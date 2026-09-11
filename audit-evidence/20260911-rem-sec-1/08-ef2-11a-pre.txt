@@ -1,0 +1,11 @@
+REM-SEC-1 · EF2-11a (P1) — REPRODUCCIÓN PRE-FIX (§22)
+=====================================================
+Fixture: apertura turno ALPHA (opening 1000) → venta cash 150 → cierre (declared 1150).
+
+TAMPERING: PATCH rest/v1/cash_closures?id=eq.<cerrado> {"declared_cash":1} (manager, PostgREST directo)
+  HTTP 200 rows=1 · declared_cash: 1150 → 1.00 (status=cerrado)
+  audit CASH_CLOSURE_UPDATED registró el tampering (detectable, no bloqueante): {"action": "CASH_CLOSURE_UPDATED", "old_d": null, "new_d": null}
+
+GUC pre-fix: app.bypass_closure_lock IS NULL = True ⇒ NULL <> 'true' ⇒ NULL ⇒ prevent_cash_closure_edit NO-OP (v2_18_1 inoperante).
+(revertido por el harness tras la captura)
+RAW: raws/pre_reproductions.json (ef211)

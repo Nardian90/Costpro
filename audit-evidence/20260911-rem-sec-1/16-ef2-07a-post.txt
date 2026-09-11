@@ -1,0 +1,19 @@
+REM-SEC-1 · EF2-07a (P1) — RECERTIFICACIÓN POST-FIX (§32)
+=========================================================
+Fixtures: svc ALPHA=ecb0f049-39eb-41df-ac8a-a0526aef75f7 · svc BETA=ee41bb34-c2d3-49af-818a-954f3f9c9d94
+
+  ALPHA manager → ALPHA service (propio) : HTTP 200 PASS (distribución legítima; audit servicio A=2 filas)
+  ALPHA manager → BETA service (IDOR)    : HTTP 403 DENIED
+  BETA manager  → ALPHA service (IDOR)   : HTTP 403 DENIED
+  OUTSIDER      → ALPHA service          : HTTP 403 DENIED
+  ALPHA clerk (miembro sin rol gestión)  : HTTP 403 DENIED (canManageStore exige manage)
+  anonymous (sin token)                  : HTTP 401 DENIED (withAuth)
+  service_id inexistente                 : HTTP 404 (404)
+
+0 MUTACIONES NO AUTORIZADAS:
+  service_audit_log BETA: 1 → 1 (SIN filas del atacante)
+  service_cost_distributions BETA: 0 → 0
+  cleanup (void own-store): A=200 B=200 (operación legítima intacta)
+
+RESULTADO: ALPHA→ALPHA PASS · ALPHA→BETA DENY · BETA→ALPHA DENY · non-member DENY · anonymous 401 · 0 unauthorized mutations.
+RAW: raws/post_cash_services.json (ef207a_post)

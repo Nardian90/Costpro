@@ -1,0 +1,94 @@
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "store_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "service_number",
+    "data_type": "text"
+  },
+  {
+    "column_name": "service_date",
+    "data_type": "date"
+  },
+  {
+    "column_name": "service_type_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "service_type_name",
+    "data_type": "text"
+  },
+  {
+    "column_name": "supplier",
+    "data_type": "text"
+  },
+  {
+    "column_name": "reference_doc",
+    "data_type": "text"
+  },
+  {
+    "column_name": "currency",
+    "data_type": "text"
+  },
+  {
+    "column_name": "exchange_rate",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "total_amount",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "observations",
+    "data_type": "text"
+  },
+  {
+    "column_name": "status",
+    "data_type": "text"
+  },
+  {
+    "column_name": "distribution_method",
+    "data_type": "text"
+  },
+  {
+    "column_name": "created_by",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "payment_status",
+    "data_type": "text"
+  },
+  {
+    "column_name": "payment_method",
+    "data_type": "text"
+  },
+  {
+    "column_name": "paid_amount",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "due_date",
+    "data_type": "date"
+  },
+  {
+    "column_name": "paid_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "payment_terms_days",
+    "data_type": "integer"
+  }
+]

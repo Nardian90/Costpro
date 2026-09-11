@@ -1,0 +1,20 @@
+REM-SEC-1 · §33 MATRIZ DE SEGURIDAD REDUCIDA (post-fix)
+=======================================================
+Contrato real (rol de gestión = canManageStore; trigger = barrera DB; RLS = aislamiento):
+
+| Operación               | ALPHA (miembro)        | BETA (cross-store)      | Anonymous        |
+|-------------------------|------------------------|-------------------------|------------------|
+| Profile role escalation | DENY (400) rol intacto | n/a (self-only)         | DENY (204) |
+| Fiscal locked update    | DENY (400) locked      | rows=0 estado locked    | rows=0 estado locked |
+| Closed cash update      | DENY (400) valor intacto | rows=0 valor intacto  | rows=0 valor intacto |
+| Service distribute      | ALLOW own (200)        | DENY (403) 0 mutaciones | DENY (401)       |
+
+EVIDENCIA POR VECTOR:
+  fiscal ALPHA manager  : 400 → locked   · outsider: rows=0 (400)
+  fiscal anonymous      : 204 → locked
+  cash (5 vectores, antes→después): 750.00 → 750.00 (cerrado) — manager=400 clerk=400 admin=400 cross=rows0 anon=204
+  profile self-escalation: 400 → role=clerk · anonymous=204
+  service distribute cross/outsider/clerk/anonymous: 403/403/403/401 (raws/post_cash_services.json)
+
+Los valores se basan en el contrato real (códigos reales capturados, no ideales).
+RAW: raws/post_matrix_idem_conc.json · raws/post_matrix_fixups.json

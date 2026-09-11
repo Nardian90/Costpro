@@ -1,0 +1,7 @@
+[
+  {
+    "proname": "prevent_cash_closure_edit",
+    "args": "",
+    "prosrc": "\nBEGIN\n  IF OLD.status = 'cerrado' AND current_setting('app.bypass_closure_lock', true) <> 'true' THEN\n    RAISE EXCEPTION 'ERR_CASH_CLOSURE_LOCKED: Cannot modify closed cash closure. Use reopen_cash_shift RPC.';\n  END IF;\n  RETURN NEW;\nEND;\n"
+  }
+]

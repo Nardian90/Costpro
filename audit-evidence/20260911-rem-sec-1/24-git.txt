@@ -1,0 +1,15 @@
+REM-SEC-1 · GIT DISCIPLINE (§9, §46, §48)
+=========================================
+ANTES de cualquier modificación: git status --short → limpio (baseline 643f4802).
+Después de cada bloque lógico: git diff --check (sin errores de whitespace) · git diff --stat · git diff revisados.
+
+CONTENIDO DEL CAMBIO (único commit de remediación, sin P2/P3, sin formato/refactor/UI):
+  M  src/app/api/received-services/distribute/route.ts               (FIX EF2-07a, +22)
+  A  supabase/migrations/20260911000000_rem_sec1_security_boundaries.sql (FIX EF2-16a/16c/11a/11b + sub-fix reopen)
+  A  audit-evidence/20260911-rem-sec-1/                              (pack completo + raws + SHA256SUMS)
+
+DIFF LIMITADO A: EF2-16a, EF2-16c, EF2-11a, EF2-11b, EF2-07a + tests directamente relacionados (ninguno necesario) + evidence.
+Sin commits intermedios de código. Sin .env (ignorado por disciplina del repo; nunca añadido).
+
+PUSH: fast-forward con token efímero del operador (no impreso, no almacenado, no
+persistido en git config; eliminado tras el uso). Verificación remota: HEAD == origin/main == <NEW_COMMIT>.

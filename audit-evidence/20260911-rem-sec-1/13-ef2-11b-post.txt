@@ -1,0 +1,18 @@
+REM-SEC-1 · EF2-11b (P1) — RECERTIFICACIÓN CONTABLE (§28)
+=========================================================
+Escenarios post-fix (tienda fixture ALPHA):
+
+A) VENTA CASH: opening=1000 · venta cash 150 · declared=1150
+   system_expected_total=1150  esperado=1150  difference=0  → NO doble conteo
+   metadata del cierre: {"v2_close": true, "cash_sales": 150, "difference": 0, "zelle_sales": 0, "cash_payments": 0, "declared_cash": 1150, "transfer_sales": 0, "opening_balance": 1000, "cash_commissions"  (cash_payments=0: el pago ref_type='sale' ya NO se resta)
+B) PAGO NO ASOCIADO A VENTA (service cash 100 — salida canónica): opening=500 · declared=400
+   system_expected_total=400  esperado=400  difference=0
+C) EGRESO (receipt cash 50): opening=500 · declared=450
+   system_expected_total=450  esperado=450  difference=0
+D) COMBINACIÓN: venta 150 + service 100 + receipt 50 · opening=1000 · declared=1000
+   system_expected_total=1000  esperado=1000  difference=0
+   Z-Report D: {"total_sales": "150", "total_cash": "150", "total_payments_suppliers": "150", "total_commissions_paid": "0"}  (total_payments_suppliers=150 = service+receipt, SIN pagos de venta)
+
+VEREDICTO A/B/C/D = {"A": true, "B": true, "C": true, "D": true} · no_double_count=True
+La venta no aparece dos veces; pagos/egresos/comisiones restan una vez; conciliación PASS.
+RAW: raws/post_cash_services.json (ef211b_post)

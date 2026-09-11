@@ -1,0 +1,14 @@
+REM-SEC-1 · CENSO DE FINDINGS EN ALCANCE (§2, §7)
+=================================================
+IN SCOPE (los 5 únicos admisibles):
+  P0-1  EF2-16a  Escalada de privilegios: self-update de profiles → role='admin'
+  P0-2  EF2-16c  Reapertura de período fiscal LOCKED por manager (GUC no-NULL-safe)
+  P1-1  EF2-11a  Inmutabilidad de cierre de caja no-op (misma familia GUC)
+  P1-2  EF2-11b  Doble conteo de ventas cash en close_cash_shift
+  P1-3  EF2-07a  IDOR en distribute de servicios (ruta V1 sin ownership check)
+
+OUT OF SCOPE (NO tocados, NO cerrados, NO modificados):
+  P2 EF2-01 (/api/receive-to-warehouse 500), P3 "[object Object]", P3 500-vs-409,
+  P3 deadlock/retry, EF2-03a/03b/06a/10a/17/CC6/11c, kardex-rounding,
+  IF-06dR-1 (DELETE silencioso en fiscal_closings), IF-06dR-2 (residuo fixture),
+  deuda arquitectónica no relacionada, build OOM (limitación de infraestructura).

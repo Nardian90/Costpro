@@ -1,0 +1,10 @@
+[
+  {
+    "typname": "plan_t",
+    "labels": "{free,pro,enterprise}"
+  },
+  {
+    "typname": "user_role",
+    "labels": "{admin,superadmin,manager,clerk,warehouse,encargado,usuario,costo,tenant_admin}"
+  }
+]

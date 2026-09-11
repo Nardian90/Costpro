@@ -1,0 +1,58 @@
+REM-SEC-1 · EF2-16a (P0) — REPRODUCCIÓN PRE-FIX (§11, §12)
+==========================================================
+Vía: PATCH {SUPABASE}/rest/v1/profiles?id=eq.<own> body {"role":"admin"} con JWT propio (PostgREST directo).
+
+CLERK  (clerk) → PATCH HTTP 200 → role=admin  · is_admin() derivado=True
+  audit CHANGE_ROLE registrado: [{"action": "CHANGE_ROLE", "old_role": "clerk", "new_role": "admin"}] · Δaudit=1
+  (revertido por el harness tras la captura)
+MANAGER → PATCH HTTP 200 → role=admin  (revertido)
+
+VARIANTES §12 (columnas sensibles del propio registro — todas mutaron con HTTP 200):
+{
+  "roles_array_admin": {
+    "status": 200,
+    "mutated": true,
+    "reverted": true
+  },
+  "store_id_beta": {
+    "status": 200,
+    "mutated": true,
+    "reverted": true
+  },
+  "tenant_id_null": {
+    "status": 200,
+    "mutated": false
+  },
+  "is_active_false": {
+    "status": 200,
+    "mutated": true,
+    "reverted": true
+  },
+  "max_stores_limit_999": {
+    "status": 200,
+    "mutated": true,
+    "reverted": true
+  },
+  "max_users_limit_999": {
+    "status": 200,
+    "mutated": true,
+    "reverted": true
+  },
+  "role_id_arbitrary": {
+    "status": 409,
+    "mutated": false
+  },
+  "full_name_self": {
+    "status": 200,
+    "mutated": false
+  }
+}
+
+CROSS-TARGET: clerk→role de otro usuario = HTTP 200 (RLS ya lo denegaba; contrato previo intacto).
+
+ROOT CAUSE (policy profiles_tenant_update, AMBAS ramas del CASE):
+  THEN/ELSE incluyen (id = auth.uid()) sin restricción de columnas → self-update de
+  role/roles/role_id/is_active/store_id/tenant_id/max_*_limit/created_by permitido.
+  Ningún trigger lo impedía (fn_sync_profile_role solo deriva role de role_id;
+  validate_active_store solo valida active_store_id).
+RAW: raws/pre_reproductions.json (ef216a)

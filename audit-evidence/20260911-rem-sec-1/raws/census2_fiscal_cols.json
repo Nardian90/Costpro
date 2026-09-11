@@ -1,0 +1,70 @@
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "store_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "period_year",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "period_month",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "status",
+    "data_type": "text"
+  },
+  {
+    "column_name": "total_sales",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "total_devolutions",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "total_purchases",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "total_commissions",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "total_cash_balance",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "closing_notes",
+    "data_type": "text"
+  },
+  {
+    "column_name": "closed_by",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "closed_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "locked_by",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "locked_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone"
+  }
+]

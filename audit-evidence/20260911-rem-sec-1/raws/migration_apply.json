@@ -1,0 +1,28 @@
+{
+  "applied": [
+    {
+      "label": "public",
+      "ok": true
+    },
+    {
+      "label": "public",
+      "ok": true
+    },
+    {
+      "label": "public",
+      "ok": true
+    },
+    {
+      "label": "public",
+      "ok": true
+    },
+    {
+      "label": "trg_prevent_self_privilege_escalation",
+      "ok": true
+    },
+    {
+      "label": "trg_prevent_self_privilege_escalation",
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "tgname": "prevent_cash_closure_edit",
+    "def": "CREATE TRIGGER prevent_cash_closure_edit BEFORE DELETE OR UPDATE ON public.cash_closures FOR EACH ROW EXECUTE FUNCTION prevent_cash_closure_edit()"
+  },
+  {
+    "tgname": "trg_audit_cash_closures",
+    "def": "CREATE TRIGGER trg_audit_cash_closures AFTER INSERT OR DELETE OR UPDATE ON public.cash_closures FOR EACH ROW EXECUTE FUNCTION audit_cash_closures_changes()"
+  }
+]

@@ -1,0 +1,25 @@
+REM-SEC-1 · EF2-16c (P0) — RECERTIFICACIÓN POST-FIX (§20)
+=========================================================
+MATRIZ DE TRANSICIONES sobre período LOCKED (ALPHA 2026-03):
+  t1 manager   LOCKED→open   : HTTP 400 (DENIED) · estado=locked
+  t2 manager   LOCKED→closed : HTTP 400 (DENIED) · estado=locked
+  t3 clerk     LOCKED→open   : HTTP 400 (DENIED) · estado=locked
+  t4 BETA mgr  cross-store   : HTTP 200 rows=0 (RLS: 0 filas) · estado=locked
+  t5 admin PATCH directa     : HTTP 400 (DENIED — fail-safe sin GUC) · estado=locked
+  t6 anonymous               : HTTP 200 rows=0 (sin política anon) · estado=locked
+  t7 outsider (sin membership): HTTP 200 rows=0 · estado=locked
+
+SEMÁNTICA GUC §18 (service-role, transacción server-side):
+  GUC NULL   → DENIED: SQL 400: {"message":"Failed to run sql query: ERROR:  P0001: ERR_FISCAL_CLOSING_LOCKED: Ca
+  GUC 'false'→ DENIED: SQL 400: {"message":"Failed to run sql query: ERROR:  P0001: ERR_FISCAL_CLOSING_LOCKED: Ca
+  GUC 'true' → bypass funcional: UPDATE procedió → status='open' (raws/guc_semantics_ef216c.json) y re-lock posterior OK
+
+TRANSICIONES LEGÍTIMAS PRESERVADAS (mes 4 fixture):
+  OPEN→CLOSED (manager /api/fiscal-close): HTTP 200 · estado=closed
+  close duplicado: HTTP 500 ERR_PERIOD_LOCKED — rechazado sin mutación (500-vs-409 = P3 heredado, fuera de alcance)
+  CLOSED→LOCKED (admin): HTTP 200 · estado=locked
+  POST status (read-only, NF-1): HTTP 200 ×2 · Δfiscal_closings=0 (pureza intacta)
+  auditoría de transiciones legítimas: [{"action": "FISCAL_CLOSING_UPDATED", "new_s": null}, {"action": "FISCAL_CLOSING_CREATED", "new_s": null}, {"action": "FISCAL_CLOSING_UPDATED", "new_s": null}]
+
+RESULTADO: LOCKED IMMUTABLE tras fix (manager/clerk/cross/outsider/anonymous/admin-direct) · close/lock/status legítimos PASS.
+RAW: raws/post_ef216a_ef216c.json (ef216c_post) · raws/guc_semantics_ef216c.json

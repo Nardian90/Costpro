@@ -1,0 +1,122 @@
+[
+  {
+    "table_name": "cash_movements",
+    "column_name": "id",
+    "data_type": "uuid"
+  },
+  {
+    "table_name": "cash_movements",
+    "column_name": "session_id",
+    "data_type": "uuid"
+  },
+  {
+    "table_name": "cash_movements",
+    "column_name": "movement_type",
+    "data_type": "USER-DEFINED"
+  },
+  {
+    "table_name": "cash_movements",
+    "column_name": "method",
+    "data_type": "USER-DEFINED"
+  },
+  {
+    "table_name": "cash_movements",
+    "column_name": "amount",
+    "data_type": "numeric"
+  },
+  {
+    "table_name": "cash_movements",
+    "column_name": "reason",
+    "data_type": "text"
+  },
+  {
+    "table_name": "cash_movements",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_name": "cash_movements",
+    "column_name": "store_id",
+    "data_type": "uuid"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "id",
+    "data_type": "uuid"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "store_id",
+    "data_type": "uuid"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "cashier_id",
+    "data_type": "uuid"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "opening_cash",
+    "data_type": "numeric"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "opening_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "closing_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "closing_cash_counted",
+    "data_type": "numeric"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "closing_vouchers_counted",
+    "data_type": "numeric"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "system_expected_cash",
+    "data_type": "numeric"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "system_expected_vouchers",
+    "data_type": "numeric"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "difference_cash",
+    "data_type": "numeric"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "difference_vouchers",
+    "data_type": "numeric"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "status",
+    "data_type": "text"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "notes",
+    "data_type": "text"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_name": "cash_sessions",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone"
+  }
+]

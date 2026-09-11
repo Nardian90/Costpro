@@ -1,0 +1,26 @@
+REM-SEC-1 · EF2-11a (P1) — RECERTIFICACIÓN POST-FIX (§24)
+=========================================================
+Sesión fixture completa (e256b7ab-25dc-4b03-b267-4a2c5c1b4520):
+  apertura HTTP 201 · caja ABIERTA modificable (declared 500→700.00, HTTP 200) · cierre HTTP 200 → status=cerrado
+
+TAMPERING POST-CIERRE (declared=700):
+  manager  : HTTP 400 (DENIED)
+  clerk    : HTTP 400 (DENIED)
+  admin PATCH directa: HTTP 400 (DENIED — fail-safe)
+  BETA (cross-store) : HTTP 200 rows=0 (RLS empty set)
+  anonymous          : HTTP 204 rows=0
+  declared tras 5 vectores: 700.00 (INTACTO)
+
+VÍA ADMINISTRATIVA (reopen_cash_shift, manager del store):
+  reopen → HTTP 200 → status=pendiente · audit CASH_CLOSURE_REOPENED=1
+  caja reabierta modificable por contrato (declared→750.00, HTTP 200)
+  re-cierre → HTTP 200 → status=cerrado declared=750.00
+  clerk NO puede reabrir: HTTP 403 (403, correcto)
+
+AUDITORÍA: Δ CASH_CLOSURE_UPDATED durante tampering = 1 — trail completo de la sesión:
+  CREATED → UPDATED(apertura legítima) → FINALIZED → REOPENED → UPDATED(reabierto legítimo) → FINALIZED (raws/audit_trail_ef211a_session.json)
+  ⇒ "unauthorized attempt" NO genera falsa mutación exitosa NI auditoría de mutación.
+
+MATRIZ §33 (antes/después, 5 vectores sobre cierre cerrado): declared 750.00 → 750.00 INTACTO.
+RESULTADO: CLOSED CASH IMMUTABLE · OPEN CASH FUNCTIONAL · ADMIN PATH PRESERVADO Y FUNCIONAL.
+RAW: raws/post_ef211a_full.json · raws/audit_trail_ef211a_session.json · raws/post_matrix_fixups.json

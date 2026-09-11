@@ -1,0 +1,22 @@
+[
+  {
+    "tgname": "prevent_hard_delete_profile",
+    "def": "CREATE TRIGGER prevent_hard_delete_profile BEFORE DELETE ON public.profiles FOR EACH ROW EXECUTE FUNCTION prevent_hard_delete_profile()"
+  },
+  {
+    "tgname": "trg_sync_profile_role",
+    "def": "CREATE TRIGGER trg_sync_profile_role BEFORE INSERT OR UPDATE OF role_id ON public.profiles FOR EACH ROW EXECUTE FUNCTION fn_sync_profile_role()"
+  },
+  {
+    "tgname": "trigger_audit_profile_changes",
+    "def": "CREATE TRIGGER trigger_audit_profile_changes AFTER INSERT OR DELETE OR UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION audit_profile_changes()"
+  },
+  {
+    "tgname": "trigger_enforce_encargado_user_limit",
+    "def": "CREATE TRIGGER trigger_enforce_encargado_user_limit BEFORE INSERT ON public.profiles FOR EACH ROW EXECUTE FUNCTION enforce_encargado_user_limit()"
+  },
+  {
+    "tgname": "trigger_validate_active_store",
+    "def": "CREATE TRIGGER trigger_validate_active_store BEFORE INSERT OR UPDATE OF active_store_id, role ON public.profiles FOR EACH ROW EXECUTE FUNCTION validate_active_store()"
+  }
+]

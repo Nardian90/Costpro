@@ -1,0 +1,8 @@
+[
+  {
+    "proname": "is_admin",
+    "args": "",
+    "res": "boolean",
+    "prosrc": "\nBEGIN\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.profiles\n    WHERE id = auth.uid()\n      AND role = 'admin'\n  );\nEND;\n"
+  }
+]

@@ -1,0 +1,15 @@
+ ✓ src/__tests__/api/fc-invalidate.test.ts (5 tests) 11ms
+ ✓ src/__tests__/store/auth-ui-store.test.ts (14 tests) 6ms
+ ✓ src/__tests__/lib/receipt-items-validation.test.ts (12 tests) 6ms
+ ✓ src/__tests__/hooks/useStoreEdit.test.tsx (4 tests) 25ms
+ ✓ src/__tests__/hooks/useStoreInactivityMonitor.test.tsx (2 tests | 1 skipped) 3ms
+ ✓ src/__tests__/components/StorefrontErrorBoundary.test.tsx (8 tests) 6ms
+ ✓ src/__tests__/hooks/useBulkAssignMemberships.test.tsx (3 tests) 27ms
+ ✓ src/__tests__/hooks/useBulkStoreAction.test.tsx (3 tests) 24ms
+ ✓ src/__tests__/store/session-store.test.ts (5 tests) 4ms
+
+ Test Files  96 passed | 1 skipped (97)
+      Tests  2058 passed | 24 skipped (2082)
+   Start at  02:42:53
+   Duration  206.78s (transform 3.56s, setup 5.00s, import 8.94s, tests 124.10s, environment 56.59s)
+

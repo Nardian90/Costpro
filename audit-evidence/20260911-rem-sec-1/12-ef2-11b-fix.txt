@@ -1,0 +1,21 @@
+REM-SEC-1 · EF2-11b (P1) — FIX APLICADO (§27)
+=============================================
+Función parcheada: public.close_cash_shift(p_closure_id, p_declared_cash, p_declared_vouchers, p_notes, p_user_id)
+
+Cambio (una línea, modelo contable canónico):
+  ANTES:  SELECT COALESCE(SUM(amount_cup),0) INTO v_cash_payments FROM public.payment_transactions
+          WHERE store_id = v_closure.store_id AND payment_method = 'cash' AND created_at > v_closure.created_at AND created_at <= NOW();
+  DESPUÉS: idem + AND (ref_type IS NULL OR ref_type <> 'sale')
+
+FUNDAMENTO (§27 — no fórmula paralela, no hardcode):
+  ref_type='sale' representa el pago de la venta YA incluida en v_cash_sales
+  (transactions.cash_amount) → excluirlo elimina el doble conteo.
+  La fórmula permanece correcta para:
+    · ventas cash            → contadas UNA vez (v_cash_sales)
+    · pagos a proveedores    → receipt/service/production_order/work (salidas, restadas una vez)
+    · reembolsos (devolution)→ salida, restada una vez
+    · comisiones             → commission_payments (restadas una vez)
+  v_cash_payments también alimenta z_reports.total_payments_suppliers — la columna
+  queda coherente con su nombre (excluye pagos de ventas, que nunca fueron pagos a proveedores).
+No se tocó nada más de la función (sin cambios de idempotencia ni de Z Report).
+MIGRACIÓN: supabase/migrations/20260911000000_rem_sec1_security_boundaries.sql

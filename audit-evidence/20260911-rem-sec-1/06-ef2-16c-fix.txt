@@ -1,0 +1,16 @@
+REM-SEC-1 · EF2-16c (P0) — FIX APLICADO (§19)
+=============================================
+Función parcheada: public.prevent_fiscal_closing_edit() (trigger BEFORE DELETE OR UPDATE ON fiscal_closings)
+
+Cambio (quirúrgico, textual sobre la definición real):
+  ANTES: IF OLD.status = 'locked' AND current_setting('app.bypass_fiscal_lock', true) <> 'true' THEN RAISE ...
+  DESPUÉS: IF OLD.status = 'locked' AND COALESCE(current_setting('app.bypass_fiscal_lock', true), 'false') <> 'true' THEN RAISE ...
+
+FAIL-SAFE / NULL-SAFE (§18, §19):
+  GUC NULL   → COALESCE→'false' → <> 'true' → TRUE → RAISE (DENIED)   [antes: no-op]
+  GUC 'false'→ RAISE (DENIED)
+  GUC 'true' → bypass permitido (vía administrativa server-side preservada; nunca
+               alcanzable por PostgREST/cliente: solo set_config en transacción server-side)
+Semántica IF-06dR-1 NO alterada (RETURN NEW de BEFORE DELETE permanece — P3 heredado, no cerrado).
+Legitimate close/lock/status intactos (close solo UPDATEa status='open'; lock solo status='closed').
+MIGRACIÓN: supabase/migrations/20260911000000_rem_sec1_security_boundaries.sql

@@ -1,0 +1,51 @@
+{
+  "at": "2026-09-11T02:24:01.285Z",
+  "session_id": "e256b7ab-25dc-4b03-b267-4a2c5c1b4520",
+  "open_status": 201,
+  "open_mutable": {
+    "status": 200,
+    "declared": "700.00"
+  },
+  "close": {
+    "status": 200,
+    "state": "cerrado"
+  },
+  "t_manager": {
+    "status": 400,
+    "state": "cerrado",
+    "declared": "700.00"
+  },
+  "t_clerk": {
+    "status": 400
+  },
+  "t_beta": {
+    "status": 200
+  },
+  "t_anon": {
+    "status": 204
+  },
+  "t_admin": {
+    "status": 400,
+    "declared": "700.00"
+  },
+  "audit_tamper_delta": 1,
+  "reopen": {
+    "status": 200,
+    "state": "pendiente",
+    "audit": 1
+  },
+  "reopened_mutable": {
+    "status": 200,
+    "declared": "750.00"
+  },
+  "reclose": {
+    "status": 200
+  },
+  "reopen_clerk": {
+    "status": 403
+  },
+  "final": {
+    "declared_cash": "750.00",
+    "status": "cerrado"
+  }
+}

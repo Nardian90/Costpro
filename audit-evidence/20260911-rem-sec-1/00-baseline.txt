@@ -1,0 +1,16 @@
+REM-SEC-1 · BASELINE OBLIGATORIO (§1)
+=====================================
+Esperado: HEAD == origin/main == 643f4802151ae340d9a3037fa42cffb0b0107081, WORKTREE CLEAN.
+
+git rev-parse HEAD        = 643f4802151ae340d9a3037fa42cffb0b0107081
+git rev-parse origin/main = 643f4802151ae340d9a3037fa42cffb0b0107081
+git status --short        = "M src/app/api/received-services/distribute/route.ts
+?? audit-evidence/20260911-rem-sec-1/
+?? supabase/migrations/20260911000000_rem_sec1_security_boundaries.sql"
+
+NOTA DE ENTORNO: el workspace fue reseteado entre sesiones (sin repo local, sin .env).
+Reconstrucción documentada antes de iniciar el gate:
+  1. git clone https://github.com/Nardian90/Costpro.git → HEAD en 643f4802 (fast-forward exacto al baseline).
+  2. .env restaurado con credenciales recuperadas de artefactos de sesión previa (/tmp/my-project).
+  3. PM2 3/3 online; / y /api/health → 200.
+La condición §1 se cumplió ANTES de cualquier verificación o mutación: HEAD==origin/main==643f4802, worktree clean.

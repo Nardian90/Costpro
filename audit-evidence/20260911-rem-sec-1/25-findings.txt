@@ -1,0 +1,34 @@
+REM-SEC-1 · FINDINGS (§42 severidades, §44 heredados, §53 formato)
+==================================================================
+EN ALCANCE — TODOS REMEDIADOS Y RECERTIFICADOS:
+  EF2-16a (P0) FIXED · REPRODUCED BEFORE · DENIED AFTER · ADMIN PATH PRESERVED ....... [04]
+  EF2-16c (P0) FIXED · REPRODUCED BEFORE · LOCKED IMMUTABLE AFTER · CLOSE/LOCK OK .... [07]
+  EF2-11a (P1) FIXED · CLOSED CASH IMMUTABLE · OPEN CASH FUNCTIONAL · ADMIN PATH OK .. [10]
+  EF2-11b (P1) FIXED · NO DOUBLE COUNT · ACCOUNTING RECONCILIATION PASS ............. [13]
+  EF2-07a (P1) FIXED · ALPHA→ALPHA PASS · ALPHA→BETA DENY · BETA→ALPHA DENY ......... [16]
+
+  Estado final de los 5: P0=0 · P1=0 reproducibles. NINGÚN finding en alcance queda abierto.
+
+SUB-DEFECTO DEL ALCANCE (§7, estrictamente necesario):
+  EF2-11a-s1: reopen_cash_shift referenciaba cash_closures.updated_at (columna inexistente)
+  ⇒ la vía administrativa de reapertura era inoperante de fábrica. FIXED dentro de EF2-11a
+  (sin ella, la inmutabilidad no tendría corrección administrativa). Clase: CONFIRMED.
+
+HEREDADOS (NO cerrados, NO modificados — §44):
+  IF-06dR-1 (P3) RETURN NEW en BEFORE DELETE de fiscal_closings cancela DELETEs en
+             silencio — comportamiento NO alterado por el fix COALESCE (verificado).
+  IF-06dR-2 (P3) residuo fixture 2026-11 en store de prueba (7912c49c) — sin impacto.
+
+OUT OF SCOPE (§7) — DOCUMENTADOS, NO FIXED:
+  P2 EF2-01 /api/receive-to-warehouse 500 · P3 [object Object] · P3 500-vs-409 (close duplicado
+  → 500 en recert) · P3 deadlock/retry · P3 restantes de E2E-2 ·
+  OBS-SEC-1 (NEW, PREEXISTENTE en baseline, AJENO a los 5): security-contract-test reporta
+  5 CRITICAL anti-spoofing en RPCs de production_orders + 3 MEDIUM anon-EXECUTE
+  (raws de verificación; demostrado preexistente por stash del worktree). Recomienda
+  gate de remediación propio de la familia production/PO.
+  OBS-2 (observación, no defecto): período CLOSED (no locked) sigue siendo mutable por
+  miembros vía PATCH directo — la inmutabilidad fuerte del contrato es 'locked' (estado
+  del diseño actual; no demostrado como defecto en E2E-2 ni en alcance REM-SEC-1).
+
+RESUMEN: NEW-CONFIRMED: 5 (+1 sub-defecto) · INHERITED: 2 (intactos) · NOT REPRODUCED: 0 ·
+P0 abiertos: 0 · P1 abiertos: 0 · P2 abiertos: 1 (EF2-01, heredado) · P3 abiertos: 8+ (heredados) + OBS-SEC-1.

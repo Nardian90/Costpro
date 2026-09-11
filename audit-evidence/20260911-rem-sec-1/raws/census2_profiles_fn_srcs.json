@@ -1,0 +1,50 @@
+[
+  {
+    "proname": "audit_profile_changes",
+    "args": "",
+    "prosecdef": true,
+    "prosrc": "\nBEGIN\n    -- Log creation\n    IF (TG_OP = 'INSERT') THEN\n        INSERT INTO public.audit_logs (user_id, action, table_name, record_id, new_data, store_id)\n        VALUES (\n            auth.uid(),\n            'CREATE_USER',\n            'profiles',\n            NEW.id,\n            jsonb_build_object('full_name', NEW.full_name, 'role', NEW.role, 'email', NEW.email),\n            NULL\n        );\n    -- Log deletion\n    ELSIF (TG_OP = 'DELETE') THEN\n        INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, store_id)\n        VALUES (\n            auth.uid(),\n            'DELETE_USER',\n            'profiles',\n            OLD.id,\n            jsonb_build_object('full_name', OLD.full_name, 'role', OLD.role),\n            NULL\n        );\n    -- Log updates\n    ELSIF (TG_OP = 'UPDATE') THEN\n        -- Log active store change\n        IF (OLD.active_store_id IS DISTINCT FROM NEW.active_store_id) THEN\n            INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, new_data, store_id)\n            VALUES (\n                auth.uid(),\n                'CHANGE_ACTIVE_STORE',\n                'profiles',\n                NEW.id,\n                jsonb_build_object('active_store_id', OLD.active_store_id),\n                jsonb_build_object('active_store_id', NEW.active_store_id),\n                NEW.active_store_id\n            );\n        END IF;\n\n        -- Log role change\n        IF (OLD.role IS DISTINCT FROM NEW.role) THEN\n            INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, new_data, store_id)\n            VALUES (\n                auth.uid(),\n                'CHANGE_ROLE',\n                'profiles',\n                NEW.id,\n                jsonb_build_object('role', OLD.role),\n                jsonb_build_object('role', NEW.role),\n                NEW.active_store_id\n            );\n        END IF;\n\n        -- Log name change\n        IF (OLD.full_name IS DISTINCT FROM NEW.full_name) THEN\n            INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, new_data, store_id)\n            VALUES (\n                auth.uid(),\n                'UPDATE_USER_NAME',\n                'profiles',\n                NEW.id,\n                jsonb_build_object('full_name', OLD.full_name),\n                jsonb_build_object('full_name', NEW.full_name),\n                NEW.active_store_id\n            );\n        END IF;\n    END IF;\n\n    IF (TG_OP = 'DELETE') THEN RETURN OLD; ELSE RETURN NEW; END IF;\nEND;\n"
+  },
+  {
+    "proname": "current_user_tenant_id",
+    "args": "",
+    "prosecdef": true,
+    "prosrc": "\n  SELECT tenant_id FROM public.profiles WHERE id = auth.uid();\n"
+  },
+  {
+    "proname": "fn_sync_profile_role",
+    "args": "",
+    "prosecdef": false,
+    "prosrc": "\nDECLARE\n  v_role_enum text;\nBEGIN\n  -- Si role_id cambió, derivar role desde role_id\n  IF NEW.role_id IS NOT NULL AND NEW.role_id IS DISTINCT FROM OLD.role_id THEN\n    SELECT public.role_name_to_enum(r.name) INTO v_role_enum\n    FROM public.roles r WHERE r.id = NEW.role_id;\n    NEW.role := v_role_enum::user_role;\n  END IF;\n  RETURN NEW;\nEND;\n"
+  },
+  {
+    "proname": "has_store_access",
+    "args": "p_store_id uuid",
+    "prosecdef": true,
+    "prosrc": "\nDECLARE\n  v_user_id uuid := auth.uid();\nBEGIN\n  IF v_user_id IS NULL OR p_store_id IS NULL THEN\n    RETURN false;\n  END IF;\n\n  -- Admin global tiene acceso a todo\n  IF public.is_admin() THEN\n    RETURN true;\n  END IF;\n\n  -- Verificar membership activa en la tienda\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.user_store_memberships m\n    JOIN public.stores s\n      ON s.id = m.store_id\n    JOIN public.profiles p\n      ON p.id = m.user_id\n    WHERE m.user_id = v_user_id\n      AND m.store_id = p_store_id\n      AND m.status::text = 'active'\n      AND (\n        p.tenant_id IS NULL\n        OR s.tenant_id IS NULL\n        OR p.tenant_id = s.tenant_id\n      )\n  );\nEND;\n"
+  },
+  {
+    "proname": "has_store_access_as",
+    "args": "p_user_id uuid, p_store_id uuid",
+    "prosecdef": true,
+    "prosrc": "\nDECLARE\n    v_role TEXT;\nBEGIN\n    IF p_user_id IS NULL OR p_store_id IS NULL THEN RETURN false; END IF;\n    \n    -- Check if admin\n    SELECT role INTO v_role FROM public.profiles WHERE id = p_user_id;\n    IF v_role = 'admin' THEN RETURN true; END IF;\n    \n    -- Check membership\n    RETURN EXISTS (\n        SELECT 1 FROM public.user_store_memberships\n        WHERE user_id = p_user_id AND store_id = p_store_id AND status = 'active'\n    );\nEND;\n"
+  },
+  {
+    "proname": "is_admin",
+    "args": "",
+    "prosecdef": true,
+    "prosrc": "\nBEGIN\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.profiles\n    WHERE id = auth.uid()\n      AND role = 'admin'\n  );\nEND;\n"
+  },
+  {
+    "proname": "is_admin_with_access",
+    "args": "p_store_id uuid",
+    "prosecdef": true,
+    "prosrc": "\nDECLARE\n  v_is_admin boolean;\n  v_user_tenant uuid;\n  v_store_tenant uuid;\nBEGIN\n  v_is_admin := public.is_admin();\n  IF NOT v_is_admin THEN\n    RETURN public.has_store_access(p_store_id);\n  END IF;\n  v_user_tenant := public.current_user_tenant_id();\n  SELECT tenant_id INTO v_store_tenant FROM public.stores WHERE id = p_store_id;\n  RETURN v_store_tenant IS NULL OR v_store_tenant = v_user_tenant;\nEND;\n"
+  },
+  {
+    "proname": "validate_active_store",
+    "args": "",
+    "prosecdef": true,
+    "prosrc": "\nDECLARE\n    v_role user_role;\nBEGIN\n    v_role := NEW.role;\n\n    -- Si role es 'costo' o 'admin' o 'superadmin', active_store_id es opcional\n    IF v_role = 'costo'::user_role\n       OR v_role = 'admin'::user_role\n       OR v_role = 'superadmin'::user_role THEN\n        -- Solo validar si active_store_id cambió o es INSERT\n        IF TG_OP = 'INSERT' OR (OLD.active_store_id IS DISTINCT FROM NEW.active_store_id) THEN\n            IF NEW.active_store_id IS NOT NULL THEN\n                IF NOT EXISTS (\n                    SELECT 1 FROM public.user_store_memberships\n                    WHERE user_id = NEW.id\n                      AND store_id = NEW.active_store_id\n                      AND status = 'active'\n                ) THEN\n                    IF TG_OP = 'UPDATE' THEN\n                        RAISE EXCEPTION 'ERR_INVALID_ACTIVE_STORE: El usuario no tiene membership activa en la tienda seleccionada.';\n                    END IF;\n                END IF;\n            END IF;\n        END IF;\n        RETURN NEW;\n    END IF;\n\n    -- Para roles operativos (encargado, clerk, warehouse, manager, usuario)\n    IF TG_OP = 'INSERT' THEN\n        -- En INSERT: ser permisivo. La función managed_create_user inserta\n        -- memberships justo después. No validar nada aquí.\n        RETURN NEW;\n    ELSE\n        -- UPDATE: solo validar si active_store_id cambió realmente\n        -- (evita bloquear updates de otros campos en perfiles intermedios)\n        IF OLD.active_store_id IS NOT DISTINCT FROM NEW.active_store_id THEN\n            -- active_store_id no cambió → permitir el UPDATE sin validar\n            RETURN NEW;\n        END IF;\n\n        -- active_store_id cambió → validar consistencia\n        IF NEW.active_store_id IS NULL THEN\n            IF v_role IN ('encargado'::user_role, 'clerk'::user_role, 'warehouse'::user_role) THEN\n                RAISE EXCEPTION 'ERR_STORE_REQUIRED: El rol % requiere una tienda activa asignada.', v_role;\n            END IF;\n        ELSE\n            IF NOT EXISTS (\n                SELECT 1 FROM public.user_store_memberships\n                WHERE user_id = NEW.id\n                  AND store_id = NEW.active_store_id\n                  AND status = 'active'\n            ) THEN\n                RAISE EXCEPTION 'ERR_INVALID_ACTIVE_STORE: El usuario no tiene membership activa en la tienda seleccionada.';\n            END IF;\n        END IF;\n        RETURN NEW;\n    END IF;\nEND;\n"
+  }
+]

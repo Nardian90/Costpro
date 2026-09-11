@@ -1,0 +1,4 @@
+{
+  "applied": true,
+  "removed": "updated_at = NOW()"
+}

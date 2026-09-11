@@ -1,0 +1,234 @@
+{
+  "at": "2026-09-11T02:35:52.350Z",
+  "matrix": {
+    "fisc_alpha_mgr": 400,
+    "fisc_after_mgr": "locked",
+    "fisc_beta": 200,
+    "fisc_after_beta": "locked",
+    "fisc_beta_rows": 0,
+    "fisc_anon": 204,
+    "fisc_after_anon": "locked",
+    "cash_alpha_mgr": 400,
+    "cash_beta": 200,
+    "cash_beta_rows": 0,
+    "cash_anon": 204,
+    "cash_after": "750.00",
+    "prof_clerk": 400,
+    "prof_clerk_role": "clerk",
+    "prof_anon": 204
+  },
+  "checks": [
+    {
+      "name": "§33 fiscal: ALPHA manager DENY + estado locked",
+      "pass": true,
+      "detail": "400 → locked"
+    },
+    {
+      "name": "§33 fiscal: cross-store 0 filas + estado locked",
+      "pass": true,
+      "detail": "rows=0 → locked"
+    },
+    {
+      "name": "§33 fiscal: anonymous 0 filas + estado locked",
+      "pass": true,
+      "detail": "204 → locked"
+    },
+    {
+      "name": "§33 cash: cerrado DENY ALPHA manager",
+      "pass": false,
+      "detail": "400 → 750.00"
+    },
+    {
+      "name": "§33 cash: cross-store 0 filas + valor intacto",
+      "pass": false,
+      "detail": "rows=0 → 750.00"
+    },
+    {
+      "name": "§33 cash: anonymous sin mutación",
+      "pass": false,
+      "detail": "204 → 750.00"
+    },
+    {
+      "name": "§33 profile: self-escalation DENY + rol intacto",
+      "pass": true,
+      "detail": "400 → clerk"
+    },
+    {
+      "name": "§35 RPC fiscal directo por authenticated → sin EXECUTE (denegado)",
+      "pass": true,
+      "detail": "HTTP 403 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for func"
+    },
+    {
+      "name": "§35 RPC distribute directo por authenticated → permitido por grants PERO con has_store_access interno (service inexistente → NOT_FOUND)",
+      "pass": true,
+      "detail": "HTTP 403 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for func"
+    },
+    {
+      "name": "§37 cash: re-cierre rechazado sin doble Z ni mutación",
+      "pass": true,
+      "detail": "{\"close1\":200,\"close2\":409,\"z\":[0,1],\"state\":{\"status\":\"cerrado\",\"system_expected_total\":\"300\"}}"
+    },
+    {
+      "name": "§37 fiscal: lock sobre período inexistente → rechazado determinista (sin mutación)",
+      "pass": true,
+      "detail": "500/500 {\"error\":\"ERR_NOT_CLOSED: El periodo debe estar cerrado ante"
+    },
+    {
+      "name": "§37 service: distribute ×2 → idempotente (mismo número de filas)",
+      "pass": true,
+      "detail": "0→0"
+    },
+    {
+      "name": "§37 fiscal: status ×10 → Δfc=0 Δaudit=0 (pureza NF-1 intacta)",
+      "pass": true,
+      "detail": "Δfc=0 Δaudit=0"
+    },
+    {
+      "name": "§38 fiscal: patch manager ‖ lock admin → final locked, sin re-apertura",
+      "pass": false,
+      "detail": "{\"close\":200,\"patch\":{\"status\":200},\"lock\":{\"status\":500},\"final\":\"open\"}"
+    },
+    {
+      "name": "§38 cash: close ‖ update → invariante respetado (cerrado ⇒ 700/250 intacto o pendiente declarado legítimo)",
+      "pass": true,
+      "detail": "{\"close\":{\"status\":200},\"upd\":{\"status\":200,\"declared\":\"250.00\"},\"final\":{\"status\":\"cerrado\",\"declared_cash\":\"250.00\"}}"
+    },
+    {
+      "name": "§38 service: distribute ‖ distribute (manager‖clerk) → sin duplicados, autorización respetada",
+      "pass": true,
+      "detail": "{\"d1\":200,\"d2\":403,\"dist_rows\":0}"
+    },
+    {
+      "name": "§38 profile: self-promote ‖ admin update → rol final = clerk (admin gana, escalada denegada)",
+      "pass": true,
+      "detail": "{\"self\":400,\"admin\":200,\"final_role\":\"clerk\"}"
+    },
+    {
+      "name": "§39 venta: inventario decrece exactamente 1 y stock_after coherente",
+      "pass": true,
+      "detail": "Δ=1 balance_after=32.0000"
+    },
+    {
+      "name": "§39 venta: stock_movement registrado (sale) + auditoría",
+      "pass": true,
+      "detail": "31→32"
+    }
+  ],
+  "service_role_surfaces": [
+    {
+      "surface": "POST /api/received-services/distribute",
+      "chain": "withAuth(JWT) → resolve received_services.store_id server-side → canManageStore(user, store) → service-role RPC/mutación",
+      "status": "FIXED (EF2-07a)"
+    },
+    {
+      "surface": "POST /api/fiscal-close",
+      "chain": "withAuth + rol manage/admin por acción → RPC close_fiscal_period/lock_fiscal_period (SECURITY DEFINER) → has_store_access_as / check role admin server-side → trigger prevent_fiscal_closing_edit",
+      "status": "PRESERVED"
+    },
+    {
+      "surface": "POST /api/cash-closures/close",
+      "chain": "withAuth → RPC close_cash_shift → has_store_access_as(caller, closure.store) server-side → status pendiente check",
+      "status": "PRESERVED"
+    },
+    {
+      "surface": "POST /api/cash-closures/reopen",
+      "chain": "withAuth → RPC reopen_cash_shift → has_store_role_as(admin|manager) server-side → set_config bypass local → UPDATE (trigger COALESCE) → auditoría",
+      "status": "PRESERVED + FIXED updated_at"
+    },
+    {
+      "surface": "PATCH /api/users/[id]",
+      "chain": "withRole('admin') → RPC managed_update_user (SECURITY DEFINER) → re-chequeo caller admin/superadmin → user_audit_log",
+      "status": "PRESERVED"
+    }
+  ],
+  "idempotency": {
+    "cash": {
+      "close1": 200,
+      "close2": 409,
+      "z": [
+        0,
+        1
+      ],
+      "state": {
+        "status": "cerrado",
+        "system_expected_total": "300"
+      }
+    },
+    "distribute": {
+      "d1": 200,
+      "d2": 200,
+      "n1": 0,
+      "n2": 0
+    },
+    "status_purity": {
+      "fc": [
+        7,
+        7
+      ],
+      "audit": [
+        36,
+        36
+      ]
+    }
+  },
+  "concurrency": {
+    "c1": {
+      "close": 200,
+      "patch": {
+        "status": 200
+      },
+      "lock": {
+        "status": 500
+      },
+      "final": "open"
+    },
+    "c2": {
+      "close": {
+        "status": 200
+      },
+      "upd": {
+        "status": 200,
+        "declared": "250.00"
+      },
+      "final": {
+        "status": "cerrado",
+        "declared_cash": "250.00"
+      }
+    },
+    "c3": {
+      "d1": 200,
+      "d2": 403,
+      "dist_rows": 0
+    },
+    "c4": {
+      "self": 400,
+      "admin": 200,
+      "final_role": "clerk"
+    }
+  },
+  "accounting": {
+    "sale": {
+      "status": 200,
+      "body": "{\"success\":true,\"status\":\"success\",\"calculated_tax\":0,\"transaction_id\":\"4e86a7c6-39bc-4e2e-9691-72259ae2bbf7\",\"discount_"
+    },
+    "inventory": {
+      "before": {
+        "quantity": "33.0000"
+      },
+      "after": {
+        "quantity": "32.0000"
+      },
+      "sm": [
+        31,
+        32
+      ],
+      "last_sm": {
+        "movement_type": "sale",
+        "quantity_change": "-1.0000",
+        "balance_after": "32.0000"
+      }
+    },
+    "wac_after": "40"
+  },
+  "finished_at": "2026-09-11T02:38:31.118Z"
+}

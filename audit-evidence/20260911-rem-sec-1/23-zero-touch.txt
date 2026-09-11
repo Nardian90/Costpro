@@ -1,0 +1,17 @@
+REM-SEC-1 · §43 ZERO-TOUCH PRODUCCIÓN
+=====================================
+Tiendas productivas (READ ONLY absoluto durante todo el gate): ENERVIDA-VITALLCONS y Puerto Padre VITALLCONS.
+Método: count + SHA-256 (fila a fila, md5 concatenado ordenado) por tabla y tienda, PRE y POST.
+
+PRE  : 48/48 tablas OK (24 × 2 tiendas)  · audit_logs=7920 · ENERVIDA products=125 · Puerto Padre products=36
+POST : 48/48 tablas OK                   · audit_logs=8038 · ENERVIDA products=125 · Puerto Padre products=36
+
+COMPARACIÓN PRE vs POST: ["id\u00e9ntico bit a bit"]
+  · ENERVIDA-VITALLCONS  : n y hash idénticos en las 24 tablas  ✓
+  · Puerto Padre         : n y hash idénticos en las 24 tablas  ✓
+  · stores_count: 50→50 · profiles_count: 75→75
+  · audit_logs 7920→8038 (+118): crecimiento esperado del trail de auditoría (append-only, global, incluye stores fixture)
+
+NINGUNA operación mutativa se ejecutó contra producción: 0 INSERT/UPDATE/DELETE/PATCH/POST/RPC mutativo.
+RESULTADO: ZERO-TOUCH PASS — PRE == POST.
+RAW: raws/zero_touch_PRE.json · raws/zero_touch_POST.json

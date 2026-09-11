@@ -1,0 +1,16 @@
+REM-SEC-1 · EF2-07a (P1) — REPRODUCCIÓN PRE-FIX (§30)
+=====================================================
+Fixture: servicio ALPHA (602cda87-e353-464b-a508-b105917ebbc4) y servicio BETA (c712dd8a-4cd0-44da-9980-5cfcdc32ca6d) creados vía POST /api/received-services (HTTP 201/201).
+
+ATAQUE: ALPHA manager → POST /api/received-services/distribute {"service_id":"<servicio BETA>"}
+  HTTP 200 · body={"success": true, "distributed_rows": 0}
+  service_audit_log de BETA: [{'action': 'created', 'user_id': 'c37cd9f7-cfe4-46c2-bad3-a48c721f2c29', 'created_at': '2026-09-11 01:57:38.090008+00'}] → [{'action': 'created', 'user_id': 'c37cd9f7-cfe4-46c2-bad3-a48c721f2c29', 'created_at': '2026-09-11 01:57:38.090008+00'}, {'action': 'recalculated', 'user_id': '4c71ba55-d2a5-499e-a34e-ccf508b8df7f', 'created_at': '2026-09-11 01:57:41.786181+00'}] filas ('recalculated' escrito a nombre del atacante)
+  service_cost_distributions de BETA tras ataque: 0
+
+Control legítimo (ALPHA→servicio propio): HTTP 200 · cleanup void A/B: 200/200
+
+ROOT CAUSE: ruta V1 de distribute (USE_V2_RECEIVED_SERVICES indefinido → código TypeScript viejo):
+  withAuth → service-role DELETE service_cost_distributions + RPC calculate_service_distribution
+  + INSERT + service_audit_log SIN resolver la tienda del servicio NI validar membresía
+  (patrón prohibido: authenticated → service role → mutación sin autorización server-side).
+RAW: raws/pre_reproductions.json (ef207a)

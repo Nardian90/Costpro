@@ -1,0 +1,17 @@
+REM-SEC-1 · EF2-07a (P1) — FIX APLICADO (§31)
+=============================================
+Archivo: src/app/api/received-services/distribute/route.ts (+22 líneas)
+
+Autorización server-side en el boundary que ejecuta la mutación (aplica a AMBAS rutas,
+V1 y V2, antes de cualquier operación privilegiada):
+  1. Resolver la tienda REAL del servicio server-side:
+       admin.from('received_services').select('id,store_id').eq('id', service_id).single()
+       → inexistente ⇒ 404
+  2. Exigir rol de gestión sobre ESA tienda:
+       canManageStore(session.user, svcRow.store_id)  → false ⇒ 403
+       (canónico F3-P0-02, espejo exacto de PATCH /api/received-services;
+        admin global transversal por diseño — src/lib/roles.ts)
+  3. Solo entonces: RPC v2 o camino V1 (service-role).
+NO se confía en store_id del cliente ni en la UI. El RPC distribute_service_cost_v2
+conserva además su propio has_store_access(v_store_id resuelto server-side) — defensa en profundidad.
+Uso de service_role queda siempre precedido de: authenticated user → authorization → target ownership.

@@ -1,0 +1,66 @@
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "user_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "store_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "session_reference",
+    "data_type": "text"
+  },
+  {
+    "column_name": "declared_cash",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "declared_vouchers",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "system_total",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "notes",
+    "data_type": "text"
+  },
+  {
+    "column_name": "closed_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "declared_total",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "system_expected_total",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "status",
+    "data_type": "text"
+  },
+  {
+    "column_name": "difference",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "opening_balance",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "cash_movements_total",
+    "data_type": "numeric"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "proname": "calculate_service_distribution",
+    "args": "p_service_id uuid"
+  },
+  {
+    "proname": "close_service_order_as_sale",
+    "args": "p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_payment_method text, p_currency text, p_exchange_rate numeric, p_user_id uuid"
+  },
+  {
+    "proname": "create_received_service_v2",
+    "args": "p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid"
+  },
+  {
+    "proname": "distribute_service_cost_v2",
+    "args": "p_service_id uuid, p_user_id uuid"
+  },
+  {
+    "proname": "link_receipts_to_service",
+    "args": "p_service_id uuid, p_receipt_ids jsonb, p_user_id uuid"
+  },
+  {
+    "proname": "prevent_received_service_edit",
+    "args": ""
+  },
+  {
+    "proname": "set_default_due_date_service",
+    "args": ""
+  },
+  {
+    "proname": "set_received_service_status",
+    "args": "p_service_id uuid, p_new_status text, p_user_id uuid, p_reason text"
+  },
+  {
+    "proname": "void_received_service_with_reversal",
+    "args": "p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone"
+  }
+]

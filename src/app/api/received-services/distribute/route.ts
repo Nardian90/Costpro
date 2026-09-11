@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withSecurity } from '@/lib/with-security';
+import { canManageStore } from '@/lib/roles';
 
 /**
  * POST /api/received-services/distribute
  * v2.25.0 — Feature flag USE_V2_RECEIVED_SERVICES:
  *   true  → RPC distribute_service_cost_v2 (atomica, SELECT FOR UPDATE, recalcula WAC)
  *   false → codigo TypeScript viejo (DELETE + RPC + INSERT no-atomico)
+ *
+ * REM-SEC-1 · FIX EF2-07a (P1, hallazgo E2E-2): la ruta NO validaba la
+ * pertenencia del servicio — un manager podia distribuir el servicio de
+ * OTRA tienda vía service-role (IDOR cross-store, patrón prohibido §35:
+ * authenticated → service role → mutación sin autorización server-side).
+ * Ahora se resuelve el store REAL del servicio server-side y se exige
+ * canManageStore sobre esa tienda ANTES de cualquier mutación (patrón
+ * canónico F3-P0-02 de PATCH /api/received-services). DENY por defecto.
  */
 
 const USE_V2 = process.env.USE_V2_RECEIVED_SERVICES === 'true';
@@ -23,6 +32,19 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (!service_id) return NextResponse.json({ error: 'service_id required' }, { status: 400 });
 
     const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
+
+    // ─── REM-SEC-1 · FIX EF2-07a: autorización server-side del ownership ───
+    // Resolver la tienda REAL del servicio (jamás confiar en store_id del
+    // cliente ni en la UI) y exigir rol de gestión sobre ESA tienda.
+    const { data: svcRow, error: svcErr } = await admin
+      .from('received_services')
+      .select('id,store_id')
+      .eq('id', service_id)
+      .single();
+    if (svcErr || !svcRow?.store_id) return NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 });
+    if (!canManageStore(session.user, svcRow.store_id)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     if (USE_V2) {
       // ─── v2.25.0: RPC transaccional ───

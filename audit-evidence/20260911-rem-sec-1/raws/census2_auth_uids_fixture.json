@@ -1,0 +1,37 @@
+[
+  {
+    "id": "7613f105-7b0d-4f4c-8792-b45c1e35fd4e",
+    "email": "e2e2-alpha-admin@fixture.costpro",
+    "fn": "E2E2 ALPHA_ADMIN"
+  },
+  {
+    "id": "a063a1db-f8e4-4a5f-a898-f643548c0b3b",
+    "email": "e2e2-alpha-clerk@fixture.costpro",
+    "fn": "E2E2 ALPHA_CLERK"
+  },
+  {
+    "id": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+    "email": "e2e2-alpha-manager@fixture.costpro",
+    "fn": "E2E2 ALPHA_MANAGER"
+  },
+  {
+    "id": "cf37edac-4bfa-4295-98e3-cb745574daf2",
+    "email": "e2e2-beta-clerk@fixture.costpro",
+    "fn": "E2E2 BETA_CLERK"
+  },
+  {
+    "id": "c37cd9f7-cfe4-46c2-bad3-a48c721f2c29",
+    "email": "e2e2-beta-manager@fixture.costpro",
+    "fn": "E2E2 BETA_MANAGER"
+  },
+  {
+    "id": "bf3b9fae-b2a0-43c4-b8c1-1cbab5fa28b8",
+    "email": "e2e2-dbg@fixture.costpro",
+    "fn": null
+  },
+  {
+    "id": "83af9b60-2265-4e3c-bdac-2cc52eb49cd2",
+    "email": "e2e2-outsider@fixture.costpro",
+    "fn": "E2E2 OUTSIDER"
+  }
+]

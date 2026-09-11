@@ -1,0 +1,42 @@
+[
+  {
+    "ref_type": "devolution",
+    "payment_method": "cash",
+    "n": 12
+  },
+  {
+    "ref_type": "production_order",
+    "payment_method": "cash",
+    "n": 6
+  },
+  {
+    "ref_type": "receipt",
+    "payment_method": "cash",
+    "n": 1
+  },
+  {
+    "ref_type": "sale",
+    "payment_method": "cash",
+    "n": 294
+  },
+  {
+    "ref_type": "sale",
+    "payment_method": "transfer",
+    "n": 3
+  },
+  {
+    "ref_type": "sale",
+    "payment_method": "zelle",
+    "n": 124
+  },
+  {
+    "ref_type": "service",
+    "payment_method": "cash",
+    "n": 1
+  },
+  {
+    "ref_type": "work",
+    "payment_method": "cash",
+    "n": 1
+  }
+]

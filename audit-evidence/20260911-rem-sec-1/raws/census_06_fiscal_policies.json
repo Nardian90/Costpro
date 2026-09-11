@@ -1,0 +1,29 @@
+[
+  {
+    "schemaname": "public",
+    "tablename": "fiscal_closings",
+    "policyname": "fiscal_closings_insert",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "has_store_access(store_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fiscal_closings",
+    "policyname": "fiscal_closings_select",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "has_store_access(store_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "fiscal_closings",
+    "policyname": "fiscal_closings_update",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "has_store_access(store_id)",
+    "with_check": "has_store_access(store_id)"
+  }
+]

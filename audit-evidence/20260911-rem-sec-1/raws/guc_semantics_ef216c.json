@@ -1,0 +1,18 @@
+{
+  "probe": [
+    {
+      "answer": 42
+    }
+  ],
+  "guc_true": [
+    {
+      "status": "open"
+    }
+  ],
+  "relock": [
+    {
+      "status": "locked"
+    }
+  ],
+  "saved_at": "2026-09-11T02:12:46.451Z"
+}

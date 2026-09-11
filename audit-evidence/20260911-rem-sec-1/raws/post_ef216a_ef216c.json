@@ -1,0 +1,177 @@
+{
+  "ef216a_post": {
+    "clerk_role_before": "clerk",
+    "clerk_self_promote": {
+      "status": 400,
+      "error": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SELF_PRIVILEGED_FIELD: role, roles, role_id, is_active, store ownership, tenant y limites solo pueden "
+    },
+    "clerk_role_after": "clerk",
+    "clerk_is_admin_after": false,
+    "clerk_audit_delta_role": 0,
+    "manager_role_before": "manager",
+    "manager_self_promote": {
+      "status": 400
+    },
+    "manager_role_after": "manager",
+    "clerk_updates_manager": {
+      "status": 200,
+      "manager_role_now": "manager"
+    },
+    "variants": {
+      "roles_array_admin": {
+        "status": 400,
+        "before": "{}",
+        "after": "{}",
+        "unchanged": true
+      },
+      "store_id_beta": {
+        "status": 400,
+        "before": null,
+        "after": null,
+        "unchanged": true
+      },
+      "tenant_id_forge": {
+        "status": 400,
+        "before": null,
+        "after": null,
+        "unchanged": true
+      },
+      "is_active_false": {
+        "status": 400,
+        "before": true,
+        "after": true,
+        "unchanged": true
+      },
+      "max_stores_limit": {
+        "status": 400,
+        "before": 0,
+        "after": 0,
+        "unchanged": true
+      },
+      "max_users_limit": {
+        "status": 400,
+        "before": 0,
+        "after": 0,
+        "unchanged": true
+      }
+    },
+    "legit_self_fields": {
+      "full_name": {
+        "status": 200
+      },
+      "plan_selfservice": {
+        "status": 200,
+        "plan_now": "pro"
+      },
+      "ai_provider": {
+        "status": 200
+      }
+    }
+  },
+  "ef216a_admin_path": {
+    "admin_promote_clerk": {
+      "status": 200,
+      "body": "{\"success\":true,\"changes\":{\"role\":{\"new\":\"manager\",\"old\":\"clerk\"}},\"user_id\":\"a063a1db-f8e4-4a5f-a898-f643548c0b3b\"}"
+    },
+    "clerk_role_after_admin_promote": "manager",
+    "admin_promote_to_admin": {
+      "status": 200
+    },
+    "clerk_role_peak": "admin",
+    "admin_demote_back": {
+      "status": 200
+    },
+    "clerk_role_final": "clerk",
+    "user_audit": [
+      {
+        "action": "USER_UPDATED",
+        "old_v": "admin",
+        "new_v": "{\"new\": \"clerk\", \"old\": \"admin\"}"
+      },
+      {
+        "action": "USER_UPDATED",
+        "old_v": "manager",
+        "new_v": "{\"new\": \"admin\", \"old\": \"manager\"}"
+      },
+      {
+        "action": "USER_UPDATED",
+        "old_v": "clerk",
+        "new_v": "{\"new\": \"manager\", \"old\": \"clerk\"}"
+      }
+    ],
+    "manager_via_admin_endpoint": {
+      "status": 403
+    },
+    "clerk_via_admin_endpoint": {
+      "status": 403,
+      "role_after": "clerk"
+    }
+  },
+  "ef216c_post": {
+    "t1_manager_locked_to_open": {
+      "status": 400,
+      "state": "locked"
+    },
+    "t2_manager_locked_to_closed": {
+      "status": 400,
+      "state": "locked"
+    },
+    "t3_clerk_locked_to_open": {
+      "status": 400,
+      "state": "locked"
+    },
+    "t4_beta_manager_cross": {
+      "status": 200,
+      "state": "locked"
+    },
+    "t5_admin_direct_locked_to_open": {
+      "status": 400,
+      "state": "locked"
+    },
+    "t6_anonymous": {
+      "status": 200,
+      "state": "locked"
+    },
+    "t7_outsider": {
+      "status": 200,
+      "state": "locked"
+    },
+    "guc_null": true,
+    "guc_true_effect": "NO_MUTATION",
+    "relocked": "NO_MUTATION",
+    "guc_false_effect": "DENIED: SQL 400: {\"message\":\"Failed to run sql query: ERROR:  P0001: ERR_FISCAL_CLOSING_LOCKED: Ca",
+    "guc_null_effect": "DENIED: SQL 400: {\"message\":\"Failed to run sql query: ERROR:  P0001: ERR_FISCAL_CLOSING_LOCKED: Ca",
+    "final_state": "locked",
+    "legit_close": {
+      "status": 200,
+      "state": "closed"
+    },
+    "legit_close_dup": {
+      "status": 500
+    },
+    "legit_lock": {
+      "status": 200,
+      "state": "locked"
+    },
+    "legit_status_readonly": {
+      "status": 200,
+      "dup_fc": true,
+      "second": 200
+    },
+    "legit_audit": [
+      {
+        "action": "FISCAL_CLOSING_UPDATED",
+        "new_s": null
+      },
+      {
+        "action": "FISCAL_CLOSING_CREATED",
+        "new_s": null
+      },
+      {
+        "action": "FISCAL_CLOSING_UPDATED",
+        "new_s": null
+      }
+    ]
+  },
+  "finished_at": "2026-09-11T02:10:01.315Z"
+}

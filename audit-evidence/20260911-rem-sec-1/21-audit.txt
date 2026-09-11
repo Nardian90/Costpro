@@ -1,0 +1,20 @@
+REM-SEC-1 · §36 AUDITORÍA
+=========================
+PRINCIPIO VERIFICADO: un intento no autorizado NO genera falsa mutación exitosa NI
+auditoría de mutación; toda operación legítima SÍ deja auditoría conforme al modelo.
+
+ATTEMPTS NO AUTORIZADOS (post-fix) → Δaudit de mutación = 0:
+  · 5 vectores PATCH sobre cierre cerrado (manager/clerk/admin/cross/anon): Δ CASH_CLOSURE_UPDATED=1 (solo eventos legítimos)
+  · manager PATCH fiscal LOCKED: DENIED → sin fila de mutación (solo change_role del PRE es detectable-pre-fix)
+  · clerk self-promote: DENIED → sin CHANGE_ROLE post-fix (0 filas post-fix)
+
+AUDITORÍA DE OPERACIONES LEGÍTIMAS (muestras):
+  · Trail completo del sesión de caja del recert (6 eventos, 1:1 con operaciones):
+    ["CASH_CLOSURE_CREATED", "CASH_CLOSURE_UPDATED", "CASH_CLOSURE_FINALIZED", "CASH_CLOSURE_REOPENED", "CASH_CLOSURE_UPDATED", "CASH_CLOSURE_FINALIZED"]
+  · fiscal close/lock: audit_fiscal_closings_changes con actor real (07-ef2-16c-post.txt)
+  · managed_update_user: user_audit_log USER_UPDATED con old/new values (04-ef2-16a-post.txt)
+  · reopen_cash_shift: CASH_CLOSURE_REOPENED con razón (raws/audit_trail_ef211a_session.json)
+  · distribute legítimo: service_audit_log 'recalculated' (16-ef2-07a-post.txt)
+
+SIN HALLAZGOS de orphan/wrong record_id/wrong store/wrong actor en las operaciones del gate.
+RAW: raws/audit_trail_ef211a_session.json · raws/post_ef211a_full.json

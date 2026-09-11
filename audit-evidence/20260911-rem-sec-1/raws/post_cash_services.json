@@ -1,0 +1,209 @@
+{
+  "run": "RS1POST-MTWBUJTT",
+  "ef211a_post": {
+    "before": {
+      "declared_cash": "1150.00",
+      "status": "cerrado"
+    },
+    "tamper_manager": {
+      "status": 400,
+      "state": {
+        "declared_cash": "1150.00",
+        "status": "cerrado"
+      }
+    },
+    "tamper_clerk": {
+      "status": 400,
+      "state": {
+        "declared_cash": "1150.00",
+        "status": "cerrado"
+      }
+    },
+    "tamper_beta": {
+      "status": 200,
+      "state": {
+        "declared_cash": "1150.00",
+        "status": "cerrado"
+      }
+    },
+    "tamper_anon": {
+      "status": 204,
+      "state": {
+        "declared_cash": "1150.00",
+        "status": "cerrado"
+      }
+    },
+    "tamper_admin_direct": {
+      "status": 400,
+      "state": {
+        "declared_cash": "1150.00",
+        "status": "cerrado"
+      }
+    },
+    "audit_delta_tamper": 0,
+    "open_session_id": "b88ab049-cd55-4e29-aa9d-25c545a4214c",
+    "open_update": {
+      "status": 200,
+      "declared": "700.00"
+    },
+    "open_close": {
+      "status": 200
+    },
+    "reopen": {
+      "status": 400,
+      "state": "cerrado"
+    },
+    "reclose": {
+      "status": 409
+    }
+  },
+  "ef211b_post": {
+    "scenarios": {
+      "A": {
+        "opening": 1000,
+        "sale": 200,
+        "declared": 1150,
+        "expected": 1150,
+        "system": 1150,
+        "diff": 0,
+        "meta": {
+          "v2_close": true,
+          "cash_sales": 150,
+          "difference": 0,
+          "zelle_sales": 0,
+          "cash_payments": 0,
+          "declared_cash": 1150,
+          "transfer_sales": 0,
+          "opening_balance": 1000,
+          "cash_commissions": 0,
+          "declared_vouchers": 0,
+          "system_expected_total": 1150
+        },
+        "z": {
+          "total_sales": "150",
+          "total_cash": "150",
+          "total_payments_suppliers": "0",
+          "total_commissions_paid": "0"
+        },
+        "closure": "e00ea581-4028-4746-bf0c-1bd0e54565d8"
+      },
+      "B": {
+        "opening": 500,
+        "declared": 400,
+        "expected": 400,
+        "system": 400,
+        "diff": 0,
+        "meta": {
+          "v2_close": true,
+          "cash_sales": 0,
+          "difference": 0,
+          "zelle_sales": 0,
+          "cash_payments": 100,
+          "declared_cash": 400,
+          "transfer_sales": 0,
+          "opening_balance": 500,
+          "cash_commissions": 0,
+          "declared_vouchers": 0,
+          "system_expected_total": 400
+        },
+        "closure": "29560cab-f711-4377-ab67-02a511be22dd"
+      },
+      "C": {
+        "opening": 500,
+        "declared": 450,
+        "expected": 450,
+        "system": 450,
+        "diff": 0,
+        "meta": {
+          "v2_close": true,
+          "cash_sales": 0,
+          "difference": 0,
+          "zelle_sales": 0,
+          "cash_payments": 50,
+          "declared_cash": 450,
+          "transfer_sales": 0,
+          "opening_balance": 500,
+          "cash_commissions": 0,
+          "declared_vouchers": 0,
+          "system_expected_total": 450
+        },
+        "closure": "d5782956-fafa-4aa7-8064-d06c3c1b715a"
+      },
+      "D": {
+        "opening": 1000,
+        "declared": 1000,
+        "expected": 1000,
+        "system": 1000,
+        "diff": 0,
+        "meta": {
+          "v2_close": true,
+          "cash_sales": 150,
+          "difference": 0,
+          "zelle_sales": 0,
+          "cash_payments": 150,
+          "declared_cash": 1000,
+          "transfer_sales": 0,
+          "opening_balance": 1000,
+          "cash_commissions": 0,
+          "declared_vouchers": 0,
+          "system_expected_total": 1000
+        },
+        "z": {
+          "total_sales": "150",
+          "total_cash": "150",
+          "total_payments_suppliers": "150",
+          "total_commissions_paid": "0"
+        },
+        "closure": "45ad433b-be25-4719-af2d-84c4c110f622"
+      }
+    },
+    "verdict": {
+      "A": true,
+      "B": true,
+      "C": true,
+      "D": true
+    },
+    "no_double_count": true
+  },
+  "ef207a_post": {
+    "svcA": "ecb0f049-39eb-41df-ac8a-a0526aef75f7",
+    "svcB": "ee41bb34-c2d3-49af-818a-954f3f9c9d94",
+    "auditB_before": 1,
+    "distB_before": 0,
+    "alpha_own": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "distributed_rows": 0
+      }
+    },
+    "alpha_to_beta": {
+      "status": 403,
+      "body": "{\"error\":\"Forbidden\"}"
+    },
+    "beta_to_alpha": {
+      "status": 403,
+      "body": "{\"error\":\"Forbidden\"}"
+    },
+    "outsider_to_alpha": {
+      "status": 403
+    },
+    "clerk_to_alpha": {
+      "status": 403
+    },
+    "anonymous": {
+      "status": 401
+    },
+    "inexistent": {
+      "status": 404
+    },
+    "auditB_after": 1,
+    "distB_after": 0,
+    "auditA_after": 2,
+    "cleanup": {
+      "voidA": 200,
+      "voidB": 200
+    }
+  },
+  "finished_at": "2026-09-11T02:20:19.223Z"
+}

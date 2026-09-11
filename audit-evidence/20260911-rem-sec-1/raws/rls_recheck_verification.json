@@ -1,0 +1,38 @@
+[
+  {
+    "n": "prevent_fiscal_closing_edit COALESCE",
+    "ok": true
+  },
+  {
+    "n": "prevent_fiscal_closing_edit sin old pattern",
+    "ok": true
+  },
+  {
+    "n": "prevent_cash_closure_edit COALESCE",
+    "ok": true
+  },
+  {
+    "n": "close_cash_shift excluye sale",
+    "ok": true
+  },
+  {
+    "n": "close_cash_shift fórmula intacta",
+    "ok": true
+  },
+  {
+    "n": "reopen sin updated_at",
+    "ok": true
+  },
+  {
+    "n": "profiles guard existe",
+    "ok": true
+  },
+  {
+    "n": "profiles guard bloquea role",
+    "ok": true
+  },
+  {
+    "n": "trigger profiles activo",
+    "ok": true
+  }
+]

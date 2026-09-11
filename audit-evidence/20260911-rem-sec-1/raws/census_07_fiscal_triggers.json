@@ -1,0 +1,10 @@
+[
+  {
+    "tgname": "prevent_fiscal_closing_edit",
+    "def": "CREATE TRIGGER prevent_fiscal_closing_edit BEFORE DELETE OR UPDATE ON public.fiscal_closings FOR EACH ROW EXECUTE FUNCTION prevent_fiscal_closing_edit()"
+  },
+  {
+    "tgname": "trg_audit_fiscal_closings",
+    "def": "CREATE TRIGGER trg_audit_fiscal_closings AFTER INSERT OR UPDATE ON public.fiscal_closings FOR EACH ROW EXECUTE FUNCTION audit_fiscal_closings_changes()"
+  }
+]

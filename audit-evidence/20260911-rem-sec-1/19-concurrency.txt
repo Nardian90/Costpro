@@ -1,0 +1,21 @@
+REM-SEC-1 · §38 CONCURRENCIA (mínima, §38)
+==========================================
+C1 FISCAL — manager PATCH locked→open ‖ admin lock (paralelo, Promise.allSettled):
+  ataque al mes LOCKED: HTTP 400 rows=None · mes3 final=locked
+  lock legítimo mes closed: HTTP 200 · mes5 final=locked
+  ⇒ autorización respetada: LOCKED inmutable bajo ataque; lock legítimo procede; sin mutación parcial.
+
+C2 CASH — close ‖ tamper-PATCH (paralelo):
+  close HTTP 200 · PATCH HTTP 200 · final status=cerrado declared=250.00
+  ⇒ invariante respetado (ambas ops sobre pendiente son contractuales; tras cerrar, el trigger niega).
+
+C3 SERVICE — distribute ‖ distribute (manager ‖ clerk, paralelo):
+  d1 HTTP 200 (manager, 200) · d2 HTTP 403 (clerk, 403) · filas=0
+  ⇒ autorización por actor respetada en carrera; sin duplicados (advisory lock interno).
+
+C4 PROFILE — clerk self-promote ‖ admin promote (paralelo):
+  self HTTP 400 (DENIED) · admin HTTP 200 (200) · rol final=clerk
+  ⇒ la vía administrativa gana; la escalada falla; sin corrupción del registro.
+
+RESULTADO: authorization · atomicity · invariants respetados en las 4 carreras.
+RAW: raws/post_matrix_idem_conc.json (concurrency) · raws/post_matrix_fixups.json (fiscal_race)

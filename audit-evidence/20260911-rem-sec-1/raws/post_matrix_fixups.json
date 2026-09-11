@@ -1,0 +1,99 @@
+{
+  "at": "2026-09-11T02:40:30.927Z",
+  "cash_matrix": {
+    "closure": "e256b7ab-25dc-4b03-b267-4a2c5c1b4520",
+    "before": {
+      "declared_cash": "750.00",
+      "status": "cerrado"
+    },
+    "attempts": {
+      "alpha_manager": 400,
+      "alpha_clerk": 400,
+      "alpha_admin_direct": 400,
+      "beta_cross": {
+        "status": 200,
+        "rows": 0
+      },
+      "anonymous": 204
+    },
+    "after": {
+      "declared_cash": "750.00",
+      "status": "cerrado"
+    }
+  },
+  "checks": [
+    {
+      "name": "§33 cash: valor ANTES==DESPUÉS pese a 5 vectores",
+      "pass": true,
+      "detail": "750.00 → 750.00 (cerrado/cerrado)"
+    },
+    {
+      "name": "§33 cash: actores con membership reciben DENY 4xx (trigger)",
+      "pass": true,
+      "detail": "{\"alpha_manager\":400,\"alpha_clerk\":400,\"alpha_admin_direct\":400,\"beta_cross\":{\"status\":200,\"rows\":0},\"anonymous\":204}"
+    },
+    {
+      "name": "§33 cash: cross-store y anonymous = 0 filas mutadas",
+      "pass": true,
+      "detail": "{\"status\":200,\"rows\":0}"
+    },
+    {
+      "name": "§38 fiscal: LOCKED permanece locked bajo ataque paralelo",
+      "pass": true,
+      "detail": "mes3=locked attack=400 rows=null"
+    },
+    {
+      "name": "§38 fiscal: lock legítimo del período closed → locked",
+      "pass": true,
+      "detail": "mes5=locked lockHTTP=200"
+    },
+    {
+      "name": "§38 fiscal: sin mutación parcial ni corrupción de estados",
+      "pass": true,
+      "detail": "final [locked, locked]"
+    }
+  ],
+  "fiscal_race": {
+    "reclose5": 200,
+    "attack": {
+      "status": 400,
+      "rows": null
+    },
+    "lock": {
+      "status": 200
+    },
+    "state3": "locked",
+    "state5": "locked"
+  },
+  "periods_final": [
+    {
+      "period_month": 1,
+      "status": "locked"
+    },
+    {
+      "period_month": 2,
+      "status": "closed"
+    },
+    {
+      "period_month": 3,
+      "status": "locked"
+    },
+    {
+      "period_month": 4,
+      "status": "locked"
+    },
+    {
+      "period_month": 5,
+      "status": "locked"
+    },
+    {
+      "period_month": 8,
+      "status": "locked"
+    },
+    {
+      "period_month": 9,
+      "status": "locked"
+    }
+  ],
+  "finished_at": "2026-09-11T02:40:57.267Z"
+}

@@ -1,0 +1,937 @@
+{
+  "policies": [
+    {
+      "schemaname": "public",
+      "tablename": "audit_logs",
+      "policyname": "Audit logs select",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(( SELECT profiles.role\n   FROM profiles\n  WHERE (profiles.id = ( SELECT auth.uid() AS uid))) = 'admin'::user_role)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "audit_logs",
+      "policyname": "audit_logs_insert_authenticated",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "(user_id = auth.uid())"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "audit_logs",
+      "policyname": "audit_logs_select_own_and_managed",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(is_global_admin() OR ((store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text])))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "cash_closures",
+      "policyname": "Cash closures unified",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "has_store_access(store_id)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "cash_closures",
+      "policyname": "cash_closures_delete_rls",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = cash_closures.store_id))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "cash_closures",
+      "policyname": "cash_closures_insert_rls",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = cash_closures.store_id))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "cash_closures",
+      "policyname": "cash_closures_select_rls",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = cash_closures.store_id))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "cash_closures",
+      "policyname": "cash_closures_tenant_insert_with_check",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "(store_id = ANY (current_user_store_ids()))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "cash_closures",
+      "policyname": "cash_closures_update_rls",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = cash_closures.store_id))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "fiscal_closings",
+      "policyname": "fiscal_closings_insert",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "has_store_access(store_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "fiscal_closings",
+      "policyname": "fiscal_closings_select",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "has_store_access(store_id)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "fiscal_closings",
+      "policyname": "fiscal_closings_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "has_store_access(store_id)",
+      "with_check": "has_store_access(store_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "profiles",
+      "policyname": "profiles_delete_admin",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "is_admin()",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "profiles",
+      "policyname": "profiles_insert_admin",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "is_admin()"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "profiles",
+      "policyname": "profiles_tenant_select",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((id = auth.uid()) OR is_admin_with_access(active_store_id) OR (is_admin() AND (tenant_id = current_user_tenant_id())))\n    ELSE ((id = auth.uid()) OR is_admin() OR (created_by = auth.uid()) OR is_managed_user(id))\nEND",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "profiles",
+      "policyname": "profiles_tenant_update",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((id = auth.uid()) OR (is_admin() AND (tenant_id = current_user_tenant_id())))\n    ELSE ((id = auth.uid()) OR is_admin())\nEND",
+      "with_check": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((id = auth.uid()) OR (is_admin() AND (tenant_id = current_user_tenant_id())))\n    ELSE ((id = auth.uid()) OR is_admin())\nEND"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "received_services",
+      "policyname": "received_services_delete_auth",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "DELETE",
+      "qual": "(has_store_access(store_id) OR (EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "received_services",
+      "policyname": "received_services_insert_auth",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((store_id IN ( SELECT profiles.active_store_id\n   FROM profiles\n  WHERE (profiles.id = auth.uid()))) OR (EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "received_services",
+      "policyname": "received_services_select_authenticated",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(has_store_access(store_id) OR (EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "received_services",
+      "policyname": "received_services_update_auth",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "UPDATE",
+      "qual": "(has_store_access(store_id) OR (EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "service_cost_distributions",
+      "policyname": "scd_delete_deny",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "false",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "service_cost_distributions",
+      "policyname": "scd_insert_authenticated",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "(EXISTS ( SELECT 1\n   FROM received_services rs\n  WHERE ((rs.id = service_cost_distributions.service_id) AND has_store_access(rs.store_id))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "service_cost_distributions",
+      "policyname": "scd_select_authenticated",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM received_services rs\n  WHERE ((rs.id = service_cost_distributions.service_id) AND has_store_access(rs.store_id))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "service_cost_distributions",
+      "policyname": "scd_update_deny",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "false",
+      "with_check": "false"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_store_memberships",
+      "policyname": "memberships_delete_admin",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "DELETE",
+      "qual": "(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text]))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_store_memberships",
+      "policyname": "memberships_insert_admin_manager",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text, 'manager'::text]))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_store_memberships",
+      "policyname": "memberships_select_own_and_managed",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) OR is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text]))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "user_store_memberships",
+      "policyname": "memberships_update_admin",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "UPDATE",
+      "qual": "(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text]))",
+      "with_check": "(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text]))"
+    }
+  ],
+  "triggers": [
+    {
+      "tablename": "cash_closures",
+      "tgname": "prevent_cash_closure_edit",
+      "def": "CREATE TRIGGER prevent_cash_closure_edit BEFORE DELETE OR UPDATE ON public.cash_closures FOR EACH ROW EXECUTE FUNCTION prevent_cash_closure_edit()"
+    },
+    {
+      "tablename": "cash_closures",
+      "tgname": "trg_audit_cash_closures",
+      "def": "CREATE TRIGGER trg_audit_cash_closures AFTER INSERT OR DELETE OR UPDATE ON public.cash_closures FOR EACH ROW EXECUTE FUNCTION audit_cash_closures_changes()"
+    },
+    {
+      "tablename": "fiscal_closings",
+      "tgname": "prevent_fiscal_closing_edit",
+      "def": "CREATE TRIGGER prevent_fiscal_closing_edit BEFORE DELETE OR UPDATE ON public.fiscal_closings FOR EACH ROW EXECUTE FUNCTION prevent_fiscal_closing_edit()"
+    },
+    {
+      "tablename": "fiscal_closings",
+      "tgname": "trg_audit_fiscal_closings",
+      "def": "CREATE TRIGGER trg_audit_fiscal_closings AFTER INSERT OR UPDATE ON public.fiscal_closings FOR EACH ROW EXECUTE FUNCTION audit_fiscal_closings_changes()"
+    },
+    {
+      "tablename": "profiles",
+      "tgname": "prevent_hard_delete_profile",
+      "def": "CREATE TRIGGER prevent_hard_delete_profile BEFORE DELETE ON public.profiles FOR EACH ROW EXECUTE FUNCTION prevent_hard_delete_profile()"
+    },
+    {
+      "tablename": "profiles",
+      "tgname": "trg_prevent_self_privilege_escalation",
+      "def": "CREATE TRIGGER trg_prevent_self_privilege_escalation BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION prevent_self_privilege_escalation()"
+    },
+    {
+      "tablename": "profiles",
+      "tgname": "trg_sync_profile_role",
+      "def": "CREATE TRIGGER trg_sync_profile_role BEFORE INSERT OR UPDATE OF role_id ON public.profiles FOR EACH ROW EXECUTE FUNCTION fn_sync_profile_role()"
+    },
+    {
+      "tablename": "profiles",
+      "tgname": "trigger_audit_profile_changes",
+      "def": "CREATE TRIGGER trigger_audit_profile_changes AFTER INSERT OR DELETE OR UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION audit_profile_changes()"
+    },
+    {
+      "tablename": "profiles",
+      "tgname": "trigger_enforce_encargado_user_limit",
+      "def": "CREATE TRIGGER trigger_enforce_encargado_user_limit BEFORE INSERT ON public.profiles FOR EACH ROW EXECUTE FUNCTION enforce_encargado_user_limit()"
+    },
+    {
+      "tablename": "profiles",
+      "tgname": "trigger_validate_active_store",
+      "def": "CREATE TRIGGER trigger_validate_active_store BEFORE INSERT OR UPDATE OF active_store_id, role ON public.profiles FOR EACH ROW EXECUTE FUNCTION validate_active_store()"
+    },
+    {
+      "tablename": "received_services",
+      "tgname": "trg_prevent_received_service_edit",
+      "def": "CREATE TRIGGER trg_prevent_received_service_edit BEFORE UPDATE ON public.received_services FOR EACH ROW EXECUTE FUNCTION prevent_received_service_edit()"
+    },
+    {
+      "tablename": "received_services",
+      "tgname": "trg_set_due_date_service",
+      "def": "CREATE TRIGGER trg_set_due_date_service BEFORE INSERT ON public.received_services FOR EACH ROW EXECUTE FUNCTION set_default_due_date_service()"
+    }
+  ],
+  "functions": [
+    {
+      "proname": "close_cash_shift",
+      "args": "p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid",
+      "secdef": true,
+      "proconfig": [
+        "search_path=pg_catalog, public"
+      ],
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "proname": "close_fiscal_period",
+      "args": "p_store_id uuid, p_year integer, p_month integer, p_user_id uuid",
+      "secdef": true,
+      "proconfig": [
+        "search_path=public, pg_temp"
+      ],
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "proname": "distribute_service_cost_v2",
+      "args": "p_service_id uuid, p_user_id uuid",
+      "secdef": true,
+      "proconfig": [
+        "search_path=public, extensions"
+      ],
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "proname": "lock_fiscal_period",
+      "args": "p_store_id uuid, p_year integer, p_month integer, p_user_id uuid",
+      "secdef": true,
+      "proconfig": [
+        "search_path=public"
+      ],
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "proname": "managed_update_user",
+      "args": "p_user_id uuid, p_full_name text, p_role user_role, p_role_id uuid, p_is_active boolean, p_max_stores_limit integer, p_max_users_limit integer, p_plan plan_t, p_caller_id uuid",
+      "secdef": true,
+      "proconfig": [
+        "search_path=public, pg_temp"
+      ],
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "proname": "prevent_cash_closure_edit",
+      "args": "",
+      "secdef": false,
+      "proconfig": null,
+      "proacl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "proname": "prevent_fiscal_closing_edit",
+      "args": "",
+      "secdef": false,
+      "proconfig": null,
+      "proacl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "proname": "prevent_self_privilege_escalation",
+      "args": "",
+      "secdef": false,
+      "proconfig": null,
+      "proacl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "proname": "reopen_cash_shift",
+      "args": "p_closure_id uuid, p_reason text, p_user_id uuid",
+      "secdef": true,
+      "proconfig": [
+        "search_path=public, pg_temp"
+      ],
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}"
+    }
+  ],
+  "func_sources": [
+    {
+      "proname": "close_cash_shift",
+      "prosrc": "\n\nDECLARE\n  v_closure RECORD;\n  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;\n  v_cash_sales numeric := 0;\n  v_transfer_sales numeric := 0;\n  v_zelle_sales numeric := 0;\n  v_cash_payments numeric := 0;\n  v_cash_commissions numeric := 0;\n  v_system_cash numeric := 0;\n  v_system_expected_total numeric := 0;\n  v_difference numeric := 0;\n  v_tax_total numeric := 0;\n  v_devolutions_total numeric := 0;\n  v_z_number text;\n  v_z_id uuid;\n  v_tx_count int := 0;\nBEGIN\n  SELECT * INTO v_closure FROM public.cash_closures WHERE id = p_closure_id FOR UPDATE;\n  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_CLOSURE_NOT_FOUND'; END IF;\n  IF v_closure.status <> 'pendiente' THEN RAISE EXCEPTION 'ERR_CLOSURE_NOT_PENDING: status=%', v_closure.status; END IF;\n  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_closure.store_id) THEN RAISE EXCEPTION 'ERR_UNAUTHORIZED'; END IF;\n  PERFORM pg_advisory_xact_lock(hashtext(v_closure.store_id::text));\n\n  SELECT COALESCE(SUM(cash_amount), 0) INTO v_cash_sales FROM public.transactions WHERE store_id = v_closure.store_id AND status = 'completed' AND created_at > v_closure.created_at AND created_at <= NOW();\n  SELECT COALESCE(SUM(transfer_amount), 0) INTO v_transfer_sales FROM public.transactions WHERE store_id = v_closure.store_id AND status = 'completed' AND created_at > v_closure.created_at AND created_at <= NOW();\n  SELECT COALESCE(SUM(zelle_amount), 0) INTO v_zelle_sales FROM public.transactions WHERE store_id = v_closure.store_id AND status = 'completed' AND created_at > v_closure.created_at AND created_at <= NOW();\n  SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_payments FROM public.payment_transactions WHERE store_id = v_closure.store_id AND payment_method = 'cash' AND (ref_type IS NULL OR ref_type <> 'sale') AND created_at > v_closure.created_at AND created_at <= NOW();\n  SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_commissions FROM public.commission_payments WHERE store_id = v_closure.store_id AND status = 'paid' AND paid_at > v_closure.created_at AND paid_at <= NOW();\n  SELECT COUNT(*) INTO v_tx_count FROM public.transactions WHERE store_id = v_closure.store_id AND status = 'completed' AND created_at > v_closure.created_at AND created_at <= NOW();\n\n  v_system_cash := COALESCE(v_closure.opening_balance, 0) + v_cash_sales - v_cash_payments - v_cash_commissions;\n  v_system_expected_total := v_system_cash + v_transfer_sales + v_zelle_sales;\n  v_difference := (p_declared_cash + p_declared_vouchers) - v_system_expected_total;\n\n  UPDATE public.cash_closures SET\n    status = 'cerrado', closed_at = NOW(),\n    declared_cash = p_declared_cash, declared_vouchers = p_declared_vouchers,\n    declared_total = p_declared_cash + p_declared_vouchers,\n    system_expected_total = v_system_expected_total, difference = v_difference,\n    notes = p_notes\n  WHERE id = p_closure_id;\n\n  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)\n  VALUES ('CASH_CLOSURE_FINALIZED', 'cash_closures', p_closure_id, v_closure.store_id, v_caller_uid,\n    jsonb_build_object('declared_cash', p_declared_cash, 'declared_vouchers', p_declared_vouchers,\n      'system_expected_total', v_system_expected_total, 'difference', v_difference,\n      'opening_balance', COALESCE(v_closure.opening_balance, 0),\n      'cash_sales', v_cash_sales, 'transfer_sales', v_transfer_sales, 'zelle_sales', v_zelle_sales,\n      'cash_payments', v_cash_payments, 'cash_commissions', v_cash_commissions, 'v2_close', true));\n\n  BEGIN\n    v_z_number := public.next_document_number(v_closure.store_id, 'z_report', v_caller_uid);\n\n    SELECT COALESCE(SUM(tax_amount), 0) INTO v_tax_total\n      FROM public.transactions\n      WHERE store_id = v_closure.store_id AND status = 'completed'\n        AND created_at > v_closure.created_at AND created_at <= NOW();\n\n    SELECT COALESCE(SUM(total_amount), 0) INTO v_devolutions_total\n      FROM public.devolutions\n      WHERE store_id = v_closure.store_id AND status = 'completed'\n        AND created_at > v_closure.created_at AND created_at <= NOW();\n\n    INSERT INTO public.z_reports (\n      cash_closure_id, store_id, z_report_number, report_date,\n      total_sales, total_cash, total_transfer, total_zelle, total_tax,\n      total_devolutions, total_commissions_paid, total_payments_suppliers,\n      opening_balance, declared_cash, difference, metadata, generated_by\n    ) VALUES (\n      p_closure_id, v_closure.store_id, v_z_number, CURRENT_DATE,\n      v_cash_sales + v_transfer_sales + v_zelle_sales,\n      v_cash_sales, v_transfer_sales, v_zelle_sales, v_tax_total,\n      v_devolutions_total, v_cash_commissions, v_cash_payments,\n      COALESCE(v_closure.opening_balance, 0), p_declared_cash, v_difference,\n      jsonb_build_object('transaction_count', v_tx_count, 'cash_closure_id', p_closure_id),\n      v_caller_uid\n    )\n    RETURNING id INTO v_z_id;\n\n    INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)\n    VALUES ('Z_REPORT_GENERATED', 'z_reports', v_z_id, v_closure.store_id, v_caller_uid,\n      jsonb_build_object('z_report_number', v_z_number, 'cash_closure_id', p_closure_id,\n        'total_sales', v_cash_sales + v_transfer_sales + v_zelle_sales, 'total_tax', v_tax_total));\n\n  EXCEPTION WHEN OTHERS THEN\n    RAISE EXCEPTION 'ERR_Z_REPORT_GENERATION_FAILED: %', SQLERRM;\n  END;\n\n  RETURN jsonb_build_object(\n    'status', 'success', 'closure_id', p_closure_id,\n    'system_expected_total', v_system_expected_total, 'difference', v_difference,\n    'z_report_number', v_z_number, 'z_report_id', v_z_id\n  );\nEND;\n\n"
+    },
+    {
+      "proname": "prevent_cash_closure_edit",
+      "prosrc": "\nBEGIN\n  IF OLD.status = 'cerrado' AND COALESCE(current_setting('app.bypass_closure_lock', true), 'false') <> 'true' THEN\n    RAISE EXCEPTION 'ERR_CASH_CLOSURE_LOCKED: Cannot modify closed cash closure. Use reopen_cash_shift RPC.';\n  END IF;\n  RETURN NEW;\nEND;\n"
+    },
+    {
+      "proname": "prevent_fiscal_closing_edit",
+      "prosrc": "\nBEGIN\n  IF OLD.status = 'locked' AND COALESCE(current_setting('app.bypass_fiscal_lock', true), 'false') <> 'true' THEN\n    RAISE EXCEPTION 'ERR_FISCAL_CLOSING_LOCKED: Cannot modify locked fiscal closing.';\n  END IF;\n  RETURN NEW;\nEND;\n"
+    },
+    {
+      "proname": "prevent_self_privilege_escalation",
+      "prosrc": "\nBEGIN\n  IF NEW.id = auth.uid() THEN\n    IF NEW.role IS DISTINCT FROM OLD.role\n       OR NEW.roles IS DISTINCT FROM OLD.roles\n       OR NEW.role_id IS DISTINCT FROM OLD.role_id\n       OR NEW.is_active IS DISTINCT FROM OLD.is_active\n       OR NEW.store_id IS DISTINCT FROM OLD.store_id\n       OR NEW.tenant_id IS DISTINCT FROM OLD.tenant_id\n       OR NEW.max_stores_limit IS DISTINCT FROM OLD.max_stores_limit\n       OR NEW.max_users_limit IS DISTINCT FROM OLD.max_users_limit\n       OR NEW.created_by IS DISTINCT FROM OLD.created_by THEN\n      RAISE EXCEPTION 'ERR_SELF_PRIVILEGED_FIELD: role, roles, role_id, is_active, store ownership, tenant y limites solo pueden modificarse por la via administrativa autorizada (managed_update_user).';\n    END IF;\n  END IF;\n  RETURN NEW;\nEND;\n"
+    },
+    {
+      "proname": "reopen_cash_shift",
+      "prosrc": "\nDECLARE\n  v_closure RECORD;\n  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;\nBEGIN\n  IF p_reason IS NULL OR length(trim(p_reason)) < 3 THEN\n    RAISE EXCEPTION 'ERR_REASON_REQUIRED: reason must be at least 3 characters';\n  END IF;\n\n  SELECT * INTO v_closure FROM public.cash_closures WHERE id = p_closure_id FOR UPDATE;\n  IF NOT FOUND THEN\n    RAISE EXCEPTION 'ERR_CLOSURE_NOT_FOUND';\n  END IF;\n\n  IF v_closure.status <> 'cerrado' THEN\n    RAISE EXCEPTION 'ERR_CLOSURE_NOT_CLOSED: status=%', v_closure.status;\n  END IF;\n\n  -- Auth: solo admin/manager del store\n  IF v_caller_uid IS NULL OR NOT public.has_store_role_as(v_caller_uid, v_closure.store_id, ARRAY['admin', 'manager']) THEN\n    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Only admins/managers can reopen cash closures';\n  END IF;\n\n  -- Bypass del trigger de inmutabilidad\n  PERFORM set_config('app.bypass_closure_lock', 'true', false);\n\n  UPDATE public.cash_closures SET\n    status = 'pendiente',\n    notes = COALESCE(notes, '') || E'\\n[REOPENED ' || NOW()::text || E'] ' || p_reason\n  WHERE id = p_closure_id;\n\n  PERFORM set_config('app.bypass_closure_lock', 'false', false);\n\n  -- Audit log\n  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)\n  VALUES ('CASH_CLOSURE_REOPENED', 'cash_closures', p_closure_id, v_closure.store_id, v_caller_uid,\n    jsonb_build_object('reason', p_reason, 'old_status', 'cerrado', 'reopened_at', NOW()));\n\n  RETURN jsonb_build_object('status', 'success', 'closure_id', p_closure_id);\nEND;\n"
+    }
+  ],
+  "table_grants": [
+    {
+      "grantee": "anon",
+      "table_name": "cash_closures",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "cash_closures",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "cash_closures",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "cash_closures",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "cash_closures",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "cash_closures",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "cash_closures",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "cash_closures",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "cash_closures",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "cash_closures",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "cash_closures",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "cash_closures",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "cash_closures",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "cash_closures",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "cash_closures",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "cash_closures",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "cash_closures",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "cash_closures",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "cash_closures",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "cash_closures",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "cash_closures",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "fiscal_closings",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "fiscal_closings",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "fiscal_closings",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "fiscal_closings",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "fiscal_closings",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "fiscal_closings",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "fiscal_closings",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "fiscal_closings",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "fiscal_closings",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "fiscal_closings",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "fiscal_closings",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "fiscal_closings",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "fiscal_closings",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "fiscal_closings",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "fiscal_closings",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "fiscal_closings",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "fiscal_closings",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "fiscal_closings",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "fiscal_closings",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "fiscal_closings",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "fiscal_closings",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "profiles",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "profiles",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "profiles",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "profiles",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "profiles",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "profiles",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "profiles",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "profiles",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "profiles",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "profiles",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "profiles",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "profiles",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "profiles",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "profiles",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "profiles",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "profiles",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "profiles",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "profiles",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "profiles",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "profiles",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "profiles",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "received_services",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "received_services",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "received_services",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "received_services",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "received_services",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "received_services",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "received_services",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "received_services",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "received_services",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "received_services",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "received_services",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "received_services",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "received_services",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "received_services",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "received_services",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "received_services",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "received_services",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "received_services",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "received_services",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "received_services",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "received_services",
+      "privilege_type": "UPDATE"
+    }
+  ],
+  "function_grants": [
+    {
+      "proname": "close_cash_shift",
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+      "rolname": "authenticated"
+    },
+    {
+      "proname": "close_fiscal_period",
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+      "rolname": "authenticated"
+    },
+    {
+      "proname": "distribute_service_cost_v2",
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+      "rolname": "authenticated"
+    },
+    {
+      "proname": "lock_fiscal_period",
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+      "rolname": "authenticated"
+    },
+    {
+      "proname": "managed_update_user",
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+      "rolname": "authenticated"
+    },
+    {
+      "proname": "reopen_cash_shift",
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+      "rolname": "authenticated"
+    }
+  ],
+  "rls_enabled": [
+    {
+      "relname": "audit_logs",
+      "relrowsecurity": true,
+      "relforcerowsecurity": false
+    },
+    {
+      "relname": "cash_closures",
+      "relrowsecurity": true,
+      "relforcerowsecurity": false
+    },
+    {
+      "relname": "fiscal_closings",
+      "relrowsecurity": true,
+      "relforcerowsecurity": false
+    },
+    {
+      "relname": "profiles",
+      "relrowsecurity": true,
+      "relforcerowsecurity": false
+    },
+    {
+      "relname": "received_services",
+      "relrowsecurity": true,
+      "relforcerowsecurity": false
+    },
+    {
+      "relname": "service_cost_distributions",
+      "relrowsecurity": true,
+      "relforcerowsecurity": false
+    }
+  ],
+  "guc_now": [
+    {
+      "fiscal": null,
+      "cash": null
+    }
+  ]
+}

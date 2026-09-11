@@ -1,0 +1,28 @@
+REM-SEC-1 · §34 RLS FORENSIC RECHECK (post-fix)
+===============================================
+Inspección completa post-fix de pg_policies / pg_trigger / pg_proc / grants para las
+tablas afectadas (raws/rls_recheck_postfix.json · verificación raws/rls_recheck_verification.json):
+
+VERIFICACIONES DE CONTENIDO (9/9 OK):
+  OK prevent_fiscal_closing_edit usa COALESCE(...,'false') <> 'true'   (patrón viejo ausente)
+  OK prevent_cash_closure_edit usa COALESCE(...,'false') <> 'true'
+  OK close_cash_shift excluye (ref_type IS NULL OR ref_type <> 'sale')
+  OK close_cash_shift mantiene fórmula canónica v_system_cash (sin fórmula paralela)
+  OK reopen_cash_shift sin updated_at (sub-fix administrativo)
+  OK prevent_self_privilege_escalation existe y bloquea NEW.role IS DISTINCT FROM OLD.role
+  OK trg_prevent_self_privilege_escalation BEFORE UPDATE activo en profiles
+
+POSTURA POR ROL (raws/rls_recheck_postfix.json):
+  · RLS habilitado (relrowsecurity) en profiles/fiscal_closings/cash_closures/received_services/
+    service_cost_distributions/audit_logs.
+  · Políticas UPDATE de fiscal_closings y cash_closures basadas en membresía de store
+    (has_store_access / user_store_memberships activa) — el bloqueo duro ahora lo pone el trigger.
+  · profiles: políticas select/insert/update/delete — la rama self-update ahora está
+    restringida por trigger a nivel DB (la UI deja de ser un control).
+  · EXECUTE de RPCs de negocio (close_fiscal_period, lock_fiscal_period,
+    distribute_service_cost_v2) NO concedido a authenticated vía directa
+    (HTTP 403 'permission denied for function' demostrado) ⇒ la única vía es la API
+    autorizada (§35).
+  · anon: sin UPDATE efectivo (0 filas); sin EXECUTE útil.
+  · service_role: операций solo vía API con autorización previa (§35).
+RAW: raws/rls_recheck_postfix.json · raws/rls_recheck_verification.json

@@ -1,0 +1,24 @@
+REM-SEC-1 · EF2-16a (P0) — FIX APLICADO (§13, §14)
+==================================================
+Mecanismo: barrera canónica a nivel DB (patrón del codebase: triggers como boundary).
+  Función: public.prevent_self_privilege_escalation()  (BEFORE UPDATE ON profiles)
+  Trigger: trg_prevent_self_privilege_escalation
+Comportamiento:
+  · Si NEW.id = auth.uid() (self-update) y cambia CUALQUIER columna sensible
+    (role, roles, role_id, is_active, store_id, tenant_id, max_stores_limit,
+    max_users_limit, created_by) → RAISE EXCEPTION 'ERR_SELF_PRIVILEGED_FIELD'.
+  · Valores sin cambio pasan (IS DISTINCT FROM) — reenvíos de formulario no rompen.
+VÍAS LEGÍTIMAS PRESERVADAS:
+  · managed_update_user (RPC SECURITY DEFINER vía PATCH /api/users/[id] con
+    withRole('admin')): corre bajo service_role sin sub en JWT ⇒ auth.uid()=NULL ⇒
+    NEW.id <> auth.uid() ⇒ NO bloqueado. Sin impersonación (verificado: única función
+    que setea jwt.claims y toca profiles es lock_fiscal_period, que NO actualiza profiles).
+  · Admin actualizando a OTRO usuario ⇒ NEW.id <> auth.uid() ⇒ NO bloqueado.
+CAMPOS SELF-SERVICE PRESERVADOS (decisión documentada):
+  full_name, logo_url, ai_provider, ai_api_key, email y plan (SettingsView.handleChangePlan
+  es feature self-service existente; plan no afecta autorización: is_admin()/roles/
+  memberships son independientes de plan) y active_store_id (validado por
+  trigger_validate_active_store + membresía).
+  · Nunca se dependió de la UI: la barrera vive en DB (§13).
+MIGRACIÓN: supabase/migrations/20260911000000_rem_sec1_security_boundaries.sql
+Aplicada a la DB vía Management API; fuentes en DB verificadas == migración (§34).

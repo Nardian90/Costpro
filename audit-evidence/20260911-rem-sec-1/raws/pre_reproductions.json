@@ -1,0 +1,333 @@
+{
+  "run": "RS1-MTWB17NT",
+  "started_at": "2026-09-11T01:55:47.849Z",
+  "ef216a": {
+    "role_clerk_before": "clerk",
+    "role_manager_before": "manager",
+    "clerk_patch": {
+      "status": 200,
+      "body": [
+        {
+          "id": "a063a1db-f8e4-4a5f-a898-f643548c0b3b",
+          "role": "admin"
+        }
+      ]
+    },
+    "role_clerk_after": "admin",
+    "is_admin_after": true,
+    "clerk_audit_change_role": [
+      {
+        "action": "CHANGE_ROLE",
+        "old_role": "clerk",
+        "new_role": "admin"
+      }
+    ],
+    "audit_delta": 1,
+    "manager_patch_status": 200,
+    "role_manager_after": "admin",
+    "variants_status": {
+      "roles_array_admin": {
+        "status": 200,
+        "mutated": true,
+        "reverted": true
+      },
+      "store_id_beta": {
+        "status": 200,
+        "mutated": true,
+        "reverted": true
+      },
+      "tenant_id_null": {
+        "status": 200,
+        "mutated": false
+      },
+      "is_active_false": {
+        "status": 200,
+        "mutated": true,
+        "reverted": true
+      },
+      "max_stores_limit_999": {
+        "status": 200,
+        "mutated": true,
+        "reverted": true
+      },
+      "max_users_limit_999": {
+        "status": 200,
+        "mutated": true,
+        "reverted": true
+      },
+      "role_id_arbitrary": {
+        "status": 409,
+        "mutated": false
+      },
+      "full_name_self": {
+        "status": 200,
+        "mutated": false
+      }
+    },
+    "clerk_cols_after": {
+      "role": "clerk",
+      "roles": "{}",
+      "store_id": null,
+      "tenant_id": null,
+      "is_active": true,
+      "max_stores_limit": 0,
+      "max_users_limit": 0,
+      "role_id": null,
+      "full_name": "E2E2 Clerk RS1-MTWB17NT"
+    },
+    "clerk_updates_manager": {
+      "status": 200,
+      "manager_role_now": "manager"
+    }
+  },
+  "ef216c": {
+    "existing_periods": [
+      {
+        "m": 1,
+        "status": "locked"
+      },
+      {
+        "m": 2,
+        "status": "closed"
+      },
+      {
+        "m": 8,
+        "status": "locked"
+      },
+      {
+        "m": 9,
+        "status": "locked"
+      }
+    ],
+    "close_rpc": {
+      "status": 200,
+      "body": {
+        "status": "success",
+        "closing_id": "ef7f1a8c-57f6-485e-a5e2-17024310d94b",
+        "total_sales": 0,
+        "total_purchases": 0,
+        "total_commissions": 0,
+        "total_devolutions": 0
+      }
+    },
+    "lock_rpc": {
+      "status": 200,
+      "body": {
+        "status": "success",
+        "message": "Periodo bloqueado"
+      }
+    },
+    "before": {
+      "id": "ef7f1a8c-57f6-485e-a5e2-17024310d94b",
+      "status": "locked",
+      "locked_by": "7613f105-7b0d-4f4c-8792-b45c1e35fd4e"
+    },
+    "attack": {
+      "status": 200,
+      "body": [
+        {
+          "id": "ef7f1a8c-57f6-485e-a5e2-17024310d94b",
+          "status": "open"
+        }
+      ]
+    },
+    "after": {
+      "id": "ef7f1a8c-57f6-485e-a5e2-17024310d94b",
+      "status": "open",
+      "locked_by": "7613f105-7b0d-4f4c-8792-b45c1e35fd4e"
+    },
+    "audit_delta": 1,
+    "audit_rows": [
+      {
+        "action": "FISCAL_CLOSING_UPDATED",
+        "user_id": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+        "old_s": null,
+        "new_s": null
+      },
+      {
+        "action": "FISCAL_CLOSING_UPDATED",
+        "user_id": "7613f105-7b0d-4f4c-8792-b45c1e35fd4e",
+        "old_s": null,
+        "new_s": null
+      }
+    ],
+    "guc_check": {
+      "guc_null": true,
+      "val": "NULL",
+      "null_semantics": true
+    },
+    "after_revert": {
+      "id": "ef7f1a8c-57f6-485e-a5e2-17024310d94b",
+      "status": "locked",
+      "locked_by": "7613f105-7b0d-4f4c-8792-b45c1e35fd4e"
+    }
+  },
+  "ef211": {
+    "open": {
+      "status": 201
+    },
+    "closure_id": "1e365426-a34b-4ead-8d40-0712d64ed5ed",
+    "sale": {
+      "status": 200,
+      "id": null
+    },
+    "paytx": [
+      {
+        "ref_type": "sale",
+        "payment_method": "cash",
+        "amount_cup": "150",
+        "transaction_id": "6216589c-ffc5-47b5-88bc-6d49df30307f"
+      }
+    ],
+    "close": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "status": "success",
+        "closure_id": "1e365426-a34b-4ead-8d40-0712d64ed5ed",
+        "difference": 150,
+        "z_report_id": "2196b0e9-9f7f-41a6-a485-641634b2fb2f",
+        "z_report_number": "ZR-000005-2026",
+        "system_expected_total": 1000
+      }
+    },
+    "closure_after_close": {
+      "status": "cerrado",
+      "system_expected_total": "1000",
+      "difference": "150",
+      "declared_cash": "1150.00"
+    },
+    "close_metadata": {
+      "v2_close": true,
+      "cash_sales": 150,
+      "difference": 150,
+      "zelle_sales": 0,
+      "cash_payments": 150,
+      "declared_cash": 1150,
+      "transfer_sales": 0,
+      "opening_balance": 1000,
+      "cash_commissions": 0,
+      "declared_vouchers": 0,
+      "system_expected_total": 1000
+    },
+    "tamper": {
+      "status": 200,
+      "rows": 1
+    },
+    "declared_after_tamper": {
+      "declared_cash": "1.00",
+      "status": "cerrado"
+    },
+    "tamper_audit": {
+      "action": "CASH_CLOSURE_UPDATED",
+      "old_d": null,
+      "new_d": null
+    },
+    "guc_check": {
+      "guc_null": true
+    }
+  },
+  "ef207a": {
+    "svcA": {
+      "status": 201,
+      "id": "602cda87-e353-464b-a508-b105917ebbc4",
+      "body": {
+        "data": {
+          "id": "602cda87-e353-464b-a508-b105917ebbc4",
+          "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+          "service_number": "SRV-0002",
+          "service_date": "2026-09-11",
+          "service_type_id": null,
+          "service_type_name": "Reparación",
+          "supplier": "REM-SEC-1 RS1-MTWB17NT",
+          "reference_doc": null,
+          "currency": "CUP",
+          "exchange_rate": 1,
+          "total_amount": 200,
+          "observations": null,
+          "status": "active",
+          "distribution_method": "quantity",
+          "created_by": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+          "created_at": "2026-09-11T01:57:35.933663+00:00",
+          "updated_at": "2026-09-11T01:57:35.933663+00:00",
+          "payment_status": "unpaid",
+          "payment_method": null,
+          "paid_amount": 0,
+          "due_date": "2026-10-11",
+          "paid_at": null,
+          "payment_terms_days": 30
+        }
+      }
+    },
+    "svcB": {
+      "status": 201,
+      "id": "c712dd8a-4cd0-44da-9980-5cfcdc32ca6d",
+      "body": {
+        "data": {
+          "id": "c712dd8a-4cd0-44da-9980-5cfcdc32ca6d",
+          "store_id": "60896157-6b0a-439c-833f-3d55d64456ba",
+          "service_number": "SRV-0002",
+          "service_date": "2026-09-11",
+          "service_type_id": null,
+          "service_type_name": "Reparación",
+          "supplier": "REM-SEC-1 RS1-MTWB17NT",
+          "reference_doc": null,
+          "currency": "CUP",
+          "exchange_rate": 1,
+          "total_amount": 200,
+          "observations": null,
+          "status": "active",
+          "distribution_method": "quantity",
+          "created_by": "c37cd9f7-cfe4-46c2-bad3-a48c721f2c29",
+          "created_at": "2026-09-11T01:57:37.840702+00:00",
+          "updated_at": "2026-09-11T01:57:37.840702+00:00",
+          "payment_status": "unpaid",
+          "payment_method": null,
+          "paid_amount": 0,
+          "due_date": "2026-10-11",
+          "paid_at": null,
+          "payment_terms_days": 30
+        }
+      }
+    },
+    "auditB_before": [
+      {
+        "action": "created",
+        "user_id": "c37cd9f7-cfe4-46c2-bad3-a48c721f2c29",
+        "created_at": "2026-09-11 01:57:38.090008+00"
+      }
+    ],
+    "attack": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "distributed_rows": 0
+      }
+    },
+    "auditB_after": [
+      {
+        "action": "created",
+        "user_id": "c37cd9f7-cfe4-46c2-bad3-a48c721f2c29",
+        "created_at": "2026-09-11 01:57:38.090008+00"
+      },
+      {
+        "action": "recalculated",
+        "user_id": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+        "created_at": "2026-09-11 01:57:41.786181+00"
+      }
+    ],
+    "distributions_after": 0,
+    "own_distribute": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "distributed_rows": 0
+      }
+    },
+    "cleanup": {
+      "voidA": 200,
+      "voidB": 200
+    }
+  },
+  "finished_at": "2026-09-11T01:57:51.485Z"
+}

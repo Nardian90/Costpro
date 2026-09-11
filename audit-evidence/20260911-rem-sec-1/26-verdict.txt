@@ -1,0 +1,14 @@
+REM-SEC-1 · VEREDICTO FINAL (§51, §54)
+======================================
+CRITERIO DE CERTIFICACIÓN (§50) — CUMPLIDO EN LOS CINCO:
+  P0 EF2-16a  FIXED · REPRODUCED BEFORE · DENIED AFTER · ADMIN PATH PRESERVED
+  P0 EF2-16c  FIXED · REPRODUCED BEFORE · LOCKED IMMUTABLE AFTER · LEGITIMATE CLOSE/LOCK PRESERVED
+  P1 EF2-11a  FIXED · CLOSED CASH IMMUTABLE · OPEN CASH FUNCTIONAL (vía admin reopen funcional)
+  P1 EF2-11b  FIXED · NO DOUBLE COUNT · ACCOUNTING RECONCILIATION PASS (A/B/C/D)
+  P1 EF2-07a  FIXED · ALPHA→ALPHA PASS · ALPHA→BETA DENY · BETA→ALPHA DENY
+
+SEGURIDAD: límites en DB (trigger/RLS/RPC), no en UI ni en GUC opcionales; service-role
+siempre precedido de autorización server-side; 0 escaladas, 0 cross-store, 0 IDOR, 0 bypass anónimo.
+CONTABILIDAD: caja reconciliada (A/B/C/D), fiscal inmutable, inventario/WAC coherentes, auditoría 1:1.
+REGRESIÓN: Vitest/TSC/ESLint/Fiscal en paridad EXACTA; contract-test production = preexistente (documentado).
+ZERO-TOUCH: PRE == POST bit a bit (48 tablas, 2 tiendas productivas).

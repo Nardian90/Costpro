@@ -1,0 +1,42 @@
+[
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "profiles_delete_admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "is_admin()",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "profiles_insert_admin",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "is_admin()"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "profiles_tenant_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((id = auth.uid()) OR is_admin_with_access(active_store_id) OR (is_admin() AND (tenant_id = current_user_tenant_id())))\n    ELSE ((id = auth.uid()) OR is_admin() OR (created_by = auth.uid()) OR is_managed_user(id))\nEND",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "profiles",
+    "policyname": "profiles_tenant_update",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((id = auth.uid()) OR (is_admin() AND (tenant_id = current_user_tenant_id())))\n    ELSE ((id = auth.uid()) OR is_admin())\nEND",
+    "with_check": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((id = auth.uid()) OR (is_admin() AND (tenant_id = current_user_tenant_id())))\n    ELSE ((id = auth.uid()) OR is_admin())\nEND"
+  }
+]

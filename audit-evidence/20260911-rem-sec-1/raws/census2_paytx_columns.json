@@ -1,0 +1,74 @@
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "store_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "ref_type",
+    "data_type": "text"
+  },
+  {
+    "column_name": "ref_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "amount",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "payment_method",
+    "data_type": "text"
+  },
+  {
+    "column_name": "currency",
+    "data_type": "text"
+  },
+  {
+    "column_name": "exchange_rate",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "amount_cup",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "payment_date",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "reference",
+    "data_type": "text"
+  },
+  {
+    "column_name": "notes",
+    "data_type": "text"
+  },
+  {
+    "column_name": "paid_by",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "column_name": "idempotency_key",
+    "data_type": "text"
+  },
+  {
+    "column_name": "transaction_id",
+    "data_type": "uuid"
+  },
+  {
+    "column_name": "direction",
+    "data_type": "text"
+  }
+]

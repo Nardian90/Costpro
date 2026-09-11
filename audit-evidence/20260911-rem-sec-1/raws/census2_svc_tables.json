@@ -1,0 +1,17 @@
+[
+  {
+    "table_name": "received_services"
+  },
+  {
+    "table_name": "service_audit_log"
+  },
+  {
+    "table_name": "service_cost_distributions"
+  },
+  {
+    "table_name": "service_reception_links"
+  },
+  {
+    "table_name": "service_types"
+  }
+]

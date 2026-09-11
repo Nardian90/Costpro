@@ -1,0 +1,18 @@
+REM-SEC-1 · §39 REGRESIÓN CONTABLE
+==================================
+CAJA (§28): escenarios A/B/C/D reconciliados system_expected_total == esperado contable,
+difference=0 en los cuatro (raws/post_cash_services.json · ver 13-ef2-11b-post.txt).
+
+FISCAL: transiciones legítimas close/lock/status PASS; pureza status ×10 sin mutación;
+auditoría de cierre/lock generada (ver 07-ef2-16c-post.txt).
+
+VENTA → INVENTARIO/WAC (flujos críticos):
+  venta fixture: HTTP 200 · inventory Δcantidad exacta=-1 (33.0000→32.0000)
+  stock_movement registrado: 31→32 · último: type=sale qty_change=-1.0000 balance_after=32.0000 == inventory.quantity ✓
+  unit_cost de producto tras venta y tras distributes V1: 40 (V1 no recalcula WAC — conducta documentada en E2E-2, sin cambios)
+SERVICIOS: distribute propio idempotente (§37), cross DENY; voids legítimos OK.
+
+DETALLE: cash_closures del recert completo cerraron con system_expected_total coherente
+(§28) y z_reports generados 1:1 por cierre (sin duplicados — §37).
+RESULTADO: la operación legítima continúa funcionando tras los 5 fixes (no solo "el exploit falla").
+RAW: raws/post_matrix_idem_conc.json (accounting) · raws/post_cash_services.json

@@ -1,0 +1,17 @@
+[
+  {
+    "table_name": "cash_closures"
+  },
+  {
+    "table_name": "cash_movements"
+  },
+  {
+    "table_name": "cash_register_sessions"
+  },
+  {
+    "table_name": "cash_sessions"
+  },
+  {
+    "table_name": "restore_sessions"
+  }
+]

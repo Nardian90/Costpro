@@ -1,0 +1,24 @@
+REM-SEC-1 · §40 REGRESIÓN GLOBAL · §41 BUILD · §42 PM2/HEALTH
+=============================================================
+Vitest : 2058 passed / 0 failed / 24 skipped  (Test Files 96 passed | 1 skipped)  — PARIDAD EXACTA con histórico (2058/0/24)
+TSC    : exit 0, sin errores                    — PARIDAD EXACTA
+ESLint : 0 errores / 1291 warnings              — PARIDAD EXACTA
+Fiscal : iteration-fiscal.test.ts 53/53 PASS    — PARIDAD EXACTA (53/53)
+         integration fiscales ampliado: 158/158 PASS (iteration-fiscal + 11-4 + 11-5)
+
+security-contract-test.cjs (linter estático de contratos RPC, NO parte del baseline de §40):
+  5 CRITICAL (anti-spoofing guard ausente en RPCs de production_orders: close_production_order_v2,
+  receive_production_output, reverse_production_order, void_closed_production_order,
+  withdraw_production_item_deprecated_6arg) + 3 MEDIUM (anon EXECUTE: receive_against_po,
+  set_purchase_order_status, void_closed_production_order).
+  CLASIFICACIÓN: PREEXISTENTE en baseline 643f4802 — verificado por stash del worktree
+  (mismo resultado con el repo limpio; familia production/PO, AJENA a los 5 findings).
+  ACCIÓN: DOCUMENTADO/CLASIFICADO, NO FIXED (§7). Recomienda gate propio de esa familia.
+
+BUILD (§41): exit 137 — 'Killed' en 'Creating an optimized production build'.
+  dmesg: oom-kill constraint=CONSTRAINT_NONE global_oom task=next-build (total-vm 40.7GB,
+  anon-rss 2.29GB) en host 4GB sin swap ⇒ INFRASTRUCTURE LIMITATION (idéntico a E2E-2 y
+  REM-F4-06d-R; misma memoria del host, sin swap). No se modificó configuración para ocultarlo.
+
+PM2 (§42): 3/3 online (costpro 736MB + 2 pollers) · / → 200 · /api/health → 200 (post-build OOM).
+RAW: raws/ (salidas completas en logs de ejecución del gate) · /tmp/build_out.txt en sesión

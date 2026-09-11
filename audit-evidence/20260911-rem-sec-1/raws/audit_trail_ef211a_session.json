@@ -1,0 +1,38 @@
+[
+  {
+    "action": "CASH_CLOSURE_CREATED",
+    "nd": null,
+    "st": null,
+    "created_at": "2026-09-11 02:24:06.690639+00"
+  },
+  {
+    "action": "CASH_CLOSURE_UPDATED",
+    "nd": null,
+    "st": null,
+    "created_at": "2026-09-11 02:24:06.970515+00"
+  },
+  {
+    "action": "CASH_CLOSURE_FINALIZED",
+    "nd": null,
+    "st": null,
+    "created_at": "2026-09-11 02:24:10.358734+00"
+  },
+  {
+    "action": "CASH_CLOSURE_REOPENED",
+    "nd": null,
+    "st": null,
+    "created_at": "2026-09-11 02:24:24.440255+00"
+  },
+  {
+    "action": "CASH_CLOSURE_UPDATED",
+    "nd": null,
+    "st": null,
+    "created_at": "2026-09-11 02:24:29.186422+00"
+  },
+  {
+    "action": "CASH_CLOSURE_FINALIZED",
+    "nd": null,
+    "st": null,
+    "created_at": "2026-09-11 02:24:32.22127+00"
+  }
+]

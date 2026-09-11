@@ -1,0 +1,70 @@
+REM-SEC-1 · EF2-16a (P0) — RECERTIFICACIÓN POST-FIX (§15)
+=========================================================
+clerk → self role=admin          : HTTP 400 (DENIED) · role=clerk→clerk · is_admin=False · Δaudit CHANGE_ROLE=0
+manager → self role=admin        : HTTP 400 (DENIED) · role=manager
+clerk → role de OTRO usuario     : HTTP 200 (RLS intacta) · manager role=manager
+
+VARIANTES §12 POST-FIX (todas DENIED + columna intacta):
+{
+  "roles_array_admin": {
+    "status": 400,
+    "before": "{}",
+    "after": "{}",
+    "unchanged": true
+  },
+  "store_id_beta": {
+    "status": 400,
+    "before": null,
+    "after": null,
+    "unchanged": true
+  },
+  "tenant_id_forge": {
+    "status": 400,
+    "before": null,
+    "after": null,
+    "unchanged": true
+  },
+  "is_active_false": {
+    "status": 400,
+    "before": true,
+    "after": true,
+    "unchanged": true
+  },
+  "max_stores_limit": {
+    "status": 400,
+    "before": 0,
+    "after": 0,
+    "unchanged": true
+  },
+  "max_users_limit": {
+    "status": 400,
+    "before": 0,
+    "after": 0,
+    "unchanged": true
+  }
+}
+
+CAMPOS SELF-SERVICE (deben seguir funcionando):
+{
+  "full_name": {
+    "status": 200
+  },
+  "plan_selfservice": {
+    "status": 200,
+    "plan_now": "pro"
+  },
+  "ai_provider": {
+    "status": 200
+  }
+}
+
+VÍA ADMINISTRATIVA LEGÍTIMA (§14, §15):
+  admin PATCH /api/users/<clerk> role=manager : HTTP 200 → role=manager (managed_update_user OK)
+  admin PATCH /api/users/<clerk> role=admin   : HTTP 200 → role=admin (promoción a admin intacta)
+  admin demote de vuelta a clerk              : HTTP 200 → role=clerk
+  user_audit_log registró: [{"action": "USER_UPDATED", "old_v": "admin", "new_v": "{\"new\": \"clerk\", \"old\": \"admin\"}"}, {"action": "USER_UPDATED", "old_v": "manager", "new_v": "{\"new\": \"admin\", \"old\": \"manager\"}"
+  manager vía admin endpoint                  : HTTP 403 (403, correcto)
+  clerk vía admin endpoint                    : HTTP 403 (403) · role=clerk
+
+RESULTADO: 0 privilege escalation · admin path preservado · DENY contractual (400 ERR_SELF_PRIVILEGED_FIELD).
+RAW: raws/post_ef216a_ef216c.json (ef216a_post, ef216a_admin_path)

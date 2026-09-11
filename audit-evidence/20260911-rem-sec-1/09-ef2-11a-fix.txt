@@ -1,0 +1,22 @@
+REM-SEC-1 · EF2-11a (P1) — FIX APLICADO (§23)
+=============================================
+1) Función parcheada: public.prevent_cash_closure_edit() (trigger BEFORE DELETE OR UPDATE ON cash_closures)
+   ANTES:  IF OLD.status = 'cerrado' AND current_setting('app.bypass_closure_lock', true) <> 'true' THEN RAISE ...
+   DESPUÉS: IF OLD.status = 'cerrado' AND COALESCE(current_setting('app.bypass_closure_lock', true), 'false') <> 'true' THEN RAISE ...
+   NULL-safe fail-safe: NULL→DENY · 'false'→DENY · 'true'→bypass (solo server-side).
+
+2) SUB-DEFECTO descubierto durante la recert (estrictamente necesario, §7):
+   public.reopen_cash_shift() — la ÚNICA vía administrativa de corrección post-cierre —
+   referenciaba la columna inexistente cash_closures.updated_at ⇒ el UPDATE SIEMPRE
+   fallaba ('column "updated_at" of relation "cash_closures" does not exist') y el
+   mecanismo administrativo exigido por la inmutabilidad era inoperante de fábrica.
+   Fix: eliminar la línea 'updated_at = NOW()' del UPDATE (el sello [REOPENED ...]
+   queda en notes + auditoría CASH_CLOSURE_REOPENED). Sin este fix, EF2-11a habría
+   dejado cierres congelados SIN vía de corrección (criterio §50: OPEN CASH FUNCTIONAL
+   + admin path preservado).
+   Nota: E2E-2 no ejercitó reopen (14_cash.mjs no lo llama); defecto latente del propio
+   mecanismo administrativo de la inmutabilidad → parte del alcance EF2-11a.
+
+RLS/trigger/API/RPC coherentes (§23): la capa que permite lo que otra bloquea se eliminó
+  (RLS deja pasar al miembro; el trigger ahora DENIEGA de verdad; reopen RPC es la única puerta).
+MIGRACIÓN: supabase/migrations/20260911000000_rem_sec1_security_boundaries.sql

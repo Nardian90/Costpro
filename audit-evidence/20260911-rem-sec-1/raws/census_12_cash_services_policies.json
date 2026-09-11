@@ -1,0 +1,65 @@
+[
+  {
+    "schemaname": "public",
+    "tablename": "cash_movements",
+    "policyname": "Cash movements access",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM cash_register_sessions s\n  WHERE ((s.id = cash_movements.session_id) AND has_store_access(s.store_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "cash_movements",
+    "policyname": "Cash movements insert",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM cash_register_sessions s\n  WHERE ((s.id = cash_movements.session_id) AND has_store_access(s.store_id))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "cash_movements",
+    "policyname": "cash_movements_insert",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = cash_movements.store_id))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "cash_movements",
+    "policyname": "cash_movements_select",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = cash_movements.store_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "cash_sessions",
+    "policyname": "cash_sessions_insert",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = cash_sessions.store_id))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "cash_sessions",
+    "policyname": "cash_sessions_select",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = cash_sessions.store_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "cash_sessions",
+    "policyname": "cash_sessions_update",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = cash_sessions.store_id))))",
+    "with_check": null
+  }
+]

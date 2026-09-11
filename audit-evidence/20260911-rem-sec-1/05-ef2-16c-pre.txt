@@ -1,0 +1,17 @@
+REM-SEC-1 · EF2-16c (P0) — REPRODUCCIÓN PRE-FIX (§17, §18)
+==========================================================
+Fixture: período ALPHA 2026-03 creado por vías legítimas: close (manager, /api/fiscal-close HTTP 200) → lock (admin, HTTP 200) → status='locked'.
+
+ATAQUE: PATCH rest/v1/fiscal_closings?id=eq.<row> {"status":"open"} (manager, PostgREST directo)
+  HTTP 200 · status: locked → open · Δaudit=1
+  audit: [{"action": "FISCAL_CLOSING_UPDATED", "user_id": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f", "old_s": null, "new_s": null}, {"action": "FISCAL_CLOSING_UPDATED", "user_id": "7613f105-7b0d-4f4c-8792-b45c1e35fd4e", "old_s": nul
+  (revertido a locked por el harness tras la captura)
+
+GUC FORENSE §18 (pre-fix):
+  app.bypass_fiscal_lock sin setear: current_setting(...,true) IS NULL = True
+  Semántica SQL: NULL <> 'true' → NULL → IF NULL → NO RAISE ⇒ prevent_fiscal_closing_edit NO-OP.
+
+ROOT CAUSE: prevent_fiscal_closing_edit() — 'IF OLD.status='locked' AND current_setting('app.bypass_fiscal_lock', true) <> 'true''
+  con GUC NULL el predicado evalúa NULL y la excepción jamás se lanza; RLS fiscal_closings_update
+  (has_store_access) deja pasar al manager del store ⇒ LOCKED→open por PATCH directo.
+RAW: raws/pre_reproductions.json (ef216c)

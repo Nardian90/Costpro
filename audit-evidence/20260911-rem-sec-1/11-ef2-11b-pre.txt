@@ -1,0 +1,19 @@
+REM-SEC-1 · EF2-11b (P1) — REPRODUCCIÓN PRE-FIX (§25, §26)
+==========================================================
+Escenario: apertura ALPHA (opening 1000) → venta POS cash 150 (create_sale_v2 inserta
+payment_transactions ref_type='sale' method='cash' 150) → close_cash_shift(declared 1150).
+
+paytx capturado: [{"ref_type": "sale", "payment_method": "cash", "amount_cup": "150", "transaction_id": "6216589c-ffc5-47b5-88bc-6d49df30307f"}]
+
+RESULTADO PRE-FIX:
+  system_expected_total = 1000  (esperado contable real: 1150)
+  difference            = 150  (faltante FALSO de 150)
+  metadata del cierre   : cash_sales=150 y cash_payments=150 ⇒ la venta contada DOBLE
+  (reproducido determinísticamente en E2E-2 y aquí)
+
+ROOT CAUSE: close_cash_shift: v_cash_payments = SUM(amount_cup) FROM payment_transactions
+  WHERE payment_method='cash' SIN excluir ref_type='sale' ⇒ v_system_cash = opening +
+  v_cash_sales − v_cash_payments resta el pago de la venta YA sumada como venta.
+  Modelo canónico (get_cash_report): ventas se cuentan desde transactions; paytx cuenta
+  pagos NO asociados a venta (receipt/service/production/work/devolution).
+RAW: raws/pre_reproductions.json (ef211)
