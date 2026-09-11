@@ -140,6 +140,7 @@ async function patchHandler(request: NextRequest, session: AuthenticatedSession)
         p_product_id: output_product_id,
         p_quantity: output_quantity,
         p_store_id: userData.active_store_id,
+        p_user_id: session_user.id, // REM-PO-1: identidad server-side (session), nunca del cliente
       });
     }
 
