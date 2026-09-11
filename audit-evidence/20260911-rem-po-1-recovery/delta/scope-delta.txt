@@ -1,0 +1,12 @@
+close_production_order_v2 | CAMBIADA | 20260812000003_pr4_4i_close_ot_update_payments.sql | 
+receive_production_output | CAMBIADA | 20260810000002_v2_26_g2_receive_production_output.sql | 
+void_closed_production_order | CAMBIADA | 20260810000004_v2_26_g4_void_closed_production_order.sql | 
+reverse_production_order | CAMBIADA | 20260905000002_w9_b10_reverse_document_authorization.sql | 
+withdraw_production_item_deprecated_6arg | NUEVA-EN-LIVE (no existe en baseline) |  | 
+create_production_order_v2 | CAMBIADA | 20260810000011_v2_26_hotfix2_param_hash_exhaustive.sql | 
+set_purchase_order_status | CAMBIADA | 20260808000007_v2_24_g7_set_purchase_order_status.sql | 
+receive_against_po | CAMBIADA | 20260808000003_v2_24_g3_receive_against_po_final.sql | 
+void_transaction | CAMBIADA | 20260905000001_w9_b8_modelo_c_undo_reverse_authorization.sql | 
+withdraw_production_item_v3 | NUEVA-EN-LIVE (no existe en baseline) |  | 
+withdraw_production_item_deprecated_9arg | NUEVA-EN-LIVE (no existe en baseline) |  | 
+receive_production_output_deprecated_4arg | NUEVA-EN-LIVE (no existe en baseline) |  | 

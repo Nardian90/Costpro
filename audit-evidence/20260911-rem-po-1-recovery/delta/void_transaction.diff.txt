@@ -1,0 +1,1 @@
+--- baseline:20260905000001_w9_b8_modelo_c_undo_reverse_authorization.sql+++ LIVE-DB@@ -78,4 +78,3 @@ END;  $function$-;

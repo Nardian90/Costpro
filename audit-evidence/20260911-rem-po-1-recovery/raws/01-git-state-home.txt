@@ -1,0 +1,18 @@
+=== PWD ===
+/home/z/my-project
+=== GIT STATUS --SHORT ===
+=== BRANCH -AVV ===
+* main 856f12d Initial commit
+=== LOG ALL -50 ===
+856f12d (HEAD -> main) Initial commit
+=== REFLOG ALL ===
+856f12d refs/heads/main@{2026-08-30 09:31:04 +0000}: commit (amend): Initial commit
+856f12d HEAD@{2026-08-30 09:31:04 +0000}: commit (amend): Initial commit
+1222197 refs/heads/main@{2026-08-29 03:38:35 +0000}: commit (initial): Initial commit
+1222197 HEAD@{2026-08-29 03:38:35 +0000}: commit (initial): Initial commit
+=== FSCK FULL ===
+unreachable commit 12221979849186912e92ce809ef1939fc1a6b703
+unreachable tree 74cdd0431b40455d65b1f8fbf21505647b3177ba
+=== REMOTE -V (masked) ===
+=== HEAD ===
+856f12d65d0b974ead18990c4f943a3545ff44e7

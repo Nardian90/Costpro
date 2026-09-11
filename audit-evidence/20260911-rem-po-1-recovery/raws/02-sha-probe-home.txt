@@ -1,0 +1,4 @@
+82e0f953 -> fatal: Not a valid object name 82e0f953
+e2d8cc95 -> fatal: Not a valid object name e2d8cc95
+3d5ed7b9 -> fatal: Not a valid object name 3d5ed7b9
+f59b8883a671299220d87b9fb1e42c9039ed1719 -> fatal: git cat-file: could not get object info
