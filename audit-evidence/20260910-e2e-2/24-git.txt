@@ -12,5 +12,5 @@ Commit de documentación al cierre (convención de todos los gates previos):
 
 Estado final tras el commit (verificado):
   HEAD == origin/main == 0719a09ba9f92731a459371f7d4b72d03938d363
-  (commit doc 1: evidencia; commit doc 2: registro de hash final — sin cambios de código)
+  (commits de documentación: evidencia + registro de hash + limpieza — sin cambios de código)
   WORKTREE CLEAN
