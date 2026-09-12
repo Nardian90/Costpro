@@ -1,0 +1,6 @@
+src/app/api/sync/batch/route.ts (offline replay path):
+  :121  // Iteración 11.2 (TD-11.2.1 resolved): Use create_sale_v2 for offline sync.
+  :148  result = await supabase.rpc('create_sale_v2', v2Payload);
+
+Contract test pin: 'sync offline usa create_sale_v2 (nunca V1)' — PASS
+Contract test pin: 'callers de create_sale = allow-list — src/hooks/api/useTransactions.ts' (solo queue offline residual) — PASS

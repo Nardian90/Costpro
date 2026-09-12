@@ -1,0 +1,3 @@
+dmesg (kernel):
+[13184.586269] oom-kill:constraint=CONSTRAINT_NONE,...,global_oom,task=next-build (v16,pid=19913,uid=1001
+[13184.586307] Out of memory: Killed process 19913 (next-build (v16) total-vm:41910960kB, anon-rss:3020840kB, file-rss:68904kB, shmem-rss:0kB, UID:1001 pgtables:15480kB oom_score_adj:0

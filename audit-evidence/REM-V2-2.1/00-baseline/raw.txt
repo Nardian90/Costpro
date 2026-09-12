@@ -1,0 +1,18 @@
+captured: 2026-09-12T07:20:43Z
+git status --short:
+
+
+git rev-parse HEAD:
+d74349ac980eea62ef0fa30b7be70548f765423e
+
+git rev-parse origin/main:
+d74349ac980eea62ef0fa30b7be70548f765423e
+
+git branch:
+main
+
+git diff --stat (pre-evidence):
+(vacío)
+
+git ls-files .env .env.local '.env.*':
+.env.example
