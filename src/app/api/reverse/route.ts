@@ -13,6 +13,10 @@
  * W9.4.7 H5-B1: RPC `reverse_transaction` (V1) retirada de la DB; el entry
  * `transaction` de AMBOS mapas resuelve a `reverse_transaction_v2` (migración
  * 20260903030000). Ningún camino de ejecución puede alcanzar la V1.
+ * REM-V2-3: los entries `receipt`/`adjustment` de AMBOS mapas resuelven a
+ * `reverse_receipt_v2` / `reverse_inventory_adjustment_v2` (misma firma).
+ * Ningún caller de aplicación alcanza ya `reverse_receipt` ni
+ * `reverse_adjustment` V1 (retiro de DB diferido — ver audit-evidence/REM-V2-3).
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
@@ -34,11 +38,11 @@ const reverseSchema = z.object({
 /** V2.3: cada tipo mapea a (rpc_name, id_param_name). SÓLO ese param se envía. */
 const RPC_MAP_V1: Record<string, { rpc: string; idParam: string }> = {
   transaction:      { rpc: 'reverse_transaction_v2',    idParam: 'p_transaction_id' }, // W9.4.7 H5-B1: V1 retirada — fallback resuelve a V2
-  receipt:          { rpc: 'reverse_receipt',            idParam: 'p_receipt_id' },
-  transfer:         { rpc: 'reverse_transfer',           idParam: 'p_transfer_id' },
-  adjustment:       { rpc: 'reverse_adjustment',         idParam: 'p_adjustment_id' },
-  devolution:       { rpc: 'reverse_devolution',         idParam: 'p_devolution_id' },
-  production_order: { rpc: 'reverse_production_order',   idParam: 'p_order_id' },
+  receipt:          { rpc: 'reverse_receipt_v2',        idParam: 'p_receipt_id' }, // REM-V2-3: V1 retirada del path — fallback resuelve a V2 (misma firma)
+  transfer:         { rpc: 'reverse_transfer',           idParam: 'p_transfer_id' }, // compartida V1=V2 (sin refactor propio)
+  adjustment:       { rpc: 'reverse_inventory_adjustment_v2', idParam: 'p_adjustment_id' }, // REM-V2-3: V1 retirada del path — fallback resuelve a V2 B-10 (misma firma)
+  devolution:       { rpc: 'reverse_devolution',         idParam: 'p_devolution_id' }, // compartida V1=V2 (sin refactor propio)
+  production_order: { rpc: 'reverse_production_order',   idParam: 'p_order_id' }, // compartida V1=V2 (sin refactor propio)
 };
 
 /** Iteración 11.3: RPCs v2 para tipos que tienen refactor */

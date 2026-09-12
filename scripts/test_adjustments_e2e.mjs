@@ -191,7 +191,8 @@ async function test4_ReverseAdjustment(ctx) {
   if (!ctx) return;
   const stockBefore = await getStock(ctx.product.id);
 
-  const { data, error } = await admin.rpc('reverse_adjustment', {
+  // REM-V2-3: V1 retirada del path — RPC V2 canónica (misma firma, inversión B-10)
+  const { data, error } = await admin.rpc('reverse_inventory_adjustment_v2', {
     p_adjustment_id: ctx.adjId, p_reason: 'Test E2E — revertir', p_user_id: USER_ID,
   });
   if (error) { reportBug('reverse', 'RPC call', error); return; }

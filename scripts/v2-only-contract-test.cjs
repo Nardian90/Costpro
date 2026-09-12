@@ -44,6 +44,15 @@ check('RPC_MAP_V1 existe en /api/reverse', !!m);
 if (m) {
   check('RPC_MAP_V1.transaction resuelve a reverse_transaction_v2 (H5-B1)',
     /transaction:\s*\{\s*rpc:\s*'reverse_transaction_v2'/.test(m[0]));
+  // REM-V2-3: receipt/adjustment también neutralizados (fallback resuelve a V2)
+  check('RPC_MAP_V1.receipt resuelve a reverse_receipt_v2 (REM-V2-3)',
+    /receipt:\s*\{\s*rpc:\s*'reverse_receipt_v2'/.test(m[0]));
+  check('RPC_MAP_V1.adjustment resuelve a reverse_inventory_adjustment_v2 (REM-V2-3)',
+    /adjustment:\s*\{\s*rpc:\s*'reverse_inventory_adjustment_v2'/.test(m[0]));
+  check('ningún entry del mapa resuelve a reverse_receipt V1',
+    !/rpc:\s*'reverse_receipt'/.test(m[0]));
+  check('ningún entry del mapa resuelve a reverse_adjustment V1',
+    !/rpc:\s*'reverse_adjustment'/.test(m[0]));
 }
 
 // 3) Registro permitido de callers V1 de checkout (baseline 34f50a55)

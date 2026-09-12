@@ -110,8 +110,8 @@ async function testReceipt() {
   const stockMid = await getStock(p.id, STORE_ID);
   info(`Stock tras recepción: ${stockMid} (esperado ${stockBefore + 10})`);
 
-  // Revertir
-  const { data: rev, error: e3 } = await supabase.rpc('reverse_receipt', {
+  // Revertir (REM-V2-3: V1 retirada del path — RPC V2 canónica, misma firma)
+  const { data: rev, error: e3 } = await supabase.rpc('reverse_receipt_v2', {
     p_receipt_id: rec.id, p_reason: 'TEST E2E', p_user_id: null,
   });
   if (e3) return bad(`reverse: ${e3.message}`);

@@ -165,9 +165,11 @@ async function testReverseReceipt() {
   const stockBefore = await getStock(item.product_id, rec.store_id);
   info(`Producto ${item.product_id} | stock antes: ${stockBefore} | recibió: ${item.quantity}`);
 
-  const { data: result, error: rpcError } = await supabase.rpc('reverse_receipt', {
+  // REM-V2-3: V1 retirada del path — RPC V2 canónica (misma firma). Nota: V2 no
+  // escribe reversed_at en receipts; solo marca status + suffix en notes.
+  const { data: result, error: rpcError } = await supabase.rpc('reverse_receipt_v2', {
     p_receipt_id: rec.id,
-    p_reason: 'TEST LIVE V2.3 — reversión de recepción',
+    p_reason: 'TEST LIVE — reversión de recepción',
     p_user_id: null,
   });
 
@@ -179,7 +181,7 @@ async function testReverseReceipt() {
 
   const { data: recAfter } = await supabase
     .from('receipts')
-    .select('status, reversed_at, reversal_reason')
+    .select('status')
     .eq('id', rec.id)
     .single();
 
@@ -194,7 +196,7 @@ async function testReverseReceipt() {
   const kardexOk = kardexCount > 0;
 
   stockOk ? ok(`Stock: ${stockBefore} → ${stockAfter} (Δ=${actualDelta}, esperado ${expectedDelta})`) : fail(`Stock mal: Δ=${actualDelta}, esperado ${expectedDelta}`);
-  statusOk ? ok(`Status: reversed @ ${recAfter.reversed_at}`) : fail(`Status mal: ${recAfter?.status}`);
+  statusOk ? ok(`Status: reversed (v2)`) : fail(`Status mal: ${recAfter?.status}`);
   kardexOk ? ok(`Kardex entries: ${kardexCount}`) : fail('Sin kardex entries');
 
   return stockOk && statusOk && kardexOk;
@@ -385,9 +387,10 @@ async function testReverseAdjustment() {
   const stockBefore = await getStock(item.product_id, adj.store_id);
   info(`Producto ${item.product_id} | stock antes: ${stockBefore} | difference original: ${item.difference}`);
 
-  const { data: result, error: rpcError } = await supabase.rpc('reverse_adjustment', {
+  // REM-V2-3: V1 retirada del path — RPC V2 canónica (misma firma, inversión B-10)
+  const { data: result, error: rpcError } = await supabase.rpc('reverse_inventory_adjustment_v2', {
     p_adjustment_id: adj.id,
-    p_reason: 'TEST LIVE V2.3 — reversión de ajuste',
+    p_reason: 'TEST LIVE — reversión de ajuste',
     p_user_id: null,
   });
 

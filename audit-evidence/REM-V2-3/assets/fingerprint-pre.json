@@ -1,0 +1,650 @@
+{
+  "mode": "pre",
+  "captured_at": "2026-09-12T22:33:20.477Z",
+  "stores": {
+    "   ": {
+      "id": "2dabe459-4b37-4be2-b8f4-d102047cc18a",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "AUDIT F4E1 STORE A 4f0d1e": {
+      "id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+      "counts": {
+        "devolutions": 1,
+        "payment_transactions": 14,
+        "receipts": 31,
+        "stock_movements": 63,
+        "transactions": 8,
+        "transfers_origin": 2,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "receipts": "2026-09-09 04:10:32.763+00",
+        "stock_movements": "2026-09-09 04:10:45.170388+00",
+        "transactions": "2026-09-09 02:09:13.943517+00"
+      }
+    },
+    "AUDIT F4E1 STORE B 4f0d1e": {
+      "id": "9e308fcd-391f-4b91-9866-f0155d8d5cbe",
+      "counts": {
+        "stock_movements": 4,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "stock_movements": "2026-09-09 00:05:12.087063+00"
+      }
+    },
+    "E2E Extra extra-mrioqepf": {
+      "id": "7aedc55d-f7e8-4938-8d98-8330c358e8d9",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "E2E Multi arch-mrip86q3": {
+      "id": "fa2c0fe5-d4b8-4a3d-929a-0c9ee8363000",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "E2E Multi dup-mrip3468": {
+      "id": "85a2cba5-09b2-4b14-9051-4bff31892f25",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "E2E Multi mrip2zpuztfw": {
+      "id": "45f46ded-bd3f-4659-848d-cb0cd9cec1d8",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "E2E No Addr noaddr-mrip32ho": {
+      "id": "4bcb61e4-be93-44cd-ba10-a54d771cd393",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "E2E Slug Sanitize mrioqg7v": {
+      "id": "2f69abc4-2fe1-425c-8cbb-3ccdb7136645",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "E2E2-ALPHA": {
+      "id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+      "counts": {
+        "devolutions": 11,
+        "payment_transactions": 69,
+        "receipts": 26,
+        "stock_movements": 126,
+        "transactions": 52,
+        "transfers_origin": 6,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "receipts": "2026-09-11 00:06:09.59+00",
+        "stock_movements": "2026-09-11 04:11:31.014169+00",
+        "transactions": "2026-09-11 04:10:36.850775+00"
+      }
+    },
+    "E2E2-BETA": {
+      "id": "60896157-6b0a-439c-833f-3d55d64456ba",
+      "counts": {
+        "payment_transactions": 9,
+        "stock_movements": 28,
+        "transactions": 17,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "stock_movements": "2026-09-11 04:25:37.079359+00",
+        "transactions": "2026-09-11 04:25:44.22297+00"
+      }
+    },
+    "ENERVIDA-VITALLCONS": {
+      "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "counts": {
+        "payment_transactions": 154,
+        "receipts": 4,
+        "stock_movements": 451,
+        "transactions": 308,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "receipts": "2026-08-11 22:49:18.423872+00",
+        "stock_movements": "2026-08-17 04:00:00+00",
+        "transactions": "2026-08-17 04:00:00+00"
+      }
+    },
+    "HOT Archive Test 1786059177": {
+      "id": "b3345abc-eb45-4c7f-9c25-76d1e31179a3",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Cross Store 1786059177": {
+      "id": "c3a45a39-28d9-417f-a8d4-7237ca11729e",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT FE Archive 1786060255": {
+      "id": "10fecc6a-58c2-433c-94eb-330dbb7fb7f4",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Integral A 1786057681": {
+      "id": "2d861da3-7b02-449d-bfcb-23e52b269fd3",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Integral A 1786057783": {
+      "id": "50865d50-e187-410c-a0d2-fcbf43aaa57b",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Integral A 1786057888": {
+      "id": "bbb7d9e6-a8b3-44da-bfa7-0179ac0995fb",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Integral A UPDATED 1786058486": {
+      "id": "e4cfe601-7239-4f64-aadd-2c32132d5901",
+      "counts": {
+        "inventory_adjustments": 1,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "inventory_adjustments": "2026-08-06 23:22:33.29029+00"
+      }
+    },
+    "HOT Integral A UPDATED 1786060163": {
+      "id": "beacb645-e77e-4f7b-800b-fa2c8f958541",
+      "counts": {
+        "inventory_adjustments": 1,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "inventory_adjustments": "2026-08-06 23:50:37.025146+00"
+      }
+    },
+    "HOT Integral B 1786057681": {
+      "id": "1e5c49e9-3607-4f17-b1b7-5b07921e1fcf",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Integral B 1786057783": {
+      "id": "58e9f839-e1de-43d6-823c-e7e073f8b0c3",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Integral B 1786057888": {
+      "id": "1f44ac81-c165-483b-acb8-3eceb2229612",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Integral B 1786058486": {
+      "id": "9a46d5c7-6a1a-4276-83e0-cd616c85c00f",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Integral B 1786060163": {
+      "id": "68d301f2-8f4e-4577-a350-b2b01799fb7f",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT R2 Store A 1786058718": {
+      "id": "c3d20f20-a4e0-472e-8680-5cd821377543",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT R2 Store B 1786058718": {
+      "id": "50e7ad25-25cb-412c-8b59-5df50f2be8bf",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT R3 Store A 1786058841": {
+      "id": "9fcc7ca2-bf06-4b46-b96f-75e510ad69eb",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT R6 Store A 1786059359": {
+      "id": "fe4a1ce9-4cf5-48f3-9400-9f31bd3308b6",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT R6 Store B 1786059359": {
+      "id": "b73e5467-11c8-466d-9a9f-208570e9ea06",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT R6B Store A 1786059504": {
+      "id": "007a3c33-a150-4442-85b9-be24c0f4b1cb",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT R6B Store B 1786059504": {
+      "id": "c135c50a-c2ff-4476-ac66-c1a698aec1e6",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT R6C Store A 1786059605": {
+      "id": "aad38a68-8214-4ee5-8239-2232312ae787",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT R6C Store B 1786059605": {
+      "id": "fd058f2c-a3c9-475c-9eff-e107f327d965",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT R6D Store A 1786059736": {
+      "id": "0fed91c9-8a15-44b6-877c-1c1e561715c4",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT R6D Store B 1786059736": {
+      "id": "40f651f4-2993-4d46-8459-6e3bbbb17b55",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Sucursal A 1785995943": {
+      "id": "4ceef696-788b-4b3d-b0ff-0b0f0af14946",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Sucursal B 1785995943": {
+      "id": "67ac1e6d-56d4-42a1-98cd-4950e3090a65",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "HOT Transfer Test 1786060918": {
+      "id": "20d080d5-65ae-4f9c-87da-5575bbffe27b",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "No Address": {
+      "id": "2ef293a3-23b4-4816-aa2b-9752627a1175",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "Puerto Padre VITALLCONS": {
+      "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "counts": {
+        "payment_transactions": 212,
+        "receipts": 2,
+        "stock_movements": 251,
+        "transactions": 212,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "receipts": "2026-06-29 09:00:00+00",
+        "stock_movements": "2026-07-11 12:00:00+00",
+        "transactions": "2026-07-11 12:00:00+00"
+      }
+    },
+    "REM-F4-06dR FIXTURE ALPHA": {
+      "id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "REM-F4-06dR FIXTURE BETA": {
+      "id": "68b08d4d-8ba1-4adc-b362-b909cba9dc57",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "Store Tenant 2": {
+      "id": "dcfd74bf-ebfa-4630-b532-ebbd4c5b42a2",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "TEST-REGRESION-1785629886030": {
+      "id": "1384d4af-210a-4809-8374-466c3667af5f",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "TEST-REGRESION-1785629953259": {
+      "id": "8a471be5-cf43-4667-ace8-229b31f3a1b1",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "TEST-REGRESION-1785631731646": {
+      "id": "9bc060c2-1a39-4cb5-aff1-1512e7b7b1f7",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "TEST-TRANSFER-DEST": {
+      "id": "568bd7a1-f47d-44a3-8c35-fd1ad3dc9944",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "Tienda Auditor": {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "counts": {
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {}
+    },
+    "TIENDA CENTRAL COSTPRO": {
+      "id": "d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576",
+      "counts": {
+        "devolutions": 13,
+        "inventory_adjustments": 3,
+        "stock_movements": 98,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "inventory_adjustments": "2026-08-06 23:58:14.171286+00",
+        "stock_movements": "2026-09-06 20:26:26.416067+00"
+      }
+    }
+  },
+  "functions": [
+    {
+      "name": "can_admin_reverse_transaction",
+      "args": "p_actor uuid, p_store_id uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "postgres=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=pg_catalog, public"
+      ]
+    },
+    {
+      "name": "can_pos_undo_transaction",
+      "args": "p_transaction_id uuid, p_actor uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "postgres=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=pg_catalog, public"
+      ]
+    },
+    {
+      "name": "can_reverse_document",
+      "args": "p_actor uuid, p_store_id uuid, p_operation text",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "postgres=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=pg_catalog, public"
+      ]
+    },
+    {
+      "name": "create_sale",
+      "args": "p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric, p_discount_type text, p_discount_value numeric, p_payment_method text, p_tax_amount numeric, p_applied_taxes jsonb, p_transaction_id uuid, p_operation_date timestamp with time zone, p_cash_amount numeric, p_transfer_amount numeric, p_idempotency_key text, p_sale_currency text, p_sale_exchange_rate numeric, p_zelle_amount numeric, p_warehouse_id uuid, p_user_id uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ]
+    },
+    {
+      "name": "create_sale_v2",
+      "args": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ]
+    },
+    {
+      "name": "reverse_adjustment",
+      "args": "p_adjustment_id uuid, p_reason text, p_user_id uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "postgres=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=public"
+      ]
+    },
+    {
+      "name": "reverse_devolution",
+      "args": "p_devolution_id uuid, p_reason text, p_user_id uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "postgres=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=public"
+      ]
+    },
+    {
+      "name": "reverse_inventory_adjustment_v2",
+      "args": "p_adjustment_id uuid, p_reason text, p_user_id uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "postgres=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ]
+    },
+    {
+      "name": "reverse_production_order",
+      "args": "p_order_id uuid, p_reason text, p_user_id uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "postgres=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=public, extensions"
+      ]
+    },
+    {
+      "name": "reverse_receipt",
+      "args": "p_receipt_id uuid, p_reason text, p_user_id uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "postgres=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=public"
+      ]
+    },
+    {
+      "name": "reverse_receipt_v2",
+      "args": "p_receipt_id uuid, p_reason text, p_user_id uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ]
+    },
+    {
+      "name": "reverse_transfer",
+      "args": "p_transfer_id uuid, p_reason text, p_user_id uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "postgres=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=public, pg_temp"
+      ]
+    },
+    {
+      "name": "void_transaction",
+      "args": "p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone, p_user_id uuid",
+      "secdef": true,
+      "owner": "postgres",
+      "acl": "=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+      "config": [
+        "search_path=pg_catalog, public"
+      ]
+    }
+  ],
+  "internal_callers_of_v1_candidates": [],
+  "internal_callers_reverse_receipt": [],
+  "internal_callers_reverse_adjustment": [],
+  "internal_callers_void_transaction": [],
+  "triggers_using_candidates": []
+}
