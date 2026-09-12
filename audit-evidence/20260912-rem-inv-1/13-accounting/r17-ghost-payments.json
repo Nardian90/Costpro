@@ -1,0 +1,1 @@
+{"message":"Failed to run sql query: ERROR:  42883: function string_agg(purchase_status_enum, unknown) does not exist\nLINE 13: SELECT 'po_statuses', (SELECT string_agg(DISTINCT status,',') FROM purchase_orders);\n                                       ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.\n"}

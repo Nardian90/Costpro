@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# REM-INV-1 — Helper de consultas READ-ONLY (SELECT-only) vía Management API.
+# El token se lee de .env en runtime; JAMÁS se imprime ni se registra.
+# Uso: inv1-q.sh <archivo.sql>
+set -euo pipefail
+TOKEN=$(grep '^SUPABASE_ACCESS_TOKEN=' /home/z/my-project/Costpro/.env | cut -d= -f2-)
+SQL_FILE="$1"
+python3 -c "import json,sys; print(json.dumps({'query': open(sys.argv[1]).read()}))" "$SQL_FILE" > /tmp/inv1-payload.json
+curl -s --max-time 120 -X POST "https://api.supabase.com/v1/projects/wthkddeleylijmonclxg/database/query" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d @/tmp/inv1-payload.json
