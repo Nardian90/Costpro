@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
+// REM-V2-1 P-2: uso residual SOLO para queue offline (el path online es /api/pos/checkout)
 import { useCreateSale } from '@/hooks/api/useTransactions';
 import { useCartStore } from '@/store/cart';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
@@ -374,37 +375,98 @@ export function useSalesCatalog() {
         });
       }
 
-      const saleId = await createSale({
-        p_store_id: user.activeStoreId,
-        p_seller_id: user.id,
-        p_payment_method: derivedPaymentMethod,
-        p_total_amount: totals.subtotal,
-        p_subtotal: totals.subtotal,
-        p_discount_type: 'fixed',
-        p_discount_value: 0,
-        // PR-4.4D: pasar cash/transfer/zelle amounts al RPC
-        p_cash_amount: totals.cashTotal,
-        p_transfer_amount: totals.transferTotal,
-        p_zelle_amount: totals.zelleTotal,
-        // PR-4.4I: persist currency + exchange rate for Zelle component
-        p_sale_currency: totals.zelleTotal > 0 ? 'USD' : 'CUP',
-        p_sale_exchange_rate: totals.zelleTotal > 0
-          ? (activeRows.find(r => r.usdExchangeRate > 0)?.usdExchangeRate || 680)
-          : 1.0,
-        p_items: activeRows.map((r) => ({
-          product_id: r.product.id,
-          variant_id: r.selectedVariantId ?? null,
-          quantity: r.quantity,
-          price: r.price,
-          cost: r.cost,
-          cash_paid: r.cashPaid,
-          transfer_paid: r.transferPaid,
-          zelle_paid: r.zellePaid,
-        })),
-        p_idempotency_key: `sale-${crypto.randomUUID()}`,
-        // PR-4.4D: pasar operationDate (de la primera fila con fecha, o la del parámetro)
-        p_operation_date: operationDate || activeRows.find((r) => r.operationDate)?.operationDate || undefined,
-      });
+      // REM-V2-1 P-2: la venta del catálogo migra al path canónico V2
+      // (/api/pos/checkout → create_sale_v2: recálculo server-side, supervisor auth,
+      // auditoría). El caller directo V1 (create_sale) queda retirado para esta vista;
+      // useCreateSale se conserva SOLO para el queue offline (replay vía create_sale_v2
+      // en /api/sync/batch).
+      const opDate = operationDate || activeRows.find((r) => r.operationDate)?.operationDate || undefined;
+      let saleId: string | undefined;
+
+      if (!navigator.onLine) {
+        // OFFLINE: preservar capacidad existente — enqueue (replay V2 vía sync/batch)
+        saleId = await createSale({
+          p_store_id: user.activeStoreId,
+          p_seller_id: user.id,
+          p_payment_method: derivedPaymentMethod,
+          p_total_amount: totals.subtotal,
+          p_subtotal: totals.subtotal,
+          p_discount_type: 'fixed',
+          p_discount_value: 0,
+          // PR-4.4D: pasar cash/transfer/zelle amounts al RPC
+          p_cash_amount: totals.cashTotal,
+          p_transfer_amount: totals.transferTotal,
+          p_zelle_amount: totals.zelleTotal,
+          // PR-4.4I: persist currency + exchange rate for Zelle component
+          p_sale_currency: totals.zelleTotal > 0 ? 'USD' : 'CUP',
+          p_sale_exchange_rate: totals.zelleTotal > 0
+            ? (activeRows.find(r => r.usdExchangeRate > 0)?.usdExchangeRate || 680)
+            : 1.0,
+          p_items: activeRows.map((r) => ({
+            product_id: r.product.id,
+            variant_id: r.selectedVariantId ?? null,
+            quantity: r.quantity,
+            price: r.price,
+            cost: r.cost,
+            cash_paid: r.cashPaid,
+            transfer_paid: r.transferPaid,
+            zelle_paid: r.zellePaid,
+          })),
+          p_idempotency_key: `sale-${crypto.randomUUID()}`,
+          // PR-4.4D: pasar operationDate (de la primera fila con fecha, o la del parámetro)
+          p_operation_date: opDate,
+        });
+      } else {
+        // ONLINE: path V2 canónico (mismo contrato que usePOSCheckout v2)
+        const response = await fetch('/api/pos/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            store_id: user.activeStoreId,
+            seller_id: user.id,
+            payment_method: derivedPaymentMethod,
+            discount_type: 'fixed',
+            discount_value: 0,
+            applied_taxes: [],
+            tax_amount: 0,
+            subtotal: totals.subtotal,
+            total_amount: totals.subtotal,
+            cash_amount: totals.cashTotal,
+            transfer_amount: totals.transferTotal,
+            zelle_amount: totals.zelleTotal,
+            sale_currency: totals.zelleTotal > 0 ? 'USD' : 'CUP',
+            sale_exchange_rate: totals.zelleTotal > 0
+              ? (activeRows.find(r => r.usdExchangeRate > 0)?.usdExchangeRate || 680)
+              : 1.0,
+            customer_id: null,
+            idempotency_key: `sale-${crypto.randomUUID()}`,
+            operation_date: opDate,
+            items: activeRows.map((r) => ({
+              product_id: r.product.id,
+              variant_id: r.selectedVariantId ?? null,
+              quantity: r.quantity,
+              price: r.price,
+              cost: r.cost,
+              cash_paid: r.cashPaid,
+              transfer_paid: r.transferPaid,
+              zelle_paid: r.zellePaid,
+            })),
+          }),
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({ error: response.statusText }));
+          throw new Error(err.error || `HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        saleId = data.transaction_id;
+      }
+
+      // Paridad con useCreateSale.onSuccess: el path V2 no pasa por el mutation hook
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-kpis'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
 
       clearCart();
       setConfirmedSaleId(saleId as string);
@@ -419,8 +481,9 @@ export function useSalesCatalog() {
           'Stock insuficiente en inventario. La tabla de productos muestra stock, pero el inventario interno no coincide. Ejecuta el script fix-insufficient-stock.sql en Supabase SQL Editor para sincronizar.',
           { duration: 8000 }
         );
-      } else if (msg.includes('ERR_BACKDATED_DOCUMENT')) {
+      } else if (msg.includes('ERR_BACKDATED_DOCUMENT') || msg.includes('anterior a la última venta')) {
         // Error de política forward-only: la fecha elegida es anterior al MAX global
+        // (la ruta V2 localiza el error, por eso también se matchea el texto ES)
         toast.error(
           'No se puede retroceder en el tiempo operativo. Revisa la "Fecha de Operación" en el dashboard MULTI-TIENDA para ver la fecha mínima permitida.',
           { duration: 8000 }
@@ -431,7 +494,7 @@ export function useSalesCatalog() {
     } finally {
       setIsProcessing(false);
     }
-  }, [user, activeRows, clearCart, createSale, derivedPaymentMethod, totals]);
+  }, [user, activeRows, clearCart, createSale, derivedPaymentMethod, totals, queryClient]);
 
   // ── Export Excel (delegates to salesCatalogExport) ──
   const handleExportExcel = useCallback(() => {

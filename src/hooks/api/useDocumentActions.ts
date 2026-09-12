@@ -3,6 +3,7 @@ import { logger } from '@/lib/logger';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
+import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { withTableLogging } from './base';
@@ -25,11 +26,13 @@ export function useInvertDocument() {
   return useMutation({
     mutationFn: async (props: DocumentActionProps) => {
       const { type, id, items: providedItems, operationDate } = props;
-      let storeId = props.storeId;
 
-      logger.info('DATABASE', `[Invert] Starting inversion for ${type} ${id} in store ${storeId}`);
+      logger.info('DATABASE', `[Invert] Starting inversion for ${type} ${id}`);
 
-      // 0. Fetch document to get storeId and status if not provided or to verify
+      // 0. Fetch document to verify existence + status (errores tempranos amigables;
+      //    el pipeline V2 re-valida todo server-side). REM-V2-1 P-3: storeId ya no se
+      //    usa en cliente — /api/reverse resuelve la tienda del documento server-side
+      //    (boundary can_reverse_document B-10).
       const docTable = type === 'sale' ? 'transactions' : 'receipts';
       const { data: docData, error: docError } = await supabase
         .from(docTable)
@@ -44,8 +47,6 @@ export function useInvertDocument() {
       if (docData.status === 'voided') {
         throw new Error('Este documento ya ha sido anulado.');
       }
-
-      if (!storeId) storeId = docData.store_id;
 
       // 1. Fetch items if not provided
       let items = providedItems;
@@ -82,44 +83,22 @@ export function useInvertDocument() {
         return { success: true, result: voidResult };
       }
 
-      // Para recepciones, usar el flujo existente (perform_inventory_adjustment)
+      // REM-V2-1 P-3: la inversión de recepciones migra al pipeline canónico
+      // /api/reverse (boundary de autorización can_reverse_document B-10 + RPC
+      // reverse server-side atómica con kardex y auditoría). Elimina el composite
+      // cliente no atómico (perform_inventory_adjustment por item + UPDATE directo
+      // de status). La selección V1/V2 del RPC la resuelve el API (RPC_MAP_V1/V2 —
+      // neutralización pendiente en P-4 + flag P-1).
       const reason = `INVERSION - Anulación Recepción ${id.split('-')[0]}`;
 
-      for (const item of items) {
-        const quantityDelta = -Math.abs(item.quantity);
+      logger.info('DATABASE', `[Invert] Dispatching receipt ${id} to /api/reverse`);
 
-        logger.info('DATABASE', `[Invert] Adjusting product ${item.product_id} with delta ${quantityDelta}`);
+      const result = await apiFetch('/api/reverse', {
+        method: 'POST',
+        body: JSON.stringify({ type: 'receipt', id, reason }),
+      });
 
-        const { error: adjError } = await supabase.rpc('perform_inventory_adjustment', {
-          p_product_id: item.product_id,
-          p_store_id: storeId,
-          p_user_id: user?.id,
-          p_quantity_delta: quantityDelta,
-          p_unit_cost_adjustment: item.unit_cost || item.cost_at_sale || null,
-          p_reason: reason,
-          p_operation_date: operationDate,
-        });
-
-        if (adjError) throw adjError;
-      }
-
-      // 3. Update document status
-      const table = 'receipts';
-      const effectiveDate = operationDate || new Date().toISOString();
-      const updateData = {
-        status: 'voided',
-        updated_at: effectiveDate,
-      };
-
-      logger.info('DATABASE', `[Invert] Updating ${table} ${id} status to voided`);
-
-      await withTableLogging('update', table, () =>
-        supabase.from(table)
-          .update(updateData)
-          .eq('id', id)
-      );
-
-      return { success: true };
+      return { success: true, result };
     },
     onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });

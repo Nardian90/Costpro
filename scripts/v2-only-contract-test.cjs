@@ -75,6 +75,16 @@ const unexpected = v1CheckoutCallers.filter(f => !allowedV1Checkout.includes(f.r
 check('callers de create_sale = allow-list', unexpected.length === 0,
   unexpected.length ? 'NUEVOS (revisar): ' + unexpected.join(', ') : v1CheckoutCallers.join(', '));
 
+// 3.b) REM-V2-1 P-2/P-3 — migraciones de callers autorizadas (remediation.md §20.2)
+const useSalesCatalogSrc = read('src/components/views/terminal/views/pos/useSalesCatalog.ts');
+check('useSalesCatalog despacha online a /api/pos/checkout (P-2, path V2 canónico)',
+  /fetch\('\/api\/pos\/checkout'/.test(useSalesCatalogSrc));
+const docActionsSrc = read('src/hooks/api/useDocumentActions.ts');
+check('useInvertDocument ya NO invoca rpc perform_inventory_adjustment (P-3, composite cliente retirado)',
+  !/rpc\(\s*'perform_inventory_adjustment'/.test(docActionsSrc));
+check('useInvertDocument despacha recepciones a /api/reverse (P-3, boundary B-10)',
+  /apiFetch\('\/api\/reverse'/.test(docActionsSrc));
+
 // 4) Rutas gated por flag
 const devRoute = read('src/app/api/devolutions/route.ts');
 check('/api/devolutions selecciona RPC por FEATURES.USE_V2_REVERSE',
