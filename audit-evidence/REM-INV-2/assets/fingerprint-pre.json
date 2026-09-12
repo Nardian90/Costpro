@@ -1,0 +1,795 @@
+{
+  "mode": "pre",
+  "captured_at": "2026-09-12T23:20:07.822Z",
+  "stores": {
+    "   ": {
+      "id": "2dabe459-4b37-4be2-b8f4-d102047cc18a",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "AUDIT F4E1 STORE A 4f0d1e": {
+      "id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+      "counts": {
+        "devolutions": 1,
+        "payment_transactions": 14,
+        "receipt_items": 35,
+        "receipts": 31,
+        "stock_movements": 63,
+        "transactions": 8,
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "receipts": "2026-09-09 04:10:32.763+00",
+        "stock_movements": "2026-09-09 04:10:45.170388+00",
+        "transactions": "2026-09-09 02:09:13.943517+00"
+      },
+      "po_status": {},
+      "inventory": {
+        "n": 25,
+        "qty_sum": "1914.0000",
+        "max_upd": "2026-09-09 04:10:45.170388+00"
+      }
+    },
+    "AUDIT F4E1 STORE B 4f0d1e": {
+      "id": "9e308fcd-391f-4b91-9866-f0155d8d5cbe",
+      "counts": {
+        "stock_movements": 4,
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "stock_movements": "2026-09-09 00:05:12.087063+00"
+      },
+      "po_status": {},
+      "inventory": {
+        "n": 2,
+        "qty_sum": "0.0000",
+        "max_upd": "2026-09-09 00:05:12.087063+00"
+      }
+    },
+    "E2E Extra extra-mrioqepf": {
+      "id": "7aedc55d-f7e8-4938-8d98-8330c358e8d9",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "E2E Multi arch-mrip86q3": {
+      "id": "fa2c0fe5-d4b8-4a3d-929a-0c9ee8363000",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "E2E Multi dup-mrip3468": {
+      "id": "85a2cba5-09b2-4b14-9051-4bff31892f25",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "E2E Multi mrip2zpuztfw": {
+      "id": "45f46ded-bd3f-4659-848d-cb0cd9cec1d8",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "E2E No Addr noaddr-mrip32ho": {
+      "id": "4bcb61e4-be93-44cd-ba10-a54d771cd393",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "E2E Slug Sanitize mrioqg7v": {
+      "id": "2f69abc4-2fe1-425c-8cbb-3ccdb7136645",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "E2E2-ALPHA": {
+      "id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+      "counts": {
+        "devolutions": 11,
+        "payment_transactions": 69,
+        "purchase_orders": 8,
+        "receipt_items": 35,
+        "receipts": 26,
+        "stock_movements": 126,
+        "transactions": 52,
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "purchase_orders": "2026-09-11 04:10:17.961697+00",
+        "receipts": "2026-09-11 00:06:09.59+00",
+        "stock_movements": "2026-09-11 04:11:31.014169+00",
+        "transactions": "2026-09-11 04:10:36.850775+00"
+      },
+      "po_status": {
+        "cancelled": 5,
+        "draft": 1,
+        "received": 2
+      },
+      "inventory": {
+        "n": 9,
+        "qty_sum": "130.0000",
+        "max_upd": "2026-09-11 04:11:31.014169+00"
+      }
+    },
+    "E2E2-BETA": {
+      "id": "60896157-6b0a-439c-833f-3d55d64456ba",
+      "counts": {
+        "payment_transactions": 9,
+        "stock_movements": 28,
+        "transactions": 17,
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "stock_movements": "2026-09-11 04:25:37.079359+00",
+        "transactions": "2026-09-11 04:25:44.22297+00"
+      },
+      "po_status": {},
+      "inventory": {
+        "n": 2,
+        "qty_sum": "57.0000",
+        "max_upd": "2026-09-11 04:25:37.079359+00"
+      }
+    },
+    "ENERVIDA-VITALLCONS": {
+      "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "counts": {
+        "payment_transactions": 154,
+        "receipt_items": 110,
+        "receipts": 4,
+        "stock_movements": 451,
+        "transactions": 308,
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "receipts": "2026-08-11 22:49:18.423872+00",
+        "stock_movements": "2026-08-17 04:00:00+00",
+        "transactions": "2026-08-17 04:00:00+00"
+      },
+      "po_status": {},
+      "inventory": {
+        "n": 106,
+        "qty_sum": "4012.5000",
+        "max_upd": "2026-08-21 23:31:55.497256+00"
+      }
+    },
+    "HOT Archive Test 1786059177": {
+      "id": "b3345abc-eb45-4c7f-9c25-76d1e31179a3",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Cross Store 1786059177": {
+      "id": "c3a45a39-28d9-417f-a8d4-7237ca11729e",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT FE Archive 1786060255": {
+      "id": "10fecc6a-58c2-433c-94eb-330dbb7fb7f4",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Integral A 1786057681": {
+      "id": "2d861da3-7b02-449d-bfcb-23e52b269fd3",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Integral A 1786057783": {
+      "id": "50865d50-e187-410c-a0d2-fcbf43aaa57b",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Integral A 1786057888": {
+      "id": "bbb7d9e6-a8b3-44da-bfa7-0179ac0995fb",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Integral A UPDATED 1786058486": {
+      "id": "e4cfe601-7239-4f64-aadd-2c32132d5901",
+      "counts": {
+        "inventory_adjustments": 1,
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Integral A UPDATED 1786060163": {
+      "id": "beacb645-e77e-4f7b-800b-fa2c8f958541",
+      "counts": {
+        "inventory_adjustments": 1,
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Integral B 1786057681": {
+      "id": "1e5c49e9-3607-4f17-b1b7-5b07921e1fcf",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Integral B 1786057783": {
+      "id": "58e9f839-e1de-43d6-823c-e7e073f8b0c3",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Integral B 1786057888": {
+      "id": "1f44ac81-c165-483b-acb8-3eceb2229612",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Integral B 1786058486": {
+      "id": "9a46d5c7-6a1a-4276-83e0-cd616c85c00f",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Integral B 1786060163": {
+      "id": "68d301f2-8f4e-4577-a350-b2b01799fb7f",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT R2 Store A 1786058718": {
+      "id": "c3d20f20-a4e0-472e-8680-5cd821377543",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT R2 Store B 1786058718": {
+      "id": "50e7ad25-25cb-412c-8b59-5df50f2be8bf",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT R3 Store A 1786058841": {
+      "id": "9fcc7ca2-bf06-4b46-b96f-75e510ad69eb",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT R6 Store A 1786059359": {
+      "id": "fe4a1ce9-4cf5-48f3-9400-9f31bd3308b6",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT R6 Store B 1786059359": {
+      "id": "b73e5467-11c8-466d-9a9f-208570e9ea06",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT R6B Store A 1786059504": {
+      "id": "007a3c33-a150-4442-85b9-be24c0f4b1cb",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT R6B Store B 1786059504": {
+      "id": "c135c50a-c2ff-4476-ac66-c1a698aec1e6",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT R6C Store A 1786059605": {
+      "id": "aad38a68-8214-4ee5-8239-2232312ae787",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT R6C Store B 1786059605": {
+      "id": "fd058f2c-a3c9-475c-9eff-e107f327d965",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT R6D Store A 1786059736": {
+      "id": "0fed91c9-8a15-44b6-877c-1c1e561715c4",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT R6D Store B 1786059736": {
+      "id": "40f651f4-2993-4d46-8459-6e3bbbb17b55",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Sucursal A 1785995943": {
+      "id": "4ceef696-788b-4b3d-b0ff-0b0f0af14946",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Sucursal B 1785995943": {
+      "id": "67ac1e6d-56d4-42a1-98cd-4950e3090a65",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "HOT Transfer Test 1786060918": {
+      "id": "20d080d5-65ae-4f9c-87da-5575bbffe27b",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "No Address": {
+      "id": "2ef293a3-23b4-4816-aa2b-9752627a1175",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "Puerto Padre VITALLCONS": {
+      "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "counts": {
+        "payment_transactions": 212,
+        "receipt_items": 39,
+        "receipts": 2,
+        "stock_movements": 251,
+        "transactions": 212,
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "receipts": "2026-06-29 09:00:00+00",
+        "stock_movements": "2026-07-11 12:00:00+00",
+        "transactions": "2026-07-11 12:00:00+00"
+      },
+      "po_status": {},
+      "inventory": {
+        "n": 35,
+        "qty_sum": "966.1289",
+        "max_upd": "2026-08-16 23:49:39.270608+00"
+      }
+    },
+    "REM-F4-06dR FIXTURE ALPHA": {
+      "id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "REM-F4-06dR FIXTURE BETA": {
+      "id": "68b08d4d-8ba1-4adc-b362-b909cba9dc57",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "Store Tenant 2": {
+      "id": "dcfd74bf-ebfa-4630-b532-ebbd4c5b42a2",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "TEST-REGRESION-1785629886030": {
+      "id": "1384d4af-210a-4809-8374-466c3667af5f",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "TEST-REGRESION-1785629953259": {
+      "id": "8a471be5-cf43-4667-ace8-229b31f3a1b1",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "TEST-REGRESION-1785631731646": {
+      "id": "9bc060c2-1a39-4cb5-aff1-1512e7b7b1f7",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "TEST-TRANSFER-DEST": {
+      "id": "568bd7a1-f47d-44a3-8c35-fd1ad3dc9944",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "Tienda Auditor": {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "counts": {
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {},
+      "po_status": {},
+      "inventory": null
+    },
+    "TIENDA CENTRAL COSTPRO": {
+      "id": "d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576",
+      "counts": {
+        "devolutions": 13,
+        "inventory_adjustments": 3,
+        "stock_movements": 98,
+        "purchase_items#global": 0,
+        "purchase_order_items#global": 9,
+        "kardex_entries#global": 1021,
+        "products#global": 367,
+        "audit_logs#global": 8144
+      },
+      "max_created_at": {
+        "stock_movements": "2026-09-06 20:26:26.416067+00"
+      },
+      "po_status": {},
+      "inventory": {
+        "n": 98,
+        "qty_sum": "6427.0000",
+        "max_upd": "2026-09-06 20:26:26.416067+00"
+      }
+    }
+  },
+  "functions": [
+    {
+      "name": "cancel_reception",
+      "args": "p_reception_id uuid",
+      "secdef": true,
+      "acl": "postgres=X/postgres,service_role=X/postgres"
+    },
+    {
+      "name": "confirm_pending_reception",
+      "args": "p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone",
+      "secdef": true,
+      "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+    },
+    {
+      "name": "receive_against_po",
+      "args": "p_po_id uuid, p_received_items jsonb, p_user_id uuid, p_reception_date timestamp with time zone, p_invoice_number text",
+      "secdef": true,
+      "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+    },
+    {
+      "name": "receive_purchase",
+      "args": "p_purchase_id uuid",
+      "secdef": false,
+      "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+    },
+    {
+      "name": "register_reception",
+      "args": "p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid",
+      "secdef": true,
+      "acl": "=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+    },
+    {
+      "name": "update_reception_items",
+      "args": "p_receipt_id uuid, p_item_updates jsonb, p_user_id uuid",
+      "secdef": true,
+      "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+    },
+    {
+      "name": "void_pending_reception",
+      "args": "p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone",
+      "secdef": true,
+      "acl": "=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+    },
+    {
+      "name": "void_reception_with_reversal",
+      "args": "p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone",
+      "secdef": true,
+      "acl": "postgres=X/postgres,service_role=X/postgres"
+    }
+  ],
+  "internal_callers_receive_purchase": []
+}

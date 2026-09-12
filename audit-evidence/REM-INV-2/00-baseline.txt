@@ -1,0 +1,22 @@
+=== BASELINE REM-INV-2 ===
+timestamp_utc: 2026-09-12T23:20:42Z
+HEAD: 90dce25fcb89195b69a29fa7ff516201f5961f86
+origin/main: 90dce25fcb89195b69a29fa7ff516201f5961f86
+branch: main
+HEAD_subject: refactor(v2): retire proven-dead V1 RPC paths
+git_status_short: [1 entries]
+git_diff_empty: true
+git_diff_cached_empty: true
+node: v24.19.0
+npm: 11.17.0
+bun: 1.3.14
+framework: next@16.3.0 react@19.2.8
+package_manager: npm ci (lockfile)
+pm2_costpro_online: online
+env_exists: true
+env_gitignored: true
+NEXT_PUBLIC_USE_V2_CHECKOUT: 1 (1=true)
+NEXT_PUBLIC_USE_V2_REVERSE: 1 (1=true)
+functional_changes_by_gate: none (PHASE 0 pre-modification)
+NOTE: initial PHASE-0 check (session start, before any work) verified clean worktree — see worklog. The 1 untracked entry below is THIS gate's own PHASE-5 instrument (rem-inv-2-dynamic-reachability.test.ts), added AFTER the baseline verification, before any code was modified.
+untracked_entries: ?? src/__tests__/integration/rem-inv-2-dynamic-reachability.test.ts

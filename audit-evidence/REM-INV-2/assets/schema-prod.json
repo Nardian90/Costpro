@@ -1,0 +1,474 @@
+{
+  "cols": [
+    {
+      "table_name": "inventory",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "store_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "product_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "quantity",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "low_stock_threshold",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": "10"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "timezone('utc'::text, now())"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "version",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "tenant_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_items",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "purchase_items",
+      "column_name": "purchase_order_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_items",
+      "column_name": "product_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_items",
+      "column_name": "quantity",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_items",
+      "column_name": "unit_cost",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_items",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "timezone('utc'::text, now())"
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "store_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "supplier",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "status",
+      "data_type": "USER-DEFINED",
+      "is_nullable": "NO",
+      "column_default": "'draft'::purchase_status_enum"
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "received_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "created_by",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "timezone('utc'::text, now())"
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "supplier_name",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "supplier_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "po_number",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "total_amount",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "notes",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "expected_date",
+      "data_type": "date",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "purchase_orders",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "store_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "product_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "variant_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "quantity_change",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "movement_type",
+      "data_type": "USER-DEFINED",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "reference_id",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "reference_doc",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "movement_date",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "created_by",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "timezone('utc'::text, now())"
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "unit_cost",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "unit_price",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "cost_value_change",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": "0"
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "balance_after",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "notes",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "stock_movements",
+      "column_name": "tenant_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "constraints": [
+    {
+      "table_name": "inventory",
+      "conname": "inventory_pkey",
+      "def": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "inventory",
+      "conname": "inventory_product_id_fkey",
+      "def": "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "inventory",
+      "conname": "inventory_store_id_fkey",
+      "def": "FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "inventory",
+      "conname": "inventory_store_id_product_id_key",
+      "def": "UNIQUE (store_id, product_id)"
+    },
+    {
+      "table_name": "inventory",
+      "conname": "inventory_tenant_id_fkey",
+      "def": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "table_name": "inventory",
+      "conname": "stock_non_negative",
+      "def": "CHECK ((quantity >= (0)::numeric))"
+    },
+    {
+      "table_name": "purchase_items",
+      "conname": "purchase_items_pkey",
+      "def": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "purchase_items",
+      "conname": "purchase_items_product_id_fkey",
+      "def": "FOREIGN KEY (product_id) REFERENCES products(id)"
+    },
+    {
+      "table_name": "purchase_items",
+      "conname": "purchase_items_purchase_order_id_fkey",
+      "def": "FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "purchase_items",
+      "conname": "purchase_items_quantity_check",
+      "def": "CHECK ((quantity > (0)::numeric))"
+    },
+    {
+      "table_name": "purchase_items",
+      "conname": "purchase_items_unit_cost_check",
+      "def": "CHECK ((unit_cost >= (0)::numeric))"
+    },
+    {
+      "table_name": "purchase_orders",
+      "conname": "purchase_orders_created_by_fkey",
+      "def": "FOREIGN KEY (created_by) REFERENCES auth.users(id)"
+    },
+    {
+      "table_name": "purchase_orders",
+      "conname": "purchase_orders_pkey",
+      "def": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "purchase_orders",
+      "conname": "purchase_orders_store_id_fkey",
+      "def": "FOREIGN KEY (store_id) REFERENCES stores(id)"
+    },
+    {
+      "table_name": "purchase_orders",
+      "conname": "purchase_orders_supplier_id_fkey",
+      "def": "FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL"
+    },
+    {
+      "table_name": "stock_movements",
+      "conname": "stock_movements_created_by_fkey",
+      "def": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "table_name": "stock_movements",
+      "conname": "stock_movements_pkey",
+      "def": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "stock_movements",
+      "conname": "stock_movements_product_id_fkey",
+      "def": "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "stock_movements",
+      "conname": "stock_movements_quantity_nonzero",
+      "def": "CHECK ((quantity_change <> (0)::numeric))"
+    },
+    {
+      "table_name": "stock_movements",
+      "conname": "stock_movements_store_id_fkey",
+      "def": "FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "stock_movements",
+      "conname": "stock_movements_tenant_id_fkey",
+      "def": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "table_name": "stock_movements",
+      "conname": "stock_movements_variant_id_fkey",
+      "def": "FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL"
+    }
+  ],
+  "enums": [
+    {
+      "typname": "movement_type",
+      "values": "sale,purchase,adjustment,return,initial,transfer,void,transfer_in,transfer_out,sale_void,production_out,production_in,sale_reverse,purchase_reverse,production_reverse,issue_slip_out,issue_slip_reverse,devolution_reverse"
+    },
+    {
+      "typname": "purchase_status_enum",
+      "values": "draft,sent,partial,received,cancelled"
+    }
+  ],
+  "products_wac_cols": [
+    {
+      "column_name": "cost_average",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "cost_price",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "cost_sheet_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "min_stock",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "stock_current",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "stock_visible",
+      "data_type": "boolean"
+    }
+  ]
+}

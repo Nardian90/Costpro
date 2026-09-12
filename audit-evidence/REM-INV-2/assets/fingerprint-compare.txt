@@ -1,0 +1,8 @@
+REM-INV-2 PHASE 19 — fingerprint comparison (SELECT-only, Management API)
+pre  captured_at: 2026-09-12T23:20:07.822Z
+post captured_at: 2026-09-12T23:36:00.876Z
+compared payload: stores(counts/max_created_at/po_status/inventory) + functions(ACL) + internal_callers_receive_purchase
+NORMALIZATION: 'captured_at' and 'mode' are capture-metadata labels (not production data) and are excluded.
+RESULT BITWISE IDENTICAL: True
+pre  canonical sha256: c17762aaa6080108d1c70b87c281efeb8516c571bc256d377c49c8a5e1b1c44a
+post canonical sha256: c17762aaa6080108d1c70b87c281efeb8516c571bc256d377c49c8a5e1b1c44a

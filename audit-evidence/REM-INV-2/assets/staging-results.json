@@ -1,0 +1,89 @@
+{
+  "uri_socket_only": "/postgres",
+  "results": [
+    {
+      "phase": "SETUP",
+      "test": "receive_purchase definition copied verbatim",
+      "verdict": "OK",
+      "detail": "chars=1264"
+    },
+    {
+      "phase": "PHASE 6",
+      "test": "F-01-A double reception (2nd receive re-applies stock)",
+      "verdict": "FAIL (DEFECT REPRODUCED)",
+      "detail": "stock 10->20, movements 2->4"
+    },
+    {
+      "phase": "PHASE 7",
+      "test": "receive on CANCELLED purchase",
+      "verdict": "FAIL (processed \u2014 no status guard)",
+      "detail": "status=received, movements=1, sum=10"
+    },
+    {
+      "phase": "PHASE 7",
+      "test": "receive on ALREADY-RECEIVED purchase",
+      "verdict": "FAIL (re-processed \u2014 no status guard)",
+      "detail": "status=received, movements=1, sum=10 (2nd reception produced new movements)"
+    },
+    {
+      "phase": "PHASE 8",
+      "test": "static: receive_purchase has NO store guard",
+      "verdict": "FAIL",
+      "detail": "p_store_id param=False, has_store_access=False, auth.uid()=False"
+    },
+    {
+      "phase": "PHASE 8",
+      "test": "cross-store: outsider receives STORE_B purchase",
+      "verdict": "FAIL (accepted)",
+      "detail": "inventory rows created in STORE_B by unrelated role: [('bbbbbbbb-0000-0000-0000-000000000002', Decimal('10'))]"
+    },
+    {
+      "phase": "PHASE 9",
+      "test": "static: identity source",
+      "verdict": "FAIL (no auth.uid(), no p_user_id, nothing recorded)",
+      "detail": "function signature receive_purchase(p_purchase_id uuid) \u2014 0 identity params; spoofing is trivial: caller A 'claims' nothing, DB records nothing"
+    },
+    {
+      "phase": "PHASE 9",
+      "test": "behavioral: stg_unprivileged role executed receive_purchase",
+      "verdict": "FAIL (executed \u2014 no authorization check)",
+      "detail": "see PHASE 8 behavioral result"
+    },
+    {
+      "phase": "PHASE 10",
+      "test": "WAC: receive with unit_cost=999 updates cost_average/stock_current?",
+      "verdict": "FAIL (WAC NEVER updated \u2014 unit_cost IGNORED; no weighted-average transition)",
+      "detail": "products.cost_average/stock_current before=(Decimal('100'), Decimal('5')) after=(Decimal('100'), Decimal('5')) (inventory.qty 40->50; movement recorded with NO unit_cost column written)"
+    },
+    {
+      "phase": "PHASE 10",
+      "test": "stock_movements rows written by receive_purchase carry NO cost",
+      "verdict": "FAIL (no cost attribution)",
+      "detail": "rows=[(Decimal('10'), 'purchase', 'dddddddd-0000-0000-0000-000000000005')] \u2014 V1 writes 7-col movement; canonical writes unit_cost + created_by + movement_date"
+    },
+    {
+      "phase": "PHASE 11",
+      "test": "atomicity: mid-loop failure rolls back stock AND status",
+      "verdict": "PASS (all-or-nothing)",
+      "detail": "inventory/movements unchanged=True, po status after failure=draft (single plpgsql block = single transaction)"
+    },
+    {
+      "phase": "PHASE 12",
+      "test": "same request x5",
+      "verdict": "FAIL (stock applied 5 times \u2014 no idempotency key/guard/unique)",
+      "detail": "p2_stock cumulative=23, movements for PO_ID=5 (each call = full re-application)"
+    },
+    {
+      "phase": "PHASE 12",
+      "test": "movement rows for 5 identical calls",
+      "verdict": "FAIL (5 rows, 1 effective reception expected)",
+      "detail": "rows=5"
+    },
+    {
+      "phase": "PHASE 13",
+      "test": "two concurrent sessions receive same purchase",
+      "verdict": "FAIL (both committed \u2014 double stock, no lock/status-guard)",
+      "detail": "outcomes=['committed', 'committed']; stock delta=20 (ordered 10); movements=2"
+    }
+  ]
+}
