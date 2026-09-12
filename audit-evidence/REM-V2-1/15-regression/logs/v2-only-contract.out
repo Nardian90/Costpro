@@ -1,0 +1,11 @@
+✅ no re-CREATE de reverse_transaction V1 en migraciones post-retiro (H5-B1) — drop H5-B1 intacto
+✅ RPC_MAP_V1 existe en /api/reverse
+✅ RPC_MAP_V1.transaction resuelve a reverse_transaction_v2 (H5-B1)
+✅ useTransactions mantiene rpc create_sale (registro V1 permitido)
+✅ POS principal usa shouldUseV2Checkout (V2 gated)
+✅ sync offline usa create_sale_v2 (nunca V1)
+✅ callers de create_sale = allow-list — src/hooks/api/useTransactions.ts
+✅ /api/devolutions selecciona RPC por FEATURES.USE_V2_REVERSE
+✅ /api/reverse selecciona mapa por FEATURES.USE_V2_REVERSE
+────────────────────────────────────────────────────────────
+✅ V2-ONLY CONTRACT: PASS (baseline REM-V2-1 consistente)
