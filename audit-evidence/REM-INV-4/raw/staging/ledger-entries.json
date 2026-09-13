@@ -1,0 +1,50 @@
+[
+  {
+    "version": "202401230001",
+    "name": "add_get_users_for_encargado"
+  },
+  {
+    "version": "20260612000000",
+    "name": "create_ofertas"
+  },
+  {
+    "version": "20260612000001",
+    "name": "alter_ofertas_add_fields"
+  },
+  {
+    "version": "20260613000001",
+    "name": "alter_stores_add_oferta_fields"
+  },
+  {
+    "version": "20260614000001",
+    "name": "add_stores_rls_policies"
+  },
+  {
+    "version": "20260614000002",
+    "name": "create_store_with_membership"
+  },
+  {
+    "version": "20260614000003",
+    "name": "create_batch_store_kpis"
+  },
+  {
+    "version": "20260614000004",
+    "name": "optimize_batch_kpi_rpc"
+  },
+  {
+    "version": "20260614000005",
+    "name": "soft_delete_store_rpc"
+  },
+  {
+    "version": "20260615000001",
+    "name": "create_store_cost_templates"
+  },
+  {
+    "version": "20260615000002",
+    "name": "create_product_cost_sheets_and_alter_products"
+  },
+  {
+    "version": "20260615000003",
+    "name": "add_unique_index_product_cost_sheets"
+  }
+]

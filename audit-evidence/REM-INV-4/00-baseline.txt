@@ -1,0 +1,13 @@
+REM-INV-4 — 00-baseline.txt
+==============================
+gate: REM-INV-4 — PostgreSQL Schema Drift & Function Integrity
+baseline exigido: 793d1309
+
+--- git ---
+793d1309f5412c294b1f64c531e47a93215a25c0
+793d1309f5412c294b1f64c531e47a93215a25c0
+worktree: 1 archivos modificados (debe ser 0 al inicio)
+?? audit-evidence/REM-INV-4/
+
+--- verificación ---
+BASELINE OK → 793d1309

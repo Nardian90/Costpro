@@ -1,0 +1,464 @@
+public|digest|text, text|f|926ba3fbdb45dc078b3e3cafddc392cc|-
+public|digest|bytea, text|f|926ba3fbdb45dc078b3e3cafddc392cc|-
+public|hmac|text, text, text|f|439ec46f1dc8e4c4b39837540788374e|-
+public|hmac|bytea, bytea, text|f|439ec46f1dc8e4c4b39837540788374e|-
+public|crypt|text, text|f|ea9cb21d4668638c79f471dc607df1b4|-
+public|gen_salt|text|f|83471500bcebc23b61302a74e64e0613|-
+public|gen_salt|text, integer|f|1ceb3513947cb5b72265001042040f51|-
+public|encrypt|bytea, bytea, text|f|a865200e3e17395d9b3774d4e7a19832|-
+public|decrypt|bytea, bytea, text|f|fa3fd67f1c168f498eab6165f27bdb1b|-
+public|encrypt_iv|bytea, bytea, bytea, text|f|17a521e43efce20dd4703e9d243d4f4d|-
+public|decrypt_iv|bytea, bytea, bytea, text|f|00048a7838901c86900226f25d8fd1ef|-
+public|gen_random_bytes|integer|f|393a992bef3cadec88b224bd3dace51c|-
+public|gen_random_uuid||f|b2825f0b165931d2f718b16cd4dc7cb1|-
+public|pgp_sym_encrypt|text, text|f|a911e6ce3232c550abbafb7ba5c13d70|-
+public|pgp_sym_encrypt_bytea|bytea, text|f|f5f1ad766d41dae19429bb6d8a8bc093|-
+public|pgp_sym_encrypt|text, text, text|f|a911e6ce3232c550abbafb7ba5c13d70|-
+public|pgp_sym_encrypt_bytea|bytea, text, text|f|f5f1ad766d41dae19429bb6d8a8bc093|-
+public|pgp_sym_decrypt|bytea, text|f|00337fc8a344a450412a6e8501b90406|-
+public|pgp_sym_decrypt_bytea|bytea, text|f|ae33cd2d0dea9f8d3899631bdfcc3bcc|-
+public|pgp_sym_decrypt|bytea, text, text|f|00337fc8a344a450412a6e8501b90406|-
+public|pgp_sym_decrypt_bytea|bytea, text, text|f|ae33cd2d0dea9f8d3899631bdfcc3bcc|-
+public|pgp_pub_encrypt|text, bytea|f|7472cedacad809d059f35b3823e16d62|-
+public|pgp_pub_encrypt_bytea|bytea, bytea|f|fb27931d690d0cbd38dfc1d2269d8167|-
+public|pgp_pub_encrypt|text, bytea, text|f|7472cedacad809d059f35b3823e16d62|-
+public|pgp_pub_encrypt_bytea|bytea, bytea, text|f|fb27931d690d0cbd38dfc1d2269d8167|-
+public|pgp_pub_decrypt|bytea, bytea|f|dd08bd1c245bc68b737103263d12bf24|-
+public|pgp_pub_decrypt_bytea|bytea, bytea|f|7e9d4fce9c6b6c044e314c928d957e9d|-
+public|pgp_pub_decrypt|bytea, bytea, text|f|dd08bd1c245bc68b737103263d12bf24|-
+public|pgp_pub_decrypt_bytea|bytea, bytea, text|f|7e9d4fce9c6b6c044e314c928d957e9d|-
+public|pgp_pub_decrypt|bytea, bytea, text, text|f|dd08bd1c245bc68b737103263d12bf24|-
+public|pgp_pub_decrypt_bytea|bytea, bytea, text, text|f|7e9d4fce9c6b6c044e314c928d957e9d|-
+public|pgp_key_id|bytea|f|4b72a26a9f6422f60ea2f6d4f053e2be|-
+public|armor|bytea|f|a45f37224c831b79e0dfc3d8c6feb4e0|-
+public|armor|bytea, text[], text[]|f|a45f37224c831b79e0dfc3d8c6feb4e0|-
+public|dearmor|text|f|698d71f03c675ff58762990312109ea6|-
+public|pgp_armor_headers|text, OUT key text, OUT value text|f|3954d7fda83ff251e09f7301df4decfe|-
+public|gbtreekey4_in|cstring|f|3ae07a716761d2fb692f9b07efc1e53e|-
+public|gbtreekey4_out|gbtreekey4|f|6712805062db109a94ce544bbe7067cc|-
+public|gbtreekey8_in|cstring|f|3ae07a716761d2fb692f9b07efc1e53e|-
+public|gbtreekey8_out|gbtreekey8|f|6712805062db109a94ce544bbe7067cc|-
+public|gbtreekey16_in|cstring|f|3ae07a716761d2fb692f9b07efc1e53e|-
+public|gbtreekey16_out|gbtreekey16|f|6712805062db109a94ce544bbe7067cc|-
+public|gbtreekey32_in|cstring|f|3ae07a716761d2fb692f9b07efc1e53e|-
+public|gbtreekey32_out|gbtreekey32|f|6712805062db109a94ce544bbe7067cc|-
+public|gbtreekey_var_in|cstring|f|3ae07a716761d2fb692f9b07efc1e53e|-
+public|gbtreekey_var_out|gbtreekey_var|f|6712805062db109a94ce544bbe7067cc|-
+public|cash_dist|money, money|f|1acd79b2b4b9df652d58d90e72f05a29|-
+public|date_dist|date, date|f|3983f43755ffa80d869985d91ee8e538|-
+public|float4_dist|real, real|f|1491a162a165d9bd567fbac3c9d1dd2d|-
+public|float8_dist|double precision, double precision|f|1c6ca5056a910a22941735008e6a75c1|-
+public|int2_dist|smallint, smallint|f|e28cfd9bdc2bae4a5d31338e45f7cc09|-
+public|int4_dist|integer, integer|f|70022e3435f9747864cf180d2d97e3dc|-
+public|int8_dist|bigint, bigint|f|a73c1806b07543ad4167457378c84df9|-
+public|interval_dist|interval, interval|f|c2001397d4f589efc976e1f2db79c9ac|-
+public|oid_dist|oid, oid|f|98f1ff8d3c8373653d6d3a2e298a7eba|-
+public|time_dist|time without time zone, time without time zone|f|570a6afc92722fa17cb3fb725c661bb5|-
+public|ts_dist|timestamp without time zone, timestamp without time zone|f|cd9d836b7dd414c3713096792f16bf8d|-
+public|tstz_dist|timestamp with time zone, timestamp with time zone|f|d9abd396677b459458fae044fa46f4b1|-
+public|gbt_oid_consistent|internal, oid, smallint, oid, internal|f|dd55203bb053d894f332ab32cd797e81|-
+public|gbt_oid_distance|internal, oid, smallint, oid, internal|f|e1605f622b9c0c4353c304a66189e79b|-
+public|gbt_oid_fetch|internal|f|b170eb7f24d67b67a728326d4b01cb10|-
+public|gbt_oid_compress|internal|f|732afaf305d4f417c4cf5db0c3bc0f23|-
+public|gbt_decompress|internal|f|59e11b242d92fcb1248165436b21dcf5|-
+public|gbt_var_decompress|internal|f|ccb6a57b982d2f25ac531bc2d0a83bb1|-
+public|gbt_var_fetch|internal|f|0574356c843636b49182bc6047dce549|-
+public|gbt_oid_penalty|internal, internal, internal|f|bcd9cb9619f4e8e465119557e028dd3f|-
+public|gbt_oid_picksplit|internal, internal|f|9d59d62bf218671c206c5a0fc99e8d03|-
+public|gbt_oid_union|internal, internal|f|5757cea442b4a6568875ead13deb3a90|-
+public|gbt_oid_same|gbtreekey8, gbtreekey8, internal|f|b7439f5acbfc90da616f215b5fa98492|-
+public|gbt_int2_consistent|internal, smallint, smallint, oid, internal|f|5d3d20338cdd8b1dd1b716d0b7fe1b20|-
+public|gbt_int2_distance|internal, smallint, smallint, oid, internal|f|1b18f69482d0ccfffc9d24e6833cc116|-
+public|gbt_int2_compress|internal|f|8e689ab3938180f4c3a82812e3ceb7e9|-
+public|gbt_int2_fetch|internal|f|22809d09c3801a9269f095ffdfbee732|-
+public|gbt_int2_penalty|internal, internal, internal|f|c3daa7326bb2cf9a91ec946a8e46f09e|-
+public|gbt_int2_picksplit|internal, internal|f|f0fde684618d8511cbeb7ee12b25f454|-
+public|gbt_int2_union|internal, internal|f|db5b663109e2c4088dc93913182f8caa|-
+public|gbt_int2_same|gbtreekey4, gbtreekey4, internal|f|3f52d2b718c78605317967df5455e6b9|-
+public|gbt_int4_consistent|internal, integer, smallint, oid, internal|f|9be10e5d8f86fd5163361f0de10f2814|-
+public|gbt_int4_distance|internal, integer, smallint, oid, internal|f|93d6a241916764584c5daa5e27c6fd4e|-
+public|gbt_int4_compress|internal|f|e4aeb13d147e98757be382ea4d8ea973|-
+public|gbt_int4_fetch|internal|f|cb39e0dcda5770ba36430bbb44249afd|-
+public|gbt_int4_penalty|internal, internal, internal|f|a34e57e9769fd251e1772b7994220353|-
+public|gbt_int4_picksplit|internal, internal|f|6fa362382d3d9451e1491b74050a9c20|-
+public|gbt_int4_union|internal, internal|f|8fccc6d938f74efa14807469982f19b2|-
+public|gbt_int4_same|gbtreekey8, gbtreekey8, internal|f|2a585782a2bc20b6bfd567258221758c|-
+public|gbt_int8_consistent|internal, bigint, smallint, oid, internal|f|3dac7564f78804ec4d9b411ece64abd2|-
+public|gbt_int8_distance|internal, bigint, smallint, oid, internal|f|7e8e63d20ce39846dd3bbc795ae9a511|-
+public|gbt_int8_compress|internal|f|b9e5b5783de00a79dffbf27b07e03ed0|-
+public|gbt_int8_fetch|internal|f|31061f1b43766b7ecb150d1b065b922d|-
+public|gbt_int8_penalty|internal, internal, internal|f|87ad9c7cc77c999350aa4049f9d844e7|-
+public|gbt_int8_picksplit|internal, internal|f|e97615b3945abc4affdfe70cc30d3000|-
+public|gbt_int8_union|internal, internal|f|362fa638f5af4198e050aa1ce4f687b8|-
+public|gbt_int8_same|gbtreekey16, gbtreekey16, internal|f|58a769820465cc9ae86df9024ffc22d1|-
+public|gbt_float4_consistent|internal, real, smallint, oid, internal|f|2e2cdd150b9ea2fd1d65b6d2ccbf35f1|-
+public|gbt_float4_distance|internal, real, smallint, oid, internal|f|6a02c2ffa11e804008bf8ac1c948a38e|-
+public|gbt_float4_compress|internal|f|888a893aaba63c847e324f3f920e8ef2|-
+public|gbt_float4_fetch|internal|f|3e979e8dbb7a68e145cbc23273b65608|-
+public|gbt_float4_penalty|internal, internal, internal|f|9f7f3cdddc71f1d2f88761fb1a603bf5|-
+public|gbt_float4_picksplit|internal, internal|f|562c951714215976f6d8e0bc83cd761a|-
+public|gbt_float4_union|internal, internal|f|f1f39c6dabdb6397aa5a07741921afc9|-
+public|gbt_float4_same|gbtreekey8, gbtreekey8, internal|f|514b26034fac053e2c0b4c244b11c965|-
+public|gbt_float8_consistent|internal, double precision, smallint, oid, internal|f|a19d7db88f02b87477109e3f22de860a|-
+public|gbt_float8_distance|internal, double precision, smallint, oid, internal|f|441f67ab03506f16034abb0c1cc5b6b3|-
+public|gbt_float8_compress|internal|f|b49686a0aaeb0b28ffff2b5ecee54741|-
+public|gbt_float8_fetch|internal|f|5fe758b66a03d975a48d2c80804295ef|-
+public|gbt_float8_penalty|internal, internal, internal|f|7d4f3fdf23be08b80f4fe26572c50d85|-
+public|gbt_float8_picksplit|internal, internal|f|9643b2a534ff52ed6f4c1449739ce9ee|-
+public|gbt_float8_union|internal, internal|f|98b9d1f308bf188b306553aabd17d79c|-
+public|gbt_float8_same|gbtreekey16, gbtreekey16, internal|f|e06294bc90bb577f59f4dd7f7be66b22|-
+public|gbt_ts_consistent|internal, timestamp without time zone, smallint, oid, internal|f|129c868da7e3c4a0491e70b514f3753b|-
+public|gbt_ts_distance|internal, timestamp without time zone, smallint, oid, internal|f|db22dca96984ecb19d93162a70524054|-
+public|gbt_tstz_consistent|internal, timestamp with time zone, smallint, oid, internal|f|b8861ab86f918b9644795bb07ca5f469|-
+public|gbt_tstz_distance|internal, timestamp with time zone, smallint, oid, internal|f|1d6585dd2397d6d2697a2e3e0c83208f|-
+public|gbt_ts_compress|internal|f|57340326372754a66f0a76ec89ca65c7|-
+public|gbt_tstz_compress|internal|f|ab22f6df5d528becaebbdece5ee66ec1|-
+public|gbt_ts_fetch|internal|f|55cb8087a37875a63f866a2123a8cbd5|-
+public|gbt_ts_penalty|internal, internal, internal|f|20c2a7e75a2240d7889f8680b81520b0|-
+public|gbt_ts_picksplit|internal, internal|f|8eabcb6214a15cbb4f4a1cee4fcc2765|-
+public|gbt_ts_union|internal, internal|f|1e726d3c09e7272724fd08b39df8d1e4|-
+public|gbt_ts_same|gbtreekey16, gbtreekey16, internal|f|f428ee7a3856b80d203b6a0c2cc6ab0c|-
+public|gbt_time_consistent|internal, time without time zone, smallint, oid, internal|f|ed8a5c9ea5d5439d44e7e5b727f34730|-
+public|gbt_time_distance|internal, time without time zone, smallint, oid, internal|f|91afb765291ff3114b8a770aed366894|-
+public|gbt_timetz_consistent|internal, time with time zone, smallint, oid, internal|f|4adebfd6169cf3aa4c847bc6f90e2a73|-
+public|gbt_time_compress|internal|f|47f6f6d7321b4278b3c82a93a42e0720|-
+public|gbt_timetz_compress|internal|f|5bb7fc668c1beac4d39297f3b0e52881|-
+public|gbt_time_fetch|internal|f|d09f1e07aeb92ae2e077e62801258b75|-
+public|gbt_time_penalty|internal, internal, internal|f|5200b734bedfcf514557aa8c3d102309|-
+public|gbt_time_picksplit|internal, internal|f|c459b1a98952cb87dbe9dc21e7dfdfa9|-
+public|gbt_time_union|internal, internal|f|7d3e359536aa378a5bc4a9d59c48caa7|-
+public|gbt_time_same|gbtreekey16, gbtreekey16, internal|f|3cb63778b4e4c2cbc7c2f3126198aeaa|-
+public|gbt_date_consistent|internal, date, smallint, oid, internal|f|f83142827e633f4e9e3b6202dd4b2c36|-
+public|gbt_date_distance|internal, date, smallint, oid, internal|f|44e562e61fb9f26a098a6e23a328f1af|-
+public|gbt_date_compress|internal|f|b370299af7cf50813973c08ef3853ad9|-
+public|gbt_date_fetch|internal|f|512d49bff26a1bb771066e01db279e8f|-
+public|gbt_date_penalty|internal, internal, internal|f|4522d3a094140c09baa58db70142376a|-
+public|gbt_date_picksplit|internal, internal|f|1e980c7ff90cfd30b84fcf965dae013d|-
+public|gbt_date_union|internal, internal|f|ba4d30001dfc222ad733ff8ef3aa2fda|-
+public|gbt_date_same|gbtreekey8, gbtreekey8, internal|f|028ae465a36da2960cf56ccfcd178841|-
+public|gbt_intv_consistent|internal, interval, smallint, oid, internal|f|5379c948b105caab4801943f1edc7ab8|-
+public|gbt_intv_distance|internal, interval, smallint, oid, internal|f|404d22269730e4f26d0a41cd8592fe3a|-
+public|gbt_intv_compress|internal|f|9a8589b4e2cc55724cac0c1ee6a98412|-
+public|gbt_intv_decompress|internal|f|c1c0144d6f29a2f82b1e403e67694b32|-
+public|gbt_intv_fetch|internal|f|89320ec81bfd80fddea68a211a1f08a2|-
+public|gbt_intv_penalty|internal, internal, internal|f|f2294b33226b16ee6b19794ac509b308|-
+public|gbt_intv_picksplit|internal, internal|f|3be6dd5b6b663313fed987fa6fb25488|-
+public|gbt_intv_union|internal, internal|f|45dd1efa1f158aab55d113763accc95e|-
+public|gbt_intv_same|gbtreekey32, gbtreekey32, internal|f|f671a03d1f498710d2f694f23c0e0a9f|-
+public|gbt_cash_consistent|internal, money, smallint, oid, internal|f|5bfd21d4f3970fe3e896d4715f6b83d0|-
+public|gbt_cash_distance|internal, money, smallint, oid, internal|f|a67ad1a9ff0f88d3556aa0c80b69afbb|-
+public|gbt_cash_compress|internal|f|c8f50386f25598786c804a6da906ddd2|-
+public|gbt_cash_fetch|internal|f|0c6e88888619f543c7593d1d90ebf5fa|-
+public|gbt_cash_penalty|internal, internal, internal|f|b923664a86f8d90a9e9fb6fa6dcdc2ca|-
+public|gbt_cash_picksplit|internal, internal|f|06bb65e86058c708a7aec660ca65b2c0|-
+public|gbt_cash_union|internal, internal|f|464138ae4426fd557d9d09d7511ae0a1|-
+public|gbt_cash_same|gbtreekey16, gbtreekey16, internal|f|28c42b17618f25bac2ffb41dfa1d328c|-
+public|gbt_macad_consistent|internal, macaddr, smallint, oid, internal|f|9289e2dd70888364a9129e1937658fc8|-
+public|gbt_macad_compress|internal|f|b191fc3b60d3dc01264fa6a8d828864c|-
+public|gbt_macad_fetch|internal|f|3a4f4e43d9ce682eb4cae6b8a16ac2dc|-
+public|gbt_macad_penalty|internal, internal, internal|f|2352699ee4110772db7e487c9c6b3438|-
+public|gbt_macad_picksplit|internal, internal|f|04abbe5c1801e67fc1a151a7d1984999|-
+public|gbt_macad_union|internal, internal|f|ccba960f35f78c345ca4a953f427c813|-
+public|gbt_macad_same|gbtreekey16, gbtreekey16, internal|f|b217d4c6a823df47625536138448273f|-
+public|gbt_text_consistent|internal, text, smallint, oid, internal|f|d701781f1989c1575390902d0620b167|-
+public|gbt_bpchar_consistent|internal, character, smallint, oid, internal|f|5f211074e31a73243aa13039f69cdd1b|-
+public|gbt_text_compress|internal|f|4cafb50ad59a6445a0213258445908b8|-
+public|gbt_bpchar_compress|internal|f|76dbb1959cbba074b92416a8d6789490|-
+public|gbt_text_penalty|internal, internal, internal|f|aebd195b135207e27deffdbc4b945f3d|-
+public|gbt_text_picksplit|internal, internal|f|7aac3bbbb28ef023d28fd70171d46ecd|-
+public|gbt_text_union|internal, internal|f|3b98d44d8eed7b1635f7649998a1c601|-
+public|gbt_text_same|gbtreekey_var, gbtreekey_var, internal|f|f6b593c2141e882e2fd3768e228ad1bf|-
+public|gbt_bytea_consistent|internal, bytea, smallint, oid, internal|f|bd08bbb206b71cab1fed270d2280fec1|-
+public|gbt_bytea_compress|internal|f|6ed79a6bd12c150a372ec90bba72fba6|-
+public|gbt_bytea_penalty|internal, internal, internal|f|e8d4a643cb184249688910c67f0b3eac|-
+public|gbt_bytea_picksplit|internal, internal|f|324c3583547bda333c03282769a6c083|-
+public|gbt_bytea_union|internal, internal|f|ec4dce0a76148a60586db7c54da925ff|-
+public|gbt_bytea_same|gbtreekey_var, gbtreekey_var, internal|f|f5f3b8ed32b1e4bc2b8144d6a1186980|-
+public|gbt_numeric_consistent|internal, numeric, smallint, oid, internal|f|c03c52fb01c0c4692f3692ff1bacc686|-
+public|gbt_numeric_compress|internal|f|aa51b3d81aceac64864832252955940c|-
+public|gbt_numeric_penalty|internal, internal, internal|f|d6d70b66647ff91894c8b92bba813db8|-
+public|gbt_numeric_picksplit|internal, internal|f|d76fd72bc92c9b1ef60d1de21ec9e796|-
+public|gbt_numeric_union|internal, internal|f|d314f0eced439e90045699aa17861e03|-
+public|gbt_numeric_same|gbtreekey_var, gbtreekey_var, internal|f|7f24092a2ba000517ad37cc6517baf1c|-
+public|gbt_bit_consistent|internal, bit, smallint, oid, internal|f|878550d7e83f71fce0c49f44e350fedb|-
+public|gbt_bit_compress|internal|f|31f34def849731302ee00e721401f01e|-
+public|gbt_bit_penalty|internal, internal, internal|f|bb931bf3a8c73b48aeb0d1c8ff8089a0|-
+public|gbt_bit_picksplit|internal, internal|f|e0877b1f6b123b43a7e32f762798e785|-
+public|gbt_bit_union|internal, internal|f|06cf6eaf5701d50b4786c48583f7bb38|-
+public|gbt_bit_same|gbtreekey_var, gbtreekey_var, internal|f|16e8047e6ef1cabcbda842ee8111c84c|-
+public|gbt_inet_consistent|internal, inet, smallint, oid, internal|f|36d9daac03ed3c1b0cd23c1ebd6d7942|-
+public|gbt_inet_compress|internal|f|5f73deaa9eb5c0635bd64eb585ea5b67|-
+public|gbt_inet_penalty|internal, internal, internal|f|8e8c84c1a762980a3ccc90cc91d655b5|-
+public|gbt_inet_picksplit|internal, internal|f|d1a64926c4a67ad5aa057e48ea4a57e5|-
+public|gbt_inet_union|internal, internal|f|782ba37d0efa46fde9508140c8e71117|-
+public|gbt_inet_same|gbtreekey16, gbtreekey16, internal|f|7a6454e92603ff9a700389528452b153|-
+public|gbt_uuid_consistent|internal, uuid, smallint, oid, internal|f|d7531ebad1116a09e0a44640cb312938|-
+public|gbt_uuid_fetch|internal|f|277131c172b9b34dd2e34bd633f2b7ef|-
+public|gbt_uuid_compress|internal|f|62f971abeadf3003a07c50230a501348|-
+public|gbt_uuid_penalty|internal, internal, internal|f|a517fd8d68c0acf48fe815e120674626|-
+public|gbt_uuid_picksplit|internal, internal|f|6959e67d7b34dcdf17784dcbd26c3190|-
+public|gbt_uuid_union|internal, internal|f|02942dd56299bb968daec39032b51cd4|-
+public|gbt_uuid_same|gbtreekey32, gbtreekey32, internal|f|a2fdf27ab5acd04fd9fc85408bdb53ec|-
+public|gbt_macad8_consistent|internal, macaddr8, smallint, oid, internal|f|48c35c7954feadbb811ed754da6c32c1|-
+public|gbt_macad8_compress|internal|f|fe1606b464ed4be2a9d8601f3839dc9c|-
+public|gbt_macad8_fetch|internal|f|b8c0246bc124d763d5f26a3ee92a74bc|-
+public|gbt_macad8_penalty|internal, internal, internal|f|6b41d25d0f422201aa7c56fc051b8e31|-
+public|gbt_macad8_picksplit|internal, internal|f|66eafaf0d97829e0736c8921846c4af3|-
+public|gbt_macad8_union|internal, internal|f|d07e39b9753a0c5921884548c6793b34|-
+public|gbt_macad8_same|gbtreekey16, gbtreekey16, internal|f|ee8c2cb89bd2e65104c1a7a6370bac86|-
+public|gbt_enum_consistent|internal, anyenum, smallint, oid, internal|f|ca7532dc5565084a0c53db2d9a2cd01d|-
+public|gbt_enum_compress|internal|f|192cb5abfc4973ab89d788caea2389ec|-
+public|gbt_enum_fetch|internal|f|3ede550074202fa83467674c6e846f99|-
+public|gbt_enum_penalty|internal, internal, internal|f|fff1a2478ce894ba1c9bc31020c16b67|-
+public|gbt_enum_picksplit|internal, internal|f|116be03e32038899242d9ad349e6e2de|-
+public|gbt_enum_union|internal, internal|f|c3948c8cf486b4e9581436f204acfd3d|-
+public|gbt_enum_same|gbtreekey8, gbtreekey8, internal|f|a7e9d571bd72ff0799d487964bacc5e0|-
+public|gbtreekey2_in|cstring|f|3ae07a716761d2fb692f9b07efc1e53e|-
+public|gbtreekey2_out|gbtreekey2|f|6712805062db109a94ce544bbe7067cc|-
+public|gbt_bool_consistent|internal, boolean, smallint, oid, internal|f|8056612ce590a44b42e53db0a2d19820|-
+public|gbt_bool_compress|internal|f|946688ab3d74a1a017a0687422a89c61|-
+public|gbt_bool_fetch|internal|f|abf7c178ce639833f9013245a9f458f7|-
+public|gbt_bool_penalty|internal, internal, internal|f|252891089913a329090c13a7eff1e03a|-
+public|gbt_bool_picksplit|internal, internal|f|8f1fce1453ce914bc90b9e31af5870ba|-
+public|gbt_bool_union|internal, internal|f|08b772bd51a11936357c18cc5a6e8483|-
+public|gbt_bool_same|gbtreekey2, gbtreekey2, internal|f|6affcd9996e5fa750e3525684a583ce5|-
+public|set_limit|real|f|79156a0336c67021d9428bff7da30542|-
+public|show_limit||f|3ab6c68b603f0310182efe3695d82a92|-
+public|show_trgm|text|f|bb20c15988887dca8023fcdec2e15705|-
+public|similarity|text, text|f|a65b94a37c1cfdf8414dc6e5180328ee|-
+public|similarity_op|text, text|f|4317659571d5d65d8c2c051c25c0cecd|-
+public|word_similarity|text, text|f|b9d296bc7ed64b19e32192351e9b284f|-
+public|word_similarity_op|text, text|f|5412212962db1aa604d6b20bbcf89c75|-
+public|word_similarity_commutator_op|text, text|f|02611902707b5de0d52c0f6a91da6218|-
+public|similarity_dist|text, text|f|ace88dc523cc3a38ee252b232a6f3233|-
+public|word_similarity_dist_op|text, text|f|ba8863f446eceb450a04b6c324db7419|-
+public|word_similarity_dist_commutator_op|text, text|f|d3dad69b1ecbf95b0cd4ad9d0b898eca|-
+public|gtrgm_in|cstring|f|af406f0d6fd3f9f056beb474dc267883|-
+public|gtrgm_out|gtrgm|f|809b516b4474d75b7ea2606e56263a8b|-
+public|gtrgm_consistent|internal, text, smallint, oid, internal|f|520315289c6207994f47bd6b574fcbe2|-
+public|gtrgm_distance|internal, text, smallint, oid, internal|f|96b6ebcb046f8c4a69cbe07f341d676e|-
+public|gtrgm_compress|internal|f|0c5e51542dfa58ac5c28c29a37958c04|-
+public|gtrgm_decompress|internal|f|92fd74d4efb9a0f25dd35b9b75f71a6b|-
+public|gtrgm_penalty|internal, internal, internal|f|78a76e7fec267214504a675b59c13d82|-
+public|gtrgm_picksplit|internal, internal|f|c2073eb2953664de02fe1c5070a2c0e3|-
+public|gtrgm_union|internal, internal|f|ac59a0687df15075468862ca946ee148|-
+public|gtrgm_same|gtrgm, gtrgm, internal|f|5b60e89adb1cae9e6b7e3b9e7512a859|-
+public|gin_extract_value_trgm|text, internal|f|c75ed6efb95d6922885e652c3b1ae63f|-
+public|gin_extract_query_trgm|text, internal, smallint, internal, internal, internal, internal|f|bcc3d1b35e67c79fdd7743051b5bb54e|-
+public|gin_trgm_consistent|internal, smallint, text, integer, internal, internal, internal, internal|f|1a51ef4f90da1f8206849b90da034f15|-
+public|gin_trgm_triconsistent|internal, smallint, text, integer, internal, internal, internal|f|2042fbe8e50aa61204b33362850572be|-
+public|strict_word_similarity|text, text|f|658697160f2064b47734aebdbd38425f|-
+public|strict_word_similarity_op|text, text|f|04fed7fd0767165a07b85c5ec4fd59a1|-
+public|strict_word_similarity_commutator_op|text, text|f|d06f5838b6234053cb93ddd82002f172|-
+public|strict_word_similarity_dist_op|text, text|f|4a6a81f56250df9a7e29bb72de12835f|-
+public|strict_word_similarity_dist_commutator_op|text, text|f|21d307ff0ca968d7cb12e9ecdf15ed5e|-
+public|gtrgm_options|internal|f|e959830838e9384393160a2b19d70bb7|-
+public|unaccent|regdictionary, text|f|26018d65d186aaf6b4c5c0c20984ff03|-
+public|unaccent|text|f|26018d65d186aaf6b4c5c0c20984ff03|-
+public|unaccent_init|internal|f|c6e36297e2acf527f1d99c82244c9033|-
+public|unaccent_lexize|internal, internal, internal, internal|f|a2c719ce86175b3b995e7e18bf5edd89|-
+public|ensure_product_barcode||t|2d047fd26613deb15e18ea9e82bf0a1f|search_path=public, pg_temp
+public|adjust_sale_payment|p_transaction_id uuid, p_user_id uuid, p_payment_method text, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_items_price_adjustments jsonb, p_discount_type text, p_discount_value numeric, p_reason text|t|affd0085875295d7b6c6980ce670670b|search_path=public, pg_temp
+public|adjust_total_amount|p_transaction_id uuid, p_new_total numeric, p_reason text|t|4da1e2832be3bd5cd818d392fa6ee5a9|search_path=public, pg_temp
+public|alert_low_stock||f|59590dbd9588489ed3f27aa8ff609517|search_path=public, extensions
+public|apply_physical_count|p_count_id uuid, p_user_id uuid, p_apply_zero_diffs boolean|t|1aa71acba3c5d5585a5955329412004a|search_path=public
+public|approve_transfer|p_transfer_id uuid, p_user_id uuid|t|7d5a0ff56ec384f39820bfda14a5f376|search_path=public
+public|audit_role_changes||t|1d36a393576134c58478dedbd913f115|-
+public|audit_cash_closures_changes||t|3bf574b11d4a98c4dc7de41396fec1c9|search_path=public, pg_temp
+public|audit_commission_payments_changes||t|7d77d1a92ceb382592ca42962f2e1cd3|search_path=public, pg_temp
+public|audit_fiscal_closings_changes||t|6af38fa39f3287c6c03443299670ae85|search_path=public, pg_temp
+public|audit_payment_transactions_changes||t|ab1363a107332e5773d7816971e34cfe|search_path=public, pg_temp
+public|audit_product_changes||f|b5d13dfaca1ec4ac45941640efd1114c|-
+public|audit_profile_changes||f|c1685f4ecc1c40d71d3c6b770685e4eb|-
+public|ensure_fiscal_period|p_store_id uuid, p_year integer, p_month integer|t|391f9718402643b3cf5f0cf66270063a|-
+public|audit_store_access_changes||f|cc62e1f76609e45aff0ef10aa154ede2|-
+public|audit_store_changes||f|1d673d9dcd6fb35aa08e8b0b853b9d2e|-
+public|audit_user_store_memberships_changes||f|5b67e56e5db45b84b082ce886446761b|-
+public|auto_assign_store_to_creator||f|f8529e2ed058f3acdfd0084063f07495|-
+public|auto_kardex_on_stock_movement||t|8ad3664feff065a177c7753ca856d2fe|search_path=public, pg_temp
+public|create_sale|p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric, p_discount_type text, p_discount_value numeric, p_payment_method text, p_tax_amount numeric, p_applied_taxes jsonb, p_transaction_id uuid, p_operation_date timestamp with time zone, p_cash_amount numeric, p_transfer_amount numeric, p_idempotency_key text, p_sale_currency text, p_sale_exchange_rate numeric, p_zelle_amount numeric, p_warehouse_id uuid, p_user_id uuid|t|65a44650af23cb3a4fd36018b35591d5|search_path=public, pg_temp
+public|auto_match_bank_items|p_statement_id uuid, p_user_id uuid|t|096b0be8cf469ea5818f5da54644997e|search_path=public
+public|bulk_update_products|_products jsonb|f|3a29a1744794deac9517ae53e57e23c2|-
+public|calculate_abc|p_store_id uuid, p_year integer, p_month integer, p_user_id uuid|t|4f5654194fb7f085bc92963d983f1bf5|search_path=public
+public|calculate_commission_amount_cup||f|cf77e1051ef40b485c37f3f33fe6e3be|-
+public|calculate_receipt_total_cup|p_receipt_id uuid|t|e30cc8ff2c811e3f467d3aa2ab73f6a8|search_path=public, pg_temp
+public|can_admin_reverse_transaction|p_actor uuid, p_store_id uuid|t|3f014de617e207ea2dd014a1b3189808|search_path=pg_catalog, public
+public|can_create_user_with_role|p_creator_id uuid, p_role_name text|t|e50b4397ed5e1dddf200a6bc4d63cdb0|-
+public|can_pos_undo_transaction|p_transaction_id uuid, p_actor uuid|t|859634c4874bedd76b825bbf2f9d0034|search_path=pg_catalog, public
+public|can_reverse_document|p_actor uuid, p_store_id uuid, p_operation text|t|fcd2b380b756592acd3ba76a124b9025|search_path=pg_catalog, public
+public|is_store_manager|p_store_id uuid|t|b36614702457e94a995852d4cbf9a3a2|search_path=public
+public|can_safely_delete_user|p_user_id uuid|t|2514a7026150e2cf0612e7c9f35fc82f|search_path=public, extensions
+public|cancel_reception|p_reception_id uuid|t|4caa630cefc915d03c2cfa58c2e4c834|-
+public|cancel_transfer|p_transfer_id uuid, p_reason text, p_user_id uuid|t|381d4db2d513e4608ba3eaa79564014a|search_path=public, pg_temp
+public|check_idempotency|p_key text, p_operation text, p_record_id uuid, p_param_hash text|t|70bec988441c4118232beb4ae2ad0b42|search_path=public, extensions
+public|check_reception_cost_variation||f|eb770694e1e9ef0c58d71eeede6c2331|-
+public|cleanup_old_aggregates|p_days integer|t|f83b7a58ee029647eea1a41ed4a156d4|-
+public|close_cash_shift|p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid|t|45f9c4ea1fcfcdf25c91878b258e99d5|search_path=pg_catalog, public
+public|close_fiscal_period|p_store_id uuid, p_year integer, p_month integer, p_user_id uuid|t|2429aa102bd9d7015c3923f8e626728d|search_path=public, pg_temp
+public|close_production_order_v2|p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_final_amount numeric, p_final_method text, p_final_currency text, p_exchange_rate numeric, p_output_product_id uuid, p_output_quantity numeric, p_user_id uuid, p_idempotency_key text|t|234eed0f145a71f3c7468297ae2354e4|search_path=public, extensions
+public|close_service_order_as_sale|p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_payment_method text, p_currency text, p_exchange_rate numeric, p_user_id uuid|t|b1e7f9cf60118e52ebb2da91fbc8c853|search_path=public, extensions
+public|compensate_inventory_error|p_store_id uuid, p_original_movement_id uuid, p_reason text, p_user_id uuid|t|1b03feb3441f50917d8d36f879eb096c|search_path=public
+public|confirm_inventory_adjustment|p_adjustment_id uuid, p_user_id uuid|t|d43cf0b83d5deb8885d49479b6914d14|search_path=public
+public|confirm_pending_reception|p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone|t|6acb16fdead893720e2b212562476842|search_path=public
+public|confirm_transfer|p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone|t|8d3e541a7a0285e4ef87c2c9bd683da3|search_path=public, pg_temp
+public|create_devolution|p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text|t|92a0d6d20925b93d525226981c7278a9|search_path=public
+public|create_devolution_v2|p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text|t|bcc6bc3fd29b1d8e2febef6e3cc176f1|search_path=public, pg_temp
+public|create_physical_count|p_store_id uuid, p_user_id uuid, p_notes text|t|84fdeb9ae2e01d3567fa2c487fc0619b|search_path=public
+public|create_sale_v2|p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid|t|8743baec2d4b0412ed758d0d52171186|search_path=public, pg_temp
+public|create_pre_restore_snapshot|p_store_id uuid|t|39376923494f2a21bb215fba2f9b811d|search_path=public
+public|create_production_order_v2|p_store_id uuid, p_order_type text, p_customer_name text, p_customer_ci text, p_customer_phone text, p_customer_address text, p_budget_total numeric, p_budget_currency text, p_description text, p_notes text, p_items jsonb, p_advance_amount numeric, p_advance_method text, p_advance_currency text, p_created_by uuid, p_idempotency_key text|t|00d5d9ae88cbfb38188ac4e67681d7c8|search_path=public, extensions
+public|create_purchase_order|p_store_id uuid, p_supplier_name text, p_supplier_id uuid, p_po_number text, p_notes text, p_expected_date date, p_created_by uuid, p_items jsonb|t|93856bef72bf97ebf89ab507cf2daa4f|search_path=public, extensions
+public|create_quotation|p_store_id uuid, p_items jsonb, p_user_id uuid, p_customer_id uuid, p_customer_name text, p_customer_phone text, p_discount_type text, p_discount_value numeric, p_notes text, p_valid_until date|t|daceb8d201b1bd85b77270d9f040b6eb|search_path=public
+public|create_received_service_v2|p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid|t|3363ad631b9bc7f64d00c1c087506ee4|search_path=public, extensions
+public|create_store_with_membership|p_name text, p_address text, p_created_by uuid, p_max_stores integer, p_logo_url text, p_reeup text, p_nit text, p_bank_account text, p_phone text, p_email text, p_slug text, p_plantilla text, p_signature_url text, p_stamp_url text, p_latitude double precision, p_longitude double precision, p_tenant_id uuid|t|84c76c4ffac41a15b33c6b4330d1c408|search_path=public, pg_temp
+public|create_transfer|p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb, p_notes text, p_transaction_id uuid, p_operation_date timestamp with time zone, p_user_id uuid|t|a1dd6f18e32593d3f93c5c44bafc91ba|search_path=public, pg_temp
+public|create_vale_salida|p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text, p_user_id uuid|t|7820e82dc0cf485d69a554b05d671b55|search_path=public, pg_temp
+public|current_user_store_id||t|0a3720e8e6735b0a4aa3b2762af3da54|-
+public|current_user_store_ids||t|7aa4f04c3ab7d2f7e5d07848d45844f8|search_path=public
+public|deduct_stock|p_store_id uuid, p_product_id uuid, p_quantity integer|t|343a5dcca1b98459b250930819c84866|-
+public|detect_orphan_users||t|3c6df053ef9d9b7ff7c6682cf2176811|search_path=public, pg_temp
+public|discover_backup_tables||t|ee9395981aa2c7236814ac40a5f64c5b|search_path=public
+public|duplicate_inventory_adjustment|p_original_id uuid, p_user_id uuid|t|f8fd1b6211b3430afd39c90d580f92d5|search_path=public
+public|duplicate_inventory_adjustment_v2|p_original_id uuid, p_user_id uuid|t|bceaf59e7bc365164203026451e5c29b|search_path=public, pg_temp
+public|fn_audit_stock_reception||t|ad688ce215d80b7c54840297c29340a9|-
+public|fn_audit_transaction_voiding||t|57994e765b5184842838833e5d579213|-
+public|fn_generate_physical_count_number||f|651cf64cc3a01b4f1bc4032c8a78c3d6|-
+public|fn_process_receipt|p_items jsonb, p_user_id uuid, p_reference text|t|b32dfcca5b9b06009567504dbee5abb5|search_path=public, extensions
+public|fn_sync_inventory_on_movement||t|6e3f97c765b82e692199a3b6428cafe3|search_path=public, pg_temp
+public|fn_sync_profile_role||f|5023bf37ec8932b2c374a6d6e3390971|-
+public|fn_user_preferences_set_updated_at||f|da5ac28a58c8b4bb30209bf0d3d7082c|-
+public|fn_validate_document_transition||f|469c529a70fe578a6f2ac25273bd79ca|-
+public|generate_confirmation_token|p_session_id uuid|t|d59c40988daf61098968bc0b7398c19b|search_path=public
+public|generate_internal_barcode||t|2bc7b177d042f4a825a6c378f34ad0b9|search_path=public, pg_temp
+public|generate_production_order_number||f|209220c0ccd0b12cdcde7c6095bf0fa3|-
+public|get_audit_logs|p_store_id uuid, p_search_term text, p_date_from timestamp without time zone, p_date_to timestamp without time zone, p_limit integer|t|7ca1055af0a60e871929a45af056a031|search_path=public
+public|get_available_stock|p_store_id uuid, p_product_id uuid|t|24dd2f22ea845ee6669c075ca57a64bd|search_path=public
+public|get_batch_store_daily_kpis|p_store_ids uuid[], p_date date|t|2b2c8e871a23e36e38886e629595e5a4|search_path=public
+public|get_cash_report|p_store_id uuid, p_start_date timestamp with time zone, p_end_date timestamp with time zone, p_include_all_dates boolean|f|18b7302ed3866de23ff460bb87e0f680|-
+public|get_current_user_store_id||t|5bea3f9b2c7526a6273e7215b748107e|-
+public|get_dashboard_kpis|p_store_id uuid, p_date_from timestamp with time zone, p_date_to timestamp with time zone|f|2b0df55f9f82359503ecb5f313f5678d|-
+public|get_fc_generation_stats|p_store_id uuid, p_days integer|t|379813f6bd5b9dba7383e5c086149529|search_path=public
+public|get_my_role||t|1b81790370a1fdf71ab44da7ea298ef2|search_path=public
+public|get_or_create_product_cost_sheet|p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_pdf_format text|t|ac244dee7d683865d6985f5ca84e386d|search_path=public
+public|get_paginated_products|p_store_id uuid, p_search_term text, p_category text, p_limit integer, p_offset integer|t|bac90acd20987aae68d0fd1ad4b7e847|search_path=public
+public|get_paginated_products_v2|p_limit integer, p_offset integer, p_store_id uuid, p_search_term text, p_category text, p_sort_key text, p_sort_dir text, p_stock_filter text, p_active_filter text|t|f1b2dcfb271f663b9d95f2d87afe9ca5|search_path=public, pg_temp
+public|get_sales_book|p_store_id uuid, p_year integer, p_month integer|t|20aa4de2cf6e67829dcedf183664409c|search_path=public, pg_temp
+public|get_product_stock_ledger_paginated|p_product_id uuid, p_store_id uuid, p_limit integer, p_offset integer|t|3a9a4da80366429cece2cbb5f2e40a87|search_path=public
+public|get_products_for_pos|p_store_id uuid, p_search_term text, p_category text, p_limit integer, p_offset integer|t|cd640765bf3ed71b3e0a3cfbf68deee3|search_path=public, pg_temp
+public|get_purchases_book|p_store_id uuid, p_year integer, p_month integer|t|7232b3b1632e3bd5b39e89fb4dd15a3a|search_path=public, pg_temp
+public|get_reorder_suggestions|p_store_id uuid, p_user_id uuid|t|73a8995ad6f63b1f5d926d6478e5e1e0|search_path=public
+public|get_sales_since_last_closure|p_store_id uuid|t|157d3df93e96bf186525079ad68e07b4|-
+public|get_store_analytics_advanced|p_store_id uuid, p_start_date date, p_end_date date, p_days integer|t|934338f1fd51711130a9d22e980a1219|search_path=public
+public|get_table_writable_columns|p_table_name text|t|f115613521751b8874966d5f0edef7d5|search_path=public
+public|get_tax_report|p_store_id uuid, p_year integer, p_month integer|t|a0d02672c3c03b47e10459641e8ed7a9|search_path=public, pg_temp
+public|get_tenant_cash_report|p_tenant_id uuid, p_start_date timestamp with time zone, p_end_date timestamp with time zone|t|2e263f95ea31bfc1d3094ec3489ba499|search_path=public, pg_temp
+public|get_tenant_sales_summary|p_tenant_id uuid, p_days integer|t|5b322fc330b2c3070047e398e58e8c6f|search_path=public
+public|is_user_creator|p_target_user_id uuid|t|0402ee4d5d4a97d2e081db440af3b800|search_path=public
+public|get_transactions|p_store_id uuid, p_search_term text, p_date_from timestamp without time zone, p_date_to timestamp without time zone, p_limit integer|t|e26ba2e3459c8d3723e02506b55e26cf|search_path=public, extensions
+public|get_usage_forecast||t|a8be75354c56f9a136c5f26dc8c84b21|-
+public|get_usage_summary|p_hours integer|t|e1a0964845532ed51fd662c5bc42541b|-
+public|get_user_audit_history|p_user_id uuid, p_limit integer, p_offset integer|t|030abfa5e7adcb9823b4a63138f4cd80|search_path=public, pg_temp
+public|get_users_for_encargado|p_user_id uuid|t|5dec8b4931dcb1de95a4a2cafc8594dd|-
+public|is_managed_user|p_target_user_id uuid|t|658abe78988ba3b5548be02e23b3f58e|search_path=public
+public|reverse_vale_salida|p_slip_id uuid, p_reason text, p_user_id uuid|t|7a77342d9f0c98dae673400df09384a7|search_path=public, pg_temp
+public|get_worker_commission_summary|p_store_id uuid, p_date_from date, p_date_to date|t|b0e2dbb61fc77e3a9f3bf38b55d46ece|-
+public|handle_updated_at||f|301a884953d37769916294bb60562e05|-
+public|has_store_access|p_store_id uuid|t|5c7d310009f60aa864b5b97d00596e48|search_path=public, pg_temp
+public|has_store_access_as|p_user_id uuid, p_store_id uuid|t|2b4e588cf482d9cd7fcfc84bb8e4b4d2|search_path=public
+public|has_store_role_as|p_user_id uuid, p_store_id uuid, p_roles text[]|t|abb566b7f3ce24ee2f0e6dbdb811f2e5|search_path=public, pg_temp
+public|is_admin||t|d3d5d5f7c3b24201ed6b62a7114bb49f|search_path=public, pg_temp
+public|is_admin_with_access|p_store_id uuid|t|2c7c10af3e4e9756c24678d7ee80d5da|search_path=public
+public|link_receipts_to_service|p_service_id uuid, p_receipt_ids jsonb, p_user_id uuid|t|225f2535b283ca51a93e6323c8f04e02|search_path=public, extensions
+public|lock_fiscal_period|p_store_id uuid, p_year integer, p_month integer, p_user_id uuid|t|aa256949ba2c250a521fdaffbc04140e|search_path=public
+public|log_audit_event|p_action text, p_payload jsonb, p_store_id uuid|t|9392dfdda2bb24a7c182569ce8a91363|search_path=public, extensions
+public|log_transaction_changes||t|3116c725681da8aa606cf88138f54b6b|search_path=public, extensions
+public|manage_user_memberships|p_user_id uuid, p_memberships jsonb|t|950c6a40f7d00477b8f4472829e268f5|-
+public|managed_create_store|p_name text, p_address text|t|f9002a16354045a1155b7e66744743cf|-
+public|managed_delete_product|p_product_id uuid|t|3be4ba5437c257b7e12e348bc31551dc|search_path=public, pg_temp
+public|managed_delete_user|p_user_id uuid|t|3770a6aa0977f5c4fa324c10e09672b0|search_path=public, extensions
+public|managed_revoke_membership|p_membership_id uuid, p_caller_id uuid|t|619b775d121a2c0015626bf7277ce98b|search_path=public, pg_temp
+public|managed_toggle_product_active|p_product_id uuid, p_is_active boolean|t|3340bd84642b03a0ec73be94b4607bb8|search_path=public, pg_temp
+public|mark_expired_lots|p_store_id uuid|t|dc4d95c50913c37487a262826205e224|-
+public|next_document_number|p_store_id uuid, p_document_type text, p_user_id uuid|t|1103141660702711b55f8821e354f896|search_path=public, pg_temp
+public|perform_inventory_adjustment|p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone|t|dbe5fc5b5ce9dd5d7605be51972adccf|search_path=public
+public|prevent_cash_closure_edit||f|7315bb7269d8ba63ee799f51515ad9da|-
+public|prevent_direct_inventory_modification||t|c1f53ddabd1111ff93bb1a07aa9837b4|search_path=public, extensions
+public|prevent_fiscal_closing_edit||f|bd17f83656ad38ef8b94d61df874ff9e|-
+public|prevent_hard_delete_profile||f|c675cd88b88ef6f559b18db13433e2c3|-
+public|prevent_negative_inventory||f|406dc1ae83a5e672a3296e86f74b49b3|search_path=public, extensions
+public|prevent_received_service_edit||t|1f8627454df3473e0b2b702a6f45a18e|search_path=public, pg_temp
+public|prevent_self_privilege_escalation||f|2e9f119202e5bfba6965adbd2202b6bc|-
+public|prevent_z_report_edit||f|7e4c9d67a9734cbf6c2858a5dc077d36|-
+public|process_initial_stock|p_store_id uuid, p_product_id uuid, p_quantity integer, p_reference_doc text, p_movement_date timestamp with time zone|t|4013981e7dfdd46f434dc4284da02482|-
+public|process_stock_adjustment|p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_operation_date timestamp with time zone|t|075893ccc9f5f1ca7736e9854f0b0f21|search_path=public
+public|protect_transactions_total_amount||f|e2955d9d1b124378b59d2c28bf13d6c8|search_path=public, pg_temp
+public|purge_expired_fc_pdf_cache||t|c30c7f66a33d173179dec2a78b5dcc09|search_path=public
+public|purge_old_reset_snapshots|p_days integer|t|8b826251cf9e4c7ad4eb502ac83cb665|-
+public|receive_production_output|p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text|t|110e15f1e600ba4e60e4079420f92195|search_path=public, extensions
+public|reopen_cash_shift|p_closure_id uuid, p_reason text, p_user_id uuid|t|62172f6d459cb8e8ef1612c5e461ac2d|search_path=public, pg_temp
+public|receive_to_warehouse|p_store_id uuid, p_product_id uuid, p_quantity numeric, p_unit_cost numeric, p_warehouse_id uuid, p_lot_number text, p_expiration_date date, p_user_id uuid, p_reason text|t|681916c158583db74962488659d96cf5|search_path=public, pg_temp
+public|reconcile_orphan_user|p_auth_user_id uuid, p_action text, p_reason text, p_caller_id uuid|t|87096b0f82813d84edf770d87832d6cd|search_path=public, pg_temp
+public|reconcile_stock|p_store_id uuid, p_fix boolean, p_user_id uuid|t|43950f25248338c1db87d5927f2cdad5|search_path=public, pg_temp
+public|record_counted_quantity|p_count_id uuid, p_product_id uuid, p_counted_quantity numeric, p_user_id uuid, p_notes text|t|070953d5d15d59d56c04624b10cc750c|search_path=public
+public|record_sale_movement|p_store_id uuid, p_product_id uuid, p_variant_id uuid, p_quantity integer, p_reference text|t|bf46bb2450fafb5ad7342ec155a1a72c|-
+public|register_idempotency|p_key text, p_operation text, p_record_id uuid, p_param_hash text, p_result jsonb|t|5e3ad7cd1489c7b559f6b9a5f9dee49a|search_path=public, extensions
+public|register_reception|p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid|t|843db128859af3253dbe845e8d4067cd|search_path=public
+public|register_stock_movement|p_product_id uuid, p_store_id uuid, p_quantity numeric, p_movement_type text, p_reason text, p_user_id uuid, p_variant_id uuid, p_sale_id uuid, p_unit_cost numeric, p_notes text, p_operation_date timestamp with time zone, p_skip_access_check boolean|t|31dd0e2c408aa436e280ee5105327ffd|search_path=public, extensions
+public|register_supplier_payment|p_store_id uuid, p_ref_type text, p_ref_id uuid, p_amount numeric, p_payment_method text, p_paid_by uuid, p_currency text, p_exchange_rate numeric, p_reference text, p_notes text, p_idempotency_key text, p_payment_date timestamp with time zone|t|a909b468fb197f11cc9eb5c5f6ab968d|search_path=public, extensions
+public|reject_transfer|p_transfer_id uuid, p_reason text, p_user_id uuid|t|30347f01ad8d305caa77a6979dc997b5|search_path=public
+public|release_expired_reservations||t|7f6bfbbc2408e5f65eb40711934084ed|search_path=public, pg_temp
+public|reverse_transaction_v2|p_transaction_id uuid, p_reason text, p_user_id uuid|t|080ab8d57a360c0a7e278e4eb1946ddc|search_path=public, pg_temp
+public|role_name_to_enum|p_role_name text|f|4541af0819f74e32591c30b47285ade8|-
+public|reset_store_data|p_store_id uuid, p_keep_catalog boolean|t|d44bd557c1786c60359bebfa36c3d338|search_path=public, pg_temp
+public|restore_store_backup|p_store_id uuid, p_backup_payload jsonb, p_mode text, p_confirmation_token text|t|9c16981a8b81fab7febe44fd1eb1aa79|search_path=public
+public|reverse_adjustment|p_adjustment_id uuid, p_reason text, p_user_id uuid|t|64cc3ca93171b998374464f79e24f570|search_path=public
+public|reverse_commissions_on_sale_void||t|e91878d819b52d45e26a0b6ec331c3e9|search_path=public, pg_temp
+public|reverse_devolution|p_devolution_id uuid, p_reason text, p_user_id uuid|t|f0ec3e1effe05c600fd9ad152bf7aac3|search_path=public
+public|reverse_transfer|p_transfer_id uuid, p_reason text, p_user_id uuid|t|afe4861ccbd7baddce507ce38538f31d|search_path=public, pg_temp
+public|reverse_inventory_adjustment_v2|p_adjustment_id uuid, p_reason text, p_user_id uuid|t|6461d401c5f333eeb2c4cb4e0729ba7c|search_path=public, pg_temp
+public|reverse_production_order|p_order_id uuid, p_reason text, p_user_id uuid|t|8a40d7419d18dd92bc8df4d3a832a844|search_path=public, extensions
+public|reverse_receipt|p_receipt_id uuid, p_reason text, p_user_id uuid|t|8dd39ad2b08111026eb69e40c57d168d|search_path=public
+public|reverse_receipt_v2|p_receipt_id uuid, p_reason text, p_user_id uuid|t|959e7ba7a289f141b51e0e638cac5a22|search_path=public, pg_temp
+public|reverse_transaction|p_transaction_id uuid, p_reason text, p_user_id uuid|t|b678f1a0086fd76b335f8ff7dfcadbe3|search_path=public
+public|save_product_cost_sheet|p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_calculated_data jsonb, p_cost_price numeric|t|4e2a2321cc82cb13bcd307c307f4c502|search_path=public
+public|set_audit_log_trace_id||f|5f9189dd1d5585453f2fa949304dc190|-
+public|set_default_due_date_commission||f|20c4d2970957337837e2a024d91b8207|-
+public|set_default_due_date_receipt||f|fa57be6ef03ca20387eda9a39a6104c4|-
+public|set_default_due_date_service||f|e78bc502c217c4ff95cea50a31bd0e1b|-
+public|set_received_service_status|p_service_id uuid, p_new_status text, p_user_id uuid, p_reason text|t|5aa60f383ba80b7662cc3a3c290fb0eb|search_path=public, extensions
+public|set_transfer_approval_rule|p_tenant_id uuid, p_store_id uuid, p_threshold_amount numeric, p_threshold_quantity numeric, p_approver_roles text[], p_is_active boolean, p_user_id uuid|t|880327063ae559f685ae685792f08e1e|search_path=public, pg_temp
+public|snapshot_commission_rule||t|5d68137234f36c93dcd2c3ac618ec181|-
+public|soft_delete_store|p_store_id uuid, p_deleted_by uuid|t|3ad3fd0fc46599f68cad075f973dc2e1|search_path=public
+public|sync_product_has_movements||t|fdd4e6bb06ad89a9657d950c6dabe031|search_path=public, pg_temp
+public|sync_product_stock||t|ac6af0450dba4906b12ba2d94ef429ea|search_path=public, pg_temp
+public|sync_products_stock_current||f|5cac0e005b65713a902ced43e2e64060|search_path=public, extensions
+public|touch_updated_at||t|301a884953d37769916294bb60562e05|-
+public|transfer_requires_approval|p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb|t|559ccc278fe9c6ff234f01ca3bd66aa9|search_path=public
+public|update_orphaned_users_log_updated_at||f|301a884953d37769916294bb60562e05|-
+public|update_payment_status||f|07796fe0c481a8b6a09c097fa138afbc|-
+public|update_product_wac||t|2f38220b694928d724066f31351bf642|search_path=public, pg_temp
+public|update_purchase_orders_updated_at||f|ed12387a25646709aca6cd9b21720d1f|-
+public|update_receipt_item_tasa|p_receipt_item_id uuid, p_new_tasa_cambio_recepcion numeric, p_new_moneda_recepcion text, p_motivo text, p_user_id uuid|t|4c996cf5f1fc279143f60b312eca2793|search_path=public, extensions
+public|update_reception_items|p_receipt_id uuid, p_item_updates jsonb, p_user_id uuid|t|fb0d30aa320949550a9aeaef265d8a0e|search_path=public, extensions
+public|update_transaction_taxes|p_transaction_id uuid, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric|t|94a0c28a9e9a242c2c3afcf72e6a4dbf|-
+public|update_updated_at_column||f|301a884953d37769916294bb60562e05|-
+public|update_user_invitations_updated_at||f|301a884953d37769916294bb60562e05|-
+public|upsert_manual_exchange_rate_with_audit|p_actor_id uuid, p_currency text, p_rate numeric, p_rate_date date, p_source text, p_capture_method text, p_source_ip text|t|1407e910ca6b288d8417f1abad2772b1|search_path=public, pg_temp
+public|upsert_store_cost_template|p_store_id uuid, p_template_id text, p_template_data jsonb, p_modalidad text, p_pdf_format text, p_created_by uuid|t|bb2f9461291702eda9d74288f1416514|search_path=public
+public|upsert_usage_aggregate|p_bucket_start timestamp with time zone, p_bucket_end timestamp with time zone, p_metric_type text, p_service text, p_endpoint text, p_count integer, p_sum_value double precision|t|9befc5b0746111bff9fbe0ec87be4048|-
+public|validate_store_can_be_modified|p_store_id uuid, p_check_type text|t|d6a1d6237e773d6da1ca0216822a763f|search_path=public
+public|validate_backup_registry_drift||t|24b04531dbef3e6e84af18ad4228a617|search_path=public
+public|validate_operation_date|p_new_date timestamp with time zone, p_store_id uuid|t|8559311d55219df06b79d84cf98772e2|search_path=public, pg_temp
+public|validate_payment_transactions_invariants||f|46bb2153d24e5248b786e05fb29ddf0d|search_path=public, pg_temp
+public|validate_post_restore|p_store_id uuid, p_backup_payload jsonb|t|fbe19f09cb577b8370cabbd5b7add704|search_path=public
+public|validate_pre_restore_fk_integrity|p_store_id uuid|t|b796132c713caa6ba62ea9c93559a7be|search_path=public
+public|validate_transfer_operation_date|p_new_date timestamp with time zone, p_origin_store_id uuid, p_destination_store_id uuid|t|bfd0b74503a36b229a4119c6a78e8b35|search_path=public
+public|validate_transfer_stores||f|23aa0c4c565214d9892329ced583e00e|-
+public|void_closed_production_order|p_order_id uuid, p_reason text, p_user_id uuid|t|1a66a8bc0990766cc37d1621d4003315|search_path=public, extensions
+public|void_inventory_adjustment|p_adjustment_id uuid, p_user_id uuid|t|bd0c24ec918a221d0970baa65955694e|search_path=public
+public|void_pending_reception|p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone|t|3197f2ad7d67ef137bb132592c0659e2|search_path=public, pg_temp
+public|void_received_service_with_reversal|p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone|t|e1ba8c1c6089871fe9dc45a7e01cf3a4|search_path=public, extensions
+public|void_reception_with_reversal|p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone|t|06047218f8d1d7374103115279e6e37d|search_path=public
+public|void_transaction|p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone, p_user_id uuid|t|b2cb434b5ad6c59fe13b347fd362f534|search_path=pg_catalog, public
+public|withdraw_production_item|p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text, p_server_side_cost boolean|t|119f9521fa7043654d535d7a9352a209|search_path=public, extensions
+public|withdraw_production_item_deprecated_6arg|p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text|t|26db3ed6351c8e85a2643dab9b889607|search_path=public, extensions

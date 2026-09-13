@@ -1,0 +1,187 @@
+{
+ "captured_at": "2026-09-13T06:23:14.215Z",
+ "tag": "post",
+ "devolutions_counts": [
+  {
+   "n": 25,
+   "n_stores": 3,
+   "min_created": "2026-08-04 07:30:51.150879+00",
+   "max_created": "2026-09-10 23:58:39.315276+00"
+  }
+ ],
+ "devolutions_by_status": [
+  {
+   "status": "completed",
+   "n": 23
+  },
+  {
+   "status": "reversed",
+   "n": 2
+  }
+ ],
+ "devolutions_money": [
+  {
+   "sum_total": "355120.00",
+   "min_total": "70.00",
+   "max_total": "349650.00"
+  }
+ ],
+ "devolution_items_counts": [
+  {
+   "n": 25,
+   "sum_qty": "1028.00",
+   "sum_total": "355120.00",
+   "min_created": "2026-08-04 07:30:51.150879+00",
+   "max_created": "2026-09-10 23:58:39.315276+00"
+  }
+ ],
+ "transactions_counts": [
+  {
+   "n": 597,
+   "min_created": "2026-05-02 12:00:00+00",
+   "max_created": "2026-09-11 04:25:44.22297+00"
+  }
+ ],
+ "transactions_by_status": [
+  {
+   "status": "completed",
+   "n": 592
+  },
+  {
+   "status": "voided",
+   "n": 5
+  }
+ ],
+ "payments_counts": [
+  {
+   "n": 458,
+   "sum_amount": "8249548.4999999999465733",
+   "min_date": "2026-05-02 12:00:00+00",
+   "max_date": "2026-09-11 04:24:09.0631+00"
+  }
+ ],
+ "payments_by_direction": [
+  {
+   "direction": "in",
+   "n": 446,
+   "sum_amount": "8248278.4999999999465733"
+  },
+  {
+   "direction": "refund",
+   "n": 12,
+   "sum_amount": "1270"
+  }
+ ],
+ "stock_movements_counts": [
+  {
+   "n": 1021,
+   "sum_qty": "13506.6289",
+   "min_created": "2026-05-01 09:00:00+00",
+   "max_created": "2026-09-11 04:25:37.079359+00"
+  }
+ ],
+ "stock_movements_by_type": [
+  {
+   "movement_type": "devolution_reverse",
+   "n": 1,
+   "sum_qty": "-2.0000"
+  },
+  {
+   "movement_type": "initial",
+   "n": 98,
+   "sum_qty": "6427.0000"
+  },
+  {
+   "movement_type": "production_in",
+   "n": 30,
+   "sum_qty": "91.0000"
+  },
+  {
+   "movement_type": "production_out",
+   "n": 26,
+   "sum_qty": "-52.0000"
+  },
+  {
+   "movement_type": "production_reverse",
+   "n": 8,
+   "sum_qty": "-25.0000"
+  },
+  {
+   "movement_type": "purchase",
+   "n": 216,
+   "sum_qty": "9896.8533"
+  },
+  {
+   "movement_type": "return",
+   "n": 12,
+   "sum_qty": "17.0000"
+  },
+  {
+   "movement_type": "sale",
+   "n": 615,
+   "sum_qty": "-2853.2244"
+  },
+  {
+   "movement_type": "sale_reverse",
+   "n": 5,
+   "sum_qty": "7.0000"
+  },
+  {
+   "movement_type": "transfer_in",
+   "n": 5,
+   "sum_qty": "36.0000"
+  },
+  {
+   "movement_type": "transfer_out",
+   "n": 5,
+   "sum_qty": "-36.0000"
+  }
+ ],
+ "inventory_counts": [
+  {
+   "n": 277,
+   "sum_qty": "13506.6289",
+   "min_updated": "2026-08-11 22:49:19.266205+00",
+   "max_updated": "2026-09-11 04:25:37.079359+00"
+  }
+ ],
+ "audit_logs_counts": [
+  {
+   "n": 8145,
+   "min_created": "2026-05-27 15:33:24.459614+00",
+   "max_created": "2026-09-13 03:19:31.092902+00"
+  }
+ ],
+ "audit_logs_dev_actions": [
+  {
+   "action": "DEVOLUTION_CREATED_V2",
+   "n": 38
+  },
+  {
+   "action": "REVERSE_DEVOLUTION",
+   "n": 1
+  }
+ ],
+ "catalog_structure": [
+  {
+   "public_functions": 484,
+   "secdef_functions": 245,
+   "public_triggers": 82,
+   "policies": 391,
+   "public_tables": 146,
+   "public_views": 8,
+   "public_sequences": 6
+  }
+ ],
+ "catalog_prosrc_canary": [
+  {
+   "all_prosrc_md5": "068ea80372b205fa17c393b9aa52e5ac",
+   "n": 484
+  }
+ ],
+ "catalog_trigger_names_md5": [
+  {
+   "trigger_names_md5": "83bfdc751409359d7fc446d5b1b466f6"
+  }
+ ]
+}

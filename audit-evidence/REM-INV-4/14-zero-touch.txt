@@ -1,0 +1,27 @@
+REM-INV-4 — 14-zero-touch.txt (§26)
+========================================
+Método: fingerprint PRE (05:44Z aprox) y POST de 7 tablas de negocio (payments=payment_transactions) +
+huella estructural del catálogo (funciones/secdef/triggers/policies/tablas + canary md5 de prosrc agregado).
+Capturas completas: zero-touch-pre.json / zero-touch-post.json.
+
+[OK] devolutions_counts: [{"n": 25, "n_stores": 3, "min_created": "2026-08-04 07:30:51.150879+00", "max_created": "2026-09-10 23:58:39.
+[OK] devolutions_by_status: [{"status": "completed", "n": 23}, {"status": "reversed", "n": 2}]
+[OK] devolutions_money: [{"sum_total": "355120.00", "min_total": "70.00", "max_total": "349650.00"}]
+[OK] devolution_items_counts: [{"n": 25, "sum_qty": "1028.00", "sum_total": "355120.00", "min_created": "2026-08-04 07:30:51.150879+00", "ma
+[OK] transactions_counts: [{"n": 597, "min_created": "2026-05-02 12:00:00+00", "max_created": "2026-09-11 04:25:44.22297+00"}]
+[OK] transactions_by_status: [{"status": "completed", "n": 592}, {"status": "voided", "n": 5}]
+[OK] payments_counts: [{"n": 458, "sum_amount": "8249548.4999999999465733", "min_date": "2026-05-02 12:00:00+00", "max_date": "2026-
+[OK] payments_by_direction: [{"direction": "in", "n": 446, "sum_amount": "8248278.4999999999465733"}, {"direction": "refund", "n": 12, "su
+[OK] stock_movements_counts: [{"n": 1021, "sum_qty": "13506.6289", "min_created": "2026-05-01 09:00:00+00", "max_created": "2026-09-11 04:2
+[OK] stock_movements_by_type: [{"movement_type": "devolution_reverse", "n": 1, "sum_qty": "-2.0000"}, {"movement_type": "initial", "n": 98, 
+[OK] inventory_counts: [{"n": 277, "sum_qty": "13506.6289", "min_updated": "2026-08-11 22:49:19.266205+00", "max_updated": "2026-09-1
+[OK] audit_logs_counts: [{"n": 8145, "min_created": "2026-05-27 15:33:24.459614+00", "max_created": "2026-09-13 03:19:31.092902+00"}]
+[OK] audit_logs_dev_actions: [{"action": "DEVOLUTION_CREATED_V2", "n": 38}, {"action": "REVERSE_DEVOLUTION", "n": 1}]
+[OK] catalog_structure: [{"public_functions": 484, "secdef_functions": 245, "public_triggers": 82, "policies": 391, "public_tables": 1
+[OK] catalog_prosrc_canary: [{"all_prosrc_md5": "068ea80372b205fa17c393b9aa52e5ac", "n": 484}]
+[OK] catalog_trigger_names_md5: [{"trigger_names_md5": "83bfdc751409359d7fc446d5b1b466f6"}]
+
+VERIFICACIÓN GLOBAL: ZERO-TOUCH VERIFICADO — PRE == POST en las 16 secciones
+Business data mutation = 0; DDL = 0; grants/policies/triggers = 0 cambios.
+
+Ledger de migraciones LIVE copiado a raw/staging/ledger-entries.json (12 entradas).

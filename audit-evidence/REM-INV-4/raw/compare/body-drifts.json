@@ -1,0 +1,387 @@
+[
+ {
+  "oid": 34760,
+  "name": "cancel_reception",
+  "identity": "public.cancel_reception(p_reception_id uuid)",
+  "secdef": "true",
+  "git_src": "20260127_canonical_stock_movement.sql"
+ },
+ {
+  "oid": 52507,
+  "name": "audit_product_changes",
+  "identity": "public.audit_product_changes()",
+  "secdef": "true",
+  "git_src": "20260215_fix_sale_price_error.sql"
+ },
+ {
+  "oid": 52509,
+  "name": "audit_store_changes",
+  "identity": "public.audit_store_changes()",
+  "secdef": "true",
+  "git_src": "20260303_fix_store_audit_and_enable_management.sql"
+ },
+ {
+  "oid": 130873,
+  "name": "cancel_transfer",
+  "identity": "public.cancel_transfer(p_transfer_id uuid, p_user_id uuid)",
+  "secdef": "true",
+  "git_src": "20260802000002_v2_12_42_transfer_remediation.sql"
+ },
+ {
+  "oid": 138218,
+  "name": "audit_cash_closures_changes",
+  "identity": "public.audit_cash_closures_changes()",
+  "secdef": "true",
+  "git_src": "20260809000004_v2_18_4_audit_triggers.sql"
+ },
+ {
+  "oid": 138220,
+  "name": "audit_commission_payments_changes",
+  "identity": "public.audit_commission_payments_changes()",
+  "secdef": "true",
+  "git_src": "20260809000004_v2_18_4_audit_triggers.sql"
+ },
+ {
+  "oid": 138689,
+  "name": "check_idempotency",
+  "identity": "public.check_idempotency(p_key text, p_operation text, p_record_id uuid, p_param_hash text)",
+  "secdef": "true",
+  "git_src": "20260810000012_v2_26_hotfix3_idempotency_registry.sql"
+ },
+ {
+  "oid": 142121,
+  "name": "adjust_total_amount",
+  "identity": "public.adjust_total_amount(p_transaction_id uuid, p_new_total numeric, p_reason text)",
+  "secdef": "true",
+  "git_src": "20260812000001_pr4_4i_payment_transactions_hardening.sql"
+ },
+ {
+  "oid": 142629,
+  "name": "bulk_update_products",
+  "identity": "public.bulk_update_products(_products jsonb)",
+  "secdef": "true",
+  "git_src": "20260124_enforce_store_sku_uniqueness.sql"
+ },
+ {
+  "oid": 131395,
+  "name": "deduct_stock",
+  "identity": "public.deduct_stock(p_store_id uuid, p_product_id uuid, p_quantity numeric)",
+  "secdef": "true",
+  "git_src": "20260127_canonical_stock_movement.sql"
+ },
+ {
+  "oid": 133208,
+  "name": "confirm_transfer",
+  "identity": "public.confirm_transfer(p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone)",
+  "secdef": "true",
+  "git_src": "20260802000005_v2_12_44_transfer_confirm_remediation.sql"
+ },
+ {
+  "oid": 136713,
+  "name": "confirm_pending_reception",
+  "identity": "public.confirm_pending_reception(p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone)",
+  "secdef": "true",
+  "git_src": "20260810000080_pr4_4f_fix_decimal_reception.sql"
+ },
+ {
+  "oid": 136967,
+  "name": "create_devolution",
+  "identity": "public.create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_currency text, p_exchange_rate numeric)",
+  "secdef": "true",
+  "git_src": "20260727000006_v2_12_9_spoofing_p_user_id.sql"
+ },
+ {
+  "oid": 137570,
+  "name": "create_pre_restore_snapshot",
+  "identity": "public.create_pre_restore_snapshot(p_store_id uuid)",
+  "secdef": "true",
+  "git_src": "20260802000007_v2_12_46_restore_rpc_preview.sql"
+ },
+ {
+  "oid": 138143,
+  "name": "create_store_with_membership",
+  "identity": "public.create_store_with_membership(p_name text, p_address text, p_created_by uuid, p_max_stores integer, p_logo_url text, p_reeup text, p_nit text, p_bank_account text, p_phone text, p_email text, p_slug text, p_plantilla text, p_signature_url text, p_stamp_url text, p_latitude double precision, p_longitude double precision, p_tenant_id uuid)",
+  "secdef": "true",
+  "git_src": "20260806000005_v2_15_5_create_store_with_tenant.sql"
+ },
+ {
+  "oid": 138285,
+  "name": "close_cash_shift",
+  "identity": "public.close_cash_shift(p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid)",
+  "secdef": "true",
+  "git_src": "20260911000000_rem_sec1_security_boundaries.sql"
+ },
+ {
+  "oid": 138373,
+  "name": "current_user_store_ids",
+  "identity": "public.current_user_store_ids()",
+  "secdef": "true",
+  "git_src": "20260807000004_v2_21_0_rls_helper_functions.sql"
+ },
+ {
+  "oid": 138865,
+  "name": "create_devolution_v2",
+  "identity": "public.create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text)",
+  "secdef": "true",
+  "git_src": "20260810000041_pr4_3_1_fixes.sql"
+ },
+ {
+  "oid": 141788,
+  "name": "create_sale_v2",
+  "identity": "public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid)",
+  "secdef": "true",
+  "git_src": "20260812000002_pr4_4i_create_sale_v2_payments.sql"
+ },
+ {
+  "oid": 142308,
+  "name": "create_vale_salida",
+  "identity": "public.create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text)",
+  "secdef": "true",
+  "git_src": "20260817000001_vale_salida.sql"
+ },
+ {
+  "oid": 142325,
+  "name": "create_vale_salida",
+  "identity": "public.create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text, p_user_id uuid)",
+  "secdef": "true",
+  "git_src": "20260817000001_vale_salida.sql"
+ },
+ {
+  "oid": 26950,
+  "name": "fn_process_receipt",
+  "identity": "public.fn_process_receipt(p_items jsonb, p_user_id uuid, p_reference text)",
+  "secdef": "true",
+  "git_src": "20260326_multi_tenant_hardening.sql"
+ },
+ {
+  "oid": 130964,
+  "name": "fn_process_receipt",
+  "identity": "public.fn_process_receipt(p_items jsonb, p_user_id uuid, p_store_id uuid, p_reference text)",
+  "secdef": "true",
+  "git_src": "20260326_multi_tenant_hardening.sql"
+ },
+ {
+  "oid": 142600,
+  "name": "ensure_product_barcode",
+  "identity": "public.ensure_product_barcode()",
+  "secdef": "true",
+  "git_src": "20260820000010_fix_barcode_type_and_rpc_trim.sql"
+ },
+ {
+  "oid": 47075,
+  "name": "get_my_role",
+  "identity": "public.get_my_role()",
+  "secdef": "true",
+  "git_src": "20260209_fix_critical_rls_issues.sql"
+ },
+ {
+  "oid": 48498,
+  "name": "get_audit_logs",
+  "identity": "public.get_audit_logs(p_store_id uuid, p_search_term text, p_date_from timestamp without time zone, p_date_to timestamp without time zone, p_limit integer)",
+  "secdef": "true",
+  "git_src": "20260227_fix_rpc_structures.sql"
+ },
+ {
+  "oid": 51380,
+  "name": "get_sales_since_last_closure",
+  "identity": "public.get_sales_since_last_closure(p_store_id uuid)",
+  "secdef": "true",
+  "git_src": "20260228_fix_sales_since_last_closure_fallback.sql"
+ },
+ {
+  "oid": 59843,
+  "name": "get_product_stock_ledger_paginated",
+  "identity": "public.get_product_stock_ledger_paginated(p_product_id uuid, p_store_id uuid, p_limit integer, p_offset integer)",
+  "secdef": "true",
+  "git_src": "20260227_fix_rpc_structures.sql"
+ },
+ {
+  "oid": 138147,
+  "name": "get_tenant_sales_summary",
+  "identity": "public.get_tenant_sales_summary(p_tenant_id uuid, p_days integer)",
+  "secdef": "true",
+  "git_src": "20260807000008_v2_21_0_rls_fix_get_tenant_sales_summary.sql"
+ },
+ {
+  "oid": 142661,
+  "name": "get_paginated_products_v2",
+  "identity": "public.get_paginated_products_v2(p_limit integer, p_offset integer, p_store_id uuid, p_search_term text, p_category text, p_sort_key text, p_sort_dir text, p_stock_filter text, p_active_filter text)",
+  "secdef": "true",
+  "git_src": "20260823000002_get_paginated_products_v2_add_fields.sql"
+ },
+ {
+  "oid": 142663,
+  "name": "get_products_for_pos",
+  "identity": "public.get_products_for_pos(p_store_id uuid, p_search_term text, p_category text, p_limit integer, p_offset integer)",
+  "secdef": "true",
+  "git_src": "20260823000002_get_paginated_products_v2_add_fields.sql"
+ },
+ {
+  "oid": 44368,
+  "name": "get_users_for_encargado",
+  "identity": "public.get_users_for_encargado(p_user_id uuid)",
+  "secdef": "false",
+  "git_src": "20260223_harden_user_management.sql"
+ },
+ {
+  "oid": 54235,
+  "name": "has_role",
+  "identity": "public.has_role(p_user_id uuid, p_required_role user_role)",
+  "secdef": "true",
+  "git_src": "20260212_fix_has_role_overload.sql"
+ },
+ {
+  "oid": 54236,
+  "name": "has_role",
+  "identity": "public.has_role(p_required_role user_role)",
+  "secdef": "true",
+  "git_src": "20260212_fix_has_role_overload.sql"
+ },
+ {
+  "oid": 88135,
+  "name": "log_audit_event",
+  "identity": "public.log_audit_event(p_action text, p_payload jsonb, p_store_id uuid)",
+  "secdef": "true",
+  "git_src": "20260324_total_remediation.sql"
+ },
+ {
+  "oid": 131888,
+  "name": "has_store_role",
+  "identity": "public.has_store_role(p_store_id uuid, p_roles text[])",
+  "secdef": "true",
+  "git_src": "20260820000001_security_fix_spoofable_caller_uid.sql"
+ },
+ {
+  "oid": 132940,
+  "name": "get_usage_forecast",
+  "identity": "public.get_usage_forecast()",
+  "secdef": "true",
+  "git_src": "20260626000001_usage_tracking.sql"
+ },
+ {
+  "oid": 136268,
+  "name": "has_store_access_as",
+  "identity": "public.has_store_access_as(p_user_id uuid, p_store_id uuid)",
+  "secdef": "true",
+  "git_src": "20260726000002_v1_2_devolutions_customers_quotations_kardex_fiscal.sql"
+ },
+ {
+  "oid": 138374,
+  "name": "is_admin_with_access",
+  "identity": "public.is_admin_with_access(p_store_id uuid)",
+  "secdef": "true",
+  "git_src": "20260807000004_v2_21_0_rls_helper_functions.sql"
+ },
+ {
+  "oid": 142421,
+  "name": "has_management_access_as",
+  "identity": "public.has_management_access_as(p_user_id uuid, p_store_id uuid)",
+  "secdef": "true",
+  "git_src": "20260818000001_security_hardening_h1_h2_h3.sql"
+ },
+ {
+  "oid": 38673,
+  "name": "managed_create_store",
+  "identity": "public.managed_create_store(p_name text, p_address text)",
+  "secdef": "true",
+  "git_src": "20260118_multi_store_managed_ops.sql"
+ },
+ {
+  "oid": 88184,
+  "name": "managed_create_user",
+  "identity": "public.managed_create_user(p_max_users integer, p_max_stores integer, p_role text, p_full_name text, p_email text, p_creator_id uuid, p_target_user_id uuid, p_store_id uuid, p_memberships jsonb)",
+  "secdef": "true",
+  "git_src": "20260326_multi_tenant_hardening.sql"
+ },
+ {
+  "oid": 131362,
+  "name": "process_initial_stock",
+  "identity": "public.process_initial_stock(p_store_id uuid, p_product_id uuid, p_quantity numeric, p_reference_doc text, p_movement_date timestamp with time zone)",
+  "secdef": "false",
+  "git_src": "20260127_canonical_stock_movement.sql"
+ },
+ {
+  "oid": 136711,
+  "name": "perform_inventory_adjustment",
+  "identity": "public.perform_inventory_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone)",
+  "secdef": "true",
+  "git_src": "20260727000008_v2_12_12_fix_is_not_null_pattern.sql"
+ },
+ {
+  "oid": 131945,
+  "name": "soft_delete_store",
+  "identity": "public.soft_delete_store(p_store_id uuid, p_deleted_by uuid)",
+  "secdef": "true",
+  "git_src": "20260802000001_v2_12_41_fase0_remediacion.sql"
+ },
+ {
+  "oid": 133204,
+  "name": "register_stock_movement",
+  "identity": "public.register_stock_movement(p_product_id uuid, p_store_id uuid, p_quantity numeric, p_movement_type text, p_reason text, p_user_id uuid, p_variant_id uuid, p_sale_id uuid, p_unit_cost numeric, p_notes text, p_operation_date timestamp with time zone, p_skip_access_check boolean)",
+  "secdef": "true",
+  "git_src": "20260626000005_qa_batch2_rpc_fixes.sql"
+ },
+ {
+  "oid": 137399,
+  "name": "reset_store_data",
+  "identity": "public.reset_store_data(target_store_id uuid, p_keep_catalog boolean, p_user_id uuid)",
+  "secdef": "true",
+  "git_src": "20260820000005_post_restore_reconciliation.sql"
+ },
+ {
+  "oid": 137580,
+  "name": "restore_store_backup",
+  "identity": "public.restore_store_backup(p_store_id uuid, p_backup_payload jsonb, p_mode text, p_confirmation_token text)",
+  "secdef": "true",
+  "git_src": "20260802000008_v2_12_47_restore_rpc_execute.sql"
+ },
+ {
+  "oid": 137974,
+  "name": "release_expired_reservations",
+  "identity": "public.release_expired_reservations()",
+  "secdef": "true",
+  "git_src": "20260804000001_v2_13_10_fix_release_expired_reservations_cast.sql"
+ },
+ {
+  "oid": 138536,
+  "name": "register_reception",
+  "identity": "public.register_reception(p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid)",
+  "secdef": "true",
+  "git_src": "register_reception_rpc.sql"
+ },
+ {
+  "oid": 138690,
+  "name": "register_idempotency",
+  "identity": "public.register_idempotency(p_key text, p_operation text, p_record_id uuid, p_param_hash text, p_result jsonb)",
+  "secdef": "true",
+  "git_src": "20260810000012_v2_26_hotfix3_idempotency_registry.sql"
+ },
+ {
+  "oid": 59867,
+  "name": "update_transaction_taxes",
+  "identity": "public.update_transaction_taxes(p_transaction_id uuid, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric)",
+  "secdef": "true",
+  "git_src": "20260228_implement_taxes.sql"
+ },
+ {
+  "oid": 136714,
+  "name": "void_reception_with_reversal",
+  "identity": "public.void_reception_with_reversal(p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone)",
+  "secdef": "true",
+  "git_src": "20260727000008_v2_12_12_fix_is_not_null_pattern.sql"
+ },
+ {
+  "oid": 137398,
+  "name": "validate_store_can_be_modified",
+  "identity": "public.validate_store_can_be_modified(p_store_id uuid, p_check_type text)",
+  "secdef": "true",
+  "git_src": "20260802000001_v2_12_41_fase0_remediacion.sql"
+ },
+ {
+  "oid": 142115,
+  "name": "validate_payment_transactions_invariants",
+  "identity": "public.validate_payment_transactions_invariants()",
+  "secdef": "false",
+  "git_src": "20260812000001_pr4_4i_payment_transactions_hardening.sql"
+ }
+]

@@ -1,0 +1,114 @@
+{
+ "aux_in_migrations": [
+  "DEMO_RESET_SCRIPT_V2.sql",
+  "sql_checks.sql",
+  "register_reception_rpc.sql",
+  "DEMO_RESET_SCRIPT.sql",
+  "DEMO_RESET_SCRIPT_V3.sql"
+ ],
+ "root_supabase_sql": [
+  {
+   "file": "VERIFICATION_TESTS.sql",
+   "stmts": 16,
+   "ops": []
+  },
+  {
+   "file": "remediation_v3.sql",
+   "stmts": 27,
+   "ops": [
+    "CREATE_FUNCTION",
+    "CREATE_FUNCTION",
+    "CREATE_FUNCTION",
+    "CREATE_FUNCTION",
+    "CREATE_FUNCTION",
+    "ALTER_TABLE",
+    "ALTER_TABLE",
+    "ALTER_TABLE",
+    "ALTER_TABLE",
+    "ALTER_TABLE",
+    "ALTER_TABLE",
+    "ALTER_TABLE",
+    "ALTER_TABLE",
+    "ALTER_TABLE",
+    "ALTER_TABLE",
+    "CREATE_POLICY",
+    "CREATE_FUNCTION",
+    "CREATE_FUNCTION",
+    "GRANT",
+    "GRANT",
+    "GRANT",
+    "GRANT",
+    "GRANT"
+   ]
+  },
+  {
+   "file": "remediation_verification.sql",
+   "stmts": 4,
+   "ops": []
+  },
+  {
+   "file": "repair_schema_cache.sql",
+   "stmts": 9,
+   "ops": [
+    "ALTER_TABLE",
+    "ALTER_TABLE",
+    "ALTER_TABLE",
+    "GRANT",
+    "GRANT",
+    "GRANT"
+   ]
+  },
+  {
+   "file": "verify_audit_fixes.sql",
+   "stmts": 3,
+   "ops": []
+  }
+ ],
+ "aux_fn_evol": {
+  "register_reception": [
+   {
+    "file": "(migrations)/register_reception_rpc.sql",
+    "stmt": 0,
+    "op": "AUX_CREATE_FUNCTION",
+    "name": "register_reception",
+    "arity": 0,
+    "language": "plpgsql",
+    "security": "SECURITY DEFINER",
+    "search_path": "public",
+    "body_md5": "e8f0b7cc8f1c35ec23e11dfd5dc9842f",
+    "body_n": 1,
+    "stmt_full": "CREATE OR REPLACE FUNCTION register_reception(\n    p_store_id UUID,\n    p_supplier TEXT,\n    p_reception_date DATE,\n    p_invoice_number TEXT,\n    p_items JSONB\n)\nRETURNS UUID\nLANGUAGE plpgsql\nSECURITY DEFINER\nSET search_path = public\nAS $$\nDECLARE\n    v_reception_id UUID;\n    v_item JSONB;\n    v_product_id UUID;\n    v_quantity NUMERIC;\n    v_unit_cost NUMERIC;\n    v_total_cost NUMERIC := 0;\n    v_items_count INT := 0;\n    v_user_id UUID;\n    v_user_store_id UUID;\nBEGIN\n    -- Obtener usuario autenticado (evita pasar user_id desde el cliente)\n    IF auth.uid() IS NULL THEN\n        RAISE EXCEPTION 'Authentication required';\n    END IF;\n    v_user_id := auth.uid()::UUID;\n    -- ================================================================\n    -- VALIDACIONES PREVIAS\n    -- ================================================================\n    \n    -- Validar store_id existe y pertenece al usuario (profiles guarda la asociaci\u00f3n tienda)\n    v_user_store_id := public.current_user_store_id();\n    IF v_user_store_id IS NULL THEN\n        RAISE EXCEPTION 'User has no store assigned';\n    END IF;\n    IF v_user_store_id != p_store_id THEN\n        RAISE EXCEPTION 'Invalid store_id for user';\n    END IF;\n\n    -- Validar proveedor\n    IF p_supplier IS NULL OR TRIM(p_supplier) = '' THEN\n        RAISE EXCEPTION 'Supplier is required';\n    END IF;\n\n    -- Validar fecha\n    IF p_reception_date IS NULL THEN\n        RAISE EXCEPTION 'Reception date is required';\n    END IF;\n\n    -- Validar fecha no es futura\n    IF p_reception_date > CURRENT_DATE THEN\n        RAISE EXCEPTION 'Reception date cannot be in the future';\n    END IF;\n\n    -- Validar n\u00famero de factura\n    IF p_invoice_number IS NULL OR TRIM(p_invoice_number) = '' THEN\n        RAISE EXCEPTION 'Invoice number is required';\n    END IF;\n\n    -- Validar que no exista duplicado de factura para este proveedor (comparamos reference_doc en receipts)\n    IF EXISTS (\n        SELECT 1 FROM receipts r\n        JOIN public.profiles p ON p.id = r.user_id\n        WHERE p.store_id = p_store_id\n          AND r.reference_doc = FORMAT('%s | %s', TRIM(p_supplier), TRIM(p_invoice_number))\n    ) THEN\n        RAISE EXCEPTION 'Duplicate invoice for this supplier in this store';\n    END IF;\n\n    -- Validar items array\n    IF p_items IS NULL OR jsonb_array_length(p_items) = 0 THEN\n        RAISE EXCEPTION 'Reception must contain at least one item';\n    END IF;\n\n    v_items_count := jsonb_array_length(p_items);\n\n    -- ================================================================\n    -- PASO 1: CREAR REGISTRO DE RECEPCI\u00d3N (CABECERA)\n    -- ================================================================\n    \n    -- Insertar en `receipts` usando `reference_doc` y `created_at` (schema est\u00e1ndar)\n    INSERT INTO receipts (\n        user_id,\n        total_cost,\n        reference_doc,\n        notes,\n        created_at,\n        status\n    ) VALUES (\n        v_user_id,\n        0,  -- Se actualizar\u00e1 luego\n        FORMAT('%s | %s', TRIM(p_supplier), TRIM(p_invoice_number)),\n        NULL,\n        p_reception_date,\n        'active'\n    )\n    RETURNING id INTO v_reception_id;\n\n    IF v_reception_id IS NULL THEN\n        RAISE EXCEPTION 'Failed to create reception record';\n    END IF;\n\n    -- ================================================================\n    -- PASO 2: PROCESAR CADA ITEM\n    -- ================================================================\n    \n    FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)\n    LOOP\n        -- Extraer valores del item\n        v_product_id := (v_item->>'product_id')::UUID;\n        v_quantity := (v_item->>'quantity')::NUMERIC;\n        v_unit_cost := (v_item->>'unit_cost')::NUMERIC;\n\n        -- Validaciones del item\n        IF v_product_id IS NULL THEN\n            RAISE EXCEPTION 'product_id is required for each item';\n        END IF;\n\n        IF v_quantity IS NULL OR v_quantity <= 0 THEN\n            RAISE EXCEPTION 'quantity must be greater than 0';\n        END IF;\n\n        IF v_unit_cost IS NULL OR v_unit_cost < 0 THEN\n            RAISE EXCEPTION 'unit_cost cannot be negative';\n        END IF;\n\n        -- Validar que el producto existe\n        IF NOT EXISTS (SELECT 1 FROM products WHERE id = v_product_id) THEN\n            RAISE EXCEPTION 'Product % does not exist', v_product_id;\n        END IF;\n\n        -- ============================================================\n        -- 2a: INSERTAR EN receipt_items (AUDITOR\u00cdA DETALLADA)\n        -- ============================================================\n        \n        INSERT INTO receipt_items (\n            receipt_id,\n            product_id,\n            quantity,\n            unit_cost,\n            created_at\n        ) VALUES (\n            v_reception_id,\n            v_product_id,\n            v_quantity,\n            v_unit_cost,\n            NOW()\n        );\n\n        -- ============================================================\n        -- 2b: ACTUALIZAR inventory (SUMA DE STOCK)\n        -- ============================================================\n        \n        INSERT INTO inventory (\n            store_id,\n            product_id,\n            quantity,\n            low_stock_threshold,\n            updated_at,\n            created_at\n        ) VALUES (\n            p_store_id,\n            v_product_id,\n            v_quantity,\n            10,  -- Umbral predeterminado\n            NOW(),\n            NOW()\n        )\n        ON CONFLICT (store_id, product_id) DO UPDATE SET\n            quantity = inventory.quantity + v_quantity,\n            updated_at = NOW();\n\n        -- ============================================================\n        -- 2c: REGISTRAR EN stock_movements (AUDITOR\u00cdA GENERAL)\n        -- ============================================================\n        \n        INSERT INTO stock_movements (\n            store_id,\n            product_id,\n            variant_id,\n            quantity_change,\n            movement_type,\n            reference_doc,\n            reference_id,\n            movement_date,\n            created_by,\n            created_at\n        ) VALUES (\n            p_store_id,\n            v_product_id,\n            NULL,\n            v_quantity,\n            'purchase'::public.movement_type,\n            FORMAT('%s | %s', TRIM(p_supplier), TRIM(p_invoice_number)),\n            v_reception_id::TEXT,\n            p_reception_date,\n            v_user_id,\n            NOW()\n        );\n\n        -- Acumular total_cost\n        v_total_cost := v_total_cost + (v_quantity * v_unit_cost);\n\n    END LOOP;\n\n    -- ================================================================\n    -- PASO 3: ACTUALIZAR RECEPCI\u00d3N CON TOTAL COST\n    -- ================================================================\n    \n    UPDATE receipts SET\n        total_cost = v_total_cost,\n        updated_at = NOW()\n    WHERE id = v_reception_id;\n\n    -- ================================================================\n    -- PASO 4: REGISTRAR EN AUDITOR\u00cdA (OPCIONAL - SI EXISTE tabla)\n    -- ================================================================\n    \n    IF EXISTS (\n        SELECT 1 FROM information_schema.tables \n        WHERE table_name = 'audit_logs'\n    ) THEN\n        INSERT INTO audit_logs (\n            user_id,\n            action,\n            table_name,\n            record_id,\n            old_data,\n            new_data,\n            created_at\n        ) VALUES (\n            v_user_id,\n            'CREATE',\n            'receipts',\n            v_reception_id::TEXT,\n            NULL,\n            jsonb_build_object(\n                'supplier', p_supplier,\n                'invoice_number', p_invoice_number,\n                'items_count', v_items_count,\n                'total_cost', v_total_cost\n            ),\n            NOW()\n        );\n    END IF;\n\n    -- ================================================================\n    -- RETORNAR ID DE RECEPCI\u00d3N\n    -- ================================================================\n    \n    RETURN v_reception_id;\n\nEXCEPTION WHEN OTHERS THEN\n    -- Rollback autom\u00e1tico por error en plpgsql\n    RAISE EXCEPTION 'Reception registration failed: %', SQLERRM;\n\nEND;\n$$"
+   }
+  ],
+  "get_recent_receptions": [
+   {
+    "file": "(migrations)/register_reception_rpc.sql",
+    "stmt": 0,
+    "op": "AUX_CREATE_FUNCTION",
+    "name": "get_recent_receptions",
+    "arity": 0,
+    "language": "plpgsql",
+    "security": null,
+    "search_path": null,
+    "body_md5": "0a9164068eae94353877967890466738",
+    "body_n": 1,
+    "stmt_full": "CREATE OR REPLACE FUNCTION get_recent_receptions(\n    p_store_id UUID,\n    p_limit INT DEFAULT 10\n)\nRETURNS TABLE (\n    id UUID,\n    supplier TEXT,\n    invoice_number TEXT,\n    reception_date DATE,\n    total_cost NUMERIC,\n    item_count INT,\n    created_at TIMESTAMP\n) AS $$\nBEGIN\n    RETURN QUERY\n    SELECT\n        r.id,\n        r.reference_doc,\n        r.created_at,\n        r.total_cost,\n        COUNT(ri.id)::INT as item_count,\n        r.created_at\n    FROM receipts r\n    LEFT JOIN receipt_items ri ON r.id = ri.receipt_id\n    WHERE (SELECT store_id FROM public.profiles WHERE id = r.user_id) = p_store_id\n    GROUP BY r.id, r.reference_doc, r.total_cost, r.created_at\n    ORDER BY r.created_at DESC\n    LIMIT p_limit;\nEND;\n$$ LANGUAGE plpgsql STABLE"
+   }
+  ],
+  "cancel_reception": [
+   {
+    "file": "(migrations)/register_reception_rpc.sql",
+    "stmt": 0,
+    "op": "AUX_CREATE_FUNCTION",
+    "name": "cancel_reception",
+    "arity": 0,
+    "language": "plpgsql",
+    "security": "SECURITY DEFINER",
+    "search_path": null,
+    "body_md5": "56064cafed044ad8dd4513734681976a",
+    "body_n": 1,
+    "stmt_full": "CREATE OR REPLACE FUNCTION cancel_reception(\n    p_reception_id UUID\n)\nRETURNS VOID AS $$\nDECLARE\n    v_store_id UUID;\n    v_user_id UUID;\nBEGIN\n    IF auth.uid() IS NULL THEN\n        RAISE EXCEPTION 'Authentication required';\n    END IF;\n    v_user_id := auth.uid()::UUID;\n\n    -- Validar que recepci\u00f3n existe y pertenece al usuario (obtener store desde profiles)\n    SELECT p.store_id INTO v_store_id\n    FROM receipts r\n    JOIN public.profiles p ON p.id = r.user_id\n    WHERE r.id = p_reception_id;\n\n    IF v_store_id IS NULL THEN\n        RAISE EXCEPTION 'Reception not found';\n    END IF;\n\n    IF NOT EXISTS (\n        SELECT 1 FROM public.profiles\n        WHERE id = v_user_id AND store_id = v_store_id\n    ) THEN\n        RAISE EXCEPTION 'Unauthorized';\n    END IF;\n\n    -- Revertir cambios de inventario\n    WITH items AS (\n        SELECT product_id, quantity\n        FROM receipt_items\n        WHERE receipt_id = p_reception_id\n    )\n    UPDATE inventory SET\n        quantity = quantity - items.quantity,\n        updated_at = NOW()\n    FROM items\n    WHERE inventory.store_id = v_store_id\n    AND inventory.product_id = items.product_id;\n\n    -- Marcar recepci\u00f3n como cancelada\n    UPDATE receipts SET\n        status = 'voided',\n        updated_at = NOW()\n    WHERE id = p_reception_id;\n\n    -- Registrar en auditor\u00eda\n    INSERT INTO stock_movements (\n        store_id,\n        product_id,\n        quantity_change,\n        movement_type,\n        reference_doc,\n        reference_id,\n        movement_date,\n        created_by,\n        created_at\n    ) SELECT\n        v_store_id,\n        product_id,\n        -quantity,\n        'return'::public.movement_type,\n        'Recepci\u00f3n cancelada: ' || p_reception_id::TEXT,\n        p_reception_id::TEXT,\n        CURRENT_DATE,\n        v_user_id,\n        NOW()\n    FROM receipt_items\n    WHERE receipt_id = p_reception_id;\n\nEND;\n$$ LANGUAGE plpgsql SECURITY DEFINER"
+   }
+  ]
+ }
+}

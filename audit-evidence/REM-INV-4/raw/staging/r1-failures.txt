@@ -1,0 +1,179 @@
+FILE: bulk_assign_memberships__20260805000016_v2_14_16_bulk_assign_memberships_audit.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/bulk_assign_memberships__20260805000016_v2_14_16_bulk_assign_memberships_audit.sql.sql:76: ERROR:  type "public.user_role" does not exist
+LINE 15:   v_role public.user_role;
+                  ^
+---
+FILE: bulk_soft_delete_stores__20260818000002_bulk_delete_functions_versioned.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/bulk_soft_delete_stores__20260818000002_bulk_delete_functions_versioned.sql.sql:151: ERROR:  syntax error at or near "REVOKE"
+LINE 146: REVOKE EXECUTE ON FUNCTION public.bulk_soft_delete_stores FR...
+          ^
+---
+FILE: calculate_service_distribution__20260625000001_servicios_recibidos.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/calculate_service_distribution__20260625000001_servicios_recibidos.sql.sql:69: ERROR:  relation "received_services" does not exist
+CONTEXT:  compilation of PL/pgSQL function "calculate_service_distribution" near line 3
+---
+FILE: check_bulk_ops_hourly_limit__20260818000002_bulk_delete_functions_versioned.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/check_bulk_ops_hourly_limit__20260818000002_bulk_delete_functions_versioned.sql.sql:37: ERROR:  syntax error at or near "REVOKE"
+LINE 32: REVOKE EXECUTE ON FUNCTION public.check_bulk_ops_hourly_limi...
+         ^
+---
+FILE: check_tenant_store_quota__20260806000007_v2_15_7_check_tenant_store_quota.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/check_tenant_store_quota__20260806000007_v2_15_7_check_tenant_store_quota.sql.sql:49: ERROR:  type plan_t does not exist
+---
+FILE: current_user_tenant_id__20260807000004_v2_21_0_rls_helper_functions.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/current_user_tenant_id__20260807000004_v2_21_0_rls_helper_functions.sql.sql:12: ERROR:  relation "public.profiles" does not exist
+LINE 8:   SELECT tenant_id FROM public.profiles WHERE id = auth.uid(...
+                                ^
+---
+FILE: distribute_service_cost_v2__20260809000008_v2_25_g8_distribute_service_cost_v2.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/distribute_service_cost_v2__20260809000008_v2_25_g8_distribute_service_cost_v2.sql.sql:95: ERROR:  relation "received_services" does not exist
+CONTEXT:  compilation of PL/pgSQL function "distribute_service_cost_v2" near line 6
+---
+FILE: enforce_encargado_store_limit__20260118_multi_store_logic.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/enforce_encargado_store_limit__20260118_multi_store_logic.sql.sql:24: ERROR:  type "user_role" does not exist
+LINE 4:     v_creator_role user_role;
+                           ^
+---
+FILE: enforce_encargado_user_limit__20260118_multi_store_logic.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/enforce_encargado_user_limit__20260118_multi_store_logic.sql.sql:24: ERROR:  type "user_role" does not exist
+LINE 4:     v_creator_role user_role;
+                           ^
+---
+FILE: generate_bulk_confirmation_token__20260818000002_bulk_delete_functions_versioned.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/generate_bulk_confirmation_token__20260818000002_bulk_delete_functions_versioned.sql.sql:52: ERROR:  syntax error at or near "REVOKE"
+LINE 47: REVOKE EXECUTE ON FUNCTION public.generate_bulk_confirmation...
+         ^
+---
+FILE: generate_bulk_override_token__20260818000002_bulk_delete_functions_versioned.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/generate_bulk_override_token__20260818000002_bulk_delete_functions_versioned.sql.sql:78: ERROR:  syntax error at or near "REVOKE"
+LINE 73: REVOKE EXECUTE ON FUNCTION public.generate_bulk_override_tok...
+         ^
+---
+FILE: get_backup_table_list__20260802000006_v2_12_45_backup_registry.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/get_backup_table_list__20260802000006_v2_12_45_backup_registry.sql.sql:33: ERROR:  relation "public.backup_table_registry" does not exist
+LINE 27:   FROM public.backup_table_registry
+                ^
+---
+FILE: get_global_max_operation_date__20260623000001_refactor_per_store_policy.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/get_global_max_operation_date__20260623000001_refactor_per_store_policy.sql.sql:15: ERROR:  relation "v_global_operation_dates" does not exist
+LINE 10:   FROM v_global_operation_dates
+                ^
+---
+FILE: get_latest_rate__20260624000001_inteligencia_cambiaria.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/get_latest_rate__20260624000001_inteligencia_cambiaria.sql.sql:12: ERROR:  relation "exchange_rates" does not exist
+LINE 5:   FROM exchange_rates
+               ^
+---
+FILE: get_low_stock_count__20260630120000_create_get_low_stock_count_rpc.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/get_low_stock_count__20260630120000_create_get_low_stock_count_rpc.sql.sql:19: ERROR:  relation "public.products" does not exist
+LINE 8:   FROM public.products
+               ^
+---
+FILE: get_product_cost_analysis__20260625000001_servicios_recibidos.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/get_product_cost_analysis__20260625000001_servicios_recibidos.sql.sql:37: ERROR:  relation "receipt_items" does not exist
+LINE 25:   FROM receipt_items ri
+                ^
+---
+FILE: get_rate_history__20260624000001_inteligencia_cambiaria.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/get_rate_history__20260624000001_inteligencia_cambiaria.sql.sql:16: ERROR:  relation "exchange_rates" does not exist
+LINE 9:   FROM exchange_rates
+               ^
+---
+FILE: get_rate_variation__20260624000001_inteligencia_cambiaria.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/get_rate_variation__20260624000001_inteligencia_cambiaria.sql.sql:41: ERROR:  relation "exchange_rates" does not exist
+LINE 17:     SELECT rate FROM exchange_rates
+                              ^
+---
+FILE: get_transferable_stores__20260726000017_v2_6_h5_get_transferable_stores.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/get_transferable_stores__20260726000017_v2_6_h5_get_transferable_stores.sql.sql:47: ERROR:  type "public.stores" does not exist
+---
+FILE: has_any_role__20260118_multi_store_rls.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/has_any_role__20260118_multi_store_rls.sql.sql:24: ERROR:  type user_role[] does not exist
+---
+FILE: has_management_access_as__20260818000001_security_hardening_h1_h2_h3.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/has_management_access_as__20260818000001_security_hardening_h1_h2_h3.sql.sql:29: ERROR:  relation "profiles" does not exist
+LINE 14:         SELECT 1 FROM profiles
+                               ^
+---
+FILE: has_role__20260212_fix_has_role_overload.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/has_role__20260212_fix_has_role_overload.sql.sql:24: ERROR:  type public.user_role does not exist
+---
+FILE: has_store_role__20260820000001_security_fix_spoofable_caller_uid.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/has_store_role__20260820000001_security_fix_spoofable_caller_uid.sql.sql:29: ERROR:  relation "public.user_store_memberships" does not exist
+LINE 11:       SELECT 1 FROM public.user_store_memberships m
+                             ^
+---
+FILE: is_global_admin__20260614000001_add_stores_rls_policies.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/is_global_admin__20260614000001_add_stores_rls_policies.sql.sql:16: ERROR:  relation "public.profiles" does not exist
+LINE 9:     SELECT 1 FROM public.profiles
+                          ^
+---
+FILE: is_role_not_changed__20260305_fix_profiles_rls_final.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/is_role_not_changed__20260305_fix_profiles_rls_final.sql.sql:21: ERROR:  type user_role does not exist
+---
+FILE: is_store_member__20260614000001_add_stores_rls_policies.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/is_store_member__20260614000001_add_stores_rls_policies.sql.sql:17: ERROR:  relation "public.user_store_memberships" does not exist
+LINE 9:     SELECT 1 FROM public.user_store_memberships
+                          ^
+---
+FILE: is_tenant_member__20260807000004_v2_21_0_rls_helper_functions.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/is_tenant_member__20260807000004_v2_21_0_rls_helper_functions.sql.sql:13: ERROR:  function public.current_user_tenant_id() does not exist
+LINE 9:    AND p_tenant_id = public.current_user_tenant_id();
+                             ^
+---
+FILE: managed_create_user__20260326_multi_tenant_hardening.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/managed_create_user__20260326_multi_tenant_hardening.sql.sql:56: ERROR:  type user_role does not exist
+---
+FILE: managed_create_user_v2__20260805000007_v2_14_7_managed_create_user_v2.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/managed_create_user_v2__20260805000007_v2_14_7_managed_create_user_v2.sql.sql:121: ERROR:  type public.user_role does not exist
+---
+FILE: managed_reset_password__20260820000001_security_fix_spoofable_caller_uid.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/managed_reset_password__20260820000001_security_fix_spoofable_caller_uid.sql.sql:42: ERROR:  type "public.user_role" does not exist
+LINE 14:   v_caller_role public.user_role;
+                         ^
+---
+FILE: managed_soft_delete_user__20260820000001_security_fix_spoofable_caller_uid.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/managed_soft_delete_user__20260820000001_security_fix_spoofable_caller_uid.sql.sql:84: ERROR:  type "public.user_role" does not exist
+LINE 16:   v_caller_role public.user_role;
+                         ^
+---
+FILE: managed_toggle_user_status__20260820000001_security_fix_spoofable_caller_uid.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/managed_toggle_user_status__20260820000001_security_fix_spoofable_caller_uid.sql.sql:52: ERROR:  type "public.user_role" does not exist
+LINE 16:   v_caller_role public.user_role;
+                         ^
+---
+FILE: managed_update_membership__20260820000001_security_fix_spoofable_caller_uid.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/managed_update_membership__20260820000001_security_fix_spoofable_caller_uid.sql.sql:64: ERROR:  type public.user_role does not exist
+---
+FILE: managed_update_tenant_plan__20260820000001_security_fix_spoofable_caller_uid.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/managed_update_tenant_plan__20260820000001_security_fix_spoofable_caller_uid.sql.sql:65: ERROR:  type plan_t does not exist
+---
+FILE: managed_update_user__20260820000001_security_fix_spoofable_caller_uid.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/managed_update_user__20260820000001_security_fix_spoofable_caller_uid.sql.sql:93: ERROR:  type public.user_role does not exist
+---
+FILE: on_auth_user_created__20260806000004_v2_15_4_on_auth_user_created_tenant.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/on_auth_user_created__20260806000004_v2_15_4_on_auth_user_created_tenant.sql.sql:92: ERROR:  type "user_role" does not exist
+LINE 9:   v_role_enum USER_ROLE;
+                      ^
+---
+FILE: process_inventory_adjustment__20260623000002_update_rpc_calls_per_store.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/process_inventory_adjustment__20260623000002_update_rpc_calls_per_store.sql.sql:43: ERROR:  type adjustment_item[] does not exist
+---
+FILE: receive_against_po__20260808000003_v2_24_g3_receive_against_po_final.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/receive_against_po__20260808000003_v2_24_g3_receive_against_po_final.sql.sql:215: ERROR:  type "public.purchase_status_enum" does not exist
+LINE 15:   v_po_status           public.purchase_status_enum;
+                                 ^
+---
+FILE: set_purchase_order_status__20260911000100_rem_po1_production_orders_boundaries.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/set_purchase_order_status__20260911000100_rem_po1_production_orders_boundaries.sql.sql:87: ERROR:  type purchase_status_enum does not exist
+---
+FILE: validate_active_store__20260715000007_trigger_smart_update.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/validate_active_store__20260715000007_trigger_smart_update.sql.sql:64: ERROR:  type "user_role" does not exist
+LINE 4:     v_role user_role;
+                   ^
+---
+FILE: validate_tenant_access__20260806000009_v2_15_9_validate_tenant_access.sql.sql
+psql:/home/z/my-project/Costpro/audit-evidence/REM-INV-4/raw/census/final-bodies/validate_tenant_access__20260806000009_v2_15_9_validate_tenant_access.sql.sql:37: ERROR:  type "public.user_role" does not exist
+LINE 13:   v_user_role public.user_role;
+                       ^
+---

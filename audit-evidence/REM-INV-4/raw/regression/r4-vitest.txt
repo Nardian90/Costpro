@@ -1,0 +1,128 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.10 /home/z/my-project/Costpro
+
+stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine produce métricas reales (no ceros fantasma)
+[AUDIT] Sharpe: 0.000
+[AUDIT] Sortino: -19.105
+[AUDIT] Calmar: -14.925
+[AUDIT] Profit Factor: 0.000
+[AUDIT] Recovery Factor: -1.000
+[AUDIT] Win Streak: 0
+[AUDIT] Loss Streak: 20
+[AUDIT] Total wins: 0 / Total bets: 60
+
+·stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine incluye CAGR con IC 95%
+[AUDIT] CAGR: -90.70%
+[AUDIT] Total Return: -9.30%
+
+·stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine incluye Kelly y Probability of Ruin
+[AUDIT] Kelly Safe: 0.00%
+[AUDIT] Kelly Edge: 0.00%
+[AUDIT] Probability of Ruin: 100.00%
+
+·stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine incluye los 4 tests estadísticos
+[AUDIT] Is Random: true
+[AUDIT] Confidence: 14.7%
+[AUDIT] Summary: VEREDICTO: Los datos son consistentes con un proceso aleatorio uniforme (4/4 tests no rechazan H0, c...
+
+·stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine incluye drift detection
+[AUDIT] Drift Detected: false
+[AUDIT] Drift Magnitude: 16.02
+
+·stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine incluye volatility, downside deviation y expectancy
+[AUDIT] Volatility: 2099.72%
+[AUDIT] Downside Dev: 6901.63%
+[AUDIT] Expectancy: $-3.45
+
+···stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > EnsembleEngine se integra con AnalysisEngine y produce predicciones
+[AUDIT] Ensemble predictions: 5
+[AUDIT] Models used: 4
+[AUDIT] Top prediction score: 46.47
+
+··stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > los 4 modelos producen scores diferentes (no todas iguales)
+[AUDIT] Model performances:
+  - frequency: weight=25.0%, hitRate=1.43%, excluded=false
+  - markov: weight=25.0%, hitRate=1.43%, excluded=false
+  - positional: weight=25.0%, hitRate=0.71%, excluded=false
+  - sumrange: weight=25.0%, hitRate=1.43%, excluded=false
+
+·stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > RiskLayer + Ensemble + Backtest integration
+[AUDIT] Backtest ROI: -6.90%
+[AUDIT] Backtest Sharpe: -59.972
+[AUDIT] Risk recommendation:
+  - Bet size: $1
+  - Total exposure: $3
+  - Risk level: low
+  - Should stop: false
+  - Warnings: 1
+
+·stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > detecta régimen cuando hay cambio en los datos
+[AUDIT] Drift detected: false
+[AUDIT] Drift magnitude: 16.02
+
+stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > funciona con datos sesgados (FrequencyModel debería tener edge)
+[AUDIT] Stats isRandom (biased data): false
+[AUDIT] Stats confidence: 0.0%
+
+··stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > RiskLayer respeta los 3 modos correctamente
+[AUDIT] defensive: betSize=$2, exposure=$6, risk=low
+[AUDIT] balanced: betSize=$6, exposure=$18, risk=low
+[AUDIT] aggressive: betSize=$12, exposure=$36, risk=medium
+
+··························stderr | src/__tests__/components/g1-component-tests.test.tsx > G1.1 — Tests de render componentes MULTI-TIENDA > StoreOnboardingWizard > renderiza sin crashear cuando está cerrado
+{"timestamp":"2026-09-13T06:26:12.501Z","level":"error","category":"DATABASE","event":"FETCH_USERS_FAILED","data":{"err":{}}}
+
+····························································stderr | src/__tests__/components/store-card.test.tsx > StoreCard > logo rendering > renders <img> when store.logo_url is set
+Received `true` for a non-boolean attribute `unoptimized`.
+
+If you want to write it to the DOM, pass a string instead: unoptimized="true" or unoptimized={value.toString()}.
+
+·························································································--····-·····························stderr | src/__tests__/lib/backup-service.test.ts > backup-service > Warnings behavior > records warnings when a table fails to fetch
+{"timestamp":"2026-09-13T06:26:33.793Z","level":"warn","category":"DATABASE","event":"BACKUP_TABLE_FETCH_WARN","data":{"storeId":"s1","table":"products","severity":"error","message":"DB_ERROR: column products.store_id does not exist"}}
+
+··············--····················································································-----····························stdout | src/__tests__/services/pick3-growth.test.ts > SPRINT-5: Growth Engine > ABTestingService > trackConversion no crashea
+{"timestamp":"2026-09-13T06:26:42.028Z","level":"info","category":"PICK3","event":"A/B conversion: paywall_cta | variant=value | event=view | user=user-123"}
+{"timestamp":"2026-09-13T06:26:42.029Z","level":"info","category":"PICK3","event":"A/B conversion: paywall_cta | variant=value | event=click_cta | user=user-123"}
+{"timestamp":"2026-09-13T06:26:42.029Z","level":"info","category":"PICK3","event":"A/B conversion: paywall_cta | variant=value | event=start_trial | user=user-123"}
+{"timestamp":"2026-09-13T06:26:42.029Z","level":"info","category":"PICK3","event":"A/B conversion: paywall_cta | variant=value | event=convert_paid | user=user-123"}
+
+·····································-····stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > retorna null cuando getUser falla (token inválido)
+[getServerSession] getUser error (fail closed): Invalid token
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > NO acepta un JWT fabricado con payload válido pero sin firma
+[getServerSession] getUser error (fail closed): Invalid signature
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > rechaza dev-token-bypass en producción
+[getServerSession] getUser error (fail closed): Invalid token
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > retorna null sin header Authorization
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+···································································································································stderr | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: handleInvitationBlock > first block → warning + 24h cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"warn","category":"DATABASE","event":"ANTI_BAN_WARNING","data":{"consecutiveBlocks":1}}
+
+stderr | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: handleInvitationBlock > second block → danger + 48h cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"warn","category":"DATABASE","event":"ANTI_BAN_DANGER","data":{"consecutiveBlocks":2}}
+
+stderr | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: handleInvitationBlock > third block → blocked + 7-day cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"error","category":"DATABASE","event":"ANTI_BAN_LONG_PAUSE","data":{"consecutiveBlocks":3,"cooldownDays":7}}
+
+stdout | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: resetRiskIfStale > resets to safe after 7 days past cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"info","category":"DATABASE","event":"ANTI_BAN_RESET","data":{"wasLevel":"blocked"}}
+
+···············································································································································································································································································································································································································································································································································································································································stderr | src/__tests__/services/audit-user-service.test.ts > auditService > logInvoiceWithoutPrice does not throw on DB error
+[AuditService] Error logging invoice_without_price: { message: 'DB error' }
+
+·································································································································································································································································································································································································-·······································································································································································-······················································································································································································································································································································································································-·----------
+
+ Test Files  99 passed | 1 skipped (100)
+      Tests  2070 passed | 24 skipped (2094)
+   Start at  06:24:12
+   Duration  211.03s (transform 3.69s, setup 5.31s, import 8.42s, tests 125.10s, environment 59.26s)
+

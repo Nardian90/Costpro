@@ -1,0 +1,50 @@
+{
+ "live": 484,
+ "git_declared_present": 247,
+ "git_declared_absent": 5,
+ "orphan_extension": 188,
+ "functions": {
+  "rows": 497,
+  "overall": {
+   "MATCH": 150,
+   "ORPHAN_LIVE": 55,
+   "DRIFT_ATTRS": 23,
+   "DRIFT_BODY": 39,
+   "DRIFT_SIGNATURE": 25,
+   "MATCH_STALE_VERSION": 3,
+   "MATCH_CANONICAL_WS": 1,
+   "ORPHAN_EXTENSION": 188,
+   "MISSING_LIVE": 13
+  },
+  "orphan_live": 55,
+  "missing_live": 13
+ },
+ "triggers": {
+  "live": 87,
+  "git_keys": 72,
+  "match": 63,
+  "classes": {
+   "MATCH": 63,
+   "ORPHAN_LIVE": 24,
+   "MISSING_LIVE": 8
+  }
+ },
+ "policies": {
+  "live": 391,
+  "git_keys": 454,
+  "classes": {
+   "MATCH_EXISTENCE": 320,
+   "ORPHAN_LIVE": 71,
+   "MISSING_LIVE": 42
+  }
+ },
+ "tables": {
+  "live_rp": 146,
+  "git": 97,
+  "classes": {
+   "MATCH": 93,
+   "ORPHAN_LIVE": 53,
+   "MISSING_LIVE": 3
+  }
+ }
+}

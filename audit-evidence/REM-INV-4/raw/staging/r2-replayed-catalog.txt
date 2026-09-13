@@ -1,0 +1,9 @@
+functions=467
+secdef_functions=137
+tables=17
+triggers=6
+ERROR:  column "schemaname" does not exist
+LINE 1: ...LECT 'policies=' || count(*) FROM pg_policy WHERE schemaname...
+                                                             ^
+views=0
+sequences=1

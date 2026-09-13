@@ -1,0 +1,522 @@
+FILE: 202401230002_update_rls_for_encargado.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/202401230002_update_rls_for_encargado.sql:19: ERROR:  relation "public.profiles" does not exist
+FILE: 20240801_create_inventory_adjustments.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20240801_create_inventory_adjustments.sql:52: ERROR:  relation "stores" does not exist
+FILE: 20260112_ensure_audit_rls.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260112_ensure_audit_rls.sql:28: ERROR:  relation "public.receipts" does not exist
+FILE: 20260113_add_optimistic_locking.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260113_add_optimistic_locking.sql:8: ERROR:  relation "public.inventory" does not exist
+FILE: 20260113_consolidate_stock_source.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260113_consolidate_stock_source.sql:23: ERROR:  relation "public.inventory" does not exist
+FILE: 20260113_strengthen_rls.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260113_strengthen_rls.sql:18: ERROR:  function public.register_reception_wrapper(jsonb) does not exist
+FILE: 20260115_fix_inventory_immutability.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260115_fix_inventory_immutability.sql:314: ERROR:  relation "public.stock_movements" does not exist
+FILE: 20260116_fix_audit_logs_permissions.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260116_fix_audit_logs_permissions.sql:19: ERROR:  relation "public.audit_logs" does not exist
+FILE: 20260117_fix_receipts_profiles_relationship.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260117_fix_receipts_profiles_relationship.sql:10: ERROR:  relation "public.receipts" does not exist
+FILE: 20260118_multi_store_audit.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260118_multi_store_audit.sql:39: ERROR:  relation "public.profiles" does not exist
+FILE: 20260118_multi_store_base.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260118_multi_store_base.sql:12: ERROR:  type "user_role" does not exist
+FILE: 20260118_multi_store_logic.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260118_multi_store_logic.sql:27: ERROR:  relation "public.profiles" does not exist
+FILE: 20260118_multi_store_managed_ops.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260118_multi_store_managed_ops.sql:73: ERROR:  type user_role does not exist
+FILE: 20260118_multi_store_rls.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260118_multi_store_rls.sql:55: ERROR:  type user_role does not exist
+FILE: 20260119_add_role_to_user_store_access.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260119_add_role_to_user_store_access.sql:3: ERROR:  relation "public.user_store_access" does not exist
+FILE: 20260120_enterprise_multi_store.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260120_enterprise_multi_store.sql:21: ERROR:  type "user_role" does not exist
+FILE: 20260121_fix_and_unify_products.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260121_fix_and_unify_products.sql:90: ERROR:  type "user_role" does not exist
+FILE: 20260124_enforce_store_sku_uniqueness.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260124_enforce_store_sku_uniqueness.sql:18: ERROR:  relation "public.products" does not exist
+FILE: 20260124_product_management_enhancements.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260124_product_management_enhancements.sql:3: ERROR:  relation "public.products" does not exist
+FILE: 20260125_fix_receipt_items_schema.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260125_fix_receipt_items_schema.sql:7: ERROR:  relation "public.receipt_items" does not exist
+FILE: 20260126_final_rls_fix.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260126_final_rls_fix.sql:34: ERROR:  relation "public.profiles" does not exist
+FILE: 20260126_fix_audit_logs_rls_and_schema.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260126_fix_audit_logs_rls_and_schema.sql:12: ERROR:  relation "public.audit_logs" does not exist
+FILE: 20260126_fix_managed_create_user.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260126_fix_managed_create_user.sql:89: ERROR:  type user_role does not exist
+FILE: 20260126_harden_profiles_rls.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260126_harden_profiles_rls.sql:33: ERROR:  relation "public.profiles" does not exist
+FILE: 20260127_canonical_stock_movement.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260127_canonical_stock_movement.sql:17: ERROR:  relation "public.stock_movements" does not exist
+FILE: 20260127_enhance_audit_logs.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260127_enhance_audit_logs.sql:93: ERROR:  relation "public.user_store_memberships" does not exist
+FILE: 20260201_alignment_fix.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260201_alignment_fix.sql:20: ERROR:  relation "public.audit_logs" does not exist
+FILE: 20260209_fix_critical_rls_issues.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260209_fix_critical_rls_issues.sql:95: ERROR:  relation "public.stores" does not exist
+FILE: 20260211_create_transfers.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260211_create_transfers.sql:24: ERROR:  relation "public.stores" does not exist
+FILE: 20260212_fix_has_role_overload.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260212_fix_has_role_overload.sql:28: ERROR:  type public.user_role does not exist
+FILE: 20260213_cash_closures_hardening.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260213_cash_closures_hardening.sql:23: ERROR:  relation "public.profiles" does not exist
+FILE: 20260214_fix_transfers_logic.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260214_fix_transfers_logic.sql:20: ERROR:  relation "public.transfer_items" does not exist
+FILE: 20260215_comprehensive_audit_logging.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260215_comprehensive_audit_logging.sql:86: ERROR:  relation "public.profiles" does not exist
+FILE: 20260215_fix_sale_price_error.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260215_fix_sale_price_error.sql:84: ERROR:  relation "public.products" does not exist
+FILE: 20260216_create_receipt_items.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260216_create_receipt_items.sql:15: ERROR:  relation "public.receipts" does not exist
+FILE: 20260216_fix_schema_discrepancies.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260216_fix_schema_discrepancies.sql:8: ERROR:  relation "public.products" does not exist
+FILE: 20260217_create_sync_log.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260217_create_sync_log.sql:15: ERROR:  relation "public.stores" does not exist
+FILE: 20260217_update_sync_log_rls.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260217_update_sync_log_rls.sql:10: ERROR:  relation "public.sync_log" does not exist
+FILE: 20260218_add_user_ai_settings.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260218_add_user_ai_settings.sql:9: ERROR:  relation "public.profiles" does not exist
+FILE: 20260220_create_reports_schema.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260220_create_reports_schema.sql:18: ERROR:  relation "public.stores" does not exist
+FILE: 20260223_fix_rls_recursion.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260223_fix_rls_recursion.sql:47: ERROR:  relation "public.profiles" does not exist
+FILE: 20260223_harden_user_management.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260223_harden_user_management.sql:105: ERROR:  relation "public.user_store_memberships" does not exist
+FILE: 20260224_improve_visibility.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260224_improve_visibility.sql:13: ERROR:  relation "public.stores" does not exist
+FILE: 20260225_create_rss_module.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260225_create_rss_module.sql:36: ERROR:  function public.has_role(unknown) does not exist
+FILE: 20260226_fix_product_store_isolation.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260226_fix_product_store_isolation.sql:103: ERROR:  cannot change return type of existing function
+FILE: 20260228_implement_taxes.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260228_implement_taxes.sql:18: ERROR:  relation "public.stores" does not exist
+FILE: 20260301_control_fallos_harden.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260301_control_fallos_harden.sql:14: ERROR:  relation "public.products" does not exist
+FILE: 20260302_0002_create_roles_table.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260302_0002_create_roles_table.sql:26: ERROR:  relation "public.profiles" does not exist
+FILE: 20260302_0004_update_managed_create_rpc.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260302_0004_update_managed_create_rpc.sql:88: ERROR:  type user_role does not exist
+FILE: 20260302_0005_audit_role_changes.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260302_0005_audit_role_changes.sql:26: ERROR:  relation "public.roles" does not exist
+FILE: 20260302_0007_fix_admin_management.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260302_0007_fix_admin_management.sql:37: ERROR:  relation "public.profiles" does not exist
+FILE: 20260302_0008_fix_stores_visibility.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260302_0008_fix_stores_visibility.sql:8: ERROR:  relation "public.stores" does not exist
+FILE: 20260303_fix_store_audit_and_enable_management.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260303_fix_store_audit_and_enable_management.sql:57: ERROR:  relation "public.stores" does not exist
+FILE: 20260304_harden_sale_stock_logic.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260304_harden_sale_stock_logic.sql:36: ERROR:  relation "public.inventory" does not exist
+FILE: 20260305_create_user_audit_log.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260305_create_user_audit_log.sql:25: ERROR:  function public.is_admin() does not exist
+FILE: 20260305_fix_ambiguous_stock_movement.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260305_fix_ambiguous_stock_movement.sql:21: ERROR:  function public.register_stock_movement(uuid, uuid, uuid, integer, text, text, uuid, numeric, text, uuid) does not exist
+FILE: 20260305_fix_profiles_rls_final.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260305_fix_profiles_rls_final.sql:45: ERROR:  type user_role does not exist
+FILE: 20260305_harden_inventory_final.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260305_harden_inventory_final.sql:17: ERROR:  relation "public.inventory" does not exist
+FILE: 20260306_fix_active_store_logic.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260306_fix_active_store_logic.sql:46: ERROR:  type "user_role" does not exist
+FILE: 20260307_safe_delete_user.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260307_safe_delete_user.sql:41: ERROR:  type "user_role" does not exist
+FILE: 20260318_harden_audit_logging.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260318_harden_audit_logging.sql:39: ERROR:  relation "public.transactions" does not exist
+FILE: 20260320_fix_audit_v2_hallazgos.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260320_fix_audit_v2_hallazgos.sql:406: ERROR:  relation "public.audit_logs" does not exist
+FILE: 20260324_total_remediation.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260324_total_remediation.sql:17: ERROR:  relation "public.stores" does not exist
+FILE: 20260325_add_store_id_to_templates.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260325_add_store_id_to_templates.sql:2: ERROR:  relation "public.cost_sheet_templates" does not exist
+FILE: 20260326_multi_tenant_hardening.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260326_multi_tenant_hardening.sql:6: ERROR:  relation "public.user_usage" does not exist
+FILE: 20260329180000_harden_pick3_schema.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260329180000_harden_pick3_schema.sql:5: ERROR:  relation "public.pick3_history" does not exist
+FILE: 20260527094858_harden_tenant_isolation_products_stores_tenants.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260527094858_harden_tenant_isolation_products_stores_tenants.sql:63: ERROR:  relation "public.products" does not exist
+FILE: 20260612000000_create_ofertas.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260612000000_create_ofertas.sql:30: ERROR:  relation "public.stores" does not exist
+FILE: 20260612000001_alter_ofertas_add_fields.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260612000001_alter_ofertas_add_fields.sql:5: ERROR:  relation "public.ofertas" does not exist
+FILE: 20260613000001_alter_stores_add_oferta_fields.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260613000001_alter_stores_add_oferta_fields.sql:14: ERROR:  relation "stores" does not exist
+FILE: 20260614000001_add_stores_rls_policies.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260614000001_add_stores_rls_policies.sql:24: ERROR:  relation "public.stores" does not exist
+FILE: 20260614000004_optimize_batch_kpi_rpc.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260614000004_optimize_batch_kpi_rpc.sql:23: ERROR:  relation "transactions" does not exist
+FILE: 20260615000001_create_store_cost_templates.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260615000001_create_store_cost_templates.sql:26: ERROR:  relation "public.stores" does not exist
+FILE: 20260615000002_create_product_cost_sheets_and_alter_products.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260615000002_create_product_cost_sheets_and_alter_products.sql:26: ERROR:  relation "public.products" does not exist
+FILE: 20260615000003_add_unique_index_product_cost_sheets.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260615000003_add_unique_index_product_cost_sheets.sql:16: ERROR:  relation "public.product_cost_sheets" does not exist
+FILE: 20260615000004_create_fc_automation_support_tables.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260615000004_create_fc_automation_support_tables.sql:28: ERROR:  relation "public.products" does not exist
+FILE: 20260616000002_audit_logs_rls.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260616000002_audit_logs_rls.sql:15: ERROR:  relation "public.audit_logs" does not exist
+FILE: 20260617000001_add_fulltext_search_products.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260617000001_add_fulltext_search_products.sql:16: ERROR:  relation "public.products" does not exist
+FILE: 20260618000001_add_customer_to_transactions.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260618000001_add_customer_to_transactions.sql:8: ERROR:  relation "transactions" does not exist
+FILE: 20260619000002_quick_wins_financial_audit.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260619000002_quick_wins_financial_audit.sql:62: ERROR:  relation "public.audit_logs" does not exist
+FILE: 20260619000005_versionar_m2_m3_m5.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260619000005_versionar_m2_m3_m5.sql:15: ERROR:  relation "public.cash_movements" does not exist
+FILE: 20260619000006_rls_policies_versioned.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260619000006_rls_policies_versioned.sql:5: ERROR:  relation "public.cash_closures" does not exist
+FILE: 20260622000001_global_operation_date_policy.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260622000001_global_operation_date_policy.sql:58: ERROR:  relation "public.transactions" does not exist
+FILE: 20260622000004_void_rpcs_op_date.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260622000004_void_rpcs_op_date.sql:237: ERROR:  relation "public.transactions" does not exist
+FILE: 20260623000001_refactor_per_store_policy.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260623000001_refactor_per_store_policy.sql:33: ERROR:  relation "v_global_operation_dates" does not exist
+FILE: 20260623000003_fix_confirm_reception_date.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260623000003_fix_confirm_reception_date.sql:95: ERROR:  relation "stock_movements" does not exist
+FILE: 20260624000001_inteligencia_cambiaria.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260624000001_inteligencia_cambiaria.sql:114: ERROR:  function pg_catalog.extract(unknown, integer) does not exist
+FILE: 20260625000001_servicios_recibidos.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260625000001_servicios_recibidos.sql:15: ERROR:  relation "stores" does not exist
+FILE: 20260626000001_usage_tracking.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260626000001_usage_tracking.sql:303: ERROR:  relation "profiles" does not exist
+FILE: 20260626000002_workers_commissions.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260626000002_workers_commissions.sql:39: ERROR:  relation "public.stores" does not exist
+FILE: 20260626000003_workers_rls_admin_bypass.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260626000003_workers_rls_admin_bypass.sql:26: ERROR:  relation "public.workers" does not exist
+FILE: 20260626000004_qa_critical_fixes.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260626000004_qa_critical_fixes.sql:98: ERROR:  relation "public.cash_closures" does not exist
+FILE: 20260626000005_qa_batch2_rpc_fixes.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260626000005_qa_batch2_rpc_fixes.sql:212: ERROR:  relation "public.cash_closures" does not exist
+FILE: 20260627000003_prevent_negative_stock.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260627000003_prevent_negative_stock.sql:16: ERROR:  relation "public.products" does not exist
+FILE: 20260628000001_store_archiving.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260628000001_store_archiving.sql:15: ERROR:  relation "public.stores" does not exist
+FILE: 20260628120000_archived_by_fk_constraint.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260628120000_archived_by_fk_constraint.sql:19: ERROR:  relation "public.stores" does not exist
+FILE: 20260628130000_normalize_legacy_slugs.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260628130000_normalize_legacy_slugs.sql:35: ERROR:  relation "public.stores" does not exist
+FILE: 20260629000001_costeo_dinamico_infraestructura.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260629000001_costeo_dinamico_infraestructura.sql:22: ERROR:  relation "public.receipt_items" does not exist
+FILE: 20260629000002_update_rpc_register_reception_with_currency.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260629000002_update_rpc_register_reception_with_currency.sql:100: ERROR:  function name "public.register_reception" is not unique
+FILE: 20260629000003_fix_rls_commission_reception_links.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260629000003_fix_rls_commission_reception_links.sql:26: ERROR:  relation "public.commission_reception_links" does not exist
+FILE: 20260630120000_create_get_low_stock_count_rpc.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260630120000_create_get_low_stock_count_rpc.sql:47: ERROR:  relation "public.products" does not exist
+FILE: 20260630190000_fix_v_global_operation_dates_security_invoker.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260630190000_fix_v_global_operation_dates_security_invoker.sql:66: ERROR:  relation "public.transactions" does not exist
+FILE: 20260701000001_create_saved_analytics_views.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260701000001_create_saved_analytics_views.sql:18: ERROR:  relation "public.stores" does not exist
+FILE: 20260702000001_create_whatsapp_module.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260702000001_create_whatsapp_module.sql:31: ERROR:  relation "public.stores" does not exist
+FILE: 20260702000001_fix_wac_currency_conversion.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260702000001_fix_wac_currency_conversion.sql:261: ERROR:  function name "public.register_reception" is not unique
+FILE: 20260702000002_backfill_wac_currency_conversion.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260702000002_backfill_wac_currency_conversion.sql:66: ERROR:  relation "products" does not exist
+FILE: 20260702000003_multi_currency_sales.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260702000003_multi_currency_sales.sql:17: ERROR:  relation "public.products" does not exist
+FILE: 20260702000009_add_variant_id_receipt_items.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260702000009_add_variant_id_receipt_items.sql:7: ERROR:  relation "public.receipt_items" does not exist
+FILE: 20260702000011_fix_variants_reception_and_void.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260702000011_fix_variants_reception_and_void.sql:19: ERROR:  type "public.movement_type" does not exist
+FILE: 20260703000001_create_telegram_module.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260703000001_create_telegram_module.sql:49: ERROR:  relation "public.stores" does not exist
+FILE: 20260703000002_telegram_multimedia.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260703000002_telegram_multimedia.sql:32: ERROR:  relation "public.telegram_messages" does not exist
+FILE: 20260703000003_receipt_items_tasa_validation.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260703000003_receipt_items_tasa_validation.sql:75: ERROR:  relation "public.receipt_items" does not exist
+FILE: 20260704000001_storefront_config.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260704000001_storefront_config.sql:31: ERROR:  relation "stores" does not exist
+FILE: 20260704000002_storefront_banner_cta.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260704000002_storefront_banner_cta.sql:8: ERROR:  relation "stores" does not exist
+FILE: 20260706000001_wallet_rls_hardening.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260706000001_wallet_rls_hardening.sql:34: ERROR:  relation "public.profiles" does not exist
+FILE: 20260707000001_add_zelle_to_create_sale.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260707000001_add_zelle_to_create_sale.sql:11: ERROR:  relation "public.transactions" does not exist
+FILE: 20260710000001_store_exchange_rates.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260710000001_store_exchange_rates.sql:17: ERROR:  relation "public.stores" does not exist
+FILE: 20260712000001_payment_tracking.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260712000001_payment_tracking.sql:17: ERROR:  relation "receipts" does not exist
+FILE: 20260712000001_store_reset_snapshots.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260712000001_store_reset_snapshots.sql:40: ERROR:  relation "public.stores" does not exist
+FILE: 20260712000002_commission_payment_tracking.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260712000002_commission_payment_tracking.sql:14: ERROR:  relation "commission_payments" does not exist
+FILE: 20260712000003_fix_cash_report_rls_security.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260712000003_fix_cash_report_rls_security.sql:130: ERROR:  relation "payment_transactions" does not exist
+FILE: 20260712000004_production_orders.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260712000004_production_orders.sql:46: ERROR:  relation "public.stores" does not exist
+FILE: 20260712000005_fix_production_orders_critical.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260712000005_fix_production_orders_critical.sql:7: ERROR:  relation "payment_transactions" does not exist
+FILE: 20260712000006_fix_e2e_100_percent.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260712000006_fix_e2e_100_percent.sql:14: ERROR:  relation "received_services" does not exist
+FILE: 20260713000001_payment_transactions_rls.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260713000001_payment_transactions_rls.sql:12: ERROR:  relation "public.payment_transactions" does not exist
+FILE: 20260713000002_accounts_payable_indexes.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260713000002_accounts_payable_indexes.sql:17: ERROR:  relation "public.receipts" does not exist
+FILE: 20260713000002_rss_spanish_cuba_focus.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260713000002_rss_spanish_cuba_focus.sql:57: ERROR:  INSERT has more target columns than expressions
+FILE: 20260713000003_register_payment_idempotency_overpay.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260713000003_register_payment_idempotency_overpay.sql:15: ERROR:  relation "public.payment_transactions" does not exist
+FILE: 20260713000004_commission_payments_due_date.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260713000004_commission_payments_due_date.sql:19: ERROR:  relation "public.commission_payments" does not exist
+FILE: 20260714000001_commission_no_overlap_constraint.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260714000001_commission_no_overlap_constraint.sql:21: ERROR:  relation "public.commission_payments" does not exist
+FILE: 20260715000001_commission_advanced_rules.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260715000001_commission_advanced_rules.sql:25: ERROR:  relation "public.commission_rules" does not exist
+FILE: 20260715000003_storage_banner_policies.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260715000003_storage_banner_policies.sql:27: ERROR:  function storage.foldername(text) does not exist
+FILE: 20260715000005_fix_validate_active_store_trigger.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260715000005_fix_validate_active_store_trigger.sql:85: ERROR:  type "user_role" does not exist
+FILE: 20260715000006_disable_trigger_on_insert.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260715000006_disable_trigger_on_insert.sql:19: ERROR:  relation "public.profiles" does not exist
+FILE: 20260715000007_trigger_smart_update.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260715000007_trigger_smart_update.sql:78: ERROR:  type "user_role" does not exist
+FILE: 20260715000008_commission_rule_products_per_product_config.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260715000008_commission_rule_products_per_product_config.sql:40: ERROR:  relation "public.commission_rule_products" does not exist
+FILE: 20260715000010_commission_rules_add_product_mode.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260715000010_commission_rules_add_product_mode.sql:17: ERROR:  relation "public.commission_rules" does not exist
+FILE: 20260715000012_validate_production_order_transitions.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260715000012_validate_production_order_transitions.sql:66: ERROR:  relation "public.production_orders" does not exist
+FILE: 20260725000001_fix_reset_store_data_and_snapshots.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260725000001_fix_reset_store_data_and_snapshots.sql:41: ERROR:  relation "public.stores" does not exist
+FILE: 20260726000001_v1_1_stabilization.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000001_v1_1_stabilization.sql:104: ERROR:  relation "public.stores" does not exist
+FILE: 20260726000002_v1_2_devolutions_customers_quotations_kardex_fiscal.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000002_v1_2_devolutions_customers_quotations_kardex_fiscal.sql:25: ERROR:  relation "public.stores" does not exist
+FILE: 20260726000003_v2_0_lots_warehouses_abc_reconciliation.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000003_v2_0_lots_warehouses_abc_reconciliation.sql:26: ERROR:  relation "public.stores" does not exist
+FILE: 20260726000004_v2_1_deep_integrations.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000004_v2_1_deep_integrations.sql:186: ERROR:  function name "public.create_sale" is not unique
+FILE: 20260726000005_v2_2_accounting_flow_reversal.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000005_v2_2_accounting_flow_reversal.sql:27: ERROR:  relation "public.receipts" does not exist
+FILE: 20260726000006_v2_3_production_reversal_and_validation.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000006_v2_3_production_reversal_and_validation.sql:289: ERROR:  relation "public.transactions" does not exist
+FILE: 20260726000009_v2_3_3_drop_legacy_po_trigger.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000009_v2_3_3_drop_legacy_po_trigger.sql:22: ERROR:  relation "public.production_orders" does not exist
+FILE: 20260726000017_v2_6_h5_get_transferable_stores.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000017_v2_6_h5_get_transferable_stores.sql:61: ERROR:  type "public.stores" does not exist
+FILE: 20260726000019_v2_8_unify_roles.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000019_v2_8_unify_roles.sql:49: ERROR:  relation "public.profiles" does not exist
+FILE: 20260726000020_v2_9_h6_physical_count.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000020_v2_9_h6_physical_count.sql:43: ERROR:  relation "public.stores" does not exist
+FILE: 20260726000021_v2_10_h7_transfer_approval.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000021_v2_10_h7_transfer_approval.sql:39: ERROR:  relation "public.stores" does not exist
+FILE: 20260726000025_v2_10_4_check_stock_nonneg.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000025_v2_10_4_check_stock_nonneg.sql:5: ERROR:  relation "public.products" does not exist
+FILE: 20260726000028_v2_11_1_fix_voided_check.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000028_v2_11_1_fix_voided_check.sql:4: ERROR:  relation "public.inventory_adjustments" does not exist
+FILE: 20260726000032_v2_12_critical_fixes.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000032_v2_12_critical_fixes.sql:175: ERROR:  relation "public.products" does not exist
+FILE: 20260726000033_v2_12_1_categories_table.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000033_v2_12_1_categories_table.sql:5: ERROR:  relation "public.categories" does not exist
+FILE: 20260726000034_v2_12_2_stock_reconciliation.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000034_v2_12_2_stock_reconciliation.sql:107: ERROR:  relation "public.products" does not exist
+FILE: 20260726000035_v2_12_3_multi_currency.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260726000035_v2_12_3_multi_currency.sql:6: ERROR:  relation "public.devolutions" does not exist
+FILE: 20260731000001_v2_12_32_fix_ot_bugs.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260731000001_v2_12_32_fix_ot_bugs.sql:26: ERROR:  relation "public.transactions" does not exist
+FILE: 20260731000003_v2_12_34_exceso_fields.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260731000003_v2_12_34_exceso_fields.sql:7: ERROR:  relation "public.production_order_items" does not exist
+FILE: 20260802000001_v2_12_41_fase0_remediacion.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260802000001_v2_12_41_fase0_remediacion.sql:559: ERROR:  relation "public.production_orders" does not exist
+FILE: 20260802000002_v2_12_42_transfer_remediation.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260802000002_v2_12_42_transfer_remediation.sql:39: ERROR:  relation "public.stores" does not exist
+FILE: 20260802000006_v2_12_45_backup_registry.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260802000006_v2_12_45_backup_registry.sql:102: ERROR:  relation "public.stores" does not exist
+FILE: 20260802000007_v2_12_46_restore_rpc_preview.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260802000007_v2_12_46_restore_rpc_preview.sql:30: ERROR:  relation "public.restore_sessions" does not exist
+FILE: 20260803000001_v2_13_1_audit_logs_lockdown.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260803000001_v2_13_1_audit_logs_lockdown.sql:43: ERROR:  relation "public.audit_logs" does not exist
+FILE: 20260803000002_v2_13_2_void_transaction_conversion_factor.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260803000002_v2_13_2_void_transaction_conversion_factor.sql:243: ERROR:  function name "public.create_sale" is not unique
+FILE: 20260803000003_v2_13_3_transactions_idempotency_unique.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260803000003_v2_13_3_transactions_idempotency_unique.sql:26: ERROR:  relation "public.transactions" does not exist
+FILE: 20260803000004_v2_13_4_create_sale_validate_op_date.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260803000004_v2_13_4_create_sale_validate_op_date.sql:152: ERROR:  function name "public.create_sale" is not unique
+FILE: 20260803000005_v2_13_5_stock_movements_immutable.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260803000005_v2_13_5_stock_movements_immutable.sql:41: ERROR:  relation "public.stock_movements" does not exist
+FILE: 20260803000006_v2_13_6_inventory_reservations_expiry.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260803000006_v2_13_6_inventory_reservations_expiry.sql:32: ERROR:  relation "public.inventory_reservations" does not exist
+FILE: 20260803000008_v2_13_8_transaction_items_index.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260803000008_v2_13_8_transaction_items_index.sql:20: ERROR:  relation "public.transaction_items" does not exist
+FILE: 20260805000001_v2_14_1_plan_enum.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000001_v2_14_1_plan_enum.sql:35: ERROR:  relation "public.profiles" does not exist
+FILE: 20260805000002_v2_14_2_profiles_soft_delete.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000002_v2_14_2_profiles_soft_delete.sql:28: ERROR:  relation "public.profiles" does not exist
+FILE: 20260805000003_v2_14_3_orphaned_users_log.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000003_v2_14_3_orphaned_users_log.sql:26: ERROR:  relation "public.profiles" does not exist
+FILE: 20260805000004_v2_14_4_user_invitations.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000004_v2_14_4_user_invitations.sql:27: ERROR:  type "public.user_role" does not exist
+FILE: 20260805000006_v2_14_6_is_global_admin_doc.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000006_v2_14_6_is_global_admin_doc.sql:18: ERROR:  function public.is_global_admin() does not exist
+FILE: 20260805000007_v2_14_7_managed_create_user_v2.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000007_v2_14_7_managed_create_user_v2.sql:130: ERROR:  type public.user_role does not exist
+FILE: 20260805000008_v2_14_8_managed_update_user.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000008_v2_14_8_managed_update_user.sql:104: ERROR:  type public.user_role does not exist
+FILE: 20260805000009_v2_14_9_managed_toggle_user_status.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000009_v2_14_9_managed_toggle_user_status.sql:56: ERROR:  type "public.user_role" does not exist
+FILE: 20260805000010_v2_14_10_managed_reset_password.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000010_v2_14_10_managed_reset_password.sql:46: ERROR:  type "public.user_role" does not exist
+FILE: 20260805000011_v2_14_11_managed_soft_delete_user.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000011_v2_14_11_managed_soft_delete_user.sql:98: ERROR:  type "public.user_role" does not exist
+FILE: 20260805000012_v2_14_12_managed_update_membership.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000012_v2_14_12_managed_update_membership.sql:66: ERROR:  type public.user_role does not exist
+FILE: 20260805000016_v2_14_16_bulk_assign_memberships_audit.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260805000016_v2_14_16_bulk_assign_memberships_audit.sql:84: ERROR:  type "public.user_role" does not exist
+FILE: 20260806000001_v2_15_1_tenants_enriched.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260806000001_v2_15_1_tenants_enriched.sql:23: ERROR:  relation "public.tenants" does not exist
+FILE: 20260806000002_v2_15_2_user_role_tenant_admin.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260806000002_v2_15_2_user_role_tenant_admin.sql:11: ERROR:  type "public.user_role" does not exist
+FILE: 20260806000003_v2_15_3_migrate_existing_to_default_tenant.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260806000003_v2_15_3_migrate_existing_to_default_tenant.sql:76: ERROR:  relation "public.tenants" does not exist
+FILE: 20260806000004_v2_15_4_on_auth_user_created_tenant.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260806000004_v2_15_4_on_auth_user_created_tenant.sql:105: ERROR:  type "user_role" does not exist
+FILE: 20260806000006_v2_15_6_managed_update_tenant_plan.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260806000006_v2_15_6_managed_update_tenant_plan.sql:78: ERROR:  type "public.user_role" does not exist
+FILE: 20260806000009_v2_15_9_validate_tenant_access.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260806000009_v2_15_9_validate_tenant_access.sql:43: ERROR:  type "public.user_role" does not exist
+FILE: 20260806000010_v2_15_10_tenant_branding_defaults.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260806000010_v2_15_10_tenant_branding_defaults.sql:16: ERROR:  relation "public.tenants" does not exist
+FILE: 20260807000001_v2_16_1_transaction_items_full_columns.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260807000001_v2_16_1_transaction_items_full_columns.sql:32: ERROR:  relation "public.transaction_items" does not exist
+FILE: 20260807000001_v2_21_0_rls_backfill_validate.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260807000001_v2_21_0_rls_backfill_validate.sql:37: ERROR:  relation "public.products" does not exist
+FILE: 20260807000002_v2_21_0_rls_backfill_tenant_id.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260807000002_v2_21_0_rls_backfill_tenant_id.sql:23: ERROR:  relation "public.products" does not exist
+FILE: 20260807000003_v2_21_0_rls_tenant_indexes.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260807000003_v2_21_0_rls_tenant_indexes.sql:13: ERROR:  relation "public.products" does not exist
+FILE: 20260807000004_v2_21_0_rls_helper_functions.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260807000004_v2_21_0_rls_helper_functions.sql:23: ERROR:  relation "public.profiles" does not exist
+FILE: 20260807000005_v2_21_0_rls_tenant_policies.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260807000005_v2_21_0_rls_tenant_policies.sql:35: ERROR:  relation "public.products" does not exist
+FILE: 20260807000006_v2_21_0_rls_insert_with_check.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260807000006_v2_21_0_rls_insert_with_check.sql:26: ERROR:  relation "public.transactions" does not exist
+FILE: 20260807000009_v2_21_3_fix_z_reports_unique_index.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260807000009_v2_21_3_fix_z_reports_unique_index.sql:17: ERROR:  relation "public.z_reports" does not exist
+FILE: 20260807000011_v2_21_4_fix_create_devolution_v2_qty_validation.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260807000011_v2_21_4_fix_create_devolution_v2_qty_validation.sql:31: ERROR:  could not find a function named "public.create_devolution_v2"
+FILE: 20260807000014_v2_23_0_receipts_hardening.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260807000014_v2_23_0_receipts_hardening.sql:12: ERROR:  relation "public.receipts" does not exist
+FILE: 20260808000001_v2_17_1_reverse_transaction_v2.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260808000001_v2_17_1_reverse_transaction_v2.sql:16: ERROR:  type "public.movement_type" does not exist
+FILE: 20260808000001_v2_24_g1_schema_sync.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260808000001_v2_24_g1_schema_sync.sql:18: ERROR:  relation "public.purchase_orders" does not exist
+FILE: 20260808000002_v2_17_2_create_devolution_v2.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260808000002_v2_17_2_create_devolution_v2.sql:12: ERROR:  relation "public.devolutions" does not exist
+FILE: 20260808000002_v2_24_g2_enum_extend.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260808000002_v2_24_g2_enum_extend.sql:9: ERROR:  type "public.purchase_status_enum" does not exist
+FILE: 20260808000003_v2_24_g3_receive_against_po_final.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260808000003_v2_24_g3_receive_against_po_final.sql:227: ERROR:  type "public.purchase_status_enum" does not exist
+FILE: 20260808000004_v2_17_4_reverse_receipt_v2.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260808000004_v2_17_4_reverse_receipt_v2.sql:14: ERROR:  type "public.movement_type" does not exist
+FILE: 20260808000005_v2_24_g5_immutable_items.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260808000005_v2_24_g5_immutable_items.sql:19: ERROR:  relation "public.purchase_order_items" does not exist
+FILE: 20260808000006_v2_24_g6_cxp_integration.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260808000006_v2_24_g6_cxp_integration.sql:13: ERROR:  relation "public.receipts" does not exist
+FILE: 20260808000007_v2_24_g7_set_purchase_order_status.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260808000007_v2_24_g7_set_purchase_order_status.sql:106: ERROR:  type public.purchase_status_enum does not exist
+FILE: 20260809000001_v2_18_1_cash_closure_immutability.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260809000001_v2_18_1_cash_closure_immutability.sql:27: ERROR:  relation "public.cash_closures" does not exist
+FILE: 20260809000001_v2_25_g1_schema_sync.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260809000001_v2_25_g1_schema_sync.sql:14: ERROR:  relation "public.received_services" does not exist
+FILE: 20260809000002_v2_25_g2_rls_deny.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260809000002_v2_25_g2_rls_deny.sql:17: ERROR:  relation "public.service_cost_distributions" does not exist
+FILE: 20260809000003_v2_18_3_commission_reversal_trigger.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260809000003_v2_18_3_commission_reversal_trigger.sql:15: ERROR:  relation "public.commission_payments" does not exist
+FILE: 20260809000003_v2_25_g3_trigger_prevent_edit.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260809000003_v2_25_g3_trigger_prevent_edit.sql:63: ERROR:  relation "public.received_services" does not exist
+FILE: 20260809000004_v2_18_4_audit_triggers.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260809000004_v2_18_4_audit_triggers.sql:69: ERROR:  relation "public.cash_closures" does not exist
+FILE: 20260809000008_v2_25_g8_distribute_service_cost_v2.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260809000008_v2_25_g8_distribute_service_cost_v2.sql:98: ERROR:  relation "received_services" does not exist
+FILE: 20260809000010_v2_25_g10_audit_migration.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260809000010_v2_25_g10_audit_migration.sql:9: ERROR:  relation "public.service_audit_log" does not exist
+FILE: 20260809000012_v2_25_1_hotfix_trigger_select_policy.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260809000012_v2_25_1_hotfix_trigger_select_policy.sql:107: ERROR:  relation "public.received_services" does not exist
+FILE: 20260809000013_v2_25_2_hotfix_cancelled_status.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260809000013_v2_25_2_hotfix_cancelled_status.sql:11: ERROR:  relation "public.received_services" does not exist
+FILE: 20260810000001_v2_19_1_document_sequences.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000001_v2_19_1_document_sequences.sql:19: ERROR:  relation "public.stores" does not exist
+FILE: 20260810000001_v2_26_g1_schema_sync.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000001_v2_26_g1_schema_sync.sql:25: ERROR:  relation "production_orders" does not exist
+FILE: 20260810000002_v2_19_2_z_reports.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000002_v2_19_2_z_reports.sql:33: ERROR:  relation "public.cash_closures" does not exist
+FILE: 20260810000003_v2_19_3_invoice_number_fiscal_lock.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000003_v2_19_3_invoice_number_fiscal_lock.sql:13: ERROR:  relation "public.transactions" does not exist
+FILE: 20260810000004_v2_26_g4_void_closed_production_order.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000004_v2_26_g4_void_closed_production_order.sql:176: ERROR:  cannot change return type of existing function
+FILE: 20260810000005_v2_19_5_fiscal_closings_immutable.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000005_v2_19_5_fiscal_closings_immutable.sql:25: ERROR:  relation "public.fiscal_closings" does not exist
+FILE: 20260810000006_v2_26_g6_close_service_order_as_sale.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000006_v2_26_g6_close_service_order_as_sale.sql:125: ERROR:  cannot change return type of existing function
+FILE: 20260810000007_v2_19_7_retention_policy.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000007_v2_19_7_retention_policy.sql:9: ERROR:  relation "public.transactions" does not exist
+FILE: 20260810000009_v2_26_g9_g10_api_cleanup.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000009_v2_26_g9_g10_api_cleanup.sql:12: ERROR:  relation "public.production_orders" does not exist
+FILE: 20260810000020_pr2_migracion_b_schema.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000020_pr2_migracion_b_schema.sql:541: ERROR:  function public.register_reception(uuid, text, timestamp with time zone, text, jsonb, uuid, uuid) does not exist
+FILE: 20260810000050_pr4_5_security_fixes.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000050_pr4_5_security_fixes.sql:32: ERROR:  relation "public.pr2_backup_receipts_20260810" does not exist
+FILE: 20260810000051_pr4_5_1_security_views_remaining.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000051_pr4_5_1_security_views_remaining.sql:40: ERROR:  relation "public.v_document_state_summary" does not exist
+FILE: 20260810000060_pr4_4c_payment_and_date_fixes.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000060_pr4_4c_payment_and_date_fixes.sql:21: ERROR:  relation "public.transactions" does not exist
+FILE: 20260810000070_pr4_4e_timezone_services_document.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000070_pr4_4e_timezone_services_document.sql:77: ERROR:  relation "public.products" does not exist
+FILE: 20260810000090_pr4_4f_relax_payment_check.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260810000090_pr4_4f_relax_payment_check.sql:7: ERROR:  relation "public.transactions" does not exist
+FILE: 20260811000001_v2_20_1_audit_logs_trace_id.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260811000001_v2_20_1_audit_logs_trace_id.sql:10: ERROR:  relation "public.audit_logs" does not exist
+FILE: 20260811000002_v2_20_2_rpc_trace_id.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260811000002_v2_20_2_rpc_trace_id.sql:39: ERROR:  relation "public.audit_logs" does not exist
+FILE: 20260812000001_pr4_4i_payment_transactions_hardening.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260812000001_pr4_4i_payment_transactions_hardening.sql:51: ERROR:  relation "public.payment_transactions" does not exist
+FILE: 20260817000001_vale_salida.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260817000001_vale_salida.sql:66: ERROR:  type "public.movement_type" does not exist
+FILE: 20260818000001_security_hardening_h1_h2_h3.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260818000001_security_hardening_h1_h2_h3.sql:63: ERROR:  relation "profiles" does not exist
+FILE: 20260818000002_bulk_delete_functions_versioned.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260818000002_bulk_delete_functions_versioned.sql:18: ERROR:  syntax error at or near "ARRAY"
+FILE: 20260820000001_security_fix_spoofable_caller_uid.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260820000001_security_fix_spoofable_caller_uid.sql:58: ERROR:  relation "public.user_store_memberships" does not exist
+FILE: 20260820000004_sync_products_stock_current.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260820000004_sync_products_stock_current.sql:32: ERROR:  relation "public.products" does not exist
+FILE: 20260820000005_post_restore_reconciliation.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260820000005_post_restore_reconciliation.sql:89: ERROR:  cannot change name of input parameter "target_store_id"
+FILE: 20260820000008_catalog_hardening.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260820000008_catalog_hardening.sql:19: ERROR:  relation "public.products" does not exist
+FILE: 20260823000002_get_paginated_products_v2_add_fields.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260823000002_get_paginated_products_v2_add_fields.sql:26: ERROR:  relation "public.products" does not exist
+FILE: 20260824000001_telegram_auto_publish.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260824000001_telegram_auto_publish.sql:15: ERROR:  relation "public.telegram_configs" does not exist
+FILE: 20260824000002_telegram_show_price_units.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260824000002_telegram_show_price_units.sql:23: ERROR:  relation "public.telegram_configs" does not exist
+FILE: 20260824000003_telegram_interval_minutes.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260824000003_telegram_interval_minutes.sql:25: ERROR:  relation "public.telegram_configs" does not exist
+FILE: 20260824000004_whatsapp_auto_publish.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260824000004_whatsapp_auto_publish.sql:35: ERROR:  relation "public.whatsapp_configs" does not exist
+FILE: 20260827000005_audit_f3p001_rls_write_isolation.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260827000005_audit_f3p001_rls_write_isolation.sql:64: ERROR:  relation "public.transactions" does not exist
+FILE: 20260831000001_w9_f07_reset_store_data_acl.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260831000001_w9_f07_reset_store_data_acl.sql:57: ERROR:  W9-F07 GUARD: firmas de overloads no coinciden (2arg=<NULL>, 3arg=18311)
+FILE: 20260902000001_w9_f01_rls_hardening.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260902000001_w9_f01_rls_hardening.sql:111: ERROR:  W9-F01 GUARD: se esperaban 6 tablas target, encontradas 0
+FILE: 20260902000002_w9_f06_secdef_execute_hardening.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260902000002_w9_f06_secdef_execute_hardening.sql:299: ERROR:  W9-F06 GUARD: estado W9.2 de reset_store_data alterado (0)
+FILE: 20260902200923_w9_f06_c2_hardening.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260902200923_w9_f06_c2_hardening.sql:152: ERROR:  W9.4.2 GUARD: estado W9.2 de reset_store_data alterado (0)
+FILE: 20260902205210_w9_f06_h1_security_definer_search_path.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260902205210_w9_f06_h1_security_definer_search_path.sql:100: ERROR:  H1-GUARD1: public.audit_cash_closures_changes() ya tiene search_path=public, pg_temp distinto del objetivo pg_catalog, public
+FILE: 20260902231200_w9_f45_h4_reverse_receipt_v2_reconcile.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260902231200_w9_f45_h4_reverse_receipt_v2_reconcile.sql:88: ERROR:  H4-GUARD-FAIL: public.fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb) not found
+FILE: 20260903030000_w9_h5b1_retire_reverse_transaction_v1.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260903030000_w9_h5b1_retire_reverse_transaction_v1.sql:79: ERROR:  H5-B1 GUARD FAIL: ACL inesperada [=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres]
+FILE: 20260905120000_w9_b10b_modernize_reverse_devolution.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260905120000_w9_b10b_modernize_reverse_devolution.sql:22: ERROR:  type "public.movement_type" does not exist
+FILE: 20260909000001_rem_f4_03_grant_withdraw_production_item_v3.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260909000001_rem_f4_03_grant_withdraw_production_item_v3.sql:78: ERROR:  REM-F4-03 GUARD: withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) not found in live DB
+FILE: 20260909000003_rem_f4_06b_audit_fiscal_closing_record_id_uuid.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260909000003_rem_f4_06b_audit_fiscal_closing_record_id_uuid.sql:114: ERROR:  F4-06B-GUARD-PRE: fiscal_closings.id no existe
+FILE: 20260909000004_rem_f4_06c_fiscal_close_rpc_contract.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260909000004_rem_f4_06c_fiscal_close_rpc_contract.sql:94: ERROR:  GUARD_FAIL: tipos uuid esperados en fiscal_closings.id/audit_logs.record_id (got <NULL>/<NULL>)
+FILE: 20260911000000_rem_sec1_security_boundaries.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260911000000_rem_sec1_security_boundaries.sql:224: ERROR:  relation "public.profiles" does not exist
+FILE: 20260911000100_rem_po1_production_orders_boundaries.sql
+psql:/home/z/my-project/Costpro/supabase/migrations/20260911000100_rem_po1_production_orders_boundaries.sql:376: ERROR:  cannot change return type of existing function

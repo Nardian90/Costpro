@@ -1,0 +1,591 @@
+schema	table	constraint	type	validated	definition
+public	abc_classifications	abc_classifications_classification_check	c	true	CHECK ((classification = ANY (ARRAY['A'::text, 'B'::text, 'C'::text])))
+public	abc_classifications	abc_classifications_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	abc_classifications	abc_classifications_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	abc_classifications	abc_classifications_pkey	p	true	PRIMARY KEY (id)
+public	abc_classifications	uq_abc_store_product_period	u	true	UNIQUE (store_id, product_id, period_year, period_month)
+public	ai_api_keys	ai_api_keys_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	ai_api_keys	ai_api_keys_pkey	p	true	PRIMARY KEY (id)
+public	audit_events	audit_events_pkey	p	true	PRIMARY KEY (id)
+public	audit_logs	audit_logs_store_id_check	c	true	CHECK (((store_id IS NOT NULL) OR (table_name = ANY (ARRAY['profiles'::text, 'stores'::text, 'system'::text]))))
+public	audit_logs	audit_logs_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	audit_logs	audit_logs_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id)
+public	audit_logs	fk_audit_logs_profiles	f	true	FOREIGN KEY (user_id) REFERENCES profiles(id)
+public	audit_logs	audit_logs_pkey	p	true	PRIMARY KEY (id)
+public	backup_table_registry	backup_table_registry_filter_strategy_check	c	true	CHECK ((filter_strategy = ANY (ARRAY['store_id'::text, 'global'::text, 'via_parent'::text, 'via_origin_dest'::text, 'via_entity_id'::text, 'by_id'::text])))
+public	backup_table_registry	backup_table_registry_source_of_truth_check	c	true	CHECK ((source_of_truth = ANY (ARRAY['primary'::text, 'derived'::text, 'audit'::text, 'reference'::text, 'ephemeral'::text, 'unset'::text])))
+public	backup_table_registry	backup_table_registry_tier_check	c	true	CHECK (((tier >= 0) AND (tier <= 99)))
+public	backup_table_registry	backup_table_registry_pkey	p	true	PRIMARY KEY (id)
+public	backup_table_registry	backup_table_registry_table_name_key	u	true	UNIQUE (table_name)
+public	bank_statement_items	bank_statement_items_type_check	c	true	CHECK ((type = ANY (ARRAY['credit'::text, 'debit'::text])))
+public	bank_statement_items	bank_statement_items_bank_statement_id_fkey	f	true	FOREIGN KEY (bank_statement_id) REFERENCES bank_statements(id) ON DELETE CASCADE
+public	bank_statement_items	bank_statement_items_matched_transaction_id_fkey	f	true	FOREIGN KEY (matched_transaction_id) REFERENCES transactions(id) ON DELETE SET NULL
+public	bank_statement_items	bank_statement_items_matched_transfer_id_fkey	f	true	FOREIGN KEY (matched_transfer_id) REFERENCES transfers(id) ON DELETE SET NULL
+public	bank_statement_items	bank_statement_items_pkey	p	true	PRIMARY KEY (id)
+public	bank_statements	bank_statements_status_check	c	true	CHECK ((status = ANY (ARRAY['pending'::text, 'reconciled'::text, 'discrepancy'::text])))
+public	bank_statements	bank_statements_reconciled_by_fkey	f	true	FOREIGN KEY (reconciled_by) REFERENCES profiles(id)
+public	bank_statements	bank_statements_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	bank_statements	bank_statements_pkey	p	true	PRIMARY KEY (id)
+public	bulk_confirmation_tokens	bulk_confirmation_tokens_action_check	c	true	CHECK ((action = ANY (ARRAY['delete'::text, 'archive'::text])))
+public	bulk_confirmation_tokens	bulk_confirmation_tokens_pkey	p	true	PRIMARY KEY (id)
+public	bulk_confirmation_tokens	bulk_confirmation_tokens_token_key	u	true	UNIQUE (token)
+public	bulk_ops_log	bulk_ops_log_status_check	c	true	CHECK ((status = ANY (ARRAY['initiated'::text, 'completed'::text, 'failed'::text, 'partial'::text])))
+public	bulk_ops_log	bulk_ops_log_pkey	p	true	PRIMARY KEY (id)
+public	business_events	business_events_pkey	p	true	PRIMARY KEY (id)
+public	cash_closures	cash_closures_status_check	c	true	CHECK ((status = ANY (ARRAY['pendiente'::text, 'cerrado'::text])))
+public	cash_closures	cash_closures_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	cash_closures	cash_closures_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES profiles(id)
+public	cash_closures	cash_closures_pkey	p	true	PRIMARY KEY (id)
+public	cash_movements	cash_movements_amount_check	c	true	CHECK ((amount > (0)::numeric))
+public	cash_movements	cash_movements_session_id_fkey	f	true	FOREIGN KEY (session_id) REFERENCES cash_register_sessions(id)
+public	cash_movements	cash_movements_pkey	p	true	PRIMARY KEY (id)
+public	cash_register_sessions	cash_register_sessions_cashier_id_fkey	f	true	FOREIGN KEY (cashier_id) REFERENCES profiles(id)
+public	cash_register_sessions	cash_register_sessions_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	cash_register_sessions	cash_register_sessions_pkey	p	true	PRIMARY KEY (id)
+public	cash_sessions	cash_sessions_pkey	p	true	PRIMARY KEY (id)
+public	categories	categories_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	categories	categories_pkey	p	true	PRIMARY KEY (id)
+public	categories	categories_name_key	u	true	UNIQUE (name)
+public	commission_payments	chk_payment_amounts	c	true	CHECK (((final_amount >= (0)::numeric) AND (calculated_amount >= (0)::numeric)))
+public	commission_payments	chk_payment_dates	c	true	CHECK ((period_end >= period_start))
+public	commission_payments	commission_payments_payment_method_check	c	true	CHECK (((payment_method IS NULL) OR (payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'zelle'::text, 'mixed'::text]))))
+public	commission_payments	commission_payments_status_check	c	true	CHECK ((status = ANY (ARRAY['draft'::text, 'approved'::text, 'paid'::text, 'cancelled'::text, 'flagged_for_review'::text])))
+public	commission_payments	commission_payments_approved_by_fkey	f	true	FOREIGN KEY (approved_by) REFERENCES profiles(id)
+public	commission_payments	commission_payments_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	commission_payments	commission_payments_paid_by_fkey	f	true	FOREIGN KEY (paid_by) REFERENCES profiles(id)
+public	commission_payments	commission_payments_rule_applied_id_fkey	f	true	FOREIGN KEY (rule_applied_id) REFERENCES commission_rules(id) ON DELETE SET NULL
+public	commission_payments	commission_payments_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	commission_payments	commission_payments_worker_id_fkey	f	true	FOREIGN KEY (worker_id) REFERENCES workers(id) ON DELETE CASCADE
+public	commission_payments	commission_payments_pkey	p	true	PRIMARY KEY (id)
+public	commission_payments	no_overlapping_periods	x	true	EXCLUDE USING gist (worker_id WITH =, daterange(period_start, period_end, '[]'::text) WITH &&) WHERE ((status <> 'cancelled'::text))
+public	commission_reception_links	commission_reception_links_distribution_method_check	c	true	CHECK ((distribution_method = ANY (ARRAY['quantity'::text, 'cost_value'::text, 'weight'::text, 'manual'::text])))
+public	commission_reception_links	commission_reception_links_commission_payment_id_fkey	f	true	FOREIGN KEY (commission_payment_id) REFERENCES commission_payments(id) ON DELETE SET NULL
+public	commission_reception_links	commission_reception_links_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL
+public	commission_reception_links	commission_reception_links_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+public	commission_reception_links	commission_reception_links_receipt_id_fkey	f	true	FOREIGN KEY (receipt_id) REFERENCES receipts(id) ON DELETE CASCADE
+public	commission_reception_links	commission_reception_links_pkey	p	true	PRIMARY KEY (id)
+public	commission_rule_products	commission_rule_products_commission_mode_check	c	true	CHECK (((commission_mode IS NULL) OR (commission_mode = ANY (ARRAY['per_sale'::text, 'per_unit'::text]))))
+public	commission_rule_products	commission_rule_products_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	commission_rule_products	commission_rule_products_rule_id_fkey	f	true	FOREIGN KEY (rule_id) REFERENCES commission_rules(id) ON DELETE CASCADE
+public	commission_rule_products	commission_rule_products_pkey	p	true	PRIMARY KEY (id)
+public	commission_rule_products	commission_rule_products_rule_id_product_id_key	u	true	UNIQUE (rule_id, product_id)
+public	commission_rule_versions	commission_rule_versions_changed_by_fkey	f	true	FOREIGN KEY (changed_by) REFERENCES profiles(id)
+public	commission_rule_versions	commission_rule_versions_rule_id_fkey	f	true	FOREIGN KEY (rule_id) REFERENCES commission_rules(id) ON DELETE CASCADE
+public	commission_rule_versions	commission_rule_versions_pkey	p	true	PRIMARY KEY (id)
+public	commission_rule_versions	commission_rule_versions_rule_id_version_key	u	true	UNIQUE (rule_id, version)
+public	commission_rules	chk_commission_values	c	true	CHECK ((((type = 'percentage_sales'::text) AND (value_percent IS NOT NULL) AND (value_percent >= (0)::numeric) AND (value_percent <= (100)::numeric)) OR ((type = 'fixed_amount'::text) AND (fixed_value IS NOT NULL) AND (fixed_value >= (0)::numeric)) OR ((type = 'salary_based'::text) AND (salary_amount IS NOT NULL) AND (salary_amount >= (0)::numeric)) OR ((type = 'hybrid'::text) AND (salary_amount IS NOT NULL) AND (value_percent IS NOT NULL)) OR ((type = 'product_specific'::text) AND (product_commission_amount IS NOT NULL) AND (product_commission_amount >= (0)::numeric)) OR ((type = 'scale_percentage'::text) AND (value_percent IS NOT NULL) AND (value_percent >= (0)::numeric) AND (value_percent <= (100)::numeric))))
+public	commission_rules	commission_rules_base_calculation_check	c	true	CHECK ((base_calculation = ANY (ARRAY['total_sales'::text, 'cash_sales'::text, 'transfer_sales'::text, 'net_sales'::text])))
+public	commission_rules	commission_rules_product_commission_mode_check	c	true	CHECK (((product_commission_mode IS NULL) OR (product_commission_mode = ANY (ARRAY['per_sale'::text, 'per_unit'::text]))))
+public	commission_rules	commission_rules_type_check	c	true	CHECK ((type = ANY (ARRAY['percentage_sales'::text, 'fixed_amount'::text, 'salary_based'::text, 'hybrid'::text, 'product_specific'::text, 'scale_percentage'::text])))
+public	commission_rules	commission_rules_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	commission_rules	commission_rules_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	commission_rules	commission_rules_worker_id_fkey	f	true	FOREIGN KEY (worker_id) REFERENCES workers(id) ON DELETE CASCADE
+public	commission_rules	commission_rules_pkey	p	true	PRIMARY KEY (id)
+public	cost_sheet_templates	cost_sheet_templates_type_check	c	true	CHECK ((type = ANY (ARRAY['system'::text, 'public'::text, 'private'::text])))
+public	cost_sheet_templates	cost_sheet_templates_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES auth.users(id)
+public	cost_sheet_templates	cost_sheet_templates_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	cost_sheet_templates	cost_sheet_templates_pkey	p	true	PRIMARY KEY (id)
+public	cost_sheets	cost_sheets_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES auth.users(id)
+public	cost_sheets	cost_sheets_pkey	p	true	PRIMARY KEY (id)
+public	customers	customers_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	customers	customers_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	customers	customers_pkey	p	true	PRIMARY KEY (id)
+public	devolution_items	devolution_items_quantity_check	c	true	CHECK ((quantity > (0)::numeric))
+public	devolution_items	devolution_items_total_check	c	true	CHECK ((total >= (0)::numeric))
+public	devolution_items	devolution_items_unit_price_check	c	true	CHECK ((unit_price >= (0)::numeric))
+public	devolution_items	devolution_items_devolution_id_fkey	f	true	FOREIGN KEY (devolution_id) REFERENCES devolutions(id) ON DELETE CASCADE
+public	devolution_items	devolution_items_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
+public	devolution_items	devolution_items_pkey	p	true	PRIMARY KEY (id)
+public	devolutions	devolutions_payment_method_check	c	true	CHECK ((payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'zelle'::text, 'store_credit'::text])))
+public	devolutions	devolutions_status_check	c	true	CHECK ((status = ANY (ARRAY['pending'::text, 'completed'::text, 'voided'::text, 'reversed'::text])))
+public	devolutions	devolutions_total_amount_check	c	true	CHECK ((total_amount >= (0)::numeric))
+public	devolutions	devolutions_customer_id_fkey	f	true	FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
+public	devolutions	devolutions_original_transaction_id_fkey	f	true	FOREIGN KEY (original_transaction_id) REFERENCES transactions(id) ON DELETE SET NULL
+public	devolutions	devolutions_processed_by_fkey	f	true	FOREIGN KEY (processed_by) REFERENCES profiles(id)
+public	devolutions	devolutions_reversed_by_fkey	f	true	FOREIGN KEY (reversed_by) REFERENCES profiles(id)
+public	devolutions	devolutions_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	devolutions	devolutions_voided_by_fkey	f	true	FOREIGN KEY (voided_by) REFERENCES profiles(id)
+public	devolutions	devolutions_pkey	p	true	PRIMARY KEY (id)
+public	document_sequences	document_sequences_document_type_check	c	true	CHECK ((document_type = ANY (ARRAY['invoice'::text, 'credit_note'::text, 'quotation'::text, 'z_report'::text, 'vale_salida'::text])))
+public	document_sequences	document_sequences_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	document_sequences	document_sequences_pkey	p	true	PRIMARY KEY (id)
+public	exchange_rate_audit	exchange_rate_audit_pkey	p	true	PRIMARY KEY (id)
+public	exchange_rates	exchange_rates_capture_method_check	c	true	CHECK ((capture_method = ANY (ARRAY['real'::text, 'estimated'::text])))
+public	exchange_rates	exchange_rates_currency_check	c	true	CHECK ((currency = ANY (ARRAY['USD'::text, 'EUR'::text, 'MLC'::text])))
+public	exchange_rates	exchange_rates_rate_check	c	true	CHECK ((rate > (0)::numeric))
+public	exchange_rates	exchange_rates_segment_check	c	true	CHECK ((segment = ANY (ARRAY['1'::text, '2'::text, '3'::text])))
+public	exchange_rates	exchange_rates_source_check	c	true	CHECK ((source = ANY (ARRAY['BCC'::text, 'elToque'::text])))
+public	exchange_rates	exchange_rates_pkey	p	true	PRIMARY KEY (id)
+public	exchange_rates	exchange_rates_rate_date_currency_source_seg_key	u	true	UNIQUE (rate_date, currency, source, segment)
+public	fiscal_closings	fiscal_closings_period_month_check	c	true	CHECK (((period_month >= 1) AND (period_month <= 12)))
+public	fiscal_closings	fiscal_closings_status_check	c	true	CHECK ((status = ANY (ARRAY['open'::text, 'closed'::text, 'locked'::text])))
+public	fiscal_closings	fiscal_closings_closed_by_fkey	f	true	FOREIGN KEY (closed_by) REFERENCES profiles(id)
+public	fiscal_closings	fiscal_closings_locked_by_fkey	f	true	FOREIGN KEY (locked_by) REFERENCES profiles(id)
+public	fiscal_closings	fiscal_closings_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	fiscal_closings	fiscal_closings_pkey	p	true	PRIMARY KEY (id)
+public	fiscal_closings	uq_fiscal_closings_store_period	u	true	UNIQUE (store_id, period_year, period_month)
+public	idempotency_keys	idempotency_keys_pkey	p	true	PRIMARY KEY (id)
+public	idempotency_registry	idempotency_registry_pkey	p	true	PRIMARY KEY (id)
+public	idempotency_registry	uq_idempotency_key_operation	u	true	UNIQUE (idempotency_key, operation)
+public	inventory	stock_non_negative	c	true	CHECK ((quantity >= (0)::numeric))
+public	inventory	inventory_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	inventory	inventory_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	inventory	inventory_tenant_id_fkey	f	true	FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+public	inventory	inventory_pkey	p	true	PRIMARY KEY (id)
+public	inventory	inventory_store_id_product_id_key	u	true	UNIQUE (store_id, product_id)
+public	inventory_adjustment_items	fk_adjustment	f	true	FOREIGN KEY (adjustment_id) REFERENCES inventory_adjustments(id) ON DELETE CASCADE
+public	inventory_adjustment_items	fk_product	f	true	FOREIGN KEY (product_id) REFERENCES products(id)
+public	inventory_adjustment_items	inventory_adjustment_items_pkey	p	true	PRIMARY KEY (id)
+public	inventory_adjustments	inventory_adjustments_status_check	c	true	CHECK ((status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'reversed'::text, 'voided'::text])))
+public	inventory_adjustments	fk_created_by	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	inventory_adjustments	fk_store	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	inventory_adjustments	inventory_adjustments_confirmed_by_fkey	f	true	FOREIGN KEY (confirmed_by) REFERENCES profiles(id)
+public	inventory_adjustments	inventory_adjustments_reversed_by_fkey	f	true	FOREIGN KEY (reversed_by) REFERENCES profiles(id)
+public	inventory_adjustments	inventory_adjustments_pkey	p	true	PRIMARY KEY (id)
+public	inventory_batches	inventory_batches_quantity_check	c	true	CHECK ((quantity > (0)::numeric))
+public	inventory_batches	inventory_batches_unit_cost_check	c	true	CHECK ((unit_cost >= (0)::numeric))
+public	inventory_batches	inventory_batches_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id)
+public	inventory_batches	inventory_batches_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	inventory_batches	inventory_batches_pkey	p	true	PRIMARY KEY (id)
+public	inventory_movements	inventory_movements_type_check	c	true	CHECK ((type = ANY (ARRAY['IN_RECEIPT'::text, 'OUT_SALE'::text, 'ADJ_IN'::text, 'ADJ_OUT'::text, 'VOID_RECEIPT'::text])))
+public	inventory_movements	inventory_movements_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id)
+public	inventory_movements	inventory_movements_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id)
+public	inventory_movements	inventory_movements_pkey	p	true	PRIMARY KEY (id)
+public	inventory_reservations	inventory_reservations_quantity_check	c	true	CHECK ((quantity > (0)::numeric))
+public	inventory_reservations	inventory_reservations_reference_type_check	c	true	CHECK ((reference_type = ANY (ARRAY['TRANSFER'::text, 'SALE_ORDER'::text, 'PRODUCTION_ORDER'::text, 'CUSTOMER_HOLD'::text])))
+public	inventory_reservations	inventory_reservations_status_check	c	true	CHECK ((status = ANY (ARRAY['ACTIVE'::text, 'RELEASED'::text, 'CONSUMED'::text])))
+public	inventory_reservations	inventory_reservations_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	inventory_reservations	inventory_reservations_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	inventory_reservations	inventory_reservations_pkey	p	true	PRIMARY KEY (id)
+public	inventory_snapshots	inventory_snapshots_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	inventory_snapshots	inventory_snapshots_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	inventory_snapshots	inventory_snapshots_pkey	p	true	PRIMARY KEY (id)
+public	issue_slip_items	issue_slip_items_quantity_check	c	true	CHECK ((quantity > (0)::numeric))
+public	issue_slip_items	issue_slip_items_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id)
+public	issue_slip_items	issue_slip_items_production_order_item_id_fkey	f	true	FOREIGN KEY (production_order_item_id) REFERENCES production_order_items(id) ON DELETE SET NULL
+public	issue_slip_items	issue_slip_items_slip_id_fkey	f	true	FOREIGN KEY (slip_id) REFERENCES issue_slips(id) ON DELETE CASCADE
+public	issue_slip_items	issue_slip_items_variant_id_fkey	f	true	FOREIGN KEY (variant_id) REFERENCES product_variants(id)
+public	issue_slip_items	issue_slip_items_pkey	p	true	PRIMARY KEY (id)
+public	issue_slips	issue_slips_status_check	c	true	CHECK ((status = ANY (ARRAY['completed'::text, 'voided'::text, 'reversed'::text])))
+public	issue_slips	issue_slips_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	issue_slips	issue_slips_production_order_id_fkey	f	true	FOREIGN KEY (production_order_id) REFERENCES production_orders(id) ON DELETE SET NULL
+public	issue_slips	issue_slips_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	issue_slips	issue_slips_voided_by_fkey	f	true	FOREIGN KEY (voided_by) REFERENCES profiles(id)
+public	issue_slips	issue_slips_pkey	p	true	PRIMARY KEY (id)
+public	kardex_entries	kardex_entries_movement_type_check	c	true	CHECK ((movement_type = ANY (ARRAY['in'::text, 'out'::text, 'adjustment'::text, 'transfer_in'::text, 'transfer_out'::text, 'devolution_in'::text, 'devolution_out'::text, 'sale_reverse'::text, 'purchase_reverse'::text, 'production_reverse'::text])))
+public	kardex_entries	kardex_entries_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	kardex_entries	kardex_entries_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	kardex_entries	kardex_entries_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	kardex_entries	kardex_entries_pkey	p	true	PRIMARY KEY (id)
+public	learning_cards	learning_cards_pkey	p	true	PRIMARY KEY (id)
+public	legal_models	legal_models_resolution_id_fkey	f	true	FOREIGN KEY (resolution_id) REFERENCES legal_resolutions(id) ON DELETE CASCADE
+public	legal_models	legal_models_pkey	p	true	PRIMARY KEY (id)
+public	legal_resolutions	legal_resolutions_pkey	p	true	PRIMARY KEY (id)
+public	migration_history_snapshots	chk_snapshot_type	c	true	CHECK ((snapshot_type = ANY (ARRAY['full_row'::text, 'product_state'::text, 'metadata'::text])))
+public	migration_history_snapshots	migration_history_snapshots_pkey	p	true	PRIMARY KEY (id)
+public	ofertas	ofertas_status_check	c	true	CHECK ((status = ANY (ARRAY['draft'::text, 'sent'::text, 'accepted'::text, 'rejected'::text, 'expired'::text])))
+public	ofertas	ofertas_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE CASCADE
+public	ofertas	ofertas_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	ofertas	ofertas_pkey	p	true	PRIMARY KEY (id)
+public	orphaned_users_log	orphaned_users_log_status_check	c	true	CHECK ((status = ANY (ARRAY['pending'::text, 'resolved'::text, 'ignored'::text, 'pending_deletion'::text])))
+public	orphaned_users_log	orphaned_users_log_resolved_by_fkey	f	true	FOREIGN KEY (resolved_by) REFERENCES profiles(id) ON DELETE SET NULL
+public	orphaned_users_log	orphaned_users_log_pkey	p	true	PRIMARY KEY (id)
+public	orphaned_users_log	orphaned_users_log_auth_user_id_key	u	true	UNIQUE (auth_user_id)
+public	payment_transactions	payment_transactions_amount_check	c	true	CHECK ((amount > (0)::numeric))
+public	payment_transactions	payment_transactions_currency_check	c	true	CHECK ((currency = ANY (ARRAY['CUP'::text, 'USD'::text, 'EUR'::text, 'MLC'::text])))
+public	payment_transactions	payment_transactions_devolution_ref_check	c	true	CHECK (((ref_type <> 'devolution'::text) OR ((transaction_id IS NOT NULL) AND (ref_id IS NOT NULL))))
+public	payment_transactions	payment_transactions_direction_check	c	true	CHECK ((direction = ANY (ARRAY['in'::text, 'refund'::text])))
+public	payment_transactions	payment_transactions_payment_method_check	c	true	CHECK ((payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'zelle'::text])))
+public	payment_transactions	payment_transactions_ref_type_check	c	true	CHECK ((ref_type = ANY (ARRAY['receipt'::text, 'service'::text, 'production_order'::text, 'work'::text, 'sale'::text, 'commission'::text, 'devolution'::text])))
+public	payment_transactions	payment_transactions_sale_ref_check	c	true	CHECK (((ref_type <> 'sale'::text) OR ((transaction_id IS NOT NULL) AND (ref_id = transaction_id))))
+public	payment_transactions	payment_transactions_transaction_id_fkey	f	true	FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE RESTRICT
+public	payment_transactions	payment_transactions_pkey	p	true	PRIMARY KEY (id)
+public	physical_count_items	physical_count_items_count_id_fkey	f	true	FOREIGN KEY (count_id) REFERENCES physical_counts(id) ON DELETE CASCADE
+public	physical_count_items	physical_count_items_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	physical_count_items	physical_count_items_pkey	p	true	PRIMARY KEY (id)
+public	physical_count_items	physical_count_items_count_id_product_id_key	u	true	UNIQUE (count_id, product_id)
+public	physical_counts	physical_counts_status_check	c	true	CHECK ((status = ANY (ARRAY['draft'::text, 'in_progress'::text, 'counted'::text, 'applied'::text, 'voided'::text])))
+public	physical_counts	physical_counts_applied_by_fkey	f	true	FOREIGN KEY (applied_by) REFERENCES profiles(id)
+public	physical_counts	physical_counts_completed_by_fkey	f	true	FOREIGN KEY (completed_by) REFERENCES profiles(id)
+public	physical_counts	physical_counts_started_by_fkey	f	true	FOREIGN KEY (started_by) REFERENCES profiles(id)
+public	physical_counts	physical_counts_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	physical_counts	physical_counts_pkey	p	true	PRIMARY KEY (id)
+public	pick3_history	pick3_history_draw_time_check	c	true	CHECK ((draw_time = ANY (ARRAY['midday'::text, 'evening'::text])))
+public	pick3_history	pick3_history_result_check	c	true	CHECK ((array_length(result, 1) = 3))
+public	pick3_history	pick3_history_pkey	p	true	PRIMARY KEY (id)
+public	pick3_history	pick3_history_date_time_unique	u	true	UNIQUE (draw_date, draw_time)
+public	pick3_history	pick3_history_draw_date_draw_time_key	u	true	UNIQUE (draw_date, draw_time)
+public	pick3_ledger	pick3_ledger_type_check	c	true	CHECK ((type = ANY (ARRAY['initial_deposit'::text, 'bet'::text, 'win'::text, 'adjustment'::text, 'withdrawal'::text])))
+public	pick3_ledger	pick3_ledger_reference_draw_id_fkey	f	true	FOREIGN KEY (reference_draw_id) REFERENCES pick3_history(id) ON DELETE SET NULL
+public	pick3_ledger	pick3_ledger_reference_play_id_fkey	f	true	FOREIGN KEY (reference_play_id) REFERENCES pick3_user_plays(id) ON DELETE SET NULL
+public	pick3_ledger	pick3_ledger_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	pick3_ledger	pick3_ledger_pkey	p	true	PRIMARY KEY (id)
+public	pick3_profiles	pick3_profiles_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	pick3_profiles	pick3_profiles_pkey	p	true	PRIMARY KEY (user_id)
+public	pick3_referrals	pick3_referrals_status_check	c	true	CHECK ((status = ANY (ARRAY['pending'::text, 'registered'::text, 'converted'::text, 'expired'::text, 'rewarded'::text])))
+public	pick3_referrals	pick3_referrals_referred_user_id_fkey	f	true	FOREIGN KEY (referred_user_id) REFERENCES auth.users(id) ON DELETE SET NULL
+public	pick3_referrals	pick3_referrals_referrer_user_id_fkey	f	true	FOREIGN KEY (referrer_user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	pick3_referrals	pick3_referrals_pkey	p	true	PRIMARY KEY (id)
+public	pick3_referrals	pick3_referrals_referral_code_key	u	true	UNIQUE (referral_code)
+public	pick3_simulations	pick3_simulations_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id)
+public	pick3_simulations	pick3_simulations_pkey	p	true	PRIMARY KEY (id)
+public	pick3_subscriptions	pick3_subscriptions_status_check	c	true	CHECK ((status = ANY (ARRAY['active'::text, 'trialing'::text, 'past_due'::text, 'canceled'::text, 'expired'::text, 'paused'::text])))
+public	pick3_subscriptions	pick3_subscriptions_tier_check	c	true	CHECK ((tier = ANY (ARRAY['free'::text, 'player'::text, 'quant'::text, 'desk'::text])))
+public	pick3_subscriptions	pick3_subscriptions_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	pick3_subscriptions	pick3_subscriptions_pkey	p	true	PRIMARY KEY (id)
+public	pick3_subscriptions	one_active_subscription_per_user	x	true	EXCLUDE USING btree (user_id WITH =) WHERE ((status = ANY (ARRAY['active'::text, 'trialing'::text, 'past_due'::text])))
+public	pick3_usage	pick3_usage_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	pick3_usage	pick3_usage_pkey	p	true	PRIMARY KEY (id)
+public	pick3_usage	pick3_usage_user_id_period_key	u	true	UNIQUE (user_id, period)
+public	pick3_user_plays	pick3_user_plays_pkey	p	true	PRIMARY KEY (id)
+public	price_change_history	price_change_history_changed_by_fkey	f	true	FOREIGN KEY (changed_by) REFERENCES auth.users(id) ON DELETE SET NULL
+public	price_change_history	price_change_history_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+public	price_change_history	price_change_history_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	price_change_history	price_change_history_tenant_id_fkey	f	true	FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+public	price_change_history	price_change_history_variant_id_fkey	f	true	FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL
+public	price_change_history	price_change_history_pkey	p	true	PRIMARY KEY (id)
+public	price_commit_log	price_commit_log_committed_by_fkey	f	true	FOREIGN KEY (committed_by) REFERENCES auth.users(id) ON DELETE SET NULL
+public	price_commit_log	price_commit_log_rolled_back_by_fkey	f	true	FOREIGN KEY (rolled_back_by) REFERENCES auth.users(id) ON DELETE SET NULL
+public	price_commit_log	price_commit_log_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	price_commit_log	price_commit_log_pkey	p	true	PRIMARY KEY (id)
+public	product_cost_sheets	product_cost_sheets_modalidad_check	c	true	CHECK ((modalidad = ANY (ARRAY['produccion'::text, 'servicios'::text, 'comercializacion'::text])))
+public	product_cost_sheets	product_cost_sheets_sync_status_check	c	true	CHECK ((sync_status = ANY (ARRAY['pending'::text, 'synced'::text, 'conflict'::text])))
+public	product_cost_sheets	product_cost_sheets_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	product_cost_sheets	product_cost_sheets_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	product_cost_sheets	product_cost_sheets_pkey	p	true	PRIMARY KEY (id)
+public	product_lots	product_lots_quantity_received_check	c	true	CHECK ((quantity_received > (0)::numeric))
+public	product_lots	product_lots_quantity_remaining_check	c	true	CHECK ((quantity_remaining >= (0)::numeric))
+public	product_lots	product_lots_status_check	c	true	CHECK ((status = ANY (ARRAY['active'::text, 'expired'::text, 'depleted'::text, 'quarantine'::text])))
+public	product_lots	product_lots_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	product_lots	product_lots_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	product_lots	product_lots_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	product_lots	product_lots_pkey	p	true	PRIMARY KEY (id)
+public	product_variants	product_variants_conversion_factor_check	c	true	CHECK ((conversion_factor > 0))
+public	product_variants	product_variants_price_check	c	true	CHECK ((price >= (0)::numeric))
+public	product_variants	product_variants_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	product_variants	product_variants_pkey	p	true	PRIMARY KEY (id)
+public	product_variants	product_variants_sku_key	u	true	UNIQUE (sku)
+public	product_variants	product_variants_sku_unique	u	true	UNIQUE (product_id, sku)
+public	production_order_items	production_order_items_status_check	c	true	CHECK ((status = ANY (ARRAY['pending'::text, 'partial'::text, 'completed'::text])))
+public	production_order_items	production_order_items_order_id_fkey	f	true	FOREIGN KEY (order_id) REFERENCES production_orders(id) ON DELETE CASCADE
+public	production_order_items	production_order_items_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id)
+public	production_order_items	production_order_items_variant_id_fkey	f	true	FOREIGN KEY (variant_id) REFERENCES product_variants(id)
+public	production_order_items	production_order_items_pkey	p	true	PRIMARY KEY (id)
+public	production_orders	production_orders_advance_method_check	c	true	CHECK (((advance_method IS NULL) OR (advance_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'zelle'::text]))))
+public	production_orders	production_orders_order_type_check	c	true	CHECK ((order_type = ANY (ARRAY['production'::text, 'service'::text, 'work'::text])))
+public	production_orders	production_orders_payment_status_check	c	true	CHECK ((payment_status = ANY (ARRAY['unpaid'::text, 'partial'::text, 'paid'::text])))
+public	production_orders	production_orders_status_check	c	true	CHECK ((status = ANY (ARRAY['draft'::text, 'approved'::text, 'in_progress'::text, 'paused'::text, 'completed'::text, 'closed'::text, 'voided'::text, 'reversed'::text])))
+public	production_orders	production_orders_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	production_orders	production_orders_output_product_id_fkey	f	true	FOREIGN KEY (output_product_id) REFERENCES products(id)
+public	production_orders	production_orders_reversed_by_fkey	f	true	FOREIGN KEY (reversed_by) REFERENCES profiles(id)
+public	production_orders	production_orders_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	production_orders	production_orders_pkey	p	true	PRIMARY KEY (id)
+public	products	products_cost_price_check	c	true	CHECK ((cost_price >= (0)::numeric))
+public	products	products_min_stock_check	c	true	CHECK ((min_stock >= (1)::numeric))
+public	products	products_precio_empresa_currency_check	c	true	CHECK (((precio_empresa_currency IS NULL) OR (precio_empresa_currency = ANY (ARRAY['CUP'::text, 'USD'::text, 'EUR'::text, 'MLC'::text]))))
+public	products	products_price_check	c	true	CHECK ((price >= (0)::numeric))
+public	products	products_price_currency_check	c	true	CHECK ((price_currency = ANY (ARRAY['CUP'::text, 'USD'::text, 'EUR'::text, 'MLC'::text])))
+public	products	products_sku_not_empty	c	true	CHECK ((sku <> ''::text))
+public	products	products_stock_current_check	c	true	CHECK ((stock_current >= (0)::numeric))
+public	products	products_category_id_fkey	f	true	FOREIGN KEY (category_id) REFERENCES categories(id)
+public	products	products_cost_sheet_id_fkey	f	true	FOREIGN KEY (cost_sheet_id) REFERENCES product_cost_sheets(id) ON DELETE SET NULL
+public	products	products_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	products	products_tenant_id_fkey	f	true	FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+public	products	products_pkey	p	true	PRIMARY KEY (id)
+public	products	products_sku_store_unique	u	true	UNIQUE (sku, store_id)
+public	profiles	profiles_deleted_implies_inactive_check	c	true	CHECK (((deleted_at IS NULL) OR (is_active = false)))
+public	profiles	profiles_active_store_id_fkey	f	true	FOREIGN KEY (active_store_id) REFERENCES stores(id) ON DELETE SET NULL
+public	profiles	profiles_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES auth.users(id)
+public	profiles	profiles_deleted_by_fkey	f	true	FOREIGN KEY (deleted_by) REFERENCES profiles(id) ON DELETE SET NULL
+public	profiles	profiles_id_fkey	f	true	FOREIGN KEY (id) REFERENCES auth.users(id)
+public	profiles	profiles_role_id_fkey	f	true	FOREIGN KEY (role_id) REFERENCES roles(id)
+public	profiles	profiles_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	profiles	profiles_tenant_id_fkey	f	true	FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+public	profiles	profiles_pkey	p	true	PRIMARY KEY (id)
+public	purchase_items	purchase_items_quantity_check	c	true	CHECK ((quantity > (0)::numeric))
+public	purchase_items	purchase_items_unit_cost_check	c	true	CHECK ((unit_cost >= (0)::numeric))
+public	purchase_items	purchase_items_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id)
+public	purchase_items	purchase_items_purchase_order_id_fkey	f	true	FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id) ON DELETE CASCADE
+public	purchase_items	purchase_items_pkey	p	true	PRIMARY KEY (id)
+public	purchase_order_items	purchase_order_items_po_id_fkey	f	true	FOREIGN KEY (po_id) REFERENCES purchase_orders(id) ON DELETE CASCADE
+public	purchase_order_items	purchase_order_items_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+public	purchase_order_items	purchase_order_items_pkey	p	true	PRIMARY KEY (id)
+public	purchase_orders	purchase_orders_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES auth.users(id)
+public	purchase_orders	purchase_orders_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	purchase_orders	purchase_orders_supplier_id_fkey	f	true	FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
+public	purchase_orders	purchase_orders_pkey	p	true	PRIMARY KEY (id)
+public	quotation_items	quotation_items_quantity_check	c	true	CHECK ((quantity > (0)::numeric))
+public	quotation_items	quotation_items_total_check	c	true	CHECK ((total >= (0)::numeric))
+public	quotation_items	quotation_items_unit_price_check	c	true	CHECK ((unit_price >= (0)::numeric))
+public	quotation_items	quotation_items_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+public	quotation_items	quotation_items_quotation_id_fkey	f	true	FOREIGN KEY (quotation_id) REFERENCES quotations(id) ON DELETE CASCADE
+public	quotation_items	quotation_items_pkey	p	true	PRIMARY KEY (id)
+public	quotations	quotations_status_check	c	true	CHECK ((status = ANY (ARRAY['draft'::text, 'sent'::text, 'accepted'::text, 'rejected'::text, 'expired'::text, 'invoiced'::text])))
+public	quotations	quotations_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	quotations	quotations_customer_id_fkey	f	true	FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
+public	quotations	quotations_invoiced_transaction_id_fkey	f	true	FOREIGN KEY (invoiced_transaction_id) REFERENCES transactions(id) ON DELETE SET NULL
+public	quotations	quotations_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	quotations	quotations_pkey	p	true	PRIMARY KEY (id)
+public	receipt_items	receipt_items_quantity_check	c	true	CHECK ((quantity > (0)::numeric))
+public	receipt_items	receipt_items_tasa_cambio_valida	c	true	CHECK (((moneda_recepcion = 'CUP'::text) OR ((tasa_cambio_recepcion IS NOT NULL) AND (tasa_cambio_recepcion > 1.5))))
+public	receipt_items	receipt_items_unit_cost_check	c	true	CHECK ((unit_cost >= (0)::numeric))
+public	receipt_items	receipt_items_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id)
+public	receipt_items	receipt_items_receipt_id_fkey	f	true	FOREIGN KEY (receipt_id) REFERENCES receipts(id)
+public	receipt_items	receipt_items_variant_id_fkey	f	true	FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL
+public	receipt_items	receipt_items_pkey	p	true	PRIMARY KEY (id)
+public	receipt_tasa_audit	receipt_tasa_audit_modificado_por_fkey	f	true	FOREIGN KEY (modificado_por) REFERENCES auth.users(id) ON DELETE SET NULL
+public	receipt_tasa_audit	receipt_tasa_audit_receipt_item_id_fkey	f	true	FOREIGN KEY (receipt_item_id) REFERENCES receipt_items(id) ON DELETE CASCADE
+public	receipt_tasa_audit	receipt_tasa_audit_pkey	p	true	PRIMARY KEY (id)
+public	receipts	receipts_payment_method_check	c	true	CHECK (((payment_method IS NULL) OR (payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'zelle'::text]))))
+public	receipts	receipts_payment_status_check	c	true	CHECK ((payment_status = ANY (ARRAY['unpaid'::text, 'partial'::text, 'paid'::text])))
+public	receipts	receipts_status_check	c	true	CHECK ((status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'active'::text, 'partial'::text, 'voided'::text, 'reversed'::text])))
+public	receipts	receipts_confirmed_by_fkey	f	true	FOREIGN KEY (confirmed_by) REFERENCES profiles(id)
+public	receipts	receipts_original_receipt_id_fkey	f	true	FOREIGN KEY (original_receipt_id) REFERENCES receipts(id)
+public	receipts	receipts_po_id_fkey	f	true	FOREIGN KEY (po_id) REFERENCES purchase_orders(id) ON DELETE SET NULL
+public	receipts	receipts_reversed_by_fkey	f	true	FOREIGN KEY (reversed_by) REFERENCES profiles(id)
+public	receipts	receipts_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	receipts	receipts_tenant_id_fkey	f	true	FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+public	receipts	receipts_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id)
+public	receipts	receipts_user_id_profiles_fkey	f	true	FOREIGN KEY (user_id) REFERENCES profiles(id)
+public	receipts	receipts_pkey	p	true	PRIMARY KEY (id)
+public	received_services	received_services_distribution_method_check	c	true	CHECK ((distribution_method = ANY (ARRAY['amount'::text, 'quantity'::text, 'manual'::text])))
+public	received_services	received_services_exchange_rate_range	c	true	CHECK (((exchange_rate >= 0.01) AND (exchange_rate <= (10000)::numeric)))
+public	received_services	received_services_payment_method_check	c	true	CHECK (((payment_method IS NULL) OR (payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'zelle'::text]))))
+public	received_services	received_services_payment_status_check	c	true	CHECK ((payment_status = ANY (ARRAY['unpaid'::text, 'partial'::text, 'paid'::text])))
+public	received_services	received_services_payment_terms_days_range	c	true	CHECK (((payment_terms_days >= 1) AND (payment_terms_days <= 365)))
+public	received_services	received_services_status_check	c	true	CHECK ((status = ANY (ARRAY['active'::text, 'voided'::text, 'draft'::text, 'cancelled'::text])))
+public	received_services	received_services_supplier_not_null	c	true	CHECK (((supplier IS NOT NULL) AND (supplier <> ''::text)))
+public	received_services	received_services_total_amount_check	c	true	CHECK ((total_amount >= (0)::numeric))
+public	received_services	received_services_total_amount_positive	c	true	CHECK ((total_amount > (0)::numeric))
+public	received_services	received_services_service_type_id_fkey	f	true	FOREIGN KEY (service_type_id) REFERENCES service_types(id)
+public	received_services	received_services_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	received_services	received_services_pkey	p	true	PRIMARY KEY (id)
+public	report_definitions	report_definitions_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES auth.users(id)
+public	report_definitions	report_definitions_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	report_definitions	report_definitions_pkey	p	true	PRIMARY KEY (id)
+public	report_runs	report_runs_executed_by_fkey	f	true	FOREIGN KEY (executed_by) REFERENCES auth.users(id)
+public	report_runs	report_runs_report_definition_id_fkey	f	true	FOREIGN KEY (report_definition_id) REFERENCES report_definitions(id) ON DELETE CASCADE
+public	report_runs	report_runs_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	report_runs	report_runs_pkey	p	true	PRIMARY KEY (id)
+public	restore_sessions	restore_sessions_mode_check	c	true	CHECK ((mode = ANY (ARRAY['preview'::text, 'dry_run'::text, 'execute'::text])))
+public	restore_sessions	restore_sessions_status_check	c	true	CHECK ((status = ANY (ARRAY['PREPARING'::text, 'DRY_RUN'::text, 'EXECUTING'::text, 'COMPLETED'::text, 'FAILED'::text, 'ROLLED_BACK'::text])))
+public	restore_sessions	restore_sessions_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	restore_sessions	restore_sessions_pkey	p	true	PRIMARY KEY (id)
+public	roles	roles_pkey	p	true	PRIMARY KEY (id)
+public	roles	roles_name_key	u	true	UNIQUE (name)
+public	rss_feeds	rss_feeds_pkey	p	true	PRIMARY KEY (id)
+public	rss_feeds	rss_feeds_url_key	u	true	UNIQUE (url)
+public	rss_settings	rss_settings_pkey	p	true	PRIMARY KEY (id)
+public	sale_items	sale_items_quantity_check	c	true	CHECK ((quantity > (0)::numeric))
+public	sale_items	sale_items_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id)
+public	sale_items	sale_items_sale_id_fkey	f	true	FOREIGN KEY (sale_id) REFERENCES sales(id)
+public	sale_items	sale_items_pkey	p	true	PRIMARY KEY (id)
+public	sales	sales_payment_method_check	c	true	CHECK ((payment_method = ANY (ARRAY['cash'::text, 'card'::text, 'transfer'::text, 'other'::text])))
+public	sales	sales_cashier_id_fkey	f	true	FOREIGN KEY (cashier_id) REFERENCES auth.users(id)
+public	sales	sales_pkey	p	true	PRIMARY KEY (id)
+public	sales_transactions	chk_sales_payments_sum	c	true	CHECK (((payment_cash + payment_transfer) = amount_total))
+public	sales_transactions	sales_transactions_amount_total_check	c	true	CHECK ((amount_total >= (0)::numeric))
+public	sales_transactions	sales_transactions_payment_cash_check	c	true	CHECK ((payment_cash >= (0)::numeric))
+public	sales_transactions	sales_transactions_payment_transfer_check	c	true	CHECK ((payment_transfer >= (0)::numeric))
+public	sales_transactions	sales_transactions_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	sales_transactions	sales_transactions_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	sales_transactions	sales_transactions_transaction_id_fkey	f	true	FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE SET NULL
+public	sales_transactions	sales_transactions_worker_id_fkey	f	true	FOREIGN KEY (worker_id) REFERENCES workers(id) ON DELETE CASCADE
+public	sales_transactions	sales_transactions_pkey	p	true	PRIMARY KEY (id)
+public	saved_analytics_views	saved_analytics_views_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	saved_analytics_views	saved_analytics_views_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	saved_analytics_views	saved_analytics_views_pkey	p	true	PRIMARY KEY (id)
+public	service_audit_log	service_audit_log_pkey	p	true	PRIMARY KEY (id)
+public	service_cost_distributions	scd_distribution_amount_positive	c	true	CHECK ((distribution_amount > (0)::numeric))
+public	service_cost_distributions	scd_distribution_percentage_range	c	true	CHECK (((distribution_percentage >= (0)::numeric) AND (distribution_percentage <= (100)::numeric)))
+public	service_cost_distributions	scd_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	service_cost_distributions	scd_receipt_id_fkey	f	true	FOREIGN KEY (receipt_id) REFERENCES receipts(id) ON DELETE CASCADE
+public	service_cost_distributions	scd_receipt_item_id_fkey	f	true	FOREIGN KEY (receipt_item_id) REFERENCES receipt_items(id) ON DELETE CASCADE
+public	service_cost_distributions	service_cost_distributions_service_id_fkey	f	true	FOREIGN KEY (service_id) REFERENCES received_services(id) ON DELETE CASCADE
+public	service_cost_distributions	service_cost_distributions_pkey	p	true	PRIMARY KEY (id)
+public	service_reception_links	srl_allocated_amount_positive	c	true	CHECK ((allocated_amount > (0)::numeric))
+public	service_reception_links	srl_allocation_percentage_range	c	true	CHECK (((allocation_percentage >= (0)::numeric) AND (allocation_percentage <= (100)::numeric)))
+public	service_reception_links	service_reception_links_receipt_id_fkey	f	true	FOREIGN KEY (receipt_id) REFERENCES receipts(id) ON DELETE CASCADE
+public	service_reception_links	service_reception_links_service_id_fkey	f	true	FOREIGN KEY (service_id) REFERENCES received_services(id) ON DELETE CASCADE
+public	service_reception_links	service_reception_links_pkey	p	true	PRIMARY KEY (id)
+public	service_reception_links	service_reception_links_service_id_receipt_id_key	u	true	UNIQUE (service_id, receipt_id)
+public	service_types	service_types_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	service_types	service_types_pkey	p	true	PRIMARY KEY (id)
+public	stock_movements	stock_movements_quantity_nonzero	c	true	CHECK ((quantity_change <> (0)::numeric))
+public	stock_movements	stock_movements_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL
+public	stock_movements	stock_movements_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	stock_movements	stock_movements_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	stock_movements	stock_movements_tenant_id_fkey	f	true	FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+public	stock_movements	stock_movements_variant_id_fkey	f	true	FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL
+public	stock_movements	stock_movements_pkey	p	true	PRIMARY KEY (id)
+public	store_cost_templates	store_cost_templates_modalidad_check	c	true	CHECK ((modalidad = ANY (ARRAY['produccion'::text, 'servicios'::text, 'comercializacion'::text])))
+public	store_cost_templates	store_cost_templates_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL
+public	store_cost_templates	store_cost_templates_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	store_cost_templates	store_cost_templates_pkey	p	true	PRIMARY KEY (id)
+public	store_cost_templates	uq_store_cost_templates_store_id	u	true	UNIQUE (store_id)
+public	store_credit_ledger	store_credit_ledger_amount_check	c	true	CHECK ((amount > (0)::numeric))
+public	store_credit_ledger	store_credit_ledger_pkey	p	true	PRIMARY KEY (id)
+public	store_credit_ledger	store_credit_ledger_idempotency_key_key	u	true	UNIQUE (idempotency_key)
+public	store_exchange_rates	store_exchange_rates_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	store_exchange_rates	store_exchange_rates_updated_by_fkey	f	true	FOREIGN KEY (updated_by) REFERENCES auth.users(id)
+public	store_exchange_rates	store_exchange_rates_pkey	p	true	PRIMARY KEY (id)
+public	store_exchange_rates	store_exchange_rates_store_id_currency_key	u	true	UNIQUE (store_id, currency)
+public	store_notifications	store_notifications_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	store_notifications	store_notifications_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	store_notifications	store_notifications_pkey	p	true	PRIMARY KEY (id)
+public	store_reset_snapshots	store_reset_snapshots_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	store_reset_snapshots	store_reset_snapshots_pkey	p	true	PRIMARY KEY (id)
+public	stores	stores_email_format	c	true	CHECK (((email IS NULL) OR (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'::text)))
+public	stores	stores_phone_format	c	true	CHECK (((phone IS NULL) OR (phone ~ '^[\d\s\+\-\(\)]+$'::text)))
+public	stores	stores_reeup_format	c	true	CHECK (((reeup IS NULL) OR (reeup ~ '^[0-9]{11}$'::text)))
+public	stores	stores_archived_by_fkey	f	true	FOREIGN KEY (archived_by) REFERENCES auth.users(id) ON DELETE SET NULL
+public	stores	stores_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES auth.users(id)
+public	stores	stores_tenant_id_fkey	f	true	FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+public	stores	stores_pkey	p	true	PRIMARY KEY (id)
+public	stores	stores_slug_unique	u	true	UNIQUE (slug)
+public	suppliers	suppliers_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	suppliers	suppliers_pkey	p	true	PRIMARY KEY (id)
+public	sync_log	sync_log_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id)
+public	sync_log	sync_log_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id)
+public	sync_log	sync_log_pkey	p	true	PRIMARY KEY (idempotency_key)
+public	system_config	system_config_pkey	p	true	PRIMARY KEY (key)
+public	system_health_logs	system_health_logs_pkey	p	true	PRIMARY KEY (id)
+public	system_metrics	system_metrics_pkey	p	true	PRIMARY KEY (id)
+public	tax_configurations	tax_configurations_type_check	c	true	CHECK ((type = ANY (ARRAY['fixed'::text, 'percentage'::text])))
+public	tax_configurations	tax_configurations_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	tax_configurations	tax_configurations_pkey	p	true	PRIMARY KEY (id)
+public	telegram_configs	telegram_configs_interval_minutes_check	c	true	CHECK (((auto_publish_interval_minutes >= 5) AND (auto_publish_interval_minutes <= 10080)))
+public	telegram_configs	telegram_configs_show_price_check	c	true	CHECK ((show_price = ANY (ARRAY['according_to_storefront'::text, 'show'::text, 'hide'::text])))
+public	telegram_configs	telegram_configs_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	telegram_configs	telegram_configs_pkey	p	true	PRIMARY KEY (id)
+public	telegram_configs	telegram_configs_store_id_key	u	true	UNIQUE (store_id)
+public	telegram_contacts	telegram_contacts_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	telegram_contacts	telegram_contacts_pkey	p	true	PRIMARY KEY (id)
+public	telegram_contacts	telegram_contacts_store_id_telegram_user_id_key	u	true	UNIQUE (store_id, telegram_user_id)
+public	telegram_invitations	telegram_invitations_contact_id_fkey	f	true	FOREIGN KEY (contact_id) REFERENCES telegram_contacts(id) ON DELETE SET NULL
+public	telegram_invitations	telegram_invitations_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	telegram_invitations	telegram_invitations_pkey	p	true	PRIMARY KEY (id)
+public	telegram_messages	telegram_messages_contact_id_fkey	f	true	FOREIGN KEY (contact_id) REFERENCES telegram_contacts(id) ON DELETE SET NULL
+public	telegram_messages	telegram_messages_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	telegram_messages	telegram_messages_pkey	p	true	PRIMARY KEY (id)
+public	telegram_product_posts	telegram_product_posts_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	telegram_product_posts	telegram_product_posts_published_by_fkey	f	true	FOREIGN KEY (published_by) REFERENCES auth.users(id)
+public	telegram_product_posts	telegram_product_posts_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	telegram_product_posts	telegram_product_posts_pkey	p	true	PRIMARY KEY (id)
+public	tenants	tenants_subscription_status_check	c	true	CHECK ((subscription_status = ANY (ARRAY['trial'::text, 'active'::text, 'past_due'::text, 'cancelled'::text, 'free'::text])))
+public	tenants	tenants_owner_id_fkey	f	true	FOREIGN KEY (owner_id) REFERENCES profiles(id) ON DELETE SET NULL
+public	tenants	tenants_pkey	p	true	PRIMARY KEY (id)
+public	transaction_item_lots	transaction_item_lots_quantity_check	c	true	CHECK ((quantity > (0)::numeric))
+public	transaction_item_lots	transaction_item_lots_lot_id_fkey	f	true	FOREIGN KEY (lot_id) REFERENCES product_lots(id) ON DELETE SET NULL
+public	transaction_item_lots	transaction_item_lots_transaction_item_id_fkey	f	true	FOREIGN KEY (transaction_item_id) REFERENCES transaction_items(id) ON DELETE CASCADE
+public	transaction_item_lots	transaction_item_lots_pkey	p	true	PRIMARY KEY (id)
+public	transaction_items	transaction_items_price_at_sale_check	c	true	CHECK ((price_at_sale >= (0)::numeric))
+public	transaction_items	transaction_items_quantity_check	c	true	CHECK ((quantity > (0)::numeric))
+public	transaction_items	transaction_items_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	transaction_items	transaction_items_transaction_id_fkey	f	true	FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+public	transaction_items	transaction_items_variant_id_fkey	f	true	FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL
+public	transaction_items	transaction_items_pkey	p	true	PRIMARY KEY (id)
+public	transaction_recovery_ledger	pk_recovery_ledger	p	true	PRIMARY KEY (migration_id, transaction_id)
+public	transactions	chk_mixed_payment_consistency	c	true	CHECK (((payment_method <> 'mixed'::payment_method_enum) OR (abs((((cash_amount + transfer_amount) + zelle_amount) - total_amount)) <= 1.00)))
+public	transactions	transactions_total_amount_check	c	true	CHECK ((total_amount >= (0)::numeric))
+public	transactions	transactions_original_transaction_id_fkey	f	true	FOREIGN KEY (original_transaction_id) REFERENCES transactions(id)
+public	transactions	transactions_reversed_by_fkey	f	true	FOREIGN KEY (reversed_by) REFERENCES profiles(id)
+public	transactions	transactions_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	transactions	transactions_tenant_id_fkey	f	true	FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+public	transactions	transactions_user_id_fkey	f	true	FOREIGN KEY (seller_id) REFERENCES profiles(id) ON DELETE CASCADE
+public	transactions	transactions_pkey	p	true	PRIMARY KEY (id)
+public	transactions	transactions_idempotency_key_key	u	true	UNIQUE (idempotency_key)
+public	transfer_approval_rules	transfer_approval_rules_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	transfer_approval_rules	transfer_approval_rules_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	transfer_approval_rules	transfer_approval_rules_pkey	p	true	PRIMARY KEY (id)
+public	transfer_approval_rules	transfer_approval_rules_tenant_id_store_id_key	u	true	UNIQUE (tenant_id, store_id)
+public	transfer_items	transfer_items_quantity_check	c	true	CHECK ((quantity > (0)::numeric))
+public	transfer_items	transfer_items_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id)
+public	transfer_items	transfer_items_transfer_id_fkey	f	true	FOREIGN KEY (transfer_id) REFERENCES transfers(id) ON DELETE CASCADE
+public	transfer_items	transfer_items_pkey	p	true	PRIMARY KEY (id)
+public	transfers	stores_must_be_different	c	true	CHECK ((origin_store_id <> destination_store_id))
+public	transfers	transfers_approved_by_fkey	f	true	FOREIGN KEY (approved_by) REFERENCES profiles(id)
+public	transfers	transfers_confirmed_by_fkey	f	true	FOREIGN KEY (confirmed_by) REFERENCES profiles(id)
+public	transfers	transfers_created_by_profiles_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	transfers	transfers_destination_store_id_fkey	f	true	FOREIGN KEY (destination_store_id) REFERENCES stores(id)
+public	transfers	transfers_origin_store_id_fkey	f	true	FOREIGN KEY (origin_store_id) REFERENCES stores(id)
+public	transfers	transfers_reversed_by_fkey	f	true	FOREIGN KEY (reversed_by) REFERENCES profiles(id)
+public	transfers	transfers_tenant_id_fkey	f	true	FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+public	transfers	transfers_pkey	p	true	PRIMARY KEY (id)
+public	units_of_measure	units_of_measure_pkey	p	true	PRIMARY KEY (id)
+public	units_of_measure	units_of_measure_code_key	u	true	UNIQUE (code)
+public	usage_aggregates	usage_aggregates_pkey	p	true	PRIMARY KEY (id)
+public	usage_alerts	usage_alerts_level_check	c	true	CHECK ((level = ANY (ARRAY['warning'::text, 'risk'::text, 'critical'::text])))
+public	usage_alerts	usage_alerts_pkey	p	true	PRIMARY KEY (id)
+public	usage_drift	usage_drift_pkey	p	true	PRIMARY KEY (id)
+public	usage_thresholds	usage_thresholds_pkey	p	true	PRIMARY KEY (id)
+public	usage_thresholds	usage_thresholds_metric_type_key	u	true	UNIQUE (metric_type)
+public	user_audit_log	user_audit_log_performed_by_check	c	true	CHECK (((performed_by IS NOT NULL) OR (action ~~ 'SYSTEM_%'::text)))
+public	user_audit_log	user_audit_log_pkey	p	true	PRIMARY KEY (id)
+public	user_invitations	user_invitations_status_check	c	true	CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'expired'::text, 'revoked'::text])))
+public	user_invitations	user_invitations_invited_by_fkey	f	true	FOREIGN KEY (invited_by) REFERENCES profiles(id) ON DELETE SET NULL
+public	user_invitations	user_invitations_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	user_invitations	user_invitations_pkey	p	true	PRIMARY KEY (id)
+public	user_invitations	user_invitations_token_hash_key	u	true	UNIQUE (token_hash)
+public	user_preferences	user_preferences_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	user_preferences	user_preferences_pkey	p	true	PRIMARY KEY (user_id, preference_key)
+public	user_progress	user_progress_card_id_fkey	f	true	FOREIGN KEY (card_id) REFERENCES learning_cards(id) ON DELETE CASCADE
+public	user_progress	user_progress_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
+public	user_progress	user_progress_pkey	p	true	PRIMARY KEY (id)
+public	user_progress	user_progress_user_id_card_id_key	u	true	UNIQUE (user_id, card_id)
+public	user_store_memberships	profiles_memberships_fkey	f	true	FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
+public	user_store_memberships	user_store_memberships_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	user_store_memberships	user_store_memberships_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
+public	user_store_memberships	user_store_memberships_pkey	p	true	PRIMARY KEY (id)
+public	user_store_memberships	user_store_memberships_user_id_store_id_key	u	true	UNIQUE (user_id, store_id)
+public	user_strategy_feedback	user_strategy_feedback_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id)
+public	user_strategy_feedback	user_strategy_feedback_pkey	p	true	PRIMARY KEY (id)
+public	user_usage	user_usage_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
+public	user_usage	user_usage_pkey	p	true	PRIMARY KEY (id)
+public	user_usage	user_usage_user_id_action_type_usage_date_key	u	true	UNIQUE (user_id, action_type, usage_date)
+public	w62_df04_design_params	w62_df04_design_params_pkey	p	true	PRIMARY KEY (param)
+public	w62_df04_synthetic_rows	w62_df04_synthetic_rows_pkey	p	true	PRIMARY KEY (row_id)
+public	w62_zero_cost_flags	w62_zero_cost_flags_pkey	p	true	PRIMARY KEY (store_id, product_id, scope)
+public	wac_change_log	wac_change_log_pkey	p	true	PRIMARY KEY (id)
+public	wallet_accounts	wallet_accounts_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	wallet_accounts	wallet_accounts_pkey	p	true	PRIMARY KEY (id)
+public	wallet_accounts	wallet_accounts_user_id_source_account_number_key	u	true	UNIQUE (user_id, source, account_number)
+public	wallet_transactions	wallet_transactions_user_id_fkey	f	true	FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+public	wallet_transactions	wallet_transactions_pkey	p	true	PRIMARY KEY (id)
+public	wallet_transactions	wallet_transactions_user_id_trm_transaction_id_key	u	true	UNIQUE (user_id, trm_transaction_id)
+public	warehouse_stock	warehouse_stock_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	warehouse_stock	warehouse_stock_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	warehouse_stock	warehouse_stock_warehouse_id_fkey	f	true	FOREIGN KEY (warehouse_id) REFERENCES warehouses(id) ON DELETE CASCADE
+public	warehouse_stock	warehouse_stock_pkey	p	true	PRIMARY KEY (id)
+public	warehouse_stock	uq_warehouse_stock	u	true	UNIQUE (warehouse_id, product_id)
+public	warehouses	warehouses_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	warehouses	warehouses_pkey	p	true	PRIMARY KEY (id)
+public	whatsapp_configs	whatsapp_configs_interval_minutes_check	c	true	CHECK (((auto_publish_interval_minutes >= 5) AND (auto_publish_interval_minutes <= 10080)))
+public	whatsapp_configs	whatsapp_configs_show_price_check	c	true	CHECK ((show_price = ANY (ARRAY['according_to_storefront'::text, 'show'::text, 'hide'::text])))
+public	whatsapp_configs	whatsapp_configs_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	whatsapp_configs	whatsapp_configs_pkey	p	true	PRIMARY KEY (id)
+public	whatsapp_configs	whatsapp_configs_store_id_key	u	true	UNIQUE (store_id)
+public	whatsapp_contacts	whatsapp_contacts_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	whatsapp_contacts	whatsapp_contacts_pkey	p	true	PRIMARY KEY (id)
+public	whatsapp_contacts	whatsapp_contacts_store_id_phone_number_key	u	true	UNIQUE (store_id, phone_number)
+public	whatsapp_invitations	whatsapp_invitations_contact_id_fkey	f	true	FOREIGN KEY (contact_id) REFERENCES whatsapp_contacts(id) ON DELETE SET NULL
+public	whatsapp_invitations	whatsapp_invitations_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	whatsapp_invitations	whatsapp_invitations_pkey	p	true	PRIMARY KEY (id)
+public	whatsapp_messages	whatsapp_messages_contact_id_fkey	f	true	FOREIGN KEY (contact_id) REFERENCES whatsapp_contacts(id) ON DELETE SET NULL
+public	whatsapp_messages	whatsapp_messages_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	whatsapp_messages	whatsapp_messages_pkey	p	true	PRIMARY KEY (id)
+public	whatsapp_product_posts	whatsapp_product_posts_product_id_fkey	f	true	FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+public	whatsapp_product_posts	whatsapp_product_posts_published_by_fkey	f	true	FOREIGN KEY (published_by) REFERENCES auth.users(id)
+public	whatsapp_product_posts	whatsapp_product_posts_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	whatsapp_product_posts	whatsapp_product_posts_pkey	p	true	PRIMARY KEY (id)
+public	whatsapp_risk_state	whatsapp_risk_state_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	whatsapp_risk_state	whatsapp_risk_state_pkey	p	true	PRIMARY KEY (id)
+public	whatsapp_risk_state	whatsapp_risk_state_store_id_key	u	true	UNIQUE (store_id)
+public	workers	workers_gender_check	c	true	CHECK (((gender = ANY (ARRAY['M'::text, 'F'::text, 'other'::text])) OR (gender IS NULL)))
+public	workers	workers_status_check	c	true	CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text])))
+public	workers	workers_created_by_fkey	f	true	FOREIGN KEY (created_by) REFERENCES profiles(id)
+public	workers	workers_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	workers	workers_pkey	p	true	PRIMARY KEY (id)
+public	z_reports	z_reports_cash_closure_id_fkey	f	true	FOREIGN KEY (cash_closure_id) REFERENCES cash_closures(id) ON DELETE RESTRICT
+public	z_reports	z_reports_store_id_fkey	f	true	FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+public	z_reports	z_reports_pkey	p	true	PRIMARY KEY (id)

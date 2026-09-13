@@ -1,0 +1,878 @@
+{
+ "fn_update_inventory_on_movement": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "generate_inventory_snapshot": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "prevent_inventory_direct_write": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "record_sale_movement": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "current_user_store_id": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_user_role": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "cleanup_expired_idempotency_keys": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "has_any_role": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_my_sales": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_product_variants_counts": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "close_cash_session": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "check_active_user": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "check_cash_session_open": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "apply_fifo_on_sale": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "update_inventory_after_sale": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "fn_process_receipt": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "fn_process_sale": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "fn_void_receipt": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "can_void_receipt": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "log_transaction_changes": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_inventory_report": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_inventory_with_costs": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_my_sales_summary": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_product_stock_ledger": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_current_user_store_id": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "cancel_reception": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "audit_profile_changes": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "audit_store_access_changes": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "validate_active_store": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "enforce_encargado_store_limit": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "enforce_encargado_user_limit": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "auto_assign_store_to_creator": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "managed_create_store": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "manage_user_memberships": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_users_for_encargado": {
+  "class": "MATCH_STALE_VERSION",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "managed_delete_product": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "managed_toggle_product_active": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "is_manager_of_store": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_my_role": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "is_store_manager": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_audit_logs": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 1,
+  "src_files": [
+   "src/lib/reports/data-fetcher.ts"
+  ]
+ },
+ "get_dashboard_kpis": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_sales_since_last_closure": {
+  "class": "DRIFT_BODY",
+  "src_refs": 1,
+  "src_files": [
+   "src/services/cash-service.ts"
+  ]
+ },
+ "audit_product_changes": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "audit_store_changes": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "is_user_creator": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "is_managed_user": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "has_role": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_transactions_with_profit": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_product_stock_ledger_paginated": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 2,
+  "src_files": [
+   "src/hooks/api/useKardex.ts",
+   "src/lib/reports/data-fetcher.ts"
+  ]
+ },
+ "update_transaction_taxes": {
+  "class": "DRIFT_BODY",
+  "src_refs": 1,
+  "src_files": [
+   "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx"
+  ]
+ },
+ "validate_transfer_stores": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "check_reception_cost_variation": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "audit_role_changes": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "can_create_user_with_role": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "is_role_not_changed": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "is_admin_check": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "managed_delete_user": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_new_academy_cards": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/academy/review/route.ts"
+  ]
+ },
+ "log_audit_event": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "managed_create_user": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "verify_audit_chain": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "increment_user_usage": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 1,
+  "src_files": [
+   "src/services/usage-service.ts"
+  ]
+ },
+ "process_pick3_transaction": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 1,
+  "src_files": [
+   "src/components/views/terminal/views/pick3/BetEntryDialog.tsx"
+  ]
+ },
+ "on_pick3_profile_initial_bankroll": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_transfers": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 1,
+  "src_files": [
+   "src/lib/reports/data-fetcher.ts"
+  ]
+ },
+ "get_cash_closures": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 1,
+  "src_files": [
+   "src/lib/reports/data-fetcher.ts"
+  ]
+ },
+ "get_profit_report": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 1,
+  "src_files": [
+   "src/lib/reports/data-fetcher.ts"
+  ]
+ },
+ "get_daily_income_aggregated": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 1,
+  "src_files": [
+   "src/lib/reports/data-fetcher.ts"
+  ]
+ },
+ "get_daily_expenses_aggregated": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 1,
+  "src_files": [
+   "src/lib/reports/data-fetcher.ts"
+  ]
+ },
+ "cancel_transfer": {
+  "class": "MATCH_STALE_VERSION",
+  "src_refs": 1,
+  "src_files": [
+   "src/services/transfer-service.ts"
+  ]
+ },
+ "stores_soft_delete_cleanup": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "fn_maintain_product_completeness": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "fn_log_system_health": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "process_sale_transaction": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "process_initial_stock": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "process_bulk_import": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "deduct_stock": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_ai_api_key": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "save_ai_api_key": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "sync_inventory_from_products": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "has_store_role": {
+  "class": "MATCH_STALE_VERSION",
+  "src_refs": 6,
+  "src_files": [
+   "src/__tests__/integration/fc-rls-database.test.ts",
+   "src/__tests__/integration/store-rls-database.test.ts",
+   "src/app/api/product-cost-sheets/auto-generate/route.ts",
+   "src/app/api/product-cost-sheets/route.ts",
+   "src/app/api/store-cost-templates/route.ts"
+  ]
+ },
+ "soft_delete_store": {
+  "class": "DRIFT_BODY",
+  "src_refs": 2,
+  "src_files": [
+   "src/app/api/stores/bulk/route.ts",
+   "src/app/api/stores/route.ts"
+  ]
+ },
+ "update_suppliers_updated_at": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_products_for_reception": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "update_po_updated_at": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "calculate_service_distribution": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/received-services/distribute/route.ts"
+  ]
+ },
+ "get_product_cost_analysis": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/received-services/analysis/route.ts"
+  ]
+ },
+ "upsert_usage_aggregate": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 1,
+  "src_files": [
+   "src/lib/usage-tracker.ts"
+  ]
+ },
+ "get_usage_summary": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/usage/summary/route.ts"
+  ]
+ },
+ "cleanup_old_aggregates": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/cron/usage-sync/route.ts"
+  ]
+ },
+ "get_usage_forecast": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "touch_updated_at": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "snapshot_commission_rule": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "register_stock_movement": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 2,
+  "src_files": [
+   "src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts",
+   "src/app/api/inventory/adjust/route.ts"
+  ]
+ },
+ "confirm_transfer": {
+  "class": "DRIFT_BODY",
+  "src_refs": 2,
+  "src_files": [
+   "src/app/api/transfers/[transferId]/confirm/route.ts",
+   "src/services/transfer-service.ts"
+  ]
+ },
+ "get_low_stock_count": {
+  "class": "MATCH_CANONICAL_WS",
+  "src_refs": 2,
+  "src_files": [
+   "src/components/views/terminal/views/sales_hub/SalesHubView.tsx",
+   "src/hooks/api/useStoreNotifications.ts"
+  ]
+ },
+ "receive_production_output_deprecated_4arg": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_worker_commission_summary": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/commissions/summary/route.ts"
+  ]
+ },
+ "purge_old_reset_snapshots": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/cron/purge-snapshots/route.ts"
+  ]
+ },
+ "ensure_fiscal_period": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "has_store_access_as": {
+  "class": "DRIFT_BODY",
+  "src_refs": 2,
+  "src_files": [
+   "src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts",
+   "src/app/api/vale-salida/[id]/reverse/route.ts"
+  ]
+ },
+ "mark_expired_lots": {
+  "class": "DRIFT_ATTRS",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "perform_inventory_adjustment": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/sync/batch/route.ts"
+  ]
+ },
+ "confirm_pending_reception": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 1,
+  "src_files": [
+   "src/hooks/api/useReceptions.ts"
+  ]
+ },
+ "void_reception_with_reversal": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 1,
+  "src_files": [
+   "src/hooks/api/useReceptions.ts"
+  ]
+ },
+ "create_devolution": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 1,
+  "src_files": [
+   "src/__tests__/integration/iteration-11-3.test.ts"
+  ]
+ },
+ "validate_store_can_be_modified": {
+  "class": "DRIFT_BODY",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/stores/bulk/preview/route.ts"
+  ]
+ },
+ "reset_store_data": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/stores/reset/route.ts"
+  ]
+ },
+ "create_pre_restore_snapshot": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "restore_store_backup": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "audit_backup_restore_protected_change": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "release_expired_reservations": {
+  "class": "DRIFT_BODY",
+  "src_refs": 1,
+  "src_files": [
+   "src/__tests__/integration/iteration-11-1.test.ts"
+  ]
+ },
+ "create_store_with_membership": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/stores/route.ts"
+  ]
+ },
+ "get_tenant_sales_summary": {
+  "class": "DRIFT_BODY",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/tenants/[id]/reports/sales/route.ts"
+  ]
+ },
+ "audit_cash_closures_changes": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "audit_commission_payments_changes": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "close_cash_shift": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 2,
+  "src_files": [
+   "src/__tests__/integration/iteration-fiscal.test.ts",
+   "src/app/api/cash-closures/close/route.ts"
+  ]
+ },
+ "test_trace_id_setting": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "current_user_store_ids": {
+  "class": "DRIFT_BODY",
+  "src_refs": 1,
+  "src_files": [
+   "src/__tests__/integration/iteration-rls.test.ts"
+  ]
+ },
+ "is_admin_with_access": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "register_reception": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 2,
+  "src_files": [
+   "src/app/api/purchase-orders/[id]/route.ts",
+   "src/app/api/sync/batch/route.ts"
+  ]
+ },
+ "check_idempotency": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "register_idempotency": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "create_devolution_v2": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 2,
+  "src_files": [
+   "src/__tests__/integration/iteration-11-3.test.ts",
+   "src/config/features.ts"
+  ]
+ },
+ "create_sale_v2": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 3,
+  "src_files": [
+   "src/__tests__/integration/iteration-11-2.test.ts",
+   "src/app/api/pos/checkout/route.ts",
+   "src/app/api/sync/batch/route.ts"
+  ]
+ },
+ "validate_payment_transactions_invariants": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "adjust_total_amount": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "enforce_ledger_append_only": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "restore_transaction_snapshot": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "withdraw_production_item_deprecated_9arg": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "create_vale_salida": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/vale-salida/route.ts"
+  ]
+ },
+ "has_management_access_as": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "ensure_product_barcode": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "bulk_update_products": {
+  "class": "DRIFT_BODY",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_paginated_products_v2": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_products_for_pos": {
+  "class": "DRIFT_SIGNATURE",
+  "src_refs": 2,
+  "src_files": [
+   "src/app/api/inventory/products/route.ts",
+   "src/components/views/terminal/views/ipv/CatalogTable.tsx"
+  ]
+ },
+ "fn_recalc_wac": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 1,
+  "src_files": [
+   "src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts"
+  ]
+ },
+ "w62_guard_wac_writer": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "withdraw_production_item_v3": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 1,
+  "src_files": [
+   "src/app/api/production-orders/[id]/withdraw/route.ts"
+  ]
+ },
+ "w62_df04_classify": {
+  "class": "ORPHAN_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "audit_user_store_memberships_changes": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "fn_audit_stock_reception": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "fn_audit_transaction_voiding": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "fn_user_preferences_set_updated_at": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_fc_generation_stats": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_latest_rate": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_rate_history": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_rate_variation": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "get_recent_receptions": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "purge_expired_fc_pdf_cache": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "reverse_transaction": {
+  "class": "MISSING_LIVE",
+  "src_refs": 1,
+  "src_files": [
+   "src/__tests__/integration/iteration-11-3.test.ts"
+  ]
+ },
+ "update_product_wac": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ },
+ "withdraw_production_item": {
+  "class": "MISSING_LIVE",
+  "src_refs": 0,
+  "src_files": []
+ }
+}

@@ -1,0 +1,36 @@
+REM-INV-4 — 15-security.txt (§27/§15)
+=====================================
+
+1. SECRET SCAN del evidence pack
+--------------------------------
+Patrones buscados sobre audit-evidence/REM-INV-4/ (contenido y nombres):
+  - SUPABASE_ACCESS_TOKEN / service_role / anon key (JWT eyJ...)
+  - database passwords / postgres:// con credenciales
+  - PATs, claves API (sk-, api_key=, Bearer )
+  - variables del .env (15 valores) — .env NO está en el pack y está git-ignored (verificado con git check-ignore)
+Resultados:
+  - JWT-like (eyJ): 0 hits reales.
+  - 'service_role': N menciones SOLO como nombre de rol en TSVs de grants/catálogo (dato de catálogo, no secreto).
+  - 'postgres': menciones como nombre de rol/owner en catálogo y logs de replay (no credenciales; contraseñas: 0).
+  - Los harnesses leen SUPABASE_ACCESS_TOKEN desde Costpro/.env en runtime y jamás lo imprimen (pg-query.mjs guard + r4-*.mjs).
+Veredicto: 0 secretos en el pack.
+
+2. SUPERFICIE DE SEGURIDAD OBSERVADA (§15 — solo lectura, sin modificar)
+------------------------------------------------------------------------
+- 245 de 484 funciones públicas son SECURITY DEFINER; 188 de las 484 son de extensiones.
+  De las 309 de app: los EXECUTE grants se encuentran censados en 06-live-grants.tsv [FUNCTIONS].
+- Grants de extremos (anon/authenticated) sobre tablas críticas:
+    * stock_movements: authenticated = SELECT-only; sin grants para anon → patrón endurecido de referencia.
+    * devolutions/devolution_items: rxt (SELECT/REFERENCES/TRIGGER) → REVOKE de REM-INV-3R-B VIGENTE (verificado).
+    * audit_logs: arwdDxtm completo para anon+authenticated INCLUYENDO TRUNCATE (RLS no cubre TRUNCATE)
+      → finding F-05 (D2 defense-in-depth; PostgREST no expone TRUNCATE; sin SECURITY INVOKER que trunque).
+    * products/stores/transactions/etc.: arwdDxtm completo (patrón default Supabase) con RLS enabled (verificar policies por tabla en 07-live-policies.tsv).
+- RLS: 391 policies; tablas críticas con RLS enabled; stock_movements además FORCED (relforcerowsecurity=true) — único caso forzado.
+- Superficies de las fases 3R-B/3C SIN REGRESIÓN: los 6 triggers ligados a fn_validate_document_transition y la versión fail-closed (md5 469c529a…) permanecen exactamente como los dejó REM-INV-3C (canary de prosrc agregado PRE==POST).
+- Hallazgos: ver 10-drift-register.md F-04 (fix anti-spoofing no desplegado — candidato a verificación P1) y F-05.
+
+3. DISCIPLINA DEL GATE
+----------------------
+- Producción: 100% sentencias SELECT/pg_catalog (harness con guard read-only client-side).
+- Cero DML/DDL/grants sobre producción; cero mutación de datos (14-zero-touch.txt).
+- Staging efímero: datadirs /tmp disposed; sin datos productivos.

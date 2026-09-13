@@ -1,0 +1,303 @@
+[
+ {
+  "name": "process_inventory_adjustment",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "b8953e705b1c7e4a95033f5b6fd2a8b8",
+  "replay_md5s": [],
+  "file": "20260623000002_update_rpc_calls_per_store.sql"
+ },
+ {
+  "name": "register_reception_wrapper",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "ad6f5c9bc518602d30824722eaeeb131",
+  "replay_md5s": [],
+  "file": "20260112_ensure_audit_rls.sql"
+ },
+ {
+  "name": "validate_active_store",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "da6ee996cd75f082c9a5e29b645021e6",
+  "replay_md5s": [],
+  "file": "20260715000007_trigger_smart_update.sql"
+ },
+ {
+  "name": "enforce_encargado_store_limit",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "2ca7d5c49b6c9828172afe0f4dc3ae49",
+  "replay_md5s": [],
+  "file": "20260118_multi_store_logic.sql"
+ },
+ {
+  "name": "enforce_encargado_user_limit",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "165c6b29890daab6a8cebb59415e15be",
+  "replay_md5s": [],
+  "file": "20260118_multi_store_logic.sql"
+ },
+ {
+  "name": "managed_create_user",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "3fd25e2139da5fb07e8335ecb64ac7b9",
+  "replay_md5s": [],
+  "file": "20260326_multi_tenant_hardening.sql"
+ },
+ {
+  "name": "has_role",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "63b78f6bed02ab0fd95b4720f77625ec",
+  "replay_md5s": [],
+  "file": "20260212_fix_has_role_overload.sql"
+ },
+ {
+  "name": "has_any_role",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "ad396fa554aa7b6f5e8190e9bbe763a7",
+  "replay_md5s": [],
+  "file": "20260118_multi_store_rls.sql"
+ },
+ {
+  "name": "get_transferable_stores",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "bfd8a24b449402e1ec6d06199942a333",
+  "replay_md5s": [],
+  "file": "20260726000017_v2_6_h5_get_transferable_stores.sql"
+ },
+ {
+  "name": "on_auth_user_created",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "178d71af951dc50237b3b52acd6d4e2b",
+  "replay_md5s": [],
+  "file": "20260806000004_v2_15_4_on_auth_user_created_tenant.sql"
+ },
+ {
+  "name": "is_role_not_changed",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "3bfcdeb6cad343a4976e5479becab192",
+  "replay_md5s": [],
+  "file": "20260305_fix_profiles_rls_final.sql"
+ },
+ {
+  "name": "is_global_admin",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "134119e5c4cbf5b30c4bcbc5b7277dd7",
+  "replay_md5s": [],
+  "file": "20260614000001_add_stores_rls_policies.sql"
+ },
+ {
+  "name": "is_store_member",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "2402df1bd096b528161256518c804fba",
+  "replay_md5s": [],
+  "file": "20260614000001_add_stores_rls_policies.sql"
+ },
+ {
+  "name": "has_store_role",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "53dd721499bf3253b567e3b1372400ee",
+  "replay_md5s": [],
+  "file": "20260820000001_security_fix_spoofable_caller_uid.sql"
+ },
+ {
+  "name": "bulk_assign_memberships",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "f373c5cf4120470dd6a6d4b0f9257599",
+  "replay_md5s": [],
+  "file": "20260805000016_v2_14_16_bulk_assign_memberships_audit.sql"
+ },
+ {
+  "name": "get_global_max_operation_date",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "bcf22693fd3e66480110e33a467f5c51",
+  "replay_md5s": [],
+  "file": "20260623000001_refactor_per_store_policy.sql"
+ },
+ {
+  "name": "get_latest_rate",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "17e713fa08f69005b53e8df3a0c81ccf",
+  "replay_md5s": [],
+  "file": "20260624000001_inteligencia_cambiaria.sql"
+ },
+ {
+  "name": "get_rate_history",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "cd9be49bfa854603a857425a1f2156ba",
+  "replay_md5s": [],
+  "file": "20260624000001_inteligencia_cambiaria.sql"
+ },
+ {
+  "name": "get_rate_variation",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "75208d5ea5b3971d19bbfa200e2da349",
+  "replay_md5s": [],
+  "file": "20260624000001_inteligencia_cambiaria.sql"
+ },
+ {
+  "name": "calculate_service_distribution",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "41c3919ac8a3cbc1a0077b24a4eda726",
+  "replay_md5s": [],
+  "file": "20260625000001_servicios_recibidos.sql"
+ },
+ {
+  "name": "get_product_cost_analysis",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "fe8ddd14ce11f3c4dda16c50529181c9",
+  "replay_md5s": [],
+  "file": "20260625000001_servicios_recibidos.sql"
+ },
+ {
+  "name": "receive_against_po",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "b8501b512a6a81bf742be4b9940cbc02",
+  "replay_md5s": [],
+  "file": "20260808000003_v2_24_g3_receive_against_po_final.sql"
+ },
+ {
+  "name": "get_low_stock_count",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "9228a0820dd068c207fcaf1c2c5dfcc9",
+  "replay_md5s": [],
+  "file": "20260630120000_create_get_low_stock_count_rpc.sql"
+ },
+ {
+  "name": "validate_production_order_transition",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "d1c505c89459b1cebb5e3f0b662e16f2",
+  "replay_md5s": [],
+  "file": "20260715000013_ampliar_transiciones.sql"
+ },
+ {
+  "name": "get_backup_table_list",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "a61a29e31dcdb4cfdb1ce2062157c13d",
+  "replay_md5s": [],
+  "file": "20260802000006_v2_12_45_backup_registry.sql"
+ },
+ {
+  "name": "managed_create_user_v2",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "a2156904df665741abf3674f18ee05d2",
+  "replay_md5s": [],
+  "file": "20260805000007_v2_14_7_managed_create_user_v2.sql"
+ },
+ {
+  "name": "managed_update_user",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "36212570c073eaef70e10b70a20a236d",
+  "replay_md5s": [],
+  "file": "20260820000001_security_fix_spoofable_caller_uid.sql"
+ },
+ {
+  "name": "managed_toggle_user_status",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "05ffab956ee164a7d8732370d11b8a34",
+  "replay_md5s": [],
+  "file": "20260820000001_security_fix_spoofable_caller_uid.sql"
+ },
+ {
+  "name": "managed_reset_password",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "e5abd8d0cadd47bb18cd8dde03780f12",
+  "replay_md5s": [],
+  "file": "20260820000001_security_fix_spoofable_caller_uid.sql"
+ },
+ {
+  "name": "managed_soft_delete_user",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "878ba3300a03b50e04b54c135f1c28a1",
+  "replay_md5s": [],
+  "file": "20260820000001_security_fix_spoofable_caller_uid.sql"
+ },
+ {
+  "name": "managed_update_membership",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "b1087fbc071da79b8882fdb2c0bf2209",
+  "replay_md5s": [],
+  "file": "20260820000001_security_fix_spoofable_caller_uid.sql"
+ },
+ {
+  "name": "managed_update_tenant_plan",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "e5ce9f7cb774bf2b3e129c971175840a",
+  "replay_md5s": [],
+  "file": "20260820000001_security_fix_spoofable_caller_uid.sql"
+ },
+ {
+  "name": "check_tenant_store_quota",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "17aedf8b0fd7cad9db81968dbb2a4933",
+  "replay_md5s": [],
+  "file": "20260806000007_v2_15_7_check_tenant_store_quota.sql"
+ },
+ {
+  "name": "validate_tenant_access",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "4296dab9243d7ae933b8dfc7a021e761",
+  "replay_md5s": [],
+  "file": "20260806000009_v2_15_9_validate_tenant_access.sql"
+ },
+ {
+  "name": "current_user_tenant_id",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "e7c7f1fdb7e5134a4f1c7a0752c1088e",
+  "replay_md5s": [],
+  "file": "20260807000004_v2_21_0_rls_helper_functions.sql"
+ },
+ {
+  "name": "is_tenant_member",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "c4584678c338a9668b3dd5da4c320541",
+  "replay_md5s": [],
+  "file": "20260807000004_v2_21_0_rls_helper_functions.sql"
+ },
+ {
+  "name": "set_purchase_order_status",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "53ae1222f47204d6dd42b9ce1e16751b",
+  "replay_md5s": [],
+  "file": "20260911000100_rem_po1_production_orders_boundaries.sql"
+ },
+ {
+  "name": "distribute_service_cost_v2",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "00ed3bfc684ec873cadc6ca2ac62a00b",
+  "replay_md5s": [],
+  "file": "20260809000008_v2_25_g8_distribute_service_cost_v2.sql"
+ },
+ {
+  "name": "has_management_access_as",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "35c7da6a71099c04174a890b649eee1e",
+  "replay_md5s": [],
+  "file": "20260818000001_security_hardening_h1_h2_h3.sql"
+ },
+ {
+  "name": "bulk_soft_delete_stores",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "3d1053f1d3775b04c375b8032cded3b2",
+  "replay_md5s": [],
+  "file": "20260818000002_bulk_delete_functions_versioned.sql"
+ },
+ {
+  "name": "check_bulk_ops_hourly_limit",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "41c789cb3cc30cbbc14153ebac3c2876",
+  "replay_md5s": [],
+  "file": "20260818000002_bulk_delete_functions_versioned.sql"
+ },
+ {
+  "name": "generate_bulk_confirmation_token",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "d2047bda7ff1c278ea655d6a1dd01158",
+  "replay_md5s": [],
+  "file": "20260818000002_bulk_delete_functions_versioned.sql"
+ },
+ {
+  "name": "generate_bulk_override_token",
+  "issue": "EXTRACTION_MISMATCH",
+  "census_md5": "ac4682362f7c1fde6fb7a3ad40c630d1",
+  "replay_md5s": [],
+  "file": "20260818000002_bulk_delete_functions_versioned.sql"
+ }
+]

@@ -1,0 +1,13 @@
+REPLAY R2 (migraciones completas en orden)
+archivos procesados: 427 | aplicados OK: 166 | fallidos: 261
+tasa de aplicación: 38.9%
+catálogo reconstruido (functions|secdef|tables|triggers|policies|views|sequences):
+functions=467
+secdef_functions=137
+tables=17
+triggers=6
+ERROR:  column "schemaname" does not exist
+LINE 1: ...LECT 'policies=' || count(*) FROM pg_policy WHERE schemaname...
+                                                             ^
+views=0
+sequences=1
