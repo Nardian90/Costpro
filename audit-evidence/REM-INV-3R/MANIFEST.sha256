@@ -1,0 +1,24 @@
+# REM-INV-3R evidence manifest — generated 2026-09-13T03:06:39Z
+# format: path | sha256 | size | mtime | purpose
+00-baseline.txt | ce7f2c2f09000b387afe1806b59720c71515285aaf0723cc757ac76a76c45e5a | 269 | 2026-09-13 02:27:27 | Git baseline verification (HEAD==origin/main==fa64514d, clean worktree)
+01-production-access.txt | 9bc39d94999709b37a3617c939356654e490237ae95c1f2c3df57ff3c4f6c87c | 556 | 2026-09-13 02:27:27 | Production access verification (read-only guard, no credentials)
+02-current-census.txt | 93e1581aa437fb21f838ece613f23eb87dced2cfba3061d9485bb78c53de5eea | 10461 | 2026-09-13 02:29:34 | Current devolutions census: 25 docs, per-store/status/format, full dump
+03-nc-reconciliation.csv | 10e6b80939064d4ab0ddc32c5b3fb6d755bd50a552d9d47b7c0d4d7875984f65 | 4865 | 2026-09-13 02:48:39 | Exact per-document reconciliation of the 13 historical NCs
+04-nc-000008-deep-dive.txt | 4a6cf4ef734f58f225d5455bf5a20e60abee3824c648e594343b8e75e137dfb1 | 2933 | 2026-09-13 02:41:05 | NC-000008-2026 deep dive (999u case, original tx evidence)
+05-items-reconciliation.txt | 9907e2b2441f1f917cc8e2d2636ec9ea1ec9a07d02e5815ce239fb0c1bd1ec0b | 3372 | 2026-09-13 02:35:57 | Items vs document totals reconciliation (13/13 MATCH)
+06-original-transactions.txt | 5d92afa923ef5d263798cb364f681cbd8ddf8fbfaa2851516b1dfecfb146ec05 | 1790 | 2026-09-13 02:36:04 | Original transaction reconciliation (NULL links, purged sales)
+07-inventory-reconciliation.txt | 3517ee4d294af9eee401dbe29e28f3f38e83ae2a13a7e84174d81bed9f2b199f | 1122 | 2026-09-13 02:36:20 | Inventory effect reconciliation (0 movements, provenance of 966)
+08-financial-reconciliation.txt | 747afd8a49e60fba8e23003946c61446c7aecb53ddcc0eb3f7ca81da9ae6b1b8 | 2202 | 2026-09-13 02:36:32 | Financial surfaces scan (payments/cash/credit = 0 for the 13)
+09-payment-r17-reconciliation.txt | d15a127752ed49b23a17928ec28adf4e767ba25071fd1334ae0d68c7f293d27b | 6351 | 2026-09-13 02:40:46 | Corrected r17 re-run (store-scoped) + attribution of the 12 financial rows
+10-audit-reconciliation.txt | a014c25b4040363b8417d23407e9886e9700b5cfaa54c34d917fe0a094352596 | 7616 | 2026-09-13 02:36:56 | Audit trail for the 13 NCs + reset era evidence
+11-chronology.txt | 19459681a6d043ce042946e13201e505d72c8ce669c5c16a796408ddac001eda | 10093 | 2026-09-13 02:45:08 | Timeline T0..T9 with real timestamps + refined purge mechanism
+12-report-impact.txt | 46e397ecd4763b772899c7ca2debf84c8a1d18a9d9d20176187bbf7624315078 | 3110 | 2026-09-13 02:48:34 | Report/KPI contamination analysis (get_tax_report line, net NOT distorted)
+13-current-code-validation.txt | a0d2dc9466ab5f4c6bfa13b62036f9c47b63a850a136ac409e15e9d1525e9678 | 2058 | 2026-09-13 02:54:12 | Live create_devolution_v2 / reverse_devolution protection checks (9/9)
+14-staging-results.txt | 3e7b52641b70d89617b35fbf2c60793a0ec2b8a027afbc32c80fd7d8b24af758 | 3194 | 2026-09-13 02:55:21 | S1-S8 coverage map (REM-INV-3 staging on identical code + live behavior)
+15-security-results.txt | d7ad178787c9867a9235d28134fd00784e768020c343fd22d22a005d852ba07c | 4060 | 2026-09-13 02:54:12 | Function grants, RLS matrix, SEC-F02-1 finding
+16-regression.txt | cc0523927d52c1d5dd44bcae6830603e587b14ce01c9a8fd89daf432d4810d16 | 1221 | 2026-09-13 03:01:37 | tsc/vitest/eslint/security-contract results
+17-zero-touch.txt | e428b8e8151fb00d0d70144f3c8ff075dbf7b516ab4fa32e3f67f189b119e4db | 3282 | 2026-09-13 03:03:30 | Production fingerprints PRE vs POST (24/24 unchanged)
+18-classification.txt | 901ba418f1ce678fc4482108f5e971e0a8d600d1dfa54df5918a111157c9f1fd | 4424 | 2026-09-13 03:04:50 | Individual classification with 9 convergent signals
+19-business-disposition.txt | 90cf0205bfe6cdc35ee457b3abf3c851930e3bdf49652b36a8a7d92e928e3a88 | 3128 | 2026-09-13 03:05:16 | Disposition options A-E analysis, recommendation RETAIN
+20-final-verdict.txt | 2b2d2fdce4c87ee4f0ced13d79c38f31b6f179045f7b8d56f6740ec038ea202c | 5750 | 2026-09-13 03:06:00 | Final verdict CONDITIONAL + §33 answers
+raw-function-defs.json | 44e8b194c198b64925031f5db86a903adf25d9b632b569e2b62c3dca02afbb65 | 21091 | 2026-09-13 02:50:25 | Verbatim live function bodies (create_devolution*, reverse_devolution)

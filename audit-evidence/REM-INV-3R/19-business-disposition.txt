@@ -1,0 +1,52 @@
+REM-INV-3R — 19 BUSINESS DISPOSITION RECOMMENDATION
+Generated: 2026-09-13
+
+UNIVERSE: 13 historical NC of TIENDA CENTRAL (12 completed, 1 reversed) + secondary
+test-store universe (E2E2-ALPHA 11, AUDIT F4E1 1). NO data mutation was executed or is
+proposed for execution without explicit human authorization (§20/§21/§22).
+
+OPTION ANALYSIS for the 13 NC:
+
+OPTION A — RETENER (RECOMMENDED)
+  Rationale: the documents are internally consistent (items MATCH totals 13/13), fully
+  provenanced (audit_logs DEVOLUTION_CREATED_V2 13/13 with metadata), and constitute the
+  historical evidence of the bug era and its remediation (fix commit 4m20s after NC-000008).
+  Their economic/accounting/inventory effect is demonstrably ZERO; retention costs one
+  informational field in one report. Deleting them would erase audit history and create
+  a provenance gap — strictly worse than retention (§21: TEST_RESIDUE != DELETE).
+
+OPTION B — ANULAR DOCUMENTALMENTE (REJECTED for now)
+  No authorized mechanism exists for these historical rows: reverse_devolution on a
+  completed NC would execute the LIVE model — creating NEW stock movements and cash-out
+  entries that NEVER existed — i.e., fabricating the very economic effects that are
+  proven absent (violates §21 "no fabricar efectos"). status='void' mass UPDATE is the
+  forbidden generic cleanup (§22). Rejected unless the organization explicitly designs
+  and authorizes an annotation mechanism.
+
+OPTION C — MARCAR COMO TEST (NOT AVAILABLE)
+  The schema has no is_test/test_residue flag and no business mechanism to tag documents.
+  Adding one is a functional change → separate gate + authorization if desired.
+
+OPTION D — CORREGIR (NOT APPLICABLE to data)
+  There is no real economic/accounting/inventory impact to correct (all zero, reconciled).
+  The ONLY real corrections available are CODE-side, in a separate remediation gate:
+    D1. get_tax_report: exclude/annotate documents whose original_transaction_id IS NULL
+        (or add a provenance filter) so total_devolutions stops showing phantom 353,500 CUP.
+    D2. SEC-F02-1: revoke INSERT/UPDATE grants on devolutions + devolution_items from
+        anon/authenticated (force all writes through service_role-only v2 path); review
+        devolutions_update_own_store policy for role restriction.
+
+OPTION E — NO DETERMINABLE (NOT APPLICABLE)
+  Evidence is sufficient to determine; no E.
+
+DISPOSITION for the secondary test-store universe (E2E2-ALPHA, AUDIT F4E1):
+  Business decision on test-store data lifecycle (retain as verification evidence, or
+  archive the stores). Their cash entries (1,270 CUP total) are consistent live-model
+  behavior in test stores — not F-02 residue. OUT of this gate's remediation scope.
+
+WHAT REQUIRES HUMAN DECISION (summary):
+  1. Accept Option A (RETAIN) for the 13 NC — recommended.
+  2. Authorize (or not) remediation gate with D1 (tax report filter) and/or D2 (RLS grant
+     revocation, SEC-F02-1).
+  3. Decide lifecycle of test stores (optional, out of F-02 scope).
+NO deletion, UPDATE, or INSERT on production data is proposed or authorized by this gate.

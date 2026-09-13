@@ -1,0 +1,13 @@
+REM-INV-3R — 01 PRODUCTION ACCESS
+Generated: 2026-09-13T02:27:27.348Z
+
+METHOD: Supabase Management API /v1/projects/<ref>/database/query (POST, SQL)
+GUARD: pg-query.mjs assertReadOnly() — only SELECT/WITH/EXPLAIN/SHOW accepted; DML/DDL keywords rejected at client
+CREDENTIALS: loaded at runtime from Costpro/.env (never printed, never written to evidence)
+
+current_database=postgres
+current_user=postgres
+server_time=2026-09-13 02:27:27.184216+00
+pg_version=17.6
+guard_negative_test: DELETE FROM x -> REJECTED (READ-ONLY GUARD)
+PRODUCTION ACCESS: PASS

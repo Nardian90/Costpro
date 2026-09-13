@@ -1,0 +1,36 @@
+REM-INV-3R — 13 CURRENT CODE VALIDATION (V2 protections, live definitions)
+Generated: 2026-09-13T02:50:25.765Z
+
+== create_devolution_v2 (live) ==
+PASS  locks original sale FOR UPDATE
+PASS  requires original_transaction_id / rejects null (ERR_DEVOLUTION_NO_ORIGINAL)
+PASS  cumulative return cap (ERR_DEVOLUTION_CAP_EXCEEDED)
+FAIL  original sale must exist
+PASS  cross-store guard (ERR_CROSS_STORE)
+FAIL  inserts stock_movements
+PASS  writes audit
+PASS  financial integration (cash/payment/credit)
+PASS  idempotency handling
+
+== reverse_devolution (live) ==
+PASS  status guard (no double reverse)
+PASS  audit event
+
+== create_devolution (V1) overloads ==
+oid 136269: argcount=9 direct-products-UPDATE=true EXECUTE-to-authenticated-grant=checked-below
+oid 136967: argcount=10 direct-products-UPDATE=false EXECUTE-to-authenticated-grant=checked-below
+
+VERSION MARKERS found in v2 body: []
+Comparison vs REM-INV-3 staging-tested era (v2_21_4): protections enumerated above all present in live definition. The NC-000008 pattern (null original + qty>cap) is blocked by ERR_DEVOLUTION_NO_ORIGINAL and ERR_DEVOLUTION_CAP_EXCEEDED.
+(Full function bodies preserved in raw/ for this gate.)
+
+== CORRECTION (regex false negatives resolved by body inspection) ==
+1) original sale must exist -> PASS (real): NULL original -> RAISE ERR_DEVOLUTION_NO_ORIGINAL;
+   non-existent/other-store original -> SELECT ... FOR UPDATE returns NULL -> RAISE ERR_CROSS_STORE.
+   Existence and store-ownership of the original sale are enforced inside the lock.
+2) inserts stock_movements -> PASS (real): v2 performs `PERFORM public.register_stock_movement(...)`
+   (canonical single-writer helper), not a direct INSERT INTO stock_movements.
+   Full INSERT set of v2 (verbatim scan): devolutions, devolution_items, cash_register_sessions
+   (auto-open), cash_movements('out'), payment_transactions, store_credit_ledger, audit_logs
+   + PERFORM register_stock_movement. Financial integration (DF-03) confirmed in live body.
+EFFECTIVE VERDICT: create_devolution_v2 live protections 9/9 PASS.

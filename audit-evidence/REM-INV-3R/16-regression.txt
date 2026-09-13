@@ -1,0 +1,12 @@
+REM-INV-3R — 16 REGRESSION RESULTS
+Generated: 2026-09-13T03:01:37.769Z
+Repo HEAD: fa64514d (worktree: only audit-evidence additions)
+
+TypeScript (npx tsc --noEmit):        PASS (exit 0, 0 errors)
+Vitest (npm test -- --run):           PASS (exit 0 — 99 files passed | 1 skipped; 2070 tests passed | 24 skipped | 0 failed; 214.21s)
+ESLint (npm run lint):                PASS (exit 0 — 0 errors, 1291 warnings pre-existing documented in REM-INV-3; no new suppressions)
+Security contract (test:security):    PASS (exit 0 — 134 SECURITY DEFINER functions verified, 0 violations; receive_purchase absent per REM-INV-2R pin)
+next build:                           SKIPPED BY DESIGN — documented infra OOM (exit 137 kernel OOM) in REM-V2-3/REM-INV-2/REM-INV-2R/REM-INV-3;
+                                      attempting it risks OOM-killing the operator's live pm2 server (costpro, ~0.7-1.3GB RSS). BUILD = BLOCKED_BY_INFRA (pre-existing, not introduced by this gate).
+No test file was modified. No configuration was changed to force PASS.
+Devolution-specific coverage: included in the 2070 (vitest suites cover devolution v2 caps/original/cross-store/idempotency; see 14-staging-results.txt for live+staging mapping).

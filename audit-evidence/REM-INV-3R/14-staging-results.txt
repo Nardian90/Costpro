@@ -1,0 +1,40 @@
+REM-INV-3R — 14 STAGING RESULTS (S1-S8 coverage map)
+Generated: 2026-09-13
+
+STAGING EXECUTION DECISION (transparent):
+- No ephemeral PostgreSQL binary exists in this environment (initdb/pg_ctl/postgres absent).
+- §23 staging is mandated "si necesitas probar una posible disposición". The recommended
+  disposition for the 13 NCs is RETAIN (Opción A — no data mutation), so no NEW disposition
+  pattern requires staging here.
+- The live create_devolution_v2 body is BYTE-IDENTICAL in protections to the body REM-INV-3
+  staged (git evidence: `git log 29f9ef2e..fa64514d -- supabase/` is EMPTY — zero function
+  changes since the REM-INV-3 staging run that produced 22 PASS / 0 FAIL / 1 INFO on
+  ephemeral PostgreSQL with verbatim bodies; see audit-evidence/REM-INV-3/09-staging-
+  reproduction.md and raw/staging-results.json, committed at fa64514d).
+- This gate ADDITIONALLY re-validated the live definition directly against production
+  (13-current-code-validation.txt: 9/9 protections PASS on the LIVE function body read today).
+
+S1-S8 COVERAGE MAP (each case -> evidence that covers it):
+S1 NC legítima .................. COVERED LIVE: E2E2-ALPHA 11 devolutions 2026-09-10 (originals
+                                   linked, cash counter-entries created — see 02/08/09 files)
+S2 NC histórica tipo NC-000008 .. COVERED STAGING: REM-INV-3 caso GHOST (patrón 999u/NULL original)
+                                   IRREPRODUCIBLE — ERR_DEVOLUTION_NO_ORIGINAL /
+                                   ERR_DEVOLUTION_CAP_EXCEEDED (22/22, código idéntico probado)
+S3 NC sin transacción original .. COVERED STAGING: mismo caso GHOST (NULL original rechazado)
+S4 NC con cantidad > venta ...... COVERED STAGING: ERR_DEVOLUTION_CAP_EXCEEDED (tope acumulado
+                                   vendido-devuelto por (venta, producto) bajo FOR UPDATE)
+S5 NC con efecto financiero ..... COVERED LIVE: 12 payment_transactions + 12 cash_movements('out')
+                                   de las devoluciones post-W7 (E2E2-ALPHA/AUDIT F4E1) — el modelo
+                                   vivo SÍ crea el contra-asiento (08/09 files)
+S6 NC purgada/revertida ......... COVERED LIVE: NC-000007-2026 (reversed, REVERSE_DEVOLUTION n=1,
+                                   status guard impide doble reversión) + ledger purgado de la era
+S7 intento de modificación no autorizada .. COVERED SECURITY (15): funciones EXECUTE-revoked para
+                                   anon/authenticated (solo service_role); devolution_items sin
+                                   políticas UPDATE/DELETE (bloqueado por RLS); hallazgo SEC-F02-1
+                                   documentado para remediation gate separado
+S8 intento cross-store .......... COVERED STAGING+LIVE: ERR_CROSS_STORE (lock FOR UPDATE + ownership
+                                   check), has_store_access_as en entrada, RLS own-store scoping
+
+RESULT: no new staging executed (justified above); coverage of S1-S8 = REM-INV-3 staging
+(identical code) + LIVE production behavior of the current model + live definition re-validation.
+No disposition mutation was staged because none is proposed for execution without human decision.

@@ -1,0 +1,58 @@
+REM-INV-3R — 09 PAYMENT r17 RECONCILIATION — v2 STORE-SCOPED (DEFINITIVE)
+Generated: 2026-09-13T02:40:37.835Z
+
+LESSON from v1 run (same file, earlier timestamp): matching cash_movements by reason LIKE '%<NC number>%' WITHOUT store scoping produced CROSS-STORE FALSE POSITIVES: devolution numbers are per-store sequences and repeat across stores (e.g. NC-000001-2026 exists in TIENDA CENTRAL, AUDIT F4E1 and E2E2-ALPHA). v2 scopes every comparison to the owning store.
+
+== r17 v2: the 13 TIENDA CENTRAL NCs, store-scoped ==
+devolution_number | status | total_amount | pt_ref_scoped | cm_scoped | scl | pt_unscoped_for_compare
+DEV-2026-828651 | completed | 350.00 | 0 | 0 | 0 | 0
+NC-000001-2026 | completed | 350.00 | 0 | 0 | 0 | 0
+NC-000002-2026 | completed | 350.00 | 0 | 0 | 0 | 0
+NC-000003-2026 | completed | 350.00 | 0 | 0 | 0 | 0
+NC-000004-2026 | completed | 350.00 | 0 | 0 | 0 | 0
+NC-000005-2026 | completed | 350.00 | 0 | 0 | 0 | 0
+NC-000006-2026 | completed | 350.00 | 0 | 0 | 0 | 0
+NC-000007-2026 | reversed | 350.00 | 0 | 0 | 0 | 0
+NC-000008-2026 | completed | 349650.00 | 0 | 0 | 0 | 0
+NC-000009-2026 | completed | 350.00 | 0 | 0 | 0 | 0
+NC-000010-2026 | completed | 350.00 | 0 | 0 | 0 | 0
+NC-000011-2026 | completed | 350.00 | 0 | 0 | 0 | 0
+NC-000012-2026 | completed | 350.00 | 0 | 0 | 0 | 0
+
+ANSWER (§13, STORE-SCOPED): NO — ninguna de las 13 NC de TIENDA CENTRAL produjo salida de efectivo, crédito, devolución de pago o impacto financiero persistente.
+Quantification: cash_out=0.00 CUP, refund=0.00 CUP, store_credit=0.00 CUP, payment_reversal=0.00 CUP (0 rows in every scoped surface for the 13 IDs).
+
+== ATTRIBUTION of the 12 payment_transactions with ref_type ILIKE '%devol%' (they exist but do NOT belong to the 13) ==
+id | ref_type | ref_id | devolution_number | store | amount | direction | payment_method | created_at
+1629822f-5f06-462a-bf80-3dfafad7f1b0 | devolution | a7cc72cc-b3ab-4294-b1dc-eae7e14bf11e | NC-000001-2026 | AUDIT F4E1 STORE A 4f0d1e | 70 | refund | cash | 2026-09-07 03:41:27.715297+00
+790a873f-303c-4ad1-a957-029474e9825a | devolution | 2955b72f-0b3b-430f-9f8f-339edf4f9fe3 | NC-000001-2026 | E2E2-ALPHA | 80 | refund | cash | 2026-09-10 22:21:18.543776+00
+1e41dea6-49e5-47a8-8c43-e5a3b6b7fd7f | devolution | 6e729c37-9fe8-484b-8e7b-a1fca823dd46 | NC-000002-2026 | E2E2-ALPHA | 160 | refund | cash | 2026-09-10 22:21:41.174545+00
+8ee2a67a-79c9-46d0-8a9f-7f81c65eb560 | devolution | a48726e3-46a4-4c16-b80c-6fdb95916b98 | NC-000003-2026 | E2E2-ALPHA | 80 | refund | cash | 2026-09-10 22:22:52.972074+00
+f08a585e-d96c-48c4-9213-b8711a7952f5 | devolution | 6bec1e1f-897d-4d73-9711-425ceb053614 | NC-000004-2026 | E2E2-ALPHA | 160 | refund | cash | 2026-09-10 22:23:15.970667+00
+916d5f26-f37e-447d-87c6-7b84caa75689 | devolution | affa4f4f-c050-47e1-8765-1c6c3d6ff519 | NC-000005-2026 | E2E2-ALPHA | 80 | refund | cash | 2026-09-10 22:24:05.551611+00
+ef79ebdc-376d-42e5-b93a-c0a344e4f919 | devolution | 8e0d0a65-107a-4674-9e7f-bf8286efdb8e | NC-000006-2026 | E2E2-ALPHA | 160 | refund | cash | 2026-09-10 22:24:26.40485+00
+5a20e7ff-f07f-4475-a084-ebaccf19e10e | devolution | d5ba664a-a85b-4b4f-be1c-09828746224a | NC-000007-2026 | E2E2-ALPHA | 80 | refund | cash | 2026-09-10 22:25:34.902201+00
+f8db1b22-21d1-4568-8f77-6bb3bdc991dd | devolution | 44a627bd-d1e9-4204-8bfa-a3dc12cf7f57 | NC-000008-2026 | E2E2-ALPHA | 160 | refund | cash | 2026-09-10 22:25:54.541879+00
+e1fb8c62-a78b-4541-bc17-51cb679ba83d | devolution | bf103a5b-566d-4736-b0a3-c4c47ff049fc | NC-000009-2026 | E2E2-ALPHA | 80 | refund | cash | 2026-09-10 22:26:12.405153+00
+69ea5f50-3f16-4891-a770-89c76f4c9f0d | devolution | 0dae12f9-c1d3-4765-8782-a33c946a6236 | NC-000010-2026 | E2E2-ALPHA | 80 | refund | cash | 2026-09-10 23:55:28.302622+00
+48c1b874-73d1-4c4f-8736-0aadac0824e8 | devolution | 0874c70f-6515-42f5-ae10-97dbdd770fda | NC-000011-2026 | E2E2-ALPHA | 80 | refund | cash | 2026-09-10 23:58:39.315276+00
+
+== ATTRIBUTION of the 12 cash_movements with reason ILIKE '%devol%' ==
+id | store | movement_type | amount | reason | created_at
+77d41be9-2183-464d-ad75-5a07c7e04ea1 | AUDIT F4E1 STORE A 4f0d1e | out | 70 | Devolución NC-000001-2026: FASE4-E2E-1 devolución gate | 2026-09-07 03:41:27.715297+00
+dc081480-e9cc-40c0-b53c-f3b2a0a18d74 | E2E2-ALPHA | out | 80 | Devolución NC-000001-2026: E2E2 devolución de prueba | 2026-09-10 22:21:18.543776+00
+303a5b44-b53e-4bbf-8dc4-14c9a9553962 | E2E2-ALPHA | out | 160 | Devolución NC-000002-2026: E2E2 devolución de prueba | 2026-09-10 22:21:41.174545+00
+2fbb9201-134e-4cff-a944-17f5b737fd96 | E2E2-ALPHA | out | 80 | Devolución NC-000003-2026: E2E2 devolución de prueba | 2026-09-10 22:22:52.972074+00
+bf1006fd-b1e7-4b82-a9b0-c2607c3ef0a7 | E2E2-ALPHA | out | 160 | Devolución NC-000004-2026: E2E2 devolución de prueba | 2026-09-10 22:23:15.970667+00
+46447316-784c-4482-aabc-b00c221dc5c1 | E2E2-ALPHA | out | 80 | Devolución NC-000005-2026: E2E2 devolución de prueba | 2026-09-10 22:24:05.551611+00
+2276ba8d-b404-4269-938e-df6d734c9093 | E2E2-ALPHA | out | 160 | Devolución NC-000006-2026: E2E2 devolución de prueba | 2026-09-10 22:24:26.40485+00
+05f159b0-954c-4993-8ec3-c9fa83af4783 | E2E2-ALPHA | out | 80 | Devolución NC-000007-2026: E2E2 devolución de prueba | 2026-09-10 22:25:34.902201+00
+e577f3df-37e9-42d5-ae9c-c59a3e2c1896 | E2E2-ALPHA | out | 160 | Devolución NC-000008-2026: E2E2 devolución de prueba | 2026-09-10 22:25:54.541879+00
+45cdb350-5fb7-47a5-9039-0e6cb3f007da | E2E2-ALPHA | out | 80 | Devolución NC-000009-2026: E2E2 idem H | 2026-09-10 22:26:12.405153+00
+dfca5691-6a2d-4ec9-ab92-7a0074ea58ca | E2E2-ALPHA | out | 80 | Devolución NC-000010-2026: CC devolución | 2026-09-10 23:55:28.302622+00
+378e761d-f1f2-4528-82cf-3fab48251570 | E2E2-ALPHA | out | 80 | Devolución NC-000011-2026: CC devolución | 2026-09-10 23:58:39.315276+00
+
+SUMMARY: [{"store":"AUDIT F4E1 STORE A 4f0d1e","n":1,"sum_out":"70"},{"store":"E2E2-ALPHA","n":11,"sum_out":"1200"}]
+
+CONCLUSION: the 12 financial rows belong to POST-W7 devolutions in TEST/AUDIT stores (E2E2-ALPHA, AUDIT F4E1) created by the LIVE model (create_devolution_v2 + DF-03 financial integration) — they are evidence that the CURRENT model creates the financial counter-entry, NOT effects of the 13 historical TIENDA CENTRAL NCs.
+r17 RESULT (for the 13): NO — zero persistent financial effect.

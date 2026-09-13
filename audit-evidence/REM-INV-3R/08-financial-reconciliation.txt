@@ -1,0 +1,26 @@
+REM-INV-3R — 08 FINANCIAL RECONCILIATION
+Generated: 2026-09-13T02:36:20.235Z
+
+== payment_transactions referencing the 13 NC (ref_id / transaction_id / refund idempotency dev-<id>-refund) ==
+NONE (0 rows)
+
+payment_transactions with ref_type ILIKE '%devol%' (whole table): 12
+
+== cash_movements referencing devolutions (reason search) ==
+id | movement_type | method | amount | reason | created_at
+77d41be9-2183-464d-ad75-5a07c7e04ea1 | out | cash | 70 | Devolución NC-000001-2026: FASE4-E2E-1 devolución gate | 2026-09-07 03:41:27.715297+00
+dc081480-e9cc-40c0-b53c-f3b2a0a18d74 | out | cash | 80 | Devolución NC-000001-2026: E2E2 devolución de prueba | 2026-09-10 22:21:18.543776+00
+303a5b44-b53e-4bbf-8dc4-14c9a9553962 | out | cash | 160 | Devolución NC-000002-2026: E2E2 devolución de prueba | 2026-09-10 22:21:41.174545+00
+2fbb9201-134e-4cff-a944-17f5b737fd96 | out | cash | 80 | Devolución NC-000003-2026: E2E2 devolución de prueba | 2026-09-10 22:22:52.972074+00
+bf1006fd-b1e7-4b82-a9b0-c2607c3ef0a7 | out | cash | 160 | Devolución NC-000004-2026: E2E2 devolución de prueba | 2026-09-10 22:23:15.970667+00
+46447316-784c-4482-aabc-b00c221dc5c1 | out | cash | 80 | Devolución NC-000005-2026: E2E2 devolución de prueba | 2026-09-10 22:24:05.551611+00
+2276ba8d-b404-4269-938e-df6d734c9093 | out | cash | 160 | Devolución NC-000006-2026: E2E2 devolución de prueba | 2026-09-10 22:24:26.40485+00
+05f159b0-954c-4993-8ec3-c9fa83af4783 | out | cash | 80 | Devolución NC-000007-2026: E2E2 devolución de prueba | 2026-09-10 22:25:34.902201+00
+e577f3df-37e9-42d5-ae9c-c59a3e2c1896 | out | cash | 160 | Devolución NC-000008-2026: E2E2 devolución de prueba | 2026-09-10 22:25:54.541879+00
+45cdb350-5fb7-47a5-9039-0e6cb3f007da | out | cash | 80 | Devolución NC-000009-2026: E2E2 idem H | 2026-09-10 22:26:12.405153+00
+dfca5691-6a2d-4ec9-ab92-7a0074ea58ca | out | cash | 80 | Devolución NC-000010-2026: CC devolución | 2026-09-10 23:55:28.302622+00
+378e761d-f1f2-4528-82cf-3fab48251570 | out | cash | 80 | Devolución NC-000011-2026: CC devolución | 2026-09-10 23:58:39.315276+00
+
+== store_credit_ledger referencing the 13 NC ==
+NONE (0 rows)
+store_credit_ledger total rows (whole table): 0

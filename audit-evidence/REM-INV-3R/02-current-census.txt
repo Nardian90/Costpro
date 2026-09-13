@@ -1,0 +1,55 @@
+REM-INV-3R — 02 CURRENT CENSUS OF DEVOLUTIONS
+Generated: 2026-09-13T02:29:19.991Z
+All queries READ-ONLY (SELECT)
+
+== TOTAL ==
+count=25 min_created=2026-08-04 07:30:51.150879+00 max_created=2026-09-10 23:58:39.315276+00 sum_total_amount=355120.00
+
+== BY STORE ==
+store | n | sum_amount | completed | reversed | other
+TIENDA CENTRAL COSTPRO | 13 | 353850.00 | 12 | 1 | 0
+E2E2-ALPHA | 11 | 1200.00 | 11 | 0 | 0
+AUDIT F4E1 STORE A 4f0d1e | 1 | 70.00 | 0 | 1 | 0
+
+== BY STATUS ==
+status | n | sum_amount
+completed | 23 | 354700.00
+reversed | 2 | 420.00
+
+== BY NUMBER FORMAT ==
+format | n | sum_amount
+NC-% | 24 | 354770.00
+DEV-% | 1 | 350.00
+
+== BY CREATOR (processed_by) ==
+processed_by | full_name | n | sum_amount | minc | maxc
+a1111111-1111-1111-1111-111111111111 | Admin Demo | 14 | 353920.00 | 2026-08-04 07:30:51.150879+00 | 2026-09-07 03:41:27.715297+00
+4c71ba55-d2a5-499e-a34e-ccf508b8df7f | E2E2 ALPHA_MANAGER | 11 | 1200.00 | 2026-09-10 22:21:18.543776+00 | 2026-09-10 23:58:39.315276+00
+
+== FULL DUMP (all devolutions; PII minimized: customer_name/customer_phone omitted) ==
+id | devolution_number | store | status | created_at | updated_at | original_transaction_id | reason | total_amount | currency | payment_method | processed_by | processed_at | reversed_at | reversal_reason | voided_at | void_reason | idempotency_key
+379122c3-ceab-4e51-8ac3-5cf0de8beb28 | DEV-2026-828651 | TIENDA CENTRAL COSTPRO | completed | 2026-08-04 07:30:51.150879+00 | 2026-08-04 07:30:51.150879+00 | null | Hot test dev | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-04 07:30:51.150879+00 | null | null | null | null | hot2-1785828650
+74cfd314-45c3-47a0-bd48-5e6f16b58b44 | NC-000001-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-06 03:30:00.537152+00 | 2026-08-06 03:30:00.537152+00 | null | Hot test OTel devolution | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-06 03:30:00.537152+00 | null | null | null | null | dev-7fe37628-5571-46d5-b457-2dfb46413979
+2a7934b7-9503-48cd-9240-c7606b486eb7 | NC-000002-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-06 04:40:22.560617+00 | 2026-08-06 04:40:22.560617+00 | null | Smoke test OTel devolución | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-06 04:40:22.560617+00 | null | null | null | null | dev-bf82b0c6-7704-4c1d-a967-6d25b8ccc46d
+8bb4cfe5-2abf-4c4d-81fe-4ac33de732eb | NC-000003-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-06 23:10:25.820118+00 | 2026-08-06 23:10:25.820118+00 | null | Hot test devolution 1786057783 | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-06 23:10:25.820118+00 | null | null | null | null | dev-c4c325e8-8e66-48d9-bef8-ea787df6ece7
+0778b5d5-bf72-4d9b-b9f7-e4192a29d33f | NC-000004-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-06 23:12:11.580593+00 | 2026-08-06 23:12:11.580593+00 | null | Hot test devolution 1786057888 | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-06 23:12:11.580593+00 | null | null | null | null | dev-d014158f-effc-4d27-af6b-c9d6920db253
+a11e7aa5-863a-4e61-a041-04d33d1f66d2 | NC-000005-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-06 23:22:10.228564+00 | 2026-08-06 23:22:10.228564+00 | null | Hot test devolution 1786058486 | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-06 23:22:10.228564+00 | null | null | null | null | dev-33a0280b-d895-4cef-a50f-e278277a6a89
+6c051892-b5ac-4fd6-be9b-546458119b96 | NC-000006-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-06 23:27:29.313767+00 | 2026-08-06 23:27:29.313767+00 | null | Hot test no original 1786058841 | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-06 23:27:29.313767+00 | null | null | null | null | dev-f54be6c5-37bc-4ad7-9f43-9d268a9a893f
+0b7213e9-344a-4aa0-876d-316be9c6ff2e | NC-000007-2026 | TIENDA CENTRAL COSTPRO | reversed | 2026-08-06 23:27:41.661518+00 | 2026-08-06 23:27:41.661518+00 | null | Hot dev reverse 1786058841 | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-06 23:27:41.661518+00 | 2026-08-06 23:27:43.117368+00 | Reverse dev 1786058841 | null | null | dev-29ff2fd9-8e4b-4146-858c-7fcdaa2e913b
+42f89372-a76c-4e45-b2c7-a14252723f3e | NC-000008-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-06 23:29:21.463226+00 | 2026-08-06 23:29:21.463226+00 | null | Hot dev qty test 1786058955 | 349650.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-06 23:29:21.463226+00 | null | null | null | null | dev-55b534c2-17a1-4a41-ab74-b809a8850863
+def14222-1dc4-469d-9053-ddfbd28db7e8 | NC-000009-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-06 23:42:58.886691+00 | 2026-08-06 23:42:58.886691+00 | null | Sequence dev 1786059736 | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-06 23:42:58.886691+00 | null | null | null | null | dev-c2fceecb-babd-4c43-9997-b37465823d8f
+fb98424e-cf04-4fcf-ba65-099696179e2c | NC-000010-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-06 23:50:11.908653+00 | 2026-08-06 23:50:11.908653+00 | null | Hot test devolution 1786060163 | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-06 23:50:11.908653+00 | null | null | null | null | dev-c3ec2955-bb78-4f6c-9cf6-e1bca90c638a
+903269d5-e624-4e52-958d-48e8bb84bde1 | NC-000011-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-07 00:00:54.348822+00 | 2026-08-07 00:00:54.348822+00 | null | Lifecycle 1786060805 | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-07 00:00:54.348822+00 | null | null | null | null | dev-246ed509-cc43-46c4-b8e8-78ae7c83e802
+c249cdcc-e0f8-43d6-b9c4-10e16daab9f3 | NC-000012-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-07 00:58:01.627486+00 | 2026-08-07 00:58:01.627486+00 | null | Audit devolution | 350.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-07 00:58:01.627486+00 | null | null | null | null | dev-cd75fd1d-14d3-436f-aba8-6ccdb12a9ad5
+a7cc72cc-b3ab-4294-b1dc-eae7e14bf11e | NC-000001-2026 | AUDIT F4E1 STORE A 4f0d1e | reversed | 2026-09-07 03:41:27.715297+00 | 2026-09-07 03:41:27.715297+00 | 062ef168-6206-4278-94f6-d68dd7d7a3b7 | FASE4-E2E-1 devolución gate | 70.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-09-07 03:41:27.715297+00 | 2026-09-07 03:41:31.37123+00 | F4E1 reverse dev | null | null | dev-dc0d6b3f-6b39-4c23-a3b1-d65bbadebce1
+2955b72f-0b3b-430f-9f8f-339edf4f9fe3 | NC-000001-2026 | E2E2-ALPHA | completed | 2026-09-10 22:21:18.543776+00 | 2026-09-10 22:21:18.543776+00 | 84871736-8349-4158-a07a-7ff3207e714d | E2E2 devolución de prueba | 80.00 | CUP | cash | 4c71ba55-d2a5-499e-a34e-ccf508b8df7f | 2026-09-10 22:21:18.543776+00 | null | null | null | null | dev-01e1c2de-c0ae-446b-b143-c85f4cbabb70
+6e729c37-9fe8-484b-8e7b-a1fca823dd46 | NC-000002-2026 | E2E2-ALPHA | completed | 2026-09-10 22:21:41.174545+00 | 2026-09-10 22:21:41.174545+00 | 84871736-8349-4158-a07a-7ff3207e714d | E2E2 devolución de prueba | 160.00 | CUP | cash | 4c71ba55-d2a5-499e-a34e-ccf508b8df7f | 2026-09-10 22:21:41.174545+00 | null | null | null | null | dev-5125712c-3ccc-4be3-a4e9-ebb8e865a839
+a48726e3-46a4-4c16-b80c-6fdb95916b98 | NC-000003-2026 | E2E2-ALPHA | completed | 2026-09-10 22:22:52.972074+00 | 2026-09-10 22:22:52.972074+00 | 7e0df899-c543-4868-a68a-fa0839e23f0a | E2E2 devolución de prueba | 80.00 | CUP | cash | 4c71ba55-d2a5-499e-a34e-ccf508b8df7f | 2026-09-10 22:22:52.972074+00 | null | null | null | null | dev-b64bb05f-d845-4363-ae72-69a24ebd2b02
+6bec1e1f-897d-4d73-9711-425ceb053614 | NC-000004-2026 | E2E2-ALPHA | completed | 2026-09-10 22:23:15.970667+00 | 2026-09-10 22:23:15.970667+00 | 7e0df899-c543-4868-a68a-fa0839e23f0a | E2E2 devolución de prueba | 160.00 | CUP | cash | 4c71ba55-d2a5-499e-a34e-ccf508b8df7f | 2026-09-10 22:23:15.970667+00 | null | null | null | null | dev-e97339ef-9f50-412e-aa86-cfe366d385b7
+affa4f4f-c050-47e1-8765-1c6c3d6ff519 | NC-000005-2026 | E2E2-ALPHA | completed | 2026-09-10 22:24:05.551611+00 | 2026-09-10 22:24:05.551611+00 | c7068bb4-0986-45c9-8179-5d1dd037cf04 | E2E2 devolución de prueba | 80.00 | CUP | cash | 4c71ba55-d2a5-499e-a34e-ccf508b8df7f | 2026-09-10 22:24:05.551611+00 | null | null | null | null | dev-2f88a835-faaf-4196-9649-541a49f34beb
+8e0d0a65-107a-4674-9e7f-bf8286efdb8e | NC-000006-2026 | E2E2-ALPHA | completed | 2026-09-10 22:24:26.40485+00 | 2026-09-10 22:24:26.40485+00 | c7068bb4-0986-45c9-8179-5d1dd037cf04 | E2E2 devolución de prueba | 160.00 | CUP | cash | 4c71ba55-d2a5-499e-a34e-ccf508b8df7f | 2026-09-10 22:24:26.40485+00 | null | null | null | null | dev-f992783c-436b-48ba-a409-0c8c9bb15839
+d5ba664a-a85b-4b4f-be1c-09828746224a | NC-000007-2026 | E2E2-ALPHA | completed | 2026-09-10 22:25:34.902201+00 | 2026-09-10 22:25:34.902201+00 | 6322c13e-8018-41d6-8965-3c85fc45c5a0 | E2E2 devolución de prueba | 80.00 | CUP | cash | 4c71ba55-d2a5-499e-a34e-ccf508b8df7f | 2026-09-10 22:25:34.902201+00 | null | null | null | null | dev-1b65fafa-3ab0-4535-b3dd-73b272e2e34e
+44a627bd-d1e9-4204-8bfa-a3dc12cf7f57 | NC-000008-2026 | E2E2-ALPHA | completed | 2026-09-10 22:25:54.541879+00 | 2026-09-10 22:25:54.541879+00 | 6322c13e-8018-41d6-8965-3c85fc45c5a0 | E2E2 devolución de prueba | 160.00 | CUP | cash | 4c71ba55-d2a5-499e-a34e-ccf508b8df7f | 2026-09-10 22:25:54.541879+00 | null | null | null | null | dev-9d96c9db-9897-479d-a6d2-5ae469ad3e5b
+bf103a5b-566d-4736-b0a3-c4c47ff049fc | NC-000009-2026 | E2E2-ALPHA | completed | 2026-09-10 22:26:12.405153+00 | 2026-09-10 22:26:12.405153+00 | 1b800eb0-7701-4714-beed-8c730816b487 | E2E2 idem H | 80.00 | CUP | cash | 4c71ba55-d2a5-499e-a34e-ccf508b8df7f | 2026-09-10 22:26:12.405153+00 | null | null | null | null | e2e2-d9ce9fe2-f4fd-424c-b95d-4ca20c159d08
+0dae12f9-c1d3-4765-8782-a33c946a6236 | NC-000010-2026 | E2E2-ALPHA | completed | 2026-09-10 23:55:28.302622+00 | 2026-09-10 23:55:28.302622+00 | dce86972-346f-42f0-8200-d53a51c7af7d | CC devolución | 80.00 | CUP | cash | 4c71ba55-d2a5-499e-a34e-ccf508b8df7f | 2026-09-10 23:55:28.302622+00 | null | null | null | null | dev-3f8b84b1-3136-48a5-b369-27327adb2f3c
+0874c70f-6515-42f5-ae10-97dbdd770fda | NC-000011-2026 | E2E2-ALPHA | completed | 2026-09-10 23:58:39.315276+00 | 2026-09-10 23:58:39.315276+00 | b5a09e31-d647-4187-ab26-e3581074ec43 | CC devolución | 80.00 | CUP | cash | 4c71ba55-d2a5-499e-a34e-ccf508b8df7f | 2026-09-10 23:58:39.315276+00 | null | null | null | null | dev-2e9a8097-9107-45bf-843d-1085648a9a60

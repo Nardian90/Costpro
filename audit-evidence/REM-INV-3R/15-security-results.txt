@@ -1,0 +1,58 @@
+REM-INV-3R — 15 SECURITY RESULTS (F-02 surface only)
+Generated: 2026-09-13T02:50:25.766Z
+
+== EXECUTE privileges on devolution functions ==
+create_devolution -> anon: revoked
+create_devolution -> authenticated: revoked
+create_devolution -> service_role: GRANTED
+create_devolution -> anon: revoked
+create_devolution -> authenticated: revoked
+create_devolution -> service_role: GRANTED
+create_devolution_v2 -> anon: revoked
+create_devolution_v2 -> authenticated: revoked
+create_devolution_v2 -> service_role: GRANTED
+reverse_devolution -> anon: revoked
+reverse_devolution -> authenticated: revoked
+reverse_devolution -> service_role: GRANTED
+
+== Table privileges (anon/authenticated) + RLS ==
+devolutions -> anon: SELECT=true INSERT=true UPDATE=true DELETE=true RLS=true
+devolutions -> authenticated: SELECT=true INSERT=true UPDATE=true DELETE=true RLS=true
+devolution_items -> anon: SELECT=true INSERT=true UPDATE=true DELETE=true RLS=true
+devolution_items -> authenticated: SELECT=true INSERT=true UPDATE=true DELETE=true RLS=true
+stock_movements -> anon: SELECT=false INSERT=false UPDATE=false DELETE=false RLS=true
+stock_movements -> authenticated: SELECT=true INSERT=false UPDATE=false DELETE=false RLS=true
+payment_transactions -> anon: SELECT=true INSERT=true UPDATE=true DELETE=true RLS=true
+payment_transactions -> authenticated: SELECT=true INSERT=true UPDATE=true DELETE=true RLS=true
+cash_movements -> anon: SELECT=true INSERT=true UPDATE=true DELETE=true RLS=true
+cash_movements -> authenticated: SELECT=true INSERT=true UPDATE=true DELETE=true RLS=true
+store_credit_ledger -> anon: SELECT=false INSERT=false UPDATE=false DELETE=false RLS=true
+store_credit_ledger -> authenticated: SELECT=false INSERT=false UPDATE=false DELETE=false RLS=true
+
+== Direct state manipulation surface (§24) ==
+API routes touching devolutions: /api/devolutions (GET list), /api/reverse (POST reversal via RPC v2). Neither exposes direct UPDATE/DELETE on devolutions rows (code inspected below).
+RLS note: privileges above are the SQL-layer exposure; the app always uses service_role server-side for these paths (v2 functions are SECURITY DEFINER with admin/access checks inside).
+
+== RLS POLICY MATRIX (live pg_policies) and F-02 surface analysis ==
+devolutions:            INSERT(devolutions_insert_own_store, devolutions_tenant_insert_with_check),
+                        SELECT(devolutions_select_own_store), UPDATE(devolutions_update_own_store)  [no DELETE policy]
+devolution_items:       INSERT/SELECT only (via parent store access)  [no UPDATE/DELETE policies]
+cash_movements:         SELECT/INSERT (store-membership scoped)       [no UPDATE/DELETE policies]
+payment_transactions:   SELECT/INSERT/UPDATE/DELETE (own-store scoped)
+stock_movements:        SELECT/INSERT/UPDATE/DELETE (tenant scoped)
+
+== FINDING SEC-F02-1 (P1-leaning hardening, F-02 surface) ==
+RLS policies + grants permit an AUTHENTICATED store member to INSERT raw rows into
+devolutions + devolution_items (and UPDATE devolutions rows of own store via
+devolutions_update_own_store) directly through PostgREST, BYPASSING the create_devolution_v2
+contract (no original_transaction_id requirement, no cumulative cap, no stock movement,
+no financial counter-entry, no idempotency). This is exactly the ghost-NC shape of F-02,
+reachable at the SQL layer by an insider. Mitigating factors: own-store scope only
+(no cross-store), requires authenticated membership, app UI never uses this path,
+no evidence of abuse in production (all 13 historical NCs predate the policies era and
+trace to the API path with audit rows; live INSERT audit exists for v2 docs).
+RECOMMENDED (separate remediation gate, NOT executed here): revoke INSERT/UPDATE grants on
+devolutions + devolution_items from anon/authenticated (keep SELECT), forcing all writes
+through the service_role-only v2 path; audit the update policy for role restriction.
+NOTE: payment_transactions UPDATE/DELETE own-store policies and stock_movements tenant
+policies are OUTSIDE F-02 scope (general hardening track) — recorded, not investigated.

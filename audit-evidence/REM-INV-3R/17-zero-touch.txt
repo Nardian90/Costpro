@@ -1,0 +1,84 @@
+REM-INV-3R — 17 PRODUCTION ZERO-TOUCH
+Generated: 2026-09-13T02:27:27.348Z
+
+== PRE FINGERPRINT (before reconciliation reads) ==
+table | exact_count(*) | max(updated_at/created_at)
+devolutions | 25 | 2026-09-10 23:58:39.315276+00
+devolution_items | 25 | 2026-09-10 23:58:39.315276+00
+transactions | 597 | 2026-09-11 04:25:44.22297+00
+transaction_items | 633 | 2026-09-11 04:25:44.22297+00
+sales | 0 | -
+sale_items | 0 | -
+payment_transactions | 458 | 2026-09-11 04:24:09.0631+00
+cash_movements | 12 | 2026-09-10 23:58:39.315276+00
+store_credit_ledger | 0 | -
+wallet_transactions | 641 | 2026-07-06 05:03:26.44266+00
+stock_movements | 1021 | 2026-09-11 04:25:37.079359+00
+inventory_movements | 0 | -
+inventory | 277 | 2026-09-11 04:25:37.079359+00
+inventory_batches | 0 | -
+kardex_entries | 1021 | 2026-09-11 04:25:37.079359+00
+products | 367 | 2026-09-11 04:25:37.079359+00
+purchase_orders | 8 | 2026-09-11 04:10:17.961697+00
+purchase_items | 0 | -
+purchase_order_items | 9 | 2026-09-11 03:49:04.221676+00
+audit_logs | 8144 | 2026-09-11 04:25:44.22297+00
+audit_events | 0 | -
+business_events | 10897 | 2026-09-11 04:25:37.079359+00
+store_reset_snapshots | 0 | -
+document_sequences | 20 | 2026-09-11 02:38:02.45957+00
+
+== POST FINGERPRINT (after all reconciliation reads; 2026-09-13T03:01:37.769Z) ==
+table | exact_count(*) | max(updated_at/created_at)
+devolutions | 25 | 2026-09-10 23:58:39.315276+00
+devolution_items | 25 | 2026-09-10 23:58:39.315276+00
+transactions | 597 | 2026-09-11 04:25:44.22297+00
+transaction_items | 633 | 2026-09-11 04:25:44.22297+00
+sales | 0 | -
+sale_items | 0 | -
+payment_transactions | 458 | 2026-09-11 04:24:09.0631+00
+cash_movements | 12 | 2026-09-10 23:58:39.315276+00
+store_credit_ledger | 0 | -
+wallet_transactions | 641 | 2026-07-06 05:03:26.44266+00
+stock_movements | 1021 | 2026-09-11 04:25:37.079359+00
+inventory_movements | 0 | -
+inventory | 277 | 2026-09-11 04:25:37.079359+00
+inventory_batches | 0 | -
+kardex_entries | 1021 | 2026-09-11 04:25:37.079359+00
+products | 367 | 2026-09-11 04:25:37.079359+00
+purchase_orders | 8 | 2026-09-11 04:10:17.961697+00
+purchase_items | 0 | -
+purchase_order_items | 9 | 2026-09-11 03:49:04.221676+00
+audit_logs | 8144 | 2026-09-11 04:25:44.22297+00
+audit_events | 0 | -
+business_events | 10897 | 2026-09-11 04:25:37.079359+00
+store_reset_snapshots | 0 | -
+document_sequences | 20 | 2026-09-11 02:38:02.45957+00
+
+== ZERO-TOUCH COMPARISON ==
+devolutions: UNCHANGED (25)
+devolution_items: UNCHANGED (25)
+transactions: UNCHANGED (597)
+transaction_items: UNCHANGED (633)
+sales: UNCHANGED (0)
+sale_items: UNCHANGED (0)
+payment_transactions: UNCHANGED (458)
+cash_movements: UNCHANGED (12)
+store_credit_ledger: UNCHANGED (0)
+wallet_transactions: UNCHANGED (641)
+stock_movements: UNCHANGED (1021)
+inventory_movements: UNCHANGED (0)
+inventory: UNCHANGED (277)
+inventory_batches: UNCHANGED (0)
+kardex_entries: UNCHANGED (1021)
+products: UNCHANGED (367)
+purchase_orders: UNCHANGED (8)
+purchase_items: UNCHANGED (0)
+purchase_order_items: UNCHANGED (9)
+audit_logs: UNCHANGED (8144)
+audit_events: UNCHANGED (0)
+business_events: UNCHANGED (10897)
+store_reset_snapshots: UNCHANGED (0)
+document_sequences: UNCHANGED (20)
+
+DATA_ROWS_PRE == DATA_ROWS_POST for ALL 24 tables -> ZERO-TOUCH: PASS (the audit generated zero DML)

@@ -1,0 +1,73 @@
+REM-INV-3R — 11 CHRONOLOGY (real timestamps)
+Generated: 2026-09-13T02:41:05.314Z
+
+== RESET ERA — all store_reset events (audit_logs) ==
+action | store | created_at | meta
+store_reset_initiated | ENERVIDA-VITALLCONS | 2026-08-09 01:43:58.200024+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-09T
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-09 01:48:18.214559+00 | {"reset_at": "2026-08-09T01:48:18.214559+00:00", "reset_by": "a1111111-1111-1111-1111-111111111111", "keep_catalog": false}
+store_reset_initiated | ENERVIDA-VITALLCONS | 2026-08-09 01:49:47.250409+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-09T
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-09 01:49:47.462192+00 | {"reset_at": "2026-08-09T01:49:47.462192+00:00", "reset_by": "a1111111-1111-1111-1111-111111111111", "keep_catalog": false}
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-09 01:49:47.658801+00 | {"completed_at": "2026-08-09T01:49:47.626Z", "initiated_by": "a1111111-1111-1111-1111-111111111111"}
+store_reset_initiated | ENERVIDA-VITALLCONS | 2026-08-10 05:07:55.425441+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-10T
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-10 05:07:57.576443+00 | {"reset_at": "2026-08-10T05:07:57.576443+00:00", "reset_by": "a1111111-1111-1111-1111-111111111111", "keep_catalog": false}
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-10 05:07:58.302868+00 | {"completed_at": "2026-08-10T05:07:58.170Z", "initiated_by": "a1111111-1111-1111-1111-111111111111"}
+store_reset_initiated | ENERVIDA-VITALLCONS | 2026-08-10 06:50:17.288191+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-10T
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-10 06:50:18.713492+00 | {"reset_at": "2026-08-10T06:50:18.713492+00:00", "reset_by": "a1111111-1111-1111-1111-111111111111", "keep_catalog": false}
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-10 06:50:19.466009+00 | {"completed_at": "2026-08-10T06:50:19.345Z", "initiated_by": "a1111111-1111-1111-1111-111111111111"}
+store_reset_initiated | ENERVIDA-VITALLCONS | 2026-08-10 07:05:57.122058+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-10T
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-10 07:06:00.041431+00 | {"reset_at": "2026-08-10T07:06:00.041431+00:00", "reset_by": "a1111111-1111-1111-1111-111111111111", "keep_catalog": false}
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-10 07:06:01.046872+00 | {"completed_at": "2026-08-10T07:06:00.884Z", "initiated_by": "a1111111-1111-1111-1111-111111111111"}
+store_reset_initiated | ENERVIDA-VITALLCONS | 2026-08-10 07:41:11.430183+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-10T
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-10 07:41:14.188595+00 | {"reset_at": "2026-08-10T07:41:14.188595+00:00", "reset_by": "a1111111-1111-1111-1111-111111111111", "keep_catalog": false}
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-10 07:41:15.302606+00 | {"completed_at": "2026-08-10T07:41:15.176Z", "initiated_by": "a1111111-1111-1111-1111-111111111111"}
+store_reset_initiated | ENERVIDA-VITALLCONS | 2026-08-11 01:03:46.461891+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-11T
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-11 01:03:49.446438+00 | {"reset_at": "2026-08-11T01:03:49.446438+00:00", "reset_by": "a1111111-1111-1111-1111-111111111111", "keep_catalog": false}
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-11 01:03:50.924087+00 | {"completed_at": "2026-08-11T01:03:50.783Z", "initiated_by": "a1111111-1111-1111-1111-111111111111"}
+store_reset_initiated | ENERVIDA-VITALLCONS | 2026-08-11 21:58:31.340431+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-11T
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-11 21:58:32.680852+00 | {"reset_at": "2026-08-11T21:58:32.680852+00:00", "reset_by": "a1111111-1111-1111-1111-111111111111", "keep_catalog": false}
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-11 21:58:34.232185+00 | {"completed_at": "2026-08-11T21:58:34.092Z", "initiated_by": "a1111111-1111-1111-1111-111111111111"}
+store_reset_initiated | ENERVIDA-VITALLCONS | 2026-08-11 22:45:55.67757+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-11T
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-11 22:45:58.858501+00 | {"reset_at": "2026-08-11T22:45:58.858501+00:00", "reset_by": "a1111111-1111-1111-1111-111111111111", "keep_catalog": false}
+store_reset_completed | ENERVIDA-VITALLCONS | 2026-08-11 22:45:59.88944+00 | {"completed_at": "2026-08-11T22:45:59.763Z", "initiated_by": "a1111111-1111-1111-1111-111111111111"}
+store_reset_initiated | Puerto Padre VITALLCONS | 2026-08-16 23:05:31.158271+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-16T
+store_reset_initiated | Puerto Padre VITALLCONS | 2026-08-16 23:08:38.965096+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-16T
+store_reset_initiated | Puerto Padre VITALLCONS | 2026-08-16 23:10:37.899745+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-16T
+store_reset_initiated | Puerto Padre VITALLCONS | 2026-08-16 23:10:54.507157+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-16T
+store_reset_initiated | Puerto Padre VITALLCONS | 2026-08-16 23:12:39.916356+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-16T
+store_reset_initiated | Puerto Padre VITALLCONS | 2026-08-16 23:15:36.073732+00 | {"warning": "Full store data reset initiated by admin — all historical data including catalog will be deleted", "initiated_at": "2026-08-16T
+store_reset_completed | Puerto Padre VITALLCONS | 2026-08-16 23:15:37.549746+00 | {"reset_at": "2026-08-16T23:15:37.549746+00:00", "reset_by": "051c6157-600b-425e-b8c0-72388bacf541", "keep_catalog": false}
+store_reset_completed | Puerto Padre VITALLCONS | 2026-08-16 23:15:38.62881+00 | {"completed_at": "2026-08-16T23:15:38.515Z", "initiated_by": "051c6157-600b-425e-b8c0-72388bacf541"}
+
+Resets touching TIENDA CENTRAL: 0
+
+== REVERSE_DEVOLUTION events (all-time) ==
+action | created_at | record_id | meta | user_id
+REVERSE_DEVOLUTION | 2026-09-07 03:41:31.37123+00 | a7cc72cc-b3ab-4294-b1dc-eae7e14bf11e | {"reason": "F4E1 reverse dev", "pipeline": "register_stock_movement", "operation": "ADMIN_REVERSE_DEVOLUTION", "new_status": "reversed", "old_status": "completed", "movement_type": "devolution_reverse | a1111111-1111-1111-1111-111111111111
+
+== TIENDA CENTRAL era ==
+NC creation window: 2026-08-04 07:30:51.150879+00 .. 2026-08-07 00:58:01.627486+00
+Timeline synthesis:
+  T0 2026-08-04 07:30:51Z  DEV-2026-828651 'Hot test dev' created (v2_19_4 era, no financial integration)
+  T1 2026-08-06 03:30..04:40Z  NC-000001/000002 (OTel smoke/hot tests)
+  T2 2026-08-06 23:10..23:29Z  NC-000003..000008 rapid hot-test sequence; NC-000008 (999u x 350) created 23:29:21Z
+  T3 2026-08-06 23:33:41Z  fix commit 7dfe8ce2 (v2_21_4) lands 4m20s after NC-000008 (REM-INV-3 provenance)
+  T4 2026-08-06 23:42..2026-08-07 00:58Z  NC-000009..000012 (sequence/lifecycle/audit tests)
+  T5 2026-08-09 01:43Z .. 2026-08-16 23:15Z  RESET ERA: 15 initiated / 19 completed store resets (audit evidence above) purge transactions/stock/payments of affected stores; by design devolutions+audit_logs survive
+  T6 2026-09-05/06 (obs1) + 2026-09-12 (REM-INV-1)  post-reset LIVE captures: inventory consistent, NCs documented as residue
+  T7 2026-09-07 03:41Z  AUDIT F4E1 devolution+reverse with cash out 70 CUP (live model with DF-03, test store)
+  T8 2026-09-10 22:21..23:58Z  E2E2-ALPHA: 11 devolutions with cash out 1,200 CUP total (live model, test store)
+  T9 2026-09-13 (this gate)  census: 25 devolutions; the 13 TC NCs unchanged (12 completed, 1 reversed); financial effects of the 13: ZERO
+
+== CORRECTION/REFINEMENT (evidence-driven, this gate) ==
+T5-refined: The store_reset_* audit rows (15 initiated / 19 completed, 2026-08-09..08-16) touch ONLY
+  ENERVIDA-VITALLCONS and Puerto Padre VITALLCONS. ZERO reset rows exist for TIENDA CENTRAL.
+  The TIENDA CENTRAL ledger purge was a DIRECT store-scoped SQL purge executed outside
+  reset_store_data, dated ≈2026-08-17 02:00–02:50 UTC (provenance: repair-design pack
+  20260906-w9-b10b-obs2-repair-design/02-forensic-facts.md F4.1). Survivors per F2.2 (verified
+  live this gate): products (124), devolutions (13) + devolution_items (13), audit_logs.
+T6-refined: TIENDA CENTRAL stock ledger re-seeded 2026-09-06 20:26:26Z by repair
+  "B10B-OBS2-RECON-OPENING:20260906T201637Z-S2HW" (98 'initial' movements, one per product).
+  CAT-0002 opening = +966 from backup position 32 (pre-ghost-era backup) + 146 validated
+  post-backup business_events summing +934 (Σ=934 < 999 → no ghost component possible).
+  Provenance: repair-design/07-proposed-opening.csv row 3 + /08-mathematical-reconciliation.md
+  id8 da1c4090 "CONFIRMED". Current products.stock_current == inventory.quantity == 966 (live).

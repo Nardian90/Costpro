@@ -1,0 +1,34 @@
+REM-INV-3R — 05 ITEMS RECONCILIATION (13 NC, TIENDA CENTRAL)
+Generated: 2026-09-13T02:35:52.871Z
+
+== ITEM ROWS ==
+devolution_number | product_id | product_name | quantity | unit_price | total | calc_total | created_at
+DEV-2026-828651 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-04 07:30:51.150879+00
+NC-000001-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-06 03:30:00.537152+00
+NC-000002-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-06 04:40:22.560617+00
+NC-000003-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-06 23:10:25.820118+00
+NC-000004-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-06 23:12:11.580593+00
+NC-000005-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-06 23:22:10.228564+00
+NC-000006-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-06 23:27:29.313767+00
+NC-000007-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-06 23:27:41.661518+00
+NC-000008-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 999.00 | 350.00 | 349650.00 | 349650.0000 | 2026-08-06 23:29:21.463226+00
+NC-000009-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-06 23:42:58.886691+00
+NC-000010-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-06 23:50:11.908653+00
+NC-000011-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-07 00:00:54.348822+00
+NC-000012-2026 | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | 1.00 | 350.00 | 350.00 | 350.0000 | 2026-08-07 00:58:01.627486+00
+
+== DOC vs Σ(items) ==
+devolution_number | status | doc_total | item_count | sum_qty | sum_item_total | sum_qty_price | verdict
+DEV-2026-828651 | completed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH
+NC-000001-2026 | completed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH
+NC-000002-2026 | completed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH
+NC-000003-2026 | completed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH
+NC-000004-2026 | completed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH
+NC-000005-2026 | completed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH
+NC-000006-2026 | completed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH
+NC-000007-2026 | reversed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH
+NC-000008-2026 | completed | 349650.00 | 1 | 999.00 | 349650.00 | 349650.0000 | MATCH
+NC-000009-2026 | completed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH
+NC-000010-2026 | completed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH
+NC-000011-2026 | completed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH
+NC-000012-2026 | completed | 350.00 | 1 | 1.00 | 350.00 | 350.0000 | MATCH

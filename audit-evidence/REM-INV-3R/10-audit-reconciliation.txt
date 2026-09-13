@@ -1,0 +1,63 @@
+REM-INV-3R — 10 AUDIT RECONCILIATION
+Generated: 2026-09-13T02:36:38.162Z
+
+== audit_logs rows for the 13 NC (record_id match) ==
+created_at | user_id | table_name | record_id | action | new_data_head | metadata_head | store_id | trace_id
+2026-08-04 07:30:51.150879+00 | a1111111-1111-1111-1111-111111111111 | devolutions | 379122c3-ceab-4e51-8ac3-5cf0de8beb28 | DEVOLUTION_CREATED_V2 | - | {"reason": "Hot test dev", "item_count": 1, "v2_reverse": true, "original_tx": null, "devolution_number": "DEV-2026-828651"} | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | -
+2026-08-06 03:30:00.537152+00 | a1111111-1111-1111-1111-111111111111 | devolutions | 74cfd314-45c3-47a0-bd48-5e6f16b58b44 | DEVOLUTION_CREATED_V2 | - | {"reason": "Hot test OTel devolution", "item_count": 1, "v2_reverse": true, "original_tx": "92222444-c1b6-4fca-b75e-1f631da2bd17", "devolution_number": "NC-0000 | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | 4862add6b5fe2988472b86ce56085724
+2026-08-06 04:40:22.560617+00 | a1111111-1111-1111-1111-111111111111 | devolutions | 2a7934b7-9503-48cd-9240-c7606b486eb7 | DEVOLUTION_CREATED_V2 | - | {"reason": "Smoke test OTel devolución", "item_count": 1, "v2_reverse": true, "original_tx": "dd3d9c13-24a5-4aac-b13c-116d5fd02452", "devolution_number": "NC-00 | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | 89f9b2ee241ca20b0c2c4742dd1b6260
+2026-08-06 23:10:25.820118+00 | a1111111-1111-1111-1111-111111111111 | devolutions | 8bb4cfe5-2abf-4c4d-81fe-4ac33de732eb | DEVOLUTION_CREATED_V2 | - | {"reason": "Hot test devolution 1786057783", "item_count": 1, "v2_reverse": true, "original_tx": "add15f2b-a5e3-4203-a9dd-eaf081795078", "devolution_number": "N | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | 7be4c2a9ab5492a2735a4de777a95caa
+2026-08-06 23:12:11.580593+00 | a1111111-1111-1111-1111-111111111111 | devolutions | 0778b5d5-bf72-4d9b-b9f7-e4192a29d33f | DEVOLUTION_CREATED_V2 | - | {"reason": "Hot test devolution 1786057888", "item_count": 1, "v2_reverse": true, "original_tx": "7360812f-8c49-4494-a5ae-b47affd80dfe", "devolution_number": "N | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | 2ef218d4800d62c8ebb564401214f7d6
+2026-08-06 23:22:10.228564+00 | a1111111-1111-1111-1111-111111111111 | devolutions | a11e7aa5-863a-4e61-a041-04d33d1f66d2 | DEVOLUTION_CREATED_V2 | - | {"reason": "Hot test devolution 1786058486", "item_count": 1, "v2_reverse": true, "original_tx": "dd9a46fc-8e8c-40af-8bab-38ae44d5fdf8", "devolution_number": "N | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | 4dcde7827c189d63705b3fd66563a297
+2026-08-06 23:27:29.313767+00 | a1111111-1111-1111-1111-111111111111 | devolutions | 6c051892-b5ac-4fd6-be9b-546458119b96 | DEVOLUTION_CREATED_V2 | - | {"reason": "Hot test no original 1786058841", "item_count": 1, "v2_reverse": true, "original_tx": null, "devolution_number": "NC-000006-2026"} | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | a8e77f9c61d14c12a4b912334bd59fff
+2026-08-06 23:27:41.661518+00 | a1111111-1111-1111-1111-111111111111 | devolutions | 0b7213e9-344a-4aa0-876d-316be9c6ff2e | DEVOLUTION_CREATED_V2 | - | {"reason": "Hot dev reverse 1786058841", "item_count": 1, "v2_reverse": true, "original_tx": "edb274bd-e2e1-4001-8932-13674d13d2b9", "devolution_number": "NC-00 | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | c8dc3d4f17ed5d37f3f0ce32f7de1a37
+2026-08-06 23:29:21.463226+00 | a1111111-1111-1111-1111-111111111111 | devolutions | 42f89372-a76c-4e45-b2c7-a14252723f3e | DEVOLUTION_CREATED_V2 | - | {"reason": "Hot dev qty test 1786058955", "item_count": 1, "v2_reverse": true, "original_tx": "4cde56a3-4685-4ff5-8998-1f0ead6df3e3", "devolution_number": "NC-0 | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | 4fffb719f93614f716e9b2aaa1afb862
+2026-08-06 23:42:58.886691+00 | a1111111-1111-1111-1111-111111111111 | devolutions | def14222-1dc4-469d-9053-ddfbd28db7e8 | DEVOLUTION_CREATED_V2 | - | {"reason": "Sequence dev 1786059736", "item_count": 1, "v2_reverse": true, "original_tx": "94d94f47-5787-487e-81b5-7648cec6d50b", "devolution_number": "NC-00000 | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | 29a6827945cf9e396014200c3bef261e
+2026-08-06 23:50:11.908653+00 | a1111111-1111-1111-1111-111111111111 | devolutions | fb98424e-cf04-4fcf-ba65-099696179e2c | DEVOLUTION_CREATED_V2 | - | {"reason": "Hot test devolution 1786060163", "item_count": 1, "v2_reverse": true, "original_tx": "89638d16-5ce9-4785-a324-e1b2a15273e9", "devolution_number": "N | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | c34d5e166d817595b5817c3af5b1d3e4
+2026-08-07 00:00:54.348822+00 | a1111111-1111-1111-1111-111111111111 | devolutions | 903269d5-e624-4e52-958d-48e8bb84bde1 | DEVOLUTION_CREATED_V2 | - | {"reason": "Lifecycle 1786060805", "item_count": 1, "v2_reverse": true, "original_tx": "a82fd929-1418-4ce0-a393-3ce562f68af1", "devolution_number": "NC-000011-2 | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | c72583325ad30daaf03aa402fcadbfff
+2026-08-07 00:58:01.627486+00 | a1111111-1111-1111-1111-111111111111 | devolutions | c249cdcc-e0f8-43d6-b9c4-10e16daab9f3 | DEVOLUTION_CREATED_V2 | - | {"reason": "Audit devolution", "item_count": 1, "v2_reverse": true, "original_tx": "f062bb42-a231-4bfc-a1c8-74c8630779e3", "devolution_number": "NC-000012-2026" | d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 | da0280e241241dbcf64bfcaed664480c
+
+== audit_logs actions on table devolutions (all-time) ==
+action | n
+DEVOLUTION_CREATED_V2 | 38
+CREATE_DEVOLUTION | 24
+REVERSE_DEVOLUTION | 1
+
+== business_events for the 13 NC ==
+NONE (0 rows)
+
+== business_events event_type distribution (top 20) ==
+event_type | n
+stock_movement | 8043
+low_stock_alert | 2854
+
+== store_reset_snapshots for TIENDA CENTRAL ==
+NONE (0 rows)
+
+== audit_logs reset/purge actions (all-time) ==
+action | n | minc | maxc
+store_reset_completed | 19 | 2026-08-09 01:48:18.214559+00 | 2026-08-16 23:15:38.62881+00
+store_reset_initiated | 15 | 2026-08-09 01:43:58.200024+00 | 2026-08-16 23:15:36.073732+00
+
+== audit_logs actions in the NC era window (2026-08-04..08-08) ==
+action | n | minc | maxc
+CREATE_SALE_V2 | 92 | 2026-08-04 06:52:50.267711+00 | 2026-08-07 02:36:46.262864+00
+UPDATE_STORE_CONFIG | 49 | 2026-08-06 05:55:03.863533+00 | 2026-08-07 00:02:00.643372+00
+CREATE_STORE | 28 | 2026-08-06 05:59:05.322425+00 | 2026-08-07 00:02:02.325466+00
+store_created | 27 | 2026-08-06 05:59:05.322425+00 | 2026-08-07 00:02:02.325466+00
+UPDATE_STATUS | 23 | 2026-08-04 07:30:37.987035+00 | 2026-08-07 02:27:13.318245+00
+REGISTER_RECEPTION | 22 | 2026-08-07 01:54:50.555477+00 | 2026-08-07 02:40:47.665419+00
+DEVOLUTION_CREATED_V2 | 13 | 2026-08-04 07:30:51.150879+00 | 2026-08-07 00:58:01.627486+00
+REVERSE_SALE_V2 | 12 | 2026-08-04 07:30:37.987035+00 | 2026-08-07 00:58:03.381692+00
+CREATE_TRANSFER | 12 | 2026-08-06 06:00:24.366556+00 | 2026-08-07 00:02:05.925669+00
+CASH_CLOSURE_CREATED | 10 | 2026-08-06 03:35:48.759076+00 | 2026-08-07 00:02:14.542562+00
+CASH_CLOSURE_FINALIZED | 9 | 2026-08-06 03:39:29.369669+00 | 2026-08-07 00:02:16.480087+00
+Z_REPORT_GENERATED | 9 | 2026-08-06 03:39:29.369669+00 | 2026-08-07 00:02:16.480087+00
+transfer_confirmed | 7 | 2026-08-06 07:22:03.298776+00 | 2026-08-07 00:02:07.621963+00
+CHANGE_ACTIVE_STORE | 7 | 2026-08-06 06:06:53.102315+00 | 2026-08-07 23:44:31.476573+00
+VOID_SALE | 6 | 2026-08-06 03:41:47.931629+00 | 2026-08-06 23:50:16.336724+00
+RECEPTION_VOIDED | 3 | 2026-08-07 02:20:32.777882+00 | 2026-08-07 02:27:13.318245+00
+STORE_BACKUP_EXPORT | 2 | 2026-08-06 23:59:12.573026+00 | 2026-08-07 00:58:44.180643+00
+TEST_DIRECT | 1 | 2026-08-06 05:57:33.838254+00 | 2026-08-06 05:57:33.838254+00
+CREATE_USER | 1 | 2026-08-06 06:07:57.500611+00 | 2026-08-06 06:07:57.500611+00
+RESERVATION_EXPIRED | 1 | 2026-08-04 03:39:08.077149+00 | 2026-08-04 03:39:08.077149+00

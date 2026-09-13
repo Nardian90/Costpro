@@ -1,0 +1,75 @@
+REM-INV-3R — 20 FINAL VERDICT
+Generated: 2026-09-13
+Baseline: fa64514d | Scope: F-02 only | Production access: PASS | Production mutation: ZERO
+
+EXECUTIVE VERDICT: CONDITIONAL
+
+WHAT IS VERIFIED (production evidence, this gate, READ-ONLY):
+  1. The 13 historical NC of TIENDA CENTRAL STILL EXIST today: 25 total devolutions in
+     production; TIENDA CENTRAL holds exactly the same 13 documents (12 completed,
+     1 reversed NC-000007), same IDs, same amounts, 353,850.00 CUP nominal. Nothing was
+     deleted or added to that universe since REM-INV-3.
+  2. Items reconcile 13/13: SUM(quantity x unit_price) == devolution.total_amount (MATCH,
+     exact; NC-000008: 999 x 350 = 349,650.00).
+  3. Source-document reconciliation: original_transaction_id is NULL in 13/13 rows (era
+     Bug #3); era audit metadata preserves original_tx for 11/13. The original sales table
+     for the store is EMPTY (purged ≈2026-08-17 by direct store-scoped SQL, outside
+     reset_store_data — repair-design F4.1; zero reset audit rows for this store).
+  4. Inventory: 0 stock_movements / kardex / inventory_movements reference the 13 NC.
+     Current CAT-0002 stock = 966 u with INDEPENDENT validated provenance (pre-ghost backup
+     position 32 + 146 validated post-backup events +934; Σ < 999 → no ghost component).
+     Inventory effect of the 13 NCs: EFFECT_PURGED / NO_EFFECT (NC-000007). Actual inventory
+     impact today: 0 units, 0 CUP.
+  5. Financial: corrected r17 (store-scoped, enum-cast fixed) proves 0 payment_transactions,
+     0 cash_movements, 0 store_credit_ledger rows for the 13. The 12 financial rows that
+     exist in the system belong to post-W7 devolutions in TEST stores (E2E2-ALPHA 1,200 CUP,
+     AUDIT F4E1 70 CUP) and demonstrate the LIVE model creates counter-entries correctly.
+     Actual cash/credit impact of the 13: 0.00 CUP.
+  6. Reporting contamination is LIMITED and MEASURED: get_tax_report() for TIENDA CENTRAL
+     2026-08 shows total_devolutions = 353,500.00 CUP from the residue (12 completed docs);
+     total_tax_returned = 0.00 and net_tax_payable = 0.00 — NOT distorted. Dashboards,
+     profit, cash, inventory reports, commissions (v1 ignores devolutions), fiscal closings,
+     z_reports, kardex: no contamination (code inspected + live aggregation run).
+  7. Active F-02 defect: NONE. The live create_devolution_v2 enforces 9/9 protections
+     (original required + existence under FOR UPDATE lock, cumulative cap, cross-store guard,
+     stock movement via canonical helper, financial integration, audit, idempotency).
+     The NC-000008 pattern is irreproducible in the current model (REM-INV-3 staging 22/22 on
+     identical code — zero supabase/ changes since; plus live E2E2/AUDIT-F4E1 behavior).
+  8. Zero-touch PASS: 24/24 tables, exact counts identical PRE/POST; client-side read-only
+     guard enforced every statement; no DML/DDL issued by this gate.
+  9. Regression: tsc 0 errors; vitest 2070 passed / 0 failed; eslint 0 errors (1291
+     pre-existing warnings); security contract 134/134 functions. BUILD = BLOCKED_BY_INFRA
+     (documented pre-existing OOM; intentionally not re-run to protect the live server).
+ 10. Git/evidence closure: evidence-only commit; gate-closure-check.sh CLOSURE OK (see below).
+
+WHAT REMAINS A BUSINESS DECISION (why CONDITIONAL, per §31):
+  B1. Disposition of the 13 documents: recommendation = RETAIN (Opción A). Annulment
+      (Opción B) would fabricate effects; test-tagging (Opción C) has no mechanism;
+      correction (Opción D) has nothing data-side to correct.
+  B2. Optional remediation gate (code-side only):
+      D1 — get_tax_report phantom total_devolutions (353,500 CUP informational exposure);
+      D2 — SEC-F02-1: RLS/grants allow authenticated store members to INSERT/UPDATE
+      devolutions rows directly (own-store scope), bypassing the v2 contract at SQL layer;
+      recommended revocation of INSERT/UPDATE grants + policy role review. Severity assessed
+      P2 (mitigations: authenticated membership required, app never uses the path, no abuse
+      evidence); P1-leaning if insider threat is in scope. It is NOT an active defect of the
+      business flow and does not demonstrate current corruption; it is recorded honestly as
+      an unresolved hardening surface so the reader can challenge this verdict.
+
+ANSWERS TO §33 (with evidence):
+  - ¿Las 13 NC siguen existiendo?  SÍ — 13/13, sin cambios (02, 03).
+  - ¿Cuáles tienen efectos de inventario?  NINGUNA — 0 movimientos; efecto purgado (07).
+  - ¿Cuáles tienen efectos financieros?  NINGUNA — 0 filas en todas las superficies (08, 09).
+  - ¿Alguna contamina estados/reportes?  SÍ, UNA línea informativa: get_tax_report
+    total_devolutions 2026-08 = 353,500 CUP; neto de impuestos NO distorsionado (12).
+  - ¿NC-000008 es problema económico real o residuo?  RESIDUO DOCUMENTAL — efecto real 0.00
+    CUP hoy; inventario 966 con procedencia independiente (04, 07).
+  - ¿El bug de 999 unidades puede reproducirse hoy?  NO — v2 exige original (FOR UPDATE) y
+    tope acumulado; staging 22/22 en código idéntico + comportamiento live verificado (13, 14).
+  - ¿Existe defecto F-02 activo?  NO en el flujo de negocio; superficie SQL residual
+    documentada como SEC-F02-1 (remediación separada).
+  - ¿Qué debe hacer la empresa?  RETENER los 13 documentos (Opción A); decidir opcionalmente
+    remediation gate D1/D2; opcionalmente definir lifecycle de tiendas de test (19).
+  - ¿F-02 puede certificarse definitivamente?  F-02 queda RECONCILIADO Y CERRADO en lo
+    técnico; la certificación plena queda supeditada a la decisión empresarial de
+    disposición (B1) y, si se desea, a la remediación D1/D2. Veredicto: CONDITIONAL.

@@ -1,0 +1,24 @@
+REM-INV-3R — 07 INVENTORY RECONCILIATION
+Generated: 2026-09-13T02:36:04.245Z
+
+== stock_movements referencing the 13 NC (by id or doc number) ==
+NONE (0 rows)
+
+== inventory_movements referencing the 13 NC ==
+NONE (0 rows)
+
+== kardex_entries referencing the 13 NC ==
+NONE (0 rows)
+
+== stock_movements in TIENDA CENTRAL (whole store) ==
+count=98 min=2026-09-06 20:26:26.416067+00 max=2026-09-06 20:26:26.416067+00
+stock_movements in store during the NC era (2026-08-01..08-10): 0
+
+== CURRENT product state ==
+id | name | sku | stock_current | cost_average | is_active | updated_at
+da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | CAT-0002 | 966.0000 | 11.919422583856775 | true | 2026-09-06 20:26:26.416067+00
+product_id | quantity | updated_at
+da1c4090-3e10-4120-a2bc-24da53cffe16 | 966.0000 | 2026-09-06 20:26:26.416067+00
+
+VERDICT SPACE: NO_EFFECT | EFFECT_PRESENT | EFFECT_REVERSED | EFFECT_PURGED | UNDETERMINED
+Interpretation rule (§9): document existence != economic effect. A completed NC with 0 linked movements and a purged era ledger = EFFECT_PURGED (document survived, effect did not).

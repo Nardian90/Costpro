@@ -1,0 +1,26 @@
+REM-INV-3R — 04 NC-000008-2026 DEEP DIVE
+Generated: 2026-09-13T02:40:46.517Z
+
+== DOCUMENT ROW ==
+id | devolution_number | store | status | created_at | updated_at | original_transaction_id | reason | total_amount | currency | payment_method | processed_by | processed_at | reversed_at | idempotency_key
+42f89372-a76c-4e45-b2c7-a14252723f3e | NC-000008-2026 | TIENDA CENTRAL COSTPRO | completed | 2026-08-06 23:29:21.463226+00 | 2026-08-06 23:29:21.463226+00 | - | Hot dev qty test 1786058955 | 349650.00 | CUP | cash | a1111111-1111-1111-1111-111111111111 | 2026-08-06 23:29:21.463226+00 | - | dev-55b534c2-17a1-4a41-ab74-b809a8850863
+== ITEM ROW ==
+devolution_id | product_id | product_name | sku | quantity | unit_price | total | reason | created_at
+42f89372-a76c-4e45-b2c7-a14252723f3e | da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | CAT-0002 | 999.00 | 350.00 | 349650.00 | Too many | 2026-08-06 23:29:21.463226+00
+== CREATION AUDIT (metadata verbatim) ==
+created_at | user_id | action | metadata
+2026-08-06 23:29:21.463226+00 | a1111111-1111-1111-1111-111111111111 | DEVOLUTION_CREATED_V2 | [object Object]
+KEY: metadata.original_tx = '4cde56a3-4685-4ff5-8998-1f0ead6df3e3' — the era's v2 logged the original sale id in audit metadata but did NOT persist it in devolutions.original_transaction_id (Bug #3, fixed in v2_21_4 commit 7dfe8ce2 four minutes after creation).
+
+== ORIGINAL TRANSACTION 4cde56a3-4685-4ff5-8998-1f0ead6df3e3 — current existence ==
+NONE (0 rows)
+== AUDIT ROWS mentioning the original transaction ==
+action | created_at | record_id | meta
+CREATE_SALE_V2 | 2026-08-06 23:29:19.913272+00 | 4cde56a3-4685-4ff5-8998-1f0ead6df3e3 | {"subtotal": 350, "item_count": 1, "tax_amount": 0, "cash_amount": 350, "customer_id": null, "v2_checkout": true, "discount_pct": 0.00000000000000000000, "total_amount": 350, "zelle_amount": 0, "super
+DEVOLUTION_CREATED_V2 | 2026-08-06 23:29:21.463226+00 | 42f89372-a76c-4e45-b2c7-a14252723f3e | {"reason": "Hot dev qty test 1786058955", "item_count": 1, "v2_reverse": true, "original_tx": "4cde56a3-4685-4ff5-8998-1f0ead6df3e3", "devolution_number": "NC-000008-2026"}
+== PRODUCT (CAT-0002) CURRENT STATE ==
+id | name | sku | stock_current | cost_average | is_active | updated_at
+da1c4090-3e10-4120-a2bc-24da53cffe16 | Abrazade metálica de 1 pulgada | CAT-0002 | 966.0000 | 11.919422583856775 | true | 2026-09-06 20:26:26.416067+00
+
+== stock_movements for product CAT-0002: total=1, pre-reset-era(<2026-08-09)=0 ==
+999-vs-1 question (§8): the original sale (1 unit) and the +999 stock effect are NOT currently visible: transactions table for TIENDA CENTRAL is EMPTY (purged), stock_movements pre-2026-08-09 for the product = 0. The 999-unit effect was purged by the reset era (see 11-chronology); it survives ONLY as: (a) the devolution document, (b) its devolution_items row, (c) the audit metadata. No inventory, cash, or cost effect remains.

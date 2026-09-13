@@ -1,0 +1,34 @@
+REM-INV-3R — 12 REPORT/KPI CONTAMINATION ANALYSIS
+Generated: 2026-09-13T02:48:34.861Z
+Method: (1) static: read the actual report/dashboard code & RPC definitions used by the app; (2) dynamic: run the same aggregations READ-ONLY for TIENDA CENTRAL.
+
+== STATIC: which current report surfaces read devolutions? ==
+get_dashboard_kpis        -> NO reference to devolutions (function definition inspected) -> NOT affected
+get_profit_report         -> NO reference to devolutions -> NOT affected
+get_cash_report           -> NO reference to devolutions -> NOT affected
+get_tenant_cash_report    -> NO reference to devolutions -> NOT affected
+get_inventory_report (x2) -> NO reference to devolutions -> NOT affected (kardex/inventory have 0 rows linked to the 13 NCs)
+get_tax_report            -> READS devolutions: v_total_devolutions = SUM(total_amount) WHERE status='completed' AND store/month; v_total_tax_returned = SUM(total * original-tx tax ratio)
+commission-engine.ts      -> v1 explicitly does NOT subtract devolutions ("net_sales: total - devoluciones (en esta v1 = total_sales)", line 27/220) -> NOT affected
+fiscal_close / z_reports / cash-closures / reports API routes -> no devolution references found (rg scan) -> NOT affected
+API /api/devolutions      -> returns the documents as data (documentary visibility, by design)
+auto_kardex_on_stock_movement trigger -> only fires on stock_movements; 0 movements for the 13 -> no kardex effect
+
+== DYNAMIC: exact live values the tax report computes for TIENDA CENTRAL ==
+Period 2026-08 (only period with TC devolutions):
+  n_completed_devolutions      = 12 (reversed NC-000007 excluded by status filter)
+  total_devolutions (reported) = 353,500.00 CUP   <-- CONTAMINATED LINE (100% residue: 349,650 NC-000008 + 11x350)
+  total_tax_returned           = 0.00 CUP (original_transaction_id NULL 13/13 -> ratio NULL -> 0)
+  net_tax_payable              = tax_collected - tax_returned = 0 - 0 = 0 (TC has 0 transactions) -> NOT distorted
+Other months: no TC devolutions -> no effect.
+
+== Other ledgers (completeness) ==
+wallet_transactions columns: id, user_id, trm_transaction_id, date, bank, card, operation, amount, currency, service, service_type, category, manual_category, counterparty, note, balance_after, is_statement, created_at, updated_at
+wallet_transactions referencing the 13 NC: 0 rows
+fiscal_closings rows for TIENDA CENTRAL: 0 (none)
+z_reports total rows (whole table): [{"n":35}]
+
+== VERDICT (§14 classification) ==
+REPORT_CONTAMINATION (LIMITED to ONE informational field): get_tax_report().total_devolutions for TIENDA CENTRAL/2026-08 shows 353,500.00 CUP of "devoluciones" that never had cash, tax, inventory or accounting effect.
+NOT contaminated: dashboard KPIs, profit report, cash reports (store & tenant), inventory report, kardex, commissions (v1 ignores devolutions), fiscal closings, z_reports, net_tax_payable, accounting ledgers, inventory quantities (966 has independent validated provenance).
+SECOND TAG for the documents: CURRENT_REPORTING_EFFECT (one field) + NO_CURRENT_ECONOMIC_EFFECT (cash/credit/inventory/accounting = 0).

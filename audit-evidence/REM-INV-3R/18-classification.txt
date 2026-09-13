@@ -1,0 +1,51 @@
+REM-INV-3R — 18 INDIVIDUAL CLASSIFICATION (evidence-based, one row per document)
+Generated: 2026-09-13
+
+CLASSIFICATION SPACE (§17): LEGITIMATE_BUSINESS_DOCUMENT | TEST_RESIDUE | CORRUPTED_DOCUMENT |
+DUPLICATE | PARTIAL_TRANSACTION | REVERSED_DOCUMENT | ORPHAN_DOCUMENT | ACCOUNTING_IMPACT |
+INVENTORY_IMPACT | UNDETERMINED.  Secondary tag: NO_CURRENT_ECONOMIC_EFFECT |
+CURRENT_ECONOMIC_EFFECT | CURRENT_REPORTING_EFFECT.
+
+CONVERGENT SIGNALS used (§18 requires multiple independent signals — 9 found):
+  SIG-1 reason text contains explicit test vocabulary (10/13 "test", 3/13 sequence/lifecycle/audit-test)
+  SIG-2 processed_by = a1111111-1111-1111-1111-111111111111 (synthetic test UUID) — 13/13
+  SIG-3 original_transaction_id NULL in table — 13/13 (impossible under live v2 contract;
+        live body raises ERR_DEVOLUTION_NO_ORIGINAL) = era Bug #3 fingerprint
+  SIG-4 NC-000008: 999 returned units vs original sale of 1 (audit metadata original_tx
+        4cde56a3; commercial absurdity) = era Bug #5 fingerprint (no cap)
+  SIG-5 timing: rapid hot-test sequence 2026-08-06 23:10..2026-08-07 00:58Z; fix commit 7dfe8ce2
+        (v2_21_4) landed 4m20s after NC-000008 (REM-INV-3 provenance, re-verified in git)
+  SIG-6 zero financial effect — 0 payment_transactions / cash_movements / store_credit_ledger
+        rows for all 13 (store-scoped), era pre-DF-03
+  SIG-7 zero surviving inventory effect — 0 stock_movements/kardex/inventory_movements linked;
+        ledger purged ≈2026-08-17 02:00–02:50Z (repair-design F4.1); current stock (966) has
+        independent validated provenance (backup 32 pre-ghost + 146 events +934)
+  SIG-8 era context: same 3-day window contains 92 CREATE_SALE_V2, 28 CREATE_STORE,
+        12 REVERSE_SALE_V2 — mass test/demo provisioning
+  SIG-9 live model behaves differently today: E2E2-ALPHA/AUDIT F4E1 devolutions carry
+        original_transaction_id AND create cash counter-entries (12 payment rows, 12 cash rows)
+
+PER-DOCUMENT CLASSIFICATION (13, TIENDA CENTRAL COSTPRO):
+DOC | CLASIFICACION | ETIQUETA SECUNDARIA | SENALES
+DEV-2026-828651   | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,6,7,8,9
+NC-000001-2026    | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,5,6,7,8,9
+NC-000002-2026    | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,6,7,8,9
+NC-000003-2026    | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,5,6,7,8,9
+NC-000004-2026    | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,5,6,7,8,9
+NC-000005-2026    | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,5,6,7,8,9
+NC-000006-2026    | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,6,7,8,9 (reason "Hot test no original")
+NC-000007-2026    | TEST_RESIDUE | REVERSED_DOCUMENT + NO_CURRENT_ECONOMIC_EFFECT | SIG-1,2,3,5,6,7,8,9 (reversal also test: "Hot dev reverse"; reversal found nothing to compensate)
+NC-000008-2026    | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,4,5,6,7,8,9 (ALL NINE)
+NC-000009-2026    | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,6,7,8,9 ("Sequence dev")
+NC-000010-2026    | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,5,6,7,8,9
+NC-000011-2026    | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,6,7,8,9 ("Lifecycle")
+NC-000012-2026    | TEST_RESIDUE | NO_CURRENT_ECONOMIC_EFFECT + CURRENT_REPORTING_EFFECT | SIG-1,2,3,6,7,8,9 ("Audit devolution")
+
+SECONDARY UNIVERSE (current, outside the 13; recorded for completeness):
+E2E2-ALPHA (11 docs, 2026-09-10)  | TEST_RESIDUE (test store, "E2E2 devolución de prueba") | CURRENT_ECONOMIC_EFFECT WITHIN TEST STORE (cash out 1,200 CUP — live model working as designed)
+AUDIT F4E1 STORE A (1 doc, 2026-09-07) | TEST_RESIDUE (audit-gate test store) | CURRENT_ECONOMIC_EFFECT WITHIN TEST STORE (cash out 70 CUP)
+
+NOT CLASSIFIED AS: CORRUPTED_DOCUMENT (items sum == doc total 13/13; structure intact),
+DUPLICATE (13 distinct documents, no repeated idempotency keys), ORPHAN_DOCUMENT
+(all trace to audit events and era metadata; the term is reserved for docs with NO
+provenance — not the case), ACCOUNTING_IMPACT / INVENTORY_IMPACT (proven zero).
