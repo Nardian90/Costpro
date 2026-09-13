@@ -1,0 +1,111 @@
+== FASE P: schema + helpers + V2 (verbatim assets 3R-B/REM-INV-3) ==
+== roles estilo Supabase ==
+== helpers live + pipeline V2 ==
+   applied mig_has_store_access_as.sql
+   applied mig_can_reverse_document.sql
+   applied mig_next_document_number.sql
+   applied live_fn_sync_inventory_on_movement.sql
+   applied live_fn_recalc_wac.sql
+   applied mig_sync_product_stock.sql
+   applied mig_auto_kardex_on_stock_movement.sql
+   applied mig_register_stock_movement.sql
+   applied live_create_devolution_v2.sql
+   applied mig_reverse_devolution.sql
+== validador LIVE verbatim + triggers como producción ==
+   md5(prosrc) staged PRE: c77a18de9a9f2ca5c935f0b4f0a35e68 (esperado c77a18de9a9f2ca5c935f0b4f0a35e68)
+== RLS + grants REGRESADOS (authenticated arwd — validador como única barrera) ==
+fixture cargado
+
+== FASE PRE: T1-T8 owner + S-series authenticated (grants regresados) ==
+fixtures NC creadas (pending/completed/reversed/voided)
+[PRE][T1] [PRE] production_orders draft→in_progress (válida, mapa vivo) = INFO :: no hay tabla production_orders en el espejo; cubierto por T1-transactions/T1-devolutions (misma rama de código)
+[PRE][T1] [PRE] transactions pending→completed (válida) = ALLOW :: OK (rows=1)
+[PRE][T1] [PRE] devolutions pending→completed (válida) = ALLOW :: OK (rows=1)
+[PRE][T1] [PRE] devolutions pending→voided (válida) = ALLOW :: OK (rows=1)
+[PRE][T1] [PRE] devolutions completed→reversed (válida: camino reverse_devolution) = ALLOW :: OK (rows=1)
+[PRE][T2] [PRE] transactions completed→pending (inválida, tabla mapeada) = DENY :: P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a pending
+[PRE][T6] [PRE] devolutions completed→pending (inválida) = ALLOW :: OK (rows=1)
+[PRE][T6] [PRE] devolutions reversed→completed (inválida: resurrección) = ALLOW :: OK (rows=1)
+[PRE][T6] [PRE] devolutions voided→completed (inválida: resurrección) = ALLOW :: OK (rows=1)
+[PRE][T6] [PRE] devolutions pending→reversed (inválida: reverse solo desde completed) = ALLOW :: OK (rows=1)
+[PRE][T3] [PRE] tipo desconocido 'tipo_desconocido_xyz' pending→completed = ALLOW :: OK (rows=1)
+[PRE][T4] [PRE] tipo desconocido + new_status NULL = ALLOW :: OK (rows=1)
+[PRE][T4] [PRE] tipo mapeado 'transactions' + new_status NULL ⇒ TRUE AND NULL = NULL = ALLOW :: OK (rows=1)
+[PRE][T4] [PRE] tipo mapeado 'transactions' pending→completed (control válido) = ALLOW :: OK (rows=1)
+[PRE][T4] [PRE] old_status inexistente (0 filas — no dispara) = INFO :: OK (rows=0)
+[PRE][T7] [PRE] validador sin contexto de tienda (TG_ARGV solo nombre de tabla) = INFO :: capa correcta: RLS USING/WITH CHECK own-store (probada en S5 grants LIVE) + RPC V2
+[PRE][T8] [PRE] UPDATE sobre document_id inexistente = NO-OP (rows=0, nada aceptado) :: OK (rows=0)
+[PRE][T8] [PRE] new_status 'estado_bogus' (CHECK constraint devolutions) = DENY :: 23514: new row for relation "devolutions" violates check constraint "devolutions_status_check"
+[PRE][T8] [PRE] new_status 'estado_bogus' (enum transactions) = DENY :: P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a estado_bogus
+[PRE][T8] [PRE] llamada directa al trigger function = DENY (no invocable fuera de trigger) :: 0A000: trigger functions can only be called as triggers
+[PRE][S4] [PRE] authenticated own-store UPDATE status completed→pending (inválida) = SUCCEEDED (fail-open del validador) :: OK (rows=1)
+[PRE][S4] [PRE] authenticated own-store UPDATE status reversed→completed (resurrección, inválida) = SUCCEEDED (fail-open del validador) :: OK (rows=1)
+[PRE][S1] [PRE] INSERT directo mínimo (grants regresados) = SUCCEEDED :: OK (rows=1)
+[PRE][S2] [PRE] INSERT NC fabricada sin original (grants regresados) = SUCCEEDED :: OK (rows=1)
+[PRE][S5] [PRE] UPDATE cross-store (RLS USING filtra) = NO-OP (0 filas) :: OK (rows=0)
+[PRE][S6] [PRE] UPDATE items directo (sin policy UPDATE items) = NO-OP (0 filas) :: OK (rows=0)
+[PRE][S8] [PRE] DELETE directo devolutions (sin policy DELETE) = NO-OP (0 filas) :: OK (rows=0)
+
+== FASE FIX: aplicar 13-remediation.sql en staging ==
+   md5(prosrc) staged POST: 469c529a70fe578a6f2ac25273bd79ca
+
+== FASE POST: T1-T8 + S-series + grants LIVE + V2 + concurrencia ==
+[POST][T1] [POST] production_orders draft→in_progress (válida, mapa vivo) = INFO :: no hay tabla production_orders en el espejo; cubierto por T1-transactions/T1-devolutions (misma rama de código)
+[POST][T1] [POST] transactions pending→completed (válida) = ALLOW :: OK (rows=1)
+[POST][T1] [POST] devolutions pending→completed (válida) = ALLOW :: OK (rows=1)
+[POST][T1] [POST] devolutions pending→voided (válida) = ALLOW :: OK (rows=1)
+[POST][T1] [POST] devolutions completed→reversed (válida: camino reverse_devolution) = ALLOW :: OK (rows=1)
+[POST][T2] [POST] transactions completed→pending (inválida, tabla mapeada) = DENY :: P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a pending
+[POST][T6] [POST] devolutions completed→pending (inválida) = DENY :: P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de completed a pending
+[POST][T6] [POST] devolutions reversed→completed (inválida: resurrección) = DENY :: P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de reversed a completed
+[POST][T6] [POST] devolutions voided→completed (inválida: resurrección) = DENY :: P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de voided a completed
+[POST][T6] [POST] devolutions pending→reversed (inválida: reverse solo desde completed) = DENY :: P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de pending a reversed
+[POST][T3] [POST] tipo desconocido 'tipo_desconocido_xyz' pending→completed = DENY :: P0001: ERR_INVALID_TRANSITION: tipo_desconocido_xyz no puede pasar de pending a completed
+[POST][T4] [POST] tipo desconocido + new_status NULL = DENY :: P0001: ERR_INVALID_TRANSITION: tipo_desconocido_xyz no puede pasar de pending a <NULL>
+[POST][T4] [POST] tipo mapeado 'transactions' + new_status NULL ⇒ TRUE AND NULL = NULL = DENY :: P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de pending a <NULL>
+[POST][T4] [POST] tipo mapeado 'transactions' pending→completed (control válido) = ALLOW :: OK (rows=1)
+[POST][T4] [POST] old_status inexistente (0 filas — no dispara) = INFO :: OK (rows=0)
+[POST][T7] [POST] validador sin contexto de tienda (TG_ARGV solo nombre de tabla) = INFO :: capa correcta: RLS USING/WITH CHECK own-store (probada en S5 grants LIVE) + RPC V2
+[POST][T8] [POST] UPDATE sobre document_id inexistente = NO-OP (rows=0, nada aceptado) :: OK (rows=0)
+[POST][T8] [POST] new_status 'estado_bogus' (CHECK constraint devolutions) = DENY :: P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de completed a estado_bogus
+[POST][T8] [POST] new_status 'estado_bogus' (enum transactions) = DENY :: P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a estado_bogus
+[POST][T8] [POST] llamada directa al trigger function = DENY (no invocable fuera de trigger) :: 0A000: trigger functions can only be called as triggers
+[POST][S4] [POST] authenticated own-store UPDATE status completed→pending (inválida) = DENIED :: P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de completed a pending
+[POST][S4] [POST] authenticated own-store UPDATE status reversed→completed (resurrección, inválida) = DENIED :: P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de reversed a completed
+[POST][S1] [POST] INSERT directo mínimo (grants regresados) = SUCCEEDED :: OK (rows=1)
+[POST][S2] [POST] INSERT NC fabricada sin original (grants regresados) = SUCCEEDED :: OK (rows=1)
+[POST][S5] [POST] UPDATE cross-store (RLS USING filtra) = NO-OP (0 filas) :: OK (rows=0)
+[POST][S6] [POST] UPDATE items directo (sin policy UPDATE items) = NO-OP (0 filas) :: OK (rows=0)
+[POST][S8] [POST] DELETE directo devolutions (sin policy DELETE) = NO-OP (0 filas) :: OK (rows=0)
+== FASE POST: grants LIVE (REVOKE como producción) ==
+[POST][S1] [LIVE] INSERT directo mínimo como authenticated = DENIED :: 42501: permission denied for table devolutions
+[POST][S2] [LIVE] INSERT NC sin original como authenticated = DENIED :: 42501: permission denied for table devolutions
+[POST][S4] [LIVE] UPDATE status completed→pending como authenticated = DENIED :: 42501: permission denied for table devolutions
+[POST][S4] [LIVE] UPDATE total_amount como authenticated = DENIED :: 42501: permission denied for table devolutions
+[POST][S5] [LIVE] UPDATE cross-store como authenticated = DENIED :: 42501: permission denied for table devolutions
+[POST][S6] [LIVE] INSERT items como authenticated = DENIED :: 42501: permission denied for table devolution_items
+[POST][S8] [LIVE] DELETE devolutions como authenticated = DENIED :: 42501: permission denied for table devolutions
+[POST][S8] [LIVE] TRUNCATE devolution_items como authenticated = DENIED :: 42501: permission denied for table devolution_items
+[POST][SEC] [LIVE] total denegados (8 ataques, capa grant post-3R-B) = PASS — 8/8 DENIED :: denied=8
+[POST][SEC] [LIVE] SELECT own-store conservado (hook duplicar) = PASS :: filas visibles=4
+== FASE POST: regresión V2 ==
+[POST][V2] creación NC válida → success (INSERT status='completed') = PASS :: {'status': 'success', 'total_amount': 350, 'devolution_id': '8ba16668-7ddb-4f83-8a5b-5772e9bbcb9c', 'financial_effect': 'cash_out_and_refund', 'devolution_number': 'NC-00
+[POST][V2] efectos laterales completos (stock/payment/audit) = PASS :: pre={'devolutions': 4, 'dev_items': 1, 'movements': 0, 'kardex': 0, 'payments_refund': 0, 'audit_created': 0, 'audit_reverse': 0} post={'devolutions': 5, 'dev_items': 2, 
+[POST][V2] tope acumulado (1 existente + 2 solicitadas > 2 vendidas ⇒ ERR_DEVOLUTION_CAP_EXCEEDED) = PASS :: P0001: ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000001 vendido=2 devuelto=1 solicitado=2 (tope acumulado, lock de venta adquirido)
+[POST][V2] NC sin original (patrón NC-000008) → rechazada = PASS :: P0001: ERR_DEVOLUTION_NO_ORIGINAL: tope acumulado exige venta original
+[POST][V2] NC sobre venta de OTRA tienda → rechazada = PASS :: P0001: ERR_CROSS_STORE: original_transaction_id does not belong to store_id
+[POST][V2] replay idempotency_key → idempotente = PASS :: {'status': 'idempotent', 'devolution_id': '8ba16668-7ddb-4f83-8a5b-5772e9bbcb9c'}
+[POST][V2] reversión completed→reversed (camino canónico; transición en mapa restaurado) = PASS :: {'status': 'success', 'devolution_id': '8ba16668-7ddb-4f83-8a5b-5772e9bbcb9c', 'items_reversed': 1} pre={'devolutions': 5, 'dev_items': 2, 'movements': 1, 'kardex': 1, 'p
+[POST][V2] estado final de la NC reversionada = reversed = PASS :: status=reversed
+[POST][V2] doble reversión → rechazada = PASS :: P0001: ERR_ALREADY_REVERSED
+[POST][V2] reversión desde pending → ERR_INVALID_STATUS (guard propio, compatible con mapa) = PASS :: P0001: ERR_INVALID_STATUS: reverse_devolution solo permite completed (status=pending)
+[POST][V2] reverse_devolution como authenticated (sin EXECUTE) → DENIED = PASS :: 42501: permission denied for function reverse_devolution
+== FASE POST: concurrencia ==
+[POST][CONC] 2 transiciones válidas concurrentes (mismo doc completed→voided, WHERE status='completed') = PASS — exactamente 1 aplicación :: [(0, 'applied', 1), (1, 'applied', 0)]
+[POST][CONC] 2 transiciones inválidas concurrentes (voided→pending) → ninguna aplica = PASS — 2/2 DENIED por validador :: [(0, 'error', 'P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de voided a pending'), (1, 'error', 'P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de
+[POST][FINAL] estado final staging POST-fix = INFO :: {'devolutions': 6, 'dev_items': 2, 'movements': 2, 'kardex': 2, 'payments_refund': 1, 'audit_created': 1, 'audit_reverse': 1}
+
+STAGING PRE: 27 casos | 16 verdictos formales | 4 SUCCEEDED | 3 INFO
+
+STAGING POST: 51 casos | 31 verdictos formales | 2 SUCCEEDED | 4 INFO
+datadir efímero disposed
