@@ -1,0 +1,142 @@
+{
+ "results": [
+  {
+   "case": "A",
+   "test": "creación NC válida → success",
+   "verdict": "PASS",
+   "detail": "{'status': 'success', 'total_amount': 350, 'devolution_id': 'f046414a-bdf5-4ea7-8ca2-e84d6ee3b4d1', 'financial_effect': 'cash_out_and_refund', 'devolution_number': 'NC-000001-2026'}"
+  },
+  {
+   "case": "A",
+   "test": "numeración NC-secuencial",
+   "verdict": "PASS",
+   "detail": "NC-000001-2026"
+  },
+  {
+   "case": "A",
+   "test": "efecto stock (mov 'return' +1 @cost_at_sale=90)",
+   "verdict": "PASS",
+   "detail": "[('return', Decimal('1'), Decimal('90'), 'f046414a-bdf5-4ea7-8ca2-e84d6ee3b4d1')]"
+  },
+  {
+   "case": "A",
+   "test": "inventory 5→6 / products 6",
+   "verdict": "PASS",
+   "detail": "inv=6 prod=6"
+  },
+  {
+   "case": "A",
+   "test": "contra-asiento financiero DF-03 (cash out + refund 350)",
+   "verdict": "PASS",
+   "detail": "cash=1 pt=[('devolution', 'refund', Decimal('350'))]"
+  },
+  {
+   "case": "A",
+   "test": "audit DEVOLUTION_CREATED_V2",
+   "verdict": "PASS",
+   "detail": "{'devolutions': 1, 'dev_items': 1, 'movements': 1, 'kardex': 1, 'cash_out': 1, 'payments_refund': 1, 'audit_created': 1, 'audit_reverse': 0}"
+  },
+  {
+   "case": "C",
+   "test": "replay misma key → idempotent, mismo id",
+   "verdict": "PASS",
+   "detail": "{'status': 'idempotent', 'devolution_id': 'f046414a-bdf5-4ea7-8ca2-e84d6ee3b4d1'}"
+  },
+  {
+   "case": "C",
+   "test": "replay NO duplica efectos",
+   "verdict": "PASS",
+   "detail": "{'devolutions': 1, 'dev_items': 1, 'movements': 1, 'kardex': 1, 'cash_out': 1, 'payments_refund': 1, 'audit_created': 1, 'audit_reverse': 0}"
+  },
+  {
+   "case": "C",
+   "test": "tope acumulado ERR_DEVOLUTION_CAP_EXCEEDED",
+   "verdict": "PASS",
+   "detail": "ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000001 vendido=2 devuelto=1 solicitado=2 (tope acumulado, lock de venta adquirido)"
+  },
+  {
+   "case": "D",
+   "test": "doc inexistente → rechazada",
+   "verdict": "PASS",
+   "detail": "ERR_CROSS_STORE: original_transaction_id does not belong to store_id"
+  },
+  {
+   "case": "E",
+   "test": "NC sobre doc de otra tienda → rechazada",
+   "verdict": "PASS",
+   "detail": "ERR_CROSS_STORE: original_transaction_id does not belong to store_id"
+  },
+  {
+   "case": "E",
+   "test": "usuario de otra tienda → rechazada",
+   "verdict": "PASS",
+   "detail": "ERR_UNAUTHORIZED"
+  },
+  {
+   "case": "F",
+   "test": "qty > venta original → rechazada",
+   "verdict": "PASS",
+   "detail": "ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000001 vendido=2 devuelto=1 solicitado=5 (tope acumulado, lock de venta adquirido)"
+  },
+  {
+   "case": "GHOST",
+   "test": "NC sin venta original (patrón NC-000008) → rechazada",
+   "verdict": "PASS",
+   "detail": "ERR_DEVOLUTION_NO_ORIGINAL: tope acumulado exige venta original"
+  },
+  {
+   "case": "GHOST",
+   "test": "NC 999u sobre venta de 1u (Bug#5 v2_21_4) → rechazada",
+   "verdict": "PASS",
+   "detail": "ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000001 vendido=1 devuelto=0 solicitado=999 (tope acumulado, lock de venta adquirido)"
+  },
+  {
+   "case": "G",
+   "test": "carrera tope: exactamente 1 NC/1 efecto (FOR UPDATE)",
+   "verdict": "PASS",
+   "detail": "ok=1 err=[('P0001', 'ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000001 vendi')] movs=1"
+  },
+  {
+   "case": "G",
+   "test": "carrera misma key: ≤1 documento (índice único parcial)",
+   "verdict": "PASS",
+   "detail": "docs=1 ok=1 err=[('P0001', 'ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-000')]"
+  },
+  {
+   "case": "H",
+   "test": "reversión B-10b → status 'reversed' + audit",
+   "verdict": "PASS",
+   "detail": "status=reversed audit=1"
+  },
+  {
+   "case": "H",
+   "test": "reversión usa pipeline canónico (mov 'devolution_reverse' -1)",
+   "verdict": "PASS",
+   "detail": "[('devolution_reverse', Decimal('-1'))]"
+  },
+  {
+   "case": "H",
+   "test": "doble reversión → rechazada",
+   "verdict": "PASS",
+   "detail": "ERR_ALREADY_REVERSED"
+  },
+  {
+   "case": "H",
+   "test": "reversión cross-store → rechazada",
+   "verdict": "PASS",
+   "detail": "ERR_UNAUTHORIZED"
+  },
+  {
+   "case": "ATOMIC",
+   "test": "fallo ítem 2 (cross-store product) aborta TODO",
+   "verdict": "PASS",
+   "detail": "pre={'devolutions': 4, 'dev_items': 4, 'movements': 5, 'kardex': 5, 'cash_out': 4, 'payments_refund': 4, 'audit_created': 4, 'audit_reverse': 1} post={'devolutions': 4, 'dev_items': 4, 'movements': 5, 'kardex': 5, 'cash_out': 4, 'payments_refund': 4, 'audit_created': 4, 'audit_reverse': 1} err=ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000002 vendi"
+  },
+  {
+   "case": "FINAL",
+   "test": "estado final del fixture",
+   "verdict": "INFO",
+   "detail": "{'devolutions': 4, 'dev_items': 4, 'movements': 5, 'kardex': 5, 'cash_out': 4, 'payments_refund': 4, 'audit_created': 4, 'audit_reverse': 1, 'inventory_qty': Decimal('8')}"
+  }
+ ]
+}

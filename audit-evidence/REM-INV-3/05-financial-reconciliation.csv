@@ -1,0 +1,7 @@
+NC_ID,DOCUMENT_NUMBER,NC_TOTAL_CUP,FINANCIAL_TRANSACTION,PAYMENT_AMOUNT,LEDGER_ENTRY,CASH_MOVEMENT,STORE_CREDIT,FINANCIAL_INTEGRATION_IN_CREATION_ERA,VERDICT_FINANCIERO
+42f89372-a76c-4e45-b2c7-a14252723f3e,NC-000008-2026,349650.00,0,0,0,0,0,NO EXISTIA (DF-03 llego con W7 20260830),SIN EFECTO ECONOMICO REAL — solo valor nominal documental
+0b7213e9-344a-4aa0-876d-316be9c6ff2e,NC-000007-2026,350.00,0,0,0,0,0,NO EXISTIA,SIN EFECTO ECONOMICO REAL
+NC-000001..000006,000009..000012,350.00 c/u,0,0,0,0,0,NO EXISTIA,SIN EFECTO ECONOMICO REAL
+379122c3-ceab-4e51-8ac3-5cf0de8beb28,DEV-2026-828651,350.00,0,0,0,0,0,NO EXISTIA,SIN EFECTO ECONOMICO REAL
+TOTAL,13 documentos,353850.00,0,0,0,0,0,,EVIDENCIA: obs1 §16 FINANCIAL IMPACT=0 ('payment_transactions sin refs a devoluciones; comisiones intactas'); REM-INV-1 13-accounting/r17 (query falló por cast enum — gap corregido parcialmente por obs1; re-ejecución REENUMERAR_EN_ACCESO)
+NOTA MODELO,El campo payment_method='cash' de devolutions es INFORMATIVO en el modelo de la era; el asiento real de caja/reembolso (cash_movements out + payment_transactions refund idempotente dev-{id}-refund, o store_credit_ledger) solo existe en el modelo LIVE (create_devolution_v2 DF-03) y SOLO para NC creadas tras W7.,,No inventar contabilidad que el sistema de la era no implementaba (§10 del task order).,,,,

@@ -1,0 +1,32 @@
+REM-INV-3 — FASE 35/36 — Git closure (2026-09-13)
+
+## Pre-commit diff forensic (§35)
+
+git status --short antes del commit: ÚNICAMENTE '?? audit-evidence/REM-INV-3/'
+(el evidence pack de este gate). Ningún archivo funcional, ningún test, ninguna
+migración, ningún cambio en src/ o supabase/. Conforme a §34 (no code changes
+durante el diagnóstico) y §35 (nunca mezclar audit con refactor/UI/deps).
+
+## Commit
+
+  mensaje : audit(rem-inv-3): F-02 ghost-NC data-integrity gate — census,
+            root cause, staging repro, remediation recommendation
+  alcance : audit-evidence/REM-INV-3/ (00-16 + raw/ + MANIFEST.sha256)
+  base    : 29f9ef2e (fix(db): retire orphaned receive_purchase RPC)
+  HEAD tras commit = el commit que contiene este archivo (limitación
+  auto-referencial estándar; el hash exacto queda verificado abajo y en worklog)
+
+## Push + verificación remota (§36)
+
+  git push origin main   -> ejecutado (PAT de sesión; jamás impresa)
+  git fetch origin       -> ejecutado
+  git rev-parse HEAD     == git rev-parse origin/main   -> verificado
+  bash scripts/gate-closure-check.sh -> CLOSURE OK (re-ejecutado post-commit;
+       ver salida en worklog de sesión y en el informe final)
+
+## Estado final
+
+  HEAD == origin/main (29f9ef2e + 1 commit de evidencia)
+  WORKTREE CLEAN (git status --short vacío tras el commit)
+  .env fuera de Git (gitignore:34; además NO existe en este entorno)
+  0 secretos en el commit (15-security-results.txt)

@@ -1,0 +1,29 @@
+REM-INV-3 — FASE 26/27 — Resultados de pruebas y build (2026-09-13)
+
+Entorno: repo re-clonado a 29f9ef2e, npm ci desde lockfile (node_modules reconstruido).
+
+FASE 26 — Suites oficiales:
+  npx tsc --noEmit            -> TSC_EXIT=0 (0 errores)
+  npx vitest run (dot)        -> Test Files 98 passed | 2 skipped (100)
+                                 Tests      2061 passed | 33 skipped (2094)
+                                 0 fallos. Duración 203.95s
+  npx eslint .                -> LINT_EXIT=0; 1291 warnings pre-existentes, 0 errors
+  Nota operativa: la primera corrida paralela de las tres suites fue abortada por
+  el kernel (memoria); re-ejecutadas EN SERIE — sin cambiar ningún test.
+  Ningún test fue modificado para pasar (§26).
+
+FASE 27 — Build oficial (npm run build):
+  BUILD_EXIT=137  ->  "Killed"
+  dmesg: oom-kill constraint=CONSTRAINT_NONE global_oom task=next-build
+         total-vm:41859164kB anon-rss:3271736kB (host 4GB)
+  CLASIFICACIÓN: OOM de INFRAESTRUCTURA (límite de memoria del sandbox), NO un
+  fallo de build de la aplicación. Es la MISMA limitación pre-existente
+  documentada y no ocultada en REM-V2-3, REM-INV-2 y REM-INV-2R (4GB/0 swap).
+  No se declara el producto defectuoso por este motivo (§27), ni se modifica
+  código para ocultarlo.
+  Log crudo: raw/build.log
+
+Suites adicionales disponibles en el proyecto (contract/security/inventory):
+  npm run test:security (scripts/security-contract-test.cjs) — requiere DB en vivo;
+  su pin REM-INV-2R (RETIRED_V1_FUNCTION_REINTRODUCED) es estático y sigue en el
+  árbol 29f9ef2e. Ejecución live: REENUMERAR_EN_ACCESO.

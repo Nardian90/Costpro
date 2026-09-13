@@ -1,0 +1,4 @@
+NC_ID,DOCUMENT_NUMBER,ORIGINAL_TRANSACTION_ID,SOURCE_EXISTS,SOURCE_SAME_STORE,SOURCE_QTY_OK,SOURCE_STATUS_OK,NOTES
+42f89372-a76c-4e45-b2c7-a14252723f3e,NC-000008-2026,NULL,NO-orNULL,N/A,N/A,N/A,original_transaction_id=NULL; el modelo de la era (v2_19_4, PRE-v2_21_4) no exigía venta original (Bug #3) ni topaba cantidad (Bug #5); fix v2_21_4 commiteado 2026-08-06T23:33Z (4 min tras la creación)
+0b7213e9-344a-4aa0-876d-316be9c6ff2e,NC-000007-2026,edb274bd-e2e1-4001-8932-13674d13d2b9,SI (en 2026-09-05; estado actual pendiente re-verificación),(misma tienda según obs1),1<=venta,(completada),reversión legacy v2.2 ejecutada 2s después de la creación (23:27:41→23:27:43); razón 'Reverse dev 1786058841'
+NC-000001..000006 / 000009..000012 / DEV-2026-828651,(ver censo),(ver prod 2026-09-05: mayoría con original_transaction_id),(ver prod),(misma tienda),1<=venta,(completadas),NC-000006 y DEV-828651 con original NULL según obs1/03; re-censo con acceso pendiente

@@ -1,0 +1,15 @@
+NC_ID,DOCUMENT_NUMBER,EXPECTED_MOVEMENT_CREATION_ERA,ACTUAL_MOVEMENT_2026_09_12,DELTA,DELTA_CLASSIFICATION
+42f89372-a76c-4e45-b2c7-a14252723f3e,NC-000008-2026,1x return +999 (v2_19_4),0,-999,EFFECTS_PURGED_BY_RESET — no fabricar movimientos retroactivos
+0b7213e9-344a-4aa0-876d-316be9c6ff2e,NC-000007-2026,return +1 (creacion); reverse legacy v2.2 sin movimientos (solo products),0,+1/-1,efectos purgados por reset; drift Caso A eliminado por el mismo evento (obs1)
+74cfd314-45c3-47a0-bd48-5e6f16b58b44,NC-000001-2026,1x return +1,0,-1,EFFECTS_PURGED_BY_RESET
+2a7934b7-9503-48cd-9240-c7606b486eb7,NC-000002-2026,1x return +1,0,-1,EFFECTS_PURGED_BY_RESET
+8bb4cfe5-2abf-4c4d-81fe-4ac33de732eb,NC-000003-2026,1x return +1,0,-1,EFFECTS_PURGED_BY_RESET
+0778b5d5-bf72-4d9b-b9f7-e4192a29d33f,NC-000004-2026,1x return +1,0,-1,EFFECTS_PURGED_BY_RESET
+a11e7aa5-863a-4e61-a041-04d33d1f66d2,NC-000005-2026,1x return +1,0,-1,EFFECTS_PURGED_BY_RESET
+6c051892-b5ac-4fd6-be9b-546458119b96,NC-000006-2026,1x return +1,0,-1,EFFECTS_PURGED_BY_RESET
+def14222-1dc4-469d-9053-ddfbd28db7e8,NC-000009-2026,1x return +1,0,-1,EFFECTS_PURGED_BY_RESET
+fb98424e-cf04-4fcf-ba65-099696179e2c,NC-000010-2026,1x return +1,0,-1,EFFECTS_PURGED_BY_RESET
+903269d5-e624-4e52-958d-48e8bb84bde1,NC-000011-2026,1x return +1,0,-1,EFFECTS_PURGED_BY_RESET
+c249cdcc-e0f8-43d6-b9c4-10e16daab9f3,NC-000012-2026,1x return +1,0,-1,EFFECTS_PURGED_BY_RESET
+379122c3-ceab-4e51-8ac3-5cf0de8beb28,DEV-2026-828651,1x kardex 'devolution_in' +1 (v2_17_2: sin stock_movements por diseño),0,-1,EFFECTS_PURGED_BY_RESET (kardex de la era purgado)
+NOTA,La purga fue un evento real documentado (reset_store_data tienda d1c4ba0e, obs1 §16). Reconstruir movimientos retroactivos fabricaría historial contable — DOCTRINA NO_DATA_REPAIR (obs1).,Inventario global consistente en capturas LIVE posteriores (REM-INV-1 r01 PASS; obs1 A1..A8 141/141).,REENUMERAR_EN_ACCESO,,,,,

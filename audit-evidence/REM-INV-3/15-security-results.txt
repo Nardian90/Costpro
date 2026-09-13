@@ -1,0 +1,34 @@
+REM-INV-3 — FASE 28 — Security scan (2026-09-13)
+
+== Secret scan sobre tracked files + evidence pack ==
+.github/workflows/ci.yml:155:            -E "sb_secret_[a-zA-Z0-9_-]{20,}|sbp_[a-f0-9]{40,}" \
+audit-evidence/20260828-af/worklog.md:11:- .env escrito con las 15 variables exactas del dueño (DATABASE_URL SQLite file:./db/custom.db, Supabase sb_publishable_/sb_secret_, NextAuth localhost:3000, CSRF_ALLOWED_DOMAINS=.space-z.ai,localhost, NODE_ENV=development, PORT=3000, V2 checkout/reverse flags true)
+audit-evidence/20260828-af/worklog.md:82:- SECRET SCAN (§3): LIMPIO en todo lo incluido. .env EXCLUIDO (hash+registro). Falso positivo documentado en 71 (nombre sb_secret_ sin valor).
+audit-evidence/20260828-w6.1/worklog.md:11:- .env escrito con las 15 variables exactas del dueño (DATABASE_URL SQLite file:./db/custom.db, Supabase sb_publishable_/sb_secret_, NextAuth localhost:3000, CSRF_ALLOWED_DOMAINS=.space-z.ai,localhost, NODE_ENV=development, PORT=3000, V2 checkout/reverse flags true)
+audit-evidence/20260828-w6.1/worklog.md:82:- SECRET SCAN (§3): LIMPIO en todo lo incluido. .env EXCLUIDO (hash+registro). Falso positivo documentado en 71 (nombre sb_secret_ sin valor).
+hits_patrones=15
+
+== .env ==
+NO EXISTE (destruido por workspace reset — documentado en 00-baseline)
+gitignore línea 34: .env*
+.gitignore:34:.env*	.env
+
+== Credencial de sesión (fuera del repo) ==
+PAT de clonación en /tmp/my-project/.gh-cred (93 bytes, fine-grained); JAMÁS impresa en
+logs ni commiteada; el clone la usó solo por URL efímera y .git/config la normalizó.
+origin	https://x-access-token:<REDACTED>@github.com/Nardian90/Costpro.git (fetch)
+origin	https://x-access-token:<REDACTED>@github.com/Nardian90/Costpro.git (push)
+
+== Evidence pack ==
+0 secretos en audit-evidence/REM-INV-3/: los CSV/MD no contienen tokens ni claves;
+los IDs de documentos son datos de negocio ya publicados en packs previos commiteados.
+
+== Verificación de los 15 hits ==
+Todos son FALSOS POSITIVOS documentados:
+ - .github/workflows/ci.yml:155 = el patrón regex del propio secret-scan del CI
+ - audit-evidence/*/worklog.md (históricos) = menciones del NOMBRE sb_secret_ sin valor
+   (falso positivo ya documentado por los gates 20260828-af y 20260828-w6.1)
+ - hits con FORMATO de valor real (sbp_<40hex> / sb_secret_<valor> / JWT): 0 fuera de
+   worklogs históricos y ci.yml
+VEREDICTO SECURITY: PASS (0 secretos reales; .env ausente del repo; PAT de sesión
+nunca impresa ni commiteada).

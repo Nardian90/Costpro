@@ -1,0 +1,39 @@
+REM-INV-3 — F-02 GHOST NC / CREDIT-NOTE DATA INTEGRITY GATE
+FASE 1 — BASELINE (capturado 2026-09-13T01:40:51Z)
+
+== Git ==
+HEAD:        29f9ef2eefdc0056e5279e98b64c0bf7dc8ac180
+origin/main: 29f9ef2eefdc0056e5279e98b64c0bf7dc8ac180
+branch:      main
+worktree:    1 cambio = este propio evidence pack (creado durante la auditoría; único diff permitido por §35)
+
+29f9ef2e fix(db): retire orphaned receive_purchase RPC
+f027d4ea audit(rem-inv-2): certify F-01 purchase-reception gate — V1 receive_purchase retired at app layer, canonical path proven
+90dce25f refactor(v2): retire proven-dead V1 RPC paths
+a1c01847 chore(audit): repair REM-V2-2.1 evidence manifest
+224ba6f4 feat: activate V2 checkout and reverse
+
+== Diagnóstico de divergencia del entorno ==
+Workspace reset detectado (2º de la historia): Costpro/, node_modules/, PM2 y Costpro/.env
+(15 valores del operador, incl. SUPABASE_ACCESS_TOKEN) destruidos.
+Repo re-clonado desde https://github.com/Nardian90/Costpro.git vía PAT local
+(.gh-cred, 93 bytes, jamás impresa). HEAD tras clonar == 29f9ef2e == origin/main.
+
+== Acceso a producción ==
+Mecanismo de gates previos: Supabase Management API con SUPABASE_ACCESS_TOKEN
+leído en runtime de Costpro/.env (ver /tmp/my-project/scripts/*/db-census.mjs).
+Costpro/.env NO SOBREVIVIÓ al reset. Búsquedas enmascaradas en /tmp: 0 copias
+de tokens (disciplina no-print de gates previos verificada).
+=> Consultas SELECT-only contra producción: NO EJECUTABLES en esta sesión.
+
+== flags V2 ==
+NEXT_PUBLIC_USE_V2_CHECKOUT / NEXT_PUBLIC_USE_V2_REVERSE: no verificables en
+runtime (sin .env). El código (features.ts) es fail-closed y los contract tests
+fijan el mecanismo; el valor de producción TRUE quedó fijado por OPS-SERVER-
+REACTIVATION-4 y REM-INV-2/2R (evidence histórica).
+
+== GATE 0 ==
+HEAD == origin/main == 29f9ef2e  : PASS
+WORKTREE CLEAN                   : PASS
+baseline exacto (29f9ef2e)       : PASS
+acceso producción READ-ONLY      : FAIL (env destruida) — ver arriba
