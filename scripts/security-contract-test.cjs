@@ -151,6 +151,33 @@ async function q(sql) {
   console.log(`Funciones verificadas: ${checked}`);
   console.log(`Funciones con violaciones: ${violations.length}\n`);
 
+  // ─── REM-INV-2R: PERMANENT RETIREMENT PIN — receive_purchase(uuid) ───
+  // receive_purchase(uuid) fue DROPPED de la base de datos por el gate
+  // REM-INV-2R (F-01 closure; commit "fix(db): retire orphaned receive_purchase RPC").
+  // Si esta consulta devuelve filas, alguien reintrodujo la función V1:
+  // BUILD BLOQUEADO (CRITICAL).
+  const rpCheck = await q(`
+    SELECT p.oid::bigint AS oid
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'receive_purchase';
+  `);
+  if (Array.isArray(rpCheck) && rpCheck.length > 0) {
+    violations.push({
+      function_name: 'receive_purchase',
+      args: '(p_purchase_id uuid)',
+      issues: [{
+        severity: 'CRITICAL',
+        rule: 'RETIRED_V1_FUNCTION_REINTRODUCED',
+        msg: 'receive_purchase(uuid) fue retirada (REM-INV-2R) pero existe de nuevo en el catálogo',
+        fix: 'DROP FUNCTION public.receive_purchase(uuid); — no reintroducir el camino de recepción V1 (usar receive_against_po → register_reception)',
+      }],
+    });
+    console.log('🚨 PIN REM-INV-2R: receive_purchase(uuid) REINTRODUCIDA — BUILD BLOQUEADO\n');
+  } else {
+    console.log('✅ PIN REM-INV-2R: receive_purchase(uuid) sigue ausente del catálogo\n');
+  }
+
   if (violations.length === 0) {
     console.log('═'.repeat(80));
     console.log('🎉 TODAS LAS FUNCIONES PASAN EL TEST DE CONTRATO');

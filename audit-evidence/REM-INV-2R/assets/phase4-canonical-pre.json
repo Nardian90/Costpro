@@ -1,0 +1,179 @@
+{
+  "captured_at": "2026-09-12T23:49:06.448Z",
+  "canonical_functions": [
+    {
+      "oid": 136713,
+      "proname": "confirm_pending_reception",
+      "identity_args": "p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone",
+      "return_type": "void",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "v",
+      "definition": "CREATE OR REPLACE FUNCTION public.confirm_pending_reception(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_receipt RECORD;\n  v_item RECORD;\n  v_store_id uuid;\n  v_effective_date timestamptz := COALESCE(p_operation_date, NOW());\n  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;\n  v_unit_cost_cup numeric;\n  v_units_to_add numeric;\nBEGIN\n  SELECT * INTO v_receipt FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;\n  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;\n  IF v_receipt.status <> 'pending' THEN RAISE EXCEPTION 'ERR_RECEIPT_ALREADY_CONFIRMED: status=%', v_receipt.status; END IF;\n\n  v_store_id := v_receipt.store_id;\n  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN\n    RAISE EXCEPTION 'ERR_UNAUTHORIZED';\n  END IF;\n\n  FOR v_item IN SELECT * FROM public.receipt_items WHERE receipt_id = p_receipt_id LOOP\n    v_unit_cost_cup := v_item.unit_cost * COALESCE(v_item.tasa_cambio_recepcion, 1.0);\n    v_units_to_add := v_item.quantity;\n\n    -- Orden doctrina W62-01 §6: WAC primero → movimiento después (kardex ve ca_new)\n    PERFORM public.fn_recalc_wac(v_store_id, v_item.product_id, 'reception_in',\n                    v_units_to_add, v_unit_cost_cup,\n                    jsonb_build_object('rpc','confirm_pending_reception','receipt_id',p_receipt_id));\n\n    UPDATE products SET updated_at = v_effective_date WHERE id = v_item.product_id AND store_id = v_store_id;\n\n    INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)\n    VALUES (v_item.product_id, v_store_id, 'purchase'::movement_type, v_units_to_add, v_unit_cost_cup, 'Confirmacion recepcion', v_effective_date, v_caller_uid, v_effective_date);\n  END LOOP;\n\n  UPDATE receipts\n  SET status = 'active', reception_date = v_effective_date,\n      total_cost = public.calculate_receipt_total_cup(p_receipt_id), updated_at = v_effective_date\n  WHERE id = p_receipt_id AND status = 'pending';\nEND $function$\n",
+      "proacl_raw": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition_sha256": "d7b0610b77bab22f96d561e5f6922015f9d169e4b2630d056f81fec7e99f61c4"
+    },
+    {
+      "oid": 138544,
+      "proname": "receive_against_po",
+      "identity_args": "p_po_id uuid, p_received_items jsonb, p_user_id uuid, p_reception_date timestamp with time zone, p_invoice_number text",
+      "return_type": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "v",
+      "definition": "CREATE OR REPLACE FUNCTION public.receive_against_po(p_po_id uuid, p_received_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'extensions'\nAS $function$\nDECLARE\n  v_store_id            uuid;\n  v_supplier_name       text;\n  v_po_status           public.purchase_status_enum;\n  v_item                jsonb;\n  v_item_id             uuid;\n  v_qty                 numeric;\n  v_qty_ordered         numeric;\n  v_qty_received_before numeric;\n  v_product_id          uuid;\n  v_unit_cost           numeric;\n  v_product_name        text;\n  v_all_received        boolean;\n  v_any_received        boolean;\n  v_new_status          public.purchase_status_enum;\n  v_receipt_id          uuid;\n  v_reception_items     jsonb := '[]'::jsonb;\n  v_count               integer := 0;\n  v_po_number           text;\n  v_invoice_to_pass     text;\n  v_sorted_items        jsonb;\nBEGIN\n  -- ─── 1. Cargar OC con lock exclusivo ───\n  SELECT po.store_id, po.supplier_name, po.status, po.po_number\n    INTO v_store_id, v_supplier_name, v_po_status, v_po_number\n  FROM public.purchase_orders po\n  WHERE po.id = p_po_id\n  FOR UPDATE;\n\n  IF NOT FOUND THEN\n    RAISE EXCEPTION 'ERR_PO_NOT_FOUND';\n  END IF;\n\n  -- ─── 2. Validar acceso (tenant-aware via has_store_access) ───\n  IF NOT public.has_store_access(v_store_id) THEN\n    RAISE EXCEPTION 'ERR_UNAUTHORIZED';\n  END IF;\n\n  -- ─── 3. Validar estado de la OC ───\n  IF v_po_status = 'cancelled' THEN\n    RAISE EXCEPTION 'ERR_PO_CANCELLED';\n  END IF;\n  -- Solo se puede recibir contra draft, sent o partial.\n  IF v_po_status NOT IN ('draft', 'sent', 'partial') THEN\n    RAISE EXCEPTION 'ERR_PO_NOT_RECEIVABLE: status % is terminal', v_po_status;\n  END IF;\n\n  -- ─── 4. Validar items no vacío (parity B3 register_reception) ───\n  IF p_received_items IS NULL OR jsonb_array_length(p_received_items) = 0 THEN\n    RAISE EXCEPTION 'ERR_EMPTY_ITEMS';\n  END IF;\n\n  -- ─── 5. Condición #5 (anti-deadlock): Ordenar items por po_item_id ASC ───\n  SELECT jsonb_agg(elem ORDER BY (elem->>'po_item_id'))\n    INTO v_sorted_items\n  FROM jsonb_array_elements(p_received_items) AS elem;\n\n  -- ─── 6. Procesar cada item: VALIDAR antes de actualizar ───\n  FOR v_item IN SELECT * FROM jsonb_array_elements(v_sorted_items) LOOP\n    v_item_id := NULLIF(v_item->>'po_item_id', '')::uuid;\n    v_qty     := COALESCE((v_item->>'quantity_received')::numeric, 0);\n\n    -- Validar po_item_id presente\n    IF v_item_id IS NULL THEN\n      RAISE EXCEPTION 'ERR_ITEM_ID_REQUIRED: missing po_item_id in received_items';\n    END IF;\n\n    -- Medio #6: qty > 0\n    IF v_qty <= 0 THEN\n      RAISE EXCEPTION 'ERR_NEGATIVE_QTY: qty % for item % must be > 0', v_qty, v_item_id;\n    END IF;\n\n    -- Cargar estado actual del item con lock FOR UPDATE\n    SELECT product_id, quantity_ordered, quantity_received, unit_cost, product_name\n      INTO v_product_id, v_qty_ordered, v_qty_received_before, v_unit_cost, v_product_name\n    FROM public.purchase_order_items\n    WHERE id = v_item_id AND po_id = p_po_id\n    FOR UPDATE;\n\n    IF NOT FOUND THEN\n      RAISE EXCEPTION 'ERR_ITEM_NOT_FOUND: %', v_item_id;\n    END IF;\n\n    -- Alto #5: over-receive check\n    IF (v_qty_received_before + v_qty) > v_qty_ordered THEN\n      RAISE EXCEPTION 'ERR_OVER_RECEIVE: item % ordered %, already received %, attempting %',\n        v_item_id, v_qty_ordered, v_qty_received_before, v_qty;\n    END IF;\n\n    -- Condición #1: todo item debe tener product_id NOT NULL\n    IF v_product_id IS NULL THEN\n      RAISE EXCEPTION 'ERR_PRODUCT_ID_REQUIRED: item % has no product_id', v_item_id;\n    END IF;\n\n    -- Medio #9: producto debe existir en store\n    IF NOT EXISTS (\n      SELECT 1 FROM public.products p\n      WHERE p.id = v_product_id AND p.store_id = v_store_id\n    ) THEN\n      RAISE EXCEPTION 'ERR_PRODUCT_NOT_IN_STORE: product % not in store %',\n        v_product_id, v_store_id;\n    END IF;\n\n    -- Acumular para register_reception (formato esperado: product_id, quantity, unit_cost, moneda, tasa)\n    v_reception_items := v_reception_items || jsonb_build_object(\n      'product_id',   v_product_id,\n      'product_name', v_product_name,\n      'quantity',     v_qty,\n      'unit_cost',    v_unit_cost,\n      'moneda_recepcion', 'CUP',\n      'tasa_cambio_recepcion', 1.0\n    );\n    v_count := v_count + 1;\n  END LOOP;\n\n  -- ─── 7. Condición #3: reference_doc NULL si no viene invoice_number ───\n  -- Evita colisión con UNIQUE INDEX idx_receipts_store_reference_doc\n  -- (store_id, reference_doc) en partial indexes.\n  -- El vínculo real receipt↔PO es receipts.po_id (G6).\n  IF p_invoice_number IS NULL OR p_invoice_number = '' THEN\n    v_invoice_to_pass := NULL;\n  ELSE\n    v_invoice_to_pass := p_invoice_number;\n  END IF;\n\n  -- ─── 8. Crear receipt vinculado vía register_reception ───\n  -- register_reception aplica las 8 validaciones B1-B5 + C1-C3 del v2.23.0\n  -- (no se relajan). G6 añade p_po_id opcional.\n  v_receipt_id := public.register_reception(\n    p_store_id        := v_store_id,\n    p_supplier        := v_supplier_name,\n    p_reception_date  := p_reception_date,\n    p_invoice_number  := v_invoice_to_pass,\n    p_items           := v_reception_items,\n    p_user_id         := p_user_id,\n    p_po_id           := p_po_id\n  );\n\n  -- ─── 9. Actualizar quantity_received en purchase_order_items ───\n  -- (SECURITY DEFINER bypasses RLS DENY UPDATE de G5)\n  FOR v_item IN SELECT * FROM jsonb_array_elements(v_sorted_items) LOOP\n    v_item_id := NULLIF(v_item->>'po_item_id', '')::uuid;\n    v_qty     := (v_item->>'quantity_received')::numeric;\n\n    UPDATE public.purchase_order_items\n    SET quantity_received = quantity_received + v_qty\n    WHERE id = v_item_id AND po_id = p_po_id;\n  END LOOP;\n\n  -- ─── 10. Recalcular status global (cast EXPLÍCITO a enum) ───\n  SELECT\n    BOOL_AND(quantity_received >= quantity_ordered),\n    BOOL_OR(quantity_received > 0)\n  INTO v_all_received, v_any_received\n  FROM public.purchase_order_items WHERE po_id = p_po_id;\n\n  v_new_status :=\n    CASE\n      WHEN v_all_received THEN 'received'::public.purchase_status_enum\n      WHEN v_any_received THEN 'partial'::public.purchase_status_enum\n      ELSE 'sent'::public.purchase_status_enum\n    END;\n\n  -- ─── 11. Actualizar OC + vincular receipt en notas ───\n  UPDATE public.purchase_orders\n  SET status       = v_new_status,\n      received_at  = CASE WHEN v_new_status = 'received' THEN NOW() ELSE received_at END,\n      notes        = COALESCE(notes, '') ||\n                     CASE WHEN COALESCE(notes, '') = '' THEN '' ELSE E'\\n' END ||\n                     '[Receipt ' || v_receipt_id::text || ' linked at ' || NOW()::text || ']'\n  WHERE id = p_po_id;\n\n  -- ─── 12. CxP (Grupo 6): marcar receipt con payment_status='unpaid' ───\n  -- Solo si aún no está seteado (no sobrescribir si register_reception ya lo puso).\n  UPDATE public.receipts\n  SET payment_status     = COALESCE(NULLIF(payment_status, ''), 'unpaid'),\n      payment_terms_days = COALESCE(payment_terms_days, 30),\n      due_date           = COALESCE(due_date, (p_reception_date::date + INTERVAL '30 days')::date)\n  WHERE id = v_receipt_id;\n\n  -- ─── 13. Auditoría ───\n  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)\n  VALUES (\n    p_user_id, v_store_id, 'po_received', 'purchase_orders', p_po_id,\n    jsonb_build_object(\n      'new_status', v_new_status::text,\n      'items_received', v_count,\n      'receipt_id', v_receipt_id,\n      'po_number', v_po_number,\n      'invoice_number', v_invoice_to_pass\n    )\n  );\n\n  RETURN jsonb_build_object(\n    'status', 'success',\n    'po_status', v_new_status::text,\n    'receipt_id', v_receipt_id,\n    'items_received', v_count\n  );\nEND;\n$function$\n",
+      "proacl_raw": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition_sha256": "57cb0dad9085e5c46eb97d407afe1f1ad320da86c79fce6cc29a61dec6bef348"
+    },
+    {
+      "oid": 138536,
+      "proname": "register_reception",
+      "identity_args": "p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid",
+      "return_type": "uuid",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "v",
+      "definition": "CREATE OR REPLACE FUNCTION public.register_reception(p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT ''::text, p_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_po_id uuid DEFAULT NULL::uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_receipt_id UUID := gen_random_uuid();\n  v_caller_uid UUID := CASE\n    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())\n    ELSE auth.uid()\n  END;\n  v_user_id UUID := COALESCE(v_caller_uid, '00000000-0000-0000-0000-000000000000'::uuid);\n  v_total_cost NUMERIC := 0;\n  v_item JSONB;\n  v_product_id UUID;\n  v_quantity NUMERIC;\n  v_unit_cost NUMERIC;\n  v_moneda TEXT;\n  v_tasa NUMERIC;\n  v_unit_cost_cup NUMERIC;\n  v_variant_id UUID;\n  v_conversion_factor NUMERIC := 1;\n  v_units_to_add NUMERIC;\n  v_effective_date TIMESTAMP WITH TIME ZONE := COALESCE(p_reception_date, NOW());\n  v_uc_base NUMERIC;\nBEGIN\n  PERFORM public.validate_operation_date(p_reception_date, p_store_id);\n\n  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN\n    RAISE EXCEPTION 'Unauthorized store access';\n  END IF;\n\n  -- B2 (v2.23.0): Supplier is required\n  IF p_supplier IS NULL OR p_supplier = '' THEN\n    RAISE EXCEPTION 'ERR_SUPPLIER_REQUIRED: supplier is mandatory';\n  END IF;\n\n  -- B3 (v2.23.0): Items array must not be empty\n  IF p_items IS NULL OR jsonb_array_length(p_items) = 0 THEN\n    RAISE EXCEPTION 'ERR_EMPTY_ITEMS: at least one item is required';\n  END IF;\n\n  INSERT INTO public.receipts (\n    id, store_id, user_id, supplier, reception_date,\n    reference_doc, total_cost, status, created_at, updated_at,\n    po_id   -- ← nueva columna\n  ) VALUES (\n    v_receipt_id, p_store_id, v_user_id, p_supplier,\n    v_effective_date, p_invoice_number, 0, 'active', v_effective_date, v_effective_date,\n    p_po_id   -- ← pasa NULL si no viene\n  );\n\n  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)\n  LOOP\n    v_product_id := (v_item->>'product_id')::UUID;\n    v_quantity := (v_item->>'quantity')::NUMERIC;\n    v_unit_cost := COALESCE((v_item->>'unit_cost')::NUMERIC, 0);\n\n    -- B4 (v2.23.0): Reject items with unit_cost <= 0\n    IF v_unit_cost <= 0 THEN\n      RAISE EXCEPTION 'ERR_INVALID_UNIT_COST: unit_cost must be > 0 for product %', v_product_id;\n    END IF;\n    v_moneda := COALESCE(v_item->>'moneda_recepcion', 'CUP');\n    v_tasa := COALESCE((v_item->>'tasa_cambio_recepcion')::NUMERIC, 1.0);\n\n    -- C1 (v2.23.0): Validate exchange rate is within reasonable range\n    IF v_tasa < 0.01 OR v_tasa > 10000 THEN\n      RAISE EXCEPTION 'ERR_INVALID_EXCHANGE_RATE: tasa_cambio_recepcion % is out of range [0.01, 10000]', v_tasa;\n    END IF;\n\n    v_variant_id := NULLIF(v_item->>'variant_id', '')::uuid;\n    v_conversion_factor := 1.0;\n    IF v_variant_id IS NOT NULL THEN\n      SELECT conversion_factor INTO v_conversion_factor FROM public.product_variants WHERE id = v_variant_id;\n      v_conversion_factor := COALESCE(v_conversion_factor, 1.0);\n    END IF;\n\n    -- C2 (v2.23.0): Warning if product has expired lots (non-blocking)\n    IF EXISTS (\n      SELECT 1 FROM public.product_lots\n      WHERE product_id = v_product_id AND store_id = p_store_id\n        AND expiration_date IS NOT NULL\n        AND expiration_date < v_effective_date\n        AND quantity_remaining > 0\n    ) THEN\n      RAISE WARNING 'C2: Product % has expired lots in store %', v_product_id, p_store_id;\n    END IF;\n\n    v_units_to_add := v_quantity * v_conversion_factor;\n    v_unit_cost_cup := v_unit_cost * v_tasa;\n\n    -- B5 (v2.23.0): Product must exist in store — RAISE EXCEPTION (not CONTINUE)\n    IF NOT EXISTS (\n      SELECT 1 FROM public.products\n      WHERE id = v_product_id AND store_id = p_store_id\n    ) THEN\n      RAISE EXCEPTION 'ERR_PRODUCT_NOT_IN_STORE: product % does not exist in store %', v_product_id, p_store_id;\n    END IF;\n\n    INSERT INTO public.receipt_items (\n      receipt_id, product_id, variant_id, quantity, unit_cost,\n      moneda_recepcion, tasa_cambio_recepcion,\n      created_at, updated_at\n    ) VALUES (\n      v_receipt_id, v_product_id, v_variant_id, v_quantity, v_unit_cost,\n      v_moneda, v_tasa,\n      v_effective_date, v_effective_date\n    );\n\n    -- REM-F4-04 (gate 20260908-rem-f4-04): el camino real de recepción termina\n    -- en el escritor canónico. El trigger trg_update_product_wac (referenciado\n    -- por el comentario A1 v2.22.0) NO existe en la BD viva y\n    -- register_stock_movement ya no escribe WAC (A2 v2.22.0).\n    -- Orden doctrina W62-01 §6 (idéntico a confirm_pending_reception):\n    -- WAC primero → movimiento después (kardex ve ca_new).\n    -- Costo por unidad BASE para el blend canónico:\n    --   q·uc = units_to_add · (unit_cost_cup/factor) = unit_cost_cup · quantity\n    v_uc_base := CASE WHEN COALESCE(v_conversion_factor, 1.0) > 0\n                      THEN v_unit_cost_cup / COALESCE(v_conversion_factor, 1.0)\n                      ELSE v_unit_cost_cup END;\n    PERFORM public.fn_recalc_wac(\n      p_store_id   := p_store_id,\n      p_product_id := v_product_id,\n      p_event      := 'reception_in',\n      p_qty_in     := v_units_to_add,\n      p_uc_in      := v_uc_base,\n      p_source_ref := jsonb_build_object('rpc','register_reception','receipt_id',v_receipt_id)\n    );\n\n    PERFORM public.register_stock_movement(\n      p_product_id := v_product_id,\n      p_store_id := p_store_id,\n      p_quantity := v_units_to_add,\n      p_movement_type := 'purchase',\n      p_reason := 'Recepción de mercancía',\n      p_user_id := v_caller_uid,\n      p_variant_id := NULL,\n      p_sale_id := NULL,\n      p_unit_cost := v_unit_cost_cup,\n      p_notes := v_receipt_id::text,\n      p_operation_date := v_effective_date,\n      p_skip_access_check := TRUE\n    );\n\n\n    v_total_cost := v_total_cost + (v_unit_cost_cup * v_quantity);\n  END LOOP;\n\n  UPDATE public.receipts SET total_cost = v_total_cost WHERE id = v_receipt_id;\n\n  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)\n  VALUES ('REGISTER_RECEPTION', 'receipts', v_receipt_id, p_store_id, v_caller_uid,\n    jsonb_build_object(\n      'supplier', p_supplier,\n      'total_cost', v_total_cost,\n      'items_count', jsonb_array_length(p_items),\n      'po_id', p_po_id\n    ));\n\n  RETURN v_receipt_id;\nEND\n$function$\n",
+      "proacl_raw": "{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition_sha256": "a6ce108357ee5bb00c8efd1ddeabcf3ed1beab34d3f9fa9adb3fbf1e44a88cd7"
+    },
+    {
+      "oid": 136714,
+      "proname": "void_reception_with_reversal",
+      "identity_args": "p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone",
+      "return_type": "void",
+      "owner": "postgres",
+      "security_definer": true,
+      "volatility": "v",
+      "definition": "CREATE OR REPLACE FUNCTION public.void_reception_with_reversal(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT 'Anulacion con reversion'::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'extensions'\nAS $function$\nDECLARE\n  v_receipt RECORD;\n  v_item RECORD;\n  v_old_stock NUMERIC;\n  v_new_stock NUMERIC;\n  v_unit_cost_cup NUMERIC;\n  v_effective_date timestamptz := COALESCE(p_operation_date, NOW());\nBEGIN\n  SELECT * INTO v_receipt FROM receipts WHERE id = p_receipt_id FOR UPDATE;\n  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;\n  IF v_receipt.status NOT IN ('active') THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_ACTIVE: %', v_receipt.status; END IF;\n\n  FOR v_item IN SELECT * FROM receipt_items WHERE receipt_id = p_receipt_id LOOP\n    v_unit_cost_cup := v_item.unit_cost * COALESCE(v_item.tasa_cambio_recepcion, 1.0);\n\n    SELECT stock_current INTO v_old_stock FROM products WHERE id = v_item.product_id AND store_id = v_receipt.store_id FOR UPDATE;\n    v_new_stock := GREATEST(0, COALESCE(v_old_stock,0) - v_item.quantity);\n\n    IF v_new_stock > 0 THEN\n      PERFORM public.fn_recalc_wac(v_receipt.store_id, v_item.product_id, 'reception_void',\n                     -v_item.quantity, v_unit_cost_cup,\n                     jsonb_build_object('rpc','void_reception_with_reversal','receipt_id',p_receipt_id));\n    END IF;\n\n    UPDATE products SET stock_current = v_new_stock, updated_at = v_effective_date\n    WHERE id = v_item.product_id AND store_id = v_receipt.store_id;\n\n    INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)\n    VALUES (v_item.product_id, v_receipt.store_id, 'purchase_reverse'::movement_type, -v_item.quantity, v_unit_cost_cup, 'Void recepción: ' || COALESCE(p_reason,''), v_effective_date, p_user_id, v_effective_date);\n  END LOOP;\n\n  UPDATE receipts SET status='voided', reversed_at=v_effective_date, reversed_by=p_user_id, reversal_reason=p_reason WHERE id=p_receipt_id;\n\n  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)\n  VALUES (p_user_id, v_receipt.store_id, 'RECEIPT_VOIDED_WITH_REVERSAL', 'receipts', p_receipt_id,\n          jsonb_build_object('reason', p_reason));\nEND $function$\n",
+      "proacl_raw": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition_sha256": "2de37b0d819cb1e23fd1a49a5e3e6f39486fd656361e4f3c5af76a83dbe5e2e5"
+    }
+  ],
+  "canonical_acls": [
+    {
+      "proname": "confirm_pending_reception",
+      "grantee": "authenticated",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "confirm_pending_reception",
+      "grantee": "postgres",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "confirm_pending_reception",
+      "grantee": "service_role",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "receive_against_po",
+      "grantee": "authenticated",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "receive_against_po",
+      "grantee": "postgres",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "receive_against_po",
+      "grantee": "service_role",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "register_reception",
+      "grantee": "-",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "register_reception",
+      "grantee": "authenticated",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "register_reception",
+      "grantee": "postgres",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "register_reception",
+      "grantee": "service_role",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "void_reception_with_reversal",
+      "grantee": "postgres",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "void_reception_with_reversal",
+      "grantee": "service_role",
+      "privilege_type": "EXECUTE"
+    }
+  ],
+  "essential_tables": [
+    {
+      "table_name": "audit_logs"
+    },
+    {
+      "table_name": "inventory"
+    },
+    {
+      "table_name": "inventory_adjustments"
+    },
+    {
+      "table_name": "products"
+    },
+    {
+      "table_name": "purchase_order_items"
+    },
+    {
+      "table_name": "purchase_orders"
+    },
+    {
+      "table_name": "receipt_items"
+    },
+    {
+      "table_name": "receipts"
+    },
+    {
+      "table_name": "stock_movements"
+    },
+    {
+      "table_name": "stores"
+    }
+  ],
+  "internal_chain": [
+    {
+      "caller": "confirm_pending_reception",
+      "refs_receive_against_po": false,
+      "refs_register_reception": false,
+      "refs_confirm_pending": true
+    },
+    {
+      "caller": "create_purchase_order",
+      "refs_receive_against_po": false,
+      "refs_register_reception": true,
+      "refs_confirm_pending": false
+    },
+    {
+      "caller": "receive_against_po",
+      "refs_receive_against_po": true,
+      "refs_register_reception": true,
+      "refs_confirm_pending": false
+    },
+    {
+      "caller": "register_reception",
+      "refs_receive_against_po": false,
+      "refs_register_reception": true,
+      "refs_confirm_pending": true
+    },
+    {
+      "caller": "set_purchase_order_status",
+      "refs_receive_against_po": true,
+      "refs_register_reception": false,
+      "refs_confirm_pending": false
+    }
+  ]
+}

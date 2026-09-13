@@ -1,0 +1,190 @@
+{
+  "results": [
+    {
+      "scenario": "SETUP",
+      "test": "has_store_access_as installed verbatim",
+      "verdict": "OK",
+      "detail": "chars=642"
+    },
+    {
+      "scenario": "SETUP",
+      "test": "has_store_access installed verbatim",
+      "verdict": "OK",
+      "detail": "chars=863"
+    },
+    {
+      "scenario": "SETUP",
+      "test": "is_admin installed verbatim",
+      "verdict": "OK",
+      "detail": "chars=293"
+    },
+    {
+      "scenario": "SETUP",
+      "test": "validate_operation_date installed verbatim",
+      "verdict": "OK",
+      "detail": "chars=1521"
+    },
+    {
+      "scenario": "SETUP",
+      "test": "fn_recalc_wac installed verbatim",
+      "verdict": "OK",
+      "detail": "chars=2042"
+    },
+    {
+      "scenario": "SETUP",
+      "test": "register_stock_movement installed verbatim",
+      "verdict": "OK",
+      "detail": "chars=2720"
+    },
+    {
+      "scenario": "SETUP",
+      "test": "register_reception installed verbatim",
+      "verdict": "OK",
+      "detail": "chars=6388"
+    },
+    {
+      "scenario": "SETUP",
+      "test": "receive_against_po installed verbatim",
+      "verdict": "OK",
+      "detail": "chars=7847"
+    },
+    {
+      "scenario": "SETUP",
+      "test": "confirm_pending_reception installed verbatim",
+      "verdict": "OK",
+      "detail": "chars=2291"
+    },
+    {
+      "scenario": "SETUP",
+      "test": "stock_movements triggers installed (BEFORE/AFTER order as prod)",
+      "verdict": "OK",
+      "detail": "3 triggers"
+    },
+    {
+      "scenario": "SETUP",
+      "test": "receive_purchase absent from staging (negative control)",
+      "verdict": "OK",
+      "detail": "to_regprocedure=None"
+    },
+    {
+      "scenario": "FIXTURE",
+      "test": "stores/profiles/products/POs seeded",
+      "verdict": "OK",
+      "detail": "products=1 stock=5 wac=100 unit_cost=5"
+    },
+    {
+      "scenario": "S4-identity",
+      "test": "anonymous caller rejected",
+      "verdict": "DENIED",
+      "detail": "err=ERR_UNAUTHORIZED"
+    },
+    {
+      "scenario": "S3-store",
+      "test": "cross-store (no membership) rejected",
+      "verdict": "DENIED",
+      "detail": "err=ERR_UNAUTHORIZED"
+    },
+    {
+      "scenario": "S5-state",
+      "test": "cancelled PO rejected",
+      "verdict": "DENIED",
+      "detail": "err=ERR_PO_CANCELLED"
+    },
+    {
+      "scenario": "S1-valid",
+      "test": "receive_against_po \u2192 success",
+      "verdict": "PASS",
+      "detail": "status=success po_status=received items=1"
+    },
+    {
+      "scenario": "S1-valid",
+      "test": "receipt created (active, po_id linked, total 50.00)",
+      "verdict": "PASS",
+      "detail": "('aaaaaaaa-0000-0000-0000-000000000001', 'SUPPLIER 1', 'active', 'dddddddd-0000-0000-0000-000000000001', Decimal('50.0'))"
+    },
+    {
+      "scenario": "S1-valid",
+      "test": "receipt_items row (10 \u00d7 5.00)",
+      "verdict": "PASS",
+      "detail": "(Decimal('10'), Decimal('5'))"
+    },
+    {
+      "scenario": "S1-valid",
+      "test": "inventory stock 5\u219215 via trigger",
+      "verdict": "PASS",
+      "detail": "(Decimal('15.0'), 1)"
+    },
+    {
+      "scenario": "S1-valid",
+      "test": "stock movement purchase +10 balance_after=15",
+      "verdict": "PASS",
+      "detail": "('purchase', Decimal('10.0'), Decimal('15.0'))"
+    },
+    {
+      "scenario": "S1-valid",
+      "test": "WAC blend canonical (S\u00b7ca + q\u00b7uc)/(S+q) = 36.666667",
+      "verdict": "PASS",
+      "detail": "stock=15.0 wac=36.666667"
+    },
+    {
+      "scenario": "S1-valid",
+      "test": "wac_change_log entry (reception_in 100\u219236.667)",
+      "verdict": "PASS",
+      "detail": "(Decimal('100'), Decimal('36.66666666666666667'), 'reception_in')"
+    },
+    {
+      "scenario": "S1-valid",
+      "test": "audit_logs REGISTER_RECEPTION + po_received",
+      "verdict": "PASS",
+      "detail": "rows=2"
+    },
+    {
+      "scenario": "S1-valid",
+      "test": "PO status draft\u2192received (10/10)",
+      "verdict": "PASS",
+      "detail": "('received', True)"
+    },
+    {
+      "scenario": "S1-valid",
+      "test": "kardex entry auto-written",
+      "verdict": "PASS",
+      "detail": "rows=1"
+    },
+    {
+      "scenario": "S1-valid",
+      "test": "business_events stock_movement entry",
+      "verdict": "PASS",
+      "detail": "rows=1"
+    },
+    {
+      "scenario": "S2-double",
+      "test": "second reception on received PO rejected",
+      "verdict": "DENIED",
+      "detail": "err=ERR_PO_NOT_RECEIVABLE: status received is terminal"
+    }
+  ],
+  "checks": [
+    {
+      "check": "S1 valid canonical reception full chain",
+      "verdict": "PASS"
+    },
+    {
+      "check": "S2 second reception DENIED",
+      "verdict": "PASS"
+    },
+    {
+      "check": "S3 wrong store DENIED",
+      "verdict": "PASS"
+    },
+    {
+      "check": "S4 wrong identity DENIED",
+      "verdict": "PASS"
+    },
+    {
+      "check": "S5 invalid state DENIED",
+      "verdict": "PASS"
+    }
+  ],
+  "overall": "PASS",
+  "captured_at": "2026-09-13T00:06:15.043857Z"
+}

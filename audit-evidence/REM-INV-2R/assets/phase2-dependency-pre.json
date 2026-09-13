@@ -1,0 +1,50 @@
+{
+  "captured_at": "2026-09-12T23:49:06.448Z",
+  "internal_callers": [],
+  "triggers": [],
+  "pg_depend": [],
+  "views": [],
+  "rewrite": [],
+  "event_triggers": [
+    {
+      "evtname": "issue_pg_graphql_access",
+      "evtevent": "ddl_command_end",
+      "evtfoid": "grant_pg_graphql_access"
+    },
+    {
+      "evtname": "issue_graphql_placeholder",
+      "evtevent": "sql_drop",
+      "evtfoid": "set_graphql_placeholder"
+    },
+    {
+      "evtname": "pgrst_ddl_watch",
+      "evtevent": "ddl_command_end",
+      "evtfoid": "pgrst_ddl_watch"
+    },
+    {
+      "evtname": "pgrst_drop_watch",
+      "evtevent": "sql_drop",
+      "evtfoid": "pgrst_drop_watch"
+    },
+    {
+      "evtname": "issue_pg_cron_access",
+      "evtevent": "ddl_command_end",
+      "evtfoid": "grant_pg_cron_access"
+    },
+    {
+      "evtname": "issue_pg_net_access",
+      "evtevent": "ddl_command_end",
+      "evtfoid": "grant_pg_net_access"
+    }
+  ],
+  "policies": [],
+  "column_defaults": [],
+  "receive_purchase_all_signatures": [
+    {
+      "nspname": "public",
+      "proname": "receive_purchase",
+      "args": "p_purchase_id uuid",
+      "oid": 25452
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "captured_at": "2026-09-12T23:49:06.448Z",
+  "ref": "masked",
+  "target_exists": [
+    {
+      "oid": 25452,
+      "schema": "public",
+      "proname": "receive_purchase",
+      "identity_args": "p_purchase_id uuid",
+      "return_type": "void",
+      "owner": "postgres",
+      "security_definer": false,
+      "volatility": "v",
+      "language": "plpgsql",
+      "proacl_raw": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+    }
+  ],
+  "acl_explicit": [
+    {
+      "proname": "receive_purchase",
+      "args": "p_purchase_id uuid",
+      "grantee": "authenticated",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "receive_purchase",
+      "args": "p_purchase_id uuid",
+      "grantee": "postgres",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "proname": "receive_purchase",
+      "args": "p_purchase_id uuid",
+      "grantee": "service_role",
+      "privilege_type": "EXECUTE"
+    }
+  ],
+  "acl_via_routine_privileges": [
+    {
+      "routine_schema": "public",
+      "routine_name": "receive_purchase",
+      "grantee": "authenticated",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "routine_schema": "public",
+      "routine_name": "receive_purchase",
+      "grantee": "postgres",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "routine_schema": "public",
+      "routine_name": "receive_purchase",
+      "grantee": "service_role",
+      "privilege_type": "EXECUTE"
+    }
+  ],
+  "roles_of_interest": [
+    {
+      "rolname": "anon",
+      "rolsuper": false,
+      "rolbypassrls": false
+    },
+    {
+      "rolname": "authenticated",
+      "rolsuper": false,
+      "rolbypassrls": false
+    },
+    {
+      "rolname": "authenticator",
+      "rolsuper": false,
+      "rolbypassrls": false
+    },
+    {
+      "rolname": "postgres",
+      "rolsuper": false,
+      "rolbypassrls": true
+    },
+    {
+      "rolname": "service_role",
+      "rolsuper": false,
+      "rolbypassrls": true
+    }
+  ]
+}

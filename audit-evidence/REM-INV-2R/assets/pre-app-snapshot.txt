@@ -1,0 +1,9 @@
+# REM-INV-2R PRE-DDL APPLICATION SNAPSHOT
+git HEAD: f027d4ea8763667a90887980dc5e70c15da93de3
+branch: main
+
+## Relevant file hashes (gate-relevant files at PRE state)
+05e8e7e0b273e48caae20a397c79e766117764298e3c3bf49d9d51f61075f2db  scripts/security-contract-test.cjs
+5defa543426808cbeb02b8542aeb550db6d174fe90e534f844d8b0951543ee64  src/__tests__/integration/rem-inv-2-dynamic-reachability.test.ts
+3aa3f6e36d6ae1a307c68bd1c9c8c8e088e9a63234d29a43ee450ba9ffc185bf  audit-evidence/REM-INV-2/assets/deferred-db-remediation.sql
+3c471307db80cd4be0e77814dbeb35aff0205d1b1fa123c78752a8c8f7abf22f  audit-evidence/REM-INV-2/assets/assets-receive_purchase.sql

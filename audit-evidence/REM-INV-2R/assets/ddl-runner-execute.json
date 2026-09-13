@@ -1,0 +1,32 @@
+{
+  "mode": "--execute",
+  "log": [
+    "# REM-INV-2R DDL RUNNER — mode=--execute — 2026-09-13T00:00:07.577Z",
+    "GUARD PASS  G1.1 exactly one receive_purchase in public :: rows=1",
+    "GUARD PASS  G1.2 identity args == p_purchase_id uuid :: p_purchase_id uuid",
+    "GUARD PASS  G1.3 oid matches PRE snapshot :: oid=25452 expected=25452",
+    "GUARD PASS  G1.4 definition sha256 matches PRE :: 3c471307db80cd4be0e77814dbeb35aff0205d1b1fa123c78752a8c8f7abf22f",
+    "GUARD PASS  G1.5 SECURITY INVOKER (not definer) :: secdef=false",
+    "GUARD PASS  G1.6 ACL PRE as reported :: postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "GUARD PASS  G2.1 internal DB callers :: rows=0",
+    "GUARD PASS  G2.2 triggers on/refs target :: rows=0",
+    "GUARD PASS  G2.3 pg_depend refs target :: rows=0",
+    "GUARD PASS  G2.4 views referencing target :: rows=0",
+    "GUARD PASS  G2.5 policies referencing target :: rows=0",
+    "GUARD PASS  G2.6 column defaults referencing target :: rows=0",
+    "GUARD PASS  G2.7 single signature (no overloads) :: rows=1",
+    "GUARD PASS  G3 canonical receive_against_po present with pinned oid :: oid=138544",
+    "GUARD PASS  G3 canonical register_reception present with pinned oid :: oid=138536",
+    "GUARD PASS  G3 canonical confirm_pending_reception present with pinned oid :: oid=136713",
+    "GUARD PASS  G3 canonical void_reception_with_reversal present :: oid=136714",
+    "REVOKE authenticated :: OK",
+    "REVOKE anon :: OK (no-op if grant absent)",
+    "POST-REVOKE privileges :: authenticated=false anon=false service_role=true postgres=true",
+    "GUARD PASS  V1 authenticated EXECUTE revoked",
+    "GUARD PASS  V1 anon EXECUTE revoked",
+    "DROP FUNCTION public.receive_purchase(uuid) :: OK (no CASCADE used)",
+    "GUARD PASS  P1 receive_purchase absent after DROP :: rows=0",
+    "GUARD PASS  P2 canonical functions still present (4/4) :: confirm_pending_reception,receive_against_po,register_reception,void_reception_with_reversal"
+  ],
+  "failures": []
+}

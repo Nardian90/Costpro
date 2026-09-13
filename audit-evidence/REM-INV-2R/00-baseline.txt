@@ -1,0 +1,26 @@
+REM-INV-2R — F-01 DDL FINALIZATION GATE
+=======================================
+Baseline mandate: f027d4ea
+
+git HEAD:            f027d4ea8763667a90887980dc5e70c15da93de3
+git branch:          main
+git origin/main:     f027d4ea8763667a90887980dc5e70c15da93de3
+HEAD == origin/main: TRUE
+commit subject:      audit(rem-inv-2): certify F-01 purchase-reception gate — V1 receive_purchase retired at app layer, canonical path proven
+git status --short:  (empty)
+git diff:            (empty)
+git diff --cached:   (empty)
+
+timestamp (UTC):     2026-09-12T23:45:43Z
+Node:                v24.19.0
+Bun:                 1.3.14
+npm:                 11.17.0
+PM2:                 costpro online (pid 1467, uptime 105m)
+
+Flags:
+NEXT_PUBLIC_USE_V2_CHECKOUT=true
+NEXT_PUBLIC_USE_V2_REVERSE=true
+(.env untracked/gitignored — valores verificados en runtime por gates previos; no se imprimen valores sensibles)
+
+Production data:      READ ONLY — única mutación autorizada por este gate:
+                      REVOKE EXECUTE + DROP FUNCTION receive_purchase(uuid)
