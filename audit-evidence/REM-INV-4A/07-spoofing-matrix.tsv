@@ -1,0 +1,25 @@
+# REM-INV-4A spoofing matrix — adapted to REAL function signatures (§9)
+# staging: PG17.6 ephemeral replica, LIVE-verbatim function bodies + ACLs; JWT claims simulated as PostgREST does post-verification
+test_id	surface	attacker_input	expected	staging_actual	exploitable
+S-BASE	has_store_role(uuid,text[])	U1+StoreA+own role [clerk]	ALLOW (baseline)	true → ALLOW	n/a (baseline)
+S-A-user	has_store_role(uuid,uuid,text[])	p_user_id = foreign member U4	DENY	false → DENIED	NO — auth.uid() used for non-service_role
+S-A-consistency	has_store_role(uuid,uuid,text[])	p_user_id = own UUID	ALLOW	true → ALLOW (identity consistent)	NO
+S-A-null	has_store_role(uuid,uuid,text[])	p_user_id = NULL	DENY/own identity	true via auth.uid() fallback	NO
+S-A-anon	has_store_role(uuid,uuid,text[])	anon + real UUID in p_user_id	DENY	false → DENIED	NO (auth.uid()=NULL)
+S-B-store	has_store_role(uuid,text[])	p_store_id = StoreB (not member)	DENY	false → DENIED	NO
+S-C-role	has_store_role(uuid,text[])	p_roles = ['admin','manager']	DENY	false → DENIED	NO
+S-D-combined	has_store_role(uuid,text[])	foreign store + privileged role	DENY	false → DENIED	NO
+S-E-null-store	has_store_role(uuid,text[])	p_store_id = NULL	DENY	false → DENIED	NO
+S-E-null-roles	has_store_role(uuid,text[])	p_roles = NULL	DENY	false → DENIED	NO
+S-F-nonexistent	has_store_role(uuid,text[])	nonexistent store UUID	DENY	false → DENIED	NO
+S-U-unknown-role	has_store_role(uuid,text[])	p_roles = ['supreme']	DENY	false → DENIED	NO
+S-H-membership	has_store_role(uuid,text[])	valid store, user w/o membership	DENY	false → DENIED	NO
+S-I-jwt	all helpers	JWT claims — client-controllable?	claims platform-signed, not client-settable	auth.uid()/auth.role() read request.jwt.claims GUC set by PostgREST from VERIFIED JWT; staging sim confirms functions trust the GUC (identity source = platform)	NO — platform-controlled (S-I: no crypto attacks attempted per §11)
+S-AS-direct	has_store_role_as(uuid,uuid,text[])	direct EXECUTE as authenticated	permission denied	permission denied for function has_store_role_as	NO — EXECUTE ACL service_role-only
+D-SUPERVISOR-1	create_sale_v2 §11 via has_store_role_as	p_supervisor_user_id = any global admin UUID (same tenant, no membership)	DENY expected	SPOOF SUCCESS — sale with 20% discount created	*** YES — EXPLOITABLE (client-controlled param feeds authorization) ***
+D-SUPERVISOR-2	create_sale_v2 §11 via has_store_role_as	p_supervisor_user_id = CROSS-TENANT admin UUID	DENY expected	SPOOF SUCCESS — sale with 20% discount created	*** YES — EXPLOITABLE (admin bypass is tenant-blind) ***
+D-SUPERVISOR-ctrl	create_sale_v2 §11 via has_store_role_as	p_supervisor_user_id = clerk of other store / random UUID / NULL	DENY	ERR_SUPERVISOR_UNAUTHORIZED / ERR_SUPERVISOR_REQUIRED	NO — only admin/superadmin/manager UUIDs pass
+E-XUSER-ENUM	get_transferable_stores(uuid,uuid)	p_user_id = another user (U4)	only own stores	returns U4's accessible store rows	*** YES — EXPLOITABLE (cross-user info disclosure) ***
+E-ADMIN-ENUM	get_transferable_stores(uuid,uuid)	p_user_id = global admin (U3)	only own stores	returns admin-accessible stores (admin bypass)	*** YES — EXPLOITABLE ***
+D-XSTORE	create_sale_v2 caller gate	U1 → create sale in StoreB	DENY	ERR_UNAUTHORIZED	NO — caller gate intact (§30 satisfied)
+G4-POLLUTION	audit_logs INSERT RLS	own user_id + foreign store_id + fabricated action	ideally DENY	INSERT accepted (WITH CHECK only constrains user_id)	YES — audit pollution (forged entries for any store)

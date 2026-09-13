@@ -1,0 +1,418 @@
+{
+ "meta": [
+  {
+   "owner": "postgres",
+   "rls": "true",
+   "force_rls": "false",
+   "relacl_text": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,costpro_transaction_adjuster=a/postgres,costpro_snapshot_restorer=a/postgres}"
+  }
+ ],
+ "aclexplode": [
+  {
+   "grantee": "anon",
+   "privilege_type": "DELETE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "INSERT",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "MAINTAIN",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "REFERENCES",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "SELECT",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "TRIGGER",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "TRUNCATE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "UPDATE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "DELETE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "INSERT",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "MAINTAIN",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "REFERENCES",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "SELECT",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "TRIGGER",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "TRUNCATE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "UPDATE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "costpro_snapshot_restorer",
+   "privilege_type": "INSERT",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "costpro_transaction_adjuster",
+   "privilege_type": "INSERT",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "DELETE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "INSERT",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "MAINTAIN",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "REFERENCES",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "SELECT",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "TRIGGER",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "TRUNCATE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "UPDATE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "DELETE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "INSERT",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "MAINTAIN",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "REFERENCES",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "SELECT",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "TRIGGER",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "TRUNCATE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "UPDATE",
+   "is_grantable": "false",
+   "grantor": "postgres"
+  }
+ ],
+ "effective": [
+  {
+   "role": "anon",
+   "priv": "DEL",
+   "ok": true
+  },
+  {
+   "role": "anon",
+   "priv": "INS",
+   "ok": true
+  },
+  {
+   "role": "anon",
+   "priv": "MAINTAIN",
+   "ok": true
+  },
+  {
+   "role": "anon",
+   "priv": "REFERENCES",
+   "ok": true
+  },
+  {
+   "role": "anon",
+   "priv": "SELECT",
+   "ok": true
+  },
+  {
+   "role": "anon",
+   "priv": "TRUNCATE",
+   "ok": true
+  },
+  {
+   "role": "anon",
+   "priv": "TRIGGER",
+   "ok": true
+  },
+  {
+   "role": "anon",
+   "priv": "UPD",
+   "ok": true
+  },
+  {
+   "role": "authenticated",
+   "priv": "DEL",
+   "ok": true
+  },
+  {
+   "role": "authenticated",
+   "priv": "INS",
+   "ok": true
+  },
+  {
+   "role": "authenticated",
+   "priv": "MAINTAIN",
+   "ok": true
+  },
+  {
+   "role": "authenticated",
+   "priv": "REFERENCES",
+   "ok": true
+  },
+  {
+   "role": "authenticated",
+   "priv": "SELECT",
+   "ok": true
+  },
+  {
+   "role": "authenticated",
+   "priv": "TRUNCATE",
+   "ok": true
+  },
+  {
+   "role": "authenticated",
+   "priv": "TRIGGER",
+   "ok": true
+  },
+  {
+   "role": "authenticated",
+   "priv": "UPD",
+   "ok": true
+  },
+  {
+   "role": "postgres",
+   "priv": "DEL",
+   "ok": true
+  },
+  {
+   "role": "postgres",
+   "priv": "INS",
+   "ok": true
+  },
+  {
+   "role": "postgres",
+   "priv": "MAINTAIN",
+   "ok": true
+  },
+  {
+   "role": "postgres",
+   "priv": "REFERENCES",
+   "ok": true
+  },
+  {
+   "role": "postgres",
+   "priv": "SELECT",
+   "ok": true
+  },
+  {
+   "role": "postgres",
+   "priv": "TRUNCATE",
+   "ok": true
+  },
+  {
+   "role": "postgres",
+   "priv": "TRIGGER",
+   "ok": true
+  },
+  {
+   "role": "postgres",
+   "priv": "UPD",
+   "ok": true
+  },
+  {
+   "role": "public",
+   "priv": "DEL",
+   "ok": false
+  },
+  {
+   "role": "public",
+   "priv": "INS",
+   "ok": false
+  },
+  {
+   "role": "public",
+   "priv": "MAINTAIN",
+   "ok": false
+  },
+  {
+   "role": "public",
+   "priv": "REFERENCES",
+   "ok": false
+  },
+  {
+   "role": "public",
+   "priv": "SELECT",
+   "ok": false
+  },
+  {
+   "role": "public",
+   "priv": "TRUNCATE",
+   "ok": false
+  },
+  {
+   "role": "public",
+   "priv": "TRIGGER",
+   "ok": false
+  },
+  {
+   "role": "public",
+   "priv": "UPD",
+   "ok": false
+  },
+  {
+   "role": "service_role",
+   "priv": "DEL",
+   "ok": true
+  },
+  {
+   "role": "service_role",
+   "priv": "INS",
+   "ok": true
+  },
+  {
+   "role": "service_role",
+   "priv": "MAINTAIN",
+   "ok": true
+  },
+  {
+   "role": "service_role",
+   "priv": "REFERENCES",
+   "ok": true
+  },
+  {
+   "role": "service_role",
+   "priv": "SELECT",
+   "ok": true
+  },
+  {
+   "role": "service_role",
+   "priv": "TRUNCATE",
+   "ok": true
+  },
+  {
+   "role": "service_role",
+   "priv": "TRIGGER",
+   "ok": true
+  },
+  {
+   "role": "service_role",
+   "priv": "UPD",
+   "ok": true
+  }
+ ]
+}

@@ -1,0 +1,30 @@
+# REM-INV-4A EXECUTE grants on auth helpers 2026-09-13T15:14:33.726Z (proacl from census + has_function_privilege effective check)
+function	role	EXECUTE_effective
+current_user_store_ids()	anon	false
+current_user_store_ids()	authenticated	true
+current_user_store_ids()	service_role	true
+current_user_store_ids()	public	false
+has_store_access(p_store_id uuid)	anon	false
+has_store_access(p_store_id uuid)	authenticated	true
+has_store_access(p_store_id uuid)	service_role	true
+has_store_access(p_store_id uuid)	public	false
+has_store_access_as(p_user_id uuid, p_store_id uuid)	anon	false
+has_store_access_as(p_user_id uuid, p_store_id uuid)	authenticated	false
+has_store_access_as(p_user_id uuid, p_store_id uuid)	service_role	true
+has_store_access_as(p_user_id uuid, p_store_id uuid)	public	false
+has_store_role(p_store_id uuid, p_roles text[])	anon	false
+has_store_role(p_store_id uuid, p_roles text[])	authenticated	true
+has_store_role(p_store_id uuid, p_roles text[])	service_role	true
+has_store_role(p_store_id uuid, p_roles text[])	public	false
+has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])	anon	true
+has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])	authenticated	true
+has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])	service_role	true
+has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])	public	true
+has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])	anon	false
+has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])	authenticated	false
+has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])	service_role	true
+has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])	public	false
+is_admin()	anon	false
+is_admin()	authenticated	true
+is_admin()	service_role	true
+is_admin()	public	false

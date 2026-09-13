@@ -1,0 +1,23 @@
+=== REM-INV-4A baseline (Gate A) ===
+executed_at: 2026-09-13T15:46:00Z (final re-verification below)
+
+--- git fetch origin ---
+--- git rev-parse HEAD ---
+5f927364ab81d90ffe07ab6a5d33b8f47d932807
+--- git rev-parse origin/main ---
+5f927364ab81d90ffe07ab6a5d33b8f47d932807
+--- git log -1 --oneline ---
+5f927364 audit(rem-inv-4): session addendum — fresh LIVE re-verification (0 material drift vs pack), Q1-Q16 matrix, task-order artifact gaps filled (indexes/sequences/types/rls/extensions), session zero-touch PRE==POST, F-14 (MAINTAIN capture gap, D3), manifest refresh
+
+--- git status --short (full) ---
+?? audit-evidence/REM-INV-4A/
+
+Interpretation: ONLY untracked path is audit-evidence/REM-INV-4A/ — the evidence
+directory this gate is REQUIRED to produce (task order §36 permits it).
+Tracked application code: CLEAN (0 modifications).
+
+--- git status --short excluding permitted evidence dir ---
+(empty — tracked tree clean)
+
+REQUIRED: HEAD == origin/main == 5f927364 && tracked WORKTREE CLEAN
+RESULT: BASELINE OK (HEAD==origin/main==5f927364; tracked tree clean; only permitted evidence dir untracked)

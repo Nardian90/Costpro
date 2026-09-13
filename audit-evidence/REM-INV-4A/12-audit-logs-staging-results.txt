@@ -1,0 +1,85 @@
+REM-INV-4A — audit_logs staging ACL/RLS matrix (F-04-B)
+Generated: 2026-09-13T15:45:21.943Z
+Environment: ephemeral PG17.6 replica — audit_logs LIVE structure (columns, constraints, FKs), LIVE relacl replica (arwdDxtm for anon/authenticated/service_role), LIVE RLS policies verbatim, RLS ON / FORCE OFF (as LIVE)
+PostgREST surface facts (platform): REST exposes SELECT/INSERT/UPDATE/DELETE only — TRUNCATE and VACUUM/MAINTAIN operations are NOT exposed via PostgREST/RPC by any existing function (verified: 0/484 LIVE functions execute TRUNCATE or DELETE on audit_logs)
+================
+
+[G1] U1 (clerk) SELECT visibility
+  expected: 0 (clerk not covered by SELECT policies)
+  actual  : (1 row) ⏎  ⏎  visible  ⏎ --------- ⏎        0 ⏎ (1 row)
+  verdict : CONFIRMED ✓
+
+[G2] U1 INSERT own audit row (legitimate writer path)
+  expected: ALLOWED-EXPECTED
+  actual  :                               set_config                                ⏎ ----------------------------------------------------------------------- ⏎  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ INSERT 0 1
+  verdict : ALLOWED-EXPECTED ✓
+
+[G3] U1 INSERT with foreign user_id (U2)
+  expected: DENIED (WITH CHECK)
+  actual  : ----------------------------------------------------------------------- ⏎  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ ERROR:  new row violates row-level security policy for table "audit_logs" ⏎ 
+  verdict : BLOCKED BY RLS ✓
+
+[G4] U1 INSERT fabricated event attributed to StoreB (no membership)
+  expected: expected: RLS should ideally deny; WITH CHECK only constrains user_id
+  actual  :                               set_config                                ⏎ ----------------------------------------------------------------------- ⏎  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ INSERT 0 1
+  verdict : *** ALLOWED-DANGEROUS (audit pollution) ***
+
+[G5] U1 UPDATE own audit row
+  expected: 0 rows (no UPDATE policy)
+  actual  :                               set_config                                ⏎ ----------------------------------------------------------------------- ⏎  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ UPDATE 0
+  verdict : BLOCKED BY RLS ✓
+
+[G6] U1 DELETE own audit row
+  expected: 0 rows (no DELETE policy)
+  actual  :                               set_config                                ⏎ ----------------------------------------------------------------------- ⏎  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ DELETE 0
+  verdict : BLOCKED BY RLS ✓
+
+[G7] U1 (authenticated) TRUNCATE audit_logs — RLS does NOT cover TRUNCATE
+  expected: expected: should be impossible for unprivileged user
+  actual  :  ⏎ TRUNCATE TABLE ⏎  remaining  ⏎ ----------- ⏎          0 ⏎ (1 row)
+  verdict : *** CATASTROPHIC — TRAIL DESTROYED (staging proof) ***
+
+[G8] U1 VACUUM (MAINTAIN priv) — fingerprint before=[0|-] after=[0|-]
+  expected: allowed-but-benign (no data change)
+  actual  :                               set_config                                ⏎ ----------------------------------------------------------------------- ⏎  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ VACUUM
+  verdict : ALLOWED-BENIGN ✓ (operational nuisance only)
+
+[G9] negative control: role WITHOUT TRUNCATE grant
+  expected: permission denied
+  actual  : -------------------------- ⏎  {"sub":"","role":"anon"} ⏎ (1 row) ⏎  ⏎ ERROR:  permission denied for table audit_logs ⏎ 
+  verdict : BLOCKED BY ACL ✓ (grant is the control point, not RLS)
+
+[G10a] anon SELECT
+  expected: 0 rows (no SELECT policy for anon)
+  actual  : (1 row) ⏎  ⏎  count  ⏎ ------- ⏎      0 ⏎ (1 row)
+  verdict : CONFIRMED ✓
+
+[G10b] anon INSERT
+  expected: DENIED (no INSERT policy for anon)
+  actual  : -------------------------- ⏎  {"sub":"","role":"anon"} ⏎ (1 row) ⏎  ⏎ ERROR:  new row violates row-level security policy for table "audit_logs" ⏎ 
+  verdict : BLOCKED BY RLS ✓
+
+[G10c] anon DELETE
+  expected: 0 rows (no DELETE policy)
+  actual  :         set_config         ⏎ -------------------------- ⏎  {"sub":"","role":"anon"} ⏎ (1 row) ⏎  ⏎ DELETE 0
+  verdict : BLOCKED BY RLS ✓
+
+[G11] service_role visibility + cleanup of G4 pollution row
+  expected: full access (trusted server-side)
+  actual  :  visible  ⏎ --------- ⏎        0 ⏎ (1 row) ⏎  ⏎ DELETE 0
+  verdict : ALLOWED-EXPECTED ✓ (service_role = trusted)
+
+================ G8 RE-RUN (rigorous, populated table) ================
+BEFORE: 1|2026-09-13 15:42:33.132693+00
+VACUUM public.audit_logs AS authenticated U1 (clerk) → SUCCESS (MAINTAIN privilege present)
+AFTER : 1|2026-09-13 15:42:33.132693+00   (fingerprint identical — no data impact)
+Classification: ALLOWED — BENIGN (operational nuisance only; no integrity impact)
+
+================ G7 FULL SESSION OUTPUT (trail destruction proof) ================
+SET ROLE authenticated; claims U1;
+TRUNCATE public.audit_logs;  → "TRUNCATE TABLE" (succeeded)
+SELECT count(*) FROM public.audit_logs; → 0   (entire trail destroyed)
+
+NOTE: TRUNCATE is unreachable through PostgREST (not an exposed method) and no RPC executes it.
+The staging proof demonstrates the PostgreSQL authorization semantics (grant is the control point;
+RLS does not cover TRUNCATE), i.e., the RISK if any future code path or insider SQL access executes it.

@@ -1,0 +1,80 @@
+# REM-INV-4A audit_logs ACL 2026-09-13T15:14:33.726Z
+# meta: {"owner":"postgres","rls":"true","force_rls":"false","relacl_text":"{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,costpro_transaction_adjuster=a/postgres,costpro_snapshot_restorer=a/postgres}"}
+# --- aclexplode(relacl) ---
+grantee	privilege_type	is_grantable	grantor
+anon	DELETE	false	postgres
+anon	INSERT	false	postgres
+anon	MAINTAIN	false	postgres
+anon	REFERENCES	false	postgres
+anon	SELECT	false	postgres
+anon	TRIGGER	false	postgres
+anon	TRUNCATE	false	postgres
+anon	UPDATE	false	postgres
+authenticated	DELETE	false	postgres
+authenticated	INSERT	false	postgres
+authenticated	MAINTAIN	false	postgres
+authenticated	REFERENCES	false	postgres
+authenticated	SELECT	false	postgres
+authenticated	TRIGGER	false	postgres
+authenticated	TRUNCATE	false	postgres
+authenticated	UPDATE	false	postgres
+costpro_snapshot_restorer	INSERT	false	postgres
+costpro_transaction_adjuster	INSERT	false	postgres
+postgres	DELETE	false	postgres
+postgres	INSERT	false	postgres
+postgres	MAINTAIN	false	postgres
+postgres	REFERENCES	false	postgres
+postgres	SELECT	false	postgres
+postgres	TRIGGER	false	postgres
+postgres	TRUNCATE	false	postgres
+postgres	UPDATE	false	postgres
+service_role	DELETE	false	postgres
+service_role	INSERT	false	postgres
+service_role	MAINTAIN	false	postgres
+service_role	REFERENCES	false	postgres
+service_role	SELECT	false	postgres
+service_role	TRIGGER	false	postgres
+service_role	TRUNCATE	false	postgres
+service_role	UPDATE	false	postgres
+# --- has_table_privilege effective matrix ---
+role	privilege	allowed
+anon	DEL	true
+anon	INS	true
+anon	MAINTAIN	true
+anon	REFERENCES	true
+anon	SELECT	true
+anon	TRUNCATE	true
+anon	TRIGGER	true
+anon	UPD	true
+authenticated	DEL	true
+authenticated	INS	true
+authenticated	MAINTAIN	true
+authenticated	REFERENCES	true
+authenticated	SELECT	true
+authenticated	TRUNCATE	true
+authenticated	TRIGGER	true
+authenticated	UPD	true
+postgres	DEL	true
+postgres	INS	true
+postgres	MAINTAIN	true
+postgres	REFERENCES	true
+postgres	SELECT	true
+postgres	TRUNCATE	true
+postgres	TRIGGER	true
+postgres	UPD	true
+public	DEL	false
+public	INS	false
+public	MAINTAIN	false
+public	REFERENCES	false
+public	SELECT	false
+public	TRUNCATE	false
+public	TRIGGER	false
+public	UPD	false
+service_role	DEL	true
+service_role	INS	true
+service_role	MAINTAIN	true
+service_role	REFERENCES	true
+service_role	SELECT	true
+service_role	TRUNCATE	true
+service_role	TRIGGER	true
+service_role	UPD	true

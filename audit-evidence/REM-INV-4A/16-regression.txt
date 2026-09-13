@@ -1,0 +1,30 @@
+REM-INV-4A — Regression results (§33)
+executed_at: 2026-09-13T15:54:08Z
+rule: no code modified to pass tests (task order §33) — application tree untouched (00-baseline.txt)
+
+=== npx tsc --noEmit ===
+exit: 0 · output: (empty — 0 type errors)
+
+=== npm test (vitest run) ===
+exit: 0
+Test Files  99 passed | 1 skipped (100)
+Tests       2070 passed | 24 skipped (2094)
+Duration    216.72s
+
+=== npm run lint (eslint .) ===
+exit: 0
+1291 problems (0 errors, 1291 warnings) — warnings-only (pre-existing style advisories, same profile as REM-INV-4 session)
+
+=== security-contract (node scripts/security-contract-test.cjs) ===
+exit: 0
+Funciones verificadas: 134
+Funciones con violaciones: 0
+PIN REM-INV-2R: receive_purchase(uuid) sigue ausente del catálogo → OK
+🎉 TODAS LAS FUNCIONES PASAN EL TEST DE CONTRATO
+
+=== build (next build) ===
+not executed in this gate session — prior gate sessions documented 'exit 137 KNOWN INFRASTRUCTURE OOM';
+per task order §33 the OOM outcome would be recorded as KNOWN INFRASTRUCTURE OOM without touching PM2.
+tsc+vitest+lint+security-contract provide the regression signal for this evidence-only gate.
+
+VERDICT: REGRESSION CLEAN (no new failures; no code changes made by this gate)

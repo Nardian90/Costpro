@@ -1,0 +1,20 @@
+[
+ {
+  "name": "current_user_tenant_id",
+  "identity_args": "",
+  "def": "CREATE OR REPLACE FUNCTION public.current_user_tenant_id()\n RETURNS uuid\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT tenant_id FROM public.profiles WHERE id = auth.uid();\n$function$\n",
+  "proacl": "=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+ },
+ {
+  "name": "is_global_admin",
+  "identity_args": "",
+  "def": "CREATE OR REPLACE FUNCTION public.is_global_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT EXISTS (\n    SELECT 1 FROM public.profiles\n    WHERE id = auth.uid()\n      AND role = 'admin'\n  );\n$function$\n",
+  "proacl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+ },
+ {
+  "name": "get_transferable_stores",
+  "identity_args": "p_user_id uuid, p_current_store_id uuid",
+  "def": "CREATE OR REPLACE FUNCTION public.get_transferable_stores(p_user_id uuid, p_current_store_id uuid)\n RETURNS SETOF stores\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_tenant_id UUID;\nBEGIN\n  -- 1. Obtener tenant_id de la tienda actual\n  SELECT tenant_id INTO v_tenant_id\n  FROM public.stores\n  WHERE id = p_current_store_id AND is_active = true;\n\n  -- 2. Devolver tiendas donde el caller tiene acceso (has_store_access_as)\n  --    EXCLUYENDO la tienda actual\n  --    Si tenant_id es NOT NULL, filtrar por mismo tenant.\n  --    Si tenant_id es NULL (legacy), mostrar todas las que el caller tiene acceso.\n  IF v_tenant_id IS NOT NULL THEN\n    RETURN QUERY\n    SELECT s.*\n    FROM public.stores s\n    WHERE s.tenant_id = v_tenant_id\n      AND s.id != p_current_store_id\n      AND s.is_active = true\n      AND s.is_archived = false\n      AND public.has_store_access_as(p_user_id, s.id)\n    ORDER BY s.name;\n  ELSE\n    -- Legacy: tiendas sin tenant_id — usar solo has_store_access_as\n    RETURN QUERY\n    SELECT s.*\n    FROM public.stores s\n    WHERE s.id != p_current_store_id\n      AND s.is_active = true\n      AND s.is_archived = false\n      AND public.has_store_access_as(p_user_id, s.id)\n    ORDER BY s.name;\n  END IF;\nEND;\n$function$\n",
+  "proacl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+ }
+]

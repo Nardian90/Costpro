@@ -1,0 +1,139 @@
+{
+ "captured_at": "2026-09-13T15:14:33.726Z",
+ "tag": "pre",
+ "sections": {
+  "stores_counts": [
+   {
+    "n": 50,
+    "n_tenants": 2,
+    "min_created": "2026-02-09 03:29:06.069828+00",
+    "max_created": "2026-09-10 21:50:42.534433+00"
+   }
+  ],
+  "products_counts": [
+   {
+    "n": 367,
+    "min_created": "2026-06-19 05:29:20.873161+00",
+    "max_created": "2026-09-10 23:48:12.923736+00"
+   }
+  ],
+  "inventory_counts": [
+   {
+    "n": 277,
+    "sum_qty": "13506.6289",
+    "min_updated": "2026-08-11 22:49:19.266205+00",
+    "max_updated": "2026-09-11 04:25:37.079359+00"
+   }
+  ],
+  "stock_movements_counts": [
+   {
+    "n": 1021,
+    "sum_qty": "13506.6289",
+    "min_created": "2026-05-01 09:00:00+00",
+    "max_created": "2026-09-11 04:25:37.079359+00"
+   }
+  ],
+  "transactions_counts": [
+   {
+    "n": 597,
+    "min_created": "2026-05-02 12:00:00+00",
+    "max_created": "2026-09-11 04:25:44.22297+00"
+   }
+  ],
+  "transactions_by_status": [
+   {
+    "status": "completed",
+    "n": 592
+   },
+   {
+    "status": "voided",
+    "n": 5
+   }
+  ],
+  "payments_counts": [
+   {
+    "n": 458,
+    "sum_amount": "8249548.4999999999465733",
+    "min_date": "2026-05-02 12:00:00+00",
+    "max_date": "2026-09-11 04:24:09.0631+00"
+   }
+  ],
+  "payment_transactions_by_direction": [
+   {
+    "direction": "in",
+    "n": 446,
+    "sum_amount": "8248278.4999999999465733"
+   },
+   {
+    "direction": "refund",
+    "n": 12,
+    "sum_amount": "1270"
+   }
+  ],
+  "devolutions_counts": [
+   {
+    "n": 25,
+    "n_stores": 3,
+    "min_created": "2026-08-04 07:30:51.150879+00",
+    "max_created": "2026-09-10 23:58:39.315276+00"
+   }
+  ],
+  "devolution_items_counts": [
+   {
+    "n": 25,
+    "sum_qty": "1028.00",
+    "sum_total": "355120.00",
+    "min_created": "2026-08-04 07:30:51.150879+00",
+    "max_created": "2026-09-10 23:58:39.315276+00"
+   }
+  ],
+  "receipts_counts": [
+   {
+    "n": 63,
+    "min_created": "2026-05-01 09:00:00+00",
+    "max_created": "2026-09-11 00:06:09.59+00"
+   }
+  ],
+  "transfers_counts": [
+   {
+    "n": 8,
+    "n_status": 4,
+    "min_created": "2026-09-07 03:22:57.575692+00",
+    "max_created": "2026-09-10 23:58:30.878079+00"
+   }
+  ],
+  "purchase_orders_counts": [
+   {
+    "n": 8,
+    "min_created": "2026-09-10 22:35:25.510431+00",
+    "max_created": "2026-09-11 04:10:15.171218+00"
+   }
+  ],
+  "production_orders_counts": [
+   {
+    "n": 89,
+    "min_created": "2026-09-07 03:23:02.825499+00",
+    "max_created": "2026-09-11 04:25:49.117942+00"
+   }
+  ],
+  "cash_sessions_counts": [
+   {
+    "n": 0,
+    "min_opened": null,
+    "max_opened": null
+   }
+  ],
+  "audit_logs_counts": [
+   {
+    "n": 8145,
+    "min_created": "2026-05-27 15:33:24.459614+00",
+    "max_created": "2026-09-13 03:19:31.092902+00"
+   }
+  ],
+  "audit_logs_max_created": [
+   {
+    "max_created": "2026-09-13 03:19:31.092902+00"
+   }
+  ]
+ }
+}

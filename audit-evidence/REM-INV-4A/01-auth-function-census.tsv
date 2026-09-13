@@ -1,0 +1,9 @@
+# REM-INV-4A LIVE auth-function census 2026-09-13T15:14:33.726Z (read-only catalog)
+oid	schema	name	identity_args	arg_types	return_type	provolatile	prosecdef	owner	proconfig	language	prosrc_md5	prosrc_len	proacl
+138373	public	current_user_store_ids			uuid[]	s	true	postgres	search_path=public	plpgsql	317799d87c0daedabb3dba833507e3f4	418	postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+38675	public	has_store_access	p_store_id uuid	uuid	boolean	s	true	postgres	search_path=public, pg_temp	plpgsql	5c7d310009f60aa864b5b97d00596e48	671	postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+136268	public	has_store_access_as	p_user_id uuid, p_store_id uuid	uuid, uuid	boolean	v	true	postgres	search_path=public	plpgsql	9844954f9389c7dfd318dbe96f128d54	449	postgres=X/postgres,service_role=X/postgres
+131888	public	has_store_role	p_store_id uuid, p_roles text[]	uuid, text[]	boolean	s	true	postgres	search_path=public, pg_temp	plpgsql	bf4b1761a6ccd80919108301fe94a0e9	224	postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+142475	public	has_store_role	p_user_id uuid, p_store_id uuid, p_roles text[]	uuid, uuid, text[]	boolean	v	true	postgres	search_path=public, pg_temp	sql	53dd721499bf3253b567e3b1372400ee	494	=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+138149	public	has_store_role_as	p_user_id uuid, p_store_id uuid, p_roles text[]	uuid, uuid, text[]	boolean	s	true	postgres	search_path=public, pg_temp	plpgsql	abb566b7f3ce24ee2f0e6dbdb811f2e5	463	postgres=X/postgres,service_role=X/postgres
+17741	public	is_admin			boolean	s	true	postgres	search_path=public, pg_temp	plpgsql	d3d5d5f7c3b24201ed6b62a7114bb49f	124	postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres,costpro_transaction_adjuster=X/postgres

@@ -1,0 +1,485 @@
+[
+ {
+  "name": "adjust_sale_payment",
+  "args": "p_transaction_id uuid, p_user_id uuid, p_payment_method text, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_items_price_adjustments jsonb, p_discount_type text, p_discount_value numeric, p_reason text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "adjust_total_amount",
+  "args": "p_transaction_id uuid, p_new_total numeric, p_reason text",
+  "prosecdef": "true",
+  "owner": "costpro_transaction_adjuster",
+  "ops": "INSERT"
+ },
+ {
+  "name": "audit_backup_restore_protected_change",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "audit_cash_closures_changes",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "audit_commission_payments_changes",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "audit_fiscal_closings_changes",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "audit_payment_transactions_changes",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "audit_product_changes",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "audit_profile_changes",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "audit_store_access_changes",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "audit_store_changes",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "bulk_soft_delete_stores",
+  "args": "p_store_ids uuid[], p_deleted_by uuid, p_confirmation_token text, p_override_token text, p_reason text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "cancel_transfer",
+  "args": "p_transfer_id uuid, p_reason text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "check_reception_cost_variation",
+  "args": "",
+  "prosecdef": "false",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "close_cash_shift",
+  "args": "p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "close_production_order_v2",
+  "args": "p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_final_amount numeric, p_final_method text, p_final_currency text, p_exchange_rate numeric, p_output_product_id uuid, p_output_quantity numeric, p_user_id uuid, p_idempotency_key text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "close_service_order_as_sale",
+  "args": "p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_payment_method text, p_currency text, p_exchange_rate numeric, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "confirm_transfer",
+  "args": "p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "create_devolution",
+  "args": "p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_currency text, p_exchange_rate numeric",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "create_devolution_v2",
+  "args": "p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "create_production_order_v2",
+  "args": "p_store_id uuid, p_order_type text, p_customer_name text, p_customer_ci text, p_customer_phone text, p_customer_address text, p_budget_total numeric, p_budget_currency text, p_description text, p_notes text, p_items jsonb, p_advance_amount numeric, p_advance_method text, p_advance_currency text, p_created_by uuid, p_idempotency_key text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "create_purchase_order",
+  "args": "p_store_id uuid, p_supplier_name text, p_supplier_id uuid, p_po_number text, p_notes text, p_expected_date date, p_created_by uuid, p_items jsonb",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "create_received_service_v2",
+  "args": "p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "create_sale",
+  "args": "p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric, p_discount_type text, p_discount_value numeric, p_payment_method text, p_tax_amount numeric, p_applied_taxes jsonb, p_transaction_id uuid, p_operation_date timestamp with time zone, p_cash_amount numeric, p_transfer_amount numeric, p_idempotency_key text, p_sale_currency text, p_sale_exchange_rate numeric, p_zelle_amount numeric, p_warehouse_id uuid, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "create_sale_v2",
+  "args": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "create_store_with_membership",
+  "args": "p_name text, p_address text, p_created_by uuid, p_max_stores integer, p_logo_url text, p_reeup text, p_nit text, p_bank_account text, p_phone text, p_email text, p_slug text, p_plantilla text, p_signature_url text, p_stamp_url text, p_latitude double precision, p_longitude double precision, p_tenant_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "create_transfer",
+  "args": "p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb, p_notes text, p_transaction_id uuid, p_operation_date timestamp with time zone, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "create_vale_salida",
+  "args": "p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "distribute_service_cost_v2",
+  "args": "p_service_id uuid, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "duplicate_inventory_adjustment_v2",
+  "args": "p_original_id uuid, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "fn_process_sale",
+  "args": "p_items jsonb, p_cashier_id uuid, p_payment_method text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "fn_void_receipt",
+  "args": "p_receipt_id uuid, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "generate_bulk_override_token",
+  "args": "p_confirmation_token text, p_override_user_id uuid, p_reason text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "link_receipts_to_service",
+  "args": "p_service_id uuid, p_receipt_ids jsonb, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "log_transaction_changes",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "managed_delete_product",
+  "args": "p_product_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "managed_toggle_product_active",
+  "args": "p_product_id uuid, p_is_active boolean",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "receive_against_po",
+  "args": "p_po_id uuid, p_received_items jsonb, p_user_id uuid, p_reception_date timestamp with time zone, p_invoice_number text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "receive_production_output",
+  "args": "p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "receive_to_warehouse",
+  "args": "p_store_id uuid, p_product_id uuid, p_quantity numeric, p_unit_cost numeric, p_warehouse_id uuid, p_lot_number text, p_expiration_date date, p_user_id uuid, p_reason text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "reconcile_stock",
+  "args": "p_store_id uuid, p_fix boolean, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "register_reception",
+  "args": "p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "release_expired_reservations",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "reopen_cash_shift",
+  "args": "p_closure_id uuid, p_reason text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "reset_store_data",
+  "args": "target_store_id uuid, p_keep_catalog boolean, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "restore_transaction_snapshot",
+  "args": "p_migration_id text, p_tx_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "reverse_commissions_on_sale_void",
+  "args": "",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "reverse_devolution",
+  "args": "p_devolution_id uuid, p_reason text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "reverse_inventory_adjustment_v2",
+  "args": "p_adjustment_id uuid, p_reason text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "reverse_production_order",
+  "args": "p_order_id uuid, p_reason text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "reverse_receipt_v2",
+  "args": "p_receipt_id uuid, p_reason text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "reverse_transaction_v2",
+  "args": "p_transaction_id uuid, p_reason text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "reverse_transfer",
+  "args": "p_transfer_id uuid, p_reason text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "reverse_vale_salida",
+  "args": "p_slip_id uuid, p_reason text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "set_purchase_order_status",
+  "args": "p_po_id uuid, p_new_status purchase_status_enum, p_user_id uuid, p_reason text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "set_received_service_status",
+  "args": "p_service_id uuid, p_new_status text, p_user_id uuid, p_reason text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "set_transfer_approval_rule",
+  "args": "p_tenant_id uuid, p_store_id uuid, p_threshold_amount numeric, p_threshold_quantity numeric, p_approver_roles text[], p_is_active boolean, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "soft_delete_store",
+  "args": "p_store_id uuid, p_deleted_by uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "update_receipt_item_tasa",
+  "args": "p_receipt_item_id uuid, p_new_tasa_cambio_recepcion numeric, p_new_moneda_recepcion text, p_motivo text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "update_reception_items",
+  "args": "p_receipt_id uuid, p_item_updates jsonb, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "update_transaction_taxes",
+  "args": "p_transaction_id uuid, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "void_closed_production_order",
+  "args": "p_order_id uuid, p_reason text, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "void_pending_reception",
+  "args": "p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "void_received_service_with_reversal",
+  "args": "p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "void_reception_with_reversal",
+  "args": "p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "void_transaction",
+  "args": "p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone, p_user_id uuid",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "withdraw_production_item_deprecated_6arg",
+  "args": "p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "withdraw_production_item_deprecated_9arg",
+  "args": "p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text, p_server_side_cost boolean",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ },
+ {
+  "name": "withdraw_production_item_v3",
+  "args": "p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text",
+  "prosecdef": "true",
+  "owner": "postgres",
+  "ops": "INSERT"
+ }
+]

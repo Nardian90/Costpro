@@ -1,0 +1,142 @@
+[
+ {
+  "fn": "current_user_store_ids()",
+  "role": "anon",
+  "execute": false
+ },
+ {
+  "fn": "current_user_store_ids()",
+  "role": "authenticated",
+  "execute": true
+ },
+ {
+  "fn": "current_user_store_ids()",
+  "role": "service_role",
+  "execute": true
+ },
+ {
+  "fn": "current_user_store_ids()",
+  "role": "public",
+  "execute": false
+ },
+ {
+  "fn": "has_store_access(p_store_id uuid)",
+  "role": "anon",
+  "execute": false
+ },
+ {
+  "fn": "has_store_access(p_store_id uuid)",
+  "role": "authenticated",
+  "execute": true
+ },
+ {
+  "fn": "has_store_access(p_store_id uuid)",
+  "role": "service_role",
+  "execute": true
+ },
+ {
+  "fn": "has_store_access(p_store_id uuid)",
+  "role": "public",
+  "execute": false
+ },
+ {
+  "fn": "has_store_access_as(p_user_id uuid, p_store_id uuid)",
+  "role": "anon",
+  "execute": false
+ },
+ {
+  "fn": "has_store_access_as(p_user_id uuid, p_store_id uuid)",
+  "role": "authenticated",
+  "execute": false
+ },
+ {
+  "fn": "has_store_access_as(p_user_id uuid, p_store_id uuid)",
+  "role": "service_role",
+  "execute": true
+ },
+ {
+  "fn": "has_store_access_as(p_user_id uuid, p_store_id uuid)",
+  "role": "public",
+  "execute": false
+ },
+ {
+  "fn": "has_store_role(p_store_id uuid, p_roles text[])",
+  "role": "anon",
+  "execute": false
+ },
+ {
+  "fn": "has_store_role(p_store_id uuid, p_roles text[])",
+  "role": "authenticated",
+  "execute": true
+ },
+ {
+  "fn": "has_store_role(p_store_id uuid, p_roles text[])",
+  "role": "service_role",
+  "execute": true
+ },
+ {
+  "fn": "has_store_role(p_store_id uuid, p_roles text[])",
+  "role": "public",
+  "execute": false
+ },
+ {
+  "fn": "has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])",
+  "role": "anon",
+  "execute": true
+ },
+ {
+  "fn": "has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])",
+  "role": "authenticated",
+  "execute": true
+ },
+ {
+  "fn": "has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])",
+  "role": "service_role",
+  "execute": true
+ },
+ {
+  "fn": "has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])",
+  "role": "public",
+  "execute": true
+ },
+ {
+  "fn": "has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])",
+  "role": "anon",
+  "execute": false
+ },
+ {
+  "fn": "has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])",
+  "role": "authenticated",
+  "execute": false
+ },
+ {
+  "fn": "has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])",
+  "role": "service_role",
+  "execute": true
+ },
+ {
+  "fn": "has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])",
+  "role": "public",
+  "execute": false
+ },
+ {
+  "fn": "is_admin()",
+  "role": "anon",
+  "execute": false
+ },
+ {
+  "fn": "is_admin()",
+  "role": "authenticated",
+  "execute": true
+ },
+ {
+  "fn": "is_admin()",
+  "role": "service_role",
+  "execute": true
+ },
+ {
+  "fn": "is_admin()",
+  "role": "public",
+  "execute": false
+ }
+]

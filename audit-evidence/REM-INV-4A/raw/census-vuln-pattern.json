@@ -1,0 +1,1044 @@
+{
+ "vulnerablePattern": [
+  {
+   "name": "adjust_sale_payment",
+   "args": "p_transaction_id uuid, p_user_id uuid, p_payment_method text, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_items_price_adjustments jsonb, p_discount_type text, p_discount_value numeric, p_reason text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "apply_physical_count",
+   "args": "p_count_id uuid, p_user_id uuid, p_apply_zero_diffs boolean",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "approve_transfer",
+   "args": "p_transfer_id uuid, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "auto_match_bank_items",
+   "args": "p_statement_id uuid, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "calculate_abc",
+   "args": "p_store_id uuid, p_year integer, p_month integer, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "cancel_transfer",
+   "args": "p_transfer_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "cancel_transfer",
+   "args": "p_transfer_id uuid, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "close_cash_shift",
+   "args": "p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "close_fiscal_period",
+   "args": "p_store_id uuid, p_year integer, p_month integer, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "close_production_order_v2",
+   "args": "p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_final_amount numeric, p_final_method text, p_final_currency text, p_exchange_rate numeric, p_output_product_id uuid, p_output_quantity numeric, p_user_id uuid, p_idempotency_key text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "close_service_order_as_sale",
+   "args": "p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_payment_method text, p_currency text, p_exchange_rate numeric, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "compensate_inventory_error",
+   "args": "p_store_id uuid, p_original_movement_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "confirm_inventory_adjustment",
+   "args": "p_adjustment_id uuid, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "confirm_pending_reception",
+   "args": "p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "confirm_transfer",
+   "args": "p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "create_devolution",
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_currency text, p_exchange_rate numeric",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "create_devolution",
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "create_devolution_v2",
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "create_physical_count",
+   "args": "p_store_id uuid, p_user_id uuid, p_notes text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "create_quotation",
+   "args": "p_store_id uuid, p_items jsonb, p_user_id uuid, p_customer_id uuid, p_customer_name text, p_customer_phone text, p_discount_type text, p_discount_value numeric, p_notes text, p_valid_until date",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "create_sale",
+   "args": "p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric, p_discount_type text, p_discount_value numeric, p_payment_method text, p_tax_amount numeric, p_applied_taxes jsonb, p_transaction_id uuid, p_operation_date timestamp with time zone, p_cash_amount numeric, p_transfer_amount numeric, p_idempotency_key text, p_sale_currency text, p_sale_exchange_rate numeric, p_zelle_amount numeric, p_warehouse_id uuid, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "create_sale_v2",
+   "args": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "create_transfer",
+   "args": "p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb, p_notes text, p_transaction_id uuid, p_operation_date timestamp with time zone, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "create_vale_salida",
+   "args": "p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "distribute_service_cost_v2",
+   "args": "p_service_id uuid, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": false
+  },
+  {
+   "name": "duplicate_inventory_adjustment",
+   "args": "p_original_id uuid, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "duplicate_inventory_adjustment_v2",
+   "args": "p_original_id uuid, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "get_reorder_suggestions",
+   "args": "p_store_id uuid, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "link_receipts_to_service",
+   "args": "p_service_id uuid, p_receipt_ids jsonb, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": false
+  },
+  {
+   "name": "lock_fiscal_period",
+   "args": "p_store_id uuid, p_year integer, p_month integer, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "managed_reset_password",
+   "args": "p_user_id uuid, p_caller_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "managed_revoke_membership",
+   "args": "p_membership_id uuid, p_caller_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "managed_soft_delete_user",
+   "args": "p_user_id uuid, p_reason text, p_caller_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "managed_toggle_user_status",
+   "args": "p_user_id uuid, p_is_active boolean, p_caller_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "managed_update_membership",
+   "args": "p_membership_id uuid, p_role user_role, p_status text, p_caller_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "managed_update_tenant_plan",
+   "args": "p_tenant_id uuid, p_plan plan_t, p_subscription_status text, p_caller_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "managed_update_user",
+   "args": "p_user_id uuid, p_full_name text, p_role user_role, p_role_id uuid, p_is_active boolean, p_max_stores_limit integer, p_max_users_limit integer, p_plan plan_t, p_caller_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "perform_inventory_adjustment",
+   "args": "p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "receive_production_output",
+   "args": "p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "receive_to_warehouse",
+   "args": "p_store_id uuid, p_product_id uuid, p_quantity numeric, p_unit_cost numeric, p_warehouse_id uuid, p_lot_number text, p_expiration_date date, p_user_id uuid, p_reason text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reconcile_orphan_user",
+   "args": "p_auth_user_id uuid, p_action text, p_reason text, p_caller_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reconcile_stock",
+   "args": "p_store_id uuid, p_fix boolean, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "record_counted_quantity",
+   "args": "p_count_id uuid, p_product_id uuid, p_counted_quantity numeric, p_user_id uuid, p_notes text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "register_reception",
+   "args": "p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reject_transfer",
+   "args": "p_transfer_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reopen_cash_shift",
+   "args": "p_closure_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reset_store_data",
+   "args": "target_store_id uuid, p_keep_catalog boolean, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reverse_adjustment",
+   "args": "p_adjustment_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reverse_devolution",
+   "args": "p_devolution_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reverse_inventory_adjustment_v2",
+   "args": "p_adjustment_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reverse_production_order",
+   "args": "p_order_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reverse_receipt",
+   "args": "p_receipt_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reverse_receipt_v2",
+   "args": "p_receipt_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reverse_transaction_v2",
+   "args": "p_transaction_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reverse_transfer",
+   "args": "p_transfer_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "reverse_vale_salida",
+   "args": "p_slip_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "set_purchase_order_status",
+   "args": "p_po_id uuid, p_new_status purchase_status_enum, p_user_id uuid, p_reason text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "set_received_service_status",
+   "args": "p_service_id uuid, p_new_status text, p_user_id uuid, p_reason text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": false
+  },
+  {
+   "name": "set_transfer_approval_rule",
+   "args": "p_tenant_id uuid, p_store_id uuid, p_threshold_amount numeric, p_threshold_quantity numeric, p_approver_roles text[], p_is_active boolean, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "update_receipt_item_tasa",
+   "args": "p_receipt_item_id uuid, p_new_tasa_cambio_recepcion numeric, p_new_moneda_recepcion text, p_motivo text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "update_reception_items",
+   "args": "p_receipt_id uuid, p_item_updates jsonb, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "void_closed_production_order",
+   "args": "p_order_id uuid, p_reason text, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "void_inventory_adjustment",
+   "args": "p_adjustment_id uuid, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "void_pending_reception",
+   "args": "p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "void_received_service_with_reversal",
+   "args": "p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": false
+  },
+  {
+   "name": "void_transaction",
+   "args": "p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone, p_user_id uuid",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "withdraw_production_item_deprecated_6arg",
+   "args": "p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "withdraw_production_item_deprecated_9arg",
+   "args": "p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text, p_server_side_cost boolean",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  },
+  {
+   "name": "withdraw_production_item_v3",
+   "args": "p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text",
+   "prosecdef": "true",
+   "owner": "postgres",
+   "gated": true
+  }
+ ],
+ "helperCallers": {
+  "has_store_access_as": [
+   {
+    "name": "adjust_sale_payment",
+    "args": "p_transaction_id uuid, p_user_id uuid, p_payment_method text, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_items_price_adjustments jsonb, p_discount_type text, p_discount_value numeric, p_reason text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "apply_physical_count",
+    "args": "p_count_id uuid, p_user_id uuid, p_apply_zero_diffs boolean",
+    "prosecdef": "true"
+   },
+   {
+    "name": "approve_transfer",
+    "args": "p_transfer_id uuid, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "auto_match_bank_items",
+    "args": "p_statement_id uuid, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "calculate_abc",
+    "args": "p_store_id uuid, p_year integer, p_month integer, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "cancel_transfer",
+    "args": "p_transfer_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "cancel_transfer",
+    "args": "p_transfer_id uuid, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "close_cash_shift",
+    "args": "p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "close_fiscal_period",
+    "args": "p_store_id uuid, p_year integer, p_month integer, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "close_production_order_v2",
+    "args": "p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_final_amount numeric, p_final_method text, p_final_currency text, p_exchange_rate numeric, p_output_product_id uuid, p_output_quantity numeric, p_user_id uuid, p_idempotency_key text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "close_service_order_as_sale",
+    "args": "p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_payment_method text, p_currency text, p_exchange_rate numeric, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "compensate_inventory_error",
+    "args": "p_store_id uuid, p_original_movement_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "confirm_inventory_adjustment",
+    "args": "p_adjustment_id uuid, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "confirm_pending_reception",
+    "args": "p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone",
+    "prosecdef": "true"
+   },
+   {
+    "name": "confirm_transfer",
+    "args": "p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone",
+    "prosecdef": "true"
+   },
+   {
+    "name": "create_devolution",
+    "args": "p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_currency text, p_exchange_rate numeric",
+    "prosecdef": "true"
+   },
+   {
+    "name": "create_devolution",
+    "args": "p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "create_devolution_v2",
+    "args": "p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "create_physical_count",
+    "args": "p_store_id uuid, p_user_id uuid, p_notes text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "create_production_order_v2",
+    "args": "p_store_id uuid, p_order_type text, p_customer_name text, p_customer_ci text, p_customer_phone text, p_customer_address text, p_budget_total numeric, p_budget_currency text, p_description text, p_notes text, p_items jsonb, p_advance_amount numeric, p_advance_method text, p_advance_currency text, p_created_by uuid, p_idempotency_key text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "create_quotation",
+    "args": "p_store_id uuid, p_items jsonb, p_user_id uuid, p_customer_id uuid, p_customer_name text, p_customer_phone text, p_discount_type text, p_discount_value numeric, p_notes text, p_valid_until date",
+    "prosecdef": "true"
+   },
+   {
+    "name": "create_sale",
+    "args": "p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric, p_discount_type text, p_discount_value numeric, p_payment_method text, p_tax_amount numeric, p_applied_taxes jsonb, p_transaction_id uuid, p_operation_date timestamp with time zone, p_cash_amount numeric, p_transfer_amount numeric, p_idempotency_key text, p_sale_currency text, p_sale_exchange_rate numeric, p_zelle_amount numeric, p_warehouse_id uuid, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "create_sale_v2",
+    "args": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "create_transfer",
+    "args": "p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb, p_notes text, p_transaction_id uuid, p_operation_date timestamp with time zone, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "create_vale_salida",
+    "args": "p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "duplicate_inventory_adjustment",
+    "args": "p_original_id uuid, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "duplicate_inventory_adjustment_v2",
+    "args": "p_original_id uuid, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_reorder_suggestions",
+    "args": "p_store_id uuid, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_transferable_stores",
+    "args": "p_user_id uuid, p_current_store_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "perform_inventory_adjustment",
+    "args": "p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone",
+    "prosecdef": "true"
+   },
+   {
+    "name": "receive_production_output",
+    "args": "p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "receive_to_warehouse",
+    "args": "p_store_id uuid, p_product_id uuid, p_quantity numeric, p_unit_cost numeric, p_warehouse_id uuid, p_lot_number text, p_expiration_date date, p_user_id uuid, p_reason text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "record_counted_quantity",
+    "args": "p_count_id uuid, p_product_id uuid, p_counted_quantity numeric, p_user_id uuid, p_notes text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "register_reception",
+    "args": "p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reject_transfer",
+    "args": "p_transfer_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reset_store_data",
+    "args": "target_store_id uuid, p_keep_catalog boolean, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reverse_adjustment",
+    "args": "p_adjustment_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reverse_devolution",
+    "args": "p_devolution_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reverse_inventory_adjustment_v2",
+    "args": "p_adjustment_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reverse_production_order",
+    "args": "p_order_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reverse_receipt",
+    "args": "p_receipt_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reverse_receipt_v2",
+    "args": "p_receipt_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reverse_transaction_v2",
+    "args": "p_transaction_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reverse_transfer",
+    "args": "p_transfer_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reverse_vale_salida",
+    "args": "p_slip_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "set_transfer_approval_rule",
+    "args": "p_tenant_id uuid, p_store_id uuid, p_threshold_amount numeric, p_threshold_quantity numeric, p_approver_roles text[], p_is_active boolean, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "update_receipt_item_tasa",
+    "args": "p_receipt_item_id uuid, p_new_tasa_cambio_recepcion numeric, p_new_moneda_recepcion text, p_motivo text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "update_reception_items",
+    "args": "p_receipt_id uuid, p_item_updates jsonb, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "void_closed_production_order",
+    "args": "p_order_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "void_inventory_adjustment",
+    "args": "p_adjustment_id uuid, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "void_pending_reception",
+    "args": "p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone",
+    "prosecdef": "true"
+   },
+   {
+    "name": "void_transaction",
+    "args": "p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "withdraw_production_item_deprecated_6arg",
+    "args": "p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "withdraw_production_item_deprecated_9arg",
+    "args": "p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text, p_server_side_cost boolean",
+    "prosecdef": "true"
+   },
+   {
+    "name": "withdraw_production_item_v3",
+    "args": "p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text",
+    "prosecdef": "true"
+   }
+  ],
+  "is_admin": [
+   {
+    "name": "adjust_total_amount",
+    "args": "p_transaction_id uuid, p_new_total numeric, p_reason text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "bulk_assign_memberships",
+    "args": "p_user_id uuid, p_assignments jsonb",
+    "prosecdef": "true"
+   },
+   {
+    "name": "current_user_store_ids",
+    "args": "",
+    "prosecdef": "true"
+   },
+   {
+    "name": "detect_orphan_users",
+    "args": "",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_ai_api_key",
+    "args": "p_user_id uuid, p_provider text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_audit_logs",
+    "args": "p_store_id uuid, p_search_term text, p_date_from timestamp without time zone, p_date_to timestamp without time zone, p_limit integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_paginated_products_v2",
+    "args": "p_limit integer, p_offset integer, p_store_id uuid, p_search_term text, p_category text, p_sort_key text, p_sort_dir text, p_stock_filter text, p_active_filter text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_products_for_pos",
+    "args": "p_store_id uuid, p_search_term text, p_category text, p_limit integer, p_offset integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_purchases_book",
+    "args": "p_store_id uuid, p_year integer, p_month integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_sales_book",
+    "args": "p_store_id uuid, p_year integer, p_month integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_tax_report",
+    "args": "p_store_id uuid, p_year integer, p_month integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_tenant_cash_report",
+    "args": "p_tenant_id uuid, p_start_date timestamp with time zone, p_end_date timestamp with time zone",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_tenant_sales_summary",
+    "args": "p_tenant_id uuid, p_days integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_transactions",
+    "args": "p_store_id uuid, p_search_term text, p_date_from timestamp without time zone, p_date_to timestamp without time zone, p_limit integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_transactions_with_profit",
+    "args": "p_store_id uuid, p_search_term text, p_date_from timestamp without time zone, p_date_to timestamp without time zone, p_limit integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_user_audit_history",
+    "args": "p_user_id uuid, p_limit integer, p_offset integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "has_store_access",
+    "args": "p_store_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "is_admin_with_access",
+    "args": "p_store_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "managed_delete_user",
+    "args": "p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reconcile_orphan_user",
+    "args": "p_auth_user_id uuid, p_action text, p_reason text, p_caller_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reconcile_stock",
+    "args": "p_store_id uuid, p_fix boolean, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "update_transaction_taxes",
+    "args": "p_transaction_id uuid, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric",
+    "prosecdef": "true"
+   }
+  ],
+  "has_store_role": [
+   {
+    "name": "bulk_assign_memberships",
+    "args": "p_user_id uuid, p_assignments jsonb",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_or_create_product_cost_sheet",
+    "args": "p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_pdf_format text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "managed_revoke_membership",
+    "args": "p_membership_id uuid, p_caller_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "managed_update_membership",
+    "args": "p_membership_id uuid, p_role user_role, p_status text, p_caller_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reconcile_stock",
+    "args": "p_store_id uuid, p_fix boolean, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "save_product_cost_sheet",
+    "args": "p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_calculated_data jsonb, p_cost_price numeric",
+    "prosecdef": "true"
+   },
+   {
+    "name": "set_transfer_approval_rule",
+    "args": "p_tenant_id uuid, p_store_id uuid, p_threshold_amount numeric, p_threshold_quantity numeric, p_approver_roles text[], p_is_active boolean, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "upsert_store_cost_template",
+    "args": "p_store_id uuid, p_template_id text, p_template_data jsonb, p_modalidad text, p_pdf_format text, p_created_by uuid",
+    "prosecdef": "true"
+   }
+  ],
+  "has_store_access": [
+   {
+    "name": "create_purchase_order",
+    "args": "p_store_id uuid, p_supplier_name text, p_supplier_id uuid, p_po_number text, p_notes text, p_expected_date date, p_created_by uuid, p_items jsonb",
+    "prosecdef": "true"
+   },
+   {
+    "name": "create_received_service_v2",
+    "args": "p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "distribute_service_cost_v2",
+    "args": "p_service_id uuid, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_audit_logs",
+    "args": "p_store_id uuid, p_search_term text, p_date_from timestamp without time zone, p_date_to timestamp without time zone, p_limit integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_paginated_products_v2",
+    "args": "p_limit integer, p_offset integer, p_store_id uuid, p_search_term text, p_category text, p_sort_key text, p_sort_dir text, p_stock_filter text, p_active_filter text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_products_for_pos",
+    "args": "p_store_id uuid, p_search_term text, p_category text, p_limit integer, p_offset integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_purchases_book",
+    "args": "p_store_id uuid, p_year integer, p_month integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_sales_book",
+    "args": "p_store_id uuid, p_year integer, p_month integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_tax_report",
+    "args": "p_store_id uuid, p_year integer, p_month integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_transactions",
+    "args": "p_store_id uuid, p_search_term text, p_date_from timestamp without time zone, p_date_to timestamp without time zone, p_limit integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "get_transactions_with_profit",
+    "args": "p_store_id uuid, p_search_term text, p_date_from timestamp without time zone, p_date_to timestamp without time zone, p_limit integer",
+    "prosecdef": "true"
+   },
+   {
+    "name": "is_admin_with_access",
+    "args": "p_store_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "link_receipts_to_service",
+    "args": "p_service_id uuid, p_receipt_ids jsonb, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "managed_create_user",
+    "args": "p_max_users integer, p_max_stores integer, p_role text, p_full_name text, p_email text, p_creator_id uuid, p_target_user_id uuid, p_store_id uuid, p_memberships jsonb",
+    "prosecdef": "true"
+   },
+   {
+    "name": "managed_create_user_v2",
+    "args": "p_email text, p_full_name text, p_role user_role, p_plan plan_t, p_store_id uuid, p_memberships jsonb, p_max_stores integer, p_max_users integer, p_target_user_id uuid, p_creator_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "managed_delete_product",
+    "args": "p_product_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "managed_toggle_product_active",
+    "args": "p_product_id uuid, p_is_active boolean",
+    "prosecdef": "true"
+   },
+   {
+    "name": "receive_against_po",
+    "args": "p_po_id uuid, p_received_items jsonb, p_user_id uuid, p_reception_date timestamp with time zone, p_invoice_number text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "register_stock_movement",
+    "args": "p_product_id uuid, p_store_id uuid, p_quantity numeric, p_movement_type text, p_reason text, p_user_id uuid, p_variant_id uuid, p_sale_id uuid, p_unit_cost numeric, p_notes text, p_operation_date timestamp with time zone, p_skip_access_check boolean",
+    "prosecdef": "true"
+   },
+   {
+    "name": "set_purchase_order_status",
+    "args": "p_po_id uuid, p_new_status purchase_status_enum, p_user_id uuid, p_reason text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "set_received_service_status",
+    "args": "p_service_id uuid, p_new_status text, p_user_id uuid, p_reason text",
+    "prosecdef": "true"
+   },
+   {
+    "name": "void_received_service_with_reversal",
+    "args": "p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone",
+    "prosecdef": "true"
+   }
+  ],
+  "has_store_role_as": [
+   {
+    "name": "create_sale_v2",
+    "args": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid",
+    "prosecdef": "true"
+   },
+   {
+    "name": "reopen_cash_shift",
+    "args": "p_closure_id uuid, p_reason text, p_user_id uuid",
+    "prosecdef": "true"
+   }
+  ]
+ }
+}

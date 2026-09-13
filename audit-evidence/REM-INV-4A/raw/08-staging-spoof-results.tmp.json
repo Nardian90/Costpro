@@ -1,0 +1,184 @@
+[
+ {
+  "id": "S-BASE-1",
+  "desc": "U1(clerk)+StoreA+[clerk] baseline",
+  "expected": "ALLOW(true)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  t ⏎ (1 row)",
+  "verdict": "ALLOW ✓"
+ },
+ {
+  "id": "S-C",
+  "desc": "role spoof: U1 claims admin/manager of own store",
+  "expected": "DENY(false)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)",
+  "verdict": "DENIED ✓"
+ },
+ {
+  "id": "S-B/S-H",
+  "desc": "store spoof: U1 checks StoreB membership",
+  "expected": "DENY(false)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)",
+  "verdict": "DENIED ✓"
+ },
+ {
+  "id": "S-D",
+  "desc": "combined: foreign store + privileged role",
+  "expected": "DENY(false)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)",
+  "verdict": "DENIED ✓"
+ },
+ {
+  "id": "S-E1",
+  "desc": "NULL store",
+  "expected": "DENY(false)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)",
+  "verdict": "DENIED ✓"
+ },
+ {
+  "id": "S-E2",
+  "desc": "NULL roles",
+  "expected": "DENY(false)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)",
+  "verdict": "DENIED ✓"
+ },
+ {
+  "id": "S-U",
+  "desc": "unknown role",
+  "expected": "DENY(false)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)",
+  "verdict": "DENIED ✓"
+ },
+ {
+  "id": "S-F",
+  "desc": "nonexistent store UUID",
+  "expected": "DENY(false)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)",
+  "verdict": "DENIED ✓"
+ },
+ {
+  "id": "S-A1",
+  "desc": "user spoof: U1 passes U4 (member of B) — must be ignored",
+  "expected": "DENY(false)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)",
+  "verdict": "DENIED ✓ (spoof ineffective)"
+ },
+ {
+  "id": "S-A2",
+  "desc": "own id passed explicitly (consistency check)",
+  "expected": "ALLOW(true)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  t ⏎ (1 row)",
+  "verdict": "ALLOW ✓"
+ },
+ {
+  "id": "S-A3",
+  "desc": "p_user_id NULL → falls back to auth.uid()",
+  "expected": "ALLOW(true)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  t ⏎ (1 row)",
+  "verdict": "ALLOW ✓"
+ },
+ {
+  "id": "S-I-note",
+  "desc": "SIMULATED platform state role=service_role: p_user_id honored (branch keyed on JWT role claim — set by platform, not client)",
+  "expected": "TRUE (branch proof)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  t ⏎ (1 row)",
+  "verdict": "gate-branch confirmed ✓"
+ },
+ {
+  "id": "S-A4",
+  "desc": "anon calls 3-arg (EXECUTE via PUBLIC grant) with real UUID",
+  "expected": "DENY(false)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)",
+  "verdict": "DENIED ✓ (no material exposure)"
+ },
+ {
+  "id": "S-AS",
+  "desc": "direct EXECUTE has_store_role_as as authenticated",
+  "expected": "permission denied",
+  "actual": "----------------------------------------------------------------------- ⏎  {\"sub\":\"11111111-1111-1111-1111-111111111111\",\"role\":\"authenticated\"} ⏎ (1 row) ⏎  ⏎ ERROR:  permission denied for function has_store_role_as ⏎ ",
+  "verdict": "BLOCKED BY ACL ✓"
+ },
+ {
+  "id": "D1",
+  "desc": "legit sale, discount 5%, no supervisor",
+  "expected": "SUCCESS",
+  "actual": "(1 row) ⏎  ⏎                                     r                                     ⏎ ------------------------------------------------------------------------- ⏎  {\"caller\": \"11111111-1111-1111-1111-111111111111\", \"status\": \"success\"} ⏎ (1 row)",
+  "verdict": "ALLOWED-EXPECTED ✓"
+ },
+ {
+  "id": "D2",
+  "desc": "discount 20%, supervisor NULL",
+  "expected": "ERR_SUPERVISOR_REQUIRED",
+  "actual": " {\"sub\":\"11111111-1111-1111-1111-111111111111\",\"role\":\"authenticated\"} ⏎ (1 row) ⏎  ⏎ ERROR:  ERR_SUPERVISOR_REQUIRED: discount_pct=20 ⏎ CONTEXT:  PL/pgSQL function create_sale_minimal(uuid,numeric,numeric,uuid,uuid) line 14 at RAISE ⏎ ",
+  "verdict": "DENIED ✓"
+ },
+ {
+  "id": "D3",
+  "desc": "discount 20%, supervisor=U4 (clerk of OTHER store)",
+  "expected": "ERR_SUPERVISOR_UNAUTHORIZED",
+  "actual": " {\"sub\":\"11111111-1111-1111-1111-111111111111\",\"role\":\"authenticated\"} ⏎ (1 row) ⏎  ⏎ ERROR:  ERR_SUPERVISOR_UNAUTHORIZED ⏎ CONTEXT:  PL/pgSQL function create_sale_minimal(uuid,numeric,numeric,uuid,uuid) line 17 at RAISE ⏎ ",
+  "verdict": "DENIED ✓"
+ },
+ {
+  "id": "D4-SPOOF",
+  "desc": "discount 20%, supervisor=U3 (global admin UUID, client-supplied)",
+  "expected": "expected DENY",
+  "actual": "(1 row) ⏎  ⏎                                     r                                     ⏎ ------------------------------------------------------------------------- ⏎  {\"caller\": \"11111111-1111-1111-1111-111111111111\", \"status\": \"success\"} ⏎ (1 row)",
+  "verdict": "*** EXPLOITABLE — SPOOF SUCCESS ***"
+ },
+ {
+  "id": "D5-SPOOF",
+  "desc": "discount 20%, supervisor=U5 (CROSS-TENANT admin UUID)",
+  "expected": "expected DENY",
+  "actual": "(1 row) ⏎  ⏎                                     r                                     ⏎ ------------------------------------------------------------------------- ⏎  {\"caller\": \"11111111-1111-1111-1111-111111111111\", \"status\": \"success\"} ⏎ (1 row)",
+  "verdict": "*** EXPLOITABLE — SPOOF SUCCESS ***"
+ },
+ {
+  "id": "D6",
+  "desc": "discount 20%, supervisor=random UUID",
+  "expected": "ERR_SUPERVISOR_UNAUTHORIZED",
+  "actual": " {\"sub\":\"11111111-1111-1111-1111-111111111111\",\"role\":\"authenticated\"} ⏎ (1 row) ⏎  ⏎ ERROR:  ERR_SUPERVISOR_UNAUTHORIZED ⏎ CONTEXT:  PL/pgSQL function create_sale_minimal(uuid,numeric,numeric,uuid,uuid) line 17 at RAISE ⏎ ",
+  "verdict": "DENIED ✓"
+ },
+ {
+  "id": "D7-XSTORE",
+  "desc": "cross-store: U1 creates sale in StoreB (§30)",
+  "expected": "ERR_UNAUTHORIZED",
+  "actual": " {\"sub\":\"11111111-1111-1111-1111-111111111111\",\"role\":\"authenticated\"} ⏎ (1 row) ⏎  ⏎ ERROR:  ERR_UNAUTHORIZED ⏎ CONTEXT:  PL/pgSQL function create_sale_minimal(uuid,numeric,numeric,uuid,uuid) line 9 at RAISE ⏎ ",
+  "verdict": "DENIED ✓"
+ },
+ {
+  "id": "D8-ATOMIC",
+  "desc": "sale_stub rows after D1..D6 (attribution + atomicity §29)",
+  "expected": "rows owned by U1; spoof rows flagged",
+  "actual": "----------------------------------------------------------------------- ⏎  {\"sub\":\"11111111-1111-1111-1111-111111111111\",\"role\":\"authenticated\"} ⏎ (1 row) ⏎  ⏎ ERROR:  permission denied for table sale_stub ⏎ ",
+  "verdict": "recorded (see actual)"
+ },
+ {
+  "id": "E1",
+  "desc": "own id: U1 enumerates own transferable stores",
+  "expected": "[] (empty)",
+  "actual": " {\"sub\":\"11111111-1111-1111-1111-111111111111\",\"role\":\"authenticated\"} ⏎ (1 row) ⏎  ⏎  name  ⏎ ------ ⏎ (0 rows)",
+  "verdict": "ALLOWED-EXPECTED ✓"
+ },
+ {
+  "id": "E2-SPOOF",
+  "desc": "cross-user: U1 passes U4 → leaks U4-accessible store",
+  "expected": "expected: only own stores",
+  "actual": "(1 row) ⏎  ⏎      name      ⏎ -------------- ⏎  Store B (T1) ⏎ (1 row)",
+  "verdict": "*** EXPLOITABLE — INFO DISCLOSURE ***"
+ },
+ {
+  "id": "E3-SPOOF",
+  "desc": "admin-bypass: U1 passes U3 (global admin) → store list leak",
+  "expected": "expected: only own stores",
+  "actual": "(1 row) ⏎  ⏎      name      ⏎ -------------- ⏎  Store B (T1) ⏎ (1 row)",
+  "verdict": "*** EXPLOITABLE — INFO DISCLOSURE ***"
+ },
+ {
+  "id": "F1",
+  "desc": "claims sub=U2 (legit manager): function trusts claims GUC — identity source = platform-injected claims",
+  "expected": "TRUE for U2 (function correctness)",
+  "actual": "(1 row) ⏎  ⏎  result  ⏎ -------- ⏎  t ⏎ (1 row)",
+  "verdict": "identity-source confirmed ✓ (platform-controlled; not client-reachable)"
+ }
+]

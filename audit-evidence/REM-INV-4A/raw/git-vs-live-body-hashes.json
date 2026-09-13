@@ -1,0 +1,38 @@
+[
+ {
+  "migration": "20260627000001_versionar_has_store_access.sql",
+  "occurrence": 1,
+  "signature": "p_store_id uuid, p_roles text[]",
+  "git_body_md5": "bf4b1761a6ccd80919108301fe94a0e9",
+  "matches_live": true,
+  "live_identity_args": [
+   "p_store_id uuid, p_roles text[]"
+  ]
+ },
+ {
+  "migration": "20260820000001_security_fix_spoofable_caller_uid.sql",
+  "occurrence": 1,
+  "signature": "p_user_id uuid, p_store_id uuid, p_roles text[]",
+  "git_body_md5": "36212570c073eaef70e10b70a20a236d",
+  "matches_live": false,
+  "live_identity_args": []
+ },
+ {
+  "migration": "20260807000002_v2_16_2_has_store_role_as.sql",
+  "occurrence": 1,
+  "signature": "p_user_id uuid, p_store_id uuid, p_roles text[]",
+  "git_body_md5": "abb566b7f3ce24ee2f0e6dbdb811f2e5",
+  "matches_live": true,
+  "live_identity_args": [
+   "p_user_id uuid, p_store_id uuid, p_roles text[]"
+  ]
+ },
+ {
+  "migration": "20260527094858_harden_tenant_isolation_products_stores_tenants.sql",
+  "occurrence": 1,
+  "signature": "p_store_id uuid",
+  "git_body_md5": "342fca81d1bc3aaf1f3677b2c2daa3b2",
+  "matches_live": false,
+  "live_identity_args": []
+ }
+]

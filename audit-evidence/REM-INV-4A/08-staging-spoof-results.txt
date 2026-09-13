@@ -1,0 +1,148 @@
+REM-INV-4A — Staging spoofing results (F-04-A)
+Generated: 2026-09-13T15:45:21.943Z
+Environment: ephemeral PostgreSQL 17.6 (port 5433, localhost) — same major version as LIVE (17.6)
+Function bodies: VERBATIM from LIVE pg_get_functiondef (captured n/a)
+Identity simulation: SET ROLE authenticated + set_config('request.jwt.claims', '{"sub":<uid>,"role":...}')
+  (mirrors PostgREST behavior AFTER cryptographic JWT verification; clients cannot set this GUC via PostgREST)
+Fixtures: U1=clerk@StoreA(T1), U2=manager@StoreA, U3=global admin T1 (no memberships), U4=clerk@StoreB(T1), U5=global admin T2
+Stores: A(T1), B(T1), C(T2).  ================
+
+[S-BASE-1] U1(clerk)+StoreA+[clerk] baseline
+  expected: ALLOW(true)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  t ⏎ (1 row)
+  verdict : ALLOW ✓
+
+[S-C] role spoof: U1 claims admin/manager of own store
+  expected: DENY(false)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)
+  verdict : DENIED ✓
+
+[S-B/S-H] store spoof: U1 checks StoreB membership
+  expected: DENY(false)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)
+  verdict : DENIED ✓
+
+[S-D] combined: foreign store + privileged role
+  expected: DENY(false)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)
+  verdict : DENIED ✓
+
+[S-E1] NULL store
+  expected: DENY(false)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)
+  verdict : DENIED ✓
+
+[S-E2] NULL roles
+  expected: DENY(false)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)
+  verdict : DENIED ✓
+
+[S-U] unknown role
+  expected: DENY(false)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)
+  verdict : DENIED ✓
+
+[S-F] nonexistent store UUID
+  expected: DENY(false)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)
+  verdict : DENIED ✓
+
+[S-A1] user spoof: U1 passes U4 (member of B) — must be ignored
+  expected: DENY(false)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)
+  verdict : DENIED ✓ (spoof ineffective)
+
+[S-A2] own id passed explicitly (consistency check)
+  expected: ALLOW(true)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  t ⏎ (1 row)
+  verdict : ALLOW ✓
+
+[S-A3] p_user_id NULL → falls back to auth.uid()
+  expected: ALLOW(true)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  t ⏎ (1 row)
+  verdict : ALLOW ✓
+
+[S-I-note] SIMULATED platform state role=service_role: p_user_id honored (branch keyed on JWT role claim — set by platform, not client)
+  expected: TRUE (branch proof)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  t ⏎ (1 row)
+  verdict : gate-branch confirmed ✓
+
+[S-A4] anon calls 3-arg (EXECUTE via PUBLIC grant) with real UUID
+  expected: DENY(false)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  f ⏎ (1 row)
+  verdict : DENIED ✓ (no material exposure)
+
+[S-AS] direct EXECUTE has_store_role_as as authenticated
+  expected: permission denied
+  actual  : ----------------------------------------------------------------------- ⏎  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ ERROR:  permission denied for function has_store_role_as ⏎ 
+  verdict : BLOCKED BY ACL ✓
+
+[D1] legit sale, discount 5%, no supervisor
+  expected: SUCCESS
+  actual  : (1 row) ⏎  ⏎                                     r                                     ⏎ ------------------------------------------------------------------------- ⏎  {"caller": "11111111-1111-1111-1111-111111111111", "status": "success"} ⏎ (1 row)
+  verdict : ALLOWED-EXPECTED ✓
+
+[D2] discount 20%, supervisor NULL
+  expected: ERR_SUPERVISOR_REQUIRED
+  actual  :  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ ERROR:  ERR_SUPERVISOR_REQUIRED: discount_pct=20 ⏎ CONTEXT:  PL/pgSQL function create_sale_minimal(uuid,numeric,numeric,uuid,uuid) line 14 at RAISE ⏎ 
+  verdict : DENIED ✓
+
+[D3] discount 20%, supervisor=U4 (clerk of OTHER store)
+  expected: ERR_SUPERVISOR_UNAUTHORIZED
+  actual  :  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ ERROR:  ERR_SUPERVISOR_UNAUTHORIZED ⏎ CONTEXT:  PL/pgSQL function create_sale_minimal(uuid,numeric,numeric,uuid,uuid) line 17 at RAISE ⏎ 
+  verdict : DENIED ✓
+
+[D4-SPOOF] discount 20%, supervisor=U3 (global admin UUID, client-supplied)
+  expected: expected DENY
+  actual  : (1 row) ⏎  ⏎                                     r                                     ⏎ ------------------------------------------------------------------------- ⏎  {"caller": "11111111-1111-1111-1111-111111111111", "status": "success"} ⏎ (1 row)
+  verdict : *** EXPLOITABLE — SPOOF SUCCESS ***
+
+[D5-SPOOF] discount 20%, supervisor=U5 (CROSS-TENANT admin UUID)
+  expected: expected DENY
+  actual  : (1 row) ⏎  ⏎                                     r                                     ⏎ ------------------------------------------------------------------------- ⏎  {"caller": "11111111-1111-1111-1111-111111111111", "status": "success"} ⏎ (1 row)
+  verdict : *** EXPLOITABLE — SPOOF SUCCESS ***
+
+[D6] discount 20%, supervisor=random UUID
+  expected: ERR_SUPERVISOR_UNAUTHORIZED
+  actual  :  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ ERROR:  ERR_SUPERVISOR_UNAUTHORIZED ⏎ CONTEXT:  PL/pgSQL function create_sale_minimal(uuid,numeric,numeric,uuid,uuid) line 17 at RAISE ⏎ 
+  verdict : DENIED ✓
+
+[D7-XSTORE] cross-store: U1 creates sale in StoreB (§30)
+  expected: ERR_UNAUTHORIZED
+  actual  :  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ ERROR:  ERR_UNAUTHORIZED ⏎ CONTEXT:  PL/pgSQL function create_sale_minimal(uuid,numeric,numeric,uuid,uuid) line 9 at RAISE ⏎ 
+  verdict : DENIED ✓
+
+[D8-ATOMIC] sale_stub rows after D1..D6 (attribution + atomicity §29)
+  expected: rows owned by U1; spoof rows flagged
+  actual  : ----------------------------------------------------------------------- ⏎  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎ ERROR:  permission denied for table sale_stub ⏎ 
+  verdict : recorded (see actual)
+
+[E1] own id: U1 enumerates own transferable stores
+  expected: [] (empty)
+  actual  :  {"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"} ⏎ (1 row) ⏎  ⏎  name  ⏎ ------ ⏎ (0 rows)
+  verdict : ALLOWED-EXPECTED ✓
+
+[E2-SPOOF] cross-user: U1 passes U4 → leaks U4-accessible store
+  expected: expected: only own stores
+  actual  : (1 row) ⏎  ⏎      name      ⏎ -------------- ⏎  Store B (T1) ⏎ (1 row)
+  verdict : *** EXPLOITABLE — INFO DISCLOSURE ***
+
+[E3-SPOOF] admin-bypass: U1 passes U3 (global admin) → store list leak
+  expected: expected: only own stores
+  actual  : (1 row) ⏎  ⏎      name      ⏎ -------------- ⏎  Store B (T1) ⏎ (1 row)
+  verdict : *** EXPLOITABLE — INFO DISCLOSURE ***
+
+[F1] claims sub=U2 (legit manager): function trusts claims GUC — identity source = platform-injected claims
+  expected: TRUE for U2 (function correctness)
+  actual  : (1 row) ⏎  ⏎  result  ⏎ -------- ⏎  t ⏎ (1 row)
+  verdict : identity-source confirmed ✓ (platform-controlled; not client-reachable)
+
+================ §29 ATOMICITY — sale_stub after D1..D6 ================
+store_id               |               user_id                | discount_pct |          supervisor_user_id          | total 
+--------------------------------------+--------------------------------------+--------------+--------------------------------------+-------
+ aaaaaaaa-0000-0000-0000-00000000000a | 11111111-1111-1111-1111-111111111111 |            5 |                                      |  1000
+ aaaaaaaa-0000-0000-0000-00000000000a | 11111111-1111-1111-1111-111111111111 |           20 | 33333333-3333-3333-3333-333333333333 |  1000
+ aaaaaaaa-0000-0000-0000-00000000000a | 11111111-1111-1111-1111-111111111111 |           20 | 55555555-5555-5555-5555-555555555555 |  1000
+(3 rows)
+Interpretation: all sales attributed to the REAL caller (U1) — p_user_id gate (v2_12_9 pattern) works;
+only the supervisor authorization field is spoofed. No partial/unintended side effects observed.

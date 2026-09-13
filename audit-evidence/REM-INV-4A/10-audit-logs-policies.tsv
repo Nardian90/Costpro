@@ -1,0 +1,18 @@
+# REM-INV-4A audit_logs RLS 2026-09-13T15:14:33.726Z
+# rls flags: {"owner":"postgres","rls":"true","force_rls":"false","relacl_text":"{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,costpro_transaction_adjuster=a/postgres,costpro_snapshot_restorer=a/postgres}"}
+# --- policies (n=3) ---
+policy	cmd	roles	permissive	qual	with_check
+Audit logs select	SELECT	{authenticated}	PERMISSIVE	(( SELECT profiles.role |    FROM profiles |   WHERE (profiles.id = ( SELECT auth.uid() AS uid))) = 'admin'::user_role)	
+audit_logs_insert_authenticated	INSERT	{authenticated}	PERMISSIVE		(user_id = auth.uid())
+audit_logs_select_own_and_managed	SELECT	{authenticated}	PERMISSIVE	(is_global_admin() OR ((store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text])))	
+# --- triggers (n=2) ---
+name	enabled	function	def
+trg_set_audit_log_trace_id	enabled	set_audit_log_trace_id	CREATE TRIGGER trg_set_audit_log_trace_id BEFORE INSERT ON public.audit_logs FOR EACH ROW EXECUTE FUNCTION set_audit_log_trace_id()
+update_audit_logs_updated_at	enabled	update_updated_at_column	CREATE TRIGGER update_audit_logs_updated_at BEFORE UPDATE ON public.audit_logs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
+# --- constraints ---
+name	type	def
+audit_logs_pkey	p	PRIMARY KEY (id)
+audit_logs_store_id_check	c	CHECK (((store_id IS NOT NULL) OR (table_name = ANY (ARRAY['profiles'::text, 'stores'::text, 'system'::text]))))
+audit_logs_store_id_fkey	f	FOREIGN KEY (store_id) REFERENCES stores(id)
+audit_logs_user_id_fkey	f	FOREIGN KEY (user_id) REFERENCES auth.users(id)
+fk_audit_logs_profiles	f	FOREIGN KEY (user_id) REFERENCES profiles(id)

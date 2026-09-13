@@ -1,0 +1,56 @@
+{
+ "usmCols": [
+  {
+   "column_name": "id",
+   "data_type": "uuid",
+   "udt_name": "uuid",
+   "is_nullable": "NO"
+  },
+  {
+   "column_name": "user_id",
+   "data_type": "uuid",
+   "udt_name": "uuid",
+   "is_nullable": "NO"
+  },
+  {
+   "column_name": "store_id",
+   "data_type": "uuid",
+   "udt_name": "uuid",
+   "is_nullable": "NO"
+  },
+  {
+   "column_name": "role",
+   "data_type": "USER-DEFINED",
+   "udt_name": "user_role",
+   "is_nullable": "NO"
+  },
+  {
+   "column_name": "status",
+   "data_type": "USER-DEFINED",
+   "udt_name": "membership_status",
+   "is_nullable": "NO"
+  },
+  {
+   "column_name": "created_at",
+   "data_type": "timestamp with time zone",
+   "udt_name": "timestamptz",
+   "is_nullable": "NO"
+  },
+  {
+   "column_name": "updated_at",
+   "data_type": "timestamp with time zone",
+   "udt_name": "timestamptz",
+   "is_nullable": "NO"
+  }
+ ],
+ "enums": [
+  {
+   "typname": "membership_status",
+   "labels": "active,revoked"
+  },
+  {
+   "typname": "user_role",
+   "labels": "admin,superadmin,manager,clerk,warehouse,encargado,usuario,costo,tenant_admin"
+  }
+ ]
+}

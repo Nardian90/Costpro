@@ -1,0 +1,155 @@
+{
+ "policies": [
+  {
+   "policyname": "Audit logs select",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "permissive": "PERMISSIVE",
+   "qual": "(( SELECT profiles.role\n   FROM profiles\n  WHERE (profiles.id = ( SELECT auth.uid() AS uid))) = 'admin'::user_role)",
+   "with_check": ""
+  },
+  {
+   "policyname": "audit_logs_insert_authenticated",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "permissive": "PERMISSIVE",
+   "qual": "",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "policyname": "audit_logs_select_own_and_managed",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "permissive": "PERMISSIVE",
+   "qual": "(is_global_admin() OR ((store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text])))",
+   "with_check": ""
+  }
+ ],
+ "triggers": [
+  {
+   "tgname": "trg_set_audit_log_trace_id",
+   "enabled": "enabled",
+   "fn": "set_audit_log_trace_id",
+   "def": "CREATE TRIGGER trg_set_audit_log_trace_id BEFORE INSERT ON public.audit_logs FOR EACH ROW EXECUTE FUNCTION set_audit_log_trace_id()"
+  },
+  {
+   "tgname": "update_audit_logs_updated_at",
+   "enabled": "enabled",
+   "fn": "update_updated_at_column",
+   "def": "CREATE TRIGGER update_audit_logs_updated_at BEFORE UPDATE ON public.audit_logs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()"
+  }
+ ],
+ "columns": [
+  {
+   "column_name": "id",
+   "data_type": "uuid",
+   "udt_name": "uuid",
+   "col_default": "uuid_generate_v4()",
+   "is_nullable": "NO"
+  },
+  {
+   "column_name": "created_at",
+   "data_type": "timestamp with time zone",
+   "udt_name": "timestamptz",
+   "col_default": "now()",
+   "is_nullable": "YES"
+  },
+  {
+   "column_name": "user_id",
+   "data_type": "uuid",
+   "udt_name": "uuid",
+   "col_default": "",
+   "is_nullable": "YES"
+  },
+  {
+   "column_name": "table_name",
+   "data_type": "text",
+   "udt_name": "text",
+   "col_default": "",
+   "is_nullable": "YES"
+  },
+  {
+   "column_name": "record_id",
+   "data_type": "uuid",
+   "udt_name": "uuid",
+   "col_default": "",
+   "is_nullable": "YES"
+  },
+  {
+   "column_name": "action",
+   "data_type": "text",
+   "udt_name": "text",
+   "col_default": "",
+   "is_nullable": "YES"
+  },
+  {
+   "column_name": "old_data",
+   "data_type": "jsonb",
+   "udt_name": "jsonb",
+   "col_default": "",
+   "is_nullable": "YES"
+  },
+  {
+   "column_name": "new_data",
+   "data_type": "jsonb",
+   "udt_name": "jsonb",
+   "col_default": "",
+   "is_nullable": "YES"
+  },
+  {
+   "column_name": "metadata",
+   "data_type": "jsonb",
+   "udt_name": "jsonb",
+   "col_default": "",
+   "is_nullable": "YES"
+  },
+  {
+   "column_name": "updated_at",
+   "data_type": "timestamp with time zone",
+   "udt_name": "timestamptz",
+   "col_default": "now()",
+   "is_nullable": "YES"
+  },
+  {
+   "column_name": "store_id",
+   "data_type": "uuid",
+   "udt_name": "uuid",
+   "col_default": "",
+   "is_nullable": "YES"
+  },
+  {
+   "column_name": "trace_id",
+   "data_type": "text",
+   "udt_name": "text",
+   "col_default": "",
+   "is_nullable": "YES"
+  }
+ ],
+ "constraints": [
+  {
+   "conname": "audit_logs_pkey",
+   "contype": "p",
+   "def": "PRIMARY KEY (id)"
+  },
+  {
+   "conname": "audit_logs_store_id_check",
+   "contype": "c",
+   "def": "CHECK (((store_id IS NOT NULL) OR (table_name = ANY (ARRAY['profiles'::text, 'stores'::text, 'system'::text]))))"
+  },
+  {
+   "conname": "audit_logs_store_id_fkey",
+   "contype": "f",
+   "def": "FOREIGN KEY (store_id) REFERENCES stores(id)"
+  },
+  {
+   "conname": "audit_logs_user_id_fkey",
+   "contype": "f",
+   "def": "FOREIGN KEY (user_id) REFERENCES auth.users(id)"
+  },
+  {
+   "conname": "fk_audit_logs_profiles",
+   "contype": "f",
+   "def": "FOREIGN KEY (user_id) REFERENCES profiles(id)"
+  }
+ ]
+}
