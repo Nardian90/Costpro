@@ -1,0 +1,82 @@
+# REM-INV-4 addendum — LIVE sequences (relkind S, public) + grants
+# columns: sequence	seqtype	start	inc	min	max	cache	cycle
+audit_events_seq_id_seq	int8	1	1	1	9223372036854775807	1	false
+devolutions_number_seq	int8	1	1	1	9223372036854775807	100	false
+internal_barcode_seq	int8	1	1	1	9223372036854775807	1	false
+production_order_number_seq	int8	1	1	1	9223372036854775807	1	false
+service_number_seq	int8	1	1	1	9223372036854775807	1	false
+units_of_measure_id_seq	int8	1	1	1	9223372036854775807	1	false
+
+# [SEQUENCES-FRESH] sequence	grantee	privilege
+audit_events_seq_id_seq	anon	SELECT
+audit_events_seq_id_seq	anon	UPDATE
+audit_events_seq_id_seq	anon	USAGE
+audit_events_seq_id_seq	authenticated	SELECT
+audit_events_seq_id_seq	authenticated	UPDATE
+audit_events_seq_id_seq	authenticated	USAGE
+audit_events_seq_id_seq	postgres	SELECT
+audit_events_seq_id_seq	postgres	UPDATE
+audit_events_seq_id_seq	postgres	USAGE
+audit_events_seq_id_seq	service_role	SELECT
+audit_events_seq_id_seq	service_role	UPDATE
+audit_events_seq_id_seq	service_role	USAGE
+devolutions_number_seq	anon	SELECT
+devolutions_number_seq	anon	UPDATE
+devolutions_number_seq	anon	USAGE
+devolutions_number_seq	authenticated	SELECT
+devolutions_number_seq	authenticated	UPDATE
+devolutions_number_seq	authenticated	USAGE
+devolutions_number_seq	postgres	SELECT
+devolutions_number_seq	postgres	UPDATE
+devolutions_number_seq	postgres	USAGE
+devolutions_number_seq	service_role	SELECT
+devolutions_number_seq	service_role	UPDATE
+devolutions_number_seq	service_role	USAGE
+internal_barcode_seq	anon	SELECT
+internal_barcode_seq	anon	UPDATE
+internal_barcode_seq	anon	USAGE
+internal_barcode_seq	authenticated	SELECT
+internal_barcode_seq	authenticated	UPDATE
+internal_barcode_seq	authenticated	USAGE
+internal_barcode_seq	postgres	SELECT
+internal_barcode_seq	postgres	UPDATE
+internal_barcode_seq	postgres	USAGE
+internal_barcode_seq	service_role	SELECT
+internal_barcode_seq	service_role	UPDATE
+internal_barcode_seq	service_role	USAGE
+production_order_number_seq	anon	SELECT
+production_order_number_seq	anon	UPDATE
+production_order_number_seq	anon	USAGE
+production_order_number_seq	authenticated	SELECT
+production_order_number_seq	authenticated	UPDATE
+production_order_number_seq	authenticated	USAGE
+production_order_number_seq	postgres	SELECT
+production_order_number_seq	postgres	UPDATE
+production_order_number_seq	postgres	USAGE
+production_order_number_seq	service_role	SELECT
+production_order_number_seq	service_role	UPDATE
+production_order_number_seq	service_role	USAGE
+service_number_seq	anon	SELECT
+service_number_seq	anon	UPDATE
+service_number_seq	anon	USAGE
+service_number_seq	authenticated	SELECT
+service_number_seq	authenticated	UPDATE
+service_number_seq	authenticated	USAGE
+service_number_seq	postgres	SELECT
+service_number_seq	postgres	UPDATE
+service_number_seq	postgres	USAGE
+service_number_seq	service_role	SELECT
+service_number_seq	service_role	UPDATE
+service_number_seq	service_role	USAGE
+units_of_measure_id_seq	anon	SELECT
+units_of_measure_id_seq	anon	UPDATE
+units_of_measure_id_seq	anon	USAGE
+units_of_measure_id_seq	authenticated	SELECT
+units_of_measure_id_seq	authenticated	UPDATE
+units_of_measure_id_seq	authenticated	USAGE
+units_of_measure_id_seq	postgres	SELECT
+units_of_measure_id_seq	postgres	UPDATE
+units_of_measure_id_seq	postgres	USAGE
+units_of_measure_id_seq	service_role	SELECT
+units_of_measure_id_seq	service_role	UPDATE
+units_of_measure_id_seq	service_role	USAGE

@@ -1,0 +1,69 @@
+{
+ "captured_at": "2026-09-13T14:27:40.569Z",
+ "parts": {
+  "functions": {
+   "pack_n": 484,
+   "fresh_n": 484,
+   "identical": 484,
+   "changed_n": 0,
+   "added_n": 0,
+   "removed_n": 0,
+   "changed": [],
+   "added": [],
+   "removed": []
+  },
+  "triggers": {
+   "pack_n": 82,
+   "fresh_n": 88,
+   "identical": 82,
+   "changed_n": 0,
+   "added": [
+    "auth.users#tr_on_auth_user_created",
+    "realtime.subscription#tr_check_filters",
+    "storage.buckets#enforce_bucket_name_length_trigger",
+    "storage.buckets#protect_buckets_delete",
+    "storage.objects#protect_objects_delete",
+    "storage.objects#update_objects_updated_at"
+   ],
+   "removed": [],
+   "changed": []
+  },
+  "policies": {
+   "pack_n": 391,
+   "fresh_n": 391,
+   "identical": 391,
+   "changed_n": 0,
+   "added": [],
+   "removed": [],
+   "changed": []
+  },
+  "tables": {
+   "pack_n": 154,
+   "fresh_n": 157,
+   "identical": 154,
+   "changed_n": 0,
+   "added": [
+    "m.mv_cash_session",
+    "m.mv_margin_product",
+    "m.mv_sales_daily"
+   ],
+   "removed": [],
+   "changed": [],
+   "_pack_relkinds": [
+    "r",
+    "v"
+   ],
+   "_fresh_relkinds": [
+    "m",
+    "r",
+    "v"
+   ],
+   "_removed_detail": [],
+   "_added_detail": [
+    "m.mv_cash_session",
+    "m.mv_margin_product",
+    "m.mv_sales_daily"
+   ]
+  }
+ }
+}
