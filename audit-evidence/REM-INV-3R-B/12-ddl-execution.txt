@@ -1,0 +1,15 @@
+REM-INV-3R-B — 12-ddl-execution
+Fecha UTC: 2026-09-13T04:01:35.908Z
+Propuesta: 10-ddl-proposal.sql (sha256 en MANIFEST)
+Sentencias autorizadas (whitelist exacta):
+  [1] REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE public.devolutions FROM authenticated;
+  [2] REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE public.devolution_items FROM authenticated;
+  [3] REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE public.devolutions FROM anon;
+  [4] REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE public.devolution_items FROM anon;
+
+[1/4] 2026-09-13T04:01:35.908Z OK — REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE public.devolutions FROM authenticated;
+[2/4] 2026-09-13T04:01:38.526Z OK — REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE public.devolution_items FROM authenticated;
+[3/4] 2026-09-13T04:01:40.554Z OK — REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE public.devolutions FROM anon;
+[4/4] 2026-09-13T04:01:42.640Z OK — REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE public.devolution_items FROM anon;
+
+RESULTADO: 4/4 REVOKE ejecutados

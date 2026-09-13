@@ -1,0 +1,24 @@
+REM-INV-3R-B — 18-production-zero-touch
+
+PRE capturado : 2026-09-13T03:57:58.051Z (antes del DDL 04:01:35Z)
+POST capturado: 2026-09-13T04:02:42.272Z (tras el DDL 04:01:42Z)
+
+Indicadores por tabla (count / sum / min-max / distribuciones):
+  [OK] devolutions_counts
+  [OK] devolutions_by_status
+  [OK] devolutions_by_store
+  [OK] devolutions_money
+  [OK] devolution_items_counts
+  [OK] transactions_counts
+  [OK] transactions_by_status
+  [OK] payments_counts
+  [OK] payments_by_direction
+  [OK] stock_movements_counts
+  [OK] stock_movements_by_type
+  [OK] inventory_counts
+  [OK] audit_logs_counts
+  [OK] audit_logs_dev_actions
+
+VEREDICTO DATOS: ZERO-TOUCH PASS — todos los indicadores idénticos PRE==POST
+DML ejecutado en producción en esta fase: NINGUNO. Cambio aplicado: solo ACL (REVOKE).
+Detalle completo en zero-touch-pre.json / zero-touch-post.json.

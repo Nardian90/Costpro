@@ -1,0 +1,31 @@
+REM-INV-3R-B — 03-grants-pre (catálogo LIVE 2026-09-13)
+
+Nota clave: GRANT y RLS son barreras independientes; AMBAS deben permitir
+una operación para que el camino directo exista.
+
+  devolution_items   anon           SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+  devolution_items   authenticated  SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+  devolution_items   postgres       SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+  devolution_items   service_role   SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+  devolutions        anon           SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+  devolutions        authenticated  SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+  devolutions        postgres       SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+  devolutions        service_role   SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+
+ACL (relacl) verbatim:
+  devolution_items: {postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}
+  devolutions: {postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}
+
+Roles: anon/authenticated/service_role NOLOGIN; service_role BYPASSRLS;
+postgres owner (bypass RLS porque relforcerowsecurity=false); supabase_admin superuser.
+
+EXECUTE de RPCs (aclexplode pg_proc):
+  create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uui...) → EXECUTE: postgres
+  create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_original_tr...) → EXECUTE: postgres
+  create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uui...) → EXECUTE: service_role
+  create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_original_tr...) → EXECUTE: service_role
+  create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uui...) → EXECUTE: postgres
+  create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uui...) → EXECUTE: service_role
+  reverse_devolution(p_devolution_id uuid, p_reason text, p_user_id uuid...) → EXECUTE: postgres
+  reverse_devolution(p_devolution_id uuid, p_reason text, p_user_id uuid...) → EXECUTE: service_role
+→ authenticated NO tiene EXECUTE en create_devolution_v2/reverse_devolution (ACL restrictiva).

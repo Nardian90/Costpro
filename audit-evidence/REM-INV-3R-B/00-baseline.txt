@@ -1,0 +1,40 @@
+REM-INV-3R-B — 00 BASELINE
+Fecha UTC: 2026-09-13T03:37:28Z
+
+== GIT ==
+HEAD:        a404e3accc5e7dba90d04ed9bc2322f71735c227
+origin/main: a404e3accc5e7dba90d04ed9bc2322f71735c227
+Baseline requerido: a404e3ac
+GATE BASELINE: PASS (HEAD == origin/main == a404e3ac)
+
+== WORKTREE ==
+WORKTREE: DIRTY
+?? audit-evidence/REM-INV-3R-B/
+
+== LOG (últimos 3) ==
+a404e3ac audit(rem-inv-3r): F-02 final production reconciliation — 13 NC census/reconciliation, corrected r17, report-impact quantification, V2 9/9 validation, verdict CONDITIONAL
+fa64514d audit(rem-inv-3): F-02 ghost-NC data-integrity gate — census, root cause, staging repro, remediation recommendation
+29f9ef2e fix(db): retire orphaned receive_purchase RPC
+
+== .ENV PRESENCIA (solo claves, valores jamás impresos) ==
+CSRF_ALLOWED_DOMAINS
+DATABASE_URL
+ENABLE_DEV_BYPASS
+NEXTAUTH_SECRET
+NEXTAUTH_URL
+NEXT_PUBLIC_APP_URL
+NEXT_PUBLIC_SITE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_USE_V
+NEXT_PUBLIC_USE_V
+NODE_ENV
+PORT
+SUPABASE_ACCESS_TOKEN
+SUPABASE_SERVICE_ROLE_KEY
+Permisos .env: 600
+gitignored: .env
+SI
+
+== PM2 ==
+costpro: online restarts: 0

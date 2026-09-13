@@ -1,0 +1,51 @@
+REM-INV-3R-B — 07-staging-s1-s8 (PRE-DDL)
+
+Entorno: PostgreSQL efímero aislado (datadir disposed al terminar).
+Espejo VERBATIM: 6 policies (pg_policies LIVE), GRANT arwdDxtm (relacl LIVE),
+trigger de transiciones (LIVE), auth.uid() (LIVE), helpers SECURITY DEFINER (LIVE),
+pipeline V2 (assets REM-INV-3 dump live 2026-09-12, validado live por REM-INV-3R).
+Actor: SET ROLE authenticated + JWT sintético (sub=manager de STORE A).
+Método: cada ataque en transacción con ROLLBACK (rowcount verificado).
+
+RESUMEN PRE: {'EXPLOIT-OK': 10, 'DENIED': 3, 'NO-OP': 5, 'INFO': 2}
+
+[S1] INSERT directo mínimo como authenticated (own-store)
+   → EXPLOIT-OK (INSERT SUCCEEDED) :: OK (rows=1)
+[S2] INSERT completo: NC completed 999u SIN original + item (2 sentencias)
+   → EXPLOIT-OK (INSERT SUCCEEDED) :: cabecera+item insertados, rows_item=1
+[S3] Réplica patrón NC-000008 (999×350, original NULL, completed) vía DML directo
+   → EXPLOIT-OK (INSERT SUCCEEDED) :: cabecera+item insertados, rows_item=1
+[S4] UPDATE directo total_amount 350→350000
+   → EXPLOIT-OK (SUCCEEDED) :: esperado≈corruptible :: OK (rows=1)
+[S4] UPDATE directo original_transaction_id → NULL
+   → EXPLOIT-OK (SUCCEEDED) :: esperado≈corruptible :: OK (rows=1)
+[S4] UPDATE directo processed_by → MGR_A
+   → EXPLOIT-OK (SUCCEEDED) :: esperado≈corruptible :: OK (rows=1)
+[S4] UPDATE directo status completed→voided
+   → EXPLOIT-OK (SUCCEEDED) :: esperado≈debe DENIED (trigger transición) :: OK (rows=1)
+[S4] UPDATE directo store_id ST_A→ST_B
+   → DENIED :: esperado≈debe DENIED (WITH CHECK) :: 42501: new row violates row-level security policy for table "devolutions"
+[S5] INSERT cross-store (MGR_A crea en ST_B)
+   → DENIED :: 42501: new row violates row-level security policy for table "devolutions"
+[S5] UPDATE cross-store (MGR_A modifica NC de ST_B)
+   → NO-OP (0 filas — filtrado por USING, sin efecto) :: OK (rows=0)
+[S6] INSERT directo item 999u en cabecera legítima (own-store)
+   → EXPLOIT-OK (SUCCEEDED) :: OK (rows=1)
+[S6] UPDATE directo de items (sin policy UPDATE)
+   → NO-OP (0 filas — filtrado por USING, sin efecto) :: OK (rows=0)
+[S6] DELETE directo de items (sin policy DELETE)
+   → NO-OP (0 filas — filtrado por USING, sin efecto) :: OK (rows=0)
+[S6] INSERT item apuntando a cabecera de OTRA tienda
+   → DENIED :: 42501: new row violates row-level security policy for table "devolution_items"
+[S7] Efectos laterales NC vía V2 (mov/kardex/pay/audit/cash)
+   → INFO :: {'movements': 1, 'kardex': 0, 'payments': 1, 'audit': 1, 'cash': 0}
+[S7] Efectos laterales NC vía DML directo (orphan document)
+   → EXPLOIT-OK — documento SIN efectos laterales obligatorios :: {'movements': 0, 'kardex': 0, 'payments': 0, 'audit': 0, 'cash': 0}
+[S8] DELETE directo de devolutions (own-store, sin policy DELETE)
+   → NO-OP (0 filas — filtrado por USING, sin efecto) :: OK (rows=0)
+[S8] DELETE directo de devolution_items
+   → NO-OP (0 filas — filtrado por USING, sin efecto) :: OK (rows=0)
+[S8] TRUNCATE devolution_items como authenticated (grant existe; RLS no cubre TRUNCATE)
+   → EXPLOIT-OK (TRUNCATE SUCCEEDED) :: OK (rows=-1)
+[SELECT] SELECT como authenticated (own-store rows visibles)
+   → INFO :: filas visibles=2

@@ -1,0 +1,60 @@
+REM-INV-3R-B — 15-reattack-s1-s8 (POST-DDL, espejo staging con el MISMO REVOKE)
+
+El re-ataque se ejecuta en el espejo de staging con el REVOKE idéntico al aplicado
+en producción; el estado de grants POST de producción está verbatim en 14 y es
+equivalente al del espejo (SELECT-only para anon/authenticated).
+
+[S1] RE-ATTACK INSERT directo mínimo
+   → DENIED :: 42501: permission denied for table devolutions
+[S2] RE-ATTACK INSERT completo sin original
+   → DENIED :: 42501: permission denied for table devolutions
+[S3] RE-ATTACK Réplica patrón 999u
+   → DENIED :: 42501: permission denied for table devolutions
+[S4a] RE-ATTACK UPDATE total_amount
+   → DENIED :: 42501: permission denied for table devolutions
+[S4b] RE-ATTACK UPDATE original_transaction_id→NULL
+   → DENIED :: 42501: permission denied for table devolutions
+[S4c] RE-ATTACK UPDATE status
+   → DENIED :: 42501: permission denied for table devolutions
+[S5a] RE-ATTACK INSERT cross-store
+   → DENIED :: 42501: permission denied for table devolutions
+[S5b] RE-ATTACK UPDATE cross-store
+   → DENIED :: 42501: permission denied for table devolutions
+[S6a] RE-ATTACK INSERT items directo
+   → DENIED :: 42501: permission denied for table devolution_items
+[S6b] RE-ATTACK UPDATE items directo
+   → DENIED :: 42501: permission denied for table devolution_items
+[S6c] RE-ATTACK DELETE items directo
+   → DENIED :: 42501: permission denied for table devolution_items
+[S8a] RE-ATTACK DELETE devolutions
+   → DENIED :: 42501: permission denied for table devolutions
+[S8b] RE-ATTACK DELETE devolution_items
+   → DENIED :: 42501: permission denied for table devolution_items
+[S8t] RE-ATTACK TRUNCATE devolution_items
+   → DENIED :: 42501: permission denied for table devolution_items
+[TOTAL] Re-ataque 14/14 (S1-S8 expandido)
+   → PASS — 14/14 DENIED :: denied=14
+[SELECT] SELECT como authenticated sigue funcionando POST-DDL
+   → PASS :: filas visibles=2
+[V2] creación NC válida → success
+   → PASS :: {'status': 'success', 'total_amount': 350, 'devolution_id': '025af6ca-c5d7-4e1a-a3b2-23767617c54c', 'financial_effect': 'cash_out_and_refund', 'devolution_number': 'NC-000002-2026'}
+[V2] efecto stock+financiero+audit presentes POST-DDL
+   → PASS :: pre={'devolutions': 2, 'dev_items': 2, 'movements': 1, 'kardex': 1, 'cash_out': 1, 'payments_refund': 1, 'audit_created': 1, 'audit_reverse': 0} post={'devolutions': 3, 'dev_items': 3, 'movements': 2, 'kardex': 2, 'cash_out': 2, 'payments_refund': 2, 'audit_created': 2, 'audit_reverse': 0}
+[V2] tope acumulado (ERR_DEVOLUTION_CAP_EXCEEDED)
+   → PASS :: P0001: ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000001 vendido=2 devuelto=2 solicitado=1 (tope acumulado, lock de venta adquirido)
+[V2] NC sin original (patrón NC-000008) → rechazada
+   → PASS :: P0001: ERR_DEVOLUTION_NO_ORIGINAL: tope acumulado exige venta original
+[V2] 999u sobre venta de 1u (cap) → rechazada
+   → PASS :: P0001: ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000001 vendido=1 devuelto=0 solicitado=999 (tope acumulado, lock de venta adquirido)
+[V2] NC sobre doc de otra tienda → rechazada
+   → PASS :: P0001: ERR_CROSS_STORE: original_transaction_id does not belong to store_id
+[V2] replay misma idempotency_key → idempotente
+   → PASS :: {'status': 'idempotent', 'devolution_id': '025af6ca-c5d7-4e1a-a3b2-23767617c54c'}
+[V2] reversión → status reversed + audit + movimiento inverso
+   → PASS :: {'status': 'success', 'devolution_id': '025af6ca-c5d7-4e1a-a3b2-23767617c54c', 'items_reversed': 1} pre={'devolutions': 3, 'dev_items': 3, 'movements': 2, 'kardex': 2, 'cash_out': 2, 'payments_refund': 2, 'audit_created': 2, 'audit_reverse': 0} post={'devolutions': 3, 'dev_items': 3, 'movements': 3,
+[V2] doble reversión → rechazada
+   → PASS :: P0001: ERR_ALREADY_REVERSED
+[V2] reversión vía RPC como authenticated (ACL restrictiva, sin EXECUTE) → DENIED
+   → PASS :: 42501: permission denied for function reverse_devolution
+[FINAL] estado final staging POST-DDL
+   → INFO :: {'devolutions': 3, 'dev_items': 3, 'movements': 3, 'kardex': 3, 'cash_out': 2, 'payments_refund': 2, 'audit_created': 2, 'audit_reverse': 1}

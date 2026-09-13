@@ -1,0 +1,26 @@
+9c2faf0e4709d997426efee3e58494c5fa319a08a47b7a08e608ec31491a14da  00-baseline.txt  1129  Gate baseline a404e3ac + worktree + .env presence + pm2
+58d05bf2308d5ee43ecf73afa81a07e3435170ba34222a0939aea29fc46d6f2f  01-scope.txt  894  Alcance exclusivo SEC-F02-1
+c5f293be93b9bf3e26b14da35cd25c2192a8ceac67f6f9d4ba83da9f89fc4410  02-rls-policies-pre.txt  1850  RLS/policies verbatim PRE-DDL (catálogo LIVE)
+680f03ce5e0bd5d3aae28241bafa6691748a3426c0919b1d3d25169f35cb41b2  03-grants-pre.txt  2545  Matriz de grants PRE-DDL (has_table_privilege + relacl + EXECUTE RPCs)
+7c3b14a77883ef222becb64b622fde0e9f70fdb9964c6682cd6fcbb2af1d7be5  04-triggers-constraints.txt  2714  Triggers/constraints verbatim + hallazgo trigger transiciones
+3f7451fcbc0a51c06c12cf6f88ecd463f3739b5d78a1cca6a2d4f7b829d13b70  05-static-write-census.txt  5226  Censo estático ripgrep verbatim de escrituras
+51eb281ec22a565886f6cac2d973b289728b7d9b609f7574289c90fae9ba3a2c  06-application-call-map.txt  2386  Mapa UI→Hook→API→RPC→DB y clasificación §8
+5cd7db217dcce287fe7214eecfd81b54be9effc9895642806a0b034462e9f508  07-staging-s1-s8.txt  3263  Ataques S1-S8 PRE-DDL por comportamiento (staging efímero)
+eb65436f541095a773cd243cbf7b823629763ac6c496d77b3a05df4ec27b7717  08-exploitability.txt  2418  Veredicto de explotabilidad SEC-F02-1=EXPLOITABLE
+8478b813385866bf9e926fd4033c9e954a644d927b322a51248f8d35c1c971e8  09-architecture-decision.txt  1793  Necesidad del grant (NOT_REQUIRED) y decisión arquitectónica
+32ffe91354a1f3cc409bfe583284e47ebe6bf245833d45120d488549f11a4bd6  10-ddl-proposal.sql  2104  SQL DDL autorizado (whitelist, 4 REVOKE)
+9528b102e75b41f0927920e8d983580b5e03cf6867c9434aeefc16006e8cd410  11-ddl-preconditions.txt  1311  Gate §25 completo (12/12 PASS)
+d370a1806e9fa552634b018ff4d10e29606eff69e14e1454a2393ce47f5de3fd  12-ddl-execution.txt  1064  Ejecución DDL producción 4/4 con timestamps
+80f0162980811ab13c52411340df91fa892bc2189740933a45ca01214abacd72  13-rls-policies-post.txt  1349  RLS/policies POST-DDL (idénticas) + relacl PRE/POST
+6c3c0d2c61559bde544a9cb650dba453b07b1cc4875ca4b0b8a6a186b7d869ea  14-grants-post.txt  1340  Matriz de grants POST-DDL (SELECT-only extremos)
+63ec37e21d40434b85710800fcdf6f44b55b88e4d222238668ef7a374d0b3fa9  15-reattack-s1-s8.txt  4230  Re-ataque 14/14 DENIED POST-DDL
+0a0efd116d07cee92da3f6a722c78e39c6d98def72d294d47b058d62ff2102b9  16-v2-regression.txt  3013  Regresión V2 completa 12/12 PASS POST-DDL
+8200b5704bdd110e6e18adcc8c5d3c0c8a3b2e5b5d9ac72f9a5d0f03467833ea  17-security.txt  957  Matriz §34 antes/después 9/9 PASS
+6706f438b718e5c8d8bcd00b980f24ea77065b4d5da0ab6385ac597185d7cac1  18-production-zero-touch.txt  861  Zero-touch datos 12/12 indicadores idénticos
+64879c3c7bf6d33311bb9c617156cde5b9512a304cfd0ba625c82c4b814d512d  19-classification.txt  1169  Clasificación final de caminos y cambios
+2ef4520e47e7ff32503b5e29281c081b4547679c25dc52728cc258a3bceb0ef6  20-final-verdict.txt  1502  Veredicto CERTIFIED + base
+2288eb33e35b6bbc334315d61ad818d45734810b1d5acdc87fec20d22734537f  21-repo-regression.txt  2414  tsc/vitest/eslint/security-contract (§33)
+12f2fb57ef6a3cde005d85bfd50cfb06d92bac1e5c8d702157ec2b3585397c5d  catalog-post.json  27056  Dump catálogo POST (raw, fuente de hashes)
+4d62d348631c8780c9facfd06899683315c7e9adccb61240fc6a91a074214a2d  catalog-pre.json  29080  Dump catálogo PRE (raw, fuente de hashes)
+d4e7e4054a1d900a3e86e84fc727959e7ed3008a5f54f428b628ee9d028a7964  zero-touch-post.json  3135  Fingerprint datos POST (raw)
+8bd425256acff5618187427694283d6d89c3350fd773b773a3011f7e313c84b4  zero-touch-pre.json  3134  Fingerprint datos PRE (raw)

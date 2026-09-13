@@ -1,0 +1,15 @@
+REM-INV-3R-B — 01-scope
+Fecha: 2026-09-13
+Hallazgo: SEC-F02-1 (origen REM-INV-3R): RLS permite INSERT/UPDATE directo sobre
+devolutions/devolution_items a miembros autenticados own-store.
+Alcance EXCLUSIVO: superficie de escritura directa DML sobre
+public.devolutions y public.devolution_items por roles de extremo
+(anon / authenticated), y su relación con el contrato canónico
+create_devolution_v2. Fuentes complementarias inspeccionadas por
+obligación de la matriz: grants, triggers, constraints, callers.
+FUERA de alcance: auditoría general RLS, checkout, pagos, inventario,
+limpieza de 13 NC históricas (disposición RETENER decidida en REM-INV-3R),
+cualquier otra tabla o módulo.
+Producción: READ ONLY para datos de negocio; DDL solo el autorizado en
+10-ddl-proposal.sql tras completar el gate de precondiciones.
+Baseline: a404e3ac (HEAD == origin/main, worktree clean al inicio).

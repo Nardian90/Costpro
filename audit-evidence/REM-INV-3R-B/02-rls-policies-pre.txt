@@ -1,0 +1,37 @@
+REM-INV-3R-B — 02-rls-policies-pre (catálogo LIVE 2026-09-13)
+
+[devolution_items] rls_enabled=True rls_forced=False owner=postgres relacl={postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}
+[devolutions] rls_enabled=True rls_forced=False owner=postgres relacl={postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}
+
+POLICY devolution_items.devolution_items_insert
+  cmd=INSERT permissive=PERMISSIVE roles={authenticated}
+  WITH CHECK : (EXISTS ( SELECT 1
+   FROM devolutions d
+  WHERE ((d.id = devolution_items.devolution_id) AND has_store_access(d.store_id))))
+
+POLICY devolution_items.devolution_items_select
+  cmd=SELECT permissive=PERMISSIVE roles={authenticated}
+  USING      : (EXISTS ( SELECT 1
+   FROM devolutions d
+  WHERE ((d.id = devolution_items.devolution_id) AND has_store_access(d.store_id))))
+
+POLICY devolutions.devolutions_insert_own_store
+  cmd=INSERT permissive=PERMISSIVE roles={authenticated}
+  WITH CHECK : has_store_access(store_id)
+
+POLICY devolutions.devolutions_select_own_store
+  cmd=SELECT permissive=PERMISSIVE roles={authenticated}
+  USING      : has_store_access(store_id)
+
+POLICY devolutions.devolutions_tenant_insert_with_check
+  cmd=INSERT permissive=PERMISSIVE roles={authenticated}
+  WITH CHECK : (store_id = ANY (current_user_store_ids()))
+
+POLICY devolutions.devolutions_update_own_store
+  cmd=UPDATE permissive=PERMISSIVE roles={authenticated}
+  USING      : has_store_access(store_id)
+  WITH CHECK : has_store_access(store_id)
+
+Helpers referenciados por las policies (SECURITY DEFINER, owner postgres):
+  has_store_access(uuid)         → membership activa + tenant match; admin=true
+  current_user_store_ids()       → memberships activas del auth.uid(); admin=tiendas del tenant

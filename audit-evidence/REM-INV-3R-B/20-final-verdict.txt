@@ -1,0 +1,27 @@
+REM-INV-3R-B — 20-final-verdict
+
+REM-INV-3R-B — FINAL REPORT (resumen de cierre; informe completo en el cuerpo de la respuesta)
+Baseline: a404e3ac
+Scope: SEC-F02-1 only
+Production data mutation: ZERO (solo DDL ACL autorizado)
+
+VEREDICTO: CERTIFIED
+
+Base del veredicto (§40):
+  ✓ Bypass directo cerrado: PRE 10 vías EXPLOITABLE → POST 14/14 DENIED (comportamiento, no solo catálogo)
+  ✓ S1-S8 (expandido a 14 ataques + TRUNCATE): POST 100% DENIED (42501 permission denied)
+  ✓ V2 continúa funcionando: 12/12 PASS en espejo con REVOKE aplicado (creación, cap,
+    NO_ORIGINAL, cross-store, idempotencia, reversión, doble reversión, ACL restrictiva)
+  ✓ Cross-store PASS (PRE y POST)
+  ✓ No existe caller legítimo roto (censo estático completo + SELECT conservado)
+  ✓ Regression: tsc / vitest / lint sin errores (ver 16-regression repo)
+  ✓ Security: matriz 9/9 PASS
+  ✓ Production data zero-touch: 12/12 indicadores idénticos PRE==POST
+  ✓ Evidence íntegra: 00-20 + catalog-pre/post + zero-touch + MANIFEST.sha256
+  ✓ Git closure: HEAD == origin/main, worktree clean, gate-closure-check.sh CLOSURE OK
+
+Nota de honestidad (§43): el veredicto CERTIFIED se emite sobre la superficie
+SEC-F02-1 exclusivamente. La prueba comportamental de producción post-DDL es la
+matriz has_table_privilege/relacl LIVE (equivalencia exacta con el espejo de
+staging donde el comportamiento fue demostrado) + zero-touch; no se lanzaron
+ataques mutativos contra producción (regla §2).

@@ -1,0 +1,18 @@
+REM-INV-3R-B — 13-rls-policies-post (catálogo LIVE tras DDL 2026-09-13)
+
+[devolution_items] rls_enabled=True rls_forced=False owner=postgres
+  relacl PRE : {postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}
+  relacl POST: {postgres=arwdDxtm/postgres,anon=rxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}
+[devolutions] rls_enabled=True rls_forced=False owner=postgres
+  relacl PRE : {postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}
+  relacl POST: {postgres=arwdDxtm/postgres,anon=rxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}
+
+Policies RLS: SIN CAMBIO (verificación automática catálogo PRE vs POST: idénticas).
+  devolution_items.devolution_items_insert cmd=INSERT roles={authenticated}
+  devolution_items.devolution_items_select cmd=SELECT roles={authenticated}
+  devolutions.devolutions_insert_own_store cmd=INSERT roles={authenticated}
+  devolutions.devolutions_select_own_store cmd=SELECT roles={authenticated}
+  devolutions.devolutions_tenant_insert_with_check cmd=INSERT roles={authenticated}
+  devolutions.devolutions_update_own_store cmd=UPDATE roles={authenticated}
+
+Triggers, columnas, constraints, índices: idénticos PRE/POST (comparación JSON).

@@ -1,0 +1,15 @@
+REM-INV-3R-B — 14-grants-post (has_table_privilege LIVE tras DDL)
+
+  devolution_items   anon           SELECT=True INSERT=False UPDATE=False DELETE=False TRUNCATE=False REFERENCES=True
+  devolution_items   authenticated  SELECT=True INSERT=False UPDATE=False DELETE=False TRUNCATE=False REFERENCES=True
+  devolution_items   postgres       SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+  devolution_items   service_role   SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+  devolutions        anon           SELECT=True INSERT=False UPDATE=False DELETE=False TRUNCATE=False REFERENCES=True
+  devolutions        authenticated  SELECT=True INSERT=False UPDATE=False DELETE=False TRUNCATE=False REFERENCES=True
+  devolutions        postgres       SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+  devolutions        service_role   SELECT=True INSERT=True UPDATE=True DELETE=True TRUNCATE=True REFERENCES=True
+
+Diferencia exacta vs PRE: anon y authenticated pierden INSERT/UPDATE/DELETE/TRUNCATE;
+conservan SELECT (+REFERENCES/TRIGGER/MAINTAIN, inertes vía PostgREST y fuera de la
+superficie DML). postgres y service_role: sin cambio (arwdDxtm completo).
+EXECUTE de RPCs: sin cambio (create_devolution_v2/reverse_devolution → postgres+service_role).

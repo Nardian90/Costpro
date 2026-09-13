@@ -1,0 +1,17 @@
+REM-INV-3R-B — 11-ddl-preconditions (GATE §25)
+
+Condición | Estado | Evidencia
+  1. Diagnóstico demuestra necesidad de hardening: PASS — 07/08 — 10 vías EXPLOITABLE por comportamiento
+  2. No existen callers legítimos del grant: PASS — 05/06 — 0 escrituras directas en src/; tests usan service_role
+  3. Staging demuestra que V2 sigue funcionando: PASS — 16 — 12/12 PASS con REVOKE aplicado en espejo
+  4. SQL revisado y exacto: PASS — 10-ddl-proposal.sql — 4 sentencias whitelist
+  5. Cambio limitado a la superficie exacta: PASS — 2 tablas × 2 roles × 4 privilegios
+  6. No afecta otras tablas: PASS — solo devolutions/devolution_items
+  7. No usa CASCADE: PASS — REVOKE simple sin opciones
+  8. No modifica datos: PASS — ACL-only; fingerprint zero-touch PRE capturado (17/18)
+  9. Snapshot PRE del catálogo con hash: PASS — catalog-pre.json sha256=4d62d348631c8780…
+  10. Propietario puede ejecutar REVOKE: PASS — owner=postgres; Management API ejecuta como postgres
+  11. Producción READ ONLY para datos: PASS — solo DDL autorizado; datos fingerprint PRE==POST exigido
+  12. SELECT conservado para authenticated: PASS — hook duplicar lee devolutions (06); probado POST en staging
+
+GATE COMPLETO: 12/12 PASS → DDL AUTORIZADO a ejecutarse (12-ddl-execution.txt)

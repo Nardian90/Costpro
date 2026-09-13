@@ -1,0 +1,39 @@
+REM-INV-3R-B — 06-application-call-map (mapa de escrituras y lecturas)
+
+CAMINO A — CANONICAL_V2 (el único legítimo de escritura):
+  UI DevolutionsView.tsx  ──POST apiFetch──►  /api/devolutions (POST)
+  UI useDuplicateDocumentV2 ──POST apiFetch──►  /api/devolutions (POST)
+      → withAuth + validateOrigin(CSRF) + rateLimit(10/min) + zod + canManageStore
+      → getSupabaseAdminSafe() = cliente SERVICE_ROLE (src/lib/supabase-admin.ts)
+      → rpc('create_devolution_v2', { p_user_id: session.user.id, ... })
+      → SECURITY DEFINER owner postgres: validación original + FOR UPDATE +
+        tope acumulado + register_stock_movement + fn_recalc_wac + DF-03
+        (cash_out + refund) + audit_logs + idempotencia
+
+CAMINO REVERSIÓN (canónico):
+  UI useReverseDocument ──► /api/reverse (POST) → boundary can_reverse_document
+      → rpc('reverse_devolution', { p_user_id }) via SERVICE_ROLE
+
+LECTURAS (no afectadas por hardening):
+  GET /api/devolutions  → SERVICE_ROLE .from('devolutions').select(...)  [route.ts:46]
+  UI useDuplicateDocumentV2 (hook browser, rol authenticated vía PostgREST):
+      supabase.from('devolutions').select('*') / from('devolution_items').select(...)
+      → REQUIERE SELECT para authenticated (RLS own-store lo acota) → SE CONSERVA
+  UI DevolutionsView: apiFetch GET /api/devolutions (HTTP, no lectura directa)
+
+CAMINOS B/C/D — DIRECT_DML (el hallazgo SEC-F02-1):
+  Authenticated Client → PostgREST → INSERT/UPDATE devolutions / INSERT items
+      → GRANT arwdDxtm (existe) + policies permissive own-store (existen)
+      → camino ABIERTO a nivel SQL (probado por comportamiento en staging, ver 07)
+      → 0 callers en la aplicación (ver 05)
+
+CLASIFICACIÓN DE CADA CAMINO (§8):
+  /api/devolutions POST → CANONICAL_V2 (v1 create_devolution también service_role-only)
+  /api/reverse devolution → CANONICAL_V2 (reverse_devolution)
+  GET /api/devolutions → SERVICE_ROLE_INTERNAL (lectura)
+  useDuplicateDocumentV2 .from(...) → solo SELECT (authenticated) — legítimo
+  scripts/test_*_e2e_full.mjs inserts → SERVICE_ROLE_INTERNAL + TEST_ONLY
+  Camino B/C/D directos desde cliente → NO USADOS por la app (DIRECT_DML residual)
+
+service_role puede ejecutar TODO el flujo sin grants de extremo: SÍ
+(SECURITY DEFINER + BYPASSRLS; probado en staging con REVOKE aplicado, ver 16).

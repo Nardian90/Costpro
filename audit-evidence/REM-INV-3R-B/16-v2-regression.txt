@@ -1,0 +1,36 @@
+REM-INV-3R-B — 16-v2-regression (flujo legítimo POST-DDL, staging espejo)
+
+Ejecutado como service_role (idéntico al camino de la app: API route → rpc).
+
+[SELECT] SELECT como authenticated sigue funcionando POST-DDL
+   → PASS :: filas visibles=2
+[V2] creación NC válida → success
+   → PASS :: {'status': 'success', 'total_amount': 350, 'devolution_id': '025af6ca-c5d7-4e1a-a3b2-23767617c54c', 'financial_effect': 'cash_out_and_refund', 'devolution_number': 'NC-000002-2026'}
+[V2] efecto stock+financiero+audit presentes POST-DDL
+   → PASS :: pre={'devolutions': 2, 'dev_items': 2, 'movements': 1, 'kardex': 1, 'cash_out': 1, 'payments_refund': 1, 'audit_created': 1, 'audit_reverse': 0} post={'devolutions': 3, 'dev_items': 3, 'movements': 2, 'kardex': 2, 'cash_out': 2, 'payments_refund': 2, 'audit_created': 2, 'audit_reverse': 0}
+[V2] tope acumulado (ERR_DEVOLUTION_CAP_EXCEEDED)
+   → PASS :: P0001: ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000001 vendido=2 devuelto=2 solicitado=1 (tope acumulado, lock de venta adquirido)
+[V2] NC sin original (patrón NC-000008) → rechazada
+   → PASS :: P0001: ERR_DEVOLUTION_NO_ORIGINAL: tope acumulado exige venta original
+[V2] 999u sobre venta de 1u (cap) → rechazada
+   → PASS :: P0001: ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000001 vendido=1 devuelto=0 solicitado=999 (tope acumulado, lock de venta adquirido)
+[V2] NC sobre doc de otra tienda → rechazada
+   → PASS :: P0001: ERR_CROSS_STORE: original_transaction_id does not belong to store_id
+[V2] replay misma idempotency_key → idempotente
+   → PASS :: {'status': 'idempotent', 'devolution_id': '025af6ca-c5d7-4e1a-a3b2-23767617c54c'}
+[V2] reversión → status reversed + audit + movimiento inverso
+   → PASS :: {'status': 'success', 'devolution_id': '025af6ca-c5d7-4e1a-a3b2-23767617c54c', 'items_reversed': 1} pre={'devolutions': 3, 'dev_items': 3, 'movements': 2, 'kardex': 2, 'cash_out': 2, 'payments_refund': 2, 'audit_created': 2, 'audit_reverse': 0} post={'devolutions': 3, 'dev_items': 3, 'movements': 3,
+[V2] doble reversión → rechazada
+   → PASS :: P0001: ERR_ALREADY_REVERSED
+[V2] reversión vía RPC como authenticated (ACL restrictiva, sin EXECUTE) → DENIED
+   → PASS :: 42501: permission denied for function reverse_devolution
+
+Cobertura: devolución normal (efectos stock+financiero+audit), devolución parcial
+(1u de venta 2u), tope acumulado, reversión (pipeline canónico), doble reversión,
+cross-store rejection, idempotencia (replay misma key), patrón GHOST 999/NULL original,
+RPC como authenticated denegado (ACL restrictiva), SELECT authenticated conservado.
+
+Nota de producción: NO se ejecutó create_devolution_v2 en producción (regla §2);
+la prueba de comportamiento es el espejo con cuerpos verbatim LIVE + estado de
+grants/policies/owner/EXECUTE verbatim idéntico (13/14). La ACL de las funciones y
+su owner no cambiaron → el camino service_role→SECURITY DEFINER queda intacto.

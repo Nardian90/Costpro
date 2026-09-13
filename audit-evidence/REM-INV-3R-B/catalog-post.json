@@ -1,0 +1,1001 @@
+{
+ "access": [
+  {
+   "db": "postgres",
+   "who": "postgres",
+   "n_dev": 25,
+   "n_items": 25
+  }
+ ],
+ "table_status": [
+  {
+   "relname": "devolution_items",
+   "rls_enabled": true,
+   "rls_forced": false,
+   "owner": "postgres",
+   "relacl": "{postgres=arwdDxtm/postgres,anon=rxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}"
+  },
+  {
+   "relname": "devolutions",
+   "rls_enabled": true,
+   "rls_forced": false,
+   "owner": "postgres",
+   "relacl": "{postgres=arwdDxtm/postgres,anon=rxtm/postgres,authenticated=rxtm/postgres,service_role=arwdDxtm/postgres}"
+  }
+ ],
+ "policies": [
+  {
+   "schemaname": "public",
+   "tablename": "devolution_items",
+   "policyname": "devolution_items_insert",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "INSERT",
+   "qual": null,
+   "with_check": "(EXISTS ( SELECT 1\n   FROM devolutions d\n  WHERE ((d.id = devolution_items.devolution_id) AND has_store_access(d.store_id))))"
+  },
+  {
+   "schemaname": "public",
+   "tablename": "devolution_items",
+   "policyname": "devolution_items_select",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "SELECT",
+   "qual": "(EXISTS ( SELECT 1\n   FROM devolutions d\n  WHERE ((d.id = devolution_items.devolution_id) AND has_store_access(d.store_id))))",
+   "with_check": null
+  },
+  {
+   "schemaname": "public",
+   "tablename": "devolutions",
+   "policyname": "devolutions_insert_own_store",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "INSERT",
+   "qual": null,
+   "with_check": "has_store_access(store_id)"
+  },
+  {
+   "schemaname": "public",
+   "tablename": "devolutions",
+   "policyname": "devolutions_select_own_store",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "SELECT",
+   "qual": "has_store_access(store_id)",
+   "with_check": null
+  },
+  {
+   "schemaname": "public",
+   "tablename": "devolutions",
+   "policyname": "devolutions_tenant_insert_with_check",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "INSERT",
+   "qual": null,
+   "with_check": "(store_id = ANY (current_user_store_ids()))"
+  },
+  {
+   "schemaname": "public",
+   "tablename": "devolutions",
+   "policyname": "devolutions_update_own_store",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "UPDATE",
+   "qual": "has_store_access(store_id)",
+   "with_check": "has_store_access(store_id)"
+  }
+ ],
+ "acl_exploded": [
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "DELETE"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "INSERT"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "MAINTAIN"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "SELECT"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "TRUNCATE"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "UPDATE"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "anon",
+   "privilege_type": "MAINTAIN"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "anon",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "anon",
+   "privilege_type": "SELECT"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "anon",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "authenticated",
+   "privilege_type": "MAINTAIN"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "authenticated",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "authenticated",
+   "privilege_type": "SELECT"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "authenticated",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "DELETE"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "INSERT"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "MAINTAIN"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "SELECT"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "TRUNCATE"
+  },
+  {
+   "table_name": "devolution_items",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "UPDATE"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "DELETE"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "INSERT"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "MAINTAIN"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "SELECT"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "TRUNCATE"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "postgres",
+   "privilege_type": "UPDATE"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "anon",
+   "privilege_type": "MAINTAIN"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "anon",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "anon",
+   "privilege_type": "SELECT"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "anon",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "authenticated",
+   "privilege_type": "MAINTAIN"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "authenticated",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "authenticated",
+   "privilege_type": "SELECT"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "authenticated",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "DELETE"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "INSERT"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "MAINTAIN"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "SELECT"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "TRUNCATE"
+  },
+  {
+   "table_name": "devolutions",
+   "grantor": "postgres",
+   "grantee": "service_role",
+   "privilege_type": "UPDATE"
+  }
+ ],
+ "priv_matrix": [
+  {
+   "role_name": "anon",
+   "table_name": "devolution_items",
+   "sel": true,
+   "ins": false,
+   "upd": false,
+   "del": false,
+   "trun": false,
+   "refs": true
+  },
+  {
+   "role_name": "authenticated",
+   "table_name": "devolution_items",
+   "sel": true,
+   "ins": false,
+   "upd": false,
+   "del": false,
+   "trun": false,
+   "refs": true
+  },
+  {
+   "role_name": "postgres",
+   "table_name": "devolution_items",
+   "sel": true,
+   "ins": true,
+   "upd": true,
+   "del": true,
+   "trun": true,
+   "refs": true
+  },
+  {
+   "role_name": "service_role",
+   "table_name": "devolution_items",
+   "sel": true,
+   "ins": true,
+   "upd": true,
+   "del": true,
+   "trun": true,
+   "refs": true
+  },
+  {
+   "role_name": "anon",
+   "table_name": "devolutions",
+   "sel": true,
+   "ins": false,
+   "upd": false,
+   "del": false,
+   "trun": false,
+   "refs": true
+  },
+  {
+   "role_name": "authenticated",
+   "table_name": "devolutions",
+   "sel": true,
+   "ins": false,
+   "upd": false,
+   "del": false,
+   "trun": false,
+   "refs": true
+  },
+  {
+   "role_name": "postgres",
+   "table_name": "devolutions",
+   "sel": true,
+   "ins": true,
+   "upd": true,
+   "del": true,
+   "trun": true,
+   "refs": true
+  },
+  {
+   "role_name": "service_role",
+   "table_name": "devolutions",
+   "sel": true,
+   "ins": true,
+   "upd": true,
+   "del": true,
+   "trun": true,
+   "refs": true
+  }
+ ],
+ "roles_present": [
+  {
+   "rolname": "anon",
+   "rolsuper": false,
+   "rolbypassrls": false,
+   "rolcanlogin": false
+  },
+  {
+   "rolname": "authenticated",
+   "rolsuper": false,
+   "rolbypassrls": false,
+   "rolcanlogin": false
+  },
+  {
+   "rolname": "authenticator",
+   "rolsuper": false,
+   "rolbypassrls": false,
+   "rolcanlogin": true
+  },
+  {
+   "rolname": "postgres",
+   "rolsuper": false,
+   "rolbypassrls": true,
+   "rolcanlogin": true
+  },
+  {
+   "rolname": "service_role",
+   "rolsuper": false,
+   "rolbypassrls": true,
+   "rolcanlogin": false
+  },
+  {
+   "rolname": "supabase_admin",
+   "rolsuper": true,
+   "rolbypassrls": true,
+   "rolcanlogin": true
+  }
+ ],
+ "triggers": [
+  {
+   "table_name": "devolutions",
+   "tgname": "trg_validate_devolution_transition",
+   "tgenabled": "O",
+   "def": "CREATE TRIGGER trg_validate_devolution_transition BEFORE UPDATE OF status ON public.devolutions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('devolutions')",
+   "fn_name": "fn_validate_document_transition",
+   "fn_secdef": false,
+   "fn_owner": "postgres"
+  }
+ ],
+ "constraints": [
+  {
+   "table_name": "devolution_items",
+   "conname": "devolution_items_quantity_check",
+   "contype": "c",
+   "def": "CHECK ((quantity > (0)::numeric))"
+  },
+  {
+   "table_name": "devolution_items",
+   "conname": "devolution_items_total_check",
+   "contype": "c",
+   "def": "CHECK ((total >= (0)::numeric))"
+  },
+  {
+   "table_name": "devolution_items",
+   "conname": "devolution_items_unit_price_check",
+   "contype": "c",
+   "def": "CHECK ((unit_price >= (0)::numeric))"
+  },
+  {
+   "table_name": "devolution_items",
+   "conname": "devolution_items_devolution_id_fkey",
+   "contype": "f",
+   "def": "FOREIGN KEY (devolution_id) REFERENCES devolutions(id) ON DELETE CASCADE"
+  },
+  {
+   "table_name": "devolution_items",
+   "conname": "devolution_items_product_id_fkey",
+   "contype": "f",
+   "def": "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT"
+  },
+  {
+   "table_name": "devolution_items",
+   "conname": "devolution_items_pkey",
+   "contype": "p",
+   "def": "PRIMARY KEY (id)"
+  },
+  {
+   "table_name": "devolutions",
+   "conname": "devolutions_payment_method_check",
+   "contype": "c",
+   "def": "CHECK ((payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'zelle'::text, 'store_credit'::text])))"
+  },
+  {
+   "table_name": "devolutions",
+   "conname": "devolutions_status_check",
+   "contype": "c",
+   "def": "CHECK ((status = ANY (ARRAY['pending'::text, 'completed'::text, 'voided'::text, 'reversed'::text])))"
+  },
+  {
+   "table_name": "devolutions",
+   "conname": "devolutions_total_amount_check",
+   "contype": "c",
+   "def": "CHECK ((total_amount >= (0)::numeric))"
+  },
+  {
+   "table_name": "devolutions",
+   "conname": "devolutions_customer_id_fkey",
+   "contype": "f",
+   "def": "FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL"
+  },
+  {
+   "table_name": "devolutions",
+   "conname": "devolutions_original_transaction_id_fkey",
+   "contype": "f",
+   "def": "FOREIGN KEY (original_transaction_id) REFERENCES transactions(id) ON DELETE SET NULL"
+  },
+  {
+   "table_name": "devolutions",
+   "conname": "devolutions_processed_by_fkey",
+   "contype": "f",
+   "def": "FOREIGN KEY (processed_by) REFERENCES profiles(id)"
+  },
+  {
+   "table_name": "devolutions",
+   "conname": "devolutions_reversed_by_fkey",
+   "contype": "f",
+   "def": "FOREIGN KEY (reversed_by) REFERENCES profiles(id)"
+  },
+  {
+   "table_name": "devolutions",
+   "conname": "devolutions_store_id_fkey",
+   "contype": "f",
+   "def": "FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE"
+  },
+  {
+   "table_name": "devolutions",
+   "conname": "devolutions_voided_by_fkey",
+   "contype": "f",
+   "def": "FOREIGN KEY (voided_by) REFERENCES profiles(id)"
+  },
+  {
+   "table_name": "devolutions",
+   "conname": "devolutions_pkey",
+   "contype": "p",
+   "def": "PRIMARY KEY (id)"
+  }
+ ],
+ "columns": [
+  {
+   "table_name": "devolution_items",
+   "column_name": "id",
+   "data_type": "uuid",
+   "is_nullable": "NO",
+   "column_default": "gen_random_uuid()"
+  },
+  {
+   "table_name": "devolution_items",
+   "column_name": "devolution_id",
+   "data_type": "uuid",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "table_name": "devolution_items",
+   "column_name": "product_id",
+   "data_type": "uuid",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "table_name": "devolution_items",
+   "column_name": "quantity",
+   "data_type": "numeric",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "table_name": "devolution_items",
+   "column_name": "unit_price",
+   "data_type": "numeric",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "table_name": "devolution_items",
+   "column_name": "total",
+   "data_type": "numeric",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "table_name": "devolution_items",
+   "column_name": "reason",
+   "data_type": "text",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolution_items",
+   "column_name": "created_at",
+   "data_type": "timestamp with time zone",
+   "is_nullable": "NO",
+   "column_default": "now()"
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "id",
+   "data_type": "uuid",
+   "is_nullable": "NO",
+   "column_default": "gen_random_uuid()"
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "store_id",
+   "data_type": "uuid",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "original_transaction_id",
+   "data_type": "uuid",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "devolution_number",
+   "data_type": "text",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "reason",
+   "data_type": "text",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "total_amount",
+   "data_type": "numeric",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "currency",
+   "data_type": "text",
+   "is_nullable": "NO",
+   "column_default": "'CUP'::text"
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "payment_method",
+   "data_type": "text",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "status",
+   "data_type": "text",
+   "is_nullable": "NO",
+   "column_default": "'completed'::text"
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "customer_id",
+   "data_type": "uuid",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "customer_name",
+   "data_type": "text",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "notes",
+   "data_type": "text",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "processed_by",
+   "data_type": "uuid",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "processed_at",
+   "data_type": "timestamp with time zone",
+   "is_nullable": "NO",
+   "column_default": "now()"
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "voided_at",
+   "data_type": "timestamp with time zone",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "voided_by",
+   "data_type": "uuid",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "void_reason",
+   "data_type": "text",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "created_at",
+   "data_type": "timestamp with time zone",
+   "is_nullable": "NO",
+   "column_default": "now()"
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "updated_at",
+   "data_type": "timestamp with time zone",
+   "is_nullable": "NO",
+   "column_default": "now()"
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "reversed_at",
+   "data_type": "timestamp with time zone",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "reversed_by",
+   "data_type": "uuid",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "reversal_reason",
+   "data_type": "text",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "exchange_rate",
+   "data_type": "numeric",
+   "is_nullable": "YES",
+   "column_default": "1.0"
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "idempotency_key",
+   "data_type": "text",
+   "is_nullable": "YES",
+   "column_default": null
+  }
+ ],
+ "indexes": [
+  {
+   "tablename": "devolution_items",
+   "indexname": "devolution_items_pkey",
+   "indexdef": "CREATE UNIQUE INDEX devolution_items_pkey ON public.devolution_items USING btree (id)"
+  },
+  {
+   "tablename": "devolution_items",
+   "indexname": "idx_devolution_items_dev",
+   "indexdef": "CREATE INDEX idx_devolution_items_dev ON public.devolution_items USING btree (devolution_id)"
+  },
+  {
+   "tablename": "devolution_items",
+   "indexname": "idx_devolution_items_prod",
+   "indexdef": "CREATE INDEX idx_devolution_items_prod ON public.devolution_items USING btree (product_id)"
+  },
+  {
+   "tablename": "devolutions",
+   "indexname": "devolutions_idempotency_key_idx",
+   "indexdef": "CREATE UNIQUE INDEX devolutions_idempotency_key_idx ON public.devolutions USING btree (idempotency_key) WHERE (idempotency_key IS NOT NULL)"
+  },
+  {
+   "tablename": "devolutions",
+   "indexname": "devolutions_pkey",
+   "indexdef": "CREATE UNIQUE INDEX devolutions_pkey ON public.devolutions USING btree (id)"
+  },
+  {
+   "tablename": "devolutions",
+   "indexname": "idx_devolutions_number",
+   "indexdef": "CREATE UNIQUE INDEX idx_devolutions_number ON public.devolutions USING btree (store_id, devolution_number)"
+  },
+  {
+   "tablename": "devolutions",
+   "indexname": "idx_devolutions_store_date",
+   "indexdef": "CREATE INDEX idx_devolutions_store_date ON public.devolutions USING btree (store_id, processed_at DESC)"
+  },
+  {
+   "tablename": "devolutions",
+   "indexname": "idx_devolutions_transaction",
+   "indexdef": "CREATE INDEX idx_devolutions_transaction ON public.devolutions USING btree (original_transaction_id)"
+  }
+ ],
+ "fks_inbound": [
+  {
+   "from_table": "devolution_items",
+   "conname": "devolution_items_devolution_id_fkey",
+   "def": "FOREIGN KEY (devolution_id) REFERENCES devolutions(id) ON DELETE CASCADE"
+  }
+ ],
+ "funcs_meta": [
+  {
+   "proname": "create_devolution",
+   "owner": "postgres",
+   "security_definer": true,
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_currency text, p_exchange_rate numeric"
+  },
+  {
+   "proname": "create_devolution",
+   "owner": "postgres",
+   "security_definer": true,
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text"
+  },
+  {
+   "proname": "create_devolution_v2",
+   "owner": "postgres",
+   "security_definer": true,
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text"
+  },
+  {
+   "proname": "has_store_access",
+   "owner": "postgres",
+   "security_definer": true,
+   "args": "p_store_id uuid"
+  },
+  {
+   "proname": "has_store_access_as",
+   "owner": "postgres",
+   "security_definer": true,
+   "args": "p_user_id uuid, p_store_id uuid"
+  },
+  {
+   "proname": "is_admin",
+   "owner": "postgres",
+   "security_definer": true,
+   "args": ""
+  },
+  {
+   "proname": "reverse_devolution",
+   "owner": "postgres",
+   "security_definer": true,
+   "args": "p_devolution_id uuid, p_reason text, p_user_id uuid"
+  }
+ ],
+ "func_grants": [
+  {
+   "proname": "create_devolution",
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text",
+   "grantee": "postgres",
+   "priv": "EXECUTE"
+  },
+  {
+   "proname": "create_devolution",
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_currency text, p_exchange_rate numeric",
+   "grantee": "postgres",
+   "priv": "EXECUTE"
+  },
+  {
+   "proname": "create_devolution",
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text",
+   "grantee": "service_role",
+   "priv": "EXECUTE"
+  },
+  {
+   "proname": "create_devolution",
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_currency text, p_exchange_rate numeric",
+   "grantee": "service_role",
+   "priv": "EXECUTE"
+  },
+  {
+   "proname": "create_devolution_v2",
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text",
+   "grantee": "postgres",
+   "priv": "EXECUTE"
+  },
+  {
+   "proname": "create_devolution_v2",
+   "args": "p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text",
+   "grantee": "service_role",
+   "priv": "EXECUTE"
+  },
+  {
+   "proname": "reverse_devolution",
+   "args": "p_devolution_id uuid, p_reason text, p_user_id uuid",
+   "grantee": "postgres",
+   "priv": "EXECUTE"
+  },
+  {
+   "proname": "reverse_devolution",
+   "args": "p_devolution_id uuid, p_reason text, p_user_id uuid",
+   "grantee": "service_role",
+   "priv": "EXECUTE"
+  }
+ ],
+ "auth_uid_body": [
+  {
+   "def": "CREATE OR REPLACE FUNCTION auth.uid()\n RETURNS uuid\n LANGUAGE sql\n STABLE\nAS $function$\n  select \n  coalesce(\n    nullif(current_setting('request.jwt.claim.sub', true), ''),\n    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')\n  )::uuid\n$function$\n"
+  }
+ ],
+ "auth_role_body": [
+  {
+   "def": "CREATE OR REPLACE FUNCTION auth.role()\n RETURNS text\n LANGUAGE sql\n STABLE\nAS $function$\n  select \n  coalesce(\n    nullif(current_setting('request.jwt.claim.role', true), ''),\n    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')\n  )::text\n$function$\n"
+  }
+ ],
+ "body_has_store_access_as_uuid_uuid_": [
+  {
+   "def": "CREATE OR REPLACE FUNCTION public.has_store_access_as(p_user_id uuid, p_store_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n    v_role TEXT;\nBEGIN\n    IF p_user_id IS NULL OR p_store_id IS NULL THEN RETURN false; END IF;\n    \n    -- Check if admin\n    SELECT role INTO v_role FROM public.profiles WHERE id = p_user_id;\n    IF v_role = 'admin' THEN RETURN true; END IF;\n    \n    -- Check membership\n    RETURN EXISTS (\n        SELECT 1 FROM public.user_store_memberships\n        WHERE user_id = p_user_id AND store_id = p_store_id AND status = 'active'\n    );\nEND;\n$function$\n"
+  }
+ ],
+ "body_has_store_access_uuid_": [
+  {
+   "def": "CREATE OR REPLACE FUNCTION public.has_store_access(p_store_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_user_id uuid := auth.uid();\nBEGIN\n  IF v_user_id IS NULL OR p_store_id IS NULL THEN\n    RETURN false;\n  END IF;\n\n  -- Admin global tiene acceso a todo\n  IF public.is_admin() THEN\n    RETURN true;\n  END IF;\n\n  -- Verificar membership activa en la tienda\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.user_store_memberships m\n    JOIN public.stores s\n      ON s.id = m.store_id\n    JOIN public.profiles p\n      ON p.id = m.user_id\n    WHERE m.user_id = v_user_id\n      AND m.store_id = p_store_id\n      AND m.status::text = 'active'\n      AND (\n        p.tenant_id IS NULL\n        OR s.tenant_id IS NULL\n        OR p.tenant_id = s.tenant_id\n      )\n  );\nEND;\n$function$\n"
+  }
+ ],
+ "body_is_admin__": [
+  {
+   "def": "CREATE OR REPLACE FUNCTION public.is_admin()\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nBEGIN\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.profiles\n    WHERE id = auth.uid()\n      AND role = 'admin'\n  );\nEND;\n$function$\n"
+  }
+ ]
+}

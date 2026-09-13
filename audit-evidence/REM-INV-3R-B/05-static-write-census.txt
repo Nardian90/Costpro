@@ -1,0 +1,52 @@
+REM-INV-3R-B — 05-static-write-census
+Fecha: 2026-09-13T03:59:25Z
+Método: ripgrep verbatim sobre el repo (excluye node_modules/.next/logs)
+
+== A. Referencias .from('devolutions'|'devolution_items') en src/ ==
+src/app/api/devolutions/route.ts:46:    .from('devolutions')
+
+== B. Operaciones de escritura (insert/update/upsert/delete) encadenadas cerca de devolutions en src/ ==
+(sin hits — cero escrituras directas en código de aplicación)
+
+== C. Referencias en scripts/ y e2e/ ==
+scripts/test_live_e2e_costpro.mjs:221:  const { data: dev, error } = await admin.from('devolutions').insert({
+scripts/test_live_e2e_costpro.mjs:230:  await admin.from('devolution_items').insert({
+scripts/test_duplicate_e2e_full.mjs:61:  const { data: dev, error } = await supabase.from('devolutions').insert({
+scripts/test_duplicate_e2e_full.mjs:68:  await supabase.from('devolution_items').insert([
+scripts/test_duplicate_e2e_full.mjs:234:    .from('devolution_items')
+scripts/test_duplicate_e2e_full.mjs:241:    .from('devolutions')
+scripts/test_reverse_all_live.mjs:288:    .from('devolutions')
+scripts/test_reverse_all_live.mjs:299:      .from('devolution_items')
+scripts/test_reverse_all_live.mjs:309:    .from('devolution_items')
+scripts/test_reverse_all_live.mjs:332:    .from('devolutions')
+scripts/test_reverse_e2e_full.mjs:182:  const { data: dev, error: e1 } = await supabase.from('devolutions').insert({
+scripts/test_reverse_e2e_full.mjs:191:  const { error: e2 } = await supabase.from('devolution_items').insert([
+scripts/test_reverse_e2e_full.mjs:209:  const { data: devAfter } = await supabase.from('devolutions').select('status').eq('id', dev.id).single();
+
+== D. RPCs canónicos referenciados ==
+src/hooks/api/useReverseDocument.ts:19: *   - devolution        -> reverse_devolution       (descuenta stock restaurado)
+src/hooks/api/useDuplicateDocumentV2.ts:115:    extractNewId: (res) => res.devolution_id || res.id, // create_devolution RPC shape
+src/__tests__/integration/iteration-15-b10-reverse-authorization.test.ts:109:    const body = sql.slice(sql.indexOf('public.reverse_devolution(p_devolution_id'));
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:4: * Modernización de reverse_devolution al pipeline canónico de inventario:
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:5: *   reverse_devolution → FOR UPDATE → validación → fn_recalc_wac (invariante)
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:19: *                    kardex_entries dentro de reverse_devolution (§29)
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:25:const MIGRATION = '20260905120000_w9_b10b_modernize_reverse_devolution.sql';
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:57:  it('reverse_devolution muta SOLO vía register_stock_movement (pipeline canónico §29)', () => {
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:58:    const fn = extractFn(code, 'public.reverse_devolution(p_devolution_id');
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:64:    const fn = extractFn(code, 'public.reverse_devolution(p_devolution_id');
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:80:describe('PT-B10B.2 — reverse_devolution: signo, WAC, trazabilidad, state machine', () => {
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:81:  const fn = extractFn(stripComments(readMig()), 'public.reverse_devolution(p_devolution_id');
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:91:    expect(fn).toMatch(/0,\s*0,\s*\n?\s*jsonb_build_object\('rpc',\s*'reverse_devolution'/);
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:132:  const fn = extractFn(stripComments(readMig()), 'public.reverse_devolution(p_devolution_id');
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:164:  it('exactamente 2 funciones redefinidas (reverse_devolution + auto_kardex)', () => {
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:170:    expect(mig).toMatch(/reverse_devolution\(p_devolution_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid\)\s*\n RETURNS jsonb\s*\n LANGUAGE plpgsql\s*\n SECURITY DEFINER\s*\n SET search_path TO 'public'/);
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:174:    const rb = readFileSync(join(process.cwd(), 'audit-evidence', '20260905-w9-b10b', 'rollback_reverse_devolution.sql'), 'utf-8');
+src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts:175:    expect(rb).toContain('CREATE OR REPLACE FUNCTION public.reverse_devolution');
+src/__tests__/integration/iteration-rls.test.ts:264:  it('PT-RLS.6.4: no se modifica create_devolution_v2 RPC', () => {
+src/__tests__/integration/iteration-rls.test.ts:267:      expect(sql).not.toContain('CREATE OR REPLACE FUNCTION public.create_devolution_v2');
+
+== E. Cliente browser (rol authenticated vía PostgREST) ==
+4:import { supabase } from '@/lib/supabaseClient';
+240:  const { data: doc, error: e1 } = await supabase
+250:  const { data: items, error: e2 } = await supabase
+282:  const { data: items, error } = await supabase

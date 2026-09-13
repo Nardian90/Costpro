@@ -1,0 +1,29 @@
+REM-INV-3R-B — 04-triggers-constraints (catálogo LIVE 2026-09-13)
+
+TRIGGER [devolutions] trg_validate_devolution_transition (enabled=O, fn_secdef=False, owner=postgres)
+  CREATE TRIGGER trg_validate_devolution_transition BEFORE UPDATE OF status ON public.devolutions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('devolutions')
+
+CONSTRAINT [devolution_items] devolution_items_quantity_check (c): CHECK ((quantity > (0)::numeric))
+CONSTRAINT [devolution_items] devolution_items_total_check (c): CHECK ((total >= (0)::numeric))
+CONSTRAINT [devolution_items] devolution_items_unit_price_check (c): CHECK ((unit_price >= (0)::numeric))
+CONSTRAINT [devolution_items] devolution_items_devolution_id_fkey (f): FOREIGN KEY (devolution_id) REFERENCES devolutions(id) ON DELETE CASCADE
+CONSTRAINT [devolution_items] devolution_items_product_id_fkey (f): FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
+CONSTRAINT [devolution_items] devolution_items_pkey (p): PRIMARY KEY (id)
+CONSTRAINT [devolutions] devolutions_payment_method_check (c): CHECK ((payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'zelle'::text, 'store_credit'::text])))
+CONSTRAINT [devolutions] devolutions_status_check (c): CHECK ((status = ANY (ARRAY['pending'::text, 'completed'::text, 'voided'::text, 'reversed'::text])))
+CONSTRAINT [devolutions] devolutions_total_amount_check (c): CHECK ((total_amount >= (0)::numeric))
+CONSTRAINT [devolutions] devolutions_customer_id_fkey (f): FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
+CONSTRAINT [devolutions] devolutions_original_transaction_id_fkey (f): FOREIGN KEY (original_transaction_id) REFERENCES transactions(id) ON DELETE SET NULL
+CONSTRAINT [devolutions] devolutions_processed_by_fkey (f): FOREIGN KEY (processed_by) REFERENCES profiles(id)
+CONSTRAINT [devolutions] devolutions_reversed_by_fkey (f): FOREIGN KEY (reversed_by) REFERENCES profiles(id)
+CONSTRAINT [devolutions] devolutions_store_id_fkey (f): FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+CONSTRAINT [devolutions] devolutions_voided_by_fkey (f): FOREIGN KEY (voided_by) REFERENCES profiles(id)
+CONSTRAINT [devolutions] devolutions_pkey (p): PRIMARY KEY (id)
+
+FKs entrantes desde otras tablas:
+  devolution_items: FOREIGN KEY (devolution_id) REFERENCES devolutions(id) ON DELETE CASCADE
+
+HALLAZGO COMPORTAMENTAL (staging, ver 07): el trigger trg_validate_devolution_transition
+NO bloquea transiciones de status de devolutions: el mapa v_valid_transitions no tiene la
+clave 'devolutions' → (NULL ? 'completed') = NULL → IF NOT(NULL) no levanta excepción
+(lógica 3-valuada). Toda transición de status es permitida vía UPDATE directo PRE-DDL.

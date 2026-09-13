@@ -1,0 +1,19 @@
+REM-INV-3R-B — 19-classification
+
+Clasificación del hallazgo (§20):
+  SEC-F02-1 = EXPLOITABLE (PRE) → REMEDIADO con hardening mínimo (POST 14/14 DENIED)
+
+Clasificación de los caminos (§8):
+  Camino A (UI→API→create_devolution_v2→DB)  : CANONICAL_V2 — único legítimo; intacto
+  Camino B (direct INSERT devolutions)        : DIRECT_DML — ABIERTO PRE → CERRADO POST
+  Camino C (direct UPDATE devolutions)        : DIRECT_DML — ABIERTO PRE → CERRADO POST
+  Camino D (direct INSERT devolution_items)   : DIRECT_DML — ABIERTO PRE → CERRADO POST
+  DELETE / items UPDATE / TRUNCATE            : exceso de grant (sin ruta o sin policy)
+                                                → CERRADO POST (defensa en profundidad)
+  Cross-store INSERT/UPDATE                   : cerrado PRE y POST (RLS own-store)
+
+Necesidad del grant (§21): NOT_REQUIRED — 0 callers legítimos; tests vía service_role;
+  SELECT conservado para lectura own-store (hook duplicar).
+
+Cambios de catálogo (§27): 4 REVOKE (2 tablas × 2 roles × 4 privilegios). Ningún otro
+  objeto tocado: policies, triggers, funciones, columnas, constraints e índices idénticos.

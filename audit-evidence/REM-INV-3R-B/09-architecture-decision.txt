@@ -1,0 +1,28 @@
+REM-INV-3R-B — 09-architecture-decision
+
+¿ES NECESARIO EL DML DIRECTO? (§21) — Respuesta por evidencia:
+
+1. ¿La UI usa .insert()/.update() directo?            NO (ver 05/06)
+2. ¿Algún API route escribe directo?                  NO (solo rpc vía service_role;
+     GET es lectura con service_role)
+3. ¿Algún hook escribe directo?                       NO (duplicar/revertir van por HTTP API)
+4. ¿Algún RPC depende de grants de extremo?           NO (SECURITY DEFINER owner postgres;
+     EXECUTE restrictivo postgres+service_role)
+5. ¿Proceso administrativo legítimo?                  NO identificado
+6. ¿Migración/test que dependa del grant authenticated? NO — los scripts de test que
+     insertan usan SUPABASE_SERVICE_ROLE_KEY (test_duplicate_e2e_full.mjs:16,
+     test_reverse_e2e_full.mjs:11, test_live_e2e_costpro.mjs:33 'admin')
+7. ¿service_role puede ejecutar el flujo sin esos grants? SÍ — probado en staging (16)
+
+CLASIFICACIÓN (§21): REQUIRED=no / NOT_REQUIRED=SÍ / LEGACY=no / TEST_ONLY=los
+  inserts de scripts pero vía service_role (no dependen del grant de extremo)
+
+ARQUITECTURA OBJETIVO (§22): el flujo legítimo ya ES la arquitectura deseada:
+  authenticated → API/RPC controlado → create_devolution_v2 → (validación,
+  FOR UPDATE, cap, stock, WAC, DF-03, audit) — el grant directo es una
+  superficie residual que la app NO usa. Decisión: REVOCAR INSERT, UPDATE,
+  DELETE, TRUNCATE para anon y authenticated en ambas tablas; CONSERVAR
+  SELECT (lectura del hook duplicar, acotada por RLS own-store) y TODO para
+  service_role/postgres. Políticas RLS: SIN CAMBIO (segunda barrera).
+  Alternativa (reducir policies) rechazada: tocar policies es más invasivo y
+  perdería defensa en profundidad si un grant futuro re-expone escritura.

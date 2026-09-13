@@ -1,0 +1,44 @@
+REM-INV-3R-B — 21-repo-regression (§33)
+Fecha: 2026-09-13T04:04:40Z
+Nota: 0 cambios de código en esta fase (solo evidencia + DDL de catálogo externo)
+
+== npx tsc --noEmit ==
+exit=0
+PASS: 0 errores de tipo
+
+== npx vitest run ==
+== npx vitest run ==
+ ✓ src/__tests__/hooks/useStoreInactivityMonitor.test.tsx (2 tests | 1 skipped) 3ms
+ ↓ src/__tests__/integration/backup-schema-validation.test.ts (10 tests | 10 skipped)
+
+ Test Files  99 passed | 1 skipped (100)
+      Tests  2070 passed | 24 skipped (2094)
+   Start at  04:04:53
+   Duration  208.94s (transform 3.95s, setup 5.29s, import 8.23s, tests 124.24s, environment 58.33s)
+
+== npm run lint (eslint) ==
+exit=0
+  3464:15  warning  V2.12.25: Considera usar <Button> de @/components/ui/button en vez de <button> crudo. Refactor incremental recomendado  no-restricted-syntax
+
+✖ 1291 problems (0 errors, 1291 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
+
+== security-contract-test (referencia REM-INV-3R: 134/134) ==
+exit=2 (node sin .env — ver re-lanzamiento con bun abajo):
+
+== bun scripts/security-contract-test.cjs (auto-carga .env) ==
+════════════════════════════════════════════════════════════════════════════════
+🔒 TEST DE CONTRATO — Seguridad de funciones SECURITY DEFINER
+════════════════════════════════════════════════════════════════════════════════
+
+Funciones SECURITY DEFINER con escritura detectadas: 134
+
+Funciones verificadas: 134
+Funciones con violaciones: 0
+
+✅ PIN REM-INV-2R: receive_purchase(uuid) sigue ausente del catálogo
+
+════════════════════════════════════════════════════════════════════════════════
+🎉 TODAS LAS FUNCIONES PASAN EL TEST DE CONTRATO
+════════════════════════════════════════════════════════════════════════════════
+exit=0

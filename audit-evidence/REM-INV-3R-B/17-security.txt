@@ -1,0 +1,16 @@
+REM-INV-3R-B — 17-security (matriz de ataques §34)
+
+| Ataque             | Antes (PRE)  | Después (POST) | Resultado |
+|--------------------|--------------|----------------|-----------|
+| Direct INSERT (S1) | EXPLOIT-OK   | DENIED         | PASS      |
+| Fake 999 NC (S2/S3) | EXPLOIT-OK   | DENIED         | PASS      |
+| NULL original (S3) | EXPLOIT-OK   | DENIED         | PASS      |
+| Direct UPDATE (S4a-c) | EXPLOIT-OK   | N/A            | FAIL      |
+| Cross-store INSERT (S5a) | DENIED       | N/A            | FAIL      |
+| Cross-store UPDATE (S5b) | DENIED       | N/A            | FAIL      |
+| Items INSERT (S6a) | EXPLOIT-OK   | N/A            | FAIL      |
+| DELETE (S8a/b)     | NO-OP        | N/A            | FAIL      |
+| TRUNCATE (S8t, extra) | NO-OP        | N/A            | FAIL      |
+
+MATRIX: FALLOS (Post-DDL todo DENIED por privilegio de tabla)
+Re-ataque expandido completo: 14/14 DENIED (ver 15). SELECT own-store conservado.
