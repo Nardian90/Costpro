@@ -1,0 +1,99 @@
+REM-INV-3C — 20-final-verdict.txt
+Fecha: 2026-09-13
+
+════════════════════════════════════════════════════════════════════
+VEREDICTO FINAL: CERTIFIED — HARDENED
+════════════════════════════════════════════════════════════════════
+
+Criterios de la misión (§36 CERTIFIED — HARDENED):
+
+  [1] Comportamiento problemático REPRODUCIDO ................... PASS
+      Fail-open por lógica 3-valuada demostrado en espejo verbatim
+      (md5(prosrc) PRE == producción): T3/T4/T6/S4 PRE = ALLOW/SUCCEEDED.
+
+  [2] Corrección MÍNIMA APLICADA ................................ PASS
+      1 CREATE OR REPLACE FUNCTION (13-remediation.sql = migración
+      20260913000001). Fail-closed (A+B) + mapas restaurados con semántica
+      documentada V2.3/V2.11 (C). D (eliminar trigger) rechazada con
+      evidencia. md5(prosrc) producción POST == 469c529a == staging (byte-exacto).
+
+  [3] T1-T8 PASS (post) ......................................... PASS
+      Válidas ALLOW (pending→completed, pending→voided, completed→reversed,
+      transacciones), inválidas DENY (4 casos devolutions + completed→pending
+      en transactions), desconocido DENY, NULL DENY (2 sub-casos),
+      documento inexistente = no-op, status boguso DENY, llamada directa
+      imposible. (16-tests-post.txt)
+
+  [4] V2 PASS ................................................... PASS
+      11/11 (creación+efectos laterales completos, cap, NO_ORIGINAL,
+      cross-store, idempotencia, reversión completed→reversed, doble
+      reversión, guard pending, RPC authenticated denegado).
+      (17-v2-regression.txt)
+
+  [5] Seguridad PASS ............................................ PASS
+      8/8 ataques DENIED con grants LIVE; fail-open eliminado con grants
+      regresados (2/2 DENIED); cross-store en su capa correcta (RLS);
+      SELECT own-store conservado. (18-security.txt)
+
+  [6] Regresión PASS ............................................ PASS
+      tsc 0 err; vitest 2070/0 fail; eslint 0 err (1291 warnings
+      pre-existentes); security-contract 134/134.
+      BUILD = INFRASTRUCTURE LIMITATION (OOM exit 137 pre-existente,
+      consistente con REM-INV-3/3R/3R-B; no re-ejecutado para proteger el
+      server pm2 del operador).
+
+  [7] Zero-touch PASS ........................................... PASS
+      14/14 indicadores de 7 tablas idénticos PRE==POST. Las 13 NC
+      históricas absolutamente intactas (la única sentencia no contiene DML).
+
+  [8] Evidence PASS ............................................. PASS
+      audit-evidence/REM-INV-3C/ 00-20 completos + raw/ (12 JSON/log) +
+      MANIFEST.sha256 verificado. Sin secretos.
+
+  [9] Git closure PASS .......................................... PASS
+      Commit único (migración + evidencia) → push → HEAD == origin/main →
+      gate-closure-check.sh CLOSURE OK → supervivencia fetch + reset --hard
+      + clean -fd (NO -fdx) verificada (.env intacto, pm2 online).
+
+RESPUESTAS OBLIGATORIAS (§38):
+  ¿Acepta alguna transición inválida?       PRE: sí (todas las de tablas no
+    mapeadas, por NULL-3-valuado). POST: no (fail-closed + mapas completos).
+  ¿Qué pasa exactamente cuando la condición es NULL?
+    NOT(NULL)=NULL; IF NULL se trata como FALSE ⇒ no se levanta la excepción
+    ⇒ la transición se acepta silenciosamente. Cerrado con IS NULL + COALESCE.
+  ¿Un document_type desconocido atraviesa el validador?
+    PRE: sí (probado). POST: no (DENY) para las 6 tablas con trigger.
+  ¿devolutions debe estar en el mapa?
+    SÍ — fue inclusión deliberada de V2.3; el trigger existe para ello; la
+    exclusión fue drift sin registro; semántica compatible 1:1 con el modelo
+    vivo y el CHECK constraint.
+  ¿Existe trigger sobre devolutions?
+    SÍ: trg_validate_devolution_transition, BEFORE UPDATE OF status, FOR EACH
+    ROW, ligado a fn_validate_document_transition('devolutions') desde V2.3
+    (48e501e8), presente PRE y POST (sin cambio).
+  ¿Hay callers productivos que dependan de la función?
+    Solo los 6 triggers (capa DB). 0 funciones RPC, 0 referencias en src/,
+    0 en tests. La única transición UPDATE de devolutions en código vivo es
+    completed→reversed (reverse_devolution) — conservada.
+  ¿Puede el defecto explotarse hoy?
+    NO (post-3R-B: sin grants de escritura para extremos; único writer
+    service_role con guard propio). Era explotable en la era pre-3R-B.
+  ¿Qué impacto tendría?
+    Manipulación de estado documental sin efectos laterales (NC regresadas o
+    resucitadas) — exactamente el vector auxiliar del patrón fantasma.
+  ¿Bug real, defense-in-depth gap o false positive?
+    DEFENSE-IN-DEPTH GAP real (reproducido), cerrado con hardening.
+  ¿Qué cambio mínimo debía hacerse?
+    Restaurar los mapas ausentes con semántica histórica y hacer el chequeo
+    NULL-safe — hecho en una única sentencia.
+  ¿Se rompió algún flujo legítimo?
+    NO — matriz §24 completa sin cambios en caminos válidos; V2 11/11;
+    vitest 2070/0; concurrencia sin corrupción.
+  ¿Las 13 NC históricas permanecieron intactas?
+    SÍ — zero-touch 14/14; la sentencia aplicada no contiene DML.
+
+RESIDUAL (documentado, fuera de scope):
+  - received_services / commission_payments / purchase_orders sin trigger del
+    validador (diseño histórico).
+  - Drift de catálogo sin traza en git: recomendación procesal de pin
+    pg_proc md5 en futuros gates de funciones críticas.

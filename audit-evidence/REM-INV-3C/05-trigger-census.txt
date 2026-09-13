@@ -1,0 +1,48 @@
+REM-INV-3C — 05-trigger-census.txt (§7 — censo LIVE de triggers)
+
+TRIGGERS LIGADOS AL VALIDADOR (PRE == POST, 6):
+  - tabla=devolutions  trigger=trg_validate_devolution_transition  enabled=O
+    def=CREATE TRIGGER trg_validate_devolution_transition BEFORE UPDATE OF status ON public.devolutions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('devolutions')
+  - tabla=inventory_adjustments  trigger=trg_validate_adjustment_transition  enabled=O
+    def=CREATE TRIGGER trg_validate_adjustment_transition BEFORE UPDATE OF status ON public.inventory_adjustments FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('inventory_adjustments')
+  - tabla=production_orders  trigger=trg_validate_production_transition  enabled=O
+    def=CREATE TRIGGER trg_validate_production_transition BEFORE UPDATE OF status ON public.production_orders FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('production_orders')
+  - tabla=receipts  trigger=trg_validate_receipt_transition  enabled=O
+    def=CREATE TRIGGER trg_validate_receipt_transition BEFORE UPDATE OF status ON public.receipts FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('receipts')
+  - tabla=transactions  trigger=trg_validate_tx_transition  enabled=O
+    def=CREATE TRIGGER trg_validate_tx_transition BEFORE UPDATE OF status ON public.transactions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('transactions')
+  - tabla=transfers  trigger=trg_validate_transfer_transition  enabled=O
+    def=CREATE TRIGGER trg_validate_transfer_transition BEFORE UPDATE OF status ON public.transfers FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('transfers')
+
+Los 6 eventos: BEFORE UPDATE OF status, FOR EACH ROW — ninguno es INSERT ni DELETE.
+Consecuencia: los INSERTs (create_devolution_v2/V1, register_reception, fn_process_receipt,
+create_transfer, process/duplicate_inventory_adjustment) NUNCA pasan por el validador;
+el estado inicial de cada documento está limitado por CHECK constraints / enums.
+
+TRIGGERS TOTALES EN LAS 9 TABLAS DOCUMENTALES (22):
+  - commission_payments.commission_payments_touch_updated_at
+  - commission_payments.trg_audit_commission_payments
+  - commission_payments.trg_calc_commission_cup
+  - commission_payments.trg_set_default_due_date_commission
+  - devolutions.trg_validate_devolution_transition
+  - inventory_adjustments.trg_validate_adjustment_transition
+  - production_orders.trg_generate_po_number
+  - production_orders.trg_validate_production_transition
+  - purchase_orders.trg_po_updated
+  - purchase_orders.trg_purchase_orders_updated_at
+  - receipts.trg_audit_receipt_changes
+  - receipts.trg_set_due_date_receipt
+  - receipts.trg_validate_receipt_transition
+  - received_services.trg_prevent_received_service_edit
+  - received_services.trg_set_due_date_service
+  - transactions.reverse_commissions_on_sale_void
+  - transactions.trg_audit_transaction_changes
+  - transactions.trg_check_active_user
+  - transactions.trg_protect_transactions_total_amount
+  - transactions.trg_validate_tx_transition
+  - transfers.trg_validate_transfer_stores
+  - transfers.trg_validate_transfer_transition
+
+NO existe otro mecanismo que invoque el validador (pg_depend: solo las 6 entradas
+de pg_trigger, deptype=n). Sin trigger sobre devolutions distinto de
+trg_validate_devolution_transition (censo: devolutions tiene 1 trigger).

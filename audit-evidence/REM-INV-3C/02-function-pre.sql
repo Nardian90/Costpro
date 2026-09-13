@@ -1,0 +1,63 @@
+-- signature: fn_validate_document_transition()
+-- secdef: false  volatility: v  owner: postgres
+-- proconfig: null
+-- proacl: {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fn_validate_document_transition()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+  v_table_name TEXT := TG_ARGV[0];
+  v_old_status TEXT;
+  v_new_status TEXT;
+  v_valid_transitions JSONB;
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    v_old_status := OLD.status;
+    v_new_status := NEW.status;
+  ELSIF TG_OP = 'INSERT' THEN
+    v_old_status := NULL;
+    v_new_status := NEW.status;
+  ELSE
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
+  IF v_old_status IS NOT NULL AND v_old_status = v_new_status THEN
+    RETURN NEW;
+  END IF;
+
+  v_valid_transitions := jsonb_build_object(
+    'production_orders', jsonb_build_object(
+      'draft',       '["approved","in_progress","voided"]'::jsonb,
+      'approved',    '["in_progress","voided"]'::jsonb,
+      'in_progress', '["paused","completed","voided","reversed"]'::jsonb,
+      'paused',      '["in_progress","voided","reversed"]'::jsonb,
+      'completed',   '["closed","reversed","voided"]'::jsonb,
+      'closed',      '["reversed","voided"]'::jsonb,
+      'voided',      '[]'::jsonb,
+      'reversed',    '[]'::jsonb
+    ),
+    'transactions', jsonb_build_object(
+      'pending',     '["completed","voided"]'::jsonb,
+      'completed',   '["voided","reversed"]'::jsonb,
+      'voided',      '[]'::jsonb,
+      'reversed',    '[]'::jsonb
+    )
+  );
+
+  IF v_old_status IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF NOT (
+    v_valid_transitions->v_table_name ? v_old_status
+    AND (v_valid_transitions->v_table_name->v_old_status) ? v_new_status
+  ) THEN
+    RAISE EXCEPTION 'ERR_INVALID_TRANSITION: % no puede pasar de % a %',
+      v_table_name, v_old_status, v_new_status;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+

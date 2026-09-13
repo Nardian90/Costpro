@@ -1,0 +1,78 @@
+REM-INV-3C — 10-findings.txt (§20/§21)
+
+HALLAZGO PRINCIPAL — FAIL-OPEN EN fn_validate_document_transition
+=================================================================
+
+Descripción exacta:
+  La función live (drift out-of-band, mapa reducido a production_orders +
+  transactions) evaluaba la transición así:
+
+      IF NOT (
+        v_valid_transitions->v_table_name ? v_old_status
+        AND (v_valid_transitions->v_table_name->v_old_status) ? v_new_status
+      ) THEN
+        RAISE EXCEPTION 'ERR_INVALID_TRANSITION: ...';
+      END IF;
+
+  Con v_table_name ausente del mapa (devolutions, receipts, transfers,
+  inventory_adjustments — las 4 tablas con trigger ligado pero sin clave):
+      v_valid_transitions->v_table_name  = NULL
+      NULL ? v_old_status                = NULL      (el operador ? sobre NULL)
+      NULL AND NULL                      = NULL
+      NOT (NULL)                         = NULL
+      IF NULL                            = FALSE     (lógica 3-valuada)
+      ⇒ NO se levanta excepción ⇒ transición ACEPTADA.
+
+  Sub-caso NULL puro (tabla mapeada): (map->tbl->v_old_status) ? NULL = NULL
+      ⇒ TRUE AND NULL = NULL ⇒ NOT(NULL) = NULL ⇒ aceptada.
+      (Inaccesible en producción por columnas status NOT NULL; probado en
+       fixture nullable — T4c.)
+
+Reproducción empírica (espejo verbatim, md5(prosrc) == producción):
+  PRE T6:  devolutions completed→pending, reversed→completed, voided→completed,
+           pending→reversed → TODAS ALLOW (rows=1).
+  PRE T3:  tipo desconocido 'tipo_desconocido_xyz' pending→completed → ALLOW.
+  PRE T4:  NULL new-status (tipo desconocido y tipo mapeado) → ALLOW.
+  PRE S4:  authenticated own-store (grants regresados) cambia status de una NC
+           completed a pending / resucita una reversed → SUCCEEDED.
+  ANTES de la remediación, el único rechazo en devolutions venía del CHECK
+  constraint devolutions_status_check (valores de status válidos), NO del
+  validador (T8 PRE: 'estado_bogus' → 23514 del CHECK, no P0001 del trigger).
+
+Impacto potencial (contextual, no explotable hoy):
+  - Antes de REM-INV-3R-B (con grant UPDATE): un miembro autenticado podía
+    regresar o resucitar una NC de su tienda (completed→pending,
+    reversed→completed) sin tocar stock/finanzas (UPDATE de status no genera
+    efectos laterales — S7 de 3R-B), falseando el estado documental.
+  - Después de REM-INV-3R-B: sin grant UPDATE para authenticated/anon, el
+    único escritor de transiciones es reverse_devolution (service_role,
+    completed→reversed) — transición legítima.
+  - receipts/transfers/inventory_adjustments: mismo fail-open, con 7/5/5
+    writers service_role-only; transiciones legítimas nunca dependieron del
+    validador durante el período de drift.
+
+HALLAZGO SECUNDARIO — OVERLOAD VOID FANTASMA (documental)
+  V2.12.37 creó fn_validate_document_transition(p_table_name TEXT) RETURNS VOID:
+  no instalable como trigger function (trigger functions deben retornar trigger),
+  inútil como RPC (TG_OP NULL → rama ELSE → RETURN inmediato). Hoy NO existe en
+  producción (eliminado out-of-band junto con la instalación de la versión
+  trigger de mapa reducido). Riesgo residual: si alguien vuelve a aplicarla
+  como migración, CREARÍA un overload muerto. La migración de este gate no la
+  referencia (CREATE OR REPLACE de la firma () es idempotente y única).
+
+HALLAZGO TERTIARIO — DERIVA DE ESQUEMA SIN TRAZA EN GIT (procesal)
+  Entre jul-26 y ago-28 el validador fue reemplazado en producción (mapa
+  reducido + SECURITY INVOKER) sin que el SQL final quedara en ninguna
+  migración del repo. Tres gates de auditoría posteriores (W7, W9.x, REM-INV-*)
+  con capturas de función no detectaron la divergencia hasta REM-INV-3R-B S4.
+  Recomendación procesal (fuera de scope): pin de pg_proc md5 en los gates y
+  verificación de mapa del validador cuando se auditen transiciones.
+
+RESIDUAL DOCUMENTADO (fuera de scope de este gate):
+  - Las tablas received_services / commission_payments / purchase_orders NO
+    tienen trigger del validador: su protección es de otra capa
+    (trg_prevent_received_service_edit etc.). El mapa restaurado no las incluye
+    (ninguna versión histórica del validador las tuvo con trigger activo).
+  - El sub-caso NULL puro está cerrado por la forma COALESCE en TODAS las
+    tablas mapeadas, incluso si alguna columna status fuera nullable en el
+    futuro.

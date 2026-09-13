@@ -1,0 +1,42 @@
+REM-INV-3C — 18-security.txt (§29/§34)
+
+MATRIZ DE SEGURIDAD (8 ataques × ANTES × DESPUÉS × dos regímenes de grants)
+
+Régimen REGRESADO (authenticated con arwd — validador como única barrera;
+reproduce la superficie histórica pre-3R-B para aislar el comportamiento del validador):
+
+| # | Ataque | ANTES (PRE) | DESPUÉS (POST) | Veredicto |
+|---|--------|-------------|----------------|-----------|
+| 1 | Direct INSERT (authenticated) | SUCCEEDED (grant arwd; INSERT no pasa por trigger) | SUCCEEDED (idem — el validador no es su capa) | capa correcta: GRANT (REVOKE 3R-B) |
+| 2 | Fake 999 NC (INSERT+item) | SUCCEEDED (idem) | SUCCEEDED (idem) | capa correcta: GRANT |
+| 3 | NULL original (INSERT) | SUCCEEDED (idem) | SUCCEEDED (idem) | capa correcta: GRANT |
+| 4 | Direct UPDATE status inválido (completed→pending / reversed→completed) | SUCCEEDED — FAIL-OPEN del validador | DENIED (ERR_INVALID_TRANSITION) | HARDENED por REM-INV-3C |
+| 5 | Cross-store INSERT | DENIED (RLS WITH CHECK) | DENIED (RLS WITH CHECK) | PASS (RLS, sin cambio) |
+| 6 | Cross-store UPDATE | NO-OP 0 filas (RLS USING) | NO-OP 0 filas (RLS USING) | PASS (RLS, sin cambio) |
+| 7 | Items INSERT directo | SUCCEEDED (grant) | SUCCEEDED (grant) | capa correcta: GRANT (REVOKE 3R-B items) |
+| 8 | DELETE directo | NO-OP 0 filas (RLS) / DENIED (grant LIVE) | DENIED (grant LIVE) | PASS |
+
+Régimen LIVE (producción post-3R-B: authenticated SELECT-only):
+
+| # | Ataque | POST-fix (producción) | Veredicto |
+|---|--------|------------------------|-----------|
+| 1 | INSERT devolutions | DENIED 42501 | PASS |
+| 2 | INSERT NC sin original | DENIED 42501 | PASS |
+| 3 | UPDATE status completed→pending | DENIED 42501 (grant) + DENIED P0001 (validador) — defensa en profundidad | PASS |
+| 4 | UPDATE total_amount | DENIED 42501 | PASS |
+| 5 | UPDATE cross-store | DENIED 42501 | PASS |
+| 6 | INSERT devolution_items | DENIED 42501 | PASS |
+| 7 | DELETE devolutions | DENIED 42501 | PASS |
+| 8 | TRUNCATE devolution_items | DENIED 42501 | PASS |
+
+TOTAL LIVE: 8/8 DENIED + SELECT own-store conservado (filas visibles=4 en espejo).
+
+POST-CORRECCIÓN (§29) en el espejo (grants regresados):
+  unknown document type  → DENY (P0001 ERR_INVALID_TRANSITION)
+  NULL expected/new status → DENY (ambos sub-casos)
+  invalid transition     → DENY (4 resurrecciones/regresiones probadas)
+  cross-store            → DENY (capa RLS — el validador no es su responsable, T7)
+  unauthorized (llamada directa) → imposible (0A000)
+
+create_devolution_v2 post-corrección: continúa ejecutándose únicamente por su
+camino autorizado (service_role; authenticated sin EXECUTE → 42501).

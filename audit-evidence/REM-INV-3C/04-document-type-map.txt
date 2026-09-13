@@ -1,0 +1,33 @@
+REM-INV-3C — 04-document-type-map.txt
+
+MAPA DE DOCUMENTOS RECONOCIDOS POR fn_validate_document_transition (§6)
+
+PRE (drifted, live hasta la remediación):
+  production_orders  -> draft/approved/in_progress/paused/completed/closed/voided/reversed
+  transactions       -> pending/completed/voided/reversed
+  (AUSENTES: devolutions, receipts, transfers, inventory_adjustments —
+   las 4 tablas con trigger ligado quedaron SIN clave en el mapa ⇒ fail-open)
+
+POST (mapas restaurados con semántica documentada):
+  production_orders       -> V2.12.37/live (idéntico byte a byte)
+  transactions            -> V2.12.37/live (idéntico byte a byte)
+  devolutions             -> V2.3 (48e501e8): pending→[completed,voided], completed→[reversed,voided], voided→[], reversed→[]
+  receipts                -> V2.3: pending→[confirmed,active,voided], confirmed→[active,reversed,voided], active→[reversed,voided], partial→[active,confirmed,reversed,voided], reversed→[], voided→[]
+  transfers               -> V2.3: PENDIENTE→[CONFIRMADA,CANCELADA], CONFIRMADA→[REVERSADA], CANCELADA→[], REVERSADA→[]
+  inventory_adjustments   -> V2.11 (970953e9): pending→[confirmed,reversed,voided], confirmed→[reversed], voided→[], reversed→[]
+
+¿Debería devolution ser responsabilidad de esta función? (pregunta §6)
+  SÍ — evidencia:
+  1. V2.3 la incluyó deliberadamente en el mapa Y creó trg_validate_devolution_transition
+     ("Aplica a: transactions, receipts, transfers, devolutions, inventory_adjustments,
+      production_orders" — comentario verbatim de la migración 20260726000006).
+  2. El trigger sigue existiendo y ligado en producción (nunca dropeado en el repo).
+  3. La semántica del mapa V2.3 es compatible 1:1 con el único escritor vivo
+     de transiciones (reverse_devolution: completed→reversed) y con el CHECK
+     constraint devolutions_status_check (mismos 4 estados).
+  4. La ausencia actual es drift no documentado, no decisión de diseño: ninguna
+     migración del repo excluye devolutions del mapa ni dropea su trigger.
+
+Tipos sin trigger del validador (protección por otras capas, FUERA DE SCOPE):
+  received_services (trg_prevent_received_service_edit), commission_payments,
+  purchase_orders (V2.12.37 los tenía en su mapa VOID nunca activo como trigger).

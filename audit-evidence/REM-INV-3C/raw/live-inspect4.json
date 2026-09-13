@@ -1,0 +1,184 @@
+{
+ "captured_at": "2026-09-13T04:50:35.872Z",
+ "phase": "inspect-live4-writers-fixed",
+ "writers": {
+  "receipts": [
+   {
+    "signature": "cancel_reception(uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "confirm_pending_reception(uuid,uuid,timestamp with time zone)",
+    "secdef": true
+   },
+   {
+    "signature": "fn_process_receipt(jsonb,uuid,text)",
+    "secdef": true
+   },
+   {
+    "signature": "fn_process_receipt(jsonb,uuid,uuid,text)",
+    "secdef": true
+   },
+   {
+    "signature": "fn_void_receipt(uuid,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "receive_against_po(uuid,jsonb,uuid,timestamp with time zone,text)",
+    "secdef": true
+   },
+   {
+    "signature": "register_reception(uuid,text,timestamp with time zone,text,jsonb,uuid,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "reverse_receipt_v2(uuid,text,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "reverse_receipt(uuid,text,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "update_payment_status()",
+    "secdef": false
+   },
+   {
+    "signature": "update_receipt_item_tasa(uuid,numeric,text,text,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "update_reception_items(uuid,jsonb,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "void_pending_reception(uuid,uuid,text,timestamp with time zone)",
+    "secdef": true
+   },
+   {
+    "signature": "void_reception_with_reversal(uuid,uuid,text,timestamp with time zone)",
+    "secdef": true
+   }
+  ],
+  "transfers": [
+   {
+    "signature": "approve_transfer(uuid,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "cancel_transfer(uuid,text,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "cancel_transfer(uuid,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "confirm_transfer(uuid,uuid,timestamp with time zone)",
+    "secdef": true
+   },
+   {
+    "signature": "create_transfer(uuid,uuid,jsonb,text,uuid,timestamp with time zone,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "reject_transfer(uuid,text,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "reverse_transfer(uuid,text,uuid)",
+    "secdef": true
+   }
+  ],
+  "inventory_adjustments": [
+   {
+    "signature": "confirm_inventory_adjustment(uuid,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "process_inventory_adjustment(uuid,uuid,adjustment_item[],timestamp with time zone)",
+    "secdef": true
+   },
+   {
+    "signature": "reverse_adjustment(uuid,text,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "reverse_inventory_adjustment_v2(uuid,text,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "void_inventory_adjustment(uuid,uuid)",
+    "secdef": true
+   }
+  ],
+  "devolutions": [
+   {
+    "signature": "create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)",
+    "secdef": true
+   },
+   {
+    "signature": "create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)",
+    "secdef": true
+   },
+   {
+    "signature": "reverse_devolution(uuid,text,uuid)",
+    "secdef": true
+   }
+  ]
+ },
+ "inserters": {
+  "receipts": [
+   {
+    "signature": "fn_process_receipt(jsonb,uuid,text)",
+    "secdef": true
+   },
+   {
+    "signature": "fn_process_receipt(jsonb,uuid,uuid,text)",
+    "secdef": true
+   },
+   {
+    "signature": "register_reception(uuid,text,timestamp with time zone,text,jsonb,uuid,uuid)",
+    "secdef": true
+   }
+  ],
+  "transfers": [
+   {
+    "signature": "create_transfer(uuid,uuid,jsonb,text,uuid,timestamp with time zone,uuid)",
+    "secdef": true
+   }
+  ],
+  "inventory_adjustments": [
+   {
+    "signature": "duplicate_inventory_adjustment_v2(uuid,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "duplicate_inventory_adjustment(uuid,uuid)",
+    "secdef": true
+   },
+   {
+    "signature": "process_inventory_adjustment(uuid,uuid,adjustment_item[],timestamp with time zone)",
+    "secdef": true
+   },
+   {
+    "signature": "reverse_inventory_adjustment_v2(uuid,text,uuid)",
+    "secdef": true
+   }
+  ],
+  "devolutions": [
+   {
+    "signature": "create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)",
+    "secdef": true
+   },
+   {
+    "signature": "create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)",
+    "secdef": true
+   },
+   {
+    "signature": "create_devolution(uuid,jsonb,text,uuid,uuid,text,uuid,text,text)",
+    "secdef": true
+   }
+  ]
+ }
+}

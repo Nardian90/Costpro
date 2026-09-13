@@ -1,0 +1,22 @@
+REM-INV-3C — 01-function-catalog.txt
+
+TABLA DE CATÁLOGO (§4 de la misión)
+
+| Elemento          | Valor PRE (live 2026-09-13) | Valor POST (tras remediación) |
+|-------------------|-----------------------------|-------------------------------|
+| Firma             | fn_validate_document_transition() | idéntica (0 args) |
+| Security          | False (SECURITY INVOKER) | False (sin cambio) |
+| Return            | trigger | trigger (sin cambio) |
+| Volatility        | v (volatile) | v |
+| Caller count (DB) | 0 funciones llaman al validador en su cuerpo (void_inventory_adjustment solo lo menciona en comentario) | sin cambio |
+| Trigger count     | 6 triggers ligados (devolutions, inventory_adjustments, production_orders, receipts, transactions, transfers) | 6, mismos bindings |
+| Policy dependency | ninguna policy depende del validador | sin cambio |
+| Migration origin  | V2.3 commit 48e501e8 (creación); V2.10.1/V2.11 redefiniciones; V2.12.37 creó overload VOID (nunca trigger); versión LIVE = drift out-of-band [jul-26, ago-28] | migración 20260913000001 |
+| Current hash      | md5(prosrc) c77a18de9a9f2ca5c935f0b4f0a35e68 (len 1567) | md5(prosrc) 469c529a70fe578a6f2ac25273bd79ca |
+
+Atributos invariantes: RETURNS trigger, SECURITY INVOKER, owner postgres, proconfig NULL (sin search_path),
+proacl {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres} (anon SIN EXECUTE).
+
+Overloads: EXISTE UNO SOLO. El overload (text) RETURNS VOID creado por V2.12.37
+(20260801000001) NO existe en producción — eliminado out-of-band junto con la
+instalación de la versión de mapa reducido.

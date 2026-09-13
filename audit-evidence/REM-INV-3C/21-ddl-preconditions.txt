@@ -1,0 +1,71 @@
+REM-INV-3C — 11-ddl-preconditions.txt
+Gate de precondiciones para aplicar 13-remediation.sql en producción (patrón §25 REM-INV-3R-B)
+Fecha UTC: ver 22-ddl-execution.txt
+
+[1/9] Diagnóstico demuestra la necesidad del hardening ................ PASS
+       - Defecto reproducido en staging (espejo verbatim, md5(prosrc) PRE
+         == c77a18de9a9f2ca5c935f0b4f0a35e68 == producción):
+         T6 devolutions completed→pending / reversed→completed / voided→completed /
+         pending→reversed = ALLOW (fail-open por lógica 3-valuada).
+         T3 tipo desconocido = ALLOW. T4 NULL (ambos sub-casos) = ALLOW.
+       - Origen: drift out-of-band entre jul-26 (V2.3 map con devolutions,
+         commit 48e501e8) y ago-28 (W7 def-md5 7ec72a14 ya con mapa reducido).
+       - Hoy el grant UPDATE de authenticated sobre devolutions está revocado
+         (REM-INV-3R-B), por lo que el defecto es DEFENSE-IN-DEPTH (sin bypass
+         actual); el trigger existe desde V2.3 precisamente para proteger
+         devolutions y quedó inerte por el drift.
+
+[2/9] Ningún caller legítimo resulta dañado ........................... PASS
+       - Censo fino de writers de status (live, prosrc verbatim):
+         devolutions: reverse_devolution (completed→reversed — única transición
+         UPDATE; mapa restaurado la permite), create_devolution_v2 (solo
+         UPDATE SET total_amount ⇒ trigger UPDATE OF status no dispara),
+         create_devolution V1 ×2 (INSERT — no pasa por trigger).
+         receipts: 7 writers, transiciones pending→active, →voided,
+         confirmed/active/partial→voided/reversed — todas en mapa V2.3.
+         transfers: PENDIENTE→CONFIRMADA/CANCELADA, CONFIRMADA→REVERSADA —
+         en mapa V2.3; approve_transfer no escribe status.
+         inventory_adjustments: pending→confirmed/voided, confirmed→reversed —
+         en mapa V2.11; el literal 'COMPLETED' de process_inventory_adjustment
+         viola HOY el CHECK constraint (código muerto; sin cambio de estado).
+       - Matriz caller PRE/POST completa en 09-tests-pre.txt / 16-tests-post.txt.
+
+[3/9] Staging prueba que V2 sigue funcionando post-cambio ............. PASS
+       - Regresión V2 11/11 PASS (creación+efectos, cap, NO_ORIGINAL,
+         cross-store, idempotencia, reversión completed→reversed, doble
+         reversión, guard pending, RPC-authenticated denegado, SELECT conservado).
+       - Concurrencia: 1 aplicación única en transición válida concurrente;
+         0 aplicaciones en transición inválida concurrente (2/2 DENIED).
+
+[4/9] SQL auditado .................................................... PASS
+       - 13-remediation.sql: 1 sentencia CREATE OR REPLACE FUNCTION;
+         whitelist estructural sin DROP/ALTER/GRANT/REVOKE/INSERT/DELETE/TRUNCATE.
+       - Sin comentarios dentro del cuerpo ⇒ prosrc byte-exacto reproducible
+         (md5 469c529a70fe578a6f2ac25273bd79ca verificado en staging y en
+         instancia efímera con el archivo completo).
+
+[5/9] Superficie exacta ............................................... PASS
+       - Se modifica EXACTAMENTE 1 función (fn_validate_document_transition()).
+       - No se tocan: policies, grants, triggers, tablas, datos, roles.
+
+[6/9] No afecta otras superficies ..................................... PASS
+       - production_orders/transactions: mapa idéntico byte a byte al vivo.
+       - receipts/transfers/inventory_adjustments: reciben su mapa histórico
+         (V2.3/V2.11) — comportamiento POST verificado en staging contra
+         CHECK constraints reales de producción (C1: mapa == CHECK).
+
+[7/9] Sin CASCADE, sin DROP ........................................... PASS
+       - CREATE OR REPLACE preserva firma, owner, grants y dependencias de
+         los 6 triggers (verificado POST en 13/14/15).
+
+[8/9] No modifica datos de negocio .................................... PASS
+       - La sentencia no contiene DML. Zero-touch fingerprint de 7 tablas
+         PRE (zero-touch-pre.json) == POST (zero-touch-post.json) — ver 19.
+
+[9/9] PRE pins capturados ............................................. PASS
+       - 02-function-pre.sql + 03-function-pre.sha256 (definición verbatim live).
+       - raw/live-inspect.json: 6 triggers ligados, policies, grants, RLS, EXECUTE.
+       - md5(prosrc) PRE producción: c77a18de9a9f2ca5c935f0b4f0a35e68.
+       - zero-touch-pre.json (7 tablas).
+
+RESULTADO GATE: 9/9 PASS → ejecución autorizada (ver 22-ddl-execution.txt)

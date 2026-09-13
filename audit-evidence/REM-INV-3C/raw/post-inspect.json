@@ -1,0 +1,171 @@
+{
+ "captured_at": "2026-09-13T05:17:37.660Z",
+ "phase": "post-ddl-verify",
+ "functions": [
+  {
+   "signature": "fn_validate_document_transition()",
+   "kind": "f",
+   "secdef": false,
+   "volatility": "v",
+   "proconfig": null,
+   "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "md5_prosrc": "469c529a70fe578a6f2ac25273bd79ca",
+   "fndef": "CREATE OR REPLACE FUNCTION public.fn_validate_document_transition()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n  v_table_name TEXT := TG_ARGV[0];\n  v_old_status TEXT;\n  v_new_status TEXT;\n  v_valid_transitions JSONB;\nBEGIN\n  IF TG_OP = 'UPDATE' THEN\n    v_old_status := OLD.status;\n    v_new_status := NEW.status;\n  ELSIF TG_OP = 'INSERT' THEN\n    v_old_status := NULL;\n    v_new_status := NEW.status;\n  ELSE\n    RETURN COALESCE(NEW, OLD);\n  END IF;\n\n  IF v_old_status IS NOT NULL AND v_old_status = v_new_status THEN\n    RETURN NEW;\n  END IF;\n\n  v_valid_transitions := jsonb_build_object(\n    'production_orders', jsonb_build_object(\n      'draft',       '[\"approved\",\"in_progress\",\"voided\"]'::jsonb,\n      'approved',    '[\"in_progress\",\"voided\"]'::jsonb,\n      'in_progress', '[\"paused\",\"completed\",\"voided\",\"reversed\"]'::jsonb,\n      'paused',      '[\"in_progress\",\"voided\",\"reversed\"]'::jsonb,\n      'completed',   '[\"closed\",\"reversed\",\"voided\"]'::jsonb,\n      'closed',      '[\"reversed\",\"voided\"]'::jsonb,\n      'voided',      '[]'::jsonb,\n      'reversed',    '[]'::jsonb\n    ),\n    'transactions', jsonb_build_object(\n      'pending',     '[\"completed\",\"voided\"]'::jsonb,\n      'completed',   '[\"voided\",\"reversed\"]'::jsonb,\n      'voided',      '[]'::jsonb,\n      'reversed',    '[]'::jsonb\n    ),\n    'devolutions', jsonb_build_object(\n      'pending',   '[\"completed\",\"voided\"]'::jsonb,\n      'completed', '[\"reversed\",\"voided\"]'::jsonb,\n      'voided',    '[]'::jsonb,\n      'reversed',  '[]'::jsonb\n    ),\n    'receipts', jsonb_build_object(\n      'pending',   '[\"confirmed\",\"active\",\"voided\"]'::jsonb,\n      'confirmed', '[\"active\",\"reversed\",\"voided\"]'::jsonb,\n      'active',    '[\"reversed\",\"voided\"]'::jsonb,\n      'partial',   '[\"active\",\"confirmed\",\"reversed\",\"voided\"]'::jsonb,\n      'reversed',  '[]'::jsonb,\n      'voided',    '[]'::jsonb\n    ),\n    'transfers', jsonb_build_object(\n      'PENDIENTE',  '[\"CONFIRMADA\",\"CANCELADA\"]'::jsonb,\n      'CONFIRMADA', '[\"REVERSADA\"]'::jsonb,\n      'CANCELADA',  '[]'::jsonb,\n      'REVERSADA',  '[]'::jsonb\n    ),\n    'inventory_adjustments', jsonb_build_object(\n      'pending',   '[\"confirmed\",\"reversed\",\"voided\"]'::jsonb,\n      'confirmed', '[\"reversed\"]'::jsonb,\n      'voided',    '[]'::jsonb,\n      'reversed',  '[]'::jsonb\n    )\n  );\n\n  IF v_old_status IS NULL THEN\n    RETURN NEW;\n  END IF;\n\n  IF (v_valid_transitions->v_table_name) IS NULL\n     OR NOT COALESCE((v_valid_transitions->v_table_name) ? v_old_status, false)\n     OR NOT COALESCE((v_valid_transitions->v_table_name->v_old_status) ? v_new_status, false) THEN\n    RAISE EXCEPTION 'ERR_INVALID_TRANSITION: % no puede pasar de % a %',\n      v_table_name, v_old_status, v_new_status;\n  END IF;\n\n  RETURN NEW;\nEND;\n$function$\n"
+  }
+ ],
+ "validator_triggers": [
+  {
+   "table_name": "devolutions",
+   "trigger_name": "trg_validate_devolution_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_devolution_transition BEFORE UPDATE OF status ON public.devolutions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('devolutions')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false
+  },
+  {
+   "table_name": "inventory_adjustments",
+   "trigger_name": "trg_validate_adjustment_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_adjustment_transition BEFORE UPDATE OF status ON public.inventory_adjustments FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('inventory_adjustments')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false
+  },
+  {
+   "table_name": "production_orders",
+   "trigger_name": "trg_validate_production_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_production_transition BEFORE UPDATE OF status ON public.production_orders FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('production_orders')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false
+  },
+  {
+   "table_name": "receipts",
+   "trigger_name": "trg_validate_receipt_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_receipt_transition BEFORE UPDATE OF status ON public.receipts FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('receipts')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false
+  },
+  {
+   "table_name": "transactions",
+   "trigger_name": "trg_validate_tx_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_tx_transition BEFORE UPDATE OF status ON public.transactions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('transactions')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false
+  },
+  {
+   "table_name": "transfers",
+   "trigger_name": "trg_validate_transfer_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_transfer_transition BEFORE UPDATE OF status ON public.transfers FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('transfers')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false
+  }
+ ],
+ "execute_privs": [
+  {
+   "signature": "fn_validate_document_transition()",
+   "anon_exec": false,
+   "authenticated_exec": true,
+   "service_role_exec": true
+  }
+ ],
+ "dev_table_privs": [
+  {
+   "table_name": "devolutions",
+   "auth_sel": true,
+   "auth_ins": false,
+   "auth_upd": false,
+   "auth_del": false,
+   "svc_sel": true,
+   "svc_ins": true,
+   "svc_upd": true
+  },
+  {
+   "table_name": "devolution_items",
+   "auth_sel": true,
+   "auth_ins": false,
+   "auth_upd": false,
+   "auth_del": false,
+   "svc_sel": true,
+   "svc_ins": true,
+   "svc_upd": true
+  }
+ ],
+ "dev_policies": [
+  {
+   "tablename": "devolution_items",
+   "policyname": "devolution_items_insert",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "INSERT"
+  },
+  {
+   "tablename": "devolution_items",
+   "policyname": "devolution_items_select",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "SELECT"
+  },
+  {
+   "tablename": "devolutions",
+   "policyname": "devolutions_insert_own_store",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "INSERT"
+  },
+  {
+   "tablename": "devolutions",
+   "policyname": "devolutions_select_own_store",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "SELECT"
+  },
+  {
+   "tablename": "devolutions",
+   "policyname": "devolutions_tenant_insert_with_check",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "INSERT"
+  },
+  {
+   "tablename": "devolutions",
+   "policyname": "devolutions_update_own_store",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "UPDATE"
+  }
+ ],
+ "quick_counts": [
+  {
+   "t": "audit_logs",
+   "n": 8145
+  },
+  {
+   "t": "devolution_items",
+   "n": 25
+  },
+  {
+   "t": "devolutions",
+   "n": 25
+  },
+  {
+   "t": "inventory",
+   "n": 277
+  },
+  {
+   "t": "payment_transactions",
+   "n": 458
+  },
+  {
+   "t": "stock_movements",
+   "n": 1021
+  },
+  {
+   "t": "transactions",
+   "n": 597
+  }
+ ]
+}

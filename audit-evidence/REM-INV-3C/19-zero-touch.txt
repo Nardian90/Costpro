@@ -1,0 +1,30 @@
+REM-INV-3C — 19-zero-touch.txt (§28/§31)
+
+Fingerprint de producción PRE (pre-DDL) vs POST (post-DDL) — 14 grupos de
+indicadores sobre las 7 tablas protegidas (devolutions, devolution_items,
+transactions, payments, stock_movements, inventory, audit_logs):
+
+  devolutions_counts / by_status / by_store / money
+  devolution_items_counts
+  transactions_counts / by_status
+  payments_counts / by_direction
+  stock_movements_counts / by_type
+  inventory_counts
+  audit_logs_counts / dev_actions
+
+RESULTADO (zero-touch-compare.py): 14/14 claves IDÉNTICAS PRE == POST.
+
+Valores clave (idénticos en ambas capturas):
+  devolutions: 25 filas (23 completed + 2 reversed), money sin delta
+  devolution_items: 25 filas, sum_qty 1028.00, sum_total 355120.00
+  transactions: 597 (592 completed + 5 voided)
+  payment_transactions: 458 (446 in + 12 refund)
+  stock_movements: 1021, sum_qty 13506.6289
+  inventory: 277, sum_qty 13506.6289
+  audit_logs: 8145 (DEVOLUTION_CREATED_V2=38, REVERSE_DEVOLUTION=1)
+
+Las 13 NC históricas de TIENDA CENTRAL (REM-INV-3R: RETENER): NO TOCADAS —
+la única sentencia ejecutada en producción fue CREATE OR REPLACE FUNCTION
+(fn_validate_document_transition), que no contiene DML.
+
+Archivos: raw/zero-touch-pre.json / raw/zero-touch-post.json.

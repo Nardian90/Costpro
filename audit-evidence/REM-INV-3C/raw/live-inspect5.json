@@ -1,0 +1,130 @@
+{
+ "captured_at": "2026-09-13T04:52:31.741Z",
+ "phase": "inspect-live5-status-transitions",
+ "transitions": {
+  "receipts": [
+   {
+    "signature": "cancel_reception(uuid)",
+    "status_assignments": "'voided'"
+   },
+   {
+    "signature": "confirm_pending_reception(uuid,uuid,timestamp with time zone)",
+    "status_assignments": "'active'"
+   },
+   {
+    "signature": "fn_process_receipt(jsonb,uuid,text)",
+    "status_assignments": null
+   },
+   {
+    "signature": "fn_process_receipt(jsonb,uuid,uuid,text)",
+    "status_assignments": null
+   },
+   {
+    "signature": "fn_void_receipt(uuid,uuid)",
+    "status_assignments": "'voided' WHERE id = p_receipt_id"
+   },
+   {
+    "signature": "receive_against_po(uuid,jsonb,uuid,timestamp with time zone,text)",
+    "status_assignments": null
+   },
+   {
+    "signature": "register_reception(uuid,text,timestamp with time zone,text,jsonb,uuid,uuid)",
+    "status_assignments": null
+   },
+   {
+    "signature": "reverse_receipt_v2(uuid,text,uuid)",
+    "status_assignments": "'reversed'"
+   },
+   {
+    "signature": "reverse_receipt(uuid,text,uuid)",
+    "status_assignments": "'reversed'"
+   },
+   {
+    "signature": "update_payment_status()",
+    "status_assignments": null
+   },
+   {
+    "signature": "update_receipt_item_tasa(uuid,numeric,text,text,uuid)",
+    "status_assignments": null
+   },
+   {
+    "signature": "update_reception_items(uuid,jsonb,uuid)",
+    "status_assignments": null
+   },
+   {
+    "signature": "void_pending_reception(uuid,uuid,text,timestamp with time zone)",
+    "status_assignments": "'voided'"
+   },
+   {
+    "signature": "void_reception_with_reversal(uuid,uuid,text,timestamp with time zone)",
+    "status_assignments": "'voided'"
+   }
+  ],
+  "transfers": [
+   {
+    "signature": "approve_transfer(uuid,uuid)",
+    "status_assignments": null
+   },
+   {
+    "signature": "cancel_transfer(uuid,text,uuid)",
+    "status_assignments": "'CANCELADA'"
+   },
+   {
+    "signature": "cancel_transfer(uuid,uuid)",
+    "status_assignments": "'CANCELADA'"
+   },
+   {
+    "signature": "confirm_transfer(uuid,uuid,timestamp with time zone)",
+    "status_assignments": "'CONFIRMADA'"
+   },
+   {
+    "signature": "create_transfer(uuid,uuid,jsonb,text,uuid,timestamp with time zone,uuid)",
+    "status_assignments": null
+   },
+   {
+    "signature": "reject_transfer(uuid,text,uuid)",
+    "status_assignments": "'CANCELADA'"
+   },
+   {
+    "signature": "reverse_transfer(uuid,text,uuid)",
+    "status_assignments": "'REVERSADA'"
+   }
+  ],
+  "inventory_adjustments": [
+   {
+    "signature": "confirm_inventory_adjustment(uuid,uuid)",
+    "status_assignments": "'confirmed'"
+   },
+   {
+    "signature": "process_inventory_adjustment(uuid,uuid,adjustment_item[],timestamp with time zone)",
+    "status_assignments": "'COMPLETED'"
+   },
+   {
+    "signature": "reverse_adjustment(uuid,text,uuid)",
+    "status_assignments": "'reversed'"
+   },
+   {
+    "signature": "reverse_inventory_adjustment_v2(uuid,text,uuid)",
+    "status_assignments": "'reversed'"
+   },
+   {
+    "signature": "void_inventory_adjustment(uuid,uuid)",
+    "status_assignments": "'voided'\n    WHERE id = p_adjustment_id"
+   }
+  ],
+  "devolutions": [
+   {
+    "signature": "create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)",
+    "status_assignments": null
+   },
+   {
+    "signature": "create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)",
+    "status_assignments": null
+   },
+   {
+    "signature": "reverse_devolution(uuid,text,uuid)",
+    "status_assignments": "'reversed'"
+   }
+  ]
+ }
+}

@@ -1,0 +1,71 @@
+REM-INV-3C — 12-remediation-decision.txt (§22/§23/§24)
+
+DECISIÓN: REMEDIACIÓN APLICADA — opciones A + B + C combinadas en UNA función,
+mediante el cambio MÍNIMO posible (CREATE OR REPLACE FUNCTION, un solo objeto).
+
+Análisis por opción de la misión (§22) — ninguna elegida automáticamente:
+
+  A. Fail-closed para document_type no reconocido ............... APLICADA
+     Evidencia que la justifica: T3/T4 PRE reproducen aceptación silenciosa de
+     tipos desconocidos (raíz: lógica 3-valuada). Es defecto estructural del
+     chequeo, independiente de la tabla.
+
+  B. Corregir la lógica NULL → DENY ............................. APLICADA
+     Forma final:
+       IF (v_valid_transitions->v_table_name) IS NULL
+          OR NOT COALESCE((v_valid_transitions->v_table_name) ? v_old_status, false)
+          OR NOT COALESCE((v_valid_transitions->v_table_name->v_old_status) ? v_new_status, false)
+       THEN RAISE ...
+     - Tabla mapeada + estados válidos: booleano no-NULL ⇒ mismo resultado que
+       la forma original (cero cambio de comportamiento en caminos válidos).
+     - Tabla ausente, estado viejo ausente o estado nuevo NULL: DENY (antes:
+       NULL → aceptado).
+     - Equivalencia verificada: production_orders/transactions (mapas byte a
+       byte idénticos) mantienen TODOS sus veredictos PRE (T1/T2/T8 idénticos).
+
+  C. Añadir devolution al mapa .................................. APLICADA
+     Pertenece conceptualmente a la función (V2.3 la incluyó deliberadamente y
+     creó su trigger; el CHECK constraint devolutions_status_check define el
+     mismo universo de 4 estados). Semántica restaurada: la ORIGINAL V2.3
+     (pending→[completed,voided], completed→[reversed,voided]) — no una nueva.
+
+  D. Eliminar el trigger ........................................ RECHAZADA
+     La arquitectura correcta no está "en otro lugar": el validador ES la capa
+     documentada para las transiciones (V2.3), y eliminar el trigger debilitaría
+     el modelo sin compensación (RLS no valida semántica de estados; los
+     CHECKs no validan pares origen→destino).
+
+  Compatibilidad probada de los mapas restaurados (por qué receipts/transfers/
+  adjustments entran también — y por qué es seguro):
+    - Sus CHECK constraints/enum en producción definen EXACTAMENTE los estados
+      de los mapas V2.3/V2.11 (live-inspect6 C1/C5).
+    - Sus writers vivos (7/5/5 funciones service_role-only) ejecutan solo
+      transiciones cubiertas por los mapas (censo fino live-inspect5, y
+      precondiciones por writer — 06-caller-census.txt).
+    - El único literal fuera de mapa ('COMPLETED' en process_inventory_adjustment)
+      viola HOY el CHECK constraint de inventory_adjustments (código muerto;
+      el gate no lo cambia).
+    - Staging POST: 0 flujos legítimos rotos; 0 rechazos nuevos sobre
+      transiciones válidas.
+
+  REGLA DE MÍNIMO CAMBIO (§23) — verificación:
+    - 1 sentencia; 1 objeto (la función); sin refactor, renombrado,
+      reordenamiento, ni migración de funciones no relacionadas.
+    - Sin comentarios dentro del cuerpo ⇒ prosrc reproducible byte-exacto
+      (md5 469c529a — verificado en staging y en la aplicación real).
+    - Sin cambios en: firma, SECURITY INVOKER, owner, search_path, proacl,
+      triggers, policies, grants, tablas, datos.
+
+REQUISITO DE COMPATIBILIDAD (§24) — matriz callers PRE/POST (espejo):
+
+  | Caller                            | PRE                     | POST                    | Resultado |
+  |-----------------------------------|-------------------------|-------------------------|-----------|
+  | reverse_devolution (completed→reversed) | ALLOW (fail-open) | ALLOW (mapa restaurado) | SIN CAMBIO |
+  | create_devolution_v2 (INSERT completed) | no pasa por trigger | no pasa por trigger   | SIN CAMBIO |
+  | create_devolution V1 ×2 (INSERT)  | no pasa por trigger     | no pasa por trigger     | SIN CAMBIO |
+  | reverse desde pending/voided      | ERR_INVALID_STATUS (guard propio) | idem          | SIN CAMBIO |
+  | update_payment_status (receipts sin status write) | no dispara | no dispara       | SIN CAMBIO |
+  | writers receipts/transfers/adjustments (transiciones válidas) | ALLOW | ALLOW (mapas) | SIN CAMBIO |
+  | transiciones inválidas (cualquier tabla ligada) | ALLOW (agujero) | DENY  | HARDENED |
+  | tipos desconocidos / NULL         | ALLOW (agujero)         | DENY                    | HARDENED |
+  | llamada directa a la función      | imposible (0A000)       | imposible (0A000)       | SIN CAMBIO |

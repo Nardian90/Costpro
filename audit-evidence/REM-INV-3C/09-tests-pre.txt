@@ -1,0 +1,35 @@
+REM-INV-3C — 09-tests-pre.txt
+
+MATRIZ PRE (validador LIVE drifted; md5 c77a18de; espejo verbatim)
+
+| Case | Test | Verdict | Detalle |
+|------|------|---------|---------|
+| T1 | [PRE] production_orders draft→in_progress (válida, mapa vivo) | INFO | no hay tabla production_orders en el espejo; cubierto por T1-transactions/T1-devolutions (misma rama de código) |
+| T1 | [PRE] transactions pending→completed (válida) | ALLOW | OK (rows=1) |
+| T1 | [PRE] devolutions pending→completed (válida) | ALLOW | OK (rows=1) |
+| T1 | [PRE] devolutions pending→voided (válida) | ALLOW | OK (rows=1) |
+| T1 | [PRE] devolutions completed→reversed (válida: camino reverse_devolution) | ALLOW | OK (rows=1) |
+| T2 | [PRE] transactions completed→pending (inválida, tabla mapeada) | DENY | P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a pending |
+| T6 | [PRE] devolutions completed→pending (inválida) | ALLOW | OK (rows=1) |
+| T6 | [PRE] devolutions reversed→completed (inválida: resurrección) | ALLOW | OK (rows=1) |
+| T6 | [PRE] devolutions voided→completed (inválida: resurrección) | ALLOW | OK (rows=1) |
+| T6 | [PRE] devolutions pending→reversed (inválida: reverse solo desde completed) | ALLOW | OK (rows=1) |
+| T3 | [PRE] tipo desconocido 'tipo_desconocido_xyz' pending→completed | ALLOW | OK (rows=1) |
+| T4 | [PRE] tipo desconocido + new_status NULL | ALLOW | OK (rows=1) |
+| T4 | [PRE] tipo mapeado 'transactions' + new_status NULL ⇒ TRUE AND NULL = NULL | ALLOW | OK (rows=1) |
+| T4 | [PRE] tipo mapeado 'transactions' pending→completed (control válido) | ALLOW | OK (rows=1) |
+| T4 | [PRE] old_status inexistente (0 filas — no dispara) | INFO | OK (rows=0) |
+| T7 | [PRE] validador sin contexto de tienda (TG_ARGV solo nombre de tabla) | INFO | capa correcta: RLS USING/WITH CHECK own-store (probada en S5 grants LIVE) + RPC V2 |
+| T8 | [PRE] UPDATE sobre document_id inexistente | NO-OP (rows=0, nada aceptado) | OK (rows=0) |
+| T8 | [PRE] new_status 'estado_bogus' (CHECK constraint devolutions) | DENY | 23514: new row for relation "devolutions" violates check constraint "devolutions_status_check" |
+| T8 | [PRE] new_status 'estado_bogus' (enum transactions) | DENY | P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a estado_bogus |
+| T8 | [PRE] llamada directa al trigger function | DENY (no invocable fuera de trigger) | 0A000: trigger functions can only be called as triggers |
+| S4 | [PRE] authenticated own-store UPDATE status completed→pending (inválida) | SUCCEEDED (fail-open del validador) | OK (rows=1) |
+| S4 | [PRE] authenticated own-store UPDATE status reversed→completed (resurrección, inválida) | SUCCEEDED (fail-open del validador) | OK (rows=1) |
+| S1 | [PRE] INSERT directo mínimo (grants regresados) | SUCCEEDED | OK (rows=1) |
+| S2 | [PRE] INSERT NC fabricada sin original (grants regresados) | SUCCEEDED | OK (rows=1) |
+| S5 | [PRE] UPDATE cross-store (RLS USING filtra) | NO-OP (0 filas) | OK (rows=0) |
+| S6 | [PRE] UPDATE items directo (sin policy UPDATE items) | NO-OP (0 filas) | OK (rows=0) |
+| S8 | [PRE] DELETE directo devolutions (sin policy DELETE) | NO-OP (0 filas) | OK (rows=0) |
+
+Resumen: 12 ALLOW / 3 DENY|DENIED / 4 SUCCEEDED / 3 INFO

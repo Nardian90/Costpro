@@ -1,0 +1,59 @@
+REM-INV-3C — 16-tests-post.txt
+
+MATRIZ POST (validador remediado; md5 469c529a; mismo espejo + misma secuencia)
+
+| Case | Test | Verdict | Detalle |
+|------|------|---------|---------|
+| T1 | [POST] production_orders draft→in_progress (válida, mapa vivo) | INFO | no hay tabla production_orders en el espejo; cubierto por T1-transactions/T1-devolutions (misma rama de código) |
+| T1 | [POST] transactions pending→completed (válida) | ALLOW | OK (rows=1) |
+| T1 | [POST] devolutions pending→completed (válida) | ALLOW | OK (rows=1) |
+| T1 | [POST] devolutions pending→voided (válida) | ALLOW | OK (rows=1) |
+| T1 | [POST] devolutions completed→reversed (válida: camino reverse_devolution) | ALLOW | OK (rows=1) |
+| T2 | [POST] transactions completed→pending (inválida, tabla mapeada) | DENY | P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a pending |
+| T6 | [POST] devolutions completed→pending (inválida) | DENY | P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de completed a pending |
+| T6 | [POST] devolutions reversed→completed (inválida: resurrección) | DENY | P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de reversed a completed |
+| T6 | [POST] devolutions voided→completed (inválida: resurrección) | DENY | P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de voided a completed |
+| T6 | [POST] devolutions pending→reversed (inválida: reverse solo desde completed) | DENY | P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de pending a reversed |
+| T3 | [POST] tipo desconocido 'tipo_desconocido_xyz' pending→completed | DENY | P0001: ERR_INVALID_TRANSITION: tipo_desconocido_xyz no puede pasar de pending a completed |
+| T4 | [POST] tipo desconocido + new_status NULL | DENY | P0001: ERR_INVALID_TRANSITION: tipo_desconocido_xyz no puede pasar de pending a <NULL> |
+| T4 | [POST] tipo mapeado 'transactions' + new_status NULL ⇒ TRUE AND NULL = NULL | DENY | P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de pending a <NULL> |
+| T4 | [POST] tipo mapeado 'transactions' pending→completed (control válido) | ALLOW | OK (rows=1) |
+| T4 | [POST] old_status inexistente (0 filas — no dispara) | INFO | OK (rows=0) |
+| T7 | [POST] validador sin contexto de tienda (TG_ARGV solo nombre de tabla) | INFO | capa correcta: RLS USING/WITH CHECK own-store (probada en S5 grants LIVE) + RPC V2 |
+| T8 | [POST] UPDATE sobre document_id inexistente | NO-OP (rows=0, nada aceptado) | OK (rows=0) |
+| T8 | [POST] new_status 'estado_bogus' (CHECK constraint devolutions) | DENY | P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de completed a estado_bogus |
+| T8 | [POST] new_status 'estado_bogus' (enum transactions) | DENY | P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a estado_bogus |
+| T8 | [POST] llamada directa al trigger function | DENY (no invocable fuera de trigger) | 0A000: trigger functions can only be called as triggers |
+| S4 | [POST] authenticated own-store UPDATE status completed→pending (inválida) | DENIED | P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de completed a pending |
+| S4 | [POST] authenticated own-store UPDATE status reversed→completed (resurrección, inválida) | DENIED | P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de reversed a completed |
+| S1 | [POST] INSERT directo mínimo (grants regresados) | SUCCEEDED | OK (rows=1) |
+| S2 | [POST] INSERT NC fabricada sin original (grants regresados) | SUCCEEDED | OK (rows=1) |
+| S5 | [POST] UPDATE cross-store (RLS USING filtra) | NO-OP (0 filas) | OK (rows=0) |
+| S6 | [POST] UPDATE items directo (sin policy UPDATE items) | NO-OP (0 filas) | OK (rows=0) |
+| S8 | [POST] DELETE directo devolutions (sin policy DELETE) | NO-OP (0 filas) | OK (rows=0) |
+| S1 | [LIVE] INSERT directo mínimo como authenticated | DENIED | 42501: permission denied for table devolutions |
+| S2 | [LIVE] INSERT NC sin original como authenticated | DENIED | 42501: permission denied for table devolutions |
+| S4 | [LIVE] UPDATE status completed→pending como authenticated | DENIED | 42501: permission denied for table devolutions |
+| S4 | [LIVE] UPDATE total_amount como authenticated | DENIED | 42501: permission denied for table devolutions |
+| S5 | [LIVE] UPDATE cross-store como authenticated | DENIED | 42501: permission denied for table devolutions |
+| S6 | [LIVE] INSERT items como authenticated | DENIED | 42501: permission denied for table devolution_items |
+| S8 | [LIVE] DELETE devolutions como authenticated | DENIED | 42501: permission denied for table devolutions |
+| S8 | [LIVE] TRUNCATE devolution_items como authenticated | DENIED | 42501: permission denied for table devolution_items |
+| SEC | [LIVE] total denegados (8 ataques, capa grant post-3R-B) | PASS — 8/8 DENIED | denied=8 |
+| SEC | [LIVE] SELECT own-store conservado (hook duplicar) | PASS | filas visibles=4 |
+| V2 | creación NC válida → success (INSERT status='completed') | PASS | {'status': 'success', 'total_amount': 350, 'devolution_id': '8ba16668-7ddb-4f83-8a5b-5772e9bbcb9c', 'financial_effect':  |
+| V2 | efectos laterales completos (stock/payment/audit) | PASS | pre={'devolutions': 4, 'dev_items': 1, 'movements': 0, 'kardex': 0, 'payments_refund': 0, 'audit_created': 0, 'audit_rev |
+| V2 | tope acumulado (1 existente + 2 solicitadas > 2 vendidas ⇒ ERR_DEVOLUTION_CAP_EXCEEDED) | PASS | P0001: ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000001 vendido=2 devuelto=1 solicitado=2 (top |
+| V2 | NC sin original (patrón NC-000008) → rechazada | PASS | P0001: ERR_DEVOLUTION_NO_ORIGINAL: tope acumulado exige venta original |
+| V2 | NC sobre venta de OTRA tienda → rechazada | PASS | P0001: ERR_CROSS_STORE: original_transaction_id does not belong to store_id |
+| V2 | replay idempotency_key → idempotente | PASS | {'status': 'idempotent', 'devolution_id': '8ba16668-7ddb-4f83-8a5b-5772e9bbcb9c'} |
+| V2 | reversión completed→reversed (camino canónico; transición en mapa restaurado) | PASS | {'status': 'success', 'devolution_id': '8ba16668-7ddb-4f83-8a5b-5772e9bbcb9c', 'items_reversed': 1} pre={'devolutions':  |
+| V2 | estado final de la NC reversionada = reversed | PASS | status=reversed |
+| V2 | doble reversión → rechazada | PASS | P0001: ERR_ALREADY_REVERSED |
+| V2 | reversión desde pending → ERR_INVALID_STATUS (guard propio, compatible con mapa) | PASS | P0001: ERR_INVALID_STATUS: reverse_devolution solo permite completed (status=pending) |
+| V2 | reverse_devolution como authenticated (sin EXECUTE) → DENIED | PASS | 42501: permission denied for function reverse_devolution |
+| CONC | 2 transiciones válidas concurrentes (mismo doc completed→voided, WHERE status='completed') | PASS — exactamente 1 aplicación | [(0, 'applied', 1), (1, 'applied', 0)] |
+| CONC | 2 transiciones inválidas concurrentes (voided→pending) → ninguna aplica | PASS — 2/2 DENIED por validador | [(0, 'error', 'P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de voided a pending'), (1, 'error', 'P0001: ERR |
+| FINAL | estado final staging POST-fix | INFO | {'devolutions': 6, 'dev_items': 2, 'movements': 2, 'kardex': 2, 'payments_refund': 1, 'audit_created': 1, 'audit_reverse |
+
+Resumen: 5 ALLOW / 20 DENY|DENIED / 2 SUCCEEDED / 4 INFO

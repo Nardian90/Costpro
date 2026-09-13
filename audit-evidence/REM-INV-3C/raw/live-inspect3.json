@@ -1,0 +1,88 @@
+{
+ "captured_at": "2026-09-13T04:48:49.158Z",
+ "phase": "inspect-live3",
+ "dev_table_privs": [
+  {
+   "table_name": "devolutions",
+   "anon_sel": true,
+   "anon_ins": false,
+   "anon_upd": false,
+   "anon_del": false,
+   "auth_sel": true,
+   "auth_ins": false,
+   "auth_upd": false,
+   "auth_del": false,
+   "svc_sel": true,
+   "svc_ins": true,
+   "svc_upd": true,
+   "svc_del": true
+  },
+  {
+   "table_name": "devolution_items",
+   "anon_sel": true,
+   "anon_ins": false,
+   "anon_upd": false,
+   "anon_del": false,
+   "auth_sel": true,
+   "auth_ins": false,
+   "auth_upd": false,
+   "auth_del": false,
+   "svc_sel": true,
+   "svc_ins": true,
+   "svc_upd": true,
+   "svc_del": true
+  }
+ ],
+ "status_writers": {
+  "receipts": [],
+  "transfers": [],
+  "inventory_adjustments": []
+ },
+ "inserters": {
+  "receipts": [],
+  "transfers": [],
+  "inventory_adjustments": []
+ },
+ "v1_grants": [
+  {
+   "signature": "create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)",
+   "proacl": "{postgres=X/postgres,service_role=X/postgres}"
+  },
+  {
+   "signature": "create_devolution(uuid,jsonb,text,uuid,uuid,text,uuid,text,text)",
+   "proacl": "{postgres=X/postgres,service_role=X/postgres}"
+  }
+ ],
+ "status_dist": {
+  "receipts": [
+   {
+    "status": "active",
+    "n": 63
+   }
+  ],
+  "transfers": [
+   {
+    "status": "CANCELADA",
+    "n": 4
+   },
+   {
+    "status": "CONFIRMADA",
+    "n": 1
+   },
+   {
+    "status": "PENDIENTE",
+    "n": 1
+   },
+   {
+    "status": "REVERSADA",
+    "n": 2
+   }
+  ],
+  "inventory_adjustments": [
+   {
+    "status": "confirmed",
+    "n": 5
+   }
+  ]
+ }
+}

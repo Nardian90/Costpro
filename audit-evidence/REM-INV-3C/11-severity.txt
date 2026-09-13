@@ -1,0 +1,51 @@
+REM-INV-3C — 11-severity.txt (§20)
+
+CLASIFICACIÓN DEL HALLAZGO (antes de la remediación):
+
+  DEFENSE-IN-DEPTH GAP  ✔ (clasificación aplicada)
+
+  Justificación contra las otras categorías:
+
+  FALSE POSITIVE — NO:
+    - El comportamiento defectuoso es REAL y reproducible: el trigger de
+      devolutions existe, está ligado, y NO protege nada (todas las
+      transiciones entre los 4 estados válidos pasan).
+    - devolutions NO está deliberadamente fuera del validador: la exclusión es
+      drift no documentado (V2.3 la incluía; ninguna migración la excluyó).
+
+  P2 — NO (tras el hardening 3R-B):
+    - No existe HOY ningún camino legítimo alcanzable que explote el
+      comportamiento: authenticated/anon no tienen INSERT/UPDATE/DELETE sobre
+      devolutions (REVOKE 3R-B verificado vivo); el único writer de
+      transiciones es reverse_devolution (service_role-only, guard propio
+      status='completed', transición completed→reversed legítima).
+
+  P1/P0 — NO:
+    - No se demuestra explotación actual: ni corrupción financiera (el UPDATE
+      de status no produce efectos laterales), ni bypass de autorización
+      (capa grant+RLS íntegras), ni cross-store (RLS USING/WITH CHECK),
+      ni pérdida de integridad de datos.
+    - Elevar severidad por el estado hipotético "si un futuro grant
+      re-expone UPDATE" sería especular (regla §20: no elevar severidad sin
+      ruta de explotación demostrable).
+
+  DEFENSE-IN-DEPTH GAP — SÍ:
+    - La defensa secundaria (trigger de transiciones) está defectuosa de forma
+      demostrada: si la capa primaria (grants) sufriera una regresión —el
+      escenario exacto que motivó SEC-F02-1—, el validador NO sería la
+      segunda barrera para devolutions/receipts/transfers/adjustments.
+    - El trigger existe desde V2.3 para ser esa barrera: el drift lo dejó
+      inerte sin decisión documentada.
+
+SEVERIDAD POST-REMEDIACIÓN:
+
+  HARDENED (para el scope del gate: devolutions + fail-open estructural):
+    - T1-T8: válidas ALLOW, inválidas DENY, desconocido DENY, NULL DENY.
+    - S4 (validador como única barrera): DENIED 2/2.
+    - Regresión V2 11/11, concurrencia 2/2, zero-touch 14/14.
+
+  Residual (mismas categorías, tablas fuera de scope):
+    - received_services/commission_payments/purchase_orders sin trigger del
+      validador (diseño histórico, no cambio de este gate).
+    - Defecto procesal: drift de catálogo sin traza en git (recomendación de
+      pin md5 en futuros gates).

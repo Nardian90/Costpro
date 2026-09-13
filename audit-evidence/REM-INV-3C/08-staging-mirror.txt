@@ -1,0 +1,35 @@
+REM-INV-3C — 08-staging-mirror.txt (§10)
+
+Mecanismo: PostgreSQL efímero (pgserver harness, datadir disposed al final),
+el mismo validado en REM-INV-3 / REM-INV-3R-B. Sin red, sin credenciales de producción.
+
+Espejo instalado:
+  - auth.uid()/auth.role() sintéticos (JWT claims via set_config).
+  - Tablas de negocio con shape de producción (devolutions/devolution_items con
+    columnas + CHECK constraints espejo; transactions, products, inventory,
+    stock_movements, kardex_entries, cash_*, payment_transactions, store_credit_ledger,
+    audit_logs, wac_change_log, business_events, receipts, document_sequences).
+  - Helpers live verbatim: is_admin, has_store_access, current_user_store_ids,
+    has_store_access_as, can_reverse_document, next_document_number,
+    fn_sync_inventory_on_movement, fn_recalc_wac, sync_product_stock,
+    auto_kardex_on_stock_movement, register_stock_movement.
+  - Pipeline canónico: create_devolution_v2 + reverse_devolution (dumps live
+    REM-INV-3, validados live 9/9 por REM-INV-3R).
+  - fn_validate_document_transition: definición LIVE VERBATIM (02-function-pre.sql).
+    md5(prosrc) staged PRE = c77a18de9a9f2ca5c935f0b4f0a35e68 == producción.
+  - Trigger trg_validate_devolution_transition BEFORE UPDATE OF status (como producción).
+  - Triggers fixture adicionales: t4_fixture_docs (TG_ARGV tipo_desconocido_xyz)
+    y t4b_fixture_docs (TG_ARGV transactions, status nullable para el sub-caso NULL puro).
+  - RLS policies verbatim de producción + GRANTS REGRESADOS (arwd a authenticated:
+    el validador queda como única barrera de transición — reproduce la superficie
+    histórica pre-3R-B para demostrar el defecto) y luego GRANTS LIVE (REVOKE:
+    authenticated SELECT-only, como producción post-3R-B).
+
+Hashes de funciones críticas:
+  fn_validate_document_transition PRE  md5 c77a18de9a9f2ca5c935f0b4f0a35e68 (len 1567)
+  fn_validate_document_transition POST md5 469c529a70fe578a6f2ac25273bd79ca (len 2645)
+  create_devolution_v2 / reverse_devolution: dumps verbatim de assets (sin cambio).
+
+Fases ejecutadas: PRE (T1-T8 + S-series) → FIX (13-remediation.sql) → POST
+(T1-T8 + S-series + grants LIVE + regresión V2 + concurrencia §27).
+Log completo: raw/staging-final-run.log; JSON: raw/staging-results.json.

@@ -1,0 +1,476 @@
+{
+ "results": {
+  "pre": [
+   {
+    "case": "T1",
+    "test": "[PRE] production_orders draft→in_progress (válida, mapa vivo)",
+    "verdict": "INFO",
+    "detail": "no hay tabla production_orders en el espejo; cubierto por T1-transactions/T1-devolutions (misma rama de código)"
+   },
+   {
+    "case": "T1",
+    "test": "[PRE] transactions pending→completed (válida)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T1",
+    "test": "[PRE] devolutions pending→completed (válida)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T1",
+    "test": "[PRE] devolutions pending→voided (válida)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T1",
+    "test": "[PRE] devolutions completed→reversed (válida: camino reverse_devolution)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T2",
+    "test": "[PRE] transactions completed→pending (inválida, tabla mapeada)",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a pending"
+   },
+   {
+    "case": "T6",
+    "test": "[PRE] devolutions completed→pending (inválida)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T6",
+    "test": "[PRE] devolutions reversed→completed (inválida: resurrección)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T6",
+    "test": "[PRE] devolutions voided→completed (inválida: resurrección)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T6",
+    "test": "[PRE] devolutions pending→reversed (inválida: reverse solo desde completed)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T3",
+    "test": "[PRE] tipo desconocido 'tipo_desconocido_xyz' pending→completed",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T4",
+    "test": "[PRE] tipo desconocido + new_status NULL",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T4",
+    "test": "[PRE] tipo mapeado 'transactions' + new_status NULL ⇒ TRUE AND NULL = NULL",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T4",
+    "test": "[PRE] tipo mapeado 'transactions' pending→completed (control válido)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T4",
+    "test": "[PRE] old_status inexistente (0 filas — no dispara)",
+    "verdict": "INFO",
+    "detail": "OK (rows=0)"
+   },
+   {
+    "case": "T7",
+    "test": "[PRE] validador sin contexto de tienda (TG_ARGV solo nombre de tabla)",
+    "verdict": "INFO",
+    "detail": "capa correcta: RLS USING/WITH CHECK own-store (probada en S5 grants LIVE) + RPC V2"
+   },
+   {
+    "case": "T8",
+    "test": "[PRE] UPDATE sobre document_id inexistente",
+    "verdict": "NO-OP (rows=0, nada aceptado)",
+    "detail": "OK (rows=0)"
+   },
+   {
+    "case": "T8",
+    "test": "[PRE] new_status 'estado_bogus' (CHECK constraint devolutions)",
+    "verdict": "DENY",
+    "detail": "23514: new row for relation \"devolutions\" violates check constraint \"devolutions_status_check\""
+   },
+   {
+    "case": "T8",
+    "test": "[PRE] new_status 'estado_bogus' (enum transactions)",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a estado_bogus"
+   },
+   {
+    "case": "T8",
+    "test": "[PRE] llamada directa al trigger function",
+    "verdict": "DENY (no invocable fuera de trigger)",
+    "detail": "0A000: trigger functions can only be called as triggers"
+   },
+   {
+    "case": "S4",
+    "test": "[PRE] authenticated own-store UPDATE status completed→pending (inválida)",
+    "verdict": "SUCCEEDED (fail-open del validador)",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "S4",
+    "test": "[PRE] authenticated own-store UPDATE status reversed→completed (resurrección, inválida)",
+    "verdict": "SUCCEEDED (fail-open del validador)",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "S1",
+    "test": "[PRE] INSERT directo mínimo (grants regresados)",
+    "verdict": "SUCCEEDED",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "S2",
+    "test": "[PRE] INSERT NC fabricada sin original (grants regresados)",
+    "verdict": "SUCCEEDED",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "S5",
+    "test": "[PRE] UPDATE cross-store (RLS USING filtra)",
+    "verdict": "NO-OP (0 filas)",
+    "detail": "OK (rows=0)"
+   },
+   {
+    "case": "S6",
+    "test": "[PRE] UPDATE items directo (sin policy UPDATE items)",
+    "verdict": "NO-OP (0 filas)",
+    "detail": "OK (rows=0)"
+   },
+   {
+    "case": "S8",
+    "test": "[PRE] DELETE directo devolutions (sin policy DELETE)",
+    "verdict": "NO-OP (0 filas)",
+    "detail": "OK (rows=0)"
+   }
+  ],
+  "post": [
+   {
+    "case": "T1",
+    "test": "[POST] production_orders draft→in_progress (válida, mapa vivo)",
+    "verdict": "INFO",
+    "detail": "no hay tabla production_orders en el espejo; cubierto por T1-transactions/T1-devolutions (misma rama de código)"
+   },
+   {
+    "case": "T1",
+    "test": "[POST] transactions pending→completed (válida)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T1",
+    "test": "[POST] devolutions pending→completed (válida)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T1",
+    "test": "[POST] devolutions pending→voided (válida)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T1",
+    "test": "[POST] devolutions completed→reversed (válida: camino reverse_devolution)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T2",
+    "test": "[POST] transactions completed→pending (inválida, tabla mapeada)",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a pending"
+   },
+   {
+    "case": "T6",
+    "test": "[POST] devolutions completed→pending (inválida)",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de completed a pending"
+   },
+   {
+    "case": "T6",
+    "test": "[POST] devolutions reversed→completed (inválida: resurrección)",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de reversed a completed"
+   },
+   {
+    "case": "T6",
+    "test": "[POST] devolutions voided→completed (inválida: resurrección)",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de voided a completed"
+   },
+   {
+    "case": "T6",
+    "test": "[POST] devolutions pending→reversed (inválida: reverse solo desde completed)",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de pending a reversed"
+   },
+   {
+    "case": "T3",
+    "test": "[POST] tipo desconocido 'tipo_desconocido_xyz' pending→completed",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: tipo_desconocido_xyz no puede pasar de pending a completed"
+   },
+   {
+    "case": "T4",
+    "test": "[POST] tipo desconocido + new_status NULL",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: tipo_desconocido_xyz no puede pasar de pending a <NULL>"
+   },
+   {
+    "case": "T4",
+    "test": "[POST] tipo mapeado 'transactions' + new_status NULL ⇒ TRUE AND NULL = NULL",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de pending a <NULL>"
+   },
+   {
+    "case": "T4",
+    "test": "[POST] tipo mapeado 'transactions' pending→completed (control válido)",
+    "verdict": "ALLOW",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "T4",
+    "test": "[POST] old_status inexistente (0 filas — no dispara)",
+    "verdict": "INFO",
+    "detail": "OK (rows=0)"
+   },
+   {
+    "case": "T7",
+    "test": "[POST] validador sin contexto de tienda (TG_ARGV solo nombre de tabla)",
+    "verdict": "INFO",
+    "detail": "capa correcta: RLS USING/WITH CHECK own-store (probada en S5 grants LIVE) + RPC V2"
+   },
+   {
+    "case": "T8",
+    "test": "[POST] UPDATE sobre document_id inexistente",
+    "verdict": "NO-OP (rows=0, nada aceptado)",
+    "detail": "OK (rows=0)"
+   },
+   {
+    "case": "T8",
+    "test": "[POST] new_status 'estado_bogus' (CHECK constraint devolutions)",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de completed a estado_bogus"
+   },
+   {
+    "case": "T8",
+    "test": "[POST] new_status 'estado_bogus' (enum transactions)",
+    "verdict": "DENY",
+    "detail": "P0001: ERR_INVALID_TRANSITION: transactions no puede pasar de completed a estado_bogus"
+   },
+   {
+    "case": "T8",
+    "test": "[POST] llamada directa al trigger function",
+    "verdict": "DENY (no invocable fuera de trigger)",
+    "detail": "0A000: trigger functions can only be called as triggers"
+   },
+   {
+    "case": "S4",
+    "test": "[POST] authenticated own-store UPDATE status completed→pending (inválida)",
+    "verdict": "DENIED",
+    "detail": "P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de completed a pending"
+   },
+   {
+    "case": "S4",
+    "test": "[POST] authenticated own-store UPDATE status reversed→completed (resurrección, inválida)",
+    "verdict": "DENIED",
+    "detail": "P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de reversed a completed"
+   },
+   {
+    "case": "S1",
+    "test": "[POST] INSERT directo mínimo (grants regresados)",
+    "verdict": "SUCCEEDED",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "S2",
+    "test": "[POST] INSERT NC fabricada sin original (grants regresados)",
+    "verdict": "SUCCEEDED",
+    "detail": "OK (rows=1)"
+   },
+   {
+    "case": "S5",
+    "test": "[POST] UPDATE cross-store (RLS USING filtra)",
+    "verdict": "NO-OP (0 filas)",
+    "detail": "OK (rows=0)"
+   },
+   {
+    "case": "S6",
+    "test": "[POST] UPDATE items directo (sin policy UPDATE items)",
+    "verdict": "NO-OP (0 filas)",
+    "detail": "OK (rows=0)"
+   },
+   {
+    "case": "S8",
+    "test": "[POST] DELETE directo devolutions (sin policy DELETE)",
+    "verdict": "NO-OP (0 filas)",
+    "detail": "OK (rows=0)"
+   },
+   {
+    "case": "S1",
+    "test": "[LIVE] INSERT directo mínimo como authenticated",
+    "verdict": "DENIED",
+    "detail": "42501: permission denied for table devolutions"
+   },
+   {
+    "case": "S2",
+    "test": "[LIVE] INSERT NC sin original como authenticated",
+    "verdict": "DENIED",
+    "detail": "42501: permission denied for table devolutions"
+   },
+   {
+    "case": "S4",
+    "test": "[LIVE] UPDATE status completed→pending como authenticated",
+    "verdict": "DENIED",
+    "detail": "42501: permission denied for table devolutions"
+   },
+   {
+    "case": "S4",
+    "test": "[LIVE] UPDATE total_amount como authenticated",
+    "verdict": "DENIED",
+    "detail": "42501: permission denied for table devolutions"
+   },
+   {
+    "case": "S5",
+    "test": "[LIVE] UPDATE cross-store como authenticated",
+    "verdict": "DENIED",
+    "detail": "42501: permission denied for table devolutions"
+   },
+   {
+    "case": "S6",
+    "test": "[LIVE] INSERT items como authenticated",
+    "verdict": "DENIED",
+    "detail": "42501: permission denied for table devolution_items"
+   },
+   {
+    "case": "S8",
+    "test": "[LIVE] DELETE devolutions como authenticated",
+    "verdict": "DENIED",
+    "detail": "42501: permission denied for table devolutions"
+   },
+   {
+    "case": "S8",
+    "test": "[LIVE] TRUNCATE devolution_items como authenticated",
+    "verdict": "DENIED",
+    "detail": "42501: permission denied for table devolution_items"
+   },
+   {
+    "case": "SEC",
+    "test": "[LIVE] total denegados (8 ataques, capa grant post-3R-B)",
+    "verdict": "PASS — 8/8 DENIED",
+    "detail": "denied=8"
+   },
+   {
+    "case": "SEC",
+    "test": "[LIVE] SELECT own-store conservado (hook duplicar)",
+    "verdict": "PASS",
+    "detail": "filas visibles=4"
+   },
+   {
+    "case": "V2",
+    "test": "creación NC válida → success (INSERT status='completed')",
+    "verdict": "PASS",
+    "detail": "{'status': 'success', 'total_amount': 350, 'devolution_id': '8ba16668-7ddb-4f83-8a5b-5772e9bbcb9c', 'financial_effect': 'cash_out_and_refund', 'devolution_number': 'NC-000001-2026'}"
+   },
+   {
+    "case": "V2",
+    "test": "efectos laterales completos (stock/payment/audit)",
+    "verdict": "PASS",
+    "detail": "pre={'devolutions': 4, 'dev_items': 1, 'movements': 0, 'kardex': 0, 'payments_refund': 0, 'audit_created': 0, 'audit_reverse': 0} post={'devolutions': 5, 'dev_items': 2, 'movements': 1, 'kardex': 1, 'payments_refund': 1, 'audit_created': 1, 'audit_reverse': 0}"
+   },
+   {
+    "case": "V2",
+    "test": "tope acumulado (1 existente + 2 solicitadas > 2 vendidas ⇒ ERR_DEVOLUTION_CAP_EXCEEDED)",
+    "verdict": "PASS",
+    "detail": "P0001: ERR_DEVOLUTION_CAP_EXCEEDED: producto ddddddd1-0000-0000-0000-000000000001 vendido=2 devuelto=1 solicitado=2 (tope acumulado, lock de venta adquirido)"
+   },
+   {
+    "case": "V2",
+    "test": "NC sin original (patrón NC-000008) → rechazada",
+    "verdict": "PASS",
+    "detail": "P0001: ERR_DEVOLUTION_NO_ORIGINAL: tope acumulado exige venta original"
+   },
+   {
+    "case": "V2",
+    "test": "NC sobre venta de OTRA tienda → rechazada",
+    "verdict": "PASS",
+    "detail": "P0001: ERR_CROSS_STORE: original_transaction_id does not belong to store_id"
+   },
+   {
+    "case": "V2",
+    "test": "replay idempotency_key → idempotente",
+    "verdict": "PASS",
+    "detail": "{'status': 'idempotent', 'devolution_id': '8ba16668-7ddb-4f83-8a5b-5772e9bbcb9c'}"
+   },
+   {
+    "case": "V2",
+    "test": "reversión completed→reversed (camino canónico; transición en mapa restaurado)",
+    "verdict": "PASS",
+    "detail": "{'status': 'success', 'devolution_id': '8ba16668-7ddb-4f83-8a5b-5772e9bbcb9c', 'items_reversed': 1} pre={'devolutions': 5, 'dev_items': 2, 'movements': 1, 'kardex': 1, 'payments_refund': 1, 'audit_created': 1, 'audit_reverse': 0} post={'devolutions': 5, 'dev_items': 2, 'movements': 2, 'kardex': 2, '"
+   },
+   {
+    "case": "V2",
+    "test": "estado final de la NC reversionada = reversed",
+    "verdict": "PASS",
+    "detail": "status=reversed"
+   },
+   {
+    "case": "V2",
+    "test": "doble reversión → rechazada",
+    "verdict": "PASS",
+    "detail": "P0001: ERR_ALREADY_REVERSED"
+   },
+   {
+    "case": "V2",
+    "test": "reversión desde pending → ERR_INVALID_STATUS (guard propio, compatible con mapa)",
+    "verdict": "PASS",
+    "detail": "P0001: ERR_INVALID_STATUS: reverse_devolution solo permite completed (status=pending)"
+   },
+   {
+    "case": "V2",
+    "test": "reverse_devolution como authenticated (sin EXECUTE) → DENIED",
+    "verdict": "PASS",
+    "detail": "42501: permission denied for function reverse_devolution"
+   },
+   {
+    "case": "CONC",
+    "test": "2 transiciones válidas concurrentes (mismo doc completed→voided, WHERE status='completed')",
+    "verdict": "PASS — exactamente 1 aplicación",
+    "detail": "[(0, 'applied', 1), (1, 'applied', 0)]"
+   },
+   {
+    "case": "CONC",
+    "test": "2 transiciones inválidas concurrentes (voided→pending) → ninguna aplica",
+    "verdict": "PASS — 2/2 DENIED por validador",
+    "detail": "[(0, 'error', 'P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de voided a pending'), (1, 'error', 'P0001: ERR_INVALID_TRANSITION: devolutions no puede pasar de voided a pending')]"
+   },
+   {
+    "case": "FINAL",
+    "test": "estado final staging POST-fix",
+    "verdict": "INFO",
+    "detail": "{'devolutions': 6, 'dev_items': 2, 'movements': 2, 'kardex': 2, 'payments_refund': 1, 'audit_created': 1, 'audit_reverse': 1}"
+   }
+  ]
+ }
+}

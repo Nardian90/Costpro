@@ -1,0 +1,41 @@
+REM-INV-3C — 17-v2-regression.txt (§26/§29/§33)
+
+REGRESIÓN V2 EN ESPEJO POST-REMEDIACIÓN (service_role, camino canónico):
+
+| Case | Test | Verdict |
+|------|------|---------|
+| V2 | creación NC válida → success (INSERT status='completed') | PASS |
+| V2 | efectos laterales completos (stock/payment/audit) | PASS |
+| V2 | tope acumulado (1 existente + 2 solicitadas > 2 vendidas ⇒ ERR_DEVOLUTION_CAP_EXCEEDED) | PASS |
+| V2 | NC sin original (patrón NC-000008) → rechazada | PASS |
+| V2 | NC sobre venta de OTRA tienda → rechazada | PASS |
+| V2 | replay idempotency_key → idempotente | PASS |
+| V2 | reversión completed→reversed (camino canónico; transición en mapa restaurado) | PASS |
+| V2 | estado final de la NC reversionada = reversed | PASS |
+| V2 | doble reversión → rechazada | PASS |
+| V2 | reversión desde pending → ERR_INVALID_STATUS (guard propio, compatible con mapa) | PASS |
+| V2 | reverse_devolution como authenticated (sin EXECUTE) → DENIED | PASS |
+| CONC | 2 transiciones válidas concurrentes (mismo doc completed→voided, WHERE status='completed') | PASS — exactamente 1 aplicación |
+| CONC | 2 transiciones inválidas concurrentes (voided→pending) → ninguna aplica | PASS — 2/2 DENIED por validador |
+
+Integridad de efectos laterales (§26): la NC creada por V2 post-fix mantiene
+devolution → devolution_items → stock_movements → inventory → WAC → efecto
+financiero (payment refund + cash out) → audit_logs (DEVOLUTION_CREATED_V2),
+y la reversión genera movimiento inverso + REVERSE_DEVOLUTION en audit.
+Atomicidad verificada: los ataques fallidos (CAP/NO_ORIGINAL/CROSS_STORE)
+no dejan efectos parciales (counts() sin deltas tras cada rechazo).
+
+CONCURRENCIA (§27):
+  - 2 transiciones válidas concurrentes sobre el mismo documento
+    (UPDATE ... WHERE status=...): exactamente 1 aplicación, 0 corrupción.
+  - 2 transiciones inválidas concurrentes: 2/2 DENIED por el validador,
+    ninguna aplicación, estado final intacto.
+
+REGRESIÓN REPO (§30):
+  npx tsc --noEmit            PASS (0 errores)
+  npx vitest run              PASS (2070 passed / 24 skipped / 0 failed)
+  npm run lint                PASS (0 errores; 1291 warnings pre-existentes)
+  security-contract-test.cjs  PASS (134/134 funciones; PIN REM-INV-2R OK)
+  next build                  INFRASTRUCTURE LIMITATION (OOM exit 137 conocido,
+                              documentado en REM-INV-3/3R/3R-B; no re-ejecutado para
+                              proteger el server pm2 del operador)

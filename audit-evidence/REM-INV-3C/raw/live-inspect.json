@@ -1,0 +1,411 @@
+{
+ "captured_at": "2026-09-13T04:40:31.221Z",
+ "phase": "inspect-live",
+ "functions": [
+  {
+   "signature": "fn_validate_document_transition()",
+   "kind": "f",
+   "secdef": false,
+   "volatility": "v",
+   "proconfig": null,
+   "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+   "owner": "postgres",
+   "fndef": "CREATE OR REPLACE FUNCTION public.fn_validate_document_transition()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n  v_table_name TEXT := TG_ARGV[0];\n  v_old_status TEXT;\n  v_new_status TEXT;\n  v_valid_transitions JSONB;\nBEGIN\n  IF TG_OP = 'UPDATE' THEN\n    v_old_status := OLD.status;\n    v_new_status := NEW.status;\n  ELSIF TG_OP = 'INSERT' THEN\n    v_old_status := NULL;\n    v_new_status := NEW.status;\n  ELSE\n    RETURN COALESCE(NEW, OLD);\n  END IF;\n\n  IF v_old_status IS NOT NULL AND v_old_status = v_new_status THEN\n    RETURN NEW;\n  END IF;\n\n  v_valid_transitions := jsonb_build_object(\n    'production_orders', jsonb_build_object(\n      'draft',       '[\"approved\",\"in_progress\",\"voided\"]'::jsonb,\n      'approved',    '[\"in_progress\",\"voided\"]'::jsonb,\n      'in_progress', '[\"paused\",\"completed\",\"voided\",\"reversed\"]'::jsonb,\n      'paused',      '[\"in_progress\",\"voided\",\"reversed\"]'::jsonb,\n      'completed',   '[\"closed\",\"reversed\",\"voided\"]'::jsonb,\n      'closed',      '[\"reversed\",\"voided\"]'::jsonb,\n      'voided',      '[]'::jsonb,\n      'reversed',    '[]'::jsonb\n    ),\n    'transactions', jsonb_build_object(\n      'pending',     '[\"completed\",\"voided\"]'::jsonb,\n      'completed',   '[\"voided\",\"reversed\"]'::jsonb,\n      'voided',      '[]'::jsonb,\n      'reversed',    '[]'::jsonb\n    )\n  );\n\n  IF v_old_status IS NULL THEN\n    RETURN NEW;\n  END IF;\n\n  IF NOT (\n    v_valid_transitions->v_table_name ? v_old_status\n    AND (v_valid_transitions->v_table_name->v_old_status) ? v_new_status\n  ) THEN\n    RAISE EXCEPTION 'ERR_INVALID_TRANSITION: % no puede pasar de % a %',\n      v_table_name, v_old_status, v_new_status;\n  END IF;\n\n  RETURN NEW;\nEND;\n$function$\n"
+  }
+ ],
+ "validator_triggers": [
+  {
+   "table_name": "devolutions",
+   "trigger_name": "trg_validate_devolution_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_devolution_transition BEFORE UPDATE OF status ON public.devolutions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('devolutions')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false,
+   "fn_owner": "postgres"
+  },
+  {
+   "table_name": "inventory_adjustments",
+   "trigger_name": "trg_validate_adjustment_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_adjustment_transition BEFORE UPDATE OF status ON public.inventory_adjustments FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('inventory_adjustments')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false,
+   "fn_owner": "postgres"
+  },
+  {
+   "table_name": "production_orders",
+   "trigger_name": "trg_validate_production_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_production_transition BEFORE UPDATE OF status ON public.production_orders FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('production_orders')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false,
+   "fn_owner": "postgres"
+  },
+  {
+   "table_name": "receipts",
+   "trigger_name": "trg_validate_receipt_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_receipt_transition BEFORE UPDATE OF status ON public.receipts FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('receipts')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false,
+   "fn_owner": "postgres"
+  },
+  {
+   "table_name": "transactions",
+   "trigger_name": "trg_validate_tx_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_tx_transition BEFORE UPDATE OF status ON public.transactions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('transactions')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false,
+   "fn_owner": "postgres"
+  },
+  {
+   "table_name": "transfers",
+   "trigger_name": "trg_validate_transfer_transition",
+   "enabled": "O",
+   "trgdef": "CREATE TRIGGER trg_validate_transfer_transition BEFORE UPDATE OF status ON public.transfers FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('transfers')",
+   "fn_signature": "fn_validate_document_transition()",
+   "fn_secdef": false,
+   "fn_owner": "postgres"
+  }
+ ],
+ "doc_table_triggers": [
+  {
+   "table_name": "commission_payments",
+   "trigger_name": "commission_payments_touch_updated_at",
+   "trgdef": "CREATE TRIGGER commission_payments_touch_updated_at BEFORE UPDATE ON public.commission_payments FOR EACH ROW EXECUTE FUNCTION touch_updated_at()"
+  },
+  {
+   "table_name": "commission_payments",
+   "trigger_name": "trg_audit_commission_payments",
+   "trgdef": "CREATE TRIGGER trg_audit_commission_payments AFTER INSERT OR DELETE OR UPDATE ON public.commission_payments FOR EACH ROW EXECUTE FUNCTION audit_commission_payments_changes()"
+  },
+  {
+   "table_name": "commission_payments",
+   "trigger_name": "trg_calc_commission_cup",
+   "trgdef": "CREATE TRIGGER trg_calc_commission_cup BEFORE INSERT OR UPDATE ON public.commission_payments FOR EACH ROW EXECUTE FUNCTION calculate_commission_amount_cup()"
+  },
+  {
+   "table_name": "commission_payments",
+   "trigger_name": "trg_set_default_due_date_commission",
+   "trgdef": "CREATE TRIGGER trg_set_default_due_date_commission BEFORE INSERT OR UPDATE OF period_end ON public.commission_payments FOR EACH ROW EXECUTE FUNCTION set_default_due_date_commission()"
+  },
+  {
+   "table_name": "devolutions",
+   "trigger_name": "trg_validate_devolution_transition",
+   "trgdef": "CREATE TRIGGER trg_validate_devolution_transition BEFORE UPDATE OF status ON public.devolutions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('devolutions')"
+  },
+  {
+   "table_name": "inventory_adjustments",
+   "trigger_name": "trg_validate_adjustment_transition",
+   "trgdef": "CREATE TRIGGER trg_validate_adjustment_transition BEFORE UPDATE OF status ON public.inventory_adjustments FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('inventory_adjustments')"
+  },
+  {
+   "table_name": "production_orders",
+   "trigger_name": "trg_generate_po_number",
+   "trgdef": "CREATE TRIGGER trg_generate_po_number BEFORE INSERT ON public.production_orders FOR EACH ROW EXECUTE FUNCTION generate_production_order_number()"
+  },
+  {
+   "table_name": "production_orders",
+   "trigger_name": "trg_validate_production_transition",
+   "trgdef": "CREATE TRIGGER trg_validate_production_transition BEFORE UPDATE OF status ON public.production_orders FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('production_orders')"
+  },
+  {
+   "table_name": "purchase_orders",
+   "trigger_name": "trg_po_updated",
+   "trgdef": "CREATE TRIGGER trg_po_updated BEFORE UPDATE ON public.purchase_orders FOR EACH ROW EXECUTE FUNCTION update_po_updated_at()"
+  },
+  {
+   "table_name": "purchase_orders",
+   "trigger_name": "trg_purchase_orders_updated_at",
+   "trgdef": "CREATE TRIGGER trg_purchase_orders_updated_at BEFORE UPDATE ON public.purchase_orders FOR EACH ROW EXECUTE FUNCTION update_purchase_orders_updated_at()"
+  },
+  {
+   "table_name": "receipts",
+   "trigger_name": "trg_audit_receipt_changes",
+   "trgdef": "CREATE TRIGGER trg_audit_receipt_changes AFTER UPDATE ON public.receipts FOR EACH ROW EXECUTE FUNCTION log_transaction_changes()"
+  },
+  {
+   "table_name": "receipts",
+   "trigger_name": "trg_set_due_date_receipt",
+   "trgdef": "CREATE TRIGGER trg_set_due_date_receipt BEFORE INSERT ON public.receipts FOR EACH ROW EXECUTE FUNCTION set_default_due_date_receipt()"
+  },
+  {
+   "table_name": "receipts",
+   "trigger_name": "trg_validate_receipt_transition",
+   "trgdef": "CREATE TRIGGER trg_validate_receipt_transition BEFORE UPDATE OF status ON public.receipts FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('receipts')"
+  },
+  {
+   "table_name": "received_services",
+   "trigger_name": "trg_prevent_received_service_edit",
+   "trgdef": "CREATE TRIGGER trg_prevent_received_service_edit BEFORE UPDATE ON public.received_services FOR EACH ROW EXECUTE FUNCTION prevent_received_service_edit()"
+  },
+  {
+   "table_name": "received_services",
+   "trigger_name": "trg_set_due_date_service",
+   "trgdef": "CREATE TRIGGER trg_set_due_date_service BEFORE INSERT ON public.received_services FOR EACH ROW EXECUTE FUNCTION set_default_due_date_service()"
+  },
+  {
+   "table_name": "transactions",
+   "trigger_name": "reverse_commissions_on_sale_void",
+   "trgdef": "CREATE TRIGGER reverse_commissions_on_sale_void AFTER UPDATE OF status ON public.transactions FOR EACH ROW EXECUTE FUNCTION reverse_commissions_on_sale_void()"
+  },
+  {
+   "table_name": "transactions",
+   "trigger_name": "trg_audit_transaction_changes",
+   "trgdef": "CREATE TRIGGER trg_audit_transaction_changes AFTER UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION log_transaction_changes()"
+  },
+  {
+   "table_name": "transactions",
+   "trigger_name": "trg_check_active_user",
+   "trgdef": "CREATE TRIGGER trg_check_active_user BEFORE INSERT OR UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION check_active_user()"
+  },
+  {
+   "table_name": "transactions",
+   "trigger_name": "trg_protect_transactions_total_amount",
+   "trgdef": "CREATE TRIGGER trg_protect_transactions_total_amount BEFORE UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION protect_transactions_total_amount()"
+  },
+  {
+   "table_name": "transactions",
+   "trigger_name": "trg_validate_tx_transition",
+   "trgdef": "CREATE TRIGGER trg_validate_tx_transition BEFORE UPDATE OF status ON public.transactions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('transactions')"
+  },
+  {
+   "table_name": "transfers",
+   "trigger_name": "trg_validate_transfer_stores",
+   "trgdef": "CREATE TRIGGER trg_validate_transfer_stores BEFORE INSERT OR UPDATE ON public.transfers FOR EACH ROW EXECUTE FUNCTION validate_transfer_stores()"
+  },
+  {
+   "table_name": "transfers",
+   "trigger_name": "trg_validate_transfer_transition",
+   "trgdef": "CREATE TRIGGER trg_validate_transfer_transition BEFORE UPDATE OF status ON public.transfers FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('transfers')"
+  }
+ ],
+ "function_callers": [
+  {
+   "signature": "void_inventory_adjustment(uuid,uuid)",
+   "secdef": true
+  }
+ ],
+ "execute_privs": [
+  {
+   "signature": "fn_validate_document_transition()",
+   "anon_exec": false,
+   "authenticated_exec": true,
+   "service_role_exec": true
+  }
+ ],
+ "dev_table_privs": [
+  null,
+  null
+ ],
+ "rls_status": [
+  {
+   "table_name": "commission_payments",
+   "rls_enabled": true,
+   "rls_forced": false
+  },
+  {
+   "table_name": "devolutions",
+   "rls_enabled": true,
+   "rls_forced": false
+  },
+  {
+   "table_name": "inventory_adjustments",
+   "rls_enabled": true,
+   "rls_forced": false
+  },
+  {
+   "table_name": "production_orders",
+   "rls_enabled": true,
+   "rls_forced": false
+  },
+  {
+   "table_name": "purchase_orders",
+   "rls_enabled": true,
+   "rls_forced": false
+  },
+  {
+   "table_name": "receipts",
+   "rls_enabled": true,
+   "rls_forced": false
+  },
+  {
+   "table_name": "received_services",
+   "rls_enabled": true,
+   "rls_forced": false
+  },
+  {
+   "table_name": "transactions",
+   "rls_enabled": true,
+   "rls_forced": false
+  },
+  {
+   "table_name": "transfers",
+   "rls_enabled": true,
+   "rls_forced": false
+  }
+ ],
+ "dev_policies": [
+  {
+   "tablename": "devolution_items",
+   "policyname": "devolution_items_insert",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "INSERT",
+   "qual": null,
+   "with_check": "(EXISTS ( SELECT 1\n   FROM devolutions d\n  WHERE ((d.id = devolution_items.devolution_id) AND has_store_access(d.store_id))))"
+  },
+  {
+   "tablename": "devolution_items",
+   "policyname": "devolution_items_select",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "SELECT",
+   "qual": "(EXISTS ( SELECT 1\n   FROM devolutions d\n  WHERE ((d.id = devolution_items.devolution_id) AND has_store_access(d.store_id))))",
+   "with_check": null
+  },
+  {
+   "tablename": "devolutions",
+   "policyname": "devolutions_insert_own_store",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "INSERT",
+   "qual": null,
+   "with_check": "has_store_access(store_id)"
+  },
+  {
+   "tablename": "devolutions",
+   "policyname": "devolutions_select_own_store",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "SELECT",
+   "qual": "has_store_access(store_id)",
+   "with_check": null
+  },
+  {
+   "tablename": "devolutions",
+   "policyname": "devolutions_tenant_insert_with_check",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "INSERT",
+   "qual": null,
+   "with_check": "(store_id = ANY (current_user_store_ids()))"
+  },
+  {
+   "tablename": "devolutions",
+   "policyname": "devolutions_update_own_store",
+   "permissive": "PERMISSIVE",
+   "roles": "{authenticated}",
+   "cmd": "UPDATE",
+   "qual": "has_store_access(store_id)",
+   "with_check": "has_store_access(store_id)"
+  }
+ ],
+ "v2_rpcs": [
+  {
+   "signature": "create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)",
+   "secdef": true,
+   "proacl": "{postgres=X/postgres,service_role=X/postgres}"
+  },
+  {
+   "signature": "reverse_devolution(uuid,text,uuid)",
+   "secdef": true,
+   "proacl": "{postgres=X/postgres,service_role=X/postgres}"
+  }
+ ],
+ "status_types": [
+  {
+   "table_name": "commission_payments",
+   "column_name": "status",
+   "data_type": "text",
+   "udt_name": "text"
+  },
+  {
+   "table_name": "devolutions",
+   "column_name": "status",
+   "data_type": "text",
+   "udt_name": "text"
+  },
+  {
+   "table_name": "inventory_adjustments",
+   "column_name": "status",
+   "data_type": "text",
+   "udt_name": "text"
+  },
+  {
+   "table_name": "production_orders",
+   "column_name": "status",
+   "data_type": "text",
+   "udt_name": "text"
+  },
+  {
+   "table_name": "purchase_orders",
+   "column_name": "status",
+   "data_type": "USER-DEFINED",
+   "udt_name": "purchase_status_enum"
+  },
+  {
+   "table_name": "receipts",
+   "column_name": "status",
+   "data_type": "text",
+   "udt_name": "text"
+  },
+  {
+   "table_name": "received_services",
+   "column_name": "status",
+   "data_type": "text",
+   "udt_name": "text"
+  },
+  {
+   "table_name": "transactions",
+   "column_name": "status",
+   "data_type": "USER-DEFINED",
+   "udt_name": "transaction_status"
+  },
+  {
+   "table_name": "transfers",
+   "column_name": "status",
+   "data_type": "USER-DEFINED",
+   "udt_name": "transfer_status"
+  }
+ ],
+ "pg_depend_refs": [
+  {
+   "referenced_fn": "fn_validate_document_transition()",
+   "dependent_class": "pg_trigger",
+   "dependent_object": "136694",
+   "dep_type": "n"
+  },
+  {
+   "referenced_fn": "fn_validate_document_transition()",
+   "dependent_class": "pg_trigger",
+   "dependent_object": "136695",
+   "dep_type": "n"
+  },
+  {
+   "referenced_fn": "fn_validate_document_transition()",
+   "dependent_class": "pg_trigger",
+   "dependent_object": "136696",
+   "dep_type": "n"
+  },
+  {
+   "referenced_fn": "fn_validate_document_transition()",
+   "dependent_class": "pg_trigger",
+   "dependent_object": "136697",
+   "dep_type": "n"
+  },
+  {
+   "referenced_fn": "fn_validate_document_transition()",
+   "dependent_class": "pg_trigger",
+   "dependent_object": "136698",
+   "dep_type": "n"
+  },
+  {
+   "referenced_fn": "fn_validate_document_transition()",
+   "dependent_class": "pg_trigger",
+   "dependent_object": "137382",
+   "dep_type": "n"
+  }
+ ]
+}

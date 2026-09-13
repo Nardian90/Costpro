@@ -1,0 +1,36 @@
+# REM-INV-3C — MANIFEST (path | sha256 | bytes | purpose)
+# Sin .env, tokens, credenciales, PATs ni service keys.
+00-baseline.txt  831632f1bd70fc3f473d4bc77c070bebbadd5386d601dae4fa44b63795d3b2c2  1422  Gate 0: baseline git verificado
+01-function-catalog.txt  f23e764870e856980c7ea4ff8fbecab34ac281a671438a661e57aed65ebb7d7c  1619  Censo del validador (firma/security/return/volatility/callers/triggers/hash)
+02-function-pre.sql  7c0643faeb5de6829d17b6721126d3d2f3c438d283150423acf5bb236f853b80  1893  Definición verbatim LIVE del validador (PRE)
+03-function-pre.sha256  a6d7b16e3989066f7d477ad3d159f9fc07cc3b062bc412760c327f2d0527edbb  86  Hash sha256 de 02-function-pre.sql
+04-document-type-map.txt  da45ab68e248586b281e87060b626f886d5d47dc0c2bf58d72f03a3efcfd68fd  2322  Mapa de document-types PRE/POST + pertenencia de devolution
+05-trigger-census.txt  b09f6a584270157e8e12f50e43724e607ba6df0737f4e296d302f45d7a0465cc  3376  Censo LIVE de triggers ligados y de las 9 tablas documentales
+06-caller-census.txt  c1e36a22d251be4a7cb08b49614cdb68ac44812d2e8082162296e8bb66ae296c  3242  Censo de callers (DB + app + tests) con clasificación
+07-git-history.txt  4a17a459fdf8f1d04729134661e3488a98dd5bbe615be51f013562363cd3181e  3808  Historial git + arqueología del drift out-of-band
+08-staging-mirror.txt  523b14466b406ef8dda22e8787f084d61619486fe11f506e989d78a732624b61  2281  Metodología del espejo efímero verbatim + hashes
+09-tests-pre.txt  c2ac7e6d275f0578b8a4ba8b4b17ac4c47b79f44438694dcee2bb66a0d9c6882  3273  Matriz T1-T8 + S-series PRE (fail-open reproducido)
+10-findings.txt  e0d3c2ba1284c12fa2a0fd6195462e23f9d9f21bfd0e4d8d8e52f0c345049de1  4458  Hallazgos (principal, overload fantasma, drift procesal, residual)
+11-severity.txt  3bb6d9c7594aeaac657e0d65d7b21950d475d46447a6e5c51330647908fb14f5  2513  Clasificación: DEFENSE-IN-DEPTH GAP → HARDENED
+12-remediation-decision.txt  07fd9f9accedd6cf07a0da1fa251150f80675d0bf8dfe4682f5ce7d3c71aabda  4564  Decisión A+B+C aplicada, D rechazada; matriz callers PRE/POST
+13-remediation.sql  8ee93945fcf57ca1dc40d16dc73afc48cb5b236a74d110cc0add968d3739411f  5998  DDL aplicado (CREATE OR REPLACE FUNCTION única sentencia)
+14-function-post.sql  dbd352682afa6cfad8c841832d71abe8a07c976826e9eef82e339c18d05ad6e0  3001  Definición verbatim POST (pg_get_functiondef de producción)
+15-function-post.sha256  89799ad488f1bb948fb8e1cb96f770f9d5066264859e25462544480038d643e5  87  Hash sha256 de 14-function-post.sql
+16-tests-post.txt  2a2d59de37a4f7d73c65fa9c573313045e3811cbf6d1473deecfdc006d74b6e7  7333  Matriz T1-T8 + S-series POST (fail-closed verificado)
+17-v2-regression.txt  ca9b8975593b1ab6e9db5deb910b915445d0b22fabf35f6c9c126d151cf3631f  2537  Regresión V2 11/11 + concurrencia + regresión repo
+18-security.txt  678e8ab6dbf70e40a8cceba24f836d255afa6954d3f84d0ecc951f4c46363f76  2671  Matriz de seguridad 8 ataques × 2 regímenes × PRE/POST
+19-zero-touch.txt  fb8becbc5fd106ea271675ed13570f8dc7f9034c6de988222544014babe0ce81  1271  Zero-touch 7 tablas PRE==POST (14/14) + 13 NC intactas
+20-final-verdict.txt  60f3fc6a1d3ab32cbd67f312e3c999c7424b42cd7399fa80606560c288fc4b29  5702  Veredicto CERTIFIED — HARDENED + respuestas §38
+21-ddl-preconditions.txt  703b8ea10a4b3287e7350110a4e3907702dd6c54f1b4d527547f55510036afa0  4507  Gate DDL: 9/9 precondiciones (patrón §25 3R-B)
+22-ddl-execution.txt  528fbee91ae1e5b0dbfa9f04c095758b381255bfc2ec98631ff3a2db9fcea2cc  575  Ejecución DDL autorizada con pin md5 PRE/POST
+raw/live-inspect.json  533af0277242c4b5140f314acdd4ab4c2ed240ada5e431d06600e8ca66f79be9  15818  Evidencia cruda (inspecciones live, staging, fingerprints)
+raw/live-inspect2.json  247d85deebc413e0fd52bee678f2b6330b5b11a6b088bfd7aa7048992478b787  17437  Evidencia cruda (inspecciones live, staging, fingerprints)
+raw/live-inspect3.json  89019bf6a6c723a79cd6c900ab45fa276e16f7dde87744b6ca6ce07913c4f5a9  1593  Evidencia cruda (inspecciones live, staging, fingerprints)
+raw/live-inspect4.json  e6ebfcc2de02f847c019887847e2ec919ea45033763b522db4c2e25626d227ef  4325  Evidencia cruda (inspecciones live, staging, fingerprints)
+raw/live-inspect5.json  2efe9ec44817e11e5b649ef1a46633adc29915f64ca864025e29a8b147575222  3556  Evidencia cruda (inspecciones live, staging, fingerprints)
+raw/live-inspect6.json  ff725dac36e30089c230b09598d512c15acef9e2b1e372b2031faf090c5b9c44  37457  Evidencia cruda (inspecciones live, staging, fingerprints)
+raw/post-inspect.json  dceced4e6a187815ba43748c811645ee15fbb42bf1329e65b35aacd64c1ed129  7668  Evidencia cruda (inspecciones live, staging, fingerprints)
+raw/staging-final-run.log  d2c44aa7b0d023705460b58876e61aa6b6f20d1d6f75540ff91240e59ea6f84c  11982  Evidencia cruda (inspecciones live, staging, fingerprints)
+raw/staging-results.json  113b3ba29aba672e09315133d5851207cc523fbb522883eb7b7d4c1f2c837ea0  15747  Evidencia cruda (inspecciones live, staging, fingerprints)
+raw/zero-touch-post.json  0c8f980d3ae9d0e96762874b0d8cbc00c00e0da7fdc2b650c19b9c60880caf52  3135  Evidencia cruda (inspecciones live, staging, fingerprints)
+raw/zero-touch-pre.json  3763ee8e4fda6b858421b1432450ed7b437f8a99fe40cd5ffa99a671b788e198  3134  Evidencia cruda (inspecciones live, staging, fingerprints)

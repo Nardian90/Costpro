@@ -1,0 +1,9 @@
+REM-INV-3C — 22-ddl-execution
+Fecha UTC: 2026-09-13T05:16:59.214Z
+Sentencia: 13-remediation.sql (CREATE OR REPLACE FUNCTION fn_validate_document_transition, único cambio)
+md5(prosrc) esperado (byte-exacto con staging POST): 469c529a70fe578a6f2ac25273bd79ca
+
+PRE: md5(prosrc) producción = c77a18de9a9f2ca5c935f0b4f0a35e68 (esperado c77a18de9a9f2ca5c935f0b4f0a35e68)
+[2026-09-13T05:17:01.266Z] OK — CREATE OR REPLACE FUNCTION aplicado
+POST: md5(prosrc) producción = 469c529a70fe578a6f2ac25273bd79ca len-owner=postgres secdef=false
+MATCH byte-exacto con staging POST: OK

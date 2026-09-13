@@ -1,0 +1,62 @@
+REM-INV-3C — 07-git-history.txt (§9)
+
+HISTORIAL DE LA FUNCIÓN EN EL REPO (git log -S "fn_validate_document_transition" -- supabase/):
+
+  48e501e8 V2.3: Auditoría contable — state machines completos + reversión
+           contable para 6 tipos de documento
+           → INTRODUCCIÓN (20260726000006_v2_3_production_reversal_and_validation.sql):
+             firma fn_validate_document_transition() RETURNS TRIGGER, SECURITY DEFINER,
+             SET search_path = public, mapa con 6 tablas INCLUYENDO devolutions
+             (pending→[completed,voided], completed→[reversed,voided]).
+             Triggers creados sobre 6 tablas (entre ellas trg_validate_devolution_transition).
+
+  c5d1be0a V2.4 / 3da20e72 V2.5 / 2ebd1280 V2.10.1-4 / 970953e9 V2.11:
+           redefiniciones del mismo cuerpo (firma trigger, mapa completo con
+           devolutions). V2.11 (20260726000027) añade 'voided' a
+           inventory_adjustments; V2.10.1 añade in_progress desde draft a
+           production_orders. devolutions NUNCA se excluye.
+
+  e971ff83 V2.12.9 + 432c9481 V2.12.12: solo menciones en comentarios
+           (permiten pending→voided en adjustments).
+
+  ce36804f V2.12.37 (20260801000001_v2_12_37_fix_e2e_bugs.sql):
+           "Bug #2: Recrear fn_validate_document_transition con closed→voided
+           permitido" — crea un OVERLOAD DIFERENTE: (p_table_name TEXT)
+           RETURNS VOID (no instalable como trigger function), con mapa
+           reducido a production_orders/transactions/receipts/received_services/
+           commission_payments/purchase_orders (SIN devolutions/transfers/
+           inventory_adjustments). NO recrea ningún trigger.
+           → Este overload VOID no existe hoy en producción: fue eliminado
+             out-of-band.
+
+git log -S "trg_validate_devolution_transition" -- supabase/:
+  ÚNICAMENTE 48e501e8 (V2.3). Ninguna migración posterior crea, modifica o
+  dropea el trigger de devolutions.
+
+EL DRIFT OUT-OF-BAND (no reproducible desde el repo):
+  - La función LIVE capturada 2026-09-13 (02-function-pre.sql, md5(prosrc)
+    c77a18de9a9f2ca5c935f0b4f0a35e68) es una VARIANTE no presente en ninguna
+    migración: firma () RETURNS trigger (compatible con los 6 triggers),
+    SECURITY INVOKER, cuerpo estilo TG_OP (V2.12.37) pero con mapa reducido a
+    production_orders + transactions.
+  - Evidencia de la ventana temporal:
+      * W7 (2026-08-30) captura F6: md5(def) = 7ec72a149a1797978fdbe746ef174e38
+        == md5(def) de la captura H5 (2026-09-02) y == md5(def) del cuerpo
+        actual (compare-eras.py) → el cuerpo de mapa reducido YA estaba vivo
+        el 2026-08-30 y NO ha vuelto a cambiar desde entonces.
+      * Las migraciones V2.3–V2.12.37 (última 2026-08-01) quedaron aplicadas
+        vía Management API durante ese mismo período sin commit del SQL
+        final del validador → el swap [jul-26, ago-28] no dejó trazas en git.
+  - Consecuencia documental: ni la exclusión de devolutions ni el cambio a
+    SECURITY INVOKER fueron decisiones registradas en el repo.
+
+RELACIÓN CON REM-INV-3 / REM-INV-3R / REM-INV-3R-B:
+  - REM-INV-3 (fa64514d): F-02 ghost-NC; el validador no fue superficie del gate.
+  - REM-INV-3R (a404e3ac): reconciliación 13 NC; SEC-F02-1 identificado (RLS).
+  - REM-INV-3R-B (760e9f79): REVOKE del grant UPDATE/INSERT/DELETE/TRUNCATE de
+    authenticated/anon sobre devolutions/devolution_items; en su staging S4
+    observó por primera vez que "el trigger de transiciones NO protege
+    devolutions: clave ausente en mapa → NULL → IF NOT(NULL) no levanta"
+    (hallazgo colateral 04, origen de este gate). No se modificó la función.
+  - Este gate (REM-INV-3C) NO reabre SEC-F02-1: el REVOKE de 3R-B permanece
+    intacto (verificado POST: auth_ins/auth_upd/auth_del = false).

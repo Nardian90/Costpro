@@ -1,0 +1,52 @@
+REM-INV-3C — 06-caller-census.txt (§8 — censo de callers, repo + catálogo)
+
+CLASIFICACIÓN DE REFERENCIAS A fn_validate_document_transition
+
+A. Capa base de datos (pg_proc.prosrc ILIKE):
+   - void_inventory_adjustment(uuid,uuid): SOLO comentario textual
+     ("NOTA: el trigger fn_validate_document_transition permite pending → voided").
+     No hay PERFORM/SELECT del validador. Clasificación: NO_CALLER (comentario).
+   - Ninguna otra función invoca al validador. Clasificación: 0 callers ejecutables.
+   - Llamada directa como función: IMPOSIBLE (0A000: trigger functions can only
+     be called as triggers — verificado en staging T8).
+   - EXECUTE grants (authenticated/service_role) son inertes para invocación
+     directa por el pseudo-tipo trigger; se conservan sin cambio.
+
+B. Trigger paths (los únicos caminos de ejecución reales):
+   PRODUCTION_PATH: 6 triggers BEFORE UPDATE OF status sobre
+     transactions, receipts, transfers, devolutions, inventory_adjustments,
+     production_orders (detalles en 05-trigger-census.txt).
+   Cada escritor de status por tabla (censo prosrc, live):
+   receipts:
+     - cancel_reception(uuid) => SET status = 'voided'
+     - confirm_pending_reception(uuid,uuid,timestamp with time zone) => SET status = 'active'
+     - fn_void_receipt(uuid,uuid) => SET status = 'voided' WHERE id = p_receipt_id
+     - reverse_receipt_v2(uuid,text,uuid) => SET status = 'reversed'
+     - reverse_receipt(uuid,text,uuid) => SET status = 'reversed'
+     - void_pending_reception(uuid,uuid,text,timestamp with time zone) => SET status = 'voided'
+     - void_reception_with_reversal(uuid,uuid,text,timestamp with time zone) => SET status = 'voided'
+   transfers:
+     - cancel_transfer(uuid,text,uuid) => SET status = 'CANCELADA'
+     - cancel_transfer(uuid,uuid) => SET status = 'CANCELADA'
+     - confirm_transfer(uuid,uuid,timestamp with time zone) => SET status = 'CONFIRMADA'
+     - reject_transfer(uuid,text,uuid) => SET status = 'CANCELADA'
+     - reverse_transfer(uuid,text,uuid) => SET status = 'REVERSADA'
+   inventory_adjustments:
+     - confirm_inventory_adjustment(uuid,uuid) => SET status = 'confirmed'
+     - process_inventory_adjustment(uuid,uuid,adjustment_item[],timestamp with time zone) => SET status = 'COMPLETED'
+     - reverse_adjustment(uuid,text,uuid) => SET status = 'reversed'
+     - reverse_inventory_adjustment_v2(uuid,text,uuid) => SET status = 'reversed'
+     - void_inventory_adjustment(uuid,uuid) => SET status = 'voided'
+    WHERE id = p_adjustment_id
+   devolutions:
+     - reverse_devolution(uuid,text,uuid) => SET status = 'reversed'
+
+C. Capa aplicación (src/): 0 referencias (el validador es puramente DB-side).
+   Escritura canónica de devolutions: /api/devolutions POST → RPC
+   create_devolution_v2 (FEATURES.USE_V2_REVERSE=true) o create_devolution V1
+   (service_role-only EXECUTE, dormant). Reversión: /api/reverse + useReverseDocument
+   → reverse_devolution. Lectura: GET /api/devolutions (service client, SELECT).
+   Clasificación: CANONICAL_V2 (POST), SERVICE_ROLE_INTERNAL (V1), RPC (reverse).
+   Ningún caller de aplicación depende del comportamiento del validador.
+
+D. Tests del repo: 0 referencias (vitest 2070/0 FAIL tras el cambio).
