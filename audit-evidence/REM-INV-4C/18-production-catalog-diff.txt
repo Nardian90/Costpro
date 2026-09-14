@@ -1,0 +1,23 @@
+REM-INV-4C — 18 production catalog diff (POST vs PRE)
+
+funciones totales: PRE=484 POST=484 (delta=0, esperado 0)
+tablas totales   : PRE=146 POST=146 (delta=0, esperado 0)
+
+== cambios en funciones ==
+  [EXPECTED-ACL] current_user_tenant_id()
+  [EXPECTED-ACL] has_store_role(uuid,uuid,text[])
+
+== cambios en tablas/relacl/RLS/policies == NINGUNO (0)
+
+UNEXPECTED CHANGES = 0
+RESULTADO: EXPECTED CHANGES ONLY — PASS
+
+Detalle objetivo (proacl PRE -> POST):
+  current_user_tenant_id()
+    PRE : ['=X/postgres', 'postgres=X/postgres', 'anon=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+    POST: ['postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+    (grantees eliminados: PUBLIC + anon)
+  has_store_role(uuid,uuid,text[])
+    PRE : ['=X/postgres', 'postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+    POST: ['postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+    (grantees eliminados: PUBLIC)

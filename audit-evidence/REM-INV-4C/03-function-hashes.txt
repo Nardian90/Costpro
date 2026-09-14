@@ -1,0 +1,16 @@
+REM-INV-4C — 03 function hashes (LIVE PRE-remediation)
+
+signature                              md5(prosrc)                      sha256(pg_get_functiondef)
+current_user_tenant_id()               e7c7f1fdb7e5134a4f1c7a0752c1088e 1c6c282342982a087cf612f74bef73dc5b90c551511ce792a269fc0593bdb8fd
+has_store_role(uuid,text[])            bf4b1761a6ccd80919108301fe94a0e9 d3b8dfcf936845456ea2896f8820f980eb7d9ae8bb019805207d56e725636e71
+has_store_role(uuid,uuid,text[])       53dd721499bf3253b567e3b1372400ee 1fc71176fdfc7aa3b6bfb65920221e0f5d451c6840ae85cb9d1302d8eafff0c1
+has_store_role_as(uuid,uuid,text[])    abb566b7f3ce24ee2f0e6dbdb811f2e5 0b2c372425fcd5511dc713effc550f9843605492cf8f65b50d3e1cb378eeccc5
+
+current_user_store_ids()               317799d87c0daedabb3dba833507e3f4 (support; sha256 of def captured locally=1fc5d38d78adcd9e…)
+has_store_access(uuid)                 5c7d310009f60aa864b5b97d00596e48 (support; sha256 of def captured locally=6d00b171f5ddf033…)
+is_admin_with_access(uuid)             0015e76b5eb9b2c453cf802a31c6a020 (support; sha256 of def captured locally=7ab1c146841f4655…)
+is_admin()                             d3d5d5f7c3b24201ed6b62a7114bb49f (support; sha256 of def captured locally=6a79caa4fbeaa04c…)
+is_global_admin()                      134119e5c4cbf5b30c4bcbc5b7277dd7 (support; sha256 of def captured locally=72b323483aa4e9ad…)
+is_managed_user(uuid)                  c66392148dab334051e2adadab15d2d6 (support; sha256 of def captured locally=d3caf7da38cb58fd…)
+is_store_member(uuid)                  2402df1bd096b528161256518c804fba (support; sha256 of def captured locally=1020768381fbbe71…)
+is_tenant_member(uuid)                 c4584678c338a9668b3dd5da4c320541 (support; sha256 of def captured locally=7f5fdb65767c91a3…)

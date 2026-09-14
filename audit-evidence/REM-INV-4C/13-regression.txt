@@ -1,0 +1,17 @@
+REM-INV-4C — 13 general regression (repo unchanged by this gate: 0 source files modified)
+
+== npx tsc --noEmit ==
+exit=0 (0 errors) — baseline 4B: 0 → delta 0
+TSC_EXIT=0
+
+== npm test (vitest) ==
+255: Test Files  99 passed | 1 skipped (100)
+256:      Tests  2070 passed | 24 skipped (2094)
+baseline 4B: 2070 passed | 24 skipped → delta 0
+
+== npm run lint ==
+1813:✖ 1291 problems (0 errors, 1291 warnings)
+baseline 4B: 0 errors / 1291 warnings → delta 0 (warnings pre-existentes, no ocultados)
+
+Notas: no se ejecutó build de producción (limitación conocida 4GB OOM/exit 137 documentada en gates previos);
+este gate no modifica código, por lo que el build no forma parte de la superficie de riesgo.

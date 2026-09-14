@@ -1,0 +1,29 @@
+REM-INV-4C — 17 production ACL POST (tras 3 REVOKE)
+
+current_user_tenant_id()               proacl=['postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+has_store_role(uuid,text[])            proacl=['postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+has_store_role(uuid,uuid,text[])       proacl=['postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+has_store_role_as(uuid,uuid,text[])    proacl=['postgres=X/postgres', 'service_role=X/postgres']
+
+== has_function_privilege POST (LIVE) ==
+current_user_tenant_id()                   anon           EXECUTE=false
+  current_user_tenant_id()                   authenticated  EXECUTE=true
+  current_user_tenant_id()                   postgres       EXECUTE=true
+  current_user_tenant_id()                   public         EXECUTE=false
+  current_user_tenant_id()                   service_role   EXECUTE=true
+  has_store_role_as(uuid,uuid,text[])        anon           EXECUTE=false
+  has_store_role_as(uuid,uuid,text[])        authenticated  EXECUTE=false
+  has_store_role_as(uuid,uuid,text[])        postgres       EXECUTE=true
+  has_store_role_as(uuid,uuid,text[])        public         EXECUTE=false
+  has_store_role_as(uuid,uuid,text[])        service_role   EXECUTE=true
+  has_store_role(uuid,text[])                anon           EXECUTE=false
+  has_store_role(uuid,text[])                authenticated  EXECUTE=true
+  has_store_role(uuid,text[])                postgres       EXECUTE=true
+  has_store_role(uuid,text[])                public         EXECUTE=false
+  has_store_role(uuid,text[])                service_role   EXECUTE=true
+  has_store_role(uuid,uuid,text[])           anon           EXECUTE=false
+  has_store_role(uuid,uuid,text[])           authenticated  EXECUTE=true
+  has_store_role(uuid,uuid,text[])           postgres       EXECUTE=true
+  has_store_role(uuid,uuid,text[])           public         EXECUTE=false
+  has_store_role(uuid,uuid,text[])           service_role   EXECUTE=true
+

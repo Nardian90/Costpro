@@ -1,0 +1,38 @@
+REM-INV-4C — 09 staging fidelity (PG 17.6 ephemeral, port 5435, zonky binaries, fresh initdb)
+
+Fixture construction:
+- 4 target overloads: VERBATIM pg_get_functiondef LIVE (byte-identical bodies)
+- 8 support functions: VERBATIM LIVE (is_admin, is_global_admin, is_admin_with_access, is_managed_user,
+  is_tenant_member, current_user_store_ids, has_store_access, is_store_member)
+- 17 RLS policies: verbatim using/check expressions extracted from LIVE pg_policy
+- proacl replicated entry-by-entry from LIVE proacl
+- auth.uid()/auth.role(): standard Supabase shims over request.jwt.claim.* GUCs (PostgREST-equivalent)
+- SECDEF probe functions owned by postgres (reproduce managed_* internal-caller mechanism)
+
+Known fidelity exceptions (behaviorally irrelevant):
+- role/status columns TEXT vs ENUM in LIVE (all comparisons are ::text)
+- is_admin() LIVE explicit grant to costpro_transaction_adjuster omitted (role not present in fixture; not a target)
+
+Fidelity check output:
+APPLY OK: fixture.sql
+
+== FIDELITY: functions ==
+current_user_tenant_id()                     md5=e7c7f1fd md5_match=true acl_match=true secdef=true owner=postgres hdr=true
+   staging proacl={=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+has_store_role(uuid,text[])                  md5=bf4b1761 md5_match=true acl_match=true secdef=true owner=postgres hdr=true
+   staging proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+has_store_role(uuid,uuid,text[])             md5=53dd7214 md5_match=true acl_match=true secdef=true owner=postgres hdr=true
+   staging proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+has_store_role_as(uuid,uuid,text[])          md5=abb566b7 md5_match=true acl_match=true secdef=true owner=postgres hdr=true
+   staging proacl={postgres=X/postgres,service_role=X/postgres}
+
+== FIDELITY: RLS + policy count ==
+product_cost_sheets        rls=true force=false policies=2
+products                   rls=true force=false policies=4
+profiles                   rls=true force=false policies=2
+stores                     rls=true force=false policies=5
+user_store_memberships     rls=true force=false policies=4
+policies referencing targets in staging: 17 (LIVE representative subset = 17)
+fixture data: stores=3 memberships=4 products=1 profiles=4
+
+FIDELITY: PASS

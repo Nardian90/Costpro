@@ -1,0 +1,14 @@
+REM-INV-4C — 15 production preconditions (GATE M)
+
+git: HEAD == origin/main == 070bc9d9 (verificado inmediatamente antes del apply; ver 24-final-verification.txt)
+worktree: clean salvo artefactos del propio gate (audit-evidence/REM-INV-4C/)
+
+== re-censo LIVE == snapshot PRE (drift=0) ==
+  current_user_tenant_id()               md5=e7c7f1fdb7e5134a4f1c7a0752c1088e proacl=['=X/postgres', 'postgres=X/postgres', 'anon=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+  has_store_role(uuid,text[])            md5=bf4b1761a6ccd80919108301fe94a0e9 proacl=['postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+  has_store_role(uuid,uuid,text[])       md5=53dd721499bf3253b567e3b1372400ee proacl=['=X/postgres', 'postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+  has_store_role_as(uuid,uuid,text[])    md5=abb566b7f3ce24ee2f0e6dbdb811f2e5 proacl=['postgres=X/postgres', 'service_role=X/postgres']
+
+Fingerprint completo capturado: 484 funciones (signature/md5/proacl/secdef/proconfig/volatility),
+146 tablas (relacl/rls/force_rls/n_policies), zero-touch 15 tablas de negocio.
+Conclusión: sin drift concurrente; precondiciones CUMPLIDAS.

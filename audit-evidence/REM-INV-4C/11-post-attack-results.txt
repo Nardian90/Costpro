@@ -1,0 +1,60 @@
+REM-INV-4C — 11 POST-attack results (staging, after 3-statement DCL remediation)
+
+  ALLOW  H1-hsr2-authed                   [{"v": true}]
+  ALLOW  H1-hsr3-authed                   [{"v": true}]
+  DENY   H2-hsr3-anon                     42501 permission denied for function has_store_role
+  DENY   H2-hsr2-anon                     42501 permission denied for function has_store_role
+  DENY   H2-cuti-anon                     42501 permission denied for function current_user_tenant_id
+  DENY   H2-hsra-anon                     42501 permission denied for function has_store_role_as
+  ALLOW  H3-self-A-storeA1                [{"v": true}]
+  ALLOW  H3-self-B-storeA2                [{"v": true}]
+  ALLOW  H4-A-as-B                        [{"v": false}]
+  ALLOW  H4-control-A-storeA1             [{"v": true}]
+  ALLOW  H4-null-store                    [{"v": false}]
+  ALLOW  H4-random-store                  [{"v": false}]
+  ALLOW  H5-A-vs-C-B1                     [{"v": false}]
+  ALLOW  H5-C-vs-A-A1                     [{"v": false}]
+  ALLOW  H5-cuti-A                        [{"v": "a0000000-0000-0000-0000-00000000000a"}]
+  ALLOW  H5-cuti-C                        [{"v": "b0000000-0000-0000-0000-00000000000b"}]
+  ALLOW  H6-callerA-subjectGA-storeA2     [{"v": false}]
+  ALLOW  H6-callerA-subjectGA-storeA1     [{"v": true}]
+  ALLOW  H6-callerGA-subjectA             [{"v": false}]
+  ALLOW  H6-callerGA-cuti                 [{"v": "a0000000-0000-0000-0000-00000000000a"}]
+  DENY   E8-oracle-existing               42501 permission denied for function has_store_role
+  DENY   E8-oracle-random                 42501 permission denied for function has_store_role
+  ALLOW  SVC-hsr3-trusted                 [{"v": true}]
+  ALLOW  SVC-cuti                         [{"v": null}]
+  ALLOW  SECDEF-probe2                    [{"v": {"has_store_role_2arg": true, "current_user_tenant_id": "a0000000-0000-0000-0000-00000000000a"}}]
+  ALLOW  SECDEF-probe3                    [{"v": true}]
+  ALLOW  RLS-stores-tenant-mode           [{"n": 2}]
+  ALLOW  RLS-memberships-admin            [{"n": 2}]
+  ALLOW  RLS-memberships-B                [{"n": 3}]
+  ALLOW  RLS-products-tenant              [{"n": 1}]
+  ALLOW  RLS-pcs-insert-admin             "inserted"
+  DENY   RLS-pcs-insert-C-cross-tenant    42501 new row violates row-level security policy for table "product_cost_she
+  ALLOW  RLS-stores-C-isolation           [{"n": 1}]
+  ALLOW  RLS-products-C                   [{"n": 0}]
+  ALLOW  RLS-stores-anon                  [{"n": 0}]
+  ALLOW  RLS-stores-A-legacy-mode         [{"names": ["Store A1"]}]
+
+== EXECUTE matrix ==
+  current_user_tenant_id()                   anon           EXECUTE=False
+  current_user_tenant_id()                   authenticated  EXECUTE=True
+  current_user_tenant_id()                   postgres       EXECUTE=True
+  current_user_tenant_id()                   public         EXECUTE=False
+  current_user_tenant_id()                   service_role   EXECUTE=True
+  has_store_role(uuid,text[])                anon           EXECUTE=False
+  has_store_role(uuid,text[])                authenticated  EXECUTE=True
+  has_store_role(uuid,text[])                postgres       EXECUTE=True
+  has_store_role(uuid,text[])                public         EXECUTE=False
+  has_store_role(uuid,text[])                service_role   EXECUTE=True
+  has_store_role(uuid,uuid,text[])           anon           EXECUTE=False
+  has_store_role(uuid,uuid,text[])           authenticated  EXECUTE=True
+  has_store_role(uuid,uuid,text[])           postgres       EXECUTE=True
+  has_store_role(uuid,uuid,text[])           public         EXECUTE=False
+  has_store_role(uuid,uuid,text[])           service_role   EXECUTE=True
+  has_store_role_as(uuid,uuid,text[])        anon           EXECUTE=False
+  has_store_role_as(uuid,uuid,text[])        authenticated  EXECUTE=False
+  has_store_role_as(uuid,uuid,text[])        postgres       EXECUTE=True
+  has_store_role_as(uuid,uuid,text[])        public         EXECUTE=False
+  has_store_role_as(uuid,uuid,text[])        service_role   EXECUTE=True

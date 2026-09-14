@@ -1,0 +1,37 @@
+REM-INV-4C — 14 security contract (scripts/security-contract-test.cjs contra LIVE)
+
+== PRE (estado heredado de 4B, antes de cualquier cambio) ==
+════════════════════════════════════════════════════════════════════════════════
+🔒 TEST DE CONTRATO — Seguridad de funciones SECURITY DEFINER
+════════════════════════════════════════════════════════════════════════════════
+
+Funciones SECURITY DEFINER con escritura detectadas: 134
+
+Funciones verificadas: 134
+Funciones con violaciones: 0
+
+✅ PIN REM-INV-2R: receive_purchase(uuid) sigue ausente del catálogo
+
+════════════════════════════════════════════════════════════════════════════════
+🎉 TODAS LAS FUNCIONES PASAN EL TEST DE CONTRATO
+════════════════════════════════════════════════════════════════════════════════
+
+
+== POST (tras DCL de producción) ==
+════════════════════════════════════════════════════════════════════════════════
+🔒 TEST DE CONTRATO — Seguridad de funciones SECURITY DEFINER
+════════════════════════════════════════════════════════════════════════════════
+
+Funciones SECURITY DEFINER con escritura detectadas: 134
+
+Funciones verificadas: 134
+Funciones con violaciones: 0
+
+✅ PIN REM-INV-2R: receive_purchase(uuid) sigue ausente del catálogo
+
+════════════════════════════════════════════════════════════════════════════════
+🎉 TODAS LAS FUNCIONES PASAN EL TEST DE CONTRATO
+════════════════════════════════════════════════════════════════════════════════
+
+Resultado: 134/134 PRE y POST — sin cambios en el contrato; el contrato no escanea ACL de funciones
+(los REVOKE de este gate no tocan cuerpos/firmas, por lo que 134/134 en ambos extremos es el resultado esperado).

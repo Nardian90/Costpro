@@ -1,0 +1,37 @@
+REM-INV-4C — 07 dependency graph (function -> caller -> authorization decision)
+
+== pg_depend edges into targets ==
+  current_user_tenant_id()                   <- deptype=n ref=2200
+  has_store_role(uuid,text[])                <- deptype=n ref=13573
+  has_store_role(uuid,text[])                <- deptype=n ref=2200
+  has_store_role(uuid,uuid,text[])           <- deptype=n ref=2200
+  has_store_role_as(uuid,uuid,text[])        <- deptype=n ref=13573
+  has_store_role_as(uuid,uuid,text[])        <- deptype=n ref=2200
+
+Graph (all LIVE, verified):
+
+public.has_store_role(uuid, text[])           [SECDEF postgres; binds auth.uid(); ACL: auth+svc+postgres, NO PUBLIC]
+  <- 20 RLS policies TO authenticated (audit_logs, commission_reception_links x2, price_commit_log,
+     product_cost_sheets x2, receipt_tasa_audit, store_cost_templates x3, stores x2,
+     user_invitations x3, user_store_memberships x4, z_reports)         -> row-visibility/write gates
+  <- 6 SECDEF bodies (run as postgres): bulk_assign_memberships, get_or_create_product_cost_sheet,
+     reconcile_stock, save_product_cost_sheet, set_transfer_approval_rule, upsert_store_cost_template
+  => authenticated EXECUTE REQUIRED (policies). anon/PUBLIC not required. ACL already minimal -> KEEP
+
+public.has_store_role(uuid, uuid, text[])     [SECDEF postgres; auth.role()=<>'service_role' binds auth.uid() (param ignored); ACL: PUBLIC+auth+svc+postgres]
+  <- 0 policies
+  <- 2 SECDEF bodies (run as postgres): managed_revoke_membership, managed_update_membership (subject = v_caller_uid = caller's own uid)
+  <- 0 app/browser direct callers
+  => PUBLIC EXECUTE UNNECESSARY (anon: constant false, no oracle — PRE proven; no legit caller uses PUBLIC).
+     authenticated EXECUTE harmless (self-bound, proven) and explicitly granted by FIX H-7 -> REVOKE PUBLIC ONLY
+
+public.current_user_tenant_id()               [SECDEF postgres; SELECT tenant_id FROM profiles WHERE id=auth.uid(); ACL: PUBLIC+anon+auth+svc+postgres]
+  <- 29 RLS policies TO authenticated (tenant scoping across products/transactions/stores/profiles/inventory/etc.)
+  <- 4 SECDEF bodies (run as postgres): current_user_store_ids, is_admin_with_access, is_tenant_member (+self)
+  <- 0 app/browser direct callers
+  => PUBLIC+anon EXECUTE UNNECESSARY (anon gets NULL: auth.uid() NULL; no anon policies). authenticated REQUIRED -> REVOKE PUBLIC + REVOKE anon
+
+public.has_store_role_as(uuid, uuid, text[])  [SECDEF postgres; trusts p_user_id as subject; ACL: svc+postgres only]
+  <- 0 policies
+  <- 2 SECDEF bodies (run as postgres): create_sale_v2, reopen_cash_shift
+  => NOT executable by anon/authenticated (42501 proven) -> exposure none -> NO CHANGE (document only)

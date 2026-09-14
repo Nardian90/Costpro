@@ -1,0 +1,14 @@
+REM-INV-4C — 00 BASELINE
+captured: 2026-09-14T23:04:23Z
+
+== git state ==
+070bc9d92d0764767a0d29709241d407754ce6d0
+070bc9d92d0764767a0d29709241d407754ce6d0
+-- status --
+?? audit-evidence/REM-INV-4C/
+-- diff --stat --
+-- branch --
+main
+070bc9d9 security: harden cross-store authorization surface
+e2e2a19e fix(security): close supervisor authorization bypass and audit_logs ACL hardening (rem-inv-4a-r RC-1+RC-2)
+751a5c01 audit(rem-inv-4a): authorization spoofing & audit_logs ACL forensic certification

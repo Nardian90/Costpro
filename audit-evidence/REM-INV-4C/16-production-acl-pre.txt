@@ -1,0 +1,6 @@
+REM-INV-4C — 16 production ACL PRE
+
+current_user_tenant_id()               proacl=['=X/postgres', 'postgres=X/postgres', 'anon=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+has_store_role(uuid,text[])            proacl=['postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+has_store_role(uuid,uuid,text[])       proacl=['=X/postgres', 'postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+has_store_role_as(uuid,uuid,text[])    proacl=['postgres=X/postgres', 'service_role=X/postgres']

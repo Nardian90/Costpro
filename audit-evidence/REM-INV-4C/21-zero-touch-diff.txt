@@ -1,0 +1,8 @@
+REM-INV-4C — 21 zero-touch diff (PRE vs POST)
+
+tablas comparadas: 15/15 (todas las existentes de la lista canónica)
+diffs: NINGUNO
+
+Indicadores: row count + SUM agregado + MAX(created_at) por tabla — PRE == POST en 15/15.
+Las funciones objetivo son helpers de autorización (no tocan datos); el DCL aplicado (REVOKE EXECUTE)
+no tiene semántica de datos. RESULTADO: ZERO-TOUCH PASS (mutación de datos de negocio: 0).

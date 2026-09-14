@@ -1,0 +1,10 @@
+REM-INV-4C — 04 LIVE ACL snapshot (proacl text + normalized grantee sets; PRE-remediation)
+
+current_user_tenant_id()               proacl=["'=X/postgres'", "'anon=X/postgres'", "'authenticated=X/postgres'", "'postgres=X/postgres'", "'service_role=X/postgres'"]
+                                       PUBLIC EXECUTE=no
+has_store_role(uuid,text[])            proacl=["'authenticated=X/postgres'", "'postgres=X/postgres'", "'service_role=X/postgres'"]
+                                       PUBLIC EXECUTE=no
+has_store_role(uuid,uuid,text[])       proacl=["'=X/postgres'", "'authenticated=X/postgres'", "'postgres=X/postgres'", "'service_role=X/postgres'"]
+                                       PUBLIC EXECUTE=no
+has_store_role_as(uuid,uuid,text[])    proacl=["'postgres=X/postgres'", "'service_role=X/postgres'"]
+                                       PUBLIC EXECUTE=no

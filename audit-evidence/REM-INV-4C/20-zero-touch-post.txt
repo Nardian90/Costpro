@@ -1,0 +1,17 @@
+REM-INV-4C — 20 zero-touch POST (rows / sum / max(created_at))
+
+  stores                     n=    50  sum=                       -  max_created=2026-09-10 21:50:42.534433+00
+  products                   n=   367  sum=              14215.6289  max_created=2026-09-10 23:48:12.923736+00
+  inventory                  n=   277  sum=              13506.6289  max_created=2026-09-11 03:49:29.963844+00
+  stock_movements            n=  1021  sum=              13506.6289  max_created=2026-09-11 04:25:37.079359+00
+  transactions               n=   597  sum=28134399.997999999946573  max_created=2026-09-11 04:25:44.22297+00
+  payment_transactions       n=   458  sum=8249548.4999999999465733  max_created=2026-09-11 04:24:09.0631+00
+  devolutions                n=    25  sum=               355120.00  max_created=2026-09-10 23:58:39.315276+00
+  receipts                   n=    63  sum=                       -  max_created=2026-09-11 00:06:09.59+00
+  transfers                  n=     8  sum=                       -  max_created=2026-09-10 23:58:30.878079+00
+  purchase_orders            n=     8  sum=                       -  max_created=2026-09-11 04:10:15.171218+00
+  inventory_adjustments      n=     5  sum=                       -  max_created=2026-08-06 23:58:14.171286+00
+  business_events            n= 10897  sum=                       -  max_created=2026-09-11 04:25:37.079359+00
+  cash_sessions              n=     0  sum=                       -  max_created=-
+  profiles                   n=    76  sum=                       -  max_created=2026-09-14 22:08:48.783836+00
+  audit_logs                 n=  8146  sum=                       -  max_created=2026-09-14 22:08:48.783836+00

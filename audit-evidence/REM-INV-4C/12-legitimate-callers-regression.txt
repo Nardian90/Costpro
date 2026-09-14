@@ -1,0 +1,64 @@
+REM-INV-4C — 12 legitimate-callers regression (staging; Gate K + §15)
+
+Every legitimate caller discovered in Gate D/E is exercised in staging under the exact identity context
+PostgREST would create (SET ROLE + request.jwt.claim.* GUCs). Result: ACL hardened AND all legitimate callers preserved.
+
+== H1 ==
+  H1-hsr2-authed                   PRE=ALLOW[{"v":true}]        POST=ALLOW[{"v":true}]        PRESERVED — authenticated executes 2-arg helper directly (self)
+  H1-hsr3-authed                   PRE=ALLOW[{"v":true}]        POST=ALLOW[{"v":true}]        PRESERVED — authenticated executes 3-arg helper directly (self)
+
+== H2 ==
+  H2-hsr3-anon                     PRE=ALLOW[{"v":false}]       POST=DENY 42501               INTENDED-DELTA — anon executes 3-arg helper (PUBLIC EXECUTE PRE)
+  H2-hsr2-anon                     PRE=DENY 42501               POST=DENY 42501               PRESERVED — anon executes 2-arg helper
+  H2-cuti-anon                     PRE=ALLOW[{"v":null}]        POST=DENY 42501               INTENDED-DELTA — anon executes current_user_tenant_id
+  H2-hsra-anon                     PRE=DENY 42501               POST=DENY 42501               PRESERVED — anon executes has_store_role_as (already restricted control)
+
+== H3 ==
+  H3-self-A-storeA1                PRE=ALLOW[{"v":true}]        POST=ALLOW[{"v":true}]        PRESERVED — authenticated USER_A self-check admin of STORE_A1
+  H3-self-B-storeA2                PRE=ALLOW[{"v":true}]        POST=ALLOW[{"v":true}]        PRESERVED — authenticated USER_B self-check admin of STORE_A2
+
+== H4 ==
+  H4-A-as-B                        PRE=ALLOW[{"v":false}]       POST=ALLOW[{"v":false}]       PRESERVED — USER_A probes subject=USER_B on STORE_A2 (B IS admin there) -> must reveal nothing
+  H4-control-A-storeA1             PRE=ALLOW[{"v":true}]        POST=ALLOW[{"v":true}]        PRESERVED — control: USER_A probes subject=USER_B on STORE_A1 (A is admin) -> true proves subject=self
+  H4-null-store                    PRE=ALLOW[{"v":false}]       POST=ALLOW[{"v":false}]       PRESERVED — USER_A probes subject=USER_B with NULL store (E5-style)
+  H4-random-store                  PRE=ALLOW[{"v":false}]       POST=ALLOW[{"v":false}]       PRESERVED — USER_A probes subject=USER_B with random store UUID (E4-style)
+
+== H5 ==
+  H5-A-vs-C-B1                     PRE=ALLOW[{"v":false}]       POST=ALLOW[{"v":false}]       PRESERVED — USER_A (TENANT_A) probes USER_C/STORE_B1 (TENANT_B)
+  H5-C-vs-A-A1                     PRE=ALLOW[{"v":false}]       POST=ALLOW[{"v":false}]       PRESERVED — USER_C (TENANT_B) probes USER_A/STORE_A1 (TENANT_A)
+  H5-cuti-A                        PRE=ALLOW[{"v":"a0000000-0000-0000-0000-00000000000a"}] POST=ALLOW[{"v":"a0000000-0000-0000-0000-00000000000a"}] PRESERVED — cuti as USER_A -> own tenant only
+  H5-cuti-C                        PRE=ALLOW[{"v":"b0000000-0000-0000-0000-00000000000b"}] POST=ALLOW[{"v":"b0000000-0000-0000-0000-00000000000b"}] PRESERVED — cuti as USER_C -> own tenant only
+
+== H6 ==
+  H6-callerA-subjectGA-storeA2     PRE=ALLOW[{"v":false}]       POST=ALLOW[{"v":false}]       PRESERVED — USER_A probes subject=GLOBAL_ADMIN on STORE_A2 (A not member; GA privilege must NOT apply)
+  H6-callerA-subjectGA-storeA1     PRE=ALLOW[{"v":true}]        POST=ALLOW[{"v":true}]        PRESERVED — USER_A probes subject=GA on STORE_A1 (true must reflect A own membership, not GA)
+  H6-callerGA-subjectA             PRE=ALLOW[{"v":false}]       POST=ALLOW[{"v":false}]       PRESERVED — GLOBAL_ADMIN as caller probes subject=USER_A/STORE_A1 (subject must be ignored -> GA own membership=false)
+  H6-callerGA-cuti                 PRE=ALLOW[{"v":"a0000000-0000-0000-0000-00000000000a"}] POST=ALLOW[{"v":"a0000000-0000-0000-0000-00000000000a"}] PRESERVED — cuti as GLOBAL_ADMIN -> own tenant
+
+== E8 ==
+  E8-oracle-existing               PRE=ALLOW[{"v":false}]       POST=DENY 42501               INTENDED-DELTA — anon oracle attempt on REAL (user,store) pair
+  E8-oracle-random                 PRE=ALLOW[{"v":false}]       POST=DENY 42501               INTENDED-DELTA — anon oracle attempt on RANDOM pair (must be indistinguishable from real)
+
+== SVC ==
+  SVC-hsr3-trusted                 PRE=ALLOW[{"v":true}]        POST=ALLOW[{"v":true}]        PRESERVED — service_role 3-arg trusted subject branch (USER_B admin of STORE_A2 -> true)
+  SVC-cuti                         PRE=ALLOW[{"v":null}]        POST=ALLOW[{"v":null}]        PRESERVED — service_role cuti (auth.uid() NULL -> NULL)
+
+== SECDEF ==
+  SECDEF-probe2                    PRE=ALLOW[{"v":{"has_store_role_2arg":true,"current_user_tenant_id":"a0000000-0000-0000-0000-00000000000a"}}] POST=ALLOW[{"v":{"has_store_role_2arg":true,"current_user_tenant_id":"a0000000-0000-0000-0000-00000000000a"}}] PRESERVED — SECDEF(proxy) calls hsr2+cuti as owner postgres under authenticated session
+  SECDEF-probe3                    PRE=ALLOW[{"v":true}]        POST=ALLOW[{"v":true}]        PRESERVED — SECDEF(proxy) calls 3-arg as owner postgres (managed_* pattern)
+
+== RLS ==
+  RLS-stores-tenant-mode           PRE=ALLOW[{"n":2}]           POST=ALLOW[{"n":2}]           PRESERVED — USER_A tenant-mode SELECT stores (cuti policy) -> 2 rows (A1,A2)
+  RLS-memberships-admin            PRE=ALLOW[{"n":2}]           POST=ALLOW[{"n":2}]           PRESERVED — USER_A SELECT memberships (hsr2 policy: own + managed A1 rows) -> 2
+  RLS-memberships-B                PRE=ALLOW[{"n":3}]           POST=ALLOW[{"n":3}]           PRESERVED — USER_B SELECT memberships (own rows A1+A2) -> 2
+  RLS-products-tenant              PRE=ALLOW[{"n":1}]           POST=ALLOW[{"n":1}]           PRESERVED — USER_A tenant-mode SELECT products (cuti) -> 1
+  RLS-pcs-insert-admin             PRE=ALLOW"inserted"          POST=ALLOW"inserted"          PRESERVED — USER_A INSERT product_cost_sheets for STORE_A1 (hsr2 policy allows admin)
+  RLS-pcs-insert-C-cross-tenant    PRE=DENY 42501               POST=DENY 42501               PRESERVED — USER_C (TENANT_B) INSERT for STORE_A1 -> policy denies (has_store_role false)
+  RLS-stores-C-isolation           PRE=ALLOW[{"n":1}]           POST=ALLOW[{"n":1}]           PRESERVED — USER_C tenant-mode SELECT stores -> only STORE_B1
+  RLS-products-C                   PRE=ALLOW[{"n":0}]           POST=ALLOW[{"n":0}]           PRESERVED — USER_C tenant-mode SELECT products -> 0 (tenant isolation)
+  RLS-stores-anon                  PRE=ALLOW[{"n":0}]           POST=ALLOW[{"n":0}]           PRESERVED — anon SELECT stores -> 0 rows (default deny)
+  RLS-stores-A-legacy-mode         PRE=ALLOW[{"names":["Store A1"]}] POST=ALLOW[{"names":["Store A1"]}] PRESERVED — USER_A legacy-mode (use_tenant_rls unset) SELECT stores -> current_user_store_ids() = {A1}
+
+Legitimate-caller contract: RLS policies evaluate unchanged (RLS-*), SECDEF internal callers unchanged (SECDEF-*),
+service_role trusted path unchanged (SVC-*), authenticated self-check unchanged (H1/H3).
+VERDICT: ACL hardened + all legitimate callers preserved = PASS

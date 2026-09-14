@@ -1,0 +1,41 @@
+REM-INV-4C — 05 static caller census (repo; grep + reading)
+
+has_store_role(  [src/]
+  - src/__tests__/integration/fc-rls-database.test.ts:24-31,106,126,145,165   -> comments documenting RLS policies (documentation)
+  - src/__tests__/integration/store-rls-database.test.ts:216,248,256,298,333,345,367 -> comments (documentation)
+  - src/lib/integration/recalculate-on-price-change.ts:159                    -> comment explaining RPC indirection (documentation)
+  - src/app/api/product-cost-sheets/route.ts:211                              -> comment (documentation)
+  - src/app/api/product-cost-sheets/auto-generate/route.ts:179                -> comment (documentation)
+  - src/app/api/store-cost-templates/route.ts:96                              -> comment (documentation)
+  - 0 direct calls; 0 supabase.rpc('has_store_role') occurrences
+
+has_store_role_as(  [src/]
+  - 0 occurrences (0 direct calls, 0 comments)
+
+current_user_tenant_id(  [src/]
+  - src/__tests__/integration/iteration-rls.test.ts:94,100,211                -> test asserts migration SQL contains policies using public.current_user_tenant_id() (documentation/contract test, no runtime call)
+  - 0 direct calls; 0 supabase.rpc('current_user_tenant_id') occurrences
+
+has_store_role(  [supabase/migrations]
+  - 20260614000001_add_stores_rls_policies.sql:87        -> DEFINITION 2-arg (uuid,text[]); used by stores/user_store_memberships policies (lines 175,179,194,224,245,259,263,278)
+  - 20260627000001_versionar_has_store_access.sql:62     -> RE-DEFINITION 2-arg
+  - 20260820000001_security_fix_spoofable_caller_uid.sql:33 -> DEFINITION 3-arg overload (uuid,uuid,text[]) FIX H-7; lines 60-62: REVOKE FROM anon (no-op vs PUBLIC), GRANT authenticated+service_role; lines 391,459: internal use in managed_* (SECDEF)
+  - Policies referencing 2-arg: 20260619000006_rls_policies_versioned.sql:122,133,283,286,297 (product_cost_sheets, store_cost_templates)
+
+has_store_role_as(  [supabase/migrations]
+  - 20260807000002_v2_16_2_has_store_role_as.sql:14      -> DEFINITION; lines 45-47 REVOKE anon + GRANT authenticated,service_role (later hardened further; LIVE now postgres+service_role only)
+  - 20260807000003_v2_16_3_create_sale_v2.sql:193        -> internal SECDEF call (supervisor check)
+  - 20260809000002_v2_18_2_close_cash_shift.sql:181      -> internal SECDEF call
+
+current_user_tenant_id(  [supabase/migrations]
+  - 20260807000006_v2_21_0_rls_insert_with_check.sql:22,95   -> policies (WITH CHECK)
+  - 20260807000005_v2_21_0_rls_tenant_policies.sql (30+ refs) -> tenant policies TO authenticated
+
+scripts/ (repo-level)
+  - scripts/test_contract_rpcs_store_access.mjs:18,48    -> allowlist reference only (documentation; no runtime call)
+
+Classification summary:
+  LIVE runtime callers: RLS policies (DB-side) + SECDEF function bodies (DB-side)
+  frontend/browser: 0    API route direct: 0    direct .rpc(): 0
+  browser-controlled arguments: n/a (no direct caller)
+  test-only/documentation: listed above

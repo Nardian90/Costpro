@@ -1,0 +1,54 @@
+REM-INV-4C — 24 final verification (production, post-DCL)
+
+== security-contract against LIVE POST-DCL ==
+command: set -a && . ./.env && set +a && node scripts/security-contract-test.cjs
+result PRE : Funciones verificadas: 134 | Funciones con violaciones: 0 (14-security-contract.txt)
+result POST: Funciones verificadas: 134 | Funciones con violaciones: 0 (14-security-contract.txt)
+
+== production re-verification (staging = behavioral proof; production = catalog/ACL/smoke) ==
+staging-post attack deltas vs staging-pre: 4 (todas neutralizaciones intencionales)
+  - H2-hsr3-anon: ALLOW[{"v": false}] -> DENY42501
+  - H2-cuti-anon: ALLOW[{"v": null}] -> DENY42501
+  - E8-oracle-existing: ALLOW[{"v": false}] -> DENY42501
+  - E8-oracle-random: ALLOW[{"v": false}] -> DENY42501
+LIVE EXECUTE matrix POST (has_function_privilege) == staging POST matrix:
+  has_store_role(uuid,text[])          public=false anon=false authenticated=true service_role=true postgres=true
+  has_store_role(uuid,uuid,text[])     public=false anon=false authenticated=true service_role=true postgres=true
+  current_user_tenant_id()             public=false anon=false authenticated=true service_role=true postgres=true
+  has_store_role_as(uuid,uuid,text[])  public=false anon=false authenticated=false service_role=true postgres=true
+
+== HTTP/PM2 ==
+GET app / -> HTTP 200
+service_role  current_user_tenant_id        -> HTTP 200 (null)   — ruta legítima server-side preservada
+service_role  has_store_role (3-arg)        -> HTTP 200 (false)  — trusted subject branch preservada
+anon          current_user_tenant_id        -> HTTP 401 code=42501 permission denied — exposición cerrada en el borde
+anon          has_store_role (3-arg)        -> HTTP 401 code=42501 permission denied — exposición cerrada en el borde
+anon          has_store_role (2-arg)        -> HTTP 401 code=42501 (control, DENY preexistente)
+anon          has_store_role_as             -> HTTP 401 code=42501 (control, DENY preexistente)
+PM2: costpro online, 0 restarts durante todo el gate (pid estable)
+
+== zero-touch ==
+15/15 tablas PRE == POST (rows + SUM + MAX(created_at)) — ver 19/20/21
+mutaciones de datos en producción: 0
+
+== change boundary ==
+production objects changed: 2 proacl (has_store_role uuid,uuid,text[] — PUBLIC revoked; current_user_tenant_id() — PUBLIC+anon revoked)
+production md5/header/other-function/table/relacl/RLS/policy changes: 0
+production row mutations: 0
+UNEXPECTED CHANGES = 0
+
+== regression (delta vs baseline 4B) ==
+tsc --noEmit: 0 errores (delta 0) | vitest: 2070 passed / 24 skipped (delta 0) | lint: 0 errores / 1291 warnings pre-existentes (delta 0)
+security-contract: 134/134 PRE y POST
+
+== evidence integrity ==
+MANIFEST.sha256: sha256sum -c -> ALL OK (ver salida del gate; los hashes cubren este pack)
+staging efímero PG 17.6: DESTRUIDO (pgdata eliminada, socket 5435 cerrado)
+scripts de staging: /home/z/my-project/scripts/rem4c (fuera del repo)
+
+== git closure ==
+baseline: HEAD == origin/main == 070bc9d9 (00-baseline.txt)
+secuencia: AUDIT → FIX → TEST → EVIDENCE → COMMIT → PUSH → FETCH → VERIFY REMOTE → WORKTREE CLEAN
+commit: "security: harden function execute ACLs" (este pack)
+closure: gate-closure-check.sh ejecutado tras el push (resultado registrado en la salida del gate y worklog)
+HEAD al escribir este archivo: 070bc9d92d0764767a0d29709241d407754ce6d0

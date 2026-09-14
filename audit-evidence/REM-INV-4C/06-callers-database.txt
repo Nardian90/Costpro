@@ -1,0 +1,84 @@
+REM-INV-4C — 06 database-side caller census (LIVE, read-only)
+
+== RLS policies referencing targets (pg_policy; 49 total, ALL TO authenticated) ==
+  audit_events                 audit_events_tenant_select                 cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  audit_logs                   audit_logs_select_own_and_managed          cmd=SELECT TO(authenticated) fns=has_store_role(
+  bulk_ops_log                 bulk_ops_log_tenant_select                 cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  commission_payments          commission_payments_tenant_select          cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  commission_reception_links   commission_reception_links_delete_admin    cmd=DELETE TO(authenticated) fns=has_store_role(
+  commission_reception_links   commission_reception_links_insert_admin    cmd=INSERT TO(authenticated) fns=has_store_role(
+  commission_rules             commission_rules_tenant_select             cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  inventory                    inventory_tenant_select                    cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  price_change_history         price_change_history_tenant_insert_with_check cmd=INSERT TO(authenticated) fns=current_user_tenant_id(
+  price_change_history         price_change_history_tenant_select         cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  price_commit_log             price_commit_log_insert_admin              cmd=INSERT TO(authenticated) fns=has_store_role(
+  product_cost_sheets          product_cost_sheets_insert_roles           cmd=INSERT TO(authenticated) fns=has_store_role(
+  product_cost_sheets          product_cost_sheets_update_roles           cmd=UPDATE TO(authenticated) fns=has_store_role(
+  production_orders            production_orders_tenant_select            cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  products                     products_tenant_delete                     cmd=DELETE TO(authenticated) fns=current_user_tenant_id(
+  products                     products_tenant_insert                     cmd=INSERT TO(authenticated) fns=current_user_tenant_id(
+  products                     products_tenant_select                     cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  products                     products_tenant_update                     cmd=UPDATE TO(authenticated) fns=current_user_tenant_id(
+  profiles                     profiles_tenant_select                     cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  profiles                     profiles_tenant_update                     cmd=UPDATE TO(authenticated) fns=current_user_tenant_id(
+  receipt_tasa_audit           receipt_tasa_audit_insert_admin            cmd=INSERT TO(authenticated) fns=has_store_role(
+  receipts                     receipts_tenant_select                     cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  receipts                     receipts_tenant_update                     cmd=UPDATE TO(authenticated) fns=current_user_tenant_id(
+  sales_transactions           sales_transactions_tenant_select           cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  stock_movements              stock_movements_tenant_delete              cmd=DELETE TO(authenticated) fns=current_user_tenant_id(
+  stock_movements              stock_movements_tenant_select              cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  store_cost_templates         store_cost_templates_delete_admin          cmd=DELETE TO(authenticated) fns=has_store_role(
+  store_cost_templates         store_cost_templates_insert_roles          cmd=INSERT TO(authenticated) fns=has_store_role(
+  store_cost_templates         store_cost_templates_update_roles          cmd=UPDATE TO(authenticated) fns=has_store_role(
+  stores                       stores_delete_admin_only                   cmd=DELETE TO(authenticated) fns=has_store_role(
+  stores                       stores_tenant_delete                       cmd=DELETE TO(authenticated) fns=current_user_tenant_id(
+  stores                       stores_tenant_select                       cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  stores                       stores_tenant_update                       cmd=UPDATE TO(authenticated) fns=current_user_tenant_id(
+  stores                       stores_update_member_roles                 cmd=UPDATE TO(authenticated) fns=has_store_role(
+  transactions                 transactions_tenant_delete                 cmd=DELETE TO(authenticated) fns=current_user_tenant_id(
+  transactions                 transactions_tenant_insert_with_check      cmd=INSERT TO(authenticated) fns=current_user_tenant_id(
+  transactions                 transactions_tenant_select                 cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  transactions                 transactions_tenant_update                 cmd=UPDATE TO(authenticated) fns=current_user_tenant_id(
+  transfer_approval_rules      transfer_approval_rules_tenant_select      cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  transfers                    transfers_tenant_select                    cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  user_invitations             user_invitations_insert_admin_manager      cmd=INSERT TO(authenticated) fns=has_store_role(
+  user_invitations             user_invitations_select_own_managed        cmd=SELECT TO(authenticated) fns=has_store_role(
+  user_invitations             user_invitations_update_admin_manager      cmd=UPDATE TO(authenticated) fns=has_store_role(
+  user_store_memberships       memberships_delete_admin                   cmd=DELETE TO(authenticated) fns=has_store_role(
+  user_store_memberships       memberships_insert_admin_manager           cmd=INSERT TO(authenticated) fns=has_store_role(
+  user_store_memberships       memberships_select_own_and_managed         cmd=SELECT TO(authenticated) fns=has_store_role(
+  user_store_memberships       memberships_update_admin                   cmd=UPDATE TO(authenticated) fns=has_store_role(
+  workers                      workers_tenant_select                      cmd=SELECT TO(authenticated) fns=current_user_tenant_id(
+  z_reports                    z_reports_select_own                       cmd=SELECT TO(authenticated) fns=has_store_role(
+
+arity split (balanced-paren parse): has_store_role 2-arg = 20 policies; 3-arg = 0 policies; has_store_role_as = 0 policies
+roles in those policies: authenticated ONLY (0 policies TO anon/service_role)
+
+== functions whose body references the targets (LIVE) ==
+  create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid) secdef=True hsra=True(1) cuti=False(0)
+  current_user_store_ids()                     secdef=True hsra=False(0) cuti=True(1)
+  current_user_tenant_id()                     secdef=True hsra=False(0) cuti=True(1)
+  has_store_role_as(uuid,uuid,text[])          secdef=True hsra=True(1) cuti=False(0)
+  is_admin_with_access(uuid)                   secdef=True hsra=False(0) cuti=True(1)
+  is_tenant_member(uuid)                       secdef=True hsra=False(0) cuti=True(1)
+  reopen_cash_shift(uuid,text,uuid)            secdef=True hsra=True(1) cuti=False(0)
+
+== has_store_role( call sites inside LIVE SECDEF functions ==
+--- bulk_assign_memberships(uuid,jsonb)
+    IF NOT public.is_admin() AND NOT public.has_store_role(v_store_id, ARRAY['admin', 'manager'])
+--- get_or_create_product_cost_sheet(uuid,uuid,text,text,text)
+    IF NOT (public.is_global_admin() OR public.has_store_role(p_store_id, ARRAY['admin', 'manager', 'encargado', 'costo']))
+--- managed_revoke_membership(uuid,uuid)
+    -- FIX H-7: Autorización usa nueva sobrecarga has_store_role(p_user_id, p_store_id, p_roles)
+    IF NOT public.has_store_role(v_caller_uid, v_old.store_id, ARRAY['admin'])
+--- managed_update_membership(uuid,user_role,text,uuid)
+    -- FIX H-7: Autorización usa nueva sobrecarga has_store_role(p_user_id, p_store_id, p_roles)
+    IF NOT public.has_store_role(v_caller_uid, v_old.store_id, ARRAY['admin', 'manager'])
+--- reconcile_stock(uuid,boolean,uuid)
+    IF NOT public.has_store_role(p_store_id, ARRAY['admin'::text, 'manager'::text])
+--- save_product_cost_sheet(uuid,uuid,text,text,jsonb,numeric)
+    IF NOT (public.is_global_admin() OR public.has_store_role(p_store_id, ARRAY['admin', 'manager', 'encargado', 'costo']))
+--- set_transfer_approval_rule(uuid,uuid,numeric,numeric,text[],boolean,uuid)
+    IF v_user_role IS NULL OR (v_user_role <> 'admin' AND v_user_role <> 'superadmin' AND NOT public.has_store_role(p_store_id, ARRAY['admin'::text, 'manager'::text]))
+--- upsert_store_cost_template(uuid,text,jsonb,text,text,uuid)
+    IF NOT (public.is_global_admin() OR public.has_store_role(p_store_id, ARRAY['admin', 'manager', 'encargado']))

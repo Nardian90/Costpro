@@ -1,0 +1,78 @@
+REM-INV-4C — 01 LIVE function census (Management API read-only; captured PRE-remediation)
+targets: has_store_role / has_store_role_as / current_user_tenant_id (+ all overloads, all non-system schemas)
+
+schema=public  name=current_user_tenant_id
+  signature      : current_user_tenant_id()
+  identity args  : 
+  OID            : 138372
+  owner          : postgres
+  SECURITY DEFIN : True
+  proconfig      : ['search_path=public']
+  volatility     : s   kind=f
+  md5(prosrc)    : e7c7f1fdb7e5134a4f1c7a0752c1088e
+  sha256(funcdef): 1c6c282342982a087cf612f74bef73dc5b90c551511ce792a269fc0593bdb8fd
+  proacl         : ['=X/postgres', 'postgres=X/postgres', 'anon=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+
+schema=public  name=has_store_role
+  signature      : has_store_role(uuid,text[])
+  identity args  : p_store_id uuid, p_roles text[]
+  OID            : 131888
+  owner          : postgres
+  SECURITY DEFIN : True
+  proconfig      : ['search_path=public, pg_temp']
+  volatility     : s   kind=f
+  md5(prosrc)    : bf4b1761a6ccd80919108301fe94a0e9
+  sha256(funcdef): d3b8dfcf936845456ea2896f8820f980eb7d9ae8bb019805207d56e725636e71
+  proacl         : ['postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+
+schema=public  name=has_store_role
+  signature      : has_store_role(uuid,uuid,text[])
+  identity args  : p_user_id uuid, p_store_id uuid, p_roles text[]
+  OID            : 142475
+  owner          : postgres
+  SECURITY DEFIN : True
+  proconfig      : ['search_path=public, pg_temp']
+  volatility     : v   kind=f
+  md5(prosrc)    : 53dd721499bf3253b567e3b1372400ee
+  sha256(funcdef): 1fc71176fdfc7aa3b6bfb65920221e0f5d451c6840ae85cb9d1302d8eafff0c1
+  proacl         : ['=X/postgres', 'postgres=X/postgres', 'authenticated=X/postgres', 'service_role=X/postgres']
+
+schema=public  name=has_store_role_as
+  signature      : has_store_role_as(uuid,uuid,text[])
+  identity args  : p_user_id uuid, p_store_id uuid, p_roles text[]
+  OID            : 138149
+  owner          : postgres
+  SECURITY DEFIN : True
+  proconfig      : ['search_path=public, pg_temp']
+  volatility     : s   kind=f
+  md5(prosrc)    : abb566b7f3ce24ee2f0e6dbdb811f2e5
+  sha256(funcdef): 0b2c372425fcd5511dc713effc550f9843605492cf8f65b50d3e1cb378eeccc5
+  proacl         : ['postgres=X/postgres', 'service_role=X/postgres']
+
+== has_function_privilege(…, 'EXECUTE') LIVE ==
+  current_user_tenant_id()                   anon           EXECUTE=True
+  current_user_tenant_id()                   authenticated  EXECUTE=True
+  current_user_tenant_id()                   postgres       EXECUTE=True
+  current_user_tenant_id()                   public         EXECUTE=True
+  current_user_tenant_id()                   service_role   EXECUTE=True
+  has_store_role_as(uuid,uuid,text[])        anon           EXECUTE=False
+  has_store_role_as(uuid,uuid,text[])        authenticated  EXECUTE=False
+  has_store_role_as(uuid,uuid,text[])        postgres       EXECUTE=True
+  has_store_role_as(uuid,uuid,text[])        public         EXECUTE=False
+  has_store_role_as(uuid,uuid,text[])        service_role   EXECUTE=True
+  has_store_role(uuid,text[])                anon           EXECUTE=False
+  has_store_role(uuid,text[])                authenticated  EXECUTE=True
+  has_store_role(uuid,text[])                postgres       EXECUTE=True
+  has_store_role(uuid,text[])                public         EXECUTE=False
+  has_store_role(uuid,text[])                service_role   EXECUTE=True
+  has_store_role(uuid,uuid,text[])           anon           EXECUTE=True
+  has_store_role(uuid,uuid,text[])           authenticated  EXECUTE=True
+  has_store_role(uuid,uuid,text[])           postgres       EXECUTE=True
+  has_store_role(uuid,uuid,text[])           public         EXECUTE=True
+  has_store_role(uuid,uuid,text[])           service_role   EXECUTE=True
+
+== aclexplode(proacl) — grantee:privilege ==
+  current_user_tenant_id()                   None, anon, authenticated, postgres, service_role
+  has_store_role_as(uuid,uuid,text[])        postgres, service_role
+  has_store_role(uuid,text[])                authenticated, postgres, service_role
+  has_store_role(uuid,uuid,text[])           None, authenticated, postgres, service_role
