@@ -1,0 +1,26 @@
+REM-INV-4B — 05 callers census (repo + LIVE)
+
+== get_transferable_stores ==
+SQL (LIVE prosrc scan): 0 callers — LEAF function, no function-to-function dependency.
+SQL (repo migrations): definition migrations only (20260211_create_transfers.sql historical def; 20260726000017_v2_6_h5 current def).
+App runtime callers:
+  1. src/services/transfer-service.ts:99-107  transferService.getTransferableStores(userId, currentStoreId)
+     -> supabase.rpc('get_transferable_stores', { p_user_id, p_current_store_id }) — BROWSER client (@/lib/supabaseClient)
+     param source: useTransfers.ts:59-67 useTransferableStores(userId, currentStoreId) <- CreateTransferModal.tsx:64
+     useTransferableStores(user?.id || '', user?.activeStoreId) — user = SESSION USER (useAuthStore)
+     response reaches browser: YES (store list for transfer destination selector)
+  2. No API routes / server actions / offline-sync callers found (grep src/ + scripts/: only the above).
+  3. p_user_id client-controlled: YES (browser-supplied; PostgREST reachable directly).
+
+== has_store_access_as ==
+LIVE SQL callers: 55 functions (authorization library). EXECUTE: postgres+service_role only (anon/authenticated revoked in w9_f06).
+Browser direct calls: NOT POSSIBLE (no EXECUTE for authenticated) — verified in 04.
+Repo migrations referencing: 96 files (library usage across sale/devolution/transfer/production/cash RPCs).
+
+== has_store_role_as ==
+LIVE SQL callers: 2 (create_sale_v2 [RC-1 gate 4A-R], close_cash_shift chain). EXECUTE: postgres+service_role only.
+
+== classification ==
+production runtime callers: transfer-service (browser) only for get_transferable_stores.
+test-only callers: none found in src/__tests__ for get_transferable_stores (grep).
+dead code / historical migrations: 20260211_create_transfers.sql (superseded def).

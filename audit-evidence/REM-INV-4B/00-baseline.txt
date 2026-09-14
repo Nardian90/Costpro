@@ -1,0 +1,19 @@
+REM-INV-4B — GATE A BASELINE
+Fecha: 2026-09-14T22:11:08Z
+
+git fetch origin: OK
+git status --short: (empty = CLEAN)
+HEAD:        e2e2a19e31ac6ac36f26edf9eea05c4fe8012fb4
+origin/main: e2e2a19e31ac6ac36f26edf9eea05c4fe8012fb4
+short:       e2e2a19e
+
+git log -5 --oneline:
+e2e2a19e fix(security): close supervisor authorization bypass and audit_logs ACL hardening (rem-inv-4a-r RC-1+RC-2)
+751a5c01 audit(rem-inv-4a): authorization spoofing & audit_logs ACL forensic certification
+5f927364 audit(rem-inv-4): session addendum — fresh LIVE re-verification (0 material drift vs pack), Q1-Q16 matrix, task-order artifact gaps filled (indexes/sequences/types/rls/extensions), session zero-touch PRE==POST, F-14 (MAINTAIN capture gap, D3), manifest refresh
+3add529c audit(rem-inv-4): PostgreSQL schema drift & function integrity gate
+793d1309 chore(audit): rem-inv-3c — include staging run log as txt (gitignore-safe) + manifest refresh
+
+REGLA: HEAD == origin/main == e2e2a19e == PASS
+REGLA: WORKTREE CLEAN == PASS
+DIFF EMPTY: 0 lines

@@ -1,0 +1,28 @@
+REM-INV-4B — 19 final ACL (LIVE POST-apply) vs PRE — normalized proacl comparison
+
+IDENTICAL current_user_store_ids()                   {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+IDENTICAL current_user_tenant_id()                   {=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+IDENTICAL get_transferable_stores(uuid,uuid)         {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+IDENTICAL has_store_access(uuid)                     {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+IDENTICAL has_store_access_as(uuid,uuid)             {postgres=X/postgres,service_role=X/postgres}
+IDENTICAL has_store_role(uuid,text[])                {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+IDENTICAL has_store_role(uuid,uuid,text[])           {=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+IDENTICAL has_store_role_as(uuid,uuid,text[])        {postgres=X/postgres,service_role=X/postgres}
+IDENTICAL is_global_admin()                          {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+
+proacl drift: 0 of 9 — ACL UNCHANGED by RC-3 (PASS)
+
+== EXECUTE has_function_privilege matrix POST ==
+(identical to PRE matrix in 04: authenticated keeps get_transferable_stores; helpers remain restricted)
+  get_transferable_stores  anon           EXECUTE=False
+  get_transferable_stores  authenticated  EXECUTE=True
+  get_transferable_stores  postgres       EXECUTE=True
+  get_transferable_stores  service_role   EXECUTE=True
+  has_store_access_as      anon           EXECUTE=False
+  has_store_access_as      authenticated  EXECUTE=False
+  has_store_access_as      postgres       EXECUTE=True
+  has_store_access_as      service_role   EXECUTE=True
+  has_store_role_as        anon           EXECUTE=False
+  has_store_role_as        authenticated  EXECUTE=False
+  has_store_role_as        postgres       EXECUTE=True
+  has_store_role_as        service_role   EXECUTE=True

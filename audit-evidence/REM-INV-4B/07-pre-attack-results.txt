@@ -1,0 +1,94 @@
+REM-INV-4B — 07 PRE-FIX controlled attack (staging PG 17.6, fixture fidelity == LIVE md5/ACL)
+generated: 2026-09-14T22:28:35.643Z
+
+Attack context: SET ROLE authenticated + request.jwt.claim.sub/role set per case (PostgREST/RPC-equivalent).
+
+PER EXPLOITABILITY CRITERION (§11):
+E1a            caller=USER_A p_user_id=USER_A p_cs=STORE_A1 (legit own, tenant branch)
+               expected: LEGIT: only own-accessible tenant-A stores minus A1 (expected empty)
+               result:  ALLOW (0 rows) []
+E1b            caller=USER_B p_user_id=USER_B p_cs=STORE_A2 (legit own, non-empty)
+               expected: LEGIT: returns [STORE_A1]; archived A3 excluded
+               result:  ALLOW (1 rows) ["STORE_A1"]
+E2             caller=USER_A p_user_id=USER_B p_cs=STORE_A1
+               expected: DENY (no disclosure of USER_B stores)
+               result:  ALLOW (1 rows) ["STORE_A2"]
+E2b            caller=USER_A p_user_id=USER_B p_cs=STORE_A2
+               expected: DENY
+               result:  ALLOW (1 rows) ["STORE_A1"]
+E3             caller=USER_A p_user_id=USER_C p_cs=STORE_B1
+               expected: DENY (no cross-tenant disclosure)
+               result:  ALLOW (1 rows) ["STORE_B2"]
+E4             caller=USER_A p_user_id=RANDOM-NONEXISTENT p_cs=STORE_A1
+               expected: FAIL-CLOSED (no silent empty as success path)
+               result:  ALLOW (0 rows) []
+E5             caller=USER_A p_user_id=NULL p_cs=STORE_A1
+               expected: DENY / FAIL CLOSED
+               result:  ALLOW (0 rows) []
+E6             caller=USER_A p_user_id=USER_ADMIN(global) p_cs=STORE_B1 (cross-tenant)
+               expected: DENY unless caller is admin itself
+               result:  ALLOW (1 rows) ["STORE_B2"]
+E6b            caller=USER_A p_user_id=USER_ADMIN p_cs=STORE_A1
+               expected: DENY unless caller is admin itself
+               result:  ALLOW (1 rows) ["STORE_A2"]
+E6c            caller=USER_ADMIN p_user_id=USER_ADMIN p_cs=STORE_A1 (admin as CALLER, own identity)
+               expected: LEGIT PASS: admin queries own transferable stores
+               result:  ALLOW (1 rows) ["STORE_A2"]
+E7             DIRECT RPC: caller=USER_A p_user_id=USER_B p_cs=STORE_A1 (PostgREST-equivalent session)
+               expected: DENY at database contract level
+               result:  ALLOW (1 rows) ["STORE_A2"]
+E7b            DIRECT RPC no-JWT-sub context: caller=<no sub> p_user_id=USER_A p_cs=STORE_A1
+               expected: FAIL-CLOSED (auth.uid() NULL cannot match)
+               result:  ALLOW (0 rows) []
+LEG-1          caller=USER_A p_user_id=USER_C p_cs=NONEXISTENT-UUID (legacy branch)
+               expected: DENY — legacy branch must not leak cross-tenant subject stores
+               result:  ALLOW (2 rows) ["STORE_B1", "STORE_B2"]
+LEG-2          caller=USER_A p_user_id=USER_ADMIN p_cs=NONEXISTENT-UUID (legacy branch)
+               expected: DENY — legacy branch must not enumerate ALL stores via admin subject
+               result:  ALLOW (5 rows) ["STORE_A1", "STORE_A2", "STORE_B1", "STORE_B2", "STORE_L0"]
+E8-oracle      membership-existence oracle via row-count (USER_B probe vs RANDOM probe): 1 vs 0
+               expected: NO DISCLOSURE: probes must be indistinguishable (both DENY)
+               result:  True oracle=1 vs 0 note=no oracle
+E8b            direct has_store_access_as(USER_B, STORE_A2) as authenticated
+               expected: DENIED BY ACL (no direct EXECUTE)
+               result:  False oracle=- note=-
+E8c            direct has_store_role_as(USER_B, STORE_A2, roles) as authenticated
+               expected: DENIED BY ACL
+               result:  False oracle=- note=-
+C8-rls-invoker invoker SELECT id,name FROM stores (RLS applies) as USER_A
+               expected: RLS-limited rows only (STORE_A1)
+               result:  ALLOW (1 rows) ["STORE_A1"]
+C8-definer-bypass same USER_A via get_transferable_stores(p_user_id=USER_B) — DEFINER bypasses RLS
+               expected: shows whether DEFINER path escapes RLS
+               result:  ALLOW (2 rows) ["STORE_A1", "STORE_A2"]
+L-rl-2arg      has_store_role(STORE_A1, [manager]) as USER_B
+               expected: true (2-arg helper intact)
+               result:  ALLOW (1 rows) [null]
+L-rl-3arg      has_store_role(USER_B, STORE_A1, [manager]) as USER_B
+               expected: true (3-arg helper intact)
+               result:  ALLOW (1 rows) [null]
+L-cusi         current_user_store_ids() as USER_B
+               expected: 3 stores (A1,A2,A3)
+               result:  ALLOW (1 rows) [null]
+L-cuti         current_user_tenant_id() as USER_A
+               expected: TENANT_A uuid
+               result:  ALLOW (1 rows) [null]
+L-iga          is_global_admin() as USER_A vs USER_ADMIN
+               expected: false / true
+               result:  ALLOW (2 rows) [null, null]
+ATOMICITY      row counts stores/profiles/memberships before={"stores":"6","profiles":"4","memberships":"7"} after={"stores":"6","profiles":"4","memberships":"7"}
+               expected: ZERO side effects from the whole attack suite
+               result:  True oracle=- note=unchanged
+STAGING-PRIVS  has_function_privilege EXECUTE matrix (staging)
+               expected: identical to LIVE
+               result:  ALLOW (9 rows) [null, null, null, null, null, null, null, null, null]
+
+VERDICT PRE-FIX: EXPLOITABLE — P1
+  E2/E2b: cross-user disclosure (same tenant).
+  E3: cross-tenant disclosure (requires foreign store UUID).
+  LEG-1: cross-tenant disclosure WITHOUT prior UUID knowledge (legacy branch).
+  LEG-2: TOTAL enumeration via admin subject UUID (all stores).
+  E4/E5/E7b: silent empty (fail-open; enables probing).
+  E8-oracle: membership-existence oracle (1 row vs 0 rows).
+  E8b/E8c: direct helper EXECUTE correctly DENIED by ACL (contained).
+  C8: RLS as invoker restricts rows; DEFINER path escapes RLS (RLS does NOT protect).

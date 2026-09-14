@@ -1,0 +1,18 @@
+REM-INV-4B — 14 production preconditions (captured immediately before apply)
+
+== git ==
+HEAD:        e2e2a19e31ac6ac36f26edf9eea05c4fe8012fb4
+origin/main: e2e2a19e31ac6ac36f26edf9eea05c4fe8012fb4
+status --short (only intended gate artifacts: migration + evidence pack):
+?? audit-evidence/REM-INV-4B/
+?? supabase/migrations/20260915000002_rem_inv_4b_rc3_transferable_stores_identity_binding.sql
+tracked diff lines: 0 (0 = no modification of tracked files)
+
+== LIVE drift ==
+fresh 8-function census vs snapshot 01/03: IDENTICAL (verified in prod-apply pre-check c, see apply log)
+expected PRE md5 get_transferable_stores: bfd8a24b449402e1ec6d06199942a333
+expected POST md5 (RC-3): d0c242926f12916a9c511e5d5b8ee06e
+
+== expected change set ==
+objects to change: 1 (get_transferable_stores uuid,uuid) via CREATE OR REPLACE; ACL: unchanged; RLS: unchanged; policies: unchanged; triggers: unchanged; data: 0 rows touched
+stores ENERVIDA/VITALLCONS + PUERTO PADRE: READ ONLY — not touched (DDL is function-level, zero row access)

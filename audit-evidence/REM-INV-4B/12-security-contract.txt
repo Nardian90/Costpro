@@ -1,0 +1,17 @@
+REM-INV-4B — 12 security-contract full output (PRE-apply run)
+command: set -a && . ./.env && set +a && node scripts/security-contract-test.cjs
+
+════════════════════════════════════════════════════════════════════════════════
+🔒 TEST DE CONTRATO — Seguridad de funciones SECURITY DEFINER
+════════════════════════════════════════════════════════════════════════════════
+
+Funciones SECURITY DEFINER con escritura detectadas: 134
+
+Funciones verificadas: 134
+Funciones con violaciones: 0
+
+✅ PIN REM-INV-2R: receive_purchase(uuid) sigue ausente del catálogo
+
+════════════════════════════════════════════════════════════════════════════════
+🎉 TODAS LAS FUNCIONES PASAN EL TEST DE CONTRATO
+════════════════════════════════════════════════════════════════════════════════

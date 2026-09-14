@@ -1,0 +1,19 @@
+REM-INV-4B — 16 zero-touch PRE (antes de RC-3)
+captura: Supabase Management API (solo SELECT), 15 tablas existentes en LIVE (payments no existe; payment_transactions es la tabla real; production_orders/devolution_items no existen)
+
+table                      rows                  sum max(created_at)                 
+stores                       50                    - 2026-09-10 21:50:42.534433+00   
+products                    367           14215.6289 2026-09-10 23:48:12.923736+00   
+inventory                   277           13506.6289 2026-09-11 03:49:29.963844+00   
+stock_movements            1021           13506.6289 2026-09-11 04:25:37.079359+00   
+transactions                597 28134399.99799999994 2026-09-11 04:25:44.22297+00    
+payment_transactions        458 8249548.499999999946 2026-09-11 04:24:09.0631+00     
+devolutions                  25            355120.00 2026-09-10 23:58:39.315276+00   
+receipts                     63                    - 2026-09-11 00:06:09.59+00       
+transfers                     8                    - 2026-09-10 23:58:30.878079+00   
+purchase_orders               8                    - 2026-09-11 04:10:15.171218+00   
+inventory_adjustments         5                    - 2026-08-06 23:58:14.171286+00   
+business_events           10897                    - 2026-09-11 04:25:37.079359+00   
+cash_sessions                 0                    - -                               
+profiles                     76                    - 2026-09-14 22:08:48.783836+00   
+audit_logs                 8146                    - 2026-09-14 22:08:48.783836+00   

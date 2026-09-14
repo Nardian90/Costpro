@@ -1,0 +1,31 @@
+REM-INV-4B — 09 staging fidelity verification (apply-fixture.mjs output)
+Fidelity rule: staging must be byte-faithful on the authorization surface before any attack.
+
+FIDELITY fn md5 comparisons: all 8 in-scope functions md5(prosrc) == LIVE  (PASS)
+FIDELITY fn proacl comparisons: all 8 functions proacl == LIVE             (PASS)
+FIDELITY rls flags: stores/profiles/user_store_memberships/tenants rls=true, force=false (== LIVE)
+  policies in staging: stores=2 (select_anon, select_authenticated), memberships=1 (select_own_and_managed),
+  profiles=0/tenants=0 — CASE-mode tenant policies (app.use_tenant_rls GUC) not exercised by the RC-3 path;
+  documented fidelity map in gen-fixture.py header.
+FIDELITY data: tenants=2 stores=6 profiles=4 memberships=7
+role/status columns: TEXT in staging vs ENUM in LIVE — function logic compares ::text only (behaviorally identical).
+
+== verbatim fidelity run output ==
+
+== verbatim clean-replay run (final evidence) ==
+APPLIED OK: staging-fixture.sql
+FIDELITY fn current_user_store_ids()                       md5=317799d8 md5_match=true acl_match=true
+FIDELITY fn current_user_tenant_id()                       md5=e7c7f1fd md5_match=true acl_match=true
+FIDELITY fn get_transferable_stores(uuid,uuid)             md5=bfd8a24b md5_match=true acl_match=true
+FIDELITY fn has_store_access(uuid)                         md5=5c7d3100 md5_match=true acl_match=true
+FIDELITY fn has_store_access_as(uuid,uuid)                 md5=9844954f md5_match=true acl_match=true
+FIDELITY fn has_store_role(uuid,text[])                    md5=bf4b1761 md5_match=true acl_match=true
+FIDELITY fn has_store_role(uuid,uuid,text[])               md5=53dd7214 md5_match=true acl_match=true
+FIDELITY fn has_store_role_as(uuid,uuid,text[])            md5=abb566b7 md5_match=true acl_match=true
+FIDELITY fn is_global_admin()                              md5=134119e5 md5_match=true acl_match=true
+FIDELITY rls profiles                 rls=true force=false policies=0
+FIDELITY rls stores                   rls=true force=false policies=2
+FIDELITY rls tenants                  rls=true force=false policies=0
+FIDELITY rls user_store_memberships   rls=true force=false policies=1
+FIDELITY data {"tenants":"2","stores":"6","profiles":"4","memberships":"7"}
+FIDELITY: FUNCTIONS md5+ACL == LIVE (PASS)

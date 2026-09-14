@@ -1,0 +1,18 @@
+REM-INV-4B — 20 final function hashes (LIVE POST-apply)
+canonical SHA256 = sha256(prosrc as stored in pg_proc), utf-8
+
+function                   md5 PRE    md5 POST   changed  sha256 POST
+current_user_store_ids     (see 03)   317799d87c same     da5699589cc76df9a5ae3c28d40e1a5c09b7a0500993e8d3a1a19c2d8297aa67
+current_user_tenant_id     (see 03)   e7c7f1fdb7 same     7f51c0cc178eb5cbac08f657c3588c362bf6a5f058bfec5cf4566a1566621f4e
+get_transferable_stores    (see 03)   d0c242926f CHANGED  8f28a3d64d7b76e2f9ffc8081e3d0fa6e72286c9214cb38d6c414f00c9b70ecc
+has_store_access           (see 03)   5c7d310009 same     1eaa84c16bc1c3b20c110028ae4831a6da4daaddab7f08e4e73d72fc75a5cca8
+has_store_access_as        (see 03)   9844954f93 same     116da8f147b6836506fd6b933e6d2e30d9f4abec939291454078ee56abf25b40
+has_store_role             (see 03)   bf4b1761a6 same     dede72524dcdc732666a28a3f820107d9b365b6201ffad114464bee6d3a5fcbb
+has_store_role             (see 03)   53dd721499 same     d0c762423f899b54bf853f9398225b4f445d4074c91548a621b064bbf35223c4
+has_store_role_as          (see 03)   abb566b7f3 same     fe1167f1c4a521a8b9f2e39480fe22bdac056b05e981bee9323ea1d1f2c97911
+is_admin                   (see 03)   d3d5d5f7c3 same     fe8fea2e4543b4dfc7f7c9e23df4388845a31033691fb7cf946f96f8f0b22235
+is_global_admin            (see 03)   134119e5c4 same     1efc7a983a828ed2af438b8be4eeabe4b135ff3373dbf8a8b0dd6f0895ac5dae
+is_store_member            (see 03)   2402df1bd0 same     19dbfca75654cc9386e353fc2c7d780eebe39320282ef3a36e86c726c9280451
+
+expected: exactly 1 CHANGED = get_transferable_stores (bfd8a24b... -> d0c242926f...)
+LIVE POST md5 == staging POST md5 (d0c242926f12916a9c511e5d5b8ee06e) == migration artifact — equivalence proven

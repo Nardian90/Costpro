@@ -1,0 +1,23 @@
+REM-INV-4B — 11 full regression (repo @ e2e2a19e + migration 20260915000002 staged, baseline comparison vs 4A-R recorded baseline)
+
+1) npx tsc --noEmit
+   exit=0 — 0 errors
+
+2) npx vitest run (default reporter)
+   Test Files  99 passed | 1 skipped (100)
+   Tests       2070 passed | 24 skipped (2094)
+   exit=0 — baseline 4A-R: 2070 pass / 24 skip == IDENTICAL (no new failures)
+
+3) npm run lint
+   exit=0 — 0 errors, 1291 warnings (ALL pre-existing, == 4A-R baseline '1291 warnings')
+
+4) security-contract (scripts/security-contract-test.cjs vs LIVE, PRE-apply)
+   Funciones verificadas: 134 | Funciones con violaciones: 0
+   exit=0 — 134/134 PASS (re-run POST-apply recorded in 21-final-verification.txt)
+
+5) Staging untouched-function regression (pg_proc md5 PRE vs POST staging apply)
+   current_user_store_ids 317799d8... == ; current_user_tenant_id e7c7f1fd... == ; has_store_access 5c7d3100... ==
+   has_store_access_as 9844954f... == ; has_store_role(2arg) bf4b1761... == ; has_store_role(3arg) 53dd7214... ==
+   has_store_role_as abb566b7... == ; is_global_admin 134119e5... ==  (7/7 unchanged)
+
+6) Known infrastructure limitation: none triggered this gate (no OOM; build not required for SQL-only migration)

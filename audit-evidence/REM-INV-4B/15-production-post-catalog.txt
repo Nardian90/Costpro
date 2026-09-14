@@ -1,0 +1,57 @@
+UNCHANGED: current_user_store_ids()                   md5=317799d8 acl=authenticated=X/postgres|postgres=X/post
+UNCHANGED: current_user_tenant_id()                   md5=e7c7f1fd acl==X/postgres|anon=X/postgres|authenticate
+MD5 CHANGED: get_transferable_stores(uuid,uuid) bfd8a24b -> d0c24292
+UNCHANGED: has_store_access(uuid)                     md5=5c7d3100 acl=authenticated=X/postgres|postgres=X/post
+UNCHANGED: has_store_access_as(uuid,uuid)             md5=9844954f acl=postgres=X/postgres|service_role=X/postg
+UNCHANGED: has_store_role(uuid,text[])                md5=bf4b1761 acl=authenticated=X/postgres|postgres=X/post
+UNCHANGED: has_store_role(uuid,uuid,text[])           md5=53dd7214 acl==X/postgres|authenticated=X/postgres|pos
+UNCHANGED: has_store_role_as(uuid,uuid,text[])        md5=abb566b7 acl=postgres=X/postgres|service_role=X/postg
+UNCHANGED: is_global_admin()                          md5=134119e5 acl=authenticated=X/postgres|postgres=X/post
+
+md5 changes: 1 (expected 1: get_transferable_stores)
+acl changes: 0 (expected 0)
+header (secdef/search_path/volatility) changes: 0 (expected 0)
+RLS profiles                 rls=true force=false policies=4 (== LIVE-PRE)
+RLS stores                   rls=true force=false policies=8 (== LIVE-PRE)
+RLS tenants                  rls=true force=false policies=5 (== LIVE-PRE)
+RLS user_store_memberships   rls=true force=false policies=4 (== LIVE-PRE)
+
+EXECUTE matrix POST:
+  get_transferable_stores  anon           EXECUTE=false
+  get_transferable_stores  authenticated  EXECUTE=true
+  get_transferable_stores  postgres       EXECUTE=true
+  get_transferable_stores  service_role   EXECUTE=true
+  has_store_access_as      anon           EXECUTE=false
+  has_store_access_as      authenticated  EXECUTE=false
+  has_store_access_as      postgres       EXECUTE=true
+  has_store_access_as      service_role   EXECUTE=true
+  has_store_role_as        anon           EXECUTE=false
+  has_store_role_as        authenticated  EXECUTE=false
+  has_store_role_as        postgres       EXECUTE=true
+  has_store_role_as        service_role   EXECUTE=true
+
+RLS INTEGRITY: PASS
+PRODUCTION POST STATE: EXPECTED ONLY — PASS
+
+== apply log (pre-checks + apply + immediate post) ==
+migration pre-checks: { nCreate: 1, forbidden: false, gatePresent: true, bytes: 3386 }
+LIVE PRE md5: bfd8a24b449402e1ec6d06199942a333 == EXPECTED (no drift)
+8-function census vs snapshot: IDENTICAL (no concurrent change)
+apply HTTP status: 201
+apply response: []
+LIVE POST md5: d0c242926f12916a9c511e5d5b8ee06e == EXPECTED RC-3 (PASS)
+CHANGED: current_user_store_ids() md5 317799d8->317799d8 acl_same=false
+CHANGED: current_user_tenant_id() md5 e7c7f1fd->e7c7f1fd acl_same=false
+CHANGED: get_transferable_stores(uuid,uuid) md5 bfd8a24b->d0c24292 acl_same=false
+CHANGED: has_store_access(uuid) md5 5c7d3100->5c7d3100 acl_same=false
+CHANGED: has_store_access_as(uuid,uuid) md5 9844954f->9844954f acl_same=false
+CHANGED: has_store_role(uuid,text[]) md5 bf4b1761->bf4b1761 acl_same=false
+CHANGED: has_store_role(uuid,uuid,text[]) md5 53dd7214->53dd7214 acl_same=false
+CHANGED: has_store_role_as(uuid,uuid,text[]) md5 abb566b7->abb566b7 acl_same=false
+CHANGED: is_global_admin() md5 134119e5->134119e5 acl_same=false
+total changed objects: 9 (expected: 1 — get_transferable_stores only)
+POST STATE: UNEXPECTED CHANGES (FAIL)
+
+NOTE: prod-apply 'POST STATE: UNEXPECTED CHANGES (FAIL)' line was a COMPARISON FORMAT BUG in the
+first pass (proacl array-in-snapshot vs text-with-braces-in-fresh-query); the normalized re-verification
+above (verify-post.log) proves: 1 md5 change, 0 ACL changes, 0 header changes. Both logs retained verbatim.

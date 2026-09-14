@@ -1,0 +1,13 @@
+REM-INV-4B — 06 API/browser exposure census
+
+get_transferable_stores is reachable DIRECTLY from any authenticated browser session:
+  POST {SUPABASE_URL}/rest/v1/rpc/get_transferable_stores
+  headers: apikey=<anon key>, Authorization: Bearer <user JWT>
+  body: { p_user_id: '<victim-uuid>', p_current_store_id: '<any-uuid>' }
+No API route mediates the call (src/app/api has no reference — grep evidence in 05).
+Authentication context of the only app caller: user session JWT (auth.uid() = session user).
+p_user_id client-controlled: YES. p_current_store_id client-controlled: YES (drives tenant derivation + legacy branch).
+Response reaches browser: full public.stores rows (SETOF stores) of OTHER users/tenants when exploited.
+
+Gate E7 conclusion: 'the API validates' is NOT applicable — there is no server-side API wrapper;
+the database contract itself must bind subject identity to the caller (fixed by RC-3).

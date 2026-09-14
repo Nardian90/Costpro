@@ -1,0 +1,8 @@
+REM-INV-4B — 18 zero-touch diff (PRE vs POST)
+regla: UNEXPECTED CHANGES = 0; producción debe quedar byte-idéntica en datos
+
+tables compared: 15 vs 15
+rows with differences: 0
+
+RESULT: ZERO-TOUCH = PASS — 15/15 tables identical (rows + SUM + MAX(created_at))
+Production data mutations caused by RC-3: 0 (CREATE OR REPLACE FUNCTION is definition-level DDL, no row access)

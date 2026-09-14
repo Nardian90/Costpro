@@ -1,0 +1,41 @@
+REM-INV-4B — 21 final verification (production, post-apply)
+
+== security-contract against LIVE POST-apply ==
+command: set -a && . ./.env && set +a && node scripts/security-contract-test.cjs
+result: Funciones verificadas: 134 | Funciones con violaciones: 0 | exit=0
+
+════════════════════════════════════════════════════════════════════════════════
+🔒 TEST DE CONTRATO — Seguridad de funciones SECURITY DEFINER
+════════════════════════════════════════════════════════════════════════════════
+
+Funciones SECURITY DEFINER con escritura detectadas: 134
+
+Funciones verificadas: 134
+Funciones con violaciones: 0
+
+✅ PIN REM-INV-2R: receive_purchase(uuid) sigue ausente del catálogo
+
+════════════════════════════════════════════════════════════════════════════════
+🎉 TODAS LAS FUNCIONES PASAN EL TEST DE CONTRATO
+════════════════════════════════════════════════════════════════════════════════
+
+== production re-verification (§22 — no destructive attack; staging = behavioral proof) ==
+definition POST md5 (d0c242926f12916a9c511e5d5b8ee06e) == staging POST md5 == migration artifact md5
+-> LIVE code is byte-identical to the staging-proven code (E1-E8 results transfer by hash equivalence)
+ACL POST == ACL PRE (19-final-acl.txt); RLS flags/policies == PRE (verify-post.log); owner/secdef/search_path == PRE
+positive smoke (read-only): service_role POST /rest/v1/rpc/get_transferable_stores -> HTTP 200, function executes under trusted route
+adversarial probes in production: NOT executed (prohibited by §1/§22); staging E1-E8 is the behavioral evidence
+
+== HTTP/PM2 ==
+GET http://localhost:3000/ -> HTTP 200 (0.07s)
+PM2: 0 costpro 1248 restarts: fork
+PM2: 1 telegram-cron-poller 1250 restarts: fork
+PM2: 2 whatsapp-cron-poller 1256 restarts: fork
+
+== zero-touch ==
+15/15 tables PRE == POST (rows + SUM + MAX(created_at)) — see 16/17/18
+
+== change boundary ==
+production objects changed: 1 (get_transferable_stores uuid,uuid) — ACL/RLS/policies/triggers/tables: 0 changes
+production row mutations: 0
+UNEXPECTED CHANGES = 0

@@ -1,0 +1,35 @@
+REM-INV-4B — 10 POST-FIX re-attack (same suite, same fixture, ONLY get_transferable_stores changed)
+generated: 2026-09-14T22:28:35.794Z
+
+CASE           PRE-FIX                                      POST-FIX                                     STATUS    
+E1a            ALLOW (0 rows) []                            ALLOW (0 rows) []                            PASS
+E1b            ALLOW (1 rows) ["STORE_A1"]                  ALLOW (1 rows) ["STORE_A1"]                  PASS
+E2             ALLOW (1 rows) ["STORE_A2"]                  oracle=- note=-                              DENY-OK
+E2b            ALLOW (1 rows) ["STORE_A1"]                  oracle=- note=-                              DENY-OK
+E3             ALLOW (1 rows) ["STORE_B2"]                  oracle=- note=-                              DENY-OK
+E4             ALLOW (0 rows) []                            oracle=- note=-                              DENY-OK
+E5             ALLOW (0 rows) []                            oracle=- note=-                              DENY-OK
+E6             ALLOW (1 rows) ["STORE_B2"]                  oracle=- note=-                              DENY-OK
+E6b            ALLOW (1 rows) ["STORE_A2"]                  oracle=- note=-                              DENY-OK
+E6c            ALLOW (1 rows) ["STORE_A2"]                  ALLOW (1 rows) ["STORE_A2"]                  PASS
+E7             ALLOW (1 rows) ["STORE_A2"]                  oracle=- note=-                              DENY-OK
+E7b            ALLOW (0 rows) []                            oracle=- note=-                              DENY-OK
+LEG-1          ALLOW (2 rows) ["STORE_B1", "STORE_B2"]      oracle=- note=-                              DENY-OK
+LEG-2          ALLOW (5 rows) ["STORE_A1", "STORE_A2", "STO oracle=- note=-                              DENY-OK
+E8-oracle      oracle=1 vs 0 note=no oracle                 oracle=ERR vs ERR note=no oracle             PASS (oracle closed)
+E8b            oracle=- note=-                              oracle=- note=-                              PASS (ACL deny both)
+E8c            oracle=- note=-                              oracle=- note=-                              PASS (ACL deny both)
+C8-rls-invoker ALLOW (1 rows) ["STORE_A1"]                  ALLOW (1 rows) ["STORE_A1"]                  INFO
+C8-definer-bypass ALLOW (2 rows) ["STORE_A1", "STORE_A2"]      oracle=- note=-                              DENY-OK
+L-rl-2arg      ALLOW (1 rows) [null]                        ALLOW (1 rows) [null]                        FAIL(allowed!)
+L-rl-3arg      ALLOW (1 rows) [null]                        ALLOW (1 rows) [null]                        FAIL(allowed!)
+L-cusi         ALLOW (1 rows) [null]                        ALLOW (1 rows) [null]                        FAIL(allowed!)
+L-cuti         ALLOW (1 rows) [null]                        ALLOW (1 rows) [null]                        FAIL(allowed!)
+L-iga          ALLOW (2 rows) [null, null]                  ALLOW (2 rows) [null, null]                  FAIL(allowed!)
+ATOMICITY      oracle=- note=unchanged                      oracle=- note=unchanged                      PASS
+STAGING-PRIVS  ALLOW (9 rows) [null, null, null, null, null ALLOW (9 rows) [null, null, null, null, null INFO
+
+RESULT (§15): E1 PASS · E2 DENY · E3 DENY · E4 DENY · E5 DENY · E6 legitimate-contract (E6c PASS, foreign DENY) · E7 DENY · E8 NO DISCLOSURE
+Legitimate flows preserved: E1a/E1b (normal users) + E6c (admin as caller) unchanged vs PRE.
+Untouched-function regression: md5 of the other 7 in-scope functions identical PRE/POST (apply log).
+Deny message: P0001 'ERR_TRANSFERABLE_STORES_UNAUTHORIZED' (uniform, no information differential).
