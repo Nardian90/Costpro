@@ -1,0 +1,12 @@
+REM-INV-4A-R — Baseline verification (§3)
+Date: 2026-09-14
+
+git fetch origin                    -> OK
+git status --short                  -> (empty; WORKTREE CLEAN; .env gitignored)
+git rev-parse HEAD                  -> 751a5c01d618ff1dea540dd7d7a1e7ee3fbcb071
+git rev-parse origin/main           -> 751a5c01d618ff1dea540dd7d7a1e7ee3fbcb071
+git log -1 --oneline                -> 751a5c01 audit(rem-inv-4a): authorization spoofing & audit_logs ACL forensic certification
+
+HEAD == origin/main == 751a5c01 : PASS
+WORKTREE CLEAN                  : PASS
+Baseline gate anterior (REM-INV-4A): 5f927364; este gate arranca en su commit de evidencia 751a5c01.

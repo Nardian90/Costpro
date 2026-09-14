@@ -6,12 +6,18 @@ import { withTracing } from '@/lib/observability';
 import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { issueSupervisorToken } from '@/lib/supervisor-token';
 
 /**
  * Iteración 11.2 — POST /api/auth/supervisor-check
  *
  * Validates supervisor credentials server-side (not in the browser).
  * Returns supervisor_user_id if valid, which is passed to create_sale_v2.
+ *
+ * REM-INV-4A-R (RC-1): the response now also carries a short-lived signed
+ * supervisor_token bound to (supervisor, operator, store). The checkout route
+ * verifies it before forwarding the supervisor identity to create_sale_v2,
+ * closing the client-supplied-UUID spoofing vector (REM-INV-4A F-04-A2, P1).
  *
  * Rate limit: 5 req/min (stricter than checkout — credential brute-force protection).
  */
@@ -104,9 +110,18 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // Sign out the supervisor session immediately (we only needed to verify credentials)
     await supabaseAdmin.auth.admin.signOut(supervisorUserId);
 
+    // REM-INV-4A-R (RC-1): issue the verifiable proof-of-authorization bound
+    // to this operator session and store. Stateless + short TTL.
+    const supervisor_token = issueSupervisorToken(
+      supervisorUserId,
+      session.user.id,
+      parsed.data.store_id
+    );
+
     return NextResponse.json({
       valid: true,
       supervisor_user_id: supervisorUserId,
+      supervisor_token,
     });
   } catch (err) {
     logger.error('AUTH', 'SUPERVISOR_CHECK_ERROR', {

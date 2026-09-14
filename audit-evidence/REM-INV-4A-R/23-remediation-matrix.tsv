@@ -1,0 +1,24 @@
+ID	Test	PRE (staging, pre-fix)	Expected POST	Actual POST	Status
+A1	normal sale, no discount	PASS (unchanged path)	PASS	success, transaction persisted	PASS ✓
+A2	discount 10% (<15%)	PASS	PASS	success	PASS ✓
+A3	discount >=15%, supervisor NULL	ERR_SUPERVISOR_REQUIRED	DENY	ERR_SUPERVISOR_REQUIRED	PASS ✓
+A4	discount >=15%, arbitrary supervisor UUID	ALLOW — EXPLOITABLE	DENY	ERR_SUPERVISOR_UNAUTHORIZED	PASS ✓
+A5	discount >=15%, foreign manager UUID	ALLOW — EXPLOITABLE (D5b)	DENY	ERR_SUPERVISOR_UNAUTHORIZED	PASS ✓
+A6	discount >=15%, global admin UUID (D4)	ALLOW — EXPLOITABLE	DENY	ERR_SUPERVISOR_UNAUTHORIZED	PASS ✓
+A7	discount >=15%, cross-tenant admin UUID (D5)	ALLOW — EXPLOITABLE	DENY	ERR_SUPERVISOR_UNAUTHORIZED	PASS ✓
+A8a	legitimate supervisor: manager self-authorized	ALLOW	PASS	success	PASS ✓
+A8b	legitimate supervisor: route(service_role)+token+operator != supervisor	ALLOW	PASS	success	PASS ✓
+A9	direct RPC attack: self-supervisor clerk / arbitrary UUID	ALLOW — EXPLOITABLE	DENY	ERR_SUPERVISOR_UNAUTHORIZED	PASS ✓
+A10	atomicity: denial => no sale/tx/payment/stock/audit mutation	n/a	PRESERVED	per-test atomicity=PRESERVED, counts stable	n/a
+B1	authenticated SELECT audit_logs	0 rows (RLS)	0 rows (unchanged)	0 (clerk) / 7 (admin)	PASS ✓
+B2	authenticated INSERT audit row (writer)	ALLOWED	ALLOWED	INSERT 1	PASS ✓
+B3	authenticated UPDATE audit_logs	UPDATE 0 (RLS)	DENY	permission denied (ACL)	BLOCKED BY ACL ✓
+B4	authenticated DELETE audit_logs	DELETE 0 (RLS)	DENY	permission denied (ACL)	BLOCKED BY ACL ✓
+B5	authenticated TRUNCATE audit_logs	SUCCESS — TRAIL DESTROYED (G7)	DENY	permission denied (ACL)	BLOCKED BY ACL ✓
+B6	authenticated VACUUM (MAINTAIN)	ALLOWED-BENIGN (G8)	DENY / not executed	PG17 NOTICE permission denied — skipped	BLOCKED BY ACL ✓ (PG17 skips with permission-denied NOTICE — operation NOT executed)
+B7	service_role logging (INSERT/SELECT/DELETE)	ALLOWED	ALLOWED (unchanged)	insert=1 select=7 delete=1	PASS ✓
+B8	RLS integrity (flags + 3 policies)	rls=true, force=false, 3 policies	unchanged	rls=true, force=false, policies=3	PASS ✓ acl_expected={postgres=arwdDxtm/postgres,anon=ar/postgres,authenticated=ar/postgres,service_role=arwdDxtm/postgres,costpro_transaction_adjuster=a/postgres,costpro_snapshot_restorer=a/postgres}
+B9	get_transferable_stores regression (§27)	E1/E2 baseline	identical	identical	PASS ✓
+B10	has_store_role 2-arg regression (§28)	S-BASE matrix	identical	identical	PASS ✓
+S25	cross-store regression (U1->B DENY, U4->A DENY, U4->B PASS)	unchanged	DENY/DENY/PASS	ERR_UNAUTHORIZED / ERR_UNAUTHORIZED / success	PASS ✓ (§25)
+S26	cross-tenant: T1 admin UUID on T2 sale	ALLOW — EXPLOITABLE	DENY	ERR_SUPERVISOR_UNAUTHORIZED	DENIED ✓

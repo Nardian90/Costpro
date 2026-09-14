@@ -1,0 +1,12 @@
+ID	Test	PRE	Expected POST	Actual POST	Status
+B1	authenticated clerk SELECT audit_logs	0 rows (RLS)	0 rows	PASS ✓
+B1b	authenticated admin SELECT audit_logs	>0 rows (RLS)	>0 rows	CONFIRMED ✓
+B2	authenticated INSERT own audit row (writer path)	ALLOWED	ALLOWED	PASS ✓
+B3	authenticated UPDATE audit_logs	UPDATE 0 (RLS)	DENY (ACL)	BLOCKED BY ACL ✓
+B4	authenticated DELETE audit_logs	DELETE 0 (RLS)	DENY (ACL)	BLOCKED BY ACL ✓
+B5	authenticated TRUNCATE audit_logs	SUCCESS — TRAIL DESTROYED (G7)	DENY (ACL)	BLOCKED BY ACL ✓
+B6	authenticated VACUUM (MAINTAIN)	ALLOWED-BENIGN (G8)	DENY (ACL / PG17 skip+NOTICE)	n/a
+B7	service_role INSERT/SELECT/DELETE audit_logs	ALLOWED	ALLOWED (unchanged)	PASS ✓
+B8	RLS integrity (rls=true, force=false, 3 policies)	baseline	unchanged	n/a
+B9	get_transferable_stores regression (§27)	E1/E2 baseline	identical	PASS ✓
+B10	has_store_role 2-arg regression (§28)	S-BASE matrix	identical	PASS ✓

@@ -1,0 +1,8 @@
+REM-INV-4A-R — audit_logs privileges matrix PRE (LIVE, has_table_privilege)
+role	SELECT	INSERT	UPDATE	DELETE	TRUNCATE	REFERENCES	TRIGGER	MAINTAIN
+authenticated	true	true	true	true	true	true	true	true
+anon	true	true	true	true	true	true	true	true
+service_role	true	true	true	true	true	true	true	true
+postgres	true	true	true	true	true	true	true	true
+
+relacl PRE: {postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,costpro_transaction_adjuster=a/postgres,costpro_snapshot_restorer=a/postgres}

@@ -1,0 +1,86 @@
+REM-INV-4A-R — staging POST suite
+Generated: 2026-09-14T21:25:48.746Z
+Environment: ephemeral PostgreSQL 17.6 (port 5433) — create_sale_v2 + helpers verbatim LIVE bodies; audit_logs LIVE structure/ACL/RLS replica
+Identity simulation: SET LOCAL ROLE <role> + set_config('request.jwt.claims', '{"sub":<uid>,"role":<role>}', true) (transaction-scoped; mirrors PostgREST AFTER JWT verification)
+Fixtures: U1=clerk@A(T1), U2=manager@A(T1), U3=global admin T1, U4=clerk@B(T1), U5=global admin T2. Stores: A,B (T1); C (T2).
+
+[A1 normal sale (no discount)]
+  expected=PASS; actual={"status":"success","calculated_tax":0,"transaction_id":"84e60929-2206-498f-806d-764812cf8125","discount_amount":0,"calculated_total":20,"calculated_subtotal":20} verdict=PASS ✓
+
+[A2 discount 10% (<15%, no supervisor)]
+  expected=PASS; actual status=success verdict=PASS ✓
+
+[A3 discount 20% supervisor NULL]
+  expected=DENY; actual=DENIED: ERR_SUPERVISOR_REQUIRED: discount_pct=20.00000000000000000000 atomicity=PRESERVED ✓
+
+[A4 discount 20% arbitrary UUID (clerk U4)]
+  expected=DENY; actual=DENIED: ERR_SUPERVISOR_UNAUTHORIZED atomicity=PRESERVED ✓
+
+[A5 discount 20% foreign manager UUID (same store, no proof)]
+  expected=DENY; actual=DENIED: ERR_SUPERVISOR_UNAUTHORIZED atomicity=PRESERVED ✓
+
+[A6 discount 20% global admin UUID (T1)]
+  expected=DENY; actual=DENIED: ERR_SUPERVISOR_UNAUTHORIZED atomicity=PRESERVED ✓
+
+[A7 discount 20% cross-tenant admin UUID (T2)]
+  expected=DENY; actual=DENIED: ERR_SUPERVISOR_UNAUTHORIZED atomicity=PRESERVED ✓
+
+[A9 direct RPC: self-supervisor (clerk lacks admin/manager role)]
+  expected=DENY; actual=DENIED: ERR_SUPERVISOR_UNAUTHORIZED atomicity=PRESERVED ✓
+
+[A8a legitimate: manager self-authorized sale (supervisor == auth.uid(), real role)]
+  expected=PASS; actual={"status":"success","calculated_tax":0,"transaction_id":"9fb577ff-40bd-4263-9449-a179a89b0a18","discount_amount":4,"calculated_total":16,"calculated_subtotal":20} verdict=PASS ✓
+
+[A8b legitimate: server route (service_role) + operator U1 + supervisor U2 (proof enforced at route)]
+  expected=PASS; actual={"status":"success","calculated_tax":0,"transaction_id":"cb0d4f17-0f85-469a-a130-288041ed8841","discount_amount":4,"calculated_total":16,"calculated_subtotal":20} verdict=PASS ✓
+
+[§25 U1 (clerk@A) sale in Store B]
+  expected=DENY (ERR_UNAUTHORIZED); actual=ERR_UNAUTHORIZED verdict=DENIED ✓
+
+[§25 U4 (clerk@B) sale in Store A]
+  expected=DENY (ERR_UNAUTHORIZED); actual=ERR_UNAUTHORIZED verdict=DENIED ✓
+
+[§25 U4 (clerk@B) sale in Store B (authorized context)]
+  expected=PASS; actual status=success verdict=PASS ✓
+
+[§26 Tenant B sale (U5, Store C) + Tenant A admin UUID (U3) as supervisor]
+  expected=DENY; actual=ERR_SUPERVISOR_UNAUTHORIZED verdict=DENIED ✓
+
+[§26 U5 (real global admin T2, verified session identity) self-authorized sale in C]
+  expected=pre-existing admin-bypass design (identity server-verified, NOT client-supplied spoof); actual=ALLOW verdict=ALLOW (documented, out of RC-1 scope)
+
+[B9 get_transferable_stores behavior unchanged]
+  expected=identical to PRE; actual_e1=[] verdict=PASS ✓
+
+[B10 has_store_role 2-arg matrix unchanged]
+  expected={"base":true,"crossStore":false,"roleSpoof":false,"nullStore":false} actual={"base":true,"crossStore":false,"roleSpoof":false,"nullStore":false} verdict=PASS ✓
+
+[B1 authenticated clerk SELECT audit_logs]
+  expected=0 (no policy grants clerk); actual=0 verdict=CONFIRMED ✓
+
+[B1b authenticated admin SELECT audit_logs]
+  expected=>0 (admin policy); actual=6 verdict=CONFIRMED ✓
+
+[B2 legitimate INSERT (writer path preserved)]
+  expected=ALLOWED; actual=INSERT 1 verdict=PASS ✓
+
+[B3 authenticated UPDATE audit_logs]
+  expected=DENY; actual=ERROR: permission denied for table audit_logs verdict=BLOCKED BY ACL ✓
+
+[B4 authenticated DELETE audit_logs]
+  expected=DENY; actual=ERROR: permission denied for table audit_logs verdict=BLOCKED BY ACL ✓
+
+[B5 authenticated TRUNCATE audit_logs]
+  expected=DENY; actual=ERROR: permission denied for table audit_logs verdict=BLOCKED BY ACL ✓
+
+[B6 authenticated VACUUM (MAINTAIN revoked)]
+  expected=DENY(not executed); actual=VACUUM command returned, notices=[permission denied to vacuum "audit_logs", skipping it] verdict=BLOCKED BY ACL ✓ (PG17 skips with permission-denied NOTICE — operation NOT executed)
+
+[B7 service_role logging + maintenance (INSERT/SELECT/DELETE intact)]
+  expected=PASS; insert=1 select=7 delete=1 verdict=PASS ✓
+
+[B8 RLS integrity + ACL minimal-privilege state]
+  rls=true force=false policies=3 relacl={postgres=arwdDxtm/postgres,anon=arxt/postgres,authenticated=arxt/postgres,service_role=arwdDxtm/postgres,costpro_transaction_adjuster=a/postgres,costpro_snapshot_restorer=a/postgres} verdict=PASS ✓ acl_expected={postgres=arwdDxtm/postgres,anon=ar/postgres,authenticated=ar/postgres,service_role=arwdDxtm/postgres,costpro_transaction_adjuster=a/postgres,costpro_snapshot_restorer=a/postgres}
+
+[A10 atomicity of denials (cumulative)]
+  tx=9 items=9 payments=9 moves=9 audits=7 p1_stock=93 (denials above reported per-test atomicity)

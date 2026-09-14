@@ -1,0 +1,25 @@
+REM-INV-4A-R — staging PRE suite
+Generated: 2026-09-14T21:25:48.524Z
+Environment: ephemeral PostgreSQL 17.6 (port 5433) — create_sale_v2 + helpers verbatim LIVE bodies; audit_logs LIVE structure/ACL/RLS replica
+Identity simulation: SET LOCAL ROLE <role> + set_config('request.jwt.claims', '{"sub":<uid>,"role":<role>}', true) (transaction-scoped; mirrors PostgREST AFTER JWT verification)
+Fixtures: U1=clerk@A(T1), U2=manager@A(T1), U3=global admin T1, U4=clerk@B(T1), U5=global admin T2. Stores: A,B (T1); C (T2).
+
+
+[G2..G9 extract]
+[G2 U1 INSERT own audit row (legitimate writer)]
+  expected=ALLOWED; actual=INSERT 1 verdict=ALLOWED-EXPECTED ✓
+
+[G5 U1 UPDATE audit rows]
+  expected=0 rows (RLS); actual=UPDATE 0 verdict=BLOCKED BY RLS ✓
+
+[G6 U1 DELETE audit rows]
+  expected=0 rows (RLS); actual=DELETE 0 verdict=BLOCKED BY RLS ✓
+
+[G8 U1 VACUUM (MAINTAIN priv)]
+  expected(PRE)=allowed-benign; actual=VACUUM verdict=ALLOWED-BENIGN ✓ (privilege exists)
+
+[G7 U1 TRUNCATE audit_logs — RLS does NOT cover TRUNCATE]
+  expected=impossible for unprivileged; rows_before=4 actual=TRUNCATE rows_after=0 verdict=*** CATASTROPHIC — TRAIL DESTROYED (staging proof) ***
+
+[G9 negative control: INSERT-only role TRUNCATE]
+  expected=permission denied; actual=ERROR: permission denied for table audit_logs verdict=BLOCKED BY ACL ✓ (grant is the control point)

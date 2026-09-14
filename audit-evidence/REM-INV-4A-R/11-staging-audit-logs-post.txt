@@ -1,0 +1,7 @@
+REM-INV-4A-R — staging POST suite
+Generated: 2026-09-14T21:25:48.746Z
+Environment: ephemeral PostgreSQL 17.6 (port 5433) — create_sale_v2 + helpers verbatim LIVE bodies; audit_logs LIVE structure/ACL/RLS replica
+Identity simulation: SET LOCAL ROLE <role> + set_config('request.jwt.claims', '{"sub":<uid>,"role":<role>}', true) (transaction-scoped; mirrors PostgREST AFTER JWT verification)
+Fixtures: U1=clerk@A(T1), U2=manager@A(T1), U3=global admin T1, U4=clerk@B(T1), U5=global admin T2. Stores: A,B (T1); C (T2).
+
+

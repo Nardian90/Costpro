@@ -7,6 +7,7 @@ import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 import { uuidRegex } from '@/validation/schemas';
+import { verifySupervisorToken } from '@/lib/supervisor-token';
 
 /**
  * Iteración 11.2 — POST /api/pos/checkout
@@ -20,6 +21,10 @@ import { uuidRegex } from '@/validation/schemas';
  * - Rate limit: 30 req/min per user
  * - Zod validation of full payload
  * - Supervisor auth server-side (if discount >= 15%)
+ *   REM-INV-4A-R (RC-1): a client-supplied supervisor_user_id is NOT proof of
+ *   authorization. It is only forwarded to create_sale_v2 when accompanied by
+ *   a valid signed supervisor_token (issued by /api/auth/supervisor-check,
+ *   bound to supervisor+operator+store, short TTL). Closes F-04-A2 (P1).
  * - All financial calculations done server-side in RPC
  */
 
@@ -66,6 +71,7 @@ const checkoutSchema = z.object({
   customer_id: z.string().regex(uuidRegex).nullable().optional(),
   customer_name: z.string().optional(),
   supervisor_user_id: z.string().regex(uuidRegex).nullable().optional(),
+  supervisor_token: z.string().min(10).max(1024).nullable().optional(),
   idempotency_key: z.string().min(1),
   operation_date: z.string().datetime().optional(),
   items: z.array(itemSchema).min(1),
@@ -96,6 +102,31 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const d = parsed.data;
+
+  // REM-INV-4A-R (RC-1): bind supervisor authorization to this sale.
+  // Under no circumstances may a client-supplied supervisor UUID reach the
+  // RPC without a server-issued, signature-verified, unexpired token bound
+  // to the same supervisor, this operator session and this store.
+  let supervisor_user_id: string | null = null;
+  if (d.supervisor_user_id) {
+    if (!d.supervisor_token) {
+      logger.warn('POS', 'SUPERVISOR_TOKEN_MISSING', { storeId: d.store_id });
+      return NextResponse.json({ error: 'Supervisor no autorizado en esta tienda.' }, { status: 403 });
+    }
+    const verification = verifySupervisorToken(d.supervisor_token, {
+      supervisorUserId: d.supervisor_user_id,
+      operatorUserId: session.user.id,
+      storeId: d.store_id,
+    });
+    if (!verification.valid) {
+      logger.warn('POS', 'SUPERVISOR_TOKEN_INVALID', {
+        storeId: d.store_id,
+        reason: verification.reason,
+      });
+      return NextResponse.json({ error: 'Supervisor no autorizado en esta tienda.' }, { status: 403 });
+    }
+    supervisor_user_id = d.supervisor_user_id;
+  }
 
   // Map items to JSONB for RPC (rename price→price_at_sale, cost→cost_at_sale)
   const itemsJsonb = d.items.map(i => ({
@@ -141,7 +172,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_sale_exchange_rate: d.sale_exchange_rate,
     p_customer_id: d.customer_id ?? null,
     p_customer_name: d.customer_name ?? null,
-    p_supervisor_user_id: d.supervisor_user_id ?? null,
+    p_supervisor_user_id: supervisor_user_id,
     p_idempotency_key: d.idempotency_key,
     p_operation_date: d.operation_date ?? null,
     p_user_id: session.user.id,

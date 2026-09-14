@@ -1,0 +1,36 @@
+REM-INV-4A-R — PRE RC-1 catalog (target functions, LIVE via Management API, read-only)
+Date: 2026-09-14. md5(prosrc) compared against REM-INV-4A captures (2026-09-13):
+concurrent-change check = 10/10 SAME (no drift between gates).
+
+create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid)
+  secdef=true owner=postgres proconfig={"search_path=public, pg_temp"}
+  md5(prosrc)=7edb09b6b6f83b6d943e6171acf3412c  sha256(pg_get_functiondef)=dcd237c5c14037a7a04d06f84c536b3e9927fd2f7a9ee86cebdc35ac5acca61f
+current_user_tenant_id()
+  secdef=true owner=postgres proconfig={search_path=public}
+  md5(prosrc)=e7c7f1fdb7e5134a4f1c7a0752c1088e  sha256(pg_get_functiondef)=1c6c282342982a087cf612f74bef73dc5b90c551511ce792a269fc0593bdb8fd
+get_transferable_stores(p_user_id uuid, p_current_store_id uuid)
+  secdef=true owner=postgres proconfig={search_path=public}
+  md5(prosrc)=bfd8a24b449402e1ec6d06199942a333  sha256(pg_get_functiondef)=3a0336bd18f51fdcc09398657c949799dcd14deed420fd06ddf202dea374ca89
+has_store_access(p_store_id uuid)
+  secdef=true owner=postgres proconfig={"search_path=public, pg_temp"}
+  md5(prosrc)=5c7d310009f60aa864b5b97d00596e48  sha256(pg_get_functiondef)=6d00b171f5ddf033c98fc50dd6206d6684c823fe690bdefe3a7583fac7eb7900
+has_store_access_as(p_user_id uuid, p_store_id uuid)
+  secdef=true owner=postgres proconfig={search_path=public}
+  md5(prosrc)=9844954f9389c7dfd318dbe96f128d54  sha256(pg_get_functiondef)=88bf028bcc7989a834e8fbd278417c9320608e5abb96032ba2dd185efbdbd4a8
+has_store_role(p_store_id uuid, p_roles text[])
+  secdef=true owner=postgres proconfig={"search_path=public, pg_temp"}
+  md5(prosrc)=bf4b1761a6ccd80919108301fe94a0e9  sha256(pg_get_functiondef)=d3b8dfcf936845456ea2896f8820f980eb7d9ae8bb019805207d56e725636e71
+has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])
+  secdef=true owner=postgres proconfig={"search_path=public, pg_temp"}
+  md5(prosrc)=53dd721499bf3253b567e3b1372400ee  sha256(pg_get_functiondef)=1fc71176fdfc7aa3b6bfb65920221e0f5d451c6840ae85cb9d1302d8eafff0c1
+has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])
+  secdef=true owner=postgres proconfig={"search_path=public, pg_temp"}
+  md5(prosrc)=abb566b7f3ce24ee2f0e6dbdb811f2e5  sha256(pg_get_functiondef)=0b2c372425fcd5511dc713effc550f9843605492cf8f65b50d3e1cb378eeccc5
+is_global_admin()
+  secdef=true owner=postgres proconfig={search_path=public}
+  md5(prosrc)=134119e5c4cbf5b30c4bcbc5b7277dd7  sha256(pg_get_functiondef)=72b323483aa4e9ad41407430cda21ba44103b7939a7c3173a48502d56f221086
+validate_operation_date(p_new_date timestamp with time zone, p_store_id uuid)
+  secdef=true owner=postgres proconfig={"search_path=public, pg_temp"}
+  md5(prosrc)=8559311d55219df06b79d84cf98772e2  sha256(pg_get_functiondef)=e442dccb65d2ff8be7b230424a48c78c0430cda306f55a646c7ee7211aaaa687
+
+LIVE public functions total: 484

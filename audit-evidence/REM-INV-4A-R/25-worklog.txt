@@ -1,0 +1,34 @@
+# Worklog — REM-INV-4A-R
+
+---
+Task ID: 1
+Agent: main (Super Z)
+Task: REM-INV-4A-R — Supervisor Authorization Bypass & audit_logs ACL Hardening (baseline 751a5c01)
+
+Work Log:
+- Servidor PM2 reactivado previamente (costpro @ 751a5c01, HTTP 200, .env escrito por usuario)
+- §3 Baseline verificado: HEAD == origin/main == 751a5c01d618ff1dea540dd7d7a1e7ee3fbcb071, worktree clean (.env gitignored)
+- Evidencia REM-INV-4A leída: 18-final-report.md (RC-1/RC-2 candidates definidos), 08 (D4/D5 EXPLOITABLE), 12 (G7 TRUNCATE SUCCESS)
+- Censo callers create_sale_v2: /api/pos/checkout (service_role, reenvía UUID del cliente), /api/sync/batch (JWT usuario), 0 llamadas browser directas al RPC
+- supervisor-check route existe: valida credenciales server-side (signInWithPassword) + rol admin/manager, retorna supervisor_user_id SIN prueba verificable vinculada a la venta
+- SupervisorAuthModal descarta el UUID (consumers llaman confirmAuthorization y no lo propagan); usePOSCheckout NO incluye supervisor_user_id en payload → flujo ≥15% v2 es fail-closed hoy
+- security-contract-test.cjs revisado: exige guard auth.role()='service_role' + SET search_path en SECDEF con escritura; corre contra LIVE vía Management API; no escanea ACL de audit_logs
+- iteration-11-5/iteration-rls tests: escanean SOLO migraciones históricas específicas → migración nueva no los rompe
+- Decisión de diseño RC-1: gate DB (authenticated solo puede citarse a sí mismo vía auth.uid(); service_role permitido) + binding HMAC en supervisor-check/checkout + propagación token frontend (detallar en 03-rc1-design.md)
+- Decisión de diseño RC-2: REVOKE DELETE, UPDATE, TRUNCATE, MAINTAIN ON public.audit_logs FROM anon, authenticated (INSERT/SELECT intactos; service_role/postgres intactos)
+
+Stage Summary:
+- Fase AUDIT en curso; siguiente: PRE-catalog LIVE (funciones + ACL audit_logs) y staging PG17.6
+
+---
+Task ID: 1 (cierre)
+Agent: main (Super Z)
+
+Closure pre-checks (§53):
+- PM2 costpro: ONLINE (0 restarts)
+- HTTP GET http://localhost:3000/ : 200
+- .env intact: OK (15 vars, gitignored, no trackeado)
+- db/custom.db: presente (server operativo)
+
+La secuencia commit → push → fetch → verify remote → worktree clean →
+gate-closure-check.sh se ejecuta tras generar este archivo y el MANIFEST.

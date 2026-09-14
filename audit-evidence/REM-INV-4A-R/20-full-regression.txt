@@ -1,0 +1,32 @@
+=== REM-INV-4A-R full regression (§32) — 2026-09-14T21:45:43Z ===
+
+--- npx tsc --noEmit ---
+tsc exit: 0
+
+--- npm run lint ---
+
+✖ 1291 problems (0 errors, 1291 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
+
+
+--- npm test (vitest) ---
+ ✓ src/__tests__/hooks/useStoreInactivityMonitor.test.tsx (2 tests | 1 skipped) 3ms
+ ↓ src/__tests__/integration/backup-schema-validation.test.ts (10 tests | 10 skipped)
+
+ Test Files  99 passed | 1 skipped (100)
+      Tests  2070 passed | 24 skipped (2094)
+   Start at  21:46:15
+   Duration  210.70s (transform 3.80s, setup 5.33s, import 8.31s, tests 123.69s, environment 60.30s)
+
+
+--- npm run test:security (security-contract, POST-fix LIVE) ---
+Funciones SECURITY DEFINER con escritura detectadas: 134
+
+Funciones verificadas: 134
+Funciones con violaciones: 0
+
+✅ PIN REM-INV-2R: receive_purchase(uuid) sigue ausente del catálogo
+
+════════════════════════════════════════════════════════════════════════════════
+🎉 TODAS LAS FUNCIONES PASAN EL TEST DE CONTRATO
+════════════════════════════════════════════════════════════════════════════════

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Shield, Lock, X, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { setSupervisorAuth } from './supervisor-auth-store';
 
 /**
  * SupervisorAuthModal — Pide PIN de supervisor para autorizar descuentos
@@ -84,7 +85,10 @@ export function SupervisorAuthModal({
         return;
       }
 
-      // Autorización exitosa — pasar supervisor_user_id al caller
+      // Autorización exitosa — REM-INV-4A-R (RC-1): almacenar la prueba de
+      // autorización firmada (token HMAC ligado a supervisor+operador+tienda)
+      // que el checkout verificará server-side, y pasar el id al caller.
+      setSupervisorAuth(data.supervisor_user_id, data.supervisor_token);
       onAuthorize(data.supervisor_user_id);
       onClose();
       setEmail('');

@@ -1,0 +1,12 @@
+ID	Test	PRE	Expected POST	Actual POST	Status
+A1	normal sale (no discount), U1@A authenticated	n/a	PASS	PASS ✓
+A2	discount 10% (<15%), no supervisor	n/a	PASS	PASS ✓
+A3	discount >=15%, supervisor NULL	ERR_SUPERVISOR_REQUIRED	DENY	n/a
+A4	discount >=15%, arbitrary supervisor UUID (clerk U4)	ALLOW (exploit)	DENY	n/a
+A5	discount >=15%, foreign manager UUID same store	ALLOW (exploit, D5b)	DENY	n/a
+A6	discount >=15%, global admin UUID (T1)	ALLOW (exploit, D4)	DENY	n/a
+A7	discount >=15%, cross-tenant admin UUID (T2)	ALLOW (exploit, D5)	DENY	n/a
+A8a	legitimate: manager self-authorized (auth.uid() identity)	ALLOW	PASS	PASS ✓
+A8b	legitimate: server route service_role + operator != supervisor	ALLOW	PASS	PASS ✓
+A9	direct RPC self-supervisor by clerk (no admin/manager role)	ALLOW (would pass has_store_role_as only if privileged)	DENY	n/a
+A10	atomicity of denials (no sale/tx/payment/stock/audit mutation)	n/a	PRESERVED	n/a

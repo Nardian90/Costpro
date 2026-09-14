@@ -1,0 +1,20 @@
+REM-INV-4A-R — audit_logs RLS policies PRE (LIVE pg_policy)
+relrowsecurity=true, relforcerowsecurity=false
+
+policy: Audit logs select
+  cmd: r  roles: authenticated
+  using: (( SELECT profiles.role
+   FROM profiles
+  WHERE (profiles.id = ( SELECT auth.uid() AS uid))) = 'admin'::user_role)
+  with_check: null
+
+policy: audit_logs_insert_authenticated
+  cmd: a  roles: authenticated
+  using: null
+  with_check: (user_id = auth.uid())
+
+policy: audit_logs_select_own_and_managed
+  cmd: r  roles: authenticated
+  using: (is_global_admin() OR ((store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text])))
+  with_check: null
+

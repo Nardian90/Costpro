@@ -11,6 +11,7 @@ import { canUndoSaleInStore } from "@/lib/roles";
 import { supabase } from "@/lib/supabaseClient";
 import { shouldUseV2Checkout } from "@/config/features";
 import { PaymentMethod } from "@/types";
+import { getSupervisorAuth, clearSupervisorAuth } from "./supervisor-auth-store";
 import type { LastSale } from "./POSCart.types";
 
 export function usePOSCheckout() {
@@ -146,6 +147,9 @@ export function usePOSCheckout() {
 
         if (useV2) {
           // ── Path v2: POST /api/pos/checkout (server-side recalculation + supervisor auth) ──
+          // REM-INV-4A-R (RC-1): consume the supervisor authorization captured
+          // by SupervisorAuthModal (bound to operator+store, short TTL).
+          const supervisorAuth = getSupervisorAuth();
           const response = await fetch('/api/pos/checkout', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -167,6 +171,10 @@ export function usePOSCheckout() {
               sale_exchange_rate: zelleAmount > 0 ? (useCartStore.getState().saleExchangeRate > 1 ? useCartStore.getState().saleExchangeRate : 680) : 1.0,
               customer_id: safeCustomerId,
               customer_name: customerName || null,
+              // REM-INV-4A-R (RC-1): forward the server-issued supervisor authorization
+              // (validated + signed at /api/auth/supervisor-check) when present.
+              supervisor_user_id: supervisorAuth?.userId ?? null,
+              supervisor_token: supervisorAuth?.token ?? null,
               idempotency_key: `sale-${crypto.randomUUID()}`,
               items: items.map((i) => ({
                 product_id: i.product_id,
@@ -201,6 +209,8 @@ export function usePOSCheckout() {
           }
           const data = await response.json();
           saleId = data.transaction_id;
+          // REM-INV-4A-R (RC-1): single sale per supervisor authorization.
+          clearSupervisorAuth();
           // v2: customer_id is already persisted atomically — no UPDATE needed
         } else {
           // ── Path v1: RPC directo (create_sale viejo, sin cambios) ──

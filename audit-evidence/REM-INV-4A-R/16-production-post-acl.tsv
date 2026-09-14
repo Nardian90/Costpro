@@ -1,0 +1,2 @@
+object	relacl
+public.audit_logs	{postgres=arwdDxtm/postgres,anon=arxt/postgres,authenticated=arxt/postgres,service_role=arwdDxtm/postgres,costpro_transaction_adjuster=a/postgres,costpro_snapshot_restorer=a/postgres}
