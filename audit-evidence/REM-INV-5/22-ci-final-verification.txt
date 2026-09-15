@@ -1,0 +1,111 @@
+REM-INV-5 — 22 GATE Q: verificación CI real (post-push, GitHub Actions API)
+
+Commit evaluado: cf2623a07a098298c49372b26268f571967990d4
+("security: enforce contract CI and harden store creation concurrency")
+Push: 31ebd4b9..cf2623a0 main -> main (2026-09-15T01:41Z aprox.)
+Método: GitHub Actions REST API (repos/Nardian90/Costpro/actions) — estado REAL,
+no falsificado; consultado tras el push desde la sesión de auditoría.
+
+=== RESULTADO CLAVE (Gate Q) ===
+RUN 34918285284 (workflow "CI", event=push, branch=main):
+  JOB "Security Audit":            conclusion=SUCCESS
+    step "Security contract (static, CI-safe)": conclusion=SUCCESS
+      → el security contract quedó EJECUTADO y APROBADO en CI real
+        (Capa A 134/134 + Capa B sin violaciones nuevas).
+  JOB "TypeCheck + Lint + Unit Tests + Build": conclusion=SUCCESS
+    (TypeCheck ✓ Lint ✓ Unit tests ✓ Build ✓ — el OOM exit 137 es una
+     limitación del host LOCAL de auditoría, no del runner de GitHub Actions).
+RUN 34918285283 (workflow "Test Coverage"):
+  JOB "Unit & Integration Tests":  conclusion=SUCCESS
+JOB "E2E Tests (Playwright)": job independiente con continue-on-error: true
+  (pre-existente en el repo); seguía in_progress dentro de su ventana de
+  30 min al momento de capturar este archivo; NO forma parte del gate de
+  seguridad ni afecta la verificación del security contract.
+
+=== FAIL → workflow failure (cadena de bloqueo) ===
+El paso del job ejecuta exactamente el mismo comando validado localmente:
+  node scripts/security-contract-test-static.cjs   (sin env, sin secrets)
+Exit semantics del comando: 1 en violación CRITICAL/HIGH → el paso falla →
+el job falla → el workflow falla → el PR queda bloqueado. Demostración local
+controlada (evidencia 03): inyección temporal → exit 1; tamper snapshot → exit 1;
+restauración → exit 0. Sin continue-on-error en el paso; sin reduzcas de casos.
+
+=== Histórico relevante (API) ===
+2149+ runs totales en el repo; CI y Test Coverage corren en cada push a main
+(trigger verificado byte a byte: branches: [main, master, develop] — una
+aparente malformación era un artefacto de renderizado de terminal, no un defecto).
+
+Capturado: 2026-09-15T02:00:04.841296+00:00
+
+=== Salida cruda de la API al momento de captura ===
+RUN 34918285284 | CI | status=in_progress | conclusion=null
+  JOB Security Audit | status=completed | conclusion=success
+    step: Set up job | status=completed | conclusion=success
+    step: Checkout | status=completed | conclusion=success
+    step: Setup Node.js | status=completed | conclusion=success
+    step: Setup Bun | status=completed | conclusion=success
+    step: Install dependencies | status=completed | conclusion=success
+    step: Audit dependencies | status=completed | conclusion=success
+    step: Check for hardcoded secrets | status=completed | conclusion=success
+    step: BOLA contract test | status=completed | conclusion=success
+    step: Security contract (static, CI-safe) | status=completed | conclusion=success
+    step: Post Setup Bun | status=completed | conclusion=success
+    step: Post Setup Node.js | status=completed | conclusion=success
+    step: Post Checkout | status=completed | conclusion=success
+    step: Complete job | status=completed | conclusion=success
+  JOB E2E Tests (Playwright) | status=in_progress | conclusion=null
+    step: Set up job | status=completed | conclusion=success
+    step: Checkout | status=completed | conclusion=success
+    step: Setup Node.js | status=completed | conclusion=success
+    step: Setup Bun | status=completed | conclusion=success
+    step: Install dependencies | status=completed | conclusion=success
+    step: Install Playwright Browsers | status=completed | conclusion=success
+    step: Build application | status=completed | conclusion=success
+    step: Start server | status=completed | conclusion=success
+    step: Run E2E tests | status=in_progress | conclusion=null
+    step: Upload E2E test results | status=pending | conclusion=null
+    step: Post Setup Bun | status=pending | conclusion=null
+    step: Post Setup Node.js | status=pending | conclusion=null
+    step: Post Checkout | status=pending | conclusion=null
+  JOB TypeCheck + Lint + Unit Tests + Build | status=completed | conclusion=success
+    step: Set up job | status=completed | conclusion=success
+    step: Checkout | status=completed | conclusion=success
+    step: Setup Node.js | status=completed | conclusion=success
+    step: Setup Bun | status=completed | conclusion=success
+    step: Install dependencies | status=completed | conclusion=success
+    step: TypeCheck | status=completed | conclusion=success
+    step: Lint | status=completed | conclusion=success
+    step: Unit tests | status=completed | conclusion=success
+    step: Build | status=completed | conclusion=success
+    step: Post Setup Bun | status=completed | conclusion=success
+    step: Post Setup Node.js | status=completed | conclusion=success
+    step: Post Checkout | status=completed | conclusion=success
+    step: Complete job | status=completed | conclusion=success
+RUN 34918285283 | Test Coverage | status=in_progress | conclusion=null
+  JOB Unit & Integration Tests | status=completed | conclusion=success
+    step: Set up job | status=completed | conclusion=success
+    step: Run actions/checkout@v4 | status=completed | conclusion=success
+    step: Setup Node.js | status=completed | conclusion=success
+    step: Setup Bun | status=completed | conclusion=success
+    step: Install dependencies | status=completed | conclusion=success
+    step: Run tests with coverage | status=completed | conclusion=success
+    step: Upload coverage HTML artifact | status=completed | conclusion=success
+    step: Post Setup Bun | status=completed | conclusion=success
+    step: Post Setup Node.js | status=completed | conclusion=success
+    step: Post Run actions/checkout@v4 | status=completed | conclusion=success
+    step: Complete job | status=completed | conclusion=success
+  JOB E2E Tests (Playwright) | status=in_progress | conclusion=null
+    step: Set up job | status=completed | conclusion=success
+    step: Run actions/checkout@v4 | status=completed | conclusion=success
+    step: Setup Node.js | status=completed | conclusion=success
+    step: Setup Bun | status=completed | conclusion=success
+    step: Install dependencies | status=completed | conclusion=success
+    step: Install Playwright browsers | status=completed | conclusion=success
+    step: Build application | status=completed | conclusion=success
+    step: Start server | status=completed | conclusion=success
+    step: Run E2E tests | status=in_progress | conclusion=null
+    step: Upload E2E test results | status=pending | conclusion=null
+    step: Post Setup Bun | status=pending | conclusion=null
+    step: Post Setup Node.js | status=pending | conclusion=null
+    step: Post Run actions/checkout@v4 | status=pending | conclusion=null
+

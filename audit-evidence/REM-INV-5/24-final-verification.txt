@@ -1,0 +1,38 @@
+REM-INV-5 — 24 verificación final
+
+Fecha cierre: 2026-09-15 (sesión REM-INV-5)
+
+Objetivo 1 — CI ejecuta el security contract:
+  [x] scripts/security-contract-test-static.cjs (Capa A 134/134 + Capa B PR-surface)
+  [x] Paso "Security contract (static, CI-safe)" en .github/workflows/ci.yml job security
+  [x] FAIL→BLOCK demostrado (inyección controlada → exit 1; tamper snapshot → exit 1)
+  [x] PASS→exit 0
+  [x] Verificación GitHub Actions REAL: job Security Audit=SUCCESS con el paso
+      del contrato=SUCCESS (run 34918285284) → ver 22-ci-final-verification.txt
+
+Objetivo 2 — Higiene PAT/documental:
+  [x] Fragmentos truncados eliminados de docs/ (2 archivos)
+  [x] REAL_SECRET = 0 en todo el repo tracked (174 hits clasificados)
+  [x] Sin reescritura de history; evidencia histórica intacta
+
+Objetivo 3 — Concurrencia create_store_with_membership:
+  [x] Carrera reproducida (C2 natural 6/2/6 con max=1; C3 determinista 2 tiendas)
+  [x] Advisory lock implementado (migración nueva reversible, delta 5 líneas)
+  [x] Re-attack POST: 10/10 casos esperados (C2 1+7 denegadas; C3 RACE CLOSED)
+  [x] Producción: HTTP 201, catálogo EXPECTED CHANGES ONLY, zero-touch 15/15
+
+Regresión:
+  [x] security-contract 134/134 LIVE PRE y POST (16/17)
+  [x] tsc 0 · vitest 2070/24 · lint 0/1291 (delta 0)
+  [x] GitHub Actions: Security Audit SUCCESS; Quality (tsc+lint+tests+build) SUCCESS
+  [x] PM2 online 0 restarts · HTTP 200 · .env intacto
+
+Git (estado al cierre):
+cf2623a0 security: enforce contract CI and harden store creation concurrency
+31ebd4b9 security: harden function execute ACLs
+070bc9d9 security: harden cross-store authorization surface
+worktree: M audit-evidence/REM-INV-5/MANIFEST.sha256
+?? audit-evidence/REM-INV-5/22-ci-final-verification.txt
+
+Manifest: sha256sum -c MANIFEST.sha256 → ALL OK (25 evidencias)
+Veredicto: CERTIFIED — PERMANENT SECURITY REGRESSION
