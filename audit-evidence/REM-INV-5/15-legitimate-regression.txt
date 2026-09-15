@@ -1,0 +1,21 @@
+REM-INV-5 — 15 GATE K: regresión de casos legítimos (staging PRE→POST)
+
+Casos legítimos del harness (idénticos PRE y POST):
+  C1  dos usuarios/tenants crean tiendas distintas              → PASS/PASS
+  C4  tenants distintos en paralelo (sin lock cruzado)          → PASS/PASS
+  C5  fallo forzado a mitad de función → rollback atómico total → PASS/PASS
+  C6  reintento tras fallo → sin duplicación, estado consistente→ PASS/PASS
+  C7  authenticated cross-tenant → DENIED 42501                 → PASS/PASS
+  C8  authenticated/anon con p_created_by suplantado → DENIED   → PASS/PASS
+
+Cambios de comportamiento POST (todos deseados):
+  C2 (8 concurrentes mismo tenant, max=1): PRE 6/2/6 creadas → POST 1 creada +
+     7 ERR_STORE_LIMIT_REACHED en las 3 rondas.
+  C3 (carrera determinista): PRE 2 tiendas → POST 1 tienda; el segundo caller
+     espera el lock (pg_locks: advisory waiting observado) y es denegado.
+
+Superficie de aplicación sin cambios:
+  - Firma del RPC idéntica → route.ts no requiere cambios (tsc 0 errores).
+  - ACL idéntica (service_role+postgres) → el único caller (API route admin)
+    conserva EXECUTE; flows autenticados no invocan el RPC directamente.
+  - RLS/policies/constraints sin cambios (0 statements no-DDL-función).

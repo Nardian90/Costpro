@@ -1,0 +1,18 @@
+REM-INV-5 — 16 security contract PRE (LIVE, scripts/security-contract-test.cjs)
+== Ejecutado tras implementar CI gate, antes del DDL de producción ==
+════════════════════════════════════════════════════════════════════════════════
+🔒 TEST DE CONTRATO — Seguridad de funciones SECURITY DEFINER
+════════════════════════════════════════════════════════════════════════════════
+
+Funciones SECURITY DEFINER con escritura detectadas: 134
+
+Funciones verificadas: 134
+Funciones con violaciones: 0
+
+✅ PIN REM-INV-2R: receive_purchase(uuid) sigue ausente del catálogo
+
+════════════════════════════════════════════════════════════════════════════════
+🎉 TODAS LAS FUNCIONES PASAN EL TEST DE CONTRATO
+════════════════════════════════════════════════════════════════════════════════
+
+EXIT=0

@@ -1,0 +1,43 @@
+REM-INV-5 — 12 GATE I: diseño del advisory lock
+
+BEFORE:
+  race window = entre SELECT COUNT(*) (check del límite) y INSERT INTO stores
+  (uso), dentro de create_store_with_membership; concurrentes mismo tenant
+  observan el mismo pre-count y exceden p_max_stores (demostrado: 6/2/6 tiendas
+  con max=1 en C2-r1/r2/r3; 2 tiendas en C3 determinista).
+
+LOCK RESOURCE:
+  El invariante lógico que necesita serialización es el CONTEO DE TIENDAS
+  ACTIVAS POR TENANT. Clave: hashtext('tenant_stores:' || v_tenant::text).
+
+AFTER:
+  race window = cerrada (el COUNT y el INSERT quedan dentro del perímetro del
+  lock; el segundo caller re-evalúa el COUNT tras adquirir el lock y ve el
+  commit del primero → ERR_STORE_LIMIT_REACHED).
+
+GRANULARITY:
+  Por tenant (prefijo 'tenant_stores:' namespaced según convención del repo
+  que ya usa 'product:', store_id y service_id como claves hashtext). Tenants
+  distintos nunca se bloquean (C4: paralelismo preservado). Colisiones de hash
+  (hashtext es int4) solo producen serialización extra ocasional entre tenants
+  no relacionados — degradación benigna, nunca incorrectitud.
+
+DEADLOCK RISK:
+  Ninguno demostrado: un único lock por transacción, adquirido una vez, sin
+  adquisiciones adicionales en otro orden; ningún otro objeto de la base usa
+  claves 'tenant_stores:'; el RPC se invoca standalone (PostgREST/admin client)
+  sin otros advisory locks retenidos.
+
+THROUGHPUT IMPACT:
+  Serializa únicamente la creación concurrente de stores del MISMO tenant
+  (operación administrativa rara). C4 mide paralelismo cross-tenant sin
+  degradación (3ms paralelo vs 2ms secuencial en staging). El lock es
+  pg_advisory_xact_lock → se libera automáticamente en COMMIT/ROLLBACK;
+  cero estado de sesión, cero dependencia de memoria de aplicación, y NO
+  sustituye constraints existentes (los UNIQUE siguen en pie).
+
+ISOLATION NOTE:
+  Bajo READ COMMITTED (default Supabase) el re-check dentro del lock ve el
+  commit del primero (snapshot por statement) → correcto. Bajo REPEATABLE READ
+  el check usaría snapshot de transacción; el fix es correcto para el modo de
+  aislamiento en producción.

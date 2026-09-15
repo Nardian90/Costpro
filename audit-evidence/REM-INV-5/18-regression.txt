@@ -1,0 +1,19 @@
+REM-INV-5 — 18 GATE M: regresión general (estado final del ticket)
+
+Herramienta      | Baseline (REM-INV-4C)        | Final (REM-INV-5)            | Delta
+-----------------+------------------------------+------------------------------+------
+npx tsc --noEmit | 0 errores                    | 0 errores (exit 0)           | 0
+npm test (vitest)| 2070 passed / 24 skipped     | 2070 passed / 24 skipped     | 0
+                 | (99 files passed, 1 skipped) | (99 files passed, 1 skipped) |
+npm run lint     | 0 errors / 1291 warnings     | 0 errors / 1291 warnings     | 0
+build            | KNOWN INFRASTRUCTURE LIMITATION (4GB host OOM / exit 137 histórico) —
+                 | no se ejecutó y no se declara PASS; clasificado como limitación de
+                 | infraestructura conocida del host, heredada de gates previos.
+
+security-contract LIVE     : 134/134 PRE y POST (16/17)
+security-contract estático : Capa A 134/134, Capa B 86 verificadas / 9 baseline / 0 nuevas (exit 0)
+Concurrency harness        : PRE reproducido (C2 6/2/6; C3 2 tiendas) → POST 10/10 esperados
+ Zero-touch producción     : 15/15 IDENTICAL
+Catálogo producción        : EXPECTED CHANGES ONLY (1 cuerpo de función)
+
+No se ocultaron warnings: los 1291 warnings de ESLint son los pre-existentes del baseline.

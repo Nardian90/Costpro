@@ -1,0 +1,14 @@
+REM-INV-5 — 19 GATE N: producción PRE (precondiciones)
+
+captured_at: 2026-09-15T01:28:09.454Z
+target md5 PRE: da512cbcbbc4cbab35edf48bde15ff4d (== baseline 4C, sin drift)
+target def_sha256 PRE: a4e9748a30fa62bc665aec1b91ac83c638cd3e431a8dce6e0239644b3f666b0e
+target proacl PRE: ['postgres=X/postgres', 'service_role=X/postgres']
+target secdef/owner/config: True / postgres / ['search_path=pg_catalog, public']
+funciones públicas totales: 484 (== fingerprint 4C: 484)
+db-side callers: 0
+zero-touch PRE: 15 tablas (rows + max(created_at)) capturadas → out/prod-pre.json
+Precondiciones verificadas: staging PASS (14/14 casos), security-contract PASS
+(134/134 LIVE y estático), regression PASS (tsc 0, vitest 2070/24, lint 0/1291),
+secret scan PASS (REAL_SECRET=0), migración revisada (delta 5 líneas),
+delta de catálogo esperado definido (1 cuerpo de función).

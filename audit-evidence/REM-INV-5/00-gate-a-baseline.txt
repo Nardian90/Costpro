@@ -1,0 +1,37 @@
+REM-INV-5 — GATE A — BASELINE
+Date: 2026-09-15T00:43:30Z
+Repo: /home/z/my-project/Costpro
+
+git rev-parse HEAD:
+31ebd4b92b0d6a29395258906aaf031337950794
+
+git rev-parse origin/main:
+31ebd4b92b0d6a29395258906aaf031337950794
+
+git status --short:
+?? audit-evidence/REM-INV-5/
+(empty = clean)
+
+git log -1 --oneline:
+31ebd4b9 security: harden function execute ACLs
+
+git diff --stat:
+(empty = no unstaged changes)
+
+git fetch origin: EXIT=0 (no new remote refs)
+
+Recent timeline:
+31ebd4b9 security: harden function execute ACLs
+070bc9d9 security: harden cross-store authorization surface
+e2e2a19e fix(security): close supervisor authorization bypass and audit_logs ACL hardening (rem-inv-4a-r RC-1+RC-2)
+751a5c01 audit(rem-inv-4a): authorization spoofing & audit_logs ACL forensic certification
+5f927364 audit(rem-inv-4): session addendum — fresh LIVE re-verification (0 material drift vs pack), Q1-Q16 matrix, task-order artifact gaps filled (indexes/sequences/types/rls/extensions), session zero-touch PRE==POST, F-14 (MAINTAIN capture gap, D3), manifest refresh
+3add529c audit(rem-inv-4): PostgreSQL schema drift & function integrity gate
+793d1309 chore(audit): rem-inv-3c — include staging run log as txt (gitignore-safe) + manifest refresh
+8df6e024 fix(db): rem-inv-3c — restore document-transition validator maps + fail-closed NULL handling
+
+CONSTRAINTS CHECK:
+HEAD == origin/main == 31ebd4b9: YES
+WORKTREE CLEAN: YES
+BASELINE = 31ebd4b9: YES
+GATE A: PASS

@@ -1,0 +1,52 @@
+REM-INV-5 — 02 GATE C: diseño CI (cambio mínimo)
+
+Objetivo: cada PR ejecuta automáticamente el security contract (hoy manual).
+
+Restricciones que condicionan el diseño:
+  - Prohibido meter credenciales de producción en CI.
+  - El contract LIVE (categoría C) requiere SUPABASE_ACCESS_TOKEN.
+  - Prohibido reducir 134 checks / convertir failures en warnings.
+
+Alternativas evaluadas:
+  A. Test estático puro sobre migraciones — RECHAZADO como único mecanismo:
+     el replay de migraciones solo cubre 86/134 (drift estructural, ver 01) y
+     reporta 9 violaciones históricas que en LIVE están corregidas out-of-band.
+     Un CI así sería permanentemente rojo o tendría menos casos que LIVE.
+  B. PostgreSQL efímero en CI aplicando migraciones — mismo drift (86/9),
+     más lento y con el mismo problema de fidelidad. RECHAZADO como único.
+  C. Contract LIVE en CI con secrets — PROHIBIDO por el ticket. RECHAZADO.
+  D. Sync-migration con las 134 definiciones LIVE → RECHAZADO: tocaría el
+     cuerpo de ~96 funciones en producción (md5 churn masivo), violando la
+     disciplina zero-touch / EXPECTED CHANGES ONLY de este ticket.
+
+DISEÑO ELEGIDO (D — combinación A+B estática, 2 capas):
+  scripts/security-contract-test-static.cjs (nuevo, Node puro, 0 dependencias,
+  0 red, 0 secretos) con la MISMA semántica de checks y exit codes:
+
+  Capa A — surface LIVE certificado:
+    supabase/security-contract/contract-surface.sql (GENERADO, 449KB,
+    sha256 4a3004864872132411f9f45264f4dcf24e2c117dfb522e828334ddfb8138a825)
+    = pg_get_functiondef verbatim de las 134 funciones + proacl capturado,
+    producido por scripts/export-contract-surface.cjs (SOLO manual, con token).
+    CI aplica los 4 checks + PIN sobre los 134 → equivale 1:1 al contract LIVE
+    en el momento de certificación. Cualquier violación CRITICAL/HIGH → exit 1.
+
+  Capa B — superficie PR (stream de migraciones):
+    replay de supabase/migrations/*.sql (orden por nombre) → estado final de
+    cada función definida en migraciones; los 4 checks + PIN se aplican igual.
+    Las 9 violaciones históricas se aceptan SOLO a través del baseline revisado
+    ci-gate-allowlist.json (nueva clave security_contract_static_baseline,
+    convención existente: function+rules+reason+added_by+expires=2026-12-31).
+    Una violación NUEVA (función sin baseline, o regla nueva sobre una con
+    baseline) → exit 1. Así, un PR que introduzca una función vulnerable
+    BLOQUEA el build aunque el snapshot de Capa A no cambie.
+
+  Integración: paso nuevo "Security contract (static, CI-safe)" en el job
+  security de .github/workflows/ci.yml (workflow existente; sin duplicar).
+
+  Re-certificación: cuando un gate futuro cambie funciones en producción, el
+  auditor re-genera el snapshot con credenciales (nunca CI) y lo commitea.
+
+Garantía permanente: los 4 checks + pin que protegen los hardenings
+REM-INV-2R/3C/4A/4B/4C (patrón anti-spoofing, fail-open, anon EXECUTE,
+search_path, receive_purchase) quedan forzados en cada PR.

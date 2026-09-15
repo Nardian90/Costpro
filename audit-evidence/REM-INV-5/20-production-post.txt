@@ -1,0 +1,21 @@
+REM-INV-5 — 20 GATE O: producción POST
+
+captured_at: 2026-09-15T01:34:32.340Z
+Aplicación: 1 llamada Management API (migración completa en 1 transacción), HTTP 201.
+
+target md5 POST: a6477c1bd46d3727fb6bd583404c42e6 (PRE: da512cbcbbc4cbab35edf48bde15ff4d)
+target secdef/owner/config POST: True / postgres / ['search_path=pg_catalog, public']
+target proacl POST: ['postgres=X/postgres', 'service_role=X/postgres'] (idéntico PRE)
+
+CATALOG DIFF (484 funciones públicas):
+  changed: [
+  {
+    "signature": "create_store_with_membership(text,text,uuid,integer,text,text,text,text,text,text,text,text,text,text,double precision,double precision,uuid)",
+    "body_md5": "da512cbcbbc4cbab35edf48bde15ff4d -> a6477c1bd46d3727fb6bd583404c42e6"
+  }
+]
+  added: [] | removed: []
+  EXPECTED_CHANGES_ONLY = True
+
+No hubo: DML, cambios de datos, cambios RLS/policies, cambios de grants,
+cambios en otras funciones. Diff = EXACTAMENTE el cuerpo del target.

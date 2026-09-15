@@ -165,3 +165,13 @@ jobs:
         # V2.12.38: Verifica que TODOS los endpoints multi-tenant bajo
         # /api/production-orders/ y /api/accounts-receivable tengan el guard
         # explícito de store_id (defense-in-depth sobre RLS)
+
+      - name: Security contract (static, CI-safe)
+        run: node scripts/security-contract-test-static.cjs
+        # REM-INV-5: engancha el security contract a CI sin secretos de producción.
+        # Capa A: re-ejecuta los 4 checks + pin REM-INV-2R sobre el surface LIVE
+        # certificado (supabase/security-contract/contract-surface.sql, 134 funciones).
+        # Capa B: replay de migraciones; una violación NUEVA en un PR bloquea el build
+        # (baseline histórico revisado en ci-gate-allowlist.json).
+        # El contract LIVE (scripts/security-contract-test.cjs) requiere
+        # SUPABASE_ACCESS_TOKEN y NUNCA debe ejecutarse en CI.

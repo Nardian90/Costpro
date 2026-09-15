@@ -1,0 +1,25 @@
+REM-INV-5 — 21 GATE P: zero-touch PRE vs POST (15 tablas de negocio)
+
+table                 | rows PRE | rows POST | max_created_at PRE==POST
+--------------------------------------------------------------------------
+devolutions           |       25 |        25 | IDENTICAL
+transactions          |      597 |       597 | IDENTICAL
+payment_transactions  |      458 |       458 | IDENTICAL
+stock_movements       |     1021 |      1021 | IDENTICAL
+inventory             |      277 |       277 | IDENTICAL
+audit_logs            |     8150 |      8150 | IDENTICAL
+business_events       |    10897 |     10897 | IDENTICAL
+purchase_orders       |        8 |         8 | IDENTICAL
+receipts              |       63 |        63 | IDENTICAL
+transfers             |        8 |         8 | IDENTICAL
+inventory_adjustments |        5 |         5 | IDENTICAL
+products              |      367 |       367 | IDENTICAL
+stores                |       50 |        50 | IDENTICAL
+user_store_memberships|       90 |        90 | IDENTICAL
+profiles              |       80 |        80 | IDENTICAL
+
+Resultado: 15/15 tablas IDENTICALES
+(rows count + max(created_at) PRE == POST; differences=[])
+
+Mutación de datos en producción durante el gate: 0.
+(Durante diagnóstico: producción READ ONLY — solo SELECT/catalog inspection.)

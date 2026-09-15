@@ -15,7 +15,7 @@
 |---------|---------|-------:|--------|
 | `supabase/migrations/20260802000009_v2_12_48_bulk_delete_safety.sql` | v2.12.48 | ~350 | ✅ Aplicada a Producción |
 
-**Aplicada vía:** Supabase Management API (`POST /v1/projects/{ref}/database/query`) con PAT `sbp_b3e5db...`
+**Aplicada vía:** Supabase Management API (`POST /v1/projects/{ref}/database/query`) con PAT `` `[sbp_*** REDACTADO (REM-INV-5)] ***` ``
 
 **Fecha de aplicación:** 2026-08-02 03:50 UTC
 

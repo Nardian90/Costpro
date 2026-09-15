@@ -39,5 +39,90 @@
       "expires": "2026-12-31"
     }
   ],
-  "tables_without_rls": []
+  "tables_without_rls": [],
+  "security_contract_static_baseline": [
+    {
+      "function": "create_quotation/10",
+      "rules": [
+        "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
+      ],
+      "reason": "REM-INV-5: definicion historica en migraciones; el fix LIVE esta fuera de banda y certificado (security contract LIVE 134/134). La definicion vigente en produccion cumple el contrato.",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "create_sale/16",
+      "rules": [
+        "ANTI_SPOOFING_GUARD_MISSING",
+        "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
+      ],
+      "reason": "REM-INV-5: version historica 16-args en migraciones; LIVE usa la version corregida out-of-band (certificada 134/134). Nueva regla sobre esta funcion sierra el build.",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "duplicate_inventory_adjustment/2",
+      "rules": [
+        "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
+      ],
+      "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "perform_inventory_adjustment/7",
+      "rules": [
+        "ANTI_SPOOFING_GUARD_MISSING",
+        "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
+      ],
+      "reason": "REM-INV-5: version historica en migraciones; LIVE usa version corregida out-of-band (certificada 134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "receive_production_output/6",
+      "rules": [
+        "ANTI_SPOOFING_GUARD_MISSING"
+      ],
+      "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "record_counted_quantity/5",
+      "rules": [
+        "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
+      ],
+      "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_stock_movement/7",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-5: overload historica en migraciones; la version LIVE (out-of-band) tiene SET search_path (certificada 134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_stock_movement/8",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-5: overload historica en migraciones; la version LIVE (out-of-band) tiene SET search_path (certificada 134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "withdraw_production_item/6",
+      "rules": [
+        "ANTI_SPOOFING_GUARD_MISSING"
+      ],
+      "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    }
+  ]
 }

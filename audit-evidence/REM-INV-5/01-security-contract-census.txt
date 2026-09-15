@@ -1,0 +1,38 @@
+REM-INV-5 — 01 GATE B: censo del security contract
+
+Ubicación: scripts/security-contract-test.cjs (231 líneas)
+Registro package.json: "test:security": "node scripts/security-contract-test.cjs"
+Cómo se ejecuta hoy: manualmente en sesiones de auditoría con credenciales
+(SUPABASE_ACCESS_TOKEN) contra el proyecto LIVE vía Management API
+(https://api.supabase.com/v1/projects/<ref>/database/query).
+
+Clasificación (pregunta crítica Gate B): C — necesita Supabase remoto/secreto.
+  Requiere: NEXT_PUBLIC_SUPABASE_URL + SUPABASE_ACCESS_TOKEN (exit 2 si faltan).
+  NO requiere base PostgreSQL local; NO puede ejecutarse en CI sin secretos;
+  las credenciales de producción NO deben entrar a CI (restricción del ticket).
+
+Exit codes: 0 = PASS (o solo warnings MEDIUM/LOW), 1 = violación CRITICAL/HIGH
+(build bloqueado), 2 = error de harness/infraestructura.
+
+Qué verifica (por función): 4 checks sobre TODA función SECURITY DEFINER en
+public con escritura (INSERT|UPDATE|DELETE)\s+(INTO|public\.) en el cuerpo:
+  1. ANTI_SPOOFING_GUARD_MISSING (CRITICAL) — guard V2.12.9 auth.role()='service_role'
+  2. VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT / _THEN (HIGH) — patrones fail-open
+  3. ANON_EXECUTE_GRANTED (MEDIUM; excepción webhook|public_endpoint|register_anon)
+  4. SEARCH_PATH_NOT_SET (LOW)
++ PIN REM-INV-2R: receive_purchase(uuid) debe permanecer ausente (CRITICAL).
+Semántica de bloqueo: exit 1 solo con CRITICAL|HIGH (idéntica en ambos layers).
+
+Censo LIVE al baseline (re-verificado en REM-INV-5): 134 funciones
+SECURITY DEFINER con escritura; 0 violaciones; PIN OK (134/134).
+Otras suites que lo referencian: ninguna en CI (solo docs/ y evidence packs
+de REM-INV-4A/4B/4C, que lo ejecutaron manualmente PRE/POST).
+
+Hallazgo estructural (drift migraciones ↔ LIVE):
+  - 62/134 funciones LIVE nunca estuvieron en migraciones (audit_*_changes,
+    managed_*, fn_process_*, fn_recalc_wac, log_*, generate_*, etc.).
+  - Algunas definiciones en migraciones están obsoletas (LIVE tiene fixes
+    out-of-band aplicados vía Management API en iteraciones/gates previos).
+  - Consecuencia: un replay de migraciones produce 86 funciones y 9 violaciones
+    históricas — NO puede reproducir fielmente el surface LIVE de 134.
+  - El DCL de REM-INV-4C (REVOKE EXECUTE) tampoco existe como migración.

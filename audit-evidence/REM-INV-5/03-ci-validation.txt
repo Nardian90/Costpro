@@ -1,0 +1,34 @@
+REM-INV-5 — 03 GATE C/D: validación del CI gate
+
+== Fidelidad Capa A vs LIVE ==
+node scripts/export-contract-surface.cjs → 134 funciones, sha256=4a3004864872…
+node scripts/security-contract-test-static.cjs (Capa A):
+Funciones SECURITY DEFINER con escritura detectadas: 134
+Funciones verificadas: 134
+Funciones con violaciones: 0
+(comparación con censo LIVE fresco de REM-INV-5: mismo conjunto, ver out/)
+
+== Comparación estático-vs-LIVE (capa B, drift documentado) ==
+LIVE SECDEF-write functions: 134
+Migration-derived SECDEF-write functions: 86
+In LIVE but NOT in migration-derived state: 62 (detalle en out/static-vs-live-diff.json)
+In migration state but NOT in LIVE census: 0
+Conclusión: la Capa B es superficie PR (no fuente de verdad); el baseline
+revisado cubre las 9 definiciones históricas obsoletas.
+
+== Validación controlada FAIL → BLOCK (sin tocar producción) ==
+(1) Inyección temporal supabase/migrations/99999999999999_ci_validation_injected.sql
+    (función SECURITY DEFINER con p_user_id + has_store_access_as SIN guard):
+    → EXIT=1; detectada como ci_validation_vulnerable_fn/2 — BUILD BLOQUEADO
+    → archivo eliminado inmediatamente; git status limpio; EXIT=0 tras restaurar
+(2) Tamper de Capa A (función vulnerable añadida temporalmente al snapshot):
+    → EXIT=1 (135 verificadas, 1 violación); restaurado; EXIT=0
+(3) PASS path: exit 0 con "CONTRATO OK — Capa A: 134/134 · Capa B: 86 verificadas,
+    9 baseline, 0 nuevas"
+
+== Reglas anti-fraude verificadas ==
+- No se desactivó ningún caso; el baseline NO reduce la cobertura Capa A (134).
+- No se convirtieron failures en warnings (CRITICAL/HIGH siempre bloquean).
+- No hay continue-on-error en el paso nuevo.
+- El contract LIVE sigue intacto y requiere credenciales (nunca CI).
+- Los 134 checks de Capa A provienen del mismo censo que ejecuta el LIVE test.

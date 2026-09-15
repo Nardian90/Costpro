@@ -1,0 +1,34 @@
+REM-INV-5 — 09 GATE G: hipótesis de concurrencia + análisis formal
+
+HIPÓTESIS (a demostrar, no asumida):
+  Dos solicitudes concurrentes de creación de store para el MISMO tenant pueden
+  exceder p_max_stores porque el check de límite (COUNT) y el INSERT no están
+  serializados: TOCTOU clásico sobre el invariante "active stores del tenant < max".
+
+Ventana exacta (READ COMMITTED, aislamiento por defecto de Supabase):
+  S1: SELECT COUNT(*) FROM stores WHERE tenant_id=T AND is_active  -> 0
+  S2: SELECT COUNT(*) ...                                          -> 0   (S1 aún no commit)
+  S1: INSERT INTO stores ...  COMMIT
+  S2: INSERT INTO stores ...  COMMIT      → 2 tiendas activas con max=1
+
+Protecciones existentes (inspección LIVE):
+  - stores_name_active_unique (UNIQUE(name) WHERE is_active): solo impide
+    DUPLICAR EL MISMO NOMBRE; con nombres distintos la carrera queda abierta.
+  - stores_slug_unique: idem slug.
+  - user_store_memberships_user_id_store_id_key: dedup de membership por tienda
+    (no cubre el límite entre tiendas distintas).
+  - No existe constraint posible que exprese "count < max" (regla de negocio
+    agregada) → requiere serialización explícita.
+  - ON CONFLICT (user_id, store_id) DO NOTHING: irrelevante para la carrera.
+  - No hay advisory locks en esta función; el codebase SÍ usa el patrón
+    pg_advisory_xact_lock(hashtext('<prefijo>:' || id::text)) en otras
+    funciones (transferencias, vales, pagos, producciones) — convención
+    establecida que el fix sigue.
+
+Condiciones esperadas de la demostración:
+  PRE  (sin lock): C2 natural (8 concurrentes, max=1) debe crear >1 tienda en
+  alguna ronda; C3 determinista (interleaving forzado con transacción abierta)
+  debe crear exactamente 2 con max=1.
+  POST (con lock): C2 = 1 creada + 7 rechazadas ERR_STORE_LIMIT_REACHED en TODAS
+  las rondas; C3 = 1 tienda; C4 (tenants distintos) sin bloqueo cruzado;
+  C5/C6 rollback atómico y reintento consistentes; C7/C8 denials intactos.

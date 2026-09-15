@@ -17,7 +17,7 @@
 | **Líneas** | ~350 |
 | **Fecha aplicación** | 2026-08-02 03:50 UTC |
 | **Método** | Supabase Management API (`POST /v1/projects/{ref}/database/query`) |
-| **PAT usado** | `sbp_b3e5db...` |
+| **PAT usado** | `` `[sbp_*** REDACTADO (REM-INV-5)] ***` `` |
 | **Estado** | ✅ Aplicada a producción |
 
 ### Fix post-deploy

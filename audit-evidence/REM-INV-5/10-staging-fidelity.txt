@@ -1,0 +1,27 @@
+REM-INV-5 — 10 GATE H: fidelidad del staging PG 17.6
+
+Clúster: PostgreSQL 17.6 portable (binarios rem4ar/pg), puerto 5436, initdb
+fresco, ROLE postgres trust local. Destruido al cierre del gate.
+
+Fixture (scripts/rem5/fixture.sql, generado por build-fixture.mjs):
+  - create_store_with_membership: VERBATIM pg_get_functiondef LIVE
+  - Verificación de fidelidad ANTES de los ataques:
+      md5(prosrc) staging = da512cbcbbc4cbab35edf48bde15ff4d  == LIVE
+      prosecdef = true                                        == LIVE
+      proconfig = search_path=pg_catalog, public               == LIVE
+      proacl = {postgres=X/postgres, service_role=X/postgres}  == LIVE
+      privs: anon=false authenticated=false service_role=true public=false == LIVE
+  - Constraints replicados: stores_slug_unique, stores_name_active_unique
+    (UNIQUE(name) WHERE is_active=true), pkey, memberships UNIQUE(user_id,store_id)
+  - Roles anon/authenticated/service_role + shims auth.uid()/auth.role() sobre
+    request.jwt.claim.* (equivalente PostgREST)
+  - Datos: TENANT_A/TENANT_B, usuarios UA/UB (tenant A) y UC (tenant B)
+
+Excepciones de fidelidad (documentadas):
+  - Tablas simplificadas a las columnas que la función toca (+ constraint parity).
+  - FK a auth.users sustituida por uuid plano (el cuerpo no la recorre).
+  - CONSTRAINT fixture_rollback_sentinel en audit_logs (fixture-only, documentado
+    en el propio fixture): rechaza metadata->>'store_name'='ROLLBACK_TEST' para
+    inyectar un fallo determinista a mitad de función en C5. Producción NO tiene
+    ese constraint.
+  - service_role NOLOGIN BYPASSRLS (paridad con el rol Supabase).

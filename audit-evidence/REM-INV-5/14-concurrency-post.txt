@@ -1,0 +1,67 @@
+══════ REM-INV-5 CONCURRENCY HARNESS — MODE POST — 2026-09-15T01:04:50.921Z ══════
+
+[C1] unique creation: 2 users, 2 distinct stores
+  expected : PASS (2 stores, 2 memberships)
+  observed : 2 stores / 2 memberships
+  verdict  : PASS
+  detail   : storeA=380eb49f-8515-42aa-83db-79a9b9357db7 storeB=8711b7af-3fd8-4380-bfc9-a97d4051dc6b
+
+[C2-r1] 8 concurrent same-tenant (max=1), natural race, round 1
+  expected : POST: exactly 1 created + 7 ERR_STORE_LIMIT_REACHED, state consistent
+  observed : created=1 limit-denied=7 otherErr=0 stores=1 memberships=1 (12ms)
+  verdict  : PASS(limit respected)
+
+[C2-r2] 8 concurrent same-tenant (max=1), natural race, round 2
+  expected : POST: exactly 1 created + 7 ERR_STORE_LIMIT_REACHED, state consistent
+  observed : created=1 limit-denied=7 otherErr=0 stores=1 memberships=1 (4ms)
+  verdict  : PASS(limit respected)
+
+[C2-r3] 8 concurrent same-tenant (max=1), natural race, round 3
+  expected : POST: exactly 1 created + 7 ERR_STORE_LIMIT_REACHED, state consistent
+  observed : created=1 limit-denied=7 otherErr=0 stores=1 memberships=1 (3ms)
+  verdict  : PASS(limit respected)
+
+[C3] deterministic exact race: interleaved check-then-insert, same tenant, max=1
+  expected : POST: 1 store persists; second call DENIED by ERR_STORE_LIMIT_REACHED
+  observed : no violation: 1 active store(s)
+  verdict  : RACE CLOSED
+  detail   : B-waited-on-advisory=true(1ms); B: DENIED(ERR_STORE_LIMIT_REACHED: Tenant a0000000-0000-0000-0000-00000000000a has 1 active stores, limit is 1); stores=1 active_a=1 (max=1)
+
+[C4] independent tenants proceed concurrently (no global lock)
+  expected : PASS: both created; parallel wall-time ≈ single call (baseline 1ms)
+  observed : stores=2, parallel wall=3ms vs single=1ms
+  verdict  : PASS
+
+[C5] forced failure at audit_logs (fixture sentinel) → store+membership rollback together
+  expected : ROLLBACK: 0 stores, 0 memberships, 0 audits, active_store_id NULL
+  observed : stores=0 memberships=0 audits=0 active_store_id=null; fnError=yes(fixture_rollback_sentinel)
+  verdict  : PASS
+
+[C6] retry after mid-function failure → consistent, no duplication
+  expected : PASS: exactly 1 store + 1 membership after retry
+  observed : firstAttempt=failed(expected); stores=1 memberships=1
+  verdict  : PASS
+
+[C7] authenticated caller attempts cross-tenant creation (p_tenant_id=TENANT_B)
+  expected : DENIED (no EXECUTE for authenticated — 42501)
+  observed : DENIED: permission denied for function create_store_with_membership
+  verdict  : PASS
+
+[C8] privilege abuse: spoofed p_created_by/p_max_stores via authenticated+anon
+  expected : DENIED both (42501)
+  observed : authenticated: DENIED; anon: DENIED
+  verdict  : PASS
+
+══════ SUMMARY POST ══════
+✅ [C1] PASS — 2 stores / 2 memberships
+✅ [C2-r1] PASS(limit respected) — created=1 limit-denied=7 otherErr=0 stores=1 memberships=1 (12ms)
+✅ [C2-r2] PASS(limit respected) — created=1 limit-denied=7 otherErr=0 stores=1 memberships=1 (4ms)
+✅ [C2-r3] PASS(limit respected) — created=1 limit-denied=7 otherErr=0 stores=1 memberships=1 (3ms)
+✅ [C3] RACE CLOSED — no violation: 1 active store(s)
+✅ [C4] PASS — stores=2, parallel wall=3ms vs single=1ms
+✅ [C5] PASS — stores=0 memberships=0 audits=0 active_store_id=null; fnError=yes(fixture_rollback_sentinel)
+✅ [C6] PASS — firstAttempt=failed(expected); stores=1 memberships=1
+✅ [C7] PASS — DENIED: permission denied for function create_store_with_membership
+✅ [C8] PASS — authenticated: DENIED; anon: DENIED
+
+POST total cases: 10, unexpected outcomes: 0

@@ -1,0 +1,30 @@
+REM-INV-5 — 07 GATE F: censo create_store_with_membership (repo + LIVE)
+
+== App/repo (rg sobre src supabase scripts tests docs) ==
+- Caller de aplicación ÚNICO: src/app/api/stores/route.ts (POST /api/stores)
+  con guard withRole('admin'); usa getSupabaseAdminSafe() (service_role);
+  p_created_by = session.user.id; p_max_stores = PLAN_STORE_LIMITS[profile.plan] ?? 1;
+  p_tenant_id desde profile. Comentario del route: "plan limit is also enforced
+  inside the RPC for atomicity" — el check interno del RPC ES el enforcement
+  atómico previsto; la carrera compromete exactamente esa garantía.
+- Existe pre-check a nivel app (checkStoreQuota) — también TOCTOU, defensa en
+  profundidad; el RPC es la barrera atómica final.
+- 0 hooks/servicios/server actions llaman el RPC; 0 tests directos.
+- Migraciones canónicas:
+    20260614000002_create_store_with_membership.sql (original)
+    20260802000001_v2_12_41_fase0_remediacion.sql (anti-spoofing)
+    20260806000005_v2_15_5_create_store_with_tenant.sql (firma actual + p_tenant_id)
+    20260902000002_w9_f06_secdef_execute_hardening.sql (grants service_role-only)
+    20260902205210_w9_f06_h1_security_definer_search_path.sql (search_path)
+- Docs: referencia documental en ITERATION_8/9 (sin callers).
+
+== LIVE (Management API, read-only) ==
+Firma exacta: create_store_with_membership(text,text,uuid,integer,text,text,text,
+text,text,text,text,text,text,text,double precision,double precision,uuid)
+OID único (1 overload) | owner: postgres | SECURITY DEFINER | volatile
+proconfig: search_path=pg_catalog, public
+proacl: postgres=X/postgres, service_role=X/postgres
+has_function_privilege: anon=false authenticated=false service_role=true public=false
+md5(prosrc) PRE: da512cbcbbc4cbab35edf48bde15ff4d
+sha256(pg_get_functiondef) PRE: a4e9748a30fa62bc665aec1b91ac83c638cd3e431a8dce6e0239644b3f666b0e
+Callers DB-side: 0 | triggers: 0 | vistas: 0
