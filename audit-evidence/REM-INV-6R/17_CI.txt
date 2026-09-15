@@ -1,0 +1,20 @@
+REM-INV-6R — 17_CI (Gates T/U)
+timestamp: 2026-09-15T20:29:42Z
+commit auditado: 7dd74d90f8fa5169413b35ce2f63f06c1875c083 (HEAD == origin/main)
+
+=== Gate T — CI REAL (push a main) ===
+run 35015372491 (CI):
+  · TypeCheck + Lint + Unit Tests + Build → SUCCESS (incluye npm run build — el OOM local era infraestructura)
+  · Security Audit → SUCCESS (ejecuta scripts/security-contract-test-static.cjs = Layer A 141 + Layer B 188 + Layer C 141/141)
+  · E2E Tests (Playwright) → cancelled — COMPORTAMIENTO PREEXISTENTE (continue-on-error: true + timeout 30min; el run baseline certificado de REM-INV-6 34929053031 tiene la MISMA conclusión)
+run 35015372648 (Test Coverage): SUCCESS
+
+=== Gate U — NEGATIVE CI REAL (rama desechable + PR 1321, nunca merged) ===
+canary: negative_ci_canary(p_user_id uuid) SECURITY DEFINER + has_store_access_as SIN guard + DELETE/INSERT/UPDATE + GRANT anon
+· Security CI Gate (run 35019089685): TypeScript Security Checks → FAILURE (SQL Security Checks skipped)
+· CI (run 35019089658): Security Audit → FAILURE (Bloqueado)
+· calidad (TypeCheck+Lint+Tests+Build) → success (la violación es de CONTRATO de seguridad, no de calidad — el gate correcto falla)
+· CIERRE: PR cerrado SIN merge, rama eliminada (404), main intacto
+
+=== Cierre git ===
+worktree clean tras push; HEAD==origin/main==7dd74d90
