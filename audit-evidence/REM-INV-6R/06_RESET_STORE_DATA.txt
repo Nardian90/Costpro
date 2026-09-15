@@ -1,0 +1,40 @@
+REM-INV-6R — 06_RESET_STORE_DATA
+timestamp: 2026-09-15T19:29:01Z
+
+=== LIVE catalog (Management API, read-only) — TODOS los overloads ===
+[
+ {
+  "sig": "reset_store_data(uuid,boolean,uuid)",
+  "owner": "postgres",
+  "prosecdef": true,
+  "vol": "v",
+  "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+  "exec_privs": "postgres:EXECUTE, service_role:EXECUTE",
+  "body_refs": 0,
+  "trigger_refs": 0
+ },
+ {
+  "sig": "reset_store_data(uuid,boolean)",
+  "owner": "postgres",
+  "prosecdef": true,
+  "vol": "v",
+  "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+  "exec_privs": "postgres:EXECUTE, service_role:EXECUTE",
+  "body_refs": 0,
+  "trigger_refs": 0
+ }
+]
+
+=== Firmas en migraciones (parser, last-wins) ===
+reset_store_data/2 @ 20260619000001_reset_store_data_with_keep_catalog.sql (ops: UPDATE,DELETE) — RECreada en 20260820000005_post_restore_reconciliation.sql
+reset_store_data/3 @ 20260802000001_v2_12_41_fase0_remediacion.sql (ops: INSERT,UPDATE,DELETE)
+
+=== Clasificación Gate G (§10) ===
+LIVE?: 2 overloads (uuid,boolean,uuid) y (uuid,boolean) — AMBOS en LIVE
+CALLABLE?: EXECUTE = {postgres, service_role} únicamente (proacl no-default, PUBLIC/anon/authenticated SIN EXECUTE)
+PUBLIC?: NO. ANON?: NO. AUTHENTICATED?: NO. SERVICE_ROLE?: SÍ (trusted interno)
+REFERENCED?: 0 body_refs (ninguna otra función la llama), 0 trigger_refs; callers API: src/app/api/stores/reset/route.ts (usa la 3-arg con p_user_id anti-spoofing V2.12.41, tras withRole + canManageStore)
+DINÁMICO (staging, ataque A5): authenticated → reset_store_data → 'permission denied for function reset_store_data' — NO ejecutable
+
+=== RES-B (§33) ===
+reset_store_data(2 args): B1 TECHNICAL DEBT ONLY — vivo en LIVE y migraciones, SIN permisos para roles de usuario, 0 callers de código (el route usa la 3-arg), 0 triggers, 0 exposición API directa. No elimina en esta fase (Gate D/§34). Deuda técnica documentada con expiry n/a — retiro futuro opcional.

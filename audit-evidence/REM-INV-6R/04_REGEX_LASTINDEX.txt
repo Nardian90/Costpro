@@ -1,0 +1,13 @@
+REM-INV-6R — 04_REGEX_LASTINDEX
+timestamp: 2026-09-15T19:40:52Z
+
+[I1] RegExp.lastIndex isolation + 10x determinism
+  PASS  isolation.b1.body.independent.of.A — len=24
+  PASS  isolation.c1.longtag.independent — len=23
+  PASS  isolation.b.solo.equals.sequential
+  PASS  determinism.10x.identical — unique_hashes=1 files=17
+
+════════════════════════════════════════════════════════════════════════
+RESULT: 59 pass / 0 fail — parser: security-contract-test-static.cjs
+
+Resultado: determinismo 10/10 idéntico (SHA del output completo del corpus de 17 fixtures), aislamiento lastIndex demostrado (multi-match → single-match independiente, solo vs secuencial idénticos). El parser ejecuta re.exec sobre el TEXTO COMPLETO y gestiona lastIndex manualmente (re.lastIndex = stmtEnd); ninguna instancia /g se reutiliza sobre strings distintos.

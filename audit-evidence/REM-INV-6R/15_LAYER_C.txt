@@ -1,0 +1,6 @@
+REM-INV-6R — 15_LAYER_C
+── Capa C — reconciliación source-of-truth (REM-INV-6): 141 funciones del surface
+Representadas en migraciones: 141/141
+Divergencias source-of-truth (bloqueantes): 0
+
+════════════════════════════════════════════════════════════════════════════════

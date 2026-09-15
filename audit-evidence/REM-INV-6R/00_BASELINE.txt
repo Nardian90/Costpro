@@ -1,0 +1,12 @@
+REM-INV-6R — 00_BASELINE
+timestamp: 2026-09-15T18:32:29Z
+HEAD: 88c88aa038e01bac98a3e05d4325ce7167938610
+origin/main: 88c88aa038e01bac98a3e05d4325ce7167938610
+branch: main
+worktree: 1 modified files
+PREVIOUS_CERTIFIED_BASELINE: REM-INV-6 FINAL (acb58b24) — snapshot surface 134 functions
+PREVIOUS_SNAPSHOT_SHA: d7b9f4fc49a31bc1...
+PREVIOUS_CONTRACT_COUNT: 134
+PREVIOUS_LAYER_A_RESULT: 134/134 checked (REM-INV-6 evidence 13/CI)
+PREVIOUS_LAYER_B_RESULT: PASS (see ci-gate-allowlist.json security_contract_static_baseline)
+PREVIOUS_LAYER_C_RESULT: 134/134 represented, 0 divergences

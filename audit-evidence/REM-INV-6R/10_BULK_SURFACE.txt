@@ -1,0 +1,61 @@
+REM-INV-6R — 10_BULK_SURFACE (Gate I)
+timestamp: 2026-09-15T19:30:05Z
+
+=== Inventario bulk LIVE (name-pattern + array args, 29 candidatos) ===
+audit_backup_restore_protected_change () secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+bulk_assign_memberships              (p_user_id uuid, p_assignments jsonb) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+bulk_soft_delete_stores              (p_store_ids uuid[], p_deleted_by uuid, p_confirmation_t) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+bulk_update_products                 (_products jsonb) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+can_safely_delete_user               (p_user_id uuid) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+check_bulk_ops_hourly_limit          (p_user_id uuid, p_plan text) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+create_pre_restore_snapshot          (p_store_id uuid) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+generate_bulk_confirmation_token     (p_store_ids uuid[], p_action text, p_user_id uuid) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+generate_bulk_override_token         (p_confirmation_token text, p_override_user_id uuid, p_r) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+get_batch_store_daily_kpis           (p_store_ids uuid[], p_date date) secdef=true acl={postgres=X/postgres,authenticated=X/postgres,service_role=X defPublic=false
+has_store_role                       (p_store_id uuid, p_roles text[]) secdef=true acl={postgres=X/postgres,authenticated=X/postgres,service_role=X defPublic=false
+has_store_role                       (p_user_id uuid, p_store_id uuid, p_roles text[]) secdef=true acl={postgres=X/postgres,authenticated=X/postgres,service_role=X defPublic=false
+has_store_role_as                    (p_user_id uuid, p_store_id uuid, p_roles text[]) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+managed_delete_product               (p_product_id uuid) secdef=true acl={postgres=X/postgres,authenticated=X/postgres,service_role=X defPublic=false
+managed_delete_user                  (p_user_id uuid) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+managed_reset_password               (p_user_id uuid, p_caller_id uuid) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+managed_soft_delete_user             (p_user_id uuid, p_reason text, p_caller_id uuid) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+prevent_hard_delete_profile          () secdef=false acl={=X/postgres,postgres=X/postgres,anon=X/postgres,authenticat defPublic=false
+process_bulk_import                  (p_store_id uuid, p_user_id uuid, p_items jsonb) secdef=false acl={postgres=X/postgres,authenticated=X/postgres,service_role=X defPublic=false
+purge_old_reset_snapshots            (p_days integer) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+reset_store_data                     (p_store_id uuid, p_keep_catalog boolean) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+reset_store_data                     (target_store_id uuid, p_keep_catalog boolean, p_user_id) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+restore_store_backup                 (p_store_id uuid, p_backup_payload jsonb, p_mode text, p) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+restore_transaction_snapshot         (p_migration_id text, p_tx_id uuid) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+set_transfer_approval_rule           (p_tenant_id uuid, p_store_id uuid, p_threshold_amount n) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+soft_delete_store                    (p_store_id uuid, p_deleted_by uuid) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+stores_soft_delete_cleanup           () secdef=false acl={postgres=X/postgres,authenticated=X/postgres,service_role=X defPublic=false
+validate_post_restore                (p_store_id uuid, p_backup_payload jsonb) secdef=true acl={postgres=X/postgres,service_role=X/postgres} defPublic=false
+validate_pre_restore_fk_integrity    (p_store_id uuid) secdef=true acl={postgres=X/postgres,service_role=X/postgres,costpro_snapsho defPublic=false
+
+=== Tabla de protección (§15) — bulk DESTRUCTIVOS/SENSIBLES ===
+| RPC                              | API caller                        | withRole | canManageStore | DB auth (EXECUTE)        | RLS aplicable      | Direct-RPC bypass |
+|----------------------------------|-----------------------------------|----------|----------------|--------------------------|--------------------|-------------------|
+| bulk_soft_delete_stores(uuid[])  | stores/bulk/execute               | admin    | per-store      | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| bulk_update_products(jsonb)      | (internal)                        | -        | -              | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| bulk_assign_memberships          | users/[id]/memberships/bulk       | (canMng) | all-targets    | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| generate_bulk_confirmation_token | stores/bulk/generate-token        | admin    | per-store      | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| generate_bulk_override_token     | stores/bulk/execute               | admin    | per-store      | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| check_bulk_ops_hourly_limit      | stores/bulk/execute               | admin    | per-store      | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| reset_store_data (2 overloads)   | stores/reset                      | -        | canManageStore | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| restore_store_backup             | (internal/audit)                  | -        | -              | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| soft_delete_store                | (API audit-verified)              | -        | -              | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| managed_delete_user              | (admin flows)                     | -        | -              | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| managed_reset_password           | (admin flows)                     | -        | -              | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| managed_soft_delete_user         | (admin flows)                     | -        | -              | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| restore_transaction_snapshot     | (internal)                        | -        | -              | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| create_pre_restore_snapshot      | (internal)                        | -        | -              | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| purge_old_reset_snapshots        | (cron)                            | -        | -              | service_role only        | (SECDEF)           | IMPOSIBLE (ACL)   |
+| managed_delete_product(uuid)     | products mgmt                     | -        | (in-body)      | authenticated+service    | (SECDEF)           | in-body guard: tenant mismatch + has_store_access → 42501 |
+| process_bulk_import(store,user,jsonb) | (import flow)                | -        | (upstream)     | authenticated+service    | SÍ (INVOKER): products_tenant_insert store_id=ANY(current_user_store_ids()) | cross-store BLOQUEADO por RLS; p_user_id spoof = atribución (P3) |
+| get_batch_store_daily_kpis(uuid[]) | useMultiStoreDashboard (client)  | -        | NO (client)    | authenticated+service    | NO (SECDEF bypass) | VULNERABLE → REMEDIADO en 20260916000004 (guard has_store_access) |
+| stores_soft_delete_cleanup       | (trigger fn, no RPC surface)      | -        | -              | authenticated (irrelevant)| (trigger)         | n/a               |
+
+=== Clasificación (§17) ===
+C1 STRUCTURALLY PROTECTED: todos los bulk destructivos (ACL service_role-only = segunda barrera estructural)
+C2 API-DEPENDENT BUT ACCEPTABLE: process_bulk_import (RLS real como segunda barrera; p_user_id-attribution residual P3)
+C3 DEFENSE-IN-DEPTH GAP → REMEDIATED: get_batch_store_daily_kpis (SECDEF read, cross-tenant leak reproducido y corregido con helper canónico; ver 11_NEGATIVE_SECURITY fase 2)

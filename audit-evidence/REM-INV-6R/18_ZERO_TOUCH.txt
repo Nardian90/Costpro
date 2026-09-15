@@ -1,0 +1,117 @@
+REM-INV-6R — 18_ZERO_TOUCH (Gate S)
+timestamp: 2026-09-15T19:42:10Z
+
+Tiendas protegidas: Puerto Padre VITALLCONS (43a4dabc-b8b4-4b66-82b3-0c75335ca5d1), ENERVIDA-VITALLCONS (5e6fe821-5465-48b1-b3f1-3aa3182edc38)
+
+=== PRE (Tue Sep 15 19:42:10 UTC 2026) ===
+{
+ "mode": "pre",
+ "captured_at": "2026-09-15T19:39:49.902Z",
+ "stores": [
+  "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+  "5e6fe821-5465-48b1-b3f1-3aa3182edc38"
+ ],
+ "tables": {
+  "inventory": {
+   "count": 141,
+   "hash": "0de987098084fa836881c566a9a8203f"
+  },
+  "stock_movements": {
+   "count": 702,
+   "hash": "976ee898e0f2606ae333c3e8cc30a9bb"
+  },
+  "transactions": {
+   "count": 520,
+   "hash": "8b0db9a67cb3aa5de3bac18506c67808"
+  },
+  "receipts": {
+   "count": 6,
+   "hash": "398c329d7f30dc3756ceafb062b7ff22"
+  },
+  "payment_transactions": {
+   "count": 366,
+   "hash": "be8d86c1afb7702cce19696f56d44f21"
+  },
+  "devolutions": {
+   "count": 0,
+   "hash": "EMPTY"
+  },
+  "production_orders": {
+   "count": 0,
+   "hash": "EMPTY"
+  },
+  "audit_logs": {
+   "count": 6574,
+   "hash": "4fb8bdb93221e684aee36b9f83a08d70"
+  },
+  "transfer_items": {
+   "error": "400 {\"message\":\"Failed to run sql query: ERROR:  42703: column \\\"store_id\\\" does not exist\\nLINE 2:         from (select"
+  },
+  "transfers": {
+   "count": 0,
+   "hash": "EMPTY"
+  },
+  "user_store_memberships": {
+   "count": 6,
+   "hash": "170b9d44d8259adc3fe7a7d37c18bc01"
+  }
+ }
+}
+=== POST ===
+{
+ "mode": "post",
+ "captured_at": "2026-09-15T19:41:14.661Z",
+ "stores": [
+  "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+  "5e6fe821-5465-48b1-b3f1-3aa3182edc38"
+ ],
+ "tables": {
+  "inventory": {
+   "count": 141,
+   "hash": "0de987098084fa836881c566a9a8203f"
+  },
+  "stock_movements": {
+   "count": 702,
+   "hash": "976ee898e0f2606ae333c3e8cc30a9bb"
+  },
+  "transactions": {
+   "count": 520,
+   "hash": "8b0db9a67cb3aa5de3bac18506c67808"
+  },
+  "receipts": {
+   "count": 6,
+   "hash": "398c329d7f30dc3756ceafb062b7ff22"
+  },
+  "payment_transactions": {
+   "count": 366,
+   "hash": "be8d86c1afb7702cce19696f56d44f21"
+  },
+  "devolutions": {
+   "count": 0,
+   "hash": "EMPTY"
+  },
+  "production_orders": {
+   "count": 0,
+   "hash": "EMPTY"
+  },
+  "audit_logs": {
+   "count": 6574,
+   "hash": "4fb8bdb93221e684aee36b9f83a08d70"
+  },
+  "transfer_items": {
+   "error": "400 {\"message\":\"Failed to run sql query: ERROR:  42703: column \\\"store_id\\\" does not exist\\nLINE 2:         from (select"
+  },
+  "transfers": {
+   "count": 0,
+   "hash": "EMPTY"
+  },
+  "user_store_memberships": {
+   "count": 6,
+   "hash": "170b9d44d8259adc3fe7a7d37c18bc01"
+  }
+ }
+}
+=== RESULTADO ===
+BITWISE IDENTICAL en las 10 tablas con datos (inventory 141, stock_movements 702, transactions 520, receipts 6, payment_transactions 366, audit_logs 6574, user_store_memberships 6; transfers/devolutions/production_orders EMPTY) — hashes md5 agregados idénticos.
+transfer_items: la tabla no tiene store_id (error 42703 esperado e idéntico en PRE y POST — filtrado vía transfers, count 0).
+Nota: audit_logs de las tiendas protegidas sin cambios → NINGUNA operación de esta auditoría tocó producción (todas las consultas fueron SELECT; las mutaciones ocurrieron únicamente en el clúster efímero local).

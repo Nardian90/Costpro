@@ -42,6 +42,29 @@
  *      shifted bodies by 2 chars and made plain `$$`-tagged functions extract
  *      an EMPTY body (invisible to write-detection).
  *
+ * Extractor note (REM-INV-6R): four detection-surface fixes, all reproduced
+ * first via scripts/rem-inv-6r-parser-tests.cjs + fixtures under
+ * scripts/test/fixtures/rem-inv-6r/ (see audit-evidence/REM-INV-6R/01 and 02):
+ *   A. WRITE_RE was blind to `DELETE FROM public.x` (the legacy pattern only
+ *      matched DELETE followed by INTO/public., which no real SQL satisfies),
+ *      to unqualified `UPDATE t SET` (search_path-qualified writes) and to
+ *      TRUNCATE/MERGE. A destructive SECURITY DEFINER function whose only
+ *      write was a DELETE/TRUNCATE silently passed Layer B. New pattern:
+ *      INSERT INTO / UPDATE <table> / DELETE FROM / TRUNCATE / MERGE INTO.
+ *   B. Layer B classified SECURITY DEFINER from the HEADER only; a definition
+ *      with `SECURITY DEFINER` in the trailer after the body tag (legal
+ *      PostgreSQL syntax) was never analysed. SECDEF is now read from the
+ *      statement MINUS the body (header + trailer).
+ *   C. ALTER FUNCTION only modelled search_path/SECURITY; volatility,
+ *      PARALLEL and LEAKPROOF were silently ignored. They are now extracted,
+ *      replayed (Layer C) and reconciled against the certified surface.
+ *   D. Write-detection and contract checks now run on a comment-stripped
+ *      view of the statement (stripCommentsDeep): an in-body comment like
+ *      `-- auth.role() = 'service_role'` could previously satisfy the
+ *      anti-spoofing check or suppress a write, faking or hiding findings.
+ *      Single-quoted strings are PRESERVED (dynamic-SQL writes still count).
+ *      Layer C body comparison remains verbatim (comments included).
+ *
  * Checks (identical regexes to the LIVE contract):
  *   1. ANTI_SPOOFING_GUARD_MISSING (CRITICAL)
  *   2. VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT / _THEN (HIGH)
@@ -63,7 +86,14 @@ const MIGRATIONS_DIR = path.join(REPO, 'supabase', 'migrations');
 const SURFACE_FILE = path.join(REPO, 'supabase', 'security-contract', 'contract-surface.sql');
 const ALLOWLIST_FILE = path.join(REPO, 'ci-gate-allowlist.json');
 
-const WRITE_RE = /(INSERT|UPDATE|DELETE)\s+(INTO|public\.)/is;
+// REM-INV-6R fix A: superset write detector. The legacy pattern
+// /(INSERT|UPDATE|DELETE)\s+(INTO|public\.)/i never matched `DELETE FROM ...`
+// (DELETE is always followed by FROM in real SQL) nor unqualified UPDATE nor
+// TRUNCATE. The new pattern matches: INSERT INTO, UPDATE <table> (qualified or
+// not), DELETE FROM, TRUNCATE [TABLE], MERGE INTO — anywhere in the statement
+// EXCEPT comments (stripCommentsDeep removes comments; string literals are
+// kept so dynamic-SQL writes are still detected — documented detection model).
+const WRITE_RE = /\b(INSERT\s+INTO\b|UPDATE\s+(?:public\.)?[A-Za-z_"']|DELETE\s+FROM\b|TRUNCATE(?:\s+TABLE)?\b|MERGE\s+INTO\b)/i;
 
 function checkFunction(def, name, aclAnonFlag) {
   const issues = [];
@@ -207,10 +237,93 @@ function extractFunctions(cleanText, sourceFile) {
       body: bodyText,
       text: cleanText.slice(start, stmtEnd),
       argsRaw: headerArgs,
+      // REM-INV-6R: absolute body boundaries (offset-proof + nonBody computation)
+      bodyStartAbs: asM[2] && asM[2].startsWith('$') ? tagStartAbs + asM[2].length : tagStartAbs + 1,
+      bodyEndAbs: bodyEnd,
     });
     re.lastIndex = stmtEnd;
   }
   return defs;
+}
+
+// REM-INV-6R fix D: comment stripper that ALSO descends into dollar-quoted
+// regions (function bodies), removing `--`/`/* */` comments while PRESERVING
+// single-quoted strings (dynamic-SQL writes must keep counting) and nested
+// dollar-quoted literals with a DIFFERENT tag. Used ONLY for write-detection
+// and contract checks; the Layer C body comparison stays verbatim.
+function stripCommentsDeep(sql) {
+  let out = '';
+  let i = 0;
+  const n = sql.length;
+  let dollar = null;
+  const stripLine = () => { while (i < n && sql[i] !== '\n') i++; };
+  const stripBlock = () => {
+    let depth = 1; i += 2;
+    while (i < n && depth > 0) {
+      if (sql[i] === '/' && sql[i + 1] === '*') { depth++; i += 2; continue; }
+      if (sql[i] === '*' && sql[i + 1] === '/') { depth--; i += 2; continue; }
+      i++;
+    }
+    out += ' ';
+  };
+  const copyString = () => {
+    let j = i + 1;
+    while (j < n) {
+      if (sql[j] === "'" && sql[j + 1] === "'") { j += 2; continue; }
+      if (sql[j] === "'") { j++; break; }
+      j++;
+    }
+    out += sql.slice(i, j);
+    i = j;
+  };
+  while (i < n) {
+    const ch = sql[i];
+    if (dollar) {
+      if (ch === "'") { copyString(); continue; }
+      if (ch === '$') {
+        const m = /^\$[A-Za-z0-9_]*\$/.exec(sql.slice(i));
+        if (m) {
+          if (m[0] === dollar) { out += m[0]; i += m[0].length; dollar = null; continue; }
+          const e2 = sql.indexOf(m[0], i + m[0].length);
+          const stop2 = e2 === -1 ? n : e2 + m[0].length;
+          out += sql.slice(i, stop2); i = stop2; continue;
+        }
+      }
+      if (ch === '-' && sql[i + 1] === '-') { stripLine(); continue; }
+      if (ch === '/' && sql[i + 1] === '*') { stripBlock(); continue; }
+      out += ch; i++; continue;
+    }
+    if (ch === '$') {
+      const m = /^\$[A-Za-z0-9_]*\$/.exec(sql.slice(i));
+      if (m) { dollar = m[0]; out += m[0]; i += m[0].length; continue; }
+    }
+    if (ch === "'") { copyString(); continue; }
+    if (ch === '-' && sql[i + 1] === '-') { stripLine(); continue; }
+    if (ch === '/' && sql[i + 1] === '*') { stripBlock(); continue; }
+    out += ch; i++;
+  }
+  return out;
+}
+
+// Statement text WITHOUT the body — header (RETURNS/LANGUAGE/SECURITY/…) plus
+// trailer (SECURITY DEFINER / SET search_path after the tag). SECURITY mode and
+// function attributes are only meaningful there; reading the full text made a
+// body comment like `-- security definer` flip the classification.
+function nonBodyOf(d) {
+  const s = d.bodyStartAbs - d.pos;
+  const e = d.bodyEndAbs - d.pos;
+  return d.text.slice(0, s) + d.text.slice(e);
+}
+
+function parseFnAttrs(nonBodyText) {
+  const volM = /\b(IMMUTABLE|STABLE|VOLATILE)\b/i.exec(nonBodyText);
+  const parM = /\bPARALLEL\s+(SAFE|RESTRICTED|UNSAFE)\b/i.exec(nonBodyText);
+  const leak = /\bLEAKPROOF\b/i.test(nonBodyText) && !/\bNOT\s+LEAKPROOF\b/i.test(nonBodyText);
+  return {
+    volatility: volM ? volM[1].toLowerCase() : 'volatile',
+    parallel: parM ? parM[1].toLowerCase() : 'unsafe',
+    leakproof: leak,
+  };
 }
 
 // GRANT/REVOKE EXECUTE statements (top-level AND inside DO-block guards),
@@ -290,11 +403,20 @@ function extractAlterStmts(cleanText) {
     const stmt = cleanText.slice(i, semi === -1 ? cleanText.length : semi);
     const spM = /set\s+search_path\s*(?:=|to)\s*([^;\n]+)/i.exec(stmt);
     const secM = /security\s+(definer|invoker)/i.exec(stmt);
-    if (!spM && !secM) continue;
+    // REM-INV-6R fix C: model volatility / PARALLEL / LEAKPROOF ALTERs too
+    // (they were silently ignored: an `ALTER FUNCTION f() STABLE` produced no
+    // replay effect and no reconciliation difference).
+    const volM = /\b(IMMUTABLE|STABLE|VOLATILE)\b/i.exec(stmt);
+    const parM = /\bPARALLEL\s+(SAFE|RESTRICTED|UNSAFE)\b/i.exec(stmt);
+    const leakM = /\b(NOT\s+)?LEAKPROOF\b/i.exec(stmt);
+    if (!spM && !secM && !volM && !parM && !leakM) continue;
     out.push({
       fname: fname.toLowerCase().replace(/^public\./, ''), args,
       sp: spM ? spM[1].trim() : null,
       secdef: secM ? secM[1].toLowerCase() === 'definer' : null,
+      volatility: volM ? volM[1].toLowerCase() : null,
+      parallel: parM ? parM[1].toLowerCase() : null,
+      leakproof: leakM ? (leakM[1] ? false : true) : null,
       pos: m.index,
     });
   }
@@ -423,11 +545,24 @@ function normSearchPath(headerText) {
       const clean = stripComments(fs.readFileSync(path.join(MIGRATIONS_DIR, f), 'utf8'));
       for (const d of extractFunctions(clean, f)) {
         const key = `${d.schema}.${d.name}/${countArgs(d.argsRaw)}`;
-        finalDefs.set(key, { ...d, secdef: /security\s+definer/i.test(d.header), key });
+        // REM-INV-6R fixes B+D: SECDEF read from header+trailer (nonBody), not
+        // header-only — a trailer `SECURITY DEFINER` after the body tag was
+        // invisible before; checks and write-detection run comment-stripped.
+        const nonBody = nonBodyOf(d);
+        const detectText = stripCommentsDeep(d.text);
+        finalDefs.set(key, {
+          ...d, nonBody, detectText,
+          secdef: /security\s+definer/i.test(nonBody),
+          attrs: parseFnAttrs(nonBody),
+          key,
+        });
       }
       replayAnonAcl(clean, anonAcl, f);
     }
-    const writeFns = [...finalDefs.values()].filter(d => d.secdef && WRITE_RE.test(d.text))
+    // REM-INV-6R: write-detection runs on the comment-stripped view (strings
+    // preserved). True-positive superset vs the legacy regex; false positives
+    // from in-body comments eliminated. Detection model documented in the header.
+    const writeFns = [...finalDefs.values()].filter(d => d.secdef && WRITE_RE.test(d.detectText))
       .sort((a, b) => (a.name + a.key).localeCompare(b.name + b.key));
 
     const baseline = loadBaseline('security_contract_static_baseline');
@@ -438,7 +573,7 @@ function normSearchPath(headerText) {
       if (f.schema === 'public' && f.name === 'receive_purchase') pinB = true;
       const anonState = anonAcl[f.name];
       const anonFlag = !!anonState && anonState.grants.length > 0 && anonState.grants[anonState.grants.length - 1] === true;
-      const issues = checkFunction(f.text, f.name, anonFlag);
+      const issues = checkFunction(f.detectText, f.name, anonFlag);
       if (issues.length === 0) continue;
       const shortKey = `${f.name}/${countArgs(f.argsRaw)}`;
       const entry = baseline.get(shortKey) || baseline.get(f.name);
@@ -497,7 +632,18 @@ function normSearchPath(headerText) {
         if (ev.kind === 'fn') {
           const d = ev.d;
           const key = `${d.schema}.${d.name}/${countArgs(d.argsRaw)}`;
-          finalState.set(key, { body: d.body, header: d.header, secdef: /security\s+definer/i.test(d.text), sp: normSearchPath(d.text), file: f, schema: d.schema, name: d.name });
+          // REM-INV-6R fixes B+C: SECDEF/attributes from nonBody (header+
+          // trailer) so in-body comments cannot fake or hide them; volatility/
+          // parallel/leakproof tracked for reconciliation.
+          const nonBody = nonBodyOf(d);
+          const attrs = parseFnAttrs(nonBody);
+          finalState.set(key, {
+            body: d.body, header: d.header,
+            secdef: /security\s+definer/i.test(nonBody),
+            sp: normSearchPath(d.text),
+            volatility: attrs.volatility, parallel: attrs.parallel, leakproof: attrs.leakproof,
+            file: f, schema: d.schema, name: d.name,
+          });
           trackName(d.name, key);
         } else if (ev.kind === 'alter') {
           const a = ev.a;
@@ -512,6 +658,10 @@ function normSearchPath(headerText) {
           if (!mig) continue;
           if (a.sp !== null) mig.sp = normSearchPathValue(a.sp);
           if (a.secdef !== null) mig.secdef = a.secdef;
+          // REM-INV-6R fix C: ALTERed attributes are part of the replay state
+          if (a.volatility !== null) mig.volatility = a.volatility;
+          if (a.parallel !== null) mig.parallel = a.parallel;
+          if (a.leakproof !== null) mig.leakproof = a.leakproof;
         } else {
           const a = ev.a;
           const roleNames = a.roles.filter(r => ['public', 'anon', 'authenticated', 'service_role'].includes(r));
@@ -557,6 +707,20 @@ function normSearchPath(headerText) {
         const migSp = mig.sp;
         if (snapSp !== migSp) {
           issues.push({ severity: 'CRITICAL', rule: 'UNEXPECTED_SEARCH_PATH_CHANGE', msg: `search_path divergente: snapshot=[${snapSp}] migraciones=[${migSp}]` });
+        }
+        // REM-INV-6R fix C: reconcile volatility / PARALLEL / LEAKPROOF.
+        // Snapshot side parsed from the pg_get_functiondef HEADER (before
+        // `AS $function$`; absent = PG default: VOLATILE / UNSAFE / not leakproof).
+        const snapHdrM = /^[\s\S]*?AS\s+\$function\$/.exec(s.def);
+        const snapAttrs = parseFnAttrs(snapHdrM ? snapHdrM[0] : s.def);
+        if (snapAttrs.volatility !== mig.volatility) {
+          issues.push({ severity: 'CRITICAL', rule: 'UNEXPECTED_VOLATILITY_CHANGE', msg: `volatilidad divergente: snapshot=${snapAttrs.volatility} migraciones=${mig.volatility}` });
+        }
+        if (snapAttrs.parallel !== mig.parallel) {
+          issues.push({ severity: 'CRITICAL', rule: 'UNEXPECTED_PARALLEL_CHANGE', msg: `parallel divergente: snapshot=${snapAttrs.parallel} migraciones=${mig.parallel}` });
+        }
+        if (snapAttrs.leakproof !== mig.leakproof) {
+          issues.push({ severity: 'CRITICAL', rule: 'UNEXPECTED_LEAKPROOF_CHANGE', msg: `leakproof divergente: snapshot=${snapAttrs.leakproof} migraciones=${mig.leakproof}` });
         }
         // ACL set comparison (grantee set, owner excluded)
         const liveGrantees = new Set();

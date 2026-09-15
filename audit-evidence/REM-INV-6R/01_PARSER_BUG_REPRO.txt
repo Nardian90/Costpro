@@ -1,0 +1,172 @@
+REM-INV-6R — 01_PARSER_BUG_REPRO
+timestamp: 2026-09-15T18:39:41Z
+commit: 88c88aa038e01bac98a3e05d4325ce7167938610
+
+=== A) CURRENT parser (scripts/security-contract-test-static.cjs @ 88c88aa0) — harness pre-fix ===
+command: node scripts/rem-inv-6r-parser-tests.cjs
+exit: 1 (5 fail)
+
+REM-INV-6R parser tests — parser: /home/z/my-project/Costpro/scripts/security-contract-test-static.cjs
+WRITE_RE (loaded): /(INSERT|UPDATE|DELETE)\s+(INTO|public\.)/is
+
+[M1/M2] dollar-quote mechanics + body boundary math
+  PASS  b1.found — n=1
+  PASS  b1.body.starts.after.tag — starts="\nBEGIN\n  INS"
+  PASS  b1.body.ends.before.closing.tag — ends="S (1);\nEND;\n"
+  PASS  b1.body.full.insert — len=56
+  PASS  b2.found
+  PASS  b2.body.full.update — len=50
+  PASS  b2.body.boundaries
+  PASS  b3.found
+  PASS  b3.body.full.delete
+  PASS  b3.secdef
+  PASS  b4.four.functions — names=b4_a,b4_b,b4_c,b4_d
+  PASS  b4.b4_a.body — len=47
+  PASS  b4.b4_b.body — len=41
+  PASS  b4.b4_c.body — len=23
+  PASS  b4.b4_d.body — len=8
+[M3] first safe, second dangerous
+  PASS  b5.two.functions — n=2
+  PASS  b5.second.body.full — len=42
+  PASS  b5.second.secdef
+[M4] comments before/after/inside
+  PASS  b6.found
+  PASS  b6.no.comment.dml
+[M5] strings containing $$ / $tag$ inside tagged bodies
+  PASS  b7.found
+  PASS  b7.body.untagged.strings.preserved
+  PASS  b7.body.insert.intact — len=120
+  PASS  b8.found
+  PASS  b8.body.other.tag.preserved
+  PASS  b8.body.update.intact
+[M6] trailers (SECURITY DEFINER before/after body, LANGUAGE sql IMMUTABLE)
+  PASS  b9.three.functions — n=3
+  PASS  b9a.text.has.secdef.trailer — header=false text=true
+  PASS  b9a.body.delete.intact
+  PASS  b9b.classic.secdef
+  PASS  b9c.immutable.sql.body
+[M7] ALTER FUNCTION modeling
+  PASS  b10.create.found
+  PASS  b10.alter.search_path — sp=public
+  PASS  b10.alter.security.definer
+  FAIL  b10.alter.volatility+parallel.modeled — captured=0 (pre-fix extractor ignores volatility/parallel)
+[D1] write-detection canaries (DELETE FROM / TRUNCATE / unqualified UPDATE)
+  PASS  canary_delete_from_only.found
+  PASS  canary_delete_from_only.secdef
+  FAIL  canary_delete_from_only.WRITE_RE.detects — WRITE_RE=false enhanced=true
+  PASS  canary_truncate_only.found
+  PASS  canary_truncate_only.secdef
+  FAIL  canary_truncate_only.WRITE_RE.detects — WRITE_RE=false enhanced=true
+  PASS  canary_unqualified_update.found
+  PASS  canary_unqualified_update.secdef
+  FAIL  canary_unqualified_update.WRITE_RE.detects — WRITE_RE=false enhanced=true
+[D2] false-positive probe
+  PASS  fp.found
+  FAIL  fp.not.write — WRITE_RE=true enhanced=true
+[I1] RegExp.lastIndex isolation + 10x determinism
+  PASS  isolation.b1.body.independent.of.A — len=24
+  PASS  isolation.c1.longtag.independent — len=23
+  PASS  isolation.b.solo.equals.sequential
+  PASS  determinism.10x.identical — unique_hashes=1 files=17
+
+════════════════════════════════════════════════════════════════════════
+RESULT: 45 pass / 5 fail — parser: security-contract-test-static.cjs
+FAILED ASSERTIONS:
+  - b10.alter.volatility+parallel.modeled: captured=0 (pre-fix extractor ignores volatility/parallel)
+  - canary_delete_from_only.WRITE_RE.detects: WRITE_RE=false enhanced=true
+  - canary_truncate_only.WRITE_RE.detects: WRITE_RE=false enhanced=true
+  - canary_unqualified_update.WRITE_RE.detects: WRITE_RE=false enhanced=true
+  - fp.not.write: WRITE_RE=true enhanced=true
+
+=== B) HISTORICAL parser (git show cf2623a0:scripts/security-contract-test-static.cjs) — offset/lastIndex bug repro ===
+command: node scripts/rem-inv-6r-parser-tests.cjs /tmp/parser-old.cjs
+exit: 1 (22 fail)
+
+REM-INV-6R parser tests — parser: /tmp/parser-old.cjs
+WRITE_RE (loaded): /(INSERT|UPDATE|DELETE)\s+(INTO|public\.)/is
+
+[M1/M2] dollar-quote mechanics + body boundary math
+  PASS  b1.found — n=1
+  FAIL  b1.body.starts.after.tag — starts=""
+  FAIL  b1.body.ends.before.closing.tag — ends=""
+  FAIL  b1.body.full.insert — len=0
+  PASS  b2.found
+  PASS  b2.body.full.update — len=52
+  FAIL  b2.body.boundaries
+  PASS  b3.found
+  PASS  b3.body.full.delete
+  PASS  b3.secdef
+  FAIL  b4.four.functions — names=b4_a,b4_b,b4_d
+  FAIL  b4.b4_a.body — len=0
+  PASS  b4.b4_b.body — len=43
+  FAIL  b4.b4_c.body — MISSING
+  FAIL  b4.b4_d.body — len=1
+[M3] first safe, second dangerous
+  FAIL  b5.two.functions — n=1
+  FAIL  b5.second.body.full — MISSING
+  FAIL  b5.second.secdef
+[M4] comments before/after/inside
+  PASS  b6.found
+  PASS  b6.no.comment.dml
+[M5] strings containing $$ / $tag$ inside tagged bodies
+  PASS  b7.found
+  PASS  b7.body.untagged.strings.preserved
+  PASS  b7.body.insert.intact — len=122
+  PASS  b8.found
+  PASS  b8.body.other.tag.preserved
+  PASS  b8.body.update.intact
+[M6] trailers (SECURITY DEFINER before/after body, LANGUAGE sql IMMUTABLE)
+  FAIL  b9.three.functions — n=2
+  FAIL  b9a.text.has.secdef.trailer — header=false text=false
+  PASS  b9a.body.delete.intact
+  PASS  b9b.classic.secdef
+  FAIL  b9c.immutable.sql.body
+[M7] ALTER FUNCTION modeling
+  PASS  b10.create.found
+  FAIL  b10.alter.search_path — MISSING
+  FAIL  b10.alter.security.definer
+  FAIL  b10.alter.volatility+parallel.modeled — captured=0 (pre-fix extractor ignores volatility/parallel)
+[D1] write-detection canaries (DELETE FROM / TRUNCATE / unqualified UPDATE)
+  PASS  canary_delete_from_only.found
+  PASS  canary_delete_from_only.secdef
+  FAIL  canary_delete_from_only.WRITE_RE.detects — WRITE_RE=false enhanced=true
+  PASS  canary_truncate_only.found
+  PASS  canary_truncate_only.secdef
+  FAIL  canary_truncate_only.WRITE_RE.detects — WRITE_RE=false enhanced=true
+  PASS  canary_unqualified_update.found
+  PASS  canary_unqualified_update.secdef
+  FAIL  canary_unqualified_update.WRITE_RE.detects — WRITE_RE=false enhanced=true
+[D2] false-positive probe
+  PASS  fp.found
+  FAIL  fp.not.write — WRITE_RE=true enhanced=true
+[I1] RegExp.lastIndex isolation + 10x determinism
+  FAIL  isolation.b1.body.independent.of.A — len=0
+  PASS  isolation.c1.longtag.independent — len=25
+  PASS  isolation.b.solo.equals.sequential
+  PASS  determinism.10x.identical — unique_hashes=1 files=17
+
+════════════════════════════════════════════════════════════════════════
+RESULT: 28 pass / 22 fail — parser: parser-old.cjs
+FAILED ASSERTIONS:
+  - b1.body.starts.after.tag: starts=""
+  - b1.body.ends.before.closing.tag: ends=""
+  - b1.body.full.insert: len=0
+  - b2.body.boundaries: 
+  - b4.four.functions: names=b4_a,b4_b,b4_d
+  - b4.b4_a.body: len=0
+  - b4.b4_c.body: MISSING
+  - b4.b4_d.body: len=1
+  - b5.two.functions: n=1
+  - b5.second.body.full: MISSING
+  - b5.second.secdef: 
+  - b9.three.functions: n=2
+  - b9a.text.has.secdef.trailer: header=false text=false
+  - b9c.immutable.sql.body: 
+  - b10.alter.search_path: MISSING
+  - b10.alter.security.definer: 
+  - b10.alter.volatility+parallel.modeled: captured=0 (pre-fix extractor ignores volatility/parallel)
+  - canary_delete_from_only.WRITE_RE.detects: WRITE_RE=false enhanced=true
+  - canary_truncate_only.WRITE_RE.detects: WRITE_RE=false enhanced=true
+  - canary_unqualified_update.WRITE_RE.detects: WRITE_RE=false enhanced=true
+  - fp.not.write: WRITE_RE=true enhanced=true
+  - isolation.b1.body.independent.of.A: len=0

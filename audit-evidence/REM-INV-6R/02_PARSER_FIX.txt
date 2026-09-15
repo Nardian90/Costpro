@@ -1,0 +1,126 @@
+REM-INV-6R — 02_PARSER_FIX
+timestamp: 2026-09-15T18:45:21Z
+commit: 88c88aa038e01bac98a3e05d4325ce7167938610 (parser fix uncommitted, verificado stash/pop)
+
+=== A) harness POST-fix (node scripts/rem-inv-6r-parser-tests.cjs) — exit 0 ===
+REM-INV-6R parser tests — parser: /home/z/my-project/Costpro/scripts/security-contract-test-static.cjs
+WRITE_RE (loaded): /\b(INSERT\s+INTO\b|UPDATE\s+(?:public\.)?[A-Za-z_"']|DELETE\s+FROM\b|TRUNCATE(?:\s+TABLE)?\b|MERGE\s+INTO\b)/i
+
+[M1/M2] dollar-quote mechanics + body boundary math
+  PASS  b1.found — n=1
+  PASS  b1.body.starts.after.tag — starts="\nBEGIN\n  INS"
+  PASS  b1.body.ends.before.closing.tag — ends="S (1);\nEND;\n"
+  PASS  b1.body.full.insert — len=56
+  PASS  b2.found
+  PASS  b2.body.full.update — len=50
+  PASS  b2.body.boundaries
+  PASS  b3.found
+  PASS  b3.body.full.delete
+  PASS  b3.secdef
+  PASS  b4.four.functions — names=b4_a,b4_b,b4_c,b4_d
+  PASS  b4.b4_a.body — len=47
+  PASS  b4.b4_b.body — len=41
+  PASS  b4.b4_c.body — len=23
+  PASS  b4.b4_d.body — len=8
+[M3] first safe, second dangerous
+  PASS  b5.two.functions — n=2
+  PASS  b5.second.body.full — len=42
+  PASS  b5.second.secdef
+[M4] comments before/after/inside
+  PASS  b6.found
+  PASS  b6.no.comment.dml
+[M5] strings containing $$ / $tag$ inside tagged bodies
+  PASS  b7.found
+  PASS  b7.body.untagged.strings.preserved
+  PASS  b7.body.insert.intact — len=120
+  PASS  b8.found
+  PASS  b8.body.other.tag.preserved
+  PASS  b8.body.update.intact
+[M6] trailers (SECURITY DEFINER before/after body, LANGUAGE sql IMMUTABLE)
+  PASS  b9.three.functions — n=3
+  PASS  b9a.text.has.secdef.trailer — header=false text=true
+  PASS  b9a.body.delete.intact
+  PASS  b9b.classic.secdef
+  PASS  b9c.immutable.sql.body
+[M7] ALTER FUNCTION modeling
+  PASS  b10.create.found
+  PASS  b10.alter.search_path — sp=public
+  PASS  b10.alter.security.definer
+  PASS  b10.alter.volatility+parallel.modeled — captured=4 (pre-fix extractor ignores volatility/parallel)
+[D1] write-detection canaries (DELETE FROM / TRUNCATE / unqualified UPDATE)
+  PASS  canary_delete_from_only.found
+  PASS  canary_delete_from_only.secdef
+  PASS  canary_delete_from_only.WRITE_RE.detects — WRITE_RE=true enhanced=true
+  PASS  canary_delete_from_only.layerB.preFilter.hidden(demo) — pre-fix filter saw it: true (repro record)
+  PASS  canary_delete_from_only.layerB.postFilter.sees — pre=true post=true
+  PASS  canary_truncate_only.found
+  PASS  canary_truncate_only.secdef
+  PASS  canary_truncate_only.WRITE_RE.detects — WRITE_RE=true enhanced=true
+  PASS  canary_truncate_only.layerB.preFilter.hidden(demo) — pre-fix filter saw it: true (repro record)
+  PASS  canary_truncate_only.layerB.postFilter.sees — pre=true post=true
+  PASS  canary_unqualified_update.found
+  PASS  canary_unqualified_update.secdef
+  PASS  canary_unqualified_update.WRITE_RE.detects — WRITE_RE=true enhanced=true
+  PASS  canary_unqualified_update.layerB.preFilter.hidden(demo) — pre-fix filter saw it: true (repro record)
+  PASS  canary_unqualified_update.layerB.postFilter.sees — pre=true post=true
+[D2] false-positive probe
+  PASS  fp.found
+  PASS  fp.not.write — WRITE_RE(detectText)=false (comments stripped, strings kept)
+  PASS  fp.layerB.postFilter.ignores — post=false
+[D3] trailer-SECDEF + canaries through the EXACT Layer-B pipeline
+  PASS  b9a.layerB.preFilter.hidden(demo) — pre-fix Layer-B filter saw it: false
+  PASS  b9a.layerB.postFilter.sees
+[I1] RegExp.lastIndex isolation + 10x determinism
+  PASS  isolation.b1.body.independent.of.A — len=24
+  PASS  isolation.c1.longtag.independent — len=23
+  PASS  isolation.b.solo.equals.sequential
+  PASS  determinism.10x.identical — unique_hashes=1 files=17
+
+════════════════════════════════════════════════════════════════════════
+RESULT: 59 pass / 0 fail — parser: security-contract-test-static.cjs
+
+=== B) CLI completo ANTES vs DESPUÉS ===
+--- ANTES (parser @88c88aa0):
+🔒 TEST DE CONTRATO (estático, CI-safe) — Seguridad de funciones SECURITY DEFINER
+── Capa A — surface LIVE certificado (contract-surface.sql sha256=d7b9f4fc49a3…)
+── Capa B — stream de migraciones (superficie PR): 432 archivos, 174 funciones SECDEF-write
+── Capa C — reconciliación source-of-truth (REM-INV-6): 134 funciones del surface
+🎉 CONTRATO OK — Capa A: 134/134 · Capa B: 174 verificadas, 17 baseline, 0 nuevas · Capa C: 134/134 representadas, 0 divergencias
+exit: 0
+--- DESPUÉS (parser REM-INV-6R):
+🔒 TEST DE CONTRATO (estático, CI-safe) — Seguridad de funciones SECURITY DEFINER
+── Capa A — surface LIVE certificado (contract-surface.sql sha256=d7b9f4fc49a3…)
+── Capa B — stream de migraciones (superficie PR): 432 archivos, 187 funciones SECDEF-write
+▸ [Capa B] cleanup_old_aggregates(cleanup_old_aggregates/1) — violación sin baseline
+▸ [Capa B] close_service_order_as_sale(close_service_order_as_sale/6) — violación sin baseline
+▸ [Capa B] fn_audit_stock_reception(fn_audit_stock_reception/0) — violación sin baseline
+▸ [Capa B] fn_audit_transaction_voiding(fn_audit_transaction_voiding/0) — violación sin baseline
+▸ [Capa B] purge_old_reset_snapshots(purge_old_reset_snapshots/1) — violación sin baseline
+▸ [Capa B] receive_production_output(receive_production_output/4) — violación sin baseline
+▸ [Capa B] snapshot_commission_rule(snapshot_commission_rule/0) — violación sin baseline
+▸ [Capa B] upsert_usage_aggregate(upsert_usage_aggregate/7) — violación sin baseline
+▸ [Capa B] withdraw_production_item(withdraw_production_item/4) — violación sin baseline
+── Capa C — reconciliación source-of-truth (REM-INV-6): 134 funciones del surface
+⚠️ CONTRATO OK con 9 warning(s) MEDIUM/LOW (semántica idéntica al contract LIVE)
+exit: 0
+
+=== C) DELTA Layer B (funciones SECDEF-write recién visibles) ===
+PRE=174 POST=187 DELTA=13
+ + public.cleanup_old_aggregates/1 @ 20260626000001_usage_tracking.sql
+ + public.close_service_order_as_sale/6 @ 20260715000014_fase6_robustness_fixes.sql
+ + public.fn_audit_stock_reception/0 @ 20260318_harden_audit_logging.sql
+ + public.fn_audit_transaction_voiding/0 @ 20260318_harden_audit_logging.sql
+ + public.managed_delete_user/1 @ 20260317_fix_safe_delete_user.sql
+ + public.purge_expired_fc_pdf_cache/0 @ 20260615000004_create_fc_automation_support_tables.sql
+ + public.purge_old_reset_snapshots/1 @ 20260726000001_v1_1_stabilization.sql
+ + public.receive_production_output/4 @ 20260719000003_fix_double_stock_update_production_orders_v3.sql
+ + public.reset_store_data/2 @ 20260820000005_post_restore_reconciliation.sql
+ + public.snapshot_commission_rule/0 @ 20260715000010_commission_rules_add_product_mode.sql
+ + public.update_product_wac/0 @ 20260809000004_v2_25_g4_wac_absorption.sql
+ + public.upsert_usage_aggregate/7 @ 20260626000001_usage_tracking.sql
+ + public.withdraw_production_item/4 @ 20260719000003_fix_double_stock_update_production_orders_v3.sql
+
+=== D) Nuevas violaciones Layer B (clasificación Gate N) ===
+9 x SEARCH_PATH_NOT_SET (LOW, no bloqueante): cleanup_old_aggregates/1, close_service_order_as_sale/6, fn_audit_stock_reception/0, fn_audit_transaction_voiding/0, purge_old_reset_snapshots/1, receive_production_output/4, snapshot_commission_rule/0, upsert_usage_aggregate/7, withdraw_production_item/4
+clasificación: PARSER BUG PREVIOUSLY HIDDEN (visibilidad nueva, violación histórica preexistente, severidad LOW — warning en CI, NO requiere allowlist, exit 0)
+0 CRITICAL/HIGH nuevas. 0 MEDIUM nuevas.

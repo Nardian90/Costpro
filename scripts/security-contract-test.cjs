@@ -65,7 +65,10 @@ async function q(sql) {
     WHERE n.nspname = 'public'
       AND p.prosecdef = true  -- SECURITY DEFINER
       AND p.prokind = 'f'     -- solo funciones (no procedures)
-      AND pg_get_functiondef(p.oid) ~ '(INSERT|UPDATE|DELETE)\\s+(INTO|public\\.)'
+      -- REM-INV-6R: detector ampliado — DELETE FROM, UPDATE sin calificar y
+      -- TRUNCATE/MERGE (el patrón legacy nunca matcheaba un DELETE FROM real;
+      -- 7 funciones SECDEF-write quedaban fuera del surface — REM-INV-6R/03)
+      AND pg_get_functiondef(p.oid) ~* E'\\\\m(INSERT\\\\s+INTO\\\\M|UPDATE\\\\s+(public\\\\.)?[A-Za-z_"\\\\x27]|DELETE\\\\s+FROM\\\\M|TRUNCATE(\\\\s+TABLE)?\\\\M|MERGE\\\\s+INTO\\\\M)'
     ORDER BY p.proname;
   `);
 

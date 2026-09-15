@@ -1,0 +1,54 @@
+REM-INV-6R — 14_LAYER_B
+
+── Capa B — stream de migraciones (superficie PR): 434 archivos, 188 funciones SECDEF-write
+Funciones verificadas: 188
+Violaciones históricas dentro del baseline revisado: 17
+Violaciones NUEVAS (bloqueantes): 9
+✅ PIN REM-INV-2R: receive_purchase(uuid) ausente del stream de migraciones
+  ⚪ baseline: confirm_pending_reception/2 → [SEARCH_PATH_NOT_SET]
+  ⚪ baseline: confirm_transfer/2 → [SEARCH_PATH_NOT_SET]
+  ⚪ baseline: create_sale/10 → [SEARCH_PATH_NOT_SET]
+  ⚪ baseline: create_sale/11 → [SEARCH_PATH_NOT_SET]
+--
+
+▸ [Capa B] cleanup_old_aggregates(cleanup_old_aggregates/1) — violación sin baseline
+  🟡 [LOW] SEARCH_PATH_NOT_SET
+     Función SECURITY DEFINER sin SET search_path explícito (vulnerable a search_path injection)
+
+▸ [Capa B] close_service_order_as_sale(close_service_order_as_sale/6) — violación sin baseline
+  🟡 [LOW] SEARCH_PATH_NOT_SET
+     Función SECURITY DEFINER sin SET search_path explícito (vulnerable a search_path injection)
+
+▸ [Capa B] fn_audit_stock_reception(fn_audit_stock_reception/0) — violación sin baseline
+  🟡 [LOW] SEARCH_PATH_NOT_SET
+     Función SECURITY DEFINER sin SET search_path explícito (vulnerable a search_path injection)
+
+▸ [Capa B] fn_audit_transaction_voiding(fn_audit_transaction_voiding/0) — violación sin baseline
+  🟡 [LOW] SEARCH_PATH_NOT_SET
+     Función SECURITY DEFINER sin SET search_path explícito (vulnerable a search_path injection)
+
+▸ [Capa B] purge_old_reset_snapshots(purge_old_reset_snapshots/1) — violación sin baseline
+  🟡 [LOW] SEARCH_PATH_NOT_SET
+     Función SECURITY DEFINER sin SET search_path explícito (vulnerable a search_path injection)
+
+▸ [Capa B] receive_production_output(receive_production_output/4) — violación sin baseline
+  🟡 [LOW] SEARCH_PATH_NOT_SET
+     Función SECURITY DEFINER sin SET search_path explícito (vulnerable a search_path injection)
+
+▸ [Capa B] snapshot_commission_rule(snapshot_commission_rule/0) — violación sin baseline
+  🟡 [LOW] SEARCH_PATH_NOT_SET
+     Función SECURITY DEFINER sin SET search_path explícito (vulnerable a search_path injection)
+
+▸ [Capa B] upsert_usage_aggregate(upsert_usage_aggregate/7) — violación sin baseline
+  🟡 [LOW] SEARCH_PATH_NOT_SET
+     Función SECURITY DEFINER sin SET search_path explícito (vulnerable a search_path injection)
+
+▸ [Capa B] withdraw_production_item(withdraw_production_item/4) — violación sin baseline
+  🟡 [LOW] SEARCH_PATH_NOT_SET
+     Función SECURITY DEFINER sin SET search_path explícito (vulnerable a search_path injection)
+
+── Capa C — reconciliación source-of-truth (REM-INV-6): 141 funciones del surface
+Representadas en migraciones: 141/141
+Divergencias source-of-truth (bloqueantes): 0
+
+════════════════════════════════════════════════════════════════════════════════

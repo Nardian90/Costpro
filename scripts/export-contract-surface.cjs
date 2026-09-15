@@ -48,7 +48,11 @@ async function q(sql) {
     WHERE n.nspname = 'public'
       AND p.prosecdef = true
       AND p.prokind = 'f'
-      AND pg_get_functiondef(p.oid) ~ '(INSERT|UPDATE|DELETE)\\s+(INTO|public\\.)'
+      -- REM-INV-6R: write detector now also covers DELETE FROM, unqualified
+      -- UPDATE and TRUNCATE/MERGE (the legacy pattern never matched a real
+      -- DELETE FROM statement — 7 SECDEF write functions were invisible to the
+      -- certified surface; see audit-evidence/REM-INV-6R/03).
+      AND pg_get_functiondef(p.oid) ~* E'\\\\m(INSERT\\\\s+INTO\\\\M|UPDATE\\\\s+(public\\\\.)?[A-Za-z_"\\\\x27]|DELETE\\\\s+FROM\\\\M|TRUNCATE(\\\\s+TABLE)?\\\\M|MERGE\\\\s+INTO\\\\M)'
     ORDER BY p.proname;
   `);
   if (!Array.isArray(rows) || rows.length === 0) { console.error('census empty — aborting'); process.exit(4); }

@@ -1,0 +1,21 @@
+REM-INV-6R — 16_REGRESSION (Gate Q)
+timestamp: 2026-09-15T19:41:14Z
+
+=== TSC (npx tsc --noEmit) ===
+exit: 0 — 0 errores
+
+=== VITEST (npm test) ===
+exit: 0
+ Test Files  99 passed | 1 skipped (100)
+      Tests  2070 passed | 24 skipped (2094)
+baseline REM-INV-6: Vitest 2070 passed / 24 skipped → IDENTICO (sin regresión)
+
+=== LINT (npm run lint) ===
+exit: 0 — 0 errors, 1291 warnings (pre-existing warnings, mismo nivel que baseline)
+
+=== BUILD (npm run build) ===
+exit: 137 (Killed — OOM del sandbox, INFRAESTRUCTURA no defecto; OOM documentado también en REM-INV-6)
+
+  Creating an optimized production build ...
+Killed
+verificación de build delegada al CI real (Gate T, evidence 17)

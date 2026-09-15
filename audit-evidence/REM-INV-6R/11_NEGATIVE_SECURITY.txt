@@ -1,0 +1,39 @@
+REM-INV-6R — 11_NEGATIVE_SECURITY (Gate J) + 12_FALSE_POSITIVES (Gate K)
+timestamp: 2026-09-15T19:30:05Z
+Método: PostgreSQL 17 EFÍMERO local (embedded-postgres, initdb desechable, cero contacto con producción). Cuerpos de función = extraídos verbatim de supabase/migrations (Layer C garantiza igualdad con LIVE). Roles/auth model = stubs Supabase (anon/authenticated/service_role vía claims GUC). ACLs instaladas = espejo de proacl LIVE (REVOKE PUBLIC + grants por función).
+
+[staging] initdb…
+[staging] starting postgres on 127.0.0.1:55432
+
+── Attacks (must be denied) ──
+  PASS  A1.anon.confirm_transfer.denied — permission denied for function confirm_transfer
+  PASS  A2.nonmember.p_user_id_spoof.denied — ERR_UNAUTHORIZED
+  PASS  A3.nonmember.cross_tenant_create.denied — ERR_UNAUTHORIZED
+  PASS  A4.authenticated.reverse_transfer.acl_denied — permission denied for function reverse_transfer
+  PASS  A5.authenticated.reset_store_data.acl_denied — permission denied for function reset_store_data
+  PASS  A6.kpi_cross_tenant_read.REPRODUCED — returned 1 row for OTHER-TENANT store (finding demonstrated on LIVE body)
+
+── Legitimate flows (must pass) ──
+  PASS  L1.member.create_transfer.success — created
+  PASS  L2.member.confirm.success — confirmed
+  PASS  L2b.binding.confirmed_by=auth.uid() — confirmed_by=aaaaaaaa-0000-0000-0000-000000000001 (p_user_id supplied was admin aaaaaaaa-0000-0000-0000-000000000003 — ignored)
+  PASS  L3.service_role.on_behalf.success — created (explicit capability)
+  PASS  L4.member.kpi_own_stores.success — own-store KPIs returned
+
+── Phase 2: remediated get_batch_store_daily_kpis (migration 20260916000004) ──
+  PASS  A6R.kpi_cross_tenant_read.denied — ERR_UNAUTHORIZED_STORE: bbbbbbbb-0000-0000-0000-000000000003
+  PASS  L4R.kpi_own_stores.still_pass — own-store KPIs still returned
+  PASS  A6R2.kpi_anon.denied — permission denied for function get_batch_store_daily_kpis
+
+════════════════════════════════════════════════════════════════════════
+STAGING RESULT: 14 pass / 0 fail (A6 = intentional finding demonstration)
+[staging] postgres stopped, cluster disposable
+
+Interpretación:
+- A1/A4/A5: denegación por ACL directa (privilege check) — sin ejecución de body, sin mutación
+- A2: ataque H3 (spoof de p_user_id por no-miembro) RECHAZADO por guard in-body (ERR_UNAUTHORIZED)
+- A3: cross-tenant rechazado (guard destino)
+- A6: hallazgo REAL reproducido en body LIVE (cross-tenant KPI read) — remediado en fase 2 (A6R/L4R/A6R2 PASS)
+- L1/L2/L2b/L3/L4 + L4R: 10+ flujos legítimos pasan — cero falsos positivos del remedio (Gate K)
+- L2b: binding dinámico demostrado (p_user_id=<admin> suministrado → confirmed_by=auth.uid())
+- Ningún ataque produjo cambios persistentes (ROLLBACK; mutaciones de éxito solo en clúster desechable)

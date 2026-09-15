@@ -1,0 +1,17 @@
+REM-INV-6R — 05_TRAILER_ALTER_FUNCTION
+timestamp: 2026-09-15T19:40:52Z
+
+[M6] trailers (SECURITY DEFINER before/after body, LANGUAGE sql IMMUTABLE)
+  PASS  b9.three.functions — n=3
+  PASS  b9a.text.has.secdef.trailer — header=false text=true
+  PASS  b9a.body.delete.intact
+  PASS  b9b.classic.secdef
+  PASS  b9c.immutable.sql.body
+[M7] ALTER FUNCTION modeling
+  PASS  b10.create.found
+  PASS  b10.alter.search_path — sp=public
+  PASS  b10.alter.security.definer
+  PASS  b10.alter.volatility+parallel.modeled — captured=4 (pre-fix extractor ignores volatility/parallel)
+[D1] write-detection canaries (DELETE FROM / TRUNCATE / unqualified UPDATE)
+
+Modelo canónico: nonBody (header+trailer) para SECURITY/volatility/parallel/leakproof; extractAlterStmts captura search_path, SECURITY DEFINER/INVOKER, STABLE/IMMUTABLE/VOLATILE, PARALLEL SAFE/RESTRICTED/UNSAFE, LEAKPROOF; Layer C reconcilia los atributos vs snapshot (pg_get_functiondef). Prueba CREATE+ALTER produce diferencia detectable (fixture b10: captured=4).

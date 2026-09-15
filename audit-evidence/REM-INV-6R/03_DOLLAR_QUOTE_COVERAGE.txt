@@ -1,0 +1,215 @@
+REM-INV-6R — 03_DOLLAR_QUOTE_COVERAGE (+ surface re-certificación)
+timestamp: 2026-09-15T18:59:22Z
+
+=== A) Métricas de cobertura del stream de migraciones (parser corregido, 432→433 archivos) ===
+{
+  "generated_at": "2026-09-15T18:46:14.028Z",
+  "commit": "88c88aa038e01bac98a3e05d4325ce7167938610",
+  "files_total": 432,
+  "total_functions_seen": 709,
+  "dollar_quote_$$": 314,
+  "dollar_quote_named_tag": 395,
+  "dollar_quote_arbitrary_tag": 53,
+  "single_quote_bodies": 0,
+  "sql_functions": 17,
+  "plpgsql_functions": 692,
+  "other_language": 0,
+  "functions_with_alter": 18,
+  "functions_with_security_definer": 620,
+  "functions_with_sensitive_dml": 509,
+  "multi_function_files": 125,
+  "distinct_tags": {
+    "$function$": 341,
+    "$body$": 5,
+    "$func$": 48,
+    "$fn$": 1
+  },
+  "sensitive": {
+    "create_transfer/4": {
+      "file": "20260211_create_transfers.sql",
+      "ops": [
+        "INSERT"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    },
+    "confirm_transfer/2": {
+      "file": "20260211_create_transfers.sql",
+      "ops": [
+        "UPDATE",
+        "INSERT"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    },
+    "managed_delete_user/1": {
+      "file": "20260307_safe_delete_user.sql",
+      "ops": [
+        "DELETE"
+      ],
+      "secdef": true,
+      "trailer_secdef": true
+    },
+    "confirm_transfer/3": {
+      "file": "20260324_total_remediation.sql",
+      "ops": [
+        "INSERT",
+        "UPDATE"
+      ],
+      "secdef": true,
+      "trailer_secdef": true
+    },
+    "create_transfer/5": {
+      "file": "20260324_total_remediation.sql",
+      "ops": [
+        "INSERT"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    },
+    "soft_delete_store/2": {
+      "file": "20260614000005_soft_delete_store_rpc.sql",
+      "ops": [
+        "INSERT",
+        "UPDATE"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    },
+    "reset_store_data/2": {
+      "file": "20260619000001_reset_store_data_with_keep_catalog.sql",
+      "ops": [
+        "UPDATE",
+        "DELETE"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    },
+    "create_transfer/6": {
+      "file": "20260622000002_extend_global_date_policy.sql",
+      "ops": [
+        "INSERT"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    },
+    "confirm_transfer/4": {
+      "file": "20260622000002_extend_global_date_policy.sql",
+      "ops": [
+        "UPDATE"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    },
+    "reverse_transfer/3": {
+      "file": "20260726000005_v2_2_accounting_flow_reversal.sql",
+      "ops": [
+        "INSERT",
+        "UPDATE"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    },
+    "create_transfer/7": {
+      "file": "20260726000016_v2_5_5_final_adjustments.sql",
+      "ops": [
+        "INSERT",
+        "UPDATE"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    },
+    "reset_store_data/3": {
+      "file": "20260802000001_v2_12_41_fase0_remediacion.sql",
+      "ops": [
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    },
+    "restore_store_backup/3": {
+      "file": "20260802000007_v2_12_46_restore_rpc_preview.sql",
+      "ops": [
+        "INSERT",
+        "UPDATE"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    },
+    "restore_store_backup/4": {
+      "file": "20260802000008_v2_12_47_restore_rpc_execute.sql",
+      "ops": [
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ],
+      "secdef": true,
+      "trailer_secdef": false
+    }
+  },
+  "dml_op_counts": {
+    "INSERT": 425,
+    "UPDATE": 365,
+    "DELETE": 34,
+    "TRUNCATE": 0,
+    "MERGE": 0
+  },
+  "alter_function_names": [
+    "audit_cash_closures_changes",
+    "calculate_service_distribution",
+    "cleanup_old_aggregates",
+    "close_cash_shift",
+    "create_store_with_membership",
+    "ensure_fiscal_period",
+    "get_product_cost_analysis",
+    "get_products_for_reception",
+    "get_usage_forecast",
+    "get_usage_summary",
+    "get_worker_commission_summary",
+    "mark_expired_lots",
+    "purge_old_reset_snapshots",
+    "snapshot_commission_rule",
+    "touch_updated_at",
+    "upsert_usage_aggregate",
+    "validate_active_store",
+    "void_transaction"
+  ]
+}
+
+=== B) Cross-check INDEPENDIENTE (PostgreSQL census, read-only via Management API) ===
+query: pg_proc public prokind='f' + pg_get_functiondef ~ old vs new pattern
+RESULTADO FINAL: old_total=144 old_secdef=134 | new_total=153 new_secdef=141 | old_not_new=0 | new_not_old_secdef=7 | new_not_old_invoker=2
+
+=== C) Las 7 funciones SECDEF-write invisibles al surface certificado (hallazgo sistémico) ===
+1. cleanup_expired_idempotency_keys()                       — DELETE FROM idempotency_keys (LIVE-only, sin CREATE en migraciones)
+2. cleanup_old_aggregates(p_days integer)                   — DELETE (ACL LIVE=service_role, migraciones=PUBLIC)
+3. managed_delete_user(p_user_id uuid)                      — DELETE (ACL LIVE=service_role, migraciones=PUBLIC) [SENSIBLE]
+4. purge_old_reset_snapshots(p_days integer)                — DELETE (ACL LIVE=service_role, migraciones=PUBLIC)
+5. register_idempotency(text,text,uuid,text,jsonb)          — UPDATE (BODY_DRIFT: migración=INSERT, LIVE=UPDATE)
+6. reset_store_data(p_store_id uuid, p_keep_catalog boolean)— UPDATE+DELETE (RECONCILIA limpio; era invisible por DELETE FROM)
+7. validate_active_store()                                  — ACL LIVE=service_role, migraciones=PUBLIC
+
+=== D) Remediación: snapshot regenerado (141) + divergencias Layer C expuestas + materialización ===
+exporter+LIVE contract+static con nuevo patrón ~* E'\\m(INSERT\\s+INTO\\M|UPDATE\\s+(public\\.)?[A-Za-z_"\\x27]|DELETE\\s+FROM\\M|TRUNCATE(\\s+TABLE)?\\M|MERGE\\s+INTO\\M)'
+contract-surface.sql: 134 → 141 funciones, sha256=e8e8f5d9687ced8a55fe6798afaee7218069cf47dee052f4b98fc23bfa1d8e8f
+divergencias Layer C iniciales (6): cleanup_expired_idempotency_keys NOT_REPRESENTED; cleanup_old_aggregates/managed_delete_user/purge_old_reset_snapshots/validate_active_store ACL drift (replay=[PUBLIC,service_role] vs LIVE=[service_role]); register_idempotency BODY_DRIFT
+migración de materialización: supabase/migrations/20260916000003_rem_inv_6r_rescue_hidden_write_surface.sql (representación canónica, sin cambio de comportamiento — el estado ya era LIVE)
+
+=== E) Estado final post-remediación ===
+🔒 TEST DE CONTRATO (estático, CI-safe) — Seguridad de funciones SECURITY DEFINER
+── Capa A — surface LIVE certificado (contract-surface.sql sha256=e8e8f5d9687c…)
+── Capa B — stream de migraciones (superficie PR): 433 archivos, 188 funciones SECDEF-write
+▸ [Capa B] cleanup_old_aggregates(cleanup_old_aggregates/1) — violación sin baseline
+▸ [Capa B] close_service_order_as_sale(close_service_order_as_sale/6) — violación sin baseline
+▸ [Capa B] fn_audit_stock_reception(fn_audit_stock_reception/0) — violación sin baseline
+▸ [Capa B] fn_audit_transaction_voiding(fn_audit_transaction_voiding/0) — violación sin baseline
+▸ [Capa B] purge_old_reset_snapshots(purge_old_reset_snapshots/1) — violación sin baseline
+▸ [Capa B] receive_production_output(receive_production_output/4) — violación sin baseline
+▸ [Capa B] snapshot_commission_rule(snapshot_commission_rule/0) — violación sin baseline
+▸ [Capa B] upsert_usage_aggregate(upsert_usage_aggregate/7) — violación sin baseline
+▸ [Capa B] withdraw_production_item(withdraw_production_item/4) — violación sin baseline
+── Capa C — reconciliación source-of-truth (REM-INV-6): 141 funciones del surface
+⚠️ CONTRATO OK con 9 warning(s) MEDIUM/LOW (semántica idéntica al contract LIVE)
+exit: 0

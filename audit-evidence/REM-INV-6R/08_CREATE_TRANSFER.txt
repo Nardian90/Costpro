@@ -1,0 +1,75 @@
+REM-INV-6R — 07_CONFIRM_TRANSFER / 08_CREATE_TRANSFER / 09_REVERSE_TRANSFER (Gates H)
+timestamp: 2026-09-15T19:29:25Z
+
+=== LIVE catalog — ACL y ejecutabilidad ===
+[
+ {
+  "sig": "confirm_transfer(uuid,uuid,timestamp with time zone)",
+  "owner": "postgres",
+  "prosecdef": true,
+  "vol": "v",
+  "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+  "exec_privs": "authenticated:EXECUTE, postgres:EXECUTE, service_role:EXECUTE"
+ },
+ {
+  "sig": "create_transfer(uuid,uuid,jsonb,text,uuid,timestamp with time zone,uuid)",
+  "owner": "postgres",
+  "prosecdef": true,
+  "vol": "v",
+  "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+  "exec_privs": "authenticated:EXECUTE, postgres:EXECUTE, service_role:EXECUTE"
+ },
+ {
+  "sig": "reverse_transfer(uuid,text,uuid)",
+  "owner": "postgres",
+  "prosecdef": true,
+  "vol": "v",
+  "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+  "exec_privs": "postgres:EXECUTE, service_role:EXECUTE"
+ }
+]
+
+=== Pregunta central (§12): ¿p_user_id bound estructuralmente o caller-controlled? ===
+
+PATRÓN CANÓNICO V2.12.9 (idéntico en las 3, última definición = LIVE por Layer C):
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
+                            THEN COALESCE(p_user_id, auth.uid())  -- capability explícita interna
+                            ELSE auth.uid() END;                  -- identidad derivada del JWT
+
+07 confirm_transfer(uuid,uuid,timestamptz) @ 20260916000001 (materialización canónica):
+  - guard: IF v_caller_uid IS NULL OR NOT has_store_access_as(v_caller_uid, v_transfer.destination_store_id) THEN RAISE ERR_UNAUTHORIZED
+  - TODA atribución usa v_caller_uid (confirmed_by, movements, audit_logs) — p_user_id NO interviene en decisiones
+  - verdicto: H1 STRUCTURALLY BOUND
+
+08 create_transfer(uuid,uuid,jsonb,text,uuid,timestamptz,uuid) @ 20260802000005 (V2.12.44):
+  - guards origen Y destino con v_caller_uid (ERR_UNAUTHORIZED x2), stores.is_active checks
+  - reservations + advisory lock + audit con v_caller_uid; created_by = v_caller_uid
+  - verdicto: H1 STRUCTURALLY BOUND
+
+09 reverse_transfer(uuid,text,uuid) @ 20260905000002 (W9-B10):
+  - binding idéntico + can_reverse_document(v_caller_uid, origin, 'transfer') requiere rol admin/manager/encargado/warehouse
+  - EXECUTE: service_role ÚNICAMENTE (ACL LIVE) — superficie directa de usuario inexistente
+  - verdicto: H1 STRUCTURALLY BOUND + ACL service_role-only (doble barrera)
+
+=== Frontera de confianza (§13) — callers HTTP ===
+  src/app/api/transfers/route.ts:
+    canManageStore } from '@/lib/roles'
+    canManageStore(session.user, storeId)) return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 })
+    canManageStore para AMBAS tiendas (origin + destination) — debt T3
+  src/app/api/transfers/[transferId]/confirm/route.ts:
+    canManageStore en destination_store_id (quien recibe confirma)
+    canManageStore } from '@/lib/roles'
+    canManageStore(session.user, transfer.destination_store_id)) {
+  src/app/api/reverse/route.ts:
+    p_user_id: session.user.id
+  src/app/api/stores/reset/route.ts:
+    canManageStore } from '@/lib/roles'
+    canManageStore ANTES de getSupabaseAdminSafe().
+    canManageStore.
+  → p_user_id SIEMPRE = session.user.id (sesión servidor), NUNCA del body del cliente
+
+=== Demostración DINÁMICA (staging efímero PG17, cuerpos reales) — ver 11_NEGATIVE_SECURITY ===
+  A1 anon→confirm_transfer: permission denied (ACL)
+  A2 no-miembro + p_user_id=<miembro> → ERR_UNAUTHORIZED (ataque H3 FALLA)
+  L2 miembro + p_user_id=<admin> → confirmado PERO confirmed_by=auth.uid() (binding: p_user_id ignorado)
+  L3 service_role + p_user_id=<miembro> → éxito (capability explícita interna, verificada)

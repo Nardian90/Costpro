@@ -1,0 +1,8 @@
+REM-INV-6R — 13_LAYER_A
+── Capa A — surface LIVE certificado (contract-surface.sql sha256=e8e8f5d9687c…)
+Funciones SECURITY DEFINER con escritura detectadas: 141
+Funciones verificadas: 141
+Funciones con violaciones: 0
+✅ PIN REM-INV-2R: receive_purchase(uuid) ausente del surface certificado
+
+── Capa B — stream de migraciones (superficie PR): 434 archivos, 188 funciones SECDEF-write
