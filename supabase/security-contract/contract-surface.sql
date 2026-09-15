@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-09-15T01:13:24.837Z
+-- Captured  : 2026-09-15T03:16:14.611Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 134 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -10,7 +10,7 @@
 -- snapshot as Layer A of the security contract. Re-run the generator to
 -- re-certify after authorized production changes.
 -- =====================================================================
--- @contract-function name=adjust_sale_payment args="p_transaction_id uuid, p_user_id uuid, p_payment_method text, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_items_price_adjustments jsonb, p_discount_type text, p_discount_value numeric, p_reason text" proacl=[]
+-- @contract-function name=adjust_sale_payment args="p_transaction_id uuid, p_user_id uuid, p_payment_method text, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_items_price_adjustments jsonb, p_discount_type text, p_discount_value numeric, p_reason text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.adjust_sale_payment(p_transaction_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT NULL::text, p_cash_amount numeric DEFAULT NULL::numeric, p_transfer_amount numeric DEFAULT NULL::numeric, p_zelle_amount numeric DEFAULT NULL::numeric, p_sale_currency text DEFAULT NULL::text, p_sale_exchange_rate numeric DEFAULT NULL::numeric, p_items_price_adjustments jsonb DEFAULT NULL::jsonb, p_discount_type text DEFAULT NULL::text, p_discount_value numeric DEFAULT NULL::numeric, p_reason text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -261,7 +261,7 @@ END;
 $function$
 
 
--- @contract-function name=adjust_total_amount args="p_transaction_id uuid, p_new_total numeric, p_reason text" proacl=[]
+-- @contract-function name=adjust_total_amount args="p_transaction_id uuid, p_new_total numeric, p_reason text" owner=costpro_transaction_adjuster proacl={costpro_transaction_adjuster=X/costpro_transaction_adjuster,authenticated=X/costpro_transaction_adjuster}
 CREATE OR REPLACE FUNCTION public.adjust_total_amount(p_transaction_id uuid, p_new_total numeric, p_reason text)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -296,7 +296,7 @@ END;
 $function$
 
 
--- @contract-function name=apply_physical_count args="p_count_id uuid, p_user_id uuid, p_apply_zero_diffs boolean" proacl=[]
+-- @contract-function name=apply_physical_count args="p_count_id uuid, p_user_id uuid, p_apply_zero_diffs boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.apply_physical_count(p_count_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_apply_zero_diffs boolean DEFAULT false)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -375,7 +375,7 @@ END;
 $function$
 
 
--- @contract-function name=approve_transfer args="p_transfer_id uuid, p_user_id uuid" proacl=[]
+-- @contract-function name=approve_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.approve_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -448,7 +448,7 @@ END;
 $function$
 
 
--- @contract-function name=audit_backup_restore_protected_change args="" proacl=[]
+-- @contract-function name=audit_backup_restore_protected_change args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.audit_backup_restore_protected_change()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -477,7 +477,7 @@ END;
 $function$
 
 
--- @contract-function name=audit_cash_closures_changes args="" proacl=[]
+-- @contract-function name=audit_cash_closures_changes args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.audit_cash_closures_changes()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -486,7 +486,7 @@ CREATE OR REPLACE FUNCTION public.audit_cash_closures_changes()
 AS $function$ DECLARE v_action text; v_record_id uuid; v_store_id uuid; v_user_id uuid; BEGIN v_user_id := auth.uid(); IF TG_OP = 'INSERT' THEN v_action := 'CASH_CLOSURE_CREATED'; v_record_id := NEW.id; v_store_id := NEW.store_id; ELSIF TG_OP = 'UPDATE' THEN v_action := 'CASH_CLOSURE_UPDATED'; v_record_id := NEW.id; v_store_id := NEW.store_id; ELSIF TG_OP = 'DELETE' THEN v_action := 'CASH_CLOSURE_DELETED'; v_record_id := OLD.id; v_store_id := OLD.store_id; END IF; IF v_action = 'CASH_CLOSURE_UPDATED' AND NEW.status = 'cerrado' AND OLD.status = 'pendiente' THEN RETURN NEW; END IF; IF v_action = 'CASH_CLOSURE_UPDATED' AND NEW.status = 'pendiente' AND OLD.status = 'cerrado' THEN RETURN NEW; END IF; INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata) VALUES (v_action, 'cash_closures', v_record_id, v_store_id, v_user_id, jsonb_build_object('tg_op', TG_OP, 'old_status', CASE WHEN TG_OP != 'INSERT' THEN OLD.status ELSE NULL END, 'new_status', CASE WHEN TG_OP != 'DELETE' THEN NEW.status ELSE NULL END)); RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END; END; $function$
 
 
--- @contract-function name=audit_commission_payments_changes args="" proacl=[]
+-- @contract-function name=audit_commission_payments_changes args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.audit_commission_payments_changes()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -526,7 +526,7 @@ END;
 $function$
 
 
--- @contract-function name=audit_fiscal_closings_changes args="" proacl=[]
+-- @contract-function name=audit_fiscal_closings_changes args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.audit_fiscal_closings_changes()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -559,7 +559,7 @@ END;
 $function$
 
 
--- @contract-function name=audit_payment_transactions_changes args="" proacl=[]
+-- @contract-function name=audit_payment_transactions_changes args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.audit_payment_transactions_changes()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -592,7 +592,7 @@ END;
 $function$
 
 
--- @contract-function name=audit_product_changes args="" proacl=[]
+-- @contract-function name=audit_product_changes args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.audit_product_changes()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -629,7 +629,7 @@ AS $function$
     $function$
 
 
--- @contract-function name=audit_profile_changes args="" proacl=[]
+-- @contract-function name=audit_profile_changes args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.audit_profile_changes()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -709,7 +709,7 @@ END;
 $function$
 
 
--- @contract-function name=audit_role_changes args="" proacl=[]
+-- @contract-function name=audit_role_changes args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.audit_role_changes()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -732,7 +732,7 @@ END;
 $function$
 
 
--- @contract-function name=audit_store_access_changes args="" proacl=[]
+-- @contract-function name=audit_store_access_changes args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.audit_store_access_changes()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -764,7 +764,7 @@ END;
 $function$
 
 
--- @contract-function name=audit_store_changes args="" proacl=[]
+-- @contract-function name=audit_store_changes args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.audit_store_changes()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -813,7 +813,7 @@ END;
 $function$
 
 
--- @contract-function name=auto_kardex_on_stock_movement args="" proacl=[]
+-- @contract-function name=auto_kardex_on_stock_movement args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.auto_kardex_on_stock_movement()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -854,7 +854,7 @@ END;
 $function$
 
 
--- @contract-function name=auto_match_bank_items args="p_statement_id uuid, p_user_id uuid" proacl=[]
+-- @contract-function name=auto_match_bank_items args="p_statement_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.auto_match_bank_items(p_statement_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -940,7 +940,7 @@ END;
 $function$
 
 
--- @contract-function name=bulk_assign_memberships args="p_user_id uuid, p_assignments jsonb" proacl=[]
+-- @contract-function name=bulk_assign_memberships args="p_user_id uuid, p_assignments jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.bulk_assign_memberships(p_user_id uuid, p_assignments jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1013,7 +1013,7 @@ END;
 $function$
 
 
--- @contract-function name=bulk_soft_delete_stores args="p_store_ids uuid[], p_deleted_by uuid, p_confirmation_token text, p_override_token text, p_reason text" proacl=[]
+-- @contract-function name=bulk_soft_delete_stores args="p_store_ids uuid[], p_deleted_by uuid, p_confirmation_token text, p_override_token text, p_reason text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.bulk_soft_delete_stores(p_store_ids uuid[], p_deleted_by uuid, p_confirmation_token text, p_override_token text DEFAULT NULL::text, p_reason text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1160,7 +1160,7 @@ END;
 $function$
 
 
--- @contract-function name=bulk_update_products args="_products jsonb" proacl=[]
+-- @contract-function name=bulk_update_products args="_products jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.bulk_update_products(_products jsonb)
  RETURNS TABLE(updated_count integer, inserted_count integer, error_message text)
  LANGUAGE plpgsql
@@ -1249,7 +1249,7 @@ AS $function$
     $function$
 
 
--- @contract-function name=calculate_abc args="p_store_id uuid, p_year integer, p_month integer, p_user_id uuid" proacl=[]
+-- @contract-function name=calculate_abc args="p_store_id uuid, p_year integer, p_month integer, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.calculate_abc(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1307,7 +1307,7 @@ END;
 $function$
 
 
--- @contract-function name=cancel_reception args="p_reception_id uuid" proacl=[]
+-- @contract-function name=cancel_reception args="p_reception_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_reception(p_reception_id uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -1358,7 +1358,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1398,7 +1398,7 @@ END;
 $function$
 
 
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" proacl=[]
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1435,7 +1435,7 @@ END;
 $function$
 
 
--- @contract-function name=check_idempotency args="p_key text, p_operation text, p_record_id uuid, p_param_hash text" proacl=[]
+-- @contract-function name=check_idempotency args="p_key text, p_operation text, p_record_id uuid, p_param_hash text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.check_idempotency(p_key text, p_operation text, p_record_id uuid, p_param_hash text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1483,7 +1483,7 @@ END;
 $function$
 
 
--- @contract-function name=close_cash_shift args="p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid" proacl=[]
+-- @contract-function name=close_cash_shift args="p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.close_cash_shift(p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1589,7 +1589,7 @@ END;
 $function$
 
 
--- @contract-function name=close_fiscal_period args="p_store_id uuid, p_year integer, p_month integer, p_user_id uuid" proacl=[]
+-- @contract-function name=close_fiscal_period args="p_store_id uuid, p_year integer, p_month integer, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.close_fiscal_period(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1628,7 +1628,7 @@ END;
 $function$
 
 
--- @contract-function name=close_production_order_v2 args="p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_final_amount numeric, p_final_method text, p_final_currency text, p_exchange_rate numeric, p_output_product_id uuid, p_output_quantity numeric, p_user_id uuid, p_idempotency_key text" proacl=[]
+-- @contract-function name=close_production_order_v2 args="p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_final_amount numeric, p_final_method text, p_final_currency text, p_exchange_rate numeric, p_output_product_id uuid, p_output_quantity numeric, p_user_id uuid, p_idempotency_key text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.close_production_order_v2(p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_final_amount numeric DEFAULT 0, p_final_method text DEFAULT NULL::text, p_final_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_output_product_id uuid DEFAULT NULL::uuid, p_output_quantity numeric DEFAULT NULL::numeric, p_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1819,7 +1819,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=close_service_order_as_sale args="p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_payment_method text, p_currency text, p_exchange_rate numeric, p_user_id uuid" proacl=[]
+-- @contract-function name=close_service_order_as_sale args="p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_payment_method text, p_currency text, p_exchange_rate numeric, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.close_service_order_as_sale(p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_payment_method text, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1930,7 +1930,7 @@ END;
 $function$
 
 
--- @contract-function name=confirm_inventory_adjustment args="p_adjustment_id uuid, p_user_id uuid" proacl=[]
+-- @contract-function name=confirm_inventory_adjustment args="p_adjustment_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.confirm_inventory_adjustment(p_adjustment_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2000,7 +2000,7 @@ END;
 $function$
 
 
--- @contract-function name=confirm_pending_reception args="p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone" proacl=[]
+-- @contract-function name=confirm_pending_reception args="p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.confirm_pending_reception(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS void
  LANGUAGE plpgsql
@@ -2047,7 +2047,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=confirm_transfer args="p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone" proacl=[]
+-- @contract-function name=confirm_transfer args="p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.confirm_transfer(p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone DEFAULT now())
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2156,7 +2156,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=create_devolution args="p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_currency text, p_exchange_rate numeric" proacl=[]
+-- @contract-function name=create_devolution args="p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_currency text, p_exchange_rate numeric" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2231,7 +2231,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=create_devolution args="p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text" proacl=[]
+-- @contract-function name=create_devolution args="p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid DEFAULT NULL::uuid, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2266,7 +2266,7 @@ END;
 $function$
 
 
--- @contract-function name=create_devolution_v2 args="p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text" proacl=[]
+-- @contract-function name=create_devolution_v2 args="p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid DEFAULT NULL::uuid, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2456,7 +2456,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=create_physical_count args="p_store_id uuid, p_user_id uuid, p_notes text" proacl=[]
+-- @contract-function name=create_physical_count args="p_store_id uuid, p_user_id uuid, p_notes text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_physical_count(p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -2500,7 +2500,7 @@ END;
 $function$
 
 
--- @contract-function name=create_production_order_v2 args="p_store_id uuid, p_order_type text, p_customer_name text, p_customer_ci text, p_customer_phone text, p_customer_address text, p_budget_total numeric, p_budget_currency text, p_description text, p_notes text, p_items jsonb, p_advance_amount numeric, p_advance_method text, p_advance_currency text, p_created_by uuid, p_idempotency_key text" proacl=[]
+-- @contract-function name=create_production_order_v2 args="p_store_id uuid, p_order_type text, p_customer_name text, p_customer_ci text, p_customer_phone text, p_customer_address text, p_budget_total numeric, p_budget_currency text, p_description text, p_notes text, p_items jsonb, p_advance_amount numeric, p_advance_method text, p_advance_currency text, p_created_by uuid, p_idempotency_key text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_production_order_v2(p_store_id uuid, p_order_type text DEFAULT 'service'::text, p_customer_name text DEFAULT NULL::text, p_customer_ci text DEFAULT NULL::text, p_customer_phone text DEFAULT NULL::text, p_customer_address text DEFAULT NULL::text, p_budget_total numeric DEFAULT 0, p_budget_currency text DEFAULT 'CUP'::text, p_description text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_items jsonb DEFAULT '[]'::jsonb, p_advance_amount numeric DEFAULT 0, p_advance_method text DEFAULT NULL::text, p_advance_currency text DEFAULT 'CUP'::text, p_created_by uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2581,7 +2581,7 @@ END;
 $function$
 
 
--- @contract-function name=create_purchase_order args="p_store_id uuid, p_supplier_name text, p_supplier_id uuid, p_po_number text, p_notes text, p_expected_date date, p_created_by uuid, p_items jsonb" proacl=[]
+-- @contract-function name=create_purchase_order args="p_store_id uuid, p_supplier_name text, p_supplier_id uuid, p_po_number text, p_notes text, p_expected_date date, p_created_by uuid, p_items jsonb" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_purchase_order(p_store_id uuid, p_supplier_name text, p_supplier_id uuid DEFAULT NULL::uuid, p_po_number text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_expected_date date DEFAULT NULL::date, p_created_by uuid DEFAULT NULL::uuid, p_items jsonb DEFAULT '[]'::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2730,7 +2730,7 @@ END;
 $function$
 
 
--- @contract-function name=create_quotation args="p_store_id uuid, p_items jsonb, p_user_id uuid, p_customer_id uuid, p_customer_name text, p_customer_phone text, p_discount_type text, p_discount_value numeric, p_notes text, p_valid_until date" proacl=[]
+-- @contract-function name=create_quotation args="p_store_id uuid, p_items jsonb, p_user_id uuid, p_customer_id uuid, p_customer_name text, p_customer_phone text, p_discount_type text, p_discount_value numeric, p_notes text, p_valid_until date" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_quotation(p_store_id uuid, p_items jsonb, p_user_id uuid DEFAULT NULL::uuid, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_customer_phone text DEFAULT NULL::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_notes text DEFAULT NULL::text, p_valid_until date DEFAULT NULL::date)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2800,7 +2800,7 @@ END;
 $function$
 
 
--- @contract-function name=create_received_service_v2 args="p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid" proacl=[]
+-- @contract-function name=create_received_service_v2 args="p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid DEFAULT NULL::uuid, p_service_type_name text DEFAULT 'Otro'::text, p_service_date date DEFAULT NULL::date, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_payment_terms_days integer DEFAULT 30, p_distribution_method text DEFAULT 'amount'::text, p_reference_doc text DEFAULT NULL::text, p_observations text DEFAULT NULL::text, p_receipt_ids jsonb DEFAULT '[]'::jsonb, p_created_by uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2897,7 +2897,7 @@ END;
 $function$
 
 
--- @contract-function name=create_sale args="p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric, p_discount_type text, p_discount_value numeric, p_payment_method text, p_tax_amount numeric, p_applied_taxes jsonb, p_transaction_id uuid, p_operation_date timestamp with time zone, p_cash_amount numeric, p_transfer_amount numeric, p_idempotency_key text, p_sale_currency text, p_sale_exchange_rate numeric, p_zelle_amount numeric, p_warehouse_id uuid, p_user_id uuid" proacl=[]
+-- @contract-function name=create_sale args="p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric, p_discount_type text, p_discount_value numeric, p_payment_method text, p_tax_amount numeric, p_applied_taxes jsonb, p_transaction_id uuid, p_operation_date timestamp with time zone, p_cash_amount numeric, p_transfer_amount numeric, p_idempotency_key text, p_sale_currency text, p_sale_exchange_rate numeric, p_zelle_amount numeric, p_warehouse_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_sale(p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric DEFAULT 0, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_payment_method text DEFAULT 'cash'::text, p_tax_amount numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_transaction_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_idempotency_key text DEFAULT NULL::text, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_zelle_amount numeric DEFAULT 0, p_warehouse_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3000,7 +3000,7 @@ END;
 $function$
 
 
--- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid" proacl=[]
+-- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid" owner=postgres proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3381,7 +3381,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=create_store_with_membership args="p_name text, p_address text, p_created_by uuid, p_max_stores integer, p_logo_url text, p_reeup text, p_nit text, p_bank_account text, p_phone text, p_email text, p_slug text, p_plantilla text, p_signature_url text, p_stamp_url text, p_latitude double precision, p_longitude double precision, p_tenant_id uuid" proacl=[]
+-- @contract-function name=create_store_with_membership args="p_name text, p_address text, p_created_by uuid, p_max_stores integer, p_logo_url text, p_reeup text, p_nit text, p_bank_account text, p_phone text, p_email text, p_slug text, p_plantilla text, p_signature_url text, p_stamp_url text, p_latitude double precision, p_longitude double precision, p_tenant_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_store_with_membership(p_name text, p_address text DEFAULT ''::text, p_created_by uuid DEFAULT NULL::uuid, p_max_stores integer DEFAULT 1, p_logo_url text DEFAULT NULL::text, p_reeup text DEFAULT NULL::text, p_nit text DEFAULT NULL::text, p_bank_account text DEFAULT NULL::text, p_phone text DEFAULT NULL::text, p_email text DEFAULT NULL::text, p_slug text DEFAULT NULL::text, p_plantilla text DEFAULT 'construccion'::text, p_signature_url text DEFAULT NULL::text, p_stamp_url text DEFAULT NULL::text, p_latitude double precision DEFAULT NULL::double precision, p_longitude double precision DEFAULT NULL::double precision, p_tenant_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3401,6 +3401,12 @@ BEGIN
   IF v_tenant IS NULL THEN
     RAISE EXCEPTION 'ERR_NO_TENANT: User has no tenant_id and p_tenant_id is NULL';
   END IF;
+
+  -- REM-INV-5: serialize per-tenant store creation. Closes the COUNT-then-INSERT
+  -- race on the per-tenant store limit (concurrent same-tenant calls could all
+  -- observe the pre-insert count and exceed p_max_stores). Transaction-scoped:
+  -- released automatically at COMMIT/ROLLBACK.
+  PERFORM pg_advisory_xact_lock(hashtext('tenant_stores:' || v_tenant::text));
 
   -- Check store count per tenant (NO per user)
   SELECT COUNT(*) INTO v_active_count
@@ -3441,7 +3447,7 @@ END;
 $function$
 
 
--- @contract-function name=create_transfer args="p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb, p_notes text, p_transaction_id uuid, p_operation_date timestamp with time zone, p_user_id uuid" proacl=[]
+-- @contract-function name=create_transfer args="p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb, p_notes text, p_transaction_id uuid, p_operation_date timestamp with time zone, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_transfer(p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb, p_notes text DEFAULT NULL::text, p_transaction_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3572,7 +3578,7 @@ END;
 $function$
 
 
--- @contract-function name=create_vale_salida args="p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text, p_user_id uuid" proacl=[]
+-- @contract-function name=create_vale_salida args="p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3683,7 +3689,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=detect_orphan_users args="" proacl=[]
+-- @contract-function name=detect_orphan_users args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.detect_orphan_users()
  RETURNS TABLE(auth_user_id uuid, email text, detected_at timestamp with time zone, log_status text)
  LANGUAGE plpgsql
@@ -3724,7 +3730,7 @@ END;
 $function$
 
 
--- @contract-function name=distribute_service_cost_v2 args="p_service_id uuid, p_user_id uuid" proacl=[]
+-- @contract-function name=distribute_service_cost_v2 args="p_service_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.distribute_service_cost_v2(p_service_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3817,7 +3823,7 @@ END;
 $function$
 
 
--- @contract-function name=duplicate_inventory_adjustment args="p_original_id uuid, p_user_id uuid" proacl=[]
+-- @contract-function name=duplicate_inventory_adjustment args="p_original_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.duplicate_inventory_adjustment(p_original_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3903,7 +3909,7 @@ END;
 $function$
 
 
--- @contract-function name=duplicate_inventory_adjustment_v2 args="p_original_id uuid, p_user_id uuid" proacl=[]
+-- @contract-function name=duplicate_inventory_adjustment_v2 args="p_original_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.duplicate_inventory_adjustment_v2(p_original_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3987,7 +3993,7 @@ END;
 $function$
 
 
--- @contract-function name=ensure_fiscal_period args="p_store_id uuid, p_year integer, p_month integer" proacl=[]
+-- @contract-function name=ensure_fiscal_period args="p_store_id uuid, p_year integer, p_month integer" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.ensure_fiscal_period(p_store_id uuid, p_year integer, p_month integer)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -4012,7 +4018,7 @@ END;
 $function$
 
 
--- @contract-function name=fn_log_system_health args="p_payload jsonb" proacl=[]
+-- @contract-function name=fn_log_system_health args="p_payload jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.fn_log_system_health(p_payload jsonb)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -4069,7 +4075,7 @@ END;
 $function$
 
 
--- @contract-function name=fn_process_receipt args="p_items jsonb, p_user_id uuid, p_store_id uuid, p_reference text" proacl=[]
+-- @contract-function name=fn_process_receipt args="p_items jsonb, p_user_id uuid, p_store_id uuid, p_reference text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.fn_process_receipt(p_items jsonb, p_user_id uuid DEFAULT NULL::uuid, p_store_id uuid DEFAULT NULL::uuid, p_reference text DEFAULT NULL::text)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -4149,7 +4155,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=fn_process_receipt args="p_items jsonb, p_user_id uuid, p_reference text" proacl=[]
+-- @contract-function name=fn_process_receipt args="p_items jsonb, p_user_id uuid, p_reference text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.fn_process_receipt(p_items jsonb, p_user_id uuid DEFAULT NULL::uuid, p_reference text DEFAULT NULL::text)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -4228,7 +4234,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=fn_process_sale args="p_items jsonb, p_cashier_id uuid, p_payment_method text" proacl=[]
+-- @contract-function name=fn_process_sale args="p_items jsonb, p_cashier_id uuid, p_payment_method text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.fn_process_sale(p_items jsonb, p_cashier_id uuid, p_payment_method text)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -4304,7 +4310,7 @@ END;
 $function$
 
 
--- @contract-function name=fn_recalc_wac args="p_store_id uuid, p_product_id uuid, p_event text, p_qty_in numeric, p_uc_in numeric, p_source_ref jsonb" proacl=[]
+-- @contract-function name=fn_recalc_wac args="p_store_id uuid, p_product_id uuid, p_event text, p_qty_in numeric, p_uc_in numeric, p_source_ref jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.fn_recalc_wac(p_store_id uuid, p_product_id uuid, p_event text, p_qty_in numeric, p_uc_in numeric, p_source_ref jsonb DEFAULT NULL::jsonb)
  RETURNS numeric
  LANGUAGE plpgsql
@@ -4364,7 +4370,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=fn_sync_inventory_on_movement args="" proacl=[]
+-- @contract-function name=fn_sync_inventory_on_movement args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.fn_sync_inventory_on_movement()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -4433,7 +4439,7 @@ END;
 $function$
 
 
--- @contract-function name=fn_void_receipt args="p_receipt_id uuid, p_user_id uuid" proacl=[]
+-- @contract-function name=fn_void_receipt args="p_receipt_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.fn_void_receipt(p_receipt_id uuid, p_user_id uuid)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -4487,7 +4493,7 @@ END;
 $function$
 
 
--- @contract-function name=generate_bulk_confirmation_token args="p_store_ids uuid[], p_action text, p_user_id uuid" proacl=[]
+-- @contract-function name=generate_bulk_confirmation_token args="p_store_ids uuid[], p_action text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.generate_bulk_confirmation_token(p_store_ids uuid[], p_action text, p_user_id uuid)
  RETURNS text
  LANGUAGE plpgsql
@@ -4535,7 +4541,7 @@ END;
 $function$
 
 
--- @contract-function name=generate_bulk_override_token args="p_confirmation_token text, p_override_user_id uuid, p_reason text" proacl=[]
+-- @contract-function name=generate_bulk_override_token args="p_confirmation_token text, p_override_user_id uuid, p_reason text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.generate_bulk_override_token(p_confirmation_token text, p_override_user_id uuid, p_reason text DEFAULT NULL::text)
  RETURNS text
  LANGUAGE plpgsql
@@ -4609,7 +4615,7 @@ END;
 $function$
 
 
--- @contract-function name=generate_confirmation_token args="p_session_id uuid" proacl=[]
+-- @contract-function name=generate_confirmation_token args="p_session_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.generate_confirmation_token(p_session_id uuid)
  RETURNS text
  LANGUAGE plpgsql
@@ -4646,7 +4652,7 @@ END;
 $function$
 
 
--- @contract-function name=generate_inventory_snapshot args="p_store_id uuid" proacl=[]
+-- @contract-function name=generate_inventory_snapshot args="p_store_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.generate_inventory_snapshot(p_store_id uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -4660,7 +4666,7 @@ END;
 $function$
 
 
--- @contract-function name=increment_user_usage args="p_user_id uuid, p_action_type text, p_limit integer" proacl=[]
+-- @contract-function name=increment_user_usage args="p_user_id uuid, p_action_type text, p_limit integer" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.increment_user_usage(p_user_id uuid, p_action_type text, p_limit integer)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -4699,7 +4705,7 @@ END;
 $function$
 
 
--- @contract-function name=link_receipts_to_service args="p_service_id uuid, p_receipt_ids jsonb, p_user_id uuid" proacl=[]
+-- @contract-function name=link_receipts_to_service args="p_service_id uuid, p_receipt_ids jsonb, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.link_receipts_to_service(p_service_id uuid, p_receipt_ids jsonb, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -4762,7 +4768,7 @@ END;
 $function$
 
 
--- @contract-function name=lock_fiscal_period args="p_store_id uuid, p_year integer, p_month integer, p_user_id uuid" proacl=[]
+-- @contract-function name=lock_fiscal_period args="p_store_id uuid, p_year integer, p_month integer, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.lock_fiscal_period(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -4805,7 +4811,7 @@ END;
 $function$
 
 
--- @contract-function name=log_audit_event args="p_action text, p_payload jsonb, p_store_id uuid" proacl=[]
+-- @contract-function name=log_audit_event args="p_action text, p_payload jsonb, p_store_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.log_audit_event(p_action text, p_payload jsonb, p_store_id uuid DEFAULT NULL::uuid)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -4838,7 +4844,7 @@ END;
 $function$
 
 
--- @contract-function name=log_transaction_changes args="" proacl=[]
+-- @contract-function name=log_transaction_changes args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.log_transaction_changes()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -4872,7 +4878,7 @@ END;
 $function$
 
 
--- @contract-function name=manage_user_memberships args="p_user_id uuid, p_memberships jsonb" proacl=[]
+-- @contract-function name=manage_user_memberships args="p_user_id uuid, p_memberships jsonb" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.manage_user_memberships(p_user_id uuid, p_memberships jsonb)
  RETURNS void
  LANGUAGE plpgsql
@@ -4945,7 +4951,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_create_store args="p_name text, p_address text" proacl=[]
+-- @contract-function name=managed_create_store args="p_name text, p_address text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_create_store(p_name text, p_address text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -4973,7 +4979,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_create_user args="p_max_users integer, p_max_stores integer, p_role text, p_full_name text, p_email text, p_creator_id uuid, p_target_user_id uuid, p_store_id uuid, p_memberships jsonb" proacl=[]
+-- @contract-function name=managed_create_user args="p_max_users integer, p_max_stores integer, p_role text, p_full_name text, p_email text, p_creator_id uuid, p_target_user_id uuid, p_store_id uuid, p_memberships jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_create_user(p_max_users integer, p_max_stores integer, p_role text, p_full_name text, p_email text, p_creator_id uuid, p_target_user_id uuid, p_store_id uuid, p_memberships jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -5071,7 +5077,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_create_user_v2 args="p_email text, p_full_name text, p_role user_role, p_plan plan_t, p_store_id uuid, p_memberships jsonb, p_max_stores integer, p_max_users integer, p_target_user_id uuid, p_creator_id uuid" proacl=[]
+-- @contract-function name=managed_create_user_v2 args="p_email text, p_full_name text, p_role user_role, p_plan plan_t, p_store_id uuid, p_memberships jsonb, p_max_stores integer, p_max_users integer, p_target_user_id uuid, p_creator_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_create_user_v2(p_email text, p_full_name text, p_role user_role, p_plan plan_t DEFAULT 'free'::plan_t, p_store_id uuid DEFAULT NULL::uuid, p_memberships jsonb DEFAULT NULL::jsonb, p_max_stores integer DEFAULT 0, p_max_users integer DEFAULT 0, p_target_user_id uuid DEFAULT NULL::uuid, p_creator_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -5181,7 +5187,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_delete_product args="p_product_id uuid" proacl=[]
+-- @contract-function name=managed_delete_product args="p_product_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_delete_product(p_product_id uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -5250,7 +5256,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_reset_password args="p_user_id uuid, p_caller_id uuid" proacl=[]
+-- @contract-function name=managed_reset_password args="p_user_id uuid, p_caller_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_reset_password(p_user_id uuid, p_caller_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -5289,7 +5295,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_revoke_membership args="p_membership_id uuid, p_caller_id uuid" proacl=[]
+-- @contract-function name=managed_revoke_membership args="p_membership_id uuid, p_caller_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_revoke_membership(p_membership_id uuid, p_caller_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -5355,7 +5361,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_soft_delete_user args="p_user_id uuid, p_reason text, p_caller_id uuid" proacl=[]
+-- @contract-function name=managed_soft_delete_user args="p_user_id uuid, p_reason text, p_caller_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_soft_delete_user(p_user_id uuid, p_reason text, p_caller_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -5435,7 +5441,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_toggle_product_active args="p_product_id uuid, p_is_active boolean" proacl=[]
+-- @contract-function name=managed_toggle_product_active args="p_product_id uuid, p_is_active boolean" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_toggle_product_active(p_product_id uuid, p_is_active boolean)
  RETURNS void
  LANGUAGE plpgsql
@@ -5487,7 +5493,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_toggle_user_status args="p_user_id uuid, p_is_active boolean, p_caller_id uuid" proacl=[]
+-- @contract-function name=managed_toggle_user_status args="p_user_id uuid, p_is_active boolean, p_caller_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_toggle_user_status(p_user_id uuid, p_is_active boolean, p_caller_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -5535,7 +5541,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_update_membership args="p_membership_id uuid, p_role user_role, p_status text, p_caller_id uuid" proacl=[]
+-- @contract-function name=managed_update_membership args="p_membership_id uuid, p_role user_role, p_status text, p_caller_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_update_membership(p_membership_id uuid, p_role user_role DEFAULT NULL::user_role, p_status text DEFAULT NULL::text, p_caller_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -5594,7 +5600,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_update_tenant_plan args="p_tenant_id uuid, p_plan plan_t, p_subscription_status text, p_caller_id uuid" proacl=[]
+-- @contract-function name=managed_update_tenant_plan args="p_tenant_id uuid, p_plan plan_t, p_subscription_status text, p_caller_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_update_tenant_plan(p_tenant_id uuid, p_plan plan_t, p_subscription_status text DEFAULT NULL::text, p_caller_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -5654,7 +5660,7 @@ END;
 $function$
 
 
--- @contract-function name=managed_update_user args="p_user_id uuid, p_full_name text, p_role user_role, p_role_id uuid, p_is_active boolean, p_max_stores_limit integer, p_max_users_limit integer, p_plan plan_t, p_caller_id uuid" proacl=[]
+-- @contract-function name=managed_update_user args="p_user_id uuid, p_full_name text, p_role user_role, p_role_id uuid, p_is_active boolean, p_max_stores_limit integer, p_max_users_limit integer, p_plan plan_t, p_caller_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.managed_update_user(p_user_id uuid, p_full_name text DEFAULT NULL::text, p_role user_role DEFAULT NULL::user_role, p_role_id uuid DEFAULT NULL::uuid, p_is_active boolean DEFAULT NULL::boolean, p_max_stores_limit integer DEFAULT NULL::integer, p_max_users_limit integer DEFAULT NULL::integer, p_plan plan_t DEFAULT NULL::plan_t, p_caller_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -5737,7 +5743,7 @@ END;
 $function$
 
 
--- @contract-function name=mark_expired_lots args="p_store_id uuid" proacl=[]
+-- @contract-function name=mark_expired_lots args="p_store_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.mark_expired_lots(p_store_id uuid DEFAULT NULL::uuid)
  RETURNS integer
  LANGUAGE plpgsql
@@ -5759,7 +5765,7 @@ END;
 $function$
 
 
--- @contract-function name=next_document_number args="p_store_id uuid, p_document_type text, p_user_id uuid" proacl=[]
+-- @contract-function name=next_document_number args="p_store_id uuid, p_document_type text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.next_document_number(p_store_id uuid, p_document_type text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS text
  LANGUAGE plpgsql
@@ -5821,7 +5827,7 @@ END;
 $function$
 
 
--- @contract-function name=on_auth_user_created args="" proacl=[]
+-- @contract-function name=on_auth_user_created args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.on_auth_user_created()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -5913,7 +5919,7 @@ END;
 $function$
 
 
--- @contract-function name=perform_inventory_adjustment args="p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone" proacl=[]
+-- @contract-function name=perform_inventory_adjustment args="p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.perform_inventory_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric DEFAULT NULL::numeric, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -5974,7 +5980,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=process_inventory_adjustment args="p_store_id uuid, p_cashier_id uuid, p_items adjustment_item[], p_operation_date timestamp with time zone" proacl=[]
+-- @contract-function name=process_inventory_adjustment args="p_store_id uuid, p_cashier_id uuid, p_items adjustment_item[], p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.process_inventory_adjustment(p_store_id uuid, p_cashier_id uuid, p_items adjustment_item[], p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -6017,7 +6023,7 @@ END;
 $function$
 
 
--- @contract-function name=process_pick3_transaction args="p_user_id uuid, p_type text, p_amount bigint, p_reference_draw_id uuid, p_reference_play_id uuid, p_notes text, p_metadata jsonb" proacl=[]
+-- @contract-function name=process_pick3_transaction args="p_user_id uuid, p_type text, p_amount bigint, p_reference_draw_id uuid, p_reference_play_id uuid, p_notes text, p_metadata jsonb" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.process_pick3_transaction(p_user_id uuid, p_type text, p_amount bigint, p_reference_draw_id uuid DEFAULT NULL::uuid, p_reference_play_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_metadata jsonb DEFAULT '{}'::jsonb)
  RETURNS pick3_ledger
  LANGUAGE plpgsql
@@ -6070,7 +6076,7 @@ END;
 $function$
 
 
--- @contract-function name=receive_against_po args="p_po_id uuid, p_received_items jsonb, p_user_id uuid, p_reception_date timestamp with time zone, p_invoice_number text" proacl=[]
+-- @contract-function name=receive_against_po args="p_po_id uuid, p_received_items jsonb, p_user_id uuid, p_reception_date timestamp with time zone, p_invoice_number text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.receive_against_po(p_po_id uuid, p_received_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -6280,7 +6286,7 @@ END;
 $function$
 
 
--- @contract-function name=receive_production_output args="p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text" proacl=[]
+-- @contract-function name=receive_production_output args="p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.receive_production_output(p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -6393,7 +6399,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=receive_to_warehouse args="p_store_id uuid, p_product_id uuid, p_quantity numeric, p_unit_cost numeric, p_warehouse_id uuid, p_lot_number text, p_expiration_date date, p_user_id uuid, p_reason text" proacl=[]
+-- @contract-function name=receive_to_warehouse args="p_store_id uuid, p_product_id uuid, p_quantity numeric, p_unit_cost numeric, p_warehouse_id uuid, p_lot_number text, p_expiration_date date, p_user_id uuid, p_reason text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.receive_to_warehouse(p_store_id uuid, p_product_id uuid, p_quantity numeric, p_unit_cost numeric, p_warehouse_id uuid DEFAULT NULL::uuid, p_lot_number text DEFAULT NULL::text, p_expiration_date date DEFAULT NULL::date, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -6441,7 +6447,7 @@ END;
 $function$
 
 
--- @contract-function name=reconcile_orphan_user args="p_auth_user_id uuid, p_action text, p_reason text, p_caller_id uuid" proacl=[]
+-- @contract-function name=reconcile_orphan_user args="p_auth_user_id uuid, p_action text, p_reason text, p_caller_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reconcile_orphan_user(p_auth_user_id uuid, p_action text, p_reason text, p_caller_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -6544,7 +6550,7 @@ END;
 $function$
 
 
--- @contract-function name=reconcile_stock args="p_store_id uuid, p_fix boolean, p_user_id uuid" proacl=[]
+-- @contract-function name=reconcile_stock args="p_store_id uuid, p_fix boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reconcile_stock(p_store_id uuid DEFAULT NULL::uuid, p_fix boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -6688,7 +6694,7 @@ END;
 $function$
 
 
--- @contract-function name=record_counted_quantity args="p_count_id uuid, p_product_id uuid, p_counted_quantity numeric, p_user_id uuid, p_notes text" proacl=[]
+-- @contract-function name=record_counted_quantity args="p_count_id uuid, p_product_id uuid, p_counted_quantity numeric, p_user_id uuid, p_notes text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.record_counted_quantity(p_count_id uuid, p_product_id uuid, p_counted_quantity numeric, p_user_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -6717,7 +6723,7 @@ END;
 $function$
 
 
--- @contract-function name=register_reception args="p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid" proacl=[]
+-- @contract-function name=register_reception args="p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid" owner=postgres proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.register_reception(p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT ''::text, p_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_po_id uuid DEFAULT NULL::uuid)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -6883,7 +6889,7 @@ END
 $function$
 
 
--- @contract-function name=register_stock_movement args="p_product_id uuid, p_store_id uuid, p_quantity numeric, p_movement_type text, p_reason text, p_user_id uuid, p_variant_id uuid, p_sale_id uuid, p_unit_cost numeric, p_notes text, p_operation_date timestamp with time zone, p_skip_access_check boolean" proacl=[]
+-- @contract-function name=register_stock_movement args="p_product_id uuid, p_store_id uuid, p_quantity numeric, p_movement_type text, p_reason text, p_user_id uuid, p_variant_id uuid, p_sale_id uuid, p_unit_cost numeric, p_notes text, p_operation_date timestamp with time zone, p_skip_access_check boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.register_stock_movement(p_product_id uuid, p_store_id uuid, p_quantity numeric, p_movement_type text DEFAULT NULL::text, p_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid, p_variant_id uuid DEFAULT NULL::uuid, p_sale_id uuid DEFAULT NULL::uuid, p_unit_cost numeric DEFAULT NULL::numeric, p_notes text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_skip_access_check boolean DEFAULT false)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -6937,7 +6943,7 @@ END
 $function$
 
 
--- @contract-function name=register_supplier_payment args="p_store_id uuid, p_ref_type text, p_ref_id uuid, p_amount numeric, p_payment_method text, p_paid_by uuid, p_currency text, p_exchange_rate numeric, p_reference text, p_notes text, p_idempotency_key text, p_payment_date timestamp with time zone" proacl=[]
+-- @contract-function name=register_supplier_payment args="p_store_id uuid, p_ref_type text, p_ref_id uuid, p_amount numeric, p_payment_method text, p_paid_by uuid, p_currency text, p_exchange_rate numeric, p_reference text, p_notes text, p_idempotency_key text, p_payment_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.register_supplier_payment(p_store_id uuid, p_ref_type text, p_ref_id uuid, p_amount numeric, p_payment_method text, p_paid_by uuid, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_reference text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text, p_payment_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -7022,7 +7028,7 @@ END;
 $function$
 
 
--- @contract-function name=reject_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=reject_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reject_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -7058,7 +7064,7 @@ END;
 $function$
 
 
--- @contract-function name=release_expired_reservations args="" proacl=[]
+-- @contract-function name=release_expired_reservations args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.release_expired_reservations()
  RETURNS integer
  LANGUAGE plpgsql
@@ -7091,7 +7097,7 @@ END;
 $function$
 
 
--- @contract-function name=reopen_cash_shift args="p_closure_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=reopen_cash_shift args="p_closure_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reopen_cash_shift(p_closure_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -7140,7 +7146,7 @@ END;
 $function$
 
 
--- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" proacl=[]
+-- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -7338,7 +7344,7 @@ END;
 $function$
 
 
--- @contract-function name=restore_store_backup args="p_store_id uuid, p_backup_payload jsonb, p_mode text, p_confirmation_token text" proacl=[]
+-- @contract-function name=restore_store_backup args="p_store_id uuid, p_backup_payload jsonb, p_mode text, p_confirmation_token text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.restore_store_backup(p_store_id uuid, p_backup_payload jsonb, p_mode text DEFAULT 'preview'::text, p_confirmation_token text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -7746,7 +7752,7 @@ END;
 $function$
 
 
--- @contract-function name=restore_transaction_snapshot args="p_migration_id text, p_tx_id uuid" proacl=[]
+-- @contract-function name=restore_transaction_snapshot args="p_migration_id text, p_tx_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.restore_transaction_snapshot(p_migration_id text, p_tx_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -7860,7 +7866,7 @@ END;
 $function$
 
 
--- @contract-function name=reverse_adjustment args="p_adjustment_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=reverse_adjustment args="p_adjustment_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reverse_adjustment(p_adjustment_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -7908,7 +7914,7 @@ END;
 $function$
 
 
--- @contract-function name=reverse_commissions_on_sale_void args="" proacl=[]
+-- @contract-function name=reverse_commissions_on_sale_void args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reverse_commissions_on_sale_void()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -7966,7 +7972,7 @@ END;
 $function$
 
 
--- @contract-function name=reverse_devolution args="p_devolution_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=reverse_devolution args="p_devolution_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reverse_devolution(p_devolution_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8089,7 +8095,7 @@ END;
 $function$
 
 
--- @contract-function name=reverse_inventory_adjustment_v2 args="p_adjustment_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=reverse_inventory_adjustment_v2 args="p_adjustment_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reverse_inventory_adjustment_v2(p_adjustment_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8168,7 +8174,7 @@ END;
 $function$
 
 
--- @contract-function name=reverse_production_order args="p_order_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=reverse_production_order args="p_order_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8234,7 +8240,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=reverse_receipt args="p_receipt_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=reverse_receipt args="p_receipt_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reverse_receipt(p_receipt_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8281,7 +8287,7 @@ END;
 $function$
 
 
--- @contract-function name=reverse_receipt_v2 args="p_receipt_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=reverse_receipt_v2 args="p_receipt_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8394,7 +8400,7 @@ END
 $function$
 
 
--- @contract-function name=reverse_transaction_v2 args="p_transaction_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=reverse_transaction_v2 args="p_transaction_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reverse_transaction_v2(p_transaction_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8482,7 +8488,7 @@ END;
 $function$
 
 
--- @contract-function name=reverse_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=reverse_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reverse_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8570,7 +8576,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=reverse_vale_salida args="p_slip_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=reverse_vale_salida args="p_slip_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reverse_vale_salida(p_slip_id uuid, p_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8688,7 +8694,7 @@ END;
 $function$
 
 
--- @contract-function name=save_ai_api_key args="p_provider text, p_api_key text, p_label text" proacl=[]
+-- @contract-function name=save_ai_api_key args="p_provider text, p_api_key text, p_label text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.save_ai_api_key(p_provider text, p_api_key text, p_label text DEFAULT NULL::text)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -8710,7 +8716,7 @@ END;
 $function$
 
 
--- @contract-function name=save_product_cost_sheet args="p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_calculated_data jsonb, p_cost_price numeric" proacl=[]
+-- @contract-function name=save_product_cost_sheet args="p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_calculated_data jsonb, p_cost_price numeric" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.save_product_cost_sheet(p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_calculated_data jsonb, p_cost_price numeric)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8768,7 +8774,7 @@ END;
 $function$
 
 
--- @contract-function name=set_purchase_order_status args="p_po_id uuid, p_new_status purchase_status_enum, p_user_id uuid, p_reason text" proacl=[]
+-- @contract-function name=set_purchase_order_status args="p_po_id uuid, p_new_status purchase_status_enum, p_user_id uuid, p_reason text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.set_purchase_order_status(p_po_id uuid, p_new_status purchase_status_enum, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8855,7 +8861,7 @@ END;
 $function$
 
 
--- @contract-function name=set_received_service_status args="p_service_id uuid, p_new_status text, p_user_id uuid, p_reason text" proacl=[]
+-- @contract-function name=set_received_service_status args="p_service_id uuid, p_new_status text, p_user_id uuid, p_reason text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.set_received_service_status(p_service_id uuid, p_new_status text, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8915,7 +8921,7 @@ END;
 $function$
 
 
--- @contract-function name=set_transfer_approval_rule args="p_tenant_id uuid, p_store_id uuid, p_threshold_amount numeric, p_threshold_quantity numeric, p_approver_roles text[], p_is_active boolean, p_user_id uuid" proacl=[]
+-- @contract-function name=set_transfer_approval_rule args="p_tenant_id uuid, p_store_id uuid, p_threshold_amount numeric, p_threshold_quantity numeric, p_approver_roles text[], p_is_active boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.set_transfer_approval_rule(p_tenant_id uuid, p_store_id uuid, p_threshold_amount numeric DEFAULT NULL::numeric, p_threshold_quantity numeric DEFAULT NULL::numeric, p_approver_roles text[] DEFAULT ARRAY['admin'::text, 'manager'::text], p_is_active boolean DEFAULT true, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -8966,7 +8972,7 @@ END;
 $function$
 
 
--- @contract-function name=snapshot_commission_rule args="" proacl=[]
+-- @contract-function name=snapshot_commission_rule args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.snapshot_commission_rule()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -9009,7 +9015,7 @@ END;
 $function$
 
 
--- @contract-function name=soft_delete_store args="p_store_id uuid, p_deleted_by uuid" proacl=[]
+-- @contract-function name=soft_delete_store args="p_store_id uuid, p_deleted_by uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.soft_delete_store(p_store_id uuid, p_deleted_by uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -9055,7 +9061,7 @@ END;
 $function$
 
 
--- @contract-function name=sync_inventory_from_products args="p_store_id uuid" proacl=[]
+-- @contract-function name=sync_inventory_from_products args="p_store_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.sync_inventory_from_products(p_store_id uuid DEFAULT NULL::uuid)
  RETURNS TABLE(sync_product_id uuid, product_name text, action text, old_qty numeric, new_qty numeric)
  LANGUAGE plpgsql
@@ -9139,7 +9145,7 @@ END;
 $function$
 
 
--- @contract-function name=sync_product_has_movements args="" proacl=[]
+-- @contract-function name=sync_product_has_movements args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.sync_product_has_movements()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -9161,7 +9167,7 @@ END;
 $function$
 
 
--- @contract-function name=sync_product_stock args="" proacl=[]
+-- @contract-function name=sync_product_stock args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.sync_product_stock()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -9190,7 +9196,7 @@ END;
 $function$
 
 
--- @contract-function name=update_receipt_item_tasa args="p_receipt_item_id uuid, p_new_tasa_cambio_recepcion numeric, p_new_moneda_recepcion text, p_motivo text, p_user_id uuid" proacl=[]
+-- @contract-function name=update_receipt_item_tasa args="p_receipt_item_id uuid, p_new_tasa_cambio_recepcion numeric, p_new_moneda_recepcion text, p_motivo text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.update_receipt_item_tasa(p_receipt_item_id uuid, p_new_tasa_cambio_recepcion numeric, p_new_moneda_recepcion text DEFAULT NULL::text, p_motivo text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -9349,7 +9355,7 @@ END;
 $function$
 
 
--- @contract-function name=update_reception_items args="p_receipt_id uuid, p_item_updates jsonb, p_user_id uuid" proacl=[]
+-- @contract-function name=update_reception_items args="p_receipt_id uuid, p_item_updates jsonb, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.update_reception_items(p_receipt_id uuid, p_item_updates jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -9427,7 +9433,7 @@ END;
 $function$
 
 
--- @contract-function name=update_transaction_taxes args="p_transaction_id uuid, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric" proacl=[]
+-- @contract-function name=update_transaction_taxes args="p_transaction_id uuid, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.update_transaction_taxes(p_transaction_id uuid, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -9477,7 +9483,7 @@ AS $function$
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             $function$
 
 
--- @contract-function name=upsert_manual_exchange_rate_with_audit args="p_actor_id uuid, p_currency text, p_rate numeric, p_rate_date date, p_source text, p_capture_method text, p_source_ip text" proacl=[]
+-- @contract-function name=upsert_manual_exchange_rate_with_audit args="p_actor_id uuid, p_currency text, p_rate numeric, p_rate_date date, p_source text, p_capture_method text, p_source_ip text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.upsert_manual_exchange_rate_with_audit(p_actor_id uuid, p_currency text, p_rate numeric, p_rate_date date DEFAULT NULL::date, p_source text DEFAULT 'elToque'::text, p_capture_method text DEFAULT 'real'::text, p_source_ip text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -9554,7 +9560,7 @@ END;
 $function$
 
 
--- @contract-function name=upsert_store_cost_template args="p_store_id uuid, p_template_id text, p_template_data jsonb, p_modalidad text, p_pdf_format text, p_created_by uuid" proacl=[]
+-- @contract-function name=upsert_store_cost_template args="p_store_id uuid, p_template_id text, p_template_data jsonb, p_modalidad text, p_pdf_format text, p_created_by uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.upsert_store_cost_template(p_store_id uuid, p_template_id text, p_template_data jsonb, p_modalidad text, p_pdf_format text DEFAULT 'res148'::text, p_created_by uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -9604,7 +9610,7 @@ END;
 $function$
 
 
--- @contract-function name=upsert_usage_aggregate args="p_bucket_start timestamp with time zone, p_bucket_end timestamp with time zone, p_metric_type text, p_service text, p_endpoint text, p_count integer, p_sum_value double precision" proacl=[]
+-- @contract-function name=upsert_usage_aggregate args="p_bucket_start timestamp with time zone, p_bucket_end timestamp with time zone, p_metric_type text, p_service text, p_endpoint text, p_count integer, p_sum_value double precision" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.upsert_usage_aggregate(p_bucket_start timestamp with time zone, p_bucket_end timestamp with time zone, p_metric_type text, p_service text DEFAULT 'api'::text, p_endpoint text DEFAULT NULL::text, p_count integer DEFAULT 1, p_sum_value double precision DEFAULT 0)
  RETURNS void
  LANGUAGE plpgsql
@@ -9625,7 +9631,7 @@ END;
 $function$
 
 
--- @contract-function name=void_closed_production_order args="p_order_id uuid, p_reason text, p_user_id uuid" proacl=[]
+-- @contract-function name=void_closed_production_order args="p_order_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.void_closed_production_order(p_order_id uuid, p_reason text DEFAULT 'Anulación'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -9682,7 +9688,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=void_inventory_adjustment args="p_adjustment_id uuid, p_user_id uuid" proacl=[]
+-- @contract-function name=void_inventory_adjustment args="p_adjustment_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.void_inventory_adjustment(p_adjustment_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -9725,7 +9731,7 @@ END;
 $function$
 
 
--- @contract-function name=void_pending_reception args="p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone" proacl=[]
+-- @contract-function name=void_pending_reception args="p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone" owner=postgres proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.void_pending_reception(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT 'Anulación de recepción pendiente'::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -9808,7 +9814,7 @@ END;
 $function$
 
 
--- @contract-function name=void_received_service_with_reversal args="p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone" proacl=[]
+-- @contract-function name=void_received_service_with_reversal args="p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.void_received_service_with_reversal(p_service_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT 'Anulacion con reversion'::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -9881,7 +9887,7 @@ END;
 $function$
 
 
--- @contract-function name=void_reception_with_reversal args="p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone" proacl=[]
+-- @contract-function name=void_reception_with_reversal args="p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.void_reception_with_reversal(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT 'Anulacion con reversion'::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS void
  LANGUAGE plpgsql
@@ -9927,7 +9933,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=void_transaction args="p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone, p_user_id uuid" proacl=[]
+-- @contract-function name=void_transaction args="p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone, p_user_id uuid" owner=postgres proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.void_transaction(p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone DEFAULT now(), p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -10010,7 +10016,7 @@ END;
 $function$
 
 
--- @contract-function name=withdraw_production_item_deprecated_6arg args="p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text" proacl=[]
+-- @contract-function name=withdraw_production_item_deprecated_6arg args="p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text" owner=postgres proacl={postgres=X/postgres}
 CREATE OR REPLACE FUNCTION public.withdraw_production_item_deprecated_6arg(p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -10076,7 +10082,7 @@ END;
 $function$
 
 
--- @contract-function name=withdraw_production_item_deprecated_9arg args="p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text, p_server_side_cost boolean" proacl=[]
+-- @contract-function name=withdraw_production_item_deprecated_9arg args="p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text, p_server_side_cost boolean" owner=postgres proacl={postgres=X/postgres}
 CREATE OR REPLACE FUNCTION public.withdraw_production_item_deprecated_9arg(p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_reference_id uuid DEFAULT NULL::uuid, p_reference_doc text DEFAULT NULL::text, p_server_side_cost boolean DEFAULT false)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -10182,7 +10188,7 @@ END;
 $function$
 
 
--- @contract-function name=withdraw_production_item_v3 args="p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text" proacl=[]
+-- @contract-function name=withdraw_production_item_v3 args="p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
 CREATE OR REPLACE FUNCTION public.withdraw_production_item_v3(p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_reference_id uuid DEFAULT NULL::uuid, p_reference_doc text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql

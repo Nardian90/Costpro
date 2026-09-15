@@ -1,0 +1,9 @@
+REM-INV-6 — 17 GATES N/V: security contract PRE y POST producción
+LIVE (scripts/security-contract-test.cjs con credenciales,Management API):
+  PRE  apply: 134/134 · 0 violaciones · PIN REM-INV-2R OK · exit 0
+  POST apply: 134/134 · 0 violaciones · PIN REM-INV-2R OK · exit 0
+Estático CI-safe (scripts/security-contract-test-static.cjs):
+  Capa A 134/134 · Capa B 174 verificadas/17 baseline/0 nuevas ·
+  Capa C 134/134 representadas, 0 divergencias · exit 0
+Source-of-truth reconciliation: PASS
+Unexpected violations: 0

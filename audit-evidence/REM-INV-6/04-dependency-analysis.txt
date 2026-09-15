@@ -1,0 +1,28 @@
+REM-INV-6 — 04 GATE E: dependencias LIVE (solo lectura) de las 14 funciones ABSENT
+Queries: pg_trigger (tgfoid), pg_policy (quals), pg_depend/pg_rewrite (vistas),
+llamadas SQL función→función (cuerpos), referencias src/.
+
+TRIGGERS:
+  audit_backup_restore_protected_change → trg_audit_backup_restore_protected (public.stores) [ACTIVA]
+
+LLAMADAS SQL INTERNAS:
+  fn_recalc_wac ← cancel_reception, confirm_pending_reception, fn_process_receipt,
+                  perform_inventory_adjustment, register_reception, reverse_devolution,
+                  reverse_receipt_v2, void_reception_with_reversal  [ACTIVA ×8]
+  process_pick3_transaction ← on_pick3_profile_initial_bankroll [ACTIVA]
+  withdraw_production_item_v3 ← create_vale_salida [ACTIVA]
+
+REFERENCIAS src/ (frontend/backend):
+  fn_recalc_wac: 1 archivo · increment_user_usage: 1 · process_pick3_transaction: 1 ·
+  withdraw_production_item_v3: 1 · resto de las 14: 0 referencias.
+
+POLÍTICAS RLS / VISTAS: 0 referencias para las 14.
+
+CLASIFICACIÓN RESULTANTE:
+  4 activas (trigger/llamadas SQL) + 4 con referencia app (C7 materializar) ·
+  6 sin referencias detectadas (legacy candidates: fn_log_system_health,
+  fn_process_receipt/4, fn_process_sale, fn_void_receipt, generate_inventory_snapshot,
+  restore_transaction_snapshot, save_ai_api_key, sync_inventory_from_products,
+  withdraw_production_item_deprecated_9arg — C7-materializar con nota C6/retiro
+  FUTURO fuera de alcance; NO se elimina nada: Gate D prohíbe DROP sin causa).
+UNKNOWN: 0 (ninguna dependencia desconocida; retirado bloqueado según Gate E).

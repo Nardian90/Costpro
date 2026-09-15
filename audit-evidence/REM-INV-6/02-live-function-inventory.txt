@@ -1,0 +1,21 @@
+REM-INV-6 — 02 GATE B: inventario LIVE (solo lectura, Management API)
+Proyecto: wthkddeleylijmonclxg · generado 2026-09-15T03:54:55.782Z
+
+Q1 funciones en public (catálogo completo): 484
+Q2 superficie contractual (SECURITY DEFINER + escritura): 134
+Q3 snapshot supabase/security-contract/contract-surface.sql vs LIVE:
+   bloques=134 idénticos=134 diffs=0
+   HALLAZGO: el snapshot heredado de REM-INV-5 estaba OBSOLETO en 1 función
+   (create_store_with_membership): fue generado ANTES del apply de producción de
+   REM-INV-5 (advisory lock) y no se regeneró. Remediado en este gate
+   (regeneración; post-apply: 134/134 idénticos).
+Q4 stream de migraciones: 432 archivos .sql, 317 claves de función,
+   816 statements GRANT/REVOKE EXECUTE.
+Q5 representación de las 134 funciones LIVE (detector CORREGIDO — ver 06):
+   EXACT=134 DRIFTED=0 ABSENT=0
+   (detector antiguo REM-INV-5 reportaba 62 ausentes — inflado por 3 bugs del
+   extractor, ver 06-migration-gap-analysis.md)
+
+Método de comparación: cuerpo verbatim (prosrc via pg_get_functiondef) normalizado
+en espacios + igualdad de firma (nombre/argcount). md5(pg_get_functiondef) LIVE
+capturado en out/live-surface-fresh.json (scripts/rem6).

@@ -1,0 +1,20 @@
+REM-INV-6 — 12 GATE Q: prueba negativa del CI (copia aislada /tmp/rem6-negtest)
+Método: copia del repo-state (gate+snapshot+migraciones+allowlist) a directorio
+temporal; mutaciones controladas del SNAPSHOT (oracle) o migraciones; ejecución
+del gate real; comparación del exit code esperado.
+
+Caso 1 — Función no representada:
+  inyección de bloque @contract-function rem6_negtest_unrepresented_fn (sin
+  migración) → 🚨 LIVE_FUNCTION_NOT_REPRESENTED → EXIT 1 (esperado 1) ✅
+Caso 2 — ACL alterada:
+  remoción de authenticated del proacl de adjust_sale_payment en el snapshot →
+  🚨 UNEXPECTED_ACL_DRIFT → EXIT 1 (esperado 1) ✅
+Caso 3 — SECURITY DEFINER alterado:
+  SECURITY DEFINER → SECURITY INVOKER en el snapshot →
+  🚨 UNEXPECTED_SECDEF_CHANGE → EXIT 1 (esperado 1) ✅
+Caso 4 — Estado correcto:
+  snapshot+migraciones sin tocar → CONTRATO OK → EXIT 0 (esperado 0) ✅
+Extra — función extra SOLO en migraciones (no en surface) → exit 0 (correcto: el
+snapshot certificado es el oráculo; sobra en migraciones no bloquea) ✅
+
+Limpieza: /tmp/rem6-negtest eliminado; el snapshot REAL nunca fue mutado.

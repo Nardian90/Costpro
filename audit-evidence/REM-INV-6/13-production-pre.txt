@@ -1,0 +1,31 @@
+REM-INV-6 — 13 GATE S: producción PRE (solo lectura)
+Fecha: 2026-09-15T03:52:49.303Z · proyecto: wthkddeleylijmonclxg
+Catálogo: 484 funciones en public — fingerprint completo
+(md5(pg_get_functiondef), proacl, prosecdef, proconfig, owner) capturado.
+Drift vs superficie capturada (live-surface-fresh.json): 0 — ABORT si ≠ 0.
+Precondiciones verificadas antes del apply:
+  staging PASS (Gate M 134/134 + idempotencia) ✓
+  contract PASS (estático 3 capas exit 0 + LIVE 134/134) ✓
+  regresión PASS (tsc 0 / vitest 2070/24 / lint 0-1291 == baseline) ✓
+  secret scan REAL_SECRET=0 ✓
+  git status explícito: 2 migraciones nuevas + gate + exporter + snapshot + allowlist
+  + 5 archivos movidos (git mv) — nada más ✓
+  delta de catálogo ESPERADO: CERO (bodies byte-idénticos + DCL guardado no-op) ✓
+Zero-touch PRE (rows): {
+"metric": "rows",
+"devolutions": "25",
+"transactions": "597",
+"payment_transactions": "458",
+"stock_movements": "1021",
+"inventory": "277",
+"audit_logs": "8152",
+"business_events": "10897",
+"purchase_orders": "8",
+"receipts": "63",
+"transfers": "8",
+"inventory_adjustments": "5",
+"products": "367",
+"stores": "50",
+"user_store_memberships": "90",
+"profiles": "82"
+}...

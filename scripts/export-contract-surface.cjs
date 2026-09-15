@@ -41,7 +41,8 @@ async function q(sql) {
       p.proname AS function_name,
       pg_get_function_identity_arguments(p.oid) AS args,
       pg_get_functiondef(p.oid) AS def,
-      COALESCE(p.proacl, ARRAY[]::aclitem[]) AS acl
+      COALESCE(p.proacl, ARRAY[]::aclitem[]) AS acl,
+      pg_get_userbyid(p.proowner) AS owner
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'public'
@@ -76,8 +77,11 @@ async function q(sql) {
 `;
 
   const blocks = fns.map((f) => {
-    const acl = Array.isArray(f.acl) ? f.acl : [];
-    return `-- @contract-function name=${f.function_name} args="${(f.args || '').replace(/"/g, "'")}" proacl=${JSON.stringify(acl)}\n${f.def}\n`;
+    // proacl: the Management API serializes aclitem[] as a PG array literal
+    // STRING ("{postgres=X/postgres,...}") — keep it verbatim (REM-INV-6: the
+    // legacy JSON-array coercion always produced [] and inert ACL checks).
+    const aclRaw = Array.isArray(f.acl) ? JSON.stringify(f.acl) : String(f.acl || '{}');
+    return `-- @contract-function name=${f.function_name} args="${(f.args || '').replace(/"/g, "'")}" owner=${f.owner || 'postgres'} proacl=${aclRaw.includes(' ') && !aclRaw.startsWith('{') ? JSON.stringify(aclRaw) : aclRaw}\n${f.def}\n`;
   });
 
   const out = header + blocks.join('\n');

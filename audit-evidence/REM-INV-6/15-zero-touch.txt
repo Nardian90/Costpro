@@ -1,0 +1,20 @@
+REM-INV-6 — 15 GATE T: ZERO-TOUCH (producción PRE vs POST)
+
+Tabla,rows_PRE,rows_POST,max_created_at_idéntico,estado
+stores,50,50,SÍ,IDENTICAL
+products,367,367,SÍ,IDENTICAL
+inventory,277,277,SÍ,IDENTICAL
+stock_movements,1021,1021,SÍ,IDENTICAL
+transactions,597,597,SÍ,IDENTICAL
+payment_transactions,458,458,SÍ,IDENTICAL
+receipts,63,63,SÍ,IDENTICAL
+devolutions,25,25,SÍ,IDENTICAL
+audit_logs,8152,8152,SÍ,IDENTICAL
+business_events,10897,10897,SÍ,IDENTICAL
+purchase_orders,8,8,SÍ,IDENTICAL
+transfers,8,8,SÍ,IDENTICAL
+inventory_adjustments,5,5,SÍ,IDENTICAL
+user_store_memberships,90,90,SÍ,IDENTICAL
+profiles,82,82,SÍ,IDENTICAL
+
+RESULTADO: 15/15+ IDENTICAL — BITWISE/HASH EQUAL (counts + max timestamps)

@@ -1,0 +1,12 @@
+REM-INV-6 — 07 GATE I: staging fiel (PostgreSQL 17.6, efímero, puerto 5437)
+Binarios: PG 17.6 (rem4ar/pg) · initdb fresco por ejecución.
+Bootstrap: roles (anon, authenticated, service_role, supabase_admin, authenticator,
+supabase_auth_admin, supabase_storage_admin, costpro_transaction_adjuster), schema
+auth + shims (auth.uid/role/jwt/email), extensiones pgcrypto/pg_trgm.
+Fixture base (desde LIVE, read-only): 13 enums + 146 tablas stub con columnas reales
++ 13 tipos compuestos standalone (adjustment_item, vistas v_*, mv_*) — SOLO para
+satisfacer referencias de firmas; SIN datos, SIN RLS, SIN triggers, SIN funciones
+(la superficie de funciones proviene EXCLUSIVAMENTE de migraciones).
+FIDELIDAD: misma versión PG (17.6 LIVE y staging); semántica de ACL por defecto
+idéntica (sin ALTER DEFAULT PRIVILEGES); diferencias documentadas: fixture sin datos
+y sin RLS de negocio (irrelevantes para la superficie de funciones+ACL).

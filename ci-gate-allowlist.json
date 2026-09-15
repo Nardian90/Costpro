@@ -123,6 +123,123 @@
       "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
       "added_by": "REM-INV-5",
       "expires": "2026-12-31"
+    },
+    {
+      "function": "confirm_pending_reception/2",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "confirm_transfer/2",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "create_sale/8",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "create_sale/10",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "create_sale/11",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "create_transfer/4",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "ensure_fiscal_period/3",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "managed_create_user/6",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "managed_create_user/7",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "mark_expired_lots/1",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "process_inventory_adjustment/3",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_stock_movement/9",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "void_reception_with_reversal/3",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
     }
   ]
 }

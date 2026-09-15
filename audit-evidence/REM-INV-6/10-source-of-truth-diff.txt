@@ -1,0 +1,13 @@
+REM-INV-6 — 10 GATE N: Layer C source-of-truth (estático, CI-safe)
+scripts/security-contract-test-static.cjs ahora ejecuta 3 capas:
+  Capa A — surface LIVE certificado (snapshot): 134/134, 0 violaciones
+  Capa B — stream de migraciones: 174 funciones SECDEF-write verificadas,
+           17 dentro del baseline revisado (9 REM-INV-5 + 13 nuevas REM-INV-6,
+           expiración 2026-12-31, razón documentada), 0 nuevas bloqueantes
+  Capa C — reconciliación source-of-truth (NUEVA): 134/134 representadas,
+           0 divergencias (body verbatim, SECURITY DEFINER, search_path,
+           grants EXECUTE en semántica de conjunto con owner excluido)
+Salida: 🎉 CONTRATO OK — exit 0
+Detalle extractor corregido: ver 06. La existencia del snapshot NO se acepta
+como evidencia: cada función del snapshot debe existir en el stream con el
+mismo cuerpo/propiedades/ACL o el build se bloquea.

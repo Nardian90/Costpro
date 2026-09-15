@@ -1,0 +1,15 @@
+REM-INV-6 — 11 GATE P/Q: CI
+Arquitectura: el workflow existente .github/workflows/ci.yml (job security, paso
+"Security contract (static, CI-safe)" añadido en REM-INV-5) ejecuta
+scripts/security-contract-test-static.cjs en cada PR — NO se creó workflow nuevo
+y NO se cambió el YAML (la Capa C vive dentro del script).
+CI falla ante (demostrado en Gate Q sobre copia aislada):
+  Caso 1: función LIVE sin migración → LIVE_FUNCTION_NOT_REPRESENTED → exit 1 ✅
+  Caso 2: ACL alterada → UNEXPECTED_ACL_DRIFT → exit 1 ✅
+  Caso 3: SECURITY DEFINER alterado → UNEXPECTED_SECDEF_CHANGE → exit 1 ✅
+  Caso 4: estado correcto → exit 0 ✅
+  Extra: función extra SOLO en migraciones → no bloquea (surface = oráculo) exit 0 ✅
+Excepciones: ci-gate-allowlist.json → security_contract_static_baseline (22 entradas,
+todas con reason/added_by/expires=2026-12-31) + source_of_truth_baseline (vacía;
+cualquier excepción futura exige reason+expires).
+Verificación GitHub Actions (Gate Q, post-push): ver 18-git-closure.txt.

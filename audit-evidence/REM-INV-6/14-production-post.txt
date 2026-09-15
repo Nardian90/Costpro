@@ -1,0 +1,10 @@
+REM-INV-6 — 14 GATE S: producción POST
+Fecha: 2026-09-15T03:53:22.894Z
+Apply: migration A HTTP 201 (1 transacción) + migration B HTTP 201 (1 transacción).
+Diff de catálogo (fingerprint completo PRE vs POST sobre 484 funciones):
+  changed=0 added=0 removed=0
+  EXPECTED DELTA == ACTUAL DELTA == 0/0/0 → EXACTO ✓
+  ("no vimos problemas" NO se acepta: comparación campo a campo de
+   def_md5/proacl/prosecdef/proconfig/owner por función)
+Post-apply: contract LIVE 134/134 ✓ · gate estático 3 capas exit 0 ✓ ·
+snapshot vs LIVE 134/134 idénticos (Q3) ✓ · representación EXACT=134 (Q5) ✓

@@ -1,0 +1,22 @@
+REM-INV-6 — 05 GATES G/H: reconciliación ACL (REM-INV-4C + censo 134)
+
+GATE G — estado LIVE de las 4 funciones REM-INV-4C (verificado read-only):
+  current_user_tenant_id()            proacl: postgres=X|authenticated=X|service_role=X  (anon=false) ✓
+  has_store_role(uuid,text[])         proacl: postgres=X|authenticated=X|service_role=X  (anon=false) ✓
+  has_store_role(uuid,uuid,text[])    proacl: postgres=X|authenticated=X|service_role=X  (anon=false) ✓
+  has_store_role_as(uuid,uuid,text[]) proacl: postgres=X|service_role=X                  (anon=false) ✓
+  Política certificada conservada; no se inventó política nueva.
+
+GATE H — brecha migratoria DCL:
+  has_store_role_as: migraciones 20260807000002 + 20260902200923 (REVOKE/GRANT) → estado final equivalente.
+  has_store_role 3-arg: 20260820000001 (REVOKE anon + GRANT auth/svc) → materialización implícita equivale.
+  current_user_tenant_id(): SIN DCL en migraciones → replay dejaba PUBLIC EXECUTE (¡brecha!).
+  has_store_role 2-arg: SIN DCL suficiente en migraciones → ídem.
+  REMEDIACIÓN: migration 20260916000002 re-asserts ACL certificado de las 134 funciones
+  con bloques DO privilegio-guardados (idempotentes; en producción = no-op).
+
+CENSO ACL 134 (LIVE): 6 firmas proacl distintas; 0 con proacl NULL
+(=sin PUBLIC implícito sin materializar); 5 funciones con PUBLIC EXECUTE explícito
+(estado certificado pre-existente: create_sale_v2, register_reception,
+reverse_receipt_v2, void_pending_reception, void_transaction) — se reproduce
+fielmente, NO se altera (el surface certificado no cambia en este gate).

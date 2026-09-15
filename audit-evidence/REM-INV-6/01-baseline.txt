@@ -1,0 +1,9 @@
+REM-INV-6 — 01 GATE A: baseline
+Comando/verificación (baseline obligatorio 5ded948e):
+  git rev-parse HEAD     → 5ded948ed3421de3a35d2af3a3d7308b8a002f00
+  git fetch origin main; git rev-parse origin/main → 5ded948ed3421de3a35d2af3a3d7308b8a002f00
+  git status --short     → (vacío — WORKTREE CLEAN)
+  git branch --show-current → main
+Cumplimiento: HEAD == origin/main == 5ded948e ✓ · WORKTREE CLEAN ✓
+Worklog previo: REM-INV-5 CERTIFIED — PERMANENT SECURITY REGRESSION (residuales
+RES-5-1/2 = objetivos de REM-INV-6).

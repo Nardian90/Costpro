@@ -1,0 +1,16 @@
+REM-INV-6 — 09 GATE M: replay POST-REMEDIACIÓN (idempotencia incluida)
+
+Aplicadas a staging (PostgreSQL 17.6 real):
+  20260916000001_rem_inv_6_materialize_certified_function_surface.sql (53 bodies
+    verbatim LIVE + 3 DROP guardados por return type histórico)
+  20260916000002_rem_inv_6_reconcile_function_acl.sql (134 DO blocks privilegio-guardados)
+
+Resultado (comparación DERIVED vs LIVE sobre las 134):
+  match=134 diff=0  →  body md5 byte-idéntico, prosecdef/search_path/owner idénticos,
+  ACL en semántica de CONJUNTO idéntica (orden de entradas proacl benigno en 2 casos:
+  create_sale_v2 y withdraw_production_item_v3 — set-equal, privilegios idénticos;
+  PG materializa owner primero; NO se altera producción para no causar churn cosmético).
+
+IDEMPOTENCIA: re-aplicación (3ª vez) de ambas migraciones → 134/134, 0 diffs;
+guards no disparan cambios (idempotencia demostrada).
+Re-verificación final (post-apply producción): EXACT=134, DRIFTED=0, ABSENT=0.

@@ -1,0 +1,19 @@
+REM-INV-6 — 08 GATE J: replay ACTUAL (dos niveles)
+
+A) Replay FULL-TABLE de las 435 migraciones sobre staging limpia (diagnóstico):
+   153 OK / 282 ERR — causa raíz estructural: NO existe migración de esquema base
+   (cascada: relation "public.profiles"/"stores"/"inventory" does not exist, type
+   "user_role" does not exist...). Evidencia de que el stream NO es auto-contenido.
+
+B) Replay de la SUPERFICIE DE SEGURIDAD (function-surface replay, ejecución real):
+   statements función-relevantes (CREATE FUNCTION / GRANT|REVOKE EXECUTE / COMMENT /
+   ALTER FUNCTION / DROP FUNCTION) de los 435 archivos en orden de filename:
+   2070 statements, 1946 OK, 32 archivos con errores históricos (ambigüedades
+   "function name is not unique" de GRANTs sin firma completa, tipos compuestos
+   ausentes en fixture — añadidos después, cambios de return type históricos).
+   DERIVED vs LIVE (134): match=32 diff=102
+   { 'ACL': 49, 'MISSING_IN_DERIVED': 18, 'BODY': 11, 'BODY+SECDEF+CONFIG+ACL': 4,
+     'BODY+CONFIG+ACL': 9, 'BODY+SECDEF+CONFIG': 1, 'BODY+CONFIG': 3, 'BODY+ACL': 7 }
+   → el replay dejaba PUBLIC EXECUTE en ~49 funciones SECDEF-write donde LIVE
+   tiene ACL restringido (brecha de reproducibilidad de seguridad) y 18 funciones
+   del surface ni siquiera existían tras el replay.

@@ -1,9 +1,9 @@
 /**
- * security-contract-test-static.cjs — CI-safe security contract (REM-INV-5)
+ * security-contract-test-static.cjs — CI-safe security contract (REM-INV-5 + REM-INV-6)
  *
  * Faithful, secret-free reproduction of scripts/security-contract-test.cjs
  * (the LIVE contract, which requires SUPABASE_ACCESS_TOKEN and therefore MUST
- * NOT run in CI). Two layers, same 4 checks + same REM-INV-2R pin + same
+ * NOT run in CI). Three layers, same 4 checks + same REM-INV-2R pin + same
  * severity→exit mapping:
  *
  *   Layer A — CERTIFIED LIVE SURFACE:
@@ -22,12 +22,32 @@
  *      added_by + expires — same convention as security_definer_without_auth_check).
  *     A NEW rule violation on any function (allowlisted or not) blocks (exit 1).
  *
+ *   Layer C — SOURCE-OF-TRUTH RECONCILIATION (REM-INV-6):
+ *     proves that every function of the certified LIVE surface is REPRESENTED
+ *     by the migration stream and that a replay reproduces it:
+ *       body (comment/whitespace-normalized) + SECURITY DEFINER flag +
+ *       search_path + EXECUTE grants (set semantics, owner excluded).
+ *     The snapshot alone is NOT accepted as source of truth: a LIVE function
+ *     with no migration representation, a drifted body, an unexpected SECURITY
+ *     DEFINER/search_path change or an unrepresented ACL change blocks the
+ *     build (exit 1). Legitimate exclusions only via ci-gate-allowlist.json
+ *     source_of_truth_baseline entries ({function, rules, reason, added_by,
+ *     expires} — never forever, always with expiry).
+ *
+ * Extractor note (REM-INV-6 Gate O): the extractor fixes two structural bugs
+ * inherited from the REM-INV-5 version:
+ *   1. a /g regex persisted lastIndex across String.slice() calls, skipping
+ *      every function defined after the first one in multi-function files;
+ *   2. the dollar-quote tag position omitted the 2-char `AS` keyword, which
+ *      shifted bodies by 2 chars and made plain `$$`-tagged functions extract
+ *      an EMPTY body (invisible to write-detection).
+ *
  * Checks (identical regexes to the LIVE contract):
  *   1. ANTI_SPOOFING_GUARD_MISSING (CRITICAL)
  *   2. VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT / _THEN (HIGH)
  *   3. ANON_EXECUTE_GRANTED (MEDIUM; webhook exception applies)
  *   4. SEARCH_PATH_NOT_SET (LOW)
- *   + RETIRED_V1_FUNCTION_REINTRODUCED pin (CRITICAL) on both layers
+ *   + RETIRED_V1_FUNCTION_REINTRODUCED pin (CRITICAL) on layers A and B
  *
  * Exit codes: 0 = pass (MEDIUM/LOW warnings allowed, as in the LIVE contract),
  * 1 = blocking violation, 2 = harness/infrastructure error.
@@ -75,7 +95,7 @@ function checkFunction(def, name, aclAnonFlag) {
   return issues;
 }
 
-// ────────────────────── SQL scanning helpers (Layer B) ──────────────────────
+// ────────────────────── SQL scanning helpers ──────────────────────
 function stripComments(sql) {
   let out = '';
   let i = 0;
@@ -128,11 +148,13 @@ function extractFunctions(cleanText, sourceFile) {
   const defs = [];
   const re = /create\s+(?:or\s+replace\s+)?function\s+((?:[A-Za-z_][\w$]*)\.)?([A-Za-z_][\w$]*)\s*\(/gi;
   let guard = 0;
-  let idx = 0;
-  while (guard++ < 5000) {
-    const m = re.exec(cleanText.slice(idx));
+  // exec on the FULL text and manage lastIndex manually: a /g regex keeps
+  // lastIndex across exec() calls on DIFFERENT strings (slice), which skipped
+  // every function after the first in multi-function files (REM-INV-6 fix 1).
+  while (guard++ < 20000) {
+    const m = re.exec(cleanText);
     if (!m) break;
-    const start = idx + m.index;
+    const start = m.index;
     const parenOpen = start + m[0].length - 1;
     let depth = 0, j = parenOpen, inStr = null;
     for (; j < cleanText.length; j++) {
@@ -146,37 +168,85 @@ function extractFunctions(cleanText, sourceFile) {
     const headerArgs = cleanText.slice(parenOpen + 1, j);
     const rest = cleanText.slice(j + 1, j + 1 + 200000);
     const asM = /\bas\b((?:\s|\S)*?)((\$[A-Za-z0-9_]*\$)|')/i.exec(rest);
-    if (!asM) { idx = start + m[0].length; continue; }
+    if (!asM) { re.lastIndex = start + m[0].length; continue; }
     const header = rest.slice(0, asM.index);
-    const bodyStart = j + 1 + asM.index + asM[1].length;
+    // tag position: asM[2] starts at asM.index + (asM[0].length - asM[2].length).
+    // The legacy formula (j + 1 + asM.index + asM[1].length) omitted the 2-char
+    // 'AS' keyword, shifting bodies and breaking plain $$ tags (REM-INV-6 fix 2).
+    const tagStartAbs = j + 1 + asM.index + (asM[0].length - asM[2].length);
     let bodyText, bodyEnd;
-    if (asM[3] && asM[3].startsWith('$')) {
-      const end = cleanText.indexOf(asM[3], bodyStart + asM[3].length);
-      if (end === -1) { idx = start + m[0].length; continue; }
-      bodyText = cleanText.slice(bodyStart + asM[3].length, end);
-      bodyEnd = end + asM[3].length;
+    if (asM[2] && asM[2].startsWith('$')) {
+      const tag = asM[2];
+      const bodyStart = tagStartAbs + tag.length;
+      const end = cleanText.indexOf(tag, bodyStart);
+      if (end === -1) { re.lastIndex = start + m[0].length; continue; }
+      bodyText = cleanText.slice(bodyStart, end);
+      bodyEnd = end + tag.length;
     } else {
-      let k = bodyStart + 1;
+      const q = tagStartAbs;
+      let k = q + 1;
       while (k < cleanText.length) {
         if (cleanText[k] === "'" && cleanText[k + 1] === "'") { k += 2; continue; }
         if (cleanText[k] === "'") break;
         k++;
       }
-      bodyText = cleanText.slice(bodyStart + 1, k);
+      bodyText = cleanText.slice(q + 1, k);
       bodyEnd = k + 1;
     }
+    // include the statement TRAILER (LANGUAGE plpgsql SECURITY DEFINER SET … ;)
+    // — SECURITY DEFINER / search_path may legitimately live after the body tag
+    let stmtEnd = bodyEnd;
+    while (stmtEnd < cleanText.length && cleanText[stmtEnd] !== ';') stmtEnd++;
+    if (stmtEnd < cleanText.length) stmtEnd++;
     defs.push({
       file: sourceFile,
+      pos: start,
       schema: (m[1] || 'public.').replace(/\.$/, '').toLowerCase(),
       name: m[2].toLowerCase(),
       header,
       body: bodyText,
-      text: cleanText.slice(start, bodyEnd),
+      text: cleanText.slice(start, stmtEnd),
       argsRaw: headerArgs,
     });
-    idx = bodyEnd;
+    re.lastIndex = stmtEnd;
   }
   return defs;
+}
+
+// GRANT/REVOKE EXECUTE statements (top-level AND inside DO-block guards),
+// position-tagged so they can be applied in stream order.
+function extractAclStmts(cleanText) {
+  const out = [];
+  const re = /\b(grant|revoke)\s+execute\s+on\s+function\s+/gi;
+  let m;
+  while ((m = re.exec(cleanText))) {
+    let i = m.index + m[0].length;
+    while (i < cleanText.length && /\s/.test(cleanText[i])) i++;
+    const nameStart = i;
+    while (i < cleanText.length && /[\w.$"]/.test(cleanText[i])) i++;
+    const fname = cleanText.slice(nameStart, i).replace(/"/g, '');
+    while (i < cleanText.length && /\s/.test(cleanText[i])) i++;
+    let args = null;
+    if (cleanText[i] === '(') {
+      let depth = 0, j = i, inStr = null;
+      for (; j < cleanText.length; j++) {
+        const c = cleanText[j];
+        if (inStr) { if (c === inStr) inStr = null; continue; }
+        if (c === "'") { inStr = c; continue; }
+        if (c === '(') depth++;
+        if (c === ')') { depth--; if (depth === 0) break; }
+      }
+      args = cleanText.slice(i + 1, j);
+      i = j + 1;
+    }
+    const semi = cleanText.indexOf(';', i);
+    const rest = cleanText.slice(i, semi === -1 ? cleanText.length : semi);
+    const toM = /\b(?:to|from)\s+([\s\S]+)$/i.exec(rest);
+    if (!toM) continue;
+    const roles = toM[1].split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    out.push({ verb: m[1].toLowerCase(), fname: fname.toLowerCase().replace(/^public\./, ''), args, roles, pos: m.index });
+  }
+  return out;
 }
 
 function replayAnonAcl(cleanText, state, sourceFile) {
@@ -189,6 +259,46 @@ function replayAnonAcl(cleanText, state, sourceFile) {
     if (!state[fn]) state[fn] = { grants: [], file: sourceFile };
     for (const r of roles) if (r === 'anon') state[fn].grants.push(verb === 'grant');
   }
+}
+
+// ALTER FUNCTION statements (search_path / SECURITY mode) — position-tagged.
+function extractAlterStmts(cleanText) {
+  const out = [];
+  const re = /\balter\s+function\s+/gi;
+  let m;
+  while ((m = re.exec(cleanText))) {
+    let i = m.index + m[0].length;
+    while (i < cleanText.length && /\s/.test(cleanText[i])) i++;
+    const nameStart = i;
+    while (i < cleanText.length && /[\w.$"]/i.test(cleanText[i])) i++;
+    const fname = cleanText.slice(nameStart, i).replace(/"/g, '');
+    while (i < cleanText.length && /\s/.test(cleanText[i])) i++;
+    let args = null;
+    if (cleanText[i] === '(') {
+      let depth = 0, j = i, inStr = null;
+      for (; j < cleanText.length; j++) {
+        const c = cleanText[j];
+        if (inStr) { if (c === inStr) inStr = null; continue; }
+        if (c === "'") { inStr = c; continue; }
+        if (c === '(') depth++;
+        if (c === ')') { depth--; if (depth === 0) break; }
+      }
+      args = cleanText.slice(i + 1, j);
+      i = j + 1;
+    }
+    const semi = cleanText.indexOf(';', i);
+    const stmt = cleanText.slice(i, semi === -1 ? cleanText.length : semi);
+    const spM = /set\s+search_path\s*(?:=|to)\s*([^;\n]+)/i.exec(stmt);
+    const secM = /security\s+(definer|invoker)/i.exec(stmt);
+    if (!spM && !secM) continue;
+    out.push({
+      fname: fname.toLowerCase().replace(/^public\./, ''), args,
+      sp: spM ? spM[1].trim() : null,
+      secdef: secM ? secM[1].toLowerCase() === 'definer' : null,
+      pos: m.index,
+    });
+  }
+  return out;
 }
 
 function countArgs(argsRaw) {
@@ -206,11 +316,11 @@ function countArgs(argsRaw) {
   return count;
 }
 
-function loadBaseline() {
+function loadBaseline(category) {
   let baseline = [];
   if (fs.existsSync(ALLOWLIST_FILE)) {
     const al = JSON.parse(fs.readFileSync(ALLOWLIST_FILE, 'utf8'));
-    baseline = al.security_contract_static_baseline || [];
+    baseline = al[category] || [];
   }
   const now = new Date();
   const valid = new Map();
@@ -219,6 +329,18 @@ function loadBaseline() {
     valid.set(item.function, item);
   }
   return valid;
+}
+
+function normBody(t) {
+  return (t || '').replace(/\s+/g, ' ').trim();
+}
+function normSearchPathValue(rawValue) {
+  return (rawValue || '').split(',').map(s => s.trim().replace(/^'|'$/g, '')).filter(Boolean).sort().join(',');
+}
+function normSearchPath(headerText) {
+  const m = /SET\s+search_path\s*(?:=|TO)\s*([^;\n]+)/i.exec(headerText || '');
+  if (!m) return '';
+  return normSearchPathValue(m[1]);
 }
 
 // ────────────────────────────── main ─────────────────────────────────────
@@ -242,13 +364,28 @@ function loadBaseline() {
     const layerAViolations = [];
     let layerAChecked = 0;
     let pinA = false;
+    const snapshotFns = [];
+    // proacl parser: supports the PG array-literal string form
+    // "{grantee=privs/grantor,...}" (authoritative) and the legacy JSON-array form.
+    function parseProacl(raw) {
+      if (!raw) return [];
+      raw = raw.trim();
+      if (raw.startsWith('{')) {
+        const inner = raw.slice(1, -1).trim();
+        return inner ? inner.split(',').map(s => s.trim()).filter(Boolean) : [];
+      }
+      if (raw.startsWith('[')) { try { const a = JSON.parse(raw); return Array.isArray(a) ? a : []; } catch { return []; } }
+      return [];
+    }
     for (const b of blocks) {
-      const metaM = /^name=(\S+) args="([^"]*)" proacl=(\[[^\n]*\])\n/.exec(b);
+      const metaM = /^name=(\S+) args="([^"]*)"(?: owner=(\S+))? proacl=([^\n]*)\n/.exec(b);
       if (!metaM) { console.error('❌ bloque @contract-function corrupto (sin metadatos)'); process.exit(2); }
       const name = metaM[1].toLowerCase();
-      const proacl = JSON.parse(metaM[3]);
+      const owner = metaM[3] || 'postgres';
+      const proacl = parseProacl(metaM[4]);
       const defText = b.slice(metaM[0].length).trimEnd();
       layerAChecked++;
+      snapshotFns.push({ name, args: metaM[2], owner, proacl, def: defText });
       if (name === 'receive_purchase') pinA = true;
       const anonFlag = proacl.some(a => a.startsWith('anon='));
       const issues = checkFunction(defText, name, anonFlag);
@@ -293,7 +430,7 @@ function loadBaseline() {
     const writeFns = [...finalDefs.values()].filter(d => d.secdef && WRITE_RE.test(d.text))
       .sort((a, b) => (a.name + a.key).localeCompare(b.name + b.key));
 
-    const baseline = loadBaseline();
+    const baseline = loadBaseline('security_contract_static_baseline');
     const layerBKnown = [];
     const layerBNew = [];
     let pinB = false;
@@ -335,10 +472,134 @@ function loadBaseline() {
       warnings += v.issues.filter(i => i.severity === 'MEDIUM' || i.severity === 'LOW').length;
     }
 
-    // Optional state export (used by REM-INV-5 fidelity validation; no-op in CI)
+    // ═══════════ Layer C — source-of-truth reconciliation (REM-INV-6) ═══════════
+    // ordered replay: function definitions (last-wins) + EXECUTE grant/revoke
+    // statements applied in stream order (DO-block-guarded statements included).
+    const knownKeysAt = new Map(); // bare name -> Set of keys (for ambiguity detection)
+    const finalState = new Map(); // key -> { body, header, secdef, file, schema, name }
+    const aclState = new Map(); // key -> { PUBLIC, anon, authenticated, service_role }
+    function aclOf(key) {
+      if (!aclState.has(key)) aclState.set(key, { PUBLIC: true, anon: false, authenticated: false, service_role: false });
+      return aclState.get(key);
+    }
+    function trackName(name, key) {
+      if (!knownKeysAt.has(name)) knownKeysAt.set(name, new Set());
+      knownKeysAt.get(name).add(key);
+    }
+    for (const f of files) {
+      const clean = stripComments(fs.readFileSync(path.join(MIGRATIONS_DIR, f), 'utf8'));
+      const events = [];
+      for (const d of extractFunctions(clean, f)) events.push({ kind: 'fn', pos: d.pos, d });
+      for (const a of extractAclStmts(clean)) events.push({ kind: 'acl', pos: a.pos, a });
+      for (const a of extractAlterStmts(clean)) events.push({ kind: 'alter', pos: a.pos, a });
+      events.sort((x, y) => x.pos - y.pos);
+      for (const ev of events) {
+        if (ev.kind === 'fn') {
+          const d = ev.d;
+          const key = `${d.schema}.${d.name}/${countArgs(d.argsRaw)}`;
+          finalState.set(key, { body: d.body, header: d.header, secdef: /security\s+definer/i.test(d.text), sp: normSearchPath(d.text), file: f, schema: d.schema, name: d.name });
+          trackName(d.name, key);
+        } else if (ev.kind === 'alter') {
+          const a = ev.a;
+          let key = null;
+          if (a.args !== null) key = `public.${a.fname}/${countArgs(a.args)}`;
+          else {
+            const keys = knownKeysAt.get(a.fname);
+            if (!keys || keys.size !== 1) continue; // ambiguous → no effect
+            key = [...keys][0];
+          }
+          const mig = finalState.get(key);
+          if (!mig) continue;
+          if (a.sp !== null) mig.sp = normSearchPathValue(a.sp);
+          if (a.secdef !== null) mig.secdef = a.secdef;
+        } else {
+          const a = ev.a;
+          const roleNames = a.roles.filter(r => ['public', 'anon', 'authenticated', 'service_role'].includes(r));
+          if (a.args !== null) {
+            const key = `public.${a.fname}/${countArgs(a.args)}`;
+            if (!finalState.has(key)) continue; // statement for a function not defined (yet) in the stream
+            const st = aclOf(key);
+            for (const r of roleNames) st[r === 'public' ? 'PUBLIC' : r] = a.verb === 'grant';
+          } else {
+            const keys = knownKeysAt.get(a.fname);
+            if (!keys || keys.size !== 1) continue; // ambiguous in real replay → statement errors → no effect
+            const key = [...keys][0];
+            const st = aclOf(key);
+            for (const r of roleNames) st[r === 'public' ? 'PUBLIC' : r] = a.verb === 'grant';
+          }
+        }
+      }
+    }
+
+    const sotBaseline = loadBaseline('source_of_truth_baseline');
+    const layerCViolations = [];
+    let layerCRepresented = 0;
+    for (const s of snapshotFns) {
+      const key = `public.${s.name}/${countArgs(s.args)}`;
+      const issues = [];
+      const mig = finalState.get(key);
+      if (!mig) {
+        issues.push({ severity: 'CRITICAL', rule: 'LIVE_FUNCTION_NOT_REPRESENTED', msg: 'función del surface certificado sin representación en el stream de migraciones (replay no puede reproducirla)' });
+      } else {
+        layerCRepresented++;
+        // verbatim body comparison (both sides carry the body verbatim; do NOT
+        // strip comments — the migration-side body keeps in-body comments that
+        // dollar-quote tag scanning correctly preserves)
+        const snapBody = s.def.replace(/^[\s\S]*?AS\s+\$function\$/, '').replace(/\$function\$\s*;?\s*$/, '');
+        if (normBody(snapBody) !== normBody(mig.body)) {
+          issues.push({ severity: 'CRITICAL', rule: 'BODY_DRIFT_FROM_MIGRATION', msg: `cuerpo LIVE ≠ replay de migraciones (última definición en ${mig.file})` });
+        }
+        const snapSecdef = /security\s+definer/i.test(s.def);
+        if (snapSecdef !== mig.secdef) {
+          issues.push({ severity: 'CRITICAL', rule: 'UNEXPECTED_SECDEF_CHANGE', msg: `SECURITY DEFINER divergente: snapshot=${snapSecdef} migraciones=${mig.secdef}` });
+        }
+        const snapSp = normSearchPath(s.def);
+        const migSp = mig.sp;
+        if (snapSp !== migSp) {
+          issues.push({ severity: 'CRITICAL', rule: 'UNEXPECTED_SEARCH_PATH_CHANGE', msg: `search_path divergente: snapshot=[${snapSp}] migraciones=[${migSp}]` });
+        }
+        // ACL set comparison (grantee set, owner excluded)
+        const liveGrantees = new Set();
+        for (const e of s.proacl) {
+          const g = e.split('=')[0];
+          const role = g === '' ? 'PUBLIC' : g;
+          if (role === s.owner || role === 'postgres') continue; // owner: implicit EXECUTE
+          liveGrantees.add(role.toUpperCase() === 'PUBLIC' ? 'PUBLIC' : role);
+        }
+        const st = aclOf(key);
+        const replayGrantees = new Set(['PUBLIC', 'anon', 'authenticated', 'service_role'].filter(r => st[r]));
+        const same = liveGrantees.size === replayGrantees.size && [...liveGrantees].every(r => replayGrantees.has(r));
+        if (!same) {
+          issues.push({ severity: 'CRITICAL', rule: 'UNEXPECTED_ACL_DRIFT', msg: `grants EXECUTE divergentes: snapshot=[${[...liveGrantees].sort().join(', ')}] replay=[${[...replayGrantees].sort().join(', ')}]` });
+        }
+      }
+      if (issues.length === 0) continue;
+      const entry = sotBaseline.get(`${s.name}/${countArgs(s.args)}`) || sotBaseline.get(s.name);
+      if (entry) {
+        const newRules = issues.filter(i => !entry.rules.includes(i.rule));
+        if (newRules.length === 0) continue; // reviewed baseline exception (with expiry)
+        layerCViolations.push({ name: s.name, key, issues: newRules, why: 'regla nueva sobre función con baseline source-of-truth' });
+      } else {
+        layerCViolations.push({ name: s.name, key, issues, why: 'divergencia sin baseline' });
+      }
+    }
+
+    console.log(`\n── Capa C — reconciliación source-of-truth (REM-INV-6): ${snapshotFns.length} funciones del surface`);
+    console.log(`Representadas en migraciones: ${layerCRepresented}/${snapshotFns.length}`);
+    console.log(`Divergencias source-of-truth (bloqueantes): ${layerCViolations.length}`);
+    for (const v of layerCViolations) {
+      console.log(`\n▸ [Capa C] ${v.name}(${v.key}) — ${v.why}`);
+      v.issues.forEach(issue => {
+        console.log(`  🚨 [${issue.severity}] ${issue.rule}`);
+        console.log(`     ${issue.msg}`);
+      });
+      blocking.push(v);
+    }
+
+    // Optional state export (used by REM-INV-5/6 fidelity validation; no-op in CI)
     if (process.env.SC_STATIC_EXPORT) {
       const dump = writeFns.map(f => ({ schema: f.schema, name: f.name, argcount: countArgs(f.argsRaw), key: f.key, file: f.file }));
-      fs.writeFileSync(process.env.SC_STATIC_EXPORT, JSON.stringify({ functions: dump, migrations: files.length, layerAChecked }, null, 2));
+      fs.writeFileSync(process.env.SC_STATIC_EXPORT, JSON.stringify({ functions: dump, migrations: files.length, layerAChecked, layerCRepresented }, null, 2));
     }
 
     console.log('\n' + '═'.repeat(80));
@@ -346,7 +607,7 @@ function loadBaseline() {
       if (warnings > 0) {
         console.log(`⚠️ CONTRATO OK con ${warnings} warning(s) MEDIUM/LOW (semántica idéntica al contract LIVE)`);
       } else {
-        console.log(`🎉 CONTRATO OK — Capa A: ${layerAChecked}/${layerAChecked} · Capa B: ${writeFns.length} verificadas, ${layerBKnown.length} baseline, ${layerBNew.length} nuevas`);
+        console.log(`🎉 CONTRATO OK — Capa A: ${layerAChecked}/${layerAChecked} · Capa B: ${writeFns.length} verificadas, ${layerBKnown.length} baseline, ${layerBNew.length} nuevas · Capa C: ${layerCRepresented}/${snapshotFns.length} representadas, 0 divergencias`);
       }
       console.log('═'.repeat(80));
       process.exit(0);
