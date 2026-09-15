@@ -1,0 +1,34 @@
+REM-INV-6 — 18 GATES Y/Z: git closure + verificación CI real
+Fecha: 2026-09-15T04:15:56.519484Z
+
+COMMIT:
+  acb58b24 REM-INV-6: reconcile live security surface with migrations
+5ded948e chore(audit): rem-inv-5 — include post-push CI verification (Gate Q) + final verification (24) + manifest refresh
+cf2623a0 security: enforce contract CI and harden store creation concurrency
+
+PUSH:
+  origin/main: 5ded948e → acb58b24 ✓
+
+ESTADO FINAL:
+  HEAD        = acb58b24d1a28384370f44d17aefe291a86c5ce7
+  ORIGIN/MAIN = acb58b24d1a28384370f44d17aefe291a86c5ce7
+  HEAD == ORIGIN/MAIN: YES ✓
+  WORKTREE CLEAN: NO ✗ → ?? audit-evidence/REM-INV-6/MANIFEST.sha256
+
+gate-closure-check.sh:
+WORKTREE CLEAN : NO (1 cambios)
+HEAD           : acb58b24d1a28384370f44d17aefe291a86c5ce7
+ORIGIN/MAIN    : acb58b24d1a28384370f44d17aefe291a86c5ce7
+FINAL VERDICT  : NOT CLOSED (worktree sucio)
+
+VERIFICACIÓN CI REAL (GitHub Actions, run 34927106899, commit acb58b24):
+  job Security Audit                          → SUCCESS
+    paso "Security contract (static, CI-safe)" → SUCCESS (3 capas: A/B/C)
+  job TypeCheck + Lint + Unit Tests + Build   → SUCCESS (build ejecuta en CI;
+    la limitación OOM del host local no aplica al runner)
+  job E2E Tests (Playwright)                  → independiente (ver FINAL-REPORT)
+  job Test Coverage / Unit & Integration      → SUCCESS (run 34927106811)
+  La ejecución es REAL (push origin main, event=push) — no simulada.
+
+SERVICIO (post-apply):
+  PM2 costpro online, 0 restarts · HTTP / → 200 · .env intacto (no tracked)
