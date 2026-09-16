@@ -3,10 +3,12 @@ import { logger } from '@/lib/logger';
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
 import { useTranslations } from 'next-intl';
+import { safeReturnTo } from '@/lib/navigation';
 
 // ── Lazy-loaded to reduce initial compilation memory ──
 const CyberShell = dynamic(() => import('@/components/ui/CyberShell'), { ssr: false });
@@ -22,10 +24,30 @@ const LandingPage = dynamic(() => import('./LandingPage'), { ssr: false });
  */
 export default function HomePageClient() {
   const { user, status } = useAuthStore();
+  const router = useRouter();
   const [isReady, setIsReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [splashDismissed, setSplashDismissed] = useState(false);
   const t = useTranslations('splash');
+
+  // FC ACCESS FLOW FIX (2026-09-16): cuando la autenticación se resuelve con un
+  // returnTo válido en la URL (p. ej. vuelta de Google OAuth hacia /?returnTo=%2Ffc%2F),
+  // navegar a la superficie solicitada. returnTo es SOLO navegación con allowlist
+  // (safeReturnTo en src/lib/navigation.ts); la autorización real sigue siendo la
+  // sesión COSTPRO + RLS. Los params se limpian para evitar re-navegaciones.
+  useEffect(() => {
+    if (!isReady || !isAuthenticated) return;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const rt = safeReturnTo(sp.get('returnTo'));
+      if (rt !== '/') {
+        window.history.replaceState({}, '', window.location.pathname);
+        router.replace(rt);
+      }
+    } catch {
+      /* noop */
+    }
+  }, [isReady, isAuthenticated, router]);
 
   // Listen for splash dismiss event from CostProLoader
   useEffect(() => {

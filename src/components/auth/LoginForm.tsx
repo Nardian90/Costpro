@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { logger } from '@/lib/logger';
 import { mapProfileToContract, UserFactory } from '@/contracts/user';
-import { safeNavigate } from '@/lib/navigation';
+import { safeNavigate, returnToFromLocation } from '@/lib/navigation';
 import { userService } from '@/services/user-service';
 
 const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -107,10 +107,13 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
+      // FC ACCESS FLOW FIX: preservar returnTo a través del round-trip OAuth
+      // (solo rutas internas de la allowlist — ver safeReturnTo).
+      const rt = returnToFromLocation();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin + (rt !== '/' ? `/?returnTo=${encodeURIComponent(rt)}` : '')
         }
       });
       if (error) throw error;
@@ -176,7 +179,7 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
         });
         login(devUser, 'dev-token-bypass', 'authenticated_valid', true);
         toast.success(`¡Bienvenido, ${devUser.fullName}! (modo desarrollo)`);
-        safeNavigate.push(router, '/');
+        safeNavigate.push(router, returnToFromLocation());
         return;
       }
 
@@ -203,7 +206,8 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
       const userData = mapProfileToContract(profileData);
       login(userData, authData.session.access_token, 'authenticated_valid');
       toast.success(`¡Bienvenido, ${userData.fullName}!`);
-      safeNavigate.push(router, '/');
+      // FC ACCESS FLOW FIX: si la entrada venía de /fc/ (returnTo), volver allí.
+      safeNavigate.push(router, returnToFromLocation());
     } catch (err: any) {
       setFailedAttempts(prev => {
         const next = prev + 1;

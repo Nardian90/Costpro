@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, UserPlus, ArrowLeft, Mail, Lock, User, Info, Eye, EyeOff, Chrome, Check, X, Building2 } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { returnToFromLocation } from '@/lib/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -93,10 +94,12 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
   const handleGoogleSignUp = useCallback(async () => {
     try {
       setLoading(true);
+      // FC ACCESS FLOW FIX: preservar returnTo a través del round-trip OAuth
+      const rt = returnToFromLocation();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin + (rt !== '/' ? `/?returnTo=${encodeURIComponent(rt)}` : '')
         }
       });
       if (error) throw error;

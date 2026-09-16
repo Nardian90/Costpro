@@ -9,37 +9,47 @@
 <script>
 /* =====================================================================
    COSTPRO FC-MVP · puente de identidad same-origin (entry point /fc/)
+   v2 — 2026-09-16 · FC ACCESS FLOW FIX (una sola identidad COSTPRO)
    ---------------------------------------------------------------------
-   MISIÓN: integración MVP Ficha de Costo en COSTPRO (cambio mínimo).
-   Este wrapper NO toca el artefacto canónico FC.release.html (byte-exacto,
-   sha256 fijado en ./release-manifest.json): solo SIEMBRA el sobre de
-   sesión que FC ya sabe leer (FC_CLOUD_SESSION_V1) a partir del token
-   estándar de supabase-js de COSTPRO (sb-<ref>-auth-token), que existe en
-   este MISMO origen porque /fc/ se sirve desde el dominio de COSTPRO.
+   Cadena:  /fc → 307 aquí → este wrapper decide → FC.html (superficie
+   de producto de COSTPRO; el release canónico v12.10.0 de fichascosto
+   con 11 parches de identidad documentados en release-manifest.json).
 
-   Garantías de diseño:
-   · FAIL-OPEN: cualquier error → redirect limpio; FC arranca en su modo
-     local/guest de siempre (sin red funciona igual).
-   · NUNCA borra: si no hay sesión COSTPRO, no toca FC_CLOUD_SESSION_V1
-     (una sesión iniciada desde la propia FC se conserva).
-   · Identidad COSTPRO tiene precedencia en la entrada (un solo ecosistema);
-     si el refresh_token ya sembrado es el mismo, no se reescribe.
-   · Sin red: 0 fetches aquí; si el token sembrado está expirado FC hará
-     su propio refresh (o quedará en modo offline con plan cacheado).
-   · Seguridad: lee solo credenciales del propio usuario en su propio
-     navegador (same-origin); todas las operaciones de FC siguen sujetas
-     a RLS (created_by = auth.uid()) en el servidor. Offline ≠ bypass.
+   DECISIÓN DE ENTRADA (Flujo 1 y 2 del mandato):
+   · Hay token de sesión COSTPRO (sb-<ref>-auth-token en este mismo
+     origen) → se siembra el sobre FC_CLOUD_SESSION_V1 (que FC ya sabe
+     leer para plan/sync) y se entra a FC.html. NO se vuelve a pedir
+     login: la identidad es la de COSTPRO.
+   · No hay token COSTPRO → el usuario NO está autenticado → se le
+     lleva al LOGIN DE COSTPRO (/?login=1&returnTo=%2Ffc%2F), nunca a
+     un login propio de FC. returnTo es SOLO navegación (allowlist en
+     el servidor/app COSTPRO); la autorización sigue siendo sesión
+     Supabase + RLS.
+
+   Garantías de diseño (invariantes v1 conservadas):
+   · FAIL-OPEN: cualquier error → redirect limpio.
+   · NUNCA borra: este puente jamás elimina FC_CLOUD_SESSION_V1 ni
+     ninguna sesión local (FC conserva su trabajo y su contexto).
+   · Sin red: 0 fetches aquí. Con sb-token persistido la entrada
+     offline funciona (FC continuará en modo local con su perfil
+     cacheado). Sin sesión COSTPRO y sin red no hay contexto que
+     preservar: offline NO otorga permisos nuevos.
+   · Seguridad: solo lee credenciales del propio usuario en su propio
+     navegador (same-origin); todas las operaciones de FC siguen
+     sujetas a RLS (created_by = auth.uid()) en el servidor.
+     Offline ≠ bypass de autorización.
    ===================================================================== */
 (function () {
   'use strict';
   var REF = 'wthkddeleylijmonclxg';           /* proyecto Supabase compartido COSTPRO/FC */
   var SB_KEY = 'sb-' + REF + '-auth-token';   /* storage por defecto de supabase-js v2 */
   var FC_KEY = 'FC_CLOUD_SESSION_V1';         /* sobre de sesión que FcCloud.init() ya consume */
+  var LOGIN_URL = '/?login=1&returnTo=%2Ffc%2F'; /* login COSTPRO; returnTo = navegación, no autorización */
 
   function seed() {
     try {
       var raw = localStorage.getItem(SB_KEY);
-      if (!raw) return;                        /* sin sesión COSTPRO → FC usa la suya o guest */
+      if (!raw) return;
       var sb = JSON.parse(raw);
       var sess = sb && sb.currentSession ? sb.currentSession : sb;  /* compat formatos antiguos */
       var at = sess && sess.access_token;
@@ -64,11 +74,24 @@
     } catch (e) { /* fail-open */ }
   }
 
-  seed();
-  location.replace('./FC.release.html');
+  try {
+    var hasCpSession = !!localStorage.getItem(SB_KEY);
+    seed();
+    /* Entrada solo con identidad COSTPRO presente en este origen.
+       El sobre previo no basta para DECIDIR la entrada (puede quedar de
+       una sesión ya cerrada): la decisión la da el token vivo de
+       COSTPRO. Nada se borra en ningún caso. */
+    if (hasCpSession) {
+      location.replace('./FC.html');
+    } else {
+      location.replace(LOGIN_URL);
+    }
+  } catch (e) {
+    location.replace(LOGIN_URL); /* fail-closed a login COSTPRO */
+  }
 })();
 </script>
-<noscript><meta http-equiv="refresh" content="0; url=./FC.release.html"></noscript>
+<noscript><meta http-equiv="refresh" content="0; url=./FC.html"></noscript>
 </head>
 <body></body>
 </html>

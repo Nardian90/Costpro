@@ -1,5 +1,14 @@
 # FC-MVP-INTEGRATION — Ficha de Costo MVP dentro de COSTPRO
 
+> **ACTUALIZACIÓN (2026-09-16) — FC ACCESS FLOW FIX:** este documento describe la
+> integración técnica MVP original (artefacto byte-exacto `FC.release.html` con su
+> landing/login propios). El **flujo de acceso fue corregido** en la fase siguiente:
+> FC es ahora una **superficie de producto de COSTPRO** con UNA SOLA IDENTIDAD
+> (landing y login propios de FC eliminados/desactivados; artefacto servido:
+> `FC.html`, release canónico + 11 parches de identidad documentados).
+> Ver **`docs/fc-access-flow-fix.md`**. Lo no relacionado con identidad/entrada
+> (offline, sync, RLS, motor) permanece vigente tal como se documenta aquí.
+
 **Fase:** REM-FC-MVP (Gate 0 read-only → Gate 1 ejecución con cambio mínimo)
 **Mandato:** integrar el MVP de Ficha de Costo (monolito `fichascosto` v12.10.0) en COSTPRO preservando offline, cálculo y funcionalidad. Autorización del propietario: «Primero valida. Después ejecuta.»
 **Fecha:** 2026-09-16 · **Repositorio fuente del artefacto:** `Nardian90/fichascosto` (release canónico `4a9ee7f3ed4d56b4441e5f271153ca6b17e0301c362d297f0862a223a31296df`)

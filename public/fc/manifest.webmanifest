@@ -5,9 +5,9 @@
   "lang": "es",
   "dir": "ltr",
   "display": "standalone",
-  "start_url": "./FC.release.html",
+  "start_url": "./index.html",
   "scope": "./",
-  "id": "./FC.release.html",
+  "id": "./index.html",
   "theme_color": "#0d5bb8",
   "background_color": "#093f66",
   "icons": [

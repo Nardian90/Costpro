@@ -10,10 +10,10 @@ export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // FC-MVP-INTEGRATION: /fc/* sirve el artefacto monolítico autocontenido
-  // FC.release.html (public/fc/, copia byte-exacta del release canónico de
-  // fichascosto, sha256 fijado en public/fc/release-manifest.json). Ese
-  // artefacto contiene cientos de scripts inline y no puede recibir un
-  // nonce por-request sin alterar el release canónico byte a byte. Por eso
+  // FC.html (public/fc/, release canónico v12.10.0 de fichascosto + 11 parches
+  // de identidad del FC ACCESS FLOW FIX; hashes en public/fc/release-manifest.json).
+  // Ese artefacto contiene cientos de scripts inline y no puede recibir un
+  // nonce por-request sin alterar el artefacto byte a byte. Por eso
   // se omite ÚNICAMENTE la CSP en este path; todos los demás headers de
   // seguridad siguen aplicándose. Fuera de /fc/* la CSP permanece intacta.
   if (pathname === '/fc' || pathname.startsWith('/fc/')) {

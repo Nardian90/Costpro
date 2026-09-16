@@ -51,6 +51,41 @@ export default function LandingPage() {
   const [faqInViewState, setFaqInViewState] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginDefaultTab, setLoginDefaultTab] = useState<'login' | 'register'>('login');
+
+  // FC ACCESS FLOW FIX (2026-09-16): la entrada a /fc/ sin sesión COSTPRO llega aquí
+  // como /?login=1&returnTo=%2Ffc%2F (wrapper del entry point). Abrimos el modal de
+  // login de COSTPRO automáticamente — el único login del ecosistema. returnTo es
+  // solo navegación (allowlist en src/lib/navigation.ts), nunca autorización.
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get('login') === '1') {
+        setLoginDefaultTab('login');
+        setShowLoginModal(true);
+      }
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  // Al cerrar el modal sin autenticarse, limpiamos login/returnTo de la URL para
+  // que un login posterior no herede un returnTo viejo. (Se conserva ?type=recovery.)
+  const handleLoginModalChange = useCallback((v: boolean) => {
+    setShowLoginModal(v);
+    if (!v && typeof window !== 'undefined') {
+      try {
+        const u = new URL(window.location.href);
+        if (u.searchParams.has('login') || u.searchParams.has('returnTo')) {
+          u.searchParams.delete('login');
+          u.searchParams.delete('returnTo');
+          const qs = u.searchParams.toString();
+          window.history.replaceState({}, '', u.pathname + (qs ? `?${qs}` : '') + u.hash);
+        }
+      } catch {
+        /* noop */
+      }
+    }
+  }, []);
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [showFab, setShowFab] = useState(false);
   const [faqFeedback, setFaqFeedback] = useState<Record<number, 'up' | 'down' | null>>({});
@@ -437,7 +472,7 @@ export default function LandingPage() {
         setContactForm={setContactForm}
         handleContactSubmit={handleContactSubmit}
       />
-      <LoginModal showLoginModal={showLoginModal} setShowLoginModal={setShowLoginModal} defaultTab={loginDefaultTab} />
+      <LoginModal showLoginModal={showLoginModal} setShowLoginModal={handleLoginModalChange} defaultTab={loginDefaultTab} />
       <FooterModals activeModal={activeFooterModal} onClose={() => setActiveFooterModal(null)} />
 
       {/* ─── COMMAND PALETTE (Ctrl+K) ─── */}

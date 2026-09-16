@@ -2,21 +2,23 @@
    COPIA DE INTEGRACIÓN FC-MVP (dominio COSTPRO, path /fc/) — derivada del sw.js canónico
    generado por scripts/build-release.js del repo fichascosto (VERSION 12.10.0).
    Deltas respecto al canónico (documentados, infraestructura de distribución únicamente):
-   1. ALLOWLIST + 'index.html' (wrapper de entrada /fc/ — puente de identidad same-origin).
-      Sin esto, abrir /fc/ sin conexión no tendría copia cacheada (el canónico no lo conoce).
-   2. VERSION = '12.10.0-fc.1' → cache 'costpro-release-12.10.0-fc.1' (bump para que el
-      precache con index.html ocurra; el prefijo 'costpro-release-' conserva la limpieza
-      de activación intacta).
+   1. ALLOWLIST + 'index.html' (wrapper de entrada /fc/ — puente de identidad same-origin)
+      y + 'FC.html' (superficie FC.html: release canónico v12.10.0 + 11 parches de
+      identidad del FC ACCESS FLOW FIX — una sola identidad COSTPRO, sin landing/login
+      propios). 'FC.release.html' (artefacto con identidad duplicada) deja de servirse.
+   2. VERSION = '12.10.0-fc.2' → cache 'costpro-release-12.10.0-fc.2' (bump para que el
+      precache con index.html + FC.html ocurra; el prefijo 'costpro-release-' conserva
+      la limpieza de activación intacta).
    TODO lo demás es byte-idéntico al canónico: shell network-first con fallback offline,
    estáticos cache-first, Supabase y todo origen cruzado NUNCA en Cache Storage,
    sin skipWaiting/clients.claim (actualización la gobierna VersionManager de la app). */
 'use strict';
-var VERSION = "12.10.0-fc.1";
+var VERSION = "12.10.0-fc.2";
 var CACHE = 'costpro-release-' + VERSION;
 var SCOPE_PATH = new URL(self.registration.scope).pathname;
 var ALLOWLIST = [
   'index.html',
-  'FC.release.html',
+  'FC.html',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',
@@ -51,7 +53,7 @@ self.addEventListener("fetch", function(e){
   var url = new URL(req.url);
   if(neverCache(url)) return;                      /* Supabase + cruzados: sin Cache Storage */
   if(!allowlisted(url)) return;                    /* resto same-origin: passthrough puro */
-  if(url.pathname.slice(SCOPE_PATH.length) === "FC.release.html"){
+  if(url.pathname.slice(SCOPE_PATH.length) === "FC.html"){
     /* shell network-first: en línea siempre fresco (deploy visible al recargar);
        sin red sirve la copia cacheada (shell offline). Respuesta no-OK o no-basic
        JAMÁS se cachea (§11). */
