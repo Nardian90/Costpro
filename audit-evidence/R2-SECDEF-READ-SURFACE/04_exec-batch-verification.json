@@ -1,0 +1,25 @@
+[
+ {
+  "migration": "20260916000005_rem_r2_a_high_read_guards.sql",
+  "checks_total": 14,
+  "ok": 13,
+  "fail": 1,
+  "failed_ids": [
+   "V4 get_transfers service_role: HTTP 404"
+  ]
+ },
+ {
+  "migration": "20260916000006_rem_r2_b_medium_read_guards.sql",
+  "checks_total": 32,
+  "ok": 32,
+  "fail": 0,
+  "failed_ids": []
+ },
+ {
+  "migration": "20260916000007_rem_r2_c_low_read_guards.sql",
+  "checks_total": 14,
+  "ok": 14,
+  "fail": 0,
+  "failed_ids": []
+ }
+]
