@@ -1,0 +1,39 @@
+{
+  "name": "COSTPRO — Fichas de Costo",
+  "short_name": "COSTPRO",
+  "description": "Fichas de Costos y Gastos conforme a la Resolución 148/2023 MFP (Anexos I y II). Local-first, con sincronización opcional de nube.",
+  "lang": "es",
+  "dir": "ltr",
+  "display": "standalone",
+  "start_url": "./FC.release.html",
+  "scope": "./",
+  "id": "./FC.release.html",
+  "theme_color": "#0d5bb8",
+  "background_color": "#093f66",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

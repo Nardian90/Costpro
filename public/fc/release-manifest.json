@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "product": "COSTPRO",
+  "productName": "COSTPRO — FC (Ficha de Costos y Gastos) · Resolución 148/2023 MFP",
+  "version": "12.10.0",
+  "channel": "stable",
+  "releaseDate": "2026-09-15",
+  "minimumVersion": "12.10.0",
+  "latestVersion": "12.10.0",
+  "releaseFile": "FC.release.html",
+  "sha256": "4a9ee7f3ed4d56b4441e5f271153ca6b17e0301c362d297f0862a223a31296df",
+  "sourceHash": "1d79f8b1ba9d3f681dc98ca4fd5d0b1721ee147046790a5de6355f6b9d037bfd",
+  "engineHash": "c5f4dca8042385c36e49c76992269b25",
+  "buildPhase": "FASE 24.6-1 · Supabase como única fuente de verdad comercial (profiles.plan: pro/enterprise = Premium, whitelist estricta; retirado el sistema de licencias locales y todo material de firma del release) + guard RLS/trigger en profiles contra auto-elección de plan/role + importación universal de fichas JSON (formato costpro-ficha 1.0: drag&drop, validación, vista previa, duplicados, migración 1..4) + exportación Excel Premium (XLSX sin dependencias desde el resultado canónico de computeFicha) + corrección D1: el chip de instalación PWA ya no sale en el PDF impreso",
+  "buildDate": "2026-09-15T05:00:00.000Z",
+  "generator": "scripts/build-release.js · html-minifier-terser + terser (mangle interno, sin ofuscación extrema)",
+  "releaseMd5": "c626beab63c206bdfbd8811a7176dc9e",
+  "sourceMd5": "96046c6edc6a85ff5972db8e1b25254b",
+  "releaseEngineHash": "634ed36aefe0762acd735fcb037fc095",
+  "engineNote": "engineHash = md5 del slice __ENGINE_START__/__ENGINE_END__ de la FUENTE. En el release el motor está minificado (mangle interno): su md5 difiere por diseño; la identidad funcional DEV≈RELEASE se demuestra por batería de equivalencia.",
+  "noSecrets": "FASE 24.6-1: el sistema de licencias locales fue retirado — el release NO contiene material de firma (sin _sk, sin makeLicense, sin claves ECDSA) ni ficheros .fclicense. Solo incluye la publishable key de Supabase (credencial PÚBLICA de cliente por diseño); sin claves de servicio, sin secretos, sin tokens privados. El plan comercial se verifica contra public.profiles.plan (Supabase).",
+  "distribution": "El archivo para clientes es exclusivamente FC.release.html; FC.html queda para desarrollo y auditoría."
+}

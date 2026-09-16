@@ -461,6 +461,14 @@ export default function HeroSection({
                   Ver demo interactiva de CostPro
                 </button>
                 <div className="h-px bg-white/[0.08] my-2" />
+                <a
+                  href="/fc/"
+                  onClick={() => setShowMobileNav(false)}
+                  className="block w-full text-left px-4 py-3 text-sm text-[#22c55e] font-medium rounded-lg hover:bg-[#22c55e]/10 transition-all"
+                >
+                  Crear Ficha de Costo — Gratis
+                </a>
+                <div className="h-px bg-white/[0.08] my-2" />
                 <button
                   onClick={() => { setShowLoginModal(true); setShowMobileNav(false); }}
                   className="block w-full text-left px-4 py-3 text-sm text-[#22c55e] font-medium rounded-lg hover:bg-[#22c55e]/10 transition-all"
@@ -533,6 +541,19 @@ export default function HeroSection({
               </div>
             </button>
 
+            {/* FC-MVP CTA — "Crear Ficha de Costo — Gratis" (producto de entrada, /fc/) */}
+            <a
+              href="/fc/"
+              data-testid="hero-fc-button"
+              aria-label="Crear Ficha de Costo gratis"
+              className="group relative px-8 py-3.5 rounded-2xl font-bold text-sm tracking-tight text-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] border border-[#0d5bb8]/40 bg-[#0d5bb8]/15 hover:bg-[#0d5bb8]/25"
+              style={{ minWidth: '200px' }}
+            >
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                Crear Ficha de Costo — Gratis
+              </span>
+            </a>
+
             {/* Secondary CTA — "Ver Demo" */}
             <button data-testid="hero-demo-button" aria-label="Ver demostración completa"
               onClick={onOpenDemo}
@@ -551,7 +572,7 @@ export default function HeroSection({
             transition={{ delay: 1.0, duration: 0.5 }}
             className="mt-3 text-[11px] text-white/20"
           >
-            Administra múltiples tiendas · Inventario y ventas · Vitrina digital propia · Gratis para empezar
+            Administra múltiples tiendas · Inventario y ventas · Vitrina digital propia · Ficha de Costo Res. 148/2023 · Gratis para empezar
           </motion.p>
 
           {/* Search bar — centered */}

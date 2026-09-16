@@ -7,6 +7,26 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // FC-MVP-INTEGRATION: /fc/* sirve el artefacto monolítico autocontenido
+  // FC.release.html (public/fc/, copia byte-exacta del release canónico de
+  // fichascosto, sha256 fijado en public/fc/release-manifest.json). Ese
+  // artefacto contiene cientos de scripts inline y no puede recibir un
+  // nonce por-request sin alterar el release canónico byte a byte. Por eso
+  // se omite ÚNICAMENTE la CSP en este path; todos los demás headers de
+  // seguridad siguen aplicándose. Fuera de /fc/* la CSP permanece intacta.
+  if (pathname === '/fc' || pathname.startsWith('/fc/')) {
+    const fcResponse = NextResponse.next();
+    fcResponse.headers.set('X-Content-Type-Options', 'nosniff');
+    fcResponse.headers.set('X-Frame-Options', 'SAMEORIGIN');
+    fcResponse.headers.set('X-XSS-Protection', '1; mode=block');
+    fcResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    fcResponse.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    fcResponse.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    return fcResponse;
+  }
+
   // Edge-compatible nonce generation using Web Crypto API
   const array = new Uint8Array(18);
   crypto.getRandomValues(array);
