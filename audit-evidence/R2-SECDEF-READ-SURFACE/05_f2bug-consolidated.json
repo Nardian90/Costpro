@@ -1,0 +1,358 @@
+{
+ "_meta": {
+  "phase": "REM-R2-F2BUG-FIX",
+  "mandate": "Ciclo separado aprobado por el propietario («aprobado y recuerda hacer el push») para F2-BUG, hallazgo preexistente documentado en 04_R2-REMEDIATION-EXECUTION.md §5",
+  "migration": "20260916000008_rem_f2bug_transfers_status_cast.sql",
+  "production_change": "1 CREATE OR REPLACE FUNCTION get_transfers — único delta: t.status → t.status::text en la comparación con p_status (fix 42883 preexistente). Guard REM-R2-READ byte-idéntico. Sin DROP/GRANT/REVOKE/ACL/firma. Cero mutación de datos.",
+  "at": "2026-09-16T01:36:56.441Z",
+  "project_ref": "wthkddeleylijmonclxg"
+ },
+ "pre": {
+  "at": "2026-09-16T01:28:06.908Z",
+  "drift_check_vs_frozen_post_r2": {
+   "def_equal": true,
+   "acl_equal": true,
+   "secdef_equal": true,
+   "volatility_equal": true,
+   "config_equal": true,
+   "owner_equal": true,
+   "args_full_equal": true,
+   "rettype_equal": true
+  },
+  "guard_present": [
+   {
+    "probe": "has_store_access(p_store_id)",
+    "present": true
+   },
+   {
+    "probe": "auth.role() <> 'service_role'",
+    "present": true
+   },
+   {
+    "probe": "42501",
+    "present": true
+   },
+   {
+    "probe": "ERR_UNAUTHORIZED_STORE",
+    "present": true
+   }
+  ],
+  "transfers_status_column": [
+   {
+    "column_type": "transfer_status",
+    "kind": "e",
+    "schema": "public"
+   }
+  ],
+  "transfer_status_labels": [
+   "PENDIENTE",
+   "CONFIRMADA",
+   "CANCELADA",
+   "REVERSADA"
+  ],
+  "note": "def/ACL/secdef/volatility/owner/args/rettype byte-iguales al congelado POST-R2 (04_exec-consolidated.json). config semánticamente idéntico (artefacto de serialización text[] documentado)."
+ },
+ "staging": {
+  "repro": [
+   {
+    "id": "U1-NULL",
+    "repro": true,
+    "err": "operator does not exist: transfer_status = text"
+   },
+   {
+    "id": "U1-PENDIENTE",
+    "repro": true,
+    "err": "operator does not exist: transfer_status = text"
+   },
+   {
+    "id": "service_role",
+    "repro": true,
+    "err": "operator does not exist: transfer_status = text"
+   }
+  ],
+  "bytecheck": [
+   {
+    "fn": "get_transfers",
+    "equal": true
+   },
+   {
+    "probe": "auth.role() <> 'service_role'",
+    "present": true
+   },
+   {
+    "probe": "p_store_id IS NULL",
+    "present": true
+   },
+   {
+    "probe": "public.has_store_access(p_store_id)",
+    "present": true
+   },
+   {
+    "probe": "ERRCODE = '42501'",
+    "present": true
+   },
+   {
+    "probe": "t.status::text = p_status",
+    "present": true
+   }
+  ],
+  "tests": [
+   {
+    "test": "T1",
+    "pass": true
+   },
+   {
+    "test": "T1s-PENDIENTE",
+    "pass": true
+   },
+   {
+    "test": "T1s-CONFIRMADA",
+    "pass": true
+   },
+   {
+    "test": "T1x-invalid-status",
+    "pass": true
+   },
+   {
+    "test": "T1l-lowercase",
+    "pass": true
+   },
+   {
+    "test": "T2",
+    "pass": true
+   },
+   {
+    "test": "T3",
+    "pass": true
+   },
+   {
+    "test": "T4",
+    "pass": true
+   },
+   {
+    "test": "T5",
+    "pass": true
+   },
+   {
+    "test": "T6",
+    "pass": true
+   },
+   {
+    "test": "T7",
+    "pass": true
+   },
+   {
+    "test": "EXTRA-dates",
+    "pass": true
+   }
+  ],
+  "summary": {
+   "passes": 21,
+   "failures": 0,
+   "at": "2026-09-16T01:32:22.743Z",
+   "port": 55434,
+   "enum_labels": [
+    "PENDIENTE",
+    "CONFIRMADA",
+    "CANCELADA",
+    "REVERSADA"
+   ]
+  }
+ },
+ "post_verify": {
+  "at": "2026-09-16T01:33:34.269Z",
+  "migration": "20260916000008_rem_f2bug_transfers_status_cast.sql",
+  "project_ref": "wthkddeleylijmonclxg",
+  "checks": [
+   {
+    "id": "V1 def LIVE == migración",
+    "ok": true,
+    "detail": "byte-equal"
+   },
+   {
+    "id": "V2 meta.acl intacta",
+    "ok": true,
+    "detail": "idéntica al PRE"
+   },
+   {
+    "id": "V2 meta.secdef intacta",
+    "ok": true,
+    "detail": "idéntica al PRE"
+   },
+   {
+    "id": "V2 meta.volatility intacta",
+    "ok": true,
+    "detail": "idéntica al PRE"
+   },
+   {
+    "id": "V2 meta.owner intacta",
+    "ok": true,
+    "detail": "idéntica al PRE"
+   },
+   {
+    "id": "V2 meta.args_full intacta",
+    "ok": true,
+    "detail": "idéntica al PRE"
+   },
+   {
+    "id": "V2 meta.rettype intacta",
+    "ok": true,
+    "detail": "idéntica al PRE"
+   },
+   {
+    "id": "V2 meta.argnames intacta",
+    "ok": true,
+    "detail": "idéntica al PRE"
+   },
+   {
+    "id": "V2 meta.config intacta",
+    "ok": true,
+    "detail": "semánticamente idéntica"
+   },
+   {
+    "id": "V3 guard «auth.role() <> 'service_role'»",
+    "ok": true,
+    "detail": "presente"
+   },
+   {
+    "id": "V3 guard «p_store_id IS NULL»",
+    "ok": true,
+    "detail": "presente"
+   },
+   {
+    "id": "V3 guard «public.has_store_access(p_store_id»",
+    "ok": true,
+    "detail": "presente"
+   },
+   {
+    "id": "V3 guard «ERRCODE = '42501'»",
+    "ok": true,
+    "detail": "presente"
+   },
+   {
+    "id": "V3 fix «t.status::text = p_status»",
+    "ok": true,
+    "detail": "presente"
+   },
+   {
+    "id": "V3 sin rastro de línea rota",
+    "ok": true,
+    "detail": true
+   },
+   {
+    "id": "V4 dep has_store_access byte-idéntica",
+    "ok": true,
+    "detail": "FREEZE ok"
+   },
+   {
+    "id": "V4 dep is_admin byte-idéntica",
+    "ok": true,
+    "detail": "FREEZE ok"
+   },
+   {
+    "id": "V5 get_cash_closures intacta (vs POST-R2)",
+    "ok": true,
+    "detail": "byte-idéntica"
+   },
+   {
+    "id": "V5 get_store_analytics_advanced intacta (vs POST-R2)",
+    "ok": true,
+    "detail": "byte-idéntica"
+   },
+   {
+    "id": "V5 get_sales_since_last_closure intacta (vs POST-R2)",
+    "ok": true,
+    "detail": "byte-idéntica"
+   },
+   {
+    "id": "V5 get_paginated_products intacta (vs POST-R2)",
+    "ok": true,
+    "detail": "byte-idéntica"
+   },
+   {
+    "id": "V5 get_products_for_reception intacta (vs POST-R2)",
+    "ok": true,
+    "detail": "byte-idéntica"
+   },
+   {
+    "id": "V5 get_product_stock_ledger_paginated intacta (vs POST-R2)",
+    "ok": true,
+    "detail": "byte-idéntica"
+   },
+   {
+    "id": "V5 get_daily_expenses_aggregated intacta (vs POST-R2)",
+    "ok": true,
+    "detail": "byte-idéntica"
+   },
+   {
+    "id": "V5 get_low_stock_count intacta (vs POST-R2)",
+    "ok": true,
+    "detail": "byte-idéntica"
+   },
+   {
+    "id": "V6 service_role get_transfers → HTTP 200",
+    "ok": true,
+    "detail": "HTTP 200 (42883 eliminado) body=[]"
+   },
+   {
+    "id": "V6 service_role con filtro PENDIENTE → HTTP 200",
+    "ok": true,
+    "detail": "HTTP 200"
+   },
+   {
+    "id": "V7 anon denegado",
+    "ok": true,
+    "detail": "HTTP 401"
+   }
+  ],
+  "smoke_store_id": "d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576",
+  "summary": {
+   "fails": 0,
+   "total": 28,
+   "at": "2026-09-16T01:33:34.269Z"
+  }
+ },
+ "zero_touch": {
+  "method": "count + md5(ids) por tienda en 7 tablas — idéntico a R1/R2",
+  "stores_compared": 50,
+  "bitwise_identical": 50,
+  "differences": 0,
+  "protected_tenants_pre": [
+   {
+    "store": "ENERVIDA-VITALLCONS",
+    "inventory_n": 106,
+    "transactions_n": 308,
+    "receipts_n": 4,
+    "memberships_n": 3
+   },
+   {
+    "store": "Puerto Padre VITALLCONS",
+    "inventory_n": 35,
+    "transactions_n": 212,
+    "receipts_n": 2,
+    "memberships_n": 3
+   }
+  ],
+  "protected_tenants_post": [
+   {
+    "store": "ENERVIDA-VITALLCONS",
+    "inventory_n": 106,
+    "transactions_n": 308,
+    "receipts_n": 4,
+    "memberships_n": 3
+   },
+   {
+    "store": "Puerto Padre VITALLCONS",
+    "inventory_n": 35,
+    "transactions_n": 212,
+    "receipts_n": 2,
+    "memberships_n": 3
+   }
+  ]
+ },
+ "baselines": {
+  "layer_a": "141/141 · 0 violaciones · PIN REM-INV-2R OK (PRE y POST de este ciclo)",
+  "layer_b_c": "CONTRATO OK · 141/141 representadas · 0 divergencias · mismos 9 LOW preexistentes (SEARCH_PATH_NOT_SET)",
+  "rule": "Existing contract: 141 — el baseline NO se renumerifica ni sustituye; F2-BUG es fix de ejecutabilidad, no nuevo guard"
+ }
+}
