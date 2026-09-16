@@ -1,0 +1,986 @@
+{
+ "project_ref": "wthkddeleylijmonclxg",
+ "at": "2026-09-15T23:42:00.257Z",
+ "scope": "PRODUCTION LIVE (Management API, SELECT-only)",
+ "purpose": "REM-R2-READ-PREP — FASE 2 (9 findings) + FASE 8 (has_store_access) + FASE 13 (13 NO-FINDING re-verify)",
+ "funcs": {
+  "get_cash_closures": [
+   {
+    "signature": "get_cash_closures(uuid,date,date,integer)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_cash_closures(p_store_id uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_limit integer DEFAULT 1000)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_results JSONB;\nBEGIN\n  SELECT COALESCE(jsonb_agg(row_to_json(t)), '[]'::jsonb) INTO v_results\n  FROM (\n    SELECT\n      cc.id,\n      cc.user_id,\n      cc.store_id,\n      cc.session_reference,\n      cc.declared_cash,\n      cc.declared_vouchers,\n      cc.system_total,\n      cc.notes,\n      cc.status,\n      cc.closed_at,\n      cc.created_at,\n      cc.declared_total,\n      cc.system_expected_total,\n      cc.difference,\n      p.full_name AS operator_name\n    FROM cash_closures cc\n    LEFT JOIN profiles p ON p.id = cc.user_id\n    WHERE\n      (p_store_id IS NULL OR cc.store_id = p_store_id)\n      AND (p_date_from IS NULL OR cc.created_at::date >= p_date_from)\n      AND (p_date_to IS NULL OR cc.created_at::date <= p_date_to)\n      AND cc.status = 'cerrado'\n    ORDER BY cc.created_at DESC\n    LIMIT p_limit\n  ) t;\n  RETURN v_results;\nEND;\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{\"search_path=public, pg_temp\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id",
+     "p_date_from",
+     "p_date_to",
+     "p_limit"
+    ],
+    "args_full": "p_store_id uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_limit integer DEFAULT 1000",
+    "rettype": "jsonb",
+    "nargs": 4
+   }
+  ],
+  "get_transfers": [
+   {
+    "signature": "get_transfers(uuid,timestamp with time zone,timestamp with time zone,text,integer)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_transfers(p_store_id uuid, p_date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_date_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_status text DEFAULT NULL::text, p_limit integer DEFAULT 1000)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_results JSONB;\nBEGIN\n  SELECT COALESCE(jsonb_agg(row_to_json(t)), '[]'::jsonb) INTO v_results\n  FROM (\n    SELECT\n      t.id,\n      t.origin_store_id,\n      t.destination_store_id,\n      t.created_by,\n      t.status,\n      t.notes,\n      t.created_at,\n      t.updated_at,\n      os.name AS origin_store_name,\n      ds.name AS destination_store_name,\n      p.full_name AS creator_name,\n      COALESCE(jsonb_agg(\n        jsonb_build_object(\n          'product_id', ti.product_id,\n          'product_name', pr.name,\n          'sku', pr.sku,\n          'quantity', ti.quantity,\n          'unit_cost', ti.unit_cost\n        ) ORDER BY ti.created_at\n      ) FILTER (WHERE ti.id IS NOT NULL), '[]'::jsonb) AS items\n    FROM transfers t\n    LEFT JOIN stores os ON os.id = t.origin_store_id\n    LEFT JOIN stores ds ON ds.id = t.destination_store_id\n    LEFT JOIN profiles p ON p.id = t.created_by\n    LEFT JOIN transfer_items ti ON ti.transfer_id = t.id\n    LEFT JOIN products pr ON pr.id = ti.product_id\n    WHERE\n      (p_store_id IS NULL OR t.origin_store_id = p_store_id OR t.destination_store_id = p_store_id)\n      AND (p_date_from IS NULL OR t.created_at >= p_date_from)\n      AND (p_date_to IS NULL OR t.created_at <= p_date_to)\n      AND (p_status IS NULL OR t.status = p_status)\n    GROUP BY t.id, os.name, ds.name, p.full_name\n    ORDER BY t.created_at DESC\n    LIMIT p_limit\n  ) t;\n  RETURN v_results;\nEND;\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{\"search_path=public, pg_temp\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id",
+     "p_date_from",
+     "p_date_to",
+     "p_status",
+     "p_limit"
+    ],
+    "args_full": "p_store_id uuid, p_date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_date_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_status text DEFAULT NULL::text, p_limit integer DEFAULT 1000",
+    "rettype": "jsonb",
+    "nargs": 5
+   }
+  ],
+  "get_store_analytics_advanced": [
+   {
+    "signature": "get_store_analytics_advanced(uuid,date,date,integer)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_store_analytics_advanced(p_store_id uuid, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_days integer DEFAULT 30)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  -- Resolución de fechas:\n  -- - Si p_start_date y p_end_date están dados → usar ese rango\n  -- - Sino → usar p_days hacia atrás desde hoy\n  v_end_date DATE := COALESCE(p_end_date, CURRENT_DATE);\n  v_start_date DATE := COALESCE(p_start_date, v_end_date - (p_days || ' days')::INTERVAL);\n  v_start_ts TIMESTAMPTZ := v_start_date::timestamp AT TIME ZONE 'UTC';\n  v_end_ts TIMESTAMPTZ := (v_end_date + INTERVAL '1 day')::timestamp AT TIME ZONE 'UTC';\n  v_today_start TIMESTAMPTZ := date_trunc('day', NOW());\n  v_actual_days INT := GREATEST(1, v_end_date - v_start_date + 1);\n  v_kpis JSONB;\n  v_sales_series JSONB;\n  v_top_products_revenue JSONB;\n  v_top_products_quantity JSONB;\n  v_payment_distribution JSONB;\n  v_weekday_distribution JSONB;\n  v_hour_distribution JSONB;\n  v_low_stock JSONB;\n  v_slow_movers JSONB;\n  v_overstock JSONB;\n  v_category_margins JSONB;\n  v_product_velocity JSONB;\nBEGIN\n  -- ============================================================\n  -- 1. KPIs principales (período + comparativa hoy)\n  -- ============================================================\n  -- ⚠️ BUG FIX: NO usar LEFT JOIN transaction_items aquí.\n  -- El LEFT JOIN duplica cada transacción por cada item, haciendo que\n  -- SUM(t.total_amount) cuente N veces la misma transacción.\n  -- Solución: calcular ventas en una subquery sin JOIN, y costo/qty en otra.\n  SELECT jsonb_build_object(\n    'period_sales', COALESCE(sales_data.total_sales, 0),\n    'period_cost', COALESCE(items_data.total_cost, 0),\n    'period_transactions', COALESCE(sales_data.tx_count, 0),\n    'period_items_sold', COALESCE(items_data.items_sold, 0),\n    'today_sales', COALESCE(sales_data.today_sales, 0),\n    'today_transactions', COALESCE(sales_data.today_tx_count, 0),\n    'avg_ticket', CASE WHEN COALESCE(sales_data.tx_count, 0) > 0\n                       THEN COALESCE(sales_data.total_sales, 0) / sales_data.tx_count\n                       ELSE 0 END,\n    'avg_items_per_sale', CASE WHEN COALESCE(sales_data.tx_count, 0) > 0\n                                THEN COALESCE(items_data.items_sold, 0)::FLOAT / sales_data.tx_count\n                                ELSE 0 END\n  )\n  INTO v_kpis\n  FROM (\n    -- Subquery 1: métricas a nivel transacción (sin JOIN, sin duplicación)\n    SELECT\n      SUM(t.total_amount) AS total_sales,\n      COUNT(*) AS tx_count,\n      SUM(CASE WHEN t.created_at >= v_today_start THEN t.total_amount ELSE 0 END) AS today_sales,\n      SUM(CASE WHEN t.created_at >= v_today_start THEN 1 ELSE 0 END) AS today_tx_count\n    FROM transactions t\n    WHERE t.store_id = p_store_id\n      AND t.status = 'completed'\n      AND t.created_at >= v_start_ts\n      AND t.created_at < v_end_ts\n  ) AS sales_data\n  CROSS JOIN (\n    -- Subquery 2: métricas a nivel item (sumando solo items de transacciones completadas)\n    SELECT\n      COALESCE(SUM(ti.cost_at_sale * ti.quantity), 0) AS total_cost,\n      COALESCE(SUM(ti.quantity), 0) AS items_sold\n    FROM transaction_items ti\n    INNER JOIN transactions t ON t.id = ti.transaction_id\n    WHERE t.store_id = p_store_id\n      AND t.status = 'completed'\n      AND t.created_at >= v_start_ts\n      AND t.created_at < v_end_ts\n  ) AS items_data;\n\n  -- ============================================================\n  -- 2. Serie temporal de ventas por día\n  -- ============================================================\n  -- BUG FIX: misma duplicación que KPIs. Usar subqueries separadas.\n  SELECT COALESCE(jsonb_agg(row_to_json(d) ORDER BY day_date), '[]'::jsonb)\n  INTO v_sales_series\n  FROM (\n    SELECT\n      d::date AS day_date,\n      d::text AS date,\n      COALESCE(sales_by_day.sales, 0) AS sales,\n      COALESCE(sales_by_day.transactions, 0) AS transactions,\n      COALESCE(items_by_day.items_sold, 0) AS items_sold\n    FROM generate_series(\n      date_trunc('day', v_start_date),\n      date_trunc('day', NOW()),\n      '1 day'\n    ) AS d\n    LEFT JOIN (\n      SELECT\n        date_trunc('day', t.created_at) AS day,\n        SUM(t.total_amount) AS sales,\n        COUNT(*) AS transactions\n      FROM transactions t\n      WHERE t.store_id = p_store_id\n        AND t.status = 'completed'\n        AND t.created_at >= v_start_ts\n      AND t.created_at < v_end_ts\n      GROUP BY date_trunc('day', t.created_at)\n    ) AS sales_by_day ON sales_by_day.day = d\n    LEFT JOIN (\n      SELECT\n        date_trunc('day', t.created_at) AS day,\n        SUM(ti.quantity) AS items_sold\n      FROM transaction_items ti\n      INNER JOIN transactions t ON t.id = ti.transaction_id\n      WHERE t.store_id = p_store_id\n        AND t.status = 'completed'\n        AND t.created_at >= v_start_ts\n      AND t.created_at < v_end_ts\n      GROUP BY date_trunc('day', t.created_at)\n    ) AS items_by_day ON items_by_day.day = d\n    ORDER BY d\n  ) AS d;\n\n  -- ============================================================\n  -- 3. Top productos por ingreso (top 10)\n  -- ============================================================\n  SELECT COALESCE(jsonb_agg(row_to_json(q)), '[]'::jsonb)\n  INTO v_top_products_revenue\n  FROM (\n    SELECT\n      ti.product_id,\n      p.name,\n      p.sku,\n      p.category,\n      COALESCE(SUM(ti.price_at_sale * ti.quantity), 0) AS revenue,\n      COALESCE(SUM(ti.quantity), 0) AS quantity,\n      COALESCE(SUM(ti.cost_at_sale * ti.quantity), 0) AS cost,\n      CASE WHEN SUM(ti.price_at_sale * ti.quantity) > 0\n           THEN ROUND(\n             ((SUM(ti.price_at_sale * ti.quantity) - SUM(ti.cost_at_sale * ti.quantity))\n             / SUM(ti.price_at_sale * ti.quantity) * 100)::numeric, 2\n           )\n           ELSE 0 END AS margin_pct\n    FROM transaction_items ti\n    INNER JOIN transactions t ON t.id = ti.transaction_id\n    INNER JOIN products p ON p.id = ti.product_id\n    WHERE t.store_id = p_store_id\n      AND t.status = 'completed'\n      AND t.created_at >= v_start_ts\n      AND t.created_at < v_end_ts\n    GROUP BY ti.product_id, p.name, p.sku, p.category\n    ORDER BY revenue DESC\n    LIMIT 10\n  ) AS q;\n\n  -- ============================================================\n  -- 4. Top productos por cantidad (top 10)\n  -- ============================================================\n  SELECT COALESCE(jsonb_agg(row_to_json(q)), '[]'::jsonb)\n  INTO v_top_products_quantity\n  FROM (\n    SELECT\n      ti.product_id,\n      p.name,\n      p.sku,\n      COALESCE(SUM(ti.quantity), 0) AS quantity,\n      COALESCE(SUM(ti.price_at_sale * ti.quantity), 0) AS revenue\n    FROM transaction_items ti\n    INNER JOIN transactions t ON t.id = ti.transaction_id\n    INNER JOIN products p ON p.id = ti.product_id\n    WHERE t.store_id = p_store_id\n      AND t.status = 'completed'\n      AND t.created_at >= v_start_ts\n      AND t.created_at < v_end_ts\n    GROUP BY ti.product_id, p.name, p.sku\n    ORDER BY quantity DESC\n    LIMIT 10\n  ) AS q;\n\n  -- ============================================================\n  -- 5. Distribución de métodos de pago\n  -- ============================================================\n  SELECT COALESCE(jsonb_agg(row_to_json(q)), '[]'::jsonb)\n  INTO v_payment_distribution\n  FROM (\n    SELECT\n      -- Cast a TEXT para evitar issues con el enum payment_method_enum\n      -- que no acepta 'unknown' como valor. Frontend mapeará 'other' → 'Otro'.\n      CASE WHEN t.payment_method IS NULL THEN 'other'\n           ELSE t.payment_method::TEXT END AS method,\n      COUNT(*) AS count,\n      COALESCE(SUM(t.total_amount), 0) AS total,\n      CASE WHEN SUM(SUM(t.total_amount)) OVER () > 0\n           THEN ROUND((SUM(t.total_amount) / SUM(SUM(t.total_amount)) OVER () * 100)::numeric, 2)\n           ELSE 0 END AS pct\n    FROM transactions t\n    WHERE t.store_id = p_store_id\n      AND t.status = 'completed'\n      AND t.created_at >= v_start_ts\n      AND t.created_at < v_end_ts\n    GROUP BY t.payment_method\n    ORDER BY total DESC\n  ) AS q;\n\n  -- ============================================================\n  -- 6. Distribución por día de semana (0=Domingo, 6=Sábado)\n  -- ============================================================\n  SELECT COALESCE(jsonb_agg(row_to_json(q) ORDER BY weekday), '[]'::jsonb)\n  INTO v_weekday_distribution\n  FROM (\n    SELECT\n      EXTRACT(DOW FROM t.created_at)::INT AS weekday,\n      TRIM(TO_CHAR(t.created_at, 'Day')) AS weekday_name,\n      COALESCE(SUM(t.total_amount), 0) AS sales,\n      COUNT(*) AS transactions\n    FROM transactions t\n    WHERE t.store_id = p_store_id\n      AND t.status = 'completed'\n      AND t.created_at >= v_start_ts\n      AND t.created_at < v_end_ts\n    GROUP BY EXTRACT(DOW FROM t.created_at), TRIM(TO_CHAR(t.created_at, 'Day'))\n  ) AS q;\n\n  -- ============================================================\n  -- 7. Distribución por hora del día (0-23)\n  -- ============================================================\n  SELECT COALESCE(jsonb_agg(row_to_json(q) ORDER BY hour), '[]'::jsonb)\n  INTO v_hour_distribution\n  FROM (\n    SELECT\n      EXTRACT(HOUR FROM t.created_at)::INT AS hour,\n      COALESCE(SUM(t.total_amount), 0) AS sales,\n      COUNT(*) AS transactions\n    FROM transactions t\n    WHERE t.store_id = p_store_id\n      AND t.status = 'completed'\n      AND t.created_at >= v_start_ts\n      AND t.created_at < v_end_ts\n    GROUP BY EXTRACT(HOUR FROM t.created_at)\n  ) AS q;\n\n  -- ============================================================\n  -- 8. Productos con stock bajo (<= min_stock)\n  -- ============================================================\n  SELECT COALESCE(jsonb_agg(row_to_json(q) ORDER BY deficit DESC), '[]'::jsonb)\n  INTO v_low_stock\n  FROM (\n    SELECT\n      p.id AS product_id,\n      p.name,\n      p.sku,\n      p.stock_current,\n      p.min_stock,\n      GREATEST(0, COALESCE(p.min_stock, 0) - COALESCE(p.stock_current, 0)) AS deficit\n    FROM products p\n    WHERE p.store_id = p_store_id\n      AND p.is_active = true\n      AND COALESCE(p.stock_current, 0) <= COALESCE(p.min_stock, 0)\n      AND COALESCE(p.min_stock, 0) > 0\n  ) AS q;\n\n  -- ============================================================\n  -- 9. Productos con movimiento lento (sin ventas en 30 días)\n  -- ============================================================\n  SELECT COALESCE(jsonb_agg(row_to_json(q) ORDER BY days_without_sales DESC), '[]'::jsonb)\n  INTO v_slow_movers\n  FROM (\n    SELECT\n      p.id AS product_id,\n      p.name,\n      p.sku,\n      p.stock_current,\n      EXTRACT(DAY FROM NOW() - COALESCE(last_sale.last_sale_date, p.created_at))::INT AS days_without_sales,\n      last_sale.last_sale_date\n    FROM products p\n    LEFT JOIN (\n      SELECT ti.product_id, MAX(t.created_at) AS last_sale_date\n      FROM transaction_items ti\n      INNER JOIN transactions t ON t.id = ti.transaction_id\n      WHERE t.store_id = p_store_id AND t.status = 'completed'\n      GROUP BY ti.product_id\n    ) last_sale ON last_sale.product_id = p.id\n    WHERE p.store_id = p_store_id\n      AND p.is_active = true\n      AND COALESCE(p.stock_current, 0) > 0\n      AND (last_sale.last_sale_date IS NULL\n           OR last_sale.last_sale_date < NOW() - INTERVAL '30 days')\n    ORDER BY days_without_sales DESC\n    LIMIT 20\n  ) AS q;\n\n  -- ============================================================\n  -- 10. Productos con exceso de inventario (rotación < 1 mes)\n  -- ============================================================\n  SELECT COALESCE(jsonb_agg(row_to_json(q) ORDER BY days_of_stock DESC NULLS LAST), '[]'::jsonb)\n  INTO v_overstock\n  FROM (\n    SELECT\n      p.id AS product_id,\n      p.name,\n      p.sku,\n      p.stock_current,\n      COALESCE(sales_stats.avg_daily, 0) AS avg_daily_sales,\n      CASE WHEN COALESCE(sales_stats.avg_daily, 0) > 0\n           THEN ROUND((COALESCE(p.stock_current, 0) / sales_stats.avg_daily)::numeric, 1)\n           ELSE NULL END AS days_of_stock,\n      COALESCE(p.stock_current, 0) * COALESCE(p.cost_price, 0) AS overstock_value\n    FROM products p\n    LEFT JOIN (\n      SELECT ti.product_id,\n             SUM(ti.quantity)::FLOAT / GREATEST(p_days, 1) AS avg_daily\n      FROM transaction_items ti\n      INNER JOIN transactions t ON t.id = ti.transaction_id\n      WHERE t.store_id = p_store_id\n        AND t.status = 'completed'\n        AND t.created_at >= v_start_ts\n      AND t.created_at < v_end_ts\n      GROUP BY ti.product_id\n    ) sales_stats ON sales_stats.product_id = p.id\n    WHERE p.store_id = p_store_id\n      AND p.is_active = true\n      AND COALESCE(p.stock_current, 0) > 0\n      AND (sales_stats.avg_daily IS NULL\n           OR COALESCE(p.stock_current, 0) / NULLIF(sales_stats.avg_daily, 0) > 45)\n    ORDER BY days_of_stock DESC NULLS LAST\n    LIMIT 15\n  ) AS q;\n\n  -- ============================================================\n  -- 11. Márgenes por categoría\n  -- ============================================================\n  SELECT COALESCE(jsonb_agg(row_to_json(q) ORDER BY revenue DESC), '[]'::jsonb)\n  INTO v_category_margins\n  FROM (\n    SELECT\n      COALESCE(p.category, 'Sin categoría') AS category,\n      COALESCE(SUM(ti.price_at_sale * ti.quantity), 0) AS revenue,\n      COALESCE(SUM(ti.cost_at_sale * ti.quantity), 0) AS cost,\n      COALESCE(SUM(ti.price_at_sale * ti.quantity), 0) - COALESCE(SUM(ti.cost_at_sale * ti.quantity), 0) AS margin,\n      CASE WHEN SUM(ti.price_at_sale * ti.quantity) > 0\n           THEN ROUND(\n             ((SUM(ti.price_at_sale * ti.quantity) - SUM(ti.cost_at_sale * ti.quantity))\n             / SUM(ti.price_at_sale * ti.quantity) * 100)::numeric, 2\n           )\n           ELSE 0 END AS margin_pct,\n      COALESCE(SUM(ti.quantity), 0) AS items_sold\n    FROM transaction_items ti\n    INNER JOIN transactions t ON t.id = ti.transaction_id\n    INNER JOIN products p ON p.id = ti.product_id\n    WHERE t.store_id = p_store_id\n      AND t.status = 'completed'\n      AND t.created_at >= v_start_ts\n      AND t.created_at < v_end_ts\n    GROUP BY p.category\n  ) AS q;\n\n  -- ============================================================\n  -- 12. Respuesta final\n  -- ============================================================\n  RETURN jsonb_build_object(\n    'period_days', v_actual_days,\n    'start_date', v_start_date::text,\n    'end_date', v_end_date::text,\n    'kpis', v_kpis,\n    'sales_series', v_sales_series,\n    'top_products_revenue', v_top_products_revenue,\n    'top_products_quantity', v_top_products_quantity,\n    'payment_distribution', v_payment_distribution,\n    'weekday_distribution', v_weekday_distribution,\n    'hour_distribution', v_hour_distribution,\n    'low_stock', v_low_stock,\n    'slow_movers', v_slow_movers,\n    'overstock', v_overstock,\n    'category_margins', v_category_margins\n  );\nEND;\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{search_path=public}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id",
+     "p_start_date",
+     "p_end_date",
+     "p_days"
+    ],
+    "args_full": "p_store_id uuid, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_days integer DEFAULT 30",
+    "rettype": "jsonb",
+    "nargs": 4
+   }
+  ],
+  "get_sales_since_last_closure": [
+   {
+    "signature": "get_sales_since_last_closure(uuid)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_sales_since_last_closure(p_store_id uuid)\n RETURNS TABLE(total_sales numeric, total_cash numeric, total_transfer numeric, last_closure_at timestamp with time zone)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'extensions'\nAS $function$\n                DECLARE\n                    v_last_closure_at timestamptz;\n                    BEGIN\n                        -- Find the last CLOSED closure for this store, using closed_at as the period marker\n                            SELECT closed_at INTO v_last_closure_at\n                                FROM public.cash_closures\n                                    WHERE store_id = p_store_id AND status = 'cerrado'\n                                        ORDER BY closed_at DESC\n                                            LIMIT 1;\n\n                                                -- Fallback: If no closed closure exists, default to the beginning of time (1970-01-01)\n                                                    -- instead of date_trunc('day', now()), so that it reflects the full balance.\n                                                        IF v_last_closure_at IS NULL THEN\n                                                                v_last_closure_at := '1970-01-01 00:00:00+00'::timestamptz;\n                                                                    END IF;\n\n                                                                        RETURN QUERY\n                                                                            SELECT\n                                                                                    COALESCE(SUM(total_amount), 0)::numeric AS total_sales,\n                                                                                            COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN total_amount ELSE 0 END), 0)::numeric AS total_cash,\n                                                                                                    COALESCE(SUM(CASE WHEN payment_method = 'transfer' THEN total_amount ELSE 0 END), 0)::numeric AS total_transfer,\n                                                                                                            v_last_closure_at AS last_closure_at\n                                                                                                                FROM public.transactions\n                                                                                                                    WHERE store_id = p_store_id\n                                                                                                                          AND status = 'completed'\n                                                                                                                                AND created_at > v_last_closure_at;\n                                                                                                                                END;\n                                                                                                                                $function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "s",
+    "config": "{\"search_path=public, extensions\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id",
+     "total_sales",
+     "total_cash",
+     "total_transfer",
+     "last_closure_at"
+    ],
+    "args_full": "p_store_id uuid",
+    "rettype": "TABLE(total_sales numeric, total_cash numeric, total_transfer numeric, last_closure_at timestamp with time zone)",
+    "nargs": 1
+   }
+  ],
+  "get_paginated_products": [
+   {
+    "signature": "get_paginated_products(uuid,text,text,integer,integer)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_paginated_products(p_store_id uuid, p_search_term text DEFAULT ''::text, p_category text DEFAULT ''::text, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0)\n RETURNS TABLE(id uuid, name text, description text, sku text, barcode text, barcode_type text, price numeric, precio_empresa numeric, cost_price numeric, image_url text, category text, unit_of_measure text, supplier text, created_at timestamp with time zone, updated_at timestamp with time zone, stock_current numeric, cost_average numeric, min_stock numeric, store_id uuid, is_active boolean, visible_en_tienda boolean, price_visible boolean, stock_visible boolean, on_promotion boolean, price_currency text, has_movements boolean, total bigint, is_complete boolean)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE v_total bigint; v_is_complete boolean;\nBEGIN\n  SELECT COUNT(*) INTO v_total FROM public.products p\n  WHERE p.store_id = p_store_id AND p.is_active = true\n  AND (COALESCE(p_search_term, '') = '' OR p.search_vector @@ plainto_tsquery('spanish', p_search_term) OR p.name ILIKE '%' || p_search_term || '%' OR p.sku ILIKE '%' || p_search_term || '%' OR COALESCE(p.barcode, '') ILIKE '%' || p_search_term || '%')\n  AND (COALESCE(p_category, '') = '' OR p.category = p_category);\n\n  v_is_complete := (p_limit + p_offset >= v_total);\n\n  RETURN QUERY SELECT\n    p.id::uuid, p.name::text, p.description::text, p.sku::text, p.barcode::text, p.barcode_type::text,\n    p.price::numeric, p.precio_empresa::numeric, p.cost_price::numeric, p.image_url::text,\n    p.category::text, p.unit_of_measure::text, p.supplier::text,\n    p.created_at::timestamptz, p.updated_at::timestamptz,\n    -- FIX: leer de inventory.quantity (fuente de verdad) en vez de p.stock_current (desincronizado)\n    COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv WHERE inv.product_id = p.id AND inv.store_id = p.store_id), 0)::numeric,\n    p.cost_average::numeric, p.min_stock::numeric,\n    p.store_id::uuid, p.is_active::boolean, p.visible_en_tienda::boolean,\n    COALESCE(p.price_visible, true)::boolean, COALESCE(p.stock_visible, true)::boolean, COALESCE(p.on_promotion, false)::boolean, COALESCE(p.price_currency, 'CUP')::text,\n    EXISTS (SELECT 1 FROM public.stock_movements sm WHERE sm.product_id = p.id)::boolean AS has_movements,\n    v_total::bigint, v_is_complete::boolean\n  FROM public.products p\n  WHERE p.store_id = p_store_id AND p.is_active = true\n  AND (COALESCE(p_search_term, '') = '' OR p.search_vector @@ plainto_tsquery('spanish', p_search_term) OR p.name ILIKE '%' || p_search_term || '%' OR p.sku ILIKE '%' || p_search_term || '%' OR COALESCE(p.barcode, '') ILIKE '%' || p_search_term || '%')\n  AND (COALESCE(p_category, '') = '' OR p.category = p_category)\n  ORDER BY p.name LIMIT p_limit OFFSET p_offset;\nEND;\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{search_path=public}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id",
+     "p_search_term",
+     "p_category",
+     "p_limit",
+     "p_offset",
+     "id",
+     "name",
+     "description",
+     "sku",
+     "barcode",
+     "barcode_type",
+     "price",
+     "precio_empresa",
+     "cost_price",
+     "image_url",
+     "category",
+     "unit_of_measure",
+     "supplier",
+     "created_at",
+     "updated_at",
+     "stock_current",
+     "cost_average",
+     "min_stock",
+     "store_id",
+     "is_active",
+     "visible_en_tienda",
+     "price_visible",
+     "stock_visible",
+     "on_promotion",
+     "price_currency",
+     "has_movements",
+     "total",
+     "is_complete"
+    ],
+    "args_full": "p_store_id uuid, p_search_term text DEFAULT ''::text, p_category text DEFAULT ''::text, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0",
+    "rettype": "TABLE(id uuid, name text, description text, sku text, barcode text, barcode_type text, price numeric, precio_empresa numeric, cost_price numeric, image_url text, category text, unit_of_measure text, supplier text, created_at timestamp with time zone, updated_at timestamp with time zone, stock_current numeric, cost_average numeric, min_stock numeric, store_id uuid, is_active boolean, visible_en_tienda boolean, price_visible boolean, stock_visible boolean, on_promotion boolean, price_currency text, has_movements boolean, total bigint, is_complete boolean)",
+    "nargs": 5
+   }
+  ],
+  "get_products_for_reception": [
+   {
+    "signature": "get_products_for_reception(uuid,text,integer,integer)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_products_for_reception(p_store_id uuid, p_search_term text DEFAULT ''::text, p_page integer DEFAULT 1, p_page_size integer DEFAULT 50)\n RETURNS TABLE(id uuid, name text, sku text, barcode text, cost_price numeric, price numeric, unit_of_measure text, stock_current numeric, min_stock numeric, is_active boolean, total_count bigint)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_offset INT;\n  v_search TEXT;\nBEGIN\n  v_offset := (p_page - 1) * p_page_size;\n  v_search := LOWER(TRIM(COALESCE(p_search_term, '')));\n\n  RETURN QUERY\n  SELECT\n    p.id,\n    p.name,\n    p.sku,\n    p.barcode,\n    p.cost_price,\n    p.price,\n    p.unit_of_measure,\n    p.stock_current,\n    p.min_stock,\n    p.is_active,\n    COUNT(*) OVER() AS total_count\n  FROM products p\n  WHERE p.store_id = p_store_id\n    AND p.is_active = true\n    AND (\n      v_search = ''\n      OR LOWER(p.name) LIKE '%' || v_search || '%'\n      OR LOWER(COALESCE(p.sku, '')) LIKE '%' || v_search || '%'\n      OR LOWER(COALESCE(p.barcode, '')) LIKE '%' || v_search || '%'\n    )\n  ORDER BY\n    CASE WHEN v_search != '' AND LOWER(p.name) LIKE v_search || '%' THEN 0 ELSE 1 END,\n    CASE WHEN v_search != '' AND LOWER(COALESCE(p.sku, '')) = v_search THEN 0 ELSE 1 END,\n    p.name ASC\n  LIMIT p_page_size\n  OFFSET v_offset;\nEND;\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{\"search_path=pg_catalog, public, pg_temp\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id",
+     "p_search_term",
+     "p_page",
+     "p_page_size",
+     "id",
+     "name",
+     "sku",
+     "barcode",
+     "cost_price",
+     "price",
+     "unit_of_measure",
+     "stock_current",
+     "min_stock",
+     "is_active",
+     "total_count"
+    ],
+    "args_full": "p_store_id uuid, p_search_term text DEFAULT ''::text, p_page integer DEFAULT 1, p_page_size integer DEFAULT 50",
+    "rettype": "TABLE(id uuid, name text, sku text, barcode text, cost_price numeric, price numeric, unit_of_measure text, stock_current numeric, min_stock numeric, is_active boolean, total_count bigint)",
+    "nargs": 4
+   }
+  ],
+  "get_product_stock_ledger_paginated": [
+   {
+    "signature": "get_product_stock_ledger_paginated(uuid,uuid,integer,integer)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_product_stock_ledger_paginated(p_product_id uuid, p_store_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0)\n RETURNS TABLE(movement_id uuid, created_at timestamp with time zone, movement_type text, reference_id text, reference_doc text, quantity_change numeric, entry numeric, exit numeric, balance_after numeric, unit_cost numeric, total_count bigint)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'extensions'\nAS $function$\n                              BEGIN\n                                RETURN QUERY\n                                  WITH movements AS (\n                                      SELECT\n                                            m.id as movement_id,\n                                                  m.created_at,\n                                                        m.movement_type::TEXT as type,\n                                                              COALESCE(m.reference_id::TEXT, 'S/Ref') as ref_id,\n                                                                    COALESCE(m.reference_doc::TEXT, 'S/Doc') as ref_doc,\n                                                                          m.quantity_change::NUMERIC as q_change,\n                                                                                CASE WHEN m.quantity_change > 0 THEN m.quantity_change::NUMERIC ELSE 0 END as q_entry,\n                                                                                      CASE WHEN m.quantity_change < 0 THEN ABS(m.quantity_change)::NUMERIC ELSE 0 END as q_exit,\n                                                                                            -- Use the calculated balance to ensure accuracy, but call it balance_after for UI compatibility\n                                                                                                  SUM(m.quantity_change) OVER (ORDER BY m.created_at ASC, m.id ASC)::NUMERIC as balance,\n                                                                                                        m.unit_cost::NUMERIC as u_cost,\n                                                                                                              COUNT(*) OVER() as total_records\n                                                                                                                  FROM public.stock_movements m\n                                                                                                                      WHERE m.product_id = p_product_id\n                                                                                                                            AND (p_store_id IS NULL OR m.store_id = p_store_id)\n                                                                                                                              )\n                                                                                                                                SELECT\n                                                                                                                                    m.movement_id,\n                                                                                                                                        m.created_at,\n                                                                                                                                            m.type,\n                                                                                                                                                m.ref_id,\n                                                                                                                                                    m.ref_doc,\n                                                                                                                                                        m.q_change,\n                                                                                                                                                            m.q_entry,\n                                                                                                                                                                m.q_exit,\n                                                                                                                                                                    m.balance,\n                                                                                                                                                                        m.u_cost,\n                                                                                                                                                                            m.total_records\n                                                                                                                                                                              FROM movements m\n                                                                                                                                                                                ORDER BY m.created_at DESC\n                                                                                                                                                                                  LIMIT p_limit\n                                                                                                                                                                                    OFFSET p_offset;\n                                                                                                                                                                                    END;\n                                                                                                                                                                                    $function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{\"search_path=public, extensions\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_product_id",
+     "p_store_id",
+     "p_limit",
+     "p_offset",
+     "movement_id",
+     "created_at",
+     "movement_type",
+     "reference_id",
+     "reference_doc",
+     "quantity_change",
+     "entry",
+     "exit",
+     "balance_after",
+     "unit_cost",
+     "total_count"
+    ],
+    "args_full": "p_product_id uuid, p_store_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0",
+    "rettype": "TABLE(movement_id uuid, created_at timestamp with time zone, movement_type text, reference_id text, reference_doc text, quantity_change numeric, entry numeric, exit numeric, balance_after numeric, unit_cost numeric, total_count bigint)",
+    "nargs": 4
+   }
+  ],
+  "get_daily_expenses_aggregated": [
+   {
+    "signature": "get_daily_expenses_aggregated(uuid,date,date,integer)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_daily_expenses_aggregated(p_store_id uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_limit integer DEFAULT 1000)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_results JSONB;\nBEGIN\n  SELECT COALESCE(jsonb_agg(row_to_json(t)), '[]'::jsonb) INTO v_results\n  FROM (\n    SELECT\n      r.created_at::date AS date,\n      COALESCE(SUM(r.total_cost), 0)::numeric(18,2) AS total_expenses\n    FROM receipts r\n    WHERE\n      (p_store_id IS NULL OR r.store_id = p_store_id)\n      AND (p_date_from IS NULL OR r.created_at::date >= p_date_from)\n      AND (p_date_to IS NULL OR r.created_at::date <= p_date_to)\n    GROUP BY r.created_at::date\n    ORDER BY date DESC\n    LIMIT p_limit\n  ) t;\n  RETURN v_results;\nEND;\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{\"search_path=public, pg_temp\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id",
+     "p_date_from",
+     "p_date_to",
+     "p_limit"
+    ],
+    "args_full": "p_store_id uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_limit integer DEFAULT 1000",
+    "rettype": "jsonb",
+    "nargs": 4
+   }
+  ],
+  "get_low_stock_count": [
+   {
+    "signature": "get_low_stock_count(uuid)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_low_stock_count(p_store_id uuid DEFAULT NULL::uuid)\n RETURNS bigint\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  SELECT COUNT(*)::bigint\r\n  FROM public.products\r\n  WHERE\r\n    (p_store_id IS NULL OR store_id = p_store_id)\r\n    AND is_active = true\r\n    AND stock_current > 0\r\n    AND min_stock IS NOT NULL\r\n    AND min_stock > 0\r\n    AND stock_current <= min_stock;\r\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{search_path=public}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id"
+    ],
+    "args_full": "p_store_id uuid DEFAULT NULL::uuid",
+    "rettype": "bigint",
+    "nargs": 1
+   }
+  ],
+  "current_user_store_ids": [
+   {
+    "signature": "current_user_store_ids()",
+    "def": "CREATE OR REPLACE FUNCTION public.current_user_store_ids()\n RETURNS uuid[]\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_result uuid[];\nBEGIN\n  IF public.is_admin() THEN\n    SELECT array_agg(id) INTO v_result\n    FROM public.stores\n    WHERE tenant_id = public.current_user_tenant_id()\n      AND is_active = true;\n  ELSE\n    SELECT array_agg(store_id) INTO v_result\n    FROM public.user_store_memberships\n    WHERE user_id = auth.uid()\n      AND status = 'active';\n  END IF;\n  RETURN COALESCE(v_result, ARRAY[]::uuid[]);\nEND;\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "s",
+    "config": "{search_path=public}",
+    "owner": "postgres",
+    "argnames": [],
+    "args_full": "",
+    "rettype": "uuid[]",
+    "nargs": 0
+   }
+  ],
+  "get_audit_logs": [
+   {
+    "signature": "get_audit_logs(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_audit_logs(p_store_id uuid DEFAULT NULL::uuid, p_search_term text DEFAULT NULL::text, p_date_from timestamp without time zone DEFAULT NULL::timestamp without time zone, p_date_to timestamp without time zone DEFAULT NULL::timestamp without time zone, p_limit integer DEFAULT 1000)\n RETURNS TABLE(id uuid, created_at timestamp with time zone, user_id uuid, action text, table_name text, record_id text, old_data jsonb, new_data jsonb, metadata jsonb, store_id uuid, store_name text, profile jsonb)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'extensions'\nAS $function$\n                                                                                                                                                                                                                                                        DECLARE\n                                                                                                                                                                                                                                                            v_user_id uuid;\n                                                                                                                                                                                                                                                                v_is_admin boolean;\n                                                                                                                                                                                                                                                                BEGIN\n                                                                                                                                                                                                                                                                    v_user_id := auth.uid();\n                                                                                                                                                                                                                                                                        v_is_admin := public.is_admin();\n\n                                                                                                                                                                                                                                                                            IF p_limit IS NULL THEN\n                                                                                                                                                                                                                                                                                    p_limit := 1000;\n                                                                                                                                                                                                                                                                                        END IF;\n\n                                                                                                                                                                                                                                                                                            RETURN QUERY\n                                                                                                                                                                                                                                                                                                SELECT\n                                                                                                                                                                                                                                                                                                        al.id,\n                                                                                                                                                                                                                                                                                                                al.created_at,\n                                                                                                                                                                                                                                                                                                                        al.user_id,\n                                                                                                                                                                                                                                                                                                                                al.action,\n                                                                                                                                                                                                                                                                                                                                        al.table_name,\n                                                                                                                                                                                                                                                                                                                                                al.record_id::TEXT,\n                                                                                                                                                                                                                                                                                                                                                        al.old_data,\n                                                                                                                                                                                                                                                                                                                                                                al.new_data,\n                                                                                                                                                                                                                                                                                                                                                                        al.metadata,\n                                                                                                                                                                                                                                                                                                                                                                                al.store_id,\n                                                                                                                                                                                                                                                                                                                                                                                        s.name as store_name,\n                                                                                                                                                                                                                                                                                                                                                                                                (\n                                                                                                                                                                                                                                                                                                                                                                                                            SELECT jsonb_build_object(\n                                                                                                                                                                                                                                                                                                                                                                                                                            'full_name', p.full_name,\n                                                                                                                                                                                                                                                                                                                                                                                                                                            'role', p.role\n                                                                                                                                                                                                                                                                                                                                                                                                                                                        )\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                    FROM public.profiles p\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                WHERE p.id = al.user_id\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ) as profile\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            FROM public.audit_logs al\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                LEFT JOIN public.stores s ON al.store_id = s.id\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    WHERE\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            (v_is_admin OR al.store_id IS NULL OR public.has_store_access(al.store_id))\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    AND (p_store_id IS NULL OR al.store_id = p_store_id)\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            AND (p_date_from IS NULL OR al.created_at >= p_date_from)\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    AND (p_date_to IS NULL OR al.created_at <= p_date_to)\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            AND (\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        p_search_term IS NULL OR p_search_term = ''\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    OR al.action ILIKE ('%' || p_search_term || '%')\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                OR al.table_name ILIKE ('%' || p_search_term || '%')\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            OR al.record_id::TEXT ILIKE ('%' || p_search_term || '%')\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    )\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ORDER BY al.created_at DESC\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            LIMIT p_limit;\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            END;\n                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            $function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{\"search_path=public, extensions\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id",
+     "p_search_term",
+     "p_date_from",
+     "p_date_to",
+     "p_limit",
+     "id",
+     "created_at",
+     "user_id",
+     "action",
+     "table_name",
+     "record_id",
+     "old_data",
+     "new_data",
+     "metadata",
+     "store_id",
+     "store_name",
+     "profile"
+    ],
+    "args_full": "p_store_id uuid DEFAULT NULL::uuid, p_search_term text DEFAULT NULL::text, p_date_from timestamp without time zone DEFAULT NULL::timestamp without time zone, p_date_to timestamp without time zone DEFAULT NULL::timestamp without time zone, p_limit integer DEFAULT 1000",
+    "rettype": "TABLE(id uuid, created_at timestamp with time zone, user_id uuid, action text, table_name text, record_id text, old_data jsonb, new_data jsonb, metadata jsonb, store_id uuid, store_name text, profile jsonb)",
+    "nargs": 5
+   }
+  ],
+  "get_batch_store_daily_kpis": [
+   {
+    "signature": "get_batch_store_daily_kpis(uuid[],date)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_batch_store_daily_kpis(p_store_ids uuid[], p_date date DEFAULT CURRENT_DATE)\n RETURNS TABLE(store_id uuid, today_sales numeric, today_transactions bigint, low_stock_count bigint, pending_transfers_out bigint, pending_receptions bigint, visible_products bigint)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  s uuid;\nBEGIN\n  -- REM-INV-6R: authorization barrier (RLS is bypassed by SECURITY DEFINER).\n  -- service_role keeps its trusted internal capability; human callers must\n  -- hold active access (membership or global admin) on EVERY requested store.\n  IF auth.role() <> 'service_role' THEN\n    FOREACH s IN ARRAY p_store_ids LOOP\n      IF NOT public.has_store_access(s) THEN\n        RAISE EXCEPTION 'ERR_UNAUTHORIZED_STORE: %', s USING ERRCODE = '42501';\n      END IF;\n    END LOOP;\n  END IF;\n\n  RETURN QUERY\n  WITH\n  -- Pre-aggregate today's sales per store (single scan with index)\n  sales AS (\n    SELECT\n      tx.store_id,\n      COALESCE(SUM(tx.total_amount), 0) AS total_sales,\n      COUNT(DISTINCT tx.id)              AS tx_count\n    FROM transactions tx\n    WHERE tx.store_id = ANY(p_store_ids)\n      AND tx.status = 'completed'\n      AND tx.created_at >= p_date\n      AND tx.created_at <  p_date + INTERVAL '1 day'\n    GROUP BY tx.store_id\n  ),\n\n  -- Pre-aggregate low-stock product counts per store (single scan with index)\n  low_stock AS (\n    SELECT\n      p.store_id,\n      COUNT(*) AS low_count\n    FROM products p\n    WHERE p.store_id = ANY(p_store_ids)\n      AND p.is_active = true\n      AND p.stock_current <= p.min_stock\n    GROUP BY p.store_id\n  ),\n\n  -- Count pending outgoing transfers per store (single scan with index)\n  transfers_out AS (\n    SELECT\n      t.origin_store_id AS store_id,\n      COUNT(*)           AS pending_count\n    FROM transfers t\n    WHERE t.origin_store_id = ANY(p_store_ids)\n      AND t.status = 'PENDIENTE'\n    GROUP BY t.origin_store_id\n  ),\n\n  -- Count active receipts (pending receptions) per store\n  receipts_pending AS (\n    SELECT\n      r.store_id,\n      COUNT(*) AS pending_count\n    FROM receipts r\n    WHERE r.store_id = ANY(p_store_ids)\n      AND r.status = 'pending'\n    GROUP BY r.store_id\n  ),\n\n  -- Count visible storefront products per store (single scan with index)\n  visible AS (\n    SELECT\n      p.store_id,\n      COUNT(*) AS visible_count\n    FROM products p\n    WHERE p.store_id = ANY(p_store_ids)\n      AND p.is_active = true\n      AND p.visible_en_tienda = true\n    GROUP BY p.store_id\n  )\n\n  -- Final join: UNNEST input + LEFT JOIN each CTE (no correlated subqueries)\n  SELECT\n    s_id                                      AS store_id,\n    COALESCE(sales.total_sales, 0)            AS today_sales,\n    COALESCE(sales.tx_count, 0)               AS today_transactions,\n    COALESCE(low_stock.low_count, 0)          AS low_stock_count,\n    COALESCE(transfers_out.pending_count, 0)  AS pending_transfers_out,\n    COALESCE(receipts_pending.pending_count, 0) AS pending_receptions,\n    COALESCE(visible.visible_count, 0)        AS visible_products\n  FROM UNNEST(p_store_ids) AS s_id\n  LEFT JOIN sales             ON sales.store_id             = s_id\n  LEFT JOIN low_stock         ON low_stock.store_id         = s_id\n  LEFT JOIN transfers_out     ON transfers_out.store_id     = s_id\n  LEFT JOIN receipts_pending  ON receipts_pending.store_id  = s_id\n  LEFT JOIN visible           ON visible.store_id           = s_id;\nEND;\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "s",
+    "config": "{search_path=public}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_ids",
+     "p_date",
+     "store_id",
+     "today_sales",
+     "today_transactions",
+     "low_stock_count",
+     "pending_transfers_out",
+     "pending_receptions",
+     "visible_products"
+    ],
+    "args_full": "p_store_ids uuid[], p_date date DEFAULT CURRENT_DATE",
+    "rettype": "TABLE(store_id uuid, today_sales numeric, today_transactions bigint, low_stock_count bigint, pending_transfers_out bigint, pending_receptions bigint, visible_products bigint)",
+    "nargs": 2
+   }
+  ],
+  "get_paginated_products_v2": [
+   {
+    "signature": "get_paginated_products_v2(integer,integer,uuid,text,text,text,text,text,text)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_paginated_products_v2(p_limit integer DEFAULT 24, p_offset integer DEFAULT 0, p_store_id uuid DEFAULT NULL::uuid, p_search_term text DEFAULT NULL::text, p_category text DEFAULT NULL::text, p_sort_key text DEFAULT 'name'::text, p_sort_dir text DEFAULT 'asc'::text, p_stock_filter text DEFAULT 'all'::text, p_active_filter text DEFAULT 'all'::text)\n RETURNS TABLE(id uuid, name text, sku text, barcode text, barcode_type text, category text, price numeric, precio_empresa numeric, precio_empresa_currency text, price_currency text, cost_price numeric, min_stock numeric, image_url text, description text, unit_of_measure text, supplier text, stock_current numeric, cost_average numeric, store_id uuid, is_active boolean, has_movements boolean, visible_en_tienda boolean, price_visible boolean, stock_visible boolean, on_promotion boolean, created_at timestamp with time zone, updated_at timestamp with time zone, is_complete boolean, total_count bigint)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n    BEGIN\n      IF auth.uid() IS NULL THEN\n        RAISE EXCEPTION 'Authentication required' USING ERRCODE = '42501';\n      END IF;\n      IF p_store_id IS NULL AND NOT public.is_admin() THEN\n        RAISE EXCEPTION 'p_store_id is required' USING ERRCODE = '42501';\n      END IF;\n      IF p_store_id IS NOT NULL AND NOT public.has_store_access(p_store_id) THEN\n        RAISE EXCEPTION 'Unauthorized store access' USING ERRCODE = '42501';\n      END IF;\n\n      RETURN QUERY\n      SELECT\n        p.id, p.name, p.sku, p.barcode, p.barcode_type,\n        p.category, p.price, p.precio_empresa, p.precio_empresa_currency, COALESCE(p.price_currency, 'CUP'),\n        p.cost_price, p.min_stock, p.image_url, p.description,\n        p.unit_of_measure, p.supplier,\n        COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv\n                  WHERE inv.product_id = p.id AND inv.store_id = p.store_id), 0)::numeric AS stock_current,\n        p.cost_average,\n        p.store_id, p.is_active,\n        EXISTS (SELECT 1 FROM public.transaction_items ti WHERE ti.product_id = p.id\n                UNION ALL SELECT 1 FROM public.stock_movements sm WHERE sm.product_id = p.id\n                UNION ALL SELECT 1 FROM public.receipt_items ri WHERE ri.product_id = p.id) AS has_movements,\n        p.visible_en_tienda,\n        COALESCE(p.price_visible, true),\n        COALESCE(p.stock_visible, true),\n        COALESCE(p.on_promotion, false),\n        p.created_at, p.updated_at,\n        (COALESCE(p.name, '') <> '' AND COALESCE(p.sku, '') <> '' AND p.price > 0\n         AND p.cost_price IS NOT NULL AND COALESCE(p.category, '') <> ''\n         AND COALESCE(p.unit_of_measure, '') <> '') AS is_complete,\n        COUNT(*) OVER()::bigint AS total_count\n      FROM public.products p\n      WHERE (p_store_id IS NULL OR p.store_id = p_store_id)\n        AND public.has_store_access(p.store_id)\n        AND (p.tenant_id IS NULL OR p.tenant_id IS NOT DISTINCT FROM\n             (SELECT s.tenant_id FROM public.stores s WHERE s.id = p.store_id))\n        AND (p_search_term IS NULL OR p_search_term = '' OR\n             p.name ILIKE ('%' || p_search_term || '%') OR\n             p.sku ILIKE ('%' || p_search_term || '%') OR\n             COALESCE(p.barcode, '') ILIKE ('%' || p_search_term || '%'))\n        AND (p_category IS NULL OR p_category = '' OR p.category = p_category)\n        AND (p_active_filter = 'all' OR\n             (p_active_filter = 'active' AND p.is_active = true) OR\n             (p_active_filter = 'inactive' AND p.is_active = false))\n        AND (p_stock_filter = 'all' OR\n             (p_stock_filter = 'out' AND\n              COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv\n                        WHERE inv.product_id = p.id AND inv.store_id = p.store_id), 0) <= 0) OR\n             (p_stock_filter = 'low' AND\n              COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv\n                        WHERE inv.product_id = p.id AND inv.store_id = p.store_id), 0) > 0 AND\n              COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv\n                        WHERE inv.product_id = p.id AND inv.store_id = p.store_id), 0) <= COALESCE(p.min_stock, 0)) OR\n             (p_stock_filter = 'ok' AND\n              COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv\n                        WHERE inv.product_id = p.id AND inv.store_id = p.store_id), 0) > COALESCE(p.min_stock, 0)))\n      ORDER BY\n        CASE WHEN p_sort_dir = 'asc' THEN\n          CASE p_sort_key\n            WHEN 'name' THEN p.name\n            WHEN 'sku' THEN COALESCE(p.sku, '')\n            WHEN 'price' THEN LPAD(p.price::text, 20, '0')\n            WHEN 'cost_price' THEN LPAD(p.cost_price::text, 20, '0')\n            WHEN 'stock_current' THEN LPAD(COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv WHERE inv.product_id = p.id AND inv.store_id = p.store_id), 0)::text, 20, '0')\n            ELSE p.name\n          END\n        END ASC NULLS LAST,\n        CASE WHEN p_sort_dir = 'desc' THEN\n          CASE p_sort_key\n            WHEN 'name' THEN p.name\n            WHEN 'sku' THEN COALESCE(p.sku, '')\n            WHEN 'price' THEN LPAD(p.price::text, 20, '0')\n            WHEN 'cost_price' THEN LPAD(p.cost_price::text, 20, '0')\n            WHEN 'stock_current' THEN LPAD(COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv WHERE inv.product_id = p.id AND inv.store_id = p.store_id), 0)::text, 20, '0')\n            ELSE p.name\n          END\n        END DESC NULLS LAST,\n        p.id ASC\n      LIMIT p_limit OFFSET p_offset;\n    END;\n    $function$\n",
+    "acl": "=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{\"search_path=public, pg_temp\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_limit",
+     "p_offset",
+     "p_store_id",
+     "p_search_term",
+     "p_category",
+     "p_sort_key",
+     "p_sort_dir",
+     "p_stock_filter",
+     "p_active_filter",
+     "id",
+     "name",
+     "sku",
+     "barcode",
+     "barcode_type",
+     "category",
+     "price",
+     "precio_empresa",
+     "precio_empresa_currency",
+     "price_currency",
+     "cost_price",
+     "min_stock",
+     "image_url",
+     "description",
+     "unit_of_measure",
+     "supplier",
+     "stock_current",
+     "cost_average",
+     "store_id",
+     "is_active",
+     "has_movements",
+     "visible_en_tienda",
+     "price_visible",
+     "stock_visible",
+     "on_promotion",
+     "created_at",
+     "updated_at",
+     "is_complete",
+     "total_count"
+    ],
+    "args_full": "p_limit integer DEFAULT 24, p_offset integer DEFAULT 0, p_store_id uuid DEFAULT NULL::uuid, p_search_term text DEFAULT NULL::text, p_category text DEFAULT NULL::text, p_sort_key text DEFAULT 'name'::text, p_sort_dir text DEFAULT 'asc'::text, p_stock_filter text DEFAULT 'all'::text, p_active_filter text DEFAULT 'all'::text",
+    "rettype": "TABLE(id uuid, name text, sku text, barcode text, barcode_type text, category text, price numeric, precio_empresa numeric, precio_empresa_currency text, price_currency text, cost_price numeric, min_stock numeric, image_url text, description text, unit_of_measure text, supplier text, stock_current numeric, cost_average numeric, store_id uuid, is_active boolean, has_movements boolean, visible_en_tienda boolean, price_visible boolean, stock_visible boolean, on_promotion boolean, created_at timestamp with time zone, updated_at timestamp with time zone, is_complete boolean, total_count bigint)",
+    "nargs": 9
+   }
+  ],
+  "get_products_for_pos": [
+   {
+    "signature": "get_products_for_pos(uuid,text,text,integer,integer)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_products_for_pos(p_store_id uuid DEFAULT NULL::uuid, p_search_term text DEFAULT NULL::text, p_category text DEFAULT NULL::text, p_limit integer DEFAULT 500, p_offset integer DEFAULT 0)\n RETURNS TABLE(id uuid, name text, description text, sku text, price numeric, cost_price numeric, image_url text, category text, unit_of_measure text, supplier text, created_at timestamp with time zone, updated_at timestamp with time zone, stock_current numeric, cost_average numeric, min_stock integer, store_id uuid, is_active boolean, has_movements boolean, product_variants jsonb, price_currency text, barcode text, barcode_type text, visible_en_tienda boolean, precio_empresa numeric, precio_empresa_currency text, on_promotion boolean)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n        DECLARE\n          v_limit integer := LEAST(GREATEST(COALESCE(p_limit, 500), 1), 5000);\n          v_offset integer := GREATEST(COALESCE(p_offset, 0), 0);\n          v_search text := trim(coalesce(p_search_term, ''));\n        BEGIN\n          IF auth.uid() IS NULL THEN\n            RAISE EXCEPTION 'Authentication required' USING ERRCODE = '42501';\n          END IF;\n          IF p_store_id IS NULL AND NOT public.is_admin() THEN\n            RAISE EXCEPTION 'p_store_id is required' USING ERRCODE = '42501';\n          END IF;\n          IF p_store_id IS NOT NULL AND NOT public.has_store_access(p_store_id) THEN\n            RAISE EXCEPTION 'Unauthorized store access' USING ERRCODE = '42501';\n          END IF;\n\n          RETURN QUERY\n          SELECT\n            p.id, p.name, p.description, p.sku, p.price, p.cost_price, p.image_url,\n            p.category, p.unit_of_measure, p.supplier, p.created_at, p.updated_at,\n            COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv WHERE inv.product_id = p.id AND inv.store_id = p.store_id), 0)::numeric,\n            p.cost_average, p.min_stock::integer, p.store_id, p.is_active,\n            EXISTS (SELECT 1 FROM public.transaction_items ti WHERE ti.product_id = p.id\n                    UNION ALL SELECT 1 FROM public.stock_movements sm WHERE sm.product_id = p.id\n                    UNION ALL SELECT 1 FROM public.receipt_items ri WHERE ri.product_id = p.id) AS has_movements,\n            COALESCE((SELECT jsonb_agg(jsonb_build_object('id', pv.id, 'name', pv.name, 'sku', pv.sku, 'price', pv.price, 'conversion_factor', pv.conversion_factor)) FROM public.product_variants pv WHERE pv.product_id = p.id), '[]'::jsonb),\n            COALESCE(p.price_currency, 'CUP'),\n            p.barcode,\n            p.barcode_type,\n            p.visible_en_tienda,\n            p.precio_empresa,\n            p.precio_empresa_currency,\n            COALESCE(p.on_promotion, false)\n          FROM public.products p\n          WHERE (p_store_id IS NULL OR p.store_id = p_store_id)\n            AND public.has_store_access(p.store_id)\n            AND (p.tenant_id IS NULL OR p.tenant_id IS NOT DISTINCT FROM (SELECT s.tenant_id FROM public.stores s WHERE s.id = p.store_id))\n            AND (\n              v_search = ''\n              OR p.name ILIKE ('%' || v_search || '%')\n              OR p.sku ILIKE ('%' || v_search || '%')\n              OR COALESCE(p.barcode, '') = v_search\n            )\n            AND (p_category IS NULL OR p_category = '' OR p.category = p_category)\n          ORDER BY p.name\n          LIMIT v_limit OFFSET v_offset;\n        END;\n    $function$\n",
+    "acl": "=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{\"search_path=public, pg_temp\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id",
+     "p_search_term",
+     "p_category",
+     "p_limit",
+     "p_offset",
+     "id",
+     "name",
+     "description",
+     "sku",
+     "price",
+     "cost_price",
+     "image_url",
+     "category",
+     "unit_of_measure",
+     "supplier",
+     "created_at",
+     "updated_at",
+     "stock_current",
+     "cost_average",
+     "min_stock",
+     "store_id",
+     "is_active",
+     "has_movements",
+     "product_variants",
+     "price_currency",
+     "barcode",
+     "barcode_type",
+     "visible_en_tienda",
+     "precio_empresa",
+     "precio_empresa_currency",
+     "on_promotion"
+    ],
+    "args_full": "p_store_id uuid DEFAULT NULL::uuid, p_search_term text DEFAULT NULL::text, p_category text DEFAULT NULL::text, p_limit integer DEFAULT 500, p_offset integer DEFAULT 0",
+    "rettype": "TABLE(id uuid, name text, description text, sku text, price numeric, cost_price numeric, image_url text, category text, unit_of_measure text, supplier text, created_at timestamp with time zone, updated_at timestamp with time zone, stock_current numeric, cost_average numeric, min_stock integer, store_id uuid, is_active boolean, has_movements boolean, product_variants jsonb, price_currency text, barcode text, barcode_type text, visible_en_tienda boolean, precio_empresa numeric, precio_empresa_currency text, on_promotion boolean)",
+    "nargs": 5
+   }
+  ],
+  "get_transactions": [
+   {
+    "signature": "get_transactions(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_transactions(p_store_id uuid DEFAULT NULL::uuid, p_search_term text DEFAULT NULL::text, p_date_from timestamp without time zone DEFAULT NULL::timestamp without time zone, p_date_to timestamp without time zone DEFAULT NULL::timestamp without time zone, p_limit integer DEFAULT 1000)\n RETURNS TABLE(id uuid, created_at timestamp with time zone, total_amount numeric, status text, payment_method text, subtotal numeric, discount_value numeric, store_id uuid, seller_id uuid, seller_name text, cash_amount numeric, transfer_amount numeric, zelle_amount numeric, sale_currency text, sale_exchange_rate numeric, completed_at timestamp with time zone, customer_name text, invoice_number text)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'extensions'\nAS $function$\nDECLARE\n    v_user_id uuid;\n    v_is_admin boolean;\nBEGIN\n    v_user_id := auth.uid();\n    v_is_admin := public.is_admin();\n\n    IF p_limit IS NULL THEN\n        p_limit := 1000;\n    END IF;\n\n    RETURN QUERY\n    SELECT\n        t.id,\n        t.created_at,\n        t.total_amount,\n        t.status::text,\n        t.payment_method::text,\n        t.subtotal,\n        t.discount_value,\n        t.store_id,\n        t.seller_id,\n        p.full_name as seller_name,\n        t.cash_amount,\n        t.transfer_amount,\n        t.zelle_amount,\n        t.sale_currency,\n        t.sale_exchange_rate,\n        t.completed_at,\n        t.customer_name,\n        t.invoice_number\n    FROM public.transactions t\n    LEFT JOIN public.profiles p ON t.seller_id = p.id\n    WHERE\n        (v_is_admin OR public.has_store_access(t.store_id))\n        AND (p_store_id IS NULL OR t.store_id = p_store_id)\n        AND (p_date_from IS NULL OR t.created_at >= p_date_from)\n        AND (p_date_to IS NULL OR t.created_at <= p_date_to)\n        AND (\n            p_search_term IS NULL OR p_search_term = ''\n            OR p.full_name ILIKE ('%' || p_search_term || '%')\n            OR t.id::text ILIKE ('%' || p_search_term || '%')\n        )\n    ORDER BY t.created_at DESC\n    LIMIT p_limit;\nEND;\n$function$\n",
+    "acl": "=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{\"search_path=public, extensions\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id",
+     "p_search_term",
+     "p_date_from",
+     "p_date_to",
+     "p_limit",
+     "id",
+     "created_at",
+     "total_amount",
+     "status",
+     "payment_method",
+     "subtotal",
+     "discount_value",
+     "store_id",
+     "seller_id",
+     "seller_name",
+     "cash_amount",
+     "transfer_amount",
+     "zelle_amount",
+     "sale_currency",
+     "sale_exchange_rate",
+     "completed_at",
+     "customer_name",
+     "invoice_number"
+    ],
+    "args_full": "p_store_id uuid DEFAULT NULL::uuid, p_search_term text DEFAULT NULL::text, p_date_from timestamp without time zone DEFAULT NULL::timestamp without time zone, p_date_to timestamp without time zone DEFAULT NULL::timestamp without time zone, p_limit integer DEFAULT 1000",
+    "rettype": "TABLE(id uuid, created_at timestamp with time zone, total_amount numeric, status text, payment_method text, subtotal numeric, discount_value numeric, store_id uuid, seller_id uuid, seller_name text, cash_amount numeric, transfer_amount numeric, zelle_amount numeric, sale_currency text, sale_exchange_rate numeric, completed_at timestamp with time zone, customer_name text, invoice_number text)",
+    "nargs": 5
+   }
+  ],
+  "get_transferable_stores": [
+   {
+    "signature": "get_transferable_stores(uuid,uuid)",
+    "def": "CREATE OR REPLACE FUNCTION public.get_transferable_stores(p_user_id uuid, p_current_store_id uuid)\n RETURNS SETOF stores\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_tenant_id UUID;\nBEGIN\n  -- RC-3 (REM-INV-4B): a client-supplied subject identity (p_user_id) is NOT\n  -- proof of authorization. Under authenticated, the ONLY server-verifiable\n  -- subject is the caller itself (auth.uid(), from the platform-signed JWT).\n  -- A foreign subject requires the trusted server route\n  -- (auth.role() = 'service_role'), which reuses the RC-1 pattern validated\n  -- in REM-INV-4A-R (create_sale_v2 supervisor gate).\n  IF auth.role() <> 'service_role'\n     AND p_user_id IS DISTINCT FROM auth.uid() THEN\n    RAISE EXCEPTION 'ERR_TRANSFERABLE_STORES_UNAUTHORIZED';\n  END IF;\n  -- 1. Obtener tenant_id de la tienda actual\n  SELECT tenant_id INTO v_tenant_id\n  FROM public.stores\n  WHERE id = p_current_store_id AND is_active = true;\n\n  -- 2. Devolver tiendas donde el caller tiene acceso (has_store_access_as)\n  --    EXCLUYENDO la tienda actual\n  --    Si tenant_id es NOT NULL, filtrar por mismo tenant.\n  --    Si tenant_id es NULL (legacy), mostrar todas las que el caller tiene acceso.\n  IF v_tenant_id IS NOT NULL THEN\n    RETURN QUERY\n    SELECT s.*\n    FROM public.stores s\n    WHERE s.tenant_id = v_tenant_id\n      AND s.id != p_current_store_id\n      AND s.is_active = true\n      AND s.is_archived = false\n      AND public.has_store_access_as(p_user_id, s.id)\n    ORDER BY s.name;\n  ELSE\n    -- Legacy: tiendas sin tenant_id — usar solo has_store_access_as\n    RETURN QUERY\n    SELECT s.*\n    FROM public.stores s\n    WHERE s.id != p_current_store_id\n      AND s.is_active = true\n      AND s.is_archived = false\n      AND public.has_store_access_as(p_user_id, s.id)\n    ORDER BY s.name;\n  END IF;\nEND;\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{search_path=public}",
+    "owner": "postgres",
+    "argnames": [
+     "p_user_id",
+     "p_current_store_id"
+    ],
+    "args_full": "p_user_id uuid, p_current_store_id uuid",
+    "rettype": "SETOF stores",
+    "nargs": 2
+   }
+  ],
+  "has_store_access": [
+   {
+    "signature": "has_store_access(uuid)",
+    "def": "CREATE OR REPLACE FUNCTION public.has_store_access(p_store_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_user_id uuid := auth.uid();\nBEGIN\n  IF v_user_id IS NULL OR p_store_id IS NULL THEN\n    RETURN false;\n  END IF;\n\n  -- Admin global tiene acceso a todo\n  IF public.is_admin() THEN\n    RETURN true;\n  END IF;\n\n  -- Verificar membership activa en la tienda\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.user_store_memberships m\n    JOIN public.stores s\n      ON s.id = m.store_id\n    JOIN public.profiles p\n      ON p.id = m.user_id\n    WHERE m.user_id = v_user_id\n      AND m.store_id = p_store_id\n      AND m.status::text = 'active'\n      AND (\n        p.tenant_id IS NULL\n        OR s.tenant_id IS NULL\n        OR p.tenant_id = s.tenant_id\n      )\n  );\nEND;\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "s",
+    "config": "{\"search_path=public, pg_temp\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id"
+    ],
+    "args_full": "p_store_id uuid",
+    "rettype": "boolean",
+    "nargs": 1
+   }
+  ],
+  "has_store_role": [
+   {
+    "signature": "has_store_role(uuid,text[])",
+    "def": "CREATE OR REPLACE FUNCTION public.has_store_role(p_store_id uuid, p_roles text[])\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nBEGIN\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.user_store_memberships m\n    WHERE m.user_id = auth.uid()\n      AND m.store_id = p_store_id\n      AND m.status = 'active'\n      AND m.role::text = ANY(p_roles)\n  );\nEND;\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "s",
+    "config": "{\"search_path=public, pg_temp\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id",
+     "p_roles"
+    ],
+    "args_full": "p_store_id uuid, p_roles text[]",
+    "rettype": "boolean",
+    "nargs": 2
+   },
+   {
+    "signature": "has_store_role(uuid,uuid,text[])",
+    "def": "CREATE OR REPLACE FUNCTION public.has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])\n RETURNS boolean\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  SELECT CASE WHEN auth.role() = 'service_role' THEN\n    EXISTS (\n      SELECT 1 FROM public.user_store_memberships m\n      WHERE m.user_id = p_user_id\n        AND m.store_id = p_store_id\n        AND m.status = 'active'\n        AND m.role::text = ANY(p_roles)\n    )\n  ELSE\n    EXISTS (\n      SELECT 1 FROM public.user_store_memberships m\n      WHERE m.user_id = auth.uid()\n        AND m.store_id = p_store_id\n        AND m.status = 'active'\n        AND m.role::text = ANY(p_roles)\n    )\n  END\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{\"search_path=public, pg_temp\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_user_id",
+     "p_store_id",
+     "p_roles"
+    ],
+    "args_full": "p_user_id uuid, p_store_id uuid, p_roles text[]",
+    "rettype": "boolean",
+    "nargs": 3
+   }
+  ],
+  "is_admin_with_access": [
+   {
+    "signature": "is_admin_with_access(uuid)",
+    "def": "CREATE OR REPLACE FUNCTION public.is_admin_with_access(p_store_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_is_admin boolean;\n  v_user_tenant uuid;\n  v_store_tenant uuid;\nBEGIN\n  v_is_admin := public.is_admin();\n  IF NOT v_is_admin THEN\n    RETURN public.has_store_access(p_store_id);\n  END IF;\n  v_user_tenant := public.current_user_tenant_id();\n  SELECT tenant_id INTO v_store_tenant FROM public.stores WHERE id = p_store_id;\n  RETURN v_store_tenant IS NULL OR v_store_tenant = v_user_tenant;\nEND;\n$function$\n",
+    "acl": "=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "s",
+    "config": "{search_path=public}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id"
+    ],
+    "args_full": "p_store_id uuid",
+    "rettype": "boolean",
+    "nargs": 1
+   }
+  ],
+  "is_managed_user": [
+   {
+    "signature": "is_managed_user(uuid)",
+    "def": "CREATE OR REPLACE FUNCTION public.is_managed_user(p_target_user_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'extensions'\nAS $function$\r\nBEGIN\r\n  RETURN EXISTS (\r\n    SELECT 1 FROM public.user_store_memberships usm_target\r\n    WHERE usm_target.user_id = p_target_user_id\r\n      AND EXISTS (\r\n        SELECT 1 FROM public.user_store_memberships usm_me\r\n        WHERE usm_me.user_id = auth.uid()\r\n          AND usm_me.store_id = usm_target.store_id\r\n          AND usm_me.role IN ('encargado', 'manager')\r\n          AND usm_me.status = 'active'\r\n      )\r\n  );\r\nEND;\r\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "v",
+    "config": "{\"search_path=public, extensions\"}",
+    "owner": "postgres",
+    "argnames": [
+     "p_target_user_id"
+    ],
+    "args_full": "p_target_user_id uuid",
+    "rettype": "boolean",
+    "nargs": 1
+   }
+  ],
+  "is_store_member": [
+   {
+    "signature": "is_store_member(uuid)",
+    "def": "CREATE OR REPLACE FUNCTION public.is_store_member(p_store_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT EXISTS (\n    SELECT 1 FROM public.user_store_memberships\n    WHERE store_id = p_store_id\n      AND user_id = auth.uid()\n      AND status = 'active'\n  );\n$function$\n",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "secdef": true,
+    "volatility": "s",
+    "config": "{search_path=public}",
+    "owner": "postgres",
+    "argnames": [
+     "p_store_id"
+    ],
+    "args_full": "p_store_id uuid",
+    "rettype": "boolean",
+    "nargs": 1
+   }
+  ]
+ },
+ "exec_grants_detail": {
+  "get_cash_closures": [
+   {
+    "signature": "get_cash_closures(uuid,date,date,integer)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_cash_closures(uuid,date,date,integer)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_cash_closures(uuid,date,date,integer)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_transfers": [
+   {
+    "signature": "get_transfers(uuid,timestamp with time zone,timestamp with time zone,text,integer)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_transfers(uuid,timestamp with time zone,timestamp with time zone,text,integer)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_transfers(uuid,timestamp with time zone,timestamp with time zone,text,integer)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_store_analytics_advanced": [
+   {
+    "signature": "get_store_analytics_advanced(uuid,date,date,integer)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_store_analytics_advanced(uuid,date,date,integer)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_store_analytics_advanced(uuid,date,date,integer)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_sales_since_last_closure": [
+   {
+    "signature": "get_sales_since_last_closure(uuid)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_sales_since_last_closure(uuid)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_sales_since_last_closure(uuid)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_paginated_products": [
+   {
+    "signature": "get_paginated_products(uuid,text,text,integer,integer)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_paginated_products(uuid,text,text,integer,integer)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_paginated_products(uuid,text,text,integer,integer)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_products_for_reception": [
+   {
+    "signature": "get_products_for_reception(uuid,text,integer,integer)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_products_for_reception(uuid,text,integer,integer)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_products_for_reception(uuid,text,integer,integer)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_product_stock_ledger_paginated": [
+   {
+    "signature": "get_product_stock_ledger_paginated(uuid,uuid,integer,integer)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_product_stock_ledger_paginated(uuid,uuid,integer,integer)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_product_stock_ledger_paginated(uuid,uuid,integer,integer)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_daily_expenses_aggregated": [
+   {
+    "signature": "get_daily_expenses_aggregated(uuid,date,date,integer)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_daily_expenses_aggregated(uuid,date,date,integer)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_daily_expenses_aggregated(uuid,date,date,integer)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_low_stock_count": [
+   {
+    "signature": "get_low_stock_count(uuid)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_low_stock_count(uuid)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_low_stock_count(uuid)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "current_user_store_ids": [
+   {
+    "signature": "current_user_store_ids()",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "current_user_store_ids()",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "current_user_store_ids()",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_audit_logs": [
+   {
+    "signature": "get_audit_logs(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_audit_logs(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_audit_logs(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_batch_store_daily_kpis": [
+   {
+    "signature": "get_batch_store_daily_kpis(uuid[],date)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_batch_store_daily_kpis(uuid[],date)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_batch_store_daily_kpis(uuid[],date)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_paginated_products_v2": [
+   {
+    "signature": "get_paginated_products_v2(integer,integer,uuid,text,text,text,text,text,text)",
+    "grantee_role": "PUBLIC",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_paginated_products_v2(integer,integer,uuid,text,text,text,text,text,text)",
+    "grantee_role": "anon",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_paginated_products_v2(integer,integer,uuid,text,text,text,text,text,text)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_paginated_products_v2(integer,integer,uuid,text,text,text,text,text,text)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_paginated_products_v2(integer,integer,uuid,text,text,text,text,text,text)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_products_for_pos": [
+   {
+    "signature": "get_products_for_pos(uuid,text,text,integer,integer)",
+    "grantee_role": "PUBLIC",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_products_for_pos(uuid,text,text,integer,integer)",
+    "grantee_role": "anon",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_products_for_pos(uuid,text,text,integer,integer)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_products_for_pos(uuid,text,text,integer,integer)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_products_for_pos(uuid,text,text,integer,integer)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_transactions": [
+   {
+    "signature": "get_transactions(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "grantee_role": "PUBLIC",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_transactions(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "grantee_role": "anon",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_transactions(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_transactions(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_transactions(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "get_transferable_stores": [
+   {
+    "signature": "get_transferable_stores(uuid,uuid)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_transferable_stores(uuid,uuid)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "get_transferable_stores(uuid,uuid)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "has_store_access": [
+   {
+    "signature": "has_store_access(uuid)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "has_store_access(uuid)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "has_store_access(uuid)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "has_store_role": [
+   {
+    "signature": "has_store_role(uuid,text[])",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "has_store_role(uuid,text[])",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "has_store_role(uuid,text[])",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "has_store_role(uuid,uuid,text[])",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "has_store_role(uuid,uuid,text[])",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "has_store_role(uuid,uuid,text[])",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "is_admin_with_access": [
+   {
+    "signature": "is_admin_with_access(uuid)",
+    "grantee_role": "PUBLIC",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "is_admin_with_access(uuid)",
+    "grantee_role": "anon",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "is_admin_with_access(uuid)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "is_admin_with_access(uuid)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "is_admin_with_access(uuid)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "is_managed_user": [
+   {
+    "signature": "is_managed_user(uuid)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "is_managed_user(uuid)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "is_managed_user(uuid)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ],
+  "is_store_member": [
+   {
+    "signature": "is_store_member(uuid)",
+    "grantee_role": "authenticated",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "is_store_member(uuid)",
+    "grantee_role": "postgres",
+    "privilege_type": "EXECUTE"
+   },
+   {
+    "signature": "is_store_member(uuid)",
+    "grantee_role": "service_role",
+    "privilege_type": "EXECUTE"
+   }
+  ]
+ }
+}
