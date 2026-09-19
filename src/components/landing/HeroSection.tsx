@@ -6,6 +6,7 @@ import {
   ChevronDown, ArrowRight,
   Search, Sparkles, Shield, X,
 } from 'lucide-react';
+import { enterFichaDeCosto } from '@/lib/fcEntry';
 
 /* ── Typewriter Text Component ── */
 function TypewriterText({ text, start, className }: { text: string; start: boolean; className?: string }) {
@@ -461,9 +462,16 @@ export default function HeroSection({
                   Ver demo interactiva de CostPro
                 </button>
                 <div className="h-px bg-white/[0.08] my-2" />
+                {/* PROMPT 3 GATE 1: CTA FC sin recarga — decide en el click
+                    (misma señal que el wrapper /fc/); sin sesión abre el login
+                    de COSTPRO con returnTo=/fc/ vía replaceState (0 navegación). */}
                 <a
                   href="/fc/"
-                  onClick={() => setShowMobileNav(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowMobileNav(false);
+                    enterFichaDeCosto(() => { setLoginDefaultTab('login'); setShowLoginModal(true); });
+                  }}
                   className="block w-full text-left px-4 py-3 text-sm text-[#22c55e] font-medium rounded-lg hover:bg-[#22c55e]/10 transition-all"
                 >
                   Crear Ficha de Costo — Gratis
@@ -513,7 +521,9 @@ export default function HeroSection({
             transition={{ delay: 0.65, duration: 0.6 }}
             className="mt-8 flex flex-col sm:flex-row items-center gap-3"
           >
-            {/* Primary CTA — "Comenzar Gratis" */}
+            {/* Primary CTA — "Iniciar en COSTPRO" (PROMPT 3: propósito real =
+                acceso a COSTPRO; el gradiente completo pasa WCAG AA con blanco:
+                #15803d 5.02:1 · #166534 7.13:1) */}
             <button
               onClick={() => {
                 if (setLoginDefaultTab) setLoginDefaultTab('login');
@@ -521,13 +531,13 @@ export default function HeroSection({
               }}
               className="group relative px-8 py-3.5 rounded-2xl font-bold text-sm tracking-tight text-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
               style={{
-                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%)',
+                background: 'linear-gradient(135deg, #15803d 0%, #15803d 45%, #166534 100%)',
                 boxShadow: '0 0 30px rgba(34,197,94,0.25), 0 4px 15px rgba(34,197,94,0.2), inset 0 1px 0 rgba(255,255,255,0.15)',
                 minWidth: '200px',
               }}
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
-                Comenzar Gratis
+                Iniciar en COSTPRO
                 <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </span>
               {/* Shimmer overlay */}
@@ -541,12 +551,20 @@ export default function HeroSection({
               </div>
             </button>
 
-            {/* FC-MVP CTA — "Crear Ficha de Costo — Gratis" (producto de entrada, /fc/) */}
+            {/* FC-MVP CTA — "Crear Ficha de Costo — Gratis" (módulo FC).
+                PROMPT 3 GATE 1: sin recarga — con sesión navega a /fc/;
+                sin sesión abre el login de COSTPRO (returnTo=/fc/, replaceState).
+                Recolor azul genérico → petróleo de marca #004d40 (identidad
+                del módulo; blanco sobre tinte petróleo ≥ 15:1 AAA). */}
             <a
               href="/fc/"
               data-testid="hero-fc-button"
               aria-label="Crear Ficha de Costo gratis"
-              className="group relative px-8 py-3.5 rounded-2xl font-bold text-sm tracking-tight text-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] border border-[#0d5bb8]/40 bg-[#0d5bb8]/15 hover:bg-[#0d5bb8]/25"
+              onClick={(e) => {
+                e.preventDefault();
+                enterFichaDeCosto(() => { if (setLoginDefaultTab) setLoginDefaultTab('login'); setShowLoginModal(true); });
+              }}
+              className="group relative px-8 py-3.5 rounded-2xl font-bold text-sm tracking-tight text-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] border border-[#004d40]/70 bg-[#004d40]/30 hover:bg-[#004d40]/50"
               style={{ minWidth: '200px' }}
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
@@ -570,7 +588,7 @@ export default function HeroSection({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.0, duration: 0.5 }}
-            className="mt-3 text-[11px] text-white/20"
+            className="mt-3 text-[11px] text-white/50"
           >
             Administra múltiples tiendas · Inventario y ventas · Vitrina digital propia · Ficha de Costo Res. 148/2023 · Gratis para empezar
           </motion.p>

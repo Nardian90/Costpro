@@ -13,7 +13,7 @@
    estáticos cache-first, Supabase y todo origen cruzado NUNCA en Cache Storage,
    sin skipWaiting/clients.claim (actualización la gobierna VersionManager de la app). */
 'use strict';
-var VERSION = "12.10.0-fc.3";
+var VERSION = "12.10.0-fc.4";
 var CACHE = 'costpro-release-' + VERSION;
 var SCOPE_PATH = new URL(self.registration.scope).pathname;
 var ALLOWLIST = [

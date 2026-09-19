@@ -191,10 +191,15 @@ export function DemoModal({
             Demo interactiva — {demoSlideIndex + 1} de {demoSlides.length}
           </p>
           <button
-            onClick={() => setShowDemoModal(false)}
-            className="px-4 py-1.5 rounded-lg bg-[#22c55e] text-white text-xs font-bold hover:bg-[#16a34a] transition-colors"
+            onClick={() => {
+              // PROMPT 3 GATE 1: «Comenzar gratis» solo cerraba el demo (CTA
+              // semánticamente roto). Ahora lleva al registro de COSTPRO.
+              setShowDemoModal(false);
+              window.dispatchEvent(new CustomEvent('open-login', { detail: 'register' }));
+            }}
+            className="px-4 py-1.5 rounded-lg bg-[#15803d] text-white text-xs font-bold hover:bg-[#166534] transition-colors"
           >
-            Comenzar gratis
+            Crear cuenta gratis
           </button>
         </div>
       </DialogContent>

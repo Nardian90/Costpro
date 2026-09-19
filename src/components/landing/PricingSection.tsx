@@ -57,7 +57,7 @@ export default function PricingSection({
               >
                 {/* Popular Badge */}
                 {isPopular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-1 rounded-full bg-gradient-to-r from-[#22c55e] to-emerald-400 text-[10px] font-bold text-white uppercase tracking-[0.15em] shadow-lg shadow-[#22c55e]/40">
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-1 rounded-full bg-gradient-to-r from-[#15803d] to-[#166534] text-[10px] font-bold text-white uppercase tracking-[0.15em] shadow-lg shadow-[#15803d]/40">
                     <Sparkles className="w-3 h-3" />
                     <span>RECOMENDADO</span>
                     <Sparkles className="w-3 h-3" />
@@ -106,7 +106,7 @@ export default function PricingSection({
                 {plan.ctaType === 'signup' ? (
                   <button
                     onClick={onSignup}
-                    className="mt-6 w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#22c55e] to-emerald-400 text-white hover:from-[#16a34a] hover:to-emerald-500 shadow-lg shadow-[#22c55e]/20 transition-all duration-300"
+                    className="mt-6 w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#15803d] to-[#166534] text-white hover:from-[#166534] hover:to-[#14532d] shadow-lg shadow-[#15803d]/20 transition-all duration-300"
                   >
                     {plan.cta}
                   </button>

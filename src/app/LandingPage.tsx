@@ -133,6 +133,21 @@ export default function LandingPage() {
     return () => window.removeEventListener('open-footer-modal', handler);
   }, []);
 
+  // PROMPT 3 GATE 1: «open-login» — puente para los CTAs del landing que no
+  // reciben props (ServicesStorySection, demo modal). Repara el CTA muerto de
+  // ServicesStory («Comenzar Gratis» despachaba este evento sin listener).
+  // detail 'register' abre la pestaña de registro; el modal siempre respeta
+  // un returnTo ya presente en la URL (p. ej. fijado por el CTA de FC).
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent;
+      setLoginDefaultTab(ce && ce.detail === 'register' ? 'register' : 'login');
+      setShowLoginModal(true);
+    };
+    window.addEventListener('open-login', handler);
+    return () => window.removeEventListener('open-login', handler);
+  }, []);
+
   // Smooth scroll to top helper
   const smoothScrollToTop = useCallback(() => {
     const el = document.documentElement;

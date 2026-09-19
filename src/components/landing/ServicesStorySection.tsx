@@ -266,9 +266,9 @@ export default function ServicesStorySection() {
             <a
               href="#"
               onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('open-login')); }}
-              className="px-8 py-3.5 rounded-xl bg-emerald-500 text-white text-sm font-bold hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20"
+              className="px-8 py-3.5 rounded-xl bg-[#15803d] text-white text-sm font-bold hover:bg-[#166534] transition-all shadow-lg shadow-[#15803d]/20"
             >
-              Comenzar Gratis
+              Iniciar en COSTPRO
             </a>
             <a
               href="#features"

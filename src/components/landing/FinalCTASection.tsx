@@ -67,7 +67,7 @@ export default function FinalCTASection({ onOpenDemo, onSignup }: FinalCTASectio
           <Button
             size="lg"
             onClick={onSignup}
-            className="bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white font-medium hover:from-[#16a34a] hover:to-[#15803d] shadow-lg shadow-green-500/20 transition-all duration-200 hover:shadow-green-500/30 w-full sm:w-auto px-8"
+            className="bg-gradient-to-r from-[#15803d] to-[#166534] text-white font-medium hover:from-[#166534] hover:to-[#14532d] shadow-lg shadow-green-500/20 transition-all duration-200 hover:shadow-green-500/30 w-full sm:w-auto px-8"
           >
             Crear mi cuenta gratis
           </Button>
