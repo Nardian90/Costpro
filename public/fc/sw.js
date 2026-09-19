@@ -3,17 +3,17 @@
    generado por scripts/build-release.js del repo fichascosto (VERSION 12.10.0).
    Deltas respecto al canónico (documentados, infraestructura de distribución únicamente):
    1. ALLOWLIST + 'index.html' (wrapper de entrada /fc/ — puente de identidad same-origin)
-      y + 'FC.html' (superficie FC.html: release canónico v12.10.0 + 11 parches de
-      identidad del FC ACCESS FLOW FIX — una sola identidad COSTPRO, sin landing/login
-      propios). 'FC.release.html' (artefacto con identidad duplicada) deja de servirse.
-   2. VERSION = '12.10.0-fc.2' → cache 'costpro-release-12.10.0-fc.2' (bump para que el
+      y + 'FC.html' (superficie FC.html: release canónico v12.10.0 + parches de identidad
+         y UX del FC ACCESS FLOW — una sola identidad COSTPRO, sin landing/login propios,
+         sección Ficha rediseñada, modo invitado local). 'FC.release.html' no se sirve.
+   2. VERSION = "12.10.0-fc.3" → cache 'costpro-release-12.10.0-fc.3' (bump para que el
       precache con index.html + FC.html ocurra; el prefijo 'costpro-release-' conserva
       la limpieza de activación intacta).
    TODO lo demás es byte-idéntico al canónico: shell network-first con fallback offline,
    estáticos cache-first, Supabase y todo origen cruzado NUNCA en Cache Storage,
    sin skipWaiting/clients.claim (actualización la gobierna VersionManager de la app). */
 'use strict';
-var VERSION = "12.10.0-fc.2";
+var VERSION = "12.10.0-fc.3";
 var CACHE = 'costpro-release-' + VERSION;
 var SCOPE_PATH = new URL(self.registration.scope).pathname;
 var ALLOWLIST = [

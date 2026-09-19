@@ -9,7 +9,7 @@
 <script>
 /* =====================================================================
    COSTPRO FC-MVP · puente de identidad same-origin (entry point /fc/)
-   v2 — 2026-09-16 · FC ACCESS FLOW FIX (una sola identidad COSTPRO)
+   v3 — 2026-09-19 · GATE 1 UX: identidad + modo invitado local (guest=1)
    ---------------------------------------------------------------------
    Cadena:  /fc → 307 aquí → este wrapper decide → FC.html (superficie
    de producto de COSTPRO; el release canónico v12.10.0 de fichascosto
@@ -76,12 +76,28 @@
 
   try {
     var hasCpSession = !!localStorage.getItem(SB_KEY);
-    seed();
-    /* Entrada solo con identidad COSTPRO presente en este origen.
-       El sobre previo no basta para DECIDIR la entrada (puede quedar de
-       una sesión ya cerrada): la decisión la da el token vivo de
-       COSTPRO. Nada se borra en ningún caso. */
+    var qGuest = /[?&]guest=1/.test(String(location.search));
+    var guestFlag = false;
+    try { guestFlag = '1' === localStorage.getItem('FC_GUEST_MODE_V1'); } catch (e) {}
+
+    /* USUARIO AUTENTICADO: la identidad COSTPRO gana siempre. Se limpia el
+       flag de modo invitado (es un MODO, no una sesión: su borrado no toca
+       ninguna sesión ni dato local) y se siembra el envelope. */
     if (hasCpSession) {
+      try { localStorage.removeItem('FC_GUEST_MODE_V1'); } catch (e) {}
+      seed();
+      location.replace('./FC.html');
+    } else if (qGuest) {
+      /* ENTRADA INVITADO (mandato PART 10): «Usar como invitado» en el login
+         de COSTPRO navega a /fc/?guest=1. Modo LOCAL SIN CUENTA: NO se siembra
+         credencial alguna (0 Supabase, 0 fetches). El flag permite reabrir
+         /fc/ sin cuenta conservando las fichas locales del navegador.
+         Offline-safe: esta decisión es 100% local. */
+      try { localStorage.setItem('FC_GUEST_MODE_V1', '1'); } catch (e) {}
+      location.replace('./FC.html');
+    } else if (guestFlag) {
+      /* INVITADO RECURRENTE: sin sesión COSTPRO pero con modo invitado activo
+         → entra en local con sus datos (cerrar/reabrir conserva todo). */
       location.replace('./FC.html');
     } else {
       location.replace(LOGIN_URL);

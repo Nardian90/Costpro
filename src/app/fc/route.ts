@@ -11,8 +11,14 @@
  * Todo /fc/* queda exento de CSP en src/proxy.ts (artefacto monolítico con
  * scripts inline). Ver docs/fc-mvp-integration.md.
  */
-export function GET() {
+import type { NextRequest } from 'next/server';
+
+export function GET(req: NextRequest) {
   // Location RELATIVO (RFC 7231): invariante detrás de proxies/dominios
   // (request.url expone 0.0.0.0:3000 cuando bun enlaza a todas las interfaces).
-  return new Response(null, { status: 307, headers: { Location: '/fc/index.html' } });
+  // FC GUEST FLOW: se preserva el query string (p.ej. ?guest=1 del botón
+  // «Usar como invitado») para que el wrapper /fc/index.html pueda leerlo.
+  // Nota: guest=1 es SOLO un modo local (0 credenciales); nunca autoriza nada.
+  const search = new URL(req.url).search || '';
+  return new Response(null, { status: 307, headers: { Location: `/fc/index.html${search}` } });
 }

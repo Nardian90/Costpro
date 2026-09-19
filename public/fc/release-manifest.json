@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "product": "COSTPRO",
   "productName": "COSTPRO — Ficha de Costo (superficie de producto de COSTPRO) · Resolución 148/2023 MFP",
-  "version": "12.10.0-fc.2",
+  "version": "12.10.0-fc.3",
   "channel": "stable",
-  "releaseDate": "2026-09-16",
+  "releaseDate": "2026-09-19",
   "minimumVersion": "12.10.0",
-  "latestVersion": "12.10.0-fc.2",
+  "latestVersion": "12.10.0-fc.3",
   "releaseFile": "FC.html",
-  "sha256": "3737d7c14f81c575c3e1aba0ec9eae6a2e9100258f2fc82a7899301d27f5a374",
+  "sha256": "496261e0562cceca5bec479ca03a2de9880b30b5bf7e9ef4ff6abdb0265a6a86",
   "canonicalProvenance": {
     "source": "fichascosto repo (Nardian90/fichascosto) · scripts/build-release.js · release/FC.release.html",
     "canonicalVersion": "12.10.0",
@@ -17,24 +17,30 @@
     "engineMd5Served": "180b1f349a002b3c2cda2b015ab9b7a3",
     "engineByteEqual": true,
     "engineRegion": "__ENGINE_START__/__ENGINE_END__ (motor contable computeFicha + fórmulas + lógica normativa: BYTE-IGUAL al canónico)",
-    "note": "FC.html es el release canónico v12.10.0 con 11 parches quirúrgicos de IDENTIDAD/ACCESO (FC ACCESS FLOW FIX, 2026-09-16): eliminación de landing/login propios y adopción de la identidad COSTPRO. Cero cambios de motor, fórmulas, PDF, persistencia o sincronización. El release canónico sin parchear queda en el repo fichascosto y en el historial git de este repo (commit 5f5fe2f5: public/fc/FC.release.html)."
+    "note": "FC.html es el release canónico v12.10.0 con 33 parches quirúrgicos (script scripts/fc-identity-patch.py v3, GATE 1 UX 2026-09-19): (a) IDENTIDAD/ACCESO — eliminación de landing/login propios y adopción de la identidad COSTPRO; (b) UX FICHA — eliminación de la pared de tarjetas (4 hero + 8 kpi), columnas Δ/Δ% y su código de presentación, nueva sección compacta «Resultado final», identidad visual COSTPRO (verde #15803d/#16a34a, petróleo #004d40); (c) MODO INVITADO LOCAL — gateEnter con rama guest (flag FC_GUEST_MODE_V1 o ?guest=1), sin credenciales, offline-safe. Cero cambios de motor (md5 byte-igual), fórmulas, PDF, persistencia o sincronización. Canónico sin parchear: repo fichascosto + git history 5f5fe2f5."
   },
   "patches": [
     "R1 title → COSTPRO",
-    "R2 appbar brand + COSTPRO",
+    "R2 appbar: COSTPRO · Ficha de Costo (módulo)",
     "R3 Landing.shouldShow=false (landing de marketing NUNCA se muestra)",
     "R4 Landing.open → volver a COSTPRO",
     "R5 Landing.close no-op",
-    "R6 gateEnter: adopta identidad COSTPRO (envelope o sb-token same-origin); sin identidad → /?login=1&returnTo=/fc/",
-    "R7 doLogout → cierra contexto FC y vuelve a COSTPRO",
+    "R6 gateEnter v3: identidad COSTPRO (envelope o sb-token) + rama MODO INVITADO LOCAL (FC_GUEST_MODE_V1/?guest=1 → Auth.guestIn, 0 credenciales); sin identidad → /?login=1&returnTo=/fc/",
+    "R7 doLogout → vuelve a COSTPRO y limpia flag invitado",
     "R8 showAuth → REDIRECT a login COSTPRO (login propio de FC inexistente)",
-    "R9 botón «Presentación» → «Volver a COSTPRO»",
-    "R10 FcCloud.signInFromAuthScreen → redirect login COSTPRO",
-    "R11 FcCloud.signInFromCuenta → redirect login COSTPRO"
+    "R9 botón «Volver a COSTPRO»",
+    "R10/R11 formularios cloud → redirect login COSTPRO",
+    "R12 resultband (4 tarjetas hero) → eliminado; se conservan vars Fila 12 (r/l) para el Resultado final",
+    "R13 kpis grid (8 tarjetas estadísticas) → eliminado (los valores viven en la tabla y en el Resultado final)",
+    "R14 encabezados Δ / Δ % → eliminados",
+    "R15 varCell → '' (celdas Δ/Δ% y data-l fuera; 100% presentacional, motor intacto)",
+    "R16 sección «Resultado final» compacta (12 · 14 · 16 · variación) tras la tabla, antes de firmas",
+    "R17 CSS identidad COSTPRO: acento verde #15803d/#16a34a/#22c55e, petróleo #004d40, gradientes/sombras/focus/theme-color light+dark, hairline appbar, .fcres con wrap 320–400px y print",
+    "R18 Cuenta/bienvenida: «Crear cuenta» → «Conectar cuenta COSTPRO» (×2 superficies)"
   ],
   "distribution": {
-    "entry": "/fc/ (wrapper index.html: con sesión COSTPRO siembra FC_CLOUD_SESSION_V1 y entra a FC.html; sin sesión → /?login=1&returnTo=%2Ffc%2F, login COSTPRO exclusivamente)",
-    "serviceWorker": "sw.js VERSION 12.10.0-fc.2 (ALLOWLIST: index.html, FC.html, manifest, icons; FC.html network-first con fallback offline)",
+    "entry": "/fc/ (wrapper index.html: con sesión COSTPRO siembra FC_CLOUD_SESSION_V1 y entra a FC.html y limpia el flag invitado; sin sesión con ?guest=1 o flag FC_GUEST_MODE_V1 → FC.html en MODO LOCAL INVITADO sin credenciales; sin sesión y sin invitado → /?login=1&returnTo=%2Ffc%2F, login COSTPRO exclusivamente)",
+    "serviceWorker": "sw.js VERSION 12.10.0-fc.3 (ALLOWLIST: index.html, FC.html, manifest, icons; FC.html network-first con fallback offline)",
     "pwaStartUrl": "./index.html (el wrapper decide identidad en cada arranque en frío; evita envelope obsoleto tras rotación de refresh_token)"
   },
   "noSecrets": "Sin cambios respecto al canónico: solo la publishable key de Supabase (credencial PÚBLICA de cliente por diseño); sin claves de servicio, sin secretos, sin tokens privados. El plan comercial se verifica contra public.profiles.plan (Supabase) y las operaciones de datos siguen sujetas a RLS (created_by = auth.uid())."

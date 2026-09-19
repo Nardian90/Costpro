@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, LogIn, Mail, Chrome, Info, Loader2, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Mail, Chrome, Info, Loader2, ArrowLeft, UserRound } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import RegisterForm from './RegisterForm';
 import { toast } from 'sonner';
@@ -103,6 +103,27 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
 
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
+
+  // FC ACCESS FLOW (mandato PART 10): «Usar como invitado» existe SOLO dentro
+  // del flujo Crear Ficha de Costo (returnTo=/fc/). Invitado NO es una cuenta:
+  // es modo LOCAL sin cuenta — 0 Supabase, 0 registro, 0 identidad paralela.
+  // Es pura navegación: el wrapper /fc/ sirve FC.html sin sembrar credenciales
+  // y FC entra en su modo invitado local (datos en este navegador).
+  const isFcFlow = returnToFromLocation() === '/fc/';
+  const handleGuestAccess = () => {
+    try {
+      // El flag se persiste ANTES de navegar: la decisión de modo invitado no
+      // depende del query string (robusto ante redirects 30x o SW cacheado).
+      localStorage.setItem('FC_GUEST_MODE_V1', '1');
+    } catch {
+      /* sin localStorage no hay modo invitado: la navegación caerá al login */
+    }
+    try {
+      window.location.href = '/fc/?guest=1';
+    } catch {
+      /* noop */
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -390,6 +411,25 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
               Continuar con Google
             </Button>
           </motion.div>
+
+          {/* FC ACCESS FLOW: acceso invitado (modo local sin cuenta) — solo en el flujo /fc/ */}
+          {isFcFlow && (
+            <motion.div variants={itemVariants} className="space-y-1.5">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleGuestAccess}
+                disabled={loading}
+                className="w-full h-11 font-medium text-sm text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-300 border border-dashed border-border"
+              >
+                <UserRound className="w-4 h-4" />
+                Usar como invitado
+              </Button>
+              <p className="text-center text-[11px] leading-snug text-muted-foreground/70">
+                Modo local sin cuenta: crea, calcula y guarda fichas en este navegador.
+              </p>
+            </motion.div>
+          )}
 
           {/* FIX #014: Terms & Conditions */}
           <motion.p className="text-center text-xs text-muted-foreground/60" variants={itemVariants}>
