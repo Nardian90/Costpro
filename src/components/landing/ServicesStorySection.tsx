@@ -6,6 +6,7 @@ import {
   Package, Truck, Users, Calculator, Shield, TrendingUp,
   FileText, Store, Smartphone, Cloud, Lock, Zap, Globe, ShoppingCart,
 } from 'lucide-react';
+import { enterFichaDeCosto } from '@/lib/fcEntry';
 
 /**
  * ServicesStorySection — Reemplaza "EL DIFERENCIADOR" (AhaMomentSection)
@@ -260,15 +261,21 @@ export default function ServicesStorySection() {
             ¿Listo para empezar?
           </h3>
           <p className="text-base text-white/50 mb-8 max-w-xl mx-auto">
-            Crea tu cuenta gratis y configura tu primera tienda en menos de 5 minutos.
+            Crea tu primera ficha de costo gratis — con tu cuenta de Google o como invitado — en menos de 5 minutos.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {/* FIX-ENTRY (2026-09-20): CTA intermedio alineado al camino B (Ficha de
+                Costo) — única conversión intermedia; «Entrar a COSTPRO» vive solo en
+                el selector del hero (cada CTA con una función distinta). */}
             <a
-              href="#"
-              onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('open-login')); }}
-              className="px-8 py-3.5 rounded-xl bg-[#15803d] text-white text-sm font-bold hover:bg-[#166534] transition-all shadow-lg shadow-[#15803d]/20"
+              href="/fc/"
+              onClick={(e) => {
+                e.preventDefault();
+                enterFichaDeCosto(() => window.dispatchEvent(new CustomEvent('open-login')));
+              }}
+              className="px-8 py-3.5 rounded-xl bg-[#004d40] text-white text-sm font-bold hover:bg-[#00695c] transition-all shadow-lg shadow-[#004d40]/25"
             >
-              Iniciar en COSTPRO
+              Crear ficha de costo gratis
             </a>
             <a
               href="#features"

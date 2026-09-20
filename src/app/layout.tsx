@@ -233,14 +233,19 @@ export default async function RootLayout({
         )}
         {/* PWA: explicit vanilla JS service worker registration.
             Lets PWABuilder & crawlers discover /sw.js immediately via HTML parsing or early execution,
-            without waiting for the async Workbox registration in the client component. */}
-        <script
-          nonce={nonce}
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function(){}); }`
-          }}
-        />
+            without waiting for the async Workbox registration in the client component.
+            FIX-ENTRY (2026-09-20): registro SOLO en producción — en dev el SW
+            (CacheFirst sobre /_next/static) servía chunks turbopack viejos tras
+            cada edición (stale HMR). Offline/PWA permanece intacto en producción. */}
+        {process.env.NODE_ENV === 'production' && (
+          <script
+            nonce={nonce}
+            suppressHydrationWarning
+            dangerouslySetInnerHTML={{
+              __html: `if('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function(){}); }`
+            }}
+          />
+        )}
         {/* FIX-CSP (2026-07-13): DIAG debug script removed — was causing CSP
             violation in dev mode. The inline script had nonce={nonce} but the
             nonce wasn't always propagated from proxy.ts to server component

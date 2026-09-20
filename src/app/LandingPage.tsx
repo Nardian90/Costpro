@@ -551,11 +551,13 @@ export default function LandingPage() {
                   </button>
                 ))}
               </nav>
-              <div className="p-4 border-t border-white/[0.06] space-y-3">
-                {/* FIX (2026-07-18): sin toggle de theme en mobile nav — landing siempre dark */}
-                <button onClick={() => { setShowLoginModal(true); setShowMobileNav(false); }} className="w-full py-2.5 rounded-lg bg-[#22c55e] text-white text-sm font-bold hover:bg-[#16a34a] shadow-lg shadow-[#22c55e]/20 transition-all">
-                  Iniciar Sesión
-                </button>
+              <div className="p-4 border-t border-white/[0.06]">
+                {/* FIX-ENTRY (2026-09-20): drawer = SOLO navegación. Los tres caminos
+                    (COSTPRO · Ficha de Costo · Demostración) viven únicamente en el
+                    selector del hero — el menú móvil ya no compite con esa decisión. */}
+                <p className="text-[11px] text-white/40 text-center px-2">
+                  Los accesos a COSTPRO, Ficha de Costo y Demo están al inicio de la página.
+                </p>
               </div>
             </motion.div>
           </>

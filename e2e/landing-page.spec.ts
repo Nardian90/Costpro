@@ -27,13 +27,16 @@ test.describe('Landing Page', () => {
   test('should display hero section', async ({ page }) => {
     await waitForLandingPage(page);
 
-    // Primary CTA "Comenzar Gratis" should be visible
-    const primaryCTA = page.getByRole('button', { name: /comenzar gratis/i }).first().first();
-    await expect(primaryCTA).toBeVisible({ timeout: 10000 });
+    // FIX-ENTRY (2026-09-20): el hero presenta un selector de 3 caminos
+    // (Ficha de Costo · COSTPRO · Demostración) — ya no «Comenzar Gratis».
+    const fcPath = page.getByTestId('path-ficha-costo');
+    await expect(fcPath).toBeVisible({ timeout: 10000 });
 
-    // Secondary CTA "Ver Demo" should also be present
-    const demoCTA = page.getByTestId('hero-demo-button');
-    await expect(demoCTA).toBeVisible();
+    const costproPath = page.getByTestId('path-costpro');
+    await expect(costproPath).toBeVisible();
+
+    const demoPath = page.getByTestId('path-demo');
+    await expect(demoPath).toBeVisible();
   });
 
   test('should display features section', async ({ page }) => {

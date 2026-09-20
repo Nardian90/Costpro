@@ -36,6 +36,13 @@ try {
   console.warn('[SW] Workbox local no pudo cargarse, usando fallback vanilla:', err);
 }
 
+// FIX-STALE-DEV (2026-09-20): en desarrollo el CacheFirst sobre /_next/static
+// servía chunks turbopack viejos tras cada edición (el filtro legacy excluía
+// '/development/' y '/webpack/' de WEBPACK, pero los chunks de TURBOPACK no
+// llevan ese marcador). Regla nueva: en host de desarrollo NO se cachea nada
+// de la app (NetworkOnly universal). El PWA/offline sigue intacto en producción.
+const IS_DEV_HOST = ['localhost', '127.0.0.1', '0.0.0.0'].includes(self.location.hostname);
+
 self.addEventListener('periodicsync', (event) => {
   if (event.tag === 'sync-data') {
     event.waitUntil(Promise.resolve());
@@ -66,12 +73,12 @@ const isCacheableStaticAsset = (url, request) => {
   return true;
 };
 
-if (workboxAvailable) {
-  console.log('[SW] Workbox local cargado — ultra-conservative mode');
+if (workboxAvailable && !IS_DEV_HOST) {
+  console.log('[SW] Workbox local cargado — ultra-conservative mode (producción)');
 
   // Precache offline page only
   workbox.precaching.precacheAndRoute([
-    { url: '/offline.html', revision: '3' }
+    { url: '/offline.html', revision: '4' }
   ]);
 
   // ── Default handler: NetworkOnly ──
@@ -86,7 +93,7 @@ if (workboxAvailable) {
   workbox.routing.registerRoute(
     ({url, request}) => isCacheableStaticAsset(url, request),
     new workbox.strategies.CacheFirst({
-      cacheName: 'costpro-next-static-v3',
+      cacheName: 'costpro-next-static-v4',
       plugins: [
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 60,
@@ -132,6 +139,9 @@ if (workboxAvailable) {
     'POST'
   );
 
+} else if (workboxAvailable && IS_DEV_HOST) {
+  // FIX-STALE-DEV: en desarrollo ni siquiera se registran estrategias — todo red.
+  console.log('[SW] Host de desarrollo — SW en modo NetworkOnly (sin caché de app)');
 } else {
   // ─────────────────────────────────────────────────────────────
   // FALLBACK VANILLA (solo si Workbox no pudo cargarse).
@@ -142,7 +152,7 @@ if (workboxAvailable) {
   // ─────────────────────────────────────────────────────────────
   console.warn('[SW] Modo fallback vanilla activo (sin Workbox)');
 
-  const STATIC_CACHE = 'costpro-next-static-v3';
+  const STATIC_CACHE = 'costpro-next-static-v4'; // v4: purga cachés dev envenenadas (stale turbopack)
 
   self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -152,6 +162,8 @@ if (workboxAvailable) {
   });
 
   self.addEventListener('fetch', (event) => {
+    // FIX-STALE-DEV: en desarrollo nada se intercepta (todo red directa).
+    if (IS_DEV_HOST) return;
     const request = event.request;
     if (request.method !== 'GET') return; // POST (incl. sync/batch) → red directa
 
@@ -207,7 +219,7 @@ self.addEventListener('activate', (event) => {
       caches.keys().then(cacheNames => {
         return Promise.all(
           cacheNames
-            .filter(name => name !== 'costpro-next-static-v3')
+            .filter(name => name !== 'costpro-next-static-v4')
             .map(name => {
               console.log('[SW] deleting old cache:', name);
               return caches.delete(name);

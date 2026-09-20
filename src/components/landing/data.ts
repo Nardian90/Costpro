@@ -124,11 +124,8 @@ export const clientLogos = [
   'Manufactura', 'Servicios Profesionales', 'Logística', 'Salud',
 ];
 
-export const demoSlides = [
-  { title: 'Dashboard Ejecutivo', desc: 'Monitorea KPIs, ventas y costos en tiempo real', color: 'from-[#052e16] via-[#064e3b] to-[#0f172a]', accent: '#22c55e', icon: BarChart3 },
-  { title: 'Hoja de Costos', desc: 'Calcula márgenes, receta y costos operativos', color: 'from-[#0f172a] via-[#1e1b4b] to-[#0f172a]', accent: '#34d399', icon: Calculator },
-  { title: 'Terminal POS', desc: 'Procesa ventas rápidas con múltiples métodos de pago', color: 'from-[#064e3b] via-[#0d2137] to-[#0a0f1a]', accent: '#6ee7b7', icon: ShoppingCart },
-];
+/* FIX-ENTRY B2 (2026-09-20): demoSlides eliminado — solo lo usaba DemoModal
+   (código muerto). La demo real es InteractiveDemo (landing/demo/). */
 
 export const integrationPartners = [
   { name: 'WhatsApp', letter: 'W' },

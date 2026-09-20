@@ -287,10 +287,14 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
               </button>
             )}
             <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-[#15803d] to-[#22c55e] bg-clip-text text-transparent">
-              Iniciar sesión
+              {/* FIX-ENTRY B3 (2026-09-20): contexto de origen — el login de COSTPRO
+                  explica POR QUÉ aparece. Mismo formulario, cero sistemas nuevos. */}
+              {isFcFlow ? 'Continuar con Ficha de Costo' : 'Iniciar sesión'}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Ingresa tus credenciales para acceder a tu cuenta
+              {isFcFlow
+                ? 'Accede con COSTPRO para continuar con tu ficha de costo — con tu cuenta o como invitado.'
+                : 'Ingresa tus credenciales para acceder a COSTPRO'}
             </p>
           </motion.div>
 

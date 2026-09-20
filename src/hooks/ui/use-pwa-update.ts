@@ -25,6 +25,9 @@ export function usePWAUpdate() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!('serviceWorker' in navigator)) return;
+    // FIX-ENTRY (2026-09-20): registro solo en producción — en dev el CacheFirst
+    // de /_next/static servía chunks turbopack viejos (stale HMR).
+    if (process.env.NODE_ENV !== 'production') return;
 
     // Listener para mensajes del SW
     const handleMessage = (event: MessageEvent) => {

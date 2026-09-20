@@ -12,7 +12,7 @@ import {
 import { toast } from 'sonner';
 import DataDecryption from '@/components/ui/DataDecryption';
 import LoginForm from '@/components/auth/LoginForm';
-import { shortcutsList, demoSlides } from './data';
+import { shortcutsList } from './data';
 
 /* ── Keyboard Shortcuts Modal ── */
 export function ShortcutsModal({
@@ -91,121 +91,10 @@ export function ShortcutsModal({
   );
 }
 
-/* ── Demo Modal ── */
-export function DemoModal({
-  showDemoModal,
-  setShowDemoModal,
-  demoSlideIndex,
-  setDemoSlideIndex,
-}: {
-  showDemoModal: boolean;
-  setShowDemoModal: (v: boolean) => void;
-  demoSlideIndex: number;
-  setDemoSlideIndex: (v: number) => void;
-}) {
-  return (
-    <Dialog open={showDemoModal} onOpenChange={setShowDemoModal}>
-      <DialogContent className="sm:max-w-xl p-0 overflow-hidden">
-        <div className="relative">
-          {/* Demo slide content */}
-          <motion.div
-            key={demoSlideIndex}
-            initial={{ opacity: 0, x: 30, scale: 0.96 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -30, scale: 0.96 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className={`w-full aspect-video bg-gradient-to-br ${demoSlides[demoSlideIndex].color} flex flex-col items-center justify-center p-8 relative overflow-hidden`}
-          >
-            {/* Grid pattern */}
-            <div className="absolute inset-0 opacity-[0.03]" style={{
-              backgroundImage: 'linear-gradient(rgba(34,197,94,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(34,197,94,0.3) 1px, transparent 1px)',
-              backgroundSize: '40px 40px',
-            }} />
-            <div className="relative z-10 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-white/[0.08] border border-white/[0.12] backdrop-blur-sm flex items-center justify-center mx-auto mb-4 group">
-                {(() => { const DemoIcon = demoSlides[demoSlideIndex].icon; return <DemoIcon className="w-8 h-8 group-hover:scale-110 transition-transform duration-300" style={{ color: demoSlides[demoSlideIndex].accent }} />; })()}
-              </div>
-              <h3 className="text-xl font-bold text-white font-[family-name:var(--font-space-grotesk)] mb-2">
-                {demoSlides[demoSlideIndex].title}
-              </h3>
-              <p className="text-sm text-white/60">{demoSlides[demoSlideIndex].desc}</p>
-              {/* Mock UI elements */}
-              <div className="mt-6 mx-auto max-w-sm">
-                <div className="h-2 rounded-full bg-white/[0.06] mb-2 overflow-hidden">
-                  <motion.div
-                    initial={{ width: '0%' }}
-                    animate={{ width: ['30%', '60%', '85%', '60%'] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                    className="h-full rounded-full"
-                    style={{ backgroundColor: demoSlides[demoSlideIndex].accent }}
-                  />
-                </div>
-                <div className="flex gap-2 mt-4">
-                  {[1, 2, 3].map((bar) => (
-                    <motion.div
-                      key={bar}
-                      animate={{ height: [20, 40 + bar * 15, 30 + bar * 10] }}
-                      transition={{ duration: 1.5 + bar * 0.3, repeat: Infinity, ease: 'easeInOut' }}
-                      className="flex-1 rounded-t-md opacity-40"
-                      style={{ backgroundColor: demoSlides[demoSlideIndex].accent }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-          {/* Close button overlay */}
-          <button
-            onClick={() => setShowDemoModal(false)}
-            className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-colors"
-            aria-label="Cerrar demo"
-          >
-            <X className="w-4 h-4 text-white/70" />
-          </button>
-          {/* Slide navigation dots with animated progress */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5">
-            {demoSlides.map((slide, i) => (
-              <button
-                key={i}
-                onClick={() => setDemoSlideIndex(i)}
-                aria-label={`Slide ${i + 1}`}
-                className="relative flex items-center justify-center"
-              >
-                <span className={`block rounded-full transition-all duration-400 ${i === demoSlideIndex ? 'w-6 h-2' : 'w-2 h-2 bg-white/25 hover:bg-white/45'}`}
-                  style={{ backgroundColor: i === demoSlideIndex ? slide.accent : undefined }}
-                />
-                {i === demoSlideIndex && (
-                  <motion.span
-                    layoutId="demo-dot-glow"
-                    className="absolute w-6 h-2 rounded-full"
-                    style={{ backgroundColor: slide.accent, opacity: 0.3 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="p-4 bg-[#111827] border-t border-white/[0.06] flex items-center justify-between">
-          <p className="text-[11px] text-white/40">
-            Demo interactiva — {demoSlideIndex + 1} de {demoSlides.length}
-          </p>
-          <button
-            onClick={() => {
-              // PROMPT 3 GATE 1: «Comenzar gratis» solo cerraba el demo (CTA
-              // semánticamente roto). Ahora lleva al registro de COSTPRO.
-              setShowDemoModal(false);
-              window.dispatchEvent(new CustomEvent('open-login', { detail: 'register' }));
-            }}
-            className="px-4 py-1.5 rounded-lg bg-[#15803d] text-white text-xs font-bold hover:bg-[#166534] transition-colors"
-          >
-            Crear cuenta gratis
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+/* ── FIX-ENTRY B2 (2026-09-20): DemoModal ELIMINADO — era código muerto (nunca
+   montado en LandingPage; la demo real es InteractiveDemoModal) y contenía un
+   CTA roto «Crear cuenta gratis». Su única dependencia (demoSlides) también se
+   eliminó de data.ts. */
 
 /* ── Contact Sales Modal ── */
 export function ContactModal({

@@ -170,6 +170,15 @@
 /* ── Ultra-small screens (320px-380px) ── */
 @media (max-width: 380px) {
   h1 { font-size: clamp(16px, 4vw, 24px) !important; }
+  /* FIX-ENTRY (2026-09-20): EXCEPCIÓN LANDING — el h1 del landing es la marca
+     (CostPro), no un título de lectura. El hardening de 16px lo reducía a un
+     texto imperceptible solapado con el nav. Se restaura un tamaño de marca
+     legible solo dentro de .landing-tokens; el resto de la app mantiene el
+     hardening para usuarios de baja visión. */
+  .landing-tokens h1 {
+    font-size: clamp(2.5rem, 11vw, 4rem) !important;
+    line-height: 1 !important;
+  }
   h2.text-3xl,
   .max-w-4xl.mx-auto h2 { font-size: clamp(16px, 4vw, 24px) !important; }
 

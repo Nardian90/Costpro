@@ -4,9 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
   ChevronDown, ArrowRight,
-  Search, Sparkles, Shield, X,
+  Search, Shield, X,
+  Calculator, LayoutGrid, PlayCircle,
 } from 'lucide-react';
-import { enterFichaDeCosto } from '@/lib/fcEntry';
+import { enterFichaDeCosto, hasCostproSession } from '@/lib/fcEntry';
 
 /* ── Typewriter Text Component ── */
 function TypewriterText({ text, start, className }: { text: string; start: boolean; className?: string }) {
@@ -276,8 +277,13 @@ export default function HeroSection({
 
   return (
     <div ref={leftPanelRef} className="relative flex-1 bg-[#020617]">
-      {/* ── Hero viewport: overflow-hidden for Ken Burns zoom ── */}
-      <div className="relative w-full overflow-hidden" style={{ height: '100vh' }}>
+      {/* ── Hero viewport: overflow-hidden for Ken Burns zoom ──
+          FIX-ENTRY (2026-09-20): height 100vh → minHeight 100vh. Con el selector
+          de 3 caminos el contenido del hero puede exceder el viewport en pantallas
+          cortas (320×690, 375×667) — con height fijo + overflow-hidden las
+          tarjetas 2 y 3 quedaban recortadas e inalcanzables. Con min-height el
+          hero crece y el fondo Ken Burns sigue cubriendo todo el contenedor. */}
+      <div className="relative w-full overflow-hidden" style={{ minHeight: '100vh' }}>
 
       {/* ── Layer 1: Background image — Ken Burns + Parallax (Apple/Stripe style) ── */}
       <motion.div
@@ -350,8 +356,9 @@ export default function HeroSection({
             >
               <div className="absolute inset-0 promo-shimmer" />
               <div className="relative flex items-center justify-center px-4 h-8 gap-2">
+                {/* FIX-ENTRY (2026-09-20): copy concreto — «gratis» solo donde tiene significado real (Ficha de Costo) */}
                 <span className="text-xs font-bold text-white tracking-wide">
-                  Plataforma multi-tienda con vitrina digital · Gestión integral · Gratis para empezar
+                  Plataforma multi-tienda · Vitrina digital por tienda · Ficha de Costo gratis
                 </span>
                 <button
                   onClick={handleDismissPromo}
@@ -396,28 +403,16 @@ export default function HeroSection({
             ))}
           </div>
 
-          {/* Right actions */}
+          {/* FIX-ENTRY (2026-09-20): header sin CTAs de acción — los tres caminos
+              (COSTPRO · Ficha de Costo · Demostración) viven UNICAMENTE en el
+              selector del hero. El header sirve a navegación e identidad y no
+              compite con la decisión principal. El hamburger móvil abre el
+              drawer de navegación (único menú — se eliminó el dropdown duplicado). */}
           <div className="flex items-center gap-2">
-            {/* Ver Demo button */}
-            <button
-              onClick={onOpenDemo}
-              className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white/80 text-sm font-medium hover:bg-white/[0.1] hover:text-white transition-all duration-200 cursor-pointer"
-            >
-              <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-              <span>Ver demo interactiva de CostPro</span>
-            </button>
-            {/* Login CTA */}
-            <button
-              onClick={() => setShowLoginModal(true)}
-              className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white/80 text-sm font-medium hover:bg-white/[0.1] hover:text-white transition-all duration-200 cursor-pointer"
-            >
-              <span>Iniciar Sesión</span>
-            </button>
-
             {/* Mobile hamburger */}
             <button
               onClick={() => setShowMobileNav(!showMobileNav)}
-              className="flex md:hidden items-center justify-center w-9 h-9 rounded-lg hover:bg-white/[0.06] transition-colors"
+              className="flex md:hidden items-center justify-center w-11 h-11 rounded-lg hover:bg-white/[0.06] transition-colors"
               aria-label="Abrir menú"
             >
               <div className={`hamburger-icon ${showMobileNav ? 'open' : ''}`}>
@@ -429,64 +424,10 @@ export default function HeroSection({
           </div>
         </motion.nav>
 
-        {/* FIX #019: Mobile hamburger menu dropdown */}
-        <AnimatePresence>
-          {showMobileNav && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: 'auto' }}
-              exit={{ opacity: 0, y: -10, height: 0 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="md:hidden absolute top-full left-0 right-0 z-50 bg-[#0a0f1a]/98 backdrop-blur-xl border-b border-white/[0.08] overflow-hidden"
-            >
-              <div className="px-6 py-4 space-y-1">
-                {navLinks.map((link, idx) => (
-                  <a
-                    key={`${link.href}-${idx}`}
-                    href={link.href}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' });
-                      setShowMobileNav(false);
-                    }}
-                    className="nav-link-hover block px-4 py-3 text-sm text-white/60 hover:text-white/90 rounded-lg hover:bg-white/[0.06] transition-all"
-                  >
-                    {link.label}
-                  </a>
-                ))}
-                <button
-                  onClick={() => { onOpenDemo?.(); setShowMobileNav(false); }}
-                  className="block w-full text-left px-4 py-3 text-sm text-[#22c55e] font-medium rounded-lg hover:bg-[#22c55e]/10 transition-all flex items-center gap-2"
-                >
-                  <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-                  Ver demo interactiva de CostPro
-                </button>
-                <div className="h-px bg-white/[0.08] my-2" />
-                {/* PROMPT 3 GATE 1: CTA FC sin recarga — decide en el click
-                    (misma señal que el wrapper /fc/); sin sesión abre el login
-                    de COSTPRO con returnTo=/fc/ vía replaceState (0 navegación). */}
-                <a
-                  href="/fc/"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowMobileNav(false);
-                    enterFichaDeCosto(() => { setLoginDefaultTab?.('login'); setShowLoginModal(true); });
-                  }}
-                  className="block w-full text-left px-4 py-3 text-sm text-[#22c55e] font-medium rounded-lg hover:bg-[#22c55e]/10 transition-all"
-                >
-                  Crear Ficha de Costo — Gratis
-                </a>
-                <div className="h-px bg-white/[0.08] my-2" />
-                <button
-                  onClick={() => { setShowLoginModal(true); setShowMobileNav(false); }}
-                  className="block w-full text-left px-4 py-3 text-sm text-[#22c55e] font-medium rounded-lg hover:bg-[#22c55e]/10 transition-all"
-                >
-                  Iniciar Sesión
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* FIX-ENTRY B1 (2026-09-20): dropdown móvil del hero ELIMINADO —
+            duplicaba el drawer lateral de LandingPage (ambos se abrían a la vez
+            con el mismo estado showMobileNav y el dropdown quedaba muerto bajo
+            el overlay). Menú móvil único = drawer de navegación. */}
 
         {/* ── HERO CENTER ── */}
         <div ref={heroRef} id="hero" className="flex-1 flex flex-col items-center justify-center px-6 text-center -mt-10">
@@ -496,7 +437,10 @@ export default function HeroSection({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
           >
-            <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[9rem] xl:text-[10rem] font-black tracking-tighter leading-none font-[family-name:var(--font-space-grotesk)]">
+            {/* FIX-ENTRY (2026-09-20): tamaño de marca defendido en ultra-small —
+                ver excepción .landing-tokens h1 en base.css (el hardening ≤380px
+                global reducía este h1 a 16px, solapado con el nav). */}
+            <h1 className="text-[3.75rem] sm:text-7xl md:text-8xl lg:text-[9rem] xl:text-[10rem] font-black tracking-tighter leading-none font-[family-name:var(--font-space-grotesk)]">
               <span className="text-white">Cost</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#22c55e] via-[#4ade80] to-[#22c55e]">Pro</span>
             </h1>
@@ -514,83 +458,138 @@ export default function HeroSection({
             </p>
           </motion.div>
 
-          {/* ── HERO CTA BUTTONS ── */}
+          {/* ── SELECTOR DE TRES CAMINOS (FIX-ENTRY 2026-09-20) ──
+              Una decisión, tres intenciones — NO tres botones iguales.
+              Jerarquía derivada del usuario, no arbitraria:
+                1. Ficha de Costo (PRIMARIA)   → la única promesa «gratis» real:
+                   módulo de COSTPRO, Res. 148/2023, con Google o invitado.
+                2. Entrar a COSTPRO (SECUNDARIA) → plataforma completa, requiere cuenta.
+                3. Ver demostración (EXPLORATORIA) → conocer el producto, sin registro.
+              Diferenciación por ESTRUCTURA (icono + eyebrow + descripción + acción +
+              micro-trust), no solo por color (WCAG: el color nunca es el único
+              mecanismo). Un solo elemento interactivo por tarjeta = 1 tab stop,
+              target ≥44px, sin link-in-link. */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.65, duration: 0.6 }}
-            className="mt-8 flex flex-col sm:flex-row items-center gap-3"
+            className="mt-8 w-full max-w-5xl mx-auto"
           >
-            {/* Primary CTA — "Iniciar en COSTPRO" (PROMPT 3: propósito real =
-                acceso a COSTPRO; el gradiente completo pasa WCAG AA con blanco:
-                #15803d 5.02:1 · #166534 7.13:1) */}
-            <button
-              onClick={() => {
-                if (setLoginDefaultTab) setLoginDefaultTab('login');
-                setShowLoginModal(true);
-              }}
-              className="group relative px-8 py-3.5 rounded-2xl font-bold text-sm tracking-tight text-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
-              style={{
-                background: 'linear-gradient(135deg, #15803d 0%, #15803d 45%, #166534 100%)',
-                boxShadow: '0 0 30px rgba(34,197,94,0.25), 0 4px 15px rgba(34,197,94,0.2), inset 0 1px 0 rgba(255,255,255,0.15)',
-                minWidth: '200px',
-              }}
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                Iniciar en COSTPRO
-                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-              </span>
-              {/* Shimmer overlay */}
-              <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{
-                    background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%)',
-                    animation: 'none',
-                  }}
-                />
-              </div>
-            </button>
+            <h2 className="text-base sm:text-lg font-semibold text-white/85 tracking-tight text-center">
+              ¿Qué quieres hacer?
+            </h2>
 
-            {/* FC-MVP CTA — "Crear Ficha de Costo — Gratis" (módulo FC).
-                PROMPT 3 GATE 1: sin recarga — con sesión navega a /fc/;
-                sin sesión abre el login de COSTPRO (returnTo=/fc/, replaceState).
-                Recolor azul genérico → petróleo de marca #004d40 (identidad
-                del módulo; blanco sobre tinte petróleo ≥ 15:1 AAA). */}
-            <a
-              href="/fc/"
-              data-testid="hero-fc-button"
-              aria-label="Crear Ficha de Costo gratis"
-              onClick={(e) => {
-                e.preventDefault();
-                enterFichaDeCosto(() => { if (setLoginDefaultTab) setLoginDefaultTab('login'); setShowLoginModal(true); });
-              }}
-              className="group relative px-8 py-3.5 rounded-2xl font-bold text-sm tracking-tight text-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] border border-[#004d40]/70 bg-[#004d40]/30 hover:bg-[#004d40]/50"
-              style={{ minWidth: '200px' }}
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                Crear Ficha de Costo — Gratis
-              </span>
-            </a>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 text-left">
 
-            {/* Secondary CTA — "Ver Demo" */}
-            <button data-testid="hero-demo-button" aria-label="Ver demostración completa"
-              onClick={onOpenDemo}
-              className="px-8 py-3.5 rounded-2xl font-semibold text-sm text-white/60 border border-white/[0.08] hover:text-white/90 hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-300 flex items-center gap-2"
-              style={{ minWidth: '180px' }}
-            >
-              <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-              Ver demostración completa
-            </button>
+              {/* ── CAMINO 1 · PRIMARIA — Ficha de Costo gratis ── */}
+              <motion.a
+                href="/fc/"
+                data-testid="path-ficha-costo"
+                aria-label="Ficha de Costo gratis, módulo de COSTPRO. Crea y calcula fichas conforme a la Resolución 148 de 2023, con tu cuenta de Google o como invitado."
+                onClick={(e) => {
+                  e.preventDefault();
+                  enterFichaDeCosto(() => { if (setLoginDefaultTab) setLoginDefaultTab('login'); setShowLoginModal(true); });
+                }}
+                className="group relative flex flex-col rounded-2xl border border-[#2dd4bf]/30 bg-gradient-to-b from-[#004d40]/45 to-[#004d40]/15 p-5 transition-all duration-300 hover:border-[#2dd4bf]/60 hover:from-[#004d40]/60 hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4bf]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020617]"
+              >
+                <span className="flex items-center justify-between mb-4" aria-hidden="true">
+                  <span className="w-10 h-10 rounded-xl bg-[#004d40]/70 border border-[#2dd4bf]/35 flex items-center justify-center">
+                    <Calculator className="w-5 h-5 text-[#5eead4]" strokeWidth={1.5} />
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-[#2dd4bf]/15 border border-[#2dd4bf]/30 text-[10px] font-bold uppercase tracking-widest text-[#5eead4]">
+                    Gratis
+                  </span>
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5eead4] mb-1" aria-hidden="true">
+                  COSTPRO · Ficha de Costo
+                </span>
+                <span className="text-lg font-bold text-white tracking-tight mb-1.5">
+                  Ficha de Costo gratis
+                </span>
+                <span className="text-[13px] leading-relaxed text-white/60 mb-5">
+                  Crea y calcula fichas conforme a la Res. 148/2023. Con tu cuenta de Google o como invitado — sin instalar nada.
+                </span>
+                <span className="mt-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-5 rounded-xl bg-[#00695c] group-hover:bg-[#00796b] text-white text-sm font-bold transition-colors" aria-hidden="true">
+                  Crear ficha gratis
+                  <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                </span>
+              </motion.a>
+
+              {/* ── CAMINO 2 · SECUNDARIA — Entrar a COSTPRO ── */}
+              <motion.a
+                href="/"
+                data-testid="path-costpro"
+                aria-label="Entrar a COSTPRO, la plataforma completa: tiendas, inventario, punto de venta y vitrina digital. Requiere cuenta."
+                onClick={(e) => {
+                  e.preventDefault();
+                  // FIX-ENTRY: con sesión COSTPRO → directo a la app; sin sesión → login.
+                  if (hasCostproSession()) {
+                    window.location.assign('/');
+                  } else {
+                    if (setLoginDefaultTab) setLoginDefaultTab('login');
+                    setShowLoginModal(true);
+                  }
+                }}
+                className="group relative flex flex-col rounded-2xl border border-white/[0.10] bg-white/[0.04] p-5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.06] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020617]"
+              >
+                <span className="flex items-center justify-between mb-4" aria-hidden="true">
+                  <span className="w-10 h-10 rounded-xl bg-[#22c55e]/10 border border-[#22c55e]/25 flex items-center justify-center">
+                    <LayoutGrid className="w-5 h-5 text-[#4ade80]" strokeWidth={1.5} />
+                  </span>
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#4ade80] mb-1" aria-hidden="true">
+                  Plataforma completa
+                </span>
+                <span className="text-lg font-bold text-white tracking-tight mb-1.5">
+                  Entrar a COSTPRO
+                </span>
+                <span className="text-[13px] leading-relaxed text-white/60 mb-5">
+                  Gestiona todas tus tiendas: inventario, punto de venta, reportes y vitrina digital en un solo lugar.
+                </span>
+                <span className="mt-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-5 rounded-xl text-white text-sm font-bold transition-all" style={{ background: 'linear-gradient(135deg, #15803d 0%, #15803d 45%, #166534 100%)' }} aria-hidden="true">
+                  Entrar a COSTPRO
+                  <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                </span>
+              </motion.a>
+
+              {/* ── CAMINO 3 · EXPLORATORIA — Ver demostración ── */}
+              <motion.button
+                type="button"
+                data-testid="path-demo"
+                aria-label="Ver demostración de COSTPRO: recorre la plataforma en dos minutos, sin registro."
+                onClick={onOpenDemo}
+                className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-all duration-300 hover:border-white/25 hover:bg-white/[0.04] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020617] text-left cursor-pointer"
+              >
+                <span className="flex items-center justify-between mb-4" aria-hidden="true">
+                  <span className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center">
+                    <PlayCircle className="w-5 h-5 text-white/70" strokeWidth={1.5} />
+                  </span>
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60 mb-1" aria-hidden="true">
+                  Sin registro
+                </span>
+                <span className="text-lg font-bold text-white tracking-tight mb-1.5">
+                  Ver demostración
+                </span>
+                <span className="text-[13px] leading-relaxed text-white/60 mb-5">
+                  Recorre la plataforma en 2 minutos y descubre cómo automatiza tus fichas de costo.
+                </span>
+                <span className="mt-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-5 rounded-xl border border-white/[0.14] text-white/80 group-hover:text-white group-hover:border-white/30 text-sm font-semibold transition-all" aria-hidden="true">
+                  Ver demo
+                  <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                </span>
+              </motion.button>
+            </div>
           </motion.div>
 
-          {/* CTA subtext — trust signal */}
+          {/* CTA subtext — trust signal (sin «gratis» vago: el «gratis» real vive en la tarjeta FC) */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.0, duration: 0.5 }}
-            className="mt-3 text-[11px] text-white/50"
+            className="mt-4 text-[11px] text-white/50"
           >
-            Administra múltiples tiendas · Inventario y ventas · Vitrina digital propia · Ficha de Costo Res. 148/2023 · Gratis para empezar
+            Inventario y ventas multi-tienda · Vitrina digital propia · Ficha de Costo Res. 148/2023 integrada
           </motion.p>
 
           {/* Search bar — centered */}

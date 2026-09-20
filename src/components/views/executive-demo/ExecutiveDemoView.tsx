@@ -365,7 +365,10 @@ export default function ExecutiveDemoView() {
                        <p className="text-sm font-medium opacity-70 leading-relaxed">Pase de la teoría a la práctica hoy mismo con sus datos reales.</p>
                        <Link href="/">
                         <Button className="w-full h-14 rounded-2xl bg-primary text-foreground font-black uppercase tracking-widest hover:scale-105 transition-transform">
-                          Comenzar Gratis
+                          {/* FIX-ENTRY B5 (2026-09-20): copy heredado «Comenzar Gratis»
+                              prohibido por PROMPT 3 — reemplazado por el verbo específico
+                              del camino B. Lleva al landing (selector de caminos). */}
+                          Crear ficha de costo gratis
                           <ChevronRight className="w-5 h-5 ml-2" />
                         </Button>
                        </Link>
