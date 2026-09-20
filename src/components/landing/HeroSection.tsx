@@ -470,7 +470,7 @@ export default function HeroSection({
                   onClick={(e) => {
                     e.preventDefault();
                     setShowMobileNav(false);
-                    enterFichaDeCosto(() => { setLoginDefaultTab('login'); setShowLoginModal(true); });
+                    enterFichaDeCosto(() => { setLoginDefaultTab?.('login'); setShowLoginModal(true); });
                   }}
                   className="block w-full text-left px-4 py-3 text-sm text-[#22c55e] font-medium rounded-lg hover:bg-[#22c55e]/10 transition-all"
                 >
