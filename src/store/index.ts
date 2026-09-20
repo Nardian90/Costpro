@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { type UserContract } from '@/contracts/user';
-import { normalizeLegacyView } from '@/config/navigation/navigation-definition';
+import { normalizeLegacyView, sanitizeViewId } from '@/config/navigation/navigation-definition';
 
 // Re-export stores
 export { useCartStore } from './cart';
@@ -159,6 +159,39 @@ export const useUIStore = create<UIState>()(
     {
       name: 'costpro-ui-storage',
       version: 4,
+      // GATE 1.1 — FRONTERA DE REHIDRATACIÓN (causa raíz del bug
+      // "[object Object]"): el estado persistido NO pasa por setCurrentView,
+      // así que aquí se valida el contrato ViewId en CADA carga y para
+      // CUALQUIER versión de persist. Esto cura navegadores con localStorage
+      // envenenado (currentView guardado como objeto durante la ventana del
+      // bug previo al fix `.view` — version 4 coincide y migrate no corre)
+      // sin exigir al usuario limpiar su storage. Un objeto jamás vuelve a
+      // entrar al store como currentView: se diagnostica y aterriza en Home.
+      merge: (persistedState: unknown, currentState: UIState) => {
+        const p = (persistedState ?? {}) as Partial<UIState>;
+        // Ausencia ≠ violación: una clave que no está en el estado persistido
+        // NO se diagnostica (es un campo nuevo); solo se valida si existe.
+        const healed: Partial<UIState> = {};
+        if (p.currentView !== undefined) {
+          healed.currentView = sanitizeViewId(p.currentView, 'persist-rehydration:currentView') as ViewType;
+        }
+        if (p.previousView !== undefined) {
+          healed.previousView = (
+            p.previousView == null
+              ? null
+              : sanitizeViewId(p.previousView, 'persist-rehydration:previousView')
+          ) as ViewType | null;
+        }
+        return {
+          ...currentState,
+          ...p,
+          ...healed,
+          // Tabs internas de vistas-módulo: guard de tipo simple (su contrato
+          // es string; defaults documentados del estado inicial).
+          ipvActiveTab: typeof p.ipvActiveTab === 'string' ? p.ipvActiveTab : currentState.ipvActiveTab,
+          activeCostSection: typeof p.activeCostSection === 'string' ? p.activeCostSection : currentState.activeCostSection,
+        };
+      },
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           persistedState = {
@@ -176,8 +209,9 @@ export const useUIStore = create<UIState>()(
         }
         // GATE 1 (v4) — Home única + wrappers muertos: el estado persistido de
         // usuarios existentes se normaliza a los destinos canónicos.
-        if (persistedState?.currentView) {
-          persistedState.currentView = normalizeLegacyView(persistedState.currentView).view;
+        // GATE 1.1: sanitizeViewId valida el contrato (objeto → Home + diagnóstico).
+        if (persistedState?.currentView !== undefined) {
+          persistedState.currentView = sanitizeViewId(persistedState.currentView, 'persist-migrate:currentView');
         }
         return persistedState;
       },

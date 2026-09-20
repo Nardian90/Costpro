@@ -662,15 +662,80 @@ export const LEGACY_VIEW_ALIASES: Record<string, LegacyAlias> = {
   // cash_report se mantiene como vista técnica (modal) — sin alias.
 };
 
+// ────────────────────────────────────────────────────────────────────
+// CONTRATO ViewId (GATE 1.1) — un destino de navegación es SIEMPRE string
+// ────────────────────────────────────────────────────────────────────
+/**
+ * El contrato canónico del shell: `ViewType` (string). Los objetos ricos
+ * (NavEntry, NavRoute, HOME_ITEM) viven SOLO dentro de esta definición y se
+ * aplanan a `entry.id` / `entry.route.view` en cada superficie.
+ *
+ * Estos artefactos son el resultado de coerciones String(objeto) y JAMÁS
+ * pueden ser ViewIds legítimos (ninguna vista se llama así).
+ */
+const VIEW_ID_CONTRACT_VIOLATIONS: ReadonlySet<string> = new Set([
+  '[object Object]', 'undefined', 'null', '',
+]);
+
+/**
+ * Detecta violaciones del contrato ViewId: un valor que NO es string, o un
+ * string que es artefacto de coerción (p. ej. String(NavEntry) →
+ * "[object Object]"). Usado por el punto único de normalización, la
+ * rehidratación del store y las fronteras de render (breadcrumb / shell).
+ */
+export function isViewIdContractViolation(value: unknown): boolean {
+  if (typeof value !== 'string') return true;
+  return VIEW_ID_CONTRACT_VIOLATIONS.has(value);
+}
+
+/**
+ * Diagnóstico único para violaciones de contrato. Falla INMEDIATAMENTE en el
+ * punto donde se recibió el valor (no 3 capas después en "Módulo No
+ * Disponible") y NUNCA coerciona el objeto a string silenciosamente.
+ */
+function reportViewIdViolation(value: unknown, consumer: string): void {
+  console.error(
+    `[NAVIGATION] Invalid navigation target: expected ViewId string, received ${typeof value}. ` +
+    `(consumer: ${consumer}) — aterrizando en Home ('${HOME_VIEW}'). ` +
+    'No pases el objeto de navegación: pasa entry.id / entry.route.view.',
+    { received: value }
+  );
+}
+
+/**
+ * Sanitiza un valor que entra desde FUERA del sistema de tipos (estado
+ * persistido en localStorage, URL, APIs externas) a un ViewId canónico.
+ * Garantiza: devuelve SIEMPRE un string; una violación de contrato aterriza
+ * en Home con diagnóstico — nunca propaga el objeto ni su coerción.
+ */
+export function sanitizeViewId(value: unknown, consumer = 'unknown'): string {
+  if (isViewIdContractViolation(value)) {
+    reportViewIdViolation(value, consumer);
+    return HOME_VIEW;
+  }
+  return normalizeLegacyView(value as string).view;
+}
+
 /**
  * Normaliza un viewId (posiblemente legacy) a su destino canónico.
  * Punto único de normalización usado por: store (persisted state), URL sync,
  * ChatBot/IA y cualquier emisor histórico.
+ *
+ * GATE 1.1 — CONTRATO: `viewId` debe ser SIEMPRE un string (ViewId). Si
+ * llega un objeto (NavEntry/NavRoute/HOME_ITEM) es una violación de contrato
+ * — la que produjo "[object Object]" en breadcrumb y shell tras la ventana
+ * del bug `normalizeLegacyView(view)` sin `.view` en el store: el estado
+ * persistido envenenado se re-inyectaba crudo en la rehidratación. Aquí la
+ * violación se diagnostica y aterriza en Home; jamás se coerciona.
  */
 export function normalizeLegacyView(
   viewId: string,
   tab?: string
 ): { view: string; tab?: string } {
+  if (isViewIdContractViolation(viewId)) {
+    reportViewIdViolation(viewId, 'normalizeLegacyView');
+    return { view: HOME_VIEW };
+  }
   const alias = LEGACY_VIEW_ALIASES[viewId];
   if (alias) return { view: alias.view, tab: alias.tab ?? tab };
   return { view: viewId, tab };

@@ -16,6 +16,7 @@ import {
   NAVIGATION_SECTIONS,
   ACTION_EXTENSIONS,
   LEGACY_VIEW_ALIASES,
+  isViewIdContractViolation,
   type NavEntry,
 } from './navigation-definition';
 
@@ -285,6 +286,21 @@ export function getBreadcrumbForView(
   ipvActiveTab?: string,
   activeCostSection?: string
 ): BreadcrumbItem[] {
+  // GATE 1.1 — CONTRATO: el breadcrumb SOLO consume ViewIds (string) y cada
+  // segmento es label: string. Un objeto aquí producía "[object Object]"
+  // renderizado (bug GATE 1). Última línea defensiva: con el guard en el
+  // store (persist merge) es inalcanzable; si algún día se llega aquí, el
+  // breadcrumb aterriza en Inicio en vez de renderizar la coerción.
+  if (isViewIdContractViolation(currentView)) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(
+        '[NAVIGATION] Invalid navigation target: expected ViewId string, received object. (consumer: getBreadcrumbForView)',
+        { received: currentView }
+      );
+    }
+    return [{ label: 'Inicio', isCurrent: true }];
+  }
+
   // HOME ÚNICA (GATE 1 §1): Inicio → dashboard. Sin ancestros.
   if (currentView === 'dashboard' || currentView === 'occ') {
     return [{ label: 'Inicio', isCurrent: true }];

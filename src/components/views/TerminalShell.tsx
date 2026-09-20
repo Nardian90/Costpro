@@ -10,7 +10,7 @@ import Sidebar from '@/components/views/terminal/Sidebar';
 import { ParticleBackground } from '@/components/ui/ParticleBackground';
 import { useTerminalNavigation } from '@/hooks/ui/useTerminalNavigation';
 import { useViewUrlSync } from '@/hooks/ui/useViewUrlSync';
-import { assertNavigationIntegrity } from '@/config/navigation/navigation-definition';
+import { assertNavigationIntegrity, isViewIdContractViolation } from '@/config/navigation/navigation-definition';
 import { useQueryClient } from '@tanstack/react-query';
 import { prefetchProducts } from '@/hooks/api/useProducts';
 import { prefetchTransactions } from '@/hooks/api/useTransactions';
@@ -355,6 +355,42 @@ export default function TerminalShell() {
   };
 
   const renderView = (view: ViewType) => {
+    // GATE 1.1 — CONTRATO: renderView consume ViewId (string). Un objeto aquí
+    // renderizaba `La vista "[object Object]"` (bug GATE 1: estado persistido
+    // envenenado re-inyectado en la rehidratación). Con el guard del store
+    // (persist merge) esto es inalcanzable; queda como última línea defensiva:
+    // jamás se coerciona el objeto a string — se diagnostica y se ofrece
+    // vuelta al Dashboard. El fallback para strings desconocidos se mantiene.
+    if (isViewIdContractViolation(view)) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error(
+          '[NAVIGATION] Invalid navigation target: expected ViewId string, received object. (consumer: TerminalShell.renderView)',
+          { received: view }
+        );
+      }
+      return (
+        <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
+          <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
+            <span className="text-2xl font-black text-muted-foreground">?</span>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-black uppercase tracking-tight">Módulo No Disponible</h3>
+            <p className="text-muted-foreground text-sm max-w-md mx-auto">
+              La vista solicitada no es válida (violación del contrato de navegación).
+            </p>
+            <p className="text-muted-foreground/70 text-xs max-w-md mx-auto">
+              Vuelve al Dashboard para continuar.
+            </p>
+          </div>
+          <button
+            onClick={() => setCurrentView('dashboard')}
+            className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity text-xs uppercase tracking-widest"
+          >
+            Ir al Dashboard
+          </button>
+        </div>
+      );
+    }
     // FIX (2026-07-15): Guard de autorización por rol.
     // Si el usuario no tiene permiso para ver esta vista (según allowedRoles
     // del sidebar), redirige al dashboard en vez de renderizarla.
