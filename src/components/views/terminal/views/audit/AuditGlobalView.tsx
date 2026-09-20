@@ -33,11 +33,11 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
           {actionLabel}
         </td>
         <td className="px-4 py-3 text-xs text-muted-foreground">
-          {entry.profiles?.full_name || entry.profiles?.email || entry.user_id.slice(0, 8) + '...'}
+          {entry.profiles?.full_name || entry.profiles?.email || (entry.user_id ? entry.user_id.slice(0, 8) + '...' : 'sistema')}
         </td>
         <td className="px-4 py-3">
           <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono text-muted-foreground">
-            {entry.record_id?.slice(0, 8)}...
+            {entry.record_id ? entry.record_id.slice(0, 8) + '...' : '—'}
           </code>
         </td>
         <td className="px-4 py-3">
