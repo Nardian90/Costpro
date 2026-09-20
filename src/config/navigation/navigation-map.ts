@@ -1,13 +1,23 @@
 /**
- * Centralized navigation mapping — Single Source of Truth
+ * NAVIGATION MAP — DERIVADO de navigation-definition.ts (fuente única).
  *
- * Maps every sidebar ID to its routing behavior:
- *   - type: 'direct' → sidebar ID IS the ViewType (e.g. 'pos', 'inventory')
- *   - type: 'module' → sidebar ID maps to a parent ViewType + internal tab/section
+ * Resuelve cada ID de navegación a su comportamiento de ruta:
+ *   - type: 'direct'  → el ID ES el ViewType (ej: 'pos', 'inventory')
+ *   - type: 'module'  → el ID apunta a una vista-módulo + tab interno
+ *     (ej: cost-analytics → cost-sheets + tab 'cost-analytics')
  *
- * Consumers: TerminalShell, Sidebar, CommandPalette
- * NEVER hardcode sidebar ID lists elsewhere — always import from here.
+ * Consumidores: TerminalShell, Sidebar, CommandPalette, MobileTabBar.
+ * NUNCA declarar listas de IDs de navegación fuera de la definición —
+ * las rutas se derivan; solo los alias legacy y las rutas técnicas de
+ * tabs internas se declaran explícitamente aquí.
  */
+
+import {
+  NAVIGATION_SECTIONS,
+  ACTION_EXTENSIONS,
+  LEGACY_VIEW_ALIASES,
+  type NavEntry,
+} from './navigation-definition';
 
 export interface DirectRoute {
   type: 'direct';
@@ -17,13 +27,36 @@ export interface DirectRoute {
 export interface ModuleRoute {
   type: 'module';
   view: string; // The parent ViewType (e.g. 'ipv', 'cost-sheets')
-  tab: string;  // The internal tab/section value (e.g. 'dashboard', 'transactions', 'templates')
+  tab: string;  // The internal tab/section value
 }
 
 export type NavigationRoute = DirectRoute | ModuleRoute;
 
 // ────────────────────────────────────────────────────────────────
-// IPV Module: sidebar IDs → IPV view + internal tab
+// Rutas derivadas de la definición (hojas con route { view, tab? })
+// ────────────────────────────────────────────────────────────────
+
+function collectLeaves(entries: NavEntry[], out: NavEntry[] = []): NavEntry[] {
+  for (const e of entries) {
+    if (e.type === 'item') out.push(e);
+    if (e.children) collectLeaves(e.children, out);
+  }
+  return out;
+}
+
+const DEFINITION_LEAVES = collectLeaves(NAVIGATION_SECTIONS);
+
+const DEFINED_ROUTES: Record<string, NavigationRoute> = {};
+for (const leaf of [...DEFINITION_LEAVES, ...ACTION_EXTENSIONS]) {
+  DEFINED_ROUTES[leaf.id] = leaf.route?.tab
+    ? { type: 'module', view: leaf.route.view, tab: leaf.route.tab }
+    : { type: 'direct', view: leaf.route?.view ?? leaf.id };
+}
+
+// ────────────────────────────────────────────────────────────────
+// Rutas TÉCNICAS de tabs internas (sin entrada en el menú):
+// tabs de IPV y de cost-sheets alcanzables por deep-link / estado interno.
+// Los IDs antiguos se conservan para compatibilidad con bookmarks/estado.
 // ────────────────────────────────────────────────────────────────
 const IPV_ROUTES: Record<string, ModuleRoute> = {
   analytics:              { type: 'module', view: 'ipv', tab: 'dashboard' },
@@ -50,27 +83,16 @@ const IPV_ROUTES: Record<string, ModuleRoute> = {
   mipyme:                 { type: 'module', view: 'ipv', tab: 'mipyme' },
 };
 
-// ────────────────────────────────────────────────────────────────
-// Costos Module: sidebar IDs → cost-sheets view + internal section
-// ────────────────────────────────────────────────────────────────
 const COSTOS_ROUTES: Record<string, ModuleRoute> = {
-  // FIX-TABLERO-PRINCIPAL (2026-07-04): "Tablero Principal" (cost-sheets) ahora
-  // abre directamente el Centro de Análisis Dinámico (tab: 'cost-analytics'),
-  // NO la ficha de costo. La ficha de costo sigue accesible desde el item
-  // "Ficha de Costo" (cost-sheet-editor) que usa tab: 'main'.
-  'cost-sheets':      { type: 'module', view: 'cost-sheets', tab: 'cost-analytics' },
+  // 'cost-sheets' / 'cost-analytics' vienen de la definición (DERIVED);
+  // aquí solo las tabs técnicas internas de la vista de fichas:
   'cost-sheet-editor': { type: 'module', view: 'cost-sheets', tab: 'main' },
   'view-assisted':    { type: 'module', view: 'cost-sheets', tab: 'view-assisted' },
   'view-reading':     { type: 'module', view: 'cost-sheets', tab: 'view-reading' },
-  // B2-B3: 'gen-easy' reemplaza a 'gen-quick' + 'gen-expert' — abre una vista
-  // con 2 tabs internos (Rápida / Experta). Los IDs antiguos se conservan
-  // para compatibilidad con bookmarks antiguos.
-  'gen-easy':         { type: 'module', view: 'cost-sheets', tab: 'gen-easy' },
   'gen-quick':        { type: 'module', view: 'cost-sheets', tab: 'gen-easy' },
   'gen-expert':       { type: 'module', view: 'cost-sheets', tab: 'gen-easy' },
   'templates':        { type: 'module', view: 'cost-sheets', tab: 'templates' },
   'arena-fc':         { type: 'module', view: 'cost-sheets', tab: 'arena-fc' },
-  'cost-analytics':   { type: 'module', view: 'cost-sheets', tab: 'cost-analytics' },
   'tool-import':      { type: 'module', view: 'cost-sheets', tab: 'tool-import' },
   'tool-save':        { type: 'module', view: 'cost-sheets', tab: 'tool-save' },
   'tool-export-excel':{ type: 'module', view: 'cost-sheets', tab: 'tool-export-excel' },
@@ -78,121 +100,94 @@ const COSTOS_ROUTES: Record<string, ModuleRoute> = {
 };
 
 // ────────────────────────────────────────────────────────────────
-// Direct routes: sidebar ID = ViewType (no internal tab mapping)
+// Rutas directas TÉCNICAS (vistas contextuales fuera del menú):
+// tarjetas de hub, CTAs contextuales y vistas de dominio.
 // ────────────────────────────────────────────────────────────────
-const DIRECT_ROUTES: Record<string, DirectRoute> = {
-  occ:                   { type: 'direct', view: 'dashboard' },
-  dashboard:             { type: 'direct', view: 'dashboard' },
-  chat:                  { type: 'direct', view: 'chat' },
-  // FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora
-  calculator:            { type: 'direct', view: 'calculator' },
-  // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
+const TECHNICAL_DIRECT_ROUTES: Record<string, DirectRoute> = {
+  devolutions:           { type: 'direct', view: 'devolutions' },
+  quotations:            { type: 'direct', view: 'quotations' },
+  sales_catalog:         { type: 'direct', view: 'sales_catalog' },
+  sales:                 { type: 'direct', view: 'sales' },
+  cash_report:           { type: 'direct', view: 'cash_report' },
+  catalog:               { type: 'direct', view: 'catalog' },
+  history:               { type: 'direct', view: 'history' },
+  lots:                  { type: 'direct', view: 'lots' },
+  warehouses:            { type: 'direct', view: 'warehouses' },
+  customers:             { type: 'direct', view: 'customers' },
+  'bank-reconciliation': { type: 'direct', view: 'bank-reconciliation' },
+  news:                  { type: 'direct', view: 'news' },
+  stores:                { type: 'direct', view: 'stores' },
   'accounts-payable':    { type: 'direct', view: 'accounts-payable' },
-  // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
-  'production-orders':   { type: 'direct', view: 'production-orders' },
-  'costeo-dinamico':     { type: 'direct', view: 'costeo-dinamico' },
-  'estructura-costo':    { type: 'direct', view: 'estructura-costo' },
+  'accounts_payable':    { type: 'direct', view: 'accounts-payable' },
+  accounts_receivable:   { type: 'direct', view: 'accounts_receivable' },
+  // Sub-vistas globales de bots (tabs de sus hubs — fuera de todo menú)
   'whatsapp-config':     { type: 'direct', view: 'whatsapp-config' },
   'whatsapp-conversations': { type: 'direct', view: 'whatsapp-conversations' },
   'whatsapp-invitations': { type: 'direct', view: 'whatsapp-invitations' },
   'whatsapp-dashboard':  { type: 'direct', view: 'whatsapp-dashboard' },
   'whatsapp-group':      { type: 'direct', view: 'whatsapp-group' },
-  // Fase T1: Telegram Bot — serverless-native, Vercel-compatible
   'telegram-config':     { type: 'direct', view: 'telegram-config' },
   'telegram-conversations': { type: 'direct', view: 'telegram-conversations' },
   'telegram-invitations': { type: 'direct', view: 'telegram-invitations' },
   'telegram-dashboard':  { type: 'direct', view: 'telegram-dashboard' },
   'telegram-group':      { type: 'direct', view: 'telegram-group' },
-  pos:                   { type: 'direct', view: 'pos' },
-  sales_catalog:         { type: 'direct', view: 'sales_catalog' },
-  sales:                 { type: 'direct', view: 'sales' },
-  cash:                  { type: 'direct', view: 'cash' },
-  catalog:               { type: 'direct', view: 'catalog' },
-  inventory:             { type: 'direct', view: 'inventory' },
-  history:               { type: 'direct', view: 'history' },
-  'inventory_adjustments': { type: 'direct', view: 'inventory_adjustments' },
-  recepcion:             { type: 'direct', view: 'recepcion' },
-  reception_list:        { type: 'direct', view: 'reception_list' },
-  'purchase-orders':     { type: 'direct', view: 'purchase-orders' },
-  'sales-hub':           { type: 'direct', view: 'sales-hub' },
-  transferencias:        { type: 'direct', view: 'transferencias' },
-  inventory_count:       { type: 'direct', view: 'inventory_count' },
-  labels:                { type: 'direct', view: 'labels' },
-  stores:                { type: 'direct', view: 'stores' },
-  users:                 { type: 'direct', view: 'users' },
-  roles:                 { type: 'direct', view: 'roles' },
-  health:                { type: 'direct', view: 'health' },
-  'usage-monitoring':    { type: 'direct', view: 'usage-monitoring' },
-  workers:               { type: 'direct', view: 'workers' },
-  audit:                 { type: 'direct', view: 'audit' },
-  settings:              { type: 'direct', view: 'settings' },
-  reports:               { type: 'direct', view: 'reports' },
-  news:                  { type: 'direct', view: 'news' },
-  rss_management:        { type: 'direct', view: 'rss_management' },
-  legal:                 { type: 'direct', view: 'legal' },
-  help:                  { type: 'direct', view: 'help' },
-  wiki:                  { type: 'direct', view: 'wiki' },
-  academy:               { type: 'direct', view: 'academy' },
-  wallet:                { type: 'direct', view: 'wallet' },
-  'pick3-intelligence':  { type: 'direct', view: 'pick3-intelligence' },
-  ofertas:               { type: 'direct', view: 'ofertas' },
 };
 
 // ────────────────────────────────────────────────────────────────
-// Master lookup table (module routes take precedence)
+// Master lookup (definición → técnicas → alias legacy)
 // ────────────────────────────────────────────────────────────────
+const LEGACY_ROUTES: Record<string, NavigationRoute> = {};
+for (const [aliasId, dest] of Object.entries(LEGACY_VIEW_ALIASES)) {
+  LEGACY_ROUTES[aliasId] = dest.tab
+    ? { type: 'module', view: dest.view, tab: dest.tab }
+    : { type: 'direct', view: dest.view };
+}
+
 const NAVIGATION_MAP: Record<string, NavigationRoute> = {
+  ...TECHNICAL_DIRECT_ROUTES,
   ...IPV_ROUTES,
   ...COSTOS_ROUTES,
-  ...DIRECT_ROUTES,
+  ...DEFINED_ROUTES,
+  ...LEGACY_ROUTES,
 };
 
 /**
- * Resolve a sidebar ID to its navigation route.
- * Returns null if the sidebar ID is unknown.
+ * Resolve a navigation ID to its routing route.
+ * Returns null if the ID is unknown.
  */
-export function getNavigationRoute(sidebarId: string): NavigationRoute | null {
-  return NAVIGATION_MAP[sidebarId] ?? null;
+export function getNavigationRoute(id: string): NavigationRoute | null {
+  return NAVIGATION_MAP[id] ?? null;
 }
 
-/**
- * Check if a sidebar ID belongs to the IPV module.
- */
-export function isIPVRoute(sidebarId: string): boolean {
-  return sidebarId in IPV_ROUTES;
+/** Check if an ID belongs to the IPV module (technical tabs). */
+export function isIPVRoute(id: string): boolean {
+  return id in IPV_ROUTES;
 }
 
-/**
- * Check if a sidebar ID belongs to the Costos module.
- */
-export function isCostosRoute(sidebarId: string): boolean {
-  return sidebarId in COSTOS_ROUTES;
+/** Check if an ID belongs to the cost-sheets module (technical tabs). */
+export function isCostosRoute(id: string): boolean {
+  return id in COSTOS_ROUTES;
 }
 
-/**
- * Check if a sidebar ID is a direct route.
- */
-export function isDirectRoute(sidebarId: string): boolean {
-  return sidebarId in DIRECT_ROUTES;
+/** Check if an ID is a direct route. */
+export function isDirectRoute(id: string): boolean {
+  const r = NAVIGATION_MAP[id];
+  return !!r && r.type === 'direct';
 }
 
-/**
- * Get all IPV sidebar IDs (for command palette, active state, etc.)
- */
+/** All IPV technical sidebar IDs (compat). */
 export function getIPVSidebarIds(): string[] {
   return Object.keys(IPV_ROUTES);
 }
 
-/**
- * Get all Costos sidebar IDs.
- */
+/** All cost-sheets technical tab IDs. */
 export function getCostosSidebarIds(): string[] {
   return Object.keys(COSTOS_ROUTES);
 }
 
 /**
- * Check if a given sidebar ID should be active for the current view state.
- * Used by Sidebar to highlight the correct item.
+ * Check if a given nav ID should be active for the current view state.
+ * Used by Sidebar/MobileTabBar to highlight the correct item.
  */
 export function isSidebarItemActive(
   sidebarId: string,
@@ -204,10 +199,6 @@ export function isSidebarItemActive(
   if (!route) return false;
 
   if (route.type === 'direct') {
-    // For direct routes, also handle special cases like 'dashboard'/'occ'
-    if (route.view === 'dashboard' && (sidebarId === 'occ' || sidebarId === 'dashboard')) {
-      return currentView === 'dashboard';
-    }
     return currentView === sidebarId;
   }
 
@@ -223,7 +214,7 @@ export function isSidebarItemActive(
 }
 
 // ────────────────────────────────────────────────────────────────
-// Breadcrumb generation
+// Breadcrumb generation (derivado de la definición — sin require)
 // ────────────────────────────────────────────────────────────────
 
 export interface BreadcrumbItem {
@@ -232,239 +223,131 @@ export interface BreadcrumbItem {
   isCurrent?: boolean;
 }
 
-/**
- * Find the sidebar path (group > submenu > item) for a given sidebar ID.
- * Returns an array of {label, view} objects representing the hierarchy.
- *
- * M-2 (IA Audit): ahora cada ancestro incluye `view` para ser navegable.
- * Antes todos los ancestros tenían view=undefined (solo "Inicio" era clicleable).
- * Ahora cada item apunta a su sidebar ID, permitiendo al usuario saltar a
- * cualquier nivel del árbol de navegación desde el breadcrumb.
- */
-function findSidebarPath(sidebarId: string): { label: string; view?: string }[] {
-   
-  const { SIDEBAR_STRUCTURE } = require('@/config/navigation/sidebar.structure');
+interface DefPathNode {
+  id: string;
+  label: string;
+  type: NavEntry['type'];
+}
 
-  for (const group of SIDEBAR_STRUCTURE) {
-    if (group.id === sidebarId) return [{ label: group.label, view: group.id }];
-    for (const child of group.children || []) {
-      if (child.id === sidebarId) {
-        return [
-          { label: group.label, view: group.id },
-          { label: child.label, view: child.id },
-        ];
-      }
-      for (const grandchild of child.children || []) {
-        if (grandchild.id === sidebarId) {
-          return [
-            { label: group.label, view: group.id },
-            { label: child.label, view: child.id },
-            { label: grandchild.label, view: grandchild.id },
-          ];
-        }
+/** Busca el path (sección > hub > hoja) de un ID en la definición. */
+function findDefinitionPath(targetId: string): DefPathNode[] {
+  const walk = (entries: NavEntry[], path: DefPathNode[]): DefPathNode[] | null => {
+    for (const e of entries) {
+      const next = [...path, { id: e.id, label: e.label, type: e.type }];
+      if (e.id === targetId) return next;
+      if (e.children) {
+        const found = walk(e.children, next);
+        if (found) return found;
       }
     }
-  }
-  return [];
+    return null;
+  };
+  return walk(NAVIGATION_SECTIONS, []) ?? [];
 }
 
 /**
- * M-2 (IA Audit): map de vistas "destino" (sub-vistas alcanzadas desde un hub)
- * a su ancestro hub en el sidebar. Permite que el breadcrumb muestre el path
- * lógico correcto cuando el usuario está en una sub-vista que no está
- * directamente como item en el sidebar.
- *
- * Ej: cuando currentView === 'pos', el breadcrumb muestra
- * "Inicio > MULTI-TIENDA > Punto de Venta > Venta > Terminal de Venta"
- * en lugar de solo "Inicio > Terminal de Venta".
+ * Map de sub-vistas (alcanzadas desde un hub) a su hub contenedor para el
+ * breadcrumb. Las hojas del menú NO están aquí (su path sale de la
+ * definición); solo vistas contextuales.
  */
 const VIEW_TO_HUB_MAP: Record<string, { hubId: string; leafLabel: string }> = {
-  // Sub-vistas del hub de Venta (sales-hub)
+  // Tarjetas del hub de Venta
   pos: { hubId: 'sales-hub', leafLabel: 'Terminal de Venta' },
-  sales_catalog: { hubId: 'sales-hub', leafLabel: 'Tabla IPV' },
-  catalog: { hubId: 'sales-hub', leafLabel: 'Catálogo' },
-  history: { hubId: 'sales-hub', leafLabel: 'Historial' },
-  cash: { hubId: 'sales-hub', leafLabel: 'Arqueo de Caja' },
-  sales: { hubId: 'sales-hub', leafLabel: 'Ventas' },
+  sales_catalog: { hubId: 'sales-hub', leafLabel: 'Tabla de Venta' },
+  sales: { hubId: 'sales-hub', leafLabel: 'Historial de Ventas' },
+  cash: { hubId: 'sales-hub', leafLabel: 'Caja' },
   inventory_count: { hubId: 'sales-hub', leafLabel: 'Venta por Conteo' },
-  // 'recepcion' es una vista de creación alcanzada desde reception_list
+  devolutions: { hubId: 'sales-hub', leafLabel: 'Devoluciones' },
+  quotations: { hubId: 'sales-hub', leafLabel: 'Cotizaciones' },
+  cash_report: { hubId: 'sales-hub', leafLabel: 'Reporte de Entrega' },
+  'accounts-payable': { hubId: 'sales-hub', leafLabel: 'Cuentas por Pagar' },
+  accounts_payable: { hubId: 'sales-hub', leafLabel: 'Cuentas por Pagar' },
+  accounts_receivable: { hubId: 'sales-hub', leafLabel: 'Cobros por Antigüedad' },
+  // Tabs contextuales de Inventario (Almacén)
+  catalog: { hubId: 'inventory', leafLabel: 'Catálogo' },
+  history: { hubId: 'inventory', leafLabel: 'Trazabilidad (Movimientos de Stock)' },
+  lots: { hubId: 'inventory', leafLabel: 'Lotes' },
+  // Contextuales de Gestión de Tiendas
+  stores: { hubId: 'management-hub', leafLabel: 'Tiendas' },
+  news: { hubId: 'management-hub', leafLabel: 'Tablón de Noticias' },
+  warehouses: { hubId: 'management-hub', leafLabel: 'Almacenes y Depósitos' },
+  // Creación contextual
   recepcion: { hubId: 'reception_list', leafLabel: 'Nueva Recepción' },
+  // Vitrina (tab del hub Gestión) — vista directa con su propio nombre
 };
 
 /**
  * Auto-generate breadcrumb items for the current view state.
- *
- * M-2 (IA Audit): ahora los ancestros son navegables (view definido) y las
- * sub-vistas de hub muestran el path completo del hub.
+ * Home única: 'dashboard' (y su alias 'occ') muestran "Inicio" sin ancestros.
  */
 export function getBreadcrumbForView(
   currentView: string,
   ipvActiveTab?: string,
   activeCostSection?: string
 ): BreadcrumbItem[] {
-  const items: BreadcrumbItem[] = [];
-
-  // E-Fix (IA Audit): 'dashboard' ya no se trata como raíz — ahora muestra
-  // breadcrumb completo "Inicio > MULTI-TIENDA > Dashboard KPI" para wayfinding
-  // consistente con las demás vistas. Solo 'occ' (Centro de Control) sigue
-  // siendo la home raíz sin ancestros.
-  if (currentView === 'occ') {
-    items.push({ label: 'Centro de Control', isCurrent: true });
-    return items;
+  // HOME ÚNICA (GATE 1 §1): Inicio → dashboard. Sin ancestros.
+  if (currentView === 'dashboard' || currentView === 'occ') {
+    return [{ label: 'Inicio', isCurrent: true }];
   }
 
-  // FIX-CALC-VIEW (2026-07-10): 'calculator' y 'chat' son vistas de acceso directo
-  // que NO están en SIDEBAR_STRUCTURE como módulo. Mostrar breadcrumb simple sin
-  // "Módulo No Disponible".
+  // Vistas de acceso directo fuera del árbol (widget/vista embebida)
   if (currentView === 'calculator') {
     return [{ label: 'Calculadora', isCurrent: true }];
   }
   if (currentView === 'chat') {
     return [{ label: 'Chat con Darian', isCurrent: true }];
   }
-  // FIX-B9 (2026-07-12): breadcrumb para accounts-payable
-  // V2.12.40: fix — el view registrado es 'accounts_payable' (underscore), no 'accounts-payable'
-  if (currentView === 'accounts-payable' || currentView === 'accounts_payable') {
-    return [{ label: 'Cuentas por Pagar', isCurrent: true }];
-  }
-  // V2.12.36: breadcrumb para accounts-receivable (Cobros por Antigüedad)
-  if (currentView === 'accounts_receivable') {
-    return [{ label: 'Cobros por Antigüedad', isCurrent: true }];
-  }
-  // FIX-PRODUCTION (2026-07-12): breadcrumb para production-orders
-  if (currentView === 'production-orders') {
-    return [{ label: 'Órdenes de Producción', isCurrent: true }];
-  }
-  // FIX-MANAGEMENT-HUB (2026-07-13): breadcrumb para management-hub
-  if (currentView === 'management-hub') {
-    return [{ label: 'Gestión', isCurrent: true }];
-  }
-  // FIX-TABLERO-BREADCRUMB (2026-07-13): 'cost-analytics' cuando se navega desde
-  // MULTI-TIENDA → Analítica → Tablero Principal, currentView se setea a 'cost-sheets'
-  // con activeCostSection='cost-analytics'. El breadcrumb debe mostrar el path
-  // de MULTI-TIENDA → Analítica → Tablero Principal, no de COSTOS.
-  // Si currentView es 'cost-sheets' Y activeCostSection es 'cost-analytics',
-  // significa que el user viene del Tablero Principal (no de la ficha de costo).
-  if (currentView === 'cost-sheets' && activeCostSection === 'cost-analytics') {
-    const path = findSidebarPath('cost-analytics');
-    if (path.length > 0) {
-      return path.map((p, i) => ({
-        label: p.label,
-        view: i < path.length - 1 ? p.view : undefined,
-        isCurrent: i === path.length - 1,
-      }));
-    }
-    // Fallback si no encuentra el path
-    return [
-      { label: 'MULTI-TIENDA', view: 'management-hub' },
-      { label: 'Analítica', view: 'analitica' },
-      { label: 'Tablero Principal', isCurrent: true },
-    ];
-  }
 
-  // M-2: si la vista es una sub-vista de hub, construir path completo
+  // Sub-vistas de hub → path del hub + hoja actual
   const hubMapping = VIEW_TO_HUB_MAP[currentView];
   if (hubMapping) {
-    const hubPath = findSidebarPath(hubMapping.hubId);
-    for (let i = 0; i < hubPath.length; i++) {
-      items.push({
-        label: hubPath[i].label,
-        view: hubPath[i].view,
-        isCurrent: false,
-      });
-    }
-    // Añadir la sub-vista actual como hoja
-    items.push({
-      label: hubMapping.leafLabel,
-      isCurrent: true,
-    });
+    const hubPath = findDefinitionPath(hubMapping.hubId);
+    const items: BreadcrumbItem[] = hubPath.map((p, i) => ({
+      label: p.label,
+      view: i < hubPath.length - 1 ? p.id : undefined,
+      isCurrent: false,
+    }));
+    items.push({ label: hubMapping.leafLabel, isCurrent: true });
     return items;
   }
 
-  // Find which sidebar ID maps to this view (for module routes)
-  let activeSidebarId = currentView;
+  // Vista-módulo con tab: resolver el ID de hoja cuyo tab coincide
+  let activeId = currentView;
 
   if (currentView === 'ipv' && ipvActiveTab) {
-    // Find the sidebar ID that has tab === ipvActiveTab
-    const IPV_ROUTES = {
-      analytics: { tab: 'dashboard' },
-      reports_ipv: { tab: 'reports' },
-      receipts: { tab: 'receipts' },
-      transfers: { tab: 'transfers' },
-      qr: { tab: 'qr' },
-      ingestion: { tab: 'ingestion' },
-      pivot: { tab: 'pivot' },
-      dashboard_ipv: { tab: 'transactions' },
-      transactions: { tab: 'transactions' },
-      catalog_ipv: { tab: 'catalog' },
-      customers: { tab: 'customers' },
-      rules: { tab: 'rules' },
-      sim: { tab: 'sim' },
-      'intelligent-receipts': { tab: 'intelligent-receipts' },
-      breakdown: { tab: 'breakdown' },
-      audit_ipv: { tab: 'audit' },
-      movements: { tab: 'movements' },
-      planning: { tab: 'planning' },
-      errors: { tab: 'errors' },
-      'mapping-rules': { tab: 'mapping-rules' },
-      mvt: { tab: 'mvt' },
-      mipyme: { tab: 'mipyme' },
-    };
-    // Prefer exact match, then dashboard_ipv for transactions
     for (const [id, route] of Object.entries(IPV_ROUTES)) {
       if (route.tab === ipvActiveTab && id !== 'analytics') {
-        activeSidebarId = id;
+        activeId = id;
         break;
       }
     }
   } else if (currentView === 'cost-sheets' && activeCostSection) {
-    // FIX-TABLERO-PRINCIPAL (2026-07-06): sincronizar este mapa con el mapa real
-    // de COSTOS_ROUTES declarado al inicio del archivo. Antes faltaban las entradas
-    // 'cost-analytics' y 'cost-sheet-editor', y 'cost-sheets' apuntaba a 'main'
-    // en lugar de 'cost-analytics', lo que hacía que el breadcrumb mostrara
-    // "Módulo No Disponible" en vez de "MULTI-TIENDA > Analítica > Tablero Principal".
-    const COSTOS_ROUTES = {
-      'cost-sheets': { tab: 'cost-analytics' },
-      'cost-sheet-editor': { tab: 'main' },
-      'cost-analytics': { tab: 'cost-analytics' },
-      'view-assisted': { tab: 'view-assisted' },
-      'view-reading': { tab: 'view-reading' },
-      'gen-quick': { tab: 'gen-easy' },
-      'gen-expert': { tab: 'gen-easy' },
-      'gen-easy': { tab: 'gen-easy' },
-      templates: { tab: 'templates' },
-      'arena-fc': { tab: 'arena-fc' },
-      'tool-import': { tab: 'tool-import' },
-      'tool-save': { tab: 'tool-save' },
-      'tool-export-excel': { tab: 'tool-export-excel' },
-      'tool-export-pdf': { tab: 'tool-export-pdf' },
+    const costosTabRoutes: Record<string, string> = {
+      'cost-analytics': 'cost-analytics',
+      main: 'cost-sheet-editor',
+      'view-assisted': 'view-assisted',
+      'view-reading': 'view-reading',
+      'gen-easy': 'cost-sheets',
+      templates: 'templates',
+      'arena-fc': 'arena-fc',
+      'tool-import': 'tool-import',
+      'tool-save': 'tool-save',
+      'tool-export-excel': 'tool-export-excel',
+      'tool-export-pdf': 'tool-export-pdf',
     };
-    for (const [id, route] of Object.entries(COSTOS_ROUTES)) {
-      if (route.tab === activeCostSection) {
-        activeSidebarId = id;
-        break;
-      }
-    }
+    const matchId = costosTabRoutes[activeCostSection];
+    if (matchId) activeId = matchId;
   }
 
-  const path = findSidebarPath(activeSidebarId);
+  const path = findDefinitionPath(activeId);
+  const items: BreadcrumbItem[] = path.map((p, i) => ({
+    label: p.label,
+    // Los grupos/submenús intermedios son navegables a su hub overview;
+    // la hoja final es la página actual.
+    view: i < path.length - 1 ? p.id : undefined,
+    isCurrent: i === path.length - 1,
+  }));
 
-  // M-2: ahora cada ancestro es navegable (view = su sidebar ID).
-  // Antes: view='occ' para todos los ancestros (solo "Inicio" era clicleable,
-  // los ancestros intermedios no hacían nada al clic).
-  for (let i = 0; i < path.length; i++) {
-    const isLast = i === path.length - 1;
-    items.push({
-      label: path[i].label,
-      view: isLast ? undefined : path[i].view,
-      isCurrent: isLast,
-    });
-  }
-
-  // E-Fix (IA Audit): si la vista no está en SIDEBAR_STRUCTURE (ej: vista
-  // eliminada, URL legacy, o submenu wrapper ID), mostramos un breadcrumb
-  // con label "Módulo No Disponible" para que el usuario entienda qué pasó.
-  // Antes mostraba el raw view ID (ej: "punto_venta") lo cual confundía.
   if (items.length === 0) {
     return [
       { label: String(currentView).replace(/-/g, ' '), isCurrent: false },

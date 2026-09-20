@@ -114,8 +114,16 @@ export const CommandPalette = () => {
       }
     };
 
+    // GATE 1 P2-2: el buscador del sidebar abre el palette real (el hint
+    // ⌘K era decorativo). El Sidebar despacha 'open-command-palette'.
+    const handleOpenEvent = () => setIsOpen(true);
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-command-palette', handleOpenEvent);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-command-palette', handleOpenEvent);
+    };
   }, []);
 
   useEffect(() => {

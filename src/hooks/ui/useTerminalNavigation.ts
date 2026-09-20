@@ -2,24 +2,49 @@
 
 import { useMemo, useCallback, useRef } from 'react';
 import { useMotionValue, useTransform } from 'framer-motion';
-import {
-  LayoutGrid, BarChart3, ShoppingCart, Book, Package, Warehouse, Receipt,
-  ClipboardList, FileText, History, Shield, DollarSign,
-  Users, Building, Settings, HelpCircle, ArrowLeftRight, GraduationCap,
-  Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale, HeartPulse, Wallet,
-  Database, Table2, Cpu, Zap, BarChart4, Wand2, FileSearch, Target, AlertCircle, ListFilter, Workflow, PackageSearch,
-  QrCode, ArrowRightLeft, Layout, FileSpreadsheet, PenTool, Eye, Sparkles, BookOpen, Download, Upload, Save, Activity, FolderOpen
-} from 'lucide-react';
 import { type UserRole } from '@/types';
 import { UserContract } from '@/contracts/user';
 import { hasRole } from '@/lib/roles';
+import {
+  HOME_ITEM,
+  flattenNavigation,
+  type FlatNavItem,
+} from '@/config/navigation/navigation-definition';
+
+/**
+ * GATE 1 — Fuente única: los ítems se DERIVAN de navigation-definition.ts.
+ * Ya no existe una lista manual paralela (la lista anterior tenía 10 IDs
+ * muertos que caían en "Módulo No Disponible" en el móvil). Añadir/quitar
+ * una vista del menú se hace SOLO en la definición.
+ */
 
 export interface NavigationItem {
   id: string;
   icon: any;
   label: string;
   roles: UserRole[];
-  category: 'OPERACIONES' | 'INVENTARIO' | 'GESTIÓN' | 'LEGAL' | 'IPV' | 'OVERVIEW';
+  category: 'INICIO' | 'OPERACIÓN' | 'ANÁLISIS' | 'SISTEMA' | 'AYUDA' | 'EN DESARROLLO';
+}
+
+/** Mapa categoría → clase para tipar el flatten. */
+const VALID_CATEGORIES: NavigationItem['category'][] = [
+  'OPERACIÓN', 'ANÁLISIS', 'SISTEMA', 'AYUDA', 'EN DESARROLLO',
+];
+
+function toNavigationItem(flat: FlatNavItem): NavigationItem | null {
+  const category = flat.category === 'INICIO'
+    ? 'INICIO'
+    : VALID_CATEGORIES.includes(flat.category as NavigationItem['category'])
+      ? (flat.category as NavigationItem['category'])
+      : null;
+  if (!category) return null;
+  return {
+    id: flat.id,
+    icon: flat.icon,
+    label: flat.label,
+    roles: (flat.roles ?? []) as UserRole[],
+    category,
+  };
 }
 
 export function useTerminalNavigation(user: UserContract | null, sidebarSearch: string) {
@@ -30,98 +55,28 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
   const navRef = useRef<HTMLElement>(null);
 
   const navigationItems = useMemo(() => {
-    if (!user) return [];
-    const all: NavigationItem[] = [
-      { id: 'occ', icon: LayoutGrid, label: 'Inicio', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'OVERVIEW' },
-      { id: 'dashboard', icon: TrendingUp, label: 'Análisis', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
-      { id: 'pick3-intelligence', icon: BarChart3, label: 'Pick 3 Intelligence', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'OPERACIONES' },
-      { id: 'wallet', icon: Wallet, label: 'Billetera', roles: ['admin', 'manager', 'encargado'], category: 'OPERACIONES' },
-      { id: 'news', icon: Newspaper, label: 'Noticias', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'OPERACIONES' },
-      { id: 'pos', icon: ShoppingCart, label: 'Vender', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'OPERACIONES' },
-      { id: 'sales', icon: Receipt, label: 'Historial', roles: ['clerk', 'manager', 'encargado'], category: 'OPERACIONES' },
-      { id: 'cash', icon: DollarSign, label: 'Caja', roles: ['manager', 'admin', 'encargado'], category: 'OPERACIONES' },
+    // Inicio fijo primero (GATE 1 §1: un solo concepto Inicio → dashboard)
+    const home: NavigationItem = {
+      id: HOME_ITEM.id,
+      icon: HOME_ITEM.icon,
+      label: HOME_ITEM.label,
+      roles: [] as UserRole[], // universal — guard especial en isViewAllowedForRole
+      category: 'INICIO',
+    };
 
-      { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse', 'encargado'], category: 'INVENTARIO' },
-      { id: 'recepcion', icon: Warehouse, label: 'Recepcionar', roles: ['warehouse', 'manager', 'encargado'], category: 'INVENTARIO' },
-      { id: 'reception_list', icon: History, label: 'Recepciones', roles: ['warehouse', 'manager', 'encargado', 'admin'], category: 'INVENTARIO' },
-      { id: 'transferencias', icon: ArrowLeftRight, label: 'Transferencias', roles: ['warehouse', 'manager', 'encargado', 'admin'], category: 'INVENTARIO' },
-      { id: 'inventory_count', icon: ClipboardList, label: 'Conteo', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'INVENTARIO' },
-      { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
-      { id: 'history', icon: History, label: 'Movimientos', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
-      { id: 'inventory_adjustments', icon: RefreshCcw, label: 'Ajustes Doc.', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
+    const derived = flattenNavigation()
+      .map(toNavigationItem)
+      .filter((i): i is NavigationItem => i !== null);
 
-      { id: 'cost-sheets', icon: FileText, label: 'Costos', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'templates', icon: FolderOpen, label: 'Plantillas', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+    const all: NavigationItem[] = [home, ...derived];
 
-      // Cost View Sub-items
-      { id: 'header', icon: Layout, label: 'Encabezado', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'open-sections', icon: ListFilter, label: 'Secciones', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'open-annexes', icon: FileSpreadsheet, label: 'Anexos', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'signature', icon: PenTool, label: 'Firmas', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'expert-content', icon: Zap, label: 'Modo Todo (Experto)', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+    if (!user) return all;
 
-      // Cost Mode Sub-items
-      { id: 'view-kpis', icon: BarChart3, label: 'Tablero (KPIs)', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'view-expert', icon: Zap, label: 'Modo Experto', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'view-assisted', icon: Sparkles, label: 'Modo Asistido', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'view-reading', icon: BookOpen, label: 'Lectura Narrativa', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-
-      // Cost Generation Sub-items
-      { id: 'gen-quick', icon: Zap, label: 'Generación Rápida', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'gen-expert', icon: Wand2, label: 'Generación Experta', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-
-      // Cost Tool Sub-items
-      { id: 'tool-import', icon: Upload, label: 'Importar JSON', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'tool-save', icon: Save, label: 'Guardar Ficha', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'tool-export-excel', icon: FileSpreadsheet, label: 'Exportar Excel', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'tool-export-pdf', icon: Download, label: 'Exportar PDF', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-
-      // Cost Resource Sub-items
-      { id: 'res-help', icon: HelpCircle, label: 'Ayuda de Vista', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'res-system-help', icon: Activity, label: 'Ayuda del Sistema', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'res-academy', icon: GraduationCap, label: 'Academia Pro', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-
-      { id: 'reports', icon: FileText, label: 'Reportes', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'GESTIÓN' },
-      { id: 'ipv', icon: FileText, label: 'IPV Builder', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'GESTIÓN' },
-      { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },
-      { id: 'health', icon: HeartPulse, label: 'Salud', roles: ['admin', 'manager'], category: 'GESTIÓN' },
-      { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
-      { id: 'roles', icon: ShieldCheck, label: 'Roles', roles: ['admin'], category: 'GESTIÓN' },
-      { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
-      { id: 'rss_management', icon: Rss, label: 'Feed RSS', roles: ['admin'], category: 'GESTIÓN' },
-      { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'GESTIÓN' },
-
-      // IPV Sub-items
-      { id: 'analytics', icon: TrendingUp, label: 'Dashboard Institucional', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'reports_ipv', icon: ClipboardList, label: 'Reportes IPV', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'receipts', icon: Receipt, label: 'Recibos SC-3-01', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'transfers', icon: ArrowRightLeft, label: 'Transferencias', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'qr', icon: QrCode, label: 'Pagos QR', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'ingestion', icon: Database, label: 'Extracto', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'pivot', icon: FileSearch, label: 'Consolidado', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'dashboard_ipv', icon: Workflow, label: 'Panel de Control', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'transactions', icon: Table2, label: 'Transacciones', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'catalog_ipv', icon: PackageSearch, label: 'Catálogo', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'customers', icon: Users, label: 'Clientes', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'rules', icon: Cpu, label: 'Reglas', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'sim', icon: Zap, label: 'Simulación', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'intelligent-receipts', icon: Wand2, label: 'Recepciones Inteligentes', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'breakdown', icon: BarChart4, label: 'Desglose', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'audit_ipv', icon: History, label: 'Auditoría', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'movements', icon: Workflow, label: 'Trazabilidad', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'planning', icon: Target, label: 'Planeación', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'errors', icon: AlertCircle, label: 'Errores', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'mapping-rules', icon: ListFilter, label: 'Mapeo', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'mvt', icon: FileText, label: 'Exportación', roles: ['admin', 'manager'], category: 'IPV' },
-      { id: 'mipyme', icon: Users, label: 'Transacciones Mipyme', roles: ['admin', 'manager'], category: 'IPV' },
-
-      { id: 'legal', icon: Scale, label: 'Legal', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
-      { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
-      { id: 'wiki', icon: Book, label: 'Wiki Contable', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
-      { id: 'academy', icon: GraduationCap, label: 'Academia', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
-    ];
-
-    const filteredByRole = all.filter(i => i.roles.some(r => hasRole(user, r)));
+    // home siempre visible; el resto por jerarquía de roles (hasRole cubre
+    // jerarquía admin > manager > … y roles por membership).
+    const filteredByRole = all.filter(i =>
+      i.category === 'INICIO' || i.roles.length === 0 || i.roles.some(r => hasRole(user, r))
+    );
 
     if (!sidebarSearch) return filteredByRole;
 

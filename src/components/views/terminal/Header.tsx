@@ -28,8 +28,9 @@ import { NotificationCenter } from './NotificationCenter';
 import { cn } from '@/lib/utils';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
-import { ViewType, SidebarState } from '@/store';
+import { ViewType, SidebarState, useUIStore } from '@/store';
 import { HelpLauncher } from './views/help/HelpLauncher';
+import { getBreadcrumbForView } from '@/config/navigation/navigation-map';
 
 interface HeaderProps {
   sidebarState: SidebarState;
@@ -66,6 +67,14 @@ export const Header = ({
   // Permite filtrar tiendas por nombre cuando hay 10+ (antes era una lista plana sin filtro).
   const [storeSearch, setStoreSearch] = useState('');
 
+  // GATE 1: título de contexto — usa el label del menú derivado y, para vistas
+  // contextuales (tarjetas de hub, vistas técnicas), el último tramo del breadcrumb.
+  const { ipvActiveTab, activeCostSection } = useUIStore();
+  const crumbs = getBreadcrumbForView(currentView, ipvActiveTab, activeCostSection);
+  const viewTitle = navigationItems.find(i => i.id === currentView)?.label
+    || crumbs[crumbs.length - 1]?.label
+    || 'Panel';
+
   // Determine which list of stores to show
   const storesToShow = user?.role === 'admin' && allStores.length > 0
     ? allStores.map(s => ({ id: s.id, name: s.name }))
@@ -99,7 +108,7 @@ export const Header = ({
 
           <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto min-w-0 flex-1 no-scrollbar pr-2">
             <h1 className="text-[clamp(0.75rem,3.5vw,1.25rem)] font-label font-bold capitalize tracking-tight text-primary whitespace-nowrap shrink-0">
-              {navigationItems.find(i => i.id === currentView)?.label || 'Panel'}
+              {viewTitle}
             </h1>
 
             <div className="h-4 w-[1px] bg-border/50 shrink-0 mx-1 hidden sm:block" />

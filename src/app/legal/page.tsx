@@ -57,9 +57,8 @@ export default function LegalPage() {
             icon={<AlertTriangle className="w-5 h-5" />}
             title="Plan de Respuesta a Incidentes"
             description="Procedimientos de detección, respuesta y recuperación ante incidentes de seguridad (NIST SP 800-61)."
-            href="/knowledge/compliance/incident-response-plan.md"
+            href="/privacy"
             tag="NIST SP 800-61"
-            external
           />
 
           {/* Cookie Policy */}
@@ -85,9 +84,8 @@ export default function LegalPage() {
             icon={<Globe className="w-5 h-5" />}
             title="Transferencias Internacionales"
             description="Marco normativo, evaluación de impacto (TIA) y salvaguardas para transferencias de datos a terceros países conforme al RGPD Art. 44-49."
-            href="/knowledge/compliance/international-transfers.md"
+            href="/privacy"
             tag="RGPD Art. 44-49"
-            external
           />
 
           {/* Data Retention Policy */}

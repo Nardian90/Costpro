@@ -13,6 +13,21 @@ const nextConfig: NextConfig = {
   //   sistema de deployment y standalone no genera los archivos que Vercel espera.
   //   Solo se activa cuando NO estamos en Vercel (Docker, Render, PM2, etc).
   ...(isVercel ? {} : { output: 'standalone' as const }),
+  // GATE 1 §6 — Rutas legacy: redirección a las vistas canónicas del shell
+  // (el shell vive en '/' con vistas como estado + ?view=&tab=).
+  // /terminal?view=X era un 404 real con emisores activos (GATE 0 P0-1).
+  async redirects() {
+    return [
+      // /terminal?view=X preserva el destino; /terminal sin view → Inicio
+      { source: '/terminal', has: [{ type: 'query', key: 'view' }], destination: '/?view=:view', permanent: false },
+      { source: '/terminal', destination: '/?view=dashboard', permanent: false },
+      { source: '/wiki', destination: '/?view=wiki', permanent: false },
+      { source: '/cost-sheets', destination: '/?view=cost-sheets', permanent: false },
+      { source: '/system/health', destination: '/?view=health', permanent: false },
+      { source: '/pick3', destination: '/?view=pick3-intelligence', permanent: false },
+      { source: '/cashier/close-session', destination: '/?view=cash', permanent: false },
+    ];
+  },
   typescript: {
     ignoreBuildErrors: false, // FIX-INF-017
   },

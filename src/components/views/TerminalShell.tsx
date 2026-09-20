@@ -9,6 +9,8 @@ import { Header } from '@/components/views/terminal/Header';
 import Sidebar from '@/components/views/terminal/Sidebar';
 import { ParticleBackground } from '@/components/ui/ParticleBackground';
 import { useTerminalNavigation } from '@/hooks/ui/useTerminalNavigation';
+import { useViewUrlSync } from '@/hooks/ui/useViewUrlSync';
+import { assertNavigationIntegrity } from '@/config/navigation/navigation-definition';
 import { useQueryClient } from '@tanstack/react-query';
 import { prefetchProducts } from '@/hooks/api/useProducts';
 import { prefetchTransactions } from '@/hooks/api/useTransactions';
@@ -75,7 +77,9 @@ function CashReportWrapper() {
 }
 
 const DashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/DashboardView'), { ssr: false });
-const OCCView = dynamic(() => import('@/components/views/terminal/views/dashboard/OCCView'), { ssr: false });
+// GATE 1 §1: OCCView retirada como superficie UX. 'occ' queda como alias
+// técnico de migración: el store normaliza a 'dashboard' y el case 'occ'
+// renderiza la home única (código de OCCView ya no se carga).
 const ChatBotView = dynamic(() => import('@/components/views/terminal/views/chat/ChatBotView'), { ssr: false });
 const CosteoDinamicoView = dynamic(() => import('@/components/views/terminal/views/costeo_dinamico/CosteoDinamicoView'), { ssr: false });
 const EstructuraCostoView = dynamic(() => import('@/components/views/terminal/views/costeo_dinamico/EstructuraCostoView'), { ssr: false });
@@ -230,6 +234,17 @@ export default function TerminalShell() {
     }
   }, [currentView, loadedView]);
 
+  // GATE 1 §6 — Sincronización URL (?view=&tab=): pushState/popstate/refresh/
+  // deep-link sin migrar router. La URL NO autoriza: el guard de renderView +
+  // backend/RLS siguen mandando.
+  useViewUrlSync();
+
+  // GATE 1 — Fuente única: en dev, detecta destinos muertos en la definición
+  // (hace imposible reintroducir los 13 del GATE 0 sin notarlo).
+  useEffect(() => {
+    assertNavigationIntegrity();
+  }, []);
+
   useKeyboardShortcuts();
 
   useEffect(() => {
@@ -357,10 +372,10 @@ export default function TerminalShell() {
               No tienes permisos para acceder a esta sección. Contacta al administrador si crees que es un error.
             </p>
             <button
-              onClick={() => setCurrentView('occ')}
+              onClick={() => setCurrentView('dashboard')}
               className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px]"
             >
-              Volver al Dashboard
+              Volver al Inicio
             </button>
           </div>
         </ViewErrorBoundary>
@@ -409,9 +424,14 @@ export default function TerminalShell() {
         case 'purchase-orders': return <ViewErrorBoundary viewName="Órdenes de Compra"><PurchaseOrdersView /></ViewErrorBoundary>;
         case 'sales-hub': return <ViewErrorBoundary viewName="Venta"><SalesHubView /></ViewErrorBoundary>;
         // E-GroupHub (IA Audit): group IDs como vistas válidas — renderizan GroupHubView.
-        // Al hacer clic en un grupo raíz del breadcrumb (ej: "MULTI-TIENDA"), navega
+        // Al hacer clic en un grupo raíz del breadcrumb (ej: "OPERACIÓN"), navega
         // a una vista overview con tarjetas de todos los submenus/items del grupo.
-        // 'core' no está aquí porque es la home (occ).
+        // GATE 1: ids nuevos de la arquitectura + legacy por compatibilidad.
+        case 'operacion':
+        case 'analisis':
+        case 'sistema':
+        case 'ayuda':
+        case 'desarrollo':
         case 'costos':
         case 'tienda':
         case 'ipv_module':
@@ -428,6 +448,8 @@ export default function TerminalShell() {
         case 'punto_venta':
         case 'almacen_gestion':
         case 'almacen_operaciones':
+        case 'costo':
+        case 'redes':
         case 'analitica':
         case 'ipv_reporting':
         case 'ipv_operaciones':
@@ -476,7 +498,9 @@ export default function TerminalShell() {
         case 'telegram-invitations': return <ViewErrorBoundary viewName="Telegram Invitaciones"><TelegramInvitationsView /></ViewErrorBoundary>;
         case 'telegram-dashboard': return <ViewErrorBoundary viewName="Telegram Dashboard"><TelegramDashboardView /></ViewErrorBoundary>;
         case 'telegram-group': return <ViewErrorBoundary viewName="Telegram Grupo"><TelegramGroupView /></ViewErrorBoundary>;
-        case 'occ': return <ViewErrorBoundary viewName="Centro de Control"><OCCView /></ViewErrorBoundary>;
+        // GATE 1 §1: alias técnico — 'occ' se normaliza a 'dashboard' en el
+        // store; este case es inalcanzable y renderiza la home única.
+        case 'occ': return <ViewErrorBoundary viewName="Inicio"><DashboardView /></ViewErrorBoundary>;
         default: {
           // E-Fix (IA Audit): default "Módulo No Disponible".
           // El breadcrumb muestra el path completo hasta la vista inexistente
@@ -575,7 +599,7 @@ export default function TerminalShell() {
           <ParticleBackground viewId={currentView} showLoadingBranding={isViewLoading} />
           <Suspense fallback={
             <ViewLoadingSplash
-              label={currentView === 'cost-sheets' ? 'Tablero Principal' : String(currentView).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              label={currentView === 'cost-sheets' ? 'Fichas de Costo' : String(currentView).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
               showTips={currentView === 'cost-sheets' || currentView === 'ipv'}
             />
           }>

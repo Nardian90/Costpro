@@ -39,10 +39,10 @@
 import React from "react";
 import { motion } from "framer-motion";
 import {
-  ShoppingCart, Table2, Package, Receipt, DollarSign,
+  ShoppingCart, Table2, Receipt, DollarSign,
   ArrowRight, Wallet, TrendingUp, ClipboardList,
   AlertCircle, Package as PackageIcon, FileClock,
-  Scale, CreditCard,
+  CreditCard, RotateCcw, FileText,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useUIStore } from "@/store";
@@ -79,8 +79,10 @@ const PRIMARY_CARDS: HubCard[] = [
     primary: true,
   },
   {
+    // GATE 1 F-G: "Tabla IPV" renombrada a "Tabla de Venta" (colisión
+    // terminológica con el módulo IPV — P3-2).
     id: "sales_catalog",
-    title: "Tabla IPV",
+    title: "Tabla de Venta",
     description: "Tabla interactiva con todos los productos visibles. Asigna cantidades, precios y métodos de pago por producto. Exporta a Excel.",
     icon: Table2,
     view: "sales_catalog",
@@ -89,18 +91,14 @@ const PRIMARY_CARDS: HubCard[] = [
     borderColor: "border-info/20",
     primary: true,
   },
-  {
-    id: "catalog",
-    title: "Catálogo de Ventas",
-    description: "Catálogo imprimible con precios, fichas de costo y exportación a PDF. Para enviar a clientes o imprimir.",
-    icon: Package,
-    view: "catalog",
-    color: "text-success",
-    bgColor: "bg-success/5",
-    borderColor: "border-success/20",
-    primary: true,
-  },
 ];
+
+// GATE 1 F-G/F4: la tarjeta "Catálogo de Ventas" se elimina (el catálogo
+// maestro vive como tab de Inventario); "Reporte de Entrega" se elimina
+// (el reporte vive dentro de Caja — CashClosureView importa el mismo modal).
+// Devoluciones y Cotizaciones se publican tras verificación de madurez
+// (CRUD completo, API propia /api/devolutions y /api/quotations, estados
+// de carga y error, navegación de regreso al hub).
 
 const SECONDARY_CARDS: HubCard[] = [
   {
@@ -114,9 +112,10 @@ const SECONDARY_CARDS: HubCard[] = [
     borderColor: "border-border",
   },
   {
+    // Caja = UNA entrada (arqueo + cierre de turno + reporte de entrega)
     id: "cash",
-    title: "Arqueo de Caja",
-    description: "Abre y cierra turnos, declara fondos y reconcilia efectivo al final del día.",
+    title: "Caja",
+    description: "Abre y cierra turnos, declara fondos, reconcilia efectivo y genera el reporte de entrega del día.",
     icon: DollarSign,
     view: "cash",
     color: "text-warning",
@@ -134,14 +133,25 @@ const SECONDARY_CARDS: HubCard[] = [
     borderColor: "border-info/20",
   },
   {
-    id: "cash_report",
-    title: "Reporte de Entrega",
-    description: "Genera el reporte de caja para entrega de dinero con desglose de billetes, cuadre CUP/USD y exportación a PDF.",
-    icon: Scale,
-    view: "cash_report",
-    color: "text-primary",
-    bgColor: "bg-primary/5",
-    borderColor: "border-primary/20",
+    // GATE 1 §4: madurez verificada — CRUD completo + API propia + estados
+    id: "devolutions",
+    title: "Devoluciones",
+    description: "Registra y gestiona devoluciones de ventas: reversa, duplicado y trazabilidad por tienda.",
+    icon: RotateCcw,
+    view: "devolutions",
+    color: "text-destructive",
+    bgColor: "bg-destructive/5",
+    borderColor: "border-destructive/20",
+  },
+  {
+    id: "quotations",
+    title: "Cotizaciones",
+    description: "Crea cotizaciones con búsqueda de productos y estados. Conversión posterior a venta.",
+    icon: FileText,
+    view: "quotations",
+    color: "text-success",
+    bgColor: "bg-success/5",
+    borderColor: "border-success/20",
   },
   {
     id: "accounts_payable",

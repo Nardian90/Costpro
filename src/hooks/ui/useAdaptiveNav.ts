@@ -98,7 +98,6 @@ export function useAdaptiveNav(userId: string | undefined, currentView: ViewType
   // Track view visit — legítimo: sincroniza estado externo (localStorage) con React.
   useEffect(() => {
     if (!userId || !currentView) return;
-    if (currentView === 'occ') return;
 
     setFrequency(prev => {
       const now = Date.now();

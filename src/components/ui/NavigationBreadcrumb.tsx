@@ -47,7 +47,7 @@ export const NavigationBreadcrumb: React.FC<NavigationBreadcrumbProps> = ({ clas
         {/* Home link */}
         <BreadcrumbItem>
           <BreadcrumbLink
-            onClick={() => handleNavigate('occ')}
+            onClick={() => handleNavigate('dashboard')}
             className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
           >
             <Home className="w-3 h-3" />

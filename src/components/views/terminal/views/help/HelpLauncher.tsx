@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 // Las rutas son relativas a /knowledge/help/.
 export const HELP_DOC_BY_VIEW: Record<string, string> = {
   // Tutoriales principales
-  'occ': 'help/01-tutoriales/01-primer-inicio.md',
+  'occ': 'help/01-tutoriales/01-primer-inicio.md', // alias legacy (normalizado a dashboard)
   'dashboard': 'help/01-tutoriales/04-primer-reporte.md',
 
   // Operaciones multi-tienda

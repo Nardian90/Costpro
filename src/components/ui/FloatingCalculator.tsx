@@ -119,7 +119,7 @@ export const FloatingCalculator: React.FC<FloatingCalculatorProps> = ({ embedded
             {/* Botón para cambiar a modo modal flotante */}
             <button
               type="button"
-              onClick={() => { setCurrentView('occ'); setIsCalculatorOpen(true); }}
+              onClick={() => { setCurrentView('dashboard'); setIsCalculatorOpen(true); }}
               className="px-2 py-1 rounded-lg text-[9px] font-black uppercase border border-primary/20 text-primary hover:bg-primary/10 transition-colors"
               title="Abrir como modal flotante"
             >

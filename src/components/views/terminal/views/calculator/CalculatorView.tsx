@@ -140,7 +140,7 @@ export default function CalculatorView() {
           {!isMobile && (
             <button
               type="button"
-              onClick={() => { setCurrentView('occ'); setIsCalculatorOpen(true); }}
+              onClick={() => { setCurrentView('dashboard'); setIsCalculatorOpen(true); }}
               className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border border-primary/20 text-primary hover:bg-primary/10 transition-colors flex items-center gap-1"
               title="Abrir como modal flotante"
             >
@@ -150,7 +150,7 @@ export default function CalculatorView() {
           {/* Volver */}
           <button
             type="button"
-            onClick={() => window.history.length > 1 ? window.history.back() : setCurrentView('occ')}
+            onClick={() => window.history.length > 1 ? window.history.back() : setCurrentView('dashboard')}
             className="px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
             aria-label="Volver"
           >

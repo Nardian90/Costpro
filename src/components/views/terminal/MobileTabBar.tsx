@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Home, Package, ShoppingCart, Building, MoreHorizontal, Search, Check, X, Warehouse, DollarSign, FolderOpen, FileText, LayoutGrid, Paperclip, PenTool, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Home, Package, ShoppingCart, Building, MoreHorizontal, Search, Check, X, Warehouse,
+  DollarSign, FolderOpen, FileText, LayoutGrid, Paperclip, ChevronDown,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { type ViewType, useUIStore } from '@/store';
@@ -9,30 +12,36 @@ import { useAuthStore } from '@/store';
 import { useStoreSwitcher } from '@/hooks/ui/useStoreSwitcher';
 import { useStores } from '@/hooks/api/useStores';
 import { useDebounce } from '@/hooks/ui/useDebounce';
-import type { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
+import { hasRole } from '@/lib/roles';
+import {
+  MOBILE_MAIN_TABS,
+  NAVIGATION_SECTIONS,
+  ACTION_EXTENSIONS,
+  type NavEntry,
+} from '@/config/navigation/navigation-definition';
 
 /**
  * F5-T02: Tab bar inferior fija para mobile (<768px).
  *
- * FIX (2026-07-22): tab bar COLAPSABLE.
- *   Problema: la tab bar固定 en bottom ocultaba el ActionMenu del InventoryView
- *   (que también es fixed bottom-0) → solapamiento visual.
- *   Solución: el usuario puede colapsar la tab bar con un botón (chevron).
- *   Cuando está colapsada, se muestra un pequeño indicador vertical flotante
- *   que permite expandirla de nuevo. El estado se persiste en localStorage.
+ * GATE 1 §8/§9 — FUENTE ÚNICA: los tabs fijos (MOBILE_MAIN_TABS), su estado
+ * activo (mapeo por proceso) y el sheet "Más" se DERIVAN de la misma
+ * navigation-definition que el Sidebar y el Command Palette. Ya no existe
+ * una tercera lista móvil: los 10 IDs muertos del sheet histórico
+ * ("Módulo No Disponible") son imposibles por construcción.
  *
- * M-4 (IA Audit): 4 accesos rápidos operativos + 1 "Más".
+ * Test contractual por destino visible: tap → vista correcta → nunca
+ * "Módulo No Disponible" → estado activo correcto → back correcto.
  */
 
 const COLLAPSED_KEY = 'costpro:mobile-tabbar:collapsed';
 
 interface MobileTabBarProps {
-  navigationItems: NavigationItem[];
+  navigationItems: unknown[]; // compat — el sheet se deriva de la definición
   currentView: string;
   onViewChange: (view: ViewType) => void;
 }
 
-export function MobileTabBar({ navigationItems, currentView, onViewChange }: MobileTabBarProps) {
+export function MobileTabBar({ currentView, onViewChange }: MobileTabBarProps) {
   const { user } = useAuthStore();
   const { switchStore } = useStoreSwitcher();
   const { setActiveCostSection, activeCostSection } = useUIStore();
@@ -59,8 +68,7 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
   const { data: stores = [] } = useStores(user?.id || '', isAdmin, isEncargado);
 
   const storesToShow = stores.map(s => ({ id: s.id, name: s.name }));
-  // P4-2: Debounce 200ms en búsqueda de sucursales (menos delay que templates
-  // porque el usuario espera feedback inmediato al buscar su tienda).
+  // P4-2: Debounce 200ms en búsqueda de sucursales
   const debouncedStoreSearch = useDebounce(storeSearch, 200);
   const filteredStores = debouncedStoreSearch.trim()
     ? storesToShow.filter(s => s.name.toLowerCase().includes(debouncedStoreSearch.toLowerCase().trim()))
@@ -70,15 +78,48 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
     onViewChange(view);
   };
 
-  // C1-PERF: Tabs contextuales por módulo. Cuando el usuario está en cost-sheets,
-  // los tabs inferiores deben ser secciones del módulo COSTOS (Plantillas, Generales,
-  // Estructura, Anexos) — NO operaciones de inventario (Vender/Recibir/Caja).
-  // Esto corrige el bug reportado: "al acceder al módulo costo se ven opciones
-  // abajo en modo móvil de inventario cuando deberían ser funciones de este módulo".
+  // ── Sheet "Más" — derivado de la definición (agrupado por sección) ──
+  const sheetGroups = useMemo(() => {
+    const roleOk = (e: NavEntry) => !e.roles || (user ? e.roles.some(r => hasRole(user, r as any)) : false);
+
+    const mainTabIds = MOBILE_MAIN_TABS.map(t => t.id);
+    const groups: { section: string; items: { id: string; label: string; icon?: any }[] }[] = [];
+
+    // Inicio siempre primero
+    groups.push({ section: 'INICIO', items: [{ id: 'dashboard', label: 'Inicio', icon: Home }] });
+
+    for (const section of NAVIGATION_SECTIONS) {
+      const sectionRolesOk = roleOk(section);
+      if (!sectionRolesOk) continue;
+      const items: { id: string; label: string; icon?: any }[] = [];
+
+      const walk = (entries: NavEntry[]) => {
+        for (const e of entries) {
+          if (e.type === 'item') {
+            if (mainTabIds.includes(e.id)) continue;      // ya son tabs fijos
+            if (e.mobileHide) continue;                    // widget/acción
+            if (!roleOk(e)) continue;
+            items.push({ id: e.id, label: e.label, icon: e.icon });
+          } else if (e.children) {
+            walk(e.children);
+          }
+        }
+      };
+      walk(section.children || []);
+      if (items.length > 0) groups.push({ section: section.label, items });
+    }
+
+    // Extensiones de acción (nueva recepción, calculadora, chat, vitrina)
+    const extItems = ACTION_EXTENSIONS
+      .filter(e => !e.mobileHide && roleOk(e))
+      .map(e => ({ id: e.id, label: e.label, icon: e.icon }));
+    if (extItems.length > 0) groups.push({ section: 'ACCIONES', items: extItems });
+
+    return groups;
+  }, [user]);
+
+  // ── Tabs contextuales del módulo Costo (secciones internas de la vista) ──
   type CostSection = 'templates' | 'general' | 'structure' | 'annexes' | '__more__';
-  // F2: Labels cortos para mobile — "Plantillas" → "Plant.", "Estructura" → "Estruct."
-  // Evita superposición de texto en pantallas <375px. El aria-label mantiene el nombre
-  // completo para lectores de pantalla.
   const costTabs: { label: string; ariaLabel: string; icon: React.ComponentType<{ className?: string }>; section: CostSection }[] = [
     { label: 'Plant.', ariaLabel: 'Plantillas', icon: FolderOpen, section: 'templates' },
     { label: 'Datos', ariaLabel: 'Datos Generales', icon: FileText, section: 'general' },
@@ -95,14 +136,6 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
     }
   };
 
-  // M-4 (IA Audit): items para el sheet "Más" — todos excepto los 4 accesos
-  // principales del tab bar. Se incluye 'occ' (Inicio) y 'stores' (Tiendas)
-  // porque ya no tienen tab propio. 'pos', 'reception_list', 'inventory' y
-  // 'cash' se excluyen porque son los 4 tabs principales.
-  const moreItems = navigationItems.filter(item =>
-    !['pos', 'reception_list', 'inventory', 'cash'].includes(item.id)
-  );
-
   const handleStoreSelect = (storeId: string) => {
     switchStore(storeId);
     setStoreSheetOpen(false);
@@ -111,8 +144,7 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
 
   return (
     <>
-      {/* FIX (2026-07-22): Si está colapsada, mostrar solo un indicador vertical flotante.
-          Cuando el usuario hace tap, se expande la tab bar completa. */}
+      {/* FIX (2026-07-22): Si está colapsada, mostrar solo un indicador vertical flotante. */}
       {collapsed ? (
         <button
           type="button"
@@ -220,9 +252,9 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
         </SheetContent>
       </Sheet>
 
-      {/* Sheet: Más — todas las rutas no principales */}
+      {/* Sheet: Más — DERIVADO de navigation-definition (agrupado por sección) */}
       <Sheet open={moreSheetOpen} onOpenChange={setMoreSheetOpen}>
-        <SheetContent side="bottom" className="max-h-[70vh] overflow-y-auto">
+        <SheetContent side="bottom" className="max-h-[75vh] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-sm font-black uppercase tracking-widest text-primary">
               Más Opciones
@@ -235,7 +267,6 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
                 type="button"
                 onClick={() => {
                   setMoreSheetOpen(false);
-                  // Pequeño delay para que el sheet "Más" cierre antes de abrir el de tiendas
                   setTimeout(() => setStoreSheetOpen(true), 150);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-primary/5 border border-primary/20 text-primary hover:bg-primary/10 transition-colors mb-3 min-h-[48px]"
@@ -251,30 +282,39 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
               </button>
             )}
           </div>
-          <div className="grid grid-cols-3 gap-3 px-4 pb-6 pt-0">
-            {moreItems.map(item => {
-              const Icon = item.icon || MoreHorizontal;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    onViewChange(item.id as ViewType);
-                    setMoreSheetOpen(false);
-                  }}
-                  className={cn(
-                    "flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-colors min-h-[72px]",
-                    currentView === item.id
-                      ? "bg-primary/10 border-primary/30 text-primary"
-                      : "bg-muted/20 border-border text-muted-foreground hover:bg-muted"
-                  )}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-xs font-black uppercase tracking-widest text-center leading-tight">
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="px-4 pb-6 pt-0 space-y-4">
+            {sheetGroups.map(group => (
+              <div key={group.section}>
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 mb-2">
+                  {group.section}
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {group.items.map(item => {
+                    const Icon = item.icon || MoreHorizontal;
+                    return (
+                      <button
+                        key={`${group.section}-${item.id}`}
+                        onClick={() => {
+                          onViewChange(item.id as ViewType);
+                          setMoreSheetOpen(false);
+                        }}
+                        className={cn(
+                          "flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-colors min-h-[72px]",
+                          currentView === item.id
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-muted/20 border-border text-muted-foreground hover:bg-muted"
+                        )}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="text-[10px] font-black uppercase tracking-wide text-center leading-tight">
+                          {item.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </SheetContent>
       </Sheet>
@@ -318,7 +358,8 @@ function TabButton({
 }
 
 // C1: Sub-componente para los tabs operativos default (Vender/Recibir/Inventario/Caja/Más).
-// Extraído para mantener legibilidad del componente principal.
+// GATE 1: el estado activo se deriva de MOBILE_MAIN_TABS (mapeo por proceso —
+// corrige P2-5: "Vender" ya no se marca activo en Trazabilidad de stock).
 function DefaultTabs({
   currentView,
   handleTabClick,
@@ -330,32 +371,24 @@ function DefaultTabs({
   moreSheetOpen: boolean;
   setMoreSheetOpen: (open: boolean) => void;
 }) {
+  const mainTabs = MOBILE_MAIN_TABS;
+  const activeTab = mainTabs.find(t => t.activeViews.includes(currentView));
+
   return (
     <>
-      <TabButton
-        label="Vender"
-        icon={ShoppingCart}
-        isActive={currentView === 'pos' || currentView === 'sales-hub' || currentView === 'sales_catalog' || currentView === 'catalog' || currentView === 'history'}
-        onClick={() => handleTabClick('pos')}
-      />
-      <TabButton
-        label="Recibir"
-        icon={Warehouse}
-        isActive={currentView === 'reception_list' || currentView === 'recepcion'}
-        onClick={() => handleTabClick('reception_list')}
-      />
-      <TabButton
-        label="Inventario"
-        icon={Package}
-        isActive={currentView === 'inventory'}
-        onClick={() => handleTabClick('inventory')}
-      />
-      <TabButton
-        label="Caja"
-        icon={DollarSign}
-        isActive={currentView === 'cash'}
-        onClick={() => handleTabClick('cash')}
-      />
+      {mainTabs.map(tab => {
+        const Icon = tab.icon;
+        return (
+          <TabButton
+            key={tab.id}
+            label={tab.label}
+            ariaLabel={tab.label}
+            icon={Icon}
+            isActive={activeTab?.id === tab.id}
+            onClick={() => handleTabClick(tab.id as ViewType)}
+          />
+        );
+      })}
       <TabButton
         label="Más"
         icon={MoreHorizontal}
@@ -365,4 +398,3 @@ function DefaultTabs({
     </>
   );
 }
-

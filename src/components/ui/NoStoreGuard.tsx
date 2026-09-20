@@ -29,7 +29,7 @@ export function NoStoreGuard({ children }: NoStoreGuardProps) {
         </p>
         <div className="mt-6 flex flex-col items-center gap-3">
           <Button
-            onClick={() => window.location.href = '/terminal?view=stores'}
+            onClick={() => window.location.href = '/?view=management-hub'}
             className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2.5 rounded-lg font-semibold focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {t('goToStores')}

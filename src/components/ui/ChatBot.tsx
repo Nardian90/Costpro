@@ -4,11 +4,11 @@ import { logger } from '@/lib/logger';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Send, X, Bot, Loader2, Sparkles, Settings, Key, Check, Trash2, Lightbulb, RefreshCw, ChevronDown, AlertTriangle, ImagePlus, Plus, Clock, MessageCircle, Copy, Download, Maximize2, Minimize2, PanelLeft } from 'lucide-react';
-import { useAuthStore, useUIStore } from '@/store';
+import { useAuthStore, useUIStore, type ViewType } from '@/store';
 import { cn } from '@/lib/utils';
 import { userService } from '@/services/user-service';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+import { normalizeLegacyView } from '@/config/navigation/navigation-definition';
 import ReactMarkdown from 'react-markdown';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -102,8 +102,9 @@ function createConversation(title?: string, firstMessage?: string): Conversation
 
 // ─── CHATBOT COMPONENT ───────────────────────────────────────────────────────
 export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
-  const router = useRouter();
-  const { isChatBotOpen: isOpen, setIsChatBotOpen: setIsOpen, currentView } = useUIStore();
+  // GATE 1: router eliminado — la navegación del chat es in-shell vía store
+  // (el shell vive en '/', las vistas son estado Zustand + URL sync).
+  const { isChatBotOpen: isOpen, setIsChatBotOpen: setIsOpen, currentView, setCurrentView } = useUIStore();
   // FEATURE-CHATBOT-VIEW: When embedded=true, the chat is rendered as a
   // first-class view (ChatBotView) instead of a floating window. This ignores
   // the isOpen state from the store and always renders the chat panel,
@@ -413,8 +414,11 @@ export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
 
     switch (action.type) {
       case 'navigation':
-        toast.info(`Navegando a ${action.payload.viewId}...`);
-        router.push(action.payload.route);
+        // GATE 1: navegación in-shell vía store Zustand (el shell vive en '/',
+        // las vistas son estado — router.push('/terminal?view=*') daba 404).
+        // normalizeLegacyView corrige viewIds legacy (occ, wrappers viejos).
+        toast.info(`Navegando a ${normalizeLegacyView(action.payload.viewId).view}...`);
+        setCurrentView(normalizeLegacyView(action.payload.viewId).view as ViewType);
         break;
 
       case 'form_fill':

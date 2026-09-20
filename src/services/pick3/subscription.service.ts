@@ -580,7 +580,7 @@ export class SubscriptionService {
       return {
         session: {
           id: `demo-${Date.now()}`,
-          url: '/pick3?tab=advisor&upgraded=1',
+          url: '/?view=pick3-intelligence',
           tier,
           mode: 'subscription',
           status: 'complete',
@@ -597,7 +597,7 @@ export class SubscriptionService {
       return {
         session: {
           id: `demo-${Date.now()}`,
-          url: '/pick3?tab=advisor&upgraded=1',
+          url: '/?view=pick3-intelligence',
           tier,
           mode: 'subscription',
           status: 'complete',

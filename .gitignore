@@ -118,3 +118,4 @@ download/
 test-results/
 playwright-report/
 test-results/
+audit-evidence/*.png

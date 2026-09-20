@@ -17,9 +17,13 @@ export const SHORTCUTS_REGISTRY: { key: string; label: string; description: stri
   { key: 'Ctrl+K', label: 'Command Palette', description: 'Abrir paleta de comandos' },
   { key: 'Ctrl+B', label: 'Toggle Sidebar', description: 'Mostrar/ocultar barra lateral' },
   { key: 'Ctrl+/', label: 'Keyboard Help', description: 'Ver atajos de teclado' },
-  { key: 'Ctrl+1', label: 'Dashboard', description: 'Ir al Centro de Control' },
-  { key: 'Ctrl+2', label: 'POS', description: 'Ir al Punto de Venta' },
+  // GATE 1 §1: un solo concepto — Ctrl+1 = Inicio (dashboard)
+  { key: 'Ctrl+1', label: 'Inicio', description: 'Ir a Inicio (dashboard)' },
+  { key: 'Ctrl+2', label: 'Terminal de Venta', description: 'Ir al Terminal de Venta' },
   { key: 'Ctrl+3', label: 'Inventario', description: 'Ir al Stock Actual' },
+  // P2-4: implementados pero no documentados — ahora en el registro
+  { key: 'Ctrl+4', label: 'IPV', description: 'Ir al módulo IPV (EN DESARROLLO, admin)' },
+  { key: 'Ctrl+5', label: 'Fichas de Costo', description: 'Ir al módulo de fichas de costo' },
   { key: 'Escape', label: 'Close', description: 'Cerrar panel/modal activo' },
   { key: 'Ctrl+Shift+H', label: 'Help', description: 'Ir al Centro de Ayuda' },
 ];

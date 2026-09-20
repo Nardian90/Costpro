@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { type UserContract } from '@/contracts/user';
+import { normalizeLegacyView } from '@/config/navigation/navigation-definition';
 
 // Re-export stores
 export { useCartStore } from './cart';
@@ -25,6 +26,9 @@ export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'r
 // una vista overview con tarjetas de todos los submenus del grupo (patrón Odoo).
 // 'core' NO está aquí porque es la home (occ) y no necesita GroupHub.
 | 'costos' | 'tienda' | 'ipv_module' | 'otros' | 'administracion' | 'recursos'
+// GATE 1: secciones/hubs de la arquitectura aprobada (operacion/analisis/
+// sistema/ayuda/desarrollo + submenús costo/redes)
+| 'operacion' | 'analisis' | 'sistema' | 'ayuda' | 'desarrollo' | 'costo' | 'redes'
 // FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora (modo embedded)
 | 'calculator'
 // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
@@ -87,11 +91,10 @@ interface UIState {
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
-      // FIX-DEFAULT-VIEW (2026-07-13): default a 'occ' (Centro de Control Operativo)
-      // en vez de 'chat'. Los usuarios nuevos deben ver el dashboard al iniciar sesión,
-      // no el chat de IA. El chat sigue accesible desde el sidebar (item "Chat con Darian"
-      // dentro del grupo ESCRITORIO).
-      currentView: 'occ',
+      // GATE 1 §1 — HOME ÚNICA: 'dashboard' es el único Home de Multi-Tienda.
+      // 'occ' dejó de existir como superficie UX; el estado persistido 'occ'
+      // se migra (persist v4 + normalizeLegacyView en setCurrentView).
+      currentView: 'dashboard',
       previousView: null,
       sidebarState: 'expanded',
       isCalculatorOpen: false,
@@ -109,12 +112,17 @@ export const useUIStore = create<UIState>()(
       isHelpReadingMode: false,
       forceOpenCart: false,
       setForceOpenCart: (v: boolean) => set({ forceOpenCart: v }),
-      setCurrentView: (view: ViewType) => set((state: UIState) => ({
-        previousView: state.currentView,
-        currentView: view,
-        // Al cambiar de vista, salir automáticamente del modo lectura de ayuda.
-        isHelpReadingMode: view === 'help' ? state.isHelpReadingMode : false,
-      })),
+      setCurrentView: (view: ViewType) => set((state: UIState) => {
+        // GATE 1: punto ÚNICO de normalización — cualquier emisor que pida un
+        // viewId legacy (occ, wrappers viejos) aterriza en su destino canónico.
+        const normalized = normalizeLegacyView(view).view as ViewType;
+        return {
+          previousView: state.currentView,
+          currentView: normalized,
+          // Al cambiar de vista, salir automáticamente del modo lectura de ayuda.
+          isHelpReadingMode: normalized === 'help' ? state.isHelpReadingMode : false,
+        };
+      }),
       setSidebarState: (sidebarState: SidebarState) => set({ sidebarState }),
       toggleSidebar: () => set((state: UIState) => {
         const next: Record<SidebarState, SidebarState> = {
@@ -150,7 +158,7 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'costpro-ui-storage',
-      version: 3,
+      version: 4,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           persistedState = {
@@ -165,6 +173,11 @@ export const useUIStore = create<UIState>()(
           if (persistedState?.activeCostSection === 'main') {
             persistedState.activeCostSection = 'cost-analytics';
           }
+        }
+        // GATE 1 (v4) — Home única + wrappers muertos: el estado persistido de
+        // usuarios existentes se normaliza a los destinos canónicos.
+        if (persistedState?.currentView) {
+          persistedState.currentView = normalizeLegacyView(persistedState.currentView).view;
         }
         return persistedState;
       },

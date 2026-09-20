@@ -5,6 +5,7 @@ import {
   X,
   Search,
   ChevronDown,
+  Home,
   LogOut,
   Zap,
   Calculator,
@@ -35,8 +36,6 @@ interface SidebarProps {
 
 // Root module IDs (depth=0) — these trigger focus mode
 const ROOT_MODULE_IDS = new Set(SIDEBAR_STRUCTURE.map(m => m.id));
-// "core" is Escritorio — special behavior
-const CORE_MODULE_ID = 'core';
 
 const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }: SidebarProps) => {
   const prefersReducedMotion = useReducedMotion();
@@ -127,37 +126,15 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
 
   // ── Click on a root module header ──
   // F3 + GAP-3: Al clickear un módulo raíz, navegar a la vista por defecto.
-  // Mapeo completo de todos los grupos del sidebar.
+  // GATE 1: secciones de la arquitectura aprobada (OPERACIÓN→pos, etc.).
   const MODULE_DEFAULT_VIEW: Record<string, ViewType> = {
-    // FIX-DEFAULT-VIEW (2026-07-13): 'core_chat' eliminado — el grupo ASISTENTE
-    // fue removido y Chat ahora es un item directo dentro de ESCRITORIO (core).
-    'core_tools': 'calculator',
-    'core': 'occ',
-    'costos': 'cost-sheets',
-    // FIX-GESTION-UNIFICADA (2026-07-13): MULTI-TIENDA ahora aterriza en el hub
-    // de Gestión (que tiene tabs Noticias/Vitrina/Tiendas) en lugar de 'stores'
-    // directo. 'stores' sigue siendo una vista válida accesible desde el tab.
-    'tienda': 'management-hub',
-    'ipv_module': 'ipv',
-    'otros': 'pick3-intelligence',
-    'administracion': 'users',
-    'recursos': 'settings',
+    'operacion': 'pos',
+    'analisis': 'dashboard',
+    'sistema': 'settings',
+    'ayuda': 'help',
+    'desarrollo': 'ipv',
   };
   const handleRootModuleClick = useCallback((mod: NavModule) => {
-    if (mod.id === CORE_MODULE_ID) {
-      // Escritorio → exit focus + navigate to home
-      exitFocusMode();
-      setCurrentView('occ');
-      onViewChange('occ');
-      // FIX (2026-07-22): NO cerrar sidebar al navegar en móvil.
-      return;
-    }
-    if (mod.id === 'core_tools') {
-      setCurrentView('calculator');
-      onViewChange('calculator');
-      // FIX (2026-07-22): NO cerrar sidebar al navegar en móvil.
-      return;
-    }
     // If already in focus for this module → exit focus
     if (focusModuleId === mod.id) {
       exitFocusMode();
@@ -187,19 +164,69 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   // ── In rail mode, expand sidebar on module click ──
   const handleRailModuleClick = useCallback((mod: NavModule) => {
     setSidebarState('expanded');
-    if (mod.id === CORE_MODULE_ID) {
-      exitFocusMode();
-      setCurrentView('occ');
-      onViewChange('occ');
-    } else {
-      enterFocusMode(mod.id);
-      // F3: Navegar a vista por defecto del módulo también en rail mode.
-      const defaultView = MODULE_DEFAULT_VIEW[mod.id];
-      if (defaultView) {
-        onViewChange(defaultView);
-      }
+    enterFocusMode(mod.id);
+    // F3: Navegar a vista por defecto del módulo también en rail mode.
+    const defaultView = MODULE_DEFAULT_VIEW[mod.id];
+    if (defaultView) {
+      onViewChange(defaultView);
     }
-  }, [setSidebarState, exitFocusMode, enterFocusMode, setCurrentView, onViewChange]);
+  }, [setSidebarState, enterFocusMode, onViewChange]);
+
+  // ── Render the fixed HOME item (GATE 1 §1: Inicio → dashboard) ──
+  // Primer ítem del nav, fuera de secciones, todos los roles. En rail mode
+  // es un botón de icono con tooltip; en expandido un ítem destacado.
+  const renderHomeItem = useCallback(() => {
+    const isActive = currentView === 'dashboard';
+    const isRail = sidebarState === 'rail';
+
+    if (isRail) {
+      return (
+        <TooltipProvider key="home-fixed" delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => handleNavClick('dashboard')}
+                onMouseEnter={() => onPrefetchView('dashboard')}
+                aria-current={isActive ? 'page' : undefined}
+                aria-label="Inicio"
+                className={cn(
+                  "w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2",
+                  isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-sidebar-foreground/80 hover:bg-primary/10 hover:text-primary"
+                )}
+              >
+                <Home className="w-5 h-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="font-bold uppercase tracking-widest text-[10px]">
+              Inicio
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return (
+      <div key="home-fixed" className="mb-1">
+        <button
+          onClick={() => handleNavClick('dashboard')}
+          onMouseEnter={() => onPrefetchView('dashboard')}
+          aria-current={isActive ? 'page' : undefined}
+          className={cn(
+            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+            isActive
+              ? "bg-primary/15 text-primary font-black shadow-md shadow-primary/20 ring-1 ring-primary/25"
+              : "text-sidebar-foreground/90 hover:bg-primary/5 hover:text-sidebar-foreground"
+          )}
+        >
+          <Home className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-primary" : "opacity-90")} />
+          <span className="text-xs uppercase tracking-wider flex-1 text-left font-black">Inicio</span>
+          {isActive && (
+            <motion.div layoutId="active-nav-indicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+          )}
+        </button>
+      </div>
+    );
+  }, [currentView, sidebarState, handleNavClick, onPrefetchView]);
 
   // ── Render a leaf nav item ──
   const renderNavItem = useCallback((item: any, depth = 0) => {
@@ -244,6 +271,17 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         >
           {item.icon && <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-primary" : "opacity-80")} />}
           <span className="text-xs uppercase tracking-wider truncate flex-1 text-left">{item.label}</span>
+          {/* GATE 1 P2-1: badges isNew/isBeta por fin renderizados */}
+          {item.isNew && (
+            <span className="shrink-0 px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-[8px] font-black uppercase tracking-widest">
+              Nuevo
+            </span>
+          )}
+          {item.isBeta && (
+            <span className="shrink-0 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[8px] font-black uppercase tracking-widest">
+              Beta
+            </span>
+          )}
           {isActive && (
             <motion.div layoutId="active-nav-indicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
           )}
@@ -315,11 +353,8 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
 
     // Root module in expanded mode → triggers focus mode on click
     if (isRoot) {
-      const isCore = mod.id === CORE_MODULE_ID;
-      const isFocused = focusModuleId === mod.id;
-      // FIX-DEFAULT-VIEW (2026-07-13): isChatModule/isChatActive eliminados —
-      // el grupo ASISTENTE (core_chat) ya no existe. Chat es ahora un item
-      // normal dentro de ESCRITORIO.
+      // GATE 1: secciones activas no requieren estado extra — el clic entra en
+      // focus mode y navega a la vista por defecto (MODULE_DEFAULT_VIEW).
 
       return (
         <div key={mod.id} className="relative">
@@ -395,7 +430,6 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   useEffect(() => {
     if (focusModuleId) return; // Don't override manual focus
     for (const mod of SIDEBAR_STRUCTURE) {
-      if (mod.id === CORE_MODULE_ID) continue;
       if (hasViewInModule(mod, currentView)) {
         queueMicrotask(() => enterFocusMode(mod.id));
         return;
@@ -455,27 +489,24 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             )}
           >
             {sidebarState !== 'rail' ? (
-              // QW-5 (IA Audit): clic en el logo lleva al hub de Venta (sales-hub)
-              // en lugar de ser decorativo. Es el acceso 1-clic más universal al
-              // workflow principal del usuario (vender). Mismo patrón que Shopify
-              // admin (clic en logo → home del admin). El usuario ya tiene el
-              // sidebar abierto; el logo es el target más predecible.
+              // GATE 1 §1: clic en el logo → HOME ÚNICA (dashboard). Un solo
+              // concepto: Inicio → dashboard · Logo → dashboard · Ctrl+1 → dashboard.
               <button
                 type="button"
-                onClick={() => setCurrentView('sales-hub')}
+                onClick={() => setCurrentView('dashboard')}
                 className="text-foreground font-black text-lg uppercase tracking-tighter leading-none hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded px-1 -mx-1"
-                aria-label="CostPro — Volver al inicio"
-                title="Volver a Venta"
+                aria-label="CostPro — Ir a Inicio"
+                title="Ir a Inicio"
               >
                 COST<span className="text-green-600 dark:text-green-400">PRO</span>
               </button>
             ) : (
               <button
                 type="button"
-                onClick={() => setCurrentView('sales-hub')}
+                onClick={() => setCurrentView('dashboard')}
                 className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-xs hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                aria-label="CostPro — Volver al inicio"
-                title="Volver a Venta"
+                aria-label="CostPro — Ir a Inicio"
+                title="Ir a Inicio"
               >
                 CP
               </button>
@@ -505,9 +536,15 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                   placeholder="BUSCAR..."
                   className="w-full h-9 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-16 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/50"
                 />
-                <kbd className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center bg-muted text-muted-foreground text-[10px] font-mono px-1.5 py-0.5 rounded pointer-events-none select-none">
+                {/* GATE 1 P2-2: el hint ⌘K ahora ABRE el Command Palette real */}
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+                  aria-label="Abrir centro de comando (Ctrl+K)"
+                  className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 items-center bg-muted text-muted-foreground text-[10px] font-mono px-1.5 py-0.5 rounded pointer-events-auto select-none hover:bg-primary/10 hover:text-primary transition-colors"
+                >
                   ⌘K
-                </kbd>
+                </button>
               </div>
             </div>
           )}
@@ -533,8 +570,8 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                   <button
                     onClick={() => {
                       exitFocusMode();
-                      setCurrentView('occ');
-                      onViewChange('occ');
+                      setCurrentView('dashboard');
+                      onViewChange('dashboard');
                     }}
                     className="flex items-center gap-1.5 text-muted-foreground/70 hover:text-primary transition-colors group outline-none"
                     aria-label="Volver al inicio"
@@ -586,6 +623,10 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 exit={prefersReducedMotion ? {} : { opacity: 0 }}
                 className={cn("space-y-1 sm:space-y-4", sidebarState === 'rail' && "space-y-2")}
               >
+                {/* GATE 1 §1 — INICIO fijo: primer ítem del nav, fuera de secciones.
+                    Un solo concepto: Inicio → dashboard (logo y Ctrl+1 al mismo destino). */}
+                {renderHomeItem()}
+
                 {/* E-2 (IA Audit): sección "FIJADOS" — accesos rápidos personalizados.
                     Solo se muestra si el usuario ha fijado al menos 1 item y el sidebar
                     está expandido (no en rail mode). Máximo 5 items. */}

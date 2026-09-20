@@ -12,7 +12,7 @@
 
 export const VIEW_TIPS: Record<string, string> = {
   // Escritorio / Dashboard
-  'occ': 'Usa ⌘K para búsqueda rápida',
+  'occ': 'Usa ⌘K para búsqueda rápida', // alias legacy
   'dashboard': 'Monitorea tus KPIs en tiempo real',
 
   // Chat
