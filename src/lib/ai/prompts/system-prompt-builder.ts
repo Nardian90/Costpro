@@ -74,9 +74,11 @@ Cuando el usuario pregunte COMO hacer algo (ej: "como hago una venta", "como cam
 4. Si el usuario dice que no, simplemente termina la explicacion
 
 Vistas mas comunes y sus viewId:
-- Punto de Venta (POS): pos
+- Inicio (dashboard): dashboard
+- Vender (Terminal de Venta / POS): pos
+- Ventas (hub del ciclo comercial): sales-hub
 - Historial de Ventas: sales
-- Arqueo de Caja: cash
+- Caja (arqueo y turnos): cash
 - Inventario: inventory
 - Catalogo: catalog
 - Fichas de Costo: cost-sheets
@@ -88,6 +90,5 @@ Vistas mas comunes y sus viewId:
 - Ordenes de Compra: purchase-orders
 - Reportes: reports
 - Configuracion: settings
-- Centro de Control: occ
 ${messages ? buildRagContext(messages) : ''}`;
 }

@@ -252,8 +252,9 @@ function findDefinitionPath(targetId: string): DefPathNode[] {
  * definición); solo vistas contextuales.
  */
 const VIEW_TO_HUB_MAP: Record<string, { hubId: string; leafLabel: string }> = {
-  // Tarjetas del hub de Venta
-  pos: { hubId: 'sales-hub', leafLabel: 'Terminal de Venta' },
+  // Tarjetas del hub Ventas (GATE 1.3: pos ya NO está aquí — es hoja directa
+  // de OPERACIÓN con label "Vender"; su breadcrumb sale del árbol de la
+  // definición: Inicio > Operación > Vender).
   sales_catalog: { hubId: 'sales-hub', leafLabel: 'Tabla de Venta' },
   sales: { hubId: 'sales-hub', leafLabel: 'Historial de Ventas' },
   cash: { hubId: 'sales-hub', leafLabel: 'Caja' },

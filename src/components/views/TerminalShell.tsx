@@ -421,8 +421,8 @@ export default function TerminalShell() {
         case 'dashboard': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
         case 'pick3-intelligence': return <ViewErrorBoundary viewName="Gestor de Riesgo"><Pick3IntelligenceView /></ViewErrorBoundary>;
         case 'wallet': return <ViewErrorBoundary viewName="Wallet"><WalletView /></ViewErrorBoundary>;
-        case 'pos': return <ViewErrorBoundary viewName="POS"><POSView /></ViewErrorBoundary>;
-        case 'sales_catalog': return <ViewErrorBoundary viewName="Catálogo de Ventas"><SalesCatalogView /></ViewErrorBoundary>;
+        case 'pos': return <ViewErrorBoundary viewName="Vender"><POSView /></ViewErrorBoundary>;
+        case 'sales_catalog': return <ViewErrorBoundary viewName="Tabla de Venta"><SalesCatalogView /></ViewErrorBoundary>;
         case 'sales': return <ViewErrorBoundary viewName="Historial de Ventas"><SalesHistoryView /></ViewErrorBoundary>;
         case 'users': return <ViewErrorBoundary viewName="Usuarios"><UsersManagementView /></ViewErrorBoundary>;
         case 'roles': return <ViewErrorBoundary viewName="Roles"><RolesManagementView /></ViewErrorBoundary>;
@@ -443,8 +443,8 @@ export default function TerminalShell() {
         case 'help': return <ViewErrorBoundary viewName="Ayuda"><HelpView /></ViewErrorBoundary>;
         case 'recepcion': return <ViewErrorBoundary viewName="Recepción"><ProductReceptionView onCancel={() => setCurrentView('inventory')} /></ViewErrorBoundary>;
         case 'transferencias': return <ViewErrorBoundary viewName="Transferencias"><TransferenciasView /></ViewErrorBoundary>;
-        case 'inventory_count': return <ViewErrorBoundary viewName="Conteo de Inventario"><InventoryCountView /></ViewErrorBoundary>;
-        case 'cash': return <ViewErrorBoundary viewName="Cierre de Caja"><CashClosureView /></ViewErrorBoundary>;
+        case 'inventory_count': return <ViewErrorBoundary viewName="Venta por Conteo"><InventoryCountView /></ViewErrorBoundary>;
+        case 'cash': return <ViewErrorBoundary viewName="Caja"><CashClosureView /></ViewErrorBoundary>;
         case 'history': return <ViewErrorBoundary viewName="Historial de Stock"><StockHistoryView /></ViewErrorBoundary>;
         case 'news': return <ViewErrorBoundary viewName="Noticias"><NewsView /></ViewErrorBoundary>;
         case 'rss_management': return <ViewErrorBoundary viewName="Gestión RSS"><RSSManagementView /></ViewErrorBoundary>;
@@ -458,7 +458,7 @@ export default function TerminalShell() {
         case 'labels': return <ViewErrorBoundary viewName="Etiquetas"><ProductLabelGenerator /></ViewErrorBoundary>;
         case 'ofertas': return <ViewErrorBoundary viewName="Ofertas"><OfertasView /></ViewErrorBoundary>;
         case 'purchase-orders': return <ViewErrorBoundary viewName="Órdenes de Compra"><PurchaseOrdersView /></ViewErrorBoundary>;
-        case 'sales-hub': return <ViewErrorBoundary viewName="Venta"><SalesHubView /></ViewErrorBoundary>;
+        case 'sales-hub': return <ViewErrorBoundary viewName="Ventas"><SalesHubView /></ViewErrorBoundary>;
         // E-GroupHub (IA Audit): group IDs como vistas válidas — renderizan GroupHubView.
         // Al hacer clic en un grupo raíz del breadcrumb (ej: "OPERACIÓN"), navega
         // a una vista overview con tarjetas de todos los submenus/items del grupo.

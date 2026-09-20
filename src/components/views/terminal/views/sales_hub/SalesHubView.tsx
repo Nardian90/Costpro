@@ -68,8 +68,10 @@ interface HubCard {
 
 const PRIMARY_CARDS: HubCard[] = [
   {
+    // GATE 1.3: dentro del hub Ventas la tarjeta es TASK-ORIENTED — la acción
+    // es "Nueva Venta" (el POS es el componente, no el concepto).
     id: "pos",
-    title: "Terminal de Venta",
+    title: "Nueva Venta",
     description: "Venta rápida con carrito, atajos de teclado, escáner de código de barras y pago mixto. Ideal para ventas mostrador.",
     icon: ShoppingCart,
     view: "pos",
@@ -146,7 +148,9 @@ const SECONDARY_CARDS: HubCard[] = [
   {
     id: "quotations",
     title: "Cotizaciones",
-    description: "Crea cotizaciones con búsqueda de productos y estados. Conversión posterior a venta.",
+    // GATE 1.3: copy honesto — la conversión a venta NO está implementada
+    // (solo GET+POST con estados); no prometer funciones inexistentes.
+    description: "Crea cotizaciones con búsqueda de productos y estados de seguimiento.",
     icon: FileText,
     view: "quotations",
     color: "text-success",
@@ -286,10 +290,10 @@ export default function SalesHubView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase">
-            Venta
+            Ventas
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
-            Selecciona cómo quieres facturar
+            Todo el ciclo comercial: facturación, caja, historial y cuentas
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">

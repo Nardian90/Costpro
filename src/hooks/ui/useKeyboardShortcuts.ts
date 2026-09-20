@@ -19,7 +19,8 @@ export const SHORTCUTS_REGISTRY: { key: string; label: string; description: stri
   { key: 'Ctrl+/', label: 'Keyboard Help', description: 'Ver atajos de teclado' },
   // GATE 1 §1: un solo concepto — Ctrl+1 = Inicio (dashboard)
   { key: 'Ctrl+1', label: 'Inicio', description: 'Ir a Inicio (dashboard)' },
-  { key: 'Ctrl+2', label: 'Terminal de Venta', description: 'Ir al Terminal de Venta' },
+  // GATE 1.3: label alineado con la navegación ("Vender"); destino intacto
+  { key: 'Ctrl+2', label: 'Vender', description: 'Ir a Vender (Terminal de Venta / POS)' },
   { key: 'Ctrl+3', label: 'Inventario', description: 'Ir al Stock Actual' },
   // P2-4: implementados pero no documentados — ahora en el registro
   { key: 'Ctrl+4', label: 'IPV', description: 'Ir al módulo IPV (EN DESARROLLO, admin)' },

@@ -97,7 +97,8 @@ export default function InventoryCountView() {
             <ClipboardList className="w-7 h-7 text-primary" />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase leading-tight text-[clamp(1.5rem,5vw,2rem)] font-black uppercase tracking-tighter text-primary"> Auditoría de Stock </h2>
+            {/* GATE 1.3: título alineado con el label de navegación (antes "Auditoría de Stock") */}
+            <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase leading-tight text-[clamp(1.5rem,5vw,2rem)] font-black uppercase tracking-tighter text-primary"> Venta por Conteo </h2>
             <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">
               {samplePercentage}% de la muestra ({countedProductIds.size === 0 ? allProducts.length : countedProductIds.size} de {allProducts.length} productos)
             </p>

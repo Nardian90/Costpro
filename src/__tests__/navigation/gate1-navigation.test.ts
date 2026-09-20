@@ -229,14 +229,14 @@ describe('Breadcrumb', () => {
     expect(items).toEqual([{ label: 'Inicio', isCurrent: true }]);
   });
 
-  it('pos cuelga de OPERACIÓN > Venta > Terminal de Venta', () => {
+  it('pos es hoja directa de OPERACIÓN con label de acción "Vender" (GATE 1.3)', () => {
     const items = getBreadcrumbForView('pos');
-    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Venta', 'Terminal de Venta']);
+    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Vender']);
   });
 
-  it('sales cuelga del hub Venta con label desambiguado', () => {
+  it('sales cuelga del hub Ventas con label desambiguado', () => {
     const items = getBreadcrumbForView('sales');
-    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Venta', 'Historial de Ventas']);
+    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas', 'Historial de Ventas']);
   });
 
   it('history (Trazabilidad) cuelga de Almacén, no de Venta', () => {
@@ -247,6 +247,58 @@ describe('Breadcrumb', () => {
   it('cash muestra "Caja" (un solo concepto)', () => {
     const items = getBreadcrumbForView('cash');
     expect(items[items.length - 1].label).toBe('Caja');
+  });
+
+  it('sales-hub se llama "Ventas" (sin colisión con "Vender", GATE 1.3)', () => {
+    const items = getBreadcrumbForView('sales-hub');
+    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas']);
+  });
+});
+
+// ─── 5b. GATE 1.3 — dominio Venta: Vender (acción) + Ventas (hub) ────
+
+describe('GATE 1.3 — Vender/Ventas', () => {
+  it('la definición usa "Vender" para pos y "Ventas" para sales-hub', () => {
+    const labels = Object.fromEntries(flattenNavigation().map(l => [l.id, l.label]));
+    expect(labels['pos']).toBe('Vender');
+    expect(labels['sales-hub']).toBe('Ventas');
+    // "Terminal de Venta" ya no es label visible (queda como keyword)
+    expect(Object.values(labels)).not.toContain('Terminal de Venta');
+    // Ningún label de menú es exactamente "Venta" (colisión eliminada)
+    expect(Object.values(labels)).not.toContain('Venta');
+  });
+
+  it('"Terminal de Venta" sigue siendo descubrible como keyword de pos', () => {
+    const pos = flattenNavigation().find(l => l.id === 'pos');
+    expect(pos?.keywords).toContain('terminal de venta');
+    expect(pos?.keywords).toContain('pos');
+  });
+
+  it('las vistas del hub Ventas son acciones de palette (⌘K directo)', () => {
+    const ids = SYSTEM_ACTIONS.map(a => a.id);
+    for (const id of ['sales', 'cash', 'inventory_count', 'devolutions', 'quotations', 'accounts-payable', 'accounts-receivable']) {
+      expect(ids).toContain(id);
+    }
+  });
+
+  it('buscar "caja" resuelve UNA acción Caja (no POS ni hub)', () => {
+    const actions = getActionsForUser('clerk');
+    const matching = actions.filter(a =>
+      a.label.toLowerCase().includes('caja') || a.keywords.includes('caja')
+    );
+    expect(matching.map(a => a.id)).toEqual(['cash']);
+  });
+
+  it('las extensiones del hub Ventas NO aparecen en el sheet móvil (mobileHide)', () => {
+    const ext = ACTION_EXTENSIONS.filter(e => e.mobileHide);
+    expect(ext.map(e => e.id)).toEqual(expect.arrayContaining(['sales', 'cash', 'devolutions']));
+  });
+
+  it('los roles del dominio venta siguen intactos (clerk sí, warehouse no)', () => {
+    expect(isViewAllowedForRole('pos', 'clerk')).toBe(true);
+    expect(isViewAllowedForRole('sales-hub', 'clerk')).toBe(true);
+    expect(isViewAllowedForRole('cash', 'clerk')).toBe(true);
+    expect(isViewAllowedForRole('pos', 'warehouse')).toBe(false);
   });
 });
 

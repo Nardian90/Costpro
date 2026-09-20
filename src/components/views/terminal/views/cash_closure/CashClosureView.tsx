@@ -256,7 +256,9 @@ export default function CashClosureView() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase">Arqueo de Caja</h2>
+            {/* GATE 1.3: UN concepto — la navegación dice "Caja"; el arqueo,
+                cierre de turno y reporte de entrega viven DENTRO (botones). */}
+            <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase">Caja</h2>
             {pendingClosure ? (
               <div className="flex items-center gap-1.5 mt-1 text-xs text-success font-bold">
                 <span className="w-2 h-2 rounded-full bg-success animate-pulse" />

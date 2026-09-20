@@ -37,7 +37,8 @@ interface BackToVentaButtonProps {
 }
 
 export function BackToVentaButton({
-  label = 'Venta',
+  // GATE 1.3: el hub se llama "Ventas" (dominio) — el botón vuelve al hub.
+  label = 'Ventas',
   compact = false,
   className,
   targetView = 'sales-hub' as ViewType,

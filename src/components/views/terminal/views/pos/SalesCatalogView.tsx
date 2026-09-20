@@ -148,7 +148,7 @@ export default function SalesCatalogView() {
           </div>
           <div className="min-w-0">
             <h2 className="text-lg sm:text-xl font-black text-foreground tracking-tight uppercase leading-tight">
-              Tabla IPV
+              Tabla de Venta
             </h2>
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-tight">
               {catalog.isReadOnly

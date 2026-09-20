@@ -6,8 +6,8 @@
  * Arquitectura aprobada (GATE 0.1 + autorización GATE 1):
  *
  *   INICIO (destino fijo: dashboard — NO es sección)
- *   OPERACIÓN   → Terminal de Venta · Venta · Almacén · Logística · Costo ·
- *                 Trabajadores y Comisiones · Gestión de Tiendas · Redes
+ *   OPERACIÓN   → Vender (POS) · Ventas (hub admin) · Almacén · Logística ·
+ *                 Costo · Trabajadores y Comisiones · Gestión de Tiendas · Redes
  *   ANÁLISIS    → Dashboard de Tiendas · Tablero Dinámico · Inteligencia
  *                 Cambiaria · Reportes · Análisis ABC
  *   SISTEMA     → Ajustes · Usuarios · Roles · Salud · Monitoreo · Auditoría ·
@@ -41,6 +41,7 @@ import {
   Factory, UserCog, LayoutGrid, MessageCircle, Send, TrendingUp, Table2, DollarSign, Truck,
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
   Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet,
+  Receipt, RotateCcw, CreditCard, ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -108,27 +109,31 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
     description: 'El trabajo diario: vender, mover stock, recibir mercancía y gestionar el ciclo comercial.',
     roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
-      // PRIMARY — 1 clic (evidencia M-3: el clerk no debe pagar 2 clics diarios)
+      // PRIMARY — 1 clic (evidencia M-3: el clerk no debe pagar 2 clics diarios).
+      // GATE 1.3: label de ACCIÓN (verbo) — "Terminal de Venta" describía la
+      // tecnología; "Vender" describe la intención. El término técnico sobrevive
+      // como keyword (recognition over recall). Móvil ya usaba "Vender".
       {
         id: 'pos',
-        label: 'Terminal de Venta',
+        label: 'Vender',
         description: 'Venta rápida con carrito, atajos de teclado, escáner de código de barras y pago mixto. Incluye el modo Vale de Salida.',
         icon: Zap,
         type: 'item',
         navClass: 'primary',
         roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
-        keywords: ['vender', 'venta', 'pos', 'terminal', 'caja', 'ticket', 'factura', 'vale de salida'],
+        keywords: ['vender', 'venta', 'pos', 'terminal', 'terminal de venta', 'cobrar', 'facturar', 'ticket', 'factura', 'vale de salida'],
       },
-      // HUB — ciclo comercial completo
+      // HUB — administración del ciclo comercial (GATE 1.3: "Venta" → "Ventas",
+      // sustantivo de dominio, para eliminar la colisión Vender/Venta).
       {
         id: 'sales-hub',
-        label: 'Venta',
-        description: 'Centro del ciclo comercial: Tabla de Venta, Historial, Caja, Venta por Conteo, Devoluciones, Cotizaciones y cuentas.',
+        label: 'Ventas',
+        description: 'Administración del ciclo comercial: Tabla de Venta, Historial de Ventas, Caja, Venta por Conteo, Devoluciones, Cotizaciones y cuentas.',
         icon: ShoppingCart,
         type: 'item',
         navClass: 'hub',
         roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
-        keywords: ['venta', 'hub', 'tabla de venta', 'historial', 'arqueo', 'conteo', 'devoluciones', 'cotizaciones', 'cuentas'],
+        keywords: ['ventas', 'venta', 'gestión de ventas', 'tabla de venta', 'historial', 'arqueo', 'conteo', 'devoluciones', 'cotizaciones', 'cuentas'],
       },
       {
         id: 'almacen_gestion',
@@ -555,6 +560,93 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
  * Vistas contextuales o utilidades que no viven en el sidebar pero deben ser
  * descubribles (Command Palette / móvil). Una vista de MENÚ nunca va aquí.
  */
+/**
+ * GATE 1.3 — vistas del hub Ventas alcanzables por contexto (tarjetas) que
+ * deben ser DIRECTAMENTE descubribles en la palette (⌘K). `mobileHide: true`
+ * = palette-only: en móvil ya son alcanzables (tab Caja / sheet Más → Ventas)
+ * y no deben duplicarse en el sheet. Roles = roles del hub Ventas.
+ */
+const SALES_HUB_PALETTE_ENTRIES: (NavEntry & { route: NavRoute })[] = [
+  {
+    id: 'sales',
+    label: 'Historial de Ventas',
+    description: 'Consulta, anula, duplica y exporta ventas. Filtra por fecha, estado y método de pago.',
+    icon: Receipt,
+    type: 'item',
+    route: { view: 'sales' },
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+    mobileHide: true,
+    keywords: ['historial', 'ventas', 'ventas anteriores', 'registro de ventas', 'anulaciones', 'duplicar venta', 'facturas'],
+  },
+  {
+    // UN solo concepto Caja (arqueo + cierre de turno + reporte de entrega)
+    id: 'cash',
+    label: 'Caja',
+    description: 'Abre y cierra turnos, declara fondos, reconcilia efectivo y genera el reporte de entrega del día.',
+    icon: DollarSign,
+    type: 'item',
+    route: { view: 'cash' },
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+    mobileHide: true,
+    keywords: ['caja', 'arqueo', 'turno', 'cierre de caja', 'efectivo', 'fondo', 'reporte de entrega'],
+  },
+  {
+    id: 'inventory_count',
+    label: 'Venta por Conteo',
+    description: 'Cuenta existencias físicas al final del día y el sistema calcula ventas por diferencia.',
+    icon: ClipboardList,
+    type: 'item',
+    route: { view: 'inventory_count' },
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+    mobileHide: true,
+    keywords: ['conteo', 'venta por conteo', 'auditoría de stock', 'diferencia', 'existencias'],
+  },
+  {
+    id: 'devolutions',
+    label: 'Devoluciones',
+    description: 'Registra y gestiona devoluciones de ventas: reversa, duplicado y trazabilidad por tienda.',
+    icon: RotateCcw,
+    type: 'item',
+    route: { view: 'devolutions' },
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+    mobileHide: true,
+    keywords: ['devoluciones', 'devolución', 'reversa', 'reembolso', 'anular venta'],
+  },
+  {
+    id: 'quotations',
+    label: 'Cotizaciones',
+    description: 'Crea cotizaciones con búsqueda de productos y estados de seguimiento.',
+    icon: FileText,
+    type: 'item',
+    route: { view: 'quotations' },
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+    mobileHide: true,
+    keywords: ['cotizaciones', 'cotización', 'presupuesto', 'proforma'],
+  },
+  {
+    id: 'accounts-payable',
+    label: 'Cuentas por Pagar',
+    description: 'Antigüedad de saldos: recepciones, servicios recibidos y comisiones. Filtra por vencimiento, paga a proveedores y exporta a Excel.',
+    icon: CreditCard,
+    type: 'item',
+    route: { view: 'accounts_payable' },
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+    mobileHide: true,
+    keywords: ['cuentas por pagar', 'cxp', 'pagar', 'proveedores', 'vencimientos', 'deudas'],
+  },
+  {
+    id: 'accounts-receivable',
+    label: 'Cobros por Antigüedad',
+    description: 'Antigüedad de saldos de clientes: órdenes de producción/servicio con saldo pendiente. Filtra por vencimiento y exporta a CSV.',
+    icon: CreditCard,
+    type: 'item',
+    route: { view: 'accounts_receivable' },
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+    mobileHide: true,
+    keywords: ['cobros', 'cuentas por cobrar', 'cxc', 'clientes', 'antigüedad', 'por cobrar'],
+  },
+];
+
 export const ACTION_EXTENSIONS: (NavEntry & { route: NavRoute })[] = [
   {
     id: 'recepcion',
@@ -595,6 +687,8 @@ export const ACTION_EXTENSIONS: (NavEntry & { route: NavRoute })[] = [
     roles: ['admin', 'manager', 'encargado'],
     keywords: ['vitrina', 'pública', 'storefront', 'banner', 'carrusel', 'tienda online'],
   },
+  // GATE 1.3 — descubribles en palette (⌘K) sin duplicar navegación visible
+  ...SALES_HUB_PALETTE_ENTRIES,
 ];
 
 // ────────────────────────────────────────────────────────────────────

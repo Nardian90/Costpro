@@ -274,7 +274,8 @@ export default function SalesHistoryView() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase">Ventas</h2>
+          {/* GATE 1.3: alineado con tarjeta del hub y breadcrumb ("Historial de Ventas") */}
+          <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase">Historial de Ventas</h2>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Export Excel */}
             <button type="button"
