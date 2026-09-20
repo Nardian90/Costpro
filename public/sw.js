@@ -1,21 +1,40 @@
-// Service Worker for Costpro PWA — ULTRA-CONSERVATIVE EDITION
-// FIX-SW-HANG-V2 (2026-07-13): the previous SW still caused Cache.put
-// NetworkError on Strategy.js:207 because StaleWhileRevalidate was trying
-// to cache opaque/cross-origin responses (Workbox CDN import, etc.) and
-// failed silently but with uncaught promise rejections.
+// Service Worker for Costpro PWA — ULTRA-CONSERVATIVE + LOCAL-VENDOR EDITION
 //
-// This new SW is intentionally minimal:
+// FIX-SW-VENDOR (2026-09-20): Workbox ahora se carga desde /workbox/ (mismo
+// origen, archivos vendidos en public/workbox/). El importScripts anterior
+// apuntaba al CDN de Google (storage.googleapis.com) y en entornos sin acceso
+// externo (preview embedido) la evaluación del SW fallaba POR COMPLETO:
+// sin offline, sin background sync, y unhandledRejection en cada carga.
+// Además se añade un fallback vanilla por si algún día los archivos locales
+// no pudieran cargarse: el SW sigue ofreciendo offline.html + caché estático.
+//
+// FIX-SW-HANG-V2 (2026-07-13): (histórico) el SW anterior causaba Cache.put
+// NetworkError porque StaleWhileRevalidate intentaba cachear respuestas
+// opaque/cross-origin. Este SW es deliberadamente mínimo:
 //   - Precache /offline.html only
-//   - Cache /_next/static/* with CacheFirst (build artifacts, hashed, safe)
-//   - NetworkOnly for EVERYTHING else (no StaleWhileRevalidate, no NetworkFirst)
-//   - Explicit bypass for auth routes (let network handle exclusively)
-//   - offline.html fallback only for document requests when network fails
-//
-// This eliminates ALL Cache.put errors because:
-//   1. The only cache.put calls happen for /_next/static/* (same-origin, no CORS)
-//   2. NetworkOnly never calls cache.put
-//   3. Opaque/cross-origin responses are never routed through caching strategies
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
+//   - Cache /_next/static/* con CacheFirst (artefactos con hash, seguros)
+//   - NetworkOnly para TODO lo demás (sin StaleWhileRevalidate ni NetworkFirst)
+//   - Bypass explícito para rutas de auth (solo red)
+//   - offline.html como fallback solo para documentos cuando la red falla
+
+// ── Carga de Workbox vendido localmente (mismo origen, sin CDN externo) ──
+// Orden obligatorio: core primero, el resto depende de él en runtime.
+// Nombres según el loader oficial: workbox-<pkg>.prod.js
+let workboxAvailable = false;
+try {
+  importScripts(
+    '/workbox/workbox-core.prod.js',
+    '/workbox/workbox-precaching.prod.js',
+    '/workbox/workbox-routing.prod.js',
+    '/workbox/workbox-strategies.prod.js',
+    '/workbox/workbox-expiration.prod.js',
+    '/workbox/workbox-cacheable-response.prod.js',
+    '/workbox/workbox-background-sync.prod.js'
+  );
+  workboxAvailable = typeof self.workbox !== 'undefined';
+} catch (err) {
+  console.warn('[SW] Workbox local no pudo cargarse, usando fallback vanilla:', err);
+}
 
 self.addEventListener('periodicsync', (event) => {
   if (event.tag === 'sync-data') {
@@ -29,21 +48,31 @@ self.addEventListener('push', (event) => {
   );
 });
 
-if (workbox) {
-  console.log('[SW] Workbox loaded — ultra-conservative mode');
+// ── Rutas que el SW NUNCA debe interceptar (solo red, sin caché) ──
+const NEVER_INTERCEPT = [
+  /\/api\/auth\//,
+  /\/api\/sync\/batch/,
+  /\/login/,
+  /\/dashboard/,
+];
+
+const isCacheableStaticAsset = (url, request) => {
+  if (request.method !== 'GET') return false;
+  if (url.origin !== self.location.origin) return false;
+  if (!url.pathname.startsWith('/_next/static/')) return false;
+  // Dev static (chunks HMR cambian constantemente → errores de Cache.put)
+  if (url.pathname.includes('/development/')) return false;
+  if (url.pathname.includes('/webpack/')) return false;
+  return true;
+};
+
+if (workboxAvailable) {
+  console.log('[SW] Workbox local cargado — ultra-conservative mode');
 
   // Precache offline page only
   workbox.precaching.precacheAndRoute([
     { url: '/offline.html', revision: '3' }
   ]);
-
-  // ── Routes that must NEVER be touched by SW (let network handle exclusively) ──
-  const NEVER_INTERCEPT = [
-    /\/api\/auth\//,
-    /\/api\/sync\/batch/,
-    /\/login/,
-    /\/dashboard/,
-  ];
 
   // ── Default handler: NetworkOnly ──
   // NEVER serves cached content. User always sees fresh auth state.
@@ -55,18 +84,7 @@ if (workbox) {
   // These are same-origin, no CORS issues, never change (filename includes hash).
   // Safe to cache with CacheFirst + long expiration.
   workbox.routing.registerRoute(
-    ({url, request}) => {
-      // Only GET
-      if (request.method !== 'GET') return false;
-      // Only same-origin
-      if (url.origin !== self.location.origin) return false;
-      // Only /_next/static/*
-      if (!url.pathname.startsWith('/_next/static/')) return false;
-      // Skip dev static (HMR chunks change constantly, cause Cache.put errors)
-      if (url.pathname.includes('/development/')) return false;
-      if (url.pathname.includes('/webpack/')) return false;
-      return true;
-    },
+    ({url, request}) => isCacheableStaticAsset(url, request),
     new workbox.strategies.CacheFirst({
       cacheName: 'costpro-next-static-v3',
       plugins: [
@@ -115,7 +133,62 @@ if (workbox) {
   );
 
 } else {
-  console.log('[SW] Workbox failed to load');
+  // ─────────────────────────────────────────────────────────────
+  // FALLBACK VANILLA (solo si Workbox no pudo cargarse).
+  // Preserva lo esencial: offline.html para documentos + caché de
+  // /_next/static/* + passthrough de red para todo lo demás.
+  // En este modo degradado NO hay cola de background sync (la app
+  // mantiene su propio pending-sync en IndexedDB/localStorage).
+  // ─────────────────────────────────────────────────────────────
+  console.warn('[SW] Modo fallback vanilla activo (sin Workbox)');
+
+  const STATIC_CACHE = 'costpro-next-static-v3';
+
+  self.addEventListener('install', (event) => {
+    event.waitUntil(
+      caches.open(STATIC_CACHE)
+        .then(cache => cache.add('/offline.html').catch(() => {}))
+    );
+  });
+
+  self.addEventListener('fetch', (event) => {
+    const request = event.request;
+    if (request.method !== 'GET') return; // POST (incl. sync/batch) → red directa
+
+    const url = new URL(request.url);
+    if (url.origin !== self.location.origin) return;
+
+    if (NEVER_INTERCEPT.some(re => re.test(url.pathname))) return; // bypass total
+
+    if (isCacheableStaticAsset(url, request)) {
+      // Cache-first manual para estáticos con hash
+      event.respondWith(
+        caches.match(request).then(cached => {
+          if (cached) return cached;
+          return fetch(request).then(response => {
+            if (response && (response.status === 200 || response.status === 0)) {
+              const clone = response.clone();
+              caches.open(STATIC_CACHE)
+                .then(cache => cache.put(request, clone))
+                .catch(() => {}); // nunca romper por un fallo de caché
+            }
+            return response;
+          });
+        })
+      );
+      return;
+    }
+
+    if (request.destination === 'document') {
+      // Network-first para documentos, offline.html si la red falla
+      event.respondWith(
+        fetch(request).catch(() =>
+          caches.match('/offline.html').then(r => r || Response.error())
+        )
+      );
+    }
+    // Resto → sin respondWith (red directa por defecto)
+  });
 }
 
 // Lifecycle

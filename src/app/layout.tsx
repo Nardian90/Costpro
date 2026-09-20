@@ -238,7 +238,7 @@ export default async function RootLayout({
           nonce={nonce}
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }`
+            __html: `if('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function(){}); }`
           }}
         />
         {/* FIX-CSP (2026-07-13): DIAG debug script removed — was causing CSP

@@ -17,14 +17,16 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false, // FIX-INF-017
   },
   reactStrictMode: true, // FIX-INF-018
+  // FIX-SPLASH-DEV-ORIGINS (2026-09-20): el matcher de Next.js compara el HOSTNAME
+  // (sin protocolo) contra cada patrón (ver csrf-protection.js matchWildcardDomain).
+  // Los patrones con prefijo "https://" nunca matchean → todos los chunks /_next/*
+  // devolvían 403 al acceder vía el dominio preview → la app quedaba congelada en
+  // el splash (el HTML cargaba pero ningún JS se hidrataba).
+  // Patrón correcto: hostname puro, wildcard "*.space-z.ai" cubre cualquier sesión.
   allowedDevOrigins: [
-    'http://localhost:3000', // FIX-INF-009
-    'https://preview-chat-3d0c5abc-4abd-4c11-a041-35a333b52182.space-z.ai', // FIX-PREVIEW: dominio del preview del chat
-    'https://preview-3d0c5abc-4abd-4c11-a041-35a333b52182.space-z.ai', // FIX-PREVIEW: variante sin prefijo chat
-    'https://preview-chat-3f4a5e22-10b0-4e84-b19a-febe51e7a60a.space-z.ai', // FIX-PREVIEW: nueva sesión chat
-    'https://preview-3f4a5e22-10b0-4e84-b19a-febe51e7a60a.space-z.ai', // FIX-PREVIEW: nueva sesión variante
-    'https://space-z.ai', // FIX-PREVIEW: dominio raíz
-    'https://*.space-z.ai', // FIX-PREVIEW: wildcard para cualquier subdominio
+    'localhost',
+    'space-z.ai',
+    '*.space-z.ai', // FIX-PREVIEW: wildcard de subdominios (cualquier preview-chat-*)
   ],
   serverExternalPackages: [
     '@opentelemetry/api',
