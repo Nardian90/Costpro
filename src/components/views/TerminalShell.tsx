@@ -431,7 +431,7 @@ export default function TerminalShell() {
         case 'audit': return <ViewErrorBoundary viewName="Auditoría"><AuditGlobalView /></ViewErrorBoundary>;
         case 'inventory': return <ViewErrorBoundary viewName="Inventario"><InventoryView /></ViewErrorBoundary>;
         case 'catalog': return <ViewErrorBoundary viewName="Catálogo"><CatalogView /></ViewErrorBoundary>;
-        case 'cost-sheets': return <ViewErrorBoundary viewName="Hojas de Costo"><CostSheetView /></ViewErrorBoundary>;
+        case 'cost-sheets': return <ViewErrorBoundary viewName="Fichas de Costo"><CostSheetView /></ViewErrorBoundary>;
         case 'reports': return <ViewErrorBoundary viewName="Reportes"><ReportsView /></ViewErrorBoundary>;
         case 'exchange-intelligence': return <ViewErrorBoundary viewName="Inteligencia Cambiaria"><ExchangeIntelligenceView /></ViewErrorBoundary>;
         case 'received-services': return <ViewErrorBoundary viewName="Servicios Recibidos"><ReceivedServicesView /></ViewErrorBoundary>;

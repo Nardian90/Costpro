@@ -326,3 +326,148 @@ describe('Command Palette por rol', () => {
     expect(ids).toContain('recepcion');
   });
 });
+
+// ───────────────────────────────────────────────────────────────────────
+// GATE 1.4R — Remediación UX/IA · Fichas de Costo
+// (Arena FC P0, modos/acciones/herramientas en palette, breadcrumb de
+//  tabs técnicas, rename "Análisis de Fichas")
+// ───────────────────────────────────────────────────────────────────────
+
+describe('GATE 1.4R — Palette del dominio Costo', () => {
+  it('Arena FC es una acción de palette con ruta module-route a SU tab', () => {
+    const ids = getActionsForUser('admin').map(a => a.id);
+    expect(ids).toContain('arena-fc');
+    // No aterriza en el default del módulo (falsa pista prohibida §12)
+    expect(getNavigationRoute('arena-fc')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'arena-fc' });
+  });
+
+  it('modos, herramientas y acciones del editor están en palette (UX-003/UX-008)', () => {
+    const ids = getActionsForUser('admin').map(a => a.id);
+    for (const id of ['view-assisted', 'view-reading', 'templates', 'massive-gen', 'steel-calculator', 'tool-save', 'tool-import', 'tool-export-excel', 'tool-export-pdf']) {
+      expect(ids).toContain(id);
+    }
+  });
+
+  it('las acciones tool-* resuelven su tab (el puente existente ejecuta la acción)', () => {
+    expect(getNavigationRoute('tool-import')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'tool-import' });
+    expect(getNavigationRoute('tool-save')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'tool-save' });
+    expect(getNavigationRoute('tool-export-excel')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'tool-export-excel' });
+    expect(getNavigationRoute('tool-export-pdf')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'tool-export-pdf' });
+  });
+
+  it('las nuevas herramientas resuelven ruta module-route (massive-gen, steel-calculator)', () => {
+    expect(getNavigationRoute('massive-gen')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'massive-gen' });
+    expect(getNavigationRoute('steel-calculator')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'steel-calculator' });
+  });
+
+  it('"generar" NO duplica entradas: solo el módulo cubre la generación principal (§8)', () => {
+    const actions = getActionsForUser('admin');
+    const genHits = actions.filter(a =>
+      a.label.toLowerCase().includes('generar ficha') || a.keywords.includes('generar')
+    );
+    expect(genHits.map(a => a.id)).toEqual(['cost-sheets']);
+  });
+
+  it('las extensiones de Costo usan roles del dominio (clerk no las ve)', () => {
+    const clerkIds = getActionsForUser('clerk').map(a => a.id);
+    expect(clerkIds).not.toContain('arena-fc');
+    expect(clerkIds).not.toContain('tool-import');
+    const encargadoIds = getActionsForUser('encargado').map(a => a.id);
+    expect(encargadoIds).toContain('arena-fc');
+  });
+
+  it('las nuevas extensiones NO aparecen en el sheet móvil (mobileHide — módulo ya es alcanzable)', () => {
+    const ext = ACTION_EXTENSIONS.filter(e => e.mobileHide);
+    expect(ext.map(e => e.id)).toEqual(expect.arrayContaining(['arena-fc', 'view-assisted', 'templates']));
+  });
+
+  it('el test "caja" del GATE 1.3 sigue resolviendo UNA sola acción (sin contaminar keywords)', () => {
+    const actions = getActionsForUser('clerk');
+    const matching = actions.filter(a =>
+      a.label.toLowerCase().includes('caja') || a.keywords.includes('caja')
+    );
+    expect(matching.map(a => a.id)).toEqual(['cash']);
+  });
+});
+
+describe('GATE 1.4R — Breadcrumb de tabs técnicas (UX-002 en la fuente)', () => {
+  const MODULE_PATH = ['OPERACIÓN', 'Costo', 'Fichas de Costo']; // el componente antepone Home
+
+  it('arena-fc: path del módulo + leaf "Arena FC" (sin "Módulo No Disponible")', () => {
+    const items = getBreadcrumbForView('cost-sheets', '', 'arena-fc');
+    expect(items.map(i => i.label)).toEqual([...MODULE_PATH, 'Arena FC']);
+    expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
+  });
+
+  it('editor (main): leaf "Editor de Ficha"', () => {
+    const items = getBreadcrumbForView('cost-sheets', '', 'main');
+    expect(items.map(i => i.label)).toEqual([...MODULE_PATH, 'Editor de Ficha']);
+  });
+
+  it('plantillas, masiva y estructural: leaf con label del registro', () => {
+    expect(getBreadcrumbForView('cost-sheets', '', 'templates').map(i => i.label)).toEqual([...MODULE_PATH, 'Plantillas de Fichas']);
+    expect(getBreadcrumbForView('cost-sheets', '', 'massive-gen').map(i => i.label)).toEqual([...MODULE_PATH, 'Generación Masiva']);
+    expect(getBreadcrumbForView('cost-sheets', '', 'steel-calculator').map(i => i.label)).toEqual([...MODULE_PATH, 'Calculadora Estructural']);
+  });
+
+  it('modos (view-assisted / view-reading): breadcrumb del modo, no vista falsa', () => {
+    expect(getBreadcrumbForView('cost-sheets', '', 'view-assisted').map(i => i.label)).toEqual([...MODULE_PATH, 'Abrir Modo Asistido']);
+    expect(getBreadcrumbForView('cost-sheets', '', 'view-reading').map(i => i.label)).toEqual([...MODULE_PATH, 'Informe de la Ficha']);
+  });
+
+  it('cost-analytics sigue resolviendo como hoja de menú de ANÁLISIS', () => {
+    const items = getBreadcrumbForView('cost-sheets', '', 'cost-analytics');
+    expect(items.map(i => i.label)).toEqual(['ANÁLISIS', 'Análisis de Fichas']);
+  });
+
+  it('secciones internas sin registro conservan leaf "Fichas de Costo" (comportamiento previo)', () => {
+    const items = getBreadcrumbForView('cost-sheets', '', 'all-annexes');
+    expect(items.map(i => i.label)).toEqual([...MODULE_PATH]);
+  });
+
+  it('ninguna tab conocida produce "Módulo No Disponible"', () => {
+    for (const tab of ['gen-easy', 'main', 'templates', 'arena-fc', 'view-assisted', 'view-reading', 'tool-save', 'tool-import', 'tool-export-excel', 'tool-export-pdf', 'massive-gen', 'steel-calculator']) {
+      const items = getBreadcrumbForView('cost-sheets', '', tab);
+      expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
+    }
+  });
+});
+
+describe('GATE 1.4R — Semántica del nombre (§7)', () => {
+  it('el label de cost-analytics es "Análisis de Fichas" (no Tablero Dinámico)', () => {
+    const leaf = flattenNavigation().find(l => l.id === 'cost-analytics');
+    expect(leaf?.label).toBe('Análisis de Fichas');
+  });
+
+  it('"Tablero Dinámico" ya no existe como label en ninguna hoja', () => {
+    const legacy = flattenNavigation().filter(l => l.label === 'Tablero Dinámico');
+    expect(legacy).toEqual([]);
+  });
+
+  it('"ficha" descubre el análisis desde su dominio (keyword)', () => {
+    const leaf = flattenNavigation().find(l => l.id === 'cost-analytics');
+    expect(leaf?.keywords).toContain('fichas');
+    expect(leaf?.keywords).toContain('análisis de fichas');
+  });
+});
+
+describe('GATE 1.4R — Contrato anti-duplicación', () => {
+  it('Arena FC NO es hoja de menú (único camino: módulo + palette — sin duplicar navegación)', () => {
+    const menuIds = flattenNavigation().map(l => l.id);
+    expect(menuIds).not.toContain('arena-fc');
+  });
+
+  it('los modos y tool-* NO son hojas de menú (siguen siendo modo/acción, §9/§10)', () => {
+    const menuIds = flattenNavigation().map(l => l.id);
+    for (const id of ['view-assisted', 'view-reading', 'tool-save', 'tool-import', 'tool-export-excel', 'tool-export-pdf']) {
+      expect(menuIds).not.toContain(id);
+    }
+  });
+
+  it('los modos usan render por viewMode (no existe vista Asistido/Informe como destino de menú)', () => {
+    // Guard de roles: si alguien los convirtiera en menú, esto fallaría al
+    // existir como hojas. Aquí: siguen siendo tabs técnicas del módulo.
+    expect(isViewAllowedForRole('view-assisted', 'encargado')).toBe(true); // default-open técnico
+    expect(flattenNavigation().find(l => l.id === 'view-assisted')).toBeUndefined();
+  });
+});

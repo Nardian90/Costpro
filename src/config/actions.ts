@@ -57,13 +57,19 @@ function buildSystemActions(): Action[] {
   const derivedViews = flattenNavigation().map(toAction);
 
   // Extensiones: acciones que NO son vistas de menú (nueva recepción,
-  // calculadora, chat IA, vitrina) — con keywords curadas en la definición.
+  // calculadora, chat IA, vitrina, tabs del módulo Fichas de Costo —
+  // GATE 1.4R) — con keywords curadas en la definición.
+  // GATE 1.4R: `route: ext.id` (antes `ext.route.view` descartaba el `tab`):
+  // cada extensión resuelve su propia ruta en NAVIGATION_MAP (los ids de
+  // extensión siempre están en DEFINED_ROUTES por construcción), de modo que
+  // las entradas module-route (cost-sheets + tab) aterrizan en SU tab y no en
+  // el default del módulo — elimina la falsa pista estructural del palette.
   const extensions: Action[] = ACTION_EXTENSIONS.map(ext => ({
     id: ext.id,
     label: ext.label,
     icon: ext.icon,
     keywords: ext.keywords ?? [ext.label.toLowerCase()],
-    route: ext.route.view,
+    route: ext.id,
     roles: ext.roles,
     description: ext.description,
   }));

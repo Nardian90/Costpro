@@ -15,6 +15,7 @@
 import {
   NAVIGATION_SECTIONS,
   ACTION_EXTENSIONS,
+  COST_SHEETS_TABS,
   LEGACY_VIEW_ALIASES,
   isViewIdContractViolation,
   type NavEntry,
@@ -94,6 +95,10 @@ const COSTOS_ROUTES: Record<string, ModuleRoute> = {
   'gen-expert':       { type: 'module', view: 'cost-sheets', tab: 'gen-easy' },
   'templates':        { type: 'module', view: 'cost-sheets', tab: 'templates' },
   'arena-fc':         { type: 'module', view: 'cost-sheets', tab: 'arena-fc' },
+  // GATE 1.4R: herramientas contextuales con camino palette (deep-links ya
+  // funcionales en CostSheetView; solo faltaba la resolución de ruta)
+  'massive-gen':      { type: 'module', view: 'cost-sheets', tab: 'massive-gen' },
+  'steel-calculator': { type: 'module', view: 'cost-sheets', tab: 'steel-calculator' },
   'tool-import':      { type: 'module', view: 'cost-sheets', tab: 'tool-import' },
   'tool-save':        { type: 'module', view: 'cost-sheets', tab: 'tool-save' },
   'tool-export-excel':{ type: 'module', view: 'cost-sheets', tab: 'tool-export-excel' },
@@ -339,21 +344,30 @@ export function getBreadcrumbForView(
       }
     }
   } else if (currentView === 'cost-sheets' && activeCostSection) {
-    const costosTabRoutes: Record<string, string> = {
-      'cost-analytics': 'cost-analytics',
-      main: 'cost-sheet-editor',
-      'view-assisted': 'view-assisted',
-      'view-reading': 'view-reading',
-      'gen-easy': 'cost-sheets',
-      templates: 'templates',
-      'arena-fc': 'arena-fc',
-      'tool-import': 'tool-import',
-      'tool-save': 'tool-save',
-      'tool-export-excel': 'tool-export-excel',
-      'tool-export-pdf': 'tool-export-pdf',
-    };
-    const matchId = costosTabRoutes[activeCostSection];
-    if (matchId) activeId = matchId;
+    // GATE 1.4R (UX-002 — fix de fuente, mandato §13): las tabs técnicas del
+    // módulo resuelven su leaf label desde el registro COST_SHEETS_TABS
+    // colgando del path del módulo (OPERACIÓN > Costo > Fichas de Costo >
+    // <tab>). Antes se mapeaban a IDs fuera del árbol de definición →
+    // findDefinitionPath devolvía [] → falso "Módulo No Disponible".
+    // `cost-analytics` sigue resolviendo como hoja de menú (ANÁLISIS); las
+    // secciones internas del editor sin registro (header, anexos, kpis…)
+    // conservan el comportamiento previo (leaf = la propia hoja del módulo).
+    if (activeCostSection === 'cost-analytics') {
+      activeId = 'cost-analytics';
+    } else {
+      const tabMeta = COST_SHEETS_TABS.find(t => t.id === activeCostSection);
+      if (tabMeta) {
+        const modulePath = findDefinitionPath('cost-sheets');
+        const items: BreadcrumbItem[] = modulePath.map((p, i) => ({
+          label: p.label,
+          view: i < modulePath.length - 1 ? p.id : undefined,
+          isCurrent: false,
+        }));
+        items.push({ label: tabMeta.label, isCurrent: true });
+        return items;
+      }
+      // Sin registro: activeId queda 'cost-sheets' → path genérico de abajo.
+    }
   }
 
   const path = findDefinitionPath(activeId);

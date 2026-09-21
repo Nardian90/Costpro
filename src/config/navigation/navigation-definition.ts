@@ -42,6 +42,7 @@ import {
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
   Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet,
   Receipt, RotateCcw, CreditCard, ClipboardList,
+  Swords, Wand2, FolderOpen, Upload, Save, Download,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -240,7 +241,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             type: 'item',
             route: { view: 'cost-sheets', tab: 'gen-easy' },
             roles: ['admin', 'manager', 'encargado', 'costo'],
-            keywords: ['ficha', 'costo', 'generar', 'costeo', 'plantillas', 'arena'],
+            keywords: ['ficha', 'costo', 'generar', 'generar ficha', 'costeo', 'plantillas', 'arena'],
           },
           {
             id: 'estructura-costo',
@@ -342,14 +343,18 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         keywords: ['dashboard', 'tiendas', 'kpi', 'indicadores', 'consolidado', 'análisis'],
       },
       {
-        // Renombrado aprobado: "Tablero Principal" → "Tablero Dinámico" (ANÁLISIS)
+        // GATE 1.4R (UX-004/§7): "Tablero Dinámico" no comunicaba QUÉ analiza y
+        // colisionaba con Tablero Consolidado (Inicio) y Dashboard de Tiendas.
+        // Label = "Análisis de Fichas" (qué analiza, no cómo está implementado).
+        // El viewId técnico `cost-analytics` se conserva (sin migraciones internas).
+        // Historial: "Tablero Principal" → "Tablero Dinámico" → "Análisis de Fichas".
         id: 'cost-analytics',
-        label: 'Tablero Dinámico',
-        description: 'Tabla dinámica tipo Power BI para analizar costos, márgenes y rentabilidad con drag & drop, plantillas y gráficos.',
+        label: 'Análisis de Fichas',
+        description: 'Analiza costos, márgenes y rentabilidad de tus fichas de costo: tabla dinámica con drag & drop, plantillas y gráficos.',
         icon: Table2,
         type: 'item',
         route: { view: 'cost-sheets', tab: 'cost-analytics' },
-        keywords: ['tablero', 'dinámico', 'pivot', 'márgenes', 'rentabilidad', 'power bi', 'productos'],
+        keywords: ['análisis de fichas', 'fichas', 'tablero', 'dinámico', 'análisis', 'pivot', 'márgenes', 'rentabilidad', 'costos', 'productos'],
       },
       {
         id: 'exchange-intelligence',
@@ -647,6 +652,188 @@ const SALES_HUB_PALETTE_ENTRIES: (NavEntry & { route: NavRoute })[] = [
   },
 ];
 
+// ────────────────────────────────────────────────────────────────────
+// GATE 1.4R — REGISTRO DE TABS TÉCNICAS DEL MÓDULO FICHAS DE COSTO
+// ────────────────────────────────────────────────────────────────────
+/**
+ * Fuente única con LABEL para las tabs técnicas de `cost-sheets` (GATE 1.4
+ * UX-002: TECHNICAL_VIEW_IDS era una lista plana sin metadatos y el
+ * breadcrumb caía en "Módulo No Disponible"; UX-003/UX-008: modos,
+ * herramientas y acciones del editor eran palette-invisibles).
+ *
+ * Clasificación VISTA/MODO/ACCIÓN/HERRAMIENTA (mandato GATE 1.4R §2/§4):
+ *   - vista        → Arena FC (capacidad autónoma del dominio, beta)
+ *   - modo         → view-assisted / view-reading (estados del editor;
+ *                    NUNCA tarjetas ni vistas — render por viewMode)
+ *   - accion       → tool-* (operaciones sobre la ficha abierta; los puentes
+ *                    existentes en useCostSheetActions ejecutan y vuelven a `main`)
+ *   - herramienta  → templates / massive-gen / steel-calculator (contextuales,
+ *                    con camino de descubrimiento palette — sin menú)
+ *
+ * `palette: true` publica la entrada en ACTION_EXTENSIONS (⌘K); `mobileHide`
+ * las excluye del sheet móvil (en móvil se alcanzan dentro del módulo).
+ * El breadcrumb consume `label` vía navigation-map (fuente corregida, sin
+ * excepciones aisladas — mandato §13).
+ */
+export interface CostSheetTabMeta {
+  id: string;              // activeCostSection (tab técnica)
+  label: string;           // label de usuario (palette + breadcrumb)
+  description: string;
+  keywords: string[];
+  kind: 'vista' | 'modo' | 'accion' | 'herramienta';
+  icon: LucideIcon;
+  isBeta?: boolean;
+  palette: boolean;
+  mobileHide?: boolean;
+}
+
+export const COST_SHEETS_TABS: CostSheetTabMeta[] = [
+  {
+    id: 'gen-easy',
+    label: 'Generar Ficha',
+    description: 'Crea fichas de costo: generación rápida o masiva desde Excel/inventario.',
+    keywords: ['generar ficha', 'generar', 'nueva ficha', 'crear ficha', 'gen fácil'],
+    kind: 'vista',
+    icon: Zap,
+    // palette: false — la entrada de menú "Fichas de Costo" ya cubre este
+    // destino (keyword 'generar'); duplicarlo en palette crearía exactamente
+    // el ruido multi-entrada que prohíbe el mandato §8. Sirve para breadcrumb.
+    palette: false,
+    mobileHide: true,
+  },
+  {
+    id: 'main',
+    label: 'Editor de Ficha',
+    description: 'Editor completo de la ficha de costo (núcleo del módulo).',
+    keywords: ['editor', 'ficha', 'estructura de costos'],
+    kind: 'vista',
+    icon: FileText,
+    // El editor es el núcleo contextual del módulo: se alcanza al abrir/editar
+    // una ficha (y desde palette vía las ACCIONES que operan sobre él).
+    palette: false,
+    mobileHide: true,
+  },
+  {
+    id: 'arena-fc',
+    label: 'Arena FC',
+    description: 'Compara fichas de costo lado a lado: motor de cálculo y exportación del duelo (beta).',
+    keywords: ['arena', 'comparar', 'comparación', 'versus', 'vs', 'duelo', 'fichas'],
+    kind: 'vista',
+    icon: Swords,
+    isBeta: true,
+    palette: true,
+    mobileHide: true,
+  },
+  {
+    id: 'view-assisted',
+    label: 'Abrir Modo Asistido',
+    description: 'Completa la ficha guiado paso a paso (modo del editor).',
+    keywords: ['asistido', 'modo asistido', 'guiado', 'paso a paso', 'wizard'],
+    kind: 'modo',
+    icon: Wand2,
+    palette: true,
+    mobileHide: true,
+  },
+  {
+    id: 'view-reading',
+    label: 'Informe de la Ficha',
+    description: 'Lee la ficha como informe narrativo presentable (modo del editor).',
+    keywords: ['informe', 'informe de ficha', 'lectura', 'narrativo', 'presentable'],
+    kind: 'modo',
+    icon: ClipboardList,
+    palette: true,
+    mobileHide: true,
+  },
+  {
+    id: 'templates',
+    label: 'Plantillas de Fichas',
+    description: 'Explora plantillas predefinidas para arrancar una ficha.',
+    keywords: ['plantillas', 'plantilla', 'modelos', 'ejemplos', 'formatos'],
+    kind: 'herramienta',
+    icon: FolderOpen,
+    palette: true,
+    mobileHide: true,
+  },
+  {
+    id: 'massive-gen',
+    label: 'Generación Masiva',
+    description: 'Genera fichas en lote desde Excel o el inventario (tab Experta de Generar).',
+    keywords: ['masiva', 'masivo', 'lote', 'batch', 'varias fichas'],
+    kind: 'herramienta',
+    icon: Layers,
+    palette: true,
+    mobileHide: true,
+  },
+  {
+    id: 'steel-calculator',
+    label: 'Calculadora Estructural',
+    description: 'Calcula costos de estructuras de acero: perfiles, pesos y precios.',
+    keywords: ['calculadora estructural', 'acero', 'perfiles', 'estructura metálica', 'steel'],
+    kind: 'herramienta',
+    icon: Calculator,
+    palette: true,
+    mobileHide: true,
+  },
+  {
+    id: 'tool-save',
+    label: 'Guardar ficha (JSON)',
+    description: 'Descarga la ficha actual como archivo JSON (⌘S).',
+    keywords: ['guardar', 'guardar ficha', 'json', 'descargar', 'backup', 'respaldo'],
+    kind: 'accion',
+    icon: Save,
+    palette: true,
+    mobileHide: true,
+  },
+  {
+    id: 'tool-import',
+    label: 'Importar ficha (JSON)',
+    description: 'Carga un archivo JSON de una ficha existente.',
+    keywords: ['importar', 'importar json', 'json', 'cargar', 'archivo', 'restaurar ficha'],
+    kind: 'accion',
+    icon: Upload,
+    palette: true,
+    mobileHide: true,
+  },
+  {
+    id: 'tool-export-excel',
+    label: 'Exportar ficha a Excel',
+    description: 'Exporta la ficha a Excel con fórmulas dinámicas.',
+    keywords: ['excel', 'exportar excel', 'csv', 'hoja de cálculo', 'planilla'],
+    kind: 'accion',
+    icon: FileText,
+    palette: true,
+    mobileHide: true,
+  },
+  {
+    id: 'tool-export-pdf',
+    label: 'Exportar ficha a PDF',
+    description: 'Genera el PDF oficial de la ficha (formato Res. 148/2023).',
+    keywords: ['pdf', 'exportar pdf', 'imprimir', 'resolución 148', 'formato oficial'],
+    kind: 'accion',
+    icon: Download,
+    palette: true,
+    mobileHide: true,
+  },
+];
+
+/** Roles del dominio Costo (heredados de la entrada `cost-sheets`). */
+const COSTO_DOMAIN_ROLES = ['admin', 'manager', 'encargado', 'costo'];
+
+/** Tabs del módulo publicadas como acciones de palette (⌘K). */
+const COST_SHEETS_PALETTE_ENTRIES: (NavEntry & { route: NavRoute })[] =
+  COST_SHEETS_TABS.filter(t => t.palette).map(t => ({
+    id: t.id,
+    label: t.label,
+    description: t.description,
+    icon: t.icon,
+    type: 'item' as const,
+    route: { view: 'cost-sheets', tab: t.id },
+    roles: COSTO_DOMAIN_ROLES,
+    mobileHide: t.mobileHide,
+    isBeta: t.isBeta,
+    keywords: t.keywords,
+  }));
+
 export const ACTION_EXTENSIONS: (NavEntry & { route: NavRoute })[] = [
   {
     id: 'recepcion',
@@ -689,6 +876,9 @@ export const ACTION_EXTENSIONS: (NavEntry & { route: NavRoute })[] = [
   },
   // GATE 1.3 — descubribles en palette (⌘K) sin duplicar navegación visible
   ...SALES_HUB_PALETTE_ENTRIES,
+  // GATE 1.4R — tabs del módulo Fichas de Costo (Arena FC, modos, herramientas
+  // y acciones del editor) descubribles en palette sin convertirse en vistas
+  ...COST_SHEETS_PALETTE_ENTRIES,
 ];
 
 // ────────────────────────────────────────────────────────────────────

@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Zap, Wand2 } from 'lucide-react';
+import { Zap, Wand2, Swords, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useUIStore } from '@/store';
 import CostSheetQuickMode from './CostSheetQuickMode';
 import CostSheetMassiveGenerator from './CostSheetMassiveGenerator';
 
@@ -54,6 +55,7 @@ export function GenEasyView({
   onMappingChange,
 }: GenEasyViewProps) {
   const t = useTranslations('costSheet');
+  const setActiveCostSection = useUIStore((s) => s.setActiveCostSection);
   const [activeTab, setActiveTab] = useState<GenEasyTab>('quick');
   const [isQuickModeGenerating, setIsQuickModeGenerating] = useState(false);
 
@@ -69,6 +71,35 @@ export function GenEasyView({
           Crea fichas de costo de forma rápida o masiva
         </p>
       </div>
+
+      {/* GATE 1.4R — P0 UX-001: camino visible y semántico hacia Arena FC
+          (mandato §6: Fichas de Costo → Arena FC). Único trigger de UI del
+          módulo hacia el comparador — reutiliza ArenaFC existente vía la
+          tab técnica arena-fc (0 duplicación de componente/motor/ruta). */}
+      <button
+        type="button"
+        onClick={() => setActiveCostSection('arena-fc')}
+        aria-label="Abrir Arena FC: comparar fichas de costo lado a lado"
+        className={cn(
+          "w-full group flex items-center gap-4 px-4 sm:px-5 py-3.5 rounded-2xl border text-left",
+          "border-primary/25 bg-primary/5 hover:bg-primary/10 hover:border-primary/40",
+          "transition-all active:scale-[0.99] min-h-[56px]"
+        )}
+      >
+        <span className="w-10 h-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Swords className="w-5 h-5 text-primary" aria-hidden="true" />
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="flex items-center gap-2">
+            <span className="text-sm font-black uppercase tracking-wide text-foreground">Arena FC</span>
+            <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-primary/15 text-primary">Beta</span>
+          </span>
+          <span className="block text-xs text-muted-foreground mt-0.5">
+            ¿Ya tienes fichas? Compara dos fichas de costo lado a lado
+          </span>
+        </span>
+        <ChevronRight className="w-5 h-5 shrink-0 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" aria-hidden="true" />
+      </button>
 
       {/* Tabs internos: Rápida / Experta */}
       <div className="w-full">
