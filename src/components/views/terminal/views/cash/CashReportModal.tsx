@@ -1471,6 +1471,12 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
   const filterSales = (s: any) => (!filterCurrency || s.currency === filterCurrency) && (!filterMethod || s.payment_method === filterMethod);
   const filterPayments = (p: any) => (!filterCurrency || p.currency === filterCurrency) && (!filterMethod || p.payment_method === filterMethod);
 
+  // GATE 1.3R (P1): la vista Caja quedaba BLOQUEADA — este modal se montaba
+  // siempre (CashClosureView lo renderiza incondicionalmente) y su render
+  // ignoraba el prop `open`, por lo que X/Escape/backdrop no podían cerrarlo.
+  // El guard respeta el contrato del prop sin tocar la lógica del reporte.
+  if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-background/80 backdrop-blur-sm" onClick={onClose}>
       <div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="cash-title" tabIndex={-1}
