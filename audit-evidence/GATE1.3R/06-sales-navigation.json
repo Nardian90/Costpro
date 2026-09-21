@@ -1,0 +1,229 @@
+{
+  "login": {
+    "terminalRendered": true,
+    "url": "http://preview-test.space-z.ai:3000/"
+  },
+  "sidebarWidth": 0,
+  "sidebarOperacion": {
+    "hasVender": true,
+    "hasVentas": true,
+    "items": [
+      "COSTPRO",
+      "⌘K",
+      "/INICIO",
+      "Chat con DarianAI",
+      "Vender",
+      "Ventas",
+      "Almacén",
+      "Logística",
+      "Costo",
+      "Trabajadores y Comisiones",
+      "Gestión de Tiendas",
+      "Redes",
+      "Mi Perfil",
+      "Salir"
+    ]
+  },
+  "vender1click": {
+    "url": "http://preview-test.space-z.ai:3000/?view=pos",
+    "esPos": true
+  },
+  "hub": {
+    "h2": "Ventas",
+    "subtitleOk": true,
+    "primaryCards": [
+      true,
+      true,
+      true
+    ],
+    "featuredFullWidth": true,
+    "otrasOpciones": true,
+    "secondaryPresent": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "secondaryOrderOk": true
+  },
+  "venderDesdeHub": {
+    "url": "http://preview-test.space-z.ai:3000/?view=pos",
+    "esPos": true
+  },
+  "cajaDesdeHub": {
+    "url": "http://preview-test.space-z.ai:3000/?view=cash"
+  },
+  "historialDesdeHub": {
+    "url": "http://preview-test.space-z.ai:3000/?view=sales"
+  },
+  "palette": {
+    "caja": [],
+    "vender": [],
+    "ventas": [],
+    "venta": [],
+    "terminal": [],
+    "historial": [],
+    "devoluciones": [],
+    "cotizaciones": [],
+    "conteo": [],
+    "cobros": []
+  },
+  "deepLinks": {
+    "pos": {
+      "err": true,
+      "heading": "Vender",
+      "terminal": false
+    },
+    "sales-hub": {
+      "err": true,
+      "heading": "Ventas",
+      "terminal": true
+    },
+    "cash": {
+      "err": true,
+      "heading": "Caja",
+      "terminal": true
+    },
+    "sales": {
+      "err": true,
+      "heading": "Historial de Ventas",
+      "terminal": true
+    },
+    "sales_catalog": {
+      "err": true,
+      "heading": "Tabla de Venta",
+      "terminal": false
+    },
+    "inventory_count": {
+      "err": true,
+      "heading": "Venta por Conteo",
+      "terminal": false
+    },
+    "devolutions": {
+      "err": true,
+      "heading": "Devoluciones",
+      "terminal": false
+    },
+    "quotations": {
+      "err": true,
+      "heading": "Cotizaciones",
+      "terminal": false
+    },
+    "accounts_payable": {
+      "err": true,
+      "heading": "Cuentas por Pagar",
+      "terminal": false
+    },
+    "accounts_receivable": {
+      "err": true,
+      "heading": "Cobros por Antigüedad",
+      "terminal": false
+    },
+    "cash_report": {
+      "err": true,
+      "heading": "Reporte de Entrega",
+      "terminal": false
+    }
+  },
+  "darkBase": {
+    "html": "rgba(0, 0, 0, 0)",
+    "main": "rgba(0, 0, 0, 0)",
+    "sidebar": "rgb(10, 10, 10)",
+    "mode": "mode-enhanced"
+  },
+  "perfMode": {
+    "html": "rgb(18, 18, 18)",
+    "main": "rgb(18, 18, 18)",
+    "sidebar": "rgb(10, 10, 10)",
+    "mode": "mode-performance"
+  },
+  "perfViewports": {
+    "375": {
+      "htmlBg": "rgb(18, 18, 18)",
+      "mode": "mode-performance",
+      "overflowPx": 0
+    },
+    "390": {
+      "htmlBg": "rgb(18, 18, 18)",
+      "mode": "mode-performance",
+      "overflowPx": 0
+    },
+    "1024": {
+      "htmlBg": "rgb(18, 18, 18)",
+      "mode": "mode-performance",
+      "overflowPx": 0
+    },
+    "1280": {
+      "htmlBg": "rgb(18, 18, 18)",
+      "mode": "mode-performance",
+      "overflowPx": 0
+    }
+  },
+  "darkViewports": {
+    "1024": {
+      "htmlBg": "rgba(0, 0, 0, 0)",
+      "mainBg": "rgba(0, 0, 0, 0)",
+      "sidebarBg": "rgb(10, 10, 10)",
+      "mode": "mode-enhanced",
+      "overflowPx": 0
+    },
+    "1280": {
+      "htmlBg": "rgba(0, 0, 0, 0)",
+      "mainBg": "rgba(0, 0, 0, 0)",
+      "sidebarBg": "rgb(10, 10, 10)",
+      "mode": "mode-enhanced",
+      "overflowPx": 0
+    },
+    "1440": {
+      "htmlBg": "rgba(0, 0, 0, 0)",
+      "mainBg": "rgba(0, 0, 0, 0)",
+      "sidebarBg": "rgb(10, 10, 10)",
+      "mode": "mode-enhanced",
+      "overflowPx": 0
+    }
+  },
+  "noviceTest": {
+    "vender": {
+      "clicks": 1,
+      "url": "http://preview-test.space-z.ai:3000/"
+    },
+    "caja": {
+      "clicks": 2,
+      "url": "http://preview-test.space-z.ai:3000/?view=cash"
+    },
+    "historial": {
+      "clicks": 2,
+      "url": "http://preview-test.space-z.ai:3000/?view=sales"
+    },
+    "devoluciones": {
+      "clicks": 2,
+      "url": "http://preview-test.space-z.ai:3000/?view=devolutions"
+    },
+    "cotizaciones": {
+      "clicks": 2,
+      "url": "http://preview-test.space-z.ai:3000/?view=quotations"
+    },
+    "cobros": {
+      "clicks": 2,
+      "url": "http://preview-test.space-z.ai:3000/?view=accounts_receivable"
+    },
+    "conteo": {
+      "clicks": 2,
+      "url": "http://preview-test.space-z.ai:3000/?view=inventory_count"
+    }
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Error fetching products: Error: Se requiere storeId\n    at fetchProducts (http://preview-test.space-z.ai:3000/_next/static/chunks/src_0b_hlm2._.js:2801:23)",
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Error fetching products: Error: Se requiere storeId\n    at fetchProducts (http://preview-test.space-z.ai:3000/_next/static/chunks/src_0b_hlm2._.js:2801:23)",
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Error fetching products: Error: Se requiere storeId\n    at fetchProducts (http://preview-test.space-z.ai:3000/_next/static/chunks/src_0b_hlm2._.js:2801:23)",
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Error fetching products: Error: Se requiere storeId\n    at fetchProducts (http://preview-test.space-z.ai:3000/_next/static/chunks/src_0b_hlm2._.js:2801:23)",
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Error fetching products: Error: Se requiere storeId\n    at fetchProducts (http://preview-test.space-z.ai:3000/_next/static/chunks/src_0b_hlm2._.js:2801:23)"
+  ]
+}

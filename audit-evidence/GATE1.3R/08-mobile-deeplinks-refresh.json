@@ -1,0 +1,19 @@
+{
+  "cashHeading": "Caja",
+  "afterRefresh": {
+    "url": "http://preview-test.space-z.ai:3000/?view=cash",
+    "heading": "Caja"
+  },
+  "afterBack": {
+    "url": "http://preview-test.space-z.ai:3000/"
+  },
+  "afterForward": {
+    "url": "http://preview-test.space-z.ai:3000/?view=cash",
+    "heading": "Caja"
+  },
+  "pageErrors": [],
+  "fresh": {
+    "landingOk": true,
+    "title": "CostPro — Plataforma Multi-Tienda: Gestión, Inventario y Vitrina Digital"
+  }
+}

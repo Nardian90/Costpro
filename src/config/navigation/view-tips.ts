@@ -37,7 +37,7 @@ export const VIEW_TIPS: Record<string, string> = {
   'exchange-intelligence': 'Simula escenarios de devaluación cambiaria',
   'reports': 'Diseña reportes con filtros personalizados',
   'pos': 'Escáner de código de barras integrado — presiona F2',
-  'sales-hub': 'Nueva Venta, Tabla de Venta, Historial y Caja en un solo lugar',
+  'sales-hub': 'Vender, Caja e Historial al frente; el resto en Otras opciones',
   'ofertas': 'Crea promociones y combos activos',
   'inventory': 'Filtra por stock bajo para reabastecer',
   'received-services': 'Distribuye costos de servicios entre recepciones',

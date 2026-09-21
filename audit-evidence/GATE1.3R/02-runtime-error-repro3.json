@@ -1,0 +1,121 @@
+{
+  "step1": {
+    "cachedTotal": 40,
+    "nextStatic": 39
+  },
+  "step2_errors": [],
+  "step3_stale": {
+    "checked": 15,
+    "deadOrErr": 0,
+    "sameUrlDiffContent": 0,
+    "detail": [
+      {
+        "u": "src_components_landing_demo_1hxc4yn._.js",
+        "st": 200,
+        "cachedBytes": 1485,
+        "serverBytes": 1485,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "src_05nizxw._.js",
+        "st": 200,
+        "cachedBytes": 84013,
+        "serverBytes": 84013,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "src_components_0ua7eff._.js",
+        "st": 200,
+        "cachedBytes": 1160936,
+        "serverBytes": 1160936,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "node_modules_0h8-q8r._.js",
+        "st": 200,
+        "cachedBytes": 419247,
+        "serverBytes": 419247,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "0c89a48fa5027cee-s.p.2cyn07wtgehh0.woff2",
+        "st": 200,
+        "cachedBytes": 21206,
+        "serverBytes": 21206,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "797e433ab948586e-s.p.0r6juujl39pe6.woff2",
+        "st": 200,
+        "cachedBytes": 21875,
+        "serverBytes": 21875,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2",
+        "st": 200,
+        "cachedBytes": 45839,
+        "serverBytes": 45839,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "caa3a2e1cccd8315-s.p.0wgildi0cnwt9.woff2",
+        "st": 200,
+        "cachedBytes": 27718,
+        "serverBytes": 27718,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "[root-of-the-server]__1oifaac._.css",
+        "st": 200,
+        "cachedBytes": 666791,
+        "serverBytes": 666791,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "[turbopack]_browser_dev_hmr-client_hmr-client_ts_1haxkf",
+        "st": 200,
+        "cachedBytes": 594,
+        "serverBytes": 594,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "node_modules_next_dist_compiled_next-devtools_index_090",
+        "st": 200,
+        "cachedBytes": 864109,
+        "serverBytes": 864109,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "node_modules_next_dist_compiled_react-dom_096_9a-._.js",
+        "st": 200,
+        "cachedBytes": 1062157,
+        "serverBytes": 1062157,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "node_modules_next_dist_compiled_1amofcm._.js",
+        "st": 200,
+        "cachedBytes": 144344,
+        "serverBytes": 144344,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "node_modules_next_dist_client_0_90u2t._.js",
+        "st": 200,
+        "cachedBytes": 893298,
+        "serverBytes": 893298,
+        "sameUrlDiffContent": false
+      },
+      {
+        "u": "_1anvha4._.js",
+        "st": 200,
+        "cachedBytes": 826,
+        "serverBytes": 826,
+        "sameUrlDiffContent": false
+      }
+    ]
+  },
+  "step4_errors": [],
+  "step5_worktree": "?? audit-evidence/GATE1.3R/"
+}

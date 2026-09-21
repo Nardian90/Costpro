@@ -1,0 +1,160 @@
+{
+  "paletteDom": {
+    "open": false,
+    "inputs": [
+      {
+        "ph": "BUSCAR...",
+        "visible": true
+      },
+      {
+        "ph": "Buscar o ejecutar acción...",
+        "visible": true
+      }
+    ],
+    "bodySample": [
+      "COMANDO"
+    ]
+  },
+  "paletteResults": {
+    "caja": [
+      "CajaAbre y cierra turnos, declara fondos, reconcil",
+      "Trabajadores y ComisionesCRUD de trabajadores por ",
+      "AcademiaFlashcards con repetición espaciada (SRS) "
+    ],
+    "vender": [
+      "VenderVenta rápida con carrito, atajos de teclado,",
+      "AcademiaFlashcards con repetición espaciada (SRS) "
+    ],
+    "ventas": [
+      "VentasAdministración del ciclo comercial: Tabla de",
+      "Historial de VentasConsulta, anula, duplica y expo",
+      "ReportesDiseña y genera reportes profesionales en ",
+      "InventarioStock actual por producto, catálogo maes",
+      "VenderVenta rápida con carrito, atajos de teclado,",
+      "Ajustes DocumentalesAjustes de inventario con just",
+      "Venta por ConteoCuenta existencias físicas al fina",
+      "Cuentas por PagarAntigüedad de saldos: recepciones"
+    ],
+    "venta": [
+      "VentasAdministración del ciclo comercial: Tabla de",
+      "VenderVenta rápida con carrito, atajos de teclado,",
+      "Historial de VentasConsulta, anula, duplica y expo",
+      "Venta por ConteoCuenta existencias físicas al fina",
+      "InventarioStock actual por producto, catálogo maes",
+      "ReportesDiseña y genera reportes profesionales en ",
+      "Ajustes DocumentalesAjustes de inventario con just",
+      "DevolucionesRegistra y gestiona devoluciones de ve"
+    ],
+    "terminal": [
+      "VenderVenta rápida con carrito, atajos de teclado,"
+    ],
+    "historial": [
+      "Historial de VentasConsulta, anula, duplica y expo",
+      "VentasAdministración del ciclo comercial: Tabla de",
+      "RecepcionesHistorial de recepciones de mercancía. ",
+      "CalculadoraCalculadora Pro con historial, memoria "
+    ],
+    "devoluciones": [
+      "DevolucionesRegistra y gestiona devoluciones de ve",
+      "VentasAdministración del ciclo comercial: Tabla de"
+    ],
+    "cotizaciones": [
+      "CotizacionesCrea cotizaciones con búsqueda de prod",
+      "VentasAdministración del ciclo comercial: Tabla de"
+    ],
+    "conteo": [
+      "Venta por ConteoCuenta existencias físicas al fina",
+      "VentasAdministración del ciclo comercial: Tabla de",
+      "Costeo DinámicoCosto real de reposición absorbiend",
+      "Fichas de CostoHerramienta de fichas de costo: Gen"
+    ],
+    "cobros": [
+      "Cobros por AntigüedadAntigüedad de saldos de clien"
+    ]
+  },
+  "deepErrInspect": {
+    "hits": [
+      {
+        "text": "self.__next_f.push([1,\"b:I[\\\"[project]/node_modules/next/dist/client/components/",
+        "tag": "SCRIPT",
+        "visible": false,
+        "cls": ""
+      }
+    ],
+    "posVisible": true
+  },
+  "darkBody": {
+    "htmlCls": "h-full dark mode-enhanced",
+    "htmlBg": "rgba(0, 0, 0, 0)",
+    "bodyBg": "rgb(18, 18, 18)",
+    "mainBg": "rgba(0, 0, 0, 0)"
+  },
+  "mobileTabs": [
+    {
+      "label": "Vender",
+      "visible": true,
+      "box": 36
+    },
+    {
+      "label": "Ventas",
+      "visible": true,
+      "box": 36
+    },
+    {
+      "label": "Vender",
+      "visible": true,
+      "box": 50
+    },
+    {
+      "label": "Recibir",
+      "visible": true,
+      "box": 50
+    },
+    {
+      "label": "Inventario",
+      "visible": true,
+      "box": 50
+    },
+    {
+      "label": "Caja",
+      "visible": true,
+      "box": 50
+    },
+    {
+      "label": "Más",
+      "visible": true,
+      "box": 50
+    }
+  ],
+  "mobileVenderTap": {
+    "url": "http://preview-test.space-z.ai:3000/?view=pos",
+    "esPos": true
+  },
+  "mobileVentasHub": {
+    "url": "?view=sales-hub",
+    "h2Ventas": true,
+    "cards": [
+      "Vender",
+      "Caja",
+      "Historial de Ventas",
+      "Tabla de Venta",
+      "Venta por Conteo",
+      "Devoluciones",
+      "Cotizaciones",
+      "Cuentas por Pagar",
+      "Cobros por Antigüedad"
+    ],
+    "otras": true,
+    "featuredFull": true
+  },
+  "mobileOverflow": 0,
+  "mobileMasSheet": {
+    "open": true,
+    "hasTerminalDeVenta": false,
+    "hasVentaAlone": false,
+    "hasVender": false,
+    "hasVentas": true,
+    "sample": " | MÁS OPCIONES | CAMBIAR SUCURSAL | ENERVIDA-VITALLCONS | INICIO | INICIO | OPERACIÓN | VENTAS | SERVICIOS RECIBIDOS | AJUSTES DOCUMENTALES | ETIQUETAS Y CÓDIGOS | ÓRDENES DE COMPRA | TRANSFERENCIA STOCK | FICHAS DE COSTO | ESTRUCTURA DE COSTO | COSTEO DINÁMICO | ÓRDENES DE PRODUCCIÓN Y TRABAJO | TRABAJADORES Y COMISIONES | GESTIÓN DE TIENDAS | WH"
+  },
+  "mobile375Overflow": 0
+}

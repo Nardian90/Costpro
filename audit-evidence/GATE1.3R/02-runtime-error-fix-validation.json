@@ -1,0 +1,28 @@
+{
+  "caso1_freshBrowser": {
+    "regs": 0,
+    "controlled": false,
+    "costproCaches": [],
+    "relevantErrors": [],
+    "allConsoleErrors": 2
+  },
+  "caso2_preregistrado": {
+    "regsPreviaApp": 1,
+    "state": "activated",
+    "caches": [
+      "costpro-next-static-v4"
+    ]
+  },
+  "caso2_trasReload": {
+    "regs": 0,
+    "controlled": true,
+    "costproCaches": [
+      "costpro-next-static-v4"
+    ]
+  },
+  "caso3_nuevaTab": {
+    "regs": 0,
+    "controlled": false,
+    "relevantErrors": []
+  }
+}

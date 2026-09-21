@@ -1,0 +1,253 @@
+{
+  "console": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://21.0.6.25:3000/_next/hmr?id=PFT0MiewJEnvlXM9G46l9' failed: Connection closed before receiving a handshake response"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://21.0.6.25:3000/_next/hmr?id=PFT0MiewJEnvlXM9G46l9' failed: Connection closed before receiving a handshake response"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://21.0.6.25:3000/_next/hmr?id=PFT0MiewJEnvlXM9G46l9' failed: Connection closed before receiving a handshake response"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://21.0.6.25:3000/_next/hmr?id=PFT0MiewJEnvlXM9G46l9' failed: Connection closed before receiving a handshake response"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://21.0.6.25:3000/_next/hmr?id=PFT0MiewJEnvlXM9G46l9' failed: Connection closed before receiving a handshake response"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://21.0.6.25:3000/_next/hmr?id=PFT0MiewJEnvlXM9G46l9' failed: Connection closed before receiving a handshake response"
+    }
+  ],
+  "failed": [
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/_1p81836._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_next_dist_0_w4y4e._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_1t4h1y6._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_zod_v4_0vwo0u2._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_@supabase_auth-js_dist_module_1vqrmkg._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_localforage_dist_localforage_06q0r22.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "tp://21.0.6.25:3000/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_1ql45e5._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_app_error_tsx_0ts9uj7._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_16wqbh9._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_0m3n37_._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_1bni632._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_1llgzwv._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_17b1_kn._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_app_global-error_tsx_1511-6v._.js",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://21.0.6.25:3000/sw.js",
+      "err": "net::ERR_ABORTED"
+    }
+  ],
+  "responses": [
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/_1p81836._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_next_dist_0_w4y4e._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_1t4h1y6._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_zod_v4_0vwo0u2._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_@supabase_auth-js_dist_module_1vqrmkg._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_localforage_dist_localforage_06q0r22.js"
+    },
+    {
+      "status": 403,
+      "url": "tp://21.0.6.25:3000/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_1ql45e5._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_app_error_tsx_0ts9uj7._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_16wqbh9._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_0m3n37_._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_1bni632._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_1llgzwv._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/node_modules_17b1_kn._.js"
+    },
+    {
+      "status": 403,
+      "url": "http://21.0.6.25:3000/_next/static/chunks/src_app_global-error_tsx_1511-6v._.js"
+    }
+  ],
+  "swProbe": {
+    "step": "register",
+    "ok": true,
+    "scope": "http://21.0.6.25:3000/",
+    "state": "activated",
+    "totalRegs": 1
+  },
+  "importProbe": {
+    "ok": false,
+    "error": "Failed to resolve module specifier 'workbox-window'"
+  },
+  "refetchProbe": {
+    "http://21.0.6.25:3000/_next/static/chunks/_1p81836._.js": {
+      "status": 200,
+      "bytes": 959
+    },
+    "http://21.0.6.25:3000/_next/static/chunks/node_modules_next_dist_0_w4y4e._.js": {
+      "status": 200,
+      "bytes": 144321
+    },
+    "http://21.0.6.25:3000/_next/static/chunks/src_1t4h1y6._.js": {
+      "status": 200,
+      "bytes": 573988
+    },
+    "http://21.0.6.25:3000/_next/static/chunks/node_modules_zod_v4_0vwo0u2._.js": {
+      "status": 200,
+      "bytes": 837187
+    },
+    "http://21.0.6.25:3000/_next/static/chunks/node_modules_@supabase_auth-js_dist_module_1vqrmkg._.js": {
+      "status": 200,
+      "bytes": 509855
+    },
+    "http://21.0.6.25:3000/_next/static/chunks/node_modules_localforage_dist_localforage_06q0r22.js": {
+      "status": 200,
+      "bytes": 135103
+    }
+  }
+}

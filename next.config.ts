@@ -42,6 +42,9 @@ const nextConfig: NextConfig = {
     'localhost',
     'space-z.ai',
     '*.space-z.ai', // FIX-PREVIEW: wildcard de subdominios (cualquier preview-chat-*)
+    '21.0.6.25', // GATE 1.3R.1 FIX-DEV-ORIGIN: acceso directo por IP del contenedor (LAN/preview embebido); sin esto Next 16 devuelve 403 en /_next/static y los chunks no cargan ("module factory is not available")
+    '127.0.0.1',
+    '0.0.0.0',
   ],
   serverExternalPackages: [
     '@opentelemetry/api',

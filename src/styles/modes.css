@@ -41,14 +41,20 @@
    que #1e1e1e pero no negro puro #000). El sidebar original usa #0a0a0a
    en dark mode, así que ahora todo coincide.
    Sin tinte verde — solo dark neutro sólido.
+   GATE 1.3R.1 FIX-PERF-BG-V6 (2026-09-21): el fondo base vuelve al dark
+   ESTÁNDAR de la app (#121212, token --background-solid) — el usuario lo
+   percibía "demasiado negro". Se usan sólidos (sin transparencias) para
+   conservar el ahorro de GPU del modo performance. El SIDEBAR conserva
+   #0a0a0a porque es exactamente el valor del token dark estándar
+   (--sidebar: #0a0a0a); cards/muted/popover conservan sus sólidos propios.
    FIX-PERF-BG-V5 (2026-07-13): las reglas oscuras SOLO aplican en dark
    mode. Antes .mode-performance .sidebar-container (sin .dark) forzaba
    #0a0a0a incluso en light mode, causando fondo negro en light. */
 
-/* DARK MODE: fondo oscuro sólido */
+/* DARK MODE: fondo oscuro sólido — ESTÁNDAR de la app (#121212) */
 .mode-performance.dark,
 .dark .mode-performance {
-  background: #0a0a0a !important;
+  background: var(--background-solid, #121212) !important;
 }
 
 /* LIGHT MODE: fondo claro sólido */
@@ -78,7 +84,7 @@
   backdrop-filter: none !important;
 }
 
-/* Main content area: dark sólido SOLO en dark mode */
+/* Main content area: dark sólido SOLO en dark mode — ESTÁNDAR #121212 */
 .mode-performance.dark main,
 .mode-performance.dark [role="main"],
 .mode-performance.dark .terminal-main,
@@ -87,7 +93,7 @@
 .dark .mode-performance [role="main"],
 .dark .mode-performance .terminal-main,
 .dark .mode-performance .main-content {
-  background: #0a0a0a !important;
+  background: var(--background-solid, #121212) !important;
   backdrop-filter: none !important;
 }
 
@@ -119,8 +125,8 @@
    FIX-PERF-BG-V4 (2026-07-13): selectores MÁS PRECISOS para no romper
    elementos con bg-card-foreground, bg-muted-foreground, etc.
    Solo afectar las clases exactas de fondo, no las variantes -foreground.
-   Paleta:
-   - background: #0a0a0a (dark base)
+   Paleta (GATE 1.3R.1: background alineado al dark estándar):
+   - background: #121212 (dark estándar, token --background-solid)
    - card: #141414 (ligeramente más claro)
    - muted: #1a1a1a (áreas inactivas)
    - popover: #141414 (dropdowns) */
@@ -137,7 +143,7 @@
 }
 
 .mode-performance.dark [class*="bg-background"]:not([class*="bg-background-foreground"]):not([class*="bg-background/"]) {
-  background-color: #0a0a0a !important;
+  background-color: var(--background-solid, #121212) !important;
 }
 
 /* Solo afectar bg-card/ con transparencia, no bg-card sólido */
@@ -170,7 +176,7 @@
 .mode-performance.dark div[style*="linear-gradient"][style*="22c55e"],
 .mode-performance.dark div[style*="linear-gradient"][style*="052e16"],
 .mode-performance.dark div[style*="linear-gradient"][style*="064e3b"] {
-  background: #0a0a0a !important;
+  background: var(--background-solid, #121212) !important;
   background-image: none !important;
 }
 

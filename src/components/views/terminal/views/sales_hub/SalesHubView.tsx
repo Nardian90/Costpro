@@ -64,54 +64,40 @@ interface HubCard {
   bgColor: string;
   borderColor: string;
   primary?: boolean;
+  /** GATE 1.3R.1: tarjeta protagonista — ocupa el ancho completo del grid. */
+  featured?: boolean;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+ * GATE 1.3R.1 — JERARQUÍA DE VENTAS (contenedor de trabajo, no pared de tarjetas)
+ *
+ * Ventas expone PRIMERO las 3 acciones de mayor frecuencia/centralidad
+ * (Vender → Caja → Historial de Ventas) y agrupa las 6 funciones
+ * secundarias bajo "Otras opciones" (progressive disclosure).
+ *
+ * §17 NO-DUPLICACIÓN: la tarjeta "Vender" navega al MISMO viewId `pos`
+ * que la entrada primaria OPERACIÓN → Vender (mismo componente, mismo
+ * flujo, sin rutas ni implementaciones nuevas). Es un acceso contextual
+ * del dominio, no una segunda navegación primaria.
+ *
+ * Orden secundario (§19): Tabla de Venta → Venta por Conteo → Devoluciones
+ * → Cotizaciones → Cuentas por Pagar → Cobros por Antigüedad.
+ * ══════════════════════════════════════════════════════════════════════ */
 
 const PRIMARY_CARDS: HubCard[] = [
   {
-    // GATE 1.3: dentro del hub Ventas la tarjeta es TASK-ORIENTED — la acción
-    // es "Nueva Venta" (el POS es el componente, no el concepto).
+    // GATE 1.3R.1 §16: la acción principal del dominio se llama "Vender"
+    // (acceso contextual, mismo viewId pos que el sidebar — ver §17 arriba).
     id: "pos",
-    title: "Nueva Venta",
-    description: "Venta rápida con carrito, atajos de teclado, escáner de código de barras y pago mixto. Ideal para ventas mostrador.",
+    title: "Vender",
+    description: "Iniciar una nueva venta: carrito, escáner de código de barras, atajos de teclado y pago mixto.",
     icon: ShoppingCart,
     view: "pos",
     color: "text-primary",
     bgColor: "bg-primary/5",
-    borderColor: "border-primary/20",
+    borderColor: "border-primary/30",
     primary: true,
-  },
-  {
-    // GATE 1 F-G: "Tabla IPV" renombrada a "Tabla de Venta" (colisión
-    // terminológica con el módulo IPV — P3-2).
-    id: "sales_catalog",
-    title: "Tabla de Venta",
-    description: "Tabla interactiva con todos los productos visibles. Asigna cantidades, precios y métodos de pago por producto. Exporta a Excel.",
-    icon: Table2,
-    view: "sales_catalog",
-    color: "text-info",
-    bgColor: "bg-info/5",
-    borderColor: "border-info/20",
-    primary: true,
-  },
-];
-
-// GATE 1 F-G/F4: la tarjeta "Catálogo de Ventas" se elimina (el catálogo
-// maestro vive como tab de Inventario); "Reporte de Entrega" se elimina
-// (el reporte vive dentro de Caja — CashClosureView importa el mismo modal).
-// Devoluciones y Cotizaciones se publican tras verificación de madurez
-// (CRUD completo, API propia /api/devolutions y /api/quotations, estados
-// de carga y error, navegación de regreso al hub).
-
-const SECONDARY_CARDS: HubCard[] = [
-  {
-    id: "sales",
-    title: "Historial de Ventas",
-    description: "Consulta, anula, duplica y exporta ventas. Filtra por fecha, estado y método de pago.",
-    icon: Receipt,
-    view: "sales",
-    color: "text-muted-foreground",
-    bgColor: "bg-muted/5",
-    borderColor: "border-border",
+    featured: true,
   },
   {
     // Caja = UNA entrada (arqueo + cierre de turno + reporte de entrega)
@@ -123,6 +109,43 @@ const SECONDARY_CARDS: HubCard[] = [
     color: "text-warning",
     bgColor: "bg-warning/5",
     borderColor: "border-warning/20",
+    primary: true,
+  },
+  {
+    id: "sales",
+    title: "Historial de Ventas",
+    description: "Consulta, anula, duplica y exporta ventas. Filtra por fecha, estado y método de pago.",
+    icon: Receipt,
+    view: "sales",
+    color: "text-muted-foreground",
+    bgColor: "bg-muted/5",
+    borderColor: "border-border",
+    primary: true,
+  },
+]
+
+// GATE 1 F-G/F4: la tarjeta "Catálogo de Ventas" se elimina (el catálogo
+// maestro vive como tab de Inventario); "Reporte de Entrega" se elimina
+// (el reporte vive dentro de Caja — CashClosureView importa el mismo modal).
+// Devoluciones y Cotizaciones se publican tras verificación de madurez
+// (CRUD completo, API propia /api/devolutions y /api/quotations, estados
+// de carga y error, navegación de regreso al hub).
+
+// GATE 1.3R.1 §19: orden secundario por frecuencia y relación con la
+// operación diaria (Tabla de Venta y Venta por Conteo descienden desde
+// primarias; Caja e Historial ascienden).
+const SECONDARY_CARDS: HubCard[] = [
+  {
+    // GATE 1 F-G: "Tabla IPV" renombrada a "Tabla de Venta" (colisión
+    // terminológica con el módulo IPV — P3-2).
+    id: "sales_catalog",
+    title: "Tabla de Venta",
+    description: "Tabla interactiva con todos los productos visibles. Asigna cantidades, precios y métodos de pago por producto. Exporta a Excel.",
+    icon: Table2,
+    view: "sales_catalog",
+    color: "text-info",
+    bgColor: "bg-info/5",
+    borderColor: "border-info/20",
   },
   {
     id: "inventory_count",
@@ -246,7 +269,7 @@ export default function SalesHubView() {
       id: 'pending-cart',
       icon: ShoppingCart,
       message: `Tienes ${cartCount} producto${cartCount !== 1 ? 's' : ''} en carrito sin confirmar`,
-      cta: 'Ir a Terminal',
+      cta: 'Ir a Vender',
       view: 'pos',
       severity: 'info',
     });
@@ -293,7 +316,7 @@ export default function SalesHubView() {
             Ventas
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
-            Todo el ciclo comercial: facturación, caja, historial y cuentas
+            Administración del ciclo comercial
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -381,9 +404,13 @@ export default function SalesHubView() {
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* GATE 1.3R.1 §16/§18: ACCIONES PRINCIPALES — Vender protagonista a
+          ancho completo; Caja e Historial a dos columnas. Jerarquía visual
+          por frecuencia/centralidad, no por estética. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {PRIMARY_CARDS.map((card, idx) => {
           const Icon = card.icon;
+          const featured = !!card.featured;
           return (
             <motion.button
               key={card.id}
@@ -393,22 +420,23 @@ export default function SalesHubView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.08 }}
               className={cn(
-                "group relative p-4 sm:p-6 rounded-2xl border-2 text-left transition-all hover:shadow-xl active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30",
+                "group relative rounded-2xl border-2 text-left transition-all hover:shadow-xl active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30",
+                featured ? "p-5 sm:p-7 md:col-span-2" : "p-4 sm:p-6",
                 card.bgColor,
                 card.borderColor,
               )}
             >
-              <div className={cn("p-3 rounded-xl inline-flex mb-4", card.bgColor)}>
-                <Icon className={cn("w-8 h-8", card.color)} />
+              <div className={cn("p-3 rounded-xl inline-flex mb-4", card.bgColor, featured && "border-2", featured && card.borderColor)}>
+                <Icon className={cn("w-8 h-8", card.color, featured && "w-10 h-10")} />
               </div>
-              <h3 className="text-base font-black uppercase tracking-tight text-foreground mb-2">
+              <h3 className={cn("font-black uppercase tracking-tight text-foreground mb-2", featured ? "text-xl" : "text-base")}>
                 {card.title}
               </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+              <p className={cn("text-muted-foreground leading-relaxed mb-4", featured ? "text-sm" : "text-xs", !featured && "line-clamp-2")}>
                 {card.description}
               </p>
               <div className={cn("inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest", card.color)}>
-                Acceder
+                {featured ? "Iniciar venta" : "Acceder"}
                 <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
               </div>
             </motion.button>
@@ -416,6 +444,12 @@ export default function SalesHubView() {
         })}
       </div>
 
+      {/* GATE 1.3R.1 §16: capa secundaria — progressive disclosure. Las 6
+          funciones restantes del mismo dominio, con etiqueta semántica
+          "Otras opciones" (no "Más"). */}
+      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 px-1 pt-2">
+        Otras opciones
+      </h3>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {SECONDARY_CARDS.map((card, idx) => {
           const Icon = card.icon;

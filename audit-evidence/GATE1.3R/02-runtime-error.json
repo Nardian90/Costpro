@@ -1,0 +1,279 @@
+{
+  "startedAt": "2026-09-21T03:37:35.222Z",
+  "base": "http://21.0.6.25:3000",
+  "cases": {
+    "A_fresh_context": {
+      "moduleFactory": [
+        "http://21.0.6.25:3000/_next/static/chunks/src_1t4h1y6._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/_1p81836._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_zod_v4_0vwo0u2._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_next_dist_0_w4y4e._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_%40supabase_auth-js_dist_module_1vqrmkg._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_localforage_dist_localforage_06q0r22.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_1ql45e5._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_error_tsx_0ts9uj7._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_16wqbh9._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_0m3n37_._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1bni632._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_17b1_kn._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1llgzwv._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_global-error_tsx_1511-6v._.js :: net::ERR_ABORTED"
+      ],
+      "counts": {
+        "consoleErrors": 20,
+        "pageErrors": 0,
+        "failed": 15,
+        "httpErrors": 15
+      },
+      "note": "fresh context, primera carga"
+    },
+    "B_hard_reload": {
+      "moduleFactory": [
+        "http://21.0.6.25:3000/_next/static/chunks/_1p81836._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1t4h1y6._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_next_dist_0_w4y4e._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_localforage_dist_localforage_06q0r22.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_zod_v4_0vwo0u2._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_%40supabase_auth-js_dist_module_1vqrmkg._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_1ql45e5._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_0m3n37_._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_error_tsx_0ts9uj7._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1bni632._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_16wqbh9._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_17b1_kn._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_global-error_tsx_1511-6v._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1llgzwv._.js :: net::ERR_ABORTED"
+      ],
+      "counts": {
+        "consoleErrors": 19,
+        "pageErrors": 0,
+        "failed": 15,
+        "httpErrors": 15
+      },
+      "note": "hard reload (CDP cache disabled)"
+    },
+    "C_new_tab": {
+      "moduleFactory": [
+        "http://21.0.6.25:3000/_next/static/chunks/_1p81836._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1t4h1y6._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_next_dist_0_w4y4e._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_zod_v4_0vwo0u2._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_%40supabase_auth-js_dist_module_1vqrmkg._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_localforage_dist_localforage_06q0r22.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_1ql45e5._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_error_tsx_0ts9uj7._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_16wqbh9._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_0m3n37_._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1bni632._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1llgzwv._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_global-error_tsx_1511-6v._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_17b1_kn._.js :: net::ERR_ABORTED"
+      ],
+      "counts": {
+        "consoleErrors": 20,
+        "pageErrors": 0,
+        "failed": 15,
+        "httpErrors": 15
+      },
+      "note": "nueva pestaña mismo contexto"
+    },
+    "D_clean_profile": {
+      "moduleFactory": [
+        "http://21.0.6.25:3000/_next/static/chunks/_1p81836._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1t4h1y6._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_next_dist_0_w4y4e._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_zod_v4_0vwo0u2._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_%40supabase_auth-js_dist_module_1vqrmkg._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_localforage_dist_localforage_06q0r22.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_1ql45e5._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_error_tsx_0ts9uj7._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_16wqbh9._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_0m3n37_._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1bni632._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_17b1_kn._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1llgzwv._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_global-error_tsx_1511-6v._.js :: net::ERR_ABORTED"
+      ],
+      "counts": {
+        "consoleErrors": 19,
+        "pageErrors": 0,
+        "failed": 15,
+        "httpErrors": 15
+      },
+      "note": "contexto nuevo (perfil limpio)"
+    },
+    "E_sw_unregistered": {
+      "moduleFactory": [
+        "http://21.0.6.25:3000/_next/static/chunks/_1p81836._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1t4h1y6._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_zod_v4_0vwo0u2._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_next_dist_0_w4y4e._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_%40supabase_auth-js_dist_module_1vqrmkg._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_localforage_dist_localforage_06q0r22.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_1ql45e5._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_error_tsx_0ts9uj7._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_16wqbh9._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_0m3n37_._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1bni632._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_17b1_kn._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1llgzwv._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_global-error_tsx_1511-6v._.js :: net::ERR_ABORTED"
+      ],
+      "counts": {
+        "consoleErrors": 16,
+        "pageErrors": 0,
+        "failed": 15,
+        "httpErrors": 15
+      },
+      "note": "SW desregistrado + cache storage limpio → reload"
+    },
+    "F_cache_cleared": {
+      "moduleFactory": [
+        "http://21.0.6.25:3000/_next/static/chunks/_1p81836._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1t4h1y6._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_next_dist_0_w4y4e._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_zod_v4_0vwo0u2._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_%40supabase_auth-js_dist_module_1vqrmkg._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_localforage_dist_localforage_06q0r22.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_1ql45e5._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_error_tsx_0ts9uj7._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_16wqbh9._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_0m3n37_._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1bni632._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_17b1_kn._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1llgzwv._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_global-error_tsx_1511-6v._.js :: net::ERR_ABORTED"
+      ],
+      "counts": {
+        "consoleErrors": 16,
+        "pageErrors": 0,
+        "failed": 15,
+        "httpErrors": 15
+      },
+      "note": "reload tras limpiar Cache Storage (SW re-registrado)"
+    }
+  },
+  "sw": {
+    "firstLoad": {
+      "secureContext": true,
+      "hasSW": true,
+      "controller": null,
+      "regs": [],
+      "caches": []
+    },
+    "afterReload": {
+      "secureContext": true,
+      "hasSW": true,
+      "controller": null,
+      "regs": [],
+      "caches": []
+    },
+    "afterUnregister": {
+      "secureContext": true,
+      "hasSW": true,
+      "controller": null,
+      "regs": [],
+      "caches": []
+    }
+  },
+  "headers": {
+    "/": {
+      "status": 200,
+      "cacheControl": "no-cache, must-revalidate",
+      "etag": null,
+      "contentType": "text/html; charset=utf-8",
+      "date": "Mon, 21 Sep 2026 03:37:55 GMT"
+    },
+    "/sw.js": {
+      "status": 200,
+      "cacheControl": "public, max-age=0",
+      "etag": "W/\"23d6-1a0c1ad67e5\"",
+      "contentType": "application/javascript; charset=UTF-8",
+      "date": "Mon, 21 Sep 2026 03:37:55 GMT"
+    },
+    "/manifest.json": {
+      "status": 200,
+      "cacheControl": "public, max-age=0",
+      "etag": "W/\"a4a-1a0c1ad67d9\"",
+      "contentType": "application/json; charset=UTF-8",
+      "date": "Mon, 21 Sep 2026 03:37:55 GMT"
+    },
+    "sampleChunk": {
+      "url": "/_next/static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_1haxkfu._.js",
+      "status": 200,
+      "cacheControl": "no-cache, must-revalidate",
+      "etag": "W/\"252-1a0c1af716f\"",
+      "contentType": "application/javascript; charset=UTF-8",
+      "date": "Mon, 21 Sep 2026 03:37:55 GMT"
+    },
+    "htmlChunks": {
+      "count": 29
+    }
+  },
+  "versionTest": {
+    "pre": {
+      "swCachedChunks": 0,
+      "htmlChunks": 29
+    },
+    "probeInjected": true,
+    "chunkUrlsChanged": false,
+    "chunkUrlDelta": {
+      "added": 0,
+      "removed": 0,
+      "note": "URLs idénticas tras recompile — mismo contenido servible desde cache"
+    },
+    "afterRecompile": {
+      "moduleFactory": [
+        "http://21.0.6.25:3000/_next/static/chunks/_1p81836._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1t4h1y6._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_next_dist_0_w4y4e._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_zod_v4_0vwo0u2._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_%40supabase_auth-js_dist_module_1vqrmkg._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_localforage_dist_localforage_06q0r22.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_0q79z23._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_1ql45e5._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_error_tsx_0ts9uj7._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_16wqbh9._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_0m3n37_._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1bni632._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/node_modules_17b1_kn._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_1llgzwv._.js :: net::ERR_ABORTED",
+        "http://21.0.6.25:3000/_next/static/chunks/src_app_global-error_tsx_1511-6v._.js :: net::ERR_ABORTED"
+      ],
+      "counts": {
+        "consoleErrors": 17,
+        "pageErrors": 0,
+        "failed": 15,
+        "httpErrors": 15
+      }
+    },
+    "staleProof": {
+      "cachedThen404": {},
+      "swWouldServe": [],
+      "verdict": "todos los chunks cacheados siguen vigentes"
+    },
+    "post": {
+      "secureContext": true,
+      "hasSW": true,
+      "controller": null,
+      "regs": [],
+      "caches": [
+        {
+          "name": "costpro-next-static-v4",
+          "entries": 0,
+          "nextStatic": 0,
+          "sample": []
+        }
+      ]
+    },
+    "worktreeAfterRestore": "CLEAN"
+  },
+  "notes": [],
+  "finishedAt": "2026-09-21T03:38:43.375Z"
+}

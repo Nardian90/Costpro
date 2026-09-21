@@ -1,0 +1,55 @@
+{
+  "step1_initial": {
+    "secure": true,
+    "hostname": "preview-test.space-z.ai",
+    "regs": [
+      {
+        "scope": "http://preview-test.space-z.ai:3000/",
+        "state": "activated"
+      }
+    ],
+    "caches": [
+      {
+        "name": "costpro-next-static-v4",
+        "total": 5,
+        "nextStatic": 4
+      }
+    ],
+    "controlled": true
+  },
+  "step2_cachedCount": 5,
+  "step4_errorsAfterRecompile": [],
+  "step5_stale": {
+    "checked": 5,
+    "dead": 5,
+    "differs": 0,
+    "detail": [
+      {
+        "u": "offline.html",
+        "st": "timeout/err",
+        "cb": 1308
+      },
+      {
+        "u": "src_components_landing_demo_1hxc4yn._.js",
+        "st": "timeout/err",
+        "cb": 1485
+      },
+      {
+        "u": "src_05nizxw._.js",
+        "st": "timeout/err",
+        "cb": 84013
+      },
+      {
+        "u": "src_components_0ua7eff._.js",
+        "st": "timeout/err",
+        "cb": 1160936
+      },
+      {
+        "u": "node_modules_0h8-q8r._.js",
+        "st": "timeout/err",
+        "cb": 419247
+      }
+    ]
+  },
+  "step6_worktree": "?? audit-evidence/GATE1.3R/"
+}
