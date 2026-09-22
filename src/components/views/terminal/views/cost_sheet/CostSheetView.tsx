@@ -20,6 +20,7 @@ import { useAutoSave } from '@/hooks/logic/useAutoSave';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 
 import CostSheetNav from './CostSheetNav';
+import CostSheetModuleNav from './CostSheetModuleNav';
 import CostSheetHeaderEditor from './CostSheetHeaderEditor';
 import { CostSheetMainTabs, type CostMainTab } from './CostSheetMainTabs';
 import { GenEasyView } from './GenEasyView';
@@ -260,7 +261,9 @@ const CostSheetView = () => {
   // pueda controlarlo (Fase C1).
   const mainTab: CostMainTab = React.useMemo(() => {
     if (activeSection === 'templates') return 'templates';
-    if (activeSection === 'header') return 'general';
+    // GATE 1.4R.1: 'general' — MobileTabBar navega con este id; antes caía al
+    // default y la tab móvil "Datos" renderizaba contenido vacío.
+    if (activeSection === 'header' || activeSection === 'general') return 'general';
     if (activeSection === 'annexes' || activeSection === 'all-annexes' || activeSection === 'signature') return 'annexes';
     return 'structure';  // default: 'main', 'all-content', 'expert-content', otros
   }, [activeSection]);
@@ -469,8 +472,14 @@ const CostSheetView = () => {
   // costo cargada. El Centro de Análisis es una vista independiente que carga
   // sus propios datos desde la tabla products + product_cost_sheets.
   if (activeSection === 'cost-analytics') {
+    // GATE 1.4R.1 (mandato §5): la vista de análisis conserva SU barra de
+    // segundo nivel — el usuario siempre puede salir hacia el resto del módulo.
     return (
       <div className="h-[calc(100vh-80px)]">
+        <CostSheetModuleNav
+          activeSection={activeSection}
+          onNavigate={handleSetActiveSection}
+        />
         <CostAnalyticsView />
       </div>
     );
@@ -482,6 +491,29 @@ const CostSheetView = () => {
 
   return (
     <div className="relative min-h-screen pb-40">
+      {/* ── GATE 1.4R.1: Navegación de segundo nivel del módulo (mandato §5).
+          Siempre visible: Generar / Experto / Generación Masiva / Análisis /
+          Arena FC. Con ficha abierta añade la fila [Modo ▼] + zona de Acciones
+          (Guardar Ficha · Importar JSON · Exportar Excel · Exportar PDF).
+          Reutiliza handlers existentes de useCostSheetActions (§21). ── */}
+      <div className="mt-4 w-full flex justify-center">
+        <div className="w-full max-w-6xl">
+          <CostSheetModuleNav
+            activeSection={activeSection}
+            onNavigate={handleSetActiveSection}
+            fichaContext={{
+              viewMode,
+              setViewMode: handleSetViewMode,
+              onSave: handleExportJSON,
+              onImport: handleImportJSON,
+              onExportExcel: handleExportExcel,
+              onExportPdf: () => setIsExportModalOpen(true),
+              isSaving,
+            }}
+          />
+        </div>
+      </div>
+
       {/* ── Diagnostic Banner (visible when calculation has issues) ── */}
       {(isCalcEmpty || calcError) && totalRows > 0 && (
         <div className={cn(
@@ -535,7 +567,9 @@ const CostSheetView = () => {
                         </div>
                     )}
 
-                    {activeSection === 'header' && (
+                    {(activeSection === 'header' || activeSection === 'general') && (
+                        // GATE 1.4R.1: 'general' — id que emite MobileTabBar para la
+                        // tab Datos Generales; antes no matcheaba ninguna rama.
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
                         </div>

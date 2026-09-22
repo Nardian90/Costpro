@@ -12,8 +12,11 @@ import CostSheetMassiveGenerator from './CostSheetMassiveGenerator';
  * B4: Vista "Generar fácil" — reemplaza al grupo "Generación" del sidebar.
  *
  * Muestra 2 tabs internos:
- *   1. Generación Rápida  → CostSheetQuickMode (cálculo express de precios)
- *   2. Generación Experta → CostSheetMassiveGenerator (masiva desde Excel/inventario)
+ *   1. Generación Rápida   → CostSheetQuickMode (cálculo express de precios)
+ *   2. Generación Masiva   → CostSheetMassiveGenerator (masiva desde Excel/inventario)
+ *   GATE 1.4R.1 (mandato §10): el tab antes llamado "Generación Experta" es en
+ *   realidad generación MASIVA — se renombra. "Experto" es el espacio de trabajo
+ *   del módulo (tab del segundo nivel), NO una opción de generación.
  *
  * Mobile-first elderly:
  *   - Mínimo 44px de alto (min-h-[44px]) en cada tab.
@@ -42,7 +45,7 @@ const TABS: { id: GenEasyTab; label: string; icon: React.ComponentType<{ classNa
   },
   {
     id: 'expert',
-    label: 'Generación Experta',
+    label: 'Generación Masiva',
     icon: Wand2,
     description: 'Masiva desde Excel o inventario',
   },
@@ -101,7 +104,7 @@ export function GenEasyView({
         <ChevronRight className="w-5 h-5 shrink-0 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" aria-hidden="true" />
       </button>
 
-      {/* Tabs internos: Rápida / Experta */}
+      {/* Tabs internos: Rápida / Masiva */}
       <div className="w-full">
         {/* Desktop: tabs centrados con borde inferior */}
         <div

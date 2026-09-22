@@ -17,6 +17,7 @@ import { describe, it, expect } from 'vitest';
 import {
   NAVIGATION_SECTIONS,
   ACTION_EXTENSIONS,
+  COST_SHEETS_TABS,
   HOME_VIEW,
   HOME_ITEM,
   LEGACY_VIEW_ALIASES,
@@ -206,7 +207,9 @@ describe('Derivaciones — Sidebar · Palette · Móvil · Rutas', () => {
 
   it('rutas module-route resuelven tab correcto (Tablero Dinámico, Fichas)', () => {
     expect(getNavigationRoute('cost-analytics')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'cost-analytics' });
-    expect(getNavigationRoute('cost-sheets')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'gen-easy' });
+    // GATE 1.4R.1 (mandato §4): el clic en el menú abre el NÚCLEO DE TRABAJO
+    // (Experto), no "Generar Fácil".
+    expect(getNavigationRoute('cost-sheets')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'main' });
     expect(getNavigationRoute('pos')).toEqual({ type: 'direct', view: 'pos' });
   });
 
@@ -399,9 +402,9 @@ describe('GATE 1.4R — Breadcrumb de tabs técnicas (UX-002 en la fuente)', () 
     expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
   });
 
-  it('editor (main): leaf "Editor de Ficha"', () => {
+  it('editor (main): leaf "Experto" (GATE 1.4R.1 — ex "Tablero Principal")', () => {
     const items = getBreadcrumbForView('cost-sheets', '', 'main');
-    expect(items.map(i => i.label)).toEqual([...MODULE_PATH, 'Editor de Ficha']);
+    expect(items.map(i => i.label)).toEqual([...MODULE_PATH, 'Experto']);
   });
 
   it('plantillas, masiva y estructural: leaf con label del registro', () => {
@@ -469,5 +472,106 @@ describe('GATE 1.4R — Contrato anti-duplicación', () => {
     // existir como hojas. Aquí: siguen siendo tabs técnicas del módulo.
     expect(isViewAllowedForRole('view-assisted', 'encargado')).toBe(true); // default-open técnico
     expect(flattenNavigation().find(l => l.id === 'view-assisted')).toBeUndefined();
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────
+// GATE 1.4R.1 — Reconstrucción integral · Experto / Generación Masiva /
+// palette VIEW+ACTION / segunda navegación
+// ───────────────────────────────────────────────────────────────────────
+
+describe('GATE 1.4R.1 — Experto (recuperación del Tablero Principal)', () => {
+  it('el tab main existe en el registro con label "Experto" y es palette-descubrible', () => {
+    const main = COST_SHEETS_TABS.find(t => t.id === 'main');
+    expect(main).toBeDefined();
+    expect(main?.label).toBe('Experto');
+    expect(main?.palette).toBe(true);
+    expect(main?.keywords).toContain('experto');
+    expect(main?.keywords).toContain('tablero principal');
+  });
+
+  it('"experto" en palette apunta al tab main (module-route correcto)', () => {
+    const actions = getActionsForUser('admin');
+    const expertHits = actions.filter(a =>
+      a.id === 'main' || a.label.toLowerCase() === 'experto' || a.keywords.includes('experto')
+    );
+    expect(expertHits.map(a => a.id)).toContain('main');
+    expect(getNavigationRoute('main')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'main' });
+  });
+
+  it('el alias técnico cost-sheet-editor sigue resolviendo a main (deep-link legacy)', () => {
+    expect(getNavigationRoute('cost-sheet-editor')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'main' });
+  });
+});
+
+describe('GATE 1.4R.1 — Generación Masiva (rename §10)', () => {
+  it('no existe "Generación Experta" como label en palette/registro', () => {
+    const allLabels = [
+      ...flattenNavigation().map(l => l.label),
+      ...ACTION_EXTENSIONS.map(e => e.label),
+      ...COST_SHEETS_TABS.map(t => t.label),
+    ];
+    expect(allLabels.filter(l => l.toLowerCase().includes('generación experta'))).toEqual([]);
+  });
+
+  it('massive-gen sigue etiquetado "Generación Masiva" y resuelve su tab', () => {
+    const mg = COST_SHEETS_TABS.find(t => t.id === 'massive-gen');
+    expect(mg?.label).toBe('Generación Masiva');
+    expect(getNavigationRoute('massive-gen')).toEqual({ type: 'module', view: 'cost-sheets', tab: 'massive-gen' });
+  });
+});
+
+describe('GATE 1.4R.1 — Palette semántica (§17)', () => {
+  it('las consultas del mandato tienen candidato correcto (sin resultados falsos)', () => {
+    const actions = getActionsForUser('admin');
+    const byKeyword = (kw: string) =>
+      actions.filter(a => a.label.toLowerCase().includes(kw) || a.keywords.some(k => k.includes(kw)));
+
+    expect(byKeyword('guardar ficha').map(a => a.id)).toContain('tool-save');
+    expect(byKeyword('importar json').map(a => a.id)).toContain('tool-import');
+    expect(byKeyword('exportar excel').map(a => a.id)).toContain('tool-export-excel');
+    expect(byKeyword('exportar pdf').map(a => a.id)).toContain('tool-export-pdf');
+    expect(byKeyword('asistido').map(a => a.id)).toContain('view-assisted');
+    expect(byKeyword('informe').map(a => a.id)).toContain('view-reading');
+    expect(byKeyword('arena').map(a => a.id)).toContain('arena-fc');
+    expect(byKeyword('generación masiva').map(a => a.id)).toContain('massive-gen');
+    expect(byKeyword('experto').map(a => a.id)).toContain('main');
+  });
+});
+
+describe('GATE 1.4R.1 — Breadcrumbs del segundo nivel (§23)', () => {
+  const MODULE_PATH = ['OPERACIÓN', 'Costo', 'Fichas de Costo'];
+
+  it('Fichas de Costo → Experto', () => {
+    expect(getBreadcrumbForView('cost-sheets', '', 'main').map(i => i.label)).toEqual([...MODULE_PATH, 'Experto']);
+  });
+
+  it('Fichas de Costo → Generación Masiva', () => {
+    expect(getBreadcrumbForView('cost-sheets', '', 'massive-gen').map(i => i.label)).toEqual([...MODULE_PATH, 'Generación Masiva']);
+  });
+
+  it('Fichas de Costo → Análisis de Fichas', () => {
+    expect(getBreadcrumbForView('cost-sheets', '', 'cost-analytics').map(i => i.label)).toEqual(['ANÁLISIS', 'Análisis de Fichas']);
+  });
+
+  it('Fichas de Costo → Arena FC', () => {
+    expect(getBreadcrumbForView('cost-sheets', '', 'arena-fc').map(i => i.label)).toEqual([...MODULE_PATH, 'Arena FC']);
+  });
+});
+
+describe('GATE 1.4R.1 — Mapeo de segundo nivel compartido (módulo ↔ móvil)', () => {
+  it('moduleTabForCostSection agrupa el scope de ficha bajo Experto', async () => {
+    const { moduleTabForCostSection } = await import('@/components/views/terminal/views/cost_sheet/CostSheetModuleNav');
+    expect(moduleTabForCostSection('main')).toBe('main');
+    expect(moduleTabForCostSection('templates')).toBe('main');
+    expect(moduleTabForCostSection('header')).toBe('main');
+    expect(moduleTabForCostSection('all-annexes')).toBe('main');
+    expect(moduleTabForCostSection('annex-I')).toBe('main');
+    expect(moduleTabForCostSection('view-assisted')).toBe('main');
+    expect(moduleTabForCostSection('gen-easy')).toBe('gen-easy');
+    expect(moduleTabForCostSection('massive-gen')).toBe('massive-gen');
+    expect(moduleTabForCostSection('cost-analytics')).toBe('cost-analytics');
+    expect(moduleTabForCostSection('arena-fc')).toBe('arena-fc');
+    expect(moduleTabForCostSection('steel-calculator')).toBe('steel-calculator');
   });
 });

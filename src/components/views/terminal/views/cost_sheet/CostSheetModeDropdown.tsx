@@ -14,9 +14,21 @@ import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 export type CostSheetViewMode = 'kpis' | 'expert' | 'assisted' | 'reading' | 'preview' | 'audit' | 'quick';
 
+/**
+ * GATE 1.4R.1 (mandato §13/§14/§15): los modos son FORMAS DE VISUALIZACIÓN/TRABAJO
+ * de la MISMA ficha abierta — nunca módulos independientes.
+ *   Completo  (ex "Experto") → editor completo; evita colisión con el TAB Experto.
+ *   Asistido  → modo gráfico paso a paso.
+ *   Informe   (ex "Resumido") → lectura narrativa presentable de la ficha.
+ *   Vistazo   → previsualización.
+ *   Resumen   (ex "Tablero")  → KPIs; evita colisión con dashboards de CostPro.
+ *   Auditoría (ex "Audit")    → consistencia de idioma.
+ * Los IDs (viewMode) NO cambian: contratos/deep-links intactos.
+ */
 interface ModeConfig {
   id: CostSheetViewMode;
   label: string;
+  hint: string;
   icon: LucideIcon;
 }
 
@@ -29,12 +41,12 @@ export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDr
   const t = useTranslations('costSheet');
   const prefersReducedMotion = useReducedMotion();
   const modes: ModeConfig[] = [
-    { id: 'kpis', label: 'Tablero', icon: BarChart3 },
-    { id: 'expert', label: 'Experto', icon: Zap },
-    { id: 'assisted', label: 'Asistido', icon: Wand2 },
-    { id: 'reading', label: 'Resumido', icon: BookOpen },
-    { id: 'preview', label: 'Vistazo', icon: Eye },
-    { id: 'audit', label: 'Audit', icon: Activity },
+    { id: 'kpis', label: 'Resumen', hint: 'KPIs de la ficha', icon: BarChart3 },
+    { id: 'expert', label: 'Completo', hint: 'Editor completo por secciones', icon: Zap },
+    { id: 'assisted', label: 'Asistido', hint: 'Modo gráfico guiado paso a paso', icon: Wand2 },
+    { id: 'reading', label: 'Informe', hint: 'Lectura narrativa presentable', icon: BookOpen },
+    { id: 'preview', label: 'Vistazo', hint: 'Previsualización rápida', icon: Eye },
+    { id: 'audit', label: 'Auditoría', hint: 'Validaciones y trazabilidad', icon: Activity },
   ];
 
   const currentMode = modes.find(m => m.id === viewMode) || modes[0];
@@ -69,9 +81,9 @@ export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDr
           <ChevronDown className="w-3 h-3 opacity-30 group-hover:opacity-100 transition-opacity" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 p-2 rounded-2xl bg-card border-border shadow-2xl">
+      <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl bg-card border-border shadow-2xl">
         <div className="px-2 py-1.5 text-xs font-black uppercase tracking-widest text-muted-foreground mb-1 border-b border-border/50 pb-2">
-          Visualización
+          Modo de la ficha
         </div>
         {modes.map((m) => (
           <DropdownMenuItem
@@ -84,8 +96,11 @@ export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDr
               viewMode === m.id ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"
             )}
           >
-            <m.icon className="w-4 h-4" aria-hidden="true" />
-            <span className="text-xs font-black uppercase tracking-widest">{m.label}</span>
+            <m.icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span className="min-w-0">
+              <span className="block text-xs font-black uppercase tracking-widest">{m.label}</span>
+              <span className="block text-[10px] font-medium normal-case tracking-normal text-muted-foreground/80">{m.hint}</span>
+            </span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

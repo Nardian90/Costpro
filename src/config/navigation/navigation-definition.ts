@@ -42,7 +42,7 @@ import {
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
   Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet,
   Receipt, RotateCcw, CreditCard, ClipboardList,
-  Swords, Wand2, FolderOpen, Upload, Save, Download,
+  Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -236,12 +236,17 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
           {
             id: 'cost-sheets',
             label: 'Fichas de Costo',
-            description: 'Herramienta de fichas de costo: Generar fácil, Ficha, Modo Asistido, Informe, Arena FC (beta), plantillas y herramientas de exportación.',
+            description: 'Herramienta de fichas de costo: Experto (trabajo completo), Generar, Generación Masiva, Análisis de Fichas y Arena FC (beta).',
             icon: FileText,
             type: 'item',
-            route: { view: 'cost-sheets', tab: 'gen-easy' },
+            // GATE 1.4R.1 (mandato §1/§4/§6): el clic abre el NÚCLEO DE TRABAJO
+            // (Experto — ex "Tablero Principal"). Antes route.tab era 'gen-easy'
+            // y el módulo aterrizaba en "Generar Fácil"; con la navegación de
+            // segundo nivel (CostSheetModuleNav) el resto del módulo queda a un
+            // clic y el núcleo deja de estar relegado.
+            route: { view: 'cost-sheets', tab: 'main' },
             roles: ['admin', 'manager', 'encargado', 'costo'],
-            keywords: ['ficha', 'costo', 'generar', 'generar ficha', 'costeo', 'plantillas', 'arena'],
+            keywords: ['ficha', 'costo', 'generar', 'generar ficha', 'costeo', 'plantillas', 'arena', 'experto'],
           },
           {
             id: 'estructura-costo',
@@ -661,8 +666,10 @@ const SALES_HUB_PALETTE_ENTRIES: (NavEntry & { route: NavRoute })[] = [
  * breadcrumb caía en "Módulo No Disponible"; UX-003/UX-008: modos,
  * herramientas y acciones del editor eran palette-invisibles).
  *
- * Clasificación VISTA/MODO/ACCIÓN/HERRAMIENTA (mandato GATE 1.4R §2/§4):
- *   - vista        → Arena FC (capacidad autónoma del dominio, beta)
+ * Clasificación VISTA/MODO/ACCIÓN/HERRAMIENTA (mandato GATE 1.4R §2/§4 +
+ * GATE 1.4R.1 §4-§7):
+ *   - vista        → Arena FC (capacidad autónoma del dominio, beta) · Experto
+ *                    (main — espacio de trabajo completo, ex "Tablero Principal")
  *   - modo         → view-assisted / view-reading (estados del editor;
  *                    NUNCA tarjetas ni vistas — render por viewMode)
  *   - accion       → tool-* (operaciones sobre la ficha abierta; los puentes
@@ -703,14 +710,16 @@ export const COST_SHEETS_TABS: CostSheetTabMeta[] = [
   },
   {
     id: 'main',
-    label: 'Editor de Ficha',
-    description: 'Editor completo de la ficha de costo (núcleo del módulo).',
-    keywords: ['editor', 'ficha', 'estructura de costos'],
+    // GATE 1.4R.1 (mandato §1/§6/§7/§8): el tab 'main' ES la vista de trabajo
+    // históricamente denominada "Tablero Principal" (CostSheetMainTabs:
+    // Plantillas / Datos Generales / Estructura de Costos / Anexos). Recupera
+    // su acceso visible como TAB "Experto" del segundo nivel + palette.
+    label: 'Experto',
+    description: 'Espacio completo de trabajo de la ficha: Plantillas, Datos Generales, Estructura de Costos y Anexos.',
+    keywords: ['experto', 'tablero principal', 'editor', 'ficha', 'trabajo completo', 'estructura de costos', 'datos generales', 'anexos'],
     kind: 'vista',
-    icon: FileText,
-    // El editor es el núcleo contextual del módulo: se alcanza al abrir/editar
-    // una ficha (y desde palette vía las ACCIONES que operan sobre él).
-    palette: false,
+    icon: PenTool,
+    palette: true,
     mobileHide: true,
   },
   {
@@ -727,8 +736,8 @@ export const COST_SHEETS_TABS: CostSheetTabMeta[] = [
   {
     id: 'view-assisted',
     label: 'Abrir Modo Asistido',
-    description: 'Completa la ficha guiado paso a paso (modo del editor).',
-    keywords: ['asistido', 'modo asistido', 'guiado', 'paso a paso', 'wizard'],
+    description: 'Modo gráfico: completa la ficha guiado paso a paso (modo del editor).',
+    keywords: ['asistido', 'modo asistido', 'guiado', 'paso a paso', 'wizard', 'gráfico', 'modo gráfico'],
     kind: 'modo',
     icon: Wand2,
     palette: true,
@@ -757,8 +766,8 @@ export const COST_SHEETS_TABS: CostSheetTabMeta[] = [
   {
     id: 'massive-gen',
     label: 'Generación Masiva',
-    description: 'Genera fichas en lote desde Excel o el inventario (tab Experta de Generar).',
-    keywords: ['masiva', 'masivo', 'lote', 'batch', 'varias fichas'],
+    description: 'Genera fichas en lote desde Excel o el inventario (también dentro de Generar).',
+    keywords: ['masiva', 'masivo', 'lote', 'batch', 'varias fichas', 'generar muchas'],
     kind: 'herramienta',
     icon: Layers,
     palette: true,

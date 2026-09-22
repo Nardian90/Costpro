@@ -222,16 +222,16 @@ describe('G2-tests — CostSheetQuickMode cálculo', () => {
 });
 
 describe('G2-tests — MobileTabBar contextual', () => {
-  it('en cost-sheets, click en tab Plant. dispara setActiveCostSection', async () => {
+  // GATE 1.4R.1 (mandato §25): el móvil usa los tabs del MÓDULO (misma IA
+  // que desktop). Click en "Experto" navega al núcleo de trabajo (main).
+  it('en cost-sheets, click en tab Experto no crashea y mantiene el tab visible', async () => {
     const { MobileTabBar } = await import('@/components/views/terminal/MobileTabBar');
     const { getByText } = render(
       <MobileTabBar navigationItems={[]} currentView="cost-sheets" onViewChange={vi.fn()} />,
       { wrapper: Wrapper }
     );
-    // F2: Label corto "Plant." en mobile
-    fireEvent.click(getByText('Plant.'));
-    // El mock de useUIStore captura setActiveCostSection — verificamos que no crashea
-    expect(getByText('Plant.')).toBeTruthy();
+    fireEvent.click(getByText('Experto'));
+    expect(getByText('Experto')).toBeTruthy();
   });
 
   it('en dashboard, click en Vender dispara onViewChange con "pos"', async () => {

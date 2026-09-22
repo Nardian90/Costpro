@@ -213,7 +213,15 @@ export function isSidebarItemActive(
     return currentView === 'ipv' && ipvActiveTab === route.tab;
   }
   if (route.view === 'cost-sheets') {
-    return currentView === 'cost-sheets' && activeCostSection === route.tab;
+    if (currentView !== 'cost-sheets') return false;
+    // GATE 1.4R.1: la hoja de menú "Fichas de Costo" (route.tab='main', el
+    // núcleo Experto) se resalta en TODAS las tabs del módulo; solo
+    // 'cost-analytics' se excluye porque es hoja propia del menú ANÁLISIS
+    // ("Análisis de Fichas") y tiene su propio resaltado.
+    if (route.tab === 'main') {
+      return activeCostSection !== 'cost-analytics';
+    }
+    return activeCostSection === route.tab;
   }
 
   return false;

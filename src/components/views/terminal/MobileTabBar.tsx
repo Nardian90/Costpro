@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Home, Package, ShoppingCart, Building, MoreHorizontal, Search, Check, X, Warehouse,
-  DollarSign, FolderOpen, FileText, LayoutGrid, Paperclip, ChevronDown,
+  DollarSign, ChevronDown, Zap, PenTool, Layers, BarChart3, Swords,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -19,6 +19,7 @@ import {
   ACTION_EXTENSIONS,
   type NavEntry,
 } from '@/config/navigation/navigation-definition';
+import { moduleTabForCostSection } from '@/components/views/terminal/views/cost_sheet/CostSheetModuleNav';
 
 /**
  * F5-T02: Tab bar inferior fija para mobile (<768px).
@@ -118,22 +119,22 @@ export function MobileTabBar({ currentView, onViewChange }: MobileTabBarProps) {
     return groups;
   }, [user]);
 
-  // ── Tabs contextuales del módulo Costo (secciones internas de la vista) ──
-  type CostSection = 'templates' | 'general' | 'structure' | 'annexes' | '__more__';
-  const costTabs: { label: string; ariaLabel: string; icon: React.ComponentType<{ className?: string }>; section: CostSection }[] = [
-    { label: 'Plant.', ariaLabel: 'Plantillas', icon: FolderOpen, section: 'templates' },
-    { label: 'Datos', ariaLabel: 'Datos Generales', icon: FileText, section: 'general' },
-    { label: 'Estruct.', ariaLabel: 'Estructura de Costos', icon: LayoutGrid, section: 'structure' },
-    { label: 'Anexos', ariaLabel: 'Anexos', icon: Paperclip, section: 'annexes' },
-    { label: 'Más', ariaLabel: 'Más opciones', icon: MoreHorizontal, section: '__more__' },
+  // ── Tabs del MÓDULO Costo (GATE 1.4R.1 — mandato §25) ──────────────
+  // La MISMA arquitectura de segundo nivel que desktop (CostSheetModuleNav):
+  // Generar · Experto · Generación Masiva · Análisis · Arena FC. Los sub-tabs
+  // de Experto (Plantillas/Datos/Estructura/Anexos) siguen accesibles in-page
+  // vía CostSheetMainTabs — NO se crea una IA móvil diferente.
+  const costTabs: { label: string; ariaLabel: string; icon: React.ComponentType<{ className?: string }>; section: string }[] = [
+    { label: 'Generar', ariaLabel: 'Generar fichas: generación rápida o masiva', icon: Zap, section: 'gen-easy' },
+    { label: 'Experto', ariaLabel: 'Experto: espacio completo de trabajo de la ficha', icon: PenTool, section: 'main' },
+    { label: 'Masiva', ariaLabel: 'Generación Masiva de fichas desde Excel o inventario', icon: Layers, section: 'massive-gen' },
+    { label: 'Análisis', ariaLabel: 'Análisis de Fichas', icon: BarChart3, section: 'cost-analytics' },
+    { label: 'Arena', ariaLabel: 'Arena FC: comparar fichas de costo (beta)', icon: Swords, section: 'arena-fc' },
   ];
   const isCostModule = currentView === 'cost-sheets';
-  const handleCostTabClick = (section: CostSection) => {
-    if (section === '__more__') {
-      setMoreSheetOpen(true);
-    } else {
-      setActiveCostSection(section);
-    }
+  const activeCostTab = moduleTabForCostSection(activeCostSection);
+  const handleCostTabClick = (section: string) => {
+    setActiveCostSection(section);
   };
 
   const handleStoreSelect = (storeId: string) => {
@@ -168,8 +169,9 @@ export function MobileTabBar({ currentView, onViewChange }: MobileTabBarProps) {
                 label={tab.label}
                 ariaLabel={tab.ariaLabel}
                 icon={tab.icon}
-                isActive={tab.section === '__more__' ? moreSheetOpen : activeCostSection === tab.section}
+                isActive={activeCostTab === tab.section}
                 onClick={() => handleCostTabClick(tab.section)}
+                small
               />
             ))
           ) : (
@@ -328,19 +330,23 @@ function TabButton({
   icon: Icon,
   isActive,
   onClick,
+  small,
 }: {
   label: string;
   ariaLabel?: string;
   icon: React.ComponentType<{ className?: string }>;
   isActive: boolean;
   onClick: () => void;
+  /** GATE 1.4R.1 (mandato §25): labels de 6-8 caracteres (tabs del módulo
+      Costo) a 9px SIN truncar en 375-390px. */
+  small?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center justify-center gap-0.5 py-1.5 px-2 min-h-[48px] min-w-[44px] rounded-lg transition-colors flex-1",
+        "flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 min-h-[48px] min-w-[44px] rounded-lg transition-colors flex-1",
         isActive ? "text-primary" : "text-muted-foreground"
       )}
       aria-label={ariaLabel || label}
@@ -348,7 +354,8 @@ function TabButton({
     >
       <Icon className={cn("w-5 h-5", isActive && "text-primary")} />
       <span className={cn(
-        "text-xs font-black uppercase tracking-tight truncate max-w-full",
+        "font-black uppercase truncate max-w-full",
+        small ? "text-[9px] tracking-wide" : "text-xs tracking-tight",
         isActive && "text-primary"
       )}>
         {label}

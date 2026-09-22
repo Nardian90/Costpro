@@ -106,7 +106,11 @@ export const useUIStore = create<UIState>()(
       initialProductName: '',
       isChatBotOpen: false,
       ipvActiveTab: 'dashboard',
-      activeCostSection: 'cost-analytics',
+      // GATE 1.4R.1 (mandato §1/§4/§6): el módulo abre su NÚCLEO DE TRABAJO
+      // (Experto — ex "Tablero Principal"), no el análisis. La navegación de
+      // segundo nivel (CostSheetModuleNav) mantiene Generar/Masiva/Análisis/
+      // Arena a un clic.
+      activeCostSection: 'main',
       pendingAuditFilter: null,
       noShiftBannerDismissUntil: null,
       isHelpReadingMode: false,
@@ -199,14 +203,10 @@ export const useUIStore = create<UIState>()(
             sidebarState: persistedState.sidebarOpen ? 'expanded' : 'closed',
           };
         }
-        // FIX-TABLERO-PRINCIPAL (2026-07-04): migrar activeCostSection de 'main'
-        // a 'cost-analytics' para que el Tablero Principal abra el Centro de
-        // Análisis en vez de la ficha de costo.
-        if (version < 3) {
-          if (persistedState?.activeCostSection === 'main') {
-            persistedState.activeCostSection = 'cost-analytics';
-          }
-        }
+        // GATE 1.4R.1 (mandato §1/§8): la migración v<3 que enviaba 'main' →
+        // 'cost-analytics' relegaba el núcleo de trabajo al análisis y queda
+        // eliminada. 'main' es de nuevo un destino válido (Experto): los
+        // usuarios antiguos vuelven a su espacio de trabajo.
         // GATE 1 (v4) — Home única + wrappers muertos: el estado persistido de
         // usuarios existentes se normaliza a los destinos canónicos.
         // GATE 1.1: sanitizeViewId valida el contrato (objeto → Home + diagnóstico).

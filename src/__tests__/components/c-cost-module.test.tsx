@@ -108,7 +108,11 @@ describe('C7 — CostSheetMainTabs', () => {
 });
 
 describe('C7 — MobileTabBar contextual por módulo', () => {
-  it('muestra tabs de costos cuando currentView=cost-sheets', async () => {
+  // GATE 1.4R.1 (mandato §25): el móvil comparte la MISMA arquitectura de
+  // segundo nivel que desktop (CostSheetModuleNav): Generar · Experto ·
+  // Generación Masiva · Análisis · Arena FC. Los sub-tabs de Experto son
+  // in-page (CostSheetMainTabs), no del bottom bar.
+  it('muestra tabs del MÓDULO costos cuando currentView=cost-sheets', async () => {
     const { MobileTabBar } = await import('@/components/views/terminal/MobileTabBar');
     const { getByText } = render(
       <MobileTabBar
@@ -118,11 +122,11 @@ describe('C7 — MobileTabBar contextual por módulo', () => {
       />,
       { wrapper: Wrapper }
     );
-    // F2: Labels cortos en mobile — "Plant." en vez de "Plantillas", etc.
-    expect(getByText('Plant.')).toBeTruthy();
-    expect(getByText('Datos')).toBeTruthy();
-    expect(getByText('Estruct.')).toBeTruthy();
-    expect(getByText('Anexos')).toBeTruthy();
+    expect(getByText('Generar')).toBeTruthy();
+    expect(getByText('Experto')).toBeTruthy();
+    expect(getByText('Masiva')).toBeTruthy();
+    expect(getByText('Análisis')).toBeTruthy();
+    expect(getByText('Arena')).toBeTruthy();
   });
 
   it('muestra tabs operativos default para otros views', async () => {

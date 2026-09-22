@@ -122,7 +122,9 @@ export function useViewUrlSync() {
       if (view === 'ipv') {
         setIpvActiveTab(fromUrl?.tab ?? 'dashboard');
       } else if (view === 'cost-sheets') {
-        setActiveCostSection(fromUrl?.tab ?? 'cost-analytics');
+        // GATE 1.4R.1: fallback coherente con el nuevo default del store —
+        // sin tab en la URL el módulo abre su núcleo de trabajo (Experto).
+        setActiveCostSection(fromUrl?.tab ?? 'main');
       }
     };
     window.addEventListener('popstate', onPopState);

@@ -21,8 +21,9 @@ export const VIEW_TIPS: Record<string, string> = {
   // Costos
   'cost-sheets': 'Genera fichas de costo con plantillas predefinidas',
   'cost-sheet-editor': 'Usa anexos para detallar materias primas',
-  'gen-easy': 'Generación rápida: solo nombre y precio',
-  'view-assisted': 'El modo asistido guía paso a paso',
+  'gen-easy': 'Generación rápida: solo nombre y precio; la Masiva importa tu Excel',
+  'main': 'Experto: Plantillas, Datos Generales, Estructura y Anexos en un solo lugar',
+  'view-assisted': 'El modo asistido (gráfico) guía paso a paso',
   'view-reading': 'Exporta informes en PDF con un clic',
   'arena-fc': 'Compara fichas de costo lado a lado',
   'templates': 'Arranca con una plantilla predefinida de ficha',
