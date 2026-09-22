@@ -121,7 +121,6 @@ const TECHNICAL_DIRECT_ROUTES: Record<string, DirectRoute> = {
   warehouses:            { type: 'direct', view: 'warehouses' },
   customers:             { type: 'direct', view: 'customers' },
   'bank-reconciliation': { type: 'direct', view: 'bank-reconciliation' },
-  news:                  { type: 'direct', view: 'news' },
   stores:                { type: 'direct', view: 'stores' },
   'accounts-payable':    { type: 'direct', view: 'accounts-payable' },
   'accounts_payable':    { type: 'direct', view: 'accounts-payable' },
@@ -284,8 +283,13 @@ const VIEW_TO_HUB_MAP: Record<string, { hubId: string; leafLabel: string }> = {
   lots: { hubId: 'inventory', leafLabel: 'Lotes' },
   // Contextuales de Gestión de Tiendas
   stores: { hubId: 'management-hub', leafLabel: 'Tiendas' },
-  news: { hubId: 'management-hub', leafLabel: 'Tablón de Noticias' },
+  // FASE B (UX-005): 'news' salió de este mapa — hoy es hoja de menú de
+  // ANÁLISIS y su breadcrumb se deriva del árbol de definición (fuente única).
   warehouses: { hubId: 'management-hub', leafLabel: 'Almacenes y Depósitos' },
+  // FASE B (UX-010): capacidades del dominio Ventas publicadas con el patrón
+  // del hub (tarjeta + palette). El breadcrumb las cuelga del hub Ventas.
+  ofertas: { hubId: 'sales-hub', leafLabel: 'Ofertas' },
+  customers: { hubId: 'sales-hub', leafLabel: 'Clientes' },
   // Creación contextual
   recepcion: { hubId: 'reception_list', leafLabel: 'Nueva Recepción' },
   // Vitrina (tab del hub Gestión) — vista directa con su propio nombre
@@ -326,6 +330,18 @@ export function getBreadcrumbForView(
   }
   if (currentView === 'chat') {
     return [{ label: 'Chat con Darian', isCurrent: true }];
+  }
+
+  // FASE B (UX-010 · GATE 1.4P): Conciliación Bancaria es una capacidad
+  // PARCIAL (UI esqueleto solo-lectura; importar/conciliar sin UI — el propio
+  // estado vacío remite al POST de API). Se mantiene FUERA de la navegación
+  // principal (sin menú/palette/tarjeta) para no aparentar una función
+  // completa; el deep-link sigue funcionando con un breadcrumb standalone
+  // honesto (precedente calculator/chat) — sin hub ficticio y sin
+  // "Módulo No Disponible". La asignación de dominio queda condicionada a
+  // que Producto decida completar la UI.
+  if (currentView === 'bank-reconciliation') {
+    return [{ label: 'Conciliación Bancaria', isCurrent: true }];
   }
 
   // Sub-vistas de hub → path del hub + hoja actual

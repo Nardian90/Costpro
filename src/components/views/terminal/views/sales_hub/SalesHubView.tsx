@@ -42,7 +42,7 @@ import {
   ShoppingCart, Table2, Receipt, DollarSign,
   ArrowRight, Wallet, TrendingUp, ClipboardList,
   AlertCircle, Package as PackageIcon, FileClock,
-  CreditCard, RotateCcw, FileText,
+  CreditCard, RotateCcw, FileText, Megaphone, Users,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useUIStore } from "@/store";
@@ -179,6 +179,36 @@ const SECONDARY_CARDS: HubCard[] = [
     color: "text-success",
     bgColor: "bg-success/5",
     borderColor: "border-success/20",
+  },
+  {
+    // FASE B (UX-010 · GATE 1.4P): Ofertas publicada tras verificación de
+    // madurez del gate (stack completo: CRUD /api/ofertas + export PDF +
+    // validación Zod + RLS). Copy honesto con su alcance real. Coexiste con
+    // Cotizaciones: son capacidades distintas (documento formal con
+    // suministrador/ITBIS/sellos vs propuesta simple pre-venta).
+    id: "ofertas",
+    title: "Ofertas",
+    description: "Crea y envía ofertas comerciales formales: datos del suministrador, productos, ITBIS, validez y exportación a PDF.",
+    icon: Megaphone,
+    view: "ofertas",
+    color: "text-warning",
+    bgColor: "bg-warning/5",
+    borderColor: "border-warning/20",
+  },
+  {
+    // FASE B (UX-010 · GATE 1.4P): destino navegacional canónico del CRM
+    // global (CustomersView, Supabase). Copy honesto con su alcance REAL
+    // (alta + búsqueda + consulta — la edición/eliminación/detalle aún no
+    // existen; la fragmentación con el catálogo local de IPV es deuda
+    // documentada, no se promete aquí).
+    id: "clientes",
+    title: "Clientes",
+    description: "Registro y consulta de clientes por tienda: alta con CI, teléfono y dirección, y búsqueda por nombre, CI o teléfono.",
+    icon: Users,
+    view: "customers",
+    color: "text-info",
+    bgColor: "bg-info/5",
+    borderColor: "border-info/20",
   },
   {
     id: "accounts_payable",

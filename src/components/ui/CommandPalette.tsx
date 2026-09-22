@@ -162,7 +162,14 @@ export const CommandPalette = () => {
         setActiveCostSection(route.tab);
       }
     } else {
-      setCurrentView(action.route as ViewType);
+      // FASE B (mandato §9 — palette sin pistas falsas): en direct-routes el
+      // ViewType canónico es route.view, no el id de la acción. Antes se
+      // despachaba el id crudo: la acción preexistente 'accounts-receivable'
+      // (id ≠ view 'accounts_receivable') aterrizaba en "Módulo No
+      // Disponible", y las nuevas entradas con id ≠ view (clientes →
+      // 'customers') hubieran heredado el defecto. Los ids que SON ViewType
+      // (pos, news, sales…) despachan idéntico: route.view === id.
+      setCurrentView((route && route.type === 'direct' ? route.view : action.route) as ViewType);
     }
 
     setIsOpen(false);

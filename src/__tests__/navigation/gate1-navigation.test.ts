@@ -22,6 +22,7 @@ import {
   HOME_ITEM,
   LEGACY_VIEW_ALIASES,
   MOBILE_MAIN_TABS,
+  TECHNICAL_VIEW_IDS,
   VALID_VIEWS,
   flattenNavigation,
   normalizeLegacyView,
@@ -30,7 +31,7 @@ import {
   SIDEBAR_STRUCTURE,
   isViewAllowedForRole,
 } from '@/config/navigation/sidebar.structure';
-import {
+import NAVIGATION_MAP, {
   getNavigationRoute,
   isSidebarItemActive,
   getBreadcrumbForView,
@@ -573,5 +574,197 @@ describe('GATE 1.4R.1 — Mapeo de segundo nivel compartido (módulo ↔ móvil)
     expect(moduleTabForCostSection('cost-analytics')).toBe('cost-analytics');
     expect(moduleTabForCostSection('arena-fc')).toBe('arena-fc');
     expect(moduleTabForCostSection('steel-calculator')).toBe('steel-calculator');
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────
+// FASE B — Semántica global y navegación transversal (post GATE 1.4P)
+// Tablón → ANÁLISIS (global/transversal) · Ofertas/Clientes → dominio
+// Ventas (patrón hub) · Conciliación fuera de navegación con breadcrumb
+// honesto · palette sin pistas falsas.
+// ───────────────────────────────────────────────────────────────────────
+
+describe('FASE B — Tablón de Noticias (UX-005: GLOBAL/TRANSVERSAL)', () => {
+  it('news es hoja de la sección ANÁLISIS (fuera de Gestión de Tiendas)', () => {
+    const leaf = flattenNavigation().find(l => l.id === 'news');
+    expect(leaf).toBeDefined();
+    expect(leaf?.category).toBe('ANÁLISIS');
+    expect(leaf?.label).toBe('Tablón de Noticias');
+  });
+
+  it('breadcrumb de news se deriva del árbol (sin hub antiguo ni módulo falso)', () => {
+    const items = getBreadcrumbForView('news');
+    expect(items.map(i => i.label)).toEqual(['ANÁLISIS', 'Tablón de Noticias']);
+    expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
+  });
+
+  it('news ya no está en el mapa de hubs contextuales (fuente única: árbol)', () => {
+    // El mapa es SOLO para vistas contextuales; news es hoja de menú.
+    expect(NAVIGATION_MAP['news']).toEqual({ type: 'direct', view: 'news' });
+  });
+
+  it('news ya no es vista técnica (TECHNICAL_VIEW_IDS)', () => {
+    expect(TECHNICAL_VIEW_IDS).not.toContain('news');
+  });
+
+  it('el hub management-hub ya no captura la búsqueda "tablón" (pista retirada)', () => {
+    const hub = flattenNavigation().find(l => l.id === 'management-hub');
+    expect(hub?.keywords).not.toContain('tablón');
+    expect(hub?.description).not.toContain('Tablón');
+  });
+
+  it('deep-link universal preservado: roles del tab histórico (incl. operativos)', () => {
+    for (const role of ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse']) {
+      expect(isViewAllowedForRole('news', role)).toBe(true);
+    }
+    // La hoja conserva los roles históricos del tab (GATE 1.4P §3).
+    const leaf = flattenNavigation().find(l => l.id === 'news');
+    expect(leaf?.roles).toEqual(['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse']);
+  });
+
+  it('el Tablón es buscable en palette para roles de gestión y operativos', () => {
+    for (const role of ['admin', 'encargado', 'clerk']) {
+      const ids = getActionsForUser(role).map(a => a.id);
+      expect(ids).toContain('news');
+    }
+  });
+
+  it('news es única en el menú (sin duplicación de navegación)', () => {
+    const menuIds = flattenNavigation().map(l => l.id);
+    expect(menuIds.filter(id => id === 'news')).toHaveLength(1);
+    const extIds = ACTION_EXTENSIONS.map(e => e.id);
+    expect(extIds).not.toContain('news');
+  });
+});
+
+describe('FASE B — Ofertas en el dominio Ventas (patrón hub, sin duplicar)', () => {
+  it('la acción de palette existe y resuelve la vista directa ofertas', () => {
+    const ids = getActionsForUser('admin').map(a => a.id);
+    expect(ids).toContain('ofertas');
+    expect(getNavigationRoute('ofertas')).toEqual({ type: 'direct', view: 'ofertas' });
+  });
+
+  it('breadcrumb: OPERACIÓN > Ventas > Ofertas (sin Módulo No Disponible)', () => {
+    const items = getBreadcrumbForView('ofertas');
+    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas', 'Ofertas']);
+    expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
+  });
+
+  it('Ofertas NO es hoja de sidebar (patrón Ventas: hub + palette)', () => {
+    const menuIds = flattenNavigation().map(l => l.id);
+    expect(menuIds).not.toContain('ofertas');
+  });
+
+  it('móvil: ofertas sigue marcando el tab Vender como activo', () => {
+    const vender = MOBILE_MAIN_TABS.find(t => t.id === 'pos')!;
+    expect(vender.activeViews).toContain('ofertas');
+  });
+
+  it('Cotizaciones no fue absorbida (coexisten, semánticas distintas)', () => {
+    const ids = getActionsForUser('admin').map(a => a.id);
+    expect(ids).toContain('quotations');
+    expect(ids).toContain('ofertas');
+  });
+});
+
+describe('FASE B — Clientes: destino canónico único (CRM global en Ventas)', () => {
+  it('la acción "clientes" existe y apunta a la vista existente customers', () => {
+    const ids = getActionsForUser('admin').map(a => a.id);
+    expect(ids).toContain('clientes');
+    // Sin tercera implementación: la ruta es la vista CRM ya existente.
+    expect(getNavigationRoute('clientes')).toEqual({ type: 'direct', view: 'customers' });
+  });
+
+  it('breadcrumb de customers: OPERACIÓN > Ventas > Clientes (sin módulo falso)', () => {
+    const items = getBreadcrumbForView('customers');
+    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas', 'Clientes']);
+    expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
+  });
+
+  it('el id customers NO pisa la ruta técnica de IPV (fragmentación preservada, sin regreso)', () => {
+    // IPV_ROUTES conserva su tab interna customers (ipv + tab customers).
+    // La extensión usa id 'clientes' — DEFINED_ROUTES no introduce la clave
+    // 'customers', el master lookup no cambia de manos.
+    expect(NAVIGATION_MAP['customers']).toEqual({ type: 'module', view: 'ipv', tab: 'customers' });
+    expect(NAVIGATION_MAP['clientes']).toEqual({ type: 'direct', view: 'customers' });
+  });
+
+  it('la extensión NO es hoja de sidebar y es mobileHide (patrón hub Ventas)', () => {
+    const menuIds = flattenNavigation().map(l => l.id);
+    expect(menuIds).not.toContain('clientes');
+    const ext = ACTION_EXTENSIONS.find(e => e.id === 'clientes');
+    expect(ext?.mobileHide).toBe(true);
+  });
+
+  it('móvil: customers activa el tab Vender (cluster comercial, igual que quotations)', () => {
+    const vender = MOBILE_MAIN_TABS.find(t => t.id === 'pos')!;
+    expect(vender.activeViews).toContain('customers');
+  });
+});
+
+describe('FASE B — Conciliación Bancaria: estatus navegacional honesto', () => {
+  it('NO es comando público de palette (capacidad parcial — no aparentar completa)', () => {
+    const ids = getActionsForUser('admin').map(a => a.id);
+    expect(ids).not.toContain('bank-reconciliation');
+    const menuIds = flattenNavigation().map(l => l.id);
+    expect(menuIds).not.toContain('bank-reconciliation');
+  });
+
+  it('deep-link funcional con breadcrumb standalone honesto (sin módulo falso)', () => {
+    const items = getBreadcrumbForView('bank-reconciliation');
+    expect(items.map(i => i.label)).toEqual(['Conciliación Bancaria']);
+    expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
+    // La vista sigue siendo un destino válido (deep-link /case del shell).
+    expect(VALID_VIEWS.has('bank-reconciliation')).toBe(true);
+    expect(getNavigationRoute('bank-reconciliation')).toEqual({ type: 'direct', view: 'bank-reconciliation' });
+  });
+});
+
+describe('FASE B — Palette sin pistas falsas (dispatch por route.view)', () => {
+  it('acciones con id ≠ view resuelven el ViewType canónico', () => {
+    // Pista falsa preexistente corregida: accounts-receivable despacha a la
+    // vista real, no al id crudo.
+    expect(getNavigationRoute('accounts-receivable')).toEqual({ type: 'direct', view: 'accounts_receivable' });
+    expect(getNavigationRoute('accounts-payable')).toEqual({ type: 'direct', view: 'accounts_payable' });
+  });
+
+  it('las consultas naturales del mandato tienen candidato correcto', () => {
+    const actions = getActionsForUser('admin');
+    const byKeyword = (kw: string) =>
+      actions.filter(a => a.label.toLowerCase().includes(kw) || a.keywords.some(k => k.includes(kw)));
+
+    expect(byKeyword('tablón').map(a => a.id)).toContain('news');
+    expect(byKeyword('noticias').map(a => a.id)).toContain('news');
+    expect(byKeyword('noticias económicas').map(a => a.id)).toContain('news');
+    expect(byKeyword('información').map(a => a.id)).toContain('news');
+    expect(byKeyword('ofertas').map(a => a.id)).toContain('ofertas');
+    expect(byKeyword('clientes').map(a => a.id)).toContain('clientes');
+    // La conciliación no debe aparecer como resultado público de palette.
+    expect(byKeyword('conciliación').map(a => a.id)).not.toContain('bank-reconciliation');
+  });
+
+  it('"caja" sigue resolviendo UNA acción (sin contaminación de keywords)', () => {
+    const actions = getActionsForUser('clerk');
+    const matching = actions.filter(a =>
+      a.label.toLowerCase().includes('caja') || a.keywords.includes('caja')
+    );
+    expect(matching.map(a => a.id)).toEqual(['cash']);
+  });
+});
+
+describe('FASE B — Hub Gestión de Tiendas sin el Tablón', () => {
+  it('el hub sigue siendo hoja de menú alcanzable (desktop y sheet móvil)', () => {
+    const menuIds = flattenNavigation().map(l => l.id);
+    expect(menuIds).toContain('management-hub');
+    // La Vitrina sigue siendo descubrible (extensión de palette preexistente).
+    const extIds = ACTION_EXTENSIONS.map(e => e.id);
+    expect(extIds).toContain('storefront-config');
+  });
+
+  it('ninguna vista conocida de las 4 capacidades cae en Módulo No Disponible', () => {
+    for (const view of ['news', 'ofertas', 'customers', 'bank-reconciliation']) {
+      const items = getBreadcrumbForView(view);
+      expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
+    }
   });
 });

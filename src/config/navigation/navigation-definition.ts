@@ -41,7 +41,7 @@ import {
   Factory, UserCog, LayoutGrid, MessageCircle, Send, TrendingUp, Table2, DollarSign, Truck,
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
   Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet,
-  Receipt, RotateCcw, CreditCard, ClipboardList,
+  Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone,
   Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool,
   type LucideIcon,
 } from 'lucide-react';
@@ -287,15 +287,17 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         keywords: ['trabajadores', 'empleados', 'comisiones', 'pagos', 'nómina'],
       },
       {
-        // Hub real (GATE 0.1 §3-D: nombre correcto, alcance = ciclo de vida completo)
+        // Hub real (GATE 0.1 §3-D: nombre correcto, alcance = ciclo de vida completo).
+        // FASE B (UX-005): el Tablón salió del hub (sección ANÁLISIS) — la
+        // keyword 'tablón' se retira para no desviar la búsqueda hacia el hub.
         id: 'management-hub',
         label: 'Gestión de Tiendas',
-        description: 'Centro unificado: Tablón de Noticias, Vitrina pública y ciclo de vida completo de tiendas (crear, configurar, backup/restore, KPIs por tienda).',
+        description: 'Centro unificado: Vitrina pública y ciclo de vida completo de tiendas (crear, configurar, backup/restore, KPIs por tienda).',
         icon: LayoutGrid,
         type: 'item',
         navClass: 'hub',
         roles: ['admin', 'manager', 'encargado'],
-        keywords: ['tiendas', 'gestión', 'sucursales', 'tablón', 'vitrina', 'backup', 'kpi tiendas'],
+        keywords: ['tiendas', 'gestión', 'sucursales', 'vitrina', 'backup', 'kpi tiendas'],
       },
       {
         id: 'redes',
@@ -333,7 +335,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
     label: 'ANÁLISIS',
     type: 'group',
     icon: TrendingUp,
-    description: 'Herramientas de análisis: KPIs de tiendas, tablero dinámico, cambiaria y reportes.',
+    description: 'Análisis e inteligencia: KPIs de tiendas, tablero dinámico, cambiaria, Tablón de Noticias y reportes.',
     roles: ['admin', 'manager', 'encargado'],
     children: [
       {
@@ -368,6 +370,25 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: DollarSign,
         type: 'item',
         keywords: ['cambiaria', 'divisas', 'tasas', 'devaluación', 'mlc', 'usd', 'simulador'],
+      },
+      {
+        // FASE B (UX-005 · GATE 1.4P): el Tablón es inteligencia de mercado
+        // GLOBAL/TRANSVERSAL (lector RSS económico-fiscal sin store_id; no
+        // cambia con activeStoreId). Deja el hub Gestión de Tiendas, donde
+        // llegó como efecto mecánico de una reducción de menú (commit
+        // b8c15082), y se ubica junto a Inteligencia Cambiaria (mismo dominio:
+        // tasas BCC, normativa, comercio exterior). Roles = los del tab
+        // histórico (todos) para PRESERVAR el deep-link universal y la
+        // palette de roles operativos; la visibilidad del menú sigue el guard
+        // de la sección. La contradicción de roles queda documentada en
+        // GATE 1.4P/FASE B como hallazgo B-adjunto (sin cambio de permisos).
+        id: 'news',
+        label: 'Tablón de Noticias',
+        description: 'Lector de noticias económicas y fiscales (BCC, FMI, ONAT, Gaceta Oficial…) con detección de tasas de cambio. Transversal: no depende de la tienda activa.',
+        icon: Newspaper,
+        type: 'item',
+        roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
+        keywords: ['tablón', 'noticias', 'noticias económicas', 'información', 'rss', 'tasas de cambio', 'mercado', 'fiscal', 'gaceta'],
       },
       {
         id: 'reports',
@@ -655,6 +676,39 @@ const SALES_HUB_PALETTE_ENTRIES: (NavEntry & { route: NavRoute })[] = [
     mobileHide: true,
     keywords: ['cobros', 'cuentas por cobrar', 'cxc', 'clientes', 'antigüedad', 'por cobrar'],
   },
+  {
+    // FASE B (UX-010 · GATE 1.4P): Ofertas es capacidad B — stack completo
+    // (UI 1.674 LOC + CRUD + PDF) sin discovery. Se publica con el patrón del
+    // hub (tarjeta + palette + breadcrumb), igual que Devoluciones/
+    // Cotizaciones. NO sustituye a Cotizaciones (coexisten). mobileHide = en
+    // móvil ya es alcanzable (proceso Vender: pos.activeViews + palette).
+    id: 'ofertas',
+    label: 'Ofertas',
+    description: 'Crea y gestiona ofertas comerciales formales: suministrador, productos, ITBIS, validez y exportación a PDF.',
+    icon: Megaphone,
+    type: 'item',
+    route: { view: 'ofertas' },
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+    mobileHide: true,
+    keywords: ['ofertas', 'oferta', 'promoción', 'propuesta comercial', 'documento comercial', 'presupuesto formal'],
+  },
+  {
+    // FASE B (UX-010 · GATE 1.4P): destino navegacional canónico ÚNICO del
+    // CRM global = CustomersView (Supabase). El id 'clientes' evita pisar
+    // IPV_ROUTES['customers'] (la tab interna de IPV conserva su ruta) y no
+    // crea una tercera implementación — apunta a la vista existente.
+    // La fragmentación con el catálogo local de IPV queda documentada como
+    // deuda técnica en audit-evidence/FASE-B/ (resolución posterior).
+    id: 'clientes',
+    label: 'Clientes',
+    description: 'Registro y consulta de clientes por tienda: alta con CI, teléfono y dirección, y búsqueda por nombre, CI o teléfono.',
+    icon: Users,
+    type: 'item',
+    route: { view: 'customers' },
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+    mobileHide: true,
+    keywords: ['clientes', 'cliente', 'crm', 'cartera de clientes', 'alta de cliente', 'buscar cliente'],
+  },
 ];
 
 // ────────────────────────────────────────────────────────────────────
@@ -904,7 +958,8 @@ export const ACTION_EXTENSIONS: (NavEntry & { route: NavRoute })[] = [
  * seguridad real vive en backend/RLS.
  */
 export const TECHNICAL_VIEW_IDS: string[] = [
-  'news', 'stores', 'catalog', 'history', 'lots', 'warehouses',
+  // FASE B: 'news' ya no es vista técnica — es hoja de menú de ANÁLISIS.
+  'stores', 'catalog', 'history', 'lots', 'warehouses',
   'customers', 'bank-reconciliation', 'cash_report', 'devolutions', 'quotations',
   'sales_catalog', 'sales', 'inventory_count', 'accounts_payable', 'accounts-payable',
   'accounts_receivable', 'ofertas', 'punto_venta', 'analitica',
@@ -1124,7 +1179,7 @@ export const MOBILE_MAIN_TABS: MobileMainTab[] = [
     icon: ShoppingCart,
     activeViews: [
       'pos', 'sales-hub', 'sales_catalog', 'sales', 'inventory_count',
-      'devolutions', 'quotations', 'ofertas', 'cash_report',
+      'devolutions', 'quotations', 'ofertas', 'customers', 'cash_report',
       'accounts-payable', 'accounts_payable', 'accounts_receivable',
     ],
   },

@@ -3,30 +3,34 @@
 /**
  * ManagementHubView — Hub de Gestión (MULTI-TIENDA).
  *
- * GESTION-UNIFICADA-V2 (2026-07-13): unifica 3 vistas administrativas en tabs:
- *   1. Tablón Noticias  → NewsView (lectura + tasa de cambio)
+ * GESTION-UNIFICADA-V2 (2026-07-13): unifica vistas administrativas en tabs:
+ *   1. Gestión Tiendas  → StoresManagementView con KPIs + dashboard avanzado
  *   2. Vitrina          → StorefrontConfigView (configuración vitrina pública)
- *   3. Gestión Tiendas  → StoresManagementView con KPIs + dashboard avanzado
  *
- * FIX-GESTION-UNIFICADA-V2: el tab "Gestión Tiendas" ahora renderiza
+ * FASE B (UX-005 · GATE 1.4P): el Tablón de Noticias SALIÓ de este hub — es
+ * inteligencia de mercado GLOBAL/TRANSVERSAL (lector RSS sin store_id, no
+ * cambia con la tienda activa) y vive ahora como hoja de la sección ANÁLISIS
+ * (navigation-definition.ts). Su ubicación aquí era efecto mecánico de una
+ * reducción de menú (commit b8c15082), no pertenencia semántica. El default
+ * del hub es su dominio propio: Gestión de Tiendas. La vista 'news' sigue
+ * existiendo como destino directo (deep-link ?view=news) y se renderiza
+ * standalone desde TerminalShell.
+ *
+ * FIX-GESTION-UNIFICADA-V2: el tab "Gestión Tiendas" renderiza
  * StoresManagementView con una prop `onOpenDashboard`. Cuando el user hace
  * clic en el botón "Ver Dashboard" de una tarjeta, se abre StoreDashboardView
  * (dashboard avanzado por tienda, 3160 LOC con ECharts + insights IA).
- *
- * El botón "Ver Dashboard KPI" del header fue removido — ya hay un botón
- * "Ver Dashboard" por cada tarjeta de tienda, que es más específico.
  *
  * Patrón: TABS (igual que InventoryView).
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Newspaper, Store, Building, Loader2, ChevronRight } from 'lucide-react';
+import { Store, Building, Loader2, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 
 // Lazy-load de las sub-vistas
-const NewsView = dynamic(() => import('@/components/views/terminal/views/rss/NewsView'), { ssr: false });
 const StorefrontConfigView = dynamic(() => import('@/components/views/terminal/views/stores/StorefrontConfigView'), { ssr: false });
 const StoresManagementView = dynamic(() => import('@/components/views/terminal/views/stores/StoresManagementView'), { ssr: false });
 
@@ -44,7 +48,7 @@ const StoreDashboardView = dynamic(
   }
 );
 
-type TabId = 'news' | 'storefront' | 'stores';
+type TabId = 'storefront' | 'stores';
 
 interface TabDef {
   id: TabId;
@@ -54,13 +58,17 @@ interface TabDef {
   roles: string[];
 }
 
+// FASE B (UX-005): el tab del Tablón se retiró (hoja ANÁLISIS). "Gestión
+// Tiendas" es el default — es el dominio propio del hub. Los valores viejos
+// 'news' persistidos en localStorage ('mgmt-hub-tab') degradan al default
+// (el guard `TABS.some(t => t.id === saved)` ya no los acepta).
 const TABS: TabDef[] = [
   {
-    id: 'news',
-    label: 'Tablón Noticias',
-    icon: Newspaper,
-    description: 'Noticias y tasas de cambio en tiempo real',
-    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
+    id: 'stores',
+    label: 'Gestión Tiendas',
+    icon: Building,
+    description: 'Tiendas con KPIs en tiempo real y dashboard avanzado por tienda',
+    roles: ['admin', 'manager', 'encargado'],
   },
   {
     id: 'storefront',
@@ -69,18 +77,11 @@ const TABS: TabDef[] = [
     description: 'Configuración de la vitrina pública',
     roles: ['admin', 'manager', 'encargado'],
   },
-  {
-    id: 'stores',
-    label: 'Gestión Tiendas',
-    icon: Building,
-    description: 'Tiendas con KPIs en tiempo real y dashboard avanzado por tienda',
-    roles: ['admin', 'manager', 'encargado'],
-  },
 ];
 
 export default function ManagementHubView() {
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<TabId>('news');
+  const [activeTab, setActiveTab] = useState<TabId>('stores');
   const [dashboardStore, setDashboardStore] = useState<{ id: string; name: string } | null>(null);
 
   // Persistir el tab activo en localStorage
@@ -178,7 +179,6 @@ export default function ManagementHubView() {
         id={`tabpanel-${activeTab}`}
         aria-labelledby={`tab-${activeTab}`}
       >
-        {activeTab === 'news' && <NewsView />}
         {activeTab === 'storefront' && <StorefrontConfigView />}
         {activeTab === 'stores' && (
           <StoresManagementView onOpenDashboard={handleOpenDashboard} />
