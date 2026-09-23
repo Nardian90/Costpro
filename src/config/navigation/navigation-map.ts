@@ -100,6 +100,8 @@ const COSTOS_ROUTES: Record<string, ModuleRoute> = {
   'massive-gen':      { type: 'module', view: 'cost-sheets', tab: 'massive-gen' },
   'steel-calculator': { type: 'module', view: 'cost-sheets', tab: 'steel-calculator' },
   'tool-import':      { type: 'module', view: 'cost-sheets', tab: 'tool-import' },
+  // C2-C (FASE C): Guardar Ficha (persistencia real) + Exportar JSON (descarga)
+  'tool-save-cloud':  { type: 'module', view: 'cost-sheets', tab: 'tool-save-cloud' },
   'tool-save':        { type: 'module', view: 'cost-sheets', tab: 'tool-save' },
   'tool-export-excel':{ type: 'module', view: 'cost-sheets', tab: 'tool-export-excel' },
   'tool-export-pdf':  { type: 'module', view: 'cost-sheets', tab: 'tool-export-pdf' },

@@ -27,6 +27,17 @@ interface CostSheetState {
   data: CostSheetData;
   _hasHydrated: boolean;
 
+  // ── C2-C (FASE C): vinculación con el documento persistido en cost_sheets ──
+  /**
+   * Id de la fila en `cost_sheets` donde este documento vive (o null si
+   * nunca se guardó / es un documento nuevo o ajeno). Permite distinguir
+   * CREAR de ACTUALIZAR al guardar (mandato C2 §8) sin duplicados.
+   * Se limpia en cada carga de documento distinto (setSheet/loadExample/reset)
+   * y se establece tras un guardado exitoso (o al abrir desde biblioteca).
+   */
+  persistedDocId: string | null;
+  setPersistedDocId: (id: string | null) => void;
+
   // ── Generic path-based mutation ──
   updateValue: (path: StorePath, value: StoreValue) => void;
   updateValues: (updates: UpdateValuePayload[]) => void;
@@ -99,7 +110,12 @@ function validatedSet(
 ): void {
   const result = costSheetDataSchema.safeParse(raw);
   if (result.success) {
-    set({ data: result.data as CostSheetData });
+    // C2-C: un documento que entra por aquí es nuevo/ajeno para el editor —
+    // se pierde el vínculo con cualquier fila previa de cost_sheets (sin
+    // riesgo de sobrescribir una ficha existente por accidente, mandato §8).
+    // El vínculo se restablece explícitamente con setPersistedDocId(id)
+    // cuando el origen lo confirma (guardado exitoso / apertura de biblioteca).
+    set({ data: result.data as CostSheetData, persistedDocId: null });
   } else {
     console.error(`[Zod Validation Error] ${sourceLabel}:`, result.error.format());
     toast.error(errorMessage);
@@ -128,6 +144,9 @@ export const useCostSheetStore = create<CostSheetState>()(
     (set) => ({
       data: reinicioTemplate as CostSheetData,
       _hasHydrated: false,
+      persistedDocId: null,
+
+      setPersistedDocId: (id) => set({ persistedDocId: id }),
 
       // ── Generic path-based mutation ────────────────────────────────
 
@@ -385,6 +404,8 @@ export const useCostSheetStore = create<CostSheetState>()(
       partialize: (state) => {
         // _hasHydrated is a runtime-only flag — never persist it.
         // If persisted as false and onRehydrateStorage fails, it stays false forever.
+        // persistedDocId SÍ se persiste: permite que "Guardar" tras recargar
+        // actualice la misma ficha en vez de duplicarla (mandato C2 §8/§16.5).
         const { _hasHydrated, ...rest } = state;
         return rest;
       },

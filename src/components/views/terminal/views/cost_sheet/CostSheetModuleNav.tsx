@@ -4,7 +4,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import {
   Zap, PenTool, Layers, BarChart3, Swords,
-  Save, Upload, FileSpreadsheet, FileText,
+  Save, Upload, FileSpreadsheet, FileText, FileJson,
 } from 'lucide-react';
 
 import { CostSheetModeDropdown, CostSheetViewMode } from './CostSheetModeDropdown';
@@ -24,8 +24,10 @@ import { CostSheetModeDropdown, CostSheetViewMode } from './CostSheetModeDropdow
  *   └── Arena FC           → arena-fc      (beta)
  *
  * CONTEXTO DE FICHA ABIERTA (scope Experto): segunda fila con el control
- * [Modo ▼] (Completo/Asistido/Informe/Vistazo) y la ZONA DE ACCIONES
- * [Guardar Ficha][Importar JSON][Exportar Excel][Exportar PDF] — mandato §15/§16.
+ * [Modo ▼] y la ZONA DE ACCIONES
+ * [Guardar Ficha][Exportar JSON][Importar JSON][Exportar Excel][Exportar PDF].
+ * C2-C: "Guardar Ficha" persiste en Supabase; "Exportar JSON" descarga un
+ * archivo local — operaciones separadas y honestas (mandato C2 §15-§18).
  *
  * REUTILIZACIÓN (mandato §21): este componente NO duplica lógica — solo navega
  * (setActiveCostSection) y dispara handlers existentes de useCostSheetActions.
@@ -80,10 +82,14 @@ interface CostSheetModuleNavProps {
   fichaContext?: {
     viewMode: CostSheetViewMode;
     setViewMode: (mode: CostSheetViewMode) => void;
+    /** C2-C: persiste la ficha en cost_sheets (Supabase). */
     onSave: () => void;
     onImport: () => void;
     onExportExcel: () => void;
     onExportPdf: () => void;
+    /** C2-C: descarga la ficha como archivo JSON (independiente de Guardar). */
+    onExportJson?: () => void;
+    /** Estado de la PERSISTENCIA real (no del autosave local). */
     isSaving?: boolean;
   };
 }
@@ -147,15 +153,26 @@ export function CostSheetModuleNav({
 
           <div className="w-px h-6 bg-border/60 shrink-0" aria-hidden="true" />
 
-          {/* ZONA DE ACCIONES — las 4 operaciones del mandato §16 */}
+          {/* ZONA DE ACCIONES — C2-C: Guardar ≠ Exportar JSON (mandato §15-§18) */}
           <button
             type="button"
             onClick={fichaContext.onSave}
-            className="flex items-center gap-1.5 px-3 h-11 min-h-[44px] rounded-xl shrink-0 active:scale-[0.98] transition-all text-xs font-black uppercase tracking-widest bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20"
-            aria-label="Guardar ficha: descarga la ficha actual como archivo JSON"
+            disabled={fichaContext.isSaving}
+            className="flex items-center gap-1.5 px-3 h-11 min-h-[44px] rounded-xl shrink-0 active:scale-[0.98] transition-all text-xs font-black uppercase tracking-widest bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 disabled:opacity-60 disabled:cursor-not-allowed"
+            aria-label="Guardar ficha: persiste la ficha actual en tu librería (Supabase)"
           >
             <Save className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>{fichaContext.isSaving ? 'Guardando…' : 'Guardar Ficha'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={fichaContext.onExportJson}
+            className="flex items-center gap-1.5 px-3 h-11 min-h-[44px] rounded-xl shrink-0 active:scale-[0.98] transition-all text-xs font-black uppercase tracking-widest text-foreground/80 hover:text-foreground hover:bg-muted/50 border border-border/60"
+            aria-label="Exportar JSON: descarga la ficha actual como archivo local"
+          >
+            <FileJson className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>Exportar JSON</span>
           </button>
 
           <button

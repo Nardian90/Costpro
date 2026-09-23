@@ -20,6 +20,12 @@ import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabaseClient';
 import { useUIStore } from '@/store';
+// C2-B (FASE C): ArenaFC compara con el motor del terminal — SOLO documentos
+// compatibles con el contrato CostSheet (D2/D4 de C1R: no calcular sobre FC).
+import {
+  isCostSheetDocument,
+  COST_SHEET_CONTRACT_FILTER,
+} from '@/lib/cost-sheets/document-compatibility';
 
 
 import { toast } from 'sonner';
@@ -256,12 +262,21 @@ export default function ArenaFC() {
       const { data, error } = await supabase
         .from('cost_sheets')
         .select('id, name, category, data, updated_at')
+        // C2-B: exclusión server-side de la familia FC (Res.148).
+        .or(COST_SHEET_CONTRACT_FILTER.excludeFcModelOr)
+        .filter(
+          COST_SHEET_CONTRACT_FILTER.excludeFcFicha.column,
+          COST_SHEET_CONTRACT_FILTER.excludeFcFicha.operator,
+          COST_SHEET_CONTRACT_FILTER.excludeFcFicha.value
+        )
         .order('updated_at', { ascending: false });
 
       if (!error && data) {
         const latestByName = new Map<string, any>();
 
-        data.forEach((d: any) => {
+        // C2-B: guard central de compatibilidad — un documento FC (o vacío)
+        // jamás entra al cálculo del motor terminal.
+        data.filter((d: any) => isCostSheetDocument(d?.data)).forEach((d: any) => {
           const sheetData = d.data as unknown as CostSheetData;
           let resolvedName = d.name || sheetData?.header?.name || 'Sin nombre';
           resolvedName = resolveFormulaicString(resolvedName, sheetData);

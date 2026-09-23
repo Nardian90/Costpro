@@ -3,6 +3,11 @@ import { getViewDetails } from '@/config/viewRegistry';
 import { TOOLS } from "./definitions";
 import { z } from 'zod';
 import { logSystemHealth } from '../../observability/system-health';
+// C2-B (FASE C): guard central de contrato documental para search_entity('costSheet')
+import {
+  isCostSheetDocument,
+  COST_SHEET_CONTRACT_FILTER,
+} from '@/lib/cost-sheets/document-compatibility';
 
 export interface ToolHandlerContext {
   supabase: SupabaseClient;
@@ -147,15 +152,37 @@ export const toolHandlers: Record<string, (args: any, context: ToolHandlerContex
       default: return { error: 'Entidad no soportada' };
     }
 
-    const { data, error } = await supabase
+    // C2-B (FASE C): `cost_sheets` NO tiene store_id (42703 — decisión D1 de C1R)
+    // y es un contenedor multi-formato. La búsqueda IA de CostSheets debe: (a)
+    // omitir el filtro de tienda inexistente, y (b) excluir la familia FC en el
+    // servidor + aplicar el guard central de contrato antes de devolver resultados.
+    const isCostSheetSearch = entity === 'costSheet';
+
+    let dbQuery = supabase
       .from(table)
-      .select('*')
-      .eq('store_id', storeId)
+      .select('*');
+
+    if (isCostSheetSearch) {
+      dbQuery = dbQuery
+        .or(COST_SHEET_CONTRACT_FILTER.excludeFcModelOr)
+        .filter(
+          COST_SHEET_CONTRACT_FILTER.excludeFcFicha.column,
+          COST_SHEET_CONTRACT_FILTER.excludeFcFicha.operator,
+          COST_SHEET_CONTRACT_FILTER.excludeFcFicha.value
+        );
+    }
+
+    const { data, error } = await dbQuery
       .ilike('name', `%${query.replace(/[%_]/g, '\\$&')}%`) // Basic sanitization
       .limit(5);
 
     if (error) return { error: error.message };
-    return { success: true, results: data };
+
+    const results = isCostSheetSearch
+      ? (data || []).filter((row: any) => isCostSheetDocument(row?.data))
+      : data;
+
+    return { success: true, results };
   },
 
   fill_form: async ({ formName, data }) => {

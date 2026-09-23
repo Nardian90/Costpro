@@ -72,6 +72,10 @@ export const API_ERRORS = {
   BULK_RATE_LIMIT_EXCEEDED: { key: 'apiErrors.bulkRateLimitExceeded', status: 429, defaultMessage: 'Límite de operaciones bulk por hora excedido' },
   BULK_CONFIRMATION_TEXT_REQUIRED: { key: 'apiErrors.bulkConfirmationTextRequired', status: 400, defaultMessage: 'Texto de confirmación BULK_DELETE requerido' },
   BULK_REASON_REQUIRED: { key: 'apiErrors.bulkReasonRequired', status: 400, defaultMessage: 'Motivo es requerido (mínimo 10 caracteres)' },
+
+  // Cost sheets documentales (FASE C — C2)
+  COST_SHEET_NOT_FOUND: { key: 'apiErrors.costSheetNotFound', status: 404, defaultMessage: 'Ficha de costo no encontrada o sin acceso' },
+  COST_SHEET_NOT_COMPATIBLE: { key: 'apiErrors.costSheetNotCompatible', status: 409, defaultMessage: 'El documento destino no es un documento CostSheet compatible' },
 } as const;
 
 export type ApiErrorKey = keyof typeof API_ERRORS;

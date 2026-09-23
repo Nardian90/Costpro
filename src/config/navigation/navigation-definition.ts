@@ -42,7 +42,7 @@ import {
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
   Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet,
   Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone,
-  Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool,
+  Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -838,12 +838,24 @@ export const COST_SHEETS_TABS: CostSheetTabMeta[] = [
     mobileHide: true,
   },
   {
-    id: 'tool-save',
-    label: 'Guardar ficha (JSON)',
-    description: 'Descarga la ficha actual como archivo JSON (⌘S).',
-    keywords: ['guardar', 'guardar ficha', 'json', 'descargar', 'backup', 'respaldo'],
+    id: 'tool-save-cloud',
+    label: 'Guardar Ficha',
+    description: 'Persiste la ficha actual en tu librería (Supabase).',
+    keywords: ['guardar', 'guardar ficha', 'salvar', 'persistir', 'librería', 'nube', 'supabase'],
     kind: 'accion',
     icon: Save,
+    palette: true,
+    mobileHide: true,
+  },
+  {
+    // C2-C (FASE C): renombrado honesto — este comando DESCARGA JSON, no guarda.
+    // La persistencia real es 'tool-save-cloud' ("Guardar Ficha").
+    id: 'tool-save',
+    label: 'Exportar JSON',
+    description: 'Descarga la ficha actual como archivo JSON (⌘S).',
+    keywords: ['exportar json', 'json', 'descargar', 'backup', 'respaldo', 'exportar'],
+    kind: 'accion',
+    icon: FileJson,
     palette: true,
     mobileHide: true,
   },

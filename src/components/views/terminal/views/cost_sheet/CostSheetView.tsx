@@ -316,6 +316,8 @@ const CostSheetView = () => {
     handleExportExcel,
     handleImportJSON,
     handleExportJSON,
+    handleSaveToSupabase,
+    isSavingCloud,
     handleQuickGenerate,
     quickModeMapping,
     setQuickModeMapping,
@@ -444,7 +446,8 @@ const CostSheetView = () => {
     toggleProblems: () => toggleProblems(),
     toggleComparison: () => {},
     expandSection: (n: number) => data.sections[n-1] && expertState.toggleSection(data.sections[n-1].id),
-    save: handleExportJSON,
+    // C2-C: ⌘S = "Guardar Ficha" → PERSISTIR en cost_sheets (no descargar JSON)
+    save: handleSaveToSupabase,
     closePanels: () => {},
     showShortcuts: () => {
       toast.info('Atajos de Teclado', {
@@ -504,11 +507,13 @@ const CostSheetView = () => {
             fichaContext={{
               viewMode,
               setViewMode: handleSetViewMode,
-              onSave: handleExportJSON,
+              // C2-C: "Guardar Ficha" persiste en Supabase (ya no descarga JSON)
+              onSave: handleSaveToSupabase,
               onImport: handleImportJSON,
               onExportExcel: handleExportExcel,
               onExportPdf: () => setIsExportModalOpen(true),
-              isSaving,
+              onExportJson: handleExportJSON,
+              isSaving: isSavingCloud,
             }}
           />
         </div>

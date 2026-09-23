@@ -8,8 +8,15 @@ import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import { CostSheetDataContract } from '@/contracts/cost-sheet';
 import { costSheetSaveSchema, zodError } from '@/validation/api-schemas';
 import { withTracing } from '@/lib/observability';
-import { withStoreAccess, type AuthenticatedSession } from '@/lib/auth-middleware';
+// C2-A (FASE C): cost_sheets es GLOBAL/no store-scoped (decisión D1 de C1R).
+// withStoreAccess exigía un storeId que la tabla nunca registra (defensa en
+// profundidad huérfana) → se sustituye por withAuth. La autorización real la
+// aplica RLS (owner-manage) y el ownership explícito por created_by.
+import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { createApiError } from '@/lib/api-errors';
+// C2-A/D3 (FASE C): el writer NUNCA convierte ni sobrescribe documentos FC —
+// solo acepta como destino de UPDATE un documento CostSheet compatible.
+import { isCostSheetDocument } from '@/lib/cost-sheets/document-compatibility';
 
 export const runtime = 'nodejs';
 
@@ -41,21 +48,10 @@ async function saveCostSheetHandler(req: NextRequest, session: AuthenticatedSess
     if (!parsed.success) {
       return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
-    const { updateData, currentData, store_id, storeId } = parsed.data as any;
-    const activeStoreId = store_id || storeId;
+    // C2-A: sin store_id (columna inexistente en cost_sheets — D1 de C1R).
+    const { updateData, currentData, id: existingId, source } = parsed.data as any;
 
-    // FIX-AUDIT-2: withStoreAccess already validated membership for this store_id,
-    // but we verify again as defense-in-depth
-    const isAdmin = (session.user as any).role === 'admin';
-    const memberships = (session.user as any).memberships || [];
-    if (!isAdmin && !memberships.some((m: any) => m.store_id === activeStoreId && m.status === 'active')) {
-      return NextResponse.json(
-        createApiError('FORBIDDEN'),
-        { status: 403 }
-      );
-    }
-
-    // Use authenticated client for database operations
+    // Use authenticated client for database operations (RLS: owner-manage)
     const supabase = getSupabaseAuthClient(session.token);
 
     // 1. Merge with template or current data
@@ -184,12 +180,14 @@ async function saveCostSheetHandler(req: NextRequest, session: AuthenticatedSess
         });
     }
 
-    // 5. Persist in Supabase
+    // 5. Persist in Supabase — solo columnas reales de cost_sheets
+    // (id, name, description, category, data, created_by, created_at, updated_at)
+    const isManual = source === 'manual';
     const exportData = {
       ...baseData,
       metadata: {
         ...baseData.metadata,
-        generatedBy: 'Darian AI',
+        generatedBy: isManual ? 'CostSheet Editor' : 'Darian AI',
         generatedAt: new Date().toISOString(),
         calculationSnapshot: {
           header: ficha.meta,
@@ -198,16 +196,80 @@ async function saveCostSheetHandler(req: NextRequest, session: AuthenticatedSess
       }
     };
 
+    const documentName = baseData.header?.name || 'Ficha sin nombre';
+    const documentCategory = baseData.header?.category || 'General';
+
+    // ── C2-A (§8): distinguir CREAR de ACTUALIZAR ──
+    // Actualizar solo si llegó un `id` válido. Ownership estricto:
+    // created_by = session.user.id (coincide con RLS cost_sheets_owner_manage;
+    // un admin NO edita ajenos — la política FOR ALL es owner-only).
+    if (existingId) {
+      // D3 (FASE C): verificar que el documento destino ES un documento
+      // CostSheet antes de sobrescribirlo. Un documento FC (o de otra familia)
+      // jamás se convierte/destruye por accidente vía este writer.
+      const { data: existingRow, error: fetchError } = await supabase
+        .from('cost_sheets')
+        .select('data')
+        .eq('id', existingId)
+        .eq('created_by', session.user.id)
+        .single();
+
+      if (fetchError || !existingRow) {
+        // PGRST116 = 0 filas: el documento no existe o no es del usuario (RLS/owner)
+        console.error('[SaveCostSheet] Update fetch error:', fetchError);
+        return NextResponse.json(
+          createApiError('COST_SHEET_NOT_FOUND', 'La ficha a actualizar no existe o no te pertenece'),
+          { status: 404 }
+        );
+      }
+
+      if (!isCostSheetDocument(existingRow.data)) {
+        return NextResponse.json(
+          createApiError('COST_SHEET_NOT_COMPATIBLE', 'El documento destino no es un documento CostSheet compatible (no puede sobrescribirse desde este editor)'),
+          { status: 409 }
+        );
+      }
+
+      const { data: updatedData, error: updateError } = await supabase
+        .from('cost_sheets')
+        .update({
+          name: documentName,
+          description: baseData.metadata?.description || (isManual ? 'Guardado desde el editor CostSheet' : 'Generado por Darian AI'),
+          category: documentCategory,
+          data: exportData as any,
+        })
+        .eq('id', existingId)
+        .eq('created_by', session.user.id)
+        .select()
+        .single();
+
+      if (updateError || !updatedData) {
+        // PGRST116 = 0 filas: el documento no existe o no es del usuario (RLS/owner)
+        console.error('[SaveCostSheet] Update error:', updateError);
+        return NextResponse.json(
+          createApiError('COST_SHEET_NOT_FOUND', 'La ficha a actualizar no existe o no te pertenece'),
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        ok: true,
+        created: false,
+        message: 'Ficha actualizada correctamente',
+        id: updatedData.id,
+        data: exportData
+      });
+    }
+
+    // Crear nuevo documento (owner = usuario autenticado, §6)
     const { data: insertedData, error: insertError } = await supabase
       .from('cost_sheets')
       .insert({
-        name: baseData.header.name || 'Ficha sin nombre',
-        description: baseData.metadata?.description || 'Generado por Darian AI',
-        category: baseData.header.category || 'General',
+        name: documentName,
+        description: baseData.metadata?.description || (isManual ? 'Guardado desde el editor CostSheet' : 'Generado por Darian AI'),
+        category: documentCategory,
         data: exportData as any,
         created_by: session.user.id,
-        // FIX-AUDIT-2: store_id is now mandatory — cost sheets are always store-scoped
-        store_id: activeStoreId,
       })
       .select()
       .single();
@@ -219,7 +281,8 @@ async function saveCostSheetHandler(req: NextRequest, session: AuthenticatedSess
 
     return NextResponse.json({
       ok: true,
-      message: 'Ficha generada y guardada correctamente',
+      created: true,
+      message: 'Ficha guardada correctamente',
       id: insertedData.id,
       data: exportData
     });
@@ -232,6 +295,6 @@ async function saveCostSheetHandler(req: NextRequest, session: AuthenticatedSess
 }
 
 export const POST = withTracing(
-  withStoreAccess(saveCostSheetHandler as any) as any,
+  withAuth(saveCostSheetHandler as any) as any,
   'POST /api/cost-sheets/save'
 );

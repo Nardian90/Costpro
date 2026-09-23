@@ -81,12 +81,17 @@ export const inventoryAdjustmentsSchema = z.object({
 });
 
 // ─── Cost sheets ─────────────────────────────────────────────────────────────
+// C2-A (FASE C): cost_sheets es una tabla documental GLOBAL — no store-scoped
+// (decisión D1 de C1R; la columna store_id NO existe en LIVE, error 42703).
+// El writer se alinea al esquema real:
+//   - SIN store_id / storeId (el supuesto FIX-AUDIT-2 rompía el writer con 400/500);
+//   - `id` opcional → si llega, se ACTUALIZA ese documento (owner-only, ver route);
+//   - `source` distingue el flujo IA del guardado manual del editor (metadata honesta).
 export const costSheetSaveSchema = z.object({
   updateData: z.record(z.string(), z.unknown()),
   currentData: z.record(z.string(), z.unknown()).optional(),
-  // FIX-AUDIT-2: store_id is mandatory for multi-store data isolation
-  store_id: uuidLoose,
-  storeId: uuidLoose.optional(), // alias support
+  id: uuidLoose.optional(), // documento a actualizar; ausente = crear nuevo
+  source: z.enum(['ai', 'manual']).optional().default('ai'),
 });
 
 export const aiChatSchema = z.object({

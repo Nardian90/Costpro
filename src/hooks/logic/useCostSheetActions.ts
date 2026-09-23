@@ -55,7 +55,7 @@ export const useCostSheetActions = ({
   const router = useRouter();
   const { user } = useAuthStore();
   const { setCurrentView, setActiveCostSection } = useUIStore();
-  const { setSheet, loadExample } = useCostSheetStore();
+  const { setSheet, loadExample, setPersistedDocId } = useCostSheetStore();
 
   // FIX-RCT-140: Removed duplicate viewMode/isEditing state. These were never used
   // for rendering (CostSheetView uses viewState's viewMode/isEditing instead).
@@ -245,6 +245,78 @@ export const useCostSheetActions = ({
     toast.success('JSON exportado correctamente');
   }, []);
 
+  // ── C2-C (FASE C): "Guardar Ficha" = PERSISTIR en cost_sheets (Supabase) ──
+  // Separa definitivamente las dos semánticas que antes compartían botón:
+  //   Guardar Ficha  → handleSaveToSupabase (esta función — writer real)
+  //   Exportar JSON  → handleExportJSON (descarga local, sin red)
+  // Mandato C2 §15-§18: validación, estado real, feedback de éxito/error,
+  // actualización del ID tras crear, sin falso "Guardando…", guard anti-doble-click.
+  const [isSavingCloud, setIsSavingCloud] = useState(false);
+  const isSavingCloudRef = useRef(false);
+
+  const handleSaveToSupabase = useCallback(async () => {
+    // §17: protección contra doble click / requests simultáneos
+    if (isSavingCloudRef.current) return;
+
+    const currentData = dataRef.current;
+    if (!currentData || !currentData.header) {
+      toast.error('No hay una ficha activa para guardar');
+      return;
+    }
+
+    isSavingCloudRef.current = true;
+    setIsSavingCloud(true);
+    const toastId = toast.loading('Guardando ficha en tu librería…');
+
+    try {
+      const authToken = useAuthStore.getState().token;
+      if (!authToken) {
+        throw new Error('Sesión no disponible. Inicia sesión para guardar tu ficha.');
+      }
+
+      // Si esta ficha ya vive en cost_sheets → UPDATE; si no → CREATE (§8)
+      const docId = useCostSheetStore.getState().persistedDocId;
+
+      const response = await fetch('/api/cost-sheets/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          source: 'manual',
+          ...(docId ? { id: docId } : {}),
+          updateData: {},
+          currentData,
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.error || result?.message || 'Error al guardar la ficha');
+      }
+
+      // §16.5: actualizar el ID del documento persistido (crear → vincular;
+      // actualizar → reafirmar). Próximo Guardar seguirá siendo UPDATE.
+      if (result?.id) {
+        setPersistedDocId(result.id);
+      }
+
+      toast.success(
+        result?.created === false
+          ? 'Ficha actualizada en tu librería'
+          : 'Ficha guardada en tu librería',
+        { id: toastId }
+      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Error al guardar: ${message}`, { id: toastId });
+    } finally {
+      isSavingCloudRef.current = false;
+      setIsSavingCloud(false);
+    }
+  }, [setPersistedDocId]);
+
   // FIX-RCT-140: This useEffect is now stable because all callbacks use refs
   // for unstable data deps, preventing re-runs on every data/calculation change.
   useEffect(() => {
@@ -260,7 +332,10 @@ export const useCostSheetActions = ({
     // B2-FIX: Pasamos activeSection explícitamente para evitar race condition con activeSectionRef.
     else if (activeSection === 'gen-easy') { handleSetViewMode('expert', activeSection); }
     else if (activeSection === 'tool-import') { handleImportJSON(); handleSetActiveSection('main'); }
+    // C2-C: tool-save conserva la descarga JSON (etiqueta honesta "Exportar JSON");
+    // tool-save-cloud es el "Guardar Ficha" real (persistencia en cost_sheets).
     else if (activeSection === 'tool-save') { handleExportJSON(); handleSetActiveSection('main'); }
+    else if (activeSection === 'tool-save-cloud') { handleSaveToSupabase(); handleSetActiveSection('main'); }
     else if (activeSection === 'tool-export-excel') { handleExportExcel(); handleSetActiveSection('main'); }
     else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); handleSetActiveSection('main'); }
     else if (activeSection === 'templates') { handleSetViewMode('expert', activeSection); }
@@ -269,7 +344,7 @@ export const useCostSheetActions = ({
     else if (activeSection === 'res-academy') { setCurrentView('academy'); handleSetActiveSection('main'); }
     else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); handleSetActiveSection('main'); }
     else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); handleSetActiveSection('main'); }
-  }, [activeSection, handleSetViewMode, handleSetActiveSection, handleImportJSON, handleExportJSON, handleExportExcel, setCurrentView, setIsQuickModeGenerating, setIsExportModalOpen, setIsHelpPanelOpen, setIsSectionsSidebarOpen, setIsAnnexesSidebarOpen]);
+  }, [activeSection, handleSetViewMode, handleSetActiveSection, handleImportJSON, handleExportJSON, handleSaveToSupabase, handleExportExcel, setCurrentView, setIsQuickModeGenerating, setIsExportModalOpen, setIsHelpPanelOpen, setIsSectionsSidebarOpen, setIsAnnexesSidebarOpen]);
 
   const handleQuickGenerate = useCallback(async (rows: any[]) => {
     setQuickModeProducts(rows.map(r => ({
@@ -300,6 +375,8 @@ export const useCostSheetActions = ({
     handleExportExcel,
     handleImportJSON,
     handleExportJSON,
+    handleSaveToSupabase,
+    isSavingCloud,
     handleQuickGenerate,
     quickModeMapping,
     setQuickModeMapping,

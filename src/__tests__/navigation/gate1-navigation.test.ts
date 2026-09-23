@@ -528,7 +528,10 @@ describe('GATE 1.4R.1 — Palette semántica (§17)', () => {
     const byKeyword = (kw: string) =>
       actions.filter(a => a.label.toLowerCase().includes(kw) || a.keywords.some(k => k.includes(kw)));
 
-    expect(byKeyword('guardar ficha').map(a => a.id)).toContain('tool-save');
+    // C2-C (FASE C): semántica separada — "guardar ficha" = persistencia real
+    // (tool-save-cloud); la descarga JSON es "exportar json" (tool-save).
+    expect(byKeyword('guardar ficha').map(a => a.id)).toContain('tool-save-cloud');
+    expect(byKeyword('exportar json').map(a => a.id)).toContain('tool-save');
     expect(byKeyword('importar json').map(a => a.id)).toContain('tool-import');
     expect(byKeyword('exportar excel').map(a => a.id)).toContain('tool-export-excel');
     expect(byKeyword('exportar pdf').map(a => a.id)).toContain('tool-export-pdf');

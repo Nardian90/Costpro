@@ -163,10 +163,18 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
     const handleApplyUpdate = async (updateData: Record<string, unknown>, messageIndex: number) => {
         setIsSaving(true);
         try {
+            // C2-A (FASE C): si esta ficha ya vive en cost_sheets, se ACTUALIZA el
+            // mismo documento (evita duplicados por re-aplicación — mandato C2 §8).
+            const persistedDocId = useCostSheetStore.getState().persistedDocId;
             const response = await fetch('/api/cost-sheets/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ updateData, currentData: sheetData }),
+                body: JSON.stringify({
+                    source: 'ai',
+                    ...(persistedDocId ? { id: persistedDocId } : {}),
+                    updateData,
+                    currentData: sheetData,
+                }),
             });
             if (!response.ok) {
                 const errData = await response.json();
@@ -174,6 +182,10 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
             }
             const result = await response.json();
             setSheet(result.data);
+            // C2-A: vincular el editor al documento persistido (crear/actualizar)
+            if (result?.id) {
+                useCostSheetStore.getState().setPersistedDocId(result.id);
+            }
             setMessages(prev => prev.map((msg, i) => i === messageIndex ? { ...msg, hasSaved: true } : msg));
             toast.success("¡Ficha persistida!");
         } catch (error: unknown) {
