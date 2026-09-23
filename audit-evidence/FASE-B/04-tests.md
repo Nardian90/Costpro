@@ -46,3 +46,23 @@ adjustes acumulados del repo), **cero regresiones**.
 - **CI lo valida**: `.github/workflows/ci.yml` — job "TypeCheck + Lint + Unit Tests + Build"
   ejecuta `bunx tsc --noEmit`, `bun run lint`, `bun run test` y
   `NODE_OPTIONS="--max-old-space-size=4096" bun run build`; tras el push se verifica el run.
+
+## 4. Validación CI del commit FASE B (`7a6a196c`) — verificada post-push
+
+Run "CI" (35681428433) — job **TypeCheck + Lint + Unit Tests + Build → SUCCESS**:
+
+| Paso CI | Conclusión |
+|---|---|
+| TypeCheck (`bunx tsc --noEmit`) | success |
+| Lint | success |
+| Unit tests | success |
+| **Build** (`NODE_OPTIONS=4096 bun run build`) | **success** |
+
+Job "Security Audit" → success (BOLA contract, secret scan, security contract estático).
+Run "Test Coverage" (35681428471) → **success**.
+
+Conclusión: el paso **Build pasa en CI con la misma configuración** que localmente recibió
+SIGKILL del kernel — confirma que el exit 137 local es **exclusivamente la limitación de
+memoria del host** (4GB sin swap), no del código. Todos los gates de CI del commit FASE B
+en verde. (Nota: la conclusión a nivel de run figura "cancelled" por preempción de la
+plataforma, pero las conclusiones de los tres jobs que la componen son success.)
