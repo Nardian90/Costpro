@@ -57,6 +57,13 @@ Ejecutados con `scripts/fasec2-e2e.py` contra `http://localhost:3000` (PM2, dev 
 
 Resultados JSON: `scripts/fasec2-e2e-results.json` (fuera del repo). Los tests mutativos usaron SOLO el fixture `[C2-TEST]` creado y eliminado por el propio script (§25) — con una excepción accidental corregida y documentada en `07-security.md` (incidente + recuperación íntegra).
 
-## 6. CI
+## 6. CI (verificada tras el push — commit `ca3a019f`)
 
-Tras el push se verificará el workflow `ci.yml` (TypeCheck + Lint + Unit + Build) del commit C2 — Build local quedó como ENVIRONMENT LIMITATION. Resultado registrado en FINAL-REPORT.
+| Workflow / Job | Resultado | Nota |
+|---|---|---|
+| **ci.yml — "TypeCheck + Lint + Unit Tests + Build"** | ✅ **SUCCESS** | Resuelve definitivamente la limitación OOM local: **Build pasa en CI** (job observado `completed:success` vía API antes de una cancelación operativa del RUN por actividad concurrente del propietario en el repo) |
+| test-coverage.yml — "Unit & Integration Tests" | attempt 1: FAILURE → **attempt 2: SUCCESS** | El único test fallido (`sprint1.integration.test.ts` «computeFullQuantReport», dominio pick3/backtest) es ajeno a C2: (a) `git diff bbb74f4c..ca3a019f -- src/services/pick3` = vacío; (b) pasa localmente en el commit exacto (8/8); (c) re-ejecución del MISMO commit → success. Clasificado: FAIL preexistente/flaky de entorno, NO nuevo |
+| test-coverage.yml — "E2E Tests (Playwright)" | attempt 2: failure **tolerado** | El job tiene `continue-on-error: true` en el propio workflow (configuración preexistente del proyecto, jobs E2E contra supabase de prueba); `git diff -- e2e/` = vacío (C2 no tocó specs E2E) |
+| Security Audit / audit / Daily AI System Audit | ✅ success | — |
+
+**Conclusión CI**: el criterio «CI/build pasa o existe limitación documentada» queda satisfecho por el **job de Build en CI = SUCCESS** en el commit C2.

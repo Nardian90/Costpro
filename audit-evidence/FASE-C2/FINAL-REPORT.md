@@ -27,7 +27,7 @@ Cadena ejecutada: `GATE 0 (baseline) → GATE 1 (mapa pre-implementación) → C
 | TESTS PASS | ✅ 2227 passed / 0 fallos (21 tests nuevos) |
 | TypeScript | ✅ `tsc --noEmit` limpio |
 | Lint | ✅ 0 errores (warnings preexistentes del proyecto) |
-| CI/Build | ⚠️→✅ build local = ENVIRONMENT LIMITATION (OOM documentado, precede en FASE B/C0); **verificación CI post-push** — resultado registrado al final de este reporte |
+| CI/Build | ✅ **Build SUCCESS en CI** (job `TypeCheck + Lint + Unit Tests + Build` = success en el commit C2); build local = ENVIRONMENT LIMITATION (OOM documentado, precede en FASE B/C0) |
 | DIFF REVISADO | ✅ (08-diff-review; cero cambios fuera de alcance, sin APIs paralelas, sin migraciones, sin RLS) |
 | GIT CERRADO | ✅ commit(s) descriptivos con SOLO implementación C2 + tests + evidencia; push verificado |
 
@@ -58,15 +58,35 @@ Cadena ejecutada: `GATE 0 (baseline) → GATE 1 (mapa pre-implementación) → C
 > ## **CERTIFIED**
 >
 > C2 implementa exactamente el alcance autorizado por C1R (C2-A/B/C/D/E): el writer de CostSheet persiste y actualiza documentos reales en `cost_sheets` sin `store_id`, la biblioteca del terminal aísla sus documentos por contrato (query → guard → Zod), «Guardar Ficha» persiste de verdad y «Exportar JSON» es una operación local independiente, FC.html y sus 7 fichas permanecen byte-intactos, RLS no presenta regresión, y la batería de verificación (unit + E2E real + typecheck + lint) pasó íntegra. El incidente del script de prueba fue corregido, recuperado y convertido en una defensa permanente del writer (H-4).
-
-**Verificación CI (post-push)**: pendiente al momento del commit → resultado registrado a continuación de la ejecución del workflow.
+>
+> (El veredicto consolidado con la verificación CI post-push está en §8.)
 
 ## 7. Cierre git (§31)
 
 ```text
-commit único de implementación C2 (código + tests + evidencia) → push a origin/main
-git rev-parse HEAD / origin/main verificados tras el push
-CI ci.yml (TypeCheck + Lint + Unit + Build) verificada en el commit pushed
+commit ca3a019f572ea2bb6d7ac6f8ad3cb5d666ada99c — "FASE C — C2: CostSheet persistencia real +
+separación por contrato + Guardar Ficha" (30 archivos: 15 modificados + util de compatibilidad +
+3 suites de tests + 11 docs de evidencia; +1371/−52)
+push verificado: bbb74f4c..ca3a019f  main -> main   →  HEAD == origin/main == ca3a019f
+Untracked restantes (intencional): audit-evidence/FASE-C/ · FASE-C1/ · FASE-C1R/ (evidencia de
+gates anteriores, NO forman parte del commit C2 según §31)
 ```
 
-*(Resultado exacto de CI anotado en la sección de cierre tras la ejecución.)*
+### Verificación CI del commit `ca3a019f` (vía API de GitHub)
+
+| Job | Conclusión |
+|---|---|
+| ci.yml — TypeCheck + Lint + Unit Tests + Build | **SUCCESS** (incluye BUILD — resuelve la limitación OOM local) |
+| test-coverage.yml — Unit & Integration Tests | SUCCESS (attempt 2; attempt 1 flaky pick3 ajeno a C2 — 07/05-tests §6) |
+| test-coverage.yml — E2E Playwright | failure tolerado (`continue-on-error: true` preexistente del proyecto) |
+| Security Audit / audit / Daily AI System Audit | SUCCESS |
+
+Nota operativa: dos RUNS fueron marcados «cancelled» por actividad concurrente externa (push del
+propietario `d16d3cc5` / gestión manual), pero los JOBS individuales del commit quedaron con las
+conclusiones registradas arriba; ninguna cancelación corresponde a un fallo del código C2.
+
+## 8. VEREDICTO FINAL
+
+> ## **GATE C2 — CERTIFIED**
+>
+> (reemplaza la sección 6; los criterios §30/§32 se cumplen simultáneamente)
