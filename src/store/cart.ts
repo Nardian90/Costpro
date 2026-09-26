@@ -124,7 +124,9 @@ interface CartState {
   customerId: string | null;
   customerName: string | null;
 
-  addItem: (productInput: Product | Partial<CartItem>, variant?: ProductVariant) => void;
+  // FIX-FASE-D: retorna true si el item fue aceptado, false si un guard lo rechazó
+  // (tienda cruzada / stock insuficiente / sin id). Permite UI honesta en el caller.
+  addItem: (productInput: Product | Partial<CartItem>, variant?: ProductVariant) => boolean;
   removeItem: (productId: string, variantId: string | null) => void;
   updateQuantity: (productId: string, variantId: string | null, quantity: number) => void;
   updateItemDiscount: (
@@ -574,15 +576,26 @@ export const useCartStore = create<CartState>()(
        */
       clearCartOnStoreSwitch: (newStoreId) => {
         const currentStoreId = get().storeId;
-        if (currentStoreId && newStoreId && currentStoreId !== newStoreId && get().items.length > 0) {
-          set({ items: [], discount: null, appliedTaxes: [], storeId: newStoreId, lastUpdated: Date.now() });
-          notify("warning", "Carrito limpiado automáticamente al cambiar de tienda");
+        if (currentStoreId && newStoreId && currentStoreId !== newStoreId) {
+          if (get().items.length > 0) {
+            set({ items: [], discount: null, appliedTaxes: [], storeId: newStoreId, lastUpdated: Date.now() });
+            notify("warning", "Carrito limpiado automáticamente al cambiar de tienda");
+          } else {
+            // FIX-FASE-D (bug carrito en 0): con carrito vacío el helper era un no-op
+            // y dejaba un storeId STALE persistido; el guard de addItem rechazaba
+            // después TODOS los adds de la tienda activa (toast de éxito engañoso).
+            // Sincronizar storeId SIEMPRE: el carrito vacío no tiene nada que limpiar.
+            set({ storeId: newStoreId, lastUpdated: Date.now() });
+          }
         } else if (!currentStoreId && newStoreId) {
           set({ storeId: newStoreId, lastUpdated: Date.now() });
         }
       },
 
-      addItem: (productInput, variant) =>
+      // FIX-FASE-D: el contrato ahora responde boolean — true si el item entró al
+      // estado, false si un guard lo rechazó (cross-store, stock, id ausente).
+      addItem: (productInput, variant) => {
+        let accepted = false;
         set(
           produce((state: CartState) => {
             const product = (productInput as any).product || ((productInput as any).id ? productInput : null) as Product | null;
@@ -650,6 +663,13 @@ export const useCartStore = create<CartState>()(
               const maxVariantQty = Math.floor(stock / conversionFactor);
               if (maxVariantQty <= 0) {
                 notify("error", `Producto ${product?.name || "producto"} sin existencias.`);
+                return;
+              }
+              // FIX-FASE-D (D8): la ruta de ítem NUEVO no validaba quantity > stock
+              // (updateQuantity y la ruta de ítem existente sí lo hacen). Contrato
+              // consistente: rechazar con aviso en vez de aceptar líneas imposibles.
+              if (incomingQuantity > maxVariantQty) {
+                notify("warning", `Stock insuficiente para ${product?.name || "producto"}. Máx: ${maxVariantQty} ${variant?.name || "uds"}`);
                 return;
               }
 
@@ -725,8 +745,14 @@ export const useCartStore = create<CartState>()(
               state.items.push(newItem);
             }
             state.lastUpdated = Date.now();
+            // FIX-FASE-D: único punto de éxito compartido por ambas rutas
+            // (consolidación y nueva línea). Los guards rechazan con return
+            // temprano, dejando accepted=false.
+            accepted = true;
           }),
-        ),
+        );
+        return accepted;
+      },
 
       removeItem: (productId, variantId) =>
         set(

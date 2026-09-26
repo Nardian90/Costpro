@@ -152,7 +152,16 @@ export function usePOSCheckout() {
           const supervisorAuth = getSupervisorAuth();
           const response = await fetch('/api/pos/checkout', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              // FIX-FASE-D (checkout V2 → 401): withAuth es fail-closed (SEC-024) y
+              // SOLO acepta Bearer token. El fetch crudo jamás enviaba el header →
+              // TODOS los checkouts V2 fallaban con 401. apiFetch no se usa aquí
+              // porque se necesita el Response crudo para mapear errores del RPC.
+              ...(useAuthStore.getState().token
+                ? { Authorization: `Bearer ${useAuthStore.getState().token}` }
+                : {}),
+            },
             body: JSON.stringify({
               store_id: user.activeStoreId,
               seller_id: user.id,

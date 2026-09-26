@@ -223,12 +223,15 @@ export default function POSView() {
     if (product.product_variants && product.product_variants.length > 0) {
       setSelectedProductForVariants(product);
     } else {
-      addItem({
+      // FIX-FASE-D: addItem ahora reporta aceptación/rechazo — el toast de éxito
+      // solo se muestra si el item REALMENTE entró al carrito (antes se mostraba
+      // incondicionalmente y enmascaraba rechazos del guard de tienda/stock).
+      const accepted = addItem({
         product_id: product.id, variant_id: null, variant: null,
         price: product.price, cost: product.cost_price || 0,
         quantity: 1, product, subtotal: product.price,
       });
-      toast.success(`${product.name} añadido`);
+      if (accepted) toast.success(`${product.name} añadido`);
     }
   };
 
@@ -242,12 +245,13 @@ export default function POSView() {
       return;
     }
     if (!variant) {
-      addItem({
+      // FIX-FASE-D: toast honesto (solo si addItem aceptó el item)
+      const accepted = addItem({
         product_id: product.id, variant_id: null, variant: null,
         price: product.price, cost: product.cost_price || 0,
         quantity: 1, product, subtotal: product.price,
       });
-      toast.success(`${product.name} (unidad base) añadido`);
+      if (accepted) toast.success(`${product.name} (unidad base) añadido`);
     } else {
       const conversionFactor = variant.conversion_factor || 1;
       const variantPrice = variant.price || 0;
@@ -256,12 +260,13 @@ export default function POSView() {
         toast.warning(`Atención: ${product.name} (${variant.name}) precio < costo ajustado`, { duration: 5000 });
         if (user) auditService.logSaleBelowCost(user.id, product.id, user.activeStoreId!, variantPrice, variantCost);
       }
-      addItem({
+      // FIX-FASE-D: toast honesto (solo si addItem aceptó el item)
+      const accepted = addItem({
         product_id: product.id, variant_id: variant.id, variant,
         price: variant.price, cost: (product.cost_price || 0) * conversionFactor,
         quantity: 1, product, subtotal: variant.price,
       });
-      toast.success(`${product.name} (${variant.name}, x${conversionFactor}) añadido`);
+      if (accepted) toast.success(`${product.name} (${variant.name}, x${conversionFactor}) añadido`);
     }
   };
 

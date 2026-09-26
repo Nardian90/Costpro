@@ -69,7 +69,10 @@ const checkoutSchema = z.object({
   sale_currency: z.string().default('CUP'),
   sale_exchange_rate: z.number().default(1),
   customer_id: z.string().regex(uuidRegex).nullable().optional(),
-  customer_name: z.string().optional(),
+  // FIX-FASE-D: el cliente envía customer_name: null en ventas walk-in ("Cliente
+  // eventual"), pero el schema solo aceptaba string|undefined → 400 en TODAS las
+  // ventas walk-in V2. El RPC create_sale_v2 ya acepta null (p_customer_name).
+  customer_name: z.string().nullable().optional(),
   supervisor_user_id: z.string().regex(uuidRegex).nullable().optional(),
   supervisor_token: z.string().min(10).max(1024).nullable().optional(),
   idempotency_key: z.string().min(1),
