@@ -32,7 +32,10 @@ const itemSchema = z.object({
   product_id: z.string().regex(uuidRegex),
   variant_id: z.string().uuid().nullable().optional(),
   quantity: z.number().positive(),
-  price: z.number().min(0),
+  // E-SEC (R-SEC-1): finite() rechaza Infinity/-Infinity (p.ej. JSON `1e999`
+  // parsea a Infinity); z.number() ya rechaza NaN. El precio inválido que entre
+  // por RPC directo se rechaza igualmente en create_sale_v2 (ERR_INVALID_PRICE).
+  price: z.number().min(0).finite(),
   cost: z.number().min(0),
   cash_paid: z.number().optional(),
   transfer_paid: z.number().optional(),
@@ -191,6 +194,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
     if (msg.includes('ERR_INSUFFICIENT_STOCK')) {
       return NextResponse.json({ error: msg }, { status: 409 });
+    }
+    if (msg.includes('ERR_INVALID_PRICE')) {
+      return NextResponse.json({ error: 'Precio inválido para la venta.' }, { status: 400 });
     }
     if (msg.includes('ERR_STORE_INACTIVE')) {
       return NextResponse.json({ error: 'La tienda no está activa.' }, { status: 403 });

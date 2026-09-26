@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 import { useCartStore } from "@/store/cart";
+import { effectiveUnitPrice } from "@/store/cart";
 import { useAuthStore } from "@/store";
 import { useCreateSale } from "@/hooks/api/useTransactions";
 import { useInvertDocument } from "@/hooks/api/useDocumentActions";
@@ -189,7 +190,13 @@ export function usePOSCheckout() {
                 product_id: i.product_id,
                 variant_id: i.variant_id ?? null,
                 quantity: i.quantity,
-                price: i.price,
+                // E-SEC (R-SEC-1): enviar el precio unitario REALMENTE cobrado
+                // (tras el descuento comercial por línea). Antes se enviaba el
+                // precio de catálogo crudo con el total ya descontado →
+                // ERR_TOTAL_MISMATCH en toda venta con descuento por ítem. Con
+                // el precio efectivo el payload es coherente y el servidor
+                // valida el desvío contra el catálogo (gate >=15%).
+                price: effectiveUnitPrice(i.price, i.quantity, i.discount_type, i.discount_value),
                 cost: i.cost,
                 cash_paid: i.cash_paid,
                 transfer_paid: i.transfer_paid,

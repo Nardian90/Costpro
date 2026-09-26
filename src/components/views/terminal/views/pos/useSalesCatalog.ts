@@ -5,6 +5,11 @@ import { useProducts } from '@/hooks/api/useProducts';
 // REM-V2-1 P-2: uso residual SOLO para queue offline (el path online es /api/pos/checkout)
 import { useCreateSale } from '@/hooks/api/useTransactions';
 import { useCartStore } from '@/store/cart';
+import { effectiveUnitPrice } from '@/store/cart';
+// E-SEC (R-SEC-1): el catálogo captura autorización de supervisor para desvíos
+// >=15% por ítem (SupervisorAuthModal → supervisor-check → token firmado);
+// debe viajar al checkout para que el gate server-side lo acepte.
+import { getSupervisorAuth, clearSupervisorAuth } from './supervisor-auth-store';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
 import { toast } from 'sonner';
 import { useHaptics } from '@/hooks/ui/useHaptics';
@@ -406,7 +411,8 @@ export function useSalesCatalog() {
             product_id: r.product.id,
             variant_id: r.selectedVariantId ?? null,
             quantity: r.quantity,
-            price: r.price,
+            // E-SEC (R-SEC-1): precio efectivamente cobrado (coherente con totals.subtotal)
+            price: effectiveUnitPrice(r.price, r.quantity, r.discountType, r.discountValue),
             cost: r.cost,
             cash_paid: r.cashPaid,
             transfer_paid: r.transferPaid,
@@ -418,9 +424,20 @@ export function useSalesCatalog() {
         });
       } else {
         // ONLINE: path V2 canónico (mismo contrato que usePOSCheckout v2)
+        // E-SEC (R-SEC-1): se reenvía la autorización de supervisor capturada por
+        // el modal de descuento por ítem (token firmado bound a operador+tienda).
+        const supervisorAuth = getSupervisorAuth();
         const response = await fetch('/api/pos/checkout', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          // RC-ES2 (E-SEC): withAuth es fail-closed (SEC-024) y SOLO acepta Bearer.
+          // Sin este header TODA venta online del catálogo fallaba con 401
+          // (misma clase que RC4 de FASE D, corregido en usePOSCheckout).
+          headers: {
+            'Content-Type': 'application/json',
+            ...(useAuthStore.getState().token
+              ? { Authorization: `Bearer ${useAuthStore.getState().token}` }
+              : {}),
+          },
           body: JSON.stringify({
             store_id: user.activeStoreId,
             seller_id: user.id,
@@ -439,13 +456,20 @@ export function useSalesCatalog() {
               ? (activeRows.find(r => r.usdExchangeRate > 0)?.usdExchangeRate || 680)
               : 1.0,
             customer_id: null,
+            customer_name: null,
+            supervisor_user_id: supervisorAuth?.userId ?? null,
+            supervisor_token: supervisorAuth?.token ?? null,
             idempotency_key: `sale-${crypto.randomUUID()}`,
             operation_date: opDate,
             items: activeRows.map((r) => ({
               product_id: r.product.id,
               variant_id: r.selectedVariantId ?? null,
               quantity: r.quantity,
-              price: r.price,
+              // E-SEC (R-SEC-1): precio efectivamente cobrado — el payload queda
+              // coherente (total = Σ price×qty) y el servidor valida el desvío
+              // contra el catálogo (>=15% ya fue autorizado por supervisor o falla
+              // fail-closed con ERR_SUPERVISOR_REQUIRED).
+              price: effectiveUnitPrice(r.price, r.quantity, r.discountType, r.discountValue),
               cost: r.cost,
               cash_paid: r.cashPaid,
               transfer_paid: r.transferPaid,
@@ -460,6 +484,8 @@ export function useSalesCatalog() {
         }
         const data = await response.json();
         saleId = data.transaction_id;
+        // E-SEC (R-SEC-1): una autorización de supervisor = una venta (igual que POS).
+        clearSupervisorAuth();
       }
 
       // Paridad con useCreateSale.onSuccess: el path V2 no pasa por el mutation hook

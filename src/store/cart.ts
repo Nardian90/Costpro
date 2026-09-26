@@ -216,6 +216,31 @@ const calculateItemSubtotal = (item: CartItem) => {
   return Math.max(0, (price - item.discount_value) * quantity);
 };
 
+/**
+ * E-SEC (R-SEC-1): precio unitario efectivo de un ítem tras su descuento
+ * comercial por línea. La UI negocia el precio vía descuento por ítem
+ * (SalesCatalogCard/Table); el payload V2 debe enviar el precio REALMENTE
+ * cobrado (coherente con total_amount) para que el servidor pueda validar el
+ * desvío contra el catálogo (create_sale_v2, gate >=15%) sin ERR_TOTAL_MISMATCH.
+ * Semántica por LÍNEA (alineada con getItemSubtotalCup): descuento fixed se
+ * aplica una vez a la línea; percentage sobre el precio unitario.
+ */
+export function effectiveUnitPrice(
+  price: number | null | undefined,
+  quantity: number | null | undefined,
+  discountType: "percentage" | "fixed" | null | undefined,
+  discountValue: number | null | undefined,
+): number {
+  const base = price ?? 0;
+  const qty = quantity ?? 1;
+  if (!discountType || !(discountValue && discountValue > 0)) return base;
+  if (discountType === "percentage") {
+    return Math.max(0, base * (1 - discountValue / 100));
+  }
+  const lineTotal = Math.max(0, base * qty - discountValue);
+  return qty > 0 ? lineTotal / qty : 0;
+}
+
 // FIX-PAYMENT-ROWS (2026-07-10): generar IDs únicos para PaymentRow
 function generatePaymentId(): string {
   return `pay_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
