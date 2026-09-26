@@ -40,5 +40,7 @@ EXIT 0
 | tsc --noEmit | **PASS** |
 | eslint (tocados) | **PASS** (0 errors) |
 | build local | **FAIL INFRA** (preexistente R-INFRA-1, mitigado por CI) |
-| CI post-push | verificado tras FASE 11 |
+| CI post-push (cad8e446) | TypeCheck + Lint + Unit Tests + **Build: SUCCESS** · Unit & Integration: **SUCCESS** · Security Audit: failure (advisory preexistente R-DEPS-1; el commit no toca package.json/lockfile) · E2E: suite preexistente tolerada (R-E2E-1) |
 | FAIL REGRESSION | **NINGUNO** |
+
+Verificación CI (GitHub API check-runs, GET-only, PAT sin imprimir): commit `cad8e4464a8e07911fd39e5daa1a5dcab267d50c` — el build que OOMea localmente es **SUCCESS en CI**, cerrando la mitigación de R-INFRA-1 para este commit.

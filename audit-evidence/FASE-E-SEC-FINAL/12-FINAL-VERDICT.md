@@ -32,7 +32,7 @@ Las cinco decisiones D1–D5 del responsable funcional están implementadas serv
 
 ## Nota de alcance (no condiciona el veredicto)
 
-- **Build local**: FAIL INFRA preexistente (R-INFRA-1, OOM del host desde FASE B/C) — mitigado por CI (TypeCheck+Lint+Unit+Build verificados post-push; resultado registrado en el worklog). Limitación externa claramente separada de esta implementación; al estar cubierta por CI no degrada el veredicto.
+- **Build local**: FAIL INFRA preexistente (R-INFRA-1, OOM del host desde FASE B/C) — **CI del commit `cad8e446`: TypeCheck+Lint+Unit+Build SUCCESS y Unit&Integration SUCCESS** (GitHub API, check-runs), cerrando la mitigación. Security Audit failure = advisory preexistente R-DEPS-1 (el commit no toca dependencias; fuera de alcance por mandato). E2E: suite preexistente tolerada (R-E2E-1).
 - **Deuda preexistente fuera de alcance** (mandato: no reabrir): R-DEPS-1 (advisory sharp/libheif), R-E2E-1 (suite E2E tolerada), R-UX-DATE (deadlock de fecha por TZ en el modal del catálogo — evitado en la evidencia vaciando el campo, sin tocar código), R-A11Y-1.
 - **Hallazgo nuevo corregido en alcance**: el modal de supervisor leía una clave localStorage inexistente (`activeStoreId`) → toda autorización por UI fallaba con 400 desde la iteración 11.2. Fix mínimo a la fuente de verdad (`useAuthStore`) — documentado en 09-BROWSER.
 - El RPC v1 (`create_sale`) permanece como fallback flag-gated sin cambios (fuera de alcance, igual que en E-SEC).
