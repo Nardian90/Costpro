@@ -168,9 +168,11 @@
   --secondary-foreground: #ffffff;
   --secondary-light: #94a3b8;
 
-  --success: #10b981;
+  /* FIX-FASE-D A11Y: #10b981 = 2.42:1 vs #f8fafc (FAIL AA). #047857 = 5.24:1 PASS. */
+  --success: #047857;
   --success-light: #34d399;
-  --warning: #f59e0b;
+  /* FIX-FASE-D A11Y: #f59e0b = 2.05:1 vs #f8fafc (FAIL AA). #b45309 = 4.80:1 PASS. */
+  --warning: #b45309;
   --warning-light: #fbbf24;
   --danger: #dc2626;
   --danger-light: #f87171;
