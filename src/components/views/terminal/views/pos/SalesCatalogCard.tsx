@@ -7,6 +7,8 @@ import { Product, ProductVariant, PaymentMethod } from '@/types';
 import type { SalesCatalogRow } from './useSalesCatalog';
 import { useDiscountAuthorization, DISCOUNT_SUPERVISOR_THRESHOLD } from './useDiscountAuthorization';
 import { SupervisorAuthModal } from './SupervisorAuthModal';
+import { effectiveUnitPrice } from '@/store/cart';
+import type { SupervisorScopeEntry } from './supervisor-auth-store';
 import { PaymentMethodSelector } from './PaymentMethodSelector';
 
 // ── Payment Badge ─────────────────────────────────────────────
@@ -83,6 +85,17 @@ export default function SalesCatalogCard({
     cancelAuthorization,
     confirmAuthorization,
   } = useDiscountAuthorization();
+
+  // E-SEC-FINAL (D3): línea autorizada en la emisión (scope firmado del token).
+  // px = precio unitario resultante del descuento pendiente — create_sale_v2
+  // exige que toda línea con desvío ≥15% esté cubierta por este scope.
+  const scopeEntry: SupervisorScopeEntry | null = pendingDiscount
+    ? {
+        pid: product.id,
+        vid: row.selectedVariantId ?? null,
+        px: effectiveUnitPrice(row.price, row.quantity, pendingDiscount.type, pendingDiscount.value),
+      }
+    : null;
 
   // Ref para guardar el descuento pendiente (producto + valor) mientras
   // esperamos autorización del supervisor.
@@ -358,7 +371,8 @@ export default function SalesCatalogCard({
       </div>
 
       {/* V2.12.30: Modal de autorización de supervisor para descuentos por item.
-          % efectivo = (value / itemSubtotal) * 100. Si >= 15%, pide PIN. */}
+          % efectivo = (value / itemSubtotal) * 100. Si >= 15%, pide PIN.
+          E-SEC-FINAL (D2/D3): motivo obligatorio + scope de la línea autorizada. */}
       <SupervisorAuthModal
         isOpen={showSupervisorAuth}
         onClose={handleSupervisorCancel}
@@ -367,6 +381,7 @@ export default function SalesCatalogCard({
         discountValue={pendingDiscount?.value || 0}
         maxAllowed={DISCOUNT_SUPERVISOR_THRESHOLD}
         discountType={pendingDiscount?.type}
+        scopeEntry={scopeEntry}
       />
     </div>
   );

@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Shield, Lock, X, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { setSupervisorAuth } from './supervisor-auth-store';
+import { setSupervisorAuth, getSupervisorAuth, type SupervisorScopeEntry } from './supervisor-auth-store';
+import { useAuthStore } from '@/store';
 
 /**
  * SupervisorAuthModal — Pide PIN de supervisor para autorizar descuentos
@@ -20,6 +21,16 @@ import { setSupervisorAuth } from './supervisor-auth-store';
  *
  * Por ahora el PIN es simple (password del usuario). En el futuro se puede
  * migrar a un PIN de 4 dígitos dedicado.
+ *
+ * E-SEC-FINAL (D2/D3 — decisión del responsable funcional):
+ *   - D2: textarea de MOTIVO obligatorio (1..500 tras trim). El motivo viaja
+ *     al checkout (`discount_reason`), se valida server-side y se almacena en
+ *     la auditoría asociada a la línea/operación autorizada. Solo se muestra
+ *     cuando el descuento excede el umbral (este modal SOLO se abre entonces).
+ *   - D3: `scopeEntry` (opcional) — la línea autorizada en esta emisión
+ *     (product_id, variant_id, unit_price resultante). El modal envía a
+ *     supervisor-check el scope acumulado + esta entrada; el token firmado
+ *     porta el scope completo y create_sale_v2 lo hace cumplir server-side.
  */
 
 interface SupervisorAuthModalProps {
@@ -35,6 +46,9 @@ interface SupervisorAuthModalProps {
   /** Tipo de descuento para mostrar el label correcto en el modal.
    *  V2.12.30: 'fixed' muestra "Descuento fijo de $X (Y% efectivo)" */
   discountType?: 'percentage' | 'fixed';
+  /** E-SEC-FINAL (D3): línea autorizada en esta emisión (null = sin líneas,
+   *  p.ej. descuento global del carrito). */
+  scopeEntry?: SupervisorScopeEntry | null;
 }
 
 export function SupervisorAuthModal({
@@ -45,21 +59,35 @@ export function SupervisorAuthModal({
   discountValue,
   maxAllowed,
   discountType = 'percentage',
+  scopeEntry = null,
 }: SupervisorAuthModalProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
+  const trimmedReason = reason.trim();
+  const reasonValid = trimmedReason.length >= 1 && trimmedReason.length <= 500;
+
   const handleAuthorize = async () => {
+    // E-SEC-FINAL (D2): el motivo es obligatorio en la autorización.
+    if (!reasonValid) {
+      setError('El motivo del descuento es obligatorio (1–500 caracteres).');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       // Iteración 11.2: Server-side supervisor auth (no expone credenciales en cliente)
       const { supabase } = await import('@/lib/supabaseClient');
       const { data: { session } } = await supabase.auth.getSession();
+      // E-SEC-FINAL (D3): scope acumulado de autorizaciones previas + la
+      // entrada de esta emisión. El servidor lo firma dentro del token.
+      const accumulatedScope = getSupervisorAuth()?.scope ?? [];
+      const scope = [...accumulatedScope, ...(scopeEntry ? [scopeEntry] : [])];
       const response = await fetch('/api/auth/supervisor-check', {
         method: 'POST',
         headers: {
@@ -69,7 +97,13 @@ export function SupervisorAuthModal({
         body: JSON.stringify({
           email,
           password,
-          store_id: typeof window !== 'undefined' ? localStorage.getItem('activeStoreId') || '' : '',
+          // FIX E-SEC-FINAL (bloqueo del flujo D1-D3): la clave localStorage
+          // 'activeStoreId' NUNCA es escrita por la app → store_id='' → 400
+          // "Invalid data" en TODA autorización por UI desde la iteración 11.2.
+          // La fuente de verdad del store activo es useAuthStore (la misma que
+          // usa usePOSCheckout para el checkout).
+          store_id: useAuthStore.getState().user?.activeStoreId || '',
+          ...(scope.length > 0 ? { scope } : {}),
         }),
       });
 
@@ -88,11 +122,13 @@ export function SupervisorAuthModal({
       // Autorización exitosa — REM-INV-4A-R (RC-1): almacenar la prueba de
       // autorización firmada (token HMAC ligado a supervisor+operador+tienda)
       // que el checkout verificará server-side, y pasar el id al caller.
-      setSupervisorAuth(data.supervisor_user_id, data.supervisor_token);
+      // E-SEC-FINAL (D2/D3): almacena también el motivo y el scope acumulado.
+      setSupervisorAuth(data.supervisor_user_id, data.supervisor_token, trimmedReason, scope);
       onAuthorize(data.supervisor_user_id);
       onClose();
       setEmail('');
       setPassword('');
+      setReason('');
     } catch (e: any) {
       setError(e.message || 'Error de autenticación');
     } finally {
@@ -168,11 +204,32 @@ export function SupervisorAuthModal({
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAuthorize()}
+                onKeyDown={(e) => e.key === 'Enter' && reasonValid && handleAuthorize()}
                 placeholder="••••••••"
                 className="w-full h-12 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold"
                 autoComplete="current-password"
               />
+            </div>
+            {/* E-SEC-FINAL (D2): motivo obligatorio del descuento autorizado */}
+            <div>
+              <label htmlFor="supervisor-discount-reason" className="text-[10px] font-black uppercase text-muted-foreground block mb-1">
+                Motivo del descuento <span className="text-destructive">*</span>
+              </label>
+              <textarea
+                id="supervisor-discount-reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                maxLength={500}
+                rows={2}
+                placeholder="Ej: cliente frecuente, mercancía dañada, liquidación autorizada..."
+                className={cn(
+                  'w-full bg-background border rounded-lg px-3 py-2 text-sm font-bold resize-none',
+                  reason.trim().length > 0 ? 'border-border/50' : 'border-amber-500/50'
+                )}
+              />
+              <p className="text-[9px] text-muted-foreground mt-0.5 text-right">
+                {trimmedReason.length}/500 — se registra en la auditoría
+              </p>
             </div>
           </div>
 
@@ -190,7 +247,7 @@ export function SupervisorAuthModal({
             </button>
             <button
               onClick={handleAuthorize}
-              disabled={loading || !email || !password}
+              disabled={loading || !email || !password || !reasonValid}
               className="flex-1 h-12 min-h-[44px] rounded-lg bg-amber-500 text-white text-xs font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (

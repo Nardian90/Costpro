@@ -36,8 +36,14 @@ const rpcMock = vi.fn();
 vi.mock('@/lib/supabase-admin', () => ({
   getSupabaseAdminSafe: () => ({ rpc: rpcMock }),
 }));
+// E-SEC-FINAL (D3): el route exige payload verificado {jti, scp} — un token
+// válido sin payload interno ya no existe (el verify real SIEMPRE lo retorna).
+const verifyMock = vi.fn(() => ({
+  valid: true,
+  payload: { jti: 'jti-test-1', scp: [] as Array<{ pid: string; vid: string | null; px: number }> },
+}));
 vi.mock('@/lib/supervisor-token', () => ({
-  verifySupervisorToken: vi.fn(() => ({ valid: true })),
+  verifySupervisorToken: (...args: unknown[]) => verifyMock(...(args as [])),
 }));
 vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
@@ -112,6 +118,11 @@ function rpcOk() {
 
 beforeEach(() => {
   rpcMock.mockReset();
+  verifyMock.mockClear();
+  verifyMock.mockImplementation(() => ({
+    valid: true,
+    payload: { jti: 'jti-test-1', scp: [] as Array<{ pid: string; vid: string | null; px: number }> },
+  }));
 });
 
 describe('E-SEC — /api/pos/checkout: precio legítimamente editable sigue funcionando', () => {
@@ -206,4 +217,93 @@ describe('E-SEC — autorización de supervisor (RC-1 se mantiene)', () => {
     expect(res.status).toBe(403);
     expect(rpcMock).not.toHaveBeenCalled();
   });
+});
+
+// ============================================================================
+// E-SEC-FINAL — política definitiva D1-D5 (route layer)
+// ============================================================================
+const SUPERVISOR_ID = 'bbbb2222-0000-4000-8000-000000000002';
+
+describe('E-SEC-FINAL D3 — token single-use: jti + scope firmados viajan al RPC', () => {
+  it('token válido → el route extrae jti + scp del payload verificado y los pasa al RPC', async () => {
+    verifyMock.mockImplementation(() => ({
+      valid: true,
+      payload: {
+        jti: 'jti-abc-123',
+        scp: [{ pid: 'aaaa1111-0000-4000-8000-000000000001', vid: null, px: 240 }],
+      },
+    }));
+    rpcOk();
+    const body = payload({
+      supervisor_user_id: SUPERVISOR_ID,
+      supervisor_token: 'aaa.validtoken',
+      discount_reason: 'cliente frecuente',
+    });
+    const res = await POST(makeReq(body), mockSession.value as any);
+    expect(res.status).toBe(200);
+    const args = rpcMock.mock.calls[0][1];
+    expect(args.p_supervisor_token_jti).toBe('jti-abc-123');
+    expect(args.p_supervisor_scope).toEqual([
+      { pid: 'aaaa1111-0000-4000-8000-000000000001', vid: null, px: 240 },
+    ]);
+    // D2: el motivo viaja al RPC
+    expect(args.p_discount_reason).toBe('cliente frecuente');
+  });
+
+  it('verify válido pero SIN payload (contrato roto) → 403 y el RPC nunca se llama', async () => {
+    verifyMock.mockImplementation(() => ({ valid: true } as any));
+    const body = payload({
+      supervisor_user_id: SUPERVISOR_ID,
+      supervisor_token: 'aaa.validtoken',
+    });
+    const res = await POST(makeReq(body), mockSession.value as any);
+    expect(res.status).toBe(403);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it('verify invalid → 403 (expirado/falsificado/mismatch, razón cualquiera)', async () => {
+    verifyMock.mockImplementation(() => ({ valid: false, reason: 'EXPIRED' }) as any);
+    const body = payload({
+      supervisor_user_id: SUPERVISOR_ID,
+      supervisor_token: 'aaa.expiredtoken',
+    });
+    const res = await POST(makeReq(body), mockSession.value as any);
+    expect(res.status).toBe(403);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('E-SEC-FINAL D2 — discount_reason: passthrough y límite de longitud', () => {
+  it('sin motivo (null) el payload llega igual al RPC — la OBLIGATORIEDAD es del RPC', async () => {
+    rpcOk();
+    const res = await POST(makeReq(payload()), mockSession.value as any);
+    expect(res.status).toBe(200);
+    expect(rpcMock.mock.calls[0][1].p_discount_reason).toBeNull();
+  });
+
+  it('discount_reason > 500 caracteres → 400 (Zod) y el RPC nunca se llama', async () => {
+    const body = payload({ discount_reason: 'x'.repeat(501) });
+    const res = await POST(makeReq(body), mockSession.value as any);
+    expect(res.status).toBe(400);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('E-SEC-FINAL — errores nuevos del RPC mapeados a HTTP', () => {
+  const cases: Array<[string, number, string]> = [
+    ['ERR_DISCOUNT_REASON_REQUIRED: motivo obligatorio', 403, 'Motivo del descuento requerido'],
+    ['ERR_DISCOUNT_REASON_INVALID: max 500 caracteres', 400, 'Motivo del descuento inválido'],
+    ['ERR_SUPERVISOR_TOKEN_REUSED: jti ya consumido', 403, 'ya fue utilizada'],
+    ['ERR_SUPERVISOR_TOKEN_REQUIRED: token requerido', 403, 'Token de supervisor requerido'],
+    ['ERR_SUPERVISOR_SCOPE_VIOLATION: product=abc', 403, 'no cubre este descuento'],
+  ];
+  for (const [rpcMsg, expectedStatus, expectedFragment] of cases) {
+    it(`${rpcMsg.split(':')[0]} → ${expectedStatus}`, async () => {
+      rpcMock.mockResolvedValueOnce({ data: null, error: { message: rpcMsg } });
+      const res = await POST(makeReq(payload()), mockSession.value as any);
+      expect(res.status).toBe(expectedStatus);
+      const j = await res.json();
+      expect(j.error).toContain(expectedFragment);
+    });
+  }
 });

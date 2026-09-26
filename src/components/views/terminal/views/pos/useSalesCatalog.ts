@@ -459,6 +459,9 @@ export function useSalesCatalog() {
             customer_name: null,
             supervisor_user_id: supervisorAuth?.userId ?? null,
             supervisor_token: supervisorAuth?.token ?? null,
+            // E-SEC-FINAL (D2): motivo del descuento autorizado — el catálogo es
+            // un SEGUNDO camino de checkout y debe viajar igual que en el POS.
+            discount_reason: supervisorAuth?.reason || null,
             idempotency_key: `sale-${crypto.randomUUID()}`,
             operation_date: opDate,
             items: activeRows.map((r) => ({

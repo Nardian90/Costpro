@@ -19,13 +19,33 @@ import { issueSupervisorToken } from '@/lib/supervisor-token';
  * verifies it before forwarding the supervisor identity to create_sale_v2,
  * closing the client-supplied-UUID spoofing vector (REM-INV-4A F-04-A2, P1).
  *
+ * E-SEC-FINAL (D3, decisión del responsable funcional): el token es de UN SOLO
+ * USO y firma además el scope autorizado en la emisión (`scope`): la(s)
+ * línea(s) con desvío ≥15% que el supervisor está autorizando (product_id,
+ * variant_id, unit_price). El create_sale_v2 verifica que cada línea con
+ * desvío ≥15% esté cubierta por el scope y consume el jti una sola vez
+ * (supervisor_token_usages) — el replay falla server-side aunque el atacante
+ * conozca el token y llame por HTTP directo.
+ *
  * Rate limit: 5 req/min (stricter than checkout — credential brute-force protection).
  */
+
+const supervisorScopeSchema = z.array(
+  z.object({
+    pid: z.string().uuid(),
+    vid: z.string().uuid().nullable(),
+    px: z.number().min(0).finite(),
+  })
+).max(200);
 
 const supervisorCheckSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
   store_id: z.string().uuid(),
+  // E-SEC-FINAL (D3): línea(s) autorizada(s) en la emisión (opcional — el
+  // descuento global del carrito no autoriza líneas concretas). El caller
+  // acumula el scope de autorizaciones previas (supervisor-auth-store).
+  scope: supervisorScopeSchema.optional(),
 });
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -112,10 +132,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     // REM-INV-4A-R (RC-1): issue the verifiable proof-of-authorization bound
     // to this operator session and store. Stateless + short TTL.
+    // E-SEC-FINAL (D3): firma además el scope autorizado (líneas pid/vid/px).
     const supervisor_token = issueSupervisorToken(
       supervisorUserId,
       session.user.id,
-      parsed.data.store_id
+      parsed.data.store_id,
+      parsed.data.scope ?? []
     );
 
     return NextResponse.json({

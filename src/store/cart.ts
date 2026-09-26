@@ -207,14 +207,33 @@ interface CartState {
 }
 
 const calculateItemSubtotal = (item: CartItem) => {
-  const price = item.price ?? 0;
-  const quantity = item.quantity ?? 0;
-  const base = price * quantity;
-
-  if (!item.discount_type || item.discount_value <= 0) return base;
-  if (item.discount_type === "percentage") return base * (1 - item.discount_value / 100);
-  return Math.max(0, (price - item.discount_value) * quantity);
+  // E-SEC-FINAL (D5): el subtotal de línea se calcula DESDE el precio unitario
+  // YA redondeado a 2dp (misma aritmética que create_sale_v2: subtotal de
+  // línea = ROUND(ROUND(unit,2) * qty, 2)) — elimina la divergencia por
+  // doble redondeo unit→línea entre cliente y servidor.
+  const unit = effectiveUnitPrice(item.price, item.quantity, item.discount_type, item.discount_value);
+  return round2(unit * (item.quantity ?? 0));
 };
+
+/**
+ * E-SEC-FINAL (D5 — política de redondeo monetario, decisión del responsable
+ * funcional): redondeo a 2 decimales HALF-UP exacto sobre el decimal, no sobre
+ * el float. El truco `e2` construye `x*100` desde la representación decimal
+ * más corta de x ("19.995e2" → 1999.5 exacto), evitando el clásico
+ * Math.round(19.995*100)=1999 del float. Semántica idéntica a ROUND(numeric,2)
+ * de PostgreSQL (half-away-from-zero; los precios/requisitos son ≥0).
+ * Exportado para tests (matriz de redondeo 19.99/33.33/99.95/0.01).
+ */
+export function round2(x: number): number {
+  if (!Number.isFinite(x)) return x;
+  // Manejo de signo: half-UP decimal = half-away-from-zero (≡ SQL ROUND)
+  const sign = x < 0 ? -1 : 1;
+  const abs = Math.abs(x);
+  // toFixed(12) recorta el polvo binario manteniendo el decimal relevante;
+  // el sufijo e2 escala ×100 de forma exacta en decimal.
+  const scaled = Number(`${Number(abs.toFixed(12))}e2`);
+  return sign * Math.round(scaled) / 100;
+}
 
 /**
  * E-SEC (R-SEC-1): precio unitario efectivo de un ítem tras su descuento
@@ -224,6 +243,10 @@ const calculateItemSubtotal = (item: CartItem) => {
  * desvío contra el catálogo (create_sale_v2, gate >=15%) sin ERR_TOTAL_MISMATCH.
  * Semántica por LÍNEA (alineada con getItemSubtotalCup): descuento fixed se
  * aplica una vez a la línea; percentage sobre el precio unitario.
+ *
+ * E-SEC-FINAL (D5): precio monetario de línea → 2 decimales. Cliente y
+ * servidor comparten la semántica round2(unit): el payload V2 envía el precio
+ * unitario redondeado y el RPC lo re-redondea sin cambio (única verdad).
  */
 export function effectiveUnitPrice(
   price: number | null | undefined,
@@ -233,12 +256,12 @@ export function effectiveUnitPrice(
 ): number {
   const base = price ?? 0;
   const qty = quantity ?? 1;
-  if (!discountType || !(discountValue && discountValue > 0)) return base;
+  if (!discountType || !(discountValue && discountValue > 0)) return round2(base);
   if (discountType === "percentage") {
-    return Math.max(0, base * (1 - discountValue / 100));
+    return round2(Math.max(0, base * (1 - discountValue / 100)));
   }
   const lineTotal = Math.max(0, base * qty - discountValue);
-  return qty > 0 ? lineTotal / qty : 0;
+  return qty > 0 ? round2(lineTotal / qty) : 0;
 }
 
 // FIX-PAYMENT-ROWS (2026-07-10): generar IDs únicos para PaymentRow

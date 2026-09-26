@@ -25,10 +25,20 @@
  *   - Tokens are stateless and expire after SUPERVISOR_TOKEN_TTL_SECONDS.
  *   - The secret reuses NEXTAUTH_SECRET (no new secret surface); rotating it
  *     invalidates outstanding tokens (max loss: the TTL window).
- *   - Residual (documented in REM-INV-4A-R 03-rc1-design.md): a token can be
- *     replayed by the SAME operator for another discounted sale in the SAME
- *     store within the TTL window — the industry-standard manager-approval
- *     caching model (P3 residual, registered for a future gate).
+ *
+ * E-SEC-FINAL (D3 — single-use, decisión del responsable funcional):
+ *   El residual P3 de RC-1 (replay dentro del TTL) queda CERRADO:
+ *   - El payload firma además `scp`: la(s) línea(s) autorizada(s) en la
+ *     emisión (product_id, variant_id, unit_price autorizado). El RPC
+ *     verifica que CADA línea con desvío >=15% esté cubierta por el scope.
+ *   - El `jti` se CONSUME una única vez server-side (tabla
+ *     supervisor_token_usages, INSERT ON CONFLICT DO NOTHING dentro de la
+ *     transacción de create_sale_v2). El replay de un token usado devuelve
+ *     ERR_SUPERVISOR_TOKEN_REUSED — aunque el atacante conozca el token y
+ *     llame por HTTP directo.
+ *   - La autorización queda ligada a: supervisor, operador, tienda (emisión,
+ *     firmado), operación (transaction_id del consumo) y línea(s)
+ *     autorizada(s) (scp firmado + snapshot en auditoría).
  */
 
 import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
@@ -37,6 +47,14 @@ export const SUPERVISOR_TOKEN_TTL_SECONDS = 300; // 5 minutes
 
 const TOKEN_VERSION = 'v1';
 
+// E-SEC-FINAL (D3): línea(s) autorizada(s) en la emisión. Firmada dentro del
+// token (HMAC): el cliente no puede alterarla sin invalidar la firma.
+export interface SupervisorScopeEntry {
+  pid: string; // product_id
+  vid: string | null; // variant_id (null = unidad base)
+  px: number; // unit price autorizado (descuento mayor ⇒ precio menor ⇒ denied)
+}
+
 interface SupervisorTokenPayload {
   v: string; // token version
   sup: string; // supervisor user id (validated credentials)
@@ -44,7 +62,8 @@ interface SupervisorTokenPayload {
   st: string; // store id the authorization applies to
   iat: number; // issued at (epoch seconds)
   exp: number; // expiry (epoch seconds)
-  jti: string; // random token id
+  jti: string; // random token id (consumed once — see supervisor_token_usages)
+  scp?: SupervisorScopeEntry[]; // authorized line(s) at issuance (E-SEC-FINAL D3)
 }
 
 function getSecret(): string {
@@ -67,7 +86,8 @@ function sign(payloadStr: string): string {
 export function issueSupervisorToken(
   supervisorUserId: string,
   operatorUserId: string,
-  storeId: string
+  storeId: string,
+  scope?: SupervisorScopeEntry[]
 ): string {
   const now = Math.floor(Date.now() / 1000);
   const payload: SupervisorTokenPayload = {
@@ -78,6 +98,9 @@ export function issueSupervisorToken(
     iat: now,
     exp: now + SUPERVISOR_TOKEN_TTL_SECONDS,
     jti: randomUUID(),
+    // E-SEC-FINAL (D3): solo se firma si hay scope (compatibilidad con
+    // autorizaciones de descuento global sin líneas). Array vacío = sin scope.
+    ...(scope && scope.length > 0 ? { scp: scope } : {}),
   };
   const payloadStr = JSON.stringify(payload);
   return `${b64url(payloadStr)}.${sign(payloadStr)}`;
@@ -93,6 +116,10 @@ export interface SupervisorTokenVerifyResult {
     | 'OPERATOR_MISMATCH'
     | 'STORE_MISMATCH'
     | 'VERSION_MISMATCH';
+  /** E-SEC-FINAL (D3): payload verificado (jti + scope) cuando valid=true.
+   *  El route lo usa para consumir el jti (single-use) y evaluar el scope
+   *  firmado contra las líneas de la venta (create_sale_v2 es la autoridad). */
+  payload?: { jti: string; scp: SupervisorScopeEntry[] };
 }
 
 /** Verify a supervisor token against the sale being authorized. */
@@ -126,5 +153,8 @@ export function verifySupervisorToken(
   if (payload.opr !== expected.operatorUserId) return { valid: false, reason: 'OPERATOR_MISMATCH' };
   if (payload.st !== expected.storeId) return { valid: false, reason: 'STORE_MISMATCH' };
 
-  return { valid: true };
+  return {
+    valid: true,
+    payload: { jti: payload.jti, scp: Array.isArray(payload.scp) ? payload.scp : [] },
+  };
 }

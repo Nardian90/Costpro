@@ -141,6 +141,10 @@ const handler = withAuth(async (req, session) => {
                 p_customer_id: op.payload.p_customer_id || null,
                 p_customer_name: op.payload.p_customer_name || null,
                 p_supervisor_user_id: op.payload.p_supervisor_user_id || null,
+                // E-SEC-FINAL (D2): motivo del descuento autorizado encolado
+                // offline. La obligatoriedad la valida create_sale_v2 (self-
+                // session path: RC-1 exige sup==auth.uid()).
+                p_discount_reason: op.payload.p_discount_reason || null,
                 p_idempotency_key: op.idempotencyKey,
                 p_operation_date: op.payload.p_operation_date || null,
                 p_user_id: session.user.id,

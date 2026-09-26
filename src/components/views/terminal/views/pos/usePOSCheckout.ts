@@ -185,6 +185,10 @@ export function usePOSCheckout() {
               // (validated + signed at /api/auth/supervisor-check) when present.
               supervisor_user_id: supervisorAuth?.userId ?? null,
               supervisor_token: supervisorAuth?.token ?? null,
+              // E-SEC-FINAL (D2): motivo del descuento autorizado. El RPC lo exige
+              // server-side solo cuando el gate ≥15% dispara y lo persiste en la
+              // auditoría asociado a la línea/operación autorizada.
+              discount_reason: supervisorAuth?.reason || null,
               idempotency_key: `sale-${crypto.randomUUID()}`,
               items: items.map((i) => ({
                 product_id: i.product_id,

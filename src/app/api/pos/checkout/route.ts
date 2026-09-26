@@ -78,6 +78,10 @@ const checkoutSchema = z.object({
   customer_name: z.string().nullable().optional(),
   supervisor_user_id: z.string().regex(uuidRegex).nullable().optional(),
   supervisor_token: z.string().min(10).max(1024).nullable().optional(),
+  // E-SEC-FINAL (D2): motivo del descuento autorizado. Texto controlado ≤500.
+  // La OBLIGATORIEDAD se valida server-side en create_sale_v2 (única regla
+  // canónica): solo se exige cuando el gate de desvío ≥15% dispara.
+  discount_reason: z.string().max(500).nullable().optional(),
   idempotency_key: z.string().min(1),
   operation_date: z.string().datetime().optional(),
   items: z.array(itemSchema).min(1),
@@ -113,7 +117,16 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   // Under no circumstances may a client-supplied supervisor UUID reach the
   // RPC without a server-issued, signature-verified, unexpired token bound
   // to the same supervisor, this operator session and this store.
+  //
+  // E-SEC-FINAL (D3): el token es de UN SOLO USO y porta el scope firmado
+  // (línea(s) autorizada(s) en la emisión). El route extrae jti + scp del
+  // payload verificado y se los pasa al RPC, que consume el jti atómicamente
+  // (supervisor_token_usages) y verifica que cada línea con desvío ≥15% esté
+  // cubierta por el scope. La UI puede borrar el token cuando quiera: el
+  // servidor es la fuente de verdad del replay.
   let supervisor_user_id: string | null = null;
+  let supervisor_token_jti: string | null = null;
+  let supervisor_scope: Array<{ pid: string; vid: string | null; px: number }> | null = null;
   if (d.supervisor_user_id) {
     if (!d.supervisor_token) {
       logger.warn('POS', 'SUPERVISOR_TOKEN_MISSING', { storeId: d.store_id });
@@ -124,7 +137,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       operatorUserId: session.user.id,
       storeId: d.store_id,
     });
-    if (!verification.valid) {
+    if (!verification.valid || !verification.payload) {
       logger.warn('POS', 'SUPERVISOR_TOKEN_INVALID', {
         storeId: d.store_id,
         reason: verification.reason,
@@ -132,6 +145,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: 'Supervisor no autorizado en esta tienda.' }, { status: 403 });
     }
     supervisor_user_id = d.supervisor_user_id;
+    supervisor_token_jti = verification.payload.jti;
+    supervisor_scope = verification.payload.scp;
   }
 
   // Map items to JSONB for RPC (rename price→price_at_sale, cost→cost_at_sale)
@@ -182,6 +197,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_idempotency_key: d.idempotency_key,
     p_operation_date: d.operation_date ?? null,
     p_user_id: session.user.id,
+    // E-SEC-FINAL (D2/D3): motivo + single-use + scope firmado
+    p_supervisor_token_jti: supervisor_token_jti,
+    p_supervisor_scope: supervisor_scope,
+    p_discount_reason: d.discount_reason ?? null,
   });
 
   if (rpcError) {
@@ -209,6 +228,22 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
     if (msg.includes('ERR_SUPERVISOR_UNAUTHORIZED')) {
       return NextResponse.json({ error: 'Supervisor no autorizado en esta tienda.' }, { status: 403 });
+    }
+    // E-SEC-FINAL (D2/D3): política definitiva de autorización
+    if (msg.includes('ERR_DISCOUNT_REASON_REQUIRED')) {
+      return NextResponse.json({ error: 'Motivo del descuento requerido para este descuento autorizado.' }, { status: 403 });
+    }
+    if (msg.includes('ERR_DISCOUNT_REASON_INVALID')) {
+      return NextResponse.json({ error: 'Motivo del descuento inválido (máximo 500 caracteres).' }, { status: 400 });
+    }
+    if (msg.includes('ERR_SUPERVISOR_TOKEN_REUSED')) {
+      return NextResponse.json({ error: 'La autorización de supervisor ya fue utilizada. Solicite una nueva autorización.' }, { status: 403 });
+    }
+    if (msg.includes('ERR_SUPERVISOR_TOKEN_REQUIRED')) {
+      return NextResponse.json({ error: 'Token de supervisor requerido para este descuento autorizado.' }, { status: 403 });
+    }
+    if (msg.includes('ERR_SUPERVISOR_SCOPE_VIOLATION')) {
+      return NextResponse.json({ error: 'La autorización del supervisor no cubre este descuento. Solicite una nueva autorización.' }, { status: 403 });
     }
     if (msg.includes('ERR_PAYMENT_MISMATCH')) {
       return NextResponse.json({ error: 'Los pagos no cuadran con el total.' }, { status: 422 });

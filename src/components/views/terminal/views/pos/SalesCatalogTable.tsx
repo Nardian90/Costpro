@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Package, AlertTriangle, Percent, DollarSign, ArrowUpDown, Eye, EyeOff, Store } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
 import type { SalesCatalogRow, SortConfig } from './useSalesCatalog';
 import { useDiscountAuthorization, DISCOUNT_SUPERVISOR_THRESHOLD } from './useDiscountAuthorization';
 import { SupervisorAuthModal } from './SupervisorAuthModal';
+import { effectiveUnitPrice } from '@/store/cart';
+import type { SupervisorScopeEntry } from './supervisor-auth-store';
 import { PaymentMethodSelector } from './PaymentMethodSelector';
 
 // ── Sortable Header ───────────────────────────────────────────
@@ -112,6 +114,13 @@ export default function SalesCatalogTable({
   // esperamos autorización del supervisor.
   const pendingDiscountRef = React.useRef<{ product: Product; value: number } | null>(null);
 
+  // E-SEC-FINAL (D3): línea autorizada en la emisión (scope firmado del token).
+  // Estado reactivo porque el modal es ÚNICO a nivel tabla (la línea pendiente
+  // depende de la fila que disparó la autorización). px = precio unitario
+  // resultante del descuento pendiente — create_sale_v2 exige que toda línea
+  // con desvío ≥15% esté cubierta por este scope.
+  const [pendingScopeEntry, setPendingScopeEntry] = useState<SupervisorScopeEntry | null>(null);
+
   // Wrapper que verifica autorización antes de aplicar el descuento al item.
   // referenceTotal = subtotal del item (precio × cantidad).
   const handleSetDiscountValueWithAuth = (p: Product, row: SalesCatalogRow, value: number) => {
@@ -128,6 +137,11 @@ export default function SalesCatalogTable({
     });
     if (requiresAuth) {
       pendingDiscountRef.current = { product: p, value };
+      setPendingScopeEntry({
+        pid: p.id,
+        vid: row.selectedVariantId ?? null,
+        px: effectiveUnitPrice(row.price, row.quantity, row.discountType, value),
+      });
       return;
     }
     handleSetDiscountValue(p, value);
@@ -143,6 +157,7 @@ export default function SalesCatalogTable({
 
   const handleSupervisorCancel = () => {
     pendingDiscountRef.current = null;
+    setPendingScopeEntry(null);
     cancelAuthorization();
   };
 
@@ -488,7 +503,8 @@ export default function SalesCatalogTable({
 
       {/* V2.12.30: Modal de autorización de supervisor para descuentos por item.
           Único modal a nivel tabla (mejor performance que uno por fila).
-          % efectivo = (value / itemSubtotal) * 100. Si >= 15%, pide PIN. */}
+          % efectivo = (value / itemSubtotal) * 100. Si >= 15%, pide PIN.
+          E-SEC-FINAL (D2/D3): motivo obligatorio + scope de la línea autorizada. */}
       <SupervisorAuthModal
         isOpen={showSupervisorAuth}
         onClose={handleSupervisorCancel}
@@ -497,6 +513,7 @@ export default function SalesCatalogTable({
         discountValue={pendingDiscount?.value || 0}
         maxAllowed={DISCOUNT_SUPERVISOR_THRESHOLD}
         discountType={pendingDiscount?.type}
+        scopeEntry={pendingScopeEntry}
       />
     </div>
   );
