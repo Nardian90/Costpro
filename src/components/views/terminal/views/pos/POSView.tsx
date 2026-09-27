@@ -393,8 +393,11 @@ export default function POSView() {
           : 'Carrito vacío'}
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      {/* F1 (UI-002): flex-wrap controlado — en <640px el grupo de estado (Abrir turno)
+          envuelve a una segunda fila alineada a la derecha en vez de salirse del viewport
+          (medido: 89px fuera a 360px). Desktop (≥sm): gap y composición originales. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {/* QW-1 (IA Audit): botón "← Volver a Venta" para wayfinding contextual.
               POSView es alcanzada desde el hub de Venta — este botón restaura el
               contexto en 1 clic y refuerza la jerarquía hub → vista. */}
@@ -441,7 +444,7 @@ export default function POSView() {
             <button
               type="button"
               onClick={() => setCurrentView('sales')}
-              className="inline-flex items-center gap-1.5 h-11 min-h-[44px] px-3 sm:px-4 rounded-xl border-2 border-blue-500/30 bg-blue-500/5 text-blue-500 font-black text-xs uppercase tracking-widest hover:bg-blue-500/10 hover:border-blue-500/50 transition-all active:scale-95"
+              className="inline-flex items-center justify-center gap-1.5 h-11 min-h-[44px] min-w-[44px] px-3 sm:px-4 rounded-xl border-2 border-blue-500/30 bg-blue-500/5 text-blue-500 font-black text-xs uppercase tracking-widest hover:bg-blue-500/10 hover:border-blue-500/50 transition-all active:scale-95"
               aria-label="Ir al Historial de Ventas"
               title="Ver historial de ventas registradas"
             >
@@ -454,7 +457,8 @@ export default function POSView() {
             POS-3a-1: si no hay turno, es clickeable y navega a vista Caja.
             POS-3b EM-5: indicador offline/sync al lado del widget de caja.
             Solo aparece cuando hay algo que mostrar (offline o cola pendiente). */}
-        <div className="flex items-center gap-2">
+        {/* F1 (UI-002): ml-auto — si este grupo envuelve a la 2ª fila queda alineado a la derecha */}
+        <div className="ml-auto flex items-center gap-2">
           <OfflineStatusIndicator />
           <CashStatusWidget compact={isMobile} />
         </div>
@@ -764,8 +768,13 @@ export default function POSView() {
       {/* POS-3a-v3 Fix 3: SpeedDial solo visible cuando el carrito NO está abierto.
           Antes estaba siempre visible, lo que hacía que se superpongiera con las
           opciones del carrito (Cobrar, Anular, etc.) cuando el sidebar estaba abierto.
-          Ahora solo aparece cuando hay espacio libre en pantalla. */}
-      {!showCart && !lastSale && (
+          Ahora solo aparece cuando hay espacio libre en pantalla.
+          F1 (FIX-3): en móvil tampoco aparece cuando StickyCartSummary está visible
+          (cartCount > 0) — el FAB z-110 solapaba tanto la tab bar como el CTA de
+          checkout. Sus 3 acciones conservan alternativa visible en ese estado:
+          Caja (header, con contador) · Escanear (botón de cámara junto al buscador) ·
+          Anular (dentro del panel del carrito). Desktop sin cambio. */}
+      {!showCart && !lastSale && !(isMobile && cartCount > 0) && (
         <SpeedDial actions={[
           {
             id: 'view-cart',

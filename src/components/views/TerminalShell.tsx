@@ -1,7 +1,7 @@
 'use client';
 import { logger } from '@/lib/logger';
 
-import React, { useState, useEffect, useTransition, Suspense } from 'react';
+import React, { useState, useEffect, useTransition, Suspense, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
 import { isViewAllowedForRole } from '@/config/navigation/sidebar.structure';
@@ -184,6 +184,21 @@ export default function TerminalShell() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
+
+  // F1 (Drawer/deep-link): en móvil, un deep-link o una recarga NO debe restaurar
+  // el drawer abierto con su overlay bloqueante (sidebarState default 'expanded' +
+  // persist del store lo restauraban así). Guard de MONTAJE: corre una sola vez
+  // cuando isMobile se resuelve true. La decisión vigente de navegación continua
+  // (2026-07-22: no cerrar el sidebar al navegar en móvil) queda intacta — esto
+  // solo normaliza el estado INICIAL, no la navegación del usuario.
+  const mobileDrawerGuardDone = useRef(false);
+  useEffect(() => {
+    if (!isMobile || mobileDrawerGuardDone.current) return;
+    mobileDrawerGuardDone.current = true;
+    if (useUIStore.getState().sidebarState !== 'closed') {
+      setSidebarState('closed');
+    }
+  }, [isMobile, setSidebarState]);
 
   // Monitor if active store is deleted by another admin
   useStoreDeletedMonitor();

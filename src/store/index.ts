@@ -194,6 +194,17 @@ export const useUIStore = create<UIState>()(
           // es string; defaults documentados del estado inicial).
           ipvActiveTab: typeof p.ipvActiveTab === 'string' ? p.ipvActiveTab : currentState.ipvActiveTab,
           activeCostSection: typeof p.activeCostSection === 'string' ? p.activeCostSection : currentState.activeCostSection,
+          // F1 (Drawer/deep-link): la rehidratación del persist NO debe restaurar
+          // el drawer ABIERTO en móvil — un deep-link o recarga en <768px debe
+          // aterrizar en la vista operativa sin overlay bloqueante. La decisión
+          // de navegación continua (no cerrar al navegar en móvil) queda intacta:
+          // esto solo normaliza el estado restaurado al arrancar.
+          sidebarState: (
+            typeof window !== 'undefined' &&
+            window.innerWidth < 768 &&
+            typeof p.sidebarState === 'string' &&
+            p.sidebarState !== 'closed'
+          ) ? 'closed' : (p.sidebarState ?? currentState.sidebarState),
         };
       },
       migrate: (persistedState: any, version: number) => {

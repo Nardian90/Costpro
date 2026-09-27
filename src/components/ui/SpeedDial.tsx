@@ -28,7 +28,9 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
 
   return (
     <Portal>
-      <div className={cn("fixed bottom-6 right-6 z-[110] flex flex-col items-end gap-3", className)}>
+      {/* F1 (FIX-3): en móvil el FAB se eleva sobre la MobileTabBar (~55px + safe-area)
+          — antes solapaba la esquina derecha de la tab bar (MÁS/OCULTAR). ≥sm: original. */}
+      <div className={cn("fixed right-6 z-[110] flex flex-col items-end gap-3 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] sm:bottom-6", className)}>
         <AnimatePresence>
           {isOpen && (
             <div className="flex flex-col items-end gap-6 mb-2">
