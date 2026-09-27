@@ -24,6 +24,35 @@ import { type Page } from '@playwright/test';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+/** Exportados para que los specs repliquen llamadas RPC igual que el browser */
+export const SUPABASE_REST_URL = SUPABASE_URL;
+export const SUPABASE_ANON = ANON_KEY;
+
+/**
+ * Invoca un RPC de Supabase exactamente como lo hace el cliente del browser
+ * (supabase.rpc → POST /rest/v1/rpc/<name> con Bearer del usuario).
+ */
+export async function rpcAsUser<T = any>(name: string, token: string, params: Record<string, unknown>): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: { apikey: ANON_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  const text = await res.text();
+  let data: any = null;
+  let error: string | null = null;
+  try {
+    data = JSON.parse(text);
+    if (typeof data === 'object' && data && 'message' in data && !res.ok) {
+      error = String((data as any).message);
+      data = null;
+    }
+  } catch {
+    error = text.slice(0, 200);
+  }
+  return { ok: res.ok, status: res.status, data, error };
+}
 export const BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:3000';
 
 export const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'admin@costpro.com';
@@ -178,6 +207,10 @@ export async function createTestStore(
     slug: `e2e80_${label.toLowerCase().replace(/\s+/g, '_')}_${suffix}`,
     plantilla: 'construccion',
   };
+  // Higiene: archivar tiendas E2E80 huérfanas de ejecuciones fallidas
+  // (evita agotar el límite de tiendas activas del tenant).
+  await sb.update('stores', 'name=like.E2E80*', { is_active: false, is_archived: true }).catch(() => {});
+
   const res = await request.post('/api/stores', {
     headers: apiHeaders(adminToken),
     data: payload,
