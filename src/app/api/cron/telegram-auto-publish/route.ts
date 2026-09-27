@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { publishProductToTelegram } from '@/lib/telegram/publish';
+import { verifyCronAuthorization } from '@/lib/cron-auth';
 import { logger } from '@/lib/logger';
 
 /**
@@ -9,7 +10,8 @@ import { logger } from '@/lib/logger';
  * Cron job — runs DAILY at 08:00 UTC on Vercel Hobby plan (free tier
  * limit: only daily crons allowed). For sub-daily frequencies (5/15/30/60 min),
  * the local PM2 poller in scripts/telegram-cron-poller.sh is the primary
- * scheduler — it hits this endpoint every 5 min from the dev machine.
+ * scheduler — it hits this endpoint every 5 min from the dev machine
+ * (enviando Authorization: Bearer ${CRON_SECRET}).
  *
  * To enable a 5-minute cron here, upgrade to Vercel Pro.
  *
@@ -20,8 +22,24 @@ import { logger } from '@/lib/logger';
  * Critical: this uses the SAME publishProductToTelegram() helper as the
  * manual /api/telegram/publish-product endpoint, so the message body and
  * Vitrina-rule enforcement are identical.
+ *
+ * SEC-TS-02 · H4 — autenticación fail-closed (patrón FIX C5+C6 de
+ * cron/usage-sync y cron/exchange-rates): solo JWT de Vercel Cron
+ * (x-vercel-signature) o Bearer CRON_SECRET. Un llamante anónimo ya no
+ * puede disparar la publicación ni leer datos multi-tienda: la respuesta
+ * es agregada (sin storeId/producto/messageId/errores por tienda — el
+ * detalle operacional sigue en los logs del servidor).
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await verifyCronAuthorization(req);
+  if (!auth.authorized) {
+    logger.warn('DATABASE', 'CRON_UNAUTHORIZED', {});
+    return NextResponse.json(
+      { error: 'Unauthorized', hint: 'Incluye Authorization: Bearer <CRON_SECRET>, o usa x-vercel-signature JWT (con VERCEL_PROJECT_ID configurado)' },
+      { status: 401 },
+    );
+  }
+
   const startTime = Date.now();
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -135,15 +153,29 @@ export async function GET() {
     }
 
     const durationMs = Date.now() - startTime;
+    const successCount = results.filter(r => r.status === 'success').length;
+    const skipCount = results.filter(r => r.skipped).length;
+    const failCount = results.filter(r => r.status === 'failed' || r.status === 'error').length;
+
     logger.info('DATABASE', 'CRON_TICK_END', {
       durationMs,
       processed: configs.length,
-      successCount: results.filter(r => r.status === 'success').length,
-      skipCount: results.filter(r => r.skipped).length,
-      failCount: results.filter(r => r.status === 'failed' || r.status === 'error').length,
+      successCount,
+      skipCount,
+      failCount,
     });
 
-    return NextResponse.json({ processed: configs.length, results });
+    // SEC-TS-02 · H4: respuesta agregada — sin results[] ni datos por tienda
+    // (el detalle operacional queda en los logs del servidor).
+    return NextResponse.json({
+      success: true,
+      auth_method: auth.method,
+      processed: configs.length,
+      published: successCount,
+      skipped: skipCount,
+      failed: failCount,
+      duration_ms: durationMs,
+    });
   } catch (error: any) {
     logger.error('DATABASE', 'CRON_FATAL', {
       error: error.message,

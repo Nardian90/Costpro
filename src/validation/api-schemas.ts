@@ -390,6 +390,61 @@ export const recalculateSchema = z.discriminatedUnion('mode', [
   }),
 ]);
 
+// ─── Store Exchange Rates (SEC-TS-02 · H2) ───────────────────────────────────
+//
+// Body de POST /api/store-rates: { storeId, rates: { USD: 680, EUR: 720 } }.
+// El storeId del body NUNCA es autorización por sí mismo — el gate real es
+// canManageStore(session.user, storeId) en la ruta (antes del service-role).
+// Este schema garantiza: formato del body, moneda alfabética de 3 letras
+// (coherente con las tasas USD/EUR/MLC de la tabla store_exchange_rates,
+// columna TEXT sin CHECK — el schema endurece ese hueco), tasa numérica
+// positiva y finita dentro del rango de NUMERIC(14,4), y un máximo de
+// monedas por solicitud (la UI envía 3).
+export const storeRatesMaxCurrencies = 16;
+
+export const storeRatesSchema = z.object({
+  storeId: uuidLoose,
+  rates: z.record(
+    z.string().regex(/^[A-Z]{3}$/, 'Código de moneda inválido (se esperaban 3 letras mayúsculas)'),
+    z.number('La tasa debe ser numérica')
+      .positive('La tasa debe ser mayor que 0')
+      .finite()
+      .max(10_000_000, 'Tasa fuera de rango (máximo 10,000,000)')
+  )
+    .refine(entries => Object.keys(entries).length > 0, 'Se requiere al menos una tasa')
+    .refine(
+      entries => Object.keys(entries).length <= storeRatesMaxCurrencies,
+      `Máximo ${storeRatesMaxCurrencies} monedas por solicitud`
+    ),
+});
+
+// ─── OCR Receipt (SEC-TS-02 · H1) ────────────────────────────────────────────
+//
+// Body de POST /api/inventory/ocr-receipt: { image: "data:image/jpeg;base64,..." }.
+// Límite elegido: 14 MiB de data-URI (≈ 10.5 MiB de imagen decodificada).
+// Coherencia del límite:
+//   - Flujo real del cliente: InvoiceOCRModal acepta fotos de hasta 10 MiB;
+//     base64 infla ×4/3 → ~13.4 MiB de data-URI. 14 MiB cubre ese contrato
+//     SIN romper el flujo legítimo (no es artificialmente pequeño).
+//   - VLM glm-4.6v: procesa imágenes de esa escala sin degradar la extracción.
+//   - Payload HTTP: la App Router no impone body-size-limit en route handlers,
+//     por lo que este límite ES el tope real de memoria por request.
+//   - Rate-limit complementario de 5 req/min por usuario en la ruta: acota el
+//     coste agregado del VLM de pago.
+//   - Validación estructural: data-URI con MIME de imagen real y alfabeto
+//     base64 estricto (sin espacios/newlines — FileReader nunca los produce).
+export const OCR_IMAGE_MAX_CHARS = 14 * 1024 * 1024; // 14 MiB de data-URI
+
+export const ocrReceiptSchema = z.object({
+  image: z.string()
+    .startsWith('data:image/', 'Se requiere una imagen base64 (data:image/...)')
+    .regex(
+      /^data:image\/(?:png|jpe?g|webp|gif|bmp|heic|heif|avif);base64,[A-Za-z0-9+/=]+$/,
+      'Formato de imagen no soportado (data:image/<tipo>;base64,<datos>)'
+    )
+    .max(OCR_IMAGE_MAX_CHARS, 'La imagen excede el límite de 14 MiB'),
+});
+
 // ─── Helper para respuesta de error estandarizada ────────────────────────────
 export function zodError(errors: z.ZodError) {
   return {

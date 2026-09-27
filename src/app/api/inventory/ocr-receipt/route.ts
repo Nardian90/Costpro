@@ -6,9 +6,22 @@
  *
  * Retorna un JSON con los items detectados para que el frontend los agregue
  * a la recepción.
+ *
+ * SEC-TS-02 · H1 — hardening de autenticación y validación:
+ *   - POST requiere sesión (withAuth) → anónimo = 401. El VLM de pago ya no
+ *     es consumible de forma anónima e ilimitada.
+ *   - El body se valida con ocrReceiptSchema (data-URI de imagen real,
+ *     alfabeto base64 estricto, tope de 14 MiB — ver schema para la
+ *     justificación del límite) → payload inválido = 400, oversized = 413.
+ *   - Rate-limit 5 req/min por usuario autenticado (VLM de pago).
+ *   - El endpoint es stateless (no toca DB ni recursos de tienda): no
+ *     requiere autorización de membresía — con sesión basta.
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { withTracing } from "@/lib/observability";
+import { withAuth, type AuthenticatedSession } from "@/lib/auth-middleware";
+import { rateLimit } from "@/lib/rate-limit";
+import { ocrReceiptSchema, zodError } from "@/validation/api-schemas";
 
 interface ExtractedItem {
   name: string;
@@ -19,8 +32,21 @@ interface ExtractedItem {
   sale_price: number | null;
 }
 
-async function postHandler(request: NextRequest) {
-  let body: { image?: string };
+async function postHandler(request: NextRequest, session: AuthenticatedSession) {
+  // Rate-limit por usuario autenticado: el OCR consume un VLM de pago.
+  // 5 requests/min es el techo de un escaneo manual de facturas real.
+  const { allowed } = await rateLimit(`ocr:${session.user.id}`, {
+    windowMs: 60_000,
+    maxRequests: 5,
+  });
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too Many Requests", message: "Demasiadas solicitudes OCR — inténtalo de nuevo en un minuto" },
+      { status: 429 }
+    );
+  }
+
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
@@ -30,12 +56,15 @@ async function postHandler(request: NextRequest) {
     );
   }
 
-  if (!body.image || !body.image.startsWith("data:image/")) {
-    return NextResponse.json(
-      { error: "Bad Request", message: "Se requiere una imagen base64 (data:image/...)" },
-      { status: 400 }
-    );
+  const validated = ocrReceiptSchema.safeParse(body);
+  if (!validated.success) {
+    // Payload oversized → 413 (semántica HTTP correcta); resto de errores de
+    // schema → 400 con detalle estándar.
+    const tooBig = validated.error.issues.some(i => i.code === "too_big");
+    return NextResponse.json(zodError(validated.error), { status: tooBig ? 413 : 400 });
   }
+
+  const { image } = validated.data;
 
   try {
     // Import dinámico para evitar cargar el SDK en cold start innecesariamente
@@ -65,7 +94,7 @@ Retorna EXCLUSIVAMENTE un JSON válido con este formato (sin markdown, sin texto
     }
   ],
   "supplier": "Nombre del proveedor si está visible",
-  "invoice_number": "Número de factura si está visible",
+  "invoice_number": "Número de factura si es visible",
   "total_detected": 625.00,
   "confidence": "high|medium|low"
 }
@@ -81,7 +110,7 @@ Si no puedes leer la factura o está borrosa, retorna:
           role: "user",
           content: [
             { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: body.image } },
+            { type: "image_url", image_url: { url: image } },
           ],
         },
       ],
@@ -149,4 +178,7 @@ Si no puedes leer la factura o está borrosa, retorna:
   }
 }
 
-export const POST = withTracing(postHandler as any, "POST /api/inventory/ocr-receipt");
+export const POST = withTracing(
+  withAuth(postHandler as any) as any,
+  "POST /api/inventory/ocr-receipt"
+);
