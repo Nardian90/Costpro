@@ -28,7 +28,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public;
 
 -- Trigger for transaction voiding
 DROP TRIGGER IF EXISTS tr_audit_transaction_voiding ON public.transactions;
@@ -59,7 +59,7 @@ BEGIN
     );
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public;
 
 -- Trigger for stock reception (purchase)
 DROP TRIGGER IF EXISTS tr_audit_stock_reception ON public.stock_movements;

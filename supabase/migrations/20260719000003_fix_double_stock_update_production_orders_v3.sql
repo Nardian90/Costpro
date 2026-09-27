@@ -56,7 +56,7 @@ BEGIN
     p_variant_id := v_variant_id
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public', 'extensions';
 
 CREATE OR REPLACE FUNCTION receive_production_output(
   p_order_id UUID,
@@ -126,7 +126,7 @@ BEGIN
     p_variant_id := NULL::uuid
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public', 'extensions';
 
 COMMENT ON FUNCTION withdraw_production_item IS 'Descuenta material de una orden de producción. Usa register_stock_movement (10-param canonical) con casts explícitos. Antes hacía UPDATE directo + INSERT, causando doble descuento (bug C-1).';
 COMMENT ON FUNCTION receive_production_output IS 'Recibe producto terminado de orden de producción. Calcula WAC con costo total de materiales. Usa register_stock_movement para entrada de stock. Antes hacía UPDATE directo + INSERT, causando doble incremento (bug C-2).';

@@ -299,6 +299,7 @@ CREATE OR REPLACE FUNCTION public.purge_old_reset_snapshots(p_days INTEGER DEFAU
 RETURNS INTEGER
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = pg_catalog, public
 AS $$
 DECLARE
   v_deleted INTEGER;
