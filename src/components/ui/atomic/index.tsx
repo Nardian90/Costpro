@@ -69,7 +69,8 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon,
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      "w-full py-2.5 rounded-xl bg-primary text-foreground font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50",
+      // F2: peso medio, sin uppercase/tracking-widest (§7 del brief)
+      "w-full py-2.5 rounded-xl bg-primary text-foreground font-medium text-xs tracking-normal flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50",
       className
     )}
   >
@@ -85,7 +86,8 @@ export const SecondaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Ico
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      "py-2 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors disabled:opacity-50",
+      // F2: peso medio, sin uppercase/tracking-widest (§7 del brief)
+      "py-2 rounded-xl border border-border hover:bg-muted font-medium text-xs tracking-normal flex items-center justify-center gap-2 transition-colors disabled:opacity-50",
       className
     )}
   >

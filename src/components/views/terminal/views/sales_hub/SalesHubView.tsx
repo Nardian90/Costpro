@@ -45,6 +45,7 @@ import {
   CreditCard, RotateCcw, FileText, Megaphone, Users,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
+import PageHeader from "@/components/ui/PageHeader";
 import { useUIStore } from "@/store";
 import { useAuthStore } from "@/store";
 import { useActiveShift } from "@/hooks/api/useActiveShift";
@@ -340,46 +341,45 @@ export default function SalesHubView() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase">
-            Ventas
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Administración del ciclo comercial
-          </p>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className={cn(
-            "flex items-center gap-2 px-3 py-2 rounded-xl border-2",
-            hasShift ? "border-success/30 bg-success/5" : "border-destructive/30 bg-destructive/5",
-          )}>
-            <Wallet className={cn("w-4 h-4", hasShift ? "text-success" : "text-destructive")} />
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Turno</p>
-              <p className={cn("text-xs font-black", hasShift ? "text-success" : "text-destructive")}>
-                {hasShift ? "Activo" : "Cerrado"}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-primary/20 bg-primary/5">
-            <TrendingUp className="w-4 h-4 text-primary" />
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Ventas turno</p>
-              <p className="text-xs font-black text-primary tabular-nums">{formatCurrency(todaySales)}</p>
-            </div>
-          </div>
-          {cartCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-info/20 bg-info/5">
-              <ShoppingCart className="w-4 h-4 text-info" />
+      {/* F2: PageHeader — jerarquía estándar. Los chips de estado (Turno / Ventas
+          turno / Carrito) son contexto-operativa: metadata con peso contenido. */}
+      <PageHeader
+        title="Ventas"
+        description="Administración del ciclo comercial"
+        icon={Receipt}
+        secondaryActions={
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-xl border-2",
+              hasShift ? "border-success/30 bg-success/5" : "border-destructive/30 bg-destructive/5",
+            )}>
+              <Wallet className={cn("w-4 h-4", hasShift ? "text-success" : "text-destructive")} />
               <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Carrito</p>
-                <p className="text-xs font-black text-info tabular-nums">{cartCount} items</p>
+                <p className="cp-metadata">Turno</p>
+                <p className={cn("text-xs font-semibold", hasShift ? "text-success" : "text-destructive")}>
+                  {hasShift ? "Activo" : "Cerrado"}
+                </p>
               </div>
             </div>
-          )}
-        </div>
-      </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-primary/20 bg-primary/5">
+              <TrendingUp className="w-4 h-4 text-primary" />
+              <div>
+                <p className="cp-metadata">Ventas turno</p>
+                <p className="text-xs font-semibold text-primary tabular-nums">{formatCurrency(todaySales)}</p>
+              </div>
+            </div>
+            {cartCount > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-info/20 bg-info/5">
+                <ShoppingCart className="w-4 h-4 text-info" />
+                <div>
+                  <p className="cp-metadata">Carrito</p>
+                  <p className="text-xs font-semibold text-info tabular-nums">{cartCount} items</p>
+                </div>
+              </div>
+            )}
+          </div>
+        }
+      />
 
       {/* E-3 (IA Audit): Alertas operativas contextuales.
           Sección que aparece solo si hay alertas activas. Cada alerta es
@@ -393,7 +393,7 @@ export default function SalesHubView() {
           aria-label="Alertas operativas"
           role="region"
         >
-          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 px-1">
+          <h3 className="cp-metadata tracking-[0.3em] text-muted-foreground/60 px-1">
             Alertas operativas
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

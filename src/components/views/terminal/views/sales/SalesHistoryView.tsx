@@ -2,12 +2,13 @@
 
 import React, { useState, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { DollarSign, CreditCard, Eye, Undo2, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight, TrendingUp, Package } from 'lucide-react';
+import { DollarSign, CreditCard, Eye, Undo2, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight, TrendingUp, Package, Receipt } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
+import PageHeader from '@/components/ui/PageHeader';
 import * as XLSX from '@e965/xlsx';
 import { useSalesHistoryView } from './useSalesHistoryView';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
@@ -272,32 +273,36 @@ export default function SalesHistoryView() {
   return (
     <>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          {/* GATE 1.3: alineado con tarjeta del hub y breadcrumb ("Historial de Ventas") */}
-          <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase">Historial de Ventas</h2>
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Export Excel */}
-            <button type="button"
-              onClick={handleExportExcel}
-              className="flex items-center gap-2 px-4 h-11 border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
-              title="Exportar a Excel"
-              aria-label="Exportar ventas a Excel"
-            >
-              <Download className="w-4 h-4" />
-              {isMobile ? 'Excel' : 'Exportar Excel'}
-            </button>
-            {selectedTransactions.length > 0 && (
+        {/* F2: PageHeader — título único (GATE 1.3: alineado con hub y breadcrumb),
+            acciones de exportación como secondaryActions. */}
+        <PageHeader
+          title="Historial de Ventas"
+          description="Consulta, anula, duplica y exporta ventas."
+          icon={Receipt}
+          secondaryActions={
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Export Excel */}
               <button type="button"
-                onClick={() => setIsTaxModalOpen(true)}
-                className="flex items-center gap-2 px-4 h-11 border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
+                onClick={handleExportExcel}
+                className="flex items-center gap-2 px-4 h-11 border border-border rounded-xl font-medium text-xs tracking-normal hover:bg-muted transition-all active:scale-95"
+                title="Exportar a Excel"
+                aria-label="Exportar ventas a Excel"
               >
-                <Calculator className="w-4 h-4" />
-                {isMobile ? 'Imp.' : `Impuestos (${selectedTransactions.length})`}
+                <Download className="w-4 h-4" />
+                {isMobile ? 'Excel' : 'Exportar Excel'}
               </button>
-            )}
-          </div>
-        </div>
+              {selectedTransactions.length > 0 && (
+                <button type="button"
+                  onClick={() => setIsTaxModalOpen(true)}
+                  className="flex items-center gap-2 px-4 h-11 border border-border rounded-xl font-medium text-xs tracking-normal hover:bg-muted transition-all active:scale-95"
+                >
+                  <Calculator className="w-4 h-4" />
+                  {isMobile ? 'Imp.' : `Impuestos (${selectedTransactions.length})`}
+                </button>
+              )}
+            </div>
+          }
+        />
 
         <StatsBar stats={stats} />
 

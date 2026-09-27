@@ -649,3 +649,67 @@
     }
   }
 }
+
+/* ============================================
+   TYPOGRAPHIC ROLES (F2) — escala de roles semánticos.
+   No introducen tamaños nuevos: mapean sobre --text-* de tokens.css.
+   Regla F2: font-black/uppercase/tracking-widest dejan de ser la voz
+   por defecto; uppercase queda reservado a METADATOS (cp-metadata),
+   navegación compacta y estados. Prefijo cp- para evitar colisiones.
+   ============================================ */
+@layer components {
+  .cp-page-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    letter-spacing: var(--tracking-tight);
+    line-height: var(--leading-tight);
+    color: var(--foreground);
+  }
+  @media (min-width: 640px) {
+    .cp-page-title { font-size: var(--text-xl); }
+  }
+
+  .cp-page-description {
+    font-size: var(--text-sm);
+    font-weight: 400;
+    line-height: 1.375;
+    color: var(--muted-foreground);
+  }
+
+  .cp-section-title {
+    font-size: var(--text-base);
+    font-weight: 600;
+    letter-spacing: var(--tracking-tight);
+    color: var(--foreground);
+  }
+
+  .cp-kpi-value {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--tracking-tight);
+    color: var(--foreground);
+  }
+
+  .cp-label {
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--foreground);
+  }
+
+  /* Único lugar del sistema (junto a nav compacta/estados) donde vive
+     uppercase: metadatos pequeños de bajo peso visual. */
+  .cp-metadata {
+    font-size: 0.625rem; /* 10px — el estándar de facto de labels compactos */
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted-foreground);
+  }
+
+  .cp-caption {
+    font-size: var(--text-xs);
+    font-weight: 400;
+    color: var(--muted-foreground);
+  }
+}

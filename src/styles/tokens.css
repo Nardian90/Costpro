@@ -184,6 +184,16 @@
   --ring: rgba(21, 128, 61, 0.4);
   --selection: rgba(21, 128, 61, 0.15);
 
+  /* ── Brand Identity (F2) — #39FF14 es la marca oficial CostPro.
+     En light theme la marca se expresa oscurecida (#39FF14 puro = 1.36:1 sobre
+     blanco, FAIL); la variante AA (4.75:1) mantiene la familia de tono. ── */
+  --brand: #128209;
+  --brand-hover: #0e6b07;
+  --brand-muted: #3f6c1a;
+  --brand-subtle: rgba(57, 255, 20, 0.1);
+  --brand-border: rgba(18, 130, 9, 0.35);
+  --brand-foreground: #ffffff;
+
   /* ── Chart Colors ── */
   --chart-1: #15803d;
   --chart-2: #16a34a;
@@ -264,6 +274,15 @@
 
   --ring: rgba(34, 197, 94, 0.4);
   --selection: rgba(34, 197, 94, 0.2);
+
+  /* ── Brand Identity (F2) — #39FF14 oficial (marca, no acción ni estado).
+     AAA sobre superficies dark; texto sobre --brand: --brand-foreground. ── */
+  --brand: #39ff14;
+  --brand-hover: #2fd60f;
+  --brand-muted: #86ef3c;
+  --brand-subtle: rgba(57, 255, 20, 0.08);
+  --brand-border: rgba(57, 255, 20, 0.35);
+  --brand-foreground: #052e16;
 
   /* ── Chart Colors (Dark) ── */
   --chart-1: #22c55e;
