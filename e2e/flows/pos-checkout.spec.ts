@@ -23,6 +23,7 @@ import {
   signIn, apiHeaders, sb, createTestStore, deleteTestStore,
   seedProduct, getInventory, getStockMovements, getTransaction,
   getTransactionItems, cleanupProducts, num, TestStore, SeededProduct,
+  restoreActiveStore,
 } from '../fixtures/session.fixture';
 
 let adminToken: string;
@@ -67,7 +68,8 @@ test.beforeAll(async () => {
 test.afterAll(async ({ request }: { request: APIRequestContext }) => {
   if (store?.id) {
     await cleanupProducts(store.id, product ? [product.id] : []).catch(() => {});
-    await deleteTestStore(request, adminToken, store.id);
+    await restoreActiveStore(adminId);
+  await deleteTestStore(request, adminToken, store.id);
   }
 });
 

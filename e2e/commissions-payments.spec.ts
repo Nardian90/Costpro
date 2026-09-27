@@ -409,11 +409,16 @@ test.describe('Comisiones y Pagos a Trabajadores — Strict', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    const results = body.data || body;
+    // FIX (FASE E2E-80): respuesta real {store_id, period, calculations: [...]}
+    const results = body.calculations || body.data || [];
+    expect(Array.isArray(results)).toBe(true);
 
     // STRICT: the test worker must appear in the results
     const found = results.find((r: any) => r.worker_id === testWorkerId);
     expect(found).toBeDefined();
-    expect(found).toHaveProperty('calculated_amount');
+    // FIX (FASE E2E-80): el campo real del cálculo es commission_suggested
+    // (con breakdown y calculation_explanation), no calculated_amount
+    expect(found).toHaveProperty('commission_suggested');
+    expect(found).toHaveProperty('breakdown');
   });
 });

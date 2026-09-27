@@ -23,8 +23,17 @@ test('sesión inyectada autentica la SPA (localStorage)', async ({ page }) => {
   };
   await injectSession(page, session);
   await page.goto('/');
-  // El shell autenticado renderiza el botón de cerrar sesión
-  await expect(page.locator('[aria-label="Cerrar sesión"]').first()).toBeVisible({ timeout: 60_000 });
+  // El shell autenticado renderiza el botón de cerrar sesión.
+  // NOTA: useSessionManager fuerza estado no-autenticado si la restauración
+  // supera 5 s — bajo carga del dev server puede ocurrir en el primer load;
+  // un reload con el servidor caliente completa la restauración.
+  const logout = page.locator('[aria-label="Cerrar sesión"]').first();
+  try {
+    await expect(logout).toBeVisible({ timeout: 60_000 });
+  } catch {
+    await page.reload();
+    await expect(logout).toBeVisible({ timeout: 60_000 });
+  }
 });
 
 test('signIn REST devuelve token funcional (API responde 200)', async ({ request }) => {

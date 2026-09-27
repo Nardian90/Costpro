@@ -24,6 +24,7 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 import {
   signIn, apiHeaders, sb, rpcAsUser, createTestStore, deleteTestStore,
   seedProduct, getInventory, getStockMovements, cleanupProducts, num,
+  restoreActiveStore,
 } from '../fixtures/session.fixture';
 
 let adminToken: string;
@@ -66,7 +67,8 @@ test.beforeAll(async () => {
 test.afterAll(async ({ request }: { request: APIRequestContext }) => {
   if (store?.id) {
     await cleanupProducts(store.id, product ? [product.id] : []).catch(() => {});
-    await deleteTestStore(request, adminToken, store.id);
+    await restoreActiveStore(adminId);
+  await deleteTestStore(request, adminToken, store.id);
   }
 });
 

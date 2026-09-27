@@ -215,7 +215,7 @@ export async function createTestStore(
   // REM-F4* FIXTURE*, E2E2-*. Las tiendas de negocio reales nunca coinciden.
   const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   const stale = `name=like.E2E80*&created_at=lt.${tenMinAgo}`;
-  const patterns = ['E2E80*', 'ESEC TEST*', 'FASE-D TEST*', 'AUDIT *', 'HOT *', 'REM-F4*', 'E2E2-*'];
+  const patterns = ['E2E80*', 'E2E *', 'ESEC TEST*', 'FASE-D TEST*', 'AUDIT *', 'HOT *', 'REM-F4*', 'E2E2-*'];
   for (const pat of patterns) {
     await sb.update('stores', `name=like.${pat.replace(/ /g, '%20')}&created_at=lt.${tenMinAgo}`, { is_active: false, is_archived: true }).catch(() => {});
   }
@@ -234,6 +234,16 @@ export async function createTestStore(
     throw new Error(`createTestStore: respuesta sin store_id — ${JSON.stringify(json).slice(0, 200)}`);
   }
   return { id, name: payload.name, slug: json?.data?.slug ?? payload.slug };
+}
+
+/**
+ * Restaura el active_store del admin a la tienda piloto tras un spec UI que
+ * lo cambió (evita dejar el perfil apuntando a una tienda de test eliminada,
+ * lo que rompe vistas dependientes del store activo en specs posteriores).
+ */
+export const PILOT_STORE_ID = '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1'; // Puerto Padre (membership admin activa)
+export async function restoreActiveStore(userId: string): Promise<void> {
+  await sb.update('profiles', `id=eq.${userId}`, { active_store_id: PILOT_STORE_ID }).catch(() => {});
 }
 
 /** Soft-delete de la tienda de prueba (cleanup) */

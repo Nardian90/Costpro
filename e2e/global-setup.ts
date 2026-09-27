@@ -37,7 +37,9 @@ const ADMIN_PASS = process.env.E2E_ADMIN_PASS || process.env.ADMIN_PASS || 'cost
 const USER_EMAIL = process.env.E2E_USER_EMAIL || 'cajero@demo.com';
 const USER_PASS = process.env.E2E_USER_PASS || 'demo123';
 
-const FALLBACK_STORE_ID = 'd1c4ba0e-5767-4ba0-e576-7d1c4ba0e576'; // Tienda Central Costpro
+// Puerto Padre VITALLCONS: membership admin ACTIVA (Tienda Central la tiene revocada →
+// RLS bloquea las consultas de specs que usan E2E_TEST_STORE_ID)
+const FALLBACK_STORE_ID = '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1';
 
 export interface SupabaseSession {
   token: string;
