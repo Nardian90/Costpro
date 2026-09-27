@@ -489,3 +489,35 @@ export const walletImportExcelSchema = z.object({
     )
     .max(WALLET_EXCEL_MAX_BASE64_CHARS, 'El archivo excede el límite de 10 MiB'),
 });
+
+// ─── Wallet Import TRM (SEC-TS-04) ───────────────────────────────────────────
+//
+// Body de POST /api/wallet/import-trm: { content: "<texto crudo del .trm>" }.
+// El cliente legítimo (WalletView) envía el texto del archivo tal cual
+// (file.text()): 128 hex (H1) + 128 hex (H2) + base64 (C), con saltos de línea
+// opcionales (validateTrmBackup los elimina).
+// Límite elegido: 10 MiB de texto crudo. Coherencia del valor:
+//   - Backups reales (evidencia del propio módulo transfermovil.ts): ~17,000
+//     filas RecordSMS ≈ 1.5–2.5 MiB de JSON plano → ~2–3.3 MiB de ciphertext
+//     base64. 10 MiB da margen 3–5× sin romper el flujo legítimo.
+//   - Paridad de dominio: mismo tope 10 MiB que WALLET_EXCEL_MAX_BASE64_CHARS.
+//   - La App Router no impone body-size-limit en route handlers y el deploy
+//     Docker no tiene tope de plataforma — este límite ES el tope real de
+//     memoria por request (en Vercel, el body ya está acotado a 4.5 MB).
+//   - Antes de este tope no existía NINGÚN límite: el body se bufferizaba
+//     (req.json()), se descifraba por AES el ciphertext completo, JSON.parse
+//     materializaba el árbol, y decryptAllFields lo recorría recursivamente
+//     duplicándolo — amplificación de memoria/CPU/DB sin cota (SEC-TS-04).
+//   - El formato estructural del .trm lo sigue validando validateTrmFormat
+//     (transfermovil.ts) DESPUÉS del schema: H1/H2 hex + C base64 + múltiplo
+//     de 16. El schema NO duplica esa lógica: su trabajo de seguridad es
+//     acotar tamaño/tipo ANTES de descifrar.
+//   - Content-Length: la ruta añade rechazo temprano del declarado como mera
+//     optimización, no como barrera (puede faltar o ser mentira).
+export const WALLET_TRM_MAX_CHARS = 10 * 1024 * 1024; // 10 MiB de texto .trm
+
+export const walletImportTrmSchema = z.object({
+  content: z.string()
+    .min(1, 'El contenido del archivo .trm es requerido')
+    .max(WALLET_TRM_MAX_CHARS, 'El archivo excede el límite de 10 MiB'),
+});
