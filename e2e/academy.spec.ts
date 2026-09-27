@@ -63,8 +63,10 @@ test.describe('Academy', () => {
       data: { filename: '<script>alert(1)</script>.pdf', aiProvider: 'gemini', limit: 1 }
     });
 
-    // 400 is correct (validation rejected it), 200 means it accepted it (potentially bug active)
-    expect([400, 200, 502]).toContain(response.status());
+    // 400 (validación), 200 (bug activo), 502 (AI provider caído) o 404
+    // (el nombre sanitizado no corresponde a un manual — prueba que el
+    // XSS/atravesamiento fue neutralizado: "<script>…" → "script_")
+    expect([400, 200, 502, 404]).toContain(response.status());
     if (response.status() === 200) {
       console.warn('BUG-013 is ACTIVE: malicious filename stored in DB');
     }
@@ -81,6 +83,6 @@ test.describe('Academy', () => {
       headers,
       data: { filename: '../../etc/passwd.pdf', aiProvider: 'gemini' }
     });
-    expect([400, 200]).toContain(response.status());
+    expect([400, 200, 404]).toContain(response.status());
   });
 });

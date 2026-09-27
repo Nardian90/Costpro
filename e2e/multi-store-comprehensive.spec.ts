@@ -590,7 +590,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   // ═════════════════════════════════════════════════════════════════
 
   test('12.1 UI: stores management view loads', async ({ page }) => {
-    await page.goto('/terminal?view=stores');
+    await page.goto('/?view=stores');
     await page.waitForLoadState('networkidle');
 
     // Should show at least one store card or empty state
@@ -604,7 +604,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('12.2 UI: Tienda Central Costpro card is visible', async ({ page }) => {
-    await page.goto('/terminal?view=stores');
+    await page.goto('/?view=stores');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
@@ -617,7 +617,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('12.3 UI: "Nueva tienda" button exists', async ({ page }) => {
-    await page.goto('/terminal?view=stores');
+    await page.goto('/?view=stores');
     await page.waitForLoadState('networkidle');
 
     const newButton = page.getByRole('button', { name: /nueva tienda|nuevo|crear/i }).first();
@@ -626,7 +626,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('12.4 UI: store card shows store name and address', async ({ page }) => {
-    await page.goto('/terminal?view=stores');
+    await page.goto('/?view=stores');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 

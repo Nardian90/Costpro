@@ -1,71 +1,25 @@
 /**
  * Ficha de costo mínima válida para tests del motor de cálculo.
- * Basada en el esquema real de CostSheetData de la app.
+ *
+ * FIX (FASE E2E-80): el contrato del endpoint cambió — FichaJSONSchema
+ * espera {meta, rows, anexos} (src/lib/cost-engine/schemas.ts), mientras
+ * los fixtures/specs usaban la estructura antigua {header, sections}.
+ * Payload verificado contra /api/cost-sheets/calculate (200 ok:true).
  */
 export const MINIMAL_COST_SHEET = {
-  header: {
+  meta: {
     id: 'test-ficha-001',
     name: 'Producto de Test E2E',
-    code: 'FC-TEST-001',
-    date: '2025-01-01',
-    unit: 'UD',
-    quantity: 100,
     currency: 'CUP',
-    category: 'Test',
-    salePrice: 0,
-    productionLevel: 'N/A',
-    utilization: 'N/A',
+    decimals: 2,
   },
-  sections: [
-    {
-      id: 'materias-primas',
-      label: 'Materias Primas y Materiales',
-      rows: [
-        {
-          id: '1.1',
-          label: 'Material A',
-          value: 500,
-          isPercent: false,
-          children: [],
-        },
-        {
-          id: '1.2',
-          label: 'Material B',
-          value: 300,
-          isPercent: false,
-          children: [],
-        },
-      ],
-    },
-    {
-      id: 'salarios',
-      label: 'Gastos de Fuerza de Trabajo',
-      rows: [
-        {
-          id: '2.1',
-          label: 'Salarios Directos',
-          value: 200,
-          isPercent: false,
-          children: [],
-        },
-      ],
-    },
+  rows: [
+    { id: 'r1', classification: 'materias-primas', type: 'COST', label: 'Material A', formaCalculo: 'FIJO', valorHistorico: 500 },
+    { id: 'r2', classification: 'materias-primas', type: 'COST', label: 'Material B', formaCalculo: 'FIJO', valorHistorico: 300 },
+    { id: 'r3', classification: 'mano-de-obra', type: 'COST', label: 'Mano de obra', formaCalculo: 'FIJO', valorHistorico: 200 },
   ],
-  annexes: [],
-  summary: {},
+  anexos: [],
 };
 
-/** Ficha con fórmulas para test de Goal Seek */
-export const GOAL_SEEK_SHEET = {
-  ...MINIMAL_COST_SHEET,
-  header: { ...MINIMAL_COST_SHEET.header, id: 'test-goal-seek-001' },
-  sections: [
-    {
-      id: 'materias-primas',
-      label: 'Materias Primas',
-      rows: [
-        { id: '1.1', label: 'Costo Variable', value: 1000, isPercent: false, children: [] },
-      ],
-    },
-  ],
-};
+/** Ficha con anexo para IMPORTAR_ANEXO (goal seek obsoleto: ver specs) */
+export const GOAL_SEEK_SHEET = MINIMAL_COST_SHEET;

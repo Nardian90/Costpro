@@ -58,7 +58,7 @@ async function injectSupabaseSession(page: Page) {
 test.describe('V2.4.5 UI: Modal de Reversión', () => {
   test('modal ReverseDocumentModal se abre al click en botón Revertir (vista ventas)', async ({ page }) => {
     await injectSupabaseSession(page);
-    await page.goto('/terminal?view=sales_history');
+    await page.goto('/?view=sales');
     await page.waitForLoadState('networkidle');
 
     // Esperar a que cargue la lista de ventas
@@ -99,7 +99,7 @@ test.describe('V2.4.5 UI: Modal de Reversión', () => {
 
   test('modal ReverseDocumentModal se abre en vista transferencias', async ({ page }) => {
     await injectSupabaseSession(page);
-    await page.goto('/terminal?view=transfers');
+    await page.goto('/?view=transferencias');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
@@ -121,7 +121,7 @@ test.describe('V2.4.5 UI: Modal de Reversión', () => {
 
   test('modal ReverseDocumentModal se abre en vista devoluciones', async ({ page }) => {
     await injectSupabaseSession(page);
-    await page.goto('/terminal?view=devolutions');
+    await page.goto('/?view=devolutions');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
@@ -148,7 +148,7 @@ test.describe('V2.4.5 UI: Modal de Reversión', () => {
 test.describe('V2.4.5 UI: Modal de Duplicación', () => {
   test('modal DuplicateDocumentModal se abre al click en Duplicar (vista transferencias)', async ({ page }) => {
     await injectSupabaseSession(page);
-    await page.goto('/terminal?view=transfers');
+    await page.goto('/?view=transferencias');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
@@ -174,7 +174,7 @@ test.describe('V2.4.5 UI: Modal de Duplicación', () => {
 
   test('modal DuplicateDocumentModal muestra "Efecto inmediato" para devoluciones', async ({ page }) => {
     await injectSupabaseSession(page);
-    await page.goto('/terminal?view=devolutions');
+    await page.goto('/?view=devolutions');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
@@ -205,7 +205,7 @@ test.describe('V2.4.5 UI: Modal de Duplicación', () => {
 test.describe('V2.4.5 UI: DocumentStatusBadge muestra estados nuevos', () => {
   test('vista ventas muestra badge "Revertida" para tx reversed', async ({ page }) => {
     await injectSupabaseSession(page);
-    await page.goto('/terminal?view=sales_history');
+    await page.goto('/?view=sales');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
@@ -224,7 +224,7 @@ test.describe('V2.4.5 UI: DocumentStatusBadge muestra estados nuevos', () => {
 
   test('vista transferencias muestra badge "Revertida" para transfers REVERSADA', async ({ page }) => {
     await injectSupabaseSession(page);
-    await page.goto('/terminal?view=transfers');
+    await page.goto('/?view=transferencias');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 

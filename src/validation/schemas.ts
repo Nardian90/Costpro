@@ -672,11 +672,15 @@ export const adjustStockInputSchema = z.object({
 });
 
 export const inventoryAdjustmentResponseSchema = z.object({
-  status: z.string(),
-  nuevo_stock: z.number(),
-  nuevo_costo_total: z.number(),
-  nuevo_costo_unitario: z.number(),
-  movimiento_registrado: z.boolean(),
+  // FIX DEFECT-002 (FASE E2E-80): el RPC desplegado perform_inventory_adjustment
+  // devuelve {success, new_stock, new_cost_average} (desde v2.5.5, migraciones
+  // 20260726000011+), pero este schema aún esperaba la forma antigua
+  // {status, nuevo_stock, ...} → validateRPCResponse fallaba SIEMPRE y el
+  // modal de ajuste de inventario de la UI no podía completar ningún ajuste.
+  // Evidencia: e2e/flows/inventory-integrity.spec.ts (E2E-INV-008) + reporte.
+  success: z.boolean(),
+  new_stock: z.number(),
+  new_cost_average: z.number(),
 });
 
 export const performInventoryAdjustmentParamsSchema = z.object({

@@ -72,7 +72,8 @@ test.describe('Legal', () => {
     );
     const responses = await Promise.all(requests);
     responses.forEach(r => {
-      expect([201, 401]).toContain(r.status());
+      // 429 = rate limit protector ante ráfaga concurrente (comportamiento válido)
+      expect([201, 401, 429]).toContain(r.status());
     });
   });
 

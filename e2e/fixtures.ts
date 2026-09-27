@@ -1,7 +1,7 @@
 /**
  * E2E test fixtures and shared utilities for CostPro.
  *
- * Provides authenticated page context (admin + manager roles),
+ * Provides authenticated page context (admin role),
  * reusable store helpers, and API response validation utilities.
  */
 /* eslint-disable react-hooks/rules-of-hooks -- Playwright's `use()` fixture function is not a React hook */
@@ -88,28 +88,43 @@ type Fixtures = {
 };
 
 /**
- * Extend the base test with an authenticated page fixture.
- * In CI, the test environment should have a seeded admin user.
- * Locally, it reuses the dev server session.
+ * FIX (FASE E2E-80): el fixture original navegaba a /auth/signin (ruta que
+ * NO existe — la app es SPA con login en /?login=1) e intentaba loguear a
+ * e2e-admin@costpro.test (usuario inexistente, ver
+ * audit-evidence/FASE-F0/03-E2E-ANALYSIS.md) → 87 tests UI fallaban.
+ *
+ * Patrón nuevo (validado en reverse-duplicate-ui.spec.ts): inyectar la sesión
+ * real de Supabase en localStorage `sb-<ref>-auth-token`. El token y el user
+ * id provienen del global-setup (e2e/global-setup.ts), que autentica al admin
+ * real antes de lanzar los workers.
  */
 export const test = base.extend<Fixtures>({
   authedPage: async ({ page }, use) => {
-    // Navigate to the login page and authenticate
-    // The test DB should have a seeded admin: e2e-admin@costpro.test / E2eTest123!
-    await page.goto('/auth/signin');
+    const token = process.env.E2E_TEST_ADMIN_TOKEN;
+    const userId = process.env.E2E_TEST_ADMIN_ID;
+    const email = process.env.E2E_ADMIN_EMAIL || 'admin@costpro.com';
 
-    const emailInput = page.locator('input[type="email"], input[name="email"]');
-    const passwordInput = page.locator('input[type="password"], input[name="password"]');
-
-    if (await emailInput.isVisible()) {
-      await emailInput.fill(process.env.E2E_ADMIN_EMAIL || 'e2e-admin@costpro.test');
-      await passwordInput.fill(process.env.E2E_ADMIN_PASSWORD || 'E2eTest123!');
-      await page.locator('button[type="submit"]').click();
-      // Wait for redirect after login
-      await page.waitForURL(/\/(dashboard|terminal)/, { timeout: 15_000 }).catch(() => {
-        // Some environments redirect elsewhere — just ensure we're authenticated
-      });
+    if (!token || !userId) {
+      throw new Error(
+        'authedPage: E2E_TEST_ADMIN_TOKEN/E2E_TEST_ADMIN_ID no definidos — ¿se ejecutó global-setup?',
+      );
     }
+
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const projectRef = SUPABASE_URL.match(/https?:\/\/([a-z0-9]+)\.supabase\.co/)?.[1] || '';
+    const storageKey = `sb-${projectRef}-auth-token`;
+    const sessionData = JSON.stringify({
+      access_token: token,
+      token_type: 'bearer',
+      expires_in: 3600,
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      refresh_token: 'mock-refresh',
+      user: { id: userId, email },
+    });
+
+    await page.addInitScript(([key, val]) => {
+      window.localStorage.setItem(key, val);
+    }, [storageKey, sessionData]);
 
     await use(page);
   },

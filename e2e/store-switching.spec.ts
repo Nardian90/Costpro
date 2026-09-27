@@ -22,7 +22,7 @@ import { test, expect, waitForStoresView } from './fixtures';
 
 test.describe('Store Switching: Dashboard UI', () => {
   test('admin sees multi-store dashboard with KPI cards', async ({ authedPage: page }) => {
-    await page.goto('/terminal');
+    await page.goto('/?view=dashboard');
     await waitForStoresView(page);
 
     // The multi-store dashboard should render store KPI cards
@@ -33,7 +33,7 @@ test.describe('Store Switching: Dashboard UI', () => {
   });
 
   test('clicking activate on a store changes the active store indicator', async ({ authedPage: page }) => {
-    await page.goto('/terminal');
+    await page.goto('/?view=dashboard');
     await waitForStoresView(page);
 
     const activateButtons = page.locator('button', { hasText: /activar|activate/i });
@@ -59,7 +59,7 @@ test.describe('Store Switching: Dashboard UI', () => {
   });
 
   test('switching stores invalidates dependent query data', async ({ authedPage: page }) => {
-    await page.goto('/terminal');
+    await page.goto('/?view=dashboard');
     await waitForStoresView(page);
 
     const activateButtons = page.locator('button', { hasText: /activar|activate/i });
@@ -85,7 +85,7 @@ test.describe('Store Switching: Dashboard UI', () => {
 
 test.describe('Store Switching: Management View', () => {
   test('admin can switch active store from the stores list', async ({ authedPage: page }) => {
-    await page.goto('/terminal/stores');
+    await page.goto('/?view=stores');
     await waitForStoresView(page);
 
     const selectButtons = page.locator('button', { hasText: /seleccionar|select/i });
@@ -109,7 +109,7 @@ test.describe('Store Switching: Management View', () => {
   });
 
   test('switching stores shows warning when cart has items', async ({ authedPage: page }) => {
-    await page.goto('/terminal/stores');
+    await page.goto('/?view=stores');
     await waitForStoresView(page);
 
     // Verify store cards render
@@ -188,7 +188,7 @@ test.describe('Store Switching: API Access', () => {
 
 test.describe('Store Switching: Data Isolation', () => {
   test('switching store clears previous store context', async ({ authedPage: page }) => {
-    await page.goto('/terminal');
+    await page.goto('/?view=dashboard');
     await waitForStoresView(page);
 
     const activateButtons = page.locator('button', { hasText: /activar|activate/i });
@@ -218,7 +218,7 @@ test.describe('Store Switching: Data Isolation', () => {
   });
 
   test('deleted store is removed from active store options', async ({ authedPage: page }) => {
-    await page.goto('/terminal/stores');
+    await page.goto('/?view=stores');
     await waitForStoresView(page);
 
     // All visible store cards should represent active stores
@@ -237,7 +237,7 @@ test.describe('Store Switching: Data Isolation', () => {
 
   // FIX-AUDIT-E2E-002: Verify store data changes after switching
   test('after switching store, inventory data belongs to the new store', async ({ authedPage: page }) => {
-    await page.goto('/terminal');
+    await page.goto('/?view=dashboard');
     await waitForStoresView(page);
 
     const activateButtons = page.locator('button', { hasText: /activar|activate/i });
@@ -253,14 +253,14 @@ test.describe('Store Switching: Data Isolation', () => {
     await page.waitForTimeout(2_000);
 
     // Navigate to inventory view
-    await page.goto('/terminal/inventory');
+    await page.goto('/?view=inventory');
     await page.waitForTimeout(3_000);
 
     // Store the product count or state for first store
     const firstStoreProducts = await page.locator('[role="row"], [data-testid="product-row"]').count();
 
     // Go back to dashboard and switch to second store
-    await page.goto('/terminal');
+    await page.goto('/?view=dashboard');
     await waitForStoresView(page);
 
     const activateButtons2 = page.locator('button', { hasText: /activar|activate/i });
@@ -269,7 +269,7 @@ test.describe('Store Switching: Data Isolation', () => {
       await page.waitForTimeout(2_000);
 
       // Navigate to inventory for second store
-      await page.goto('/terminal/inventory');
+      await page.goto('/?view=inventory');
       await page.waitForTimeout(3_000);
 
       const secondStoreProducts = await page.locator('[role="row"], [data-testid="product-row"]').count();
@@ -284,7 +284,7 @@ test.describe('Store Switching: Data Isolation', () => {
 
 test.describe('Store Switching: Concurrency Guard', () => {
   test('rapid consecutive clicks do not cause race conditions', async ({ authedPage: page }) => {
-    await page.goto('/terminal');
+    await page.goto('/?view=dashboard');
     await waitForStoresView(page);
 
     const activateButtons = page.locator('button', { hasText: /activar|activate/i });
@@ -317,7 +317,7 @@ test.describe('Store Switching: Concurrency Guard', () => {
 
   // FIX-AUDIT-E2E-003: Verify store switch completes within reasonable time
   test('store switch completes within 5 seconds', async ({ authedPage: page }) => {
-    await page.goto('/terminal');
+    await page.goto('/?view=dashboard');
     await waitForStoresView(page);
 
     const activateButtons = page.locator('button', { hasText: /activar|activate/i });

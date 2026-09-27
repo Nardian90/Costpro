@@ -303,7 +303,7 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
   // ─── UI: reset button exists on store card ───────────────────────
 
   test('UI: "Reiniciar" button exists on Tienda Central Costpro card', async ({ page }) => {
-    await page.goto('/terminal?view=stores');
+    await page.goto('/?view=stores');
     await page.waitForLoadState('networkidle');
 
     // Wait for store cards to render
@@ -323,7 +323,7 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
   });
 
   test('UI: clicking "Reiniciar" opens confirmation dialog', async ({ page }) => {
-    await page.goto('/terminal?view=stores');
+    await page.goto('/?view=stores');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 

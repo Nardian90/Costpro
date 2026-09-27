@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getAuthHeaders } from './fixtures/auth.fixture';
+import { freshAuthHeaders } from './fixtures/auth.fixture';
 import { makeAdjustPayload } from './fixtures/inventory.fixture';
 
 /**
@@ -31,7 +31,7 @@ test.describe('Inventory Adjustments — Strict Assertions', () => {
   });
 
   test('rejects invalid payload (non-uuid productId, text quantity, invalid movement) → 400', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('admin');
     test.skip(!headers, 'E2E_TEST_USER_TOKEN not configured');
 
     const response = await request.post('/api/inventory/adjust', {
@@ -46,7 +46,7 @@ test.describe('Inventory Adjustments — Strict Assertions', () => {
   });
 
   test('rejects quantity out of range → 400', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('admin');
     test.skip(!headers, 'E2E_TEST_USER_TOKEN not configured');
 
     const response = await request.post('/api/inventory/adjust', {
@@ -58,7 +58,7 @@ test.describe('Inventory Adjustments — Strict Assertions', () => {
   });
 
   test('rejects version <= 0 → 400', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('admin');
     test.skip(!headers, 'E2E_TEST_USER_TOKEN not configured');
 
     const response = await request.post('/api/inventory/adjust', {
@@ -70,7 +70,7 @@ test.describe('Inventory Adjustments — Strict Assertions', () => {
   });
 
   test('rejects version = 0 → 400', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('admin');
     test.skip(!headers, 'E2E_TEST_USER_TOKEN not configured');
 
     const response = await request.post('/api/inventory/adjust', {
@@ -82,7 +82,7 @@ test.describe('Inventory Adjustments — Strict Assertions', () => {
   });
 
   test('rejects missing required field (productId) → 400', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('admin');
     test.skip(!headers, 'E2E_TEST_USER_TOKEN not configured');
 
     const payload = makeAdjustPayload();
@@ -96,7 +96,7 @@ test.describe('Inventory Adjustments — Strict Assertions', () => {
   });
 
   test('rejects missing required field (movementType) → 400', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('admin');
     test.skip(!headers, 'E2E_TEST_USER_TOKEN not configured');
 
     const payload = makeAdjustPayload();
@@ -110,12 +110,17 @@ test.describe('Inventory Adjustments — Strict Assertions', () => {
   });
 
   test('rate limit: 6+ rapid requests → 429 eventually', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('admin');
     test.skip(!headers, 'E2E_TEST_USER_TOKEN not configured');
 
     let hit429 = false;
-    // Send 8 rapid requests with invalid payload (fast rejection, no DB writes)
-    for (let i = 0; i < 8; i++) {
+    // FIX (FASE E2E-80): el rate limit por defecto del adjust es 30 req/min
+    // (src/lib/rate-limit.ts). En dev el limiter in-memory puede distribuirse
+    // entre procesos → se envían 70 requests para cubrir 2 workers (el
+    // comportamiento fue verificado empíricamente: 429 a partir del 30.º
+    // request consecutivo contra el mismo proceso).
+    test.setTimeout(120_000);
+    for (let i = 0; i < 70; i++) {
       const response = await request.post('/api/inventory/adjust', {
         headers,
         data: makeAdjustPayload({ quantity: 999999 }) // 400 fast-path

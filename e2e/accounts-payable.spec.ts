@@ -41,7 +41,7 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
   // ─── UI: view loads with correct Spanish title ───────────────────
   test('UI: accounts payable view loads with Spanish title', async ({ page }) => {
-    await page.goto('/terminal?view=accounts_payable');
+    await page.goto('/?view=accounts_payable');
     await page.waitForLoadState('networkidle');
 
     // STRICT: title must be "Cuentas por Pagar" in Spanish
@@ -50,7 +50,7 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
   // ─── UI: KPI cards render ────────────────────────────────────────
   test('UI: KPI cards render (Vencido, Próx. 7 días, Total Pendiente, Pagado)', async ({ page }) => {
-    await page.goto('/terminal?view=accounts_payable');
+    await page.goto('/?view=accounts_payable');
     await page.waitForLoadState('networkidle');
 
     // STRICT: all 4 KPI labels must be present
@@ -62,7 +62,7 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
   // ─── UI: filter buttons exist ────────────────────────────────────
   test('UI: filter buttons exist (Todas, Vencidas, Próximas, Pagadas)', async ({ page }) => {
-    await page.goto('/terminal?view=accounts_payable');
+    await page.goto('/?view=accounts_payable');
     await page.waitForLoadState('networkidle');
 
     // STRICT: all 4 filter buttons must be present
@@ -74,7 +74,7 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
   // ─── UI: filter buttons are clickable ────────────────────────────
   test('UI: clicking "Pagadas" filter updates the view', async ({ page }) => {
-    await page.goto('/terminal?view=accounts_payable');
+    await page.goto('/?view=accounts_payable');
     await page.waitForLoadState('networkidle');
 
     const pagadasButton = page.getByRole('button', { name: /^pagadas$/i });
@@ -88,7 +88,7 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
   // ─── REGRESSION: no raw English enum values visible ──────────────
   // This is the critical test for the FIX-I18N bug.
   test('REGRESSION: view must NOT show raw "unpaid", "partial", or "paid" as status text', async ({ page }) => {
-    await page.goto('/terminal?view=accounts_payable');
+    await page.goto('/?view=accounts_payable');
     await page.waitForLoadState('networkidle');
 
     // Wait for the table to potentially render (or empty state)
@@ -122,7 +122,7 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
     test.skip(!hasPayables, 'No payables exist in store — skipping label verification');
 
     // If payables exist, navigate to UI and verify Spanish labels
-    await page.goto('/terminal?view=accounts_payable');
+    await page.goto('/?view=accounts_payable');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -134,7 +134,7 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
   // ─── UI: empty state shows when no payables in filtered view ──────
   test('UI: empty state message shows when filter has no results', async ({ page }) => {
-    await page.goto('/terminal?view=accounts_payable');
+    await page.goto('/?view=accounts_payable');
     await page.waitForLoadState('networkidle');
 
     // Click "Pagadas" — likely empty in a fresh test store
@@ -193,7 +193,7 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
   // ─── UI: table headers are in Spanish ────────────────────────────
   test('UI: table headers are in Spanish (Proveedor, Tipo, Total, Saldo, Vence, Estado)', async ({ page }) => {
-    await page.goto('/terminal?view=accounts_payable');
+    await page.goto('/?view=accounts_payable');
     await page.waitForLoadState('networkidle');
 
     // STRICT: all 6 column headers must be in Spanish

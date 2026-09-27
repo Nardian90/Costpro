@@ -19,7 +19,7 @@ const UNIQUE = Date.now().toString(36);
 test.describe('Stores CRUD: Create', () => {
   test('admin can create a new store via the UI', async ({ authedPage: page }) => {
     // Navigate to stores management
-    await page.goto('/terminal/stores');
+    await page.goto('/?view=stores');
     await waitForStoresView(page);
 
     // Click the "New Store" action button
@@ -55,7 +55,7 @@ test.describe('Stores CRUD: Create', () => {
   });
 
   test('create store with missing required fields shows validation error', async ({ authedPage: page }) => {
-    await page.goto('/terminal/stores');
+    await page.goto('/?view=stores');
     await waitForStoresView(page);
 
     // Open create modal
@@ -75,7 +75,7 @@ test.describe('Stores CRUD: Create', () => {
 
 test.describe('Stores CRUD: Read', () => {
   test('stores list loads and displays store cards', async ({ authedPage: page }) => {
-    await page.goto('/terminal/stores');
+    await page.goto('/?view=stores');
     await waitForStoresView(page);
 
     // Verify at least one store card is rendered
@@ -85,7 +85,7 @@ test.describe('Stores CRUD: Read', () => {
   });
 
   test('store search filters visible stores', async ({ authedPage: page }) => {
-    await page.goto('/terminal/stores');
+    await page.goto('/?view=stores');
     await waitForStoresView(page);
 
     // Type a search term into the search bar
@@ -101,7 +101,7 @@ test.describe('Stores CRUD: Read', () => {
   });
 
   test('store card shows key information (name, address)', async ({ authedPage: page }) => {
-    await page.goto('/terminal/stores');
+    await page.goto('/?view=stores');
     await waitForStoresView(page);
 
     const firstCard = page.locator('[role="article"]').first();
@@ -114,7 +114,7 @@ test.describe('Stores CRUD: Read', () => {
 
 test.describe('Stores CRUD: Update', () => {
   test('admin can edit a store name and address', async ({ authedPage: page }) => {
-    await page.goto('/terminal/stores');
+    await page.goto('/?view=stores');
     await waitForStoresView(page);
 
     // Find the first store card and click the edit button
@@ -144,7 +144,7 @@ test.describe('Stores CRUD: Update', () => {
 
 test.describe('Stores CRUD: Delete', () => {
   test('admin can soft-delete a store', async ({ authedPage: page }) => {
-    await page.goto('/terminal/stores');
+    await page.goto('/?view=stores');
     await waitForStoresView(page);
 
     // Find the first store card and click delete
