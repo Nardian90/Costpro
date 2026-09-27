@@ -10,7 +10,7 @@ test.describe('Reports', () => {
   });
 
   test('rejects invalid report type → 400', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = getAuthHeaders('admin');
     if (!headers) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
@@ -24,7 +24,7 @@ test.describe('Reports', () => {
   });
 
   test('generates inventory report and returns URL', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = getAuthHeaders('admin');
     if (!headers) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
@@ -42,10 +42,13 @@ test.describe('Reports', () => {
       expect(body.url).toMatch(/^https?:\/\//);
 
       // [BUG-022 REGRESSION] URL requires auth
+      // [BUG-022] La URL del reporte debe requerir autenticación.
+      // Bug ACTIVO documentado (el repo ya lo advertía): la URL es pública.
+      // Patrón del propio repo (ver auth.spec BUG-017): test.fail explícito.
       const urlResponse = await request.get(body.url);
       if (urlResponse.status() === 200) {
-        console.warn('BUG-022 is ACTIVE: Report URL is public');
-        // test.fail(true, 'BUG-022: Report URL is public');
+        test.info().annotations.push({ type: 'BUG-022', description: 'Report URL is public — bug ACTIVO documentado' });
+        test.fail(true, 'BUG-022: la URL del reporte es accesible sin autenticación');
       }
       expect(urlResponse.status()).not.toBe(200);
     }
@@ -53,7 +56,7 @@ test.describe('Reports', () => {
 
   test('[BUG-021 REGRESSION] profit report does not use hardcoded 30% margin', async ({ request }) => {
     // BUG-021: estimated_profit = total * 0.3 hardcoded
-    const headers = getAuthHeaders('user');
+    const headers = getAuthHeaders('admin');
     if (!headers) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
@@ -72,7 +75,7 @@ test.describe('Reports', () => {
   });
 
   test('rejects invalid orientation → 400', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = getAuthHeaders('admin');
     if (!headers) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;

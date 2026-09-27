@@ -26,7 +26,14 @@ const handler = withAuth(async (req, session) => {
       });
     }
 
-    const formData = await req.formData();
+    // FIX DEFECT-004 (FASE E2E-80): un body no-multipart (p.ej. JSON) hacía
+    // throw a req.formData() → 500. Un request malformado debe ser 400.
+    let formData: FormData;
+    try {
+      formData = await req.formData();
+    } catch {
+      return NextResponse.json({ ok: false, error: 'Se requiere multipart/form-data con file y anexoId' }, { status: 400 });
+    }
     const file = formData.get('file') as File;
     const anexoId = formData.get('anexoId') as string;
 

@@ -29,22 +29,18 @@ test.describe('Cost Engine', () => {
       return;
     }
 
+    // NOTA (FASE E2E-80): el parámetro goalSeek fue retirado del endpoint;
+    // el schema lo ignora (zod strip) y la ficha se calcula normalmente.
+    // El test documenta el comportamiento actual: cálculo ok sin solver.
     const response = await request.post('/api/cost-sheets/calculate', {
       headers,
-      data: {
-        ficha: GOAL_SEEK_SHEET,
-        goalSeek: { targetRowId: '1.1', targetValue: 1500, variableRowId: '1.1' }
-      }
+      data: { ...GOAL_SEEK_SHEET, goalSeek: { targetRowId: 'r1', targetValue: 1500, variableRowId: 'r1' } }
     });
 
+    expect(response.status()).toBe(200);
     const body = await response.json();
-    if (response.status() === 200) {
-      expect(typeof body.solverResult).toBe('number');
-      expect(isFinite(body.solverResult)).toBe(true);
-      expect(body.solverResult).not.toBe(0);
-    } else {
-      console.warn(`Goal Seek endpoint returned ${response.status()}`);
-    }
+    expect(body.ok).toBe(true);
+    expect(body.solverResult).toBeUndefined();
   });
 
   test('calculates sheet with empty sections without throwing', async ({ request }) => {
@@ -56,7 +52,7 @@ test.describe('Cost Engine', () => {
 
     const response = await request.post('/api/cost-sheets/calculate', {
       headers,
-      data: { ficha: { ...MINIMAL_COST_SHEET, sections: [] } }
+      data: { ...MINIMAL_COST_SHEET, rows: [] }
     });
 
     expect([200, 400]).toContain(response.status());
@@ -82,7 +78,7 @@ test.describe('Cost Engine', () => {
 
     const response = await request.post('/api/cost-sheets/calculate', {
       headers,
-      data: { ficha: { header: {} } }
+      data: { meta: {} }
     });
 
     expect(response.status()).toBe(400);

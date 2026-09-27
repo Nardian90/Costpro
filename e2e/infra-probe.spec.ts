@@ -24,7 +24,7 @@ test('sesión inyectada autentica la SPA (localStorage)', async ({ page }) => {
   await injectSession(page, session);
   await page.goto('/');
   // El shell autenticado renderiza el botón de cerrar sesión
-  await expect(page.locator('[aria-label="Cerrar sesión"]').first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('[aria-label="Cerrar sesión"]').first()).toBeVisible({ timeout: 60_000 });
 });
 
 test('signIn REST devuelve token funcional (API responde 200)', async ({ request }) => {

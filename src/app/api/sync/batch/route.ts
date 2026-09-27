@@ -27,7 +27,16 @@ const handler = withAuth(async (req, session) => {
     const supabase = getSupabaseAuthClient(session.token);
 
     const body = await req.json();
-    const batch = syncBatchSchema.parse(body);
+    // FIX DEFECT-005 (FASE E2E-80): .parse() con body inválido (p.ej. operations
+    // vacío) lanzaba excepción sin capturar → 500. safeParse → 400 limpio.
+    const parsedBatch = syncBatchSchema.safeParse(body);
+    if (!parsedBatch.success) {
+      return NextResponse.json(
+        { ...createApiError('INVALID_DATA'), details: parsedBatch.error.format() },
+        { status: 400 },
+      );
+    }
+    const batch = parsedBatch.data;
 
     // FIX-SEC-H3: Validate store membership for each operation in the batch
     const isAdmin = (session.user as any).role === 'admin';

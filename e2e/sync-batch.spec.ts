@@ -34,6 +34,7 @@ test.describe('Sync Batch', () => {
       headers,
       data: { operations: [] }
     });
+    // FIX DEFECT-005: batch vacío ahora responde 400 limpio (antes 500)
     expect([200, 400]).toContain(response.status());
     if (response.status() === 200) {
       const body = await response.json();
@@ -48,7 +49,20 @@ test.describe('Sync Batch', () => {
       return;
     }
 
-    const payload = { operations: [{ entity: 'product', operationType: 'create', idempotencyKey: 'test-k1', payload: {} }] };
+    // FIX (FASE E2E-80): syncBatchSchema exige clientInfo {userId, deviceId}
+    // e idempotencyKey UUID — el payload antiguo provocaba 400/500.
+    const idemKey = '11111111-1111-4111-8111-111111111111';
+    const payload = {
+      clientInfo: { userId: process.env.E2E_TEST_USER_ID || '00000000-0000-0000-0000-000000000000', deviceId: 'e2e-device' },
+      operations: [{
+        entity: 'product',
+        operationType: 'CREATE',
+        idempotencyKey: idemKey,
+        payload: {},
+        createdAt: new Date().toISOString(),
+        clientClock: Date.now(),
+      }],
+    };
 
     // First call
     await request.post('/api/sync/batch', { headers, data: payload });
