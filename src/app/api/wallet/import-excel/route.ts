@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import * as XLSX from '@e965/xlsx';
+import { walletImportExcelSchema, zodError, WALLET_EXCEL_MAX_BASE64_CHARS } from '@/validation/api-schemas';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -18,17 +19,41 @@ export const maxDuration = 30;
  *
  * FIX-IMPORT-EXCEL (2026-07-06): importar billetera desde Excel
  * para round-trip con el endpoint /export.
+ *
+ * SEC-TS-03 · H7: el payload se valida con walletImportExcelSchema
+ * (base64 estricto, tope 10 MiB — ver justificación en api-schemas.ts)
+ * ANTES de decodificar/parsear: la App Router no impone body-size-limit
+ * y el deploy Docker no tiene tope de plataforma. Payload inválido = 400,
+ * oversized = 413. El Content-Length declarado se rechaza temprano solo
+ * como optimización (no es la barrera — puede faltar o ser mentira).
  */
 async function postHandler(req: NextRequest) {
   try {
     const session = await getServerSession(req);
     if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
-    const body = await req.json();
-    const { content } = body;
-    if (!content || typeof content !== 'string') {
-      return NextResponse.json({ error: 'Contenido Excel requerido (base64)' }, { status: 400 });
+    // Rechazo temprano si el cliente DECLARA un tamaño ya excesivo — evita
+    // bufferizar para clientes honestos. NO es la barrera única: el chequeo
+    // real está en el schema sobre el contenido recibido (abajo).
+    const declaredLength = parseInt(req.headers.get('content-length') || '', 10);
+    if (Number.isFinite(declaredLength) && declaredLength > WALLET_EXCEL_MAX_BASE64_CHARS + 2048) {
+      return NextResponse.json({ error: 'El archivo excede el límite de 10 MiB' }, { status: 413 });
     }
+
+    const body = await req.json().catch(() => null);
+    if (body === null) {
+      return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+    }
+
+    // SEC-TS-03 · H7: validación real ANTES de decodificar/parsear — antes
+    // cualquier string se decodificaba y XLSX.read parseaba el archivo
+    // completo en memoria sin tope.
+    const validated = walletImportExcelSchema.safeParse(body);
+    if (!validated.success) {
+      const tooBig = validated.error.issues.some(i => i.code === 'too_big');
+      return NextResponse.json(zodError(validated.error), { status: tooBig ? 413 : 400 });
+    }
+    const { content } = validated.data;
 
     // Decodificar base64
     const buf = Buffer.from(content, 'base64');

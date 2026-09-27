@@ -16,6 +16,11 @@ import type { TelegramUpdate } from '@/types/telegram';
  * Autenticación (doble factor):
  *   1. Header `X-Telegram-Bot-Api-Secret-Token` debe coincidir con el
  *      `webhook_secret` almacenado en `telegram_configs.webhook_secret`.
+ *      Un bot SIN webhook_secret configurado es RECHAZADO (fail-closed,
+ *      SEC-TS-03 · H6) — igual que billing/webhook rechaza sin
+ *      STRIPE_WEBHOOK_SECRET. El mecanismo legítimo (telegram/setup
+ *      'register') siempre genera el secret, así que un bot sin secret
+ *      está des-registrado o es legacy y debe re-ejecutar setup.
  *   2. El `bot_id` en query param debe corresponder a un bot configurado
  *      en alguna tienda. Esto nos permite identificar a qué tienda pertenece
  *      el update (1 bot = 1 tienda).
@@ -101,24 +106,31 @@ export async function POST(req: NextRequest): Promise<Response> {
     // FIX TELEGRAM-SEC-1: antes era fail-open (si faltaba el header se aceptaba).
     // Ahora: si config.webhook_secret está seteado, el header DEBE estar presente
     // Y coincidir (timing-safe comparison vía validateWebhookSecret).
-    // Si config.webhook_secret NO está seteado (bot sin secret configurado),
-    // aceptamos sin header (comportamiento legado, pero logueamos warning).
+    // SEC-TS-03 · H6: si config.webhook_secret NO está seteado, el update
+    // también se RECHAZA (antes: fail-open con warning — cualquiera podía
+    // inyectar updates falsos y disparar sendMessage/addChatMember forjados,
+    // mutando invitations y consumiendo Bot-API/LLM en nombre de la tienda).
+    // Compatibilidad con el mecanismo legítimo: telegram/setup 'register'
+    // SIEMPRE genera un secret de 32 bytes y lo pasa a setWebhook, por lo
+    // que los webhooks registrados por la app llegan con el header. Un bot
+    // sin secret quedó des-registrado (setup 'remove' lo limpia) o es
+    // legacy — en ambos casos la acción correcta es re-ejecutar setup, no
+    // aceptar tráfico no autenticado.
     const secretHeader = req.headers.get('x-telegram-bot-api-secret-token');
-    if (config.webhook_secret) {
-      if (!validateWebhookSecret(secretHeader, config.webhook_secret)) {
-        logger.warn('DATABASE', 'TELEGRAM_WEBHOOK_SECRET_INVALID', {
-          botUserId,
-          hasSecret: !!config.webhook_secret,
-          hasHeader: !!secretHeader,
-        });
-        return NextResponse.json({ error: 'Secret inválido' }, { status: 403 });
-      }
-    } else {
-      // Bot sin secret configurado — aceptamos pero advertimos
+    if (!config.webhook_secret) {
       logger.warn('DATABASE', 'TELEGRAM_WEBHOOK_NO_SECRET_CONFIGURED', {
         botUserId,
-        message: 'Bot sin webhook_secret configurado — cualquiera puede enviar updates falsos',
+        message: 'Bot sin webhook_secret — update rechazado (fail-closed, SEC-TS-03 H6). Re-ejecutar telegram/setup register.',
       });
+      return NextResponse.json({ error: 'Webhook no configurado' }, { status: 403 });
+    }
+    if (!validateWebhookSecret(secretHeader, config.webhook_secret)) {
+      logger.warn('DATABASE', 'TELEGRAM_WEBHOOK_SECRET_INVALID', {
+        botUserId,
+        hasSecret: !!config.webhook_secret,
+        hasHeader: !!secretHeader,
+      });
+      return NextResponse.json({ error: 'Secret inválido' }, { status: 403 });
     }
 
     // ── 5. Parsear el Update ─────────────────────────────────────────

@@ -456,3 +456,36 @@ export function zodError(errors: z.ZodError) {
     })),
   };
 }
+
+// ─── Wallet Import Excel (SEC-TS-03 · H7) ────────────────────────────────────
+//
+// Body de POST /api/wallet/import-excel: { content: "<base64 del .xlsx>" }.
+// Límite elegido: 10 MiB de base64 (≈ 7.5 MiB de xlsx decodificado).
+// Coherencia del límite:
+//   - Flujo real del cliente (WalletView): convierte con
+//     btoa(String.fromCharCode(...new Uint8Array(buf))) — el spread limita
+//     de facto los archivos legítimos a bien menos de 1 MiB.
+//   - Round-trip con /api/wallet/export (motivo de existencia del endpoint,
+//     FIX-IMPORT-EXCEL): el export escribe TODAS las transacciones del
+//     usuario; wallets reales (cientos a miles de filas) ocupan KB–pocos MB.
+//     10 MiB da margen de un orden de magnitud sin romper el flujo legítimo.
+//   - Payload HTTP: la App Router no impone body-size-limit en route
+//     handlers, y el deploy real (Docker persistente) no tiene tope de
+//     plataforma — este límite ES el tope real de memoria por request
+//     (en Vercel, el body ya está acotado a 4.5 MB por la plataforma).
+//   - Alfabeto base64 estricto (btoa no produce espacios/newlines): el
+//     tamaño decodificado queda acotado por el tamaño del string
+//     (≤ 3/4 × 10 MiB), SIN depender de Content-Length (que puede faltar
+//     o ser mentira). La ruta añade un rechazo temprano por Content-Length
+//     declarado como mera optimización, no como barrera única.
+export const WALLET_EXCEL_MAX_BASE64_CHARS = 10 * 1024 * 1024; // 10 MiB de base64
+
+export const walletImportExcelSchema = z.object({
+  content: z.string()
+    .min(1, 'El contenido del archivo Excel es requerido (base64)')
+    .regex(
+      /^[A-Za-z0-9+/=]+$/,
+      'El contenido debe ser base64 válido (sin espacios ni newlines)'
+    )
+    .max(WALLET_EXCEL_MAX_BASE64_CHARS, 'El archivo excede el límite de 10 MiB'),
+});

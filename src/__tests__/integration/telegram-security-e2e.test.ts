@@ -9,7 +9,8 @@
  * Escenarios cubiertos:
  *   1. Webhook fail-closed (secret faltante/incorrecto) — FIX TELEGRAM-SEC-1
  *   2. Webhook acepta con secret correcto y procesa async
- *   3. Webhook sin secret configurado (bot legacy) — acepta pero advierte
+ *   3. Webhook sin secret configurado → 403 (fail-closed, SEC-TS-03 · H6 —
+ *      antes: bot legacy aceptaba updates sin autenticar)
  *   4. bot_token NUNCA se devuelve en GET config — FIX TELEGRAM-SEC-2
  *   5. bot_token_masked sí se devuelve
  *   6. GET config con clerk sin permisos → 403
@@ -281,7 +282,7 @@ describe('Telegram Security E2E — Task IC-SECURITY-E2E', () => {
       // pero el res.status 200 confirma que pasó el check
     });
 
-    it('bot sin secret configurado (legacy) → acepta pero NO valida secret', async () => {
+    it('bot sin secret configurado → 403 (fail-closed, SEC-TS-03 H6)', async () => {
       mockFindConfigByBotUserId.mockResolvedValue({
         ...sampleConfig,
         webhook_secret: null, // bot sin secret
@@ -293,12 +294,17 @@ describe('Telegram Security E2E — Task IC-SECURITY-E2E', () => {
       });
       const res = await webhookPOST(req);
 
-      expect(res.status).toBe(200);
+      // Antes (fail-open): 200 y el update se procesaba sin autenticar.
+      // SEC-TS-03 H6: rechazo — un bot sin webhook_secret está
+      // des-registrado o es legacy; debe re-ejecutar setup register.
+      expect(res.status).toBe(403);
       // validateWebhookSecret NO se llama cuando webhook_secret es null
       expect(mockValidateWebhookSecret).not.toHaveBeenCalled();
+      // el update NUNCA se procesa
+      expect(mockHandleTelegramUpdate).not.toHaveBeenCalled();
     });
 
-    it('bot sin secret configurado pero con header → acepta (no valida)', async () => {
+    it('bot sin secret configurado pero con header cualquiera → 403 (el header no sustituye al secret configurado)', async () => {
       mockFindConfigByBotUserId.mockResolvedValue({
         ...sampleConfig,
         webhook_secret: null,
@@ -310,8 +316,9 @@ describe('Telegram Security E2E — Task IC-SECURITY-E2E', () => {
       });
       const res = await webhookPOST(req);
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(403);
       expect(mockValidateWebhookSecret).not.toHaveBeenCalled();
+      expect(mockHandleTelegramUpdate).not.toHaveBeenCalled();
     });
 
     it('bot no encontrado → 404', async () => {
