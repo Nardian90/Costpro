@@ -126,7 +126,7 @@ BEGIN
     sum_value = usage_aggregates.sum_value + EXCLUDED.sum_value,
     updated_at = now();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public;
 
 -- ════════════════════════════════════════════════════════════════════
 -- RPC: get_usage_summary — devuelve agregados de las últimas N horas
@@ -269,7 +269,7 @@ BEGIN
   GET DIAGNOSTICS v_deleted = ROW_COUNT;
   RETURN v_deleted;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public;
 
 -- ════════════════════════════════════════════════════════════════════
 -- SEGURIDAD — FIX C2

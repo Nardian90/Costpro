@@ -68,7 +68,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public;
 
 SELECT 'phantom_field_fixed' AS status,
        (SELECT count(*) FROM information_schema.columns
