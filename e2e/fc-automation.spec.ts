@@ -48,7 +48,7 @@ test.describe('FC Automation', () => {
   test.describe('Store Cost Template Management', () => {
     test('should fetch store cost template', async ({ authedPage: page }) => {
       // Navigate to stores management
-      await page.goto('/terminal/stores');
+      await page.goto('/?view=stores');
       await page.waitForSelector('[role="article"], [data-testid="stores-empty"]', {
         timeout: 15_000,
       });
@@ -76,7 +76,7 @@ test.describe('FC Automation', () => {
 
     test('should display template configuration options', async ({ authedPage: page }) => {
       // Navigate to stores management
-      await page.goto('/terminal/stores');
+      await page.goto('/?view=stores');
       await page.waitForSelector('[role="article"], [data-testid="stores-empty"]', {
         timeout: 15_000,
       });
@@ -120,7 +120,7 @@ test.describe('FC Automation', () => {
   test.describe('FC Status in Catalog View', () => {
     test('should display FC status badges on products', async ({ authedPage: page }) => {
       // Navigate to catalog
-      await page.goto('/terminal/catalog');
+      await page.goto('/?view=catalog');
       await waitForCatalogView(page);
 
       // Verify FC column exists — in grid mode, FCStatusBadge has aria-label "Estado FC: ..."
@@ -139,7 +139,7 @@ test.describe('FC Automation', () => {
 
     test('should filter products by FC status', async ({ authedPage: page }) => {
       // Navigate to catalog
-      await page.goto('/terminal/catalog');
+      await page.goto('/?view=catalog');
       await waitForCatalogView(page);
 
       // Find the FC filter chip group
@@ -175,7 +175,7 @@ test.describe('FC Automation', () => {
 
     test('should show FC coverage bar', async ({ authedPage: page }) => {
       // Navigate to catalog
-      await page.goto('/terminal/catalog');
+      await page.goto('/?view=catalog');
       await waitForCatalogView(page);
 
       // Verify FCCoverageBar is visible with coverage stats
@@ -198,7 +198,7 @@ test.describe('FC Automation', () => {
   test.describe('FC Status in Inventory View', () => {
     test('should display FC column in inventory table', async ({ authedPage: page }) => {
       // Navigate to inventory
-      await page.goto('/terminal/inventory');
+      await page.goto('/?view=inventory');
       await waitForInventoryView(page);
 
       // Make sure we're in table view (default for desktop)
@@ -223,7 +223,7 @@ test.describe('FC Automation', () => {
 
     test('should display FC badges in inventory cards', async ({ authedPage: page }) => {
       // Navigate to inventory
-      await page.goto('/terminal/inventory');
+      await page.goto('/?view=inventory');
       await waitForInventoryView(page);
 
       // Switch to card view by clicking the layout toggle button
@@ -246,7 +246,7 @@ test.describe('FC Automation', () => {
 
     test('should filter inventory by FC status', async ({ authedPage: page }) => {
       // Navigate to inventory
-      await page.goto('/terminal/inventory');
+      await page.goto('/?view=inventory');
       await waitForInventoryView(page);
 
       // Find FC filter chips in inventory
@@ -282,7 +282,7 @@ test.describe('FC Automation', () => {
   test.describe('FC Preview Modal', () => {
     test('should open FC preview modal for vigente product', async ({ authedPage: page }) => {
       // Navigate to inventory where FCPreviewModal is used
-      await page.goto('/terminal/inventory');
+      await page.goto('/?view=inventory');
       await waitForInventoryView(page);
 
       // Find a FCQuickIcon with aria-label "Ver Ficha de Costo (PDF)" (vigente status)
@@ -316,7 +316,7 @@ test.describe('FC Automation', () => {
 
     test('should show generate button for pendiente product', async ({ authedPage: page }) => {
       // Navigate to inventory
-      await page.goto('/terminal/inventory');
+      await page.goto('/?view=inventory');
       await waitForInventoryView(page);
 
       // Find a FCQuickIcon with aria-label "Generar Ficha de Costo" (pendiente status)
@@ -339,7 +339,7 @@ test.describe('FC Automation', () => {
 
     test('should close modal on ESC key', async ({ authedPage: page }) => {
       // Navigate to inventory
-      await page.goto('/terminal/inventory');
+      await page.goto('/?view=inventory');
       await waitForInventoryView(page);
 
       // Find any FCQuickIcon and click it to open the modal
@@ -367,7 +367,7 @@ test.describe('FC Automation', () => {
   test.describe('FC Quick Icon', () => {
     test('should render FCQuickIcon with correct aria-label', async ({ authedPage: page }) => {
       // Navigate to inventory (table view shows FCQuickIcon)
-      await page.goto('/terminal/inventory');
+      await page.goto('/?view=inventory');
       await waitForInventoryView(page);
 
       // Find FC icon buttons in the table — they use aria-label with FC status
@@ -387,7 +387,7 @@ test.describe('FC Automation', () => {
 
     test('should have minimum touch target size', async ({ authedPage: page }) => {
       // Navigate to inventory (table view)
-      await page.goto('/terminal/inventory');
+      await page.goto('/?view=inventory');
       await waitForInventoryView(page);
 
       // Find FCQuickIcon buttons (they have p-1 rounded + icon inside)
@@ -414,7 +414,7 @@ test.describe('FC Automation', () => {
   test.describe('Product FC Sync Indicator', () => {
     test('should show sync status for products', async ({ authedPage: page }) => {
       // Navigate to inventory and switch to card view (ProductFCSync renders there)
-      await page.goto('/terminal/inventory');
+      await page.goto('/?view=inventory');
       await waitForInventoryView(page);
 
       // Switch to card view
@@ -441,7 +441,7 @@ test.describe('FC Automation', () => {
 
     test('should show recalc button for conflict status', async ({ authedPage: page }) => {
       // Navigate to inventory card view
-      await page.goto('/terminal/inventory');
+      await page.goto('/?view=inventory');
       await waitForInventoryView(page);
 
       // Switch to card view

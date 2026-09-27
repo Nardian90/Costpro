@@ -228,7 +228,7 @@ test.describe('Worker Creation Flow — Strict Assertions', () => {
   test('UI: worker creation modal has all required fields', async ({ page }) => {
     test.skip(!process.env.E2E_TEST_ADMIN_TOKEN, 'Admin token required for UI test');
 
-    await page.goto('/terminal?view=workers');
+    await page.goto('/?view=workers');
 
     const createButton = page.getByRole('button', { name: /nuevo trabajador|nuevo/i });
     const buttonVisible = await createButton.isVisible({ timeout: 5000 }).catch(() => false);
@@ -263,7 +263,7 @@ test.describe('Worker Creation Flow — Strict Assertions', () => {
   test('UI: CI field shows validation error for invalid month', async ({ page }) => {
     test.skip(!process.env.E2E_TEST_ADMIN_TOKEN, 'Admin token required for UI test');
 
-    await page.goto('/terminal?view=workers');
+    await page.goto('/?view=workers');
 
     const createButton = page.getByRole('button', { name: /nuevo trabajador|nuevo/i });
     const buttonVisible = await createButton.isVisible({ timeout: 5000 }).catch(() => false);
@@ -282,12 +282,13 @@ test.describe('Worker Creation Flow — Strict Assertions', () => {
   });
 
   // ─── UI: worker appears in list after creation ───────────────────
-  test('UI: created worker appears in the workers list', async ({ page }) => {
+  test('UI: created worker appears in the workers list', async ({ page, request }) => {
     test.skip(!process.env.E2E_TEST_ADMIN_TOKEN, 'Admin token required for UI test');
 
-    // First create a worker via API (faster, deterministic)
+    // FIX (FASE E2E-80): 'const { request } = test' no es un patrón válido de
+    // Playwright (request no es propiedad del objeto test) → TypeError.
+    // Se usa el fixture { request } del test.
     const uniqueCI = TEST_CI_PREFIX + Math.floor(10000 + Math.random() * 89999).toString();
-    const { request } = test;
     const response = await request.post('/api/workers', {
       headers,
       data: {
@@ -303,7 +304,7 @@ test.describe('Worker Creation Flow — Strict Assertions', () => {
     createdWorkerId = worker.id;
 
     // Navigate to workers view and verify the worker appears
-    await page.goto('/terminal?view=workers');
+    await page.goto('/?view=workers');
     await page.waitForLoadState('networkidle');
 
     // STRICT: the worker's full name must be visible in the list
