@@ -1,0 +1,1 @@
+{"total":309,"passed":64,"failed":87,"skipped":158,"duration_ms":71179,"coverage_pct":20.7,"date":"2026-09-27","note":"Baseline pre-intervention. 158 skips: token env vars never configured. 87 failures: broken authedPage fixture (dead /auth/signin route, nonexistent user) + dead /terminal URLs."}

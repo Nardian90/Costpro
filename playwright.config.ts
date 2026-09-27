@@ -17,6 +17,10 @@ dotenv.config({ path: './.env' });
  */
 export default defineConfig({
   testDir: './e2e',
+  // FASE E2E-80: autentica usuarios reales y exporta E2E_TEST_*_TOKEN/ID
+  // ANTES de lanzar workers → reactiva ~150 tests que antes saltaban.
+  // Los workers heredan el env del proceso padre tras completar el setup.
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: false, // Los tests de Supabase real no son paralelos-safe
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
