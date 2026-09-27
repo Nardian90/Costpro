@@ -207,9 +207,18 @@ export async function createTestStore(
     slug: `e2e80_${label.toLowerCase().replace(/\s+/g, '_')}_${suffix}`,
     plantilla: 'construccion',
   };
-  // Higiene: archivar tiendas E2E80 huérfanas de ejecuciones fallidas
-  // (evita agotar el límite de tiendas activas del tenant).
-  await sb.update('stores', 'name=like.E2E80*', { is_active: false, is_archived: true }).catch(() => {});
+  // Higiene: archivar tiendas de PRUEBA huérfanas de ejecuciones fallidas
+  // (evita agotar el límite de tiendas activas del tenant). Solo tiendas
+  // creadas hace >10 min → nunca archiva stores del run actual.
+  // Patrones de artefactos de test de fases previas (audit-evidence/):
+  // E2E80* (esta iniciativa), ESEC TEST*, FASE-D TEST*, AUDIT *, HOT *Test*,
+  // REM-F4* FIXTURE*, E2E2-*. Las tiendas de negocio reales nunca coinciden.
+  const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const stale = `name=like.E2E80*&created_at=lt.${tenMinAgo}`;
+  const patterns = ['E2E80*', 'ESEC TEST*', 'FASE-D TEST*', 'AUDIT *', 'HOT *', 'REM-F4*', 'E2E2-*'];
+  for (const pat of patterns) {
+    await sb.update('stores', `name=like.${pat.replace(/ /g, '%20')}&created_at=lt.${tenMinAgo}`, { is_active: false, is_archived: true }).catch(() => {});
+  }
 
   const res = await request.post('/api/stores', {
     headers: apiHeaders(adminToken),
