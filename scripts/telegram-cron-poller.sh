@@ -22,6 +22,9 @@
 #   - CRON_HIT_INTERVAL_SECONDS (default 300 = 5 min): minimum time
 #     between calls to the endpoint
 #   - TARGET_URL: defaults to http://localhost:3000/api/cron/telegram-auto-publish
+#   - CRON_SECRET (SEC-TS-02 · H4): required — the endpoint is fail-closed
+#     and rejects unauthenticated hits with 401. Must match the server's
+#     CRON_SECRET; sent as "Authorization: Bearer ${CRON_SECRET}".
 #
 # Logs go to stdout/stderr which PM2 captures into the log file.
 # Use `pm2 logs telegram-cron-poller` to inspect.
@@ -32,6 +35,16 @@ POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-60}"
 CRON_HIT_INTERVAL_SECONDS="${CRON_HIT_INTERVAL_SECONDS:-300}"
 TARGET_URL="${TARGET_URL:-http://localhost:3000/api/cron/telegram-auto-publish}"
 STATE_FILE="${STATE_FILE:-/tmp/telegram-cron-poller-last-run}"
+CRON_SECRET="${CRON_SECRET:-}"
+
+if [ -z "${CRON_SECRET}" ]; then
+  echo "[telegram-cron-poller] ⚠ CRON_SECRET is NOT set — the endpoint will reject every hit with 401 (fail-closed). Export CRON_SECRET (same value as the server) before starting this poller." >&2
+fi
+
+CURL_AUTH_ARGS=()
+if [ -n "${CRON_SECRET}" ]; then
+  CURL_AUTH_ARGS=(-H "Authorization: Bearer ${CRON_SECRET}")
+fi
 
 echo "[telegram-cron-poller] Starting — poll every ${POLL_INTERVAL_SECONDS}s, hit endpoint every ${CRON_HIT_INTERVAL_SECONDS}s"
 echo "[telegram-cron-poller] Target: ${TARGET_URL}"
@@ -51,8 +64,8 @@ while true; do
     TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     echo "[${TIMESTAMP}] Hitting ${TARGET_URL} (elapsed since last: ${ELAPSED}s)"
 
-    # Make the request with a 30s timeout
-    HTTP_RESPONSE=$(curl -s -m 30 -w "\n%{http_code}" "${TARGET_URL}" 2>&1 || echo "curl-failed")
+    # Make the request with a 30s timeout (auth: Bearer CRON_SECRET — SEC-TS-02 H4)
+    HTTP_RESPONSE=$(curl -s -m 30 -w "\n%{http_code}" "${CURL_AUTH_ARGS[@]}" "${TARGET_URL}" 2>&1 || echo "curl-failed")
     HTTP_BODY=$(echo "${HTTP_RESPONSE}" | head -n -1)
     HTTP_CODE=$(echo "${HTTP_RESPONSE}" | tail -n1)
 

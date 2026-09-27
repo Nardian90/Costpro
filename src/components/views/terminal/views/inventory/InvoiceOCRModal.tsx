@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store";
 import { POSPortalModal } from "@/components/views/terminal/views/pos/POSPortalModal";
 
 interface ExtractedItem {
@@ -80,9 +81,15 @@ export function InvoiceOCRModal({ open, onClose, onImportItems }: InvoiceOCRModa
     setError(null);
 
     try {
+      // SEC-TS-02 · H1: el endpoint requiere sesión — enviar el token de
+      // autenticación como el resto de vistas de la terminal.
+      const token = useAuthStore.getState().token;
       const response = await fetch("/api/inventory/ocr-receipt", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ image: imagePreview }),
       });
 

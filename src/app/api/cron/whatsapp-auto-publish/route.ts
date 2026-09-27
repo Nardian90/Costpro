@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { publishProductToWhatsApp } from '@/lib/whatsapp/publish';
+import { verifyCronAuthorization } from '@/lib/cron-auth';
 import { logger } from '@/lib/logger';
 
 /**
@@ -8,7 +9,8 @@ import { logger } from '@/lib/logger';
  *
  * Cron job — runs DAILY on Vercel Hobby plan (free tier limit).
  * For sub-daily frequencies (5/15/30/60 min), the local PM2 poller
- * in scripts/whatsapp-cron-poller.sh hits this endpoint every 5 min.
+ * in scripts/whatsapp-cron-poller.sh hits this endpoint every 5 min
+ * (enviando Authorization: Bearer ${CRON_SECRET}).
  *
  * CRITICAL DIFFERENCE vs Telegram:
  *   - Telegram can publish anywhere with a bot token (no session needed)
@@ -17,8 +19,24 @@ import { logger } from '@/lib/logger';
  *
  * This endpoint is idempotent: each store only publishes when its own
  * interval_minutes has elapsed since last_publish_at AND anti-ban allows.
+ *
+ * SEC-TS-02 · H3 — autenticación fail-closed (patrón FIX C5+C6 de
+ * cron/usage-sync y cron/exchange-rates): solo JWT de Vercel Cron
+ * (x-vercel-signature) o Bearer CRON_SECRET. Un llamante anónimo ya no
+ * puede disparar la publicación ni leer datos multi-tienda: la respuesta
+ * es agregada (sin storeId/producto/messageId/errores por tienda — el
+ * detalle operacional sigue en los logs del servidor).
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await verifyCronAuthorization(req);
+  if (!auth.authorized) {
+    logger.warn('DATABASE', 'WA_CRON_UNAUTHORIZED', {});
+    return NextResponse.json(
+      { error: 'Unauthorized', hint: 'Incluye Authorization: Bearer <CRON_SECRET>, o usa x-vercel-signature JWT (con VERCEL_PROJECT_ID configurado)' },
+      { status: 401 },
+    );
+  }
+
   const startTime = Date.now();
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -132,16 +150,30 @@ export async function GET() {
       }
     }
 
-    const durationMs = Date.now() - startTime;
+    const durationMs = Date.now();
+    const successCount = results.filter(r => r.status === 'success').length;
+    const skipCount = results.filter(r => r.skipped).length;
+    const failCount = results.filter(r => r.status === 'failed' || r.status === 'error').length;
+
     logger.info('DATABASE', 'WA_CRON_TICK_END', {
       durationMs,
       processed: configs.length,
-      successCount: results.filter(r => r.status === 'success').length,
-      skipCount: results.filter(r => r.skipped).length,
-      failCount: results.filter(r => r.status === 'failed' || r.status === 'error').length,
+      successCount,
+      skipCount,
+      failCount,
     });
 
-    return NextResponse.json({ processed: configs.length, results });
+    // SEC-TS-02 · H3: respuesta agregada — sin results[] ni datos por tienda
+    // (el detalle operacional queda en los logs del servidor).
+    return NextResponse.json({
+      success: true,
+      auth_method: auth.method,
+      processed: configs.length,
+      published: successCount,
+      skipped: skipCount,
+      failed: failCount,
+      duration_ms: durationMs,
+    });
   } catch (error: any) {
     logger.error('DATABASE', 'WA_CRON_FATAL', {
       error: error.message,

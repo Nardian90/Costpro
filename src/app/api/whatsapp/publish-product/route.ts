@@ -10,14 +10,18 @@ import { publishProductToWhatsApp } from '@/lib/whatsapp/publish';
  * Body:
  *   - storeId: string (required)
  *   - publishType: 'manual' | 'automatic' (default: 'manual')
- *   - userId?: string
  *   - productId?: string (manual "publish THIS one")
  *   - showPriceOverride?: 'according_to_storefront' | 'show' | 'hide'
  *   - showPhysicalUnitsOverride?: boolean
+ *
+ * SEC-TS-02 · H5 — actor de auditoría no falsificable: el `published_by`
+ * de whatsapp_product_posts se toma SIEMPRE de session.user.id (identidad
+ * autenticada). El campo userId del body se ignora por completo — un
+ * cliente no puede falsificar quién publicó.
  */
 async function handler(req: NextRequest, session: AuthenticatedSession) {
   const body = await req.json().catch(() => ({}));
-  const { storeId, publishType = 'manual', userId, productId, showPriceOverride, showPhysicalUnitsOverride } = body;
+  const { storeId, publishType = 'manual', productId, showPriceOverride, showPhysicalUnitsOverride } = body;
 
   if (!storeId) {
     return NextResponse.json({ error: 'storeId is required' }, { status: 400 });
@@ -35,7 +39,8 @@ async function handler(req: NextRequest, session: AuthenticatedSession) {
     const result = await publishProductToWhatsApp({
       storeId,
       publishType,
-      userId: userId || (session.user as any).id,
+      // SEC-TS-02 · H5: identidad autenticada — nunca del body.
+      userId: (session.user as any).id,
       productId,
       showPriceOverride,
       showPhysicalUnitsOverride,
