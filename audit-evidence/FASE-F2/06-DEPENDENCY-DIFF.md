@@ -9,6 +9,7 @@
 | `package.json` | **+1 línea** (y coma en la línea anterior) | override `"nanoid@^3.3.16": "3.3.18"` |
 | `bun.lock` | **3 cambios de versión + 1 re-serialización cosmética + 1 línea de metadatos** | ver desglose |
 | `package-lock.json` | **0 cambios** (byte-idéntico) | el árbol npm ya estaba en 3.3.18 y cumple el override |
+| `.github/workflows/ci.yml` + `test-coverage.yml` | **5 líneas**: `bun-version: latest` → `bun-version: 1.3.14` (ver sección CI pin) | configuración necesaria — skew de tooling descubierto por F2 |
 
 ```text
 $ git diff --stat
@@ -16,6 +17,21 @@ $ git diff --stat
  package.json | 3 ++-
  2 files changed, 6 insertions(+), 4 deletions(-)
 ```
+
+## CI pin — bun 1.3.14 en los 5 pasos setup-bun (configuración necesaria)
+
+**Descubrimiento (run 36291895501, job Security Audit, step "Install dependencies")**: CI usa bun **1.4.2** (`bun-version: latest`) y rechazó el lockfile:
+
+```text
+error: lockfile had changes, but lockfile is frozen
+note: overrides in package.json changed since bun.lock was saved
+```
+
+- Causa raíz (reproducida localmente con el binario 1.4.2 descargado a `scripts/bun142/`, sin `bun upgrade`): bun 1.4.x serializa los overrides en el lock como objetos (`"nanoid@^3.3.16": { ".": "3.3.18" }`) y sube `lockfileVersion` 1 → 3; el frozen-check de 1.4.x compara estrictamente y rechaza el formato string grabado por bun 1.3.14 cuando una override es NUEVA (F1 no lo detectó porque no añadió overrides).
+- Si se re-guardara el lock con 1.4.2 (probado), el lock pasaría a `lockfileVersion: 3`, que **bun 1.3.x ignora** (`warn: Ignoring lockfile`) → rompería la reproducibilidad local y de cualquier usuario en 1.3.x, y revertiría el formato con cada install local (churn perpetuo).
+- **Decisión**: fijar `bun-version: 1.3.14` (misma versión que generó y valida el lock, engines `bun >=1.3` satisfecho) en los 5 pasos de `ci.yml` (quality/e2e/security) y `test-coverage.yml` → installs deterministas idénticos local/CI.
+- Alternativa futura (NEXT ACTION del owner): estandarizar toolchain en bun ≥1.4 (local + CI) y commitear lock v3 — decisión de modernización fuera del alcance mínimo de F2.
+- El pin NO altera steps de auditoría, security contract, allowlists ni ninguna lógica de CI — solo la versión de la herramienta de instalación/auditoría, que pasa a coincidir 1:1 con la del lockfile commiteado.
 
 ## package.json — diff completo
 
