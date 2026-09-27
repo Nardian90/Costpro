@@ -1,6 +1,6 @@
 # FASE F3 — 12 FINAL VERDICT (CONFIRMADO POST-CI)
 
-**Fecha**: 2026-09-27 · Commit fix: `0d660541` · CI: runs `36296366950` (CI), `36296366922` (Test Coverage), `36296366966` (Security CI Gate) — todos `pull_request` sobre `0d660541` vía PR #1323.
+**Fecha**: 2026-09-27 · Commit fix: `0d660541` · CI: runs `36296366950` (CI), `36296366922` (Test Coverage), `36296366966` (Security CI Gate) — `pull_request` sobre `0d660541` vía PR #1323; y runs de main `36297405234`/`36297405119` sobre `9d220a36` (merge del PR ejecutado por el owner).
 
 ## F3 — REMEDIACIÓN SEARCH_PATH_NOT_SET (CAPA B)
 
@@ -56,20 +56,25 @@ diff cad8e446 (src/server/next.config/e2e): vacío · migración 20260927000001:
 
 | Gate | Resultado |
 |---|---|
-| Quality (TypeCheck/Lint/Unit/Build) | **SUCCESS** (run 36296366950) |
-| Test Coverage | **SUCCESS** (run 36296366922; su E2E failure = estado F1/F2) |
-| Security Audit — Audit dependencies | **SUCCESS** |
-| Security Audit — Security contract | failure — solo Capa C preexistente (las 9 FIXED); condición documentada abajo |
-| E2E (ci.yml) | cancelled a 30 min = baseline (R-E2E-1) |
+| Quality (TypeCheck/Lint/Unit/Build) | **SUCCESS** (run 36296366950; ídem en main 9d220a36, run 36297405234) |
+| Test Coverage | **SUCCESS** (runs 36296366922 y 36297405119; su E2E failure = estado F1/F2) |
+| Security Audit — Audit dependencies | **SUCCESS** («No vulnerabilities found» en PR y en main) |
+| Security Audit — Security contract | failure — solo Capa C preexistente (las 9 FIXED; «Violaciones NUEVAS (bloqueantes): 0» en PR y en main); condición documentada abajo |
+| E2E (ci.yml) | cancelled a 30 min = baseline (R-E2E-1), en PR y en main |
 | Security CI Gate (PR-only, preexistente v2.12.50) | failure PREEXISTING: 74 checks TS idénticos byte-a-byte al baseline (probado por `diff` de logs locales); Allowlist Review SUCCESS |
 
 ### Git y PR (elementos 8 y 9)
 
 ```text
 Commit 1: 0d6605419b6b42af24a4a0339c32ea26201fc9db  fix(security): harden function search paths
-Commit 2: <docs>                                     docs(audit): close F3 security contract
-Rama:      audit/f3-search-path-remediation (push verificado: HEAD == origin/rama)
-PR:        #1323 https://github.com/Nardian90/Costpro/pull/1323 (open, head 0d660541 → main; SIN merge)
+Commit 2: 8bccda8077bd7a9c34c0db320bbd9ab180e251c0  docs(audit): close F3 security contract
+Commit 3: <ampliación docs>                          docs(audit): F3 post-merge CI on main + merge record
+Rama:      audit/f3-search-path-remediation (push verificado: HEAD == origin/rama en cada paso)
+PR:        #1323 https://github.com/Nardian90/Costpro/pull/1323 — el OWNER la fusionó a main
+           (9d220a36 «Merge pull request #1323…») durante la fase; F3 NO ejecutó el merge
+           (mandato §21: no auto-merge — respetado)
+main:      9d220a36 contiene el fix 0d660541 EXCLUSIVAMENTE (6 migraciones, +9/−8; verificado por
+           git diff c09366ed..origin/main --stat)
 Worktree:  limpio tras cada commit (git diff --check OK)
 ```
 
