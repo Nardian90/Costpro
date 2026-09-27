@@ -58,7 +58,9 @@ export function CashStatusWidget({ compact = false, className }: CashStatusWidge
         onClick={hasShift ? handleNavigateToCash : handleNavigateToCash}
         title={hasShift ? "Turno activo — clic para ir a Caja" : "Sin turno abierto — clic para abrir turno en Caja"}
         className={cn(
-          "inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest border-2 transition-all active:scale-95",
+          // F1 (UI-002): min-h 44px — touch target del widget compacto en la fila
+          // del header del POS (medido 36px tras el wrapping de F1).
+          "inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-xl text-xs font-black uppercase tracking-widest border-2 transition-all active:scale-95",
           hasShift
             ? "bg-primary/5 text-primary border-primary/30 hover:bg-primary/10 hover:border-primary/50"
             : "bg-destructive/10 text-destructive border-destructive/40 hover:bg-destructive/20 hover:border-destructive/60 animate-pulse",

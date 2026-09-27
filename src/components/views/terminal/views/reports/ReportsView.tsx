@@ -14,6 +14,7 @@ import { ReportScheduleModal } from './ReportScheduleModal';
 import { ReportHistoryModal } from './ReportHistoryModal';
 import { ReportShareModal } from './ReportShareModal';
 import { ReportsActionToolbar, ToolbarAction } from './ReportsActionToolbar';
+import PageHeader from '@/components/ui/PageHeader';
 import { useReportState } from '@/hooks/ui/useReportState';
 
 /**
@@ -160,29 +161,21 @@ export default function ReportsView() {
   return (
     <div className="space-y-4" role="main" aria-label="Generador de Reportes">
       {/* ── Header ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="md:hidden">
-          <h1 className="text-xl font-black uppercase tracking-tight text-primary flex items-center gap-2">
-            <FileText className="w-5 h-5" aria-hidden="true" />
-            Reportes
-          </h1>
-        </div>
-        <div className="hidden md:block">
-          <h1 className="text-[clamp(1.5rem,6vw,1.875rem)] font-black uppercase tracking-tight text-primary flex items-center gap-3">
-            <FileText className="w-8 h-8" aria-hidden="true" />
-            Configuración de Reportes
-          </h1>
-          <p className="text-muted-foreground font-medium">Diseña y genera documentos profesionales para auditoría y gestión.</p>
-        </div>
-        {/* Audit-Fix #3: toolbar único con overflow "..." en lugar de 2 ActionMenu.
-            Elimina el dead space entre las 2 filas anteriores. */}
-        <div className="w-full md:max-w-2xl">
-          <ReportsActionToolbar
-            primaryActions={primaryActions}
-            secondaryActions={secondaryActions}
-          />
-        </div>
-      </div>
+      {/* F2: PageHeader — UN solo título (antes: dos H1 distintos móvil/desktop).
+          Label y descripción = fuente única de navegación (GATE 1.3). */}
+      <PageHeader
+        title="Reportes"
+        description="Diseña y genera reportes profesionales en PDF/Excel con filtros y agrupaciones personalizadas."
+        icon={FileText}
+        secondaryActions={
+          <div className="w-full md:max-w-2xl">
+            <ReportsActionToolbar
+              primaryActions={primaryActions}
+              secondaryActions={secondaryActions}
+            />
+          </div>
+        }
+      />
 
       {/* ── Modals ── */}
       <AuditLogsModal

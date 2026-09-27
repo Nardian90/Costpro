@@ -62,8 +62,12 @@ main[data-help-scroll] {
   --font-body: var(--font-inter), var(--font-geist-sans);
   --font-label: var(--font-space-grotesk);
 
-  /* CostPro Design Palette */
-  --color-primary: #2d8a4e;
+  /* CostPro Design Palette
+     FIX F2 (UI-010): el primario interactivo es UNO SOLO — var(--primary)
+     (#22c55e dark / #15803d light de tokens.css). El hardcode #2d8a4e creaba un
+     segundo verde (bg-primary ≠ ring/charts/badges) y su par de contraste era
+     el peor del sistema (3.04:1 vs 6.54:1 del token). */
+  --color-primary: var(--primary);
   --color-on-primary: #003914;
   --color-primary-container: #15803d;
   --color-on-primary-container: #003111;
@@ -118,7 +122,17 @@ main[data-help-scroll] {
   --color-success-light: var(--success-light);
   --color-warning: var(--warning);
   --color-warning-light: var(--warning-light);
-  --color-info: var(--color-info);
+  /* FIX F2 (C1-4): autorreferencia circular — se ancla el valor estructural de tokens.css */
+  --color-info: #3b82f6;
+
+  /* Brand Identity (F2) — #39FF14 y su familia, definidos en tokens.css.
+     Utilities disponibles: bg-brand, text-brand, border-brand, bg-brand-subtle… */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-border: var(--brand-border);
+  --color-brand-foreground: var(--brand-foreground);
 
   /* Semantic */
   --color-ring: var(--ring);
@@ -430,9 +444,12 @@ html:not(.dark) .mesh-orb {
 }
 
 /* FIX-WCAG (2026-07-05): focus visible para accesibilidad WCAG AA */
-/* Asegura que todos los elementos interactivos tengan focus visible */
+/* Asegura que todos los elementos interactivos tengan focus visible.
+   FIX F2 (C1-3): hsl(var(--primary)) era inválido — --primary es un hex, no una
+   tripleta HSL; el valor computado caía a currentcolor pisando el focus correcto
+   de base.css. Se usa el token directo. */
 *:focus-visible {
-  outline: 2px solid hsl(var(--primary));
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -440,7 +457,7 @@ html:not(.dark) .mesh-orb {
 /* Tabs del módulo Pick3 */
 button:focus-visible,
 [role="tab"]:focus-visible {
-  outline: 2px solid hsl(var(--primary));
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
@@ -448,6 +465,6 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid hsl(var(--primary));
+  outline: 2px solid var(--primary);
   outline-offset: 1px;
 }

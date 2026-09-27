@@ -6,6 +6,20 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { LucideIcon } from 'lucide-react';
 
+/**
+ * PageHeader (F2) — portador de la jerarquía de página:
+ *   PAGE TITLE → DESCRIPTION → PRIMARY ACTION → SECONDARY ACTIONS
+ *
+ * Reglas F2 (§11-§12 del brief):
+ * - Es SOLO composición visual y jerarquía: sin modales, sin tabs, sin
+ *   fetching, sin lógica de negocio. La lógica permanece en las vistas.
+ * - El breadcrumb global de TerminalShell NO se duplica: `context` existe para
+ *   chips/breadcrumb LOCAL de la vista cuando lo necesita.
+ * - Ninguna prop salvo `title` es obligatoria.
+ * - Tipografía por roles (components.css): .cp-page-title / .cp-page-description.
+ * - El chip de icono es un momento de marca (tokens --brand, AAA verificado).
+ */
+
 interface PageHeaderBadge {
   text: string;
   variant: 'default' | 'success' | 'warning' | 'danger';
@@ -13,9 +27,17 @@ interface PageHeaderBadge {
 
 interface PageHeaderProps {
   title: string;
-  description?: string;
+  /** Descripción o estado de contexto (texto o nodo dinámico, ej: estado del turno). */
+  description?: React.ReactNode;
   icon?: LucideIcon;
   badge?: PageHeaderBadge;
+  /** Slot de contexto local (breadcrumb local, chips de estado). Opcional. */
+  context?: React.ReactNode;
+  /** Acción primaria (una sola). Opcional. */
+  primaryAction?: React.ReactNode;
+  /** Grupo de acciones secundarias. Opcional. */
+  secondaryActions?: React.ReactNode;
+  /** Compatibilidad: equivalente a secondaryActions (API original). */
   actions?: React.ReactNode;
   children?: React.ReactNode;
 }
@@ -32,9 +54,14 @@ export default function PageHeader({
   description,
   icon: Icon,
   badge,
+  context,
+  primaryAction,
+  secondaryActions,
   actions,
   children,
 }: PageHeaderProps) {
+  const secondary = secondaryActions ?? actions;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -42,19 +69,26 @@ export default function PageHeader({
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className="border-b border-border/50 pb-4 sm:pb-6"
     >
+      {/* Contexto local (opcional) — bajo el breadcrumb global del shell */}
+      {context && (
+        <div className="mb-2">
+          {context}
+        </div>
+      )}
+
       {/* Main header row */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Left side: icon + title + badge + description */}
         <div className="flex items-center gap-3 min-w-0">
           {Icon && (
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground shrink-0">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand text-brand-foreground shrink-0">
               <Icon className="w-5 h-5" />
             </div>
           )}
 
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="font-label text-lg sm:text-xl font-bold tracking-tight text-foreground capitalize">
+              <h1 className="cp-page-title">
                 {title}
               </h1>
 
@@ -62,7 +96,7 @@ export default function PageHeader({
                 <Badge
                   variant="outline"
                   className={cn(
-                    'rounded-full px-2.5 py-0 text-[10px] font-semibold uppercase tracking-wider border',
+                    'rounded-full px-2.5 py-0 text-[10px] font-medium uppercase tracking-wide border',
                     badgeVariantMap[badge.variant]
                   )}
                 >
@@ -72,17 +106,20 @@ export default function PageHeader({
             </div>
 
             {description && (
-              <p className="mt-0.5 text-sm text-muted-foreground leading-snug">
+              // div (no p): description acepta nodos con markup (ej. estado del
+              // turno en Caja) — un <p> que contenga <div> rompe la hidratación.
+              <div className="cp-page-description mt-0.5">
                 {description}
-              </p>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Right side: actions */}
-        {actions && (
-          <div className="flex items-center gap-2 shrink-0 sm:ml-auto">
-            {actions}
+        {/* Right side: primary + secondary actions */}
+        {(primaryAction || secondary) && (
+          <div className="flex flex-wrap items-center gap-2 shrink-0 sm:ml-auto">
+            {secondary}
+            {primaryAction}
           </div>
         )}
       </div>

@@ -26,7 +26,9 @@ export const StickyCartSummary = ({
       animate={{ y: 0, opacity: 1 }}
       exit={prefersReducedMotion ? undefined : { y: 100, opacity: 0 }}
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-40 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-background via-background/80 to-transparent pt-10",
+        // F1 (FIX-4): en móvil la barra se eleva sobre la MobileTabBar (~55px + safe-area)
+        // — antes la cubría completa (z-40 sobre z-30). ≥sm: bottom-0 + safe-area original.
+        "fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 p-4 sm:bottom-0 sm:pb-[calc(1rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-background via-background/80 to-transparent pt-10",
         className
       )}
     >

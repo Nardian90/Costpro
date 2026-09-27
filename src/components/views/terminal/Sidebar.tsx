@@ -102,14 +102,22 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
 
   // ── Focus mode: enter ──
   const enterFocusMode = useCallback((moduleId: string) => {
-    setSidebarState('expanded');
+    // F1 (Drawer/deep-link): el focus mode NO debe forzar la apertura del drawer
+    // en móvil. El efecto de auto-focus al montar (más abajo) llamaba a esta
+    // función en cada carga y reabría el drawer + overlay sobre la vista operativa
+    // tras un deep-link o recarga — el "focus-mode persistente" de Discovery.
+    // En móvil solo se fija el módulo enfocado (coherencia visual); el drawer
+    // se abre/cierra manualmente (hamburguesa, backdrop, X). Desktop intacto.
+    if (!isMobile) {
+      setSidebarState('expanded');
+    }
     setFocusModuleId(moduleId);
     // FIX: Do NOT auto-expand children — let the user expand manually
     setExpandedModules([]);
     // FIX (2026-07-22): NO cerrar el sidebar al navegar en móvil.
     // El usuario quiere navegación continua — el sidebar se cierra solo
     // al hacer clic en el backdrop (overlay) o en el botón X.
-  }, [setSidebarState]);
+  }, [setSidebarState, isMobile]);
 
   // ── Focus mode: exit ──
   const exitFocusMode = useCallback(() => {

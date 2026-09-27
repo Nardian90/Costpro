@@ -91,12 +91,17 @@ export function CookieConsent() {
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 ${animationClass}`}
+      className={`fixed bottom-0 left-0 right-0 z-50 p-4 pb-[calc(4.25rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-6 pointer-events-none ${animationClass}`}
       role="dialog"
       aria-modal="false"
       aria-label="Consentimiento de cookies"
     >
-      <div className="max-w-4xl mx-auto bg-card border border-border rounded-xl shadow-2xl shadow-black/10 p-6 sm:p-8 backdrop-blur-xl bg-card/95">
+      {/* F1 (UI-003/UI-001): contenedor pointer-events-none (su padding dejaba de pasar
+          taps a la MobileTabBar) + offset sobre la tab bar (~55px + safe-area; ≥sm no hay
+          tab bar → padding original). Tarjeta pointer-events-auto y compacta en móvil:
+          p-4, texto text-xs, botones h-11 con wrap — "Configurar" queda icon-only en móvil
+          (aria-label conservado). Desktop ≥sm: valores originales intactos. */}
+      <div className="max-w-4xl mx-auto bg-card border border-border rounded-xl shadow-2xl shadow-black/10 p-4 sm:p-8 backdrop-blur-xl bg-card/95 pointer-events-auto max-h-[calc(100dvh-9rem)] overflow-y-auto">
         {!showDetails ? (
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex items-start gap-3 flex-1">
@@ -105,29 +110,29 @@ export function CookieConsent() {
                 <h3 className="font-semibold text-foreground text-sm">
                   Consentimiento de Cookies
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                   Utilizamos cookies esenciales para el funcionamiento de la aplicación
                   y cookies opcionales para mejorar tu experiencia. Puedes gestionar
                   tus preferencias en cualquier momento.
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDetails(true)}
-                className="gap-1.5 text-xs"
+                className="gap-1.5 text-xs h-11 sm:h-8"
                 aria-label="Configurar preferencias de cookies"
               >
                 <Settings className="w-3.5 h-3.5" />
-                Configurar
+                <span className="hidden sm:inline">Configurar</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleRejectOptional}
-                className="text-xs"
+                className="text-xs h-11 sm:h-8"
                 aria-label="Rechazar cookies opcionales"
               >
                 Solo esenciales
@@ -135,7 +140,7 @@ export function CookieConsent() {
               <Button
                 size="sm"
                 onClick={handleAcceptAll}
-                className="gap-1.5 text-xs"
+                className="gap-1.5 text-xs h-11 sm:h-8"
                 aria-label="Aceptar todas las cookies"
               >
                 Aceptar todas
@@ -151,7 +156,7 @@ export function CookieConsent() {
               </div>
               <button
                 onClick={() => setShowDetails(false)}
-                className="p-1 hover:bg-muted rounded-md transition-colors"
+                className="p-1 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-muted rounded-md transition-colors"
                 aria-label="Cerrar configuración de cookies"
               >
                 <X className="w-4 h-4" />
@@ -185,11 +190,11 @@ export function CookieConsent() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 mt-6">
-              <Button variant="ghost" size="sm" onClick={handleRejectOptional} className="text-xs">
+            <div className="flex flex-wrap justify-end gap-2 mt-6">
+              <Button variant="ghost" size="sm" onClick={handleRejectOptional} className="text-xs h-11 sm:h-8">
                 Solo esenciales
               </Button>
-              <Button size="sm" onClick={handleSavePreferences} className="text-xs">
+              <Button size="sm" onClick={handleSavePreferences} className="text-xs h-11 sm:h-8">
                 Guardar preferencias
               </Button>
             </div>

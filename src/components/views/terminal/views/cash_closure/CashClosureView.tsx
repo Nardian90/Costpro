@@ -6,6 +6,7 @@ import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
+import PageHeader from '@/components/ui/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 // FIX-PAYMENT-TRACKING (2026-07-12): Reporte de caja con desglose de billetes
@@ -253,52 +254,53 @@ export default function CashClosureView() {
   return (
     <>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            {/* GATE 1.3: UN concepto — la navegación dice "Caja"; el arqueo,
-                cierre de turno y reporte de entrega viven DENTRO (botones). */}
-            <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase">Caja</h2>
-            {pendingClosure ? (
-              <div className="flex items-center gap-1.5 mt-1 text-xs text-success font-bold">
-                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                Turno abierto desde {formatDate(pendingClosure.created_at)} {formatTime(pendingClosure.created_at)}
-              </div>
-            ) : salesData?.last_closure_at ? (
-              <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
-                <Clock className="w-3 h-3" />
-                Último cierre: {formatDate(salesData.last_closure_at)} {formatTime(salesData.last_closure_at)}
-              </div>
-            ) : null}
-          </div>
-          <div className="w-full sm:w-auto flex items-center gap-2">
-            {/* FIX-PAYMENT-TRACKING: Botón de Reporte de Caja para entrega de dinero */}
-            <button
-              type="button"
-              onClick={() => setShowCashReport(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-primary/20 text-primary hover:bg-primary/10 transition-colors text-xs font-black uppercase tracking-widest min-h-[44px]"
-              title="Reporte de caja con desglose de billetes para entrega de dinero"
-            >
-              <Printer className="w-4 h-4" />
-              <span className="hidden sm:inline">Reporte Entrega</span>
-            </button>
-            {/* FIX-B4: Botón de Cuentas por Pagar */}
-            <button
-              type="button"
-              onClick={() => setCurrentView('accounts-payable')}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-500/30 text-amber-600 dark:text-amber-500 hover:bg-amber-500/10 transition-colors text-xs font-black uppercase tracking-widest min-h-[44px]"
-              title="Ver cuentas por pagar y vencimientos"
-            >
-              <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline">Cuentas por Pagar</span>
-            </button>
-            <ActionMenu
-              actions={actions}
-              sticky={false}
-              className="shadow-none bg-transparent"
-            />
-          </div>
-        </div>
+        {/* F2: PageHeader — jerarquía estándar (GATE 1.3: UN concepto "Caja";
+            el arqueo, cierre y reporte viven DENTRO). El estado del turno es la
+            descripción dinámica de la página. */}
+        <PageHeader
+          title="Caja"
+          icon={DollarSign}
+          description={pendingClosure ? (
+            <div className="flex items-center gap-1.5 text-xs text-success font-semibold">
+              <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              Turno abierto desde {formatDate(pendingClosure.created_at)} {formatTime(pendingClosure.created_at)}
+            </div>
+          ) : salesData?.last_closure_at ? (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="w-3 h-3" />
+              Último cierre: {formatDate(salesData.last_closure_at)} {formatTime(salesData.last_closure_at)}
+            </div>
+          ) : undefined}
+          secondaryActions={
+            <div className="w-full sm:w-auto flex items-center gap-2">
+              {/* FIX-PAYMENT-TRACKING: Botón de Reporte de Caja para entrega de dinero */}
+              <button
+                type="button"
+                onClick={() => setShowCashReport(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-primary/20 text-primary hover:bg-primary/10 transition-colors text-xs font-medium tracking-normal min-h-[44px]"
+                title="Reporte de caja con desglose de billetes para entrega de dinero"
+              >
+                <Printer className="w-4 h-4" />
+                <span className="hidden sm:inline">Reporte Entrega</span>
+              </button>
+              {/* FIX-B4: Botón de Cuentas por Pagar */}
+              <button
+                type="button"
+                onClick={() => setCurrentView('accounts-payable')}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-500/30 text-amber-600 dark:text-amber-500 hover:bg-amber-500/10 transition-colors text-xs font-medium tracking-normal min-h-[44px]"
+                title="Ver cuentas por pagar y vencimientos"
+              >
+                <Clock className="w-4 h-4" />
+                <span className="hidden sm:inline">Cuentas por Pagar</span>
+              </button>
+              <ActionMenu
+                actions={actions}
+                sticky={false}
+                className="shadow-none bg-transparent"
+              />
+            </div>
+          }
+        />
 
         {/* Loading skeleton */}
         {isLoading ? (

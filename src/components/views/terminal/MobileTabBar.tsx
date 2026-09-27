@@ -158,7 +158,7 @@ export function MobileTabBar({ currentView, onViewChange }: MobileTabBarProps) {
         </button>
       ) : (
         <nav
-          className="sm:hidden fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around px-2 py-1"
+          className="sm:hidden fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around px-1 py-1"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           aria-label="Navegación principal mobile"
         >
@@ -182,15 +182,16 @@ export function MobileTabBar({ currentView, onViewChange }: MobileTabBarProps) {
               setMoreSheetOpen={setMoreSheetOpen}
             />
           )}
-          {/* Botón colapsar — a la derecha de los tabs */}
+          {/* Botón colapsar — a la derecha de los tabs.
+              F1 (FIX-6): icon-only en móvil (chevron + aria-label existente) — el label
+              "OCULTAR" comprimía los labels de los 4 tabs + Más a 360-390px (UI-018). */}
           <button
             type="button"
             onClick={() => setCollapsed(true)}
             aria-label="Colapsar barra de navegación"
-            className="flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 min-h-[48px] min-w-[36px] rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+            className="flex items-center justify-center py-1.5 px-1 min-h-[48px] min-w-[36px] rounded-lg transition-colors text-muted-foreground hover:text-foreground"
           >
-            <ChevronDown className="w-4 h-4" />
-            <span className="text-[9px] font-bold uppercase">Ocultar</span>
+            <ChevronDown className="w-5 h-5" />
           </button>
         </nav>
       )}
@@ -354,8 +355,11 @@ function TabButton({
     >
       <Icon className={cn("w-5 h-5", isActive && "text-primary")} />
       <span className={cn(
+        // F1 (FIX-6): 10px + tracking-tighter para los tabs default — "INVENTARIO"
+        // completo a 360-390px (antes text-xs truncaba "INVENT…"). Consistente con
+        // la variante small (9px) ya existente.
         "font-black uppercase truncate max-w-full",
-        small ? "text-[9px] tracking-wide" : "text-xs tracking-tight",
+        small ? "text-[9px] tracking-wide" : "text-[10px] tracking-tighter",
         isActive && "text-primary"
       )}>
         {label}

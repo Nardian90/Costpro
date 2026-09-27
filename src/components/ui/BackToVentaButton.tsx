@@ -52,7 +52,9 @@ export function BackToVentaButton({
       aria-label={`Volver a ${label}`}
       className={cn(
         'group inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-        compact ? 'h-9 px-2.5' : 'h-10 px-3',
+        // F1 (FIX-7): variante compact con touch target 44px en móvil (era h-9 = 36px).
+        // ≥sm conserva exactamente el valor original.
+        compact ? 'h-11 px-2.5 sm:h-9' : 'h-10 px-3',
         className,
       )}
     >

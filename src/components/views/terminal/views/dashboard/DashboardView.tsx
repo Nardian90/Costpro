@@ -4,6 +4,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import {
   Calendar as CalendarIcon,
+  LayoutDashboard,
   Settings2,
   TrendingUp,
   ShoppingCart,
@@ -18,6 +19,7 @@ import type { Product } from '@/types';
 import { useDashboardView } from './useDashboardView';
 import { useAuthStore } from '@/store';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import PageHeader from '@/components/ui/PageHeader';
 import { useTranslations, useLocale } from 'next-intl';
 import { format } from 'date-fns';
 import { es as esLocale, enUS as enLocale } from 'date-fns/locale';
@@ -86,33 +88,34 @@ function DashboardViewImpl() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header with Title and Time Range */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold font-display text-foreground tracking-tight">{t('title')}</h2>
-          <p className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mt-1">{t('subtitle')}</p>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+      {/* F2: PageHeader — jerarquía estándar (título único, descripción, acciones).
+          Sustituye el h2 ad-hoc text-3xl + subtítulo uppercase tracking-widest. */}
+      <PageHeader
+        title={t('title')}
+        description={t('subtitle')}
+        icon={LayoutDashboard}
+        secondaryActions={
+          <>
             <ToggleGroup
               type="single"
               value={timeRange}
               onValueChange={(v) => { if (v) setTimeRange(v as 'day' | 'month' | 'year') }}
               className="bg-muted rounded-xl p-1 w-full sm:w-auto"
             >
-              <ToggleGroupItem value="day" className="flex-1 sm:flex-none text-sm font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="day" className="flex-1 sm:flex-none text-sm font-medium px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 {t('day')}
               </ToggleGroupItem>
-              <ToggleGroupItem value="month" className="flex-1 sm:flex-none text-sm font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="month" className="flex-1 sm:flex-none text-sm font-medium px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 {t('month')}
               </ToggleGroupItem>
-              <ToggleGroupItem value="year" className="flex-1 sm:flex-none text-sm font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="year" className="flex-1 sm:flex-none text-sm font-medium px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 {t('year')}
               </ToggleGroupItem>
             </ToggleGroup>
 
             <Popover>
               <PopoverTrigger asChild>
-                <button type="button" aria-label={t('selectDate')} className="flex items-center gap-2 min-h-[44px] py-2.5 px-4 rounded-xl border border-border/50 bg-card text-xs font-semibold uppercase tracking-wider text-muted-foreground min-w-[140px] justify-center hover:bg-muted/50 hover:text-foreground transition-colors w-full sm:w-auto">
+                <button type="button" aria-label={t('selectDate')} className="flex items-center gap-2 min-h-[44px] py-2.5 px-4 rounded-xl border border-border/50 bg-card text-xs font-medium text-muted-foreground min-w-[140px] justify-center hover:bg-muted/50 hover:text-foreground transition-colors w-full sm:w-auto">
                   <CalendarIcon className="w-3.5 h-3.5" />
                   {timeRange === 'day'
                     ? formatDate(selectedDate)
@@ -132,8 +135,9 @@ function DashboardViewImpl() {
                 />
               </PopoverContent>
             </Popover>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <StateRenderer
         isLoading={isLoading || isLoadingProducts}
