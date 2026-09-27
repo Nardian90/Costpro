@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GET as GET_WA } from '@/app/api/cron/whatsapp-auto-publish/route';
 import { GET as GET_TG } from '@/app/api/cron/telegram-auto-publish/route';
 import { verifyCronAuthorization } from '@/lib/cron-auth';
@@ -213,3 +213,49 @@ describe('SEC-TS-02 · H3/H4 — actor del cron', () => {
     expect(firstCall.publishType).toBe('automatic');
   });
 });
+
+// ── SEC-TS-02 · P2 — duration_ms determinista ─────────────────────────────
+// P2 (detectado en la revisión del PR #1327): whatsapp-auto-publish
+// calculaba `durationMs = Date.now()` (timestamp Unix absoluto) en el camino
+// exitoso, en lugar de la duración transcurrida. Este test fija el reloj
+// (vi.setSystemTime + toFake: ['Date']) y lo avanza DENTRO del mock de
+// publish, exigiendo un elapsed EXACTO: el bug habría devuelto 1_000_123
+// (y un timestamp real ~1.7e12), no 123.
+describe.each([
+  ['whatsapp-auto-publish (P2 corregido)', GET_WA, waPublish],
+  ['telegram-auto-publish (guardia simétrica)', GET_TG, tgPublish],
+] as Array<[string, any, any]>)(
+  'SEC-TS-02 · P2 — GET /api/cron/%s: duration_ms es duración transcurrida, no timestamp Unix',
+  (_name, GET, publishMock) => {
+    afterEach(() => {
+      // Restaurar reloj real — no filtrar fake Date a otras suites.
+      vi.useRealTimers();
+    });
+
+    it('start=1_000_000, end=1_000_123 → duration_ms === 123 (elapsed, no epoch)', async () => {
+      process.env.CRON_SECRET = 'sekret';
+      // Solo se falsifica Date: promesas/microtasks siguen siendo reales,
+      // el flujo async de la ruta no se altera.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(1_000_000);
+
+      // El "trabajo" de publicación consume 123 ms de reloj simulado.
+      publishMock.mockImplementation(async () => {
+        vi.setSystemTime(1_000_123);
+        return { skipped: true, reason: 'deterministic_clock' };
+      });
+
+      const res = await GET(makeGetReq({ authorization: 'Bearer sekret' }));
+      expect(res.status).toBe(200);
+      const json = await res.json();
+
+      // Elapsed EXACTO. Con el bug P2 esto devolvía 1_000_123 (Date.now()
+      // absoluto); un timestamp Unix real sería ~1.7e12.
+      expect(json.duration_ms).toBe(123);
+      expect(json.duration_ms).toBeGreaterThanOrEqual(0);
+      // Jamás un epoch: una duración de tick no puede ser del orden de
+      // 1970+milliseconds-since.
+      expect(json.duration_ms).toBeLessThan(60_000);
+    });
+  },
+);

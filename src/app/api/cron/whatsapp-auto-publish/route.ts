@@ -150,7 +150,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const durationMs = Date.now();
+    // SEC-TS-02 · P2: duración transcurrida (no timestamp Unix absoluto),
+    // igual que telegram-auto-publish y que el camino catch de abajo.
+    const durationMs = Date.now() - startTime;
     const successCount = results.filter(r => r.status === 'success').length;
     const skipCount = results.filter(r => r.skipped).length;
     const failCount = results.filter(r => r.status === 'failed' || r.status === 'error').length;
