@@ -186,7 +186,12 @@ export async function createTestStore(
     throw new Error(`createTestStore falló: ${res.status()} ${await res.text()}`);
   }
   const json = await res.json();
-  return { id: json.data.id, name: json.data.name, slug: json.data.slug ?? payload.slug };
+  // Respuesta real: { data: { success, store_id, tenant_id } }
+  const id = json?.data?.store_id ?? json?.data?.id ?? json?.store_id;
+  if (!id) {
+    throw new Error(`createTestStore: respuesta sin store_id — ${JSON.stringify(json).slice(0, 200)}`);
+  }
+  return { id, name: payload.name, slug: json?.data?.slug ?? payload.slug };
 }
 
 /** Soft-delete de la tienda de prueba (cleanup) */
@@ -235,7 +240,7 @@ export async function seedProduct(
     price_currency: 'CUP',
     stock_current: opts.quantity,
     cost_average: opts.cost,
-    min_stock: 0,
+    min_stock: 1, // check constraint products_min_stock_check exige > 0
   }]);
   await sb.insert('inventory', [{
     store_id: store.id,
