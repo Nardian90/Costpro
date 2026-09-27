@@ -235,10 +235,13 @@ los tests citados viven en `e2e/` (prefijo `flows/` = nuevos de esta fase).
 | Workers y comisiones | 8 | 8 | 0 |
 | FC/reportes/otros | 10 | 10 | 0 |
 | Storefront (incluido en catálogo) | — | — | — |
-| **TOTAL** | **127** | **112** | **15** |
+| **TOTAL** | **128** | **113** | **15** |
 
-**Cobertura E2E = 112 / 127 = 88.2%** (P0: 56/57, P1: 42/44, P2: 13/17, P3: 1/1 —
-sin escenarios P3 cosméticos identificados más allá de los listados).
+> Cuenta exacta: 126 filas individuales + la fila combinada E2E-SF-001..003
+> (3 escenarios de storefront, todos automatizados) = 128 escenarios.
+
+**Cobertura E2E = 113 / 128 = 88.3%** — P0: 50/52 (96.2%) · P1: 49/57 (86.0%) ·
+P2: 15/20 (75.0%) · P0+P1 combinados: 99/109 (90.8%).
 
 > Nota: los 15 pendientes y su justificación detallada están en
 > `E2E-COVERAGE-REPORT.md` (sección "Tests no automatizados").
