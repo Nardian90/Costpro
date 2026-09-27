@@ -2,18 +2,55 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { processTrmBackup, getAllAccounts, getAllTransactions } from '@/lib/transfermovil/transfermovil';
+import { walletImportTrmSchema, zodError, WALLET_TRM_MAX_CHARS } from '@/validation/api-schemas';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
+/**
+ * POST /api/wallet/import-trm
+ *
+ * Importa cuentas y transacciones desde un respaldo .trm de Transfermóvil.
+ * Body: { content: <texto crudo del archivo .trm> }
+ *
+ * SEC-TS-04 · H7-TRM: el payload se valida con walletImportTrmSchema
+ * (tope 10 MiB de texto — ver justificación en api-schemas.ts) ANTES de
+ * descifrar/parsear: la App Router no impone body-size-limit y el deploy
+ * Docker no tiene tope de plataforma. Antes el AES + JSON.parse + walk
+ * recursivo de decryptAllFields + N upserts por fila ocurrían sin cota.
+ * Payload inválido = 400, oversized = 413. El Content-Length declarado se
+ * rechaza temprano solo como optimización (no es la barrera). El formato
+ * estructural del .trm lo sigue validando validateTrmFormat (módulo
+ * transfermovil) después del schema.
+ */
 async function postHandler(req: NextRequest) {
   try {
     const session = await getServerSession(req);
     if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
-    const body = await req.json();
-    const { content } = body;
-    if (!content || typeof content !== 'string') return NextResponse.json({ error: 'Contenido .trm requerido' }, { status: 400 });
+    // Rechazo temprano si el cliente DECLARA un tamaño ya excesivo — evita
+    // bufferizar para clientes honestos. NO es la barrera única: el chequeo
+    // real está en el schema sobre el contenido recibido (abajo).
+    const declaredLength = parseInt(req.headers.get('content-length') || '', 10);
+    if (Number.isFinite(declaredLength) && declaredLength > WALLET_TRM_MAX_CHARS + 2048) {
+      return NextResponse.json({ error: 'El archivo excede el límite de 10 MiB' }, { status: 413 });
+    }
+
+    const body = await req.json().catch(() => null);
+    if (body === null) {
+      return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+    }
+
+    // SEC-TS-04 · H7-TRM: validación real ANTES de descifrar/parsear — antes
+    // cualquier string se descifraba por AES y JSON.parse materializaba el
+    // árbol completo en memoria sin tope (amplificación memoria/CPU/DB sin
+    // cota; ver justificación del límite en api-schemas.ts).
+    const validated = walletImportTrmSchema.safeParse(body);
+    if (!validated.success) {
+      const tooBig = validated.error.issues.some(i => i.code === 'too_big');
+      return NextResponse.json(zodError(validated.error), { status: tooBig ? 413 : 400 });
+    }
+    const { content } = validated.data;
 
     logger.info('WALLET', `TRM import by ${session.user.id}, size: ${content.length}`);
 
