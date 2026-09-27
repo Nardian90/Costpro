@@ -1,29 +1,32 @@
 import { test, expect } from '@playwright/test';
-import { getAuthHeaders } from './fixtures/auth.fixture';
+import { freshAuthHeaders } from './fixtures/auth.fixture';
 import { MINIMAL_COST_SHEET, GOAL_SEEK_SHEET } from './fixtures/cost-sheet.fixture';
 
 test.describe('Cost Engine', () => {
   test('calculates minimal sheet correctly', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('user');
     if (!headers) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
     }
 
+    // FIX (FASE E2E-80): el body ES la ficha (FichaJSONSchema) — sin wrapper.
+    // Respuesta real: {ok, rows:[{total,...}]}
     const response = await request.post('/api/cost-sheets/calculate', {
       headers,
-      data: { ficha: MINIMAL_COST_SHEET }
+      data: MINIMAL_COST_SHEET
     });
 
     const body = await response.json();
-    expect(response.status()).toBe(200);
+    expect(response.status(), JSON.stringify(body).slice(0, 250)).toBe(200);
     expect(body.ok).toBe(true);
-    // 500 + 300 + 200 = 1000
-    expect(body.result.summary.grandTotal).toBeCloseTo(1000, 1);
+    // 500 + 300 + 200 = 1000 (suma de los totals de las filas)
+    const total = (body.rows || []).reduce((acc: number, r: any) => acc + (r.total ?? 0), 0);
+    expect(total).toBeCloseTo(1000, 1);
   });
 
   test('[BUG-002 BUG-003 REGRESSION] Goal Seek: solveForTarget finds correct value', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('user');
     if (!headers) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
@@ -44,7 +47,7 @@ test.describe('Cost Engine', () => {
   });
 
   test('calculates sheet with empty sections without throwing', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('user');
     if (!headers) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
@@ -60,7 +63,7 @@ test.describe('Cost Engine', () => {
   });
 
   test('rejects malformed JSON', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('user');
     if (!headers) { test.skip(true, 'Auth headers missing'); return; }
     const response = await request.post('/api/cost-sheets/calculate', {
       headers,
@@ -70,7 +73,7 @@ test.describe('Cost Engine', () => {
   });
 
   test('rejects sheet with missing required fields', async ({ request }) => {
-    const headers = getAuthHeaders('user');
+    const headers = await freshAuthHeaders('user');
     if (!headers) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
