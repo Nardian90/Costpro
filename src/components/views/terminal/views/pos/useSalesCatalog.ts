@@ -627,7 +627,9 @@ export function useSalesCatalog() {
   const handleClearAll = useCallback(() => {
     setRows(new Map());
     setImportWarnings([]);
-    toast.success('Tabla IPV limpiada');
+    // F4 (IA-F12b): "Tabla de Venta" — label vigente de la vista (sales_catalog);
+    // "Tabla IPV" es el nombre pre-renombramiento.
+    toast.success('Tabla de Venta limpiada');
   }, []);
 
   // ── New IPV (reset after confirmed sale) ──

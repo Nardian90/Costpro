@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import ActionMenu from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
+import PageHeader from '@/components/ui/PageHeader'; // F4 (IA-F11): portador F2 de la jerarquía de página
 import { QueryInspector } from '@/components/ui/QueryInspector';
 import { cn } from '@/lib/utils';
 import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
@@ -91,38 +92,35 @@ export default function InventoryCountView() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-0 pb-20 sm:pb-0">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
-            <ClipboardList className="w-7 h-7 text-primary" />
-          </div>
-          <div>
-            {/* GATE 1.3: título alineado con el label de navegación (antes "Auditoría de Stock") */}
-            <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase leading-tight text-[clamp(1.5rem,5vw,2rem)] font-black uppercase tracking-tighter text-primary"> Venta por Conteo </h2>
-            <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">
-              {samplePercentage}% de la muestra ({countedProductIds.size === 0 ? allProducts.length : countedProductIds.size} de {allProducts.length} productos)
-            </p>
-          </div>
-        </div>
-        {!isMobile && (
-          <ActionMenu
-            actions={[
-              {
-                id: 'toggle-layout',
-                label: layoutMode === 'table' ? 'Tarjetas' : 'Tabla',
-                icon: layoutMode === 'table' ? LayoutGrid : List,
-                onClick: () => setLayoutMode(prev => prev === 'table' ? 'card' : 'table'),
-                variant: 'outline',
-                className: 'hidden sm:flex'
-              },
-              { id: 'reset-count', label: 'Conteo Total', icon: RotateCcw, onClick: resetCountToAll, variant: 'outline', className: 'hidden sm:flex' },
-              { id: 'export', label: 'Exportar Excel', icon: Download, onClick: handleExportExcel, variant: 'outline' },
-              { id: 'submit', label: 'Finalizar', icon: Check, onClick: handleInitialSubmit, variant: 'primary', disabled: loading }
-            ]}
-            className="sm:w-auto"
-          />
-        )}
-      </div>
+      {/* F4 (IA-F11): encabezado migrado a PageHeader (F2) — jerarquía canónica
+          título → descripción dinámica → acciones. Corrige además el h2 con
+          clases duplicadas en conflicto (text-foreground + text-primary,
+          font-black ×2, uppercase ×2). Título 1:1 "Venta por Conteo". */}
+      <PageHeader
+        title="Venta por Conteo"
+        description={`${samplePercentage}% de la muestra (${countedProductIds.size === 0 ? allProducts.length : countedProductIds.size} de ${allProducts.length} productos)`}
+        icon={ClipboardList}
+        secondaryActions={
+          !isMobile ? (
+            <ActionMenu
+              actions={[
+                {
+                  id: 'toggle-layout',
+                  label: layoutMode === 'table' ? 'Tarjetas' : 'Tabla',
+                  icon: layoutMode === 'table' ? LayoutGrid : List,
+                  onClick: () => setLayoutMode(prev => prev === 'table' ? 'card' : 'table'),
+                  variant: 'outline',
+                  className: 'hidden sm:flex'
+                },
+                { id: 'reset-count', label: 'Conteo Total', icon: RotateCcw, onClick: resetCountToAll, variant: 'outline', className: 'hidden sm:flex' },
+                { id: 'export', label: 'Exportar Excel', icon: Download, onClick: handleExportExcel, variant: 'outline' },
+                { id: 'submit', label: 'Finalizar', icon: Check, onClick: handleInitialSubmit, variant: 'primary', disabled: loading }
+              ]}
+              className="sm:w-auto"
+            />
+          ) : undefined
+        }
+      />
 
       <QueryInspector />
 

@@ -971,10 +971,17 @@ export const ACTION_EXTENSIONS: (NavEntry & { route: NavRoute })[] = [
  */
 export const TECHNICAL_VIEW_IDS: string[] = [
   // FASE B: 'news' ya no es vista técnica — es hoja de menú de ANÁLISIS.
+  // F4 (higiene IA): 'sales', 'inventory_count', 'devolutions', 'quotations',
+  // 'accounts-payable' y 'ofertas' se retiran de esta lista — son entradas de
+  // ACTION_EXTENSIONS (palette, GATE 1.3) y la doble clasificación era
+  // documentación contradictoria ("sin entrada de navegación" vs "descubribles
+  // en palette"). Sin efecto runtime: TECHNICAL_VIEW_IDS no tiene consumidor
+  // de ejecución; el guard de roles es default-open (sidebar.structure.ts:78).
   'stores', 'catalog', 'history', 'lots', 'warehouses',
-  'customers', 'bank-reconciliation', 'cash_report', 'devolutions', 'quotations',
-  'sales_catalog', 'sales', 'inventory_count', 'accounts_payable', 'accounts-payable',
-  'accounts_receivable', 'ofertas', 'punto_venta', 'analitica',
+  'customers', 'bank-reconciliation', 'cash_report',
+  'sales_catalog',
+  'accounts_payable',
+  'accounts_receivable', 'punto_venta', 'analitica',
   'cost_views', 'cost_gen', 'cost_templates', 'cost_tools',
   'ipv_reporting', 'ipv_operaciones', 'ipv_datos', 'ipv_procesamiento', 'ipv_avanzado',
   'ipv_module', 'costos', 'tienda', 'otros', 'administracion', 'recursos', 'core', 'core_tools',
@@ -1242,6 +1249,7 @@ export const VALID_VIEWS: Set<string> = new Set([
   'ipv_reporting', 'ipv_operaciones', 'ipv_datos', 'ipv_procesamiento', 'ipv_avanzado',
   'cost_views', 'cost_gen', 'cost_templates', 'cost_tools',
   'costos', 'tienda', 'ipv_module', 'otros', 'administracion', 'recursos',
+  'costo', // F4 (higiene IA): ViewType real (case SectionHubView) que faltaba aquí
   // Secciones/hubs nuevos de la arquitectura GATE 1
   'operacion', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
 ]);

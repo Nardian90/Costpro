@@ -489,7 +489,10 @@ const CostSheetView = () => {
   }
 
   if (!hasHydrated || !data || !data.header || !data.annexes || !data.sections) {
-    return <ViewLoadingSplash label="Tablero Principal" showTips />;
+    // F4 (IA-F09): label de splash alineado al nombre vigente del módulo.
+    // "Tablero Principal" fue retirado por GATE 1.4R.1 (hoy: tab "Experto");
+    // el splash nombraba una vista que ya no existe en la arquitectura.
+    return <ViewLoadingSplash label="Fichas de Costo" showTips />;
   }
 
   return (
