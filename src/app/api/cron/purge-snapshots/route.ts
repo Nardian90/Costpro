@@ -4,20 +4,27 @@
  * V1.1: Purge automático de store_reset_snapshots >30 días.
  * Diseñado para ejecutarse diariamente via Vercel Cron o cron externo.
  *
- * Autorización: requiere CRON_SECRET header (configurable) o Bearer token admin.
- * Esto previene acceso público al endpoint.
+ * Autorización (SEC-TS-05 · fail-closed): helper canónico cron-auth —
+ * JWT x-vercel-signature (Vercel Cron automático, requiere
+ * VERCEL_PROJECT_ID) o Authorization: Bearer CRON_SECRET (manual/local;
+ * Vercel lo envía automáticamente cuando CRON_SECRET está configurado en
+ * el proyecto). Sin ninguno de los dos, el endpoint rechaza con 401 —
+ * NUNCA autoriza por omisión.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { withTracing } from '@/lib/observability';
 import { logger } from '@/lib/logger';
+import { verifyCronAuthorization } from '@/lib/cron-auth';
 
 async function handler(req: NextRequest) {
-  // Autorización: CRON_SECRET header o admin bearer token
-  const cronSecret = req.headers.get('x-cron-secret');
-  const expectedSecret = process.env.CRON_SECRET;
-
-  if (expectedSecret && cronSecret !== expectedSecret) {
+  // SEC-TS-05: el chequeo condicional x-cron-secret (fail-open — CRON_SECRET
+  // ausente dejaba el endpoint sin autenticación, y Vercel nunca envía ese
+  // header) se reemplaza por el helper estándar del repo (cron-auth, patrón
+  // FIX C5+C6 de cron/usage-sync, cron/exchange-rates y
+  // {telegram,whatsapp}-auto-publish). CRON_SECRET ausente → 401.
+  const auth = await verifyCronAuthorization(req);
+  if (!auth.authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
