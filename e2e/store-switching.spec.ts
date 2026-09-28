@@ -17,8 +17,34 @@
  * - At least 2 active stores in the test database
  */
 import { test, expect, waitForStoresView } from './fixtures';
+import { sb } from './fixtures/session.fixture';
 
 // ── 1. DASHBOARD SWITCHING ──────────────────────────────────────────
+
+// SEC-TS-08 (aislamiento): el test 'clicking activate' cambia el
+// active_store del usuario E2E a la primera tienda activable — que puede
+// ser una tienda REAL (Puerto Padre / Enervida). Se captura el valor
+// ORIGINAL antes de la suite y se restaura en afterAll: el perfil no
+// queda apuntando a una tienda elegida por un test.
+let switchingOriginalActiveStore: string | null | undefined;
+let switchingAdminId: string | null = null;
+
+test.beforeAll(async () => {
+  const uid = process.env.E2E_TEST_ADMIN_ID;
+  if (!uid || !process.env.SUPABASE_SERVICE_ROLE_KEY) return;
+  switchingAdminId = uid;
+  try {
+    const rows = await sb.select<{ active_store_id: string | null }>(
+      'profiles', `id=eq.${uid}&select=active_store_id&limit=1`,
+    );
+    switchingOriginalActiveStore = rows[0]?.active_store_id ?? null;
+  } catch { /* sin service-role disponible — sin restore */ }
+});
+
+test.afterAll(async () => {
+  if (!switchingAdminId || switchingOriginalActiveStore === undefined) return;
+  await sb.update('profiles', `id=eq.${switchingAdminId}`, { active_store_id: switchingOriginalActiveStore }).catch(() => {});
+});
 
 test.describe('Store Switching: Dashboard UI', () => {
   test('admin sees multi-store dashboard with KPI cards', async ({ authedPage: page }) => {

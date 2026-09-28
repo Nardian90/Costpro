@@ -107,7 +107,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     expect(Array.isArray(body.data)).toBe(true);
   });
 
-  test('1.2 GET /api/stores includes Tienda Central Costpro', async ({ request }) => {
+  test('1.2 GET /api/stores includes PILOT STORE A (SEC-TS-08: entorno piloto)', async ({ request }) => {
     const response = await request.get('/api/stores', { headers });
     expect(response.status()).toBe(200);
 
@@ -603,13 +603,15 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     expect(hasCards || hasEmpty).toBe(true);
   });
 
-  test('12.2 UI: Tienda Central Costpro card is visible', async ({ page }) => {
+  test('12.2 UI: PILOT STORE A card is visible (SEC-TS-08)', async ({ page }) => {
     await page.goto('/?view=stores');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
+    // SEC-TS-08: se verifica la tarjeta de la tienda PILOT dedicada —
+    // 'Tienda Central Costpro' (real) queda fuera del banco de pruebas E2E
     const pilotCard = page.locator('[role="article"], .store-card, [data-store-card]').filter({
-      hasText: /tienda central costpro/i,
+      hasText: /e2e pilot a costpro/i,
     }).first();
 
     const visible = await pilotCard.isVisible({ timeout: 10000 }).catch(() => false);

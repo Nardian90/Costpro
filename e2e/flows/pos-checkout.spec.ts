@@ -82,8 +82,11 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
       cost: SALE_COST,
       quantity: INITIAL_STOCK,
     });
-    // Producto de otra tienda para E2E-POS-007
-    foreignProductId = process.env.E2E_TEST_PRODUCT_ID || '';
+    // SEC-TS-08: producto de OTRA tienda para E2E-POS-007 — usa el producto
+    // de referencia de PILOT STORE B (dedicado), no un producto real de una
+    // tienda operativa. E2E_TEST_PRODUCT_ID (A) queda reservado para la
+    // tienda activa de los specs legacy.
+    foreignProductId = process.env.E2E_TEST_FOREIGN_PRODUCT_ID || '';
   });
 
   test('E2E-POS-001 (P0) venta cash exitosa registra transacción, items y descuenta stock', async ({ request }) => {

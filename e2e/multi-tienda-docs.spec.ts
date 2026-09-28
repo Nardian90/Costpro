@@ -9,15 +9,22 @@
  * Estos tests requieren que el servidor esté corriendo en localhost:3000
  * y usan autenticación real via Supabase.
  *
+ * SEC-TS-08 (aislamiento): la sesión se toma del entorno piloto (admin E2E)
+ * y el active_store se apunta a PILOT STORE A antes de la suite, restaurando
+ * el valor original al terminar — las vistas NO se sirven sobre tiendas
+ * reales (Enervida/Puerto Padre) como banco de pruebas.
+ *
  * Ejecutar: npx playwright test e2e/multi-tienda-docs.spec.ts
  */
 
 import { test, expect, type Page } from '@playwright/test';
+import { signIn, injectSession, sb, BASE_URL } from './fixtures/session.fixture';
 
-// Credenciales de test
-const TEST_EMAIL = 'admin@demo.com';
-const TEST_PASSWORD = 'demo123';
-const BASE_URL = 'http://localhost:3000';
+// SEC-TS-08: usuario E2E del entorno piloto (credenciales piloto existentes,
+// fuera del alcance de esta fase — ver A1). admin@demo.com queda retirado de
+// este spec porque sus tiendas activas (Enervida/Puerto Padre) son REALES.
+const TEST_EMAIL = process.env.E2E_ADMIN_EMAIL || 'admin@costpro.com';
+const TEST_PASSWORD = process.env.E2E_ADMIN_PASS || 'costpro123';
 
 /**
  * Helper: hacer login via UI.
@@ -62,9 +69,53 @@ async function getOperationDateBadge(page: Page): Promise<string | null> {
 
 // ─── TEST SUITE ────────────────────────────────────────────
 
+// SEC-TS-08: sesión compartida por ambos bloques (module scope) — se apunta
+// el active_store del usuario E2E a PILOT STORE A durante toda la suite (las
+// vistas de inventario/recepciones/transferencias se sirven sobre el entorno
+// piloto, no sobre tiendas reales) y se restaura el valor ORIGINAL en afterAll.
+// Pilot-env es fail-closed: sin provisioning el global-setup ya abortó.
+let adminSession: { token: string; userId: string; email: string } | null = null;
+let originalActiveStore: string | null | undefined;
+
+async function switchActiveStoreToPilotA(userId: string): Promise<void> {
+  const PILOT_A = process.env.E2E_PILOT_STORE_A;
+  if (!PILOT_A || !userId) return;
+  const rows = await sb.select<{ active_store_id: string | null }>('profiles', `id=eq.${userId}&select=active_store_id&limit=1`);
+  originalActiveStore = rows[0]?.active_store_id ?? null;
+  if (originalActiveStore !== PILOT_A) {
+    await sb.update('profiles', `id=eq.${userId}`, { active_store_id: PILOT_A }).catch(() => {});
+  }
+}
+
+async function restoreOriginalActiveStore(userId: string): Promise<void> {
+  if (originalActiveStore === undefined || !userId) return;
+  await sb.update('profiles', `id=eq.${userId}`, { active_store_id: originalActiveStore }).catch(() => {});
+}
+
 test.describe('MULTI-TIENDA — Flujos de documentos', () => {
+
+  test.beforeAll(async () => {
+    // SEC-TS-08: sesión E2E (piloto) + active_store → PILOT A
+    try {
+      adminSession = await signIn(TEST_EMAIL, TEST_PASSWORD);
+      await switchActiveStoreToPilotA(adminSession.userId);
+    } catch {
+      adminSession = null; // los tests usan el helper login() UI como fallback
+    }
+  });
+
+  test.afterAll(async () => {
+    if (adminSession) await restoreOriginalActiveStore(adminSession.userId);
+  });
+
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    // SEC-TS-08: sesión inyectada (patrón validado E2E-80) — el login UI
+    // frágil queda como fallback si la sesión no está disponible
+    if (adminSession) {
+      await injectSession(page, adminSession);
+    } else {
+      await login(page);
+    }
   });
 
   test('Dashboard KPI carga y muestra badge de Fecha de Operación', async ({ page }) => {
@@ -83,23 +134,8 @@ test.describe('MULTI-TIENDA — Flujos de documentos', () => {
 
   test('Vista de Tiendas carga correctamente', async ({ page }) => {
     // FIX (FASE E2E-80): la vista /?view=stores requiere sesión — sin login
-    // renderiza el landing público. El helper login() UI es frágil bajo carga
-    // del dev server → inyección directa de sesión real (patrón validado).
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: TEST_EMAIL, password: TEST_PASSWORD }),
-    });
-    const auth = await res.json();
-    const projectRef = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').match(/https?:\/\/([a-z0-9]+)\.supabase\.co/)?.[1] || '';
-    await page.addInitScript(([key, val]: any) => window.localStorage.setItem(key, val), [
-      `sb-${projectRef}-auth-token`,
-      JSON.stringify({
-        access_token: auth.access_token, token_type: 'bearer', expires_in: 3600,
-        expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'mock-refresh',
-        user: { id: auth.user.id, email: TEST_EMAIL },
-      }),
-    ]);
+    // renderiza el landing público. SEC-TS-08: la sesión ya viene inyectada
+    // por beforeEach (admin E2E del entorno piloto, active_store = PILOT A).
     await page.goto(`${BASE_URL}/?view=stores`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
 
@@ -210,7 +246,13 @@ test.describe('MULTI-TIENDA — Flujos de documentos', () => {
 
 test.describe('MULTI-TIENDA — Política Forward-Only (validación UI)', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    // SEC-TS-08: misma sesión del entorno piloto (active_store = PILOT A,
+    // restaurado en afterAll del bloque anterior)
+    if (adminSession) {
+      await injectSession(page, adminSession);
+    } else {
+      await login(page);
+    }
   });
 
   test('Selector de fecha en Tabla IPV respeta min date', async ({ page }) => {

@@ -11,24 +11,58 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { signIn, injectSession, sb, BASE_URL, ADMIN_EMAIL, ADMIN_PASS } from './fixtures/session.fixture';
 
-const TEST_EMAIL = 'admin@demo.com';
-const TEST_PASSWORD = 'demo123';
-const BASE_URL = 'http://localhost:3000';
+// SEC-TS-08 (aislamiento): sesión E2E del entorno piloto (admin@costpro.com)
+// en vez de admin@demo.com (sus tiendas activas Enervida/Puerto Padre son
+// REALES). La tienda creada usa prefijo 'E2E Autoswitch *' → cubierta por la
+// higiene E2E-80 ('E2E *') si el cleanup no llega a ejecutarse.
+let adminSession: { token: string; userId: string; email: string } | null = null;
+let originalActiveStore: string | null | undefined;
+const RUN_TS = Date.now().toString(36);
 
 test.describe('Flujo crear tienda → auto-switch', () => {
-  test.beforeEach(async ({ page }) => {
-    // Login
-    await page.goto(BASE_URL);
-    await page.waitForLoadState('networkidle');
+  test.beforeAll(async () => {
+    // SEC-TS-08: sesión E2E (piloto) + captura del active_store original
+    try {
+      adminSession = await signIn(ADMIN_EMAIL, ADMIN_PASS);
+      const rows = await sb.select<{ active_store_id: string | null }>(
+        'profiles', `id=eq.${adminSession.userId}&select=active_store_id&limit=1`,
+      );
+      originalActiveStore = rows[0]?.active_store_id ?? null;
+    } catch {
+      adminSession = null;
+    }
+  });
 
-    // Si hay formulario de login, llenarlo
-    const emailInput = page.locator('input[type="email"], input[name="email"]').first();
-    if (await emailInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await emailInput.fill(TEST_EMAIL);
-      await page.locator('input[type="password"], input[name="password"]').first().fill(TEST_PASSWORD);
-      await page.locator('button[type="submit"], button:has-text("Entrar"), button:has-text("Login")').first().click();
+  test.afterAll(async () => {
+    // Cleanup SEC-TS-08: archivar las tiendas de prueba de ESTE spec (prefijo
+    // exclusivo propio) y restaurar el active_store original del usuario E2E.
+    if (!adminSession) return;
+    const oneMinAgo = new Date(Date.now() - 60_000).toISOString();
+    await sb.update('stores', `name=like.E2E%20Autoswitch%20*&created_at=lt.${oneMinAgo}`, { is_active: false, is_archived: true }).catch(() => {});
+    if (originalActiveStore !== undefined) {
+      await sb.update('profiles', `id=eq.${adminSession.userId}`, { active_store_id: originalActiveStore }).catch(() => {});
+    }
+  });
+
+  test.beforeEach(async ({ page }) => {
+    if (adminSession) {
+      // SEC-TS-08: sesión inyectada del entorno piloto (patrón E2E-80)
+      await injectSession(page, adminSession);
+    } else {
+      // Fallback: login UI (patrón frágil original)
+      await page.goto(BASE_URL);
       await page.waitForLoadState('networkidle');
+
+      // Si hay formulario de login, llenarlo
+      const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+      if (await emailInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await emailInput.fill(ADMIN_EMAIL);
+        await page.locator('input[type="password"], input[name="password"]').first().fill(ADMIN_PASS);
+        await page.locator('button[type="submit"], button:has-text("Entrar"), button:has-text("Login")').first().click();
+        await page.waitForLoadState('networkidle');
+      }
     }
   });
 
@@ -56,7 +90,9 @@ test.describe('Flujo crear tienda → auto-switch', () => {
       // Llenar el formulario de creación rápida
       const nameInput = page.locator('input[placeholder*="nombre" i], input[name="name"]').first();
       if (await nameInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-        const testName = `Test E2E ${Date.now()}`;
+        // SEC-TS-08: prefijo 'E2E Autoswitch *' — tienda de prueba identificable,
+        // cubierta por la higiene E2E-80 ('E2E *') ante fallos de cleanup
+        const testName = `E2E Autoswitch ${RUN_TS}`;
         await nameInput.fill(testName);
 
         // Esperar a que se autogenere el slug
