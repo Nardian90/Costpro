@@ -27,6 +27,16 @@ import EditProductModal from '@/components/views/terminal/views/catalog/EditProd
 import type { EditFormState, EditVariant } from '@/components/views/terminal/views/catalog/EditProductModal';
 import { ProductImageViewerModal } from '@/components/views/terminal/views/catalog/ProductImageViewerModal';
 import DeleteProductDialog from '@/components/views/terminal/views/catalog/DeleteProductDialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import BulkSelectionBar from '@/components/views/terminal/views/catalog/BulkSelectionBar';
 import { useProductFCStatus } from '@/hooks/ui/useProductFCStatus';
 import { FCPreviewModal } from '@/components/ui/FCPreviewModal';
@@ -615,8 +625,11 @@ export default function CatalogView() {
     setSelectedIds(new Set());
   }, [selectedIds, filteredProducts, toggleActiveMutation]);
 
-  // CM-2.8: Bulk delete
-  const handleBulkDelete = useCallback(async () => {
+  // CM-2.8: Bulk delete — F3-B6: confirmación con AlertDialog canónico (antes confirm nativo).
+  // La validación de elegibilidad ocurre al PEDIR la confirmación; la ejecución, al confirmar.
+  const [bulkDeleteInfo, setBulkDeleteInfo] = useState<{ count: number; ids: string[] } | null>(null);
+
+  const requestBulkDelete = useCallback(() => {
     if (selectedIds.size === 0) return;
     const ids = Array.from(selectedIds);
     const productsToDelete = filteredProducts.filter(p => ids.includes(p.id) && !p.has_movements);
@@ -624,13 +637,18 @@ export default function CatalogView() {
       toast.warning('Los productos seleccionados tienen movimientos y no se pueden eliminar');
       return;
     }
-    if (!confirm(`¿Eliminar ${productsToDelete.length} producto(s)? Esta acción es irreversible.`)) return;
+    setBulkDeleteInfo({ count: productsToDelete.length, ids: productsToDelete.map(p => p.id) });
+  }, [selectedIds, filteredProducts]);
+
+  const handleBulkDelete = useCallback(async () => {
+    if (!bulkDeleteInfo) return;
+    setBulkDeleteInfo(null);
     await Promise.all(
-      productsToDelete.map(p => deleteProductMutation.mutateAsync(p.id))
+      bulkDeleteInfo.ids.map(id => deleteProductMutation.mutateAsync(id))
     );
-    toast.success(`${productsToDelete.length} producto(s) eliminado(s)`);
+    toast.success(`${bulkDeleteInfo.ids.length} producto(s) eliminado(s)`);
     setSelectedIds(new Set());
-  }, [selectedIds, filteredProducts, deleteProductMutation]);
+  }, [bulkDeleteInfo, deleteProductMutation]);
 
   // CM-4.6: Bulk asignar categoría
   const handleBulkAssignCategory = useCallback(async (category: string) => {
@@ -716,6 +734,24 @@ export default function CatalogView() {
     setSavedFilters(next);
     localStorage.setItem('catalog_savedFilters', JSON.stringify(next));
   }, [savedFilters]);
+
+  // F3-B3: distinguir catálogo realmente vacío de catálogo sin resultados por filtros.
+  const hasActiveCatalogFilters = !!(
+    searchTerm ||
+    selectedCategories.size > 0 ||
+    stockFilter !== 'all' ||
+    activeFilter !== 'all' ||
+    showIncompleteOnly ||
+    fcFilter !== 'all'
+  );
+  const handleClearCatalogFilters = useCallback(() => {
+    setSearchTerm('');
+    setSelectedCategories(new Set());
+    setStockFilter('all');
+    setActiveFilter('all');
+    setShowIncompleteOnly(false);
+    setFcFilter('all');
+  }, []);
 
   // --- Image Handlers for Edit Modal ---
   const handleEditImageSelect = useCallback(async (file: File) => {
@@ -1054,6 +1090,9 @@ export default function CatalogView() {
         products={filteredProducts}
         isLoading={v2IsLoading}
         error={v2Error as Error | null}
+        onRetry={layoutMode === 'grid' ? (catalogInfinite.refetch as () => void) : (catalogPage.refetch as () => void)}
+        hasActiveFilters={hasActiveCatalogFilters}
+        onClearFilters={handleClearCatalogFilters}
         selectedIds={selectedIds}
         isAllSelected={isAllSelected}
         onToggleSelect={toggleSelect}
@@ -1080,7 +1119,7 @@ export default function CatalogView() {
         onBulkDeactivate={handleBulkDeactivate}
         onCancel={() => setSelectedIds(new Set())}
         onBulkGenerateFC={handleBulkGenerateFC}
-        onBulkDelete={handleBulkDelete}
+        onBulkDelete={requestBulkDelete}
         onBulkActivate={handleBulkActivate}
         // CM-4.6 + CM-4.7: Bulk asignar categoría + visibilidad
         onBulkAssignCategory={handleBulkAssignCategory}
@@ -1167,6 +1206,28 @@ export default function CatalogView() {
         onConfirm={handleConfirmDelete}
         isPending={deleteProductMutation.isPending}
       />
+
+      {/* F3-B6: confirmación de borrado masivo con AlertDialog canónico (antes confirm nativo) */}
+      <AlertDialog open={!!bulkDeleteInfo} onOpenChange={(open) => { if (!open) setBulkDeleteInfo(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar {bulkDeleteInfo?.count} producto(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción es <strong>irreversible</strong>. Los productos seleccionados se eliminarán permanentemente del catálogo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteProductMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={deleteProductMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteProductMutation.isPending ? 'Eliminando...' : 'Eliminar todo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Excel Import Dialog */}
       <CatalogImportDialog open={isImportDialogOpen} onOpenChange={(open) => { if (!open) handleCloseImport(); }} onImportSuccess={invalidateAndRefetch} />

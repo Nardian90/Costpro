@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { RefreshCcw, Loader2, AlertTriangle, X } from 'lucide-react';
 import { cn, touch } from '@/lib/utils';
 import { useReverseDocument, type ReversibleDocType } from '@/hooks/api/useReverseDocument';
+import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 
 /**
  * ReverseDocumentModal — Modal UNIFICADO para revertir cualquier documento contable.
@@ -62,6 +63,22 @@ export function ReverseDocumentModal({
   const [reason, setReason] = useState('');
   const reverseMutation = useReverseDocument();
 
+  // F3-B4: focus trap + Escape + restauración de foco (overlay manual, sin Radix).
+  // No se cierra con Escape mientras la reversión está en curso.
+  const trapRef = useFocusTrap(isOpen, () => {
+    if (!reverseMutation.isPending) onClose();
+  });
+
+  // F3-B4: scroll lock del body mientras el overlay está abierto
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   // Reset al abrir
   useEffect(() => {
     if (isOpen) {
@@ -89,6 +106,7 @@ export function ReverseDocumentModal({
 
   return (
     <div
+      ref={trapRef}
       className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
       onClick={onClose}
       role="dialog"
@@ -149,13 +167,16 @@ export function ReverseDocumentModal({
               onChange={(e) => setReason(e.target.value)}
               placeholder="Ej: Error en el registro de la venta, cliente devolvió mercancía..."
               rows={3}
+              /* F3-B4: el foco inicial lo gestiona useFocusTrap vía [data-autofocus],
+                 DESPUÉS de capturar el foco previo — un autoFocus nativo enfocaría
+                 durante el commit y contaminaría la restauración al cerrar. */
+              data-autofocus
               className={cn(
                 'w-full mt-1 px-3 py-2 rounded-xl border border-border bg-background text-sm resize-none',
                 'focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50',
                 touch,
               )}
               maxLength={500}
-              autoFocus
             />
             <p className="text-[10px] text-muted-foreground mt-1 text-right">
               {reason.length}/500 caracteres (mínimo 3)

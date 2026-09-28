@@ -72,6 +72,8 @@ function DashboardViewImpl() {
     summary,
     kpis,
     isLoading,
+    dashboardError,
+    refetchDashboard,
     timeRange,
     setTimeRange,
     selectedDate,
@@ -141,7 +143,8 @@ function DashboardViewImpl() {
 
       <StateRenderer
         isLoading={isLoading || isLoadingProducts}
-        error={productsError}
+        error={dashboardError ?? productsError}
+        onRetry={dashboardError ? refetchDashboard : undefined}
         data={summary && kpis ? [{ kpis, summary }] : []}
       >
         {(data) => {

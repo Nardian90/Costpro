@@ -302,6 +302,7 @@ export default function TransferenciasView() {
         <StateRenderer
           isLoading={currentQuery.isLoading}
           error={currentQuery.error as Error}
+          onRetry={() => currentQuery.refetch()}
           data={allTransfers}
           emptyComponent={
             <div className="py-24 text-center neu-card bg-white/2 space-y-4">

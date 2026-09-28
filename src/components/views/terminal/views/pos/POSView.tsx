@@ -137,7 +137,7 @@ export default function POSView() {
     setLastSale,
   } = usePOSCheckout();
 
-  const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProducts(user?.activeStoreId);
+  const { data: productsData, isLoading: isLoadingProducts, error: productsError, refetch: refetchProducts } = useProducts(user?.activeStoreId);
   const products = (productsData || []) as Product[];
 
   // POS-3b EM-2: Server-side search paginado (híbrido client).
@@ -697,6 +697,7 @@ export default function POSView() {
             <StateRenderer
               isLoading={isLoadingProducts}
               error={productsError as Error}
+              onRetry={refetchProducts as () => void}
               data={filteredProducts}
               emptyComponent={<EmptyProducts onClearSearch={searchTerm ? () => setSearchTerm('') : undefined} />}
               loadingComponent={<POSLoadingSkeleton layoutMode={posLayoutMode} />}

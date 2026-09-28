@@ -166,6 +166,7 @@ export default function SalesHistoryView() {
     selectedTransaction,
     transactions, totalFilteredCount,
     isLoading, stats,
+    transactionsError, refetchTransactions,
     page, setPage, totalPages,
     handleViewDetails, handleCloseDetails,
     transactionItems, loadingDetails,
@@ -404,7 +405,8 @@ export default function SalesHistoryView() {
         {activeTab === 'detalle' && (
         <StateRenderer
           isLoading={isLoading}
-          error={null}
+          error={transactionsError}
+          onRetry={refetchTransactions}
           data={transactions}
           loadingComponent={<SalesLoadingSkeleton />}
           emptyComponent={

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Copy, Loader2, AlertTriangle, X } from 'lucide-react';
 import { cn, touch } from '@/lib/utils';
 import { useDuplicateDocumentV2, type DuplicableDocType } from '@/hooks/api/useDuplicateDocumentV2';
+import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 
 /**
  * DuplicateDocumentModal — Modal UNIFICADO de confirmación para duplicar documentos.
@@ -81,6 +82,21 @@ export function DuplicateDocumentModal({
 }: DuplicateDocumentModalProps) {
   const duplicateMutation = useDuplicateDocumentV2();
 
+  // F3-B4: focus trap + Escape + restauración de foco (overlay manual, sin Radix).
+  const trapRef = useFocusTrap(isOpen, () => {
+    if (!duplicateMutation.isPending) onClose();
+  });
+
+  // F3-B4: scroll lock del body mientras el overlay está abierto
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen) {
       duplicateMutation.reset();
@@ -104,6 +120,7 @@ export function DuplicateDocumentModal({
 
   return (
     <div
+      ref={trapRef}
       className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
       onClick={onClose}
       role="dialog"

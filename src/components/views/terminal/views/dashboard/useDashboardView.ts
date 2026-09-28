@@ -38,7 +38,9 @@ export function useDashboardView() {
     };
   }, [timeRange, selectedDate]);
 
-  const { data: dashboardData, isLoading: isLoadingData } = useDashboardData(
+  // F3-B1: exponer error de KPIs — antes solo se pasaba productsError y los fallos
+  // del dashboard quedaban invisibles (KPIs vacíos parecían datos reales).
+  const { data: dashboardData, isLoading: isLoadingData, error: dashboardError, refetch: refetchDashboard } = useDashboardData(
     user?.activeStoreId,
     user?.role === 'admin',
     dateFrom,
@@ -47,6 +49,8 @@ export function useDashboardView() {
 
   return {
     isLoading: isLoadingData,
+    dashboardError: dashboardError ?? null,
+    refetchDashboard,
     summary: dashboardData?.summary,
     kpis: dashboardData?.kpis,
     timeRange,

@@ -33,7 +33,8 @@ export function useReceptionsHistoryView() {
   const duplicateDocumentMutation = useDuplicateDocumentV2();
 
   // Data Fetching
-  const { data: receptions = [], isLoading } = useReceptions(user?.activeStoreId);
+  // F3-B1: exponer error + refetch — antes los errores de red se tragaban (error={null} en la vista).
+  const { data: receptions = [], isLoading, error: receptionsError, refetch: refetchReceptions } = useReceptions(user?.activeStoreId);
 
   const filteredReceipts = useMemo(() => {
     return receptions.filter((r: any) => {
@@ -281,9 +282,20 @@ export function useReceptionsHistoryView() {
     dateTo,
     setDateTo,
 
+    // F3-B3: distinción empty real vs empty filtrado + limpieza de filtros
+    hasActiveFilters: !!(searchTerm || selectedStatus || dateFrom || dateTo),
+    handleClearFilters: () => {
+      setSearchTerm('');
+      setSelectedStatus('');
+      setDateFrom('');
+      setDateTo('');
+    },
+
     // Data
     receptions: filteredReceipts,
     isLoading,
+    receptionsError: receptionsError ?? null,
+    refetchReceptions,
 
     // Modal State & Data
     selectedReceipt,

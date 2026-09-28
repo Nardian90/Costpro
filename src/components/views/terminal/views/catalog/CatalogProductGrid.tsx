@@ -21,6 +21,11 @@ interface CatalogProductGridProps {
   products: Product[];
   isLoading: boolean;
   error: Error | null;
+  /** F3-B2: reintento suave del fetch de productos (refetch) */
+  onRetry?: () => void;
+  /** F3-B3: hay filtros/búsqueda activos → vacío significa "sin resultados", no "catálogo vacío" */
+  hasActiveFilters?: boolean;
+  onClearFilters?: () => void;
   selectedIds: Set<string>;
   isAllSelected: boolean;
   onToggleSelect: (id: string) => void;
@@ -50,6 +55,9 @@ export default function CatalogProductGrid({
   products,
   isLoading,
   error,
+  onRetry,
+  hasActiveFilters,
+  onClearFilters,
   selectedIds,
   isAllSelected,
   onToggleSelect,
@@ -87,7 +95,42 @@ export default function CatalogProductGrid({
     <StateRenderer
       isLoading={isLoading}
       error={error}
+      onRetry={onRetry}
       data={products}
+      emptyComponent={
+        // F3-B3: la búsqueda es server-side — si hay filtros activos, vacío = "sin resultados",
+        // no "catálogo vacío" (el total del servidor ya viene filtrado).
+        hasActiveFilters ? (
+          <div className="text-center py-16 space-y-3">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-muted">
+              <Package className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-bold text-foreground">Sin resultados</p>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              No se encontraron productos con los filtros seleccionados. Intenta ajustar los criterios.
+            </p>
+            {onClearFilters && (
+              <button
+                type="button"
+                onClick={onClearFilters}
+                className="mt-3 px-4 py-2 text-xs font-bold uppercase border border-border rounded-lg hover:bg-muted transition-all"
+              >
+                Limpiar filtros
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-16 space-y-3">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-muted">
+              <Package className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-bold text-foreground">El catálogo está vacío</p>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              Los productos que registres aparecerán aquí.
+            </p>
+          </div>
+        )
+      }
       loadingComponent={
         <div className={cn(layoutMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-3")}>
           {[...Array(8)].map((_, i) => <Skeleton key={i} className={cn("rounded-2xl", layoutMode === 'grid' ? "h-64" : "h-16")} />)}

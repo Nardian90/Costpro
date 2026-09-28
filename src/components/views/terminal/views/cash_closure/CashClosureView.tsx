@@ -50,14 +50,18 @@ export default function CashClosureView() {
     data: cashClosuresData,
     isLoading: isLoadingClosures,
     refetch: refetchClosures,
-    isRefetching: isRefetchingClosures
+    isRefetching: isRefetchingClosures,
+    // F3-B1: exponer errores de carga — antes no se desestructuraban y un fallo de red
+    // dejaba la vista en silencio (sin turno + $0 en resumen parecían datos reales).
+    error: closuresError,
   } = useCashClosures(user?.activeStoreId, user?.role === 'admin');
 
   const {
     data: salesData,
     isLoading: isLoadingSales,
     refetch: refetchSales,
-    isRefetching: isRefetchingSales
+    isRefetching: isRefetchingSales,
+    error: salesError,
   } = useSalesSinceLastClosure(user?.activeStoreId);
 
   const createClosure = useCreateCashClosure();
@@ -205,6 +209,10 @@ export default function CashClosureView() {
   const isProcessing = createClosure.isPending || updateClosure.isPending;
   const isRefreshing = isRefetchingClosures || isRefetchingSales;
   const isLoading = isLoadingClosures || isLoadingSales;
+  // F3-B1: error de carga solo bloquea si además no hay datos que mostrar;
+  // si hay datos stale, se muestran y el usuario puede refrescar como siempre.
+  const loadError = (closuresError ?? salesError) || null;
+  const showLoadError = !!loadError && !cashClosuresData;
 
   const handleRefresh = async () => {
     await Promise.all([refetchClosures(), refetchSales()]);
@@ -305,6 +313,25 @@ export default function CashClosureView() {
         {/* Loading skeleton */}
         {isLoading ? (
           <ClosureLoadingSkeleton />
+        ) : showLoadError ? (
+          /* F3-B1: error de carga con acción de reintento (antes quedaba en silencio) */
+          <div
+            role="alert"
+            className="flex flex-col items-center justify-center gap-4 text-center w-full bg-destructive/5 border border-destructive/20 rounded-2xl p-8"
+          >
+            <AlertTriangle className="w-8 h-8 text-destructive" aria-hidden="true" />
+            <p className="font-bold text-destructive">Error al cargar los datos de caja</p>
+            <p className="text-sm text-destructive/80 max-w-md">
+              {loadError instanceof Error ? loadError.message : 'No se pudieron cargar los datos. Verifica tu conexión e intenta nuevamente.'}
+            </p>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90"
+            >
+              Reintentar
+            </button>
+          </div>
         ) : (
           <>
             {/* ── EMPTY STATE: No hay turno abierto ── */}

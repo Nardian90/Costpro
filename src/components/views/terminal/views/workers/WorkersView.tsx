@@ -4,6 +4,16 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { UnifiedTabs } from '@/components/views/terminal/views/cost_sheet/UnifiedTabs';
 import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+import {
   Users,
   Calculator,
   Settings,
@@ -2722,13 +2732,16 @@ function RuleFormModal({
     }
   };
 
+  // F3-B6: confirmación con AlertDialog canónico (antes confirm nativo)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const handleDelete = async () => {
     if (!editingRule) return;
-    if (!confirm('¿Eliminar esta regla? Esta acción no se puede deshacer.')) return;
     setDeleting(true);
     try {
       await apiFetch(`/api/commissions/rules/${editingRule.id}`, { method: 'DELETE' });
       toast.success('Regla eliminada');
+      setShowDeleteConfirm(false);
       onSaved();
     } catch (e: any) {
       toast.error('Error: ' + e.message);
@@ -2760,7 +2773,7 @@ function RuleFormModal({
           <div>
             {editingRule && (
               <button
-                onClick={handleDelete}
+                onClick={() => setShowDeleteConfirm(true)}
                 disabled={deleting}
                 className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive border border-destructive/30 text-sm font-bold hover:bg-destructive/20 min-h-[44px]"
               >
@@ -3127,6 +3140,28 @@ function RuleFormModal({
             </div>
           </div>
       </div>
+
+      {/* F3-B6: confirmación de eliminación con AlertDialog canónico (antes confirm nativo) */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={(open) => { if (!open) setShowDeleteConfirm(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta regla de comisión?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Los cálculos dejarán de aplicar la regla “{RULE_TYPE_LABELS[form.type] || form.type}”.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Eliminando...' : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </BaseModal>
   );
 }
