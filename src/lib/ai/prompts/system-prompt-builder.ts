@@ -75,7 +75,7 @@ Cuando el usuario pregunte COMO hacer algo (ej: "como hago una venta", "como cam
 
 Vistas mas comunes y sus viewId:
 - Inicio (dashboard): dashboard
-- Vender (Terminal de Venta / POS): pos
+- Vender (POS): pos
 - Ventas (hub del ciclo comercial): sales-hub
 - Historial de Ventas: sales
 - Caja (arqueo y turnos): cash

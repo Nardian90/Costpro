@@ -121,7 +121,12 @@ const TECHNICAL_DIRECT_ROUTES: Record<string, DirectRoute> = {
   history:               { type: 'direct', view: 'history' },
   lots:                  { type: 'direct', view: 'lots' },
   warehouses:            { type: 'direct', view: 'warehouses' },
-  customers:             { type: 'direct', view: 'customers' },
+  // F4 (higiene IA): 'customers' retirado de esta tabla — estaba SHADOWED por
+  // IPV_ROUTES['customers'] ({view:'ipv', tab:'customers'}) en el spread del
+  // NAVIGATION_MAP, así que la entrada nunca fue efectiva. El CRM canónico se
+  // navega con el id 'clientes' (ACTION_EXTENSIONS, GATE 1.4P); el deep-link
+  // /?view=customers sigue resolviendo por el case 'customers' del shell y su
+  // breadcrumb por VIEW_TO_HUB_MAP ("Clientes" colgando del hub Ventas).
   'bank-reconciliation': { type: 'direct', view: 'bank-reconciliation' },
   stores:                { type: 'direct', view: 'stores' },
   'accounts-payable':    { type: 'direct', view: 'accounts-payable' },
@@ -295,6 +300,25 @@ const VIEW_TO_HUB_MAP: Record<string, { hubId: string; leafLabel: string }> = {
   // Creación contextual
   recepcion: { hubId: 'reception_list', leafLabel: 'Nueva Recepción' },
   // Vitrina (tab del hub Gestión) — vista directa con su propio nombre
+  // F4 (IA): la Vitrina Pública es capacidad del dominio Gestión de Tiendas
+  // (deep-link /?view=storefront-config y palette). Sin este mapeo el crumb
+  // caía en "Módulo No Disponible" al refrescar/bookmarkear.
+  'storefront-config': { hubId: 'management-hub', leafLabel: 'Vitrina Pública' },
+  // F4 (IA): sub-vistas de los hubs de bots — se renderizan como tabs internas
+  // de WhatsAppHubView/TelegramHubView, pero son ViewTypes reales con
+  // deep-link propio. Cuelgan del hub correspondiente para que el refresh/
+  // bookmark muestre el contexto real (Inicio > OPERACIÓN > Redes > WhatsApp
+  // > <tab>) en vez de "Módulo No Disponible".
+  'whatsapp-config': { hubId: 'whatsapp-hub', leafLabel: 'Configuración' },
+  'whatsapp-conversations': { hubId: 'whatsapp-hub', leafLabel: 'Conversaciones' },
+  'whatsapp-invitations': { hubId: 'whatsapp-hub', leafLabel: 'Invitaciones' },
+  'whatsapp-dashboard': { hubId: 'whatsapp-hub', leafLabel: 'Dashboard' },
+  'whatsapp-group': { hubId: 'whatsapp-hub', leafLabel: 'Grupo de Ventas' },
+  'telegram-config': { hubId: 'telegram-hub', leafLabel: 'Configuración' },
+  'telegram-conversations': { hubId: 'telegram-hub', leafLabel: 'Conversaciones' },
+  'telegram-invitations': { hubId: 'telegram-hub', leafLabel: 'Invitaciones' },
+  'telegram-dashboard': { hubId: 'telegram-hub', leafLabel: 'Dashboard' },
+  'telegram-group': { hubId: 'telegram-hub', leafLabel: 'Grupo de Ventas' },
 };
 
 /**

@@ -722,7 +722,8 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
 
             <button
               onClick={() => onViewChange('settings')}
-              aria-label="Configuración"
+              aria-label="Ajustes"
+              title="Ajustes"
               className={cn(
                 "rounded-xl transition-all group active:scale-95 font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                 sidebarState === 'expanded' ? "p-3.5" : "w-12 h-12 flex items-center justify-center",

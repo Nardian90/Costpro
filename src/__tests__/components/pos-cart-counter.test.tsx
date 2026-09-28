@@ -7,6 +7,11 @@
  *
  * PRE-fix: el clic muestra toast de éxito pero "Caja (0)" (bug).
  * POST-fix: "Caja (1)".
+ *
+ * F4 (IA-F13): el label del botón carrito pasó de "Caja (n)" a "Carrito (n)"
+ * (colisión semántica con la vista Caja — audit-evidence/UI-DESIGN/F4/01 §5).
+ * El assertions se actualizan al label vigente; el comportamiento medido
+ * (el contador REFLEJA el carrito) es idéntico.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -88,8 +93,8 @@ describe('FASE D — flujo real Vender: agregar producto actualiza el contador',
     const card = await screen.findByText('Cemento Fase D');
     fireEvent.click(card);
 
-    // POST-fix: el header pasa a "Caja (1)". PRE-fix: queda "Caja (0)".
-    await screen.findByText(/Caja \(1\)/, {}, { timeout: 3000 });
+    // POST-fix: el header pasa a "Carrito (1)" (F4: ex "Caja (1)"). PRE-fix: queda "(0)".
+    await screen.findByText(/Carrito \(1\)/, {}, { timeout: 3000 });
   });
 
   it('segundo producto distinto → 2 líneas y contador 2', async () => {
@@ -100,7 +105,7 @@ describe('FASE D — flujo real Vender: agregar producto actualiza el contador',
     );
     fireEvent.click(await screen.findByText('Cemento Fase D'));
     fireEvent.click(await screen.findByText('Bloque Fase D'));
-    await screen.findByText(/Caja \(2\)/, {}, { timeout: 3000 });
+    await screen.findByText(/Carrito \(2\)/, {}, { timeout: 3000 });
     const items = useCartStore.getState().items;
     expect(items).toHaveLength(2);
     expect(items.map(i => i.product_id).sort()).toEqual(['pos-prod-1', 'pos-prod-2']);
@@ -114,7 +119,7 @@ describe('FASE D — flujo real Vender: agregar producto actualiza el contador',
     );
     fireEvent.click(await screen.findByText('Cemento Fase D'));
     fireEvent.click(await screen.findByText('Cemento Fase D'));
-    await screen.findByText(/Caja \(2\)/, {}, { timeout: 3000 });
+    await screen.findByText(/Carrito \(2\)/, {}, { timeout: 3000 });
     expect(useCartStore.getState().items).toHaveLength(1);
     expect(useCartStore.getState().items[0].quantity).toBe(2);
   });

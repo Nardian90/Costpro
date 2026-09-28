@@ -185,7 +185,8 @@ export default function SettingsView() {
           <Sparkles className="w-6 h-6 text-primary-foreground" />
         </div>
         <div>
-          <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase">Ajustes Globales</h2>
+          {/* F4 (IA-F03): título alineado al label de menú "Ajustes" — antes "Ajustes Globales" (2ª identidad de la vista). */}
+          <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase">Ajustes</h2>
           <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Personaliza tu experiencia</p>
         </div>
       </div>

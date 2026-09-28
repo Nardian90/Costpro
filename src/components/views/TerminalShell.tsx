@@ -454,9 +454,14 @@ export default function TerminalShell() {
         case 'academy': return <ViewErrorBoundary viewName="Academia"><AcademyView /></ViewErrorBoundary>;
         case 'inventory_adjustments': return <ViewErrorBoundary viewName="Ajustes de Inventario"><InventoryAdjustmentsView /></ViewErrorBoundary>;
         case 'legal': return <ViewErrorBoundary viewName="Legal"><LegalView /></ViewErrorBoundary>;
-        case 'settings': return <ViewErrorBoundary viewName="Configuración"><SettingsView /></ViewErrorBoundary>;
+        case 'settings': return <ViewErrorBoundary viewName="Ajustes"><SettingsView /></ViewErrorBoundary>; // F4 (IA-F03): nombre alineado al label de menú "Ajustes"
         case 'help': return <ViewErrorBoundary viewName="Ayuda"><HelpView /></ViewErrorBoundary>;
-        case 'recepcion': return <ViewErrorBoundary viewName="Recepción"><ProductReceptionView onCancel={() => setCurrentView('inventory')} /></ViewErrorBoundary>;
+        // F4 (IA-F07): cancelar Nueva Recepción restaura el contexto RECEPCIONES
+        // (view 'reception_list'), no Inventario. Ambas entradas al flujo — la
+        // tarjeta "Nueva" del hub Recepciones y la acción de palette "Nueva
+        // Recepción" — pertenecen al dominio Recepciones; aterrizar en Inventario
+        // perdía el contexto del Journey D (auditoría F4 §10).
+        case 'recepcion': return <ViewErrorBoundary viewName="Recepción"><ProductReceptionView onCancel={() => setCurrentView('reception_list')} /></ViewErrorBoundary>;
         case 'transferencias': return <ViewErrorBoundary viewName="Transferencias"><TransferenciasView /></ViewErrorBoundary>;
         case 'inventory_count': return <ViewErrorBoundary viewName="Venta por Conteo"><InventoryCountView /></ViewErrorBoundary>;
         case 'cash': return <ViewErrorBoundary viewName="Caja"><CashClosureView /></ViewErrorBoundary>;
@@ -469,7 +474,7 @@ export default function TerminalShell() {
         case 'health': return <ViewErrorBoundary viewName="Salud del Sistema"><HealthView /></ViewErrorBoundary>;
         case 'usage-monitoring': return <ViewErrorBoundary viewName="Monitoreo de Uso"><UsageMonitoringView /></ViewErrorBoundary>;
         case 'workers': return <ViewErrorBoundary viewName="Trabajadores y Comisiones"><WorkersView /></ViewErrorBoundary>;
-        case 'reception_list': return <ViewErrorBoundary viewName="Historial de Recepciones"><ReceptionsHistoryView /></ViewErrorBoundary>;
+        case 'reception_list': return <ViewErrorBoundary viewName="Recepciones"><ReceptionsHistoryView /></ViewErrorBoundary>; // F4 (IA-F06): alineado al label de menú
         case 'labels': return <ViewErrorBoundary viewName="Etiquetas"><ProductLabelGenerator /></ViewErrorBoundary>;
         case 'ofertas': return <ViewErrorBoundary viewName="Ofertas"><OfertasView /></ViewErrorBoundary>;
         case 'purchase-orders': return <ViewErrorBoundary viewName="Órdenes de Compra"><PurchaseOrdersView /></ViewErrorBoundary>;

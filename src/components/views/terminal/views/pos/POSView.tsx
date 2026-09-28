@@ -402,7 +402,10 @@ export default function POSView() {
               POSView es alcanzada desde el hub de Venta — este botón restaura el
               contexto en 1 clic y refuerza la jerarquía hub → vista. */}
           <BackToVentaButton compact />
-          <h2 className="text-[clamp(1.875rem,6vw,3rem)] font-black text-foreground tracking-tighter uppercase hidden sm:block">TPV</h2>
+          {/* F4 (IA-F05): h2 "TPV" eliminado — término técnico retirado por GATE 1.3.
+              El título de la vista lo dan el Header global y el breadcrumb ("Vender");
+              duplicarlo aquí con un 4º nombre reintroducía exactamente la ambigüedad
+              que la arquitectura certificada eliminó. */}
           <div className="flex items-center gap-2">
             <ViewSwitcher currentView={posLayoutMode} onViewChange={setPosLayoutMode} />
             {/* POS-3a-v3 Fix 2: botón simple en vez de ActionMenu de un solo botón.
@@ -423,7 +426,10 @@ export default function POSView() {
               aria-expanded={showCart}
             >
               <ShoppingCart className="w-5 h-5" />
-              <span>{isMobile ? `🛒 (${cartCount})` : `Caja (${cartCount})`}</span>
+              {/* F4 (IA-F13): "Carrito" — antes "Caja (n)", colisionaba con la vista Caja
+                  (cash: arqueo/cierre de turno). aria-label, móvil y live-region ya
+                  decían "carrito"; el desktop era la única voz discordante. */}
+              <span>{isMobile ? `🛒 (${cartCount})` : `Carrito (${cartCount})`}</span>
             </button>
             {/* POS-3b EM-1: Toggle Modo Cajero Express.
                 Layout full-screen alternativo optimizado para venta de alto volumen.
@@ -449,7 +455,9 @@ export default function POSView() {
               title="Ver historial de ventas registradas"
             >
               <History className="w-4 h-4" />
-              <span className="hidden sm:inline">Registro</span>
+              {/* F4 (IA-F15): "Historial" — mismo destino que la tarjeta "Historial de
+                  Ventas" del hub (view 'sales'); "Registro" era un 3er nombre huérfano. */}
+              <span className="hidden sm:inline">Historial</span>
             </button>
           </div>
         </div>

@@ -35,6 +35,8 @@ import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
 import { useReceptionsHistoryView } from './useReceptionsHistoryView';
 import { ReceptionDetailsModal } from './ReceptionDetailsModal';
+import PageHeader from '@/components/ui/PageHeader'; // F4 (IA-F11): portador F2 de la jerarquía de página
+import { Warehouse } from 'lucide-react';
 
 const ReceptionsLoadingSkeleton = () => (
   <div className="space-y-4">
@@ -153,11 +155,14 @@ export default function ReceptionsHistoryView() {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase text-primary">
-            Recepciones
-          </h2>
-          <div className="flex items-center gap-2 flex-wrap">
+        {/* F4 (IA-F11): encabezado migrado a PageHeader (F2) — título/description/acciones
+            en la jerarquía canónica; título 1:1 "Recepciones" (label de menú).
+            Antes: h2 self-made uppercase + fila de acciones ad-hoc. */}
+        <PageHeader
+          title="Recepciones"
+          description="Historial de recepciones de mercancía"
+          icon={Warehouse}
+          primaryAction={
             <button
               type="button"
               onClick={() => setCurrentView('recepcion')}
@@ -167,42 +172,46 @@ export default function ReceptionsHistoryView() {
               <Plus className="w-4 h-4" />
               Nueva
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                sessionStorage.setItem('reception-express-auto', 'true');
-                setCurrentView('recepcion');
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border-2 border-primary/30 bg-primary/5 text-primary font-black text-xs uppercase tracking-widest hover:bg-primary/10 hover:border-primary/50 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30"
-              aria-label="Modo recepción express"
-              title="Recepción Express: layout optimizado para recepción rápida"
-            >
-              <Zap className="w-4 h-4" />
-              <span className="hidden sm:inline">Express</span>
-            </button>
-            {/* FIX-WIZARD: Botón de wizard de backfill masivo */}
-            {isAdmin && (
+          }
+          secondaryActions={
+            <>
               <button
                 type="button"
-                onClick={() => setShowBackfillWizard(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border-2 border-amber-400/40 bg-amber-400/10 text-amber-600 dark:text-amber-400 font-black text-xs uppercase tracking-widest hover:bg-amber-400/20 hover:border-amber-400/60 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
-                title="Asignar tasas históricas a múltiples recepciones"
+                onClick={() => {
+                  sessionStorage.setItem('reception-express-auto', 'true');
+                  setCurrentView('recepcion');
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border-2 border-primary/30 bg-primary/5 text-primary font-black text-xs uppercase tracking-widest hover:bg-primary/10 hover:border-primary/50 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                aria-label="Modo recepción express"
+                title="Recepción Express: layout optimizado para recepción rápida"
               >
-                <DollarSign className="w-4 h-4" />
-                <span className="hidden sm:inline">Tasas históricas</span>
+                <Zap className="w-4 h-4" />
+                <span className="hidden sm:inline">Express</span>
               </button>
-            )}
-            <button
-              type="button"
-              onClick={handleExportAllExcel}
-              className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground font-black text-xs uppercase tracking-widest transition-all active:scale-95"
-              aria-label="Exportar todas las recepciones a Excel"
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Exportar</span>
-            </button>
-          </div>
-        </div>
+              {/* FIX-WIZARD: Botón de wizard de backfill masivo */}
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setShowBackfillWizard(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border-2 border-amber-400/40 bg-amber-400/10 text-amber-600 dark:text-amber-400 font-black text-xs uppercase tracking-widest hover:bg-amber-400/20 hover:border-amber-400/60 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                  title="Asignar tasas históricas a múltiples recepciones"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  <span className="hidden sm:inline">Tasas históricas</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleExportAllExcel}
+                className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground font-black text-xs uppercase tracking-widest transition-all active:scale-95"
+                aria-label="Exportar todas las recepciones a Excel"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Exportar</span>
+              </button>
+            </>
+          }
+        />
 
         {/* Reception-Flow-Fix: banner informativo cuando hay recepciones pendientes.
             Ayuda al usuario a recordar que tiene recepciones sin confirmar. */}

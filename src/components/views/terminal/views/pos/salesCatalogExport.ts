@@ -657,11 +657,11 @@ export function exportSalesCatalogExcel(params: ExportExcelParams): void {
   r++;
 
   const steps: [string, string, string, string][] = [
-    ['Paso 1', 'Haz clic en "Export Excel" en la Tabla IPV de CostPro para descargar el archivo.', '', 'Se descarga un .xlsx con todos tus productos.'],
+    ['Paso 1', 'Haz clic en "Export Excel" en la Tabla de Venta de CostPro para descargar el archivo.', '', 'Se descarga un .xlsx con todos tus productos.'],
     ['Paso 2', 'Abre el archivo en Excel, Google Sheets o LibreOffice Calc.', '', 'Ve a la hoja "Ayuda" para consultar esta guia.'],
     ['Paso 3', 'Modifica SOLO las columnas verdes: Cantidad, Precio Venta, Tipo Desc., Descuento, Forma Pago, Efectivo, Transferencia.', '', 'NO toques las rojas/grises. NO cambies nombres ni IDs.'],
     ['Paso 4', 'Guarda el archivo en formato .xlsx (NO .csv ni .xls antiguo).', '', 'Google Sheets: Archivo > Descargar > Microsoft Excel (.xlsx).'],
-    ['Paso 5', 'Vuelve a CostPro y haz clic en el boton "Importar" en el menu de la Tabla IPV.', '', 'Selecciona el archivo modificado. Veras un resumen de la importacion.'],
+    ['Paso 5', 'Vuelve a CostPro y haz clic en el boton "Importar" en el menu de la Tabla de Venta.', '', 'Selecciona el archivo modificado. Veras un resumen de la importacion.'],
     ['Paso 6', 'Revisa los resultados. Si algo salio mal, usa "Deshacer Importacion" para restaurar los datos anteriores.', '', 'El boton "Deshacer" solo aparece despues de importar.'],
   ];
 

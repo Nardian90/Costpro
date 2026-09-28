@@ -299,7 +299,9 @@ export const Header = ({
                 onClick={() => onViewChange('settings')}
               >
                 <Settings aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs font-semibold">Configuración</span>
+                {/* F4 (IA-F03): "Ajustes" — mismo label que el menú lateral para la misma
+                    vista; "Configuración" era la 4ª identidad de settings. */}
+                <span className="text-xs font-semibold">Ajustes</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -307,7 +309,7 @@ export const Header = ({
                 onClick={() => onLogout?.()}
               >
                 <LogOut aria-hidden="true" className="w-4 h-4" />
-                <span className="text-xs font-semibold">Cerrar Sesion</span>
+                <span className="text-xs font-semibold">Cerrar Sesión</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

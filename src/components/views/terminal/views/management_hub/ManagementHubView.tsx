@@ -26,7 +26,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Store, Building, Loader2, ChevronRight } from 'lucide-react';
+import { Store, Building, Loader2 } from 'lucide-react'; // F4: ChevronRight retirado con el breadcrumb local
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 
@@ -65,7 +65,9 @@ interface TabDef {
 const TABS: TabDef[] = [
   {
     id: 'stores',
-    label: 'Gestión Tiendas',
+    // F4 (IA-F04): "Tiendas" — bajo el encabezado "Gestión de Tiendas" el tab
+    // ya no repite el título (jerarquía encabezado → tabs). id persiste ('stores').
+    label: 'Tiendas',
     icon: Building,
     description: 'Tiendas con KPIs en tiempo real y dashboard avanzado por tienda',
     roles: ['admin', 'manager', 'encargado'],
@@ -122,20 +124,19 @@ export default function ManagementHubView() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-        <span>Inicio</span>
-        <ChevronRight className="w-3 h-3" />
-        <span>MULTI-TIENDA</span>
-        <ChevronRight className="w-3 h-3" />
-        <span className="text-primary">Gestión</span>
-      </div>
+      {/* F4 (IA-F04): breadcrumb local ELIMINADO — el NavigationBreadcrumb global
+          (TerminalShell) ya renderiza el contexto real derivado de la fuente única:
+          Inicio > OPERACIÓN > Gestión de Tiendas. El bloque local duplicaba el crumb
+          con un segmento inventado ("MULTI-TIENDA") que no existe en el árbol de
+          navegación — breadcrumb falso, 2º menú (auditoría F4 §4). */}
 
       {/* Header con tabs */}
       <div className="border-b border-border px-0 sm:px-2 lg:px-4 pt-2 sm:pt-4">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight uppercase">Gestión</h2>
+            {/* F4 (IA-F04): título alineado al label de menú "Gestión de Tiendas"
+                (navigation-definition.ts). Antes: "Gestión" (4ª identidad de la vista). */}
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight uppercase">Gestión de Tiendas</h2>
             <p className="text-xs text-muted-foreground mt-1">
               {activeTabDef?.description || 'Centro unificado de gestión administrativa'}
             </p>
