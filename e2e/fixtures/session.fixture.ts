@@ -20,6 +20,7 @@
  * ============================================================================
  */
 import { type Page } from '@playwright/test';
+import { PILOT_A_NAME, PILOT_B_NAME } from './pilot-env';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -213,11 +214,18 @@ export async function createTestStore(
   // Patrones de artefactos de test de fases previas (audit-evidence/):
   // E2E80* (esta iniciativa), ESEC TEST*, FASE-D TEST*, AUDIT *, HOT *Test*,
   // REM-F4* FIXTURE*, E2E2-*. Las tiendas de negocio reales nunca coinciden.
+  //
+  // SEC-TS-09 (bug fix): el patrón 'E2E *' (PostgREST traduce '*'→'%')
+  // TAMBIÉN matchea las tiendas piloto persistentes 'E2E PILOT A/B CostPro'
+  // (SEC-TS-08) una vez superados los 10 min de antigüedad → el sweep las
+  // archivaba y la CORRIDA SIGUIENTE abortaba en global-setup (fail-closed).
+  // Guard: excluir SIEMPRE las dos tiendas piloto por nombre exacto.
   const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   const stale = `name=like.E2E80*&created_at=lt.${tenMinAgo}`;
+  const pilotGuard = `&name=neq.${encodeURIComponent(PILOT_A_NAME)}&name=neq.${encodeURIComponent(PILOT_B_NAME)}`;
   const patterns = ['E2E80*', 'E2E *', 'ESEC TEST*', 'FASE-D TEST*', 'AUDIT *', 'HOT *', 'REM-F4*', 'E2E2-*'];
   for (const pat of patterns) {
-    await sb.update('stores', `name=like.${pat.replace(/ /g, '%20')}&created_at=lt.${tenMinAgo}`, { is_active: false, is_archived: true }).catch(() => {});
+    await sb.update('stores', `name=like.${pat.replace(/ /g, '%20')}&created_at=lt.${tenMinAgo}${pilotGuard}`, { is_active: false, is_archived: true }).catch(() => {});
   }
 
   const res = await request.post('/api/stores', {
