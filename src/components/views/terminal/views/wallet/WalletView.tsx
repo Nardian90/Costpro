@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useFocusTrap } from "@/hooks/ui/useFocusTrap";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/wallet/types";
 import { WalletAnalyticsView } from './WalletAnalyticsView';
 
@@ -322,6 +323,16 @@ export default function WalletView() {
     };
 
     const closeConfirm = () => setConfirmDialog(d => ({ ...d, open: false }));
+
+    // F3-B4: focus trap + Escape + restauración de foco en el diálogo de confirmación
+    // (overlay manual sin Radix).
+    const confirmTrapRef = useFocusTrap(confirmDialog.open, closeConfirm);
+    useEffect(() => {
+        if (!confirmDialog.open) return;
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = prevOverflow; };
+    }, [confirmDialog.open]);
 
     const handleAddTransaction = async () => {
         if (viewingOther) { toast.error('No puedes modificar la billetera de otro usuario'); return; }
@@ -1490,6 +1501,7 @@ export default function WalletView() {
                 en lugar de window.confirm(). Estilizado, accesible y con botones claros. */}
             {confirmDialog.open && (
                 <div
+                    ref={confirmTrapRef}
                     className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm"
                     onClick={closeConfirm}
                     role="dialog"

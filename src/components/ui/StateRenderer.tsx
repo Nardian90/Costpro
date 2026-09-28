@@ -13,18 +13,21 @@ export interface StateRendererProps<T> {
   emptyComponent?: React.ReactNode;
   isEmpty?: boolean;
   emptyMessage?: string;
+  /** F3-B2: reintento suave (p.ej. refetch de react-query). Si no se provee,
+   *  se mantiene el comportamiento histórico (recargar la página). */
+  onRetry?: () => void;
 }
 
 const DefaultLoadingComponent = () => (
   <ViewLoadingSplash label="CARGANDO" showTips={false} />
 );
 
-const DefaultErrorComponent = ({ message }: { message: string }) => (
+const DefaultErrorComponent = ({ message, onRetry }: { message: string; onRetry?: () => void }) => (
   <div className="flex flex-col items-center justify-center py-20 gap-4 text-center w-full bg-destructive/5 border border-destructive/20 rounded-2xl p-8" /* FIX-ACC-017 */>
     <p className="font-bold text-destructive">Ha ocurrido un error</p>
     <p className="text-sm text-destructive/80">{message || 'No se pudieron cargar los datos. Intenta nuevamente.'}</p>
     <button
-      onClick={() => window.location.reload()}
+      onClick={() => (onRetry ? onRetry() : window.location.reload())}
       className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90"
     >
       Reintentar
@@ -54,6 +57,7 @@ export function StateRenderer<T>({
   emptyComponent,
   isEmpty,
   emptyMessage,
+  onRetry,
 }: StateRendererProps<T>) {
 
   if (isLoading) {
@@ -61,7 +65,7 @@ export function StateRenderer<T>({
   }
 
   if (error) {
-    return (errorComponent as any) || <DefaultErrorComponent message={error.message} />;
+    return (errorComponent as any) || <DefaultErrorComponent message={error.message} onRetry={onRetry} />;
   }
 
   const effectiveEmpty = isEmpty ?? (!data || data.length === 0);

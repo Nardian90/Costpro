@@ -19,6 +19,16 @@ import {
   Wallet,
 } from 'lucide-react';
 import { BaseModal } from '@/components/ui/BaseModal';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store';
@@ -266,11 +276,13 @@ export default function PurchaseOrdersView() {
 
 function OrderRow({ order, onView }: { order: PurchaseOrder; onView: () => void }) {
   const updateStatus = useUpdatePOStatus();
+  // F3-B6: confirmación con AlertDialog canónico (antes window.confirm nativo)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const canCancel = order.status === 'sent' || order.status === 'partial';
 
   const handleCancel = async () => {
-    if (!window.confirm(`¿Cancelar la OC ${order.po_number || order.id.slice(0, 8)}?`)) return;
+    setShowCancelConfirm(false);
     try {
       await updateStatus.mutateAsync({ poId: order.id, status: 'cancelled' });
       toast.success('OC cancelada');
@@ -324,7 +336,7 @@ function OrderRow({ order, onView }: { order: PurchaseOrder; onView: () => void 
         {canCancel && (
           <button
             type="button"
-            onClick={handleCancel}
+            onClick={() => setShowCancelConfirm(true)}
             disabled={updateStatus.isPending}
             className="p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
             aria-label={`Cancelar OC ${order.po_number || order.id.slice(0, 8)}`}
@@ -334,6 +346,28 @@ function OrderRow({ order, onView }: { order: PurchaseOrder; onView: () => void 
           </button>
         )}
       </div>
+
+      {/* F3-B6: confirmación de cancelación con AlertDialog canónico (antes window.confirm) */}
+      <AlertDialog open={showCancelConfirm} onOpenChange={(open) => { if (!open) setShowCancelConfirm(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar la OC {order.po_number || order.id.slice(0, 8)}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              La orden de compra quedará marcada como <strong>cancelada</strong> y no podrá recibir mercancía. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateStatus.isPending}>No, volver</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancel}
+              disabled={updateStatus.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {updateStatus.isPending ? 'Cancelando...' : 'Sí, cancelar OC'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

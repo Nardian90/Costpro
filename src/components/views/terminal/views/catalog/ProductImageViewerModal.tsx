@@ -36,6 +36,16 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+import {
   ZoomIn, Crop as CropIcon, RefreshCw, Save, X, Upload, Trash2,
   ImageOff, AlertTriangle, Loader2, Maximize2, RotateCcw,
 } from 'lucide-react';
@@ -141,6 +151,8 @@ export function ProductImageViewerModal({
   const [crop, setCrop] = useState<CropArea | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  // F3-B6: confirmación destructiva con AlertDialog canónico (antes window.confirm nativo)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   // === Refs for crop drag interaction ===
@@ -367,9 +379,6 @@ export function ProductImageViewerModal({
   const handleDelete = useCallback(async () => {
     if (!product) return;
     if (isDeletingRef.current) return;
-    if (!window.confirm('¿Eliminar la imagen del producto? Esta acción no se puede deshacer.')) {
-      return;
-    }
     setError(null);
     isDeletingRef.current = true;
     setIsDeleting(true);
@@ -529,7 +538,7 @@ export function ProductImageViewerModal({
               {hasImage && (
                 <Button
                   variant="destructive"
-                  onClick={handleDelete}
+                  onClick={() => setShowDeleteConfirm(true)}
                   disabled={isSaving || isDeleting || !sourceIsPersisted && !sourceFile}
                   title="Eliminar imagen del producto"
                 >
@@ -648,6 +657,28 @@ export function ProductImageViewerModal({
           </p>
         )}
       </div>
+
+      {/* F3-B6: confirmación destructiva canónica (AlertDialog) en lugar de window.confirm */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={(open) => { if (!open) setShowDeleteConfirm(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar la imagen del producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se quitará la imagen de <strong>{product?.name}</strong> y se borrará del almacenamiento. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { setShowDeleteConfirm(false); handleDelete(); }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Eliminando...' : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </BaseModal>
   );
 }

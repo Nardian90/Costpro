@@ -84,7 +84,9 @@ export function useSalesHistoryView() {
     const duplicateDocumentMutation = useDuplicateDocumentV2();
 
     // Data Fetching
-    const { data: transactionsData = [], isLoading: isLoadingTransactions } = useTransactions(user?.activeStoreId, user?.role === 'admin');
+    // F3-B1: exponer error + refetch — antes los errores de red se tragaban y la vista
+    // mostraba "Sin ventas registradas" (empty) para lo que era un error.
+    const { data: transactionsData = [], isLoading: isLoadingTransactions, error: transactionsError, refetch: refetchTransactions } = useTransactions(user?.activeStoreId, user?.role === 'admin');
 
     const filteredTransactions = useMemo(() => {
         return transactionsData.filter(t => {
@@ -218,6 +220,8 @@ export function useSalesHistoryView() {
         transactions: paginatedTransactions,
         totalFilteredCount: filteredTransactions.length,
         isLoading: isLoadingTransactions,
+        transactionsError: transactionsError ?? null,
+        refetchTransactions,
         stats,
 
         // Pagination

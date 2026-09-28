@@ -60,6 +60,10 @@ export default function ReceptionsHistoryView() {
     selectedReceipt,
     receptions,
     isLoading,
+    hasActiveFilters,
+    handleClearFilters,
+    receptionsError,
+    refetchReceptions,
     handleViewDetails,
     handleCloseDetails,
     handleInvert,
@@ -269,9 +273,32 @@ export default function ReceptionsHistoryView() {
         <div className="table-scroll-wrapper">
           <StateRenderer
             isLoading={isLoading}
-            error={null}
+            error={receptionsError}
+            onRetry={refetchReceptions}
             data={receptions}
             loadingComponent={<ReceptionsLoadingSkeleton />}
+            emptyComponent={
+              // F3-B3: distinguir vacío real de vacío por filtros (patrón Historial)
+              <div className="text-center py-16 space-y-3">
+                <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                  {hasActiveFilters ? 'Sin resultados' : 'Sin recepciones registradas'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {hasActiveFilters
+                    ? 'No se encontraron recepciones con los filtros seleccionados. Intenta ajustar los criterios.'
+                    : 'Las recepciones aparecerán aquí después de registrarlas en Inventario.'
+                  }
+                </p>
+                {hasActiveFilters && (
+                  <button type="button"
+                    onClick={handleClearFilters}
+                    className="mt-3 px-4 py-2 text-xs font-bold uppercase border border-border rounded-lg hover:bg-muted transition-all"
+                  >
+                    Limpiar filtros
+                  </button>
+                )}
+              </div>
+            }
           >
             {(data) => (
               <table className="data-table sticky-column-1 w-full text-sm">

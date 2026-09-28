@@ -70,11 +70,27 @@ import { catalogService } from '@/services/catalog-service';
 
 const PAGE_LIMIT = 20;
 
-const EmptyInventoryComponent = () => (
+const EmptyInventoryComponent = ({ filtered, onClearFilters }: { filtered?: boolean; onClearFilters?: () => void }) => (
     <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
         <Package className="w-16 h-16 mx-auto mb-6 opacity-5" aria-hidden="true" />
-        <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Inventario Vacío</p>
-        <p className="text-sm text-muted-foreground mt-2">No se encontraron productos. Intenta con otra búsqueda o filtro.</p>
+        {/* F3-B3: distinguir inventario vacío real de búsqueda/filtros sin resultados */}
+        <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">
+            {filtered ? 'Sin resultados' : 'Inventario Vacío'}
+        </p>
+        <p className="text-sm text-muted-foreground mt-2">
+            {filtered
+                ? 'No se encontraron productos con los filtros seleccionados. Intenta ajustar los criterios.'
+                : 'No hay productos registrados todavía. Añade productos para empezar a controlar tu stock.'}
+        </p>
+        {filtered && onClearFilters && (
+            <button
+                type="button"
+                onClick={onClearFilters}
+                className="mt-6 px-4 py-2 text-xs font-bold uppercase border border-border rounded-lg hover:bg-muted transition-all"
+            >
+                Limpiar filtros
+            </button>
+        )}
     </div>
 );
 
@@ -229,6 +245,7 @@ export default function InventoryView() {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
+        refetch: refetchInventoryQuery,
     } = useInventory(user?.activeStoreId, debouncedSearch, selectedCategory, PAGE_LIMIT);
 
     const products = useMemo(() => {
@@ -315,6 +332,17 @@ export default function InventoryView() {
         if (fcFilter !== 'all') count++;
         return count;
     }, [selectedCategory, stockFilter, fcFilter]);
+
+    // F3-B3: hay búsqueda/filtros activos → vacío = "sin resultados" (la búsqueda es server-side,
+    // así que el total ya viene filtrado). Sin filtros y vacío = inventario realmente vacío.
+    const hasActiveInventoryFilters = !!(debouncedSearch || selectedCategory || fcFilter !== 'all' || stockFilter !== 'with_stock');
+    const handleClearInventoryFilters = useCallback(() => {
+        setSearchTerm('');
+        setDebouncedSearch('');
+        setSelectedCategory('');
+        setStockFilter('with_stock');
+        setFcFilter('all');
+    }, []);
 
     const stockAlerts = useStockAlerts(products);
 
@@ -943,8 +971,14 @@ export default function InventoryView() {
                 <StateRenderer
                     isLoading={isLoading}
                     error={error as Error | null}
+                    onRetry={refetchInventoryQuery as () => void}
                     data={filteredProducts}
-                    emptyComponent={<EmptyInventoryComponent />}
+                    emptyComponent={
+                        <EmptyInventoryComponent
+                            filtered={hasActiveInventoryFilters}
+                            onClearFilters={handleClearInventoryFilters}
+                        />
+                    }
                     loadingComponent={<InventoryLoadingSkeleton layoutMode={layoutMode} />}
                 >
                     {(loadedProducts) => (

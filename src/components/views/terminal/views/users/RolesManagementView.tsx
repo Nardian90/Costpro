@@ -7,6 +7,16 @@ import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { useRoles, useDeleteRole, useCreateRole, useUpdateRole } from '@/hooks/api/useRoles';
 import { BaseModal } from '@/components/ui/BaseModal';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import RoleForm, { RoleFormData } from './RoleForm';
 import { Role } from '@/types';
 
@@ -19,6 +29,8 @@ export default function RolesManagementView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  // F3-B6: confirmación con AlertDialog canónico (antes confirm nativo)
+  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
 
   const filteredRoles = roles.filter(r =>
     r.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -34,9 +46,12 @@ export default function RolesManagementView() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('¿Estás seguro de que deseas eliminar este rol?')) {
-      await deleteRoleMutation.mutateAsync(id);
+  const handleDelete = async (role: Role) => {
+    try {
+      await deleteRoleMutation.mutateAsync(role.id);
+      setRoleToDelete(null);
+    } catch {
+      /* el error se notifica vía toast del hook */
     }
   };
 
@@ -132,7 +147,7 @@ export default function RolesManagementView() {
                       <Edit className="w-4 h-4" />
                     </button>
                     <button type="button"
-                      onClick={() => handleDelete(role.id)}
+                      onClick={() => setRoleToDelete(role)}
                       className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-danger hover:text-foreground transition-all active:scale-95"
                       aria-label="Eliminar rol"
                     >
@@ -167,6 +182,28 @@ export default function RolesManagementView() {
           isSubmitting={createRoleMutation.isPending || updateRoleMutation.isPending}
         />
       </BaseModal>
+
+      {/* F3-B6: confirmación de eliminación con AlertDialog canónico (antes confirm nativo) */}
+      <AlertDialog open={!!roleToDelete} onOpenChange={(open) => { if (!open) setRoleToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar el rol “{roleToDelete?.name}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Los usuarios con este rol asignado perderán sus permisos. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteRoleMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => roleToDelete && handleDelete(roleToDelete)}
+              disabled={deleteRoleMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteRoleMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
