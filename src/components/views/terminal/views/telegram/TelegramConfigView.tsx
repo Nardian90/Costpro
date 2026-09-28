@@ -975,17 +975,17 @@ export default function TelegramConfigView() {
             return (
               <div className="flex flex-wrap gap-1.5">
                 {p.price_visible_in_vitrina ? (
-                  <Badge variant="secondary" className="text-[9px] bg-emerald-100 text-emerald-700">Precio visible en Vitrina</Badge>
+                  <Badge variant="secondary" className="text-[9px] bg-success/10 text-success">Precio visible en Vitrina</Badge>
                 ) : (
-                  <Badge variant="secondary" className="text-[9px] bg-amber-100 text-amber-700">Precio oculto en Vitrina</Badge>
+                  <Badge variant="secondary" className="text-[9px] bg-warning/10 text-warning">Precio oculto en Vitrina</Badge>
                 )}
                 {p.stock_visible_in_vitrina ? (
-                  <Badge variant="secondary" className="text-[9px] bg-emerald-100 text-emerald-700">Stock visible en Vitrina</Badge>
+                  <Badge variant="secondary" className="text-[9px] bg-success/10 text-success">Stock visible en Vitrina</Badge>
                 ) : (
-                  <Badge variant="secondary" className="text-[9px] bg-amber-100 text-amber-700">Stock oculto en Vitrina</Badge>
+                  <Badge variant="secondary" className="text-[9px] bg-warning/10 text-warning">Stock oculto en Vitrina</Badge>
                 )}
                 {p.on_promotion && (
-                  <Badge variant="secondary" className="text-[9px] bg-amber-100 text-amber-700"><Zap className="w-2.5 h-2.5 inline mr-0.5" />En promoción</Badge>
+                  <Badge variant="secondary" className="text-[9px] bg-warning/10 text-warning"><Zap className="w-2.5 h-2.5 inline mr-0.5" />En promoción</Badge>
                 )}
               </div>
             );
@@ -1025,8 +1025,8 @@ export default function TelegramConfigView() {
                     <span className="font-bold truncate">{post.product_name}</span>
                     <Badge variant="secondary" className={cn(
                       'text-[9px] shrink-0',
-                      post.status === 'success' ? 'bg-emerald-100 text-emerald-700' :
-                      post.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700',
+                      post.status === 'success' ? 'bg-success/10 text-success' :
+                      post.status === 'failed' ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning',
                     )}>
                       {post.status}
                     </Badge>

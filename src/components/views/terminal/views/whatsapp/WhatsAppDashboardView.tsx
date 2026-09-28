@@ -273,7 +273,7 @@ export default function WhatsAppDashboardView() {
               className="text-xs h-11"
               disabled={testing}
             />
-            <Button onClick={handleTestBot} disabled={testing || !testMessage.trim()} size="sm" className="bg-green-600 hover:bg-green-700 active:scale-95 text-white min-h-[44px]">
+            <Button onClick={handleTestBot} disabled={testing || !testMessage.trim()} size="sm" className="active:scale-95 min-h-[44px]">
               {testing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             </Button>
           </div>

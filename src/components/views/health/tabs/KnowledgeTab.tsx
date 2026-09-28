@@ -137,8 +137,8 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                     <div className="flex-1 min-w-0 text-left">
                       <div className="truncate">{section.name}</div>
                       <div className={cn(
-                        "text-[7px] font-bold uppercase tracking-widest mt-0.5",
-                        activeTab === section.id ? "text-primary-foreground/50" : "text-muted-foreground/30"
+                        "text-[9px] font-medium tracking-wide mt-0.5",
+                        activeTab === section.id ? "text-primary-foreground/70" : "text-muted-foreground"
                       )}>{section.description}</div>
                     </div>
                     <span className={cn(
@@ -173,10 +173,10 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
               </div>
               {searchTerm && (
                 <div className="mt-2 flex items-center justify-between px-1">
-                  <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">
+                  <span className="text-[10px] font-medium text-muted-foreground tracking-wide">
                     {sortedData.length} resultado{sortedData.length !== 1 ? 's' : ''}
                   </span>
-                  <button onClick={() => setSearchTerm('')} className="text-[7px] font-bold text-primary uppercase tracking-wider hover:underline">
+                  <button onClick={() => setSearchTerm('')} className="text-[10px] font-medium text-primary hover:underline">
                     Limpiar
                   </button>
                 </div>
@@ -273,12 +273,12 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-border/30">
-                            <th className="text-left px-6 py-3 text-[7px] font-black uppercase tracking-widest text-muted-foreground/50">Capa</th>
-                            <th className="text-center px-4 py-3 text-[7px] font-black uppercase tracking-widest text-muted-foreground/50">Componentes</th>
-                            <th className="text-center px-4 py-3 text-[7px] font-black uppercase tracking-widest text-muted-foreground/50">Fan-In Prom.</th>
-                            <th className="text-center px-4 py-3 text-[7px] font-black uppercase tracking-widest text-muted-foreground/50">Fan-Out Prom.</th>
-                            <th className="text-center px-4 py-3 text-[7px] font-black uppercase tracking-widest text-muted-foreground/50">Acoplamiento</th>
-                            <th className="text-center px-4 py-3 text-[7px] font-black uppercase tracking-widest text-muted-foreground/50">Inestabilidad</th>
+                            <th className="text-left px-6 py-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Capa</th>
+                            <th className="text-center px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Componentes</th>
+                            <th className="text-center px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Fan-In Prom.</th>
+                            <th className="text-center px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Fan-Out Prom.</th>
+                            <th className="text-center px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Acoplamiento</th>
+                            <th className="text-center px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Inestabilidad</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -376,16 +376,16 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                 {/* Sort bar */}
                 <div className="flex items-center gap-2 px-1">
                   <ArrowUpDown className="w-3 h-3 text-muted-foreground/40" />
-                  <span className="text-[7px] font-bold uppercase tracking-widest text-muted-foreground/40">Ordenar:</span>
+                  <span className="text-[9px] font-medium tracking-wide text-muted-foreground">Ordenar:</span>
                   {(['name', 'fan_in', 'fan_out', 'coupling'] as const).map(field => (
                     <button
                       key={field}
                       onClick={() => toggleSort(field)}
                       className={cn(
-                        "px-2 py-1 rounded text-[7px] font-bold uppercase tracking-wider transition-all",
+                        "px-2 py-1 rounded text-[9px] font-medium tracking-wide transition-all",
                         sortBy === field
                           ? "bg-primary/10 text-primary border border-primary/20"
-                          : "text-muted-foreground/40 hover:text-muted-foreground/60 border border-transparent hover:border-border/30"
+                          : "text-muted-foreground hover:text-foreground border border-transparent hover:border-border/30"
                       )}
                     >
                       {field === 'fan_in' ? 'Entradas' : field === 'fan_out' ? 'Salidas' : field === 'coupling' ? 'Acoplamiento' : 'Nombre'}
@@ -407,7 +407,7 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                           </div>
                           <h4 className="text-[10px] font-black uppercase tracking-tight truncate">{item.name || item.title || item.label || item.id}</h4>
                         </div>
-                        <div className="px-2 py-0.5 rounded bg-muted/30 border border-border/50 text-[7px] font-black uppercase tracking-widest text-muted-foreground italic shrink-0 ml-2">
+                        <div className="px-2 py-0.5 rounded bg-muted/30 border border-border/50 text-[9px] font-medium tracking-wide text-muted-foreground shrink-0 ml-2">
                           {item.domain || item.layer || item.feature || 'SISTEMA'}
                         </div>
                       </div>
@@ -452,7 +452,7 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                       {activeTab === 'views' && item.dependencyCount !== undefined && (
                         <div className="mt-3 flex items-center gap-1.5">
                           <Cpu className="w-2.5 h-2.5 text-muted-foreground/40" />
-                          <span className="text-[7px] font-bold text-muted-foreground/50 uppercase tracking-wider">{item.dependencyCount} dependencias</span>
+                          <span className="text-[9px] font-medium text-muted-foreground tracking-wide">{item.dependencyCount} dependencias</span>
                         </div>
                       )}
                     </div>

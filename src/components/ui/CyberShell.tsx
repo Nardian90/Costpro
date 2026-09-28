@@ -63,8 +63,9 @@ const CyberShell: React.FC<CyberShellProps> = ({ children }) => {
         {/* Animated gradient border wrapper */}
           <div className="relative rounded-none overflow-hidden animate-border-glow h-full">
           {/* Animated gradient pseudo-border */}
+          {/* F5: capa puramente decorativa — oculta en modo performance/reduced-motion (convención perf-hide, cf. Header perf-hide-gradient) */}
           <div
-            className="absolute inset-0 rounded-none"
+            className="absolute inset-0 rounded-none perf-hide-decor"
             style={{
               background:
                 'conic-gradient(from var(--cyber-angle, 0deg), var(--primary) 0%, transparent 15%, transparent 35%, var(--secondary, #4cd7f6) 50%, transparent 65%, transparent 85%, var(--primary) 100%)',
@@ -81,7 +82,7 @@ const CyberShell: React.FC<CyberShellProps> = ({ children }) => {
           >
             {/* Subtle animated gradient sweep across the top */}
             <div
-              className="absolute top-0 left-0 right-0 h-[2px] pointer-events-none z-20"
+              className="absolute top-0 left-0 right-0 h-[2px] pointer-events-none z-20 perf-hide-decor"
               aria-hidden="true"
             >
               <div
@@ -94,10 +95,10 @@ const CyberShell: React.FC<CyberShellProps> = ({ children }) => {
             </div>
 
             {/* Corner glow accents */}
-            <span className="absolute top-[-3px] left-[-3px] w-[6px] h-[6px] rounded-full bg-primary/60 shadow-[0_0_8px_2px_var(--primary)] animate-[cyber-corner-pulse_3s_ease-in-out_infinite] pointer-events-none z-20" aria-hidden="true" />
-            <span className="absolute top-[-3px] right-[-3px] w-[6px] h-[6px] rounded-full bg-primary/60 shadow-[0_0_8px_2px_var(--primary)] animate-[cyber-corner-pulse_3s_ease-in-out_0.75s_infinite] pointer-events-none z-20" aria-hidden="true" />
-            <span className="absolute bottom-[-3px] left-[-3px] w-[6px] h-[6px] rounded-full bg-primary/60 shadow-[0_0_8px_2px_var(--primary)] animate-[cyber-corner-pulse_3s_ease-in-out_1.5s_infinite] pointer-events-none z-20" aria-hidden="true" />
-            <span className="absolute bottom-[-3px] right-[-3px] w-[6px] h-[6px] rounded-full bg-primary/60 shadow-[0_0_8px_2px_var(--primary)] animate-[cyber-corner-pulse_3s_ease-in-out_2.25s_infinite] pointer-events-none z-20" aria-hidden="true" />
+            <span className="absolute top-[-3px] left-[-3px] w-[6px] h-[6px] rounded-full bg-primary/60 shadow-[0_0_8px_2px_var(--primary)] animate-[cyber-corner-pulse_3s_ease-in-out_infinite] pointer-events-none z-20 perf-hide-decor" aria-hidden="true" />
+            <span className="absolute top-[-3px] right-[-3px] w-[6px] h-[6px] rounded-full bg-primary/60 shadow-[0_0_8px_2px_var(--primary)] animate-[cyber-corner-pulse_3s_ease-in-out_0.75s_infinite] pointer-events-none z-20 perf-hide-decor" aria-hidden="true" />
+            <span className="absolute bottom-[-3px] left-[-3px] w-[6px] h-[6px] rounded-full bg-primary/60 shadow-[0_0_8px_2px_var(--primary)] animate-[cyber-corner-pulse_3s_ease-in-out_1.5s_infinite] pointer-events-none z-20 perf-hide-decor" aria-hidden="true" />
+            <span className="absolute bottom-[-3px] right-[-3px] w-[6px] h-[6px] rounded-full bg-primary/60 shadow-[0_0_8px_2px_var(--primary)] animate-[cyber-corner-pulse_3s_ease-in-out_2.25s_infinite] pointer-events-none z-20 perf-hide-decor" aria-hidden="true" />
 
             {children}
           </div>

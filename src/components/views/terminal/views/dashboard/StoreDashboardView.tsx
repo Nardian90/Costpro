@@ -726,7 +726,7 @@ function SmartPurchaseOrderButton({ analytics, storeId }: {
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="shrink-0 px-5 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-black text-sm uppercase tracking-widest hover:shadow-lg hover:shadow-primary/25 active:scale-95 transition-all flex items-center gap-2"
+          className="shrink-0 px-5 py-3 min-h-[44px] rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 active:scale-95 transition-all flex items-center gap-2"
           aria-label="Generar orden de compra inteligente"
         >
           <Zap className="w-4 h-4" />
@@ -761,7 +761,7 @@ function SmartPurchaseOrderButton({ analytics, storeId }: {
                 <button
                   type="button"
                   onClick={() => { setShowModal(false); setGenerated(false); }}
-                  className="px-4 min-h-[44px] py-2.5 border border-border rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-muted transition-colors"
+                  className="px-4 min-h-[44px] py-2.5 border border-border rounded-xl font-medium text-sm hover:bg-muted transition-colors"
                 >
                   Cancelar
                 </button>
@@ -769,7 +769,7 @@ function SmartPurchaseOrderButton({ analytics, storeId }: {
                   <button
                     type="button"
                     onClick={handleGoToPurchaseOrders}
-                    className="px-4 min-h-[44px] py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors text-sm uppercase tracking-widest flex items-center gap-1.5"
+                    className="px-4 min-h-[44px] py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors text-sm flex items-center gap-1.5"
                   >
                     Ver Órdenes de Compra
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -778,7 +778,7 @@ function SmartPurchaseOrderButton({ analytics, storeId }: {
                   <button
                     type="button"
                     onClick={handleGenerate}
-                    className="px-4 min-h-[44px] py-2.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all text-sm uppercase tracking-widest flex items-center gap-1.5"
+                    className="px-4 min-h-[44px] py-2.5 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors text-sm flex items-center gap-1.5"
                   >
                     <Zap className="w-3.5 h-3.5" />
                     Confirmar OC
