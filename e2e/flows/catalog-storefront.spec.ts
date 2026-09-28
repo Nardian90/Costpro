@@ -15,7 +15,7 @@
  * ============================================================================
  */
 import { test, expect, type APIRequestContext } from '@playwright/test';
-import { signIn, apiHeaders, sb, createTestStore, deleteTestStore, seedProduct, cleanupProducts, num   restoreActiveStore,
+import { signIn, apiHeaders, sb, createTestStore, deleteTestStore, seedProduct, cleanupProducts, num, restoreActiveStore,
 } from '../fixtures/session.fixture';
 
 let api: APIRequestContext;

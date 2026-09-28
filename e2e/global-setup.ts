@@ -19,12 +19,17 @@
  *   - Usuarios reales:
  *       admin:  E2E_ADMIN_EMAIL (default admin@costpro.com / costpro123)
  *       usuario: E2E_USER_EMAIL  (default cajero@demo.com  / demo123)
+ *   - ENTORNO PILOTO MULTI-TIENDA provisionado (SEC-TS-08):
+ *       'E2E PILOT A CostPro' + 'E2E PILOT B CostPro' — ver
+ *       e2e/scripts/provision-pilot-env.cjs. Si no está provisionado,
+ *       el setup ABORTA (fail-closed): nunca cae a una tienda real.
  *
  * Tokens Supabase duran 1h — la suite completa debe ejecutarse dentro de esa
  * ventana, o relanzar por módulos (los specs nuevos firman sesión propia).
  * ============================================================================
  */
 import { config as loadEnv } from 'dotenv';
+import { getPilotEnv } from './fixtures/pilot-env';
 
 loadEnv({ path: './.env' });
 
@@ -37,9 +42,9 @@ const ADMIN_PASS = process.env.E2E_ADMIN_PASS || process.env.ADMIN_PASS || 'cost
 const USER_EMAIL = process.env.E2E_USER_EMAIL || 'cajero@demo.com';
 const USER_PASS = process.env.E2E_USER_PASS || 'demo123';
 
-// Puerto Padre VITALLCONS: membership admin ACTIVA (Tienda Central la tiene revocada →
-// RLS bloquea las consultas de specs que usan E2E_TEST_STORE_ID)
-const FALLBACK_STORE_ID = '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1';
+// SEC-TS-08: NO hay fallback a tiendas reales. El entorno piloto se resuelve
+// por nombre exacto ('E2E PILOT A/B CostPro') y es FAIL-CLOSED (pilot-env.ts).
+// Puerto Padre / Tienda Central / Enervida quedan FUERA del banco de pruebas.
 
 export interface SupabaseSession {
   token: string;
@@ -60,34 +65,6 @@ async function supabaseSignIn(email: string, password: string): Promise<Supabase
   return { token: data.access_token, userId: data.user.id, email };
 }
 
-function serviceHeaders(): Record<string, string> {
-  return {
-    apikey: SERVICE_KEY,
-    Authorization: `Bearer ${SERVICE_KEY}`,
-    'Content-Type': 'application/json',
-  };
-}
-
-async function getProfileActiveStore(userId: string): Promise<string | null> {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=active_store_id`,
-    { headers: serviceHeaders() },
-  );
-  if (!res.ok) return null;
-  const rows = await res.json();
-  return rows[0]?.active_store_id ?? null;
-}
-
-async function getFirstProductInStore(storeId: string): Promise<string | null> {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/products?store_id=eq.${storeId}&is_active=eq.true&select=id&limit=1`,
-    { headers: serviceHeaders() },
-  );
-  if (!res.ok) return null;
-  const rows = await res.json();
-  return rows[0]?.id ?? null;
-}
-
 export default async function globalSetup(): Promise<void> {
   if (!SUPABASE_URL || !ANON_KEY || !SERVICE_KEY) {
     throw new Error('[global-setup] Faltan NEXT_PUBLIC_SUPABASE_URL / ANON_KEY / SERVICE_ROLE_KEY en .env');
@@ -102,17 +79,23 @@ export default async function globalSetup(): Promise<void> {
   process.env.E2E_TEST_USER_TOKEN = user.token;
   process.env.E2E_TEST_USER_ID = user.userId;
 
-  // 2. Tienda piloto (active_store del admin → Tienda Central Costpro)
-  const storeId = (await getProfileActiveStore(admin.userId)) || FALLBACK_STORE_ID;
-  process.env.E2E_TEST_STORE_ID = storeId;
+  // 2. ENTORNO PILOTO MULTI-TIENDA (SEC-TS-08) — fail-closed:
+  //    E2E_TEST_STORE_ID apunta a PILOT STORE A (dedicada), NUNCA al
+  //    active_store real del admin (Puerto Padre) ni a Tienda Central.
+  const pilot = await getPilotEnv();
+  process.env.E2E_TEST_STORE_ID = pilot.storeA.id;
+  process.env.E2E_PILOT_STORE_A = pilot.storeA.id;
+  process.env.E2E_PILOT_STORE_B = pilot.storeB.id;
 
-  // 3. Producto de referencia dentro de la tienda piloto
-  const productId = await getFirstProductInStore(storeId);
-  if (productId) process.env.E2E_TEST_PRODUCT_ID = productId;
+  // 3. Producto de referencia DEDICADO dentro de la tienda piloto A (seed
+  //    determinista, nunca un producto real de una tienda operativa)
+  process.env.E2E_TEST_PRODUCT_ID = pilot.productA;
+  // Producto de la tienda piloto B (cross-store: POS-007 y specs de aislamiento)
+  process.env.E2E_TEST_FOREIGN_PRODUCT_ID = pilot.productB;
 
   console.log(
     `[global-setup] Sesiones listas — admin=${ADMIN_EMAIL} (${admin.userId.slice(0, 8)}…) ` +
-    `user=${USER_EMAIL} (${user.userId.slice(0, 8)}…) store=${storeId.slice(0, 8)}… ` +
-    `product=${productId ? productId.slice(0, 8) + '…' : 'N/A'}`,
+    `user=${USER_EMAIL} (${user.userId.slice(0, 8)}…) store=PILOT A (${pilot.storeA.id.slice(0, 8)}…) ` +
+    `pilotB=(${pilot.storeB.id.slice(0, 8)}…) product=${pilot.productA.slice(0, 8)}…`,
   );
 }

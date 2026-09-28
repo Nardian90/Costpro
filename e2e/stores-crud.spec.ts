@@ -9,8 +9,14 @@
  * - Running dev server (npm run dev)
  * - Seeded admin user (e2e-admin@costpro.test)
  * - Supabase test project with required RPCs deployed
+ *
+ * SEC-TS-08 (aislamiento): los tests de Update y Delete operan sobre
+ * una tienda de PRUEBA creada por el propio spec vía API — NUNCA sobre
+ * la primera tarjeta de la lista (que puede ser una tienda real como
+ * TIENDA CENTRAL COSTPRO / Puerto Padre / Enervida).
  */
 import { test, expect, buildStorePayload, extractStoreId, waitForStoresView } from './fixtures';
+import { freshAuthHeaders } from './fixtures/auth.fixture';
 
 const UNIQUE = Date.now().toString(36);
 
@@ -113,13 +119,30 @@ test.describe('Stores CRUD: Read', () => {
 // ── 3. UPDATE ──────────────────────────────────────────────────────
 
 test.describe('Stores CRUD: Update', () => {
-  test('admin can edit a store name and address', async ({ authedPage: page }) => {
+  test('admin can edit a store name and address (sobre tienda de prueba propia)', async ({ authedPage: page, request }) => {
+    // SEC-TS-08: crear tienda de prueba PROPIA vía API y operar SOBRE ELLA.
+    // Antes este test editaba la PRIMERA tarjeta de la lista, que puede ser
+    // una tienda real → renombraba datos operativos. Aislamiento: nunca más.
+    const headers = await freshAuthHeaders('admin');
+    test.skip(!headers, 'E2E_TEST_ADMIN_TOKEN not configured');
+    const own = `E2E Edit Src ${UNIQUE}`;
+    const createRes = await request.post('/api/stores', {
+      headers,
+      data: buildStorePayload(own),
+    });
+    test.skip(createRes.status() !== 201, `setup: no se pudo crear tienda propia (${createRes.status()})`);
+    // Extracción tolerante (respuesta real: { data: { store_id } } — ver
+    // createTestStore en session.fixture)
+    const createJson = await createRes.json();
+    const ownId = createJson?.data?.store_id ?? createJson?.data?.id ?? createJson?.store_id;
+
     await page.goto('/?view=stores');
     await waitForStoresView(page);
 
-    // Find the first store card and click the edit button
-    const firstCard = page.locator('[role="article"]').first();
-    const editButton = firstCard.locator('button[aria-label*="dit"], button[title*="dit"], button', { hasText: /editar|edit/i }).first();
+    // Localizar la tarjeta de la tienda PROPIA (por nombre exacto), no la primera
+    const ownCard = page.locator('[role="article"]').filter({ hasText: new RegExp(own.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).first();
+    await expect(ownCard).toBeVisible({ timeout: 10_000 });
+    const editButton = ownCard.locator('button[aria-label*="dit"], button[title*="dit"], button', { hasText: /editar|edit/i }).first();
     await editButton.click();
 
     // Wait for edit modal
@@ -137,21 +160,41 @@ test.describe('Stores CRUD: Update', () => {
     // Verify modal closes and updated name appears
     await expect(modal).toBeHidden({ timeout: 10_000 });
     await expect(page.locator('text=' + `E2E Editada ${UNIQUE}`)).toBeVisible({ timeout: 10_000 });
+
+    // Cleanup: eliminar la tienda de prueba propia
+    if (ownId) {
+      await request.delete('/api/stores', { headers, data: { storeId: ownId } }).catch(() => {});
+    }
   });
 });
 
 // ── 4. DELETE ──────────────────────────────────────────────────────
 
 test.describe('Stores CRUD: Delete', () => {
-  test('admin can soft-delete a store', async ({ authedPage: page }) => {
+  test('admin can soft-delete a store (sobre tienda de prueba propia)', async ({ authedPage: page, request }) => {
+    // SEC-TS-08: antes este test borraba la PRIMERA tarjeta de la lista —
+    // podía soft-deletear una tienda REAL (TIENDA CENTRAL / Puerto Padre /
+    // Enervida). Ahora opera exclusivamente sobre una tienda de prueba
+    // creada por el propio spec vía API.
+    const headers = await freshAuthHeaders('admin');
+    test.skip(!headers, 'E2E_TEST_ADMIN_TOKEN not configured');
+    const own = `E2E Del Src ${UNIQUE}`;
+    const createRes = await request.post('/api/stores', {
+      headers,
+      data: buildStorePayload(own),
+    });
+    test.skip(createRes.status() !== 201, `setup: no se pudo crear tienda propia (${createRes.status()})`);
+    const createJson = await createRes.json();
+    // Extracción tolerante (respuesta real: { data: { store_id } })
+
     await page.goto('/?view=stores');
     await waitForStoresView(page);
 
-    // Find the first store card and click delete
-    const firstCard = page.locator('[role="article"]').first();
-    const storeName = await firstCard.locator('h3, [class*="font-black"], [class*="font-bold"]').first().textContent();
+    // Localizar la tarjeta de la tienda PROPIA (por nombre exacto), no la primera
+    const ownCard = page.locator('[role="article"]').filter({ hasText: new RegExp(own.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).first();
+    await expect(ownCard).toBeVisible({ timeout: 10_000 });
 
-    const deleteButton = firstCard.locator('button[aria-label*="liminar"], button[aria-label*="elete"], button', { hasText: /eliminar|delete/i }).first();
+    const deleteButton = ownCard.locator('button[aria-label*="liminar"], button[aria-label*="elete"], button', { hasText: /eliminar|delete/i }).first();
     await deleteButton.click();
 
     // Confirm deletion in the confirmation dialog
@@ -162,9 +205,7 @@ test.describe('Stores CRUD: Delete', () => {
     await confirmButton.click();
 
     // Verify the store card is removed from the list
-    if (storeName) {
-      await expect(page.locator(`text="${storeName.trim()}"`)).toBeHidden({ timeout: 10_000 });
-    }
+    await expect(ownCard).toBeHidden({ timeout: 10_000 });
   });
 });
 

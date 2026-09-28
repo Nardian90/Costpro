@@ -302,37 +302,40 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
 
   // ─── UI: reset button exists on store card ───────────────────────
 
-  test('UI: "Reiniciar" button exists on Tienda Central Costpro card', async ({ page }) => {
+  test('UI: "Reiniciar" button exists on PILOT STORE A card (SEC-TS-08)', async ({ page }) => {
     await page.goto('/?view=stores');
     await page.waitForLoadState('networkidle');
 
     // Wait for store cards to render
     await page.waitForTimeout(3000);
 
-    // Find the Tienda Central Costpro card
+    // SEC-TS-08: se opera sobre la tarjeta de la tienda PILOT dedicada —
+    // 'Tienda Central Costpro' (datos reales) queda fuera del banco de pruebas
     const storeCard = page.locator('[role="article"], .store-card, [data-store-card]').filter({
-      hasText: /tienda central costpro/i,
+      hasText: /e2e pilot a costpro/i,
     }).first();
 
     const cardVisible = await storeCard.isVisible({ timeout: 10000 }).catch(() => false);
-    test.skip(!cardVisible, 'Tienda Central Costpro card not found — skipping');
+    test.skip(!cardVisible, 'PILOT STORE A card not found — skipping');
 
     // STRICT: the "Reiniciar" button must exist within the card
     const resetButton = storeCard.getByRole('button', { name: /reiniciar/i });
     await expect(resetButton).toBeVisible({ timeout: 5000 });
   });
 
-  test('UI: clicking "Reiniciar" opens confirmation dialog', async ({ page }) => {
+  test('UI: clicking "Reiniciar" on PILOT STORE A opens confirmation dialog (SEC-TS-08)', async ({ page }) => {
     await page.goto('/?view=stores');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
+    // SEC-TS-08: el diálogo destructivo se abre sobre la tienda PILOT A —
+    // NUNCA sobre 'Tienda Central Costpro' (datos operativos reales)
     const storeCard = page.locator('[role="article"], .store-card, [data-store-card]').filter({
-      hasText: /tienda central costpro/i,
+      hasText: /e2e pilot a costpro/i,
     }).first();
 
     const cardVisible = await storeCard.isVisible({ timeout: 10000 }).catch(() => false);
-    test.skip(!cardVisible, 'Tienda Central Costpro card not found — skipping');
+    test.skip(!cardVisible, 'PILOT STORE A card not found — skipping');
 
     const resetButton = storeCard.getByRole('button', { name: /reiniciar/i });
     await resetButton.click();
