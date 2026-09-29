@@ -90,10 +90,10 @@ export const HOME_VIEW = 'dashboard';
 export const HOME_ITEM: NavEntry = {
   id: HOME_VIEW,
   label: 'Inicio',
-  description: 'Estado del negocio: KPIs consolidados (admin/manager) o tablero de tu tienda.',
+  description: 'AI Command Center: pídele a Darian lo que necesitas — costos, ventas, productos y acciones.',
   icon: Home,
   type: 'item',
-  keywords: ['inicio', 'home', 'dashboard', 'kpi', 'indicadores', 'tablero', 'resumen'],
+  keywords: ['inicio', 'home', 'darian', 'ai', 'asistente', 'dashboard', 'kpi', 'indicadores', 'tablero', 'resumen'],
 };
 
 // ────────────────────────────────────────────────────────────────────
@@ -339,9 +339,11 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
     roles: ['admin', 'manager', 'encargado'],
     children: [
       {
-        // Aprobado §1/§baseline: "Dashboard de Tiendas" como entrada de ANÁLISIS.
-        // La HOME única sigue siendo el destino fijo INICIO → dashboard.
-        id: 'dashboard',
+        // AI COMMAND CENTER: el viewId 'dashboard' es ahora el Inicio
+        // conversacional (Darian primero). El KPI consolidado se preserva
+        // intacto como 'store-dashboard' — entrada de ANÁLISIS (GATE 11:
+        // estructura F4 sin cambios, sin duplicar Inicio).
+        id: 'store-dashboard',
         label: 'Dashboard de Tiendas',
         description: 'KPIs consolidados por tienda: ventas, costos, ganancia y alertas de stock.',
         icon: TrendingUp,
@@ -1231,7 +1233,7 @@ export const MOBILE_MAIN_TABS: MobileMainTab[] = [
 
 /** Conjunto de ViewTypes válidos declarados en el store. */
 export const VALID_VIEWS: Set<string> = new Set([
-  'occ', 'dashboard', 'wallet', 'pos', 'inventory', 'recepcion', 'reception_list',
+  'occ', 'dashboard', 'store-dashboard', 'wallet', 'pos', 'inventory', 'recepcion', 'reception_list',
   'transferencias', 'sales', 'inventory_count', 'cost-sheets', 'reports', 'catalog',
   'history', 'inventory_adjustments', 'audit', 'cash', 'users', 'roles', 'stores',
   'storefront-config', 'settings', 'help', 'wiki', 'news', 'rss_management',

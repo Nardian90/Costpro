@@ -33,7 +33,13 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
   {
     id: "dashboard",
     route: "/?view=dashboard",
-    description: "Tablero principal con indicadores clave de rendimiento (KPIs), ventas del día y estado general.",
+    description: "AI Command Center de CostPro: conversa con Darian (asistente IA), consulta costos y ventas, busca productos y ejecuta acciones. Acciones recientes para reanudar trabajo.",
+    actions: ["ask_question", "search_entity", "get_cost_summary", "open_view", "fill_form", "export_document"]
+  },
+  {
+    id: "store-dashboard",
+    route: "/?view=store-dashboard",
+    description: "Dashboard de Tiendas: KPIs consolidados por tienda — ventas, costos, ganancia y alertas de stock.",
     actions: ["view_kpis", "refresh_data"]
   },
   {

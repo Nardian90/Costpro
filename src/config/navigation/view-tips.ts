@@ -13,7 +13,9 @@
 export const VIEW_TIPS: Record<string, string> = {
   // Escritorio / Dashboard
   'occ': 'Usa ⌘K para búsqueda rápida', // alias legacy
-  'dashboard': 'Monitorea tus KPIs en tiempo real',
+  // AI COMMAND CENTER: Inicio es el punto de entrada conversacional
+  'dashboard': 'Pídele lo que necesitas a Darian, tu asistente IA',
+  'store-dashboard': 'Monitorea los KPIs de tus tiendas en tiempo real',
 
   // Chat
   'chat': 'Pregunta a Darian sobre costos, ventas o inventario',

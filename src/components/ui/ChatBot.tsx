@@ -10,6 +10,7 @@ import { userService } from '@/services/user-service';
 import { toast } from 'sonner';
 import { normalizeLegacyView } from '@/config/navigation/navigation-definition';
 import ReactMarkdown from 'react-markdown';
+import { recordDarianAction, type DarianActionKind } from '@/lib/darian/recent-actions';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 interface Message {
@@ -44,11 +45,17 @@ const MODEL_OPTIONS: ModelOption[] = [
   { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', badge: 'Estable' },
 ];
 
+// AI COMMAND CENTER (GATE 4): sugerencias de alto valor alineadas a
+// capacidades REALES del motor (/api/bot/chat: search_entity, get_cost_summary,
+// open_view, fill_form). Cada prompt se envía tal cual a Darian — sin botones
+// que prometan acciones inexistentes.
 const QUICK_PROMPTS = [
-  { icon: '📊', text: 'Muéstrame el resumen de costos', view: 'cost-sheets' },
-  { icon: '📦', text: '¿Cómo creo una ficha de costo?', view: 'cost-sheets' },
-  { icon: '🔍', text: 'Busca un producto en el catálogo', view: 'catalog' },
-  { icon: '📈', text: '¿Qué ventas se hicieron hoy?', view: 'sales' },
+  { icon: '📈', text: '¿Qué ventas se hicieron hoy?' },
+  { icon: '🔍', text: 'Busca un producto en el catálogo' },
+  { icon: '📊', text: 'Muéstrame el resumen de costos' },
+  { icon: '📦', text: '¿Cómo está el inventario?' },
+  { icon: '🧾', text: 'Quiero crear una venta' },
+  { icon: '💰', text: '¿Cómo va la caja?' },
 ];
 
 // ─── STORAGE HELPERS WITH DEBOUNCE ────────────────────────────────────────────
@@ -101,7 +108,11 @@ function createConversation(title?: string, firstMessage?: string): Conversation
 }
 
 // ─── CHATBOT COMPONENT ───────────────────────────────────────────────────────
-export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
+// AI COMMAND CENTER (GATE 9): `onConversationChange` notifica al host (p.ej.
+// AICommandCenterView) si hay conversación activa, para que las Acciones
+// Recientes cedan espacio al contenido conversacional. Callback-only: sin
+// estado global nuevo (GATE 18).
+export function ChatBot({ embedded = false, onConversationChange }: { embedded?: boolean; onConversationChange?: (hasMessages: boolean, conversationId: string | null) => void } = {}) {
   // GATE 1: router eliminado — la navegación del chat es in-shell vía store
   // (el shell vive en '/', las vistas son estado Zustand + URL sync).
   const { isChatBotOpen: isOpen, setIsChatBotOpen: setIsOpen, currentView, setCurrentView } = useUIStore();
@@ -155,6 +166,36 @@ export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
 
   // ─── DERIVED STATE ────────────────────────────────────────────────────────
   const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
+
+  // AI COMMAND CENTER (GATE 9): notificar al host el estado conversacional
+  // (hay mensajes → conversación activa). Primitivas en deps para no re-disparar.
+  const onConversationChangeRef = useRef(onConversationChange);
+  useEffect(() => {
+    onConversationChangeRef.current = onConversationChange;
+  }, [onConversationChange]);
+  const hasActiveMessages = (activeConversation?.messages.length ?? 0) > 0;
+  useEffect(() => {
+    onConversationChangeRef.current?.(hasActiveMessages, activeConversationId);
+  }, [hasActiveMessages, activeConversationId]);
+
+  // AI COMMAND CENTER (GATE 19 · Reapertura): el host (Acciones Recientes)
+  // pide restaurar una conversación concreta del log de actividad.
+  useEffect(() => {
+    const openConversation = (e: Event) => {
+      const id = (e as CustomEvent).detail?.conversationId as string | undefined;
+      if (!id) return;
+      setConversations(prev => {
+        if (prev.some(c => c.id === id)) {
+          setActiveConversationId(id);
+          activeConvoIdRef.current = id;
+          if (!embedded) setIsOpen(true);
+        }
+        return prev;
+      });
+    };
+    window.addEventListener('darian:open-conversation', openConversation);
+    return () => window.removeEventListener('darian:open-conversation', openConversation);
+  }, [embedded, setIsOpen]);
   const messages = activeConversation?.messages || [];
 
   // ─── LOAD CONVERSATIONS ON MOUNT + USER CHANGE ────────────────────────────
@@ -408,35 +449,53 @@ export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
     setAttachedImage(null);
   }, []);
 
-  // ─── ACTIONS HANDLER ─────────────────────────────────────────────────────
+  // ─── ACTIONS HANDLER ─────────────────────────────────────────
   const handleAction = (action: any) => {
     logger.info('DATABASE', '[AI_CONTROLLER]_ACTION_RECEIVED:', { data: action })
+
+    // AI COMMAND CENTER (GATE 5.1): toda acción EJECUTADA por Darian se
+    // registra en el log user-scoped para Acciones Recientes. Best-effort:
+    // el fallo del log nunca bloquea la acción.
+    const recordThis = (kind: DarianActionKind, title: string, detail?: string, viewId?: string) => {
+      recordDarianAction(
+        { kind, title, detail, viewId, conversationId: activeConvoIdRef.current || undefined, storeId: user?.activeStoreId || undefined },
+        (user as any)?.id || null
+      );
+    };
 
     switch (action.type) {
       case 'navigation':
         // GATE 1: navegación in-shell vía store Zustand (el shell vive en '/',
         // las vistas son estado — router.push('/terminal?view=*') daba 404).
         // normalizeLegacyView corrige viewIds legacy (occ, wrappers viejos).
-        toast.info(`Navegando a ${normalizeLegacyView(action.payload.viewId).view}...`);
-        setCurrentView(normalizeLegacyView(action.payload.viewId).view as ViewType);
+        {
+          const dest = normalizeLegacyView(action.payload.viewId).view as ViewType;
+          toast.info(`Navegando a ${dest}...`);
+          setCurrentView(dest);
+          recordThis('navigation', `Navegó a ${dest}`, undefined, dest);
+        }
         break;
 
       case 'form_fill':
         toast.success(`Formulario ${action.payload.formName} completado por Darian`);
         window.dispatchEvent(new CustomEvent('ai:fill-form', { detail: action.payload }));
+        recordThis('form_fill', `Completó formulario: ${action.payload.formName}`, action.payload.formName);
         break;
 
       case 'form_submit':
         toast.success(`Formulario ${action.payload.formName} enviado por Darian`);
         window.dispatchEvent(new CustomEvent('ai:submit-form', { detail: action.payload }));
+        recordThis('form_submit', `Envió formulario: ${action.payload.formName}`, action.payload.formName);
         break;
 
       case 'export':
         toast.success(`Archivo ${action.payload.type.toUpperCase()} listo para descargar`);
+        recordThis('export', `Generó exportación ${String(action.payload.type).toUpperCase()}`);
         break;
 
       case 'ui_mode':
         toast.info(`Cambiando a modo ${action.payload.mode}`);
+        recordThis('ui_mode', `Cambió a modo ${action.payload.mode}`);
         break;
 
       default:
@@ -475,6 +534,12 @@ export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
       setActiveConversationId(newConvo.id);
       activeConvoIdRef.current = newConvo.id;
       convoId = newConvo.id;
+      // AI COMMAND CENTER (GATE 5.2): consulta iniciada desde Darian →
+      // Recents. Solo el primer prompt de cada conversación (evita spam).
+      recordDarianAction(
+        { kind: 'query', title: textToSend, conversationId: newConvo.id, storeId: user?.activeStoreId || undefined },
+        (user as any)?.id || null
+      );
     } else {
       activeConvoIdRef.current = convoId;
     }

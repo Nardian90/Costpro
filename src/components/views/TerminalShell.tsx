@@ -77,6 +77,9 @@ function CashReportWrapper() {
 }
 
 const DashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/DashboardView'), { ssr: false });
+// AI COMMAND CENTER: la nueva Inicio (hero conversacional de Darian +
+// Acciones recientes). El Dashboard KPI anterior vive en 'store-dashboard'.
+const AICommandCenterView = dynamic(() => import('@/components/views/terminal/views/dashboard/AICommandCenterView'), { ssr: false });
 // GATE 1 §1: OCCView retirada como superficie UX. 'occ' queda como alias
 // técnico de migración: el store normaliza a 'dashboard' y el case 'occ'
 // renderiza la home única (código de OCCView ya no se carga).
@@ -360,6 +363,9 @@ export default function TerminalShell() {
       case 'dashboard':
         prefetchDashboardData(queryClient, user.activeStoreId, user.role === 'admin');
         break;
+      case 'store-dashboard':
+        prefetchDashboardData(queryClient, user.activeStoreId, user.role === 'admin');
+        break;
       case 'audit':
         prefetchAuditLogs(queryClient, { storeIds: [user.activeStoreId] });
         break;
@@ -433,7 +439,8 @@ export default function TerminalShell() {
       );
     }
     switch (view) {
-        case 'dashboard': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
+        case 'dashboard': return <ViewErrorBoundary viewName="Inicio"><AICommandCenterView /></ViewErrorBoundary>;
+        case 'store-dashboard': return <ViewErrorBoundary viewName="Dashboard de Tiendas"><DashboardView /></ViewErrorBoundary>;
         case 'pick3-intelligence': return <ViewErrorBoundary viewName="Gestor de Riesgo"><Pick3IntelligenceView /></ViewErrorBoundary>;
         case 'wallet': return <ViewErrorBoundary viewName="Wallet"><WalletView /></ViewErrorBoundary>;
         case 'pos': return <ViewErrorBoundary viewName="Vender"><POSView /></ViewErrorBoundary>;
@@ -556,7 +563,7 @@ export default function TerminalShell() {
         case 'telegram-group': return <ViewErrorBoundary viewName="Telegram Grupo"><TelegramGroupView /></ViewErrorBoundary>;
         // GATE 1 §1: alias técnico — 'occ' se normaliza a 'dashboard' en el
         // store; este case es inalcanzable y renderiza la home única.
-        case 'occ': return <ViewErrorBoundary viewName="Inicio"><DashboardView /></ViewErrorBoundary>;
+        case 'occ': return <ViewErrorBoundary viewName="Inicio"><AICommandCenterView /></ViewErrorBoundary>;
         default: {
           // E-Fix (IA Audit): default "Módulo No Disponible".
           // El breadcrumb muestra el path completo hasta la vista inexistente
@@ -672,7 +679,11 @@ export default function TerminalShell() {
                   // que el wrapper también tenga h-full para que la cadena de alturas
                   // conecte hasta el main.
                   (currentView === 'telegram-conversations' ||
-                   currentView === 'whatsapp-conversations') ? "h-full max-w-none" : "",
+                   currentView === 'whatsapp-conversations' ||
+                   // AI COMMAND CENTER: Inicio (chat embebido) necesita la cadena
+                   // de alturas completa hasta el main, como las vistas de chat.
+                   currentView === 'dashboard' ||
+                   currentView === 'store-dashboard') ? "h-full max-w-none" : "",
                   // POS-3a: POS necesita full-width porque ahora tiene un sidebar derecha
                   // fixed (carrito). max-w-7xl dejaría demasiado espacio muerto a la derecha.
                   (currentView === 'cost-sheets' || currentView === 'ipv' || currentView === 'pos') ? "max-w-none" : "max-w-7xl"
@@ -708,8 +719,12 @@ export default function TerminalShell() {
       <KeyboardShortcutsModal open={showKeyboardHelp} onOpenChange={setShowKeyboardHelp} />
       {/* F5-T02: ChatBot y FloatingCalculator solo en desktop — en mobile están integrados en el tab bar / sheet "Más" */}
       {/* Fix: ocultar ChatBot en vistas de chat (Telegram/WhatsApp Conversations) porque estorba el input de mensajes */}
+      {/* AI COMMAND CENTER: oculto también en Inicio ('dashboard') — Darian ya está
+          embebido allí como protagonista; el flotante duplicaría la capacidad (GATE 20.7).
+          En todas las demás vistas el flotante sigue disponible como acceso rápido. */}
       {currentView !== 'pos' && currentView !== 'help' &&
        currentView !== 'telegram-conversations' && currentView !== 'whatsapp-conversations' &&
+       currentView !== 'dashboard' &&
        !isMobile && <ChatBot />}
       {/* FIX-CALC-PRO (2026-07-10): FloatingCalculator ahora disponible TAMBIÉN en POS.
           Antes estaba gateado con currentView !== "pos". Como ahora tiene desglose de
