@@ -357,6 +357,50 @@ export async function sweepStaleTestStores(): Promise<void> {
 }
 
 /**
+ * SEC-TS-10 (cuota activa): archiva tiendas de PRUEBA ACTIVAS para liberar
+ * cuota del plan (enterprise: 10 activas — checkStoreQuota cuenta
+ * is_active=true). Usada por el retry-403 de los helpers de creación cuando
+ * la cuota se agota a mitad de corrida.
+ *
+ * Protegidas SIEMPRE:
+ *   - PILOT A/B (por nombre exacto — guard de SEC-TS-08/09)
+ *   - ids pasados en protectedIds (stores del test en curso)
+ *   - cualquier tienda creada hace <2 min (ventana del test actual; con
+ *     workers=1 ninguna otra spec corre concurrentemente)
+ *   - tiendas cuyo nombre NO matchea los prefijos de artefactos de test
+ *
+ * No toca NUNCA: tiendas operativas (nombres de negocio), pilotos.
+ */
+const TEST_NAME_PREFIX = /^(E2E|E2E80|ESEC TEST|FASE-D TEST|AUDIT|HOT|REM-F4|E2E2)/i;
+export async function freeActiveTestQuota(
+  protectedIds: readonly string[] = [],
+  maxAgeMs = 120_000,
+): Promise<number> {
+  try {
+    const rows = (await sb.select('stores', 'select=id,name,created_at&is_active=eq.true')) as Array<{
+      id: string; name: string; created_at: string;
+    }>;
+    const now = Date.now();
+    const toArchive = rows.filter((r) => {
+      const name = String(r.name || '');
+      if (name === PILOT_A_NAME || name === PILOT_B_NAME) return false;
+      if (protectedIds.includes(r.id)) return false;
+      const created = Date.parse(r.created_at || '') || 0;
+      if (now - created < maxAgeMs) return false;
+      if (!TEST_NAME_PREFIX.test(name)) return false;
+      return true;
+    });
+    if (toArchive.length === 0) return 0;
+    const idList = toArchive.map((r) => `"${r.id}"`).join(',');
+    await sb.update('stores', `id=in.(${idList})`, { is_active: false, is_archived: true });
+    return toArchive.length;
+  } catch {
+    // best-effort: si falla, la creación reportará el 403 real
+    return 0;
+  }
+}
+
+/**
  * SEC-TS-10 (FIXTURE): soft-delete robusto de la tienda de prueba.
  * Intenta el flujo REAL (DELETE /api/stores → RPC soft_delete_store).
  * Si la API rechaza por rate-limit (429) u otro error transitorio, cae a

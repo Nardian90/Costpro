@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
-import { waitStoreBudget, sweepStaleTestStores, deleteTestStore as robustDelete } from './fixtures/session.fixture';
+import { waitStoreBudget, sweepStaleTestStores, freeActiveTestQuota, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 /**
  * E2E: Full store lifecycle — create → archive → restore — STRICT ASSERTIONS.
@@ -50,10 +50,12 @@ test.describe('Store Lifecycle: Create → Archive → Restore — Strict', () =
 
   test('1. create store via POST /api/stores → 201', async ({ request }) => {
     // SEC-TS-10: sweep de huérfanas >10 min (libera cuota activa) + pacear
-    // creación (API: 5/min)
+    // creación (API: 5/min). Timeout extendido: sweep + pacing + posible
+    // retry de cuota pueden superar los 60 s por defecto.
+    test.setTimeout(180_000);
     await sweepStaleTestStores();
     await waitStoreBudget('create');
-    const response = await request.post('/api/stores', {
+    let response = await request.post('/api/stores', {
       headers,
       data: {
         name: storeName,
@@ -64,6 +66,23 @@ test.describe('Store Lifecycle: Create → Archive → Restore — Strict', () =
         bank_account: 'E2E-BANK',
       },
     });
+    if (response.status() === 403) {
+      // SEC-TS-10 (cuota llena): liberar test-stores activas antiguas
+      // (pilotos y stores <2 min protegidas) y reintentar 1× vía API real.
+      await freeActiveTestQuota([]);
+      await waitStoreBudget('create');
+      response = await request.post('/api/stores', {
+        headers,
+        data: {
+          name: storeName,
+          address: 'E2E Test Address',
+          slug: storeSlug,
+          reeup: storeReeup,
+          nit: storeNit,
+          bank_account: 'E2E-BANK',
+        },
+      });
+    }
 
     // STRICT: must be exactly 201. 500 = RPC broken = test fails.
     // 403 = plan limit reached = test fails (need to upgrade plan or cleanup)

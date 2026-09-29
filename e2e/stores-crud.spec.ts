@@ -18,7 +18,7 @@
 import { test, expect, buildStorePayload, extractStoreId, waitForStoresView } from './fixtures';
 import { freshAuthHeaders } from './fixtures/auth.fixture';
 // SEC-TS-10: pacing de rate-limit (create 5/min, delete 3/min en /api/stores)
-import { waitStoreBudget, deleteTestStore as robustDelete } from './fixtures/session.fixture';
+import { waitStoreBudget, freeActiveTestQuota, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 const UNIQUE = Date.now().toString(36);
 
@@ -48,6 +48,11 @@ test.describe('Stores CRUD: Create', () => {
     await slugInput.fill(`e2e_${UNIQUE}`);
 
     // Submit the form — el botón se habilita cuando el slug pasa check-slug
+    // SEC-TS-10 (cuota): liberar cuota activa ANTES del submit — el POST lo
+    // hace el BROWSER (sin retry posible) y una cuota llena dejaba el modal
+    // abierto con error (reproducido en re-run mini). Se liberan solo
+    // test-stores antiguas; pilotos y stores <2 min quedan protegidas.
+    await freeActiveTestQuota([]);
     const submitBtn = modal.getByRole('button', { name: /crear tienda/i });
     await expect(submitBtn).toBeEnabled({ timeout: 10_000 });
     await submitBtn.click();

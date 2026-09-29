@@ -5,7 +5,7 @@ import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
 // sweepStaleTestStores: libera cuota activa de huérfanas >10 min ANTES de
 // crear (el helper local de este spec no la invocaba → 403 en cascada tras
 // una corrida previa sucia — reproducido en el re-run mini).
-import { waitStoreBudget, sweepStaleTestStores, deleteTestStore as robustDelete } from './fixtures/session.fixture';
+import { waitStoreBudget, sweepStaleTestStores, freeActiveTestQuota, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 /**
  * E2E: Multi-Tienda Module — Comprehensive coverage (>90%).
@@ -100,7 +100,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     // la ráfaga de creaciones de este spec recibe 429 y falla en cascada.
     await sweepStaleTestStores();
     await waitStoreBudget('create');
-    const response = await request.post('/api/stores', {
+    let response = await request.post('/api/stores', {
       headers,
       data: {
         name: `E2E Multi ${sfx}`,
@@ -111,6 +111,25 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
         nit: '123456789',
       },
     });
+    if (response.status() === 403) {
+      // SEC-TS-10 (cuota llena): liberar test-stores ACTIVAS antiguas
+      // (>2 min — de tests ya completados; pilotos y stores del test en
+      // curso protegidas por freeActiveTestQuota) y reintentar 1× por la
+      // vía REAL de la API. Sin esto, tests 8.x-10.x recibían 403 en
+      // cascada por acumulación de activas (>10 del plan enterprise).
+      await freeActiveTestQuota(createdStoreIds);
+      await waitStoreBudget('create');
+      response = await request.post('/api/stores', {
+        headers,
+        data: {
+          name: `E2E Multi ${sfx}`,
+          address: `Calle ${sfx}`,
+          slug: `e2e-multi-${sfx}`,
+          reeup: '12345678901',
+          nit: '123456789',
+        },
+      });
+    }
 
     expect(response.status()).toBe(201);
     const body = await response.json();
@@ -217,8 +236,12 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     });
     expect(response.status()).toBe(201);
     const body = await response.json();
-    const storeId = body.data?.id || body.id;
-    createdStoreIds.push(storeId);
+    // SEC-TS-10 (BUG LATENTE — extracción): la respuesta real es
+    // { data: { success, store_id, tenant_id } } — el patrón body.data?.id
+    // || body.id devolvía undefined → push(undefined) → afterAll no limpiaba
+    // → tienda ACTIVA filtrada → cuota 403 en cascada.
+    const storeId = body?.data?.store_id ?? body?.data?.id ?? body?.store_id;
+    if (storeId) createdStoreIds.push(storeId);
   });
 
   test('2.4 POST /api/stores rejects name with only whitespace → 400', async ({ request }) => {
@@ -324,6 +347,10 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   // ═════════════════════════════════════════════════════════════════
 
   test('4.1 DELETE /api/stores removes a store → 200', async ({ request }) => {
+    // SEC-TS-10: timeout extendido — este test hace create PACEADO + delete
+    // PACEADO (presupuestos 4/min y 2/min): esperas de hasta ~90 s contra
+    // el timeout por defecto de 60 s (mismo criterio que store-reset 7/9).
+    test.setTimeout(180_000);
     const storeId = await createTestStore(request, 'del-' + Date.now().toString(36));
 
     // SEC-TS-10: pacear delete (API: 3/min) — la creación previa de este mismo
@@ -342,7 +369,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('4.2 DELETE /api/stores rejects missing storeId → 400', async ({ request }) => {
-    // SEC-TS-10: pacear delete (API: 3/min)
+    // SEC-TS-10: pacear delete (API: 3/min) + timeout extendido (espera
+    // paceada de hasta ~60 s tras el delete del 4.1).
+    test.setTimeout(180_000);
     await waitStoreBudget('delete');
     const response = await request.delete('/api/stores', {
       headers,
@@ -352,7 +381,10 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('4.3 DELETE /api/stores rejects non-existent store → 404', async ({ request }) => {
-    // SEC-TS-10: pacear delete (API: 3/min)
+    // SEC-TS-10: pacear delete (API: 3/min) + timeout extendido — con 2
+    // deletes previos en el bucket, la espera puede superar los 60 s
+    // ("Request context disposed" reproducido en el re-run mini).
+    test.setTimeout(180_000);
     await waitStoreBudget('delete');
     const response = await request.delete('/api/stores', {
       headers,
@@ -738,8 +770,10 @@ test('12.1 UI: stores management view loads', async ({ page }) => {
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    const storeId = body.data?.id || body.id;
-    createdStoreIds.push(storeId);
+    // SEC-TS-10 (BUG LATENTE — extracción): ver 2.3 — push(undefined) dejaba
+    // la tienda ACTIVA sin cleanup (cuota 403 en cascada).
+    const storeId = body?.data?.store_id ?? body?.data?.id ?? body?.store_id;
+    if (storeId) createdStoreIds.push(storeId);
   });
 
   test('13.3 slug with special characters gets sanitized', async ({ request }) => {
@@ -760,8 +794,9 @@ test('12.1 UI: stores management view loads', async ({ page }) => {
     expect([201, 400]).toContain(response.status());
     if (response.status() === 201) {
       const body = await response.json();
-      const storeId = body.data?.id || body.id;
-      createdStoreIds.push(storeId);
+      // SEC-TS-10 (BUG LATENTE — extracción): ver 2.3.
+      const storeId = body?.data?.store_id ?? body?.data?.id ?? body?.store_id;
+      if (storeId) createdStoreIds.push(storeId);
     }
   });
 
