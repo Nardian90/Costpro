@@ -32,8 +32,10 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 /** Nombres exactos e inmutables de las tiendas piloto dedicadas.
- *  Elegidos para NO colisionar con patrones de higiene E2E-80 ('E2E80*',
- *  'E2E *', ...) ni con tiendas de negocio reales. */
+ *  ⚠️ SEC-TS-09: 'E2E PILOT *' SÍ colisiona con el patrón de higiene
+ *  'E2E *' del sweep de createTestStore (PostgREST traduce '*'→'%').
+ *  El sweep ahora las excluye por nombre exacto (pilotGuard en
+ *  session.fixture.ts) — mantener ambos en sincronía al renombrar. */
 export const PILOT_A_NAME = 'E2E PILOT A CostPro';
 export const PILOT_B_NAME = 'E2E PILOT B CostPro';
 
