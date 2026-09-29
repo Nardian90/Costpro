@@ -16,7 +16,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const getUserMock = vi.fn();
 
+// SEC-TS-10: auth.ts getServerSession ahora usa createServerClient()
+// (instancia request-scoped, BUG-037) en lugar del singleton `supabase`.
+// El mock expone AMBOS para cubrir el patrón nuevo y cualquier consumidor
+// legacy del singleton. Las aserciones NO cambian: getUser debe llamarse
+// 1 vez por request y el fail-closed se sigue verificando igual.
 vi.mock('@/lib/supabaseClient', () => ({
+  createServerClient: () => ({
+    auth: {
+      getUser: getUserMock,
+    },
+  }),
   supabase: {
     auth: {
       getUser: getUserMock,
