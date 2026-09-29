@@ -161,13 +161,18 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
     // STRICT: either the empty state message OR a paid item must be visible
     // (we can't guarantee which, but one must exist)
+    // SEC-TS-10 (UI REDESIGNADA): la matriz de aging muestra "N proveedor(es)
+    // en esta vista" cuando el filtro tiene resultados — tercer indicador
+    // válido de que el filtro aplicó y la vista se actualizó.
     const emptyMessage = page.getByText(/no hay cuentas por pagar en esta categoría/i);
     const paidItem = page.locator('td:has-text(/pagado/i)');
+    const providerCount = page.getByText(/proveedor\(es\) en esta vista/i);
 
     const hasEmpty = await emptyMessage.isVisible().catch(() => false);
     const hasPaid = await paidItem.first().isVisible().catch(() => false);
+    const hasProviders = await providerCount.isVisible().catch(() => false);
 
-    expect(hasEmpty || hasPaid).toBe(true);
+    expect(hasEmpty || hasPaid || hasProviders).toBe(true);
   });
 
   // ─── API: GET /api/received-services returns expected shape ──────

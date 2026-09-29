@@ -78,6 +78,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     // SEC-TS-10: usa deleteTestStore robusto — el DELETE /api/stores tiene
     // rate limit 3/min; en bulk los 429 dejaban huérfanas ACTIVAS que
     // agotaban la cuota del plan y cascabeaban 403 sobre specs posteriores.
+    // SEC-TS-10: timeout del hook extendido — el cleanup paceado (~2 deletes/min
+    // × ~10 stores) tarda >60s y el hook moría a mitad dejando huérfanas.
+    test.setTimeout(360_000);
     for (const storeId of createdStoreIds) {
       await robustDelete(request, headers.Authorization?.replace('Bearer ', '') || '', storeId);
     }
@@ -184,6 +187,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('2.2 POST /api/stores rejects missing name → 400', async ({ request }) => {
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: { address: 'Test', slug: 'test-no-name-' + Date.now() },
@@ -194,6 +200,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   test('2.3 POST /api/stores accepts missing address (optional field) → 201', async ({ request }) => {
     // FIX: schema says address is optional (create-quick flow)
     const sfx = 'noaddr-' + Date.now().toString(36);
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: { name: `E2E No Addr ${sfx}`, slug: `e2e-no-addr-${sfx}` },
@@ -205,6 +214,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('2.4 POST /api/stores rejects name with only whitespace → 400', async ({ request }) => {
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: { name: '   ', address: 'Test', slug: 'test-ws-name-' + Date.now() },
@@ -218,6 +230,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     const storeId = await createTestStore(request, sfx);
 
     // Try to create another with the same slug
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: {
@@ -232,6 +247,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('2.6 POST /api/stores without auth → 401', async ({ request }) => {
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       data: { name: 'No Auth', address: 'Test', slug: 'no-auth-' + Date.now() },
     });
@@ -239,6 +257,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('2.7 POST /api/stores rejects invalid plantilla → 400', async ({ request }) => {
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: {
@@ -690,6 +711,9 @@ test('12.1 UI: stores management view loads', async ({ page }) => {
 
   test('13.2 POST /api/stores with extra fields ignores them → 201', async ({ request }) => {
     const sfx = 'extra-' + Date.now().toString(36);
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: {
@@ -709,6 +733,9 @@ test('12.1 UI: stores management view loads', async ({ page }) => {
 
   test('13.3 slug with special characters gets sanitized', async ({ request }) => {
     const sfx = Date.now().toString(36);
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: {
