@@ -116,6 +116,50 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     );
   }
 
+  // FIX SEC-TS-10: validar el payload ANTES del INSERT para devolver 400
+  // (antes, tipos/rangos inválidos llegaban al INSERT y reventaban el CHECK
+  // CONSTRAINT chk_commission_values de la DB → 500 con el mensaje crudo de
+  // Postgres). El vocabulario de tipos y rangos replica EXACTAMENTE el
+  // contrato de la DB (migrations 20260626/20260715) y el del frontend
+  // (WorkersView: percentage_sales, fixed_amount, salary_based, hybrid,
+  // product_specific, scale_percentage).
+  const VALID_TYPES = ['percentage_sales', 'fixed_amount', 'salary_based', 'hybrid', 'product_specific', 'scale_percentage'] as const;
+  if (!VALID_TYPES.includes(type)) {
+    return NextResponse.json(
+      { error: `Tipo de regla inválido: '${type}'. Válidos: ${VALID_TYPES.join(', ')}` },
+      { status: 400 },
+    );
+  }
+  const pct = value_percent == null ? null : Number(value_percent);
+  if (pct != null && (Number.isNaN(pct) || pct < 0 || pct > 100)) {
+    return NextResponse.json(
+      { error: 'value_percent debe ser un número entre 0 y 100' },
+      { status: 400 },
+    );
+  }
+  if ((type === 'percentage_sales' || type === 'scale_percentage') && (pct == null || Number.isNaN(pct))) {
+    return NextResponse.json(
+      { error: `Las reglas ${type} requieren value_percent` },
+      { status: 400 },
+    );
+  }
+  if (type === 'hybrid' && (pct == null || body['salary_amount'] == null)) {
+    return NextResponse.json(
+      { error: 'Las reglas hybrid requieren salary_amount y value_percent' },
+      { status: 400 },
+    );
+  }
+  if ((type === 'fixed_amount' || type === 'salary_based' || type === 'hybrid' || type === 'product_specific')
+      && type !== 'hybrid') {
+    const reqField = type === 'fixed_amount' ? 'fixed_value' : type === 'salary_based' ? 'salary_amount' : type === 'product_specific' ? 'product_commission_amount' : '';
+    if (reqField && (body[reqField] == null || Number(body[reqField]) < 0)) {
+      return NextResponse.json(
+        { error: `Las reglas ${type} requieren ${reqField} >= 0` },
+        { status: 400 },
+      );
+    }
+  }
+
   // Validación: product_specific requiere product_ids[]
   if (type === 'product_specific' && (!product_ids || product_ids.length === 0)) {
     return NextResponse.json(

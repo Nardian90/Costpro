@@ -221,6 +221,12 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
     const res = await request.post('/api/pos/checkout', {
       headers: apiHeaders(adminToken),
       data: basePayload({
+        // FIX SEC-TS-10: los totales deben cuadrar con el item ajeno (1×1=1);
+        // si se dejan los defaults (200) el API responde 422 'Descuadre' antes
+        // de llegar a la validación de producto-por-tienda.
+        total_amount: 1,
+        subtotal: 1,
+        cash_amount: 1,
         items: [{ product_id: foreignProductId, quantity: 1, price: 1, cost: 1 }],
       }),
     });
@@ -232,6 +238,10 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
 
   test('E2E-POS-008 (P1) venta con pago mixto persiste el desglose de pagos', async ({ request }) => {
     const qty = 4; // 4 × 100 = 400
+    // FIX SEC-TS-10: baseline dinámico — el stock inicial depende de los tests
+    // previos del archivo (que pueden fallar/reordenarse); lo robusto es leer
+    // el stock ANTES de esta venta y verificar el delta exacto.
+    const stockBefore = num((await getInventory(store.id, product.id))!.quantity);
     const res = await request.post('/api/pos/checkout', {
       headers: apiHeaders(adminToken),
       data: basePayload({
@@ -253,7 +263,7 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
     expect(num(tx!.total_amount)).toBe(4 * SALE_PRICE);
 
     const inv = await getInventory(store.id, product.id);
-    expect(num(inv!.quantity)).toBe(95 - qty);
+    expect(num(inv!.quantity)).toBe(stockBefore - qty);
   });
 });
 
