@@ -119,12 +119,15 @@ test.describe('MULTI-TIENDA — Flujos de documentos', () => {
   });
 
   test('Dashboard KPI carga y muestra badge de Fecha de Operación', async ({ page }) => {
-    await page.goto(`${BASE_URL}/?view=dashboard?view=dashboard`, { waitUntil: 'networkidle' });
+    // SEC-TS-10 (FIX URL): era '/?view=dashboard?view=dashboard' (query
+    // malformado) → el parser de view no resolvía dashboard y no renderizaba
+    // el h2. Timeout 15s: primera compilación del dashboard en dev-mode.
+    await page.goto(`${BASE_URL}/?view=dashboard`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
 
     // Verificar que la página carga
     const heading = page.locator('h2').first();
-    await expect(heading).toBeVisible({ timeout: 5000 });
+    await expect(heading).toBeVisible({ timeout: 15_000 });
 
     // Verificar que el badge de fecha de operación existe
     const badge = await getOperationDateBadge(page);
@@ -147,7 +150,7 @@ test.describe('MULTI-TIENDA — Flujos de documentos', () => {
 
   test('Vista de Inventario carga sin overflow horizontal en mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto(`${BASE_URL}/?view=dashboard?view=inventory`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE_URL}/?view=inventory`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
 
     // Verificar que no hay overflow horizontal
@@ -157,7 +160,7 @@ test.describe('MULTI-TIENDA — Flujos de documentos', () => {
   });
 
   test('Vista de Recepciones carga correctamente', async ({ page }) => {
-    await page.goto(`${BASE_URL}/?view=dashboard?view=reception_list`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE_URL}/?view=reception_list`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
 
     // La página debe cargar sin errores

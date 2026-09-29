@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { getAuthHeaders } from './fixtures/auth.fixture';
+import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
+import { waitStoreBudget, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 /**
  * E2E: Full store lifecycle — create → archive → restore — STRICT ASSERTIONS.
@@ -25,32 +26,39 @@ test.describe('Store Lifecycle: Create → Archive → Restore — Strict', () =
 
   let headers: Record<string, string>;
   let createdStoreId: string | null = null;
-  const storeName = `E2E Test Store ${Date.now()}`;
-  const storeSlug = `e2e-test-store-${Date.now()}`;
+  const ts = Date.now();
+  const storeName = `E2E Test Store ${ts}`;
+  const storeSlug = `e2e-test-store-${ts}`;
+  // SEC-TS-10 (TEST OBSOLETO): reeup/nit fijos alfabéticos ('E2E-REEUP'/'E2E-NIT')
+  // rompían la validación Zod actual (REEUP 11 dígitos / NIT solo dígitos) → 400.
+  // Valores válidos y únicos por corrida (derivados del timestamp).
+  const storeReeup = String(ts % 100_000_000_000).padStart(11, '0');
+  const storeNit = String(ts % 10_000_000_000);
 
-  test.beforeAll(() => {
-    headers = getAuthHeaders('admin')!;
+  test.beforeAll(async () => {
+    // SEC-TS-10: sesión fresca (inmune a revocación de token a mitad de corrida)
+    headers = (await freshAuthHeaders('admin')) || getAuthHeaders('admin')!;
   });
 
   test.afterAll(async ({ request }) => {
     // Cleanup: force-delete the test store if it still exists
     if (createdStoreId) {
-      await request.delete('/api/stores', {
-        headers,
-        data: { storeId: createdStoreId },
-      }).catch(() => {});
+      // SEC-TS-10: cleanup robusto (rate-limit-aware + fallback de archivado)
+      await robustDelete(request, getAuthHeaders('admin')?.Authorization?.replace('Bearer ', '') || '', createdStoreId);
     }
   });
 
   test('1. create store via POST /api/stores → 201', async ({ request }) => {
+    // SEC-TS-10: pacear creación (API: 5/min)
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: {
         name: storeName,
         address: 'E2E Test Address',
         slug: storeSlug,
-        reeup: 'E2E-REEUP',
-        nit: 'E2E-NIT',
+        reeup: storeReeup,
+        nit: storeNit,
         bank_account: 'E2E-BANK',
       },
     });

@@ -17,6 +17,8 @@
  */
 import { test, expect, buildStorePayload, extractStoreId, waitForStoresView } from './fixtures';
 import { freshAuthHeaders } from './fixtures/auth.fixture';
+// SEC-TS-10: pacing de rate-limit (create 5/min, delete 3/min en /api/stores)
+import { waitStoreBudget, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 const UNIQUE = Date.now().toString(36);
 
@@ -163,7 +165,8 @@ test.describe('Stores CRUD: Update', () => {
 
     // Cleanup: eliminar la tienda de prueba propia
     if (ownId) {
-      await request.delete('/api/stores', { headers, data: { storeId: ownId } }).catch(() => {});
+      // SEC-TS-10: cleanup robusto (rate-limit-aware + fallback de archivado)
+      await robustDelete(request, headers.Authorization?.replace('Bearer ', '') || '', ownId);
     }
   });
 });
@@ -273,6 +276,8 @@ test.describe('Stores CRUD: API Level', () => {
     expect(updateJson.data.name).toContain('Updated');
 
     // DELETE — DELETE /api/stores
+    // SEC-TS-10: pacear delete (API: 3/min por usuario)
+    await waitStoreBudget('delete');
     const deleteRes = await request.delete('/api/stores', {
       data: { storeId },
       headers: {

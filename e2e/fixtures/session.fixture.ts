@@ -68,7 +68,7 @@ export function testSuffix(): string {
 
 // ── Autenticación ───────────────────────────────────────────────────────────
 
-export interface Session { token: string; userId: string; email: string; }
+export interface Session { token: string; userId: string; email: string; refreshToken?: string; }
 
 /** Inicia sesión real contra Supabase Auth (password grant) */
 export async function signIn(email: string, password: string): Promise<Session> {
@@ -81,7 +81,10 @@ export async function signIn(email: string, password: string): Promise<Session> 
     throw new Error(`signIn falló para ${email}: ${res.status} ${await res.text()}`);
   }
   const data = await res.json();
-  return { token: data.access_token, userId: data.user.id, email };
+  // SEC-TS-10: conservar el refresh_token REAL para que la sesión inyectada
+  // en el browser pueda auto-sanarse vía supabase-js si el access_token es
+  // revocado a mitad de corrida (signOut global de un spec UI previo).
+  return { token: data.access_token, userId: data.user.id, email, refreshToken: data.refresh_token };
 }
 
 /** Headers para llamadas API autenticadas (Bearer + Origin para CSRF) */
@@ -102,12 +105,28 @@ export async function injectSession(page: Page, session: Session): Promise<void>
     token_type: 'bearer',
     expires_in: 3600,
     expires_at: Math.floor(Date.now() / 1000) + 3600,
-    refresh_token: 'mock-refresh',
+    // SEC-TS-10: refresh_token REAL cuando está disponible (signIn) para que
+    // supabase-js pueda refrescar la sesión en el browser. El placeholder
+    // 'mock-refresh' solo se usa si el caller no tiene refresh_token.
+    refresh_token: session.refreshToken || 'mock-refresh',
     user: { id: session.userId, email: session.email },
   });
-  await page.addInitScript(([key, val]) => {
-    window.localStorage.setItem(key, val);
-  }, [storageKey, sessionData]);
+  // SEC-TS-10: pre-sembrar el consentimiento de cookies (mismo formato que
+  // src/lib/consent.ts) para que el banner GDPR no renderice durante los
+  // tests — su [role="dialog"] interfieren con selectores de modales
+  // (strict-mode violations) y pueden interceptar clicks.
+  const consentData = JSON.stringify({
+    essential: true,
+    analytics: false,
+    functional: true,
+    marketing: false,
+    timestamp: new Date().toISOString(),
+    version: '1.0',
+  });
+  await page.addInitScript(([k, v, ck, cv]) => {
+    window.localStorage.setItem(k, v);
+    window.localStorage.setItem(ck, cv);
+  }, [storageKey, sessionData, 'costpro_cookie_consent', consentData]);
 }
 
 /**
@@ -228,6 +247,8 @@ export async function createTestStore(
     await sb.update('stores', `name=like.${pat.replace(/ /g, '%20')}&created_at=lt.${tenMinAgo}${pilotGuard}`, { is_active: false, is_archived: true }).catch(() => {});
   }
 
+  // SEC-TS-10: pacear creación dentro del presupuesto 5/min de la API
+  await waitStoreBudget('create');
   const res = await request.post('/api/stores', {
     headers: apiHeaders(adminToken),
     data: payload,
@@ -254,16 +275,100 @@ export async function restoreActiveStore(userId: string): Promise<void> {
   await sb.update('profiles', `id=eq.${userId}`, { active_store_id: PILOT_STORE_ID }).catch(() => {});
 }
 
-/** Soft-delete de la tienda de prueba (cleanup) */
+/**
+ * SEC-TS-10 (FIXTURE): presupuesto de rate-limit para /api/stores.
+ * ============================================================================
+ * La API real limita (ventana fija 60s, por usuario+IP, ver
+ * src/app/api/stores/route.ts):
+ *   POST   5 creaciones/min · DELETE 3 borrados/min · PATCH 10/min
+ * El reset de tienda limita a 2/min (src/app/api/stores/reset/route.ts).
+ *
+ * En una corrida FULL los specs en ráfaga (sobre todo cuando otros tests
+ * fallan instantáneo) exceden el presupuesto → 429 → cleanups fallan en
+ * silencio → tiendas huérfanas ACTIVAS acumulan → cuota activa del plan
+ * (10) agotada → 403 en cascada sobre TODA creación posterior.
+ *
+ * waitStoreBudget() pacea ANTES de cada llamada para garantizar ≤budget
+ * en cualquier ventana de 60s (rolling ≤ fixed window: siempre seguro).
+ * NO modifica límites de la app: la suite respeta el contrato publicado.
+ */
+const STORE_BUDGETS: Record<string, { maxPerMin: number; envKey: string }> = {
+  create: { maxPerMin: 4, envKey: 'E2E_BUDGET_CREATE' }, // límite API: 5/min (margen 1)
+  delete: { maxPerMin: 2, envKey: 'E2E_BUDGET_DELETE' }, // límite API: 3/min (margen 1)
+  patch: { maxPerMin: 8, envKey: 'E2E_BUDGET_PATCH' },   // límite API: 10/min (margen 2)
+  reset: { maxPerMin: 2, envKey: 'E2E_BUDGET_RESET' },   // límite API: 2/min (exacto)
+  get: { maxPerMin: 25, envKey: 'E2E_BUDGET_GET' },      // límite API: 30/min (margen 5)
+};
+
+/**
+ * SEC-TS-10: los timestamps se persisten en process.env (JSON) porque cada
+ * spec file recibe un registro de módulos FRESCO dentro del mismo worker
+ * process (workers=1) — el estado module-level NO sobrevive entre specs, y
+ * el rate-limit de la API es GLOBAL al usuario+IP. Sin persistencia, el
+ * pacing de un spec no ve las llamadas del spec anterior → 429 en cascada
+ * (reproducido: 6× 429 en multi-store durante la corrida #4).
+ */
+function loadBudgetTimes(envKey: string): number[] {
+  try {
+    const raw = process.env[envKey];
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? (arr as number[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveBudgetTimes(envKey: string, times: number[]): void {
+  try {
+    process.env[envKey] = JSON.stringify(times);
+  } catch {
+    // no-op
+  }
+}
+
+export async function waitStoreBudget(kind: keyof typeof STORE_BUDGETS): Promise<void> {
+  const b = STORE_BUDGETS[kind];
+  if (!b) return;
+  const now = Date.now();
+  let times = loadBudgetTimes(b.envKey).filter((t) => now - t < 60_000);
+  if (times.length >= b.maxPerMin) {
+    // Esperar a que la llamada más antigua del presupuesto salga de la ventana
+    const waitMs = 60_000 - (now - times[0]) + 500;
+    await new Promise((r) => setTimeout(r, Math.max(0, waitMs)));
+    const after = Date.now();
+    times = loadBudgetTimes(b.envKey).filter((t) => after - t < 60_000);
+  }
+  times.push(Date.now());
+  saveBudgetTimes(b.envKey, times);
+}
+
+/**
+ * SEC-TS-10 (FIXTURE): soft-delete robusto de la tienda de prueba.
+ * Intenta el flujo REAL (DELETE /api/stores → RPC soft_delete_store).
+ * Si la API rechaza por rate-limit (429) u otro error transitorio, cae a
+ * archivado directo por service key (is_active=false + is_archived=true) —
+ * MISMA semántica que el sweep de higiene de createTestStore — para
+ * garantizar que la tienda de prueba nunca quede ACTIVA y agote la cuota
+ * del plan de stores activas. Nunca lanza (es cleanup best-effort).
+ */
 export async function deleteTestStore(
   request: import('@playwright/test').APIRequestContext,
   adminToken: string,
   storeId: string,
 ): Promise<void> {
-  await request.delete('/api/stores', {
-    headers: apiHeaders(adminToken),
-    data: { storeId },
-  }).catch(() => {});
+  await waitStoreBudget('delete');
+  const res = await request
+    .delete('/api/stores', { headers: apiHeaders(adminToken), data: { storeId } })
+    .catch(() => null);
+  if (!res || !res.ok()) {
+    // Fallback (SEC-TS-10): archivado directo, idéntico al sweep de higiene.
+    // Libera la cuota activa sin debilitar ningún control de la API: el
+    // endpoint real sigue siendo el camino ejercitado en el happy path.
+    await sb
+      .update('stores', `id=eq.${storeId}`, { is_active: false, is_archived: true })
+      .catch(() => {});
+  }
 }
 
 export interface SeededProduct {

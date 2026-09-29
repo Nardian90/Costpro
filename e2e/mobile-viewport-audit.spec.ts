@@ -67,7 +67,10 @@ test.describe('Mobile-First PWA Audit', () => {
   });
 
   test('theme-color meta tag presente', async ({ page }) => {
-    const meta = page.locator('meta[name="theme-color"]');
+    // SEC-TS-10: el layout renderiza 2 meta theme-color (ambos #16a34a, uno
+    // probablemente inyectado por el PWA runtime). Strict mode violaba con
+    // 2 matches → usar .first() (mismo valor esperado, aserción intacta).
+    const meta = page.locator('meta[name="theme-color"]').first();
     await expect(meta).toHaveAttribute('content', '#16a34a');
   });
 

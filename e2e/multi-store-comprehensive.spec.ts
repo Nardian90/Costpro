@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
+// SEC-TS-10: pacing de rate-limit (POST 5/min, DELETE 3/min en /api/stores)
+// y cleanup robusto con fallback de archivado para el afterAll.
+import { waitStoreBudget, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 /**
  * E2E: Multi-Tienda Module — Comprehensive coverage (>90%).
@@ -71,18 +74,21 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    // Cleanup: delete all test stores created during the run
+    // Cleanup: delete all test stores created during the run.
+    // SEC-TS-10: usa deleteTestStore robusto — el DELETE /api/stores tiene
+    // rate limit 3/min; en bulk los 429 dejaban huérfanas ACTIVAS que
+    // agotaban la cuota del plan y cascabeaban 403 sobre specs posteriores.
     for (const storeId of createdStoreIds) {
-      await request.delete('/api/stores', {
-        headers,
-        data: { storeId },
-      }).catch(() => {});
+      await robustDelete(request, headers.Authorization?.replace('Bearer ', '') || '', storeId);
     }
   });
 
   // Helper: create a test store
   async function createTestStore(request: any, suffix?: string): Promise<string> {
     const sfx = suffix || Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min por usuario) — sin esto,
+    // la ráfaga de creaciones de este spec recibe 429 y falla en cascada.
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: {
@@ -97,8 +103,15 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    const storeId = body.data?.id || body.id;
-    createdStoreIds.push(storeId);
+    // SEC-TS-10 (BUG LATENTE): la respuesta real de POST /api/stores es
+    // { data: { success, store_id, tenant_id } } — este helper extraía
+    // body.data?.id || body.id (AMBOS undefined) → storeId undefined →
+    // tests de archive/patch/delete sobre 'undefined' fallaban Y las stores
+    // creadas nunca entraban a createdStoreIds → afterAll no las limpiaba →
+    // cuota activa del tenant (10) agotada → 403 en cascada al resto de la
+    // suite. Espejo de la extracción tolerante de session.fixture.
+    const storeId = body?.data?.store_id ?? body?.data?.id ?? body?.store_id;
+    if (storeId) createdStoreIds.push(storeId);
     return storeId;
   }
 
@@ -284,6 +297,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   test('4.1 DELETE /api/stores removes a store → 200', async ({ request }) => {
     const storeId = await createTestStore(request, 'del-' + Date.now().toString(36));
 
+    // SEC-TS-10: pacear delete (API: 3/min) — la creación previa de este mismo
+    // test y los deletes de specs anteriores comparten el presupuesto.
+    await waitStoreBudget('delete');
     const response = await request.delete('/api/stores', {
       headers,
       data: { storeId },
@@ -297,6 +313,8 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('4.2 DELETE /api/stores rejects missing storeId → 400', async ({ request }) => {
+    // SEC-TS-10: pacear delete (API: 3/min)
+    await waitStoreBudget('delete');
     const response = await request.delete('/api/stores', {
       headers,
       data: {},
@@ -305,6 +323,8 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('4.3 DELETE /api/stores rejects non-existent store → 404', async ({ request }) => {
+    // SEC-TS-10: pacear delete (API: 3/min)
+    await waitStoreBudget('delete');
     const response = await request.delete('/api/stores', {
       headers,
       data: { storeId: '00000000-0000-0000-0000-000000000000' },
@@ -567,6 +587,8 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     // This test would need a non-admin token to be meaningful
     // For now, verify that the admin token CAN delete (control)
     const storeId = await createTestStore(request, 'perm-' + Date.now().toString(36));
+    // SEC-TS-10: pacear delete (API: 3/min)
+    await waitStoreBudget('delete');
     const response = await request.delete('/api/stores', {
       headers,
       data: { storeId },
@@ -597,9 +619,17 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   // 12. UI — Stores management view
   // ═════════════════════════════════════════════════════════════════
 
-  test('12.1 UI: stores management view loads', async ({ page }) => {
-    await page.goto('/?view=stores');
-    await page.waitForLoadState('networkidle');
+// SEC-TS-10: los tests 12.x navegaban SIN sesión → login wall → nunca
+// renderizaban las tarjetas. Helper con sesión fresca inyectada.
+async function authedGoto(page: import('@playwright/test').Page, view: string) {
+  const { signIn, injectSession } = await import('./fixtures/session.fixture');
+  await injectSession(page, await signIn('admin@costpro.com', 'costpro123'));
+  await page.goto(`/?view=${view}`);
+  await page.waitForLoadState('networkidle');
+}
+
+test('12.1 UI: stores management view loads', async ({ page }) => {
+  await authedGoto(page, 'stores');
 
     // Should show at least one store card or empty state
     await page.waitForTimeout(3000);
@@ -612,8 +642,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('12.2 UI: PILOT STORE A card is visible (SEC-TS-08)', async ({ page }) => {
-    await page.goto('/?view=stores');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'stores');
     await page.waitForTimeout(3000);
 
     // SEC-TS-08: se verifica la tarjeta de la tienda PILOT dedicada —
@@ -627,8 +656,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('12.3 UI: "Nueva tienda" button exists', async ({ page }) => {
-    await page.goto('/?view=stores');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'stores');
 
     const newButton = page.getByRole('button', { name: /nueva tienda|nuevo|crear/i }).first();
     const visible = await newButton.isVisible({ timeout: 10000 }).catch(() => false);
@@ -636,8 +664,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('12.4 UI: store card shows store name and address', async ({ page }) => {
-    await page.goto('/?view=stores');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'stores');
     await page.waitForTimeout(3000);
 
     const pilotCard = page.locator('[role="article"], .store-card, [data-store-card]').filter({

@@ -93,6 +93,24 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       const reqBody = await req.json().catch(() => ({}));
       const { reason } = reqBody;
 
+      // SEC-TS-10 (FIX API CONTRACT): verificar existencia + estado antes de
+      // archivar. Antes: UPDATE incondicional → 200 aunque la tienda no
+      // exista (0 rows) o ya esté archivada. Contrato documentado
+      // (SCENARIO-INVENTORY E2E-MST-005, multi-store 5.x): 404 para tienda
+      // inexistente, 409 para ya archivada.
+      const { data: existing } = await supabase
+        .from('stores')
+        .select('id, is_archived')
+        .eq('id', storeId)
+        .maybeSingle();
+
+      if (!existing) {
+        return { status: 404, body: { ...createApiError('STORE_NOT_FOUND'), message: 'La tienda no existe' } };
+      }
+      if (existing.is_archived) {
+        return { status: 409, body: { ...createApiError('BULK_IMPORT_CONFLICT'), message: 'La tienda ya está archivada' } };
+      }
+
       const { error } = await supabase
         .from('stores')
         .update({
