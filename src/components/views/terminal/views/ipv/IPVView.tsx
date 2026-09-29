@@ -401,7 +401,7 @@ export default function IPVView() {
                 </Button>
             )}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
                     Control IPV
                 </h1>
                 <p className="text-muted-foreground flex items-center gap-2">

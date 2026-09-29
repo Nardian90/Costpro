@@ -639,7 +639,7 @@ export function ExchangeIntelligenceView() {
             <button
               onClick={handleUploadExcel}
               disabled={uploading || !selectedFile}
-              className="flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm"
+              className="flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm"
             >
               <Upload className={cn('w-4 h-4', uploading && 'animate-pulse')} />
               {uploading ? 'Procesando...' : 'Subir y procesar'}
@@ -2682,7 +2682,7 @@ function ConfiguracionTab({
             <button
               onClick={onDownloadTemplate}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
+              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
             >
               <Download className="w-4 h-4" />
               <span>Descargar plantilla</span>

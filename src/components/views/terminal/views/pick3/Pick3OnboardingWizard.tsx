@@ -168,7 +168,7 @@ export function Pick3OnboardingWizard({ userId, onComplete }: Pick3OnboardingWiz
             </CardContent>
             <CardFooter>
               <Button
-                className="w-full h-14 rounded-full font-black uppercase text-sm bg-success hover:bg-emerald-700"
+                className="w-full h-14 rounded-full font-black uppercase text-sm bg-success hover:bg-success/90"
                 onClick={handleComplete}
                 disabled={loading}
               >

@@ -300,7 +300,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, onSave
                 <Button variant="outline" size="sm" onClick={() => setIsSectionDialogOpen(true)} className="h-9">
                   <PlusCircle className="w-4 h-4 mr-2" /> Grupo
                 </Button>
-                <Button size="sm" onClick={() => onSave(editedTemplate)} disabled={!isModified} className="bg-success hover:bg-emerald-700 h-9">
+                <Button size="sm" onClick={() => onSave(editedTemplate)} disabled={!isModified} className="bg-success hover:bg-success/90 h-9">
                   <Check className="w-4 h-4 mr-2" /> Guardar
                 </Button>
               </>

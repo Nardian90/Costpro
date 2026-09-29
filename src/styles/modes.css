@@ -223,8 +223,13 @@
    - El gradient accent line del Header (perf-hide-gradient)
    - El OnlineStatusDot verde del avatar (perf-hide-status-dot)
    - Cualquier radial-gradient o linear-gradient verde decorativo */
+/* ── F5 (2026-09-29): perf-hide-decor — capas cyber puramente decorativas de
+   CyberShell (borde cónico animado, sweep, corner dots) quedan excluidas en
+   modo performance (incl. prefers-reduced-motion vía IntelligentThemeHandler).
+   La decoración pasa a ser opt-in; el chrome operacional queda sobrio. */
 .mode-performance .perf-hide-gradient,
-.mode-performance .perf-hide-status-dot {
+.mode-performance .perf-hide-status-dot,
+.mode-performance .perf-hide-decor {
   display: none !important;
 }
 

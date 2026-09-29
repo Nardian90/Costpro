@@ -60,32 +60,26 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
   useEffect(() => {
     if (!fullScreen || dismissed) return;
 
-    console.log('[DIAG] CostProLoader effect: isReturning=', isReturning, 'phase=', phase);
     let timers: ReturnType<typeof setTimeout>[] = [];
     const totalMs = isReturning ? SPLASH_RETURN_MS : SPLASH_FIRST_MS;
 
     if (isReturning) {
       timers.push(setTimeout(() => {
-        console.log('[DIAG] CostProLoader dismiss timer fired (returning)');
         dismiss();
       }, totalMs));
     } else {
       timers.push(setTimeout(() => {
-        console.log('[DIAG] CostProLoader phase -> logo');
         setPhase('logo');
       }, 800));
       timers.push(setTimeout(() => {
-        console.log('[DIAG] CostProLoader phase -> hold');
         setPhase('hold');
       }, 1200));
       timers.push(setTimeout(() => {
-        console.log('[DIAG] CostProLoader dismiss timer fired (first)');
         dismiss();
       }, totalMs));
     }
 
     return () => {
-      console.log('[DIAG] CostProLoader effect cleanup');
       timers.forEach(clearTimeout);
     };
   }, [fullScreen, dismissed, dismiss, isReturning]);

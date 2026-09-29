@@ -191,7 +191,7 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
           <button
             type="button"
             onClick={() => onOpenDashboard(kpi.storeId, kpi.storeName)}
-            className="w-full py-2.5 min-h-[44px] rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 text-primary hover:from-primary/20 hover:to-primary/10 hover:border-primary/50 hover:shadow-md hover:shadow-primary/10"
+            className="w-full py-2.5 min-h-[44px] rounded-xl font-medium text-sm transition-colors active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 hover:border-primary/50"
             aria-label={`Dashboard KPI avanzado de ${kpi.storeName}`}
             title="Dashboard KPI con analítica, insights y trazabilidad"
           >
