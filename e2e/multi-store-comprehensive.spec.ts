@@ -2,7 +2,10 @@ import { test, expect } from '@playwright/test';
 import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
 // SEC-TS-10: pacing de rate-limit (POST 5/min, DELETE 3/min en /api/stores)
 // y cleanup robusto con fallback de archivado para el afterAll.
-import { waitStoreBudget, deleteTestStore as robustDelete } from './fixtures/session.fixture';
+// sweepStaleTestStores: libera cuota activa de huérfanas >10 min ANTES de
+// crear (el helper local de este spec no la invocaba → 403 en cascada tras
+// una corrida previa sucia — reproducido en el re-run mini).
+import { waitStoreBudget, sweepStaleTestStores, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 /**
  * E2E: Multi-Tienda Module — Comprehensive coverage (>90%).
@@ -92,8 +95,10 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   // Helper: create a test store
   async function createTestStore(request: any, suffix?: string): Promise<string> {
     const sfx = suffix || Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    // SEC-TS-10: pacear creación (API: 5 POSTs/min por usuario) — sin esto,
+    // SEC-TS-10: sweep de huérfanas >10 min (libera cuota activa del tenant)
+    // + pacear creación (API: 5 POSTs/min por usuario) — sin esto,
     // la ráfaga de creaciones de este spec recibe 429 y falla en cascada.
+    await sweepStaleTestStores();
     await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,

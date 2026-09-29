@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
 // SEC-TS-10: pacing de rate-limit (reset 2/min, create 5/min, delete 3/min)
-// + cleanup robusto con fallback de archivado.
-import { waitStoreBudget, deleteTestStore as robustDelete } from './fixtures/session.fixture';
+// + cleanup robusto con fallback de archivado + sweep de huérfanas >10 min.
+import { waitStoreBudget, sweepStaleTestStores, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 /**
  * E2E: Reset de Tienda — Store Reset flow.
@@ -68,7 +68,9 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
     const storeName = `E2E Reset Test ${Date.now()}`;
     const storeSlug = `e2e-reset-test-${Date.now()}`;
 
-    // SEC-TS-10: pacear creación (API: 5 POSTs/min por usuario)
+    // SEC-TS-10: sweep de huérfanas >10 min (libera cuota) + pacear creación
+    // (API: 5 POSTs/min por usuario)
+    await sweepStaleTestStores();
     await waitStoreBudget('create');
     const createRes = await request.post('/api/stores', {
       headers,
@@ -81,7 +83,9 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
 
     if (createRes.status() !== 201) return null;
     const body = await createRes.json();
-    return body.data?.id || body.id;
+    // SEC-TS-10 (BUG LATENTE): la respuesta real es { data: { store_id } } —
+    // espejo de la extracción tolerante de session.fixture/multi-store.
+    return body?.data?.store_id ?? body?.data?.id ?? body?.store_id ?? null;
   }
 
   // ─── Authorization & Validation ──────────────────────────────────

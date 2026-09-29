@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
-import { waitStoreBudget, deleteTestStore as robustDelete } from './fixtures/session.fixture';
+import { waitStoreBudget, sweepStaleTestStores, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 /**
  * E2E: Full store lifecycle — create → archive → restore — STRICT ASSERTIONS.
@@ -49,7 +49,9 @@ test.describe('Store Lifecycle: Create → Archive → Restore — Strict', () =
   });
 
   test('1. create store via POST /api/stores → 201', async ({ request }) => {
-    // SEC-TS-10: pacear creación (API: 5/min)
+    // SEC-TS-10: sweep de huérfanas >10 min (libera cuota activa) + pacear
+    // creación (API: 5/min)
+    await sweepStaleTestStores();
     await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,

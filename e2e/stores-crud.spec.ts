@@ -34,37 +34,27 @@ test.describe('Stores CRUD: Create', () => {
     await page.locator('button', { hasText: /nueva|new|crear|create/i }).first().click();
 
     // Fill in the store creation form
-    // SEC-TS-10: la UI rediseñada usa dialog Radix (overlay con
-    // data-state="open" + contenido role="dialog") → el locator genérico
-    // '[role="dialog"], .modal, [data-state="open"]' resolvía 2 elementos
-    // (overlay + contenido) y violaba strict mode. Se aserta sobre el
-    // CONTENIDO del diálogo por su nombre accesible (único).
+    // SEC-TS-10 (UI REDESIGNADA — quick modal): inputs reales id="quick-name"
+    // / id="quick-slug" (sin address/phone — "configura los detalles
+    // después"). El submit "Crear Tienda" está DISABLED hasta name≥2 y slug
+    // disponible (check-slug debounced 300 ms) → esperar a que habilite.
     const modal = page.getByRole('dialog', { name: /nueva tienda|crear nueva/i });
     await modal.waitFor({ state: 'visible', timeout: 5_000 });
 
-    const nameInput = modal.locator('input[name="name"], input[id="name"]');
-    const addressInput = modal.locator('input[name="address"], input[id="address"]');
-
+    const nameInput = modal.locator('input[id="quick-name"], input[name="name"], input[id="name"]');
     await nameInput.fill(`E2E Tienda ${UNIQUE}`);
-    await addressInput.fill(`Calle Test ${UNIQUE}, La Habana`);
 
-    // Optional fields
-    const phoneInput = modal.locator('input[name="phone"], input[id="phone"]');
-    if (await phoneInput.isVisible()) {
-      await phoneInput.fill('+5355550000');
-    }
+    const slugInput = modal.locator('input[id="quick-slug"], input[name="slug"], input[id="slug"]');
+    await slugInput.fill(`e2e_${UNIQUE}`);
 
-    const slugInput = modal.locator('input[name="slug"], input[id="slug"]');
-    if (await slugInput.isVisible()) {
-      await slugInput.fill(`e2e_${UNIQUE}`);
-    }
-
-    // Submit the form
-    await modal.locator('button[type="submit"], button', { hasText: /guardar|save|crear|create/i }).first().click();
+    // Submit the form — el botón se habilita cuando el slug pasa check-slug
+    const submitBtn = modal.getByRole('button', { name: /crear tienda/i });
+    await expect(submitBtn).toBeEnabled({ timeout: 10_000 });
+    await submitBtn.click();
 
     // Verify success — modal closes and new store card appears
     await expect(modal).toBeHidden({ timeout: 10_000 });
-    await expect(page.locator('text=' + `E2E Tienda ${UNIQUE}`)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(`E2E Tienda ${UNIQUE}`)).toBeVisible({ timeout: 10_000 });
   });
 
   test('create store with missing required fields shows validation error', async ({ authedPage: page }) => {
@@ -73,16 +63,22 @@ test.describe('Stores CRUD: Create', () => {
 
     // Open create modal
     await page.locator('button', { hasText: /nueva|new|crear|create/i }).first().click();
-    // SEC-TS-10: diálogo Radix por nombre accesible (ver comentario en el
-    // test de creación) — el locator genérico resolvía overlay + contenido.
+    // SEC-TS-10 (UI REDESIGNADA — quick modal): el botón "Crear Tienda"
+    // permanece DISABLED con campos requeridos vacíos/inválidos — el submit
+    // inválido se PREVIENE en la UI (la validación por toast solo ocurre si
+    // el form se envía con canSubmit=false, p.ej. slug ocupado). El contrato
+    // actual verificado: sin completar → submit disabled; con slug pero sin
+    // nombre → sigue disabled (nombre es requerido).
     const modal = page.getByRole('dialog', { name: /nueva tienda|crear nueva/i });
     await modal.waitFor({ state: 'visible', timeout: 5_000 });
 
-    // Submit without filling required fields
-    await modal.locator('button[type="submit"], button', { hasText: /guardar|save|crear|create/i }).first().click();
+    const submitBtn = modal.getByRole('button', { name: /crear tienda/i });
+    await expect(submitBtn).toBeDisabled();
 
-    // Verify validation error is shown
-    await expect(modal.locator('text=/requerido|required|obligatorio/i')).toBeVisible({ timeout: 5_000 });
+    // Completar SOLO el slug (sin nombre) → el submit sigue disabled
+    const slugInput = modal.locator('input[id="quick-slug"], input[name="slug"], input[id="slug"]');
+    await slugInput.fill(`e2e_${UNIQUE}`);
+    await expect(submitBtn).toBeDisabled();
   });
 });
 
@@ -104,19 +100,20 @@ test.describe('Stores CRUD: Read', () => {
     await waitForStoresView(page);
 
     // Type a search term into the search bar
-    // SEC-TS-10: la SearchBar real renderiza input type="text" con
-    // aria-label="Buscar" y placeholder="Filtrar por nombre o ubicación..."
-    // (es.json) — los selectores ingleses ("earch") nunca matcheaban →
-    // timeout en fill. Selectores extendidos al español real de la UI.
-    const searchInput = page.locator('input[type="search"], input[aria-label*="earch"], input[aria-label*="uscar"], input[placeholder*="earch"], input[placeholder*="iltrar"]').first();
+    // SEC-TS-10: la SearchBar real de la vista stores renderiza input
+    // type="text" con placeholder="Filtrar por nombre o ubicación..."
+    // (es.json stores.filterByLocation). NOTA: no usar aria-label*=uscar —
+    // el sidebar tiene "Buscar en el menú" ANTES en el DOM y .first()
+    // matcheaba el input equivocado. El placeholder de filtrado es único
+    // de la vista stores.
+    const searchInput = page.locator('input[placeholder*="iltrar"], input[placeholder*="Filter by"]').first();
     await searchInput.fill('ZZZZZZZ_NONEXISTENT');
 
-    // All store cards should be hidden or "no results" shown
-    const storeCards = page.locator('[role="article"]');
-    await expect(storeCards).toHaveCount(0, { timeout: 5_000 }).catch(() => {
-      // Some implementations keep cards but hide them — check for empty state
-      expect(page.locator('text=/no.*tienda|no.*store|sin resultado/i')).toBeVisible();
-    });
+    // SEC-TS-10 (UI REDESIGNADA): el filtrado es client-side; con 0 matches
+    // se renderiza el empty-state exacto "No se encontraron sucursales"
+    // (es.json stores.noStores) y ninguna tarjeta [role=article].
+    await expect(page.getByText('No se encontraron sucursales')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('[role="article"]')).toHaveCount(0);
   });
 
   test('store card shows key information (name, address)', async ({ authedPage: page }) => {
