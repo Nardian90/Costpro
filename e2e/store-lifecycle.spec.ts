@@ -68,7 +68,12 @@ test.describe('Store Lifecycle: Create → Archive → Restore — Strict', () =
     expect(response.status()).toBe(201);
 
     const body = await response.json();
-    createdStoreId = body.data?.id || body.id;
+    // SEC-TS-10 (BUG LATENTE): la respuesta real de POST /api/stores es
+    // { data: { success, store_id, tenant_id } } — la extracción antigua
+    // (body.data?.id || body.id) devolvía undefined → el test fallaba PERO
+    // la tienda quedaba creada y sin trackear → cuota activa filtrada.
+    // Espejo de la extracción tolerante de session.fixture/multi-store.
+    createdStoreId = body?.data?.store_id ?? body?.data?.id ?? body?.store_id;
     // STRICT: id must be a valid UUID
     expect(createdStoreId).toBeDefined();
     expect(createdStoreId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);

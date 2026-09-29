@@ -34,7 +34,12 @@ test.describe('Stores CRUD: Create', () => {
     await page.locator('button', { hasText: /nueva|new|crear|create/i }).first().click();
 
     // Fill in the store creation form
-    const modal = page.locator('[role="dialog"], .modal, [data-state="open"]');
+    // SEC-TS-10: la UI rediseñada usa dialog Radix (overlay con
+    // data-state="open" + contenido role="dialog") → el locator genérico
+    // '[role="dialog"], .modal, [data-state="open"]' resolvía 2 elementos
+    // (overlay + contenido) y violaba strict mode. Se aserta sobre el
+    // CONTENIDO del diálogo por su nombre accesible (único).
+    const modal = page.getByRole('dialog', { name: /nueva tienda|crear nueva/i });
     await modal.waitFor({ state: 'visible', timeout: 5_000 });
 
     const nameInput = modal.locator('input[name="name"], input[id="name"]');
@@ -68,7 +73,9 @@ test.describe('Stores CRUD: Create', () => {
 
     // Open create modal
     await page.locator('button', { hasText: /nueva|new|crear|create/i }).first().click();
-    const modal = page.locator('[role="dialog"], .modal, [data-state="open"]');
+    // SEC-TS-10: diálogo Radix por nombre accesible (ver comentario en el
+    // test de creación) — el locator genérico resolvía overlay + contenido.
+    const modal = page.getByRole('dialog', { name: /nueva tienda|crear nueva/i });
     await modal.waitFor({ state: 'visible', timeout: 5_000 });
 
     // Submit without filling required fields
@@ -97,7 +104,11 @@ test.describe('Stores CRUD: Read', () => {
     await waitForStoresView(page);
 
     // Type a search term into the search bar
-    const searchInput = page.locator('input[aria-label*="earch"], input[placeholder*="earch"], input[type="search"]').first();
+    // SEC-TS-10: la SearchBar real renderiza input type="text" con
+    // aria-label="Buscar" y placeholder="Filtrar por nombre o ubicación..."
+    // (es.json) — los selectores ingleses ("earch") nunca matcheaban →
+    // timeout en fill. Selectores extendidos al español real de la UI.
+    const searchInput = page.locator('input[type="search"], input[aria-label*="earch"], input[aria-label*="uscar"], input[placeholder*="earch"], input[placeholder*="iltrar"]').first();
     await searchInput.fill('ZZZZZZZ_NONEXISTENT');
 
     // All store cards should be hidden or "no results" shown

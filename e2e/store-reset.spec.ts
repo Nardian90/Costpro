@@ -122,6 +122,12 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
 
     // SEC-TS-10: pacear reset (API: 2/min) — sin esto, la ráfaga 5→6→7 agota
     // el bucket y este test recibe 429 en lugar del 404 que valida.
+    // Timeout extendido (mismo criterio que el test 9): el waitStoreBudget
+    // puede esperar hasta ~60 s a que la ventana del bucket se renueve tras
+    // los resets de los tests 5/6 — con el timeout por defecto (60 s) el
+    // contexto de request se dispone a mitad de la espera ("Request context
+    // disposed") y el 404 bajo prueba nunca llega a verificarse.
+    test.setTimeout(180_000);
     await waitStoreBudget('reset');
     const response = await request.post('/api/stores/reset', {
       headers,

@@ -79,8 +79,11 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     // rate limit 3/min; en bulk los 429 dejaban huérfanas ACTIVAS que
     // agotaban la cuota del plan y cascabeaban 403 sobre specs posteriores.
     // SEC-TS-10: timeout del hook extendido — el cleanup paceado (~2 deletes/min
-    // × ~10 stores) tarda >60s y el hook moría a mitad dejando huérfanas.
-    test.setTimeout(360_000);
+    // × ~15 stores creadas por este spec) tarda ~450 s; con 360 s las ÚLTIMAS
+    // stores del array no llegaban a limpiarse → quedaban ACTIVAS → presión de
+    // cuota (403) sobre los specs siguientes (6.2/9.2 en el run focalizado).
+    // 600 s cubre ~20 deletes paceados con margen.
+    test.setTimeout(600_000);
     for (const storeId of createdStoreIds) {
       await robustDelete(request, headers.Authorization?.replace('Bearer ', '') || '', storeId);
     }
@@ -695,8 +698,11 @@ test('12.1 UI: stores management view loads', async ({ page }) => {
     const visible = await pilotCard.isVisible({ timeout: 10000 }).catch(() => false);
     test.skip(!visible, 'Pilot store card not visible');
 
-    // Card should show at least the name
-    await expect(pilotCard.getByText(/tienda central costpro/i)).toBeVisible();
+    // Card should show at least the name.
+    // SEC-TS-10: el texto aparece 2× dentro de la tarjeta (h3 del título +
+    // span.sr-only de descripción) → getByText violaba strict mode. Se
+    // aserta sobre el HEADING del título (elemento visible y único).
+    await expect(pilotCard.getByRole('heading', { name: /tienda central costpro/i })).toBeVisible();
   });
 
   // ═════════════════════════════════════════════════════════════════
