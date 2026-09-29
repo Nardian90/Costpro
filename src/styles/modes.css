@@ -771,3 +771,775 @@ html.mode-transitioning * {
     background: var(--background) !important;
   }
 }
+
+
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  DARK PERFORMANCE MONOCHROME (2026-09-29)                    ║
+   ║  Scope estricto: Theme = Dark × Mode = Performance.          ║
+   ║  Selector raíz REUTILIZADO: html.mode-performance.dark       ║
+   ║  (IntelligentThemeHandler ya coloca ambas clases en <html>). ║
+   ║                                                              ║
+   ║  Arquitectura: capa de tokens + barrido de utilidades.       ║
+   ║  Los componentes existentes HEREDAN la estética; no se       ║
+   ║  modifica ningún componente.                                 ║
+   ║                                                              ║
+   ║  SEMÁNTICA PRESERVADA (GATE 3):                              ║
+   ║  · --success/--warning/--danger/--destructive NO se tocan.   ║
+   ║  · Cromatismo no-verde (ámbar/rojo/azul) NO se toca.         ║
+   ║  · #15803d excluido del barrido SVG (selector funcional de   ║
+   ║    color de etiquetas en CatalogExportModal).                ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+/* ── T-MONO-TOKENS: capa de tokens monocroma ──
+   Redefine SOLO los tokens cromáticos verdes. Las superficies
+   neutras del tema dark (#0a0a0a/#121212/#1a1a1a/#1e1e1e/#2a2a2a)
+   ya son grayscale y se conservan (evita contraste negro puro duro).
+   Jerarquía resultante (GATE 5):
+     Background #121212 · Sidebar #0a0a0a · Surface #1a1a1a
+     Border subtle #2a2a2a · Border strong #3f3f46
+     Muted #b4b4bc · Secondary #d4d4d8 · Primary text #e4e4e7
+     Highlight #f4f4f5/#fafafa
+   Acción primaria: verde -> blanco técnico (#e4e4e7 + texto #0a0a0a). */
+.mode-performance.dark {
+  --primary: #e4e4e7;
+  --primary-foreground: #0a0a0a;
+  --primary-light: #f4f4f5;
+  --primary-dark: #a1a1aa;
+
+  /* Branding D: #39ff14 -> blanco */
+  --brand: #fafafa;
+  --brand-hover: #e4e4e7;
+  --brand-muted: #a1a1aa;
+  --brand-subtle: rgba(255, 255, 255, 0.08);
+  --brand-border: rgba(255, 255, 255, 0.32);
+  --brand-foreground: #0a0a0a;
+
+  /* Focus/selección: verde -> blanco (contraste de focus mejora) */
+  --ring: rgba(255, 255, 255, 0.55);
+  --selection: rgba(255, 255, 255, 0.22);
+
+  /* Data-viz: rampa de grises (jerarquía por luminosidad) */
+  --chart-1: #e4e4e7;
+  --chart-2: #a1a1aa;
+  --chart-3: #71717a;
+  --chart-4: #52525b;
+  --chart-5: #3f3f46;
+
+  /* Sidebar */
+  --sidebar-primary: #e4e4e7;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-ring: rgba(255, 255, 255, 0.35);
+}
+
+/* ── T-MONO-LP: tokens landing bajo dark+performance ──
+   La landing es siempre dark; en dark+performance sus acentos
+   pasan a grayscale para coherencia con el resto del producto. */
+.mode-performance.dark .landing-tokens {
+  --lp-accent: #e4e4e7;
+  --lp-accent-glow: rgba(255, 255, 255, 0.25);
+  --lp-accent-subtle: rgba(255, 255, 255, 0.12);
+  --lp-border-hover: rgba(255, 255, 255, 0.35);
+  --lp-gradient-start: #3f3f46;
+  --lp-gradient-end: #d4d4d8;
+  --lp-shadow-glow: 0 0 30px rgba(255, 255, 255, 0.05), 0 0 60px rgba(255, 255, 255, 0.03);
+}
+
+/* ── T-MONO-INTERNAL: verdes dentro de reglas perf existentes ──
+   El borde-degradado de glass cards en performance usaba verde
+   (rgba(34,197,94,…)); en dark+performance pasa a grayscale.
+   Light+Performance NO cambia (override scopeado a .dark). */
+.mode-performance.dark .glass-card::before,
+.mode-performance.dark .neu-card::before,
+.mode-performance.dark .stats-glass-card::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05) 50%, transparent);
+}
+
+.mode-performance.dark .landing-tokens .glass-card-interactive:hover {
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Isotipo CostPro (C): stops verdes del gradiente -> grises */
+.mode-performance.dark .logo-stop-start { stop-color: #d4d4d8; }
+.mode-performance.dark .logo-stop-end { stop-color: #a1a1aa; }
+.mode-performance.dark [fill="#39ff14"] { fill: #e4e4e7; }
+.mode-performance.dark [stroke="#39ff14"] { stroke: #e4e4e7; }
+
+/* ── T-MONO-SVG: fills/strokes SVG verdes (charts, diagramas) ──
+   Los presentation attributes SVG pierden ante cualquier regla CSS.
+   Solo se barren los verdes usados en data-viz operacional.
+   #15803d NO se barre (funcional: CatalogExportModal). */
+.mode-performance.dark [fill="#22c55e"] { fill: #a1a1aa; }
+.mode-performance.dark [fill="#16a34a"] { fill: #a1a1aa; }
+.mode-performance.dark [fill="#4ade80"] { fill: #d4d4d8; }
+.mode-performance.dark [fill="#34d399"] { fill: #d4d4d8; }
+.mode-performance.dark [stroke="#22c55e"] { stroke: #a1a1aa; }
+.mode-performance.dark [stroke="#16a34a"] { stroke: #a1a1aa; }
+.mode-performance.dark [stroke="#4ade80"] { stroke: #d4d4d8; }
+.mode-performance.dark [stroke="#34d399"] { stroke: #d4d4d8; }
+.mode-performance.dark [stop-color="#22c55e"] { stop-color: #a1a1aa; }
+.mode-performance.dark [stop-color="#16a34a"] { stop-color: #a1a1aa; }
+.mode-performance.dark [stop-color="#4ade80"] { stop-color: #d4d4d8; }
+.mode-performance.dark [stop-color="#34d399"] { stop-color: #d4d4d8; }
+
+/* ── T-MONO-SWEEP: barrido de utilidades verdes crudas ──
+   Generado desde la auditoría GATE 2 (scripts/audit-green.js).
+   green/emerald/lime -> grayscale por tier de luminosidad,
+   preservando la jerarquía que tenía cada shade.
+   Orden sensible: shade "50" antes que "500" (substring);
+   tintes (con slash) después de sólidos. Todo !important.
+   NOTA: text-success/bg-success (tokens semánticos) no usan
+   clases green/emerald/lime y NO son afectados por este barrido. */
+/* T-MONO-TEXT: texto verde -> gris */
+.mode-performance.dark [class*="text-green-50"],
+.mode-performance.dark [class*="text-emerald-50"],
+.mode-performance.dark [class*="text-lime-50"] {
+  color: #f4f4f5 !important;
+}
+.mode-performance.dark [class*="text-green-100"],
+.mode-performance.dark [class*="text-emerald-100"],
+.mode-performance.dark [class*="text-lime-100"] {
+  color: #f4f4f5 !important;
+}
+.mode-performance.dark [class*="text-green-200"],
+.mode-performance.dark [class*="text-emerald-200"],
+.mode-performance.dark [class*="text-lime-200"] {
+  color: #e4e4e7 !important;
+}
+.mode-performance.dark [class*="text-green-300"],
+.mode-performance.dark [class*="text-emerald-300"],
+.mode-performance.dark [class*="text-lime-300"] {
+  color: #d4d4d8 !important;
+}
+.mode-performance.dark [class*="text-green-400"],
+.mode-performance.dark [class*="text-emerald-400"],
+.mode-performance.dark [class*="text-lime-400"] {
+  color: #d4d4d8 !important;
+}
+.mode-performance.dark [class*="text-green-500"],
+.mode-performance.dark [class*="text-emerald-500"],
+.mode-performance.dark [class*="text-lime-500"] {
+  color: #a1a1aa !important;
+}
+.mode-performance.dark [class*="text-green-600"],
+.mode-performance.dark [class*="text-emerald-600"],
+.mode-performance.dark [class*="text-lime-600"] {
+  color: #a1a1aa !important;
+}
+.mode-performance.dark [class*="text-green-700"],
+.mode-performance.dark [class*="text-emerald-700"],
+.mode-performance.dark [class*="text-lime-700"] {
+  color: #71717a !important;
+}
+.mode-performance.dark [class*="text-green-800"],
+.mode-performance.dark [class*="text-emerald-800"],
+.mode-performance.dark [class*="text-lime-800"] {
+  color: #52525b !important;
+}
+.mode-performance.dark [class*="text-green-900"],
+.mode-performance.dark [class*="text-emerald-900"],
+.mode-performance.dark [class*="text-lime-900"] {
+  color: #52525b !important;
+}
+.mode-performance.dark [class*="text-green-950"],
+.mode-performance.dark [class*="text-emerald-950"],
+.mode-performance.dark [class*="text-lime-950"] {
+  color: #3f3f46 !important;
+}
+.mode-performance.dark [class*="text-green-400/80"],
+.mode-performance.dark [class*="text-emerald-300/80"],
+.mode-performance.dark [class*="text-[#22c55e]/70"],
+.mode-performance.dark [class*="text-[#22c55e]/80"] {
+  color: rgba(212, 212, 216, 0.8) !important;
+}
+.mode-performance.dark [class*="text-green-400/60"],
+.mode-performance.dark [class*="text-emerald-400/90"],
+.mode-performance.dark [class*="text-emerald-400/60"],
+.mode-performance.dark [class*="text-emerald-700/60"],
+.mode-performance.dark [class*="text-[#22c55e]/60"],
+.mode-performance.dark [class*="text-[#22c55e]/50"],
+.mode-performance.dark [class*="text-[#22c55e]/40"] {
+  color: rgba(212, 212, 216, 0.65) !important;
+}
+/* T-MONO-BG: fondos verdes -> gris */
+.mode-performance.dark [class*="bg-green-50"],
+.mode-performance.dark [class*="bg-emerald-50"],
+.mode-performance.dark [class*="bg-lime-50"] {
+  background-color: #27272a !important;
+}
+.mode-performance.dark [class*="bg-green-100"],
+.mode-performance.dark [class*="bg-emerald-100"],
+.mode-performance.dark [class*="bg-lime-100"] {
+  background-color: #27272a !important;
+}
+.mode-performance.dark [class*="bg-green-200"],
+.mode-performance.dark [class*="bg-emerald-200"],
+.mode-performance.dark [class*="bg-lime-200"] {
+  background-color: #27272a !important;
+}
+.mode-performance.dark [class*="bg-green-300"],
+.mode-performance.dark [class*="bg-emerald-300"],
+.mode-performance.dark [class*="bg-lime-300"] {
+  background-color: #52525b !important;
+}
+.mode-performance.dark [class*="bg-green-400"],
+.mode-performance.dark [class*="bg-emerald-400"],
+.mode-performance.dark [class*="bg-lime-400"] {
+  background-color: #52525b !important;
+}
+.mode-performance.dark [class*="bg-green-500"],
+.mode-performance.dark [class*="bg-emerald-500"],
+.mode-performance.dark [class*="bg-lime-500"] {
+  background-color: #52525b !important;
+}
+.mode-performance.dark [class*="bg-green-600"],
+.mode-performance.dark [class*="bg-emerald-600"],
+.mode-performance.dark [class*="bg-lime-600"] {
+  background-color: #52525b !important;
+}
+.mode-performance.dark [class*="bg-green-700"],
+.mode-performance.dark [class*="bg-emerald-700"],
+.mode-performance.dark [class*="bg-lime-700"] {
+  background-color: #3f3f46 !important;
+}
+.mode-performance.dark [class*="bg-green-800"],
+.mode-performance.dark [class*="bg-emerald-800"],
+.mode-performance.dark [class*="bg-lime-800"] {
+  background-color: #3f3f46 !important;
+}
+.mode-performance.dark [class*="bg-green-900"],
+.mode-performance.dark [class*="bg-emerald-900"],
+.mode-performance.dark [class*="bg-lime-900"] {
+  background-color: #27272a !important;
+}
+.mode-performance.dark [class*="bg-green-950"],
+.mode-performance.dark [class*="bg-emerald-950"],
+.mode-performance.dark [class*="bg-lime-950"] {
+  background-color: #27272a !important;
+}
+.mode-performance.dark [class*="bg-[#22c55e]"],
+.mode-performance.dark [class*="bg-[#16a34a]"],
+.mode-performance.dark [class*="bg-[#15803d]"] {
+  background-color: #52525b !important;
+}
+.mode-performance.dark [class*="bg-green-500/40"],
+.mode-performance.dark [class*="bg-green-500/60"],
+.mode-performance.dark [class*="bg-green-500/70"],
+.mode-performance.dark [class*="bg-[#22c55e]/50"],
+.mode-performance.dark [class*="bg-[#22c55e]/40"] {
+  background-color: rgba(255, 255, 255, 0.30) !important;
+}
+.mode-performance.dark [class*="bg-green-500/10"],
+.mode-performance.dark [class*="bg-green-500/5"],
+.mode-performance.dark [class*="bg-green-500/15"],
+.mode-performance.dark [class*="bg-green-500/20"],
+.mode-performance.dark [class*="bg-green-500/25"],
+.mode-performance.dark [class*="bg-green-500/30"],
+.mode-performance.dark [class*="bg-green-600/10"],
+.mode-performance.dark [class*="bg-green-400/10"],
+.mode-performance.dark [class*="bg-green-950/20"],
+.mode-performance.dark [class*="bg-green-900/30"],
+.mode-performance.dark [class*="bg-green-50/50"],
+.mode-performance.dark [class*="bg-emerald-500/10"],
+.mode-performance.dark [class*="bg-emerald-500/5"],
+.mode-performance.dark [class*="bg-emerald-500/15"],
+.mode-performance.dark [class*="bg-emerald-500/20"],
+.mode-performance.dark [class*="bg-emerald-500/25"],
+.mode-performance.dark [class*="bg-emerald-600/5"],
+.mode-performance.dark [class*="bg-emerald-950/20"],
+.mode-performance.dark [class*="bg-emerald-950/30"],
+.mode-performance.dark [class*="bg-emerald-950/40"],
+.mode-performance.dark [class*="bg-emerald-900/30"],
+.mode-performance.dark [class*="bg-emerald-50/60"],
+.mode-performance.dark [class*="bg-lime-500/10"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+/* T-MONO-BORDER: bordes verdes -> gris */
+.mode-performance.dark [class*="border-[#22c55e]"],
+.mode-performance.dark [class*="border-[#15803d]"],
+.mode-performance.dark [class*="border-green-500/30"],
+.mode-performance.dark [class*="border-green-500/20"],
+.mode-performance.dark [class*="border-green-500/15"],
+.mode-performance.dark [class*="border-green-500/25"],
+.mode-performance.dark [class*="border-green-500/10"],
+.mode-performance.dark [class*="border-green-500/40"],
+.mode-performance.dark [class*="border-emerald-500/20"],
+.mode-performance.dark [class*="border-emerald-500/30"],
+.mode-performance.dark [class*="border-emerald-500/10"],
+.mode-performance.dark [class*="border-emerald-500/15"],
+.mode-performance.dark [class*="border-emerald-500/50"],
+.mode-performance.dark [class*="border-emerald-600/20"],
+.mode-performance.dark [class*="border-green-900/30"],
+.mode-performance.dark [class*="border-[#22c55e]/20"],
+.mode-performance.dark [class*="border-[#22c55e]/40"],
+.mode-performance.dark [class*="border-[#22c55e]/15"],
+.mode-performance.dark [class*="border-[#22c55e]/30"],
+.mode-performance.dark [class*="border-[#22c55e]/10"],
+.mode-performance.dark [class*="border-[#22c55e]/25"],
+.mode-performance.dark [class*="border-[#22c55e]/45"],
+.mode-performance.dark [class*="border-[#22c55e]/60"],
+.mode-performance.dark [class*="border-[#22c55e]/50"],
+.mode-performance.dark [class*="border-l-[#22c55e]"],
+.mode-performance.dark [class*="border-l-[#22c55e]/30"],
+.mode-performance.dark [class*="border-l-[#22c55e]/60"],
+.mode-performance.dark [class*="border-t-[#22c55e]/10"],
+.mode-performance.dark [class*="border-r-[#22c55e]/10"],
+.mode-performance.dark [class*="border-b-[#22c55e]/10"],
+.mode-performance.dark [class*="border-green-50"],
+.mode-performance.dark [class*="border-green-100"],
+.mode-performance.dark [class*="border-green-200"],
+.mode-performance.dark [class*="border-green-300"],
+.mode-performance.dark [class*="border-green-400"],
+.mode-performance.dark [class*="border-green-500"],
+.mode-performance.dark [class*="border-green-600"],
+.mode-performance.dark [class*="border-green-700"],
+.mode-performance.dark [class*="border-green-800"],
+.mode-performance.dark [class*="border-green-900"],
+.mode-performance.dark [class*="border-green-950"],
+.mode-performance.dark [class*="border-emerald-50"],
+.mode-performance.dark [class*="border-emerald-100"],
+.mode-performance.dark [class*="border-emerald-200"],
+.mode-performance.dark [class*="border-emerald-300"],
+.mode-performance.dark [class*="border-emerald-400"],
+.mode-performance.dark [class*="border-emerald-500"],
+.mode-performance.dark [class*="border-emerald-600"],
+.mode-performance.dark [class*="border-emerald-700"],
+.mode-performance.dark [class*="border-emerald-800"],
+.mode-performance.dark [class*="border-emerald-900"],
+.mode-performance.dark [class*="border-emerald-950"],
+.mode-performance.dark [class*="border-lime-50"],
+.mode-performance.dark [class*="border-lime-100"],
+.mode-performance.dark [class*="border-lime-200"],
+.mode-performance.dark [class*="border-lime-300"],
+.mode-performance.dark [class*="border-lime-400"],
+.mode-performance.dark [class*="border-lime-500"],
+.mode-performance.dark [class*="border-lime-600"],
+.mode-performance.dark [class*="border-lime-700"],
+.mode-performance.dark [class*="border-lime-800"],
+.mode-performance.dark [class*="border-lime-900"],
+.mode-performance.dark [class*="border-lime-950"] {
+  border-color: #3f3f46 !important;
+}
+/* T-MONO-GRADIENT: stops verdes -> gris */
+.mode-performance.dark [class*="from-[#15803d]"],
+.mode-performance.dark [class*="from-[#22c55e]"],
+.mode-performance.dark [class*="from-[#166534]"],
+.mode-performance.dark [class*="to-[#22c55e]"],
+.mode-performance.dark [class*="to-[#16a34a]"],
+.mode-performance.dark [class*="to-[#166534]"],
+.mode-performance.dark [class*="to-[#14532d]"],
+.mode-performance.dark [class*="to-[#4ade80]"],
+.mode-performance.dark [class*="via-green-400"],
+.mode-performance.dark [class*="via-green-500"],
+.mode-performance.dark [class*="via-emerald-500"],
+.mode-performance.dark [class*="via-emerald-600"],
+.mode-performance.dark [class*="via-[#4ade80]"],
+.mode-performance.dark [class*="from-green-500"],
+.mode-performance.dark [class*="from-green-400"],
+.mode-performance.dark [class*="from-emerald-600"],
+.mode-performance.dark [class*="from-emerald-500"],
+.mode-performance.dark [class*="from-emerald-400"],
+.mode-performance.dark [class*="from-emerald-700"],
+.mode-performance.dark [class*="to-emerald-500"],
+.mode-performance.dark [class*="to-emerald-400"],
+.mode-performance.dark [class*="to-emerald-600"],
+.mode-performance.dark [class*="to-emerald-800"],
+.mode-performance.dark [class*="from-green-500/10"],
+.mode-performance.dark [class*="from-green-500/20"],
+.mode-performance.dark [class*="from-green-400/10"],
+.mode-performance.dark [class*="from-[#22c55e]/40"],
+.mode-performance.dark [class*="from-[#22c55e]/10"],
+.mode-performance.dark [class*="from-[#22c55e]/20"],
+.mode-performance.dark [class*="from-[#22c55e]/30"],
+.mode-performance.dark [class*="from-emerald-500/5"],
+.mode-performance.dark [class*="from-emerald-500/10"],
+.mode-performance.dark [class*="from-emerald-500/20"],
+.mode-performance.dark [class*="to-emerald-500/5"],
+.mode-performance.dark [class*="to-emerald-500/10"],
+.mode-performance.dark [class*="to-emerald-500/20"],
+.mode-performance.dark [class*="to-[#22c55e]/60"],
+.mode-performance.dark [class*="via-green-500/10"],
+.mode-performance.dark [class*="via-[#22c55e]/40"],
+.mode-performance.dark [class*="from-green-50"],
+.mode-performance.dark [class*="from-green-100"],
+.mode-performance.dark [class*="from-green-200"],
+.mode-performance.dark [class*="from-green-300"],
+.mode-performance.dark [class*="from-green-400"],
+.mode-performance.dark [class*="from-green-500"],
+.mode-performance.dark [class*="from-green-600"],
+.mode-performance.dark [class*="from-green-700"],
+.mode-performance.dark [class*="from-green-800"],
+.mode-performance.dark [class*="from-green-900"],
+.mode-performance.dark [class*="from-green-950"],
+.mode-performance.dark [class*="from-emerald-50"],
+.mode-performance.dark [class*="from-emerald-100"],
+.mode-performance.dark [class*="from-emerald-200"],
+.mode-performance.dark [class*="from-emerald-300"],
+.mode-performance.dark [class*="from-emerald-400"],
+.mode-performance.dark [class*="from-emerald-500"],
+.mode-performance.dark [class*="from-emerald-600"],
+.mode-performance.dark [class*="from-emerald-700"],
+.mode-performance.dark [class*="from-emerald-800"],
+.mode-performance.dark [class*="from-emerald-900"],
+.mode-performance.dark [class*="from-emerald-950"],
+.mode-performance.dark [class*="from-lime-50"],
+.mode-performance.dark [class*="from-lime-100"],
+.mode-performance.dark [class*="from-lime-200"],
+.mode-performance.dark [class*="from-lime-300"],
+.mode-performance.dark [class*="from-lime-400"],
+.mode-performance.dark [class*="from-lime-500"],
+.mode-performance.dark [class*="from-lime-600"],
+.mode-performance.dark [class*="from-lime-700"],
+.mode-performance.dark [class*="from-lime-800"],
+.mode-performance.dark [class*="from-lime-900"],
+.mode-performance.dark [class*="from-lime-950"],
+.mode-performance.dark [class*="to-green-50"],
+.mode-performance.dark [class*="to-green-100"],
+.mode-performance.dark [class*="to-green-200"],
+.mode-performance.dark [class*="to-green-300"],
+.mode-performance.dark [class*="to-green-400"],
+.mode-performance.dark [class*="to-green-500"],
+.mode-performance.dark [class*="to-green-600"],
+.mode-performance.dark [class*="to-green-700"],
+.mode-performance.dark [class*="to-green-800"],
+.mode-performance.dark [class*="to-green-900"],
+.mode-performance.dark [class*="to-green-950"],
+.mode-performance.dark [class*="to-emerald-50"],
+.mode-performance.dark [class*="to-emerald-100"],
+.mode-performance.dark [class*="to-emerald-200"],
+.mode-performance.dark [class*="to-emerald-300"],
+.mode-performance.dark [class*="to-emerald-400"],
+.mode-performance.dark [class*="to-emerald-500"],
+.mode-performance.dark [class*="to-emerald-600"],
+.mode-performance.dark [class*="to-emerald-700"],
+.mode-performance.dark [class*="to-emerald-800"],
+.mode-performance.dark [class*="to-emerald-900"],
+.mode-performance.dark [class*="to-emerald-950"],
+.mode-performance.dark [class*="to-lime-50"],
+.mode-performance.dark [class*="to-lime-100"],
+.mode-performance.dark [class*="to-lime-200"],
+.mode-performance.dark [class*="to-lime-300"],
+.mode-performance.dark [class*="to-lime-400"],
+.mode-performance.dark [class*="to-lime-500"],
+.mode-performance.dark [class*="to-lime-600"],
+.mode-performance.dark [class*="to-lime-700"],
+.mode-performance.dark [class*="to-lime-800"],
+.mode-performance.dark [class*="to-lime-900"],
+.mode-performance.dark [class*="to-lime-950"],
+.mode-performance.dark [class*="via-green-50"],
+.mode-performance.dark [class*="via-green-100"],
+.mode-performance.dark [class*="via-green-200"],
+.mode-performance.dark [class*="via-green-300"],
+.mode-performance.dark [class*="via-green-400"],
+.mode-performance.dark [class*="via-green-500"],
+.mode-performance.dark [class*="via-green-600"],
+.mode-performance.dark [class*="via-green-700"],
+.mode-performance.dark [class*="via-green-800"],
+.mode-performance.dark [class*="via-green-900"],
+.mode-performance.dark [class*="via-green-950"],
+.mode-performance.dark [class*="via-emerald-50"],
+.mode-performance.dark [class*="via-emerald-100"],
+.mode-performance.dark [class*="via-emerald-200"],
+.mode-performance.dark [class*="via-emerald-300"],
+.mode-performance.dark [class*="via-emerald-400"],
+.mode-performance.dark [class*="via-emerald-500"],
+.mode-performance.dark [class*="via-emerald-600"],
+.mode-performance.dark [class*="via-emerald-700"],
+.mode-performance.dark [class*="via-emerald-800"],
+.mode-performance.dark [class*="via-emerald-900"],
+.mode-performance.dark [class*="via-emerald-950"],
+.mode-performance.dark [class*="via-lime-50"],
+.mode-performance.dark [class*="via-lime-100"],
+.mode-performance.dark [class*="via-lime-200"],
+.mode-performance.dark [class*="via-lime-300"],
+.mode-performance.dark [class*="via-lime-400"],
+.mode-performance.dark [class*="via-lime-500"],
+.mode-performance.dark [class*="via-lime-600"],
+.mode-performance.dark [class*="via-lime-700"],
+.mode-performance.dark [class*="via-lime-800"],
+.mode-performance.dark [class*="via-lime-900"],
+.mode-performance.dark [class*="via-lime-950"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+/* T-MONO-GLOW: glows verdes -> none */
+.mode-performance.dark [class*="shadow-green-50"],
+.mode-performance.dark [class*="shadow-green-100"],
+.mode-performance.dark [class*="shadow-green-200"],
+.mode-performance.dark [class*="shadow-green-300"],
+.mode-performance.dark [class*="shadow-green-400"],
+.mode-performance.dark [class*="shadow-green-500"],
+.mode-performance.dark [class*="shadow-green-600"],
+.mode-performance.dark [class*="shadow-green-700"],
+.mode-performance.dark [class*="shadow-green-800"],
+.mode-performance.dark [class*="shadow-green-900"],
+.mode-performance.dark [class*="shadow-green-950"],
+.mode-performance.dark [class*="shadow-emerald-50"],
+.mode-performance.dark [class*="shadow-emerald-100"],
+.mode-performance.dark [class*="shadow-emerald-200"],
+.mode-performance.dark [class*="shadow-emerald-300"],
+.mode-performance.dark [class*="shadow-emerald-400"],
+.mode-performance.dark [class*="shadow-emerald-500"],
+.mode-performance.dark [class*="shadow-emerald-600"],
+.mode-performance.dark [class*="shadow-emerald-700"],
+.mode-performance.dark [class*="shadow-emerald-800"],
+.mode-performance.dark [class*="shadow-emerald-900"],
+.mode-performance.dark [class*="shadow-emerald-950"],
+.mode-performance.dark [class*="shadow-lime-50"],
+.mode-performance.dark [class*="shadow-lime-100"],
+.mode-performance.dark [class*="shadow-lime-200"],
+.mode-performance.dark [class*="shadow-lime-300"],
+.mode-performance.dark [class*="shadow-lime-400"],
+.mode-performance.dark [class*="shadow-lime-500"],
+.mode-performance.dark [class*="shadow-lime-600"],
+.mode-performance.dark [class*="shadow-lime-700"],
+.mode-performance.dark [class*="shadow-lime-800"],
+.mode-performance.dark [class*="shadow-lime-900"],
+.mode-performance.dark [class*="shadow-lime-950"] {
+  box-shadow: none !important;
+}
+.mode-performance.dark [class*="shadow-green-500/30"],
+.mode-performance.dark [class*="shadow-green-500/20"],
+.mode-performance.dark [class*="shadow-green-500/5"],
+.mode-performance.dark [class*="shadow-green-500/10"],
+.mode-performance.dark [class*="shadow-green-500/25"],
+.mode-performance.dark [class*="shadow-green-600/20"],
+.mode-performance.dark [class*="shadow-green-600/30"],
+.mode-performance.dark [class*="shadow-green-400/50"],
+.mode-performance.dark [class*="shadow-emerald-500/20"],
+.mode-performance.dark [class*="shadow-emerald-500/5"],
+.mode-performance.dark [class*="shadow-[#22c55e]/40"],
+.mode-performance.dark [class*="shadow-[#22c55e]/30"],
+.mode-performance.dark [class*="shadow-[#22c55e]/20"],
+.mode-performance.dark [class*="shadow-[#22c55e]/10"],
+.mode-performance.dark [class*="shadow-[#15803d]/40"],
+.mode-performance.dark [class*="shadow-[#15803d]/20"] {
+  box-shadow: none !important;
+}
+/* T-MONO-RING */
+.mode-performance.dark [class*="ring-green-50"],
+.mode-performance.dark [class*="ring-green-100"],
+.mode-performance.dark [class*="ring-green-200"],
+.mode-performance.dark [class*="ring-green-300"],
+.mode-performance.dark [class*="ring-green-400"],
+.mode-performance.dark [class*="ring-green-500"],
+.mode-performance.dark [class*="ring-green-600"],
+.mode-performance.dark [class*="ring-green-700"],
+.mode-performance.dark [class*="ring-green-800"],
+.mode-performance.dark [class*="ring-green-900"],
+.mode-performance.dark [class*="ring-green-950"],
+.mode-performance.dark [class*="ring-emerald-50"],
+.mode-performance.dark [class*="ring-emerald-100"],
+.mode-performance.dark [class*="ring-emerald-200"],
+.mode-performance.dark [class*="ring-emerald-300"],
+.mode-performance.dark [class*="ring-emerald-400"],
+.mode-performance.dark [class*="ring-emerald-500"],
+.mode-performance.dark [class*="ring-emerald-600"],
+.mode-performance.dark [class*="ring-emerald-700"],
+.mode-performance.dark [class*="ring-emerald-800"],
+.mode-performance.dark [class*="ring-emerald-900"],
+.mode-performance.dark [class*="ring-emerald-950"],
+.mode-performance.dark [class*="ring-lime-50"],
+.mode-performance.dark [class*="ring-lime-100"],
+.mode-performance.dark [class*="ring-lime-200"],
+.mode-performance.dark [class*="ring-lime-300"],
+.mode-performance.dark [class*="ring-lime-400"],
+.mode-performance.dark [class*="ring-lime-500"],
+.mode-performance.dark [class*="ring-lime-600"],
+.mode-performance.dark [class*="ring-lime-700"],
+.mode-performance.dark [class*="ring-lime-800"],
+.mode-performance.dark [class*="ring-lime-900"],
+.mode-performance.dark [class*="ring-lime-950"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+.mode-performance.dark [class*="ring-green-500/30"],
+.mode-performance.dark [class*="ring-green-500/40"],
+.mode-performance.dark [class*="ring-green-500/70"],
+.mode-performance.dark [class*="ring-green-500/10"],
+.mode-performance.dark [class*="ring-green-500/15"],
+.mode-performance.dark [class*="ring-green-500/20"],
+.mode-performance.dark [class*="ring-green-500/25"],
+.mode-performance.dark [class*="ring-[#22c55e]/20"],
+.mode-performance.dark [class*="ring-[#22c55e]/15"],
+.mode-performance.dark [class*="ring-[#22c55e]/25"],
+.mode-performance.dark [class*="ring-[#22c55e]/40"],
+.mode-performance.dark [class*="ring-[#22c55e]/70"],
+.mode-performance.dark [class*="ring-[#22c55e]/10"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+/* T-MONO-FILL-DECOR */
+.mode-performance.dark [class*="fill-green-50"],
+.mode-performance.dark [class*="fill-green-100"],
+.mode-performance.dark [class*="fill-green-200"],
+.mode-performance.dark [class*="fill-green-300"],
+.mode-performance.dark [class*="fill-green-400"],
+.mode-performance.dark [class*="fill-green-500"],
+.mode-performance.dark [class*="fill-green-600"],
+.mode-performance.dark [class*="fill-green-700"],
+.mode-performance.dark [class*="fill-green-800"],
+.mode-performance.dark [class*="fill-green-900"],
+.mode-performance.dark [class*="fill-green-950"],
+.mode-performance.dark [class*="fill-emerald-50"],
+.mode-performance.dark [class*="fill-emerald-100"],
+.mode-performance.dark [class*="fill-emerald-200"],
+.mode-performance.dark [class*="fill-emerald-300"],
+.mode-performance.dark [class*="fill-emerald-400"],
+.mode-performance.dark [class*="fill-emerald-500"],
+.mode-performance.dark [class*="fill-emerald-600"],
+.mode-performance.dark [class*="fill-emerald-700"],
+.mode-performance.dark [class*="fill-emerald-800"],
+.mode-performance.dark [class*="fill-emerald-900"],
+.mode-performance.dark [class*="fill-emerald-950"],
+.mode-performance.dark [class*="fill-lime-50"],
+.mode-performance.dark [class*="fill-lime-100"],
+.mode-performance.dark [class*="fill-lime-200"],
+.mode-performance.dark [class*="fill-lime-300"],
+.mode-performance.dark [class*="fill-lime-400"],
+.mode-performance.dark [class*="fill-lime-500"],
+.mode-performance.dark [class*="fill-lime-600"],
+.mode-performance.dark [class*="fill-lime-700"],
+.mode-performance.dark [class*="fill-lime-800"],
+.mode-performance.dark [class*="fill-lime-900"],
+.mode-performance.dark [class*="fill-lime-950"] {
+  fill: #a1a1aa !important;
+}
+.mode-performance.dark [class*="stroke-green-50"],
+.mode-performance.dark [class*="stroke-green-100"],
+.mode-performance.dark [class*="stroke-green-200"],
+.mode-performance.dark [class*="stroke-green-300"],
+.mode-performance.dark [class*="stroke-green-400"],
+.mode-performance.dark [class*="stroke-green-500"],
+.mode-performance.dark [class*="stroke-green-600"],
+.mode-performance.dark [class*="stroke-green-700"],
+.mode-performance.dark [class*="stroke-green-800"],
+.mode-performance.dark [class*="stroke-green-900"],
+.mode-performance.dark [class*="stroke-green-950"],
+.mode-performance.dark [class*="stroke-emerald-50"],
+.mode-performance.dark [class*="stroke-emerald-100"],
+.mode-performance.dark [class*="stroke-emerald-200"],
+.mode-performance.dark [class*="stroke-emerald-300"],
+.mode-performance.dark [class*="stroke-emerald-400"],
+.mode-performance.dark [class*="stroke-emerald-500"],
+.mode-performance.dark [class*="stroke-emerald-600"],
+.mode-performance.dark [class*="stroke-emerald-700"],
+.mode-performance.dark [class*="stroke-emerald-800"],
+.mode-performance.dark [class*="stroke-emerald-900"],
+.mode-performance.dark [class*="stroke-emerald-950"],
+.mode-performance.dark [class*="stroke-lime-50"],
+.mode-performance.dark [class*="stroke-lime-100"],
+.mode-performance.dark [class*="stroke-lime-200"],
+.mode-performance.dark [class*="stroke-lime-300"],
+.mode-performance.dark [class*="stroke-lime-400"],
+.mode-performance.dark [class*="stroke-lime-500"],
+.mode-performance.dark [class*="stroke-lime-600"],
+.mode-performance.dark [class*="stroke-lime-700"],
+.mode-performance.dark [class*="stroke-lime-800"],
+.mode-performance.dark [class*="stroke-lime-900"],
+.mode-performance.dark [class*="stroke-lime-950"] {
+  stroke: #a1a1aa !important;
+}
+.mode-performance.dark [class*="decoration-green-50"],
+.mode-performance.dark [class*="decoration-green-100"],
+.mode-performance.dark [class*="decoration-green-200"],
+.mode-performance.dark [class*="decoration-green-300"],
+.mode-performance.dark [class*="decoration-green-400"],
+.mode-performance.dark [class*="decoration-green-500"],
+.mode-performance.dark [class*="decoration-green-600"],
+.mode-performance.dark [class*="decoration-green-700"],
+.mode-performance.dark [class*="decoration-green-800"],
+.mode-performance.dark [class*="decoration-green-900"],
+.mode-performance.dark [class*="decoration-green-950"],
+.mode-performance.dark [class*="decoration-emerald-50"],
+.mode-performance.dark [class*="decoration-emerald-100"],
+.mode-performance.dark [class*="decoration-emerald-200"],
+.mode-performance.dark [class*="decoration-emerald-300"],
+.mode-performance.dark [class*="decoration-emerald-400"],
+.mode-performance.dark [class*="decoration-emerald-500"],
+.mode-performance.dark [class*="decoration-emerald-600"],
+.mode-performance.dark [class*="decoration-emerald-700"],
+.mode-performance.dark [class*="decoration-emerald-800"],
+.mode-performance.dark [class*="decoration-emerald-900"],
+.mode-performance.dark [class*="decoration-emerald-950"],
+.mode-performance.dark [class*="decoration-lime-50"],
+.mode-performance.dark [class*="decoration-lime-100"],
+.mode-performance.dark [class*="decoration-lime-200"],
+.mode-performance.dark [class*="decoration-lime-300"],
+.mode-performance.dark [class*="decoration-lime-400"],
+.mode-performance.dark [class*="decoration-lime-500"],
+.mode-performance.dark [class*="decoration-lime-600"],
+.mode-performance.dark [class*="decoration-lime-700"],
+.mode-performance.dark [class*="decoration-lime-800"],
+.mode-performance.dark [class*="decoration-lime-900"],
+.mode-performance.dark [class*="decoration-lime-950"] {
+  text-decoration-color: #a1a1aa !important;
+}
+.mode-performance.dark [class*="divide-green-50"],
+.mode-performance.dark [class*="divide-green-100"],
+.mode-performance.dark [class*="divide-green-200"],
+.mode-performance.dark [class*="divide-green-300"],
+.mode-performance.dark [class*="divide-green-400"],
+.mode-performance.dark [class*="divide-green-500"],
+.mode-performance.dark [class*="divide-green-600"],
+.mode-performance.dark [class*="divide-green-700"],
+.mode-performance.dark [class*="divide-green-800"],
+.mode-performance.dark [class*="divide-green-900"],
+.mode-performance.dark [class*="divide-green-950"],
+.mode-performance.dark [class*="divide-emerald-50"],
+.mode-performance.dark [class*="divide-emerald-100"],
+.mode-performance.dark [class*="divide-emerald-200"],
+.mode-performance.dark [class*="divide-emerald-300"],
+.mode-performance.dark [class*="divide-emerald-400"],
+.mode-performance.dark [class*="divide-emerald-500"],
+.mode-performance.dark [class*="divide-emerald-600"],
+.mode-performance.dark [class*="divide-emerald-700"],
+.mode-performance.dark [class*="divide-emerald-800"],
+.mode-performance.dark [class*="divide-emerald-900"],
+.mode-performance.dark [class*="divide-emerald-950"],
+.mode-performance.dark [class*="divide-lime-50"],
+.mode-performance.dark [class*="divide-lime-100"],
+.mode-performance.dark [class*="divide-lime-200"],
+.mode-performance.dark [class*="divide-lime-300"],
+.mode-performance.dark [class*="divide-lime-400"],
+.mode-performance.dark [class*="divide-lime-500"],
+.mode-performance.dark [class*="divide-lime-600"],
+.mode-performance.dark [class*="divide-lime-700"],
+.mode-performance.dark [class*="divide-lime-800"],
+.mode-performance.dark [class*="divide-lime-900"],
+.mode-performance.dark [class*="divide-lime-950"] {
+  border-color: #3f3f46 !important;
+}
+.mode-performance.dark [class*="accent-green-50"],
+.mode-performance.dark [class*="accent-green-100"],
+.mode-performance.dark [class*="accent-green-200"],
+.mode-performance.dark [class*="accent-green-300"],
+.mode-performance.dark [class*="accent-green-400"],
+.mode-performance.dark [class*="accent-green-500"],
+.mode-performance.dark [class*="accent-green-600"],
+.mode-performance.dark [class*="accent-green-700"],
+.mode-performance.dark [class*="accent-green-800"],
+.mode-performance.dark [class*="accent-green-900"],
+.mode-performance.dark [class*="accent-green-950"],
+.mode-performance.dark [class*="accent-emerald-50"],
+.mode-performance.dark [class*="accent-emerald-100"],
+.mode-performance.dark [class*="accent-emerald-200"],
+.mode-performance.dark [class*="accent-emerald-300"],
+.mode-performance.dark [class*="accent-emerald-400"],
+.mode-performance.dark [class*="accent-emerald-500"],
+.mode-performance.dark [class*="accent-emerald-600"],
+.mode-performance.dark [class*="accent-emerald-700"],
+.mode-performance.dark [class*="accent-emerald-800"],
+.mode-performance.dark [class*="accent-emerald-900"],
+.mode-performance.dark [class*="accent-emerald-950"],
+.mode-performance.dark [class*="accent-lime-50"],
+.mode-performance.dark [class*="accent-lime-100"],
+.mode-performance.dark [class*="accent-lime-200"],
+.mode-performance.dark [class*="accent-lime-300"],
+.mode-performance.dark [class*="accent-lime-400"],
+.mode-performance.dark [class*="accent-lime-500"],
+.mode-performance.dark [class*="accent-lime-600"],
+.mode-performance.dark [class*="accent-lime-700"],
+.mode-performance.dark [class*="accent-lime-800"],
+.mode-performance.dark [class*="accent-lime-900"],
+.mode-performance.dark [class*="accent-lime-950"] {
+  accent-color: #a1a1aa !important;
+}
