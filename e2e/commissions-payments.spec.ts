@@ -92,7 +92,7 @@ test.describe('Comisiones y Pagos a Trabajadores — Strict', () => {
       data: {
         store_id: TEST_STORE_ID,
         worker_id: testWorkerId,
-        type: 'percentage',
+        type: 'percentage_sales',
         value_percent: 5.0,
         base_calculation: 'net_sales',
         priority: 1,
@@ -102,9 +102,10 @@ test.describe('Comisiones y Pagos a Trabajadores — Strict', () => {
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    const rule = body.data || body;
+    // FIX SEC-TS-10 (contract drift): POST /api/commissions/rules responde {rule: {...}}
+    const rule = body.rule || body.data || body;
     expect(rule).toHaveProperty('id');
-    expect(rule.type).toBe('percentage');
+    expect(rule.type).toBe('percentage_sales');
     expect(Number(rule.value_percent)).toBe(5.0);
     testRuleId = rule.id;
   });
@@ -116,7 +117,7 @@ test.describe('Comisiones y Pagos a Trabajadores — Strict', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    const rules = body.data || body;
+    const rules = body.rules || body.data || body;
     expect(Array.isArray(rules)).toBe(true);
     expect(rules.some((r: any) => r.id === testRuleId)).toBe(true);
   });
@@ -141,7 +142,7 @@ test.describe('Comisiones y Pagos a Trabajadores — Strict', () => {
     const response = await request.post('/api/commissions/rules', {
       headers,
       data: {
-        type: 'percentage',
+        type: 'percentage_sales',
         value_percent: 5,
         base_calculation: 'net_sales',
         priority: 1,
@@ -157,7 +158,7 @@ test.describe('Comisiones y Pagos a Trabajadores — Strict', () => {
       headers,
       data: {
         store_id: TEST_STORE_ID,
-        type: 'percentage',
+        type: 'percentage_sales',
         value_percent: 150, // invalid
         base_calculation: 'net_sales',
         priority: 1,
@@ -173,7 +174,7 @@ test.describe('Comisiones y Pagos a Trabajadores — Strict', () => {
       headers,
       data: {
         store_id: TEST_STORE_ID,
-        type: 'percentage',
+        type: 'percentage_sales',
         value_percent: -5, // invalid
         base_calculation: 'net_sales',
         priority: 1,
@@ -233,7 +234,8 @@ test.describe('Comisiones y Pagos a Trabajadores — Strict', () => {
     expect(response.status()).toBe(200);
     const body = await response.json();
     // Response shape: { data: [{ worker_id, calculated_amount, breakdown }] }
-    const results = body.data || body;
+    // FIX SEC-TS-10 (contract drift): calculate responde {calculations: [...]}
+    const results = body.calculations || body.data || body;
     expect(Array.isArray(results)).toBe(true);
   });
 
@@ -278,18 +280,27 @@ test.describe('Comisiones y Pagos a Trabajadores — Strict', () => {
         worker_id: testWorkerId,
         period_start: periodStart,
         period_end: periodEnd,
+    // FIX SEC-TS-10 (contract drift): payments recalcula la comisión server-side;
+    // si final difiere del recalculo (0 sin ventas) exige manual_adjustment_reason
         calculated_amount: 100.00,
         final_amount: 100.00,
+        manual_adjustment_reason: 'Ajuste manual E2E — pago de prueba (sin ventas en el periodo)',
         rule_applied_id: testRuleId,
-        status: 'pending',
+        // FIX SEC-TS-10 (contract drift): statuses válidos de commission_payments
+        // (DB CHECK): draft/approved/paid/cancelled/flagged_for_review — 'pending' no existe
+        status: 'draft',
       },
     });
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    const payment = body.data || body;
+    // FIX SEC-TS-10 (contract drift): la API recalcula server-side y persiste
+    // calculated_amount = recálculo (0 sin ventas); final_amount conserva el
+    // monto manual con manual_adjustment_reason. Ver postHandler payments.
+    const payment = body.payment || body.data || body;
     expect(payment).toHaveProperty('id');
-    expect(Number(payment.calculated_amount)).toBe(100);
+    expect(Number(payment.calculated_amount)).toBe(0);
+    expect(Number(payment.final_amount)).toBe(100);
     testPaymentId = payment.id;
   });
 
@@ -344,17 +355,17 @@ test.describe('Comisiones y Pagos a Trabajadores — Strict', () => {
 
   test('13. GET /api/commissions/payments filters by status', async ({ request }) => {
     const response = await request.get(
-      `/api/commissions/payments?store_id=${TEST_STORE_ID}&status=pending`,
+      `/api/commissions/payments?store_id=${TEST_STORE_ID}&status=draft`,
       { headers }
     );
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    const payments = body.data || body;
+    const payments = body.payments || body.data || body;
     expect(Array.isArray(payments)).toBe(true);
     // STRICT: all returned payments must have status=pending
     payments.forEach((p: any) => {
-      expect(p.status).toBe('pending');
+      expect(p.status).toBe('draft');
     });
   });
 

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getAuthHeaders } from './fixtures/auth.fixture';
+import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
 
 /**
  * E2E: Multi-Tienda Module — Comprehensive coverage (>90%).
@@ -58,8 +58,16 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   let headers: Record<string, string>;
   const createdStoreIds: string[] = [];
 
-  test.beforeAll(() => {
-    headers = getAuthHeaders('admin')!;
+  test.beforeAll(async () => {
+    // FIX SEC-TS-10: usar freshAuthHeaders (sign-in dedicado + re-sign-in ante
+    // revocación) en vez del token global del env. Causa raíz de los 401 en
+    // suite completa: useSessionManager llama supabase.auth.signOut() GLOBAL
+    // (src/hooks/logic/useSessionManager.ts:105) cuando el fetch de profile
+    // falla transitoriamente → revoca TODAS las sesiones del usuario → el
+    // token del global-setup muere a mitad de corrida. Una sesión fresca
+    // propia hace este spec inmune a revocaciones cruzadas de specs UI.
+    const fresh = await freshAuthHeaders('admin');
+    headers = fresh || getAuthHeaders('admin')!;
   });
 
   test.afterAll(async ({ request }) => {
