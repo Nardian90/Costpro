@@ -112,6 +112,12 @@ const COSTOS_ROUTES: Record<string, ModuleRoute> = {
 // tarjetas de hub, CTAs contextuales y vistas de dominio.
 // ────────────────────────────────────────────────────────────────
 const TECHNICAL_DIRECT_ROUTES: Record<string, DirectRoute> = {
+  // AI COMMAND CENTER: HOME_ITEM (Inicio) no es hoja de NAVIGATION_SECTIONS,
+  // así que su ruta no sale de DEFINED_ROUTES. Antes existía vía el item
+  // 'dashboard' de ANÁLISIS (renombrado a 'store-dashboard' — el KPI vive
+  // intacto ahí); se declara explícita para palette/deep-links de Inicio.
+  dashboard:             { type: 'direct', view: 'dashboard' },
+  'store-dashboard':     { type: 'direct', view: 'store-dashboard' },
   devolutions:           { type: 'direct', view: 'devolutions' },
   quotations:            { type: 'direct', view: 'quotations' },
   sales_catalog:         { type: 'direct', view: 'sales_catalog' },
