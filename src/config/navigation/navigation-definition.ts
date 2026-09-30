@@ -6,10 +6,11 @@
  * Arquitectura aprobada (GATE 0.1 + autorización GATE 1):
  *
  *   INICIO (destino fijo: dashboard — NO es sección)
- *   OPERACIÓN   → Vender (POS) · Ventas (hub admin) · Almacén · Logística ·
- *                 Costo · Trabajadores y Comisiones · Gestión de Tiendas · Redes
- *   ANÁLISIS    → Dashboard de Tiendas · Tablero Dinámico · Inteligencia
- *                 Cambiaria · Reportes · Análisis ABC
+ *   OPERACIÓN   → Dashboard (tienda activa) · Ventas (Vender · Opciones) ·
+ *                 Almacén · Logística · Costo · Trabajadores y Comisiones ·
+ *                 Gestión de Tiendas · Redes
+ *   ANÁLISIS    → Análisis de datos · Inteligencia Cambiaria · Tablón de
+ *                 Noticias · Reportes · Análisis ABC
  *   SISTEMA     → Ajustes · Usuarios · Roles · Salud · Monitoreo · Auditoría ·
  *                 Gestión RSS · Cierre Fiscal   (admin)
  *   AYUDA       → Centro de Ayuda · Wiki · Academia · Marco Legal
@@ -110,31 +111,56 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
     description: 'El trabajo diario: vender, mover stock, recibir mercancía y gestionar el ciclo comercial.',
     roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
-      // PRIMARY — 1 clic (evidencia M-3: el clerk no debe pagar 2 clics diarios).
-      // GATE 1.3: label de ACCIÓN (verbo) — "Terminal de Venta" describía la
-      // tecnología; "Vender" describe la intención. El término técnico sobrevive
-      // como keyword (recognition over recall). Móvil ya usaba "Vender".
+      // CAMBIO 2 (HOME/SALES/PERFORMANCE DEFAULTS): "Dashboard" es la PRIMERA
+      // opción operativa del menú. Reutiliza la vista existente ViewType
+      // 'store-dashboard' (antes "Dashboard de Tiendas" en ANÁLISIS — se
+      // MUEVE, no se duplica: NO DUPLICAR HUBS). El KPI responde a la tienda
+      // activa (DashboardView: admin/manager → MultiStore; demás roles →
+      // implementación single-store con activeStoreId).
       {
-        id: 'pos',
-        label: 'Vender',
-        description: 'Venta rápida con carrito, atajos de teclado, escáner de código de barras y pago mixto. Incluye el modo Vale de Salida.',
-        icon: Zap,
+        id: 'store-dashboard',
+        label: 'Dashboard',
+        description: 'Dashboard de la tienda activa: ventas, costos, ganancia y alertas de stock en tiempo real.',
+        icon: TrendingUp,
         type: 'item',
         navClass: 'primary',
-        roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
-        keywords: ['vender', 'venta', 'pos', 'terminal', 'terminal de venta', 'cobrar', 'facturar', 'ticket', 'factura', 'vale de salida'],
+        keywords: ['dashboard', 'tienda', 'kpi', 'indicadores', 'consolidado', 'resumen', 'inicio'],
       },
-      // HUB — administración del ciclo comercial (GATE 1.3: "Venta" → "Ventas",
-      // sustantivo de dominio, para eliminar la colisión Vender/Venta).
+      // CAMBIO 4 (HOME/SALES/PERFORMANCE DEFAULTS): grupo explícito "Ventas"
+      // con la acción de vender + las opciones administrativas. La antigua
+      // entrada plana "Ventas" (sales-hub) pasa a llamarse "Opciones" para
+      // eliminar la relación semántica confusa Ventas → Vender → Ventas.
+      // Estructura: Ventas ├── Vender └── Opciones.
       {
-        id: 'sales-hub',
+        id: 'ventas',
         label: 'Ventas',
-        description: 'Administración del ciclo comercial: Tabla de Venta, Historial de Ventas, Caja, Venta por Conteo, Devoluciones, Cotizaciones y cuentas.',
+        description: 'Vender y las opciones administrativas del ciclo comercial.',
         icon: ShoppingCart,
-        type: 'item',
+        type: 'submenu',
         navClass: 'hub',
         roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
-        keywords: ['ventas', 'venta', 'gestión de ventas', 'tabla de venta', 'historial', 'arqueo', 'conteo', 'devoluciones', 'cotizaciones', 'cuentas'],
+        children: [
+          {
+            id: 'pos',
+            label: 'Vender',
+            description: 'Venta rápida con carrito, atajos de teclado, escáner de código de barras y pago mixto. Incluye el modo Vale de Salida.',
+            icon: Zap,
+            type: 'item',
+            navClass: 'primary',
+            roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+            keywords: ['vender', 'venta', 'pos', 'terminal', 'terminal de venta', 'cobrar', 'facturar', 'ticket', 'factura', 'vale de salida'],
+          },
+          {
+            id: 'sales-hub',
+            label: 'Opciones',
+            description: 'Opciones administrativas de ventas: Tabla de Venta, Historial de Ventas, Caja, Venta por Conteo, Devoluciones, Cotizaciones, Clientes y cuentas.',
+            icon: ShoppingCart,
+            type: 'item',
+            navClass: 'hub',
+            roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+            keywords: ['opciones', 'ventas', 'venta', 'gestión de ventas', 'tabla de venta', 'historial', 'arqueo', 'conteo', 'devoluciones', 'cotizaciones', 'cuentas'],
+          },
+        ],
       },
       {
         id: 'almacen_gestion',
@@ -339,31 +365,20 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
     roles: ['admin', 'manager', 'encargado'],
     children: [
       {
-        // AI COMMAND CENTER: el viewId 'dashboard' es ahora el Inicio
-        // conversacional (Darian primero). El KPI consolidado se preserva
-        // intacto como 'store-dashboard' — entrada de ANÁLISIS (GATE 11:
-        // estructura F4 sin cambios, sin duplicar Inicio).
-        id: 'store-dashboard',
-        label: 'Dashboard de Tiendas',
-        description: 'KPIs consolidados por tienda: ventas, costos, ganancia y alertas de stock.',
-        icon: TrendingUp,
-        type: 'item',
-        navClass: 'primary',
-        keywords: ['dashboard', 'tiendas', 'kpi', 'indicadores', 'consolidado', 'análisis'],
-      },
-      {
-        // GATE 1.4R (UX-004/§7): "Tablero Dinámico" no comunicaba QUÉ analiza y
-        // colisionaba con Tablero Consolidado (Inicio) y Dashboard de Tiendas.
-        // Label = "Análisis de Fichas" (qué analiza, no cómo está implementado).
-        // El viewId técnico `cost-analytics` se conserva (sin migraciones internas).
-        // Historial: "Tablero Principal" → "Tablero Dinámico" → "Análisis de Fichas".
+        // GATE 1.4R (UX-004/§7) + CAMBIO 8 (HOME/SALES/PERFORMANCE DEFAULTS):
+        // "Análisis de Fichas" no comunicaba QUÉ analiza. Label = "Análisis de
+        // datos" (análisis de datos de costos/márgenes de las fichas). El
+        // viewId técnico `cost-analytics` se conserva (sin migraciones
+        // internas). ÚNICO acceso canónico al análisis: la entrada del menú
+        // ANÁLISIS (el tab "Análisis" del rail interno del módulo Fichas de
+        // Costo se retira — CAMBIO 7, sin eliminar funcionalidad).
         id: 'cost-analytics',
-        label: 'Análisis de Fichas',
+        label: 'Análisis de datos',
         description: 'Analiza costos, márgenes y rentabilidad de tus fichas de costo: tabla dinámica con drag & drop, plantillas y gráficos.',
         icon: Table2,
         type: 'item',
         route: { view: 'cost-sheets', tab: 'cost-analytics' },
-        keywords: ['análisis de fichas', 'fichas', 'tablero', 'dinámico', 'análisis', 'pivot', 'márgenes', 'rentabilidad', 'costos', 'productos'],
+        keywords: ['análisis de datos', 'análisis de fichas', 'fichas', 'tablero', 'dinámico', 'análisis', 'pivot', 'márgenes', 'rentabilidad', 'costos', 'productos'],
       },
       {
         id: 'exchange-intelligence',
@@ -933,15 +948,11 @@ export const ACTION_EXTENSIONS: (NavEntry & { route: NavRoute })[] = [
     keywords: ['calculadora', 'calcular', 'billetes', 'memoria', 'cambio'],
   },
   {
-    id: 'chat',
-    label: 'Chat con Darian (IA)',
-    description: 'Asistente IA: consulta costos y ventas, busca productos, navega y ejecuta acciones.',
-    icon: MessageCircle,
-    type: 'item',
-    route: { view: 'chat' },
-    keywords: ['chat', 'darian', 'ia', 'asistente', 'inteligencia', 'preguntar'],
-  },
-  {
+    // CAMBIO 3 (HOME/SALES/PERFORMANCE DEFAULTS): la entrada de menú/palette
+    // "Chat con Darian" se ELIMINA — Darian ya vive dentro de Inicio (AI
+    // Command Center) y una segunda entrada era duplicación conceptual.
+    // El ViewType 'chat' sigue VÁLIDO (deep-link /?view=chat usado por
+    // Acciones recientes al reabrir conversaciones; TerminalShell lo renderiza).
     id: 'storefront-config',
     label: 'Vitrina Pública',
     description: 'Personaliza banner, servicios, carrusel promocional y canales de contacto de tu vitrina.',
@@ -1252,6 +1263,8 @@ export const VALID_VIEWS: Set<string> = new Set([
   'cost_views', 'cost_gen', 'cost_templates', 'cost_tools',
   'costos', 'tienda', 'ipv_module', 'otros', 'administracion', 'recursos',
   'costo', // F4 (higiene IA): ViewType real (case SectionHubView) que faltaba aquí
+  // CAMBIO 4: submenu hub "Ventas" (Vender + Opciones) — wayfinding SectionHub
+  'ventas',
   // Secciones/hubs nuevos de la arquitectura GATE 1
   'operacion', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
 ]);

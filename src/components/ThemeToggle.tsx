@@ -12,7 +12,10 @@ export function ThemeToggle() {
   const { themePreference, setThemePreference } = useUIStore();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
-  const [uiMode, setUiMode] = React.useState<UIMode>('enhanced');
+  // CAMBIO 6: el default del sistema es Modo Performance — el estado inicial
+  // del toggle lo refleja (el effect de montaje lo corrige con el valor real
+  // persistido, evitando un primer frame en 'enhanced').
+  const [uiMode, setUiMode] = React.useState<UIMode>('performance');
   const [isTransitioning, setIsTransitioning] = React.useState(false);
 
   React.useEffect(() => {

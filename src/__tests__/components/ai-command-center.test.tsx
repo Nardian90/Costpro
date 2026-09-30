@@ -59,6 +59,16 @@ vi.mock('@/components/ui/ChatBot', () => ({
   ),
 }));
 
+// ─── MOCK: DashboardView (el dashboard real se valida en QA de browser) ────
+vi.mock('@/components/views/terminal/views/dashboard/DashboardView', () => ({
+  default: ({ embedded }: any) => (
+    <div
+      data-testid="store-dashboard-embedded"
+      data-embedded={String(Boolean(embedded))}
+    />
+  ),
+}));
+
 // ─── MOCK: stores (zustand mínimo — mismos selectores que usa el código) ────
 const setCurrentViewMock = vi.fn();
 vi.mock('@/store', async () => {
@@ -147,27 +157,38 @@ describe('recent-actions (log user-scoped)', () => {
 });
 
 describe('AICommandCenterView (Inicio)', () => {
-  it('estado inicial: chat embebido + recents visibles (vacíos)', async () => {
+  it('estado inicial: Dashboard de la tienda activa + chat embebido + recents (CAMBIO 1)', async () => {
     render(<AICommandCenterView />);
     await waitFor(() => {
       expect(screen.getByTestId('chatbot-embedded')).toBeInTheDocument();
     });
     expect(screen.getByTestId('chatbot-embedded').getAttribute('data-embedded')).toBe('true');
+    // CAMBIO 1: el dashboard de la tienda activa va encima de Darian,
+    // reutilizando la vista existente en modo embebido (PageHeader h2)
+    await waitFor(() => {
+      expect(screen.getByTestId('inicio-store-dashboard')).toBeInTheDocument();
+    });
+    const embedded = screen.getByTestId('store-dashboard-embedded');
+    expect(embedded.getAttribute('data-embedded')).toBe('true');
     expect(screen.getByTestId('recent-activity-empty')).toBeInTheDocument();
   });
 
-  it('GATE 9: conversación activa → recents desmontados; idle → regresan', async () => {
+  it('GATE 9 + CAMBIO 1: conversación activa → recents Y dashboard desmontados; idle → regresan', async () => {
     render(<AICommandCenterView />);
     await waitFor(() => screen.getByTestId('chatbot-embedded'));
+    await waitFor(() => screen.getByTestId('store-dashboard-embedded'));
 
     fireEvent.click(screen.getByTestId('simulate-active'));
     await waitFor(() => {
       expect(screen.queryByTestId('recent-activity-empty')).not.toBeInTheDocument();
+      // La conversación toma prioridad: el dashboard embebido se desmonta
+      expect(screen.queryByTestId('inicio-store-dashboard')).not.toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByTestId('simulate-idle'));
     await waitFor(() => {
       expect(screen.getByTestId('recent-activity-empty')).toBeInTheDocument();
+      expect(screen.getByTestId('inicio-store-dashboard')).toBeInTheDocument();
     });
   });
 

@@ -93,6 +93,36 @@ describe('useViewUrlSync', () => {
     unmount();
   });
 
+  it('CAMBIO 1: entrada con URL limpia "/" aterriza en Inicio aunque haya vista persistida (fin de "abre en Vender")', async () => {
+    // Un usuario cuyo estado persistido es 'pos' (su última vista) debe
+    // aterrizar en Inicio al ENTRAR por '/', no en Vender.
+    setUrl('');
+    useUIStore.setState({ currentView: 'pos' });
+    const { unmount } = renderHook(() => useViewUrlSync());
+    await act(tick);
+    expect(useUIStore.getState().currentView).toBe('dashboard');
+    unmount();
+  });
+
+  it('CAMBIO 1: la URL limpia no interfiere si ya estamos en Inicio (sin pushState extra)', async () => {
+    setUrl('');
+    useUIStore.setState({ currentView: 'dashboard' });
+    const { unmount } = renderHook(() => useViewUrlSync());
+    await act(tick);
+    expect(useUIStore.getState().currentView).toBe('dashboard');
+    expect(window.location.search).toBe('');
+    unmount();
+  });
+
+  it('CAMBIO 1: F5 en una vista SÍ restaura la vista (la URL tiene ?view= — deep-link intacto)', async () => {
+    setUrl('?view=pos');
+    useUIStore.setState({ currentView: 'dashboard' });
+    const { unmount } = renderHook(() => useViewUrlSync());
+    await act(tick);
+    expect(useUIStore.getState().currentView).toBe('pos');
+    unmount();
+  });
+
   it('alias legacy: ?view=occ aterriza en dashboard', async () => {
     setUrl('?view=occ');
     const { unmount } = renderHook(() => useViewUrlSync());
