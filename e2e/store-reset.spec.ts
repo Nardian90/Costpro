@@ -218,9 +218,14 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
     // First reset
     // SEC-TS-10: pacear reset (API: 2/min) — ambos POSTs del test de
     // idempotencia consumen bucket (el rate-limit corre antes del replay).
+    // FIX: el Idempotency-Key debe IR EN EL HEADER — la ruta construye su
+    // clave de caché desde req.headers.get('idempotency-key'); sin el
+    // header, idemKey=null y el segundo POST RE-EJECUTABA el reset (sin
+    // X-Idempotent-Replay). Este test pasaba vacío antes (skip por setup
+    // fallido de createTestStore con la extracción rota).
     await waitStoreBudget('reset');
     const firstRes = await request.post('/api/stores/reset', {
-      headers,
+      headers: { ...headers, 'Idempotency-Key': idemKey },
       data: resetPayload,
     });
     expect(firstRes.status()).toBe(200);
@@ -229,7 +234,7 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
     // Second reset with SAME idempotency-key — must return same response, not execute again
     await waitStoreBudget('reset');
     const secondRes = await request.post('/api/stores/reset', {
-      headers,
+      headers: { ...headers, 'Idempotency-Key': idemKey },
       data: resetPayload,
     });
 

@@ -68,8 +68,8 @@ test.describe('Store Lifecycle: Create → Archive → Restore — Strict', () =
     });
     if (response.status() === 403) {
       // SEC-TS-10 (cuota llena): liberar test-stores activas antiguas
-      // (pilotos y stores <2 min protegidas) y reintentar 1× vía API real.
-      await freeActiveTestQuota([]);
+      // (>60 s; pilotos protegidos por nombre) y reintentar 1× vía API real.
+      await freeActiveTestQuota([], 60_000);
       await waitStoreBudget('create');
       response = await request.post('/api/stores', {
         headers,
@@ -154,14 +154,24 @@ test.describe('Store Lifecycle: Create → Archive → Restore — Strict', () =
   test('6. cannot archive already-archived store → 400 or 409', async ({ request }) => {
     test.skip(!createdStoreId, 'Store was not created');
 
-    // First re-archive to test the idempotency/conflict case
-    const response = await request.post(`/api/stores/${createdStoreId}/archive`, {
+    // SEC-TS-10 (FIX LÓGICA DEL TEST): el test 4 RESTAURÓ la tienda → está
+    // ACTIVA al llegar aquí. La primera llamada de archivado es legítima
+    // (200); el caso de conflicto es la SEGUNDA sobre la tienda ya
+    // archivada. Antes este test pasaba VACUO (skip por setup fallido del
+    // test 1) y nunca ejercitó esta secuencia.
+    const first = await request.post(`/api/stores/${createdStoreId}/archive`, {
       headers,
-      data: { reason: 'Double archive test' },
+      data: { reason: 'Double archive test — primera llamada (activa)' },
+    });
+    expect(first.status()).toBe(200);
+
+    const second = await request.post(`/api/stores/${createdStoreId}/archive`, {
+      headers,
+      data: { reason: 'Double archive test — segunda llamada (ya archivada)' },
     });
 
     // STRICT: must NOT be 200 (already archived). Either 400 (bad request) or 409 (conflict).
-    expect(response.status()).not.toBe(200);
-    expect([400, 409]).toContain(response.status());
+    expect(second.status()).not.toBe(200);
+    expect([400, 409]).toContain(second.status());
   });
 });

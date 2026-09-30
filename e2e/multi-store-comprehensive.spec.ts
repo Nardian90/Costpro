@@ -256,6 +256,10 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('2.5 POST /api/stores rejects duplicate slug → 400 or 409', async ({ request }) => {
+    // SEC-TS-10: timeout extendido — setup createTestStore PACEADO (con
+    // posible retry de cuota) + POST duplicado PACEADO superan los 60 s
+    // por defecto ("Request context disposed" reproducido en re-run mini 3).
+    test.setTimeout(180_000);
     // First create a store with a specific slug
     const sfx = 'dup-' + Date.now().toString(36);
     const storeId = await createTestStore(request, sfx);

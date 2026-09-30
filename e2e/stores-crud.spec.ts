@@ -59,7 +59,10 @@ test.describe('Stores CRUD: Create', () => {
 
     // Verify success — modal closes and new store card appears
     await expect(modal).toBeHidden({ timeout: 10_000 });
-    await expect(page.getByText(`E2E Tienda ${UNIQUE}`)).toBeVisible({ timeout: 10_000 });
+    // SEC-TS-10: el nombre aparece 2× en la tarjeta (h3 del título + span.sr-only
+    // de descripción — ver fix análogo en multi-store 12.4) → aserción sobre el
+    // HEADING (elemento visible y único).
+    await expect(page.getByRole('heading', { name: `E2E Tienda ${UNIQUE}` })).toBeVisible({ timeout: 10_000 });
   });
 
   test('create store with missing required fields shows validation error', async ({ authedPage: page }) => {
