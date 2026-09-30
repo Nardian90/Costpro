@@ -205,6 +205,11 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
   // ─── Idempotency ─────────────────────────────────────────────────
 
   test('10. Idempotency: same key returns same response (no double reset)', async ({ request }) => {
+    // SEC-TS-10: timeout extendido — setup createTestStore PACEADO (con
+    // posible retry de cuota) + 2 resets PACEADOS (2/min: tras el test 9 el
+    // bucket está lleno y cada espera puede durar ~60 s) superan los 60 s
+    // por defecto (mismo criterio que tests 7/9 — "Test timeout" en mini-4).
+    test.setTimeout(180_000);
     // Create another test store for this test
     const idemStoreId = await createTestStore(request);
     test.skip(!idemStoreId, 'Failed to create test store — skipping');

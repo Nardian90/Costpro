@@ -113,11 +113,14 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     });
     if (response.status() === 403) {
       // SEC-TS-10 (cuota llena): liberar test-stores ACTIVAS antiguas
-      // (>2 min — de tests ya completados; pilotos y stores del test en
-      // curso protegidas por freeActiveTestQuota) y reintentar 1× por la
-      // vía REAL de la API. Sin esto, tests 8.x-10.x recibían 403 en
-      // cascada por acumulación de activas (>10 del plan enterprise).
-      await freeActiveTestQuota(createdStoreIds);
+      // (>60 s — de tests ya completados; las del test en curso y los
+      // pilotos quedan protegidas por freeActiveTestQuota) y reintentar 1×
+      // por la vía REAL de la API. Protección por EDAD (no por
+      // createdStoreIds — con la lista completa TODO lo activo estaba
+      // trackeado → free=0 → 403 persistente, reproducido en mini-3/4):
+      // las stores de tests previos del spec también son archivables y el
+      // afterAll las tolera (DELETE → 400 → fallback idempotente).
+      await freeActiveTestQuota([], 60_000);
       await waitStoreBudget('create');
       response = await request.post('/api/stores', {
         headers,
