@@ -509,6 +509,7 @@ export default function TerminalShell() {
         // IPV y Costos submenus redirigen internamente desde SectionHubView (porque ya
         // tienen tabs internas y duplicar tarjetas sería redundante).
         case 'punto_venta':
+        case 'ventas': // CAMBIO 4: hub "Ventas" (Vender + Opciones) — wayfinding
         case 'almacen_gestion':
         case 'almacen_operaciones':
         case 'costo':

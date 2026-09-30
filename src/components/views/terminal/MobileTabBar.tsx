@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Home, Package, ShoppingCart, Building, MoreHorizontal, Search, Check, X, Warehouse,
-  DollarSign, ChevronDown, Zap, PenTool, Layers, BarChart3, Swords,
+  DollarSign, ChevronDown, Zap, PenTool, Layers, Swords,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -121,14 +121,15 @@ export function MobileTabBar({ currentView, onViewChange }: MobileTabBarProps) {
 
   // ── Tabs del MÓDULO Costo (GATE 1.4R.1 — mandato §25) ──────────────
   // La MISMA arquitectura de segundo nivel que desktop (CostSheetModuleNav):
-  // Generar · Experto · Generación Masiva · Análisis · Arena FC. Los sub-tabs
-  // de Experto (Plantillas/Datos/Estructura/Anexos) siguen accesibles in-page
-  // vía CostSheetMainTabs — NO se crea una IA móvil diferente.
+  // Generar · Experto · Generación Masiva · Arena FC. CAMBIO 7: el tab
+  // "Análisis" (cost-analytics) se retira aquí igual que en desktop — acceso
+  // canónico único: menú ANÁLISIS → "Análisis de datos" (sheet "Más"). Los
+  // sub-tabs de Experto (Plantillas/Datos/Estructura/Anexos) siguen accesibles
+  // in-page vía CostSheetMainTabs — NO se crea una IA móvil diferente.
   const costTabs: { label: string; ariaLabel: string; icon: React.ComponentType<{ className?: string }>; section: string }[] = [
     { label: 'Generar', ariaLabel: 'Generar fichas: generación rápida o masiva', icon: Zap, section: 'gen-easy' },
     { label: 'Experto', ariaLabel: 'Experto: espacio completo de trabajo de la ficha', icon: PenTool, section: 'main' },
     { label: 'Masiva', ariaLabel: 'Generación Masiva de fichas desde Excel o inventario', icon: Layers, section: 'massive-gen' },
-    { label: 'Análisis', ariaLabel: 'Análisis de Fichas', icon: BarChart3, section: 'cost-analytics' },
     { label: 'Arena', ariaLabel: 'Arena FC: comparar fichas de costo (beta)', icon: Swords, section: 'arena-fc' },
   ];
   const isCostModule = currentView === 'cost-sheets';

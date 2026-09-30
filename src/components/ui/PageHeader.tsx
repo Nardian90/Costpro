@@ -40,6 +40,13 @@ interface PageHeaderProps {
   /** Compatibilidad: equivalente a secondaryActions (API original). */
   actions?: React.ReactNode;
   children?: React.ReactNode;
+  /**
+   * Nivel del heading del título (default 'h1').
+   * GATE 16 (a11y): una sola h1 por página — el Header del shell pinta la h1
+   * de la vista; cuando PageHeader se usa EMBEBIDO dentro de otra vista
+   * (p. ej. Dashboard de la tienda activa dentro de Inicio), debe ser h2.
+   */
+  headingLevel?: 'h1' | 'h2';
 }
 
 const badgeVariantMap: Record<PageHeaderBadge['variant'], string> = {
@@ -59,8 +66,10 @@ export default function PageHeader({
   secondaryActions,
   actions,
   children,
+  headingLevel = 'h1',
 }: PageHeaderProps) {
   const secondary = secondaryActions ?? actions;
+  const TitleTag = headingLevel;
 
   return (
     <motion.div
@@ -88,10 +97,9 @@ export default function PageHeader({
 
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="cp-page-title">
+              <TitleTag className="cp-page-title">
                 {title}
-              </h1>
-
+              </TitleTag>
               {badge && (
                 <Badge
                   variant="outline"

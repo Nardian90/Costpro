@@ -11,7 +11,6 @@ import {
   Calculator,
   Pin,
   PinOff,
-  Bot,
   User,
   Settings,
 } from 'lucide-react';
@@ -591,32 +590,13 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                   <span className="text-primary/80 truncate">{focusedModule.label}</span>
                 </div>
 
-                {/* FEATURE-CHATBOT-VIEW: Pinned chat access at the top of focus mode.
-                    This ensures the AI assistant is ALWAYS accessible, even when
-                    the user is focused on a specific module (Multi-Tienda, Costos, etc.). */}
-                <div className="px-2 mb-3">
-                  <button
-                    onClick={() => {
-                      exitFocusMode();
-                      setCurrentView('chat');
-                      onViewChange('chat');
-                      // FIX (2026-07-22): NO cerrar sidebar al navegar en móvil.
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all active:scale-[0.98]",
-                      currentView === 'chat'
-                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                        : "bg-primary/5 text-primary hover:bg-primary/10 border border-primary/20"
-                    )}
-                    aria-label="Volver al chat con Darian"
-                    title="Chat con Darian (siempre disponible)"
-                    type="button"
-                  >
-                    <Bot className="w-4 h-4 shrink-0" />
-                    <span className="flex-1 text-left">Chat con Darian</span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider opacity-80">AI</span>
-                  </button>
-                </div>
+                {/* CAMBIO 3 (HOME/SALES/PERFORMANCE DEFAULTS): el botón fijado
+                    "Chat con Darian" del focus mode se RETIRA — Darian ya vive
+                    dentro de Inicio (AI Command Center) y una segunda entrada
+                    era duplicación conceptual. El breadcrumb /INICIO de este
+                    mismo panel lleva a Inicio, donde está Darian. El ViewType
+                    'chat' sigue válido para deep-links (/?view=chat) y para la
+                    reapertura de conversaciones desde Acciones recientes. */}
 
                 {/* Focused module children */}
                 <div className="space-y-1">

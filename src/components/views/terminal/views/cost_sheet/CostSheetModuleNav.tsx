@@ -3,7 +3,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import {
-  Zap, PenTool, Layers, BarChart3, Swords,
+  Zap, PenTool, Layers, Swords,
   Save, Upload, FileSpreadsheet, FileText, FileJson,
 } from 'lucide-react';
 
@@ -20,8 +20,14 @@ import { CostSheetModeDropdown, CostSheetViewMode } from './CostSheetModeDropdow
  *   ├── Experto            → main          (ex "Tablero Principal": Plantillas /
  *   │                                        Datos Generales / Estructura / Anexos)
  *   ├── Generación Masiva  → massive-gen
- *   ├── Análisis de Fichas → cost-analytics
  *   └── Arena FC           → arena-fc      (beta)
+ *
+ * CAMBIO 7 (HOME/SALES/PERFORMANCE DEFAULTS): el tab "Análisis" (cost-analytics)
+ * se RETIRA de este rail — era un SEGUNDO acceso al análisis que ya tiene
+ * entrada canónica en el menú: Inicio → Análisis → Análisis de datos
+ * (route: cost-sheets + tab cost-analytics). RETIRAR EL ACCESO DUPLICADO, NO
+ * LA FUNCIONALIDAD: CostSheetView sigue renderizando cost-analytics y los
+ * deep-links /?view=cost-sheets&tab=cost-analytics siguen funcionando.
  *
  * CONTEXTO DE FICHA ABIERTA (scope Experto): segunda fila con el control
  * [Modo ▼] y la ZONA DE ACCIONES
@@ -49,7 +55,8 @@ const MODULE_TABS: CostSheetModuleTab[] = [
   { id: 'gen-easy', label: 'Generar', ariaLabel: 'Generar fichas: generación rápida o masiva', icon: Zap },
   { id: 'main', label: 'Experto', ariaLabel: 'Experto: espacio completo de trabajo de la ficha (Plantillas, Datos Generales, Estructura de Costos y Anexos)', icon: PenTool },
   { id: 'massive-gen', label: 'Masiva', ariaLabel: 'Generación Masiva de fichas desde Excel o inventario', icon: Layers },
-  { id: 'cost-analytics', label: 'Análisis', ariaLabel: 'Análisis de Fichas: tablero dinámico de costos', icon: BarChart3 },
+  // CAMBIO 7: 'cost-analytics' retirado del rail — acceso canónico único vía
+  // menú ANÁLISIS → "Análisis de datos" (ver doc header).
   { id: 'arena-fc', label: 'Arena FC', ariaLabel: 'Arena FC: comparar fichas de costo lado a lado (beta)', icon: Swords, isBeta: true },
 ];
 

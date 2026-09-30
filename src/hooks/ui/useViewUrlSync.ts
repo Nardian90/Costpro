@@ -78,9 +78,23 @@ export function useViewUrlSync() {
 
   // 1) MONTAJE / URL entrante: si hay ?view=, la URL gana sobre el estado
   //    persistido (refresh y deep-link).
+  //    CAMBIO 1 (HOME/SALES/PERFORMANCE DEFAULTS): si la URL está LIMPIA
+  //    ('/' sin ?view=), la vista de entrada es Inicio (HOME_VIEW) — el
+  //    estado persistido NO compite con la URL en la entrada de la app.
+  //    Antes, un currentView persistido 'pos' hacía que CostPro abriera en
+  //    Vender ("Inicio abre en Vender"). Reglas resultantes:
+  //      /            → Inicio (siempre)
+  //      /?view=X     → vista X (deep-link/refresh — intacto)
+  //      F5 en X      → X se restaura (la URL ya tiene ?view=X — intacto)
+  //      Back/Forward → popstate maneja (intacto)
   useEffect(() => {
     const fromUrl = parseViewFromUrl();
-    if (!fromUrl) return;
+    if (!fromUrl) {
+      if (useUIStore.getState().currentView !== HOME_VIEW) {
+        setCurrentView(HOME_VIEW as ViewType);
+      }
+      return;
+    }
     setCurrentView(fromUrl.view as ViewType);
     if (fromUrl.view === 'ipv' && fromUrl.tab) {
       setIpvActiveTab(fromUrl.tab);

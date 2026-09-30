@@ -110,11 +110,13 @@ describe('C7 — CostSheetMainTabs', () => {
 describe('C7 — MobileTabBar contextual por módulo', () => {
   // GATE 1.4R.1 (mandato §25): el móvil comparte la MISMA arquitectura de
   // segundo nivel que desktop (CostSheetModuleNav): Generar · Experto ·
-  // Generación Masiva · Análisis · Arena FC. Los sub-tabs de Experto son
-  // in-page (CostSheetMainTabs), no del bottom bar.
+  // Generación Masiva · Arena FC. CAMBIO 7: el tab "Análisis" (cost-analytics)
+  // se retira de ambos rails — acceso canónico único ANÁLISIS → Análisis de
+  // datos. Los sub-tabs de Experto son in-page (CostSheetMainTabs), no del
+  // bottom bar.
   it('muestra tabs del MÓDULO costos cuando currentView=cost-sheets', async () => {
     const { MobileTabBar } = await import('@/components/views/terminal/MobileTabBar');
-    const { getByText } = render(
+    const { getByText, queryByText } = render(
       <MobileTabBar
         navigationItems={[]}
         currentView="cost-sheets"
@@ -125,8 +127,9 @@ describe('C7 — MobileTabBar contextual por módulo', () => {
     expect(getByText('Generar')).toBeTruthy();
     expect(getByText('Experto')).toBeTruthy();
     expect(getByText('Masiva')).toBeTruthy();
-    expect(getByText('Análisis')).toBeTruthy();
     expect(getByText('Arena')).toBeTruthy();
+    // CAMBIO 7: el tab duplicado "Análisis" ya no existe en el rail móvil
+    expect(queryByText('Análisis')).toBeNull();
   });
 
   it('muestra tabs operativos default para otros views', async () => {

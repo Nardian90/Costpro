@@ -38,7 +38,13 @@ const ExecutiveKpiCards = dynamic(() => import('./ExecutiveKpiCards').then(mod =
   ssr: false
 });
 
-export default function DashboardView() {
+// CAMBIO 1 (HOME/SALES/PERFORMANCE DEFAULTS): prop `embedded` — cuando TRUE,
+// el dashboard se renderiza como sección del Inicio (AICommandCenterView):
+// el PageHeader pasa a h2 (una sola h1 por página — el shell ya pinta "Inicio")
+// y el ancho máximo se amplía al contenedor padre. Es la MISMA vista
+// certificada (admin/manager → MultiStore; demás roles → single-store con
+// activeStoreId) — cero duplicación de dashboards.
+export default function DashboardView({ embedded = false }: { embedded?: boolean } = {}) {
   // Audit-Fix #3: la decisión admin/no-admin se hace en un wrapper component
   // separado (DashboardRouter) para evitar llamar hooks innecesarios cuando
   // el usuario es admin. Originalmente, este componente llamaba useDashboardView
@@ -54,7 +60,7 @@ export default function DashboardView() {
   if (isAdminOrManager) {
     return <MultiStoreDashboardView />;
   }
-  return <DashboardViewImpl />;
+  return <DashboardViewImpl embedded={embedded} />;
 }
 
 /**
@@ -62,7 +68,7 @@ export default function DashboardView() {
  * usuario, warehouse, costo). Todos los hooks se llaman incondicionalmente aquí
  * (Rules of Hooks OK), y solo se monta cuando el usuario NO es admin/manager.
  */
-function DashboardViewImpl() {
+function DashboardViewImpl({ embedded = false }: { embedded?: boolean } = {}) {
   const t = useTranslations('dashboard.singleStore');
   const locale = useLocale();
   const dateFnsLocale = locale === 'en' ? enLocale : esLocale;
@@ -89,10 +95,12 @@ function DashboardViewImpl() {
   const products = productsData || [];
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className={embedded ? 'space-y-6 w-full' : 'space-y-6 max-w-5xl mx-auto'}>
       {/* F2: PageHeader — jerarquía estándar (título único, descripción, acciones).
-          Sustituye el h2 ad-hoc text-3xl + subtítulo uppercase tracking-widest. */}
+          Sustituye el h2 ad-hoc text-3xl + subtítulo uppercase tracking-widest.
+          CAMBIO 1: embebido en Inicio el título es h2 (GATE 16 — una sola h1). */}
       <PageHeader
+        headingLevel={embedded ? 'h2' : 'h1'}
         title={t('title')}
         description={t('subtitle')}
         icon={LayoutDashboard}

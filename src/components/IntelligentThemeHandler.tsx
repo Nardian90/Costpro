@@ -74,16 +74,20 @@ export default function IntelligentThemeHandler() {
     } catch {}
 
     // 2. Initialize mode
-    // Priority: manual override > stored preference > default (enhanced)
-    // Note: prefers-reduced-motion only sets the INITIAL default for new users,
-    //       but manual toggle always takes precedence.
+    // Priority: manual override > stored preference > DEFAULT (performance)
+    // CAMBIO 6 (HOME/SALES/PERFORMANCE DEFAULTS): el default del sistema es
+    // Modo Performance. GATE 8 — REGLA DE PERSISTENCIA:
+    //   NO EXISTE preferencia  → Dark + Performance (nuevo default)
+    //   EXISTE preferencia     → respetar (stored/manual override)
+    // prefers-reduced-motion solo refuerza el default para nuevos usuarios;
+    // el toggle manual SIEMPRE gana.
     if (hasManualOverride()) {
       const storedMode = getStoredMode();
       if (storedMode) {
         applyMode(storedMode);
       } else {
-        applyMode('enhanced');
-        localStorage.setItem(MODE_KEY, 'enhanced');
+        applyMode('performance');
+        localStorage.setItem(MODE_KEY, 'performance');
       }
     } else if (prefersReducedMotion()) {
       const storedMode = getStoredMode();
@@ -98,9 +102,9 @@ export default function IntelligentThemeHandler() {
       if (storedMode) {
         applyMode(storedMode);
       } else {
-        // Default to enhanced for new users
-        applyMode('enhanced');
-        localStorage.setItem(MODE_KEY, 'enhanced');
+        // Default para nuevos usuarios: Modo Performance (CAMBIO 6)
+        applyMode('performance');
+        localStorage.setItem(MODE_KEY, 'performance');
       }
     }
 
@@ -114,13 +118,36 @@ export default function IntelligentThemeHandler() {
         localStorage.setItem(MODE_KEY, 'performance');
       } else {
         const stored = getStoredMode();
-        applyMode(stored || 'enhanced');
+        applyMode(stored || 'performance');
       }
     };
 
     motionQuery.addEventListener('change', handleMotionChange);
     return () => motionQuery.removeEventListener('change', handleMotionChange);
   }, [mounted, applyMode, getStoredMode, hasManualOverride, prefersReducedMotion]);
+
+  // ── Re-sync defensivo del MODO (GATE 10 — fuente única de verdad) ──
+  // El modo se inicializa UNA vez al boot. Si algo externo muta la clase de
+  // <html> mientras tanto (p. ej. una superficie que fuerza branding), este
+  // re-sync al volver a la pestaña re-aplica el estado persistido y garantiza:
+  // estado visual == estado persistido == lo que muestra el toggle.
+  useEffect(() => {
+    if (!mounted) return;
+    const resync = () => {
+      const storedMode = getStoredMode();
+      if (!storedMode) return;
+      const html = document.documentElement;
+      const isApplied = html.classList.contains(`mode-${storedMode}`);
+      const isOther = html.classList.contains('mode-performance') || html.classList.contains('mode-enhanced');
+      if (!isApplied && isOther) applyMode(storedMode);
+    };
+    document.addEventListener('visibilitychange', resync);
+    window.addEventListener('focus', resync);
+    return () => {
+      document.removeEventListener('visibilitychange', resync);
+      window.removeEventListener('focus', resync);
+    };
+  }, [mounted, applyMode, getStoredMode, hasManualOverride]);
 
   // ── Sync resolved theme on mount ──
   useEffect(() => {
@@ -137,7 +164,8 @@ export default function IntelligentThemeHandler() {
 
 /** Utility: Toggle mode (for use in components) */
 export function toggleUIMode(): UIMode {
-  const current = (localStorage.getItem(MODE_KEY) as UIMode) || 'enhanced';
+  // CAMBIO 6: fallback = default del sistema (performance)
+  const current = (localStorage.getItem(MODE_KEY) as UIMode) || 'performance';
   const next: UIMode = current === 'performance' ? 'enhanced' : 'performance';
   
   const html = document.documentElement;
@@ -152,14 +180,15 @@ export function toggleUIMode(): UIMode {
 
 /** Utility: Get current mode */
 export function getCurrentUIMode(): UIMode {
-  if (typeof window === 'undefined') return 'enhanced';
+  if (typeof window === 'undefined') return 'performance';
   // If user manually toggled, always respect their choice
   if (localStorage.getItem(MANUAL_OVERRIDE_KEY) === 'true') {
-    return (localStorage.getItem(MODE_KEY) as UIMode) || 'enhanced';
+    return (localStorage.getItem(MODE_KEY) as UIMode) || 'performance';
   }
   // Otherwise, respect OS preference as initial default
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     return (localStorage.getItem(MODE_KEY) as UIMode) || 'performance';
   }
-  return (localStorage.getItem(MODE_KEY) as UIMode) || 'enhanced';
+  // CAMBIO 6: default del sistema = performance
+  return (localStorage.getItem(MODE_KEY) as UIMode) || 'performance';
 }

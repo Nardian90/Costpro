@@ -113,14 +113,29 @@ export default function LandingPage() {
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
-    // FIX (2026-07-18): forzar dark + enhanced en el landing SIEMPRE
+    // FIX (2026-07-18): landing SIEMPRE dark + enhanced — branding propio.
+    // CAMBIO 6 / GATE 10 (HOME/SALES/PERFORMANCE DEFAULTS — fix P0 toggle):
+    // el branding se aplica SOLO mientras el landing está montado y se
+    // RESTAURA el estado exacto de <html> al desmontar. Antes: forzaba
+    // 'dark + mode-enhanced' PERMANENTEMENTE y escribía
+    // localStorage.theme='dark' → al entrar a la app el estado visual
+    // (clase forzada) quedaba desconectado del estado persistido
+    // (costpro-mode) y el primer click del toggle Modo Performance quedaba
+    // INVERTIDO (reproducido: visual enhanced + persistido performance →
+    // click 1 persiste enhanced, click 2 aplica performance = "varios
+    // clics al iniciar"). Reglas ahora:
+    //   - NO se escribe localStorage (next-themes + IntelligentThemeHandler
+    //     son la única fuente de verdad de theme/mode).
+    //   - Al desmontar (login resuelto / sesión activa), <html> vuelve al
+    //     estado persistido y el toggle coincide con lo visible.
     const html = document.documentElement;
-    html.classList.add('dark');
-    html.classList.add('mode-enhanced');
-    html.classList.remove('mode-performance');
-    html.classList.remove('light');
-    // Remover el toggle de theme del localStorage
-    try { localStorage.setItem('theme', 'dark'); } catch {}
+    const prevClasses = Array.from(html.classList);
+    html.classList.add('dark', 'mode-enhanced');
+    html.classList.remove('mode-performance', 'light');
+    return () => {
+      html.classList.remove('mode-enhanced', 'mode-performance', 'dark', 'light');
+      prevClasses.forEach((c) => html.classList.add(c));
+    };
   }, []);
 
   // Listen for footer modal requests from LoginForm

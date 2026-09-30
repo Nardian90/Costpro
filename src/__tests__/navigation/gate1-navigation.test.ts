@@ -233,14 +233,14 @@ describe('Breadcrumb', () => {
     expect(items).toEqual([{ label: 'Inicio', isCurrent: true }]);
   });
 
-  it('pos es hoja directa de OPERACIÓN con label de acción "Vender" (GATE 1.3)', () => {
+  it('pos cuelga del grupo Ventas con label de acción "Vender" (GATE 1.3 + CAMBIO 4)', () => {
     const items = getBreadcrumbForView('pos');
-    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Vender']);
+    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas', 'Vender']);
   });
 
-  it('sales cuelga del hub Ventas con label desambiguado', () => {
+  it('sales cuelga del grupo Ventas → Opciones con label desambiguado', () => {
     const items = getBreadcrumbForView('sales');
-    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas', 'Historial de Ventas']);
+    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas', 'Opciones', 'Historial de Ventas']);
   });
 
   it('history (Trazabilidad) cuelga de Almacén, no de Venta', () => {
@@ -253,23 +253,35 @@ describe('Breadcrumb', () => {
     expect(items[items.length - 1].label).toBe('Caja');
   });
 
-  it('sales-hub se llama "Ventas" (sin colisión con "Vender", GATE 1.3)', () => {
+  it('sales-hub se llama "Opciones" dentro del grupo Ventas (CAMBIO 4: fin de la relación Ventas→Vender→Ventas)', () => {
     const items = getBreadcrumbForView('sales-hub');
-    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas']);
+    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas', 'Opciones']);
   });
 });
 
 // ─── 5b. GATE 1.3 — dominio Venta: Vender (acción) + Ventas (hub) ────
 
 describe('GATE 1.3 — Vender/Ventas', () => {
-  it('la definición usa "Vender" para pos y "Ventas" para sales-hub', () => {
+  it('la definición usa "Vender" para pos y "Opciones" para sales-hub dentro del grupo Ventas (CAMBIO 4)', () => {
     const labels = Object.fromEntries(flattenNavigation().map(l => [l.id, l.label]));
     expect(labels['pos']).toBe('Vender');
-    expect(labels['sales-hub']).toBe('Ventas');
+    expect(labels['sales-hub']).toBe('Opciones');
+    // CAMBIO 4: "Ventas" es el GRUPO (submenu — no es hoja de flattenNavigation);
+    // ninguna hoja del menú se llama exactamente "Ventas" (relación semántica clara)
+    expect(Object.values(labels).filter(l => l === 'Ventas')).toEqual([]);
     // "Terminal de Venta" ya no es label visible (queda como keyword)
     expect(Object.values(labels)).not.toContain('Terminal de Venta');
     // Ningún label de menú es exactamente "Venta" (colisión eliminada)
     expect(Object.values(labels)).not.toContain('Venta');
+  });
+
+  it('el grupo Ventas existe como submenu con hijos Vender + Opciones (CAMBIO 4)', () => {
+    const operacion = NAVIGATION_SECTIONS.find(s => s.id === 'operacion');
+    const ventas = operacion?.children?.find(c => c.id === 'ventas');
+    expect(ventas?.type).toBe('submenu');
+    expect(ventas?.label).toBe('Ventas');
+    expect(ventas?.children?.map(c => c.id)).toEqual(['pos', 'sales-hub']);
+    expect(ventas?.children?.map(c => c.label)).toEqual(['Vender', 'Opciones']);
   });
 
   it('"Terminal de Venta" sigue siendo descubrible como keyword de pos', () => {
@@ -323,11 +335,13 @@ describe('Command Palette por rol', () => {
     expect(ids).toContain('pos');
   });
 
-  it('las extensiones contextuales están en el palette (calculadora, chat, nueva recepción)', () => {
+  it('las extensiones contextuales están en el palette (calculadora, nueva recepción) — chat retirado (CAMBIO 3)', () => {
     const ids = getActionsForUser('admin').map(a => a.id);
     expect(ids).toContain('calculator');
-    expect(ids).toContain('chat');
     expect(ids).toContain('recepcion');
+    // CAMBIO 3: "Chat con Darian" ya NO es entrada de palette — Darian vive
+    // dentro de Inicio (AI Command Center); la entrada duplicada se retiró.
+    expect(ids).not.toContain('chat');
   });
 });
 
@@ -419,9 +433,9 @@ describe('GATE 1.4R — Breadcrumb de tabs técnicas (UX-002 en la fuente)', () 
     expect(getBreadcrumbForView('cost-sheets', '', 'view-reading').map(i => i.label)).toEqual([...MODULE_PATH, 'Informe de la Ficha']);
   });
 
-  it('cost-analytics sigue resolviendo como hoja de menú de ANÁLISIS', () => {
+  it('cost-analytics sigue resolviendo como hoja de menú de ANÁLISIS (CAMBIO 8: "Análisis de datos")', () => {
     const items = getBreadcrumbForView('cost-sheets', '', 'cost-analytics');
-    expect(items.map(i => i.label)).toEqual(['ANÁLISIS', 'Análisis de Fichas']);
+    expect(items.map(i => i.label)).toEqual(['ANÁLISIS', 'Análisis de datos']);
   });
 
   it('secciones internas sin registro conservan leaf "Fichas de Costo" (comportamiento previo)', () => {
@@ -438,9 +452,9 @@ describe('GATE 1.4R — Breadcrumb de tabs técnicas (UX-002 en la fuente)', () 
 });
 
 describe('GATE 1.4R — Semántica del nombre (§7)', () => {
-  it('el label de cost-analytics es "Análisis de Fichas" (no Tablero Dinámico)', () => {
+  it('el label de cost-analytics es "Análisis de datos" (CAMBIO 8; no Tablero Dinámico)', () => {
     const leaf = flattenNavigation().find(l => l.id === 'cost-analytics');
-    expect(leaf?.label).toBe('Análisis de Fichas');
+    expect(leaf?.label).toBe('Análisis de datos');
   });
 
   it('"Tablero Dinámico" ya no existe como label en ninguna hoja', () => {
@@ -554,8 +568,8 @@ describe('GATE 1.4R.1 — Breadcrumbs del segundo nivel (§23)', () => {
     expect(getBreadcrumbForView('cost-sheets', '', 'massive-gen').map(i => i.label)).toEqual([...MODULE_PATH, 'Generación Masiva']);
   });
 
-  it('Fichas de Costo → Análisis de Fichas', () => {
-    expect(getBreadcrumbForView('cost-sheets', '', 'cost-analytics').map(i => i.label)).toEqual(['ANÁLISIS', 'Análisis de Fichas']);
+  it('Fichas de Costo → Análisis de datos (acceso canónico único — CAMBIO 7/8)', () => {
+    expect(getBreadcrumbForView('cost-sheets', '', 'cost-analytics').map(i => i.label)).toEqual(['ANÁLISIS', 'Análisis de datos']);
   });
 
   it('Fichas de Costo → Arena FC', () => {
@@ -647,9 +661,9 @@ describe('FASE B — Ofertas en el dominio Ventas (patrón hub, sin duplicar)', 
     expect(getNavigationRoute('ofertas')).toEqual({ type: 'direct', view: 'ofertas' });
   });
 
-  it('breadcrumb: OPERACIÓN > Ventas > Ofertas (sin Módulo No Disponible)', () => {
+  it('breadcrumb: OPERACIÓN > Ventas > Opciones > Ofertas (sin Módulo No Disponible)', () => {
     const items = getBreadcrumbForView('ofertas');
-    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas', 'Ofertas']);
+    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas', 'Opciones', 'Ofertas']);
     expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
   });
 
@@ -678,9 +692,9 @@ describe('FASE B — Clientes: destino canónico único (CRM global en Ventas)',
     expect(getNavigationRoute('clientes')).toEqual({ type: 'direct', view: 'customers' });
   });
 
-  it('breadcrumb de customers: OPERACIÓN > Ventas > Clientes (sin módulo falso)', () => {
+  it('breadcrumb de customers: OPERACIÓN > Ventas > Opciones > Clientes (sin módulo falso)', () => {
     const items = getBreadcrumbForView('customers');
-    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas', 'Clientes']);
+    expect(items.map(i => i.label)).toEqual(['OPERACIÓN', 'Ventas', 'Opciones', 'Clientes']);
     expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
   });
 
