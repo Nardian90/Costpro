@@ -7,6 +7,13 @@
  *   1. Gestión Tiendas  → StoresManagementView con KPIs + dashboard avanzado
  *   2. Vitrina          → StorefrontConfigView (configuración vitrina pública)
  *
+ * REMEDIACIÓN (fix/dashboard-active-store): nuevo tab "KPIs" →
+ * MultiStoreDashboardView (tablero consolidado de TODAS las tiendas). Ese
+ * tablero dej de presentarse como "Dashboard" (la entrada Dashboard del menú
+ * responde ahora a la tienda activa para todos los roles); su función real —
+ * monitoreo del conjunto de tiendas — pertenece a este hub. Sin duplicar
+ * navegación: es un tab interno del ÚNICO destino "Gestión de Tiendas".
+ *
  * FASE B (UX-005 · GATE 1.4P): el Tablón de Noticias SALIÓ de este hub — es
  * inteligencia de mercado GLOBAL/TRANSVERSAL (lector RSS sin store_id, no
  * cambia con la tienda activa) y vive ahora como hoja de la sección ANÁLISIS
@@ -26,13 +33,17 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Store, Building, Loader2 } from 'lucide-react'; // F4: ChevronRight retirado con el breadcrumb local
+import { Store, Building, Loader2, BarChart3 } from 'lucide-react'; // F4: ChevronRight retirado con el breadcrumb local
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 
 // Lazy-load de las sub-vistas
 const StorefrontConfigView = dynamic(() => import('@/components/views/terminal/views/stores/StorefrontConfigView'), { ssr: false });
 const StoresManagementView = dynamic(() => import('@/components/views/terminal/views/stores/StoresManagementView'), { ssr: false });
+// REMEDIACIÓN (fix/dashboard-active-store): tablero consolidado multi-tienda.
+// Antes era la respuesta de la entrada "Dashboard" para admin/manager; ahora
+// vive exclusivamente aquí, como tab "KPIs" del hub Gestión de Tiendas.
+const MultiStoreDashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/MultiStoreDashboardView'), { ssr: false });
 
 // StoreDashboardView — dashboard avanzado por tienda (3160 LOC con ECharts).
 // Lazy-loaded. Solo se carga cuando el user hace clic en "Ver Dashboard".
@@ -48,7 +59,7 @@ const StoreDashboardView = dynamic(
   }
 );
 
-type TabId = 'storefront' | 'stores';
+type TabId = 'storefront' | 'stores' | 'kpis';
 
 interface TabDef {
   id: TabId;
@@ -70,6 +81,15 @@ const TABS: TabDef[] = [
     label: 'Tiendas',
     icon: Building,
     description: 'Tiendas con KPIs en tiempo real y dashboard avanzado por tienda',
+    roles: ['admin', 'manager', 'encargado'],
+  },
+  {
+    // REMEDIACIÓN (fix/dashboard-active-store): el tablero consolidado
+    // (MultiStoreDashboardView) vive aquí — ya no se presenta como "Dashboard".
+    id: 'kpis',
+    label: 'KPIs',
+    icon: BarChart3,
+    description: 'Tablero consolidado: ventas, transacciones y alertas de todas las tiendas',
     roles: ['admin', 'manager', 'encargado'],
   },
   {
@@ -184,6 +204,7 @@ export default function ManagementHubView() {
         {activeTab === 'stores' && (
           <StoresManagementView onOpenDashboard={handleOpenDashboard} />
         )}
+        {activeTab === 'kpis' && <MultiStoreDashboardView />}
       </div>
 
       {/* Dashboard avanzado overlay — se abre al clickear "Ver Dashboard" */}

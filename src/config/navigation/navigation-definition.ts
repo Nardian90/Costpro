@@ -114,9 +114,13 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
       // CAMBIO 2 (HOME/SALES/PERFORMANCE DEFAULTS): "Dashboard" es la PRIMERA
       // opción operativa del menú. Reutiliza la vista existente ViewType
       // 'store-dashboard' (antes "Dashboard de Tiendas" en ANÁLISIS — se
-      // MUEVE, no se duplica: NO DUPLICAR HUBS). El KPI responde a la tienda
-      // activa (DashboardView: admin/manager → MultiStore; demás roles →
-      // implementación single-store con activeStoreId).
+      // MUEVE, no se duplica: NO DUPLICAR HUBS).
+      // REMEDIACIÓN (fix/dashboard-active-store): el ViewType 'store-dashboard'
+      // responde SIEMPRE a la tienda activa (DashboardViewImpl con
+      // user.activeStoreId) para TODOS los roles — la rama admin/manager que
+      // renderizaba MultiStoreDashboardView fue retirada. El tablero
+      // consolidado multi-tienda vive como tab "KPIs" del hub 'management-hub'
+      // ("Gestión de Tiendas"), no como respuesta de esta entrada.
       {
         id: 'store-dashboard',
         label: 'Dashboard',

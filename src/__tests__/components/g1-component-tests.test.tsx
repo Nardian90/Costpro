@@ -27,7 +27,15 @@ vi.mock('@/store', () => ({
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), loading: vi.fn(), warning: vi.fn() } }));
 vi.mock('next/dynamic', () => ({ __esModule: true, default: () => (p: any) => p.children || null }));
 vi.mock('echarts-for-react', () => ({ __esModule: true, default: () => null }));
-vi.mock('react-day-picker', () => ({ DateRange: {} }));
+vi.mock('react-day-picker', () => ({
+  DateRange: {},
+  // REMEDIACIÓN (fix/dashboard-active-store): DashboardView ahora renderiza
+  // DashboardViewImpl también para admin/manager — importa ui/calendar, que
+  // necesita estos exports de react-day-picker en tiempo de render/import.
+  DayPicker: () => null,
+  DayButton: () => null,
+  getDefaultClassNames: () => ({}),
+}));
 vi.mock('date-fns', () => ({
   format: () => '2026-06-23', subDays: () => new Date(), startOfDay: (d: Date) => d,
   isToday: () => true, isSameDay: () => true, parseISO: () => new Date(),
@@ -141,6 +149,36 @@ describe('G1.1 — Tests de render componentes MULTI-TIENDA', () => {
       const DashboardView = (await import('@/components/views/terminal/views/dashboard/DashboardView')).default;
       const { container } = render(<DashboardView />, { wrapper: Wrapper });
       expect(container).toBeDefined();
+    });
+
+    // REMEDIACIÓN (fix/dashboard-active-store): con role admin + activeStoreId,
+    // DashboardView renderiza el dashboard SINGLE-STORE (tienda activa) — jamás
+    // el tablero consolidado MultiStoreDashboardView (que ahora vive como tab
+    // "KPIs" del hub Gestión de Tiendas). El mock de useDashboardView devuelve
+    // isLoading=true → PageHeader visible, tablero multi-tienda ausente.
+    it('admin → dashboard de la tienda activa, NO el tablero multi-tienda (remediación)', async () => {
+      const DashboardView = (await import('@/components/views/terminal/views/dashboard/DashboardView')).default;
+      const { container } = render(<DashboardView />, { wrapper: Wrapper });
+      const text = container.textContent || '';
+      // El header del tablero multi-tienda usa la clave i18n 'consolidatedBoard'
+      // y el contador 'storeCount' — su presencia delataría la vista incorrecta.
+      expect(text).not.toContain('consolidatedBoard');
+      expect(text).not.toContain('storeCount');
+      // El dashboard single-store renderiza su PageHeader (clave 'title' de
+      // dashboard.singleStore) y los controles de rango temporal.
+      expect(text).toContain('title');
+    });
+  });
+
+  describe('ManagementHubView (remediación)', () => {
+    it('expone el tab "KPIs" — el tablero multi-tienda vive en Gestión de Tiendas', async () => {
+      const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
+      const { getByRole, getByText } = render(<ManagementHubView />, { wrapper: Wrapper });
+      // Encabezado del hub + los 3 tabs del dominio multi-tienda
+      expect(getByText('Gestión de Tiendas')).toBeTruthy();
+      expect(getByRole('tab', { name: 'Tiendas' })).toBeTruthy();
+      expect(getByRole('tab', { name: 'KPIs' })).toBeTruthy();
+      expect(getByRole('tab', { name: 'Vitrina' })).toBeTruthy();
     });
   });
 

@@ -39,7 +39,7 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
   {
     id: "store-dashboard",
     route: "/?view=store-dashboard",
-    description: "Dashboard de Tiendas: KPIs consolidados por tienda — ventas, costos, ganancia y alertas de stock.",
+    description: "Dashboard de la tienda activa: KPI — ventas, costos, ganancia y alertas de stock en tiempo real.",
     actions: ["view_kpis", "refresh_data"]
   },
   {

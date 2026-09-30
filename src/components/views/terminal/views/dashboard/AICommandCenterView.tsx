@@ -11,10 +11,11 @@
  *   └── Darian
  *       ¿En qué puedo ayudarte? + sugerencias + acciones recientes
  *
- *   - El Dashboard KPI es la MISMA vista 'store-dashboard' certificada
- *     (admin/manager → MultiStoreDashboardView; demás roles → single-store
- *     con activeStoreId real). Prop `embedded`: PageHeader en h2 (GATE 16:
- *     una sola h1 por página — el Header del shell pinta "Inicio").
+ *   - El Dashboard KPI es la MISMA vista 'store-dashboard' certificada:
+ *     tras la REMEDIACIÓN (fix/dashboard-active-store) responde a la tienda
+ *     activa para TODOS los roles (user.activeStoreId real). Prop `embedded`:
+ *     PageHeader en h2 (GATE 16: una sola h1 por página — el Header del shell
+ *     pinta "Inicio").
  *   - Hero conversacional: motor ChatBot existente en modo `embedded`
  *     (GATE 18: reutilizar, no reconstruir).
  *   - GATE 9: en conversación activa el contenido conversacional toma

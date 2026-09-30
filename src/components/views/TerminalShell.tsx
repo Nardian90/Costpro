@@ -361,10 +361,10 @@ export default function TerminalShell() {
         prefetchTransactions(queryClient, user.activeStoreId, user.role === 'admin');
         break;
       case 'dashboard':
-        prefetchDashboardData(queryClient, user.activeStoreId, user.role === 'admin');
-        break;
       case 'store-dashboard':
-        prefetchDashboardData(queryClient, user.activeStoreId, user.role === 'admin');
+        // REMEDIACIÓN (fix/dashboard-active-store): el Dashboard es store-scoped
+        // para todos los roles — sin rama admin (p_store_id nunca NULL aquí).
+        prefetchDashboardData(queryClient, user.activeStoreId, false);
         break;
       case 'audit':
         prefetchAuditLogs(queryClient, { storeIds: [user.activeStoreId] });
@@ -440,7 +440,11 @@ export default function TerminalShell() {
     }
     switch (view) {
         case 'dashboard': return <ViewErrorBoundary viewName="Inicio"><AICommandCenterView /></ViewErrorBoundary>;
-        case 'store-dashboard': return <ViewErrorBoundary viewName="Dashboard de Tiendas"><DashboardView /></ViewErrorBoundary>;
+        // F4 + REMEDIACIÓN (fix/dashboard-active-store): el ViewType
+        // 'store-dashboard' ES la entrada "Dashboard" del menú — responde a la
+        // tienda activa para todos los roles (el tablero multi-tienda vive en el
+        // hub Gestión de Tiendas). El viewName refleja el label de menú real.
+        case 'store-dashboard': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
         case 'pick3-intelligence': return <ViewErrorBoundary viewName="Gestor de Riesgo"><Pick3IntelligenceView /></ViewErrorBoundary>;
         case 'wallet': return <ViewErrorBoundary viewName="Wallet"><WalletView /></ViewErrorBoundary>;
         case 'pos': return <ViewErrorBoundary viewName="Vender"><POSView /></ViewErrorBoundary>;
