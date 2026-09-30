@@ -1,5 +1,19 @@
 import { test, expect } from '@playwright/test';
-import { getAuthHeaders } from './fixtures/auth.fixture';
+import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
+// SEC-TS-10: los UI tests de este spec navegaban SIN sesión → login wall →
+// selectores nunca visibles (y el REGRESSION de enums pasaba vacuamente).
+// Inyección de sesión fresca por test (auto-sanable con refresh real).
+import { signIn, injectSession } from './fixtures/session.fixture';
+
+const ADMIN_EMAIL = 'admin@costpro.com';
+const ADMIN_PASS = 'costpro123';
+
+/** SEC-TS-10: sesión fresca + navegación autenticada */
+async function authedGoto(page: import('@playwright/test').Page, view: string) {
+  await injectSession(page, await signIn(ADMIN_EMAIL, ADMIN_PASS));
+  await page.goto(`/?view=${view}`);
+  await page.waitForLoadState('networkidle');
+}
 
 /**
  * E2E: Cuentas por Pagar — Accounts Payable module.
@@ -35,23 +49,25 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
   let headers: Record<string, string>;
 
-  test.beforeAll(() => {
-    headers = getAuthHeaders('admin')!;
+  test.beforeAll(async () => {
+    // SEC-TS-10: sesión fresca — el token del global-setup muere a mitad de
+    // corrida completa (signOut global de useSessionManager desde un spec UI)
+    headers = (await freshAuthHeaders('admin')) || getAuthHeaders('admin')!;
   });
 
   // ─── UI: view loads with correct Spanish title ───────────────────
   test('UI: accounts payable view loads with Spanish title', async ({ page }) => {
-    await page.goto('/?view=accounts_payable');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'accounts_payable');
 
     // STRICT: title must be "Cuentas por Pagar" in Spanish
-    await expect(page.getByRole('heading', { name: /cuentas por pagar/i })).toBeVisible({ timeout: 10000 });
+    // SEC-TS-10: .first() — el shell renderiza h1 (topbar) + h2 (vista), ambos
+    // con el mismo texto → strict-mode violation con 2 matches.
+    await expect(page.getByRole('heading', { name: /cuentas por pagar/i }).first()).toBeVisible({ timeout: 10000 });
   });
 
   // ─── UI: KPI cards render ────────────────────────────────────────
   test('UI: KPI cards render (Vencido, Próx. 7 días, Total Pendiente, Pagado)', async ({ page }) => {
-    await page.goto('/?view=accounts_payable');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'accounts_payable');
 
     // STRICT: all 4 KPI labels must be present
     await expect(page.getByText(/vencido/i).first()).toBeVisible({ timeout: 10000 });
@@ -62,20 +78,21 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
   // ─── UI: filter buttons exist ────────────────────────────────────
   test('UI: filter buttons exist (Todas, Vencidas, Próximas, Pagadas)', async ({ page }) => {
-    await page.goto('/?view=accounts_payable');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'accounts_payable');
 
-    // STRICT: all 4 filter buttons must be present
+    // STRICT: all aging-tab filter buttons must be present
+    // SEC-TS-10 (UI REDESIGNADA): la vista usa tabs de aging (Todas, Vencidas,
+    // 0-30d, 31-60d, 61-90d, 91-120d, Pagadas) — el botón "Próximas" de la
+    // versión anterior YA NO EXISTE por diseño. Aserción alineada a la UI real.
     await expect(page.getByRole('button', { name: /^todas$/i })).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('button', { name: /^vencidas$/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /^próximas$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^0-30d$/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /^pagadas$/i })).toBeVisible();
   });
 
   // ─── UI: filter buttons are clickable ────────────────────────────
   test('UI: clicking "Pagadas" filter updates the view', async ({ page }) => {
-    await page.goto('/?view=accounts_payable');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'accounts_payable');
 
     const pagadasButton = page.getByRole('button', { name: /^pagadas$/i });
     await expect(pagadasButton).toBeVisible({ timeout: 10000 });
@@ -88,8 +105,9 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
   // ─── REGRESSION: no raw English enum values visible ──────────────
   // This is the critical test for the FIX-I18N bug.
   test('REGRESSION: view must NOT show raw "unpaid", "partial", or "paid" as status text', async ({ page }) => {
-    await page.goto('/?view=accounts_payable');
-    await page.waitForLoadState('networkidle');
+    // SEC-TS-10: con sesión inyectada — sin auth este test pasaba VACUO
+    // (la pantalla de login no contiene los enums ingleses).
+    await authedGoto(page, 'accounts_payable');
 
     // Wait for the table to potentially render (or empty state)
     await page.waitForTimeout(2000);
@@ -122,8 +140,7 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
     test.skip(!hasPayables, 'No payables exist in store — skipping label verification');
 
     // If payables exist, navigate to UI and verify Spanish labels
-    await page.goto('/?view=accounts_payable');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'accounts_payable');
     await page.waitForTimeout(2000);
 
     // STRICT: at least one of the Spanish labels must be visible in the status column
@@ -134,8 +151,7 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
   // ─── UI: empty state shows when no payables in filtered view ──────
   test('UI: empty state message shows when filter has no results', async ({ page }) => {
-    await page.goto('/?view=accounts_payable');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'accounts_payable');
 
     // Click "Pagadas" — likely empty in a fresh test store
     const pagadasButton = page.getByRole('button', { name: /^pagadas$/i });
@@ -145,13 +161,18 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
     // STRICT: either the empty state message OR a paid item must be visible
     // (we can't guarantee which, but one must exist)
+    // SEC-TS-10 (UI REDESIGNADA): la matriz de aging muestra "N proveedor(es)
+    // en esta vista" cuando el filtro tiene resultados — tercer indicador
+    // válido de que el filtro aplicó y la vista se actualizó.
     const emptyMessage = page.getByText(/no hay cuentas por pagar en esta categoría/i);
     const paidItem = page.locator('td:has-text(/pagado/i)');
+    const providerCount = page.getByText(/proveedor\(es\) en esta vista/i);
 
     const hasEmpty = await emptyMessage.isVisible().catch(() => false);
     const hasPaid = await paidItem.first().isVisible().catch(() => false);
+    const hasProviders = await providerCount.isVisible().catch(() => false);
 
-    expect(hasEmpty || hasPaid).toBe(true);
+    expect(hasEmpty || hasPaid || hasProviders).toBe(true);
   });
 
   // ─── API: GET /api/received-services returns expected shape ──────
@@ -193,15 +214,17 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
 
   // ─── UI: table headers are in Spanish ────────────────────────────
   test('UI: table headers are in Spanish (Proveedor, Tipo, Total, Saldo, Vence, Estado)', async ({ page }) => {
-    await page.goto('/?view=accounts_payable');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'accounts_payable');
 
-    // STRICT: all 6 column headers must be in Spanish
-    await expect(page.getByRole('columnheader', { name: /^proveedor/i })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole('columnheader', { name: /^tipo/i })).toBeVisible();
+    // STRICT: key column headers must be in Spanish
+    // SEC-TS-10 (UI REDESIGNADA): la vista ahora es una matriz de aging por
+    // acreedor — headers reales: "Proveedor / Acreedor", "Total", "Saldo",
+    // "Por Vencer", "Vencido". Los headers "Tipo/Vence/Estado" de la tabla
+    // plana anterior YA NO EXISTEN por diseño. Aserción alineada a la UI real.
+    await expect(page.getByRole('columnheader', { name: /proveedor/i })).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('columnheader', { name: /^total/i })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: /^saldo/i })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: /^vence/i })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: /^estado/i })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /por vencer/i })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /^vencido/i })).toBeVisible();
   });
 });

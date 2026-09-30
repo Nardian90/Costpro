@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { getAuthHeaders } from './fixtures/auth.fixture';
+import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
+// SEC-TS-10: pacing de rate-limit (reset 2/min, create 5/min, delete 3/min)
+// + cleanup robusto con fallback de archivado + sweep de huérfanas >10 min.
+import { waitStoreBudget, sweepStaleTestStores, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 /**
  * E2E: Reset de Tienda — Store Reset flow.
@@ -41,8 +44,11 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
   let headers: Record<string, string>;
   let testStoreId: string | null = null;
 
-  test.beforeAll(() => {
-    headers = getAuthHeaders('admin')!;
+  test.beforeAll(async () => {
+    // SEC-TS-10: sesión fresca — el token del global-setup muere a mitad de
+    // corrida completa (signOut global de useSessionManager desde un spec UI);
+    // sin esto los POST de reset devolvían 401 y los setups saltaban en cascada.
+    headers = (await freshAuthHeaders('admin')) || getAuthHeaders('admin')!;
   });
 
   test.afterAll(async ({ request }) => {
@@ -52,10 +58,8 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
         headers,
         data: { reason: 'Test cleanup' },
       }).catch(() => {});
-      await request.delete('/api/stores', {
-        headers,
-        data: { storeId: testStoreId },
-      }).catch(() => {});
+      // SEC-TS-10: cleanup robusto (rate-limit-aware + fallback de archivado)
+      await robustDelete(request, getAuthHeaders('admin')?.Authorization?.replace('Bearer ', '') || '', testStoreId);
     }
   });
 
@@ -64,6 +68,10 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
     const storeName = `E2E Reset Test ${Date.now()}`;
     const storeSlug = `e2e-reset-test-${Date.now()}`;
 
+    // SEC-TS-10: sweep de huérfanas >10 min (libera cuota) + pacear creación
+    // (API: 5 POSTs/min por usuario)
+    await sweepStaleTestStores();
+    await waitStoreBudget('create');
     const createRes = await request.post('/api/stores', {
       headers,
       data: {
@@ -75,7 +83,9 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
 
     if (createRes.status() !== 201) return null;
     const body = await createRes.json();
-    return body.data?.id || body.id;
+    // SEC-TS-10 (BUG LATENTE): la respuesta real es { data: { store_id } } —
+    // espejo de la extracción tolerante de session.fixture/multi-store.
+    return body?.data?.store_id ?? body?.data?.id ?? body?.store_id ?? null;
   }
 
   // ─── Authorization & Validation ──────────────────────────────────
@@ -89,6 +99,8 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
   });
 
   test('5. POST without storeId → 400', async ({ request }) => {
+    // SEC-TS-10: pacear reset (API: 2/min por usuario+IP)
+    await waitStoreBudget('reset');
     const response = await request.post('/api/stores/reset', {
       headers,
       data: { keepCatalog: true },
@@ -98,6 +110,8 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
   });
 
   test('6. POST with non-UUID storeId → 400', async ({ request }) => {
+    // SEC-TS-10: pacear reset (API: 2/min por usuario+IP)
+    await waitStoreBudget('reset');
     const response = await request.post('/api/stores/reset', {
       headers,
       data: { storeId: 'not-a-uuid', keepCatalog: true },
@@ -110,6 +124,15 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
     // Use a valid UUID format that doesn't exist
     const fakeUuid = '00000000-0000-0000-0000-000000000000';
 
+    // SEC-TS-10: pacear reset (API: 2/min) — sin esto, la ráfaga 5→6→7 agota
+    // el bucket y este test recibe 429 en lugar del 404 que valida.
+    // Timeout extendido (mismo criterio que el test 9): el waitStoreBudget
+    // puede esperar hasta ~60 s a que la ventana del bucket se renueve tras
+    // los resets de los tests 5/6 — con el timeout por defecto (60 s) el
+    // contexto de request se dispone a mitad de la espera ("Request context
+    // disposed") y el 404 bajo prueba nunca llega a verificarse.
+    test.setTimeout(180_000);
+    await waitStoreBudget('reset');
     const response = await request.post('/api/stores/reset', {
       headers,
       data: { storeId: fakeUuid, keepCatalog: true },
@@ -143,6 +166,8 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
     // the API if available. If product creation failed, skip the seed check.
 
     // Execute reset with keepCatalog=true
+    // SEC-TS-10: pacear reset (API: 2/min por usuario+IP)
+    await waitStoreBudget('reset');
     const resetRes = await request.post('/api/stores/reset', {
       headers,
       data: {
@@ -180,6 +205,11 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
   // ─── Idempotency ─────────────────────────────────────────────────
 
   test('10. Idempotency: same key returns same response (no double reset)', async ({ request }) => {
+    // SEC-TS-10: timeout extendido — setup createTestStore PACEADO (con
+    // posible retry de cuota) + 2 resets PACEADOS (2/min: tras el test 9 el
+    // bucket está lleno y cada espera puede durar ~60 s) superan los 60 s
+    // por defecto (mismo criterio que tests 7/9 — "Test timeout" en mini-4).
+    test.setTimeout(180_000);
     // Create another test store for this test
     const idemStoreId = await createTestStore(request);
     test.skip(!idemStoreId, 'Failed to create test store — skipping');
@@ -191,16 +221,25 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
     };
 
     // First reset
+    // SEC-TS-10: pacear reset (API: 2/min) — ambos POSTs del test de
+    // idempotencia consumen bucket (el rate-limit corre antes del replay).
+    // FIX: el Idempotency-Key debe IR EN EL HEADER — la ruta construye su
+    // clave de caché desde req.headers.get('idempotency-key'); sin el
+    // header, idemKey=null y el segundo POST RE-EJECUTABA el reset (sin
+    // X-Idempotent-Replay). Este test pasaba vacío antes (skip por setup
+    // fallido de createTestStore con la extracción rota).
+    await waitStoreBudget('reset');
     const firstRes = await request.post('/api/stores/reset', {
-      headers,
+      headers: { ...headers, 'Idempotency-Key': idemKey },
       data: resetPayload,
     });
     expect(firstRes.status()).toBe(200);
     const firstBody = await firstRes.json();
 
     // Second reset with SAME idempotency-key — must return same response, not execute again
+    await waitStoreBudget('reset');
     const secondRes = await request.post('/api/stores/reset', {
-      headers,
+      headers: { ...headers, 'Idempotency-Key': idemKey },
       data: resetPayload,
     });
 
@@ -210,27 +249,41 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
     const secondBody = await secondRes.json();
     expect(secondBody).toEqual(firstBody);
 
-    // Cleanup this store
+    // Cleanup this store (robusto: rate-limit-aware + fallback de archivado)
     await request.post(`/api/stores/${idemStoreId}/archive`, {
       headers,
       data: { reason: 'Test cleanup' },
     }).catch(() => {});
-    await request.delete('/api/stores', {
-      headers,
-      data: { storeId: idemStoreId },
-    }).catch(() => {});
+    await robustDelete(request, getAuthHeaders('admin')?.Authorization?.replace('Bearer ', '') || '', idemStoreId);
   });
 
   // ─── Rate limit ──────────────────────────────────────────────────
 
   test('9. Rate limit: 3rd reset within 1 minute → 429', async ({ request }) => {
+    // SEC-TS-10: este test espera deliberadamente 61 s una ventana FRESCA del
+    // rate-limiter + 3 creaciones paceadas → excede el timeout por defecto
+    // (60 s) y moría con "Request context disposed". Timeout extendido
+    // JUSTIFICADO: mide el comportamiento real de 2 resets/min del API.
+    test.setTimeout(180_000);
     // The rate limit is 2 resets per minute per user+IP.
     // We need 2 different stores (each can be reset once) + a 3rd attempt.
+    // SEC-TS-10: las 3 stores se crean ANTES de la ráfaga — crear la 3ª en
+    // medio podría insertar esperas de pacing (create: 5/min) y sacar el
+    // 3er intento fuera de la ventana de 60s del rate-limiter de reset.
     const store1 = await createTestStore(request);
     const store2 = await createTestStore(request);
-    test.skip(!store1 || !store2, 'Failed to create test stores — skipping');
+    const store3 = await createTestStore(request);
+    test.skip(!store1 || !store2 || !store3, 'Failed to create test stores — skipping');
+
+    // SEC-TS-10 (determinismo): esperar una ventana FRESCA del rate-limiter
+    // (ventana fija 60s) antes de la ráfaga. Así res1+res2+res3 caen seguro
+    // en la MISMA ventana del API → el 429 del 3er intento es determinista,
+    // no un artefacto de la posición de la ventana. El comportamiento del
+    // API bajo prueba no cambia: 2/min por usuario+IP.
+    await new Promise(r => setTimeout(r, 61_000));
 
     // Reset 1: should succeed
+    await waitStoreBudget('reset');
     const res1 = await request.post('/api/stores/reset', {
       headers,
       data: { storeId: store1, keepCatalog: true },
@@ -238,33 +291,27 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
     expect(res1.status()).toBe(200);
 
     // Reset 2: should succeed (still within limit)
+    await waitStoreBudget('reset');
     const res2 = await request.post('/api/stores/reset', {
       headers,
       data: { storeId: store2, keepCatalog: true },
     });
     expect(res2.status()).toBe(200);
 
-    // Reset 3: should be rate-limited
-    const store3 = await createTestStore(request);
-    if (store3) {
-      const res3 = await request.post('/api/stores/reset', {
-        headers,
-        data: { storeId: store3, keepCatalog: true },
-      });
+    // Reset 3: should be rate-limited (mismo bucket, misma ventana)
+    const res3 = await request.post('/api/stores/reset', {
+      headers,
+      data: { storeId: store3, keepCatalog: true },
+    });
 
-      // STRICT: must be 429 (rate limited)
-      expect(res3.status()).toBe(429);
+    // STRICT: must be 429 (rate limited)
+    expect(res3.status()).toBe(429);
 
-      // Cleanup store3
-      await request.delete('/api/stores', {
-        headers,
-        data: { storeId: store3 },
-      }).catch(() => {});
-    }
-
-    // Cleanup
-    await request.delete('/api/stores', { headers, data: { storeId: store1 } }).catch(() => {});
-    await request.delete('/api/stores', { headers, data: { storeId: store2 } }).catch(() => {});
+    // Cleanup (robusto: rate-limit-aware + fallback de archivado)
+    const token = getAuthHeaders('admin')?.Authorization?.replace('Bearer ', '') || '';
+    await robustDelete(request, token, store3);
+    await robustDelete(request, token, store1);
+    await robustDelete(request, token, store2);
   });
 
   // ─── Audit log entry ─────────────────────────────────────────────
@@ -296,8 +343,8 @@ test.describe('Reset de Tienda — Store Reset (Strict)', () => {
       expect(logs[0].action).toBe('store_reset_initiated');
     }
 
-    // Cleanup
-    await request.delete('/api/stores', { headers, data: { storeId: auditStoreId } }).catch(() => {});
+    // Cleanup (robusto: rate-limit-aware + fallback de archivado)
+    await robustDelete(request, getAuthHeaders('admin')?.Authorization?.replace('Bearer ', '') || '', auditStoreId);
   });
 
   // ─── UI: reset button exists on store card ───────────────────────

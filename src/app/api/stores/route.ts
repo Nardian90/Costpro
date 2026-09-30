@@ -349,12 +349,22 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
       .update(updates)
       .eq('id', storeId)
       .select()
-      .single();
+      // SEC-TS-10 (FIX API CONTRACT): maybeSingle — UPDATE de tienda
+      // inexistente afecta 0 rows; .single() elevaba PGRST116 → 500.
+      // Contrato (multi-store 3.x): 404 para tienda inexistente.
+      .maybeSingle();
 
     if (error) {
       // FIX-IDEMPOTENCY-LEAK (2026-07-13): no pasar error.message como details
       logger.error('DATABASE', 'STORE_UPDATE_FAILED', { storeId: validated.data.storeId, error });
       return NextResponse.json(createApiError('STORE_UPDATE_FAILED'), { status: 500 });
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { ...createApiError('STORE_NOT_FOUND'), message: 'La tienda no existe' },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({ data });

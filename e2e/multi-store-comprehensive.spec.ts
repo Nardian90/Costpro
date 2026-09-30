@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
+// SEC-TS-10: pacing de rate-limit (POST 5/min, DELETE 3/min en /api/stores)
+// y cleanup robusto con fallback de archivado para el afterAll.
+// sweepStaleTestStores: libera cuota activa de huérfanas >10 min ANTES de
+// crear (el helper local de este spec no la invocaba → 403 en cascada tras
+// una corrida previa sucia — reproducido en el re-run mini).
+import { waitStoreBudget, sweepStaleTestStores, freeActiveTestQuota, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 /**
  * E2E: Multi-Tienda Module — Comprehensive coverage (>90%).
@@ -71,19 +77,30 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    // Cleanup: delete all test stores created during the run
+    // Cleanup: delete all test stores created during the run.
+    // SEC-TS-10: usa deleteTestStore robusto — el DELETE /api/stores tiene
+    // rate limit 3/min; en bulk los 429 dejaban huérfanas ACTIVAS que
+    // agotaban la cuota del plan y cascabeaban 403 sobre specs posteriores.
+    // SEC-TS-10: timeout del hook extendido — el cleanup paceado (~2 deletes/min
+    // × ~15 stores creadas por este spec) tarda ~450 s; con 360 s las ÚLTIMAS
+    // stores del array no llegaban a limpiarse → quedaban ACTIVAS → presión de
+    // cuota (403) sobre los specs siguientes (6.2/9.2 en el run focalizado).
+    // 600 s cubre ~20 deletes paceados con margen.
+    test.setTimeout(600_000);
     for (const storeId of createdStoreIds) {
-      await request.delete('/api/stores', {
-        headers,
-        data: { storeId },
-      }).catch(() => {});
+      await robustDelete(request, headers.Authorization?.replace('Bearer ', '') || '', storeId);
     }
   });
 
   // Helper: create a test store
   async function createTestStore(request: any, suffix?: string): Promise<string> {
     const sfx = suffix || Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const response = await request.post('/api/stores', {
+    // SEC-TS-10: sweep de huérfanas >10 min (libera cuota activa del tenant)
+    // + pacear creación (API: 5 POSTs/min por usuario) — sin esto,
+    // la ráfaga de creaciones de este spec recibe 429 y falla en cascada.
+    await sweepStaleTestStores();
+    await waitStoreBudget('create');
+    let response = await request.post('/api/stores', {
       headers,
       data: {
         name: `E2E Multi ${sfx}`,
@@ -94,11 +111,40 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
         nit: '123456789',
       },
     });
+    if (response.status() === 403) {
+      // SEC-TS-10 (cuota llena): liberar test-stores ACTIVAS antiguas
+      // (>60 s — de tests ya completados; las del test en curso y los
+      // pilotos quedan protegidas por freeActiveTestQuota) y reintentar 1×
+      // por la vía REAL de la API. Protección por EDAD (no por
+      // createdStoreIds — con la lista completa TODO lo activo estaba
+      // trackeado → free=0 → 403 persistente, reproducido en mini-3/4):
+      // las stores de tests previos del spec también son archivables y el
+      // afterAll las tolera (DELETE → 400 → fallback idempotente).
+      await freeActiveTestQuota([], 60_000);
+      await waitStoreBudget('create');
+      response = await request.post('/api/stores', {
+        headers,
+        data: {
+          name: `E2E Multi ${sfx}`,
+          address: `Calle ${sfx}`,
+          slug: `e2e-multi-${sfx}`,
+          reeup: '12345678901',
+          nit: '123456789',
+        },
+      });
+    }
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    const storeId = body.data?.id || body.id;
-    createdStoreIds.push(storeId);
+    // SEC-TS-10 (BUG LATENTE): la respuesta real de POST /api/stores es
+    // { data: { success, store_id, tenant_id } } — este helper extraía
+    // body.data?.id || body.id (AMBOS undefined) → storeId undefined →
+    // tests de archive/patch/delete sobre 'undefined' fallaban Y las stores
+    // creadas nunca entraban a createdStoreIds → afterAll no las limpiaba →
+    // cuota activa del tenant (10) agotada → 403 en cascada al resto de la
+    // suite. Espejo de la extracción tolerante de session.fixture.
+    const storeId = body?.data?.store_id ?? body?.data?.id ?? body?.store_id;
+    if (storeId) createdStoreIds.push(storeId);
     return storeId;
   }
 
@@ -171,6 +217,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('2.2 POST /api/stores rejects missing name → 400', async ({ request }) => {
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: { address: 'Test', slug: 'test-no-name-' + Date.now() },
@@ -181,17 +230,27 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   test('2.3 POST /api/stores accepts missing address (optional field) → 201', async ({ request }) => {
     // FIX: schema says address is optional (create-quick flow)
     const sfx = 'noaddr-' + Date.now().toString(36);
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: { name: `E2E No Addr ${sfx}`, slug: `e2e-no-addr-${sfx}` },
     });
     expect(response.status()).toBe(201);
     const body = await response.json();
-    const storeId = body.data?.id || body.id;
-    createdStoreIds.push(storeId);
+    // SEC-TS-10 (BUG LATENTE — extracción): la respuesta real es
+    // { data: { success, store_id, tenant_id } } — el patrón body.data?.id
+    // || body.id devolvía undefined → push(undefined) → afterAll no limpiaba
+    // → tienda ACTIVA filtrada → cuota 403 en cascada.
+    const storeId = body?.data?.store_id ?? body?.data?.id ?? body?.store_id;
+    if (storeId) createdStoreIds.push(storeId);
   });
 
   test('2.4 POST /api/stores rejects name with only whitespace → 400', async ({ request }) => {
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: { name: '   ', address: 'Test', slug: 'test-ws-name-' + Date.now() },
@@ -200,11 +259,18 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('2.5 POST /api/stores rejects duplicate slug → 400 or 409', async ({ request }) => {
+    // SEC-TS-10: timeout extendido — setup createTestStore PACEADO (con
+    // posible retry de cuota) + POST duplicado PACEADO superan los 60 s
+    // por defecto ("Request context disposed" reproducido en re-run mini 3).
+    test.setTimeout(180_000);
     // First create a store with a specific slug
     const sfx = 'dup-' + Date.now().toString(36);
     const storeId = await createTestStore(request, sfx);
 
     // Try to create another with the same slug
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: {
@@ -219,6 +285,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('2.6 POST /api/stores without auth → 401', async ({ request }) => {
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       data: { name: 'No Auth', address: 'Test', slug: 'no-auth-' + Date.now() },
     });
@@ -226,6 +295,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('2.7 POST /api/stores rejects invalid plantilla → 400', async ({ request }) => {
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: {
@@ -282,8 +354,15 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   // ═════════════════════════════════════════════════════════════════
 
   test('4.1 DELETE /api/stores removes a store → 200', async ({ request }) => {
+    // SEC-TS-10: timeout extendido — este test hace create PACEADO + delete
+    // PACEADO (presupuestos 4/min y 2/min): esperas de hasta ~90 s contra
+    // el timeout por defecto de 60 s (mismo criterio que store-reset 7/9).
+    test.setTimeout(180_000);
     const storeId = await createTestStore(request, 'del-' + Date.now().toString(36));
 
+    // SEC-TS-10: pacear delete (API: 3/min) — la creación previa de este mismo
+    // test y los deletes de specs anteriores comparten el presupuesto.
+    await waitStoreBudget('delete');
     const response = await request.delete('/api/stores', {
       headers,
       data: { storeId },
@@ -297,6 +376,10 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('4.2 DELETE /api/stores rejects missing storeId → 400', async ({ request }) => {
+    // SEC-TS-10: pacear delete (API: 3/min) + timeout extendido (espera
+    // paceada de hasta ~60 s tras el delete del 4.1).
+    test.setTimeout(180_000);
+    await waitStoreBudget('delete');
     const response = await request.delete('/api/stores', {
       headers,
       data: {},
@@ -305,6 +388,11 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('4.3 DELETE /api/stores rejects non-existent store → 404', async ({ request }) => {
+    // SEC-TS-10: pacear delete (API: 3/min) + timeout extendido — con 2
+    // deletes previos en el bucket, la espera puede superar los 60 s
+    // ("Request context disposed" reproducido en el re-run mini).
+    test.setTimeout(180_000);
+    await waitStoreBudget('delete');
     const response = await request.delete('/api/stores', {
       headers,
       data: { storeId: '00000000-0000-0000-0000-000000000000' },
@@ -567,6 +655,8 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     // This test would need a non-admin token to be meaningful
     // For now, verify that the admin token CAN delete (control)
     const storeId = await createTestStore(request, 'perm-' + Date.now().toString(36));
+    // SEC-TS-10: pacear delete (API: 3/min)
+    await waitStoreBudget('delete');
     const response = await request.delete('/api/stores', {
       headers,
       data: { storeId },
@@ -597,9 +687,17 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   // 12. UI — Stores management view
   // ═════════════════════════════════════════════════════════════════
 
-  test('12.1 UI: stores management view loads', async ({ page }) => {
-    await page.goto('/?view=stores');
-    await page.waitForLoadState('networkidle');
+// SEC-TS-10: los tests 12.x navegaban SIN sesión → login wall → nunca
+// renderizaban las tarjetas. Helper con sesión fresca inyectada.
+async function authedGoto(page: import('@playwright/test').Page, view: string) {
+  const { signIn, injectSession } = await import('./fixtures/session.fixture');
+  await injectSession(page, await signIn('admin@costpro.com', 'costpro123'));
+  await page.goto(`/?view=${view}`);
+  await page.waitForLoadState('networkidle');
+}
+
+test('12.1 UI: stores management view loads', async ({ page }) => {
+  await authedGoto(page, 'stores');
 
     // Should show at least one store card or empty state
     await page.waitForTimeout(3000);
@@ -612,8 +710,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('12.2 UI: PILOT STORE A card is visible (SEC-TS-08)', async ({ page }) => {
-    await page.goto('/?view=stores');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'stores');
     await page.waitForTimeout(3000);
 
     // SEC-TS-08: se verifica la tarjeta de la tienda PILOT dedicada —
@@ -627,8 +724,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('12.3 UI: "Nueva tienda" button exists', async ({ page }) => {
-    await page.goto('/?view=stores');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'stores');
 
     const newButton = page.getByRole('button', { name: /nueva tienda|nuevo|crear/i }).first();
     const visible = await newButton.isVisible({ timeout: 10000 }).catch(() => false);
@@ -636,8 +732,7 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   });
 
   test('12.4 UI: store card shows store name and address', async ({ page }) => {
-    await page.goto('/?view=stores');
-    await page.waitForLoadState('networkidle');
+    await authedGoto(page, 'stores');
     await page.waitForTimeout(3000);
 
     const pilotCard = page.locator('[role="article"], .store-card, [data-store-card]').filter({
@@ -647,8 +742,11 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     const visible = await pilotCard.isVisible({ timeout: 10000 }).catch(() => false);
     test.skip(!visible, 'Pilot store card not visible');
 
-    // Card should show at least the name
-    await expect(pilotCard.getByText(/tienda central costpro/i)).toBeVisible();
+    // Card should show at least the name.
+    // SEC-TS-10: el texto aparece 2× dentro de la tarjeta (h3 del título +
+    // span.sr-only de descripción) → getByText violaba strict mode. Se
+    // aserta sobre el HEADING del título (elemento visible y único).
+    await expect(pilotCard.getByRole('heading', { name: /tienda central costpro/i })).toBeVisible();
   });
 
   // ═════════════════════════════════════════════════════════════════
@@ -663,6 +761,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
 
   test('13.2 POST /api/stores with extra fields ignores them → 201', async ({ request }) => {
     const sfx = 'extra-' + Date.now().toString(36);
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: {
@@ -676,12 +777,17 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    const storeId = body.data?.id || body.id;
-    createdStoreIds.push(storeId);
+    // SEC-TS-10 (BUG LATENTE — extracción): ver 2.3 — push(undefined) dejaba
+    // la tienda ACTIVA sin cleanup (cuota 403 en cascada).
+    const storeId = body?.data?.store_id ?? body?.data?.id ?? body?.store_id;
+    if (storeId) createdStoreIds.push(storeId);
   });
 
   test('13.3 slug with special characters gets sanitized', async ({ request }) => {
     const sfx = Date.now().toString(36);
+    // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
+    // incluidos los que fallan validación; el límite corre antes del parse).
+    await waitStoreBudget('create');
     const response = await request.post('/api/stores', {
       headers,
       data: {
@@ -695,8 +801,9 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     expect([201, 400]).toContain(response.status());
     if (response.status() === 201) {
       const body = await response.json();
-      const storeId = body.data?.id || body.id;
-      createdStoreIds.push(storeId);
+      // SEC-TS-10 (BUG LATENTE — extracción): ver 2.3.
+      const storeId = body?.data?.store_id ?? body?.data?.id ?? body?.store_id;
+      if (storeId) createdStoreIds.push(storeId);
     }
   });
 

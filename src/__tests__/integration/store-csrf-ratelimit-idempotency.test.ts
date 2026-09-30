@@ -27,10 +27,26 @@ const withIdempotencyMock = vi.fn(
 
 // Mock supabase-admin: devuelve un cliente fake que simula UPDATE exitoso
 const fakeSupabaseUpdate = vi.fn().mockResolvedValue({ data: null, error: null });
+// SEC-TS-10: archive/restore ahora pre-verifican existencia/estado con
+// from('stores').select('id, is_archived').eq(id).maybeSingle() antes del
+// UPDATE (contrato 404/409). El fake devuelve por defecto una tienda
+// EXISTENTE y NO archivada, para que estos tests de CSRF/rate-limit/
+// idempotency sigan ejerciendo el camino de mutación como antes del
+// cambio de contrato. (UUID en literal: el mock se evalúa antes que
+// las constantes de test-data de abajo.)
+const fakeSupabaseSelect = vi.fn().mockResolvedValue({
+  data: { id: '11111111-1111-1111-1111-111111111111', is_archived: false },
+  error: null,
+});
 const fakeSupabaseClient = {
   from: vi.fn(() => ({
     update: vi.fn(() => ({
       eq: vi.fn(() => fakeSupabaseUpdate()),
+    })),
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        maybeSingle: vi.fn(() => fakeSupabaseSelect()),
+      })),
     })),
   })),
 };

@@ -17,6 +17,8 @@
  */
 import { test, expect, buildStorePayload, extractStoreId, waitForStoresView } from './fixtures';
 import { freshAuthHeaders } from './fixtures/auth.fixture';
+// SEC-TS-10: pacing de rate-limit (create 5/min, delete 3/min en /api/stores)
+import { waitStoreBudget, freeActiveTestQuota, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 const UNIQUE = Date.now().toString(36);
 
@@ -32,32 +34,35 @@ test.describe('Stores CRUD: Create', () => {
     await page.locator('button', { hasText: /nueva|new|crear|create/i }).first().click();
 
     // Fill in the store creation form
-    const modal = page.locator('[role="dialog"], .modal, [data-state="open"]');
+    // SEC-TS-10 (UI REDESIGNADA — quick modal): inputs reales id="quick-name"
+    // / id="quick-slug" (sin address/phone — "configura los detalles
+    // después"). El submit "Crear Tienda" está DISABLED hasta name≥2 y slug
+    // disponible (check-slug debounced 300 ms) → esperar a que habilite.
+    const modal = page.getByRole('dialog', { name: /nueva tienda|crear nueva/i });
     await modal.waitFor({ state: 'visible', timeout: 5_000 });
 
-    const nameInput = modal.locator('input[name="name"], input[id="name"]');
-    const addressInput = modal.locator('input[name="address"], input[id="address"]');
-
+    const nameInput = modal.locator('input[id="quick-name"], input[name="name"], input[id="name"]');
     await nameInput.fill(`E2E Tienda ${UNIQUE}`);
-    await addressInput.fill(`Calle Test ${UNIQUE}, La Habana`);
 
-    // Optional fields
-    const phoneInput = modal.locator('input[name="phone"], input[id="phone"]');
-    if (await phoneInput.isVisible()) {
-      await phoneInput.fill('+5355550000');
-    }
+    const slugInput = modal.locator('input[id="quick-slug"], input[name="slug"], input[id="slug"]');
+    await slugInput.fill(`e2e_${UNIQUE}`);
 
-    const slugInput = modal.locator('input[name="slug"], input[id="slug"]');
-    if (await slugInput.isVisible()) {
-      await slugInput.fill(`e2e_${UNIQUE}`);
-    }
-
-    // Submit the form
-    await modal.locator('button[type="submit"], button', { hasText: /guardar|save|crear|create/i }).first().click();
+    // Submit the form — el botón se habilita cuando el slug pasa check-slug
+    // SEC-TS-10 (cuota): liberar cuota activa ANTES del submit — el POST lo
+    // hace el BROWSER (sin retry posible) y una cuota llena dejaba el modal
+    // abierto con error (reproducido en re-run mini). Se liberan solo
+    // test-stores antiguas; pilotos y stores <2 min quedan protegidas.
+    await freeActiveTestQuota([]);
+    const submitBtn = modal.getByRole('button', { name: /crear tienda/i });
+    await expect(submitBtn).toBeEnabled({ timeout: 10_000 });
+    await submitBtn.click();
 
     // Verify success — modal closes and new store card appears
     await expect(modal).toBeHidden({ timeout: 10_000 });
-    await expect(page.locator('text=' + `E2E Tienda ${UNIQUE}`)).toBeVisible({ timeout: 10_000 });
+    // SEC-TS-10: el nombre aparece 2× en la tarjeta (h3 del título + span.sr-only
+    // de descripción — ver fix análogo en multi-store 12.4) → aserción sobre el
+    // HEADING (elemento visible y único).
+    await expect(page.getByRole('heading', { name: `E2E Tienda ${UNIQUE}` })).toBeVisible({ timeout: 10_000 });
   });
 
   test('create store with missing required fields shows validation error', async ({ authedPage: page }) => {
@@ -66,14 +71,22 @@ test.describe('Stores CRUD: Create', () => {
 
     // Open create modal
     await page.locator('button', { hasText: /nueva|new|crear|create/i }).first().click();
-    const modal = page.locator('[role="dialog"], .modal, [data-state="open"]');
+    // SEC-TS-10 (UI REDESIGNADA — quick modal): el botón "Crear Tienda"
+    // permanece DISABLED con campos requeridos vacíos/inválidos — el submit
+    // inválido se PREVIENE en la UI (la validación por toast solo ocurre si
+    // el form se envía con canSubmit=false, p.ej. slug ocupado). El contrato
+    // actual verificado: sin completar → submit disabled; con slug pero sin
+    // nombre → sigue disabled (nombre es requerido).
+    const modal = page.getByRole('dialog', { name: /nueva tienda|crear nueva/i });
     await modal.waitFor({ state: 'visible', timeout: 5_000 });
 
-    // Submit without filling required fields
-    await modal.locator('button[type="submit"], button', { hasText: /guardar|save|crear|create/i }).first().click();
+    const submitBtn = modal.getByRole('button', { name: /crear tienda/i });
+    await expect(submitBtn).toBeDisabled();
 
-    // Verify validation error is shown
-    await expect(modal.locator('text=/requerido|required|obligatorio/i')).toBeVisible({ timeout: 5_000 });
+    // Completar SOLO el slug (sin nombre) → el submit sigue disabled
+    const slugInput = modal.locator('input[id="quick-slug"], input[name="slug"], input[id="slug"]');
+    await slugInput.fill(`e2e_${UNIQUE}`);
+    await expect(submitBtn).toBeDisabled();
   });
 });
 
@@ -95,15 +108,20 @@ test.describe('Stores CRUD: Read', () => {
     await waitForStoresView(page);
 
     // Type a search term into the search bar
-    const searchInput = page.locator('input[aria-label*="earch"], input[placeholder*="earch"], input[type="search"]').first();
+    // SEC-TS-10: la SearchBar real de la vista stores renderiza input
+    // type="text" con placeholder="Filtrar por nombre o ubicación..."
+    // (es.json stores.filterByLocation). NOTA: no usar aria-label*=uscar —
+    // el sidebar tiene "Buscar en el menú" ANTES en el DOM y .first()
+    // matcheaba el input equivocado. El placeholder de filtrado es único
+    // de la vista stores.
+    const searchInput = page.locator('input[placeholder*="iltrar"], input[placeholder*="Filter by"]').first();
     await searchInput.fill('ZZZZZZZ_NONEXISTENT');
 
-    // All store cards should be hidden or "no results" shown
-    const storeCards = page.locator('[role="article"]');
-    await expect(storeCards).toHaveCount(0, { timeout: 5_000 }).catch(() => {
-      // Some implementations keep cards but hide them — check for empty state
-      expect(page.locator('text=/no.*tienda|no.*store|sin resultado/i')).toBeVisible();
-    });
+    // SEC-TS-10 (UI REDESIGNADA): el filtrado es client-side; con 0 matches
+    // se renderiza el empty-state exacto "No se encontraron sucursales"
+    // (es.json stores.noStores) y ninguna tarjeta [role=article].
+    await expect(page.getByText('No se encontraron sucursales')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('[role="article"]')).toHaveCount(0);
   });
 
   test('store card shows key information (name, address)', async ({ authedPage: page }) => {
@@ -163,7 +181,8 @@ test.describe('Stores CRUD: Update', () => {
 
     // Cleanup: eliminar la tienda de prueba propia
     if (ownId) {
-      await request.delete('/api/stores', { headers, data: { storeId: ownId } }).catch(() => {});
+      // SEC-TS-10: cleanup robusto (rate-limit-aware + fallback de archivado)
+      await robustDelete(request, headers.Authorization?.replace('Bearer ', '') || '', ownId);
     }
   });
 });
@@ -273,6 +292,8 @@ test.describe('Stores CRUD: API Level', () => {
     expect(updateJson.data.name).toContain('Updated');
 
     // DELETE — DELETE /api/stores
+    // SEC-TS-10: pacear delete (API: 3/min por usuario)
+    await waitStoreBudget('delete');
     const deleteRes = await request.delete('/api/stores', {
       data: { storeId },
       headers: {

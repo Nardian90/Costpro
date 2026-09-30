@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { getAuthHeaders } from './fixtures/auth.fixture';
+import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
+import { waitStoreBudget, sweepStaleTestStores, freeActiveTestQuota, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
 /**
  * E2E: Full store lifecycle — create → archive → restore — STRICT ASSERTIONS.
@@ -25,42 +26,75 @@ test.describe('Store Lifecycle: Create → Archive → Restore — Strict', () =
 
   let headers: Record<string, string>;
   let createdStoreId: string | null = null;
-  const storeName = `E2E Test Store ${Date.now()}`;
-  const storeSlug = `e2e-test-store-${Date.now()}`;
+  const ts = Date.now();
+  const storeName = `E2E Test Store ${ts}`;
+  const storeSlug = `e2e-test-store-${ts}`;
+  // SEC-TS-10 (TEST OBSOLETO): reeup/nit fijos alfabéticos ('E2E-REEUP'/'E2E-NIT')
+  // rompían la validación Zod actual (REEUP 11 dígitos / NIT solo dígitos) → 400.
+  // Valores válidos y únicos por corrida (derivados del timestamp).
+  const storeReeup = String(ts % 100_000_000_000).padStart(11, '0');
+  const storeNit = String(ts % 10_000_000_000);
 
-  test.beforeAll(() => {
-    headers = getAuthHeaders('admin')!;
+  test.beforeAll(async () => {
+    // SEC-TS-10: sesión fresca (inmune a revocación de token a mitad de corrida)
+    headers = (await freshAuthHeaders('admin')) || getAuthHeaders('admin')!;
   });
 
   test.afterAll(async ({ request }) => {
     // Cleanup: force-delete the test store if it still exists
     if (createdStoreId) {
-      await request.delete('/api/stores', {
-        headers,
-        data: { storeId: createdStoreId },
-      }).catch(() => {});
+      // SEC-TS-10: cleanup robusto (rate-limit-aware + fallback de archivado)
+      await robustDelete(request, getAuthHeaders('admin')?.Authorization?.replace('Bearer ', '') || '', createdStoreId);
     }
   });
 
   test('1. create store via POST /api/stores → 201', async ({ request }) => {
-    const response = await request.post('/api/stores', {
+    // SEC-TS-10: sweep de huérfanas >10 min (libera cuota activa) + pacear
+    // creación (API: 5/min). Timeout extendido: sweep + pacing + posible
+    // retry de cuota pueden superar los 60 s por defecto.
+    test.setTimeout(180_000);
+    await sweepStaleTestStores();
+    await waitStoreBudget('create');
+    let response = await request.post('/api/stores', {
       headers,
       data: {
         name: storeName,
         address: 'E2E Test Address',
         slug: storeSlug,
-        reeup: 'E2E-REEUP',
-        nit: 'E2E-NIT',
+        reeup: storeReeup,
+        nit: storeNit,
         bank_account: 'E2E-BANK',
       },
     });
+    if (response.status() === 403) {
+      // SEC-TS-10 (cuota llena): liberar test-stores activas antiguas
+      // (>60 s; pilotos protegidos por nombre) y reintentar 1× vía API real.
+      await freeActiveTestQuota([], 60_000);
+      await waitStoreBudget('create');
+      response = await request.post('/api/stores', {
+        headers,
+        data: {
+          name: storeName,
+          address: 'E2E Test Address',
+          slug: storeSlug,
+          reeup: storeReeup,
+          nit: storeNit,
+          bank_account: 'E2E-BANK',
+        },
+      });
+    }
 
     // STRICT: must be exactly 201. 500 = RPC broken = test fails.
     // 403 = plan limit reached = test fails (need to upgrade plan or cleanup)
     expect(response.status()).toBe(201);
 
     const body = await response.json();
-    createdStoreId = body.data?.id || body.id;
+    // SEC-TS-10 (BUG LATENTE): la respuesta real de POST /api/stores es
+    // { data: { success, store_id, tenant_id } } — la extracción antigua
+    // (body.data?.id || body.id) devolvía undefined → el test fallaba PERO
+    // la tienda quedaba creada y sin trackear → cuota activa filtrada.
+    // Espejo de la extracción tolerante de session.fixture/multi-store.
+    createdStoreId = body?.data?.store_id ?? body?.data?.id ?? body?.store_id;
     // STRICT: id must be a valid UUID
     expect(createdStoreId).toBeDefined();
     expect(createdStoreId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
@@ -120,14 +154,24 @@ test.describe('Store Lifecycle: Create → Archive → Restore — Strict', () =
   test('6. cannot archive already-archived store → 400 or 409', async ({ request }) => {
     test.skip(!createdStoreId, 'Store was not created');
 
-    // First re-archive to test the idempotency/conflict case
-    const response = await request.post(`/api/stores/${createdStoreId}/archive`, {
+    // SEC-TS-10 (FIX LÓGICA DEL TEST): el test 4 RESTAURÓ la tienda → está
+    // ACTIVA al llegar aquí. La primera llamada de archivado es legítima
+    // (200); el caso de conflicto es la SEGUNDA sobre la tienda ya
+    // archivada. Antes este test pasaba VACUO (skip por setup fallido del
+    // test 1) y nunca ejercitó esta secuencia.
+    const first = await request.post(`/api/stores/${createdStoreId}/archive`, {
       headers,
-      data: { reason: 'Double archive test' },
+      data: { reason: 'Double archive test — primera llamada (activa)' },
+    });
+    expect(first.status()).toBe(200);
+
+    const second = await request.post(`/api/stores/${createdStoreId}/archive`, {
+      headers,
+      data: { reason: 'Double archive test — segunda llamada (ya archivada)' },
     });
 
     // STRICT: must NOT be 200 (already archived). Either 400 (bad request) or 409 (conflict).
-    expect(response.status()).not.toBe(200);
-    expect([400, 409]).toContain(response.status());
+    expect(second.status()).not.toBe(200);
+    expect([400, 409]).toContain(second.status());
   });
 });

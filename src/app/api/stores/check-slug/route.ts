@@ -31,7 +31,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const excludeStoreId = searchParams.get('exclude_store_id');
 
   if (!slug || slug.length < 2) {
-    return NextResponse.json({ available: false, reason: 'too_short' });
+    // SEC-TS-10 (FIX API CONTRACT): 400 para parámetro requerido faltante o
+    // inválido (contrato multi-store 7.x). Antes devolvía 200 con
+    // {available:false} — un missing-param NO es una respuesta válida de
+    // disponibilidad y enmascara errores del cliente.
+    return NextResponse.json(
+      { ...createApiError('INVALID_DATA'), message: 'Parámetro slug requerido (mínimo 2 caracteres)' },
+      { status: 400 },
+    );
   }
 
   if (slug.length > 60) {

@@ -1,5 +1,14 @@
 import { type NextRequest } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { createServerClient } from "@/lib/supabaseClient";
+// SEC-TS-10 (FIX BUG REAL): getServerSession usaba el SINGLETON client-side
+// de supabase (`export const supabase` — persistSession: true,
+// autoRefreshToken: true) en el SERVIDOR. Bajo concurrencia (múltiples
+// requests API simultáneas comparten ese singleton), el estado interno de
+// auth del cliente produce errores esporádicos "Auth session missing!" →
+// getServerSession devuelve null → 401 transitorios en requests válidas
+// (reproducido en corridas E2E completas: 1-9 blips por corrida).
+// Fix: instancia request-scoped (BUG-037 ya definió el patrón correcto en
+// supabaseClient.ts) con persistSession: false — sin estado compartido.
 
 const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 // FIX-AUDIT-3: Dev bypass solo funciona cuando está explícitamente habilitado
@@ -49,7 +58,9 @@ export async function getServerSession(request: NextRequest) {
       // This is the ONLY accepted path: Supabase validates signature, exp,
       // and revocation status. No local decode-without-verify fallback.
       if (isSupabaseConfigured) {
-        const { data: { user }, error } = await supabase.auth.getUser(token);
+        // SEC-TS-10: instancia por-request (sin estado de sesión compartido)
+        const requestScopedClient = createServerClient();
+        const { data: { user }, error } = await requestScopedClient.auth.getUser(token);
 
         if (!error && user) {
           // FIX-ADMIN-ROLE (2026-07-05): obtener el role de la tabla profiles

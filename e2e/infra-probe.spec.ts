@@ -16,11 +16,11 @@ test('global-setup exporta tokens a los workers', () => {
 });
 
 test('sesión inyectada autentica la SPA (localStorage)', async ({ page }) => {
-  const session = {
-    token: process.env.E2E_TEST_ADMIN_TOKEN!,
-    userId: process.env.E2E_TEST_ADMIN_ID!,
-    email: 'admin@costpro.com',
-  };
+  // SEC-TS-10: sesión FRESCA en lugar del token del global-setup. El token
+  // compartido muere a mitad de corrida completa cuando un spec UI dispara
+  // el signOut global de useSessionManager (revoca TODAS las sesiones del
+  // usuario). El refresh_token REAL permite auto-sanar en el browser.
+  const session = await signIn('admin@costpro.com', 'costpro123');
   await injectSession(page, session);
   await page.goto('/');
   // El shell autenticado renderiza el botón de cerrar sesión.
