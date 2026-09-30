@@ -40,9 +40,18 @@ export function useDashboardView() {
 
   // F3-B1: exponer error de KPIs — antes solo se pasaba productsError y los fallos
   // del dashboard quedaban invisibles (KPIs vacíos parecían datos reales).
+  //
+  // REMEDIACIÓN (fix/dashboard-active-store): el dashboard single-store es
+  // SIEMPRE store-scoped — isAdmin va a `false` incluso para admin/manager.
+  // Antes `user?.role === 'admin'` habilitaba la consulta con p_store_id=NULL
+  // para admins sin tienda activa, y el RPC devuelve TOTALES GLOBALES en ese
+  // caso (WHERE p_store_id IS NULL OR store_id = p_store_id): datos de todas
+  // las tiendas presentados como "mi tienda activa". Ahora, sin tienda activa,
+  // la consulta se deshabilita (enabled: !!storeId) y StateRenderer muestra el
+  // estado vacío honesto — nunca datos multi-tienda bajo este encabezado.
   const { data: dashboardData, isLoading: isLoadingData, error: dashboardError, refetch: refetchDashboard } = useDashboardData(
     user?.activeStoreId,
-    user?.role === 'admin',
+    false,
     dateFrom,
     dateTo
   );

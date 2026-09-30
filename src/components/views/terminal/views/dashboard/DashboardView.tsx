@@ -25,7 +25,6 @@ import { format } from 'date-fns';
 import { es as esLocale, enUS as enLocale } from 'date-fns/locale';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import MultiStoreDashboardView from './MultiStoreDashboardView';
 
 // Lazy load heavy dashboard components to improve TBT and LCP
 const ConcentricDashboardRing = dynamic(() => import('./ConcentricDashboardRing').then(mod => mod.ConcentricDashboardRing), {
@@ -41,32 +40,25 @@ const ExecutiveKpiCards = dynamic(() => import('./ExecutiveKpiCards').then(mod =
 // CAMBIO 1 (HOME/SALES/PERFORMANCE DEFAULTS): prop `embedded` — cuando TRUE,
 // el dashboard se renderiza como sección del Inicio (AICommandCenterView):
 // el PageHeader pasa a h2 (una sola h1 por página — el shell ya pinta "Inicio")
-// y el ancho máximo se amplía al contenedor padre. Es la MISMA vista
-// certificada (admin/manager → MultiStore; demás roles → single-store con
-// activeStoreId) — cero duplicación de dashboards.
+// y el ancho máximo se amplía al contenedor padre.
+//
+// REMEDIACIÓN (fix/dashboard-active-store): "Dashboard" responde a la pregunta
+// "¿cómo está MI tienda activa?" — para TODOS los roles. Se elimina la rama
+// admin/manager → MultiStoreDashboardView (el tablero consolidado multi-tienda
+// ya NO se presenta como "Dashboard": vive como tab "KPIs" del hub "Gestión de
+// Tiendas", ViewType 'management-hub'). La fuente de verdad de la tienda activa
+// es la certificada: useAuthStore().user.activeStoreId (profiles.active_store_id).
+// Cero hardcode: sin stores[0], sin tienda fija, sin segunda fuente de verdad.
 export default function DashboardView({ embedded = false }: { embedded?: boolean } = {}) {
-  // Audit-Fix #3: la decisión admin/no-admin se hace en un wrapper component
-  // separado (DashboardRouter) para evitar llamar hooks innecesarios cuando
-  // el usuario es admin. Originalmente, este componente llamaba useDashboardView
-  // y useProducts SIEMPRE (incluso para admins que caían al early return hacia
-  // MultiStoreDashboardView — wasted queries a Supabase).
-  //
-  // Solución: DashboardView es el router que decide cuál componente renderizar.
-  // DashboardViewImpl contiene la implementación original (clerk/encargado).
-  // MultiStoreDashboardView se renderiza para admins sin llamar hooks de clerk.
-  const { user } = useAuthStore();
-  const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager';
-
-  if (isAdminOrManager) {
-    return <MultiStoreDashboardView />;
-  }
   return <DashboardViewImpl embedded={embedded} />;
 }
 
 /**
- * DashboardViewImpl — implementación para usuarios no-admin (clerk, encargado,
- * usuario, warehouse, costo). Todos los hooks se llaman incondicionalmente aquí
- * (Rules of Hooks OK), y solo se monta cuando el usuario NO es admin/manager.
+ * DashboardViewImpl — implementación single-store del Dashboard (tienda activa).
+ * REMEDIACIÓN (fix/dashboard-active-store): es la ÚNICA implementación — antes
+ * era la rama no-admin (clerk, encargado, usuario, warehouse, costo); ahora
+ * también la usan admin/manager. Todos los hooks se llaman incondicionalmente
+ * (Rules of Hooks OK) y los datos responden a user.activeStoreId.
  */
 function DashboardViewImpl({ embedded = false }: { embedded?: boolean } = {}) {
   const t = useTranslations('dashboard.singleStore');
