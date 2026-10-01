@@ -57,7 +57,17 @@ import { apiFetch } from '@/lib/api-fetch';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-export default function StoresManagementView({ onOpenDashboard }: { onOpenDashboard?: (store: { id: string; name: string }) => void }) {
+interface StoresManagementViewProps {
+  onOpenDashboard?: (store: { id: string; name: string }) => void;
+  /** REMEDIACIÓN DENSIDAD (fix/ui-management-density-inventory-a11y): slot para
+   * el switcher de vista (Completa | Resumen) que el hub Gestión de Tiendas
+   * inyecta en esta fila de acciones. Elimina la fila independiente que el
+   * switcher ocupaba en el hub (espacio muerto en desktop) sin mover el
+   * estado del modo fuera del hub. Patrón toolbar: InventoryView. */
+  toolbar?: React.ReactNode;
+}
+
+export default function StoresManagementView({ onOpenDashboard, toolbar }: StoresManagementViewProps) {
   const t = useTranslations('stores');
   const tc = useTranslations('common');
   const { user } = useAuthStore();
@@ -219,10 +229,15 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
   return (
     <>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <h2 className="text-[clamp(1.5rem,5vw,2rem)] font-black tracking-tighter uppercase text-primary">
-            {t('title')}
-          </h2>
+        {/* REMEDIACIÓN DENSIDAD (fix/ui-management-density-inventory-a11y):
+            header compacto de una fila — el título interno "Gestión Tiendas"
+            era redundante (el encabezado del hub ya comunica "Gestión de
+            Tiendas" y esta vista solo se monta dentro de ese hub) y el
+            switcher de vista ocupaba una fila propia en el hub. Ahora las
+            acciones y el switcher comparten fila (patrón toolbar de
+            InventoryView): desktop ≥905px = una sola fila; en viewports
+            menores hay wrapping natural con targets intactos. */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <ActionMenu
             actions={[
               { id: 'new', label: t('newStore'), icon: Plus, onClick: handleCreateStore, variant: 'primary' },
@@ -233,6 +248,7 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
             ]}
             className="sm:w-auto"
           />
+          {toolbar && <div className="shrink-0">{toolbar}</div>}
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">

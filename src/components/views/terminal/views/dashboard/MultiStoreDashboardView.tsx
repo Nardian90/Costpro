@@ -206,7 +206,7 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
 });
 
 // Vista principal
-export default function MultiStoreDashboardView() {
+export default function MultiStoreDashboardView({ toolbar }: { toolbar?: React.ReactNode }) {
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
   const isEncargado = user?.role === 'encargado' || user?.role === 'manager';
@@ -326,6 +326,11 @@ export default function MultiStoreDashboardView() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* REMEDIACIÓN DENSIDAD (fix/ui-management-density-inventory-a11y):
+              el switcher Completa | Resumen se integra al cluster derecho del
+              header (sin fila propia) también en modo Resumen, para que el
+              usuario pueda volver a Completa desde el mismo lugar. */}
+          {toolbar && <div className="shrink-0">{toolbar}</div>}
           {/* Badge: Fecha de Operación Actual (política forward-only locking) */}
           <GlobalOperationDateBadge />
 
