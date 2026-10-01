@@ -70,7 +70,13 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon,
     disabled={disabled}
     className={cn(
       // F2: peso medio, sin uppercase/tracking-widest (§7 del brief)
-      "w-full py-2.5 rounded-xl bg-primary text-foreground font-medium text-xs tracking-normal flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50",
+      // FIX-A11Y-CONTRAST (fix/ui-management-density-inventory-a11y): el par
+      // semántico correcto sobre bg-primary es text-primary-foreground (igual
+      // que button.tsx default y ContentSwitcher). text-foreground igualaba el
+      // texto al fondo del botón en Dark+Performance (#e4e4e7 s/#e4e4e7 =
+      // 1.00:1 — "Ajustar" invisible en modo tarjeta) y fallaba 4.5:1 en los
+      // otros 3 modos (1.80/3.56/3.56).
+      "w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-xs tracking-normal flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50",
       className
     )}
   >

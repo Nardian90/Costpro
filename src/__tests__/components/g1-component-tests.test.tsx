@@ -25,7 +25,32 @@ vi.mock('@/store', () => ({
   useAuthStore: () => ({ user: { id: 'u1', activeStoreId: 's1', role: 'admin' } }),
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), loading: vi.fn(), warning: vi.fn() } }));
-vi.mock('next/dynamic', () => ({ __esModule: true, default: () => (p: any) => p.children || null }));
+// REMEDIACIÓN DENSIDAD (fix/ui-management-density-inventory-a11y): el switcher
+// Completa | Resumen vive ahora DENTRO de las sub-vistas lazy del hub (slot
+// `toolbar`). El mock anterior de next/dynamic descartaba todas las props
+// (p.children || null) y ocultaba el toolbar. Este mock resuelve el loader
+// real vía React.lazy + Suspense para que el contrato hub → sub-vista sea
+// testeable; los módulos heavy se stubbean más abajo.
+vi.mock('next/dynamic', () => ({
+  __esModule: true,
+  default: (loader: any) => {
+    const Lazy = React.lazy(async () => {
+      const mod = await loader();
+      return { default: (mod && mod.default) ? mod.default : mod };
+    });
+    const Dyn = (props: any) =>
+      React.createElement(React.Suspense, { fallback: null }, React.createElement(Lazy, props));
+    return Dyn;
+  },
+}));
+// Stubs mínimos de las sub-vistas del hub: renderizan el slot `toolbar` (el
+// objeto real bajo test) sin arrastrar grid virtualizado, modales ni ECharts.
+vi.mock('@/components/views/terminal/views/stores/StoresManagementView', () => ({
+  default: ({ toolbar }: { toolbar?: React.ReactNode }) => React.createElement(React.Fragment, null, toolbar ?? null),
+}));
+vi.mock('@/components/views/terminal/views/dashboard/MultiStoreDashboardView', () => ({
+  default: ({ toolbar }: { toolbar?: React.ReactNode }) => React.createElement(React.Fragment, null, toolbar ?? null),
+}));
 vi.mock('echarts-for-react', () => ({ __esModule: true, default: () => null }));
 vi.mock('react-day-picker', () => ({
   DateRange: {},
@@ -212,7 +237,8 @@ describe('G1.1 — Tests de render componentes MULTI-TIENDA', () => {
     it('expone el content switcher Completa | Resumen con estado programático', async () => {
       const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
       const { getByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
-      const group = getByRole('radiogroup', { name: 'Vista de Tiendas' });
+      // El switcher llega vía lazy-load de la sub-vista (toolbar slot) → esperar
+      const group = await waitFor(() => getByRole('radiogroup', { name: 'Vista de Tiendas' }));
       expect(group).toBeTruthy();
       const completa = getByRole('radio', { name: /Vista completa de tiendas/ });
       const resumen = getByRole('radio', { name: /Vista resumen/ });
@@ -224,10 +250,12 @@ describe('G1.1 — Tests de render componentes MULTI-TIENDA', () => {
     it('cambia a Resumen con clic, persiste el modo y lo comunica programáticamente', async () => {
       const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
       const { getByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
-      const resumen = getByRole('radio', { name: /Vista resumen/ });
+      const resumen = await waitFor(() => getByRole('radio', { name: /Vista resumen/ }));
       fireEvent.click(resumen);
+      // El radiogroup se remonta dentro de la sub-vista lazy del modo destino
+      // (Completa ↔ Resumen) → re-consultar en cada poll, no retener referencias.
       await waitFor(() => {
-        expect(resumen).toHaveAttribute('aria-checked', 'true');
+        expect(getByRole('radio', { name: /Vista resumen/ })).toHaveAttribute('aria-checked', 'true');
         expect(getByRole('radio', { name: /Vista completa de tiendas/ })).toHaveAttribute('aria-checked', 'false');
         expect(localStorage.getItem(STORE_MODE_KEY)).toBe('summary');
       });
@@ -247,12 +275,12 @@ describe('G1.1 — Tests de render componentes MULTI-TIENDA', () => {
     it('navega el switcher con flechas (radiogroup WAI-APG)', async () => {
       const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
       const { getByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
-      const completa = getByRole('radio', { name: /Vista completa de tiendas/ });
-      const resumen = getByRole('radio', { name: /Vista resumen/ });
+      const completa = await waitFor(() => getByRole('radio', { name: /Vista completa de tiendas/ }));
       fireEvent.keyDown(completa, { key: 'ArrowRight' });
-      await waitFor(() => expect(resumen).toHaveAttribute('aria-checked', 'true'));
-      fireEvent.keyDown(resumen, { key: 'ArrowLeft' });
-      await waitFor(() => expect(completa).toHaveAttribute('aria-checked', 'true'));
+      // Re-consultar: el radiogroup se remonta con la sub-vista del modo destino
+      await waitFor(() => expect(getByRole('radio', { name: /Vista resumen/ })).toHaveAttribute('aria-checked', 'true'));
+      fireEvent.keyDown(getByRole('radio', { name: /Vista resumen/ }), { key: 'ArrowLeft' });
+      await waitFor(() => expect(getByRole('radio', { name: /Vista completa de tiendas/ })).toHaveAttribute('aria-checked', 'true'));
     });
   });
 

@@ -31,6 +31,14 @@
  * modo 'summary' (sin romper el contexto del usuario; sin deep-links URL
  * afectados — este hub nunca tuvo ?tab=).
  *
+ * REMEDIACIÓN DENSIDAD (fix/ui-management-density-inventory-a11y): el
+ * switcher ya NO ocupa una fila propia (espacio muerto en desktop). Se
+ * inyecta como slot `toolbar` en la fila de acciones de StoresManagementView
+ * (Completa) o en el cluster derecho del header de MultiStoreDashboardView
+ * (Resumen) — patrón toolbar de InventoryView. El título interno "Gestión
+ * Tiendas" de StoresManagementView se retiró (redundante con el encabezado
+ * del hub). Estado, persistencia y migración legacy NO cambian.
+ *
  * FASE B (UX-005 · GATE 1.4P): el Tablón de Noticias SALIÓ de este hub — es
  * inteligencia de mercado GLOBAL/TRANSVERSAL (lector RSS sin store_id, no
  * cambia con la tienda activa) y vive ahora como hoja de la sección ANÁLISIS
@@ -190,12 +198,47 @@ export default function ManagementHubView() {
   // localStorage local al hub. No introduce persistencia global nueva.
   // El modo sobrevive a refresh, navegación y cambio de tema/performance
   // (localStorage no se limpia en cambios de tema).
+  //
+  // REMEDIACIÓN DENSIDAD (fix/ui-management-density-inventory-a11y): al
+  // cambiar de modo el radiogroup se REMONTA dentro de la sub-vista lazy
+  // activa (Completa → StoresManagementView / Resumen → MultiStoreDashboard).
+  // Sin restauración, el foco de teclado caería al <body> tras el swap del
+  // árbol. Bandera + efecto: si el origen del cambio era el propio switcher,
+  // el foco vuelve al radio marcado en cuanto la nueva sub-vista lo renderice.
+  const pendingSwitcherFocus = useRef(false);
+
   const handleStoresViewModeChange = useCallback((mode: StoreViewMode) => {
+    if (typeof document !== 'undefined') {
+      const active = document.activeElement as HTMLElement | null;
+      if (active?.closest('[role=radiogroup][aria-label="Vista de Tiendas"]')) {
+        pendingSwitcherFocus.current = true;
+      }
+    }
     setStoresViewMode(mode);
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORE_VIEW_MODE_STORAGE_KEY, mode);
     }
   }, []);
+
+  useEffect(() => {
+    if (!pendingSwitcherFocus.current) return;
+    pendingSwitcherFocus.current = false;
+    let raf = 0;
+    let tries = 0;
+    const tick = () => {
+      const radio = document.querySelector<HTMLButtonElement>(
+        '[role=radiogroup][aria-label="Vista de Tiendas"] [role=radio][aria-checked="true"]'
+      );
+      if (radio) {
+        radio.focus();
+        return;
+      }
+      // La sub-vista es lazy: esperar a que monte (tope ~1s de frames).
+      if (++tries < 60) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [storesViewMode]);
 
   const visibleTabs = useMemo(() => TABS.filter(tab => !user || tab.roles.includes(user.role)), [user]);
 
@@ -321,28 +364,39 @@ export default function ManagementHubView() {
       >
         {activeTab === 'storefront' && <StorefrontConfigView />}
         {activeTab === 'stores' && (
-          <div className="space-y-4">
-            {/* IA-FIX: content switcher — Tiendas y Resumen son dos
-                representaciones del MISMO contenido (mismas tiendas, mismos
-                datos). Radiogroup accesible con navegación por flechas
-                (ContentSwitcher). El cambio de modo NO cambia de módulo ni
-                de contexto (permisos, tienda activa y búsqueda intactos).
-                FASE 13: el switcher vive entre el encabezado y el contenido;
-                no se crean tabs anidados ni navegación paralela. */}
-            <div className="flex items-center justify-start sm:justify-end px-0 sm:px-2 lg:px-4">
-              <ContentSwitcher
-                groupLabel="Vista de Tiendas"
-                items={STORE_VIEW_MODES}
-                value={storesViewMode}
-                onChange={handleStoresViewModeChange}
-              />
-            </div>
+          /* IA-FIX: content switcher — Tiendas y Resumen son dos
+              representaciones del MISMO contenido (mismas tiendas, mismos
+              datos). Radiogroup accesible con navegación por flechas
+              (ContentSwitcher). El cambio de modo NO cambia de módulo ni
+              de contexto (permisos, tienda activa y búsqueda intactos).
+              REMEDIACIÓN DENSIDAD: el switcher se inyecta como slot `toolbar`
+              en la fila de acciones de la sub-vista activa — sin fila propia. */
+          <>
             {storesViewMode === 'full' ? (
-              <StoresManagementView onOpenDashboard={handleOpenDashboard} />
+              <StoresManagementView
+                onOpenDashboard={handleOpenDashboard}
+                toolbar={
+                  <ContentSwitcher
+                    groupLabel="Vista de Tiendas"
+                    items={STORE_VIEW_MODES}
+                    value={storesViewMode}
+                    onChange={handleStoresViewModeChange}
+                  />
+                }
+              />
             ) : (
-              <MultiStoreDashboardView />
+              <MultiStoreDashboardView
+                toolbar={
+                  <ContentSwitcher
+                    groupLabel="Vista de Tiendas"
+                    items={STORE_VIEW_MODES}
+                    value={storesViewMode}
+                    onChange={handleStoresViewModeChange}
+                  />
+                }
+              />
             )}
-          </div>
+          </>
         )}
       </div>
 
