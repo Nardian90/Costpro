@@ -4,11 +4,19 @@ import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import type { Product, ProductFCStatus } from '@/types';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
-import { Package, Edit, BookOpen, ArrowUpDown, ArrowUp, ArrowDown, Store, Eye, EyeOff, DollarSign, Tag, Pencil } from 'lucide-react';
+import { Package, Edit, BookOpen, ArrowUpDown, ArrowUp, ArrowDown, Store, Eye, EyeOff, DollarSign, Tag, Pencil, MoreVertical } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
 import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
 import { FCQuickIcon } from '@/components/ui/FCQuickIcon';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 type SortKey = 'name' | 'stock' | 'price' | 'cost';
 type SortDir = 'asc' | 'desc';
@@ -43,7 +51,10 @@ interface InventoryTableViewProps {
 }
 
 const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void; onEdit?: (product: Product) => void; onViewKardex?: (product: Product) => void; onToggleVisible?: (product: Product, visible: boolean) => void; isTogglingVisible?: string | null; onTogglePriceVisible?: (product: Product) => void; isTogglingPriceVisible?: string | null; onToggleStockVisible?: (product: Product) => void; isTogglingStockVisible?: string | null; onTogglePromotion?: (product: Product) => void; isTogglingPromotion?: string | null; fcStatus?: ProductFCStatus; fcResolution?: FCResolutionResult; onViewFC?: (product: Product, resolution: FCResolutionResult) => void }>(({ product, onAdjust, onEdit, onViewKardex, onToggleVisible, isTogglingVisible, onTogglePriceVisible, isTogglingPriceVisible, onToggleStockVisible, isTogglingStockVisible, onTogglePromotion, isTogglingPromotion, fcStatus, fcResolution, onViewFC }, ref) => {
-    const isLowStock = product.stock_current <= (product.min_stock ?? 0);
+    // REMEDIACIÓN: el badge Bajo/OK se retiró de la celda Acciones (era
+    // informativo, no una acción). Su información está 1:1 en la columna
+    // Stock: Agotado (stock=0), Mínimo (0<stock<=min) y ausencia de badge
+    // cuando stock>min (equivalente exacto del estado OK).
     return (
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
             <td className="p-3" data-label="Producto" aria-label={`Producto: ${product.name}`}>
@@ -101,133 +112,94 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                     )}
                 </div>
             </td>
-            {/* Status badge — moved to Stock column */}
-            {/* Visibility toggle + Actions — merged into one compact column */}
-            <td className="p-3" data-label="Acciones" aria-label="Acciones del producto">
-                <div className="flex justify-center items-center gap-1">
-                    {/* Stock status badge */}
-                    <span className={cn(
-                        "text-[9px] font-black uppercase px-1.5 py-0.5 rounded whitespace-nowrap",
-                        isLowStock ? "text-destructive bg-destructive/10" : "text-success bg-success/10"
-                    )}>
-                        {isLowStock ? 'Bajo' : 'OK'}
-                    </span>
-                    <span className="w-px h-4 bg-border mx-0.5" />
-                    {/* Kardex */}
-                    <button
-                        type="button"
-                        onClick={() => onViewKardex?.(product)}
-                        title="Kardex"
-                        className="inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border bg-info/8 border-info/15 text-info hover:bg-info/15 transition-all active:scale-90"
-                    >
-                        <BookOpen className="w-4 h-4" />
-                    </button>
-                    {/* Editar Producto — abre EditProductModal (mismo editor que Catálogo) */}
-                    <button
-                        type="button"
-                        onClick={() => onEdit?.(product)}
-                        title="Editar producto"
-                        aria-label="Editar producto"
-                        className="inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border bg-primary/8 border-primary/15 text-primary hover:bg-primary/15 transition-all active:scale-90"
-                    >
-                        <Pencil className="w-4 h-4" />
-                    </button>
-                    {/* Ajustar Stock */}
-                    <button
-                        type="button"
-                        onClick={() => onAdjust?.(product)}
-                        title="Ajustar stock"
-                        className="inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border bg-warning/8 border-warning/15 text-warning hover:bg-warning/15 transition-all active:scale-90"
-                    >
-                        <Edit className="w-4 h-4" />
-                    </button>
-                    {/* Visible en tienda */}
-                    <button
-                        type="button"
-                        onClick={() => onToggleVisible?.(product, !product.visible_en_tienda)}
-                        disabled={isTogglingVisible === product.id}
-                        className={cn(
-                            'inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border transition-all active:scale-90 disabled:opacity-50',
-                            product.visible_en_tienda
-                                ? 'bg-primary/10 border-primary/20 text-primary'
-                                : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
-                        )}
-                        title={product.visible_en_tienda ? 'Visible en tienda — Clic para ocultar' : 'Oculto en tienda — Clic para mostrar'}
-                        aria-label={product.visible_en_tienda ? 'Ocultar producto en la tienda pública' : 'Mostrar producto en la tienda pública'}
-                        aria-pressed={!!product.visible_en_tienda}
-                    >
-                        {isTogglingVisible === product.id ? (
-                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : product.visible_en_tienda ? (
-                            <Eye className="w-4 h-4" />
-                        ) : (
-                            <EyeOff className="w-4 h-4" />
-                        )}
-                    </button>
-                    {/* Cambio 2: Precio visible en tienda (DollarSign) — verde si visible, tachado si no */}
-                    <button
-                        type="button"
-                        onClick={() => onTogglePriceVisible?.(product)}
-                        disabled={isTogglingPriceVisible === product.id}
-                        className={cn(
-                            'inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border transition-all active:scale-90 disabled:opacity-50',
-                            product.price_visible
-                                ? 'bg-success/10 border-success/20 text-success'
-                                : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
-                        )}
-                        title={product.price_visible ? 'Precio visible en tienda — Clic para ocultar' : 'Precio oculto en tienda — Clic para mostrar'}
-                        aria-label={product.price_visible ? 'Ocultar precio en la tienda pública' : 'Mostrar precio en la tienda pública'}
-                        aria-pressed={!!product.price_visible}
-                    >
-                        {isTogglingPriceVisible === product.id ? (
-                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <DollarSign className={cn('w-4 h-4', !product.price_visible && 'line-through opacity-60')} />
-                        )}
-                    </button>
-                    {/* Cambio 2: Stock visible en tienda (Package) — verde si visible, tachado si no */}
-                    <button
-                        type="button"
-                        onClick={() => onToggleStockVisible?.(product)}
-                        disabled={isTogglingStockVisible === product.id}
-                        className={cn(
-                            'inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border transition-all active:scale-90 disabled:opacity-50',
-                            product.stock_visible
-                                ? 'bg-success/10 border-success/20 text-success'
-                                : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
-                        )}
-                        title={product.stock_visible ? 'Stock visible en tienda — Clic para ocultar' : 'Stock oculto en tienda — Clic para mostrar'}
-                        aria-label={product.stock_visible ? 'Ocultar stock en la tienda pública' : 'Mostrar stock en la tienda pública'}
-                        aria-pressed={!!product.stock_visible}
-                    >
-                        {isTogglingStockVisible === product.id ? (
-                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <Package className={cn('w-4 h-4', !product.stock_visible && 'line-through opacity-60')} />
-                        )}
-                    </button>
-                    {/* Cambio 2: En promoción (Tag) — amarillo si activa, gris si no */}
-                    <button
-                        type="button"
-                        onClick={() => onTogglePromotion?.(product)}
-                        disabled={isTogglingPromotion === product.id}
-                        className={cn(
-                            'inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border transition-all active:scale-90 disabled:opacity-50',
-                            product.on_promotion
-                                ? 'bg-warning/10 border-warning/20 text-warning'
-                                : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
-                        )}
-                        title={product.on_promotion ? 'En promoción — Clic para desactivar' : 'Sin promoción — Clic para activar'}
-                        aria-label={product.on_promotion ? 'Quitar promoción del producto' : 'Marcar producto en promoción'}
-                        aria-pressed={!!product.on_promotion}
-                    >
-                        {isTogglingPromotion === product.id ? (
-                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <Tag className="w-4 h-4" />
-                        )}
-                    </button>
-                </div>
+            {/* ═══ REMEDIACIÓN (fix/inventory-stock-table-actions) ═══
+                Arquitectura de acciones de fila: OVERFLOW MENU.
+                Antes: 7 botones inline (≈340px) + badge — con el grid de 7
+                tracks la celda caía a una segunda línea (filas dobles).
+                Ahora: columna estable de 56px con UN botón ⋮ que abre el
+                menú de opciones de la fila. Las 7 acciones existentes
+                conservan sus handlers y nombres; ninguna se elimina.
+                El badge Bajo/OK desaparece de aquí: su información ya está
+                1:1 en la columna Stock (Agotado / Mínimo / sin badge = OK). */}
+            <td className="p-3 text-center whitespace-nowrap" data-label="Acciones" aria-label="Acciones del producto">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            type="button"
+                            aria-label={`Opciones de ${product.name}`}
+                            aria-haspopup="menu"
+                            title="Opciones"
+                            className="inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border bg-card border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-all active:scale-90 shrink-0"
+                        >
+                            <MoreVertical className="w-4 h-4" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" sideOffset={4} className="w-56 rounded-xl border-border/60 bg-card shadow-lg">
+                        <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                            Opciones
+                        </DropdownMenuLabel>
+                        <DropdownMenuItem onSelect={() => onViewKardex?.(product)} className="gap-2 text-xs font-bold">
+                            <BookOpen className="w-3.5 h-3.5" />
+                            Ver Kardex
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onEdit?.(product)} className="gap-2 text-xs font-bold">
+                            <Pencil className="w-3.5 h-3.5" />
+                            Editar producto
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onAdjust?.(product)} className="gap-2 text-xs font-bold">
+                            <Edit className="w-3.5 h-3.5" />
+                            Ajustar stock
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {/* Vitrina digital — toggles con su estado actual (mismos handlers) */}
+                        <DropdownMenuItem
+                            onSelect={() => onToggleVisible?.(product, !product.visible_en_tienda)}
+                            disabled={isTogglingVisible === product.id}
+                            className="gap-2 text-xs font-bold"
+                        >
+                            {product.visible_en_tienda
+                                ? <Eye className="w-3.5 h-3.5 text-success" />
+                                : <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />}
+                            <span className="flex-1">Visible en tienda</span>
+                            <span className={cn('text-[10px] font-black uppercase', product.visible_en_tienda ? 'text-success' : 'text-muted-foreground')}>
+                                {product.visible_en_tienda ? 'Sí' : 'No'}
+                            </span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onSelect={() => onTogglePriceVisible?.(product)}
+                            disabled={isTogglingPriceVisible === product.id}
+                            className="gap-2 text-xs font-bold"
+                        >
+                            <DollarSign className={cn('w-3.5 h-3.5', product.price_visible ? 'text-success' : 'line-through text-muted-foreground')} />
+                            <span className="flex-1">Precio visible</span>
+                            <span className={cn('text-[10px] font-black uppercase', product.price_visible ? 'text-success' : 'text-muted-foreground')}>
+                                {product.price_visible ? 'Sí' : 'No'}
+                            </span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onSelect={() => onToggleStockVisible?.(product)}
+                            disabled={isTogglingStockVisible === product.id}
+                            className="gap-2 text-xs font-bold"
+                        >
+                            <Package className={cn('w-3.5 h-3.5', product.stock_visible ? 'text-success' : 'line-through text-muted-foreground')} />
+                            <span className="flex-1">Stock visible</span>
+                            <span className={cn('text-[10px] font-black uppercase', product.stock_visible ? 'text-success' : 'text-muted-foreground')}>
+                                {product.stock_visible ? 'Sí' : 'No'}
+                            </span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onSelect={() => onTogglePromotion?.(product)}
+                            disabled={isTogglingPromotion === product.id}
+                            className="gap-2 text-xs font-bold"
+                        >
+                            <Tag className={cn('w-3.5 h-3.5', product.on_promotion ? 'text-warning' : 'text-muted-foreground')} />
+                            <span className="flex-1">En promoción</span>
+                            <span className={cn('text-[10px] font-black uppercase', product.on_promotion ? 'text-warning' : 'text-muted-foreground')}>
+                                {product.on_promotion ? 'Sí' : 'No'}
+                            </span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </td>
         </tr>
     );
@@ -288,7 +260,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
 
     return (
         <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
-            <table className="w-full min-w-[860px] grid-table-inventory" aria-label="Tabla de productos del inventario">
+            <table className="w-full min-w-[920px] grid-table-inventory" aria-label="Tabla de productos del inventario">
                 <thead className="bg-muted/30 border-b sticky-header">
                     <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
                         <th className="p-3 pl-[60px]"><button type="button" onClick={() => handleSort('name')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Producto <SortIcon col="name" sortKey={sortKey} sortDir={sortDir} /></button></th>
@@ -298,7 +270,11 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                         <th className="p-3 text-right">Empresa</th>
                         <th className="p-3 text-right"><button type="button" onClick={() => handleSort('cost')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Costo <SortIcon col="cost" sortKey={sortKey} sortDir={sortDir} /></button></th>
                         <th className="p-3 text-center">FC</th>
-                        <th className="p-3 text-center">Acciones</th>
+                        {/* Columna de acciones estable (56px): header icónico para
+                            no desbordar el track (el texto "Acciones" forzaba scroll) */}
+                        <th className="p-3 text-center" aria-label="Acciones">
+                            <MoreVertical className="w-3.5 h-3.5 mx-auto opacity-60" aria-hidden="true" />
+                        </th>
                     </tr>
                 </thead>
                 <tbody>

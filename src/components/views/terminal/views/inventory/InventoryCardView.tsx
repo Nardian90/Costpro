@@ -4,7 +4,7 @@ import React, { useRef, useCallback, useEffect, useState } from 'react';
 import type { Product, ProductFCStatus } from '@/types';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 import { cn } from '@/lib/utils';
-import { Package, Eye, EyeOff, DollarSign, Tag } from 'lucide-react';
+import { Package, Eye, EyeOff, DollarSign, Tag, BookOpen } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion, motionSafe } from '@/hooks/ui/useReducedMotion';
@@ -21,6 +21,9 @@ interface InventoryCardViewProps {
     /** NEW: Opens EditProductModal (full product editor). Distinct from onAdjust,
      * which opens the stock-only adjustment modal. */
     onEdit?: (product: Product) => void;
+    /** REMEDIACIÓN (fix/inventory-stock-table-actions): paridad funcional
+     * tabla ↔ tarjetas — el Kardex estaba ausente en modo tarjetas. */
+    onViewKardex?: (product: Product) => void;
     /** FC status map: productId → ProductFCStatus */
     fcStatusMap?: Map<string, ProductFCStatus>;
     /** Callback cuando el usuario quiere ver/generar FC de un producto */
@@ -36,7 +39,7 @@ interface InventoryCardViewProps {
 }
 
 export default function InventoryCardView({
-    products, loadMore, hasMore, isLoading, onAdjust, onEdit, fcStatusMap, onViewFC,
+    products, loadMore, hasMore, isLoading, onAdjust, onEdit, onViewKardex, fcStatusMap, onViewFC,
     onToggleVisible, isTogglingVisible,
     onTogglePriceVisible, isTogglingPriceVisible,
     onToggleStockVisible, isTogglingStockVisible,
@@ -118,6 +121,19 @@ export default function InventoryCardView({
 
                                     {/* ── Toggles de visibilidad en la parte inferior de la tarjeta ── */}
                                     <div className="flex items-center justify-center gap-1.5 mt-2 pb-1">
+                                        {/* REMEDIACIÓN: Kardex — paridad con modo tabla (antes ausente) */}
+                                        {onViewKardex && (
+                                            <button
+                                                type="button"
+                                                onClick={() => onViewKardex(product)}
+                                                className="inline-flex items-center justify-center w-7 h-7 rounded-lg border bg-card border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-all active:scale-90"
+                                                aria-label={`Ver Kardex de ${product.name}`}
+                                                title="Kardex"
+                                            >
+                                                <BookOpen className="w-3.5 h-3.5" />
+                                            </button>
+                                        )}
+
                                         {/* Visible en tienda */}
                                         <button
                                             type="button"
