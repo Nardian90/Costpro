@@ -145,26 +145,39 @@ describe('G1.1 — Tests de render componentes MULTI-TIENDA', () => {
   });
 
   describe('DashboardView', () => {
-    it('renderiza sin crashear', async () => {
+    // REMEDIACIÓN V2 (fix/dashboard-consolidated-tabs): standalone (la entrada
+    // "Dashboard" del menú) monta StoreDashboardGate → vista consolidada por
+    // tabs de la tienda activa. Con el mock global (activeStoreId 's1' +
+    // useStores → []) la tienda activa NO está en el listado accesible →
+    // prompt honesto NoStorePrompt. El Panel de Control deja de existir como
+    // destino standalone (no renderiza el PageHeader 'title' de
+    // dashboard.singleStore). El caso con tienda activa resuelta se cubre en
+    // dashboard-consolidated-gate.test.tsx con un doble de StoreDashboardView.
+    it('standalone sin tienda accesible → prompt honesto, NO Panel de Control (remediación V2)', async () => {
       const DashboardView = (await import('@/components/views/terminal/views/dashboard/DashboardView')).default;
       const { container } = render(<DashboardView />, { wrapper: Wrapper });
-      expect(container).toBeDefined();
+      const text = container.textContent || '';
+      // Panel de Control standalone retirado como destino de navegación.
+      expect(text).not.toContain('title');
+      // Prompt honesto (claves i18n de stores) — NoStorePrompt reutilizado.
+      expect(text).toContain('selectStorePrompt');
+      expect(text).toContain('goToStores');
     });
 
-    // REMEDIACIÓN (fix/dashboard-active-store): con role admin + activeStoreId,
-    // DashboardView renderiza el dashboard SINGLE-STORE (tienda activa) — jamás
-    // el tablero consolidado MultiStoreDashboardView (que ahora vive como tab
-    // "KPIs" del hub Gestión de Tiendas). El mock de useDashboardView devuelve
+    // REMEDIACIÓN (fix/dashboard-active-store) + V2: embedded en Inicio sigue
+    // siendo el resumen compacto single-store (tienda activa) — jamás el
+    // tablero consolidado MultiStoreDashboardView (que vive como tab "KPIs"
+    // del hub Gestión de Tiendas). El mock de useDashboardView devuelve
     // isLoading=true → PageHeader visible, tablero multi-tienda ausente.
-    it('admin → dashboard de la tienda activa, NO el tablero multi-tienda (remediación)', async () => {
+    it('embedded → resumen compacto de la tienda activa, NO el tablero multi-tienda', async () => {
       const DashboardView = (await import('@/components/views/terminal/views/dashboard/DashboardView')).default;
-      const { container } = render(<DashboardView />, { wrapper: Wrapper });
+      const { container } = render(<DashboardView embedded />, { wrapper: Wrapper });
       const text = container.textContent || '';
       // El header del tablero multi-tienda usa la clave i18n 'consolidatedBoard'
       // y el contador 'storeCount' — su presencia delataría la vista incorrecta.
       expect(text).not.toContain('consolidatedBoard');
       expect(text).not.toContain('storeCount');
-      // El dashboard single-store renderiza su PageHeader (clave 'title' de
+      // El resumen embebido renderiza su PageHeader (clave 'title' de
       // dashboard.singleStore) y los controles de rango temporal.
       expect(text).toContain('title');
     });

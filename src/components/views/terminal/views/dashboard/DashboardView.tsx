@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { lazy, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import {
   Calendar as CalendarIcon,
@@ -12,12 +12,12 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
-import { useUIStore } from '@/store';
+import { useUIStore, useAuthStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
+import { useStores } from '@/hooks/api/useStores';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import type { Product } from '@/types';
 import { useDashboardView } from './useDashboardView';
-import { useAuthStore } from '@/store';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import PageHeader from '@/components/ui/PageHeader';
 import { useTranslations, useLocale } from 'next-intl';
@@ -25,6 +25,8 @@ import { format } from 'date-fns';
 import { es as esLocale, enUS as enLocale } from 'date-fns/locale';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { NoStorePrompt } from '@/components/ui/NoStoreGuard';
+import { withChunkRetry } from '@/components/ui/ChunkErrorBoundary';
 
 // Lazy load heavy dashboard components to improve TBT and LCP
 const ConcentricDashboardRing = dynamic(() => import('./ConcentricDashboardRing').then(mod => mod.ConcentricDashboardRing), {
@@ -36,6 +38,92 @@ const ExecutiveKpiCards = dynamic(() => import('./ExecutiveKpiCards').then(mod =
   loading: () => <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[120px] animate-pulse bg-muted/5 rounded-2xl" aria-hidden="true" />,
   ssr: false
 });
+
+// ══════════════════════════════════════════════════════════════════════════
+// REMEDIACIÓN V2 (fix/dashboard-consolidated-tabs): UN SOLO DASHBOARD.
+//
+// "Dashboard" (ViewType 'store-dashboard', menú Inicio → OPERACIÓN) abre la
+// vista consolidada por tabs — Resumen / Productos / Comportamiento — de la
+// TIENDA ACTIVA: StoreDashboardView, el MISMO componente que "Gestión de
+// Tiendas" abre por tienda (botón "Dashboard" de cada tarjeta). El viejo
+// "Panel de Control" deja de ser un destino standalone; sobrevive SOLO como
+// resumen compacto embebido del Inicio (AICommandCenterView, prop embedded).
+//
+//   Acceso 1: menú Inicio → OPERACIÓN → Dashboard  → tienda ACTIVA
+//             (fuente de verdad certificada: user.activeStoreId =
+//             profiles.active_store_id — cero hardcode, sin stores[0]).
+//   Acceso 2: Gestión de Tiendas → botón "Dashboard" de una tarjeta → ESA
+//             tienda (ManagementHubView/MultiStoreDashboardView ya lo hacen;
+//             sin cambios — mismo componente, misma vista).
+//
+// El nombre de la tienda activa se resuelve con useStores — la MISMA fuente
+// que el selector de tienda del header (TerminalShell). Sin tienda activa
+// (o tienda revocada) → NoStorePrompt (estado honesto certificado).
+// ══════════════════════════════════════════════════════════════════════════
+const LazyStoreDashboardView = withChunkRetry(
+  lazy(() => import('./StoreDashboardView')),
+  'StoreDashboardView'
+);
+
+/** Skeleton honesto mientras se resuelve la tienda activa / carga el chunk. */
+function StoreDashboardGateSkeleton() {
+  return (
+    <div className="space-y-4 max-w-5xl mx-auto" aria-busy="true" aria-label="Cargando dashboard">
+      <div className="h-24 rounded-2xl bg-muted/20 animate-pulse" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="h-20 rounded-xl bg-muted/20 animate-pulse" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * StoreDashboardGate — resuelve la tienda activa y monta la vista consolidada.
+ * FASE 3 (fuente de verdad): storeId SIEMPRE = user.activeStoreId; el nombre
+ * sale del listado useStores (misma query que el selector del header). Si el
+ * listado aún carga → skeleton; si no hay tienda activa o ya no es accesible
+ * (membresía revocada) → NoStorePrompt (navega a Gestión de Tiendas).
+ * onClose del dashboard ("← Tiendas") → vuelve a Gestión de Tiendas,
+ * coherente con el breadcrumb interno del componente.
+ */
+function StoreDashboardGate() {
+  const { user } = useAuthStore();
+  const { setCurrentView } = useUIStore();
+
+  // isEncargado: misma expresión certificada de TerminalShell (FIX HIGH-004).
+  const isEncargado =
+    user?.role === 'encargado' ||
+    user?.role === 'manager' ||
+    user?.memberships?.some((m) => m.role === 'encargado') ||
+    false;
+
+  const { data: stores = [], isLoading: isLoadingStores } = useStores(
+    user?.id || '',
+    user?.role === 'admin',
+    isEncargado
+  );
+
+  const activeStore = useMemo(
+    () => stores.find((s) => s.id === user?.activeStoreId),
+    [stores, user?.activeStoreId]
+  );
+
+  if (!activeStore) {
+    if (isLoadingStores) return <StoreDashboardGateSkeleton />;
+    // Sin tienda activa, o activa pero no accesible/revocada → prompt honesto.
+    return <NoStorePrompt />;
+  }
+
+  return (
+    <LazyStoreDashboardView
+      storeId={activeStore.id}
+      storeName={activeStore.name}
+      onClose={() => setCurrentView('management-hub')}
+    />
+  );
+}
 
 // CAMBIO 1 (HOME/SALES/PERFORMANCE DEFAULTS): prop `embedded` — cuando TRUE,
 // el dashboard se renderiza como sección del Inicio (AICommandCenterView):
@@ -49,8 +137,14 @@ const ExecutiveKpiCards = dynamic(() => import('./ExecutiveKpiCards').then(mod =
 // Tiendas", ViewType 'management-hub'). La fuente de verdad de la tienda activa
 // es la certificada: useAuthStore().user.activeStoreId (profiles.active_store_id).
 // Cero hardcode: sin stores[0], sin tienda fija, sin segunda fuente de verdad.
+//
+// REMEDIACIÓN V2 (fix/dashboard-consolidated-tabs): modo standalone (la entrada
+// "Dashboard" del menú) → vista consolidada por tabs de la tienda activa
+// (StoreDashboardGate). Modo embedded (sección del Inicio) → resumen compacto
+// DashboardViewImpl (Panel de Control como widget, no como destino).
 export default function DashboardView({ embedded = false }: { embedded?: boolean } = {}) {
-  return <DashboardViewImpl embedded={embedded} />;
+  if (embedded) return <DashboardViewImpl embedded />;
+  return <StoreDashboardGate />;
 }
 
 /**

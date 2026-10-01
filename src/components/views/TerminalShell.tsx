@@ -444,6 +444,11 @@ export default function TerminalShell() {
         // 'store-dashboard' ES la entrada "Dashboard" del menú — responde a la
         // tienda activa para todos los roles (el tablero multi-tienda vive en el
         // hub Gestión de Tiendas). El viewName refleja el label de menú real.
+        // REMEDIACIÓN V2 (fix/dashboard-consolidated-tabs): DashboardView
+        // standalone monta la vista consolidada por tabs (Resumen/Productos/
+        // Comportamiento) de la tienda activa — StoreDashboardView, el mismo
+        // componente que Gestión de Tiendas abre por tarjeta. El Panel de
+        // Control queda solo como widget embebido del Inicio.
         case 'store-dashboard': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
         case 'pick3-intelligence': return <ViewErrorBoundary viewName="Gestor de Riesgo"><Pick3IntelligenceView /></ViewErrorBoundary>;
         case 'wallet': return <ViewErrorBoundary viewName="Wallet"><WalletView /></ViewErrorBoundary>;
