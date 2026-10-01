@@ -13,7 +13,7 @@ import {
   ShoppingBag, Tag, BarChart3, Activity, Percent, DollarSign,
   ArrowUpRight, ArrowDownRight, ExternalLink, PanelLeftClose,
   PanelLeftOpen, Search, CalendarRange,
-  LineChart, BookOpen, Crown, CheckCircle2,
+  LineChart, BookOpen, Crown, CheckCircle2, Gauge,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useStoreAnalytics, useStoreInsights, type Insight, type InsightDetail, formatCurrencyShort, PAYMENT_LABELS_ES } from '@/hooks/api/useStoreAnalytics';
@@ -32,6 +32,20 @@ const ECharts = dynamic(() => import('echarts-for-react'), {
   ssr: false,
   loading: () => <div className="h-[280px] w-full rounded-xl bg-muted/20 animate-pulse" />,
 }) as unknown as typeof ReactECharts;
+
+// REMEDIACIÓN V3 (fix/dashboard-tab-panel-control): el anillo concéntrico del
+// antiguo "Panel de Control" — el gráfico circular limpio/minimalista — vuelve
+// como TAB DEFAULT del dashboard consolidado. Dynamic import (framer-motion
+// fuera del chunk crítico), mismo patrón que DashboardView.
+const ConcentricDashboardRing = dynamic(
+  () => import('./ConcentricDashboardRing').then((mod) => mod.ConcentricDashboardRing),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[280px] w-[280px] rounded-2xl bg-muted/20 animate-pulse flex items-center justify-center text-sm text-muted-foreground uppercase font-bold font-display">...</div>
+    ),
+  }
+);
 
 // ── Props ──────────────────────────────────────────────────────
 
@@ -95,13 +109,18 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
   const [days, setDays] = useState(30);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [selectedInsight, setSelectedInsight] = useState<Insight | null>(null);
-  // Pestañas: progressive disclosure — Resumen / Productos / Comportamiento
+  // Pestañas: progressive disclosure — Panel / Resumen / Productos / Comportamiento
   // Pregunta que responde cada una:
+  //   - panel: "¿Qué tan saludable es mi margen?" — REMEDIACIÓN V3
+  //     (fix/dashboard-tab-panel-control): el gráfico circular concéntrico del
+  //     antiguo "Panel de Control" vuelve como tab DEFAULT. Lectura de un
+  //     vistazo con los datos del MISMO rango activo del dashboard (7d/30d/90d
+  //     o personalizado) — sin controles duplicados ni KPIs repetidos.
   //   - resumen: "¿Cómo va la tienda?" (KPIs + insights + tendencia + alertas críticas)
   //   - productos: "¿Qué comprar/descontinuar?" (top + ranking + drill-down + márgenes)
   //   - comportamiento: "¿Cuándo y cómo se vende?" (pagos + weekday + hora + todos los insights)
-  type TabId = 'resumen' | 'productos' | 'comportamiento';
-  const [activeTab, setActiveTab] = useState<TabId>('resumen');
+  type TabId = 'panel' | 'resumen' | 'productos' | 'comportamiento';
+  const [activeTab, setActiveTab] = useState<TabId>('panel');
 
   // Construir parámetros para el hook
   const analyticsParams = useMemo(() => {
@@ -342,6 +361,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
               aria-label="Secciones del dashboard"
             >
               {([
+                { id: 'panel', label: 'Panel', icon: Gauge, hint: 'Panel de Control — margen de un vistazo' },
                 { id: 'resumen', label: 'Resumen', icon: BarChart3, hint: 'KPIs + insights + alertas' },
                 { id: 'productos', label: 'Productos', icon: Package, hint: 'Análisis por producto y categoría' },
                 { id: 'comportamiento', label: 'Comportamiento', icon: Activity, hint: 'Patrones de venta y pago' },
@@ -368,6 +388,19 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                 );
               })}
             </div>
+
+            {/* ────────── TAB PANEL (default — REMEDIACIÓN V3) ──────────
+                El "Panel de Control" (anillo concéntrico minimalista) como
+                primer contacto: margen de un vistazo con los datos del rango
+                activo. El detalle vive en Resumen (progressive disclosure). */}
+            {activeTab === 'panel' && (
+              <PanelTab
+                analytics={analytics}
+                days={days}
+                dateRange={dateRange}
+                onViewDetails={() => setActiveTab('resumen')}
+              />
+            )}
 
             {/* ────────── TAB 1: RESUMEN ──────────
                 Audiencia: decisor / dueño
@@ -891,6 +924,77 @@ function SmartPurchaseOrderButton({ analytics, storeId }: {
 }
 
 // ── KPIs Hero Row con tendencia ────────────────────────────────
+
+// ── PanelTab (REMEDIACIÓN V3 — fix/dashboard-tab-panel-control) ────────────
+// El "gráfico limpio circular" del antiguo Panel de Control (anillo
+// concéntrico Ventas/Costos/Ganancia con margen % al centro) vuelve como
+// tab DEFAULT del dashboard consolidado. Minimalista por diseño:
+//   - Datos del MISMO rango activo del dashboard (7d/30d/90d o personalizado)
+//     — una sola fuente de verdad, sin controles de fecha duplicados.
+//   - No duplica KPI cards, insights ni alertas (viven en Resumen): el CTA
+//     "Ver detalle completo" conduce al tab Resumen (progressive disclosure).
+//   - Mini-stats y etiquetas reutilizan las claves i18n ring.sales/costs/profit.
+function PanelTab({
+  analytics, days, dateRange, onViewDetails,
+}: {
+  analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']>;
+  days: number;
+  dateRange?: DateRange;
+  onViewDetails: () => void;
+}) {
+  const t = useTranslations('dashboard.storeDashboard');
+  const k = analytics.kpis;
+  const sales = k.period_sales;
+  const costs = k.period_cost;
+  const profit = sales - costs;
+
+  const rangeText = dateRange?.from && dateRange?.to
+    ? `${format(dateRange.from, 'dd/MM/yy')} → ${format(dateRange.to, 'dd/MM/yy')}`
+    : `Últimos ${days} días`;
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-2xl border border-border/50 bg-card/50 px-4 sm:px-8 py-6 flex flex-col items-center">
+        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{rangeText}</p>
+
+        <ConcentricDashboardRing sales={sales} costs={costs} profit={profit} />
+
+        {/* Mini stats bajo el anillo — idénticas al Panel de Control original */}
+        <div className="grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-sm mt-4">
+          <div className="flex flex-col items-center">
+            <div className="w-2 h-2 rounded-full bg-primary mb-2" />
+            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('ring.sales')}</span>
+            <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(sales)}</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="w-2 h-2 rounded-full bg-muted-foreground/50 mb-2" />
+            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('ring.costs')}</span>
+            <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(costs)}</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="w-2 h-2 rounded-full bg-success mb-2" />
+            <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('ring.profit')}</span>
+            <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(profit)}</span>
+          </div>
+        </div>
+
+        {/* Contexto "hoy" — conecta la lectura de un vistazo con el día en curso */}
+        <p className="mt-6 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          Hoy: <span className="text-foreground tabular-nums">{formatCurrency(k.today_sales)}</span> · {k.today_transactions} tx
+        </p>
+
+        <button
+          type="button"
+          onClick={onViewDetails}
+          className="mt-3 inline-flex items-center gap-1 min-h-[44px] px-4 text-xs font-black uppercase tracking-widest text-primary hover:underline transition-colors"
+        >
+          Ver detalle completo
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function KpiHeroRow({ analytics, days }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']>; days: number }) {
   const t = useTranslations('dashboard.storeDashboard');

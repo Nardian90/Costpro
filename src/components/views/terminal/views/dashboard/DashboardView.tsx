@@ -43,11 +43,13 @@ const ExecutiveKpiCards = dynamic(() => import('./ExecutiveKpiCards').then(mod =
 // REMEDIACIÓN V2 (fix/dashboard-consolidated-tabs): UN SOLO DASHBOARD.
 //
 // "Dashboard" (ViewType 'store-dashboard', menú Inicio → OPERACIÓN) abre la
-// vista consolidada por tabs — Resumen / Productos / Comportamiento — de la
-// TIENDA ACTIVA: StoreDashboardView, el MISMO componente que "Gestión de
+// vista consolidada por tabs — Panel / Resumen / Productos / Comportamiento —
+// de la TIENDA ACTIVA: StoreDashboardView, el MISMO componente que "Gestión de
 // Tiendas" abre por tienda (botón "Dashboard" de cada tarjeta). El viejo
-// "Panel de Control" deja de ser un destino standalone; sobrevive SOLO como
-// resumen compacto embebido del Inicio (AICommandCenterView, prop embedded).
+// "Panel de Control" deja de ser un destino standalone; sobrevive como (1)
+// tab default "Panel" del dashboard consolidado (REMEDIACIÓN V3 — su gráfico
+// circular concéntrico, fix/dashboard-tab-panel-control) y como (2) resumen
+// compacto embebido del Inicio (AICommandCenterView, prop embedded).
 //
 //   Acceso 1: menú Inicio → OPERACIÓN → Dashboard  → tienda ACTIVA
 //             (fuente de verdad certificada: user.activeStoreId =
@@ -142,6 +144,9 @@ function StoreDashboardGate() {
 // "Dashboard" del menú) → vista consolidada por tabs de la tienda activa
 // (StoreDashboardGate). Modo embedded (sección del Inicio) → resumen compacto
 // DashboardViewImpl (Panel de Control como widget, no como destino).
+// REMEDIACIÓN V3 (fix/dashboard-tab-panel-control): la vista consolidada abre
+// por defecto en el tab "Panel" (anillo concéntrico del antiguo Panel de
+// Control) — el widget embebido del Inicio NO cambia.
 export default function DashboardView({ embedded = false }: { embedded?: boolean } = {}) {
   if (embedded) return <DashboardViewImpl embedded />;
   return <StoreDashboardGate />;
