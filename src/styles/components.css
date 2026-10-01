@@ -446,7 +446,13 @@
   /* ── Grid Table Utilities ── */
   .grid-table-pos tr { display: grid !important; grid-template-columns: minmax(200px, 2fr) minmax(100px, 1fr) 100px 120px 80px !important; width: 100%; }
   .grid-table-catalog tr { display: grid !important; grid-template-columns: minmax(200px, 2fr) minmax(100px, 1fr) minmax(100px, 1fr) 100px 100px 100px !important; width: 100%; }
-  .grid-table-inventory tr { display: grid !important; grid-template-columns: minmax(200px, 2fr) 120px 100px 100px 100px 100px 120px !important; width: 100%; }
+  /* REMEDIACIÓN (fix/inventory-stock-table-actions): la tabla de inventario
+     tiene 8 columnas (Producto, SKU, Stock, Precio, Empresa, Costo, FC,
+     Acciones) — el template anterior definía 7 tracks, por lo que la celda
+     de Acciones caía a una SEGUNDA fila del grid (filas de doble altura).
+     La columna Acciones es ahora una zona de overflow estable de 56px (botón
+     ⋮ único, white-space nowrap). */
+  .grid-table-inventory tr { display: grid !important; grid-template-columns: minmax(200px, 2fr) 110px 90px 110px 110px 110px 120px 56px !important; width: 100%; }
   .grid-table-transactions tr { display: grid !important; grid-template-columns: 100px 1fr 120px 120px 100px 80px !important; width: 100%; }
   .grid-table-audit tr { display: grid !important; grid-template-columns: 120px 1fr 100px 120px 150px !important; width: 100%; }
   .grid-table-users tr { display: grid !important; grid-template-columns: 1.5fr 1fr 1fr 100px 100px !important; width: 100%; }

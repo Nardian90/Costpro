@@ -990,6 +990,7 @@ export default function InventoryView() {
                                 isLoading={isFetchingNextPage}
                                 onAdjust={handleAdjustProduct}
                                 onEdit={handleOpenEdit}
+                                onViewKardex={setKardexProduct}
                                 fcStatusMap={fcStatusMap}
                                 onViewFC={handleViewFC}
                                 onToggleVisible={handleToggleVisible}
