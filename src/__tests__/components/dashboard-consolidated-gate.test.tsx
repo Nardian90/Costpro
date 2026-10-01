@@ -5,7 +5,8 @@
  * Contrato verificado:
  *   1. La entrada "Dashboard" del menú (ViewType 'store-dashboard' →
  *      DashboardView standalone) monta StoreDashboardView — la MISMA vista
- *      consolidada por tabs (Resumen / Productos / Comportamiento) que
+ *      consolidada por tabs (Panel / Resumen / Productos / Comportamiento —
+ *      tab "Panel" default desde fix/dashboard-tab-panel-control) que
  *      "Gestión de Tiendas" abre con el botón "Dashboard" de cada tarjeta.
  *   2. Fuente de verdad (FASE 3): storeId SIEMPRE = user.activeStoreId;
  *      el nombre se resuelve del listado useStores (misma fuente que el
