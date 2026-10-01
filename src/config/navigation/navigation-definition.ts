@@ -116,19 +116,25 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
       // 'store-dashboard' (antes "Dashboard de Tiendas" en ANÁLISIS — se
       // MUEVE, no se duplica: NO DUPLICAR HUBS).
       // REMEDIACIÓN (fix/dashboard-active-store): el ViewType 'store-dashboard'
-      // responde SIEMPRE a la tienda activa (DashboardViewImpl con
-      // user.activeStoreId) para TODOS los roles — la rama admin/manager que
-      // renderizaba MultiStoreDashboardView fue retirada. El tablero
-      // consolidado multi-tienda vive como tab "KPIs" del hub 'management-hub'
-      // ("Gestión de Tiendas"), no como respuesta de esta entrada.
+      // responde SIEMPRE a la tienda activa (user.activeStoreId) para TODOS los
+      // roles — la rama admin/manager que renderizaba MultiStoreDashboardView
+      // fue retirada. El tablero consolidado multi-tienda vive como tab "KPIs"
+      // del hub 'management-hub' ("Gestión de Tiendas"), no como respuesta de
+      // esta entrada.
+      // REMEDIACIÓN V2 (fix/dashboard-consolidated-tabs): UN SOLO DASHBOARD —
+      // esta entrada abre la vista consolidada por tabs (Resumen / Productos /
+      // Comportamiento) de la tienda activa: StoreDashboardView, el MISMO
+      // componente que Gestión de Tiendas abre con el botón "Dashboard" de cada
+      // tarjeta. El "Panel de Control" deja de ser destino standalone (solo
+      // queda como widget embebido del Inicio).
       {
         id: 'store-dashboard',
         label: 'Dashboard',
-        description: 'Dashboard de la tienda activa: ventas, costos, ganancia y alertas de stock en tiempo real.',
+        description: 'Dashboard consolidado de la tienda activa: tabs Resumen (KPIs, insights, tendencia), Productos y Comportamiento.',
         icon: TrendingUp,
         type: 'item',
         navClass: 'primary',
-        keywords: ['dashboard', 'tienda', 'kpi', 'indicadores', 'consolidado', 'resumen', 'inicio'],
+        keywords: ['dashboard', 'tienda', 'kpi', 'indicadores', 'consolidado', 'resumen', 'inicio', 'productos', 'comportamiento', 'insights', 'orden de compra'],
       },
       // CAMBIO 4 (HOME/SALES/PERFORMANCE DEFAULTS): grupo explícito "Ventas"
       // con la acción de vender + las opciones administrativas. La antigua
