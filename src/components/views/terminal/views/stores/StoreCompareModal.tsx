@@ -255,11 +255,21 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
                     <div
                       className={cn(
                         "h-full transition-all duration-500 flex items-center justify-end pr-2",
-                        c.healthScore >= 80 ? 'bg-success' : c.healthScore >= 40 ? 'bg-amber-500' : 'bg-destructive'
+                        // FIX-STORE-MGMT-A11Y: el color del texto acompaña al fondo
+                        // por banda (los tokens semánticos aclaran en dark):
+                        //  - success: #047857 claro→texto blanco / #34d399 dark→texto oscuro
+                        //  - amber-500 es claro en AMBOS modos → texto oscuro siempre
+                        //    (blanco sobre ámbar medía ~1.9:1)
+                        //  - destructive: #dc2626 claro→blanco / #ef4444 dark→oscuro
+                        c.healthScore >= 80
+                          ? 'bg-success text-white dark:text-black'
+                          : c.healthScore >= 40
+                            ? 'bg-amber-500 text-black'
+                            : 'bg-destructive text-white dark:text-black'
                       )}
                       style={{ width: `${c.healthScore}%` }}
                     >
-                      <span className="text-sm font-black text-white">{c.healthScore}%</span>
+                      <span className="text-sm font-black">{c.healthScore}%</span>
                     </div>
                   </div>
                 </div>

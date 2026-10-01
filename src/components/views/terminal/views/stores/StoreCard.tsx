@@ -329,7 +329,7 @@ export function StoreCard({
             aria-label={`${t('selectStore')} ${store.name}`}
             aria-pressed={false}
             aria-describedby={`store-desc-${store.id}`}
-            className="w-full min-h-[44px] py-2.5 rounded-xl bg-primary text-foreground font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            className="w-full min-h-[44px] py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
           >
             <Target className="w-3.5 h-3.5" />
             {t('selectStore')}
