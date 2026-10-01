@@ -15,95 +15,199 @@
  * - Running dev server (npm run dev)
  * - Seeded admin user (e2e-admin@costpro.test)
  * - At least 2 active stores in the test database
+ *
+ * E2E-DEBT-CLEANUP (store-switching x7):
+ * Los 7 tests del dashboard estaban stale: esperaban [role="article"] en
+ * /?view=dashboard, pero el tablero multi-tienda renderiza StoreKPICard
+ * (div sin role) desde ANTES de #1340/#1342. Reescritos contra el contrato
+ * actual con selectores semánticos estables:
+ *   - heading "Tablero Consolidado" (h2 del dashboard)
+ *   - botón "Activar {tienda} como tienda de trabajo" (aria-label único por tienda)
+ *   - badge "Activa" (único en el tablero por contexto activo)
+ *   - toast "Tienda cambiada exitosamente" (sonner)
+ *   - td[aria-label="Producto: {nombre}"] (inventario de la tienda activa)
+ * SEC-TS-08: los tests de switch operan SOBRE tiendas de prueba creadas por
+ * este spec (A y B) con producto sembrado cada una — nunca sobre tiendas
+ * operativas (TIENDA CENTRAL / Puerto Padre / Enervida) ni pilotos.
  */
 import { test, expect, waitForStoresView } from './fixtures';
+// E2E-DEBT-CLEANUP: fixture de datos de prueba (tiendas A/B + productos)
+import {
+  signIn,
+  createTestStore,
+  deleteTestStore,
+  seedProduct,
+  cleanupProducts,
+} from './fixtures/session.fixture';
 import { sb } from './fixtures/session.fixture';
 
 // ── 1. DASHBOARD SWITCHING ──────────────────────────────────────────
 
-// SEC-TS-08 (aislamiento): el test 'clicking activate' cambia el
-// active_store del usuario E2E a la primera tienda activable — que puede
-// ser una tienda REAL (Puerto Padre / Enervida). Se captura el valor
-// ORIGINAL antes de la suite y se restaura en afterAll: el perfil no
-// queda apuntando a una tienda elegida por un test.
+// SEC-TS-08 (aislamiento): el perfil del admin se restaura en afterAll al
+// valor ORIGINAL capturado en beforeAll — ningún test deja el puntero
+// active_store apuntando a una tienda de prueba eliminada.
 let switchingOriginalActiveStore: string | null | undefined;
 let switchingAdminId: string | null = null;
 
-test.beforeAll(async () => {
-  const uid = process.env.E2E_TEST_ADMIN_ID;
-  if (!uid || !process.env.SUPABASE_SERVICE_ROLE_KEY) return;
-  switchingAdminId = uid;
+// E2E-DEBT-CLEANUP: tiendas de prueba propias del spec (CREATE→TRACK→TEST→CLEANUP)
+let storeA: { id: string; name: string; slug: string } | null = null;
+let storeB: { id: string; name: string; slug: string } | null = null;
+let productA: { id: string; name: string } | null = null;
+let productB: { id: string; name: string } | null = null;
+let adminToken = '';
+
+/** Espera a que el tablero multi-tienda termine de cargar (contrato actual) */
+async function waitForDashboardLoaded(page: import('@playwright/test').Page) {
+  // El dashboard renderiza h2 "Tablero Consolidado" (i18n stores.dashboard.consolidatedBoard)
+  await expect(
+    page.getByRole('heading', { name: 'Tablero Consolidado' }),
+  ).toBeVisible({ timeout: 20_000 });
+}
+
+/** Botón "Activar {tienda} como tienda de trabajo" — aria-label único por KPI card */
+function activateButtonFor(page: import('@playwright/test').Page, storeName: string) {
+  return page.getByRole('button', { name: `Activar ${storeName} como tienda de trabajo` });
+}
+
+/** El badge "Activa" solo existe en la KPI card de la tienda activa */
+function activeBadge(page: import('@playwright/test').Page) {
+  return page.getByText('Activa', { exact: true });
+}
+
+test.beforeAll(async ({ request }) => {
+  // SEC-TS-10: timeout extendido — el setup paceado (2 tiendas con presupuesto
+  // create 4/min) puede esperar hasta ~120 s por la ventana de rate-limit
+  test.setTimeout(240_000);
+  // E2E-DEBT-CLEANUP: sesión fresca + captura del active store original
   try {
-    const rows = await sb.select<{ active_store_id: string | null }>(
-      'profiles', `id=eq.${uid}&select=active_store_id&limit=1`,
+    const session = await signIn(
+      process.env.E2E_ADMIN_EMAIL || 'admin@costpro.com',
+      process.env.E2E_ADMIN_PASS || 'costpro123',
     );
-    switchingOriginalActiveStore = rows[0]?.active_store_id ?? null;
-  } catch { /* sin service-role disponible — sin restore */ }
+    adminToken = session.token;
+    switchingAdminId = session.userId;
+  } catch { /* sin sesión — los tests individuales reportarán */ }
+
+  if (switchingAdminId && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const rows = await sb.select<{ active_store_id: string | null }>(
+        'profiles', `id=eq.${switchingAdminId}&select=active_store_id&limit=1`,
+      );
+      switchingOriginalActiveStore = rows[0]?.active_store_id ?? null;
+    } catch { /* sin service-role disponible — sin restore */ }
+  }
+
+  // CREATE: dos tiendas de prueba aisladas (con pacing de rate-limit) + 1 producto cada una
+  if (adminToken) {
+    try {
+      storeA = await createTestStore(request, adminToken, 'SW A');
+      productA = await seedProduct(storeA, {
+        name: `E2E Prod A ${storeA.slug}`,
+        price: 10,
+        cost: 5,
+        quantity: 5,
+      });
+      storeB = await createTestStore(request, adminToken, 'SW B');
+      productB = await seedProduct(storeB, {
+        name: `E2E Prod B ${storeB.slug}`,
+        price: 20,
+        cost: 8,
+        quantity: 7,
+      });
+    } catch (e) {
+      // El setup falló — los tests lo reportarán; el afterAll limpia lo creado
+      console.error('[store-switching] setup de tiendas de prueba falló:', e);
+    }
+  }
 });
 
-test.afterAll(async () => {
-  if (!switchingAdminId || switchingOriginalActiveStore === undefined) return;
-  await sb.update('profiles', `id=eq.${switchingAdminId}`, { active_store_id: switchingOriginalActiveStore }).catch(() => {});
+test.afterAll(async ({ request }) => {
+  // CLEANUP: restaurar contexto ANTES de eliminar las tiendas (evita puntero huérfano)
+  if (switchingAdminId && switchingOriginalActiveStore !== undefined) {
+    await sb.update('profiles', `id=eq.${switchingAdminId}`, { active_store_id: switchingOriginalActiveStore }).catch(() => {});
+  }
+  for (const [store, product] of [[storeA, productA], [storeB, productB]] as const) {
+    if (store && product) {
+      await cleanupProducts(store.id, [product.id]).catch(() => {});
+    }
+    if (store && adminToken) {
+      await deleteTestStore(request, adminToken, store.id).catch(() => {});
+    }
+  }
 });
 
 test.describe('Store Switching: Dashboard UI', () => {
   test('admin sees multi-store dashboard with KPI cards', async ({ authedPage: page }) => {
+    test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
+    // Deep-link vigente: /?view=dashboard renderiza el tablero multi-tienda
     await page.goto('/?view=dashboard');
-    await waitForStoresView(page);
+    await waitForDashboardLoaded(page);
 
-    // The multi-store dashboard should render store KPI cards
-    const storeCards = page.locator('[class*="rounded-2xl"]').filter({ hasText: /ventas|sales/i });
-    const count = await storeCards.count();
-    // Admin should see at least one store card (or empty state)
-    expect(count).toBeGreaterThanOrEqual(0);
+    // El tablero renderiza KPI cards: cada StoreKPICard expone el nombre de la
+    // tienda en un heading h3 y (si no está activa) el botón semántico "Activar"
+    const headingA = page.getByRole('heading', { name: storeA!.name, exact: true });
+    const headingB = page.getByRole('heading', { name: storeB!.name, exact: true });
+    await expect(headingA).toBeVisible({ timeout: 15_000 });
+    await expect(headingB).toBeVisible({ timeout: 15_000 });
+
+    // Exactly one store is active at any time — el badge "Activa" es único
+    await expect(activeBadge(page)).toHaveCount(1);
   });
 
   test('clicking activate on a store changes the active store indicator', async ({ authedPage: page }) => {
+    test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
     await page.goto('/?view=dashboard');
-    await waitForStoresView(page);
+    await waitForDashboardLoaded(page);
+    await expect(page.getByRole('heading', { name: storeB!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
-    const activateButtons = page.locator('button', { hasText: /activar|activate/i });
-    const buttonCount = await activateButtons.count();
+    // Elegir un destino cuyo botón "Activar" esté disponible (no es la activa)
+    const activateB = activateButtonFor(page, storeB!.name);
+    const activateA = activateButtonFor(page, storeA!.name);
+    const target = (await activateB.count()) > 0 ? storeB!.name : storeA!.name;
+    const targetButton = target === storeB!.name ? activateB : activateA;
+    const other = target === storeB!.name ? storeA!.name : storeB!.name;
+    await expect(targetButton).toBeVisible({ timeout: 10_000 });
 
-    if (buttonCount === 0) {
-      test.skip();
-      return;
-    }
+    // Click en "Activar {target} como tienda de trabajo"
+    await targetButton.click();
 
-    // Click the first available activate button
-    await activateButtons.first().click();
+    // Confirmación observable del switch (useStoreSwitcher → sonner)
+    await expect(page.getByText('Tienda cambiada exitosamente')).toBeVisible({ timeout: 15_000 });
 
-    // Wait for toast notification or state update
-    await expect(page.locator('text=/tienda cambiada|store changed|exitosamente|successfully/i')).toBeVisible({
-      timeout: 10_000,
-    }).catch(() => {
-      // Toast may disappear quickly — verify via UI state instead
-    });
-
-    // Allow for state propagation
-    await page.waitForTimeout(2_000);
+    // El indicador de tienda activa pasa al destino: badge único + botón
+    // "Activar" desaparece de la card destino y aparece en la otra
+    await expect(activateButtonFor(page, target)).toHaveCount(0, { timeout: 15_000 });
+    await expect(activateButtonFor(page, other).first()).toBeVisible({ timeout: 15_000 });
+    await expect(activeBadge(page)).toHaveCount(1);
   });
 
   test('switching stores invalidates dependent query data', async ({ authedPage: page }) => {
+    test.skip(!storeA || !storeB || !productB, 'setup de tiendas de prueba no disponible');
     await page.goto('/?view=dashboard');
-    await waitForStoresView(page);
+    await waitForDashboardLoaded(page);
+    await expect(page.getByRole('heading', { name: storeB!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
-    const activateButtons = page.locator('button', { hasText: /activar|activate/i });
-    const buttonCount = await activateButtons.count();
-
-    if (buttonCount === 0) {
-      test.skip();
-      return;
+    // Cambiar a la tienda B (o A si B ya está activa)
+    const activateB = activateButtonFor(page, storeB!.name);
+    let targetName = storeB!.name;
+    if ((await activateB.count()) === 0) {
+      targetName = storeA!.name;
+      await expect(activateButtonFor(page, storeA!.name)).toBeVisible({ timeout: 10_000 });
+      await activateButtonFor(page, storeA!.name).click();
+    } else {
+      await activateB.click();
     }
 
-    // Click to switch store
-    await activateButtons.first().click();
-
-    // After switching, verify no error toasts appear (indicating clean data refresh)
+    // Switch completado sin errores de refresco (queries invalidadas → refetch limpio)
+    await expect(page.getByText('Tienda cambiada exitosamente')).toBeVisible({ timeout: 15_000 });
     const errorToast = page.locator('[data-sonner-toast][data-type="error"]');
-    await expect(errorToast).not.toBeVisible({ timeout: 5_000 }).catch(() => {
-      // Error toast means the switch failed — acceptable for test env without data
-    });
+    await expect(errorToast).toHaveCount(0, { timeout: 5_000 });
+
+    // La vista dependiente (inventario) sirve datos de la tienda recién activada:
+    // el producto sembrado de la tienda destino aparece tras el switch.
+    await page.goto('/?view=inventory');
+    const targetProduct = targetName === storeB!.name ? productB!.name : productA!.name;
+    await expect(page.locator(`td[aria-label="Producto: ${targetProduct}"]`)).toBeVisible({ timeout: 20_000 });
   });
 });
 
@@ -214,33 +318,34 @@ test.describe('Store Switching: API Access', () => {
 
 test.describe('Store Switching: Data Isolation', () => {
   test('switching store clears previous store context', async ({ authedPage: page }) => {
+    test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
     await page.goto('/?view=dashboard');
-    await waitForStoresView(page);
+    await waitForDashboardLoaded(page);
+    await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
-    const activateButtons = page.locator('button', { hasText: /activar|activate/i });
-    const buttonCount = await activateButtons.count();
-
-    if (buttonCount === 0) {
-      test.skip();
-      return;
+    // Cambiar primero a A (si no está ya activa)
+    const activateA = activateButtonFor(page, storeA!.name);
+    if ((await activateA.count()) > 0) {
+      await activateA.click();
+      await expect(page.getByText('Tienda cambiada exitosamente').last()).toBeVisible({ timeout: 15_000 });
+      // El contexto A queda establecido: botón de A desaparece, badge único
+      await expect(activateButtonFor(page, storeA!.name)).toHaveCount(0, { timeout: 15_000 });
+      await expect(activeBadge(page)).toHaveCount(1);
     }
 
-    // Note current store name if visible
-    const currentStoreBadge = page.locator('text=/actual|current/i').first();
+    // Switch A → B
+    const activateB = activateButtonFor(page, storeB!.name);
+    await expect(activateB).toBeVisible({ timeout: 10_000 });
+    await activateB.click();
+    // .last(): este test ejecuta DOS switches en la misma página — sonner puede
+    // mantener ambos toasts de éxito apilados (matches legítimos, no ambigüedad)
+    await expect(page.getByText('Tienda cambiada exitosamente').last()).toBeVisible({ timeout: 15_000 });
 
-    // Click to switch
-    await activateButtons.first().click();
-    await page.waitForTimeout(3_000);
-
-    // After switch, the "actual/current" badge should have changed
-    // This is a soft verification — exact behavior depends on implementation
-    const newBadge = page.locator('text=/actual|current/i').first();
-    const isVisible = await newBadge.isVisible().catch(() => false);
-    // If badge was visible before and still visible after switch, content should differ
-    if (isVisible) {
-      // Store switch completed successfully
-      expect(true).toBe(true);
-    }
+    // El contexto previo (A) queda limpiado: A recupera su botón "Activar",
+    // B lo pierde, y el badge "Activa" sigue siendo ÚNICO (sin contexto dual)
+    await expect(activateButtonFor(page, storeA!.name)).toBeVisible({ timeout: 15_000 });
+    await expect(activateButtonFor(page, storeB!.name)).toHaveCount(0, { timeout: 15_000 });
+    await expect(activeBadge(page)).toHaveCount(1);
   });
 
   test('deleted store is removed from active store options', async ({ authedPage: page }) => {
@@ -263,46 +368,35 @@ test.describe('Store Switching: Data Isolation', () => {
 
   // FIX-AUDIT-E2E-002: Verify store data changes after switching
   test('after switching store, inventory data belongs to the new store', async ({ authedPage: page }) => {
+    test.skip(!storeA || !storeB || !productA || !productB, 'setup de tiendas de prueba no disponible');
     await page.goto('/?view=dashboard');
-    await waitForStoresView(page);
+    await waitForDashboardLoaded(page);
+    await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
-    const activateButtons = page.locator('button', { hasText: /activar|activate/i });
-    const buttonCount = await activateButtons.count();
-
-    if (buttonCount < 2) {
-      test.skip();
-      return;
+    // 1. Activar tienda A y verificar que su inventario muestra SOLO su producto
+    const activateA = activateButtonFor(page, storeA!.name);
+    if ((await activateA.count()) > 0) {
+      await activateA.click();
+      await expect(page.getByText('Tienda cambiada exitosamente')).toBeVisible({ timeout: 15_000 });
     }
-
-    // Activate first store and note its inventory state
-    await activateButtons.first().click();
-    await page.waitForTimeout(2_000);
-
-    // Navigate to inventory view
     await page.goto('/?view=inventory');
-    await page.waitForTimeout(3_000);
+    await expect(page.locator(`td[aria-label="Producto: ${productA!.name}"]`)).toBeVisible({ timeout: 20_000 });
+    // Sin contaminación de B: el producto de B NO aparece en el inventario de A
+    await expect(page.locator(`td[aria-label="Producto: ${productB!.name}"]`)).toHaveCount(0);
 
-    // Store the product count or state for first store
-    const firstStoreProducts = await page.locator('[role="row"], [data-testid="product-row"]').count();
-
-    // Go back to dashboard and switch to second store
+    // 2. Cambiar a B y verificar que el inventario pasa a datos de B
     await page.goto('/?view=dashboard');
-    await waitForStoresView(page);
+    await waitForDashboardLoaded(page);
+    const activateB = activateButtonFor(page, storeB!.name);
+    await expect(activateB).toBeVisible({ timeout: 15_000 });
+    await activateB.click();
+    await expect(page.getByText('Tienda cambiada exitosamente')).toBeVisible({ timeout: 15_000 });
 
-    const activateButtons2 = page.locator('button', { hasText: /activar|activate/i });
-    if (await activateButtons2.count() >= 2) {
-      await activateButtons2.nth(1).click();
-      await page.waitForTimeout(2_000);
-
-      // Navigate to inventory for second store
-      await page.goto('/?view=inventory');
-      await page.waitForTimeout(3_000);
-
-      const secondStoreProducts = await page.locator('[role="row"], [data-testid="product-row"]').count();
-
-      // The product counts may differ between stores — verify the page loaded without errors
-      expect(typeof secondStoreProducts).toBe('number');
-    }
+    await page.goto('/?view=inventory');
+    // Los datos relevantes pertenecen a B...
+    await expect(page.locator(`td[aria-label="Producto: ${productB!.name}"]`)).toBeVisible({ timeout: 20_000 });
+    // ...y NO aparece contaminación de A
+    await expect(page.locator(`td[aria-label="Producto: ${productA!.name}"]`)).toHaveCount(0);
   });
 });
 
@@ -310,58 +404,70 @@ test.describe('Store Switching: Data Isolation', () => {
 
 test.describe('Store Switching: Concurrency Guard', () => {
   test('rapid consecutive clicks do not cause race conditions', async ({ authedPage: page }) => {
+    test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
     await page.goto('/?view=dashboard');
-    await waitForStoresView(page);
+    await waitForDashboardLoaded(page);
+    await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
-    const activateButtons = page.locator('button', { hasText: /activar|activate/i });
-    const buttonCount = await activateButtons.count();
-
-    if (buttonCount < 2) {
-      test.skip();
-      return;
+    const activateA = activateButtonFor(page, storeA!.name);
+    const activateB = activateButtonFor(page, storeB!.name);
+    // Dos botones disponibles (ninguna de las dos tiendas es la activa). Si un
+    // test previo dejó A o B activa, restaurar el contexto ORIGINAL (capturado
+    // en beforeAll — siempre distinto de las tiendas de prueba) y recargar.
+    let aCount = await activateA.count();
+    let bCount = await activateB.count();
+    if (aCount + bCount < 2 && switchingAdminId && switchingOriginalActiveStore != null) {
+      await sb.update('profiles', `id=eq.${switchingAdminId}`, { active_store_id: switchingOriginalActiveStore }).catch(() => {});
+      await page.reload();
+      await waitForDashboardLoaded(page);
+      await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
+      aCount = await activateA.count();
+      bCount = await activateB.count();
     }
+    test.skip(aCount + bCount < 2, 'no hay dos tiendas conmutables disponibles');
 
-    // Rapidly click two different activate buttons
-    await activateButtons.nth(0).click();
-    // Immediately click another
-    await activateButtons.nth(1).click();
+    // Clicks rápidos en dos tiendas distintas — useStoreSwitcher debe
+    // serializarlos (isSwitchingRef bloquea el concurrente). noWaitAfter evita
+    // que Playwright espere estabilidad post-click (eso eliminaría la carrera);
+    // el segundo click es best-effort: si el re-render lo intercepta, la
+    // invariante final sigue siendo la que se valida.
+    if (aCount > 0) await activateA.click({ noWaitAfter: true }).catch(() => {});
+    if (bCount > 0) await activateB.click({ noWaitAfter: true }).catch(() => {});
 
-    // Wait for state to settle
+    // Esperar a que el estado se estabilice (el switch en curso completa)
     await page.waitForTimeout(5_000);
 
-    // The app should not crash — verify the page is still functional
+    // La app no se rompe: el tablero sigue funcional
     const bodyVisible = await page.locator('body').isVisible();
     expect(bodyVisible).toBe(true);
+    await expect(page.getByRole('heading', { name: 'Tablero Consolidado' })).toBeVisible({ timeout: 10_000 });
 
-    // Verify no unhandled error toasts
-    const errorToast = page.locator('[data-sonner-toast][data-type="error"]');
-    // We may see a "switch already in progress" warning, which is expected
-    const hasError = await errorToast.isVisible().catch(() => false);
-    // Even if there's an error toast, the page should remain functional
-    expect(bodyVisible).toBe(true);
+    // Invariante de la guard de concurrencia: EXACTAMENTE una tienda activa
+    await expect(activeBadge(page)).toHaveCount(1, { timeout: 15_000 });
   });
 
   // FIX-AUDIT-E2E-003: Verify store switch completes within reasonable time
   test('store switch completes within 5 seconds', async ({ authedPage: page }) => {
+    test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
     await page.goto('/?view=dashboard');
-    await waitForStoresView(page);
+    await waitForDashboardLoaded(page);
+    await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
-    const activateButtons = page.locator('button', { hasText: /activar|activate/i });
-    const buttonCount = await activateButtons.count();
+    // Destino conmutable disponible
+    const activateB = activateButtonFor(page, storeB!.name);
+    const activateA = activateButtonFor(page, storeA!.name);
+    const targetButton = (await activateB.count()) > 0 ? activateB : activateA;
+    const target = (await activateB.count()) > 0 ? storeB!.name : storeA!.name;
+    await expect(targetButton).toBeVisible({ timeout: 10_000 });
 
-    if (buttonCount === 0) {
-      test.skip();
-      return;
-    }
-
+    // Medir el switch OBSERVABLE: click → confirmación (toast + badge)
     const startTime = Date.now();
-    await activateButtons.first().click();
-
-    // Wait for any visual confirmation of the switch completing
-    await page.waitForTimeout(1_000);
-
+    await targetButton.click();
+    await expect(page.getByText('Tienda cambiada exitosamente')).toBeVisible({ timeout: 15_000 });
+    await expect(activateButtonFor(page, target)).toHaveCount(0, { timeout: 15_000 });
     const elapsed = Date.now() - startTime;
-    // The switch should be initiated well within 5 seconds
+
+    // El switch completo (PATCH + invalidaciones + UI) debe ser rápido
     expect(elapsed).toBeLessThan(5_000);
   });
 });
