@@ -312,7 +312,9 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
                 <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
                   <div className={cn(
                     "w-11 h-11 rounded-full flex items-center justify-center border-2 transition-all shrink-0",
-                    isCompleted ? "bg-success border-success text-white" :
+                    // FIX-STORE-MGMT-A11Y: bg-success aclara en dark (#34d399) —
+                    // el par correcto en dark es texto oscuro (blanco medía 1.92:1).
+                    isCompleted ? "bg-success border-success text-white dark:text-black" :
                     isActive ? "border-primary text-primary bg-primary/5" : "border-border text-muted-foreground"
                   )}>
                     {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}

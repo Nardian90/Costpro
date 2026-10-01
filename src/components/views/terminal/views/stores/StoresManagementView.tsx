@@ -250,12 +250,18 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
                   key={f.id}
                   onClick={() => setStatusFilter(f.id)}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
+                    'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                    // FIX-STORE-MGMT-A11Y: --success/--destructive cambian a
+                    // valores claros en dark (#34d399/#ef4444) — el par correcto
+                    // en dark es texto oscuro (precedente: InventoryView,
+                    // CatalogImportDialog, DuplicateDocumentModal con
+                    // text-white dark:text-black). En Dark+Performance sin este
+                    // fix, el chip "Activas" medía 1.92:1 (blanco sobre menta).
                     statusFilter === f.id
                       ? f.id === 'active'
-                        ? 'bg-success text-white shadow-md'
+                        ? 'bg-success text-white dark:text-black shadow-md'
                         : f.id === 'inactive'
-                          ? 'bg-destructive text-white shadow-md'
+                          ? 'bg-destructive text-white dark:text-black shadow-md'
                           : 'bg-primary text-primary-foreground shadow-md'
                       : 'text-muted-foreground hover:text-foreground',
                   )}

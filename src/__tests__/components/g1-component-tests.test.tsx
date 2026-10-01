@@ -4,8 +4,8 @@
  * StoreCompareModal, StoreOnboardingWizard.
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -183,15 +183,117 @@ describe('G1.1 — Tests de render componentes MULTI-TIENDA', () => {
     });
   });
 
-  describe('ManagementHubView (remediación)', () => {
-    it('expone el tab "KPIs" — el tablero multi-tienda vive en Gestión de Tiendas', async () => {
+  describe('ManagementHubView (IA-FIX: view switcher)', () => {
+    // IA-FIX (fix/store-management-view-switcher-a11y): "Tiendas" y "KPIs"
+    // eran dos representaciones del MISMO contenido → dejan de ser tabs
+    // independientes. Nuevo contrato:
+    //   - tabs semánticos: Tiendas | Vitrina (contenidos conceptualmente
+    //     distintos — KPIs ya NO es tab)
+    //   - content switcher (radiogroup) Completa | Resumen dentro del tab
+    //     Tiendas, con estado seleccionado programáticamente comunicable
+    const HUB_TAB_KEY = 'mgmt-hub-tab';
+    const STORE_MODE_KEY = 'mgmt-stores-view-mode';
+
+    beforeEach(() => {
+      localStorage.removeItem(HUB_TAB_KEY);
+      localStorage.removeItem(STORE_MODE_KEY);
+    });
+
+    it('expone tabs semánticos Tiendas | Vitrina — KPIs ya no es tab', async () => {
       const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
-      const { getByRole, getByText } = render(<ManagementHubView />, { wrapper: Wrapper });
-      // Encabezado del hub + los 3 tabs del dominio multi-tienda
-      expect(getByText('Gestión de Tiendas')).toBeTruthy();
+      const { getByRole, queryByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
+      // Encabezado único del hub + tabs semánticos del dominio multi-tienda
+      expect(getByRole('heading', { name: 'Gestión de Tiendas' })).toBeTruthy();
       expect(getByRole('tab', { name: 'Tiendas' })).toBeTruthy();
-      expect(getByRole('tab', { name: 'KPIs' })).toBeTruthy();
       expect(getByRole('tab', { name: 'Vitrina' })).toBeTruthy();
+      expect(queryByRole('tab', { name: 'KPIs' })).toBeNull();
+    });
+
+    it('expone el content switcher Completa | Resumen con estado programático', async () => {
+      const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
+      const { getByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
+      const group = getByRole('radiogroup', { name: 'Vista de Tiendas' });
+      expect(group).toBeTruthy();
+      const completa = getByRole('radio', { name: /Vista completa de tiendas/ });
+      const resumen = getByRole('radio', { name: /Vista resumen/ });
+      // Default: Completa (gestión = dominio propio del hub)
+      expect(completa).toHaveAttribute('aria-checked', 'true');
+      expect(resumen).toHaveAttribute('aria-checked', 'false');
+    });
+
+    it('cambia a Resumen con clic, persiste el modo y lo comunica programáticamente', async () => {
+      const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
+      const { getByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
+      const resumen = getByRole('radio', { name: /Vista resumen/ });
+      fireEvent.click(resumen);
+      await waitFor(() => {
+        expect(resumen).toHaveAttribute('aria-checked', 'true');
+        expect(getByRole('radio', { name: /Vista completa de tiendas/ })).toHaveAttribute('aria-checked', 'false');
+        expect(localStorage.getItem(STORE_MODE_KEY)).toBe('summary');
+      });
+    });
+
+    it('migra el valor legacy mgmt-hub-tab="kpis" al modo Resumen sin pérdida', async () => {
+      localStorage.setItem(HUB_TAB_KEY, 'kpis');
+      const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
+      const { getByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
+      await waitFor(() => {
+        expect(getByRole('radio', { name: /Vista resumen/ })).toHaveAttribute('aria-checked', 'true');
+      });
+      // El tab aterriza en Tiendas (único tab del dominio) y el legacy se reescribe
+      expect(localStorage.getItem(HUB_TAB_KEY)).toBe('stores');
+    });
+
+    it('navega el switcher con flechas (radiogroup WAI-APG)', async () => {
+      const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
+      const { getByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
+      const completa = getByRole('radio', { name: /Vista completa de tiendas/ });
+      const resumen = getByRole('radio', { name: /Vista resumen/ });
+      fireEvent.keyDown(completa, { key: 'ArrowRight' });
+      await waitFor(() => expect(resumen).toHaveAttribute('aria-checked', 'true'));
+      fireEvent.keyDown(resumen, { key: 'ArrowLeft' });
+      await waitFor(() => expect(completa).toHaveAttribute('aria-checked', 'true'));
+    });
+  });
+
+  describe('ContentSwitcher (design system — radiogroup accesible)', () => {
+    it('renderiza items, roving tabindex y responde a clic/flechas', async () => {
+      const ContentSwitcher = (await import('@/components/ui/ContentSwitcher')).default;
+      const items = [
+        { value: 'a', label: 'Alpha' },
+        { value: 'b', label: 'Beta' },
+      ] as const;
+      let current = 'a' as 'a' | 'b';
+      const { getByRole, rerender } = render(
+        <ContentSwitcher
+          groupLabel="Grupo de prueba"
+          items={items as any}
+          value={current}
+          onChange={(v: 'a' | 'b') => { current = v; }}
+        />,
+        { wrapper: Wrapper }
+      );
+      const alpha = getByRole('radio', { name: 'Alpha' });
+      const beta = getByRole('radio', { name: 'Beta' });
+      expect(alpha).toHaveAttribute('aria-checked', 'true');
+      expect(alpha).toHaveAttribute('tabindex', '0');
+      expect(beta).toHaveAttribute('tabindex', '-1');
+      fireEvent.click(beta);
+      expect(current).toBe('b');
+      // Estado controlado: rerender con el nuevo valor → radio beta checked + foco posible
+      rerender(
+        <ContentSwitcher
+          groupLabel="Grupo de prueba"
+          items={items as any}
+          value={current}
+          onChange={(v: 'a' | 'b') => { current = v; }}
+        />
+      );
+      expect(beta).toHaveAttribute('aria-checked', 'true');
+      expect(beta).toHaveAttribute('tabindex', '0');
+      // Flechas: ← desde beta vuelve a alpha (activación automática)
+      fireEvent.keyDown(beta, { key: 'ArrowLeft' });
+      expect(current).toBe('a');
     });
   });
 
