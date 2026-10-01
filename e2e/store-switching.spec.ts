@@ -21,11 +21,21 @@
  * /?view=dashboard, pero el tablero multi-tienda renderiza StoreKPICard
  * (div sin role) desde ANTES de #1340/#1342. Reescritos contra el contrato
  * actual con selectores semánticos estables:
- *   - heading "Tablero Consolidado" (h2 del dashboard)
+ *   - heading "Tablero Consolidado" (h2 del tablero)
  *   - botón "Activar {tienda} como tienda de trabajo" (aria-label único por tienda)
  *   - badge "Activa" (único en el tablero por contexto activo)
  *   - toast "Tienda cambiada exitosamente" (sonner)
  *   - td[aria-label="Producto: {nombre}"] (inventario de la tienda activa)
+ * E2E-REBASE-ALIGNMENT (PR #1349 sobre main d123c2f9, PRs #1344-#1348):
+ * La RUTA del tablero consolidado cambió de semántica: /?view=dashboard ya NO
+ * lo renderiza (es Inicio/AICommandCenterView desde #1344; #1345/#1346 lo
+ * reubicaron y #1348 convirtió el tab "KPIs" del hub en modo "Resumen" de un
+ * ContentSwitcher "Vista de Tiendas"). Flujo real actual (verificado en
+ * ManagementHubView.tsx):
+ *   /?view=management-hub → tab "Tiendas" (default) → radio "Vista resumen"
+ *   → MultiStoreDashboardView ("Tablero Consolidado")
+ * Los selectores DEL tablero (heading, botón Activar, badge Activa, toast) NO
+ * cambiaron — solo la ruta de acceso (helper openConsolidatedBoard).
  * SEC-TS-08: los tests de switch operan SOBRE tiendas de prueba creadas por
  * este spec (A y B) con producto sembrado cada una — nunca sobre tiendas
  * operativas (TIENDA CENTRAL / Puerto Padre / Enervida) ni pilotos.
@@ -58,10 +68,29 @@ let adminToken = '';
 
 /** Espera a que el tablero multi-tienda termine de cargar (contrato actual) */
 async function waitForDashboardLoaded(page: import('@playwright/test').Page) {
-  // El dashboard renderiza h2 "Tablero Consolidado" (i18n stores.dashboard.consolidatedBoard)
+  // El tablero renderiza h2 "Tablero Consolidado" (i18n stores.dashboard.consolidatedBoard)
   await expect(
     page.getByRole('heading', { name: 'Tablero Consolidado' }),
   ).toBeVisible({ timeout: 20_000 });
+}
+
+/**
+ * E2E-REBASE-ALIGNMENT: abre el tablero consolidado multi-tienda por su flujo
+ * real actual. /?view=dashboard ya NO lo renderiza (es Inicio desde #1344);
+ * el tablero vive como modo "Resumen" del ContentSwitcher "Vista de Tiendas"
+ * dentro del hub Gestión de Tiendas (radiogroup accesible, #1348). El click
+ * en el radio es idempotente: si el modo ya persistió en localStorage
+ * ('mgmt-stores-view-mode'), re-seleccionarlo no cambia el estado y el
+ * tablero simplemente permanece montado.
+ */
+async function openConsolidatedBoard(page: import('@playwright/test').Page) {
+  await page.goto('/?view=management-hub');
+  const summaryModeRadio = page
+    .getByRole('radiogroup', { name: 'Vista de Tiendas' })
+    .getByRole('radio', { name: 'Vista resumen' });
+  await expect(summaryModeRadio).toBeVisible({ timeout: 20_000 });
+  await summaryModeRadio.click();
+  await waitForDashboardLoaded(page);
 }
 
 /** Botón "Activar {tienda} como tienda de trabajo" — aria-label único por KPI card */
@@ -139,9 +168,8 @@ test.afterAll(async ({ request }) => {
 test.describe('Store Switching: Dashboard UI', () => {
   test('admin sees multi-store dashboard with KPI cards', async ({ authedPage: page }) => {
     test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
-    // Deep-link vigente: /?view=dashboard renderiza el tablero multi-tienda
-    await page.goto('/?view=dashboard');
-    await waitForDashboardLoaded(page);
+    // Flujo actual (#1344-#1348): hub Gestión de Tiendas → modo "Resumen"
+    await openConsolidatedBoard(page);
 
     // El tablero renderiza KPI cards: cada StoreKPICard expone el nombre de la
     // tienda en un heading h3 y (si no está activa) el botón semántico "Activar"
@@ -156,8 +184,7 @@ test.describe('Store Switching: Dashboard UI', () => {
 
   test('clicking activate on a store changes the active store indicator', async ({ authedPage: page }) => {
     test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
-    await page.goto('/?view=dashboard');
-    await waitForDashboardLoaded(page);
+    await openConsolidatedBoard(page);
     await expect(page.getByRole('heading', { name: storeB!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
     // Elegir un destino cuyo botón "Activar" esté disponible (no es la activa)
@@ -183,8 +210,7 @@ test.describe('Store Switching: Dashboard UI', () => {
 
   test('switching stores invalidates dependent query data', async ({ authedPage: page }) => {
     test.skip(!storeA || !storeB || !productB, 'setup de tiendas de prueba no disponible');
-    await page.goto('/?view=dashboard');
-    await waitForDashboardLoaded(page);
+    await openConsolidatedBoard(page);
     await expect(page.getByRole('heading', { name: storeB!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
     // Cambiar a la tienda B (o A si B ya está activa)
@@ -319,8 +345,7 @@ test.describe('Store Switching: API Access', () => {
 test.describe('Store Switching: Data Isolation', () => {
   test('switching store clears previous store context', async ({ authedPage: page }) => {
     test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
-    await page.goto('/?view=dashboard');
-    await waitForDashboardLoaded(page);
+    await openConsolidatedBoard(page);
     await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
     // Cambiar primero a A (si no está ya activa)
@@ -369,8 +394,7 @@ test.describe('Store Switching: Data Isolation', () => {
   // FIX-AUDIT-E2E-002: Verify store data changes after switching
   test('after switching store, inventory data belongs to the new store', async ({ authedPage: page }) => {
     test.skip(!storeA || !storeB || !productA || !productB, 'setup de tiendas de prueba no disponible');
-    await page.goto('/?view=dashboard');
-    await waitForDashboardLoaded(page);
+    await openConsolidatedBoard(page);
     await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
     // 1. Activar tienda A y verificar que su inventario muestra SOLO su producto
@@ -385,8 +409,7 @@ test.describe('Store Switching: Data Isolation', () => {
     await expect(page.locator(`td[aria-label="Producto: ${productB!.name}"]`)).toHaveCount(0);
 
     // 2. Cambiar a B y verificar que el inventario pasa a datos de B
-    await page.goto('/?view=dashboard');
-    await waitForDashboardLoaded(page);
+    await openConsolidatedBoard(page);
     const activateB = activateButtonFor(page, storeB!.name);
     await expect(activateB).toBeVisible({ timeout: 15_000 });
     await activateB.click();
@@ -405,8 +428,7 @@ test.describe('Store Switching: Data Isolation', () => {
 test.describe('Store Switching: Concurrency Guard', () => {
   test('rapid consecutive clicks do not cause race conditions', async ({ authedPage: page }) => {
     test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
-    await page.goto('/?view=dashboard');
-    await waitForDashboardLoaded(page);
+    await openConsolidatedBoard(page);
     await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
     const activateA = activateButtonFor(page, storeA!.name);
@@ -418,8 +440,8 @@ test.describe('Store Switching: Concurrency Guard', () => {
     let bCount = await activateB.count();
     if (aCount + bCount < 2 && switchingAdminId && switchingOriginalActiveStore != null) {
       await sb.update('profiles', `id=eq.${switchingAdminId}`, { active_store_id: switchingOriginalActiveStore }).catch(() => {});
-      await page.reload();
-      await waitForDashboardLoaded(page);
+      // Re-navegación completa al tablero (goto re-ejecuta el flujo del hub)
+      await openConsolidatedBoard(page);
       await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
       aCount = await activateA.count();
       bCount = await activateB.count();
@@ -449,8 +471,7 @@ test.describe('Store Switching: Concurrency Guard', () => {
   // FIX-AUDIT-E2E-003: Verify store switch completes within reasonable time
   test('store switch completes within 5 seconds', async ({ authedPage: page }) => {
     test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
-    await page.goto('/?view=dashboard');
-    await waitForDashboardLoaded(page);
+    await openConsolidatedBoard(page);
     await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
 
     // Destino conmutable disponible
