@@ -47,6 +47,12 @@ import {
   sb,
   TestStore,
 } from './fixtures/session.fixture';
+// RES190-CONTRACT (fix/fc-res190-contract): fuente única de formatos válidos.
+// El contrato de pdf_format vive en src/contracts/store-cost-template.ts
+// (FC_PDF_FORMATS) y el enum Zod de /api/store-cost-templates está alineado.
+// Import relativo (módulo puro, sin dependencias) — el spec NO inventa su
+// propia lista de formatos.
+import { FC_PDF_FORMATS } from '../src/contracts/store-cost-template';
 
 // ── Helpers ────────────────────────────────────────────────────────
 
@@ -196,7 +202,7 @@ test.describe('FC Automation', () => {
       await expect(modal.locator('#edit-fc-active')).toBeVisible();
     });
 
-    test('should display template configuration options', async ({ authedPage: page }) => {
+    test('should display template configuration options', async ({ authedPage: page, request }) => {
       test.skip(!fcStore, 'setup de tienda de prueba no disponible');
       // Navigate to stores management
       await page.goto('/?view=stores');
@@ -226,14 +232,47 @@ test.describe('FC Automation', () => {
 
       const pdfFormatSelect = modal.locator('#edit-fc-pdf');
       await expect(pdfFormatSelect).toBeVisible();
-      expect(await pdfFormatSelect.locator('option').count()).toBeGreaterThanOrEqual(2);
+      // RES190-CONTRACT: la UI solo ofrece formatos del contrato (FC_PDF_FORMATS).
+      // "Res. 190/2021" (res190) fue ELIMINADO — nunca fue aceptado por
+      // upsertStoreCostTemplateSchema (400 INVALID_DATA, reproducido en la
+      // rama fix/fc-res190-contract). Antes había 2 <option> hardcoded que
+      // duplicaban (mal) el enum de la API; ahora derivan del contrato único.
+      const optionValues = await pdfFormatSelect.locator('option').evaluateAll(
+        (opts) => opts.map((o) => (o as HTMLOptionElement).value),
+      );
+      expect(optionValues.length).toBeGreaterThan(0);
+      for (const value of optionValues) {
+        expect(
+          (FC_PDF_FORMATS as readonly string[]).includes(value),
+          `La UI ofrece un formato fuera del contrato: "${value}"`,
+        ).toBe(true);
+      }
+      expect(optionValues).not.toContain('res190');
+      expect(optionValues).toContain('res148');
+
+      // API side del contrato (Caso B): la API DEBE seguir rechazando res190
+      // (validation falla ANTES de cualquier write — sin efectos colaterales)
+      const res190Res = await request.put('/api/store-cost-templates', {
+        headers: {
+          Authorization: `Bearer ${fcAdminToken}`,
+          'Content-Type': 'application/json',
+          Origin: 'http://localhost:3000',
+        },
+        data: {
+          store_id: fcStore!.id,
+          template_id: `e2e-fc-${fcStore!.slug}`,
+          modalidad: 'servicios',
+          pdf_format: 'res190',
+          is_active: true,
+        },
+      });
+      expect(res190Res.status()).toBe(400);
 
       // Operar la configuración: activar FC + modalidad + plantilla + formato
-      // NOTA (E2E-DEBT-CLEANUP): se usa res148 (valor del contrato VÁLIDO de la
-      // API). La UI también ofrece "Res. 190/2021" (res190) pero el enum de
-      // upsertStoreCostTemplateSchema NO lo acepta (400) — hallazgo pre-existente
-      // 1a25d190 (2026-06-19, anterior a #1340) documentado en el informe, NO
-      // corregido aquí (regla: no modificar producto en esta tarea).
+      // NOTA (RES190-CONTRACT — resuelto): antes de fix/fc-res190-contract se
+      // usaba res148 porque la UI ofrecía "Res. 190/2021" (res190) que la API
+      // rechazaba (400). El contrato ahora está alineado: la UI ofrece solo
+      // formatos de FC_PDF_FORMATS y persiste con éxito.
       const fcToggle = modal.locator('#edit-fc-active');
       if (!(await fcToggle.isChecked())) {
         await fcToggle.check();

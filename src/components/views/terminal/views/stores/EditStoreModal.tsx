@@ -7,6 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Store, StoreTemplate } from '@/types';
 import { Upload, ImageIcon } from 'lucide-react';
+// RES190-CONTRACT (fix/fc-res190-contract): opciones de formato PDF derivadas
+// del contrato único (FC_PDF_FORMATS — misma fuente que el enum Zod de
+// /api/store-cost-templates). Antes había 2 opciones hardcoded (res148 + res190)
+// pero res190 NUNCA fue aceptado por upsertStoreCostTemplateSchema (400
+// INVALID_DATA — reproducido). La UI ahora solo puede ofrecer formatos válidos.
+import { FC_PDF_FORMATS, FC_PDF_FORMAT_LABELS } from '@/contracts/store-cost-template';
 // Audit-Fix #2b: removed StoreTemplateSelector import — was used with wrong props
 // (value/onChange don't exist on its interface). Replaced with inline <select>.
 import { supabase } from '@/lib/supabaseClient';
@@ -504,8 +510,9 @@ export function EditStoreModal({
                             onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'fcPdfFormat', value: e.target.value })}
                             className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold rounded-lg px-3"
                         >
-                            <option value="res148">Res. 148/2023</option>
-                            <option value="res190">Res. 190/2021</option>
+                            {FC_PDF_FORMATS.map((f) => (
+                                <option key={f} value={f}>{FC_PDF_FORMAT_LABELS[f]}</option>
+                            ))}
                         </select>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">

@@ -8,6 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Store } from '@/types';
+// RES190-CONTRACT (fix/fc-res190-contract): formatos PDF desde el contrato
+// único (FC_PDF_FORMATS) — res190 fue eliminado (nunca aceptado por la API).
+import { FC_PDF_FORMATS, FC_PDF_FORMAT_LABELS } from '@/contracts/store-cost-template';
+import type { FCPdfFormat } from '@/contracts/store-cost-template';
 import { storeApiClient } from '@/services/store-api-client';
 import { useStoreEdit } from '@/hooks/views/useStoreEdit';
 import { useQueryClient } from '@tanstack/react-query';
@@ -50,7 +54,9 @@ interface WizardData {
   nit: string;
   bankAccount: string;
   fcModalidad: 'produccion' | 'servicios' | 'comercializacion';
-  fcPdfFormat: 'res148' | 'res190';
+  // RES190-CONTRACT: tipado desde el contrato único (antes 'res148' | 'res190',
+  // y res190 era inválido para la API)
+  fcPdfFormat: FCPdfFormat;
   fcTemplateId: string;
   fcActive: boolean;
   // Paso 3 — asignación real de usuarios existentes
@@ -504,8 +510,9 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
                       className="w-full h-11 min-h-[44px] px-3 rounded-lg border border-border bg-background text-sm font-bold outline-none focus:ring-1 focus:ring-primary"
                       aria-label={t('formatoPdfLabel')}
                     >
-                      <option value="res148">Res. 148/2023</option>
-                      <option value="res190">Res. 190/2021</option>
+                      {FC_PDF_FORMATS.map((f) => (
+                        <option key={f} value={f}>{FC_PDF_FORMAT_LABELS[f]}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

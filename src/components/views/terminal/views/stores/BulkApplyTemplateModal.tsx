@@ -4,6 +4,10 @@ import React, { useState } from 'react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { Store } from '@/types';
+// RES190-CONTRACT (fix/fc-res190-contract): formatos PDF desde el contrato
+// único (FC_PDF_FORMATS) — res190 fue eliminado (nunca aceptado por la API).
+import { FC_PDF_FORMATS, FC_PDF_FORMAT_LABELS } from '@/contracts/store-cost-template';
+import type { FCPdfFormat } from '@/contracts/store-cost-template';
 import { useStoreEdit } from '@/hooks/views/useStoreEdit';
 import { Loader2, FileText, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -35,7 +39,9 @@ export function BulkApplyTemplateModal({
   const t = useTranslations('stores');
   const storeEdit = useStoreEdit();
   const [modalidad, setModalidad] = useState<'produccion' | 'servicios' | 'comercializacion'>('produccion');
-  const [pdfFormat, setPdfFormat] = useState<'res148' | 'res190'>('res148');
+  // RES190-CONTRACT: tipado desde el contrato único (antes 'res148' | 'res190',
+  // y res190 era inválido para la API)
+  const [pdfFormat, setPdfFormat] = useState<FCPdfFormat>('res148');
   const [templateId, setTemplateId] = useState('costpro-reinicio');
   const [applying, setApplying] = useState(false);
 
@@ -189,8 +195,9 @@ export function BulkApplyTemplateModal({
               onChange={(e) => setPdfFormat(e.target.value as typeof pdfFormat)}
               className="w-full px-3 py-2 h-11 rounded-lg border border-border bg-background text-sm font-bold outline-none focus:ring-1 focus:ring-primary"
             >
-              <option value="res148">Res. 148/2023</option>
-              <option value="res190">Res. 190/2021</option>
+              {FC_PDF_FORMATS.map((f) => (
+                <option key={f} value={f}>{FC_PDF_FORMAT_LABELS[f]}</option>
+              ))}
             </select>
           </div>
         </div>
