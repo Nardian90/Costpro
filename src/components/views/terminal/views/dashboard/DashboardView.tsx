@@ -132,6 +132,13 @@ function StoreDashboardGate() {
 // el PageHeader pasa a h2 (una sola h1 por página — el shell ya pinta "Inicio")
 // y el ancho máximo se amplía al contenedor padre.
 //
+// DASHBOARD V3 (feat/dashboard-v3-audit-ux) — FASE 4/6: prop `aside` opcional.
+// AICommandCenterView pasa <RecentActivityPanel /> ("Acciones recientes") para
+// que quede AL LADO del gráfico circular (Resumen de Indicadores) en desktop,
+// y debajo de él en mobile — única representación canónica, la instancia al
+// final del Inicio se retira. "Alertas Críticas" sale de este componente y
+// pasa al final del Inicio (después de Darian) — ver AICommandCenterView.
+//
 // REMEDIACIÓN (fix/dashboard-active-store): "Dashboard" responde a la pregunta
 // "¿cómo está MI tienda activa?" — para TODOS los roles. Se elimina la rama
 // admin/manager → MultiStoreDashboardView (el tablero consolidado multi-tienda
@@ -147,8 +154,8 @@ function StoreDashboardGate() {
 // REMEDIACIÓN V3 (fix/dashboard-tab-panel-control): la vista consolidada abre
 // por defecto en el tab "Panel" (anillo concéntrico del antiguo Panel de
 // Control) — el widget embebido del Inicio NO cambia.
-export default function DashboardView({ embedded = false }: { embedded?: boolean } = {}) {
-  if (embedded) return <DashboardViewImpl embedded />;
+export default function DashboardView({ embedded = false, aside = undefined }: { embedded?: boolean; aside?: React.ReactNode } = {}) {
+  if (embedded) return <DashboardViewImpl embedded aside={aside} />;
   return <StoreDashboardGate />;
 }
 
@@ -159,11 +166,10 @@ export default function DashboardView({ embedded = false }: { embedded?: boolean
  * también la usan admin/manager. Todos los hooks se llaman incondicionalmente
  * (Rules of Hooks OK) y los datos responden a user.activeStoreId.
  */
-function DashboardViewImpl({ embedded = false }: { embedded?: boolean } = {}) {
+function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?: boolean; aside?: React.ReactNode } = {}) {
   const t = useTranslations('dashboard.singleStore');
   const locale = useLocale();
   const dateFnsLocale = locale === 'en' ? enLocale : esLocale;
-  const { user } = useAuthStore();
 
   const {
     summary,
@@ -177,13 +183,6 @@ function DashboardViewImpl({ embedded = false }: { embedded?: boolean } = {}) {
     setSelectedDate
   } = useDashboardView();
   const { setCurrentView } = useUIStore();
-  const {
-    data: productsData,
-    isLoading: isLoadingProducts,
-    error: productsError
-  } = useProducts(user?.activeStoreId);
-
-  const products = productsData || [];
 
   return (
     <div className={embedded ? 'space-y-6 w-full' : 'space-y-6 max-w-5xl mx-auto'}>
@@ -241,8 +240,8 @@ function DashboardViewImpl({ embedded = false }: { embedded?: boolean } = {}) {
       />
 
       <StateRenderer
-        isLoading={isLoading || isLoadingProducts}
-        error={dashboardError ?? productsError}
+        isLoading={isLoading}
+        error={dashboardError}
         onRetry={dashboardError ? refetchDashboard : undefined}
         data={summary && kpis ? [{ kpis, summary }] : []}
       >
@@ -259,34 +258,47 @@ function DashboardViewImpl({ embedded = false }: { embedded?: boolean } = {}) {
 
           return (
             <div className="flex flex-col gap-8">
-              {/* Concentric Ring Section */}
-              <div className="flex flex-col items-center">
-                <ConcentricDashboardRing
-                  sales={sales}
-                  costs={costs}
-                  profit={profit}
-                />
+              {/* DASHBOARD V3 (FASE 4): Resumen de Indicadores (gráfico circular)
+                  + Acciones recientes lado a lado en desktop (lg+). En mobile
+                  se apilan: gráfico primero, Acciones recientes después — sin
+                  columnas forzadas ni espacios muertos. El aside es UNA única
+                  representación canónica de Acciones recientes. */}
+              <section
+                aria-label="Resumen de indicadores y acciones recientes"
+                className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start"
+              >
+                <div className="flex flex-col items-center min-w-0">
+                  <ConcentricDashboardRing
+                    sales={sales}
+                    costs={costs}
+                    profit={profit}
+                  />
 
-                {/* Mini Stats under the ring — all tokens, no hardcoded colors */}
-                <div className="grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-sm mt-4">
-                  <div className="flex flex-col items-center">
-                    <div className="w-2 h-2 rounded-full bg-primary mb-2"></div>
-                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('sales')}</span>
-                    <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(sales)}</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <div className="w-2 h-2 rounded-full bg-muted-foreground/50 mb-2"></div>
-                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('costs')}</span>
-                    <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(costs)}</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    {/* FIX UX-001: was bg-[#00E0FF], now uses semantic success token */}
-                    <div className="w-2 h-2 rounded-full bg-success mb-2"></div>
-                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('profit')}</span>
-                    <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(profit)}</span>
+                  {/* Mini Stats under the ring — all tokens, no hardcoded colors */}
+                  <div className="grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-sm mt-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-2 h-2 rounded-full bg-primary mb-2"></div>
+                      <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('sales')}</span>
+                      <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(sales)}</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-2 h-2 rounded-full bg-muted-foreground/50 mb-2"></div>
+                      <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('costs')}</span>
+                      <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(costs)}</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      {/* FIX UX-001: was bg-[#00E0FF], now uses semantic success token */}
+                      <div className="w-2 h-2 rounded-full bg-success mb-2"></div>
+                      <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('profit')}</span>
+                      <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(profit)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                {/* DASHBOARD V3 (FASE 5): Acciones recientes junto al gráfico.
+                    Lógica y contenido intactos (RecentActivityPanel). */}
+                {aside && <div className="min-w-0">{aside}</div>}
+              </section>
 
               {/* Sales Summary — uses previously hidden SalesSummary data */}
               <section className="space-y-4">
@@ -336,12 +348,9 @@ function DashboardViewImpl({ embedded = false }: { embedded?: boolean } = {}) {
                 </button>
               </div>
 
-              {/* Alerts Section */}
-              <DashboardAlertsSection
-                products={products}
-                onViewInventory={() => setCurrentView('inventory')}
-                onGoToCatalog={() => setCurrentView('catalog')}
-              />
+              {/* DASHBOARD V3 (FASE 6): "Alertas Críticas" ya NO vive aquí —
+                  se movió al FINAL del Inicio (después de Darian), como última
+                  sección del Panel de Control. Ver AICommandCenterView. */}
             </div>
           );
         }}
@@ -363,11 +372,27 @@ function SummaryPill({ icon, label, value }: { icon: React.ReactNode; label: str
   );
 }
 
-function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { products: Product[], onViewInventory: () => void, onGoToCatalog: () => void }) {
+/**
+ * DashboardAlertsSection — "Alertas Críticas" (stock bajo) del Inicio.
+ *
+ * DASHBOARD V3 (feat/dashboard-v3-audit-ux — FASE 6): era la última sección
+ * INTERNA del widget del dashboard; ahora es la ÚLTIMA sección del Inicio
+ * (después de Darian). Es autocontenida: resuelve sus propios datos
+ * (useProducts de la tienda activa — misma query key, cache compartida con
+ * react-query) y sus acciones de navegación. Lógica de filtrado intacta:
+ * solo productos con stock_current <= min_stock; máx 4 tarjetas + botón
+ * "Ver todas"; renderiza null mientras carga o si no hay alertas.
+ */
+export function DashboardAlertsSection() {
   const t = useTranslations('dashboard.singleStore');
+  const { user } = useAuthStore();
+  const { setCurrentView } = useUIStore();
+  const { data: productsData, isLoading: isLoadingProducts } = useProducts(user?.activeStoreId);
+
+  const products: Product[] = productsData || [];
   const criticalProducts = products.filter(p => (p.stock_current ?? 0) <= (p.min_stock ?? 0));
 
-  if (criticalProducts.length === 0) return null;
+  if (isLoadingProducts || criticalProducts.length === 0) return null;
 
   return (
     <section className="p-6 rounded-2xl border border-destructive/20 bg-card shadow-sm" aria-label={t('inventoryAlerts')}>
@@ -388,7 +413,7 @@ function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { 
         ))}
         {criticalProducts.length > 4 && (
           <button type="button"
-            onClick={onViewInventory}
+            onClick={() => setCurrentView('inventory')}
             className="w-full py-3 min-h-[44px] text-sm font-semibold uppercase text-primary hover:underline mt-2"
           >
             {t('viewAllAlerts')} ({criticalProducts.length})

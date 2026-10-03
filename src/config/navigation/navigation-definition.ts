@@ -336,6 +336,23 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         keywords: ['tiendas', 'gestión', 'sucursales', 'vitrina', 'backup', 'kpi tiendas'],
       },
       {
+        // DASHBOARD V3 (feat/dashboard-v3-audit-ux): Auditoría se MUEVE desde
+        // SISTEMA a OPERACIÓN, inmediatamente después de "Gestión de Tiendas"
+        // (solicitud explícita del usuario). Mismo ViewType 'audit', misma
+        // vista, mismo deep-link — NO se duplica la entrada. El roles explícito
+        // ['admin'] PRESERVA la visibilidad efectiva previa (SISTEMA es
+        // admin-only; isViewAllowedForRole usa el allowedRoles más cercano,
+        // así que clerk/encargado siguen sin verla — gate1-navigation.test).
+        id: 'audit',
+        label: 'Auditoría',
+        description: 'Historial de actividad de la operación en lenguaje claro: qué ocurrió, cuándo y quién. Con detalle técnico y documentos asociados.',
+        icon: Shield,
+        type: 'item',
+        navClass: 'admin',
+        roles: ['admin'],
+        keywords: ['auditoría', 'logs', 'trazabilidad', 'quién hizo', 'eventos', 'csv', 'historial', 'actividad'],
+      },
+      {
         id: 'redes',
         label: 'Redes',
         description: 'Bots de WhatsApp y Telegram por tienda.',
@@ -444,7 +461,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
     label: 'SISTEMA',
     type: 'group',
     icon: Settings,
-    description: 'Configuración y control administrativo del tenant: usuarios, roles, salud, auditoría.',
+    description: 'Configuración y control administrativo del tenant: usuarios, roles, salud y monitoreo.',
     roles: ['admin'],
     children: [
       {
@@ -494,16 +511,8 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         keywords: ['monitoreo', 'uso', 'consumo', 'vercel', 'supabase', 'límites', 'forecast'],
       },
       {
-        // Auditoría = SISTEMA (control/trazabilidad, cero KPIs — GATE 0.1 §3 D-Auditoría)
-        id: 'audit',
-        label: 'Auditoría',
-        description: 'Registro de acciones de control: anulaciones, ventas bajo costo, transferencias y resets. Quién, qué, cuándo. Exporta CSV.',
-        icon: Shield,
-        type: 'item',
-        navClass: 'admin',
-        keywords: ['auditoría', 'logs', 'trazabilidad', 'quién hizo', 'eventos', 'csv'],
-      },
-      {
+        // DASHBOARD V3: la entrada 'audit' se MOVIO a OPERACIÓN (después de
+        // "Gestión de Tiendas"). SISTEMA conserva el resto de entradas admin.
         id: 'rss_management',
         label: 'Gestión RSS',
         description: 'Configura feeds RSS externos (noticias fiscales, contables, regulatorias) para el Tablón de Noticias.',
