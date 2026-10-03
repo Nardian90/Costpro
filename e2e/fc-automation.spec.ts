@@ -14,8 +14,39 @@
  * - Running dev server (npm run dev)
  * - Seeded admin user (e2e-admin@costpro.test)
  * - Supabase test project with store_cost_templates table
+ *
+ * E2E-DEBT-CLEANUP (FC x4):
+ * OLD CONTRACT (Store Cost Template Management x2): abrir el modal de edición
+ * con un botón "editar" visible en la primera tarjeta y encontrar
+ * StoreTemplateSelector (switch + select[aria-label="Modalidad de FC"]).
+ * StoreTemplateSelector fue eliminado (commit 9303670a, 2026-07-01, pre-#1340)
+ * y el botón "editar" pasó a ser "Info" dentro de <details> "Ver opciones"
+ * colapsado (rediseño 2026-07-23). El flujo FC ACTUAL es:
+ *   card [role="article"] → "Ver opciones" → "Info" (aria-label "Editar {name}")
+ *   → EditStoreModal sección "Plantilla FC" (#edit-fc-template,
+ *   #edit-fc-modalidad ×3, #edit-fc-pdf ×2, #edit-fc-active checkbox nativo)
+ *   → "Guardar Cambios" → PUT /api/store-cost-templates → badge "FC: {modalidad}"
+ * NEW CONTRACT: acceso a la funcionalidad FC, configuración/selección válida,
+ * persistencia (store_cost_templates + badge en card + StoreConfigModal).
+ *
+ * E2E-DEBT-CLEANUP (Catalog x2 — test bugs evidenciados en baseline): los
+ * tests de catálogo contaban badges ANTES de que cargaran los productos
+ * (waitForCatalogView resolvía con el breadcrumb role="list") y esperaban el
+ * FC filter group visible sin abrir el modal "Filtros" donde vive desde el
+ * rediseño. Reescritos contra el contrato actual: espera de fila de producto
+ * + apertura del modal de filtros + chips aria-pressed.
  */
 import { test, expect } from './fixtures';
+// E2E-DEBT-CLEANUP: fixture de datos de prueba (tienda propia + producto + restore)
+import {
+  signIn,
+  createTestStore,
+  deleteTestStore,
+  seedProduct,
+  cleanupProducts,
+  sb,
+  TestStore,
+} from './fixtures/session.fixture';
 
 // ── Helpers ────────────────────────────────────────────────────────
 
@@ -41,77 +72,213 @@ async function navigateToSidebarView(page: import('@playwright/test').Page, view
   await sidebarItem.click();
 }
 
+// ── SETUP/CLEANUP: tienda de prueba aislada (SEC-TS-08) ────────────
+
+let fcStore: TestStore | null = null;
+let fcProduct: { id: string; name: string } | null = null;
+let fcAdminId: string | null = null;
+let fcOriginalActiveStore: string | null | undefined;
+let fcAdminToken = '';
+
+test.beforeAll(async ({ request }) => {
+  // SEC-TS-10: timeout extendido — el setup paceado (1 tienda con presupuesto
+  // create 4/min) puede esperar hasta ~60 s por la ventana de rate-limit
+  test.setTimeout(180_000);
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const email = process.env.E2E_ADMIN_EMAIL || 'admin@costpro.com';
+  const pass = process.env.E2E_ADMIN_PASS || 'costpro123';
+  try {
+    const session = await signIn(email, pass);
+    fcAdminToken = session.token;
+    fcAdminId = session.userId;
+  } catch { /* sin sesión — los tests lo reportarán */ }
+
+  if (fcAdminId) {
+    try {
+      const rows = await sb.select<{ active_store_id: string | null }>(
+        'profiles', `id=eq.${fcAdminId}&select=active_store_id&limit=1`,
+      );
+      fcOriginalActiveStore = rows[0]?.active_store_id ?? null;
+    } catch { /* sin service-role — sin restore */ }
+  }
+
+  // CREATE: tienda de prueba exclusiva del spec + 1 producto sembrado
+  if (fcAdminToken) {
+    try {
+      fcStore = await createTestStore(request, fcAdminToken, 'FC');
+      fcProduct = await seedProduct(fcStore, {
+        name: `E2E Prod FC ${fcStore.slug}`,
+        price: 15,
+        cost: 6,
+        quantity: 4,
+      });
+    } catch (e) {
+      console.error('[fc-automation] setup de tienda de prueba falló:', e);
+    }
+  }
+
+  // Contexto determinista: anclar el active store del admin a PILOT A (E2E
+  // PILOT STORE A — protegida por NOMBRE de todos los sweeps de higiene).
+  // Los tests de catálogo re-anclan a la tienda de prueba propia; los tests
+  // de plantilla solo necesitan un contexto VÁLIDO para que el shell no
+  // caiga al interstitial "Selecciona una tienda".
+  const pilotA = process.env.E2E_PILOT_STORE_A;
+  if (fcAdminId && pilotA) {
+    await sb.update('profiles', `id=eq.${fcAdminId}`, { active_store_id: pilotA }).catch(() => {});
+  }
+});
+
+test.afterAll(async ({ request }) => {
+  // CLEANUP: restaurar contexto (si un test de catálogo lo cambió) ANTES de borrar
+  if (fcAdminId && fcOriginalActiveStore !== undefined) {
+    await sb.update('profiles', `id=eq.${fcAdminId}`, { active_store_id: fcOriginalActiveStore }).catch(() => {});
+  }
+  // Limpiar cualquier plantilla FC sembrada por los tests de configuración
+  if (fcStore) {
+    await sb.delete('store_cost_templates', `store_id=eq.${fcStore.id}`).catch(() => {});
+  }
+  if (fcStore && fcProduct) {
+    await cleanupProducts(fcStore.id, [fcProduct.id]).catch(() => {});
+  }
+  if (fcStore && fcAdminToken) {
+    await deleteTestStore(request, fcAdminToken, fcStore.id).catch(() => {});
+  }
+});
+
+/** Activa la tienda de prueba como contexto del admin (setup determinista) */
+async function activateFcStore() {
+  if (!fcStore || !fcAdminId) return;
+  await sb.update('profiles', `id=eq.${fcAdminId}`, { active_store_id: fcStore.id });
+}
+
 // ── 1. STORE COST TEMPLATE MANAGEMENT ─────────────────────────────
 
 test.describe('FC Automation', () => {
 
   test.describe('Store Cost Template Management', () => {
     test('should fetch store cost template', async ({ authedPage: page }) => {
+      test.skip(!fcStore, 'setup de tienda de prueba no disponible');
       // Navigate to stores management
       await page.goto('/?view=stores');
       await page.waitForSelector('[role="article"], [data-testid="stores-empty"]', {
         timeout: 15_000,
       });
 
-      // Open the edit modal for the first store
-      const firstCard = page.locator('[role="article"]').first();
-      const editButton = firstCard.locator(
-        'button[aria-label*="dit"], button[title*="dit"], button',
-        { hasText: /editar|edit/i },
-      ).first();
+      // CURRENT CONTRACT: la configuración FC se abre desde la tarjeta de la
+      // tienda de prueba (SEC-TS-08 — nunca la primera tarjeta) vía el abanico
+      // colapsable "Ver opciones" → botón "Info" (aria-label "Editar {name}")
+      const card = page.getByRole('article', { name: `Gestión Tiendas ${fcStore!.name}` });
+      await expect(card).toBeVisible({ timeout: 15_000 });
+
+      const optionsSummary = card.getByText('Ver opciones', { exact: true });
+      await optionsSummary.click();
+      const editButton = card.getByRole('button', { name: `Editar ${fcStore!.name}` });
+      await expect(editButton).toBeVisible({ timeout: 5_000 });
       await editButton.click();
 
-      // Wait for the modal to appear
-      const modal = page.locator('[role="dialog"], .modal, [data-state="open"]');
+      // Wait for the modal to appear (CURRENT CONTRACT: BaseModal Radix con
+      // aria-label "Editar Sucursal. Completa los datos de la sucursal.")
+      const modal = page.getByRole('dialog', { name: /editar sucursal/i });
       await modal.waitFor({ state: 'visible', timeout: 10_000 });
 
-      // Verify the FC template section exists
-      const fcSection = modal.locator('text=Plantilla de Ficha de Costo');
+      // Verify the FC template section exists (h4 "Plantilla FC" — i18n
+      // stores.fcTemplate; antes "Plantilla de Ficha de Costo" del selector
+      // eliminado StoreTemplateSelector)
+      const fcSection = modal.getByRole('heading', { name: 'Plantilla FC' });
       await expect(fcSection).toBeVisible({ timeout: 5_000 });
 
-      // Verify the FC template toggle switch exists
-      const fcToggle = modal.locator('button[role="switch"][aria-label*="Ficha de Costo"]');
-      await expect(fcToggle).toBeVisible();
+      // CURRENT CONTRACT: los 4 campos FC son inputs/selects/checkbox nativos
+      // (Audit-Fix #2b) — no hay role="switch"
+      await expect(modal.locator('#edit-fc-template')).toBeVisible();
+      await expect(modal.locator('#edit-fc-modalidad')).toBeVisible();
+      await expect(modal.locator('#edit-fc-pdf')).toBeVisible();
+      await expect(modal.locator('#edit-fc-active')).toBeVisible();
     });
 
     test('should display template configuration options', async ({ authedPage: page }) => {
+      test.skip(!fcStore, 'setup de tienda de prueba no disponible');
       // Navigate to stores management
       await page.goto('/?view=stores');
       await page.waitForSelector('[role="article"], [data-testid="stores-empty"]', {
         timeout: 15_000,
       });
 
-      // Open the edit modal for the first store
-      const firstCard = page.locator('[role="article"]').first();
-      const editButton = firstCard.locator(
-        'button[aria-label*="dit"], button[title*="dit"], button',
-        { hasText: /editar|edit/i },
-      ).first();
+      // Open the FC config modal for OUR test store (CURRENT CONTRACT)
+      const card = page.getByRole('article', { name: `Gestión Tiendas ${fcStore!.name}` });
+      await expect(card).toBeVisible({ timeout: 15_000 });
+      await card.getByText('Ver opciones', { exact: true }).click();
+      const editButton = card.getByRole('button', { name: `Editar ${fcStore!.name}` });
+      await expect(editButton).toBeVisible({ timeout: 5_000 });
       await editButton.click();
 
-      const modal = page.locator('[role="dialog"], .modal, [data-state="open"]');
+      const modal = page.getByRole('dialog', { name: /editar sucursal/i });
       await modal.waitFor({ state: 'visible', timeout: 10_000 });
 
-      // Enable FC template to reveal configuration options
-      const fcToggle = modal.locator('button[role="switch"][aria-label*="Ficha de Costo"]');
-      const isAlreadyActive = await fcToggle.getAttribute('aria-checked');
-      if (isAlreadyActive !== 'true') {
-        await fcToggle.click();
-      }
-
-      // Verify modalidad selector exists with 3 options (produccion, servicios, comercializacion)
-      const modalidadSelect = modal.locator('select[aria-label="Modalidad de FC"]');
+      // Configuration options (CURRENT CONTRACT — 3 modalidades, 2 formatos PDF)
+      const modalidadSelect = modal.locator('#edit-fc-modalidad');
       await expect(modalidadSelect).toBeVisible({ timeout: 5_000 });
       const modalidadOptions = await modalidadSelect.locator('option').count();
       expect(modalidadOptions).toBeGreaterThanOrEqual(3);
 
-      // Verify template selector exists
-      const templateSelect = modal.locator('select[aria-label="Plantilla de FC"]');
-      await expect(templateSelect).toBeVisible();
+      const templateInput = modal.locator('#edit-fc-template');
+      await expect(templateInput).toBeVisible();
 
-      // Verify PDF format selector exists
-      const pdfFormatSelect = modal.locator('select[aria-label="Formato PDF de FC"]');
+      const pdfFormatSelect = modal.locator('#edit-fc-pdf');
       await expect(pdfFormatSelect).toBeVisible();
+      expect(await pdfFormatSelect.locator('option').count()).toBeGreaterThanOrEqual(2);
+
+      // Operar la configuración: activar FC + modalidad + plantilla + formato
+      // NOTA (E2E-DEBT-CLEANUP): se usa res148 (valor del contrato VÁLIDO de la
+      // API). La UI también ofrece "Res. 190/2021" (res190) pero el enum de
+      // upsertStoreCostTemplateSchema NO lo acepta (400) — hallazgo pre-existente
+      // 1a25d190 (2026-06-19, anterior a #1340) documentado en el informe, NO
+      // corregido aquí (regla: no modificar producto en esta tarea).
+      const fcToggle = modal.locator('#edit-fc-active');
+      if (!(await fcToggle.isChecked())) {
+        await fcToggle.check();
+      }
+      await modalidadSelect.selectOption('servicios');
+      await templateInput.fill(`e2e-fc-${fcStore!.slug}`);
+      await pdfFormatSelect.selectOption('res148');
+
+      // Persistir (CURRENT CONTRACT: "Guardar Cambios" → PUT /api/store-cost-templates)
+      const saveBtn = modal.getByRole('button', { name: /guardar cambios/i });
+      await saveBtn.click();
+      // Timeout 30s: el flujo de guardado encadena PATCH /api/stores +
+      // PUT /api/store-cost-templates + POST invalidate (observado 4-7 s POR
+      // LLAMADA cuando el Supabase compartido está bajo carga concurrente)
+      await expect(modal).toBeHidden({ timeout: 30_000 });
+
+      // Persistencia verificada 3 vías:
+      // 1) En la base (store_cost_templates — upsert del hook useStoreEdit)
+      const rows = await sb.select<{ modalidad: string; pdf_format: string; is_active: boolean }>(
+        'store_cost_templates',
+        `store_id=eq.${fcStore!.id}&select=modalidad,pdf_format,is_active&limit=1`,
+      );
+      expect(rows.length).toBe(1);
+      expect(rows[0].modalidad).toBe('servicios');
+      expect(rows[0].pdf_format).toBe('res148');
+      expect(rows[0].is_active).toBe(true);
+
+      // 2) En la tarjeta de la tienda (badge "FC: {modalidad}" tras refetch)
+      await expect(card.getByText('FC: servicios')).toBeVisible({ timeout: 15_000 });
+
+      // 3) En el modal de configuración read-only (StoreConfigModal → sección FC)
+      if (!(await card.getByRole('button', { name: `Configurar tienda ${fcStore!.name}` }).isVisible().catch(() => false))) {
+        await card.getByText('Ver opciones', { exact: true }).click();
+      }
+      await card.getByRole('button', { name: `Configurar tienda ${fcStore!.name}` }).click();
+      // El nombre accesible del dialog viene del DialogTitle (Radix enlaza
+      // aria-labelledby automáticamente): "Configuración de {store.name}"
+      // (el aria-label de BaseModal queda eclipsado por aria-labelledby)
+      const configModal = page.getByRole('dialog', { name: `Configuración de ${fcStore!.name}` });
+      // Timeout 30s: StoreConfigModal es lazy-loaded (withChunkRetry) — la
+      // primera apertura compila el chunk bajo demanda en el dev server
+      await configModal.waitFor({ state: 'visible', timeout: 30_000 });
+      await configModal.getByRole('button', { name: 'Ficha de Costo' }).click();
+      await expect(configModal.getByText('Plantilla FC activa')).toBeVisible({ timeout: 5_000 });
+      await expect(configModal.getByText('servicios')).toBeVisible();
     });
   });
 
@@ -119,58 +286,84 @@ test.describe('FC Automation', () => {
 
   test.describe('FC Status in Catalog View', () => {
     test('should display FC status badges on products', async ({ authedPage: page }) => {
+      test.skip(!fcStore || !fcProduct, 'setup de tienda de prueba no disponible');
+      // Setup determinista: la tienda de prueba (con su producto sembrado)
+      // como contexto activo del admin — se restaura en afterAll
+      await activateFcStore();
+
       // Navigate to catalog
       await page.goto('/?view=catalog');
       await waitForCatalogView(page);
 
-      // Verify FC column exists — in grid mode, FCStatusBadge has aria-label "Estado FC: ..."
-      // In table mode, the th would contain "FC"
+      // CURRENT CONTRACT: el badge FC (FCStatusBadge, aria-label "Estado FC:
+      // {label}") renderiza POR FILA de producto en la vista de lista —
+      // esperar la fila sembrada ANTES de contar (el wait del breadcrumb
+      // resolvía antes de que cargaran los productos)
+      const productRow = page.locator('tr', { hasText: fcProduct!.name }).first();
+      await expect(productRow).toBeVisible({ timeout: 20_000 });
+
+      // Cada producto renderiza su badge de estado FC
       const fcBadges = page.locator('[aria-label^="Estado FC:"]');
-      // At least some products should have an FC status badge
+      await expect(fcBadges.first()).toBeVisible({ timeout: 10_000 });
       const badgeCount = await fcBadges.count();
-      // Even if no badges are present (all products "sin_fc" without resolution),
-      // the coverage bar or filter chips should be visible
-      if (badgeCount === 0) {
-        // Verify the FC filter chip group exists as proof that FC integration is rendered
-        const fcFilterGroup = page.locator('[aria-label="Filtrar por estado de Ficha de Costo"]');
-        await expect(fcFilterGroup).toBeVisible({ timeout: 10_000 });
-      }
+      expect(badgeCount).toBeGreaterThanOrEqual(1);
     });
 
     test('should filter products by FC status', async ({ authedPage: page }) => {
+      test.skip(!fcStore || !fcProduct, 'setup de tienda de prueba no disponible');
+      await activateFcStore();
+
       // Navigate to catalog
       await page.goto('/?view=catalog');
       await waitForCatalogView(page);
+      const productRow = page.locator('tr', { hasText: fcProduct!.name }).first();
+      await expect(productRow).toBeVisible({ timeout: 20_000 });
 
-      // Find the FC filter chip group
-      const fcFilterGroup = page.locator('[aria-label="Filtrar por estado de Ficha de Costo"]');
+      // CURRENT CONTRACT: los chips de filtro FC viven dentro del modal
+      // "Filtros" (CatalogSearchAndFilters — BaseModal) y solo renderizan con
+      // cobertura FC > 0 (la tienda de prueba tiene 1 producto → total=1)
+      const filtersBtn = page.getByRole('button', { name: /configurar filtros/i });
+      await filtersBtn.click();
+
+      const dialog = page.getByRole('dialog');
+      const fcFilterGroup = dialog.locator('[aria-label="Filtrar por estado de Ficha de Costo"]');
       await expect(fcFilterGroup).toBeVisible({ timeout: 10_000 });
 
-      // Click the "FC Vigente" filter chip
-      const vigenteChip = fcFilterGroup.locator('button[aria-label="Filtrar por FC: FC Vigente"]');
-      if (await vigenteChip.isVisible()) {
-        await vigenteChip.click();
+      // El estado FC del producto sembrado depende del orden de ejecución:
+      // "sin_fc" sin plantilla, "pendiente" si el test de configuración ya
+      // activó la plantilla FC de la tienda. Se lee la cobertura REAL del UI
+      // (progressbar "Cobertura FC: ... (N vigente, M pendiente, K sin FC)")
+      // y se elige el chip del producto dinámicamente.
+      const coverageLabel = await dialog
+        .locator('[role="progressbar"]')
+        .getAttribute('aria-label');
+      const m = /(\d+) vigente, (\d+) pendiente, (\d+) sin FC/.exec(coverageLabel || '');
+      // Si el parseo falla, el contrato del aria-label de la cobertura cambió
+      // — el test debe FALLAR, no saltar (aserción sobre el contrato)
+      expect(m).not.toBeNull();
+      const [vigente, pendiente, sinFc] = [Number(m![1]), Number(m![2]), Number(m![3])];
+      const productChipLabel =
+        pendiente > 0 ? 'Pendiente' : sinFc > 0 ? 'Sin FC' : 'Vigente';
+      const emptyChipLabel =
+        pendiente > 0 ? (sinFc > 0 ? 'Sin FC' : 'Vigente') : sinFc > 0 ? 'Pendiente' : 'Pendiente';
 
-        // Verify the filter indicator appears
-        const filterIndicator = page.locator('text=Filtrando por:').first();
-        await expect(filterIndicator).toBeVisible({ timeout: 5_000 }).catch(() => {
-          // Filter might produce zero results — verify "clear filter" button instead
-          const clearBtn = page.locator('button', { hasText: /limpiar filtro fc/i });
-          expect(clearBtn).toBeVisible();
-        });
+      // Filtrar por el estado real del producto → sigue visible
+      const productChip = fcFilterGroup.locator(`button[aria-label="Filtrar por FC: ${productChipLabel}"]`);
+      await expect(productChip).toBeVisible();
+      await productChip.click();
+      await expect(productChip).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('tr', { hasText: fcProduct!.name }).first()).toBeVisible({ timeout: 10_000 });
 
-        // Reset filter
-        const clearBtn = page.locator('button', { hasText: /limpiar filtro fc/i });
-        if (await clearBtn.isVisible()) {
-          await clearBtn.click();
-        } else {
-          // Click "Todo" chip to reset
-          const allChip = fcFilterGroup.locator('button[aria-label="Filtrar por FC: Todo"]');
-          if (await allChip.isVisible()) {
-            await allChip.click();
-          }
-        }
-      }
+      // Cambiar a un estado con 0 productos → el producto desaparece
+      const emptyChip = fcFilterGroup.locator(`button[aria-label="Filtrar por FC: ${emptyChipLabel}"]`);
+      await emptyChip.click();
+      await expect(emptyChip).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('tr', { hasText: fcProduct!.name })).toHaveCount(0, { timeout: 10_000 });
+
+      // Reset: chip "Todos" devuelve el producto
+      const allChip = fcFilterGroup.locator('button[aria-label="Filtrar por FC: Todos"]');
+      await allChip.click();
+      await expect(page.locator('tr', { hasText: fcProduct!.name }).first()).toBeVisible({ timeout: 10_000 });
     });
 
     test('should show FC coverage bar', async ({ authedPage: page }) => {

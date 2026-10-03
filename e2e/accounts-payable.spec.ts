@@ -4,6 +4,14 @@ import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
 // selectores nunca visibles (y el REGRESSION de enums pasaba vacuamente).
 // Inyección de sesión fresca por test (auto-sanable con refresh real).
 import { signIn, injectSession } from './fixtures/session.fixture';
+// E2E-DEBT-CLEANUP: seed determinista para el test de headers (Opción B del
+// plan de deuda: datos test-owned en tienda EXCLUSIVA de test + cleanup)
+import {
+  createTestStore,
+  deleteTestStore,
+  sb,
+  testSuffix,
+} from './fixtures/session.fixture';
 
 const ADMIN_EMAIL = 'admin@costpro.com';
 const ADMIN_PASS = 'costpro123';
@@ -40,6 +48,16 @@ async function authedGoto(page: import('@playwright/test').Page, view: string) {
  *   unpaid  → "Pendiente" (changed from "Sin pagar" — nobody uses that term)
  *   partial → "Parcial"
  *   paid    → "Pagado"
+ *
+ * E2E-DEBT-CLEANUP (data-dependent x1): el test de headers fallaba porque la
+ * matriz de aging SOLO renderiza <table> cuando existen datos y ninguna
+ * tienda operativa tiene cuentas por pagar (la vista muestra su empty state
+ * correcto — producto HEALTHY, test data-dependent). El objetivo ESPECÍFICO
+ * del test es validar los headers en español (regresión i18n), así que se
+ * aplica la Opción B: sembrar received_services en una tienda EXCLUSIVA de
+ * test (nunca PILOT A/B ni TIENDA CENTRAL/Puerto Padre/Enervida), apuntar el
+ * active_store del admin a esa tienda durante el test y restaurarlo después
+ * (CREATE→TRACK→TEST→CLEANUP con cleanup garantizado ante fallo).
  */
 
 const TEST_STORE_ID = process.env.E2E_TEST_STORE_ID || 'test-store-00000000';
@@ -213,18 +231,87 @@ test.describe('Cuentas por Pagar — Accounts Payable', () => {
   });
 
   // ─── UI: table headers are in Spanish ────────────────────────────
-  test('UI: table headers are in Spanish (Proveedor, Tipo, Total, Saldo, Vence, Estado)', async ({ page }) => {
-    await authedGoto(page, 'accounts_payable');
+  test('UI: table headers are in Spanish (Proveedor, Tipo, Total, Saldo, Vence, Estado)', async ({ page, request }) => {
+    // E2E-DEBT-CLEANUP (Opción B — seed test-owned): el objetivo específico
+    // de este test es validar los HEADERS de la matriz de aging, que solo
+    // renderizan con datos. Se siembran cuentas por pagar en una tienda
+    // EXCLUSIVA de test y se apunta el active_store del admin a ella.
+    // TRACK: todo lo creado se limpia en el finally (también ante fallo).
+    // SEC-TS-10: timeout extendido — createTestStore paceado (4/min) puede
+    // esperar la ventana de rate-limit y superar los 60 s por defecto.
+    test.setTimeout(180_000);
+    const session = await signIn(ADMIN_EMAIL, ADMIN_PASS);
+    const suffix = testSuffix();
+    const seedStore = await createTestStore(request, session.token, 'AP');
 
-    // STRICT: key column headers must be in Spanish
-    // SEC-TS-10 (UI REDESIGNADA): la vista ahora es una matriz de aging por
-    // acreedor — headers reales: "Proveedor / Acreedor", "Total", "Saldo",
-    // "Por Vencer", "Vencido". Los headers "Tipo/Vence/Estado" de la tabla
-    // plana anterior YA NO EXISTEN por diseño. Aserción alineada a la UI real.
-    await expect(page.getByRole('columnheader', { name: /proveedor/i })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole('columnheader', { name: /^total/i })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: /^saldo/i })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: /por vencer/i })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: /^vencido/i })).toBeVisible();
+    const adminRows = await sb.select<{ active_store_id: string | null }>(
+      'profiles', `id=eq.${session.userId}&select=active_store_id&limit=1`,
+    );
+    const originalActiveStore = adminRows[0]?.active_store_id ?? null;
+
+    // CREATE: 2 cuentas por pagar con aging distinto (1 corriente, 1 vencida)
+    const futureDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const pastDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    await sb.insert('received_services', [
+      {
+        store_id: seedStore.id,
+        service_number: `E2E-AP-CUR-${suffix}`,
+        service_date: new Date().toISOString().split('T')[0],
+        service_type_name: 'Otro',
+        supplier: `E2E Proveedor Corriente ${suffix}`,
+        currency: 'CUP',
+        exchange_rate: 1,
+        total_amount: 150.0,
+        payment_status: 'unpaid',
+        paid_amount: 0,
+        due_date: futureDate,
+        status: 'active',
+      },
+      {
+        store_id: seedStore.id,
+        service_number: `E2E-AP-VEN-${suffix}`,
+        service_date: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        service_type_name: 'Otro',
+        supplier: `E2E Proveedor Vencido ${suffix}`,
+        currency: 'CUP',
+        exchange_rate: 1,
+        total_amount: 320.5,
+        payment_status: 'unpaid',
+        paid_amount: 0,
+        due_date: pastDate,
+        status: 'active',
+      },
+    ]);
+
+    // TEST (setup del contexto — se restaura en el finally)
+    await sb.update('profiles', `id=eq.${session.userId}`, { active_store_id: seedStore.id });
+
+    try {
+      await authedGoto(page, 'accounts_payable');
+
+      // STRICT: key column headers must be in Spanish
+      // SEC-TS-10 (UI REDESIGNADA): la vista ahora es una matriz de aging por
+      // acreedor — headers reales: "Proveedor / Acreedor", "Total", "Saldo",
+      // "Por Vencer", "Vencido". Los headers "Tipo/Vence/Estado" de la tabla
+      // plana anterior YA NO EXISTEN por diseño. Aserción alineada a la UI real.
+      // (E2E-DEBT-CLEANUP: con el seed, la tabla SÍ renderiza → determinista)
+      await expect(page.getByRole('columnheader', { name: /proveedor/i })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('columnheader', { name: /^total/i })).toBeVisible();
+      await expect(page.getByRole('columnheader', { name: /^saldo/i })).toBeVisible();
+      await expect(page.getByRole('columnheader', { name: /por vencer/i })).toBeVisible();
+      await expect(page.getByRole('columnheader', { name: /^vencido/i })).toBeVisible();
+
+      // La matriz renderiza los proveedores sembrados (datos de la tienda de
+      // test — evidencia de que la tabla corresponde al contexto activo)
+      await expect(page.getByText(`E2E Proveedor Corriente ${suffix}`).first()).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText(`E2E Proveedor Vencido ${suffix}`).first()).toBeVisible();
+    } finally {
+      // CLEANUP (garantizado ante fallo): restaurar contexto → borrar seed →
+      // eliminar la tienda de test. Orden crítico: el puntero active_store se
+      // restaura ANTES de borrar la tienda para no dejarlo huérfano.
+      await sb.update('profiles', `id=eq.${session.userId}`, { active_store_id: originalActiveStore }).catch(() => {});
+      await sb.delete('received_services', `store_id=eq.${seedStore.id}`).catch(() => {});
+      await deleteTestStore(request, session.token, seedStore.id).catch(() => {});
+    }
   });
 });
