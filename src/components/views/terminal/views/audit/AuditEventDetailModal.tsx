@@ -9,11 +9,21 @@
  *   - "Detalles técnicos" (sección colapsada) conserva la trazabilidad
  *     completa: ID del evento, referencia, tipo interno, origen, tabla,
  *     metadatos y datos anterior/nuevo (JSON crudo).
- *   - "Documento asociado": SOLO cuando la relación es inequívoca
+ *   - Documento asociado: SOLO cuando la relación es inequívoca
  *     (whitelist en lib/audit/eventPresentation). El documento se abre con
  *     el visor existente TransactionDetailsModal — no se crea un segundo
  *     visor (FASE 12). Estados contemplados: cargando, documento inexistente
  *     y documento no accesible (FASE 14) — jamás se fabrica un documento.
+ *
+ * REMEDIACIÓN (fix/audit-sale-document-link): la whitelist se amplía a las
+ * ventas REALMENTE registradas (CREATE_SALE / CREATE_SALE_V2 — relación
+ * demostrada: record_id ES el id de la transacción). El botón se etiqueta
+ * según lo que realmente abre (preferencia del mandato):
+ *   - intent 'sale'        → "Ver venta" (registro operacional de la venta,
+ *                            misma vista que Historial de Ventas).
+ *   - intent 'voided-sale' → "Ver documento" (comportamiento certificado).
+ * La venta se muestra con su referencia corta y SOLO datos reales del evento
+ * (artículos/método/total). Sin permiso RLS → mensaje honesto, sin bypass.
  *
  * Accesibilidad (FASE 17): Dialog de Radix (focus trap, Escape, restauración
  * de foco); título con DialogTitle; sección técnica con <details>/<summary>
@@ -75,13 +85,18 @@ function DetailRow({
 export function AuditEventDetailModal({ entry, storeName, isOpen, onClose }: AuditEventDetailModalProps) {
   const presentation = entry ? getAuditEventPresentation(entry) : null;
 
-  // Documento asociado (solo venta anulada — whitelist estricta).
+  // Documento asociado (ventas registradas y anuladas — whitelist estricta).
   const [docRequested, setDocRequested] = useState(false);
   const [docModalOpen, setDocModalOpen] = useState(false);
+  // REMEDIACIÓN: 'sale' → el evento REGISTRA la venta (botón "Ver venta");
+  // 'voided-sale' → el evento la ANULA (botón "Ver documento", comportamiento
+  // certificado). La etiqueta corresponde EXACTAMENTE a lo que abre.
+  const isSaleIntent = presentation?.document?.intent === 'sale';
 
   // FASE 12: reutilizar el visor existente — la transacción se resuelve por
-  // record_id (id real de la venta anulada) SOLO cuando el usuario pide el
-  // documento (fetch diferido, cero consultas para el resto de eventos).
+  // record_id (id real de la venta registrada o anulada) SOLO cuando el
+  // usuario pide el documento (fetch diferido, cero consultas para el resto
+  // de eventos).
   const { data: transaction, isLoading: isLoadingDoc, error: docError } = useQuery({
     queryKey: ['audit-sale-document', presentation?.document?.recordId],
     queryFn: async (): Promise<Transaction | null> => {
@@ -145,33 +160,55 @@ export function AuditEventDetailModal({ entry, storeName, isOpen, onClose }: Aud
             )}
           </div>
 
-          {/* ── Documento asociado (FASE 11/12/14 — solo si existe relación real) ── */}
+          {/* ── Venta / documento asociado (solo si existe relación real demostrada) ── */}
           {hasDocument && (
             <div className="rounded-xl border border-border p-4 space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Documento asociado</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                {isSaleIntent ? 'Venta asociada' : 'Documento asociado'}
+              </p>
+
+              {/* Información de la venta — SOLO datos reales del evento (sin fetch) */}
+              {(presentation.saleRef || presentation.saleSummary) && (
+                <div className="min-w-0">
+                  {presentation.saleRef && (
+                    <p className="text-sm text-foreground font-medium break-words">{presentation.saleRef}</p>
+                  )}
+                  {presentation.saleSummary && (
+                    <p className="text-xs text-muted-foreground break-words">{presentation.saleSummary}</p>
+                  )}
+                </div>
+              )}
 
               {!docRequested && (
                 <button
                   type="button"
                   onClick={() => setDocRequested(true)}
-                  aria-label={`Ver documento de la venta anulada del ${formatDate(entry.created_at)}`}
+                  aria-label={
+                    isSaleIntent
+                      ? `Ver venta del ${formatDate(entry.created_at)}`
+                      : `Ver documento de la venta anulada del ${formatDate(entry.created_at)}`
+                  }
                   className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border border-border bg-background text-xs font-black uppercase tracking-widest text-primary hover:bg-muted transition-colors"
                 >
                   <FileText className="w-4 h-4" aria-hidden="true" />
-                  Ver documento
+                  {isSaleIntent ? 'Ver venta' : 'Ver documento'}
                 </button>
               )}
 
               {docRequested && isLoadingDoc && (
                 <div className="flex items-center gap-3" role="status" aria-live="polite">
                   <Skeleton className="h-4 w-40" />
-                  <span className="text-xs text-muted-foreground">Cargando documento…</span>
+                  <span className="text-xs text-muted-foreground">
+                    {isSaleIntent ? 'Cargando venta…' : 'Cargando documento…'}
+                  </span>
                 </div>
               )}
 
               {docUnavailable && (
                 <p className="text-xs text-muted-foreground" role="status">
-                  El documento ya no existe o no es accesible con tu rol. La trazabilidad del evento se conserva en los detalles técnicos.
+                  {isSaleIntent
+                    ? 'La venta ya no existe o no es accesible con tu rol. La trazabilidad del evento se conserva en los detalles técnicos.'
+                    : 'El documento ya no existe o no es accesible con tu rol. La trazabilidad del evento se conserva en los detalles técnicos.'}
                 </p>
               )}
 
@@ -179,11 +216,15 @@ export function AuditEventDetailModal({ entry, storeName, isOpen, onClose }: Aud
                 <button
                   type="button"
                   onClick={() => setDocModalOpen(true)}
-                  aria-label={`Abrir documento de la venta anulada del ${formatDate(entry.created_at)}`}
+                  aria-label={
+                    isSaleIntent
+                      ? `Abrir venta del ${formatDate(entry.created_at)}`
+                      : `Abrir documento de la venta anulada del ${formatDate(entry.created_at)}`
+                  }
                   className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
                 >
                   <FileText className="w-4 h-4" aria-hidden="true" />
-                  Abrir documento
+                  {isSaleIntent ? 'Abrir venta' : 'Abrir documento'}
                 </button>
               )}
             </div>
@@ -237,7 +278,8 @@ export function AuditEventDetailModal({ entry, storeName, isOpen, onClose }: Aud
         </DialogContent>
       </Dialog>
 
-      {/* FASE 12: visor de venta EXISTENTE — cero visores nuevos. */}
+      {/* FASE 12: visor de venta EXISTENTE — cero visores nuevos. Es la MISMA
+          vista canónica que abre Historial de Ventas (REMEDIACIÓN). */}
       <TransactionDetailsModal
         isOpen={docModalOpen}
         onClose={() => setDocModalOpen(false)}

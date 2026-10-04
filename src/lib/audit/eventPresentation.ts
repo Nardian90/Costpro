@@ -12,11 +12,24 @@
  *     (metadata/old_data/new_data). Si no hay datos → sin descripción.
  *   - Un evento desconocido no se disfraza: se humaniza su código literal
  *     y el código original queda disponible en "Detalles técnicos".
- *   - Documento asociado SOLO cuando la relación es inequívoca
- *     (sale_voided → record_id ES el id de la transacción — ver
- *     auditService.logSaleVoided). Otros eventos NO fabrican documentos:
- *     p.ej. invoice_without_price/sale_below_cost guardan un PRODUCT id en
- *     record_id, no una transacción.
+ *   - Documento asociado SOLO cuando la relación es inequívoca, demostrada
+ *     en el código que ESCRIBE el evento (no en la etiqueta):
+ *       · sale_voided (V1, auditService.logSaleVoided) → record_id =
+ *         transactionId, table_name 'transactions'.
+ *       · REVERSE_TRANSACTION_V2 (V2, RPC reverse_transaction_v2 — migración
+ *         20260905000001_w9_b8_modelo_c_undo_reverse_authorization.sql línea
+ *         "VALUES ('REVERSE_TRANSACTION_V2', 'transactions', p_transaction_id,…")
+ *         → record_id = id de la transacción anulada.
+ *       · CREATE_SALE (V1, RPC create_sale — 20260215_comprehensive_audit_logging)
+ *         y CREATE_SALE_V2 (V2, RPC create_sale_v2 — 20260807000003/
+ *         20260812000002/20260915000001) → record_id = v_tx_id, table_name
+ *         'transactions'. Verificado además contra datos reales: el evento y
+ *         la transacción comparten store_id, total_amount y created_at.
+ *     El discriminador es la TERNA (action, table_name, record_id) — jamás la
+ *     etiqueta de negocio: recepciones (reception_created/receipts), órdenes
+ *     de producción/trabajo/servicio u otros eventos con aspecto de "venta"
+ *     NO cumplen la terna y NO obtienen botón. invoice_without_price/
+ *     sale_below_cost guardan un PRODUCT id en record_id — excluidos.
  */
 
 import { formatCurrency } from '@/lib/utils';
@@ -44,6 +57,16 @@ export const AUDIT_EVENT_TITLES: Record<string, string> = {
   fc_pdf_exported:          'Documento de ficha de costo exportado',
   cash_closure_finalized:   'Cierre de caja finalizado',
   sale_voided:              'Venta anulada',
+  // REMEDIACIÓN (fix/audit-sale-document-link): la anulación V2 (RPC
+  // reverse_transaction_v2) escribe REVERSE_TRANSACTION_V2 — mismo hecho de
+  // negocio que sale_voided. Sin este mapeo el evento se humanizaría como
+  // código crudo ("Reverse transaction v2"), violando el idioma de negocio.
+  REVERSE_TRANSACTION_V2:   'Venta anulada',
+  // REMEDIACIÓN (fix/audit-sale-document-link): el checkout V2 (RPC
+  // create_sale_v2) escribe CREATE_SALE_V2 — mismo hecho de negocio que
+  // CREATE_SALE ('Venta realizada'). Ambas acciones comparten terna
+  // documental: (action, 'transactions', transaction id).
+  CREATE_SALE_V2:           'Venta realizada',
   stock_adjustment:         'Ajuste de stock registrado',
   price_change:             'Precio de producto actualizado',
 
@@ -100,14 +123,42 @@ function humanizeActionCode(action: string): string {
 // ─────────────────────────────────────────────────────────────────
 
 export type AuditDocumentRef =
-  | { kind: 'sale'; recordId: string }
+  | {
+      kind: 'sale';
+      recordId: string;
+      /**
+       * 'sale'        → el evento REGISTRA la venta (CREATE_SALE / CREATE_SALE_V2):
+       *                 el botón abre el registro operacional → "Ver venta".
+       * 'voided-sale' → el evento ANULA la venta (sale_voided /
+       *                 REVERSE_TRANSACTION_V2): botón "Ver documento" (comportamiento
+       *                 certificado en feat/dashboard-v3-audit-ux).
+       */
+      intent: 'sale' | 'voided-sale';
+    }
   | null;
 
+/**
+ * REMEDIACIÓN (fix/audit-sale-document-link): whitelist documental ampliada a
+ * las ventas REALMENTE registradas. La relación evento → venta está
+ * demostrada en el productor del evento (RPC/función de BD) y verificada
+ * contra datos reales (record_id resuelve a transactions.id con mismo
+ * store_id/total/created_at). El discriminador es la terna exacta
+ * (action, table_name='transactions', record_id) — la etiqueta de negocio NO
+ * participa, por lo que recepciones, órdenes de producción/trabajo/servicio,
+ * cambios de estado (UPDATE_STATUS) y alertas de control (record_id = product
+ * id) nunca obtienen botón documental.
+ */
+const SALE_CREATED_ACTIONS: ReadonlySet<string> = new Set(['CREATE_SALE', 'CREATE_SALE_V2']);
+const SALE_VOIDED_ACTIONS: ReadonlySet<string> = new Set(['sale_voided', 'REVERSE_TRANSACTION_V2']);
+
 function getDocumentRef(entry: AuditLogEntry): AuditDocumentRef {
-  // ÚNICA relación inequívoca certificada: sale_voided escribe record_id =
-  // transactionId (auditService.logSaleVoided) con table_name 'transactions'.
-  if (entry.action === 'sale_voided' && entry.table_name === 'transactions' && entry.record_id) {
-    return { kind: 'sale', recordId: entry.record_id };
+  if (entry.table_name === 'transactions' && entry.record_id) {
+    if (SALE_CREATED_ACTIONS.has(entry.action)) {
+      return { kind: 'sale', recordId: entry.record_id, intent: 'sale' };
+    }
+    if (SALE_VOIDED_ACTIONS.has(entry.action)) {
+      return { kind: 'sale', recordId: entry.record_id, intent: 'voided-sale' };
+    }
   }
   // Todo lo demás: SIN botón de documento (regla crítica — no fabricar).
   return null;
@@ -124,13 +175,59 @@ export interface AuditEventPresentation {
   description?: string;
   severity: AuditSeverity;
   document: AuditDocumentRef;
+  /**
+   * REMEDIACIÓN: resumen de la venta construido SOLO con datos reales del
+   * registro (metadata del V2 / new_data del V1). Si falta un dato, se omite
+   * — jamás se inventa. Presente solo para eventos con documento de venta.
+   */
+  saleSummary?: string;
+  /** Referencia corta de la venta (convención del visor: "Ref: XXXXXXXX"). */
+  saleRef?: string;
+}
+
+/**
+ * Traducción honesta de métodos de pago — enum CERRADO del checkout V2
+ * (zod: ['cash','transfer','zelle','mixed']). Un valor fuera del enum se
+ * omite (no se traduce a ciegas).
+ */
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash: 'Efectivo',
+  transfer: 'Transferencia',
+  zelle: 'Zelle',
+  mixed: 'Mixto',
+};
+
+/**
+ * Construye "Información de la venta" SOLO con datos reales del evento.
+ * Fuentes demostradas: CREATE_SALE_V2.metadata (total_amount, item_count,
+ * payment_method) y CREATE_SALE.new_data (total_amount, items_count,
+ * payment_method).
+ */
+function buildSaleSummary(entry: AuditLogEntry): string | undefined {
+  const meta = (entry.metadata || {}) as Record<string, any>;
+  const newData = (entry.new_data || {}) as Record<string, any>;
+  const parts: string[] = [];
+
+  const items = Number(meta.item_count ?? newData.items_count);
+  if (Number.isFinite(items) && items > 0) parts.push(`${items} artículo(s)`);
+
+  const methodRaw = meta.payment_method ?? newData.payment_method;
+  const method = typeof methodRaw === 'string' ? PAYMENT_METHOD_LABELS[methodRaw] : undefined;
+  if (method) parts.push(method);
+
+  const total = money(meta.total_amount ?? newData.total_amount);
+  if (total) parts.push(`Total: ${total}`);
+
+  return parts.length > 0 ? parts.join(' · ') : undefined;
 }
 
 /** Severidad de negocio (solo acentos; colores semánticos de tokens). */
 function getSeverity(entry: AuditLogEntry): AuditSeverity {
   const a = entry.action.toUpperCase();
   if (a.includes('RESET') || a.includes('DELETE')) return 'danger';
-  if (a.includes('VOID') || a.includes('CANCEL') || a.includes('WITHOUT_PRICE') || a.includes('BELOW_COST')) return 'warning';
+  // REVERSE_TRANSACTION_V2 = misma anulación de venta que sale_voided →
+  // misma severidad (no contiene el literal VOID).
+  if (a.includes('VOID') || a === 'REVERSE_TRANSACTION_V2' || a.includes('CANCEL') || a.includes('WITHOUT_PRICE') || a.includes('BELOW_COST')) return 'warning';
   if (a.includes('CONFIRMED')) return 'success';
   return 'neutral';
 }
@@ -152,7 +249,8 @@ function buildDescription(entry: AuditLogEntry): string | undefined {
   const parts: string[] = [];
 
   switch (entry.action) {
-    case 'sale_voided': {
+    case 'sale_voided':
+    case 'REVERSE_TRANSACTION_V2': {
       if (meta.reason) parts.push(`Motivo registrado: ${String(meta.reason)}`);
       break;
     }
@@ -257,20 +355,68 @@ export function getAuditEventPresentation(entry: AuditLogEntry): AuditEventPrese
     title = humanizeActionCode(entry.action);
   }
 
+  const document = getDocumentRef(entry);
+
   return {
     title,
     description: buildDescription(entry),
     severity: getSeverity(entry),
-    document: getDocumentRef(entry),
+    document,
+    saleSummary: document?.kind === 'sale' ? buildSaleSummary(entry) : undefined,
+    saleRef:
+      document?.kind === 'sale' && document.recordId
+        ? `Ref: ${String(document.recordId).split('-')[0]}`
+        : undefined,
   };
 }
 
-/** Opciones del filtro de tipo de evento (etiquetas de negocio, orden alfabético). */
-export const AUDIT_FILTER_OPTIONS: Array<{ value: string; label: string }> =
+/** Opciones del filtro de tipo de evento (etiquetas de negocio, orden alfabético).
+ *
+ * REMEDIACIÓN (fix/audit-sale-document-link): los hechos de negocio que
+ * existen en dos eras técnicas (venta creada: CREATE_SALE V1 + CREATE_SALE_V2;
+ * venta anulada: sale_voided + REVERSE_TRANSACTION_V2) se agrupan en UNA
+ * opción con `actions` — el filtro busca con `.in()` y los códigos internos
+ * jamás se muestran. Sin agrupación aparecerían dos opciones idénticas
+ * "Venta realizada" (defecto) o el filtro solo vería una era (engañoso).
+ */
+export interface AuditFilterOption {
+  /** Clave única para el <select> (nunca se muestra al usuario). */
+  value: string;
+  label: string;
+  /** Acciones internas cubiertas por esta etiqueta. Ausente = [value]. */
+  actions?: string[];
+}
+
+export const AUDIT_FILTER_OPTIONS: AuditFilterOption[] =
   Object.entries(AUDIT_EVENT_TITLES)
-    .filter(([value]) => !['INSERT', 'UPDATE', 'DELETE', 'VOID', 'CANCEL'].includes(value))
-    .map(([value, label]) => ({ value, label }))
+    .filter(([value]) => {
+      // Genéricos de trigger no filtrables...
+      if (['INSERT', 'UPDATE', 'DELETE', 'VOID', 'CANCEL'].includes(value)) return false;
+      // ...y códigos hermanos agrupados bajo su opción canónica (hechos con
+      // dos eras técnicas — misma etiqueta de negocio, mismos datos).
+      if (value === 'CREATE_SALE') return false;         // agrupado en CREATE_SALE_V2
+      if (value === 'sale_voided') return false;         // agrupado en REVERSE_TRANSACTION_V2
+      if (value === 'CONFIRM_TRANSFER') return false;    // agrupado en transfer_confirmed (duplicado preexistente del mismo patrón)
+      return true;
+    })
+    .map(([value, label]) => {
+      if (value === 'CREATE_SALE_V2') {
+        return { value, label, actions: ['CREATE_SALE_V2', 'CREATE_SALE'] };
+      }
+      if (value === 'REVERSE_TRANSACTION_V2') {
+        return { value, label, actions: ['REVERSE_TRANSACTION_V2', 'sale_voided'] };
+      }
+      if (value === 'transfer_confirmed') {
+        return { value, label, actions: ['transfer_confirmed', 'CONFIRM_TRANSFER'] };
+      }
+      return { value, label };
+    })
     .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+
+/** Resuelve las acciones internas de una opción de filtro ([keys] si no agrupa). */
+export function resolveAuditFilterActions(option: AuditFilterOption): string[] {
+  return option.actions ?? [option.value];
+}
 
 /** Etiqueta de actor legible: nombre → email → 'Sistema' (jamás 'sistema' crudo en UI). */
 export function getActorLabel(entry: AuditLogEntry): string {
