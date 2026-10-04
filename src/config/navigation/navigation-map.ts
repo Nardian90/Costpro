@@ -133,7 +133,6 @@ const TECHNICAL_DIRECT_ROUTES: Record<string, DirectRoute> = {
   // navega con el id 'clientes' (ACTION_EXTENSIONS, GATE 1.4P); el deep-link
   // /?view=customers sigue resolviendo por el case 'customers' del shell y su
   // breadcrumb por VIEW_TO_HUB_MAP ("Clientes" colgando del hub Ventas).
-  'bank-reconciliation': { type: 'direct', view: 'bank-reconciliation' },
   stores:                { type: 'direct', view: 'stores' },
   'accounts-payable':    { type: 'direct', view: 'accounts-payable' },
   'accounts_payable':    { type: 'direct', view: 'accounts-payable' },
@@ -364,17 +363,12 @@ export function getBreadcrumbForView(
     return [{ label: 'Chat con Darian', isCurrent: true }];
   }
 
-  // FASE B (UX-010 · GATE 1.4P): Conciliación Bancaria es una capacidad
-  // PARCIAL (UI esqueleto solo-lectura; importar/conciliar sin UI — el propio
-  // estado vacío remite al POST de API). Se mantiene FUERA de la navegación
-  // principal (sin menú/palette/tarjeta) para no aparentar una función
-  // completa; el deep-link sigue funcionando con un breadcrumb standalone
-  // honesto (precedente calculator/chat) — sin hub ficticio y sin
-  // "Módulo No Disponible". La asignación de dominio queda condicionada a
-  // que Producto decida completar la UI.
-  if (currentView === 'bank-reconciliation') {
-    return [{ label: 'Conciliación Bancaria', isCurrent: true }];
-  }
+  // REORGANIZACIÓN (fix/navigation-orphaned-development): el bloque standalone
+  // de Conciliación Bancaria se retira — la vista es hoy hoja de menú de
+  // EN DESARROLLO (huérfana rescatada) y su breadcrumb se deriva del árbol de
+  // la definición (fuente única): Inicio > EN DESARROLLO > Conciliación
+  // Bancaria. El deep-link y la ruta directa quedan intactos (ahora vía
+  // DEFINED_ROUTES).
 
   // Sub-vistas de hub → path del hub + hoja actual
   const hubMapping = VIEW_TO_HUB_MAP[currentView];

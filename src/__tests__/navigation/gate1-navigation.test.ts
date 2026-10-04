@@ -30,6 +30,7 @@ import {
 import {
   SIDEBAR_STRUCTURE,
   isViewAllowedForRole,
+  filterModulesByRole,
 } from '@/config/navigation/sidebar.structure';
 import NAVIGATION_MAP, {
   getNavigationRoute,
@@ -113,7 +114,7 @@ describe('Guard isViewAllowedForRole', () => {
     }
   });
 
-  it('EN DESARROLLO es admin-only', () => {
+  it('EN DESARROLLO: el trío experimental sigue admin-only (roles por entrada desde fix/navigation-orphaned-development)', () => {
     for (const view of ['ipv', 'pick3-intelligence', 'wallet']) {
       expect(isViewAllowedForRole(view, 'manager')).toBe(false);
       expect(isViewAllowedForRole(view, 'admin')).toBe(true);
@@ -139,9 +140,19 @@ describe('Guard isViewAllowedForRole', () => {
     expect(isViewAllowedForRole('reception_list', 'warehouse')).toBe(true);
   });
 
-  it('AYUDA es universal (incl. rol costo)', () => {
-    for (const view of ['help', 'wiki', 'academy', 'legal']) {
-      expect(isViewAllowedForRole(view, 'costo')).toBe(true);
+  it('AYUDA es universal (solo Centro de Ayuda) — incl. rol costo', () => {
+    for (const role of ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse', 'costo']) {
+      expect(isViewAllowedForRole('help', role)).toBe(true);
+    }
+  });
+
+  it('las vistas trasladadas a EN DESARROLLO conservan su visibilidad efectiva (sin cambios de permisos)', () => {
+    // Wiki/Academia/Marco Legal eran universales en AYUDA — siguen universales.
+    // Conciliación Bancaria era default-open (fuera del menú) — sigue default-open.
+    for (const view of ['wiki', 'academy', 'legal', 'bank-reconciliation']) {
+      for (const role of ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse', 'costo']) {
+        expect(isViewAllowedForRole(view, role)).toBe(true);
+      }
     }
   });
 
@@ -719,17 +730,146 @@ describe('FASE B — Clientes: destino canónico único (CRM global en Ventas)',
   });
 });
 
-describe('FASE B — Conciliación Bancaria: estatus navegacional honesto', () => {
-  it('NO es comando público de palette (capacidad parcial — no aparentar completa)', () => {
-    const ids = getActionsForUser('admin').map(a => a.id);
-    expect(ids).not.toContain('bank-reconciliation');
-    const menuIds = flattenNavigation().map(l => l.id);
-    expect(menuIds).not.toContain('bank-reconciliation');
+describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navigation-orphaned-development)', () => {
+  it('A — Ayuda contiene EXCLUSIVAMENTE el Centro de Ayuda', () => {
+    const ayuda = NAVIGATION_SECTIONS.find(s => s.id === 'ayuda');
+    expect(ayuda?.children?.map(c => c.id)).toEqual(['help']);
+    expect(ayuda?.children?.map(c => c.label)).toEqual(['Centro de Ayuda']);
   });
 
-  it('deep-link funcional con breadcrumb standalone honesto (sin módulo falso)', () => {
+  it('B — En desarrollo contiene las existentes no integradas (orden por madurez, no alfabético)', () => {
+    const desarrollo = NAVIGATION_SECTIONS.find(s => s.id === 'desarrollo');
+    // 1. experimentales relacionadas · 2. existentes no integradas · 3. incompletas
+    expect(desarrollo?.children?.map(c => c.id)).toEqual([
+      'ipv', 'pick3-intelligence', 'wallet', 'wiki', 'academy', 'legal', 'bank-reconciliation',
+    ]);
+  });
+
+  it('C — cero vistas huérfanas: cada ViewType renderizable está clasificado (menú/palette/hub/técnica)', () => {
+    const menuIds = flattenNavigation().map(l => l.id);
+    const paletteIds = SYSTEM_ACTIONS.map(a => a.id);
+    // Toda vista con componente real en TerminalShell y sin otra vía de
+    // descubrimiento documentada (hub, contextual, chat, calculator) debe
+    // ser hoja de menú o extensión de palette.
+    for (const orphanCandidate of ['wiki', 'academy', 'legal', 'bank-reconciliation']) {
+      expect(menuIds).toContain(orphanCandidate);
+    }
+    // El conjunto de "huérfana" (componente + deep-link + sin ubicación) está
+    // vacío: toda hoja del menú es única y ninguna queda fuera de ambas vías.
+    const classified = new Set([...menuIds, ...paletteIds, ...TECHNICAL_VIEW_IDS]);
+    for (const view of VALID_VIEWS) {
+      // Los wrappers legacy, secciones y submenús no son vistas terminales.
+      if (LEGACY_VIEW_ALIASES[view]) continue;
+      const isSectionOrHub = [
+        'operacion', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
+        'ventas', 'costo', 'almacen_gestion', 'almacen_operaciones',
+        'punto_venta', 'analitica', 'ipv_reporting', 'ipv_operaciones',
+        'ipv_datos', 'ipv_procesamiento', 'ipv_avanzado', 'cost_views',
+        'cost_gen', 'cost_templates', 'cost_tools', 'costos', 'tienda',
+        'ipv_module', 'otros', 'administracion', 'recursos', 'occ',
+      ].includes(view);
+      if (isSectionOrHub) continue;
+      // Vistas con camino documentado (hub/contextual/palette/menú) o
+      // placeholder técnico sin componente propio.
+      const documentedContextual = [
+        'chat', 'calculator', 'sales_catalog', 'cash_report', 'catalog',
+        'history', 'lots', 'warehouses', 'stores', 'recepcion',
+        'storefront-config', 'ofertas', 'customers',
+      ];
+      if (documentedContextual.includes(view)) continue;
+      // Lo restante debe ser hoja de menú o extensión.
+      expect(classified.has(view) || menuIds.includes(view) || paletteIds.includes(view)).toBe(true);
+    }
+  });
+
+  it('D — integridad: ViewType/label/ruta de cada vista trasladada, sin duplicados', () => {
+    const menuIds = flattenNavigation().map(l => l.id);
+    // Aparecen UNA sola vez (sin duplicados por id).
+    for (const id of ['help', 'wiki', 'academy', 'legal', 'bank-reconciliation', 'ipv', 'pick3-intelligence', 'wallet']) {
+      expect(menuIds.filter(x => x === id)).toHaveLength(1);
+    }
+    // Ninguna coexiste en otra sección (categoría única).
+    const categories = Object.fromEntries(flattenNavigation().map(l => [l.id, l.category]));
+    expect(categories['help']).toBe('AYUDA');
+    for (const id of ['wiki', 'academy', 'legal', 'bank-reconciliation', 'ipv', 'pick3-intelligence', 'wallet']) {
+      expect(categories[id]).toBe('EN DESARROLLO');
+    }
+    // Sin duplicados por label en hojas + extensiones.
+    const labels = [
+      ...flattenNavigation().map(l => l.label),
+      ...ACTION_EXTENSIONS.map(e => e.label),
+    ];
+    expect(new Set(labels).size).toBe(labels.length);
+    // Deep-links intactos (rutas directas, sin tab ni redirección).
+    for (const id of ['help', 'wiki', 'academy', 'legal', 'bank-reconciliation']) {
+      expect(getNavigationRoute(id)).toEqual({ type: 'direct', view: id });
+    }
+  });
+
+  it('E — sidebar filtrado por rol: la sección EN DESARROLLO muestra exactamente las entradas correctas', () => {
+    // clerk (no admin): solo las universales — el trío experimental desaparece,
+    // pero la sección NO desaparece (antes hubiera desaparecido entera).
+    const clerkTree = filterModulesByRole(SIDEBAR_STRUCTURE, 'clerk');
+    const clerkDesarrollo = clerkTree.find(g => g.id === 'desarrollo');
+    expect(clerkDesarrollo?.children?.map(c => c.id)).toEqual(['wiki', 'academy', 'legal', 'bank-reconciliation']);
+    expect(clerkTree.find(g => g.id === 'ayuda')?.children?.map(c => c.id)).toEqual(['help']);
+    // admin: las 7 entradas.
+    const adminTree = filterModulesByRole(SIDEBAR_STRUCTURE, 'admin');
+    expect(adminTree.find(g => g.id === 'desarrollo')?.children?.map(c => c.id)).toEqual([
+      'ipv', 'pick3-intelligence', 'wallet', 'wiki', 'academy', 'legal', 'bank-reconciliation',
+    ]);
+  });
+
+  it('F — breadcrumbs derivados del árbol (sin sección antigua ni Módulo No Disponible)', () => {
+    expect(getBreadcrumbForView('help').map(i => i.label)).toEqual(['AYUDA', 'Centro de Ayuda']);
+    expect(getBreadcrumbForView('wiki').map(i => i.label)).toEqual(['EN DESARROLLO', 'Wiki']);
+    expect(getBreadcrumbForView('academy').map(i => i.label)).toEqual(['EN DESARROLLO', 'Academia']);
+    expect(getBreadcrumbForView('legal').map(i => i.label)).toEqual(['EN DESARROLLO', 'Marco Legal']);
+    expect(getBreadcrumbForView('bank-reconciliation').map(i => i.label)).toEqual(['EN DESARROLLO', 'Conciliación Bancaria']);
+    for (const view of ['help', 'wiki', 'academy', 'legal', 'bank-reconciliation']) {
+      expect(getBreadcrumbForView(view).some(i => i.label === 'Módulo No Disponible')).toBe(false);
+    }
+  });
+
+  it('G — palette por rol: el trío experimental solo admin; las universales para todos', () => {
+    const clerkIds = getActionsForUser('clerk').map(a => a.id);
+    expect(clerkIds).not.toContain('ipv');
+    expect(clerkIds).not.toContain('pick3-intelligence');
+    expect(clerkIds).not.toContain('wallet');
+    for (const id of ['wiki', 'academy', 'legal', 'bank-reconciliation']) {
+      expect(clerkIds).toContain(id);
+    }
+    const adminIds = getActionsForUser('admin').map(a => a.id);
+    for (const id of ['ipv', 'pick3-intelligence', 'wallet', 'wiki', 'academy', 'legal', 'bank-reconciliation']) {
+      expect(adminIds).toContain(id);
+    }
+  });
+
+  it('H — sheet móvil derivado: la misma fuente para desktop y móvil (sin listas paralelas)', () => {
+    // Las 7 entradas viven en NAVIGATION_SECTIONS (el sheet móvil las recoge
+    // por sección; ninguna declara mobileHide).
+    const desarrollo = NAVIGATION_SECTIONS.find(s => s.id === 'desarrollo');
+    for (const child of desarrollo?.children ?? []) {
+      expect(child.mobileHide).toBeFalsy();
+    }
+    // La sección ya no es admin-only: los roles operativos la ven (con sus
+    // entradas universales) en desktop y móvil por el mismo filtro.
+    expect(desarrollo?.roles).toBeUndefined();
+    expect(desarrollo?.children?.find(c => c.id === 'ipv')?.roles).toEqual(['admin']);
+  });
+});
+
+describe('FASE B — Conciliación Bancaria: estatus navegacional (actualizado por fix/navigation-orphaned-development)', () => {
+  it('es hoja de menú EN DESARROLLO y comando de palette (huérfana rescatada, mandato de producto)', () => {
+    const ids = getActionsForUser('admin').map(a => a.id);
+    expect(ids).toContain('bank-reconciliation');
+    const menuIds = flattenNavigation().map(l => l.id);
+    expect(menuIds).toContain('bank-reconciliation');
+  });
+
+  it('deep-link funcional con breadcrumb derivado del árbol (sin módulo falso)', () => {
     const items = getBreadcrumbForView('bank-reconciliation');
-    expect(items.map(i => i.label)).toEqual(['Conciliación Bancaria']);
+    expect(items.map(i => i.label)).toEqual(['EN DESARROLLO', 'Conciliación Bancaria']);
     expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
     // La vista sigue siendo un destino válido (deep-link /case del shell).
     expect(VALID_VIEWS.has('bank-reconciliation')).toBe(true);
@@ -756,8 +896,8 @@ describe('FASE B — Palette sin pistas falsas (dispatch por route.view)', () =>
     expect(byKeyword('información').map(a => a.id)).toContain('news');
     expect(byKeyword('ofertas').map(a => a.id)).toContain('ofertas');
     expect(byKeyword('clientes').map(a => a.id)).toContain('clientes');
-    // La conciliación no debe aparecer como resultado público de palette.
-    expect(byKeyword('conciliación').map(a => a.id)).not.toContain('bank-reconciliation');
+    // La conciliación es hoy hoja de EN DESARROLLO (huérfana rescatada).
+    expect(byKeyword('conciliación').map(a => a.id)).toContain('bank-reconciliation');
   });
 
   it('"caja" sigue resolviendo UNA acción (sin contaminación de keywords)', () => {

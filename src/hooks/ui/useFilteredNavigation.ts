@@ -1,25 +1,20 @@
 import { useMemo } from 'react';
 import { useAuthStore } from '@/store';
-import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
+import {
+  SIDEBAR_STRUCTURE,
+  filterModulesByRole,
+  NavModule,
+} from '@/config/navigation/sidebar.structure';
 
-function filterModulesByRole(modules: NavModule[], role: string): NavModule[] {
-  return modules
-    .filter(mod => {
-      // Si no tiene allowedRoles definido, acceso universal
-      if (!mod.allowedRoles) return true;
-      return mod.allowedRoles.includes(role);
-    })
-    .map(mod => {
-      if (!mod.children) return mod;
-      const filteredChildren = filterModulesByRole(mod.children, role);
-      return { ...mod, children: filteredChildren };
-    })
-    // Elimina grupos/submenús que quedaron vacíos después de filtrar
-    .filter(mod => {
-      if (mod.type === 'item') return true;
-      return (mod.children?.length ?? 0) > 0;
-    });
-}
+/**
+ * Filtra el árbol por rol a CADA nivel (la visibilidad de un grupo depende
+ * de su propio allowedRoles; las entradas heredan el más cercano).
+ * Vive en sidebar.structure.ts (módulo puro, sin dependencia del store) y se
+ * re-exporta aquí para los consumidores del hook — los tests de reorganización
+ * (fix/navigation-orphaned-development) validan el MISMO filtro que produce
+ * el sidebar sin montar React ni el store.
+ */
+export { filterModulesByRole };
 
 export function useFilteredNavigation(): NavModule[] {
   const { user } = useAuthStore();

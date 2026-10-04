@@ -9,7 +9,8 @@
  *
  * Los 3 destinos muertos del palette histórico (res-help, res-system-help,
  * res-academy) desaparecen por construcción: la ayuda se busca como
- * "Centro de Ayuda" / "Wiki" / "Academia" (vistas reales de AYUDA).
+ * "Centro de Ayuda" / "Wiki" / "Academia" (vistas reales del menú —
+ * Wiki/Academia hoy en EN DESARROLLO tras fix/navigation-orphaned-development).
  */
 
 import { ViewType } from '@/store';
