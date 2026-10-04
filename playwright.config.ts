@@ -21,6 +21,9 @@ export default defineConfig({
   // ANTES de lanzar workers → reactiva ~150 tests que antes saltaban.
   // Los workers heredan el env del proceso padre tras completar el setup.
   globalSetup: './e2e/global-setup.ts',
+  // E2E-RUNNER-ISOLATION: teardown del run aislado (limpia SOLO los recursos
+  // propios — usuarios/tenant/pilotos provisionados por el global-setup).
+  globalTeardown: './e2e/global-teardown.ts',
   fullyParallel: false, // Los tests de Supabase real no son paralelos-safe
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -35,6 +38,12 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     storageState: undefined, // Cada test maneja su propio login
+    // Sandbox de 4GB sin swap: el dev server (Next dev) + chromium pueden
+    // agotar la memoria y el OOM-killer termina el runner de forma silenciosa
+    // (reproducido). --disable-dev-shm-usage evita /dev/shm de 64MB; sin GPU.
+    launchOptions: {
+      args: ['--disable-dev-shm-usage', '--disable-gpu'],
+    },
   },
 
   projects: [

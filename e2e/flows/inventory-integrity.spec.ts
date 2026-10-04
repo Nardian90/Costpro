@@ -22,7 +22,7 @@
  */
 import { test, expect, type APIRequestContext } from '@playwright/test';
 import {
-  signIn, apiHeaders, sb, rpcAsUser, createTestStore, deleteTestStore,
+  ADMIN_EMAIL, ADMIN_PASS, CLERK_EMAIL, CLERK_PASS, signIn, apiHeaders, sb, rpcAsUser, createTestStore, deleteTestStore,
   seedProduct, getInventory, getStockMovements, cleanupProducts, num,
   restoreActiveStore,
 } from '../fixtures/session.fixture';
@@ -57,10 +57,10 @@ async function assertStockConsistency(label: string) {
 }
 
 test.beforeAll(async () => {
-  const admin = await signIn('admin@costpro.com', 'costpro123');
+  const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   adminToken = admin.token;
   adminId = admin.userId;
-  const clerk = await signIn('cajero@demo.com', 'demo123');
+  const clerk = await signIn(CLERK_EMAIL, CLERK_PASS);
   clerkToken = clerk.token;
 });
 
@@ -217,7 +217,7 @@ test.describe('Inventario — flujo UI', () => {
     test.setTimeout(120_000);
 
     // Recrear datos propios (el describe anterior ya limpió el suyo)
-    const admin = await signIn('admin@costpro.com', 'costpro123');
+    const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
     adminToken = admin.token;
     adminId = admin.userId;
     store = await createTestStore(request, admin.token, 'INV-UI');
@@ -229,7 +229,7 @@ test.describe('Inventario — flujo UI', () => {
       JSON.stringify({
         access_token: admin.token, token_type: 'bearer', expires_in: 3600,
         expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'mock-refresh',
-        user: { id: admin.userId, email: 'admin@costpro.com' },
+        user: { id: admin.userId, email: ADMIN_EMAIL },
       }),
     ]);
 

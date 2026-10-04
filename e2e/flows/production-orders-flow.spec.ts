@@ -12,7 +12,7 @@
  * ============================================================================
  */
 import { test, expect, type APIRequestContext } from '@playwright/test';
-import { signIn, apiHeaders, sb, createTestStore, deleteTestStore, cleanupProducts } from '../fixtures/session.fixture';
+import { signIn, apiHeaders, sb, createTestStore, deleteTestStore, cleanupProducts, ADMIN_EMAIL, ADMIN_PASS } from '../fixtures/session.fixture';
 
 let api: APIRequestContext;
 let adminToken: string;
@@ -22,7 +22,7 @@ let orderId: string;
 
 test.beforeAll(async ({ playwright }) => {
   api = await playwright.request.newContext({ baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000' });
-  const admin = await signIn('admin@costpro.com', 'costpro123');
+  const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   adminToken = admin.token;
   adminId = admin.userId;
   store = await createTestStore(api, adminToken, 'PRD');

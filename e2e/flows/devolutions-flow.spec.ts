@@ -16,7 +16,7 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 /** Contexto de request propio del spec (el fixture de beforeAll no es reutilizable en tests) */
 let api: APIRequestContext;
 import {
-  signIn, apiHeaders, sb, createTestStore, deleteTestStore, seedProduct,
+  ADMIN_EMAIL, ADMIN_PASS, CLERK_EMAIL, CLERK_PASS, signIn, apiHeaders, sb, createTestStore, deleteTestStore, seedProduct,
   getInventory, cleanupProducts, num,
 } from '../fixtures/session.fixture';
 
@@ -54,10 +54,10 @@ async function createSale(): Promise<string> {
 
 test.beforeAll(async ({ playwright }) => {
   api = await playwright.request.newContext({ baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000' });
-  const admin = await signIn('admin@costpro.com', 'costpro123');
+  const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   adminToken = admin.token;
   adminId = admin.userId;
-  const clerk = await signIn('cajero@demo.com', 'demo123');
+  const clerk = await signIn(CLERK_EMAIL, CLERK_PASS);
   clerkToken = clerk.token;
 });
 

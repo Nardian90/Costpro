@@ -23,6 +23,7 @@
     "test:coverage": "vitest run --coverage",
     "test:coverage:ci": "vitest run --coverage --reporter=json",
     "test:e2e": "playwright test",
+    "test:e2e:isolation-proof": "node e2e/scripts/concurrency-proof.cjs",
     "test:security": "node scripts/security-contract-test.cjs"
   },
   "dependencies": {
