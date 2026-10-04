@@ -119,3 +119,6 @@ test-results/
 playwright-report/
 test-results/
 audit-evidence/*.png
+
+# FASE QA H1 — estado de fixtures (credenciales de usuarios QA de un entorno LIVE; regenerable con 00-fixtures.cjs)
+scripts/qa-h1/state.json

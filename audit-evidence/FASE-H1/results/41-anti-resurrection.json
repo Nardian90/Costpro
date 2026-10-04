@@ -1,0 +1,69 @@
+{
+  "suite": "AR — Anti-resurrección",
+  "suite_id": "41-anti-resurrection",
+  "started": "2026-10-04T04:33:41.376Z",
+  "duration_ms": 2305,
+  "counts": {
+    "total": 6,
+    "pass": 2,
+    "fail": 4,
+    "blocked": 0,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-AR-001",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — ningún caller legítimo de create_sale( en producción",
+      "expected": "0 archivos de PRODUCCIÓN (src + scripts activos, excluye tests) llaman a V1",
+      "status": "FAIL",
+      "current": "src/hooks/api/useTransactions.ts (1 línea(s))",
+      "evidence": "censo de callers V1 en código de producción"
+    },
+    {
+      "id": "T-AR-002",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — sin mecanismo de fallback V1 (USE_V2_CHECKOUT=false o equivalente)",
+      "expected": "0 ocurrencias del flag de fallback en src/.env.example/CI",
+      "status": "FAIL",
+      "current": "refs=src/config/features.ts, .env.example · pilot-mechanism=true",
+      "evidence": "el flag y su mecanismo piloto permiten reactivar V1 por configuración: deben eliminarse con el retiro"
+    },
+    {
+      "id": "T-AR-003",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — migraciones sin GRANT PUBLIC/anon → create_sale_v2",
+      "expected": "0 migraciones con GRANT EXECUTE ... TO PUBLIC/anon sobre create_sale_v2",
+      "status": "FAIL",
+      "current": "20260807000003_v2_16_3_create_sale_v2.sql, 20260810000003_v2_19_3_invoice_number_fiscal_lock.sql, 20260810000070_pr4_4e_timezone_services_document.sql, 20260916000002_rem_inv_6_reconcile_function_acl.sql, 20260927000002_f4_create_sale_v2_acl_reconciliation.sql",
+      "evidence": "20260807000003_v2_16_3_create_sale_v2.sql, 20260810000003_v2_19_3_invoice_number_fiscal_lock.sql, 20260810000070_pr4_4e_timezone_services_document.sql, 20260916000002_rem_inv_6_reconcile_function_acl.sql, 20260927000002_f4_create_sale_v2_acl_reconciliation.sql: RE-GRANTEAN PUBLIC→create_sale_v2 (patrón canónico F4). El reconciler de ACL es el mecanismo de resurrección del grant peligroso — debe reescribirse a REVOKE en el hardening"
+    },
+    {
+      "id": "T-AR-004",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — LIVE: create_sale_v2 sin EXECUTE para PUBLIC/anon (post-hardening gate)",
+      "expected": "proacl LIVE sin =X ni anon=X (idem T-H1-002, gate de regresión)",
+      "status": "FAIL",
+      "current": "ACL LIVE={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "evidence": "estado LIVE del grant (debe permanecer sin PUBLIC/anon tras el hardening)"
+    },
+    {
+      "id": "T-AR-005",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — census de restauración de grants V1 en scripts/tests/seeds/CI",
+      "expected": "0 archivos (excluye migraciones históricas pre-drop) con GRANT V1",
+      "status": "PASS",
+      "current": "0 archivos",
+      "evidence": "los reconcilers de ACL (patrón rem_inv_6 / F4) son el vector de resurrección: el PR-R1 debe auditarlos"
+    },
+    {
+      "id": "T-AR-006",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — contract-surface no canoniza PUBLIC→create_sale_v2",
+      "expected": "supabase/security-contract/contract-surface.sql sin GRANT PUBLIC a create_sale_v2",
+      "status": "PASS",
+      "current": "GRANT PUBLIC en contract-surface=false",
+      "evidence": "la superficie de contrato certificada es lo que un replay limpio reproducirá: no debe contener el grant peligroso"
+    }
+  ]
+}

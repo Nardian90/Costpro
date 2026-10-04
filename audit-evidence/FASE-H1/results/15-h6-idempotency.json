@@ -1,0 +1,96 @@
+{
+  "suite": "H6 — IDEMPOTENCY",
+  "suite_id": "15-h6-idempotency",
+  "started": "2026-10-04T04:30:50.352Z",
+  "duration_ms": 23209,
+  "counts": {
+    "total": 9,
+    "pass": 5,
+    "fail": 4,
+    "blocked": 0,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-H6-001",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — misma clave + mismo payload → misma transacción",
+      "expected": "segunda llamada retorna la MISMA transaction_id; 1 fila en transactions",
+      "status": "PASS",
+      "current": "retry → HTTP 200 {\"status\":\"idempotent\",\"transaction_id\":\"efb15730-f3bd-4e33-8454-b44ecb28aff1\"} · filas=1",
+      "evidence": "idempotencia básica por (key, store) funciona"
+    },
+    {
+      "id": "T-H6-002",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — retry idéntico: 0 duplicados (tx/items/pagos/movimientos)",
+      "expected": "exactly 1 transaction, 1 set items, 1 pago, 1 movimiento de stock",
+      "status": "PASS",
+      "current": "tx=1 items=1 pagos=1 movimientos=1",
+      "evidence": "sin duplicación en retry"
+    },
+    {
+      "id": "T-H6-003",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — misma clave + cantidad DIFERENTE → CONFLICT",
+      "expected": "respuesta de conflicto (no retorno silencioso de la transacción previa)",
+      "status": "FAIL",
+      "current": "payload distinto (qty=2) con misma clave → HTTP 200 {\"status\":\"idempotent\",\"transaction_id\":\"efb15730-f3bd-4e33-8454-b44ecb28aff1\"}",
+      "evidence": "CONFLICTO NO DETECTADO: el retry con payload distinto retorna silenciosamente la transacción original — la clave no está ligada al hash del payload"
+    },
+    {
+      "id": "T-H6-004",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — misma clave + precio DIFERENTE → CONFLICT",
+      "expected": "respuesta de conflicto",
+      "status": "FAIL",
+      "current": "precio distinto con misma clave → HTTP 200 {\"status\":\"idempotent\",\"transaction_id\":\"efb15730-f3bd-4e33-8454-b44ecb28aff1\"}",
+      "evidence": "CONFLICTO NO DETECTADO para payload con precio distinto"
+    },
+    {
+      "id": "T-H6-005",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — misma clave + tienda DIFERENTE → deny/conflict",
+      "expected": "deny o conflict (la clave NO puede reutilizarse en otra tienda)",
+      "status": "PASS",
+      "current": "USER_A + clave existente + STORE_B → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "el alcance store de la clave impide satisfacerla en otra tienda (authz deniega antes)"
+    },
+    {
+      "id": "T-H6-006",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — misma clave + actor DIFERENTE → deny/conflict (sin fuga)",
+      "expected": "USER_B con clave de USER_A → deny/conflict, SIN transaction_id de la venta ajena",
+      "status": "FAIL",
+      "current": "USER_B + clave de USER_A (STORE_A) → HTTP 200 {\"status\":\"idempotent\",\"transaction_id\":\"efb15730-f3bd-4e33-8454-b44ecb28aff1\"}",
+      "evidence": "FUGA CROSS-ACTOR: USER_B (sin membresía en STORE_A) recibió transaction_id=efb15730-f3bd-4e33-8454-b44ecb28aff1 de la venta de USER_A"
+    },
+    {
+      "id": "T-H6-007",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 (matriz) — anonymous + clave existente → unauthorized",
+      "expected": "HTTP >= 401/403 sin transaction_id",
+      "status": "FAIL",
+      "current": "HTTP 200 {\"status\":\"idempotent\",\"transaction_id\":\"efb15730-f3bd-4e33-8454-b44ecb28aff1\"}",
+      "evidence": "fuga anónima de transaction_id"
+    },
+    {
+      "id": "T-H6-008",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 (matriz) — anonymous + clave aleatoria → unauthorized",
+      "expected": "HTTP >= 400 sin datos",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "anon denied"
+    },
+    {
+      "id": "T-H6-009",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — concurrente misma clave (mismo actor/tienda/payload)",
+      "expected": "EXACTLY 1 transacción · 0 duplicados de inventario/pago/movimiento",
+      "status": "PASS",
+      "current": "tx=1 movimientos=1 pagos=1 idsDistintos=1",
+      "evidence": "advisory lock por tienda + idempotencia serializan correctamente los retries concurrentes"
+    }
+  ]
+}

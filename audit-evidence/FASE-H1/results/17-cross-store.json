@@ -1,0 +1,78 @@
+{
+  "suite": "CS — Cross-store security",
+  "suite_id": "17-cross-store",
+  "started": "2026-10-04T04:31:35.894Z",
+  "duration_ms": 9299,
+  "counts": {
+    "total": 7,
+    "pass": 5,
+    "fail": 2,
+    "blocked": 0,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-CS-001",
+      "suite": "17-cross-store",
+      "spec": "CS-A — USER_A crea venta en STORE_A",
+      "expected": "HTTP 200 con transacción creada",
+      "status": "PASS",
+      "current": "HTTP 200 {\"status\":\"success\",\"calculated_tax\":0,\"transaction_id\":\"dd86b0db-7f0c-4963-9814-947ed1f6f8b7\",\"discount_amount\":0,\"calculated_total\":100,\"calculated_subtotal\":100}",
+      "evidence": "venta legítima en tienda propia (dd86b0db-7f0c-4963-9814-947ed1f6f8b7)"
+    },
+    {
+      "id": "T-CS-002",
+      "suite": "17-cross-store",
+      "spec": "CS-B — USER_A intenta crear venta en STORE_B",
+      "expected": "DENIED (ERR_UNAUTHORIZED)",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "membresía de tienda validada (has_store_access_as)"
+    },
+    {
+      "id": "T-CS-003",
+      "suite": "17-cross-store",
+      "spec": "CS-C — USER_A utiliza seller de STORE_B",
+      "expected": "DENIED (referencia T-H3-003)",
+      "status": "FAIL",
+      "current": "ACEPTADA con seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65",
+      "evidence": "venta en STORE_A atribuida a USER_B (miembro de STORE_B): tx 04842eed-de3a-4566-aee4-cd08b35a55bf"
+    },
+    {
+      "id": "T-CS-004",
+      "suite": "17-cross-store",
+      "spec": "CS-D — USER_A utiliza producto de STORE_B en venta de STORE_A",
+      "expected": "DENIED — producto ajeno a la tienda no puede venderse",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_STORE_MISMATCH: movement store_id a5b81cbf-8ffc-4525-8ac4-f2ec92b912d2 no coincide con product store_id b9cfacda-3731-47a2-8588-f524c6ec3456 p",
+      "evidence": "producto cross-store rechazado (ERR_STORE_MISMATCH via trigger fn_sync_inventory_on_movement (defense-in-depth: el trigger valida product.store_id vs movement.store_id; el RPC en sí usa fallback sin filtro de tienda en primera pasada))"
+    },
+    {
+      "id": "T-CS-005",
+      "suite": "17-cross-store",
+      "spec": "CS-E — USER_A reutiliza idempotency key creada por USER_B",
+      "expected": "DENY/CONFLICT sin revelar la transacción ajena",
+      "status": "FAIL",
+      "current": "USER_A + clave de USER_B → HTTP 200 {\"status\":\"idempotent\",\"transaction_id\":\"029f92b5-d8d3-4c81-b171-3ed44ef55e5a\"}",
+      "evidence": "FUGA: USER_A obtuvo transaction_id=029f92b5-d8d3-4c81-b171-3ed44ef55e5a de la venta de USER_B en STORE_B sin membresía"
+    },
+    {
+      "id": "T-CS-006",
+      "suite": "17-cross-store",
+      "spec": "CS-F — USER_A UPDATE directo sobre transacción de STORE_B",
+      "expected": "DENIED por RLS (0 filas afectadas)",
+      "status": "PASS",
+      "current": "PATCH → 204 · total sigue=200.00",
+      "evidence": "RLS transactions_update_rls exige membresía activa en la tienda de la transacción: escritura de USER_A sobre STORE_B bloqueada"
+    },
+    {
+      "id": "T-CS-007",
+      "suite": "17-cross-store",
+      "spec": "CS-F — USER_A SELECT de transacciones de STORE_B",
+      "expected": "0 filas visibles (RLS SELECT)",
+      "status": "PASS",
+      "current": "GET → 200 filas=0",
+      "evidence": "aislamiento de lectura cross-store operativo"
+    }
+  ]
+}

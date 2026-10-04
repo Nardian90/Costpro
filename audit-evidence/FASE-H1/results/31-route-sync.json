@@ -1,0 +1,60 @@
+{
+  "suite": "SB — Contrato ruta /api/sync/batch",
+  "suite_id": "31-route-sync",
+  "started": "2026-10-04T04:33:26.663Z",
+  "duration_ms": 7682,
+  "counts": {
+    "total": 5,
+    "pass": 4,
+    "fail": 1,
+    "blocked": 0,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-SB-001",
+      "suite": "31-route-sync",
+      "spec": "SB — POST /api/sync/batch sin sesión → 401",
+      "expected": "HTTP 401",
+      "status": "PASS",
+      "current": "HTTP 401",
+      "evidence": "withAuth fail-closed"
+    },
+    {
+      "id": "T-SB-002",
+      "suite": "31-route-sync",
+      "spec": "SB — operación de venta con p_store_id ajeno (STORE_B) → 403",
+      "expected": "HTTP 403 STORE_ACCESS_DENIED (gate por operación)",
+      "status": "PASS",
+      "current": "HTTP 403 {\"error\":\"Sin acceso a la tienda especificada\",\"key\":\"apiErrors.storeAccessDenied\",\"operationKey\":\"4bafb242-6914-4c54-8a",
+      "evidence": "FIX-SEC-H3: membresía validada por operación antes de ejecutar"
+    },
+    {
+      "id": "T-SB-003",
+      "suite": "31-route-sync",
+      "spec": "SB — sync usa EXCLUSIVAMENTE create_sale_v2 (nunca V1)",
+      "expected": "route.ts mapea entity=sale → create_sale_v2 sin fallback V1",
+      "status": "PASS",
+      "current": "v2=true v1=false",
+      "evidence": "camino offline canonical V2"
+    },
+    {
+      "id": "T-SB-004",
+      "suite": "31-route-sync",
+      "spec": "SB — sync ejecuta RPCs con el token DEL USUARIO (no service_role)",
+      "expected": "getSupabaseAuthClient(session.token); sin getSupabaseAdminSafe",
+      "status": "PASS",
+      "current": "userToken=true admin=false",
+      "evidence": "la ruta offline no expone service_role al usuario: el RPC corre como authenticated (auth.uid=usuario)"
+    },
+    {
+      "id": "T-SB-005",
+      "suite": "31-route-sync",
+      "spec": "SB — seller spoofing vía payload de sync (p_seller_id=USER_B)",
+      "expected": "la venta offline no puede atribuirse a otro vendedor (binding server-side)",
+      "status": "FAIL",
+      "current": "HTTP 200 · spoofed=752ec53e-a63f-4fec-8164-4221de995529 · log={\"results\":[{\"idempotencyKey\":\"6a511a45-311d-42f9-a9da-ff932efc93c9\",\"status\":\"ok\",\"serverId\":{\"status\":\"success\",\"calculated_tax\":0,\"transa",
+      "evidence": "venta offline de USER_A atribuida a USER_B (752ec53e-a63f-4fec-8164-4221de995529) — el payload de sync reenvía p_seller_id sin binding"
+    }
+  ]
+}

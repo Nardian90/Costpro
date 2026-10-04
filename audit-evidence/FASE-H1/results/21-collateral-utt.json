@@ -1,0 +1,87 @@
+{
+  "suite": "UTT — Colateral update_transaction_taxes",
+  "suite_id": "21-collateral-utt",
+  "started": "2026-10-04T04:32:39.191Z",
+  "duration_ms": 20879,
+  "counts": {
+    "total": 8,
+    "pass": 4,
+    "fail": 2,
+    "blocked": 2,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-UTT-001",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C5 — quién puede ejecutar update_transaction_taxes",
+      "expected": "CONTRATO H0 de autorización exacta — H0 NO PRODUCIDO (FAIL SPEC COVERAGE)",
+      "status": "BLOCKED",
+      "current": "ACL={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres} · cuerpo: is_admin() OR has_role('manager') OR has_role('encargado') — roles GLOBALES",
+      "evidence": "FAIL SPEC COVERAGE: H0 no define el contrato de autorización de update_transaction_taxes. Descubrimiento documentado: ACL=authenticated; autorización por rol GLOBAL de profiles (admin/encargado/manager) SIN scoping de tienda y SIN token/motivo. H0 debe fijar: quién, en qué tiendas, en qué estados."
+    },
+    {
+      "id": "T-UTT-002",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C6 — clerk NO puede modificar una venta cerrada",
+      "expected": "DENIED para USER_A (clerk)",
+      "status": "PASS",
+      "current": "clerk → HTTP 400 [object Object]",
+      "evidence": "chequeo de rol global bloquea al clerk"
+    },
+    {
+      "id": "T-UTT-003",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C7 — tax_amount/applied_taxes reescritos SIN recálculo server-side",
+      "expected": "los campos tributarios persistidos deben derivarse server-side con invariante total=subtotal−desc+tax",
+      "status": "FAIL",
+      "current": "ACEPTADA: tax_amount=777 applied=[{\"type\":\"percentage\",\"value\":999}] con subtotal=200.00 total=200 (invariante rota: 200≠200−0+777)",
+      "evidence": "update_transaction_taxes persiste los valores cliente tal cual (999%, 777) sin recálculo ni invariante — el registro financiero queda internamente inconsistente; total_amount solo se salva por el trigger PT008"
+    },
+    {
+      "id": "T-UTT-004",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C8 — reescribir el total post-venta para evadir supervisor",
+      "expected": "el total NO puede reescribirse por esta vía (política de supervisor intacta)",
+      "status": "PASS",
+      "current": "intento total 200→5 → HTTP 502 · total persistido=200",
+      "evidence": "DENEGADO por defense-in-depth: el trigger protect_transactions_total_amount (PT008) hace inmutable el total fuera de adjust_total_amount — la función en SÍ lo habría escrito (no valida nada); la protección es del trigger, no del RPC"
+    },
+    {
+      "id": "T-UTT-005",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C9 — encargado de STORE_B modifica campos de transacción de STORE_A",
+      "expected": "DENIED — scoping de tienda obligatorio",
+      "status": "FAIL",
+      "current": "ACEPTADA: transacción de STORE_A (a5b81cbf-8ffc-4525-8ac4-f2ec92b912d2) con tax_amount=55 escrito por encargado GLOBAL de STORE_B",
+      "evidence": "SECDEF + rol global SIN membresía de tienda: escritura cross-store sobre campos tributarios (RLS de transactions no protege: la función corre como postgres)"
+    },
+    {
+      "id": "T-UTT-006",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C10 — modificación sin estado/justificación permitida",
+      "expected": "CONTRATO H0 de estados/justificación — H0 NO PRODUCIDO (FAIL SPEC COVERAGE)",
+      "status": "BLOCKED",
+      "current": "tx status=completed (completed) modificada en C7 · la función no consulta status ni exige motivo",
+      "evidence": "FAIL SPEC COVERAGE: H0 no define estados permitidos ni justificación para la modificación tributaria post-venta. Evidencia: venta completed modificada sin estado/motivo alguno."
+    },
+    {
+      "id": "T-UTT-007",
+      "suite": "21-collateral-utt",
+      "spec": "UTT — adjust_total_amount: clerk denegado (superficie adyacente)",
+      "expected": "ERR_UNAUTHORIZED para no-admin",
+      "status": "PASS",
+      "current": "clerk → HTTP 403 [object Object]",
+      "evidence": "is_admin() fail-closed para clerk"
+    },
+    {
+      "id": "T-UTT-008",
+      "suite": "21-collateral-utt",
+      "spec": "UTT — adjust_total_amount: encargado GLOBAL denegado (asimetría documentada)",
+      "expected": "ERR_UNAUTHORIZED (solo admin global) — contraste con update_transaction_taxes que SÍ lo permite",
+      "status": "PASS",
+      "current": "encargado global → HTTP 403 [object Object]",
+      "evidence": "adjust_total_amount exige is_admin() estricto: más estrecho que update_transaction_taxes (que acepta manager/encargado globales). Asimetría de privilegios documentada para H0."
+    }
+  ]
+}

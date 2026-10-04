@@ -1,0 +1,51 @@
+{
+  "suite": "H1 — ACL + AUTH BEFORE IDEMPOTENCY",
+  "suite_id": "10-h1-acl",
+  "started": "2026-10-04T04:29:46.656Z",
+  "duration_ms": 5598,
+  "counts": {
+    "total": 4,
+    "pass": 1,
+    "fail": 3,
+    "blocked": 0,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-H1-001",
+      "suite": "10-h1-acl",
+      "spec": "H1.1 — Anonymous cannot execute create_sale_v2",
+      "expected": "DENIED (HTTP >= 400, sin transaction_id, sin divulgación de existencia de transacción/clave/tienda/usuario)",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "anon + clave aleatoria → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"} · filtraTx=false · infoAdicional=false"
+    },
+    {
+      "id": "T-H1-002",
+      "suite": "10-h1-acl",
+      "spec": "H1/§16 — ACL LIVE: create_sale_v2 sin EXECUTE para PUBLIC ni anon",
+      "expected": "proacl NO contiene =X (PUBLIC) ni anon=X",
+      "status": "FAIL",
+      "current": "ACL LIVE = {=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "evidence": "PUBLIC execute=true · anon execute=false — patrón canónico F4 = {PUBLIC, authenticated, service_role}"
+    },
+    {
+      "id": "T-H1-003",
+      "suite": "10-h1-acl",
+      "spec": "H1.2 — Anonymous + idempotency key EXISTENTE → UNAUTHORIZED sin datos",
+      "expected": "HTTP >= 400 sin transaction_id, sin status idempotent/success",
+      "status": "FAIL",
+      "current": "anon + clave existente → HTTP 200 {\"status\":\"idempotent\",\"transaction_id\":\"2423a83b-81d7-43c9-89a0-c1a91e744164\"}",
+      "evidence": "FUGA: anon obtuvo transaction_id=2423a83b-81d7-43c9-89a0-c1a91e744164 de una venta ajena sin autenticarse (orden idempotencia-antes-de-auth)"
+    },
+    {
+      "id": "T-H1-004",
+      "suite": "10-h1-acl",
+      "spec": "H1.3 — anon: clave existente vs aleatoria indistinguibles antes de autenticar",
+      "expected": "misma forma de rechazo (status + body) para clave existente y aleatoria",
+      "status": "FAIL",
+      "current": "existing → HTTP 200 {\"status\":\"idempotent\",\"transaction_id\":\"2423a83b-81d7-43c9-89a0-c1a91e744164\"} || random → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "statusIgual=false · mensajeIgual=false — la existencia de la clave ES distinguible por un atacante anónimo"
+    }
+  ]
+}
