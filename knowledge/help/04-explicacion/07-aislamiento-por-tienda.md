@@ -112,15 +112,10 @@ Como administrador o manager, usted **sí** puede ver datos consolidados:
 - En el filtro "Tienda", elija **"Todas las tiendas"**.
 - El sistema le muestra el consolidado.
 
-### En el Dashboard OCC
-- El OCC tiene una vista **"consolidada"** que muestra KPIs de todas las tiendas.
-- Compare tiendas entre sí.
-- Identifique cuál está mejor y cuál peor.
-
-### En el módulo Multi-Tienda Dashboard
-- Vista especial que muestra anillos de progreso para cada tienda.
-- Sparklines (gráficos pequeños) con tendencia de cada tienda.
-- Tabla comparativa.
+### En Inicio y en el Dashboard de la tienda
+- La información de **Inicio** y del **Dashboard** corresponde siempre a la **tienda activa**.
+- Para comparar tiendas, cambie la tienda activa con el selector de la barra superior o genere reportes con el filtro "Todas las tiendas".
+- Identifique cuál está mejor y cuál peor comparando los indicadores de cada una.
 
 ## Preguntas frecuentes
 

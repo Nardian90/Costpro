@@ -121,7 +121,7 @@
 - Sí, todos a PDF y Excel.
 
 **¿Los reportes se pueden programar para que se generen solos?**
-- Sí. En Configuración → Tareas programadas, puede configurar que un reporte se genere y envíe por correo cada semana o cada mes.
+- Sí. En Reportes (botón Programar), puede configurar que un reporte se genere y envíe por correo cada semana o cada mes.
 
 **¿Por qué mi reporte sale en blanco?**
 - Lo más común: no hubo operaciones del tipo solicitado en el período elegido.

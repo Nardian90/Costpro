@@ -52,8 +52,13 @@ function scrollToHelpTop() {
 
 export default function HelpView() {
   const { setCurrentView } = useUIStore();
+  // FASE 4-7: Biblioteca colapsable — preferencia persistida (solo se aplica
+  // en desktop; en móvil la Biblioteca vive en el Sheet controlado).
+  const helpLibraryCollapsed = useUIStore(s => s.helpLibraryCollapsed);
+  const setHelpLibraryCollapsed = useUIStore(s => s.setHelpLibraryCollapsed);
   const searchParams = useSearchParams();
   const [showAccessibility, setShowAccessibility] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeHeadingId, setActiveHeadingId] = useState('');
   const {
@@ -161,17 +166,21 @@ export default function HelpView() {
           <HelpSidebar
             structure={structure}
             toc={toc}
-            onSelect={(path) => { setShowAccessibility(false); loadDocument(path); }}
+            onSelect={(path) => { setShowAccessibility(false); setMobileNavOpen(false); loadDocument(path); }}
             activePath={currentDoc?.path}
             isAccessibilityActive={showAccessibility}
-            onSelectAccessibility={() => setShowAccessibility(true)}
+            onSelectAccessibility={() => { setShowAccessibility(true); setMobileNavOpen(false); }}
             autoExpandForPath={currentDoc?.path || null}
             activeHeadingId={activeHeadingId}
+            railMode={helpLibraryCollapsed}
+            onExpand={() => setHelpLibraryCollapsed(false)}
           />
         }
         isReadingMode={isReadingMode}
         scrollProgress={scrollProgress}
         onMainScroll={handleMainScroll}
+        mobileNavOpen={mobileNavOpen}
+        onMobileNavOpenChange={setMobileNavOpen}
       >
         {/* ── Toolbar ── */}
         <div className="flex items-center justify-between mb-8 pb-5 border-b border-border/30 flex-wrap gap-3 px-6 md:px-10 xl:px-14 pt-6 md:pt-8">

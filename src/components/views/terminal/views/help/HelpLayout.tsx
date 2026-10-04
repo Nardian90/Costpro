@@ -7,6 +7,8 @@ import {
   LifeBuoy,
   Columns,
   Sparkles,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import {
   Sheet,
@@ -17,6 +19,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useUIStore } from '@/store';
 
 interface HelpLayoutProps {
   sidebar: ReactNode;
@@ -24,9 +27,19 @@ interface HelpLayoutProps {
   isReadingMode?: boolean;
   scrollProgress: number;
   onMainScroll: (e: React.UIEvent<HTMLDivElement>) => void;
+  /** Estado del Sheet móvil de la Biblioteca (controlado por HelpView). */
+  mobileNavOpen?: boolean;
+  onMobileNavOpenChange?: (open: boolean) => void;
 }
 
-export default function HelpLayout({ sidebar, children, isReadingMode, scrollProgress, onMainScroll }: HelpLayoutProps) {
+export default function HelpLayout({ sidebar, children, isReadingMode, scrollProgress, onMainScroll, mobileNavOpen = false, onMobileNavOpenChange }: HelpLayoutProps) {
+  // FASE 4-7 (help-center-library-evolution): la Biblioteca se comporta como el
+  // Sidebar principal — visible por defecto, colapsable a rail de iconos y
+  // re-expansible, con controles con nombre accesible y preferencia persistida
+  // (solo desktop; en móvil la Biblioteca vive en un Sheet controlado).
+  const helpLibraryCollapsed = useUIStore(s => s.helpLibraryCollapsed);
+  const setHelpLibraryCollapsed = useUIStore(s => s.setHelpLibraryCollapsed);
+
   return (
     <div className="flex flex-col bg-background text-foreground min-h-[calc(100vh-56px)] w-full">
       {/* ── Enterprise Header ── */}
@@ -72,21 +85,68 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
 
       {/* ── Desktop: Two-column layout ── */}
       <div className="hidden lg:flex flex-1 overflow-hidden relative">
-        {/* Document Sidebar */}
-        <aside className={cn(
-          "w-[300px] xl:w-[320px] min-w-0 border-r border-border/30 bg-card/30 backdrop-blur-sm flex flex-col transition-all duration-500 shrink-0",
-          isReadingMode ? "-ml-[320px] opacity-0 w-0 min-w-0 overflow-hidden border-r-0" : "opacity-100"
-        )}>
-          {/* Sidebar inner header */}
-          <div className="px-5 pt-6 pb-3 shrink-0">
-            <div className="flex items-center gap-2 mb-1">
-              <BookOpen className="w-3.5 h-3.5 text-primary" />
-              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-primary">Biblioteca</span>
-            </div>
-            <p className="text-[11px] font-medium text-muted-foreground">Navega por los módulos y secciones del sistema</p>
-          </div>
-          <div className="border-t border-border/30 mx-5 mb-2 shrink-0" />
-          {sidebar}
+        {/* Document Sidebar — Biblioteca (colapsable a rail de iconos) */}
+        <aside
+          id="help-biblioteca"
+          aria-label="Biblioteca"
+          className={cn(
+            "border-r border-border/30 bg-card/30 backdrop-blur-sm flex flex-col shrink-0 transition-[width,margin,opacity] duration-300 ease-out min-w-0",
+            isReadingMode
+              ? "-ml-[320px] opacity-0 w-0 overflow-hidden border-r-0"
+              : helpLibraryCollapsed
+                ? "w-[68px]"
+                : "w-[300px] xl:w-[320px]"
+          )}
+        >
+          {helpLibraryCollapsed && !isReadingMode ? (
+            <>
+              {/* Control “Mostrar biblioteca” — nombre accesible explícito */}
+              <div className="pt-3 px-2 shrink-0 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setHelpLibraryCollapsed(false)}
+                  title="Mostrar biblioteca"
+                  aria-label="Mostrar biblioteca"
+                  aria-expanded={false}
+                  aria-controls="help-biblioteca"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                >
+                  <PanelLeftOpen className="w-5 h-5" aria-hidden="true" />
+                </button>
+              </div>
+              <div className="border-t border-border/30 mx-3 my-2 shrink-0" aria-hidden="true" />
+              {sidebar}
+            </>
+          ) : (
+            <>
+              {/* Sidebar inner header + control “Ocultar biblioteca” (no
+                  focable en modo lectura: el aside está oculto) */}
+              <div className="px-5 pt-6 pb-3 shrink-0">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <BookOpen className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-primary truncate">Biblioteca</span>
+                  </div>
+                  {!isReadingMode && (
+                    <button
+                      type="button"
+                      onClick={() => setHelpLibraryCollapsed(true)}
+                      title="Ocultar biblioteca"
+                      aria-label="Ocultar biblioteca"
+                      aria-expanded={true}
+                      aria-controls="help-biblioteca"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-accent/50 active:scale-95 transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                    >
+                      <PanelLeftClose className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] font-medium text-muted-foreground">Navega por los módulos y secciones del sistema</p>
+              </div>
+              <div className="border-t border-border/30 mx-5 mb-2 shrink-0" />
+              {sidebar}
+            </>
+          )}
         </aside>
 
         {/* Main Content Area */}
@@ -134,11 +194,13 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
 
       {/* ── Mobile: Single column with Sheet for sidebar ── */}
       <div className="lg:hidden">
-        <Sheet>
+        <Sheet open={mobileNavOpen} onOpenChange={onMobileNavOpenChange}>
           <SheetTrigger asChild>
             <Button
               size="icon"
-              aria-label="Abrir índice de documentos"
+              aria-label="Abrir biblioteca"
+              aria-expanded={mobileNavOpen}
+              onClick={() => onMobileNavOpenChange?.(true)}
               className="fixed bottom-6 right-6 z-[60] w-14 h-14 rounded-2xl shadow-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground hover:scale-105 active:scale-95 transition-all border-0"
             >
               <Columns className="w-5 h-5" />
@@ -151,7 +213,7 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
                   <BookOpen className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <SheetTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground">Índice del Manual</SheetTitle>
+                  <SheetTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground">Biblioteca</SheetTitle>
                   <p className="text-[10px] font-medium text-muted-foreground mt-0.5">Secciones y módulos</p>
                 </div>
               </div>

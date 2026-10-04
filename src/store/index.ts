@@ -61,6 +61,10 @@ interface UIState {
   // Help reading mode: cuando es true, oculta el Header global y el Sidebar global
   // para que el usuario pueda leer la ayuda sin distracciones.
   isHelpReadingMode: boolean;
+  // Biblioteca del Centro de Ayuda (desktop): true = colapsada a rail de iconos.
+  // Persistida para recordar la preferencia en desktop; en móvil NO se aplica
+  // (la Biblioteca móvil vive en un Sheet y no debe quedar inaccesible).
+  helpLibraryCollapsed: boolean;
   // NoShiftBanner dismiss: timestamp ISO hasta el cual el banner NO debe mostrarse.
   // null = nunca silenciado (comportamiento por defecto).
   // Se persiste para que sobreviva recargas y reinicios de sesión del mismo usuario.
@@ -83,6 +87,7 @@ interface UIState {
   setActiveCostSection: (section: string) => void;
   setPendingAuditFilter: (filter: PendingAuditFilter | null) => void;
   setIsHelpReadingMode: (open: boolean) => void;
+  setHelpLibraryCollapsed: (collapsed: boolean) => void;
   // Silencia el banner N horas (1, 4, 24) o indefinidamente (null = silenciar indefinido).
   // Pasar hours = undefined o null limpia el dismiss y vuelve a mostrar.
   dismissNoShiftBanner: (hours: number | null) => void;
@@ -114,6 +119,7 @@ export const useUIStore = create<UIState>()(
       pendingAuditFilter: null,
       noShiftBannerDismissUntil: null,
       isHelpReadingMode: false,
+      helpLibraryCollapsed: false,
       forceOpenCart: false,
       setForceOpenCart: (v: boolean) => set({ forceOpenCart: v }),
       setCurrentView: (view: ViewType) => set((state: UIState) => {
@@ -150,6 +156,7 @@ export const useUIStore = create<UIState>()(
       setActiveCostSection: (activeCostSection: string) => set({ activeCostSection }),
       setPendingAuditFilter: (pendingAuditFilter) => set({ pendingAuditFilter }),
       setIsHelpReadingMode: (isHelpReadingMode) => set({ isHelpReadingMode }),
+      setHelpLibraryCollapsed: (helpLibraryCollapsed) => set({ helpLibraryCollapsed }),
       // NoShiftBanner dismiss: hours = null → silenciar indefinidamente.
       // hours > 0 → silenciar hasta dentro de N horas.
       // Si se llama con un valor pero ya hay un dismiss activo más largo, se respeta el más restrictivo.

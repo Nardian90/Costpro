@@ -40,22 +40,22 @@ La siguiente tabla detalla el nivel de acceso de cada rol a los módulos princip
 
 > **Nota**: El rol **costo** tiene acceso completo a las fichas de costo (creación, edición, eliminación) así como a las herramientas analíticas del módulo (KPI Tablero, Solver, Darian, plantillas y exportaciones). No tiene acceso al generador masivo ni a la importación/exportación JSON.
 
-### MULTI-TIENDA
+### Operación (Ventas, Almacén y Logística)
 
 | Permiso | admin | manager | encargado | clerk | warehouse | usuario | costo |
 |---------|:-----:|:-------:|:---------:|:-----:|:---------:|:-------:|:-----:|
-| Dashboard KPI | ✅ | ✅ | ✅ | — | — | ✅ | — |
-| Terminal POS | ✅ | ✅ | ✅ | ✅ | — | — | — |
+| Dashboard | ✅ | ✅ | ✅ | — | — | ✅ | — |
+| Vender (POS) | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | Historial de ventas | ✅ | ✅ | ✅ | ✅ (propias) | — | — | — |
-| Cierre de caja | ✅ | ✅ | ✅ | ✅ | — | — | — |
+| Caja (cierre de caja) | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | Catálogo de productos | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Inventario | ✅ | ✅ | ✅ | ✅ (lectura) | ✅ | ✅ (lectura) | — |
 | Recepciones | ✅ | ✅ | ✅ | — | ✅ | — | — |
 | Transferencias | ✅ | ✅ | ✅ | — | ✅ | — | — |
-| Conteo de inventario | ✅ | ✅ | ✅ | — | ✅ | — | — |
+| Venta por Conteo | ✅ | ✅ | ✅ | — | ✅ | — | — |
 | Ajustes de inventario | ✅ | ✅ | ✅ | — | ✅ | — | — |
 
-> **Nota**: El rol **costo** solo accede al catálogo de productos en modo lectura dentro de MULTI-TIENDA, necesario como referencia para la elaboración de fichas de costo. No tiene acceso a POS, ventas, inventario ni ninguna operación de almacén.
+> **Nota**: El rol **costo** solo accede al catálogo de productos en modo lectura dentro de la operación de la tienda, necesario como referencia para la elaboración de fichas de costo. No tiene acceso a POS, ventas, inventario ni ninguna operación de almacén.
 
 ### IPV
 

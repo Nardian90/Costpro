@@ -96,7 +96,7 @@ No todas las empresas necesitan multi-tienda. CostPro es multi-tienda desde el d
 
 Si su administrador quiere crear una nueva tienda:
 
-1. Va a **Configuración → Tiendas**.
+1. Va a **Operación → Gestión de Tiendas**.
 2. Hace clic en **"+ Nueva tienda"**.
 3. Llena:
    - Nombre de la tienda.

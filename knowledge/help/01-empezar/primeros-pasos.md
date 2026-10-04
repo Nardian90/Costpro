@@ -4,17 +4,16 @@
 
 - [Primer Inicio de Sesión](#primer-inicio-de-sesión)
   - [Selección de Tienda](#selección-de-tienda)
-- [Dashboard — Centro de Operaciones (OCC)](#dashboard-centro-de-operaciones-occ)
-  - [KPIs Principales](#kpis-principales)
-  - [Fichas de Costo Recientes](#fichas-de-costo-recientes)
-  - [Acciones Rápidas](#acciones-rápidas)
-- [Los 6 Grupos de Módulos](#los-6-grupos-de-módulos)
-  - [COSTOS](#costos)
-  - [MULTI-TIENDA](#multi-tienda)
-  - [IPV — Índice de Precios y Variaciones](#ipv-índice-de-precios-y-variaciones)
-  - [OTROS](#otros)
-  - [CONFIGURACIÓN](#configuración)
-  - [MÁS RECURSOS](#más-recursos)
+- [Inicio — Tu Centro de Operaciones](#inicio-tu-centro-de-operaciones)
+  - [Panel de Control (Resumen de Indicadores)](#panel-de-control-resumen-de-indicadores)
+  - [Darian, tu Asistente IA](#darian-tu-asistente-ia)
+  - [Acciones Recomendadas](#acciones-recomendadas)
+- [Las Secciones del Sistema](#las-secciones-del-sistema)
+  - [Operación](#operación)
+  - [Análisis](#análisis)
+  - [Sistema](#sistema)
+  - [Ayuda](#ayuda)
+  - [En Desarrollo](#en-desarrollo)
 - [El Módulo de Costos en Profundidad](#el-módulo-de-costos-en-profundidad)
   - [¿Qué es una Ficha de Costo?](#qué-es-una-ficha-de-costo)
   - [Anatomía del Editor de Fichas](#anatomía-del-editor-de-fichas)
@@ -38,100 +37,80 @@ Una vez dentro, verifica la **tienda activa** en el selector ubicado en la barra
 
 > **Importante**: Toda la información mostrada —ventas, inventario, costos— se filtra según la tienda seleccionada. Si solo tienes acceso a una tienda, el selector no estará disponible.
 
-## Dashboard — Centro de Operaciones (OCC)
+## Inicio — Tu Centro de Operaciones
 
-El OCC es tu pantalla principal y punto de partida. Está dividido en las siguientes secciones:
+**Inicio** es tu pantalla principal y punto de partida (vuelve a ella con `Ctrl + 1`). Está organizada en las siguientes zonas:
 
-### KPIs Principales
+### Panel de Control (Resumen de Indicadores)
 
-Los indicadores clave de rendimiento se muestran en tarjetas visuales en la parte superior del dashboard. Estos KPIs incluyen métricas de ventas, costos e inventario actualizadas en tiempo real.
+El KPI de rendimiento compara tus ventas del período contra una referencia contextual, con un anillo de cumplimiento y una lectura cualitativa. El selector del encabezado cambia la perspectiva temporal:
 
-### Fichas de Costo Recientes
+- **Día**: ventas del día vs promedio diario del mes anterior.
+- **Mes**: total del mes vs promedio mensual reciente.
+- **Año**: acumulado del año vs el año anterior.
 
-Un panel muestra las fichas de costo que han sido modificadas recientemente, permitiendo acceso rápido para continuar el trabajo o revisar cambios.
+Al lado encontrarás el **resumen de actividad**: transacciones, ticket promedio y desglose por método de pago del período seleccionado.
 
-### Acciones Rápidas
+### Darian, tu Asistente IA
 
-Botones de acceso directo para las operaciones más frecuentes:
+Darian es el asistente de inteligencia artificial integrado. Pídele en lenguaje natural lo que necesites: consultar ventas, revisar costos, buscar productos o ejecutar acciones. Responde con datos de tu tienda activa.
 
-- Crear nueva ficha de costo
-- Abrir el KPI Tablero
-- Acceder a la terminal POS
-- Ver reportes del día
+### Acciones Recomendadas
 
-## Los 6 Grupos de Módulos
+Sugerencias que se adaptan a tu rol y al estado del negocio: revisar productos con stock bajo, abrir el turno de caja, completar datos de costos pendientes u otras tareas de tu alcance. Haz clic en una acción para ir directo al lugar correspondiente.
 
-### COSTOS
+## Las Secciones del Sistema
 
-El corazón de CostPro. Contiene el **editor de fichas de costo** con las siguientes funcionalidades:
+La barra lateral organiza CostPro en secciones. Haz clic en una sección para ver sus módulos; en móvil, usa el botón del menú en la barra superior.
 
-- **KPI Tablero**: Panel de indicadores con función Solver (Goal Seek) para búsqueda de objetivos.
-- **Fichas de Costo**: Creación y edición de costos con 5 modos de visualización.
-- **Generador Masivo**: Creación masiva de fichas a partir de plantillas.
-- **Explorador de Plantillas**: Biblioteca de plantillas de costo reutilizables.
-- **Motor de Fórmulas**: 6 métodos de cálculo (FIJO, FORMULA, PRORRATEO, ANEXO, IMPORTAR_ANEXO, COEFICIENTE).
+### Operación
 
-### MULTI-TIENDA
+El trabajo diario de la tienda:
 
-Gestión comercial operativa por sucursal:
+| Módulo | Descripción |
+|--------|-------------|
+| Dashboard | Indicadores de la tienda activa: Resumen, Productos y Comportamiento |
+| Ventas → Vender | Punto de venta rápido con carrito, escáner y pago mixto |
+| Ventas → Opciones | Historial de Ventas, Caja, Venta por Conteo, Devoluciones, Cotizaciones, Ofertas, Clientes y cuentas |
+| Almacén → Inventario | Existencias (tab Stock), catálogo de productos y trazabilidad de movimientos |
+| Almacén → Ajustes Documentales | Correcciones de stock con justificación documental |
+| Almacén → Etiquetas y Códigos | Etiquetas con código de barras y QR para imprimir |
+| Logística | Recepciones, Órdenes de Compra y Transferencia Stock |
+| Costo | Fichas de Costo, Estructura de Costo, Costeo Dinámico y Órdenes de Producción y Trabajo |
+| Trabajadores y Comisiones | Equipo, reglas de comisión y pagos con auditoría |
+| Gestión de Tiendas | Centro unificado: crear y configurar tiendas, backups y KPIs por tienda |
+| Auditoría | Qué ocurrió, cuándo y quién: actividad en lenguaje claro |
+| Redes | Bots de WhatsApp y Telegram por tienda |
 
-| Función | Descripción |
-|---------|-------------|
-| Dashboard KPI | Indicadores de ventas y rendimiento por tienda |
-| Terminal POS | Punto de venta para registro de transacciones |
-| Historial de Ventas | Registro completo de ventas realizadas |
-| Cierre de Caja | Arqueo y cierre del turno de caja |
-| Catálogo | Gestión de productos disponibles para venta |
-| Inventario | Control de existencias en la tienda |
-| Historial de Stock | Movimientos históricos de inventario |
-| Recepciones | Ingreso de mercancía al inventario |
-| Transferencias | Movimiento de productos entre tiendas |
-| Conteo de Inventario | Verificación física de existencias |
-| Ajustes | Correcciones manuales de stock |
+### Análisis
 
-### IPV — Índice de Precios y Variaciones
+Módulos de análisis y decisión:
 
-Análisis y seguimiento de cambios en precios:
+- **Análisis de datos**: tabla dinámica de costos, márgenes y rentabilidad de tus fichas.
+- **Inteligencia Cambiaria**: tasas oficiales vs informales, impacto en precios y simulador de escenarios.
+- **Tablón de Noticias**: noticias económicas y fiscales con detección de tasas.
+- **Reportes**: generador de reportes profesionales en PDF/Excel.
+- **Análisis ABC**: clasificación de productos por impacto en ventas.
 
-- **Reportes**: Informes de variación de precios por período.
-- **Transacciones**: Registro de todas las operaciones de precios.
-- **Catálogo**: Productos sujetos a seguimiento de precios.
-- **Reglas**: Configuración de reglas de cálculo automático.
-- **Simulación**: Proyección de escenarios de precios.
-- **Recibos Inteligentes**: Generación de recibos con datos de ingreso.
-- **Desglose**: Desglose detallado de componentes de precio.
-- **Exportación MVT**: Exportación en formato MVT.
-- **Auditoría**: Registro de cambios en el sistema IPV.
-- **Movimientos**: Control de movimientos de precios.
-- **Planificación**: Herramientas de planificación de precios.
-- **Mipyme**: Funciones específicas para mipymes.
+### Sistema
 
-### OTROS
+Administración del sistema (solo administradores): **Ajustes** (preferencias, impuestos, claves de IA), **Usuarios**, **Roles**, **Salud** (estado de servicios), **Monitoreo** (consumo y límites), **Gestión RSS** (fuentes del Tablón) y **Cierre Fiscal** (bloqueo de periodos con inmutabilidad).
 
-Funciones adicionales y complementarias del sistema.
+### Ayuda
 
-### CONFIGURACIÓN
+**Centro de Ayuda**: esta documentación. Nada más — así la encuentras siempre en el mismo lugar.
 
-Administración y personalización del sistema:
+### En Desarrollo
 
-- **Usuarios**: Gestión de cuentas de usuario.
-- **Roles**: Definición y asignación de roles y permisos.
-- **Tiendas**: Administración de sucursales.
-- **Salud del Sistema**: Monitoreo del estado de la plataforma.
-- **Logs de Auditoría**: Registro de todas las acciones del sistema.
-- **Ajustes**: Configuración general del sistema.
-- **Reportes**: Gestión de plantillas y configuración de reportes.
-- **Noticias**: Publicaciones y comunicados internos.
-- **RSS**: Configuración de fuentes de noticias.
+Capacidades que **existen** pero aún no están completamente integradas. Son experimentales y pueden cambiar:
 
-### MÁS RECURSOS
-
-Soporte y documentación:
-
-- **Legal**: Marco legal y normativo.
-- **Centro de Ayuda**: Sistema de ayuda en línea (este documento).
-- **Wiki Contable**: Referencia contable y de costos.
-- **Academia**: Material de capacitación.
+- **IPV** (administradores): banco de trabajo de conciliación con reportes, extractos, procesamiento IA y auditoría.
+- **Pick3** (administradores): gestor de riesgo de inversión con métricas cuantitativas y backtest.
+- **Billetera** (administradores): billetera digital experimental con importación de backups de Transfermóvil.
+- **Wiki Contable**: asientos con Debe/Haber, plan de cuentas y normativas NC-29/ONAT.
+- **Academia**: flashcards con repetición espaciada (SRS).
+- **Marco Legal**: consultor de normativa cubana y generador de formularios oficiales.
+- **Conciliación Bancaria**: vista de extractos y estado de conciliación en solo lectura (beta, capacidad parcial).
 
 ## El Módulo de Costos en Profundidad
 
@@ -196,12 +175,13 @@ Darian es el asistente de inteligencia artificial integrado en el módulo de cos
 | Atajo | Acción |
 |-------|--------|
 | `Ctrl + K` | Abrir la paleta de comandos — busca cualquier función o sección del sistema |
-| `Alt + 1` | Ir al grupo COSTOS |
-| `Alt + 2` | Ir al grupo MULTI-TIENDA |
-| `Alt + 3` | Ir al grupo IPV |
-| `Alt + 4` | Ir al grupo OTROS |
-| `Alt + 5` | Ir al grupo CONFIGURACIÓN |
-| `Alt + 6` | Ir al grupo MÁS RECURSOS |
+| `Ctrl + 1` | Ir a Inicio (dashboard) |
+| `Ctrl + 2` | Ir a Vender (POS) |
+| `Ctrl + 3` | Ir a Inventario (Stock) |
+| `Ctrl + 4` | Ir al módulo IPV (En desarrollo, administradores) |
+| `Ctrl + 5` | Ir a Fichas de Costo |
+| `Ctrl + Shift + H` | Abrir el Centro de Ayuda |
+| `Ctrl + /` | Ver la lista de atajos de teclado |
 | `Escape` | Cerrar menús desplegables, modales y paneles |
 
 > **Tip**: La paleta de comandos (`Ctrl + K`) es la forma más rápida de navegar. Escribe el nombre de cualquier módulo, ficha o función y presiona Enter para ir directamente.
@@ -226,8 +206,8 @@ La selección se guarda automáticamente y persiste entre sesiones para cada usu
 
 Para acceder al sistema de ayuda en cualquier momento:
 
-1. Desplázate hasta el grupo **MÁS RECURSOS** en la barra lateral.
+1. Abre la sección **Ayuda** en la barra lateral.
 2. Haz clic en **Centro de Ayuda**.
-3. Utiliza la barra de búsqueda para encontrar artículos específicos o navega por las categorías disponibles.
+3. Utiliza la barra de búsqueda para encontrar artículos específicos o navega por la Biblioteca (el panel interno de secciones).
 
-> **Tip**: También puedes escribir "ayuda" o "help" en la paleta de comandos (`Ctrl + K`) para acceder directamente al centro de ayuda.
+> **Tip**: También puedes pulsar `Ctrl + Shift + H`, escribir "ayuda" o "help" en la paleta de comandos (`Ctrl + K`), o usar el botón **?** que aparece en varias vistas para abrir directamente la documentación de esa vista.

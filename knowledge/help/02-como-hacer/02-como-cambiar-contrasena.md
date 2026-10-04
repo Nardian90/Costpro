@@ -6,7 +6,7 @@
 
 1. En la barra superior (arriba a la derecha), haga clic en **su nombre de usuario**.
 2. Aparece un menú pequeño.
-3. Haga clic en **"Mi Perfil"** o **"Cambiar Contraseña"** (depende de la versión).
+3. Haga clic en **"Mi Perfil"**.
 4. Se abre una ventana con tres campos:
    - **Contraseña actual**: escriba la que usa ahora.
    - **Nueva contraseña**: escriba la nueva.

@@ -1,10 +1,10 @@
 # Tutorial: Flujo Completo de Punto de Venta
 
-Este tutorial guía paso a paso por el ciclo completo de una venta en CostPro, desde el acceso al terminal hasta el cierre de caja. Cubre todas las funcionalidades del módulo POS para que puedas procesar ventas de forma eficiente y precisa.
+Este tutorial guía paso a paso por el ciclo completo de una venta en CostPro, desde el acceso a Vender hasta el cierre de caja. Cubre todas las funcionalidades del módulo POS para que puedas procesar ventas de forma eficiente y precisa.
 
 ## Contenido
 
-- [1. Acceder al Terminal de Venta](#1-acceder-al-terminal-de-venta)
+- [1. Acceder a Vender](#1-acceder-a-vender)
 - [2. Selección de Tienda](#2-selección-de-tienda)
 - [3. Agregar Productos al Carrito](#3-agregar-productos-al-carrito)
   - [3.1 Búsqueda por Nombre o SKU](#31-búsqueda-por-nombre-o-sku)
@@ -30,14 +30,14 @@ Este tutorial guía paso a paso por el ciclo completo de una venta en CostPro, d
 
 ---
 
-## 1. Acceder al Terminal de Venta
+## 1. Acceder a Vender
 
-El punto de venta se encuentra dentro del módulo de gestión multi-tienda:
+Vender es la vista de venta rápida de CostPro:
 
 1. Abre el **menú lateral** de navegación
-2. Despliega la sección **MULTI-TIENDA**
-3. Selecciona **Punto de Venta**
-4. Haz clic en **Terminal de Venta**
+2. Entra en la sección **Operación**
+3. Selecciona **Ventas**
+4. Haz clic en **Vender**
 
 > 💡 **Tip**: Si necesitas cambiar de tienda rápidamente, utiliza el **selector de tienda** en la barra superior antes de iniciar la venta. Todas las transacciones quedarán registradas bajo la tienda seleccionada.
 
@@ -262,7 +262,7 @@ La transacción se almacena en el **Historial de Ventas** con todos sus detalles
 
 Para revisar las ventas realizadas:
 
-1. Navega a **MULTI-TIENDA > Punto de Venta > Historial de Ventas**
+1. Navega a **Operación → Ventas → Opciones → Historial de Ventas**
 2. Utiliza los **filtros** para encontrar transacciones específicas:
    - **Por fecha**: selecciona un rango de fechas
    - **Por tienda**: filtra por la tienda de origen
@@ -325,7 +325,7 @@ La exportación respeta los filtros activos, por lo que puedes generar reportes 
 
 Al finalizar el turno o el día de operación, realiza el **cierre de caja** para conciliar los movimientos:
 
-1. Navega a **MULTI-TIENDA > Punto de Venta > Arqueo de Caja**
+1. Navega a **Operación → Ventas → Opciones → Caja**
 2. El sistema muestra un resumen de:
    - **Ventas por método de pago**: total en efectivo, tarjeta, mixto y transferencia
    - **Fondo inicial de caja**: monto con el que se inició el turno

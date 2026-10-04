@@ -153,7 +153,7 @@ Puede seguir vendiendo así todo el día. Al final del día, recuerde hacer el *
 
 **¿Y si el cliente quiere devolver un producto después de comprarlo?**
 - No se puede "borrar" una venta desde la caja.
-- El administrador puede hacer una **devolución** desde Configuración → Auditoría.
+- El administrador puede hacer una **devolución** desde `Operación → Auditoría` y desde **Ventas → Opciones → Devoluciones**.
 - El producto vuelve al inventario y el dinero sale de la caja.
 
 **¿Qué pasa si se va la luz o el Internet en medio de la venta?**

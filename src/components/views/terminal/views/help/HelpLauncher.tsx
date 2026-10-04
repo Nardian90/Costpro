@@ -30,18 +30,24 @@ export const HELP_DOC_BY_VIEW: Record<string, string> = {
   'pos': 'help/02-como-hacer/03-como-cerrar-caja.md',
   'sales-hub': 'help/02-como-hacer/11-como-ver-historial-ventas.md',
   'sales': 'help/02-como-hacer/11-como-ver-historial-ventas.md',
-  'sales_catalog': 'help/02-como-hacer/09-como-exportar-catalogo.md',
+  'sales_catalog': 'help/03-inventario/catalogo-ventas.md',
   'catalog': 'help/01-tutoriales/03-primer-producto.md',
   'inventory': 'help/02-como-hacer/10-como-ajustar-inventario.md',
   'inventory_adjustments': 'help/02-como-hacer/10-como-ajustar-inventario.md',
   'history': 'help/03-referencia/08-estados-transferencia.md',
-  'inventory_count': 'help/02-como-hacer/10-como-ajustar-inventario.md',
+  'inventory_count': 'help/02-como-hacer/18-como-usar-venta-por-conteo.md',
   'labels': 'help/02-como-hacer/08-como-imprimir-etiqueta.md',
   'recepcion': 'help/02-como-hacer/04-como-recibir-mercancia.md',
   'reception_list': 'help/02-como-hacer/04-como-recibir-mercancia.md',
   'transferencias': 'help/02-como-hacer/05-como-hacer-transferencia.md',
   'cash': 'help/02-como-hacer/03-como-cerrar-caja.md',
   'purchase-orders': 'help/02-como-hacer/06-como-crear-orden-compra.md',
+  'devolutions': 'help/02-como-hacer/19-como-procesar-devolucion.md',
+  'quotations': 'help/02-como-hacer/20-como-crear-cotizacion.md',
+  'customers': 'help/02-como-hacer/21-como-gestionar-clientes.md',
+  'ofertas': 'help/02-como-hacer/22-como-crear-oferta.md',
+  'accounts_payable': 'help/02-como-hacer/23-como-consultar-cuentas.md',
+  'accounts_receivable': 'help/02-como-hacer/23-como-consultar-cuentas.md',
 
   // Inteligencia / servicios
   'exchange-intelligence': 'help/02-como-hacer/12-como-usar-tasa-cambio.md',
@@ -49,13 +55,22 @@ export const HELP_DOC_BY_VIEW: Record<string, string> = {
   'usage-monitoring': 'help/02-como-hacer/15-como-ver-uso-sistema.md',
   'workers': 'help/02-como-hacer/13-como-pagar-comisiones.md',
 
-  // Configuración
+  // Costo
+  'estructura-costo': 'help/02-gestion/estructura-costo-y-costeo-dinamico.md',
+  'costeo-dinamico': 'help/02-gestion/estructura-costo-y-costeo-dinamico.md',
+
+  // Configuración / sistema
   'stores': 'help/04-explicacion/01-que-es-multi-tienda.md',
+  'management-hub': 'help/04-explicacion/01-que-es-multi-tienda.md',
   'users': 'help/03-referencia/02-roles-permisos.md',
   'roles': 'help/03-referencia/02-roles-permisos.md',
   'settings': 'help/03-referencia/04-temas-visuales.md',
   'health': 'help/02-como-hacer/15-como-ver-uso-sistema.md',
   'audit': 'help/04-explicacion/04-por-que-auditoria.md',
+  'fiscal-close': 'help/04-configuracion/herramientas-sistema.md',
+  'rss_management': 'help/04-configuracion/herramientas-sistema.md',
+  'whatsapp-hub': 'help/04-configuracion/redes-sociales.md',
+  'telegram-hub': 'help/04-configuracion/redes-sociales.md',
 
   // Reportes
   'reports': 'help/01-tutoriales/04-primer-reporte.md',
@@ -74,10 +89,8 @@ export const HELP_DOC_BY_VIEW: Record<string, string> = {
 
   // Otros
   'pick3-intelligence': 'help/05-referencia/pick3-workflow.md',
-  'ofertas': 'help/02-como-hacer/07-como-aplicar-descuento.md',
-  'news': 'help/00-diataxis-map.md',
-  'rss_management': 'help/00-diataxis-map.md',
-  'wallet': 'help/00-diataxis-map.md',
+  'news': 'help/04-configuracion/herramientas-sistema.md',
+  'wallet': 'help/04-explicacion/08-seccion-en-desarrollo.md',
 };
 
 export interface HelpLauncherProps {

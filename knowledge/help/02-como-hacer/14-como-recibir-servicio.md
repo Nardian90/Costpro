@@ -110,7 +110,7 @@ Verifique que coincida con la factura del proveedor.
 
 **¿Cómo diferencio un servicio recurrente de uno puntual?**
 - En la descripción, indíquelo claramente. Ej: *"Limpieza mensual de marzo"* vs *"Reparación de aire acondicionado"*.
-- Para servicios recurrentes, puede configurar un **recordatorio** en el sistema (Configuración → Tareas programadas).
+- Para servicios recurrentes, puede configurar un **recordatorio** en el sistema (Reportes (botón Programar)).
 
 **¿Puedo pagar un servicio en cuotas?**
 - Sí, pero tiene que registrar cada cuota como un servicio separado.

@@ -21,46 +21,31 @@
 | `F5` | Refrescar la página |
 | `Escape` | Cerrar menús, modales, volver atrás |
 
-## Navegación entre módulos (Alt + número)
+## Navegación rápida (Ctrl + número)
 
 | Atajo | Va a |
 |-------|------|
-| `Alt + 1` | COSTOS |
-| `Alt + 2` | MULTI-TIENDA |
-| `Alt + 3` | IPV |
-| `Alt + 4` | OTROS |
-| `Alt + 5` | CONFIGURACIÓN |
-| `Alt + 6` | MÁS RECURSOS |
-| `Alt + E` | Expandir/colapsar la sección activa |
-| `Alt + P` | Abrir panel de problemas |
-| `Alt + H` | Abrir el Centro de Ayuda |
+| `Ctrl + 1` | Inicio (dashboard) |
+| `Ctrl + 2` | Vender (POS) |
+| `Ctrl + 3` | Inventario (Stock) |
+| `Ctrl + 4` | Módulo IPV (En desarrollo, administradores) |
+| `Ctrl + 5` | Fichas de Costo |
+| `Ctrl + B` | Mostrar/ocultar la barra lateral |
+| `Ctrl + Shift + H` | Abrir el Centro de Ayuda |
+| `Ctrl + /` | Ver la lista de atajos de teclado |
 
-> 💡 **Consejo**: Los números del 1 al 6 corresponden al orden de los grupos en la barra lateral. Memoricelos así: 1=Costos, 2=Tienda, 3=IPV, 4=Otros, 5=Config, 6=Recursos.
+> 💡 **Consejo**: Memorice primero estos cuatro: 1=Inicio, 2=Vender, 3=Inventario, 5=Fichas de Costo. Todo lo demás lo encuentra con `Ctrl + K`.
 
 ## Atajos del POS (caja)
 
 | Atajo | Acción |
 |-------|--------|
-| `F1` | Enfocar la barra de búsqueda de productos |
-| `F2` | Cobrar (igual que hacer clic en "Cobrar") |
-| `F3` | Aplicar descuento al producto seleccionado |
-| `F4` | Eliminar el producto seleccionado del carrito |
-| `F8` | Cambiar método de pago |
-| `F9` | Buscar cliente |
-| `F12` | Abrir el cajón de dinero |
+| `F1` | Abrir la ayuda de atajos del POS |
+| `F2` | Enfocar la barra de búsqueda de productos |
+| `F9` | Cobrar (procesar el checkout) |
+| `Ctrl + Enter` | Cobrar (alternativa mientras escribe en un campo) |
 | `Enter` | Confirmar (depende del contexto) |
 | `Escape` | Cancelar operación actual |
-
-## Atajos de la ficha de costo
-
-| Atajo | Acción |
-|-------|--------|
-| `Ctrl + S` | Guardar la ficha |
-| `Ctrl + Shift + A` | Abrir auditoría |
-| `Ctrl + Shift + E` | Modo experto |
-| `Ctrl + Shift + N` | Nueva fila |
-| `Ctrl + Shift + D` | Duplicar fila seleccionada |
-| `Ctrl + Shift + Del` | Eliminar fila seleccionada |
 
 ## Atajos universales del navegador
 
@@ -85,15 +70,16 @@ Estos funcionan en cualquier página web, no solo en CostPro:
 3. Suelte ambas teclas.
 4. Se abre la paleta de comandos.
 
-### Para presionar `Alt + 2`:
-1. Mantenga presionada la tecla **Alt** (a la izquierda de la barra espaciadora).
+### Para presionar `Ctrl + 2`:
+1. Mantenga presionada la tecla **Ctrl** (la de abajo a la izquierda del teclado).
 2. Sin soltarla, presione una vez la tecla **2** (en el teclado de números de arriba, no en el lateral).
 3. Suelte ambas teclas.
+4. Va directo a Vender (POS).
 
-### Para presionar `Ctrl + Shift + S`:
+### Para presionar `Ctrl + Shift + H`:
 1. Mantenga presionada **Ctrl**.
 2. Sin soltarla, mantenga presionada **Shift** (la flecha hacia arriba).
-3. Sin soltar ninguna, presione **S**.
+3. Sin soltar ninguna, presione **H**.
 4. Suelte todas.
 
 ## Preguntas frecuentes
@@ -112,7 +98,7 @@ Estos funcionan en cualquier página web, no solo en CostPro:
 **¿Cómo memorizo los atajos más importantes?**
 - Empiece por estos 5:
   1. **Ctrl + K**: paleta de comandos (lo más útil).
-  2. **Alt + H**: ayuda.
+  2. **Ctrl + Shift + H**: ayuda.
   3. **Escape**: cerrar / cancelar.
   4. **Ctrl + +**: agrandar letra (para personas mayores).
   5. **F5**: refrescar.

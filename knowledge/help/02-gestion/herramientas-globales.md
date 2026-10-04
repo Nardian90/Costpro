@@ -71,19 +71,17 @@ CostPro define atajos de teclado para agilizar la navegación y las acciones má
 | Atajo | Acción |
 |-------|--------|
 | `Ctrl + K` | Abrir la Paleta de Comandos |
-| `Alt + 1` | Ir al módulo COSTOS |
-| `Alt + 2` | Ir al módulo MULTI-TIENDA |
-| `Alt + 3` | Ir al módulo IPV |
-| `Alt + 4` | Ir al módulo OTROS |
-| `Alt + 5` | Ir al módulo CONFIGURACIÓN |
-| `Alt + 6` | Ir al módulo MÁS RECURSOS |
-| `Alt + E` | Acción rápida de edición (contextual al módulo) |
-| `Alt + P` | Acción rápida de impresión / exportación |
-| `Alt + H` | Abrir el Centro de Ayuda |
-| `Cmd + S` | Guardar cambios en el formulario o ficha activa |
+| `Ctrl + 1` | Ir a Inicio (dashboard) |
+| `Ctrl + 2` | Ir a Vender (POS) |
+| `Ctrl + 3` | Ir a Inventario (Stock) |
+| `Ctrl + 4` | Ir al módulo IPV (En desarrollo, administradores) |
+| `Ctrl + 5` | Ir a Fichas de Costo |
+| `Ctrl + B` | Mostrar/ocultar la barra lateral |
+| `Ctrl + Shift + H` | Abrir el Centro de Ayuda |
+| `Ctrl + /` | Ver la lista de atajos de teclado |
 | `Escape` | Cerrar menús, modales o cancelar la acción en curso |
 
-> **Tip:** Los atajos con `Alt` no funcionan durante la edición de campos de texto. Primero cierra el campo (Escape) y luego usa el atajo deseado.
+> **Tip:** Los atajos con `Ctrl` también funcionan mientras escribe en un campo de texto (por ejemplo, `Ctrl + 2` lo lleva a Vender sin salir del campo).
 
 ## Temas Visuales
 

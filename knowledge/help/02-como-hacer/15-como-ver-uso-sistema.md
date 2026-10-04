@@ -149,6 +149,6 @@ La pestaña Resumen muestra:
 - Ambos son complementarios.
 
 **¿Puedo recibir alertas si un usuario no entra en X días?**
-- Sí. En Configuración → Alertas, active "Alerta de usuario inactivo".
-- Elija cuántos días sin acceso disparan la alerta (por defecto: 7 días).
-- Recibirá un correo o notificación cuando se cumpla.
+- Actualmente no existe una alerta automática de usuarios inactivos (esta funcionalidad está en desarrollo).
+- Mientras tanto, puede usar **Monitoreo** para revisar patrones de actividad por usuario y fecha.
+- Para el detalle de acciones concretas, consulte la **Auditoría** (`Operación → Auditoría`).

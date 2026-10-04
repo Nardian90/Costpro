@@ -34,11 +34,11 @@ Este tutorial cubre el ciclo completo de gestión de inventario en CostPro, desd
 
 ## 1. Acceder a la Gestión de Inventario
 
-El módulo de inventario se organiza dentro de la sección multi-tienda:
+El módulo de inventario vive en la sección **Operación**:
 
 1. Abre el **menú lateral** de navegación
-2. Despliega la sección **MULTI-TIENDA**
-3. Selecciona **Gestión Inventario**
+2. Entra en la sección **Operación**
+3. Selecciona **Almacén** y luego **Inventario**
 
 Dentro de este módulo encontrarás los siguientes sub-módulos:
 
@@ -283,7 +283,7 @@ Las recepciones permiten registrar la entrada de mercancía desde proveedores al
 ### 4.1 Ruta de Navegación
 
 ```
-MULTI-TIENDA > Logística > Nueva Recepción
+Operación → Logística → Recepciones (botón Nueva recepción)
 ```
 
 ### 4.2 Proceso de Recepción Paso a Paso
@@ -317,7 +317,7 @@ Para cada producto recibido:
 Consulta todas las recepciones anteriores en:
 
 ```
-MULTI-TIENDA > Logística > Historial de Recepciones
+Operación → Logística → Recepciones
 ```
 
 Filtra por proveedor, fecha o estado para encontrar recepciones específicas.
@@ -331,7 +331,7 @@ Las transferencias permiten mover inventario entre tiendas, manteniendo la traza
 ### 5.1 Ruta de Navegación
 
 ```
-MULTI-TIENDA > Logística > Transferencia Stock
+Operación → Logística → Transferencia Stock
 ```
 
 ### 5.2 Flujo de Transferencia
@@ -421,7 +421,7 @@ La auditoría de conteo permite verificar físicamente el inventario y detectar 
 ### 7.1 Ruta de Navegación
 
 ```
-MULTI-TIENDA > Logística > Auditoría Conteo
+Operación → Ventas → Opciones → Venta por Conteo
 ```
 
 ### 7.2 Proceso de Auditoría Paso a Paso
@@ -474,17 +474,17 @@ Si detectas discrepancias, puedes:
 
 | Función | Ruta en el menú |
 |---------|-----------------|
-| Catálogo de productos | `MULTI-TIENDA > Gestión Inventario > Catálogo Maestro` |
-| Niveles de stock | `MULTI-TIENDA > Gestión Inventario > Stock Actual` |
-| Historial de movimientos | `MULTI-TIENDA > Gestión Inventario > Trazabilidad Stock` |
-| Ajustes manuales | `MULTI-TIENDA > Gestión Inventario > Ajustes Documentales` |
-| Nueva recepción | `MULTI-TIENDA > Logística > Nueva Recepción` |
-| Historial de recepciones | `MULTI-TIENDA > Logística > Historial de Recepciones` |
-| Nueva transferencia | `MULTI-TIENDA > Logística > Transferencia Stock` |
-| Auditoría de conteo | `MULTI-TIENDA > Logística > Auditoría Conteo` |
-| Punto de venta | `MULTI-TIENDA > Punto de Venta > Terminal de Venta` |
-| Historial de ventas | `MULTI-TIENDA > Punto de Venta > Historial de Ventas` |
-| Cierre de caja | `MULTI-TIENDA > Punto de Venta > Arqueo de Caja` |
+| Catálogo de productos | `Operación → Almacén → Inventario (tab Catálogo)` |
+| Niveles de stock | `Operación → Almacén → Inventario (tab Stock)` |
+| Historial de movimientos | `Operación → Almacén → Inventario (tab Trazabilidad)` |
+| Ajustes manuales | `Operación → Almacén → Ajustes Documentales` |
+| Nueva recepción | `Operación → Logística → Recepciones (botón Nueva recepción)` |
+| Historial de recepciones | `Operación → Logística → Recepciones` |
+| Nueva transferencia | `Operación → Logística → Transferencia Stock` |
+| Auditoría de conteo | `Ventas → Opciones → Venta por Conteo` |
+| Punto de venta | `Operación → Ventas → Vender` |
+| Historial de ventas | `Operación → Ventas → Opciones → Historial de Ventas` |
+| Cierre de caja | `Operación → Ventas → Opciones → Caja` |
 
 ---
 

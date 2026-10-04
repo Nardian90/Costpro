@@ -7,10 +7,10 @@ CostPro incluye un sistema integral de generación de reportes que permite anali
 Para acceder al Generador de Reportes, navega a la siguiente ruta:
 
 ```
-MULTI-TIENDA > Dashboard KPI > Generador de Reportes
+Análisis → Reportes
 ```
 
-El Generador se abre como un panel lateral que permite configurar y previsualizar reportes sin abandonar la vista actual. Los datos generados corresponden siempre a la **tienda activa** seleccionada en la barra superior.
+El Generador se abre como una vista dedicada que permite configurar y previsualizar reportes antes de generarlos. Los datos generados corresponden siempre a la **tienda activa** seleccionada en la barra superior.
 
 > **Nota:** Los roles `admin` y `manager` pueden generar reportes de cualquier tienda. Los roles `encargado` y `clerk` solo acceden a reportes de su tienda asignada.
 

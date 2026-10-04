@@ -44,7 +44,7 @@ Cada plantilla genera un archivo de alta calidad que puedes descargar y distribu
 El exportador se accede desde el módulo de ventas de la siguiente manera:
 
 ```
-MULTI-TIENDA > Ventas > Catálogo de Ventas
+Operación → Ventas → Opciones → Tabla de Venta
 ```
 
 Una vez en la vista del Catálogo de Ventas, localiza el botón **"Exportar Catálogo"** en la barra de herramientas superior. Al hacer clic, se abrirá el **Modal de Exportación** que contiene todas las opciones de plantilla, personalización y filtros.
@@ -237,7 +237,7 @@ Sigue estos pasos para generar un catálogo desde cero:
 
 ### Paso 2: Acceder al Catálogo de Ventas
 
-1. Navega a **MULTI-TIENDA > Ventas > Catálogo de Ventas**.
+1. Navega a **Operación → Ventas → Opciones → Tabla de Venta**.
 2. Revisa la tabla de productos para confirmar que se muestran correctamente.
 
 ### Paso 3: Aplicar Filtros (Opcional)

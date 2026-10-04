@@ -70,7 +70,7 @@ Formato de archivo de valores separados por comas. Se abre con Excel. CostPro pu
 ## D
 
 **Dashboard**
-Pantalla principal con KPIs y resumen. También llamado OCC (Operations Command Center).
+La pantalla de **Inicio**: KPIs de rendimiento, resumen de actividad y acciones recomendadas. Es lo primero que ve al entrar.
 
 **Descuento**
 Reducción del precio de un producto o de toda una venta. Puede ser en porcentaje o en monto fijo. Ver: *Cómo aplicar un descuento*.
@@ -89,7 +89,7 @@ Estándar internacional de código de barras de 13 dígitos. Es el más usado en
 Rol del sistema. Usuario que supervisa una tienda, puede ver reportes, ajustar inventario y autorizar operaciones especiales.
 
 **Escritorio**
-Ver *Dashboard* u *OCC*.
+Término antiguo de la pantalla principal. Hoy se llama **Inicio**.
 
 **Extracto bancario**
 Documento del banco que lista todas las transacciones de la cuenta. CostPro puede importarlo en formato CSV o BANDEC.
@@ -172,7 +172,7 @@ Formato de exportación contable (Movement Transaction). CostPro puede exportar 
 ## O
 
 **OCC**
-Operations Command Center. Ver *Dashboard*.
+Término antiguo del panel principal. Hoy esa pantalla se llama **Inicio**. Ver *Inicio*.
 
 **OC**
 Orden de Compra. Documento formal de pedido a un proveedor.

@@ -13,10 +13,10 @@ CostPro puede generar el catálogo en **4 formatos diferentes**, cada uno pensad
 | **Lista de precios PDF** | Imprimir o enviar por correo a empresas (B2B) | PDF (tabla profesional) |
 | **Catálogo elegante PDF** | Imprimir como folleto profesional | PDF (con portada y secciones) |
 
-## Paso 1 — Ir al Catálogo de Ventas IPV
+## Paso 1 — Ir a la Tabla de Venta
 
-1. En el menú izquierdo, haga clic en **Multi-Tienda**.
-2. Haga clic en **Catálogo de Ventas (IPV)**.
+1. En el menú izquierdo, abra **Operación → Ventas → Opciones**.
+2. Haga clic en **Tabla de Venta**.
 3. Verá una tabla con todos los productos y sus precios indexados.
 
 ## Paso 2 — Filtrar los productos a incluir (opcional)
@@ -111,7 +111,7 @@ Si no quiere incluir todos los productos:
 - Cada vez que exporta, el sistema usa los precios actuales. No se queda con precios viejos.
 
 **¿Puedo programar exportaciones automáticas?**
-- Sí, con un Administrador. Vaya a Configuración → Tareas programadas.
+- Sí, con un Administrador. Vaya a Reportes (botón Programar).
 
 **¿El catálogo incluye productos sin stock?**
 - Depende. En el paso 4 hay una opción "Incluir productos sin stock". Por defecto es NO.
