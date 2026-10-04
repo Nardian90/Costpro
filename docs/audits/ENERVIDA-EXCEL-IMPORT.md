@@ -1,6 +1,6 @@
 # ENERVIDA-EXCEL-IMPORT — Informe de Auditoría
 
-**Fecha de ejecución:** 2026-10-04 (04:40–05:15 UTC)
+**Fecha de ejecución:** 2026-10-04 (04:40–05:15 UTC importación; 05:46 UTC registro de pendientes)
 **Rama:** `feat/enervida-excel-movement-import` (base: main `6cba0a1c`)
 **Tienda:** ENERVIDA-VITALLCONS (`5e6fe821-5465-48b1-b3f1-3aa3182edc38`, slug `enervida-vitallcons`)
 **Fuente:** `/home/z/my-project/upload/Enervida.xlsx` (2 hojas: Movimientos 821 filas 16/07→03/10/2026; Cat 157 productos)
@@ -32,6 +32,8 @@ Se importaron **480 operaciones** del Excel a la tienda ENERVIDA mediante los RP
 - 280/280 ventas con total y fecha operativa idénticos a la fila Excel (Δ global −0.02 CUP por redondeo documentado en 2 filas).
 - Pagos por método: efectivo CUP 3.146.939,98 · transferencia CUP 261.450,01 · USD (zelle) 13.624,84 netos — exactos bajo la política aprobada.
 - 815 entradas de auditoría de la sesión; imágenes intactas (111 productos, 151 archivos, 0 faltantes).
+
+**Cierre de pendientes (2026-10-04 05:46 UTC):** las 2 ventas saltadas (filas 480 y 819, ver §7) fueron registradas mediante la **cadena oficial del POS** (`POST /api/auth/supervisor-check` → `POST /api/pos/checkout` → `create_sale_v2`) con `admin@demo.com` como supervisor autorizado — ver §6-bis y §7.
 
 ## 2. Decisiones aprobadas por el usuario (GATE, 14 respuestas)
 
@@ -87,10 +89,38 @@ Aplicadas vía Management API SQL (`postgres`), firmas verificadas post-aplicaci
 ✓ 3 reversas confirmadas (status=voided)
 ```
 
-## 7. Pendientes para el usuario (acción manual)
+### 6-bis. Verificación post-registro de pendientes (FASE 17-bis, `verify_v2.mjs` — 0 fallos)
 
-1. **Fila 480** — venta real 1× "Grapas plasticas con clavo de acero" (sku 111) por **2.000 CUP** (efectivo), fecha Excel 2026-08-25, = 20% bajo catálogo 2500. Registrarla en el POS con autorización de supervisor. El stock de 111 está en 46+1 y bajará a 46 (= fin2) al registrarla.
-2. **Fila 819** — venta real 2× "Cemento TBV 50 Kg" (sku 141) por **33.320 CUP** (16.660/u, transferencia), fecha Excel 2026-09-30, = 16,7% bajo catálogo 20.000. Mismo tratamiento; stock 141 = 13+2 → 13 al registrarla.
+Ejecutada tras registrar las filas 480/819. Estado final certificado:
+
+```
+✓ inventario = fin2 PURO (sin deltas): 157/157 SKUs — stock 111=46, 141=13
+✓ fila 480: tx d939ea06-b328-42f8-ac42-931f201e81c2 — completed, 2.000 CUP, cash, CUP@1,
+  seller/supervisor admin@demo.com, registro 2026-10-04 (fecha POS natural)
+✓ fila 819: tx 2753440f-595e-4e66-b2be-c6728d7c52bc — completed, 33.320 CUP, zelle, USD 49@680,
+  seller/supervisor admin@demo.com, registro 2026-10-04 (fecha POS natural)
+✓ pagos: cash 2.000 CUP · zelle 49 USD @680 = 33.320 CUP (moneda original preservada)
+✓ supervisor_token_usages: 2 jti consumidos (ef28bfc2…, 1f77b8e9…) vinculados a cada transacción
+✓ discount_reason trazable en metadata de auditoría (CREATE_SALE_V2, discount_pct 20 y 16.7)
+✓ auditoría sesión total: CREATE_SALE_V2=282 (280+2), pagos 333 (+2), reversas/DV/OT/recepciones intactos
+✓ mapping fila→documento: 505 entradas (download/ENERVIDA-mapping-fila-documento.csv)
+```
+
+Nota de fechas: el registro POS se realiza con la fecha del día (2026-10-04) — retrofechar la fila 480
+(02-09) habría sido rechazado por el gate `ERR_BACKDATED_DOCUMENT` (última venta 2026-10-03). Las fechas
+históricas del Excel quedan documentadas en el `discount_reason` de cada venta y en este informe.
+
+## 7. Pendientes para el usuario
+
+**RESUELTO (2026-10-04 05:46 UTC) — ventas pendientes registradas vía cadena oficial del POS:**
+
+1. **Fila 480** — venta real 1× "Grapas plasticas con clavo de acero" (sku 111) por **2.000 CUP** (efectivo), fecha Excel **2026-09-02**, = 20% bajo catálogo 2.500 → **REGISTRADA**: tx `d939ea06-b328-42f8-ac42-931f201e81c2`, gate de supervisor superado con `admin@demo.com` (jti `ef28bfc2…` consumido), stock 47→46 (= fin2). La comisión Excel de la fila (si la hubiera) no se importó por decisión 11.
+2. **Fila 819** — venta real 2× "Cemento TBV 50 Kg" (sku 141) por **33.320 CUP** (16.660/u), fecha Excel **2026-10-02**, = 16,7% bajo catálogo 20.000 → **REGISTRADA**: tx `2753440f-595e-4e66-b2be-c6728d7c52bc`, pago zelle **49 USD @680** (moneda original preservada), gate de supervisor superado con `admin@demo.com` (jti `1f77b8e9…`), stock 15→13 (= fin2). La comisión Excel de 400 CUP de esta fila **no se importó** (decisión 11: comisiones fuera de alcance).
+
+Nota: el informe previo citaba las fechas Excel como 08-25/09-30; el dump canónico del Excel (`enervida_excel.json`) fija **02-09-2026 y 02-10-2026** respectivamente — se corrige aquí.
+
+**Pendientes restantes:**
+
 3. Los **pares neto-cero** se excluyeron por no ser representables (efecto neto 0): filas 569+570 (venta XT60 a precio 0 + su devolución) y Anticipo OT 26/26 (+700/−700 USD el mismo día).
 4. Las **comisiones** (Cat: 75 productos; 225.395 CUP en el período del Excel) no se importaron por decisión del usuario; sugerencia futura: crear `commission_rules` por producto.
 
@@ -106,11 +136,13 @@ Aplicadas vía Management API SQL (`postgres`), firmas verificadas post-aplicaci
 
 | Artefacto | Ubicación |
 |---|---|
-| Mapping fila Excel → documento CostPro (503 entradas) | `download/ENERVIDA-mapping-fila-documento.csv` |
+| Mapping fila Excel → documento CostPro (505 entradas) | `download/ENERVIDA-mapping-fila-documento.csv` |
 | Clasificación de las 821 filas | `download/ENERVIDA-reconciliacion-filas.csv` |
 | Importador por fases (idempotente, reanudable) | `scripts/enervida_import/importer.mjs` |
+| Registro de pendientes (480/819 vía API oficial) | `scripts/enervida_ventas_pendientes.mjs` |
 | Verificación integral | `scripts/enervida_import/verify.mjs` |
-| Resultados por fase (row→id) | `scripts/enervida_import/results-*.json` |
+| Verificación post-pendientes (v2, 0 fallos) | `scripts/enervida_import/verify_v2.mjs` |
+| Resultados por fase (row→id) | `scripts/enervida_import/results-*.json` (incl. `results-ventas-pendientes.json`) |
 | Análisis previo (Excel y BD, read-only) | `scripts/enervida_0*.py`, `enervida_1*.mjs`, `enervida_excel.json`, `enervida_db_dump.json` |
 
 Claves de idempotencia usadas: `enervida-imp-ven-<fila>`, `enervida-imp-vs-<fila>`, `enervida-imp-dv-<fila>`, `enervida-imp-ot-<ot>`, `enervida-imp-otp-<fila>-<cup|usd>`; recepciones reanudables por `reference_doc = IMPORT-ENERVIDA-<fila>`; cuadres por motivo. Una re-ejecución de cualquier fase no duplica documentos.
