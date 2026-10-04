@@ -670,6 +670,129 @@
   },
   "dashboard": {
     "singleStore": {
+      "performance": {
+        "title": "Performance",
+        "configure": "Configure indicator",
+        "metricLabel": "Metric",
+        "comparatorLabel": "Comparison",
+        "periodLabel": "Period",
+        "suggested": "Suggested",
+        "done": "Done",
+        "vs": "vs {label}",
+        "current": "Current",
+        "refScaled": "Reference: {value} · {label} × {days} days",
+        "refRaw": "Reference: {value} · {label}",
+        "noSales": "No sales in this period",
+        "noSalesHint": "Record a sale to see performance",
+        "newSale": "New sale",
+        "noReferenceHint": "Not enough data to compare",
+        "insufficientMargin": "Insufficient data to calculate margin",
+        "insufficientMarginHint": "Valid costs are missing for some products.",
+        "marginUnavailable": "Margin unavailable: valid costs are missing.",
+        "combinationNote": "The 7-day total is compared against the previous month's daily average × 7.",
+        "metric": {
+          "auto": "Automatic (recommended)",
+          "autoHint": "Picks the most useful metric based on store data",
+          "sales": "Sales",
+          "transactions": "Transactions",
+          "avg_ticket": "Average ticket",
+          "units": "Units sold",
+          "margin": "Gross margin",
+          "marginNote": "Available: all products have valid costs",
+          "marginRequiresCosts": "Requires valid costs for all products",
+          "unitsYearNote": "Not available in Year mode: the daily history does not cover that range."
+        },
+        "metricShort": {
+          "sales": "Sales",
+          "transactions": "Transactions",
+          "avg_ticket": "Avg. ticket",
+          "units": "Units sold",
+          "margin": "Margin"
+        },
+        "comparator": {
+          "notAvailable": "Not available",
+          "prev_month_daily_avg": "Previous month daily average",
+          "last7_daily_avg": "Last 7 days daily average",
+          "last30_daily_avg": "Last 30 days daily average",
+          "same_weekday_last_week": "Same weekday last week",
+          "same_period_last_year": "Same period last year",
+          "monthly_avg_6m": "Monthly average (last 6 months)"
+        },
+        "comparatorHint": {
+          "prev_month_daily_avg": "Reference = previous month's average per day",
+          "last7_daily_avg": "Reference = the 7 days before the period",
+          "last30_daily_avg": "Reference = the 30 days before the period",
+          "same_weekday_last_week": "Mirror window from last week",
+          "same_period_last_year": "Equivalent window last year",
+          "monthly_avg_6m": "Total of the last 6 full months ÷ 6, compared with the selected month total."
+        },
+        "comparatorShort": {
+          "prev_month_daily_avg": "previous month average",
+          "last7_daily_avg": "previous 7-day average",
+          "last30_daily_avg": "previous 30-day average",
+          "same_weekday_last_week": "same weekday last week",
+          "same_period_last_year": "same period last year",
+          "monthly_avg_6m": "monthly avg (6 months)"
+        },
+        "marginRefLabel": {
+          "prev_month_daily_avg": "previous month margin",
+          "last7_daily_avg": "previous 7-day margin",
+          "last30_daily_avg": "previous 30-day margin",
+          "same_weekday_last_week": "same weekday last week margin",
+          "same_period_last_year": "same period last year margin"
+        },
+        "period": {
+          "hoy": "Today",
+          "ayer": "Yesterday",
+          "ultimos_7_dias": "Last 7 days",
+          "este_mes": "This month"
+        },
+        "helpLabel": "What does this indicator mean?",
+        "txShort": "transactions",
+        "periodHeaderNote": "The period is controlled by the Day / Month / Year selector in the header. The comparison is recalculated on every period or date change.",
+        "comparatorFixedMonth": "Fixed reference for Month mode: average of the last 6 full months. For the current month, the reference is prorated to the days elapsed (fair comparison).",
+        "comparatorFixedYear": "Fixed reference for Year mode: the same period of the previous year. The comparison is recalculated on every period or date change.",
+        "metricUnavailable": "Metric not available for this period",
+        "metricUnavailableHint": "There is recorded activity, but the selected metric has no data source for the chosen period.",
+        "qualitative": {
+          "way_above": "Well above usual",
+          "above": "Above usual",
+          "in_line": "In line with usual",
+          "below": "Below usual",
+          "way_below": "Well below usual"
+        },
+        "tooltip": {
+          "title": "What does it mean?",
+          "rule": "The comparison uses real recorded sales. When data is insufficient, N/D is shown instead of an invented percentage.",
+          "noRef": "There is not enough history to calculate a reliable comparison. The indicator shows N/D until the reference exists.",
+          "sales": {
+            "above": "Sales for the selected period were {variation} above the reference ({refLabel}). {current} was recorded in {transactions} transactions, versus {reference}.",
+            "below": "Sales for the selected period were {variation} below the reference ({refLabel}). {current} was recorded in {transactions} transactions, versus {reference}.",
+            "equal": "Sales for the selected period match the reference ({refLabel}): {current}."
+          },
+          "transactions": {
+            "above": "Transactions for the selected period were {variation} above the reference ({refLabel}). {current} were recorded, versus {reference}.",
+            "below": "Transactions for the selected period were {variation} below the reference ({refLabel}). {current} were recorded, versus {reference}.",
+            "equal": "Transactions for the selected period match the reference ({refLabel}): {current}."
+          },
+          "avg_ticket": {
+            "above": "The average ticket for the selected period was {variation} above the reference ({refLabel}). It was {current}, versus {reference}.",
+            "below": "The average ticket for the selected period was {variation} below the reference ({refLabel}). It was {current}, versus {reference}.",
+            "equal": "The average ticket for the selected period matches the reference ({refLabel}): {current}."
+          },
+          "units": {
+            "above": "Units sold for the selected period were {variation} above the reference ({refLabel}). {current} units were sold, versus {reference}.",
+            "below": "Units sold for the selected period were {variation} below the reference ({refLabel}). {current} units were sold, versus {reference}.",
+            "equal": "Units sold for the selected period match the reference ({refLabel}): {current}."
+          },
+          "margin": {
+            "above": "Gross margin for the selected period was {variation} above the reference ({refLabel}). It was {current}, versus {reference}.",
+            "below": "Gross margin for the selected period was {variation} below the reference ({refLabel}). It was {current}, versus {reference}.",
+            "equal": "Gross margin for the selected period matches the reference ({refLabel}): {current}."
+          }
+        },
+        "refProRated": "Reference: {value} · {label}, prorated to the {days} days elapsed"
+      },
       "title": "Dashboard",
       "subtitle": "KPI Summary",
       "day": "Day",
@@ -679,8 +802,6 @@
       "sales": "Sales",
       "costs": "Costs",
       "profit": "Profit",
-      "salesSummary": "Sales Summary",
-      "liveUpdates": "Live Updates",
       "transactions": "Transactions",
       "averageTicket": "Average Ticket",
       "cash": "Cash",
@@ -690,7 +811,8 @@
       "criticalAlerts": "Critical Alerts",
       "units": "units",
       "viewAllAlerts": "View all alerts",
-      "loadingVisualization": "Loading Visualization..."
+      "loadingVisualization": "Loading Visualization...",
+      "activitySummary": "Activity summary"
     },
     "storeDashboard": {
       "occ": {

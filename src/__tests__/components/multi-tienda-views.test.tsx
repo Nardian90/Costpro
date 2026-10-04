@@ -150,15 +150,10 @@ describe('MULTI-TIENDA — Tests de render', () => {
     });
   });
 
-  describe('ExecutiveKpiCards', () => {
-    it('renderiza con datos válidos', async () => {
-      const { ExecutiveKpiCards } = await import('@/components/views/terminal/views/dashboard/ExecutiveKpiCards');
-      const { container } = render(
-        <ExecutiveKpiCards sales={1000} costs={600} profit={400} />
-      );
-      expect(container.textContent).toBeTruthy();
-    });
-  });
+  // REMEDIACIÓN KPI temporal (fix/dashboard-kpi-periods-semantics):
+  // ExecutiveKpiCards fue ELIMINADO — duplicaba los KPIs financieros del
+  // anillo y mostraba $0 cuando el costo es N/D. Sus datos únicos viven en
+  // "Resumen de actividad" (DashboardViewImpl).
 
   describe('OCCView', () => {
     it.skip('renderiza sin crashear', async () => {

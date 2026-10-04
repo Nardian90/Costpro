@@ -44,8 +44,13 @@ export async function prefetchDashboardData(
         return {
           kpis: {
             gross_sales: kpis.total_sales || 0,
-            cost_of_goods: kpis.total_cost || 0,
-            profit: kpis.total_profit || 0,
+            // REMEDIACIÓN (fix/dashboard-contextual-kpi-actions) FASE 2:
+            // preservar la señal NULL del RPC (costos incompletos). El tipo
+            // DashboardKPIs ya es number | null; los consumidores con `|| 0`
+            // mantienen su comportamiento — los que necesiten honestidad
+            // distinguen null (N/D) de 0 (cero real).
+            cost_of_goods: kpis.total_cost ?? null,
+            profit: kpis.total_profit ?? null,
           } as DashboardKPIs,
           summary: {
             total_billed: kpis.total_sales || 0,
@@ -102,8 +107,9 @@ export function useSuspenseDashboardData(
         return {
           kpis: {
             gross_sales: kpis.total_sales || 0,
-            cost_of_goods: kpis.total_cost || 0,
-            profit: kpis.total_profit || 0,
+            // REMEDIACIÓN (fix/dashboard-contextual-kpi-actions) FASE 2: ver nota en prefetchDashboardData.
+            cost_of_goods: kpis.total_cost ?? null,
+            profit: kpis.total_profit ?? null,
           } as DashboardKPIs,
           summary: {
             total_billed: kpis.total_sales || 0,
@@ -128,7 +134,11 @@ export function useDashboardData(
   storeId?: string | null,
   isAdmin = false,
   dateFrom?: string,
-  dateTo?: string
+  dateTo?: string,
+  // REMEDIACIÓN (fix/dashboard-contextual-kpi-actions) FASE 20: habilitación
+  // perezosa retrocompatible — las consultas de referencia del KPI (margen,
+  // año anterior) solo se disparan cuando la configuración las necesita.
+  options?: { enabled?: boolean }
 ) {
   const cleanStoreId = getCleanStoreId(storeId);
 
@@ -159,8 +169,9 @@ export function useDashboardData(
         return {
           kpis: {
             gross_sales: kpis.total_sales || 0,
-            cost_of_goods: kpis.total_cost || 0,
-            profit: kpis.total_profit || 0,
+            // REMEDIACIÓN (fix/dashboard-contextual-kpi-actions) FASE 2: ver nota en prefetchDashboardData.
+            cost_of_goods: kpis.total_cost ?? null,
+            profit: kpis.total_profit ?? null,
           } as DashboardKPIs,
           summary: {
             total_billed: kpis.total_sales || 0,
@@ -173,7 +184,7 @@ export function useDashboardData(
       }
       return null;
     },
-    enabled: isAdmin || !!storeId,
+    enabled: (options?.enabled ?? true) && (isAdmin || !!storeId),
     staleTime: 60 * 1000,
   });
 }

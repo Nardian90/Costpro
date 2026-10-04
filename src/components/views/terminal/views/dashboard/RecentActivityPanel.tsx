@@ -28,6 +28,7 @@ import {
   type RecentDarianAction,
 } from '@/lib/darian/recent-actions';
 import { normalizeLegacyView } from '@/config/navigation/navigation-definition';
+import RecommendedActions from './RecommendedActions';
 
 const MAX_VISIBLE = 5;
 
@@ -75,24 +76,11 @@ export default function RecentActivityPanel({ className }: { className?: string 
   };
 
   if (entries.length === 0) {
-    // Empty state sobrio — sin decoración, invita al flujo conversacional.
-    return (
-      <section
-        className={className}
-        aria-label="Acciones recientes"
-        data-testid="recent-activity-empty"
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <History className="w-3.5 h-3.5 text-muted-foreground/50" aria-hidden="true" />
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
-            Acciones recientes
-          </h3>
-        </div>
-        <p className="text-xs text-muted-foreground/40 py-6 text-center border border-dashed border-border/60 rounded-xl">
-          Aún no hay actividad de Darian. Pídele algo y aparecerá aquí para retomarla.
-        </p>
-      </section>
-    );
+    // FASE 12 (fix/dashboard-contextual-kpi-actions): sin acciones recientes
+    // el bloque se convierte automáticamente en "Acciones recomendadas"
+    // (rol + permisos + estado real de la tienda) — nunca queda un espacio
+    // vacío. Mantiene el testid canónico recent-activity-empty.
+    return <RecommendedActions className={className} />;
   }
 
   return (

@@ -29,13 +29,20 @@ import { NoStorePrompt } from '@/components/ui/NoStoreGuard';
 import { withChunkRetry } from '@/components/ui/ChunkErrorBoundary';
 
 // Lazy load heavy dashboard components to improve TBT and LCP
-const ConcentricDashboardRing = dynamic(() => import('./ConcentricDashboardRing').then(mod => mod.ConcentricDashboardRing), {
-  loading: () => <div className="h-[280px] w-[280px] rounded-2xl bg-muted/20 animate-pulse flex items-center justify-center text-sm text-muted-foreground uppercase font-bold font-display">...</div>,
-  ssr: false
-});
-
-const ExecutiveKpiCards = dynamic(() => import('./ExecutiveKpiCards').then(mod => mod.ExecutiveKpiCards), {
-  loading: () => <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[120px] animate-pulse bg-muted/5 rounded-2xl" aria-hidden="true" />,
+// REMEDIACIÓN (fix/dashboard-contextual-kpi-actions): el Inicio usa el KPI
+// contextual "Rendimiento" (configurable, honesto con 0/N/D). El anillo
+// concéntrico anterior (ConcentricDashboardRing) sigue vivo en el dashboard
+// consolidado (StoreDashboardView) — fuera del alcance de esta remediación.
+// REMEDIACIÓN KPI temporal (fix/dashboard-kpi-periods-semantics): el anillo
+// recibe el ANCLA del selector Día/Mes/Año + fecha — el % reacciona al
+// selector (FASE 4-8). ExecutiveKpiCards se RETIRA de esta vista: duplicaba
+// Ventas/Costos/Utilidad (ya visibles en las mini-stats del anillo, con N/D
+// honesto), mostraba $0 cuando el costo es N/D (contradicción contable) y
+// sus sparklines eran paths decorativos hardcodeados (datos inventados).
+// Los datos ÚNICOS de actividad (transacciones, ticket, efectivo,
+// transferencia) se conservan en el bloque renombrado "Resumen de actividad".
+const PerformanceKpi = dynamic(() => import('./PerformanceKpi').then(mod => mod.PerformanceKpi), {
+  loading: () => <div className="h-[360px] w-full max-w-sm rounded-2xl bg-muted/20 animate-pulse" aria-hidden="true" />,
   ssr: false
 });
 
@@ -248,8 +255,13 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
         {(data) => {
           const { kpis, summary } = data[0];
           const sales = kpis?.gross_sales || 0;
-          const costs = kpis?.cost_of_goods || 0;
-          const profit = kpis?.profit || 0;
+          // REMEDIACIÓN (fix/dashboard-contextual-kpi-actions) FASE 2:
+          // cost_of_goods/profit llegan con null preservado (señal honesta
+          // del RPC). null = "N/D" (dato no disponible) — NUNCA 0.
+          // REMEDIACIÓN KPI temporal: estos null YA NO se convierten a 0
+          // para ningún bloque (antes ExecutiveKpiCards los aplastaba).
+          const rawCosts = kpis?.cost_of_goods ?? null;
+          const rawProfit = kpis?.profit ?? null;
 
           const transactions = summary?.transaction_count || 0;
           const avgTicket = summary?.average_ticket || 0;
@@ -258,24 +270,24 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
 
           return (
             <div className="flex flex-col gap-8">
-              {/* DASHBOARD V3 (FASE 4): Resumen de Indicadores (gráfico circular)
-                  + Acciones recientes lado a lado en desktop (lg+). En mobile
-                  se apilan: gráfico primero, Acciones recientes después — sin
-                  columnas forzadas ni espacios muertos. El aside es UNA única
-                  representación canónica de Acciones recientes. */}
+              {/* DASHBOARD V3 (FASE 4): Resumen de Indicadores (KPI contextual
+                  "Rendimiento") + Acciones recientes lado a lado en desktop
+                  (lg+). En mobile se apilan: gráfico primero, Acciones
+                  recientes después. El aside es UNA única representación
+                  canónica de Acciones recientes. */}
               <section
                 aria-label="Resumen de indicadores y acciones recientes"
                 className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start"
               >
                 <div className="flex flex-col items-center min-w-0">
-                  <ConcentricDashboardRing
-                    sales={sales}
-                    costs={costs}
-                    profit={profit}
-                  />
+                  {/* REMEDIACIÓN KPI temporal — el anillo recibe el período del
+                      selector Día/Mes/Año + fecha (misma fuente que las
+                      mini-stats y los pills: cero contradicciones). */}
+                  <PerformanceKpi anchor={{ mode: timeRange, date: selectedDate }} />
 
-                  {/* Mini Stats under the ring — all tokens, no hardcoded colors */}
-                  <div className="grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-sm mt-4">
+                  {/* Mini Stats under the ring — all tokens, no hardcoded colors.
+                      REMEDIACIÓN FASE 2: costos/utilidad null ⇒ "N/D" (nunca 0). */}
+                  <div className="grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-sm mt-4" data-testid="kpi-mini-stats">
                     <div className="flex flex-col items-center">
                       <div className="w-2 h-2 rounded-full bg-primary mb-2"></div>
                       <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('sales')}</span>
@@ -284,13 +296,17 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
                     <div className="flex flex-col items-center">
                       <div className="w-2 h-2 rounded-full bg-muted-foreground/50 mb-2"></div>
                       <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('costs')}</span>
-                      <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(costs)}</span>
+                      <span className="text-sm font-bold font-display text-foreground tabular-nums" data-testid="mini-stat-costs">
+                        {rawCosts === null ? 'N/D' : formatCurrency(rawCosts)}
+                      </span>
                     </div>
                     <div className="flex flex-col items-center">
                       {/* FIX UX-001: was bg-[#00E0FF], now uses semantic success token */}
                       <div className="w-2 h-2 rounded-full bg-success mb-2"></div>
                       <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('profit')}</span>
-                      <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(profit)}</span>
+                      <span className="text-sm font-bold font-display text-foreground tabular-nums" data-testid="mini-stat-profit">
+                        {rawProfit === null ? 'N/D' : formatCurrency(rawProfit)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -300,17 +316,19 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
                 {aside && <div className="min-w-0">{aside}</div>}
               </section>
 
-              {/* Sales Summary — uses previously hidden SalesSummary data */}
+              {/* REMEDIACIÓN KPI temporal (FASE 15-18) — "Resumen de
+                  actividad": la información ÚNICA del bloque (transacciones,
+                  ticket promedio, efectivo, transferencia). Los KPIs
+                  financieros viven SOLO en las mini-stats del anillo (Ventas /
+                  Costos / Utilidad, con N/D honesto) — sin duplicación ni
+                  contradicción contable. El tag "Live Updates" se retiró: no
+                  existía streaming real (los datos refrescan vía TanStack
+                  Query al invalidarse / staleTime — presentarlo como "live"
+                  era engañoso). */}
               <section className="space-y-4">
                 <div className="flex justify-between items-end px-1">
-                  <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground">{t('salesSummary')}</h2>
-                  <span className="text-sm font-mono text-primary animate-pulse uppercase font-semibold">{t('liveUpdates')}</span>
+                  <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground">{t('activitySummary')}</h2>
                 </div>
-                <ExecutiveKpiCards
-                  sales={sales}
-                  costs={costs}
-                  profit={profit}
-                />
 
                 {/* PM-001: SalesSummary detail cards — previously computed but never shown */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

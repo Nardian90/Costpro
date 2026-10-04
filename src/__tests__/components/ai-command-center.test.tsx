@@ -71,6 +71,22 @@ vi.mock('@/hooks/api/useProducts', () => ({
   useProducts: (...args: unknown[]) => useProductsMock(...args),
 }));
 
+// REMEDIACIÓN (fix/dashboard-contextual-kpi-actions): sin acciones recientes
+// el panel monta RecommendedActions, que consulta el turno de caja (gated)
+// y lee el carrito. Se mockean con las mismas señales neutras del resto
+// del archivo — sin QueryClientProvider en este suite.
+vi.mock('@/hooks/api/useActiveShift', () => ({
+  useActiveShift: () => ({ data: null, isLoading: false }),
+}));
+vi.mock('@/store/cart', async () => {
+  const { create } = await import('zustand');
+  const useCartStore = create(() => ({
+    items: [] as unknown[],
+    storeId: 'store-1' as string | null,
+  }));
+  return { useCartStore };
+});
+
 vi.mock('@/components/views/terminal/views/dashboard/DashboardView', () => ({
   default: ({ embedded, aside }: any) => (
     <div
