@@ -35,6 +35,7 @@ export default function UserAuditHistoryModal({
     MEMBERSHIP_REVOKED: 'Membresía revocada',
     MEMBERSHIPS_BULK_ASSIGNED: 'Membresías asignadas (bulk)',
     PASSWORD_RESET_REQUESTED: 'Reset de password solicitado',
+    PASSWORD_SET_BY_ADMIN: 'Contraseña establecida por administrador',
     ORPHAN_RECONCILED: 'Huérfano reconciliado',
     USER_REGISTERED_PUBLICLY: 'Registro público',
   };
