@@ -44,11 +44,36 @@ function toNavModule(entry: NavEntry): NavModule {
 export const SIDEBAR_STRUCTURE: NavModule[] = DERIVED_TREE.map(toNavModule);
 
 // ════════════════════════════════════════════════════════════════════
-// Guard de roles (UI-only — la seguridad real vive en backend/RLS).
+// Filtro por rol (UI-only — la seguridad real vive en backend/RLS).
 // Herencia: el allowedRoles del ancestro más cercano manda; si nadie
 // define roles, acceso universal (default-open, comportamiento previo
 // conservado — no hay cambios de permisos en GATE 1).
 // ════════════════════════════════════════════════════════════════════
+
+/**
+ * Filtra el árbol por rol a CADA nivel (la visibilidad de un grupo depende
+ * de su propio allowedRoles). Puro y sin dependencia del store — usado por
+ * useFilteredNavigation y validado directamente por los tests de la
+ * reorganización (fix/navigation-orphaned-development).
+ */
+export function filterModulesByRole(modules: NavModule[], role: string): NavModule[] {
+  return modules
+    .filter(mod => {
+      // Si no tiene allowedRoles definido, acceso universal
+      if (!mod.allowedRoles) return true;
+      return mod.allowedRoles.includes(role);
+    })
+    .map(mod => {
+      if (!mod.children) return mod;
+      const filteredChildren = filterModulesByRole(mod.children, role);
+      return { ...mod, children: filteredChildren };
+    })
+    // Elimina grupos/submenús que quedaron vacíos después de filtrar
+    .filter(mod => {
+      if (mod.type === 'item') return true;
+      return (mod.children?.length ?? 0) > 0;
+    });
+}
 
 function findModuleAndAncestors(
   modules: NavModule[],

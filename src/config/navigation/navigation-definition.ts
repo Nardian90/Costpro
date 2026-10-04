@@ -13,8 +13,19 @@
  *                 Noticias · Reportes · Análisis ABC
  *   SISTEMA     → Ajustes · Usuarios · Roles · Salud · Monitoreo · Auditoría ·
  *                 Gestión RSS · Cierre Fiscal   (admin)
- *   AYUDA       → Centro de Ayuda · Wiki · Academia · Marco Legal
- *   EN DESARROLLO → IPV · Pick3 · Billetera   (admin, experimental)
+ *   AYUDA       → Centro de Ayuda
+ *   EN DESARROLLO → IPV · Pick3 · Billetera · Wiki · Academia · Marco
+ *                 Legal · Conciliación Bancaria
+ *                 (existentes pero no integradas / experimentales)
+ *
+ * REORGANIZACIÓN (fix/navigation-orphaned-development): Ayuda contiene
+ * EXCLUSIVAMENTE el Centro de Ayuda. Wiki/Academia/Marco Legal (antes en
+ * Ayuda) y Conciliación Bancaria (huérfana: solo deep-link, decisión FASE B
+ * condicionada a Producto — resuelta aquí) viven en EN DESARROLLO. Los
+ * roles de cada entrada preservan la visibilidad efectiva EXACTA previa:
+ * la sección deja de ser admin-only y son las entradas IPV/Pick3/Billetera
+ * las que declaran roles: ['admin'] (mismo acceso efectivo que la
+ * herencia de sección anterior; sin cambios de permisos).
  *
  * De ESTE archivo se derivan (no existe ninguna otra lista de navegación):
  *   ├── Sidebar            (sidebar.structure.ts → SIDEBAR_STRUCTURE)
@@ -41,7 +52,7 @@ import {
   Home, Zap, ShoppingCart, Package, Warehouse, ArrowLeftRight, FileText, Calculator,
   Factory, UserCog, LayoutGrid, MessageCircle, Send, TrendingUp, Table2, DollarSign, Truck,
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
-  Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet,
+  Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet, Landmark,
   Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone,
   Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson,
   type LucideIcon,
@@ -535,12 +546,16 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
   },
 
   // ═══════════════════════ AYUDA ═══════════════════════
+  // REORGANIZACIÓN (fix/navigation-orphaned-development): Ayuda contiene
+  // EXCLUSIVAMENTE el Centro de Ayuda (mandato de producto). Wiki/Academia/
+  // Marco Legal se trasladan a EN DESARROLLO — mismas vistas, mismos
+  // deep-links, mismos roles efectivos (universales).
   {
     id: 'ayuda',
     label: 'AYUDA',
     type: 'group',
     icon: HelpCircle,
-    description: 'Documentación, conocimiento contable, aprendizaje y normativa. El "?" del header es ayuda contextual de la vista actual.',
+    description: 'Documentación de la app. El "?" del header es ayuda contextual de la vista actual.',
     children: [
       {
         id: 'help',
@@ -550,42 +565,27 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         type: 'item',
         keywords: ['ayuda', 'soporte', 'guía', 'tutorial', 'documentación', 'faq'],
       },
-      {
-        id: 'wiki',
-        label: 'Wiki',
-        description: 'Conocimiento contable cubano: asientos con Debe/Haber, plan de cuentas, normativas NC-29 y ONAT.',
-        icon: Book,
-        type: 'item',
-        keywords: ['wiki', 'contable', 'asientos', 'cuentas', 'onat', 'nc-29', 'glosario'],
-      },
-      {
-        id: 'academy',
-        label: 'Academia',
-        description: 'Flashcards con repetición espaciada (SRS) para dominar conceptos del sistema. Progreso guardado en tu cuenta.',
-        icon: GraduationCap,
-        type: 'item',
-        keywords: ['academia', 'aprender', 'flashcards', 'estudio', 'capacitación'],
-      },
-      {
-        // Descripción REAL (la anterior decía "RGPD" — falso, eso vive en /privacy)
-        id: 'legal',
-        label: 'Marco Legal',
-        description: 'Consultor de normativa cubana (fiscal, laboral, mercantil) y generador de formularios oficiales en PDF.',
-        icon: Scale,
-        type: 'item',
-        keywords: ['legal', 'normativa', 'cubana', 'formularios', 'fiscal', 'leyes'],
-      },
     ],
   },
 
-  // ═══════════════════════ EN DESARROLLO (admin, experimental) ═══════════════════════
+  // ═════════════════ EN DESARROLLO (existentes no integradas) ═════════════════
+  // REORGANIZACIÓN (fix/navigation-orphaned-development): semántica exacta
+  // del mandato — funcionalidades EXISTENTES pero todavía no integradas
+  // como parte del flujo principal del producto. La sección ya NO declara
+  // roles: la visibilidad la fija cada entrada (roles: ['admin'] en el trío
+  // experimental preserva el acceso efectivo que antes heredaba de la
+  // sección; Wiki/Academia/Marco Legal permanecen universales como en
+  // Ayuda; Conciliación Bancaria conserva su guard default-open histórico).
+  // Orden (FASE 6 — madurez descendente, no alfabético):
+  //   1. Experimentales relacionadas (IPV · Pick3 · Billetera)
+  //   2. Existentes no integradas (Wiki · Academia · Marco Legal)
+  //   3. Incompletas (Conciliación Bancaria — UI parcial, última)
   {
     id: 'desarrollo',
     label: 'EN DESARROLLO',
     type: 'group',
     icon: FlaskConical,
-    description: 'Funcionalidades experimentales. No son parte del producto productivo todavía.',
-    roles: ['admin'],
+    description: 'Funcionalidades existentes pero todavía no integradas como parte del flujo principal del producto.',
     children: [
       {
         // 21 hojas falsas del sidebar colapsan a UNA entrada (el rail interno
@@ -596,6 +596,9 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: Layers,
         type: 'item',
         navClass: 'experimental',
+        // Roles explícitos (antes heredados de la sección admin-only):
+        // visibilidad efectiva idéntica, solo cambia el mecanismo.
+        roles: ['admin'],
         keywords: ['ipv', 'conciliación', 'extracto', 'bancario', 'matching'],
       },
       {
@@ -605,6 +608,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: BarChart3,
         type: 'item',
         navClass: 'experimental',
+        roles: ['admin'],
         keywords: ['pick3', 'riesgo', 'inversión', 'markov', 'backtest', 'bankroll', 'lotería'],
       },
       {
@@ -614,7 +618,59 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: Wallet,
         type: 'item',
         navClass: 'experimental',
+        roles: ['admin'],
         keywords: ['billetera', 'wallet', 'transferencias', 'transfermóvil', 'pagos', 'sms'],
+      },
+      {
+        // Trasladada desde AYUDA (fix/navigation-orphaned-development):
+        // funcionalidad de conocimiento contable, no ayuda de la app.
+        // Universal (sin roles) — igual que en Ayuda. Deep-link intacto.
+        id: 'wiki',
+        label: 'Wiki',
+        description: 'Conocimiento contable cubano: asientos con Debe/Haber, plan de cuentas, normativas NC-29 y ONAT.',
+        icon: Book,
+        type: 'item',
+        keywords: ['wiki', 'contable', 'asientos', 'cuentas', 'onat', 'nc-29', 'glosario'],
+      },
+      {
+        // Trasladada desde AYUDA (fix/navigation-orphaned-development).
+        // Universal (sin roles) — igual que en Ayuda. Deep-link intacto.
+        id: 'academy',
+        label: 'Academia',
+        description: 'Flashcards con repetición espaciada (SRS) para dominar conceptos del sistema. Progreso guardado en tu cuenta.',
+        icon: GraduationCap,
+        type: 'item',
+        keywords: ['academia', 'aprender', 'flashcards', 'estudio', 'capacitación'],
+      },
+      {
+        // Trasladada desde AYUDA (fix/navigation-orphaned-development).
+        // Descripción REAL (la anterior decía "RGPD" — falso, eso vive en /privacy).
+        // Universal (sin roles) — igual que en Ayuda. Deep-link intacto.
+        id: 'legal',
+        label: 'Marco Legal',
+        description: 'Consultor de normativa cubana (fiscal, laboral, mercantil) y generador de formularios oficiales en PDF.',
+        icon: Scale,
+        type: 'item',
+        keywords: ['legal', 'normativa', 'cubana', 'formularios', 'fiscal', 'leyes'],
+      },
+      {
+        // HUÉRFANA RESCATADA (fix/navigation-orphaned-development): vista
+        // real (BankReconciliationView) alcanzable SOLO por deep-link
+        // /?view=bank-reconciliation sin ubicación de navegación. La decisión
+        // FASE B (UX-010) la mantenía fuera de la navegación hasta que
+        // Producto decidiera su dominio — este mandato ES esa decisión.
+        // EN DESARROLLO resuelve ambas cosas: ubicación coherente Y etiqueta
+        // honesta de capacidad parcial (no aparenta función completa).
+        // Sin roles: conserva el guard default-open histórico (la seguridad
+        // real vive en backend/RLS). Sin mobileHide: una sola fuente de
+        // verdad para desktop y móvil.
+        id: 'bank-reconciliation',
+        label: 'Conciliación Bancaria',
+        description: 'Capacidad parcial (beta): vista de extractos y estado de conciliación en solo lectura. Sin importación ni matching automático todavía.',
+        icon: Landmark,
+        type: 'item',
+        navClass: 'experimental',
+        keywords: ['conciliación', 'bancaria', 'extracto', 'banco', 'estado de cuenta'],
       },
     ],
   },
