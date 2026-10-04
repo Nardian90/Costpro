@@ -32,7 +32,11 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
 
 export interface UseAuditLogsParams {
   storeIds: string[];
-  action?: string;
+  /**
+   * Acción única o lista de acciones (REMEDIACIÓN: grupos de hechos de
+   * negocio — p.ej. "Venta realizada" = CREATE_SALE_V2 + CREATE_SALE).
+   */
+  action?: string | string[];
   dateFrom?: string;
   dateTo?: string;
   pageSize?: number;
@@ -55,7 +59,11 @@ export function useAuditLogs(params: UseAuditLogsParams) {
         .order('created_at', { ascending: false })
         .range(pageParam as number, (pageParam as number) + pageSize - 1);
 
-      if (action) query = query.eq('action', action);
+      if (action) {
+        query = Array.isArray(action)
+          ? query.in('action', action)
+          : query.eq('action', action);
+      }
       if (dateFrom) query = query.gte('created_at', `${dateFrom}T00:00:00`);
       if (dateTo) query = query.lte('created_at', `${dateTo}T23:59:59`);
 
@@ -92,7 +100,11 @@ export async function prefetchAuditLogs(queryClient: QueryClient, params: UseAud
         .order('created_at', { ascending: false })
         .range(pageParam as number, (pageParam as number) + pageSize - 1);
 
-      if (action) query = query.eq('action', action);
+      if (action) {
+        query = Array.isArray(action)
+          ? query.in('action', action)
+          : query.eq('action', action);
+      }
       if (dateFrom) query = query.gte('created_at', `${dateFrom}T00:00:00`);
       if (dateTo) query = query.lte('created_at', `${dateTo}T23:59:59`);
 

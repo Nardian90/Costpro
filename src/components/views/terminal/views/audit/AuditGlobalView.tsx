@@ -39,6 +39,7 @@ import {
   getAuditEventPresentation,
   getActorLabel,
   AUDIT_FILTER_OPTIONS,
+  resolveAuditFilterActions,
 } from '@/lib/audit/eventPresentation';
 import { AuditEventDetailModal } from './AuditEventDetailModal';
 
@@ -121,7 +122,17 @@ export default function AuditGlobalView() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useAuditLogs({ storeIds, action: actionFilter || undefined, dateFrom, dateTo });
+  } = useAuditLogs({
+    storeIds,
+    // REMEDIACIÓN: la opción de filtro resuelve a su grupo de acciones
+    // (p.ej. "Venta realizada" → CREATE_SALE_V2 + CREATE_SALE); opciones sin
+    // grupo resuelven a su acción única — comportamiento previo intacto.
+    action: actionFilter
+      ? resolveAuditFilterActions(AUDIT_FILTER_OPTIONS.find(o => o.value === actionFilter)!)
+      : undefined,
+    dateFrom,
+    dateTo,
+  });
 
   // FIX-AUDIT-LOAD (2026-07-12): mostrar errores al usuario en vez de silenciarlos.
   useEffect(() => {

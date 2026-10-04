@@ -39,6 +39,7 @@ const getBusinessText = (log: AuditLog) => {
     'ACTIVATE_PRODUCT': 'activó el producto',
     'DEACTIVATE_PRODUCT': 'desactivó el producto',
     'CREATE_SALE': 'realizó una venta',
+    'CREATE_SALE_V2': 'realizó una venta',
     'MANUAL_STOCK_ADJUSTMENT': 'ajustó stock de',
     'CREATE_TRANSFER': 'inició una transferencia',
     'CONFIRM_TRANSFER': 'confirmó una transferencia',
@@ -54,8 +55,8 @@ const getBusinessText = (log: AuditLog) => {
   const actionName = actionMap[action.toUpperCase()] || action.toLowerCase();
 
   // Custom logic for specific actions/tables
-  if (action === 'CREATE_SALE') {
-    const total = new_data?.total_amount || 0;
+  if (action === 'CREATE_SALE' || action === 'CREATE_SALE_V2') {
+    const total = new_data?.total_amount || log.metadata?.total_amount || 0;
     return `realizó una venta por ${formatCurrency(total)}`;
   }
 
