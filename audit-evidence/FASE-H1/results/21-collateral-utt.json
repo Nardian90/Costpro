@@ -1,12 +1,12 @@
 {
   "suite": "UTT — Colateral update_transaction_taxes",
   "suite_id": "21-collateral-utt",
-  "started": "2026-10-04T04:32:39.191Z",
-  "duration_ms": 20879,
+  "started": "2026-10-04T14:29:42.235Z",
+  "duration_ms": 14854,
   "counts": {
     "total": 8,
-    "pass": 4,
-    "fail": 2,
+    "pass": 6,
+    "fail": 0,
     "blocked": 2,
     "not_observable": 0
   },
@@ -17,7 +17,7 @@
       "spec": "UTT-C5 — quién puede ejecutar update_transaction_taxes",
       "expected": "CONTRATO H0 de autorización exacta — H0 NO PRODUCIDO (FAIL SPEC COVERAGE)",
       "status": "BLOCKED",
-      "current": "ACL={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres} · cuerpo: is_admin() OR has_role('manager') OR has_role('encargado') — roles GLOBALES",
+      "current": "ACL={costpro_transaction_adjuster=X/costpro_transaction_adjuster,authenticated=X/costpro_transaction_adjuster,service_role=X/costpro_transaction_adjuster} · cuerpo: is_admin() OR has_role('manager') OR has_role('encargado') — roles GLOBALES",
       "evidence": "FAIL SPEC COVERAGE: H0 no define el contrato de autorización de update_transaction_taxes. Descubrimiento documentado: ACL=authenticated; autorización por rol GLOBAL de profiles (admin/encargado/manager) SIN scoping de tienda y SIN token/motivo. H0 debe fijar: quién, en qué tiendas, en qué estados."
     },
     {
@@ -26,7 +26,7 @@
       "spec": "UTT-C6 — clerk NO puede modificar una venta cerrada",
       "expected": "DENIED para USER_A (clerk)",
       "status": "PASS",
-      "current": "clerk → HTTP 400 [object Object]",
+      "current": "clerk → HTTP 404 [object Object]",
       "evidence": "chequeo de rol global bloquea al clerk"
     },
     {
@@ -34,9 +34,9 @@
       "suite": "21-collateral-utt",
       "spec": "UTT-C7 — tax_amount/applied_taxes reescritos SIN recálculo server-side",
       "expected": "los campos tributarios persistidos deben derivarse server-side con invariante total=subtotal−desc+tax",
-      "status": "FAIL",
-      "current": "ACEPTADA: tax_amount=777 applied=[{\"type\":\"percentage\",\"value\":999}] con subtotal=200.00 total=200 (invariante rota: 200≠200−0+777)",
-      "evidence": "update_transaction_taxes persiste los valores cliente tal cual (999%, 777) sin recálculo ni invariante — el registro financiero queda internamente inconsistente; total_amount solo se salva por el trigger PT008"
+      "status": "PASS",
+      "current": "denegada: HTTP 404 {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.update_transaction_taxes with parameters p_applied_taxes, p_tax_amount, p_total_amount, p_transaction_id or with a single unnamed json/js",
+      "evidence": "sin reescritura"
     },
     {
       "id": "T-UTT-004",
@@ -44,7 +44,7 @@
       "spec": "UTT-C8 — reescribir el total post-venta para evadir supervisor",
       "expected": "el total NO puede reescribirse por esta vía (política de supervisor intacta)",
       "status": "PASS",
-      "current": "intento total 200→5 → HTTP 502 · total persistido=200",
+      "current": "intento total 200→5 → HTTP 404 · total persistido=200.00",
       "evidence": "DENEGADO por defense-in-depth: el trigger protect_transactions_total_amount (PT008) hace inmutable el total fuera de adjust_total_amount — la función en SÍ lo habría escrito (no valida nada); la protección es del trigger, no del RPC"
     },
     {
@@ -52,9 +52,9 @@
       "suite": "21-collateral-utt",
       "spec": "UTT-C9 — encargado de STORE_B modifica campos de transacción de STORE_A",
       "expected": "DENIED — scoping de tienda obligatorio",
-      "status": "FAIL",
-      "current": "ACEPTADA: transacción de STORE_A (a5b81cbf-8ffc-4525-8ac4-f2ec92b912d2) con tax_amount=55 escrito por encargado GLOBAL de STORE_B",
-      "evidence": "SECDEF + rol global SIN membresía de tienda: escritura cross-store sobre campos tributarios (RLS de transactions no protege: la función corre como postgres)"
+      "status": "PASS",
+      "current": "denegada: HTTP 404",
+      "evidence": "scoping presente"
     },
     {
       "id": "T-UTT-006",

@@ -1,12 +1,12 @@
 {
   "suite": "AR — Anti-resurrección",
   "suite_id": "41-anti-resurrection",
-  "started": "2026-10-04T04:33:41.376Z",
-  "duration_ms": 2305,
+  "started": "2026-10-04T14:30:33.777Z",
+  "duration_ms": 2299,
   "counts": {
     "total": 6,
-    "pass": 2,
-    "fail": 4,
+    "pass": 3,
+    "fail": 3,
     "blocked": 0,
     "not_observable": 0
   },
@@ -34,9 +34,9 @@
       "suite": "41-anti-resurrection",
       "spec": "AR — migraciones sin GRANT PUBLIC/anon → create_sale_v2",
       "expected": "0 migraciones con GRANT EXECUTE ... TO PUBLIC/anon sobre create_sale_v2",
-      "status": "FAIL",
-      "current": "20260807000003_v2_16_3_create_sale_v2.sql, 20260810000003_v2_19_3_invoice_number_fiscal_lock.sql, 20260810000070_pr4_4e_timezone_services_document.sql, 20260916000002_rem_inv_6_reconcile_function_acl.sql, 20260927000002_f4_create_sale_v2_acl_reconciliation.sql",
-      "evidence": "20260807000003_v2_16_3_create_sale_v2.sql, 20260810000003_v2_19_3_invoice_number_fiscal_lock.sql, 20260810000070_pr4_4e_timezone_services_document.sql, 20260916000002_rem_inv_6_reconcile_function_acl.sql, 20260927000002_f4_create_sale_v2_acl_reconciliation.sql: RE-GRANTEAN PUBLIC→create_sale_v2 (patrón canónico F4). El reconciler de ACL es el mecanismo de resurrección del grant peligroso — debe reescribirse a REVOKE en el hardening"
+      "status": "PASS",
+      "current": "0 migraciones",
+      "evidence": "sin grants peligrosos"
     },
     {
       "id": "T-AR-004",
@@ -44,7 +44,7 @@
       "spec": "AR — LIVE: create_sale_v2 sin EXECUTE para PUBLIC/anon (post-hardening gate)",
       "expected": "proacl LIVE sin =X ni anon=X (idem T-H1-002, gate de regresión)",
       "status": "FAIL",
-      "current": "ACL LIVE={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "current": "ACL LIVE={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
       "evidence": "estado LIVE del grant (debe permanecer sin PUBLIC/anon tras el hardening)"
     },
     {

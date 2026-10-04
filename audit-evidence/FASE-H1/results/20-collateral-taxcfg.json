@@ -1,12 +1,12 @@
 {
   "suite": "TC — Colateral tax_configurations",
   "suite_id": "20-collateral-taxcfg",
-  "started": "2026-10-04T04:32:22.281Z",
-  "duration_ms": 16867,
+  "started": "2026-10-04T14:29:28.300Z",
+  "duration_ms": 13881,
   "counts": {
     "total": 5,
-    "pass": 2,
-    "fail": 2,
+    "pass": 4,
+    "fail": 0,
     "blocked": 1,
     "not_observable": 0
   },
@@ -17,7 +17,7 @@
       "spec": "TC-C1 — modificaciones permitidas por rol/contrato",
       "expected": "CONTRATO H0 (matriz rol→operación) — H0 NO PRODUCIDO",
       "status": "BLOCKED",
-      "current": "policy única: Tax unified[ALL] roles={authenticated} USING=has_store_access(store_id)",
+      "current": "policy única: tax_configurations_delete[DELETE] roles={authenticated} USING=(((store_id IS NULL) AND is_admin()) OR ((store_id IS NOT NU · tax_configurations_insert[INSERT] roles={authenticated} USING=null · tax_configurations_select[SELECT] roles={authenticated} USING=((store_id IS NULL) OR has_store_access(store_id)) · tax_configurations_update[UPDATE] roles={authenticated} USING=(((store_id IS NULL) AND is_admin()) OR ((store_id IS NOT NU",
       "evidence": "El spec H0 no define la matriz rol→operación sobre tax_configurations. NO SE INVENTA. Evidencia actual: una SOLA policy \"Tax unified\" [ALL] para authenticated con USING has_store_access(store_id) — cualquier miembro (incl. clerk) tiene INSERT/UPDATE/DELETE sobre la configuración fiscal de su tienda."
     },
     {
@@ -25,17 +25,17 @@
       "suite": "20-collateral-taxcfg",
       "spec": "TC-C2 — clerk NO puede crear impuesto arbitrario (fuente de descuentos)",
       "expected": "DENIED — INSERT de tax_configurations por clerk rechazado",
-      "status": "FAIL",
-      "current": "INSERT clerk → 201 null",
-      "evidence": "CLERK creó un impuesto arbitrario ACTIVO (value=-10): la config fiscal es escribible por cualquier miembro de tienda — combinada con T-H4-003 es una vía de impuestos arbitrarios persistida"
+      "status": "PASS",
+      "current": "INSERT clerk → 403 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for function has_store_role_as\"}",
+      "evidence": "escritura por clerk bloqueada"
     },
     {
       "id": "T-TC-003",
       "suite": "20-collateral-taxcfg",
       "spec": "TC-C3 — valores inválidos no pueden introducirse",
       "expected": "constraint/policy rechaza value negativo (y rango inválido según H0)",
-      "status": "FAIL",
-      "current": "check constraints: CHECK ((type = ANY (ARRAY['fixed'::text, 'percentage'::text])))",
+      "status": "PASS",
+      "current": "check constraints: CHECK ((type = ANY (ARRAY['fixed'::text, 'percentage'::text]))) · CHECK ((value > (0)::numeric))",
       "evidence": "tax_configurations.value acepta cualquier numeric (sin CHECK de rango): negativos, >100%, NaN-like. El rango válido exacto es contrato H0 (ausente) pero el NEGATIVO es inválido bajo cualquier lectura y hoy es introducible."
     },
     {
@@ -44,7 +44,7 @@
       "spec": "TC-C4 — modificar config fiscal NO altera ventas existentes",
       "expected": "transactions.applied_taxes/tax_amount de ventas previas permanecen intactas",
       "status": "PASS",
-      "current": "ventas=147→147 sumTax=40570.0000000000000000→40570.0000000000000000",
+      "current": "ventas=255→255 sumTax=50920.0000000000000000→50920.0000000000000000",
       "evidence": "las ventas persisten applied_taxes como snapshot JSONB: la config no las re-cacula (la vía retroactiva real es update_transaction_taxes — suite 21)"
     },
     {

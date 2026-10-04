@@ -1,8 +1,8 @@
 {
   "suite": "V1 — Retirement readiness gates",
   "suite_id": "40-v1-retirement",
-  "started": "2026-10-04T04:33:34.381Z",
-  "duration_ms": 6954,
+  "started": "2026-10-04T14:30:26.864Z",
+  "duration_ms": 6863,
   "counts": {
     "total": 8,
     "pass": 2,

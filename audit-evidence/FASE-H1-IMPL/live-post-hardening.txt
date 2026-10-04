@@ -1,0 +1,60 @@
+# EVIDENCIA LIVE POST-HARDENING — 2026-10-04T14:31:47.482Z
+# Proyecto: wthkddeleylijmonclxg (Supabase LIVE, via Management API)
+
+## 1. ACL create_sale_v2 (/24)
+{"acl":"postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres","prosecdef":true,"owner":"postgres"}
+
+## 2. Privilegios efectivos anon/PUBLIC sobre create_sale_v2
+{"anon_can_execute":false}
+
+## 3. ACL update_transaction_taxes (/3 endurecida)
+{"acl":"costpro_transaction_adjuster=X/costpro_transaction_adjuster,authenticated=X/costpro_transaction_adjuster,service_role=X/costpro_transaction_adjuster","prosecdef":true,"owner":"costpro_transaction_adjuster"}
+
+## 4. Huella del cuerpo endurecido (create_sale_v2)
+{
+ "def_chars": 32793,
+ "auth_offset": 3575,
+ "idem_offset": 7671,
+ "refs_taxcfg": true,
+ "refs_storerates": true,
+ "refs_globalrates": true,
+ "has_stale_gate": true,
+ "has_seller_binding": true,
+ "has_idem_conflict": true,
+ "has_neg_discount": true,
+ "has_tax_validation": true
+}
+
+## 5. Constraints fiscales/tasas
+{"tbl":"store_exchange_rates","conname":"store_rates_positive","def":"CHECK ((rate > (0)::numeric))"}
+{"tbl":"tax_configurations","conname":"tax_configurations_value_positive","def":"CHECK ((value > (0)::numeric))"}
+
+## 6. Policies tax_configurations
+{"policyname":"tax_configurations_delete","cmd":"DELETE","roles":"{authenticated}"}
+{"policyname":"tax_configurations_insert","cmd":"INSERT","roles":"{authenticated}"}
+{"policyname":"tax_configurations_select","cmd":"SELECT","roles":"{authenticated}"}
+{"policyname":"tax_configurations_update","cmd":"UPDATE","roles":"{authenticated}"}
+
+## 7. Policies store_exchange_rates
+{"policyname":"store_rates_delete","cmd":"DELETE","roles":"{authenticated}"}
+{"policyname":"store_rates_insert","cmd":"INSERT","roles":"{authenticated}"}
+{"policyname":"store_rates_update","cmd":"UPDATE","roles":"{authenticated}"}
+{"policyname":"store_rates_view","cmd":"SELECT","roles":"{authenticated}"}
+
+## 8. update_transaction_taxes — firma y huella del cuerpo
+{
+ "args": "p_transaction_id uuid, p_applied_taxes jsonb, p_reason text",
+ "has_state_check": true,
+ "has_reason_check": true,
+ "has_pt002": true,
+ "has_store_scoping": true,
+ "refs_taxcfg": true
+}
+
+## 9. idempotency_registry — mecanismo en producción
+{"total_rows":287,"v2_rows":62}
+
+## 10. Muestra de auditoría extendida (CREATE_SALE_V2 con client/server rate)
+{"created_at":"2026-10-04 14:30:21.636615+00","action":"CREATE_SALE_V2","client_rate":"1","server_rate":"1","rate_source":null,"param_hash":"09a6a1283293f318bae88f7fa61f800f"}
+{"created_at":"2026-10-04 14:30:17.900387+00","action":"CREATE_SALE_V2","client_rate":"1","server_rate":"1","rate_source":null,"param_hash":"dca8329a20e3528d281f1715ec10e12a"}
+{"created_at":"2026-10-04 14:30:14.140111+00","action":"CREATE_SALE_V2","client_rate":"1000000","server_rate":"400.0000","rate_source":"store","param_hash":"c0bada0c9aae53dadd1bf3fde4b7dd27"}

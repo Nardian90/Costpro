@@ -1,12 +1,12 @@
 {
   "suite": "FIN — Integridad financiera",
   "suite_id": "16-financial",
-  "started": "2026-10-04T04:31:13.677Z",
-  "duration_ms": 22166,
+  "started": "2026-10-04T14:28:32.653Z",
+  "duration_ms": 15714,
   "counts": {
     "total": 12,
-    "pass": 9,
-    "fail": 3,
+    "pass": 10,
+    "fail": 2,
     "blocked": 0,
     "not_observable": 0
   },
@@ -62,17 +62,17 @@
       "spec": "§12 — tax_amount del cliente ignorado; autoridad real en applied_taxes",
       "expected": "el impuesto persistido deriva de fuente autorizada — hoy: del JSONB cliente (referencia T-H4-003)",
       "status": "FAIL",
-      "current": "tax_amount cliente=999 → persistido=10 (derivó del JSONB cliente con value=10)",
-      "evidence": "el parámetro p_tax_amount se ignora (bien) pero la fuente real del impuesto sigue siendo p_applied_taxes del cliente (mal) — ver T-H4-001..005"
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_APPLIED_TAX_INVALID: entrada sin id de configuración\"}",
+      "evidence": "venta falló"
     },
     {
       "id": "T-FIN-007",
       "suite": "16-financial",
       "spec": "§12 — descuento negativo (fixed -100) no puede aumentar el total",
       "expected": "DENIED — descuento no puede ser negativo ni esquivar el gate",
-      "status": "FAIL",
-      "current": "ACEPTADA: subtotal=100.00 descuento=-100 total=200.00",
-      "evidence": "descuento NEGATIVO persistido — el total se infla y el gate de supervisor no dispara (pct negativo)"
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INVALID_DISCOUNT: -100\"}",
+      "evidence": "descuento negativo rechazado"
     },
     {
       "id": "T-FIN-008",
@@ -89,8 +89,8 @@
       "spec": "§12 — exchange rate manipulado (referencia T-H5-001)",
       "expected": "tasa server-side — hoy el cliente la impone (FAIL vía H5)",
       "status": "FAIL",
-      "current": "rate persistida=1000000.0000 · price_at_sale_cup=100000000.00",
-      "evidence": "tasa cliente 1000000 persistida; price_at_sale_cup = precio*rate cliente (100000000.00) — autoridad de tasa en el cliente (ver suite H5)"
+      "current": "rate persistida=400.0000 · price_at_sale_cup=40000.00",
+      "evidence": "tasa cliente 1000000 persistida; price_at_sale_cup = precio*rate cliente (40000.00) — autoridad de tasa en el cliente (ver suite H5)"
     },
     {
       "id": "T-FIN-010",

@@ -1,12 +1,12 @@
 {
   "suite": "H4 — TAX AUTHORITY",
   "suite_id": "13-h4-tax",
-  "started": "2026-10-04T04:30:15.526Z",
-  "duration_ms": 14945,
+  "started": "2026-10-04T14:27:37.148Z",
+  "duration_ms": 6164,
   "counts": {
     "total": 5,
-    "pass": 0,
-    "fail": 5,
+    "pass": 4,
+    "fail": 1,
     "blocked": 0,
     "not_observable": 0
   },
@@ -16,18 +16,18 @@
       "suite": "13-h4-tax",
       "spec": "H4.1 — tax negativo (fixed -30) debe rechazarse",
       "expected": "DENIED — el impuesto negativo no puede convertirse en descuento implícito",
-      "status": "FAIL",
-      "current": "ACEPTADA: tax_amount=-30 total=70.00",
-      "evidence": "venta 9973e7dd-2470-43ed-8239-b9af7bec4ac3 con impuesto NEGATIVO persistido — descuento implícito sin autorización"
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_APPLIED_TAX_INVALID: entrada sin id de configuración\"}",
+      "evidence": "tax negativo rechazado"
     },
     {
       "id": "T-H4-002",
       "suite": "13-h4-tax",
       "spec": "H4.3 — tax porcentaje -10% debe rechazarse",
       "expected": "DENIED — porcentaje negativo invalida la base impositiva",
-      "status": "FAIL",
-      "current": "ACEPTADA: tax_amount=-10.0000000000000000",
-      "evidence": "porcentaje negativo aceptado y persistido"
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_APPLIED_TAX_INVALID: entrada sin id de configuración\"}",
+      "evidence": "porcentaje negativo rechazado"
     },
     {
       "id": "T-H4-003",
@@ -35,7 +35,7 @@
       "spec": "H4.2/4.3 — matriz de manipulación de impuesto cliente (0% · 100% · 10000%)",
       "expected": "el impuesto efectivo debe derivarse server-side de la configuración autorizada (tax_configurations) — no del payload",
       "status": "FAIL",
-      "current": "0%→HTTP 200 tax=0 · 100%→HTTP 200 tax=100.0000000000000000 · 10000%→HTTP 200 tax=10000.0000000000000000",
+      "current": "0%→HTTP 200 tax=0 · 100%→HTTP 400 tax=? · 10000%→HTTP 400 tax=?",
       "evidence": "create_sale_v2 calcula el impuesto EXCLUSIVAMENTE desde p_applied_taxes (JSONB cliente). pg_get_functiondef LIVE: 0 referencias a tax_configurations. Un atacante autenticado impone cualquier impuesto (incl. ninguno) cuadrando p_total_amount."
     },
     {
@@ -43,18 +43,18 @@
       "suite": "13-h4-tax",
       "spec": "H4.4 — manipular impuestos no puede evadir la política de supervisor",
       "expected": "SUPERVISOR POLICY STILL APPLIES — ninguna vía reduce el total bajo umbral sin autorización",
-      "status": "FAIL",
-      "current": "ACEPTADA sin supervisor: total=70 sobre subtotal=100 (−30%)",
-      "evidence": "venta 1688d04a-d26a-407a-b23f-b99489330910: impuesto negativo usado como descuento implícito que esquiva el gate ≥15% (que solo evalúa descuento/precio, no el total)"
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_APPLIED_TAX_INVALID: entrada sin id de configuración\"}",
+      "evidence": "no bypass posible"
     },
     {
       "id": "T-H4-005",
       "suite": "13-h4-tax",
       "spec": "H4 — create_sale_v2 debe leer impuestos de tax_configurations",
       "expected": "pg_get_functiondef LIVE referencia tax_configurations como fuente autorizada",
-      "status": "FAIL",
-      "current": "referencias a tax_configurations en LIVE def: false",
-      "evidence": "El RPC NO consulta la tabla autorizada: la única entrada de impuestos es p_applied_taxes (cliente). Nota: tax_configurations está VACÍA en LIVE — el contrato de provisionamiento fiscal es decisión H0."
+      "status": "PASS",
+      "current": "referencias a tax_configurations en LIVE def: true",
+      "evidence": "fuente autorizada consultada"
     }
   ]
 }

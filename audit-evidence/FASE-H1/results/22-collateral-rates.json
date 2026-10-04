@@ -1,12 +1,12 @@
 {
   "suite": "ER — Colateral fuentes de tasa",
   "suite_id": "22-collateral-rates",
-  "started": "2026-10-04T04:33:00.129Z",
-  "duration_ms": 7796,
+  "started": "2026-10-04T14:29:57.121Z",
+  "duration_ms": 3497,
   "counts": {
     "total": 4,
-    "pass": 2,
-    "fail": 2,
+    "pass": 4,
+    "fail": 0,
     "blocked": 0,
     "not_observable": 0
   },
@@ -16,17 +16,17 @@
       "suite": "22-collateral-rates",
       "spec": "ER — clerk (USER_A) reescribe la tasa de confianza de SU tienda",
       "expected": "DENIED — la fuente server-side de tasas no es escribible por clerk",
-      "status": "FAIL",
-      "current": "PATCH store_exchange_rates por clerk → 204",
-      "evidence": "policy \"Users can manage own store rates\" (ALL, roles=public, USING profiles.store_id match): CUALQUIER miembro —incl. clerk— puede poner la tasa de confianza en 0.5 y esperar una venta que la consuma. La fuente NO es de confianza si el checkout la adopta (prerequisito del fix H5)."
+      "status": "PASS",
+      "current": "PATCH store_exchange_rates por clerk → 403",
+      "evidence": "fuente protegida contra clerk"
     },
     {
       "id": "T-ER-002",
       "suite": "22-collateral-rates",
       "spec": "ER — USER_B (STORE_B) reescribe la tasa de STORE_A",
       "expected": "DENIED",
-      "status": "FAIL",
-      "current": "PATCH cross-store → 204",
+      "status": "PASS",
+      "current": "PATCH cross-store → 403",
       "evidence": "el scoping per-store de la policy bloquea a no-miembros"
     },
     {

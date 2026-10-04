@@ -1,12 +1,12 @@
 {
   "suite": "CS — Cross-store security",
   "suite_id": "17-cross-store",
-  "started": "2026-10-04T04:31:35.894Z",
-  "duration_ms": 9299,
+  "started": "2026-10-04T14:28:48.420Z",
+  "duration_ms": 8784,
   "counts": {
     "total": 7,
-    "pass": 5,
-    "fail": 2,
+    "pass": 7,
+    "fail": 0,
     "blocked": 0,
     "not_observable": 0
   },
@@ -17,8 +17,8 @@
       "spec": "CS-A — USER_A crea venta en STORE_A",
       "expected": "HTTP 200 con transacción creada",
       "status": "PASS",
-      "current": "HTTP 200 {\"status\":\"success\",\"calculated_tax\":0,\"transaction_id\":\"dd86b0db-7f0c-4963-9814-947ed1f6f8b7\",\"discount_amount\":0,\"calculated_total\":100,\"calculated_subtotal\":100}",
-      "evidence": "venta legítima en tienda propia (dd86b0db-7f0c-4963-9814-947ed1f6f8b7)"
+      "current": "HTTP 200 {\"status\":\"success\",\"calculated_tax\":0,\"transaction_id\":\"5fa4a9dd-ff06-4933-9709-33bbc4b6de7c\",\"discount_amount\":0,\"calculated_total\":100,\"calculated_subtotal\":100}",
+      "evidence": "venta legítima en tienda propia (5fa4a9dd-ff06-4933-9709-33bbc4b6de7c)"
     },
     {
       "id": "T-CS-002",
@@ -34,9 +34,9 @@
       "suite": "17-cross-store",
       "spec": "CS-C — USER_A utiliza seller de STORE_B",
       "expected": "DENIED (referencia T-H3-003)",
-      "status": "FAIL",
-      "current": "ACEPTADA con seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65",
-      "evidence": "venta en STORE_A atribuida a USER_B (miembro de STORE_B): tx 04842eed-de3a-4566-aee4-cd08b35a55bf"
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SELLER_MISMATCH: p_seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65 no coincide con el actor autenticado=6eb29691-d253-4e03-b593-2b0cdd1415bc\"}",
+      "evidence": "seller cross-store rechazado"
     },
     {
       "id": "T-CS-004",
@@ -52,9 +52,9 @@
       "suite": "17-cross-store",
       "spec": "CS-E — USER_A reutiliza idempotency key creada por USER_B",
       "expected": "DENY/CONFLICT sin revelar la transacción ajena",
-      "status": "FAIL",
-      "current": "USER_A + clave de USER_B → HTTP 200 {\"status\":\"idempotent\",\"transaction_id\":\"029f92b5-d8d3-4c81-b171-3ed44ef55e5a\"}",
-      "evidence": "FUGA: USER_A obtuvo transaction_id=029f92b5-d8d3-4c81-b171-3ed44ef55e5a de la venta de USER_B en STORE_B sin membresía"
+      "status": "PASS",
+      "current": "USER_A + clave de USER_B → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "reutilización cross-actor rechazada sin fuga"
     },
     {
       "id": "T-CS-006",

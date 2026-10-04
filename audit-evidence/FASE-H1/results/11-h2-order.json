@@ -1,12 +1,12 @@
 {
   "suite": "H2 — AUTHENTICATION ORDER",
   "suite_id": "11-h2-order",
-  "started": "2026-10-04T04:29:52.308Z",
-  "duration_ms": 15201,
+  "started": "2026-10-04T14:27:16.970Z",
+  "duration_ms": 15370,
   "counts": {
     "total": 4,
-    "pass": 2,
-    "fail": 1,
+    "pass": 3,
+    "fail": 0,
     "blocked": 0,
     "not_observable": 1
   },
@@ -16,9 +16,9 @@
       "suite": "11-h2-order",
       "spec": "H2 — authZ debe preceder a idempotencia: no-miembro + clave existente",
       "expected": "ERR_UNAUTHORIZED (HTTP >= 400) SIN transaction_id — la clave no puede satisfacerse antes de autorizar",
-      "status": "FAIL",
-      "current": "USER_B (sin membresía STORE_A) + clave existente → HTTP 200 {\"status\":\"idempotent\",\"transaction_id\":\"e2e738d4-e8db-4e29-ba2b-cf492d0990ba\"}",
-      "evidence": "ORDEN VIOLADO: idempotencia se resuelve ANTES de la autorización — USER_B obtiene transaction_id=e2e738d4-e8db-4e29-ba2b-cf492d0990ba de una venta de STORE_A sin ser miembro"
+      "status": "PASS",
+      "current": "USER_B (sin membresía STORE_A) + clave existente → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "orden correcto"
     },
     {
       "id": "T-H2-002",
@@ -35,7 +35,7 @@
       "spec": "H2 — denegación no produce escritura (no side-effects)",
       "expected": "0 transacciones nuevas creadas por llamadas denegadas",
       "status": "PASS",
-      "current": "transacciones antes=118 después=118 (delta=0)",
+      "current": "transacciones antes=235 después=235 (delta=0)",
       "evidence": "llamadas anon y no-miembro no crean transacciones"
     },
     {
@@ -44,7 +44,7 @@
       "spec": "H2 — cadena authentication→…→inventory: efectos observables post-hoc",
       "expected": "transacción + items + pago + movimiento de stock presentes y consistentes; orden interno exacto no observable",
       "status": "NOT-OBSERVABLE",
-      "current": "tx=true items=1 pagos~115 movimientos=1",
+      "current": "tx=true items=1 pagos~71 movimientos=1",
       "evidence": "Efectos finales correctos (tx+items+movement). La secuencia INTERNA exacta (actor→authz→membership→idempotencia→validación→cálculo→inventario) NO es observable en runtime sin instrumentation de PG: se requiere verificación por Agent 3 (pg_stat/statements o trace). Evidencia estática complementaria: pg_get_functiondef posiciona \"2. Idempotencia\" (offset ~2798) ANTES de \"3. Auth/ERR_UNAUTHORIZED\" (offset ~3242)."
     }
   ]

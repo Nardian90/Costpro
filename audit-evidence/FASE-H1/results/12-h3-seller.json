@@ -1,12 +1,12 @@
 {
   "suite": "H3 — SELLER BINDING",
   "suite_id": "12-h3-seller",
-  "started": "2026-10-04T04:30:07.568Z",
-  "duration_ms": 7908,
+  "started": "2026-10-04T14:27:32.397Z",
+  "duration_ms": 4697,
   "counts": {
     "total": 6,
-    "pass": 3,
-    "fail": 2,
+    "pass": 5,
+    "fail": 0,
     "blocked": 1,
     "not_observable": 0
   },
@@ -18,25 +18,25 @@
       "expected": "HTTP 200 y transactions.seller_id == USER_A",
       "status": "PASS",
       "current": "seller_id persistido = 6eb29691-d253-4e03-b593-2b0cdd1415bc",
-      "evidence": "venta válida con seller_id=USER_A → tx 60167cfe-babf-404c-a9a3-dbae78a4585e"
+      "evidence": "venta válida con seller_id=USER_A → tx 29a4c283-33e9-4acf-8653-f54b82e01714"
     },
     {
       "id": "T-H3-002",
       "suite": "12-h3-seller",
       "spec": "H3.2 — USER_A vende como USER_B (spoof mismo nivel)",
       "expected": "DENIED o derivación inequívoca a USER_A; NUNCA seller=USER_B",
-      "status": "FAIL",
-      "current": "venta ACEPTADA con seller_id persistido = 8b04b1a9-80c3-444e-952b-6b0256155d65",
-      "evidence": "SPOOFING: la transacción 5342bbf6-e12d-4019-a18b-80e8431bd668 quedó atribuida a USER_B (8b04b1a9-80c3-444e-952b-6b0256155d65) siendo el actor autenticado USER_A"
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SELLER_MISMATCH: p_seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65 no coincide con el actor autenticado=6eb29691-d253-4e03-b593-2b0cdd1415bc\"}",
+      "evidence": "rechazo o derivación server-side"
     },
     {
       "id": "T-H3-003",
       "suite": "12-h3-seller",
       "spec": "H3.3 — Cross-store seller spoof (actor USER_A/STORE_A, seller USER_B/STORE_B)",
       "expected": "DENIED; nunca seller de otra tienda",
-      "status": "FAIL",
-      "current": "ACEPTADA con seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65 (miembro de STORE_B)",
-      "evidence": "venta en STORE_A atribuida a un vendedor de otra tienda: tx 646b2d66-ba45-4030-b0ef-69ae6283500f"
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SELLER_MISMATCH: p_seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65 no coincide con el actor autenticado=6eb29691-d253-4e03-b593-2b0cdd1415bc\"}",
+      "evidence": "cross-store seller rechazado"
     },
     {
       "id": "T-H3-004",
@@ -53,7 +53,7 @@
       "spec": "H3.5 — p_user_id spoofing con sesión authenticated → ignorado",
       "expected": "v_uid = auth.uid() (USER_A): la venta se evalúa contra USER_A, no contra p_user_id",
       "status": "PASS",
-      "current": "authenticated + p_user_id=USER_B → HTTP 200 {\"status\":\"success\",\"calculated_tax\":0,\"transaction_id\":\"5dc9e8ec-dd2e-470f-9134-19f4a06286a0\",\"discount_amount\":0,\"calculated_total\":100,\"calculated_subtotal\":100}",
+      "current": "authenticated + p_user_id=USER_B → HTTP 200 {\"status\":\"success\",\"calculated_tax\":0,\"transaction_id\":\"0b1e544a-a1e4-4256-97aa-248f2131b9af\",\"discount_amount\":0,\"calculated_total\":100,\"calculated_subtotal\":100}",
       "evidence": "p_user_id se ignora para rol authenticated (v_uid=auth.uid()); el bypass de identidad solo existe en service_role"
     },
     {

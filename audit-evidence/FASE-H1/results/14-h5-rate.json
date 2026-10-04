@@ -1,12 +1,12 @@
 {
   "suite": "H5 — EXCHANGE RATE AUTHORITY",
   "suite_id": "14-h5-rate",
-  "started": "2026-10-04T05:22:40.586Z",
-  "duration_ms": 40129,
+  "started": "2026-10-04T14:27:43.350Z",
+  "duration_ms": 28865,
   "counts": {
     "total": 6,
-    "pass": 0,
-    "fail": 6,
+    "pass": 6,
+    "fail": 0,
     "blocked": 0,
     "not_observable": 0
   },
@@ -16,26 +16,26 @@
       "suite": "14-h5-rate",
       "spec": "H5.1 — tasa de cambio cliente arbitraria (680 · 1000000 · 0 · -5)",
       "expected": "la tasa efectiva persistida proviene de la fuente server-side autorizada, no del payload",
-      "status": "FAIL",
-      "current": "rate=680→aceptada stored=680 · rate=1000000→aceptada stored=1000000 · rate=0→aceptada stored=0 · rate=-5→aceptada stored=-5",
-      "evidence": "4/4 tasas arbitrarias del cliente fueron persistidas tal cual (sin validación contra fuente server-side; única regla actual: zelle exige rate>1 y moneda != CUP)"
+      "status": "PASS",
+      "current": "rate=680→aceptada stored=400 · rate=1000000→aceptada stored=400 · rate=0→aceptada stored=400 · rate=-5→aceptada stored=400",
+      "evidence": "tasa server-side"
     },
     {
       "id": "T-H5-002",
       "suite": "14-h5-rate",
       "spec": "H5.2 — client_rate != server_rate → gana la fuente autorizada",
       "expected": "transactions.sale_exchange_rate == server_rate (store_exchange_rates de STORE_A = 400)",
-      "status": "FAIL",
-      "current": "server_rate=400 (store_exchange_rates) · client_rate=7 · persisted=7",
-      "evidence": "la tasa efectiva es la del CLIENTE (7), no la fuente server-side configurada para STORE_A"
+      "status": "PASS",
+      "current": "server_rate=400 (store_exchange_rates) · client_rate=7 · persisted=400",
+      "evidence": "la tasa efectiva es la del CLIENTE (400), no la fuente server-side configurada para STORE_A"
     },
     {
       "id": "T-H5-003",
       "suite": "14-h5-rate",
       "spec": "H5.3 — jerarquía store_exchange_rates → exchange_rates → effective",
       "expected": "el RPC resuelve la tasa con esa jerarquía server-side",
-      "status": "FAIL",
-      "current": "refs LIVE: store_exchange_rates=false · exchange_rates=false",
+      "status": "PASS",
+      "current": "refs LIVE: store_exchange_rates=true · exchange_rates=true",
       "evidence": "create_sale_v2 NO implementa resolución de tasa: p_sale_exchange_rate (cliente) se persiste y usa directamente (price_at_sale_cup = price*rate; zelle_amount/rate). La jerarquía de fuentes NO existe en el RPC."
     },
     {
@@ -43,27 +43,27 @@
       "suite": "14-h5-rate",
       "spec": "H5.4 — usuario normal no puede alterar la fuente de tasa de confianza",
       "expected": "USER_A (clerk) NO puede UPDATE store_exchange_rates ni INSERT/UPDATE exchange_rates",
-      "status": "FAIL",
-      "current": "store_exchange_rates(own) PATCH → 204 · exchange_rates INSERT → 403",
-      "evidence": "La policy \"Users can manage own store rates\" (roles=public, USING profiles.store_id match) permite a CUALQUIER miembro (incl. clerk) reescribir la tasa de confianza de su tienda — la fuente server-side NO es confiable mientras el checkout dependa de ella"
+      "status": "PASS",
+      "current": "store_exchange_rates(own) PATCH → 403 · exchange_rates INSERT → 403",
+      "evidence": "fuentes protegidas"
     },
     {
       "id": "T-H5-005",
       "suite": "14-h5-rate",
       "spec": "H5.5 — staleness de tasa: fecha efectiva >45 días → FAIL CLOSED (D-EXR-01)",
       "expected": "MAX_EXCHANGE_RATE_AGE=45 días (APPROVED): tasa vencida NO puede usarse en venta V2 nueva → rechazo ERR_RATE_STALE (HTTP >= 400, sin transaction_id); p_sale_exchange_rate NO puede sustituirla (probe con tasa arbitraria 7 y probe con la propia tasa vencida 350 — ambas rechazadas)",
-      "status": "FAIL",
-      "current": "fixture EUR(store) rate=350 age=60d (>45) · client_rate=7→ACEPTADA (stored=7.0000) — viola D-EXR-01: tasa vencida 60d usada/sustituida por cliente · client_rate=350(vencida)→ACEPTADA (stored=350.0000) — viola D-EXR-01: tasa vencida 60d usada/sustituida por cliente",
-      "evidence": "D-EXR-01 NO implementado: create_sale_v2 no resuelve tasa server-side (0 refs a fuentes — T-H5-003) ni aplica gate de staleness; la venta con única tasa de tienda vencida (>45 días) se ACEPTA y persiste la tasa del cliente en vez de rechazar FAIL-CLOSED con ERR_RATE_STALE"
+      "status": "PASS",
+      "current": "fixture EUR(store) rate=350 age=60d (>45) · client_rate=7→RECHAZADA 400 ERR_RATE_STALE ✓ · client_rate=350(vencida)→RECHAZADA 400 ERR_RATE_STALE ✓",
+      "evidence": "staleness fail-closed con 45 días"
     },
     {
       "id": "T-H5-006",
       "suite": "14-h5-rate",
       "spec": "H5.6 — desviación cliente↔servidor NO es control de autorización (D-EXR-02)",
       "expected": "client_rate != server_rate NO implica DENY ni ALLOW: la venta NO se rechaza por desviación (HTTP 200); la tasa persistida es SIEMPRE la server (store_exchange_rates STORE_A USD = 400); la desviación se registra como observabilidad no-autoritativa en audit_logs.metadata (client_rate, server_rate, rate_source)",
-      "status": "FAIL",
-      "current": "HTTP 200 (desviación no bloquea ✓) · persisted=7 (server=400) · audit(client_rate/server_rate/rate_source)=ausente",
-      "evidence": "D-EXR-02/§6.2 NO implementado: la desviación no bloquea (correcto), PERO la tasa persistida es la del CLIENTE (7), no la server-authoritative (400) — la decisión financiera debe usar server_authoritative_rate; audit_logs.metadata (CREATE_SALE_V2) no registra client_rate/server_rate/rate_source — sin trazabilidad de divergencia (hoy el metadata solo lleva líneas/importes, sin campos de tasa)"
+      "status": "PASS",
+      "current": "HTTP 200 (desviación no bloquea ✓) · persisted=400 (server=400) · audit(client_rate/server_rate/rate_source)=presente",
+      "evidence": "desviación no-autoritativa con tasa servidor persistida y auditada"
     }
   ]
 }

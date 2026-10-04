@@ -1,8 +1,8 @@
 {
   "suite": "INV — Inventario + concurrencia",
   "suite_id": "18-inventory",
-  "started": "2026-10-04T04:31:45.252Z",
-  "duration_ms": 36974,
+  "started": "2026-10-04T14:28:57.253Z",
+  "duration_ms": 30993,
   "counts": {
     "total": 5,
     "pass": 5,
@@ -26,7 +26,7 @@
       "spec": "INV — stock insuficiente → rechazo sin efectos",
       "expected": "ERR_INSUFFICIENT_STOCK y 0 escrituras",
       "status": "PASS",
-      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INSUFFICIENT_STOCK: product ea4c1d7b-f827-43b1-9a88-8197171a2dda, stock 969.0000, requested 999999\"} · inventario 969.0000→969.0000",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INSUFFICIENT_STOCK: product 401435ba-6bb5-4bcd-9c25-3895b0794f03, stock 978.0000, requested 999999\"} · inventario 978.0000→978.0000",
       "evidence": "oversell bloqueado por SELECT FOR UPDATE + pre-validación"
     },
     {
@@ -44,7 +44,7 @@
       "spec": "INV — rollback atómico: fallo en 2ª línea revierte la 1ª",
       "expected": "sin transacción, sin movimientos, inventario intacto",
       "status": "PASS",
-      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INSUFFICIENT_STOCK: product afe22111-1b8e-4b1f-a52d-97bd31044c39, stock 0.0000, requested 999\"} · inventario 969.0000→969.0000 · movimientosHuérfanos=0",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INSUFFICIENT_STOCK: product 979f9e5e-cd61-41b9-aefc-e5502dad2154, stock 0.0000, requested 999\"} · inventario 978.0000→978.0000 · movimientosHuérfanos=0",
       "evidence": "atomicidad de la transacción SQL revierte items+movimientos al fallar"
     },
     {

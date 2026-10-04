@@ -1,12 +1,12 @@
 {
   "suite": "SB — Contrato ruta /api/sync/batch",
   "suite_id": "31-route-sync",
-  "started": "2026-10-04T04:33:26.663Z",
-  "duration_ms": 7682,
+  "started": "2026-10-04T14:30:18.186Z",
+  "duration_ms": 8642,
   "counts": {
     "total": 5,
-    "pass": 4,
-    "fail": 1,
+    "pass": 5,
+    "fail": 0,
     "blocked": 0,
     "not_observable": 0
   },
@@ -26,7 +26,7 @@
       "spec": "SB — operación de venta con p_store_id ajeno (STORE_B) → 403",
       "expected": "HTTP 403 STORE_ACCESS_DENIED (gate por operación)",
       "status": "PASS",
-      "current": "HTTP 403 {\"error\":\"Sin acceso a la tienda especificada\",\"key\":\"apiErrors.storeAccessDenied\",\"operationKey\":\"4bafb242-6914-4c54-8a",
+      "current": "HTTP 403 {\"error\":\"Sin acceso a la tienda especificada\",\"key\":\"apiErrors.storeAccessDenied\",\"operationKey\":\"c1505191-ba72-4754-bc",
       "evidence": "FIX-SEC-H3: membresía validada por operación antes de ejecutar"
     },
     {
@@ -52,9 +52,9 @@
       "suite": "31-route-sync",
       "spec": "SB — seller spoofing vía payload de sync (p_seller_id=USER_B)",
       "expected": "la venta offline no puede atribuirse a otro vendedor (binding server-side)",
-      "status": "FAIL",
-      "current": "HTTP 200 · spoofed=752ec53e-a63f-4fec-8164-4221de995529 · log={\"results\":[{\"idempotencyKey\":\"6a511a45-311d-42f9-a9da-ff932efc93c9\",\"status\":\"ok\",\"serverId\":{\"status\":\"success\",\"calculated_tax\":0,\"transa",
-      "evidence": "venta offline de USER_A atribuida a USER_B (752ec53e-a63f-4fec-8164-4221de995529) — el payload de sync reenvía p_seller_id sin binding"
+      "status": "PASS",
+      "current": "HTTP 200 · spoofed=no · log={\"results\":[{\"idempotencyKey\":\"12627ec8-1ca0-4f2d-8243-d9ecbe81d299\",\"status\":\"ok\",\"serverId\":{\"status\":\"success\",\"calculated_tax\":0,\"transa",
+      "evidence": "sin spoofing vía sync"
     }
   ]
 }

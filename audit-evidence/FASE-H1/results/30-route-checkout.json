@@ -1,12 +1,12 @@
 {
   "suite": "RT — Contrato ruta /api/pos/checkout",
   "suite_id": "30-route-checkout",
-  "started": "2026-10-04T04:33:07.968Z",
-  "duration_ms": 18641,
+  "started": "2026-10-04T14:30:00.652Z",
+  "duration_ms": 17484,
   "counts": {
     "total": 7,
-    "pass": 4,
-    "fail": 3,
+    "pass": 6,
+    "fail": 1,
     "blocked": 0,
     "not_observable": 0
   },
@@ -26,7 +26,7 @@
       "spec": "RT — USER_A venta válida por la ruta → 200 + tx + seller=USER_A",
       "expected": "HTTP 200, transaction_id presente, seller_id persistido = USER_A",
       "status": "PASS",
-      "current": "tx=010d6b93-5d79-4c74-984a-57556ae7b455 seller=6eb29691-d253-4e03-b593-2b0cdd1415bc",
+      "current": "tx=1138afaf-4d3a-499e-a341-6bf0f363a9b2 seller=6eb29691-d253-4e03-b593-2b0cdd1415bc",
       "evidence": "ruta canónica V2 operativa con actores reales"
     },
     {
@@ -34,18 +34,18 @@
       "suite": "30-route-checkout",
       "spec": "RT — la ruta no debe permitir seller spoofing (seller_id=USER_B)",
       "expected": "la ruta DERIVA el vendedor del servidor (session) o rechaza; jamás persiste seller=USER_B",
-      "status": "FAIL",
-      "current": "ACEPTADA con seller persistido=8b04b1a9-80c3-444e-952b-6b0256155d65",
-      "evidence": "la ruta reenvía seller_id del body tal cual al RPC: venta de USER_A atribuida a USER_B (8b04b1a9-80c3-444e-952b-6b0256155d65)"
+      "status": "PASS",
+      "current": "ACEPTADA con seller persistido=6eb29691-d253-4e03-b593-2b0cdd1415bc",
+      "evidence": "la ruta reenvía seller_id del body tal cual al RPC: venta de USER_A atribuida a USER_B (6eb29691-d253-4e03-b593-2b0cdd1415bc)"
     },
     {
       "id": "T-RT-004",
       "suite": "30-route-checkout",
       "spec": "RT — la ruta no debe aceptar impuestos del cliente",
       "expected": "applied_taxes del body no puede ser la fuente del impuesto persistido",
-      "status": "FAIL",
-      "current": "ACEPTADA: tax_amount persistido=100.0000000000000000 (100% del cliente)",
-      "evidence": "la ruta reenvía applied_taxes cliente→RPC sin resolución server-side: 100% de impuesto impuesto por el cliente"
+      "status": "PASS",
+      "current": "HTTP 400",
+      "evidence": "ruta valida impuestos"
     },
     {
       "id": "T-RT-005",
@@ -53,7 +53,7 @@
       "spec": "RT — la ruta no debe aceptar tasa de cambio del cliente",
       "expected": "sale_exchange_rate del body no puede fijar la tasa efectiva",
       "status": "FAIL",
-      "current": "ACEPTADA: rate persistida=1000000.0000",
+      "current": "ACEPTADA: rate persistida=400.0000",
       "evidence": "la ruta reenvía sale_exchange_rate cliente→RPC sin fuente server-side"
     },
     {

@@ -1,12 +1,13 @@
 {
-  "generated_at": "2026-10-04T05:24:51.985Z",
+  "generated_at": "2026-10-04T14:30:36.125Z",
   "baseline": "6cba0a1c1f1d0a63fb4e2e6703b87a6a4d52cb9f (main)",
   "totals": {
     "total": 101,
-    "pass": 50,
-    "fail": 46,
+    "pass": 82,
+    "fail": 14,
     "blocked": 4,
-    "not_observable": 1
+    "not_observable": 1,
+    "duration_ms": 204346
   },
   "suites": [
     {
@@ -14,8 +15,8 @@
       "name": "H1 — ACL + AUTH BEFORE IDEMPOTENCY",
       "counts": {
         "total": 4,
-        "pass": 1,
-        "fail": 3,
+        "pass": 3,
+        "fail": 1,
         "blocked": 0,
         "not_observable": 0
       }
@@ -25,8 +26,8 @@
       "name": "H2 — AUTHENTICATION ORDER",
       "counts": {
         "total": 4,
-        "pass": 2,
-        "fail": 1,
+        "pass": 3,
+        "fail": 0,
         "blocked": 0,
         "not_observable": 1
       }
@@ -36,8 +37,8 @@
       "name": "H3 — SELLER BINDING",
       "counts": {
         "total": 6,
-        "pass": 3,
-        "fail": 2,
+        "pass": 5,
+        "fail": 0,
         "blocked": 1,
         "not_observable": 0
       }
@@ -47,8 +48,8 @@
       "name": "H4 — TAX AUTHORITY",
       "counts": {
         "total": 5,
-        "pass": 0,
-        "fail": 5,
+        "pass": 4,
+        "fail": 1,
         "blocked": 0,
         "not_observable": 0
       }
@@ -58,8 +59,8 @@
       "name": "H5 — EXCHANGE RATE AUTHORITY",
       "counts": {
         "total": 6,
-        "pass": 0,
-        "fail": 6,
+        "pass": 6,
+        "fail": 0,
         "blocked": 0,
         "not_observable": 0
       }
@@ -69,8 +70,8 @@
       "name": "H6 — IDEMPOTENCY",
       "counts": {
         "total": 9,
-        "pass": 5,
-        "fail": 4,
+        "pass": 9,
+        "fail": 0,
         "blocked": 0,
         "not_observable": 0
       }
@@ -80,8 +81,8 @@
       "name": "FIN — Integridad financiera",
       "counts": {
         "total": 12,
-        "pass": 9,
-        "fail": 3,
+        "pass": 10,
+        "fail": 2,
         "blocked": 0,
         "not_observable": 0
       }
@@ -91,8 +92,8 @@
       "name": "CS — Cross-store security",
       "counts": {
         "total": 7,
-        "pass": 5,
-        "fail": 2,
+        "pass": 7,
+        "fail": 0,
         "blocked": 0,
         "not_observable": 0
       }
@@ -113,8 +114,8 @@
       "name": "TC — Colateral tax_configurations",
       "counts": {
         "total": 5,
-        "pass": 2,
-        "fail": 2,
+        "pass": 4,
+        "fail": 0,
         "blocked": 1,
         "not_observable": 0
       }
@@ -124,8 +125,8 @@
       "name": "UTT — Colateral update_transaction_taxes",
       "counts": {
         "total": 8,
-        "pass": 4,
-        "fail": 2,
+        "pass": 6,
+        "fail": 0,
         "blocked": 2,
         "not_observable": 0
       }
@@ -135,8 +136,8 @@
       "name": "ER — Colateral fuentes de tasa",
       "counts": {
         "total": 4,
-        "pass": 2,
-        "fail": 2,
+        "pass": 4,
+        "fail": 0,
         "blocked": 0,
         "not_observable": 0
       }
@@ -146,8 +147,8 @@
       "name": "RT — Contrato ruta /api/pos/checkout",
       "counts": {
         "total": 7,
-        "pass": 4,
-        "fail": 3,
+        "pass": 6,
+        "fail": 1,
         "blocked": 0,
         "not_observable": 0
       }
@@ -157,8 +158,8 @@
       "name": "SB — Contrato ruta /api/sync/batch",
       "counts": {
         "total": 5,
-        "pass": 4,
-        "fail": 1,
+        "pass": 5,
+        "fail": 0,
         "blocked": 0,
         "not_observable": 0
       }
@@ -179,8 +180,8 @@
       "name": "AR — Anti-resurrección",
       "counts": {
         "total": 6,
-        "pass": 2,
-        "fail": 4,
+        "pass": 3,
+        "fail": 3,
         "blocked": 0,
         "not_observable": 0
       }
