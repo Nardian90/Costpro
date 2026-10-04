@@ -62,7 +62,10 @@ const checkoutSchema = z.object({
   payment_method: z.enum(['cash', 'transfer', 'zelle', 'mixed']),
   discount_type: z.enum(['fixed', 'percentage']).default('fixed'),
   discount_value: z.number().min(0).default(0),
-  applied_taxes: z.array(z.any()).default([]),
+  // H0-R §10: applied_taxes es una PROPUESTA de ids de tax_configurations —
+  // cada entrada debe llevar id uuid (la autoridad fiscal vive en el RPC, que
+  // valida y reemplaza desde el catálogo; jamás se persiste el JSONB tal cual)
+  applied_taxes: z.array(z.object({ id: z.string().uuid() }).passthrough()).default([]),
   tax_amount: z.number().min(0).default(0),
   total_amount: z.number().min(0),
   subtotal: z.number().min(0).default(0),
@@ -177,7 +180,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('create_sale_v2', {
     p_store_id: d.store_id,
-    p_seller_id: d.seller_id,
+    // H0-R §4/§10 (defensa en profundidad): el vendedor se DERIVA de la sesión
+    // verificada — el seller_id del body es dato de cliente no confiable y NO se
+    // reenvía. El RPC igualmente exige p_seller_id == actor (ERR_SELLER_MISMATCH).
+    p_seller_id: session.user.id,
     p_items: itemsJsonb,
     p_payment_method: d.payment_method,
     p_discount_type: d.discount_type,
@@ -250,6 +256,29 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
     if (msg.includes('ERR_UNAUTHORIZED')) {
       return NextResponse.json({ error: 'No autorizado para vender en esta tienda.' }, { status: 403 });
+    }
+    // H0-R §4: binding del vendedor al actor autenticado
+    if (msg.includes('ERR_SELLER_REQUIRED') || msg.includes('ERR_SELLER_MISMATCH')) {
+      return NextResponse.json({ error: 'El vendedor de la venta debe coincidir con la sesión autenticada.' }, { status: 403 });
+    }
+    // H0-R §5.4: impuesto no autorizado por el catálogo server-side
+    if (msg.includes('ERR_APPLIED_TAX_INVALID')) {
+      return NextResponse.json({ error: 'Impuesto inválido: no está autorizado para esta tienda.' }, { status: 400 });
+    }
+    // H0-R §6.1 (D-EXR-01): tasa vencida / no disponible → FAIL CLOSED
+    if (msg.includes('ERR_RATE_STALE')) {
+      return NextResponse.json({ error: 'La tasa de cambio está vencida (más de 45 días). Actualice la tasa de la tienda.' }, { status: 409 });
+    }
+    if (msg.includes('ERR_EXCHANGE_RATE_UNAVAILABLE')) {
+      return NextResponse.json({ error: 'No hay tasa de cambio disponible para esta moneda. Configure la tasa de la tienda.' }, { status: 409 });
+    }
+    // H0-R §8: descuento negativo estructuralmente inválido
+    if (msg.includes('ERR_INVALID_DISCOUNT')) {
+      return NextResponse.json({ error: 'Descuento inválido: no puede ser negativo.' }, { status: 422 });
+    }
+    // H0-R §7: conflicto de idempotencia (misma clave, identidad distinta)
+    if (msg.includes('ERR_IDEMPOTENCY_KEY_REUSE')) {
+      return NextResponse.json({ error: 'Conflicto de idempotencia: la clave ya está ligada a otra venta.' }, { status: 409 });
     }
     if (msg.includes('ERR_BACKDATED_DOCUMENT')) {
       return NextResponse.json({ error: 'La fecha de operación es anterior a la última venta.' }, { status: 422 });
