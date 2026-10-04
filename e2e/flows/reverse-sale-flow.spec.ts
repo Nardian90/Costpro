@@ -15,7 +15,7 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 /** Contexto de request propio del spec */
 let api: APIRequestContext;
 import {
-  signIn, apiHeaders, sb, createTestStore, deleteTestStore, seedProduct,
+  ADMIN_EMAIL, ADMIN_PASS, signIn, apiHeaders, sb, createTestStore, deleteTestStore, seedProduct,
   getInventory, getStockMovements, cleanupProducts, num,
 } from '../fixtures/session.fixture';
 
@@ -58,7 +58,7 @@ async function reverse(type: string, id: string, reason: string) {
 
 test.beforeAll(async ({ playwright }) => {
   api = await playwright.request.newContext({ baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000' });
-  const admin = await signIn('admin@costpro.com', 'costpro123');
+  const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   adminToken = admin.token;
   adminId = admin.userId;
 });

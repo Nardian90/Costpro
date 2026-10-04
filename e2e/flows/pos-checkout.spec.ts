@@ -20,6 +20,7 @@
  */
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 import {
+  ADMIN_EMAIL, ADMIN_PASS, CLERK_EMAIL, CLERK_PASS,
   signIn, apiHeaders, sb, createTestStore, deleteTestStore,
   seedProduct, getInventory, getStockMovements, getTransaction,
   getTransactionItems, cleanupProducts, num, TestStore, SeededProduct,
@@ -58,10 +59,10 @@ function basePayload(overrides: Record<string, unknown> = {}) {
 }
 
 test.beforeAll(async () => {
-  const admin = await signIn('admin@costpro.com', 'costpro123');
+  const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   adminToken = admin.token;
   adminId = admin.userId;
-  const clerk = await signIn('cajero@demo.com', 'demo123');
+  const clerk = await signIn(CLERK_EMAIL, CLERK_PASS);
   clerkToken = clerk.token;
 });
 
@@ -280,7 +281,7 @@ test.describe('POS Checkout V2 — flujo UI de usuario real', () => {
     test.setTimeout(120_000);
 
     // Setup: tienda + producto + sesión (la tienda de este describe es la misma)
-    const admin = await signIn('admin@costpro.com', 'costpro123');
+    const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
     adminToken = admin.token;
     adminId = admin.userId;
 
@@ -295,7 +296,7 @@ test.describe('POS Checkout V2 — flujo UI de usuario real', () => {
         expires_in: 3600,
         expires_at: Math.floor(Date.now() / 1000) + 3600,
         refresh_token: 'mock-refresh',
-        user: { id: admin.userId, email: 'admin@costpro.com' },
+        user: { id: admin.userId, email: ADMIN_EMAIL },
       }),
     ]);
 

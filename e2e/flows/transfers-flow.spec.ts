@@ -16,7 +16,7 @@
  */
 import { test, expect, type APIRequestContext } from '@playwright/test';
 import {
-  signIn, apiHeaders, sb, createTestStore, deleteTestStore, seedProduct,
+  ADMIN_EMAIL, ADMIN_PASS, CLERK_EMAIL, CLERK_PASS, signIn, apiHeaders, sb, createTestStore, deleteTestStore, seedProduct,
   getInventory, getStockMovements, cleanupProducts, num,
 } from '../fixtures/session.fixture';
 
@@ -44,10 +44,10 @@ async function destProductStock(): Promise<number> {
 }
 
 test.beforeAll(async () => {
-  const admin = await signIn('admin@costpro.com', 'costpro123');
+  const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   adminToken = admin.token;
   adminId = admin.userId;
-  const clerk = await signIn('cajero@demo.com', 'demo123');
+  const clerk = await signIn(CLERK_EMAIL, CLERK_PASS);
   clerkToken = clerk.token;
 });
 

@@ -5,7 +5,7 @@
  * No forma parte del inventario de escenarios de negocio.
  */
 import { test, expect } from '@playwright/test';
-import { injectSession, signIn } from './fixtures/session.fixture';
+import { injectSession, signIn, ADMIN_EMAIL, ADMIN_PASS } from './fixtures/session.fixture';
 
 test('global-setup exporta tokens a los workers', () => {
   expect(process.env.E2E_TEST_ADMIN_TOKEN, 'E2E_TEST_ADMIN_TOKEN').toBeTruthy();
@@ -20,7 +20,7 @@ test('sesión inyectada autentica la SPA (localStorage)', async ({ page }) => {
   // compartido muere a mitad de corrida completa cuando un spec UI dispara
   // el signOut global de useSessionManager (revoca TODAS las sesiones del
   // usuario). El refresh_token REAL permite auto-sanar en el browser.
-  const session = await signIn('admin@costpro.com', 'costpro123');
+  const session = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   await injectSession(page, session);
   await page.goto('/');
   // El shell autenticado renderiza el botón de cerrar sesión.
@@ -37,7 +37,7 @@ test('sesión inyectada autentica la SPA (localStorage)', async ({ page }) => {
 });
 
 test('signIn REST devuelve token funcional (API responde 200)', async ({ request }) => {
-  const session = await signIn('admin@costpro.com', 'costpro123');
+  const session = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   const res = await request.get('/api/stores', {
     headers: { Authorization: `Bearer ${session.token}` },
   });

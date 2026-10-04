@@ -21,6 +21,9 @@ export default defineConfig({
   // ANTES de lanzar workers → reactiva ~150 tests que antes saltaban.
   // Los workers heredan el env del proceso padre tras completar el setup.
   globalSetup: './e2e/global-setup.ts',
+  // E2E-RUNNER-ISOLATION: teardown del run aislado (limpia SOLO los recursos
+  // propios — usuarios/tenant/pilotos provisionados por el global-setup).
+  globalTeardown: './e2e/global-teardown.ts',
   fullyParallel: false, // Los tests de Supabase real no son paralelos-safe
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

@@ -690,8 +690,8 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
 // SEC-TS-10: los tests 12.x navegaban SIN sesión → login wall → nunca
 // renderizaban las tarjetas. Helper con sesión fresca inyectada.
 async function authedGoto(page: import('@playwright/test').Page, view: string) {
-  const { signIn, injectSession } = await import('./fixtures/session.fixture');
-  await injectSession(page, await signIn('admin@costpro.com', 'costpro123'));
+  const { signIn, injectSession, ADMIN_EMAIL, ADMIN_PASS } = await import('./fixtures/session.fixture');
+  await injectSession(page, await signIn(ADMIN_EMAIL, ADMIN_PASS));
   await page.goto(`/?view=${view}`);
   await page.waitForLoadState('networkidle');
 }

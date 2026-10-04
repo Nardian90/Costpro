@@ -119,3 +119,6 @@ test-results/
 playwright-report/
 test-results/
 audit-evidence/*.png
+
+# E2E-RUNNER-ISOLATION: context files de ejecuciones (nunca en test-results/, que Playwright vacía)
+.e2e-run-contexts/

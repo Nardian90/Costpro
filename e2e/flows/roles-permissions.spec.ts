@@ -17,25 +17,30 @@
  * ============================================================================
  */
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
-import { signIn, apiHeaders, sb, createTestStore, deleteTestStore, cleanupProducts } from '../fixtures/session.fixture';
+import {
+  ADMIN_EMAIL, ADMIN_PASS, CLERK_EMAIL, CLERK_PASS,
+  WAREHOUSE_EMAIL, WAREHOUSE_PASS, ENCARGADO_EMAIL, ENCARGADO_PASS, ENCARGADO_ID,
+  signIn, apiHeaders, sb, createTestStore, deleteTestStore, cleanupProducts,
+} from '../fixtures/session.fixture';
 
 let api: APIRequestContext;
 let adminToken: string;
 let clerkToken: string;
 let warehouseToken: string;
 let encargadoToken: string;
-let encargadoId = 'e2222222-2222-2222-2222-222222222222';
+// E2E-RUNNER-ISOLATION: id del encargado del run (legacy: demo compartido)
+let encargadoId = ENCARGADO_ID;
 let store: { id: string; name: string; slug: string };
 
 test.beforeAll(async ({ playwright }) => {
   api = await playwright.request.newContext({ baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000' });
-  const admin = await signIn('admin@costpro.com', 'costpro123');
+  const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   adminToken = admin.token;
-  const clerk = await signIn('cajero@demo.com', 'demo123');
+  const clerk = await signIn(CLERK_EMAIL, CLERK_PASS);
   clerkToken = clerk.token;
-  const warehouse = await signIn('almacen@demo.com', 'demo123');
+  const warehouse = await signIn(WAREHOUSE_EMAIL, WAREHOUSE_PASS);
   warehouseToken = warehouse.token;
-  const encargado = await signIn('encargado@demo.com', 'demo123');
+  const encargado = await signIn(ENCARGADO_EMAIL, ENCARGADO_PASS);
   encargadoToken = encargado.token;
 });
 
@@ -117,13 +122,13 @@ test.describe('Roles y permisos — autorización por rol', () => {
 
   test('E2E-RBAC-007 (P1) UI: vista de administración bloqueada para clerk (Acceso Denegado)', async ({ page }) => {
     test.setTimeout(90_000);
-    const session = await signIn('cajero@demo.com', 'demo123');
+    const session = await signIn(CLERK_EMAIL, CLERK_PASS);
     await page.addInitScript(([key, val]: any) => window.localStorage.setItem(key, val), [
       `sb-${(process.env.NEXT_PUBLIC_SUPABASE_URL || '').match(/https?:\/\/([a-z0-9]+)\.supabase\.co/)?.[1]}-auth-token`,
       JSON.stringify({
         access_token: session.token, token_type: 'bearer', expires_in: 3600,
         expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'mock-refresh',
-        user: { id: session.userId, email: 'cajero@demo.com' },
+        user: { id: session.userId, email: CLERK_EMAIL },
       }),
     ]);
 

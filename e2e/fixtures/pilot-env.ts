@@ -35,13 +35,17 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
  *  ⚠️ SEC-TS-09: 'E2E PILOT *' SÍ colisiona con el patrón de higiene
  *  'E2E *' del sweep de createTestStore (PostgREST traduce '*'→'%').
  *  El sweep ahora las excluye por nombre exacto (pilotGuard en
- *  session.fixture.ts) — mantener ambos en sincronía al renombrar. */
-export const PILOT_A_NAME = 'E2E PILOT A CostPro';
-export const PILOT_B_NAME = 'E2E PILOT B CostPro';
+ *  session.fixture.ts) — mantener ambos en sincronía al renombrar.
+ *  E2E-RUNNER-ISOLATION: en modo aislado el global-setup exporta
+ *  E2E_PILOT_A_NAME/B_NAME por-run ('E2E PILOT A CostPro <RUN_ID>') —
+ *  estos exports las respetan (fallback: nombres legacy compartidos). */
+export const PILOT_A_NAME = process.env.E2E_PILOT_A_NAME || 'E2E PILOT A CostPro';
+export const PILOT_B_NAME = process.env.E2E_PILOT_B_NAME || 'E2E PILOT B CostPro';
 
-/** SKU determinista del producto de referencia en cada tienda piloto. */
-export const PILOT_SKU_A = 'E2E-PILOT-A-001';
-export const PILOT_SKU_B = 'E2E-PILOT-B-001';
+/** SKU determinista del producto de referencia en cada tienda piloto.
+ *  E2E-RUNNER-ISOLATION: overridables por run (SKU único por ejecución). */
+export const PILOT_SKU_A = process.env.E2E_PILOT_SKU_A || 'E2E-PILOT-A-001';
+export const PILOT_SKU_B = process.env.E2E_PILOT_SKU_B || 'E2E-PILOT-B-001';
 
 export interface PilotStore { id: string; name: string; }
 export interface PilotEnv {

@@ -9,7 +9,7 @@
  * ============================================================================
  */
 import { test, expect, type APIRequestContext } from '@playwright/test';
-import { signIn, apiHeaders, sb, createTestStore, deleteTestStore, seedProduct, cleanupProducts, num } from '../fixtures/session.fixture';
+import { signIn, apiHeaders, sb, createTestStore, deleteTestStore, seedProduct, cleanupProducts, num, ADMIN_EMAIL, ADMIN_PASS } from '../fixtures/session.fixture';
 
 let api: APIRequestContext;
 let adminToken: string;
@@ -19,7 +19,7 @@ let poId: string;
 
 test.beforeAll(async ({ playwright }) => {
   api = await playwright.request.newContext({ baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000' });
-  const admin = await signIn('admin@costpro.com', 'costpro123');
+  const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   adminToken = admin.token;
   store = await createTestStore(api, adminToken, 'PO');
   product = await seedProduct(store, { name: 'Producto E2E Compra', price: 100, cost: 60, quantity: 10 });
