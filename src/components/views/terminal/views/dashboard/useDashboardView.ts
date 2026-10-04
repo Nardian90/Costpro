@@ -1,42 +1,23 @@
 'use client'
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useAuthStore } from '@/store';
 import { useDashboardData } from '@/hooks/api/useDashboard';
-import { startOfDay, startOfMonth, startOfYear, addDays, addMonths, addYears } from 'date-fns';
-
-export type DashboardTimeRange = 'day' | 'month' | 'year';
+// REMEDIACIÓN KPI temporal (fix/dashboard-kpi-periods-semantics): la derivación
+// del rango se EXTRAJO a lib/kpi/dashboard-range.ts — misma lógica (sin cambio
+// de comportamiento), compartida con usePerformanceKpi para que el anillo y
+// la página construyan la MISMA queryKey (cache compartida, cero duplicación).
+import {
+  getDashboardDateRange,
+  type DashboardTimeRange,
+} from '@/lib/kpi/dashboard-range';
 
 export function useDashboardView() {
   const { user } = useAuthStore();
   const [timeRange, setTimeRange] = useState<DashboardTimeRange>('day');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const { dateFrom, dateTo } = useMemo(() => {
-    let from: Date;
-    let to: Date;
-
-    switch (timeRange) {
-      case 'month':
-        from = startOfMonth(selectedDate);
-        to = addMonths(from, 1);
-        break;
-      case 'year':
-        from = startOfYear(selectedDate);
-        to = addYears(from, 1);
-        break;
-      case 'day':
-      default:
-        from = startOfDay(selectedDate);
-        to = addDays(from, 1);
-        break;
-    }
-
-    return {
-      dateFrom: from.toISOString(),
-      dateTo: to.toISOString()
-    };
-  }, [timeRange, selectedDate]);
+  const { dateFrom, dateTo } = getDashboardDateRange(timeRange, selectedDate);
 
   // F3-B1: exponer error de KPIs — antes solo se pasaba productsError y los fallos
   // del dashboard quedaban invisibles (KPIs vacíos parecían datos reales).

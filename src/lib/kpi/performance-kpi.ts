@@ -32,8 +32,10 @@ import {
   addDays,
   addMonths,
   addYears,
+  differenceInCalendarDays,
   startOfDay,
   startOfMonth,
+  startOfYear,
   endOfMonth,
 } from 'date-fns';
 
@@ -46,7 +48,8 @@ export type KpiComparator =
   | 'last7_daily_avg'
   | 'last30_daily_avg'
   | 'same_weekday_last_week'
-  | 'same_period_last_year';
+  | 'same_period_last_year'
+  | 'monthly_avg_6m'; // REMEDIACIÓN KPI temporal — referencia del modo Mes (FASE 6)
 
 export type KpiMetric =
   | 'auto'
@@ -88,6 +91,7 @@ export function isValidKpiConfig(value: unknown): value is KpiConfig {
       'last30_daily_avg',
       'same_weekday_last_week',
       'same_period_last_year',
+      'monthly_avg_6m',
     ].includes(v.comparator) &&
     typeof v.period === 'string' &&
     ['hoy', 'ayer', 'ultimos_7_dias', 'este_mes'].includes(v.period)
@@ -196,6 +200,19 @@ export interface KpiReferenceWindow {
   to: Date; // exclusivo
   /** Escalar la referencia diaria (promedio diario × días del período). */
   scaleByDays: number | null; // null = comparar totales crudos (ventana espejo)
+  /**
+   * REMEDIACIÓN KPI temporal (FASE 6): dividir el total de la ventana entre
+   * N meses para obtener el PROMEDIO MENSUAL (p. ej. últimos 6 meses). null
+   * cuando la ventana no usa promedio mensual.
+   */
+  averageByMonths: number | null;
+  /**
+   * REMEDIACIÓN KPI temporal — fracción del período transcurrida
+   * (daysElapsed/daysTotal) para PRORRATEAR referencias mensuales en períodos
+   * en curso (mes parcial vs meses completos ⇒ comparación justa, mismo
+   * criterio que el espejo anual). null = sin ajuste (períodos completos).
+   */
+  periodFraction: number | null;
   /** Se resuelve desde la serie (true) o requiere RPC de agregados (false). */
   fromSeries: boolean;
 }
@@ -213,6 +230,26 @@ export function getKpiReferenceWindow(
         from: prevMonthStart,
         to: prevMonthEnd,
         scaleByDays: periodRange.daysElapsed,
+        averageByMonths: null,
+        periodFraction: null,
+        fromSeries: true,
+      };
+    }
+    case 'monthly_avg_6m': {
+      // REMEDIACIÓN KPI temporal (FASE 6 — modo Mes): referencia = promedio
+      // MENSUAL de los últimos 6 meses completos ANTERIORES al mes del
+      // período. Comparación definida matemáticamente: total(6 meses) / 6.
+      // Para el mes EN CURSO la referencia se prorratea a los días
+      // transcurridos (período parcial vs meses completos — comparación justa).
+      const monthStart = startOfMonth(startOfDay(periodRange.from));
+      return {
+        from: addMonths(monthStart, -6),
+        to: monthStart,
+        scaleByDays: null,
+        averageByMonths: 6,
+        periodFraction: periodRange.daysTotal > 0
+          ? Math.min(1, periodRange.daysElapsed / periodRange.daysTotal)
+          : null,
         fromSeries: true,
       };
     }
@@ -222,6 +259,8 @@ export function getKpiReferenceWindow(
         from: addDays(startOfDay(periodRange.from), -7),
         to: startOfDay(periodRange.from),
         scaleByDays: periodRange.daysElapsed,
+        averageByMonths: null,
+        periodFraction: null,
         fromSeries: true,
       };
     }
@@ -230,6 +269,8 @@ export function getKpiReferenceWindow(
         from: addDays(startOfDay(periodRange.from), -30),
         to: startOfDay(periodRange.from),
         scaleByDays: periodRange.daysElapsed,
+        averageByMonths: null,
+        periodFraction: null,
         fromSeries: true,
       };
     }
@@ -243,6 +284,8 @@ export function getKpiReferenceWindow(
         from: addDays(startOfDay(periodRange.from), -7),
         to: addDays(startOfDay(periodRange.from), periodRange.daysElapsed - 7),
         scaleByDays: null,
+        averageByMonths: null,
+        periodFraction: null,
         fromSeries: true,
       };
     }
@@ -253,10 +296,159 @@ export function getKpiReferenceWindow(
         // Espejo de los días transcurridos (comparación justa en mes en curso).
         to: addDays(yearAgoFrom, periodRange.daysElapsed),
         scaleByDays: null,
+        averageByMonths: null,
+        periodFraction: null,
         fromSeries: false, // requiere RPC get_dashboard_kpis (histórico anual)
       };
     }
   }
+}
+
+// ── REMEDIACIÓN KPI temporal — semántica anclada al selector Día/Mes/Año ──
+//
+// El selector Día/Mes/Año + fecha del encabezado es LA fuente de verdad del
+// período del "Resumen de Indicadores" (FASE 4-8). El KPI anclado representa
+// el rendimiento del período seleccionado frente a una referencia explícita:
+//
+//   day   → ventas del día D vs promedio diario del mes anterior a D (FASE 5)
+//   month → total del mes M vs promedio mensual de los últimos 6 meses (FASE 6)
+//   year  → acumulado del año Y vs mismo período del año anterior (FASE 7)
+
+export type KpiAnchorMode = 'day' | 'month' | 'year';
+
+export interface KpiAnchor {
+  mode: KpiAnchorMode;
+  /** Fecha seleccionada (cualquier día del mes/año que se quiera representar). */
+  date: Date;
+}
+
+/**
+ * Ventana del período actual derivada del selector. daysElapsed cubre los
+ * tres casos (pasado → longitud completa; en curso → días transcurridos;
+ * futuro → irrelevante: sin transacciones ⇒ no_current_data).
+ */
+export function getAnchoredPeriodRange(anchor: KpiAnchor, now: Date): KpiPeriodRange {
+  switch (anchor.mode) {
+    case 'month': {
+      const from = startOfMonth(startOfDay(anchor.date));
+      const to = addMonths(from, 1);
+      const daysTotal = endOfMonth(from).getDate();
+      const elapsed = Math.min(daysTotal, Math.max(1, differenceInCalendarDays(startOfDay(now), from) + 1));
+      return { from, to, daysElapsed: elapsed, daysTotal };
+    }
+    case 'year': {
+      const from = startOfYear(startOfDay(anchor.date));
+      const to = addYears(from, 1);
+      const daysTotal = differenceInCalendarDays(to, from); // 365/366
+      const elapsed = Math.min(daysTotal, Math.max(1, differenceInCalendarDays(startOfDay(now), from) + 1));
+      return { from, to, daysElapsed: elapsed, daysTotal };
+    }
+    case 'day':
+    default: {
+      const from = startOfDay(anchor.date);
+      return { from, to: addDays(from, 1), daysElapsed: 1, daysTotal: 1 };
+    }
+  }
+}
+
+/**
+ * Comparador efectivo en modo anclado:
+ *   day   → el comparador configurado por el usuario (default = FASE 5:
+ *           promedio diario del mes anterior, relativo a la fecha D).
+ *   month → fijo: promedio mensual de los últimos 6 meses (FASE 6).
+ *   year  → fijo: mismo período del año anterior (FASE 7).
+ */
+export function getAnchoredComparator(
+  mode: KpiAnchorMode,
+  configured: KpiComparator
+): KpiComparator {
+  switch (mode) {
+    case 'month':
+      return 'monthly_avg_6m';
+    case 'year':
+      return 'same_period_last_year';
+    case 'day':
+    default:
+      return configured;
+  }
+}
+
+/** Ventana de referencia del modo anclado (delega en el comparador efectivo). */
+export function getAnchoredReferenceWindow(
+  mode: KpiAnchorMode,
+  comparator: KpiComparator,
+  periodRange: KpiPeriodRange,
+  now: Date
+): KpiReferenceWindow {
+  return getKpiReferenceWindow(getAnchoredComparator(mode, comparator), periodRange, now);
+}
+
+/**
+ * REMEDIACIÓN KPI temporal — escalado de referencia extraído como función
+ * PURA (antes inline en el hook) para cubrir también el promedio mensual.
+ *   - averageByMonths: total de la ventana / N meses (promedio mensual).
+ *   - scaleByDays: promedio diario de la ventana × días del período.
+ *   - ninguno: totales crudos (ventana espejo).
+ */
+export function applyReferenceScaling(
+  totals: KpiWindowTotals,
+  window: {
+    scaleByDays: number | null;
+    averageByMonths: number | null;
+    /** Opcional: los tests y ventanas espejo lo omiten (= 1). */
+    periodFraction?: number | null;
+  }
+): { sales: number; transactions: number; units: number } {
+  if (window.averageByMonths !== null && window.averageByMonths > 0) {
+    // Promedio mensual, prorrateado a los días transcurridos del período si
+    // el período está en curso (período parcial vs meses completos).
+    const fraction = window.periodFraction ?? 1;
+    return {
+      sales: (totals.sales / window.averageByMonths) * fraction,
+      transactions: (totals.transactions / window.averageByMonths) * fraction,
+      units: (totals.items_sold / window.averageByMonths) * fraction,
+    };
+  }
+  const scale = window.scaleByDays;
+  const scaleVal = (v: number) =>
+    scale && totals.days > 0 ? (v / totals.days) * scale : v;
+  return {
+    sales: scaleVal(totals.sales),
+    transactions: scaleVal(totals.transactions),
+    units: scaleVal(totals.items_sold),
+  };
+}
+
+// ── REMEDIACIÓN KPI temporal (FASE 12) — interpretación cualitativa ───────
+//
+// Reglas DETERMINISTAS (sin IA generativa). Umbrales:
+//   Variación % (ventas/transacciones/ticket/unidades) — bandas del producto:
+//     >= +20%  → muy por encima     +5%..+19.9% → por encima
+//     -4.9%..+4.9% → en línea
+//     -19.9%..-5% → por debajo      <= -20% → muy por debajo
+//   Margen (variación en PUNTOS PORCENTUALES, dominio 0-100): los swings
+//     operativos de margen rara vez exceden ±10 pp, por lo que las bandas
+//     se estrechan: >= +10 muy arriba / >= +3 arriba / > -3 en línea /
+//     > -10 abajo / <= -10 muy abajo. Documentado como decisión.
+
+export type KpiQualitativeTone = 'way_above' | 'above' | 'in_line' | 'below' | 'way_below';
+
+export function interpretVariation(variationPct: number | null | undefined): KpiQualitativeTone | null {
+  if (variationPct === null || variationPct === undefined) return null;
+  if (variationPct >= 20) return 'way_above';
+  if (variationPct >= 5) return 'above';
+  if (variationPct > -5) return 'in_line';
+  if (variationPct > -20) return 'below';
+  return 'way_below';
+}
+
+export function interpretMarginPp(variationPp: number | null | undefined): KpiQualitativeTone | null {
+  if (variationPp === null || variationPp === undefined) return null;
+  if (variationPp >= 10) return 'way_above';
+  if (variationPp >= 3) return 'above';
+  if (variationPp > -3) return 'in_line';
+  if (variationPp > -10) return 'below';
+  return 'way_below';
 }
 
 // ── Cálculo del KPI ───────────────────────────────────────────────────────
@@ -266,7 +458,8 @@ export type KpiValueStatus =
   | 'ok'
   | 'no_current_data' // FASE 9 Caso E — sin ventas en el período
   | 'no_reference' // FASE 6 — histórico insuficiente para la referencia
-  | 'insufficient_margin'; // FASE 5 — costos inválidos con margen explícito
+  | 'insufficient_margin' // FASE 5 — costos inválidos con margen explícito
+  | 'metric_unavailable'; // REMEDIACIÓN — hay actividad pero la métrica elegida no tiene fuente para el período (p. ej. unidades en modo Año)
 
 export interface KpiComputation {
   status: KpiValueStatus;
@@ -288,7 +481,9 @@ export interface KpiComputation {
 export interface KpiRawMetricValue {
   sales: number;
   transactions: number;
-  units: number;
+  /** REMEDIACIÓN: null = la métrica no tiene fuente para el período (p. ej.
+   *  unidades en modo Año) — computeKpi lo resuelve como metric_unavailable. */
+  units: number | null;
   /** Margen del período: null cuando el RPC reporta costos incompletos. */
   marginPct: number | null;
 }
@@ -303,7 +498,7 @@ export interface KpiRawReferenceValue {
 
 function metricValue(
   metric: Exclude<KpiMetric, 'auto'>,
-  raw: { sales: number; transactions: number; units: number; marginPct: number | null }
+  raw: { sales: number; transactions: number; units: number | null; marginPct: number | null }
 ): number | null {
   switch (metric) {
     case 'sales':
@@ -382,7 +577,10 @@ export function computeKpi(params: {
   }
 
   if (current === null) {
-    return { ...base, status: 'no_current_data' };
+    // REMEDIACIÓN: distinguir "sin actividad" (0 transacciones) de "hay
+    // actividad pero la métrica no tiene fuente para este período" (p. ej.
+    // unidades en modo Año — el RPC de agregados no expone unidades).
+    return { ...base, status: currentRaw.transactions > 0 ? 'metric_unavailable' : 'no_current_data' };
   }
 
   // Referencia no disponible (FASE 6).

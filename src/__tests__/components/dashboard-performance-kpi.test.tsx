@@ -340,9 +340,8 @@ vi.mock('@/components/ui/NoStoreGuard', () => ({
 vi.mock('@/components/ui/ChunkErrorBoundary', () => ({
   withChunkRetry: (c: any) => c,
 }));
-vi.mock('@/components/views/terminal/views/dashboard/ExecutiveKpiCards', () => ({
-  ExecutiveKpiCards: () => <div data-testid="executive-kpi-cards" />,
-}));
+// NOTA (fix/dashboard-kpi-periods-semantics): el mock de ExecutiveKpiCards se
+// retiró junto con el componente — duplicación eliminada del Inicio.
 
 describe('DashboardView embebido — mini-stats con calidad de datos (FASE 2)', () => {
   it('costos/utilidad NULL → "N/D" (nunca 0) en el Resumen de Indicadores', async () => {
@@ -362,5 +361,130 @@ describe('DashboardView embebido — mini-stats con calidad de datos (FASE 2)', 
     await waitFor(() => {
       expect(screen.getByTestId('performance-kpi')).toBeInTheDocument();
     });
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// REMEDIACIÓN KPI temporal (fix/dashboard-kpi-periods-semantics)
+// El selector Día/Mes/Año + fecha ANCLA el KPI: cambiar el selector cambia el
+// % (FASE 8/20), la query incluye el período/fecha (FASE 21), el tooltip es
+// dinámico y accesible (FASE 10/11/23) y NO hay duplicación de KPIs
+// financieros (FASE 15-17).
+// ════════════════════════════════════════════════════════════════════════════
+
+function rpcResponse(sales: number, tx: number, costs: number | null = null) {
+  return {
+    data: {
+      kpis: { gross_sales: sales, cost_of_goods: costs, profit: costs === null ? null : sales - costs },
+      summary: {
+        total_billed: sales,
+        transaction_count: tx,
+        average_ticket: tx > 0 ? sales / tx : 0,
+        total_cash: 0,
+        total_transfer: 0,
+      },
+    },
+    isLoading: false,
+  };
+}
+
+describe('PerformanceKpi anclado — modo Día (FASE 5/8/20/21)', () => {
+  it('fecha A: usa el RPC del día seleccionado (queryKey con la fecha) → +25%', () => {
+    mockDashboardData = rpcResponse(125000, 3);
+    render(<PerformanceKpi anchor={{ mode: 'day', date: new Date('2026-10-15T12:00:00.000Z') }} />);
+    expect(screen.getByTestId('kpi-center-value').textContent).toContain('+25%');
+    // FASE 21 — la query del período contiene EXACTAMENTE la fecha del selector
+    expect(dashboardDataCalls.some((c) => c[2] === '2026-10-15T00:00:00.000Z' && c[3] === '2026-10-16T00:00:00.000Z')).toBe(true);
+    // Sub-título con el período seleccionado + ayuda presente (FASE 10)
+    expect(screen.getByTestId('kpi-help-button')).toHaveAttribute('aria-label', 'helpLabel');
+    expect(screen.getByTestId('kpi-qualitative').textContent).toContain('qualitative');
+  });
+
+  it('FASE 8 A/B: fecha B distinta → consulta distinta y % distinto (−18%)', () => {
+    mockDashboardData = rpcResponse(125000, 3);
+    const { rerender } = render(<PerformanceKpi anchor={{ mode: 'day', date: new Date('2026-10-15T12:00:00.000Z') }} />);
+    expect(screen.getByTestId('kpi-center-value').textContent).toContain('+25%');
+
+    mockDashboardData = rpcResponse(82000, 2);
+    rerender(<PerformanceKpi anchor={{ mode: 'day', date: new Date('2026-10-14T12:00:00.000Z') }} />);
+    expect(screen.getByTestId('kpi-center-value').textContent).toContain('−18%');
+    expect(dashboardDataCalls.some((c) => c[2] === '2026-10-14T00:00:00.000Z')).toBe(true);
+  });
+
+  it('sin ventas en el día seleccionado → estado informativo, NUNCA 0%', () => {
+    mockDashboardData = rpcResponse(0, 0);
+    render(<PerformanceKpi anchor={{ mode: 'day', date: new Date('2026-10-15T12:00:00.000Z') }} />);
+    expect(screen.getByTestId('kpi-no-sales')).toBeInTheDocument();
+    expect(screen.getByTestId('kpi-center-value').textContent).not.toContain('0%');
+  });
+
+  it('tooltip dinámico: +25% ⇒ plantilla "above" de ventas (FASE 11)', () => {
+    mockDashboardData = rpcResponse(125000, 3);
+    render(<PerformanceKpi anchor={{ mode: 'day', date: new Date('2026-10-15T12:00:00.000Z') }} />);
+    // El mock de PopoverContent no propaga data-testid → se aserta el texto.
+    // El mock i18n devuelve la key sin interpolar: la plantilla elegida
+    // depende del estado (ok/above) y de la métrica (sales).
+    expect(screen.getByText('tooltip.title')).toBeInTheDocument();
+    expect(screen.getByText('tooltip.sales.above')).toBeInTheDocument();
+    expect(screen.queryByText('tooltip.noRef')).not.toBeInTheDocument();
+  });
+});
+
+describe('PerformanceKpi anclado — modo Mes (FASE 6)', () => {
+  it('ventana del mes en la query; sin serie de 6 meses → N/D honesto', () => {
+    mockDashboardData = rpcResponse(842300, 700);
+    render(<PerformanceKpi anchor={{ mode: 'month', date: new Date('2026-09-10T12:00:00.000Z') }} />);
+    // FASE 21 — query del MES seleccionado
+    expect(dashboardDataCalls.some((c) => c[2] === '2026-09-01T00:00:00.000Z' && c[3] === '2026-10-01T00:00:00.000Z')).toBe(true);
+    // buildStandardSeries solo cubre sep+oct → la referencia de 6 meses
+    // (mar..ago) no está cubierta ⇒ N/D, nunca comparación inventada.
+    expect(screen.getByTestId('kpi-center-value').textContent).toContain('N/D');
+  });
+});
+
+describe('PerformanceKpi anclado — modo Año (FASE 7)', () => {
+  it('ventana anual en la query + referencia año anterior perezosa (RPC)', () => {
+    mockDashboardData = rpcResponse(4800000, 5000);
+    render(<PerformanceKpi anchor={{ mode: 'year', date: new Date('2026-02-10T12:00:00.000Z') }} />);
+    expect(dashboardDataCalls.some((c) => c[2] === '2026-01-01T00:00:00.000Z' && c[3] === '2027-01-01T00:00:00.000Z')).toBe(true);
+    // Referencia espejo 2025 vía RPC (perezosa, enabled=true)
+    expect(dashboardDataCalls.some((c) => c[2] === '2025-01-01T00:00:00.000Z' && c[4]?.enabled === true)).toBe(true);
+    // El mock devuelve los mismos datos para el espejo → 4.8M vs 4.8M → 0% REAL
+    expect(screen.getByTestId('kpi-center-value').textContent).toContain('0%');
+  });
+
+  it('unidades sin fuente para el período → metric_unavailable (N/D, no "sin ventas")', () => {
+    mockConfig = { ...DEFAULT_KPI_CONFIG, metric: 'units' };
+    mockDashboardData = rpcResponse(4800000, 5000);
+    render(<PerformanceKpi anchor={{ mode: 'year', date: new Date('2025-05-10T12:00:00.000Z') }} />);
+    expect(screen.getByTestId('kpi-metric-unavailable')).toBeInTheDocument();
+    expect(screen.getByTestId('kpi-center-value').textContent).not.toContain('0%');
+  });
+});
+
+describe('DashboardView embebido — sin duplicación de KPIs (FASE 15-17)', () => {
+  it('NO renderiza ExecutiveKpiCards; el bloque de actividad conserva los datos únicos', async () => {
+    mockDashboardData = rpcResponse(125000, 3);
+    render(<DashboardView embedded />);
+    await waitFor(() => {
+      expect(screen.getByTestId('performance-kpi')).toBeInTheDocument();
+    });
+    // Duplicado eliminado: el trío financiero vive SOLO en las mini-stats
+    expect(screen.queryByTestId('executive-kpi-cards')).not.toBeInTheDocument();
+    // La sección renombrada conserva transacciones/ticket/efectivo/transferencia
+    expect(screen.getByText('activitySummary')).toBeInTheDocument();
+    expect(screen.getByTestId('kpi-mini-stats')).toBeInTheDocument();
+  });
+
+  it('el anillo anclado comparte la MISMA queryKey que la página (cache compartida)', async () => {
+    mockDashboardData = rpcResponse(125000, 3);
+    render(<DashboardView embedded />);
+    await waitFor(() => {
+      expect(screen.getByTestId('performance-kpi')).toBeInTheDocument();
+    });
+    // La página (useDashboardView) y el anillo (ancla day/hoy) piden el MISMO
+    // rango → una sola consulta de red (FASE 21).
+    const dayCalls = dashboardDataCalls.filter((c) => typeof c[2] === 'string' && c[2] === '2026-10-15T00:00:00.000Z');
+    expect(dayCalls.length).toBeGreaterThanOrEqual(2);
   });
 });

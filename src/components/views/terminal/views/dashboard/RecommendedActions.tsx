@@ -53,6 +53,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore, useUIStore, type ViewType } from '@/store';
+import type { UserRole } from '@/types';
 import { useCartStore } from '@/store/cart';
 import { useProducts } from '@/hooks/api/useProducts';
 import { useActiveShift } from '@/hooks/api/useActiveShift';
@@ -226,7 +227,7 @@ export default function RecommendedActions({ className }: { className?: string }
       .filter((c) => {
         if (seen.has(c.view)) return false;
         if (!isViewAllowedForRole(c.view, user?.role)) return false;
-        if (c.allowedRoles && !c.allowedRoles.some((r) => hasRole(user, r))) return false;
+        if (c.allowedRoles && !c.allowedRoles.some((r) => hasRole(user, r as UserRole))) return false;
         seen.add(c.view);
         return true;
       })

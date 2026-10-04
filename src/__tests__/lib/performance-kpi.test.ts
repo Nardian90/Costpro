@@ -24,6 +24,12 @@ import {
   formatKpiVariation,
   formatKpiPp,
   formatKpiValue,
+  // REMEDIACIÓN KPI temporal (fix/dashboard-kpi-periods-semantics)
+  getAnchoredPeriodRange,
+  getAnchoredComparator,
+  applyReferenceScaling,
+  interpretVariation,
+  interpretMarginPp,
   type KpiSeriesPoint,
 } from '@/lib/kpi/performance-kpi';
 
@@ -386,5 +392,286 @@ describe('formateo (FASE 2/18 — texto, no solo color)', () => {
     expect(formatKpiValue('transactions', 12)).toBe('12');
     expect(formatKpiValue('margin', 34.2)).toBe('34,2%');
     expect(formatKpiValue('avg_ticket', null)).toBe('N/D');
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// REMEDIACIÓN KPI temporal (fix/dashboard-kpi-periods-semantics)
+// Semántica anclada al selector Día / Mes / Año + fecha (FASE 4-8, 12).
+// ════════════════════════════════════════════════════════════════════════════
+
+describe('getAnchoredPeriodRange (FASE 5/6/7 — período = selector)', () => {
+  it('modo Día: ventana exacta del día seleccionado', () => {
+    const r = getAnchoredPeriodRange({ mode: 'day', date: new Date('2026-09-15T10:00:00.000Z') }, NOW);
+    expect(r.from.toISOString()).toBe('2026-09-15T00:00:00.000Z');
+    expect(r.to.toISOString()).toBe('2026-09-16T00:00:00.000Z');
+    expect(r.daysElapsed).toBe(1);
+    expect(r.daysTotal).toBe(1);
+  });
+
+  it('modo Mes en curso: días transcurridos (15 oct → 15 días)', () => {
+    const r = getAnchoredPeriodRange({ mode: 'month', date: new Date('2026-10-10T10:00:00.000Z') }, NOW);
+    expect(r.from.toISOString()).toBe('2026-10-01T00:00:00.000Z');
+    expect(r.to.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+    expect(r.daysElapsed).toBe(15);
+    expect(r.daysTotal).toBe(31);
+  });
+
+  it('modo Mes pasado: mes COMPLETO (comparación justa)', () => {
+    const r = getAnchoredPeriodRange({ mode: 'month', date: new Date('2026-09-10T10:00:00.000Z') }, NOW);
+    expect(r.from.toISOString()).toBe('2026-09-01T00:00:00.000Z');
+    expect(r.daysElapsed).toBe(30);
+    expect(r.daysTotal).toBe(30);
+  });
+
+  it('modo Año en curso: días transcurridos desde el 1 de enero', () => {
+    const r = getAnchoredPeriodRange({ mode: 'year', date: new Date('2026-02-10T10:00:00.000Z') }, NOW);
+    expect(r.from.toISOString()).toBe('2026-01-01T00:00:00.000Z');
+    expect(r.to.toISOString()).toBe('2027-01-01T00:00:00.000Z');
+    expect(r.daysElapsed).toBe(288); // 1 ene..15 oct 2026 (no bisiesto)
+    expect(r.daysTotal).toBe(365);
+  });
+
+  it('modo Año pasado: año completo', () => {
+    const r = getAnchoredPeriodRange({ mode: 'year', date: new Date('2025-05-10T10:00:00.000Z') }, NOW);
+    expect(r.from.toISOString()).toBe('2025-01-01T00:00:00.000Z');
+    expect(r.daysElapsed).toBe(365);
+  });
+});
+
+describe('getAnchoredComparator (FASE 6/7 — comparador por modo)', () => {
+  it('Día → el comparador configurado (default FASE 5: promedio diario mes anterior)', () => {
+    expect(getAnchoredComparator('day', 'prev_month_daily_avg')).toBe('prev_month_daily_avg');
+    expect(getAnchoredComparator('day', 'last7_daily_avg')).toBe('last7_daily_avg');
+  });
+  it('Mes → fijo promedio mensual 6 meses; Año → fijo mismo período año anterior', () => {
+    expect(getAnchoredComparator('month', 'last7_daily_avg')).toBe('monthly_avg_6m');
+    expect(getAnchoredComparator('year', 'prev_month_daily_avg')).toBe('same_period_last_year');
+  });
+});
+
+describe('monthly_avg_6m (FASE 6 — ventana y escalado)', () => {
+  it('ventana = 6 meses completos ANTERIORES al mes del período', () => {
+    const period = getAnchoredPeriodRange({ mode: 'month', date: new Date('2026-09-10T10:00:00.000Z') }, NOW);
+    const w = getKpiReferenceWindow('monthly_avg_6m', period, NOW);
+    expect(w.from.toISOString()).toBe('2026-03-01T00:00:00.000Z'); // mar..ago
+    expect(w.to.toISOString()).toBe('2026-09-01T00:00:00.000Z');
+    expect(w.averageByMonths).toBe(6);
+    expect(w.fromSeries).toBe(true);
+  });
+
+  it('applyReferenceScaling: promedio mensual = total ÷ 6', () => {
+    const scaled = applyReferenceScaling(
+      { sales: 4_800_000, transactions: 1200, items_sold: 3600, days: 184, complete: true },
+      { scaleByDays: null, averageByMonths: 6 }
+    );
+    expect(scaled.sales).toBe(800_000);
+    expect(scaled.transactions).toBe(200);
+  });
+
+  it('applyReferenceScaling: mes EN CURSO prorratea el promedio mensual a los días transcurridos (comparación justa)', () => {
+    const scaled = applyReferenceScaling(
+      { sales: 4_800_000, transactions: 1200, items_sold: 3600, days: 184, complete: true },
+      { scaleByDays: null, averageByMonths: 6, periodFraction: 5 / 31 }
+    );
+    expect(Math.round(scaled.sales)).toBe(Math.round(800_000 * (5 / 31)));
+  });
+
+  it('applyReferenceScaling: promedio diario × días del período (comparadores diarios)', () => {
+    const scaled = applyReferenceScaling(
+      { sales: 3_100_000, transactions: 620, items_sold: 1240, days: 31, complete: true },
+      { scaleByDays: 1, averageByMonths: null }
+    );
+    expect(scaled.sales).toBe(100_000); // 3.1M / 31 días × 1 día
+  });
+
+  it('applyReferenceScaling: ventana espejo → totales crudos', () => {
+    const scaled = applyReferenceScaling(
+      { sales: 900_000, transactions: 90, items_sold: 180, days: 90, complete: true },
+      { scaleByDays: null, averageByMonths: null }
+    );
+    expect(scaled.sales).toBe(900_000);
+  });
+});
+
+describe('interpretVariation / interpretMarginPp (FASE 12 — cualitativo determinista)', () => {
+  it('bandas de variación % documentadas (+20/+5/−5/−20)', () => {
+    expect(interpretVariation(25)).toBe('way_above');
+    expect(interpretVariation(20)).toBe('way_above');
+    expect(interpretVariation(19.9)).toBe('above');
+    expect(interpretVariation(5)).toBe('above');
+    expect(interpretVariation(4.9)).toBe('in_line');
+    expect(interpretVariation(0)).toBe('in_line');
+    expect(interpretVariation(-4.9)).toBe('in_line');
+    expect(interpretVariation(-5)).toBe('below');
+    expect(interpretVariation(-19.9)).toBe('below');
+    expect(interpretVariation(-20)).toBe('way_below');
+    expect(interpretVariation(-50)).toBe('way_below');
+    expect(interpretVariation(null)).toBeNull();
+  });
+
+  it('bandas de margen en pp (±10/±3, justificadas en performance-kpi.ts)', () => {
+    expect(interpretMarginPp(12)).toBe('way_above');
+    expect(interpretMarginPp(3)).toBe('above');
+    expect(interpretMarginPp(2.9)).toBe('in_line');
+    expect(interpretMarginPp(0)).toBe('in_line');
+    expect(interpretMarginPp(-3)).toBe('below');
+    expect(interpretMarginPp(-10)).toBe('way_below');
+    expect(interpretMarginPp(null)).toBeNull();
+  });
+});
+
+describe('FASE 5 — modo Día: ejemplo del producto (+18.5% vs promedio mes anterior)', () => {
+  it('15/09/2026: $35.320 vs promedio diario de agosto $29.800 → +18,5%', () => {
+    const period = getAnchoredPeriodRange({ mode: 'day', date: new Date('2026-09-15T10:00:00.000Z') }, NOW);
+    const w = getKpiReferenceWindow('prev_month_daily_avg', period, NOW);
+    expect(w.from.toISOString()).toBe('2026-08-01T00:00:00.000Z'); // mes anterior a D
+
+    // Agosto completo: $29.800/día × 31 días
+    const series: KpiSeriesPoint[] = [];
+    for (let d = 1; d <= 31; d++) {
+      series.push({
+        day_date: `2026-08-${String(d).padStart(2, '0')}`,
+        sales: 29800, transactions: 210, items_sold: 580,
+      });
+    }
+    const totals = sumSeriesWindow(series, w.from, w.to);
+    expect(totals.complete).toBe(true);
+    const ref = applyReferenceScaling(totals, w);
+    expect(Math.round(ref.sales)).toBe(29800); // promedio diario
+
+    const result = computeKpi({
+      metric: 'sales',
+      periodRange: period,
+      comparator: 'prev_month_daily_avg',
+      now: NOW,
+      series,
+      currentRaw: { sales: 35320, transactions: 247, units: 681, marginPct: null },
+      referenceRaw: { sales: ref.sales, transactions: ref.transactions, units: ref.units, marginPct: null, available: true },
+    });
+    expect(result.status).toBe('ok');
+    expect(Math.round((result.variationPct ?? 0) * 10) / 10).toBe(18.5);
+  });
+});
+
+describe('FASE 6 — modo Mes: mes seleccionado vs promedio mensual 6 meses', () => {
+  it('septiembre $842.300 vs promedio mensual $800.000 → +5,3%', () => {
+    const period = getAnchoredPeriodRange({ mode: 'month', date: new Date('2026-09-10T10:00:00.000Z') }, NOW);
+    const w = getKpiReferenceWindow('monthly_avg_6m', period, NOW);
+    // Serie: mar..ago con $4.8M total (6 meses)
+    const series: KpiSeriesPoint[] = [];
+    const months = [{ m: '03', d: 31 }, { m: '04', d: 30 }, { m: '05', d: 31 }, { m: '06', d: 30 }, { m: '07', d: 31 }, { m: '08', d: 31 }];
+    for (const { m, d } of months) {
+      for (let day = 1; day <= d; day++) {
+        series.push({
+          day_date: `2026-${m}-${String(day).padStart(2, '0')}`,
+          sales: 4_800_000 / 184, transactions: 7, items_sold: 20,
+        });
+      }
+    }
+    const totals = sumSeriesWindow(series, w.from, w.to);
+    expect(totals.complete).toBe(true);
+    const ref = applyReferenceScaling(totals, w);
+    expect(Math.round(ref.sales)).toBe(800_000);
+
+    const result = computeKpi({
+      metric: 'sales',
+      periodRange: period,
+      comparator: 'monthly_avg_6m',
+      now: NOW,
+      series,
+      currentRaw: { sales: 842_300, transactions: 700, units: 2100, marginPct: null },
+      referenceRaw: { sales: ref.sales, transactions: ref.transactions, units: ref.units, marginPct: null, available: true },
+    });
+    expect(result.status).toBe('ok');
+    expect(Math.round((result.variationPct ?? 0) * 10) / 10).toBe(5.3);
+  });
+
+  it('histórico corto (serie no cubre 6 meses) → no_reference, NUNCA inventa', () => {
+    const period = getAnchoredPeriodRange({ mode: 'month', date: new Date('2026-09-10T10:00:00.000Z') }, NOW);
+    const result = computeKpi({
+      metric: 'sales',
+      periodRange: period,
+      comparator: 'monthly_avg_6m',
+      now: NOW,
+      series: [{ day_date: '2026-09-05', sales: 100000, transactions: 2, items_sold: 5 }],
+      currentRaw: { sales: 842_300, transactions: 700, units: 2100, marginPct: null },
+      referenceRaw: { sales: null, transactions: null, units: null, marginPct: null, available: false },
+    });
+    expect(result.status).toBe('no_reference');
+  });
+});
+
+describe('FASE 7 — modo Año: acumulado vs mismo período del año anterior', () => {
+  it('sin año anterior suficiente → no_reference (N/D honesto del producto)', () => {
+    const period = getAnchoredPeriodRange({ mode: 'year', date: new Date('2026-02-10T10:00:00.000Z') }, NOW);
+    const w = getKpiReferenceWindow('same_period_last_year', period, NOW);
+    expect(w.fromSeries).toBe(false); // vía RPC (histórico anual)
+    expect(w.from.toISOString()).toBe('2025-01-01T00:00:00.000Z');
+    // Espejo justa: solo los días transcurridos del año en curso (288)
+    expect(w.to.toISOString()).toBe('2025-10-16T00:00:00.000Z');
+
+    const result = computeKpi({
+      metric: 'sales',
+      periodRange: period,
+      comparator: 'same_period_last_year',
+      now: NOW,
+      series: [],
+      currentRaw: { sales: 4_800_000, transactions: 5000, units: 15000, marginPct: null },
+      referenceRaw: { sales: null, transactions: null, units: null, marginPct: null, available: false },
+    });
+    expect(result.status).toBe('no_reference');
+  });
+
+  it('con año anterior → comparación justa a la fecha (mismo rango de días)', () => {
+    const period = getAnchoredPeriodRange({ mode: 'year', date: new Date('2026-02-10T10:00:00.000Z') }, NOW);
+    const result = computeKpi({
+      metric: 'sales',
+      periodRange: period,
+      comparator: 'same_period_last_year',
+      now: NOW,
+      series: [],
+      currentRaw: { sales: 4_800_000, transactions: 5000, units: 15000, marginPct: null },
+      referenceRaw: { sales: 4_000_000, transactions: 4200, units: null, marginPct: null, available: true },
+    });
+    expect(result.status).toBe('ok');
+    expect(Math.round((result.variationPct ?? 0) * 10) / 10).toBe(20);
+  });
+});
+
+describe('FASE 8 — A/B: dos fechas distintas ⇒ KPI distinto', () => {
+  it('día A ($35.320) ≠ día B ($12.400) contra la misma referencia', () => {
+    const mk = (sales: number) => computeKpi({
+      metric: 'sales',
+      periodRange: getAnchoredPeriodRange({ mode: 'day', date: new Date('2026-09-15T10:00:00.000Z') }, NOW),
+      comparator: 'prev_month_daily_avg',
+      now: NOW,
+      series: [],
+      currentRaw: { sales, transactions: sales > 0 ? 3 : 0, units: 9, marginPct: null },
+      referenceRaw: { sales: 29800, transactions: 210, units: 580, marginPct: null, available: true },
+    });
+    const a = mk(35320);
+    const b = mk(12400);
+    expect(a.status).toBe('ok');
+    expect(b.status).toBe('ok');
+    expect(a.variationPct).not.toBe(b.variationPct);
+    expect(Math.round((a.variationPct ?? 0) * 10) / 10).toBe(18.5);
+    expect(Math.round((b.variationPct ?? 0) * 10) / 10).toBe(-58.4);
+  });
+});
+
+describe('metric_unavailable (REMEDIACIÓN — unidades sin fuente para el período)', () => {
+  it('hay actividad (transacciones > 0) pero la métrica no tiene dato → metric_unavailable, no "sin ventas"', () => {
+    const result = computeKpi({
+      metric: 'units',
+      periodRange: getAnchoredPeriodRange({ mode: 'year', date: new Date('2025-05-10T10:00:00.000Z') }, NOW),
+      comparator: 'same_period_last_year',
+      now: NOW,
+      series: [],
+      currentRaw: { sales: 4_800_000, transactions: 5000, units: null, marginPct: null },
+      referenceRaw: { sales: 4_000_000, transactions: 4200, units: null, marginPct: null, available: true },
+    });
+    expect(result.status).toBe('metric_unavailable');
+    expect(result.current).toBeNull();
   });
 });

@@ -31,6 +31,7 @@ import type {
   KpiMetric,
   KpiComparator,
   KpiPeriod,
+  KpiAnchorMode,
 } from '@/lib/kpi/performance-kpi';
 import type { ComparatorAvailability } from './usePerformanceKpi';
 
@@ -44,6 +45,13 @@ interface KpiConfigModalProps {
   marginOptionAvailable: boolean;
   /** Transacciones del período actual (para la regla auto, informativo). */
   currentTotals: number;
+  /**
+   * REMEDIACIÓN KPI temporal: cuando el selector Día/Mes/Año del encabezado
+   * ancla el período, la sección Período se sustituye por una nota (una sola
+   * fuente de verdad del período) y el comparador es fijo en Mes/Año (FASE
+   * 6/7). null = sin anclar (configuración previa intacta).
+   */
+  anchorMode?: KpiAnchorMode | null;
 }
 
 const METRICS: { value: KpiMetric; key: string; hintKey?: string }[] = [
@@ -73,8 +81,12 @@ export function KpiConfigModal({
   effectiveMetric,
   comparatorAvailability,
   marginOptionAvailable,
+  anchorMode = null,
 }: KpiConfigModalProps) {
   const t = useTranslations('dashboard.singleStore.performance');
+  // FASE 10 — unidades sin fuente en modo Año (el RPC de agregados no expone
+  // unidades y la serie diaria puede no cubrir años pasados): honesto.
+  const unitsBlocked = anchorMode === 'year';
 
   return (
     <BaseModal
@@ -106,7 +118,8 @@ export function KpiConfigModal({
           >
             {METRICS.map(({ value, key, hintKey }) => {
               const isMargin = value === 'margin';
-              const disabled = isMargin && !marginOptionAvailable;
+              const isUnits = value === 'units';
+              const disabled = (isMargin && !marginOptionAvailable) || (isUnits && unitsBlocked);
               return (
                 <div
                   key={value}
@@ -142,6 +155,9 @@ export function KpiConfigModal({
                           : t('metric.marginRequiresCosts')}
                       </p>
                     )}
+                    {isUnits && unitsBlocked && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{t('metric.unitsYearNote')}</p>
+                    )}
                   </div>
                 </div>
               );
@@ -150,6 +166,23 @@ export function KpiConfigModal({
         </fieldset>
 
         {/* ── Comparador (FASE 6) ──────────────────────────────────────── */}
+        {anchorMode === 'month' ? (
+          // REMEDIACIÓN KPI temporal — FASE 6: referencia fija del modo Mes.
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-semibold text-foreground mb-2">{t('comparatorLabel')}</legend>
+            <p className="text-xs text-muted-foreground rounded-xl border border-border/50 p-3" data-testid="kpi-comparator-fixed">
+              {t('comparatorFixedMonth')}
+            </p>
+          </fieldset>
+        ) : anchorMode === 'year' ? (
+          // FASE 7: referencia fija del modo Año.
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-semibold text-foreground mb-2">{t('comparatorLabel')}</legend>
+            <p className="text-xs text-muted-foreground rounded-xl border border-border/50 p-3" data-testid="kpi-comparator-fixed">
+              {t('comparatorFixedYear')}
+            </p>
+          </fieldset>
+        ) : (
         <fieldset className="space-y-2">
           <legend className="text-sm font-semibold text-foreground mb-2">{t('comparatorLabel')}</legend>
           <RadioGroup
@@ -190,8 +223,19 @@ export function KpiConfigModal({
             })}
           </RadioGroup>
         </fieldset>
+        )}
 
         {/* ── Período (FASE 7) ─────────────────────────────────────────── */}
+        {anchorMode ? (
+          // REMEDIACIÓN KPI temporal — el selector Día/Mes/Año del encabezado
+          // es la ÚNICA fuente del período (FASE 4-8): sin segundo selector.
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-semibold text-foreground mb-2">{t('periodLabel')}</legend>
+            <p className="text-xs text-muted-foreground rounded-xl border border-border/50 p-3" data-testid="kpi-period-anchored-note">
+              {t('periodHeaderNote')}
+            </p>
+          </fieldset>
+        ) : (
         <fieldset className="space-y-2">
           <legend className="text-sm font-semibold text-foreground mb-2">{t('periodLabel')}</legend>
           <RadioGroup
@@ -222,6 +266,7 @@ export function KpiConfigModal({
             </p>
           )}
         </fieldset>
+        )}
       </div>
     </BaseModal>
   );

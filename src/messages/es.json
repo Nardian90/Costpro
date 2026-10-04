@@ -699,7 +699,8 @@
           "units": "Unidades vendidas",
           "margin": "Margen bruto",
           "marginNote": "Disponible: todos los productos tienen costos válidos",
-          "marginRequiresCosts": "Requiere costos válidos en todos los productos"
+          "marginRequiresCosts": "Requiere costos válidos en todos los productos",
+          "unitsYearNote": "No disponible en modo Año: el histórico diario no cubre ese rango."
         },
         "metricShort": {
           "sales": "Ventas",
@@ -714,21 +715,24 @@
           "last7_daily_avg": "Promedio diario de los últimos 7 días",
           "last30_daily_avg": "Promedio diario de los últimos 30 días",
           "same_weekday_last_week": "Mismo día de la semana anterior",
-          "same_period_last_year": "Mismo período del año anterior"
+          "same_period_last_year": "Mismo período del año anterior",
+          "monthly_avg_6m": "Promedio mensual (últimos 6 meses)"
         },
         "comparatorHint": {
           "prev_month_daily_avg": "Referencia = promedio por día del mes anterior",
           "last7_daily_avg": "Referencia = los 7 días anteriores al período",
           "last30_daily_avg": "Referencia = los 30 días anteriores al período",
           "same_weekday_last_week": "Ventana espejo de la semana pasada",
-          "same_period_last_year": "Ventana equivalente del año pasado"
+          "same_period_last_year": "Ventana equivalente del año pasado",
+          "monthly_avg_6m": "Total de los últimos 6 meses completos ÷ 6, comparado con el total del mes seleccionado."
         },
         "comparatorShort": {
           "prev_month_daily_avg": "promedio mes anterior",
           "last7_daily_avg": "promedio 7 días anteriores",
           "last30_daily_avg": "promedio 30 días anteriores",
           "same_weekday_last_week": "mismo día semana anterior",
-          "same_period_last_year": "mismo período año anterior"
+          "same_period_last_year": "mismo período año anterior",
+          "monthly_avg_6m": "promedio mensual (6 meses)"
         },
         "marginRefLabel": {
           "prev_month_daily_avg": "margen del mes anterior",
@@ -742,7 +746,52 @@
           "ayer": "Ayer",
           "ultimos_7_dias": "Últimos 7 días",
           "este_mes": "Este mes"
-        }
+        },
+        "helpLabel": "¿Qué significa este indicador?",
+        "txShort": "transacciones",
+        "periodHeaderNote": "El período lo controla el selector Día / Mes / Año del encabezado. La comparación se recalcula con cada cambio de período o fecha.",
+        "comparatorFixedMonth": "Referencia fija del modo Mes: promedio mensual de los últimos 6 meses completos. Para el mes en curso, la referencia se ajusta proporcionalmente a los días transcurridos (comparación justa).",
+        "comparatorFixedYear": "Referencia fija del modo Año: el mismo período del año anterior. La comparación se recalcula con cada cambio de período o fecha.",
+        "metricUnavailable": "Métrica no disponible para este período",
+        "metricUnavailableHint": "Hay actividad registrada, pero la métrica seleccionada no tiene fuente de datos para el período elegido.",
+        "qualitative": {
+          "way_above": "Muy por encima de lo habitual",
+          "above": "Por encima de lo habitual",
+          "in_line": "En línea con lo habitual",
+          "below": "Por debajo de lo habitual",
+          "way_below": "Muy por debajo de lo habitual"
+        },
+        "tooltip": {
+          "title": "¿Qué significa?",
+          "rule": "La comparación usa ventas reales registradas. Sin datos suficientes se muestra N/D en lugar de un porcentaje inventado.",
+          "noRef": "No hay suficiente histórico para calcular una comparación fiable. El indicador muestra N/D hasta que exista la referencia.",
+          "sales": {
+            "above": "Las ventas del período seleccionado fueron {variation} superiores a la referencia ({refLabel}). Se registraron {current} en {transactions} transacciones, frente a {reference}.",
+            "below": "Las ventas del período seleccionado fueron {variation} inferiores a la referencia ({refLabel}). Se registraron {current} en {transactions} transacciones, frente a {reference}.",
+            "equal": "Las ventas del período seleccionado coinciden con la referencia ({refLabel}): {current}."
+          },
+          "transactions": {
+            "above": "Las transacciones del período seleccionado fueron {variation} superiores a la referencia ({refLabel}). Se registraron {current}, frente a {reference}.",
+            "below": "Las transacciones del período seleccionado fueron {variation} inferiores a la referencia ({refLabel}). Se registraron {current}, frente a {reference}.",
+            "equal": "Las transacciones del período seleccionado coinciden con la referencia ({refLabel}): {current}."
+          },
+          "avg_ticket": {
+            "above": "El ticket promedio del período seleccionado fue {variation} superior a la referencia ({refLabel}). Fue {current}, frente a {reference}.",
+            "below": "El ticket promedio del período seleccionado fue {variation} inferior a la referencia ({refLabel}). Fue {current}, frente a {reference}.",
+            "equal": "El ticket promedio del período seleccionado coincide con la referencia ({refLabel}): {current}."
+          },
+          "units": {
+            "above": "Las unidades vendidas del período seleccionado fueron {variation} superiores a la referencia ({refLabel}). Se vendieron {current} unidades, frente a {reference}.",
+            "below": "Las unidades vendidas del período seleccionado fueron {variation} inferiores a la referencia ({refLabel}). Se vendieron {current} unidades, frente a {reference}.",
+            "equal": "Las unidades vendidas del período seleccionado coinciden con la referencia ({refLabel}): {current}."
+          },
+          "margin": {
+            "above": "El margen bruto del período seleccionado fue {variation} superior a la referencia ({refLabel}). Fue {current}, frente a {reference}.",
+            "below": "El margen bruto del período seleccionado fue {variation} inferior a la referencia ({refLabel}). Fue {current}, frente a {reference}.",
+            "equal": "El margen bruto del período seleccionado coincide con la referencia ({refLabel}): {current}."
+          }
+        },
+        "refProRated": "Referencia: {value} · {label}, ajustada a los {days} días transcurridos"
       },
       "title": "Panel de Control",
       "subtitle": "Resumen de Indicadores",
@@ -753,8 +802,6 @@
       "sales": "Ventas",
       "costs": "Costos",
       "profit": "Utilidad",
-      "salesSummary": "Resumen de Ventas",
-      "liveUpdates": "Live Updates",
       "transactions": "Transacciones",
       "averageTicket": "Ticket Promedio",
       "cash": "Efectivo",
@@ -764,7 +811,8 @@
       "criticalAlerts": "Alertas Críticas",
       "units": "uds",
       "viewAllAlerts": "Ver todas las alertas",
-      "loadingVisualization": "Cargando Visualización..."
+      "loadingVisualization": "Cargando Visualización...",
+      "activitySummary": "Resumen de actividad"
     },
     "storeDashboard": {
       "occ": {
