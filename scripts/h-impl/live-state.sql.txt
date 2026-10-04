@@ -1,0 +1,1127 @@
+
+/* ===== create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text) ACL={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres} ===== */
+CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_tx_id uuid := gen_random_uuid();
+  v_eff timestamp with time zone := COALESCE(p_operation_date, NOW());
+  v_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_item jsonb;
+  v_pid uuid;
+  v_qty numeric;
+  v_price numeric;
+  v_cost numeric;
+  v_variant_id uuid;
+  v_conversion_factor integer := 1;
+  v_units numeric;
+  v_stock numeric;
+  v_existing uuid;
+  v_effective_method text := p_payment_method;
+  v_product_price numeric;
+  v_calculated_subtotal numeric := 0;
+  v_discount_amount numeric := 0;
+  v_taxable_base numeric := 0;
+  v_calculated_tax numeric := 0;
+  v_calculated_total numeric := 0;
+  v_tax jsonb;
+  v_tax_value numeric;
+  v_effective_discount_pct numeric := 0;
+  v_cash_amt numeric := p_cash_amount;
+  v_transfer_amt numeric := p_transfer_amount;
+  v_zelle_amt numeric := p_zelle_amount;
+  v_pt_id uuid;
+  v_zelle_original_amount numeric;
+  v_sum_payments numeric;
+  v_wac_prev numeric;
+  -- E-SEC (R-SEC-1): precio de referencia server-side y desvío comercial por ítem
+  v_catalog_price numeric;
+  v_reference_price numeric;
+  v_catalog_subtotal numeric := 0;
+  v_item_discount_total numeric := 0;
+  v_item_discount_pct numeric := 0;
+  -- E-SEC-FINAL (D1-D5): umbral por línea, single-use, motivo, snapshot, redondeo
+  v_ord bigint;
+  v_line_pct numeric := 0;
+  v_max_line_pct numeric := 0;
+  v_gate_triggered boolean := false;
+  v_supervisor_path text := 'none';
+  v_reason text;
+  v_line_snapshot jsonb := '[]'::jsonb;
+  v_snap jsonb;
+  v_scope_entry jsonb;
+  v_scope_ok boolean := false;
+BEGIN
+  -- 1. Advisory lock por store (serializa ventas concurrentes)
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+
+  -- 2. Idempotencia
+  IF p_idempotency_key IS NOT NULL THEN
+    SELECT id INTO v_existing FROM public.transactions
+      WHERE idempotency_key = p_idempotency_key AND store_id = p_store_id LIMIT 1;
+    IF v_existing IS NOT NULL THEN
+      RETURN jsonb_build_object('status','idempotent','transaction_id',v_existing);
+    END IF;
+  END IF;
+
+  -- 3. Auth
+  IF v_uid IS NULL OR NOT public.has_store_access_as(v_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- 4. Operation date validation
+  IF p_operation_date IS NOT NULL THEN
+    PERFORM public.validate_operation_date(p_operation_date, p_store_id);
+  END IF;
+
+  -- 5. Auto-promote to mixed
+  IF p_cash_amount > 0 AND p_transfer_amount > 0 AND p_payment_method <> 'mixed' THEN
+    v_effective_method := 'mixed';
+  END IF;
+  IF p_zelle_amount > 0 AND p_payment_method <> 'mixed' AND (p_cash_amount > 0 OR p_transfer_amount > 0) THEN
+    v_effective_method := 'mixed';
+  END IF;
+  IF p_payment_method = 'zelle' AND p_zelle_amount = 0 AND p_cash_amount = 0 AND p_transfer_amount = 0 THEN
+    v_zelle_amt := p_total_amount;
+  END IF;
+
+  -- E-SEC-FINAL (D2): normalización del motivo; la OBLIGATORIEDAD se evalúa
+  -- solo cuando el gate dispara (nada se exige bajo el umbral).
+  v_reason := btrim(COALESCE(p_discount_reason, ''));
+  IF char_length(v_reason) > 500 THEN
+    RAISE EXCEPTION 'ERR_DISCOUNT_REASON_INVALID: max 500 caracteres';
+  END IF;
+
+  -- 6. Primera pasada — orden determinista por product_id (doctrina W62-05 §2.3):
+  --    FOR UPDATE de la fila del producto (serializa stock+WAC) + validaciones.
+  --    WITH ORDINALITY: posición determinista de cada línea (clave del snapshot D4).
+  FOR v_item, v_ord IN SELECT t.value, t.ord
+      FROM jsonb_array_elements(p_items) WITH ORDINALITY AS t(value, ord)
+      ORDER BY (t.value->>'product_id') LOOP
+    v_pid := (v_item->>'product_id')::uuid;
+    v_qty := (v_item->>'quantity')::numeric;
+    v_variant_id := NULLIF(v_item->>'variant_id', '')::uuid;
+
+    v_conversion_factor := 1;
+    IF v_variant_id IS NOT NULL THEN
+      SELECT conversion_factor INTO v_conversion_factor
+        FROM public.product_variants WHERE id = v_variant_id;
+      v_conversion_factor := COALESCE(v_conversion_factor, 1);
+    END IF;
+    v_units := v_qty * v_conversion_factor;
+
+    SELECT stock_current, cost_average, price INTO v_stock, v_wac_prev, v_catalog_price
+      FROM public.products
+      WHERE id = v_pid AND store_id = p_store_id
+      FOR UPDATE;
+
+    IF v_stock IS NULL THEN
+      -- fallback legacy: producto sin tienda (servicios globales)
+      SELECT stock_current, cost_average, price INTO v_stock, v_wac_prev, v_catalog_price
+        FROM public.products WHERE id = v_pid FOR UPDATE;
+    END IF;
+    v_stock := COALESCE(v_stock, 0);
+
+    -- DF-02: costo SIEMPRE del servidor (WAC_prev bajo lock)
+    IF v_wac_prev IS NULL THEN
+      RAISE EXCEPTION 'ERR_PRODUCT_COST_UNAVAILABLE: %', v_pid;
+    END IF;
+    IF v_wac_prev = 0 THEN
+      IF NOT EXISTS (SELECT 1 FROM public.w62_zero_cost_flags
+                     WHERE store_id = p_store_id AND product_id = v_pid AND scope = 'sale') THEN
+        RAISE EXCEPTION 'ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED: %', v_pid;
+      END IF;
+    END IF;
+
+    -- Saltar validación de stock para servicios
+    IF NOT EXISTS (SELECT 1 FROM public.products WHERE id = v_pid AND is_service = true) THEN
+      IF v_stock < v_units THEN
+        RAISE EXCEPTION 'ERR_INSUFFICIENT_STOCK: product %, stock %, requested %', v_pid, v_stock, v_units;
+      END IF;
+    END IF;
+
+    v_price := NULLIF(v_item->>'price_at_sale', '')::numeric;
+    IF v_price IS NULL THEN
+      v_price := NULLIF(v_item->>'price', '')::numeric;
+    END IF;
+    IF v_price IS NULL THEN
+      SELECT price INTO v_product_price FROM public.products WHERE id = v_pid;
+      v_price := COALESCE(v_product_price, 0);
+    END IF;
+
+    -- DF-02: claves cost_at_sale/cost del request IGNORADAS (no error)
+    v_cost := v_wac_prev;
+
+    -- E-SEC (R-SEC-1): precio inválido rechazado EN EL SERVIDOR (defensa contra
+    -- llamadas RPC directas que saltan la validación Zod del route). NaN se
+    -- detecta por auto-desigualdad; ±Infinity por comparación explícita
+    -- (numeric acepta ambos literales); negativo rechazado siempre. Cero NO se
+    -- rechaza aquí: es 100% de desvío y cae al gate de supervisor.
+    IF v_price IS NULL OR v_price <> v_price
+       OR v_price >= 'Infinity'::numeric OR v_price <= '-Infinity'::numeric
+       OR v_price < 0 THEN
+      RAISE EXCEPTION 'ERR_INVALID_PRICE: price_at_sale=% product=%', v_price, v_pid;
+    END IF;
+
+    -- E-SEC-FINAL (D5): precio monetario de línea → 2 decimales. Todo el
+    -- cálculo (desvío, subtotal, INSERT) usa el valor redondeado.
+    v_price := ROUND(v_price, 2);
+
+    -- E-SEC (R-SEC-1): precio de referencia del SERVIDOR para evaluar el desvío.
+    -- Variante → product_variants.price (precio por modalidad es legítimo y NO
+    -- se computa como desvío); base → products.price. Sin referencia (NULL/0)
+    -- no hay desvío evaluable (compatibilidad con servicios sin precio).
+    IF v_variant_id IS NOT NULL THEN
+      SELECT price INTO v_reference_price
+        FROM public.product_variants WHERE id = v_variant_id;
+      v_reference_price := COALESCE(v_reference_price, v_catalog_price);
+    ELSE
+      v_reference_price := v_catalog_price;
+    END IF;
+
+    -- E-SEC-FINAL (D5): el precio de catálogo de referencia también es monetario (2dp)
+    IF v_reference_price IS NOT NULL THEN
+      v_reference_price := ROUND(v_reference_price, 2);
+    END IF;
+
+    IF v_reference_price IS NOT NULL AND v_reference_price > 0 THEN
+      v_catalog_subtotal := v_catalog_subtotal + (v_reference_price * v_qty);
+      v_line_pct := 0;
+      IF v_price < v_reference_price THEN
+        v_item_discount_total := v_item_discount_total
+          + ((v_reference_price - v_price) * v_qty);
+        v_line_pct := ((v_reference_price - v_price) / v_reference_price) * 100;
+      END IF;
+      -- E-SEC-FINAL (D1): umbral POR LÍNEA — ninguna línea queda exenta por los
+      -- precios normales de otras líneas; el máximo de desvío gobierna el gate.
+      IF v_line_pct > v_max_line_pct THEN
+        v_max_line_pct := v_line_pct;
+      END IF;
+      -- E-SEC-FINAL (D4): snapshot por línea (clave 'ord' = posición
+      -- determinista; lo consume la segunda pasada y la auditoría).
+      v_line_snapshot := v_line_snapshot || jsonb_build_object(
+        'ord', v_ord,
+        'product_id', v_pid,
+        'variant_id', v_variant_id,
+        'catalog_price', v_reference_price,
+        'price_at_sale', v_price,
+        'discount_value', ROUND(GREATEST(0, v_reference_price - v_price) * v_qty, 2),
+        'discount_pct', ROUND(v_line_pct, 2)
+      );
+    END IF;
+
+    -- E-SEC-FINAL (D5): subtotal de LÍNEA redondeado a 2 decimales; el total de
+    -- la venta es la suma de los subtotales de línea ya redondeados.
+    v_calculated_subtotal := v_calculated_subtotal + ROUND((v_price * v_qty), 2);
+  END LOOP;
+
+  -- 7. Recalcular descuento
+  IF p_discount_type = 'percentage' THEN
+    v_discount_amount := LEAST((v_calculated_subtotal * p_discount_value) / 100, v_calculated_subtotal);
+  ELSE
+    v_discount_amount := LEAST(p_discount_value, v_calculated_subtotal);
+  END IF;
+
+  -- 8. Recalcular tax
+  v_taxable_base := GREATEST(0, v_calculated_subtotal - v_discount_amount);
+  v_calculated_tax := 0;
+  FOR v_tax IN SELECT * FROM jsonb_array_elements(p_applied_taxes) LOOP
+    IF v_tax->>'type' = 'percentage' THEN
+      v_tax_value := (v_taxable_base * COALESCE((v_tax->>'value')::numeric, 0)) / 100;
+      IF v_tax ? 'min_exempt' THEN
+        v_tax_value := GREATEST(0, v_taxable_base - COALESCE((v_tax->>'min_exempt')::numeric, 0)) * COALESCE((v_tax->>'value')::numeric, 0) / 100;
+      END IF;
+    ELSE
+      v_tax_value := COALESCE((v_tax->>'value')::numeric, 0);
+    END IF;
+    v_calculated_tax := v_calculated_tax + v_tax_value;
+  END LOOP;
+
+  -- 9. Calcular total
+  v_calculated_total := v_calculated_subtotal - v_discount_amount + v_calculated_tax;
+
+  -- 10. Validar total vs cliente (tolerancia 0.01 CUP)
+  IF abs(v_calculated_total - p_total_amount) > 0.01 THEN
+    RAISE EXCEPTION 'ERR_TOTAL_MISMATCH: calculated=%, client=%', v_calculated_total, p_total_amount;
+  END IF;
+
+  -- 11. Validar supervisor auth (si descuento global >= 15%)
+  IF v_calculated_subtotal > 0 THEN
+    v_effective_discount_pct := (v_discount_amount / v_calculated_subtotal) * 100;
+  END IF;
+
+  -- E-SEC (R-SEC-1): el desvío de precio por ítem ES un descuento comercial.
+  -- El agregado se conserva SOLO como metadato de auditoría (continuidad).
+  IF v_catalog_subtotal > 0 THEN
+    v_item_discount_pct := (v_item_discount_total / v_catalog_subtotal) * 100;
+  END IF;
+
+  -- ============================================================================
+  -- E-SEC-FINAL — gate definitivo D1-D3 (decisión del responsable funcional;
+  -- cierra E-SEC-R-DECISION-REQUIRED.md):
+  --   D1: el gate se evalúa POR LÍNEA (v_max_line_pct >= 15). El agregado NO
+  --       puede convertir {20% en una línea + 0% en otras} en una operación
+  --       autorizable sin supervisor. Se conserva el gate del descuento global
+  --       (v_effective_discount_pct >= 15, mecanismo preexistente).
+  --   D2: discount_reason obligatorio cuando hay autorización (validado aquí,
+  --       server-side, única regla canónica).
+  --   D3: token single-use (consumo atómico del jti) + scope firmado por línea.
+  -- ============================================================================
+  IF v_effective_discount_pct >= 15 OR v_max_line_pct >= 15 THEN
+    v_gate_triggered := true;
+  END IF;
+
+  IF v_gate_triggered THEN
+    -- Orden de denegación: PRIMERO la exigencia de supervisor (política
+    -- primaria), DESPUÉS el motivo (atributo de la autorización). Así una
+    -- llamada sin supervisor recibe ERR_SUPERVISOR_REQUIRED aunque tampoco
+    -- traiga motivo, y una llamada con supervisor válido pero sin motivo
+    -- recibe ERR_DISCOUNT_REASON_REQUIRED.
+    IF p_supervisor_user_id IS NULL THEN
+      RAISE EXCEPTION 'ERR_SUPERVISOR_REQUIRED: global_pct=%, max_line_pct=%', v_effective_discount_pct, v_max_line_pct;
+    END IF;
+
+    -- D2: motivo obligatorio (server-side; no se exige bajo el umbral)
+    IF v_reason = '' THEN
+      RAISE EXCEPTION 'ERR_DISCOUNT_REASON_REQUIRED: motivo obligatorio para descuento autorizado';
+    END IF;
+
+    -- RC-1 (REM-INV-4A-R): a client-supplied supervisor UUID is NOT proof of
+    -- authorization. Under authenticated, the ONLY server-verifiable supervisor
+    -- identity is the caller itself (auth.uid(), from the platform-signed JWT).
+    -- A foreign supervisor identity requires the trusted server route
+    -- (auth.role() = 'service_role'), which enforces the supervisor credential
+    -- proof (supervisor-check -> signed token -> checkout route) before RPC.
+    IF auth.role() <> 'service_role'
+       AND p_supervisor_user_id IS DISTINCT FROM auth.uid() THEN
+      RAISE EXCEPTION 'ERR_SUPERVISOR_UNAUTHORIZED';
+    END IF;
+    IF NOT public.has_store_role_as(p_supervisor_user_id, p_store_id, ARRAY['admin', 'manager']) THEN
+      RAISE EXCEPTION 'ERR_SUPERVISOR_UNAUTHORIZED';
+    END IF;
+
+    IF auth.role() = 'service_role' THEN
+      -- Camino delegado (route con token HMAC verificado). E-SEC-FINAL (D3):
+      -- la autorización es de UN SOLO USO y está ligada a la operación.
+      v_supervisor_path := 'token';
+      IF p_supervisor_token_jti IS NULL OR btrim(p_supervisor_token_jti) = '' THEN
+        RAISE EXCEPTION 'ERR_SUPERVISOR_TOKEN_REQUIRED: token de supervisor requerido';
+      END IF;
+      -- Consumo atómico del jti DENTRO de esta transacción: una venta fallida
+      -- revierte el consumo (el token no se quema); una venta confirmada lo
+      -- quema de forma irreversible. El replay —aunque el atacante conozca el
+      -- token y llame por HTTP directo— choca con el PRIMARY KEY: 0 filas
+      -- insertadas ⇒ ERR_SUPERVISOR_TOKEN_REUSED.
+      INSERT INTO public.supervisor_token_usages
+        (jti, supervisor_user_id, operator_user_id, store_id, transaction_id)
+      VALUES
+        (btrim(p_supervisor_token_jti), p_supervisor_user_id, v_uid, p_store_id, v_tx_id)
+      ON CONFLICT (jti) DO NOTHING;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'ERR_SUPERVISOR_TOKEN_REUSED: jti ya consumido';
+      END IF;
+
+      -- D3: scope firmado en la emisión. CADA línea con desvío >=15% debe estar
+      -- cubierta por una entrada (pid, vid) con px <= precio real (el descuento
+      -- aplicado no excede el autorizado). Evita: otro producto, otra línea no
+      -- autorizada, o un descuento mayor que el visto por el supervisor.
+      IF v_max_line_pct >= 15 THEN
+        IF p_supervisor_scope IS NULL OR jsonb_typeof(p_supervisor_scope) <> 'array' THEN
+          RAISE EXCEPTION 'ERR_SUPERVISOR_SCOPE_VIOLATION: scope ausente para lineas >=15%%';
+        END IF;
+        IF jsonb_array_length(p_supervisor_scope) = 0 THEN
+          RAISE EXCEPTION 'ERR_SUPERVISOR_SCOPE_VIOLATION: scope vacio para lineas >=15%%';
+        END IF;
+        FOR v_snap IN SELECT * FROM jsonb_array_elements(v_line_snapshot) LOOP
+          IF COALESCE((v_snap->>'discount_pct')::numeric, 0) >= 15 THEN
+            v_scope_ok := false;
+            FOR v_scope_entry IN SELECT * FROM jsonb_array_elements(p_supervisor_scope) LOOP
+              IF v_scope_entry->>'pid' IS NOT NULL
+                 AND v_scope_entry->>'pid' = v_snap->>'product_id'
+                 AND COALESCE(v_scope_entry->>'vid', '') = COALESCE(v_snap->>'variant_id', '')
+                 AND ROUND(COALESCE((v_scope_entry->>'px')::numeric, -1), 2)
+                     <= ROUND((v_snap->>'price_at_sale')::numeric, 2) THEN
+                v_scope_ok := true;
+                EXIT;
+              END IF;
+            END LOOP;
+            IF NOT v_scope_ok THEN
+              RAISE EXCEPTION 'ERR_SUPERVISOR_SCOPE_VIOLATION: product=%, price=% no cubierto por el scope autorizado', v_snap->>'product_id', v_snap->>'price_at_sale';
+            END IF;
+          END IF;
+        END LOOP;
+      END IF;
+    ELSE
+      -- Camino de sesión propia (RC-1: p_supervisor_user_id = auth.uid(),
+      -- admin/manager de la tienda; usado por sync/offline). Sin token por
+      -- diseño: la sesión firmada del supervisor ES la prueba de identidad y
+      -- no existe token reutilizable. Política preexistente, sin cambios.
+      v_supervisor_path := 'self_session';
+    END IF;
+  END IF;
+
+  -- 12. Validar/setear payment split
+  IF v_effective_method = 'mixed' THEN
+    IF abs(v_cash_amt + v_transfer_amt + v_zelle_amt - v_calculated_total) > 1.00 THEN
+      RAISE EXCEPTION 'ERR_PAYMENT_MISMATCH: cash=%, transfer=%, zelle=%, total=%',
+        v_cash_amt, v_transfer_amt, v_zelle_amt, v_calculated_total;
+    END IF;
+  ELSIF v_effective_method = 'cash' THEN
+    v_cash_amt := v_calculated_total;
+  ELSIF v_effective_method = 'transfer' THEN
+    v_transfer_amt := v_calculated_total;
+  ELSIF v_effective_method = 'zelle' THEN
+    v_zelle_amt := v_calculated_total;
+  END IF;
+
+  -- 13. INSERT transactions
+  INSERT INTO public.transactions (
+    id, store_id, seller_id, total_amount, status, payment_method,
+    discount_type, discount_value, subtotal, tax_amount, applied_taxes,
+    sale_currency, sale_exchange_rate, completed_at, idempotency_key, created_at,
+    cash_amount, transfer_amount, zelle_amount,
+    customer_id, customer_name
+  ) VALUES (
+    v_tx_id, p_store_id, p_seller_id, v_calculated_total, 'completed',
+    v_effective_method::public.payment_method_enum,
+    p_discount_type::public.discount_type_enum, v_discount_amount,
+    v_calculated_subtotal, v_calculated_tax, p_applied_taxes,
+    p_sale_currency, p_sale_exchange_rate, v_eff, p_idempotency_key, v_eff,
+    v_cash_amt, v_transfer_amt, v_zelle_amt,
+    p_customer_id, p_customer_name
+  );
+
+  -- 14. Segunda pasada: stock movement + transaction_items — MISMA autoridad de costo
+  FOR v_item, v_ord IN SELECT t.value, t.ord
+      FROM jsonb_array_elements(p_items) WITH ORDINALITY AS t(value, ord)
+      ORDER BY (t.value->>'product_id') LOOP
+    v_pid := (v_item->>'product_id')::uuid;
+    v_qty := (v_item->>'quantity')::numeric;
+    v_variant_id := NULLIF(v_item->>'variant_id', '')::uuid;
+
+    v_conversion_factor := 1;
+    IF v_variant_id IS NOT NULL THEN
+      SELECT conversion_factor INTO v_conversion_factor
+        FROM public.product_variants WHERE id = v_variant_id;
+      v_conversion_factor := COALESCE(v_conversion_factor, 1);
+    END IF;
+    v_units := v_qty * v_conversion_factor;
+
+    v_price := NULLIF(v_item->>'price_at_sale', '')::numeric;
+    IF v_price IS NULL THEN
+      v_price := NULLIF(v_item->>'price', '')::numeric;
+    END IF;
+    IF v_price IS NULL THEN
+      SELECT price INTO v_product_price FROM public.products WHERE id = v_pid;
+      v_price := COALESCE(v_product_price, 0);
+    END IF;
+
+    -- E-SEC-FINAL (D5): misma semántica de redondeo que la primera pasada
+    v_price := ROUND(v_price, 2);
+
+    -- E-SEC-FINAL (D4): snapshot de esta línea calculado en la primera pasada
+    -- (misma transacción, mismo lock; la clave 'ord' es determinista).
+    SELECT e INTO v_snap FROM jsonb_array_elements(v_line_snapshot) AS e
+      WHERE (e->>'ord')::bigint = v_ord;
+
+    -- DF-02: re-lectura bajo FOR UPDATE (misma TX; sin ventana TOCTOU)
+    SELECT cost_average INTO v_cost
+      FROM public.products
+      WHERE id = v_pid AND store_id = p_store_id
+      FOR UPDATE;
+    IF v_cost IS NULL THEN
+      SELECT cost_average INTO v_cost FROM public.products WHERE id = v_pid FOR UPDATE;
+    END IF;
+    IF v_cost IS NULL THEN
+      RAISE EXCEPTION 'ERR_PRODUCT_COST_UNAVAILABLE: %', v_pid;
+    END IF;
+
+    -- Stock movement (solo si NO es servicio)
+    IF NOT EXISTS (SELECT 1 FROM public.products WHERE id = v_pid AND is_service = true) THEN
+      PERFORM public.register_stock_movement(
+        p_product_id := v_pid, p_store_id := p_store_id, p_user_id := v_uid,
+        p_quantity := -v_units, p_movement_type := 'sale', p_reason := 'Venta POS v2',
+        p_sale_id := v_tx_id, p_unit_cost := v_cost, p_notes := NULL,
+        p_operation_date := v_eff, p_skip_access_check := TRUE
+      );
+    END IF;
+
+    INSERT INTO public.transaction_items (
+      transaction_id, product_id, variant_id, quantity, price_at_sale, cost_at_sale, created_at,
+      cash_paid, transfer_paid, zelle_paid, currency, exchange_rate,
+      cash_currency, transfer_currency, zelle_currency,
+      cash_discount_type, cash_discount_value, cash_discount_currency,
+      transfer_discount_type, transfer_discount_value, transfer_discount_currency,
+      zelle_discount_type, zelle_discount_value, zelle_discount_currency,
+      discount_type, discount_value, price_currency, price_at_sale_cup,
+      catalog_price_at_sale, item_discount_value, item_discount_pct
+    ) VALUES (
+      v_tx_id, v_pid, v_variant_id, v_qty, v_price, v_cost, v_eff,
+      COALESCE(NULLIF(v_item->>'cash_paid','')::numeric, NULL),
+      COALESCE(NULLIF(v_item->>'transfer_paid','')::numeric, NULL),
+      COALESCE(NULLIF(v_item->>'zelle_paid','')::numeric, NULL),
+      v_item->>'currency',
+      COALESCE(NULLIF(v_item->>'exchange_rate','')::numeric, NULL),
+      v_item->>'cash_currency',
+      v_item->>'transfer_currency',
+      v_item->>'zelle_currency',
+      v_item->>'cash_discount_type',
+      COALESCE(NULLIF(v_item->>'cash_discount_value','')::numeric, NULL),
+      v_item->>'cash_discount_currency',
+      v_item->>'transfer_discount_type',
+      COALESCE(NULLIF(v_item->>'transfer_discount_value','')::numeric, NULL),
+      v_item->>'transfer_discount_currency',
+      v_item->>'zelle_discount_type',
+      COALESCE(NULLIF(v_item->>'zelle_discount_value','')::numeric, NULL),
+      v_item->>'zelle_discount_currency',
+      p_discount_type::public.discount_type_enum,
+      v_discount_amount,
+      p_sale_currency,
+      v_price * p_sale_exchange_rate,
+      -- E-SEC-FINAL (D4): snapshot histórico del precio por línea
+      (v_snap->>'catalog_price')::numeric,
+      COALESCE((v_snap->>'discount_value')::numeric, 0),
+      COALESCE((v_snap->>'discount_pct')::numeric, 0)
+    );
+  END LOOP;
+
+  -- 15. payment_transactions (fuente autoritativa de pagos)
+  IF v_cash_amt > 0 THEN
+    INSERT INTO public.payment_transactions (
+      store_id, ref_type, ref_id, transaction_id,
+      amount, payment_method, currency, exchange_rate,
+      payment_date, paid_by, idempotency_key
+    ) VALUES (
+      p_store_id, 'sale', v_tx_id, v_tx_id,
+      v_cash_amt, 'cash', 'CUP', 1.0,
+      v_eff, v_uid, 'pay-cash-' || v_tx_id::text
+    ) RETURNING id INTO v_pt_id;
+  END IF;
+
+  IF v_transfer_amt > 0 THEN
+    INSERT INTO public.payment_transactions (
+      store_id, ref_type, ref_id, transaction_id,
+      amount, payment_method, currency, exchange_rate,
+      payment_date, paid_by, idempotency_key
+    ) VALUES (
+      p_store_id, 'sale', v_tx_id, v_tx_id,
+      v_transfer_amt, 'transfer', 'CUP', 1.0,
+      v_eff, v_uid, 'pay-transfer-' || v_tx_id::text
+    ) RETURNING id INTO v_pt_id;
+  END IF;
+
+  IF v_zelle_amt > 0 THEN
+    IF p_sale_currency = 'CUP' OR p_sale_exchange_rate IS NULL OR p_sale_exchange_rate <= 1 THEN
+      RAISE EXCEPTION 'ERR_ZELLE_REQUIRES_RATE: zelle payment requires p_sale_currency != CUP and p_sale_exchange_rate > 1. Got: currency=%, rate=%',
+        p_sale_currency, p_sale_exchange_rate USING ERRCODE = 'PT009';
+    END IF;
+    IF p_sale_currency NOT IN ('USD', 'EUR', 'MLC') THEN
+      RAISE EXCEPTION 'ERR_INVALID_CURRENCY: p_sale_currency must be USD, EUR, or MLC. Got: %',
+        p_sale_currency USING ERRCODE = 'PT004';
+    END IF;
+    v_zelle_original_amount := v_zelle_amt / p_sale_exchange_rate;
+    INSERT INTO public.payment_transactions (
+      store_id, ref_type, ref_id, transaction_id,
+      amount, payment_method, currency, exchange_rate,
+      payment_date, paid_by, idempotency_key
+    ) VALUES (
+      p_store_id, 'sale', v_tx_id, v_tx_id,
+      v_zelle_original_amount, 'zelle', p_sale_currency, p_sale_exchange_rate,
+      v_eff, v_uid, 'pay-zelle-' || v_tx_id::text
+    ) RETURNING id INTO v_pt_id;
+  END IF;
+
+  -- 16. Validación post-INSERT: I1b (POS exige pago completo)
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_sum_payments
+  FROM public.payment_transactions WHERE transaction_id = v_tx_id;
+
+  IF ABS(v_sum_payments - v_calculated_total) > 0.01 THEN
+    RAISE EXCEPTION 'ERR_PAYMENT_INVARIANT_VIOLATED: SUM(amount_cup)=% != total_amount=% (POS requires full payment)',
+      v_sum_payments, v_calculated_total USING ERRCODE = 'PT011';
+  END IF;
+
+  -- 17. Audit log completo
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CREATE_SALE_V2', 'transactions', v_tx_id, p_store_id, v_uid,
+    jsonb_build_object(
+      'total_amount', v_calculated_total,
+      'subtotal', v_calculated_subtotal,
+      'discount_amount', v_discount_amount,
+      'discount_pct', v_effective_discount_pct,
+      'catalog_subtotal', v_catalog_subtotal,
+      'item_discount_total', v_item_discount_total,
+      'item_discount_pct', v_item_discount_pct,
+      'max_line_discount_pct', v_max_line_pct,
+      'tax_amount', v_calculated_tax,
+      'payment_method', v_effective_method,
+      'cash_amount', v_cash_amt, 'transfer_amount', v_transfer_amt, 'zelle_amount', v_zelle_amt,
+      'customer_id', p_customer_id,
+      'supervisor_id', p_supervisor_user_id,
+      -- E-SEC-FINAL (D2/D3/D4): auditoría reconstruible de la autorización
+      'discount_reason', v_reason,
+      'supervisor_path', v_supervisor_path,
+      'supervisor_token_jti', CASE WHEN v_supervisor_path = 'token' THEN btrim(p_supervisor_token_jti) END,
+      'lines', v_line_snapshot,
+      'item_count', jsonb_array_length(p_items),
+      'v2_checkout', true,
+      'payment_transactions_created', true,
+      'cogs_authority', 'server_side_wac_df02',
+      'policy_version', 'E-SEC-FINAL'
+    ));
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transaction_id', v_tx_id,
+    'calculated_total', v_calculated_total,
+    'calculated_subtotal', v_calculated_subtotal,
+    'calculated_tax', v_calculated_tax,
+    'discount_amount', v_discount_amount
+  );
+END $function$
+
+
+
+/* ===== create_sale(p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric, p_discount_type text, p_discount_value numeric, p_payment_method text, p_tax_amount numeric, p_applied_taxes jsonb, p_transaction_id uuid, p_operation_date timestamp with time zone, p_cash_amount numeric, p_transfer_amount numeric, p_idempotency_key text, p_sale_currency text, p_sale_exchange_rate numeric, p_zelle_amount numeric, p_warehouse_id uuid, p_user_id uuid) ACL={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres} ===== */
+CREATE OR REPLACE FUNCTION public.create_sale(p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric DEFAULT 0, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_payment_method text DEFAULT 'cash'::text, p_tax_amount numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_transaction_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_idempotency_key text DEFAULT NULL::text, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_zelle_amount numeric DEFAULT 0, p_warehouse_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_tx_id uuid := COALESCE(p_transaction_id, gen_random_uuid());
+  v_eff timestamp with time zone := COALESCE(p_operation_date, NOW());
+  v_item jsonb; v_pid uuid; v_qty numeric; v_price numeric; v_cost numeric;
+  v_variant_id uuid;
+  v_conversion_factor integer := 1;
+  v_units_to_deduct numeric;
+  v_existing uuid;
+  v_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_effective_method text := p_payment_method;
+  v_product_price numeric;
+BEGIN
+  -- Idempotencia
+  IF p_idempotency_key IS NOT NULL THEN
+    SELECT id INTO v_existing FROM public.transactions WHERE idempotency_key = p_idempotency_key AND store_id = p_store_id LIMIT 1;
+    IF v_existing IS NOT NULL THEN RETURN jsonb_build_object('status','idempotent','transaction_id',v_existing); END IF;
+  END IF;
+
+  IF v_uid IS NULL OR NOT public.has_store_access_as(v_uid, p_store_id) THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
+  -- FIX H-2 (Iteración 11.1): Validar operation_date (forward-only locking).
+  -- validate_operation_date usa pg_advisory_xact_lock(hashtext(store_id))
+  -- para serializar la validación por tienda. Si p_operation_date es anterior
+  -- al MAX(created_at) de la tienda, lanza ERR_BACKDATED_DOCUMENT.
+  -- Solo validar si p_operation_date fue proporcionado explícitamente.
+  IF p_operation_date IS NOT NULL THEN
+    PERFORM public.validate_operation_date(p_operation_date, p_store_id);
+  END IF;
+
+  IF p_cash_amount > 0 AND p_transfer_amount > 0 AND p_payment_method <> 'mixed' THEN
+    v_effective_method := 'mixed';
+  END IF;
+
+  INSERT INTO public.transactions (
+    id, store_id, seller_id, total_amount, status, payment_method,
+    discount_type, discount_value, subtotal, tax_amount, applied_taxes,
+    sale_currency, sale_exchange_rate, completed_at, idempotency_key, created_at,
+    cash_amount, transfer_amount, zelle_amount
+  ) VALUES (
+    v_tx_id, p_store_id, p_seller_id, p_total_amount, 'completed',
+    v_effective_method::public.payment_method_enum,
+    p_discount_type::public.discount_type_enum, p_discount_value, p_subtotal, p_tax_amount, p_applied_taxes,
+    p_sale_currency, p_sale_exchange_rate, v_eff, p_idempotency_key, v_eff,
+    p_cash_amount, p_transfer_amount, p_zelle_amount
+  );
+
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
+    v_pid := (v_item->>'product_id')::uuid;
+    v_qty := (v_item->>'quantity')::numeric;
+    v_variant_id := NULLIF(v_item->>'variant_id', '')::uuid;
+
+    v_price := NULLIF(v_item->>'price_at_sale', '')::numeric;
+    IF v_price IS NULL THEN
+      v_price := NULLIF(v_item->>'price', '')::numeric;
+    END IF;
+    IF v_price IS NULL THEN
+      SELECT price INTO v_product_price FROM public.products WHERE id = v_pid;
+      v_price := COALESCE(v_product_price, 0);
+    END IF;
+
+    v_cost := COALESCE((v_item->>'cost_at_sale')::numeric, (v_item->>'cost')::numeric, 0);
+
+    v_conversion_factor := 1;
+    IF v_variant_id IS NOT NULL THEN
+      SELECT conversion_factor INTO v_conversion_factor
+        FROM public.product_variants WHERE id = v_variant_id;
+      v_conversion_factor := COALESCE(v_conversion_factor, 1);
+    END IF;
+
+    v_units_to_deduct := v_qty * v_conversion_factor;
+
+    PERFORM public.register_stock_movement(
+      p_product_id := v_pid, p_store_id := p_store_id, p_user_id := v_uid,
+      p_quantity := -v_units_to_deduct, p_movement_type := 'sale', p_reason := 'Venta POS',
+      p_sale_id := v_tx_id, p_unit_cost := v_cost, p_notes := NULL,
+      p_operation_date := v_eff, p_skip_access_check := TRUE
+    );
+
+    INSERT INTO public.transaction_items (transaction_id, product_id, variant_id, quantity, price_at_sale, cost_at_sale, created_at)
+    VALUES (v_tx_id, v_pid, v_variant_id, v_qty, v_price, v_cost, v_eff);
+  END LOOP;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CREATE_SALE', 'transactions', v_tx_id, p_store_id, v_uid,
+    jsonb_build_object('total_amount', p_total_amount, 'payment_method', v_effective_method,
+      'cash_amount', p_cash_amount, 'transfer_amount', p_transfer_amount,
+      'currency', p_sale_currency, 'exchange_rate', p_sale_exchange_rate,
+      'item_count', jsonb_array_length(p_items)));
+
+  RETURN jsonb_build_object('status','success','transaction_id',v_tx_id);
+END;
+$function$
+
+
+
+/* ===== update_transaction_taxes(p_transaction_id uuid, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric) ACL={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres} ===== */
+CREATE OR REPLACE FUNCTION public.update_transaction_taxes(p_transaction_id uuid, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+                                                                                                                                                                                                                                                                                                                                                                                                                        DECLARE
+                                                                                                                                                                                                                                                                                                                                                                                                                            v_old_tax_amount numeric;
+                                                                                                                                                                                                                                                                                                                                                                                                                                v_store_id uuid;
+                                                                                                                                                                                                                                                                                                                                                                                                                                BEGIN
+                                                                                                                                                                                                                                                                                                                                                                                                                                    -- Check permissions (only manager or admin)
+                                                                                                                                                                                                                                                                                                                                                                                                                                        IF NOT (public.is_admin() OR public.has_role('manager') OR public.has_role('encargado')) THEN
+                                                                                                                                                                                                                                                                                                                                                                                                                                                RAISE EXCEPTION 'Unauthorized: Only managers can update taxes of confirmed sales';
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    END IF;
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        SELECT tax_amount, store_id INTO v_old_tax_amount, v_store_id
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            FROM public.transactions
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                WHERE id = p_transaction_id;
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    IF NOT FOUND THEN
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            RAISE EXCEPTION 'Transaction not found';
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                END IF;
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    -- Update transaction
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        UPDATE public.transactions
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            SET
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    applied_taxes = p_applied_taxes,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            tax_amount = p_tax_amount,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    total_amount = p_total_amount,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            updated_at = now()
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                WHERE id = p_transaction_id;
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    -- Audit Log
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, new_data, store_id)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            VALUES (
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    auth.uid(),
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            'UPDATE_TRANSACTION_TAXES',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'transactions',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            p_transaction_id,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    jsonb_build_object('tax_amount', v_old_tax_amount),
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            jsonb_build_object('tax_amount', p_tax_amount, 'total_amount', p_total_amount, 'applied_taxes', p_applied_taxes),
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    v_store_id
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        );
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            RETURN true;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            END;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            $function$
+
+
+
+/* ===== adjust_total_amount(p_transaction_id uuid, p_new_total numeric, p_reason text) ACL={costpro_transaction_adjuster=X/costpro_transaction_adjuster,authenticated=X/costpro_transaction_adjuster} ===== */
+CREATE OR REPLACE FUNCTION public.adjust_total_amount(p_transaction_id uuid, p_new_total numeric, p_reason text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE v_actor uuid; v_old_total numeric; v_store_id uuid; v_paid_total numeric; v_lock_key bigint;
+BEGIN
+  v_actor := auth.uid();
+  IF v_actor IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHENTICATED' USING ERRCODE = 'PT014'; END IF;
+  IF NOT public.is_admin() THEN RAISE EXCEPTION 'ERR_UNAUTHORIZED' USING ERRCODE = 'PT015'; END IF;
+  IF p_reason IS NULL OR btrim(p_reason) = '' THEN RAISE EXCEPTION 'ERR_REASON_REQUIRED' USING ERRCODE = 'PT013'; END IF;
+  IF p_new_total IS NULL OR p_new_total < 0 THEN RAISE EXCEPTION 'ERR_INVALID_TOTAL' USING ERRCODE = 'PT012'; END IF;
+  v_lock_key := hashtextextended(p_transaction_id::text, 0);
+  PERFORM pg_advisory_xact_lock(v_lock_key);
+  SELECT total_amount, store_id INTO v_old_total, v_store_id FROM public.transactions WHERE id = p_transaction_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_TRANSACTION_NOT_FOUND' USING ERRCODE = 'PT016'; END IF;
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_paid_total FROM public.payment_transactions WHERE transaction_id = p_transaction_id;
+  IF v_paid_total > p_new_total + 0.01 THEN RAISE EXCEPTION 'ERR_TOTAL_BELOW_PAYMENTS' USING ERRCODE = 'PT002'; END IF;
+  IF v_old_total = p_new_total THEN
+    INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+    VALUES ('ADJUST_TOTAL_AMOUNT_NO_OP', 'transactions', p_transaction_id, v_store_id, v_actor,
+      jsonb_build_object('total_amount', v_old_total, 'reason', p_reason, 'result', 'NO_OP', 'executed_as', current_user, 'session_user', session_user, 'auth_uid', v_actor));
+    RETURN true;
+  END IF;
+  UPDATE public.transactions SET total_amount = p_new_total WHERE id = p_transaction_id;
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('ADJUST_TOTAL_AMOUNT', 'transactions', p_transaction_id, v_store_id, v_actor,
+    jsonb_build_object('old_total', v_old_total, 'new_total', p_new_total, 'reason', p_reason, 'paid_total_at_time', v_paid_total, 'executed_as', current_user, 'session_user', session_user, 'auth_uid', v_actor));
+  RETURN true;
+END;
+$function$
+
+
+
+/* ===== has_store_access_as(p_user_id uuid, p_store_id uuid) ACL={postgres=X/postgres,service_role=X/postgres} ===== */
+CREATE OR REPLACE FUNCTION public.has_store_access_as(p_user_id uuid, p_store_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+    v_role TEXT;
+BEGIN
+    IF p_user_id IS NULL OR p_store_id IS NULL THEN RETURN false; END IF;
+    
+    -- Check if admin
+    SELECT role INTO v_role FROM public.profiles WHERE id = p_user_id;
+    IF v_role = 'admin' THEN RETURN true; END IF;
+    
+    -- Check membership
+    RETURN EXISTS (
+        SELECT 1 FROM public.user_store_memberships
+        WHERE user_id = p_user_id AND store_id = p_store_id AND status = 'active'
+    );
+END;
+$function$
+
+
+
+/* ===== has_store_access(p_store_id uuid) ACL={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres} ===== */
+CREATE OR REPLACE FUNCTION public.has_store_access(p_store_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_user_id uuid := auth.uid();
+BEGIN
+  IF v_user_id IS NULL OR p_store_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  -- Admin global tiene acceso a todo
+  IF public.is_admin() THEN
+    RETURN true;
+  END IF;
+
+  -- Verificar membership activa en la tienda
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.user_store_memberships m
+    JOIN public.stores s
+      ON s.id = m.store_id
+    JOIN public.profiles p
+      ON p.id = m.user_id
+    WHERE m.user_id = v_user_id
+      AND m.store_id = p_store_id
+      AND m.status::text = 'active'
+      AND (
+        p.tenant_id IS NULL
+        OR s.tenant_id IS NULL
+        OR p.tenant_id = s.tenant_id
+      )
+  );
+END;
+$function$
+
+
+
+/* ===== has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[]) ACL={postgres=X/postgres,service_role=X/postgres} ===== */
+CREATE OR REPLACE FUNCTION public.has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+  IF p_user_id IS NULL OR p_store_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  -- Admin global bypasses
+  IF EXISTS (SELECT 1 FROM public.profiles WHERE id = p_user_id AND role IN ('admin', 'superadmin')) THEN
+    RETURN true;
+  END IF;
+
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.user_store_memberships m
+    WHERE m.user_id = p_user_id
+      AND m.store_id = p_store_id
+      AND m.status = 'active'
+      AND m.role::text = ANY(p_roles)
+  );
+END;
+$function$
+
+
+
+/* ===== is_admin() ACL={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres,costpro_transaction_adjuster=X/postgres} ===== */
+CREATE OR REPLACE FUNCTION public.is_admin()
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = auth.uid()
+      AND role = 'admin'
+  );
+END;
+$function$
+
+
+
+/* ===== check_idempotency(p_key text, p_operation text, p_record_id uuid, p_param_hash text) ACL={postgres=X/postgres,service_role=X/postgres} ===== */
+CREATE OR REPLACE FUNCTION public.check_idempotency(p_key text, p_operation text, p_record_id uuid, p_param_hash text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+DECLARE v_existing_result jsonb;
+  v_existing_hash text;
+  v_inserted_id uuid;
+BEGIN
+  IF p_key IS NULL THEN RETURN NULL; END IF;
+
+  INSERT INTO idempotency_registry (idempotency_key, operation, record_id, param_hash, result)
+  VALUES (p_key, p_operation, p_record_id, p_param_hash, jsonb_build_object('status', 'pending'))
+  ON CONFLICT (idempotency_key, operation) DO NOTHING
+  RETURNING id INTO v_inserted_id;
+
+  IF v_inserted_id IS NOT NULL THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT result, param_hash INTO v_existing_result, v_existing_hash
+  FROM idempotency_registry
+  WHERE idempotency_key = p_key AND operation = p_operation LIMIT 1;
+
+  IF v_existing_hash != p_param_hash THEN
+    RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE';
+  END IF;
+
+  IF v_existing_result->>'status' = 'pending' THEN
+    PERFORM pg_sleep(0.1);
+    SELECT result INTO v_existing_result
+    FROM idempotency_registry
+    WHERE idempotency_key = p_key AND operation = p_operation LIMIT 1;
+    IF v_existing_result->>'status' = 'pending' THEN
+      PERFORM pg_sleep(0.2);
+      SELECT result INTO v_existing_result
+      FROM idempotency_registry
+      WHERE idempotency_key = p_key AND operation = p_operation LIMIT 1;
+    END IF;
+  END IF;
+
+  RETURN v_existing_result;
+END;
+$function$
+
+
+
+/* ===== ACL LIVE create_sale_v2 ===== */
+=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+
+
+/* ===== POLICIES LIVE ===== */
+-- exchange_rates :: exchange_rates_insert [INSERT] roles={service_role}
+   USING: null
+   WITH CHECK: true
+-- exchange_rates :: exchange_rates_read [SELECT] roles={authenticated}
+   USING: true
+   WITH CHECK: null
+-- exchange_rates :: exchange_rates_update [UPDATE] roles={service_role}
+   USING: true
+   WITH CHECK: null
+-- store_exchange_rates :: Users can manage own store rates [ALL] roles={public}
+   USING: (EXISTS ( SELECT 1
+   FROM profiles p
+  WHERE ((p.id = auth.uid()) AND (p.store_id = store_exchange_rates.store_id))))
+   WITH CHECK: (EXISTS ( SELECT 1
+   FROM profiles p
+  WHERE ((p.id = auth.uid()) AND (p.store_id = store_exchange_rates.store_id))))
+-- store_exchange_rates :: Users can view own store rates [SELECT] roles={public}
+   USING: ((EXISTS ( SELECT 1
+   FROM profiles p
+  WHERE ((p.id = auth.uid()) AND (p.store_id = store_exchange_rates.store_id)))) OR (EXISTS ( SELECT 1
+   FROM profiles p
+  WHERE ((p.id = auth.uid()) AND (p.role = 'admin'::user_role)))))
+   WITH CHECK: null
+-- tax_configurations :: Tax unified [ALL] roles={authenticated}
+   USING: has_store_access(store_id)
+   WITH CHECK: null
+
+/* ===== CONSTRAINTS ===== */
+-- exchange_rates.exchange_rates_capture_method_check: CHECK ((capture_method = ANY (ARRAY['real'::text, 'estimated'::text])))
+-- exchange_rates.exchange_rates_currency_check: CHECK ((currency = ANY (ARRAY['USD'::text, 'EUR'::text, 'MLC'::text])))
+-- exchange_rates.exchange_rates_pkey: PRIMARY KEY (id)
+-- exchange_rates.exchange_rates_rate_check: CHECK ((rate > (0)::numeric))
+-- exchange_rates.exchange_rates_rate_date_currency_source_seg_key: UNIQUE (rate_date, currency, source, segment)
+-- exchange_rates.exchange_rates_segment_check: CHECK ((segment = ANY (ARRAY['1'::text, '2'::text, '3'::text])))
+-- exchange_rates.exchange_rates_source_check: CHECK ((source = ANY (ARRAY['BCC'::text, 'elToque'::text])))
+-- store_exchange_rates.store_exchange_rates_pkey: PRIMARY KEY (id)
+-- store_exchange_rates.store_exchange_rates_store_id_currency_key: UNIQUE (store_id, currency)
+-- store_exchange_rates.store_exchange_rates_store_id_fkey: FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+-- store_exchange_rates.store_exchange_rates_updated_by_fkey: FOREIGN KEY (updated_by) REFERENCES auth.users(id)
+-- tax_configurations.tax_configurations_pkey: PRIMARY KEY (id)
+-- tax_configurations.tax_configurations_store_id_fkey: FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+-- tax_configurations.tax_configurations_type_check: CHECK ((type = ANY (ARRAY['fixed'::text, 'percentage'::text])))
+
+/* ===== transactions columns ===== */
+-- id uuid nullable=NO default=gen_random_uuid()
+-- store_id uuid nullable=NO default=null
+-- seller_id uuid nullable=NO default=null
+-- total_amount numeric nullable=NO default=null
+-- status USER-DEFINED nullable=NO default='completed'::transaction_status
+-- created_at timestamp with time zone nullable=NO default=timezone('utc'::text, now())
+-- updated_at timestamp with time zone nullable=NO default=timezone('utc'::text, now())
+-- completed_at timestamp with time zone nullable=YES default=null
+-- cancelled_at timestamp with time zone nullable=YES default=null
+-- void_reason text nullable=YES default=null
+-- payment_method USER-DEFINED nullable=YES default='cash'::payment_method_enum
+-- discount_type USER-DEFINED nullable=YES default='fixed'::discount_type_enum
+-- discount_value numeric nullable=YES default=0
+-- subtotal numeric nullable=YES default=0
+-- idempotency_key text nullable=YES default=null
+-- tax_amount numeric nullable=YES default=0
+-- applied_taxes jsonb nullable=YES default='[]'::jsonb
+-- tenant_id uuid nullable=YES default=null
+-- cash_amount numeric nullable=YES default=0
+-- transfer_amount numeric nullable=YES default=0
+-- customer_id uuid nullable=YES default=null
+-- customer_name text nullable=YES default=null
+-- sale_currency text nullable=NO default='CUP'::text
+-- sale_exchange_rate numeric nullable=NO default=1.0
+-- zelle_amount numeric nullable=YES default=0
+-- reversed_at timestamp with time zone nullable=YES default=null
+-- reversed_by uuid nullable=YES default=null
+-- reversal_reason text nullable=YES default=null
+-- original_transaction_id uuid nullable=YES default=null
+-- customer_phone text nullable=YES default=null
+-- customer_ci text nullable=YES default=null
+-- customer_address text nullable=YES default=null
+-- invoice_number text nullable=YES default=null
+
+/* ===== triggers transactions ===== */
+-- CREATE TRIGGER reverse_commissions_on_sale_void AFTER UPDATE OF status ON public.transactions FOR EACH ROW EXECUTE FUNCTION reverse_commissions_on_sale_void()
+-- CREATE TRIGGER trg_audit_transaction_changes AFTER UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION log_transaction_changes()
+-- CREATE TRIGGER trg_check_active_user BEFORE INSERT OR UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION check_active_user()
+-- CREATE TRIGGER trg_protect_transactions_total_amount BEFORE UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION protect_transactions_total_amount()
+-- CREATE TRIGGER trg_validate_tx_transition BEFORE UPDATE OF status ON public.transactions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('transactions')
+
+/* ===== idempotency_registry columns ===== */
+-- id uuid nullable=NO
+-- idempotency_key text nullable=NO
+-- operation text nullable=NO
+-- record_id uuid nullable=NO
+-- param_hash text nullable=NO
+-- result jsonb nullable=NO
+-- created_at timestamp with time zone nullable=NO
+
+/* ===== tax_configurations columns ===== */
+-- id uuid nullable=NO
+-- name text nullable=NO
+-- type text nullable=NO
+-- value numeric nullable=NO
+-- min_exempt numeric nullable=YES
+-- is_active boolean nullable=YES
+-- store_id uuid nullable=YES
+-- created_at timestamp with time zone nullable=YES
+-- updated_at timestamp with time zone nullable=YES
+
+/* ===== store_exchange_rates columns ===== */
+-- id uuid nullable=NO
+-- store_id uuid nullable=NO
+-- currency text nullable=NO
+-- rate numeric nullable=NO
+-- updated_by uuid nullable=YES
+-- created_at timestamp with time zone nullable=NO
+-- updated_at timestamp with time zone nullable=NO
+
+/* ===== exchange_rates columns ===== */
+-- id uuid nullable=NO
+-- rate_date date nullable=NO
+-- captured_at timestamp with time zone nullable=NO
+-- currency text nullable=NO
+-- source text nullable=NO
+-- rate numeric nullable=NO
+-- variation_daily numeric nullable=YES
+-- variation_weekly numeric nullable=YES
+-- variation_monthly numeric nullable=YES
+-- variation_yearly numeric nullable=YES
+-- created_at timestamp with time zone nullable=NO
+-- segment text nullable=YES
+-- capture_method text nullable=YES
+
+/* ===== profiles columns ===== */
+-- id uuid nullable=NO
+-- store_id uuid nullable=YES
+-- full_name text nullable=YES
+-- created_at timestamp with time zone nullable=NO
+-- email text nullable=YES
+-- updated_at timestamp with time zone nullable=NO
+-- role USER-DEFINED nullable=YES
+-- is_active boolean nullable=YES
+-- active_store_id uuid nullable=YES
+-- max_stores_limit integer nullable=YES
+-- max_users_limit integer nullable=YES
+-- created_by uuid nullable=YES
+-- roles ARRAY nullable=YES
+-- logo_url text nullable=YES
+-- ai_provider text nullable=YES
+-- ai_api_key text nullable=YES
+-- role_id uuid nullable=YES
+-- tenant_id uuid nullable=YES
+-- plan USER-DEFINED nullable=NO
+-- deleted_at timestamp with time zone nullable=YES
+-- deletion_reason text nullable=YES
+-- deleted_by uuid nullable=YES
+
+/* ===== payment_transactions columns ===== */
+-- id uuid nullable=NO
+-- store_id uuid nullable=NO
+-- ref_type text nullable=NO
+-- ref_id uuid nullable=NO
+-- amount numeric nullable=NO
+-- payment_method text nullable=NO
+-- currency text nullable=NO
+-- exchange_rate numeric nullable=NO
+-- amount_cup numeric nullable=NO
+-- payment_date timestamp with time zone nullable=NO
+-- reference text nullable=YES
+-- notes text nullable=YES
+-- paid_by uuid nullable=YES
+-- created_at timestamp with time zone nullable=NO
+-- updated_at timestamp with time zone nullable=NO
+-- idempotency_key text nullable=YES
+-- transaction_id uuid nullable=YES
+-- direction text nullable=NO
+
+/* ===== roles ===== */
+authenticated, anon, service_role, supabase_auth_admin, costpro_transaction_adjuster
+
+/* ===== owners ===== */
+-- adjust_total_amount: owner=costpro_transaction_adjuster secdef=true
+-- create_sale_v2: owner=postgres secdef=true
+-- update_transaction_taxes: owner=postgres secdef=true

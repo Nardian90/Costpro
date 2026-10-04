@@ -308,9 +308,8 @@ BEGIN
 END;
 $function$;
 
+REVOKE EXECUTE ON FUNCTION public.create_sale_v2 FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.create_sale_v2 FROM anon;
-GRANT EXECUTE ON FUNCTION public.create_sale_v2 TO authenticated;
-GRANT EXECUTE ON FUNCTION public.create_sale_v2 TO service_role;
 
 COMMENT ON FUNCTION public.create_sale_v2 IS
   'Iteración 11.2 + Fiscal: Server-side checkout with invoice_number (F-C1), tax_configurations enforcement (F-H5), fiscal period lock (F-C3).';
