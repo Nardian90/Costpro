@@ -23,6 +23,12 @@ export function useUsersView() {
     const [userFormMode, setUserFormMode] = useState<'create' | 'edit' | null>(null);
     const [selectedUserContract, setSelectedUserContract] = useState<UserContract | null>(null);
 
+    // REMEDIACIÓN (fix/users-multistore-admin-password): modal de seteo directo
+    // de contraseña por Super Admin. Solo se guarda el usuario objetivo
+    // (identificación) — la contraseña vive únicamente en el estado local del
+    // modal y viaja por POST al endpoint server-side.
+    const [setPasswordTarget, setSetPasswordTarget] = useState<Profile | null>(null);
+
     // Data Fetching
     const isEncargado = user?.role === 'encargado' || user?.role === 'manager' || user?.memberships?.some(m => m.role === 'encargado');
 
@@ -184,6 +190,54 @@ export function useUsersView() {
         }
     };
 
+    // REMEDIACIÓN (fix/users-multistore-admin-password): abrir el modal de
+    // cambio administrativo de contraseña para un usuario concreto.
+    const openSetPassword = (u: Profile) => {
+        setSetPasswordTarget(u);
+    };
+
+    const closeSetPassword = () => {
+        setSetPasswordTarget(null);
+    };
+
+    // Seteo directo: el Super Admin entrega una contraseña nueva. El POST va
+    // al endpoint server-side (/api/users/reset-password, withRole('admin'))
+    // que ejecuta auth.admin.updateUserById con service_role. La contraseña
+    // jamás se persiste aquí, ni se loguea, ni se incluye en la auditoría.
+    const submitSetPassword = async (userId: string, newPassword: string): Promise<boolean> => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                throw new Error('No hay sesión activa.');
+            }
+
+            const response = await fetch('/api/users/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ user_id: userId, new_password: newPassword })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Error al actualizar la contraseña');
+            }
+
+            toast.success(data.message || 'Contraseña actualizada correctamente');
+            // La auditoría (user_audit_log) cambia: refrescar el historial del usuario.
+            await queryClient.invalidateQueries({ queryKey: ['user-audit-history', userId] });
+            return true;
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : String(error));
+            return false;
+        }
+    };
+
     const handleResetPassword = async (userId: string) => {
         if (!confirm('¿Estás seguro de que deseas reiniciar la contraseña de este usuario? Se enviará un correo de recuperación.')) {
             return;
@@ -255,6 +309,10 @@ export function useUsersView() {
         handleToggleUserStatus,
         handleDeleteUser,
         handleResetPassword,
+        openSetPassword,
+        closeSetPassword,
+        submitSetPassword,
+        setPasswordTarget,
         handleUpdatePlan,
         isSubmittingUser: createUserMutation.isPending || updateUserMutation.isPending || manageMembershipsMutation.isPending,
         allowedRoles: getAllowedRoles(user?.role as UserRole)
