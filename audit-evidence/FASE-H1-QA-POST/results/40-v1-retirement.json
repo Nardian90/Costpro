@@ -1,0 +1,87 @@
+{
+  "suite": "V1 — Retirement readiness gates",
+  "suite_id": "40-v1-retirement",
+  "started": "2026-10-04T15:00:55.091Z",
+  "duration_ms": 9180,
+  "counts": {
+    "total": 8,
+    "pass": 2,
+    "fail": 6,
+    "blocked": 0,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-V1-001",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — ACL LIVE: create_sale SIN EXECUTE para authenticated",
+      "expected": "proacl de create_sale sin authenticated=X ni anon=X ni PUBLIC",
+      "status": "FAIL",
+      "current": "ACL LIVE V1 = {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "evidence": "V1 sigue ejecutable por authenticated: prerequisiteio de DROP no cumplido"
+    },
+    {
+      "id": "T-V1-002",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — callers de producción de create_sale = 0",
+      "expected": "0 referencias ejecutables a rpc create_sale / rpcName=create_sale en src (excluye tests)",
+      "status": "FAIL",
+      "current": "callers=1: src/hooks/api/useTransactions.ts",
+      "evidence": "useTransactions.ts mantiene rpcName=create_sale (registro V1 permitido por el contract test actual) y usePOSCheckout.ts conserva el else-branch V1 — el censo debe llegar a 0"
+    },
+    {
+      "id": "T-V1-003",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — referencias a fallback USE_V2_CHECKOUT=false = 0",
+      "expected": "ni features.ts ni hooks conservan el camino V1 (flag, else-branch, pilot stores)",
+      "status": "FAIL",
+      "current": "refs=src/config/features.ts (flag) · usePOSCheckout.ts (path v1)",
+      "evidence": "el mecanismo de fallback V1 sigue presente: cualquier despliegue con NEXT_PUBLIC_USE_V2_CHECKOUT=false reactiva V1"
+    },
+    {
+      "id": "T-V1-004",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — tests legacy de V1 = 0",
+      "expected": "ningún test de integración/unidad depende de create_sale V1",
+      "status": "PASS",
+      "current": "tests legacy=0: ",
+      "evidence": "iteration-11-1.test.ts / iteration-11-2.test.ts ejercitan V1: deben migrarse o eliminarse con V1"
+    },
+    {
+      "id": "T-V1-005",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — contract allow-list de V2-ONLY prohíbe V1",
+      "expected": "v2-only-contract-test.cjs con allow-list VACÍA (allowedV1Checkout = [])",
+      "status": "FAIL",
+      "current": "allow-list con useTransactions=true · exige presencia V1=true",
+      "evidence": "el contract test actual PERMITE (e incluso exige) el caller V1 — debe invertirse a prohibición total"
+    },
+    {
+      "id": "T-V1-006",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — E2E de checkout usa exclusivamente V2",
+      "expected": "specs E2E de venta no dependen de V1 ni del flag",
+      "status": "FAIL",
+      "current": "specs con dependencia V1/flag=1: security.spec.ts",
+      "evidence": "requisito: los E2E de venta deben hablar solo con /api/pos/checkout (V2)"
+    },
+    {
+      "id": "T-V1-007",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — reconcilers/migraciones no resucitan grants de V1",
+      "expected": "ningún archivo post-retiro hace GRANT EXECUTE sobre create_sale (V1)",
+      "status": "FAIL",
+      "current": "migraciones con GRANT V1=15: 20260114_create_sale_rpc.sql, 20260304_harden_sale_stock_logic.sql, 20260320_fix_audit_v2_hallazgos.sql, 20260324_total_remediation.sql, 20260622000001_global_operation_date_policy.sql, 20260622000002_extend_global_date_policy.sql, 20260726000001_v1_1_stabilization.sql, 20260726000004_v2_1_deep_integrations.sql, 20260726000026_v2_10_5_fix_create_sale_auth.sql, 20260726000030_v2_11_3_fix_create_sale_bypass.sql, 20260726000032_v2_12_critical_fixes.sql, 20260727000009_v2_12_13_revoke_anon_grants_comments.sql, 20260803000002_v2_13_2_void_transaction_conversion_factor.sql, 20260803000004_v2_13_4_create_sale_validate_op_date.sql, 20260916000002_rem_inv_6_reconcile_function_acl.sql",
+      "evidence": "existen grants históricos de V1 en migraciones: al ejecutar el DROP (PR-R1) ninguna migración posterior puede re-grantear; el reconciler F4 (20260927000002) ya demostró el patrón de resurrección con PUBLIC→V2"
+    },
+    {
+      "id": "T-V1-008",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — create_sale es removible (sin dependientes DB)",
+      "expected": "0 objetos DB dependen de create_sale (pg_depend) y 0 llamadas internas desde otras funciones",
+      "status": "PASS",
+      "current": "pg_depend no-n=0 · funciones llamantes=0",
+      "evidence": "verificación de removabilidad (DROP sin cascada)"
+    }
+  ]
+}

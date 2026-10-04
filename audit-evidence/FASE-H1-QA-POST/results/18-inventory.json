@@ -1,0 +1,60 @@
+{
+  "suite": "INV — Inventario + concurrencia",
+  "suite_id": "18-inventory",
+  "started": "2026-10-04T14:59:21.656Z",
+  "duration_ms": 34537,
+  "counts": {
+    "total": 5,
+    "pass": 5,
+    "fail": 0,
+    "blocked": 0,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-INV-001",
+      "suite": "18-inventory",
+      "spec": "INV — venta crea tx + items + decremento + stock_movement",
+      "expected": "transacción, items, movimiento y decremento consistentes",
+      "status": "PASS",
+      "current": "delta_inventory=2 movimientos=1 items=1",
+      "evidence": "cadena tx→items→movimiento→decremento atómica"
+    },
+    {
+      "id": "T-INV-002",
+      "suite": "18-inventory",
+      "spec": "INV — stock insuficiente → rechazo sin efectos",
+      "expected": "ERR_INSUFFICIENT_STOCK y 0 escrituras",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INSUFFICIENT_STOCK: product 24d3c7b9-06f9-481e-adb8-85471c36eff2, stock 978.0000, requested 999999\"} · inventario 978.0000→978.0000",
+      "evidence": "oversell bloqueado por SELECT FOR UPDATE + pre-validación"
+    },
+    {
+      "id": "T-INV-003",
+      "suite": "18-inventory",
+      "spec": "INV — 2 ventas concurrentes sobre la última unidad (stock=1)",
+      "expected": "exactamente 1 éxito · 1 rechazo · inventario >= 0 · sin duplicar movimiento",
+      "status": "PASS",
+      "current": "transacciones=1 idsDistintos=1 movimientos=1 inventario_final=0 · resp200=2",
+      "evidence": "advisory lock por tienda + idempotencia serializan la última unidad sin oversell"
+    },
+    {
+      "id": "T-INV-004",
+      "suite": "18-inventory",
+      "spec": "INV — rollback atómico: fallo en 2ª línea revierte la 1ª",
+      "expected": "sin transacción, sin movimientos, inventario intacto",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INSUFFICIENT_STOCK: product f22dedc7-ff58-4433-8755-0d1c4e18efb1, stock 0.0000, requested 999\"} · inventario 978.0000→978.0000 · movimientosHuérfanos=0",
+      "evidence": "atomicidad de la transacción SQL revierte items+movimientos al fallar"
+    },
+    {
+      "id": "T-INV-005",
+      "suite": "18-inventory",
+      "spec": "INV — invariante inventory.quantity >= 0 en fixtures QA",
+      "expected": "todas las cantidades QA >= 0",
+      "status": "PASS",
+      "current": "filas=3 negativas=0",
+      "evidence": "trigger prevent_negative_inventory + pre-validación RPC mantienen el invariante"
+    }
+  ]
+}

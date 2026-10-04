@@ -1,0 +1,51 @@
+{
+  "suite": "H2 — AUTHENTICATION ORDER",
+  "suite_id": "11-h2-order",
+  "started": "2026-10-04T14:57:17.260Z",
+  "duration_ms": 18881,
+  "counts": {
+    "total": 4,
+    "pass": 3,
+    "fail": 0,
+    "blocked": 0,
+    "not_observable": 1
+  },
+  "results": [
+    {
+      "id": "T-H2-001",
+      "suite": "11-h2-order",
+      "spec": "H2 — authZ debe preceder a idempotencia: no-miembro + clave existente",
+      "expected": "ERR_UNAUTHORIZED (HTTP >= 400) SIN transaction_id — la clave no puede satisfacerse antes de autorizar",
+      "status": "PASS",
+      "current": "USER_B (sin membresía STORE_A) + clave existente → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "orden correcto"
+    },
+    {
+      "id": "T-H2-002",
+      "suite": "11-h2-order",
+      "spec": "H2 — no-miembro + clave aleatoria → denied",
+      "expected": "HTTP >= 400 ERR_UNAUTHORIZED sin datos",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "autorización efectiva cuando la clave no golpea: HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}"
+    },
+    {
+      "id": "T-H2-003",
+      "suite": "11-h2-order",
+      "spec": "H2 — denegación no produce escritura (no side-effects)",
+      "expected": "0 transacciones nuevas creadas por llamadas denegadas",
+      "status": "PASS",
+      "current": "transacciones antes=264 después=264 (delta=0)",
+      "evidence": "llamadas anon y no-miembro no crean transacciones"
+    },
+    {
+      "id": "T-H2-004",
+      "suite": "11-h2-order",
+      "spec": "H2 — cadena authentication→…→inventory: efectos observables post-hoc",
+      "expected": "transacción + items + pago + movimiento de stock presentes y consistentes; orden interno exacto no observable",
+      "status": "NOT-OBSERVABLE",
+      "current": "tx=true items=1 pagos~59 movimientos=1",
+      "evidence": "Efectos finales correctos (tx+items+movement). La secuencia INTERNA exacta (actor→authz→membership→idempotencia→validación→cálculo→inventario) NO es observable en runtime sin instrumentation de PG: se requiere verificación por Agent 3 (pg_stat/statements o trace). Evidencia estática complementaria: pg_get_functiondef posiciona \"2. Idempotencia\" (offset ~2798) ANTES de \"3. Auth/ERR_UNAUTHORIZED\" (offset ~3242)."
+    }
+  ]
+}

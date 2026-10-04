@@ -1,0 +1,78 @@
+{
+  "suite": "RT — Contrato ruta /api/pos/checkout",
+  "suite_id": "30-route-checkout",
+  "started": "2026-10-04T15:00:32.552Z",
+  "duration_ms": 13979,
+  "counts": {
+    "total": 7,
+    "pass": 6,
+    "fail": 1,
+    "blocked": 0,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-RT-001",
+      "suite": "30-route-checkout",
+      "spec": "RT — POST /api/pos/checkout sin sesión → 401",
+      "expected": "HTTP 401",
+      "status": "PASS",
+      "current": "HTTP 401 {\"error\":\"No autorizado\",\"message\":\"Se requiere sesión activa\"}",
+      "evidence": "withAuth fail-closed"
+    },
+    {
+      "id": "T-RT-002",
+      "suite": "30-route-checkout",
+      "spec": "RT — USER_A venta válida por la ruta → 200 + tx + seller=USER_A",
+      "expected": "HTTP 200, transaction_id presente, seller_id persistido = USER_A",
+      "status": "PASS",
+      "current": "tx=2a1b1540-cb29-47d9-aa1b-a2ee334b0e0a seller=6eb29691-d253-4e03-b593-2b0cdd1415bc",
+      "evidence": "ruta canónica V2 operativa con actores reales"
+    },
+    {
+      "id": "T-RT-003",
+      "suite": "30-route-checkout",
+      "spec": "RT — la ruta no debe permitir seller spoofing (seller_id=USER_B)",
+      "expected": "la ruta DERIVA el vendedor del servidor (session) o rechaza; jamás persiste seller=USER_B",
+      "status": "PASS",
+      "current": "ACEPTADA con seller persistido=6eb29691-d253-4e03-b593-2b0cdd1415bc",
+      "evidence": "la ruta reenvía seller_id del body tal cual al RPC: venta de USER_A atribuida a USER_B (6eb29691-d253-4e03-b593-2b0cdd1415bc)"
+    },
+    {
+      "id": "T-RT-004",
+      "suite": "30-route-checkout",
+      "spec": "RT — la ruta no debe aceptar impuestos del cliente",
+      "expected": "applied_taxes del body no puede ser la fuente del impuesto persistido",
+      "status": "PASS",
+      "current": "HTTP 400",
+      "evidence": "ruta valida impuestos"
+    },
+    {
+      "id": "T-RT-005",
+      "suite": "30-route-checkout",
+      "spec": "RT — la ruta no debe aceptar tasa de cambio del cliente",
+      "expected": "sale_exchange_rate del body no puede fijar la tasa efectiva",
+      "status": "FAIL",
+      "current": "ACEPTADA: rate persistida=400.0000",
+      "evidence": "la ruta reenvía sale_exchange_rate cliente→RPC sin fuente server-side"
+    },
+    {
+      "id": "T-RT-006",
+      "suite": "30-route-checkout",
+      "spec": "RT — la ruta usa EXCLUSIVAMENTE create_sale_v2 (sin legacy RPC)",
+      "expected": "route.ts invoca rpc(\"create_sale_v2\") y no existe llamada a create_sale V1",
+      "status": "PASS",
+      "current": "v2=true v1=false",
+      "evidence": "contrato canónico V2 en la ruta"
+    },
+    {
+      "id": "T-RT-007",
+      "suite": "30-route-checkout",
+      "spec": "RT — service-role de la ruta está bound a la sesión (p_user_id)",
+      "expected": "p_user_id SIEMPRE session.user.id; el body no puede inyectarlo",
+      "status": "PASS",
+      "current": "static bind=true · body p_user_id ignorado=true",
+      "evidence": "la identidad del actor en la ruta proviene de la sesión verificada; p_user_id del body es filtrado por zod e ignorado"
+    }
+  ]
+}

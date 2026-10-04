@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-10-04T15:20:12.457Z",
+  "gateVerdicts": {
+    "G1_acl": true,
+    "G2_idempotency": true,
+    "G3_seller": true,
+    "G4_tax": false,
+    "G5_rate": true,
+    "G6_concurrency": true,
+    "G7_multitenant": true,
+    "G8_live": true,
+    "G9_audit": false
+  }
+}

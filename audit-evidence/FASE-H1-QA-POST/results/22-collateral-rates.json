@@ -1,0 +1,51 @@
+{
+  "suite": "ER — Colateral fuentes de tasa",
+  "suite_id": "22-collateral-rates",
+  "started": "2026-10-04T15:00:29.988Z",
+  "duration_ms": 2525,
+  "counts": {
+    "total": 4,
+    "pass": 4,
+    "fail": 0,
+    "blocked": 0,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-ER-001",
+      "suite": "22-collateral-rates",
+      "spec": "ER — clerk (USER_A) reescribe la tasa de confianza de SU tienda",
+      "expected": "DENIED — la fuente server-side de tasas no es escribible por clerk",
+      "status": "PASS",
+      "current": "PATCH store_exchange_rates por clerk → 403",
+      "evidence": "fuente protegida contra clerk"
+    },
+    {
+      "id": "T-ER-002",
+      "suite": "22-collateral-rates",
+      "spec": "ER — USER_B (STORE_B) reescribe la tasa de STORE_A",
+      "expected": "DENIED",
+      "status": "PASS",
+      "current": "PATCH cross-store → 403",
+      "evidence": "el scoping per-store de la policy bloquea a no-miembros"
+    },
+    {
+      "id": "T-ER-003",
+      "suite": "22-collateral-rates",
+      "spec": "ER — usuario autenticado NO escribe exchange_rates (global)",
+      "expected": "DENIED (policy service_role-only para INSERT/UPDATE)",
+      "status": "PASS",
+      "current": "INSERT exchange_rates → 403 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"new row violates row-level security policy for",
+      "evidence": "exchange_rates_insert/update son service_role-only: la fuente global está protegida"
+    },
+    {
+      "id": "T-ER-004",
+      "suite": "22-collateral-rates",
+      "spec": "ER — anon no lee ni escribe fuentes de tasa",
+      "expected": "DENIED ambos",
+      "status": "PASS",
+      "current": "read global→200 read store→200 write→401",
+      "evidence": "RLS deny-by-default para anon en ambas fuentes"
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "dangerous": [],
+  "default_acl_risk": [
+    {
+      "file": "20260807000003_v2_16_3_create_sale_v2.sql",
+      "creates_v2": true,
+      "revoke_public_or_anon_on_v2": true,
+      "drop_v2_first": true,
+      "verdict": "NEUTRALIZED (REVOKE V2 → PUBLIC/anon presente)"
+    },
+    {
+      "file": "20260810000003_v2_19_3_invoice_number_fiscal_lock.sql",
+      "creates_v2": true,
+      "revoke_public_or_anon_on_v2": true,
+      "drop_v2_first": true,
+      "verdict": "NEUTRALIZED (REVOKE V2 → PUBLIC/anon presente)"
+    },
+    {
+      "file": "20260810000070_pr4_4e_timezone_services_document.sql",
+      "creates_v2": true,
+      "revoke_public_or_anon_on_v2": true,
+      "drop_v2_first": true,
+      "verdict": "NEUTRALIZED (REVOKE V2 → PUBLIC/anon presente)"
+    },
+    {
+      "file": "20260812000002_pr4_4i_create_sale_v2_payments.sql",
+      "creates_v2": true,
+      "revoke_public_or_anon_on_v2": false,
+      "drop_v2_first": false,
+      "verdict": "UNNEUTRALIZED-CREATE (sin REVOKE V2 en archivo — depende de migraciones posteriores)"
+    },
+    {
+      "file": "20260915000001_rem_inv_4a_r_rc1_rc2_supervisor_gate_audit_acl.sql",
+      "creates_v2": true,
+      "revoke_public_or_anon_on_v2": false,
+      "drop_v2_first": false,
+      "verdict": "UNNEUTRALIZED-CREATE (sin REVOKE V2 en archivo — depende de migraciones posteriores)"
+    },
+    {
+      "file": "20260926000001_esec_price_integrity.sql",
+      "creates_v2": true,
+      "revoke_public_or_anon_on_v2": false,
+      "drop_v2_first": false,
+      "verdict": "UNNEUTRALIZED-CREATE (sin REVOKE V2 en archivo — depende de migraciones posteriores)"
+    },
+    {
+      "file": "20260927000001_esec_final_definitive_policy.sql",
+      "creates_v2": true,
+      "revoke_public_or_anon_on_v2": true,
+      "drop_v2_first": true,
+      "verdict": "NEUTRALIZED (REVOKE V2 → PUBLIC/anon presente)"
+    },
+    {
+      "file": "20261004130000_h0r_create_sale_v2_hardening.sql",
+      "creates_v2": true,
+      "revoke_public_or_anon_on_v2": true,
+      "drop_v2_first": false,
+      "verdict": "NEUTRALIZED (REVOKE V2 → PUBLIC/anon presente)"
+    }
+  ],
+  "contract_surface": [
+    {
+      "line": 3034,
+      "text": "-- @contract-function name=create_sale_v2 args=\"p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value ",
+      "has_public_entry": false
+    }
+  ],
+  "summary": {
+    "files_scanned": 449,
+    "dangerous_grants": 0,
+    "creates_v2": 8,
+    "creates_v2_unneutralized": 3
+  }
+}

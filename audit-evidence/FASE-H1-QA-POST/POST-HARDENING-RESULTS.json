@@ -1,0 +1,1125 @@
+{
+  "generated_at": "2026-10-04T15:21:52.073Z",
+  "agent": "QA POST-HARDENING (Agent 2 — verificación independiente)",
+  "baseline_ref": "3c85f0e (fase/create-sale-v2-hardening — post-implementación)",
+  "methodology": "cleanup + fixtures + run-all aislado (protocolo idéntico al Implementation Agent); totales calculados desde artefactos individuales (ver consolidator_issue)",
+  "totals": {
+    "total": 101,
+    "pass": 82,
+    "fail": 14,
+    "blocked": 4,
+    "not_observable": 1
+  },
+  "suites": [
+    {
+      "id": "10-h1-acl",
+      "name": "H1 — ACL + AUTH BEFORE IDEMPOTENCY",
+      "started": "2026-10-04T14:57:12.843Z",
+      "counts": {
+        "total": 4,
+        "pass": 3,
+        "fail": 1,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "11-h2-order",
+      "name": "H2 — AUTHENTICATION ORDER",
+      "started": "2026-10-04T14:57:17.260Z",
+      "counts": {
+        "total": 4,
+        "pass": 3,
+        "fail": 0,
+        "blocked": 0,
+        "not_observable": 1
+      }
+    },
+    {
+      "id": "12-h3-seller",
+      "name": "H3 — SELLER BINDING",
+      "started": "2026-10-04T14:57:36.201Z",
+      "counts": {
+        "total": 6,
+        "pass": 5,
+        "fail": 0,
+        "blocked": 1,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "13-h4-tax",
+      "name": "H4 — TAX AUTHORITY",
+      "started": "2026-10-04T14:57:40.473Z",
+      "counts": {
+        "total": 5,
+        "pass": 4,
+        "fail": 1,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "14-h5-rate",
+      "name": "H5 — EXCHANGE RATE AUTHORITY",
+      "started": "2026-10-04T14:57:47.786Z",
+      "counts": {
+        "total": 6,
+        "pass": 6,
+        "fail": 0,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "15-h6-idempotency",
+      "name": "H6 — IDEMPOTENCY",
+      "started": "2026-10-04T14:58:26.082Z",
+      "counts": {
+        "total": 9,
+        "pass": 9,
+        "fail": 0,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "16-financial",
+      "name": "FIN — Integridad financiera",
+      "started": "2026-10-04T14:58:52.262Z",
+      "counts": {
+        "total": 12,
+        "pass": 10,
+        "fail": 2,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "17-cross-store",
+      "name": "CS — Cross-store security",
+      "started": "2026-10-04T14:59:12.605Z",
+      "counts": {
+        "total": 7,
+        "pass": 7,
+        "fail": 0,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "18-inventory",
+      "name": "INV — Inventario + concurrencia",
+      "started": "2026-10-04T14:59:21.656Z",
+      "counts": {
+        "total": 5,
+        "pass": 5,
+        "fail": 0,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "20-collateral-taxcfg",
+      "name": "TC — Colateral tax_configurations",
+      "started": "2026-10-04T14:59:56.228Z",
+      "counts": {
+        "total": 5,
+        "pass": 4,
+        "fail": 0,
+        "blocked": 1,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "21-collateral-utt",
+      "name": "UTT — Colateral update_transaction_taxes",
+      "started": "2026-10-04T15:00:16.320Z",
+      "counts": {
+        "total": 8,
+        "pass": 6,
+        "fail": 0,
+        "blocked": 2,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "22-collateral-rates",
+      "name": "ER — Colateral fuentes de tasa",
+      "started": "2026-10-04T15:00:29.988Z",
+      "counts": {
+        "total": 4,
+        "pass": 4,
+        "fail": 0,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "30-route-checkout",
+      "name": "RT — Contrato ruta /api/pos/checkout",
+      "started": "2026-10-04T15:00:32.552Z",
+      "counts": {
+        "total": 7,
+        "pass": 6,
+        "fail": 1,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "31-route-sync",
+      "name": "SB — Contrato ruta /api/sync/batch",
+      "started": "2026-10-04T15:00:46.582Z",
+      "counts": {
+        "total": 5,
+        "pass": 5,
+        "fail": 0,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "40-v1-retirement",
+      "name": "V1 — Retirement readiness gates",
+      "started": "2026-10-04T15:00:55.091Z",
+      "counts": {
+        "total": 8,
+        "pass": 2,
+        "fail": 6,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "41-anti-resurrection",
+      "name": "AR — Anti-resurrección",
+      "started": "2026-10-04T15:01:04.323Z",
+      "counts": {
+        "total": 6,
+        "pass": 3,
+        "fail": 3,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    }
+  ],
+  "results": [
+    {
+      "id": "T-H1-001",
+      "suite": "10-h1-acl",
+      "spec": "H1.1 — Anonymous cannot execute create_sale_v2",
+      "expected": "DENIED (HTTP >= 400, sin transaction_id, sin divulgación de existencia de transacción/clave/tienda/usuario)",
+      "status": "PASS",
+      "current": "HTTP 401 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for function create_sale_v2\"}",
+      "evidence": "anon + clave aleatoria → HTTP 401 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for function create_sale_v2\"} · filtraTx=false · infoAdicional=false"
+    },
+    {
+      "id": "T-H1-002",
+      "suite": "10-h1-acl",
+      "spec": "H1/§16 — ACL LIVE: create_sale_v2 sin EXECUTE para PUBLIC ni anon",
+      "expected": "proacl NO contiene =X (PUBLIC) ni anon=X",
+      "status": "FAIL",
+      "current": "ACL LIVE = {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "evidence": "PUBLIC execute=true · anon execute=false — patrón canónico F4 = {PUBLIC, authenticated, service_role}"
+    },
+    {
+      "id": "T-H1-003",
+      "suite": "10-h1-acl",
+      "spec": "H1.2 — Anonymous + idempotency key EXISTENTE → UNAUTHORIZED sin datos",
+      "expected": "HTTP >= 400 sin transaction_id, sin status idempotent/success",
+      "status": "PASS",
+      "current": "anon + clave existente → HTTP 401 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for function create_sale_v2\"}",
+      "evidence": "sin fuga observable"
+    },
+    {
+      "id": "T-H1-004",
+      "suite": "10-h1-acl",
+      "spec": "H1.3 — anon: clave existente vs aleatoria indistinguibles antes de autenticar",
+      "expected": "misma forma de rechazo (status + body) para clave existente y aleatoria",
+      "status": "PASS",
+      "current": "existing → HTTP 401 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for function create_sale_v2\"} || random → HTTP 401 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for function create_sale_v2\"}",
+      "evidence": "statusIgual=true · mensajeIgual=true — la existencia de la clave ES distinguible por un atacante anónimo"
+    },
+    {
+      "id": "T-H2-001",
+      "suite": "11-h2-order",
+      "spec": "H2 — authZ debe preceder a idempotencia: no-miembro + clave existente",
+      "expected": "ERR_UNAUTHORIZED (HTTP >= 400) SIN transaction_id — la clave no puede satisfacerse antes de autorizar",
+      "status": "PASS",
+      "current": "USER_B (sin membresía STORE_A) + clave existente → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "orden correcto"
+    },
+    {
+      "id": "T-H2-002",
+      "suite": "11-h2-order",
+      "spec": "H2 — no-miembro + clave aleatoria → denied",
+      "expected": "HTTP >= 400 ERR_UNAUTHORIZED sin datos",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "autorización efectiva cuando la clave no golpea: HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}"
+    },
+    {
+      "id": "T-H2-003",
+      "suite": "11-h2-order",
+      "spec": "H2 — denegación no produce escritura (no side-effects)",
+      "expected": "0 transacciones nuevas creadas por llamadas denegadas",
+      "status": "PASS",
+      "current": "transacciones antes=264 después=264 (delta=0)",
+      "evidence": "llamadas anon y no-miembro no crean transacciones"
+    },
+    {
+      "id": "T-H2-004",
+      "suite": "11-h2-order",
+      "spec": "H2 — cadena authentication→…→inventory: efectos observables post-hoc",
+      "expected": "transacción + items + pago + movimiento de stock presentes y consistentes; orden interno exacto no observable",
+      "status": "NOT-OBSERVABLE",
+      "current": "tx=true items=1 pagos~59 movimientos=1",
+      "evidence": "Efectos finales correctos (tx+items+movement). La secuencia INTERNA exacta (actor→authz→membership→idempotencia→validación→cálculo→inventario) NO es observable en runtime sin instrumentation de PG: se requiere verificación por Agent 3 (pg_stat/statements o trace). Evidencia estática complementaria: pg_get_functiondef posiciona \"2. Idempotencia\" (offset ~2798) ANTES de \"3. Auth/ERR_UNAUTHORIZED\" (offset ~3242)."
+    },
+    {
+      "id": "T-H3-001",
+      "suite": "12-h3-seller",
+      "spec": "H3.1 — USER_A vende como sí mismo → atribución = USER_A",
+      "expected": "HTTP 200 y transactions.seller_id == USER_A",
+      "status": "PASS",
+      "current": "seller_id persistido = 6eb29691-d253-4e03-b593-2b0cdd1415bc",
+      "evidence": "venta válida con seller_id=USER_A → tx fedaa9a1-3ac9-44de-a5cd-2217e53d4b32"
+    },
+    {
+      "id": "T-H3-002",
+      "suite": "12-h3-seller",
+      "spec": "H3.2 — USER_A vende como USER_B (spoof mismo nivel)",
+      "expected": "DENIED o derivación inequívoca a USER_A; NUNCA seller=USER_B",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SELLER_MISMATCH: p_seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65 no coincide con el actor autenticado=6eb29691-d253-4e03-b593-2b0cdd1415bc\"}",
+      "evidence": "rechazo o derivación server-side"
+    },
+    {
+      "id": "T-H3-003",
+      "suite": "12-h3-seller",
+      "spec": "H3.3 — Cross-store seller spoof (actor USER_A/STORE_A, seller USER_B/STORE_B)",
+      "expected": "DENIED; nunca seller de otra tienda",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SELLER_MISMATCH: p_seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65 no coincide con el actor autenticado=6eb29691-d253-4e03-b593-2b0cdd1415bc\"}",
+      "evidence": "cross-store seller rechazado"
+    },
+    {
+      "id": "T-H3-004",
+      "suite": "12-h3-seller",
+      "spec": "H3.4 — p_seller_id ausente (NULL): rechazar o derivar del actor",
+      "expected": "CONTRATO H0: rechazar O derivar server-side del actor — H0 NO PRODUCIDO",
+      "status": "BLOCKED",
+      "current": "probe actual: HTTP 400 → seller_id=n/a",
+      "evidence": "La especificación H0 (CREATE-SALE-V2-HARDENING-SPEC.md) NO EXISTE en el repo (verificado en baseline). La decisión rechazar-vs-derivar es un contrato H0: NO SE INVENTA. Comportamiento actual observado y documentado como evidencia para el implementador."
+    },
+    {
+      "id": "T-H3-005",
+      "suite": "12-h3-seller",
+      "spec": "H3.5 — p_user_id spoofing con sesión authenticated → ignorado",
+      "expected": "v_uid = auth.uid() (USER_A): la venta se evalúa contra USER_A, no contra p_user_id",
+      "status": "PASS",
+      "current": "authenticated + p_user_id=USER_B → HTTP 200 {\"status\":\"success\",\"calculated_tax\":0,\"transaction_id\":\"947f5563-1c69-477f-a2c0-1e9aa4f03f55\",\"discount_amount\":0,\"calculated_total\":100,\"calculated_subtotal\":100}",
+      "evidence": "p_user_id se ignora para rol authenticated (v_uid=auth.uid()); el bypass de identidad solo existe en service_role"
+    },
+    {
+      "id": "T-H3-006",
+      "suite": "12-h3-seller",
+      "spec": "H3.5 — census: llamadores service_role de create_sale_v2",
+      "expected": "solo /api/pos/checkout (server route) y ningún path cliente expone service_role al usuario",
+      "status": "PASS",
+      "current": "checkout admin-client+p_user_id(session)=true · sync user-token=true",
+      "evidence": "/api/pos/checkout usa service_role con p_user_id=session.user.id (bind a sesión); /api/sync/batch ejecuta RPCs con el token DEL USUARIO (authenticado). Ninguna superficie cliente ejecuta como service_role."
+    },
+    {
+      "id": "T-H4-001",
+      "suite": "13-h4-tax",
+      "spec": "H4.1 — tax negativo (fixed -30) debe rechazarse",
+      "expected": "DENIED — el impuesto negativo no puede convertirse en descuento implícito",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_APPLIED_TAX_INVALID: entrada sin id de configuración\"}",
+      "evidence": "tax negativo rechazado"
+    },
+    {
+      "id": "T-H4-002",
+      "suite": "13-h4-tax",
+      "spec": "H4.3 — tax porcentaje -10% debe rechazarse",
+      "expected": "DENIED — porcentaje negativo invalida la base impositiva",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_APPLIED_TAX_INVALID: entrada sin id de configuración\"}",
+      "evidence": "porcentaje negativo rechazado"
+    },
+    {
+      "id": "T-H4-003",
+      "suite": "13-h4-tax",
+      "spec": "H4.2/4.3 — matriz de manipulación de impuesto cliente (0% · 100% · 10000%)",
+      "expected": "el impuesto efectivo debe derivarse server-side de la configuración autorizada (tax_configurations) — no del payload",
+      "status": "FAIL",
+      "current": "0%→HTTP 200 tax=0 · 100%→HTTP 400 tax=? · 10000%→HTTP 400 tax=?",
+      "evidence": "create_sale_v2 calcula el impuesto EXCLUSIVAMENTE desde p_applied_taxes (JSONB cliente). pg_get_functiondef LIVE: 0 referencias a tax_configurations. Un atacante autenticado impone cualquier impuesto (incl. ninguno) cuadrando p_total_amount."
+    },
+    {
+      "id": "T-H4-004",
+      "suite": "13-h4-tax",
+      "spec": "H4.4 — manipular impuestos no puede evadir la política de supervisor",
+      "expected": "SUPERVISOR POLICY STILL APPLIES — ninguna vía reduce el total bajo umbral sin autorización",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_APPLIED_TAX_INVALID: entrada sin id de configuración\"}",
+      "evidence": "no bypass posible"
+    },
+    {
+      "id": "T-H4-005",
+      "suite": "13-h4-tax",
+      "spec": "H4 — create_sale_v2 debe leer impuestos de tax_configurations",
+      "expected": "pg_get_functiondef LIVE referencia tax_configurations como fuente autorizada",
+      "status": "PASS",
+      "current": "referencias a tax_configurations en LIVE def: true",
+      "evidence": "fuente autorizada consultada"
+    },
+    {
+      "id": "T-H5-001",
+      "suite": "14-h5-rate",
+      "spec": "H5.1 — tasa de cambio cliente arbitraria (680 · 1000000 · 0 · -5)",
+      "expected": "la tasa efectiva persistida proviene de la fuente server-side autorizada, no del payload",
+      "status": "PASS",
+      "current": "rate=680→aceptada stored=400 · rate=1000000→aceptada stored=400 · rate=0→aceptada stored=400 · rate=-5→aceptada stored=400",
+      "evidence": "tasa server-side"
+    },
+    {
+      "id": "T-H5-002",
+      "suite": "14-h5-rate",
+      "spec": "H5.2 — client_rate != server_rate → gana la fuente autorizada",
+      "expected": "transactions.sale_exchange_rate == server_rate (store_exchange_rates de STORE_A = 400)",
+      "status": "PASS",
+      "current": "server_rate=400 (store_exchange_rates) · client_rate=7 · persisted=400",
+      "evidence": "la tasa efectiva es la del CLIENTE (400), no la fuente server-side configurada para STORE_A"
+    },
+    {
+      "id": "T-H5-003",
+      "suite": "14-h5-rate",
+      "spec": "H5.3 — jerarquía store_exchange_rates → exchange_rates → effective",
+      "expected": "el RPC resuelve la tasa con esa jerarquía server-side",
+      "status": "PASS",
+      "current": "refs LIVE: store_exchange_rates=true · exchange_rates=true",
+      "evidence": "create_sale_v2 NO implementa resolución de tasa: p_sale_exchange_rate (cliente) se persiste y usa directamente (price_at_sale_cup = price*rate; zelle_amount/rate). La jerarquía de fuentes NO existe en el RPC."
+    },
+    {
+      "id": "T-H5-004",
+      "suite": "14-h5-rate",
+      "spec": "H5.4 — usuario normal no puede alterar la fuente de tasa de confianza",
+      "expected": "USER_A (clerk) NO puede UPDATE store_exchange_rates ni INSERT/UPDATE exchange_rates",
+      "status": "PASS",
+      "current": "store_exchange_rates(own) PATCH → 403 · exchange_rates INSERT → 403",
+      "evidence": "fuentes protegidas"
+    },
+    {
+      "id": "T-H5-005",
+      "suite": "14-h5-rate",
+      "spec": "H5.5 — staleness de tasa: fecha efectiva >45 días → FAIL CLOSED (D-EXR-01)",
+      "expected": "MAX_EXCHANGE_RATE_AGE=45 días (APPROVED): tasa vencida NO puede usarse en venta V2 nueva → rechazo ERR_RATE_STALE (HTTP >= 400, sin transaction_id); p_sale_exchange_rate NO puede sustituirla (probe con tasa arbitraria 7 y probe con la propia tasa vencida 350 — ambas rechazadas)",
+      "status": "PASS",
+      "current": "fixture EUR(store) rate=350 age=60d (>45) · client_rate=7→RECHAZADA 400 ERR_RATE_STALE ✓ · client_rate=350(vencida)→RECHAZADA 400 ERR_RATE_STALE ✓",
+      "evidence": "staleness fail-closed con 45 días"
+    },
+    {
+      "id": "T-H5-006",
+      "suite": "14-h5-rate",
+      "spec": "H5.6 — desviación cliente↔servidor NO es control de autorización (D-EXR-02)",
+      "expected": "client_rate != server_rate NO implica DENY ni ALLOW: la venta NO se rechaza por desviación (HTTP 200); la tasa persistida es SIEMPRE la server (store_exchange_rates STORE_A USD = 400); la desviación se registra como observabilidad no-autoritativa en audit_logs.metadata (client_rate, server_rate, rate_source)",
+      "status": "PASS",
+      "current": "HTTP 200 (desviación no bloquea ✓) · persisted=400 (server=400) · audit(client_rate/server_rate/rate_source)=presente",
+      "evidence": "desviación no-autoritativa con tasa servidor persistida y auditada"
+    },
+    {
+      "id": "T-H6-001",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — misma clave + mismo payload → misma transacción",
+      "expected": "segunda llamada retorna la MISMA transaction_id; 1 fila en transactions",
+      "status": "PASS",
+      "current": "retry → HTTP 200 {\"status\":\"idempotent\",\"transaction_id\":\"85c81177-1924-402a-b392-629c64a68f5f\"} · filas=1",
+      "evidence": "idempotencia básica por (key, store) funciona"
+    },
+    {
+      "id": "T-H6-002",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — retry idéntico: 0 duplicados (tx/items/pagos/movimientos)",
+      "expected": "exactly 1 transaction, 1 set items, 1 pago, 1 movimiento de stock",
+      "status": "PASS",
+      "current": "tx=1 items=1 pagos=1 movimientos=1",
+      "evidence": "sin duplicación en retry"
+    },
+    {
+      "id": "T-H6-003",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — misma clave + cantidad DIFERENTE → CONFLICT",
+      "expected": "respuesta de conflicto (no retorno silencioso de la transacción previa)",
+      "status": "PASS",
+      "current": "payload distinto (qty=2) con misma clave → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_IDEMPOTENCY_KEY_REUSE: idempotency conflict — la clave qa-h6-1791125907095 ya está ligada a otra identidad de venta (payload/actor/tienda)\"}",
+      "evidence": "conflicto detectado"
+    },
+    {
+      "id": "T-H6-004",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — misma clave + precio DIFERENTE → CONFLICT",
+      "expected": "respuesta de conflicto",
+      "status": "PASS",
+      "current": "precio distinto con misma clave → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_IDEMPOTENCY_KEY_REUSE: idempotency conflict — la clave qa-h6-1791125907095 ya está ligada a otra identidad de venta (payload/actor/tienda)\"}",
+      "evidence": "conflicto detectado"
+    },
+    {
+      "id": "T-H6-005",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — misma clave + tienda DIFERENTE → deny/conflict",
+      "expected": "deny o conflict (la clave NO puede reutilizarse en otra tienda)",
+      "status": "PASS",
+      "current": "USER_A + clave existente + STORE_B → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "el alcance store de la clave impide satisfacerla en otra tienda (authz deniega antes)"
+    },
+    {
+      "id": "T-H6-006",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — misma clave + actor DIFERENTE → deny/conflict (sin fuga)",
+      "expected": "USER_B con clave de USER_A → deny/conflict, SIN transaction_id de la venta ajena",
+      "status": "PASS",
+      "current": "USER_B + clave de USER_A (STORE_A) → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "sin fuga cross-actor"
+    },
+    {
+      "id": "T-H6-007",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 (matriz) — anonymous + clave existente → unauthorized",
+      "expected": "HTTP >= 401/403 sin transaction_id",
+      "status": "PASS",
+      "current": "HTTP 401 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for function create_sale_v2\"}",
+      "evidence": "anon no obtiene datos"
+    },
+    {
+      "id": "T-H6-008",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 (matriz) — anonymous + clave aleatoria → unauthorized",
+      "expected": "HTTP >= 400 sin datos",
+      "status": "PASS",
+      "current": "HTTP 401 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for function create_sale_v2\"}",
+      "evidence": "anon denied"
+    },
+    {
+      "id": "T-H6-009",
+      "suite": "15-h6-idempotency",
+      "spec": "H6 — concurrente misma clave (mismo actor/tienda/payload)",
+      "expected": "EXACTLY 1 transacción · 0 duplicados de inventario/pago/movimiento",
+      "status": "PASS",
+      "current": "tx=1 movimientos=1 pagos=1 idsDistintos=1",
+      "evidence": "advisory lock por tienda + idempotencia serializan correctamente los retries concurrentes"
+    },
+    {
+      "id": "T-FIN-001",
+      "suite": "16-financial",
+      "spec": "§12 — precio inferior al autorizado (50 vs catálogo 100) sin supervisor",
+      "expected": "ERR_SUPERVISOR_REQUIRED (gate de desvío ≥15%)",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SUPERVISOR_REQUIRED: global_pct=0.00000000000000000000, max_line_pct=50.00000000000000000000\"}",
+      "evidence": "gate de desvío de precio operativo (E-SEC-FINAL D1)"
+    },
+    {
+      "id": "T-FIN-002",
+      "suite": "16-financial",
+      "spec": "§12 — precio inferior CON supervisor válido (manager propio, motivo)",
+      "expected": "venta autorizada persistida con snapshot de precio",
+      "status": "PASS",
+      "current": "price_at_sale=50.00",
+      "evidence": "camino supervisor (sesión propia manager + motivo) funciona — RC-1 intacto"
+    },
+    {
+      "id": "T-FIN-003",
+      "suite": "16-financial",
+      "spec": "§12 — precio superior al autorizado (150 vs 100)",
+      "expected": "política documentada E-SEC-FINAL D1: desvío evalúa SOLO precio<catálogo; overprice permitido sin gate (decisión funcional vigente) — anotado para revisión H0",
+      "status": "PASS",
+      "current": "ACEPTADA sin supervisor (política D1 vigente)",
+      "evidence": "E-SEC-FINAL D1 (migración 20260927000001) computa desvío únicamente cuando v_price < v_reference: el sobreprecio NO dispara gate. Es comportamiento aprobado documentado; H0 puede endurecerlo."
+    },
+    {
+      "id": "T-FIN-004",
+      "suite": "16-financial",
+      "spec": "§12 — subtotal del cliente (999) debe ser recalculado server-side",
+      "expected": "transactions.subtotal == 100 (valor servidor), no el del cliente",
+      "status": "PASS",
+      "current": "subtotal persistido=100.00",
+      "evidence": "p_subtotal es recalculado (parámetro ignorado)"
+    },
+    {
+      "id": "T-FIN-005",
+      "suite": "16-financial",
+      "spec": "§12 — total del cliente inconsistente → rechazo",
+      "expected": "ERR_TOTAL_MISMATCH",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_TOTAL_MISMATCH: calculated=100.00, client=50\"}",
+      "evidence": "validación de total server-side"
+    },
+    {
+      "id": "T-FIN-006",
+      "suite": "16-financial",
+      "spec": "§12 — tax_amount del cliente ignorado; autoridad real en applied_taxes",
+      "expected": "el impuesto persistido deriva de fuente autorizada — hoy: del JSONB cliente (referencia T-H4-003)",
+      "status": "FAIL",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_APPLIED_TAX_INVALID: entrada sin id de configuración\"}",
+      "evidence": "venta falló"
+    },
+    {
+      "id": "T-FIN-007",
+      "suite": "16-financial",
+      "spec": "§12 — descuento negativo (fixed -100) no puede aumentar el total",
+      "expected": "DENIED — descuento no puede ser negativo ni esquivar el gate",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INVALID_DISCOUNT: -100\"}",
+      "evidence": "descuento negativo rechazado"
+    },
+    {
+      "id": "T-FIN-008",
+      "suite": "16-financial",
+      "spec": "§12 — descuento mayor que el subtotal (999999)",
+      "expected": "capped a subtotal y gate de supervisor (100% descuento exige autorización)",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SUPERVISOR_REQUIRED: global_pct=100.00000000000000000000, max_line_pct=0\"}",
+      "evidence": "cap + gate operativos"
+    },
+    {
+      "id": "T-FIN-009",
+      "suite": "16-financial",
+      "spec": "§12 — exchange rate manipulado (referencia T-H5-001)",
+      "expected": "tasa server-side — hoy el cliente la impone (FAIL vía H5)",
+      "status": "FAIL",
+      "current": "rate persistida=400.0000 · price_at_sale_cup=40000.00",
+      "evidence": "tasa cliente 1000000 persistida; price_at_sale_cup = precio*rate cliente (40000.00) — autoridad de tasa en el cliente (ver suite H5)"
+    },
+    {
+      "id": "T-FIN-010",
+      "suite": "16-financial",
+      "spec": "§12 — cost_at_sale del cliente (999) ignorado → WAC del servidor",
+      "expected": "transaction_items.cost_at_sale == WAC del producto (50)",
+      "status": "PASS",
+      "current": "cost_at_sale persistido=50 (cliente envió 999)",
+      "evidence": "DF-02: costo siempre del servidor (WAC bajo lock); claves cost/cost_at_sale del request ignoradas"
+    },
+    {
+      "id": "T-FIN-011",
+      "suite": "16-financial",
+      "spec": "§12 — pagos mixed inconsistentes con el total",
+      "expected": "ERR_PAYMENT_MISMATCH",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_PAYMENT_MISMATCH: cash=40, transfer=40, zelle=0, total=100.00\"}",
+      "evidence": "invariante de suma de pagos operativa"
+    },
+    {
+      "id": "T-FIN-012",
+      "suite": "16-financial",
+      "spec": "§12 — cash_amount cliente (999) ignorado en método cash",
+      "expected": "cash_amount persistido == total server (100)",
+      "status": "PASS",
+      "current": "cash_amount persistido=100.00",
+      "evidence": "para método único el servidor impone el importe = total"
+    },
+    {
+      "id": "T-CS-001",
+      "suite": "17-cross-store",
+      "spec": "CS-A — USER_A crea venta en STORE_A",
+      "expected": "HTTP 200 con transacción creada",
+      "status": "PASS",
+      "current": "HTTP 200 {\"status\":\"success\",\"calculated_tax\":0,\"transaction_id\":\"09ca7df0-667d-4d68-bd33-0c80a3767cc8\",\"discount_amount\":0,\"calculated_total\":100,\"calculated_subtotal\":100}",
+      "evidence": "venta legítima en tienda propia (09ca7df0-667d-4d68-bd33-0c80a3767cc8)"
+    },
+    {
+      "id": "T-CS-002",
+      "suite": "17-cross-store",
+      "spec": "CS-B — USER_A intenta crear venta en STORE_B",
+      "expected": "DENIED (ERR_UNAUTHORIZED)",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "membresía de tienda validada (has_store_access_as)"
+    },
+    {
+      "id": "T-CS-003",
+      "suite": "17-cross-store",
+      "spec": "CS-C — USER_A utiliza seller de STORE_B",
+      "expected": "DENIED (referencia T-H3-003)",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SELLER_MISMATCH: p_seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65 no coincide con el actor autenticado=6eb29691-d253-4e03-b593-2b0cdd1415bc\"}",
+      "evidence": "seller cross-store rechazado"
+    },
+    {
+      "id": "T-CS-004",
+      "suite": "17-cross-store",
+      "spec": "CS-D — USER_A utiliza producto de STORE_B en venta de STORE_A",
+      "expected": "DENIED — producto ajeno a la tienda no puede venderse",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_STORE_MISMATCH: movement store_id a5b81cbf-8ffc-4525-8ac4-f2ec92b912d2 no coincide con product store_id b9cfacda-3731-47a2-8588-f524c6ec3456 p",
+      "evidence": "producto cross-store rechazado (ERR_STORE_MISMATCH via trigger fn_sync_inventory_on_movement (defense-in-depth: el trigger valida product.store_id vs movement.store_id; el RPC en sí usa fallback sin filtro de tienda en primera pasada))"
+    },
+    {
+      "id": "T-CS-005",
+      "suite": "17-cross-store",
+      "spec": "CS-E — USER_A reutiliza idempotency key creada por USER_B",
+      "expected": "DENY/CONFLICT sin revelar la transacción ajena",
+      "status": "PASS",
+      "current": "USER_A + clave de USER_B → HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}",
+      "evidence": "reutilización cross-actor rechazada sin fuga"
+    },
+    {
+      "id": "T-CS-006",
+      "suite": "17-cross-store",
+      "spec": "CS-F — USER_A UPDATE directo sobre transacción de STORE_B",
+      "expected": "DENIED por RLS (0 filas afectadas)",
+      "status": "PASS",
+      "current": "PATCH → 204 · total sigue=200.00",
+      "evidence": "RLS transactions_update_rls exige membresía activa en la tienda de la transacción: escritura de USER_A sobre STORE_B bloqueada"
+    },
+    {
+      "id": "T-CS-007",
+      "suite": "17-cross-store",
+      "spec": "CS-F — USER_A SELECT de transacciones de STORE_B",
+      "expected": "0 filas visibles (RLS SELECT)",
+      "status": "PASS",
+      "current": "GET → 200 filas=0",
+      "evidence": "aislamiento de lectura cross-store operativo"
+    },
+    {
+      "id": "T-INV-001",
+      "suite": "18-inventory",
+      "spec": "INV — venta crea tx + items + decremento + stock_movement",
+      "expected": "transacción, items, movimiento y decremento consistentes",
+      "status": "PASS",
+      "current": "delta_inventory=2 movimientos=1 items=1",
+      "evidence": "cadena tx→items→movimiento→decremento atómica"
+    },
+    {
+      "id": "T-INV-002",
+      "suite": "18-inventory",
+      "spec": "INV — stock insuficiente → rechazo sin efectos",
+      "expected": "ERR_INSUFFICIENT_STOCK y 0 escrituras",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INSUFFICIENT_STOCK: product 24d3c7b9-06f9-481e-adb8-85471c36eff2, stock 978.0000, requested 999999\"} · inventario 978.0000→978.0000",
+      "evidence": "oversell bloqueado por SELECT FOR UPDATE + pre-validación"
+    },
+    {
+      "id": "T-INV-003",
+      "suite": "18-inventory",
+      "spec": "INV — 2 ventas concurrentes sobre la última unidad (stock=1)",
+      "expected": "exactamente 1 éxito · 1 rechazo · inventario >= 0 · sin duplicar movimiento",
+      "status": "PASS",
+      "current": "transacciones=1 idsDistintos=1 movimientos=1 inventario_final=0 · resp200=2",
+      "evidence": "advisory lock por tienda + idempotencia serializan la última unidad sin oversell"
+    },
+    {
+      "id": "T-INV-004",
+      "suite": "18-inventory",
+      "spec": "INV — rollback atómico: fallo en 2ª línea revierte la 1ª",
+      "expected": "sin transacción, sin movimientos, inventario intacto",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INSUFFICIENT_STOCK: product f22dedc7-ff58-4433-8755-0d1c4e18efb1, stock 0.0000, requested 999\"} · inventario 978.0000→978.0000 · movimientosHuérfanos=0",
+      "evidence": "atomicidad de la transacción SQL revierte items+movimientos al fallar"
+    },
+    {
+      "id": "T-INV-005",
+      "suite": "18-inventory",
+      "spec": "INV — invariante inventory.quantity >= 0 en fixtures QA",
+      "expected": "todas las cantidades QA >= 0",
+      "status": "PASS",
+      "current": "filas=3 negativas=0",
+      "evidence": "trigger prevent_negative_inventory + pre-validación RPC mantienen el invariante"
+    },
+    {
+      "id": "T-TC-001",
+      "suite": "20-collateral-taxcfg",
+      "spec": "TC-C1 — modificaciones permitidas por rol/contrato",
+      "expected": "CONTRATO H0 (matriz rol→operación) — H0 NO PRODUCIDO",
+      "status": "BLOCKED",
+      "current": "policy única: tax_configurations_delete[DELETE] roles={authenticated} USING=(((store_id IS NULL) AND is_admin()) OR ((store_id IS NOT NU · tax_configurations_insert[INSERT] roles={authenticated} USING=null · tax_configurations_select[SELECT] roles={authenticated} USING=((store_id IS NULL) OR has_store_access(store_id)) · tax_configurations_update[UPDATE] roles={authenticated} USING=(((store_id IS NULL) AND is_admin()) OR ((store_id IS NOT NU",
+      "evidence": "El spec H0 no define la matriz rol→operación sobre tax_configurations. NO SE INVENTA. Evidencia actual: una SOLA policy \"Tax unified\" [ALL] para authenticated con USING has_store_access(store_id) — cualquier miembro (incl. clerk) tiene INSERT/UPDATE/DELETE sobre la configuración fiscal de su tienda."
+    },
+    {
+      "id": "T-TC-002",
+      "suite": "20-collateral-taxcfg",
+      "spec": "TC-C2 — clerk NO puede crear impuesto arbitrario (fuente de descuentos)",
+      "expected": "DENIED — INSERT de tax_configurations por clerk rechazado",
+      "status": "PASS",
+      "current": "INSERT clerk → 403 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for function has_store_role_as\"}",
+      "evidence": "escritura por clerk bloqueada"
+    },
+    {
+      "id": "T-TC-003",
+      "suite": "20-collateral-taxcfg",
+      "spec": "TC-C3 — valores inválidos no pueden introducirse",
+      "expected": "constraint/policy rechaza value negativo (y rango inválido según H0)",
+      "status": "PASS",
+      "current": "check constraints: CHECK ((type = ANY (ARRAY['fixed'::text, 'percentage'::text]))) · CHECK ((value > (0)::numeric))",
+      "evidence": "tax_configurations.value acepta cualquier numeric (sin CHECK de rango): negativos, >100%, NaN-like. El rango válido exacto es contrato H0 (ausente) pero el NEGATIVO es inválido bajo cualquier lectura y hoy es introducible."
+    },
+    {
+      "id": "T-TC-004",
+      "suite": "20-collateral-taxcfg",
+      "spec": "TC-C4 — modificar config fiscal NO altera ventas existentes",
+      "expected": "transactions.applied_taxes/tax_amount de ventas previas permanecen intactas",
+      "status": "PASS",
+      "current": "ventas=284→284 sumTax=50920.0000000000000000→50920.0000000000000000",
+      "evidence": "las ventas persisten applied_taxes como snapshot JSONB: la config no las re-cacula (la vía retroactiva real es update_transaction_taxes — suite 21)"
+    },
+    {
+      "id": "T-TC-005",
+      "suite": "20-collateral-taxcfg",
+      "spec": "TC — cross-store: USER_B (STORE_B) escribe tax_config de STORE_A",
+      "expected": "DENIED (has_store_access falla para no-miembro)",
+      "status": "PASS",
+      "current": "INSERT USER_B sobre STORE_A → 403",
+      "evidence": "RLS tax_configurations cierra el cross-store (solo same-store members)"
+    },
+    {
+      "id": "T-UTT-001",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C5 — quién puede ejecutar update_transaction_taxes",
+      "expected": "CONTRATO H0 de autorización exacta — H0 NO PRODUCIDO (FAIL SPEC COVERAGE)",
+      "status": "BLOCKED",
+      "current": "ACL={costpro_transaction_adjuster=X/costpro_transaction_adjuster,authenticated=X/costpro_transaction_adjuster,service_role=X/costpro_transaction_adjuster} · cuerpo: is_admin() OR has_role('manager') OR has_role('encargado') — roles GLOBALES",
+      "evidence": "FAIL SPEC COVERAGE: H0 no define el contrato de autorización de update_transaction_taxes. Descubrimiento documentado: ACL=authenticated; autorización por rol GLOBAL de profiles (admin/encargado/manager) SIN scoping de tienda y SIN token/motivo. H0 debe fijar: quién, en qué tiendas, en qué estados."
+    },
+    {
+      "id": "T-UTT-002",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C6 — clerk NO puede modificar una venta cerrada",
+      "expected": "DENIED para USER_A (clerk)",
+      "status": "PASS",
+      "current": "clerk → HTTP 404 [object Object]",
+      "evidence": "chequeo de rol global bloquea al clerk"
+    },
+    {
+      "id": "T-UTT-003",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C7 — tax_amount/applied_taxes reescritos SIN recálculo server-side",
+      "expected": "los campos tributarios persistidos deben derivarse server-side con invariante total=subtotal−desc+tax",
+      "status": "PASS",
+      "current": "denegada: HTTP 404 {\"code\":\"PGRST202\",\"details\":\"Searched for the function public.update_transaction_taxes with parameters p_applied_taxes, p_tax_amount, p_total_amount, p_transaction_id or with a single unnamed json/js",
+      "evidence": "sin reescritura"
+    },
+    {
+      "id": "T-UTT-004",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C8 — reescribir el total post-venta para evadir supervisor",
+      "expected": "el total NO puede reescribirse por esta vía (política de supervisor intacta)",
+      "status": "PASS",
+      "current": "intento total 200→5 → HTTP 404 · total persistido=200.00",
+      "evidence": "DENEGADO por defense-in-depth: el trigger protect_transactions_total_amount (PT008) hace inmutable el total fuera de adjust_total_amount — la función en SÍ lo habría escrito (no valida nada); la protección es del trigger, no del RPC"
+    },
+    {
+      "id": "T-UTT-005",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C9 — encargado de STORE_B modifica campos de transacción de STORE_A",
+      "expected": "DENIED — scoping de tienda obligatorio",
+      "status": "PASS",
+      "current": "denegada: HTTP 404",
+      "evidence": "scoping presente"
+    },
+    {
+      "id": "T-UTT-006",
+      "suite": "21-collateral-utt",
+      "spec": "UTT-C10 — modificación sin estado/justificación permitida",
+      "expected": "CONTRATO H0 de estados/justificación — H0 NO PRODUCIDO (FAIL SPEC COVERAGE)",
+      "status": "BLOCKED",
+      "current": "tx status=completed (completed) modificada en C7 · la función no consulta status ni exige motivo",
+      "evidence": "FAIL SPEC COVERAGE: H0 no define estados permitidos ni justificación para la modificación tributaria post-venta. Evidencia: venta completed modificada sin estado/motivo alguno."
+    },
+    {
+      "id": "T-UTT-007",
+      "suite": "21-collateral-utt",
+      "spec": "UTT — adjust_total_amount: clerk denegado (superficie adyacente)",
+      "expected": "ERR_UNAUTHORIZED para no-admin",
+      "status": "PASS",
+      "current": "clerk → HTTP 403 [object Object]",
+      "evidence": "is_admin() fail-closed para clerk"
+    },
+    {
+      "id": "T-UTT-008",
+      "suite": "21-collateral-utt",
+      "spec": "UTT — adjust_total_amount: encargado GLOBAL denegado (asimetría documentada)",
+      "expected": "ERR_UNAUTHORIZED (solo admin global) — contraste con update_transaction_taxes que SÍ lo permite",
+      "status": "PASS",
+      "current": "encargado global → HTTP 403 [object Object]",
+      "evidence": "adjust_total_amount exige is_admin() estricto: más estrecho que update_transaction_taxes (que acepta manager/encargado globales). Asimetría de privilegios documentada para H0."
+    },
+    {
+      "id": "T-ER-001",
+      "suite": "22-collateral-rates",
+      "spec": "ER — clerk (USER_A) reescribe la tasa de confianza de SU tienda",
+      "expected": "DENIED — la fuente server-side de tasas no es escribible por clerk",
+      "status": "PASS",
+      "current": "PATCH store_exchange_rates por clerk → 403",
+      "evidence": "fuente protegida contra clerk"
+    },
+    {
+      "id": "T-ER-002",
+      "suite": "22-collateral-rates",
+      "spec": "ER — USER_B (STORE_B) reescribe la tasa de STORE_A",
+      "expected": "DENIED",
+      "status": "PASS",
+      "current": "PATCH cross-store → 403",
+      "evidence": "el scoping per-store de la policy bloquea a no-miembros"
+    },
+    {
+      "id": "T-ER-003",
+      "suite": "22-collateral-rates",
+      "spec": "ER — usuario autenticado NO escribe exchange_rates (global)",
+      "expected": "DENIED (policy service_role-only para INSERT/UPDATE)",
+      "status": "PASS",
+      "current": "INSERT exchange_rates → 403 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"new row violates row-level security policy for",
+      "evidence": "exchange_rates_insert/update son service_role-only: la fuente global está protegida"
+    },
+    {
+      "id": "T-ER-004",
+      "suite": "22-collateral-rates",
+      "spec": "ER — anon no lee ni escribe fuentes de tasa",
+      "expected": "DENIED ambos",
+      "status": "PASS",
+      "current": "read global→200 read store→200 write→401",
+      "evidence": "RLS deny-by-default para anon en ambas fuentes"
+    },
+    {
+      "id": "T-RT-001",
+      "suite": "30-route-checkout",
+      "spec": "RT — POST /api/pos/checkout sin sesión → 401",
+      "expected": "HTTP 401",
+      "status": "PASS",
+      "current": "HTTP 401 {\"error\":\"No autorizado\",\"message\":\"Se requiere sesión activa\"}",
+      "evidence": "withAuth fail-closed"
+    },
+    {
+      "id": "T-RT-002",
+      "suite": "30-route-checkout",
+      "spec": "RT — USER_A venta válida por la ruta → 200 + tx + seller=USER_A",
+      "expected": "HTTP 200, transaction_id presente, seller_id persistido = USER_A",
+      "status": "PASS",
+      "current": "tx=2a1b1540-cb29-47d9-aa1b-a2ee334b0e0a seller=6eb29691-d253-4e03-b593-2b0cdd1415bc",
+      "evidence": "ruta canónica V2 operativa con actores reales"
+    },
+    {
+      "id": "T-RT-003",
+      "suite": "30-route-checkout",
+      "spec": "RT — la ruta no debe permitir seller spoofing (seller_id=USER_B)",
+      "expected": "la ruta DERIVA el vendedor del servidor (session) o rechaza; jamás persiste seller=USER_B",
+      "status": "PASS",
+      "current": "ACEPTADA con seller persistido=6eb29691-d253-4e03-b593-2b0cdd1415bc",
+      "evidence": "la ruta reenvía seller_id del body tal cual al RPC: venta de USER_A atribuida a USER_B (6eb29691-d253-4e03-b593-2b0cdd1415bc)"
+    },
+    {
+      "id": "T-RT-004",
+      "suite": "30-route-checkout",
+      "spec": "RT — la ruta no debe aceptar impuestos del cliente",
+      "expected": "applied_taxes del body no puede ser la fuente del impuesto persistido",
+      "status": "PASS",
+      "current": "HTTP 400",
+      "evidence": "ruta valida impuestos"
+    },
+    {
+      "id": "T-RT-005",
+      "suite": "30-route-checkout",
+      "spec": "RT — la ruta no debe aceptar tasa de cambio del cliente",
+      "expected": "sale_exchange_rate del body no puede fijar la tasa efectiva",
+      "status": "FAIL",
+      "current": "ACEPTADA: rate persistida=400.0000",
+      "evidence": "la ruta reenvía sale_exchange_rate cliente→RPC sin fuente server-side"
+    },
+    {
+      "id": "T-RT-006",
+      "suite": "30-route-checkout",
+      "spec": "RT — la ruta usa EXCLUSIVAMENTE create_sale_v2 (sin legacy RPC)",
+      "expected": "route.ts invoca rpc(\"create_sale_v2\") y no existe llamada a create_sale V1",
+      "status": "PASS",
+      "current": "v2=true v1=false",
+      "evidence": "contrato canónico V2 en la ruta"
+    },
+    {
+      "id": "T-RT-007",
+      "suite": "30-route-checkout",
+      "spec": "RT — service-role de la ruta está bound a la sesión (p_user_id)",
+      "expected": "p_user_id SIEMPRE session.user.id; el body no puede inyectarlo",
+      "status": "PASS",
+      "current": "static bind=true · body p_user_id ignorado=true",
+      "evidence": "la identidad del actor en la ruta proviene de la sesión verificada; p_user_id del body es filtrado por zod e ignorado"
+    },
+    {
+      "id": "T-SB-001",
+      "suite": "31-route-sync",
+      "spec": "SB — POST /api/sync/batch sin sesión → 401",
+      "expected": "HTTP 401",
+      "status": "PASS",
+      "current": "HTTP 401",
+      "evidence": "withAuth fail-closed"
+    },
+    {
+      "id": "T-SB-002",
+      "suite": "31-route-sync",
+      "spec": "SB — operación de venta con p_store_id ajeno (STORE_B) → 403",
+      "expected": "HTTP 403 STORE_ACCESS_DENIED (gate por operación)",
+      "status": "PASS",
+      "current": "HTTP 403 {\"error\":\"Sin acceso a la tienda especificada\",\"key\":\"apiErrors.storeAccessDenied\",\"operationKey\":\"949367ea-6770-4559-bd",
+      "evidence": "FIX-SEC-H3: membresía validada por operación antes de ejecutar"
+    },
+    {
+      "id": "T-SB-003",
+      "suite": "31-route-sync",
+      "spec": "SB — sync usa EXCLUSIVAMENTE create_sale_v2 (nunca V1)",
+      "expected": "route.ts mapea entity=sale → create_sale_v2 sin fallback V1",
+      "status": "PASS",
+      "current": "v2=true v1=false",
+      "evidence": "camino offline canonical V2"
+    },
+    {
+      "id": "T-SB-004",
+      "suite": "31-route-sync",
+      "spec": "SB — sync ejecuta RPCs con el token DEL USUARIO (no service_role)",
+      "expected": "getSupabaseAuthClient(session.token); sin getSupabaseAdminSafe",
+      "status": "PASS",
+      "current": "userToken=true admin=false",
+      "evidence": "la ruta offline no expone service_role al usuario: el RPC corre como authenticated (auth.uid=usuario)"
+    },
+    {
+      "id": "T-SB-005",
+      "suite": "31-route-sync",
+      "spec": "SB — seller spoofing vía payload de sync (p_seller_id=USER_B)",
+      "expected": "la venta offline no puede atribuirse a otro vendedor (binding server-side)",
+      "status": "PASS",
+      "current": "HTTP 200 · spoofed=no · log={\"results\":[{\"idempotencyKey\":\"7f70259e-b006-48ec-85e8-fefbc63cab77\",\"status\":\"ok\",\"serverId\":{\"status\":\"success\",\"calculated_tax\":0,\"transa",
+      "evidence": "sin spoofing vía sync"
+    },
+    {
+      "id": "T-V1-001",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — ACL LIVE: create_sale SIN EXECUTE para authenticated",
+      "expected": "proacl de create_sale sin authenticated=X ni anon=X ni PUBLIC",
+      "status": "FAIL",
+      "current": "ACL LIVE V1 = {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "evidence": "V1 sigue ejecutable por authenticated: prerequisiteio de DROP no cumplido"
+    },
+    {
+      "id": "T-V1-002",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — callers de producción de create_sale = 0",
+      "expected": "0 referencias ejecutables a rpc create_sale / rpcName=create_sale en src (excluye tests)",
+      "status": "FAIL",
+      "current": "callers=1: src/hooks/api/useTransactions.ts",
+      "evidence": "useTransactions.ts mantiene rpcName=create_sale (registro V1 permitido por el contract test actual) y usePOSCheckout.ts conserva el else-branch V1 — el censo debe llegar a 0"
+    },
+    {
+      "id": "T-V1-003",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — referencias a fallback USE_V2_CHECKOUT=false = 0",
+      "expected": "ni features.ts ni hooks conservan el camino V1 (flag, else-branch, pilot stores)",
+      "status": "FAIL",
+      "current": "refs=src/config/features.ts (flag) · usePOSCheckout.ts (path v1)",
+      "evidence": "el mecanismo de fallback V1 sigue presente: cualquier despliegue con NEXT_PUBLIC_USE_V2_CHECKOUT=false reactiva V1"
+    },
+    {
+      "id": "T-V1-004",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — tests legacy de V1 = 0",
+      "expected": "ningún test de integración/unidad depende de create_sale V1",
+      "status": "PASS",
+      "current": "tests legacy=0: ",
+      "evidence": "iteration-11-1.test.ts / iteration-11-2.test.ts ejercitan V1: deben migrarse o eliminarse con V1"
+    },
+    {
+      "id": "T-V1-005",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — contract allow-list de V2-ONLY prohíbe V1",
+      "expected": "v2-only-contract-test.cjs con allow-list VACÍA (allowedV1Checkout = [])",
+      "status": "FAIL",
+      "current": "allow-list con useTransactions=true · exige presencia V1=true",
+      "evidence": "el contract test actual PERMITE (e incluso exige) el caller V1 — debe invertirse a prohibición total"
+    },
+    {
+      "id": "T-V1-006",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — E2E de checkout usa exclusivamente V2",
+      "expected": "specs E2E de venta no dependen de V1 ni del flag",
+      "status": "FAIL",
+      "current": "specs con dependencia V1/flag=1: security.spec.ts",
+      "evidence": "requisito: los E2E de venta deben hablar solo con /api/pos/checkout (V2)"
+    },
+    {
+      "id": "T-V1-007",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — reconcilers/migraciones no resucitan grants de V1",
+      "expected": "ningún archivo post-retiro hace GRANT EXECUTE sobre create_sale (V1)",
+      "status": "FAIL",
+      "current": "migraciones con GRANT V1=15: 20260114_create_sale_rpc.sql, 20260304_harden_sale_stock_logic.sql, 20260320_fix_audit_v2_hallazgos.sql, 20260324_total_remediation.sql, 20260622000001_global_operation_date_policy.sql, 20260622000002_extend_global_date_policy.sql, 20260726000001_v1_1_stabilization.sql, 20260726000004_v2_1_deep_integrations.sql, 20260726000026_v2_10_5_fix_create_sale_auth.sql, 20260726000030_v2_11_3_fix_create_sale_bypass.sql, 20260726000032_v2_12_critical_fixes.sql, 20260727000009_v2_12_13_revoke_anon_grants_comments.sql, 20260803000002_v2_13_2_void_transaction_conversion_factor.sql, 20260803000004_v2_13_4_create_sale_validate_op_date.sql, 20260916000002_rem_inv_6_reconcile_function_acl.sql",
+      "evidence": "existen grants históricos de V1 en migraciones: al ejecutar el DROP (PR-R1) ninguna migración posterior puede re-grantear; el reconciler F4 (20260927000002) ya demostró el patrón de resurrección con PUBLIC→V2"
+    },
+    {
+      "id": "T-V1-008",
+      "suite": "40-v1-retirement",
+      "spec": "V1-GATE — create_sale es removible (sin dependientes DB)",
+      "expected": "0 objetos DB dependen de create_sale (pg_depend) y 0 llamadas internas desde otras funciones",
+      "status": "PASS",
+      "current": "pg_depend no-n=0 · funciones llamantes=0",
+      "evidence": "verificación de removabilidad (DROP sin cascada)"
+    },
+    {
+      "id": "T-AR-001",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — ningún caller legítimo de create_sale( en producción",
+      "expected": "0 archivos de PRODUCCIÓN (src + scripts activos, excluye tests) llaman a V1",
+      "status": "FAIL",
+      "current": "src/hooks/api/useTransactions.ts (1 línea(s))",
+      "evidence": "censo de callers V1 en código de producción"
+    },
+    {
+      "id": "T-AR-002",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — sin mecanismo de fallback V1 (USE_V2_CHECKOUT=false o equivalente)",
+      "expected": "0 ocurrencias del flag de fallback en src/.env.example/CI",
+      "status": "FAIL",
+      "current": "refs=src/config/features.ts, .env.example · pilot-mechanism=true",
+      "evidence": "el flag y su mecanismo piloto permiten reactivar V1 por configuración: deben eliminarse con el retiro"
+    },
+    {
+      "id": "T-AR-003",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — migraciones sin GRANT PUBLIC/anon → create_sale_v2",
+      "expected": "0 migraciones con GRANT EXECUTE ... TO PUBLIC/anon sobre create_sale_v2",
+      "status": "PASS",
+      "current": "0 migraciones",
+      "evidence": "sin grants peligrosos"
+    },
+    {
+      "id": "T-AR-004",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — LIVE: create_sale_v2 sin EXECUTE para PUBLIC/anon (post-hardening gate)",
+      "expected": "proacl LIVE sin =X ni anon=X (idem T-H1-002, gate de regresión)",
+      "status": "FAIL",
+      "current": "ACL LIVE={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "evidence": "estado LIVE del grant (debe permanecer sin PUBLIC/anon tras el hardening)"
+    },
+    {
+      "id": "T-AR-005",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — census de restauración de grants V1 en scripts/tests/seeds/CI",
+      "expected": "0 archivos (excluye migraciones históricas pre-drop) con GRANT V1",
+      "status": "PASS",
+      "current": "0 archivos",
+      "evidence": "los reconcilers de ACL (patrón rem_inv_6 / F4) son el vector de resurrección: el PR-R1 debe auditarlos"
+    },
+    {
+      "id": "T-AR-006",
+      "suite": "41-anti-resurrection",
+      "spec": "AR — contract-surface no canoniza PUBLIC→create_sale_v2",
+      "expected": "supabase/security-contract/contract-surface.sql sin GRANT PUBLIC a create_sale_v2",
+      "status": "PASS",
+      "current": "GRANT PUBLIC en contract-surface=false",
+      "evidence": "la superficie de contrato certificada es lo que un replay limpio reproducirá: no debe contener el grant peligroso"
+    }
+  ],
+  "consolidator_issue": {
+    "issue": "run-all.cjs:67 TypeError: Cannot read properties of undefined (reading pass) — el consolidador relee su propio _consolidated.json previo (sin campo counts) como si fuera una suite",
+    "root_cause": "results/_consolidated.json persistente de corridas previas entra al loop de consolidación (readdirSync lee TODOS los .json)",
+    "impact": "solo metadatos consolidados; TODAS las 16 suites y sus 101 tests ejecutan y persisten artefactos individuales correctamente",
+    "resolution_by_qa": "cómputo directo desde los 16 JSON individuales (este archivo); el defecto NO fue corregido (regla: no modificar tests)",
+    "note": "La corrida del Implementation Agent no lo sufrió porque partió de results/ limpio; la condición se dispara cuando existe _consolidated.json previo"
+  }
+}

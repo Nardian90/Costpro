@@ -1,0 +1,69 @@
+{
+  "suite": "H3 — SELLER BINDING",
+  "suite_id": "12-h3-seller",
+  "started": "2026-10-04T14:57:36.201Z",
+  "duration_ms": 4222,
+  "counts": {
+    "total": 6,
+    "pass": 5,
+    "fail": 0,
+    "blocked": 1,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-H3-001",
+      "suite": "12-h3-seller",
+      "spec": "H3.1 — USER_A vende como sí mismo → atribución = USER_A",
+      "expected": "HTTP 200 y transactions.seller_id == USER_A",
+      "status": "PASS",
+      "current": "seller_id persistido = 6eb29691-d253-4e03-b593-2b0cdd1415bc",
+      "evidence": "venta válida con seller_id=USER_A → tx fedaa9a1-3ac9-44de-a5cd-2217e53d4b32"
+    },
+    {
+      "id": "T-H3-002",
+      "suite": "12-h3-seller",
+      "spec": "H3.2 — USER_A vende como USER_B (spoof mismo nivel)",
+      "expected": "DENIED o derivación inequívoca a USER_A; NUNCA seller=USER_B",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SELLER_MISMATCH: p_seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65 no coincide con el actor autenticado=6eb29691-d253-4e03-b593-2b0cdd1415bc\"}",
+      "evidence": "rechazo o derivación server-side"
+    },
+    {
+      "id": "T-H3-003",
+      "suite": "12-h3-seller",
+      "spec": "H3.3 — Cross-store seller spoof (actor USER_A/STORE_A, seller USER_B/STORE_B)",
+      "expected": "DENIED; nunca seller de otra tienda",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SELLER_MISMATCH: p_seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65 no coincide con el actor autenticado=6eb29691-d253-4e03-b593-2b0cdd1415bc\"}",
+      "evidence": "cross-store seller rechazado"
+    },
+    {
+      "id": "T-H3-004",
+      "suite": "12-h3-seller",
+      "spec": "H3.4 — p_seller_id ausente (NULL): rechazar o derivar del actor",
+      "expected": "CONTRATO H0: rechazar O derivar server-side del actor — H0 NO PRODUCIDO",
+      "status": "BLOCKED",
+      "current": "probe actual: HTTP 400 → seller_id=n/a",
+      "evidence": "La especificación H0 (CREATE-SALE-V2-HARDENING-SPEC.md) NO EXISTE en el repo (verificado en baseline). La decisión rechazar-vs-derivar es un contrato H0: NO SE INVENTA. Comportamiento actual observado y documentado como evidencia para el implementador."
+    },
+    {
+      "id": "T-H3-005",
+      "suite": "12-h3-seller",
+      "spec": "H3.5 — p_user_id spoofing con sesión authenticated → ignorado",
+      "expected": "v_uid = auth.uid() (USER_A): la venta se evalúa contra USER_A, no contra p_user_id",
+      "status": "PASS",
+      "current": "authenticated + p_user_id=USER_B → HTTP 200 {\"status\":\"success\",\"calculated_tax\":0,\"transaction_id\":\"947f5563-1c69-477f-a2c0-1e9aa4f03f55\",\"discount_amount\":0,\"calculated_total\":100,\"calculated_subtotal\":100}",
+      "evidence": "p_user_id se ignora para rol authenticated (v_uid=auth.uid()); el bypass de identidad solo existe en service_role"
+    },
+    {
+      "id": "T-H3-006",
+      "suite": "12-h3-seller",
+      "spec": "H3.5 — census: llamadores service_role de create_sale_v2",
+      "expected": "solo /api/pos/checkout (server route) y ningún path cliente expone service_role al usuario",
+      "status": "PASS",
+      "current": "checkout admin-client+p_user_id(session)=true · sync user-token=true",
+      "evidence": "/api/pos/checkout usa service_role con p_user_id=session.user.id (bind a sesión); /api/sync/batch ejecuta RPCs con el token DEL USUARIO (authenticado). Ninguna superficie cliente ejecuta como service_role."
+    }
+  ]
+}

@@ -1,0 +1,546 @@
+{
+  "started_at": "2026-10-04T15:18:27.851Z",
+  "gates": {
+    "gate1_acl": {
+      "privileges": {
+        "anon_exec": false,
+        "auth_exec": true,
+        "svc_exec": true
+      },
+      "g1_anon_cannot_execute": true,
+      "proacl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+      "public_entry_semantic": false,
+      "g1_proacl_no_public": true,
+      "anon_existing": {
+        "status": 401,
+        "body": {
+          "code": "42501",
+          "details": null,
+          "hint": null,
+          "message": "permission denied for function create_sale_v2"
+        }
+      },
+      "anon_random": {
+        "status": 401,
+        "body": {
+          "code": "42501",
+          "details": null,
+          "hint": null,
+          "message": "permission denied for function create_sale_v2"
+        }
+      },
+      "g1_anon_uniform_403": true,
+      "g1_anon_indistinguishable": true,
+      "authenticated_member_call": {
+        "status": 200
+      },
+      "g1_authenticated_member_ok": true
+    },
+    "gate2_idempotency_oracle": {
+      "first": {
+        "status": 200,
+        "tx": "37ada7ef-1e26-4b90-99da-c75871dc47c0"
+      },
+      "caseA_anon_existing_key": {
+        "status": 401,
+        "body": {
+          "code": "42501",
+          "details": null,
+          "hint": null,
+          "message": "permission denied for function create_sale_v2"
+        }
+      },
+      "g2A": true,
+      "caseB": {
+        "status": 200,
+        "body": {
+          "status": "idempotent",
+          "transaction_id": "37ada7ef-1e26-4b90-99da-c75871dc47c0"
+        },
+        "counts": {
+          "tx": 1,
+          "items": 1,
+          "pays": 1,
+          "movs": 1
+        }
+      },
+      "g2B": true,
+      "caseC": {
+        "status": 400,
+        "body": {
+          "code": "P0001",
+          "details": null,
+          "hint": null,
+          "message": "ERR_IDEMPOTENCY_KEY_REUSE: idempotency conflict — la clave qa-post-1791127117656-1or9vw ya está ligada a otra identidad de venta (payload/actor/tienda)"
+        }
+      },
+      "g2C": true,
+      "caseD_member_other_actor": {
+        "status": 400,
+        "body": {
+          "code": "P0001",
+          "details": null,
+          "hint": null,
+          "message": "ERR_IDEMPOTENCY_KEY_REUSE: idempotency conflict — la clave qa-post-1791127117656-1or9vw ya está ligada a otra identidad de venta (payload/actor/tienda)"
+        }
+      },
+      "g2D_same_store_other_actor": true,
+      "caseD_nonmember": {
+        "status": 400,
+        "body": {
+          "code": "P0001",
+          "details": null,
+          "hint": null,
+          "message": "ERR_UNAUTHORIZED"
+        }
+      },
+      "g2D_nonmember_unauthorized": true
+    },
+    "gate3_seller_spoofing": {
+      "rpc_spoof": {
+        "status": 400,
+        "body": {
+          "code": "P0001",
+          "details": null,
+          "hint": null,
+          "message": "ERR_SELLER_MISMATCH: p_seller_id=8b04b1a9-80c3-444e-952b-6b0256155d65 no coincide con el actor autenticado=6eb29691-d253-4e03-b593-2b0cdd1415bc"
+        }
+      },
+      "g3_rpc_mismatch": true,
+      "rpc_null": {
+        "status": 400,
+        "body": {
+          "code": "P0001",
+          "details": null,
+          "hint": null,
+          "message": "ERR_SELLER_REQUIRED: p_seller_id es obligatorio y debe coincidir con el actor autenticado"
+        }
+      },
+      "g3_rpc_null": true,
+      "checkout_spoof": {
+        "status": 200,
+        "persisted_seller": "6eb29691-d253-4e03-b593-2b0cdd1415bc",
+        "expected": "6eb29691-d253-4e03-b593-2b0cdd1415bc"
+      },
+      "g3_checkout_derives_session": true,
+      "sync_spoof_direct": {
+        "status": 200,
+        "persisted_seller": "6eb29691-d253-4e03-b593-2b0cdd1415bc",
+        "result": "ok"
+      },
+      "g3_sync_direct": true,
+      "sync_spoof_nested": {
+        "status": 200,
+        "persisted_seller": "6eb29691-d253-4e03-b593-2b0cdd1415bc",
+        "result": "ok"
+      },
+      "g3_sync_nested": true
+    },
+    "gate4_tax": {
+      "fixtures": {
+        "tax_store_a": "9af30cc0-6bb1-4e85-a8eb-ccc547eacb2e",
+        "tax_store_b": "6d196e18-1bc7-4087-9ddb-0fa4c5834f67"
+      },
+      "negative_fixed": {
+        "status": 400,
+        "msg": "ERR_APPLIED_TAX_INVALID: entrada sin id de configuración"
+      },
+      "g4_negative_fixed": true,
+      "negative_pct": {
+        "status": 400,
+        "msg": "ERR_APPLIED_TAX_INVALID: entrada sin id de configuración"
+      },
+      "g4_negative_pct": true,
+      "unknown_id": {
+        "status": 400,
+        "msg": "ERR_APPLIED_TAX_INVALID"
+      },
+      "g4_unknown_id": true,
+      "duplicate": {
+        "status": 400,
+        "msg": "ERR_APPLIED_TAX_INVALID: impuesto duplicado"
+      },
+      "g4_duplicate": true,
+      "cross_store_tax": {
+        "status": 400,
+        "msg": "ERR_APPLIED_TAX_INVALID"
+      },
+      "g4_cross_store": true,
+      "valid_tax_sale": {
+        "status": 200,
+        "tx": {
+          "tax_amount": "10.0000000000000000",
+          "applied_taxes": [
+            {
+              "id": "9af30cc0-6bb1-4e85-a8eb-ccc547eacb2e",
+              "name": "QA IVA 10%",
+              "type": "percentage",
+              "value": 10,
+              "min_exempt": 0
+            }
+          ],
+          "total_amount": "110.0000000000000000"
+        }
+      },
+      "g4_valid_tax": true,
+      "supervisor_bypass": {
+        "status": 400,
+        "msg": "ERR_APPLIED_TAX_INVALID: entrada sin id de configuración"
+      },
+      "g4_supervisor_bypass_impossible": true,
+      "utt_clerk": {
+        "status": 403,
+        "msg": "permission denied for schema auth"
+      },
+      "g4_utt_clerk_denied": true,
+      "utt_cross_store": {
+        "user_b": {
+          "status": 403,
+          "msg": "permission denied for schema auth"
+        },
+        "global_encargado": {
+          "status": 403,
+          "msg": "permission denied for schema auth"
+        }
+      },
+      "g4_utt_cross_store_denied": true,
+      "utt_no_reason": {
+        "status": 403,
+        "msg": "permission denied for schema auth"
+      },
+      "g4_utt_reason_required": true,
+      "utt_no_reason_blocked_by_defect": true,
+      "utt_authorized": {
+        "status": 403,
+        "msg": "permission denied for schema auth"
+      },
+      "g4_utt_authorized_recalc": false,
+      "DEFECT_utt_schema_auth": true,
+      "utt_voided": {
+        "status": 403,
+        "msg": "permission denied for schema auth"
+      },
+      "g4_utt_terminal_state": true,
+      "utt_voided_blocked_by_defect": true,
+      "pt008_direct_update": "mgmt query falló: {\"message\":\"Failed to run sql query: ERROR:  PT008: ERR_TOTAL_AMOUNT_IMMUTABLE: transactions.total_amount cannot be modifi",
+      "g4_pt008_intact": true,
+      "adjust_total_amount_preexisting": {
+        "status": 403,
+        "msg": "permission denied for schema auth"
+      },
+      "PREEXISTING_adjust_schema_auth": true,
+      "owner_schema_auth_usage": false,
+      "ROOT_CAUSE_owner_no_auth_usage": true
+    },
+    "gate5_rate": {
+      "client_1000000": {
+        "status": 200,
+        "persisted_rate": "400.0000",
+        "price_cup": "40000.00"
+      },
+      "g5_rate_1m_server_wins": true,
+      "client_0": {
+        "status": 200,
+        "persisted": "400.0000"
+      },
+      "client_neg": {
+        "status": 200,
+        "persisted": "400.0000"
+      },
+      "g5_rate_0_neg_informational": true,
+      "stale": {
+        "probe_arbitrary_7": {
+          "status": 400,
+          "msg": "ERR_RATE_STALE: currency=EUR, store=a5b81cbf-8ffc-4525-8ac4-f2ec92b912d2, source=store, effective=2026-08-05 15:19:37.413827+00"
+        },
+        "probe_stale_350": {
+          "status": 400,
+          "msg": "ERR_RATE_STALE: currency=EUR, store=a5b81cbf-8ffc-4525-8ac4-f2ec92b912d2, source=store, effective=2026-08-05 15:19:37.413827+00"
+        }
+      },
+      "g5_stale_fail_closed": true,
+      "fresh_rate": {
+        "status": 200
+      },
+      "g5_fresh_works": true,
+      "unavailable": {
+        "status": 400,
+        "msg": "ERR_EXCHANGE_RATE_UNAVAILABLE: currency=XYZ, store=a5b81cbf-8ffc-4525-8ac4-f2ec92b912d2"
+      },
+      "g5_unavailable_fail_closed": true,
+      "audit_divergence": {
+        "lines": [
+          {
+            "ord": 1,
+            "product_id": "24d3c7b9-06f9-481e-adb8-85471c36eff2",
+            "variant_id": null,
+            "discount_pct": 0,
+            "catalog_price": 100,
+            "price_at_sale": 100,
+            "discount_value": 0
+          }
+        ],
+        "subtotal": 100,
+        "item_count": 1,
+        "tax_amount": 0,
+        "cash_amount": 100,
+        "client_rate": 1000000,
+        "customer_id": null,
+        "rate_source": "store",
+        "server_rate": 400,
+        "v2_checkout": true,
+        "discount_pct": 0,
+        "total_amount": 100,
+        "zelle_amount": 0,
+        "supervisor_id": null,
+        "tax_authority": "tax_configurations_server_side",
+        "cogs_authority": "server_side_wac_df02",
+        "payment_method": "cash",
+        "policy_version": "E-SEC-FINAL",
+        "rate_authority": "server_side_h0r_d_exr",
+        "discount_amount": 0,
+        "discount_reason": "",
+        "supervisor_path": "none",
+        "transfer_amount": 0,
+        "catalog_subtotal": 100,
+        "item_discount_pct": 0,
+        "item_discount_total": 0,
+        "supervisor_token_jti": null,
+        "max_line_discount_pct": 0,
+        "idempotency_param_hash": "e9668906f292a6307e83a04af8d82f1e",
+        "payment_transactions_created": true
+      },
+      "g5_audit_records": true
+    },
+    "gate6_concurrency": {
+      "same_key_concurrent": {
+        "statuses": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "unique_tx": [
+          "6fe6a260-f74c-4c79-aab9-fb8e75968521"
+        ],
+        "tx_rows": 1,
+        "items": 1,
+        "movements": 1
+      },
+      "g6_same_key_single_tx": true,
+      "last_unit": {
+        "ok_count": 1,
+        "rejected": 5,
+        "final_stock": 0
+      },
+      "g6_last_unit": true
+    },
+    "gate7_multi_tenant": {
+      "sale_B": {
+        "status": 200
+      },
+      "g7_sale_B_ok": true,
+      "a_in_B": {
+        "status": 400,
+        "msg": "ERR_UNAUTHORIZED"
+      },
+      "g7_a_cannot_sell_B": true,
+      "lookup": {
+        "status": 200,
+        "rows": 0
+      },
+      "g7_rls_lookup": true,
+      "utt_a_on_B": {
+        "status": 403
+      },
+      "g7_utt_cross": true,
+      "key_reuse_cross": {
+        "status": 400,
+        "msg": "ERR_UNAUTHORIZED"
+      },
+      "g7_key_reuse_no_leak": true
+    },
+    "gate8_live_state": {
+      "fingerprint": {
+        "def_chars": 32793,
+        "auth_offset": 3509,
+        "idem_offset": 4467,
+        "refs_tax_configurations": true,
+        "refs_store_exchange_rates": true,
+        "refs_exchange_rates": true,
+        "has_ERR_RATE_STALE": true,
+        "has_45_days": true,
+        "has_ERR_SELLER_MISMATCH": true,
+        "has_ERR_IDEMPOTENCY_KEY_REUSE": true,
+        "has_ERR_INVALID_DISCOUNT": true,
+        "has_ERR_APPLIED_TAX_INVALID": true,
+        "prosecdef": true,
+        "search_path": true
+      },
+      "g8_order_auth_before_idem": true,
+      "g8_contract_markers": true,
+      "live_signature": {
+        "args": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text",
+        "prosecdef": true,
+        "owner": "postgres"
+      },
+      "utt_live": {
+        "args": "p_transaction_id uuid, p_applied_taxes jsonb, p_reason text",
+        "owner": "costpro_transaction_adjuster",
+        "acl": "costpro_transaction_adjuster=X/costpro_transaction_adjuster,authenticated=X/costpro_transaction_adjuster,service_role=X/costpro_transaction_adjuster"
+      }
+    },
+    "gate9_audit": {
+      "create_sale_v2_samples": [
+        {
+          "created_at": "2026-10-04 15:19:55.803372+00",
+          "record_id": "26bd186b-bcd6-41ca-acd5-c3e2b0674f9e",
+          "metadata": {
+            "lines": [
+              {
+                "ord": 1,
+                "product_id": "0d2a0081-8af6-4377-a3ef-a60f9cb1198b",
+                "variant_id": null,
+                "discount_pct": 0,
+                "catalog_price": 200,
+                "price_at_sale": 200,
+                "discount_value": 0
+              }
+            ],
+            "subtotal": 200,
+            "item_count": 1,
+            "tax_amount": 0,
+            "cash_amount": 200,
+            "client_rate": 1,
+            "customer_id": null,
+            "rate_source": null,
+            "server_rate": 1,
+            "v2_checkout": true,
+            "discount_pct": 0,
+            "total_amount": 200,
+            "zelle_amount": 0,
+            "supervisor_id": null,
+            "tax_authority": "tax_configurations_server_side",
+            "cogs_authority": "server_side_wac_df02",
+            "payment_method": "cash",
+            "policy_version": "E-SEC-FINAL",
+            "rate_authority": "server_side_h0r_d_exr",
+            "discount_amount": 0,
+            "discount_reason": "",
+            "supervisor_path": "none",
+            "transfer_amount": 0,
+            "catalog_subtotal": 200,
+            "item_discount_pct": 0,
+            "item_discount_total": 0,
+            "supervisor_token_jti": null,
+            "max_line_discount_pct": 0,
+            "idempotency_param_hash": "449a8d28b21edef41cbffbfb9e4fd452",
+            "payment_transactions_created": true
+          }
+        },
+        {
+          "created_at": "2026-10-04 15:19:52.750248+00",
+          "record_id": "379a6ee4-ef22-46a8-baf6-2d3578bcb9c7",
+          "metadata": {
+            "lines": [
+              {
+                "ord": 1,
+                "product_id": "f22dedc7-ff58-4433-8755-0d1c4e18efb1",
+                "variant_id": null,
+                "discount_pct": 0,
+                "catalog_price": 100,
+                "price_at_sale": 100,
+                "discount_value": 0
+              }
+            ],
+            "subtotal": 100,
+            "item_count": 1,
+            "tax_amount": 0,
+            "cash_amount": 100,
+            "client_rate": 1,
+            "customer_id": null,
+            "rate_source": null,
+            "server_rate": 1,
+            "v2_checkout": true,
+            "discount_pct": 0,
+            "total_amount": 100,
+            "zelle_amount": 0,
+            "supervisor_id": null,
+            "tax_authority": "tax_configurations_server_side",
+            "cogs_authority": "server_side_wac_df02",
+            "payment_method": "cash",
+            "policy_version": "E-SEC-FINAL",
+            "rate_authority": "server_side_h0r_d_exr",
+            "discount_amount": 0,
+            "discount_reason": "",
+            "supervisor_path": "none",
+            "transfer_amount": 0,
+            "catalog_subtotal": 100,
+            "item_discount_pct": 0,
+            "item_discount_total": 0,
+            "supervisor_token_jti": null,
+            "max_line_discount_pct": 0,
+            "idempotency_param_hash": "cb35c2825bfef269fd4fffbfbcef166c",
+            "payment_transactions_created": true
+          }
+        },
+        {
+          "created_at": "2026-10-04 15:19:44.363612+00",
+          "record_id": "6fe6a260-f74c-4c79-aab9-fb8e75968521",
+          "metadata": {
+            "lines": [
+              {
+                "ord": 1,
+                "product_id": "24d3c7b9-06f9-481e-adb8-85471c36eff2",
+                "variant_id": null,
+                "discount_pct": 0,
+                "catalog_price": 100,
+                "price_at_sale": 100,
+                "discount_value": 0
+              }
+            ],
+            "subtotal": 100,
+            "item_count": 1,
+            "tax_amount": 0,
+            "cash_amount": 100,
+            "client_rate": 1,
+            "customer_id": null,
+            "rate_source": null,
+            "server_rate": 1,
+            "v2_checkout": true,
+            "discount_pct": 0,
+            "total_amount": 100,
+            "zelle_amount": 0,
+            "supervisor_id": null,
+            "tax_authority": "tax_configurations_server_side",
+            "cogs_authority": "server_side_wac_df02",
+            "payment_method": "cash",
+            "policy_version": "E-SEC-FINAL",
+            "rate_authority": "server_side_h0r_d_exr",
+            "discount_amount": 0,
+            "discount_reason": "",
+            "supervisor_path": "none",
+            "transfer_amount": 0,
+            "catalog_subtotal": 100,
+            "item_discount_pct": 0,
+            "item_discount_total": 0,
+            "supervisor_token_jti": null,
+            "max_line_discount_pct": 0,
+            "idempotency_param_hash": "6cebab4cdd4f16f2548d046ea9e65024",
+            "payment_transactions_created": true
+          }
+        }
+      ],
+      "g9_create_audit": true,
+      "utt_samples": [],
+      "g9_utt_audit": false
+    }
+  },
+  "env": {
+    "url": "https://wthkddeleylijmonclxg.supabase.co",
+    "app": "http://localhost:3000"
+  },
+  "finished_at": "2026-10-04T15:20:12.456Z"
+}

@@ -1,0 +1,123 @@
+{
+  "suite": "FIN — Integridad financiera",
+  "suite_id": "16-financial",
+  "started": "2026-10-04T14:58:52.262Z",
+  "duration_ms": 20302,
+  "counts": {
+    "total": 12,
+    "pass": 10,
+    "fail": 2,
+    "blocked": 0,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-FIN-001",
+      "suite": "16-financial",
+      "spec": "§12 — precio inferior al autorizado (50 vs catálogo 100) sin supervisor",
+      "expected": "ERR_SUPERVISOR_REQUIRED (gate de desvío ≥15%)",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SUPERVISOR_REQUIRED: global_pct=0.00000000000000000000, max_line_pct=50.00000000000000000000\"}",
+      "evidence": "gate de desvío de precio operativo (E-SEC-FINAL D1)"
+    },
+    {
+      "id": "T-FIN-002",
+      "suite": "16-financial",
+      "spec": "§12 — precio inferior CON supervisor válido (manager propio, motivo)",
+      "expected": "venta autorizada persistida con snapshot de precio",
+      "status": "PASS",
+      "current": "price_at_sale=50.00",
+      "evidence": "camino supervisor (sesión propia manager + motivo) funciona — RC-1 intacto"
+    },
+    {
+      "id": "T-FIN-003",
+      "suite": "16-financial",
+      "spec": "§12 — precio superior al autorizado (150 vs 100)",
+      "expected": "política documentada E-SEC-FINAL D1: desvío evalúa SOLO precio<catálogo; overprice permitido sin gate (decisión funcional vigente) — anotado para revisión H0",
+      "status": "PASS",
+      "current": "ACEPTADA sin supervisor (política D1 vigente)",
+      "evidence": "E-SEC-FINAL D1 (migración 20260927000001) computa desvío únicamente cuando v_price < v_reference: el sobreprecio NO dispara gate. Es comportamiento aprobado documentado; H0 puede endurecerlo."
+    },
+    {
+      "id": "T-FIN-004",
+      "suite": "16-financial",
+      "spec": "§12 — subtotal del cliente (999) debe ser recalculado server-side",
+      "expected": "transactions.subtotal == 100 (valor servidor), no el del cliente",
+      "status": "PASS",
+      "current": "subtotal persistido=100.00",
+      "evidence": "p_subtotal es recalculado (parámetro ignorado)"
+    },
+    {
+      "id": "T-FIN-005",
+      "suite": "16-financial",
+      "spec": "§12 — total del cliente inconsistente → rechazo",
+      "expected": "ERR_TOTAL_MISMATCH",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_TOTAL_MISMATCH: calculated=100.00, client=50\"}",
+      "evidence": "validación de total server-side"
+    },
+    {
+      "id": "T-FIN-006",
+      "suite": "16-financial",
+      "spec": "§12 — tax_amount del cliente ignorado; autoridad real en applied_taxes",
+      "expected": "el impuesto persistido deriva de fuente autorizada — hoy: del JSONB cliente (referencia T-H4-003)",
+      "status": "FAIL",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_APPLIED_TAX_INVALID: entrada sin id de configuración\"}",
+      "evidence": "venta falló"
+    },
+    {
+      "id": "T-FIN-007",
+      "suite": "16-financial",
+      "spec": "§12 — descuento negativo (fixed -100) no puede aumentar el total",
+      "expected": "DENIED — descuento no puede ser negativo ni esquivar el gate",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INVALID_DISCOUNT: -100\"}",
+      "evidence": "descuento negativo rechazado"
+    },
+    {
+      "id": "T-FIN-008",
+      "suite": "16-financial",
+      "spec": "§12 — descuento mayor que el subtotal (999999)",
+      "expected": "capped a subtotal y gate de supervisor (100% descuento exige autorización)",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_SUPERVISOR_REQUIRED: global_pct=100.00000000000000000000, max_line_pct=0\"}",
+      "evidence": "cap + gate operativos"
+    },
+    {
+      "id": "T-FIN-009",
+      "suite": "16-financial",
+      "spec": "§12 — exchange rate manipulado (referencia T-H5-001)",
+      "expected": "tasa server-side — hoy el cliente la impone (FAIL vía H5)",
+      "status": "FAIL",
+      "current": "rate persistida=400.0000 · price_at_sale_cup=40000.00",
+      "evidence": "tasa cliente 1000000 persistida; price_at_sale_cup = precio*rate cliente (40000.00) — autoridad de tasa en el cliente (ver suite H5)"
+    },
+    {
+      "id": "T-FIN-010",
+      "suite": "16-financial",
+      "spec": "§12 — cost_at_sale del cliente (999) ignorado → WAC del servidor",
+      "expected": "transaction_items.cost_at_sale == WAC del producto (50)",
+      "status": "PASS",
+      "current": "cost_at_sale persistido=50 (cliente envió 999)",
+      "evidence": "DF-02: costo siempre del servidor (WAC bajo lock); claves cost/cost_at_sale del request ignoradas"
+    },
+    {
+      "id": "T-FIN-011",
+      "suite": "16-financial",
+      "spec": "§12 — pagos mixed inconsistentes con el total",
+      "expected": "ERR_PAYMENT_MISMATCH",
+      "status": "PASS",
+      "current": "HTTP 400 {\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_PAYMENT_MISMATCH: cash=40, transfer=40, zelle=0, total=100.00\"}",
+      "evidence": "invariante de suma de pagos operativa"
+    },
+    {
+      "id": "T-FIN-012",
+      "suite": "16-financial",
+      "spec": "§12 — cash_amount cliente (999) ignorado en método cash",
+      "expected": "cash_amount persistido == total server (100)",
+      "status": "PASS",
+      "current": "cash_amount persistido=100.00",
+      "evidence": "para método único el servidor impone el importe = total"
+    }
+  ]
+}
