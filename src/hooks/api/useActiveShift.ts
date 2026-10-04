@@ -12,8 +12,15 @@ import type { CashClosure } from "@/types";
  * el cajero está "fuera de turno" y debería abrir uno antes de vender.
  *
  * Refresca cada 30s para mantener el total de ventas del turno al día.
+ *
+ * REMEDIACIÓN (fix/dashboard-contextual-kpi-actions) FASE 20: parámetro
+ * `options.enabled` retrocompatible — el Inicio solo consulta el turno
+ * cuando el rol del usuario tiene acciones de caja relevantes.
  */
-export function useActiveShift(storeId?: string | null) {
+export function useActiveShift(
+  storeId?: string | null,
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: ["active-shift", storeId],
     queryFn: async (): Promise<CashClosure | null> => {
@@ -29,7 +36,7 @@ export function useActiveShift(storeId?: string | null) {
       if (error) throw error;
       return (data as CashClosure) || null;
     },
-    enabled: !!storeId,
+    enabled: (options?.enabled ?? true) && !!storeId,
     refetchInterval: 30_000, // refrescar cada 30s
     staleTime: 15_000,
   });

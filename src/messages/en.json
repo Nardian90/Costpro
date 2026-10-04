@@ -670,6 +670,80 @@
   },
   "dashboard": {
     "singleStore": {
+      "performance": {
+        "title": "Performance",
+        "configure": "Configure indicator",
+        "metricLabel": "Metric",
+        "comparatorLabel": "Comparison",
+        "periodLabel": "Period",
+        "suggested": "Suggested",
+        "done": "Done",
+        "vs": "vs {label}",
+        "current": "Current",
+        "refScaled": "Reference: {value} · {label} × {days} days",
+        "refRaw": "Reference: {value} · {label}",
+        "noSales": "No sales in this period",
+        "noSalesHint": "Record a sale to see performance",
+        "newSale": "New sale",
+        "noReferenceHint": "Not enough data to compare",
+        "insufficientMargin": "Insufficient data to calculate margin",
+        "insufficientMarginHint": "Valid costs are missing for some products.",
+        "marginUnavailable": "Margin unavailable: valid costs are missing.",
+        "combinationNote": "The 7-day total is compared against the previous month's daily average × 7.",
+        "metric": {
+          "auto": "Automatic (recommended)",
+          "autoHint": "Picks the most useful metric based on store data",
+          "sales": "Sales",
+          "transactions": "Transactions",
+          "avg_ticket": "Average ticket",
+          "units": "Units sold",
+          "margin": "Gross margin",
+          "marginNote": "Available: all products have valid costs",
+          "marginRequiresCosts": "Requires valid costs for all products"
+        },
+        "metricShort": {
+          "sales": "Sales",
+          "transactions": "Transactions",
+          "avg_ticket": "Avg. ticket",
+          "units": "Units sold",
+          "margin": "Margin"
+        },
+        "comparator": {
+          "notAvailable": "Not available",
+          "prev_month_daily_avg": "Previous month daily average",
+          "last7_daily_avg": "Last 7 days daily average",
+          "last30_daily_avg": "Last 30 days daily average",
+          "same_weekday_last_week": "Same weekday last week",
+          "same_period_last_year": "Same period last year"
+        },
+        "comparatorHint": {
+          "prev_month_daily_avg": "Reference = previous month's average per day",
+          "last7_daily_avg": "Reference = the 7 days before the period",
+          "last30_daily_avg": "Reference = the 30 days before the period",
+          "same_weekday_last_week": "Mirror window from last week",
+          "same_period_last_year": "Equivalent window last year"
+        },
+        "comparatorShort": {
+          "prev_month_daily_avg": "previous month average",
+          "last7_daily_avg": "previous 7-day average",
+          "last30_daily_avg": "previous 30-day average",
+          "same_weekday_last_week": "same weekday last week",
+          "same_period_last_year": "same period last year"
+        },
+        "marginRefLabel": {
+          "prev_month_daily_avg": "previous month margin",
+          "last7_daily_avg": "previous 7-day margin",
+          "last30_daily_avg": "previous 30-day margin",
+          "same_weekday_last_week": "same weekday last week margin",
+          "same_period_last_year": "same period last year margin"
+        },
+        "period": {
+          "hoy": "Today",
+          "ayer": "Yesterday",
+          "ultimos_7_dias": "Last 7 days",
+          "este_mes": "This month"
+        }
+      },
       "title": "Dashboard",
       "subtitle": "KPI Summary",
       "day": "Day",

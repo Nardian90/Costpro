@@ -29,8 +29,12 @@ import { NoStorePrompt } from '@/components/ui/NoStoreGuard';
 import { withChunkRetry } from '@/components/ui/ChunkErrorBoundary';
 
 // Lazy load heavy dashboard components to improve TBT and LCP
-const ConcentricDashboardRing = dynamic(() => import('./ConcentricDashboardRing').then(mod => mod.ConcentricDashboardRing), {
-  loading: () => <div className="h-[280px] w-[280px] rounded-2xl bg-muted/20 animate-pulse flex items-center justify-center text-sm text-muted-foreground uppercase font-bold font-display">...</div>,
+// REMEDIACIÓN (fix/dashboard-contextual-kpi-actions): el Inicio usa el KPI
+// contextual "Rendimiento" (configurable, honesto con 0/N/D). El anillo
+// concéntrico anterior (ConcentricDashboardRing) sigue vivo en el dashboard
+// consolidado (StoreDashboardView) — fuera del alcance de esta remediación.
+const PerformanceKpi = dynamic(() => import('./PerformanceKpi').then(mod => mod.PerformanceKpi), {
+  loading: () => <div className="h-[360px] w-full max-w-sm rounded-2xl bg-muted/20 animate-pulse" aria-hidden="true" />,
   ssr: false
 });
 
@@ -248,8 +252,13 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
         {(data) => {
           const { kpis, summary } = data[0];
           const sales = kpis?.gross_sales || 0;
-          const costs = kpis?.cost_of_goods || 0;
-          const profit = kpis?.profit || 0;
+          // REMEDIACIÓN (fix/dashboard-contextual-kpi-actions) FASE 2:
+          // cost_of_goods/profit llegan con null preservado (señal honesta
+          // del RPC). null = "N/D" (dato no disponible) — NUNCA 0.
+          const rawCosts = kpis?.cost_of_goods ?? null;
+          const rawProfit = kpis?.profit ?? null;
+          const costs = rawCosts || 0; // consumidores agnósticos (SalesSummary)
+          const profit = rawProfit || 0;
 
           const transactions = summary?.transaction_count || 0;
           const avgTicket = summary?.average_ticket || 0;
@@ -258,24 +267,21 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
 
           return (
             <div className="flex flex-col gap-8">
-              {/* DASHBOARD V3 (FASE 4): Resumen de Indicadores (gráfico circular)
-                  + Acciones recientes lado a lado en desktop (lg+). En mobile
-                  se apilan: gráfico primero, Acciones recientes después — sin
-                  columnas forzadas ni espacios muertos. El aside es UNA única
-                  representación canónica de Acciones recientes. */}
+              {/* DASHBOARD V3 (FASE 4): Resumen de Indicadores (KPI contextual
+                  "Rendimiento") + Acciones recientes lado a lado en desktop
+                  (lg+). En mobile se apilan: gráfico primero, Acciones
+                  recientes después. El aside es UNA única representación
+                  canónica de Acciones recientes. */}
               <section
                 aria-label="Resumen de indicadores y acciones recientes"
                 className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start"
               >
                 <div className="flex flex-col items-center min-w-0">
-                  <ConcentricDashboardRing
-                    sales={sales}
-                    costs={costs}
-                    profit={profit}
-                  />
+                  <PerformanceKpi />
 
-                  {/* Mini Stats under the ring — all tokens, no hardcoded colors */}
-                  <div className="grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-sm mt-4">
+                  {/* Mini Stats under the ring — all tokens, no hardcoded colors.
+                      REMEDIACIÓN FASE 2: costos/utilidad null ⇒ "N/D" (nunca 0). */}
+                  <div className="grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-sm mt-4" data-testid="kpi-mini-stats">
                     <div className="flex flex-col items-center">
                       <div className="w-2 h-2 rounded-full bg-primary mb-2"></div>
                       <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('sales')}</span>
@@ -284,13 +290,17 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
                     <div className="flex flex-col items-center">
                       <div className="w-2 h-2 rounded-full bg-muted-foreground/50 mb-2"></div>
                       <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('costs')}</span>
-                      <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(costs)}</span>
+                      <span className="text-sm font-bold font-display text-foreground tabular-nums" data-testid="mini-stat-costs">
+                        {rawCosts === null ? 'N/D' : formatCurrency(costs)}
+                      </span>
                     </div>
                     <div className="flex flex-col items-center">
                       {/* FIX UX-001: was bg-[#00E0FF], now uses semantic success token */}
                       <div className="w-2 h-2 rounded-full bg-success mb-2"></div>
                       <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('profit')}</span>
-                      <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(profit)}</span>
+                      <span className="text-sm font-bold font-display text-foreground tabular-nums" data-testid="mini-stat-profit">
+                        {rawProfit === null ? 'N/D' : formatCurrency(profit)}
+                      </span>
                     </div>
                   </div>
                 </div>

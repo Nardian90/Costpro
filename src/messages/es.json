@@ -670,6 +670,80 @@
   },
   "dashboard": {
     "singleStore": {
+      "performance": {
+        "title": "Rendimiento",
+        "configure": "Configurar indicador",
+        "metricLabel": "Métrica",
+        "comparatorLabel": "Comparador",
+        "periodLabel": "Período",
+        "suggested": "Sugerido",
+        "done": "Listo",
+        "vs": "vs {label}",
+        "current": "Actual",
+        "refScaled": "Referencia: {value} · {label} × {days} días",
+        "refRaw": "Referencia: {value} · {label}",
+        "noSales": "Sin ventas en el período",
+        "noSalesHint": "Registra una venta para ver el rendimiento",
+        "newSale": "Nueva venta",
+        "noReferenceHint": "Sin datos suficientes para comparar",
+        "insufficientMargin": "Datos insuficientes para calcular margen",
+        "insufficientMarginHint": "Faltan costos válidos en parte de los productos.",
+        "marginUnavailable": "Margen no disponible: faltan costos válidos.",
+        "combinationNote": "Se compara el acumulado de 7 días contra el promedio diario del mes anterior × 7.",
+        "metric": {
+          "auto": "Automático (recomendado)",
+          "autoHint": "Elige la métrica más útil según los datos de la tienda",
+          "sales": "Ventas",
+          "transactions": "Transacciones",
+          "avg_ticket": "Ticket promedio",
+          "units": "Unidades vendidas",
+          "margin": "Margen bruto",
+          "marginNote": "Disponible: todos los productos tienen costos válidos",
+          "marginRequiresCosts": "Requiere costos válidos en todos los productos"
+        },
+        "metricShort": {
+          "sales": "Ventas",
+          "transactions": "Transacciones",
+          "avg_ticket": "Ticket promedio",
+          "units": "Unidades vendidas",
+          "margin": "Margen"
+        },
+        "comparator": {
+          "notAvailable": "No disponible",
+          "prev_month_daily_avg": "Promedio diario del mes anterior",
+          "last7_daily_avg": "Promedio diario de los últimos 7 días",
+          "last30_daily_avg": "Promedio diario de los últimos 30 días",
+          "same_weekday_last_week": "Mismo día de la semana anterior",
+          "same_period_last_year": "Mismo período del año anterior"
+        },
+        "comparatorHint": {
+          "prev_month_daily_avg": "Referencia = promedio por día del mes anterior",
+          "last7_daily_avg": "Referencia = los 7 días anteriores al período",
+          "last30_daily_avg": "Referencia = los 30 días anteriores al período",
+          "same_weekday_last_week": "Ventana espejo de la semana pasada",
+          "same_period_last_year": "Ventana equivalente del año pasado"
+        },
+        "comparatorShort": {
+          "prev_month_daily_avg": "promedio mes anterior",
+          "last7_daily_avg": "promedio 7 días anteriores",
+          "last30_daily_avg": "promedio 30 días anteriores",
+          "same_weekday_last_week": "mismo día semana anterior",
+          "same_period_last_year": "mismo período año anterior"
+        },
+        "marginRefLabel": {
+          "prev_month_daily_avg": "margen del mes anterior",
+          "last7_daily_avg": "margen de los 7 días anteriores",
+          "last30_daily_avg": "margen de los 30 días anteriores",
+          "same_weekday_last_week": "margen del mismo día de la semana anterior",
+          "same_period_last_year": "margen del mismo período del año anterior"
+        },
+        "period": {
+          "hoy": "Hoy",
+          "ayer": "Ayer",
+          "ultimos_7_dias": "Últimos 7 días",
+          "este_mes": "Este mes"
+        }
+      },
       "title": "Panel de Control",
       "subtitle": "Resumen de Indicadores",
       "day": "Día",
