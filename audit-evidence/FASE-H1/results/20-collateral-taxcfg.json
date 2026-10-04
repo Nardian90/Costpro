@@ -1,0 +1,60 @@
+{
+  "suite": "TC — Colateral tax_configurations",
+  "suite_id": "20-collateral-taxcfg",
+  "started": "2026-10-04T04:32:22.281Z",
+  "duration_ms": 16867,
+  "counts": {
+    "total": 5,
+    "pass": 2,
+    "fail": 2,
+    "blocked": 1,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-TC-001",
+      "suite": "20-collateral-taxcfg",
+      "spec": "TC-C1 — modificaciones permitidas por rol/contrato",
+      "expected": "CONTRATO H0 (matriz rol→operación) — H0 NO PRODUCIDO",
+      "status": "BLOCKED",
+      "current": "policy única: Tax unified[ALL] roles={authenticated} USING=has_store_access(store_id)",
+      "evidence": "El spec H0 no define la matriz rol→operación sobre tax_configurations. NO SE INVENTA. Evidencia actual: una SOLA policy \"Tax unified\" [ALL] para authenticated con USING has_store_access(store_id) — cualquier miembro (incl. clerk) tiene INSERT/UPDATE/DELETE sobre la configuración fiscal de su tienda."
+    },
+    {
+      "id": "T-TC-002",
+      "suite": "20-collateral-taxcfg",
+      "spec": "TC-C2 — clerk NO puede crear impuesto arbitrario (fuente de descuentos)",
+      "expected": "DENIED — INSERT de tax_configurations por clerk rechazado",
+      "status": "FAIL",
+      "current": "INSERT clerk → 201 null",
+      "evidence": "CLERK creó un impuesto arbitrario ACTIVO (value=-10): la config fiscal es escribible por cualquier miembro de tienda — combinada con T-H4-003 es una vía de impuestos arbitrarios persistida"
+    },
+    {
+      "id": "T-TC-003",
+      "suite": "20-collateral-taxcfg",
+      "spec": "TC-C3 — valores inválidos no pueden introducirse",
+      "expected": "constraint/policy rechaza value negativo (y rango inválido según H0)",
+      "status": "FAIL",
+      "current": "check constraints: CHECK ((type = ANY (ARRAY['fixed'::text, 'percentage'::text])))",
+      "evidence": "tax_configurations.value acepta cualquier numeric (sin CHECK de rango): negativos, >100%, NaN-like. El rango válido exacto es contrato H0 (ausente) pero el NEGATIVO es inválido bajo cualquier lectura y hoy es introducible."
+    },
+    {
+      "id": "T-TC-004",
+      "suite": "20-collateral-taxcfg",
+      "spec": "TC-C4 — modificar config fiscal NO altera ventas existentes",
+      "expected": "transactions.applied_taxes/tax_amount de ventas previas permanecen intactas",
+      "status": "PASS",
+      "current": "ventas=147→147 sumTax=40570.0000000000000000→40570.0000000000000000",
+      "evidence": "las ventas persisten applied_taxes como snapshot JSONB: la config no las re-cacula (la vía retroactiva real es update_transaction_taxes — suite 21)"
+    },
+    {
+      "id": "T-TC-005",
+      "suite": "20-collateral-taxcfg",
+      "spec": "TC — cross-store: USER_B (STORE_B) escribe tax_config de STORE_A",
+      "expected": "DENIED (has_store_access falla para no-miembro)",
+      "status": "PASS",
+      "current": "INSERT USER_B sobre STORE_A → 403",
+      "evidence": "RLS tax_configurations cierra el cross-store (solo same-store members)"
+    }
+  ]
+}

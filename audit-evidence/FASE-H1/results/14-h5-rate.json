@@ -1,0 +1,69 @@
+{
+  "suite": "H5 — EXCHANGE RATE AUTHORITY",
+  "suite_id": "14-h5-rate",
+  "started": "2026-10-04T04:30:30.509Z",
+  "duration_ms": 19806,
+  "counts": {
+    "total": 6,
+    "pass": 0,
+    "fail": 4,
+    "blocked": 2,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-H5-001",
+      "suite": "14-h5-rate",
+      "spec": "H5.1 — tasa de cambio cliente arbitraria (680 · 1000000 · 0 · -5)",
+      "expected": "la tasa efectiva persistida proviene de la fuente server-side autorizada, no del payload",
+      "status": "FAIL",
+      "current": "rate=680→aceptada stored=680 · rate=1000000→aceptada stored=1000000 · rate=0→aceptada stored=0 · rate=-5→aceptada stored=-5",
+      "evidence": "4/4 tasas arbitrarias del cliente fueron persistidas tal cual (sin validación contra fuente server-side; única regla actual: zelle exige rate>1 y moneda != CUP)"
+    },
+    {
+      "id": "T-H5-002",
+      "suite": "14-h5-rate",
+      "spec": "H5.2 — client_rate != server_rate → gana la fuente autorizada",
+      "expected": "transactions.sale_exchange_rate == server_rate (store_exchange_rates de STORE_A = 400)",
+      "status": "FAIL",
+      "current": "server_rate=400 (store_exchange_rates) · client_rate=7 · persisted=7",
+      "evidence": "la tasa efectiva es la del CLIENTE (7), no la fuente server-side configurada para STORE_A"
+    },
+    {
+      "id": "T-H5-003",
+      "suite": "14-h5-rate",
+      "spec": "H5.3 — jerarquía store_exchange_rates → exchange_rates → effective",
+      "expected": "el RPC resuelve la tasa con esa jerarquía server-side",
+      "status": "FAIL",
+      "current": "refs LIVE: store_exchange_rates=false · exchange_rates=false",
+      "evidence": "create_sale_v2 NO implementa resolución de tasa: p_sale_exchange_rate (cliente) se persiste y usa directamente (price_at_sale_cup = price*rate; zelle_amount/rate). La jerarquía de fuentes NO existe en el RPC."
+    },
+    {
+      "id": "T-H5-004",
+      "suite": "14-h5-rate",
+      "spec": "H5.4 — usuario normal no puede alterar la fuente de tasa de confianza",
+      "expected": "USER_A (clerk) NO puede UPDATE store_exchange_rates ni INSERT/UPDATE exchange_rates",
+      "status": "FAIL",
+      "current": "store_exchange_rates(own) PATCH → 204 · exchange_rates INSERT → 403",
+      "evidence": "La policy \"Users can manage own store rates\" (roles=public, USING profiles.store_id match) permite a CUALQUIER miembro (incl. clerk) reescribir la tasa de confianza de su tienda — la fuente server-side NO es confiable mientras el checkout dependa de ella"
+    },
+    {
+      "id": "T-H5-005",
+      "suite": "14-h5-rate",
+      "spec": "H5.5 — staleness de tasa (p.ej. 45 días)",
+      "expected": "CONTRATO H0: límite de staleness — H0 NO PRODUCIDO",
+      "status": "BLOCKED",
+      "current": "columnas store_exchange_rates: id, store_id, currency, rate, updated_by, created_at, updated_at",
+      "evidence": "El spec H0 no existe; el límite de staleness es decisión H0 y NO SE INVENTA. Además: store_exchange_rates no tiene campo de fecha de captura (solo updated_at de fila) y el RPC no consulta la fuente — no hay contrato de staleness implementado que probar."
+    },
+    {
+      "id": "T-H5-006",
+      "suite": "14-h5-rate",
+      "spec": "H5.6 — banda de desviación (p.ej. ±10%)",
+      "expected": "CONTRATO H0: banda dentro/fuera — H0 NO PRODUCIDO",
+      "status": "BLOCKED",
+      "current": "sin banda implementada: cualquier tasa cliente se acepta (ver T-H5-001)",
+      "evidence": "El spec H0 no existe; la banda de desviación es decisión H0 y NO SE INVENTA. La prueba se anclará al valor exacto documentado en H0 cuando exista."
+    }
+  ]
+}

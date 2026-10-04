@@ -1,0 +1,190 @@
+{
+  "generated_at": "2026-10-04T04:33:43.716Z",
+  "baseline": "6cba0a1c1f1d0a63fb4e2e6703b87a6a4d52cb9f (main)",
+  "totals": {
+    "total": 101,
+    "pass": 50,
+    "fail": 44,
+    "blocked": 6,
+    "not_observable": 1,
+    "duration_ms": 237108
+  },
+  "suites": [
+    {
+      "id": "10-h1-acl",
+      "name": "H1 — ACL + AUTH BEFORE IDEMPOTENCY",
+      "counts": {
+        "total": 4,
+        "pass": 1,
+        "fail": 3,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "11-h2-order",
+      "name": "H2 — AUTHENTICATION ORDER",
+      "counts": {
+        "total": 4,
+        "pass": 2,
+        "fail": 1,
+        "blocked": 0,
+        "not_observable": 1
+      }
+    },
+    {
+      "id": "12-h3-seller",
+      "name": "H3 — SELLER BINDING",
+      "counts": {
+        "total": 6,
+        "pass": 3,
+        "fail": 2,
+        "blocked": 1,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "13-h4-tax",
+      "name": "H4 — TAX AUTHORITY",
+      "counts": {
+        "total": 5,
+        "pass": 0,
+        "fail": 5,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "14-h5-rate",
+      "name": "H5 — EXCHANGE RATE AUTHORITY",
+      "counts": {
+        "total": 6,
+        "pass": 0,
+        "fail": 4,
+        "blocked": 2,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "15-h6-idempotency",
+      "name": "H6 — IDEMPOTENCY",
+      "counts": {
+        "total": 9,
+        "pass": 5,
+        "fail": 4,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "16-financial",
+      "name": "FIN — Integridad financiera",
+      "counts": {
+        "total": 12,
+        "pass": 9,
+        "fail": 3,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "17-cross-store",
+      "name": "CS — Cross-store security",
+      "counts": {
+        "total": 7,
+        "pass": 5,
+        "fail": 2,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "18-inventory",
+      "name": "INV — Inventario + concurrencia",
+      "counts": {
+        "total": 5,
+        "pass": 5,
+        "fail": 0,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "20-collateral-taxcfg",
+      "name": "TC — Colateral tax_configurations",
+      "counts": {
+        "total": 5,
+        "pass": 2,
+        "fail": 2,
+        "blocked": 1,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "21-collateral-utt",
+      "name": "UTT — Colateral update_transaction_taxes",
+      "counts": {
+        "total": 8,
+        "pass": 4,
+        "fail": 2,
+        "blocked": 2,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "22-collateral-rates",
+      "name": "ER — Colateral fuentes de tasa",
+      "counts": {
+        "total": 4,
+        "pass": 2,
+        "fail": 2,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "30-route-checkout",
+      "name": "RT — Contrato ruta /api/pos/checkout",
+      "counts": {
+        "total": 7,
+        "pass": 4,
+        "fail": 3,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "31-route-sync",
+      "name": "SB — Contrato ruta /api/sync/batch",
+      "counts": {
+        "total": 5,
+        "pass": 4,
+        "fail": 1,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "40-v1-retirement",
+      "name": "V1 — Retirement readiness gates",
+      "counts": {
+        "total": 8,
+        "pass": 2,
+        "fail": 6,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    },
+    {
+      "id": "41-anti-resurrection",
+      "name": "AR — Anti-resurrección",
+      "counts": {
+        "total": 6,
+        "pass": 2,
+        "fail": 4,
+        "blocked": 0,
+        "not_observable": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "suite": "ER — Colateral fuentes de tasa",
+  "suite_id": "22-collateral-rates",
+  "started": "2026-10-04T04:33:00.129Z",
+  "duration_ms": 7796,
+  "counts": {
+    "total": 4,
+    "pass": 2,
+    "fail": 2,
+    "blocked": 0,
+    "not_observable": 0
+  },
+  "results": [
+    {
+      "id": "T-ER-001",
+      "suite": "22-collateral-rates",
+      "spec": "ER — clerk (USER_A) reescribe la tasa de confianza de SU tienda",
+      "expected": "DENIED — la fuente server-side de tasas no es escribible por clerk",
+      "status": "FAIL",
+      "current": "PATCH store_exchange_rates por clerk → 204",
+      "evidence": "policy \"Users can manage own store rates\" (ALL, roles=public, USING profiles.store_id match): CUALQUIER miembro —incl. clerk— puede poner la tasa de confianza en 0.5 y esperar una venta que la consuma. La fuente NO es de confianza si el checkout la adopta (prerequisito del fix H5)."
+    },
+    {
+      "id": "T-ER-002",
+      "suite": "22-collateral-rates",
+      "spec": "ER — USER_B (STORE_B) reescribe la tasa de STORE_A",
+      "expected": "DENIED",
+      "status": "FAIL",
+      "current": "PATCH cross-store → 204",
+      "evidence": "el scoping per-store de la policy bloquea a no-miembros"
+    },
+    {
+      "id": "T-ER-003",
+      "suite": "22-collateral-rates",
+      "spec": "ER — usuario autenticado NO escribe exchange_rates (global)",
+      "expected": "DENIED (policy service_role-only para INSERT/UPDATE)",
+      "status": "PASS",
+      "current": "INSERT exchange_rates → 403 {\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"new row violates row-level security policy for",
+      "evidence": "exchange_rates_insert/update son service_role-only: la fuente global está protegida"
+    },
+    {
+      "id": "T-ER-004",
+      "suite": "22-collateral-rates",
+      "spec": "ER — anon no lee ni escribe fuentes de tasa",
+      "expected": "DENIED ambos",
+      "status": "PASS",
+      "current": "read global→200 read store→200 write→401",
+      "evidence": "RLS deny-by-default para anon en ambas fuentes"
+    }
+  ]
+}
