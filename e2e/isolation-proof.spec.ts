@@ -150,20 +150,32 @@ test.describe('E2E-RUNNER-ISOLATION — aislamiento entre corridas', () => {
     // + edad) — en modo aislado debe quedar acotado al tenant propio.
     await sweepStaleTestStores();
     const after = await foreignTestStores();
-    expect(
-      new Set(after.map((s) => s.id)),
-      'ninguna tienda de prueba ajena cambia de estado (mismo conjunto activo)',
-    ).toEqual(new Set(foreignBefore.map((s) => s.id)));
+    // El PEER (runner concurrente) puede CREAR tiendas nuevas legítimamente
+    // durante la corrida — el invariante de aislamiento es que las tiendas
+    // ajenas EXISTENTES no desaparezcan ni cambien de estado, no que el
+    // conjunto sea idéntico (las adiciones del peer son legítimas).
+    const afterById = new Map(after.map((s) => [s.id, s]));
+    for (const s of foreignBefore) {
+      const still = afterById.get(s.id);
+      expect(still, `tienda ajena "${s.name}" sigue activa tras el sweep propio`).toBeTruthy();
+      expect(still?.is_active, `tienda ajena "${s.name}" no desactivada por el sweep propio`).toBe(true);
+      expect(still?.is_archived, `tienda ajena "${s.name}" no archivada por el sweep propio`).toBe(false);
+    }
   });
 
   test('ISO-004 freeActiveTestQuota NO archiva tiendas de otros tenants', async () => {
     foreignBefore = await foreignTestStores();
     const freed = await freeActiveTestQuota(ephemeral ? [ephemeral.id] : []);
     const after = await foreignTestStores();
-    expect(
-      new Set(after.map((s) => s.id)),
-      'ninguna tienda de prueba ajena fue archivada para liberar cuota',
-    ).toEqual(new Set(foreignBefore.map((s) => s.id)));
+    // Mismo invariante que ISO-003: las ajenas EXISTENTES permanecen activas;
+    // las adiciones concurrentes del PEER en su propio tenant son legítimas.
+    const afterById = new Map(after.map((s) => [s.id, s]));
+    for (const s of foreignBefore) {
+      const still = afterById.get(s.id);
+      expect(still, `tienda ajena "${s.name}" sigue activa tras freeActiveTestQuota propio`).toBeTruthy();
+      expect(still?.is_active, `tienda ajena "${s.name}" no archivada para liberar cuota ajena`).toBe(true);
+      expect(still?.is_archived).toBe(false);
+    }
     // La cuota liberada, si la hay, solo proviene del tenant propio.
     expect(typeof freed).toBe('number');
   });

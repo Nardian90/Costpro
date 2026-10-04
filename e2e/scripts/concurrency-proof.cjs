@@ -166,6 +166,25 @@ async function main() {
   const seen = { foreign: null };
   let capturedCtxA = null;
   let capturedCtxB = null;
+  let afterATaken = false;
+  let afterBTaken = false;
+
+  /** FASE 10: snapshot de cleanup cruzado — residuo del run terminado +
+   *  estado del peer en ese instante (peerStillRunning false = ventana de
+   *  observación no disponible; el invariante del peer lo cubre ISO-006). */
+  async function snapshotCrossCleanup(label, ownCtx, peerCtx, peerStillRunning) {
+    const peerStores = await activeStoresOfTenant(peerCtx.tenantId);
+    const ownResidue = await activeStoresOfTenant(ownCtx.tenantId);
+    return {
+      label,
+      peerStillRunning,
+      tenantPeerActiveStores: peerStores.map((s) => s.name),
+      tenantPeerIntact:
+        peerStores.some((s) => s.id === peerCtx.pilotStoreA.id) &&
+        peerStores.some((s) => s.id === peerCtx.pilotStoreB.id),
+      tenantOwnActiveStores: ownResidue.map((s) => s.name),
+    };
+  }
 
   function launchRun(runId, peerRunId) {
     const env = {
@@ -207,8 +226,11 @@ async function main() {
       if (ctxB) capturedCtxB = ctxB;
       const storesA = await activeStoresOfTenant(ctxA?.tenantId);
       const storesB = await activeStoresOfTenant(ctxB?.tenantId);
-      evidence.runs[runAId].tenantId = ctxA?.tenantId || null;
-      evidence.runs[runBId].tenantId = ctxB?.tenantId || null;
+      // Solo registrar el tenant cuando el context aún existe — el ÚLTIMO poll
+      // ocurre tras los teardowns (que borran los files) y NO debe sobrescribir
+      // con null un valor ya capturado.
+      if (ctxA?.tenantId) evidence.runs[runAId].tenantId = ctxA.tenantId;
+      if (ctxB?.tenantId) evidence.runs[runBId].tenantId = ctxB.tenantId;
 
       const idsB = new Set(storesB.map((s) => s.id));
       const idsA = new Set(storesA.map((s) => s.id));
@@ -228,24 +250,35 @@ async function main() {
         );
         for (const p of profiles) {
           const isA = p.id === ctxA.users.admin.id;
-          if (p.active_store_id && idsB.has(p.active_store_id)) {
+          // Guard isA/!isA: cada admin legítimamente apunta a SUS tiendas —
+          // solo es contaminación si apunta a las del OTRO run.
+          if (isA && p.active_store_id && idsB.has(p.active_store_id)) {
             evidence.violations.push(`active_store del admin A apunta a tienda del run B (${p.active_store_id})`);
           }
-          if (p.active_store_id && idsA.has(p.active_store_id) && !isA) {
+          if (!isA && p.active_store_id && idsA.has(p.active_store_id)) {
             evidence.violations.push(`active_store del admin B apunta a tienda del run A (${p.active_store_id})`);
           }
         }
       }
 
-      // Barridos: las tiendas de PRUEBA de terceros (T0 legacy) no cambian
+      // Barridos: las tiendas de PRUEBA de terceros (T0 legacy) no desaparecen.
+      // El PEER puede AÑADIR tiendas (legítimo) — solo se flaggea la DESAPARICIÓN
+      // de una tienda ajena ya vista (archivada por un sweep cruzado). El
+      // tracking empieza cuando ambos tenants son conocidos (si no, los
+      // pilotos de A/B cuentan como "ajenos" durante la provisión).
       const foreign = await svcGet(
         `stores?select=id,is_active&is_active=eq.true&tenant_id=neq.${ctxA?.tenantId || '00000000-0000-0000-0000-000000000000'}&tenant_id=neq.${ctxB?.tenantId || '11111111-1111-1111-1111-111111111111'}&name=like.E2E*`,
       );
-      const fk = foreign.map((r) => r.id).sort().join(',');
-      if (seen.foreign === null) seen.foreign = fk;
-      else if (seen.foreign !== fk) {
-        evidence.violations.push(`el conjunto de tiendas de prueba ajenas cambió durante la corrida (${seen.foreign} → ${fk})`);
-        seen.foreign = fk; // reportar una vez por cambio
+      const fk = new Set(foreign.map((r) => r.id));
+      if (seen.foreign === null) {
+        if (ctxA?.tenantId && ctxB?.tenantId) seen.foreign = fk;
+      } else {
+        for (const id of seen.foreign) {
+          if (!fk.has(id)) {
+            evidence.violations.push(`tienda de prueba ajena ${id} DESAPARECIÓ (archivada por un sweep cruzado)`);
+          }
+        }
+        seen.foreign = fk;
       }
 
       log(
@@ -254,6 +287,30 @@ async function main() {
       );
     } catch (e) {
       log(`(monitor) ${e.message}`);
+    }
+
+    // ── FASE 10 (timing correcto): snapshot del PEER en el instante en que
+    // un run termina — si se mide tras AMBOS teardowns, el propio teardown
+    // del peer (no un daño cruzado) explica su ausencia. El snapshot se toma
+    // en la primera iteración posterior a la salida del run.
+    if (exited.has(runAId) && !afterATaken && capturedCtxA && capturedCtxB) {
+      afterATaken = true;
+      evidence.afterTeardownA = await snapshotCrossCleanup('A', capturedCtxA, capturedCtxB, !exited.has(runBId));
+      if (!evidence.afterTeardownA.tenantPeerIntact && evidence.afterTeardownA.peerStillRunning) {
+        evidence.violations.push('el teardown de RUN A dañó las tiendas de RUN B (cleanup cruzado)');
+      }
+      if (evidence.afterTeardownA.tenantOwnActiveStores.length > 0) {
+        evidence.violations.push(`RUN A dejó residuo activo: ${evidence.afterTeardownA.tenantOwnActiveStores.join(', ')}`);
+      }
+      log(`snapshot tras teardown A: residuo A=${evidence.afterTeardownA.tenantOwnActiveStores.length} · B intacto=${evidence.afterTeardownA.tenantPeerIntact} (peer corriendo=${evidence.afterTeardownA.peerStillRunning})`);
+    }
+    if (exited.has(runBId) && !afterBTaken && capturedCtxA && capturedCtxB) {
+      afterBTaken = true;
+      evidence.afterTeardownB = await snapshotCrossCleanup('B', capturedCtxB, capturedCtxA, !exited.has(runAId));
+      if (evidence.afterTeardownB.tenantOwnActiveStores.length > 0) {
+        evidence.violations.push(`RUN B dejó residuo activo: ${evidence.afterTeardownB.tenantOwnActiveStores.join(', ')}`);
+      }
+      log(`snapshot tras teardown B: residuo B=${evidence.afterTeardownB.tenantOwnActiveStores.length} · A intacto=${evidence.afterTeardownB.tenantPeerIntact} (peer corriendo=${evidence.afterTeardownB.peerStillRunning})`);
     }
   }
 
@@ -265,33 +322,36 @@ async function main() {
   evidence.runA.exitCode = exited.get(runAId) ?? 'killed';
   evidence.runB.exitCode = exited.get(runBId) ?? 'killed';
 
-  // ── FASE 10: cleanup cruzado — A limpio, B intacto; luego B limpio ─────
-  // Usa los contextos capturados DURANTE la corrida (el teardown borra los files)
+  // ── FASE 10 (post-loop): snapshots que no alcanzaron a tomarse en la
+  // transición (ambos salieron entre polls) + verificación final de residuo.
+  // Usa los contextos capturados DURANTE la corrida (el teardown borra los files).
   const ctxA = capturedCtxA;
   const ctxB = capturedCtxB;
 
   if (ctxA && ctxB) {
-    const storesBAfterA = await activeStoresOfTenant(ctxB.tenantId);
-    evidence.afterTeardownA = {
-      tenantBActiveStores: storesBAfterA.map((s) => s.name),
-      tenantBIntact:
-        storesBAfterA.some((s) => s.id === ctxB.pilotStoreA.id) &&
-        storesBAfterA.some((s) => s.id === ctxB.pilotStoreB.id),
-    };
-    if (!evidence.afterTeardownA.tenantBIntact) {
-      evidence.violations.push('el teardown de RUN A dañó las tiendas de RUN B (cleanup cruzado)');
+    if (!afterATaken) {
+      afterATaken = true;
+      evidence.afterTeardownA = await snapshotCrossCleanup('A', ctxA, ctxB, false);
+      log('snapshot post-loop A (ventana de peer no observable — ISO-006 cubre el invariante)');
     }
-
+    if (!afterBTaken) {
+      afterBTaken = true;
+      evidence.afterTeardownB = await snapshotCrossCleanup('B', ctxB, ctxA, false);
+      log('snapshot post-loop B (ventana de peer no observable — ISO-006 cubre el invariante)');
+    }
+    // Residuo final: tras AMBOS teardowns, ninguno de los dos tenants debe
+    // tener tiendas activas (los snapshot de transición ya reportaron el suyo).
     const residueA = await activeStoresOfTenant(ctxA.tenantId);
-    evidence.afterTeardownA.tenantAActiveStores = residueA.map((s) => s.name);
-    if (residueA.length > 0) {
-      evidence.violations.push(`RUN A dejó residuo activo: ${residueA.map((s) => s.name).join(', ')}`);
-    }
-
     const residueB = await activeStoresOfTenant(ctxB.tenantId);
-    evidence.afterTeardownB = { tenantBActiveStores: residueB.map((s) => s.name) };
+    evidence.finalResidue = {
+      tenantAActiveStores: residueA.map((s) => s.name),
+      tenantBActiveStores: residueB.map((s) => s.name),
+    };
+    if (residueA.length > 0) {
+      evidence.violations.push(`residuo final RUN A: ${residueA.map((s) => s.name).join(', ')}`);
+    }
     if (residueB.length > 0) {
-      evidence.violations.push(`RUN B dejó residuo activo: ${residueB.map((s) => s.name).join(', ')}`);
+      evidence.violations.push(`residuo final RUN B: ${residueB.map((s) => s.name).join(', ')}`);
     }
   } else {
     evidence.violations.push('no se pudieron leer los contextos de ambos runs (provisionamiento fallido)');
@@ -305,6 +365,8 @@ async function main() {
 
   evidence.finishedAt = new Date().toISOString();
   evidence.durationMs = Date.now() - started;
+  // Deduplicar violaciones (el monitor registra por poll)
+  evidence.violations = [...new Set(evidence.violations)];
   const testsPassed =
     evidence.runA.exitCode === 0 && evidence.runB.exitCode === 0;
 
@@ -322,10 +384,10 @@ async function main() {
   console.log('\n══════════ RESUMEN DE LA PRUEBA DE CONCURRENCIA ══════════');
   console.log(`RUN A (${runAId}): exit=${evidence.runA.exitCode}`);
   console.log(`RUN B (${runBId}): exit=${evidence.runB.exitCode}`);
-  console.log(`Tenants: A=${evidence.runs[runAId].tenantId || 'n/d'} B=${evidence.runs[runBId].tenantId || 'n/d'}`);
-  console.log(`RUN A tras teardown de A: ${JSON.stringify(evidence.afterTeardownA?.tenantAActiveStores || [])}`);
-  console.log(`RUN B tras teardown de A (debe estar intacto): ${JSON.stringify(evidence.afterTeardownA?.tenantBActiveStores || [])}`);
-  console.log(`RUN B tras teardown de B: ${JSON.stringify(evidence.afterTeardownB?.tenantBActiveStores || [])}`);
+  console.log(`Tenants: A=${evidence.runs[runAId].tenantId || 'n/d'} B=${evidence.runs[runBId].tenantId || 'n/d'} (distintos=${evidence.runs[runAId].tenantId !== evidence.runs[runBId].tenantId})`);
+  console.log(`Tras teardown A: residuo A=${JSON.stringify(evidence.afterTeardownA?.tenantOwnActiveStores || [])} · peer B intacto=${evidence.afterTeardownA?.tenantPeerIntact} (peer corriendo=${evidence.afterTeardownA?.peerStillRunning})`);
+  console.log(`Tras teardown B: residuo B=${JSON.stringify(evidence.afterTeardownB?.tenantOwnActiveStores || [])} · peer A intacto=${evidence.afterTeardownB?.tenantPeerIntact}`);
+  console.log(`Residuo final: A=${JSON.stringify(evidence.finalResidue?.tenantAActiveStores || [])} B=${JSON.stringify(evidence.finalResidue?.tenantBActiveStores || [])}`);
   console.log(`Protegidas idénticas: ${sameProtected(evidence.protectedBefore, evidence.protectedAfter)}`);
   if (evidence.violations.length > 0) {
     console.log('VIOLACIONES:');

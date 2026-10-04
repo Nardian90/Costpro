@@ -38,6 +38,12 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     storageState: undefined, // Cada test maneja su propio login
+    // Sandbox de 4GB sin swap: el dev server (Next dev) + chromium pueden
+    // agotar la memoria y el OOM-killer termina el runner de forma silenciosa
+    // (reproducido). --disable-dev-shm-usage evita /dev/shm de 64MB; sin GPU.
+    launchOptions: {
+      args: ['--disable-dev-shm-usage', '--disable-gpu'],
+    },
   },
 
   projects: [

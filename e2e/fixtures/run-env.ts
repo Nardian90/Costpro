@@ -155,8 +155,13 @@ async function adminCreateUser(
   password: string,
   role: string,
   fullName: string,
-  companyName: string | null,
 ): Promise<{ id: string }> {
+  // ⚠️ NUNCA pasar company_name: el trigger on_auth_user_created inserta
+  // tenants(owner_id = NEW.id) ANTES de crear el profile → viola el FK
+  // tenants_owner_id_fkey (v2_15_1) y revierte toda la transacción
+  // (reproducido: HTTP 500 23503). El tenant dedicado del run se crea
+  // EXPLÍCITAMENTE vía service-role en provisionRunEnv (paso 3), cuando el
+  // profile ya existe y el FK pasa.
   const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
     method: 'POST',
     headers: {
@@ -171,7 +176,6 @@ async function adminCreateUser(
       user_metadata: {
         role,
         full_name: fullName,
-        ...(companyName ? { company_name: companyName } : {}),
       },
     }),
   });
@@ -330,17 +334,18 @@ export async function provisionRunEnv(): Promise<RunContext> {
   const runId = process.env.E2E_RUN_ID || generateRunId();
   const slug = runSlug(runId);
 
-  // 1) Admin del run + tenant dedicado (company_name dispara on_auth_user_created)
+  // 1) Admin del run (sin company_name — ver warning en adminCreateUser:
+  // el path de tenant del trigger está roto por tenants_owner_id_fkey)
   const admin: RunUser = {
     id: '',
     email: `e2e-${slug}-adm@costpro.test`,
     password: runPassword(),
     role: 'admin',
   };
-  const created = await adminCreateUser(admin.email, admin.password, 'admin', `E2E Admin ${runId}`, `E2E TENANT ${runId}`);
+  const created = await adminCreateUser(admin.email, admin.password, 'admin', `E2E Admin ${runId}`);
   admin.id = created.id;
 
-  // 2) Plantel demo dedicado (sin company_name → sin tenant propio; se adscriben al del run)
+  // 2) Plantel demo dedicado (perfiles con tenant_id NULL — se adscriben en el paso 3)
   const cajero: RunUser = {
     id: '', email: `e2e-${slug}-usr@costpro.test`, password: runPassword(), role: 'clerk',
   };
@@ -350,24 +355,36 @@ export async function provisionRunEnv(): Promise<RunContext> {
   const encargado: RunUser = {
     id: '', email: `e2e-${slug}-enc@costpro.test`, password: runPassword(), role: 'encargado',
   };
-  cajero.id = (await adminCreateUser(cajero.email, cajero.password, 'clerk', `E2E Cajero ${runId}`, null)).id;
-  almacen.id = (await adminCreateUser(almacen.email, almacen.password, 'warehouse', `E2E Almacen ${runId}`, null)).id;
-  encargado.id = (await adminCreateUser(encargado.email, encargado.password, 'encargado', `E2E Encargado ${runId}`, null)).id;
+  cajero.id = (await adminCreateUser(cajero.email, cajero.password, 'clerk', `E2E Cajero ${runId}`)).id;
+  almacen.id = (await adminCreateUser(almacen.email, almacen.password, 'warehouse', `E2E Almacen ${runId}`)).id;
+  encargado.id = (await adminCreateUser(encargado.email, encargado.password, 'encargado', `E2E Encargado ${runId}`)).id;
 
-  // 3) Resolver tenant del admin y adscribir al plantel
-  const profRes = await svc('GET', `/profiles?id=eq.${admin.id}&select=tenant_id&limit=1`);
-  if (!profRes.ok) throw new Error(`[run-env] No se pudo leer el profile del admin: HTTP ${profRes.status}`);
-  const profRows = (await profRes.json()) as Array<{ tenant_id: string | null }>;
-  const tenantId = profRows[0]?.tenant_id ?? null;
-  if (!tenantId) {
-    throw new Error('[run-env] El admin del run no resolvió tenant_id (trigger on_auth_user_created)');
+  // 3) TENANT dedicado del run — creado explícitamente vía service-role
+  //    (el profile del admin YA existe → el FK owner_id pasa). Cuota real
+  //    per-tenant aislada del resto de runners (create_store_with_membership
+  //    cuenta tenant_id = v_tenant AND is_active, advisory lock REM-INV-5).
+  const tenantIns = await svc('POST', '/tenants?select=id', [{
+    name: `E2E TENANT ${runId}`,
+    owner_id: admin.id,
+    plan: 'enterprise',
+    subscription_status: 'trial',
+    trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    is_active: true,
+  }]);
+  if (!tenantIns.ok) {
+    throw new Error(`[run-env] Creación de tenant del run falló: HTTP ${tenantIns.status} ${await tenantIns.text()}`);
   }
+  const tenantRows = (await tenantIns.json()) as Array<{ id: string }>;
+  const tenantId = tenantRows[0]?.id;
+  if (!tenantId) throw new Error('[run-env] Tenant del run sin id en respuesta');
+
+  // Adscribir al plantel al tenant del run
   await patchProfile(cajero.id, { tenant_id: tenantId });
   await patchProfile(almacen.id, { tenant_id: tenantId });
   await patchProfile(encargado.id, { tenant_id: tenantId });
   // Plan enterprise del admin del run → PLAN_STORE_LIMITS.enterprise = 10
   // tiendas activas PER TENANT (cuota aislada del resto de runners/tenant T0).
-  await patchProfile(admin.id, { plan: 'enterprise' });
+  await patchProfile(admin.id, { plan: 'enterprise', tenant_id: tenantId });
 
   // 4) Pilotos A/B del run vía la API REAL (tenant propio + membership admin)
   const adminSession = await signInRunUser(admin.email, admin.password);
@@ -423,6 +440,13 @@ export async function provisionRunEnv(): Promise<RunContext> {
   process.env.E2E_ENCARGADO_PASS = encargado.password;
   process.env.E2E_ENCARGADO_ID = encargado.id;
   process.env.E2E_TEST_ADMIN_EMAIL = admin.email;
+  // Alias de pase por-run: reverse-duplicate-ui (y potenciales specs legacy)
+  // leen E2E_TEST_ADMIN_PASS / E2E_TEST_USER_PASS — sin esto firman sesión
+  // con la contraseña por defecto del modo compartido → credenciales
+  // inválidas (reproducido: "Login failed: Invalid login credentials").
+  process.env.E2E_TEST_ADMIN_PASS = admin.password;
+  process.env.E2E_TEST_USER_EMAIL = cajero.email;
+  process.env.E2E_TEST_USER_PASS = cajero.password;
   process.env.E2E_TEST_ADMIN_TOKEN = adminSession.token;
   process.env.E2E_TEST_ADMIN_ID = admin.id;
   process.env.E2E_TEST_USER_TOKEN = cajeroSession.token;
@@ -527,7 +551,16 @@ export async function teardownRunEnv(contextPath = runContextPath()): Promise<vo
       headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ ban_duration: '87600h' }),
     }).catch(() => {});
-    await patchProfile(user.id, { is_active: false, active_store_id: null }).catch(() => {});
+    // Desactivar SIN tocar active_store_id: el trigger validate_active_store
+    // (20260715) rechaza active_store_id→NULL para roles
+    // encargado/clerk/warehouse (ERR_STORE_REQUIRED) — la propia app tampoco
+    // lo toca en managed_soft_delete_user. Semántica idéntica a la app:
+    // deleted_at + reason + is_active=false (profiles NO admite hard delete).
+    await patchProfile(user.id, {
+      is_active: false,
+      deleted_at: new Date().toISOString(),
+      deletion_reason: 'E2E run teardown (E2E-RUNNER-ISOLATION)',
+    }).catch(() => {});
   }
 
   try {
