@@ -67,9 +67,13 @@ interface HelpSidebarProps {
   onSelectAccessibility: () => void;
   autoExpandForPath: string | null;
   activeHeadingId?: string;
+  /** Rail: render colapsado de la Biblioteca (solo iconos, desktop). */
+  railMode?: boolean;
+  /** Pide expandir la Biblioteca (salir del rail). Conserva la página actual. */
+  onExpand?: () => void;
 }
 
-export default function HelpSidebar({ structure, toc, onSelect, activePath, isAccessibilityActive, onSelectAccessibility, autoExpandForPath, activeHeadingId }: HelpSidebarProps) {
+export default function HelpSidebar({ structure, toc, onSelect, activePath, isAccessibilityActive, onSelectAccessibility, autoExpandForPath, activeHeadingId, railMode = false, onExpand }: HelpSidebarProps) {
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
     empezar: true,
     gestion: false,
@@ -104,6 +108,16 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
   }, [toc.length]);
 
   if (!structure) {
+    // Rail skeleton — placeholders compactos mientras carga la estructura.
+    if (railMode) {
+      return (
+        <nav aria-label="Biblioteca" className="flex flex-col items-center gap-1.5 py-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="w-10 h-10 rounded-xl bg-muted/30 animate-pulse" />
+          ))}
+        </nav>
+      );
+    }
     return (
       <div className="flex flex-col min-h-full">
         <div className="px-5 pb-4">
@@ -163,6 +177,90 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
 
   const totalDocs = visibleCategories.reduce((sum, cat) => sum + cat.files.length, 0);
   const tocOpen = openCategories.toc ?? false;
+
+  // ── Modo rail (Biblioteca colapsada): columna de iconos con nombre accesible.
+  // Clic en un icono = expandir la Biblioteca + abrir esa categoría (conserva
+  // la página activa; el estado openCategories no se pierde porque el
+  // componente permanece montado).
+  const expandAndOpen = (id: string) => {
+    setOpenCategories((prev) => ({ ...prev, [id]: true }));
+    onExpand?.();
+  };
+
+  if (railMode) {
+    return (
+      <nav aria-label="Biblioteca" className="flex flex-col items-center gap-1.5 py-3 w-full">
+        {visibleCategories.map((cat) => {
+          const activeInCategory = cat.files.some((f) => activePath === f.path);
+          const IconComp = cat.icon;
+          const styles = SECTION_STYLES[cat.id] || SECTION_STYLES['03-referencia'];
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => expandAndOpen(cat.id)}
+              title={cat.label}
+              aria-label={`Expandir biblioteca y abrir ${cat.label}`}
+              aria-expanded={false}
+              aria-controls="help-biblioteca"
+              aria-current={activeInCategory ? 'page' : undefined}
+              className={cn(
+                'w-10 h-10 rounded-xl flex items-center justify-center border bg-gradient-to-br transition-all duration-200',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
+                styles.gradient,
+                activeInCategory
+                  ? 'ring-2 ring-primary shadow-sm'
+                  : 'opacity-70 hover:opacity-100 hover:bg-accent/40',
+              )}
+            >
+              <IconComp className="w-4 h-4 text-foreground/80" aria-hidden="true" />
+            </button>
+          );
+        })}
+
+        {toc.length > 0 && (
+          <button
+            type="button"
+            onClick={() => expandAndOpen('toc')}
+            title="Contenido del documento"
+            aria-label="Expandir biblioteca y abrir el contenido del documento"
+            aria-expanded={false}
+            aria-controls="help-biblioteca"
+            className={cn(
+              'w-10 h-10 rounded-xl flex items-center justify-center border bg-gradient-to-br transition-all duration-200',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
+              SECTION_STYLES.toc.gradient,
+              'opacity-70 hover:opacity-100 hover:bg-accent/40',
+            )}
+          >
+            <Lightbulb className="w-4 h-4 text-primary" aria-hidden="true" />
+          </button>
+        )}
+
+        <div className="w-8 border-t border-border/30 my-1" aria-hidden="true" />
+
+        <button
+          type="button"
+          onClick={() => { onSelectAccessibility(); onExpand?.(); }}
+          title="Accesibilidad"
+          aria-label="Expandir biblioteca y abrir Accesibilidad"
+          aria-current={isAccessibilityActive ? 'page' : undefined}
+          className={cn(
+            'w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
+            isAccessibilityActive
+              ? 'bg-primary/10 ring-2 ring-primary'
+              : 'opacity-70 hover:opacity-100 hover:bg-accent/40',
+          )}
+        >
+          <Shield
+            className={cn('w-4 h-4', isAccessibilityActive ? 'text-primary' : 'text-muted-foreground')}
+            aria-hidden="true"
+          />
+        </button>
+      </nav>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-0">

@@ -42,6 +42,13 @@ Piense en ello como una biblioteca con 4 secciones:
 - `02-como-hacer/14-como-recibir-servicio.md` — Recibir un servicio (no mercancía)
 - `02-como-hacer/15-como-ver-uso-sistema.md` — Ver cuánto se usa el sistema
 - `02-como-hacer/16-como-crear-orden-produccion.md` — Crear una orden de producción, servicio o trabajo
+- `02-como-hacer/17-como-usar-paleta-comandos.md` — Usar la paleta de comandos (Ctrl + K)
+- `02-como-hacer/18-como-usar-venta-por-conteo.md` — Usar la venta por conteo
+- `02-como-hacer/19-como-procesar-devolucion.md` — Procesar una devolución
+- `02-como-hacer/20-como-crear-cotizacion.md` — Crear una cotización
+- `02-como-hacer/21-como-gestionar-clientes.md` — Gestionar clientes (CRM)
+- `02-como-hacer/22-como-crear-oferta.md` — Crear una oferta comercial formal
+- `02-como-hacer/23-como-consultar-cuentas.md` — Consultar cuentas por pagar y por cobrar
 
 ### 3. Referencia (datos técnicos)
 - `03-referencia/01-glosario.md` — Diccionario de términos
@@ -62,6 +69,12 @@ Piense en ello como una biblioteca con 4 secciones:
 - `04-explicacion/05-por-que-tasa-inteligente.md` — Por qué la tasa es "inteligente"
 - `04-explicacion/06-como-funciona-offline.md` — Cómo funciona sin Internet
 - `04-explicacion/07-aislamiento-por-tienda.md` — Por qué cada tienda ve solo sus datos
+- `04-explicacion/08-seccion-en-desarrollo.md` — ¿Qué es la sección "En desarrollo"?
+
+### Referencias complementarias
+- `02-gestion/estructura-costo-y-costeo-dinamico.md` — Estructura de costo y costeo dinámico
+- `04-configuracion/herramientas-sistema.md` — Salud, Monitoreo, Gestión RSS y Cierre Fiscal
+- `04-configuracion/redes-sociales.md` — Bots de WhatsApp y Telegram por tienda
 
 ---
 
@@ -71,6 +84,6 @@ Piense en ello como una biblioteca con 4 secciones:
 
 1. **Botón de ayuda dentro de cada vista** (recomendado): Cada pantalla del sistema tiene un botón con un signo de pregunta **"?"**. Al pulsarlo, usted viaja directamente a la sección de ayuda que explica ESA pantalla. No tiene que buscar nada.
 
-2. **Buscador de ayuda**: En la parte superior de esta página hay un campo de búsqueda. Escriba una palabra (por ejemplo "vender", "caja", "descuento") y verá todos los documentos que la mencionan.
+2. **Buscador de ayuda**: En la parte superior de esta página hay un campo de búsqueda. Escriba una palabra (por ejemplo "vender", "caja", "contraseña") y verá los documentos que la mencionan.
 
-3. **Índice de la izquierda**: La barra lateral muestra las 4 secciones. Haga clic en una para ver todos sus documentos.
+3. **Biblioteca (el panel de la izquierda)**: muestra las secciones y sus documentos; puede ocultarla con el botón de su encabezado y volver a mostrarla cuando la necesite. En móvil, ábrala con el botón flotante de la esquina.

@@ -1,4 +1,4 @@
-# Guía del Catálogo de Ventas (Tablas IPV)
+# Guía del Catálogo de Ventas (Tabla de Venta)
 
 Tutorial completo sobre el sistema de Catálogo de Ventas en CostPro, que permite consultar productos con precios indexados según las tablas oficiales de IPV, filtrar por categorías, seleccionar productos en tabla o cuadrícula visual, y procesar ventas directamente desde la vista de catálogo.
 
@@ -21,14 +21,14 @@ Tutorial completo sobre el sistema de Catálogo de Ventas en CostPro, que permit
   - [7.1 Procesar Venta Directa](#71-procesar-venta-directa)
   - [7.2 Modal de Checkout](#72-modal-de-checkout)
 - [8. Exportación desde el Catálogo](#8-exportación-desde-el-catálogo)
-- [9. Diferencias con el Terminal POS](#9-diferencias-con-el-terminal-pos)
+- [9. Diferencias con Vender (POS)](#9-diferencias-con-vender-pos)
 - [10. Buenas Prácticas](#10-buenas-prácticas)
 
 ---
 
 ## 1. Qué es el Catálogo de Ventas
 
-El **Catálogo de Ventas** es una vista especializada que muestra todos los productos disponibles para la venta organizados en una tabla o cuadrícula visual. A diferencia del Terminal POS — que está optimizado para ventas rápidas una por una — el Catálogo de Ventas permite **visualizar el portafolio completo** de productos con sus precios indexados, aplicar filtros avanzados, comparar productos y procesar ventas de forma selectiva.
+El **Catálogo de Ventas** es una vista especializada que muestra todos los productos disponibles para la venta organizados en una tabla o cuadrícula visual. A diferencia de **Vender (POS)** — que está optimizado para ventas rápidas una por una — el Catálogo de Ventas permite **visualizar el portafolio completo** de productos con sus precios indexados, aplicar filtros avanzados, comparar productos y procesar ventas de forma selectiva.
 
 Esta vista es especialmente útil cuando:
 
@@ -37,19 +37,17 @@ Esta vista es especialmente útil cuando:
 - Realizas **ventas al por mayor** seleccionando múltiples productos a la vez.
 - Requieres **exportar el catálogo** completo o filtrado para compartir con clientes.
 
-El catálogo se integra con el sistema de **Tablas IPV** (Índice de Precios y Variaciones), lo que significa que los precios mostrados reflejan las actualizaciones oficiales de precios cuando estén configuradas.
+El catálogo se integra con el sistema de **Tabla de Venta** (Índice de Precios y Variaciones), lo que significa que los precios mostrados reflejan las actualizaciones oficiales de precios cuando estén configuradas.
 
 ---
 
 ## 2. Acceder al Catálogo
 
-Navega al Catálogo de Ventas desde la barra lateral del módulo Multi-Tienda:
+Navega al Catálogo de Ventas desde el menú lateral:
 
 ```
-MULTI-TIENDA > Ventas > Catálogo de Ventas
+Operación → Ventas → Opciones → Tabla de Venta
 ```
-
-> **Nota**: El Catálogo de Ventas aparece marcado con la etiqueta **"Nuevo"** en la barra lateral. Esta etiqueta indica funcionalidad añadida recientemente al sistema.
 
 Al acceder, el catálogo carga automáticamente todos los productos de la tienda activa y los muestra en la vista predeterminada (tabla o cuadrícula, según tu última selección).
 
@@ -172,7 +170,7 @@ Este resumen se actualiza automáticamente cada vez que aplicas un filtro, cambi
 
 ## 7. Ventas desde el Catálogo
 
-El catálogo permite procesar ventas directamente sin necesidad de cambiar al Terminal POS. Esto es útil cuando atiendes a un cliente que desea comprar varios productos específicos que ha seleccionado de la tabla.
+El catálogo permite procesar ventas directamente sin necesidad de cambiar a Vender (POS). Esto es útil cuando atiendes a un cliente que desea comprar varios productos específicos que ha seleccionado de la tabla.
 
 ### 7.1 Procesar Venta Directa
 
@@ -193,7 +191,7 @@ Cuando procesas una venta desde el catálogo, se abre el **Modal de Checkout** q
 - **Total** con impuestos incluidos.
 - **Botón de confirmar venta** que finaliza la transacción.
 
-Al confirmar la venta, se ejecutan los mismos procesos automáticos que en el Terminal POS:
+Al confirmar la venta, se ejecutan los mismos procesos automáticos que en Vender (POS):
 
 - Se genera un comprobante de venta.
 - El inventario se actualiza automáticamente.
@@ -215,11 +213,11 @@ Desde la vista del Catálogo de Ventas puedes acceder al **exportador de catálo
 
 ---
 
-## 9. Diferencias con el Terminal POS
+## 9. Diferencias con Vender (POS)
 
-Aunque tanto el Catálogo de Ventas como el Terminal POS permiten procesar ventas, cada uno está optimizado para un flujo de trabajo diferente:
+Aunque tanto el Catálogo de Ventas como Vender (POS) permiten procesar ventas, cada uno está optimizado para un flujo de trabajo diferente:
 
-| Característica | Catálogo de Ventas | Terminal POS |
+| Característica | Catálogo de Ventas | Vender (POS) |
 |---------------|-------------------|--------------|
 | **Enfoque** | Consulta y comparación de productos | Venta rápida |
 | **Vista predeterminada** | Tabla o cuadrícula de productos | Carrito de compra |
@@ -231,7 +229,7 @@ Aunque tanto el Catálogo de Ventas como el Terminal POS permiten procesar venta
 | **Velocidad por transacción** | Media (requiere selección) | Alta (escaneo directo) |
 | **Ideal para** | Clientes que piden presupuesto, ventas mayoristas | Atención rápida en mostrador |
 
-> **Tip**: Usa el **Catálogo de Ventas** cuando un cliente solicita ver opciones y precios antes de decidirse. Usa el **Terminal POS** cuando el cliente ya sabe qué quiere y solo necesitas procesar la venta rápidamente. Ambos módulos actualizan el mismo inventario e historial de ventas.
+> **Tip**: Usa el **Catálogo de Ventas** cuando un cliente solicita ver opciones y precios antes de decidirse. Usa **Vender (POS)** cuando el cliente ya sabe qué quiere y solo necesitas procesar la venta rápidamente. Ambos módulos actualizan el mismo inventario e historial de ventas.
 
 ---
 
@@ -245,4 +243,4 @@ Aunque tanto el Catálogo de Ventas como el Terminal POS permiten procesar venta
 >
 > **📦 Coordina con inventario:** El catálogo muestra stock en tiempo real, pero un producto puede agotarse mientras un cliente está consultando. Si un cliente intenta comprar un producto que se agotó entre la consulta y la venta, el sistema mostrará un aviso de stock insuficiente.
 >
-> **⌨️ Atajos de teclado:** Usa `Ctrl + K` para abrir la paleta de comandos y navegar rápidamente al Catálogo de Ventas o al Terminal POS según necesites.
+> **⌨️ Atajos de teclado:** Usa `Ctrl + K` para abrir la paleta de comandos y navegar rápidamente al Catálogo de Ventas o a Vender (POS) según necesites.

@@ -102,7 +102,7 @@ En muchos países, la ley exige llevar un registro de ciertas operaciones (sobre
 
 ## El reporte de auditoría
 
-Desde **Configuración → Auditoría Global**, puede generar reportes con filtros:
+Desde **Operación → Auditoría**, puede generar reportes con filtros:
 
 ### Filtros disponibles
 - Por usuario.

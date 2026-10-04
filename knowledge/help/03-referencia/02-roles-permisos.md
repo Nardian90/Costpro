@@ -99,7 +99,7 @@ CostPro tiene **6 roles jerárquicos**. Los permisos son **acumulativos**: un ro
 ## Cómo cambiar el rol de un usuario
 
 1. Solo **admin** o **manager** pueden cambiar roles.
-2. Vaya a **Configuración → Usuarios**.
+2. Vaya a **Sistema → Usuarios**.
 3. Haga clic en el usuario.
 4. En el campo **"Rol"**, elija el nuevo.
 5. Haga clic en **"Guardar"**.
@@ -110,7 +110,7 @@ CostPro tiene **6 roles jerárquicos**. Los permisos son **acumulativos**: un ro
 
 **¿Un usuario puede tener diferentes roles en diferentes tiendas?**
 - Sí. Por ejemplo: encargado en la tienda A, pero clerk en la tienda B.
-- Se configura en Configuración → Usuarios → Memberships.
+- Se configura en Sistema → Usuarios → Memberships.
 
 **¿Qué rol debo dar a un cajero nuevo?**
 - **clerk**. Es el rol mínimo para poder vender.

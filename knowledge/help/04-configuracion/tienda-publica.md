@@ -111,7 +111,7 @@ Es importante entender la distinción entre ambos conceptos:
 | **Audiencia** | Clientes externos | Personal de la tienda |
 | **Autenticación** | No requerida | Requiere inicio de sesión |
 | **Funcionalidad** | Solo lectura (búsqueda, filtrado) | Operaciones completas (ventas, cobro, cierre) |
-| **Acceso** | URL pública abierta | Desde el módulo MULTI-TIENDA |
+| **Acceso** | URL pública abierta | Desde Operación → Gestión de Tiendas |
 | **Datos** | Catálogo de productos visible | Inventario completo, ventas, cierres |
 | **Propósito** | Exhibición de productos al público | Registro y procesamiento de transacciones |
 

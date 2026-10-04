@@ -33,7 +33,7 @@ Además del tema visual, CostPro tiene **2 modos de conectividad** que afectan e
 
 ### Cómo cambiar el modo de conectividad
 
-1. Vaya a **Configuración → Ajustes Globales**.
+1. Vaya a **Sistema → Ajustes**.
 2. Busque la sección **"Modo de conectividad"**.
 3. Elija 4G Fast o 3G Savings.
 4. Haga clic en **"Guardar"**.

@@ -110,7 +110,7 @@ Verá muchos campos, pero **solo los marcados con asterisco (*) son obligatorios
 
 > ⚠️ **Si al guardar aparece un mensaje rojo**: Léalo con calma. Lo más común es:
 > - *"Ya existe un producto con ese SKU"*: cambie el código y vuelva a intentar.
-> - *"La categoría no existe"*: primero cree la categoría en Configuración → Categorías.
+> - *"La categoría no existe"*: el campo **Categoría** del producto es de texto libre — escriba ahí el nombre de la categoría que desea usar.
 > - *"Precio inválido"*: revise que usó punto y no coma en los decimales.
 
 ## Paso 7 — Verificar que aparezca en la caja

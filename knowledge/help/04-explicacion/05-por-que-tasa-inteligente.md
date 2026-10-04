@@ -168,8 +168,8 @@ El sistema registra esta tasa como "Personalizada" y la diferencia queda visible
 - Las fuentes que consulta son públicas y gratuitas.
 
 **¿Puedo agregar mis propias fuentes?**
-- Sí, en Configuración → Fuentes de tasa de cambio.
-- Por ejemplo, si tiene un acuerdo con un proveedor que le da una tasa especial.
+- Las fuentes de consulta vienen preconfiguradas en el sistema.
+- Para casos especiales, use la opción de **tasa personalizada** cuando la vista la ofrece —con moderación, como se explicó arriba.
 
 **¿Qué tasa usa el sistema para los reportes de ganancias?**
 - La tasa activa al momento de generar el reporte.

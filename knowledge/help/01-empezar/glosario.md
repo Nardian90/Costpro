@@ -130,7 +130,7 @@ Referencia rápida de los términos técnicos utilizados en CostPro. Organizado 
 
 **Academy Pro**: Sistema de aprendizaje basado en tarjetas de estudio (flashcards) con algoritmo SM-2 de repetición espaciada, modos de dificultad (Básico, Operativo, Experto) y generación de tarjetas mediante IA.
 
-**Wiki Contable**: Módulo de consulta contable que incluye un clasificador de cuentas, visor detallado de cuentas y registro de asientos contables, accesible desde Más Recursos.
+**Wiki Contable**: Módulo de consulta contable que incluye un clasificador de cuentas, visor detallado de cuentas y registro de asientos contables, accesible desde la sección EN DESARROLLO.
 
 **Modo de Conectividad**: Configuración que ajusta el rendimiento visual de la aplicación según la calidad de conexión a internet: 4G Fast (modo completo con animaciones) y 3G Savings (modo ligero sin animaciones complejas).
 
@@ -138,7 +138,7 @@ Referencia rápida de los términos técnicos utilizados en CostPro. Organizado 
 
 ### Sistema y Configuración
 
-**OCC**: Centro de Operaciones y Comando — Dashboard principal que muestra KPIs, fichas recientes y acciones rápidas al iniciar sesión.
+**OCC**: Término antiguo del panel principal. Hoy esa pantalla se llama **Inicio** — muestra el Panel de Control con KPIs, acciones recomendadas y el asistente Darian al iniciar sesión.
 
 **Rol Costo**: Séptimo rol del sistema con acceso exclusivo al módulo de costos (fichas, plantillas, KPI Tablero, Solver, Darian, exportaciones), sin acceso a ventas, inventario, IPV ni configuración.
 

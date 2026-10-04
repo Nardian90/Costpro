@@ -61,35 +61,33 @@ Cuando entre, verá tres zonas importantes. Mírelas de arriba hacia abajo:
 ### Diagrama de la pantalla principal
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│  [☰]  CostPro    [Tienda Centro ▼]      🔔 ☀️ ? 👤  ← BARRA   │
-├──────────────┬─────────────────────────────────────────────────┤
-│              │                                                 │
-│  ESCRITORIO  │                                                 │
-│  COSTOS   ▶  │          CONTENIDO                              │
-│  MULTI-T  ▶  │     (Dashboard / OCC)                           │
-│  IPV      ▶  │                                                 │
-│  OTROS    ▶  │                                                 │
-│  CONFIGURACIÓN                                                 │
-│              │                                                 │
-│  ← MENÚ      │                                                 │
-│              │                                                 │
-└──────────────┴─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  [☰]  CostPro    [Tienda Centro ▼]      🔔 ☀️ ? 👤  ← BARRA │
+├──────────────┬───────────────────────────────────────────────┤
+│              │                                               │
+│  INICIO      │                                               │
+│  OPERACIÓN ▶ │          CONTENIDO                            │
+│  ANÁLISIS ▶  │     (Inicio / Panel de Control)               │
+│  SISTEMA ▶   │                                               │
+│  AYUDA       │                                               │
+│              │                                               │
+│  ← MENÚ      │                                               │
+│              │                                               │
+└──────────────┴───────────────────────────────────────────────┘
 ```
 
-### Arriba: la barra negra con el nombre de la tienda
-- A la izquierda está el **logo** y el nombre de CostPro.
-- En el centro está el **nombre de la tienda activa** (por ejemplo "Tienda Centro"). Si usted trabaja en varias tiendas, aquí puede cambiar de una a otra.
-- A la derecha hay íconos pequeños: **notificaciones** (una campana), **tema** (sol/luna), **ayuda** (un signo de pregunta **?**), y **su usuario**.
+### Arriba: la barra con el nombre de la tienda
+- A la izquierda está el botón del **menú** y el nombre de CostPro.
+- Al lado está el **nombre de la tienda activa** (por ejemplo "Tienda Centro"). Si usted trabaja en varias tiendas, aquí puede cambiar de una a otra.
+- A la derecha hay íconos pequeños: **notificaciones**, **tema** (sol/luna), **ayuda** (un signo de pregunta **?**), y **su usuario**.
 
-### Izquierda: el menú de módulos
-- Es una lista con varios grupos: **Escritorio**, **Costos**, **Multi-Tienda**, **IPV**, **Otros**, **Configuración** y **Más Recursos**.
-- Haga clic en cualquier grupo para abrirlo y ver sus opciones.
-- Haga clic de nuevo en el grupo para cerrarlo.
+### Izquierda: el menú de secciones
+- Es una lista con las secciones: **Inicio**, **Operación**, **Análisis**, **Sistema**, **Ayuda** y **En Desarrollo** (algunas secciones solo se ven según su rol).
+- Haga clic en una sección para abrirla y ver sus opciones.
 
 ### Centro: el contenido
 - Aquí aparece la pantalla que usted elija del menú.
-- Al entrar, normalmente verá el **Escritorio** (también llamado OCC), que es como la sala de espera: muestra un resumen de cómo va el negocio hoy.
+- Al entrar, normalmente verá **Inicio**, que es como la sala de espera: muestra un resumen de cómo va el negocio hoy.
 
 ## Paso 4 — Cambiar de tienda (si trabaja en varias)
 
@@ -116,17 +114,17 @@ En cada pantalla del sistema, arriba a la derecha, hay un botón con un **signo 
 ```
 Vista donde está         →  Documento que se abre
 ─────────────────────────────────────────────────
-POS (caja)               →  Cómo cerrar la caja
+Vender (POS)             →  Cómo cerrar la caja
 Inventario               →  Cómo ajustar inventario
 Recepciones              →  Cómo recibir mercancía
 Transferencias           →  Cómo hacer transferencia
-Cierre de caja           →  Cómo cerrar la caja
+Caja (cierre de caja)    →  Cómo cerrar la caja
 Órdenes de Compra        →  Cómo crear orden de compra
 Trabajadores             →  Cómo pagar comisiones
 Servicios Recibidos      →  Cómo recibir un servicio
 Inteligencia Cambiaria   →  Cómo usar la tasa de cambio
-Monitoreo de Uso         →  Cómo ver uso del sistema
-Tiendas                  →  ¿Qué es multi-tienda?
+Monitoreo                →  Cómo ver uso del sistema
+Gestión de Tiendas       →  ¿Qué es multi-tienda?
 Reportes                 →  Cómo ver mi primer reporte
 ```
 

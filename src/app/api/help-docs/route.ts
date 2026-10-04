@@ -129,8 +129,46 @@ async function getHandler(request: NextRequest) {
     // ── Search ──
     if (searchQuery && searchQuery.length >= 3) {
       const results: SearchResult[] = [];
+      const seen = new Set<string>();
       const query = searchQuery.toLowerCase();
       const helpDir = path.join(KNOWLEDGE_BASE, 'help');
+
+      const typeForPath = (p: string): string => {
+        if (p.includes('01-tutoriales')) return 'tutorial';
+        if (p.includes('02-como-hacer')) return 'how-to';
+        if (p.includes('03-referencia')) return 'reference';
+        if (p.includes('04-explicacion')) return 'reference';
+        return 'getting-started';
+      };
+
+      // FASE 8 (help-center-library-evolution): índice de alias/sinónimos
+      // centralizado en knowledge/help/search-keywords.json — permite localizar
+      // contenido por términos de usuario ("cambiar contraseña") aunque el
+      // título del documento sea otro ("Cambiar Mi Contraseña"). Best-effort:
+      // si el índice no existe o es inválido, el search por contenido sigue.
+      try {
+        const kwPath = path.join(helpDir, 'search-keywords.json');
+        if (fs.existsSync(kwPath)) {
+          const kwIndex = JSON.parse(fs.readFileSync(kwPath, 'utf8')) as Record<string, string[]>;
+          for (const [term, docPaths] of Object.entries(kwIndex)) {
+            if (term.startsWith('_')) continue;
+            if (term.includes(query) || query.includes(term)) {
+              for (const docPath of docPaths) {
+                if (seen.has(docPath)) continue;
+                const abs = path.join(KNOWLEDGE_BASE, docPath);
+                if (!fs.existsSync(abs)) continue;
+                const content = fs.readFileSync(abs, 'utf8');
+                const title = content.split('\n')[0].replace(/^#+\s+/, '') || docPath;
+                const excerptLine = content.split('\n').map(l => l.trim()).find(l => l && !l.startsWith('#') && !l.startsWith('>')) || '';
+                results.push({ path: docPath, title, excerpt: excerptLine.slice(0, 160), type: typeForPath(docPath) });
+                seen.add(docPath);
+              }
+            }
+          }
+        }
+      } catch {
+        // Índice de keywords opcional — el walk por contenido cubre el resto.
+      }
 
       const walk = (dir: string, depth = 0, maxDepth = 10) => {
         if (depth >= maxDepth) return;
@@ -144,19 +182,15 @@ async function getHandler(request: NextRequest) {
             const content = fs.readFileSync(fullPath, 'utf8');
             if (content.toLowerCase().includes(query)) {
               const relativePath = path.relative(KNOWLEDGE_BASE, fullPath);
+              if (seen.has(relativePath)) return;
+              seen.add(relativePath);
               const title = content.split('\n')[0].replace(/^#+\s+/, '') || file;
               const index = content.toLowerCase().indexOf(query);
               const start = Math.max(0, index - 40);
               const end = Math.min(content.length, index + query.length + 80);
               const excerpt = (start > 0 ? '...' : '') + content.substring(start, end).replace(/\n/g, ' ') + (end < content.length ? '...' : '');
 
-              let type = 'getting-started';
-              if (relativePath.includes('01-tutoriales')) type = 'tutorial';
-              else if (relativePath.includes('02-como-hacer')) type = 'how-to';
-              else if (relativePath.includes('03-referencia')) type = 'reference';
-              else if (relativePath.includes('04-explicacion')) type = 'reference';
-
-              results.push({ path: relativePath, title, excerpt, type });
+              results.push({ path: relativePath, title, excerpt, type: typeForPath(relativePath) });
             }
           }
         });
