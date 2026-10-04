@@ -60,13 +60,48 @@ vi.mock('@/components/ui/ChatBot', () => ({
 }));
 
 // ─── MOCK: DashboardView (el dashboard real se valida en QA de browser) ────
+// DASHBOARD V3: el mock renderiza el `aside` (Acciones recientes) — refleja
+// la nueva composición donde el panel viaja DENTRO del dashboard, al lado del
+// gráfico circular.
+const useProductsMock = vi.fn<(...args: unknown[]) => { data: any[]; isLoading: boolean }>(() => ({
+  data: [],
+  isLoading: false,
+}));
+vi.mock('@/hooks/api/useProducts', () => ({
+  useProducts: (...args: unknown[]) => useProductsMock(...args),
+}));
+
 vi.mock('@/components/views/terminal/views/dashboard/DashboardView', () => ({
-  default: ({ embedded }: any) => (
+  default: ({ embedded, aside }: any) => (
     <div
       data-testid="store-dashboard-embedded"
       data-embedded={String(Boolean(embedded))}
-    />
+    >
+      {aside}
+    </div>
   ),
+  // DASHBOARD V3: AICommandCenterView importa { DashboardAlertsSection } del
+  // mismo módulo. El stub respeta el contrato real del componente:
+  // null mientras carga o sin productos críticos; heading i18n key cuando hay
+  // stock crítico (useTranslations mockeado globalmente devuelve la key).
+  DashboardAlertsSection: () => {
+    const { data, isLoading } = useProductsMock();
+    if (isLoading) return null;
+    const critical = (data || []).filter(
+      (p: any) => (p.stock_current ?? 0) <= (p.min_stock ?? 0)
+    );
+    if (critical.length === 0) return null;
+    return (
+      <section aria-label="criticalAlerts" data-testid="dashboard-alerts-section">
+        <h3>criticalAlerts</h3>
+        <div className="space-y-3">
+          {critical.map((p: any) => (
+            <div key={p.id}>{p.name}</div>
+          ))}
+        </div>
+      </section>
+    );
+  },
 }));
 
 // ─── MOCK: stores (zustand mínimo — mismos selectores que usa el código) ────
@@ -157,6 +192,10 @@ describe('recent-actions (log user-scoped)', () => {
 });
 
 describe('AICommandCenterView (Inicio)', () => {
+  beforeEach(() => {
+    useProductsMock.mockReturnValue({ data: [], isLoading: false });
+  });
+
   it('estado inicial: Dashboard de la tienda activa + chat embebido + recents (CAMBIO 1)', async () => {
     render(<AICommandCenterView />);
     await waitFor(() => {
@@ -170,6 +209,8 @@ describe('AICommandCenterView (Inicio)', () => {
     });
     const embedded = screen.getByTestId('store-dashboard-embedded');
     expect(embedded.getAttribute('data-embedded')).toBe('true');
+    // DASHBOARD V3: recents viajan como aside DENTRO del dashboard (única
+    // instancia canónica, al lado del gráfico circular)
     expect(screen.getByTestId('recent-activity-empty')).toBeInTheDocument();
   });
 
@@ -200,6 +241,51 @@ describe('AICommandCenterView (Inicio)', () => {
       expect(screen.queryByTestId('recent-activity-empty')).not.toBeInTheDocument();
       expect(screen.getByTestId('recent-activity-list')).toBeInTheDocument();
     });
+  });
+
+  it('DASHBOARD V3: Alertas Críticas es la ÚLTIMA sección del Inicio (después de Darian)', async () => {
+    useProductsMock.mockReturnValue({
+      data: [{ id: 'p1', name: 'Producto crítico', sku: 'SKU-1', stock_current: 0, min_stock: 5 }],
+      isLoading: false,
+    });
+    const { container } = render(<AICommandCenterView />);
+    await waitFor(() => screen.getByTestId('chatbot-embedded'));
+    await waitFor(() => {
+      // DashboardAlertsSection renderiza null mientras carga → con productos
+      // críticos aparece la sección (heading = clave i18n en tests)
+      expect(screen.getByText('criticalAlerts')).toBeInTheDocument();
+    });
+    // ÚLTIMA sección: el heading de Alertas va DESPUÉS del chat (Darian)
+    // en el orden del DOM.
+    const chatEl = screen.getByTestId('chatbot-embedded');
+    const alertsHeading = screen.getByText('criticalAlerts');
+    expect(alertsHeading.compareDocumentPosition(chatEl) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(0);
+    expect(chatEl.compareDocumentPosition(alertsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Sin duplicados: UN solo heading de Alertas Críticas
+    expect(screen.getAllByText('criticalAlerts')).toHaveLength(1);
+    void container;
+  });
+
+  it('DASHBOARD V3 + GATE 9: conversación activa → Alertas Críticas desmontadas', async () => {
+    useProductsMock.mockReturnValue({
+      data: [{ id: 'p1', name: 'Producto crítico', sku: 'SKU-1', stock_current: 0, min_stock: 5 }],
+      isLoading: false,
+    });
+    render(<AICommandCenterView />);
+    await waitFor(() => screen.getByTestId('chatbot-embedded'));
+    await waitFor(() => screen.getByText('criticalAlerts'));
+
+    fireEvent.click(screen.getByTestId('simulate-active'));
+    await waitFor(() => {
+      expect(screen.queryByText('criticalAlerts')).not.toBeInTheDocument();
+    });
+  });
+
+  it('DASHBOARD V3: sin productos críticos NO se renderiza la sección de Alertas', async () => {
+    useProductsMock.mockReturnValue({ data: [], isLoading: false });
+    render(<AICommandCenterView />);
+    await waitFor(() => screen.getByTestId('chatbot-embedded'));
+    expect(screen.queryByText('criticalAlerts')).not.toBeInTheDocument();
   });
 });
 

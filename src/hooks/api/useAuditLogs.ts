@@ -10,6 +10,11 @@ export interface AuditLogEntry {
   record_id: string;
   store_id: string;
   metadata: Record<string, any>;
+  // DASHBOARD V3 (feat/dashboard-v3-audit-ux): columnas escritas por los
+  // triggers de BD (audit_*_changes) y devueltas por select('*') — solo se
+  // declara el TIPO, la consulta no cambia (cero cambios de backend).
+  old_data?: Record<string, any> | null;
+  new_data?: Record<string, any> | null;
   // Join con profiles:
   profiles?: { full_name: string | null; email: string | null };
 }

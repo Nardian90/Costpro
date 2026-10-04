@@ -8,19 +8,31 @@
  *   INICIO
  *   ├── Dashboard de la tienda activa   ← DashboardView (reutilizada, no
  *   │                                      se crea un dashboard nuevo)
+ *   │     ├── Resumen de Indicadores (gráfico circular)
+ *   │     └── Acciones recientes (al lado del gráfico — DASHBOARD V3)
  *   └── Darian
- *       ¿En qué puedo ayudarte? + sugerencias + acciones recientes
+ *       ¿En qué puedo ayudarte? + sugerencias
+ *
+ *   └── Alertas Críticas (stock bajo) — ÚLTIMA sección del Panel de Control
+ *       (DASHBOARD V3 — feat/dashboard-v3-audit-ux FASE 6)
  *
  *   - El Dashboard KPI es la MISMA vista 'store-dashboard' certificada:
  *     tras la REMEDIACIÓN (fix/dashboard-active-store) responde a la tienda
  *     activa para TODOS los roles (user.activeStoreId real). Prop `embedded`:
  *     PageHeader en h2 (GATE 16: una sola h1 por página — el Header del shell
  *     pinta "Inicio").
+ *   - DASHBOARD V3 (FASE 4/5): "Acciones recientes" (RecentActivityPanel) se
+ *     pasa como `aside` del dashboard para que quede AL LADO del gráfico
+ *     circular en desktop (apilado en mobile) — única representación
+ *     canónica; la instancia duplicada al final del Inicio se retiró.
+ *   - DASHBOARD V3 (FASE 6): "Alertas Críticas" sale del widget del dashboard
+ *     y pasa al final del Inicio, después de Darian (DashboardAlertsSection,
+ *     autocontenida). Sin duplicar: una sola instancia.
  *   - Hero conversacional: motor ChatBot existente en modo `embedded`
  *     (GATE 18: reutilizar, no reconstruir).
  *   - GATE 9: en conversación activa el contenido conversacional toma
- *     prioridad — el dashboard y las acciones recientes se desmontan
- *     (mismo comportamiento certificado del panel de recents).
+ *     prioridad — el dashboard, las acciones recientes y las alertas se
+ *     desmontan (mismo comportamiento certificado del panel de recents).
  *   - Desktop: columna central max-w-4xl para el chat — espaciosa, sobria,
  *     empresarial (GATE 13); el dashboard usa el ancho del shell.
  *
@@ -35,7 +47,7 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
-import RecentActivityPanel from './RecentActivityPanel';
+import { DashboardAlertsSection } from './DashboardView';
 
 const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.ChatBot), {
   ssr: false,
@@ -61,6 +73,11 @@ const DashboardView = dynamic(
   }
 );
 
+const RecentActivityPanel = dynamic(
+  () => import('./RecentActivityPanel').then(m => m.default),
+  { ssr: false }
+);
+
 export default function AICommandCenterView() {
   // GATE 9: estado inicial (dashboard + bienvenida + recents) vs conversación
   // activa (prioridad conversacional). El ChatBot notifica vía callback — sin
@@ -77,14 +94,16 @@ export default function AICommandCenterView() {
       data-testid="ai-command-center"
     >
       {/* CAMBIO 1 — Dashboard de la tienda activa (solo estado inicial; la
-          conversación activa lo desmonta — GATE 9). */}
+          conversación activa lo desmonta — GATE 9).
+          DASHBOARD V3 — FASE 4/5: RecentActivityPanel viaja como `aside`
+          (al lado del gráfico circular en desktop; única instancia). */}
       {!hasActiveConversation && (
         <section
           aria-label="Dashboard de la tienda activa"
           data-testid="inicio-store-dashboard"
           className="w-full px-3 sm:px-6 pt-4"
         >
-          <DashboardView embedded />
+          <DashboardView embedded aside={<RecentActivityPanel />} />
         </section>
       )}
 
@@ -105,13 +124,17 @@ export default function AICommandCenterView() {
         >
           <ChatBot embedded onConversationChange={handleConversationChange} />
         </div>
-
-        {/* GATE 9: recents solo en estado inicial — la conversación activa
-            los desmonta para que el bienvenida no ocupe espacio innecesario */}
-        {!hasActiveConversation && (
-          <RecentActivityPanel className="mt-2 mb-10 px-1 sm:px-2" />
-        )}
       </div>
+
+      {/* DASHBOARD V3 — FASE 6: "Alertas Críticas" es la ÚLTIMA sección del
+          Panel de Control (después de Darian). Solo en estado inicial —
+          la conversación activa toma prioridad (GATE 9). Renderiza null
+          mientras carga o si no hay productos en stock crítico. */}
+      {!hasActiveConversation && (
+        <div className="mx-auto w-full max-w-4xl px-3 sm:px-6 pb-10">
+          <DashboardAlertsSection />
+        </div>
+      )}
     </div>
   );
 }
