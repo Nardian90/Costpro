@@ -21,6 +21,7 @@
  */
 import { type Page } from '@playwright/test';
 import { PILOT_A_NAME, PILOT_B_NAME } from './pilot-env';
+import { getRunId, getRunTenantId } from './run-env';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -60,6 +61,14 @@ export const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || process.env.ADMIN_EMAI
 export const ADMIN_PASS = process.env.E2E_ADMIN_PASS || process.env.ADMIN_PASS || 'costpro123';
 export const CLERK_EMAIL = process.env.E2E_USER_EMAIL || 'cajero@demo.com';
 export const CLERK_PASS = process.env.E2E_USER_PASS || 'demo123';
+// E2E-RUNNER-ISOLATION: plantel demo completo por-run (roles-permissions).
+// Defaults legacy = usuarios demo compartidos; en modo aislado el
+// global-setup exporta las variables por-run antes de lanzar los workers.
+export const WAREHOUSE_EMAIL = process.env.E2E_WAREHOUSE_EMAIL || 'almacen@demo.com';
+export const WAREHOUSE_PASS = process.env.E2E_WAREHOUSE_PASS || 'demo123';
+export const ENCARGADO_EMAIL = process.env.E2E_ENCARGADO_EMAIL || 'encargado@demo.com';
+export const ENCARGADO_PASS = process.env.E2E_ENCARGADO_PASS || 'demo123';
+export const ENCARGADO_ID = process.env.E2E_ENCARGADO_ID || 'e2222222-2222-2222-2222-222222222222';
 
 /** Sufijo único para datos de prueba (evita colisiones entre ejecuciones) */
 export function testSuffix(): string {
@@ -219,8 +228,13 @@ export async function createTestStore(
   label: string,
 ): Promise<TestStore> {
   const suffix = testSuffix();
+  // E2E-RUNNER-ISOLATION: el nombre incorpora la identidad del run —
+  // dos runners simultáneos nunca colisionan en nombre/slug ni se
+  // disputan los mismos fixtures (el sweep queda además acotado al tenant).
+  const runId = getRunId();
+  const name = runId ? `E2E80 ${runId} ${label} ${suffix}` : `E2E80 ${label} ${suffix}`;
   const payload = {
-    name: `E2E80 ${label} ${suffix}`,
+    name,
     address: `Calle Test ${suffix}`,
     phone: '+5355550000',
     email: `e2e80-${suffix}@costpro.test`,
@@ -263,8 +277,12 @@ export async function createTestStore(
  * Restaura el active_store del admin a la tienda piloto tras un spec UI que
  * lo cambió (evita dejar el perfil apuntando a una tienda de test eliminada,
  * lo que rompe vistas dependientes del store activo en specs posteriores).
+ * E2E-RUNNER-ISOLATION: en modo aislado el global-setup exporta
+ * E2E_RESTORE_ACTIVE_STORE_ID = PILOT A del RUN (nunca el ID compartido) —
+ * cada runner restaura el active_store de SU usuario a SU tienda. El
+ * hardcode legacy (Puerto Padre) solo aplica en modo compartido.
  */
-export const PILOT_STORE_ID = '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1'; // Puerto Padre (membership admin activa)
+export const PILOT_STORE_ID = process.env.E2E_RESTORE_ACTIVE_STORE_ID || '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1'; // Puerto Padre (legacy compartido)
 export async function restoreActiveStore(userId: string): Promise<void> {
   await sb.update('profiles', `id=eq.${userId}`, { active_store_id: PILOT_STORE_ID }).catch(() => {});
 }
@@ -346,13 +364,19 @@ export async function waitStoreBudget(kind: keyof typeof STORE_BUDGETS): Promise
  * sin esto, una corrida que deja huérfanas satura la cuota y la corrida
  * siguiente recibe 403 en cascada desde su primer POST (reproducido en el
  * re-run mini del run focalizado).
+ *
+ * E2E-RUNNER-ISOLATION: en modo aislado el barrido queda ACOTADO al tenant
+ * del run (env E2E_RUN_TENANT_ID). Un runner NUNCA archiva tiendas de otro
+ * runner concurrente — su tenant es otro y queda fuera del filtro. En modo
+ * legacy (sin tenant) se conserva el comportamiento global original.
  */
 export async function sweepStaleTestStores(): Promise<void> {
   const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   const pilotGuard = `&name=neq.${encodeURIComponent(PILOT_A_NAME)}&name=neq.${encodeURIComponent(PILOT_B_NAME)}`;
+  const tenantScope = getRunTenantId() ? `&tenant_id=eq.${getRunTenantId()}` : '';
   const patterns = ['E2E80*', 'E2E *', 'ESEC TEST*', 'FASE-D TEST*', 'AUDIT *', 'HOT *', 'REM-F4*', 'E2E2-*'];
   for (const pat of patterns) {
-    await sb.update('stores', `name=like.${pat.replace(/ /g, '%20')}&created_at=lt.${tenMinAgo}${pilotGuard}`, { is_active: false, is_archived: true }).catch(() => {});
+    await sb.update('stores', `name=like.${pat.replace(/ /g, '%20')}${tenantScope}&created_at=lt.${tenMinAgo}${pilotGuard}`, { is_active: false, is_archived: true }).catch(() => {});
   }
 }
 
@@ -362,14 +386,21 @@ export async function sweepStaleTestStores(): Promise<void> {
  * is_active=true). Usada por el retry-403 de los helpers de creación cuando
  * la cuota se agota a mitad de corrida.
  *
+ * E2E-RUNNER-ISOLATION: el SELECT queda acotado al TENANT del run (la cuota
+ * real es per-tenant: create_store_with_membership cuenta
+ * `tenant_id = v_tenant AND is_active`) — libera SOLO la cuota propia y
+ * nunca archiva tiendas de otro runner concurrente (tenant distinto).
+ * En modo legacy (sin tenant) se conserva el alcance global original.
+ *
  * Protegidas SIEMPRE:
- *   - PILOT A/B (por nombre exacto — guard de SEC-TS-08/09)
+ *   - PILOT A/B (por nombre exacto — los del run en modo aislado)
  *   - ids pasados en protectedIds (stores del test en curso)
  *   - cualquier tienda creada hace <2 min (ventana del test actual; con
  *     workers=1 ninguna otra spec corre concurrentemente)
  *   - tiendas cuyo nombre NO matchea los prefijos de artefactos de test
  *
- * No toca NUNCA: tiendas operativas (nombres de negocio), pilotos.
+ * No toca NUNCA: tiendas operativas (nombres de negocio), pilotos, ni
+ * tiendas de OTROS runners/tenants.
  */
 const TEST_NAME_PREFIX = /^(E2E|E2E80|ESEC TEST|FASE-D TEST|AUDIT|HOT|REM-F4|E2E2)/i;
 export async function freeActiveTestQuota(
@@ -377,7 +408,8 @@ export async function freeActiveTestQuota(
   maxAgeMs = 120_000,
 ): Promise<number> {
   try {
-    const rows = (await sb.select('stores', 'select=id,name,created_at&is_active=eq.true')) as Array<{
+    const tenantScope = getRunTenantId() ? `&tenant_id=eq.${getRunTenantId()}` : '';
+    const rows = (await sb.select('stores', `select=id,name,created_at&is_active=eq.true${tenantScope}`)) as Array<{
       id: string; name: string; created_at: string;
     }>;
     const now = Date.now();

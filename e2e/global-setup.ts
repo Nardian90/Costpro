@@ -13,16 +13,22 @@
  *   completar el globalSetup, por lo que los process.env definidos aquí
  *   llegan a todos los specs.
  *
+ * E2E-RUNNER-ISOLATION (chore/e2e-runner-isolation):
+ *   MODO AISLADO (default): provisiona una identidad de ejecución DEDICADA —
+ *   usuarios propios + tenant propio + pilotos A/B propios + productos
+ *   propios (ver e2e/fixtures/run-env.ts). Dos runners simultáneos (local +
+ *   CI) ya no comparten usuario/active_store/cuota/sesión/datos.
+ *
+ *   MODO LEGACY (E2E_ISOLATION=0): comportamiento compartido original —
+ *   usuarios demo fijos + pilotos persistentes por nombre exacto
+ *   ('E2E PILOT A/B CostPro', provisionados con
+ *   e2e/scripts/provision-pilot-env.cjs).
+ *
  * Requisitos:
  *   - Servidor corriendo en localhost:3000 (pm2)
  *   - .env con NEXT_PUBLIC_SUPABASE_URL / ANON_KEY / SERVICE_ROLE_KEY
- *   - Usuarios reales:
- *       admin:  E2E_ADMIN_EMAIL (default admin@costpro.com / costpro123)
- *       usuario: E2E_USER_EMAIL  (default cajero@demo.com  / demo123)
- *   - ENTORNO PILOTO MULTI-TIENDA provisionado (SEC-TS-08):
- *       'E2E PILOT A CostPro' + 'E2E PILOT B CostPro' — ver
- *       e2e/scripts/provision-pilot-env.cjs. Si no está provisionado,
- *       el setup ABORTA (fail-closed): nunca cae a una tienda real.
+ *   - Modo legacy: usuarios reales admin@costpro.com / cajero@demo.com y
+ *     entorno piloto provisionado. Modo aislado: auto-provisionado.
  *
  * Tokens Supabase duran 1h — la suite completa debe ejecutarse dentro de esa
  * ventana, o relanzar por módulos (los specs nuevos firman sesión propia).
@@ -30,6 +36,7 @@
  */
 import { config as loadEnv } from 'dotenv';
 import { getPilotEnv } from './fixtures/pilot-env';
+import { isIsolatedRun, provisionRunEnv } from './fixtures/run-env';
 
 loadEnv({ path: './.env' });
 
@@ -70,6 +77,17 @@ export default async function globalSetup(): Promise<void> {
     throw new Error('[global-setup] Faltan NEXT_PUBLIC_SUPABASE_URL / ANON_KEY / SERVICE_ROLE_KEY en .env');
   }
 
+  // ── MODO AISLADO (default) — E2E-RUNNER-ISOLATION ──────────────────────
+  // Identidad dedicada por ejecución: usuarios + tenant + pilotos + productos
+  // propios. provisionRunEnv() exporta TODO el E2E_* env que los workers
+  // heredan (mismo contrato de exportación que el modo legacy).
+  if (isIsolatedRun()) {
+    await provisionRunEnv();
+    return;
+  }
+
+  // ── MODO LEGACY (E2E_ISOLATION=0) — compartido, comportamiento original ─
+
   // 1. Sesiones reales (admin + usuario regular)
   const admin = await supabaseSignIn(ADMIN_EMAIL, ADMIN_PASS);
   const user = await supabaseSignIn(USER_EMAIL, USER_PASS);
@@ -94,7 +112,7 @@ export default async function globalSetup(): Promise<void> {
   process.env.E2E_TEST_FOREIGN_PRODUCT_ID = pilot.productB;
 
   console.log(
-    `[global-setup] Sesiones listas — admin=${ADMIN_EMAIL} (${admin.userId.slice(0, 8)}…) ` +
+    `[global-setup] (legacy) Sesiones listas — admin=${ADMIN_EMAIL} (${admin.userId.slice(0, 8)}…) ` +
     `user=${USER_EMAIL} (${user.userId.slice(0, 8)}…) store=PILOT A (${pilot.storeA.id.slice(0, 8)}…) ` +
     `pilotB=(${pilot.storeB.id.slice(0, 8)}…) product=${pilot.productA.slice(0, 8)}…`,
   );

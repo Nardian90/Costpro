@@ -122,3 +122,5 @@ audit-evidence/*.png
 
 # FASE QA H1 — estado de fixtures (credenciales de usuarios QA de un entorno LIVE; regenerable con 00-fixtures.cjs)
 scripts/qa-h1/state.json
+# E2E-RUNNER-ISOLATION: context files de ejecuciones (nunca en test-results/, que Playwright vacía)
+.e2e-run-contexts/

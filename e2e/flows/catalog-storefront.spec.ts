@@ -16,6 +16,7 @@
  */
 import { test, expect, type APIRequestContext } from '@playwright/test';
 import { signIn, apiHeaders, sb, createTestStore, deleteTestStore, seedProduct, cleanupProducts, num, restoreActiveStore,
+  ADMIN_EMAIL, ADMIN_PASS,
 } from '../fixtures/session.fixture';
 
 let api: APIRequestContext;
@@ -26,7 +27,7 @@ let product: { id: string; name: string; price: number; cost: number; initialSto
 
 test.beforeAll(async ({ playwright }) => {
   api = await playwright.request.newContext({ baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000' });
-  const admin = await signIn('admin@costpro.com', 'costpro123');
+  const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   adminToken = admin.token;
   adminId = admin.userId;
   store = await createTestStore(api, adminToken, 'CAT');
@@ -70,7 +71,7 @@ test.describe('Catálogo — UI', () => {
   test('E2E-CAT-003 (P1) vista catálogo muestra el producto de la tienda activa', async ({ page }) => {
     test.setTimeout(120_000);
     await sb.update('profiles', `id=eq.${adminId}`, { active_store_id: store.id });
-    const session = { token: adminToken, userId: adminId, email: 'admin@costpro.com' };
+    const session = { token: adminToken, userId: adminId, email: ADMIN_EMAIL };
     await page.addInitScript(([key, val]: any) => window.localStorage.setItem(key, val), [
       `sb-${(process.env.NEXT_PUBLIC_SUPABASE_URL || '').match(/https?:\/\/([a-z0-9]+)\.supabase\.co/)?.[1]}-auth-token`,
       JSON.stringify({
