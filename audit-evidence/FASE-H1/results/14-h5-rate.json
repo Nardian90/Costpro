@@ -1,13 +1,13 @@
 {
   "suite": "H5 — EXCHANGE RATE AUTHORITY",
   "suite_id": "14-h5-rate",
-  "started": "2026-10-04T04:30:30.509Z",
-  "duration_ms": 19806,
+  "started": "2026-10-04T05:22:40.586Z",
+  "duration_ms": 40129,
   "counts": {
     "total": 6,
     "pass": 0,
-    "fail": 4,
-    "blocked": 2,
+    "fail": 6,
+    "blocked": 0,
     "not_observable": 0
   },
   "results": [
@@ -50,20 +50,20 @@
     {
       "id": "T-H5-005",
       "suite": "14-h5-rate",
-      "spec": "H5.5 — staleness de tasa (p.ej. 45 días)",
-      "expected": "CONTRATO H0: límite de staleness — H0 NO PRODUCIDO",
-      "status": "BLOCKED",
-      "current": "columnas store_exchange_rates: id, store_id, currency, rate, updated_by, created_at, updated_at",
-      "evidence": "El spec H0 no existe; el límite de staleness es decisión H0 y NO SE INVENTA. Además: store_exchange_rates no tiene campo de fecha de captura (solo updated_at de fila) y el RPC no consulta la fuente — no hay contrato de staleness implementado que probar."
+      "spec": "H5.5 — staleness de tasa: fecha efectiva >45 días → FAIL CLOSED (D-EXR-01)",
+      "expected": "MAX_EXCHANGE_RATE_AGE=45 días (APPROVED): tasa vencida NO puede usarse en venta V2 nueva → rechazo ERR_RATE_STALE (HTTP >= 400, sin transaction_id); p_sale_exchange_rate NO puede sustituirla (probe con tasa arbitraria 7 y probe con la propia tasa vencida 350 — ambas rechazadas)",
+      "status": "FAIL",
+      "current": "fixture EUR(store) rate=350 age=60d (>45) · client_rate=7→ACEPTADA (stored=7.0000) — viola D-EXR-01: tasa vencida 60d usada/sustituida por cliente · client_rate=350(vencida)→ACEPTADA (stored=350.0000) — viola D-EXR-01: tasa vencida 60d usada/sustituida por cliente",
+      "evidence": "D-EXR-01 NO implementado: create_sale_v2 no resuelve tasa server-side (0 refs a fuentes — T-H5-003) ni aplica gate de staleness; la venta con única tasa de tienda vencida (>45 días) se ACEPTA y persiste la tasa del cliente en vez de rechazar FAIL-CLOSED con ERR_RATE_STALE"
     },
     {
       "id": "T-H5-006",
       "suite": "14-h5-rate",
-      "spec": "H5.6 — banda de desviación (p.ej. ±10%)",
-      "expected": "CONTRATO H0: banda dentro/fuera — H0 NO PRODUCIDO",
-      "status": "BLOCKED",
-      "current": "sin banda implementada: cualquier tasa cliente se acepta (ver T-H5-001)",
-      "evidence": "El spec H0 no existe; la banda de desviación es decisión H0 y NO SE INVENTA. La prueba se anclará al valor exacto documentado en H0 cuando exista."
+      "spec": "H5.6 — desviación cliente↔servidor NO es control de autorización (D-EXR-02)",
+      "expected": "client_rate != server_rate NO implica DENY ni ALLOW: la venta NO se rechaza por desviación (HTTP 200); la tasa persistida es SIEMPRE la server (store_exchange_rates STORE_A USD = 400); la desviación se registra como observabilidad no-autoritativa en audit_logs.metadata (client_rate, server_rate, rate_source)",
+      "status": "FAIL",
+      "current": "HTTP 200 (desviación no bloquea ✓) · persisted=7 (server=400) · audit(client_rate/server_rate/rate_source)=ausente",
+      "evidence": "D-EXR-02/§6.2 NO implementado: la desviación no bloquea (correcto), PERO la tasa persistida es la del CLIENTE (7), no la server-authoritative (400) — la decisión financiera debe usar server_authoritative_rate; audit_logs.metadata (CREATE_SALE_V2) no registra client_rate/server_rate/rate_source — sin trazabilidad de divergencia (hoy el metadata solo lleva líneas/importes, sin campos de tasa)"
     }
   ]
 }

@@ -3,6 +3,7 @@
 > **FASE H0-R — RECONSTRUCCIÓN CONTRACTUAL** · 2026-10-04
 > Este documento **reemplaza conceptualmente** la especificación H0 perdida (`CREATE-SALE-V2-HARDENING-SPEC.md`, nunca producida — ver FASE-H1 Baseline §1) y es la fuente normativa para el hardening H1–H6, las superficies colaterales y el retiro de V1.
 > **Modo**: READ-ONLY / DECISION-ONLY. Esta fase no modificó producción, tests, fixtures ni migraciones (verificado: `git status` — solo documentación añadida).
+> **ENMIENDA H0-R-FINAL · 2026-10-04 — DECISIONES FINALES DEL DUEÑO INCORPORADAS**: **D-EXR-01** (staleness de tasa = 45 días, fail-closed) · **D-EXR-02** (banda de desviación cliente↔servidor = NO es control de autorización) · **D-TAX-01** (tope de impuesto porcentual = NOT SPECIFIED / NON-BLOCKING) — §15. Estado resultante: **READY FOR IMPLEMENTATION** (§16). La enmienda modificó únicamente: este documento, su registro compañero de decisiones, y los tests `T-H5-005`/`T-H5-006` (ex-BLOCKED **por estas decisiones** — dotados de expected determinista y re-ejecutados contra LIVE, `results/14-h5-rate.json`). Producción, SQL, RPC, RLS, rutas, POS, V1, reconciliadores, fixtures y el resto de los 101 tests: **intactos**.
 
 ---
 
@@ -26,7 +27,7 @@ Los 44 FAIL de H1 son **evidencia intacta**. Esta especificación:
 - **no** clasifica ningún FAIL como "aceptable";
 - confirma los expected results originales (§13) y añade el **REQUIRED CONTRACT** que faltaba.
 
-Cambio de categoría permitido únicamente para los 6 BLOCKED (§18): 4 pasan a `FAIL — IMPLEMENTATION` porque este documento define su contrato; 2 permanecen `BLOCKED — BUSINESS DECISION` porque **no existe evidencia** para fijar el valor (§15). El único NOT-OBSERVABLE se resuelve como `NOT-OBSERVABLE BY DESIGN` con vía de certificación (§14).
+Cambio de categoría permitido únicamente para los 6 BLOCKED (§18): 4 pasaron a `FAIL — IMPLEMENTATION` porque este documento define su contrato (sus tests permanecen congelados como evidencia H1); los 2 restantes (`T-H5-005`/`T-H5-006`) fueron resueltos por la **Enmienda H0-R-FINAL** (§15: D-EXR-01/D-EXR-02 APPROVED) — sus tests fueron dotados de expected determinista y **re-ejecutados contra LIVE** (`results/14-h5-rate.json` regenerado; la evidencia de la ejecución original queda preservada en la historia git) → `FAIL — IMPLEMENTATION`. El único NOT-OBSERVABLE se resuelve como `NOT-OBSERVABLE BY DESIGN` con vía de certificación (§14).
 
 ### 0.3 Qué puede decidir este documento
 
@@ -42,13 +43,13 @@ create_sale_v2 es el ÚNICO contrato de venta:
   · Orden interno: auth → actor → autorización (membresía) → idempotencia → negocio → financiero → inventario
   · Seller: p_seller_id == actor autenticado (Opción B), sin excepciones
   · Tax: fuente única tax_configurations (global + por tienda), recálculo server-side, cliente = propuesta validada/reemplazada
-  · Rate: resolución server-side store_exchange_rates → exchange_rates (BCC seg 3 → elToque), cliente = informativo
+  · Rate: resolución server-side store_exchange_rates → exchange_rates (BCC seg 3 → elToque), cliente = informativo, staleness 45 días fail-closed (D-EXR-01)
   · Idempotencia: identidad (clave, actor, tienda, param_hash) + ERR_IDEMPOTENCY_KEY_REUSE
   · update_transaction_taxes: retenida y estrictamente limitada (Opción B, patrón adjust_total_amount)
   · V1: retirada por gates PR-R1 con anti-resurrección total
 ```
 
-Pendiente exclusivamente del dueño: **staleness de tasa**, **banda de desviación**, **tope superior de impuesto porcentual** (§15). Por eso el veredicto es `BLOCKED — BUSINESS DECISION REQUIRED` (§16).
+Las tres decisiones que faltaban (**staleness de tasa**, **banda de desviación**, **tope superior de impuesto porcentual**) fueron resueltas por el dueño mediante la Enmienda H0-R-FINAL (§15: D-EXR-01 · D-EXR-02 · D-TAX-01 — todas APPROVED). Por eso el veredicto es `READY FOR IMPLEMENTATION` (§16).
 
 ---
 
@@ -193,7 +194,7 @@ ALTER TABLE public.tax_configurations ADD CONSTRAINT tax_configurations_value_po
 ALTER TABLE public.store_exchange_rates ADD CONSTRAINT store_rates_positive CHECK (rate > 0);
 ```
 
-Precedente: `exchange_rates.rate CHECK (rate > 0)` y regla F-21 (tasa no-CUP > 1.5 en recepciones). **Tope superior para `type='percentage'`**: sin evidencia → `BUSINESS DECISION REQUIRED` (§15.3, no bloqueante — ver §5.3).
+Precedente: `exchange_rates.rate CHECK (rate > 0)` y regla F-21 (tasa no-CUP > 1.5 en recepciones). **Tope superior para `type='percentage'`**: **NOT SPECIFIED BY BUSINESS CONTRACT** — D-TAX-01 APPROVED (§15.3): ningún tope numérico (10/15/20/25/100% u otro) puede inventarse; el control obligatorio es la matriz de roles §5.2 + `CHECK (value > 0)` + auditoría; una política fiscal explícita futura podrá fijar el valor concreto (no bloqueante para H1–H5).
 
 ### 5.3 Contrato de valores en venta
 
@@ -202,7 +203,7 @@ Precedente: `exchange_rates.rate CHECK (rate > 0)` y regla F-21 (tasa no-CUP > 1
 | Impuesto negativo (fixed −30 / −10%) | **IMPOSIBLE POR CONSTRUCCIÓN** — el impuesto se reconstruye desde catálogo con `value > 0`; entradas cliente con valor negativo no existen en catálogo → `ERR_APPLIED_TAX_INVALID` |
 | Impuesto 0% | Solo posible como **ausencia de impuestos** (`applied_taxes = []` → `tax = 0`, venta legítima); no existe config con `value = 0` (CHECK) |
 | Impuesto positivo | Aceptado **solo** si existe como fila activa visible para la tienda (global o de la tienda) |
-| Impuesto extremo (100% / 10000%) | Solo alcanzable si un rol autorizado (§5.2) crea la config — queda auditado y es análogo a la política vigente de sobrecarga de precio (T-FIN-003, "overprice permitido", E-SEC-FINAL D1). Tope numérico: §15.3 |
+| Impuesto extremo (100% / 10000%) | Solo alcanzable si un rol autorizado (§5.2) crea la config — queda auditado y es análogo a la política vigente de sobrecarga de precio (T-FIN-003, "overprice permitido", E-SEC-FINAL D1). Tope numérico: **NOT SPECIFIED** (D-TAX-01 APPROVED — §15.3) |
 | Impuesto duplicado (mismo `id` dos veces) | `ERR_APPLIED_TAX_INVALID` |
 | Impuesto desconocido (`id` no existe / inactivo / de otra tienda) | `ERR_APPLIED_TAX_INVALID` — sin revelar si el id existe (mensaje uniforme) |
 
@@ -246,16 +247,16 @@ La ruta `/api/pos/checkout` debe reforzar el schema: `applied_taxes: z.array(z.o
 Evidencia: `store_exchange_rates` fue diseñada como "tasas manuales por tienda … **que se usan en el POS**; persisten hasta cambio manual" (`20260710000001`); `exchange_rates` es la fuente global (BCC oficial con 3 segmentos + elToque informal; escritura admin-only con auditoría atómica — DECISION-FX-01; captura automática service_role). El default de lectura global de toda la app es **BCC segmento 3 (tasaEspecial, MIPYMES)** — `GET /api/exchange-rates` (`segment || '3'`) y el auto-fill de recepciones (F4-GAP3, `source=BCC&segment=3`). **MLC no existe en BCC** (solo elToque — documentado en `exchange-capture.ts`), por lo que el fallback por moneda necesita la cadena BCC-seg3 → elToque.
 
 ```text
-v_server_rate := (
+v_server_rate, v_rate_source, v_rate_effective_date := (
   CASE p_sale_currency
-    WHEN 'CUP' THEN 1
+    WHEN 'CUP' THEN (1, NULL, NULL)                     -- CUP = 1 por definición (sin fuente, sin staleness)
     ELSE COALESCE(
-      (SELECT rate FROM store_exchange_rates
+      (SELECT (rate, 'store', updated_at) FROM store_exchange_rates
         WHERE store_id = p_store_id AND currency = p_sale_currency),
-      (SELECT rate FROM exchange_rates
+      (SELECT (rate, 'global_bcc_seg3', rate_date) FROM exchange_rates
         WHERE currency = p_sale_currency AND source = 'BCC' AND segment = '3'
         ORDER BY rate_date DESC, captured_at DESC LIMIT 1),
-      (SELECT rate FROM exchange_rates
+      (SELECT (rate, 'global_eltoque', rate_date) FROM exchange_rates
         WHERE currency = p_sale_currency AND source = 'elToque'
         ORDER BY rate_date DESC, captured_at DESC LIMIT 1)
     )
@@ -264,15 +265,37 @@ v_server_rate := (
 IF p_sale_currency <> 'CUP' AND (v_server_rate IS NULL OR v_server_rate <= 0) THEN
   RAISE 'ERR_EXCHANGE_RATE_UNAVAILABLE: currency=%, store=%'   -- fail-closed; NUNCA 1, ni 680, ni la tasa del cliente
 END IF;
+
+-- D-EXR-01 (APPROVED · Enmienda H0-R-FINAL): MAX_EXCHANGE_RATE_AGE = 45 DAYS
+IF p_sale_currency <> 'CUP' AND v_rate_effective_date < now() - INTERVAL '45 days' THEN
+  RAISE 'ERR_RATE_STALE: currency=%, store=%, source=%, effective=%'   -- FAIL CLOSED: checkout rechazado
+END IF;
 ```
+
+**Staleness (D-EXR-01 — Enmienda H0-R-FINAL, APPROVED)**: `MAX_EXCHANGE_RATE_AGE = 45 DAYS`. La **fecha efectiva** por fuente es: `store_exchange_rates.updated_at` (única marca temporal de la fila; su escritura está gateada por `canManageStore`, §6.4 — el refresh de la tasa es el evento de autorización) y `exchange_rates.rate_date` (con `captured_at` como desempate, igual que la precedencia de lectura). Una tasa cuya fecha efectiva tenga **más de 45 días** no puede utilizarse para una **nueva venta V2**:
+
+```text
+stale rate  →  FAIL CLOSED  →  checkout rechazado (ERR_RATE_STALE, HTTP >= 400, sin transaction_id)
+```
+
+Consecuencias contractuales:
+
+1. **Nunca** se utiliza silenciosamente una tasa vencida.
+2. El cliente **no puede sustituir la tasa vencida** enviando `p_sale_exchange_rate` (sin autoridad financiera — §6.2): ni una tasa arbitraria ni la propia tasa vencida (ambas sondas cubiertas por T-H5-005).
+3. La jerarquía de precedencia queda **exactamente** como estaba documentada — la staleness es un **gate de validez sobre el resultado**, no una regla de selección: si la tasa que gana por precedencia está vencida, la venta se rechaza. No hay salto silencioso a una fuente inferior: cambiar la fuente efectiva de una venta es un cambio de dato financiero que exige acción autorizada (refrescar la tasa de tienda vía `canManageStore`, o eliminar la fila para que la precedencia caiga a la fuente global — escrituras auditadas, §6.4).
+4. `p_sale_exchange_rate` puede continuar en el contrato técnico como dato recibido/compatibilidad, **sin autoridad financiera**; el valor persistido es siempre el resultado de la resolución server-side.
+
+**Nota operativa**: las tasas manuales de tienda que el diseño documentado mantenía "hasta cambio manual" (`20260710000001`) ahora requieren refresco al menos cada 45 días para ventas no-CUP — o la eliminación de la fila para delegar en las fuentes globales. El rechazo `ERR_RATE_STALE` es la señal operativa explícita (nunca silenciosa) de esa condición.
 
 ### 6.2 Tasa del cliente: **informational only** (el servidor reemplaza)
 
-Fijado por el contrato H1 (T-H5-001/002: "gana la fuente autorizada"; T-FIN-009; T-RT-005):
+Fijado por el contrato H1 (T-H5-001/002: "gana la fuente autorizada"; T-FIN-009; T-RT-005) y confirmado por **D-EXR-02 (APPROVED · Enmienda H0-R-FINAL)**:
 
 - `p_sale_exchange_rate` **no puede** fijar la tasa efectiva ni el valor persistido.
-- No se rechaza por valor (0/−5/680/1.000.000 pasan al mismo destino: ser ignorados) — **la política de rechazo por desviación extrema es §15.2 (BUSINESS DECISION)**.
+- No se rechaza por valor ni por desviación (0/−5/680/1.000.000 pasan al mismo destino: ser ignorados) — **la desviación cliente↔servidor NO es un control de autorización**: `client_rate != server_rate` NO implica `DENY` ni `ALLOW`; **no existe política obligatoria de ±10%** ni de ninguna otra magnitud (toda referencia a ±10% como requisito de seguridad/autorización queda eliminada — §15.2).
 - Auditoría: `audit_logs.metadata` registra `client_rate`, `server_rate`, `rate_source` (`store` | `global_bcc_seg3` | `global_eltoque`) para trazabilidad de la divergencia.
+
+**Usos permitidos de la tasa del cliente** (D-EXR-02) — exclusivamente: UX · diagnóstico · telemetría · detección de anomalías. **Jamás**: calcular el total financiero final · decidir si una venta está autorizada · sustituir la tasa server-side · saltarse controles · seleccionar una tasa alternativa. La decisión financiera siempre utiliza `server_authoritative_rate`. Cualquier comparación de desviación que se conserve en el futuro debe documentarse como `NON-AUTHORITATIVE OBSERVABILITY ONLY` y no bloquea el hardening actual. El test T-H5-006 fija este contrato: venta con desviación extrema → HTTP 200 (no bloqueada por desviación) + tasa servidor persistida + registro de auditoría de la divergencia.
 
 ### 6.3 Dónde termina cada tasa (scope completo)
 
@@ -295,10 +318,10 @@ Fijado por el contrato H1 (T-H5-001/002: "gana la fuente autorizada"; T-FIN-009;
   - `exchange_rates`: admin global vía `upsert_manual_exchange_rate_with_audit` (DECISION-FX-01, auditoría atómica) + captura automática service_role. Sin cambios.
 - **fallback**: §6.1 (fail-closed con `ERR_EXCHANGE_RATE_UNAVAILABLE`).
 
-### 6.5 Pendiente de negocio (sin evidencia — NO inventado)
+### 6.5 Decisiones finales del dueño — Enmienda H0-R-FINAL (APPROVED)
 
-- **Staleness** (T-H5-005): ninguna política de antigüedad de tasa existe en el código (ni 45 días ni otro valor; `store_exchange_rates` ni siquiera tiene fecha de captura — solo `updated_at`; `exchange_rates` tiene `rate_date`). → **§15.1 BUSINESS DECISION REQUIRED**.
-- **Banda de desviación** (T-H5-006): no existe banda alguna en el sistema (la constante `EL_TOQUE_SPREAD=1.15` es un estimador de captura, no una banda de validación; F-21 es un piso para recepciones). → **§15.2 BUSINESS DECISION REQUIRED**. Nota: la seguridad ya está cerrada sin banda (la tasa persistida es siempre la del servidor); la banda solo decide rechazo-vs-aceptación de propuestas clientiles aberrantes.
+- **Staleness** (T-H5-005): **D-EXR-01 — APPROVED**: `MAX_EXCHANGE_RATE_AGE = 45 DÍAS`, fail-closed con `ERR_RATE_STALE` (§6.1; fecha efectiva por fuente definida ahí). El test fue dotado de expected determinista y **re-ejecutado contra LIVE**: hoy `FAIL — IMPLEMENTATION` (venta con única tasa de tienda vencida 60 días ACEPTADA, con la tasa del cliente persistida en su lugar).
+- **Banda de desviación** (T-H5-006): **D-EXR-02 — APPROVED**: NO es control de autorización; sin banda ±10%; observabilidad no-autoritativa (§6.2). El test fue dotado de expected determinista y **re-ejecutado contra LIVE**: hoy `FAIL — IMPLEMENTATION` (HTTP 200 correcto por desviación no-bloqueante, PERO persiste 7 en lugar de la tasa servidor 400 y la auditoría no registra `client_rate`/`server_rate`/`rate_source`).
 
 ---
 
@@ -511,64 +534,90 @@ Clasificación final: **NOT-OBSERVABLE BY DESIGN** — con certificación estát
 
 ---
 
-## 15. Decisiones de negocio pendientes (sin evidencia — NO inventadas)
+## 15. Decisiones de negocio — RESUELTAS (Enmienda H0-R-FINAL · 2026-10-04)
 
-### 15.1 Staleness de tasa (T-H5-005) — **BUSINESS DECISION REQUIRED**
+> El dueño resolvió las tres decisiones que quedaban pendientes tras la reconstrucción H0-R. Se incorporan formalmente con estado **APPROVED**. Esta sección sustituye a la de decisiones pendientes de la reconstrucción original y es normativa con igual fuerza que el resto del documento.
 
-Ninguna política de antigüedad existe en el sistema. Opciones para el dueño:
+### 15.1 Staleness del tipo de cambio (T-H5-005 — ex `BLOCKED — BUSINESS DECISION`) — **APPROVED**
 
-- **(a)** Sin límite de staleness (la fuente manual de tienda es válida hasta cambio manual — diseño documentado; el fallback global usa la última fila disponible).
-- **(b)** Límite de N días sobre el fallback `exchange_rates.rate_date` (p.ej. 45) → `ERR_RATE_STALE` fail-closed.
-- **(c)** Límite de N días sobre `store_exchange_rates.updated_at` (requiere tratar `updated_at` como fecha de captura).
+```text
+D-EXR-01
+Exchange rate staleness = 45 days
+Status = APPROVED
+```
 
-### 15.2 Banda de desviación cliente↔servidor (T-H5-006) — **BUSINESS DECISION REQUIRED**
+`MAX_EXCHANGE_RATE_AGE = 45 DAYS`. Una tasa cuya fecha efectiva tenga más de 45 días no puede utilizarse para una **nueva venta V2**:
 
-La seguridad ya está cerrada sin banda (§6.2: la tasa persistida es siempre la del servidor). La banda decide el tratamiento de propuestas clientiles divergentes:
+```text
+stale rate → FAIL CLOSED → checkout rejected (ERR_RATE_STALE, HTTP >= 400, sin transaction_id)
+```
 
-- **(a)** Sin banda: propuesta aberrante = ignorada silenciosamente (auditoría registra la divergencia).
-- **(b)** Banda ±X% (p.ej. ±10%): fuera de banda → rechazo `ERR_RATE_DEVIATION` (UX fail-closed).
-- **(c)** Banda ±X%: fuera → warning en auditoría + aceptación con tasa servidor.
+No se utiliza silenciosamente una tasa vencida. No se permite que el cliente sustituya la tasa vencida enviando `p_sale_exchange_rate` (sin autoridad financiera — el valor persistido es siempre el resultado de la resolución server-side). La tasa efectiva continúa determinándose exclusivamente por la jerarquía server-side (`store_exchange_rates` → `BCC seg3 / exchange_rates` → `elToque` → effective server rate), respetando **exactamente** las reglas de precedencia documentadas en §6.1. Semántica precisa, fecha efectiva por fuente, consecuencias contractuales y nota operativa: **§6.1**. Test determinista: **T-H5-005** (re-ejecutado).
 
-### 15.3 Tope superior de impuesto porcentual (TC-C3, "extreme tax") — **BUSINESS DECISION REQUIRED (no bloqueante para los 44 FAIL)**
+### 15.2 Banda de desviación cliente↔servidor (T-H5-006 — ex `BLOCKED — BUSINESS DECISION`) — **APPROVED**
 
-- **(a)** Sin tope (control = rol autorizado §5.2 + auditoría — análogo a overprice permitido D1).
-- **(b)** Tope N% (p.ej. 100%) en `CHECK` — requiere valor del dueño.
+```text
+D-EXR-02
+Client/server deviation band = NOT AN AUTHORIZATION CONTROL
+Status = APPROVED
+```
 
-Estas tres decisiones son las **únicas** que impiden `READY FOR IMPLEMENTATION`. Todo lo demás de esta especificación es ejecutable sin decisiones adicionales de arquitectura.
+**NO se utiliza una banda de desviación cliente↔servidor como mecanismo de autorización.** La tasa enviada por el cliente no es fuente de verdad: `client_rate != server_rate` NO implica `DENY` ni `ALLOW`; la decisión financiera siempre utiliza `server_authoritative_rate`. La tasa del cliente puede conservarse exclusivamente para UX · diagnóstico · telemetría · detección de anomalías — jamás para calcular el total financiero final, decidir autorización, sustituir la tasa server-side, saltarse controles o seleccionar una tasa alternativa. **No existe política obligatoria de ±10%**; toda referencia a ±10% como requisito de seguridad o autorización queda eliminada. Una futura comparación de desviación, si se conserva, se documenta como `NON-AUTHORITATIVE OBSERVABILITY ONLY` y no bloquea el hardening actual. Detalle: **§6.2**. Test determinista: **T-H5-006** (re-ejecutado).
+
+### 15.3 Tope superior de impuesto porcentual (TC-C3 / T-TC-003 — no bloqueante) — **APPROVED**
+
+```text
+D-TAX-01
+Maximum tax percentage = NOT SPECIFIED / NON-BLOCKING
+Status = APPROVED
+```
+
+El tope porcentual específico queda **`NOT SPECIFIED BY BUSINESS CONTRACT`**. No se inventa 10/15/20/25/100% ni ningún otro límite arbitrario. Esto **no bloquea la implementación H1–H5**. El contrato obligatorio sí garantiza lo **prohibido**: impuesto negativo · impuesto no autorizado por configuración server · impuesto arbitrario del cliente · impuesto como descuento implícito · impuesto que esquive la autorización de supervisor/descuento. Y lo **permitido** — el impuesto válido es aquel que: (1) corresponde a una configuración server-side autorizada; (2) pertenece al contexto/store correspondiente; (3) cumple el contrato fiscal existente; (4) es calculado/validado server-side; (5) queda registrado como parte de la transacción. El porcentaje máximo concreto podrá definirse cuando exista una política fiscal explícita. Detalle: **§5.2/§5.3**.
+
+**Estado del gate**: `BLOCKED — BUSINESS DECISION REQUIRED = 0` — las tres decisiones que impedían `READY FOR IMPLEMENTATION` están resueltas (§16).
 
 ---
 
 ## 16. VEREDICTO FINAL
 
-# `BLOCKED — BUSINESS DECISION REQUIRED`
+# `READY FOR IMPLEMENTATION`
 
-**Justificación**: el contrato normativo H1–H6 + colaterales + V1 queda **completamente definido** en este documento (seller binding §4, tax authority §5, tax roles §5.2, exchange-rate authority §6, UTT §9, idempotencia §7, ACL §2, matriz financiera §8, superficies §10, anti-resurrección §12), pero el gate de §15 del mandato exige **staleness definida** y **deviation policy definida**: no existe evidencia en código/migraciones/config/historia para fijarlas (§15.1/§15.2, más el tope opcional §15.3). No se inventaron valores.
+**Justificación**: las tres decisiones de negocio que impedían el gate (§15 de la reconstrucción H0-R) fueron resueltas por el dueño e incorporadas formalmente — **D-EXR-01** (staleness = 45 días, fail-closed) · **D-EXR-02** (banda de desviación = NO control de autorización) · **D-TAX-01** (tope de impuesto = NOT SPECIFIED / NON-BLOCKING). El contrato normativo completo — seller binding §4, tax authority §5, tax roles §5.2, exchange-rate authority §6 (ahora con staleness 45 días fail-closed y desviación no-autoritativa), UTT §9, idempotencia §7, ACL §2, matriz financiera §8, superficies colaterales §10, anti-resurrección §12, retiro V1 §11 — está definido y es ejecutable **sin decisiones adicionales de arquitectura**.
 
-**Los 44 FAIL de H1 permanecen intactos como evidencia** (§0.2, §18-matriz): 50 PASS + 48 FAIL — IMPLEMENTATION (44 FAIL originales + 4 ex-BLOCKED ahora con contrato determinista) + 2 BLOCKED — BUSINESS DECISION + 1 NOT-OBSERVABLE BY DESIGN = 101.
+**Gate final (verificado tras la enmienda)**:
 
-**Para desbloquear**: el dueño responde §15.1/§15.2 (y opcionalmente §15.3) → se emenda este documento (sección única, sin cambios arquitectónicos) → veredicto `READY FOR IMPLEMENTATION` → el Implementation Agent ejecuta §17 y QA re-ejecuta `node scripts/qa-h1/run-all.cjs`.
+```text
+BLOCKED — BUSINESS DECISION REQUIRED = 0   ✓ (D-EXR-01 / D-EXR-02 / D-TAX-01 — APPROVED, §15)
+FAIL de implementación permanecen FAIL        ✓ (50 — ninguno corregido, relajado ni re-clasificado artificialmente)
+Sin fixes implementados                       ✓ (la enmienda no toca SQL / RPC / RLS / API / POS / V1 / reconciliadores)
+NOT-OBSERVABLE BY DESIGN                      ✓ (T-H2-004 permanece justificado — certificación §14)
+```
+
+**Recuento final (§18)**: 101 tests · 50 PASS (regresión protegida) · **50 FAIL — IMPLEMENTATION** (44 FAIL originales de H1 + 6 ex-BLOCKED con contrato determinista: 4 por la reconstrucción H0-R y 2 — `T-H5-005`/`T-H5-006` — por la Enmienda H0-R-FINAL, con re-ejecución runtime de la suite 14-h5-rate) · **0 BLOCKED — BUSINESS DECISION** · 1 NOT-OBSERVABLE BY DESIGN.
+
+**Siguiente paso**: el Implementation Agent ejecuta §17 (sin pasos ⛔) y QA re-ejecuta `node scripts/qa-h1/run-all.cjs`. Esperado post-hardening: 50 PASS intactos + 46 FAIL runtime → PASS (incluidos los 2 tests enmendados) + 4 BLOCKED runtime congelados como evidencia H1 (`T-H3-004`/`T-TC-001`/`T-UTT-001`/`T-UTT-006` — contrato §18 = FAIL — IMPLEMENTATION; convertibles a expected definitivo en el PR de QA post-implementación o verificables contra §18) + 1 NOT-OBSERVABLE (certificación §14) + verificación estática §14.
 
 ---
 
 ## 17. Requisitos de implementación (orden sugerido para el Implementation Agent)
 
-> Ningún paso requiere decisiones de arquitectura: todo está contratado arriba. Los pasos marcados ⛔ dependen de §15.
+> Ningún paso requiere decisiones de arquitectura: todo está contratado arriba. (La Enmienda H0-R-FINAL eliminó el único paso ⛔ — §15 resuelto: D-EXR-01/D-EXR-02/D-TAX-01 APPROVED.)
 
-1. **RPC `create_sale_v2`** (una migración): reorden §3.1 (auth→seller→idempotencia), binding seller §4, validación/reemplazo de impuestos §5.4, resolución de tasa §6.1, idempotencia con param_hash §7, `ERR_INVALID_DISCOUNT` (descuento negativo) §8, auditoría ampliada (client_rate/server_rate/rate_source, hash). Sin cambio de firma /24.
+1. **RPC `create_sale_v2`** (una migración): reorden §3.1 (auth→seller→idempotencia), binding seller §4, validación/reemplazo de impuestos §5.4, resolución de tasa §6.1 **+ gate de staleness 45 días (D-EXR-01) con `ERR_RATE_STALE`**, idempotencia con param_hash §7, `ERR_INVALID_DISCOUNT` (descuento negativo) §8, auditoría ampliada (client_rate/server_rate/rate_source, hash). Sin cambio de firma /24.
 2. **ACL** (misma migración): `REVOKE EXECUTE ON create_sale_v2 FROM PUBLIC, anon` + grants explícitos `authenticated`/`service_role`; reescritura del reconciler F4 (§12.3) y corrección de contract-surface.
 3. **`tax_configurations`**: policies SELECT/ALL por roles §5.2 + `CHECK (value > 0)`; `store_exchange_rates`: policy alineada a `canManageStore` + `CHECK (rate > 0)`.
 4. **`update_transaction_taxes`**: DROP+CREATE con firma /3 (p_reason) + contrato §9.2 completo (owner `costpro_transaction_adjuster`, PT008/PT002, auditoría).
 5. **Rutas**: `/api/pos/checkout` (derivar seller; Zod applied_taxes estricto), `/api/sync/batch` (seller := session).
 6. **Frontend**: `TransactionDetailsModal` (enviar ids + reason; preview-only), `usePOSCheckout`/`useSalesCatalog` (mantener seller=user.id — ya comply; opcional: eliminar constantes 680 hardcodeadas en favor de la tasa servidor).
-7. ⛔ **Staleness / banda / tope** (§15): solo tras decisión del dueño.
+7. **Staleness / banda / tope (§15 — RESUELTOS por Enmienda H0-R-FINAL)**: implementar el gate `MAX_EXCHANGE_RATE_AGE = 45 días` con `ERR_RATE_STALE` dentro de la migración del RPC (§6.1, D-EXR-01). La banda (D-EXR-02) y el tope de impuesto (D-TAX-01) **no requieren control alguno que implementar**: la tasa del cliente queda informational-only con auditoría §6.2, y no se añade ningún tope numérico (garantías §5.2/§5.3).
 8. **PR-R1 (separado)**: retiro V1 con los 8 gates §11 + anti-resurrección §12.
-9. **QA**: re-ejecutar `scripts/qa-h1/run-all.cjs` — esperado: 50 PASS intactos + 48 FAIL → PASS (salvo los 2 ⛔ y el NOT-OBSERVABLE por diseño) + verificación estática §14.
+9. **QA**: re-ejecutar `scripts/qa-h1/run-all.cjs` — esperado post-hardening: 50 PASS intactos + 46 FAIL runtime → PASS (incluidos `T-H5-005`/`T-H5-006` enmendados) + 4 BLOCKED runtime congelados como evidencia H1 (`T-H3-004`/`T-TC-001`/`T-UTT-001`/`T-UTT-006` — contrato §18 = FAIL — IMPLEMENTATION) + 1 NOT-OBSERVABLE (certificación §14) + verificación estática §14.
 
 ---
 
 ## 18. Matriz final (101 tests)
 
-Generada desde `audit-evidence/FASE-H1/results/*.json` (evidencia H1 intacta) contra el contrato H0-R. Clasificaciones: `PASS` (regresión protegida) · `FAIL — IMPLEMENTATION` (expected confirmado; el hardening lo convierte en PASS) · `BLOCKED — BUSINESS DECISION` (§15) · `NOT-OBSERVABLE BY DESIGN` (§14).
+Generada desde `audit-evidence/FASE-H1/results/*.json` contra el contrato H0-R. Tras la **Enmienda H0-R-FINAL**, la suite `14-h5-rate` fue **re-ejecutada** contra LIVE (`T-H5-005`/`T-H5-006` con expected determinista D-EXR-01/D-EXR-02; la evidencia de la ejecución H1 original queda preservada en la historia git del repo). Clasificaciones: `PASS` (regresión protegida) · `FAIL — IMPLEMENTATION` (expected confirmado; el hardening lo convierte en PASS) · `BLOCKED — BUSINESS DECISION` (§15 — **0 tras la enmienda**) · `NOT-OBSERVABLE BY DESIGN` (§14).
 
 | # | TEST ID | Contrato H0-R | EXPECTED (contrato) | CURRENT (evidencia H1) | Requisito de implementación | Clasificación |
 |---|---------|----------------|----------------------|------------------------|------------------------------|---------------|
@@ -595,8 +644,8 @@ Generada desde `audit-evidence/FASE-H1/results/*.json` (evidencia H1 intacta) co
 | 21 | `T-H5-002` | H0-R §6 (autoridad de tasa) | transactions.sale_exchange_rate == server_rate (store_exchange_rates de STORE_A = 400) | server_rate=400 (store_exchange_rates) · client_rate=7 · persisted=7 | resolver tasa server-side (store_exchange_rates → exchange_rates BCC seg3 → elToque); cliente informativo | FAIL — IMPLEMENTATION |
 | 22 | `T-H5-003` | H0-R §6 (autoridad de tasa) | el RPC resuelve la tasa con esa jerarquía server-side | refs LIVE: store_exchange_rates=false · exchange_rates=false | resolver tasa server-side (store_exchange_rates → exchange_rates BCC seg3 → elToque); cliente informativo | FAIL — IMPLEMENTATION |
 | 23 | `T-H5-004` | H0-R §6 (autoridad de tasa) | USER_A (clerk) NO puede UPDATE store_exchange_rates ni INSERT/UPDATE exchange_rates | store_exchange_rates(own) PATCH → 204 · exchange_rates INSERT → 403 | resolver tasa server-side (store_exchange_rates → exchange_rates BCC seg3 → elToque); cliente informativo | FAIL — IMPLEMENTATION |
-| 24 | `T-H5-005` | H0-R §6 (autoridad de tasa) | CONTRATO H0: límite de staleness — H0 NO PRODUCIDO | columnas store_exchange_rates: id, store_id, currency, rate, updated_by, created_at, updated_at | resolver tasa server-side (store_exchange_rates → exchange_rates BCC seg3 → elToque); cliente informativo | BLOCKED — BUSINESS DECISION |
-| 25 | `T-H5-006` | H0-R §6 (autoridad de tasa) | CONTRATO H0: banda dentro/fuera — H0 NO PRODUCIDO | sin banda implementada: cualquier tasa cliente se acepta (ver T-H5-001) | resolver tasa server-side (store_exchange_rates → exchange_rates BCC seg3 → elToque); cliente informativo | BLOCKED — BUSINESS DECISION |
+| 24 | `T-H5-005` | H0-R §6 (autoridad de tasa) + §15.1 (D-EXR-01) | MAX_EXCHANGE_RATE_AGE=45 días (APPROVED): tasa vencida NO puede usarse en venta V2 nueva → rechazo ERR_RATE_STALE (HTTP >= 400, sin transaction_id); p_sale_exchange_rate NO puede sustituirla (probe con tasa arbitraria 7 y probe con la propia tasa vencida 350 — ambas rechazadas) | fixture EUR(store) rate=350 age=60d (>45) · client_rate=7→ACEPTADA (stored=7.0000) — viola D-EXR-01: tasa vencida 60d usada/sustituida por cliente · client_rate=350(vencida)→ACEPTADA (stored=350.0000) — viola D-EXR-01 | resolver tasa server-side + staleness 45d ERR_RATE_STALE (§6.1); cliente informativo (§6.2) | FAIL — IMPLEMENTATION |
+| 25 | `T-H5-006` | H0-R §6 (autoridad de tasa) + §15.2 (D-EXR-02) | client_rate != server_rate NO implica DENY ni ALLOW: la venta NO se rechaza por desviación (HTTP 200); la tasa persistida es SIEMPRE la server (store_exchange_rates STORE_A USD = 400); la desviación se registra como observabilidad no-autoritativa en audit_logs.metadata (client_rate, server_rate, rate_source) | HTTP 200 (desviación no bloquea ✓) · persisted=7 (server=400) · audit(client_rate/server_rate/rate_source)=ausente | resolver tasa server-side (§6.1) + auditoría client/server rate (§6.2); desviación nunca bloquea | FAIL — IMPLEMENTATION |
 | 26 | `T-H6-001` | H0-R §7 (idempotencia) | segunda llamada retorna la MISMA transaction_id; 1 fila en transactions | retry → HTTP 200 {"status":"idempotent","transaction_id":"efb15730-f3bd-4e33-8454-b44ecb28aff1"} · filas=1 | identidad (clave, actor, tienda, param_hash) + ERR_IDEMPOTENCY_KEY_REUSE; registro idempotencia V2.26 | PASS |
 | 27 | `T-H6-002` | H0-R §7 (idempotencia) | exactly 1 transaction, 1 set items, 1 pago, 1 movimiento de stock | tx=1 items=1 pagos=1 movimientos=1 | identidad (clave, actor, tienda, param_hash) + ERR_IDEMPOTENCY_KEY_REUSE; registro idempotencia V2.26 | PASS |
 | 28 | `T-H6-003` | H0-R §7 (idempotencia) | respuesta de conflicto (no retorno silencioso de la transacción previa) | payload distinto (qty=2) con misma clave → HTTP 200 {"status":"idempotent","transaction_id":"efb15730-f3bd-4e33-8454-b44ecb28aff1"} | identidad (clave, actor, tienda, param_hash) + ERR_IDEMPOTENCY_KEY_REUSE; registro idempotencia V2.26 | FAIL — IMPLEMENTATION |
@@ -674,4 +723,6 @@ Generada desde `audit-evidence/FASE-H1/results/*.json` (evidencia H1 intacta) co
 | 100 | `T-AR-005` | H0-R §12 (anti-resurrección) | 0 archivos (excluye migraciones históricas pre-drop) con GRANT V1 | 0 archivos | reescribir reconciler F4 a REVOKE; contract-surface sin =X; census CI | PASS |
 | 101 | `T-AR-006` | H0-R §12 (anti-resurrección) | supabase/security-contract/contract-surface.sql sin GRANT PUBLIC a create_sale_v2 | GRANT PUBLIC en contract-surface=false | reescribir reconciler F4 a REVOKE; contract-surface sin =X; census CI | PASS |
 
-**Recuento: 101 tests · PASS 50 · FAIL — IMPLEMENTATION 48 · BLOCKED — BUSINESS DECISION 2 · NOT-OBSERVABLE BY DESIGN 1**
+**Recuento: 101 tests · PASS 50 · FAIL — IMPLEMENTATION 50 · BLOCKED — BUSINESS DECISION 0 · NOT-OBSERVABLE BY DESIGN 1**
+
+*(Recuento pre-enmienda de la reconstrucción H0-R: 50 PASS · 48 FAIL — IMPLEMENTATION · 2 BLOCKED — BUSINESS DECISION · 1 NOT-OBSERVABLE BY DESIGN — los 2 BLOCKED fueron resueltos por D-EXR-01/D-EXR-02 y re-ejecutados.)*

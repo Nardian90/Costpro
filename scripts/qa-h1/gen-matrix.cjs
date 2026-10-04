@@ -54,7 +54,9 @@ const ICON = { PASS: '✅', FAIL: '❌', BLOCKED: '⛔', 'NOT-OBSERVABLE': '👁
   const c = JSON.parse(fs.readFileSync(path.join(RESULTS, '_consolidated.json'), 'utf8'));
   md.push(`**TOTAL: ${c.totals.total} · ✅ PASS: ${c.totals.pass} · ❌ FAIL: ${c.totals.fail} · ⛔ BLOCKED: ${c.totals.blocked} · 👁️ NOT-OBSERVABLE: ${c.totals.not_observable}**`);
   md.push('');
-  md.push('Los **FAIL** son evidencia del estado pre-hardening (TEST-FIRST): cada uno es un comportamiento que H1–H6 debe corregir. Los **BLOCKED** dependen de decisiones de la especificación H0 (`CREATE-SALE-V2-HARDENING-SPEC.md`), **que no existe en el repositorio** — ver Baseline §1.');
+  md.push('Los **FAIL** son evidencia del estado pre-hardening (TEST-FIRST): cada uno es un comportamiento que H1–H6 debe corregir.');
+  md.push('');
+  md.push('**ENMIENDA H0-R-FINAL (2026-10-04)**: `T-H5-005`/`T-H5-006` (ex-BLOCKED — BUSINESS DECISION) fueron dotados de contrato determinista por las decisiones aprobadas **D-EXR-01** (staleness = 45 días, FAIL CLOSED) y **D-EXR-02** (desviación cliente↔servidor NO es control de autorización) y **re-ejecutados** contra LIVE → `FAIL — IMPLEMENTATION` (evidencia runtime en `results/14-h5-rate.json`). Los 4 BLOCKED restantes (`T-H3-004`, `T-TC-001`, `T-UTT-001`, `T-UTT-006`) tienen contrato definido en `audit-evidence/FASE-H0-R/CREATE-SALE-V2-HARDENING-SPEC-RECOVERED.md` (§4/§5/§9; clasificados `FAIL — IMPLEMENTATION` en su §18) — su código de test permanece congelado como evidencia H1. El baseline de la ejecución H1 original (101 · 50 PASS · 44 FAIL · 6 BLOCKED · 1 NOT-OBSERVABLE) está en `CREATE-SALE-V2-QA-BASELINE.md`.');
   md.push('');
   md.push('| # | TEST ID | SPEC CONTRACT | TEST FILE | EJECUCIÓN | EXPECTED | CURRENT | STATUS |');
   md.push('|---|---------|---------------|-----------|-----------|----------|---------|--------|');

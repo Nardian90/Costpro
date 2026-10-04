@@ -8,6 +8,17 @@ sistema REAL (Supabase LIVE + servidor Next.js local).
 son EVIDENCIA del estado pre-hardening: el implementador debe hacerlos pasar
 SIN debilitar los tests.
 
+**ENMIENDA H0-R-FINAL (2026-10-04)**: los tests `T-H5-005`/`T-H5-006`
+(ex-BLOCKED — BUSINESS DECISION) fueron dotados de contrato determinista por
+las decisiones aprobadas del dueño — **D-EXR-01** (staleness = 45 días, FAIL
+CLOSED) y **D-EXR-02** (desviación cliente↔servidor NO es control de
+autorización) — y re-ejecutados contra LIVE (`results/14-h5-rate.json`
+regenerado). Los otros 4 ex-BLOCKED (`T-H3-004`, `T-TC-001`, `T-UTT-001`,
+`T-UTT-006`) tienen contrato definido en
+`audit-evidence/FASE-H0-R/CREATE-SALE-V2-HARDENING-SPEC-RECOVERED.md` y
+permanecen congelados como evidencia H1. Veredicto contractual:
+`READY FOR IMPLEMENTATION`.
+
 ## Ejecución
 
 ```bash

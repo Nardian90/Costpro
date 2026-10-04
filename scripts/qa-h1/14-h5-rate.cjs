@@ -1,14 +1,15 @@
 /**
- * FASE H1 — H5: EXCHANGE RATE AUTHORITY (§10)
+ * FASE H1 — H5: EXCHANGE RATE AUTHORITY (§6)
  *
  * T-H5-001  Matriz de tasas cliente: 680 / 1000000 / 0 / negativa → server-side
  * T-H5-002  server_rate (store_exchange_rates=400) vs client_rate=7 → gana servidor
  * T-H5-003  Jerarquía store_exchange_rates → exchange_rates → effective
  * T-H5-004  Modificación no autorizada de la fuente de tasa
- * T-H5-005  Staleness — CONTRATO H0 AUSENTE → BLOCKED
- * T-H5-006  Banda de desviación — CONTRATO H0 AUSENTE → BLOCKED
+ * T-H5-005  Staleness — ENMIENDA H0-R-FINAL (D-EXR-01 APPROVED): 45 días → FAIL CLOSED
+ * T-H5-006  Banda de desviación — ENMIENDA H0-R-FINAL (D-EXR-02 APPROVED): NO es control
+ *           de autorización; observabilidad no-autoritativa
  */
-const { rpc, rest, fixtures, login, q, createSuite, brief } = require('./lib.cjs');
+const { rpc, rest, fixtures, login, q, createSuite, brief, isDenied } = require('./lib.cjs');
 
 const S = createSuite('H5 — EXCHANGE RATE AUTHORITY', '14-h5-rate');
 
@@ -123,27 +124,86 @@ const S = createSuite('H5 — EXCHANGE RATE AUTHORITY', '14-h5-rate');
       };
     });
 
-  // ── T-H5-005: staleness ──
-  await S.test('T-H5-005', 'H5.5 — staleness de tasa (p.ej. 45 días)',
-    'CONTRATO H0: límite de staleness — H0 NO PRODUCIDO',
+  // ── T-H5-005: staleness (D-EXR-01 · ENMIENDA H0-R-FINAL · APPROVED) ──
+  // Contrato: MAX_EXCHANGE_RATE_AGE = 45 DÍAS. Una tasa cuya fecha efectiva tenga
+  // más de 45 días NO puede utilizarse para una nueva venta V2 → FAIL CLOSED →
+  // checkout rechazado (ERR_RATE_STALE, HTTP >= 400, sin transaction_id). El cliente
+  // NO puede sustituir la tasa vencida vía p_sale_exchange_rate (ni arbitraria ni
+  // igual al valor vencido). La jerarquía de precedencia server-side queda intacta
+  // (§6.1): la tasa que gana por precedencia y está vencida → rechazo, sin fallback
+  // silencioso a otra fuente y sin uso silencioso de la vencida.
+  await S.test('T-H5-005', 'H5.5 — staleness de tasa: fecha efectiva >45 días → FAIL CLOSED (D-EXR-01)',
+    'MAX_EXCHANGE_RATE_AGE=45 días (APPROVED): tasa vencida NO puede usarse en venta V2 nueva → rechazo ERR_RATE_STALE (HTTP >= 400, sin transaction_id); p_sale_exchange_rate NO puede sustituirla (probe con tasa arbitraria 7 y probe con la propia tasa vencida 350 — ambas rechazadas)',
     async () => {
-      const cols = await q(`SELECT column_name FROM information_schema.columns
-        WHERE table_schema='public' AND table_name='store_exchange_rates';`);
-      return {
-        status: 'BLOCKED',
-        current: `columnas store_exchange_rates: ${cols.map(c => c.column_name).join(', ')}`,
-        evidence: 'El spec H0 no existe; el límite de staleness es decisión H0 y NO SE INVENTA. Además: store_exchange_rates no tiene campo de fecha de captura (solo updated_at de fila) y el RPC no consulta la fuente — no hay contrato de staleness implementado que probar.',
-      };
+      const STALE_RATE = 350;
+      // fixture QA: tasa de tienda EUR para STORE_A con updated_at = 60 días atrás (vencida)
+      // (store_exchange_rates no tiene trigger que fuerce updated_at — verificado; UNIQUE (store_id,currency) libre para EUR)
+      const ins = await q(`INSERT INTO public.store_exchange_rates (store_id, currency, rate, updated_by)
+        VALUES ('${fx.store_a}', 'EUR', ${STALE_RATE}, '${fx.user_a}') RETURNING id;`);
+      const rowId = ins[0].id;
+      let out = [];
+      let violations = 0;
+      try {
+        await q(`UPDATE public.store_exchange_rates SET updated_at = now() - interval '60 days', created_at = now() - interval '60 days' WHERE id='${rowId}';`);
+        const chk = await q(`SELECT rate, updated_at, GREATEST(0, EXTRACT(EPOCH FROM (now() - updated_at))/86400)::int AS age_days FROM public.store_exchange_rates WHERE id='${rowId}';`);
+        const age = chk[0].age_days;
+        // sonda 1: cliente envía tasa arbitraria (7) — no puede sustituir la vencida
+        const r1 = await rpc('create_sale_v2', saleUSD(7, { p_sale_currency: 'EUR' }), tokA);
+        // sonda 2: cliente envía la MISMA tasa vencida (350) — sigue vencida, sigue rechazada
+        const r2 = await rpc('create_sale_v2', saleUSD(STALE_RATE, { p_sale_currency: 'EUR' }), tokA);
+        for (const [label, r] of [['client_rate=7', r1], ['client_rate=350(vencida)', r2]]) {
+          const denied = isDenied(r);
+          const code = r.body && r.body.message ? String(r.body.message) : '';
+          const staleCode = code.includes('ERR_RATE_STALE');
+          if (denied && staleCode) {
+            out.push(`${label}→RECHAZADA ${r.status} ERR_RATE_STALE ✓`);
+          } else if (denied) {
+            violations++;
+            out.push(`${label}→rechazada ${r.status} SIN código ERR_RATE_STALE (${code.slice(0, 60)})`);
+          } else {
+            violations++;
+            const tx = await storedRate(r.body.transaction_id);
+            out.push(`${label}→ACEPTADA (stored=${tx[0] && tx[0].sale_exchange_rate}) — viola D-EXR-01: tasa vencida ${age}d usada/sustituida por cliente`);
+          }
+        }
+        return {
+          status: violations === 0 ? 'PASS' : 'FAIL',
+          current: `fixture EUR(store) rate=${STALE_RATE} age=${age}d (>45) · ${out.join(' · ')}`,
+          evidence: violations > 0
+            ? 'D-EXR-01 NO implementado: create_sale_v2 no resuelve tasa server-side (0 refs a fuentes — T-H5-003) ni aplica gate de staleness; la venta con única tasa de tienda vencida (>45 días) se ACEPTA y persiste la tasa del cliente en vez de rechazar FAIL-CLOSED con ERR_RATE_STALE'
+            : 'staleness fail-closed con 45 días',
+        };
+      } finally {
+        await q(`DELETE FROM public.store_exchange_rates WHERE id='${rowId}';`);
+      }
     });
 
-  // ── T-H5-006: banda de desviación ──
-  await S.test('T-H5-006', 'H5.6 — banda de desviación (p.ej. ±10%)',
-    'CONTRATO H0: banda dentro/fuera — H0 NO PRODUCIDO',
+  // ── T-H5-006: banda de desviación (D-EXR-02 · ENMIENDA H0-R-FINAL · APPROVED) ──
+  // Contrato: client_rate != server_rate NO es control de autorización: NO implica
+  // DENY ni ALLOW. La decisión financiera usa SIEMPRE server_authoritative_rate
+  // (persistida). La desviación queda como observabilidad NO-autoritativa
+  // (audit_logs.metadata: client_rate/server_rate/rate_source). Sin banda ±10%.
+  await S.test('T-H5-006', 'H5.6 — desviación cliente↔servidor NO es control de autorización (D-EXR-02)',
+    'client_rate != server_rate NO implica DENY ni ALLOW: la venta NO se rechaza por desviación (HTTP 200); la tasa persistida es SIEMPRE la server (store_exchange_rates STORE_A USD = 400); la desviación se registra como observabilidad no-autoritativa en audit_logs.metadata (client_rate, server_rate, rate_source)',
     async () => {
+      // tasa servidor fresca (fixture USD=400) vs cliente 7 → desviación extrema (~98%)
+      const r = await rpc('create_sale_v2', saleUSD(7), tokA);
+      if (r.status !== 200) {
+        return { status: 'FAIL', current: brief(r), evidence: 'D-EXR-02: la desviación NO puede causar rechazo — la venta con server rate fresco (400) y client rate divergente (7) debe ser HTTP 200' };
+      }
+      const tx = await storedRate(r.body.transaction_id);
+      const stored = Number(tx[0].sale_exchange_rate);
+      const serverWins = stored === 400;
+      // observabilidad no-autoritativa: auditoría de la venta registra client vs server
+      const aud = await q(`SELECT metadata FROM public.audit_logs WHERE action='CREATE_SALE_V2' AND record_id='${r.body.transaction_id}' LIMIT 1;`);
+      const meta = aud[0] && aud[0].metadata ? aud[0].metadata : null;
+      const auditObs = !!(meta && meta.client_rate !== undefined && meta.server_rate !== undefined && meta.rate_source !== undefined);
       return {
-        status: 'BLOCKED',
-        current: 'sin banda implementada: cualquier tasa cliente se acepta (ver T-H5-001)',
-        evidence: 'El spec H0 no existe; la banda de desviación es decisión H0 y NO SE INVENTA. La prueba se anclará al valor exacto documentado en H0 cuando exista.',
+        status: serverWins && auditObs ? 'PASS' : 'FAIL',
+        current: `HTTP 200 (desviación no bloquea ✓) · persisted=${stored} (server=400) · audit(client_rate/server_rate/rate_source)=${auditObs ? 'presente' : 'ausente'}`,
+        evidence: serverWins && auditObs
+          ? 'desviación no-autoritativa con tasa servidor persistida y auditada'
+          : `D-EXR-02/§6.2 NO implementado: la desviación no bloquea (correcto), PERO ${serverWins ? '' : 'la tasa persistida es la del CLIENTE (7), no la server-authoritative (400) — la decisión financiera debe usar server_authoritative_rate; '}${auditObs ? '' : 'audit_logs.metadata (CREATE_SALE_V2) no registra client_rate/server_rate/rate_source — sin trazabilidad de divergencia (hoy el metadata solo lleva líneas/importes, sin campos de tasa)'}`,
       };
     });
 

@@ -1,13 +1,12 @@
 {
-  "generated_at": "2026-10-04T04:33:43.716Z",
+  "generated_at": "2026-10-04T05:24:51.985Z",
   "baseline": "6cba0a1c1f1d0a63fb4e2e6703b87a6a4d52cb9f (main)",
   "totals": {
     "total": 101,
     "pass": 50,
-    "fail": 44,
-    "blocked": 6,
-    "not_observable": 1,
-    "duration_ms": 237108
+    "fail": 46,
+    "blocked": 4,
+    "not_observable": 1
   },
   "suites": [
     {
@@ -60,8 +59,8 @@
       "counts": {
         "total": 6,
         "pass": 0,
-        "fail": 4,
-        "blocked": 2,
+        "fail": 6,
+        "blocked": 0,
         "not_observable": 0
       }
     },
