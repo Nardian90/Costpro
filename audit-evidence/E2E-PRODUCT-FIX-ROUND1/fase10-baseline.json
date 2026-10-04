@@ -1,0 +1,1744 @@
+{
+  "protected_stores": [
+    {
+      "id": "26cd1230-37dc-4819-9005-f6726aa40e91",
+      "name": "E2E PILOT A CLEAN-Aa03",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "4504a554-7996-4e7f-a89f-0ac76bcbbe3b",
+      "name": "E2E PILOT A CLEAN-Aa05",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "f2d03c3b-9671-43f8-b49a-9d5e7908dcd0",
+      "name": "E2E PILOT A CLEAN-Aa07",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "5e630684-a1e0-4ec9-b432-78b033788812",
+      "name": "E2E PILOT A CLEAN-Bb06",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "852d7328-4621-4b33-9b8d-69bc5e6780db",
+      "name": "E2E PILOT A CONC-Aa01",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "c1c48add-9f30-4c3e-830e-e52bba990cd8",
+      "name": "E2E PILOT A CONC-Bb02",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "6b5eff1a-0fc2-48fc-85af-098853e453f4",
+      "name": "E2E PILOT A CostPro",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "4df47698-1769-4180-89af-5a6afe18a9ed",
+      "name": "E2E PILOT A CostPro E2E-20261004-0A32FE",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "21bf5888-24e9-4f53-a0d1-d34d5abc891b",
+      "name": "E2E PILOT A CostPro E2E-20261004-0F6F71",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "a13c3e5d-13de-449f-8fbe-5bb6a9225a03",
+      "name": "E2E PILOT A CostPro E2E-20261004-1EC90B",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "d1c917c9-dcee-4503-b042-fbbbbe3dad7a",
+      "name": "E2E PILOT A CostPro E2E-20261004-225F77",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "39478090-db9a-40ff-9f9d-3c3776c853a3",
+      "name": "E2E PILOT A CostPro E2E-20261004-361C56",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "1cdbfeb8-515f-469c-90ad-8fa3e074226d",
+      "name": "E2E PILOT A CostPro E2E-20261004-4F0978",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "37719cdc-1b2b-4b30-8a2b-8b7ec9d1e11d",
+      "name": "E2E PILOT A CostPro E2E-20261004-4FDD8A",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "5bf1c3ef-dac5-4426-86f2-6bebedf6388b",
+      "name": "E2E PILOT A CostPro E2E-20261004-54A1AB",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "9b426748-6363-4da9-b367-fc5ba75bc46c",
+      "name": "E2E PILOT A CostPro E2E-20261004-5CFBD5",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "b3b13921-ebf6-476f-8d31-f25ce3283d68",
+      "name": "E2E PILOT A CostPro E2E-20261004-696E13",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "1eb7f23b-e92b-4bca-8317-f743a2f48fa2",
+      "name": "E2E PILOT A CostPro E2E-20261004-6B1C25",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "502c01d2-06c2-4245-b5ca-116064763a94",
+      "name": "E2E PILOT A CostPro E2E-20261004-6F651B",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "fd837847-38f1-4222-b5c2-95abf4b9d422",
+      "name": "E2E PILOT A CostPro E2E-20261004-7CAE71",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "331fbc6b-e27e-4c39-9bab-082b985bb8c7",
+      "name": "E2E PILOT A CostPro E2E-20261004-888B89",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "68c34692-7f6b-4b34-a7d4-1e64b2447a98",
+      "name": "E2E PILOT A CostPro E2E-20261004-8ABD6F",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "89af2de6-02a0-4571-9f24-3a6fbca49c4a",
+      "name": "E2E PILOT A CostPro E2E-20261004-9CE289",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "fd73a0f6-d198-4852-a6cf-1026a82172e5",
+      "name": "E2E PILOT A CostPro E2E-20261004-9DFA94",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "acc2082f-1673-4041-9dc5-064b0e7a5591",
+      "name": "E2E PILOT A CostPro E2E-20261004-A1ADA4",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "0e995480-d1fa-4e92-8027-0a44fb8eb382",
+      "name": "E2E PILOT A CostPro E2E-20261004-A7E782",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "b9824939-c885-4ce3-91fe-fa2714e8cbf5",
+      "name": "E2E PILOT A CostPro E2E-20261004-AA8BD0",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "fac0617d-348b-42a3-9fa6-c406c9bfcd4e",
+      "name": "E2E PILOT A CostPro E2E-20261004-AB992B",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "ddcfbdf7-9065-4101-83bd-b7b08fa728d8",
+      "name": "E2E PILOT A CostPro E2E-20261004-B3D261",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "bb3c6d4a-5365-4fdb-93fb-89c182cb9063",
+      "name": "E2E PILOT A CostPro E2E-20261004-B3FBA5",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "d865591a-6501-4513-847a-4b0426e98234",
+      "name": "E2E PILOT A CostPro E2E-20261004-D4E310",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "13aecea4-75d5-458e-b2b3-dd4c18e3223a",
+      "name": "E2E PILOT A CostPro E2E-20261004-E6AE59",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "c3794bc1-7f34-48fc-a8e8-de0a98fd4684",
+      "name": "E2E PILOT A CostPro E2E-20261004-F4F183",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "2d0c5b36-0707-43bb-bd31-cf1e0728dbc9",
+      "name": "E2E PILOT A CostPro E2E-20261004-F8F383",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "819fc2d3-3172-4ed0-85f0-0843c195109a",
+      "name": "E2E PILOT A CostPro E2E-20261004-FEEDCB",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "67eabef0-406c-444f-bd8f-bc137577f65f",
+      "name": "E2E PILOT A FULL-Su01",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "de263b8f-4e0a-4819-aacd-f72ac8925594",
+      "name": "E2E PILOT A SMOKE-Ab04",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "008ac26e-3ced-4cb4-919a-8d5418d0faf5",
+      "name": "E2E PILOT A SMOKE-Ab05",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "d9ed32cc-659c-48d2-b5aa-eaa32ab439eb",
+      "name": "E2E PILOT A SMOKE-Ab06",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "b763a23f-91a8-4771-96e9-796ba40f039e",
+      "name": "E2E PILOT A SMOKE-Fl07",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "86462150-278b-4a59-8ced-63d0320b7941",
+      "name": "E2E PILOT A SMOKE-Fl08",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "a57f0b55-358c-4029-92d8-f2b17630270f",
+      "name": "E2E PILOT A SMOKE-Tt09",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "e773e53d-40a0-4c3f-bb61-1a6b71add19e",
+      "name": "E2E PILOT B CLEAN-Aa03",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "2bcd848a-422f-4aef-a6b8-b1515fe577ce",
+      "name": "E2E PILOT B CLEAN-Aa05",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "f0a5f290-a557-4ab5-9586-36bc2a5a302d",
+      "name": "E2E PILOT B CLEAN-Aa07",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "f45fb077-59da-47eb-a1be-daeb8bcbf955",
+      "name": "E2E PILOT B CLEAN-Bb06",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "70e40808-8158-4808-92be-3a39c45b3188",
+      "name": "E2E PILOT B CONC-Aa01",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "3135be55-1c9c-460d-b802-fad89b307fa5",
+      "name": "E2E PILOT B CONC-Bb02",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "fbb8648f-daa0-417c-8cee-dd8128976279",
+      "name": "E2E PILOT B CostPro",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "580d5b41-9315-4003-9b45-e8658779e51a",
+      "name": "E2E PILOT B CostPro E2E-20261004-0A32FE",
+      "is_active": false,
+      "is_archived": false
+    },
+    {
+      "id": "33c9d49b-e9b9-44dc-bc97-3c1095031ca5",
+      "name": "E2E PILOT B CostPro E2E-20261004-0F6F71",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "a2c15395-89bc-4a26-9daf-d4dfb5d015ea",
+      "name": "E2E PILOT B CostPro E2E-20261004-1EC90B",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "d0e34680-9eee-4f9a-82c9-827586b8a868",
+      "name": "E2E PILOT B CostPro E2E-20261004-225F77",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "7879b995-7a50-49f4-abe9-b3e547ddec8c",
+      "name": "E2E PILOT B CostPro E2E-20261004-361C56",
+      "is_active": false,
+      "is_archived": false
+    },
+    {
+      "id": "fc4a9f03-f6a1-4816-af42-7c17ec222f32",
+      "name": "E2E PILOT B CostPro E2E-20261004-4F0978",
+      "is_active": false,
+      "is_archived": false
+    },
+    {
+      "id": "6ec2a67f-2377-4272-adb8-17b245bfcc32",
+      "name": "E2E PILOT B CostPro E2E-20261004-4FDD8A",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "5a5fd062-78fb-435d-910d-fe99a102642e",
+      "name": "E2E PILOT B CostPro E2E-20261004-54A1AB",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "0e15e975-80ed-463f-845a-2c0eb6bb7fdb",
+      "name": "E2E PILOT B CostPro E2E-20261004-5CFBD5",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "0e8aeb07-763f-48a4-9e6e-f21a7cb0af2a",
+      "name": "E2E PILOT B CostPro E2E-20261004-696E13",
+      "is_active": false,
+      "is_archived": false
+    },
+    {
+      "id": "ee58f119-510b-484a-88e7-8b6d08f941a4",
+      "name": "E2E PILOT B CostPro E2E-20261004-6B1C25",
+      "is_active": false,
+      "is_archived": false
+    },
+    {
+      "id": "749238c0-ba87-496b-a7e2-104a28abfe38",
+      "name": "E2E PILOT B CostPro E2E-20261004-6F651B",
+      "is_active": false,
+      "is_archived": false
+    },
+    {
+      "id": "9b97d8d8-908d-40e1-bf6d-80627c462c8e",
+      "name": "E2E PILOT B CostPro E2E-20261004-7CAE71",
+      "is_active": false,
+      "is_archived": false
+    },
+    {
+      "id": "7a314f35-15ec-429a-8593-c1f30bb1625f",
+      "name": "E2E PILOT B CostPro E2E-20261004-888B89",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "ac773c8e-d123-4867-b07c-39f360105d47",
+      "name": "E2E PILOT B CostPro E2E-20261004-8ABD6F",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "520b36bc-4921-4043-81cb-531bdabc6d91",
+      "name": "E2E PILOT B CostPro E2E-20261004-9CE289",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "5a60d93c-659c-4c06-b126-636009c4e515",
+      "name": "E2E PILOT B CostPro E2E-20261004-9DFA94",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "4f1e636f-ebde-4cc3-bb05-6d8c8ad6b32d",
+      "name": "E2E PILOT B CostPro E2E-20261004-A1ADA4",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "e26c006e-27e0-4a6c-9504-4a343c0ac023",
+      "name": "E2E PILOT B CostPro E2E-20261004-A7E782",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "d1266f7b-72ef-4a27-9714-efa6a2b20840",
+      "name": "E2E PILOT B CostPro E2E-20261004-AA8BD0",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "d3f23152-aec3-4643-83f8-b4cdc16ddf82",
+      "name": "E2E PILOT B CostPro E2E-20261004-AB992B",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "d22555f4-b8f5-4bb5-b5bd-10b46982e5fb",
+      "name": "E2E PILOT B CostPro E2E-20261004-B3D261",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "e965a6ae-9861-42e7-85f0-4a7bacd9cbe2",
+      "name": "E2E PILOT B CostPro E2E-20261004-B3FBA5",
+      "is_active": false,
+      "is_archived": false
+    },
+    {
+      "id": "a580ef42-f898-4666-94d4-7538be3ba5f9",
+      "name": "E2E PILOT B CostPro E2E-20261004-D4E310",
+      "is_active": false,
+      "is_archived": false
+    },
+    {
+      "id": "2702d7b2-3bad-4f54-8ff0-64c93a18685b",
+      "name": "E2E PILOT B CostPro E2E-20261004-E6AE59",
+      "is_active": false,
+      "is_archived": false
+    },
+    {
+      "id": "7cdf1155-aed4-488c-85a2-fb704a3a46fa",
+      "name": "E2E PILOT B CostPro E2E-20261004-F4F183",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "4beb44ae-9490-4c42-ada2-e1e95935bbca",
+      "name": "E2E PILOT B CostPro E2E-20261004-F8F383",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "ef3c2480-7e91-48c6-81e9-c8f1f34e7e68",
+      "name": "E2E PILOT B CostPro E2E-20261004-FEEDCB",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "a00c7668-b79c-44eb-9205-57fcdb39b737",
+      "name": "E2E PILOT B FULL-Su01",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "0a1b57ec-3b68-442e-b07d-71f0cc21e8e1",
+      "name": "E2E PILOT B SMOKE-Ab04",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "5c7ca4ce-5917-410a-b9d4-7a1d0fafda99",
+      "name": "E2E PILOT B SMOKE-Ab06",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "9a1f9c0a-0209-4fd8-a683-e1a6c408efcb",
+      "name": "E2E PILOT B SMOKE-Fl07",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "db8bd071-51be-4349-b167-305d4b964cae",
+      "name": "E2E PILOT B SMOKE-Fl08",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "f7f9db5a-82f1-404c-87f7-c36371c08e22",
+      "name": "E2E PILOT B SMOKE-Tt09",
+      "is_active": false,
+      "is_archived": true
+    },
+    {
+      "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "name": "ENERVIDA-VITALLCONS",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "name": "Puerto Padre VITALLCONS",
+      "is_active": true,
+      "is_archived": false
+    },
+    {
+      "id": "d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576",
+      "name": "TIENDA CENTRAL COSTPRO",
+      "is_active": true,
+      "is_archived": false
+    }
+  ],
+  "protected_product_counts": [
+    {
+      "store": "E2E PILOT A CLEAN-Aa03",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CLEAN-Aa05",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CLEAN-Aa07",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CLEAN-Bb06",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CONC-Aa01",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CONC-Bb02",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro",
+      "products": 1,
+      "stock_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-0A32FE",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-0F6F71",
+      "products": 1,
+      "stock_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-1EC90B",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-225F77",
+      "products": 1,
+      "stock_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-361C56",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-4F0978",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-4FDD8A",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-54A1AB",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-5CFBD5",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-696E13",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-6B1C25",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-6F651B",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-7CAE71",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-888B89",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-8ABD6F",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-9CE289",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-9DFA94",
+      "products": 1,
+      "stock_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-A1ADA4",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-A7E782",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-AA8BD0",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-AB992B",
+      "products": 1,
+      "stock_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-B3D261",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-B3FBA5",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-D4E310",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-E6AE59",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-F4F183",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-F8F383",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-FEEDCB",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A FULL-Su01",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Ab04",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Ab05",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Ab06",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Fl07",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Fl08",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Tt09",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Aa03",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Aa05",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Aa07",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Bb06",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CONC-Aa01",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CONC-Bb02",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro",
+      "products": 1,
+      "stock_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-0A32FE",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-0F6F71",
+      "products": 1,
+      "stock_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-1EC90B",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-225F77",
+      "products": 1,
+      "stock_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-361C56",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-4F0978",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-4FDD8A",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-54A1AB",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-5CFBD5",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-696E13",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-6B1C25",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-6F651B",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-7CAE71",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-888B89",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-8ABD6F",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-9CE289",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-9DFA94",
+      "products": 1,
+      "stock_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-A1ADA4",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-A7E782",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-AA8BD0",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-AB992B",
+      "products": 1,
+      "stock_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-B3D261",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-B3FBA5",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-D4E310",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-E6AE59",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-F4F183",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-F8F383",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-FEEDCB",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B FULL-Su01",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Ab04",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Ab06",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Fl07",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Fl08",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Tt09",
+      "products": 0,
+      "stock_total": "0"
+    },
+    {
+      "store": "ENERVIDA-VITALLCONS",
+      "products": 157,
+      "stock_total": "2997.5000"
+    },
+    {
+      "store": "Puerto Padre VITALLCONS",
+      "products": 36,
+      "stock_total": "966.1289"
+    },
+    {
+      "store": "TIENDA CENTRAL COSTPRO",
+      "products": 126,
+      "stock_total": "6553.0000"
+    }
+  ],
+  "protected_inventory": [
+    {
+      "store": "E2E PILOT A CLEAN-Aa03",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CLEAN-Aa05",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CLEAN-Aa07",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CLEAN-Bb06",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CONC-Aa01",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CONC-Bb02",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro",
+      "inv_rows": 1,
+      "inv_qty_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-0A32FE",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-0F6F71",
+      "inv_rows": 1,
+      "inv_qty_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-1EC90B",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-225F77",
+      "inv_rows": 1,
+      "inv_qty_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-361C56",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-4F0978",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-4FDD8A",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-54A1AB",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-5CFBD5",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-696E13",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-6B1C25",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-6F651B",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-7CAE71",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-888B89",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-8ABD6F",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-9CE289",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-9DFA94",
+      "inv_rows": 1,
+      "inv_qty_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-A1ADA4",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-A7E782",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-AA8BD0",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-AB992B",
+      "inv_rows": 1,
+      "inv_qty_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-B3D261",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-B3FBA5",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-D4E310",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-E6AE59",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-F4F183",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-F8F383",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-FEEDCB",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A FULL-Su01",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Ab04",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Ab05",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Ab06",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Fl07",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Fl08",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Tt09",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Aa03",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Aa05",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Aa07",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Bb06",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CONC-Aa01",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CONC-Bb02",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro",
+      "inv_rows": 1,
+      "inv_qty_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-0A32FE",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-0F6F71",
+      "inv_rows": 1,
+      "inv_qty_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-1EC90B",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-225F77",
+      "inv_rows": 1,
+      "inv_qty_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-361C56",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-4F0978",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-4FDD8A",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-54A1AB",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-5CFBD5",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-696E13",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-6B1C25",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-6F651B",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-7CAE71",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-888B89",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-8ABD6F",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-9CE289",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-9DFA94",
+      "inv_rows": 1,
+      "inv_qty_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-A1ADA4",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-A7E782",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-AA8BD0",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-AB992B",
+      "inv_rows": 1,
+      "inv_qty_total": "100.0000"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-B3D261",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-B3FBA5",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-D4E310",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-E6AE59",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-F4F183",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-F8F383",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-FEEDCB",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B FULL-Su01",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Ab04",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Ab06",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Fl07",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Fl08",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Tt09",
+      "inv_rows": 0,
+      "inv_qty_total": "0"
+    },
+    {
+      "store": "ENERVIDA-VITALLCONS",
+      "inv_rows": 143,
+      "inv_qty_total": "2997.5000"
+    },
+    {
+      "store": "Puerto Padre VITALLCONS",
+      "inv_rows": 35,
+      "inv_qty_total": "966.1289"
+    },
+    {
+      "store": "TIENDA CENTRAL COSTPRO",
+      "inv_rows": 98,
+      "inv_qty_total": "6427.0000"
+    }
+  ],
+  "protected_memberships": [
+    {
+      "store": "E2E PILOT A CLEAN-Aa03",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CLEAN-Aa05",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CLEAN-Aa07",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CLEAN-Bb06",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CONC-Aa01",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CONC-Bb02",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro",
+      "memberships": 1
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-0A32FE",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-0F6F71",
+      "memberships": 2
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-1EC90B",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-225F77",
+      "memberships": 2
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-361C56",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-4F0978",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-4FDD8A",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-54A1AB",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-5CFBD5",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-696E13",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-6B1C25",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-6F651B",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-7CAE71",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-888B89",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-8ABD6F",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-9CE289",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-9DFA94",
+      "memberships": 2
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-A1ADA4",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-A7E782",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-AA8BD0",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-AB992B",
+      "memberships": 2
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-B3D261",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-B3FBA5",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-D4E310",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-E6AE59",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-F4F183",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-F8F383",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A CostPro E2E-20261004-FEEDCB",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A FULL-Su01",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Ab04",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Ab05",
+      "memberships": 1
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Ab06",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Fl07",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Fl08",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT A SMOKE-Tt09",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Aa03",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Aa05",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Aa07",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CLEAN-Bb06",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CONC-Aa01",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CONC-Bb02",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro",
+      "memberships": 1
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-0A32FE",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-0F6F71",
+      "memberships": 1
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-1EC90B",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-225F77",
+      "memberships": 1
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-361C56",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-4F0978",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-4FDD8A",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-54A1AB",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-5CFBD5",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-696E13",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-6B1C25",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-6F651B",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-7CAE71",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-888B89",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-8ABD6F",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-9CE289",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-9DFA94",
+      "memberships": 1
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-A1ADA4",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-A7E782",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-AA8BD0",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-AB992B",
+      "memberships": 1
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-B3D261",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-B3FBA5",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-D4E310",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-E6AE59",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-F4F183",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-F8F383",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B CostPro E2E-20261004-FEEDCB",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B FULL-Su01",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Ab04",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Ab06",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Fl07",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Fl08",
+      "memberships": 0
+    },
+    {
+      "store": "E2E PILOT B SMOKE-Tt09",
+      "memberships": 0
+    },
+    {
+      "store": "ENERVIDA-VITALLCONS",
+      "memberships": 3
+    },
+    {
+      "store": "Puerto Padre VITALLCONS",
+      "memberships": 3
+    },
+    {
+      "store": "TIENDA CENTRAL COSTPRO",
+      "memberships": 11
+    }
+  ],
+  "shared_admin": [
+    {
+      "id": "051c6157-600b-425e-b8c0-72388bacf541",
+      "email": "admin@costpro.com",
+      "active_store_id": "63baed9c-22c4-4854-ac11-70cde0db56a3",
+      "soft_deleted": false
+    }
+  ],
+  "e2e_residue_counts": [
+    {
+      "e2e_active_stores": 0,
+      "e2e_active_users": 68
+    }
+  ]
+}

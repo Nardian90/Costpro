@@ -1,0 +1,9 @@
+[
+  {
+    "proname": "register_stock_movement",
+    "identity_args": "p_product_id uuid, p_store_id uuid, p_quantity numeric, p_movement_type text, p_reason text, p_user_id uuid, p_variant_id uuid, p_sale_id uuid, p_unit_cost numeric, p_notes text, p_operation_date timestamp with time zone, p_skip_access_check boolean",
+    "arg_names": "p_product_id,p_store_id,p_quantity,p_movement_type,p_reason,p_user_id,p_variant_id,p_sale_id,p_unit_cost,p_notes,p_operation_date,p_skip_access_check",
+    "arg_count": 12,
+    "oid": "133204"
+  }
+]

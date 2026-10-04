@@ -114,6 +114,9 @@ scripts/clean_wallet_db.cjs
 worklog.md
 .zscripts/
 download/
+# E2E-PRODUCT-FIX-ROUND1: la regla download/ (sin slash inicial) también
+# ignoraba la ruta de API autenticada de descarga de reportes (BUG-022)
+!src/app/api/reports/download/
 *.pid
 test-results/
 playwright-report/

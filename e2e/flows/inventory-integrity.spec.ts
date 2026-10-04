@@ -161,15 +161,14 @@ test.describe('Inventario — ajustes e integridad de stock', () => {
     expect(items.length, 'el kardex debe contener los movimientos del spec').toBeGreaterThanOrEqual(4);
   });
 
-  test('E2E-INV-006 (P1) [DEFECT-001] ruta legacy /api/inventory/adjust falla sin corromper estado', async ({ request }) => {
-    // DEFECT-001 (documentado en E2E-COVERAGE-REPORT.md): la ruta legacy
-    // /api/inventory/adjust pasa movementType 'add'|'subtract'|'set' al RPC
-    // register_stock_movement, que lo castea al enum movement_type
-    // ('sale'|'purchase'|'adjustment'|...) → SIEMPRE devuelve 500 en el happy
-    // path. El flujo real de negocio usa la RPC perform_inventory_adjustment
-    // (probada en INV-001..004). La UI moderna nunca llama a esta ruta.
-    // Este test garantiza que el fallo NO corrompe el estado de stock y queda
-    // como regresión hasta que se repare la ruta.
+  test('E2E-INV-006 (P1) [DEFECT-001 REPARADO] ruta /api/inventory/adjust aplica el ajuste vía service-role', async ({ request }) => {
+    // DEFECT-001 (documentado en E2E-COVERAGE-REPORT.md) + ACL REM-INV-6:
+    // la ruta estaba rota por (a) llamada con el client del usuario a una RPC
+    // service_role-only (42501 permission denied → 500) y (b) movementType
+    // 'add'|'subtract'|'set' sin mapear al enum movement_type. Reparada en
+    // E2E-PRODUCT-FIX-ROUND1 (admin client + mapeo 'adjustment' con delta,
+    // p_user_id siempre del JWT). Regresión del contrato reparado: el ajuste
+    // aplica, deja exactamente un movimiento y mantiene la consistencia.
     const before = await getInventory(store.id, product.id);
     const movementsBefore = (await getStockMovements(store.id, product.id)).length;
 
@@ -178,22 +177,29 @@ test.describe('Inventario — ajustes e integridad de stock', () => {
       data: {
         productId: product.id,
         storeId: store.id,
-        quantity: 1,
+        quantity: 4,
         movementType: 'add',
         version: 1,
-        reason: 'Probe DEFECT-001',
+        reason: 'E2E INV-006 reparada',
       },
     });
+    expect(res.status(), 'la ruta reparada debe responder 200').toBe(200);
+    const json = await res.json();
+    expect(num(json.newQuantity), 'la respuesta debe reflejar el nuevo stock').toBe(num(before?.quantity) + 4);
+    expect(json.newVersion, 'la respuesta debe incluir la nueva versión').toBeTruthy();
 
-    // Documentación del comportamiento actual
-    test.info().annotations.push({ type: 'DEFECT-001', description: `POST /api/inventory/adjust (payload válido según su schema) → HTTP ${res.status()}` });
-    expect(res.status(), 'la ruta legada no debe responder 2xx (defecto documentado)').toBeGreaterThanOrEqual(400);
-
-    // La propiedad crítica: sin cambio de estado
+    // Estado persistido: stock incrementado
     const after = await getInventory(store.id, product.id);
-    expect(num(after?.quantity), 'el stock no debe mutar tras el fallo').toBe(num(before?.quantity));
-    const movementsAfter = (await getStockMovements(store.id, product.id)).length;
-    expect(movementsAfter, 'no debe registrarse movimiento espurio').toBe(movementsBefore);
+    expect(num(after?.quantity), 'el stock debe reflejar +4 tras el ajuste vía API').toBe(num(before?.quantity) + 4);
+
+    // Exactamente un movimiento nuevo (+4, tipo adjustment)
+    const movements = await getStockMovements(store.id, product.id);
+    expect(movements.length, 'debe registrarse exactamente un movimiento nuevo').toBe(movementsBefore + 1);
+    const added = movements[movements.length - 1];
+    expect(num(added.quantity_change), 'el movimiento debe ser +4').toBe(4);
+    expect(added.movement_type, 'el tipo debe ser adjustment').toBe('adjustment');
+
+    await assertStockConsistency('INV-006');
   });
 
   test('E2E-INV-007 (P0) clerk sin membership no puede ajustar en tienda ajena → 403', async ({ request }) => {
@@ -242,7 +248,12 @@ test.describe('Inventario — flujo UI', () => {
     await expect(productRow, 'el producto debe aparecer en la tabla de inventario').toBeVisible({ timeout: 45_000 });
 
     // 3. Abrir el modal de ajuste del producto
-    await productRow.locator('[title="Ajustar stock"]').first().click();
+    // 5da9228a2 (fix(ui): stabilize inventory row actions): las acciones de
+    // fila se consolidaron en un menú desplegable — botón "Opciones de
+    // [producto]" (⋮) → ítem "Ajustar stock" (mismos handlers/modal que el
+    // botón directo anterior). El spec se actualiza al contrato de UI vigente.
+    await productRow.getByRole('button', { name: /^Opciones de / }).first().click();
+    await page.getByRole('menuitem', { name: /Ajustar stock/ }).first().click();
     const unitsInput = page.locator('#ajusteUnidades');
     await expect(unitsInput).toBeVisible({ timeout: 15_000 });
 
