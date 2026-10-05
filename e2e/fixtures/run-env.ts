@@ -58,6 +58,13 @@ import { config as loadEnv } from 'dotenv';
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'fs';
 import { randomBytes } from 'crypto';
 import { resolve } from 'path';
+import {
+  hardDeleteTestStore,
+  hardDeleteRunTenantStores,
+  hardDeleteRunUser,
+  deleteRunTenantIfEmpty,
+  sweepResidualsSince,
+} from './hard-cleanup';
 
 loadEnv({ path: './.env' });
 
@@ -471,52 +478,23 @@ export async function provisionRunEnv(): Promise<RunContext> {
 
 // ── Teardown del run (SOLO recursos propios — nunca los de otro runner) ──────
 
-/** Tablas de negocio a limpiar por store del run (best-effort por tabla). */
-const RUN_DATA_TABLES = [
-  'stock_movements',
-  'inventory',
-  'transaction_items',
-  'transactions',
-  'received_services',
-  'store_cost_templates',
-  'receipts',
-  'transfers',
-  'cost_sheets',
-  'products',
-];
-
+/** Teardown del run: HARD delete (E2E DATA HYGIENE) — el criterio es NET ZERO. */
 async function teardownRunStores(context: RunContext): Promise<void> {
+  // 1. Pilotos A/B del run: HARD delete (antes: DELETE API → fallback archive;
+  //    el archive era la causa raíz de la acumulación — 2638 tiendas residuales).
+  // 2. TODAS las tiendas del tenant del run (el tenant es exclusivo de esta
+  //    ejecución): specs crean tiendas adicionales (stores-crud, lifecycle,
+  //    multi-store…) cuyo afterAll puede fallar — se barren por tenant.
+  // 3. El tenant mismo, si quedó vacío.
   const storeIds = [context.pilotStoreA.id, context.pilotStoreB.id];
-  // Datos de negocio de los pilotos del run (service-role, best-effort)
-  for (const table of RUN_DATA_TABLES) {
-    for (const storeId of storeIds) {
-      await svc('DELETE', `/${table}?store_id=eq.${storeId}`).catch(() => {});
-    }
-  }
-  // Memberships del cajero en el piloto A del run
-  await svc('DELETE', `/user_store_memberships?store_id=in.(${storeIds.map((s) => `"${s}"`).join(',')})`)
-    .catch(() => {});
-  // Borrado REAL vía API (sign-in fresco del admin del run); fallback: archivado
-  try {
-    const session = await signInRunUser(context.users.admin.email, context.users.admin.password);
-    for (const storeId of storeIds) {
-      const res = await fetch(`${BASE_URL}/api/stores`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-          'Content-Type': 'application/json',
-          Origin: BASE_URL,
-        },
-        body: JSON.stringify({ storeId }),
-      }).catch(() => null);
-      if (!res || !res.ok) {
-        await svc('PATCH', `/stores?id=eq.${storeId}`, { is_active: false, is_archived: true }).catch(() => {});
-      }
-    }
-  } catch {
-    for (const storeId of storeIds) {
+  for (const storeId of storeIds) {
+    await hardDeleteTestStore(storeId).catch(async () => {
+      // respaldo legacy: archivar (solo si el hard delete falla)
       await svc('PATCH', `/stores?id=eq.${storeId}`, { is_active: false, is_archived: true }).catch(() => {});
-    }
+    });
+  }
+  if (context.tenantId) {
+    await hardDeleteRunTenantStores(context.tenantId).catch(() => {});
   }
 }
 
@@ -538,29 +516,29 @@ export async function teardownRunEnv(contextPath = runContextPath()): Promise<vo
 
   await teardownRunStores(context);
 
-  // Usuarios del run: revocar sesiones + desactivar (soft delete de la app)
+  // Usuarios del run: HARD delete (E2E DATA HYGIENE — antes solo ban +
+  // soft-delete de profile, acumulando identidades Auth permanentes).
   for (const user of [context.users.admin, context.users.cajero, context.users.almacen, context.users.encargado]) {
     // signOut (revoca refresh tokens de ESTE usuario únicamente)
     await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${user.id}/sign_out`, {
       method: 'POST',
       headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
     }).catch(() => {});
-    // Ban (mismo contrato que /api/users/delete: 10 años)
-    await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
-      method: 'PUT',
-      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ban_duration: '87600h' }),
-    }).catch(() => {});
-    // Desactivar SIN tocar active_store_id: el trigger validate_active_store
-    // (20260715) rechaza active_store_id→NULL para roles
-    // encargado/clerk/warehouse (ERR_STORE_REQUIRED) — la propia app tampoco
-    // lo toca en managed_soft_delete_user. Semántica idéntica a la app:
-    // deleted_at + reason + is_active=false (profiles NO admite hard delete).
-    await patchProfile(user.id, {
-      is_active: false,
-      deleted_at: new Date().toISOString(),
-      deletion_reason: 'E2E run teardown (E2E-RUNNER-ISOLATION)',
-    }).catch(() => {});
+    // HARD delete: profile + identidad Auth vía GoTrue Admin API
+    await hardDeleteRunUser(user.id).catch(() => {});
+  }
+
+  // Tenant del run: eliminarlo si quedó vacío (NET ZERO)
+  await deleteRunTenantIfEmpty(context.tenantId).catch(() => {});
+
+  // Barrido residual (FASE 14): specs que crearon entidades como el admin
+  // compartido (T0) o usuarios attacker — por ventana temporal del run.
+  const swept = await sweepResidualsSince(
+    context.createdAt,
+    [context.users.admin.id, context.users.cajero.id, context.users.almacen.id, context.users.encargado.id],
+  ).catch(() => ({ stores: 0, users: 0 }));
+  if (swept.stores || swept.users) {
+    console.log(`[run-env] Barrido residual del run: ${swept.stores} tiendas, ${swept.users} usuarios`);
   }
 
   try {
@@ -568,7 +546,7 @@ export async function teardownRunEnv(contextPath = runContextPath()): Promise<vo
   } catch { /* ya eliminado */ }
 
   console.log(
-    `[run-env] Teardown del run ${context.runId} completado — stores propias archivadas, ` +
-    `datos de negocio eliminados, ${Object.keys(context.users).length} usuarios desactivados.`,
+    `[run-env] Teardown del run ${context.runId} completado — stores del run HARD-deleted, ` +
+    `usuarios del run eliminados de Auth (net zero).`,
   );
 }

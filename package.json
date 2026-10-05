@@ -24,7 +24,10 @@
     "test:coverage:ci": "vitest run --coverage --reporter=json",
     "test:e2e": "playwright test",
     "test:e2e:isolation-proof": "node e2e/scripts/concurrency-proof.cjs",
-    "test:security": "node scripts/security-contract-test.cjs"
+    "test:security": "node scripts/security-contract-test.cjs",
+    "test:e2e:hygiene": "node e2e/scripts/data-hygiene-guard.cjs",
+    "test:e2e:hygiene-before": "node e2e/scripts/data-hygiene-guard.cjs --before",
+    "test:e2e:probe": "playwright test e2e/data-hygiene-probe.spec.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.2",

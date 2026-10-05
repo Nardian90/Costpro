@@ -22,6 +22,7 @@
 import { type Page } from '@playwright/test';
 import { PILOT_A_NAME, PILOT_B_NAME } from './pilot-env';
 import { getRunId, getRunTenantId } from './run-env';
+import { hardDeleteTestStore } from './hard-cleanup';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -376,7 +377,15 @@ export async function sweepStaleTestStores(): Promise<void> {
   const tenantScope = getRunTenantId() ? `&tenant_id=eq.${getRunTenantId()}` : '';
   const patterns = ['E2E80*', 'E2E *', 'ESEC TEST*', 'FASE-D TEST*', 'AUDIT *', 'HOT *', 'REM-F4*', 'E2E2-*'];
   for (const pat of patterns) {
-    await sb.update('stores', `name=like.${pat.replace(/ /g, '%20')}${tenantScope}&created_at=lt.${tenMinAgo}${pilotGuard}`, { is_active: false, is_archived: true }).catch(() => {});
+    // E2E DATA HYGIENE: el sweep anterior ARCHIVABA (la semántica que causó
+    // 2600+ residuos). Ahora hace HARD delete de las tiendas de prueba
+    // huérfanas (>10 min) — liberan cuota REAL y no permanecen como filas.
+    const rows = await sb
+      .select<{ id: string; name: string }>('stores', `select=id,name&name=like.${pat.replace(/ /g, '%20')}${tenantScope}&created_at=lt.${tenMinAgo}${pilotGuard}&limit=50`)
+      .catch(() => [] as Array<{ id: string; name: string }>);
+    for (const r of rows) {
+      await hardDeleteTestStore(r.id).catch(() => {});
+    }
   }
 }
 
@@ -423,8 +432,10 @@ export async function freeActiveTestQuota(
       return true;
     });
     if (toArchive.length === 0) return 0;
-    const idList = toArchive.map((r) => `"${r.id}"`).join(',');
-    await sb.update('stores', `id=in.(${idList})`, { is_active: false, is_archived: true });
+    // E2E DATA HYGIENE: hard delete (antes archivaba — residuos permanentes)
+    for (const r of toArchive) {
+      await hardDeleteTestStore(r.id).catch(() => {});
+    }
     return toArchive.length;
   } catch {
     // best-effort: si falla, la creación reportará el 403 real
@@ -433,13 +444,15 @@ export async function freeActiveTestQuota(
 }
 
 /**
- * SEC-TS-10 (FIXTURE): soft-delete robusto de la tienda de prueba.
- * Intenta el flujo REAL (DELETE /api/stores → RPC soft_delete_store).
- * Si la API rechaza por rate-limit (429) u otro error transitorio, cae a
- * archivado directo por service key (is_active=false + is_archived=true) —
- * MISMA semántica que el sweep de higiene de createTestStore — para
- * garantizar que la tienda de prueba nunca quede ACTIVA y agote la cuota
- * del plan de stores activas. Nunca lanza (es cleanup best-effort).
+ * SEC-TS-10 (FIXTURE): cleanup de la tienda de prueba.
+ * 1. Intenta el flujo REAL (DELETE /api/stores → RPC soft_delete_store) para
+ *    seguir ejercitando el contrato de la API en el happy path.
+ * 2. E2E DATA HYGIENE: después verifica si la fila sigue existiendo — la app
+ *    hace SOFT delete (archive), lo que durante meses acumuló 2600+ tiendas
+ *    residuales. Si la tienda sigue presente (soft-deleted, 429, o fallback),
+ *    ejecuta HARD delete vía e2e_hard_delete_store (service-role) para que
+ *    el criterio sea NET ZERO: una entidad temporal no permanece.
+ * Nunca lanza (es cleanup best-effort; el guardrail del teardown audita).
  */
 export async function deleteTestStore(
   request: import('@playwright/test').APIRequestContext,
@@ -450,14 +463,18 @@ export async function deleteTestStore(
   const res = await request
     .delete('/api/stores', { headers: apiHeaders(adminToken), data: { storeId } })
     .catch(() => null);
-  if (!res || !res.ok()) {
-    // Fallback (SEC-TS-10): archivado directo, idéntico al sweep de higiene.
-    // Libera la cuota activa sin debilitar ningún control de la API: el
-    // endpoint real sigue siendo el camino ejercitado en el happy path.
-    await sb
-      .update('stores', `id=eq.${storeId}`, { is_active: false, is_archived: true })
-      .catch(() => {});
+  if (res && res.ok()) {
+    // Verificar ausencia real (el endpoint de la app es soft-delete)
+    try {
+      const rows = await sb.select('stores', `select=id&id=eq.${storeId}&limit=1`);
+      if (rows.length === 0) return; // ya no existe (hard delete efectivo)
+    } catch {
+      return; // no se pudo verificar — el guardrail final audita
+    }
   }
+  // HARD delete de la tienda de prueba (fallback anterior era archivar —
+  // esa semántica es la causa raíz de la contaminación auditada).
+  await hardDeleteTestStore(storeId).catch(() => {});
 }
 
 export interface SeededProduct {
