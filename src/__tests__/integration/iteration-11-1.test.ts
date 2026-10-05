@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { readFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 const MIGRATIONS_DIR = join(process.cwd(), 'supabase', 'migrations');
@@ -331,23 +331,18 @@ describe('PT-11.1.12 — M-16: transfer_status REVERSADA', () => {
 // ============================================================================
 // PT-11.1.13 — Feature flag USE_V2_CHECKOUT
 // ============================================================================
-describe('PT-11.1.13 — Feature flag USE_V2_CHECKOUT', () => {
-  it('src/config/features.ts existe y exporta FEATURES', () => {
-    const src = readFileSync(
-      join(process.cwd(), 'src', 'config', 'features.ts'),
-      'utf-8'
-    );
-    expect(src).toContain('USE_V2_CHECKOUT');
-    expect(src).toContain('false');
+describe('PT-11.1.13 — FINALIZE-V2: flag USE_V2_CHECKOUT eliminado', () => {
+  // El flag de migración fue retirado: create_sale_v2 es el único camino de
+  // venta y la función V1 fue dropeada de la base (migración 20261005140000).
+  it('src/config/features.ts fue eliminado del producto', () => {
+    expect(existsSync(join(process.cwd(), 'src', 'config', 'features.ts'))).toBe(false);
   });
-
-  it('USE_V2_CHECKOUT default es false (no activo en 11.1)', () => {
-    const src = readFileSync(
-      join(process.cwd(), 'src', 'config', 'features.ts'),
+  it('ningún archivo de producción referencia NEXT_PUBLIC_USE_V2_CHECKOUT', () => {
+    const checkoutRoute = readFileSync(
+      join(process.cwd(), 'src', 'app', 'api', 'pos', 'checkout', 'route.ts'),
       'utf-8'
     );
-    // Debe default a false a menos que NEXT_PUBLIC_USE_V2_CHECKOUT=true
-    expect(src).toContain("process.env.NEXT_PUBLIC_USE_V2_CHECKOUT === 'true' || false");
+    expect(checkoutRoute).not.toContain('NEXT_PUBLIC_USE_V2_CHECKOUT');
   });
 });
 

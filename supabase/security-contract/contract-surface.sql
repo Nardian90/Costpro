@@ -270,7 +270,7 @@ CREATE OR REPLACE FUNCTION public.adjust_total_amount(p_transaction_id uuid, p_n
 AS $function$
 DECLARE v_actor uuid; v_old_total numeric; v_store_id uuid; v_paid_total numeric; v_lock_key bigint;
 BEGIN
-  v_actor := auth.uid();
+  v_actor := public.app_actor_uid();
   IF v_actor IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHENTICATED' USING ERRCODE = 'PT014'; END IF;
   IF NOT public.is_admin() THEN RAISE EXCEPTION 'ERR_UNAUTHORIZED' USING ERRCODE = 'PT015'; END IF;
   IF p_reason IS NULL OR btrim(p_reason) = '' THEN RAISE EXCEPTION 'ERR_REASON_REQUIRED' USING ERRCODE = 'PT013'; END IF;
@@ -289,11 +289,12 @@ BEGIN
   END IF;
   UPDATE public.transactions SET total_amount = p_new_total WHERE id = p_transaction_id;
   INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
-  VALUES ('ADJUST_TOTAL_AMOUNT', 'transactions', p_transaction_id, v_store_id, v_actor,
-    jsonb_build_object('old_total', v_old_total, 'new_total', p_new_total, 'reason', p_reason, 'paid_total_at_time', v_paid_total, 'executed_as', current_user, 'session_user', session_user, 'auth_uid', v_actor));
+    VALUES ('ADJUST_TOTAL_AMOUNT', 'transactions', p_transaction_id, v_store_id, v_actor,
+      jsonb_build_object('old_total', v_old_total, 'new_total', p_new_total, 'reason', p_reason, 'paid_total_at_time', v_paid_total, 'executed_as', current_user, 'session_user', session_user, 'auth_uid', v_actor));
   RETURN true;
 END;
 $function$
+
 
 
 -- @contract-function name=apply_physical_count args="p_count_id uuid, p_user_id uuid, p_apply_zero_diffs boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
@@ -2187,114 +2188,8 @@ BEGIN
 END $function$
 
 
--- @contract-function name=create_devolution args="p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_currency text, p_exchange_rate numeric" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-  v_devolution_id uuid := gen_random_uuid();
-  v_item jsonb;
-  v_pid uuid;
-  v_qty numeric;
-  v_price numeric;
-  v_devolution_cost numeric;
-  v_total numeric := 0;
-  v_dev_number text;
-BEGIN
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  v_dev_number := public.next_document_number(p_store_id, 'credit_note', v_caller_uid);
-
-  INSERT INTO public.devolutions (
-    id, store_id, original_transaction_id, devolution_number, reason, total_amount,
-    currency, payment_method, status, customer_id, customer_name, notes, processed_by, created_at
-  ) VALUES (
-    v_devolution_id, p_store_id, p_original_transaction_id, v_dev_number, p_reason, 0,
-    COALESCE(p_currency, 'CUP'), COALESCE(p_payment_method, 'cash'), 'completed', p_customer_id, p_customer_name, p_notes, v_caller_uid, NOW()
-  );
-
-  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
-    v_pid := (v_item->>'product_id')::uuid;
-    v_qty := (v_item->>'quantity')::numeric;
-    v_price := COALESCE((v_item->>'unit_price')::numeric, (v_item->>'price')::numeric, 0);
-
-    INSERT INTO public.devolution_items (devolution_id, product_id, quantity, unit_price, total, reason)
-    VALUES (v_devolution_id, v_pid, v_qty, v_price, v_qty * v_price, COALESCE(v_item->>'reason', p_reason));
-
-    v_total := v_total + (v_qty * v_price);
-
-    v_devolution_cost := NULL;
-    IF p_original_transaction_id IS NOT NULL THEN
-      SELECT cost_at_sale INTO v_devolution_cost
-      FROM public.transaction_items
-      WHERE transaction_id = p_original_transaction_id AND product_id = v_pid LIMIT 1;
-    END IF;
-    IF v_devolution_cost IS NULL THEN
-      SELECT cost_average INTO v_devolution_cost FROM public.products WHERE id = v_pid;
-    END IF;
-    v_devolution_cost := COALESCE(v_devolution_cost, 0);
-
-    -- DF-01: entrada de stock A1 NEUTRA — SIN blend WAC (antes: blend propio L75-85 = defecto)
-    PERFORM public.register_stock_movement(
-      p_product_id := v_pid, p_store_id := p_store_id, p_user_id := v_caller_uid,
-      p_quantity := v_qty, p_movement_type := 'return',
-      p_sale_id := v_devolution_id, p_unit_cost := v_devolution_cost,
-      p_reason := ('Devolución: ' || COALESCE(p_reason, ''))::text,
-      p_operation_date := NOW(), p_skip_access_check := TRUE
-    );
-  END LOOP;
-
-  UPDATE public.devolutions SET total_amount = v_total WHERE id = v_devolution_id;
-
-  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
-  VALUES (v_caller_uid, p_store_id, 'DEVOLUTION_CREATED', 'devolutions', v_devolution_id,
-    jsonb_build_object('devolution_number', v_dev_number, 'original_transaction_id', p_original_transaction_id,
-      'total_amount', v_total, 'items_count', jsonb_array_length(p_items), 'wac_neutral_a1', true));
-
-  RETURN jsonb_build_object('status','success','devolution_id',v_devolution_id,
-    'devolution_number',v_dev_number,'total_amount',v_total);
-END $function$
 
 
--- @contract-function name=create_devolution args="p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid DEFAULT NULL::uuid, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE v_devolution_id UUID; v_dev_number TEXT; v_item JSONB; v_total NUMERIC := 0;
-    v_pid UUID; v_qty NUMERIC; v_price NUMERIC; v_item_total NUMERIC;
-    v_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-    IF NOT public.has_store_access_as(v_uid, p_store_id) THEN RAISE EXCEPTION 'ERR_UNAUTHORIZED'; END IF;
-    v_dev_number := 'DEV-' || EXTRACT(YEAR FROM now())::TEXT || '-' || LPAD((EXTRACT(EPOCH FROM now())::BIGINT % 1000000)::TEXT, 6, '0');
-    FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
-        v_qty := (v_item->>'quantity')::NUMERIC; v_price := (v_item->>'unit_price')::NUMERIC;
-        v_total := v_total + (v_qty * v_price);
-    END LOOP;
-    INSERT INTO public.devolutions (store_id, original_transaction_id, devolution_number, reason, total_amount, currency, payment_method, status, customer_id, customer_name, notes, processed_by)
-    VALUES (p_store_id, p_original_transaction_id, v_dev_number, p_reason, v_total, 'CUP', p_payment_method, 'completed', p_customer_id, p_customer_name, p_notes, v_uid)
-    RETURNING id INTO v_devolution_id;
-    FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
-        v_pid := (v_item->>'product_id')::UUID; v_qty := (v_item->>'quantity')::NUMERIC;
-        v_price := (v_item->>'unit_price')::NUMERIC; v_item_total := v_qty * v_price;
-        INSERT INTO public.devolution_items (devolution_id, product_id, quantity, unit_price, total, reason)
-        VALUES (v_devolution_id, v_pid, v_qty, v_price, v_item_total, v_item->>'reason');
-        UPDATE public.products SET stock_current = stock_current + v_qty WHERE id = v_pid;
-        INSERT INTO public.kardex_entries (store_id, product_id, movement_type, quantity, unit_cost, total_value, balance_quantity, balance_unit_cost, balance_total_value, reference_type, reference_id, reference_description, created_by)
-        SELECT p_store_id, v_pid, 'devolution_in', v_qty, v_price, v_item_total, stock_current, cost_average, stock_current * cost_average, 'devolution', v_devolution_id, 'Devolucion ' || v_dev_number, v_uid
-        FROM public.products WHERE id = v_pid;
-    END LOOP;
-    RETURN jsonb_build_object('status', 'success', 'devolution_id', v_devolution_id, 'devolution_number', v_dev_number, 'total', v_total);
-END;
-$function$
 
 
 -- @contract-function name=create_devolution_v2 args="p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
@@ -2928,110 +2823,9 @@ END;
 $function$
 
 
--- @contract-function name=create_sale args="p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric, p_discount_type text, p_discount_value numeric, p_payment_method text, p_tax_amount numeric, p_applied_taxes jsonb, p_transaction_id uuid, p_operation_date timestamp with time zone, p_cash_amount numeric, p_transfer_amount numeric, p_idempotency_key text, p_sale_currency text, p_sale_exchange_rate numeric, p_zelle_amount numeric, p_warehouse_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_sale(p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric DEFAULT 0, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_payment_method text DEFAULT 'cash'::text, p_tax_amount numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_transaction_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_idempotency_key text DEFAULT NULL::text, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_zelle_amount numeric DEFAULT 0, p_warehouse_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  v_tx_id uuid := COALESCE(p_transaction_id, gen_random_uuid());
-  v_eff timestamp with time zone := COALESCE(p_operation_date, NOW());
-  v_item jsonb; v_pid uuid; v_qty numeric; v_price numeric; v_cost numeric;
-  v_variant_id uuid;
-  v_conversion_factor integer := 1;
-  v_units_to_deduct numeric;
-  v_existing uuid;
-  v_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-  v_effective_method text := p_payment_method;
-  v_product_price numeric;
-BEGIN
-  -- Idempotencia
-  IF p_idempotency_key IS NOT NULL THEN
-    SELECT id INTO v_existing FROM public.transactions WHERE idempotency_key = p_idempotency_key AND store_id = p_store_id LIMIT 1;
-    IF v_existing IS NOT NULL THEN RETURN jsonb_build_object('status','idempotent','transaction_id',v_existing); END IF;
-  END IF;
-
-  IF v_uid IS NULL OR NOT public.has_store_access_as(v_uid, p_store_id) THEN
-    RAISE EXCEPTION 'Unauthorized';
-  END IF;
-
-  -- FIX H-2 (Iteración 11.1): Validar operation_date (forward-only locking).
-  -- validate_operation_date usa pg_advisory_xact_lock(hashtext(store_id))
-  -- para serializar la validación por tienda. Si p_operation_date es anterior
-  -- al MAX(created_at) de la tienda, lanza ERR_BACKDATED_DOCUMENT.
-  -- Solo validar si p_operation_date fue proporcionado explícitamente.
-  IF p_operation_date IS NOT NULL THEN
-    PERFORM public.validate_operation_date(p_operation_date, p_store_id);
-  END IF;
-
-  IF p_cash_amount > 0 AND p_transfer_amount > 0 AND p_payment_method <> 'mixed' THEN
-    v_effective_method := 'mixed';
-  END IF;
-
-  INSERT INTO public.transactions (
-    id, store_id, seller_id, total_amount, status, payment_method,
-    discount_type, discount_value, subtotal, tax_amount, applied_taxes,
-    sale_currency, sale_exchange_rate, completed_at, idempotency_key, created_at,
-    cash_amount, transfer_amount, zelle_amount
-  ) VALUES (
-    v_tx_id, p_store_id, p_seller_id, p_total_amount, 'completed',
-    v_effective_method::public.payment_method_enum,
-    p_discount_type::public.discount_type_enum, p_discount_value, p_subtotal, p_tax_amount, p_applied_taxes,
-    p_sale_currency, p_sale_exchange_rate, v_eff, p_idempotency_key, v_eff,
-    p_cash_amount, p_transfer_amount, p_zelle_amount
-  );
-
-  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
-    v_pid := (v_item->>'product_id')::uuid;
-    v_qty := (v_item->>'quantity')::numeric;
-    v_variant_id := NULLIF(v_item->>'variant_id', '')::uuid;
-
-    v_price := NULLIF(v_item->>'price_at_sale', '')::numeric;
-    IF v_price IS NULL THEN
-      v_price := NULLIF(v_item->>'price', '')::numeric;
-    END IF;
-    IF v_price IS NULL THEN
-      SELECT price INTO v_product_price FROM public.products WHERE id = v_pid;
-      v_price := COALESCE(v_product_price, 0);
-    END IF;
-
-    v_cost := COALESCE((v_item->>'cost_at_sale')::numeric, (v_item->>'cost')::numeric, 0);
-
-    v_conversion_factor := 1;
-    IF v_variant_id IS NOT NULL THEN
-      SELECT conversion_factor INTO v_conversion_factor
-        FROM public.product_variants WHERE id = v_variant_id;
-      v_conversion_factor := COALESCE(v_conversion_factor, 1);
-    END IF;
-
-    v_units_to_deduct := v_qty * v_conversion_factor;
-
-    PERFORM public.register_stock_movement(
-      p_product_id := v_pid, p_store_id := p_store_id, p_user_id := v_uid,
-      p_quantity := -v_units_to_deduct, p_movement_type := 'sale', p_reason := 'Venta POS',
-      p_sale_id := v_tx_id, p_unit_cost := v_cost, p_notes := NULL,
-      p_operation_date := v_eff, p_skip_access_check := TRUE
-    );
-
-    INSERT INTO public.transaction_items (transaction_id, product_id, variant_id, quantity, price_at_sale, cost_at_sale, created_at)
-    VALUES (v_tx_id, v_pid, v_variant_id, v_qty, v_price, v_cost, v_eff);
-  END LOOP;
-
-  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
-  VALUES ('CREATE_SALE', 'transactions', v_tx_id, p_store_id, v_uid,
-    jsonb_build_object('total_amount', p_total_amount, 'payment_method', v_effective_method,
-      'cash_amount', p_cash_amount, 'transfer_amount', p_transfer_amount,
-      'currency', p_sale_currency, 'exchange_rate', p_sale_exchange_rate,
-      'item_count', jsonb_array_length(p_items)));
-
-  RETURN jsonb_build_object('status','success','transaction_id',v_tx_id);
-END;
-$function$
 
 
--- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text" owner=postgres proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+-- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3086,30 +2880,128 @@ DECLARE
   v_snap jsonb;
   v_scope_entry jsonb;
   v_scope_ok boolean := false;
+  -- H0-R §6: resolución server-side de la tasa efectiva (D-EXR-01 / D-EXR-02)
+  v_server_rate numeric;
+  v_rate_source text;
+  v_rate_effective_date timestamptz;
+  v_client_rate numeric := p_sale_exchange_rate;  -- propuesta cliente: SOLO auditoría/UX (§6.2)
+  -- H0-R §5.4: impuestos validados y reconstruidos desde tax_configurations
+  v_applied_taxes_canonical jsonb := '[]'::jsonb;
+  v_tax_entry jsonb;
+  v_tc record;
+  v_tax_ids text[] := '{}';
+  -- H0-R §7: identidad de idempotencia (param_hash exhaustivo, patrón V2.26)
+  v_param_hash text;
+  v_idem_result jsonb;
+  v_idem_hash text;
 BEGIN
-  -- 1. Advisory lock por store (serializa ventas concurrentes)
+  -- 1. Advisory lock por store (serializa ventas concurrentes) — sin cambio
   PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
 
-  -- 2. Idempotencia
-  IF p_idempotency_key IS NOT NULL THEN
-    SELECT id INTO v_existing FROM public.transactions
-      WHERE idempotency_key = p_idempotency_key AND store_id = p_store_id LIMIT 1;
-    IF v_existing IS NOT NULL THEN
-      RETURN jsonb_build_object('status','idempotent','transaction_id',v_existing);
-    END IF;
-  END IF;
-
-  -- 3. Auth
+  -- 2. AUTH (§3.1 paso 2 — ANTES de idempotencia; cierra el oráculo de claves)
   IF v_uid IS NULL OR NOT public.has_store_access_as(v_uid, p_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
-  -- 4. Operation date validation
+  -- 3. SELLER BINDING (§4 — Opción B): p_seller_id == actor autenticado, sin
+  --    excepciones. El rechazo es temprano y determinista (transactions.seller_id
+  --    es NOT NULL: el NULL explícito hoy fallaba tarde, en el INSERT).
+  IF p_seller_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_SELLER_REQUIRED: p_seller_id es obligatorio y debe coincidir con el actor autenticado';
+  END IF;
+  IF p_seller_id IS DISTINCT FROM v_uid THEN
+    RAISE EXCEPTION 'ERR_SELLER_MISMATCH: p_seller_id=% no coincide con el actor autenticado=%', p_seller_id, v_uid;
+  END IF;
+
+  -- 4. Operation date validation — sin cambio
   IF p_operation_date IS NOT NULL THEN
     PERFORM public.validate_operation_date(p_operation_date, p_store_id);
   END IF;
 
-  -- 5. Auto-promote to mixed
+  -- 5. IDEMPOTENCIA (§7 — DESPUÉS de auth/seller; identidad = clave + actor +
+  --    tienda + param_hash exhaustivo). El registro idempotency_registry
+  --    (patrón V2.26, UNIQUE (key, operation)) da la semántica de precedencia:
+  --    la misma identidad → MISMA transacción; identidad distinta con la misma
+  --    clave → conflicto limpio SIN fuga de transaction_id (fail-closed).
+  IF p_idempotency_key IS NOT NULL THEN
+    -- §7.2: campos del hash (orden determinista; lo que el cliente ENVÍA)
+    v_param_hash := md5(
+      'store=' || COALESCE(p_store_id::text, '') ||
+      '|actor=' || COALESCE(v_uid::text, '') ||
+      '|items=' || COALESCE((
+        SELECT string_agg(
+          COALESCE(t.value->>'product_id', '') || ':' ||
+          COALESCE(t.value->>'variant_id', '') || ':' ||
+          COALESCE(t.value->>'quantity', '') || ':' ||
+          COALESCE(NULLIF(t.value->>'price_at_sale', ''), t.value->>'price', ''),
+          ',' ORDER BY t.value->>'product_id', t.ord)
+        FROM jsonb_array_elements(COALESCE(p_items, '[]'::jsonb)) WITH ORDINALITY AS t(value, ord)
+      ), '') ||
+      '|payment_method=' || COALESCE(p_payment_method, '') ||
+      '|cash=' || COALESCE(p_cash_amount::text, '') ||
+      '|transfer=' || COALESCE(p_transfer_amount::text, '') ||
+      '|zelle=' || COALESCE(p_zelle_amount::text, '') ||
+      '|discount_type=' || COALESCE(p_discount_type, '') ||
+      '|discount_value=' || COALESCE(p_discount_value::text, '') ||
+      '|applied_taxes=' || COALESCE(p_applied_taxes::text, '') ||
+      '|sale_currency=' || COALESCE(p_sale_currency, '') ||
+      '|sale_exchange_rate=' || COALESCE(p_sale_exchange_rate::text, '') ||
+      '|customer_id=' || COALESCE(p_customer_id::text, '') ||
+      '|customer_name=' || COALESCE(p_customer_name, '') ||
+      '|operation_date=' || COALESCE(NULLIF(FLOOR(EXTRACT(EPOCH FROM p_operation_date))::text, ''), '') ||
+      '|total_amount=' || COALESCE(p_total_amount::text, '') ||
+      '|subtotal=' || COALESCE(p_subtotal::text, '') ||
+      '|tax_amount=' || COALESCE(p_tax_amount::text, '')
+    );
+
+    INSERT INTO public.idempotency_registry (idempotency_key, operation, record_id, param_hash, result)
+    VALUES (p_idempotency_key, 'create_sale_v2', v_tx_id, v_param_hash,
+            jsonb_build_object('status', 'pending'))
+    ON CONFLICT (idempotency_key, operation) DO NOTHING;
+
+    IF NOT FOUND THEN
+      -- Registro preexistente: verificar identidad completa
+      SELECT result, param_hash INTO v_idem_result, v_idem_hash
+        FROM public.idempotency_registry
+        WHERE idempotency_key = p_idempotency_key AND operation = 'create_sale_v2'
+        LIMIT 1;
+
+      IF v_idem_hash IS DISTINCT FROM v_param_hash THEN
+        -- §7.1: misma clave + payload/actor/tienda distinto → conflicto SIN
+        -- transaction_id (jamás retorno silencioso de la venta previa)
+        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE: idempotency conflict — la clave % ya está ligada a otra identidad de venta (payload/actor/tienda)', p_idempotency_key;
+      END IF;
+
+      -- Misma identidad → MISMA transacción (0 duplicados)
+      SELECT id INTO v_existing FROM public.transactions
+        WHERE idempotency_key = p_idempotency_key AND store_id = p_store_id LIMIT 1;
+      IF v_existing IS NOT NULL THEN
+        RETURN jsonb_build_object('status','idempotent','transaction_id',v_existing);
+      END IF;
+
+      -- Hash coincide pero la transacción no aparece (creación concurrente en
+      -- curso en otra sesión): esperar brevemente y reintentar la lectura.
+      PERFORM pg_sleep(0.1);
+      SELECT id INTO v_existing FROM public.transactions
+        WHERE idempotency_key = p_idempotency_key AND store_id = p_store_id LIMIT 1;
+      IF v_existing IS NOT NULL THEN
+        RETURN jsonb_build_object('status','idempotent','transaction_id',v_existing);
+      END IF;
+      RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE: idempotency conflict — operación previa con la clave % aún en curso', p_idempotency_key;
+    ELSE
+      -- Registro recién insertado por esta llamada. Compatibilidad con
+      -- transacciones pre-hardening creadas sin registro de identidad: si la
+      -- clave ya existe en transactions (índice único global), rechazo limpio
+      -- fail-closed en lugar de chocar el índice con un 500 con fuga (§7.3).
+      SELECT id INTO v_existing FROM public.transactions
+        WHERE idempotency_key = p_idempotency_key AND store_id = p_store_id LIMIT 1;
+      IF v_existing IS NOT NULL THEN
+        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE: idempotency conflict — la clave % pertenece a una venta previa sin registro de identidad; utilice una clave nueva', p_idempotency_key;
+      END IF;
+    END IF;
+  END IF;
+
+  -- 6. Auto-promote to mixed — sin cambio
   IF p_cash_amount > 0 AND p_transfer_amount > 0 AND p_payment_method <> 'mixed' THEN
     v_effective_method := 'mixed';
   END IF;
@@ -3120,16 +3012,14 @@ BEGIN
     v_zelle_amt := p_total_amount;
   END IF;
 
-  -- E-SEC-FINAL (D2): normalización del motivo; la OBLIGATORIEDAD se evalúa
-  -- solo cuando el gate dispara (nada se exige bajo el umbral).
+  -- E-SEC-FINAL (D2): normalización del motivo (obligatoriedad solo si el gate dispara)
   v_reason := btrim(COALESCE(p_discount_reason, ''));
   IF char_length(v_reason) > 500 THEN
     RAISE EXCEPTION 'ERR_DISCOUNT_REASON_INVALID: max 500 caracteres';
   END IF;
 
-  -- 6. Primera pasada — orden determinista por product_id (doctrina W62-05 §2.3):
+  -- 7. Primera pasada — orden determinista por product_id (doctrina W62-05 §2.3):
   --    FOR UPDATE de la fila del producto (serializa stock+WAC) + validaciones.
-  --    WITH ORDINALITY: posición determinista de cada línea (clave del snapshot D4).
   FOR v_item, v_ord IN SELECT t.value, t.ord
       FROM jsonb_array_elements(p_items) WITH ORDINALITY AS t(value, ord)
       ORDER BY (t.value->>'product_id') LOOP
@@ -3187,25 +3077,17 @@ BEGIN
     -- DF-02: claves cost_at_sale/cost del request IGNORADAS (no error)
     v_cost := v_wac_prev;
 
-    -- E-SEC (R-SEC-1): precio inválido rechazado EN EL SERVIDOR (defensa contra
-    -- llamadas RPC directas que saltan la validación Zod del route). NaN se
-    -- detecta por auto-desigualdad; ±Infinity por comparación explícita
-    -- (numeric acepta ambos literales); negativo rechazado siempre. Cero NO se
-    -- rechaza aquí: es 100% de desvío y cae al gate de supervisor.
+    -- E-SEC (R-SEC-1): precio inválido rechazado EN EL SERVIDOR
     IF v_price IS NULL OR v_price <> v_price
        OR v_price >= 'Infinity'::numeric OR v_price <= '-Infinity'::numeric
        OR v_price < 0 THEN
       RAISE EXCEPTION 'ERR_INVALID_PRICE: price_at_sale=% product=%', v_price, v_pid;
     END IF;
 
-    -- E-SEC-FINAL (D5): precio monetario de línea → 2 decimales. Todo el
-    -- cálculo (desvío, subtotal, INSERT) usa el valor redondeado.
+    -- E-SEC-FINAL (D5): precio monetario de línea → 2 decimales
     v_price := ROUND(v_price, 2);
 
-    -- E-SEC (R-SEC-1): precio de referencia del SERVIDOR para evaluar el desvío.
-    -- Variante → product_variants.price (precio por modalidad es legítimo y NO
-    -- se computa como desvío); base → products.price. Sin referencia (NULL/0)
-    -- no hay desvío evaluable (compatibilidad con servicios sin precio).
+    -- E-SEC (R-SEC-1): precio de referencia del SERVIDOR para evaluar el desvío
     IF v_variant_id IS NOT NULL THEN
       SELECT price INTO v_reference_price
         FROM public.product_variants WHERE id = v_variant_id;
@@ -3214,7 +3096,6 @@ BEGIN
       v_reference_price := v_catalog_price;
     END IF;
 
-    -- E-SEC-FINAL (D5): el precio de catálogo de referencia también es monetario (2dp)
     IF v_reference_price IS NOT NULL THEN
       v_reference_price := ROUND(v_reference_price, 2);
     END IF;
@@ -3227,13 +3108,9 @@ BEGIN
           + ((v_reference_price - v_price) * v_qty);
         v_line_pct := ((v_reference_price - v_price) / v_reference_price) * 100;
       END IF;
-      -- E-SEC-FINAL (D1): umbral POR LÍNEA — ninguna línea queda exenta por los
-      -- precios normales de otras líneas; el máximo de desvío gobierna el gate.
       IF v_line_pct > v_max_line_pct THEN
         v_max_line_pct := v_line_pct;
       END IF;
-      -- E-SEC-FINAL (D4): snapshot por línea (clave 'ord' = posición
-      -- determinista; lo consume la segunda pasada y la auditoría).
       v_line_snapshot := v_line_snapshot || jsonb_build_object(
         'ord', v_ord,
         'product_id', v_pid,
@@ -3245,88 +3122,129 @@ BEGIN
       );
     END IF;
 
-    -- E-SEC-FINAL (D5): subtotal de LÍNEA redondeado a 2 decimales; el total de
-    -- la venta es la suma de los subtotales de línea ya redondeados.
     v_calculated_subtotal := v_calculated_subtotal + ROUND((v_price * v_qty), 2);
   END LOOP;
 
-  -- 7. Recalcular descuento
+  -- 8. Recalcular descuento (§8: el descuento NEGATIVO queda estructuralmente
+  --    imposibilitado — hoy LEAST(-100, subtotal) inflaba el total, T-FIN-007)
+  IF p_discount_value IS NULL OR p_discount_value < 0 THEN
+    RAISE EXCEPTION 'ERR_INVALID_DISCOUNT: %', p_discount_value;
+  END IF;
   IF p_discount_type = 'percentage' THEN
     v_discount_amount := LEAST((v_calculated_subtotal * p_discount_value) / 100, v_calculated_subtotal);
   ELSE
     v_discount_amount := LEAST(p_discount_value, v_calculated_subtotal);
   END IF;
 
-  -- 8. Recalcular tax
+  -- 9. Impuestos (§5.4): el cliente PROPONE (ids); el servidor VALIDA contra el
+  --    catálogo autorizado (tax_configurations: global + tienda) y REEMPLAZA con
+  --    la entrada canónica reconstruida desde la fila. El JSONB cliente JAMÁS se
+  --    persiste tal cual. Entradas sin id / id desconocido / inactivo / de otra
+  --    tienda / duplicado → ERR_APPLIED_TAX_INVALID (mensaje uniforme, sin
+  --    revelar si el id existe).
   v_taxable_base := GREATEST(0, v_calculated_subtotal - v_discount_amount);
   v_calculated_tax := 0;
-  FOR v_tax IN SELECT * FROM jsonb_array_elements(p_applied_taxes) LOOP
-    IF v_tax->>'type' = 'percentage' THEN
-      v_tax_value := (v_taxable_base * COALESCE((v_tax->>'value')::numeric, 0)) / 100;
-      IF v_tax ? 'min_exempt' THEN
-        v_tax_value := GREATEST(0, v_taxable_base - COALESCE((v_tax->>'min_exempt')::numeric, 0)) * COALESCE((v_tax->>'value')::numeric, 0) / 100;
-      END IF;
+  v_applied_taxes_canonical := '[]'::jsonb;
+  v_tax_ids := '{}';
+  IF p_applied_taxes IS NULL OR jsonb_typeof(p_applied_taxes) <> 'array' THEN
+    RAISE EXCEPTION 'ERR_APPLIED_TAX_INVALID: p_applied_taxes debe ser un array de {id}';
+  END IF;
+  FOR v_tax_entry IN SELECT * FROM jsonb_array_elements(p_applied_taxes) LOOP
+    IF v_tax_entry->>'id' IS NULL OR btrim(v_tax_entry->>'id') = ''
+       OR v_tax_entry->>'id' !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' THEN
+      RAISE EXCEPTION 'ERR_APPLIED_TAX_INVALID: entrada sin id de configuración';
+    END IF;
+    SELECT id, name, type, value, min_exempt INTO v_tc
+      FROM public.tax_configurations
+      WHERE id = (v_tax_entry->>'id')::uuid
+        AND is_active = true
+        AND (store_id IS NULL OR store_id = p_store_id);
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'ERR_APPLIED_TAX_INVALID';
+    END IF;
+    IF v_tc.id::text = ANY(v_tax_ids) THEN
+      RAISE EXCEPTION 'ERR_APPLIED_TAX_INVALID: impuesto duplicado';
+    END IF;
+    v_tax_ids := array_append(v_tax_ids, v_tc.id::text);
+    v_applied_taxes_canonical := v_applied_taxes_canonical || jsonb_build_object(
+      'id', v_tc.id, 'name', v_tc.name, 'type', v_tc.type,
+      'value', v_tc.value, 'min_exempt', v_tc.min_exempt);
+    IF v_tc.type = 'percentage' THEN
+      v_tax_value := GREATEST(0, v_taxable_base - COALESCE(v_tc.min_exempt, 0)) * v_tc.value / 100;
     ELSE
-      v_tax_value := COALESCE((v_tax->>'value')::numeric, 0);
+      v_tax_value := v_tc.value;
     END IF;
     v_calculated_tax := v_calculated_tax + v_tax_value;
   END LOOP;
 
-  -- 9. Calcular total
+  -- 10. Tasa de cambio (§6.1): resolución SERVER-SIDE exclusiva. Jerarquía:
+  --     store_exchange_rates (updated_at) → exchange_rates BCC seg 3 (rate_date)
+  --     → exchange_rates elToque (rate_date) → fail-closed. D-EXR-01: la tasa
+  --     que gana por precedencia y tiene fecha efectiva > 45 días → ERR_RATE_STALE
+  --     (FAIL CLOSED, sin salto silencioso a fuente inferior, sin sustitución por
+  --     la tasa del cliente). D-EXR-02: p_sale_exchange_rate queda como dato
+  --     recibido SIN autoridad financiera (0/−5/680/1000000 → mismo destino:
+  --     ignorados; la desviación NUNCA bloquea).
+  v_server_rate := NULL;
+  v_rate_source := NULL;
+  v_rate_effective_date := NULL;
+  IF p_sale_currency = 'CUP' THEN
+    v_server_rate := 1;  -- CUP = 1 por definición (sin fuente, sin staleness)
+  ELSE
+    SELECT ser.rate, 'store', ser.updated_at
+      INTO v_server_rate, v_rate_source, v_rate_effective_date
+      FROM public.store_exchange_rates ser
+      WHERE ser.store_id = p_store_id AND ser.currency = p_sale_currency;
+    IF v_server_rate IS NULL THEN
+      SELECT er.rate, 'global_bcc_seg3', er.rate_date
+        INTO v_server_rate, v_rate_source, v_rate_effective_date
+        FROM public.exchange_rates er
+        WHERE er.currency = p_sale_currency AND er.source = 'BCC' AND er.segment = '3'
+        ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+    END IF;
+    IF v_server_rate IS NULL THEN
+      SELECT er.rate, 'global_eltoque', er.rate_date
+        INTO v_server_rate, v_rate_source, v_rate_effective_date
+        FROM public.exchange_rates er
+        WHERE er.currency = p_sale_currency AND er.source = 'elToque'
+        ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+    END IF;
+    IF v_server_rate IS NULL OR v_server_rate <= 0 THEN
+      RAISE EXCEPTION 'ERR_EXCHANGE_RATE_UNAVAILABLE: currency=%, store=%', p_sale_currency, p_store_id;
+    END IF;
+    IF v_rate_effective_date < now() - INTERVAL '45 days' THEN
+      RAISE EXCEPTION 'ERR_RATE_STALE: currency=%, store=%, source=%, effective=%',
+        p_sale_currency, p_store_id, v_rate_source, v_rate_effective_date;
+    END IF;
+  END IF;
+
+  -- 11. Calcular total
   v_calculated_total := v_calculated_subtotal - v_discount_amount + v_calculated_tax;
 
-  -- 10. Validar total vs cliente (tolerancia 0.01 CUP)
+  -- 12. Validar total vs cliente (tolerancia 0.01)
   IF abs(v_calculated_total - p_total_amount) > 0.01 THEN
     RAISE EXCEPTION 'ERR_TOTAL_MISMATCH: calculated=%, client=%', v_calculated_total, p_total_amount;
   END IF;
 
-  -- 11. Validar supervisor auth (si descuento global >= 15%)
+  -- 13. Validar supervisor auth (gate D1–D5 E-SEC-FINAL — SIN CAMBIO)
   IF v_calculated_subtotal > 0 THEN
     v_effective_discount_pct := (v_discount_amount / v_calculated_subtotal) * 100;
   END IF;
-
-  -- E-SEC (R-SEC-1): el desvío de precio por ítem ES un descuento comercial.
-  -- El agregado se conserva SOLO como metadato de auditoría (continuidad).
   IF v_catalog_subtotal > 0 THEN
     v_item_discount_pct := (v_item_discount_total / v_catalog_subtotal) * 100;
   END IF;
 
-  -- ============================================================================
-  -- E-SEC-FINAL — gate definitivo D1-D3 (decisión del responsable funcional;
-  -- cierra E-SEC-R-DECISION-REQUIRED.md):
-  --   D1: el gate se evalúa POR LÍNEA (v_max_line_pct >= 15). El agregado NO
-  --       puede convertir {20% en una línea + 0% en otras} en una operación
-  --       autorizable sin supervisor. Se conserva el gate del descuento global
-  --       (v_effective_discount_pct >= 15, mecanismo preexistente).
-  --   D2: discount_reason obligatorio cuando hay autorización (validado aquí,
-  --       server-side, única regla canónica).
-  --   D3: token single-use (consumo atómico del jti) + scope firmado por línea.
-  -- ============================================================================
   IF v_effective_discount_pct >= 15 OR v_max_line_pct >= 15 THEN
     v_gate_triggered := true;
   END IF;
 
   IF v_gate_triggered THEN
-    -- Orden de denegación: PRIMERO la exigencia de supervisor (política
-    -- primaria), DESPUÉS el motivo (atributo de la autorización). Así una
-    -- llamada sin supervisor recibe ERR_SUPERVISOR_REQUIRED aunque tampoco
-    -- traiga motivo, y una llamada con supervisor válido pero sin motivo
-    -- recibe ERR_DISCOUNT_REASON_REQUIRED.
     IF p_supervisor_user_id IS NULL THEN
       RAISE EXCEPTION 'ERR_SUPERVISOR_REQUIRED: global_pct=%, max_line_pct=%', v_effective_discount_pct, v_max_line_pct;
     END IF;
-
-    -- D2: motivo obligatorio (server-side; no se exige bajo el umbral)
     IF v_reason = '' THEN
       RAISE EXCEPTION 'ERR_DISCOUNT_REASON_REQUIRED: motivo obligatorio para descuento autorizado';
     END IF;
-
-    -- RC-1 (REM-INV-4A-R): a client-supplied supervisor UUID is NOT proof of
-    -- authorization. Under authenticated, the ONLY server-verifiable supervisor
-    -- identity is the caller itself (auth.uid(), from the platform-signed JWT).
-    -- A foreign supervisor identity requires the trusted server route
-    -- (auth.role() = 'service_role'), which enforces the supervisor credential
-    -- proof (supervisor-check -> signed token -> checkout route) before RPC.
     IF auth.role() <> 'service_role'
        AND p_supervisor_user_id IS DISTINCT FROM auth.uid() THEN
       RAISE EXCEPTION 'ERR_SUPERVISOR_UNAUTHORIZED';
@@ -3336,17 +3254,10 @@ BEGIN
     END IF;
 
     IF auth.role() = 'service_role' THEN
-      -- Camino delegado (route con token HMAC verificado). E-SEC-FINAL (D3):
-      -- la autorización es de UN SOLO USO y está ligada a la operación.
       v_supervisor_path := 'token';
       IF p_supervisor_token_jti IS NULL OR btrim(p_supervisor_token_jti) = '' THEN
         RAISE EXCEPTION 'ERR_SUPERVISOR_TOKEN_REQUIRED: token de supervisor requerido';
       END IF;
-      -- Consumo atómico del jti DENTRO de esta transacción: una venta fallida
-      -- revierte el consumo (el token no se quema); una venta confirmada lo
-      -- quema de forma irreversible. El replay —aunque el atacante conozca el
-      -- token y llame por HTTP directo— choca con el PRIMARY KEY: 0 filas
-      -- insertadas ⇒ ERR_SUPERVISOR_TOKEN_REUSED.
       INSERT INTO public.supervisor_token_usages
         (jti, supervisor_user_id, operator_user_id, store_id, transaction_id)
       VALUES
@@ -3356,10 +3267,6 @@ BEGIN
         RAISE EXCEPTION 'ERR_SUPERVISOR_TOKEN_REUSED: jti ya consumido';
       END IF;
 
-      -- D3: scope firmado en la emisión. CADA línea con desvío >=15% debe estar
-      -- cubierta por una entrada (pid, vid) con px <= precio real (el descuento
-      -- aplicado no excede el autorizado). Evita: otro producto, otra línea no
-      -- autorizada, o un descuento mayor que el visto por el supervisor.
       IF v_max_line_pct >= 15 THEN
         IF p_supervisor_scope IS NULL OR jsonb_typeof(p_supervisor_scope) <> 'array' THEN
           RAISE EXCEPTION 'ERR_SUPERVISOR_SCOPE_VIOLATION: scope ausente para lineas >=15%%';
@@ -3387,15 +3294,11 @@ BEGIN
         END LOOP;
       END IF;
     ELSE
-      -- Camino de sesión propia (RC-1: p_supervisor_user_id = auth.uid(),
-      -- admin/manager de la tienda; usado por sync/offline). Sin token por
-      -- diseño: la sesión firmada del supervisor ES la prueba de identidad y
-      -- no existe token reutilizable. Política preexistente, sin cambios.
       v_supervisor_path := 'self_session';
     END IF;
   END IF;
 
-  -- 12. Validar/setear payment split
+  -- 14. Validar/setear payment split — sin cambio
   IF v_effective_method = 'mixed' THEN
     IF abs(v_cash_amt + v_transfer_amt + v_zelle_amt - v_calculated_total) > 1.00 THEN
       RAISE EXCEPTION 'ERR_PAYMENT_MISMATCH: cash=%, transfer=%, zelle=%, total=%',
@@ -3409,7 +3312,8 @@ BEGIN
     v_zelle_amt := v_calculated_total;
   END IF;
 
-  -- 13. INSERT transactions
+  -- 15. INSERT transactions — §6.3/§4/§5.4: tasa servidor, seller = v_uid,
+  --     impuestos = snapshot canónico del catálogo
   INSERT INTO public.transactions (
     id, store_id, seller_id, total_amount, status, payment_method,
     discount_type, discount_value, subtotal, tax_amount, applied_taxes,
@@ -3417,16 +3321,16 @@ BEGIN
     cash_amount, transfer_amount, zelle_amount,
     customer_id, customer_name
   ) VALUES (
-    v_tx_id, p_store_id, p_seller_id, v_calculated_total, 'completed',
+    v_tx_id, p_store_id, v_uid, v_calculated_total, 'completed',
     v_effective_method::public.payment_method_enum,
     p_discount_type::public.discount_type_enum, v_discount_amount,
-    v_calculated_subtotal, v_calculated_tax, p_applied_taxes,
-    p_sale_currency, p_sale_exchange_rate, v_eff, p_idempotency_key, v_eff,
+    v_calculated_subtotal, v_calculated_tax, v_applied_taxes_canonical,
+    p_sale_currency, v_server_rate, v_eff, p_idempotency_key, v_eff,
     v_cash_amt, v_transfer_amt, v_zelle_amt,
     p_customer_id, p_customer_name
   );
 
-  -- 14. Segunda pasada: stock movement + transaction_items — MISMA autoridad de costo
+  -- 16. Segunda pasada: stock movement + transaction_items — MISMA autoridad de costo
   FOR v_item, v_ord IN SELECT t.value, t.ord
       FROM jsonb_array_elements(p_items) WITH ORDINALITY AS t(value, ord)
       ORDER BY (t.value->>'product_id') LOOP
@@ -3450,16 +3354,11 @@ BEGIN
       SELECT price INTO v_product_price FROM public.products WHERE id = v_pid;
       v_price := COALESCE(v_product_price, 0);
     END IF;
-
-    -- E-SEC-FINAL (D5): misma semántica de redondeo que la primera pasada
     v_price := ROUND(v_price, 2);
 
-    -- E-SEC-FINAL (D4): snapshot de esta línea calculado en la primera pasada
-    -- (misma transacción, mismo lock; la clave 'ord' es determinista).
     SELECT e INTO v_snap FROM jsonb_array_elements(v_line_snapshot) AS e
       WHERE (e->>'ord')::bigint = v_ord;
 
-    -- DF-02: re-lectura bajo FOR UPDATE (misma TX; sin ventana TOCTOU)
     SELECT cost_average INTO v_cost
       FROM public.products
       WHERE id = v_pid AND store_id = p_store_id
@@ -3471,7 +3370,6 @@ BEGIN
       RAISE EXCEPTION 'ERR_PRODUCT_COST_UNAVAILABLE: %', v_pid;
     END IF;
 
-    -- Stock movement (solo si NO es servicio)
     IF NOT EXISTS (SELECT 1 FROM public.products WHERE id = v_pid AND is_service = true) THEN
       PERFORM public.register_stock_movement(
         p_product_id := v_pid, p_store_id := p_store_id, p_user_id := v_uid,
@@ -3512,15 +3410,15 @@ BEGIN
       p_discount_type::public.discount_type_enum,
       v_discount_amount,
       p_sale_currency,
-      v_price * p_sale_exchange_rate,
-      -- E-SEC-FINAL (D4): snapshot histórico del precio por línea
+      v_price * v_server_rate,
       (v_snap->>'catalog_price')::numeric,
       COALESCE((v_snap->>'discount_value')::numeric, 0),
       COALESCE((v_snap->>'discount_pct')::numeric, 0)
     );
   END LOOP;
 
-  -- 15. payment_transactions (fuente autoritativa de pagos)
+  -- 17. payment_transactions (fuente autoritativa de pagos) — §6.3: zelle
+  --     siempre con la tasa servidor
   IF v_cash_amt > 0 THEN
     INSERT INTO public.payment_transactions (
       store_id, ref_type, ref_id, transaction_id,
@@ -3546,36 +3444,45 @@ BEGIN
   END IF;
 
   IF v_zelle_amt > 0 THEN
-    IF p_sale_currency = 'CUP' OR p_sale_exchange_rate IS NULL OR p_sale_exchange_rate <= 1 THEN
-      RAISE EXCEPTION 'ERR_ZELLE_REQUIRES_RATE: zelle payment requires p_sale_currency != CUP and p_sale_exchange_rate > 1. Got: currency=%, rate=%',
-        p_sale_currency, p_sale_exchange_rate USING ERRCODE = 'PT009';
+    IF p_sale_currency = 'CUP' OR v_server_rate IS NULL OR v_server_rate <= 1 THEN
+      RAISE EXCEPTION 'ERR_ZELLE_REQUIRES_RATE: zelle payment requires p_sale_currency != CUP and server_exchange_rate > 1. Got: currency=%, rate=%',
+        p_sale_currency, v_server_rate USING ERRCODE = 'PT009';
     END IF;
     IF p_sale_currency NOT IN ('USD', 'EUR', 'MLC') THEN
       RAISE EXCEPTION 'ERR_INVALID_CURRENCY: p_sale_currency must be USD, EUR, or MLC. Got: %',
         p_sale_currency USING ERRCODE = 'PT004';
     END IF;
-    v_zelle_original_amount := v_zelle_amt / p_sale_exchange_rate;
+    v_zelle_original_amount := v_zelle_amt / v_server_rate;
     INSERT INTO public.payment_transactions (
       store_id, ref_type, ref_id, transaction_id,
       amount, payment_method, currency, exchange_rate,
       payment_date, paid_by, idempotency_key
     ) VALUES (
       p_store_id, 'sale', v_tx_id, v_tx_id,
-      v_zelle_original_amount, 'zelle', p_sale_currency, p_sale_exchange_rate,
+      v_zelle_original_amount, 'zelle', p_sale_currency, v_server_rate,
       v_eff, v_uid, 'pay-zelle-' || v_tx_id::text
     ) RETURNING id INTO v_pt_id;
   END IF;
 
-  -- 16. Validación post-INSERT: I1b (POS exige pago completo)
+  -- 18. Validación post-INSERT: I1b (POS exige pago completo) — sin cambio
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_sum_payments
-  FROM public.payment_transactions WHERE transaction_id = v_tx_id;
+    FROM public.payment_transactions WHERE transaction_id = v_tx_id;
 
   IF ABS(v_sum_payments - v_calculated_total) > 0.01 THEN
     RAISE EXCEPTION 'ERR_PAYMENT_INVARIANT_VIOLATED: SUM(amount_cup)=% != total_amount=% (POS requires full payment)',
       v_sum_payments, v_calculated_total USING ERRCODE = 'PT011';
   END IF;
 
-  -- 17. Audit log completo
+  -- 19. Cerrar el registro de idempotencia con el resultado definitivo
+  --     (patrón V2.26: el retry posterior lee el resultado del registry)
+  IF p_idempotency_key IS NOT NULL THEN
+    UPDATE public.idempotency_registry
+      SET result = jsonb_build_object('status', 'success', 'transaction_id', v_tx_id)
+      WHERE idempotency_key = p_idempotency_key AND operation = 'create_sale_v2';
+  END IF;
+
+  -- 20. Audit log completo — §6.2/§7: auditoría ampliada con tasa cliente/servidor
+  --     (observabilidad NO autoritativa de la divergencia, D-EXR-02) y param_hash
   INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
   VALUES ('CREATE_SALE_V2', 'transactions', v_tx_id, p_store_id, v_uid,
     jsonb_build_object(
@@ -3592,7 +3499,6 @@ BEGIN
       'cash_amount', v_cash_amt, 'transfer_amount', v_transfer_amt, 'zelle_amount', v_zelle_amt,
       'customer_id', p_customer_id,
       'supervisor_id', p_supervisor_user_id,
-      -- E-SEC-FINAL (D2/D3/D4): auditoría reconstruible de la autorización
       'discount_reason', v_reason,
       'supervisor_path', v_supervisor_path,
       'supervisor_token_jti', CASE WHEN v_supervisor_path = 'token' THEN btrim(p_supervisor_token_jti) END,
@@ -3601,7 +3507,16 @@ BEGIN
       'v2_checkout', true,
       'payment_transactions_created', true,
       'cogs_authority', 'server_side_wac_df02',
-      'policy_version', 'E-SEC-FINAL'
+      'policy_version', 'E-SEC-FINAL',
+      -- H0-R §6.2 (D-EXR-02): trazabilidad no-autoritativa de la tasa
+      'client_rate', v_client_rate,
+      'server_rate', v_server_rate,
+      'rate_source', v_rate_source,
+      'rate_authority', 'server_side_h0r_d_exr',
+      -- H0-R §7: identidad de idempotencia auditada
+      'idempotency_param_hash', v_param_hash,
+      -- H0-R §5.4: autoridad fiscal del snapshot
+      'tax_authority', 'tax_configurations_server_side'
     ));
 
   RETURN jsonb_build_object(
@@ -3613,6 +3528,7 @@ BEGIN
     'discount_amount', v_discount_amount
   );
 END $function$
+
 
 
 -- @contract-function name=create_store_with_membership args="p_name text, p_address text, p_created_by uuid, p_max_stores integer, p_logo_url text, p_reeup text, p_nit text, p_bank_account text, p_phone text, p_email text, p_slug text, p_plantilla text, p_signature_url text, p_stamp_url text, p_latitude double precision, p_longitude double precision, p_tenant_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
@@ -4309,239 +4225,10 @@ END;
 $function$
 
 
--- @contract-function name=fn_process_receipt args="p_items jsonb, p_user_id uuid, p_store_id uuid, p_reference text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.fn_process_receipt(p_items jsonb, p_user_id uuid DEFAULT NULL::uuid, p_store_id uuid DEFAULT NULL::uuid, p_reference text DEFAULT NULL::text)
- RETURNS uuid
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'extensions'
-AS $function$
-DECLARE
-    v_receipt_id uuid;
-    v_item jsonb;
-    v_prod_id uuid;
-    v_qty numeric;
-    v_cost numeric;
-    v_current_stock numeric;
-    v_current_avg_cost numeric;
-    v_new_stock numeric;
-    v_total_receipt numeric := 0;
-    v_new_details jsonb;
-    v_sku text;
-    v_store uuid := p_store_id;
-    v_auth_user_id uuid := auth.uid();
-BEGIN
-    IF v_auth_user_id IS NOT NULL AND v_auth_user_id != p_user_id THEN
-        RAISE EXCEPTION 'ERR_UNAUTHORIZED: Identity mismatch. p_user_id (%) does not match auth.uid() (%)', p_user_id, v_auth_user_id;
-    END IF;
-
-    INSERT INTO public.receipts (user_id, store_id, status, reference_doc)
-    VALUES (p_user_id, v_store, 'active', p_reference)
-    RETURNING id INTO v_receipt_id;
-
-    FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
-    LOOP
-        v_sku := v_item->>'sku';
-        v_qty := (v_item->>'quantity')::numeric;
-        v_cost := (v_item->>'unit_cost')::numeric;
-        v_new_details := v_item->'new_product_details';
-
-        IF v_new_details IS NOT NULL AND v_new_details != 'null'::jsonb THEN
-            INSERT INTO public.products (name, sku, cost_price, price, unit_of_measure, supplier, image_url, stock_current, cost_average, store_id)
-            VALUES (
-                v_new_details->>'name', v_sku, v_cost, COALESCE((v_new_details->>'price')::numeric, 0),
-                COALESCE(v_new_details->>'unit_of_measure','unidad'), v_new_details->>'supplier',
-                v_new_details->>'image_url', 0, 0, v_store)
-            RETURNING id INTO v_prod_id;
-            v_current_stock := 0; v_current_avg_cost := 0;
-        ELSE
-            SELECT id INTO v_prod_id FROM public.products WHERE sku = v_sku AND store_id = v_store;
-            IF v_prod_id IS NULL THEN
-                SELECT id INTO v_prod_id FROM public.products WHERE sku = v_sku LIMIT 1;
-            END IF;
-            IF v_prod_id IS NULL THEN
-                RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: %', v_sku;
-            END IF;
-            SELECT store_id INTO v_store FROM public.products WHERE id = v_prod_id;
-            SELECT stock_current, cost_average INTO v_current_stock, v_current_avg_cost
-            FROM public.products WHERE id = v_prod_id FOR UPDATE;
-        END IF;
-
-        v_new_stock := COALESCE(v_current_stock,0) + v_qty;
-
-        INSERT INTO public.receipt_items (receipt_id, product_id, quantity, unit_cost, tasa_cambio_recepcion)
-        VALUES (v_receipt_id, v_prod_id, v_qty, v_cost, 1.0);
-
-        -- DF-01: mismo contrato que la 3-arg (WAC primero, movimiento canónico)
-        PERFORM public.fn_recalc_wac(v_store, v_prod_id, 'direct_ingest', v_qty, v_cost,
-                   jsonb_build_object('rpc','fn_process_receipt4','receipt_id',v_receipt_id));
-        PERFORM public.register_stock_movement(
-          p_product_id := v_prod_id, p_store_id := v_store, p_user_id := p_user_id,
-          p_quantity := v_qty, p_movement_type := 'purchase', p_reason := 'Ingesta directa',
-          p_sale_id := v_receipt_id, p_unit_cost := v_cost,
-          p_operation_date := now(), p_skip_access_check := TRUE);
-
-        v_total_receipt := v_total_receipt + (v_qty * v_cost);
-    END LOOP;
-
-    UPDATE public.receipts SET total_cost = v_total_receipt WHERE id = v_receipt_id;
-    RETURN v_receipt_id;
-END $function$
 
 
--- @contract-function name=fn_process_receipt args="p_items jsonb, p_user_id uuid, p_reference text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.fn_process_receipt(p_items jsonb, p_user_id uuid DEFAULT NULL::uuid, p_reference text DEFAULT NULL::text)
- RETURNS uuid
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'extensions'
-AS $function$
-DECLARE
-    v_receipt_id uuid;
-    v_item jsonb;
-    v_prod_id uuid;
-    v_qty numeric;
-    v_cost numeric;
-    v_current_stock numeric;
-    v_current_avg_cost numeric;
-    v_new_stock numeric;
-    v_total_receipt numeric := 0;
-    v_new_details jsonb;
-    v_sku text;
-    v_store_id uuid;
-    v_auth_user_id uuid := auth.uid();
-BEGIN
-    IF v_auth_user_id IS NOT NULL AND v_auth_user_id != p_user_id THEN
-        RAISE EXCEPTION 'ERR_UNAUTHORIZED: Identity mismatch. p_user_id (%) does not match auth.uid() (%)', p_user_id, v_auth_user_id;
-    END IF;
-
-    INSERT INTO public.receipts (user_id, status, reference_doc)
-    VALUES (p_user_id, 'active', p_reference)
-    RETURNING id INTO v_receipt_id;
-
-    FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
-    LOOP
-        v_sku := v_item->>'sku';
-        v_qty := (v_item->>'quantity')::numeric;
-        v_cost := (v_item->>'unit_cost')::numeric;
-        v_new_details := v_item->'new_product_details';
-
-        IF v_new_details IS NOT NULL AND v_new_details != 'null'::jsonb THEN
-            SELECT s.id INTO v_store_id FROM public.stores s ORDER BY s.created_at LIMIT 1;
-            INSERT INTO public.products (name, sku, cost_price, price, unit_of_measure, supplier, image_url, stock_current, cost_average, store_id)
-            VALUES (
-                v_new_details->>'name', v_sku, v_cost, COALESCE((v_new_details->>'price')::numeric, 0),
-                COALESCE(v_new_details->>'unit_of_measure','unidad'), v_new_details->>'supplier',
-                v_new_details->>'image_url', 0, 0, v_store_id)
-            RETURNING id INTO v_prod_id;
-            v_current_stock := 0; v_current_avg_cost := 0;
-        ELSE
-            SELECT id INTO v_prod_id FROM public.products WHERE sku = v_sku LIMIT 1;
-            IF v_prod_id IS NULL THEN
-                RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: %', v_sku;
-            END IF;
-            SELECT store_id INTO v_store_id FROM public.products WHERE id = v_prod_id;
-            SELECT stock_current, cost_average INTO v_current_stock, v_current_avg_cost
-            FROM public.products WHERE id = v_prod_id FOR UPDATE;
-        END IF;
-
-        v_new_stock := COALESCE(v_current_stock,0) + v_qty;
-
-        INSERT INTO public.receipt_items (receipt_id, product_id, quantity, unit_cost, tasa_cambio_recepcion)
-        VALUES (v_receipt_id, v_prod_id, v_qty, v_cost, 1.0);
-
-        -- DF-01: WAC primero (S_prev) vía escritor único; stock vía MOVIMIENTO canónico
-        -- (corrige además el desync products↔inventory del legacy); SIN espejo cost_price (D-02)
-        PERFORM public.fn_recalc_wac(v_store_id, v_prod_id, 'direct_ingest', v_qty, v_cost,
-                   jsonb_build_object('rpc','fn_process_receipt','receipt_id',v_receipt_id));
-        PERFORM public.register_stock_movement(
-          p_product_id := v_prod_id, p_store_id := v_store_id, p_user_id := p_user_id,
-          p_quantity := v_qty, p_movement_type := 'purchase', p_reason := 'Ingesta directa',
-          p_sale_id := v_receipt_id, p_unit_cost := v_cost,
-          p_operation_date := now(), p_skip_access_check := TRUE);
-
-        v_total_receipt := v_total_receipt + (v_qty * v_cost);
-    END LOOP;
-
-    UPDATE public.receipts SET total_cost = v_total_receipt WHERE id = v_receipt_id;
-    RETURN v_receipt_id;
-END $function$
 
 
--- @contract-function name=fn_process_sale args="p_items jsonb, p_cashier_id uuid, p_payment_method text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.fn_process_sale(p_items jsonb, p_cashier_id uuid, p_payment_method text)
- RETURNS uuid
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'extensions'
-AS $function$
-DECLARE
-    v_sale_id uuid;
-    v_item jsonb;
-    v_prod_id uuid;
-    v_qty int;
-    v_price numeric;
-    v_current_stock int;
-    v_cost_at_sale numeric;
-    v_new_stock int;
-    v_total_sale numeric := 0;
-    v_store_id uuid;
-    v_auth_user_id uuid := auth.uid();
-BEGIN
-    -- Security validation: Impersonation check
-    IF v_auth_user_id IS NOT NULL AND v_auth_user_id != p_cashier_id THEN
-        RAISE EXCEPTION 'ERR_UNAUTHORIZED: Identity mismatch';
-    END IF;
-
-    -- Get cashier store
-    SELECT store_id INTO v_store_id FROM public.profiles WHERE id = p_cashier_id;
-    IF v_store_id IS NULL THEN
-        RAISE EXCEPTION 'El cajero no tiene una tienda asignada';
-    END IF;
-
-    INSERT INTO public.sales (cashier_id, payment_method)
-    VALUES (p_cashier_id, p_payment_method)
-    RETURNING id INTO v_sale_id;
-
-    FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
-    LOOP
-        v_prod_id := (v_item->>'product_id')::uuid;
-        v_qty := (v_item->>'quantity')::int;
-        v_price := (v_item->>'unit_price')::numeric;
-
-        -- Verify product belongs to the same store
-        IF NOT EXISTS (SELECT 1 FROM public.products WHERE id = v_prod_id AND store_id = v_store_id) THEN
-            RAISE EXCEPTION 'Producto % no pertenece a la tienda del cajero', v_prod_id;
-        END IF;
-
-        SELECT stock_current, cost_average INTO v_current_stock, v_cost_at_sale
-        FROM public.products WHERE id = v_prod_id FOR UPDATE;
-
-        IF v_current_stock < v_qty THEN
-            RAISE EXCEPTION 'Stock insuficiente para producto %', v_prod_id;
-        END IF;
-
-        v_new_stock := v_current_stock - v_qty;
-
-        INSERT INTO public.sale_items (sale_id, product_id, quantity, unit_price_sold, cost_at_sale)
-        VALUES (v_sale_id, v_prod_id, v_qty, v_price, COALESCE(v_cost_at_sale, 0));
-
-        UPDATE public.products SET stock_current = v_new_stock WHERE id = v_prod_id;
-
-        INSERT INTO public.inventory_movements (product_id, type, quantity_change, reference_id, user_id, balance_after)
-        VALUES (v_prod_id, 'OUT_SALE', -v_qty, v_sale_id, p_cashier_id, v_new_stock);
-
-        v_total_sale := v_total_sale + (v_qty * v_price);
-    END LOOP;
-
-    UPDATE public.sales SET total_amount = v_total_sale WHERE id = v_sale_id;
-
-    INSERT INTO public.audit_logs (user_id, action, table_name, record_id, new_data, store_id)
-    VALUES (p_cashier_id, 'INSERT_SALE', 'sales', v_sale_id, jsonb_build_object('total', v_total_sale), v_store_id);
-
-    RETURN v_sale_id;
-END;
-$function$
 
 
 -- @contract-function name=fn_recalc_wac args="p_store_id uuid, p_product_id uuid, p_event text, p_qty_in numeric, p_uc_in numeric, p_source_ref jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
@@ -6241,12 +5928,13 @@ BEGIN
     p_unit_cost := v_costo_unitario_movimiento,
     p_reason := p_reason,
     p_operation_date := v_effective_date,
-    p_skip_access_check := (v_caller_uid IS NULL)
+    p_skip_access_check := TRUE
   );
 
   RETURN jsonb_build_object('success', true, 'new_stock', v_nuevo_stock,
     'new_cost_average', (SELECT cost_average FROM public.products WHERE id=p_product_id AND store_id=p_store_id));
 END $function$
+
 
 
 -- @contract-function name=process_inventory_adjustment args="p_store_id uuid, p_cashier_id uuid, p_items adjustment_item[], p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
@@ -8244,52 +7932,6 @@ END;
 $function$
 
 
--- @contract-function name=reverse_adjustment args="p_adjustment_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reverse_adjustment(p_adjustment_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_adj RECORD;
-  v_item RECORD;
-  v_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-  v_count INTEGER := 0;
-BEGIN
-  SELECT * INTO v_adj FROM public.inventory_adjustments WHERE id = p_adjustment_id;
-  IF v_adj IS NULL THEN RAISE EXCEPTION 'ERR_ADJUSTMENT_NOT_FOUND'; END IF;
-  IF v_adj.status = 'reversed' THEN RAISE EXCEPTION 'ERR_ALREADY_REVERSED'; END IF;
-  IF v_uid IS NULL OR NOT public.has_store_access_as(v_uid, v_adj.store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  -- FIX V2.3.2: usar 'difference' (columna real) en vez de 'quantity_change'
-  FOR v_item IN
-    SELECT product_id, difference FROM public.inventory_adjustment_items WHERE adjustment_id = p_adjustment_id
-  LOOP
-    -- Invertir el ajuste: si sumó X, ahora resta X (y viceversa)
-    UPDATE public.products
-      SET stock_current = stock_current - v_item.difference, updated_at = now()
-      WHERE id = v_item.product_id AND store_id = v_adj.store_id;
-
-    INSERT INTO public.kardex_entries (store_id, product_id, movement_type, quantity, unit_cost, total_value,
-      balance_quantity, balance_unit_cost, balance_total_value, reference_type, reference_id, reference_description, created_by)
-    SELECT v_adj.store_id, v_item.product_id, 'adjustment', ABS(v_item.difference), 0, 0,
-      p.stock_current, p.cost_average, p.stock_current * p.cost_average,
-      'reversal', p_adjustment_id, 'Reversión de ajuste', v_uid
-    FROM public.products p WHERE p.id = v_item.product_id;
-
-    v_count := v_count + 1;
-  END LOOP;
-
-  UPDATE public.inventory_adjustments
-    SET status = 'reversed', reversed_at = now(), reversed_by = v_uid, reversal_reason = p_reason
-    WHERE id = p_adjustment_id;
-
-  RETURN jsonb_build_object('status', 'success', 'items_reversed', v_count, 'adjustment_id', p_adjustment_id);
-END;
-$function$
 
 
 -- @contract-function name=reverse_commissions_on_sale_void args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
@@ -10379,7 +10021,7 @@ BEGIN
 END $function$
 
 
--- @contract-function name=void_transaction args="p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone, p_user_id uuid" owner=postgres proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+-- @contract-function name=void_transaction args="p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.void_transaction(p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone DEFAULT now(), p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -10460,6 +10102,7 @@ BEGIN
 END;
 
 $function$
+
 
 
 -- @contract-function name=withdraw_production_item_deprecated_6arg args="p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text" owner=postgres proacl={postgres=X/postgres}

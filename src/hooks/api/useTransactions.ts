@@ -114,18 +114,20 @@ export function useCreateSale() {
       const paramsWithId = { ...rawParams, p_transaction_id: rawParams.p_transaction_id || uuidv4() };
       const params = createSaleParamsSchema.parse(paramsWithId);
       if (!navigator.onLine) {
+        // OFFLINE: enqueue — el replay SINCRONIZA vía /api/sync/batch →
+        // create_sale_v2 (camino canónico único; el payload se adapta en el
+        // servidor con seller/user derivados de la sesión).
         return await addToQueue('sale', 'CREATE', params);
       }
-      const rpcName = 'create_sale';
-      const data = await withLogging<string>(rpcName, params, () => supabase.rpc(rpcName, params));
-      // FIX-BUG-6 (2026-07-06): create_sale retorna {status, transaction_id}, no un UUID directo
-      const saleResultSchema = z.object({
-        status: z.string(),
-        transaction_id: z.string().regex(uuidRegex),
-      }).or(z.string().regex(uuidRegex)); // fallback para compat
-      const validated = await validateRPCResponse(data, saleResultSchema, rpcName);
-      // Si es objeto, extraer transaction_id; si es string (UUID), usar directo
-      return typeof validated === 'string' ? validated : validated?.transaction_id;
+      // FINALIZE-V2: el path ONLINE con RPC directo `create_sale` (V1) fue
+      // ELIMINADO — la función se retiró de la base (migración
+      // 20261005140000_drop_v1_sale_devolution). La venta online usa
+      // SIEMPRE POST /api/pos/checkout → create_sale_v2. Este hook queda
+      // reservado al enqueue offline (contrato del queue en
+      // /api/sync/batch case 'sale').
+      throw new Error(
+        'FINALIZE-V2: venta online no disponible por este camino. Usa POST /api/pos/checkout (create_sale_v2). Este hook solo encola ventas offline.'
+      );
     },
     onSuccess: (_, variables) => {
       const cleanStoreId = getCleanStoreId(variables.p_store_id);

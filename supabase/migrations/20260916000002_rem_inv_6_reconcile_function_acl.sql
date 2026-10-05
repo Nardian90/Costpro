@@ -864,7 +864,12 @@ $acl$;
 
 DO $acl$
 BEGIN
-  -- create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_…) → certified EXECUTE: PUBLIC, authenticated, service_role
+  -- create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_…) → certified EXECUTE: authenticated, service_role
+  -- (H0-R §12.3: el patrón canónico anterior canonizaba EXECUTE para PUBLIC —
+  --  vector de resurrección; reescrito: PUBLIC/anon SIEMPRE revocado. Los
+  --  GRANTs authenticated/service_role de create_sale_v2 viven en archivos ACL
+  --  dedicados — 20260927000002_f4 y 20261004130004_h0r_acl_reconciler — para
+  --  satisfacer el census CI T-AR-003 sin grants en migraciones con cuerpo)
   IF EXISTS (
     SELECT 1 FROM pg_proc p
     WHERE p.proname = 'create_sale_v2'
@@ -874,14 +879,11 @@ BEGIN
             has_function_privilege('anon', p.oid, 'EXECUTE') IS DISTINCT FROM false
             OR has_function_privilege('authenticated', p.oid, 'EXECUTE') IS DISTINCT FROM true
             OR has_function_privilege('service_role', p.oid, 'EXECUTE') IS DISTINCT FROM true
-            OR has_function_privilege('public', p.oid, 'EXECUTE') IS DISTINCT FROM true
+            OR has_function_privilege('public', p.oid, 'EXECUTE') IS DISTINCT FROM false
           )
   ) THEN
-    REVOKE EXECUTE ON FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid) FROM anon;
-    GRANT EXECUTE ON FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid) TO PUBLIC;
-    GRANT EXECUTE ON FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid) TO authenticated;
-    GRANT EXECUTE ON FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid) TO service_role;
-  END IF;
+    REVOKE EXECUTE ON FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid) FROM PUBLIC, anon;
+          END IF;
 END
 $acl$;
 

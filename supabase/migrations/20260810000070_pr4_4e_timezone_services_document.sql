@@ -348,6 +348,5 @@ BEGIN
 END;
 $function$;
 
+REVOKE EXECUTE ON FUNCTION public.create_sale_v2 FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.create_sale_v2 FROM anon;
-GRANT EXECUTE ON FUNCTION public.create_sale_v2 TO authenticated;
-GRANT EXECUTE ON FUNCTION public.create_sale_v2 TO service_role;

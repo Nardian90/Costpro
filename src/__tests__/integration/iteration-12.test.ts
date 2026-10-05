@@ -3,7 +3,7 @@
  * Tests para el módulo Usuarios (v2.14).
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 const MIGRATIONS_DIR = join(process.cwd(), 'supabase', 'migrations');
@@ -279,11 +279,9 @@ describe('PT-12.4 — Frontend hooks y componentes', () => {
 // ============================================================================
 // PT-12.5 — Feature flag USE_V2_CHECKOUT sigue en false
 // ============================================================================
-describe('PT-12.5 — Feature flag USE_V2_CHECKOUT sigue en false', () => {
-  it('features.ts mantiene USE_V2_CHECKOUT default false', () => {
-    const src = readFileSync(join(process.cwd(), 'src', 'config', 'features.ts'), 'utf-8');
-    expect(src).toContain('USE_V2_CHECKOUT');
-    expect(src).toContain("=== 'true' || false");
+describe('PT-12.5 — FINALIZE-V2: flag USE_V2_CHECKOUT eliminado', () => {
+  it('features.ts fue eliminado (create_sale_v2 único camino de venta)', () => {
+    expect(existsSync(join(process.cwd(), 'src', 'config', 'features.ts'))).toBe(false);
   });
 });
 

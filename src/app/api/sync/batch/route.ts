@@ -133,7 +133,11 @@ const handler = withAuth(async (req, session) => {
             {
               const v2Payload = {
                 p_store_id: op.payload.p_store_id,
-                p_seller_id: op.payload.p_seller_id,
+                // H0-R §10 (defensa en profundidad): el payload offline encolado
+                // es dato de cliente NO confiable — el vendedor se DERIVA de la
+                // sesión verificada del servidor. El RPC igualmente exige
+                // p_seller_id == actor (ERR_SELLER_MISMATCH, §4).
+                p_seller_id: session.user.id,
                 p_items: op.payload.p_items,
                 p_payment_method: op.payload.p_payment_method || 'cash',
                 p_discount_type: op.payload.p_discount_type || 'fixed',
