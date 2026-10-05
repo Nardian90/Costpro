@@ -251,10 +251,24 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
     // incluidos los que fallan validación; el límite corre antes del parse).
     await waitStoreBudget('create');
-    const response = await request.post('/api/stores', {
+    let response = await request.post('/api/stores', {
       headers,
       data: { name: '   ', address: 'Test', slug: 'test-ws-name-' + Date.now() },
     });
+    if (response.status() === 429) {
+      // FLAKY-documentado (e2e-incremental-stabilization FASE 17): el 429 en
+      // este POST de VALIDACIÓN no mide el contrato (nombre whitespace → 400)
+      // sino la ventana de rate limit del usuario (5 POSTs/min, ventana fija
+      // anclada al primer POST del run — los pilotos del global-setup y el
+      // reinicio de worker de Playwright pueden desalinear el presupuesto
+      // client-side). Reintento ÚNICO tras vaciar la ventana; la aserción
+      // 400/422 se mantiene íntegra sobre el reintento.
+      await new Promise((r) => setTimeout(r, 61_000));
+      response = await request.post('/api/stores', {
+        headers,
+        data: { name: '   ', address: 'Test', slug: 'test-ws-name-' + Date.now() },
+      });
+    }
     expect([400, 422]).toContain(response.status());
   });
 
