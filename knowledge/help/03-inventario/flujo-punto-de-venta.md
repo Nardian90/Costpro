@@ -39,6 +39,8 @@ Vender es la vista de venta rápida de CostPro:
 3. Selecciona **Ventas**
 4. Haz clic en **Vender**
 
+![Vista Vender (POS) con la cuadrícula de productos, categorías y carrito](/help/capturas/pos-terminal.webp "Figura 1. Vender — POS con cuadrícula de productos y carrito")
+
 > 💡 **Tip**: Si necesitas cambiar de tienda rápidamente, utiliza el **selector de tienda** en la barra superior antes de iniciar la venta. Todas las transacciones quedarán registradas bajo la tienda seleccionada.
 
 ---

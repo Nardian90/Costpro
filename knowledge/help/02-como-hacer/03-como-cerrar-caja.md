@@ -12,6 +12,8 @@ Es **contar el dinero físico** que hay en la caja registradora y compararlo con
 2. Haga clic en **Cierre de Caja** (también llamado "Arqueo").
 3. Verá la pantalla de cierre con su turno actual.
 
+![Vista de Caja con la apertura de turno, el fondo inicial y el balance del sistema](/help/capturas/caja-arqueo.webp "Figura 1. Caja — apertura y cierre de turno con arqueo de efectivo")
+
 ## Paso 2 — Contar el dinero físico
 
 Antes de tocar la computadora:

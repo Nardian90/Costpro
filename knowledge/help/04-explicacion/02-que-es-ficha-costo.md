@@ -22,6 +22,8 @@ Una **ficha de costo** es exactamente eso: un documento donde se anota **todo lo
 
 Una ficha de costo bien hecha tiene **4 secciones**:
 
+![Editor de fichas de costo con las secciones de gastos materiales, salario directo y estructura completa](/help/capturas/fichas-costo-gestion.webp "Figura 1. Ficha de Costo en el editor — secciones y filas del costo")
+
 ### 1. Materiales directos
 Todo lo que se "ve" en el producto final. En el pastel:
 - Harina, azúcar, huevos, chocolate.

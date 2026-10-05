@@ -42,6 +42,10 @@
 └──────────────────────────────────────┘
 ```
 
+Así se ve la pantalla real de inicio de CostPro:
+
+![Página de inicio de CostPro con las opciones de acceso a la plataforma](/help/capturas/pagina-inicio.webp "Figura 1. Pantalla de inicio de CostPro — acceso a la plataforma")
+
 > 💡 **Tip para personas mayores**: Si la letra le parece pequeña, mantenga presionada la tecla **Ctrl** (abajo a la izquierda del teclado) y pulse la tecla **+** (más) dos o tres veces. La página se hará más grande. Para hacerla más pequeña, use **Ctrl** y **-** (menos).
 
 ## Paso 2 — Iniciar sesión
@@ -80,6 +84,10 @@ Cuando entre, verá tres zonas importantes. Mírelas de arriba hacia abajo:
 - A la izquierda está el botón del **menú** y el nombre de CostPro.
 - Al lado está el **nombre de la tienda activa** (por ejemplo "Tienda Centro"). Si usted trabaja en varias tiendas, aquí puede cambiar de una a otra.
 - A la derecha hay íconos pequeños: **notificaciones**, **tema** (sol/luna), **ayuda** (un signo de pregunta **?**), y **su usuario**.
+
+La pantalla principal real se ve así:
+
+![Pantalla principal de CostPro con el menú lateral, la barra de tienda y el Panel de Control](/help/capturas/dashboard-command-center.webp "Figura 2. Pantalla principal — menú lateral, tienda activa y Panel de Control")
 
 ### Izquierda: el menú de secciones
 - Es una lista con las secciones: **Inicio**, **Operación**, **Análisis**, **Sistema**, **Ayuda** y **En Desarrollo** (algunas secciones solo se ven según su rol).

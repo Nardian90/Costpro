@@ -24,6 +24,8 @@ Operación → Costo → Estructura de Costo
 
 Una tabla con los productos de la **tienda activa** y el desglose de sus componentes de costo. Seleccione una tienda para poblar la tabla; si no hay productos, la vista lo indica.
 
+![Vista Estructura de Costo con el desglose por producto: existencia, costo unitario, transportación, manipulación, comisiones y variación cambiaria](/help/capturas/ficha-costo-editor.webp "Figura 1. Estructura de Costo — desglose de componentes por producto")
+
 ---
 
 ## Costeo Dinámico
@@ -43,6 +45,8 @@ Operación → Costo → Costeo Dinámico
 - Saber cuánto costaría **volver a comprar** cada producto hoy, con la tasa de cambio vigente.
 - Decidir aumentos de precio con base en el costo de reposición, no en el costo histórico.
 - Simular escenarios: *"¿qué pasa con mis costos si el dólar sube a X?"*
+
+![Vista de Costeo Dinámico con el costo real de reposición del inventario](/help/capturas/costeo-dinamico.webp "Figura 2. Costeo Dinámico — costo de reposición con la tasa vigente")
 
 ### Cómo usarla
 

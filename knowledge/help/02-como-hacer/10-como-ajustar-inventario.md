@@ -46,6 +46,8 @@ Antes de tocar la computadora:
 
 3. Haga clic en **"Continuar"**.
 
+![Vista de Ajustes de Inventario con el registro de ajustes por tienda](/help/capturas/ajustes-inventario.webp "Figura 1. Ajustes de Inventario — nuevo ajuste con motivo y justificación")
+
 ## Los 7 motivos de ajuste
 
 | Motivo | Cuándo usarlo |

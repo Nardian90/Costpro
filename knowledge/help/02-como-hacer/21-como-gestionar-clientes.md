@@ -22,6 +22,8 @@ También con `Ctrl + K` escribiendo "clientes".
 4. Use el buscador para encontrar un cliente por **nombre, CI o teléfono**.
 5. Desde el detalle del cliente puede consultar su información registrada.
 
+![Vista de Clientes con el registro y búsqueda de clientes por tienda](/help/capturas/clientes-crm.webp "Figura 1. Clientes (CRM) — registro con CI, teléfono y dirección")
+
 ## Qué significa cada dato
 
 | Dato | Significado |

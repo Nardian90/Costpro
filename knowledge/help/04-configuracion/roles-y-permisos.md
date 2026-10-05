@@ -4,6 +4,8 @@
 
 CostPro implementa un sistema de roles jerárquico basado en el principio de **mínimo privilegio**. Cada rol tiene un conjunto definido de permisos, donde los niveles superiores heredan y amplían los del nivel inmediato inferior.
 
+![Vista de Roles y Permisos con la gestión de permisos del sistema](/help/capturas/roles-permisos.webp "Figura 1. Roles y Permisos — gestión granular de permisos por módulo")
+
 La jerarquía de roles, de mayor a menor acceso, es la siguiente:
 
 | Nivel | Rol | Descripción |

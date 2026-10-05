@@ -14,6 +14,8 @@ Operación → Ventas → Opciones → Devoluciones
 
 También con `Ctrl + K` escribiendo "devoluciones".
 
+![Vista de Devoluciones con el registro de devoluciones por tienda](/help/capturas/devoluciones.webp "Figura 1. Devoluciones — registro y trazabilidad de devoluciones")
+
 ## Cómo usarla
 
 1. Abra **Devoluciones**.

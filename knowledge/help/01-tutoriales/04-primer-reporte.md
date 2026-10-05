@@ -22,6 +22,8 @@ CostPro puede generar **11 tipos de reportes**. En este tutorial aprenderá a ha
 2. Aparece una lista con 11 opciones.
 3. Para este tutorial, seleccione **"Ventas (Sales)"**.
 
+![Generador de reportes con la configuración base, tipo de reporte Ventas y la vista previa en borrador](/help/capturas/reportes-generador.webp "Figura 1. Generador de Reportes — configuración base y vista previa")
+
 > 💡 Los otros tipos de reporte se explican en la sección **Referencia → Los 11 tipos de reportes**. Por ahora, quédese con "Ventas".
 
 ## Paso 3 — Elegir el período (fechas)

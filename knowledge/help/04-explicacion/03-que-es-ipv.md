@@ -6,9 +6,11 @@
 
 Todos sabemos que "las cosas están más caras", pero ¿cómo medirlo de forma precisa? Si el pan costaba 1 peso en enero y cuesta 1.20 en junio, subió 20%. Pero si el azúcar bajó de 2 a 1.80, bajó 10%. ¿Cómo combinar todas estas variaciones en un solo número?
 
-Eso es exactamente lo que hace un **índice de precios**: toma una canasta de productos代表性, la sigue en el tiempo, y calcula un número que representa la variación promedio.
+Eso es exactamente lo que hace un **índice de precios**: toma una canasta de productos representativos, la sigue en el tiempo, y calcula un número que representa la variación promedio.
 
 ## ¿Qué es el IPV en CostPro?
+
+![Vista IPV con el índice de precios y la conciliación de transferencias bancarias](/help/capturas/ipv-conciliacion.webp "Figura 1. IPV — índice de precios y conciliación de transferencias")
 
 En CostPro, el **IPV (Índice de Precios y Variaciones)** es un módulo avanzado que permite:
 

@@ -57,6 +57,8 @@ Al acceder, el catálogo carga automáticamente todos los productos de la tienda
 
 La vista de tabla presenta los productos en un formato tabular denso, similar a una hoja de cálculo, que permite consultar rápidamente precios, stock y datos de cada producto sin desplazamiento excesivo.
 
+![Catálogo de Ventas en vista de tabla tipo hoja de cálculo con precios, descuentos y formas de pago](/help/capturas/catalogo-ventas-tabla.webp "Figura 1. Catálogo de Ventas — vista de tabla con precios y stock")
+
 ### 3.1 Columnas Disponibles
 
 La tabla incluye las siguientes columnas:

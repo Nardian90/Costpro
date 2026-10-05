@@ -88,6 +88,8 @@ Al iniciar sesión aterrizas en **Inicio** (puedes volver en cualquier momento c
 
 > **Nota**: El contenido de Inicio se adapta según el rol del usuario. Un administrador verá el panorama completo, mientras que un cajero verá información relevante a su punto de venta —como ventas del día, arqueo pendiente y alertas de su sucursal.
 
+![Vista Inicio con el Panel de Control, las acciones recomendadas y los indicadores del período](/help/capturas/dashboard-command-center.webp "Figura 1. Inicio — Panel de Control con Resumen de Indicadores y Acciones Recomendadas")
+
 ## Herramientas Globales
 
 CostPro incluye un conjunto de herramientas disponibles desde cualquier módulo que potencian la productividad diaria:
@@ -96,6 +98,8 @@ CostPro incluye un conjunto de herramientas disponibles desde cualquier módulo 
 
 La paleta de comandos permite ejecutar cualquier acción del sistema mediante **búsqueda difusa (fuzzy search)**. Simplemente presiona `Ctrl + K`, escribe parte del nombre de una acción, ficha, módulo o función y selecciona el resultado deseado. No es necesario recordar la ubicación exacta en el menú.
 
+![Paleta de comandos abierta con la búsqueda "reporte" y las acciones coincidentes](/help/capturas/paleta-comandos.webp "Figura 2. Paleta de Comandos — búsqueda difusa de acciones y módulos")
+
 ### Calculadora Flotante
 
 Una calculadora siempre accesible que se puede abrir desde la barra superior. Permite realizar cálculos rápidos sin abandonar la pantalla actual. Soporta operaciones aritméticas básicas y el resultado puede copiarse al portapapeles con un clic.
@@ -103,6 +107,8 @@ Una calculadora siempre accesible que se puede abrir desde la barra superior. Pe
 ### ChatBot IA Global
 
 Un asistente de IA integrado accesible desde cualquier punto de la aplicación. Puede responder preguntas sobre el uso de CostPro, explicar conceptos de costeo, ayudar con la navegación y proporcionar asistencia contextual basada en el módulo activo.
+
+![Chat del asistente Darian con la pregunta inicial y sugerencias rápidas de consulta](/help/capturas/asistente-darian.webp "Figura 3. Darian — Asistente IA con sugerencias de consulta rápidas")
 
 ### Soporte PWA
 
@@ -158,6 +164,8 @@ Características de la tienda pública:
 
 > **Nota**: La tienda pública utiliza el **slug público** definido en la configuración de la tienda. Asegúrate de elegir un slug descriptivo y único que sea fácil de compartir con tus clientes.
 
+![Tienda pública de ejemplo con banner, contador de productos y catálogo navegable](/help/capturas/tienda-publica.webp "Figura 4. Tienda Pública — catálogo en línea accesible para tus clientes")
+
 ## Requisitos del Sistema
 
 Para utilizar CostPro se requiere:
@@ -189,5 +197,7 @@ Este sistema de documentación que estás consultando se llama **Centro de Ayuda
 | **Cumplimiento Normativo** | Políticas de seguridad y cumplimiento. |
 
 Usa la **Biblioteca** (barra lateral interna) para navegar entre secciones, o el buscador de la parte superior para encontrar contenido específico. En escritorio puedes ocultar o mostrar la Biblioteca con el botón correspondiente de su encabezado.
+
+![Centro de Ayuda con la Biblioteca de secciones y el buscador de documentación](/help/capturas/centro-ayuda.webp "Figura 5. Centro de Ayuda — Biblioteca con secciones Diátaxis y buscador")
 
 > **Nota**: Este sistema de ayuda cumple con la norma **ISO/IEC 26514** de documentación de productos de software, garantizando una estructura clara, vocabulario consistente y trazabilidad en la información.

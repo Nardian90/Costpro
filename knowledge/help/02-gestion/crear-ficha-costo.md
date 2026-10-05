@@ -53,6 +53,8 @@ Guía paso a paso para construir una ficha de costo desde cero, incluyendo estru
 
 > **💡 Tip:** Usa plantillas para productos con estructura de costo repetible. Puedes clonar una ficha existente y modificar los valores.
 
+![Editor de fichas de costo con la estructura estándar de 16 secciones y filas hijas](/help/capturas/fichas-costo-gestion.webp "Figura 1. Editor de Fichas de Costo — estructura por secciones y filas")
+
 ---
 
 ## 2. Completar el Encabezado
