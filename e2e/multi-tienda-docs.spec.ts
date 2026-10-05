@@ -191,18 +191,43 @@ test.describe('MULTI-TIENDA — Flujos de documentos', () => {
     await page.goto(`${BASE_URL}/?view=stores`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(3000);
 
-    // Verificar que los botones interactivos tienen ≥ 44px de altura
-    const buttons = page.locator('button:visible');
-    const count = await buttons.count();
+    // Verificar que los botones interactivos tienen ≥ 44px de altura.
+    //
+    // FASE 5 (e2e-incremental-stabilization) — heurística de visibilidad
+    // corregida: `button:visible` de Playwright cuenta como visibles botones
+    // RECORTADOS por un contenedor colapsado (p.ej. el sidebar móvil cerrado,
+    // w-0 + overflow-hidden, conserva las cajas de layout de sus hijos con
+    // anchura natural). Esos botones NO son tocables por el usuario y no
+    // deben entrar en la medición. El filtro efectivo exige que ningún
+    // ancestro con overflow hidden/clip esté colapsado a 0 (clientWidth o
+    // clientHeight 0).
+    const violations = await page.evaluate(() => {
+      const effectivelyVisible = (el: Element): boolean => {
+        if (typeof el.checkVisibility === 'function' && !el.checkVisibility()) return false;
+        let cur: Element | null = el;
+        while (cur && cur !== document.body) {
+          const cs = getComputedStyle(cur);
+          if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+          if (/(hidden|clip)/.test(cs.overflowX + cs.overflowY)) {
+            const he = cur as HTMLElement;
+            if (he.clientWidth === 0 || he.clientHeight === 0) return false;
+          }
+          cur = cur.parentElement;
+        }
+        return true;
+      };
 
-    let violations = 0;
-    for (let i = 0; i < Math.min(count, 20); i++) {
-      const btn = buttons.nth(i);
-      const box = await btn.boundingBox();
-      if (box && box.height > 0 && box.height < 44 && box.width > 0 && box.width < 44) {
-        violations++;
+      const all = Array.from(document.querySelectorAll('button')).filter(effectivelyVisible);
+      let count = 0;
+      for (const btn of all.slice(0, 20)) {
+        const box = btn.getBoundingClientRect();
+        if (box.height > 0 && box.height < 44 && box.width > 0 && box.width < 44) {
+          count++;
+        }
       }
-    }
+      return count;
+    });
+
     // Permitir hasta 2 excepciones (iconos decorativos)
     expect(violations).toBeLessThanOrEqual(2);
   });
