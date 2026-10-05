@@ -27,14 +27,38 @@
  * ============================================================================
  */
 import { config as loadEnv } from 'dotenv';
-import { isIsolatedRun, teardownRunEnv } from './fixtures/run-env';
+import { isIsolatedRun, teardownRunEnv, getRunTenantId } from './fixtures/run-env';
+import { hardDeleteRunTenantStores, deleteRunTenantIfEmpty, countE2EResiduals } from './fixtures/hard-cleanup';
 
 loadEnv({ path: './.env' });
 
 export default async function globalTeardown(): Promise<void> {
+  // Limpieza del run (hard delete de pilotos + tenant del run + usuarios)
   if (!isIsolatedRun()) {
     console.log('[global-teardown] Modo legacy (E2E_ISOLATION=0) — sin teardown de run.');
-    return;
+  } else {
+    await teardownRunEnv();
+    // Barrido final del tenant del run (specs que crearon tiendas fuera de los
+    // pilotos — stores-crud, lifecycle, multi-store…) + tenant vacío.
+    const tenantId = getRunTenantId();
+    if (tenantId) {
+      await hardDeleteRunTenantStores(tenantId).catch(() => {});
+      await deleteRunTenantIfEmpty(tenantId).catch(() => {});
+    }
   }
-  await teardownRunEnv();
+
+  // GUARDRAIL (FASE 16-17): net zero al finalizar la suite. Si hay residuos,
+  // la corrida NO puede aparecer como verde: se reporta contaminación.
+  const residuals = await countE2EResiduals().catch(() => ({ stores: -1, users: -1 }));
+  if (residuals.stores > 0 || residuals.users > 0) {
+    console.error(
+      `E2E DATA CONTAMINATION DETECTED — stores=${residuals.stores} users=${residuals.users}. ` +
+      'CI = FAIL. Ver docs/audits/E2E-DATA-HYGIENE.md.',
+    );
+    // Nota: Playwright propaga el estado del runner; el guardrail standalone
+    // (npm run test:e2e:hygiene) falla el job de CI si el proceso no lo hace.
+    process.exitCode = 1;
+  } else {
+    console.log('[global-teardown] Guardrail PASS — net delta = 0');
+  }
 }
