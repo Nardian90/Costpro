@@ -347,7 +347,12 @@ export async function waitStoreBudget(kind: keyof typeof STORE_BUDGETS): Promise
   let times = loadBudgetTimes(b.envKey).filter((t) => now - t < 60_000);
   if (times.length >= b.maxPerMin) {
     // Esperar a que la llamada más antigua del presupuesto salga de la ventana
-    const waitMs = 60_000 - (now - times[0]) + 500;
+    // Buffer 2s (antes 500ms): la ventana del server se ancla cuando EL
+    // SERVER procesa el 1er POST (δ de cola/compilación del dev server),
+    // no cuando el cliente registra el timestamp. Con δ>500ms el POST
+    // paceado llegaba antes de la expiración real → 429 (reproducido en
+    // lote 7 de e2e-incremental-stabilization, store-reset test 7).
+    const waitMs = 60_000 - (now - times[0]) + 2_000;
     await new Promise((r) => setTimeout(r, Math.max(0, waitMs)));
     const after = Date.now();
     times = loadBudgetTimes(b.envKey).filter((t) => after - t < 60_000);
