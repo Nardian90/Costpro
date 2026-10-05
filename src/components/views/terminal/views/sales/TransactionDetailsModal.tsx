@@ -1,7 +1,7 @@
 
 'use client'
 
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -60,10 +60,47 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
   // PR-4.4I: Fetch authoritative payment data from payment_transactions
   const { data: salePayments = [] } = useSalePayments(transaction?.id);
 
+  // H0-R §9.4: ajuste tributario con firma endurecida /3 (ids + motivo).
+  // El borrador local (draft) es PREVISUALIZACIÓN: el recálculo client-side
+  // queda como solo-preview — la autoridad fiscal y el total los recalcula el
+  // RPC server-side desde tax_configurations (patrón adjust_total_amount).
+  const [draftTaxes, setDraftTaxes] = useState<TaxConfiguration[]>([]);
+  const [taxReason, setTaxReason] = useState('');
+  const [isSavingTaxes, setIsSavingTaxes] = useState(false);
+
+  const currentAppliedTaxes: TaxConfiguration[] = Array.isArray(transaction?.applied_taxes) ? transaction.applied_taxes : [];
+
+  useEffect(() => {
+    setDraftTaxes(Array.isArray(transaction?.applied_taxes) ? transaction.applied_taxes : []);
+    setTaxReason('');
+  }, [transaction?.id, transaction?.applied_taxes]);
+
+  // H0-R §9.4: preview client-side del ajuste propuesto (SOLO lectura — nunca
+  // se envía al servidor: el RPC recalcula desde el catálogo con la misma
+  // aritmética canónica total = subtotal − descuento + impuesto)
+  const previewTaxAmount = useMemo(() => {
+    const subtotal = Number(transaction?.subtotal || 0);
+    const discountAmount = Number(transaction?.discount_value || 0);
+    const baseAmount = Math.max(0, subtotal - discountAmount);
+    return draftTaxes.reduce((total, t) => {
+      if (t.type === 'percentage') {
+        const taxableAmount = Math.max(0, baseAmount - (t.min_exempt || 0));
+        return total + (taxableAmount * t.value) / 100;
+      }
+      return total + t.value;
+    }, 0);
+  }, [draftTaxes, transaction?.subtotal, transaction?.discount_value]);
+
+  const draftUnchanged = useMemo(() => {
+    const sameIds = (a: TaxConfiguration[], b: TaxConfiguration[]) =>
+      a.length === b.length && a.every(t => b.some(x => x.id === t.id));
+    return sameIds(draftTaxes, currentAppliedTaxes);
+  }, [draftTaxes, currentAppliedTaxes]);
+
   if (!transaction) return null;
 
   const canManageTaxes = user?.role === 'admin' || user?.role === 'encargado' || user?.role === 'manager';
-  const appliedTaxes: TaxConfiguration[] = Array.isArray(transaction.applied_taxes) ? transaction.applied_taxes : [];
+  const appliedTaxes = currentAppliedTaxes;
   const isVoided = transaction.status === 'voided';
 
   // PR-4.4I: Use resolveSalePayments for authoritative currency info
@@ -88,40 +125,33 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
       ? 'CUP + USD'
       : 'CUP';
 
-  const handleToggleTax = async (tax: TaxConfiguration) => {
-    if (!canManageTaxes) return;
+  const toggleDraftTax = (tax: TaxConfiguration) => {
+    const isApplied = draftTaxes.some(t => t.id === tax.id);
+    setDraftTaxes(isApplied ? draftTaxes.filter(t => t.id !== tax.id) : [...draftTaxes, tax]);
+  };
 
-    const isApplied = appliedTaxes.some(t => t.id === tax.id);
-    let newAppliedTaxes: TaxConfiguration[];
-
-    if (isApplied) {
-      newAppliedTaxes = appliedTaxes.filter(t => t.id !== tax.id);
-    } else {
-      newAppliedTaxes = [...appliedTaxes, tax];
+  const handleSaveTaxAdjustment = async () => {
+    if (!canManageTaxes || !transaction) return;
+    const reason = taxReason.trim();
+    if (!reason) {
+      toast.error('El motivo del ajuste es obligatorio (corrección tributaria auditada).');
+      return;
+    }
+    if (reason.length > 500) {
+      toast.error('El motivo no puede exceder 500 caracteres.');
+      return;
     }
 
-    // Recalculate Tax Amount and Total
-    const subtotal = transaction.subtotal || 0;
-    const discountAmount = transaction.discount_value || 0;
-    const baseAmount = Math.max(0, subtotal - discountAmount);
-
-    const newTaxAmount = newAppliedTaxes.reduce((total, t) => {
-      if (t.type === 'percentage') {
-        const taxableAmount = Math.max(0, baseAmount - (t.min_exempt || 0));
-        return total + (taxableAmount * t.value) / 100;
-      }
-      return total + t.value;
-    }, 0);
-
-    const newTotalAmount = baseAmount + newTaxAmount;
-
     const toastId = toast.loading('Actualizando impuestos...');
+    setIsSavingTaxes(true);
     try {
-      const { data, error } = await supabase.rpc('update_transaction_taxes', {
+      // H0-R §9.4: firma endurecida — solo ids (propuesta) + motivo; el servidor
+      // valida contra tax_configurations, recalcula tax_amount/total_amount e
+      // impone la invariante de pagos (PT002) + auditoría completa
+      const { error } = await supabase.rpc('update_transaction_taxes', {
         p_transaction_id: transaction.id,
-        p_applied_taxes: newAppliedTaxes,
-        p_tax_amount: Number(newTaxAmount.toFixed(2)),
-        p_total_amount: Number(newTotalAmount.toFixed(2))
+        p_applied_taxes: draftTaxes.map(t => ({ id: t.id })),
+        p_reason: reason,
       });
 
       if (error) throw error;
@@ -130,6 +160,8 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
     } catch (err: any) {
       toast.error(err.message || 'Error al actualizar impuestos', { id: toastId });
+    } finally {
+      setIsSavingTaxes(false);
     }
   };
 
@@ -280,7 +312,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
 
         {/* Summary & Tax Management */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-border">
-            {/* Tax management panel */}
+            {/* Tax management panel — H0-R §9.4: borrador + motivo + preview; el servidor recalcula */}
             <div>
               {canManageTaxes && !isVoided && (
                 <div className="space-y-3">
@@ -292,10 +324,10 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                     {allTaxes.map(tax => (
                       <button type="button"
                         key={tax.id}
-                        onClick={() => handleToggleTax(tax)}
+                        onClick={() => toggleDraftTax(tax)}
                         className={cn(
                           "w-full flex items-center justify-between p-3 rounded-lg border text-xs transition-all",
-                          appliedTaxes.some(t => t.id === tax.id)
+                          draftTaxes.some(t => t.id === tax.id)
                             ? "bg-primary/5 border-primary font-bold"
                             : "bg-background border-border text-muted-foreground"
                         )}
@@ -303,13 +335,49 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                         <span className="uppercase truncate max-w-[150px]">{tax.name}</span>
                         <div className={cn(
                           "w-5 h-5 rounded border flex items-center justify-center",
-                          appliedTaxes.some(t => t.id === tax.id) ? "bg-primary border-primary" : "border-border"
+                          draftTaxes.some(t => t.id === tax.id) ? "bg-primary border-primary" : "border-border"
                         )}>
-                          {appliedTaxes.some(t => t.id === tax.id) && <Check className="w-2.5 h-2.5 text-foreground" />}
+                          {draftTaxes.some(t => t.id === tax.id) && <Check className="w-2.5 h-2.5 text-foreground" />}
                         </div>
                       </button>
                     ))}
                   </div>
+                  {/* Preview del ajuste propuesto (cálculo client-side SOLO orientativo:
+                      la autoridad fiscal y el total los recalcula el RPC server-side) */}
+                  {!draftUnchanged && (
+                    <div className="p-2 rounded-lg bg-muted/50 border border-border text-[10px] text-muted-foreground space-y-1">
+                      <p className="uppercase font-black tracking-widest">Vista previa (el servidor recalcula)</p>
+                      <div className="flex justify-between tabular-nums">
+                        <span>Impuesto propuesto:</span>
+                        <span className="font-bold">+{formatLabeledCurrency(previewTaxAmount, 'CUP')}</span>
+                      </div>
+                      <div className="flex justify-between tabular-nums">
+                        <span>Total propuesto:</span>
+                        <span className="font-bold">{formatLabeledCurrency(Math.max(0, subtotalAmt - discountAmt) + previewTaxAmount, 'CUP')}</span>
+                      </div>
+                    </div>
+                  )}
+                  {/* H0-R §9.2: motivo obligatorio (corrección tributaria auditada) */}
+                  <input
+                    type="text"
+                    value={taxReason}
+                    onChange={e => setTaxReason(e.target.value)}
+                    maxLength={500}
+                    placeholder="Motivo del ajuste (obligatorio, auditable)…"
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-xs"
+                  />
+                  <button type="button"
+                    onClick={handleSaveTaxAdjustment}
+                    disabled={draftUnchanged || !taxReason.trim() || isSavingTaxes}
+                    className={cn(
+                      "w-full px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
+                      draftUnchanged || !taxReason.trim() || isSavingTaxes
+                        ? "bg-muted text-muted-foreground cursor-not-allowed"
+                        : "bg-primary text-primary-foreground hover:opacity-90"
+                    )}
+                  >
+                    {isSavingTaxes ? 'Guardando…' : 'Guardar Ajuste de Impuestos'}
+                  </button>
                 </div>
               )}
             </div>
