@@ -63,6 +63,7 @@ import {
   hardDeleteRunTenantStores,
   hardDeleteRunUser,
   deleteRunTenantIfEmpty,
+  sweepResidualsSince,
 } from './hard-cleanup';
 
 loadEnv({ path: './.env' });
@@ -529,6 +530,16 @@ export async function teardownRunEnv(contextPath = runContextPath()): Promise<vo
 
   // Tenant del run: eliminarlo si quedó vacío (NET ZERO)
   await deleteRunTenantIfEmpty(context.tenantId).catch(() => {});
+
+  // Barrido residual (FASE 14): specs que crearon entidades como el admin
+  // compartido (T0) o usuarios attacker — por ventana temporal del run.
+  const swept = await sweepResidualsSince(
+    context.createdAt,
+    [context.users.admin.id, context.users.cajero.id, context.users.almacen.id, context.users.encargado.id],
+  ).catch(() => ({ stores: 0, users: 0 }));
+  if (swept.stores || swept.users) {
+    console.log(`[run-env] Barrido residual del run: ${swept.stores} tiendas, ${swept.users} usuarios`);
+  }
 
   try {
     unlinkSync(contextPath);

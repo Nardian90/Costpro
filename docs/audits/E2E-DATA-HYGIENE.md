@@ -131,44 +131,51 @@ usuarios.
 ### Antes de la suite (guardrail --before)
 
 ```text
-residuos E2E — stores=0 users=0 (tras el barrido final de la tarea)
+ANTES RUN #1: stores=9 users=27 tenants=15  (residuo E2E = 0/0)
 ```
 
-### Corrida #1 (specs que crean entidades + probe)
+### Corrida #1 (specs que crean entidades: probe + stores-crud + lifecycle + autoswitch + switching + reset + security + multi-store)
 
 ```text
 E2E run #1:
-  new stores: 13 (fixtures del run: 2 pilotos + specs de stores/lifecycle/multi-store)
-  deleted stores: 13 (teardown HARD + sweep del tenant)
-  net stores: 0
-  new users: 4 (plantel del run) + probe-user: 0 permanentes
-  deleted users: 4
-  net users: 0
-  E2E-CLEANUP-PROBE = 0 (create→verify→delete→verify-absence OK)
+  DESPUÉS inmediato:  stores=16 (+7) users=32 (+5)  ← FUGA DETECTADA
+  new stores: 7 (specs que crean como admin compartido en T0 + attackers)
+  new users: 5 (plantel de 2 invocaciones + attackers)
+  net: ≠ 0 → expuso que el teardown por tenant NO cubría entidades creadas
+  fuera del tenant del run → FIX APLICADO: sweepResidualsSince() integrado
+  en teardownRunEnv (barrido por ventana temporal del run + identidad).
+  Limpieza del residuo: 7 tiendas + 5 usuarios (sweep puntual) → estado base 9/27/15.
 ```
 
-### Corrida #2 (repetición obligatoria)
+### Corrida #2 (repetición obligatoria, MISMA suite, con el fix integrado)
 
 ```text
 E2E run #2:
-  net stores: 0
-  net users: 0
-  E2E-CLEANUP-PROBE = 0
+  ANTES:  stores=9 users=27 tenants=15
+  DESPUÉS (incluido el barrido asíncrono del propio teardown):
+          stores=9 users=27 tenants=15
+  stores_residuo = 0 · users_residuo = 0
+  NET DELTA = 0  ✓
+  E2E-CLEANUP-PROBE = 0 (create→verify→delete→verify-absence OK en ambas corridas)
 ```
 
-(detalles de ejecución y conteos exactos por corrida en la sección Testing del
-PR — medidas con `countE2EResiduals()` antes/después de cada corrida).
+Resultados de tests de las corridas (informativo): run #2-A 48 passed / 2
+failed (security.spec V2.12.9/V2.12.13 — PREEXISTING: `create_sale` fue
+reemplazado por `create_sale_v2` en el esquema, el test busca el error de auth
+y recibe PGRST202; sin relación con la higiene de datos) / 5 skipped.
 
 ### Verificación final de Supabase (FASE 21)
 
 ```text
-Stores: 9 totales al cierre del barrido (= 3 protegidas + 6 D-indeterminadas
-        documentadas: Tienda Auditor, QA-H1-A/B, No Address, blank, Store Tenant 2)
-Users:  0 inesperados E2E; protegidos 8/8 activos
-Memberships huérfanas: 0
-Profiles sin auth.users: 0
-Memberships sin user: 0
-Auth:   0 identidades E2E residuales (patrones e2e*/e2e80*/esec*/f06dr*/…)
+Stores: 9 totales = 3 protegidas (activas) + QA-H1-A/B (fixtures QA activas)
+        + Tienda Auditor / No Address / blank / Store Tenant 2 (D-indeterminadas archivadas)
+Users:  27 = 8 protegidos + 3 reales + 16 D-indeterminados documentados
+Unexpected E2E entities: 0
+Memberships huérfanas: 0 · Memberships sin user: 0 · Profiles sin auth: 0
+Auth:   0 identidades E2E residuales
+Protegidas (integridad de negocio intacta):
+  Puerto Padre 36 productos · 212 transacciones · ENERVIDA 157 productos ·
+  590 transacciones · TIENDA CENTRAL 126 productos · logins demo OK
 ```
 
 ⚠️ Nota de transparencia: durante la tarea el job E2E de CI (que corre el

@@ -275,6 +275,57 @@ export async function deleteRunTenantIfEmpty(tenantId: string): Promise<boolean>
 }
 
 /**
+ * Barrido residual del run (FASE 14 — cleanup garantizado): algunas specs
+ * crean tiendas como el admin COMPARTIDO (tenant T0, fuera del tenant del
+ * run) o usuarios attacker — el barrido por tenant no los cubre. Este sweep
+ * hard-deleta las entidades de patrón-test creadas DESDE el inicio del run
+ * o POR usuarios del run. Nunca toca protegidas ni entidades de otros runs
+ * (identidad distinta y ventana temporal distinta).
+ */
+export async function sweepResidualsSince(
+  sinceIso: string,
+  runUserIds: readonly string[],
+): Promise<{ stores: number; users: number }> {
+  let storesDeleted = 0;
+  let usersDeleted = 0;
+
+  // Tiendas: creadas desde el inicio del run O por usuarios del run
+  try {
+    const createdBy = runUserIds.length
+      ? `&created_by=in.(${runUserIds.map((id) => `"${id}"`).join(',')})`
+      : '';
+    const rows = await sb.select<{ id: string; name: string; created_by: string | null }>(
+      'stores',
+      `select=id,name,created_by&created_at=gte.${sinceIso}${createdBy}&limit=500`,
+    );
+    for (const r of rows) {
+      if (PROTECTED_STORE_IDS.includes(r.id)) continue;
+      if (!isTestStoreName(r.name)) continue;
+      await hardDeleteTestStore(r.id).catch(() => {});
+      storesDeleted++;
+    }
+  } catch { /* best-effort */ }
+
+  // Usuarios de patrón test creados desde el inicio del run
+  try {
+    const profs = await sb.select<{ id: string; email: string | null }>(
+      'profiles',
+      `select=id,email&created_at=gte.${sinceIso}&limit=500`,
+    );
+    for (const p of profs) {
+      const e = (p.email || '').toLowerCase();
+      const isTest = /^(e2e-|e2e80-|e2e2-|hot-test-|hot-regular|f06dr-|audit-ph3-|esec-|gate-f406d-|fase-d-|test_no_admin|fc\.e2e\.|fc-access-e2e-|fc-mvp-smoke|qa-costpro-)/.test(e)
+        || /@costpro\.test$|@fixture\.local$|@fixture\.costpro$|@audit\.costpro\.test$|@costpro\.local$/.test(e);
+      if (!isTest) continue;
+      const ok = await hardDeleteRunUser(p.id).catch(() => false);
+      if (ok) usersDeleted++;
+    }
+  } catch { /* best-effort */ }
+
+  return { stores: storesDeleted, users: usersDeleted };
+}
+
+/**
  * GUARDRAIL (FASE 16-17): cuenta residuos E2E (tiendas con patrón de test no
  * archivadas y perfiles de usuarios E2E) vía service-role. "Unexpected" =
  * cualquier residuo tras el teardown — el criterio es NET ZERO.
