@@ -297,7 +297,27 @@ export function useReportState(): UseReportStateReturn {
       dispatch({ type: 'SET_GENERATE_PROGRESS', payload: { percentage: 100, stage: 'Completado' } });
 
       toast.success('Reporte generado exitosamente');
-      window.open(result.url, '_blank');
+
+      // BUG-022 (E2E-PRODUCT-FIX-ROUND1): la URL del reporte ahora requiere
+      // autenticación (endpoint /api/reports/download/[runId]). Descargar con
+      // el token de sesión y abrir el blob — antes se abría una signed URL
+      // pública de 24h directamente con window.open.
+      try {
+        const token = useAuthStore.getState().token || '';
+        const pdfRes = await fetch(result.url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!pdfRes.ok) {
+          throw new Error(`HTTP ${pdfRes.status}`);
+        }
+        const blob = await pdfRes.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+        // Revocar tras un margen (la pestaña ya cargó el PDF)
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+      } catch (dlError) {
+        toast.error('Reporte generado, pero no se pudo abrir el PDF. Vuelve a generarlo.');
+      }
 
       // 4.3: Log execution run to report_runs table (fire-and-forget)
       reportService.logRun({

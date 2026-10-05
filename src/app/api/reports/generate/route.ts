@@ -127,13 +127,18 @@ async function generateReportHandler(
       });
     }
 
-    // ── Upload PDF to Supabase Storage ──
+    // ── Upload PDF a Supabase Storage ──
     const pdfBuffer = doc.output('arraybuffer');
     const fileName = `reports/${type}/${runData.id}.pdf`;
 
+    // BUG-022: tras privatizar el bucket (20261005120001), el INSERT con
+    // ON CONFLICT DO UPDATE (upsert) exige política UPDATE de storage.objects
+    // que el bucket 'reports' no tiene → RLS violation (reproducido). El path
+    // es único por run id (report_runs genera el uuid), el upsert no aporta:
+    // write simple RLS-scoped del usuario autenticado.
     const { error: uploadError } = await supabase.storage.from('reports').upload(fileName, pdfBuffer, {
       contentType: 'application/pdf',
-      upsert: true,
+      upsert: false,
     });
 
     if (uploadError) {
@@ -149,42 +154,29 @@ async function generateReportHandler(
       throw new Error(`Error al subir PDF: ${uploadError.message}`);
     }
 
-    // Use signed URL for financial security (expires in 24h)
-    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-      .from('reports')
-      .createSignedUrl(fileName, 86400);
+    // ── BUG-022 (E2E-PRODUCT-FIX-ROUND1): la URL del reporte requiere autenticación ──
+    // El bucket 'reports' es privado (migración 20261005120001) y el PDF se
+    // descarga EXCLUSIVAMENTE vía el endpoint autenticado
+    // /api/reports/download/[runId] (withAuth + ownership del run).
+    // Se eliminan: la signed URL de 24h (bearer URL accesible sin sesión) y
+    // el fallback a la URL pública del objeto (exposición total del PDF).
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
+    const reportUrl = `${appUrl}/api/reports/download/${runData.id}`;
 
-    if (signedUrlError || !signedUrlData) {
-      // Fallback to public URL if signed URL creation fails
-      const { data: urlData } = supabase.storage.from('reports').getPublicUrl(fileName);
-      await supabase
-        .from('report_runs')
-        .update({
-          status: 'completed',
-          file_url: urlData.publicUrl,
-          executed_at: new Date().toISOString(),
-        })
-        .eq('id', runData.id);
-
-      return NextResponse.json({
-        success: true,
-        url: urlData.publicUrl,
-        run_id: runData.id,
-      });
-    }
-
-    await supabase
+    const { error: runUpdateError } = await supabase
       .from('report_runs')
       .update({
         status: 'completed',
-        file_url: signedUrlData.signedUrl,
+        file_url: reportUrl,
         executed_at: new Date().toISOString(),
       })
       .eq('id', runData.id);
 
+    if (runUpdateError) throw runUpdateError;
+
     return NextResponse.json({
       success: true,
-      url: signedUrlData.signedUrl,
+      url: reportUrl,
       run_id: runData.id,
     });
   } catch (error: unknown) {
