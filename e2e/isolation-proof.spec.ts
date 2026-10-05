@@ -211,18 +211,20 @@ test.describe('E2E-RUNNER-ISOLATION — aislamiento entre corridas', () => {
       expect(peerStoreBefore!.tenant_id, 'el peer vive en otro tenant').not.toBe(TENANT_ID);
     }
 
-    // Cleanup propio (flujo REAL de DELETE con fallback de archivado)
+    // Cleanup propio (flujo REAL de DELETE con hard-delete de higiene)
     await deleteTestStore(api, adminToken, ephemeral!.id);
 
+    // CONTRATO VIGENTE (chore/e2e-data-hygiene): el cleanup de una tienda de
+    // prueba es HARD delete — deleteTestStore garantiza que la fila
+    // DESAPAREZCA (soft-delete API + fallback hard, nunca archivar). El
+    // assert anterior (fila remanente con is_active=false/is_archived=true)
+    // era el contrato soft-delete que causó la contaminación auditada
+    // (2.638 tiendas residuales). CREATE → TEST → DELETE → VERIFY ABSENCE.
     const ownRows = await sb.select<StoreRow>(
       'stores',
       `select=id,is_active,is_archived&id=eq.${ephemeral!.id}`,
     );
-    expect(ownRows.length).toBe(1);
-    expect(
-      ownRows[0].is_active === false || ownRows[0].is_archived === true,
-      'la tienda efímera propia queda inactiva/archivada',
-    ).toBe(true);
+    expect(ownRows.length, 'la tienda efímera propia queda ELIMINADA (hard delete)').toBe(0);
     ephemeral = null; // afterAll no debe reintentar el cleanup
 
     if (peer) {

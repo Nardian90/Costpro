@@ -306,7 +306,12 @@ export async function restoreActiveStore(userId: string): Promise<void> {
  * NO modifica límites de la app: la suite respeta el contrato publicado.
  */
 const STORE_BUDGETS: Record<string, { maxPerMin: number; envKey: string }> = {
-  create: { maxPerMin: 4, envKey: 'E2E_BUDGET_CREATE' }, // límite API: 5/min (margen 1)
+  // e2e-incremental-stabilization (cert c5b): el budget del worker NO ve los
+  // 2 POSTs de pilotos A/B del aprovisionamiento (run-env corre en otro
+  // proceso → su consumo sólo existe server-side). Budget 4 + headroom 2
+  // = 6 > límite server 5 → 429 garantizado en el 4.º POST paceado.
+  // Budget 3: server ve ≤ 2 pilotos + 3 spec = 5 = exactamente el límite.
+  create: { maxPerMin: 3, envKey: 'E2E_BUDGET_CREATE' }, // límite API: 5/min (−2 pilotos aprovisionamiento)
   delete: { maxPerMin: 2, envKey: 'E2E_BUDGET_DELETE' }, // límite API: 3/min (margen 1)
   patch: { maxPerMin: 8, envKey: 'E2E_BUDGET_PATCH' },   // límite API: 10/min (margen 2)
   reset: { maxPerMin: 2, envKey: 'E2E_BUDGET_RESET' },   // límite API: 2/min (exacto)
@@ -347,7 +352,12 @@ export async function waitStoreBudget(kind: keyof typeof STORE_BUDGETS): Promise
   let times = loadBudgetTimes(b.envKey).filter((t) => now - t < 60_000);
   if (times.length >= b.maxPerMin) {
     // Esperar a que la llamada más antigua del presupuesto salga de la ventana
-    const waitMs = 60_000 - (now - times[0]) + 500;
+    // Buffer 2s (antes 500ms): la ventana del server se ancla cuando EL
+    // SERVER procesa el 1er POST (δ de cola/compilación del dev server),
+    // no cuando el cliente registra el timestamp. Con δ>500ms el POST
+    // paceado llegaba antes de la expiración real → 429 (reproducido en
+    // lote 7 de e2e-incremental-stabilization, store-reset test 7).
+    const waitMs = 60_000 - (now - times[0]) + 2_000;
     await new Promise((r) => setTimeout(r, Math.max(0, waitMs)));
     const after = Date.now();
     times = loadBudgetTimes(b.envKey).filter((t) => after - t < 60_000);

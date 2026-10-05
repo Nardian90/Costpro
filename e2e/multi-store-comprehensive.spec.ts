@@ -61,6 +61,13 @@ const PILOT_STORE_ID = process.env.E2E_TEST_STORE_ID || 'test-store-00000000';
 test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
   test.skip(!process.env.E2E_TEST_ADMIN_TOKEN, 'E2E_TEST_ADMIN_TOKEN not configured');
 
+  // e2e-incremental-stabilization (cert c5b): spec rate-bound — las esperas
+  // paceadas (ventana server 60 s + buffer 2 s) y el retry-único-post-429
+  // (FASE 17) superan el timeout por defecto de 60 s. Timeout uniforme de
+  // 180 s para TODO el describe: los asserts siguen fallando al instante;
+  // sólo el límite duro del test se acomoda al pacing determinista.
+  test.setTimeout(180_000);
+
   let headers: Record<string, string>;
   const createdStoreIds: string[] = [];
 
@@ -111,6 +118,26 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
         nit: '123456789',
       },
     });
+    if (response.status() === 429) {
+      // FLAKY-documentado (e2e-incremental-stabilization, cert c5b): el budget
+      // del worker NO ve los 2 POSTs de pilotos A/B del aprovisionamiento
+      // (run-env corre en otro proceso → sólo consumo server-side) — un 429
+      // aquí mide la ventana de rate limit, no el contrato del POST. Reintento
+      // ÚNICO tras una ventana completa de silencio (60 s + 2 s buffer); la
+      // aserción 201 se mantiene íntegra sobre el reintento.
+      await new Promise((r) => setTimeout(r, 62_000));
+      await waitStoreBudget('create');
+      response = await request.post('/api/stores', {
+        headers,
+        data: {
+          name: `E2E Multi ${sfx}`,
+          address: `Calle ${sfx}`,
+          slug: `e2e-multi-${sfx}`,
+          reeup: '12345678901',
+          nit: '123456789',
+        },
+      });
+    }
     if (response.status() === 403) {
       // SEC-TS-10 (cuota llena): liberar test-stores ACTIVAS antiguas
       // (>60 s — de tests ya completados; las del test en curso y los
@@ -251,10 +278,24 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     // SEC-TS-10: pacear creación (API: 5 POSTs/min — TODOS los POSTs cuentan,
     // incluidos los que fallan validación; el límite corre antes del parse).
     await waitStoreBudget('create');
-    const response = await request.post('/api/stores', {
+    let response = await request.post('/api/stores', {
       headers,
       data: { name: '   ', address: 'Test', slug: 'test-ws-name-' + Date.now() },
     });
+    if (response.status() === 429) {
+      // FLAKY-documentado (e2e-incremental-stabilization FASE 17): el 429 en
+      // este POST de VALIDACIÓN no mide el contrato (nombre whitespace → 400)
+      // sino la ventana de rate limit del usuario (5 POSTs/min, ventana fija
+      // anclada al primer POST del run — los pilotos del global-setup y el
+      // reinicio de worker de Playwright pueden desalinear el presupuesto
+      // client-side). Reintento ÚNICO tras vaciar la ventana; la aserción
+      // 400/422 se mantiene íntegra sobre el reintento.
+      await new Promise((r) => setTimeout(r, 61_000));
+      response = await request.post('/api/stores', {
+        headers,
+        data: { name: '   ', address: 'Test', slug: 'test-ws-name-' + Date.now() },
+      });
+    }
     expect([400, 422]).toContain(response.status());
   });
 
@@ -380,10 +421,22 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     // paceada de hasta ~60 s tras el delete del 4.1).
     test.setTimeout(180_000);
     await waitStoreBudget('delete');
-    const response = await request.delete('/api/stores', {
+    let response = await request.delete('/api/stores', {
       headers,
       data: {},
     });
+    if (response.status() === 429) {
+      // FLAKY-documentado (e2e-incremental-stabilization, cert c5b): el 429
+      // mide la ventana de rate limit (requests abortados por timeouts de
+      // tests previos igual cuentan server-side), no el contrato. Reintento
+      // ÚNICO tras ventana completa de silencio; el assert 400 queda íntegro.
+      await new Promise((r) => setTimeout(r, 62_000));
+      await waitStoreBudget('delete');
+      response = await request.delete('/api/stores', {
+        headers,
+        data: {},
+      });
+    }
     expect(response.status()).toBe(400);
   });
 
@@ -393,10 +446,21 @@ test.describe('Multi-Tienda Module — Comprehensive (>90% coverage)', () => {
     // ("Request context disposed" reproducido en el re-run mini).
     test.setTimeout(180_000);
     await waitStoreBudget('delete');
-    const response = await request.delete('/api/stores', {
+    let response = await request.delete('/api/stores', {
       headers,
       data: { storeId: '00000000-0000-0000-0000-000000000000' },
     });
+    if (response.status() === 429) {
+      // FLAKY-documentado (e2e-incremental-stabilization, cert c5b): mismo
+      // criterio que 4.2 — el 429 mide la ventana, no el contrato. Reintento
+      // ÚNICO tras ventana completa de silencio; assert [404,403] íntegro.
+      await new Promise((r) => setTimeout(r, 62_000));
+      await waitStoreBudget('delete');
+      response = await request.delete('/api/stores', {
+        headers,
+        data: { storeId: '00000000-0000-0000-0000-000000000000' },
+      });
+    }
     expect([404, 403]).toContain(response.status());
   });
 

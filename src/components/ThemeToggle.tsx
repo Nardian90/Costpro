@@ -78,7 +78,7 @@ export function ThemeToggle() {
       {/* Light/Dark Toggle */}
       <button
         onClick={handleToggleTheme}
-        className="relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="relative h-11 w-11 flex items-center justify-center rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
       >
         <div className="relative w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center overflow-hidden">
@@ -94,7 +94,7 @@ export function ThemeToggle() {
       <button
         onClick={handleToggleMode}
         className={cn(
-          "relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl border active:scale-90 transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "relative h-11 w-11 flex items-center justify-center rounded-xl border active:scale-90 transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring",
           isTransitioning && "scale-95",
           isPerformance
             ? "border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/15"

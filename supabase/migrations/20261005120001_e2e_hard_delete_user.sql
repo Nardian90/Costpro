@@ -72,6 +72,13 @@ BEGIN
   END LOOP;
 
   BEGIN
+    -- Bypass de trg_validate_payment_invariants: el trigger bloquea TODO
+    -- DELETE de payment_transactions salvo current_user postgres/snapshot
+    -- restorer + app.restore_mode='true'. SECURITY DEFINER corre como
+    -- postgres (owner), así que el toggle LOCAL a la transacción basta.
+    -- Patrón canónico: reset_store_data / restore_transaction_snapshot.
+    PERFORM set_config('app.restore_mode', 'true', true);
+
     -- Datos user-scoped (mismo conjunto que e2e/fixtures/hard-cleanup.ts)
     DELETE FROM public.user_store_memberships WHERE user_id = p_user_id;
     DELETE FROM public.user_preferences       WHERE user_id = p_user_id;
@@ -98,6 +105,22 @@ BEGIN
     DELETE FROM public.whatsapp_product_posts WHERE published_by = p_user_id;
     DELETE FROM public.pick3_simulations      WHERE user_id = p_user_id;
     DELETE FROM public.inventory_movements    WHERE user_id = p_user_id;
+
+    -- Cadena v2 (checkout V2): el RPC v1 solo cubría sales/sale_items (v1).
+    -- Gap detectado en FASE 2 de e2e-incremental-stabilization: el usuario
+    -- qa.h1.sup tenía ventas en transactions (v2) + payment_transactions +
+    -- kardex_entries que bloqueaban el DELETE del profile/auth user con
+    -- FK violations (23503).
+    -- Orden: payment_transactions (FK RESTRICT a transactions) → items →
+    -- transactions (seller_id) → kardex_entries.
+    DELETE FROM public.payment_transactions
+      WHERE paid_by = p_user_id
+         OR transaction_id IN (SELECT id FROM public.transactions WHERE seller_id = p_user_id);
+    DELETE FROM public.transaction_items
+      WHERE transaction_id IN (SELECT id FROM public.transactions WHERE seller_id = p_user_id);
+    DELETE FROM public.transactions WHERE seller_id = p_user_id;
+    DELETE FROM public.kardex_entries WHERE created_by = p_user_id;
+
     DELETE FROM public.sale_items             WHERE sale_id IN (SELECT id FROM public.sales WHERE cashier_id = p_user_id);
     DELETE FROM public.sales                  WHERE cashier_id = p_user_id;
 
