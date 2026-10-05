@@ -39,7 +39,7 @@ export function NotificationCenter() {
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="relative p-2 rounded-xl hover:bg-muted transition-colors"
+          className="relative min-h-[44px] min-w-[44px] p-2 rounded-xl hover:bg-muted transition-colors"
           aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ''}`}
         >
           <Bell className="w-5 h-5 text-muted-foreground" />
