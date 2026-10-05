@@ -52,8 +52,16 @@ import {
 
 /** Wait for the catalog view to finish loading products */
 async function waitForCatalogView(page: import('@playwright/test').Page) {
+  // STALE FIX (e2e-incremental-stabilization FASE 5): la vista de catálogo
+  // actual renderiza TABLA (CatalogProductGrid layoutMode='table', <table>)
+  // y el breadcrumb ya no usa role="list" — el selector viejo
+  // (role="list"/.grid/role="article") no matcheaba NADA y el wait expiraba
+  // con la vista correctamente cargada (captura en evidencia del lote 2).
+  // Se añade 'main table' al union: mismo propósito (contenedor de contenido
+  // cargado), contrato vigente. role="article"/.grid se mantienen por la
+  // vista grid alternativo (layoutMode='grid' usa .grid + cards article).
   await page.waitForSelector(
-    '[role="list"], [data-testid="catalog-empty"], [role="article"], .grid',
+    '[role="list"], [data-testid="catalog-empty"], [role="article"], .grid, main table',
     { timeout: 20_000 },
   );
 }
