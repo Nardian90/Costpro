@@ -13,7 +13,9 @@ import { verifySupervisorToken } from '@/lib/supervisor-token';
  * Iteración 11.2 — POST /api/pos/checkout
  *
  * Server-side checkout endpoint that wraps create_sale_v2 RPC.
- * Activated only when USE_V2_CHECKOUT feature flag is true.
+ * FINALIZE-V2: this is the ONLY supported online sale path (the
+ * USE_V2_CHECKOUT feature flag and the V1 `create_sale` direct-RPC fallback
+ * were removed — the V1 function was dropped from the database).
  *
  * Security:
  * - withAuth (validates session)

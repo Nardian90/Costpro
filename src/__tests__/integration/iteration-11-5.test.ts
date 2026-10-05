@@ -2,7 +2,7 @@
  * Iteración 11.5 — Pruebas PT-11.5.x (Observabilidad OTel)
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 const MIGRATIONS_DIR = join(process.cwd(), 'supabase', 'migrations');
@@ -187,8 +187,7 @@ describe('PT-11.5.12 — Regresión', () => {
     expect(testFiles).toContain('iteration-13.test.ts');
     expect(testFiles).toContain('iteration-fiscal.test.ts');
   });
-  it('USE_V2_CHECKOUT sigue activo', () => {
-    const src = readFileSync(join(process.cwd(), 'src', 'config', 'features.ts'), 'utf-8');
-    expect(src).toContain('USE_V2_CHECKOUT');
+  it('FINALIZE-V2: USE_V2_CHECKOUT eliminado (V2 único camino)', () => {
+    expect(existsSync(join(process.cwd(), 'src', 'config', 'features.ts'))).toBe(false);
   });
 });

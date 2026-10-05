@@ -2,7 +2,7 @@
  * Iteración 13 — Pruebas PT-13.x (Soft Multi-Tenant)
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 const MIGRATIONS_DIR = join(process.cwd(), 'supabase', 'migrations');
@@ -160,10 +160,9 @@ describe('PT-13.12 — Cada migration tiene DOWN', () => {
   }
 });
 
-describe('PT-13.13 — Feature flag USE_V2_CHECKOUT sigue false', () => {
-  it('features.ts no se modificó', () => {
-    const src = readFileSync(join(process.cwd(), 'src', 'config', 'features.ts'), 'utf-8');
-    expect(src).toContain("=== 'true' || false");
+describe('PT-13.13 — FINALIZE-V2: flag USE_V2_CHECKOUT eliminado', () => {
+  it('features.ts fue eliminado (V2 canónico)', () => {
+    expect(existsSync(join(process.cwd(), 'src', 'config', 'features.ts'))).toBe(false);
   });
 });
 

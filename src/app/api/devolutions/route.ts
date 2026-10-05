@@ -1,6 +1,8 @@
 /**
  * GET /api/devolutions?store_id=X&limit=20&page=1
- * POST /api/devolutions — crear devolución vía RPC create_devolution
+ * POST /api/devolutions — crear devolución vía RPC create_devolution_v2
+ * (FINALIZE-V2: único camino soportado; el fallback V1 create_devolution y el
+ * flag USE_V2_REVERSE fueron eliminados).
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
@@ -68,10 +70,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
 
-  // Iteración 11.3: usar create_devolution_v2 si feature flag activo
-  const { FEATURES } = await import('@/config/features');
-  const rpcName = FEATURES.USE_V2_REVERSE ? 'create_devolution_v2' : 'create_devolution';
-
+  // FINALIZE-V2: create_devolution_v2 es el ÚNICO camino de devolución (el
+  // fallback al RPC V1 create_devolution y el feature flag USE_V2_REVERSE
+  // fueron eliminados — migración 20261005140000_drop_v1_sale_devolution).
   const rpcParams: Record<string, unknown> = {
     p_store_id: parsed.data.store_id,
     p_user_id: session.user.id,
@@ -82,14 +83,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_customer_id: parsed.data.customer_id || null,
     p_customer_name: parsed.data.customer_name || null,
     p_notes: parsed.data.notes || null,
+    p_idempotency_key: `dev-${crypto.randomUUID()}`,
   };
 
-  // v2: añadir idempotency_key
-  if (FEATURES.USE_V2_REVERSE) {
-    rpcParams.p_idempotency_key = `dev-${crypto.randomUUID()}`;
-  }
-
-  const { data, error } = await supabase.rpc(rpcName, rpcParams);
+  const { data, error } = await supabase.rpc('create_devolution_v2', rpcParams);
 
   if (error) {
     logger.error('DATABASE', 'CREATE_DEVOLUTION_FAILED', { error: error.message });

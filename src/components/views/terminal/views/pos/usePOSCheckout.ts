@@ -6,11 +6,8 @@ import { toast } from "sonner";
 import { useCartStore } from "@/store/cart";
 import { effectiveUnitPrice } from "@/store/cart";
 import { useAuthStore } from "@/store";
-import { useCreateSale } from "@/hooks/api/useTransactions";
 import { useInvertDocument } from "@/hooks/api/useDocumentActions";
 import { canUndoSaleInStore } from "@/lib/roles";
-import { supabase } from "@/lib/supabaseClient";
-import { shouldUseV2Checkout } from "@/config/features";
 import { PaymentMethod } from "@/types";
 import { getSupervisorAuth, clearSupervisorAuth } from "./supervisor-auth-store";
 import type { LastSale } from "./POSCart.types";
@@ -56,8 +53,10 @@ export function usePOSCheckout() {
     })),
   );
 
-  const { mutateAsync: createSale, isPending: isProcessingSale } =
-    useCreateSale();
+  // FINALIZE-V2: useCreateSale (RPC V1 create_sale) eliminado del checkout
+  // online — el estado de procesamiento ahora es local al hook (guard
+  // anti doble-submit + UX del botón), sin depender del mutation V1.
+  const [isProcessingSale, setIsProcessingSale] = useState(false);
 
   // POS-2 MM-9: Hook de anulación para soportar "Deshacer venta".
   const { mutateAsync: invertSale } = useInvertDocument();
@@ -78,6 +77,7 @@ export function usePOSCheckout() {
       // una sola vez por intento de checkout y se reutiliza en todos los retries.
 
       try {
+        setIsProcessingSale(true);
         const cartState = useCartStore.getState();
         const customerId = cartState.customerId;
         const customerName = cartState.customerName;
@@ -142,12 +142,15 @@ export function usePOSCheckout() {
           throw new Error(`Descuadre: efectivo (${cashAmountCup.toFixed(2)}) + transf (${transferAmountCup.toFixed(2)}) + zelle (${zelleAmountCup.toFixed(2)}) ≠ total (${totalAmountCup.toFixed(2)}) CUP`);
         }
 
-        // Iteración 11.2: Feature flag — use v2 checkout (server-side) or v1 (RPC directo)
-        const useV2 = shouldUseV2Checkout(user.activeStoreId);
+        // FINALIZE-V2: create_sale_v2 es el ÚNICO camino de venta (path V1 con
+        // RPC directo create_sale eliminado — ver migración 20261005140000).
+        // El checkout POS es online (fetch /api/pos/checkout); la capacidad
+        // offline vive en useSalesCatalog (enqueue → replay create_sale_v2 vía
+        // /api/sync/batch).
         let saleId: string;
 
-        if (useV2) {
-          // ── Path v2: POST /api/pos/checkout (server-side recalculation + supervisor auth) ──
+        {
+          // ── Path canónico V2: POST /api/pos/checkout (recálculo server-side + supervisor auth) ──
           // REM-INV-4A-R (RC-1): consume the supervisor authorization captured
           // by SupervisorAuthModal (bound to operator+store, short TTL).
           const supervisorAuth = getSupervisorAuth();
@@ -232,78 +235,10 @@ export function usePOSCheckout() {
           // REM-INV-4A-R (RC-1): single sale per supervisor authorization.
           clearSupervisorAuth();
           // v2: customer_id is already persisted atomically — no UPDATE needed
-        } else {
-          // ── Path v1: RPC directo (create_sale viejo, sin cambios) ──
-          saleId = await createSale({
-          p_store_id: user.activeStoreId,
-          p_seller_id: user.id,
-          p_payment_method: paymentMethod,
-          p_total_amount: useCartStore.getState().getExpectedTotalCup(),
-          // FIX-B4 (2026-07-10): p_subtotal en CUP, no suma cruda de monedas mixtas
-          p_subtotal: useCartStore.getState().getSubtotalCup(),
-          p_discount_type: (checkoutDiscount || discount)?.type || "fixed",
-          p_discount_value: getDiscountAmount(),
-          // FIX F2-01: persistir split cash/transfer/zelle server-side
-          p_cash_amount: cashAmount,
-          p_transfer_amount: transferAmount,
-          // FIX-ZELLE: enviar zelle_amount al RPC
-          p_zelle_amount: zelleAmount,
-          // FIX: idempotencia con crypto.randomUUID() para mayor entropía
-          p_idempotency_key: `sale-${crypto.randomUUID()}`,
-          // PR-4.4I: Zelle currency + rate
-          p_sale_currency: zelleAmount > 0 ? 'USD' : 'CUP',
-          p_sale_exchange_rate: zelleAmount > 0 ? (useCartStore.getState().saleExchangeRate > 1 ? useCartStore.getState().saleExchangeRate : 680) : 1.0,
-          p_items: items.map((i) => ({
-            product_id: i.product_id,
-            variant_id: i.variant_id ?? null,
-            quantity: i.quantity,
-            price: i.price,
-            cost: i.cost,
-            cash_paid: i.cash_paid,
-            transfer_paid: i.transfer_paid,
-            zelle_paid: i.zelle_paid || 0,
-            currency: i.currency || 'CUP',
-            exchange_rate: i.exchange_rate || 1.0,
-            // FIX-PAYMENT-METHOD-CURRENCY: moneda por método de pago
-            cash_currency: i.cash_currency || 'CUP',
-            transfer_currency: i.transfer_currency || 'CUP',
-            zelle_currency: i.zelle_currency || 'USD',
-            // FIX-B5: persistir descuentos por método
-            cash_discount_type: i.cash_discount_type || null,
-            cash_discount_value: i.cash_discount_value || 0,
-            cash_discount_currency: i.cash_discount_currency || 'CUP',
-            transfer_discount_type: i.transfer_discount_type || null,
-            transfer_discount_value: i.transfer_discount_value || 0,
-            transfer_discount_currency: i.transfer_discount_currency || 'CUP',
-            zelle_discount_type: i.zelle_discount_type || null,
-            zelle_discount_value: i.zelle_discount_value || 0,
-            zelle_discount_currency: i.zelle_discount_currency || 'USD',
-          })),
-        });
-        } // end else (v1 path)
-
-        // POS-3b audit P0.1: persistir customer_id y customer_name en transactions.
-        // Iteración 11.2: solo necesario en path v1 (v2 lo hace atómicamente).
-        // En path v2, saleId ya tiene customer_id persistido — skip UPDATE.
-        if (!useV2 && (safeCustomerId || customerName)) {
-          try {
-            const { error: custUpdateErr } = await supabase
-              .from("transactions")
-              .update({
-                customer_id: safeCustomerId,
-                customer_name: customerName || null,
-              })
-              .eq("id", saleId);
-            if (custUpdateErr) {
-              // FIX: no mostrar toast.success mintiendo, mostrar warning
-              toast.warning("Venta registrada, pero no se pudo asociar el cliente", {
-                description: "La venta se completó sin cliente. Puedes editarla después.",
-              });
-            }
-          } catch {
-            // FIX: el toast.warning ya se mostró en el bloque if anterior
-          }
         }
+
+        // FINALIZE-V2: el bloque de parche customer_id (path v1) fue eliminado —
+        // create_sale_v2 persiste customer_id/customer_name atómicamente.
 
         // POS-2 MM-9: Capturar items + saleId ANTES de clearCart
         // para poder deshacer la venta si el usuario lo pide en 30s.
@@ -405,11 +340,12 @@ export function usePOSCheckout() {
           friendlyMsg = 'Error de conexión. Verifica tu internet e intenta de nuevo.';
         }
         toast.error(friendlyMsg);
+      } finally {
+        setIsProcessingSale(false);
       }
     },
     [
       user,
-      createSale,
       invertSale,
       items,
       getSubtotal,

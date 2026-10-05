@@ -2,7 +2,7 @@
  * Iteración 11.2 — Pruebas PT-11.2.x (create_sale_v2)
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'fs';
+import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const MIGRATIONS_DIR = join(process.cwd(), 'supabase', 'migrations');
@@ -98,8 +98,16 @@ describe('PT-11.2.4 — create_sale_v2 RPC (C-1, C-2, C-3, C-6, H-9, H-19)', () 
   it('audit_logs con v2_checkout=true', () => expect(sql).toContain("'v2_checkout', true"));
   it('audit_logs con supervisor_id', () => expect(sql).toContain("'supervisor_id'"));
 
-  // No modifica create_sale viejo
-  it('NO hace DROP de create_sale', () => expect(sql).not.toContain('DROP FUNCTION IF EXISTS public.create_sale('));
+  // FINALIZE-V2: la migración histórica v2_16_3 sigue SIN tocar create_sale
+  // (la eliminación física de V1 vive en la migración dedicada
+  // 20261005140000_drop_v1_sale_devolution.sql — patrón reconciler §12.3).
+  it('NO hace DROP de create_sale (la eliminación V1 vive en 20261005140000)', () => {
+    expect(sql).not.toContain('DROP FUNCTION IF EXISTS public.create_sale(');
+    const finalize = readFileSync(join(MIGRATIONS_DIR, '20261005140000_drop_v1_sale_devolution.sql'), 'utf-8');
+    expect(finalize).toContain('DROP FUNCTION IF EXISTS public.create_sale(');
+    expect(finalize).toContain('DROP FUNCTION IF EXISTS public.create_devolution(');
+    expect(finalize).toContain('DROP FUNCTION IF EXISTS public.fn_process_sale(');
+  });
 
   // SECURIY DEFINER
   it('SECURITY DEFINER', () => expect(sql).toContain('SECURITY DEFINER'));
@@ -133,35 +141,44 @@ describe('PT-11.2.6 — API /api/auth/supervisor-check', () => {
   it('signOut after check', () => expect(src).toContain('signOut'));
 });
 
-describe('PT-11.2.7 — Feature flag + pilot stores', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'config', 'features.ts'), 'utf-8');
-  it('USE_V2_CHECKOUT default false', () => {
-    expect(src).toContain("=== 'true' || false");
+describe('PT-11.2.7 — FINALIZE-V2: flags eliminados, V2 camino único', () => {
+  it('src/config/features.ts fue eliminado (sin feature flags de migración)', () => {
+    expect(existsSync(join(process.cwd(), 'src', 'config', 'features.ts'))).toBe(false);
   });
-  it('V2_CHECKOUT_PILOT_STORES', () => {
-    expect(src).toContain('V2_CHECKOUT_PILOT_STORES');
-    expect(src).toContain('NEXT_PUBLIC_V2_CHECKOUT_PILOT_STORES');
+  it('USE_V2_CHECKOUT/USE_V2_REVERSE no existen en código de producción', () => {
+    // Patrón de código real: la variable de entorno (los comentarios
+    // históricos de FINALIZE-V2 mencionan el flag eliminado).
+    const checkouts = readFileSync(join(process.cwd(), 'src', 'app', 'api', 'pos', 'checkout', 'route.ts'), 'utf-8');
+    expect(checkouts).not.toContain('NEXT_PUBLIC_USE_V2_CHECKOUT');
+    expect(checkouts).not.toContain("import('@/config/features')");
+    const devolutions = readFileSync(join(process.cwd(), 'src', 'app', 'api', 'devolutions', 'route.ts'), 'utf-8');
+    expect(devolutions).not.toContain('FEATURES.USE_V2_REVERSE');
+    expect(devolutions).toContain("rpc('create_devolution_v2'");
   });
-  it('shouldUseV2Checkout helper', () => {
-    expect(src).toContain('export function shouldUseV2Checkout');
+  it('usePOSCheckout no tiene path V1 (RPC directo create_sale)', () => {
+    const pos = readFileSync(join(process.cwd(), 'src', 'components', 'views', 'terminal', 'views', 'pos', 'usePOSCheckout.ts'), 'utf-8');
+    expect(pos).not.toContain("rpc('create_sale'");
+    expect(pos).not.toContain('createSale(');
   });
-  it('pilot stores empty → all stores', () => {
-    expect(src).toContain('length === 0) return true');
+  it('useCreateSale ya no llama al RPC V1 online', () => {
+    const hooks = readFileSync(join(process.cwd(), 'src', 'hooks', 'api', 'useTransactions.ts'), 'utf-8');
+    expect(hooks).not.toContain("const rpcName = 'create_sale'");
   });
 });
 
-describe('PT-11.2.8 — usePOSCheckout feature flag integration', () => {
+describe('PT-11.2.8 — FINALIZE-V2: usePOSCheckout camino único V2', () => {
   const src = readFileSync(join(process.cwd(), 'src', 'components', 'views', 'terminal', 'views', 'pos', 'usePOSCheckout.ts'), 'utf-8');
-  it('importa shouldUseV2Checkout', () => expect(src).toContain('shouldUseV2Checkout'));
-  it('usa fetch /api/pos/checkout cuando v2', () => {
+  it('usa siempre fetch /api/pos/checkout (sin flag ni path V1)', () => {
     expect(src).toContain("fetch('/api/pos/checkout'");
-    expect(src).toContain("shouldUseV2Checkout(user.activeStoreId)");
+    expect(src).not.toContain('shouldUseV2Checkout');
+    expect(src).not.toContain('await createSale({');
   });
-  it('NO hace UPDATE post-RPC cuando v2', () => {
-    expect(src).toContain('!useV2 && (safeCustomerId');
+  it('sin UPDATE post-RPC de customer (persistencia atómica en create_sale_v2)', () => {
+    expect(src).not.toContain('!useV2 && (safeCustomerId');
+    expect(src).not.toContain('.from("transactions")');
   });
-  it('mantiene path viejo (createSale) cuando !v2', () => {
-    expect(src).toContain('await createSale({');
+  it('guard anti doble-submit local (isProcessingSale)', () => {
+    expect(src).toContain('setIsProcessingSale');
   });
 });
 
@@ -185,9 +202,9 @@ describe('PT-11.2.10 — Regresión: iteraciones anteriores intactas', () => {
     const files = readdirSync(MIGRATIONS_DIR).filter(f => f.includes('create_sale_validate_op_date'));
     expect(files.length).toBeGreaterThan(0);
   });
-  it('USE_V2_CHECKOUT default false en código (activado via .env)', () => {
-    const src = readFileSync(join(process.cwd(), 'src', 'config', 'features.ts'), 'utf-8');
-    expect(src).toContain("=== 'true' || false");
+  it('FINALIZE-V2: flags USE_V2 eliminados del producto (V2 único camino)', () => {
+    // El archivo de flags fue eliminado; las rutas no referencian FEATURES.
+    expect(existsSync(join(process.cwd(), 'src', 'config', 'features.ts'))).toBe(false);
   });
   it('tests de 11.1, 12, 13 siguen presentes', () => {
     const testFiles = readdirSync(join(process.cwd(), 'src', '__tests__', 'integration'));

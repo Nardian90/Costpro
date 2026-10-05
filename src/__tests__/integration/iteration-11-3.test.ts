@@ -2,7 +2,7 @@
  * Iteración 11.3 — Pruebas PT-11.3.x (Reverse/Void/Devolution v2)
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 const MIGRATIONS_DIR = join(process.cwd(), 'supabase', 'migrations');
@@ -107,30 +107,42 @@ describe('PT-11.3.7 — RPCs viejos NO fueron dropeados', () => {
   });
 });
 
-describe('PT-11.3.8 — Feature flag USE_V2_REVERSE', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'config', 'features.ts'), 'utf-8');
-  it('USE_V2_REVERSE existe', () => expect(src).toContain('USE_V2_REVERSE'));
-  it('default false', () => expect(src).toContain("=== 'true' || false"));
+describe('PT-11.3.8 — FINALIZE-V2: flag USE_V2_REVERSE eliminado', () => {
+  it('features.ts eliminado y reverse route sin flag', () => {
+    expect(existsSync(join(process.cwd(), 'src', 'config', 'features.ts'))).toBe(false);
+    const route = readFileSync(join(process.cwd(), 'src', 'app', 'api', 'reverse', 'route.ts'), 'utf-8');
+    // Patrones de código real (los comentarios históricos documentan la eliminación)
+    expect(route).not.toContain("import('@/config/features')");
+    expect(route).not.toContain('const RPC_MAP_V1');
+    expect(route).not.toContain('const RPC_MAP_V2');
+  });
 });
 
-describe('PT-11.3.9 — API /api/reverse branch v1/v2', () => {
+describe('PT-11.3.9 — API /api/reverse mapa único (FINALIZE-V2)', () => {
   const src = readFileSync(join(process.cwd(), 'src', 'app', 'api', 'reverse', 'route.ts'), 'utf-8');
-  it('tiene RPC_MAP_V1', () => expect(src).toContain('RPC_MAP_V1'));
-  it('tiene RPC_MAP_V2', () => expect(src).toContain('RPC_MAP_V2'));
-  it('v2 usa reverse_transaction_v2', () => expect(src).toContain("'reverse_transaction_v2'"));
-  it('v2 usa reverse_receipt_v2', () => expect(src).toContain("'reverse_receipt_v2'"));
+  it('mapa único RPC_MAP (V1/V2 colapsados)', () => {
+    expect(src).toContain('const RPC_MAP:');
+    expect(src).not.toContain('const RPC_MAP_V1');
+    expect(src).not.toContain('const RPC_MAP_V2');
+  });
+  it('usa reverse_transaction_v2', () => expect(src).toContain("'reverse_transaction_v2'"));
+  it('usa reverse_receipt_v2', () => expect(src).toContain("'reverse_receipt_v2'"));
   // W9.5 B-10 (ADJ-1): el mapeo B-11 (duplicate) fue supersesado por
   // reverse_inventory_adjustment_v2 — el botón 'Revertir' invierte (contra-documento);
   // duplicate_inventory_adjustment_v2 sigue vivo para el botón 'Duplicar'.
-  it('v2 usa reverse_inventory_adjustment_v2 (B-10 ADJ-1)', () => expect(src).toContain("'reverse_inventory_adjustment_v2'"));
-  it('selecciona según FEATURES.USE_V2_REVERSE', () => expect(src).toContain('FEATURES.USE_V2_REVERSE'));
-  it('transfer sin cambio en v2', () => expect(src).toContain("'reverse_transfer'"));
+  it('usa reverse_inventory_adjustment_v2 (B-10 ADJ-1)', () => expect(src).toContain("'reverse_inventory_adjustment_v2'"));
+  it('sin selección por flag (FEATURES eliminado)', () => expect(src).not.toContain('FEATURES'));
+  it('transfer sin cambio', () => expect(src).toContain("'reverse_transfer'"));
 });
 
-describe('PT-11.3.10 — API /api/devolutions branch v1/v2', () => {
+describe('PT-11.3.10 — API /api/devolutions camino único (FINALIZE-V2)', () => {
   const src = readFileSync(join(process.cwd(), 'src', 'app', 'api', 'devolutions', 'route.ts'), 'utf-8');
-  it('selecciona create_devolution_v2 si flag activo', () => expect(src).toContain("'create_devolution_v2'"));
-  it('pasa p_idempotency_key en v2', () => expect(src).toContain('p_idempotency_key'));
+  it('llama create_devolution_v2 sin fallback V1', () => {
+    expect(src).toContain("rpc('create_devolution_v2'");
+    expect(src).not.toContain("'create_devolution'");
+    expect(src).not.toContain('FEATURES');
+  });
+  it('pasa p_idempotency_key (siempre)', () => expect(src).toContain('p_idempotency_key'));
   it('genera idempotency_key con crypto.randomUUID', () => expect(src).toContain('crypto.randomUUID'));
 });
 
@@ -154,8 +166,7 @@ describe('PT-11.3.12 — Regresión: iteraciones anteriores', () => {
     expect(testFiles).toContain('iteration-12.test.ts');
     expect(testFiles).toContain('iteration-13.test.ts');
   });
-  it('USE_V2_CHECKOUT sigue activo', () => {
-    const src = readFileSync(join(process.cwd(), 'src', 'config', 'features.ts'), 'utf-8');
-    expect(src).toContain('USE_V2_CHECKOUT');
+  it('FINALIZE-V2: USE_V2_CHECKOUT eliminado (V2 único camino)', () => {
+    expect(existsSync(join(process.cwd(), 'src', 'config', 'features.ts'))).toBe(false);
   });
 });

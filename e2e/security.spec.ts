@@ -143,8 +143,12 @@ test.describe('V2.12.9 — Anti-spoofing p_user_id', () => {
       test.skip(!products || products.length === 0, 'No hay producto activo en la store');
       const productId = products[0].id;
 
-      // 5. Intentar create_sale con p_user_id = víctima (SPOOFING ATTEMPT)
-      const { status, data } = await rpc('create_sale', {
+      // 5. FINALIZE-V2: spoofing contra el ÚNICO camino soportado (create_sale_v2).
+      // El atacante autenticado sin membresía intenta vender en la store de la
+      // víctima spoofeando p_seller_id/p_user_id — el RPC endurecido H0-R §3
+      // resuelve v_uid = auth.uid() (atacante) y has_store_access_as = false →
+      // ERR_UNAUTHORIZED (paso 2, ANTES de idempotencia y seller binding).
+      const { status, data } = await rpc('create_sale_v2', {
         p_store_id: storeId,
         p_seller_id: victimId, // también spoofeando seller_id
         p_total_amount: 10,
@@ -160,14 +164,29 @@ test.describe('V2.12.9 — Anti-spoofing p_user_id', () => {
         p_sale_currency: 'CUP',
         p_sale_exchange_rate: 1.0,
         p_zelle_amount: 0,
-        p_user_id: victimId, // ← SPOOFING
+        p_user_id: victimId, // ← SPOOFING (ignorado: v_uid = auth.uid())
       }, attackerJwt);
 
-      // V2.12.9 fix: auth.role() != 'service_role' → v_uid = auth.uid() = attackerId
-      // has_store_access_as(attackerId, storeId) = false → Unauthorized
       const errorStr = JSON.stringify(data);
-      expect(errorStr).toContain('Unauthorized');
+      expect(errorStr).toContain('ERR_UNAUTHORIZED');
       expect(status).toBe(400);
+
+      // 6. ANTI-RESURRECTION: el RPC V1 create_sale fue ELIMINADO de la base
+      // (migración 20261005140000) — PostgREST debe responder 404 not-found.
+      const v1 = await rpc('create_sale', {
+        p_store_id: storeId,
+        p_seller_id: victimId,
+        p_total_amount: 10,
+        p_items: [],
+        p_subtotal: 10,
+        p_discount_type: 'fixed',
+        p_discount_value: 0,
+        p_payment_method: 'cash',
+        p_tax_amount: 0,
+        p_applied_taxes: [],
+      }, attackerJwt);
+      expect(v1.status).toBe(404);
+      expect(JSON.stringify(v1.data)).toContain('create_sale');
     } finally {
       await deleteTestUser(attackerId);
     }
@@ -176,7 +195,9 @@ test.describe('V2.12.9 — Anti-spoofing p_user_id', () => {
   test('service_role with p_user_id still works (legitimate use case)', async () => {
     // service_role puede pasar p_user_id explícito (scripts server-side)
     // Este test verifica que el fix NO rompió el caso legítimo.
-    // Llamamos create_sale con service_role + p_user_id de admin
+    // FINALIZE-V2: llamado contra create_sale_v2 — el RPC endurecido resuelve
+    // v_uid = COALESCE(p_user_id, auth.uid()) para service_role (§3.1), por lo
+    // que el guard de membresía evalúa al admin, no al service role.
     const adminRes = await fetch(
       `${SUPABASE_URL}/rest/v1/profiles?select=id,role&role=eq.admin&limit=1`,
       { headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` } }
@@ -184,9 +205,10 @@ test.describe('V2.12.9 — Anti-spoofing p_user_id', () => {
     const admins = await adminRes.json();
     test.skip(!admins || admins.length === 0, 'No hay admin en profiles');
 
-    // Solo verificar que el service_role puede llamar create_sale sin Unauthorized
-    // (no necesitamos crear venta real, solo verificar que el guard NO bloquea)
-    const { status, data } = await rpc('create_sale', {
+    // Solo verificar que el service_role puede llamar create_sale_v2 sin
+    // ERR_UNAUTHORIZED (no creamos venta real: store inexistente + items
+    // vacíos → el guard de auth PASA y falla después en otra validación)
+    const { status, data } = await rpc('create_sale_v2', {
       p_store_id: '00000000-0000-0000-0000-000000000000', // store inexistente
       p_seller_id: admins[0].id,
       p_total_amount: 1,
@@ -205,9 +227,10 @@ test.describe('V2.12.9 — Anti-spoofing p_user_id', () => {
       p_user_id: admins[0].id,
     }, SERVICE_KEY);
 
-    // service_role NO debe recibir Unauthorized (debe pasar el guard)
+    // service_role NO debe recibir ERR_UNAUTHORIZED (el guard pasa; falla
+    // después por store inexistente u otra validación de items)
     const errorStr = JSON.stringify(data);
-    expect(errorStr).not.toContain('Unauthorized');
+    expect(errorStr).not.toContain('ERR_UNAUTHORIZED');
   });
 });
 
@@ -238,9 +261,11 @@ test.describe('V2.12.10 — confirm_transfer requires_approval', () => {
 });
 
 test.describe('V2.12.13 — REVOKE EXECUTE FROM anon', () => {
-  test('anon cannot call create_sale (rejected with auth error)', async () => {
+  // FINALIZE-V2: la superficie protegida es create_sale_v2 (H0-R §12.3:
+  // EXECUTE revocado para anon/PUBLIC; y create_sale V1 eliminado de la base).
+  test('anon cannot call create_sale_v2 (rejected with auth error)', async () => {
     // anon = no Authorization header at all
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_sale`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_sale_v2`, {
       method: 'POST',
       headers: {
         'apikey': ANON_KEY,
@@ -260,17 +285,34 @@ test.describe('V2.12.13 — REVOKE EXECUTE FROM anon', () => {
       }),
     });
 
-    // PostgREST devuelve 200 con error embebido en body cuando una función
-    // SECURITY DEFINER lanza RAISE EXCEPTION. Si REVOKE EXECUTE FROM anon
-    // funciona, devolverá 4xx con "permission denied" o "JWT required".
-    // Si NO funciona, devolverá 200 con "Unauthorized" embebido (la función
-    // se ejecuta pero falla en el check de auth.uid() interno).
+    // PostgREST oculta funciones no ejecutables por el rol: responde 404
+    // (schema cache) o 4xx con permission denied / JWT required. Si el
+    // REVOKE fallara, devolvería 200 con el error embebido del RAISE interno
+    // (ERR_UNAUTHORIZED tras EJECUTAR la función — superficie expuesta).
     const text = await res.text();
-    const isRejected = res.status === 401 || res.status === 403 ||
+    const isRejected = res.status === 404 ||
+                       res.status === 401 || res.status === 403 ||
                        text.includes('permission denied') ||
                        text.includes('JWT') ||
-                       text.includes('Unauthorized'); // la función rechaza con RAISE
+                       text.includes('ERR_UNAUTHORIZED'); // la función rechaza con RAISE
     expect(isRejected).toBe(true);
+  });
+
+  test('V1 create_sale RPC is physically gone (anti-resurrection)', async () => {
+    // FINALIZE-V2: migración 20261005140000 — create_sale (V1) DROP de la base.
+    // Con apikey ANON y sin JWT: PostgREST responde 404 not-found para
+    // cualquier rol porque la función no existe en el schema cache.
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_sale`, {
+      method: 'POST',
+      headers: {
+        'apikey': ANON_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ p_items: [] }),
+    });
+    const text = await res.text();
+    expect(res.status).toBe(404);
+    expect(text).toContain('create_sale');
   });
 });
 

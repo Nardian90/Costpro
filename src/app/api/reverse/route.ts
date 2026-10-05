@@ -35,24 +35,19 @@ const reverseSchema = z.object({
   reason: z.string().min(3).max(500),
 });
 
-/** V2.3: cada tipo mapea a (rpc_name, id_param_name). SÓLO ese param se envía. */
-const RPC_MAP_V1: Record<string, { rpc: string; idParam: string }> = {
-  transaction:      { rpc: 'reverse_transaction_v2',    idParam: 'p_transaction_id' }, // W9.4.7 H5-B1: V1 retirada — fallback resuelve a V2
-  receipt:          { rpc: 'reverse_receipt_v2',        idParam: 'p_receipt_id' }, // REM-V2-3: V1 retirada del path — fallback resuelve a V2 (misma firma)
-  transfer:         { rpc: 'reverse_transfer',           idParam: 'p_transfer_id' }, // compartida V1=V2 (sin refactor propio)
-  adjustment:       { rpc: 'reverse_inventory_adjustment_v2', idParam: 'p_adjustment_id' }, // REM-V2-3: V1 retirada del path — fallback resuelve a V2 B-10 (misma firma)
-  devolution:       { rpc: 'reverse_devolution',         idParam: 'p_devolution_id' }, // compartida V1=V2 (sin refactor propio)
-  production_order: { rpc: 'reverse_production_order',   idParam: 'p_order_id' }, // compartida V1=V2 (sin refactor propio)
-};
-
-/** Iteración 11.3: RPCs v2 para tipos que tienen refactor */
-const RPC_MAP_V2: Record<string, { rpc: string; idParam: string }> = {
+/**
+ * FINALIZE-V2: mapa ÚNICO de reversal (RPC_MAP_V1/RPC_MAP_V2 eran contenido
+ * idéntico tras las retiradas progresivas — colapsados; el feature flag
+ * USE_V2_REVERSE fue eliminado). create_devolution_v2 / create_sale_v2 son
+ * los únicos caminos de creación; el reversal siempre resuelve a esta tabla.
+ */
+const RPC_MAP: Record<string, { rpc: string; idParam: string }> = {
   transaction:      { rpc: 'reverse_transaction_v2',    idParam: 'p_transaction_id' },
   receipt:          { rpc: 'reverse_receipt_v2',        idParam: 'p_receipt_id' },
-  transfer:         { rpc: 'reverse_transfer',           idParam: 'p_transfer_id' }, // sin cambio
-  adjustment:       { rpc: 'reverse_inventory_adjustment_v2', idParam: 'p_adjustment_id' }, // W9.5 B-10: inversión verdadera (antes duplicate B-11 — ver 02-policy-matrix ADJ-1)
-  devolution:       { rpc: 'reverse_devolution',         idParam: 'p_devolution_id' }, // sin cambio en reverse_devolution
-  production_order: { rpc: 'reverse_production_order',   idParam: 'p_order_id' }, // sin cambio
+  transfer:         { rpc: 'reverse_transfer',           idParam: 'p_transfer_id' }, // sin refactor propio (V1≡V2)
+  adjustment:       { rpc: 'reverse_inventory_adjustment_v2', idParam: 'p_adjustment_id' }, // W9.5 B-10: inversión verdadera
+  devolution:       { rpc: 'reverse_devolution',         idParam: 'p_devolution_id' }, // sin refactor propio (V1≡V2)
+  production_order: { rpc: 'reverse_production_order',   idParam: 'p_order_id' }, // sin refactor propio (V1≡V2)
 };
 /** W9.5 B-10: entidad y columna de tienda por tipo (para el boundary). */
 const REVERSE_ENTITY: Record<string, { table: string; storeCol: string }> = {
@@ -163,9 +158,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
   }
 
-  // Iteración 11.3: seleccionar RPC v1 o v2 según feature flag
-  const { FEATURES } = await import('@/config/features');
-  const rpcMap = FEATURES.USE_V2_REVERSE ? RPC_MAP_V2 : RPC_MAP_V1;
+  // FINALIZE-V2: mapa único (sin feature flag)
+  const rpcMap = RPC_MAP;
   const mapping = rpcMap[parsed.data.type];
   if (!mapping) {
     return NextResponse.json({ error: 'Tipo de documento no soportado' }, { status: 400 });
