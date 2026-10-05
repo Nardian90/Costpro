@@ -15,7 +15,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { useAuthStore, useUIStore, ViewType } from '@/store';
+import { useAuthStore, useUIStore, SidebarState, ViewType } from '@/store';
 import { NavModule, SIDEBAR_STRUCTURE } from '@/config/navigation/sidebar.structure';
 import { isSidebarItemActive } from '@/config/navigation/navigation-map';
 import { useFilteredNavigation } from '@/hooks/ui/useFilteredNavigation';
@@ -24,6 +24,7 @@ import { usePinnedNav } from '@/hooks/ui/usePinnedNav';
 import { cn } from '@/lib/utils';
 import OnlineStatusDot from '@/components/shared/OnlineStatusDot';
 import { useIsMobile } from '@/hooks/ui/useMobile';
+import { useSidebarHoverExpand } from '@/hooks/ui/useSidebarHoverExpand';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SidebarProps {
@@ -52,6 +53,17 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     setCurrentView,
   } = useUIStore();
   const isMobile = useIsMobile();
+
+  // ── Hover expansion (rail → expandido temporal) ──
+  // En desktop con puntero fino, un sidebar en 'rail' se expande al pasar el
+  // puntero sobre él (hit area = TODO el aside, no un botón pequeño). El ancho
+  // crece como overlay (TerminalShell mantiene pl-20) → cero layout shift.
+  // El hover NUNCA muta sidebarState (persistencia intacta): el pin explícito
+  // sigue existiendo vía hamburguesa / Ctrl+B / clic en icono del rail.
+  const { hoverExpanded, hoverProps } = useSidebarHoverExpand({ collapsed: sidebarState === 'rail' });
+  // Estado efectivo de renderizado: rail + hover → se pinta como expandido.
+  const displayState: SidebarState = hoverExpanded && sidebarState === 'rail' ? 'expanded' : sidebarState;
+
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [focusModuleId, setFocusModuleId] = useState<string | null>(null);
@@ -184,7 +196,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   // es un botón de icono con tooltip; en expandido un ítem destacado.
   const renderHomeItem = useCallback(() => {
     const isActive = currentView === 'dashboard';
-    const isRail = sidebarState === 'rail';
+    const isRail = displayState === 'rail';
 
     if (isRail) {
       return (
@@ -233,12 +245,12 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         </button>
       </div>
     );
-  }, [currentView, sidebarState, handleNavClick, onPrefetchView]);
+  }, [currentView, displayState, handleNavClick, onPrefetchView]);
 
   // ── Render a leaf nav item ──
   const renderNavItem = useCallback((item: any, depth = 0) => {
     const isActive = isSidebarItemActive(item.id, currentView, ipvActiveTab, activeCostSection);
-    const isRail = sidebarState === 'rail';
+    const isRail = displayState === 'rail';
 
     if (isRail && depth === 0) {
       return (
@@ -296,7 +308,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         {/* E-2 (IA Audit): botón pin/desfijar visible al hover.
             Permite al usuario fijar accesos rápidos en la sección "FIJADOS"
             al inicio del sidebar. Máximo 5 items fijados. */}
-        {!isRail && sidebarState === 'expanded' && (
+        {!isRail && displayState === 'expanded' && (
           <button
             type="button"
             onClick={(e) => {
@@ -319,12 +331,12 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         )}
       </div>
     );
-  }, [currentView, ipvActiveTab, activeCostSection, sidebarState, handleNavClick, onPrefetchView, isPinned, togglePin]);
+  }, [currentView, ipvActiveTab, activeCostSection, displayState, handleNavClick, onPrefetchView, isPinned, togglePin]);
 
   // ── Render a module (group or submenu) ──
   function renderModule(mod: NavModule, depth = 0): React.ReactNode {
     const isExpanded = expandedModules.includes(mod.id);
-    const isRail = sidebarState === 'rail';
+    const isRail = displayState === 'rail';
     const isRoot = depth === 0 && ROOT_MODULE_IDS.has(mod.id);
 
     // Leaf item
@@ -444,13 +456,15 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     }
   }, []); // Only on mount
 
+  // El ancho sigue al estado de renderizado: rail + hover → ancho expandido
+  // (overlay flotante sobre el contenido; TerminalShell no cambia su padding).
   const sidebarWidthClass = useMemo(() => {
-    switch (sidebarState) {
+    switch (displayState) {
       case 'expanded': return "w-64 lg:w-72 translate-x-0";
       case 'rail': return "w-20 translate-x-0";
       case 'closed': return "w-0 -translate-x-full border-r-0";
     }
-  }, [sidebarState]);
+  }, [displayState]);
 
   // Focus first interactive element when sidebar opens on mobile
   useEffect(() => {
@@ -471,6 +485,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
       role="navigation"
       aria-label="Barra lateral de navegación"
       data-sidebar
+      {...hoverProps}
       className={cn(
         "fixed inset-y-0 left-0 z-40 bg-sidebar transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden enhanced-sidebar-edge",
         sidebarWidthClass
@@ -478,7 +493,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     >
       <div className={cn(
         "relative bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden transition-all duration-300",
-        sidebarState === 'expanded' ? "w-64 lg:w-72" : sidebarState === 'rail' ? "w-20" : "w-0"
+        displayState === 'expanded' ? "w-64 lg:w-72" : displayState === 'rail' ? "w-20" : "w-0"
       )}>
         {/* Gradient accent line at top */}
         <div className="absolute top-0 left-0 right-0 h-[2px] z-50 overflow-hidden">
@@ -492,10 +507,10 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           <div
             className={cn(
               "px-4 pt-4 pb-2 flex items-center justify-between",
-              sidebarState === 'rail' && "justify-center"
+              displayState === 'rail' && "justify-center"
             )}
           >
-            {sidebarState !== 'rail' ? (
+            {displayState !== 'rail' ? (
               // GATE 1 §1: clic en el logo → HOME ÚNICA (dashboard). Un solo
               // concepto: Inicio → dashboard · Logo → dashboard · Ctrl+1 → dashboard.
               <button
@@ -530,7 +545,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             )}
           </div>
 
-          {sidebarState === 'expanded' && (
+          {displayState === 'expanded' && (
             <div className="px-1 pb-1">
               <div className="relative group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
@@ -563,7 +578,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           className="flex-1 overflow-y-auto pt-0 px-3 pb-4 sm:pb-4 no-scrollbar overscroll-contain scroll-smooth"
         >
           <AnimatePresence mode="wait">
-            {focusModuleId && focusedModule && sidebarState === 'expanded' ? (
+            {focusModuleId && focusedModule && displayState === 'expanded' ? (
               <motion.div
                 key="focus-mode"
                 initial={{ opacity: 0, x: 20 }}
@@ -609,7 +624,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 initial={{ opacity: 0 }}
                 animate={prefersReducedMotion ? {} : { opacity: 1 }}
                 exit={prefersReducedMotion ? {} : { opacity: 0 }}
-                className={cn("space-y-1 sm:space-y-4", sidebarState === 'rail' && "space-y-2")}
+                className={cn("space-y-1 sm:space-y-4", displayState === 'rail' && "space-y-2")}
               >
                 {/* GATE 1 §1 — INICIO fijo: primer ítem del nav, fuera de secciones.
                     Un solo concepto: Inicio → dashboard (logo y Ctrl+1 al mismo destino). */}
@@ -618,7 +633,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 {/* E-2 (IA Audit): sección "FIJADOS" — accesos rápidos personalizados.
                     Solo se muestra si el usuario ha fijado al menos 1 item y el sidebar
                     está expandido (no en rail mode). Máximo 5 items. */}
-                {pinnedItems.length > 0 && sidebarState === 'expanded' && !sidebarSearch && (
+                {pinnedItems.length > 0 && displayState === 'expanded' && !sidebarSearch && (
                   <div className="space-y-1 mb-2">
                     <div className="px-4 py-1 flex items-center justify-between">
                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/80">
@@ -640,7 +655,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           <div className="h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
 
           {/* User profile section */}
-          {user && sidebarState === 'expanded' && (
+          {user && displayState === 'expanded' && (
             <div className="px-4 pt-4 pb-2">
               <div className="flex items-center gap-3">
                 <div className="relative shrink-0">
@@ -666,8 +681,8 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             </div>
           )}
 
-          <div className={cn("p-4 space-y-1", sidebarState === 'rail' && "p-2 items-center flex flex-col")}>
-          {user?.plan === 'free' && user?.role !== 'admin' && sidebarState === 'expanded' && (
+          <div className={cn("p-4 space-y-1", displayState === 'rail' && "p-2 items-center flex flex-col")}>
+          {user?.plan === 'free' && user?.role !== 'admin' && displayState === 'expanded' && (
             <button
               onClick={() => {
                 const whatsappNumber = "+53 53183215";
@@ -684,7 +699,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               </div>
             </button>
           )}
-          <div className={cn("flex items-center justify-between gap-2", sidebarState === 'rail' && "flex-col")}>
+          <div className={cn("flex items-center justify-between gap-2", displayState === 'rail' && "flex-col")}>
             {/* FIX-AUDIT-MOBILE: "Mi Perfil" y "Configuración" movidos aquí desde el dropdown
                 del avatar en el Header. Libera el header móvil de un icono y centraliza
                 las opciones de cuenta en el sidebar (patrón estándar: GitHub, Slack, Discord). */}
@@ -693,11 +708,11 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               aria-label="Mi perfil"
               className={cn(
                 "flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-primary/10 text-sidebar-foreground font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-                sidebarState === 'expanded' ? "flex-1" : "w-12 h-12 justify-center"
+                displayState === 'expanded' ? "flex-1" : "w-12 h-12 justify-center"
               )}
             >
               <User className="w-4.5 h-4.5" />
-              {sidebarState === 'expanded' && <span className="text-xs uppercase tracking-wider">Mi Perfil</span>}
+              {displayState === 'expanded' && <span className="text-xs uppercase tracking-wider">Mi Perfil</span>}
             </button>
 
             <button
@@ -706,7 +721,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               title="Ajustes"
               className={cn(
                 "rounded-xl transition-all group active:scale-95 font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-                sidebarState === 'expanded' ? "p-3.5" : "w-12 h-12 flex items-center justify-center",
+                displayState === 'expanded' ? "p-3.5" : "w-12 h-12 flex items-center justify-center",
                 "hover:bg-primary/5 text-sidebar-foreground/80"
               )}
             >
@@ -719,7 +734,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               aria-pressed={isCalculatorOpen}
               className={cn(
                 "rounded-xl transition-all group active:scale-95 font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-                sidebarState === 'expanded' ? "p-3.5" : "w-12 h-12 flex items-center justify-center",
+                displayState === 'expanded' ? "p-3.5" : "w-12 h-12 flex items-center justify-center",
                 isCalculatorOpen
                   ? "bg-primary/10 text-primary border border-primary/20"
                   : "hover:bg-primary/5 text-sidebar-foreground/80"
@@ -735,11 +750,11 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             aria-label="Cerrar sesión"
             className={cn(
               "flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold outline-none focus-visible:ring-2 focus-visible:ring-danger/50",
-              sidebarState === 'expanded' ? "w-full" : "w-12 h-12 justify-center"
+              displayState === 'expanded' ? "w-full" : "w-12 h-12 justify-center"
             )}
           >
             <LogOut className="w-4.5 h-4.5" />
-            {sidebarState === 'expanded' && <span className="text-xs uppercase tracking-wider">Salir</span>}
+            {displayState === 'expanded' && <span className="text-xs uppercase tracking-wider">Salir</span>}
           </button>
         </div>
       </div>
