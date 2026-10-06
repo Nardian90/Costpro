@@ -167,6 +167,18 @@ El sistema mostrará:
 
 > **Auditoría**: Cada salida de material queda registrada en el historial con fecha, usuario y cantidad. No se puede deshacer sin autorización del administrador.
 
+### Alternativa: Vale de Salida desde el POS
+
+También puede dar salida a materiales de la orden **desde el POS**, en modo **Vale de Salida** (toggle **[VS]** del carrito):
+
+1. Abra **Vender** y mueva el toggle del carrito a **VS**.
+2. Agregue los materiales al carrito.
+3. En **Orden de Producción (opcional)** seleccione la orden (estados Aprobada, En Progreso o Pausada).
+4. Asocie cada ítem del carrito a la **línea de la orden** que corresponda.
+5. Escriba las **notas** (obligatorias) y haga clic en **"Emitir Vale"**.
+
+Usa el mismo mecanismo interno que "Dar Salida" desde el detalle (descuenta inventario, actualiza la cantidad **Real** de la línea y queda auditable) y, además, deja el documento trazable `VS-000NNN-AAAA` con su nota en el kardex. Vea **"Cómo Hacer: Emitir un Vale de Salida"**.
+
 ---
 
 ## Paso 11 — Cerrar la orden (con pago final)

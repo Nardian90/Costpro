@@ -31,7 +31,16 @@ También con `Ctrl + K` escribiendo "devoluciones".
 |------|-------------|
 | **Motivo** | Causa de la devolución (producto defectuoso, error de venta, arrepentimiento...) |
 | **Total** | Monto que se reversa de la venta original |
-| **Nota de crédito** | Documento que respalda la reversa |
+| **Nota de crédito** | Documento que respalda la reversa (numeración `NC-000NNN-AAAA`) |
+
+## Reglas del sistema (importantes)
+
+- **Toda devolución exige la venta original**: el sistema valida que el producto realmente se vendió en esa venta y que no se haya devuelto ya la misma cantidad (no se puede devolver dos veces lo mismo; el tope es acumulado por venta y producto).
+- La devolución se registra como **nota de crédito** con método de reembolso (efectivo, transferencia, Zelle o crédito en tienda) y genera el **contra-asiento de caja** correspondiente: el dinero sale de la caja en el mismo método.
+- La **cantidad** devuelta vuelve al inventario de la misma tienda de la venta original.
+- No se puede registrar una devolución "huérfana" sin venta original: el sistema la rechaza.
+
+> **Limitación conocida (2026-10)**: el botón **"Nueva Devolución"** de la vista aún no permite elegir la venta original, por lo que la creación directa desde el modal puede fallar con el rechazo del sistema. La vía operativa hoy es realizar la devolución con referencia a la venta original (el mismo mecanismo que usan las importaciones controladas y la reversión desde **Auditoría/Historial**). Consulte al administrador si el caso no le permite completar la devolución desde la vista.
 
 ## Qué ocurre automáticamente
 

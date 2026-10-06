@@ -28,6 +28,10 @@ const createSchema = z.object({
   customer_id: z.string().min(1).optional(),
   customer_name: z.string().optional(),
   notes: z.string().optional(),
+  // ENERVIDA import (2026-10-05): fecha de operación opcional (retro-compatible).
+  // El RPC create_devolution_v2 ya la soporta (migración 20261004120001,
+  // p_operation_date DEFAULT NULL) — paridad con /api/pos/checkout.
+  operation_date: z.string().datetime().optional(),
 });
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -84,6 +88,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_customer_name: parsed.data.customer_name || null,
     p_notes: parsed.data.notes || null,
     p_idempotency_key: `dev-${crypto.randomUUID()}`,
+    p_operation_date: parsed.data.operation_date ?? null, // ENERVIDA import: paridad con checkout
   };
 
   const { data, error } = await supabase.rpc('create_devolution_v2', rpcParams);
