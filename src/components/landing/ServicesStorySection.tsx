@@ -7,16 +7,15 @@ import {
   FileText, Store, Smartphone, Cloud, Lock, Zap, Globe, ShoppingCart,
 } from 'lucide-react';
 import { enterFichaDeCosto } from '@/lib/fcEntry';
+import FeatureVisual from './FeatureVisual';
 
 /**
  * ServicesStorySection — Reemplaza "EL DIFERENCIADOR" (AhaMomentSection)
  *
- * Scroll storytelling con efecto parallax estilo Apple.
- * Cada sección se revela al hacer scroll, con:
- * - Texto que aparece con fade + slide
- * - Icono con parallax (se mueve a diferente velocidad que el texto)
- * - Fondo con gradiente sutil que cambia entre secciones
- * - Sticky positioning para efecto "pinned"
+ * LANDING VISUAL EVIDENCE (FASE 1/3): cada historia muestra la CAPTURA REAL
+ * de CostPro (public/landing/capturas/*.webp — estado demo controlado, sin
+ * PII) como evidencia visual principal. El icono queda como badge de
+ * contexto, no como visual principal (regla 6 del mandato).
  *
  * El landing SIEMPRE es dark + enhanced — no depende de theme.
  */
@@ -28,6 +27,13 @@ interface StorySection {
   subtitle: string;
   description: string;
   gradient: string;
+  /** Captura real de CostPro — evidencia visual (FASE 3) */
+  image?: string;
+  /** Variante móvil de la misma pantalla (FASE 10 — art direction) */
+  srcMobile?: string;
+  imageAlt?: string;
+  caption?: string;
+  frameLabel?: string;
 }
 
 const SECTIONS: StorySection[] = [
@@ -38,6 +44,11 @@ const SECTIONS: StorySection[] = [
     subtitle: 'Sin multiplicar sistemas de gestión.',
     description: 'Gestiona cada tienda por separado con su propio catálogo, inventario y ventas. Mira el negocio completo desde un dashboard central. Cambia de sucursal en 1 clic con aislamiento de datos por tienda.',
     gradient: 'from-emerald-500/10 to-transparent',
+    image: '/landing/capturas/dashboard.webp',
+    srcMobile: '/landing/capturas/dashboard-movil.webp',
+    imageAlt: 'Panel central de CostPro con el anillo de KPIs de la tienda activa: ventas, costos y utilidad del día con su comparación histórica, y el selector de sucursal arriba.',
+    caption: 'Dashboard real de CostPro — datos de demostración',
+    frameLabel: 'costpro.app · panel',
   },
   {
     id: 'storefront',
@@ -46,6 +57,11 @@ const SECTIONS: StorySection[] = [
     subtitle: 'Tu tienda física tiene presencia online.',
     description: 'Cada tienda tiene su propia web donde tus clientes ven productos, precios y disponibilidad. Catálogo público, banner personalizable, carrusel promocional y canales de WhatsApp y Telegram integrados.',
     gradient: 'from-blue-500/10 to-transparent',
+    image: '/landing/capturas/tienda-publica.webp',
+    srcMobile: '/landing/capturas/tienda-publica-movil.webp',
+    imageAlt: 'Vitrina digital pública de una tienda: catálogo con fotos de productos, precios en CUP y badge de disponibilidad, accesible sin instalar nada.',
+    caption: 'Vitrina pública de la tienda — lo que ve tu cliente',
+    frameLabel: 'tienda.costpro.app',
   },
   {
     id: 'inventory',
@@ -54,6 +70,11 @@ const SECTIONS: StorySection[] = [
     subtitle: 'Cada producto, cada movimiento, siempre.',
     description: 'Control total de tu almacén en tiempo real. Recepciones, transferencias entre tiendas, ajustes documentados y trazabilidad completa. Sabes qué tienes, dónde lo tienes y cuánto vale.',
     gradient: 'from-cyan-500/10 to-transparent',
+    image: '/landing/capturas/inventario-stock.webp',
+    srcMobile: '/landing/capturas/inventario-stock-movil.webp',
+    imageAlt: 'Vista de inventario de CostPro: tabla de stock actual por producto con SKU, existencias, costo unitario y valor total.',
+    caption: 'Inventario por tienda — stock, costos y valor',
+    frameLabel: 'costpro.app · inventario',
   },
   {
     id: 'pos',
@@ -62,6 +83,11 @@ const SECTIONS: StorySection[] = [
     subtitle: 'Pago mixto multi-moneda sin fricción.',
     description: 'Terminal de venta intuitiva con escáner de código de barras, pago mixto (efectivo + transferencia + Zelle), desglose por denominaciones de billetes y ventas históricas con fecha personalizada.',
     gradient: 'from-purple-500/10 to-transparent',
+    image: '/landing/capturas/pos-terminal.webp',
+    srcMobile: '/landing/capturas/pos-terminal-movil.webp',
+    imageAlt: 'Terminal de venta de CostPro: grilla de productos, carrito abierto con 4 artículos, cantidades, total a cobrar y botón COBRAR.',
+    caption: 'POS real — carrito, total y cobro en una pantalla',
+    frameLabel: 'costpro.app · vender',
   },
   {
     id: 'costing',
@@ -70,6 +96,11 @@ const SECTIONS: StorySection[] = [
     subtitle: 'Resolución 148/2023 MFP, herramienta adicional.',
     description: 'Además de gestionar tu negocio, CostPro incorpora herramientas para conocer y controlar tus costos. Transporte, arrendamiento, salarios e impuestos correctamente distribuidos según la metodología oficial.',
     gradient: 'from-orange-500/10 to-transparent',
+    image: '/landing/capturas/estructura-costo.webp',
+    srcMobile: '/landing/capturas/estructura-costo-movil.webp',
+    imageAlt: 'Estructura de costo de CostPro: tabla por producto con existencias, costo unitario y totales calculados según la metodología oficial.',
+    caption: 'Estructura de costo — calculada, no estimada',
+    frameLabel: 'costpro.app · costos',
   },
   {
     id: 'reports',
@@ -78,6 +109,11 @@ const SECTIONS: StorySection[] = [
     subtitle: 'Decisiones con datos, no con intuición.',
     description: 'Dashboard en tiempo real, reportes de ventas, inventario y costos. KPIs automáticos, márgenes por producto, rentabilidad por tienda. Todo exportable a PDF y Excel.',
     gradient: 'from-pink-500/10 to-transparent',
+    image: '/landing/capturas/reportes.webp',
+    srcMobile: '/landing/capturas/reportes-movil.webp',
+    imageAlt: 'Generador de reportes de CostPro: configuración del informe y vista previa con transacciones, montos y totales del período.',
+    caption: 'Reportes configurables — con vista previa en vivo',
+    frameLabel: 'costpro.app · reportes',
   },
   {
     id: 'security',
@@ -120,18 +156,29 @@ function StoryCard({ section, index }: { section: StorySection; index: number })
         style={{ opacity, scale }}
         className={`relative z-10 max-w-5xl mx-auto px-6 py-16 flex flex-col ${isEven ? 'sm:flex-row' : 'sm:flex-row-reverse'} items-center gap-8 sm:gap-16`}
       >
-        {/* Icono con parallax */}
+        {/* Visual: captura REAL de CostPro (FASE 1) o icono (sección sin captura) */}
         <motion.div
           style={{ y: iconY }}
-          className="shrink-0"
+          className="shrink-0 w-full sm:w-[58%]"
         >
-          <div className="relative">
-            {/* Glow detrás del icono */}
-            <div className="absolute inset-0 blur-3xl opacity-30 bg-white rounded-full" />
-            <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-3xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl flex items-center justify-center">
-              <Icon className="w-10 h-10 sm:w-14 sm:h-14 text-white" strokeWidth={1.2} />
+          {section.image && section.imageAlt ? (
+            <FeatureVisual
+              src={section.image}
+              alt={section.imageAlt}
+              srcMobile={section.srcMobile}
+              altMobile={section.imageAlt}
+              caption={section.caption}
+              frameLabel={section.frameLabel}
+            />
+          ) : (
+            <div className="relative mx-auto w-fit">
+              {/* Glow detrás del icono */}
+              <div className="absolute inset-0 blur-3xl opacity-30 bg-white rounded-full" />
+              <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-3xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl flex items-center justify-center">
+                <Icon className="w-10 h-10 sm:w-14 sm:h-14 text-white" strokeWidth={1.2} />
+              </div>
             </div>
-          </div>
+          )}
         </motion.div>
 
         {/* Texto con parallax */}
