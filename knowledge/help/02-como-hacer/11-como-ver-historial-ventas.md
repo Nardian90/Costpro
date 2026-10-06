@@ -8,6 +8,8 @@
 2. Haga clic en **Historial de Ventas** (a veces llamado simplemente "Ventas").
 3. Verá una tabla con todas las ventas registradas.
 
+![Historial de Ventas con los indicadores del período, el buscador y las vistas Detalle/Producto/Resumen](/help/capturas/historial-ventas.webp "Figura 1. Historial de Ventas — indicadores del período y vistas de detalle")
+
 ## Paso 2 — Filtrar las ventas que quiere ver
 
 Por defecto, la tabla muestra las ventas de **hoy** en la tienda activa. Si quiere ver otras:

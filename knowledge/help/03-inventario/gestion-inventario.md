@@ -42,6 +42,8 @@ El módulo de inventario vive en la sección **Operación**:
 
 Dentro de este módulo encontrarás los siguientes sub-módulos:
 
+![Vista de Inventario con el control de existencias y niveles de stock por producto](/help/capturas/inventario-stock.webp "Figura 1. Inventario — stock actual por producto en tiempo real")
+
 | Sub-módulo | Función principal |
 |------------|-------------------|
 | **Catálogo Maestro** | Crear, editar y gestionar todos los productos |

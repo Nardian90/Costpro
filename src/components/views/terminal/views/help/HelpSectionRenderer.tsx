@@ -1047,13 +1047,25 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
           ),
 
           // ── IMAGES ────────────────────────────────────────────────────
-          img: ({ node, ...props }) => (
+          // HELP-FIGURES (2026-10-05): las capturas del Centro de Ayuda se
+          // renderizan como <figure> con caption opcional (atributo title del
+          // markdown) y lazy-loading (WCAG 1.1.1 alt + rendimiento). El caption
+          // usa el patrón "Figura N." definido en docs/audits/HELP-SCREENSHOT-STANDARD.md.
+          img: ({ node, src, alt, title, ...props }) => (
             <figure className="my-8">
               <img
-                className="rounded-xl border border-border/40 shadow-sm max-w-full"
+                className="rounded-xl border border-border/40 shadow-sm max-w-full w-full h-auto"
+                loading="lazy"
+                decoding="async"
+                src={src}
+                alt={alt || ''}
                 {...props}
-                alt={props.alt || ''}
               />
+              {title ? (
+                <figcaption className="mt-3 text-center text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                  {title}
+                </figcaption>
+              ) : null}
             </figure>
           ),
         }}

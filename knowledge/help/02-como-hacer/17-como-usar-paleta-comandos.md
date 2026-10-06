@@ -27,6 +27,8 @@ También puede abrirla con el botón de búsqueda de la barra superior.
 4. Presione **Enter** para ir al resultado seleccionado.
 5. Presione **Escape** para cerrar la paleta sin navegar.
 
+![Paleta de comandos con la búsqueda "reporte" y los resultados filtrados](/help/capturas/paleta-comandos.webp "Figura 1. Paleta de Comandos — escribir para filtrar acciones y vistas")
+
 ## Qué significa cada resultado
 
 - **Vistas y módulos**: lo llevan a la pantalla correspondiente (Inventario, Reportes, IPV...).

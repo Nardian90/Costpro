@@ -59,6 +59,8 @@ Antes de poder vender algo en la caja, ese "algo" tiene que existir en el sistem
 2. En la lista que se abre, busque y haga clic en **Catálogo Maestro** (a veces llamado solo "Catálogo").
 3. Verá una tabla con todos los productos que ya existen.
 
+![Catálogo maestro con la tabla de productos: imagen, SKU, categoría, stock, costo y precios](/help/capturas/catalogo-productos.webp "Figura 1. Catálogo Maestro — tabla de productos con stock y precios")
+
 > 💡 Si la tienda es nueva y nunca se ha cargado nada, la tabla estará vacía. Eso es normal la primera vez.
 
 ## Paso 2 — Abrir el formulario de nuevo producto

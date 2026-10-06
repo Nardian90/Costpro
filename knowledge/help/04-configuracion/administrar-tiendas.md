@@ -34,6 +34,8 @@ Guía completa para la gestión multi-tienda, administración de usuarios y cont
 
 Las tiendas representan sucursales físicas o puntos de venta dentro de tu organización.
 
+![Vista de Gestión de Tiendas con las tarjetas de sucursales activas y sus indicadores](/help/capturas/gestion-tiendas.webp "Figura 1. Gestión de Tiendas — sucursales activas con indicadores y link público")
+
 ### Pasos para Crear una Tienda
 
 1. Navega a **CONFIGURACIÓN > Administrativa > Tiendas**
@@ -194,6 +196,8 @@ Cuando un usuario tiene acceso a múltiples tiendas, puede cambiar la tienda act
 2. Haz clic para desplegar el menú
 3. Selecciona la tienda deseada
 4. Todos los datos de la interfaz se actualizan automáticamente para reflejar la tienda seleccionada
+
+![Selector de tienda desplegado con el buscador y la lista de sucursales accesibles](/help/capturas/selector-tienda.webp "Figura 2. Selector de Tienda — cambio de tienda activa")
 
 ### Aislamiento de Datos
 

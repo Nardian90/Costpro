@@ -12,6 +12,8 @@ Análisis → Reportes
 
 El Generador se abre como una vista dedicada que permite configurar y previsualizar reportes antes de generarlos. Los datos generados corresponden siempre a la **tienda activa** seleccionada en la barra superior.
 
+![Generador de Reportes con la configuración base y la vista previa del reporte](/help/capturas/reportes-generador.webp "Figura 1. Generador de Reportes — configuración, vista previa y exportación")
+
 > **Nota:** Los roles `admin` y `manager` pueden generar reportes de cualquier tienda. Los roles `encargado` y `clerk` solo acceden a reportes de su tienda asignada.
 
 ## Panel de Configuración
@@ -116,7 +118,7 @@ Cada reporte generado queda registrado en el sistema de auditoría. Para consult
 | **Kardex** | Investigación de discrepancias de stock por producto | Según necesidad |
 | **Compras** | Control de adquisiciones y evaluación de proveedores | Mensual |
 | **Auditoría** | Revisión de actividad de usuarios y cambios en el sistema | Mensual o trimestral |
-| **Ficha de Costo** | Análisis de costos de producción y定价 | Al actualizar fichas |
+| **Ficha de Costo** | Análisis de costos de producción y fijación de precios | Al actualizar fichas |
 | **Ingresos Diarios** | Flujo de caja y proyecciones de ingresos | Diaria |
 | **Egresos Diarios** | Control de gastos operativos | Diaria o semanal |
 | **Transferencias** | Seguimiento de movimientos entre sucursales | Semanal |

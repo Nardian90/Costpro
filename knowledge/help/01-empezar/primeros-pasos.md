@@ -35,6 +35,8 @@ Una vez dentro, verifica la **tienda activa** en el selector ubicado en la barra
 2. Se desplegará una lista de las tiendas a las que tienes acceso asignado.
 3. Selecciona la tienda con la que deseas trabajar.
 
+![Selector de tienda abierto con el buscador de sucursales y la lista de tiendas accesibles](/help/capturas/selector-tienda.webp "Figura 1. Selector de Tienda — cambio de sucursal activa desde la barra superior")
+
 > **Importante**: Toda la información mostrada —ventas, inventario, costos— se filtra según la tienda seleccionada. Si solo tienes acceso a una tienda, el selector no estará disponible.
 
 ## Inicio — Tu Centro de Operaciones
@@ -51,9 +53,13 @@ El KPI de rendimiento compara tus ventas del período contra una referencia cont
 
 Al lado encontrarás el **resumen de actividad**: transacciones, ticket promedio y desglose por método de pago del período seleccionado.
 
+![Panel de Control de Inicio con el KPI de rendimiento y las acciones recomendadas](/help/capturas/dashboard-command-center.webp "Figura 2. Panel de Control — Resumen de Indicadores con perspectiva Día/Mes/Año")
+
 ### Darian, tu Asistente IA
 
 Darian es el asistente de inteligencia artificial integrado. Pídele en lenguaje natural lo que necesites: consultar ventas, revisar costos, buscar productos o ejecutar acciones. Responde con datos de tu tienda activa.
+
+![Chat de Darian listo para consultas en lenguaje natural con sugerencias rápidas](/help/capturas/asistente-darian.webp "Figura 3. Darian — consulta de ventas, costos y acciones en lenguaje natural")
 
 ### Acciones Recomendadas
 
@@ -121,6 +127,8 @@ La **Ficha de Costo** es el documento central de CostPro. Representa el análisi
 ### Anatomía del Editor de Fichas
 
 El editor de fichas de costo se estructura en tres zonas principales:
+
+![Editor de fichas de costo con plantillas, estructura de costos por secciones y filas](/help/capturas/fichas-costo-gestion.webp "Figura 4. Editor de Fichas de Costo — estructura por secciones (1–16) y filas")
 
 #### Encabezado
 
@@ -209,5 +217,7 @@ Para acceder al sistema de ayuda en cualquier momento:
 1. Abre la sección **Ayuda** en la barra lateral.
 2. Haz clic en **Centro de Ayuda**.
 3. Utiliza la barra de búsqueda para encontrar artículos específicos o navega por la Biblioteca (el panel interno de secciones).
+
+![Centro de Ayuda abierto desde la sección Ayuda de la barra lateral](/help/capturas/centro-ayuda.webp "Figura 5. Centro de Ayuda — Biblioteca de secciones y buscador")
 
 > **Tip**: También puedes pulsar `Ctrl + Shift + H`, escribir "ayuda" o "help" en la paleta de comandos (`Ctrl + K`), o usar el botón **?** que aparece en varias vistas para abrir directamente la documentación de esa vista.

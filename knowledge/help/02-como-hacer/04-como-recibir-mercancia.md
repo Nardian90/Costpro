@@ -39,6 +39,8 @@ Antes de tocar la computadora:
 
 3. Haga clic en **"Continuar"**.
 
+![Formulario de nueva recepción con proveedor, número de factura, fecha y productos](/help/capturas/recepcion-mercancia.webp "Figura 1. Nueva Recepción — datos de la recepción y productos recibidos")
+
 ## Paso 4 — Agregar los productos recibidos
 
 Verá una tabla vacía con un campo de búsqueda arriba.

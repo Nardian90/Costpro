@@ -31,6 +31,8 @@ El sistema lleva un control estricto porque cada transferencia **afecta el inven
 
 > ⚠️ **Importante**: La tienda origen debe ser **una tienda donde usted tiene permiso**. Si no tiene acceso, el sistema le impedirá continuar.
 
+![Vista de Transferencias con la gestión de traslados entre tiendas](/help/capturas/transferencias.webp "Figura 1. Transferencias — gestión de traslados entre tiendas")
+
 ## Paso 3 — Agregar los productos a transferir
 
 1. Verá una tabla vacía con un campo de búsqueda arriba.

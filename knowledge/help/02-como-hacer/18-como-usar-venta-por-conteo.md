@@ -14,6 +14,8 @@ Operación → Ventas → Opciones → Venta por Conteo
 
 También la encuentra con la paleta de comandos (`Ctrl + K`) escribiendo "conteo".
 
+![Vista de Venta por Conteo con el registro de conteos físicos por tienda](/help/capturas/venta-por-conteo.webp "Figura 1. Venta por Conteo — conteo físico y cálculo de ventas por diferencia")
+
 ## Para qué sirve
 
 - Cerrar el día de un punto de venta que no registra ventas individuales.

@@ -40,6 +40,8 @@ El enlace es permanente y no requiere que el cliente tenga una cuenta ni inicie 
 
 ## Características de la Tienda Pública
 
+![Tienda pública de ejemplo con banner, contador de productos y catálogo navegable](/help/capturas/tienda-publica.webp "Figura 1. Tienda Pública — catálogo en línea con plantilla visual")
+
 ### Navegación de Productos
 
 La Tienda Pública ofrece las siguientes funcionalidades para los clientes:

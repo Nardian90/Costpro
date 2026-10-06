@@ -61,7 +61,7 @@ El motor estadístico genera predicciones basadas en análisis de frecuencia, ga
    - **Frecuencia histórica** de aparición
    - **Gap actual** (días desde la última aparición)
    - **Cumplimiento de la Ley del Tercio**
-4. Las predicciones se filtran automáticamente por la **Ley del Tercio**: se muestran combinaciones de频 Alta, Media y Baja según la distribución estadística esperada.
+4. Las predicciones se filtran automáticamente por la **Ley del Tercio**: se muestran combinaciones de frecuencia Alta, Media y Baja según la distribución estadística esperada.
 5. El usuario puede ajustar los filtros para ver más o menos predicciones, o filtrar por rango de confianza.
 
 > **Nota:** Las predicciones son sugerencias basadas en análisis estadístico histórico. No son garantías de resultados futuros.

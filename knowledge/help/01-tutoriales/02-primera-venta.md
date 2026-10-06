@@ -65,6 +65,10 @@ Para hacer una venta necesita:
 2. Aparece una lista de opciones. Haga clic en **Terminal POS**.
 3. Espere 2 segundos. Verá la pantalla de la caja con los productos visibles al fondo.
 
+La pantalla real de la caja (POS) se ve así:
+
+![Terminal POS con el buscador de productos, categorías y la cuadrícula de productos con precio y stock](/help/capturas/pos-terminal.webp "Figura 1. Terminal POS — búsqueda, categorías y cuadrícula de productos")
+
 > 💡 **Atajo**: Si recuerda atajos, presione **Alt + 2** para ir directo a Multi-Tienda.
 
 ## Paso 2 — Buscar el producto que el cliente quiere comprar
