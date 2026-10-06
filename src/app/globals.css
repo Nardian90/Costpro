@@ -1,3 +1,4 @@
+/* BLINDAJE-V2: reglas de modo divididas a selector único (evita :is() de Lightning CSS que rompe :not(:has()) en Chromium) */
 /* ============================================
    GLOBALS.CSS — Slim Import Orchestrator
    All styles are modularized in /styles/
@@ -258,8 +259,13 @@ html.mode-performance:not(:has(#landing-root)) .tilt-card:hover {
   animation: float 12s ease-in-out infinite;
 }
 
-html.mode-performance:not(:has(#landing-root)) .floating-orb-sm,
-html.mode-performance:not(:has(#landing-root)) .floating-orb-md,
+
+html.mode-performance:not(:has(#landing-root)) .floating-orb-sm {
+  display: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .floating-orb-md {
+  display: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) .floating-orb-lg {
   display: none !important;
 }

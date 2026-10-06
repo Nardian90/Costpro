@@ -1,3 +1,4 @@
+/* BLINDAJE-V2: reglas de modo divididas a selector único (evita :is() de Lightning CSS que rompe :not(:has()) en Chromium) */
 /* ============================================
    MODES — Performance vs Enhanced
    Two activation methods:
@@ -33,7 +34,6 @@ html.mode-performance:not(:has(#landing-root)) {
 
   /* ── Kill backdrop-filter (GPU expensive) ── */
   backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
 }
 
 /* ── FIX-PERF-BG: Fondos sólidos en modo performance ──
@@ -52,7 +52,10 @@ html.mode-performance:not(:has(#landing-root)) {
    #0a0a0a incluso en light mode, causando fondo negro en light. */
 
 /* DARK MODE: fondo oscuro sólido — ESTÁNDAR de la app (#121212) */
-html.mode-performance:not(:has(#landing-root)).dark,
+
+html.mode-performance:not(:has(#landing-root)).dark {
+  background: var(--background-solid, #121212) !important;
+}
 .dark html.mode-performance:not(:has(#landing-root)) {
   background: var(--background-solid, #121212) !important;
 }
@@ -63,44 +66,108 @@ html.mode-performance:not(:has(#landing-root)):not(.dark) {
 }
 
 /* Sidebar: dark sólido SOLO en dark mode */
-html.mode-performance:not(:has(#landing-root)).dark .sidebar-container,
-html.mode-performance:not(:has(#landing-root)).dark [data-sidebar],
-html.mode-performance:not(:has(#landing-root)).dark aside[class*="sidebar"],
-html.mode-performance:not(:has(#landing-root)).dark nav[class*="sidebar"],
-.dark html.mode-performance:not(:has(#landing-root)) .sidebar-container,
-.dark html.mode-performance:not(:has(#landing-root)) [data-sidebar],
-.dark html.mode-performance:not(:has(#landing-root)) aside[class*="sidebar"],
+
+html.mode-performance:not(:has(#landing-root)).dark .sidebar-container {
+  background: #0a0a0a !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [data-sidebar] {
+  background: #0a0a0a !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark aside[class*="sidebar"] {
+  background: #0a0a0a !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark nav[class*="sidebar"] {
+  background: #0a0a0a !important;
+  backdrop-filter: none !important;
+}
+.dark html.mode-performance:not(:has(#landing-root)) .sidebar-container {
+  background: #0a0a0a !important;
+  backdrop-filter: none !important;
+}
+.dark html.mode-performance:not(:has(#landing-root)) [data-sidebar] {
+  background: #0a0a0a !important;
+  backdrop-filter: none !important;
+}
+.dark html.mode-performance:not(:has(#landing-root)) aside[class*="sidebar"] {
+  background: #0a0a0a !important;
+  backdrop-filter: none !important;
+}
 .dark html.mode-performance:not(:has(#landing-root)) nav[class*="sidebar"] {
   background: #0a0a0a !important;
   backdrop-filter: none !important;
 }
 
 /* Sidebar: claro sólido en LIGHT mode */
-html.mode-performance:not(:has(#landing-root)):not(.dark) .sidebar-container,
-html.mode-performance:not(:has(#landing-root)):not(.dark) [data-sidebar],
-html.mode-performance:not(:has(#landing-root)):not(.dark) aside[class*="sidebar"],
+
+html.mode-performance:not(:has(#landing-root)):not(.dark) .sidebar-container {
+  background: #f8fafc !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)):not(.dark) [data-sidebar] {
+  background: #f8fafc !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)):not(.dark) aside[class*="sidebar"] {
+  background: #f8fafc !important;
+  backdrop-filter: none !important;
+}
 html.mode-performance:not(:has(#landing-root)):not(.dark) nav[class*="sidebar"] {
   background: #f8fafc !important;
   backdrop-filter: none !important;
 }
 
 /* Main content area: dark sólido SOLO en dark mode — ESTÁNDAR #121212 */
-html.mode-performance:not(:has(#landing-root)).dark main,
-html.mode-performance:not(:has(#landing-root)).dark [role="main"],
-html.mode-performance:not(:has(#landing-root)).dark .terminal-main,
-html.mode-performance:not(:has(#landing-root)).dark .main-content,
-.dark html.mode-performance:not(:has(#landing-root)) main,
-.dark html.mode-performance:not(:has(#landing-root)) [role="main"],
-.dark html.mode-performance:not(:has(#landing-root)) .terminal-main,
+
+html.mode-performance:not(:has(#landing-root)).dark main {
+  background: var(--background-solid, #121212) !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [role="main"] {
+  background: var(--background-solid, #121212) !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark .terminal-main {
+  background: var(--background-solid, #121212) !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark .main-content {
+  background: var(--background-solid, #121212) !important;
+  backdrop-filter: none !important;
+}
+.dark html.mode-performance:not(:has(#landing-root)) main {
+  background: var(--background-solid, #121212) !important;
+  backdrop-filter: none !important;
+}
+.dark html.mode-performance:not(:has(#landing-root)) [role="main"] {
+  background: var(--background-solid, #121212) !important;
+  backdrop-filter: none !important;
+}
+.dark html.mode-performance:not(:has(#landing-root)) .terminal-main {
+  background: var(--background-solid, #121212) !important;
+  backdrop-filter: none !important;
+}
 .dark html.mode-performance:not(:has(#landing-root)) .main-content {
   background: var(--background-solid, #121212) !important;
   backdrop-filter: none !important;
 }
 
 /* Main content area: claro sólido en LIGHT mode */
-html.mode-performance:not(:has(#landing-root)):not(.dark) main,
-html.mode-performance:not(:has(#landing-root)):not(.dark) [role="main"],
-html.mode-performance:not(:has(#landing-root)):not(.dark) .terminal-main,
+
+html.mode-performance:not(:has(#landing-root)):not(.dark) main {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)):not(.dark) [role="main"] {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)):not(.dark) .terminal-main {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+}
 html.mode-performance:not(:has(#landing-root)):not(.dark) .main-content {
   background: #ffffff !important;
   backdrop-filter: none !important;
@@ -108,17 +175,33 @@ html.mode-performance:not(:has(#landing-root)):not(.dark) .main-content {
 
 /* ── FIX-PERF-BG: Eliminar transparencias en cards/paneles ──
    Reemplazar bg-card/50, bg-muted/50, etc. con versiones sólidas */
-html.mode-performance:not(:has(#landing-root)) .glass-panel,
-html.mode-performance:not(:has(#landing-root)) .glass-card,
-html.mode-performance:not(:has(#landing-root)) .glass-card-interactive,
-html.mode-performance:not(:has(#landing-root)) .stats-glass-card,
-html.mode-performance:not(:has(#landing-root)) .form-card-glass,
-html.mode-performance:not(:has(#landing-root)) [class*="backdrop-blur"],
-html.mode-performance:not(:has(#landing-root)) [class*="bg-card/"],
-html.mode-performance:not(:has(#landing-root)) [class*="bg-muted/"],
+
+html.mode-performance:not(:has(#landing-root)) .glass-panel {
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .glass-card {
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .glass-card-interactive {
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .stats-glass-card {
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .form-card-glass {
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) [class*="bg-card/"] {
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) [class*="bg-muted/"] {
+  backdrop-filter: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) [class*="bg-background/"] {
   backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
 }
 
 /* Forzar backgrounds sólidos en dark mode — DARK NEUTRO (#0a0a0a, #141414, #1a1a1a)
@@ -147,13 +230,22 @@ html.mode-performance:not(:has(#landing-root)).dark [class*="bg-background"]:not
 }
 
 /* Solo afectar bg-card/ con transparencia, no bg-card sólido */
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-card/"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-muted/"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-popover/"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-card/"] {
+  background-color: #141414 !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-muted/"] {
+  background-color: #141414 !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-popover/"] {
+  background-color: #141414 !important;
+  backdrop-filter: none !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-background/"] {
   background-color: #141414 !important;
   backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
 }
 
 /* ── FIX-PERF-TINT (2026-07-13): Eliminar TINTES VERDES del fondo ──
@@ -161,8 +253,13 @@ html.mode-performance:not(:has(#landing-root)).dark [class*="bg-background/"] {
    Solo afectar las clases que son SOLO de fondo (no -foreground).
    No usar background: que resetea todo, usar background-color: que
    solo cambia el color manteniendo otros estilos. */
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-primary/"]:not([class*="text-"]),
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald/"]:not([class*="text-"]),
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-primary/"]:not([class*="text-"]) {
+  background-color: #1a1a1a !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald/"]:not([class*="text-"]) {
+  background-color: #1a1a1a !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green/"]:not([class*="text-"]) {
   background-color: #1a1a1a !important;
 }
@@ -170,11 +267,27 @@ html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green/"]:not([cl
 /* ── FIX-PERF-TINT: Eliminar radial-gradient verde del fondo ──
    Solo afectar elementos con style inline que tengan gradientes verdes
    EN SU FONDO (no en texto). */
-html.mode-performance:not(:has(#landing-root)).dark div[style*="radial-gradient"][style*="34, 197, 94"],
-html.mode-performance:not(:has(#landing-root)).dark div[style*="radial-gradient"][style*="22c55e"],
-html.mode-performance:not(:has(#landing-root)).dark div[style*="linear-gradient"][style*="34, 197, 94"],
-html.mode-performance:not(:has(#landing-root)).dark div[style*="linear-gradient"][style*="22c55e"],
-html.mode-performance:not(:has(#landing-root)).dark div[style*="linear-gradient"][style*="052e16"],
+
+html.mode-performance:not(:has(#landing-root)).dark div[style*="radial-gradient"][style*="34, 197, 94"] {
+  background: var(--background-solid, #121212) !important;
+  background-image: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark div[style*="radial-gradient"][style*="22c55e"] {
+  background: var(--background-solid, #121212) !important;
+  background-image: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark div[style*="linear-gradient"][style*="34, 197, 94"] {
+  background: var(--background-solid, #121212) !important;
+  background-image: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark div[style*="linear-gradient"][style*="22c55e"] {
+  background: var(--background-solid, #121212) !important;
+  background-image: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark div[style*="linear-gradient"][style*="052e16"] {
+  background: var(--background-solid, #121212) !important;
+  background-image: none !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark div[style*="linear-gradient"][style*="064e3b"] {
   background: var(--background-solid, #121212) !important;
   background-image: none !important;
@@ -183,16 +296,50 @@ html.mode-performance:not(:has(#landing-root)).dark div[style*="linear-gradient"
 /* ── FIX-PERF-BORDER: Bordes degradados sutiles ──
    En vez de borders planos, usar gradientes sutiles para dar profundidad
    sin usar blur/sombra (que cuesta GPU). Solo en bordes de cards principales. */
-html.mode-performance:not(:has(#landing-root)) .neu-card,
-html.mode-performance:not(:has(#landing-root)) .glass-card,
+
+html.mode-performance:not(:has(#landing-root)) .neu-card {
+  position: relative;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+}
+html.mode-performance:not(:has(#landing-root)) .glass-card {
+  position: relative;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+}
 html.mode-performance:not(:has(#landing-root)) .stats-glass-card {
   position: relative;
   border: 1px solid transparent !important;
   background-clip: padding-box !important;
 }
 
-html.mode-performance:not(:has(#landing-root)) .neu-card::before,
-html.mode-performance:not(:has(#landing-root)) .glass-card::before,
+
+html.mode-performance:not(:has(#landing-root)) .neu-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.05) 50%, transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+html.mode-performance:not(:has(#landing-root)) .glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.05) 50%, transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
 html.mode-performance:not(:has(#landing-root)) .stats-glass-card::before {
   content: '';
   position: absolute;
@@ -210,8 +357,15 @@ html.mode-performance:not(:has(#landing-root)) .stats-glass-card::before {
 /* ── FIX-PERF-BG: Indicador de estado performance sin luz verde ──
    El botón de performance ya no muestra glow verde (ver ThemeToggle.tsx).
    Aquí aseguramos que ningún indicador de modo tenga glow verde parpadeante. */
-html.mode-performance:not(:has(#landing-root)) .mode-indicator,
-html.mode-performance:not(:has(#landing-root)) [class*="mode-glow"],
+
+html.mode-performance:not(:has(#landing-root)) .mode-indicator {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) [class*="mode-glow"] {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) [class*="performance-glow"] {
   box-shadow: none !important;
   text-shadow: none !important;
@@ -227,8 +381,13 @@ html.mode-performance:not(:has(#landing-root)) [class*="performance-glow"] {
    CyberShell (borde cónico animado, sweep, corner dots) quedan excluidas en
    modo performance (incl. prefers-reduced-motion vía IntelligentThemeHandler).
    La decoración pasa a ser opt-in; el chrome operacional queda sobrio. */
-html.mode-performance:not(:has(#landing-root)) .perf-hide-gradient,
-html.mode-performance:not(:has(#landing-root)) .perf-hide-status-dot,
+
+html.mode-performance:not(:has(#landing-root)) .perf-hide-gradient {
+  display: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .perf-hide-status-dot {
+  display: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) .perf-hide-decor {
   display: none !important;
 }
@@ -236,13 +395,35 @@ html.mode-performance:not(:has(#landing-root)) .perf-hide-decor {
 /* ── FIX-PERF-GRADIENT: Eliminar gradientes verdes residuales ──
    Captura cualquier bg-gradient con verde (#22c55e, primary) que pueda
    seguir mostrándose como "luz" en el fondo. */
-html.mode-performance:not(:has(#landing-root)) [class*="bg-gradient-to"][class*="22c55e"],
-html.mode-performance:not(:has(#landing-root)) [class*="bg-gradient-to"][class*="primary"],
-html.mode-performance:not(:has(#landing-root)) [class*="via-primary"],
-html.mode-performance:not(:has(#landing-root)) [class*="via-[#22c55e]"],
-html.mode-performance:not(:has(#landing-root)) [class*="to-[#22c55e]"],
-html.mode-performance:not(:has(#landing-root)) [class*="from-[#22c55e]"],
-html.mode-performance:not(:has(#landing-root)) [class*="from-primary"],
+
+html.mode-performance:not(:has(#landing-root)) [class*="bg-gradient-to"][class*="22c55e"] {
+  background: transparent !important;
+  background-image: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) [class*="bg-gradient-to"][class*="primary"] {
+  background: transparent !important;
+  background-image: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) [class*="via-primary"] {
+  background: transparent !important;
+  background-image: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) [class*="via-[#22c55e]"] {
+  background: transparent !important;
+  background-image: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) [class*="to-[#22c55e]"] {
+  background: transparent !important;
+  background-image: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) [class*="from-[#22c55e]"] {
+  background: transparent !important;
+  background-image: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) [class*="from-primary"] {
+  background: transparent !important;
+  background-image: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) [class*="to-primary"] {
   background: transparent !important;
   background-image: none !important;
@@ -255,10 +436,23 @@ html.mode-performance:not(:has(#landing-root)) *:hover {
   box-shadow: none !important;
 }
 
-html.mode-performance:not(:has(#landing-root)) .neu-raised-hover:hover,
-html.mode-performance:not(:has(#landing-root)) .neu-card:hover,
-html.mode-performance:not(:has(#landing-root)) .neu-btn:hover,
-html.mode-performance:not(:has(#landing-root)) .glass-card-interactive:hover,
+
+html.mode-performance:not(:has(#landing-root)) .neu-raised-hover:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .neu-card:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .neu-btn:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .glass-card-interactive:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) .hover-lift:hover {
   box-shadow: none !important;
   transform: none !important;
@@ -276,8 +470,15 @@ html.mode-performance:not(:has(#landing-root)) [class*="glow"] {
    content-visibility: auto permite al navegador saltar el render de
    elementos off-screen, ahorrando hasta 50% de tiempo de render en
    listas largas (inventory, transactions, receipts). */
-html.mode-performance:not(:has(#landing-root)) .virtual-list-item,
-html.mode-performance:not(:has(#landing-root)) [data-list-item],
+
+html.mode-performance:not(:has(#landing-root)) .virtual-list-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 48px;
+}
+html.mode-performance:not(:has(#landing-root)) [data-list-item] {
+  content-visibility: auto;
+  contain-intrinsic-size: 48px;
+}
 html.mode-performance:not(:has(#landing-root)) table tbody tr {
   content-visibility: auto;
   contain-intrinsic-size: 48px;
@@ -286,8 +487,15 @@ html.mode-performance:not(:has(#landing-root)) table tbody tr {
 /* ── FIX-PERF-LAZY: content-visibility en cards de dashboards ──
    Las tarjetas de KPI/dashboard que están fuera del viewport inicial
    también se benefician de content-visibility. */
-html.mode-performance:not(:has(#landing-root)) .neu-card,
-html.mode-performance:not(:has(#landing-root)) .glass-card,
+
+html.mode-performance:not(:has(#landing-root)) .neu-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
+}
+html.mode-performance:not(:has(#landing-root)) .glass-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
+}
 html.mode-performance:not(:has(#landing-root)) .stats-glass-card {
   content-visibility: auto;
   contain-intrinsic-size: 200px;
@@ -307,38 +515,87 @@ html.mode-performance:not(:has(#landing-root)) .perf-avatar-solid {
    Antes solo se ocultaban mesh-orbs, bg-tip-text y canvas, pero el
    contenedor Layer 2 con clase loading-branding-visible tenía display:flex
    que pisaba el display:none, mostrando COSTPRO en performance. */
-html.mode-performance:not(:has(#landing-root)) .mesh-orb,
-html.mode-performance:not(:has(#landing-root)) .bg-tip-text,
-html.mode-performance:not(:has(#landing-root)) .bg-costpro-branding,
-html.mode-performance:not(:has(#landing-root)) .loading-branding-visible,
-html.mode-performance:not(:has(#landing-root)) .loading-branding-hidden,
+
+html.mode-performance:not(:has(#landing-root)) .mesh-orb {
+  display: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .bg-tip-text {
+  display: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .bg-costpro-branding {
+  display: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .loading-branding-visible {
+  display: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .loading-branding-hidden {
+  display: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) canvas.enhanced-layer {
   display: none !important;
 }
 
 /* Ocultar SOLO los contenedores específicos del ParticleBackground */
-html.mode-performance:not(:has(#landing-root)) .mesh-orb-1,
-html.mode-performance:not(:has(#landing-root)) .mesh-orb-2,
+
+html.mode-performance:not(:has(#landing-root)) .mesh-orb-1 {
+  display: none !important;
+  background: none !important;
+  filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .mesh-orb-2 {
+  display: none !important;
+  background: none !important;
+  filter: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) .mesh-orb-3 {
   display: none !important;
   background: none !important;
   filter: none !important;
 }
 
-html.mode-performance:not(:has(#landing-root)) *,
-html.mode-performance:not(:has(#landing-root)) *::before,
+
+html.mode-performance:not(:has(#landing-root)) * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) *::before {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  backdrop-filter: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) *::after {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
   backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
 }
 
 /* ── Allow specific critical transitions to remain ── */
-html.mode-performance:not(:has(#landing-root)) .allow-animations,
-html.mode-performance:not(:has(#landing-root)) .allow-animations *,
-html.mode-performance:not(:has(#landing-root)) .allow-animations *::before,
+
+html.mode-performance:not(:has(#landing-root)) .allow-animations {
+  animation-duration: revert !important;
+  animation-iteration-count: revert !important;
+  transition-duration: revert !important;
+  backdrop-filter: revert !important;
+  -webkit-backdrop-filter: revert !important;
+}
+html.mode-performance:not(:has(#landing-root)) .allow-animations * {
+  animation-duration: revert !important;
+  animation-iteration-count: revert !important;
+  transition-duration: revert !important;
+  backdrop-filter: revert !important;
+  -webkit-backdrop-filter: revert !important;
+}
+html.mode-performance:not(:has(#landing-root)) .allow-animations *::before {
+  animation-duration: revert !important;
+  animation-iteration-count: revert !important;
+  transition-duration: revert !important;
+  backdrop-filter: revert !important;
+  -webkit-backdrop-filter: revert !important;
+}
 html.mode-performance:not(:has(#landing-root)) .allow-animations *::after {
   animation-duration: revert !important;
   animation-iteration-count: revert !important;
@@ -348,27 +605,55 @@ html.mode-performance:not(:has(#landing-root)) .allow-animations *::after {
 }
 
 /* ── Performance: Reduce shadows ── */
-html.mode-performance:not(:has(#landing-root)) .neu-raised,
-html.mode-performance:not(:has(#landing-root)) .neu-card,
+
+html.mode-performance:not(:has(#landing-root)) .neu-raised {
+  box-shadow: var(--shadow-xs) !important;
+}
+html.mode-performance:not(:has(#landing-root)) .neu-card {
+  box-shadow: var(--shadow-xs) !important;
+}
 html.mode-performance:not(:has(#landing-root)) .neu-btn {
   box-shadow: var(--shadow-xs) !important;
 }
 
-html.mode-performance:not(:has(#landing-root)) .neu-raised-hover:hover,
-html.mode-performance:not(:has(#landing-root)) .neu-card:hover,
+
+html.mode-performance:not(:has(#landing-root)) .neu-raised-hover:hover {
+  box-shadow: var(--shadow-sm) !important;
+  transform: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .neu-card:hover {
+  box-shadow: var(--shadow-sm) !important;
+  transform: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) .neu-btn:hover {
   box-shadow: var(--shadow-sm) !important;
   transform: none !important;
 }
 
 /* ── Performance: Flatten glass effects ── */
-html.mode-performance:not(:has(#landing-root)) .glass-panel,
-html.mode-performance:not(:has(#landing-root)) .glass-card,
-html.mode-performance:not(:has(#landing-root)) .glass-card-interactive,
-html.mode-performance:not(:has(#landing-root)) .stats-glass-card,
+
+html.mode-performance:not(:has(#landing-root)) .glass-panel {
+  backdrop-filter: none !important;
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+}
+html.mode-performance:not(:has(#landing-root)) .glass-card {
+  backdrop-filter: none !important;
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+}
+html.mode-performance:not(:has(#landing-root)) .glass-card-interactive {
+  backdrop-filter: none !important;
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+}
+html.mode-performance:not(:has(#landing-root)) .stats-glass-card {
+  backdrop-filter: none !important;
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+}
 html.mode-performance:not(:has(#landing-root)) .form-card-glass {
   backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
   background: var(--card) !important;
   border: 1px solid var(--border) !important;
 }
@@ -382,16 +667,36 @@ html.mode-performance:not(:has(#landing-root)) .glass-card-interactive:hover {
 /* ── Performance: Landing page keeps dark glass cards ──
    The landing page is ALWAYS dark-themed (#020617), so
    we must NOT use var(--card) which is white in light mode. */
-html.mode-performance:not(:has(#landing-root)) .landing-tokens .stats-glass-card,
-html.mode-performance:not(:has(#landing-root)) .landing-tokens .glass-panel,
-html.mode-performance:not(:has(#landing-root)) .landing-tokens .glass-card,
-html.mode-performance:not(:has(#landing-root)) .landing-tokens .glass-card-interactive,
-html.mode-performance:not(:has(#landing-root)) .landing-tokens .form-card-glass,
+
+html.mode-performance:not(:has(#landing-root)) .landing-tokens .stats-glass-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .landing-tokens .glass-panel {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .landing-tokens .glass-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .landing-tokens .glass-card-interactive {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .landing-tokens .form-card-glass {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) .landing-tokens .glass-input {
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
 }
 
 html.mode-performance:not(:has(#landing-root)) .landing-tokens .glass-card-interactive:hover {
@@ -407,9 +712,16 @@ html.mode-performance:not(:has(#landing-root)) .tilt-card {
 }
 
 /* ── FIX-UX-013: Disable infinite animations in performance mode (catch-all) ── */
-html.mode-performance:not(:has(#landing-root)) .floating-orb-sm,
-html.mode-performance:not(:has(#landing-root)) .floating-orb,
-html.mode-performance:not(:has(#landing-root)) [class*="animate-"],
+
+html.mode-performance:not(:has(#landing-root)) .floating-orb-sm {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .floating-orb {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) [class*="animate-"] {
+  animation: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) [class*="animation-"] {
   animation: none !important;
 }
@@ -423,9 +735,22 @@ html.mode-performance:not(:has(#landing-root)) .costpro-brand-3d {
 }
 
 /* ── Performance: Simplify gradients ── */
-html.mode-performance:not(:has(#landing-root)) .text-gradient,
-html.mode-performance:not(:has(#landing-root)) .text-gradient-green,
-html.mode-performance:not(:has(#landing-root)) .text-shimmer-green,
+
+html.mode-performance:not(:has(#landing-root)) .text-gradient {
+  -webkit-text-fill-color: var(--primary) !important;
+  background: none !important;
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .text-gradient-green {
+  -webkit-text-fill-color: var(--primary) !important;
+  background: none !important;
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .text-shimmer-green {
+  -webkit-text-fill-color: var(--primary) !important;
+  background: none !important;
+  animation: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) .text-gradient-animate {
   -webkit-text-fill-color: var(--primary) !important;
   background: none !important;
@@ -433,20 +758,91 @@ html.mode-performance:not(:has(#landing-root)) .text-gradient-animate {
 }
 
 /* ── Performance: Kill floating elements ── */
-html.mode-performance:not(:has(#landing-root)) .animate-float,
-html.mode-performance:not(:has(#landing-root)) .animate-float-slow,
-html.mode-performance:not(:has(#landing-root)) .animate-float-medium,
-html.mode-performance:not(:has(#landing-root)) .animate-float-gentle,
-html.mode-performance:not(:has(#landing-root)) .animate-float-shape-1,
-html.mode-performance:not(:has(#landing-root)) .animate-float-shape-2,
-html.mode-performance:not(:has(#landing-root)) .animate-mesh-drift,
-html.mode-performance:not(:has(#landing-root)) .animate-mesh-drift-2,
-html.mode-performance:not(:has(#landing-root)) .breathing-card,
-html.mode-performance:not(:has(#landing-root)) .animate-pulse-glow,
-html.mode-performance:not(:has(#landing-root)) .animate-pulse-ring,
-html.mode-performance:not(:has(#landing-root)) .pulse-ring::before,
-html.mode-performance:not(:has(#landing-root)) .animate-subtle-glow,
-html.mode-performance:not(:has(#landing-root)) .animate-count-glow,
+
+html.mode-performance:not(:has(#landing-root)) .animate-float {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-float-slow {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-float-medium {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-float-gentle {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-float-shape-1 {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-float-shape-2 {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-mesh-drift {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-mesh-drift-2 {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .breathing-card {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-pulse-glow {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-pulse-ring {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .pulse-ring::before {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-subtle-glow {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-count-glow {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) .stat-number-glow {
   animation: none !important;
   transform: none !important;
@@ -455,28 +851,67 @@ html.mode-performance:not(:has(#landing-root)) .stat-number-glow {
 }
 
 /* ── Performance: Kill landing visual effects ── */
-html.mode-performance:not(:has(#landing-root)) .animate-gradient-shift,
-html.mode-performance:not(:has(#landing-root)) .animate-scroll-logos,
-html.mode-performance:not(:has(#landing-root)) .animate-scroll-integrations,
-html.mode-performance:not(:has(#landing-root)) .animate-corner-pulse,
-html.mode-performance:not(:has(#landing-root)) .animate-corner-pulse-delayed,
-html.mode-performance:not(:has(#landing-root)) .animate-play-pulse-ring,
-html.mode-performance:not(:has(#landing-root)) .animate-border-glow,
-html.mode-performance:not(:has(#landing-root)) .spy-ring-anim,
-html.mode-performance:not(:has(#landing-root)) .promo-shimmer,
-html.mode-performance:not(:has(#landing-root)) .glow-pulse-interactive,
-html.mode-performance:not(:has(#landing-root)) .float-badge-pulse,
-html.mode-performance:not(:has(#landing-root)) .badge-pop,
-html.mode-performance:not(:has(#landing-root)) .animate-glow-pulse-subtle,
-html.mode-performance:not(:has(#landing-root)) .feature-icon-float,
-html.mode-performance:not(:has(#landing-root)) .feature-card-shine::before,
-html.mode-performance:not(:has(#landing-root)) .animated-underline-gradient::after,
-html.mode-performance:not(:has(#landing-root)) .hover-lift-shadow:hover,
+
+html.mode-performance:not(:has(#landing-root)) .animate-gradient-shift {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-scroll-logos {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-scroll-integrations {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-corner-pulse {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-corner-pulse-delayed {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-play-pulse-ring {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-border-glow {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .spy-ring-anim {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .promo-shimmer {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .glow-pulse-interactive {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .float-badge-pulse {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .badge-pop {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animate-glow-pulse-subtle {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .feature-icon-float {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .feature-card-shine::before {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .animated-underline-gradient::after {
+  animation: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .hover-lift-shadow:hover {
+  animation: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) .footer-link-hover::after {
   animation: none !important;
 }
 
-html.mode-performance:not(:has(#landing-root)) .skeleton::after,
+
+html.mode-performance:not(:has(#landing-root)) .skeleton::after {
+  animation: none !important;
+  background: var(--muted) !important;
+}
 html.mode-performance:not(:has(#landing-root)) .skeleton-shimmer::after {
   animation: none !important;
   background: var(--muted) !important;
@@ -493,9 +928,16 @@ html.mode-performance:not(:has(#landing-root)) .hover-underline-slide::after {
 }
 
 /* ── Performance: Flatten bruma/glow effects ── */
-html.mode-performance:not(:has(#landing-root)) .bruma-effect,
-html.mode-performance:not(:has(#landing-root)) .glow-overlay,
-html.mode-performance:not(:has(#landing-root)) .glow-line,
+
+html.mode-performance:not(:has(#landing-root)) .bruma-effect {
+  display: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .glow-overlay {
+  display: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .glow-line {
+  display: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) .stats-gradient-separator {
   display: none !important;
 }
@@ -509,8 +951,13 @@ html.mode-performance:not(:has(#landing-root)) {
   --radius: var(--radius-md);
 }
 
-html.mode-performance:not(:has(#landing-root)) .neu-raised,
-html.mode-performance:not(:has(#landing-root)) .neu-raised-sm,
+
+html.mode-performance:not(:has(#landing-root)) .neu-raised {
+  border-radius: var(--radius-md) !important;
+}
+html.mode-performance:not(:has(#landing-root)) .neu-raised-sm {
+  border-radius: var(--radius-md) !important;
+}
 html.mode-performance:not(:has(#landing-root)) .neu-card {
   border-radius: var(--radius-md) !important;
 }
@@ -694,17 +1141,29 @@ html.mode-transitioning * {
    ============================================ */
 
 /* ── Ocultar imágenes decorativas pesadas ── */
-html.mode-performance:not(:has(#landing-root)) img[loading="lazy"][class*="absolute"],
-html.mode-performance:not(:has(#landing-root)) img[class*="decorative"],
-html.mode-performance:not(:has(#landing-root)) .hero-image,
+
+html.mode-performance:not(:has(#landing-root)) img[loading="lazy"][class*="absolute"] {
+  display: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) img[class*="decorative"] {
+  display: none !important;
+}
+html.mode-performance:not(:has(#landing-root)) .hero-image {
+  display: none !important;
+}
 html.mode-performance:not(:has(#landing-root)) .landing-hero-image {
   display: none !important;
 }
 
 /* ── Reducir calidad de imágenes de producto en móvil ── */
 @media (max-width: 768px) {
-  html.mode-performance:not(:has(#landing-root)) img[class*="object-cover"],
-  html.mode-performance:not(:has(#landing-root)) img[class*="product"] {
+  
+html.mode-performance:not(:has(#landing-root)) img[class*="object-cover"] {
+    filter: none !important;
+    /* Evitar transform 3D en imágenes */
+    transform: none !important;
+  }
+html.mode-performance:not(:has(#landing-root)) img[class*="product"] {
     filter: none !important;
     /* Evitar transform 3D en imágenes */
     transform: none !important;
@@ -715,9 +1174,14 @@ html.mode-performance:not(:has(#landing-root)) .landing-hero-image {
    Los componentes framer-motion usan will-change: transform
    que consume GPU. En performance móvil, lo desactivamos. */
 @media (max-width: 768px) {
-  html.mode-performance:not(:has(#landing-root)) [style*="will-change"],
-  html.mode-performance:not(:has(#landing-root)) [style*="transform:"],
-  html.mode-performance:not(:has(#landing-root)) [style*="opacity:"] {
+  
+html.mode-performance:not(:has(#landing-root)) [style*="will-change"] {
+    will-change: auto !important;
+  }
+html.mode-performance:not(:has(#landing-root)) [style*="transform:"] {
+    will-change: auto !important;
+  }
+html.mode-performance:not(:has(#landing-root)) [style*="opacity:"] {
     will-change: auto !important;
   }
 
@@ -757,17 +1221,26 @@ html.mode-performance:not(:has(#landing-root)) .landing-hero-image {
   }
 
   /* ── Forzar GPU acceleration solo donde es necesario ── */
-  html.mode-performance:not(:has(#landing-root)) .fixed,
-  html.mode-performance:not(:has(#landing-root)) .sticky {
+  
+html.mode-performance:not(:has(#landing-root)) .fixed {
+    transform: translateZ(0);
+  }
+html.mode-performance:not(:has(#landing-root)) .sticky {
     transform: translateZ(0);
   }
 
   /* ── Reducir blur en modales ── */
-  html.mode-performance:not(:has(#landing-root)) [class*="backdrop-blur"],
-  html.mode-performance:not(:has(#landing-root)) [class*="bg-background/80"],
-  html.mode-performance:not(:has(#landing-root)) [class*="bg-background/90"] {
+  
+html.mode-performance:not(:has(#landing-root)) [class*="backdrop-blur"] {
     backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    background: var(--background) !important;
+  }
+html.mode-performance:not(:has(#landing-root)) [class*="bg-background/80"] {
+    backdrop-filter: none !important;
+    background: var(--background) !important;
+  }
+html.mode-performance:not(:has(#landing-root)) [class*="bg-background/90"] {
+    backdrop-filter: none !important;
     background: var(--background) !important;
   }
 }
@@ -848,8 +1321,13 @@ html.mode-performance:not(:has(#landing-root)).dark .landing-tokens {
    El borde-degradado de glass cards en performance usaba verde
    (rgba(34,197,94,…)); en dark+performance pasa a grayscale.
    Light+Performance NO cambia (override scopeado a .dark). */
-html.mode-performance:not(:has(#landing-root)).dark .glass-card::before,
-html.mode-performance:not(:has(#landing-root)).dark .neu-card::before,
+
+html.mode-performance:not(:has(#landing-root)).dark .glass-card::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05) 50%, transparent);
+}
+html.mode-performance:not(:has(#landing-root)).dark .neu-card::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05) 50%, transparent);
+}
 html.mode-performance:not(:has(#landing-root)).dark .stats-glass-card::before {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05) 50%, transparent);
 }
@@ -890,656 +1368,2030 @@ html.mode-performance:not(:has(#landing-root)).dark [stop-color="#34d399"] { sto
    NOTA: text-success/bg-success (tokens semánticos) no usan
    clases green/emerald/lime y NO son afectados por este barrido. */
 /* T-MONO-TEXT: texto verde -> gris */
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-50"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-50"] {
+  color: #f4f4f5 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-50"] {
+  color: #f4f4f5 !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-lime-50"] {
   color: #f4f4f5 !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-100"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-100"] {
+  color: #f4f4f5 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-100"] {
+  color: #f4f4f5 !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-lime-100"] {
   color: #f4f4f5 !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-200"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-200"] {
+  color: #e4e4e7 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-200"] {
+  color: #e4e4e7 !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-lime-200"] {
   color: #e4e4e7 !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-300"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-300"] {
+  color: #d4d4d8 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-300"] {
+  color: #d4d4d8 !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-lime-300"] {
   color: #d4d4d8 !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-400"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-400"] {
+  color: #d4d4d8 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-400"] {
+  color: #d4d4d8 !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-lime-400"] {
   color: #d4d4d8 !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-500"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-500"] {
+  color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-500"] {
+  color: #a1a1aa !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-lime-500"] {
   color: #a1a1aa !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-600"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-600"] {
+  color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-600"] {
+  color: #a1a1aa !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-lime-600"] {
   color: #a1a1aa !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-700"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-700"] {
+  color: #71717a !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-700"] {
+  color: #71717a !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-lime-700"] {
   color: #71717a !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-800"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-800"] {
+  color: #52525b !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-800"] {
+  color: #52525b !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-lime-800"] {
   color: #52525b !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-900"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-900"] {
+  color: #52525b !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-900"] {
+  color: #52525b !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-lime-900"] {
   color: #52525b !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-950"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-950"] {
+  color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-950"] {
+  color: #3f3f46 !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-lime-950"] {
   color: #3f3f46 !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-400/80"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-300/80"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-[#22c55e]/70"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-400/80"] {
+  color: rgba(212, 212, 216, 0.8) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-300/80"] {
+  color: rgba(212, 212, 216, 0.8) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-[#22c55e]/70"] {
+  color: rgba(212, 212, 216, 0.8) !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-[#22c55e]/80"] {
   color: rgba(212, 212, 216, 0.8) !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-400/60"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-400/90"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-400/60"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-700/60"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-[#22c55e]/60"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="text-[#22c55e]/50"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-green-400/60"] {
+  color: rgba(212, 212, 216, 0.65) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-400/90"] {
+  color: rgba(212, 212, 216, 0.65) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-400/60"] {
+  color: rgba(212, 212, 216, 0.65) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-emerald-700/60"] {
+  color: rgba(212, 212, 216, 0.65) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-[#22c55e]/60"] {
+  color: rgba(212, 212, 216, 0.65) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="text-[#22c55e]/50"] {
+  color: rgba(212, 212, 216, 0.65) !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="text-[#22c55e]/40"] {
   color: rgba(212, 212, 216, 0.65) !important;
 }
 /* T-MONO-BG: fondos verdes -> gris */
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-50"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-50"] {
+  background-color: #27272a !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-50"] {
+  background-color: #27272a !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-50"] {
   background-color: #27272a !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-100"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-100"] {
+  background-color: #27272a !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-100"] {
+  background-color: #27272a !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-100"] {
   background-color: #27272a !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-200"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-200"] {
+  background-color: #27272a !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-200"] {
+  background-color: #27272a !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-200"] {
   background-color: #27272a !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-300"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-300"] {
+  background-color: #52525b !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-300"] {
+  background-color: #52525b !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-300"] {
   background-color: #52525b !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-400"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-400"] {
+  background-color: #52525b !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-400"] {
+  background-color: #52525b !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-400"] {
   background-color: #52525b !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500"] {
+  background-color: #52525b !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500"] {
+  background-color: #52525b !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-500"] {
   background-color: #52525b !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-600"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-600"] {
+  background-color: #52525b !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-600"] {
+  background-color: #52525b !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-600"] {
   background-color: #52525b !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-700"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-700"] {
+  background-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-700"] {
+  background-color: #3f3f46 !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-700"] {
   background-color: #3f3f46 !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-800"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-800"] {
+  background-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-800"] {
+  background-color: #3f3f46 !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-800"] {
   background-color: #3f3f46 !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-900"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-900"] {
+  background-color: #27272a !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-900"] {
+  background-color: #27272a !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-900"] {
   background-color: #27272a !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-950"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-950"] {
+  background-color: #27272a !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-950"] {
+  background-color: #27272a !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-950"] {
   background-color: #27272a !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-[#22c55e]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-[#16a34a]"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-[#22c55e]"] {
+  background-color: #52525b !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-[#16a34a]"] {
+  background-color: #52525b !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-[#15803d]"] {
   background-color: #52525b !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/40"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/60"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/70"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-[#22c55e]/50"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/40"] {
+  background-color: rgba(255, 255, 255, 0.30) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/60"] {
+  background-color: rgba(255, 255, 255, 0.30) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/70"] {
+  background-color: rgba(255, 255, 255, 0.30) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-[#22c55e]/50"] {
+  background-color: rgba(255, 255, 255, 0.30) !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-[#22c55e]/40"] {
   background-color: rgba(255, 255, 255, 0.30) !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/5"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/15"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/25"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-600/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-400/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-950/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-900/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-50/50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500/5"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500/15"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500/25"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-600/5"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-950/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-950/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-950/40"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-900/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-50/60"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/10"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/5"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/15"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/20"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/25"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-500/30"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-600/10"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-400/10"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-950/20"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-900/30"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-green-50/50"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500/10"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500/5"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500/15"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500/20"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-500/25"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-600/5"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-950/20"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-950/30"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-950/40"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-900/30"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="bg-emerald-50/60"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="bg-lime-500/10"] {
   background-color: rgba(255, 255, 255, 0.07) !important;
 }
 /* T-MONO-BORDER: bordes verdes -> gris */
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#15803d]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/15"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/25"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/40"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500/15"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500/50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-600/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-900/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/40"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/15"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/25"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/45"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/60"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-l-[#22c55e]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-l-[#22c55e]/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-l-[#22c55e]/60"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-t-[#22c55e]/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-r-[#22c55e]/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-b-[#22c55e]/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-900"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#15803d]"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/30"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/20"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/15"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/25"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/10"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500/40"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500/20"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500/30"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500/10"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500/15"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500/50"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-600/20"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-900/30"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/20"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/40"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/15"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/30"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/10"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/25"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/45"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/60"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-[#22c55e]/50"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-l-[#22c55e]"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-l-[#22c55e]/30"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-l-[#22c55e]/60"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-t-[#22c55e]/10"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-r-[#22c55e]/10"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-b-[#22c55e]/10"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-50"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-100"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-200"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-300"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-400"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-500"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-600"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-700"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-800"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-900"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-green-950"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-50"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-100"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-200"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-300"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-400"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-500"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-600"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-700"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-800"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-900"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-emerald-950"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-50"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-100"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-200"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-300"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-400"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-500"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-600"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-700"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-800"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-900"] {
+  border-color: #3f3f46 !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="border-lime-950"] {
   border-color: #3f3f46 !important;
 }
 /* T-MONO-GRADIENT: stops verdes -> gris */
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#15803d]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#22c55e]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#166534]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#22c55e]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#16a34a]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#166534]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#14532d]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#4ade80]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-[#4ade80]"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-500/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-500/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-400/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#22c55e]/40"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#22c55e]/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#22c55e]/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#22c55e]/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-500/5"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-500/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-500/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-500/5"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-500/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-500/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#22c55e]/60"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-500/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-[#22c55e]/40"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-900"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#15803d]"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#22c55e]"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#166534]"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#22c55e]"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#16a34a]"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#166534]"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#14532d]"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#4ade80]"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-[#4ade80]"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-700"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-800"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-500/10"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-500/20"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-400/10"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#22c55e]/40"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#22c55e]/10"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#22c55e]/20"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-[#22c55e]/30"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-500/5"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-500/10"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-500/20"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-500/5"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-500/10"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-500/20"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-[#22c55e]/60"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-500/10"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-[#22c55e]/40"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-50"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-100"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-200"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-300"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-700"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-800"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-900"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-green-950"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-50"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-100"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-200"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-300"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-700"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-800"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-900"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-emerald-950"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-50"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-100"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-200"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-300"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-700"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-800"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-900"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="from-lime-950"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-50"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-100"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-200"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-300"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-700"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-800"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-900"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-green-950"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-50"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-100"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-200"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-300"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-700"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-800"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-900"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-emerald-950"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-50"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-100"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-200"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-300"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-700"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-800"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-900"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="to-lime-950"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-50"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-100"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-200"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-300"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-700"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-800"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-900"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-green-950"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-50"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-100"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-200"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-300"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-700"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-800"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-900"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-emerald-950"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-50"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-100"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-200"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-300"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-400"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-500"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-600"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-700"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-800"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-900"] {
+  --tw-gradient-from: #3f3f46 !important;
+  --tw-gradient-to: #3f3f46 !important;
+  --tw-gradient-stops: #3f3f46 !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="via-lime-950"] {
   --tw-gradient-from: #3f3f46 !important;
   --tw-gradient-to: #3f3f46 !important;
   --tw-gradient-stops: #3f3f46 !important;
 }
 /* T-MONO-GLOW: glows verdes -> none */
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-900"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-50"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-100"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-200"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-300"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-400"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-600"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-700"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-800"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-900"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-950"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-50"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-100"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-200"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-300"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-400"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-500"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-600"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-700"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-800"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-900"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-950"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-50"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-100"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-200"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-300"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-400"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-500"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-600"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-700"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-800"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-900"] {
+  box-shadow: none !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-lime-950"] {
   box-shadow: none !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500/5"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500/25"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-600/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-600/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-400/50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-500/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-500/5"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-[#22c55e]/40"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-[#22c55e]/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-[#22c55e]/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-[#22c55e]/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-[#15803d]/40"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500/30"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500/20"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500/5"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500/10"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-500/25"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-600/20"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-600/30"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-green-400/50"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-500/20"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-emerald-500/5"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-[#22c55e]/40"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-[#22c55e]/30"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-[#22c55e]/20"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-[#22c55e]/10"] {
+  box-shadow: none !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-[#15803d]/40"] {
+  box-shadow: none !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="shadow-[#15803d]/20"] {
   box-shadow: none !important;
 }
 /* T-MONO-RING */
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-900"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-50"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-100"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-200"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-300"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-400"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-600"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-700"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-800"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-900"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-950"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-50"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-100"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-200"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-300"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-400"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-500"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-600"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-700"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-800"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-900"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-emerald-950"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-50"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-100"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-200"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-300"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-400"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-500"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-600"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-700"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-800"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-900"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="ring-lime-950"] {
   --tw-ring-color: rgba(255, 255, 255, 0.35) !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/30"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/40"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/70"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/10"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/15"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/25"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-[#22c55e]/20"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-[#22c55e]/15"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-[#22c55e]/25"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-[#22c55e]/40"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="ring-[#22c55e]/70"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/30"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/40"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/70"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/10"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/15"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/20"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-green-500/25"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-[#22c55e]/20"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-[#22c55e]/15"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-[#22c55e]/25"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-[#22c55e]/40"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="ring-[#22c55e]/70"] {
+  --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="ring-[#22c55e]/10"] {
   --tw-ring-color: rgba(255, 255, 255, 0.25) !important;
 }
 /* T-MONO-FILL-DECOR */
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-900"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-50"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-100"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-200"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-300"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-400"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-500"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-600"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-700"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-800"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-900"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-green-950"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-50"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-100"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-200"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-300"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-400"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-500"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-600"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-700"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-800"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-900"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-emerald-950"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-50"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-100"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-200"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-300"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-400"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-500"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-600"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-700"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-800"] {
+  fill: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-900"] {
+  fill: #a1a1aa !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="fill-lime-950"] {
   fill: #a1a1aa !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-900"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-50"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-100"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-200"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-300"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-400"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-500"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-600"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-700"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-800"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-900"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-green-950"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-50"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-100"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-200"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-300"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-400"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-500"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-600"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-700"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-800"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-900"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-emerald-950"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-50"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-100"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-200"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-300"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-400"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-500"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-600"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-700"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-800"] {
+  stroke: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-900"] {
+  stroke: #a1a1aa !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="stroke-lime-950"] {
   stroke: #a1a1aa !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-900"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-50"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-100"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-200"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-300"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-400"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-500"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-600"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-700"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-800"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-900"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-green-950"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-50"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-100"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-200"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-300"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-400"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-500"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-600"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-700"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-800"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-900"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-emerald-950"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-50"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-100"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-200"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-300"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-400"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-500"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-600"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-700"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-800"] {
+  text-decoration-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-900"] {
+  text-decoration-color: #a1a1aa !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="decoration-lime-950"] {
   text-decoration-color: #a1a1aa !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-900"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-50"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-100"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-200"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-300"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-400"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-500"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-600"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-700"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-800"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-900"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-green-950"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-50"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-100"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-200"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-300"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-400"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-500"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-600"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-700"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-800"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-900"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-emerald-950"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-50"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-100"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-200"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-300"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-400"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-500"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-600"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-700"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-800"] {
+  border-color: #3f3f46 !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-900"] {
+  border-color: #3f3f46 !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="divide-lime-950"] {
   border-color: #3f3f46 !important;
 }
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-900"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-950"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-50"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-100"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-200"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-300"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-400"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-500"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-600"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-700"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-800"],
-html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-900"],
+
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-50"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-100"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-200"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-300"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-400"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-500"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-600"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-700"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-800"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-900"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-green-950"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-50"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-100"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-200"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-300"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-400"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-500"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-600"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-700"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-800"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-900"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-emerald-950"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-50"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-100"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-200"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-300"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-400"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-500"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-600"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-700"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-800"] {
+  accent-color: #a1a1aa !important;
+}
+html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-900"] {
+  accent-color: #a1a1aa !important;
+}
 html.mode-performance:not(:has(#landing-root)).dark [class*="accent-lime-950"] {
   accent-color: #a1a1aa !important;
 }
