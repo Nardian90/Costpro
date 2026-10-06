@@ -45,7 +45,16 @@ interface FeatureVisualProps {
   className?: string;
   /** id para deep-links */
   id?: string;
+  /**
+   * `sizes` de next/image — ancho CSS REAL del render (FIX CALIDAD 2026-10-06).
+   * El valor anterior («…, 640px») era MENOR que el ancho real (~976px en
+   * MultiStore) → el navegador elegía un derivado de 640px y lo estiraba →
+   * imagen despixelada. Cada sección pasa el suyo según su layout.
+   */
+  sizes?: string;
 }
+
+const DEFAULT_SIZES = '(max-width: 640px) 100vw, (max-width: 1024px) 92vw, 976px';
 
 export default function FeatureVisual({
   src,
@@ -57,6 +66,7 @@ export default function FeatureVisual({
   priority = false,
   className = '',
   id,
+  sizes = DEFAULT_SIZES,
 }: FeatureVisualProps) {
   return (
     <motion.figure
@@ -96,7 +106,11 @@ export default function FeatureVisual({
 
         {/* Captura real — art direction (FASE 10):
             desktop → 16:10 horizontal; móvil → captura vertical real de la
-            misma pantalla (una de desktop reducida resultaría ilegible). */}
+            misma pantalla (una de desktop reducida resultaría ilegible).
+            FIX CALIDAD (2026-10-06): quality=90 (texto de UI nítido; el 75
+            por defecto de next/image emborrona las capturas) + `sizes`
+            por sección acorde al ancho real de render. Fuentes: 2560x1600
+            q90 (scripts/convert-landing-captures.py). */}
         {srcMobile ? (
           <>
             <div className="relative hidden w-full aspect-[16/10] sm:block">
@@ -107,7 +121,8 @@ export default function FeatureVisual({
                 priority={priority}
                 loading={priority ? undefined : 'lazy'}
                 decoding={priority ? 'sync' : 'async'}
-                sizes="(max-width: 1024px) 90vw, 640px"
+                sizes={sizes}
+                quality={90}
                 className="object-cover object-top"
               />
             </div>
@@ -120,6 +135,7 @@ export default function FeatureVisual({
                 loading={priority ? undefined : 'lazy'}
                 decoding={priority ? 'sync' : 'async'}
                 sizes="100vw"
+                quality={90}
                 className="object-cover object-top"
               />
             </div>
@@ -133,7 +149,8 @@ export default function FeatureVisual({
               priority={priority}
               loading={priority ? undefined : 'lazy'}
               decoding={priority ? 'sync' : 'async'}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 640px"
+              sizes={sizes}
+              quality={90}
               className="object-cover object-top"
             />
           </div>

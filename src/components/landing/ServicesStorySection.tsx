@@ -169,6 +169,7 @@ function StoryCard({ section, index }: { section: StorySection; index: number })
               altMobile={section.imageAlt}
               caption={section.caption}
               frameLabel={section.frameLabel}
+              sizes="(max-width: 640px) 100vw, (max-width: 1056px) 60vw, 570px"
             />
           ) : (
             <div className="relative mx-auto w-fit">
