@@ -58,7 +58,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { Store, Building, Loader2, LayoutGrid, BarChart3 } from 'lucide-react'; // F4: ChevronRight retirado con el breadcrumb local
+import { Store, Building, Loader2, LayoutGrid, BarChart3, LayoutList } from 'lucide-react'; // F4: ChevronRight retirado con el breadcrumb local
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import ContentSwitcher, { type ContentSwitcherItem } from '@/components/ui/ContentSwitcher';
@@ -66,6 +66,9 @@ import ContentSwitcher, { type ContentSwitcherItem } from '@/components/ui/Conte
 // Lazy-load de las sub-vistas
 const StorefrontConfigView = dynamic(() => import('@/components/views/terminal/views/stores/StorefrontConfigView'), { ssr: false });
 const StoresManagementView = dynamic(() => import('@/components/views/terminal/views/stores/StoresManagementView'), { ssr: false });
+// Catálogo/Vitrina (fix/ux-inventario-vitrina): gestión de publicación de
+// productos (visible/precio/stock/promoción) sobre la única fuente de verdad.
+const StoreCatalogView = dynamic(() => import('@/components/views/terminal/views/stores/StoreCatalogView'), { ssr: false });
 // REMEDIACIÓN (fix/dashboard-active-store): tablero consolidado multi-tienda.
 // Antes era la respuesta de la entrada "Dashboard" para admin/manager; ahora
 // vive exclusivamente aquí, como tab "KPIs" del hub Gestión de Tiendas.
@@ -85,7 +88,7 @@ const StoreDashboardView = dynamic(
   }
 );
 
-type TabId = 'storefront' | 'stores';
+type TabId = 'storefront' | 'stores' | 'catalog';
 // IA-FIX: 'kpis' deja de ser tab — pasa a ser viewMode 'summary' del tab
 // 'stores' (dos representaciones del mismo contenido, no dos secciones).
 type StoreViewMode = 'full' | 'summary';
@@ -120,6 +123,15 @@ const TABS: TabDef[] = [
     label: 'Vitrina',
     icon: Store,
     description: 'Configuración de la vitrina pública',
+    roles: ['admin', 'manager', 'encargado'],
+  },
+  {
+    // fix/ux-inventario-vitrina: tercero del hub. Relación explícita
+    // INVENTARIO (¿qué tengo?) → CATÁLOGO (¿qué muestro?) → VITRINA (¿cómo se ve?).
+    id: 'catalog',
+    label: 'Catálogo',
+    icon: LayoutList,
+    description: 'Qué ve el cliente: publicación, precio, stock y promociones por producto',
     roles: ['admin', 'manager', 'encargado'],
   },
 ];
@@ -363,6 +375,7 @@ export default function ManagementHubView() {
         aria-labelledby={`tab-${activeTab}`}
       >
         {activeTab === 'storefront' && <StorefrontConfigView />}
+        {activeTab === 'catalog' && <StoreCatalogView />}
         {activeTab === 'stores' && (
           /* IA-FIX: content switcher — Tiendas y Resumen son dos
               representaciones del MISMO contenido (mismas tiendas, mismos
