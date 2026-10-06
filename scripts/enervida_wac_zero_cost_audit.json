@@ -1,0 +1,2371 @@
+{
+ "task": "TAREA2-ENERVIDA-WAC-ZERO-COST-2026-10",
+ "store": "ENERVIDA-VITALLCONS",
+ "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+ "date": "2026-10-06",
+ "baseline": "main@8b479ddc5 (GATE 16 certificado: import 05/10/2026 26 ops, 157/157 delta=0)",
+ "method": {
+  "writer": "fn_recalc_wac (unico escritor canonico; token app.wac_writer + wac_change_log)",
+  "correction_protocol": "governed_admin_write: replica del protocolo del escritor canonico; DO atomico: verify(cost=0,stock=snapshot FOR UPDATE) -> set_config token -> UPDATE -> INSERT wac_change_log(event='wac_correction') -> release",
+  "replay": "fn_recalc_wac D-01: ca=(S*ca_prev+q*uc)/(S+q) por cada purchase cronologico; salidas (sale/issue_slip_out/adjustment) y reversas (sale_reverse/issue_slip_reverse) WAC-invariantes (A1/DF-01)",
+  "currency_rule": "unit_cost x COALESCE(tasa_cambio_recepcion,1.0) -> CUP (migracion 20260702000001 fix P0); sin conversion inventada",
+  "idempotency": "ENERVIDA-WAC-2026-SKU-XXX en wac_change_log.source_ref.correction_id"
+ },
+ "results": [
+  {
+   "sku": "1",
+   "product_name": "Abrazadera metálica de 3/4",
+   "stock": 18.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 19.0,
+     "uc": 350.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 350.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 18.0,
+    "stock_current": 18.0,
+    "dStock": 0.0,
+    "wac_proposed": 350.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 350.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 350.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-1",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "2",
+   "product_name": "Abrazadera metálica de 1 pulgada",
+   "stock": 32.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 32.0,
+     "uc": 350.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 350.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 32.0,
+    "stock_current": 32.0,
+    "dStock": 0.0,
+    "wac_proposed": 350.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 350.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 350.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-2",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "4",
+   "product_name": "Bisagra",
+   "stock": 1.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 1.0,
+     "uc": 4000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 4000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 1.0,
+    "stock_current": 1.0,
+    "dStock": 0.0,
+    "wac_proposed": 4000.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 4000.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 4000.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-4",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "5",
+   "product_name": "Brecker 16A Sencillo",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 3.0,
+     "uc": 2000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 2000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 2000.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 2000.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 2000.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-5",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "6",
+   "product_name": "Brecker 25 A Sencillo",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 2.0,
+     "uc": 2000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 2000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 2000.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 2000.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 2000.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-6",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "7",
+   "product_name": "Brecker 32A Trifasico",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 3000.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "8",
+   "product_name": "Brecker C32 A Trible",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 2.0,
+     "uc": 6000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 6000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 6000.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 6000.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 6000.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-8",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "9",
+   "product_name": "Brecker D63 A",
+   "stock": 1.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 23.0,
+     "uc": 25.0,
+     "mon": "USD",
+     "tasa": 680.0,
+     "uc_cup": 17000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 1.0,
+    "stock_current": 1.0,
+    "dStock": 0.0,
+    "wac_proposed": 17000.0,
+    "ratio_vs_price": 680.0
+   },
+   "price": 25.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "10",
+   "product_name": "Brida 58",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 150.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "11",
+   "product_name": "Cabilla 70 Cm",
+   "stock": 6.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 69.0,
+     "uc": 350.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 350.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 6.0,
+    "stock_current": 6.0,
+    "dStock": 0.0,
+    "wac_proposed": 350.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 350.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 350.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-11",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "13",
+   "product_name": "Cable Conductor electrico 8",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 266.0,
+     "uc": 1500.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1500.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 1500.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 1500.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1500.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-13",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "14",
+   "product_name": "Distribuidor de corriente 4 salidas",
+   "stock": 16.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 16.0,
+     "uc": 500.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 500.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 16.0,
+    "stock_current": 16.0,
+    "dStock": 0.0,
+    "wac_proposed": 500.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 500.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 500.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-14",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "16",
+   "product_name": "Cemento P425 Tudella",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 23.0,
+     "uc": 12500.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 12500.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 12500.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 12500.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 12500.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-16",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "17",
+   "product_name": "Césped Artificial",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 27.0,
+     "uc": 6500.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 6500.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 6500.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 6500.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 6500.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-17",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "18",
+   "product_name": "Cheques metálicos",
+   "stock": 1.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 4.0,
+     "uc": 3500.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 3500.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 1.0,
+    "stock_current": 1.0,
+    "dStock": 0.0,
+    "wac_proposed": 3500.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 3500.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 3500.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-18",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "19",
+   "product_name": "Codo de 90",
+   "stock": 16.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 29.0,
+     "uc": 200.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 200.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 16.0,
+    "stock_current": 16.0,
+    "dStock": 0.0,
+    "wac_proposed": 200.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 200.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 200.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-19",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "20",
+   "product_name": "Codos de 45 grado",
+   "stock": 15.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 15.0,
+     "uc": 200.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 200.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 15.0,
+    "stock_current": 15.0,
+    "dStock": 0.0,
+    "wac_proposed": 200.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 200.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 200.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-20",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "21",
+   "product_name": "Colchón Milexus",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 1.0,
+     "uc": 220.0,
+     "mon": "USD",
+     "tasa": 680.0,
+     "uc_cup": 149600.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 149600.0,
+    "ratio_vs_price": 680.0
+   },
+   "price": 220.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "23",
+   "product_name": "Cuchilla 2P 100A",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 20.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "24",
+   "product_name": "Cuchilla 2P 63A",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 4.0,
+     "uc": 18.0,
+     "mon": "USD",
+     "tasa": 680.0,
+     "uc_cup": 12240.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 12240.0,
+    "ratio_vs_price": 680.0
+   },
+   "price": 18.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "26",
+   "product_name": "Disco de esmeril",
+   "stock": 3.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 3.0,
+     "uc": 2000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 2000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 3.0,
+    "stock_current": 3.0,
+    "dStock": 0.0,
+    "wac_proposed": 2000.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 2000.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 2000.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-26",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "27",
+   "product_name": "Escobas",
+   "stock": 3.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 9.0,
+     "uc": 1800.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1800.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 3.0,
+    "stock_current": 3.0,
+    "dStock": 0.0,
+    "wac_proposed": 1800.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 1800.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1800.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-27",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "28",
+   "product_name": "Espejo",
+   "stock": 33.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 35.0,
+     "uc": 5000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 5000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 33.0,
+    "stock_current": 33.0,
+    "dStock": 0.0,
+    "wac_proposed": 5000.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 5000.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 5000.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-28",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "31",
+   "product_name": "Expansiones con tornillos M6",
+   "stock": 1.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 95.0,
+     "uc": 350.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 350.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 1.0,
+    "stock_current": 1.0,
+    "dStock": 0.0,
+    "wac_proposed": 350.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 350.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 350.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-31",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "32",
+   "product_name": "Expansiones con tornillos M8",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 28.0,
+     "uc": 400.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 400.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 400.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 400.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 400.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-32",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "34",
+   "product_name": "Fregadero",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 4.0,
+     "uc": 23000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 23000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 23000.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 23000.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 23000.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-34",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "35",
+   "product_name": "Fuerte eléctrico",
+   "stock": 56.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 68.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 56.0,
+    "stock_current": 56.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-35",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "38",
+   "product_name": "Lampara de 20",
+   "stock": 19.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 27.0,
+     "uc": 3200.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 3200.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 19.0,
+    "stock_current": 19.0,
+    "dStock": 0.0,
+    "wac_proposed": 3200.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 3200.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 3200.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-38",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "41",
+   "product_name": "Latiguillo MC4",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "42",
+   "product_name": "Llave de lavamano",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 3.0,
+     "uc": 3000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 3000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 3000.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 3000.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 3000.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-42",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "43",
+   "product_name": "Losa aporcelanada 60x60",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 6.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-43",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "44",
+   "product_name": "Losa aporcelanada 60x60 con defectos",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "INV-INIT-2026-08-10",
+     "date": "2026-08-10",
+     "qty": 4.0,
+     "uc": 5040.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 5040.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 5040.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "45",
+   "product_name": "Malla perli",
+   "stock": 1.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 4.0,
+     "uc": 40000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 40000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 1.0,
+    "stock_current": 1.0,
+    "dStock": 0.0,
+    "wac_proposed": 40000.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 40000.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 40000.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-45",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "46",
+   "product_name": "Masilla interior blanca",
+   "stock": 3.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 5.0,
+     "uc": 22000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 22000.0
+    },
+    {
+     "receipt": "INV-INIT-2026-08-10",
+     "date": "2026-08-10",
+     "qty": 13.0,
+     "uc": 22000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 22000.0
+    }
+   ],
+   "n_purchase_movements": 2,
+   "replay": {
+    "S_final": 3.0,
+    "stock_current": 3.0,
+    "dStock": 0.0,
+    "wac_proposed": 22000.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 22000.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 22000.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-46",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "49",
+   "product_name": "Nudos de 3/4",
+   "stock": 8.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 8.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 8.0,
+    "stock_current": 8.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-49",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "50",
+   "product_name": "Nudos de 50",
+   "stock": 8.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 10.0,
+     "uc": 250.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 250.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 8.0,
+    "stock_current": 8.0,
+    "dStock": 0.0,
+    "wac_proposed": 250.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 250.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 250.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-50",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "51",
+   "product_name": "Pintura Casa Blanca 14L",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 20.0,
+     "uc": 32500.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 32500.0
+    },
+    {
+     "receipt": "INV-INIT-2026-08-10",
+     "date": "2026-08-10",
+     "qty": 13.0,
+     "uc": 32500.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 32500.0
+    }
+   ],
+   "n_purchase_movements": 2,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 32500.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 32500.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 32500.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-51",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "53",
+   "product_name": "Planchas de zinc",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "54",
+   "product_name": "Porta Fusibles",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "56",
+   "product_name": "Reducido de 3/4",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 5.0,
+     "uc": 350.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 350.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 350.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 350.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 350.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-56",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "58",
+   "product_name": "Rosca Chapa",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "60",
+   "product_name": "Supresores de sobretensiones",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "73",
+   "product_name": "Interruptor doble",
+   "stock": 6.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 10.0,
+     "uc": 1500.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1500.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 6.0,
+    "stock_current": 6.0,
+    "dStock": 0.0,
+    "wac_proposed": 1500.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 1500.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1500.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-73",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "74",
+   "product_name": "Controlador de línea",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 4.0,
+     "uc": 6000.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 6000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 6000.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 6000.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 6000.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-74",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "78",
+   "product_name": "Tornillo con tuerca 4.8",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 300.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "79",
+   "product_name": "Interruptor y toma corriente",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 10.0,
+     "uc": 1500.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1500.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 1500.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 1500.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1500.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-79",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "80",
+   "product_name": "Brecker C32A Doble",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 1.0,
+     "uc": 5.0,
+     "mon": "USD",
+     "tasa": 680.0,
+     "uc_cup": 3400.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 3400.0,
+    "ratio_vs_price": 680.0
+   },
+   "price": 5.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "81",
+   "product_name": "Bridas de 4x8 400mm",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 401.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-81",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "82",
+   "product_name": "Crimpiadora con pela cable Anaranjada",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 1.0,
+     "uc": 200.0,
+     "mon": "USD",
+     "tasa": 680.0,
+     "uc_cup": 136000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 136000.0,
+    "ratio_vs_price": 680.0
+   },
+   "price": 200.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "83",
+   "product_name": "Crimpiadora Roja con 6 dabas rojas",
+   "stock": 3.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 3.0,
+     "uc": 180.0,
+     "mon": "USD",
+     "tasa": 680.0,
+     "uc_cup": 122400.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 3.0,
+    "stock_current": 3.0,
+    "dStock": 0.0,
+    "wac_proposed": 122400.0,
+    "ratio_vs_price": 680.0
+   },
+   "price": 180.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "84",
+   "product_name": "Conector XT60",
+   "stock": 35.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 66.0,
+     "uc": 6500.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 6500.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 35.0,
+    "stock_current": 35.0,
+    "dStock": 0.0,
+    "wac_proposed": 6500.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 6500.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 6500.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-84",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "85",
+   "product_name": "Panel 585",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 5.0,
+     "uc": 380.0,
+     "mon": "USD",
+     "tasa": 680.0,
+     "uc_cup": 258400.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 258400.0,
+    "ratio_vs_price": 680.0
+   },
+   "price": 380.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "86",
+   "product_name": "Panel + 600W",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 58.0,
+     "uc": 370.0,
+     "mon": "USD",
+     "tasa": 680.0,
+     "uc_cup": 251600.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 251600.0,
+    "ratio_vs_price": 762.424
+   },
+   "price": 330.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "91",
+   "product_name": "Liquidación OT 16",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "93",
+   "product_name": "Liquidacion de OT 12",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "94",
+   "product_name": "Barrena 6mm Madera",
+   "stock": 2.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 3.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 2.0,
+    "stock_current": 2.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-94",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "95",
+   "product_name": "Barrena 34mm Madera",
+   "stock": 36.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 36.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 36.0,
+    "stock_current": 36.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-95",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "96",
+   "product_name": "Barrena 5mm Madera",
+   "stock": 212.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 212.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 212.0,
+    "stock_current": 212.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-96",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "97",
+   "product_name": "Disco de corte",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 122.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": 0.004
+   },
+   "price": 250.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-97",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "98",
+   "product_name": "Limpia parabrisa",
+   "stock": 42.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 42.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 42.0,
+    "stock_current": 42.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-98",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "101",
+   "product_name": "Canal de media",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "105",
+   "product_name": "Cajita breckera sencilla",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "108",
+   "product_name": "Cajita Breckera sencilla gris",
+   "stock": 1.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 2.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 1.0,
+    "stock_current": 1.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-108",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "110",
+   "product_name": "Intermedio",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 219.0,
+     "uc": 1200.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1200.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 1200.0,
+    "ratio_vs_price": 1.0
+   },
+   "price": 1200.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1200.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-110",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "111",
+   "product_name": "Grapas plasticas con clavo de acero",
+   "stock": 45.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 49.0,
+     "uc": 2500.0,
+     "mon": "USD",
+     "tasa": 680.0,
+     "uc_cup": 1700000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 45.0,
+    "stock_current": 45.0,
+    "dStock": 0.0,
+    "wac_proposed": 1700000.0,
+    "ratio_vs_price": 680.0
+   },
+   "price": 2500.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "114",
+   "product_name": "Combustible",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_ZERO_LEGITIMO",
+   "receipts": [],
+   "n_purchase_movements": 0,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 0.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "116",
+   "product_name": "Herraje",
+   "stock": 1.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 2.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 1.0,
+    "stock_current": 1.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": null
+   },
+   "price": 0.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-116",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "117",
+   "product_name": "Inversor",
+   "stock": 3.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 6.0,
+     "uc": 3200.0,
+     "mon": "USD",
+     "tasa": 680.0,
+     "uc_cup": 2176000.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 3.0,
+    "stock_current": 3.0,
+    "dStock": 0.0,
+    "wac_proposed": 2176000.0,
+    "ratio_vs_price": 680.0
+   },
+   "price": 3200.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "118",
+   "product_name": "Barilla de Tierra",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 3.0,
+     "uc": 80.0,
+     "mon": "USD",
+     "tasa": 680.0,
+     "uc_cup": 54400.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 54400.0,
+    "ratio_vs_price": 680.0
+   },
+   "price": 80.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  },
+  {
+   "sku": "120",
+   "product_name": "Estación de carga",
+   "stock": 0.0,
+   "wac_before": 0,
+   "classification": "COSTO_REAL_RECUPERABLE",
+   "receipts": [
+    {
+     "receipt": "FAC-VITALLCONS-001",
+     "date": "2026-07-01",
+     "qty": 1.0,
+     "uc": 1.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 1.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 0.0,
+    "stock_current": 0.0,
+    "dStock": 0.0,
+    "wac_proposed": 1.0,
+    "ratio_vs_price": 0.0
+   },
+   "price": 2200.0,
+   "cost_price": 0.0,
+   "action": "APLICAR",
+   "final_wac": 1.0,
+   "correction_id": "ENERVIDA-WAC-2026-SKU-120",
+   "confidence": "ALTA",
+   "issues": []
+  },
+  {
+   "sku": "122",
+   "product_name": "Controladores de voltaje",
+   "stock": 2.0,
+   "wac_before": 0,
+   "classification": "REQUIERE_DECISION_CONTABLE",
+   "receipts": [
+    {
+     "receipt": "INV-INIT-ELEC-2026-08-10",
+     "date": "2026-08-10",
+     "qty": 10.0,
+     "uc": 23800.0,
+     "mon": "CUP",
+     "tasa": 1.0,
+     "uc_cup": 23800.0
+    }
+   ],
+   "n_purchase_movements": 1,
+   "replay": {
+    "S_final": 2.0,
+    "stock_current": 2.0,
+    "dStock": 0.0,
+    "wac_proposed": 23800.0,
+    "ratio_vs_price": 680.0
+   },
+   "price": 35.0,
+   "cost_price": 0.0,
+   "action": "NO_APLICAR",
+   "final_wac": 0,
+   "correction_id": null,
+   "confidence": null,
+   "issues": []
+  }
+ ],
+ "flags_audit": [
+  {
+   "sku": "120",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:53:57.424194+00"
+  },
+  {
+   "sku": "110",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:53:57.693749+00"
+  },
+  {
+   "sku": "86",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:53:57.951939+00"
+  },
+  {
+   "sku": "84",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:53:58.221337+00"
+  },
+  {
+   "sku": "97",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:53:58.469199+00"
+  },
+  {
+   "sku": "28",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:53:58.714974+00"
+  },
+  {
+   "sku": "17",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:53:58.977775+00"
+  },
+  {
+   "sku": "9",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:53:59.234489+00"
+  },
+  {
+   "sku": "122",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:53:59.489833+00"
+  },
+  {
+   "sku": "73",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:53:59.745456+00"
+  },
+  {
+   "sku": "27",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:53:59.985774+00"
+  },
+  {
+   "sku": "50",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:54:00.249872+00"
+  },
+  {
+   "sku": "94",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:54:00.519257+00"
+  },
+  {
+   "sku": "111",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:54:00.782385+00"
+  },
+  {
+   "sku": "19",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:54:01.06734+00"
+  },
+  {
+   "sku": "18",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:54:01.319329+00"
+  },
+  {
+   "sku": "56",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:54:01.594375+00"
+  },
+  {
+   "sku": "42",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:54:01.865708+00"
+  },
+  {
+   "sku": "79",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:54:02.109453+00"
+  },
+  {
+   "sku": "34",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:54:02.359766+00"
+  },
+  {
+   "sku": "46",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:54:02.624045+00"
+  },
+  {
+   "sku": "5",
+   "scope": "sale",
+   "reason": "Importación ENERVIDA: costo no registrado en Excel/Cat (cost_price=0)",
+   "approved_at": "2026-10-04 04:54:02.872929+00"
+  }
+ ]
+}

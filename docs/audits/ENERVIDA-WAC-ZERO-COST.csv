@@ -1,0 +1,72 @@
+sku,product_name,stock,wac_before,classification,receipt_id,receipt_quantity,unit_cost,currency,evidence,proposed_wac,final_wac,action,confidence,decision
+1,Abrazadera metálica de 3/4,18.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,19.0,350.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,350.0,350.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+2,Abrazadera metálica de 1 pulgada,32.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,32.0,350.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,350.0,350.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+4,Bisagra,1.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,1.0,4000.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,4000.0,4000.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+5,Brecker 16A Sencillo,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,3.0,2000.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,2000.0,2000.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+6,Brecker 25 A Sencillo,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,2.0,2000.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,2000.0,2000.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+7,Brecker 32A Trifasico,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+8,Brecker C32 A Trible,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,2.0,6000.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,6000.0,6000.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+9,Brecker D63 A,1.0,0,REQUIERE_DECISION_CONTABLE,FAC-VITALLCONS-001,23.0,25.0,USD,receipt FAC-VITALLCONS-001 2026-07-01,17000.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+10,Brida 58,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+11,Cabilla 70 Cm,6.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,69.0,350.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,350.0,350.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+13,Cable Conductor electrico 8,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,266.0,1500.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1500.0,1500.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+14,Distribuidor de corriente 4 salidas,16.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,16.0,500.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,500.0,500.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+16,Cemento P425 Tudella,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,23.0,12500.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,12500.0,12500.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+17,Césped Artificial,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,27.0,6500.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,6500.0,6500.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+18,Cheques metálicos,1.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,4.0,3500.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,3500.0,3500.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+19,Codo de 90,16.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,29.0,200.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,200.0,200.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+20,Codos de 45 grado,15.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,15.0,200.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,200.0,200.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+21,Colchón Milexus,0.0,0,REQUIERE_DECISION_CONTABLE,FAC-VITALLCONS-001,1.0,220.0,USD,receipt FAC-VITALLCONS-001 2026-07-01,149600.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+23,Cuchilla 2P 100A,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+24,Cuchilla 2P 63A,0.0,0,REQUIERE_DECISION_CONTABLE,FAC-VITALLCONS-001,4.0,18.0,USD,receipt FAC-VITALLCONS-001 2026-07-01,12240.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+26,Disco de esmeril,3.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,3.0,2000.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,2000.0,2000.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+27,Escobas,3.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,9.0,1800.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1800.0,1800.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+28,Espejo,33.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,35.0,5000.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,5000.0,5000.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+31,Expansiones con tornillos M6,1.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,95.0,350.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,350.0,350.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+32,Expansiones con tornillos M8,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,28.0,400.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,400.0,400.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+34,Fregadero,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,4.0,23000.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,23000.0,23000.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+35,Fuerte eléctrico,56.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,68.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+38,Lampara de 20,19.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,27.0,3200.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,3200.0,3200.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+41,Latiguillo MC4,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+42,Llave de lavamano,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,3.0,3000.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,3000.0,3000.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+43,Losa aporcelanada 60x60,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,6.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+44,Losa aporcelanada 60x60 con defectos,0.0,0,REQUIERE_DECISION_CONTABLE,INV-INIT-2026-08-10,4.0,5040.0,CUP,receipt INV-INIT-2026-08-10 2026-08-10,5040.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+45,Malla perli,1.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,4.0,40000.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,40000.0,40000.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+46,Masilla interior blanca,3.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,5.0,22000.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,22000.0,22000.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+49,Nudos de 3/4,8.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,8.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+50,Nudos de 50,8.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,10.0,250.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,250.0,250.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+51,Pintura Casa Blanca 14L,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,20.0,32500.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,32500.0,32500.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+53,Planchas de zinc,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+54,Porta Fusibles,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+56,Reducido de 3/4,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,5.0,350.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,350.0,350.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+58,Rosca Chapa,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+60,Supresores de sobretensiones,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+73,Interruptor doble,6.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,10.0,1500.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1500.0,1500.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+74,Controlador de línea,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,4.0,6000.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,6000.0,6000.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+78,Tornillo con tuerca 4.8,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+79,Interruptor y toma corriente,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,10.0,1500.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1500.0,1500.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+80,Brecker C32A Doble,0.0,0,REQUIERE_DECISION_CONTABLE,FAC-VITALLCONS-001,1.0,5.0,USD,receipt FAC-VITALLCONS-001 2026-07-01,3400.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+81,Bridas de 4x8 400mm,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,401.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+82,Crimpiadora con pela cable Anaranjada,0.0,0,REQUIERE_DECISION_CONTABLE,FAC-VITALLCONS-001,1.0,200.0,USD,receipt FAC-VITALLCONS-001 2026-07-01,136000.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+83,Crimpiadora Roja con 6 dabas rojas,3.0,0,REQUIERE_DECISION_CONTABLE,FAC-VITALLCONS-001,3.0,180.0,USD,receipt FAC-VITALLCONS-001 2026-07-01,122400.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+84,Conector XT60,35.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,66.0,6500.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,6500.0,6500.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+85,Panel 585,0.0,0,REQUIERE_DECISION_CONTABLE,FAC-VITALLCONS-001,5.0,380.0,USD,receipt FAC-VITALLCONS-001 2026-07-01,258400.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+86,Panel + 600W,0.0,0,REQUIERE_DECISION_CONTABLE,FAC-VITALLCONS-001,58.0,370.0,USD,receipt FAC-VITALLCONS-001 2026-07-01,251600.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+91,Liquidación OT 16,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+93,Liquidacion de OT 12,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+94,Barrena 6mm Madera,2.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,3.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+95,Barrena 34mm Madera,36.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,36.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+96,Barrena 5mm Madera,212.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,212.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+97,Disco de corte,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,122.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+98,Limpia parabrisa,42.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,42.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+101,Canal de media,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+105,Cajita breckera sencilla,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+108,Cajita Breckera sencilla gris,1.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,2.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+110,Intermedio,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,219.0,1200.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1200.0,1200.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+111,Grapas plasticas con clavo de acero,45.0,0,REQUIERE_DECISION_CONTABLE,FAC-VITALLCONS-001,49.0,2500.0,USD,receipt FAC-VITALLCONS-001 2026-07-01,1700000.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+114,Combustible,0.0,0,COSTO_ZERO_LEGITIMO,,,,,sin recepcion; sin movimientos,0.0,0,NO APLICAR,-,justificado: sin movimientos ni recepciones
+116,Herraje,1.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,2.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+117,Inversor,3.0,0,REQUIERE_DECISION_CONTABLE,FAC-VITALLCONS-001,6.0,3200.0,USD,receipt FAC-VITALLCONS-001 2026-07-01,2176000.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+118,Barilla de Tierra,0.0,0,REQUIERE_DECISION_CONTABLE,FAC-VITALLCONS-001,3.0,80.0,USD,receipt FAC-VITALLCONS-001 2026-07-01,54400.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
+120,Estación de carga,0.0,0,COSTO_REAL_RECUPERABLE,FAC-VITALLCONS-001,1.0,1.0,CUP,receipt FAC-VITALLCONS-001 2026-07-01,1.0,1.0,APLICAR,ALTA,aplicado via single-writer + wac_change_log
+122,Controladores de voltaje,2.0,0,REQUIERE_DECISION_CONTABLE,INV-INIT-ELEC-2026-08-10,10.0,23800.0,CUP,receipt INV-INIT-ELEC-2026-08-10 2026-08-10,23800.0,0,NO APLICAR,-,incoherencia monetaria (patron 680x / dato USD) — decision humana
