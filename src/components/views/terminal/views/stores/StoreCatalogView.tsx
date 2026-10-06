@@ -132,6 +132,13 @@ function StorefrontPreviewModal({ product, onClose }: { product: CatalogProduct;
     const priceShown = product.price_visible !== false ? product.price : null;
     const imageUrl = resolveProductImage(product as never);
 
+    // Accesibilidad: cierre con Escape (parity con el resto de modales de la app).
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [onClose]);
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={`Vista previa de ${product.name}`}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -644,10 +651,13 @@ export default function StoreCatalogView() {
                 </div>
             )}
 
-            {/* Barra flotante de acciones masivas (§17) — confirmación previa (§22) */}
+            {/* Barra flotante de acciones masivas (§17) — confirmación previa (§22).
+                fixed: visible sin depender del scroll (el shell usa contenedores
+                de scroll propios donde sticky no es fiable). bottom-20 en móvil
+                para no tapar la barra de navegación inferior. */}
             {selected.size > 0 && (
-                <div className="sticky bottom-4 z-30">
-                    <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card/95 backdrop-blur-md shadow-xl p-3 flex flex-wrap items-center justify-center gap-2">
+                <div className="fixed bottom-20 sm:bottom-4 right-4 left-4 sm:left-auto z-40 flex justify-end pointer-events-none">
+                    <div className="pointer-events-auto max-w-3xl w-full sm:w-auto rounded-2xl border border-border bg-card/95 backdrop-blur-md shadow-xl p-3 flex flex-wrap items-center justify-center gap-2 max-h-[45vh] overflow-y-auto">
                         <span className="text-xs font-black uppercase tracking-widest text-foreground px-2">
                             {selected.size} seleccionado{selected.size === 1 ? '' : 's'}
                         </span>
