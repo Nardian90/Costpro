@@ -43,6 +43,11 @@ const valeSalidaSchema = z.object({
   production_order_id: z.string().uuid().nullable().optional(),
   notes: z.string().min(1, { message: 'notes es requerido' }).max(2000),
   idempotency_key: z.string().min(8, { message: 'idempotency_key requerido (mín 8 chars)' }).max(200),
+  // ENERVIDA import (2026-10-05): fecha de operación opcional (retro-compatible).
+  // El RPC create_vale_salida ya la soporta (migración 20261004120000,
+  // p_operation_date DEFAULT NULL) — paridad con /api/pos/checkout.
+  // validate_operation_date aplica el mismo gate (6 meses atrás / +1 día).
+  operation_date: z.string().datetime().optional(),
 });
 
 // =====================================================================
@@ -66,7 +71,7 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
       { status: 400 }
     );
   }
-  const { items, production_order_id, notes, idempotency_key } = parsed.data;
+  const { items, production_order_id, notes, idempotency_key, operation_date } = parsed.data;
 
   // -----------------------------------------------------------------
   // 2. Derivar store_id del perfil del usuario (NUNCA del body)
@@ -99,6 +104,7 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
     p_notes: notes,
     p_idempotency_key: idempotency_key,
     p_user_id: session.user.id, // ← TRUST BOUNDARY: from JWT, not body
+    p_operation_date: operation_date ?? null, // ENERVIDA import: paridad con checkout
   });
 
   // -----------------------------------------------------------------
