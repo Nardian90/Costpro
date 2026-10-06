@@ -1,0 +1,235 @@
+/* ============================================
+   LANDING SHIELD — Zona protegida del Landing Page
+   BLINDAJE (2026-10-06)
+
+   Objetivo
+   --------
+   El Landing Page público debe renderizar SIEMPRE idéntico,
+   independientemente de:
+     - Theme (dark / light) de next-themes
+     - Modo Performance / Enhanced (IntelligentThemeHandler)
+     - localStorage('theme' | 'costpro-mode' | 'costpro-ui-storage')
+     - clases/atributos que la app interna aplique a <html>
+
+   Mecanismo
+   ---------
+   El landing (y solo el landing) monta el nodo <div id="landing-root">;
+   app interna y landing son mutuamente excluyentes (HomePageClient).
+   Con el selector de presencia :has(#landing-root) fijamos los tokens
+   semánticos a los VALORES DARK ACTUALES de tokens.css (copiados
+   verbatim → el diseño NO cambia: hoy el landing siempre renderiza
+   con dark forzado). Se fija en tres niveles:
+
+     1. html:has(#landing-root)  → variables de raíz (scrollbar del
+        documento, color-scheme, fondo detrás del landing).
+     2. body:has(#landing-root)  → overlays globales visibles con el
+        landing (CookieConsent, Toaster, PWA banner) conservan el
+        branding dark que tenían con el antiguo forzado de html.dark.
+     3. #landing-root            → muro directo: cualquier descendiente
+        que consuma var(--*) resuelve a los valores del landing aunque
+        la app cambie tokens en :root/.dark.
+
+   Importante
+   ----------
+   - Esto es CSS puro condicionado a la presencia del landing en el DOM:
+     cero mutación de <html>/<body> por JS, cero escritura de
+     localStorage, y se desactiva solo cuando el landing se desmonta.
+   - La app interna (CyberShell/TerminalShell) nunca coexiste con el
+     landing ⇒ estos fijados jamás alcanzan a la aplicación.
+   - Los tokens --lp-* (landing page tokens de tokens.css) se fijan
+     también, para que dejen de depender de .dark/.theme-dark.
+   ============================================ */
+
+/* ── Nivel 1: raíz del documento mientras el landing está montado ── */
+html:has(#landing-root) {
+  color-scheme: dark;
+
+  /* Semantic Dark Tokens (tokens.css → .dark, verbatim) */
+  --background: #121212;
+  --background-solid: #121212;
+  --foreground: #e4e4e7;
+  --card: #1a1a1a;
+  --card-foreground: #e4e4e7;
+  --muted: #1e1e1e;
+  --muted-foreground: #b4b4bc;
+  --popover: #1a1a1a;
+  --popover-foreground: #e4e4e7;
+  --border: #2a2a2a;
+  --input: #2a2a2a;
+  --primary: #22c55e;
+  --primary-foreground: #052e16;
+  --primary-light: #4ade80;
+  --primary-dark: #16a34a;
+  --secondary: #71717a;
+  --secondary-foreground: #fafafa;
+  --secondary-light: #a1a1aa;
+  --success: #34d399;
+  --success-light: #6ee7b7;
+  --warning: #fbbf24;
+  --warning-light: #fcd34d;
+  --danger: #f87171;
+  --danger-light: #fca5a5;
+  --destructive: #ef4444;
+  --accent: #1a1a1a;
+  --accent-foreground: #e4e4e7;
+  --ring: rgba(34, 197, 94, 0.4);
+  --selection: rgba(34, 197, 94, 0.2);
+  --brand: #39ff14;
+  --brand-hover: #2fd60f;
+  --brand-muted: #86ef3c;
+  --brand-subtle: rgba(57, 255, 20, 0.08);
+  --brand-border: rgba(57, 255, 20, 0.35);
+  --brand-foreground: #052e16;
+  --chart-1: #22c55e;
+  --chart-2: #34d399;
+  --chart-3: #f472b6;
+  --chart-4: #fbbf24;
+  --chart-5: #38bdf8;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #d4d4d8;
+  --sidebar-primary: #22c55e;
+  --sidebar-primary-foreground: #052e16;
+  --sidebar-accent: #1e1e1e;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #2a2a2a;
+  --sidebar-ring: rgba(34, 197, 94, 0.3);
+}
+
+/* Fondo del body: con theme=light el body sería #f8fafc y asomaría en
+   overscroll; el landing vivo pinta el lienzo con su fondo de marca. */
+body:has(#landing-root) {
+  background-color: #020617;
+
+  /* Nivel 2: mismos tokens para overlays globales (CookieConsent, etc.) */
+  --background: #121212;
+  --background-solid: #121212;
+  --foreground: #e4e4e7;
+  --card: #1a1a1a;
+  --card-foreground: #e4e4e7;
+  --muted: #1e1e1e;
+  --muted-foreground: #b4b4bc;
+  --popover: #1a1a1a;
+  --popover-foreground: #e4e4e7;
+  --border: #2a2a2a;
+  --input: #2a2a2a;
+  --primary: #22c55e;
+  --primary-foreground: #052e16;
+  --primary-light: #4ade80;
+  --primary-dark: #16a34a;
+  --secondary: #71717a;
+  --secondary-foreground: #fafafa;
+  --secondary-light: #a1a1aa;
+  --success: #34d399;
+  --success-light: #6ee7b7;
+  --warning: #fbbf24;
+  --warning-light: #fcd34d;
+  --danger: #f87171;
+  --danger-light: #fca5a5;
+  --destructive: #ef4444;
+  --accent: #1a1a1a;
+  --accent-foreground: #e4e4e7;
+  --ring: rgba(34, 197, 94, 0.4);
+  --selection: rgba(34, 197, 94, 0.2);
+  --brand: #39ff14;
+  --brand-hover: #2fd60f;
+  --brand-muted: #86ef3c;
+  --brand-subtle: rgba(57, 255, 20, 0.08);
+  --brand-border: rgba(57, 255, 20, 0.35);
+  --brand-foreground: #052e16;
+  --chart-1: #22c55e;
+  --chart-2: #34d399;
+  --chart-3: #f472b6;
+  --chart-4: #fbbf24;
+  --chart-5: #38bdf8;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #d4d4d8;
+  --sidebar-primary: #22c55e;
+  --sidebar-primary-foreground: #052e16;
+  --sidebar-accent: #1e1e1e;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #2a2a2a;
+  --sidebar-ring: rgba(34, 197, 94, 0.3);
+}
+
+/* ── Nivel 3: muro directo sobre el subárbol del landing ──
+   Especificidad (1,0,0) supera a .dark (0,1,0), a
+   .dark .landing-tokens (0,2,0) y a cualquier re-pin de modo. */
+#landing-root {
+  color-scheme: dark;
+
+  --background: #121212;
+  --background-solid: #121212;
+  --foreground: #e4e4e7;
+  --card: #1a1a1a;
+  --card-foreground: #e4e4e7;
+  --muted: #1e1e1e;
+  --muted-foreground: #b4b4bc;
+  --popover: #1a1a1a;
+  --popover-foreground: #e4e4e7;
+  --border: #2a2a2a;
+  --input: #2a2a2a;
+  --primary: #22c55e;
+  --primary-foreground: #052e16;
+  --primary-light: #4ade80;
+  --primary-dark: #16a34a;
+  --secondary: #71717a;
+  --secondary-foreground: #fafafa;
+  --secondary-light: #a1a1aa;
+  --success: #34d399;
+  --success-light: #6ee7b7;
+  --warning: #fbbf24;
+  --warning-light: #fcd34d;
+  --danger: #f87171;
+  --danger-light: #fca5a5;
+  --destructive: #ef4444;
+  --accent: #1a1a1a;
+  --accent-foreground: #e4e4e7;
+  --ring: rgba(34, 197, 94, 0.4);
+  --selection: rgba(34, 197, 94, 0.2);
+  --brand: #39ff14;
+  --brand-hover: #2fd60f;
+  --brand-muted: #86ef3c;
+  --brand-subtle: rgba(57, 255, 20, 0.08);
+  --brand-border: rgba(57, 255, 20, 0.35);
+  --brand-foreground: #052e16;
+  --chart-1: #22c55e;
+  --chart-2: #34d399;
+  --chart-3: #f472b6;
+  --chart-4: #fbbf24;
+  --chart-5: #38bdf8;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #d4d4d8;
+  --sidebar-primary: #22c55e;
+  --sidebar-primary-foreground: #052e16;
+  --sidebar-accent: #1e1e1e;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #2a2a2a;
+  --sidebar-ring: rgba(34, 197, 94, 0.3);
+
+  /* Landing Page Specific Tokens (tokens.css → .dark .landing-tokens, verbatim) */
+  --lp-bg: #000000;
+  --lp-bg-subtle: #050505;
+  --lp-text: #ffffff;
+  --lp-text-muted: #a1a1aa;
+  --lp-text-dim: #8a8a8f;
+  --lp-border: rgba(255, 255, 255, 0.08);
+  --lp-border-hover: rgba(34, 197, 94, 0.3);
+  --lp-glass-bg: rgba(255, 255, 255, 0.03);
+  --lp-glass-border: rgba(255, 255, 255, 0.06);
+  --lp-glass-bg-hover: rgba(255, 255, 255, 0.06);
+  --lp-accent: #22c55e;
+  --lp-accent-glow: rgba(34, 197, 94, 0.4);
+  --lp-accent-subtle: rgba(34, 197, 94, 0.15);
+  --lp-gradient-start: #15803d;
+  --lp-gradient-end: #4ade80;
+  --lp-shadow-glow: 0 0 30px rgba(34, 197, 94, 0.08), 0 0 60px rgba(34, 197, 94, 0.04);
+}
+
+/* ── Réplica de reglas gated por .dark que afectan clases del landing ──
+   Auditadas en docs/audits/landing-isolation-audit.md §2.1.4:
+   - .dark .form-card-glass (globals.css / landing.css): el landing NO usa
+     form-card-glass (verificado) → no requiere réplica.
+   - html:not(.dark) .mesh-orb: ParticleBackground no se usa en el landing
+     (verificado) → no requiere réplica.
+   Si en el futuro el landing consume alguna clase gated por .dark, añadir
+   aquí su réplica bajo #landing-root (NO re-forzar html.dark). */

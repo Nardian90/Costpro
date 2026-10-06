@@ -1,0 +1,1301 @@
+{
+  "scenarios": {
+    "TEST1": {
+      "invariants": {
+        "rootBg": "rgb(2, 6, 23)",
+        "rootColorScheme": "dark",
+        "varForeground": "#e4e4e7",
+        "varMuted": "#1e1e1e",
+        "varPrimary": "#22c55e",
+        "varBrand": "#39ff14",
+        "varLpBg": "#000",
+        "foregroundColor": null,
+        "borderColor": "rgb(42, 42, 42)",
+        "glassBackdrop": "blur(24px)",
+        "animatedName": "pulse",
+        "animatedCount": 1,
+        "canvasDisplays": [
+          "block"
+        ],
+        "hasLandingTokensClass": true,
+        "stylesheetLandingRules": 785
+      },
+      "html": {
+        "classes": [
+          "dark",
+          "h-full",
+          "mode-performance"
+        ],
+        "dataConnectivity": "4g"
+      }
+    },
+    "TEST2": {
+      "invariants": {
+        "rootBg": "rgb(2, 6, 23)",
+        "rootColorScheme": "dark",
+        "varForeground": "#e4e4e7",
+        "varMuted": "#1e1e1e",
+        "varPrimary": "#22c55e",
+        "varBrand": "#39ff14",
+        "varLpBg": "#000",
+        "foregroundColor": null,
+        "borderColor": "rgb(42, 42, 42)",
+        "glassBackdrop": "blur(24px)",
+        "animatedName": "pulse",
+        "animatedCount": 1,
+        "canvasDisplays": [
+          "block"
+        ],
+        "hasLandingTokensClass": true,
+        "stylesheetLandingRules": 785
+      },
+      "html": {
+        "classes": [
+          "h-full",
+          "light",
+          "mode-performance"
+        ],
+        "dataConnectivity": "4g"
+      }
+    },
+    "TEST3": {
+      "invariants": {
+        "rootBg": "rgb(2, 6, 23)",
+        "rootColorScheme": "dark",
+        "varForeground": "#e4e4e7",
+        "varMuted": "#1e1e1e",
+        "varPrimary": "#22c55e",
+        "varBrand": "#39ff14",
+        "varLpBg": "#000",
+        "foregroundColor": null,
+        "borderColor": "rgb(42, 42, 42)",
+        "glassBackdrop": "blur(24px)",
+        "animatedName": "pulse",
+        "animatedCount": 1,
+        "canvasDisplays": [
+          "block"
+        ],
+        "hasLandingTokensClass": true,
+        "stylesheetLandingRules": 785
+      },
+      "html": {
+        "classes": [
+          "dark",
+          "h-full",
+          "mode-performance"
+        ],
+        "dataConnectivity": "4g"
+      },
+      "probe": {
+        "probeGlassWithLanding": "blur(12px)",
+        "probeAnimWithLanding": "float",
+        "probeGlassWithoutLanding": "none",
+        "probeAnimWithoutLanding": "none"
+      }
+    },
+    "TEST4": {
+      "invariants": {
+        "rootBg": "rgb(2, 6, 23)",
+        "rootColorScheme": "dark",
+        "varForeground": "#e4e4e7",
+        "varMuted": "#1e1e1e",
+        "varPrimary": "#22c55e",
+        "varBrand": "#39ff14",
+        "varLpBg": "#000",
+        "foregroundColor": null,
+        "borderColor": "rgb(42, 42, 42)",
+        "glassBackdrop": "blur(24px)",
+        "animatedName": "pulse",
+        "animatedCount": 1,
+        "canvasDisplays": [
+          "block"
+        ],
+        "hasLandingTokensClass": true,
+        "stylesheetLandingRules": 785
+      },
+      "html": {
+        "classes": [
+          "dark",
+          "h-full",
+          "mode-enhanced"
+        ],
+        "dataConnectivity": "4g"
+      }
+    },
+    "TEST5": {
+      "invariants": {
+        "rootBg": "rgb(2, 6, 23)",
+        "rootColorScheme": "dark",
+        "varForeground": "#e4e4e7",
+        "varMuted": "#1e1e1e",
+        "varPrimary": "#22c55e",
+        "varBrand": "#39ff14",
+        "varLpBg": "#000",
+        "foregroundColor": null,
+        "borderColor": "rgb(42, 42, 42)",
+        "glassBackdrop": "blur(24px)",
+        "animatedName": "pulse",
+        "animatedCount": 1,
+        "canvasDisplays": [
+          "block"
+        ],
+        "hasLandingTokensClass": true,
+        "stylesheetLandingRules": 785
+      },
+      "html": {
+        "classes": [
+          "h-full",
+          "light",
+          "mode-performance"
+        ],
+        "dataConnectivity": "4g"
+      }
+    },
+    "TEST6": {
+      "invariants": {
+        "rootBg": "rgb(2, 6, 23)",
+        "rootColorScheme": "dark",
+        "varForeground": "#e4e4e7",
+        "varMuted": "#1e1e1e",
+        "varPrimary": "#22c55e",
+        "varBrand": "#39ff14",
+        "varLpBg": "#000",
+        "foregroundColor": null,
+        "borderColor": "rgb(42, 42, 42)",
+        "glassBackdrop": "blur(24px)",
+        "animatedName": "pulse",
+        "animatedCount": 1,
+        "canvasDisplays": [
+          "block"
+        ],
+        "hasLandingTokensClass": true,
+        "stylesheetLandingRules": 785
+      },
+      "html": {
+        "classes": [
+          "dark",
+          "h-full",
+          "mode-performance"
+        ],
+        "dataConnectivity": "4g"
+      }
+    },
+    "TEST7": {
+      "invariants": {
+        "rootBg": "rgb(2, 6, 23)",
+        "rootColorScheme": "dark",
+        "varForeground": "#e4e4e7",
+        "varMuted": "#1e1e1e",
+        "varPrimary": "#22c55e",
+        "varBrand": "#39ff14",
+        "varLpBg": "#000",
+        "foregroundColor": null,
+        "borderColor": "rgb(42, 42, 42)",
+        "glassBackdrop": "blur(24px)",
+        "animatedName": "pulse",
+        "animatedCount": 1,
+        "canvasDisplays": [
+          "block"
+        ],
+        "hasLandingTokensClass": true,
+        "stylesheetLandingRules": 785
+      },
+      "html": {
+        "classes": [
+          "dark",
+          "h-full",
+          "mode-performance"
+        ],
+        "dataConnectivity": "4g"
+      }
+    },
+    "TEST8": {
+      "invariants": {
+        "rootBg": "rgb(2, 6, 23)",
+        "rootColorScheme": "dark",
+        "varForeground": "#e4e4e7",
+        "varMuted": "#1e1e1e",
+        "varPrimary": "#22c55e",
+        "varBrand": "#39ff14",
+        "varLpBg": "#000",
+        "foregroundColor": null,
+        "borderColor": "rgb(42, 42, 42)",
+        "glassBackdrop": "blur(24px)",
+        "animatedName": "pulse",
+        "animatedCount": 1,
+        "canvasDisplays": [
+          "block"
+        ],
+        "hasLandingTokensClass": true,
+        "stylesheetLandingRules": 785
+      },
+      "html": {
+        "classes": [
+          "h-full",
+          "light",
+          "mode-performance"
+        ],
+        "dataConnectivity": "4g"
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "TEST1: #landing-root presente",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "TEST2: #landing-root presente",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "TEST3: #landing-root presente",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "TEST4: #landing-root presente",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "TEST5: #landing-root presente",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "TEST6: #landing-root presente",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "TEST7: #landing-root presente",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "TEST8: #landing-root presente",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "TEST2: invariante rootBg idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(2, 6, 23)' vs 'rgb(2, 6, 23)'"
+    },
+    {
+      "name": "TEST2: invariante rootColorScheme idéntico al baseline",
+      "ok": true,
+      "detail": "'dark' vs 'dark'"
+    },
+    {
+      "name": "TEST2: invariante varForeground idéntico al baseline",
+      "ok": true,
+      "detail": "'#e4e4e7' vs '#e4e4e7'"
+    },
+    {
+      "name": "TEST2: invariante varMuted idéntico al baseline",
+      "ok": true,
+      "detail": "'#1e1e1e' vs '#1e1e1e'"
+    },
+    {
+      "name": "TEST2: invariante varPrimary idéntico al baseline",
+      "ok": true,
+      "detail": "'#22c55e' vs '#22c55e'"
+    },
+    {
+      "name": "TEST2: invariante varBrand idéntico al baseline",
+      "ok": true,
+      "detail": "'#39ff14' vs '#39ff14'"
+    },
+    {
+      "name": "TEST2: invariante varLpBg idéntico al baseline",
+      "ok": true,
+      "detail": "'#000' vs '#000'"
+    },
+    {
+      "name": "TEST2: invariante foregroundColor idéntico al baseline",
+      "ok": true,
+      "detail": "None vs None"
+    },
+    {
+      "name": "TEST2: invariante borderColor idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(42, 42, 42)' vs 'rgb(42, 42, 42)'"
+    },
+    {
+      "name": "TEST2: invariante glassBackdrop idéntico al baseline",
+      "ok": true,
+      "detail": "'blur(24px)' vs 'blur(24px)'"
+    },
+    {
+      "name": "TEST2: invariante animatedName idéntico al baseline",
+      "ok": true,
+      "detail": "'pulse' vs 'pulse'"
+    },
+    {
+      "name": "TEST2: invariante animatedCount idéntico al baseline",
+      "ok": true,
+      "detail": "1 vs 1"
+    },
+    {
+      "name": "TEST2: invariante canvasDisplays idéntico al baseline",
+      "ok": true,
+      "detail": "['block'] vs ['block']"
+    },
+    {
+      "name": "TEST2: invariante hasLandingTokensClass idéntico al baseline",
+      "ok": true,
+      "detail": "True vs True"
+    },
+    {
+      "name": "TEST3: invariante rootBg idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(2, 6, 23)' vs 'rgb(2, 6, 23)'"
+    },
+    {
+      "name": "TEST3: invariante rootColorScheme idéntico al baseline",
+      "ok": true,
+      "detail": "'dark' vs 'dark'"
+    },
+    {
+      "name": "TEST3: invariante varForeground idéntico al baseline",
+      "ok": true,
+      "detail": "'#e4e4e7' vs '#e4e4e7'"
+    },
+    {
+      "name": "TEST3: invariante varMuted idéntico al baseline",
+      "ok": true,
+      "detail": "'#1e1e1e' vs '#1e1e1e'"
+    },
+    {
+      "name": "TEST3: invariante varPrimary idéntico al baseline",
+      "ok": true,
+      "detail": "'#22c55e' vs '#22c55e'"
+    },
+    {
+      "name": "TEST3: invariante varBrand idéntico al baseline",
+      "ok": true,
+      "detail": "'#39ff14' vs '#39ff14'"
+    },
+    {
+      "name": "TEST3: invariante varLpBg idéntico al baseline",
+      "ok": true,
+      "detail": "'#000' vs '#000'"
+    },
+    {
+      "name": "TEST3: invariante foregroundColor idéntico al baseline",
+      "ok": true,
+      "detail": "None vs None"
+    },
+    {
+      "name": "TEST3: invariante borderColor idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(42, 42, 42)' vs 'rgb(42, 42, 42)'"
+    },
+    {
+      "name": "TEST3: invariante glassBackdrop idéntico al baseline",
+      "ok": true,
+      "detail": "'blur(24px)' vs 'blur(24px)'"
+    },
+    {
+      "name": "TEST3: invariante animatedName idéntico al baseline",
+      "ok": true,
+      "detail": "'pulse' vs 'pulse'"
+    },
+    {
+      "name": "TEST3: invariante animatedCount idéntico al baseline",
+      "ok": true,
+      "detail": "1 vs 1"
+    },
+    {
+      "name": "TEST3: invariante canvasDisplays idéntico al baseline",
+      "ok": true,
+      "detail": "['block'] vs ['block']"
+    },
+    {
+      "name": "TEST3: invariante hasLandingTokensClass idéntico al baseline",
+      "ok": true,
+      "detail": "True vs True"
+    },
+    {
+      "name": "TEST4: invariante rootBg idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(2, 6, 23)' vs 'rgb(2, 6, 23)'"
+    },
+    {
+      "name": "TEST4: invariante rootColorScheme idéntico al baseline",
+      "ok": true,
+      "detail": "'dark' vs 'dark'"
+    },
+    {
+      "name": "TEST4: invariante varForeground idéntico al baseline",
+      "ok": true,
+      "detail": "'#e4e4e7' vs '#e4e4e7'"
+    },
+    {
+      "name": "TEST4: invariante varMuted idéntico al baseline",
+      "ok": true,
+      "detail": "'#1e1e1e' vs '#1e1e1e'"
+    },
+    {
+      "name": "TEST4: invariante varPrimary idéntico al baseline",
+      "ok": true,
+      "detail": "'#22c55e' vs '#22c55e'"
+    },
+    {
+      "name": "TEST4: invariante varBrand idéntico al baseline",
+      "ok": true,
+      "detail": "'#39ff14' vs '#39ff14'"
+    },
+    {
+      "name": "TEST4: invariante varLpBg idéntico al baseline",
+      "ok": true,
+      "detail": "'#000' vs '#000'"
+    },
+    {
+      "name": "TEST4: invariante foregroundColor idéntico al baseline",
+      "ok": true,
+      "detail": "None vs None"
+    },
+    {
+      "name": "TEST4: invariante borderColor idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(42, 42, 42)' vs 'rgb(42, 42, 42)'"
+    },
+    {
+      "name": "TEST4: invariante glassBackdrop idéntico al baseline",
+      "ok": true,
+      "detail": "'blur(24px)' vs 'blur(24px)'"
+    },
+    {
+      "name": "TEST4: invariante animatedName idéntico al baseline",
+      "ok": true,
+      "detail": "'pulse' vs 'pulse'"
+    },
+    {
+      "name": "TEST4: invariante animatedCount idéntico al baseline",
+      "ok": true,
+      "detail": "1 vs 1"
+    },
+    {
+      "name": "TEST4: invariante canvasDisplays idéntico al baseline",
+      "ok": true,
+      "detail": "['block'] vs ['block']"
+    },
+    {
+      "name": "TEST4: invariante hasLandingTokensClass idéntico al baseline",
+      "ok": true,
+      "detail": "True vs True"
+    },
+    {
+      "name": "TEST5: invariante rootBg idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(2, 6, 23)' vs 'rgb(2, 6, 23)'"
+    },
+    {
+      "name": "TEST5: invariante rootColorScheme idéntico al baseline",
+      "ok": true,
+      "detail": "'dark' vs 'dark'"
+    },
+    {
+      "name": "TEST5: invariante varForeground idéntico al baseline",
+      "ok": true,
+      "detail": "'#e4e4e7' vs '#e4e4e7'"
+    },
+    {
+      "name": "TEST5: invariante varMuted idéntico al baseline",
+      "ok": true,
+      "detail": "'#1e1e1e' vs '#1e1e1e'"
+    },
+    {
+      "name": "TEST5: invariante varPrimary idéntico al baseline",
+      "ok": true,
+      "detail": "'#22c55e' vs '#22c55e'"
+    },
+    {
+      "name": "TEST5: invariante varBrand idéntico al baseline",
+      "ok": true,
+      "detail": "'#39ff14' vs '#39ff14'"
+    },
+    {
+      "name": "TEST5: invariante varLpBg idéntico al baseline",
+      "ok": true,
+      "detail": "'#000' vs '#000'"
+    },
+    {
+      "name": "TEST5: invariante foregroundColor idéntico al baseline",
+      "ok": true,
+      "detail": "None vs None"
+    },
+    {
+      "name": "TEST5: invariante borderColor idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(42, 42, 42)' vs 'rgb(42, 42, 42)'"
+    },
+    {
+      "name": "TEST5: invariante glassBackdrop idéntico al baseline",
+      "ok": true,
+      "detail": "'blur(24px)' vs 'blur(24px)'"
+    },
+    {
+      "name": "TEST5: invariante animatedName idéntico al baseline",
+      "ok": true,
+      "detail": "'pulse' vs 'pulse'"
+    },
+    {
+      "name": "TEST5: invariante animatedCount idéntico al baseline",
+      "ok": true,
+      "detail": "1 vs 1"
+    },
+    {
+      "name": "TEST5: invariante canvasDisplays idéntico al baseline",
+      "ok": true,
+      "detail": "['block'] vs ['block']"
+    },
+    {
+      "name": "TEST5: invariante hasLandingTokensClass idéntico al baseline",
+      "ok": true,
+      "detail": "True vs True"
+    },
+    {
+      "name": "TEST6: invariante rootBg idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(2, 6, 23)' vs 'rgb(2, 6, 23)'"
+    },
+    {
+      "name": "TEST6: invariante rootColorScheme idéntico al baseline",
+      "ok": true,
+      "detail": "'dark' vs 'dark'"
+    },
+    {
+      "name": "TEST6: invariante varForeground idéntico al baseline",
+      "ok": true,
+      "detail": "'#e4e4e7' vs '#e4e4e7'"
+    },
+    {
+      "name": "TEST6: invariante varMuted idéntico al baseline",
+      "ok": true,
+      "detail": "'#1e1e1e' vs '#1e1e1e'"
+    },
+    {
+      "name": "TEST6: invariante varPrimary idéntico al baseline",
+      "ok": true,
+      "detail": "'#22c55e' vs '#22c55e'"
+    },
+    {
+      "name": "TEST6: invariante varBrand idéntico al baseline",
+      "ok": true,
+      "detail": "'#39ff14' vs '#39ff14'"
+    },
+    {
+      "name": "TEST6: invariante varLpBg idéntico al baseline",
+      "ok": true,
+      "detail": "'#000' vs '#000'"
+    },
+    {
+      "name": "TEST6: invariante foregroundColor idéntico al baseline",
+      "ok": true,
+      "detail": "None vs None"
+    },
+    {
+      "name": "TEST6: invariante borderColor idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(42, 42, 42)' vs 'rgb(42, 42, 42)'"
+    },
+    {
+      "name": "TEST6: invariante glassBackdrop idéntico al baseline",
+      "ok": true,
+      "detail": "'blur(24px)' vs 'blur(24px)'"
+    },
+    {
+      "name": "TEST6: invariante animatedName idéntico al baseline",
+      "ok": true,
+      "detail": "'pulse' vs 'pulse'"
+    },
+    {
+      "name": "TEST6: invariante animatedCount idéntico al baseline",
+      "ok": true,
+      "detail": "1 vs 1"
+    },
+    {
+      "name": "TEST6: invariante canvasDisplays idéntico al baseline",
+      "ok": true,
+      "detail": "['block'] vs ['block']"
+    },
+    {
+      "name": "TEST6: invariante hasLandingTokensClass idéntico al baseline",
+      "ok": true,
+      "detail": "True vs True"
+    },
+    {
+      "name": "TEST7: invariante rootBg idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(2, 6, 23)' vs 'rgb(2, 6, 23)'"
+    },
+    {
+      "name": "TEST7: invariante rootColorScheme idéntico al baseline",
+      "ok": true,
+      "detail": "'dark' vs 'dark'"
+    },
+    {
+      "name": "TEST7: invariante varForeground idéntico al baseline",
+      "ok": true,
+      "detail": "'#e4e4e7' vs '#e4e4e7'"
+    },
+    {
+      "name": "TEST7: invariante varMuted idéntico al baseline",
+      "ok": true,
+      "detail": "'#1e1e1e' vs '#1e1e1e'"
+    },
+    {
+      "name": "TEST7: invariante varPrimary idéntico al baseline",
+      "ok": true,
+      "detail": "'#22c55e' vs '#22c55e'"
+    },
+    {
+      "name": "TEST7: invariante varBrand idéntico al baseline",
+      "ok": true,
+      "detail": "'#39ff14' vs '#39ff14'"
+    },
+    {
+      "name": "TEST7: invariante varLpBg idéntico al baseline",
+      "ok": true,
+      "detail": "'#000' vs '#000'"
+    },
+    {
+      "name": "TEST7: invariante foregroundColor idéntico al baseline",
+      "ok": true,
+      "detail": "None vs None"
+    },
+    {
+      "name": "TEST7: invariante borderColor idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(42, 42, 42)' vs 'rgb(42, 42, 42)'"
+    },
+    {
+      "name": "TEST7: invariante glassBackdrop idéntico al baseline",
+      "ok": true,
+      "detail": "'blur(24px)' vs 'blur(24px)'"
+    },
+    {
+      "name": "TEST7: invariante animatedName idéntico al baseline",
+      "ok": true,
+      "detail": "'pulse' vs 'pulse'"
+    },
+    {
+      "name": "TEST7: invariante animatedCount idéntico al baseline",
+      "ok": true,
+      "detail": "1 vs 1"
+    },
+    {
+      "name": "TEST7: invariante canvasDisplays idéntico al baseline",
+      "ok": true,
+      "detail": "['block'] vs ['block']"
+    },
+    {
+      "name": "TEST7: invariante hasLandingTokensClass idéntico al baseline",
+      "ok": true,
+      "detail": "True vs True"
+    },
+    {
+      "name": "TEST8: invariante rootBg idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(2, 6, 23)' vs 'rgb(2, 6, 23)'"
+    },
+    {
+      "name": "TEST8: invariante rootColorScheme idéntico al baseline",
+      "ok": true,
+      "detail": "'dark' vs 'dark'"
+    },
+    {
+      "name": "TEST8: invariante varForeground idéntico al baseline",
+      "ok": true,
+      "detail": "'#e4e4e7' vs '#e4e4e7'"
+    },
+    {
+      "name": "TEST8: invariante varMuted idéntico al baseline",
+      "ok": true,
+      "detail": "'#1e1e1e' vs '#1e1e1e'"
+    },
+    {
+      "name": "TEST8: invariante varPrimary idéntico al baseline",
+      "ok": true,
+      "detail": "'#22c55e' vs '#22c55e'"
+    },
+    {
+      "name": "TEST8: invariante varBrand idéntico al baseline",
+      "ok": true,
+      "detail": "'#39ff14' vs '#39ff14'"
+    },
+    {
+      "name": "TEST8: invariante varLpBg idéntico al baseline",
+      "ok": true,
+      "detail": "'#000' vs '#000'"
+    },
+    {
+      "name": "TEST8: invariante foregroundColor idéntico al baseline",
+      "ok": true,
+      "detail": "None vs None"
+    },
+    {
+      "name": "TEST8: invariante borderColor idéntico al baseline",
+      "ok": true,
+      "detail": "'rgb(42, 42, 42)' vs 'rgb(42, 42, 42)'"
+    },
+    {
+      "name": "TEST8: invariante glassBackdrop idéntico al baseline",
+      "ok": true,
+      "detail": "'blur(24px)' vs 'blur(24px)'"
+    },
+    {
+      "name": "TEST8: invariante animatedName idéntico al baseline",
+      "ok": true,
+      "detail": "'pulse' vs 'pulse'"
+    },
+    {
+      "name": "TEST8: invariante animatedCount idéntico al baseline",
+      "ok": true,
+      "detail": "1 vs 1"
+    },
+    {
+      "name": "TEST8: invariante canvasDisplays idéntico al baseline",
+      "ok": true,
+      "detail": "['block'] vs ['block']"
+    },
+    {
+      "name": "TEST8: invariante hasLandingTokensClass idéntico al baseline",
+      "ok": true,
+      "detail": "True vs True"
+    },
+    {
+      "name": "TEST1: glassmorphism (backdrop-blur) vivo",
+      "ok": true,
+      "detail": "blur(24px)"
+    },
+    {
+      "name": "TEST1: animaciones CSS vivas",
+      "ok": true,
+      "detail": "pulse"
+    },
+    {
+      "name": "TEST1: canvas del landing NO display:none",
+      "ok": true,
+      "detail": "['block']"
+    },
+    {
+      "name": "TEST2: glassmorphism (backdrop-blur) vivo",
+      "ok": true,
+      "detail": "blur(24px)"
+    },
+    {
+      "name": "TEST2: animaciones CSS vivas",
+      "ok": true,
+      "detail": "pulse"
+    },
+    {
+      "name": "TEST2: canvas del landing NO display:none",
+      "ok": true,
+      "detail": "['block']"
+    },
+    {
+      "name": "TEST3: glassmorphism (backdrop-blur) vivo",
+      "ok": true,
+      "detail": "blur(24px)"
+    },
+    {
+      "name": "TEST3: animaciones CSS vivas",
+      "ok": true,
+      "detail": "pulse"
+    },
+    {
+      "name": "TEST3: canvas del landing NO display:none",
+      "ok": true,
+      "detail": "['block']"
+    },
+    {
+      "name": "TEST4: glassmorphism (backdrop-blur) vivo",
+      "ok": true,
+      "detail": "blur(24px)"
+    },
+    {
+      "name": "TEST4: animaciones CSS vivas",
+      "ok": true,
+      "detail": "pulse"
+    },
+    {
+      "name": "TEST4: canvas del landing NO display:none",
+      "ok": true,
+      "detail": "['block']"
+    },
+    {
+      "name": "TEST5: glassmorphism (backdrop-blur) vivo",
+      "ok": true,
+      "detail": "blur(24px)"
+    },
+    {
+      "name": "TEST5: animaciones CSS vivas",
+      "ok": true,
+      "detail": "pulse"
+    },
+    {
+      "name": "TEST5: canvas del landing NO display:none",
+      "ok": true,
+      "detail": "['block']"
+    },
+    {
+      "name": "TEST6: glassmorphism (backdrop-blur) vivo",
+      "ok": true,
+      "detail": "blur(24px)"
+    },
+    {
+      "name": "TEST6: animaciones CSS vivas",
+      "ok": true,
+      "detail": "pulse"
+    },
+    {
+      "name": "TEST6: canvas del landing NO display:none",
+      "ok": true,
+      "detail": "['block']"
+    },
+    {
+      "name": "TEST7: glassmorphism (backdrop-blur) vivo",
+      "ok": true,
+      "detail": "blur(24px)"
+    },
+    {
+      "name": "TEST7: animaciones CSS vivas",
+      "ok": true,
+      "detail": "pulse"
+    },
+    {
+      "name": "TEST7: canvas del landing NO display:none",
+      "ok": true,
+      "detail": "['block']"
+    },
+    {
+      "name": "TEST8: glassmorphism (backdrop-blur) vivo",
+      "ok": true,
+      "detail": "blur(24px)"
+    },
+    {
+      "name": "TEST8: animaciones CSS vivas",
+      "ok": true,
+      "detail": "pulse"
+    },
+    {
+      "name": "TEST8: canvas del landing NO display:none",
+      "ok": true,
+      "detail": "['block']"
+    },
+    {
+      "name": "TEST1: fondo landing = rgb(2, 6, 23)",
+      "ok": true,
+      "detail": "rgb(2, 6, 23)"
+    },
+    {
+      "name": "TEST1: --foreground = #e4e4e7",
+      "ok": true,
+      "detail": "#e4e4e7"
+    },
+    {
+      "name": "TEST1: --muted = #1e1e1e",
+      "ok": true,
+      "detail": "#1e1e1e"
+    },
+    {
+      "name": "TEST1: --primary = #22c55e",
+      "ok": true,
+      "detail": "#22c55e"
+    },
+    {
+      "name": "TEST1: --brand = #39ff14",
+      "ok": true,
+      "detail": "#39ff14"
+    },
+    {
+      "name": "TEST1: --lp-bg = #000000",
+      "ok": true,
+      "detail": "#000"
+    },
+    {
+      "name": "TEST2: fondo landing = rgb(2, 6, 23)",
+      "ok": true,
+      "detail": "rgb(2, 6, 23)"
+    },
+    {
+      "name": "TEST2: --foreground = #e4e4e7",
+      "ok": true,
+      "detail": "#e4e4e7"
+    },
+    {
+      "name": "TEST2: --muted = #1e1e1e",
+      "ok": true,
+      "detail": "#1e1e1e"
+    },
+    {
+      "name": "TEST2: --primary = #22c55e",
+      "ok": true,
+      "detail": "#22c55e"
+    },
+    {
+      "name": "TEST2: --brand = #39ff14",
+      "ok": true,
+      "detail": "#39ff14"
+    },
+    {
+      "name": "TEST2: --lp-bg = #000000",
+      "ok": true,
+      "detail": "#000"
+    },
+    {
+      "name": "TEST3: fondo landing = rgb(2, 6, 23)",
+      "ok": true,
+      "detail": "rgb(2, 6, 23)"
+    },
+    {
+      "name": "TEST3: --foreground = #e4e4e7",
+      "ok": true,
+      "detail": "#e4e4e7"
+    },
+    {
+      "name": "TEST3: --muted = #1e1e1e",
+      "ok": true,
+      "detail": "#1e1e1e"
+    },
+    {
+      "name": "TEST3: --primary = #22c55e",
+      "ok": true,
+      "detail": "#22c55e"
+    },
+    {
+      "name": "TEST3: --brand = #39ff14",
+      "ok": true,
+      "detail": "#39ff14"
+    },
+    {
+      "name": "TEST3: --lp-bg = #000000",
+      "ok": true,
+      "detail": "#000"
+    },
+    {
+      "name": "TEST4: fondo landing = rgb(2, 6, 23)",
+      "ok": true,
+      "detail": "rgb(2, 6, 23)"
+    },
+    {
+      "name": "TEST4: --foreground = #e4e4e7",
+      "ok": true,
+      "detail": "#e4e4e7"
+    },
+    {
+      "name": "TEST4: --muted = #1e1e1e",
+      "ok": true,
+      "detail": "#1e1e1e"
+    },
+    {
+      "name": "TEST4: --primary = #22c55e",
+      "ok": true,
+      "detail": "#22c55e"
+    },
+    {
+      "name": "TEST4: --brand = #39ff14",
+      "ok": true,
+      "detail": "#39ff14"
+    },
+    {
+      "name": "TEST4: --lp-bg = #000000",
+      "ok": true,
+      "detail": "#000"
+    },
+    {
+      "name": "TEST5: fondo landing = rgb(2, 6, 23)",
+      "ok": true,
+      "detail": "rgb(2, 6, 23)"
+    },
+    {
+      "name": "TEST5: --foreground = #e4e4e7",
+      "ok": true,
+      "detail": "#e4e4e7"
+    },
+    {
+      "name": "TEST5: --muted = #1e1e1e",
+      "ok": true,
+      "detail": "#1e1e1e"
+    },
+    {
+      "name": "TEST5: --primary = #22c55e",
+      "ok": true,
+      "detail": "#22c55e"
+    },
+    {
+      "name": "TEST5: --brand = #39ff14",
+      "ok": true,
+      "detail": "#39ff14"
+    },
+    {
+      "name": "TEST5: --lp-bg = #000000",
+      "ok": true,
+      "detail": "#000"
+    },
+    {
+      "name": "TEST6: fondo landing = rgb(2, 6, 23)",
+      "ok": true,
+      "detail": "rgb(2, 6, 23)"
+    },
+    {
+      "name": "TEST6: --foreground = #e4e4e7",
+      "ok": true,
+      "detail": "#e4e4e7"
+    },
+    {
+      "name": "TEST6: --muted = #1e1e1e",
+      "ok": true,
+      "detail": "#1e1e1e"
+    },
+    {
+      "name": "TEST6: --primary = #22c55e",
+      "ok": true,
+      "detail": "#22c55e"
+    },
+    {
+      "name": "TEST6: --brand = #39ff14",
+      "ok": true,
+      "detail": "#39ff14"
+    },
+    {
+      "name": "TEST6: --lp-bg = #000000",
+      "ok": true,
+      "detail": "#000"
+    },
+    {
+      "name": "TEST7: fondo landing = rgb(2, 6, 23)",
+      "ok": true,
+      "detail": "rgb(2, 6, 23)"
+    },
+    {
+      "name": "TEST7: --foreground = #e4e4e7",
+      "ok": true,
+      "detail": "#e4e4e7"
+    },
+    {
+      "name": "TEST7: --muted = #1e1e1e",
+      "ok": true,
+      "detail": "#1e1e1e"
+    },
+    {
+      "name": "TEST7: --primary = #22c55e",
+      "ok": true,
+      "detail": "#22c55e"
+    },
+    {
+      "name": "TEST7: --brand = #39ff14",
+      "ok": true,
+      "detail": "#39ff14"
+    },
+    {
+      "name": "TEST7: --lp-bg = #000000",
+      "ok": true,
+      "detail": "#000"
+    },
+    {
+      "name": "TEST8: fondo landing = rgb(2, 6, 23)",
+      "ok": true,
+      "detail": "rgb(2, 6, 23)"
+    },
+    {
+      "name": "TEST8: --foreground = #e4e4e7",
+      "ok": true,
+      "detail": "#e4e4e7"
+    },
+    {
+      "name": "TEST8: --muted = #1e1e1e",
+      "ok": true,
+      "detail": "#1e1e1e"
+    },
+    {
+      "name": "TEST8: --primary = #22c55e",
+      "ok": true,
+      "detail": "#22c55e"
+    },
+    {
+      "name": "TEST8: --brand = #39ff14",
+      "ok": true,
+      "detail": "#39ff14"
+    },
+    {
+      "name": "TEST8: --lp-bg = #000000",
+      "ok": true,
+      "detail": "#000"
+    },
+    {
+      "name": "TEST1: <html> sin mode-enhanced forzado por el landing",
+      "ok": true,
+      "detail": "['dark', 'h-full', 'mode-performance']"
+    },
+    {
+      "name": "TEST2: <html> sin mode-enhanced forzado por el landing",
+      "ok": true,
+      "detail": "['h-full', 'light', 'mode-performance']"
+    },
+    {
+      "name": "TEST2: <html> con theme light (sin dark forzado)",
+      "ok": true,
+      "detail": "['h-full', 'light', 'mode-performance']"
+    },
+    {
+      "name": "TEST3: <html> sin mode-enhanced forzado por el landing",
+      "ok": true,
+      "detail": "['dark', 'h-full', 'mode-performance']"
+    },
+    {
+      "name": "TEST3: <html> conserva mode-performance (handler activo)",
+      "ok": true,
+      "detail": "['dark', 'h-full', 'mode-performance']"
+    },
+    {
+      "name": "TEST4: <html> sin mode-enhanced forzado por el landing",
+      "ok": true,
+      "detail": "['dark', 'h-full', 'mode-enhanced']"
+    },
+    {
+      "name": "TEST5: <html> sin mode-enhanced forzado por el landing",
+      "ok": true,
+      "detail": "['h-full', 'light', 'mode-performance']"
+    },
+    {
+      "name": "TEST5: <html> conserva mode-performance (handler activo)",
+      "ok": true,
+      "detail": "['h-full', 'light', 'mode-performance']"
+    },
+    {
+      "name": "TEST5: <html> con theme light (sin dark forzado)",
+      "ok": true,
+      "detail": "['h-full', 'light', 'mode-performance']"
+    },
+    {
+      "name": "TEST6: <html> sin mode-enhanced forzado por el landing",
+      "ok": true,
+      "detail": "['dark', 'h-full', 'mode-performance']"
+    },
+    {
+      "name": "TEST7: <html> sin mode-enhanced forzado por el landing",
+      "ok": true,
+      "detail": "['dark', 'h-full', 'mode-performance']"
+    },
+    {
+      "name": "TEST8: <html> sin mode-enhanced forzado por el landing",
+      "ok": true,
+      "detail": "['h-full', 'light', 'mode-performance']"
+    },
+    {
+      "name": "TEST8: <html> conserva mode-performance (handler activo)",
+      "ok": true,
+      "detail": "['h-full', 'light', 'mode-performance']"
+    },
+    {
+      "name": "TEST8: <html> con theme light (sin dark forzado)",
+      "ok": true,
+      "detail": "['h-full', 'light', 'mode-performance']"
+    },
+    {
+      "name": "CSS: reglas #landing-root compiladas (shield + variante dark)",
+      "ok": true,
+      "detail": "785"
+    },
+    {
+      "name": "PROBE: con landing montado, .glass-card conserva backdrop-filter",
+      "ok": true,
+      "detail": "blur(12px)"
+    },
+    {
+      "name": "PROBE: sin landing, reglas de modo re-armadas (backdrop none)",
+      "ok": true,
+      "detail": "none"
+    },
+    {
+      "name": "PROBE: con landing, animate-float vivo",
+      "ok": true,
+      "detail": "float"
+    },
+    {
+      "name": "PROBE: sin landing, animate-float muerto (modo performance)",
+      "ok": true,
+      "detail": "none"
+    },
+    {
+      "name": "TEST2: screenshot top idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST2: screenshot sec2 idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST3: screenshot top idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST3: screenshot sec2 idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": false, \"diffPixels\": 1239, \"totalPixels\": 1296000, \"diffPct\": 0.0956}"
+    },
+    {
+      "name": "TEST4: screenshot top idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST4: screenshot sec2 idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST5: screenshot top idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST5: screenshot sec2 idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST6: screenshot top idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST6: screenshot sec2 idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST7: screenshot top idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST7: screenshot sec2 idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST8: screenshot top idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    },
+    {
+      "name": "TEST8: screenshot sec2 idéntico al baseline (tol 0.15%)",
+      "ok": true,
+      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+    }
+  ],
+  "okAll": true,
+  "generatedAt": "2026-10-06T15:14:28+0000"
+}
