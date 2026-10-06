@@ -224,13 +224,21 @@ async function provision() {
   await seedProducts(storeIds['demo-playa'], PRODUCTS.playa, 'playa');
 
   // 8) ventas ficticias vía /api/pos/checkout (V2) — idempotentes por key
+  // FIX (2026-10-06): las keys ahora llevan el sufijo del tenant. Antes las keys
+  // fijas («demo-sale-0001») quedaban ligadas a la identidad (actor/tienda) de
+  // una provisión anterior y un re-provisionamiento fallaba entero con
+  // ERR_IDEMPOTENCY_KEY_REUSE (409) — así lo hizo la segunda corrida tras el
+  // reset del entorno. Con sufijo: estables dentro del tenant, únicas entre
+  // provisionamientos. Además, el rate-limit del checkout es 30 req/min por
+  // usuario → pacing para no reventar la ventana.
+  const KSUF = String(tenantId).slice(0, 8);
   const S = PRODUCTS.central;
   const sales = [
-    { key: 'demo-sale-0001', method: 'cash', store: centralId, items: [{ sku: S[0].sku, qty: 2 }, { sku: S[1].sku, qty: 1 }, { sku: S[7].sku, qty: 3 }], customer: 'Cliente eventual' },
-    { key: 'demo-sale-0002', method: 'transfer', store: centralId, items: [{ sku: S[4].sku, qty: 2 }, { sku: S[5].sku, qty: 1 }], customer: 'Marta González' },
-    { key: 'demo-sale-0003', method: 'mixed', store: centralId, items: [{ sku: S[6].sku, qty: 2 }, { sku: S[8].sku, qty: 2 }, { sku: S[9].sku, qty: 4 }], customer: 'Cliente eventual' },
-    { key: 'demo-sale-0004', method: 'cash', store: centralId, items: [{ sku: S[2].sku, qty: 3 }, { sku: S[3].sku, qty: 2 }], customer: 'Ernesto Rodríguez' },
-    { key: 'demo-sale-0005', method: 'cash', store: vedadoId, items: [{ sku: 'DEMO-V-ARZ-005', qty: 1 }, { sku: 'DEMO-V-JAB-090', qty: 4 }], customer: 'Cliente eventual' },
+    { key: `demo-${KSUF}-sale-0001`, method: 'cash', store: centralId, items: [{ sku: S[0].sku, qty: 2 }, { sku: S[1].sku, qty: 1 }, { sku: S[7].sku, qty: 3 }], customer: 'Cliente eventual' },
+    { key: `demo-${KSUF}-sale-0002`, method: 'transfer', store: centralId, items: [{ sku: S[4].sku, qty: 2 }, { sku: S[5].sku, qty: 1 }], customer: 'Marta González' },
+    { key: `demo-${KSUF}-sale-0003`, method: 'mixed', store: centralId, items: [{ sku: S[6].sku, qty: 2 }, { sku: S[8].sku, qty: 2 }, { sku: S[9].sku, qty: 4 }], customer: 'Cliente eventual' },
+    { key: `demo-${KSUF}-sale-0004`, method: 'cash', store: centralId, items: [{ sku: S[2].sku, qty: 3 }, { sku: S[3].sku, qty: 2 }], customer: 'Ernesto Rodríguez' },
+    { key: `demo-${KSUF}-sale-0005`, method: 'cash', store: vedadoId, items: [{ sku: 'DEMO-V-ARZ-005', qty: 1 }, { sku: 'DEMO-V-JAB-090', qty: 4 }], customer: 'Cliente eventual' },
   ];
   const allProducts = [...PRODUCTS.central, ...PRODUCTS.vedado];
   const bySku = Object.fromEntries(allProducts.map(p => [p.sku, p]));
@@ -242,7 +250,7 @@ async function provision() {
   for (let d = 1; d <= 14; d++) {
     for (let n = 0; n < 2; n++) {
       sales.push({
-        key: `demo-sale-h${String(d).padStart(2, '0')}${n}`, daysAgo: d,
+        key: `demo-${KSUF}-sale-h${String(d).padStart(2, '0')}${n}`, daysAgo: d,
         method: methods[(d + n) % 3], store: centralId,
         items: [
           { sku: allSkus[(d * 2 + n) % allSkus.length], qty: 1 + ((d + n) % 4) },
@@ -254,7 +262,14 @@ async function provision() {
   }
 
   let salesMade = 0;
-  for (const sale of sales) {
+  for (let i = 0; i < sales.length; i++) {
+    const sale = sales[i];
+    // pacing: el checkout limita a 30 req/min por usuario — pausa tras 26
+    // para dejar margen a las llamadas previas que aún corren.
+    if (i > 0 && i % 26 === 0) {
+      console.log(`  … pacing rate-limit (${i}/${sales.length}) — 65s`);
+      await new Promise(r => setTimeout(r, 65000));
+    }
     const items = sale.items.map(it => ({
       product_id: productIds[it.sku], quantity: it.qty,
       price: bySku[it.sku].price, cost: bySku[it.sku].cost,

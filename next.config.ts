@@ -59,6 +59,12 @@ const nextConfig: NextConfig = {
     'crypto-js', // FIX-TRM (2026-07-05): evitar que Turbopack intente bundlear crypto-js
   ],
   images: {
+    // FIX CALIDAD (2026-10-06, feat/landing-product-demo): Next 16 restringe
+    // los valores de `quality` por imagen a esta lista (default [75]). Las
+    // capturas del landing (public/landing/capturas) son screenshots con
+    // texto de UI: a q75 sharp emborrona las letras. Se habilita q90 para
+    // FeatureVisual (src/components/landing/FeatureVisual.tsx).
+    qualities: [75, 90],
     remotePatterns: [
       {
         protocol: 'https',
