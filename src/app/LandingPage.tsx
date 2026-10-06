@@ -113,29 +113,24 @@ export default function LandingPage() {
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
-    // FIX (2026-07-18): landing SIEMPRE dark + enhanced — branding propio.
-    // CAMBIO 6 / GATE 10 (HOME/SALES/PERFORMANCE DEFAULTS — fix P0 toggle):
-    // el branding se aplica SOLO mientras el landing está montado y se
-    // RESTAURA el estado exacto de <html> al desmontar. Antes: forzaba
-    // 'dark + mode-enhanced' PERMANENTEMENTE y escribía
-    // localStorage.theme='dark' → al entrar a la app el estado visual
-    // (clase forzada) quedaba desconectado del estado persistido
-    // (costpro-mode) y el primer click del toggle Modo Performance quedaba
-    // INVERTIDO (reproducido: visual enhanced + persistido performance →
-    // click 1 persiste enhanced, click 2 aplica performance = "varios
-    // clics al iniciar"). Reglas ahora:
-    //   - NO se escribe localStorage (next-themes + IntelligentThemeHandler
-    //     son la única fuente de verdad de theme/mode).
-    //   - Al desmontar (login resuelto / sesión activa), <html> vuelve al
-    //     estado persistido y el toggle coincide con lo visible.
-    const html = document.documentElement;
-    const prevClasses = Array.from(html.classList);
-    html.classList.add('dark', 'mode-enhanced');
-    html.classList.remove('mode-performance', 'light');
-    return () => {
-      html.classList.remove('mode-enhanced', 'mode-performance', 'dark', 'light');
-      prevClasses.forEach((c) => html.classList.add(c));
-    };
+    // BLINDAJE DEL LANDING (2026-10-06) — ZONA PROTEGIDA:
+    // Antes este efecto forzaba 'dark + mode-enhanced' en <html> y restauraba
+    // al desmontar. Eso acoplaba el landing al estado global y generaba una
+    // carrera con IntelligentThemeHandler (resync en visibilitychange/focus
+    // re-aplicaba mode-performance y mataba las animaciones del landing).
+    // Ahora el landing es una superficie VISUALMENTE INDEPENDIENTE:
+    //  - Scope propio: raíz con id="landing-root".
+    //  - Tokens propios fijados en src/styles/landing-shield.css
+    //    (html/body:has(#landing-root) + #landing-root) — sin depender de
+    //    html.dark ni de next-themes.
+    //  - Variantes dark:* siempre activas dentro de #landing-root
+    //    (@custom-variant dark en globals.css incluye "#landing-root *").
+    //  - Las reglas .mode-performance / .mode-enhanced quedan acotadas con
+    //    html:not(:has(#landing-root)) → el Modo Performance/Enhanced de la
+    //    app interna ya no alcanza al landing.
+    //  - NO se escribe ni se lee localStorage de tema/modo; NO se mutan
+    //    <html>/<body> por JS. Theme/Performance/Enhanced siguen funcionando
+    //    con normalidad en la aplicación interna.
   }, []);
 
   // Listen for footer modal requests from LoginForm
@@ -330,7 +325,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="landing-tokens min-h-screen flex flex-col bg-[#020617] pb-[env(safe-area-inset-bottom)]">
+    <div id="landing-root" className="landing-tokens min-h-screen flex flex-col bg-[#020617] pb-[env(safe-area-inset-bottom)]">
       {/* ─── Reading Progress Bar ─── */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 pointer-events-none">
         <div className="h-full w-full bg-white/5" />

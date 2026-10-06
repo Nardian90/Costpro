@@ -48,9 +48,15 @@ main[data-help-scroll] {
 @import "../styles/components.css";
 @import "../styles/landing.css";
 @import "../styles/modes.css";
+/* BLINDAJE DEL LANDING: el escudo se importa AL FINAL para ganar empates
+   de cascada y fijar los tokens del landing por encima de cualquier modo. */
+@import "../styles/landing-shield.css";
 
-/* ── Tailwind Custom Variant ── */
-@custom-variant dark (&:is(.dark *, [data-theme='dark'] *));
+/* ── Tailwind Custom Variant ──
+   BLINDAJE DEL LANDING: además de .dark / [data-theme='dark'], las
+   utilidades dark:* se activan SIEMPRE dentro de #landing-root — el
+   landing tiene branding dark propio y NO depende del tema global. */
+@custom-variant dark (&:is(.dark *, [data-theme='dark'] *, #landing-root *));
 
 /* ── Tailwind Theme Inline ── */
 @theme inline {
@@ -193,12 +199,15 @@ html:not(.dark) .mesh-orb {
   transform: rotateX(2deg) rotateY(-2deg);
 }
 
-.mode-performance .tilt-card {
+/* BLINDAJE: reglas de modo acotadas — html:not(:has(#landing-root)) las
+   desarma mientras el landing está montado (app y landing nunca coexisten,
+   así que la app interna conserva el comportamiento exacto). */
+html.mode-performance:not(:has(#landing-root)) .tilt-card {
   perspective: none !important;
   transform-style: flat !important;
 }
 
-.mode-performance .tilt-card:hover {
+html.mode-performance:not(:has(#landing-root)) .tilt-card:hover {
   transform: none !important;
 }
 
@@ -249,9 +258,9 @@ html:not(.dark) .mesh-orb {
   animation: float 12s ease-in-out infinite;
 }
 
-.mode-performance .floating-orb-sm,
-.mode-performance .floating-orb-md,
-.mode-performance .floating-orb-lg {
+html.mode-performance:not(:has(#landing-root)) .floating-orb-sm,
+html.mode-performance:not(:has(#landing-root)) .floating-orb-md,
+html.mode-performance:not(:has(#landing-root)) .floating-orb-lg {
   display: none !important;
 }
 
@@ -279,7 +288,7 @@ html:not(.dark) .mesh-orb {
   opacity: 1;
 }
 
-.mode-performance .card-spotlight::before {
+html.mode-performance:not(:has(#landing-root)) .card-spotlight::before {
   display: none !important;
 }
 
@@ -311,7 +320,7 @@ html:not(.dark) .mesh-orb {
   100% { background: linear-gradient(360deg, rgba(34, 197, 94, 0.3), transparent, rgba(34, 197, 94, 0.1)); }
 }
 
-.mode-performance .border-gradient-animate::before {
+html.mode-performance:not(:has(#landing-root)) .border-gradient-animate::before {
   display: none !important;
 }
 
@@ -339,7 +348,7 @@ html:not(.dark) .mesh-orb {
   100% { background-position: 200% 0; }
 }
 
-.mode-performance .shimmer-border::after {
+html.mode-performance:not(:has(#landing-root)) .shimmer-border::after {
   display: none !important;
 }
 
@@ -359,7 +368,7 @@ html:not(.dark) .mesh-orb {
   }
 }
 
-.mode-performance .text-reveal-up {
+html.mode-performance:not(:has(#landing-root)) .text-reveal-up {
   animation: none !important;
   opacity: 1 !important;
   transform: none !important;
@@ -418,7 +427,7 @@ html:not(.dark) .mesh-orb {
   100% { left: 200%; }
 }
 
-.mode-performance .badge-shine::after {
+html.mode-performance:not(:has(#landing-root)) .badge-shine::after {
   display: none !important;
 }
 
@@ -436,7 +445,7 @@ html:not(.dark) .mesh-orb {
   filter: blur(0);
 }
 
-.mode-performance .slide-in-blur {
+html.mode-performance:not(:has(#landing-root)) .slide-in-blur {
   animation: none !important;
   opacity: 1 !important;
   transform: none !important;
