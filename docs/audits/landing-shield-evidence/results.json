@@ -1243,7 +1243,7 @@
     {
       "name": "TEST3: screenshot sec2 idéntico al baseline (tol 0.15%)",
       "ok": true,
-      "detail": "{\"identical\": true, \"diffPixels\": 0, \"totalPixels\": 1296000, \"diffPct\": 0.0}"
+      "detail": "{\"identical\": false, \"diffPixels\": 1239, \"totalPixels\": 1296000, \"diffPct\": 0.0956}"
     },
     {
       "name": "TEST4: screenshot top idéntico al baseline (tol 0.15%)",
@@ -1297,5 +1297,5 @@
     }
   ],
   "okAll": true,
-  "generatedAt": "2026-10-06T15:11:01+0000"
+  "generatedAt": "2026-10-06T15:14:28+0000"
 }
