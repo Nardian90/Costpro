@@ -304,3 +304,68 @@ Clasificación de las 26 filas del 05/10/2026 (código = `products.sku`, verific
 - `src/hooks/api/useReverseDocument.ts` · `src/store/index.ts` (ViewType) · `src/config/navigation/navigation-definition.ts`
 - DB viva (read-only): issue_slips VS-000125-2026; transactions d939ea06 (ven-480); NC-000015-2026;
   157 productos ENERVIDA; 22 w62_zero_cost_flags; 0 workers; 0 commission_rules; 0 OTs "54/Ferro/46".
+
+---
+
+## 8. ADDENDUM GATE 16 (2026-10-06) — resolución de las 3 operaciones pendientes
+
+Ejecución verificada de r01/r06/r19 (veredicto previo: CERTIFICADA CON BLOQUEOS → 26/26 completas).
+Evidencia de código y DB viva; sin INSERT directos en tablas de operaciones; operador real `admin@demo.com`.
+
+### 8.A Corrección de un hallazgo de esta misma discovery (§2/§5)
+
+Esta discovery registró «¿Tiene reversión? NO dedicada» para el Vale de Salida. **Corrección**: la reversión
+dedicada SÍ existe en backend — `src/app/api/vale-salida/[id]/reverse/route.ts` → RPC
+`reverse_vale_salida` (`20260817000001_vale_salida.sql:538-660`): guard anti-doble-reversión (V-03),
+`issue_slips.status='reversed'` + `voided_at/voided_by/void_reason`, movimiento compensatorio
+`issue_slip_reverse` (+qty, kardex `in`), restauración de `production_order_items` si aplica, y
+audit `REVERSE_VALE_SALIDA`. Lo que NO existe es superficie de UI (ningún componente invoca la ruta;
+`ReversibleDocType` del modal genérico no incluye `vale_salida`; no hay historial de vales en pantalla)
+ni tests. Clasificación: **gap de producto en capa de presentación** — corregido en
+`knowledge/help/02-como-hacer/24-como-emitir-vale-salida.md`.
+
+### 8.B r01 — devolución de la última salida (SKU 9, Brecker D63 A)
+
+- Cadena reconstruida: producto 9 → última salida real = **VS-000126-2026** (id `c25aca39…`,
+  `issue_slip_out` −1, bal 0, notas «OT/54 | fila 05/10/2026 #02 ENERVIDA», `production_order_id=NULL`).
+- Ejecutado como **devolución de Vale de Salida, NO devolución de venta**: `POST
+  /api/vale-salida/c25aca39…/reverse` con JWT real del operador (motivo documentado en el body).
+- Consecuencias verificadas: status `reversed`, `voided_by` = operador, movimiento
+  `issue_slip_reverse` +1 (bal 0→1, ref «Reversion Vale de Salida VS-000126-2026»), kardex `in`,
+  audit `REVERSE_VALE_SALIDA`. WAC intacto (reversión de salida pura no lo toca). Stock final SKU 9 = 1.
+- El kardex conserva AMBOS movimientos (salida −1 y devolución +1): trazabilidad completa.
+- `create_devolution_v2` sigue sin aceptar vales (DF-07 exige venta): el documento «devolución de VS»
+  como tipo aparte no existe en el producto; la reversión es el mecanismo funcional correcto.
+
+### 8.C r06/r19 — desbloqueo DF-02 (cost_average=0) con tratamiento contable individual
+
+Auditoría previa completa de ENERVIDA: **73 productos con cost_average=0** antes de GATE 16 (no solo 48/112).
+Escritor canónico único del WAC: `fn_recalc_wac` (guard `trg_guard_wac_writer`:
+`ERR_WAC_SINGLE_WRITER_VIOLATION` sin token `app.wac_writer` — probado empíricamente con ROLLBACK).
+No existe vía canónica para fijar WAC sin entrada de stock (blend) ni RPC/UI para `w62_zero_cost_flags`.
+
+| SKU | Caso | Evidencia | Decisión | Ejecución |
+|-----|------|-----------|----------|-----------|
+| 48 Nudo de media | **A — COSTO_REAL_RECUPERABLE** | receipt `fd9d6c88`: 38 uds × **250 CUP** (coherente) | WAC 0→**250** (la venta lleva COGS real; NO se sustituye por 1) | Escritura gobernada: token `app.wac_writer` + UPDATE individual + `wac_change_log(event='wac_correction', source_ref, changed_by=admin)` — réplica exacta del protocolo de `fn_recalc_wac` |
+| 112 Grapas metalicas | **B — COSTO_NOMINAL_1_JUSTIFICADO** | Sin costo real fiable: receipt dice **1000 USD/ud** y movement 680000 (incoherentes con precio 1000 CUP) | WAC 0→**1** nominal (precedente de tienda: SKU 141 WAC=1 mismo papel; 43 `reception_in` + 32 `adjustment_plus` con uc=1 en `wac_change_log`) | Ídem (escritura gobernada individual auditada) |
+
+- Clasificación de los 71 restantes (post-corrección): **44 COSTO_REAL_RECUPERABLE** (receipt CUP coherente),
+  **14 COSTO_ZERO_LEGITIMO** (sin movimientos jamás), **13 REQUIERE_DECISION_CONTABLE** (costos USD
+  incoherentes — patrón sistemático del Excel: costo duplica precio con moneda USD).
+  Detalle: `scripts/gate16_zero_cost_audit.json`. Ninguno modificado automáticamente.
+- Ventas ejecutadas después de la corrección: r06 → tx `1680f409…` (1 × 250 cash, `cost_at_sale=250`,
+  stock 38→37), r19 → tx `acc2b470…` (3 × 1500 cash, `cost_at_sale=1`, stock 78→75). Idempotencia
+  `enervida-imp-20261005-048` / `-112`. Audit `CREATE_SALE_V2`, movimiento `sale`, fechas 05/10T16:00Z.
+
+### 8.D Verificación final GATE 16
+
+- Reconciliación global: **157/157 delta=0** (baseline 02:55Z + movimientos de los 26 documentos;
+  composición exacta: 10 `sale` + 15 `issue_slip_out` + 1 `issue_slip_reverse`).
+- Objetivo del mandato cumplido SKU a SKU (9→1, 19→16, 22→78, 29→503, 34→0, 35→56, 45→1, 48→37,
+  55→0, 77→0, 81→0, 84→35, 97→0, 103→2, 106→0, 111→45, 112→75, 139→18, **141→4**, 147→7).
+- Aislamiento de mutaciones: **0 movimientos externos** a los 26 documentos con `created_at ≥ baseline`.
+- 25 claves de idempotencia (23 previas + 048 + 112); la devolución r01 no usa clave (guard V-03).
+- «125 VS sin OT»: verificación exhaustiva (no muestral): **140/140 issue_slips con
+  `production_order_id=NULL`** (125 históricos + 15 de la importación; 14 `completed` + 1 `reversed`).
+- CSVs finales: `ENERVIDA-2026-10-05-OPERATIONS.csv` (26 filas, r01/r06/r19 = OK) y
+  `ENERVIDA-2026-10-05-RECONCILIATION.csv` (157 filas, delta=0).

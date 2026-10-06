@@ -45,7 +45,7 @@ Operación → Vender → (toggle del carrito) [Venta] [VS]
 ## Precauciones
 
 - **Las notas son obligatorias** y son la única explicación del motivo: escriba algo que entienda dentro de 6 meses.
-- El vale **no se puede revertir desde una vista dedicada**: si se equivocó, la corrección es un **Ajuste de Inventario documental** (Inventario → Ajustes) que el administrador puede auditar.
+- **Reversión de un vale**: el mecanismo funcional existe — `POST /api/vale-salida/{id}/reverse` (RPC `reverse_vale_salida`) marca el vale como `reversed`, registra el movimiento compensatorio `issue_slip_reverse` (+cantidad, kardex `in`), restaura la línea de la OT si aplica y deja auditoría `REVERSE_VALE_SALIDA`. Solo vale en estado `completed` es reversible (protección anti doble reversión). **Gap actual**: no existe todavía una vista o botón en la UI que invoque esa reversión (no hay historial de vales en pantalla); hasta que exista, la reversión queda como operación de administrador vía API y el ajuste documental de inventario (Inventario → Ajustes) es la alternativa disponible desde la interfaz.
 - No use el vale para "regalar" sin permiso: el costo del vale impacta el costo de la tienda aunque no haya ingreso.
 
 ## Preguntas frecuentes
