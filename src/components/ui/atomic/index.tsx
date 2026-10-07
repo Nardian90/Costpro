@@ -61,13 +61,20 @@ export interface PrimaryButtonProps {
   disabled?: boolean;
   asChild?: boolean;
   children?: React.ReactNode;
+  /** §37 accesibilidad: nombre accesible para lectores de pantalla
+   * (obligatorio en botones solo-icono). */
+  'aria-label'?: string;
+  /** Tooltip nativo como fallback visual. */
+  title?: string;
 }
 
-export const PrimaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon, onClick, className, disabled, children }) => (
+export const PrimaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon, onClick, className, disabled, children, 'aria-label': ariaLabel, title }) => (
   <button
     type="button"
     onClick={onClick}
     disabled={disabled}
+    aria-label={ariaLabel}
+    title={title}
     className={cn(
       // F2: peso medio, sin uppercase/tracking-widest (§7 del brief)
       // FIX-A11Y-CONTRAST (fix/ui-management-density-inventory-a11y): el par
@@ -86,11 +93,13 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon,
   </button>
 );
 
-export const SecondaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon, onClick, className, disabled, children }) => (
+export const SecondaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon, onClick, className, disabled, children, 'aria-label': ariaLabel, title }) => (
   <button
     type="button"
     onClick={onClick}
     disabled={disabled}
+    aria-label={ariaLabel}
+    title={title}
     className={cn(
       // F2: peso medio, sin uppercase/tracking-widest (§7 del brief)
       "py-2 rounded-xl border border-border hover:bg-muted font-medium text-xs tracking-normal flex items-center justify-center gap-2 transition-colors disabled:opacity-50",

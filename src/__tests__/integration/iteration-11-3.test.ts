@@ -147,14 +147,21 @@ describe('PT-11.3.10 — API /api/devolutions camino único (FINALIZE-V2)', () =
 });
 
 describe('PT-11.3.11 — KardexModal labels (Aclaración 2)', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'components', 'views', 'terminal', 'views', 'inventory', 'KardexModal.tsx'), 'utf-8');
+  // Evolución Trazabilidad/Kardex (PR #1379): el diccionario de etiquetas se
+  // centralizó en src/lib/inventory/movementPresentation.ts (UNA SOLA FUENTE,
+  // compartido por KardexModal y Trazabilidad). KardexModal debe CONSUMIRLO.
+  const dict = readFileSync(join(process.cwd(), 'src', 'lib', 'inventory', 'movementPresentation.ts'), 'utf-8');
+  const kardex = readFileSync(join(process.cwd(), 'src', 'components', 'views', 'terminal', 'views', 'inventory', 'KardexModal.tsx'), 'utf-8');
   it('mapea sale_reverse → Reverso de venta', () => {
-    expect(src).toContain("sale_reverse:");
-    expect(src).toContain("'Reverso de venta'");
+    expect(dict).toContain("sale_reverse:");
+    expect(dict).toContain("'Reverso de venta'");
   });
   it('mapea purchase_reverse → Reverso de recepción', () => {
-    expect(src).toContain("purchase_reverse:");
-    expect(src).toContain("'Reverso de recepción'");
+    expect(dict).toContain("purchase_reverse:");
+    expect(dict).toContain("'Reverso de recepción'");
+  });
+  it('KardexModal consume el diccionario central (sin enums crudos en UI)', () => {
+    expect(kardex).toContain('obtenerEtiquetaMovimiento');
   });
 });
 
