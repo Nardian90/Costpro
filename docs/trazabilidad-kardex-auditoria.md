@@ -178,3 +178,42 @@ Ver checklist completo en la descripción del PR (28 ítems §44). Resumen crít
 - [ ] Móvil: tarjetas de movimiento
 - [ ] Warnings de botones reducidos, no aumentados
 - [ ] Pruebas de regresión ejecutadas
+
+---
+
+## 4. IMPLEMENTACIÓN (completada)
+
+### Archivos nuevos
+
+| Archivo | Rol |
+|---|---|
+| `src/lib/inventory/movementPresentation.ts` | Diccionario central: 18 tipos reales → etiquetas ES profesionales, categoría semántica (entrada/salida/neutro/ajuste/reverso/anulación), colores y badges; `obtenerEtiquetaMovimiento()` con fallback "Otro" — jamás enum crudo |
+| `src/lib/inventory/kardexPeriod.ts` | Lógica pura: `rankearCoincidencias` (§6), `calcularResumenPeriodo` (§10/§23), `ordenarCronologico` (§21/§22), `formatearCantidad` (§40) |
+| `src/hooks/api/useProductKardex.ts` | Motor de período: saldo inicial = balance_after del último movimiento antes de `from`; movimientos del período por lotes de 1000 (techo 10.000, `isTruncated` visible §13/§31); NUNCA recalcula saldos |
+| `src/__tests__/lib/movementPresentation.test.ts` | 9 tests del diccionario |
+| `src/__tests__/lib/kardexPeriod.test.ts` | 15 tests: ranking, resumen, orden, formato |
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `src/components/views/terminal/views/stock_history/StockHistoryView.tsx` | Reescritura completa: NIVEL 1 buscador con ranking (sin carga de movimientos al entrar §7) → NIVEL 2 Kardex del producto (cabecera §8, período rápido §9, resumen §23, tabla escritorio §25, tarjetas móvil §26, Cambiar producto §28, estados vacíos §29/§30, export CSV §32) |
+| `src/components/views/terminal/views/inventory/KardexModal.tsx` | Consume diccionario central (eliminado MOVEMENT_INFO local + mapeo CSV duplicado); `aria-label` en paginación (§37) |
+| `src/components/ui/atomic/index.tsx` | `PrimaryButtonProps` extendido con `aria-label` + `title` (retrocompatible, §37) |
+| `src/__tests__/integration/iteration-11-3.test.ts` | PT-11.3.11 actualizado: el diccionario vive en su fuente única; KardexModal debe consumirlo |
+
+### Verificación (PRUEBA)
+
+- TypeCheck proyecto completo: **0 errores**
+- Suite unitaria: **2700 tests** — 2 fallos preexistentes-corregidos (PT-11.3.11 fuente del diccionario movida a ubicación canónica); tras corrección: **0 fallos**
+- Regresión dirigida (navigation gate, inventory, vales-salida, kardex): **217/217**
+- Lint archivos tocados: **12 warnings vs 13 baseline → REDUCIDO** (§38); los 12 restantes son preexistentes históricos de `atomic/index.tsx`
+- Warnings de botones: 0 nuevos; los 2 botones nuevos usan `<Button>` canónico; chips de período con `aria-pressed`; filas de producto con `aria-label`
+- Smoke: `/?view=history` responde HTTP 200
+
+### Decisión arquitectónica (§34)
+
+KardexModal conserva su RPC paginada (vista rápida sin fechas); Trazabilidad usa el motor
+de período directo a `stock_movements`. **Ambos leen el MISMO ledger con `balance_after`
+calculado server-side** — una sola fuente de verdad, cero recálculos client-side, cero
+sistemas de inventario paralelos.
