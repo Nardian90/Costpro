@@ -10,14 +10,27 @@
  *
  * Solución:
  *   Tabla compacta con columnas esenciales visibles SIN scroll horizontal:
- *     [thumbnail] Producto | Stock | Precio
- *   Acciones secundarias (FC, visibilidad, promoción) accesibles vía tap
- *   en la fila → abre un mini-menú inline expandible.
+ *     [thumbnail] Producto (+ estado vitrina) | Stock | Precio | ⋮
+ *
+ * REFINAMIENTO UX (iteración 2 — módulo especial UX/UI):
+ *   ANTES: tap en fila → expansión con 4 icono-toggles ambiguos
+ *   (Eye/EyeOff/Dólar/Package = ¿estado o acción?) — la misma violación §6
+ *   que se corrigió en tarjetas y tabla desktop, más el estado de vitrina
+ *   INVISIBLE en la fila colapsada (§24 exige "● Visible / ● Precio").
+ *
+ *   AHORA (paridad con tarjetas y tabla desktop):
+ *     - Estado de vitrina VISIBLE de un vistazo: chips compactos bajo el
+ *       nombre (● Visible · ● Precio · ● Stock · ● Promo si activa).
+ *     - ÚNICO punto de acciones: menú ⋮ (ProductActionsMenu) — táctil 44px,
+ *       Radix portal, sin dependencia de hover (§23). Reemplaza a la
+ *       expansión inline: un solo patrón de interacción en toda la app (§E1).
+ *     - Ajustar/Editar/Kardex + configuración de tienda viven en el ⋮,
+ *       agrupados por relevancia; el menú no crece sin límite.
  *
  * Diseño mobile-first:
  *   - Sin min-width que fuerce scroll horizontal
- *   - Densidad alta (filas de 56px, no 80px+)
- *   - Touch targets ≥44px
+ *   - Densidad alta (filas de 48-56px)
+ *   - Touch targets ≥44px (triggerSize="lg")
  *   - Stock grande y coloreado (rojo=0, ámbar=bajo, verde=ok)
  *   - Precio visible (no oculto tras scroll)
  *   - Badge de estado (Agotado/Mínimo) integrado en la celda stock
@@ -27,10 +40,11 @@ import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import type { Product, ProductFCStatus } from '@/types';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
-import { Package, Edit, BookOpen, Eye, EyeOff, DollarSign, Tag, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
+import { Package, MoreVertical } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
-import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
+import { StoreStatusChip } from '@/components/ui/StoreStatusChip';
+import { ProductActionsMenu } from '@/components/ui/ProductActionsMenu';
 
 type SortKey = 'name' | 'stock' | 'price';
 type SortDir = 'asc' | 'desc';
@@ -41,7 +55,7 @@ interface InventoryMobileTableProps {
   hasMore: boolean;
   isLoading: boolean;
   onAdjust?: (product: Product) => void;
-  /** NEW: Opens EditProductModal (full product editor). Distinct from onAdjust,
+  /** Opens EditProductModal (full product editor). Distinct from onAdjust,
    * which opens the stock-only adjustment modal. */
   onEdit?: (product: Product) => void;
   onViewKardex?: (product: Product) => void;
@@ -71,11 +85,9 @@ export default function InventoryMobileTable({
   onTogglePriceVisible, isTogglingPriceVisible,
   onToggleStockVisible, isTogglingStockVisible,
   onTogglePromotion, isTogglingPromotion,
-  fcStatusMap, fcResolutionMap, onViewFC,
 }: InventoryMobileTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const sortedProducts = useMemo(() => {
     const arr = [...products];
@@ -97,7 +109,7 @@ export default function InventoryMobileTable({
   };
 
   const observer = useRef<IntersectionObserver | null>(null);
-  const lastElementRef = useCallback((node: HTMLTableRowElement) => {
+  const lastElementRef = useCallback((node: HTMLDivElement) => {
     if (isLoading) return;
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(entries => {
@@ -116,16 +128,12 @@ export default function InventoryMobileTable({
     return 'text-foreground';
   };
 
-  const getStockBadge = (stock: number, min: number) => {
-    if (stock <= 0) return <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-destructive/10 text-destructive border border-destructive/20">Agotado</span>;
-    if (min > 0 && stock <= min) return <span className="text-[8px] font-black uppercase px-1 py-0.5 rounded bg-warning/10 text-warning border border-warning/20">Mín</span>;
-    return null;
-  };
+  const monoStyle = { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace' };
 
   return (
     <div className="rounded-xl border border-border/30 overflow-hidden bg-card">
       {/* Header de tabla — con fuente monospace para columnas numéricas */}
-      <div className="grid grid-cols-[1fr_50px_70px] gap-0 px-2 py-1.5 bg-muted/60 border-b-2 border-border text-[9px] font-black uppercase text-muted-foreground tracking-wider">
+      <div className="grid grid-cols-[1fr_50px_70px_44px] gap-0 px-2 py-1.5 bg-muted/60 border-b-2 border-border text-[9px] font-black uppercase text-muted-foreground tracking-wider">
         <button
           type="button"
           onClick={() => handleSort('name')}
@@ -138,7 +146,7 @@ export default function InventoryMobileTable({
           type="button"
           onClick={() => handleSort('stock')}
           className="flex items-center justify-end gap-1 text-right min-h-[32px] pr-1 border-r border-border/40"
-          style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace' }}
+          style={monoStyle}
           aria-label="Ordenar por stock"
         >
           Stock <SortIcon col="stock" sortKey={sortKey} sortDir={sortDir} />
@@ -146,24 +154,29 @@ export default function InventoryMobileTable({
         <button
           type="button"
           onClick={() => handleSort('price')}
-          className="flex items-center justify-end gap-1 text-right min-h-[32px] pr-1"
-          style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace' }}
+          className="flex items-center justify-end gap-1 text-right min-h-[32px] pr-1 border-r border-border/40"
+          style={monoStyle}
           aria-label="Ordenar por precio"
         >
           Precio <SortIcon col="price" sortKey={sortKey} sortDir={sortDir} />
         </button>
+        <span
+          className="flex items-center justify-center"
+          aria-hidden="true"
+          title="Acciones del producto"
+        >
+          <MoreVertical className="w-3 h-3 opacity-60" />
+        </span>
       </div>
 
-      {/* Filas — altura FIJA, alineación estricta, nombre con line-clamp-2 (no truncate) */}
+      {/* Filas — altura compacta, alineación estricta, nombre con line-clamp-2 (no truncate) */}
       <div role="table" aria-label="Productos del inventario">
         {sortedProducts.map((product, index) => {
           const isLast = index === sortedProducts.length - 1;
           const stock = Number(product.stock_current ?? 0);
           const min = Number(product.min_stock ?? 0);
-          const fcStatus = fcStatusMap?.get(product.id);
-          const isExpanded = expandedId === product.id;
-          const hasActions = onAdjust || onEdit || onViewKardex || onToggleVisible || onTogglePriceVisible || onToggleStockVisible || onTogglePromotion;
-          const monoStyle = { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace' };
+          const isOutOfStock = stock <= 0;
+          const isAtMin = !isOutOfStock && min > 0 && stock <= min;
 
           return (
             <div
@@ -172,19 +185,13 @@ export default function InventoryMobileTable({
               role="row"
               className="border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors"
             >
-              {/* Fila principal — altura FIJA 48px, 3 columnas con bordes verticales sutiles */}
+              {/* Fila principal — 4 columnas: Producto(+estado) | Stock | Precio | ⋮ */}
               <div
-                className="grid grid-cols-[1fr_50px_70px] gap-0 px-2 items-center cursor-pointer h-12"
-                onClick={() => hasActions && setExpandedId(isExpanded ? null : product.id)}
+                className="grid grid-cols-[1fr_50px_70px_44px] gap-0 px-2 items-center h-14"
                 role="cell"
               >
-                {/* Columna 1: Producto — thumbnail + nombre (line-clamp-2, NO truncate) + SKU */}
-                <div className="flex items-center gap-1.5 min-w-0 pr-1 border-r border-border/20">
-                  {hasActions && (
-                    <span className="shrink-0 text-muted-foreground">
-                      {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    </span>
-                  )}
+                {/* Columna 1: Producto — thumbnail + nombre + SKU + chips de estado vitrina (§24) */}
+                <div className="flex items-center gap-1.5 min-w-0 pr-1 border-r border-border/20 py-1">
                   <div className="w-6 h-6 rounded-sm overflow-hidden shrink-0 bg-muted/30 border border-border/30">
                     <ProductImage
                       src={resolveProductImage(product)}
@@ -195,134 +202,60 @@ export default function InventoryMobileTable({
                   <div className="min-w-0 flex-1">
                     <div className="text-[10px] font-bold leading-tight line-clamp-2 break-words">{product.name}</div>
                     <span className="text-[8px] text-muted-foreground" style={monoStyle}>{product.sku || '—'}</span>
+                    {/* Estado de vitrina visible de un vistazo (§24) — representación ÚNICA */}
+                    <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                      <StoreStatusChip size="compact" on={!!product.visible_en_tienda} label="Visible" hiddenLabel="Oculto" />
+                      <StoreStatusChip size="compact" on={!!product.price_visible} label="Precio" hiddenLabel="P.oculto" />
+                      <StoreStatusChip size="compact" on={!!product.stock_visible} label="Stock" hiddenLabel="S.oculto" />
+                      {product.on_promotion && (
+                        <StoreStatusChip size="compact" on tone="warning" label="Promo" />
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Columna 2: Stock — monospace, alineación derecha ESTRICTA, altura fija */}
-                <div className="flex items-center justify-end pr-1 border-r border-border/20" style={monoStyle}>
+                {/* Columna 2: Stock — monospace, alineación derecha ESTRICTA */}
+                <div className="flex flex-col items-end justify-center pr-1 border-r border-border/20" style={monoStyle}>
                   <span className={cn('text-sm font-black tabular-nums leading-none', getStockColor(stock, min))}>
                     {stock}
                   </span>
+                  {(isOutOfStock || isAtMin) && (
+                    <span className={cn(
+                      'text-[7px] font-black uppercase leading-none mt-0.5',
+                      isOutOfStock ? 'text-destructive' : 'text-warning'
+                    )}>
+                      {isOutOfStock ? 'Agotado' : 'Mín'}
+                    </span>
+                  )}
                 </div>
 
                 {/* Columna 3: Precio — monospace, alineación derecha ESTRICTA */}
-                <div className="flex flex-col items-end justify-center pr-1" style={monoStyle}>
+                <div className="flex flex-col items-end justify-center pr-1 border-r border-border/20" style={monoStyle}>
                   <span className="text-[11px] font-bold text-primary tabular-nums leading-none">
                     {formatCurrency(product.price || 0)}
                   </span>
                   <span className="text-[7px] text-muted-foreground leading-none mt-0.5">{product.price_currency || 'CUP'}</span>
                 </div>
+
+                {/* Columna 4: ⋮ — ÚNICO punto de acciones (táctil 44px, sin hover §23) */}
+                <div className="flex items-center justify-center">
+                  <ProductActionsMenu
+                    product={product}
+                    triggerSize="lg"
+                    onEdit={onEdit}
+                    onAdjust={onAdjust}
+                    onViewKardex={onViewKardex}
+                    onToggleVisible={onToggleVisible}
+                    isTogglingVisible={isTogglingVisible}
+                    onTogglePriceVisible={onTogglePriceVisible}
+                    isTogglingPriceVisible={isTogglingPriceVisible}
+                    onToggleStockVisible={onToggleStockVisible}
+                    isTogglingStockVisible={isTogglingStockVisible}
+                    onTogglePromotion={onTogglePromotion}
+                    isTogglingPromotion={isTogglingPromotion}
+                  />
+                </div>
               </div>
-
-              {/* Badge de stock bajo/agotado — fila separada, solo si aplica */}
-              {(stock <= 0 || (min > 0 && stock <= min)) && (
-                <div className="px-2 pb-1 -mt-1">
-                  <span className={cn(
-                    'text-[8px] font-black uppercase px-1.5 py-0.5 rounded inline-block',
-                    stock <= 0 ? 'bg-destructive/10 text-destructive border border-destructive/20' : 'bg-warning/10 text-warning border border-warning/20'
-                  )}>
-                    {stock <= 0 ? 'Agotado' : 'Stock mínimo'}
-                  </span>
-                </div>
-              )}
-
-              {/* Fila expandible — acciones secundarias */}
-              {isExpanded && hasActions && (
-                <div className="px-2 pb-2 pt-1 bg-muted/10 border-t border-border/10">
-                  <div className="flex flex-wrap items-center gap-1">
-                    {onEdit && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); onEdit(product); }}
-                        className="inline-flex items-center gap-1 px-2 py-1.5 min-h-[36px] rounded-lg bg-primary/10 text-primary text-[10px] font-bold uppercase border border-primary/20 active:scale-95 transition-transform"
-                        aria-label="Editar producto"
-                      >
-                        <Pencil className="w-3 h-3" /> Editar
-                      </button>
-                    )}
-                    {onAdjust && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); onAdjust(product); }}
-                        className="inline-flex items-center gap-1 px-2 py-1.5 min-h-[36px] rounded-lg bg-warning/10 text-warning text-[10px] font-bold uppercase border border-warning/20 active:scale-95 transition-transform"
-                        aria-label="Ajustar stock"
-                      >
-                        <Edit className="w-3 h-3" /> Ajustar
-                      </button>
-                    )}
-                    {onViewKardex && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); onViewKardex(product); }}
-                        className="inline-flex items-center gap-1 px-2 py-1.5 min-h-[36px] rounded-lg bg-muted text-foreground text-[10px] font-bold uppercase border border-border active:scale-95 transition-transform"
-                        aria-label="Ver kardex"
-                      >
-                        <BookOpen className="w-3 h-3" /> Kardex
-                      </button>
-                    )}
-                    {onToggleVisible && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); onToggleVisible(product, !product.visible_en_tienda); }}
-                        disabled={isTogglingVisible === product.id}
-                        className={cn(
-                          'inline-flex items-center justify-center w-9 h-9 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
-                          product.visible_en_tienda ? 'bg-success/10 border-success/20 text-success' : 'bg-muted border-border text-muted-foreground/50'
-                        )}
-                        aria-label={product.visible_en_tienda ? 'Ocultar de la tienda' : 'Mostrar en tienda'}
-                        aria-pressed={!!product.visible_en_tienda}
-                      >
-                        {isTogglingVisible === product.id ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : product.visible_en_tienda ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                      </button>
-                    )}
-                    {onTogglePriceVisible && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); onTogglePriceVisible(product); }}
-                        disabled={isTogglingPriceVisible === product.id}
-                        className={cn(
-                          'inline-flex items-center justify-center w-9 h-9 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
-                          product.price_visible ? 'bg-success/10 border-success/20 text-success' : 'bg-muted border-border text-muted-foreground/50'
-                        )}
-                        aria-label={product.price_visible ? 'Ocultar precio' : 'Mostrar precio'}
-                        aria-pressed={!!product.price_visible}
-                      >
-                        {isTogglingPriceVisible === product.id ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <DollarSign className={cn('w-3.5 h-3.5', !product.price_visible && 'line-through opacity-60')} />}
-                      </button>
-                    )}
-                    {onToggleStockVisible && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); onToggleStockVisible(product); }}
-                        disabled={isTogglingStockVisible === product.id}
-                        className={cn(
-                          'inline-flex items-center justify-center w-9 h-9 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
-                          product.stock_visible ? 'bg-success/10 border-success/20 text-success' : 'bg-muted border-border text-muted-foreground/50'
-                        )}
-                        aria-label={product.stock_visible ? 'Ocultar stock' : 'Mostrar stock'}
-                        aria-pressed={!!product.stock_visible}
-                      >
-                        {isTogglingStockVisible === product.id ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Package className={cn('w-3.5 h-3.5', !product.stock_visible && 'line-through opacity-60')} />}
-                      </button>
-                    )}
-                    {onTogglePromotion && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); onTogglePromotion(product); }}
-                        disabled={isTogglingPromotion === product.id}
-                        className={cn(
-                          'inline-flex items-center justify-center w-9 h-9 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
-                          product.on_promotion ? 'bg-warning/10 border-warning/20 text-warning' : 'bg-muted border-border text-muted-foreground/50'
-                        )}
-                        aria-label={product.on_promotion ? 'Quitar promoción' : 'Marcar promoción'}
-                        aria-pressed={!!product.on_promotion}
-                      >
-                        {isTogglingPromotion === product.id ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Tag className="w-3.5 h-3.5" />}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           );
         })}

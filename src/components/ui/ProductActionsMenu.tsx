@@ -58,6 +58,9 @@ interface ProductActionsMenuProps {
     onTogglePromotion?: (product: Product) => void;
     isTogglingPromotion?: string | null;
     align?: 'start' | 'center' | 'end';
+    /** Tamaño del trigger: 'sm' = 36px (desktop, default) · 'lg' = 44px táctil
+     * (móvil — §23: el ⋮ debe ser fácil de tocar, sin depender de hover). */
+    triggerSize?: 'sm' | 'lg';
 }
 
 /** Spinner inline reutilizable para ítems en vuelo (mismo lenguaje visual que
@@ -76,6 +79,7 @@ export function ProductActionsMenu({
     onToggleStockVisible, isTogglingStockVisible,
     onTogglePromotion, isTogglingPromotion,
     align = 'end',
+    triggerSize = 'sm',
 }: ProductActionsMenuProps) {
     const busy =
         isTogglingVisible === product.id ||
@@ -90,7 +94,8 @@ export function ProductActionsMenu({
                     type="button"
                     disabled={busy}
                     className={cn(
-                        'inline-flex items-center justify-center w-9 h-9 rounded-lg',
+                        'inline-flex items-center justify-center rounded-lg',
+                        triggerSize === 'lg' ? 'w-11 h-11' : 'w-9 h-9',
                         'bg-card/90 border border-border text-muted-foreground',
                         'hover:bg-muted hover:text-foreground transition-all active:scale-90',
                         'shadow-sm backdrop-blur-sm',

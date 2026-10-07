@@ -97,3 +97,34 @@ Cadena de relación: **INVENTARIO → CONFIGURACIÓN COMERCIAL → VITRINA**
 | Fecha | Fase | Cambio | Commit |
 |---|---|---|---|
 | 2026-10-08 | AUDITA | Línea base documentada; archivos identificados | (este commit) |
+
+### Iteración 2 — Paridad móvil (§23/§24) · 2026-10-08
+
+**Auditoría de estado real**: la fase A (tarjeta limpia + ⋮ + chips) y la fase B
+(Catálogo/Vitrina en Gestión de Tiendas) ya estaban implementadas y mergeadas
+en main (PR #1373, ciclo anterior). Re-auditoría de las 5 vistas detectó un
+único gap restante:
+
+- `InventoryMobileTable` mantenía el patrón antiguo: expansión de fila con
+  4 icono-toggles ambiguos (Eye/EyeOff/Dólar/Package = estado Y acción a la
+  vez, violación §6) y el estado de vitrina **invisible** en la fila
+  colapsada (§24 exige "● Visible / ● Precio" visibles).
+
+**Cambios (quirúrgicos, 4 archivos + 1 test):**
+
+| Archivo | Cambio |
+|---|---|
+| `src/components/ui/StoreStatusChip.tsx` | NUEVO — chip compartido (desktop/móvil) con variante `compact` |
+| `src/components/ui/ProductActionsMenu.tsx` | prop `triggerSize?: 'sm' \| 'lg'` → trigger táctil 44px (§23) |
+| `.../inventory/InventoryCardView.tsx` | consume el chip compartido (sin cambio visual) |
+| `.../inventory/InventoryMobileTable.tsx` | fila móvil: chips de estado visibles + ⋮ unificado; eliminados los 4 icono-toggles y la expansión |
+| `src/__tests__/components/inventory-mobile-row.test.tsx` | NUEVO — 5 tests del contrato §23/§24 |
+
+**Verificación:** 9/9 tests de inventario (móvil+desktop) · 23/23 archivos,
+234 tests de componentes en verde · `tsc --noEmit` sin errores en archivos
+tocado · eslint 0 errores.
+
+**Criterios de aceptación cubiertos por esta iteración:** §6 (representación
+única del estado), §23 (⋮ táctil ≥44px sin hover), §24 (fila móvil compacta:
+nombre + ⋮ / Existencia / ● Visible / ● Precio), §E1 (un solo patrón de
+interacción en las 3 superficies: tarjeta desktop, tabla desktop, fila móvil).
