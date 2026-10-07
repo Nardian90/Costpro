@@ -1,0 +1,154 @@
+sku,producto,precio,moneda_precio,receipt_ref,receipt_fecha,receipt_status,quantity,unit_cost,moneda_recepcion,tasa,unit_cost_cup,cost_average_actual,clasificacion,motivo
+1,Abrazadera metálica de 3/4,350,CUP,FAC-VITALLCONS-001,2026-07-01,active,19.0000,350.0,CUP,1.0000,350.0,350.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+2,Abrazadera metálica de 1 pulgada,350,CUP,FAC-VITALLCONS-001,2026-07-01,active,32.0000,350.0,CUP,1.0000,350.0,350.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+3,Araganes,1600,CUP,FAC-VITALLCONS-001,2026-07-01,active,6.0000,1600.0,CUP,1.0000,1600.0,0.20000000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+4,Bisagra,4000,CUP,FAC-VITALLCONS-001,2026-07-01,active,1.0000,4000.0,CUP,1.0000,4000.0,4000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+5,Brecker 16A Sencillo,2000,CUP,FAC-VITALLCONS-001,2026-07-01,active,3.0000,2000.0,CUP,1.0000,2000.0,2000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+6,Brecker 25 A Sencillo,2000,CUP,FAC-VITALLCONS-001,2026-07-01,active,2.0000,2000.0,CUP,1.0000,2000.0,2000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+8,Brecker C32 A Trible,6000,CUP,FAC-VITALLCONS-001,2026-07-01,active,2.0000,6000.0,CUP,1.0000,6000.0,6000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+9,Brecker D63 A,25,USD,FAC-VITALLCONS-001,2026-07-01,active,23.0000,25.0,USD,680.0000,17000.0,0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+11,Cabilla 70 Cm,350,CUP,FAC-VITALLCONS-001,2026-07-01,active,69.0000,350.0,CUP,1.0000,350.0,350.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+12,Cable Conductor electrico 10,1350,CUP,FAC-VITALLCONS-001,2026-07-01,active,89.5000,1350.0,CUP,1.0000,1350.0,1.00000000000000000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+12,Cable Conductor electrico 10,1350,CUP,IMPORT-ENERVIDA-538,2026-09-09,active,10.0000,1,CUP,1.0000,1.0,1.00000000000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+12,Cable Conductor electrico 10,1350,CUP,IMPORT-ENERVIDA-666,2026-09-21,active,6.0000,1,CUP,1.0000,1.0,1.00000000000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+12,Cable Conductor electrico 10,1350,CUP,IMPORT-ENERVIDA-677,2026-09-22,active,100.0000,1,CUP,1.0000,1.0,1.00000000000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+13,Cable Conductor electrico 8,1500,CUP,FAC-VITALLCONS-001,2026-07-01,active,266.0000,1500.0,CUP,1.0000,1500.0,1500.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+14,Distribuidor de corriente 4 salidas,500,CUP,FAC-VITALLCONS-001,2026-07-01,active,16.0000,500.0,CUP,1.0000,500.0,500.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+15,Cemento Cola,10000,CUP,FAC-VITALLCONS-001,2026-07-01,active,33.0000,10000.0,CUP,1.0000,10000.0,0.896103896103896103894805,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+15,Cemento Cola,10000,CUP,IMPORT-ENERVIDA-716,2026-09-24,active,50.0000,1,CUP,1.0000,1.0,0.896103896103896103894805,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+16,Cemento P425 Tudella,12500,CUP,FAC-VITALLCONS-001,2026-07-01,active,23.0000,12500.0,CUP,1.0000,12500.0,12500.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+17,Césped Artificial,6500,CUP,FAC-VITALLCONS-001,2026-07-01,active,27.0000,6500.0,CUP,1.0000,6500.0,6500.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+18,Cheques metálicos,3500,CUP,FAC-VITALLCONS-001,2026-07-01,active,4.0000,3500.0,CUP,1.0000,3500.0,3500.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+19,Codo de 90,200,CUP,FAC-VITALLCONS-001,2026-07-01,active,29.0000,200.0,CUP,1.0000,200.0,200.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+20,Codos de 45 grado,200,CUP,FAC-VITALLCONS-001,2026-07-01,active,15.0000,200.0,CUP,1.0000,200.0,200.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+21,Colchón Milexus,220,USD,FAC-VITALLCONS-001,2026-07-01,active,1.0000,220.0,USD,680.0000,149600.0,0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+22,Conectores MC4,7,USD,FAC-VITALLCONS-001,2026-07-01,active,226.0000,7.0,USD,680.0000,4760.0,0.300751879699248120301,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+22,Conectores MC4,7,USD,IMPORT-ENERVIDA-801,2026-10-01,active,40.0000,1,CUP,1.0000,1.0,0.300751879699248120301,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+24,Cuchilla 2P 63A,18,USD,FAC-VITALLCONS-001,2026-07-01,active,4.0000,18.0,USD,680.0000,12240.0,0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+25,Cuchilla 3P 100A,25,USD,IMPORT-ENERVIDA-645,2026-09-19,active,1.0000,12000,CUP,1.0000,12000.0,12000.00000000000000000,C2,"costo registrado por importación, plausible (< precio), procedencia no verificable"
+26,Disco de esmeril,2000,CUP,FAC-VITALLCONS-001,2026-07-01,active,3.0000,2000.0,CUP,1.0000,2000.0,2000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+27,Escobas,1800,CUP,FAC-VITALLCONS-001,2026-07-01,active,9.0000,1800.0,CUP,1.0000,1800.0,1800.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+28,Espejo,5000,CUP,FAC-VITALLCONS-001,2026-07-01,active,35.0000,5000.0,CUP,1.0000,5000.0,5000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+29,Expansiones 8x80,200,CUP,FAC-VITALLCONS-001,2026-07-01,active,532.0000,200.0,CUP,1.0000,200.0,200.0000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+30,Expansiones anaranjada 6*40mm /Rapita,150,CUP,FAC-VITALLCONS-001,2026-07-01,active,100.0000,150.0,CUP,1.0000,150.0,25.00000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+30,Expansiones anaranjada 6*40mm /Rapita,150,CUP,IMPORT-ENERVIDA-642,2026-09-19,active,100.0000,25,CUP,1.0000,25.0,25.00000000000000000,C2,"costo registrado por importación, plausible (< precio), procedencia no verificable"
+31,Expansiones con tornillos M6,350,CUP,FAC-VITALLCONS-001,2026-07-01,active,95.0000,350.0,CUP,1.0000,350.0,350.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+32,Expansiones con tornillos M8,400,CUP,FAC-VITALLCONS-001,2026-07-01,active,28.0000,400.0,CUP,1.0000,400.0,400.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+33,Extensiones 5M,6000,CUP,IMPORT-ENERVIDA-799,2026-10-01,active,6.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+34,Fregadero,23000,CUP,FAC-VITALLCONS-001,2026-07-01,active,4.0000,23000.0,CUP,1.0000,23000.0,23000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+35,Fuerte eléctrico,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,68.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+36,Impermeable verde 20Kg,110,USD,FAC-VITALLCONS-001,2026-07-01,active,2.0000,110.0,USD,680.0000,74800.0,1.00000000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+37,J de techo,50,CUP,FAC-VITALLCONS-001,2026-07-01,active,11.0000,50.0,CUP,1.0000,50.0,0.96000000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+38,Lampara de 20,3200,CUP,FAC-VITALLCONS-001,2026-07-01,active,27.0000,3200.0,CUP,1.0000,3200.0,3200.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+39,Tubo de Lampara de 40,2800,CUP,FAC-VITALLCONS-001,2026-07-01,active,39.0000,2800.0,CUP,1.0000,2800.0,2800.0000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+40,Latiguillo de media por 3/8,1000,CUP,FAC-VITALLCONS-001,2026-07-01,active,7.0000,1000.0,CUP,1.0000,1000.0,0.14285714285714285714,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+42,Llave de lavamano,3000,CUP,FAC-VITALLCONS-001,2026-07-01,active,3.0000,3000.0,CUP,1.0000,3000.0,3000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+43,Losa aporcelanada 60x60,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,6.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+44,Losa aporcelanada 60x60 con defectos,0,CUP,INV-INIT-2026-08-10,2026-08-10,active,4.0000,5040,CUP,1.0000,5040.0,0,C2/C5,costo registrado sin precio de referencia comparable
+45,Malla perli,40000,CUP,FAC-VITALLCONS-001,2026-07-01,active,4.0000,40000.0,CUP,1.0000,40000.0,40000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+46,Masilla interior blanca,22000,CUP,FAC-VITALLCONS-001,2026-07-01,active,5.0000,22000.0,CUP,1.0000,22000.0,22000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+46,Masilla interior blanca,22000,CUP,INV-INIT-2026-08-10,2026-08-10,active,13.0000,22000,CUP,1.0000,22000.0,22000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+47,Mortero,8000,CUP,FAC-VITALLCONS-001,2026-07-01,active,39.0000,14000.0,CUP,1.0000,14000.0,0.612244897959183673469,C2,"costo registrado, procedencia económica no verificable"
+47,Mortero,8000,CUP,IMPORT-ENERVIDA-715,2026-09-24,active,30.0000,1,CUP,1.0000,1.0,0.612244897959183673469,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+48,Nudo de media,250,CUP,FAC-VITALLCONS-001,2026-07-01,active,38.0000,250.0,CUP,1.0000,250.0,250,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+49,Nudos de 3/4,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,8.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+50,Nudos de 50,250,CUP,FAC-VITALLCONS-001,2026-07-01,active,10.0000,250.0,CUP,1.0000,250.0,250.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+51,Pintura Casa Blanca 14L,32500,CUP,FAC-VITALLCONS-001,2026-07-01,active,20.0000,32500.0,CUP,1.0000,32500.0,32500.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+51,Pintura Casa Blanca 14L,32500,CUP,INV-INIT-2026-08-10,2026-08-10,active,13.0000,32500,CUP,1.0000,32500.0,32500.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+52,Pintura Verde 4L,2500,CUP,FAC-VITALLCONS-001,2026-07-01,active,44.0000,2500.0,CUP,1.0000,2500.0,2500.0000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+55,Purles,20000,CUP,FAC-VITALLCONS-001,2026-07-01,active,13.0000,20000.0,CUP,1.0000,20000.0,1.00000000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+56,Reducido de 3/4,350,CUP,FAC-VITALLCONS-001,2026-07-01,active,5.0000,350.0,CUP,1.0000,350.0,350.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+57,Rodillo,2500,CUP,FAC-VITALLCONS-001,2026-07-01,active,7.0000,2500.0,CUP,1.0000,2500.0,2500.0000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+59,Soporte de papel higiénico,2500,CUP,FAC-VITALLCONS-001,2026-07-01,active,1.0000,2500.0,CUP,1.0000,2500.0,2500.0000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+61,T de media,250,CUP,FAC-VITALLCONS-001,2026-07-01,active,26.0000,250.0,CUP,1.0000,250.0,250.0000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+62,T de pulgada a 3/4,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,4.0000,1,CUP,1.0000,1.0,1.00000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+63,Tanqueta de Aceite negro 20 L,69900,CUP,FAC-VITALLCONS-001,2026-07-01,active,1.0000,69900.0,CUP,1.0000,69900.0,69900.000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+64,Tanqueta de antioxidante gris 20L,69900,CUP,FAC-VITALLCONS-001,2026-07-01,active,1.0000,69900.0,CUP,1.0000,69900.0,69900.000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+65,Terminales eléctricas,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,204.0000,1,CUP,1.0000,1.0,1.00000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+67,Transfer monofásico,45,USD,FAC-VITALLCONS-001,2026-07-01,active,1.0000,45.0,USD,680.0000,30600.0,30600.000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+68,Transfer trifásico,65,USD,FAC-VITALLCONS-001,2026-07-01,active,12.0000,65.0,USD,680.0000,44200.0,44200.000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+69,Unión universal de 3/4,800,CUP,FAC-VITALLCONS-001,2026-07-01,active,4.0000,800.0,CUP,1.0000,800.0,800.0000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+70,Unión universal de media,600,CUP,FAC-VITALLCONS-001,2026-07-01,active,82.0000,600.0,CUP,1.0000,600.0,600.0000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+71,Uniones de media/Niple macho,150,CUP,FAC-VITALLCONS-001,2026-07-01,active,108.0000,150.0,CUP,1.0000,150.0,150.0000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+72,Yee de 50,250,CUP,FAC-VITALLCONS-001,2026-07-01,active,6.0000,250.0,CUP,1.0000,250.0,250.0000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+73,Interruptor doble,1500,CUP,FAC-VITALLCONS-001,2026-07-01,active,10.0000,1500.0,CUP,1.0000,1500.0,1500.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+74,Controlador de línea,6000,CUP,FAC-VITALLCONS-001,2026-07-01,active,4.0000,6000.0,CUP,1.0000,6000.0,6000.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+75,Espigas de 15 AMP,1000,CUP,FAC-VITALLCONS-001,2026-07-01,active,8.0000,1000.0,CUP,1.0000,1000.0,750.00000000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+75,Espigas de 15 AMP,1000,CUP,IMPORT-ENERVIDA-643,2026-09-19,active,2.0000,500,CUP,1.0000,500.0,750.00000000000000000000,C2,"costo registrado por importación, plausible (< precio), procedencia no verificable"
+76,Toma corriente con tapa,1500,CUP,FAC-VITALLCONS-001,2026-07-01,active,16.0000,1500.0,CUP,1.0000,1500.0,1250.00000000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+76,Toma corriente con tapa,1500,CUP,IMPORT-ENERVIDA-641,2026-09-19,active,2.0000,1000,CUP,1.0000,1000.0,1250.00000000000000000000,C2,"costo registrado por importación, plausible (< precio), procedencia no verificable"
+77,Teipe negro,1000,CUP,FAC-VITALLCONS-001,2026-07-01,active,22.0000,1000.0,CUP,1.0000,1000.0,1000.0000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+79,Interruptor y toma corriente,1500,CUP,FAC-VITALLCONS-001,2026-07-01,active,10.0000,1500.0,CUP,1.0000,1500.0,1500.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+80,Brecker C32A Doble,5,USD,FAC-VITALLCONS-001,2026-07-01,active,1.0000,5.0,USD,680.0000,3400.0,0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+81,Bridas de 4x8 400mm,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,401.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+82,Crimpiadora con pela cable Anaranjada,200,USD,FAC-VITALLCONS-001,2026-07-01,active,1.0000,200.0,USD,680.0000,136000.0,0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+83,Crimpiadora Roja con 6 dabas rojas,180,USD,FAC-VITALLCONS-001,2026-07-01,active,3.0000,180.0,USD,680.0000,122400.0,0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+84,Conector XT60,6500,CUP,FAC-VITALLCONS-001,2026-07-01,active,66.0000,6500.0,CUP,1.0000,6500.0,6500.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+85,Panel 585,380,USD,FAC-VITALLCONS-001,2026-07-01,active,5.0000,380.0,USD,680.0000,258400.0,0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+86,Panel + 600W,330,USD,FAC-VITALLCONS-001,2026-07-01,active,58.0000,370.0,USD,680.0000,251600.0,0,C6,unit_cost ≈ precio de venta USD (desviación ≤15%)
+87,Cable Solar Negro 4mm,4.5,USD,FAC-VITALLCONS-001,2026-07-01,active,339.0000,4.5,USD,680.0000,3060.0,0.79152308752584424534898351136802,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+87,Cable Solar Negro 4mm,4.5,USD,INV-INIT-2026-08-10,2026-08-10,active,100.0000,3060,CUP,1.0000,3060.0,0.79152308752584424534898351136802,C4+C6,costo CUP = precio USD × 680 (doble conversión / precio como costo)
+87,Cable Solar Negro 4mm,4.5,USD,IMPORT-ENERVIDA-539,2026-09-09,active,100.0000,1,CUP,1.0000,1.0,0.79152308752584424534898351136802,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+87,Cable Solar Negro 4mm,4.5,USD,IMPORT-ENERVIDA-783,2026-09-30,active,100.0000,1,CUP,1.0000,1.0,0.79152308752584424534898351136802,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+88,Cable Solar Rojo 4mm,4.5,USD,FAC-VITALLCONS-001,2026-07-01,active,444.5000,4.5,USD,680.0000,3060.0,0.8960997442455242966761636777,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+88,Cable Solar Rojo 4mm,4.5,USD,IMPORT-ENERVIDA-540,2026-09-09,active,100.0000,1,CUP,1.0000,1.0,0.8960997442455242966761636777,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+88,Cable Solar Rojo 4mm,4.5,USD,IMPORT-ENERVIDA-784,2026-09-30,active,100.0000,1,CUP,1.0000,1.0,0.8960997442455242966761636777,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+89,Cable Solar Negro 6mm,5,USD,FAC-VITALLCONS-001,2026-07-01,active,122.5000,5.0,USD,680.0000,3400.0,0.869565217391304347826,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+89,Cable Solar Negro 6mm,5,USD,IMPORT-ENERVIDA-678,2026-09-22,active,100.0000,1,CUP,1.0000,1.0,0.869565217391304347826,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+90,Cable Solar Rojo 6mm,5,CUP,FAC-VITALLCONS-001,2026-07-01,active,173.0000,5.0,USD,680.0000,3400.0,0.751879699248120300752,C2,"costo registrado, procedencia económica no verificable"
+90,Cable Solar Rojo 6mm,5,CUP,IMPORT-ENERVIDA-679,2026-09-22,active,100.0000,1,CUP,1.0000,1.0,0.751879699248120300752,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+92,Juego de pata,30,USD,FAC-VITALLCONS-001,2026-07-01,active,12.0000,1,CUP,1.0000,1.0,0.944444444444444444446667,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+92,Juego de pata,30,USD,IMPORT-ENERVIDA-738,2026-09-26,active,20.0000,1,CUP,1.0000,1.0,0.944444444444444444446667,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+94,Barrena 6mm Madera,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,3.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+95,Barrena 34mm Madera,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,36.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+96,Barrena 5mm Madera,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,212.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+97,Disco de corte,250,CUP,FAC-VITALLCONS-001,2026-07-01,active,122.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+98,Limpia parabrisa,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,42.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+99,Electrodo 4mm,0,CUP,IMPORT-ENERVIDA-478,2026-09-02,active,153.0000,1,CUP,1.0000,1.0,1.000000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+100,Autorroscante chiquito,50,CUP,FAC-VITALLCONS-001,2026-07-01,active,155.0000,1,CUP,1.0000,1.0,14.580291970802919708029197,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+100,Autorroscante chiquito,50,CUP,IMPORT-ENERVIDA-644,2026-09-19,active,114.0000,35,CUP,1.0000,35.0,14.580291970802919708029197,C2,"costo registrado por importación, plausible (< precio), procedencia no verificable"
+103,Perfiles para brecker,500,CUP,FAC-VITALLCONS-001,2026-07-01,active,15.0000,1,CUP,1.0000,1.0,1.00000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+104,Terminales cubanas,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,20.0000,1,CUP,1.0000,1.0,1.00000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+106,Tornillo con arandela,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,377.0000,1,CUP,1.0000,1.0,1.00000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+107,Caja de distribución TRIC,25,USD,FAC-VITALLCONS-001,2026-07-01,active,5.0000,25.0,USD,680.0000,17000.0,17000.000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+108,Cajita Breckera sencilla gris,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,2.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+109,inicio Z,1200,CUP,FAC-VITALLCONS-001,2026-07-01,active,107.0000,1200.0,CUP,1.0000,1200.0,720.400000000000000000000,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+109,inicio Z,1200,CUP,IMPORT-ENERVIDA-800,2026-10-01,active,10.0000,1,CUP,1.0000,1.0,720.400000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+110,Intermedio,1200,CUP,FAC-VITALLCONS-001,2026-07-01,active,219.0000,1200.0,CUP,1.0000,1200.0,1200.0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+111,Grapas plasticas con clavo de acero,2500,USD,FAC-VITALLCONS-001,2026-07-01,active,49.0000,2500.0,USD,680.0000,1700000.0,0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+112,Grapas metalicas 3/4 con tornillo roscante,1000,USD,FAC-VITALLCONS-001,2026-07-01,active,100.0000,1000.0,USD,680.0000,680000.0,1,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+113,Goma Termo Retractil,100,CUP,FAC-VITALLCONS-001,2026-07-01,active,126.0000,200.0,CUP,1.0000,200.0,0.42713567839195979899,C2,"costo registrado, procedencia económica no verificable"
+115,Canaleta ,1000,CUP,FAC-VITALLCONS-001,2026-07-01,active,37.0000,1,CUP,1.0000,1.0,0.526315789473684210526,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+115,Canaleta ,1000,CUP,IMPORT-ENERVIDA-739,2026-09-26,active,30.0000,1,CUP,1.0000,1.0,0.526315789473684210526,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+116,Herraje,0,CUP,FAC-VITALLCONS-001,2026-07-01,active,2.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+117,Inversor,3200,USD,FAC-VITALLCONS-001,2026-07-01,active,6.0000,3200.0,USD,680.0000,2176000.0,0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+118,Barilla de Tierra,80,USD,FAC-VITALLCONS-001,2026-07-01,active,3.0000,80.0,USD,680.0000,54400.0,0,C6,"unit_cost = precio de venta (idéntico, misma moneda)"
+119,Yee MC4,15,USD,FAC-VITALLCONS-001,2026-07-01,active,20.0000,10.0,USD,680.0000,6800.0,6800.0000000000000000,C2,"costo registrado, procedencia económica no verificable"
+120,Estación de carga,2200,USD,FAC-VITALLCONS-001,2026-07-01,active,1.0000,1,CUP,1.0000,1.0,1.0,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+121,Supresores,30,USD,INV-INIT-ELEC-2026-08-10,2026-08-10,active,10.0000,20400,CUP,1.0000,20400.0,20400.000000000000,C4+C6,costo CUP = precio USD × 680 (doble conversión / precio como costo)
+122,Controladores de voltaje,35,USD,INV-INIT-ELEC-2026-08-10,2026-08-10,active,10.0000,23800,CUP,1.0000,23800.0,0,C4+C6,costo CUP = precio USD × 680 (doble conversión / precio como costo)
+123,Alarma,120,USD,INV-INIT-ELEC-2026-08-10,2026-08-10,active,5.0000,81600,CUP,1.0000,81600.0,0.33333333333333333333,C4+C6,costo CUP = precio USD × 680 (doble conversión / precio como costo)
+128,Brecker 63 AMP Corriente alterna,20,USD,INV-INIT-ELEC-2026-08-10,2026-08-10,active,5.0000,13600,CUP,1.0000,13600.0,0.78571428571428571429,C4+C6,costo CUP = precio USD × 680 (doble conversión / precio como costo)
+131,Panel de 550W,295,USD,IMPORT-ENERVIDA-522,2026-09-09,active,2.0000,1,CUP,1.0000,1.0,1.0000000000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+131,Panel de 550W,295,USD,IMPORT-ENERVIDA-613,2026-09-18,active,8.0000,1,CUP,1.0000,1.0,1.0000000000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+137,Tubo blanco de condulei  de 1/2 de 5M,0,CUP,IMPORT-ENERVIDA-521,2026-09-09,active,200.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+138,Kid de 6 K Inversor - 5K Bateria +Accesorios,3250,USD,IMPORT-ENERVIDA-605,2026-09-18,active,1.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+139,Panel de 640 W Suntech,210,USD,IMPORT-ENERVIDA-607,2026-09-18,active,63.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+140,Breckera de 9 posiciones,30,USD,IMPORT-ENERVIDA-710,2026-09-24,active,1.0000,1,CUP,1.0000,1.0,1.000000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+141,Cemento TBV 50 Kg,20000,CUP,IMPORT-ENERVIDA-714,2026-09-24,active,50.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+142,Cemento Blanco 2 Kg,2000,CUP,IMPORT-ENERVIDA-717,2026-09-24,active,30.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+143,Filtros de Gasolina,0,CUP,IMPORT-ENERVIDA-766,2026-09-30,active,28.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+144,Fusible de auntomovil,0,CUP,IMPORT-ENERVIDA-767,2026-09-30,active,300.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+145,Tunder 24 Vol,80,USD,IMPORT-ENERVIDA-768,2026-09-30,active,1.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+146,Tunder Grande,150,USD,IMPORT-ENERVIDA-769,2026-09-30,active,1.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+147,MPPT,120,USD,IMPORT-ENERVIDA-771,2026-09-30,active,9.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+148,Huncong (Medir corriente),0,CUP,IMPORT-ENERVIDA-772,2026-09-30,active,2.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+149,Voltímetro,0,CUP,IMPORT-ENERVIDA-773,2026-09-30,active,1.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+150,Batería 7.5 Kilos 21.8 V 314 Ah,0,CUP,IMPORT-ENERVIDA-774,2026-09-30,active,10.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+151,Inversor Sumry,0,CUP,IMPORT-ENERVIDA-775,2026-09-30,active,5.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+152,Equipo Música DAZONE,250,USD,IMPORT-ENERVIDA-776,2026-09-30,active,1.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+153,Taladro con bateria y barrena,0,CUP,IMPORT-ENERVIDA-777,2026-09-30,active,1.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+154,Breckera de 12 posiciones,30,USD,IMPORT-ENERVIDA-798,2026-10-01,active,6.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+155,Compresor de aire,0,CUP,IMPORT-ENERVIDA-770,2026-09-30,active,2.0000,1,CUP,1.0000,1.0,1.000000000000000000000,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+999,Servicio de crimpiar,1,USD,FAC-VITALLCONS-001,2026-07-01,active,4.0000,1,CUP,1.0000,1.0,443.82608695652173910435,C3,costo nominal 1 CUP (convención 'sin dato'; RPC exige >0)
+999,Servicio de crimpiar,1,USD,INV-INIT-SERV-2026-08-10,2026-08-10,active,20.0000,680,CUP,1.0000,680.0,443.82608695652173910435,C4+C6,costo CUP = precio USD × 680 (doble conversión / precio como costo)

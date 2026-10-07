@@ -1,0 +1,487 @@
+{
+ "meta": {
+  "tarea": "TAREA 2C — AUDITORÍA FORENSE DE PROCEDENCIA Y VALIDEZ DE COSTOS HISTÓRICOS",
+  "tienda": "ENERVIDA-VITALLCONS",
+  "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+  "fecha": "2026-10-07",
+  "modo": "READ-ONLY (0 escrituras)",
+  "baseline_main": "466f4b9cb4",
+  "rama": "audit/enervida-cost-provenance",
+  "fuente_datos": "Supabase Management API database/query (live) + código/migraciones del repo",
+  "nota": "No incluye secretos. Valores monetarios en las unidades registradas en BD."
+ },
+ "resumen_censo_items": {
+  "total_receipt_items": 153,
+  "clasificacion": {
+   "C2": 9,
+   "C2/C5": 1,
+   "C3": 59,
+   "C4+C6": 6,
+   "C6": 78
+  },
+  "nota_C1": "C1 (costo real documentado): 0 items — no existe evidencia documental externa (facturas/adjuntos) en el sistema"
+ },
+ "fuentes_de_recepciones": {
+  "PRECORTE_USUARIO_FAC-VITALLCONS-001": {
+   "receipts": 1,
+   "items": 101,
+   "creada": "2026-08-11 22:49 UTC (retrofecha 2026-07-01)",
+   "detalle": "79 items CUP@1.0 (32 con uc=precio exacto, 12 con uc=1, resto sin WAC vigente) + 22 items USD@680 (uc = precio USD)",
+   "sin_evento_audit": true
+  },
+  "INVENTARIO_INICIAL_2026-08-10": {
+   "receipts": 3,
+   "items": 9,
+   "registradas_via_RPC": "2026-08-18 03:58–04:03 UTC (retrofecha 2026-08-10)",
+   "detalle": "6 items con costo CUP = precioUSD×680 (121,122,123,128,87,999); 2 con uc = precio CUP (46,51); 1 sin precio (SKU 44, uc=5040)"
+  },
+  "IMPORTACION_EXCEL_2026-10-04": {
+   "receipts": 43,
+   "items": 43,
+   "usuario": "admin@demo.com",
+   "detalle": "38 items uc=1 CUP nominal (GATE decisión 9: 'costo nominal 1 CUP sin dato') + 5 items 'con dinero' (SKU 100:35, 25:12000, 30:25, 75:500, 76:1000 CUP)"
+  }
+ },
+ "los_13_pendientes": [
+  {
+   "sku": 9,
+   "producto": "Brecker D63 A",
+   "precio": "25",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "1.0000",
+   "recepciones": [
+    {
+     "reference_doc": "FAC-VITALLCONS-001",
+     "fecha": "2026-07-01",
+     "unit_cost": "25.0",
+     "moneda": "USD",
+     "tasa": "680.0000",
+     "unit_cost_cup": 17000.0,
+     "clasificacion": "C6"
+    }
+   ]
+  },
+  {
+   "sku": 21,
+   "producto": "Colchón Milexus",
+   "precio": "220",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "0.0000",
+   "recepciones": [
+    {
+     "reference_doc": "FAC-VITALLCONS-001",
+     "fecha": "2026-07-01",
+     "unit_cost": "220.0",
+     "moneda": "USD",
+     "tasa": "680.0000",
+     "unit_cost_cup": 149600.0,
+     "clasificacion": "C6"
+    }
+   ]
+  },
+  {
+   "sku": 24,
+   "producto": "Cuchilla 2P 63A",
+   "precio": "18",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "0.0000",
+   "recepciones": [
+    {
+     "reference_doc": "FAC-VITALLCONS-001",
+     "fecha": "2026-07-01",
+     "unit_cost": "18.0",
+     "moneda": "USD",
+     "tasa": "680.0000",
+     "unit_cost_cup": 12240.0,
+     "clasificacion": "C6"
+    }
+   ]
+  },
+  {
+   "sku": 44,
+   "producto": "Losa aporcelanada 60x60 con defectos",
+   "precio": "0",
+   "moneda_precio": "CUP",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "0.0000",
+   "recepciones": [
+    {
+     "reference_doc": "INV-INIT-2026-08-10",
+     "fecha": "2026-08-10",
+     "unit_cost": "5040",
+     "moneda": "CUP",
+     "tasa": "1.0000",
+     "unit_cost_cup": 5040.0,
+     "clasificacion": "C2/C5"
+    }
+   ]
+  },
+  {
+   "sku": 80,
+   "producto": "Brecker C32A Doble",
+   "precio": "5",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "0.0000",
+   "recepciones": [
+    {
+     "reference_doc": "FAC-VITALLCONS-001",
+     "fecha": "2026-07-01",
+     "unit_cost": "5.0",
+     "moneda": "USD",
+     "tasa": "680.0000",
+     "unit_cost_cup": 3400.0,
+     "clasificacion": "C6"
+    }
+   ]
+  },
+  {
+   "sku": 82,
+   "producto": "Crimpiadora con pela cable Anaranjada",
+   "precio": "200",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "0.0000",
+   "recepciones": [
+    {
+     "reference_doc": "FAC-VITALLCONS-001",
+     "fecha": "2026-07-01",
+     "unit_cost": "200.0",
+     "moneda": "USD",
+     "tasa": "680.0000",
+     "unit_cost_cup": 136000.0,
+     "clasificacion": "C6"
+    }
+   ]
+  },
+  {
+   "sku": 83,
+   "producto": "Crimpiadora Roja con 6 dabas rojas",
+   "precio": "180",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "3.0000",
+   "recepciones": [
+    {
+     "reference_doc": "FAC-VITALLCONS-001",
+     "fecha": "2026-07-01",
+     "unit_cost": "180.0",
+     "moneda": "USD",
+     "tasa": "680.0000",
+     "unit_cost_cup": 122400.0,
+     "clasificacion": "C6"
+    }
+   ]
+  },
+  {
+   "sku": 85,
+   "producto": "Panel 585",
+   "precio": "380",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "0.0000",
+   "recepciones": [
+    {
+     "reference_doc": "FAC-VITALLCONS-001",
+     "fecha": "2026-07-01",
+     "unit_cost": "380.0",
+     "moneda": "USD",
+     "tasa": "680.0000",
+     "unit_cost_cup": 258400.0,
+     "clasificacion": "C6"
+    }
+   ]
+  },
+  {
+   "sku": 86,
+   "producto": "Panel + 600W",
+   "precio": "330",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "0.0000",
+   "recepciones": [
+    {
+     "reference_doc": "FAC-VITALLCONS-001",
+     "fecha": "2026-07-01",
+     "unit_cost": "370.0",
+     "moneda": "USD",
+     "tasa": "680.0000",
+     "unit_cost_cup": 251600.0,
+     "clasificacion": "C6"
+    }
+   ]
+  },
+  {
+   "sku": 111,
+   "producto": "Grapas plasticas con clavo de acero",
+   "precio": "2500",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "45.0000",
+   "recepciones": [
+    {
+     "reference_doc": "FAC-VITALLCONS-001",
+     "fecha": "2026-07-01",
+     "unit_cost": "2500.0",
+     "moneda": "USD",
+     "tasa": "680.0000",
+     "unit_cost_cup": 1700000.0,
+     "clasificacion": "C6"
+    }
+   ]
+  },
+  {
+   "sku": 117,
+   "producto": "Inversor",
+   "precio": "3200",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "3.0000",
+   "recepciones": [
+    {
+     "reference_doc": "FAC-VITALLCONS-001",
+     "fecha": "2026-07-01",
+     "unit_cost": "3200.0",
+     "moneda": "USD",
+     "tasa": "680.0000",
+     "unit_cost_cup": 2176000.0,
+     "clasificacion": "C6"
+    }
+   ]
+  },
+  {
+   "sku": 118,
+   "producto": "Barilla de Tierra",
+   "precio": "80",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "0.0000",
+   "recepciones": [
+    {
+     "reference_doc": "FAC-VITALLCONS-001",
+     "fecha": "2026-07-01",
+     "unit_cost": "80.0",
+     "moneda": "USD",
+     "tasa": "680.0000",
+     "unit_cost_cup": 54400.0,
+     "clasificacion": "C6"
+    }
+   ]
+  },
+  {
+   "sku": 122,
+   "producto": "Controladores de voltaje",
+   "precio": "35",
+   "moneda_precio": "USD",
+   "cost_average": "0",
+   "cost_price": "0",
+   "stock_current": "2.0000",
+   "recepciones": [
+    {
+     "reference_doc": "INV-INIT-ELEC-2026-08-10",
+     "fecha": "2026-08-10",
+     "unit_cost": "23800",
+     "moneda": "CUP",
+     "tasa": "1.0000",
+     "unit_cost_cup": 23800.0,
+     "clasificacion": "C4+C6"
+    }
+   ]
+  }
+ ],
+ "los_14_ceros_legitimos": [
+  {
+   "sku": 7,
+   "producto": "Brecker 32A Trifasico",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 10,
+   "producto": "Brida 58",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 23,
+   "producto": "Cuchilla 2P 100A",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 41,
+   "producto": "Latiguillo MC4",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 53,
+   "producto": "Planchas de zinc",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 54,
+   "producto": "Porta Fusibles",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 58,
+   "producto": "Rosca Chapa",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 60,
+   "producto": "Supresores de sobretensiones",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 78,
+   "producto": "Tornillo con tuerca 4.8",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 91,
+   "producto": "Liquidación OT 16",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 93,
+   "producto": "Liquidacion de OT 12",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 101,
+   "producto": "Canal de media",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 105,
+   "producto": "Cajita breckera sencilla",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  },
+  {
+   "sku": 114,
+   "producto": "Combustible",
+   "cost_average": "0",
+   "stock_current": "0.0000",
+   "movimientos": 0,
+   "recepciones": 0
+  }
+ ],
+ "wac_inflados_680x_no_tocados": [
+  {
+   "sku": 67,
+   "producto": "Transfer monofásico",
+   "wac_actual": "30600.000000000000",
+   "precio": "45",
+   "moneda_precio": "USD",
+   "patron": "WAC = 45 USD × 680"
+  },
+  {
+   "sku": 68,
+   "producto": "Transfer trifásico",
+   "wac_actual": "44200.000000000000",
+   "precio": "65",
+   "moneda_precio": "USD",
+   "patron": "WAC = 65 USD × 680"
+  },
+  {
+   "sku": 107,
+   "producto": "Caja de distribución TRIC",
+   "wac_actual": "17000.000000000000",
+   "precio": "25",
+   "moneda_precio": "USD",
+   "patron": "WAC = 25 USD × 680"
+  },
+  {
+   "sku": 121,
+   "producto": "Supresores",
+   "wac_actual": "20400.000000000000",
+   "precio": "30",
+   "moneda_precio": "USD",
+   "patron": "WAC = 30 USD × 680"
+  }
+ ],
+ "wac_anomalos_dilucion": [
+  {
+   "sku": 90,
+   "producto": "Cable Solar Rojo 6mm",
+   "wac_actual": "0.751879699248120300752",
+   "nota": "WAC 0.7519 = dilución de recibo USD 5×680=3400 con recepción nominal 1 CUP (IMPORT-ENERVIDA-679)"
+  },
+  {
+   "sku": 999,
+   "producto": "Servicio de crimpiar",
+   "wac_actual": "443.82608695652173910435",
+   "nota": "servicio; WAC 443.83 = dilución de 680 CUP (INV-INIT-SERV) con cuadre nominal 1 CUP"
+  }
+ ],
+ "estado_actual_productos": {
+  "total": 157,
+  "cero": 27,
+  "wac_1": 57,
+  "wac_mayor_1": 58
+ },
+ "wac_change_log": {
+  "primer_registro": "2026-10-04 04:52 UTC",
+  "implicacion": "Escrituras WAC anteriores son era pre-log; 90/101 productos FAC obtuvieron WAC = costo del recibo por escritor no reconstruible (confirm_pending_reception / era pre-v2.22.0)",
+  "transiciones_0_a_1_importacion": 40
+ },
+ "mecanismos_de_codigo": {
+  "register_reception": "unit_cost del llamador; rechaza <=0 (v2.23.0); defaults moneda='CUP', tasa=1.0; llama fn_recalc_wac (REM-F4-04, 2026-09-09)",
+  "no_existe_DEFAULT_1": "buscado en 462 migraciones; el valor 1 fue introducido por el llamador (usuario o importador)",
+  "ui_recepcion": "prefill unit_cost = products.cost_price (useReceptionState.ts:219,544,580); pegado Excel 'Costo Unitario' (:691)",
+  "validacion_F21": "ruta API + CHECK BD rechazan tasa<=1.5 para no-CUP (20260703000003); el RPC puro no la tiene",
+  "perform_inventory_adjustment": "Δ>0 mezcla WAC con uc=COALESCE(p_unit_cost_adjustment, cost_average, cost_price)"
+ }
+}
