@@ -1,0 +1,244 @@
+{
+ "meta": {
+  "tarea": "TAREA 2B — CIERRE CONTROLADO cost_average=0",
+  "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+  "fecha_snapshot": "2026-10-07 11:50:15.064391+00",
+  "rama": "audit/enervida-zero-cost-cierre",
+  "decision": "DECISIÓN CONTABLE EXPLÍCITA: WAC nominal = 1 CUP para saneamiento de cost_average=0. No representa reconstrucción demostrada del costo histórico.",
+  "nota": "No incluye secretos. Snapshot posterior a las 13 escrituras gobernadas."
+ },
+ "productos_13_despues": [
+  {
+   "sku": "9",
+   "name": "Brecker D63 A",
+   "cost_average": "1",
+   "stock_current": "1.0000"
+  },
+  {
+   "sku": "21",
+   "name": "Colchón Milexus",
+   "cost_average": "1",
+   "stock_current": "0.0000"
+  },
+  {
+   "sku": "24",
+   "name": "Cuchilla 2P 63A",
+   "cost_average": "1",
+   "stock_current": "0.0000"
+  },
+  {
+   "sku": "44",
+   "name": "Losa aporcelanada 60x60 con defectos",
+   "cost_average": "1",
+   "stock_current": "0.0000"
+  },
+  {
+   "sku": "80",
+   "name": "Brecker C32A Doble",
+   "cost_average": "1",
+   "stock_current": "0.0000"
+  },
+  {
+   "sku": "82",
+   "name": "Crimpiadora con pela cable Anaranjada",
+   "cost_average": "1",
+   "stock_current": "0.0000"
+  },
+  {
+   "sku": "83",
+   "name": "Crimpiadora Roja con 6 dabas rojas",
+   "cost_average": "1",
+   "stock_current": "3.0000"
+  },
+  {
+   "sku": "85",
+   "name": "Panel 585",
+   "cost_average": "1",
+   "stock_current": "0.0000"
+  },
+  {
+   "sku": "86",
+   "name": "Panel + 600W",
+   "cost_average": "1",
+   "stock_current": "0.0000"
+  },
+  {
+   "sku": "111",
+   "name": "Grapas plasticas con clavo de acero",
+   "cost_average": "1",
+   "stock_current": "45.0000"
+  },
+  {
+   "sku": "117",
+   "name": "Inversor",
+   "cost_average": "1",
+   "stock_current": "3.0000"
+  },
+  {
+   "sku": "118",
+   "name": "Barilla de Tierra",
+   "cost_average": "1",
+   "stock_current": "0.0000"
+  },
+  {
+   "sku": "122",
+   "name": "Controladores de voltaje",
+   "cost_average": "1",
+   "stock_current": "2.0000"
+  }
+ ],
+ "trazabilidad_wac_13": [
+  {
+   "sku": "9",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-009",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:38:08.404809+00"
+  },
+  {
+   "sku": "21",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-021",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:38:14.464837+00"
+  },
+  {
+   "sku": "24",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-024",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:38:20.127415+00"
+  },
+  {
+   "sku": "44",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-044",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:38:25.914273+00"
+  },
+  {
+   "sku": "80",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-080",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:38:51.204494+00"
+  },
+  {
+   "sku": "82",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-082",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:38:57.854454+00"
+  },
+  {
+   "sku": "83",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-083",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:39:04.106036+00"
+  },
+  {
+   "sku": "85",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-085",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:39:09.74696+00"
+  },
+  {
+   "sku": "86",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-086",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:39:34.613625+00"
+  },
+  {
+   "sku": "111",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-111",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:39:40.310871+00"
+  },
+  {
+   "sku": "117",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-117",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:39:45.998326+00"
+  },
+  {
+   "sku": "118",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-118",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:39:51.713525+00"
+  },
+  {
+   "sku": "122",
+   "wac_before": "0",
+   "wac_after": "1",
+   "event": "wac_correction",
+   "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-122",
+   "method": "governed_admin_write",
+   "changed_by": "a1111111-1111-1111-1111-111111111111",
+   "created_at": "2026-10-07 11:40:17.714075+00"
+  }
+ ],
+ "censo_final": {
+  "total": 157,
+  "cero": 14,
+  "uno": 70,
+  "mayor": 58,
+  "entre_0_y_1": 15
+ },
+ "wac_change_log_total_despues": 134,
+ "flags_df02_total_despues": 22,
+ "validaciones": {
+  "13/13 WAC = 1": true,
+  "13/13 trazabilidad": true,
+  "stock intacto 13/13": true,
+  "44 correcciones anteriores intactas": true,
+  "14 ceros legítimos permanecen en 0": true,
+  "reconciliación 157/157 delta=0": true,
+  "71/71 stock idéntico al snapshot": true,
+  "Δ movimientos = 0": true,
+  "Δ transacciones = 0": true,
+  "Δ históricos = 0": true,
+  "0 otras tiendas modificadas por esta tarea": true
+ }
+}
