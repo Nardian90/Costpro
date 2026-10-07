@@ -693,6 +693,7 @@ export default function StoreCatalogView() {
             {/* Confirmación de acción masiva — afecta la vitrina pública (§22) */}
             {bulkConfirm && (
                 <DestructiveConfirmModal
+                    key={`bulk-${bulkConfirm.op.field}-${bulkConfirm.op.value}-${selected.size}`}
                     isOpen={!!bulkConfirm}
                     onClose={() => !isBulkRunning && setBulkConfirm(null)}
                     title={`${bulkConfirm.op.label} — ${selected.size} producto${selected.size === 1 ? '' : 's'}`}
@@ -700,6 +701,14 @@ export default function StoreCatalogView() {
                         bulkConfirm.op.field === 'visible_en_tienda'
                             ? `Esta acción cambia INMEDIATAMENTE qué productos ve el cliente en la vitrina pública. ${bulkConfirm.op.value ? 'Los productos aparecerán publicados.' : 'Los productos dejarán de ser visibles.'}`
                             : `Esta acción cambia la configuración comercial de ${selected.size} producto${selected.size === 1 ? '' : 's'} y se refleja en la vitrina al instante.`
+                    }
+                    confirmName="BULK"
+                    confirmNameLabel="Escribe BULK para confirmar"
+                    warningText={
+                        <>
+                            Vas a <strong>{bulkConfirm.op.label.toLowerCase()}</strong> {selected.size} producto{selected.size === 1 ? '' : 's'}
+                            {bulkConfirm.op.field === 'visible_en_tienda' ? ' — esto cambia INMEDIATAMENTE la vitrina pública.' : '.'}
+                        </>
                     }
                     confirmLabel={isBulkRunning ? 'Aplicando…' : `Sí, ${bulkConfirm.op.label.toLowerCase()}`}
                     onConfirm={() => runBulk(bulkConfirm.op)}
