@@ -118,6 +118,7 @@ const ReceivedServicesView = dynamic(() => import('@/components/views/terminal/v
 const IPVView = dynamic(() => import('@/components/views/terminal/views/ipv/IPVView'), { ssr: false });
 const AcademyView = dynamic(() => import('@/components/views/terminal/views/academy/AcademyView'), { ssr: false });
 const InventoryAdjustmentsView = dynamic(() => import('@/components/views/terminal/views/inventory/InventoryAdjustmentsView'), { ssr: false });
+const ValesSalidaView = dynamic(() => import('@/components/views/terminal/views/inventory/ValesSalidaView'), { ssr: false });
 const LegalView = dynamic(() => import('@/components/views/terminal/views/legal/LegalView'), { ssr: false });
 const SettingsView = dynamic(() => import('@/components/views/terminal/views/settings/SettingsView'), { ssr: false });
 const HelpView = dynamic(() => import('@/components/views/terminal/views/help/HelpView'), { ssr: false });
@@ -469,6 +470,7 @@ export default function TerminalShell() {
         case 'ipv': return <ViewErrorBoundary viewName="IPV"><IPVView /></ViewErrorBoundary>;
         case 'academy': return <ViewErrorBoundary viewName="Academia"><AcademyView /></ViewErrorBoundary>;
         case 'inventory_adjustments': return <ViewErrorBoundary viewName="Ajustes de Inventario"><InventoryAdjustmentsView /></ViewErrorBoundary>;
+        case 'vales_salida': return <ViewErrorBoundary viewName="Vales de Salida"><ValesSalidaView /></ViewErrorBoundary>;
         case 'legal': return <ViewErrorBoundary viewName="Legal"><LegalView /></ViewErrorBoundary>;
         case 'settings': return <ViewErrorBoundary viewName="Ajustes"><SettingsView /></ViewErrorBoundary>; // F4 (IA-F03): nombre alineado al label de menú "Ajustes"
         case 'help': return <ViewErrorBoundary viewName="Ayuda"><HelpView /></ViewErrorBoundary>;

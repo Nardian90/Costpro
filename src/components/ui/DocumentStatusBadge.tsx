@@ -28,9 +28,11 @@ import {
  * - devolution         (pending, completed, voided, reversed)
  * - adjustment         (pending, confirmed, reversed)
  * - production_order   (draft, approved, in_progress, paused, completed, closed, voided, reversed)
+ * - issue_slip         (completed, voided, reversed) — Vale de Salida (nace completado;
+ *                      la "devolución" es la reversión contable reverse_vale_salida)
  */
 
-type DocType = 'transaction' | 'receipt' | 'transfer' | 'devolution' | 'adjustment' | 'production_order';
+type DocType = 'transaction' | 'receipt' | 'transfer' | 'devolution' | 'adjustment' | 'production_order' | 'issue_slip';
 
 interface BadgeConfig {
   label: string;
@@ -83,6 +85,13 @@ const STATUS_CONFIG: Record<DocType, Record<string, BadgeConfig>> = {
     closed:      { label: 'Cerrada',       icon: CheckCircle2,  className: 'bg-muted text-muted-foreground' },
     voided:      { label: 'Anulada',       icon: Ban,           className: 'bg-destructive/15 text-destructive' },
     reversed:    { label: 'Revertida',     icon: RefreshCcw,    className: 'bg-purple-500/15 text-purple-500 dark:text-purple-400' },
+  },
+  issue_slip: {
+    // Estados REALES de issue_slips (CHECK constraint DB). No existe borrador:
+    // el vale nace 'completed' y su devolución es la reversión compensatoria.
+    completed:   { label: 'Completado',  icon: CheckCircle2,  className: 'bg-success/10 text-success' },
+    voided:      { label: 'Anulado',     icon: Ban,           className: 'bg-destructive/10 text-destructive' },
+    reversed:    { label: 'Devuelto',    icon: RefreshCcw,    className: 'bg-purple-500/10 text-purple-500 dark:text-purple-400' },
   },
 };
 
@@ -165,6 +174,7 @@ export function isTerminalStatus(type: DocType, status: string): boolean {
     devolution: ['voided', 'reversed'],
     adjustment: ['reversed'],
     production_order: ['voided', 'reversed'],
+    issue_slip: ['voided', 'reversed'],
   };
   return terminal[type]?.includes(status) ?? false;
 }
@@ -180,6 +190,7 @@ export function canReverse(type: DocType, status: string): boolean {
     devolution: ['completed'],
     adjustment: ['confirmed'],
     production_order: ['in_progress', 'paused', 'completed', 'closed'],
+    issue_slip: ['completed'],
   };
   return reversible[type]?.includes(status) ?? false;
 }

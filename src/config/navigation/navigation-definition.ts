@@ -220,6 +220,20 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             keywords: ['ajuste', 'merma', 'corrección', 'inventario', 'documental'],
           },
           {
+            // Vista documental de Vales de Salida (issue_slips). Consulta + gestión
+            // (listado, detalle, devolución vía reversión contable existente).
+            // La CREACIÓN sigue viviendo en Ventas → Vender → Carrito (mismo flujo,
+            // misma RPC, misma numeración VS-NNNNNN-YYYY); el botón "Crear" de la
+            // vista abre ese mismo flujo con el modo Vale activado — cero duplicación.
+            id: 'vales_salida',
+            label: 'Vales de Salida',
+            description: 'Centro documental de Vales de Salida: consulta, detalle, trazabilidad y devolución de vales emitidos.',
+            icon: FileText,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'warehouse', 'clerk', 'usuario'],
+            keywords: ['vale', 'vales', 'salida', 'issue slip', 'consumo interno', 'merma', 'descarga', 'documento'],
+          },
+          {
             id: 'labels',
             label: 'Etiquetas y Códigos',
             description: 'Genera etiquetas con código de barras y QR para imprimir en productos y estantes.',
@@ -1301,7 +1315,7 @@ export const MOBILE_MAIN_TABS: MobileMainTab[] = [
     label: 'Inventario',
     icon: Package,
     activeViews: [
-      'inventory', 'history', 'catalog', 'inventory_adjustments',
+      'inventory', 'history', 'catalog', 'inventory_adjustments', 'vales_salida',
       'labels', 'received-services', 'lots', 'warehouses',
     ],
   },
@@ -1321,7 +1335,7 @@ export const MOBILE_MAIN_TABS: MobileMainTab[] = [
 export const VALID_VIEWS: Set<string> = new Set([
   'occ', 'dashboard', 'store-dashboard', 'wallet', 'pos', 'inventory', 'recepcion', 'reception_list',
   'transferencias', 'sales', 'inventory_count', 'cost-sheets', 'reports', 'catalog',
-  'history', 'inventory_adjustments', 'audit', 'cash', 'users', 'roles', 'stores',
+  'history', 'inventory_adjustments', 'vales_salida', 'audit', 'cash', 'users', 'roles', 'stores',
   'storefront-config', 'settings', 'help', 'wiki', 'news', 'rss_management',
   'management-hub', 'ipv', 'academy', 'legal', 'health', 'pick3-intelligence',
   'labels', 'sales_catalog', 'ofertas', 'purchase-orders', 'sales-hub',

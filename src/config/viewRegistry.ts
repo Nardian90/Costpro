@@ -181,6 +181,12 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["create_adjustment"]
   },
   {
+    id: "vales_salida",
+    route: "/?view=vales_salida",
+    description: "Centro documental de Vales de Salida: listado, detalle con trazabilidad y devolución (reversión) de vales emitidos. La creación reutiliza el flujo del carrito de Vender.",
+    actions: ["view_details", "reverse_vale"]
+  },
+  {
     id: "inventory_count",
     route: "/?view=inventory_count",
     description: "Realización de conteos físicos y auditoría de stock.",
