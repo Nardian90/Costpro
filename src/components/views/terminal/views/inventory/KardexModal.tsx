@@ -8,6 +8,9 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { toast } from 'sonner';
 import { useKardex, type KardexEntry } from '@/hooks/api/useKardex';
+// CAPA DE PRESENTACIÓN (§14-18): etiquetas SIEMPRE vía diccionario central.
+// Jamás imprimir movement_type crudo al usuario.
+import { obtenerEtiquetaMovimiento, obtenerClaseMovimiento } from '@/lib/inventory/movementPresentation';
 
 interface KardexModalProps {
   product: Product | null;
@@ -59,7 +62,7 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
     const headers = ['Fecha', 'Tipo', 'Entrada', 'Salida', 'Saldo', 'Referencia'];
     const rows = entries.map(e => [
       formatDate(e.created_at),
-      e.movement_type === 'sale' ? 'Venta' : e.movement_type === 'purchase' ? 'Compra' : e.movement_type === 'adjustment' ? 'Ajuste' : e.movement_type,
+      obtenerEtiquetaMovimiento(e.movement_type),
       e.entry.toString(),
       e.exit.toString(),
       e.running_balance.toString(),
@@ -159,30 +162,14 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
                 </tr>
               ) : (
                 entries.map((entry) => {
-                  // V2.2: mapa completo de movement_type con colores + etiquetas legibles
-                  const mt = entry.movement_type || '';
+                  // CAPA DE PRESENTACIÓN: diccionario centralizado compartido con
+                  // Trazabilidad (movementPresentation.ts). Una sola fuente de
+                  // etiquetas; fallback seguro "Otro" — nunca el enum crudo.
                   const isReversal = entry.reference_type === 'reversal';
-                  const MOVEMENT_INFO: Record<string, { label: string; color: string }> = {
-                    sale:            { label: 'Venta',             color: 'text-primary' },
-                    purchase:        { label: 'Compra',            color: 'text-success' },
-                    adjustment:      { label: 'Ajuste',            color: 'text-warning' },
-                    return:          { label: 'Devolución',        color: 'text-blue-500' },
-                    initial:         { label: 'Inicial',           color: 'text-muted-foreground' },
-                    transfer:        { label: 'Transferencia',     color: 'text-blue-500' },
-                    void:            { label: 'Anulación',         color: 'text-destructive' },
-                    devolution_in:   { label: 'Dev. entrada',      color: 'text-success' },
-                    transfer_in:     { label: 'Transf. ent.',      color: 'text-success' },
-                    transfer_out:    { label: 'Transf. sal.',      color: 'text-destructive' },
-                    out:             { label: 'Salida',            color: 'text-destructive' },
-                    production:      { label: 'Producción',        color: 'text-purple-500' },
-                    // Iteración 11.3 (Aclaración 2): nuevos movement types para reversos v2
-                    sale_reverse:    { label: 'Reverso de venta',    color: 'text-purple-500' },
-                    purchase_reverse:{ label: 'Reverso de recepción',color: 'text-purple-500' },
-                    sale_void:       { label: 'Anulación venta',     color: 'text-destructive' },
-                    production_in:   { label: 'Prod. entrada',       color: 'text-purple-500' },
-                    production_out:  { label: 'Prod. salida',        color: 'text-purple-500' },
+                  const info = {
+                    label: obtenerEtiquetaMovimiento(entry.movement_type),
+                    color: obtenerClaseMovimiento(entry.movement_type),
                   };
-                  const info = MOVEMENT_INFO[mt] || { label: mt || '—', color: 'text-muted-foreground' };
                   return (
                   <tr key={entry.id} className={cn('hover:bg-muted/30 transition-colors', isReversal && 'bg-purple-500/5')}>
                     <td className="px-3 py-2 font-mono text-[11px]">{formatDate(entry.created_at)}</td>
@@ -223,6 +210,8 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
               icon={ChevronLeft}
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1}
+              aria-label="Página anterior del Kardex"
+              title="Página anterior"
               className="px-2 min-w-[44px] min-h-[44px]"
             />
             <span className="flex items-center text-xs font-bold text-muted-foreground">
@@ -233,6 +222,8 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
               icon={ChevronRight}
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
+              aria-label="Página siguiente del Kardex"
+              title="Página siguiente"
               className="px-2 min-w-[44px] min-h-[44px]"
             />
           </div>
