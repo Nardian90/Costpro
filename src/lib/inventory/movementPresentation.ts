@@ -146,7 +146,128 @@ const MOVEMENT_PRESENTATION: Record<string, MovementPresentation> = {
     color: 'text-purple-500',
     badge: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
   },
+  // Valores REALES del enum `public.movement_type` en BD (auditado 2026-10 vía
+  // OpenAPI de PostgREST) que faltaban en este diccionario. Sin ellos, los
+  // vales de salida y sus reversos se mostraban como "Otro" (violación §7).
+  issue_slip_out: {
+    label: 'Vale de salida',
+    kind: 'salida',
+    color: 'text-destructive',
+    badge: 'text-destructive bg-destructive/10 border-destructive/20',
+  },
+  issue_slip_reverse: {
+    label: 'Reverso de vale',
+    kind: 'reverso',
+    color: 'text-purple-500',
+    badge: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
+  },
+  production_reverse: {
+    label: 'Reverso de producción',
+    kind: 'reverso',
+    color: 'text-purple-500',
+    badge: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
+  },
+  devolution_reverse: {
+    label: 'Reverso de devolución',
+    kind: 'reverso',
+    color: 'text-purple-500',
+    badge: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
+  },
 };
+
+/**
+ * Los 18 valores REALES del enum `public.movement_type` en la base de datos
+ * (auditado 2026-10 vía OpenAPI de PostgREST). Fuente de verdad para validar
+ * que los grupos de filtro cubren todo el universo de movimientos posibles
+ * sin inventar tipos (§6 del requisito de Trazabilidad Global).
+ */
+export const TIPOS_MOVIMIENTO_REALES: readonly string[] = [
+  'sale',
+  'purchase',
+  'adjustment',
+  'return',
+  'initial',
+  'transfer',
+  'void',
+  'transfer_in',
+  'transfer_out',
+  'sale_void',
+  'production_out',
+  'production_in',
+  'sale_reverse',
+  'purchase_reverse',
+  'production_reverse',
+  'issue_slip_out',
+  'issue_slip_reverse',
+  'devolution_reverse',
+] as const;
+
+/** Grupo de filtro por tipo de movimiento (§6/§14 de Trazabilidad Global). */
+export interface GrupoFiltroMovimiento {
+  /** Identificador estable del grupo (estado del filtro). */
+  id: string;
+  /** Etiqueta profesional en español para la UI. */
+  label: string;
+  /** Valores internos REALES del enum que integran el grupo ([] = todos). */
+  tipos: string[];
+}
+
+/**
+ * Grupos de filtro de tipo de movimiento — §6 de Trazabilidad Global.
+ *
+ * Reglas:
+ * - Cada grupo mapea EXCLUSIVAMENTE valores reales del enum en BD.
+ * - Los grupos son disjuntos y su unión cubre TIPOS_MOVIMIENTO_REALES
+ *   al completo (verificado por test en kardexPeriod.test.ts).
+ * - 'todos' (tipos: []) significa "sin filtro de tipo": el backend recibe
+ *   el resto de filtros igualmente (§9).
+ */
+export const GRUPOS_FILTRO_MOVIMIENTO: readonly GrupoFiltroMovimiento[] = [
+  { id: 'todos', label: 'Todos', tipos: [] },
+  { id: 'ventas', label: 'Ventas', tipos: ['sale'] },
+  { id: 'entradas', label: 'Entradas', tipos: ['purchase', 'initial'] },
+  { id: 'vales-salida', label: 'Vales de salida', tipos: ['issue_slip_out'] },
+  { id: 'devoluciones', label: 'Devoluciones', tipos: ['return', 'devolution_reverse'] },
+  { id: 'ajustes', label: 'Ajustes', tipos: ['adjustment'] },
+  { id: 'anulaciones', label: 'Anulaciones', tipos: ['void', 'sale_void'] },
+  {
+    id: 'reversos',
+    label: 'Reversos',
+    tipos: ['sale_reverse', 'purchase_reverse', 'issue_slip_reverse', 'production_reverse'],
+  },
+  { id: 'transferencias', label: 'Transferencias', tipos: ['transfer', 'transfer_in', 'transfer_out'] },
+  { id: 'produccion', label: 'Producción', tipos: ['production_in', 'production_out'] },
+] as const;
+
+/** Grupo por id; undefined si el id no existe (llamador decide fallback). */
+export function obtenerGrupoFiltro(id: string | null | undefined): GrupoFiltroMovimiento | undefined {
+  if (!id) return undefined;
+  return GRUPOS_FILTRO_MOVIMIENTO.find(g => g.id === id);
+}
+
+/**
+ * Valida que los grupos de filtro cubren el enum real sin solapamientos.
+ * Devuelve la lista de problemas encontrados (vacía = OK).
+ * Usado por tests y como verificación de integridad en desarrollo.
+ */
+export function validarCoberturaGrupos(): string[] {
+  const problemas: string[] = [];
+  const vistos = new Map<string, string>();
+  for (const grupo of GRUPOS_FILTRO_MOVIMIENTO) {
+    for (const tipo of grupo.tipos) {
+      if (vistos.has(tipo)) {
+        problemas.push(`Tipo «${tipo}» duplicado en «${vistos.get(tipo)}» y «${grupo.id}»`);
+      } else {
+        vistos.set(tipo, grupo.id);
+      }
+    }
+  }
+  const faltantes = TIPOS_MOVIMIENTO_REALES.filter(t => !vistos.has(t));
+  for (const f of faltantes) problemas.push(`Tipo real «${f}» sin grupo de filtro`);
+  const extra = [...vistos.keys()].filter(t => !TIPOS_MOVIMIENTO_REALES.includes(t));
+  for (const e of extra) problemas.push(`Grupo filtra tipo inexistente en enum: «${e}»`);
+  return problemas;
+}
 
 /** Fallback seguro para tipos desconocidos: nunca exponer el enum crudo. */
 const UNKNOWN_PRESENTATION: MovementPresentation = {

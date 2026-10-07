@@ -18,6 +18,12 @@ import {
   ordenarCronologico,
   type KardexMovementLike,
 } from '@/lib/inventory/kardexPeriod';
+import {
+  GRUPOS_FILTRO_MOVIMIENTO,
+  TIPOS_MOVIMIENTO_REALES,
+  validarCoberturaGrupos,
+  obtenerEtiquetaMovimiento,
+} from '@/lib/inventory/movementPresentation';
 
 const mk = (
   id: string,
@@ -175,5 +181,59 @@ describe('formatearCantidad — §40/§41', () => {
     expect(formatearCantidad(null)).toBe('—');
     expect(formatearCantidad(undefined)).toBe('—');
     expect(formatearCantidad(NaN)).toBe('—');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AMPLIACIÓN Trazabilidad Global — §6/§7/§14: grupos de filtro por tipo
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('GRUPOS_FILTRO_MOVIMIENTO — §6/§7/§14 Trazabilidad Global', () => {
+  it('cubre TODOS los valores reales del enum movement_type sin solapamientos', () => {
+    const problemas = validarCoberturaGrupos();
+    expect(problemas).toEqual([]);
+  });
+
+  it('cada grupo filtra solo tipos reales del enum en BD', () => {
+    for (const grupo of GRUPOS_FILTRO_MOVIMIENTO) {
+      for (const tipo of grupo.tipos) {
+        expect(TIPOS_MOVIMIENTO_REALES).toContain(tipo);
+      }
+    }
+  });
+
+  it('los grupos son disjuntos entre sí', () => {
+    const vistos: string[] = [];
+    for (const grupo of GRUPOS_FILTRO_MOVIMIENTO) {
+      for (const tipo of grupo.tipos) {
+        expect(vistos).not.toContain(tipo);
+        vistos.push(tipo);
+      }
+    }
+  });
+
+  it('incluye el grupo mínimo exigido por la especificación (§6) con etiquetas en español', () => {
+    const ids = GRUPOS_FILTRO_MOVIMIENTO.map(g => g.id);
+    for (const esperado of ['todos', 'ventas', 'entradas', 'vales-salida', 'devoluciones', 'ajustes', 'anulaciones']) {
+      expect(ids).toContain(esperado);
+    }
+    for (const grupo of GRUPOS_FILTRO_MOVIMIENTO) {
+      // §7: nunca exponer el enum crudo como etiqueta
+      expect(grupo.label).not.toMatch(/^[A-Z_]+$/);
+      expect(grupo.label.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('el diccionario presenta «Vale de salida» para issue_slip_out (§7)', () => {
+    expect(obtenerEtiquetaMovimiento('issue_slip_out')).toBe('Vale de salida');
+    expect(obtenerEtiquetaMovimiento('issue_slip_reverse')).toBe('Reverso de vale');
+    expect(obtenerEtiquetaMovimiento('production_reverse')).toBe('Reverso de producción');
+    expect(obtenerEtiquetaMovimiento('devolution_reverse')).toBe('Reverso de devolución');
+  });
+
+  it('ningún tipo real del enum cae en el fallback «Otro»', () => {
+    for (const tipo of TIPOS_MOVIMIENTO_REALES) {
+      expect(obtenerEtiquetaMovimiento(tipo)).not.toBe('Otro');
+    }
   });
 });
