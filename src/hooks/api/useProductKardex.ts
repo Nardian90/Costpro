@@ -89,10 +89,17 @@ export function useProductKardex(
       let isTruncated = false;
 
       for (let offset = 0; offset < MAX_MOVEMENTS; offset += BATCH_SIZE) {
+        // FIX 42703: la tabla `stock_movements` NO tiene columna
+        // `reference_type` (schema real: id, store_id, product_id, variant_id,
+        // movement_type, quantity_change, balance_after, reference_id,
+        // reference_doc, movement_date, unit_cost, unit_price, created_by,
+        // created_at). Solicitarla provocaba error PGRST204/42703 y la
+        // búsqueda de producto fallaba completa. La detección de reversión
+        // (badge) se hace por `movement_type` en la capa de presentación.
         let q = supabase
           .from('stock_movements')
           .select(
-            'id, created_at, movement_type, quantity_change, balance_after, reference_doc, reference_type, created_by'
+            'id, created_at, movement_type, quantity_change, balance_after, reference_doc, created_by'
           )
           .eq('product_id', productId)
           .order('created_at', { ascending: true })
@@ -114,7 +121,10 @@ export function useProductKardex(
             ? null
             : Number(row.balance_after),
           reference_doc: (row.reference_doc as string | null) ?? null,
-          reference_type: (row.reference_type as string | null) ?? null,
+          // La columna no existe en la tabla (ver FIX 42703 arriba): se
+          // normaliza a null para mantener el tipo KardexMovementLike. Los
+          // checks cosméticos `=== 'reversal'` quedan como no-ops seguros.
+          reference_type: null,
           created_by: (row.created_by as string | null) ?? null,
         }));
 
