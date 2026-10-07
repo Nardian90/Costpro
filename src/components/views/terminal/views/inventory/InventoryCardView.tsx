@@ -32,6 +32,7 @@ import { PrimaryButton, ProductImage } from '@/components/ui/atomic';
 import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
 import { ProductFCSync } from '@/components/ui/ProductFCSync';
 import { ProductActionsMenu } from '@/components/ui/ProductActionsMenu';
+import { StoreStatusChip } from '@/components/ui/StoreStatusChip';
 import { Edit3 } from 'lucide-react';
 
 interface InventoryCardViewProps {
@@ -57,34 +58,6 @@ interface InventoryCardViewProps {
     isTogglingStockVisible?: string | null;
     onTogglePromotion?: (product: Product) => void;
     isTogglingPromotion?: string | null;
-}
-
-/* ────────────────────────────────────────────────────────────────────────────
-   Chip de estado de tienda — REPRESENTACIÓN ÚNICA del estado (§6): los chips
-   son solo informativos; la alternación vive en el menú ⋮ y en Catálogo.
-   ──────────────────────────────────────────────────────────────────────────── */
-function StoreStatusChip({ on, label, hiddenLabel, tone = 'success' }: {
-    on: boolean;
-    label: string;
-    /** Etiqueta cuando el estado está desactivado (p. ej. "Oculto"). */
-    hiddenLabel?: string;
-    tone?: 'success' | 'warning';
-}) {
-    const activeTone = tone === 'warning'
-        ? 'bg-warning/10 text-warning border-warning/20'
-        : 'bg-success/10 text-success border-success/20';
-    return (
-        <span
-            className={cn(
-                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border whitespace-nowrap',
-                on ? activeTone : 'bg-muted/60 text-muted-foreground/70 border-border'
-            )}
-            title={on ? `${label}: activado` : `${hiddenLabel || label}: desactivado`}
-        >
-            <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', on ? (tone === 'warning' ? 'bg-warning' : 'bg-success') : 'bg-muted-foreground/40')} />
-            {on ? label : (hiddenLabel || label)}
-        </span>
-    );
 }
 
 export default function InventoryCardView({
