@@ -59,11 +59,17 @@ export default function CatalogView() {
   const { user } = useAuthStore();
   const { setIsCreateProductModalOpen } = useUIStore();
 
-  // CM-1.8: Persistir preferencias en localStorage (mismo patrón que ipv/CatalogTable)
-  const [searchTerm, setSearchTerm] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return localStorage.getItem('catalog_searchTerm') || '';
-  });
+  // FIX (2026-10-08, INVENTORY-CATALOG-REGRESSION-1379): el término de búsqueda
+  // es estado de consulta EFÍMERO, no una preferencia. Antes se persistía en
+  // localStorage (CM-1.8) y se restauraba al montar, lo que dejaba el catálogo
+  // filtrado silenciosamente tras una recarga/cambio de entorno (síntoma:
+  // "Catálogo muestra 2 productos cuando existen 157"). Se elimina la lectura
+  // y se purga la clave legacy; la búsqueda sigue funcionando con normalidad
+  // dentro de la sesión.
+  const [searchTerm, setSearchTerm] = useState('');
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.removeItem('catalog_searchTerm');
+  }, []);
   // CM-3.8: Multi-categoría con Set (antes era string single-select)
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => {
     if (typeof window === 'undefined') return new Set();
@@ -170,10 +176,8 @@ export default function CatalogView() {
   // Import dialog state
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
-  // CM-1.8: Persistir cambios de preferencias en localStorage
-  useEffect(() => {
-    localStorage.setItem('catalog_searchTerm', searchTerm);
-  }, [searchTerm]);
+  // FIX (2026-10-08, INVENTORY-CATALOG-REGRESSION-1379): ya NO se persiste
+  // catalog_searchTerm — ver comentario en el estado inicial de searchTerm.
   // CM-1.8: Removed old selectedCategory persistence — replaced by selectedCategories Set
   useEffect(() => {
     localStorage.setItem('catalog_layoutMode', layoutMode);
