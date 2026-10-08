@@ -132,7 +132,9 @@ export function ValeSalidaDetalleModal({
   canReverse,
   onReverse,
 }: ValeSalidaDetalleModalProps) {
-  const { data: movimientos, isLoading: loadingMovs, error: errorMovs } = useMovimientosVale(
+  // Default `[]`: en TanStack Query v5 `data` es `TData | undefined`; los ternarios
+  // de render (loadingMovs / errorMovs) no reducen el tipo y `next build` falla con TS18048.
+  const { data: movimientos = [], isLoading: loadingMovs, error: errorMovs } = useMovimientosVale(
     vale?.id ?? null,
     open
   );
