@@ -1,18 +1,22 @@
 /**
- * ValesSalidaView — Tests del centro documental de Vales de Salida.
+ * ValesSalidaView — Tests del centro documental PROFESIONAL de Vales de Salida.
  *
- * Contrato verificado (brief VALES DE SALIDA + modelo REAL issue_slips):
- *   1. Render: header, botón "+ Crear Vale de Salida", listado RLS-scoped.
+ * Contrato verificado (brief de profesionalización PR #1381 + modelo REAL
+ * issue_slips):
+ *   1. Render: breadcrumb, header, botón «Crear Vale de Salida», listado RLS-scoped
+ *      con paginación .range() («Cargar más» real, no limit(100) silencioso).
  *   2. Matriz de acciones por estado REAL (no existe borrador):
  *        completed  → [Ver] + [Devolver]
  *        reversed   → [Ver] únicamente
  *        voided     → [Ver] únicamente
- *   3. Crear: activa el MODO VALE del carrito existente (setOperationType
- *      'issue_slip') y navega a 'pos' — cero formulario duplicado.
- *   4. Devolver: modal pide motivo (mín 3) → POST al endpoint EXISTENTE
+ *   3. CREAR (requisito 1): abre el MODAL DEDICADO del módulo (no navega a
+ *      'pos', no toca el carrito). La emisión usa el endpoint existente.
+ *   4. VER (requisito 7/8): abre el documento real VALE DE SALIDA (encabezado
+ *      documental + productos + trazabilidad + movimientos del vale).
+ *   5. Modo tabla: toggle visible y persistido (requisito 5/6).
+ *   6. Devolver: modal pide motivo (mín 3) → POST al endpoint EXISTENTE
  *      /api/vale-salida/[id]/reverse → invalida queries de la vista.
- *   5. Estado desconocido → badge crudo (defensivo, no inventa estados).
- *   6. Sin tienda activa → mensaje explícito (no consulta).
+ *   7. Sin tienda activa → mensaje explícito (no consulta).
  */
 
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
@@ -21,7 +25,11 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ValesSalidaView from '@/components/views/terminal/views/inventory/ValesSalidaView';
-import { DocumentStatusBadge, canReverse, isTerminalStatus } from '@/components/ui/DocumentStatusBadge';
+import {
+  DocumentStatusBadge,
+  canReverse,
+  isTerminalStatus,
+} from '@/components/ui/DocumentStatusBadge';
 
 // ── Polyfills jsdom (mismos que inventory-row-actions.test.tsx) ──
 beforeAll(() => {
@@ -40,48 +48,6 @@ beforeAll(() => {
   }
 });
 
-// ── MOCK: supabase client (cadena exacta de la vista) ──
-const fromMock = vi.fn();
-vi.mock('@/lib/supabaseClient', () => ({
-  supabase: {
-    from: (...args: unknown[]) => fromMock(...args),
-  },
-}));
-
-// ── MOCK: auth/ui/cart stores (usuario mutable vía vi.hoisted) ──
-const mockSetCurrentView = vi.fn();
-const mockSetOperationType = vi.fn();
-const authState = vi.hoisted(() => ({
-  user: {
-    id: 'u-1',
-    role: 'admin',
-    activeStoreId: 'store-1',
-    memberships: [{ store_id: 'store-1', role: 'admin', status: 'active' }],
-  },
-}));
-vi.mock('@/store', () => ({
-  useAuthStore: (sel?: (s: unknown) => unknown) =>
-    sel ? sel({ user: authState.user }) : { user: authState.user },
-  useUIStore: (sel?: (s: unknown) => unknown) =>
-    sel ? sel({ setCurrentView: mockSetCurrentView }) : { setCurrentView: mockSetCurrentView },
-}));
-vi.mock('@/store/cart', () => ({
-  useCartStore: {
-    getState: () => ({ setOperationType: mockSetOperationType }),
-  },
-}));
-
-// ── MOCK: apiFetch (endpoint de reversión EXISTENTE) ──
-const apiFetchMock = vi.fn();
-vi.mock('@/lib/api-fetch', () => ({
-  apiFetch: (...args: unknown[]) => apiFetchMock(...args),
-}));
-
-// ── MOCK: sonner toasts ──
-vi.mock('sonner', () => ({
-  toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() },
-}));
-
 // ── Fixtures: 3 vales, uno por estado REAL ──
 const VALES = [
   {
@@ -96,7 +62,7 @@ const VALES = [
     store_id: 'store-1', production_order_id: null,
     creator: { full_name: 'Ana Torres' },
     items: [
-      { id: 'i-1', product_id: 'p-1', variant_id: null, production_order_item_id: null, quantity: 3, unit_cost: 50, total_cost: 150, products: { name: 'Tornillo M8', sku: 'SKU-001' } },
+      { id: 'i-1', product_id: 'p-1', variant_id: null, production_order_item_id: null, quantity: 3, unit_cost: 50, total_cost: 150, products: { name: 'Tornillo M8', sku: 'SKU-001', unit_of_measure: 'UN' } },
     ],
   },
   {
@@ -112,7 +78,7 @@ const VALES = [
     creator: { full_name: 'Ana Torres' },
     voider: { full_name: 'Luis Vega' },
     items: [
-      { id: 'i-2', product_id: 'p-2', variant_id: null, production_order_item_id: null, quantity: 2, unit_cost: 20, total_cost: 40, products: { name: 'Pintura Blanca', sku: null } },
+      { id: 'i-2', product_id: 'p-2', variant_id: null, production_order_item_id: null, quantity: 2, unit_cost: 20, total_cost: 40, products: { name: 'Pintura Blanca', sku: null, unit_of_measure: 'GL' } },
     ],
   },
   {
@@ -130,14 +96,106 @@ const VALES = [
   },
 ];
 
-function chain() {
-  return {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue({ data: VALES, error: null }),
-  };
+/** Movimientos del vale VS-000002 (stock_movements.reference_id = issue_slips.id). */
+const MOVIMIENTOS = [
+  {
+    id: 'm-1',
+    created_at: '2026-10-02T11:00:01Z',
+    movement_type: 'issue_slip_out',
+    quantity_change: -2,
+    reference_doc: 'Vale de Salida VS-000002-2026',
+    product: { name: 'Pintura Blanca', sku: null, unit_of_measure: 'GL' },
+  },
+  {
+    id: 'm-2',
+    created_at: '2026-10-03T12:00:01Z',
+    movement_type: 'issue_slip_reverse',
+    quantity_change: 2,
+    reference_doc: 'Vale de Salida VS-000002-2026 (reversión)',
+    product: { name: 'Pintura Blanca', sku: null, unit_of_measure: 'GL' },
+  },
+];
+
+// ── MOCK: supabase client — cadena thenable genérica con dispatch por tabla ──
+const fromMock = vi.fn();
+
+function chain(result: { data: unknown; error: unknown | null } = { data: VALES, error: null }) {
+  const c: Record<string, unknown> = {};
+  const terminal = () => Promise.resolve(result);
+  for (const m of ['select', 'eq', 'order', 'in', 'neq', 'gte', 'lte']) {
+    c[m] = vi.fn(() => c);
+  }
+  for (const m of ['limit', 'range', 'single']) {
+    c[m] = vi.fn(() => terminal());
+  }
+  // thenable: cualquier final de cadena awaits correctamente
+  c.then = (res?: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
+    Promise.resolve(result).then(res, rej);
+  return c;
 }
+
+vi.mock('@/lib/supabaseClient', () => ({
+  supabase: {
+    from: (...args: unknown[]) => fromMock(...args),
+  },
+}));
+
+// ── MOCK: useProducts (catálogo del POS — usado por el flujo dedicado) ──
+const PRODUCTOS = [
+  {
+    id: 'aaaaaaaa-1111-1111-1111-111111111111',
+    name: 'Tornillo M8',
+    sku: 'SKU-001',
+    unit_of_measure: 'UN',
+    stock_current: 50,
+    cost_average: 10,
+  },
+  {
+    id: 'aaaaaaaa-2222-2222-2222-222222222222',
+    name: 'Pintura Blanca',
+    sku: 'SKU-002',
+    unit_of_measure: 'GL',
+    stock_current: 0,
+    cost_average: 20,
+  },
+];
+
+const useProductsMock = vi.fn(() => ({ data: PRODUCTOS, isLoading: false }));
+vi.mock('@/hooks/api/useProducts', async importOriginal => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return { ...actual, useProducts: () => useProductsMock() };
+});
+
+// ── MOCK: auth/ui stores (usuario mutable vía vi.hoisted) ──
+const mockSetCurrentView = vi.fn();
+const authState = vi.hoisted(() => ({
+  user: {
+    id: 'u-1',
+    role: 'admin',
+    fullName: 'Ana Torres',
+    activeStoreId: 'store-1',
+    memberships: [
+      { store_id: 'store-1', role: 'admin', status: 'active', store: { name: 'Almacén Central' } },
+    ],
+  },
+}));
+vi.mock('@/store', () => ({
+  useAuthStore: (sel?: (s: unknown) => unknown) =>
+    sel ? sel({ user: authState.user }) : { user: authState.user },
+  useUIStore: (sel?: (s: unknown) => unknown) =>
+    sel ? sel({ setCurrentView: mockSetCurrentView }) : { setCurrentView: mockSetCurrentView },
+}));
+
+// ── MOCK: apiFetch (endpoints de reversión y emisión EXISTENTES) ──
+const apiFetchMock = vi.fn();
+vi.mock('@/lib/api-fetch', () => ({
+  apiFetch: (...args: unknown[]) => apiFetchMock(...args),
+}));
+
+// ── MOCK: sonner toasts ──
+vi.mock('sonner', () => ({
+  toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() },
+}));
 
 function renderView() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -150,15 +208,22 @@ function renderView() {
 
 beforeEach(() => {
   cleanup();
-  fromMock.mockReset().mockImplementation(() => chain());
+  window.localStorage.clear();
+  fromMock.mockReset().mockImplementation((table: string) => {
+    if (table === 'stock_movements') return chain({ data: MOVIMIENTOS, error: null });
+    if (table === 'production_orders' || table === 'production_order_items') {
+      return chain({ data: [], error: null });
+    }
+    return chain();
+  });
   apiFetchMock.mockReset();
   mockSetCurrentView.mockReset();
-  mockSetOperationType.mockReset();
 });
 
 describe('ValesSalidaView — render y listado', () => {
-  it('1 · header con título exacto, contador y botón Crear', async () => {
+  it('1 · breadcrumb, header con título exacto, contador y botón Crear', async () => {
     renderView();
+    expect(screen.getByLabelText('Ubicación actual')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Vales de Salida' })).toBeTruthy();
     const createBtn = screen.getByRole('button', { name: /Crear Vale de Salida/i });
     expect(createBtn).toBeTruthy();
@@ -169,13 +234,15 @@ describe('ValesSalidaView — render y listado', () => {
     expect(screen.getByText(/3 vale\(s\)/)).toBeTruthy();
   });
 
-  it('2 · consulta RLS-scoped a issue_slips de la tienda activa (limit 100, desc)', async () => {
+  it('2 · consulta RLS-scoped a issue_slips de la tienda activa (range paginado, desc)', async () => {
     renderView();
     await waitFor(() => expect(fromMock).toHaveBeenCalledWith('issue_slips'));
     const c = fromMock.mock.results[0]?.value;
     expect(c.select).toHaveBeenCalled();
     expect(c.eq).toHaveBeenCalledWith('store_id', 'store-1');
     expect(c.order).toHaveBeenCalledWith('created_at', { ascending: false });
+    // Paginación real «Cargar más» — ya no limit(100) silencioso
+    expect(c.range).toHaveBeenCalledWith(0, 49);
   });
 
   it('3 · badge por estado: Completado / Devuelto / Anulado', async () => {
@@ -200,33 +267,63 @@ describe('ValesSalidaView — matriz de acciones (estados REALES)', () => {
     expect(screen.queryByRole('button', { name: 'Devolver vale VS-000002-2026' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Devolver vale VS-000003-2026' })).toBeNull();
   });
-
-  it('6 · detalle expandible muestra items + trazabilidad con devolución', async () => {
-    renderView();
-    await waitFor(() => expect(screen.getByText('VS-000002-2026')).toBeTruthy());
-    // Expandir el vale DEVUELTO (botón Eye)
-    fireEvent.click(screen.getByRole('button', { name: 'Ver items del vale VS-000002-2026' }));
-    await waitFor(() => {
-      expect(screen.getByText('Pintura Blanca')).toBeTruthy();
-      expect(screen.getByText('Devuelto por:')).toBeTruthy();
-      expect(screen.getByText('Luis Vega')).toBeTruthy();
-      expect(screen.getByText(/Emitido por error/i)).toBeTruthy();
-    });
-  });
 });
 
-describe('ValesSalidaView — Crear reutiliza el flujo del carrito (FASE 8)', () => {
-  it('7 · click en Crear → setOperationType("issue_slip") + navegación a Vender', async () => {
+describe('ValesSalidaView — CREAR abre el flujo DEDICADO del módulo', () => {
+  it('6 · click en Crear abre el modal dedicado (sin navegar a Vender ni tocar el carrito)', async () => {
     renderView();
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: /Crear Vale de Salida/i }));
-    expect(mockSetOperationType).toHaveBeenCalledWith('issue_slip');
-    expect(mockSetCurrentView).toHaveBeenCalledWith('pos');
+
+    const dialog = await screen.findByRole('dialog', { name: /Crear Vale de Salida/i });
+    expect(dialog).toBeTruthy();
+    // Cabecera documental del flujo dedicado
+    expect(screen.getByText(/se asignará al emitir/i)).toBeTruthy();
+    expect(screen.getByText('Almacén Central')).toBeTruthy();
+    // CERO navegación a Vender / carrito (requisito 1 del brief)
+    expect(mockSetCurrentView).not.toHaveBeenCalled();
   });
 });
 
-describe('ValesSalidaView — Devolver usa el endpoint EXISTENTE (FASE 12)', () => {
-  it('8 · modal pide motivo, disabled < 3 chars, POST a /api/vale-salida/[id]/reverse', async () => {
+describe('ValesSalidaView — VER muestra el DOCUMENTO REAL', () => {
+  it('7 · Ver abre VALE DE SALIDA con productos, trazabilidad y movimientos del vale', async () => {
+    renderView();
+    await waitFor(() => expect(screen.getByText('VS-000002-2026')).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver vale VS-000002-2026' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog.textContent).toContain('Vale de Salida');
+    expect(dialog.textContent).toContain('VS-000002-2026');
+
+    // Productos del documento con unidad REAL
+    await waitFor(() => expect(screen.getByText('Pintura Blanca')).toBeTruthy());
+    // Match EXACTO de la celda de cantidad ("2 GL"); evita colisión con
+    // "+2 GL" / "−2 GL" de la lista de movimientos.
+    expect(screen.getByText('2 GL')).toBeTruthy();
+
+    // Trazabilidad documental (devolución con motivo)
+    expect(screen.getByText('Devuelto por')).toBeTruthy();
+    expect(screen.getByText('Luis Vega')).toBeTruthy();
+    expect(screen.getByText(/Emitido por error/)).toBeTruthy();
+
+    // Movimientos del vale (Documento ↔ Movimiento vía reference_id)
+    await waitFor(() => expect(screen.getByText('Movimientos de inventario')).toBeTruthy());
+    expect(screen.getByText('Vale de salida')).toBeTruthy();   // etiqueta dict central
+    expect(screen.getByText('Reverso de vale')).toBeTruthy();  // issue_slip_reverse
+  });
+
+  it('8 · Ver funciona incluso con vale sin items (antes quedaba sin detalle)', async () => {
+    renderView();
+    await waitFor(() => expect(screen.getByText('VS-000003-2026')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Ver vale VS-000003-2026' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog.textContent).toContain('VS-000003-2026');
+    expect(screen.getByText(/no tiene líneas de producto/i)).toBeTruthy();
+  });
+});
+
+describe('ValesSalidaView — Devolver usa el endpoint EXISTENTE', () => {
+  it('9 · modal pide motivo, disabled < 3 chars, POST a /api/vale-salida/[id]/reverse', async () => {
     renderView();
     const user = userEvent.setup();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Devolver vale VS-000001-2026' })).toBeTruthy());
@@ -257,7 +354,7 @@ describe('ValesSalidaView — Devolver usa el endpoint EXISTENTE (FASE 12)', () 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
-  it('9 · error del backend queda visible en el modal (no cierra)', async () => {
+  it('10 · error del backend queda visible en el modal (no cierra)', async () => {
     renderView();
     const user = userEvent.setup();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Devolver vale VS-000001-2026' })).toBeTruthy());
@@ -275,8 +372,25 @@ describe('ValesSalidaView — Devolver usa el endpoint EXISTENTE (FASE 12)', () 
   });
 });
 
+describe('ValesSalidaView — modo tabla (requisito 5/6)', () => {
+  it('11 · toggle a modo tabla renderiza tabla densa con columnas y orden', async () => {
+    renderView();
+    await waitFor(() => expect(screen.getByText('VS-000001-2026')).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Modo tabla' }));
+    expect(screen.getByRole('table')).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Documento' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: /Fecha/ })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Concepto' })).toBeTruthy();
+    // Orden por fecha (aria-sort)
+    expect(screen.getByRole('columnheader', { name: /Fecha/ }).getAttribute('aria-sort')).toBe('descending');
+    // Persistencia del modo
+    expect(window.localStorage.getItem('vales_salida_view_mode')).toBe('table');
+  });
+});
+
 describe('ValesSalidaView — sin tienda activa', () => {
-  it('10 · sin activeStoreId no consulta y muestra guía', async () => {
+  it('12 · sin activeStoreId no consulta y muestra guía', async () => {
     const withStore = authState.user;
     authState.user = { ...withStore, activeStoreId: '' } as typeof withStore;
     try {
@@ -290,7 +404,7 @@ describe('ValesSalidaView — sin tienda activa', () => {
 });
 
 describe('DocumentStatusBadge — tipo issue_slip', () => {
-  it('11 · labels correctos por estado y helper canReverse/isTerminal', () => {
+  it('13 · labels correctos por estado y helper canReverse/isTerminal', () => {
     render(<DocumentStatusBadge type="issue_slip" status="completed" />);
     expect(screen.getByText('Completado')).toBeTruthy();
     cleanup();
@@ -313,7 +427,7 @@ describe('DocumentStatusBadge — tipo issue_slip', () => {
     expect(isTerminalStatus('issue_slip', 'completed')).toBe(false);
   });
 
-  it('12 · estado desconocido → badge crudo defensivo (no inventa estados)', () => {
+  it('14 · estado desconocido → badge crudo defensivo (no inventa estados)', () => {
     render(<DocumentStatusBadge type="issue_slip" status="weird_state" />);
     expect(screen.getByText('weird_state')).toBeTruthy();
   });

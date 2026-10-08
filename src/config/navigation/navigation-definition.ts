@@ -220,11 +220,12 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             keywords: ['ajuste', 'merma', 'corrección', 'inventario', 'documental'],
           },
           {
-            // Vista documental de Vales de Salida (issue_slips). Consulta + gestión
-            // (listado, detalle, devolución vía reversión contable existente).
-            // La CREACIÓN sigue viviendo en Ventas → Vender → Carrito (mismo flujo,
-            // misma RPC, misma numeración VS-NNNNNN-YYYY); el botón "Crear" de la
-            // vista abre ese mismo flujo con el modo Vale activado — cero duplicación.
+            // Vista documental de Vales de Salida (issue_slips). Módulo PROPIO:
+            // listado dual (tarjetas/tabla), detalle documental real (VALE DE SALIDA
+            // + movimientos vía reference_id), devolución vía reversión contable
+            // existente y flujo DEDICADO de creación (misma RPC create_vale_salida,
+            // misma numeración VS-NNNNNN-YYYY — cero duplicación de lógica).
+            // El acceso desde Vender continúa como mecanismo operativo independiente.
             id: 'vales_salida',
             label: 'Vales de Salida',
             description: 'Centro documental de Vales de Salida: consulta, detalle, trazabilidad y devolución de vales emitidos.',
