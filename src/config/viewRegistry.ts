@@ -183,7 +183,7 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
   {
     id: "vales_salida",
     route: "/?view=vales_salida",
-    description: "Centro documental de Vales de Salida: listado, detalle con trazabilidad y devolución (reversión) de vales emitidos. La creación reutiliza el flujo del carrito de Vender.",
+    description: "Centro documental de Vales de Salida: listado (tarjetas/tabla), detalle documental con trazabilidad y movimientos, devolución (reversión) y flujo dedicado de creación propio del módulo (misma RPC que Vender).",
     actions: ["view_details", "reverse_vale"]
   },
   {
