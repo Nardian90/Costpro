@@ -20,9 +20,10 @@
  * ============================================================================
  */
 import { type Page } from '@playwright/test';
-import { PILOT_A_NAME, PILOT_B_NAME } from './pilot-env';
+import { PILOT_A_NAME, PILOT_B_NAME, getPilotEnv, type PilotEnv } from './pilot-env';
 import { getRunId, getRunTenantId } from './run-env';
 import { hardDeleteTestStore } from './hard-cleanup';
+import { isProtectedStore } from './protected-resources';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -70,6 +71,52 @@ export const WAREHOUSE_PASS = process.env.E2E_WAREHOUSE_PASS || 'demo123';
 export const ENCARGADO_EMAIL = process.env.E2E_ENCARGADO_EMAIL || 'encargado@demo.com';
 export const ENCARGADO_PASS = process.env.E2E_ENCARGADO_PASS || 'demo123';
 export const ENCARGADO_ID = process.env.E2E_ENCARGADO_ID || 'e2222222-2222-2222-2222-222222222222';
+
+// ── E2E-FIXTURE-REUSE (2026-10-09) ──────────────────────────────────────────
+/**
+ * MODO DE FIXTURE DE TIENDA — decisión del propietario tras los incidentes de
+ * contaminación (48 tiendas + 26 usuarios + 6 tenants el 2026-10-09):
+ *
+ *   reuse (DEFAULT) — la suite ORDINARIA nunca crea tiendas: cada llamada a
+ *     createTestStore() devuelve una tienda PILOTO PERSISTENTE existente
+ *     (A/B alternando — specs con 2 tiendas obtienen A y B), y
+ *     deleteTestStore() es un no-op protegido. Los datos de prueba del spec
+ *     (productos/inventario/movimientos/transacciones de productos E2E) se
+ *     limpian con cleanupProducts() → net-zero del spec.
+ *
+ *   create (opt-in) — comportamiento efímero original: SOLO para el proyecto
+ *     Playwright 'creation' (specs cuyo OBJETIVO es comprobar creación), que
+ *     exige E2E_ALLOW_CREATION=1 + E2E_ISOLATION=1 (entorno aislado por-run
+ *     con teardown reconciliado). Ver playwright.config.ts.
+ */
+const CREATION_PROJECT_ACTIVE =
+  process.env.E2E_ALLOW_CREATION === '1' && process.env.E2E_ISOLATION === '1';
+const STORE_FIXTURE_MODE: 'reuse' | 'create' =
+  process.env.E2E_STORE_FIXTURE_MODE === 'create' || CREATION_PROJECT_ACTIVE
+    ? 'create'
+    : 'reuse';
+
+/** Guard FAIL-CLOSED para specs del proyecto 'creation': si se invocan fuera
+ *  del entorno aislado autorizado, FALLAN con instrucción accionable (nunca
+ *  crean recursos en la BD compartida ni se saltan en silencio). */
+export function requireIsolatedCreation(): void {
+  if (CREATION_PROJECT_ACTIVE) return;
+  throw new Error(
+    '[e2e-creation] Spec de CREACIÓN invocado fuera del proyecto aislado. ' +
+      'Suite ordinaria: npm run test:e2e (este spec se EXCLUYE). ' +
+      'Ejecución explícita bajo petición del propietario: ' +
+      'E2E_ALLOW_CREATION=1 E2E_ISOLATION=1 npm run test:e2e:creation',
+  );
+}
+
+/** Entorno piloto (persistente) cacheado por proceso worker. */
+let reusePilotCache: PilotEnv | null = null;
+async function getReusePilotEnv(): Promise<PilotEnv> {
+  if (!reusePilotCache) reusePilotCache = await getPilotEnv();
+  return reusePilotCache;
+}
+/** Round-robin A/B por spec file (cada archivo arranca en A; workers=1). */
+let reuseAlternate = 0;
 
 /** Sufijo único para datos de prueba (evita colisiones entre ejecuciones) */
 export function testSuffix(): string {
@@ -219,15 +266,40 @@ export const sb = {
 export interface TestStore { id: string; name: string; slug: string; }
 
 /**
- * Crea una tienda aislada para el spec vía la API REAL (POST /api/stores,
- * RPC create_store_with_membership → membership admin automática).
- * Cleanup: soft-delete vía DELETE /api/stores en afterAll del spec.
+ * E2E-FIXTURE-REUSE: en modo reuse (suite ordinaria) NO crea ninguna tienda —
+ * devuelve la piloto persistente A (primera llamada del spec) o B (segunda,
+ * p.ej. transfers-flow) resueltas fail-closed por nombre exacto vía
+ * pilot-env.ts. En modo create (proyecto 'creation' aislado) ejecuta el
+ * flujo REAL de creación (POST /api/stores → RPC
+ * create_store_with_membership → membership admin automática).
+ * Cleanup en modo create: hard delete vía DELETE /api/stores en afterAll.
  */
 export async function createTestStore(
   request: import('@playwright/test').APIRequestContext,
   adminToken: string,
   label: string,
 ): Promise<TestStore> {
+  if (STORE_FIXTURE_MODE === 'reuse') {
+    const pilot = await getReusePilotEnv();
+    const pick = reuseAlternate++ % 2 === 0 ? pilot.storeA : pilot.storeB;
+    // Fail-closed: si la gobernanza de protegidos rotara y el piloto dejara
+    // de estar en la lista, el spec aborta en vez de operar sobre una tienda
+    // sin protección (defensa en profundidad sobre pilot-env).
+    if (!isProtectedStore(pick.id, pick.name)) {
+      throw new Error(
+        `[fixture:reuse] La piloto ${pick.name} (${pick.id}) NO está en protected-resources.json — ` +
+          'actualizar la gobernanza antes de reutilizarla (FASE 4).',
+      );
+    }
+    console.log(
+      `[fixture:reuse] createTestStore(${label}) → ${pick.name} (${pick.id}) — NO se crea ninguna tienda (suite ordinaria, net-zero)`,
+    );
+    return {
+      id: pick.id,
+      name: pick.name,
+      slug: pick === pilot.storeA ? 'e2e-pilot-a' : 'e2e-pilot-b',
+    };
+  }
   const suffix = testSuffix();
   // E2E-RUNNER-ISOLATION: el nombre incorpora la identidad del run —
   // dos runners simultáneos nunca colisionan en nombre/slug ni se
@@ -242,9 +314,10 @@ export async function createTestStore(
     slug: `e2e80_${label.toLowerCase().replace(/\s+/g, '_')}_${suffix}`,
     plantilla: 'construccion',
   };
-  // Higiene: archivar tiendas de PRUEBA huérfanas de ejecuciones fallidas
-  // (evita agotar el límite de tiendas activas del tenant). Solo tiendas
-  // creadas hace >10 min → nunca archiva stores del run actual.
+  // Higiene (SOLO modo create): archivar tiendas de PRUEBA huérfanas de
+  // ejecuciones fallidas (evita agotar el límite de tiendas activas del
+  // tenant). En modo reuse NO se barre: la limpieza de huérfanos preexistentes
+  // exige inventario + autorización del propietario (FASE 5 del plan 2026-10-09).
   // Patrones de artefactos de test de fases previas (audit-evidence/):
   // E2E80* (esta iniciativa), ESEC TEST*, FASE-D TEST*, AUDIT *, HOT *Test*,
   // REM-F4* FIXTURE*, E2E2-*. Las tiendas de negocio reales nunca coinciden.
@@ -283,7 +356,10 @@ export async function createTestStore(
  * cada runner restaura el active_store de SU usuario a SU tienda. El
  * hardcode legacy (Puerto Padre) solo aplica en modo compartido.
  */
-export const PILOT_STORE_ID = process.env.E2E_RESTORE_ACTIVE_STORE_ID || '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1'; // Puerto Padre (legacy compartido)
+export const PILOT_STORE_ID =
+  process.env.E2E_RESTORE_ACTIVE_STORE_ID ||
+  process.env.E2E_PILOT_STORE_A ||
+  '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1'; // Puerto Padre (legacy compartido)
 export async function restoreActiveStore(userId: string): Promise<void> {
   await sb.update('profiles', `id=eq.${userId}`, { active_store_id: PILOT_STORE_ID }).catch(() => {});
 }
@@ -454,21 +530,23 @@ export async function freeActiveTestQuota(
 }
 
 /**
- * SEC-TS-10 (FIXTURE): cleanup de la tienda de prueba.
- * 1. Intenta el flujo REAL (DELETE /api/stores → RPC soft_delete_store) para
- *    seguir ejercitando el contrato de la API en el happy path.
- * 2. E2E DATA HYGIENE: después verifica si la fila sigue existiendo — la app
- *    hace SOFT delete (archive), lo que durante meses acumuló 2600+ tiendas
- *    residuales. Si la tienda sigue presente (soft-deleted, 429, o fallback),
- *    ejecuta HARD delete vía e2e_hard_delete_store (service-role) para que
- *    el criterio sea NET ZERO: una entidad temporal no permanece.
- * Nunca lanza (es cleanup best-effort; el guardrail del teardown audita).
+ * E2E-FIXTURE-REUSE: en modo reuse es un NO-OP protegido (la suite ordinaria
+ * reutiliza pilotos PERSISTENTES — borrarlos rompería el banco de pruebas y
+ * está prohibido por la gobernanza de protected-resources.json). En modo
+ * create limpia la tienda efímera: 1) DELETE /api/stores (flujo real),
+ * 2) hard delete (e2e_hard_delete_store) si la fila persiste (soft-delete/
+ * 429/fallback) — criterio NET ZERO para entidades temporales.
+ * Nunca lanza (cleanup best-effort; el guardrail del teardown audita).
  */
 export async function deleteTestStore(
   request: import('@playwright/test').APIRequestContext,
   adminToken: string,
   storeId: string,
 ): Promise<void> {
+  if (STORE_FIXTURE_MODE === 'reuse') {
+    console.log(`[fixture:reuse] deleteTestStore(${storeId}) → no-op (tienda piloto persistente, gobernanza protegida)`);
+    return;
+  }
   await waitStoreBudget('delete');
   const res = await request
     .delete('/api/stores', { headers: apiHeaders(adminToken), data: { storeId } })
@@ -559,9 +637,28 @@ export async function getTransactionItems(transactionId: string) {
   return sb.select('transaction_items', `transaction_id=eq.${transactionId}&select=*&order=created_at.asc`);
 }
 
-/** Limpia los artefactos de datos de un spec (productos + inventario) */
+/** Limpia los artefactos de datos de un spec (productos + inventario +
+ *  transacciones/movimientos de esos productos E2E). En modo REUSE el spec
+ *  vive sobre una tienda piloto PERSISTENTE: el cleanup debe ser net-zero
+ *  también dentro de ella, por eso se eliminan antes los transaction_items
+ *  / transactions que referencian el producto (evita FK-residuos y stock
+ *  fantasma del producto de prueba). */
 export async function cleanupProducts(storeId: string, productIds: string[]): Promise<void> {
   for (const pid of productIds) {
+    try {
+      const items = await sb.select<{ transaction_id: string }>(
+        'transaction_items',
+        `product_id=eq.${pid}&select=transaction_id`,
+      );
+      const txIds = [...new Set(items.map((i) => i.transaction_id))];
+      if (txIds.length > 0) {
+        await sb.delete('transaction_items', `product_id=eq.${pid}`);
+        const list = txIds.map((id) => `"${id}"`).join(',');
+        await sb.delete('transactions', `store_id=eq.${storeId}&id=in.(${list})`);
+      }
+    } catch {
+      // best-effort: el delete de products reportará el residuo si aplica
+    }
     await sb.delete('inventory', `store_id=eq.${storeId}&product_id=eq.${pid}`).catch(() => {});
     await sb.delete('stock_movements', `store_id=eq.${storeId}&product_id=eq.${pid}`).catch(() => {});
   }

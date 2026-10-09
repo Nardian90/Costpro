@@ -10,25 +10,31 @@
  * Ejecutar: npx playwright test e2e/store-create-autoswitch.spec.ts
  */
 
+import { requireIsolatedCreation } from "./fixtures/session.fixture";
 import { test, expect } from '@playwright/test';
 import { signIn, injectSession, sb, BASE_URL, ADMIN_EMAIL, ADMIN_PASS } from './fixtures/session.fixture';
 
 // ============================================================================
-// ⛔ DESHABILITADO POR EL PROPIETARIO (2026-10-09) — NO ELIMINAR ESTE BLOQUE
+// E2E PROYECTO 'CREATION' — EXCLUIDO de la suite ordinaria (proyecto 'core')
 // ----------------------------------------------------------------------------
-// Este spec CREA una tienda vía UI (CreateStoreQuickModal) en el proyecto Supabase COMPARTIDO (wthkddeleylijmonclxg)
-// y fue causa directa de la contaminación de datos del 2026-10-09
-// (48 tiendas + 26 usuarios + 6 tenants de prueba; evidencia completa en
-// docs/audits/e2e-contamination-cleanup-20261009.md).
+// Este spec CREA recursos reales (tiendas) sobre el entorno de pruebas y, por
+// decisión del propietario (2026-10-09, incidentes de contaminación), está
+// SEPARADO de la suite E2E ordinaria mediante el proyecto Playwright
+// 'creation' (fail-closed en playwright.config.ts + requireIsolatedCreation).
 //
-// Permanece COMENTADO/omitido por defecto. Solo se ejecuta si el propietario
-// lo pide EXPLÍCITAMENTE. Para habilitarlo puntualmente:
-//   1. Comentar la línea `test.skip(true, ...)` de abajo.
-//   2. Ejecutar con E2E_ISOLATION=1 (provisiona entorno aislado efímero con
-//      teardown reconciliado) — NUNCA contra tiendas de negocio.
-//   3. Verificar net-zero al terminar: node e2e/scripts/data-hygiene-guard.cjs
+//   * `npm run test:e2e` (core) lo EXCLUYE siempre.
+//   * Sin E2E_ALLOW_CREATION=1 el proyecto 'creation' ni siquiera se
+//     registra — es imposible ejecutarlo por accidente.
+//   * El guard requireIsolatedCreation() FALLA con instrucción accionable si
+//     se invoca fuera del entorno aislado (nunca crea en la BD compartida ni
+//     se salta en silencio).
+//
+// Ejecución EXPLÍCITA (solo bajo petición del propietario), en entorno
+// aislado por-run con teardown reconciliado:
+//   E2E_ALLOW_CREATION=1 E2E_ISOLATION=1 npm run test:e2e:creation
+// Verificar net-zero al terminar: node e2e/scripts/data-hygiene-guard.cjs
 // ============================================================================
-test.skip(true, 'Deshabilitado por el propietario (2026-10-09): crea tiendas. Habilitar solo bajo petición explícita (ver banner).');
+test.beforeAll(() => requireIsolatedCreation());
 
 // SEC-TS-08 (aislamiento): sesión E2E del entorno piloto (admin@costpro.com)
 // en vez de admin@demo.com (sus tiendas activas Enervida/Puerto Padre son

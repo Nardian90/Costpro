@@ -15,6 +15,33 @@ dotenv.config({ path: './.env' });
  *
  * Ejecutar: `npm run test:e2e`
  */
+
+// ── E2E-FIXTURE-REUSE / separación de tests de creación (2026-10-09) ────────
+// Decisión del propietario: la suite ORDINARIA (proyecto 'core') nunca crea
+// usuarios ni tiendas — reutiliza las pilotos persistentes A/B vía el modo
+// reuse de e2e/fixtures/session.fixture.ts. Los specs cuyo OBJETIVO es
+// comprobar la creación real viven en el proyecto 'creation', que SOLO
+// existe cuando el operador lo invoca explícitamente con E2E_ALLOW_CREATION=1
+// (y se ejecutan con E2E_ISOLATION=1: entorno aislado por-run con teardown
+// reconciliado). Sin esas variables el proyecto ni siquiera se registra →
+// es imposible ejecutarlos por accidente (fail-closed en la CONFIG, no en
+// el test). Lista EXPLÍCITA y revisable en PR.
+// Patrones RELATIVOS a testDir ('./e2e') — así los resuelve Playwright.
+const CREATION_SPECS = [
+  '**/creation/**',
+  '**/data-hygiene-probe.spec.ts',
+  '**/isolation-proof.spec.ts',
+  '**/multi-store-comprehensive.spec.ts',
+  '**/security.spec.ts',
+  '**/store-create-autoswitch.spec.ts',
+  '**/store-lifecycle.spec.ts',
+  '**/store-reset.spec.ts',
+  '**/store-switching.spec.ts',
+  '**/stores-crud.spec.ts',
+  '**/workers-create.spec.ts',
+];
+const creationAllowed = process.env.E2E_ALLOW_CREATION === '1';
+
 export default defineConfig({
   testDir: './e2e',
   // FASE E2E-80: autentica usuarios reales y exporta E2E_TEST_*_TOKEN/ID
@@ -48,9 +75,22 @@ export default defineConfig({
 
   projects: [
     {
-      name: 'chromium',
+      name: 'core',
+      testIgnore: CREATION_SPECS,
       use: { ...devices['Desktop Chrome'] },
     },
+    // Proyecto 'creation': registrado SOLO con E2E_ALLOW_CREATION=1.
+    // Uso documentado (bajo petición explícita del propietario):
+    //   E2E_ALLOW_CREATION=1 E2E_ISOLATION=1 npm run test:e2e:creation
+    ...(creationAllowed
+      ? [
+          {
+            name: 'creation',
+            testMatch: CREATION_SPECS,
+            use: { ...devices['Desktop Chrome'] },
+          },
+        ]
+      : []),
   ],
 
   // No auto-start webServer — el servidor debe estar corriendo manualmente
