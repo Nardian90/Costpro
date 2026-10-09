@@ -1,17 +1,25 @@
 # Inventario de Escenarios E2E — CostPro (FASE E2E-80)
 
-> ⛔ **NOTA DE GOBERNANZA (2026-10-09, propietario):** los specs que CREAN
-> tiendas/usuarios/tenants en el Supabase compartido están DESHABILITADOS por
-> defecto (banner `⛔ DESHABILITADO POR EL PROPIETARIO` + `test.skip(true)`
-> al inicio del archivo): `multi-store-comprehensive`, `stores-crud`,
-> `store-lifecycle`, `store-switching`, `store-reset`,
-> `store-create-autoswitch`, `security`, `workers-create`,
-> `flows/roles-permissions`, `data-hygiene-probe`, `isolation-proof`.
-> Los jobs E2E de CI (`ci.yml`, `test-coverage.yml`) también están apagados
-> (`if: false`). El modo aislado por run dejó de ser el default: toda corrida
-> reutiliza los pilotos persistentes A/B (legacy). Reactivar cualquiera de
-> estas piezas SOLO bajo petición explícita del propietario.
-> Evidencia: `docs/audits/e2e-contamination-cleanup-20261009.md`.
+> 🛡 **NOTA DE GOBERNANZA (2026-10-09, propietario — actualizada con E2E-FIXTURE-REUSE):**
+>
+> * **Suite ordinaria (`npm run test:e2e`, proyecto `core`)**: NO crea
+>   usuarios ni tiendas. Reutiliza las pilotos persistentes A/B vía el modo
+>   `reuse` de `e2e/fixtures/session.fixture.ts` (createTestStore → piloto
+>   A/B, deleteTestStore → no-op, cleanup de datos de prueba net-zero). Los
+>   specs funcionales (p.ej. `flows/roles-permissions` RBAC-001..007) corren
+>   con identidades demo preexistentes.
+> * **Proyecto `creation` (fail-closed)**: los specs cuyo OBJETIVO es
+>   comprobar la creación real (`multi-store-comprehensive`, `stores-crud`,
+>   `store-lifecycle`, `store-switching`, `store-reset`,
+>   `store-create-autoswitch`, `security`, `workers-create`,
+>   `data-hygiene-probe`, `isolation-proof` y `e2e/creation/**` — incluida
+>   RBAC-008 extraída) están SEPARADOS del proyecto core vía
+>   `playwright.config.ts`. NO se registran sin `E2E_ALLOW_CREATION=1` y sus
+>   guards exigen `E2E_ISOLATION=1` (entorno aislado por-run con teardown
+>   reconciliado). Ejecución explícita, solo bajo petición del propietario:
+>   `E2E_ALLOW_CREATION=1 E2E_ISOLATION=1 npm run test:e2e:creation`.
+> * Los jobs E2E de CI (`ci.yml`, `test-coverage.yml`) siguen apagados
+>   (`if: false`). Evidencia: `docs/audits/e2e-contamination-cleanup-20261009.md`.
 
 > **Denominador oficial de cobertura E2E.** Un "escenario" es un flujo de
 > comportamiento observable de negocio (no un archivo ni un assert aislado).

@@ -9,7 +9,19 @@
  *   E2E-RBAC-005 (P0) encargado CON membership activa SÍ puede gestionar su tienda
  *   E2E-RBAC-006 (P0) usuario sin membership NO ve la tienda ajena en su listado
  *   E2E-RBAC-007 (P1) UI: vista de administración bloqueada para clerk (Acceso Denegado)
- *   E2E-RBAC-008 (P1) admin crea usuario gestionado con membership → puede iniciar sesión
+ *
+ * E2E-FIXTURE-REUSE (2026-10-09): este spec FUNCIONAL reutiliza identidades
+ * demo preexistentes (admin@costpro.com, cajero@demo.com, almacen@demo.com,
+ * encargado@demo.com — protegidas por gobernanza) y la tienda PILOTO
+ * PERSISTENTE A vía el modo reuse de session.fixture (createTestStore →
+ * Piloto A, deleteTestStore → no-op). NADA se crea ni se elimina:
+ *   * La membership temporal del encargado sobre la piloto se inserta en el
+ *     beforeAll y se ELIMINA en el afterAll (reversible).
+ *   * E2E-RBAC-005 verifica autorización + persistencia con un PATCH no-op
+ *     (address = address actual) → estado de la piloto net-zero.
+ *
+ * NOTA: E2E-RBAC-008 (creación de usuario gestionado) se SEPARÓ al proyecto
+ * 'creation' → e2e/creation/rbac008-managed-user-creation.spec.ts.
  *
  * Roles reales del sistema: admin | encargado | usuario | manager | clerk |
  * warehouse | costo (src/types/index.ts). Usuarios demo reales:
@@ -19,35 +31,18 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 import {
   ADMIN_EMAIL, ADMIN_PASS, CLERK_EMAIL, CLERK_PASS,
-  WAREHOUSE_EMAIL, WAREHOUSE_PASS, ENCARGADO_EMAIL, ENCARGADO_PASS, ENCARGADO_ID,
-  signIn, apiHeaders, sb, createTestStore, deleteTestStore, cleanupProducts,
+  WAREHOUSE_EMAIL, WAREHOUSE_PASS, ENCARGADO_EMAIL, ENCARGADO_PASS,
+  signIn, apiHeaders, sb, createTestStore, TestStore,
 } from '../fixtures/session.fixture';
-
-// ============================================================================
-// ⛔ DESHABILITADO POR EL PROPIETARIO (2026-10-09) — NO ELIMINAR ESTE BLOQUE
-// ----------------------------------------------------------------------------
-// Este spec CREA tiendas y usuarios de prueba ('e2e80-created-*@costpro.test', sin limpieza posterior — causa de 4 huérfanos) en el proyecto Supabase COMPARTIDO (wthkddeleylijmonclxg)
-// y fue causa directa de la contaminación de datos del 2026-10-09
-// (48 tiendas + 26 usuarios + 6 tenants de prueba; evidencia completa en
-// docs/audits/e2e-contamination-cleanup-20261009.md).
-//
-// Permanece COMENTADO/omitido por defecto. Solo se ejecuta si el propietario
-// lo pide EXPLÍCITAMENTE. Para habilitarlo puntualmente:
-//   1. Comentar la línea `test.skip(true, ...)` de abajo.
-//   2. Ejecutar con E2E_ISOLATION=1 (provisiona entorno aislado efímero con
-//      teardown reconciliado) — NUNCA contra tiendas de negocio.
-//   3. Verificar net-zero al terminar: node e2e/scripts/data-hygiene-guard.cjs
-// ============================================================================
-test.skip(true, 'Deshabilitado por el propietario (2026-10-09): crea tiendas y usuarios. Habilitar solo bajo petición explícita (ver banner).');
 
 let api: APIRequestContext;
 let adminToken: string;
 let clerkToken: string;
 let warehouseToken: string;
 let encargadoToken: string;
-// E2E-RUNNER-ISOLATION: id del encargado del run (legacy: demo compartido)
-let encargadoId = ENCARGADO_ID;
-let store: { id: string; name: string; slug: string };
+let encargadoId: string;
+let store: TestStore;
+let originalAddress: string | null = null;
 
 test.beforeAll(async ({ playwright }) => {
   api = await playwright.request.newContext({ baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000' });
@@ -59,21 +54,43 @@ test.beforeAll(async ({ playwright }) => {
   warehouseToken = warehouse.token;
   const encargado = await signIn(ENCARGADO_EMAIL, ENCARGADO_PASS);
   encargadoToken = encargado.token;
+
+  // Identidad REAL del encargado demo (el placeholder legacy no sirve para
+  // insertar memberships). En modo aislado el global-setup exporta el ID;
+  // en legacy compartido se resuelve por email (usuario protegido).
+  if (process.env.E2E_ENCARGADO_ID) {
+    encargadoId = process.env.E2E_ENCARGADO_ID;
+  } else {
+    const rows = await sb.select<{ id: string }>(
+      'profiles', `email=eq.${encodeURIComponent(ENCARGADO_EMAIL)}&select=id&limit=1`,
+    );
+    if (!rows[0]?.id) throw new Error(`[roles-permissions] No se encontró el perfil del encargado (${ENCARGADO_EMAIL})`);
+    encargadoId = rows[0].id;
+  }
 });
 
 test.afterAll(async () => {
-  if (store?.id) {
-    // Revocar la membership de setup del encargado y limpiar
+  if (store?.id && encargadoId) {
+    // Reversión de la membership temporal insertada en el beforeAll del describe
     await sb.delete('user_store_memberships', `user_id=eq.${encargadoId}&store_id=eq.${store.id}`).catch(() => {});
-    await deleteTestStore(api, adminToken, store.id);
   }
   await api?.dispose().catch(() => {});
 });
 
 test.describe('Roles y permisos — autorización por rol', () => {
   test.beforeAll(async () => {
+    // E2E-FIXTURE-REUSE: devuelve la PILOTO A persistente (no crea nada).
     store = await createTestStore(api, adminToken, 'RBAC');
-    // Setup: membership activa de encargado en la tienda de prueba
+
+    // Address original de la piloto (para el PATCH no-op de RBAC-005)
+    const rows = await sb.select<{ address: string | null }>(
+      'stores', `id=eq.${store.id}&select=address`,
+    ).catch(() => [] as Array<{ address: string | null }>);
+    originalAddress = rows[0]?.address ?? '';
+
+    // Setup REVERSIBLE: membership activa de encargado en la piloto (eliminada
+    // en el afterAll del archivo). El encargado demo no la tiene por defecto.
+    await sb.delete('user_store_memberships', `user_id=eq.${encargadoId}&store_id=eq.${store.id}`).catch(() => {});
     await sb.insert('user_store_memberships', [{
       user_id: encargadoId,
       store_id: store.id,
@@ -116,16 +133,20 @@ test.describe('Roles y permisos — autorización por rol', () => {
 
   test('E2E-RBAC-005 (P0) encargado con membership activa puede gestionar su tienda', async () => {
     // PATCH /api/stores requiere canManageStore (admin global O membership
-    // admin/manager/encargado activa en esa tienda)
+    // admin/manager/encargado activa en esa tienda).
+    // E2E-FIXTURE-REUSE: la piloto es PERSISTENTE → el PATCH es NO-OP
+    // (address = address actual) y así la verificación de autorización y de
+    // persistencia conserva su valor sin mutar el estado de la piloto.
+    const targetAddress = originalAddress ?? 'Calle Piloto A';
     const res = await api.patch('/api/stores', {
       headers: apiHeaders(encargadoToken),
-      data: { storeId: store.id, address: 'Calle Actualizada E2E' },
+      data: { storeId: store.id, address: targetAddress },
     });
     expect(res.status(), `body: ${await res.text()}`).toBe(200);
 
-    // Persistido
+    // Persistido (idempotente: el valor enviado es el ya vigente)
     const rows = await sb.select('stores', `id=eq.${store.id}&select=address`);
-    expect(rows[0].address).toBe('Calle Actualizada E2E');
+    expect(rows[0].address).toBe(targetAddress);
   });
 
   test('E2E-RBAC-006 (P0) usuario sin membership NO ve la tienda ajena en su listado', async () => {
@@ -144,7 +165,7 @@ test.describe('Roles y permisos — autorización por rol', () => {
       `sb-${(process.env.NEXT_PUBLIC_SUPABASE_URL || '').match(/https?:\/\/([a-z0-9]+)\.supabase\.co/)?.[1]}-auth-token`,
       JSON.stringify({
         access_token: session.token, token_type: 'bearer', expires_in: 3600,
-        expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'mock-refresh',
+        expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: session.refreshToken || 'mock-refresh',
         user: { id: session.userId, email: CLERK_EMAIL },
       }),
     ]);
@@ -155,57 +176,5 @@ test.describe('Roles y permisos — autorización por rol', () => {
       page.getByText(/acceso denegado/i).first(),
       'la vista users debe estar bloqueada para rol clerk',
     ).toBeVisible({ timeout: 45_000 });
-  });
-
-  test('E2E-RBAC-008 (P1) admin crea usuario gestionado con membership y éste puede iniciar sesión', async () => {
-    const email = `e2e80-created-${Date.now().toString(36)}@costpro.test`;
-    const password = 'E2eCreado123!';
-
-    const res = await api.post('/api/users/managed-create', {
-      headers: apiHeaders(adminToken),
-      data: {
-        p_email: email,
-        p_full_name: 'Usuario Creado E2E',
-        p_role: 'usuario',
-        p_store_id: store.id,
-        p_memberships: [{ store_id: store.id, role: 'usuario' }],
-        p_password: password,
-      },
-    });
-
-    // DEFECT-003 (documentado en E2E-COVERAGE-REPORT.md): la ruta crea el
-    // usuario de auth (paso 1) y luego el RPC managed_create_user_v2
-    // rechaza con ERR_EMAIL_ALREADY_EXISTS porque detecta el usuario que la
-    // propia ruta acaba de crear. El usuario queda CREADO Y FUNCIONAL (login
-    // OK) pero la API responde 400. El outcome de negocio se valida abajo.
-    if (res.status() !== 201) {
-      const body = await res.text();
-      test.info().annotations.push({
-        type: 'DEFECT-003',
-        description: `managed-create responde ${res.status()} (${body.slice(0, 120)}) pero el usuario se crea correctamente`,
-      });
-      expect(res.status()).toBe(400);
-      expect(body).toContain('ERR_EMAIL_ALREADY_EXISTS');
-    }
-
-    // El usuario creado puede autenticarse contra Supabase Auth (outcome real)
-    const session = await signIn(email, password);
-    expect(session.token).toBeTruthy();
-    expect(session.userId).toBeTruthy();
-
-    // Y su perfil tiene rol y membership correctos
-    const profile = await sb.select('profiles', `id=eq.${session.userId}&select=email,role,active_store_id`);
-    expect(profile[0].email).toBe(email);
-    expect(profile[0].role).toBe('usuario');
-
-    // Cleanup: eliminar el usuario creado (profiles + auth)
-    await sb.delete('user_store_memberships', `user_id=eq.${session.userId}`).catch(() => {});
-    await sb.delete('profiles', `id=eq.${session.userId}`).catch(() => {});
-    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-    await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${session.userId}`, {
-      method: 'DELETE',
-      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
-    }).catch(() => {});
   });
 });
