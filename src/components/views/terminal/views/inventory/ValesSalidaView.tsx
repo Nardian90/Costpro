@@ -29,6 +29,16 @@
  *   | Devuelto (reversado) | ✅  | ❌       |
  *   | Anulado (defensivo)  | ✅  | ❌       |
  *
+ * FIX UI/UX (evidencia del usuario — 09/10/2026):
+ *   - Breadcrumb DUPLICADO eliminado: el shell ya renderiza el
+ *     NavigationBreadcrumb global (Inicio › Operación › Almacén › Vales de
+ *     Salida); la copia interna «Ubicación actual» fue retirada (mismo
+ *     patrón que ManagementHubView — F4/IA-F04).
+ *   - Botones de acción ahora VISIBLES: «Ver» = botón relleno (secondary)
+ *     con etiqueta e icono; «Devolver» = botón violeta de alto contraste
+ *     con etiqueta e icono. Antes eran icon-only outline con opacidad 5%
+ *     — prácticamente invisibles en modo oscuro (evidencia adjunta).
+ *
  * Autorización: RLS acota las filas (current_user_store_ids); canViewStore
  * espeja la RPC de reversión. La base de datos sigue siendo la última barrera.
  */
@@ -240,17 +250,6 @@ export default function ValesSalidaView() {
 
   return (
     <div className="space-y-4">
-      {/* ── Breadcrumb de ubicación (requisito 10: jerarquía) ── */}
-      <nav aria-label="Ubicación actual" className="flex items-center gap-1 text-[11px] text-muted-foreground font-bold uppercase tracking-wider">
-        <span>Inicio</span>
-        <span aria-hidden="true">/</span>
-        <span>Operación</span>
-        <span aria-hidden="true">/</span>
-        <span>Almacén</span>
-        <span aria-hidden="true">/</span>
-        <span className="text-foreground">Vales de Salida</span>
-      </nav>
-
       {/* ── Header documental ── */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div>
@@ -497,29 +496,35 @@ function TarjetaVale({
             {d.total_cost > 0 && ` • ${formatCurrency(d.total_cost)}`}
           </p>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          {/* FIX visibilidad: botón relleno (secondary) con etiqueta — antes
+              icon-only outline casi invisible en modo oscuro. */}
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={() => onVer(d)}
-            className="w-10 h-10 p-0 rounded-lg"
-            title="Ver Vale de Salida"
+            className="h-10 px-3.5 rounded-lg gap-1.5 text-xs font-bold"
+            title="Ver Vale de Salida (documento completo)"
             aria-label={`Ver vale ${d.slip_number}`}
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-4 h-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Ver</span>
           </Button>
           {/* Matriz de acciones: solo 'completed' admite devolución
-              (espejo de canReverse('issue_slip') + RPC reverse_vale_salida). */}
+              (espejo de canReverse('issue_slip') + RPC reverse_vale_salida).
+              FIX visibilidad: fondo violeta 20% + borde 70% + etiqueta — antes
+              bg-purple-500/5 (5% de opacidad) prácticamente invisible. */}
           {d.status === 'completed' && canActInStore && (
             <Button
               type="button"
               variant="outline"
               onClick={() => onDevolver(d)}
-              className="w-10 h-10 p-0 rounded-lg border-purple-500/40 bg-purple-500/5 text-purple-500 dark:text-purple-400 hover:bg-purple-500 hover:text-white dark:hover:text-black dark:hover:bg-purple-500 dark:hover:text-black"
+              className="h-10 px-3.5 rounded-lg gap-1.5 text-xs font-bold border-purple-500/70 bg-purple-500/20 text-purple-700 dark:text-purple-300 hover:bg-purple-500 hover:text-white dark:hover:bg-purple-500 dark:hover:text-white"
               title="Devolver vale (reversión: devuelve el stock descontado)"
               aria-label={`Devolver vale ${d.slip_number}`}
             >
-              <Undo2 className="w-4 h-4" />
+              <Undo2 className="w-4 h-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Devolver</span>
             </Button>
           )}
         </div>
@@ -594,27 +599,30 @@ function TablaVales({
                 ) : '—'}
               </td>
               <td className="p-3 text-right whitespace-nowrap">
-                <div className="inline-flex items-center gap-1">
+                <div className="inline-flex items-center gap-1.5">
+                  {/* FIX visibilidad (tabla): relleno secondary + etiqueta en
+                      Devolver — antes icon-only outline de bajo contraste. */}
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => onVer(d)}
-                    className="w-8 h-8 p-0 rounded-lg"
-                    title="Ver Vale de Salida"
+                    className="h-8 w-8 p-0 rounded-lg"
+                    title="Ver Vale de Salida (documento completo)"
                     aria-label={`Ver vale ${d.slip_number}`}
                   >
-                    <Eye className="w-3.5 h-3.5" />
+                    <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                   </Button>
                   {d.status === 'completed' && canActInStore && (
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => onDevolver(d)}
-                      className="w-8 h-8 p-0 rounded-lg border-purple-500/40 bg-purple-500/5 text-purple-500 dark:text-purple-400 hover:bg-purple-500 hover:text-white dark:hover:bg-purple-500 dark:hover:text-black"
+                      className="h-8 px-2.5 rounded-lg gap-1 text-[10px] font-black uppercase border-purple-500/70 bg-purple-500/20 text-purple-700 dark:text-purple-300 hover:bg-purple-500 hover:text-white dark:hover:bg-purple-500 dark:hover:text-white"
                       title="Devolver vale (reversión: devuelve el stock descontado)"
                       aria-label={`Devolver vale ${d.slip_number}`}
                     >
-                      <Undo2 className="w-3.5 h-3.5" />
+                      <Undo2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span className="hidden lg:inline">Devolver</span>
                     </Button>
                   )}
                 </div>

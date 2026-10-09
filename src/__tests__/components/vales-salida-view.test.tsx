@@ -221,9 +221,13 @@ beforeEach(() => {
 });
 
 describe('ValesSalidaView — render y listado', () => {
-  it('1 · breadcrumb, header con título exacto, contador y botón Crear', async () => {
+  it('1 · header con título exacto, contador, botón Crear y SIN breadcrumb local duplicado', async () => {
     renderView();
-    expect(screen.getByLabelText('Ubicación actual')).toBeTruthy();
+    // FIX duplicado: el breadcrumb de ubicación lo renderiza el shell global
+    // (NavigationBreadcrumb). La vista NO debe renderizar su copia interna
+    // «Ubicación actual» (evidencia del usuario: ruta duplicada en pantalla).
+    expect(screen.queryByLabelText('Ubicación actual')).toBeNull();
+    expect(screen.queryByText('INICIO')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Vales de Salida' })).toBeTruthy();
     const createBtn = screen.getByRole('button', { name: /Crear Vale de Salida/i });
     expect(createBtn).toBeTruthy();
@@ -255,10 +259,14 @@ describe('ValesSalidaView — render y listado', () => {
 });
 
 describe('ValesSalidaView — matriz de acciones (estados REALES)', () => {
-  it('4 · completed → botón Devolver visible con aria-label del número', async () => {
+  it('4 · completed → botón Devolver visible con aria-label del número y ETIQUETA visible (fix contraste)', async () => {
     renderView();
     await waitFor(() => expect(screen.getByText('VS-000001-2026')).toBeTruthy());
     expect(screen.getByRole('button', { name: 'Devolver vale VS-000001-2026' })).toBeTruthy();
+    // FIX visibilidad: los botones de acción llevan etiqueta de texto además
+    // del icono (antes icon-only outline casi invisible — evidencia usuario).
+    expect(screen.getAllByText('Ver').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Devolver').length).toBeGreaterThanOrEqual(1);
   });
 
   it('5 · reversed y voided → SIN botón Devolver (matriz: solo Ver)', async () => {

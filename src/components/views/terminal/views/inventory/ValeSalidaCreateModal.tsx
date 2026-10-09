@@ -38,6 +38,7 @@ import {
   Plus,
   ChevronDown,
   ClipboardList,
+  Ban,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
@@ -49,6 +50,7 @@ import { useProducts } from '@/hooks/api/useProducts';
 import { useDebounce } from '@/hooks/ui/useDebounce';
 import { formatearCantidad } from '@/lib/inventory/kardexPeriod';
 import { useCrearValeSalida, type CrearValeResult } from './useCrearValeSalida';
+import { toast } from 'sonner';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos locales (espejo de los datos reales disponibles)
@@ -324,6 +326,22 @@ export function ValeSalidaCreateModal({
     }
   }, [emitirVale, lineas, productionOrderId, notas, onEmitido]);
 
+  // ── Anulación del borrador (paso REVISIÓN → descartar) ──
+  // Flujo documental requerido: crear → REVISIÓN → anular o confirmar →
+  // (si se confirmó) devolver. El borrador NO está persistido — no se
+  // escribe nada en BD hasta EMITIR (la RPC crea el vale ya confirmado
+  // y mueve stock en la misma transacción). Por eso «Anular» aquí es
+  // descartar el documento en revisión: cero efectos en inventario,
+  // numeración o auditoría. Tras la confirmación NO existe Anular
+  // (modelo real: solo devolución/reversión).
+  const anularBorrador = useCallback(() => {
+    if (isSubmitting) return;
+    onClose();
+    toast.info('Vale anulado antes de confirmar', {
+      description: 'El borrador fue descartado: no se registró documento ni se movió stock.',
+    });
+  }, [isSubmitting, onClose]);
+
   // ── Render ──
   return (
     <BaseModal
@@ -355,17 +373,33 @@ export function ValeSalidaCreateModal({
             </Button>
           </div>
         ) : paso === 'confirmando' ? (
-          <div className="flex items-center justify-between gap-2 w-full">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setPaso('editando')}
-              disabled={isSubmitting}
-              className="h-10 rounded-lg"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1.5" aria-hidden="true" />
-              Volver a editar
-            </Button>
+          <div className="flex flex-wrap items-center justify-between gap-2 w-full">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPaso('editando')}
+                disabled={isSubmitting}
+                className="h-10 rounded-lg"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                Volver a editar
+              </Button>
+              {/* Anular el documento EN REVISIÓN (flujo crear → revisión →
+                  anular/confirmar). Descarta el borrador sin efectos. */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={anularBorrador}
+                disabled={isSubmitting}
+                className="h-10 rounded-lg text-destructive border-destructive/50 hover:bg-destructive hover:text-white dark:hover:text-white"
+                title="Anular el vale en revisión: descarta el borrador sin efectos en inventario"
+                aria-label="Anular vale en revisión"
+              >
+                <Ban className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                Anular
+              </Button>
+            </div>
             <Button
               type="button"
               onClick={emitir}

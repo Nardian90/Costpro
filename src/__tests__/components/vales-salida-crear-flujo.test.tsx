@@ -206,6 +206,42 @@ describe('ValeSalidaCreateModal — paso 2 CONFIRMANDO (validación pre-emisión
     });
     expect(screen.getByText(/supera el stock disponible/i)).toBeTruthy();
   });
+
+  it('6b · ANULAR en Revisión: descarta el borrador y cierra SIN POST (flujo crear → revisión → anular)', async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <ValeSalidaCreateModal
+          open
+          onClose={onClose}
+          storeId="store-1"
+          storeName="Almacén Central"
+          onEmitido={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    // Llegar al paso 2 (REVISIÓN) con un borrador válido
+    const search = await screen.findByLabelText(/Buscar productos/i);
+    await user.type(search, 'Tor');
+    await waitFor(() => expect(screen.getByRole('option', { name: /Tornillo M8/ })).toBeTruthy());
+    await user.click(screen.getByRole('option', { name: /Tornillo M8/ }));
+    await user.type(screen.getByLabelText(/Concepto \/ notas/i), 'Borrador que se anulará');
+    await user.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    await screen.findByText(/Impacto en inventario/i);
+
+    // El botón Anular existe en el pie del paso Revisión
+    const anularBtn = screen.getByRole('button', { name: 'Anular vale en revisión' });
+    expect(anularBtn).toBeEnabled();
+    await user.click(anularBtn);
+
+    // Anular = descartar: cierra el modal y NO llama al endpoint (cero
+    // efectos en inventario/numeración — nada se persiste hasta Emitir).
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(apiFetchMock).not.toHaveBeenCalled();
+  });
 });
 
 describe('ValeSalidaCreateModal — paso 3 REGISTRADO (emisión real)', () => {
