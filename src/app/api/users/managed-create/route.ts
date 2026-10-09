@@ -88,7 +88,14 @@ const handler = withRole('admin', async (req, session) => {
     });
 
     if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 400 });
+      // v2_16_1: mapear el error de GoTrue a un mensaje claro en español
+      // (correo ya registrado) — el administrador ve LA causa real, un solo
+      // toast rojo, sin mensajes técnicos en inglés.
+      const authMsg = authError.message || '';
+      if (/already.*registered|already exists/i.test(authMsg)) {
+        return NextResponse.json({ error: 'Ya existe un usuario con ese correo electrónico' }, { status: 409 });
+      }
+      return NextResponse.json({ error: authMsg }, { status: 400 });
     }
 
     const userId = authUser.user.id;
@@ -117,19 +124,47 @@ const handler = withRole('admin', async (req, session) => {
         // Do NOT log email or PII
       });
 
-      // Rollback: eliminar auth.users creado
-      await supabaseAdmin.auth.admin.deleteUser(userId);
+      // Rollback: eliminar auth.users creado.
+      // v2_16_0 (fix/usuarios-en-desarrollo-admin): el resultado del rollback se
+      // verifica — antes un fallo silencioso dejaba un usuario a medio crear
+      // (auth user + perfil del trigger) mientras el cliente veía un error
+      // genérico, sin rastro del estado real.
+      let { error: rollbackError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (rollbackError) {
+        // GoTrue devuelve 500 mientras exista la fila profiles (FK
+        // profiles_id_fkey). Para usuarios REALES la política de la app es
+        // soft-delete (trigger prevent_hard_delete_profile): marcamos el perfil
+        // como eliminado y reintentamos el borrado del auth user. Si aún así
+        // falla, el usuario queda clasificado para el panel de huérfanos
+        // (OrphanUsersPanel) — el mecanismo existente de recuperación.
+        const { error: softDeleteError } = await supabaseAdmin
+          .from('profiles')
+          .update({ deleted_at: new Date().toISOString(), deletion_reason: 'managed-create rollback' })
+          .eq('id', userId);
+        const retry = await supabaseAdmin.auth.admin.deleteUser(userId);
+        rollbackError = retry.error;
+        logger.error('DATABASE', 'MANAGED_CREATE_USER_ROLLBACK_PARTIAL', {
+          userId,
+          first_error: rollbackError.message,
+          soft_delete_error: softDeleteError?.message || null,
+          retry_deleted: !retry.error,
+        });
+      }
 
-      // Mapear errores del RPC a respuestas HTTP
+      // Mapear errores del RPC a respuestas HTTP con mensajes claros (sin
+      // prefijos técnicos dobles — el cliente muestra un único toast rojo).
       const errMsg = rpcError.message || '';
       if (errMsg.includes('ERR_UNAUTHORIZED')) {
-        return NextResponse.json({ error: 'Permiso denegado' }, { status: 403 });
+        return NextResponse.json({ error: 'No tienes permisos para crear este usuario' }, { status: 403 });
+      }
+      if (errMsg.includes('ERR_EMAIL_ALREADY_EXISTS')) {
+        return NextResponse.json({ error: 'Ya existe un usuario con ese correo electrónico' }, { status: 409 });
       }
       if (errMsg.includes('ERR_INVALID_ACTIVE_STORE') || errMsg.includes('ERR_STORE_REQUIRED')) {
         return NextResponse.json({ error: 'Tienda inválida o no especificada' }, { status: 400 });
       }
 
-      return NextResponse.json({ error: `Error al crear usuario: ${errMsg}` }, { status: 400 });
+      return NextResponse.json({ error: errMsg || 'Error al crear el usuario' }, { status: 400 });
     }
 
     // 6. If no password provided, generate recovery link
