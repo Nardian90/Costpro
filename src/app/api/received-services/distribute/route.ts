@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { withSecurity } from '@/lib/with-security';
 import { canManageStore } from '@/lib/roles';
 
@@ -28,7 +29,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (!url || !key) return NextResponse.json({ error: 'CONFIG_ERROR' }, { status: 500 });
     const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
-    const { service_id } = await req.json();
+    const parsedJson = z.object({ service_id: z.string() }).safeParse(await req.json());
+    if (!parsedJson.success) {
+      return NextResponse.json({ error: 'service_id required' }, { status: 400 });
+    }
+    const { service_id } = parsedJson.data;
     if (!service_id) return NextResponse.json({ error: 'service_id required' }, { status: 400 });
 
     const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;

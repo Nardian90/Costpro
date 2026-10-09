@@ -441,14 +441,22 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   }
 
   // ── Get the focused module object ──
+  // COSTPRO 4 (fix/usuarios-en-desarrollo-admin): el módulo enfocado se resuelve
+  // SIEMPRE sobre el árbol FILTRADO POR ROL (allNavigation) — antes buscaba en
+  // SIDEBAR_STRUCTURE cruda, así que un usuario sin rol admin que aterrizaba en
+  // una vista de EN DESARROLLO (deep-link / sesión previa) veía la sección
+  // completa aunque el filtro la hubiera eliminado. Si el módulo no existe para
+  // este rol, focusedModule queda null y el sidebar cae al modo normal.
   const focusedModule = useMemo(() =>
-    SIDEBAR_STRUCTURE.find(m => m.id === focusModuleId),
-  [focusModuleId]);
+    allNavigation.find(m => m.id === focusModuleId),
+  [focusModuleId, allNavigation]);
 
   // ── Check if current view belongs to a root module (for auto-focus) ──
   useEffect(() => {
     if (focusModuleId) return; // Don't override manual focus
-    for (const mod of SIDEBAR_STRUCTURE) {
+    // COSTPRO 4: el auto-focus SOLO considera módulos visibles para el rol —
+    // nunca enfoca secciones que el filtro de permisos eliminó.
+    for (const mod of allNavigation) {
       if (hasViewInModule(mod, currentView)) {
         queueMicrotask(() => enterFocusMode(mod.id));
         return;

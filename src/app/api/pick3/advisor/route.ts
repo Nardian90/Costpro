@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
+import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { Pick3Storage } from '@/services/pick3/storage';
 import { AnalysisEngine } from '@/services/pick3/analysis.engine';
@@ -10,6 +11,7 @@ import { runFullStatisticalTests, detectRegimeChange } from '@/services/pick3/st
 import { BettingConfig } from '@/types/pick3';
 import { SubscriptionService } from '@/services/pick3/subscription.service';
 import { TIERS } from '@/services/pick3/subscription.types';
+import { withRole } from '@/lib/auth-middleware';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -277,6 +279,19 @@ async function advisorHandler(req: NextRequest) {
       return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
     }
 
+    // REM-COSTPRO4-CI: contrato del body con Zod (tipos del AdvisorRequestBody;
+    // campos opcionales + passthrough para compatibilidad).
+    const AdvisorBodySchema = z.object({
+      messages: z.array(z.unknown()).optional(),
+      riskMode: z.string().optional(),
+      bankroll: z.number().optional(),
+      config: z.unknown().optional(),
+    }).passthrough();
+    const parsedBody = AdvisorBodySchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'JSON inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+    }
+
     if (!body.messages?.length) {
       return NextResponse.json({ error: 'No hay mensajes' }, { status: 400 });
     }
@@ -503,4 +518,5 @@ async function advisorHandler(req: NextRequest) {
   }
 }
 
-export const POST = advisorHandler;
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const POST = withRole('admin', advisorHandler);

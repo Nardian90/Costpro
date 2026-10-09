@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
@@ -24,6 +25,18 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   if (!allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
 
   const body = await req.json();
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (invitaciones a importar; la
+  // requeridad y el límite de 100 los aplica la lógica de negocio).
+  const TelegramImportSchema = z.object({
+    store_id: z.string().optional(),
+    invitations: z.array(z.unknown()).optional(),
+  }).passthrough();
+  const parsedBody = TelegramImportSchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json(createApiError('INVALID_DATA'), { status: 400 });
+  }
+
   const { store_id, invitations } = body;
 
   if (!store_id || !Array.isArray(invitations) || invitations.length === 0) {

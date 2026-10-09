@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 // FIX R1: withUsageTracking eliminado — withAuth ya aplica withAutoTracking internamente
 
 /**
@@ -64,6 +65,17 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   try {
     const body = await req.json();
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (requeridad de id la aplica
+    // el check de abajo).
+    const AlertActionSchema = z.object({
+      id: z.string().optional(),
+    }).passthrough();
+    const parsedBody = AlertActionSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+    }
+
     const { id } = body;
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });

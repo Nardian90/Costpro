@@ -14,6 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { withTracing } from '@/lib/observability';
 import { canManageStore } from '@/lib/roles';
 import { validateOrigin } from '@/lib/csrf';
@@ -74,6 +75,17 @@ async function postHandler(
   let operationDate: Date | undefined;
   try {
     const body = await req.json();
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (body opcional; solo
+    // operation_date, cuya validez temporal la valida new Date() abajo).
+    const ConfirmTransferSchema = z.object({
+      operation_date: z.string().optional(),
+    }).passthrough();
+    const parsedBody = ConfirmTransferSchema.safeParse(body ?? {});
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+    }
+
     if (body?.operation_date) {
       operationDate = new Date(body.operation_date);
     }

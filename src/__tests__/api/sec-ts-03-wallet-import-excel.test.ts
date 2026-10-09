@@ -32,6 +32,26 @@ vi.mock('@/lib/auth', () => ({
   getServerSession: async () => sessionState.value,
 }));
 
+// COSTPRO 4: withRole('admin') consulta el perfil del solicitante vía
+// supabase-admin — se mockea como admin para ejercitar el gate real.
+vi.mock('@/lib/supabase-admin', () => ({
+  getSupabaseAdminSafe: () => adminProfileClient(),
+  getSupabaseAdmin: () => adminProfileClient(),
+}));
+
+function adminProfileClient() {
+  const chain: any = {
+    select: () => chain,
+    eq: () => chain,
+    single: () => Promise.resolve({ data: { role: 'admin', roles: ['admin'] } }),
+  };
+  return {
+    from: (table: string) => (table === 'user_store_memberships'
+      ? { select: () => ({ eq: () => ({ eq: () => Promise.resolve({ data: [] }) }) }) }
+      : chain),
+  };
+}
+
 vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));

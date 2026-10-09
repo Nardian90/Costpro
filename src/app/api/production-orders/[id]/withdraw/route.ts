@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
 
@@ -17,6 +18,19 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
   const orderId = request.nextUrl.pathname.split('/').slice(-2, -1)[0] || '';
   try {
     const body = await request.json();
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (unit_cost se IGNORA por
+    // diseño — REM-F4-03; la requeridad la aplica el check de abajo).
+    const WithdrawSchema = z.object({
+      item_id: z.string().optional(),
+      qty: z.union([z.number(), z.string()]).optional(),
+      idempotency_key: z.string().optional(),
+    }).passthrough();
+    const parsedBody = WithdrawSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+    }
+
     // unit_cost intencionalmente NO se lee del body (REM-F4-03 §cost authority):
     // si el cliente lo envía, se descarta silenciosamente.
     const { item_id, qty, idempotency_key } = body;

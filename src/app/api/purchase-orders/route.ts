@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { withSecurity } from '@/lib/with-security';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 
@@ -40,6 +41,26 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const body = await req.json();
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (tipos conocidos; la
+  // requeridad y la validación de items la aplica la lógica de negocio).
+  const PurchaseOrderSchema = z.object({
+    store_id: z.string().optional(),
+    supplier_name: z.string().optional(),
+    supplier_id: z.string().nullable().optional(),
+    po_number: z.string().nullable().optional(),
+    notes: z.string().nullable().optional(),
+    expected_date: z.string().nullable().optional(),
+    items: z.array(z.unknown()).optional(),
+  }).passthrough();
+  const parsedBody = PurchaseOrderSchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json(
+      { error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) },
+      { status: 400 },
+    );
+  }
+
   const { store_id, supplier_name, supplier_id, po_number, notes, expected_date, items } = body;
 
   if (!store_id || !supplier_name || !items || items.length === 0) {

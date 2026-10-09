@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
 
@@ -32,6 +33,31 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const body = await req.json();
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (PATCH parcial: todos los
+  // campos opcionales — la requeridad la decide qué campos envía el cliente).
+  const BodySchema = z.object({
+    worker_id: z.string().nullable().optional(),
+    type: z.string().optional(),
+    value_percent: z.union([z.number(), z.string()]).nullable().optional(),
+    fixed_value: z.union([z.number(), z.string()]).nullable().optional(),
+    salary_amount: z.union([z.number(), z.string()]).nullable().optional(),
+    base_calculation: z.string().nullable().optional(),
+    priority: z.union([z.number(), z.string()]).optional(),
+    valid_from: z.string().optional(),
+    valid_to: z.string().nullable().optional(),
+    min_price: z.union([z.number(), z.string()]).nullable().optional(),
+    max_price: z.union([z.number(), z.string()]).nullable().optional(),
+    product_commission_amount: z.union([z.number(), z.string()]).nullable().optional(),
+    product_ids: z.unknown().optional(),
+    product_configs: z.unknown().optional(),
+    product_commission_mode: z.string().nullable().optional(),
+  }).passthrough();
+  const parsedBody = BodySchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+  }
+
   const supabase = getSupabaseForSession(session);
 
   // Verificar ownership: la regla debe pertenecer a una tienda donde el usuario tenga membership

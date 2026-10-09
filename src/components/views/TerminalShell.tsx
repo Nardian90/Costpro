@@ -307,7 +307,12 @@ export default function TerminalShell() {
   }, [loading, user, router, queryClient, status]);
 
   // Role-based view guard: restrict 'costo' users to cost-related views + resources only
-  const COSTO_ALLOWED_VIEWS: ViewType[] = ['cost-sheets', 'legal', 'help', 'wiki', 'academy'];
+  // COSTPRO 4 (fix/usuarios-en-desarrollo-admin): wiki/academy/legal salen de
+  // esta lista — la sección EN DESARROLLO es admin-only y el guard
+  // isViewAllowedForRole (líneas abajo) les niega el acceso igualmente;
+  // mantenerlas aquí contradiría la nueva regla y forzaría un bucle de
+  // redirección para el rol costo.
+  const COSTO_ALLOWED_VIEWS: ViewType[] = ['cost-sheets', 'help'];
   useEffect(() => {
     if (user?.role === 'costo' && !COSTO_ALLOWED_VIEWS.includes(currentView)) {
       setCurrentView('cost-sheets');

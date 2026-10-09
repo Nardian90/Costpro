@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
 
@@ -59,6 +60,18 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const body = await req.json();
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (transición de estado; la
+  // requeridad de status la aplica el check de abajo).
+  const PoStatusSchema = z.object({
+    status: z.string().optional(),
+    reason: z.string().nullable().optional(),
+  }).passthrough();
+  const parsedBody = PoStatusSchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+  }
+
   const { status: newStatus, reason } = body;
 
   if (!newStatus) {
@@ -121,6 +134,19 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const body = await req.json();
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (recepción de items de la OC;
+  // la requeridad del array la aplica el check de abajo).
+  const PoReceiveSchema = z.object({
+    receivedItems: z.array(z.unknown()).optional(),
+    receptionDate: z.string().nullable().optional(),
+    invoiceNumber: z.string().nullable().optional(),
+  }).passthrough();
+  const parsedBody = PoReceiveSchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+  }
+
   const { receivedItems, receptionDate, invoiceNumber } = body;
 
   if (!receivedItems || !Array.isArray(receivedItems) || receivedItems.length === 0) {

@@ -103,6 +103,15 @@ export function useUserStoreAccess(userId?: string) {
   });
 }
 
+/**
+ * COSTPRO 4 (fix/usuarios-en-desarrollo-admin): opciones de notificación.
+ * `silentSuccess` suprime el toast verde del hook para que el FLUJO que combina
+ * varias mutaciones (editar = memberships + perfil) emita UN único mensaje.
+ */
+interface UserMutationOptions {
+  silentSuccess?: boolean;
+}
+
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -136,16 +145,25 @@ export function useCreateUser() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      // COSTPRO 4: ÚNICO punto de éxito de la creación — un solo toast verde.
       toast.success('Usuario creado correctamente');
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : String(error);
+      // COSTPRO 4 (caso «resultado incierto»): un fallo de red no permite
+      // afirmar que la creación fracasó — el backend pudo completarla.
+      if (/fetch failed|failed to fetch|networkerror|load failed/i.test(message)) {
+        toast.error('No se pudo contactar al servidor. Verifica tu conexión y comprueba si el usuario fue creado antes de reintentar, para evitar duplicados.');
+        return;
+      }
+      // Un solo toast rojo con la causa real (el mensaje ya llega limpio desde
+      // /api/users/managed-create — p. ej. «Ya existe un usuario con ese correo»).
       toast.error(`Error al crear usuario: ${message}`);
     }
   });
 }
 
-export function useManageUserMemberships() {
+export function useManageUserMemberships(options?: UserMutationOptions) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (rawParams: { userId: string; memberships: any[] }) => {
@@ -159,7 +177,9 @@ export function useManageUserMemberships() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('Accesos actualizados correctamente');
+      // COSTPRO 4: silenciable — el flujo de edición combina esta mutación con
+      // updateUser y emite UN solo verde al final (handleUserFormSubmit).
+      if (!options?.silentSuccess) toast.success('Accesos actualizados correctamente');
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : String(error);
@@ -212,7 +232,7 @@ export function useBulkAssignMemberships() {
   });
 }
 
-export function useUpdateUser() {
+export function useUpdateUser(options?: UserMutationOptions) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...rawUpdates }: { id: string } & Partial<z.input<typeof profileSchema>>) => {
@@ -245,7 +265,8 @@ export function useUpdateUser() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('Usuario actualizado correctamente');
+      // COSTPRO 4: silenciable — ver useManageUserMemberships.
+      if (!options?.silentSuccess) toast.success('Usuario actualizado correctamente');
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : String(error);

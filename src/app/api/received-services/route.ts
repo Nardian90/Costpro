@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { withSecurity } from '@/lib/with-security';
@@ -65,6 +66,30 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (!rl.allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
 
     const body = await req.json();
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (servicio recibido; campos
+    // opcionales — la requeridad de store_id la aplica el check de abajo y el
+    // RPC valida el resto).
+    const ReceivedServiceSchema = z.object({
+      store_id: z.string().optional(),
+      supplier: z.string().nullable().optional(),
+      total_amount: z.union([z.number(), z.string()]).nullable().optional(),
+      service_type_id: z.string().nullable().optional(),
+      service_type_name: z.string().nullable().optional(),
+      service_date: z.string().nullable().optional(),
+      currency: z.string().nullable().optional(),
+      exchange_rate: z.union([z.number(), z.string()]).nullable().optional(),
+      payment_terms_days: z.union([z.number(), z.string()]).nullable().optional(),
+      distribution_method: z.string().nullable().optional(),
+      reference_doc: z.string().nullable().optional(),
+      observations: z.string().nullable().optional(),
+      receipt_ids: z.array(z.unknown()).nullable().optional(),
+    }).passthrough();
+    const parsedBody = ReceivedServiceSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+    }
+
     const storeId = body.store_id;
     if (!storeId) {
       return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });

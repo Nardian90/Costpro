@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { rateLimit } from '@/lib/rate-limit';
 import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
@@ -31,6 +32,24 @@ async function exportPdfHandler(req: NextRequest, session: AuthenticatedSession)
     const body = await req.json();
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Cuerpo de solicitud inválido' }, { status: 400 });
+    }
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (estructura del payload de
+    // exportación; todo opcional — el handler aplica sus propios defaults).
+    const ExportPdfSchema = z.object({
+      data: z.unknown().optional(),
+      options: z.unknown().optional(),
+      exportOptions: z.unknown().optional(),
+      calculatedValues: z.unknown().optional(),
+      calculatedHeader: z.unknown().nullable().optional(),
+      calculatedAnnexes: z.unknown().optional(),
+      exportMode: z.string().optional(),
+      comparisonData: z.unknown().optional(),
+      activeScenarioIds: z.unknown().optional(),
+    }).passthrough();
+    const parsedBody = ExportPdfSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
     }
 
     const pdfUint8Array = await generateFCPdf({

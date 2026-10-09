@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
@@ -13,6 +14,15 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   if (!allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
 
   const body = await req.json().catch(() => ({}));
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (requeridad de store_id la
+  // aplica el check de abajo con el error de contrato).
+  const StoreActionSchema = z.object({ store_id: z.string().optional() }).passthrough();
+  const parsedBody = StoreActionSchema.safeParse(body ?? {});
+  if (!parsedBody.success) {
+    return NextResponse.json(createApiError('INVALID_DATA'), { status: 400 });
+  }
+
   const storeId = body.store_id;
   if (!storeId) return NextResponse.json(createApiError('INVALID_DATA'), { status: 400 });
   if (!canManageStore(session.user, storeId)) {

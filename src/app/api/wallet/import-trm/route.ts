@@ -3,6 +3,7 @@ import { getServerSession } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { processTrmBackup, getAllAccounts, getAllTransactions } from '@/lib/transfermovil/transfermovil';
 import { walletImportTrmSchema, zodError, WALLET_TRM_MAX_CHARS } from '@/validation/api-schemas';
+import { withRole } from '@/lib/auth-middleware';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -355,4 +356,5 @@ function categorize(service: string, serviceType: string): string {
   return 'Otros';
 }
 
-export const POST = postHandler;
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const POST = withRole('admin', postHandler);

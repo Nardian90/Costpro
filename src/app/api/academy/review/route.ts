@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
+import { withRole } from '@/lib/auth-middleware';
 
 export const runtime = 'nodejs';
 
@@ -48,4 +49,5 @@ async function getHandler(req: NextRequest) {
   }
 }
 
-export const GET = withTracing(getHandler, 'GET /api/academy/review');
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const GET = withTracing(withRole('admin', getHandler), 'GET /api/academy/review');

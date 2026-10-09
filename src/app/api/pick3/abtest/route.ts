@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
+import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { ABTestingService, EXPERIMENTS, ExperimentId } from '@/services/pick3/abtesting.service';
+import { withRole } from '@/lib/auth-middleware';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,6 +43,18 @@ async function postHandler(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (la validez de experimentId
+    // y event la aplica la lógica de negocio con mensajes específicos).
+    const AbtestEventSchema = z.object({
+      experimentId: z.string().optional(),
+      event: z.string().optional(),
+    }).passthrough();
+    const parsedBody = AbtestEventSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+    }
+
     const { experimentId, event } = body;
 
     if (!experimentId || !EXPERIMENTS[experimentId as ExperimentId]) {
@@ -66,5 +80,6 @@ async function postHandler(req: NextRequest) {
   }
 }
 
-export const GET = getHandler;
-export const POST = postHandler;
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const GET = withRole('admin', getHandler);
+export const POST = withRole('admin', postHandler);

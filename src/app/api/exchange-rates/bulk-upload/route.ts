@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import * as XLSX from '@e965/xlsx';
@@ -219,6 +220,16 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
 
     const file = formData.get('file');
+
+    // REM-COSTPRO4-CI: contrato del form-data con Zod (file = File binario
+    // requerido — el mensaje específico lo aplica la lógica de negocio).
+    const BulkUploadFormSchema = z.object({
+      file: z.instanceof(File),
+    });
+    const parsedForm = BulkUploadFormSchema.safeParse({ file });
+    if (!parsedForm.success) {
+      return NextResponse.json({ error: 'Se requiere un archivo Excel en el campo "file"' }, { status: 400 });
+    }
     if (!(file instanceof File)) {
       return NextResponse.json(
         { error: 'No se encontró el archivo. Campo esperado: "file"' },

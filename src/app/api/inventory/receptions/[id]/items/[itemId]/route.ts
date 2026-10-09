@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { withTracing } from '@/lib/observability';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
@@ -31,6 +32,20 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const body = await req.json().catch(() => ({}));
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (campos opcionales — la
+  // requeridad de moneda/tasa la aplica el check de abajo con mensaje
+  // específico).
+  const ReceptionItemPatchSchema = z.object({
+    moneda_recepcion: z.string().optional(),
+    tasa_cambio_recepcion: z.number().positive().optional(),
+    motivo: z.string().optional(),
+  }).passthrough();
+  const parsedBody = ReceptionItemPatchSchema.safeParse(body ?? {});
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+  }
+
   const { moneda_recepcion, tasa_cambio_recepcion, motivo } = body;
 
   if (tasa_cambio_recepcion === undefined && moneda_recepcion === undefined) {

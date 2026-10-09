@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { publishProductToWhatsApp } from '@/lib/whatsapp/publish';
 
 /**
@@ -21,6 +22,21 @@ import { publishProductToWhatsApp } from '@/lib/whatsapp/publish';
  */
 async function handler(req: NextRequest, session: AuthenticatedSession) {
   const body = await req.json().catch(() => ({}));
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (userId del body se IGNORA
+  // por diseño — identidad siempre de la sesión).
+  const WsPublishSchema = z.object({
+    storeId: z.string().optional(),
+    publishType: z.string().optional(),
+    productId: z.string().nullable().optional(),
+    showPriceOverride: z.unknown().optional(),
+    showPhysicalUnitsOverride: z.unknown().optional(),
+  }).passthrough();
+  const parsedBody = WsPublishSchema.safeParse(body ?? {});
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+  }
+
   const { storeId, publishType = 'manual', productId, showPriceOverride, showPhysicalUnitsOverride } = body;
 
   if (!storeId) {

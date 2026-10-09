@@ -63,13 +63,25 @@ export function useUsersView() {
 
     // Mutations
     const createUserMutation = useCreateUser();
-    const updateUserMutation = useUpdateUser();
-    const manageMembershipsMutation = useManageUserMemberships();
+    // COSTPRO 4: en el flujo de EDICIÓN las dos mutaciones son silenciosas y el
+    // resultado combinado emite UN solo toast (ver handleUserFormSubmit).
+    const updateUserMutation = useUpdateUser({ silentSuccess: true });
+    const manageMembershipsMutation = useManageUserMemberships({ silentSuccess: true });
 
+    // COSTPRO 4 (fix/usuarios-en-desarrollo-admin) — REGLA DE ORO: una operación,
+    // un mensaje. El éxito/fracaso real lo emite la mutación correspondiente
+    // (useCreateUser: verde/rojo únicos). Este handler NUNCA re-emite: el
+    // catch anterior añadía un segundo/tercer toast rojo sobre el ya mostrado
+    // por el hook («Error al crear usuario: Error al crear usuario: …»), que es
+    // exactamente la secuencia contradictoria reportada.
     const handleUserFormSubmit = async (mode: 'create' | 'edit' | null, data: UserFormData, selectedUserContractId?: string): Promise<boolean> => {
         if (!user) return false;
         try {
           if (mode === 'create') {
+            // Creación = UNA operación atómica server-side (auth + perfil +
+            // memberships + auditoría en /api/users/managed-create). Si una
+            // operación secundaria posterior fallara, la mutación ya avisó y el
+            // usuario quedó creado — aquí no se repite ni se reenvía.
             await createUserMutation.mutateAsync({
               p_email: data.email,
               p_full_name: data.fullName,
@@ -97,13 +109,16 @@ export function useUsersView() {
               max_stores_limit: data.role === 'encargado' ? data.maxStoresLimit : 0,
               max_users_limit: data.role === 'encargado' ? data.maxUsersLimit : 0
             });
+            // ÚNICO verde de la edición (ambas mutaciones son silentSuccess).
+            toast.success('Usuario actualizado correctamente');
           }
           setUserFormMode(null);
           setSelectedUserContract(null);
           return true;
         } catch (error: unknown) {
+          // La mutación que falló ya mostró UN toast rojo con la causa real.
+          // Solo registramos en consola para diagnóstico (sin PII).
           console.error('[useUsersView] Error submitting form:', error);
-          toast.error((error instanceof Error ? error.message : String(error)) || 'Error al procesar la solicitud');
           return false;
         }
     };

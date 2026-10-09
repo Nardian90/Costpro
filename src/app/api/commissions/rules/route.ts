@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 // FIX C1: usar getSupabaseAuthClient para que RLS respete el usuario autenticado
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
@@ -95,6 +96,35 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const body = await req.json();
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (tipos conocidos; la
+  // requeridad y los rangos los aplica la lógica de negocio con mensajes
+  // específicos — el schema valida formas).
+  const BodySchema = z.object({
+    store_id: z.string().optional(),
+    worker_id: z.string().nullable().optional(),
+    type: z.string().optional(),
+    value_percent: z.union([z.number(), z.string()]).nullable().optional(),
+    fixed_value: z.union([z.number(), z.string()]).nullable().optional(),
+    salary_amount: z.union([z.number(), z.string()]).nullable().optional(),
+    base_calculation: z.string().nullable().optional(),
+    priority: z.union([z.number(), z.string()]).optional(),
+    valid_from: z.string().optional(),
+    valid_to: z.string().nullable().optional(),
+    min_price: z.union([z.number(), z.string()]).nullable().optional(),
+    max_price: z.union([z.number(), z.string()]).nullable().optional(),
+    product_commission_amount: z.union([z.number(), z.string()]).nullable().optional(),
+    product_ids: z.unknown().optional(),
+    product_commission_mode: z.string().nullable().optional(),
+    product_configs: z.unknown().optional(),
+  }).passthrough();
+  const parsedBody = BodySchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json(
+      { error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) },
+      { status: 400 },
+    );
+  }
 
   if (session.user.role !== 'admin' && session.user.role !== 'manager') {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });

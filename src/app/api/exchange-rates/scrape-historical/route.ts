@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { fetchHistoricalRates, type HistoricalRateEntry } from '@/lib/soluciones-cuba-scraper';
 
@@ -36,6 +37,18 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   let sourceFilter: 'both' | 'bcc' | 'informal' = 'both';
   try {
     const body = await req.json().catch(() => ({}));
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (body opcional — vacío es
+    // válido; solo se validan tipos de los campos conocidos).
+    const ScrapeHistoricalSchema = z.object({
+      dryRun: z.boolean().optional(),
+      source: z.string().optional(),
+    }).passthrough();
+    const parsedBody = ScrapeHistoricalSchema.safeParse(body ?? {});
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+    }
+
     dryRun = !!body?.dryRun;
     if (body?.source && ['both', 'bcc', 'informal'].includes(body.source)) {
       sourceFilter = body.source;
