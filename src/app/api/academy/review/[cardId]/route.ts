@@ -9,10 +9,19 @@ import { withRole } from '@/lib/auth-middleware';
 
 export const runtime = 'nodejs';
 
-async function postHandler(
-  req: NextRequest,
-  { params }: { params: Promise<{ cardId: string }> }
-) {
+/**
+ * FIX COSTPRO 4 (CI TS2345 + runtime): withRole no pasa el context object de
+ * Next ({ params }), así que el destructuring `params` rompía la firma del
+ * AuthHandler (error de tipos) y en runtime `await params` habría fallado con
+ * la sesión enriquecida. Patrón del codebase (ver payments/[id], FIX-AUD4-1):
+ * extraer el id de la URL.
+ */
+function extractCardIdFromUrl(req: NextRequest): string | null {
+  const match = req.nextUrl?.pathname?.match(/\/api\/academy\/review\/([^/]+)/);
+  return match?.[1] || null;
+}
+
+async function postHandler(req: NextRequest) {
   const session = await getServerSession(req);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -32,7 +41,10 @@ async function postHandler(
     return NextResponse.json(zodError(parsed.error), { status: 400 });
   }
   const { score } = parsed.data; // 0-5
-  const { cardId } = await params;
+  const cardId = extractCardIdFromUrl(req);
+  if (!cardId) {
+    return NextResponse.json({ error: 'cardId requerido' }, { status: 400 });
+  }
 
   try {
     // 1. Get current progress

@@ -131,6 +131,11 @@ const handler = withRole('admin', async (req, session) => {
       // genérico, sin rastro del estado real.
       let { error: rollbackError } = await supabaseAdmin.auth.admin.deleteUser(userId);
       if (rollbackError) {
+        // FIX TS18047 (CI): capturar el PRIMER error ya estrechado a no-null
+        // antes de reasignar rollbackError (retry.error es AuthError | null y
+        // la reasignación invalidaba el narrowing). Además corrige la semántica
+        // del log: first_error debe ser el error ORIGINAL del primer intento.
+        const firstRollbackError = rollbackError;
         // GoTrue devuelve 500 mientras exista la fila profiles (FK
         // profiles_id_fkey). Para usuarios REALES la política de la app es
         // soft-delete (trigger prevent_hard_delete_profile): marcamos el perfil
@@ -145,7 +150,7 @@ const handler = withRole('admin', async (req, session) => {
         rollbackError = retry.error;
         logger.error('DATABASE', 'MANAGED_CREATE_USER_ROLLBACK_PARTIAL', {
           userId,
-          first_error: rollbackError.message,
+          first_error: firstRollbackError.message,
           soft_delete_error: softDeleteError?.message || null,
           retry_deleted: !retry.error,
         });
