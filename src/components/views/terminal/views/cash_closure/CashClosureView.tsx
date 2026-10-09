@@ -12,7 +12,8 @@ import { motion } from 'framer-motion';
 // FIX-PAYMENT-TRACKING (2026-07-12): Reporte de caja con desglose de billetes
 import { CashReportModal } from '@/components/views/terminal/views/cash/CashReportModal';
 
-import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSinceLastClosure } from '@/hooks/api/useCashClosures';
+import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSinceLastClosure, useCashShiftExpected } from '@/hooks/api/useCashClosures';
+import { computeArqueo, type CashShiftBreakdown } from '@/lib/cash-arqueo';
 import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
 import { CashClosure } from '@/types';
@@ -64,6 +65,16 @@ export default function CashClosureView() {
     error: salesError,
   } = useSalesSinceLastClosure(user?.activeStoreId);
 
+  // v2.18.0: desglose del turno con EGRESOS de efectivo (RPC get_cash_shift_expected).
+  // Misma ventana y fórmula que close_cash_shift → lo mostrado = lo que el cierre calculará.
+  const {
+    data: shiftExpected,
+    isLoading: isLoadingExpected,
+    refetch: refetchExpected,
+    isRefetching: isRefetchingExpected,
+    error: expectedError,
+  } = useCashShiftExpected(user?.activeStoreId);
+
   const createClosure = useCreateCashClosure();
   const updateClosure = useUpdateCashClosure();
 
@@ -82,29 +93,51 @@ export default function CashClosureView() {
 
   // FIX F3-01: Al cerrar, el efectivo declarado se compara con (fondo inicial + ventas cash - salidas)
   // NO con solo ventas cash. El fondo inicial se guarda en opening_balance al abrir.
-  const openingBalance = Number(pendingClosure?.opening_balance) || 0;
+  const openingBalance = Number(pendingClosure?.opening_balance) || Number(shiftExpected?.opening_balance) || 0;
 
   const summary = {
-    total_billed: salesData?.total_sales || 0,
-    total_cash: salesData?.total_cash || 0,
-    total_transfer: salesData?.total_transfer || 0,
+    total_billed: shiftExpected?.total_sales ?? salesData?.total_sales ?? 0,
+    total_cash: shiftExpected?.cash_sales ?? salesData?.total_cash ?? 0,
+    total_transfer: shiftExpected?.transfer_sales ?? salesData?.total_transfer ?? 0,
   };
 
-  // FIX F3-04: system_expected_total = fondo inicial + ventas cash
-  // Antes: systemCash = solo ventas cash (ignoraba fondo inicial)
-  // Ahora: systemCash = opening_balance + ventas cash
+  // ── v2.18.0 — Arqueo con desglose completo (fórmula espejo del RPC) ──
+  // Efectivo esperado = Fondo + Ventas cash + Anticipos producción cash
+  //                     − Pagos proveedores cash − Comisiones cash
+  // Transferencias y Zelle NO son efectivo (lado vouchers del arqueo).
   const salesCash = summary.total_cash || 0;
   const salesTransfer = summary.total_transfer || 0;
-  const systemCash = openingBalance + salesCash; // FIX F3-04: incluir fondo inicial
-  const systemVouchers = salesTransfer;
+  const cashOutflows = Number(shiftExpected?.cash_outflows) || 0;
+  const cashCommissions = Number(shiftExpected?.cash_commissions) || 0;
+  const cashProduction = Number(shiftExpected?.cash_production) || 0;
+  const systemVouchers = (Number(shiftExpected?.transfer_sales) || 0) + (Number(shiftExpected?.zelle_sales) || 0);
 
-  // FIX F3-04: mostrar fondo inicial + ventas cash = efectivo esperado total
-  const summaryItems = [
+  const arqueo = computeArqueo(
+    (shiftExpected || {
+      opening_balance: openingBalance,
+      total_sales: 0,
+      cash_sales: salesCash,
+      cash_outflows: 0,
+      cash_production: 0,
+      cash_commissions: 0,
+      transfer_sales: salesTransfer,
+      zelle_sales: 0,
+    }) as CashShiftBreakdown,
+    declaredCash,
+    declaredVouchers,
+  );
+  const systemCash = arqueo.expected_cash;
+
+  // Desglose del balance del sistema (solo cuando hay turno abierto)
+  const summaryItems = pendingClosure ? [
     { label: 'Fondo Inicial', value: openingBalance, color: 'text-muted-foreground' },
     { label: 'Ventas en Efectivo', value: salesCash, color: 'text-foreground' },
-    { label: 'Efectivo Esperado (Fondo + Ventas)', value: systemCash, color: 'text-success' },
-    { label: 'Transferencias (Sistema)', value: salesTransfer, color: 'text-primary' },
-  ];
+    ...(cashProduction > 0 ? [{ label: 'Anticipos Producción (Efectivo)', value: cashProduction, color: 'text-foreground' }] : []),
+    ...(cashOutflows > 0 ? [{ label: 'Pagos a Proveedores (Efectivo)', value: -cashOutflows, color: 'text-destructive' }] : []),
+    ...(cashCommissions > 0 ? [{ label: 'Comisiones (Efectivo)', value: -cashCommissions, color: 'text-destructive' }] : []),
+    { label: 'Efectivo Esperado', value: systemCash, color: 'text-success' },
+    { label: `Transferencias/Zelle (Sistema)`, value: systemVouchers, color: 'text-primary' },
+  ] : [];
 
   // Restore pending closure state
   useEffect(() => {
@@ -127,10 +160,11 @@ export default function CashClosureView() {
 
   const totalDeclared = declaredCash + declaredVouchers;
 
-  // FIX F3-04: diferencia = efectivo declarado - (fondo inicial + ventas cash)
-  const cashDiff = pendingClosure ? declaredCash - systemCash : 0;
-  const voucherDiff = pendingClosure ? declaredVouchers - systemVouchers : 0;
-  const difference = pendingClosure ? cashDiff + voucherDiff : 0;
+  // v2.18.0: diferencia con convención explícita (contado − esperado),
+  // espejo del cálculo server-side de close_cash_shift (fuente autoritativa).
+  const cashDiff = pendingClosure ? arqueo.cash_diff : 0;
+  const voucherDiff = pendingClosure ? arqueo.voucher_diff : 0;
+  const difference = pendingClosure ? arqueo.difference : 0;
 
   const canClose = useMemo(
     () => ['admin', 'manager', 'encargado'].includes(user?.role || ''),
@@ -207,15 +241,15 @@ export default function CashClosureView() {
   };
 
   const isProcessing = createClosure.isPending || updateClosure.isPending;
-  const isRefreshing = isRefetchingClosures || isRefetchingSales;
-  const isLoading = isLoadingClosures || isLoadingSales;
+  const isRefreshing = isRefetchingClosures || isRefetchingSales || isRefetchingExpected;
+  const isLoading = isLoadingClosures || isLoadingSales || isLoadingExpected;
   // F3-B1: error de carga solo bloquea si además no hay datos que mostrar;
   // si hay datos stale, se muestran y el usuario puede refrescar como siempre.
-  const loadError = (closuresError ?? salesError) || null;
+  const loadError = (closuresError ?? salesError ?? expectedError) || null;
   const showLoadError = !!loadError && !cashClosuresData;
 
   const handleRefresh = async () => {
-    await Promise.all([refetchClosures(), refetchSales()]);
+    await Promise.all([refetchClosures(), refetchSales(), refetchExpected()]);
   };
 
   // POS-3a: Labels dinámicos según contexto (apertura vs cierre)
@@ -385,10 +419,10 @@ export default function CashClosureView() {
                       Turno Activo
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {salesData?.total_sales !== undefined && (
-                        <>Ventas: <span className="font-black text-foreground">{formatCurrency(salesData.total_sales)}</span> · </>
+                      {summary.total_billed !== undefined && (
+                        <>Ventas: <span className="font-black text-foreground">{formatCurrency(summary.total_billed)}</span> · </>
                       )}
-                      Efectivo: <span className="font-black text-foreground">{formatCurrency(salesData?.total_cash || 0)}</span> · Transf: <span className="font-black text-foreground">{formatCurrency(salesData?.total_transfer || 0)}</span>
+                      Efectivo: <span className="font-black text-foreground">{formatCurrency(summary.total_cash || 0)}</span> · Transf: <span className="font-black text-foreground">{formatCurrency(summary.total_transfer || 0)}</span>
                     </p>
                   </div>
                 </div>
@@ -713,8 +747,12 @@ export default function CashClosureView() {
 
           <div className="rounded-xl bg-muted/50 border border-border p-4 space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-muted-foreground uppercase">Esperado por Sistema</span>
-              <span className="text-xs font-black tabular-nums">{formatCurrency(summary.total_billed)}</span>
+              <span className="text-xs font-bold text-muted-foreground uppercase">Efectivo Esperado (Sistema)</span>
+              <span className="text-xs font-black tabular-nums">{formatCurrency(arqueo.expected_cash)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-muted-foreground uppercase">Transferencias/Zelle (Sistema)</span>
+              <span className="text-xs font-black tabular-nums">{formatCurrency(arqueo.expected_vouchers)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-muted-foreground uppercase">Total Declarado</span>

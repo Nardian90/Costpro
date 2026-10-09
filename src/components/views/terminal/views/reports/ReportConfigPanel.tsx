@@ -42,7 +42,8 @@ const ALL_COLUMNS: Record<ReportType, string[]> = {
   audit: ['created_at', 'action', 'table_name', 'store_name', 'profile'],
   cost_sheet: ['id', 'created_at', 'name', 'code', 'total_cost'],
   daily_income: ['date', 'total_income'],
-  daily_expenses: ['date', 'total_expenses'],
+  // v2.18.0: desglose Costo Mercancía + Servicios Recibidos
+  daily_expenses: ['date', 'receipts_cost', 'services_amount', 'total_expenses'],
   transfer: ['id', 'created_at', 'origin_store_name', 'destination_store_name', 'creator_name', 'status'],
   cash: ['id', 'created_at', 'operator_name', 'declared_cash', 'declared_vouchers', 'system_total', 'difference', 'status']
 };

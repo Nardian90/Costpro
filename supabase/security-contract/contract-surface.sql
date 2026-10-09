@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-09T17:34:34.044Z
+-- Captured  : 2026-10-09T21:02:24.718Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 136 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -940,8 +940,8 @@ END;
 $function$
 
 
--- @contract-function name=bulk_assign_memberships args="p_user_id uuid, p_assignments jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.bulk_assign_memberships(p_user_id uuid, p_assignments jsonb)
+-- @contract-function name=bulk_assign_memberships args="p_user_id uuid, p_assignments jsonb, p_actor_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.bulk_assign_memberships(p_user_id uuid, p_assignments jsonb, p_actor_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -954,11 +954,25 @@ DECLARE
   v_store_id uuid;
   v_role public.user_role;
   v_status text;
-  v_caller_uid uuid := auth.uid();
+  v_actor uuid;
   v_changes jsonb := '[]'::jsonb;
 BEGIN
-  IF v_caller_uid IS NULL THEN
+  -- Actor: patrón create_sale_v2 (20261004130000 §3.1). Bajo service_role el
+  -- actor llega EXPLÍCITO por parámetro (la ruta lo deriva de la sesión
+  -- verificada); bajo JWT de usuario manda auth.uid() y el parámetro se ignora
+  -- (anti-spoofing, doctrina 20260820000001).
+  v_actor := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_actor_id, auth.uid())
+    ELSE auth.uid()
+  END;
+
+  IF v_actor IS NULL THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- El objetivo de la asignación debe existir (fail-closed, antes del bucle).
+  IF p_user_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = p_user_id) THEN
+    RAISE EXCEPTION 'ERR_USER_NOT_FOUND';
   END IF;
 
   FOR v_assignment IN SELECT * FROM jsonb_array_elements(p_assignments) LOOP
@@ -967,8 +981,10 @@ BEGIN
       v_role := (v_assignment->>'role')::public.user_role;
       v_status := COALESCE(v_assignment->>'status', 'active');
 
-      -- Validar caller tiene acceso al store
-      IF NOT public.is_admin() AND NOT public.has_store_role(v_store_id, ARRAY['admin', 'manager']) THEN
+      -- Autorización del ACTOR sobre la tienda objetivo (no del rol JWT):
+      -- has_store_role_as = bypass admin/superadmin global + membership activa
+      -- con rol de gestión en la tienda (20260807000002).
+      IF NOT public.has_store_role_as(v_actor, v_store_id, ARRAY['admin', 'manager']::text[]) THEN
         v_failed := v_failed + 1;
         CONTINUE;
       END IF;
@@ -993,11 +1009,11 @@ BEGIN
     END;
   END LOOP;
 
-  -- Audit log atómico (solo si hubo cambios)
+  -- Audit log atómico (solo si hubo cambios). performed_by = actor real.
   IF v_affected > 0 THEN
     INSERT INTO public.user_audit_log (performed_by, target_user_id, action, new_values, metadata)
     VALUES (
-      v_caller_uid, p_user_id, 'MEMBERSHIPS_BULK_ASSIGNED',
+      v_actor, p_user_id, 'MEMBERSHIPS_BULK_ASSIGNED',
       jsonb_build_object('assignments', v_changes),
       jsonb_build_object('affected', v_affected, 'failed', v_failed)
     );
@@ -1358,6 +1374,43 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
+END;
+$function$
+
+
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1394,43 +1447,6 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
-END;
-$function$
-
-
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
 END;
 $function$
 
@@ -1521,102 +1537,151 @@ CREATE OR REPLACE FUNCTION public.close_cash_shift(p_closure_id uuid, p_declared
  SECURITY DEFINER
  SET search_path TO 'pg_catalog', 'public'
 AS $function$
-
 DECLARE
   v_closure RECORD;
   v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
   v_cash_sales numeric := 0;
   v_transfer_sales numeric := 0;
   v_zelle_sales numeric := 0;
-  v_cash_payments numeric := 0;
+  v_cash_outflows numeric := 0;
+  v_cash_production numeric := 0;
   v_cash_commissions numeric := 0;
   v_system_cash numeric := 0;
   v_system_expected_total numeric := 0;
   v_difference numeric := 0;
-  v_tax_total numeric := 0;
-  v_devolutions_total numeric := 0;
-  v_z_number text;
-  v_z_id uuid;
-  v_tx_count int := 0;
 BEGIN
+  -- 1. SELECT FOR UPDATE + validar status
   SELECT * INTO v_closure FROM public.cash_closures WHERE id = p_closure_id FOR UPDATE;
-  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_CLOSURE_NOT_FOUND'; END IF;
-  IF v_closure.status <> 'pendiente' THEN RAISE EXCEPTION 'ERR_CLOSURE_NOT_PENDING: status=%', v_closure.status; END IF;
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_closure.store_id) THEN RAISE EXCEPTION 'ERR_UNAUTHORIZED'; END IF;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_CLOSURE_NOT_FOUND';
+  END IF;
+
+  IF v_closure.status <> 'pendiente' THEN
+    RAISE EXCEPTION 'ERR_CLOSURE_NOT_PENDING: status=%', v_closure.status;
+  END IF;
+
+  -- 2. Auth (actor-explícito, sin cambios respecto a v2.18.2)
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_closure.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- 3. Advisory lock por store
   PERFORM pg_advisory_xact_lock(hashtext(v_closure.store_id::text));
 
-  SELECT COALESCE(SUM(cash_amount), 0) INTO v_cash_sales FROM public.transactions WHERE store_id = v_closure.store_id AND status = 'completed' AND created_at > v_closure.created_at AND created_at <= NOW();
-  SELECT COALESCE(SUM(transfer_amount), 0) INTO v_transfer_sales FROM public.transactions WHERE store_id = v_closure.store_id AND status = 'completed' AND created_at > v_closure.created_at AND created_at <= NOW();
-  SELECT COALESCE(SUM(zelle_amount), 0) INTO v_zelle_sales FROM public.transactions WHERE store_id = v_closure.store_id AND status = 'completed' AND created_at > v_closure.created_at AND created_at <= NOW();
-  SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_payments FROM public.payment_transactions WHERE store_id = v_closure.store_id AND payment_method = 'cash' AND (ref_type IS NULL OR ref_type <> 'sale') AND created_at > v_closure.created_at AND created_at <= NOW();
-  SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_commissions FROM public.commission_payments WHERE store_id = v_closure.store_id AND status = 'paid' AND paid_at > v_closure.created_at AND paid_at <= NOW();
-  SELECT COUNT(*) INTO v_tx_count FROM public.transactions WHERE store_id = v_closure.store_id AND status = 'completed' AND created_at > v_closure.created_at AND created_at <= NOW();
+  -- 4. Fórmula v2.18.0 — Efectivo esperado =
+  --      Fondo inicial + Entradas de efectivo − Salidas de efectivo
+  --    Entradas: ventas cobradas en efectivo (parte cash de ventas mixtas
+  --      incluida) + anticipos de órdenes de producción/trabajo en efectivo.
+  --    Salidas: pagos a proveedores en efectivo (recepciones + servicios
+  --      recibidos) + comisiones pagadas en efectivo.
+  --    NO son efectivo: transferencias y zelle (van a su propio lado del
+  --      arqueo); pagos pendientes de documentos (no hay salida de dinero);
+  --      cobros de ventas (ref_type='sale') — ya están contados como ventas.
 
-  v_system_cash := COALESCE(v_closure.opening_balance, 0) + v_cash_sales - v_cash_payments - v_cash_commissions;
+  -- Ventas por canal (columnas de desglose: soportan pago 'mixed')
+  SELECT COALESCE(SUM(cash_amount), 0) INTO v_cash_sales
+    FROM public.transactions
+    WHERE store_id = v_closure.store_id
+      AND status = 'completed'
+      AND created_at > v_closure.created_at
+      AND created_at <= NOW();
+
+  SELECT COALESCE(SUM(transfer_amount), 0) INTO v_transfer_sales
+    FROM public.transactions
+    WHERE store_id = v_closure.store_id
+      AND status = 'completed'
+      AND created_at > v_closure.created_at
+      AND created_at <= NOW();
+
+  SELECT COALESCE(SUM(zelle_amount), 0) INTO v_zelle_sales
+    FROM public.transactions
+    WHERE store_id = v_closure.store_id
+      AND status = 'completed'
+      AND created_at > v_closure.created_at
+      AND created_at <= NOW();
+
+  -- FIX D3: SOLO egresos reales de caja — pagos a proveedores en efectivo
+  -- (recepciones y servicios recibidos). Excluye ref_type='sale' (cobros de
+  -- ventas — doble conteo), 'production_order'/'work' (anticipos = ingresos)
+  -- y 'commission' (término aparte).
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_outflows
+    FROM public.payment_transactions
+    WHERE store_id = v_closure.store_id
+      AND payment_method = 'cash'
+      AND ref_type IN ('receipt', 'service')
+      AND payment_date > v_closure.created_at
+      AND payment_date <= NOW();
+
+  -- FIX D3: anticipos de producción/trabajo EN EFECTIVO son ENTRADAS de caja.
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_production
+    FROM public.payment_transactions
+    WHERE store_id = v_closure.store_id
+      AND payment_method = 'cash'
+      AND ref_type IN ('production_order', 'work')
+      AND payment_date > v_closure.created_at
+      AND payment_date <= NOW();
+
+  -- FIX D3: comisiones SOLO en efectivo (antes se restaban todas del
+  -- efectivo, incluidas las pagadas por transferencia/zelle).
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_commissions
+    FROM public.commission_payments
+    WHERE store_id = v_closure.store_id
+      AND status = 'paid'
+      AND payment_method = 'cash'
+      AND paid_at > v_closure.created_at
+      AND paid_at <= NOW();
+
+  -- Calcular totales
+  v_system_cash := COALESCE(v_closure.opening_balance, 0)
+                 + v_cash_sales + v_cash_production
+                 - v_cash_outflows - v_cash_commissions;
   v_system_expected_total := v_system_cash + v_transfer_sales + v_zelle_sales;
-  v_difference := (p_declared_cash + p_declared_vouchers) - v_system_expected_total;
+  v_difference := (COALESCE(p_declared_cash, 0) + COALESCE(p_declared_vouchers, 0)) - v_system_expected_total;
 
+  -- 5. UPDATE closure con valores recalculados
   UPDATE public.cash_closures SET
-    status = 'cerrado', closed_at = NOW(),
-    declared_cash = p_declared_cash, declared_vouchers = p_declared_vouchers,
-    declared_total = p_declared_cash + p_declared_vouchers,
-    system_expected_total = v_system_expected_total, difference = v_difference,
-    notes = p_notes
+    status = 'cerrado',
+    closed_at = NOW(),
+    declared_cash = p_declared_cash,
+    declared_vouchers = p_declared_vouchers,
+    declared_total = COALESCE(p_declared_cash, 0) + COALESCE(p_declared_vouchers, 0),
+    system_expected_total = v_system_expected_total,
+    difference = v_difference,
+    notes = p_notes,
+    updated_at = NOW()
   WHERE id = p_closure_id;
 
-  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
-  VALUES ('CASH_CLOSURE_FINALIZED', 'cash_closures', p_closure_id, v_closure.store_id, v_caller_uid,
-    jsonb_build_object('declared_cash', p_declared_cash, 'declared_vouchers', p_declared_vouchers,
-      'system_expected_total', v_system_expected_total, 'difference', v_difference,
-      'opening_balance', COALESCE(v_closure.opening_balance, 0),
-      'cash_sales', v_cash_sales, 'transfer_sales', v_transfer_sales, 'zelle_sales', v_zelle_sales,
-      'cash_payments', v_cash_payments, 'cash_commissions', v_cash_commissions, 'v2_close', true));
-
-  BEGIN
-    v_z_number := public.next_document_number(v_closure.store_id, 'z_report', v_caller_uid);
-
-    SELECT COALESCE(SUM(tax_amount), 0) INTO v_tax_total
-      FROM public.transactions
-      WHERE store_id = v_closure.store_id AND status = 'completed'
-        AND created_at > v_closure.created_at AND created_at <= NOW();
-
-    SELECT COALESCE(SUM(total_amount), 0) INTO v_devolutions_total
-      FROM public.devolutions
-      WHERE store_id = v_closure.store_id AND status = 'completed'
-        AND created_at > v_closure.created_at AND created_at <= NOW();
-
-    INSERT INTO public.z_reports (
-      cash_closure_id, store_id, z_report_number, report_date,
-      total_sales, total_cash, total_transfer, total_zelle, total_tax,
-      total_devolutions, total_commissions_paid, total_payments_suppliers,
-      opening_balance, declared_cash, difference, metadata, generated_by
-    ) VALUES (
-      p_closure_id, v_closure.store_id, v_z_number, CURRENT_DATE,
-      v_cash_sales + v_transfer_sales + v_zelle_sales,
-      v_cash_sales, v_transfer_sales, v_zelle_sales, v_tax_total,
-      v_devolutions_total, v_cash_commissions, v_cash_payments,
-      COALESCE(v_closure.opening_balance, 0), p_declared_cash, v_difference,
-      jsonb_build_object('transaction_count', v_tx_count, 'cash_closure_id', p_closure_id),
-      v_caller_uid
+  -- 6. Audit log atómico
+  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (
+    v_caller_uid, v_closure.store_id, 'CASH_CLOSURE_FINALIZED', 'cash_closures', p_closure_id,
+    jsonb_build_object(
+      'system_cash', v_system_cash,
+      'expected_total', v_system_expected_total,
+      'difference', v_difference,
+      'formula', 'v2.18.0',
+      'cash_sales', v_cash_sales,
+      'cash_production_income', v_cash_production,
+      'cash_outflows_suppliers', v_cash_outflows,
+      'cash_commissions', v_cash_commissions,
+      'transfer_sales', v_transfer_sales,
+      'zelle_sales', v_zelle_sales
     )
-    RETURNING id INTO v_z_id;
-
-    INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
-    VALUES ('Z_REPORT_GENERATED', 'z_reports', v_z_id, v_closure.store_id, v_caller_uid,
-      jsonb_build_object('z_report_number', v_z_number, 'cash_closure_id', p_closure_id,
-        'total_sales', v_cash_sales + v_transfer_sales + v_zelle_sales, 'total_tax', v_tax_total));
-
-  EXCEPTION WHEN OTHERS THEN
-    RAISE EXCEPTION 'ERR_Z_REPORT_GENERATION_FAILED: %', SQLERRM;
-  END;
+  );
 
   RETURN jsonb_build_object(
-    'status', 'success', 'closure_id', p_closure_id,
-    'system_expected_total', v_system_expected_total, 'difference', v_difference,
-    'z_report_number', v_z_number, 'z_report_id', v_z_id
+    'status', 'success',
+    'system_cash', v_system_cash,
+    'system_expected_total', v_system_expected_total,
+    'difference', v_difference,
+    'cash_sales', v_cash_sales,
+    'cash_outflows', v_cash_outflows,
+    'cash_production', v_cash_production,
+    'cash_commissions', v_cash_commissions,
+    'transfer_sales', v_transfer_sales,
+    'zelle_sales', v_zelle_sales
   );
 END;
-
 $function$
 
 
@@ -2727,8 +2792,8 @@ END;
 $function$
 
 
--- @contract-function name=create_received_service_v2 args="p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid DEFAULT NULL::uuid, p_service_type_name text DEFAULT 'Otro'::text, p_service_date date DEFAULT NULL::date, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_payment_terms_days integer DEFAULT 30, p_distribution_method text DEFAULT 'amount'::text, p_reference_doc text DEFAULT NULL::text, p_observations text DEFAULT NULL::text, p_receipt_ids jsonb DEFAULT '[]'::jsonb, p_created_by uuid DEFAULT NULL::uuid)
+-- @contract-function name=create_received_service_v2 args="p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid, p_production_order_ids jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid DEFAULT NULL::uuid, p_service_type_name text DEFAULT 'Otro'::text, p_service_date date DEFAULT NULL::date, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_payment_terms_days integer DEFAULT 30, p_distribution_method text DEFAULT 'amount'::text, p_reference_doc text DEFAULT NULL::text, p_observations text DEFAULT NULL::text, p_receipt_ids jsonb DEFAULT '[]'::jsonb, p_created_by uuid DEFAULT NULL::uuid, p_production_order_ids jsonb DEFAULT '[]'::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2738,14 +2803,26 @@ DECLARE
   v_service_id uuid;
   v_service_number text;
   v_receipt_id uuid;
+  v_order_id uuid;
   v_count integer;
   v_allocated_per_receipt numeric;
   v_link_count integer;
-  v_caller_uid uuid := COALESCE(p_created_by, auth.uid());
+  v_ot_count integer := 0;
+  -- Doctrina actor-explícito (create_sale_v2 §3.1 / v2.17.0): bajo
+  -- service_role el actor llega EXPLÍCITO por parámetro derivado server-side
+  -- de la sesión verificada; bajo JWT de usuario manda auth.uid().
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_created_by, auth.uid())
+    ELSE auth.uid()
+  END;
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
 
-  IF NOT public.has_store_access(p_store_id) THEN
+  -- FIX D1: autorización del ACTOR (no de auth.uid() del contexto service_role).
+  IF v_caller_uid IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
@@ -2796,6 +2873,8 @@ BEGIN
     p_payment_terms_days, (COALESCE(p_service_date, CURRENT_DATE) + p_payment_terms_days)::date
   ) RETURNING id INTO v_service_id;
 
+  -- Vinculación documental con recepciones (validación server-side: misma
+  -- tienda + recepción activa). NO distribuye costos ni toca inventario.
   v_link_count := jsonb_array_length(p_receipt_ids);
   IF v_link_count > 0 THEN
     v_allocated_per_receipt := p_total_amount / v_link_count;
@@ -2808,17 +2887,39 @@ BEGIN
     END LOOP;
   END IF;
 
+  -- FIX D2: vinculación documental con Órdenes de Trabajo/Producción.
+  -- Validación: la OT debe existir, pertenecer a la MISMA tienda y no estar
+  -- anulada ni cerrada (draft/approved/in_progress/paused/completed ok).
+  IF jsonb_array_length(p_production_order_ids) > 0 THEN
+    FOR v_order_id IN SELECT value::uuid FROM jsonb_array_elements_text(p_production_order_ids) LOOP
+      IF NOT EXISTS (
+        SELECT 1 FROM production_orders
+        WHERE id = v_order_id
+          AND store_id = p_store_id
+          AND status NOT IN ('voided', 'closed')
+      ) THEN
+        RAISE EXCEPTION 'ERR_PRODUCTION_ORDER_INVALID: % no pertenece a la tienda o su estado no admite vinculación', v_order_id;
+      END IF;
+      INSERT INTO service_production_order_links (service_id, production_order_id)
+      VALUES (v_service_id, v_order_id)
+      ON CONFLICT (service_id, production_order_id) DO NOTHING;
+      v_ot_count := v_ot_count + 1;
+    END LOOP;
+  END IF;
+
   INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
   VALUES (v_caller_uid, p_store_id, 'SERVICE_CREATED', 'received_services', v_service_id,
     jsonb_build_object(
       'service_number', v_service_number, 'supplier', p_supplier,
       'total_amount', p_total_amount, 'currency', p_currency,
-      'receipt_ids_linked', v_link_count
+      'receipt_ids_linked', v_link_count,
+      'production_order_ids_linked', v_ot_count
     ));
 
   RETURN jsonb_build_object(
     'status', 'success', 'service_id', v_service_id,
-    'service_number', v_service_number, 'link_count', v_link_count
+    'service_number', v_service_number, 'link_count', v_link_count,
+    'production_order_link_count', v_ot_count
   );
 END;
 $function$
@@ -3903,7 +4004,10 @@ DECLARE
   v_total_qty numeric := 0;
   v_allocated numeric;
   v_dist_count integer := 0;
-  v_caller_uid uuid := COALESCE(p_user_id, auth.uid());
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext(p_service_id::text));
 
@@ -3915,7 +4019,8 @@ BEGIN
   v_total_amount := v_service.total_amount;
   v_method := v_service.distribution_method;
 
-  IF NOT public.has_store_access(v_store_id) THEN
+  -- FIX D1: autorización del ACTOR sobre la tienda REAL del servicio.
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
@@ -3969,8 +4074,8 @@ BEGIN
   WHERE product_id IN (SELECT DISTINCT product_id FROM service_cost_distributions WHERE service_id = p_service_id);
 
   INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
-  VALUES (v_caller_uid, v_store_id, 'SERVICE_DISTRIBUTED', 'received_services', p_service_id,
-    jsonb_build_object('rows_distributed', v_dist_count, 'method', v_method, 'total_amount', v_total_amount));
+  VALUES (v_caller_uid, v_store_id, 'SERVICE_COST_DISTRIBUTED', 'received_services', p_service_id,
+    jsonb_build_object('distributed_rows', v_dist_count, 'method', v_method));
 
   RETURN jsonb_build_object('status', 'success', 'distributed_rows', v_dist_count);
 END;
@@ -4984,7 +5089,10 @@ DECLARE
   v_allocated_per_receipt numeric;
   v_total_receipts integer;
   v_service_total numeric;
-  v_caller_uid uuid := COALESCE(p_user_id, auth.uid());
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext(p_service_id::text));
 
@@ -4993,7 +5101,8 @@ BEGIN
 
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_SERVICE_NOT_FOUND'; END IF;
 
-  IF NOT public.has_store_access(v_store_id) THEN
+  -- FIX D1: autorización del ACTOR sobre la tienda REAL del servicio.
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
@@ -9251,7 +9360,10 @@ DECLARE
   v_current text;
   v_service_number text;
   v_allowed text[];
-  v_caller_uid uuid := COALESCE(p_user_id, auth.uid());
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext(p_service_id::text));
 
@@ -9261,7 +9373,8 @@ BEGIN
 
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_SERVICE_NOT_FOUND'; END IF;
 
-  IF NOT public.has_store_access(v_store_id) THEN
+  -- FIX D1: autorización del ACTOR sobre la tienda REAL del servicio.
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
@@ -10366,7 +10479,10 @@ DECLARE
   v_service_number text;
   v_payment_status text;
   v_paid_amount numeric;
-  v_caller_uid uuid := COALESCE(p_user_id, auth.uid());
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
   v_eff_date timestamp with time zone := COALESCE(p_operation_date, NOW());
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext(p_service_id::text));
@@ -10381,7 +10497,8 @@ BEGIN
     RAISE EXCEPTION 'ERR_SERVICE_NOT_FOUND_OR_NOT_ACTIVE';
   END IF;
 
-  IF NOT public.has_store_access(v_store_id) THEN
+  -- FIX D1: autorización del ACTOR sobre la tienda REAL del servicio.
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
@@ -10391,6 +10508,7 @@ BEGIN
 
   DELETE FROM service_reception_links WHERE service_id = p_service_id;
   DELETE FROM service_cost_distributions WHERE service_id = p_service_id;
+  DELETE FROM service_production_order_links WHERE service_id = p_service_id;
 
   UPDATE received_services
   SET status = 'voided',
