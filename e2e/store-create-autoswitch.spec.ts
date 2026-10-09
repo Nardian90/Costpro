@@ -13,6 +13,23 @@
 import { test, expect } from '@playwright/test';
 import { signIn, injectSession, sb, BASE_URL, ADMIN_EMAIL, ADMIN_PASS } from './fixtures/session.fixture';
 
+// ============================================================================
+// ⛔ DESHABILITADO POR EL PROPIETARIO (2026-10-09) — NO ELIMINAR ESTE BLOQUE
+// ----------------------------------------------------------------------------
+// Este spec CREA una tienda vía UI (CreateStoreQuickModal) en el proyecto Supabase COMPARTIDO (wthkddeleylijmonclxg)
+// y fue causa directa de la contaminación de datos del 2026-10-09
+// (48 tiendas + 26 usuarios + 6 tenants de prueba; evidencia completa en
+// docs/audits/e2e-contamination-cleanup-20261009.md).
+//
+// Permanece COMENTADO/omitido por defecto. Solo se ejecuta si el propietario
+// lo pide EXPLÍCITAMENTE. Para habilitarlo puntualmente:
+//   1. Comentar la línea `test.skip(true, ...)` de abajo.
+//   2. Ejecutar con E2E_ISOLATION=1 (provisiona entorno aislado efímero con
+//      teardown reconciliado) — NUNCA contra tiendas de negocio.
+//   3. Verificar net-zero al terminar: node e2e/scripts/data-hygiene-guard.cjs
+// ============================================================================
+test.skip(true, 'Deshabilitado por el propietario (2026-10-09): crea tiendas. Habilitar solo bajo petición explícita (ver banner).');
+
 // SEC-TS-08 (aislamiento): sesión E2E del entorno piloto (admin@costpro.com)
 // en vez de admin@demo.com (sus tiendas activas Enervida/Puerto Padre son
 // REALES). La tienda creada usa prefijo 'E2E Autoswitch *' → cubierta por la

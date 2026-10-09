@@ -57,6 +57,12 @@ jobs:
 
   e2e:
     name: E2E Tests (Playwright)
+    # ⛔ DESHABILITADO POR EL PROPIETARIO (2026-10-09) — NO ELIMINAR ESTE BLOQUE.
+    # Los E2E crean tiendas/usuarios en el Supabase compartido y contaminaron
+    # datos de negocio (48 tiendas + 26 usuarios + 6 tenants el 2026-10-09;
+    # evidencia: docs/audits/e2e-contamination-cleanup-20261009.md).
+    # Solo reactivar bajo petición EXPLÍCITA del propietario (quitar `if: false`).
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 30
     continue-on-error: true

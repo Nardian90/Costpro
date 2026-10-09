@@ -1,5 +1,14 @@
 # E2E RESOURCE LIFECYCLE REMEDIATION — Higiene de datos + gobernanza de fixtures
 
+> ⛔ **ACTUALIZACIÓN 2026-10-09 (post-merge de PR #1383):** mientras este PR
+> esperaba merge, el CI de main (sin el fix) y las corridas locales causaron un
+> SEGUNDO incidente en vivo (48 tiendas + 26 usuarios + 6 tenants). Fue limpiado
+> con los mecanismos de este PR y, como decisión del PROPIETARIO, se deshabilitó
+> por defecto toda creación E2E de tiendas/usuarios: specs creadores apagados,
+> jobs E2E de CI en `if: false` y modo legacy (pilotos persistentes) como
+> default. Evidencia completa:
+> [`e2e-contamination-cleanup-20261009.md`](./e2e-contamination-cleanup-20261009.md).
+
 > **Tarea**: E2E 数据修复 + 测试夹具生命周期治理 — eliminar la acumulación persistente
 > de usuarios y tiendas de prueba E2E en el proyecto Supabase compartido
 > (`wthkddeleylijmonclxg`) y blindar el ciclo de vida de las fixtures.

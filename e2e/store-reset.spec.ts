@@ -4,6 +4,23 @@ import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
 // + cleanup robusto con fallback de archivado + sweep de huérfanas >10 min.
 import { waitStoreBudget, sweepStaleTestStores, deleteTestStore as robustDelete } from './fixtures/session.fixture';
 
+// ============================================================================
+// ⛔ DESHABILITADO POR EL PROPIETARIO (2026-10-09) — NO ELIMINAR ESTE BLOQUE
+// ----------------------------------------------------------------------------
+// Este spec CREA tiendas de prueba para el flujo de reset en el proyecto Supabase COMPARTIDO (wthkddeleylijmonclxg)
+// y fue causa directa de la contaminación de datos del 2026-10-09
+// (48 tiendas + 26 usuarios + 6 tenants de prueba; evidencia completa en
+// docs/audits/e2e-contamination-cleanup-20261009.md).
+//
+// Permanece COMENTADO/omitido por defecto. Solo se ejecuta si el propietario
+// lo pide EXPLÍCITAMENTE. Para habilitarlo puntualmente:
+//   1. Comentar la línea `test.skip(true, ...)` de abajo.
+//   2. Ejecutar con E2E_ISOLATION=1 (provisiona entorno aislado efímero con
+//      teardown reconciliado) — NUNCA contra tiendas de negocio.
+//   3. Verificar net-zero al terminar: node e2e/scripts/data-hygiene-guard.cjs
+// ============================================================================
+test.skip(true, 'Deshabilitado por el propietario (2026-10-09): crea tiendas. Habilitar solo bajo petición explícita (ver banner).');
+
 /**
  * E2E: Reset de Tienda — Store Reset flow.
  *

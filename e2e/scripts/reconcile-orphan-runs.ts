@@ -135,11 +135,12 @@ async function resolveRunResources(runId: string): Promise<ResolvedRun> {
   const slug = runId.toLowerCase().replace(/[^a-z0-9]+/g, '');
   const out: ResolvedRun = { tenantId: null, stores: [], users: [] };
 
-  // Tenant del run (nombre exacto 'E2E TENANT <runId>') — los espacios van
-  // entre comillas dobles (gramática PostgREST).
+  // Tenant del run — el nombre contiene el runId (único por formato
+  // E2E-YYYYMMDD-XXXXXX). Nota: eq."..." con %20 no matchea espacios en
+  // PostgREST vía REST (probado 2026-10-09); ilike.*runId* sí.
   const t = await rest<Array<{ id: string }>>(
     'GET',
-    `/tenants?select=id&name=eq.${encodeURIComponent(`"E2E TENANT ${runId}"`)}`,
+    `/tenants?select=id&name=ilike.*${encodeURIComponent(runId)}*&limit=2`,
   );
   if (t.status === 200 && Array.isArray(t.data) && t.data[0]) out.tenantId = t.data[0].id;
 

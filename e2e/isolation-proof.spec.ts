@@ -40,6 +40,26 @@ import {
   type TestStore,
 } from './fixtures/session.fixture';
 
+// ============================================================================
+// ⛔ DESHABILITADO POR EL PROPIETARIO (2026-10-09) — NO ELIMINAR ESTE BLOQUE
+// ----------------------------------------------------------------------------
+// Este spec CREA un entorno de run aislado completo (vehículo de prueba de concurrencia; se lanza 2× simultáneas) en el proyecto Supabase COMPARTIDO (wthkddeleylijmonclxg)
+// y fue causa directa de la contaminación de datos del 2026-10-09
+// (48 tiendas + 26 usuarios + 6 tenants de prueba; evidencia completa en
+// docs/audits/e2e-contamination-cleanup-20261009.md).
+//
+// Permanece COMENTADO/omitido por defecto. Solo se ejecuta si el propietario
+// lo pide EXPLÍCITAMENTE. Para habilitarlo puntualmente:
+//   1. Comentar la línea `test.skip(true, ...)` de abajo.
+//   2. Ejecutar con E2E_ISOLATION=1 (provisiona entorno aislado efímero con
+//      teardown reconciliado) — NUNCA contra tiendas de negocio.
+//   3. Verificar net-zero al terminar: node e2e/scripts/data-hygiene-guard.cjs
+// ============================================================================
+// NOTA: este spec solo tiene sentido con E2E_ISOLATION=1 y lanzado vía
+// e2e/scripts/concurrency-proof.cjs (ver cabecera del archivo).
+
+test.skip(true, 'Deshabilitado por el propietario (2026-10-09): crea tiendas y usuarios. Habilitar solo bajo petición explícita (ver banner).');
+
 const RUN_ID = process.env.E2E_RUN_ID || '';
 const TENANT_ID = process.env.E2E_RUN_TENANT_ID || '';
 const PILOT_A = process.env.E2E_PILOT_STORE_A || '';

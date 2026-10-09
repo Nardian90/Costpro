@@ -86,9 +86,18 @@ const CONTEXT_ORPHAN_AGE_MS = 60 * 60 * 1000;
 
 // ── Identidad de ejecución ───────────────────────────────────────────────────
 
-/** Modo aislado por defecto; E2E_ISOLATION=0 restaura el modo compartido (legacy). */
+/**
+ * DECISIÓN DEL PROPIETARIO (2026-10-09, incidente de contaminación): el modo
+ * aislado DEJA DE SER el default. Toda corrida E2E reutiliza las tiendas
+ * piloto persistentes ('E2E PILOT A/B CostPro') y los usuarios de seed —
+ * NO crea tiendas, usuarios ni tenants. El modo aislado queda como OPT-IN
+ * explícito (E2E_ISOLATION=1) para los specs de creación/aislamiento, que
+ * además están deshabilitados en el inventario por defecto (solo se ejecutan
+ * bajo petición expresa del propietario).
+ * Evidencia: docs/audits/E2E-RESOURCE-LIFECYCLE-REMEDIATION.md
+ */
 export function isIsolatedRun(): boolean {
-  return process.env.E2E_ISOLATION !== '0';
+  return process.env.E2E_ISOLATION === '1';
 }
 
 /** RUN_ID de esta ejecución (vacío en modo legacy o antes del global-setup). */

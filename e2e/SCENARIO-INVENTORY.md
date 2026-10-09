@@ -1,5 +1,18 @@
 # Inventario de Escenarios E2E — CostPro (FASE E2E-80)
 
+> ⛔ **NOTA DE GOBERNANZA (2026-10-09, propietario):** los specs que CREAN
+> tiendas/usuarios/tenants en el Supabase compartido están DESHABILITADOS por
+> defecto (banner `⛔ DESHABILITADO POR EL PROPIETARIO` + `test.skip(true)`
+> al inicio del archivo): `multi-store-comprehensive`, `stores-crud`,
+> `store-lifecycle`, `store-switching`, `store-reset`,
+> `store-create-autoswitch`, `security`, `workers-create`,
+> `flows/roles-permissions`, `data-hygiene-probe`, `isolation-proof`.
+> Los jobs E2E de CI (`ci.yml`, `test-coverage.yml`) también están apagados
+> (`if: false`). El modo aislado por run dejó de ser el default: toda corrida
+> reutiliza los pilotos persistentes A/B (legacy). Reactivar cualquiera de
+> estas piezas SOLO bajo petición explícita del propietario.
+> Evidencia: `docs/audits/e2e-contamination-cleanup-20261009.md`.
+
 > **Denominador oficial de cobertura E2E.** Un "escenario" es un flujo de
 > comportamiento observable de negocio (no un archivo ni un assert aislado).
 > Cada escenario se clasifica por riesgo (P0–P3) y se marca como automatizado
