@@ -497,14 +497,19 @@ function TarjetaVale({
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {/* FIX visibilidad: botón relleno (secondary) con etiqueta — antes
-              icon-only outline casi invisible en modo oscuro. */}
+          {/* Historial de visibilidad: icon-only outline (invisible en dark)
+              → secondary relleno (etiqueta, #1384) → OUTLINE del design system
+              con etiqueta (E2E-AUDIT 2026-10-09: contraste + coherencia verde). */}
+          {/* E2E-AUDIT FIX (2026-10-09): variante outline (tokens del design
+              system) — antes `secondary` (#475569 slate azulado + blanco):
+              contraste y coherencia visual deficientes con el primario verde.
+              Se conserva la etiqueta de texto «Ver» (requisito de accesibilidad). */}
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             onClick={() => onVer(d)}
             className="h-10 px-3.5 rounded-lg gap-1.5 text-xs font-bold"
-            title="Ver Vale de Salida (documento completo)"
+            title="Ver Vale de Salida"
             aria-label={`Ver vale ${d.slip_number}`}
           >
             <Eye className="w-4 h-4" aria-hidden="true" />
@@ -608,15 +613,17 @@ function TablaVales({
                 <div className="inline-flex items-center gap-1.5">
                   {/* FIX visibilidad (tabla): relleno secondary + etiqueta en
                       Devolver — antes icon-only outline de bajo contraste. */}
+                  {/* E2E-AUDIT FIX (2026-10-09): outline (design system) en
+                      lugar de secondary — coherente con la acción Devolver. */}
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="outline"
                     onClick={() => onVer(d)}
-                    className="h-8 w-8 p-0 rounded-lg"
-                    title="Ver Vale de Salida (documento completo)"
+                    className="w-8 h-8 p-0 rounded-lg"
+                    title="Ver Vale de Salida"
                     aria-label={`Ver vale ${d.slip_number}`}
                   >
-                    <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                    <Eye className="w-3.5 h-3.5" />
                   </Button>
                   {d.status === 'completed' && canActInStore && (
                     <Button

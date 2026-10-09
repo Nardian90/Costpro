@@ -20,6 +20,8 @@
  */
 
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -438,5 +440,68 @@ describe('DocumentStatusBadge — tipo issue_slip', () => {
   it('14 · estado desconocido → badge crudo defensivo (no inventa estados)', () => {
     render(<DocumentStatusBadge type="issue_slip" status="weird_state" />);
     expect(screen.getByText('weird_state')).toBeTruthy();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E2E-AUDIT FIX (2026-10-09): el botón «Ver» estaba en variante `secondary`
+// (--secondary #475569, slate de tono azulado, con texto blanco) — contraste
+// percibido deficiente y estética incoherente con el primario verde del
+// design system. Se movió a la variante `outline` (tokens compartidos). Este
+// bloque es la prueba de regresión: contrato de clase + contraste WCAG 2.2 AA
+// calculado sobre los tokens reales de src/styles/tokens.css.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('ValesSalidaView — botón VER: contraste WCAG 2.2 AA + coherencia', () => {
+  // Helpers de contraste WCAG 2.2 (relative luminance sobre sRGB)
+  const srgbToLinear = (v: number) =>
+    v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  const luminance = (hex: string) => {
+    const h = hex.replace('#', '');
+    return (
+      0.2126 * srgbToLinear(parseInt(h.slice(0, 2), 16) / 255) +
+      0.7152 * srgbToLinear(parseInt(h.slice(2, 4), 16) / 255) +
+      0.0722 * srgbToLinear(parseInt(h.slice(4, 6), 16) / 255)
+    );
+  };
+  const contrastRatio = (fg: string, bg: string) => {
+    const [l1, l2] = [luminance(fg), luminance(bg)].sort((a, b) => b - a);
+    return (l1 + 0.05) / (l2 + 0.05);
+  };
+
+  it('15 · ambos botones Ver usan la variante outline del design system (no secondary)', async () => {
+    renderView();
+    let verButtons: HTMLElement[] = [];
+    await waitFor(() => {
+      verButtons = screen.getAllByRole('button', { name: /^Ver vale / });
+      expect(verButtons.length).toBeGreaterThanOrEqual(1);
+    });
+    for (const btn of verButtons) {
+      // Firma del variant outline (src/components/ui/button.tsx):
+      expect(btn.className).toContain('border');
+      expect(btn.className).toContain('bg-background');
+      expect(btn.className).toContain('hover:bg-accent');
+      // La variante secondary (fondo slate azulado #475569) ya no puede volver:
+      expect(btn.className).not.toContain('bg-secondary');
+    }
+  });
+
+  it('16 · contraste ≥ 4.5:1 (AA texto normal) de outline en tokens light y dark reales', () => {
+    // Consistencia con tokens.css: si el design system cambia estos valores,
+    // este test falla y obliga a recalcular (no se testean valores fantasmas).
+    const css = readFileSync(resolve(process.cwd(), 'src/styles/tokens.css'), 'utf8');
+    expect(css).toContain('--background: #f8fafc');
+    expect(css).toContain('--foreground: #0f172a');
+    expect(css).toContain('--accent: #f0fdf4');
+    expect(css).toContain('--accent-foreground: #166534');
+    expect(css).toContain('--background: #121212');
+    expect(css).toContain('--foreground: #e4e4e7');
+
+    // LIGHT — reposo (foreground sobre background) y hover (accent-foreground
+    // sobre accent, el hover real del variant outline):
+    expect(contrastRatio('#0f172a', '#f8fafc')).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio('#166534', '#f0fdf4')).toBeGreaterThanOrEqual(4.5);
+    // DARK — reposo y hover:
+    expect(contrastRatio('#e4e4e7', '#121212')).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio('#e4e4e7', '#1a1a1a')).toBeGreaterThanOrEqual(4.5);
   });
 });
