@@ -89,6 +89,8 @@ describe('POST /api/users/[id]/memberships/bulk (F4-T02)', () => {
       p_assignments: expect.arrayContaining([
         expect.objectContaining({ store_id: 'a1111111-1111-4111-8111-111111111111', role: 'clerk' }),
       ]),
+      // FIX v2.17.0: el actor llega explícito desde la sesión verificada
+      p_actor_id: 'admin-1',
     });
     const body = await res.json();
     expect(body.affected).toBe(3);

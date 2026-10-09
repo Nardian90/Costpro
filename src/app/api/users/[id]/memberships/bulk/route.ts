@@ -5,16 +5,27 @@ import { validateOrigin } from '@/lib/csrf';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
+import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
 /**
  * F4-T02: Endpoint bulk para asignar un usuario a múltiples tiendas.
  *
- * FIX-DEUDA: ahora usa el RPC `bulk_assign_memberships` (transaccional atómico)
- * en vez de Promise.allSettled. Cada asignación hace upsert (ON CONFLICT).
- * Si una asignación falla por FK violation, se cuenta como failed pero la
- * transacción continúa — no rollback total, pero consistente.
+ * FIX-DEUDA: usa el RPC `bulk_assign_memberships` (transaccional atómico).
+ * Cada asignación hace upsert (ON CONFLICT). Si una asignación falla por FK
+ * violation, se cuenta como failed pero la transacción continúa.
+ *
+ * FIX v2.17.0 (bug de asignación masiva — ERR_UNAUTHORIZED crónico):
+ *   La RPC exige un actor real (auth.uid() IS NOT NULL) para autorizar por
+ *   tienda y escribir el audit log. Invocarla con el cliente service_role
+ *   plano dejaba auth.uid() = NULL → fallaba el 100% de las veces.
+ *   La RPC resuelve ahora el actor con la doctrina create_sale_v2
+ *   (20261004130000 §3.1): bajo service_role llega EXPLÍCITO por p_actor_id,
+ *   derivado aquí de la SESIÓN VERIFICADA — nunca del body del cliente
+ *   (H0-R §4/§10, mismo patrón que p_seller_id en el checkout). La RPC
+ *   re-valida igualmente los roles del actor en cada tienda objetivo
+ *   (has_store_role_as), por lo que el actor explícito no amplía privilegios.
  *
  * Rate limit: 10 bulk ops por minuto. CSRF: validateOrigin.
  */
@@ -74,19 +85,18 @@ async function bulkMembershipsHandler(
       }
     }
 
-    // Usar service role para invocar el RPC transaccional
-    const { createClient } = await import('@supabase/supabase-js');
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) {
+    // Cliente admin centralizado (factory única — doctrina lib/supabase-admin)
+    const admin = getSupabaseAdminSafe();
+    if (!admin) {
       return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
     }
-    const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
-    // FIX-DEUDA: invocar RPC transaccional en vez de Promise.allSettled
+    // FIX v2.17.0: invocar RPC transaccional con el actor de la sesión
+    // verificada (la RPC re-valida sus roles por tienda — defensa en profundidad)
     const { data: rpcResult, error: rpcError } = await admin.rpc('bulk_assign_memberships', {
       p_user_id: userId,
       p_assignments: validated.data.assignments,
+      p_actor_id: session.user.id,
     });
 
     if (rpcError) {
