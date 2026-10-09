@@ -157,35 +157,39 @@ test.describe('Vales de Salida — vista documental', () => {
     ).toHaveCount(0);
   });
 
-  test('4 · detalle expandible: items + trazabilidad (FASE 13)', async ({ page }) => {
+  // PR #1381 sustituyó las filas expandibles («Ver items del vale X») por el
+  // modal documental que se abre con «Ver vale X» (ValeSalidaDetalleModal).
+  test('4 · detalle documental: datos, productos y trazabilidad (FASE 13)', async ({ page }) => {
     await gotoValesView(page);
     await expect(page.getByText(completedVale.slip_number)).toBeVisible({ timeout: 15_000 });
 
-    await page.getByRole('button', { name: `Ver items del vale ${completedVale.slip_number}` }).first().click();
-    await expect(page.getByText(/Emitido por:/i)).toBeVisible();
-    await expect(page.getByText(/Fecha de emisión:/i)).toBeVisible();
-    await expect(page.getByText(/Costo total/i)).toBeVisible();
+    await page.getByRole('button', { name: `Ver vale ${completedVale.slip_number}` }).first().click();
+    // El nombre accesible del dialog viene del título («Vale de Salida» + slip + estado)
+    const detalle = page.getByRole('dialog', { name: new RegExp(completedVale.slip_number) });
+    await expect(detalle).toBeVisible();
+    await expect(page.getByText('Responsable')).toBeVisible();
+    await expect(page.getByText('Emitido', { exact: true })).toBeVisible();
+    await expect(page.getByText(/Productos \(/)).toBeVisible();
+    await expect(page.getByText('Creado por')).toBeVisible();
 
     // Trazabilidad del vale DEVUELTO (motivo visible)
-    await page.getByRole('button', { name: `Ver items del vale ${reversedVale.slip_number}` }).first().click();
-    await expect(page.getByText(/Devuelto por:/i)).toBeVisible();
+    await page.getByRole('button', { name: 'Cerrar' }).click();
+    await expect(detalle).toHaveCount(0);
+    await page.getByRole('button', { name: `Ver vale ${reversedVale.slip_number}` }).first().click();
+    await expect(page.getByText('Devuelto por')).toBeVisible();
     await expect(page.getByText(/E2E setup: devolución inicial/i)).toBeVisible();
   });
 
-  test('5 · crear desde la vista abre Vender con modo Vale activo (FASE 8/21)', async ({ page }) => {
+  // PR #1381 introdujo el flujo dedicado: «Crear Vale de Salida» abre el modal
+  // de creación (ValeSalidaCreateModal), ya no navega al POS.
+  test('5 · crear abre el flujo dedicado de creación (FASE 8/21)', async ({ page }) => {
     await gotoValesView(page);
     await page.getByRole('button', { name: /Crear Vale de Salida/i }).click();
 
-    // Navega al POS
-    await page.waitForTimeout(1500);
-    expect(page.url()).toContain('view=pos');
-
-    // El carrito queda en modo Vale de Salida (toggle activo / encabezado)
-    const valeMode = page.locator('[data-testid="pos-cart"], .pos-cart, main').first();
-    await expect(
-      page.getByText('Vale de Salida', { exact: false }).first(),
-    ).toBeVisible({ timeout: 15_000 });
-    expect(valeMode).toBeTruthy();
+    const crear = page.getByRole('dialog', { name: 'Crear Vale de Salida' });
+    await expect(crear).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Documento de salida de almacén sin venta comercial/i)).toBeVisible();
+    await expect(page.getByText(/El número de documento se asigna automáticamente al emitir/i)).toBeVisible();
   });
 
   test('6 · devolver: modal → motivo → estado Devuelto sin reload (FASE 10-12)', async ({ page }) => {
