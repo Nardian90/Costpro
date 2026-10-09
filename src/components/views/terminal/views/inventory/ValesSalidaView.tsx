@@ -513,13 +513,19 @@ function TarjetaVale({
           {/* Matriz de acciones: solo 'completed' admite devolución
               (espejo de canReverse('issue_slip') + RPC reverse_vale_salida).
               FIX visibilidad: fondo violeta 20% + borde 70% + etiqueta — antes
-              bg-purple-500/5 (5% de opacidad) prácticamente invisible. */}
+              bg-purple-500/5 (5% de opacidad) prácticamente invisible.
+              NOTA TÉCNICA: el modificador `!` (Tailwind v4) es OBLIGATORIO en
+              borde/fondo/hover. El variante outline del Button define
+              dark:bg-input/30 + dark:border-input + dark:hover:bg-input/50,
+              que en modo oscuro tienen especificidad (0,2,0) y PISAN las
+              utilidades púrpura planas (0,1,0) — sin `!` el botón se
+              renderiza gris sobre gris (bug evidenciado 09/10/2026). */}
           {d.status === 'completed' && canActInStore && (
             <Button
               type="button"
               variant="outline"
               onClick={() => onDevolver(d)}
-              className="h-10 px-3.5 rounded-lg gap-1.5 text-xs font-bold border-purple-500/70 bg-purple-500/20 text-purple-700 dark:text-purple-300 hover:bg-purple-500 hover:text-white dark:hover:bg-purple-500 dark:hover:text-white"
+              className="h-10 px-3.5 rounded-lg gap-1.5 text-xs font-bold border-purple-500/70! bg-purple-500/20! text-purple-700 dark:text-purple-300 hover:bg-purple-500! hover:text-white! dark:hover:bg-purple-500! dark:hover:text-white!"
               title="Devolver vale (reversión: devuelve el stock descontado)"
               aria-label={`Devolver vale ${d.slip_number}`}
             >
@@ -617,7 +623,7 @@ function TablaVales({
                       type="button"
                       variant="outline"
                       onClick={() => onDevolver(d)}
-                      className="h-8 px-2.5 rounded-lg gap-1 text-[10px] font-black uppercase border-purple-500/70 bg-purple-500/20 text-purple-700 dark:text-purple-300 hover:bg-purple-500 hover:text-white dark:hover:bg-purple-500 dark:hover:text-white"
+                      className="h-8 px-2.5 rounded-lg gap-1 text-[10px] font-black uppercase border-purple-500/70! bg-purple-500/20! text-purple-700 dark:text-purple-300 hover:bg-purple-500! hover:text-white! dark:hover:bg-purple-500! dark:hover:text-white!"
                       title="Devolver vale (reversión: devuelve el stock descontado)"
                       aria-label={`Devolver vale ${d.slip_number}`}
                     >
