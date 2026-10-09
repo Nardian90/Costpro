@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
+import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { Pick3Storage } from '@/services/pick3/storage';
 import { AnalysisEngine } from '@/services/pick3/analysis.engine';
@@ -276,6 +277,19 @@ async function advisorHandler(req: NextRequest) {
       body = await req.json();
     } catch {
       return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+    }
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (tipos del AdvisorRequestBody;
+    // campos opcionales + passthrough para compatibilidad).
+    const AdvisorBodySchema = z.object({
+      messages: z.array(z.unknown()).optional(),
+      riskMode: z.string().optional(),
+      bankroll: z.number().optional(),
+      config: z.unknown().optional(),
+    }).passthrough();
+    const parsedBody = AdvisorBodySchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'JSON inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
     }
 
     if (!body.messages?.length) {

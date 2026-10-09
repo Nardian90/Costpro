@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getServerSession } from '@/lib/auth';
 import { logInfo, logError } from '@/lib/observability/logger';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
@@ -42,6 +43,19 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
     }
 
     const { products } = body;
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (products = array; la
+    // requeridad y el límite de 500 los aplica la lógica de negocio).
+    const BulkImportSchema = z.object({
+      products: z.array(z.unknown()).optional(),
+    }).passthrough();
+    const parsedBody = BulkImportSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        createApiError('INVALID_JSON'),
+        { status: 400 }
+      );
+    }
 
     if (!products || !Array.isArray(products) || products.length === 0) {
       return NextResponse.json(

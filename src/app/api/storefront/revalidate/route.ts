@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { withAuth, withRole, AuthenticatedSession } from '@/lib/auth-middleware';
 import { canManageStore } from '@/lib/roles';
@@ -23,6 +24,20 @@ import { createApiError } from '@/lib/api-errors';
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
     const body = await req.json();
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (slug; la requeridad la
+    // aplica el check de abajo con el mensaje del contrato).
+    const RevalidateSchema = z.object({
+      slug: z.string().optional(),
+    }).passthrough();
+    const parsedBody = RevalidateSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { ...createApiError('INVALID_DATA'), message: 'slug es requerido' },
+        { status: 400 }
+      );
+    }
+
     const slug = typeof body?.slug === 'string' ? body.slug.trim() : '';
 
     if (!slug || slug.length < 1) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
+import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { withRole } from '@/lib/auth-middleware';
 
@@ -18,6 +19,26 @@ async function postHandler(req: NextRequest) {
     if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
     const body = await req.json();
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (transacción de cartera;
+    // la requeridad la aplica el check de abajo y parseFloat/abs su
+    // normalización numérica).
+    const WalletTxSchema = z.object({
+      date: z.string().optional(),
+      bank: z.string().optional(),
+      operation: z.string().optional(),
+      amount: z.union([z.number(), z.string()]).optional(),
+      currency: z.string().optional(),
+      service: z.string().optional(),
+      category: z.string().nullable().optional(),
+      note: z.string().nullable().optional(),
+      counterparty: z.string().nullable().optional(),
+    }).passthrough();
+    const parsedBody = WalletTxSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+    }
+
     const { date, bank, operation, amount, currency, service, category, note, counterparty } = body;
 
     if (!date || !operation || !amount) return NextResponse.json({ error: 'Faltan campos' }, { status: 400 });
@@ -51,6 +72,21 @@ async function putHandler(req: NextRequest) {
     if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
     const body = await req.json();
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (PUT parcial de transacción;
+    // requeridad de id la aplica el check de abajo).
+    const WalletTxPatchSchema = z.object({
+      id: z.string().optional(),
+      category: z.string().nullable().optional(),
+      note: z.string().nullable().optional(),
+      amount: z.union([z.number(), z.string()]).optional(),
+      date: z.string().optional(),
+    }).passthrough();
+    const parsedBody = WalletTxPatchSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+    }
+
     const { id, category, note, amount, date } = body;
     if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 

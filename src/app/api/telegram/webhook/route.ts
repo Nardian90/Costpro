@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { handleTelegramUpdate, findConfigByBotUserId } from '@/lib/telegram/webhook-handler';
 import {
@@ -135,6 +136,18 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     // ── 5. Parsear el Update ─────────────────────────────────────────
     const update = (await req.json()) as TelegramUpdate;
+
+    // REM-COSTPRO4-CI: contrato del payload del Update de Telegram con Zod
+    // (update_id numérico es el ancla del contrato de la API de Telegram).
+    const TelegramUpdateSchema = z.object({
+      update_id: z.number(),
+    }).passthrough();
+    const parsedUpdate = TelegramUpdateSchema.safeParse(update);
+    if (!parsedUpdate.success) {
+      logger.warn('DATABASE', 'TELEGRAM_WEBHOOK_INVALID_PAYLOAD', { botUserId });
+      return NextResponse.json({ error: 'Payload inválido' }, { status: 400 });
+    }
+
     if (!update || typeof update.update_id !== 'number') {
       logger.warn('DATABASE', 'TELEGRAM_WEBHOOK_INVALID_PAYLOAD', { botUserId });
       return NextResponse.json({ error: 'Payload inválido' }, { status: 400 });

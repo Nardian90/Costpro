@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { validateOrigin } from '@/lib/csrf';
 import { rateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
@@ -72,6 +73,22 @@ async function chatHandler(req: NextRequest, session: AuthenticatedSession) {
       body = await req.json();
     } catch {
       return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+    }
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (tipos conocidos del
+    // ChatRequestBody; campos opcionales + passthrough para compatibilidad).
+    const ChatBodySchema = z.object({
+      messages: z.array(z.unknown()).optional(),
+      model: z.string().optional(),
+      temperature: z.number().optional(),
+      maxTokens: z.number().optional(),
+      systemInstruction: z.string().optional(),
+      grounding: z.boolean().optional(),
+      apiKey: z.string().optional(),
+    }).passthrough();
+    const parsedBody = ChatBodySchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'JSON inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
     }
 
     if (!body.messages?.length) {

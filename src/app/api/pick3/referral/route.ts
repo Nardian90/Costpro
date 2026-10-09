@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
+import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { ReferralService } from '@/services/pick3/referral.service';
 import { withRole } from '@/lib/auth-middleware';
@@ -51,6 +52,18 @@ async function postHandler(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (la validez de action y el
+    // formato del código los aplica la lógica de negocio).
+    const ReferralActionSchema = z.object({
+      action: z.string().optional(),
+      referralCode: z.string().optional(),
+    }).passthrough();
+    const parsedBody = ReferralActionSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+    }
+
     const { action, referralCode } = body;
 
     switch (action) {

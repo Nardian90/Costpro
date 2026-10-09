@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { z } from 'zod';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
 import { canManageStore } from '@/lib/roles';
@@ -91,6 +92,17 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     24 * 60 * 60, // 24h
     async () => {
       const reqBody = await req.json().catch(() => ({}));
+
+      // REM-COSTPRO4-CI: contrato del body con Zod (reason opcional; el body
+      // completo es opcional — catch(() => ({})) lo permite).
+      const ArchiveSchema = z.object({
+        reason: z.string().nullable().optional(),
+      }).passthrough();
+      const parsedBody = ArchiveSchema.safeParse(reqBody ?? {});
+      if (!parsedBody.success) {
+        return { status: 400, body: { error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) } };
+      }
+
       const { reason } = reqBody;
 
       // SEC-TS-10 (FIX API CONTRACT): verificar existencia + estado antes de

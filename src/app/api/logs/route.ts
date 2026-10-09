@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getServerSession } from '@/lib/auth';
 import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
@@ -34,6 +35,23 @@ async function postHandler(req: NextRequest) {
     try {
       body = await req.json();
     } catch {
+      return NextResponse.json({ ok: true });
+    }
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (log de cliente: campos
+    // opcionales y tolerantes — sanitize() ya recorta/normaliza cada campo).
+    const ClientLogSchema = z.object({
+      level: z.string().optional(),
+      context: z.string().optional(),
+      message: z.string().optional(),
+      stack: z.string().optional(),
+      error: z.unknown().optional(),
+      data: z.unknown().optional(),
+      variables: z.unknown().optional(),
+    }).passthrough();
+    const parsedBody = ClientLogSchema.safeParse(body);
+    if (!parsedBody.success) {
+      // Un log de cliente inválido no debe romper el flujo del usuario
       return NextResponse.json({ ok: true });
     }
 

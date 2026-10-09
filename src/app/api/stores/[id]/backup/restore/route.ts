@@ -31,6 +31,7 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
+import { z } from 'zod';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
 import { canManageStore } from '@/lib/roles';
@@ -92,6 +93,22 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
       const file = formData.get('file');
+
+      // REM-COSTPRO4-CI: contrato del form-data con Zod (file = File; upsert/
+      // dryRun como strings de form — el límite de tamaño lo aplica abajo).
+      const RestoreFormSchema = z.object({
+        file: z.instanceof(File),
+        upsert: z.string().nullable().optional(),
+        dryRun: z.string().nullable().optional(),
+      });
+      const parsedForm = RestoreFormSchema.safeParse({ file, upsert: formData.get('upsert'), dryRun: formData.get('dryRun') });
+      if (!parsedForm.success) {
+        return NextResponse.json(
+          { ...createApiError('BAD_REQUEST'), message: 'Campo "file" requerido' },
+          { status: 400 },
+        );
+      }
+
       if (!(file instanceof File)) {
         return NextResponse.json(
           { ...createApiError('BAD_REQUEST'), message: 'Campo "file" requerido' },
@@ -110,6 +127,22 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     } else {
       // Application/JSON path
       const body = await req.json();
+
+      // REM-COSTPRO4-CI: contrato del body con Zod (content = string con el
+      // JSON del respaldo; upsert/dryRun opcionales — el tamaño lo aplica abajo).
+      const RestoreJsonSchema = z.object({
+        content: z.string().optional(),
+        upsert: z.boolean().optional(),
+        dryRun: z.boolean().optional(),
+      }).passthrough();
+      const parsedBody = RestoreJsonSchema.safeParse(body);
+      if (!parsedBody.success) {
+        return NextResponse.json(
+          { ...createApiError('BAD_REQUEST'), message: 'Campo "content" (string) requerido' },
+          { status: 400 },
+        );
+      }
+
       if (typeof body.content !== 'string') {
         return NextResponse.json(
           { ...createApiError('BAD_REQUEST'), message: 'Campo "content" (string) requerido' },

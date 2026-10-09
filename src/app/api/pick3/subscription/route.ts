@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
+import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { SubscriptionService } from '@/services/pick3/subscription.service';
 import { SubscriptionTier, TIERS } from '@/services/pick3/subscription.types';
@@ -55,6 +56,19 @@ async function postHandler(req: NextRequest) {
     }
 
     const body = await req.json();
+
+    // REM-COSTPRO4-CI: contrato del body con Zod (la validez de action/tier
+    // la aplica la lógica de negocio con mensajes específicos).
+    const SubscriptionActionSchema = z.object({
+      action: z.string().optional(),
+      tier: z.string().optional(),
+      mode: z.string().optional(),
+    }).passthrough();
+    const parsedBody = SubscriptionActionSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+    }
+
     const { action, tier, mode } = body;
 
     if (!action) {

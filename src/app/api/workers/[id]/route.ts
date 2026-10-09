@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 // FIX C1: usar getSupabaseAuthClient para que RLS respete el usuario autenticado
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { parseCI, getBirthDateFromCI } from '@/lib/parse-ci';
@@ -62,6 +63,26 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
   const body = await req.json();
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (PATCH parcial del trabajador;
+  // campos editables opcionales — el formato del CI lo re-valida parseCI).
+  const WorkerPatchSchema = z.object({
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    gender: z.string().optional(),
+    address: z.string().optional(),
+    province: z.string().optional(),
+    municipality: z.string().optional(),
+    shirt_size: z.string().optional(),
+    shoe_size: z.string().optional(),
+    waist_size: z.string().optional(),
+    status: z.string().optional(),
+    ci: z.string().optional(),
+  }).passthrough();
+  const parsedBody = WorkerPatchSchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+  }
 
   if (session.user.role !== 'admin' && session.user.role !== 'manager') {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });

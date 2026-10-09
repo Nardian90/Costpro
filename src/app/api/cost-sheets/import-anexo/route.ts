@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { withAuth } from '@/lib/auth-middleware';
 import { validateOrigin } from '@/lib/csrf';
 import Papa from 'papaparse';
@@ -36,6 +37,17 @@ const handler = withAuth(async (req, session) => {
     }
     const file = formData.get('file') as File;
     const anexoId = formData.get('anexoId') as string;
+
+    // REM-COSTPRO4-CI: contrato del form-data con Zod (file = File binario;
+    // anexoId = string — la requeridad la aplica el check de abajo).
+    const FormDataSchema = z.object({
+      file: z.instanceof(File),
+      anexoId: z.string(),
+    });
+    const parsedForm = FormDataSchema.safeParse({ file, anexoId });
+    if (!parsedForm.success) {
+      return NextResponse.json({ ok: false, error: 'File and anexoId are required' }, { status: 400 });
+    }
 
     if (!file || !anexoId) {
       return NextResponse.json({ ok: false, error: 'File and anexoId are required' }, { status: 400 });

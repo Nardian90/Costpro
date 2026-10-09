@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 // FIX C1: usar getSupabaseAuthClient para que RLS respete el usuario autenticado
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
@@ -36,6 +37,24 @@ import {
  */
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const body = await req.json();
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (tipos conocidos; requeridad
+  // la sigue aplicando la lógica de negocio — el schema valida formas).
+  const BodySchema = z.object({
+    store_id: z.string().optional(),
+    worker_ids: z.union([z.array(z.string()), z.string(), z.null()]).optional(),
+    date_from: z.string().optional(),
+    date_to: z.string().optional(),
+    manual_commissions: z.unknown().optional(),
+  }).passthrough();
+  const parsedBody = BodySchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json(
+      { error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) },
+      { status: 400 },
+    );
+  }
+
   const { store_id, worker_ids, date_from, date_to, manual_commissions } = body;
 
   if (!store_id || !date_from || !date_to) {

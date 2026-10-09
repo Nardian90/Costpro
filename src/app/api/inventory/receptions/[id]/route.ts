@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { z } from 'zod';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
 
@@ -32,6 +33,20 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const body = await req.json();
+
+  // REM-COSTPRO4-CI: contrato del body con Zod (PATCH parcial de recepción;
+  // itemUpdates = array de actualizaciones por ítem).
+  const ReceptionPatchSchema = z.object({
+    supplier: z.string().nullable().optional(),
+    referenceDoc: z.string().nullable().optional(),
+    notes: z.string().nullable().optional(),
+    itemUpdates: z.unknown().optional(),
+  }).passthrough();
+  const parsedBody = ReceptionPatchSchema.safeParse(body);
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
+  }
+
   const { supplier, referenceDoc, notes, itemUpdates } = body;
   const supabase = getSupabaseForSession(session);
   const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
