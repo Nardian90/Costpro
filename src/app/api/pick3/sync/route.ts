@@ -3,6 +3,7 @@ import { getServerSession } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { withTracing } from '@/lib/observability';
 import { Pick3ScraperService } from '@/services/pick3/Pick3ScraperService';
+import { withRole } from '@/lib/auth-middleware';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,4 +77,5 @@ async function postHandler(req: NextRequest) {
   }
 }
 
-export const POST = withTracing(postHandler, 'POST /api/pick3/sync');
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const POST = withTracing(withRole('admin', postHandler), 'POST /api/pick3/sync');

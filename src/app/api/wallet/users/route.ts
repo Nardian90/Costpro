@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { withRole } from '@/lib/auth-middleware';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -100,4 +101,5 @@ async function getHandler(req: NextRequest) {
   }
 }
 
-export const GET = getHandler;
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const GET = withRole('admin', getHandler);

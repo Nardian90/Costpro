@@ -5,6 +5,7 @@ import { academyReviewSchema, zodError } from '@/validation/api-schemas';
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
+import { withRole } from '@/lib/auth-middleware';
 
 export const runtime = 'nodejs';
 
@@ -88,4 +89,5 @@ async function postHandler(
   }
 }
 
-export const POST = withTracing(postHandler as any, 'POST /api/academy/review/[cardId]');
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const POST = withTracing(withRole('admin', postHandler) as any, 'POST /api/academy/review/[cardId]');

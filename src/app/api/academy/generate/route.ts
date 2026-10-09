@@ -10,6 +10,7 @@ import fs, { readdirSync } from 'fs';
 import path from 'path';
 // FIX-DEBT: resolveModel extracted to testable helper
 import { resolveModel } from '@/lib/ai/resolve-model';
+import { withRole } from '@/lib/auth-middleware';
 
 /**
  * MIGRATED to Vercel AI SDK (FIX-DEBT: removed dependency on deprecated orchestrator.ts).
@@ -186,7 +187,8 @@ async function postHandler(req: NextRequest) {
   }
 }
 
-export const POST = withTracing(postHandler, 'POST /api/academy/generate');
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const POST = withTracing(withRole('admin', postHandler), 'POST /api/academy/generate');
 
 async function getHandler(req: NextRequest) {
     if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
@@ -209,4 +211,4 @@ async function getHandler(req: NextRequest) {
   }
 }
 
-export const GET = withTracing(getHandler, 'GET /api/academy/generate');
+export const GET = withTracing(withRole('admin', getHandler), 'GET /api/academy/generate');

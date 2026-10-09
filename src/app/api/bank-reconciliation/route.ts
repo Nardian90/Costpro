@@ -2,7 +2,7 @@
  *  POST /api/bank-reconciliation — crear statement + items
  *  POST /api/bank-reconciliation/match — conciliar item con transacción */
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { withRole, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
 import { canManageStore } from '@/lib/roles';
 import { validateOrigin } from '@/lib/csrf';
@@ -77,5 +77,6 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   return NextResponse.json({ id: stmt.id, message: `Statement created with ${items.length} items` });
 }
 
-export const GET = withTracing(withAuth(getHandler) as any, 'GET /api/bank-reconciliation');
-export const POST = withTracing(withAuth(postHandler) as any, 'POST /api/bank-reconciliation');
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const GET = withTracing(withRole('admin', getHandler) as any, 'GET /api/bank-reconciliation');
+export const POST = withTracing(withRole('admin', postHandler) as any, 'POST /api/bank-reconciliation');

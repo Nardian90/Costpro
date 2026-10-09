@@ -3,6 +3,7 @@ import { getServerSession } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import * as XLSX from '@e965/xlsx';
 import { walletImportExcelSchema, zodError, WALLET_EXCEL_MAX_BASE64_CHARS } from '@/validation/api-schemas';
+import { withRole } from '@/lib/auth-middleware';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -165,4 +166,5 @@ async function postHandler(req: NextRequest) {
   }
 }
 
-export const POST = postHandler;
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const POST = withRole('admin', postHandler);

@@ -586,20 +586,26 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
   // ═════════════════ EN DESARROLLO (existentes no integradas) ═════════════════
   // REORGANIZACIÓN (fix/navigation-orphaned-development): semántica exacta
   // del mandato — funcionalidades EXISTENTES pero todavía no integradas
-  // como parte del flujo principal del producto. La sección ya NO declara
-  // roles: la visibilidad la fija cada entrada (roles: ['admin'] en el trío
-  // experimental preserva el acceso efectivo que antes heredaba de la
-  // sección; Wiki/Academia/Marco Legal permanecen universales como en
-  // Ayuda; Conciliación Bancaria conserva su guard default-open histórico).
-  // Orden (FASE 6 — madurez descendente, no alfabético):
-  //   1. Experimentales relacionadas (IPV · Pick3 · Billetera)
-  //   2. Existentes no integradas (Wiki · Academia · Marco Legal)
-  //   3. Incompletas (Conciliación Bancaria — UI parcial, última)
+  // como parte del flujo principal del producto.
+  //
+  // COSTPRO 4 (fix/usuarios-en-desarrollo-admin — mandato del propietario):
+  // la sección COMPLETA queda reservada al rol `admin`. La regla se declara
+  // UNA vez aquí y se propaga por herencia a TODAS las superficies derivadas:
+  // sidebar (filterModulesByRole), palette (getActionsForUser vía
+  // flattenNavigation), móvil (mismo filtro), deep-links (isViewAllowedForRole
+  // → «Acceso Denegado» en TerminalShell) y widgets (RecommendedActions).
+  // ipv/pick3/wallet ya declaraban roles:['admin'] por entrada (se conservan);
+  // wiki/academy/legal/bank-reconciliation heredan ['admin'] de la sección
+  // (antes universales — el mandato revoca ese acceso universal).
+  // El nivel de datos se refuerza aparte con withRole('admin') en las APIs
+  // exclusivas de estas vistas (/api/wallet/*, /api/pick3/*, /api/academy/*,
+  // /api/bank-reconciliation/*).
   {
     id: 'desarrollo',
     label: 'EN DESARROLLO',
     type: 'group',
     icon: FlaskConical,
+    roles: ['admin'],
     description: 'Funcionalidades existentes pero todavía no integradas como parte del flujo principal del producto.',
     children: [
       {
@@ -676,9 +682,10 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         // Producto decidiera su dominio — este mandato ES esa decisión.
         // EN DESARROLLO resuelve ambas cosas: ubicación coherente Y etiqueta
         // honesta de capacidad parcial (no aparenta función completa).
-        // Sin roles: conserva el guard default-open histórico (la seguridad
-        // real vive en backend/RLS). Sin mobileHide: una sola fuente de
-        // verdad para desktop y móvil.
+        // COSTPRO 4: hereda roles:['admin'] de la sección. El guard
+        // default-open histórico desaparece por mandato: la seguridad real
+        // vive en backend (withRole en /api/bank-reconciliation/*).
+        // Sin mobileHide: una sola fuente de verdad para desktop y móvil.
         id: 'bank-reconciliation',
         label: 'Conciliación Bancaria',
         description: 'Capacidad parcial (beta): vista de extractos y estado de conciliación en solo lectura. Sin importación ni matching automático todavía.',

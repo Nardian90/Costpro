@@ -1,6 +1,6 @@
 /** POST /api/bank-reconciliation/match — matching automático de items */
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { withRole, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
 import { canManageStore } from '@/lib/roles';
 import { validateOrigin } from '@/lib/csrf';
@@ -38,4 +38,5 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   return NextResponse.json(data);
 }
 
-export const POST = withTracing(withAuth(postHandler) as any, 'POST /api/bank-reconciliation/match');
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const POST = withTracing(withRole('admin', postHandler) as any, 'POST /api/bank-reconciliation/match');

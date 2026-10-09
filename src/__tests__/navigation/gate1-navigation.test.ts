@@ -146,12 +146,16 @@ describe('Guard isViewAllowedForRole', () => {
     }
   });
 
-  it('las vistas trasladadas a EN DESARROLLO conservan su visibilidad efectiva (sin cambios de permisos)', () => {
-    // Wiki/Academia/Marco Legal eran universales en AYUDA — siguen universales.
-    // Conciliación Bancaria era default-open (fuera del menú) — sigue default-open.
-    for (const view of ['wiki', 'academy', 'legal', 'bank-reconciliation']) {
-      for (const role of ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse', 'costo']) {
-        expect(isViewAllowedForRole(view, role)).toBe(true);
+  it('COSTPRO 4: EN DESARROLLO completa (incl. las 4 antes universales) es admin-only — mandato del propietario', () => {
+    // Antes (fix/navigation-orphaned-development) wiki/academy/legal/bank-rec
+    // eran universales. El mandato COSTPRO 4 revoca ese acceso: TODA la
+    // sección EN DESARROLLO queda reservada al rol admin (herencia de la
+    // sección + refuerzo backend withRole en las APIs exclusivas).
+    const desarrolloViews = ['wiki', 'academy', 'legal', 'bank-reconciliation'];
+    for (const view of desarrolloViews) {
+      expect(isViewAllowedForRole(view, 'admin')).toBe(true);
+      for (const role of ['manager', 'encargado', 'clerk', 'usuario', 'warehouse', 'costo']) {
+        expect(isViewAllowedForRole(view, role)).toBe(false);
       }
     }
   });
@@ -806,12 +810,11 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
     }
   });
 
-  it('E — sidebar filtrado por rol: la sección EN DESARROLLO muestra exactamente las entradas correctas', () => {
-    // clerk (no admin): solo las universales — el trío experimental desaparece,
-    // pero la sección NO desaparece (antes hubiera desaparecido entera).
+  it('E — sidebar filtrado por rol: EN DESARROLLO solo visible para admin (COSTPRO 4)', () => {
+    // clerk (no admin): la sección DESAPARECE COMPLETA — sin entradas propias
+    // ni heredadas; el grupo vacío se elimina del árbol filtrado.
     const clerkTree = filterModulesByRole(SIDEBAR_STRUCTURE, 'clerk');
-    const clerkDesarrollo = clerkTree.find(g => g.id === 'desarrollo');
-    expect(clerkDesarrollo?.children?.map(c => c.id)).toEqual(['wiki', 'academy', 'legal', 'bank-reconciliation']);
+    expect(clerkTree.find(g => g.id === 'desarrollo')).toBeUndefined();
     expect(clerkTree.find(g => g.id === 'ayuda')?.children?.map(c => c.id)).toEqual(['help']);
     // admin: las 7 entradas.
     const adminTree = filterModulesByRole(SIDEBAR_STRUCTURE, 'admin');
@@ -831,13 +834,10 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
     }
   });
 
-  it('G — palette por rol: el trío experimental solo admin; las universales para todos', () => {
+  it('G — palette por rol: TODA la sección EN DESARROLLO solo admin (COSTPRO 4)', () => {
     const clerkIds = getActionsForUser('clerk').map(a => a.id);
-    expect(clerkIds).not.toContain('ipv');
-    expect(clerkIds).not.toContain('pick3-intelligence');
-    expect(clerkIds).not.toContain('wallet');
-    for (const id of ['wiki', 'academy', 'legal', 'bank-reconciliation']) {
-      expect(clerkIds).toContain(id);
+    for (const id of ['ipv', 'pick3-intelligence', 'wallet', 'wiki', 'academy', 'legal', 'bank-reconciliation']) {
+      expect(clerkIds).not.toContain(id);
     }
     const adminIds = getActionsForUser('admin').map(a => a.id);
     for (const id of ['ipv', 'pick3-intelligence', 'wallet', 'wiki', 'academy', 'legal', 'bank-reconciliation']) {
@@ -852,9 +852,9 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
     for (const child of desarrollo?.children ?? []) {
       expect(child.mobileHide).toBeFalsy();
     }
-    // La sección ya no es admin-only: los roles operativos la ven (con sus
-    // entradas universales) en desktop y móvil por el mismo filtro.
-    expect(desarrollo?.roles).toBeUndefined();
+    // La sección declara la regla UNA vez (heredada por las entradas sin
+    // roles propios): COSTPRO 4 — mandato admin-only.
+    expect(desarrollo?.roles).toEqual(['admin']);
     expect(desarrollo?.children?.find(c => c.id === 'ipv')?.roles).toEqual(['admin']);
   });
 });

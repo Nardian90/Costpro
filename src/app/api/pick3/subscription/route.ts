@@ -3,6 +3,7 @@ import { getServerSession } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { SubscriptionService } from '@/services/pick3/subscription.service';
 import { SubscriptionTier, TIERS } from '@/services/pick3/subscription.types';
+import { withRole } from '@/lib/auth-middleware';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -133,5 +134,6 @@ async function postHandler(req: NextRequest) {
   }
 }
 
-export const GET = getHandler;
-export const POST = postHandler;
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const GET = withRole('admin', getHandler);
+export const POST = withRole('admin', postHandler);

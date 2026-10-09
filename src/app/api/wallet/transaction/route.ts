@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { withRole } from '@/lib/auth-middleware';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -87,6 +88,7 @@ async function deleteHandler(req: NextRequest) {
   } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }
 
-export const POST = postHandler;
-export const PUT = putHandler;
-export const DELETE = deleteHandler;
+// COSTPRO 4 (fix/usuarios-en-desarrollo-admin): vista EN DESARROLLO — acceso admin-only.
+export const POST = withRole('admin', postHandler);
+export const PUT = withRole('admin', putHandler);
+export const DELETE = withRole('admin', deleteHandler);
