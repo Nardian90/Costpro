@@ -234,10 +234,13 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: 'PATCH requiere action=void o status=...' }, { status: 400 });
     }
 
-    // ─── v2.24.x: codigo TypeScript viejo ───
+    // ─── v2.24.x: codigo TypeScript viejo (compatibilidad) ───
     if (body.action === 'void') {
       const { error } = await admin.from('received_services').update({ status: 'voided', updated_at: new Date().toISOString() }).eq('id', service_id);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      // v2.18.0: paridad con void_received_service_with_reversal — la anulación
+      // limpia TAMBIÉN los vínculos documentales de OT (tabla nueva).
+      await admin.from('service_production_order_links').delete().eq('service_id', service_id);
       await admin.from('service_cost_distributions').delete().eq('service_id', service_id);
       await admin.from('service_audit_log').insert({ service_id, user_id: session.user.id, action: 'voided', details: {} });
       return NextResponse.json({ success: true });
