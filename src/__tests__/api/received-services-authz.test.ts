@@ -33,6 +33,9 @@ const probes = {
   insertedAuditRows: [] as Array<{ table: string; row: any }>,
 };
 
+// v2.18.0: mock compartido del rpc() del cliente admin (service_role)
+const rpcSharedMock = vi.fn();
+
 let resolvedServiceRow: { data: any; error: any };
 
 const CREATED_SERVICE = { id: 'srv-new-1', store_id: 'A', service_number: 'SRV-0001' };
@@ -107,7 +110,7 @@ function makeAdminMock() {
 
       return chain;
     },
-    rpc: vi.fn(),
+    rpc: rpcSharedMock,
   };
 }
 
@@ -188,7 +191,11 @@ describe('POST /api/received-services · FIX F3-P0-02', () => {
     expect(res.status).toBe(403);
   });
 
-  it('encargado con membership activa crea servicio en su tienda → 201 + auditoría', async () => {
+  it('encargado con membership activa crea servicio en su tienda → 201 vía RPC', async () => {
+    rpcSharedMock.mockResolvedValue({
+      data: { status: 'success', service_id: 'srv-1', service_number: 'SRV-1', link_count: 0 },
+      error: null,
+    });
     mockSession.value = sessionWith('encargado', [
       { store_id: STORE_A, role: 'encargado', status: 'active' },
     ]);
@@ -198,8 +205,64 @@ describe('POST /api/received-services · FIX F3-P0-02', () => {
       })
     );
     expect(res.status).toBe(201);
-    expect(probes.countHeadUsed).toBe(true);
-    expect(probes.insertedAuditRows.some(r => r.table === 'service_audit_log')).toBe(true);
+    const call = rpcSharedMock.mock.calls.find(c => c[0] === 'create_received_service_v2');
+    expect(call).toBeTruthy();
+    expect(call![1].p_store_id).toBe(STORE_A);
+    expect(call![1].p_supplier).toBe('Prov X');
+    rpcSharedMock.mockReset();
+  });
+
+  it('v2.18.0: vinculación operativa (OT + recepciones) se envía al RPC como parámetros', async () => {
+    rpcSharedMock.mockResolvedValue({
+      data: { service_id: 'srv-1', service_number: 'SRV-1', production_order_link_count: 1 },
+      error: null,
+    });
+
+    mockSession.value = sessionWith('admin', []);
+    const otId = 'c1111111-1111-4111-8111-111111111111';
+    const rcptId = 'd2222222-2222-4222-8222-222222222222';
+    const res = await POST(
+      makeRequest('POST', {
+        body: {
+          store_id: STORE_A, total_amount: 10000, supplier: 'Prov',
+          receipt_ids: [rcptId],
+          production_order_ids: [otId],
+        },
+      })
+    );
+    expect(res.status).toBe(201);
+    const call = rpcSharedMock.mock.calls.find(c => c[0] === 'create_received_service_v2');
+    expect(call).toBeTruthy();
+    expect(call![1].p_production_order_ids).toEqual([otId]);
+    expect(call![1].p_receipt_ids).toEqual([rcptId]);
+    // El guard anti-spoofing de la ruta solo pasa al RPC ids con formato UUID;
+    // cualquier otro valor de sesión se normaliza a NULL (el RPC lo rechaza).
+    expect(call![1].p_created_by).toBeNull();
+    rpcSharedMock.mockReset();
+  });
+
+  it('v2.18.0: ERR_UNAUTHORIZED del RPC (actor sin acceso) → 403', async () => {
+    rpcSharedMock.mockResolvedValue({ data: null, error: { message: 'ERR_UNAUTHORIZED' } });
+    mockSession.value = sessionWith('admin', []);
+    const res = await POST(
+      makeRequest('POST', { body: { store_id: STORE_A, total_amount: 100, supplier: 'X' } })
+    );
+    expect(res.status).toBe(403);
+    rpcSharedMock.mockReset();
+  });
+
+  it('v2.18.0: OT de otra tienda → 400 (ERR_PRODUCTION_ORDER_INVALID)', async () => {
+    rpcSharedMock.mockResolvedValue({ data: null, error: { message: 'ERR_PRODUCTION_ORDER_INVALID: cross-store' } });
+    mockSession.value = sessionWith('admin', []);
+    const res = await POST(
+      makeRequest('POST', {
+        body: { store_id: STORE_A, total_amount: 100, supplier: 'X', production_order_ids: ['b2222222-2222-4222-8222-222222222222'] },
+      })
+    );
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain('Orden de trabajo invalida');
+    rpcSharedMock.mockReset();
   });
 });
 

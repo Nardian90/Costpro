@@ -1,0 +1,16 @@
+{
+  "fecha": "2026-10-09T21:02:00.698Z",
+  "proyecto": "wthkddeleylijmonclxg",
+  "funciones_respaldo": [
+    "bulk_assign_memberships(p_user_id uuid, p_assignments jsonb, p_actor_id uuid) proacl=postgres=X/postgres|service_role=X/postgres",
+    "close_cash_shift(p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid) proacl=postgres=X/postgres|service_role=X/postgres",
+    "create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid, p_production_order_ids jsonb) proacl=postgres=X/postgres|service_role=X/postgres",
+    "distribute_service_cost_v2(p_service_id uuid, p_user_id uuid) proacl=postgres=X/postgres|service_role=X/postgres",
+    "get_cash_shift_expected(p_store_id uuid) proacl=postgres=X/postgres|authenticated=X/postgres|service_role=X/postgres",
+    "get_daily_expenses_aggregated(p_store_id uuid, p_date_from date, p_date_to date, p_limit integer) proacl=postgres=X/postgres|authenticated=X/postgres|service_role=X/postgres",
+    "get_sales_since_last_closure(p_store_id uuid) proacl=postgres=X/postgres|authenticated=X/postgres|service_role=X/postgres",
+    "link_receipts_to_service(p_service_id uuid, p_receipt_ids jsonb, p_user_id uuid) proacl=postgres=X/postgres|service_role=X/postgres",
+    "set_received_service_status(p_service_id uuid, p_new_status text, p_user_id uuid, p_reason text) proacl=postgres=X/postgres|service_role=X/postgres",
+    "void_received_service_with_reversal(p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone) proacl=postgres=X/postgres|service_role=X/postgres"
+  ]
+}

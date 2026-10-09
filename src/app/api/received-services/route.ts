@@ -8,12 +8,17 @@ import { canManageStore, canViewStore } from '@/lib/roles';
 
 /**
  * GET /api/received-services?store_id=...&status=...&type=...
- * POST /api/received-services — Crear nuevo servicio (v2: RPC create_received_service_v2)
- * PATCH /api/received-services — Editar/anular servicio (v2: RPC void_received_service_with_reversal / set_received_service_status)
+ * POST /api/received-services — Crear nuevo servicio (v2.18.0: SIEMPRE RPC create_received_service_v2)
+ * PATCH /api/received-services — Editar/anular servicio
+ *   USE_V2=true  → RPCs transaccionales (void_received_service_with_reversal / set_received_service_status)
+ *   USE_V2=false → codigo TypeScript viejo (compatibilidad; solo void y updates de columnas)
  *
- * v2.25.0 — Feature flag USE_V2_RECEIVED_SERVICES:
- *   true  → usa RPCs transaccionales (create_received_service_v2, void_received_service_with_reversal, set_received_service_status)
- *   false → usa codigo TypeScript viejo (compatibilidad)
+ * v2.18.0 — FIX-SERVICIOS-ARQUEO-REPORTES:
+ *   · POST ya no depende del flag: siempre RPC transaccional actor-explícito
+ *     (corrige «No tienes acceso autorizado» — auth.uid() NULL bajo service_role)
+ *     y soporta vinculación operativa (p_receipt_ids + p_production_order_ids).
+ *   · PATCH legacy extrae action/reason antes del update (eran enviados como
+ *     columnas → PGRST204 500).
  */
 
 const USE_V2 = process.env.USE_V2_RECEIVED_SERVICES === 'true';
@@ -84,6 +89,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       reference_doc: z.string().nullable().optional(),
       observations: z.string().nullable().optional(),
       receipt_ids: z.array(z.unknown()).nullable().optional(),
+      // v2.18.0: vinculación documental con Órdenes de Trabajo/Producción
+      production_order_ids: z.array(z.unknown()).nullable().optional(),
     }).passthrough();
     const parsedBody = ReceivedServiceSchema.safeParse(body);
     if (!parsedBody.success) {
@@ -100,8 +107,14 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
-    if (USE_V2) {
-      // ─── v2.25.0: RPC transaccional ───
+    // ─── v2.18.0: POST SIEMPRE usa el RPC transaccional ───
+    // Antes el POST dependía del feature flag USE_V2_RECEIVED_SERVICES. Con el
+    // flag desactivado (estado de Vercel verificado el 10-oct-2026) el path
+    // legacy omitía la validación del ACTOR dentro del RPC y no soportaba la
+    // vinculación operativa (OT). El RPC create_received_service_v2 v2.18.0 es
+    // actor-explícito (patrón create_sale_v2), transaccional y ya está aplicado
+    // y probado en LIVE → el POST no vuelve a depender del flag.
+    {
       const { createClient } = await import('@supabase/supabase-js');
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -123,6 +136,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         p_observations: body.observations || null,
         p_receipt_ids: body.receipt_ids || [],
         p_created_by: userId,
+        p_production_order_ids: body.production_order_ids || [],
       });
 
       if (rpcErr) {
@@ -134,62 +148,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         if (msg.includes('ERR_INVALID_PAYMENT_TERMS')) return NextResponse.json({ error: 'payment_terms_days fuera de rango [1, 365]' }, { status: 400 });
         if (msg.includes('ERR_SERVICE_TYPE_NOT_FOUND')) return NextResponse.json({ error: 'Service type no encontrado' }, { status: 400 });
         if (msg.includes('ERR_RECEIPT_INVALID')) return NextResponse.json({ error: 'Receipt invalido (cross-store o no activo)' }, { status: 400 });
+        if (msg.includes('ERR_PRODUCTION_ORDER_INVALID')) return NextResponse.json({ error: 'Orden de trabajo invalida (cross-store, anulada o cerrada)' }, { status: 400 });
         return NextResponse.json({ error: msg }, { status: 500 });
       }
 
-      return NextResponse.json({ data: { id: rpcResult.service_id, service_number: rpcResult.service_number } }, { status: 201 });
+      return NextResponse.json({ data: { id: rpcResult.service_id, service_number: rpcResult.service_number, production_order_link_count: rpcResult.production_order_link_count || 0 } }, { status: 201 });
     }
-
-    // ─── v2.24.x: codigo TypeScript viejo (compatibilidad) ───
-    const { createClient } = await import('@supabase/supabase-js');
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
-    const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-
-    const { count } = await admin.from('received_services').select('*', { count: 'exact', head: true }).eq('store_id', storeId);
-    const serviceNumber = `SRV-${String((count || 0) + 1).padStart(4, '0')}`;
-
-    const { data, error } = await admin.from('received_services').insert({
-      store_id: storeId,
-      service_number: serviceNumber,
-      service_date: body.service_date || new Date().toISOString().split('T')[0],
-      service_type_id: body.service_type_id || null,
-      service_type_name: body.service_type_name || 'Otro',
-      supplier: body.supplier || null,
-      reference_doc: body.reference_doc || null,
-      currency: body.currency || 'CUP',
-      exchange_rate: body.exchange_rate || 1,
-      total_amount: body.total_amount,
-      observations: body.observations || null,
-      status: 'active',
-      distribution_method: body.distribution_method || 'amount',
-      created_by: session.user.id,
-    }).select().single();
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-    await admin.from('service_audit_log').insert({
-      service_id: data.id, user_id: session.user.id,
-      action: 'created', details: { service_number: serviceNumber, total_amount: body.total_amount }
-    });
-
-    if (body.receipt_ids && Array.isArray(body.receipt_ids) && body.receipt_ids.length > 0) {
-      const totalReceipts = body.receipt_ids.length;
-      const allocatedPerReceipt = body.total_amount / totalReceipts;
-      const links = body.receipt_ids.map((rid: string) => ({
-        service_id: data.id, receipt_id: rid,
-        allocation_percentage: 100 / totalReceipts,
-        allocated_amount: allocatedPerReceipt,
-      }));
-      await admin.from('service_reception_links').insert(links);
-      await admin.from('service_audit_log').insert({
-        service_id: data.id, user_id: session.user.id,
-        action: 'linked', details: { receipt_ids: body.receipt_ids }
-      });
-    }
-
-    return NextResponse.json({ data }, { status: 201 });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
@@ -204,10 +168,14 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
     const body = await req.json();
-    const { service_id, ...updates } = body;
+    const { service_id, ...rest } = body;
     if (!service_id || typeof service_id !== 'string') {
       return NextResponse.json({ error: 'service_id es requerido' }, { status: 400 });
     }
+    // v2.18.0: 'action' y 'reason' son parámetros de control del endpoint, NO
+    // columnas de received_services. Enviarlos al update legacy provocaba
+    // PGRST204 500 («Could not find the 'reason' column»). Se extraen antes.
+    const { action, reason, ...updates } = rest;
     const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
     const { createClient: createClientEarly } = await import('@supabase/supabase-js');

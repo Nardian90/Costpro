@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { getCleanStoreId } from './base';
 import { useAuthStore } from '@/store';
 import { auditService } from '@/services/audit-service';
+import { supabase } from '@/lib/supabaseClient';
 
 export function useCashClosures(storeId?: string | null, isAdmin = false) {
   const cleanStoreId = getCleanStoreId(storeId);
@@ -83,5 +84,40 @@ export function useUpdateCashClosure() {
       const message = error instanceof Error ? error.message : String(error);
       toast.error(`Error al finalizar cierre: ${message}`);
     },
+  });
+}
+
+export interface CashShiftExpected {
+  window_start: string;
+  has_pending_shift: boolean;
+  opening_balance: number;
+  total_sales: number;
+  cash_sales: number;
+  cash_outflows: number;
+  cash_production: number;
+  cash_commissions: number;
+  expected_cash: number;
+  transfer_sales: number;
+  zelle_sales: number;
+  expected_total: number;
+}
+
+/**
+ * v2.18.0: desglose del turno en curso para el arqueo (RPC get_cash_shift_expected).
+ * Misma ventana y fórmula que close_cash_shift → la UI muestra siempre lo que
+ * el cierre calculará server-side (fondo + entradas de efectivo − salidas).
+ */
+export function useCashShiftExpected(storeId?: string | null) {
+  const cleanStoreId = getCleanStoreId(storeId);
+  return useQuery({
+    queryKey: ['cash-shift-expected', cleanStoreId],
+    queryFn: async (): Promise<CashShiftExpected | null> => {
+      if (!cleanStoreId) return null;
+      const { data, error } = await supabase.rpc('get_cash_shift_expected', { p_store_id: cleanStoreId });
+      if (error) throw error;
+      return (data as CashShiftExpected) || null;
+    },
+    enabled: !!cleanStoreId,
+    refetchInterval: 60_000,
   });
 }

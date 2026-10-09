@@ -28,6 +28,9 @@ export const COLUMN_LABELS: Record<string, string> = {
   date: 'Fecha',
   total_income: 'Total Ingresos',
   total_expenses: 'Total Gastos/Costos',
+  // v2.18.0 — desglose de Gastos/Costos por Día
+  receipts_cost: 'Costo Mercancía (Recepciones)',
+  services_amount: 'Servicios Recibidos',
   origin_store_name: 'Origen',
   destination_store_name: 'Destino',
   creator_name: 'Creado por',
