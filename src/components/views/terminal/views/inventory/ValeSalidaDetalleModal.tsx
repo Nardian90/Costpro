@@ -178,7 +178,7 @@ export function ValeSalidaDetalleModal({
                 type="button"
                 variant="outline"
                 onClick={() => onReverse(vale)}
-                className="h-9 px-4 rounded-lg gap-1.5 font-bold border-purple-500/70 bg-purple-500/20 text-purple-700 dark:text-purple-300 hover:bg-purple-500 hover:text-white dark:hover:bg-purple-500 dark:hover:text-white"
+                className="h-9 px-4 rounded-lg gap-1.5 font-bold border-purple-500/70! bg-purple-500/20! text-purple-700 dark:text-purple-300 hover:bg-purple-500! hover:text-white! dark:hover:bg-purple-500! dark:hover:text-white!"
               >
                 <Undo2 className="w-4 h-4" aria-hidden="true" />
                 Devolver
