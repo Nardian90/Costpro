@@ -113,6 +113,8 @@ Snapshot read-only (Management API, `fase0_snapshot.py`). **No se eliminó nada 
 
 **Vía de limpieza autorizable** (cuando el propietario decida): `node e2e/scripts/reconcile-orphan-runs.ts --run-id E2E-20261009-D0978E` (y para los `Multi`: borrado RPC por UUID tras re-verificación) + guard AFTER. Las tiendas/usuarios protegidos quedan fuera de toda ruta de borrado.
 
+> **Verificación final (post-implementación, read-only):** los conteos se mantienen en stores=22 / users=27; el tenant vacío `E2E TENANT E2E-20261009-7DAE03` ya no está presente — fue reconciliado externamente durante la intervención (ninguna operación de este PR borra datos: los teardowns corrieron en modo legacy «sin teardown de run»). El resto de residuos (2 tenants, 8 tiendas, 4 usuarios) sigue pendiente de autorización. Todos los protegidos verificados OK por UUID/email al cierre.
+
 ## 7. Fix de accesibilidad del botón «Ver» (FASE 6)
 
 * **Causa raíz:** en `origin/main` el botón **Ver** (tarjeta y tabla) usaba `variant="secondary"` → `--secondary: #475569` (slate de tono azulado) con texto blanco — el propietario lo percibió como «azul claro con texto blanco», insuficientemente contrastado y ajeno al sistema visual verde de CostPro (los equivalentes Devolver/Anular/Recargar usan `outline`).
