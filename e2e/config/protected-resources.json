@@ -1,0 +1,31 @@
+{
+  "$comment": "GOBERNANZA E2E — Inventario de recursos protegidos por UUID (fuente única de verdad). Consumido por e2e/fixtures/protected-resources.ts (usado por hard-cleanup.ts y run-env.ts) y data-hygiene-guard.cjs (verificación de identidad + exclusión del conteo de residuos). NUNCA borrar ni modificar recursos de estas listas. Actualizar en el mismo PR que cambie la infraestructura de fixtures.",
+  "version": 1,
+  "updated_at": "2026-10-09",
+  "allowedProjectRefs": ["wthkddeleylijmonclxg"],
+  "protectedStores": [
+    { "id": "d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576", "name": "TIENDA CENTRAL COSTPRO", "reason": "Tienda operativa real (misión + FASE 18)" },
+    { "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1", "name": "Puerto Padre VITALLCONS", "reason": "Tienda operativa real (misión + FASE 18)" },
+    { "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38", "name": "ENERVIDA-VITALLCONS", "reason": "Tienda operativa real (misión + FASE 18)" },
+    { "id": "e711cebc-8df7-4f12-be6e-873176c7960f", "name": "E2E PILOT A CostPro", "reason": "Piloto persistente A (modo legacy/reutilización) — re-provisionado 2026-10-09 vía provision-pilot-env.cjs, misión ciclo de vida" },
+    { "id": "b5fed991-8357-4edf-88b3-18095369100e", "name": "E2E PILOT B CostPro", "reason": "Piloto persistente B (modo legacy/reutilización) — re-provisionado 2026-10-09 vía provision-pilot-env.cjs, misión ciclo de vida" }
+  ],
+  "protectedStoreNamesExact": ["E2E PILOT A CostPro", "E2E PILOT B CostPro", "TIENDA CENTRAL COSTPRO", "Puerto Padre VITALLCONS", "ENERVIDA-VITALLCONS"],
+  "protectedUsers": [
+    { "email": "admin@costpro.com", "reason": "Admin CostPro (misión)" },
+    { "email": "admin@demo.com", "reason": "Admin Demo (misión)" },
+    { "email": "belkis9999@gmail.com", "reason": "Belkis (misión)" },
+    { "email": "adrianpompasantana@gmail.com", "reason": "Propietario (doc E2E-DATA-HYGIENE)" },
+    { "email": "almacen@demo.com", "reason": "Almacén demo (doc E2E-DATA-HYGIENE)" },
+    { "email": "cajero@demo.com", "reason": "Seed demo (doc E2E-DATA-HYGIENE; usuario legacy E2E)" },
+    { "email": "encargado@demo.com", "reason": "Seed demo (doc E2E-DATA-HYGIENE)" },
+    { "email": "costo@demo.com", "reason": "Seed demo (doc E2E-DATA-HYGIENE)" },
+    { "email": "landing.demo@costpro-e2e.com", "reason": "Fixture landing demo (scripts/landing-demo-provision.cjs)" },
+    { "email": "qa.h1.a@costpro.test", "reason": "Fixture QA H1 (scripts/qa-h1) — conservada" }
+  ],
+  "notes": [
+    "Los pilotos A/B persistentes NO existían al iniciar la remediación (borrados antes; evidencia en docs/audits/E2E-RESOURCE-LIFECYCLE-REMEDIATION.md) — se re-provisionaron con el script oficial e2e/scripts/provision-pilot-env.cjs y sus UUID nuevos quedan protegidos aquí.",
+    "SEGUNDO INCIDENTE (2026-10-09): los UUIDs 2fc9a0dd…/74c30b98… provisionados la madrugada del 9-oct fueron hard-borrados por el sweepResidualsSince de un run posterior — 'E2E PILOT A CostPro' matchea isTestStoreName y esos UUIDs NO estaban en las guardas de código (solo 3 tiendas de negocio). Causa raíz corregida en este PR: todas las rutas de borrado consultan el config vía e2e/fixtures/protected-resources.ts (por UUID y por nombre exacto).",
+    "Las pilotos de RUN (E2E PILOT A/B CostPro <RUN_ID>) son efímeras por diseño y NO están en esta lista: las limpia el teardown del run."
+  ]
+}

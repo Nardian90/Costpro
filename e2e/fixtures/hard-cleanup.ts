@@ -22,6 +22,13 @@
  *   - No modifica lógica de producto: es infraestructura exclusiva de e2e/.
  * ============================================================================
  */
+import {
+  isProtectedStore,
+  isProtectedUserEmail,
+  describeProtected,
+  PROTECTED_STORE_IDS as CONFIG_PROTECTED_STORE_IDS,
+} from './protected-resources';
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
@@ -54,12 +61,32 @@ const sb = {
   },
 };
 
-/** Tiendas reales autorizadas — JAMÁS eliminadas ni modificadas (FASE 18). */
-export const PROTECTED_STORE_IDS: readonly string[] = [
+/**
+ * Tiendas reales autorizadas — JAMÁS eliminadas ni modificadas (FASE 18).
+ *
+ * E2E-DATA-LIFECYCLE: la lista es la UNIÓN del mínimo de negocio (hardcodeado,
+ * fail-safe) y del config de gobernanza (e2e/config/protected-resources.json)
+ * que incluye los pilotos persistentes A/B. El incidente del 2026-10-09
+ * (pilotos re-provisionados borrados por el sweep de un run posterior porque
+ * "E2E PILOT A CostPro" coincide con el patrón de test y su UUID no estaba
+ * protegido) no puede repetirse: TODAS las rutas de borrado consultan
+ * PROTECTED_STORE_IDS (por id) e isProtectedStore (id+nombre) ANTES de tocar
+ * la BD.
+ */
+const BUSINESS_STORE_IDS: readonly string[] = [
   'd1c4ba0e-5767-4ba0-e576-7d1c4ba0e576', // TIENDA CENTRAL COSTPRO
   '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1', // Puerto Padre VITALLCONS
   '5e6fe821-5465-48b1-b3f1-3aa3182edc38', // ENERVIDA-VITALLCONS
 ];
+
+export const PROTECTED_STORE_IDS: readonly string[] = Array.from(
+  new Set([...BUSINESS_STORE_IDS, ...CONFIG_PROTECTED_STORE_IDS]),
+);
+
+// Log de diagnóstico en carga (solo cuando se importa como módulo de guard)
+if (process.env.E2E_DEBUG_PROTECTED === '1') {
+  console.log(`[hard-cleanup] Protección cargada: ${describeProtected()}`);
+}
 
 /**
  * Patrones de nombre inequívocos de tienda de prueba (mismos criterios que la
@@ -124,6 +151,24 @@ async function rpcService(name: string, params: Record<string, unknown>): Promis
 export async function hardDeleteTestStore(storeId: string): Promise<void> {
   if (PROTECTED_STORE_IDS.includes(storeId)) {
     throw new Error(`[hard-cleanup] FATAL: se intentó eliminar una tienda protegida (${storeId})`);
+  }
+
+  // Defensa en profundidad (E2E-DATA-LIFECYCLE): el RPC tiene su propia guarda
+  // por nombre, pero SOLO cubre las 3 tiendas de negocio hardcodeadas en la
+  // migración. Los pilotos persistentes A/B coinciden con el patrón de test
+  // a nivel BD — su protección es AQUÍ, por nombre exacto del config.
+  try {
+    const row = await sb.select<{ id: string; name: string }>(
+      'stores', `select=id,name&id=eq.${storeId}&limit=1`,
+    );
+    if (row[0] && isProtectedStore(row[0].id, row[0].name)) {
+      throw new Error(
+        `[hard-cleanup] FATAL: '${row[0].name}' (${row[0].id}) es un recurso protegido del config de gobernanza`,
+      );
+    }
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('[hard-cleanup] FATAL')) throw e;
+    // SELECT falló (red, etc.): continuar — el RPC revalida sus guardas
   }
 
   const viaRpc = await rpcService('e2e_hard_delete_store', { p_store_id: storeId });
@@ -198,6 +243,24 @@ export async function hardDeleteTestStore(storeId: string): Promise<void> {
  * identidad Auth (GoTrue Admin). Best-effort excepto el delete de Auth.
  */
 export async function hardDeleteRunUser(userId: string): Promise<boolean> {
+  // ── GUARDA DE IDENTIDAD (E2E-DATA-LIFECYCLE) ────────────────────────────
+  // El RPC e2e_hard_delete_user acepta cualquier email @costpro.test — la
+  // fixture protegida qa.h1.a@costpro.test (y cualquier usuario futuro del
+  // config) sería borrable. La protección por email es AQUÍ, antes de tocar
+  // nada (ni tiendas creadas ni datos scoped).
+  try {
+    const prof = await sb.select<{ id: string; email: string | null }>(
+      'profiles', `select=id,email&id=eq.${userId}&limit=1`,
+    );
+    if (prof[0] && isProtectedUserEmail(prof[0].email)) {
+      throw new Error(
+        `[hard-cleanup] FATAL: el usuario ${prof[0].email} (${userId}) está protegido por el config de gobernanza`,
+      );
+    }
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('[hard-cleanup] FATAL')) throw e;
+  }
+
   // 0. Tiendas creadas por el usuario (stores_created_by_fkey NO ACTION
   //    bloquearía el delete de la identidad Auth)
   try {
@@ -299,10 +362,10 @@ export async function sweepResidualsSince(
       `select=id,name,created_by&created_at=gte.${sinceIso}${createdBy}&limit=500`,
     );
     for (const r of rows) {
-      if (PROTECTED_STORE_IDS.includes(r.id)) continue;
+      if (isProtectedStore(r.id, r.name)) continue; // config: pilotos A/B + negocio
       if (!isTestStoreName(r.name)) continue;
-      await hardDeleteTestStore(r.id).catch(() => {});
-      storesDeleted++;
+      const deleted = await hardDeleteTestStore(r.id).then(() => true).catch(() => false);
+      if (deleted) storesDeleted++; // solo cuenta borrados REALES
     }
   } catch { /* best-effort */ }
 
@@ -314,6 +377,7 @@ export async function sweepResidualsSince(
     );
     for (const p of profs) {
       const e = (p.email || '').toLowerCase();
+      if (isProtectedUserEmail(e)) continue; // config: fixtures QA/demo protegidas
       const isTest = /^(e2e-|e2e80-|e2e2-|hot-test-|hot-regular|f06dr-|audit-ph3-|esec-|gate-f406d-|fase-d-|test_no_admin|fc\.e2e\.|fc-access-e2e-|fc-mvp-smoke|qa-costpro-)/.test(e)
         || /@costpro\.test$|@fixture\.local$|@fixture\.costpro$|@audit\.costpro\.test$|@costpro\.local$/.test(e);
       if (!isTest) continue;
@@ -340,14 +404,15 @@ export async function countE2EResiduals(): Promise<{ stores: number; users: numb
       'stores',
       `select=id,name&is_archived=false&${storeOr}`,
     );
-    stores = rows.length;
+    // Protegidos NO son residuo (pilotos persistentes matchean 'E2E *')
+    stores = rows.filter((r) => !isProtectedStore(r.id, r.name)).length;
   } catch { /* best-effort */ }
   try {
-    const profs = await sb.select<{ id: string }>(
+    const profs = await sb.select<{ id: string; email: string | null }>(
       'profiles',
-      'select=id&deleted_at=is.null&or=(email.ilike.e2e-*,email.ilike.e2e80-*,email.ilike.e2e2-*,email.ilike.hot-test-*,email.ilike.hot-regular@*,email.ilike.f06dr-*,email.ilike.audit-ph3-*,email.ilike.esec-*,email.ilike.gate-f406d-*)',
+      'select=id,email&deleted_at=is.null&or=(email.ilike.e2e-*,email.ilike.e2e80-*,email.ilike.e2e2-*,email.ilike.hot-test-*,email.ilike.hot-regular@*,email.ilike.f06dr-*,email.ilike.audit-ph3-*,email.ilike.esec-*,email.ilike.gate-f406d-*)',
     );
-    users = profs.length;
+    users = profs.filter((p) => !isProtectedUserEmail(p.email)).length;
   } catch { /* best-effort */ }
   return { stores, users };
 }

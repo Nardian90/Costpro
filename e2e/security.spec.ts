@@ -16,6 +16,23 @@
  */
 import { test, expect, type APIRequestContext } from '@playwright/test';
 
+// ============================================================================
+// ⛔ DESHABILITADO POR EL PROPIETARIO (2026-10-09) — NO ELIMINAR ESTE BLOQUE
+// ----------------------------------------------------------------------------
+// Este spec CREA tiendas y usuarios de prueba (endpoints /api/stores, managed-create, signUp) en el proyecto Supabase COMPARTIDO (wthkddeleylijmonclxg)
+// y fue causa directa de la contaminación de datos del 2026-10-09
+// (48 tiendas + 26 usuarios + 6 tenants de prueba; evidencia completa en
+// docs/audits/e2e-contamination-cleanup-20261009.md).
+//
+// Permanece COMENTADO/omitido por defecto. Solo se ejecuta si el propietario
+// lo pide EXPLÍCITAMENTE. Para habilitarlo puntualmente:
+//   1. Comentar la línea `test.skip(true, ...)` de abajo.
+//   2. Ejecutar con E2E_ISOLATION=1 (provisiona entorno aislado efímero con
+//      teardown reconciliado) — NUNCA contra tiendas de negocio.
+//   3. Verificar net-zero al terminar: node e2e/scripts/data-hygiene-guard.cjs
+// ============================================================================
+test.skip(true, 'Deshabilitado por el propietario (2026-10-09): crea tiendas y usuarios. Habilitar solo bajo petición explícita (ver banner).');
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';

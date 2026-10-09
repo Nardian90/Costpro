@@ -1,0 +1,202 @@
+================================================================================
+E2E DATA LIFECYCLE — REFLEXIÓN TÉCNICA
+================================================================================
+Fecha      : 2026-10-09
+Tarea      : E2E 数据修复 + 测试夹具生命周期治理 (higiene de datos E2E y gobernanza
+             del ciclo de vida de fixtures)
+Repositorio: Nardian90/Costpro — rama fix/e2e-resource-lifecycle-hygiene
+Alcance    : proyecto Supabase compartido wthkddeleylijmonclxg (único disponible;
+             la infraestructura no ofrece un segundo proyecto para testing)
+Docs       : E2E-RESOURCE-LIFECYCLE-REMEDIATION.md (evidencia de esta remediación)
+             E2E-DATA-HYGIENE.md (remediación previa 2026-10-05, causa raíz
+             "soft-delete acumulativo" — 2638 tiendas / 364 usuarios / 38 tenants)
+
+--------------------------------------------------------------------------------
+1. DIAGNÓSTICO: POR QUÉ SE ACUMULABAN USUARIOS Y TIENDAS DE PRUEBA
+--------------------------------------------------------------------------------
+
+La remediación del 2026-10-05 (E2E-DATA-HYGIENE.md) corrigió la causa raíz de
+VOLUMEN: todo el cleanup histórico era SOFT (archive/ban) porque la semántica de
+borrado de la app es soft-delete — correcta para negocio real, equivalente a "no
+borrar" para entidades de prueba. Se introdujeron: hard-delete server-side (RPCs
+SECURITY DEFINER con guardas), teardown por run aislado (tenant + plantel
+propios) y guardrail net-zero (before/after).
+
+Esta remediación encontró la segunda capa del problema: la causa raíz de
+PERSISTENCIA no era el mecanismo de borrado sino la GESTIÓN DEL CICLO DE VIDA
+cuando el mecanismo no llega a ejecutarse. Tres fisuras concretas:
+
+  F1. Interrupción del runner. afterAll/global-teardown son hooks: si el
+      proceso muere (SIGKILL, OOM, timeout/cancel del job de CI), NO se
+      ejecutan. Cada corrida interrumpida deja huérfanos permanentes: 4
+      usuarios Auth + tenant + pilotos del run + tiendas de specs. En CI el
+      context file (que identifica los recursos por UUID) vive en el
+      filesystem efímero del runner — inalcanzable para la siguiente corrida.
+
+  F2. Protección desincronizada. La lista de recursos protegidos vivía
+      hardcodeada en UN módulo (PROTECTED_STORE_IDS, 3 tiendas) mientras el
+      inventario real de protegidos vivía en otro lugar (config JSON, pilotos
+      incluidos). El sweep del teardown usa patrón de nombre para decidir qué
+      es "artefacto de prueba": los pilotos persistentes 'E2E PILOT A/B
+      CostPro' COINCIDEN con ese patrón. Un run posterior los hard-borró.
+      Reproducido dos veces el mismo día (ver §4).
+
+  F3. Nombres no son identidad. Todo el sweep E2E decide por patrón de nombre
+      ('E2E *', 'E2E80*', …). Un patrón no distingue "piloto persistente del
+      programa" de "piloto efímero del run": ambos se llaman igual salvo un
+      sufijo. Cualquier limpieza dirigida por nombre es, tarde o temprano, una
+      limpieza incorrecta. La identidad verificable es el UUID registrado en
+      el context del run y en el inventario de gobernanza.
+
+--------------------------------------------------------------------------------
+2. LECCIONES DE DISEÑO (qué se aplicó en el fix)
+--------------------------------------------------------------------------------
+
+  L1. afterAll no es una estrategia de limpieza, es una optimización. Se
+      necesita una capa de RECONCILIACIÓN independiente de hooks: (a) al
+      inicio de cada corrida, escanear contextos de procesos muertos y limpiar
+      por UUID lo que registraron; (b) para huérfanos de CI, una CLI que
+      resuelva los recursos POR RUN ID (tenant exacto + patrón exacto de 4
+      emails + tiendas por tenant/nombre∋runId/created_by) y borre por UUID
+      con dry-run por defecto. El context file deja de ser el único
+      mecanismo: es la fuente para la reconciliación local, y el run-id es la
+      fuente para la remota.
+
+  L2. Fuente única de verdad para protegidos. Un solo config versionado en el
+      repo (e2e/config/protected-resources.json) consumido por TODAS las
+      rutas de borrado (hard-cleanup, sweep, conteo de residuos, guard de
+      entorno). La lista hardcodeada se conserva como fallback fail-safe
+      (mínimo de negocio): si el JSON falta, la protección nunca es más débil
+      que antes; cuando existe, es más completa.
+
+  L3. Doble guarda: UUID + nombre exacto. Borrar por UUID evita falsos
+      positivos; la guarda adicional por NOMBRE EXACTO (no patrón) protege
+      contra UUIDs desactualizados tras re-provisionar. El patrón de nombre
+      queda relegado a una función: ENCONTRAR candidatos, nunca decidir el
+      borrado de algo no registrado como efímero.
+
+  L4. El conteo de residuos también excluye protegidos. Los pilotos
+      persistentes matchean 'E2E *': sin la exclusión, el guardrail
+      reportaría CI=FAIL perpetuo (falso positivo) y se normalizaría ignorar
+      el guardrail — el peor de los desenlaces para una barrera.
+
+  L5. Fail-fast de entorno. provisionRunEnv verifica que los protegidos
+      EXISTEN antes de crear nada. Si falta un protegido, algo violó la
+      gobernanza: abortar es más barato que descubrirlo en producción.
+
+  L6. Ventanas temporales en sweeps multi-tenant son peligrosas. El sweep por
+      ventana (created_at >= inicio del run) es razonable para limpiar el
+      PROPIO residuo al final del PROPIO run, pero aplicarlo desde una
+      reconciliación tardía cubriría entidades de runs posteriores o
+      concurrentes. La reconciliación usa identidad (created_by ∈ usuarios
+      del run muerto) y tenant propio — nunca tiempo.
+
+--------------------------------------------------------------------------------
+3. RIESGOS DEL ENTORNO COMPARTIDO (no resolvibles en este PR, mitigados)
+--------------------------------------------------------------------------------
+
+  R1. CI corre E2E contra el MISMO Supabase en cada push/PR a main. Cuatro
+      workflows simultáneos = cuatro plantels de usuarios y cuatro cuotas.
+      Mitigado por el aislamiento por run (tenant propio, cuota per-tenant).
+      Residual: los runners ejecutan el código de main — hasta que un fix de
+      higiene esté MERGEADO, las corridas de CI siguen exponiendo la fisura
+      que corrige (ver §4: la ventana de exposición es real, no teórica).
+      Lección operativa: los fixes de gobernanza de datos deben mergearse
+      rápido y los provisionamientos de pilotos hacerse DESPUÉS del merge.
+
+  R2. Cuota T0 compartida: las specs que crean tiendas como el admin
+      compartido (E2E80 en Default Tenant) compiten con el negocio real por
+      la cuota del tenant. El sweep por run la recupera al terminar; si el
+      run muere, la reconciliación por created_by la recupera después.
+
+  R3. Sesiones y active_store: el signOut del teardown es por UUID de usuario
+      del run — nunca del admin compartido. Los pilotos persistentes evitan
+      tocar active_store de usuarios reales (global-setup legacy es
+      fail-closed: nunca cae a una tienda real).
+
+  R4. Cuota de creación (rate-limit stores:post por usuario): los runs
+      aislados la aíslan por diseño (usuarios propios). No requiere acción.
+
+--------------------------------------------------------------------------------
+4. CRONOLOGÍA VERIFICABLE DEL INCIDENTE DE PILOTOS (misma jornada)
+--------------------------------------------------------------------------------
+
+  00:02Z  Sesión previa genera el plan de limpieza (82/28/35 candidatos).
+  00:13Z  La sesión previa registra protected-resources.json con pilotos
+          re-provisionados (UUIDs 2fc9a0dd… / 74c30b98…) — sin cablear al
+          código (los ejecutores referenciados no existían aún).
+  ~00:5xZ  Snapshot read-only de esta sesión: pilotos AUSENTES. Con la
+          evidencia de que entre medias hubo corridas E2E (local/CI) cuyo
+          sweepResidualsSince, con la lista hardcodeada de 3 UUIDs, los
+          alcanzó: nombre matcheable + UUID no protegido = borrado.
+  01:1xZ  Fix implementado (config → código, guardas en todas las rutas),
+          pilotos re-provisionados vía API real (e711cebc… / b5fed991…) y
+          config actualizado en el MISMO commit.
+  00:32Z  (concurrente) El usuario mergea PR #1383 → CI dispara 4 workflows
+          E2E contra el proyecto con el código de main SIN el fix — los
+          sweeps de esos runs incluyen la ventana de creación de los pilotos
+          re-provisionados. Riesgo confirmado en vivo: los pilotos pueden ser
+          barridos de nuevo hasta que este PR se merge. La remediación
+          acepta este riesgo de ventana (documentado) porque la alternativa
+          — no provisionar hasta el merge — bloquearía la verificación FASE E
+          y el guard de entorno exigiría los pilotos presentes.
+
+--------------------------------------------------------------------------------
+5. QUÉ HUBIERA EVITADO TODO (design review retrospectivo)
+--------------------------------------------------------------------------------
+
+  - Tratar las fixtures persistentes como RECURSOS DE INFRAESTRUCTURA con
+    inventario versionado desde el día uno (SEC-TS-08 las definió por nombre,
+    no por UUID; la gobernanza por UUID llegó tarde).
+  - Un test de contrato para el ciclo de vida: "provisionar run → matar
+    proceso → siguiente run reconcilia → net zero" como spec E2E de
+    infraestructura, no como script manual.
+  - El guardrail BEFORE no verificaba la IDENTIDAD de los protegidos (solo
+    el residuo): un protegido ausente pasaba desapercibido hasta que un
+    global-setup fail-closed abortaba la corrida siguiente. Ahora --before
+    falla con el mensaje de remediación exacto.
+
+--------------------------------------------------------------------------------
+6. VERIFICACIÓN DE NO-REPRODUCIBILIDAD (FASE E — resultados)
+--------------------------------------------------------------------------------
+
+Limpieza del segundo incidente (01:13–01:22 UTC del 9-oct, ver informe
+completo e2e-contamination-cleanup-20261009.md):
+
+  1. Reconciliación oficial por RUN ID de 6 runs muertos (A01D2D, 3FCEE0,
+     50D7F7, F7EA69, EEA303, 7F722C): 46/46 tiendas, 22/22 usuarios y
+     6/6 tenants eliminados POR UUID, con guarda de protegidos activa.
+     Los 5 protegidos verificados presentes POST-limpieza por UUID.
+  2. Residuos fuera de run sets (4× e2e80-created-*@costpro.test, patrón
+     generado por roles-permissions.spec:144 sin cleanup): eliminados por
+     UUID vía RPC oficial. Evidencia: patrón + ventana temporal.
+  3. Estado final verificado por SQL: stores=14 (12 preexistentes + 2
+     pilotos), auth.users=23, profiles=21, tenants=5, creados-hoy=0.
+     Integridad de negocio: ENERVIDA 157p/600t/994m/140 vales intacta.
+  4. EXCLUIDOS de la limpieza por no poder probarse como E2E: 3 vales
+     manuales del propietario en tiendas reales (notas de redacción
+     humana, creados tras el fin de todo el CI, sin productos E2E).
+  5. Guard de higiene: detectó correctamente los residuos de una corrida
+     CONCURRENTE en vivo (stores=7 users=8 durante la limpieza) — el
+     guardrail funciona; el delta restante se reconcilia cuando la
+     corrida del propietario termina (vehículo: simulate-killed-run.ts
+     + reconcile-orphan-runs.ts ya cubren el caso "run muerto").
+
+Mitigaciones estructurales de este PR (decisión del propietario):
+
+  6. Modo aislado deja de ser default (isIsolatedRun → E2E_ISOLATION=1
+     explícito); toda corrida reutiliza pilotos persistentes A/B.
+  7. 11 specs creadores de tiendas/usuarios deshabilitados con banner y
+     skip documentado; solo se reactivan bajo petición explícita.
+  8. Jobs E2E de CI deshabilitados (if: false) en ci.yml y
+     test-coverage.yml — los 4 workflows del merge de PR #1383 fueron la
+     fuente principal del segundo incidente.
+  9. Validación estática: 390 tests en 47 archivos parsean (playwright
+     --list), tsc --noEmit 0 errores (e2e excluido del tsconfig: la
+     validación de tipos de e2e la hace el runner), eslint 0 errores,
+     git diff --check limpio.
+
+Pendiente (post-cierre de la corrida concurrente del propietario):
+reconciliación final de sus restos + smoke de modo legacy con delta neto
+cero verificado por UUID — se añadirá como commit adicional del PR.
+================================================================================

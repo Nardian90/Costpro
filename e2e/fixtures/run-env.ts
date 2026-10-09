@@ -64,7 +64,9 @@ import {
   hardDeleteRunUser,
   deleteRunTenantIfEmpty,
   sweepResidualsSince,
+  PROTECTED_STORE_IDS,
 } from './hard-cleanup';
+import { isProtectedStore } from './protected-resources';
 
 loadEnv({ path: './.env' });
 
@@ -77,12 +79,25 @@ const RUN_CONTEXTS_DIR = resolve(process.cwd(), '.e2e-run-contexts');
 const CONTEXT_PREFIX = 'e2e-run-context-pid-';
 /** Antigüedad máxima de un context file antes de GC (corridas legítimas viven <1h: tokens 1h). */
 const CONTEXT_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+/** Gracia para context files de PID recién creado (runner arrancando). */
+const CONTEXT_PID_GRACE_MS = 2 * 60 * 1000;
+/** Edad mínima de un context file preset antes de considerarse huérfano por edad. */
+const CONTEXT_ORPHAN_AGE_MS = 60 * 60 * 1000;
 
 // ── Identidad de ejecución ───────────────────────────────────────────────────
 
-/** Modo aislado por defecto; E2E_ISOLATION=0 restaura el modo compartido (legacy). */
+/**
+ * DECISIÓN DEL PROPIETARIO (2026-10-09, incidente de contaminación): el modo
+ * aislado DEJA DE SER el default. Toda corrida E2E reutiliza las tiendas
+ * piloto persistentes ('E2E PILOT A/B CostPro') y los usuarios de seed —
+ * NO crea tiendas, usuarios ni tenants. El modo aislado queda como OPT-IN
+ * explícito (E2E_ISOLATION=1) para los specs de creación/aislamiento, que
+ * además están deshabilitados en el inventario por defecto (solo se ejecutan
+ * bajo petición expresa del propietario).
+ * Evidencia: docs/audits/E2E-RESOURCE-LIFECYCLE-REMEDIATION.md
+ */
 export function isIsolatedRun(): boolean {
-  return process.env.E2E_ISOLATION !== '0';
+  return process.env.E2E_ISOLATION === '1';
 }
 
 /** RUN_ID de esta ejecución (vacío en modo legacy o antes del global-setup). */
@@ -319,7 +334,153 @@ export function gcStaleRunContexts(): number {
   return removed;
 }
 
-// ── Provisión del entorno del run ────────────────────────────────────────────
+// ── Reconciliación de runs interrumpidos (E2E-DATA-LIFECYCLE) ────────────
+
+/** ¿El PID está vivo? (process.kill(pid,0): ESRCH=muerto, EPERM=vivo ajeno) */
+function isPidAlive(pid: number): boolean {
+  if (!Number.isFinite(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return (e as NodeJS.ErrnoException).code === 'EPERM';
+  }
+}
+
+/**
+ * Teardown SCOPE de un context huérfano — SOLO recursos por UUID exacto del
+ * context. A diferencia de teardownRunEnv NO ejecuta el barrido global por
+ * ventana temporal (sweepResidualsSince): el huérfano es VIEJO y su ventana
+ * cubriría entidades de runs posteriores/concurrentes. La identidad del run
+ * muerto queda cubierta por el sweep por created_by (paso 6) — exacto y sin
+ * riesgo cross-run.
+ */
+async function reconcileOrphanContext(context: RunContext, contextPath: string): Promise<void> {
+  // 1-2. Pilotos + tiendas del tenant del run (por UUID / tenant propio)
+  for (const storeId of [context.pilotStoreA.id, context.pilotStoreB.id]) {
+    await hardDeleteTestStore(storeId).catch(() => {});
+  }
+  if (context.tenantId) {
+    await hardDeleteRunTenantStores(context.tenantId).catch(() => {});
+  }
+  // 3. Usuarios del run por UUID (hardDeleteRunUser aplica guardas de config)
+  for (const user of [context.users.admin, context.users.cajero, context.users.almacen, context.users.encargado]) {
+    await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${user.id}/sign_out`, {
+      method: 'POST',
+      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
+    }).catch(() => {});
+    await hardDeleteRunUser(user.id).catch(() => {});
+  }
+  // 4. Tenant del run si quedó vacío
+  await deleteRunTenantIfEmpty(context.tenantId).catch(() => {});
+  // 5. Sweep por IDENTIDAD (created_by ∈ usuarios del run muerto) — sin
+  //    ventana temporal: exacto, nunca toca entidades de otros runs.
+  try {
+    const runUserIds = [context.users.admin.id, context.users.cajero.id, context.users.almacen.id, context.users.encargado.id];
+    const rows = await svc(
+      'GET',
+      `/stores?select=id,name,created_by&created_by=in.(${runUserIds.map((id) => `"${id}"`).join(',')})&limit=200`,
+    ).then((r) => (r.ok ? (r.json() as Promise<Array<{ id: string; name: string }>>) : []));
+    for (const r of rows) {
+      if (isProtectedStore(r.id, r.name)) continue;
+      await hardDeleteTestStore(r.id).catch(() => {});
+    }
+  } catch { /* best-effort */ }
+  // 6. El context file del huérfano ya no sirve
+  try {
+    unlinkSync(contextPath);
+  } catch { /* ya eliminado */ }
+  console.log(`[run-env] Reconciliado run huérfano ${context.runId} (context ${contextPath.split('/').pop()})`);
+}
+
+/**
+ * RECONCILIACIÓN (garantía anti-huérfanos — el afterAll/teardown NO puede
+ * ejecutarse si el runner muere con SIGKILL/OOM/timeout de CI): recorre los
+ * context files de corridas anteriores y limpia por UUID los recursos de
+ * los runs cuyo proceso YA NO EXISTE.
+ *
+ *   - `e2e-run-context-pid-<pid>.json` → huérfano si el PID no está vivo
+ *     (con gracia de 2 min para no pisar un runner arrancando).
+ *   - `e2e-run-context-<slug>.json` (E2E_RUN_ID preset por CI) → huérfano
+ *     si el file tiene >1h sin modificarse (una corrida viva actualiza el
+ *     contexto al provisionar; los tokens viven 1h — ninguna corrida sana
+ *     supera esa edad).
+ *
+ * Conservador por diseño: ante duda, NO limpia (el GC de 6h cubre el
+ * residual y el guardrail detecta cualquier fuga). Se invoca al inicio de
+ * provisionRunEnv — todo run nuevo reconcilia el pasado antes de crear nada.
+ */
+export async function reconcileOrphanedRunContexts(): Promise<{ reconciled: number; skipped: number }> {
+  let reconciled = 0;
+  let skipped = 0;
+  try {
+    if (!existsSync(RUN_CONTEXTS_DIR)) return { reconciled, skipped };
+    for (const f of readdirSync(RUN_CONTEXTS_DIR)) {
+      if (!f.startsWith('e2e-run-context-') || !f.endsWith('.json')) continue;
+      const full = resolve(RUN_CONTEXTS_DIR, f);
+      let orphan = false;
+      const pidMatch = f.match(/^e2e-run-context-pid-(\d+)\.json$/);
+      if (pidMatch) {
+        const pid = Number(pidMatch[1]);
+        const ageMs = Date.now() - statSync(full).mtimeMs;
+        orphan = !isPidAlive(pid) && ageMs > CONTEXT_PID_GRACE_MS;
+      } else {
+        // context preset por slug (E2E_RUN_ID): sin PID — criterio por edad
+        try {
+          orphan = Date.now() - statSync(full).mtimeMs > CONTEXT_ORPHAN_AGE_MS;
+        } catch { orphan = false; }
+      }
+      if (!orphan) { skipped++; continue; }
+      const context = readRunContext(full);
+      if (!context) {
+        // ilegible/corrupto: solo GC del file (nada que limpiar por UUID)
+        try { unlinkSync(full); } catch { /* noop */ }
+        continue;
+      }
+      await reconcileOrphanContext(context, full).catch(() => {});
+      reconciled++;
+    }
+  } catch { /* best-effort — el guardrail detecta cualquier fuga */ }
+  return { reconciled, skipped };
+}
+
+// ── Guard de entorno: recursos protegidos presentes (fail-fast) ───────────
+
+/**
+ * GUARD DE ENTORNO: verifica que los recursos protegidos del config de
+ * gobernanza (negocio + pilotos persistentes) EXISTEN y están activos antes
+ * de provisionar nada. Si falta uno, algún run anterior violó la protección
+ * — aborta ANTES de crear recursos sobre una base degradada, con el mensaje
+ * de remediación exacto.
+ */
+export async function verifyProtectedResources(): Promise<void> {
+  if (process.env.E2E_SKIP_PROTECTED_GUARD === '1') return;
+  const ids = PROTECTED_STORE_IDS;
+  const missing: string[] = [];
+  for (const id of ids) {
+    try {
+      const rows = await svc(
+        'GET',
+        `/stores?select=id,name,is_active,is_archived&id=eq.${id}&limit=1`,
+      ).then((r) => (r.ok ? (r.json() as Promise<Array<{ id: string; name: string; is_active: boolean | null; is_archived: boolean | null }>>) : []));
+      const s = rows[0];
+      if (!s) missing.push(`${id} (AUSENTE)`);
+      else if (s.is_archived) missing.push(`${s.name} (${id}) ARCHIVADA`);
+    } catch (e) {
+      throw new Error(`[run-env] Guard de entorno: no se pudo verificar ${id}: ${(e as Error).message}`);
+    }
+  }
+  if (missing.length > 0) {
+    throw new Error(
+      `[run-env] GUARD DE ENTORNO: recursos protegidos ausentes → ${missing.join('; ')}. ` +
+      'Algún run anterior violó la protección (ver docs/audits/E2E-RESOURCE-LIFECYCLE-REMEDIATION.md). ' +
+      'Remediación: re-provisionar con node e2e/scripts/provision-pilot-env.cjs y actualizar ' +
+      'e2e/config/protected-resources.json. Para bootstrap excepcional: E2E_SKIP_PROTECTED_GUARD=1.',
+    );
+  }
+}
+
+// ── Provisión del entorno del run ─────────────────────────────────────────────
 
 /**
  * Materializa la identidad de ejecución aislada y exporta el environment que
@@ -337,6 +498,17 @@ export async function provisionRunEnv(): Promise<RunContext> {
   }
 
   gcStaleRunContexts();
+
+  // RECONCILIACIÓN: limpiar recursos de runs muertos (SIGKILL/OOM/CI timeout)
+  // ANTES de provisionar — el run nuevo nunca hereda huérfanos.
+  const rec = await reconcileOrphanedRunContexts();
+  if (rec.reconciled > 0) {
+    console.log(`[run-env] Reconciliación previa: ${rec.reconciled} run(s) huérfano(s) limpiado(s), ${rec.skipped} activo(s) respetado(s).`);
+  }
+
+  // GUARD DE ENTORNO: protegidos presentes (fail-fast, ver E2E-RESOURCE-
+  // LIFECYCLE-REMEDIATION.md) — pilotos A/B + tiendas de negocio.
+  await verifyProtectedResources();
 
   const runId = process.env.E2E_RUN_ID || generateRunId();
   const slug = runSlug(runId);

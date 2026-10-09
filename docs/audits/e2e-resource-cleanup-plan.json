@@ -1,0 +1,1938 @@
+{
+ "generated_at": "2026-10-09T00:02:57.011553Z",
+ "scope": "Recursos de prueba E2E con procedencia inequívoca (patrón de nombre + tenant de run + actividad nula/de prueba)",
+ "mechanism": {
+  "stores": "RPC public.e2e_hard_delete_store(p_store_id) — SECURITY DEFINER, migración 20261005120000, con guardas de tiendas protegidas y patrón test",
+  "users": "RPC public.e2e_hard_delete_user(p_user_id) — SECURITY DEFINER, migración 20261005120001, solo emails con patrón de test",
+  "tenants": "DELETE REST service-role tras verificar 0 stores y 0 profiles (práctica establecida en docs/audits/E2E-DATA-HYGIENE.md §2)"
+ },
+ "protection_check": {
+  "protected_store_ids": [
+   "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+   "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+   "d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576"
+  ],
+  "active_store_conflicts": [],
+  "foreign_memberships_in_candidates": [
+   {
+    "store_id": "c76bff6e-217f-4413-8792-c9d8af46083c",
+    "user_id": "051c6157-600b-425e-b8c0-72388bacf541",
+    "email": "admin@costpro.com"
+   }
+  ],
+  "business_activity_outliers": [],
+  "known_effects": [
+   "admin@costpro.com (protegido) pierde 1 membership E2E en tienda 'E2E80 E2E-20261006-69ACA5 AP muwk07efd6ui' — artefacto de prueba creado por un run del 6-oct, no dato de negocio",
+   "los usuarios candidatos referencian active_store_id a pilotos de su propio run; sus perfiles se eliminan íntegros, por lo que la referencia desaparece con ellos",
+   "orden de ejecución respetando FKs: stores → NULL de tenant_id/active_store_id en perfiles candidatos → tenants → users"
+  ]
+ },
+ "stores": [
+  {
+   "id": "57d852c7-74e6-4218-91d1-a22a0e513a64",
+   "name": "E2E PILOT A CostPro E2E-20261005-AD7882",
+   "created": "2026-10-05",
+   "tenant": "E2E TENANT E2E-20261005-AD7882",
+   "created_by_email": "e2e-e2e20261005ad7882-adm@costpro.test",
+   "run_id": "E2E-20261005-AD7882",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "765b8223-358f-47ce-9ab0-015028758733",
+   "name": "E2E PILOT B CostPro E2E-20261005-AD7882",
+   "created": "2026-10-05",
+   "tenant": "E2E TENANT E2E-20261005-AD7882",
+   "created_by_email": "e2e-e2e20261005ad7882-adm@costpro.test",
+   "run_id": "E2E-20261005-AD7882",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "58d7a81a-03d0-4b01-8123-c9893faf778a",
+   "name": "E2E Reset Test 1791230180476",
+   "created": "2026-10-05",
+   "tenant": "E2E TENANT E2E-20261005-AD7882",
+   "created_by_email": "e2e-e2e20261005ad7882-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "70228fe6-5b03-4d73-8f76-9c81fac5d269",
+   "name": "E2E Reset Test 1791230245453",
+   "created": "2026-10-05",
+   "tenant": "E2E TENANT E2E-20261005-AD7882",
+   "created_by_email": "e2e-e2e20261005ad7882-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "309de86b-ef66-43cf-92f5-1d03683cb206",
+   "name": "E2E Reset Test 1791230246576",
+   "created": "2026-10-05",
+   "tenant": "E2E TENANT E2E-20261005-AD7882",
+   "created_by_email": "e2e-e2e20261005ad7882-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "ff078214-5bef-445e-a2f5-f49e0c6c139d",
+   "name": "E2E Reset Test 1791230247447",
+   "created": "2026-10-05",
+   "tenant": "E2E TENANT E2E-20261005-AD7882",
+   "created_by_email": "e2e-e2e20261005ad7882-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "a2329e69-e725-4ac5-bed0-1cd573bd2131",
+   "name": "E2E PILOT A CostPro E2E-20261006-718C14",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-718C14",
+   "created_by_email": "e2e-e2e20261006718c14-adm@costpro.test",
+   "run_id": "E2E-20261006-718C14",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "75dc239a-8f35-4462-b919-c9074963e51c",
+   "name": "E2E PILOT B CostPro E2E-20261006-718C14",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-718C14",
+   "created_by_email": "e2e-e2e20261006718c14-adm@costpro.test",
+   "run_id": "E2E-20261006-718C14",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "dc87400b-07c9-428a-b42e-811fae4e30c8",
+   "name": "E2E Multi del-muw19e0n",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-718C14",
+   "created_by_email": "e2e-e2e20261006718c14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "0ac389e0-60de-4f22-8558-4e3c0bc59cf5",
+   "name": "E2E Multi perm-muw1h03m",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-718C14",
+   "created_by_email": "e2e-e2e20261006718c14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "6f7a97ed-ca47-491b-a2c0-59525137855b",
+   "name": "E2E PILOT A CostPro E2E-20261006-8348BC",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-8348BC",
+   "created_by_email": "e2e-e2e202610068348bc-adm@costpro.test",
+   "run_id": "E2E-20261006-8348BC",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "adac5c77-474a-40bb-aaf9-ab99fbbe0b72",
+   "name": "E2E PILOT B CostPro E2E-20261006-8348BC",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-8348BC",
+   "created_by_email": "e2e-e2e202610068348bc-adm@costpro.test",
+   "run_id": "E2E-20261006-8348BC",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "af69cd8a-e766-4edc-afd5-968edab42dc8",
+   "name": "E2E PILOT A CostPro E2E-20261006-D22ADA",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-D22ADA",
+   "created_by_email": "e2e-e2e20261006d22ada-adm@costpro.test",
+   "run_id": "E2E-20261006-D22ADA",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "b9970978-e0db-45bc-ab8f-61fa56bbf5bf",
+   "name": "E2E PILOT B CostPro E2E-20261006-D22ADA",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-D22ADA",
+   "created_by_email": "e2e-e2e20261006d22ada-adm@costpro.test",
+   "run_id": "E2E-20261006-D22ADA",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "c76bff6e-217f-4413-8792-c9d8af46083c",
+   "name": "E2E80 E2E-20261006-69ACA5 AP muwk07efd6ui",
+   "created": "2026-10-06",
+   "tenant": "Default Tenant",
+   "created_by_email": "admin@costpro.com",
+   "run_id": "E2E-20261006-69ACA5",
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "4447847e-87ab-4409-9471-61c948206683",
+   "name": "E2E Multi del-muwkcyu7",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-8348BC",
+   "created_by_email": "e2e-e2e202610068348bc-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "cb0b7c0e-3301-4c53-ad57-495bc2bdd16b",
+   "name": "E2E Multi arch-muwkf8l4",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-8348BC",
+   "created_by_email": "e2e-e2e202610068348bc-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 0
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "90502035-804e-4fdb-a64c-ebc888255faa",
+   "name": "E2E Multi del-muwkgkcm",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-D22ADA",
+   "created_by_email": "e2e-e2e20261006d22ada-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "25c5a666-271b-4aa8-9eae-7e5201a4fd6a",
+   "name": "E2E Multi rls1-muwkjnlh",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-8348BC",
+   "created_by_email": "e2e-e2e202610068348bc-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "0476b36d-d0da-4aeb-b239-56020fe7173f",
+   "name": "E2E Multi perm-muwkkn5m",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-8348BC",
+   "created_by_email": "e2e-e2e202610068348bc-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "6ee11ddb-72f8-43de-9e82-400b7dd3671e",
+   "name": "E2E Multi perm-muwkn035",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-D22ADA",
+   "created_by_email": "e2e-e2e20261006d22ada-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "a59eca5e-62bf-4cfe-924e-32a59ad52f7a",
+   "name": "E2E PILOT A CostPro E2E-20261006-022567",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-022567",
+   "created_by_email": "e2e-e2e20261006022567-adm@costpro.test",
+   "run_id": "E2E-20261006-022567",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "11897dec-446e-4630-8754-f0e3136db9d6",
+   "name": "E2E PILOT B CostPro E2E-20261006-022567",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-022567",
+   "created_by_email": "e2e-e2e20261006022567-adm@costpro.test",
+   "run_id": "E2E-20261006-022567",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "c613f93a-d066-4e9f-90de-02edc7a6c4f9",
+   "name": "E2E PILOT A CostPro E2E-20261006-55CE14",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": "E2E-20261006-55CE14",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "f2e9e6a2-cc81-44e3-a01d-ef8a81c1bf7c",
+   "name": "E2E PILOT B CostPro E2E-20261006-55CE14",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": "E2E-20261006-55CE14",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "31f1a748-d17b-482e-a743-3a013a514b2a",
+   "name": "E2E Multi del-muwp0mv0",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-022567",
+   "created_by_email": "e2e-e2e20261006022567-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "0a9901b5-c1fc-4df2-a829-a0f236ffafd4",
+   "name": "E2E Multi rest-muwp3n0g",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-022567",
+   "created_by_email": "e2e-e2e20261006022567-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 0
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "9af2ac9c-f121-4cce-99c3-f084bc80f0eb",
+   "name": "Updated Name E2E",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "05126480-1d92-4b69-8b76-c2de59caaf68",
+   "name": "E2E Multi blki-muwpcqkd",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-022567",
+   "created_by_email": "e2e-e2e20261006022567-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "fb34b3cc-09f9-4f9b-aad5-d51b1a7f1928",
+   "name": "E2E Multi rls1-muwpcx45",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-022567",
+   "created_by_email": "e2e-e2e20261006022567-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "fc1f3df7-1c02-4507-98db-d2296f976875",
+   "name": "E2E Multi del-muwpck0f",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "12259f0c-8fe7-4ee4-a242-e1ab5c364df9",
+   "name": "E2E Multi perm-muwpcyvg",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-022567",
+   "created_by_email": "e2e-e2e20261006022567-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "17220c1b-1a10-420c-a87d-c307751a7185",
+   "name": "E2E Multi arch-muwpeqp9",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "17fb6d88-ee30-4b7d-a66a-bde33bdb7bf0",
+   "name": "E2E Multi dblarch-muwpf8mk",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "a3416d4e-a1c6-4891-bd4a-79cc04732aef",
+   "name": "E2E Multi hb1-muwpgft9",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "5bc5dc5c-571a-4e8d-80f6-f417de9c880b",
+   "name": "E2E Multi hb2-muwpgmn2",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "37e5cec8-0955-4f2a-9c03-cb5b541c99f5",
+   "name": "E2E Multi blk1-muwpgrix",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "9e5a20f3-1ffd-439a-bed0-6ec95746d519",
+   "name": "E2E Multi blk2-muwphya1",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "f15724c1-ad02-4093-b76e-81af41ea1f04",
+   "name": "E2E Multi blkd1-muwpi2yk",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "95b83710-528e-4638-916e-29759d5d03f9",
+   "name": "E2E Multi blkd2-muwpiy4f",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "70ad8e27-6562-408d-b6af-3e966621d021",
+   "name": "E2E Multi blki-muwpjb2l",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "2bb2a974-4d20-4a1a-b43d-cd8f695e4c6c",
+   "name": "E2E Multi rls1-muwpjezd",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "28d0d7ea-831d-41ed-bf46-3180fe2201c8",
+   "name": "E2E Multi perm-muwpkb3f",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55CE14",
+   "created_by_email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "c8555d0d-d4a0-429a-afd8-15bb5bdf7ea0",
+   "name": "E2E PILOT A CostPro E2E-20261006-0A4510",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-0A4510",
+   "created_by_email": "e2e-e2e202610060a4510-adm@costpro.test",
+   "run_id": "E2E-20261006-0A4510",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "ef6b26fc-4e3b-44c9-a1d3-5322a35a9990",
+   "name": "E2E PILOT B CostPro E2E-20261006-0A4510",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-0A4510",
+   "created_by_email": "e2e-e2e202610060a4510-adm@costpro.test",
+   "run_id": "E2E-20261006-0A4510",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "4f4620c8-6ec5-490a-a6f5-725b09b86a36",
+   "name": "E2E Multi perm-muwxp6vm",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-0A4510",
+   "created_by_email": "e2e-e2e202610060a4510-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "f2ecc527-0e3e-4c2d-9809-897f46b6f341",
+   "name": "E2E PILOT A CostPro E2E-20261007-AAB996",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-AAB996",
+   "created_by_email": "e2e-e2e20261007aab996-adm@costpro.test",
+   "run_id": "E2E-20261007-AAB996",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "3c966e2c-ac7d-410f-94c7-4df470ed561e",
+   "name": "E2E PILOT B CostPro E2E-20261007-AAB996",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-AAB996",
+   "created_by_email": "e2e-e2e20261007aab996-adm@costpro.test",
+   "run_id": "E2E-20261007-AAB996",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "9e2f8fda-dcad-4149-a182-128ecea8f8c3",
+   "name": "E2E Multi perm-muxzzzqk",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-AAB996",
+   "created_by_email": "e2e-e2e20261007aab996-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "eb058b3c-e760-4a72-902e-2eec129d617c",
+   "name": "E2E PILOT A CostPro E2E-20261007-597311",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-597311",
+   "created_by_email": "e2e-e2e20261007597311-adm@costpro.test",
+   "run_id": "E2E-20261007-597311",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 2
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "b5fe82be-8a5c-4266-9fa1-ee7def2d0fc2",
+   "name": "E2E PILOT B CostPro E2E-20261007-597311",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-597311",
+   "created_by_email": "e2e-e2e20261007597311-adm@costpro.test",
+   "run_id": "E2E-20261007-597311",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "ac903a92-3bf6-4d8c-8e1e-c6375e2d438b",
+   "name": "E2E PILOT A CostPro E2E-20261007-8CF88C",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8CF88C",
+   "created_by_email": "e2e-e2e202610078cf88c-adm@costpro.test",
+   "run_id": "E2E-20261007-8CF88C",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 2
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "013089bd-dd52-4b29-9c45-b618e905b9a6",
+   "name": "E2E PILOT B CostPro E2E-20261007-8CF88C",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8CF88C",
+   "created_by_email": "e2e-e2e202610078cf88c-adm@costpro.test",
+   "run_id": "E2E-20261007-8CF88C",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "1f371628-0b71-40de-b501-aba113654a33",
+   "name": "E2E Multi del-muyhp2c0",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-597311",
+   "created_by_email": "e2e-e2e20261007597311-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "97613dd9-bf11-46ca-a81c-af431dddee3e",
+   "name": "E2E Multi arch-muyhqp1l",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-597311",
+   "created_by_email": "e2e-e2e20261007597311-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 0
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "b7efc31c-34ca-45b8-a3a3-72a0eadce6d4",
+   "name": "E2E Multi del-muyhtcmh",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8CF88C",
+   "created_by_email": "e2e-e2e202610078cf88c-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "cf170700-4d84-4c8f-987e-55b2d8ec498a",
+   "name": "E2E Multi arch-muyhux7v",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8CF88C",
+   "created_by_email": "e2e-e2e202610078cf88c-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "6d1f8161-04cd-44ef-9367-2986523dc3b0",
+   "name": "E2E Multi dblarch-muyhv4ko",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8CF88C",
+   "created_by_email": "e2e-e2e202610078cf88c-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "9c637ff5-59a5-439f-85a4-117acfa228aa",
+   "name": "E2E Multi rest-muyhv9dm",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8CF88C",
+   "created_by_email": "e2e-e2e202610078cf88c-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "901aad98-7de3-472c-89b7-b888fd141641",
+   "name": "E2E Multi restactive-muyhvinz",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8CF88C",
+   "created_by_email": "e2e-e2e202610078cf88c-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "18cd011d-d440-4199-ac49-ddc330a0de63",
+   "name": "E2E Multi hb1-muyhwiwi",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8CF88C",
+   "created_by_email": "e2e-e2e202610078cf88c-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "f51bdd4d-e9fb-4007-ac8b-5d83ca71078f",
+   "name": "E2E Multi hb2-muyhwmwc",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8CF88C",
+   "created_by_email": "e2e-e2e202610078cf88c-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "f18dfc8e-a431-403a-af08-6022fc2956e5",
+   "name": "E2E PILOT A CostPro E2E-20261007-A73A23",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": "E2E-20261007-A73A23",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 2
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "5a179ede-605c-44af-9b78-dc17452b4881",
+   "name": "E2E PILOT B CostPro E2E-20261007-A73A23",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": "E2E-20261007-A73A23",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "912608e6-f22d-4899-8235-718fe5c445c9",
+   "name": "E2E Multi restactive-muyovf4d",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "6c46b31e-dc6e-4a7a-9612-c54af8a6238c",
+   "name": "E2E Multi hb1-muyowmc2",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "9a0a9aa5-305d-44e9-af3e-b5bd9cd545dd",
+   "name": "E2E Multi hb2-muyownh6",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "1f2e2c90-8049-46af-8fa1-4e8567a8ba80",
+   "name": "E2E Multi blk1-muyowpea",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "7444e15a-f9e0-4e64-80a5-60e8a33ffbe7",
+   "name": "E2E Multi blk2-muyoxwjp",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "8bbe59df-306e-4fc3-98f1-d53b908f641d",
+   "name": "E2E Multi blkd1-muyoxygs",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "a630f240-eff9-4968-8960-4e82f2b6328c",
+   "name": "E2E Multi blkd2-muyoxznz",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "fa8666dd-0273-44d5-97ce-d2ff0d5a175a",
+   "name": "E2E Multi blki-muyoz8xk",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "2e094212-c541-4d23-882c-0cc988b06f39",
+   "name": "E2E Multi rls1-muyozb5l",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "538f5e70-f047-4d87-b9f8-074a4ecc658e",
+   "name": "E2E Multi perm-muyozczp",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A73A23",
+   "created_by_email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "0b679bf5-2377-4153-9c4b-1967f270a80a",
+   "name": "E2E PILOT A CostPro E2E-20261008-DC71AE",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-DC71AE",
+   "created_by_email": "e2e-e2e20261008dc71ae-adm@costpro.test",
+   "run_id": "E2E-20261008-DC71AE",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 2
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "68bb7c96-30fb-468f-a23d-d83bf6839c7d",
+   "name": "E2E PILOT B CostPro E2E-20261008-DC71AE",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-DC71AE",
+   "created_by_email": "e2e-e2e20261008dc71ae-adm@costpro.test",
+   "run_id": "E2E-20261008-DC71AE",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "6ebc816e-61ed-4e34-9531-b226260ecd2c",
+   "name": "E2E Multi perm-muzigo45",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-DC71AE",
+   "created_by_email": "e2e-e2e20261008dc71ae-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "1ef2efa6-108a-49c6-9d67-159fb9d2c953",
+   "name": "E2E PILOT A CostPro E2E-20261008-C8ECB4",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-C8ECB4",
+   "created_by_email": "e2e-e2e20261008c8ecb4-adm@costpro.test",
+   "run_id": "E2E-20261008-C8ECB4",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 2
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "f7ded56d-0ea9-4718-924e-2a79d88e5980",
+   "name": "E2E PILOT B CostPro E2E-20261008-C8ECB4",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-C8ECB4",
+   "created_by_email": "e2e-e2e20261008c8ecb4-adm@costpro.test",
+   "run_id": "E2E-20261008-C8ECB4",
+   "activity": {
+    "products": 1,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "0d28491c-e3d1-4283-94fd-95197cfe3943",
+   "name": "E2E Multi perm-mv05rvc9",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-C8ECB4",
+   "created_by_email": "e2e-e2e20261008c8ecb4-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "7abeaf4f-fdd3-41c0-a29b-fc1842d38127",
+   "name": "E2E Extra extra-mv061tao",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-C8ECB4",
+   "created_by_email": "e2e-e2e20261008c8ecb4-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  },
+  {
+   "id": "37d9a8cc-55b1-4d0a-bd2a-78f97be9ca60",
+   "name": "E2E Slug Sanitize mv061ttq",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-C8ECB4",
+   "created_by_email": "e2e-e2e20261008c8ecb4-adm@costpro.test",
+   "run_id": null,
+   "activity": {
+    "products": 0,
+    "transactions": 0,
+    "movements": 0,
+    "issue_slips": 0,
+    "memberships": 1
+   },
+   "justification": "Nombre con patrón de test inequívoco (hard-cleanup.isTestStoreName) + sin actividad de negocio legítima (p/t/m/mem bajo umbral) + tenant de run E2E o created_by de usuario de run"
+  }
+ ],
+ "users": [
+  {
+   "id": "b5b58c5a-c231-4074-8ccf-b1381533de6c",
+   "email": "e2e-e2e20261005ad7882-adm@costpro.test",
+   "created": "2026-10-05",
+   "tenant": "E2E TENANT E2E-20261005-AD",
+   "profile_soft_deleted": true,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "0fe17d5f-ffcc-4245-8142-21e3471eb6b4",
+   "email": "e2e-e2e20261006718c14-adm@costpro.test",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-71",
+   "profile_soft_deleted": true,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "2b704ea5-806e-472f-99fa-ba6b47b3c2e9",
+   "email": "e2e-e2e202610068348bc-adm@costpro.test",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-83",
+   "profile_soft_deleted": true,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "b581c500-7d3d-4602-85bd-5fbea8e3f3ee",
+   "email": "e2e-e2e20261006d22ada-adm@costpro.test",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-D2",
+   "profile_soft_deleted": true,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "44e8e1de-c31d-478a-88c9-f9b4a03ef6ca",
+   "email": "e2e-e2e20261006022567-adm@costpro.test",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-02",
+   "profile_soft_deleted": true,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "1ac7a453-78f8-40ae-9940-e0fc3236a0b5",
+   "email": "e2e-e2e2026100655ce14-adm@costpro.test",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-55",
+   "profile_soft_deleted": true,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "2adb6e6e-3702-4d3b-9c1e-8c968d51bf9c",
+   "email": "e2e-e2e202610060a4510-adm@costpro.test",
+   "created": "2026-10-06",
+   "tenant": "E2E TENANT E2E-20261006-0A",
+   "profile_soft_deleted": true,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "21803836-5a00-4d51-957b-d1c03a8bd88c",
+   "email": "e2e-e2e20261007aab996-adm@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-AA",
+   "profile_soft_deleted": true,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "6706b8e0-fcb2-45d8-80ed-a95abf5546f7",
+   "email": "e2e-e2e20261007597311-adm@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-59",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "0644b570-617a-4cbd-9979-7038a4457ab3",
+   "email": "e2e-e2e20261007597311-usr@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-59",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "a947350b-c1de-4222-a59d-ac2421d1b653",
+   "email": "e2e-e2e20261007597311-wh@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-59",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "b2d4e5c0-4d11-4a05-91ea-2592da03d993",
+   "email": "e2e-e2e20261007597311-enc@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-59",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "045c4bd4-b04a-421a-bb3a-3bff4c94321e",
+   "email": "e2e-e2e202610078cf88c-adm@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8C",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "bc275af3-aaf4-4b7f-b5be-7b9753e6d778",
+   "email": "e2e-e2e202610078cf88c-usr@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8C",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "988448e3-484c-4756-aec4-badabb0e96a7",
+   "email": "e2e-e2e202610078cf88c-wh@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8C",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "a934ca08-0705-4847-837d-9c2e9c27aa08",
+   "email": "e2e-e2e202610078cf88c-enc@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-8C",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "357df0f5-e3b8-4df6-bb54-7c8f8316ac07",
+   "email": "e2e-e2e20261007a73a23-adm@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A7",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "1d3f587a-78d0-47d2-b9c2-38a6f4d52634",
+   "email": "e2e-e2e20261007a73a23-usr@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A7",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "d6fa050c-9254-411c-8ad3-9ebb66e87ab9",
+   "email": "e2e-e2e20261007a73a23-wh@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A7",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "90cdcb07-97fb-4657-bf7b-04c3c1346f86",
+   "email": "e2e-e2e20261007a73a23-enc@costpro.test",
+   "created": "2026-10-07",
+   "tenant": "E2E TENANT E2E-20261007-A7",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "9acb3a67-385b-48e5-a2cf-5a0ee6e6ec13",
+   "email": "e2e-e2e20261008dc71ae-adm@costpro.test",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-DC",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "e08a2ad0-5f79-40d0-835a-c8211b69a747",
+   "email": "e2e-e2e20261008dc71ae-usr@costpro.test",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-DC",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "97a938e7-7c72-4f46-8f3e-c1b231c42f07",
+   "email": "e2e-e2e20261008dc71ae-wh@costpro.test",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-DC",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "be48abd1-5de5-4f49-8aef-02879578b276",
+   "email": "e2e-e2e20261008dc71ae-enc@costpro.test",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-DC",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "0ecabf6f-2693-4c01-b7b8-c8cf1d2888cb",
+   "email": "e2e-e2e20261008c8ecb4-adm@costpro.test",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-C8",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "7e99c46c-b468-4cf4-a3e2-20da24581f8d",
+   "email": "e2e-e2e20261008c8ecb4-usr@costpro.test",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-C8",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "93e314bc-fc79-48e3-a29a-25f0ab631cc0",
+   "email": "e2e-e2e20261008c8ecb4-wh@costpro.test",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-C8",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  },
+  {
+   "id": "e57f23f4-753d-45fa-9557-863719581524",
+   "email": "e2e-e2e20261008c8ecb4-enc@costpro.test",
+   "created": "2026-10-08",
+   "tenant": "E2E TENANT E2E-20261008-C8",
+   "profile_soft_deleted": false,
+   "justification": "Email con patrón e2e-<run-id>-<rol>@costpro.test creado por provisionRunEnv (run interrumpido sin teardown); procedencia verificable por tenant 'E2E TENANT <run-id>'"
+  }
+ ],
+ "tenants": [
+  {
+   "id": "254e451e-c6d1-48ed-b7b4-2b3e5497151a",
+   "name": "E2E RUN SMOKE-Ab06",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-04",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "27bf339d-90e9-4e6e-80ec-2b5012ca0173",
+   "name": "E2E RUN SMOKE-Fl07",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-04",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "fc751687-1f6d-48a1-b53b-ec058bb81cec",
+   "name": "E2E RUN SMOKE-Fl08",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-04",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "ee70ce0d-90b3-4b7e-b1f5-a846c870a3c2",
+   "name": "E2E RUN SMOKE-Tt09",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-04",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "063de4b9-ee89-4faf-a757-873701c62257",
+   "name": "E2E RUN CONC-Bb02",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-04",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "fc0ed064-cb8f-40fc-bd50-fc332172e811",
+   "name": "E2E RUN CONC-Aa01",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-04",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "79232b23-1494-4529-aed0-844f08132a26",
+   "name": "E2E RUN CLEAN-Aa03",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-04",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "e2213159-7b9a-4262-83b2-bdb03cc6bdca",
+   "name": "E2E RUN CLEAN-Aa05",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-04",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "1a4aa736-2be3-45a6-a2e6-d2c7b6fe59c8",
+   "name": "E2E RUN CLEAN-Aa07",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-04",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "6777f99e-de25-48c7-9a8e-3ec80672de19",
+   "name": "E2E RUN CLEAN-Bb06",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-04",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "16e49278-4f19-4898-989a-9aa6a8b5bdb4",
+   "name": "E2E RUN FULL-Su01",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-04",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "8c11eaa7-d698-404c-bf53-6af49f71260b",
+   "name": "E2E TENANT E2E-20261005-31F5E1",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-05",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "cc6b8231-59b9-4624-879c-6156a73fa65e",
+   "name": "E2E TENANT E2E-20261005-510FFF",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-05",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "72d07746-8d87-4faf-9fca-7e09f671473d",
+   "name": "E2E TENANT E2E-20261005-E93A87",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-05",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "cdf82ec7-3774-4c1c-88f9-f75c2eed86a1",
+   "name": "E2E TENANT E2E-20261005-D99255",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-05",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "cee1d09c-b4e0-4ead-918e-15e6917f77ef",
+   "name": "E2E TENANT E2E-20261005-AF78EA",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-05",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "9f356e2e-c78d-488a-8c4f-fee476389bbe",
+   "name": "E2E TENANT E2E-20261005-BCD009",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-05",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "6f67b6da-38ab-4af5-bd3c-1c6b24261cb3",
+   "name": "E2E TENANT E2E-20261005-88BB89",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-05",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "f489b8cb-8c69-4981-9ff5-a97e539082b2",
+   "name": "E2E TENANT E2E-20261005-27F8A6",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-05",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "8e83a7f6-c8b6-464d-b47e-00a2ab18af2d",
+   "name": "E2E TENANT E2E-20261005-8F7640",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-05",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "b4a7c7c9-c733-4ae2-af38-e35db948f880",
+   "name": "E2E TENANT E2E-20261005-480D39",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-05",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "29461331-af88-4f9a-b618-15d5545756f5",
+   "name": "E2E TENANT E2E-20261005-AD7882",
+   "n_stores": 6,
+   "n_profiles": 1,
+   "created": "2026-10-05",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "24940835-adf1-4613-813f-363f843ce2cb",
+   "name": "E2E TENANT E2E-20261006-718C14",
+   "n_stores": 4,
+   "n_profiles": 1,
+   "created": "2026-10-06",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "d3eccae9-22ef-4be4-903c-56a94da1eac7",
+   "name": "E2E TENANT E2E-20261006-8348BC",
+   "n_stores": 6,
+   "n_profiles": 1,
+   "created": "2026-10-06",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "a990dd3d-5725-4916-8b14-a60d28b2f780",
+   "name": "E2E TENANT E2E-20261006-D22ADA",
+   "n_stores": 4,
+   "n_profiles": 1,
+   "created": "2026-10-06",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "e6668a22-f1b8-40a4-91e1-8e42f86aee9e",
+   "name": "E2E TENANT E2E-20261006-022567",
+   "n_stores": 7,
+   "n_profiles": 1,
+   "created": "2026-10-06",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "0689290a-f31b-442e-8136-1a049634a415",
+   "name": "E2E TENANT E2E-20261006-55CE14",
+   "n_stores": 15,
+   "n_profiles": 1,
+   "created": "2026-10-06",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "b6430d0d-6422-453c-8fe7-2d338e88950e",
+   "name": "E2E TENANT E2E-20261006-0A4510",
+   "n_stores": 3,
+   "n_profiles": 1,
+   "created": "2026-10-06",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "d5318325-9501-4bc0-a055-e545bd93cdc2",
+   "name": "E2E TENANT E2E-20261007-AAB996",
+   "n_stores": 3,
+   "n_profiles": 1,
+   "created": "2026-10-07",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "028d6daa-e1cc-4604-af34-12ddc4b4b687",
+   "name": "E2E TENANT E2E-20261007-597311",
+   "n_stores": 4,
+   "n_profiles": 4,
+   "created": "2026-10-07",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "0807de4f-6f1a-4c36-9556-40a08aaf28c3",
+   "name": "E2E TENANT E2E-20261007-8CF88C",
+   "n_stores": 9,
+   "n_profiles": 4,
+   "created": "2026-10-07",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "c314b622-699b-4a01-ade8-e9f40114c949",
+   "name": "E2E TENANT E2E-20261007-5A5E53",
+   "n_stores": 0,
+   "n_profiles": 0,
+   "created": "2026-10-07",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "6cd11af6-4466-4693-b691-41d8ea01187f",
+   "name": "E2E TENANT E2E-20261007-A73A23",
+   "n_stores": 12,
+   "n_profiles": 4,
+   "created": "2026-10-07",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "4b2b81aa-fcd1-4968-b686-588bdde901d1",
+   "name": "E2E TENANT E2E-20261008-DC71AE",
+   "n_stores": 3,
+   "n_profiles": 4,
+   "created": "2026-10-08",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  },
+  {
+   "id": "b29c9a14-2c13-4790-a699-83991441ed75",
+   "name": "E2E TENANT E2E-20261008-C8ECB4",
+   "n_stores": 5,
+   "n_profiles": 4,
+   "created": "2026-10-08",
+   "justification": "Tenant efímero de run (E2E TENANT <run-id> / E2E RUN <etiqueta>); se elimina solo si queda con 0 stores y 0 profiles tras la limpieza"
+  }
+ ],
+ "excluded_pending_review": [
+  {
+   "id": "11111111-1111-1111-1111-111111111111",
+   "tipo": "store",
+   "nombre": "Tienda Auditor",
+   "motivo": "Seed de era antigua (2026-06-19), sin patrón test; sin evidencia de procedencia E2E"
+  },
+  {
+   "id": "2ef293a3-23b4-4816-aa2b-9752627a1175",
+   "tipo": "store",
+   "nombre": "No Address",
+   "motivo": "Creada por admin@costpro.com (usuario real); sin patrón test"
+  },
+  {
+   "id": "2dabe459-4b37-4be2-b8f4-d102047cc18a",
+   "tipo": "store",
+   "nombre": "(sin nombre)",
+   "motivo": "Creada por admin@costpro.com (usuario real); sin patrón test"
+  },
+  {
+   "id": "dcfd74bf-ebfa-4630-b532-ebbd4c5b42a2",
+   "tipo": "store",
+   "nombre": "Store Tenant 2",
+   "motivo": "Tenant 'Tenant Test RLS' (fixture de seguridad RLS); sin patrón test"
+  },
+  {
+   "id": "d9ad29df-ba36-488c-b912-6e4cd3371dee",
+   "tipo": "auth_user_ghost",
+   "nombre": "auditor@costpro.test",
+   "motivo": "Ghost de Auth sin profile (era antigua 2026-06-19); dominio .test pero sin referencia en código actual — requiere revisión humana"
+  },
+  {
+   "id": "c0000000-0000-0000-0000-00000000000c",
+   "tipo": "auth_user_ghost",
+   "nombre": "user_c@tenant_b.com",
+   "motivo": "Identidad sintética de seed (UUID c0000000…c, created_at NULL), sin referencias en código actual — requiere revisión humana"
+  },
+  {
+   "id": "f5fa6d11-61a8-41eb-9e09-f5ce0d1da83d",
+   "tipo": "user",
+   "nombre": "f243he2en2ejpm@uberip.com",
+   "motivo": "Email @uberip.com (dominio desechable) con rol tenant_admin; sin patrón del guard ni referencia en código — requiere revisión humana"
+  },
+  {
+   "id": "0a9e3d54-7729-4e5c-ab7d-7e7f57106292",
+   "tipo": "user",
+   "nombre": "f244ab40u9o0m@uberip.com",
+   "motivo": "Email @uberip.com (dominio desechable) con rol tenant_admin; sin patrón del guard ni referencia en código — requiere revisión humana"
+  },
+  {
+   "id": "bfcbc06d-1bd7-4a43-916f-0a4891c169a0",
+   "tipo": "user",
+   "nombre": "f244zxe5gmk@uberip.com",
+   "motivo": "Email @uberip.com (dominio desechable) con rol tenant_admin; sin patrón del guard ni referencia en código — requiere revisión humana"
+  },
+  {
+   "id": "ccff0c17-b436-4ecc-95dd-a53bdfe051d2",
+   "tipo": "user",
+   "nombre": "f244bc7klbb6p@uberip.com",
+   "motivo": "Email @uberip.com (dominio desechable) con rol tenant_admin; sin patrón del guard ni referencia en código — requiere revisión humana"
+  },
+  {
+   "id": "a491c932-1c4e-491f-a006-093b692b7c5e",
+   "tipo": "user",
+   "nombre": "f244beh00he8i@uberip.com",
+   "motivo": "Email @uberip.com (dominio desechable) con rol tenant_admin; sin patrón del guard ni referencia en código — requiere revisión humana"
+  },
+  {
+   "id": "4ac61783-a99c-46ab-ae3f-5e110471cb39",
+   "tipo": "user",
+   "nombre": "g3g3af38ck3v6@uberip.com",
+   "motivo": "Email @uberip.com (dominio desechable) con rol tenant_admin; sin patrón del guard ni referencia en código — requiere revisión humana"
+  },
+  {
+   "id": "db311037-7527-4647-9ecf-1d1ef0813520",
+   "tipo": "user",
+   "nombre": "g3g3b4isid7xo@uberip.com",
+   "motivo": "Email @uberip.com (dominio desechable) con rol tenant_admin; sin patrón del guard ni referencia en código — requiere revisión humana"
+  },
+  {
+   "id": "ca0f16d1-f067-4b2d-9126-396e06dc36d4",
+   "tipo": "user",
+   "nombre": "f246empresa01@uberip.com",
+   "motivo": "Email @uberip.com (dominio desechable) con rol tenant_admin; sin patrón del guard ni referencia en código — requiere revisión humana"
+  }
+ ]
+}
