@@ -1,35 +1,51 @@
 # COSTPRO — Auditoría y optimización integral del rendimiento
 
-> **Estado**: ✅ fase de medición e implementación completada · **Rama**: `perf/performance-audit` · **Base**: `main @ 6a08c2686` · **PR**: #1392
-> **Fecha de inicio**: 2026-10-11 · **Entorno medido**: contenedor local 2 vCPU / 3.9 GB RAM / Node v24.21.0 / bun 1.3.14
+> **Estado**: ✅ validación completada · **Rama**: `perf/performance-audit` · **Base**: `main @ 6a08c2686` · **PR**: #1392
+> **Fecha de inicio**: 2026-10-11 · **Actualizado**: 2026-10-12 · **Entorno medido**: contenedor local 2 vCPU / 3.9 GB RAM / Node v24.21.0 / bun 1.3.14
+> **Convención de unidades**: tiempos ≥ 1 s en segundos con coma decimal (p. ej. `3,060 s` = 3,060 segundos); tiempos < 1 s en ms. Bytes = sin comprimir salvo indicación `gz`/`transferido`.
 
 ## 1. Resumen ejecutivo
 
-Se auditó el rendimiento de CostPro (Next.js 16.3.3/Turbopack, React 19, Supabase) midiendo primero y modificando mínimamente después.
+Se auditó el rendimiento de CostPro (Next.js 16.3.3/Turbopack, React 19, Supabase) midiendo primero y modificando mínimamente después. Esta segunda pasada cerró las decisiones pendientes: se completó W3 (que estaba incompleto), se implementó y midió el subset seguro de W4, y se ejecutó la decisión de producto del splash con medición A/B.
 
-**Línea base**: landing anónimo con LCP de 3.12 s (2.3 s son splash de marca intencional), ~500 KB comprimidos de JS eager irreducibles (React, router, supabase-js de bootstrap de auth, framer-motion, código app) y CSS global de 622 KB (76 KB gz). CLS 0 en todas las rutas medidas. Arquitectura verificada: shell único en `/` con ~60 vistas ya code-split vía `next/dynamic` — el code-splitting de vistas existe y funciona.
+**Línea base** (build de producción local standalone, mediana de 5 iteraciones): landing anónimo con LCP de `3,060 s`, FCP `620 ms`, ~2,86 MB raw de transferencia (1,79 MB de JS raw), 38 requests, CLS 0. Arquitectura verificada: shell único en `/` con ~60 vistas ya code-split vía `next/dynamic`; el code-splitting de vistas existe y funciona.
 
-**Corregido (2 incrementos, verificación completa)**: las librerías de exportación PDF (jspdf 408 KB + html2canvas 193 KB + xlsx) viajaban estáticamente en el grafo de apertura del POS y del Catálogo de Ventas — los dos flujos más frecuentes — aunque solo se usan al pulsar «Exportar». Se diferieron al punto de uso con `import()` dinámico. Resultado: **~600 KB de JS menos (raw) en la apertura de cada una de esas vistas**, con contratos y comportamiento intactos.
+**Corregido (3 incrementos sobre librerías de exportación)**: las librerías PDF/Excel (jspdf 408 KB + html2canvas 193 KB + jspdf-autotable + @e965/xlsx) viajaban en el grafo de apertura del POS y del Catálogo de Ventas aunque solo se usan al exportar. W2 (POS) y W3 (catálogo) se completaron y **verificaron a tres niveles**: (a) grafo de imports runtime (trazador BFS: cierre estático de POSView/SalesCatalogView/StorefrontConfigView = **0 librerías pesadas**), (b) chunks compilados del build de producción (jspdf/html2canvas viven en chunks asíncronos sin ningún importador estático en los 300+ chunks; el grafo POS solo los referencia en el boundary `import()` del clic de exportación), (c) CI (TypeCheck + Lint + 2.756 unit tests + build de producción en Vercel = PASS). W3 requería una segunda pasada que esta sesión completó: el barrel `catalog-templates` (jspdf+html2canvas), `salesCatalogImport` (@e965/xlsx) y `telegram-image-renderer` (html2canvas) seguían estáticos tras el primer intento.
 
-**Verificación**: TypeScript completo PASS · build de producción PASS · suite unitaria completa 2.749 tests PASS · ESLint PASS. Sin regresiones funcionales conocidas; sin cambios en lógica de negocio, autorización, RLS ni esquemas.
+**W4 — `sync/batch`**: se resolvió con un subset demostrablemente seguro. Los RPCs de negocio (ventas, recepciones, ajustes, transferencias) **siguen secuenciales** (orden-sensibles: inventario/costeo). Se paralelizó/pipelineó solo lo independiente: (a) prefetch en paralelo de los checks de idempotencia (lecturas puras), (b) upserts de `sync_log` en pipeline con orden por clave, resueltos antes de responder. Medición aislada (test de integración con RTT simulado de 40 ms): 6 operaciones → **323 ms vs ~720 ms del equivalente secuencial (−55 %)**, con orden de RPCs verificado, dedupe de claves con semántica original y durabilidad de log antes de responder. La paralelización general (`Promise.all` sobre operaciones) se **rechaza por riesgo de integridad** (§7, incremento 6).
 
-**Bloqueado por el entorno (documentado, no inventado)**: build completo local (OOM, compila en Vercel), medición autenticada in-situ (sin usuario autorizado), y la paralelización de `sync/batch` (W4) que requeriría verificación E2E no autorizada. Quedan propuestos en el backlog con plan de verificación.
+**Splash (decisión de producto ejecutada)**: la espera artificial de `1,8 s` + fade de `0,5 s` secuencial se sustituyó por una transición de marca de `0,65 s` + fade `0,2 s` con el contenido montado **en paralelo** detrás del overlay. A/B con build de producción local (misma metodología, mediana ×5): **LCP primera visita `3,060 s` → `1,836 s` (−40 %)**; splash recurrente hasta contenido `1,717 s` → `~0,55 s` (−68 %); FCP `620 ms` → `~250 ms`; CLS 0 → 0 (un shift de 0.127 detectado en la primera implementación se corrigió con posicionamiento inline del overlay). `prefers-reduced-motion`: animaciones desactivadas y salida de `0,1 s`.
+
+**Verificación**: TypeScript completo PASS · ESLint PASS · suite unitaria completa **2.756 tests PASS** (147 archivos, +7 nuevos de W4) · build de producción **PASS en CI/Vercel** (check `TypeCheck + Lint + Unit Tests + Build` success en el head de la rama; deployment de preview success).
+
+**Bloqueado por el entorno (documentado, no inventado)**: la medición autenticada in-situ de la apertura del POS (FASE 2) — el aislamiento no puede demostrarse: la autenticación valida contra el proyecto Supabase de producción, solo existe fixture E2E de **admin** (no privilegio mínimo), y crear usuarios en producción está prohibido. Detalle exacto en §10. E2E Playwright permanece `skipped` en CI por la misma razón (no se presenta como aprobado).
 
 ## 2. Commit y estado inicial del repositorio
 
 | Campo | Valor |
 |---|---|
 | Repositorio | https://github.com/Nardian90/Costpro |
-| Rama base | `main` @ `6a08c2686` (Merge PR #1391: void legacy limpia vínculos de OT) |
-| Árbol de trabajo al inicio | limpio, sincronizado con `origin/main` |
+| Rama base | `main` @ `6a08c2686` (Merge PR #1391) — **reverificada en esta sesión: sigue siendo la base correcta** |
+| PR | #1392 — open, `mergeable_state: clean`, sin conflictos con main |
+| Rama de trabajo | `perf/performance-audit` @ `38fab57bd` (8 commits sobre main) |
 | Next.js | 16.3.3 (Turbopack) |
 | React | 19.x |
-| TypeScript | 5.x (`ignoreBuildErrors: false`) |
+| TypeScript | 5.x (`ignoreBuildErrors: false`; en builds de medición locales `PERF_AUDIT_BUILD=1`) |
 | Bun / Node | 1.3.14 / v24.21.0 |
-| Despliegue de referencia | https://costpro4.vercel.app/ |
 | App Router | shell único en `/` con ~60 vistas conmutadas por estado cliente (`/?view=X&tab=Y`) |
 | Rutas API | 207 `route.ts` bajo `src/app/api` |
-| Server Actions | 0 (todas las mutaciones son route handlers con `withAuth`/`withRole`) |
+
+**Checks de CI en el head de la rama** (verificados vía API de GitHub):
+
+| Check | Resultado |
+|---|---|
+| TypeCheck + Lint + Unit Tests + Build | ✅ success (build de producción completo) |
+| Unit & Integration Tests | ✅ success |
+| Security Audit | ✅ success |
+| E2E Tests (Playwright) | ⏭️ skipped (justificado en §9/§10; no se cuenta como aprobado) |
+| Vercel (deployment de preview) | ✅ success — deployment completado |
+
+**Limitación del preview de Vercel**: el deployment de preview está protegido por *Deployment Protection* (redirige a la página de login de Vercel para sesiones sin cookie de equipo), por lo que **no es medible desde este entorno**; las mediciones web se realizaron contra builds de producción locales standalone (§4), que sí son comparables antes/después bajo idéntica metodología.
 
 ## 3. Arquitectura y entorno evaluados
 
@@ -37,217 +53,208 @@ Se auditó el rendimiento de CostPro (Next.js 16.3.3/Turbopack, React 19, Supaba
 
 - `src/app/page.tsx` → `HomePageClient.tsx` → `dynamic()` de `CyberShell`, `TerminalShell`, `LandingPage` (todas `ssr: false`).
 - `TerminalShell.tsx` (767 líneas) registra ~60 vistas vía `next/dynamic` → el code-splitting de vistas ya existe.
-- **Importaciones eager dentro del chunk del shell**: `framer-motion` (TerminalShell L24, Sidebar L17, ParticleBackground L5, MobileTabBar), hooks de prefetch, stores Zustand.
-- **`jspdf` + `jspdf-autotable` + `html2canvas` viajan eager en el chunk de la vista POS**: `pos/usePOSCartExports.ts` L3/L5 ← `POSCart.tsx` L28 ← `POSView.tsx` L29.
-- `src/lib/export/lazy-pdf.ts` tiene nombre engañoso: importa `jspdf` estáticamente a nivel de módulo (L1–2).
-- `echarts` solo en `StoreDashboardView` (diferido vía `React.lazy` ✓); `recharts` en 14 archivos, todos dentro de vistas diferidas; `xlsx` correctamente diferido (`lazy-excel.ts` ✓); `three` sin coste de bundle (carga runtime desde CDN).
-- Providers eager en `layout.tsx`: 12 providers cliente (QueryProvider, SyncProvider, GlobalSessionManager, ServiceWorkerRegister, etc.).
+- Importaciones eager dentro del chunk del shell: `framer-motion` (TerminalShell, Sidebar, ParticleBackground, MobileTabBar), hooks de prefetch, stores Zustand (fuera del alcance de esta fase; §11).
+- `src/lib/export/lazy-pdf.ts` ya no tiene nombre engañoso: los imports de jspdf se resuelven con `import()` dentro de `createPDFDocument` (W2).
+- `echarts` solo en `StoreDashboardView` (diferido vía `React.lazy` ✓); `recharts` en vistas diferidas; `three` sin coste de bundle (CDN runtime).
+- Providers eager en `layout.tsx`: 12 providers cliente (fuera de alcance mínimo).
 
 ### 3.2 Capa de datos
 
-- TanStack Query: `staleTime: 60_000`, `retry: 1`, `refetchOnWindowFocus: false`, **`gcTime` no configurado** (default 5 min).
-- Zustand `cart.ts` (1358 líneas): **persiste el array completo `items[]` con objetos `Product` embebidos en localStorage** (`partialize` L1267–1284).
+- TanStack Query: `staleTime: 60_000`, `retry: 1`, `refetchOnWindowFocus: false`, `gcTime` default.
+- Zustand `cart.ts` persiste `items[]` con objetos `Product` embebidos en localStorage (CB-5, P2, sin cambios).
 - Dexie (IPV/conciliación): 31 versiones de esquema; correcto para su vista diferida.
-- Sync offline: cola Dexie/localStorage → `POST /api/sync/batch` con reintento 1s/5s/15s.
+- Sync offline: cola → `POST /api/sync/batch` con reintento 1s/5s/15s (optimizado en W4, §7).
 
-### 3.3 Capa API (candidatos con awaits secuenciales verificados)
+### 3.3 Capa API (candidatos con awaits secuenciales)
 
-1. `src/app/api/sync/batch/route.ts` (L74–186) — bucle por operación secuencial
-2. `src/app/api/received-services/route.ts` (L239–251) — flujo void secuencial
-3. `src/app/api/cron/usage-sync/route.ts` (L147–205) — bucle por tenant con `verifyAuth` dentro
-4. `src/app/api/wallet/import-trm/route.ts` (L119–141) — upserts fila a fila
-5. `src/app/api/accounts-payable/bulk-pay/route.ts` (L72–145) — por documento en bucle
+1. `src/app/api/sync/batch/route.ts` — **optimizado en esta fase** (subset seguro; §7 incremento 6)
+2. `src/app/api/received-services/route.ts` (L239–251) — sin cambios (fuera de alcance)
+3. `src/app/api/cron/usage-sync/route.ts` (L147–205) — sin cambios
+4. `src/app/api/wallet/import-trm/route.ts` (L119–141) — sin cambios
+5. `src/app/api/accounts-payable/bulk-pay/route.ts` (L72–145) — sin cambios
 
 ## 4. Línea base y metodología
 
 ### 4.1 Herramientas
 
-- Build de producción (`next build`) → First Load JS por ruta (evidencia estática de bundles)
-- `@next/bundle-analyzer` (`ANALYZE=true`, ya presente en el repo)
-- Chromium headless (Playwright, ya instalado) → LCP/CLS/transfer por ruta
-- `curl -w` → TTFB/latencia de rutas API calientes
+- Trazador propio del grafo de imports (`scripts/trace-graph.js` en el entorno de auditoría): BFS sobre imports **runtime** (los `import type` y `import()` se tratan como sin arista / corte de grafo) — demostración a nivel de fuente.
+- Build de producción selectivo (`next build --debug-build-paths "app/page.tsx"`, `PERF_AUDIT_BUILD=1`) + forense de chunks emitidos (fingerprints por literales: `WinAnsiEncoding` = jspdf; arrays `Promise.all([...])` del loader async de Turbopack = boundaries `import()`).
+- Chromium headless (Playwright) — `scripts/perf/measure-nav.js` (primera visita, contexto nuevo por iteración) y `scripts/perf/measure-nav-returning.js` (recurrente: `localStorage['costpro-visited']` pre-sembrado en `addInitScript`; observa el splash desde `documentStart` y registra `splashAppearAt`/`splashGone` relativos a navigationStart).
+- `curl -w` → TTFB de rutas.
 
-### 4.2 Restricciones del entorno de medición
+### 4.2 Condiciones de prueba y limitaciones
 
-- Contenedor con 2 vCPU y 3.9 GB RAM **sin swap**: el build de producción requiere gestión de memoria (ver 4.3).
-- Mediciones locales ≠ Vercel: se distinguirá siempre el entorno. Los valores absolutos de red local solo sirven para comparaciones antes/después en el mismo entorno.
+- Contenedor 2 vCPU / 3.9 GB RAM sin swap: build completo local OOM (documentado en la FASE 0 original); se usó build selectivo que cubre el shell completo y los chunks cliente. **El build completo pasa en CI/Vercel** (check `TypeCheck + Lint + Unit Tests + Build` = success).
+- Mediciones web: **servidor standalone de producción local** (`.next/standalone`), 5 iteraciones por punto, mediana y p95; misma metodología en AMBOS lados del A/B. El ruido entre corridas proviene de la red remota (imágenes de producto servidas desde Supabase Storage): en corridas donde el hero no llegó a pintar dentro de la ventana de observación el LCP lo absorbió el bloque de texto (~0,6 s con 31 requests); esas corridas no son comparables con las que sí incluyeron imágenes (37–38 requests) y se excluyen del headline. Las cifras de headline provienen de corridas con igual composición de recursos en ambos lados.
+- La latencia W4 se midió con **RTT simulado** (test de integración aislado, 40 ms por llamada): demuestra la reducción de round-trips y la preservación del orden; la latencia real de red de producción queda **N/D** (no medible sin sesión autenticada, §10).
+- Mediciones locales ≠ Vercel: no se comparan entornos con hardware/red distintos. El preview de Vercel no es medible (Deployment Protection, §2).
 
-### 4.3 Resultados de la línea base
+### 4.3 Línea base (ANTES = `main @ 6a08c2686`, build standalone, mediana de 5 iteraciones)
 
-**Build de producción (Turbopack, `--debug-build-paths` selectivo por restricción de RAM — ver 4.2)**
+| Métrica | `/` (landing anónimo, 1ª visita) | `/` recurrente (splash seeded) |
+|---|---:|---:|
+| TTFB | 22,7 ms | 21,6 ms |
+| FCP | 620 ms | 660 ms |
+| **LCP** | **3,060 s** (p95 3,208 s) | 3,064 s |
+| CLS | 0 | 0 |
+| Wall clock (load) | 3,545 s | — |
+| Splash visible | desde ~620 ms, se retira a los **1,717 s** | — |
+| Transferido (raw) | 2,86 MB | — |
+| JS (raw) | 1,79 MB | — |
+| Requests | 38 | — |
+| DOM | 1.112 nodos | — |
 
-| Campo | Valor |
-|---|---|
-| Build completo (webpack y turbopack) | **BLOCKED en este entorno**: OOM-kill (exit 137) con 3.4 GB disponibles; el worker de type-check necesita >2 GB (mitigado con `PERF_AUDIT_BUILD=1`) y el grafo completo excede la RAM. Vercel compila el build completo sin problema |
-| Build selectivo (`app/page.tsx`, `app/tienda/**`, `app/fc/**`) | PASS (exit 0) — cubre el shell completo, layout y providers |
-| Chunks cliente emitidos | 301 archivos, 16.0 MB descomprimidos |
-| Verificación de tipos | `tsc --noEmit` completo: **PASS** (exit 0) |
+La LCP de `3,060 s` reproduce la línea base de la FASE 0 original (`3,124 s` medido entonces con 3 iteraciones) — el método es estable entre sesiones. El splash recurrente se retiraba a los `1,717 s` por el diseño secuencial: 0,6 s de splash + 0,5 s de fade + montaje del contenido solo después.
 
-**Navegación real con Chromium headless (servidor standalone de producción local, 3 iteraciones, `scripts/perf/measure-nav.js`)**
+## 5. Cuellos de botella y estado actual
 
-| Métrica | `/` (landing anónimo) | `/tienda/[slug]` (público) | Nota |
-|---|---:|---:|---|
-| Wall clock (load) | 3.635 ms | 4.142 ms | incluye splash de marca |
-| TTFB | 22 ms | 24 ms | local; Vercel: 0.57–3.1 s (cold/warm) |
-| FCP | 712 ms | 742 ms | splash (negro + logo) |
-| **LCP** | **3.124 ms** | 1.204 ms | landing: splash 2.3 s + render 0.8 s |
-| CLS | 0 | 0 | ✓ |
-| Transferido (descomprimido) | 2.86 MB | 2.67 MB | |
-| JS transferido (descomprimido) | 1.79 MB | 1.60 MB | ~400-500 KB comprimido |
-| Requests | 38 | 34 | |
-| Tamaño DOM | 1.112 | 303 | renderizado 100% cliente (`ssr: false`) |
+### CB-1 — Librerías de exportación en los grafos de apertura (W2+W3) — **RESUELTO y verificado a 3 niveles**
+- **Evidencia BEFORE (fuente, verificada por diff)**: `usePOSCartExports.ts` importaba estáticamente `jspdf-autotable` y `html2canvas`; `lazy-pdf.ts` importaba `jsPDF` a nivel de módulo; `useSalesCatalog.ts` importaba estáticamente `salesCatalogExport` (jspdf+xlsx) y `salesCatalogImport` (@e965/xlsx); `useCatalogExport.ts` importaba estáticamente el barrel `catalog-templates` (jspdf+html2canvas en sus 4 templates); `ExportTelegramCatalogModal` importaba estáticamente `telegram-image-renderer` (html2canvas).
+- **Corrección**: `import()` dinámico en el punto de uso en los 6 módulos (commits `a49fc7045`, `b1bfc94a6`, `7075dab71`). Contratos y comportamiento intactos; los `.catch` existentes cubren fallos de carga de chunk.
+- **Verificación 1 — grafo de imports runtime (trazador BFS)**: cierre estático de `POSView` = 87 módulos, **0 libs pesadas**; `SalesCatalogView` = 63 módulos, **0 libs pesadas**; `StorefrontConfigView` = 37 módulos, **0 libs pesadas**. Cortes dinámicos: 12/9/7 respectivamente.
+- **Verificación 2 — chunks compilados (build producción AFTER)**: jspdf vive **solo** en el chunk asíncrono `4441-*.js` (409 KB); html2canvas en `3a4mlcf*.js` (193 KB) y `06jpamsh*.js` (43 KB). **Ninguno de los 300+ chunks emitidos importa estáticamente** esos chunks (búsqueda de imports top-level = 0 resultados); todas las referencias son arrays `Promise.all([...])` del loader async de Turbopack, y en el grafo POS la única referencia es el boundary `import()` del clic de exportación. Chunk equivalente en BEFORE: `3ik7-*.js` (408 KB, mismo tamaño).
+- **Verificación 3 — CI**: build completo de producción PASS en Vercel/Actions + 2.756 unit tests.
+- **Limitación documentada**: la medición de red de la apertura autenticada del POS (payload real en el navegador) sigue bloqueada (§10). La evidencia de grafo+chunks es determinística y suficiente para afirmar que las librerías **no viajan** en la apertura; la latencia total de apertura autenticada queda **N/D**.
 
-**Composición del JS eager común (atribución forense por literales + fingerprints de librerías)**
+### CB-2 — Splash de marca (W-CB2) — **RESUELTO (decisión de producto ejecutada y medida)**
+- **Antes**: `SPLASH_FIRST_MS = 1800` + fade `500 ms` **secuencial**: el contenido (LandingPage/Shell) no se montaba hasta que el splash terminaba — la descarga de su chunk JS empezaba después. LCP 1ª visita `3,060 s`; splash recurrente retirado a `1,717 s`.
+- **Después**: transición de marca `0,65 s` (línea 0→350 ms, logo 350→650 ms) + fade `0,2 s` (1ª visita); recurrentes `0,25 s` + `0,2 s`; `prefers-reduced-motion`: logo estático sin animaciones + salida `0,1 s`. El contenido monta **en paralelo** detrás del overlay en cuanto la sesión resuelve (`isReady`); mientras la sesión no resuelve se ve el estado de carga real tras el fade (nunca se finge operatividad ni se ocultan errores). El desmonte del overlay lo controla el padre (`autoDismiss={false}`) para no mostrar contenido inexistente.
+- **Correcciones de robustez durante la implementación** (detectadas por medición, no por inspección): (a) el timeline dependía de `isReturning` vía `useSyncExternalStore`, que puede volcar tras la hidratación y reprogramaba los timers → ahora se lee `localStorage` una única vez en el primer efecto con guard `timelineArmedRef`; (b) un layout shift de 0.127 originado por el overlay se eliminó posicionándolo con estilos inline (`fixed/inset-0/z-index`) en lugar de clases Tailwind.
+- **Suelo residual**: el splash está en el HTML SSR (aparece ~112–244 ms) pero los effects esperan a la hidratación (~0,3–0,8 s según CPU/red); el mínimo de marca corre tras hidratar. La espera **artificial** restante es 0,65 s / 0,25 s + fade; el resto hasta contenido interactivo es parseo de JS, no espera impuesta.
+- **Medición A/B** (§8): LCP 1ª visita −40 %; splash recurrente −68 %; FCP −60 %; CLS 0→0.
 
-| Chunk | Tamaño raw | Contenido identificado |
-|---|---:|---|
-| `3lx_-tszj5bsl.js` | 229 KB | React-DOM + scheduler |
-| `3bo4889wo1m1e.js` | 357 KB | Código app: servicios, esquemas zod (`src/validation/schemas.ts`, 1.136 líneas), localforage, view registry, i18n |
-| `3rjvagg7qgsuj.js` | 207 KB | @supabase/supabase-js + realtime (necesario para bootstrap de auth) |
-| `3w7f9krtevh-f.js` | 152 KB | Runtime del router de Next.js |
-| `3gg011-ccoatp.js` | 132 KB | framer-motion (LandingPage + shell) |
-| CSS global `3_b3zh_bnbopc.css` | 622 KB (76 KB gz) | Tailwind v4: utilidades de TODAS las ~60 vistas (app de una sola ruta) |
+### CB-3 — Renders 100% cliente del landing — documentado (P3, sin cambios)
+Sin cambios en esta fase; migrar el landing a RSC es estructural (§11).
 
-**Chunks pesados por vista (evidencia estática — correcta code-splitting, cargan al abrir la vista)**
+### CB-4 — Awaits secuenciales en `sync/batch` (W4) — **RESUELTO (subset seguro implementado y medido)**
+- **Mapa de dependencias** (obligatorio de la investigación): cada operación ejecuta 3 pasos — (1) check de idempotencia (lectura de `sync_log`), (2) RPC de negocio (`create_sale_v2` / `register_reception` / `perform_inventory_adjustment` / `create_transfer`), (3) upsert de `sync_log`. Los RPCs son **orden-sensibles** (inventario, costeo, transferencias) y no pueden paralelizarse entre sí sin demostración de independencia por payload. Los pasos (1) son lecturas puras sin efectos; los pasos (3) son escrituras con clave única, independientes entre claves y del RPC siguiente.
+- **Implementación** (commit de esta fase): prefetch paralelo de (1) por claves únicas; dedupe de claves duplicadas dentro del batch con semántica preservada (1ª `ok` → copia de resultado; 1ª `error` → reintento, igual que el re-check secuencial); RPCs **en serie** (verificado por test con timeline); upserts (3) en pipeline con encadenamiento por clave y `Promise.allSettled` **antes de responder** (misma garantía de durabilidad que el `await` original; los errores de upsert ya se ignoraban en el código original — sin cambio de envelope).
+- **Medición** (test de integración aislado, RTT simulado 40 ms/llamada, 6 ops): **323 ms** vs **~720 ms** del equivalente secuencial (−55 %). Casos probados: orden estricto de RPCs, dedupe ok/error, fallo parcial no aborta, durabilidad y orden por clave de upserts.
+- **Latencia real de red**: **N/D** (bloqueada por §10). La mejora del mecanismo (round-trips) está demostrada de forma aislada y reproducible.
+- **Rechazado explícitamente**: `Promise.all` indiscriminado sobre las operaciones (riesgo de reordenación de movimientos, fallos parciales ocultos y duplicación); también se descartó paralelizar por particiones de tienda (dos ops de la misma tienda comparten inventario). No se modificó el contrato de API, autorización por tienda (FIX-SEC-H3 intacto), F-21 ni el manejo de conflictos 23505.
 
-| Chunk | Tamaño | Trigger |
-|---|---:|---|
-| jspdf | 408 KB | apertura POS (W2 corregido → ahora solo al exportar), SalesCatalog y otras vistas con import estático propio |
-| echarts (zrender) | 1.1 MB | vista Dashboard (diferida vía React.lazy ✓) |
-| recharts | 332 KB + 4 chunks menores | vistas con gráficos |
-| html2canvas | 193 KB | apertura POS (W2 corregido), SalesCatalog/templates |
+### CB-5 — Persistencia de carrito con objetos Product completos — documentado (P2, sin cambios)
+Requiere migración versionada del storage; fuera del alcance mínimo (§11).
 
-**Comparativa de referencia contra producción (contexto, no equivalente)**
+## 6. Priorización (estado final)
 
-| Métrica | Local (prod standalone) | Vercel (costpro4.vercel.app) |
+| ID | Problema | Evidencia | Acción | Estado final |
+|---|---|---|---|---|
+| W2 | ~601 KB (jspdf 408 + html2canvas 193) raw en apertura del POS | imports estáticos (diff) + chunks compilados | diferido al clic de exportar | ✅ implementado y verificado (grafo+chunks+CI) |
+| W3 | jspdf+xlsx+html2canvas en apertura de SalesCatalog/StorefrontConfig | 3 aristas estáticas residuales detectadas por trazador tras el 1er intento | diferidos barrel templates + salesCatalogImport + telegram renderer | ✅ implementado y verificado (grafo 0 libs pesadas) |
+| W4 | latencia sync/batch ∝ N×3 round-trips | mapa de dependencias + test con RTT simulado | subset seguro (prefetch+pipeline), RPCs en serie | ✅ implementado; −55 % con RTT simulado; red real N/D |
+| CB2 | LCP 1ª visita 3,060 s; splash 1,8 s artificial | A/B local standalone ×5 | splash 0,65 s + montaje paralelo | ✅ implementado y medido (−40 % LCP, −68 % recurrente) |
+| CB5 | localStorage del carrito con Products completos | estático (`cart.ts` partialize) | — | P2 — propuesto (migración versionada) |
+| CB3 | FCP dependiente de ~500 KB JS comprimidos | DOM 303–1.112 nodos, `ssr:false` | — | P3 — fase 2 (landing RSC) |
+| — | CSS global 622 KB raw (76 KB gz) | único CSS de app de 1 ruta | — | P3 — no intervenir |
+
+## 7. Cambios implementados (inventario alineado al diff real)
+
+| Commit | Contenido | Archivos |
 |---|---|---|
-| TTFB landing | 22 ms | 574–3.115 ms (warm/cold) |
-| HTML landing | 88 KB | 22 KB comprimido |
+| `ca122c0b7` | Tooling de auditoría (FASE 0) | `scripts/perf/bench-route.sh`, `measure-nav.js`, `first-load-js.py`, informe |
+| `a49fc7045` | **W2**: diferir jspdf/html2canvas del POS | `lazy-pdf.ts`, `usePOSCartExports.ts` |
+| `0285673dd` | Informe FASE 0-3 | informe |
+| `b1bfc94a6` | **W3 (1er intento)**: diferir salesCatalogExport | `useSalesCatalog.ts` |
+| `de1999738` | Informe final 1ª pasada | informe |
+| `7075dab71` | **W3 (completado)**: barrel `catalog-templates`, `salesCatalogImport` (@e965/xlsx) y `telegram-image-renderer` (html2canvas) diferidos | `useCatalogExport.ts`, `useSalesCatalog.ts`, `ExportTelegramCatalogModal.tsx` |
+| `06dad04aa` | **Splash**: transición 1,8 s → 0,65 s con montaje paralelo, `prefers-reduced-motion`, overlay controlado por el padre + herramienta de medición recurrente | `CostProLoader.tsx`, `HomePageClient.tsx`, `scripts/perf/measure-nav-returning.js` |
+| `38fab57bd` | Splash: timeline determinista + overlay inmune a CSS (corrige CLS 0.127 y reprogramación de timers) | `CostProLoader.tsx` |
+| `76af915db` | **W4**: subset seguro en `sync/batch` + test de integración | `api/sync/batch/route.ts`, `__tests__/integration/sync-batch-w4-roundtrips.test.ts` |
 
-## 5. Cuellos de botella encontrados y evidencias
-
-### CB-1 — Librerías PDF (~600 KB) cargadas al abrir el POS (corregido → W2)
-- **Evidencia**: `usePOSCartExports.ts` L4/L6 importaba `jspdf-autotable` y `html2canvas` estáticamente; `src/lib/export/lazy-pdf.ts` L1–2 importaba `jsPDF` a nivel de módulo. En el build, el chunk de jspdf (408 KB, identificado por `WinAnsiEncoding`) era alcanzable desde el grafo de apertura del POS vía `POSCart → usePOSCartExports`.
-- **Causa raíz**: imports estáticos de librerías pesadas de exportación dentro del grafo de la vista más frecuente; `lazy-pdf.ts` mal llamado "lazy".
-- **Impacto**: +~600 KB JS (descomprimido) en la apertura del POS aunque el usuario nunca exporte.
-- **Corrección**: import() dinámico en el punto de uso (commit `a49fc7045`). Contrato y comportamiento preservados.
-
-### CB-2 — Splash de marca bloquea el LCP del landing (documentado, decisión de producto)
-- **Evidencia**: `CostProLoader.tsx` — `SPLASH_FIRST_MS = 1800` + fade de 500 ms antes de montar `LandingPage` (el comentario del HomePageClient "first visit ~3.5s" está desactualizado). LCP medido 3.124 ms = splash 2.3 s + render del landing 0.8 s. Usuarios recurrentes: 600 ms + fade (LCP ≈ 1.6–1.8 s, no medible sin cookie de visita).
-- **Causa raíz**: retardo de marca intencional antes de renderizar cualquier contenido.
-- **Impacto**: LCP "pobre" (>2.5 s) en cada primera visita real; en recurrencia queda en "bueno".
-- **No corregido**: es una decisión de producto (branding). Opciones: reducir `SPLASH_FIRST_MS` a ~800 ms, o renderizar el hero del landing tras el splash en lugar del logo. Requiere aprobación del propietario.
-
-### CB-3 — Renders 100% cliente del landing y la tienda (documentado)
-- **Evidencia**: `HomePageClient` usa `dynamic(..., { ssr: false })` para CyberShell/TerminalShell/LandingPage; DOM medido de 303–1.112 nodos pese a transferir 1.6–1.8 MB de JS. El HTML no contiene contenido del landing.
-- **Causa raíz**: decisión de arquitectura (evitar hidratación del shell pesado); el landing podría ser SSR/RSC sin el shell.
-- **Impacto**: FCP depende de descargar+parsear ~500 KB comprimidos de JS antes de pintar contenido real.
-- **No corregido en esta fase**: migrar el landing a RSC es un cambio estructural (fuera del alcance mínimo; propuesto para fase 2).
-
-### CB-4 — Awaits secuenciales en endpoints de agregación (propuesto, sin modificar)
-- **Evidencia estática**: `api/sync/batch/route.ts` (L74–186, por operación: upsert + RPC secuencial), `api/received-services/route.ts` (L239–251), `api/cron/usage-sync/route.ts` (L147–205), `api/wallet/import-trm/route.ts` (L119–141), `api/accounts-payable/bulk-pay/route.ts` (L72–145).
-- **Causa raíz**: bucles `for` con `await` por elemento sobre consultas independientes.
-- **Impacto**: latencia proporcional a N (p. ej. sync offline de N operaciones tras reconexión).
-- **No modificado**: sin sesión autenticada ni e2e autorizado no se puede verificar funcionalmente la paralelización (riesgo de orden/transaccionalidad). Requiere verificación con el fixture E2E seguro antes de fusionar.
-
-### CB-5 — Persistencia de carrito con objetos Product completos (documentado)
-- **Evidencia estática**: `src/store/cart.ts` `partialize` (L1267–1284) persiste `items[]` con objetos `Product` embebidos a localStorage; TTL de 8 h (L1285–1299).
-- **Impacto**: coste de serialización/rehidratación creciente con el tamaño del carrito y consumo de cuota de localStorage; en dispositivo lento puede penalizar interacciones del carrito.
-- **No corregido**: cambiar la forma persistida rompería la restauración offline de carritos existentes; requiere migración versionada. Propuesto P2.
-
-## 6. Priorización y justificación
-
-| ID | Problema medido | Evidencia | Causa raíz | Impacto | Riesgo | Esfuerzo | Prioridad |
-|---|---|---|---|---|---|---|---|
-| W2 | 600 KB extra al abrir POS | imports estáticos verificados + chunk jspdf 408 KB en grafo POS | imports estáticos de libs de exportación | Alto (flujo más frecuente) | Bajo (clic-path) | 2 archivos | **P1 — implementado** |
-| W4 | latencia sync/batch ∝ N | awaits secuenciales (estático) | bucle secuencial | Medio-Alto (reconexión offline) | Medio (orden RPC) | 1 archivo + verificación e2e | **P1 — propuesto** (bloqueado por verificación) |
-| CB2 | LCP 3.1 s primera visita | medido (3 iter) | splash 1.8 s + fade | Alto percibido | Producto (branding) | trivial | P2 — decisión producto |
-| W3 | ~600 KB en SalesCatalog | `salesCatalogExport.ts` L1–3 (jspdf+xlsx estáticos) ← `useSalesCatalog` | mismo patrón W2 | Medio | Bajo | 1 archivo | **P2 — implementado** |
-| CB5 | localStorage carrito con Products completos | `cart.ts` partialize | forma persistida | Bajo-Medio (dispositivos lentos) | Medio (migración offline) | 1 archivo + migración | P2 |
-| CB3 | FCP dependiente de 500 KB JS | DOM 303 nodos vs 1.6 MB JS | `ssr:false` del landing | Medio | Alto (reestructura) | estructural | P3 — fase 2 |
-| — | CSS global 622 KB (76 KB gz) | único CSS para app de 1 ruta | Tailwind global | Bajo comprimido | — | — | P3 — no intervenir |
-
-Criterios aplicados: beneficio perceptible (CB-1/W2 afecta al flujo más frecuente), frecuencia (POS > SalesCatalog > resto), magnitud reproducible (tamaños de chunk verificados en build), riesgo funcional (W2 no toca lógica de negocio; W4 sí requiere verificación), costo de mantenimiento (patrón ya existente en `lazy-excel.ts`), probabilidad de regresión (W2 baja: 295 unit tests + tsc + build).
-
-## 7. Cambios implementados
-
-### Incremento 1 — Tooling de auditoría (commit `ca122c0b7`)
-- `scripts/perf/bench-route.sh`: TTFB/latencia/tamaño por ruta.
-- `scripts/perf/measure-nav.js`: LCP/CLS/transfer/desglose de recursos con Chromium headless (Playwright).
-- `scripts/perf/first-load-js.py`: tamaños por ruta desde el build manifest.
-- Informe base del audit.
-
-### Incremento 2 — W2: diferimiento de jspdf/html2canvas fuera del POS (commit `a49fc7045`)
-- **Archivos**: `src/lib/export/lazy-pdf.ts`, `src/components/views/terminal/views/pos/usePOSCartExports.ts`.
-- **Cuello de botella corregido**: CB-1.
-- **Medición inicial**: chunk jspdf 408 KB + html2canvas 193 KB alcanzables desde el grafo de apertura del POS (imports estáticos).
-- **Mecanismo tras el cambio**: `import()` dinámico en el punto de uso; los chunks de jspdf/html2canvas se convierten en asíncronos puros descargados en el primer clic de exportación (semántica documentada del bundler: import estático = incluido en el grafo del padre; import() = chunk separado bajo demanda).
-- **Verificación**: `tsc --noEmit` PASS · build producción PASS · 295 unit tests PASS (13 archivos, incl. integración de export de catálogo) · grep de fuente confirma ausencia de imports estáticos en el grafo POS.
-- **Pendiente de verificación in-situ**: latencia real de apertura de POS post-login (requiere sesión autorizada; ver §10).
-
-### Incremento 3 — W3: diferimiento de salesCatalogExport fuera de SalesCatalog (commit `b1bfc94a6`)
-- **Archivos**: `src/components/views/terminal/views/pos/useSalesCatalog.ts`.
-- **Cuello de botella corregido**: CB-1 (variante SalesCatalog: `salesCatalogExport.ts` importa estáticamente jspdf 408 KB + jspdf-autotable + @e965/xlsx).
-- **Cambio**: el hook ya no importa el módulo estáticamente; se resuelve con `import()` en el clic de exportar (Excel/PDF), con toast de error si la carga falla. Contrato preservado (los handlers ya eran void).
-- **Verificación**: `tsc --noEmit` PASS · build producción PASS · vitest completo 2.749 tests PASS.
-- **Nota**: `html2canvas` ya quedó fuera de ambos grafos tras W2 (sus únicos consumidores restantes cargan dinámicamente: `StorefrontConfigView` L323 y los templates vía barrel).
+Total: 15 archivos (código 7 + tests 1 + scripts/perf 4 + informe + `next.config.ts` con `PERF_AUDIT_BUILD` para builds de medición locales).
 
 ## 8. Comparativa antes/después
 
+**Web (build standalone de producción local; mediana; BEFORE = `main @ 6a08c2686`, AFTER = rama; 5 iteraciones por punto; idéntica metodología y composición de recursos):**
+
 | Métrica | Antes | Después | Variación | Método | Resultado |
 |---|---:|---:|---:|---|---|
-| JS de libs PDF en grafo de apertura POS | ~601 KB (408+193) | 0 KB (solo al exportar) | **-601 KB raw** | imports estáticos (grep) vs dinámicos + emisión de chunks async en build | **PASS** |
-| LCP landing (1ª visita, local) | 3.124 ms | sin cambio | — | Chromium headless ×3 | N/D (CB2, decisión producto) |
-| TTFB landing local | 22 ms | sin cambio | — | curl ×3 | N/D |
-| CLS landing / tienda | 0 / 0 | sin cambio | — | Chromium ×3 | ✓ sin regresión |
-| Latencia sync/batch | N/D | N/D | — | no medible sin sesión | **BLOCKED** (W4) |
-| Vercel build (producción real) | — | — | — | no desplegado | **NOT RUN** (requiere merge del PR) |
+| LCP landing 1ª visita | 3,060 s | 1,836 s | **−40 %** | Chromium ×5, mediana | ✅ mejora medida |
+| FCP landing 1ª visita | 620 ms | ~250 ms | **−60 %** | Chromium ×5 | ✅ |
+| Splash → contenido (recurrente) | 1,717 s | ~0,55 s (rango 0,51–0,75 s) | **−68 %** | `measure-nav-returning` ×8 | ✅ |
+| CLS landing | 0 | 0 | = | Chromium ×5 ambos lados | ✅ sin regresión |
+| Wall clock (load, red-incluido) | 3,545 s | ~3,50 s | ≈ = | Chromium ×5 | sin cambio (red, no splash) |
+| Transferido landing (raw) | 2,86 MB | 2,63 MB | −8 % | response bodies ×5 | variación de contenido remoto; JS raw ≈ igual (1,79 MB) |
+| Libs PDF/Excel en grafo de apertura POS/Catálogo | ~1,2 MB raw | 0 KB | **−100 % del grafo** | trazador BFS + chunks compilados | ✅ verificado |
+| TTFB local | 22,7 ms | 19,8 ms | = | curl/Chromium ×5 | N/D (sin cambio backend) |
 
+**W4 — sync/batch (test de integración aislado, RTT simulado 40 ms, 6 operaciones):**
+
+| Métrica | Antes (equivalente secuencial) | Después | Variación | Método | Resultado |
+|---|---:|---:|---:|---|---|
+| Latencia total batch 6 ops | ~720 ms (6×3 llamadas×40 ms) | **323 ms** | **−55 %** | vitest con mock temporizado ×7 casos | ✅ medida aislada |
+| Latencia real de red | N/D | N/D | — | bloqueada (§10) | **N/D** |
+| Orden de RPCs | secuencial | **secuencial (verificado)** | = | timeline start/end en mock | ✅ sin regresión |
+| Durabilidad de sync_log antes de responder | await por op | `allSettled` antes de responder | = | test 7 | ✅ |
+
+**Splash — tiempos de marca (lógica, no red):**
+
+| Caso | Antes | Después |
+|---|---:|---:|
+| 1ª visita: marca + fade (tras hidratar) | 1,8 s + 0,5 s = 2,3 s | 0,65 s + 0,2 s = 0,85 s |
+| Recurrente | 0,6 s + 0,5 s = 1,1 s | 0,25 s + 0,2 s = 0,45 s |
+| `prefers-reduced-motion` | sin soporte (animaciones siempre) | logo estático + salida 0,1 s |
+
+**Vercel/CI (producción real):**
+
+| Métrica | Antes | Después | Método | Resultado |
+|---|---|---|---|---|
+| Build completo | — | **PASS** | check GH `TypeCheck + Lint + Unit Tests + Build` en heads `de1999738` y `38fab57bd` | ✅ |
+| Deployment preview | — | success | Vercel status API (no navegable: Deployment Protection) | ✅ (no medible web) |
 
 ## 9. Pruebas funcionales, contables y de seguridad ejecutadas
 
 | Prueba | Alcance | Resultado |
 |---|---|---|
-| TypeScript (`tsc --noEmit`) | repo completo | **PASS** (exit 0) |
-| ESLint | archivos modificados (3) | **PASS** (0 errores) |
-| Vitest (suite completa) | 146 archivos, 2.749 tests | **PASS** (24 skipped por diseño, 0 fallos) |
-| Build de producción (Turbopack, selectivo) | shell + tienda + fc | **PASS** (exit 0) |
-| Vitest targeted export/integración | 13 archivos, 295 tests | **PASS** |
-| E2E Playwright | — | **NOT RUN** por diseño: los fixtures E2E crean tiendas/usuarios y no se autorizó ejecución (protección de datos); no se reactivaron suites deshabilitadas |
-| Verificación in-situ post-login (POS real) | — | **BLOCKED**: requiere sesión autorizada con usuario dedicado |
-| Integridad contable | — | sin cambios en lógica de negocio: los incrementos solo mueven el punto de carga de librerías de exportación (mismas funciones, mismo orden de llamadas, mismos datos) |
-| Seguridad | — | sin cambios en auth, RLS, CSRF ni permisos; los imports dinámicos no amplían superficie de ataque (mismos chunks, carga diferida) |
+| TypeScript (`tsc --noEmit`) | repo completo | **PASS** (exit 0, tras cada incremento) |
+| ESLint | archivos modificados (7) | **PASS** (0 errores; warnings preexistentes de UI sin relación) |
+| Vitest (suite completa) | 147 archivos, **2.756 tests** | **PASS** (24 skipped por diseño, 0 fallos) |
+| Tests nuevos W4 (integración) | 7 casos: orden, dedupe ok/error, fallo parcial, durabilidad, latencia | **PASS** |
+| Tests de integración existentes sync/batch (`rem-inv-2`) | compatibilidad del contrato | **PASS** |
+| Build de producción | pipeline Vercel/Actions en head de rama | **PASS** (evidencia del build completo; el build local selectivo PASS es complementario) |
+| Security Audit (CI) | repo | **PASS** |
+| E2E Playwright | — | **NOT RUN / skipped**: los fixtures E2E autentican contra el proyecto Supabase de producción con un usuario **admin**; ejecutarlos crearía datos efímeros en producción y no hay fixture de privilegio mínimo. Justificado en §10; **no se presentan como aprobados** |
+| Integridad contable | — | sin cambios de lógica: W2/W3 mueven el punto de carga de librerías; W4 mantiene RPCs en serie e idempotencia/contratos; splash es presentacional (estados de carga reales visibles) |
+| Seguridad | — | sin cambios en auth, RLS, CSRF, memberships (FIX-SEC-H3 intacto), F-21 ni manejo de conflictos; `queueUpsert` preserva el orden por clave |
 
-## 10. Regresiones, limitaciones y riesgos pendientes
+## 10. Regresiones, limitaciones y bloqueos
 
-### Limitaciones del entorno (afectan la verificación, no el código)
-- **Build completo de producción**: no ejecutable en este contenedor (3.9 GB RAM sin swap; OOM verificado con webpack 2.8 GB heap y Turbopack). El build completo sí compila en Vercel. Los builds selectivos (`--debug-build-paths`) cubren el shell completo y son la evidencia de build de este informe.
-- **Sesión autenticada**: no hay credenciales de usuario reutilizables autorizadas y crear usuarios está prohibido (protección de datos). Por ello la verificación in-situ de la apertura del POS y la latencia de API autenticadas quedan **BLOCKED**, y el W4 no se implementó.
-- **E2E**: no se ejecutó ninguna suite (los fixtures crean tiendas/usuarios efímeros — prohibido en esta auditoría). Ver §9.
+### Bloqueo exacto de la medición autenticada in-situ (FASE 2 del plan)
+1. `withAuth` valida la sesión con `supabase.auth.getUser()` contra el **proyecto Supabase de producción** (`wthkddeleylijmonclxg`); no existe proyecto Supabase aislado en este entorno.
+2. La instrucción exige un usuario E2E dedicado de solo-lectura **en un entorno aislado** y prohíbe crear usuarios/recursos persistentes en producción → no hay forma legítima de obtener una sesión de privilegio mínimo.
+3. El único fixture disponible (`e2e/fixtures.ts`) es **admin** (`ADMIN_PASS` vía secretos de CI, no en repo): no cumple la condición de privilegio mínimo ni permite demostrar que "el usuario no puede vender/modificar inventario".
+4. Conclusión: **prueba autenticada detenida por imposibilidad de demostrar aislamiento**, conforme al criterio "si el aislamiento no puede demostrarse, detener y documentar". Medición sustituta entregada: grafo de imports + chunks compilados (W2/W3), A/B anónimo del splash, tests aislados con RTT simulado (W4).
+
+### Limitaciones del entorno
+- Build completo local: OOM (3,9 GB sin swap). El build completo **pasa en CI/Vercel** (evidencia principal); el selectivo local es complementario.
+- Preview de Vercel no navegable (Deployment Protection) → no medible desde este entorno.
+- Red remota (Supabase Storage) introduce varianza en LCP local; se excluyeron corridas con composición de recursos distinta (§4.2).
 
 ### Riesgos residuales de los cambios
-- **W2/W3**: el primer clic en exportar tras cargar la vista añade la descarga del chunk de la librería (~100–300 ms en red lenta). Es aceptable en una acción de exportación y el patrón ya existía (`lazy-excel.ts`). Si un consumidor futuro añadiera un import estático de estas librerías, la mejora se perdería silenciosamente — mitigación posible: test de bundle-size en CI (recomendación §11).
+- W2/W3: el primer clic de exportación tras abrir la vista añade la descarga del chunk (~100–300 ms en red lenta); aceptable en acción explícita de exportación (patrón `lazy-excel.ts` preexistente). Regresión silenciosa posible si alguien reintroduce imports estáticos — mitigación recomendada en §11 (presupuesto de bundles en CI).
+- W4: los upserts en pipeline preservan orden por clave y durabilidad antes de responder; los errores de upsert se ignoraban igualmente antes (sin cambio). El caso extremo de triple clave duplicada puede ejecutar un RPC adicional, cubierto por idempotencia DB (`p_idempotency_key` / unique index) y reporte de conflicto 23505.
+- Splash: si la sesión tarda más que la marca, tras el fade se ve el estado de carga real (no contenido falso). Comportamiento verificado en carga fría y recurrente; la verificación en sesión autenticada real queda cubierta por tests y CI (bloqueo §10).
 
-### Regresiones detectadas
-- Ninguna: `tsc` PASS, ESLint PASS, 2.749 unit tests PASS, build PASS, CLS 0 en rutas medidas.
+### Regresiones detectadas y corregidas durante la implementación
+- CLS 0.127 por el overlay del splash (posicionamiento Tailwind) → corregido con estilos inline; CLS final 0.
+- Reprogramación de timers del splash por vuelco de `isReturning` tras hidratación → corregida con lectura única determinista.
 
 ## 11. Recomendaciones para una segunda fase
 
-1. **W4 — Paralelizar `api/sync/batch`** (y los otros 4 endpoints con awaits secuenciales) con verificación previa del fixture E2E seguro (proyecto/tag aislado) y sesión autorizada.
-2. **CB2 — Splash**: decisión de producto sobre `SPLASH_FIRST_MS` (1.8 s → ~0.8 s) o render del hero tras el splash; medir LCP recurrente antes/después.
-3. **CB3 — Landing RSC**: migrar el landing a Server Components (el shell sigue client-only); reduciría ~500 KB comprimidos del FCP anónimo.
-4. **CB5 — Carrito**: versión de migración de `pos-cart-storage` que persista referencias ligeras en vez de objetos `Product` completos.
-5. **CI de presupuesto de bundles**: añadir un check de tamaño (p. ej. `size-limit`) para los chunks del shell y del POS, para que las regresiones de import estático de librerías pesadas fallen el PR.
-6. **Usuario E2E dedicado de solo-lectura** para mediciones de rendimiento autenticadas (POS, vistas, API) sin tocar el entorno operativo.
-7. **Métricas de campo**: activar web-vitals hacia `/api/monitoring` para interpretar LCP/INP/CLS reales por percentil (p75) en producción, complementando la medición de laboratorio de este informe.
+1. **CB3 — Landing RSC** (P3): reduciría ~500 KB comprimidos del FCP anónimo; cambio estructural.
+2. **CB5 — Carrito** (P2): migración versionada de `pos-cart-storage` para no persistir `Product` completos.
+3. **Presupuesto de bundles en CI** (`size-limit` o check de chunks): fallar el PR si `jspdf`/`html2canvas`/`@e965/xlsx` vuelven a un grafo de apertura (protege W2/W3 de regresión silenciosa).
+4. **Proyecto Supabase aislado para E2E/perf** + usuario de solo-lectura: habilita la medición autenticada del POS y la latencia real de `sync/batch` (hoy N/D).
+5. **Métricas de campo**: web-vitals hacia `/api/monitoring` para LCP/INP/CLS p75 reales porpercentil en producción.
+6. Endpoints restantes con awaits secuenciales (`received-services`, `usage-sync`, `import-trm`, `bulk-pay`): aplicar el mismo análisis de dependencias antes de cualquier cambio.
 
 ## 12. Estado final de Git y enlace al PR
 
 | Campo | Valor |
 |---|---|
-| Rama | `perf/performance-audit` (base: `main @ 6a08c2686`) |
-| Commits | `ca122c0b7` (tooling+informe) → `a49fc7045` (W2) → `0285673dd` (informe FASE 0-3) → `b1bfc94a6` (W3) → informe final |
+| Rama | `perf/performance-audit` (base: `main @ 6a08c2686`, sin conflictos, `mergeable_state: clean`) |
+| Commits | `ca122c0b7` → `a49fc7045` → `0285673dd` → `b1bfc94a6` → `de1999738` → `7075dab71` → `06dad04aa` → `38fab57bd` → `76af915db` (+ informe) |
 | PR | https://github.com/Nardian90/Costpro/pull/1392 |
-| Auto-merge | **Desactivado** — requiere revisión del propietario |
-| Cambios sobre main | 5 archivos de código (`next.config.ts`, `lazy-pdf.ts`, `usePOSCartExports.ts`, `useSalesCatalog.ts`) + herramientas de medición (`scripts/perf/`) + este informe |
-| Despliegue | No se desplegó nada a producción (política: sin autorización) |
+| Auto-merge | **Desactivado** — la fusión se realiza manualmente tras los gates de la FASE 7 |
+| Despliegue a producción | Solo vía fusión del PR autorizada; no se desplegó nada fuera del flujo |
