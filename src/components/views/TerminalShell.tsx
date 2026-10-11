@@ -64,16 +64,11 @@ function ViewErrorBoundary({ children, viewName }: { children: React.ReactNode; 
   );
 }
 
-// FIX-CASH-REPORT (2026-07-14): wrapper para mostrar CashReportModal como vista
-function CashReportWrapper() {
-  const { setCurrentView } = useUIStore();
-  const [open, setOpen] = React.useState(true);
-  return (
-    <div className="p-4">
-      <CashReportModal open={open} onClose={() => { setOpen(false); setCurrentView('sales-hub'); }} />
-    </div>
-  );
-}
+// CAMBIO 2026-10 (vista dedicada): el antiguo CashReportWrapper (que montaba
+// el overlay CashReportModal con open=true) se sustituye por CashReportView —
+// vista de primer nivel con PageHeader, tabs y vista previa. El modal se
+// eliminó: esta es la única implementación del reporte (fuente única).
+const CashReportView = dynamic(() => import('@/components/views/terminal/views/cash/CashReportView'), { ssr: false });
 
 const DashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/DashboardView'), { ssr: false });
 // AI COMMAND CENTER: la nueva Inicio (hero conversacional de Darian +
@@ -153,8 +148,7 @@ const CalculatorView = dynamic(() => import('@/components/views/terminal/views/c
 const AccountsPayableView = dynamic(() => import('@/components/views/terminal/views/accounts_payable/AccountsPayableView'), { ssr: false });
 // V2.12.36: Cobros por Antigüedad (espejo de Cuentas por Pagar para cobros)
 const AccountsReceivableView = dynamic(() => import('@/components/views/terminal/views/accounts_receivable/AccountsReceivableView'), { ssr: false });
-// FIX-CASH-REPORT (2026-07-14): modal de reporte de entrega desde SalesHub
-const CashReportModal = dynamic(() => import('@/components/views/terminal/views/cash/CashReportModal').then(m => ({ default: m.CashReportModal })), { ssr: false });
+// CAMBIO 2026-10: modal de reporte sustituido por la vista dedicada CashReportView (import dinámico arriba)
 // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
 const ProductionOrdersView = dynamic(() => import('@/components/views/terminal/views/production_orders/ProductionOrdersView'), { ssr: false });
 // V1.2: Devoluciones, Clientes, Cotizaciones, Cierre Fiscal
@@ -326,7 +320,10 @@ export default function TerminalShell() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full bg-background">
+      // FIX-SCROLL-DESKTOP (2026-10): h-full — el shell vive dentro del frame de
+      // CyberShell (p-2 + borde en ≥sm); h-screen excedía el viewport en 18px y
+      // provocaba scroll documental innecesario en escritorio.
+      <div className="h-full w-full bg-background">
         <ViewLoadingSplash label="COSTPRO" showTips={false} />
       </div>
     );
@@ -553,8 +550,8 @@ export default function TerminalShell() {
         case 'accounts-payable':
         case 'accounts_payable': return <ViewErrorBoundary viewName="Cuentas por Pagar"><AccountsPayableView /></ViewErrorBoundary>;
         case 'accounts_receivable': return <ViewErrorBoundary viewName="Cobros por Antigüedad"><AccountsReceivableView /></ViewErrorBoundary>;
-        // FIX-CASH-REPORT (2026-07-14): reporte de entrega como vista desde SalesHub
-        case 'cash_report': return <ViewErrorBoundary viewName="Reporte de Entrega"><CashReportWrapper /></ViewErrorBoundary>;
+        // CAMBIO 2026-10: reporte de entrega como VISTA dedicada (antes overlay modal)
+        case 'cash_report': return <ViewErrorBoundary viewName="Reporte de Entrega"><CashReportView /></ViewErrorBoundary>;
         // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
         case 'production-orders': return <ViewErrorBoundary viewName="Órdenes de Producción"><ProductionOrdersView /></ViewErrorBoundary>;
         // V1.2: Devoluciones, Clientes CRM, Cotizaciones, Cierre Fiscal
@@ -629,7 +626,10 @@ export default function TerminalShell() {
   };
 
   return (
-    <div className="h-screen h-dvh flex bg-background text-foreground max-w-full overflow-hidden">
+    // FIX-SCROLL-DESKTOP (2026-10): h-full en vez de h-screen/h-dvh. El contenedor
+    // definitivo de altura lo da HomePageClient (h-dvh) envolviendo a CyberShell;
+    // el frame añade p-2+borde en ≥sm — usar 100vh aquí sumaba 18px al documento.
+    <div className="h-full flex bg-background text-foreground max-w-full overflow-hidden">
       {/* Skip Navigation — WCAG 2.4.1 */}
       <a
         href="#main-content"
@@ -679,7 +679,10 @@ export default function TerminalShell() {
             ? "overflow-y-hidden p-0"
             : currentView === 'help'
               ? "overflow-y-auto p-0"
-              : "overflow-y-auto px-3 sm:px-4 pt-0 pb-24 sm:pb-24 lg:pb-28"
+              // FIX-SCROLL-DESKTOP (2026-10): pb pequeño en ≥sm. El padding grande
+              // (pb-24/pb-28) compensaba el MobileTabBar (sm:hidden); en tablet/escritorio
+              // era espacio muerto que forzaba scroll sin utilidad. En móvil se conserva.
+              : "overflow-y-auto px-3 sm:px-4 pt-0 pb-24 sm:pb-6"
         )}>
           <ParticleBackground viewId={currentView} showLoadingBranding={isViewLoading} />
           <Suspense fallback={
