@@ -9,6 +9,7 @@ import {
   EyeOff,
   Camera,
   AlertTriangle,
+  Printer,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useShallow } from 'zustand/react/shallow';
@@ -55,6 +56,16 @@ export default function POSView() {
   const { user } = useAuthStore();
   const isMobile = useIsMobile();
   const prefersReducedMotion = useReducedMotion();
+
+  // CAMBIO 2026-10: acceso directo a Reporte Entrega desde Vender (entre
+  // Carrito y Express). Misma política de permisos EFECTIVA que el acceso
+  // original dentro de Caja (CashClosureView.allowedRoles): admin/manager/
+  // encargado/clerk. Si el rol no puede abrir el reporte, el acceso NO se
+  // presenta como disponible (no se renderiza). Navega a la vista existente
+  // `cash_report` — sin segunda implementación del reporte.
+  const canOpenCashReport = !!user?.roles?.some(r =>
+    ['admin', 'manager', 'encargado', 'clerk'].includes(r)
+  );
 
   // Wire up cart notifications (decoupled from store via callback)
   React.useEffect(() => {
@@ -431,6 +442,25 @@ export default function POSView() {
                   decían "carrito"; el desktop era la única voz discordante. */}
               <span>{isMobile ? `🛒 (${cartCount})` : `Carrito (${cartCount})`}</span>
             </button>
+            {/* CAMBIO 2026-10: acceso directo a Reporte Entrega entre Carrito y
+                Express. Mismo sistema visual que los accesos vecinos (border-2,
+                rounded-xl, h-11/44px, uppercase tracking-widest), icono Printer
+                como el botón original de Caja. Destino: la vista existente
+                cash_report (CashReportModal elevado) — misma vista que el menú
+                lateral y el botón de Caja. Icon-only en móvil (<sm) para no
+                desbordar la fila; oculto si el rol no tiene permiso. */}
+            {canOpenCashReport && (
+            <button
+              type="button"
+              onClick={() => setCurrentView('cash_report')}
+              className="inline-flex items-center gap-1.5 h-11 min-h-[44px] min-w-[44px] px-3 sm:px-4 rounded-xl border-2 border-primary/20 bg-background text-primary font-black text-xs uppercase tracking-widest hover:bg-primary/10 hover:border-primary/40 transition-all active:scale-95"
+              aria-label="Abrir Reporte Entrega"
+              title="Reporte de caja con desglose de billetes para entrega de dinero"
+            >
+              <Printer className="w-4 h-4" />
+              <span className="hidden sm:inline">Reporte Entrega</span>
+            </button>
+            )}
             {/* POS-3b EM-1: Toggle Modo Cajero Express.
                 Layout full-screen alternativo optimizado para venta de alto volumen.
                 FIX (2026-07-23): oculto en móvil — no es útil en pantalla pequeña. */}
