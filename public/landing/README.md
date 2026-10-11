@@ -42,3 +42,14 @@ Contexto del demo: `.e2e-run-contexts/landing-demo-context.json` (gitignored).
   encogido ilegible)
 - `demo-products/` — imágenes de producto ficticias para la vitrina demo
   (sembradas por el provisioner como `image_url`)
+
+## demo-products/ (imágenes ficticias de producto)
+
+- Origen: assets del proyecto (commit c4ce1177e, feat/landing-product-demo),
+  1024x1024 webp — estilo fotografía de producto sobre fondo gris claro.
+- Consumo: `MultiStoreVisualSection` paso 2 «Organiza tu catálogo»
+  (LANDING-CATALOG-IMAGES, 2026-10-12).
+- `detergente.webp` REGENERADO (2026-10-12): el original mostraba texto
+  corrupto generado ("Loundry Detegent"); el reemplazo es una caja de
+  detergente sin texto, mismo fondo/estilo, generado por IA y convertido a
+  WebP q82 (scripts: PIL).
