@@ -242,14 +242,31 @@ export default function TerminalShell() {
   // FIX-TIMING (2026-07-13): aumentar a 1500ms para que COSTPRO + tips
   // permanezcan visibles un tiempo después de cargada la vista, luego
   // desaparecen con fade-out suave.
+  //
+  // FIX-ENHANCED-BRANDING-PERSIST (2026-10-12) — segunda causa raíz del texto
+  // permanente: el efecto original armaba el timer y seteaba `loadedView` en
+  // el MISMO efecto con deps [currentView, loadedView]. Al hacer flush del
+  // estado, las deps cambiaban, React ejecutaba el cleanup (clearTimeout) y
+  // el re-run salía temprano por `currentView === loadedView` → el timer
+  // quedaba cancelado y `isViewLoading` NUNCA volvía a false: el texto
+  // «COSTPRO» persistía indefinidamente tras cada navegación (visible solo
+  // en dark+enhanced; performance/light lo ocultaban con display:none).
+  // Ahora el ciclo son dos efectos: (1) sincroniza loadedView cuando cambia
+  // la vista, (2) arma el timer mientras isViewLoading esté activo — si la
+  // vista vuelve a cambiar durante la carga, el timer se re-arma con los
+  // 1500ms completos para la vista nueva.
   useEffect(() => {
     if (currentView !== loadedView) {
       setIsViewLoading(true);
       setLoadedView(currentView);
-      const timer = setTimeout(() => setIsViewLoading(false), 1500);
-      return () => clearTimeout(timer);
     }
   }, [currentView, loadedView]);
+
+  useEffect(() => {
+    if (!isViewLoading) return;
+    const timer = setTimeout(() => setIsViewLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, [isViewLoading, currentView]);
 
   // GATE 1 §6 — Sincronización URL (?view=&tab=): pushState/popstate/refresh/
   // deep-link sin migrar router. La URL NO autoriza: el guard de renderView +
