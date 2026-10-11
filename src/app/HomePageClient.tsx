@@ -88,37 +88,49 @@ export default function HomePageClient() {
     return () => { clearTimeout(timer); unsub(); };
   }, []);
 
-  // While splash is showing, render full-screen splash
-  // CostProLoader handles its own auto-dismiss (first visit ~3.5s, returning ~500ms)
-  if (!splashDismissed) {
-    return (
-      <CostProLoader fullScreen text={t('main')} subtext={t('initializing')} />
-    );
-  }
-
+  // PERF-AUDIT FASE 4 (2026-10-12): montaje en paralelo. Antes el contenido (landing
+  // o shell) NO se montaba hasta que el splash terminaba (1.8s + 500ms fade) — la
+  // descarga de su chunk JS empezaba después del splash → LCP ~3,1 s. Ahora el
+  // contenido monta detrás del overlay en cuanto la sesión se resuelve, y el splash
+  // (transición de marca breve, 600–800 ms extremo a extremo) se superpone y se
+  // desvanece. autoDismiss=false: el desmonte del splash lo controla este componente
+  // (splashDismissed) para que nunca se muestre contenido inexistente ni se oculten
+  // errores; mientras !isReady, lo visible tras el fade es el estado de carga real.
+  const showSplash = !splashDismissed;
   const showLogin = !isReady || !isAuthenticated;
 
-  if (showLogin) {
-    return (
-      <Suspense fallback={
+  return (
+    <div className="relative min-h-screen w-full">
+      {isReady ? (
+        showLogin ? (
+          <Suspense fallback={
+            <div className="min-h-screen w-full flex items-center justify-center bg-background">
+              <ViewLoadingSplash label={t('main')} showTips={false} />
+            </div>
+          }>
+            <LandingPage />
+          </Suspense>
+        ) : (
+          <Suspense fallback={
+            <div className="min-h-screen w-full flex items-center justify-center bg-background">
+              <ViewLoadingSplash label={t('main')} showTips={false} />
+            </div>
+          }>
+            <CyberShell>
+              <TerminalShell />
+            </CyberShell>
+          </Suspense>
+        )
+      ) : (
+        // Estado de carga real de la sesión (visible si el splash ya se fue y la
+        // autenticación aún no resuelve — p. ej. red lenta): honesto, no enmascarado.
         <div className="min-h-screen w-full flex items-center justify-center bg-background">
           <ViewLoadingSplash label={t('main')} showTips={false} />
         </div>
-      }>
-        <LandingPage />
-      </Suspense>
-    );
-  }
-
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen w-full flex items-center justify-center bg-background">
-        <ViewLoadingSplash label={t('main')} showTips={false} />
-      </div>
-    }>
-      <CyberShell>
-        <TerminalShell />
-      </CyberShell>
-    </Suspense>
+      )}
+      {showSplash && (
+        <CostProLoader fullScreen overlay autoDismiss={false} text={t('main')} subtext={t('initializing')} />
+      )}
+    </div>
   );
 }
