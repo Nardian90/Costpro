@@ -83,6 +83,13 @@ interface HubCard {
  *
  * Orden secundario (§19): Tabla de Venta → Venta por Conteo → Devoluciones
  * → Cotizaciones → Cuentas por Pagar → Cobros por Antigüedad.
+ *
+ * CAMBIO 2026-10 — DENSIDAD VISUAL: las 3 tarjetas primarias pasan de
+ * composición vertical (icono arriba, mucho padding y espacio vacío) a
+ * composición horizontal compacta (icono a la izquierda; título + CTA en
+ * una fila; descripción debajo). Mantiene destinos, permisos, colores
+ * semánticos, estados hover/focus/active y la cuadrícula (Vender
+ * protagonista a ancho completo; Caja e Historial a 2 columnas).
  * ══════════════════════════════════════════════════════════════════════ */
 
 const PRIMARY_CARDS: HubCard[] = [
@@ -434,10 +441,12 @@ export default function SalesHubView() {
         </motion.div>
       )}
 
-      {/* GATE 1.3R.1 §16/§18: ACCIONES PRINCIPALES — Vender protagonista a
-          ancho completo; Caja e Historial a dos columnas. Jerarquía visual
-          por frecuencia/centralidad, no por estética. */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* GATE 1.3R.1 §16/§18 + CAMBIO 2026-10: ACCIONES PRINCIPALES — Vender
+          protagonista a ancho completo; Caja e Historial a dos columnas.
+          Composición horizontal compacta: icono a la izquierda, título + CTA
+          compartiendo fila (jerarquía tipográfica inmediata), descripción
+          debajo con clamp para alturas coherentes sin recortes rígidos. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         {PRIMARY_CARDS.map((card, idx) => {
           const Icon = card.icon;
           const featured = !!card.featured;
@@ -450,24 +459,45 @@ export default function SalesHubView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.08 }}
               className={cn(
-                "group relative rounded-2xl border-2 text-left transition-all hover:shadow-xl active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30",
-                featured ? "p-5 sm:p-7 md:col-span-2" : "p-4 sm:p-6",
+                "group relative flex items-start gap-3.5 rounded-2xl border-2 text-left transition-all hover:shadow-lg active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30",
+                featured ? "p-4 sm:p-5 md:col-span-2" : "p-4",
                 card.bgColor,
                 card.borderColor,
               )}
             >
-              <div className={cn("p-3 rounded-xl inline-flex mb-4", card.bgColor, featured && "border-2", featured && card.borderColor)}>
-                <Icon className={cn("w-8 h-8", card.color, featured && "w-10 h-10")} />
+              <div
+                className={cn(
+                  "p-2.5 rounded-xl inline-flex shrink-0",
+                  card.bgColor,
+                  featured && "border-2",
+                  featured && card.borderColor,
+                )}
+              >
+                <Icon className={cn("w-6 h-6", card.color, featured && "w-7 h-7")} />
               </div>
-              <h3 className={cn("font-black uppercase tracking-tight text-foreground mb-2", featured ? "text-xl" : "text-base")}>
-                {card.title}
-              </h3>
-              <p className={cn("text-muted-foreground leading-relaxed mb-4", featured ? "text-sm" : "text-xs", !featured && "line-clamp-2")}>
-                {card.description}
-              </p>
-              <div className={cn("inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest", card.color)}>
-                {featured ? "Iniciar venta" : "Acceder"}
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className={cn(
+                    "font-black uppercase tracking-tight text-foreground truncate",
+                    featured ? "text-base sm:text-lg" : "text-sm",
+                  )}>
+                    {card.title}
+                  </h3>
+                  <div className={cn(
+                    "inline-flex items-center gap-1.5 shrink-0 text-[10px] sm:text-xs font-black uppercase tracking-widest",
+                    card.color,
+                  )}>
+                    {featured ? "Iniciar venta" : "Acceder"}
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </div>
+                <p className={cn(
+                  "text-muted-foreground leading-relaxed mt-1",
+                  featured ? "text-xs sm:text-sm" : "text-xs",
+                  !featured && "line-clamp-2",
+                )}>
+                  {card.description}
+                </p>
               </div>
             </motion.button>
           );

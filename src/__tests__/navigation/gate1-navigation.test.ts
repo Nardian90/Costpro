@@ -290,13 +290,29 @@ describe('GATE 1.3 — Vender/Ventas', () => {
     expect(Object.values(labels)).not.toContain('Venta');
   });
 
-  it('el grupo Ventas existe como submenu con hijos Vender + Opciones (CAMBIO 4)', () => {
+  it('el grupo Ventas existe como submenu con hijos Vender + Reporte Entrega + Opciones (CAMBIO 4 + CAMBIO 2026-10)', () => {
     const operacion = NAVIGATION_SECTIONS.find(s => s.id === 'operacion');
     const ventas = operacion?.children?.find(c => c.id === 'ventas');
     expect(ventas?.type).toBe('submenu');
     expect(ventas?.label).toBe('Ventas');
-    expect(ventas?.children?.map(c => c.id)).toEqual(['pos', 'sales-hub']);
-    expect(ventas?.children?.map(c => c.label)).toEqual(['Vender', 'Opciones']);
+    // CAMBIO 2026-10: acceso directo a Reporte Entrega (cash_report) entre
+    // Vender y Opciones — misma vista existente, sin segunda implementación.
+    expect(ventas?.children?.map(c => c.id)).toEqual(['pos', 'cash_report', 'sales-hub']);
+    expect(ventas?.children?.map(c => c.label)).toEqual(['Vender', 'Reporte Entrega', 'Opciones']);
+  });
+
+  it('el acceso directo Reporte Entrega conserva la política de permisos del acceso original en Caja (sin ampliar privilegios)', () => {
+    // El acceso original vive dentro de la vista Caja, cuyo guard permite
+    // admin/manager/encargado/clerk (CashClosureView). El acceso directo
+    // declara EXACTAMENTE esos roles: 'usuario' y 'warehouse' no lo ven.
+    for (const role of ['admin', 'manager', 'encargado', 'clerk']) {
+      expect(isViewAllowedForRole('cash_report', role)).toBe(true);
+    }
+    for (const role of ['usuario', 'warehouse']) {
+      expect(isViewAllowedForRole('cash_report', role)).toBe(false);
+    }
+    // El destino del acceso directo es la MISMA vista que abre Caja.
+    expect(getNavigationRoute('cash_report')).toEqual({ type: 'direct', view: 'cash_report' });
   });
 
   it('"Terminal de Venta" sigue siendo descubrible como keyword de pos', () => {

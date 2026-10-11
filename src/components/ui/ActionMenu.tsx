@@ -20,6 +20,14 @@ export interface Action {
   disabled?: boolean;
   active?: boolean;
   className?: string;
+  /**
+   * Clases aplicadas SOLO al icono (no al botón completo).
+   * FIX (CAMBIO 2026-10): antes la animación de recarga de Caja se pasaba vía
+   * `className` y giraba el botón entero. Las animaciones de estado de carga
+   * (ej. `animate-spin-slow` sobre el icono de recarga) deben declararse aquí
+   * para que solo rote el icono y el botón mantenga su geometría.
+   */
+  iconClassName?: string;
   ariaLabel?: string;
   component?: React.ReactNode;
 }
@@ -182,7 +190,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
                         )}
                         aria-label={action.ariaLabel || action.label}
                       >
-                        {action.icon && <action.icon className="w-4 h-4 sm:w-5 sm:h-5" />}
+                        {action.icon && <action.icon className={cn('w-4 h-4 sm:w-5 sm:h-5', action.iconClassName)} />}
                         <span className="font-semibold">{action.label}</span>
                       </button>
                     </TooltipTrigger>

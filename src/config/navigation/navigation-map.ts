@@ -285,7 +285,10 @@ const VIEW_TO_HUB_MAP: Record<string, { hubId: string; leafLabel: string }> = {
   inventory_count: { hubId: 'sales-hub', leafLabel: 'Venta por Conteo' },
   devolutions: { hubId: 'sales-hub', leafLabel: 'Devoluciones' },
   quotations: { hubId: 'sales-hub', leafLabel: 'Cotizaciones' },
-  cash_report: { hubId: 'sales-hub', leafLabel: 'Reporte de Entrega' },
+  // CAMBIO 2026-10: 'cash_report' retirado de este mapa — ahora es hoja de
+  // menú del grupo Ventas (hijo directo, entre Vender y Opciones) y su
+  // breadcrumb se deriva del árbol de la definición (fuente única):
+  // Inicio > OPERACIÓN > Ventas > Reporte Entrega.
   'accounts-payable': { hubId: 'sales-hub', leafLabel: 'Cuentas por Pagar' },
   accounts_payable: { hubId: 'sales-hub', leafLabel: 'Cuentas por Pagar' },
   accounts_receivable: { hubId: 'sales-hub', leafLabel: 'Cobros por Antigüedad' },
