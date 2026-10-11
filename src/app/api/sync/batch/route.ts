@@ -71,7 +71,69 @@ const handler = withAuth(async (req, session) => {
 
     const results: unknown[] = [];
 
+    // ── W4 (perf audit 2026-10-12) — reducción de round-trips SIN tocar el orden ──
+    // Los RPCs de negocio (create_sale_v2, register_reception, perform_inventory_
+    // adjustment, create_transfer) son orden-sensibles (inventario/costeo) y se
+    // mantienen SECUENCIALES. Solo se paraleliza/pipelinea lo demostrablemente
+    // independiente:
+    //   a) Prefetch en paralelo de los logs de idempotencia: LECTURAS puras de
+    //      sync_log por clave única; el resultado por clave es idéntico al chequeo
+    //      secuencial que se hacía justo antes de cada op.
+    //   b) Upserts de sync_log en pipeline con encadenamiento por clave (tablas
+    //      distintas del RPC siguiente; mismo orden por clave que el await
+    //      original). Se resuelven con allSettled ANTES de responder: misma
+    //      garantía de durabilidad y mismo envelope de errores (los errores de
+    //      upsert ya se ignoraban en el código original).
+    const uniqueKeys = [...new Set(batch.operations.map((op) => op.idempotencyKey))];
+    const logByKey = new Map<string, { data: any }>();
+    await Promise.all(
+      uniqueKeys.map(async (key) => {
+        const { data } = await supabase
+          .from('sync_log')
+          .select('*')
+          .eq('idempotency_key', key)
+          .single();
+        logByKey.set(key, { data });
+      }),
+    );
+
+    const upsertTailByKey = new Map<string, Promise<unknown>>();
+    const pendingUpserts: Promise<unknown>[] = [];
+    const queueUpsert = (row: {
+      idempotency_key: string;
+      [k: string]: unknown;
+    }) => {
+      const key = row.idempotency_key;
+      const tail = upsertTailByKey.get(key) ?? Promise.resolve();
+      const p = tail.then(() => supabase.from('sync_log').upsert(row));
+      upsertTailByKey.set(key, p);
+      pendingUpserts.push(p);
+    };
+
+    // Dedupe dentro del batch: el prefetch de logs ocurre ANTES de ejecutar, así
+    // que un duplicado no vería el log escrito por la 1ª ocurrencia. La 1ª
+    // ocurrencia ejecuta; si su resultado es 'ok', los duplicados copian (misma
+    // semántica que el re-check secuencial contra sync_log). Si la 1ª falló, el
+    // duplicado reintenta (idéntico al flujo original: log status != 'ok' →
+    // retry). Caso extremo (1ª falla, reintento ok, 3er duplicado): puede
+    // reintentar el RPC una vez más, pero los RPCs son idempotentes por clave
+    // (p_idempotency_key / unique index) y el conflicto se reporta como tal —
+    // sin duplicación de movimientos.
+    const firstResultIndexByKey = new Map<string, number>();
+
     for (const op of batch.operations) {
+      const firstIdx = firstResultIndexByKey.get(op.idempotencyKey);
+      if (firstIdx !== undefined) {
+        const prev = results[firstIdx] as { status?: string } | undefined;
+        if (prev?.status === 'ok') {
+          results.push({ ...prev, idempotencyKey: op.idempotencyKey });
+          continue;
+        }
+        // 1ª ocurrencia falló → el duplicado reintenta (semántica original)
+      } else {
+        firstResultIndexByKey.set(op.idempotencyKey, results.length);
+      }
+
       // F-21: para recepciones, validar tasa_cambio_recepcion antes de tocar la RPC.
       // Si el item viola la regla (moneda != CUP y tasa <= 1.5), se rechaza con
       // 400 para que el cliente pueda corregir y reintentar — no se encola.
@@ -85,8 +147,8 @@ const handler = withAuth(async (req, session) => {
               ? `F-21: ${tasaValidation.error} — ${tasaValidation.details}`
               : 'Tasa de cambio inválida',
           });
-          // Registrar en sync_log para que el cliente pueda ver el rechazo.
-          await supabase.from('sync_log').upsert({
+          // Registrar en sync_log para que el cliente pueda ver el rechazo (pipeline W4).
+          queueUpsert({
             idempotency_key: op.idempotencyKey,
             user_id: session.user.id,
             entity: op.entity,
@@ -102,12 +164,8 @@ const handler = withAuth(async (req, session) => {
         }
       }
 
-      // 1. Check idempotency
-      const { data: existingLog } = await supabase
-        .from('sync_log')
-        .select('*')
-        .eq('idempotency_key', op.idempotencyKey)
-        .single();
+      // 1. Check idempotency (prefetch paralelo W4 — sin I/O en este punto)
+      const { data: existingLog } = logByKey.get(op.idempotencyKey) ?? { data: null };
 
       if (existingLog) {
         if (existingLog.status === 'ok') {
@@ -191,8 +249,8 @@ const handler = withAuth(async (req, session) => {
 
         if (result.error) throw result.error;
 
-        // 3. Record success in sync_log
-        await supabase.from('sync_log').upsert({
+        // 3. Record success in sync_log (pipeline W4)
+        queueUpsert({
           idempotency_key: op.idempotencyKey,
           user_id: session.user.id,
           entity: op.entity,
@@ -215,8 +273,8 @@ const handler = withAuth(async (req, session) => {
         const isConflict = errMsg.includes('Duplicate') || (err instanceof Error && (err as any).code === '23505');
         const status = isConflict ? 'conflict' : 'error';
 
-        // Record failure/conflict in sync_log
-        await supabase.from('sync_log').upsert({
+        // Record failure/conflict in sync_log (pipeline W4)
+        queueUpsert({
           idempotency_key: op.idempotencyKey,
           user_id: session.user.id,
           entity: op.entity,
@@ -251,6 +309,10 @@ const handler = withAuth(async (req, session) => {
         });
       }
     }
+
+    // W4: resolver los upserts en pipeline antes de responder (misma garantía de
+    // durabilidad que el await original; los errores de upsert ya se ignoraban)
+    await Promise.allSettled(pendingUpserts);
 
     return NextResponse.json({ results });
   } catch (err: unknown) {
