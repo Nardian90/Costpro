@@ -11,7 +11,7 @@ export default defineConfig({
     // on slow CI runners, causing flaky timeouts.
     testTimeout: 120_000,
     hookTimeout: 30_000,
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/bundle-gate/**/*.test.mjs'],
     exclude: [
       'node_modules/**',
       '.next/**',
