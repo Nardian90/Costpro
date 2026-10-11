@@ -2,7 +2,6 @@
 import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect, useTransition, Suspense, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
 import { isViewAllowedForRole } from '@/config/navigation/sidebar.structure';
 import { Header } from '@/components/views/terminal/Header';
@@ -185,7 +184,6 @@ export default function TerminalShell() {
     isHelpReadingMode
   } = useUIStore();
   const queryClient = useQueryClient();
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
 
@@ -284,6 +282,14 @@ export default function TerminalShell() {
   // FIX HIGH-001: Use consolidated store switcher
   const { switchStore } = useStoreSwitcher();
 
+  // FIX-LOGOUT-SPLASH (2026-10-12): cierre de sesión = UNA sola transición.
+  // Antes: logout() + window.location.reload() — el store reactivo ya intercambia
+  // el shell por el Landing (HomePageClient está suscrito al auth store), y el
+  // reload re-montaba toda la app reactivando el Splash DESPUÉS de que el Landing
+  // era visible → transición duplicada Landing→Splash→Landing. El estado
+  // en memoria que el reload limpiaba implícitamente (caché de React Query) se
+  // limpia aquí explícitamente; el estado persistido (carrito, preferencias de
+  // tema/UI) sobrevivía al reload vía localStorage y no se toca.
   const handleLogout = async () => {
     try {
       await userService.logout();
@@ -291,20 +297,19 @@ export default function TerminalShell() {
       logger.warn('DATABASE', '[TERMINALSHELL]_LOGOUT_ERROR_(SILENT):', { data: error })
     } finally {
       logout();
-      window.location.reload();
+      queryClient.clear();
     }
   };
 
+  // FIX-LOGOUT-SPLASH (2026-10-12): la rama `status === 'unauthenticated' →
+  // window.location.reload()` se elimina. Cuando la sesión termina (logout
+  // explícito o invalidación desde otro tab), HomePageClient reacciona al auth
+  // store y desmonta este shell mostrando el Landing — sin recargar la página.
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      window.location.reload();
-      return;
-    }
-
     if (user?.activeStoreId && status === 'authenticated_valid') {
       prefetchProducts(queryClient, user.activeStoreId);
     }
-  }, [loading, user, router, queryClient, status]);
+  }, [user, queryClient, status]);
 
   // Role-based view guard: restrict 'costo' users to cost-related views + resources only
   // COSTPRO 4 (fix/usuarios-en-desarrollo-admin): wiki/academy/legal salen de

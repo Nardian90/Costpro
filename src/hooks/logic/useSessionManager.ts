@@ -137,13 +137,18 @@ export function useSessionManager() {
         if (!isSupabaseConfigured) return; // Skip Supabase listener in dev mode
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_OUT') {
-                const wasAuthed = useAuthStore.getState().status !== 'unauthenticated';
+                // FIX-LOGOUT-SPLASH (2026-10-12): cierre de sesión = transición ÚNICA y
+                // determinista. logout() limpia el auth store y HomePageClient (suscrito
+                // al mismo store) intercambia el shell por el Landing de forma reactiva.
+                // Antes se ejecutaba window.location.reload() cuando había sesión activa:
+                // el reload re-montaba la app completa y reactivaba el Splash DESPUÉS de
+                // que el Landing ya era visible → transición duplicada
+                // Landing → Splash → Landing. Sin reload no existe la posibilidad del
+                // bucle de recargas en carga inicial que el guard `wasAuthed` evitaba,
+                // y el logout disparado desde otro tab u origen externo aterriza en el
+                // Landing por la misma vía reactiva.
                 logout();
                 setLoading(false);
-                // Only reload if there was an actual session (avoid reload loop on initial load)
-                if (wasAuthed) {
-                    window.location.reload();
-                }
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 const { user: currentUser } = useAuthStore.getState();
                 if (session?.access_token && currentUser) {
