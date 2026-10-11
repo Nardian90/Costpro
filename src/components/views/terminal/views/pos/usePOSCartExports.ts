@@ -1,10 +1,13 @@
 "use client";
 
 import { useCallback } from "react";
-import autoTable from 'jspdf-autotable';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
-import html2canvas from "html2canvas";
 import { toast } from "sonner";
+// PERF-AUDIT (2026-10-11): jspdf-autotable y html2canvas ya no se importan aquí
+// estáticamente. Con el import estático, abrir el POS descargaba ~600KB extra de JS
+// (chunks de jspdf 408KB + html2canvas 193KB) aunque el usuario nunca exportara.
+// Ambas librerías ahora se resuelven con import() dinámico dentro de las funciones
+// que las usan (primer clic en exportar). Sin cambios de comportamiento ni contrato.
 import { formatCurrency } from "@/lib/utils";
 import type { LastSale } from "./POSCart.types";
 
@@ -48,6 +51,9 @@ function resolvePrimaryColor(): [number, number, number] {
 export function usePOSCartExports({ lastSale }: UsePOSCartExportsOptions) {
   const generatePDF = useCallback(async () => {
     if (!lastSale) return;
+    const [{ default: autoTable }] = await Promise.all([
+      import('jspdf-autotable'),
+    ]);
     const doc = await createPDFDocument();
     const pageWidth = doc.internal.pageSize.getWidth();
     const primary = resolvePrimaryColor();
@@ -159,6 +165,7 @@ export function usePOSCartExports({ lastSale }: UsePOSCartExportsOptions) {
 
     const toastId = toast.loading("Generando imagen...");
     try {
+      const { default: html2canvas } = await import("html2canvas");
       const canvas = await html2canvas(element, {
         scale: 2,
         backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--background').trim() || '#ffffff',
