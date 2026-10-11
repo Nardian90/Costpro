@@ -53,7 +53,7 @@ import {
   Factory, UserCog, LayoutGrid, MessageCircle, Send, TrendingUp, Table2, DollarSign, Truck,
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
   Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet, Landmark,
-  Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone,
+  Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone, Printer,
   Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson,
   type LucideIcon,
 } from 'lucide-react';
@@ -170,6 +170,26 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             navClass: 'primary',
             roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
             keywords: ['vender', 'venta', 'pos', 'terminal', 'terminal de venta', 'cobrar', 'facturar', 'ticket', 'factura', 'vale de salida'],
+          },
+          {
+            // CAMBIO 2026-10: acceso directo a Reporte Entrega como hijo del
+            // grupo Ventas (entre Vender y Opciones). NAVEGA a la MISMA vista
+            // existente `cash_report` (CashReportModal ya elevado a vista en
+            // TerminalShell) — sin segunda implementación del reporte.
+            // El acceso original DENTRO de Caja (botón "Reporte Entrega" de
+            // CashClosureView) queda intacto.
+            // Permisos: misma política EFECTIVA que el acceso original — hoy
+            // el reporte solo es alcanzable desde la vista Caja, cuyo guard
+            // permite admin/manager/encargado/clerk (CashClosureView.tsx:
+            // allowedRoles). NO hereda 'usuario' del grupo Ventas para no
+            // ampliar privilegios; warehouse tampoco (hoy tampoco accede).
+            id: 'cash_report',
+            label: 'Reporte Entrega',
+            description: 'Reporte de caja con desglose de billetes para la entrega de dinero del día.',
+            icon: Printer,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'clerk'],
+            keywords: ['reporte de entrega', 'entrega', 'reporte', 'desglose de billetes', 'cuadre de efectivo', 'entrega de dinero'],
           },
           {
             id: 'sales-hub',
@@ -1074,7 +1094,9 @@ export const ACTION_EXTENSIONS: (NavEntry & { route: NavRoute })[] = [
  * como destinos de primer nivel). Se alcanzan por contexto:
  *   - tabs internas de un hub o vista-módulo (news, stores, catalog…)
  *   - creación contextual (recepcion ya está en ACTION_EXTENSIONS)
- *   - modales elevados a vista (cash_report)
+ *   - modales elevados a vista (cash_report — CAMBIO 2026-10: ahora también
+ *     hoja de menú del grupo Ventas; sigue siendo alcanzable por contexto
+ *     desde Caja y POS. Dualidad documentada, no contradictoria)
  *   - dominios con rail propio (whatsapp-*, telegram-*)
  * El guard de roles las deja pasar (default-open, igual que hoy): la
  * seguridad real vive en backend/RLS.
@@ -1087,8 +1109,11 @@ export const TECHNICAL_VIEW_IDS: string[] = [
   // documentación contradictoria ("sin entrada de navegación" vs "descubribles
   // en palette"). Sin efecto runtime: TECHNICAL_VIEW_IDS no tiene consumidor
   // de ejecución; el guard de roles es default-open (sidebar.structure.ts:78).
+  // CAMBIO 2026-10: 'cash_report' retirado de esta lista — es hoja de menú
+  // del grupo Ventas (hijo directo, entre Vender y Opciones). Sigue siendo
+  // además destino contextual desde Caja/POS (el mismo destino, no otro).
   'stores', 'catalog', 'history', 'lots', 'warehouses',
-  'customers', 'bank-reconciliation', 'cash_report',
+  'customers', 'bank-reconciliation',
   'sales_catalog',
   'accounts_payable',
   'accounts_receivable', 'punto_venta', 'analitica',
