@@ -12,6 +12,7 @@ import { effectiveUnitPrice } from '@/store/cart';
 import { getSupervisorAuth, clearSupervisorAuth } from './supervisor-auth-store';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 import { useHaptics } from '@/hooks/ui/useHaptics';
 
 // ── Re-exports for backward compatibility ────────────────────
@@ -36,8 +37,15 @@ import {
   autoAssignPayment,
   compareFn,
 } from './salesCatalogHelpers';
-import { exportSalesCatalogExcel, exportSalesCatalogPDF } from './salesCatalogExport';
-import { readSheetNames, parseImportFile } from './salesCatalogImport';
+// PERF-AUDIT (2026-10-11): salesCatalogExport (y sus deps estáticas jspdf 408KB +
+// jspdf-autotable + @e965/xlsx) ya no se importa aquí estáticamente. Con el import
+// estático, abrir el catálogo de ventas descargaba esas librerías aunque el usuario
+// nunca exportara. Ahora el módulo completo se resuelve con import() dinámico en el
+// clic de exportación. Sin cambios de comportamiento ni contrato.
+// PERF-AUDIT (2026-10-12): salesCatalogImport (y su dep estática @e965/xlsx) ya no
+// se importa aquí estáticamente. Con el import estático, abrir el catálogo descargaba
+// xlsx aunque el usuario nunca importara un Excel. Se resuelve con import() dinámico
+// en los dos handlers de importación; el .catch existente cubre fallos de carga.
 
 // ── Hook ──────────────────────────────────────────────────────
 
@@ -525,23 +533,37 @@ export function useSalesCatalog() {
     }
   }, [user, activeRows, clearCart, createSale, derivedPaymentMethod, totals, queryClient]);
 
-  // ── Export Excel (delegates to salesCatalogExport) ──
+  // ── Export Excel (delegates to salesCatalogExport, lazy-loaded) ──
   const handleExportExcel = useCallback(() => {
-    exportSalesCatalogExcel({
-      products,
-      rows,
-      activeRows,
-      totals,
-      confirmedSaleId,
-    });
+    void import('./salesCatalogExport')
+      .then(({ exportSalesCatalogExcel }) =>
+        exportSalesCatalogExcel({
+          products,
+          rows,
+          activeRows,
+          totals,
+          confirmedSaleId,
+        }),
+      )
+      .catch((e) => {
+        logger.error('POS', 'No se pudo cargar el módulo de exportación', e);
+        toast.error('Error al cargar el módulo de exportación');
+      });
   }, [products, rows, activeRows, totals, confirmedSaleId]);
 
-  // ── Export PDF (delegates to salesCatalogExport) ──
+  // ── Export PDF (delegates to salesCatalogExport, lazy-loaded) ──
   const handleExportPDF = useCallback(() => {
-    exportSalesCatalogPDF({
-      activeRows,
-      confirmedSaleId,
-    });
+    void import('./salesCatalogExport')
+      .then(({ exportSalesCatalogPDF }) =>
+        exportSalesCatalogPDF({
+          activeRows,
+          confirmedSaleId,
+        }),
+      )
+      .catch((e) => {
+        logger.error('POS', 'No se pudo cargar el módulo de exportación', e);
+        toast.error('Error al cargar el módulo de exportación');
+      });
   }, [activeRows, confirmedSaleId]);
 
   // ── Import Excel (delegates to salesCatalogImport) ──
@@ -555,8 +577,9 @@ export function useSalesCatalog() {
       setImportWarnings([]);
       setSelectedSheetName(null);
 
-      // Detect sheets via the stateless helper
-      readSheetNames(file)
+      // Detect sheets via the stateless helper (cargado bajo demanda)
+      import('./salesCatalogImport')
+        .then(({ readSheetNames }) => readSheetNames(file))
         .then((names) => setImportSheetNames(names))
         .catch(() => setImportSheetNames([]));
 
@@ -579,7 +602,8 @@ export function useSalesCatalog() {
     setIsImporting(true);
     const prevRowsBackup = new Map(rows); // snapshot for undo
 
-    parseImportFile(file, selectedSheetName, products, rows)
+    import('./salesCatalogImport')
+      .then(({ parseImportFile }) => parseImportFile(file, selectedSheetName, products, rows))
       .then(({ nextRows, warnings, updated, skipped }) => {
         // Apply updated rows
         setRows(nextRows);

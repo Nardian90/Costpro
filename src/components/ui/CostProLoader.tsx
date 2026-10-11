@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
 import { cn } from '@/lib/utils';
 
 interface CostProLoaderProps {
@@ -11,10 +11,38 @@ interface CostProLoaderProps {
   showSubtext?: boolean;
   className?: string;
   fullScreen?: boolean;
+  /**
+   * PERF-AUDIT FASE 4 (2026-10-12): overlay posicionado sobre el contenido real
+   * (que monta en paralelo detrás). Evita el <main id="main-content"> duplicado
+   * y el salto de layout: el contenido ya está renderizado bajo el splash.
+   */
+  overlay?: boolean;
+  /**
+   * PERF-AUDIT FASE 4 (2026-10-12): si false, al terminar la marca el splash
+   * dispara `costpro:skip-splash` pero permanece montado (fade a opacity-0);
+   * el desmonte lo controla el padre cuando el contenido existe. Así nunca se
+   * muestra la app como operativa antes de tiempo y no se ocultan errores.
+   */
+  autoDismiss?: boolean;
 }
 
-const SPLASH_FIRST_MS = 1800;
-const SPLASH_RETURN_MS = 600;
+// PERF-AUDIT FASE 4 (2026-10-12) — decisión de producto: reducir la espera artificial.
+// Antes: 1.800 ms (primera visita) + fade 500 ms ANTES de montar el contenido
+// (montaje secuencial): el JS del landing/app no empezaba a descargar hasta que el
+// splash terminaba → LCP de primera visita ~3,1 s. Ahora la preocupación está separada:
+//   1) mínimo de marca: SPLASH_FIRST_MS / SPLASH_RETURN_MS (transición breve 600–800 ms
+//      de extremo a extremo, incluida la salida),
+//   2) inicialización real: el contenido monta en paralelo detrás del overlay y manda
+//      su propio estado de carga (nunca se finge operatividad),
+//   3) salida: SPLASH_FADE_MS.
+// prefers-reduced-motion: sin animaciones, logo estático y salida corta.
+const SPLASH_FIRST_MS = 650;      // antes 1800 (decisión de producto: 600–800 ms totales)
+const SPLASH_RETURN_MS = 250;     // antes 600
+const SPLASH_FADE_MS = 200;       // antes 500 (hardcoded)
+const SPLASH_FADE_REDUCED_MS = 100;
+const SPLASH_LINE_PHASE_MS = 350; // primera visita: línea 0→350 ms, logo 350→650 ms
+
+type SplashPhase = 'line' | 'logo' | 'out';
 
 export const CostProLoader: React.FC<CostProLoaderProps> = ({
   text,
@@ -23,6 +51,8 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
   showSubtext = !!subtext,
   className,
   fullScreen = false,
+  overlay = false,
+  autoDismiss = true,
 }) => {
   // FIX-HYDRATION (2026-07-12): usar ID estable en vez de React.useId()
   // que genera hashes diferentes entre server/client en Turbopack dev mode.
@@ -33,15 +63,31 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
     () => typeof window !== 'undefined' ? !!localStorage.getItem('costpro-visited') : false,
     () => false
   );
-  const [phase, setPhase] = useState<'line' | 'logo' | 'hold' | 'out'>(
-    () => {
-      if (!fullScreen) return 'logo';
-      return 'line';
-    }
+  const prefersReducedMotion = useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof window === 'undefined' || !window.matchMedia) return () => {};
+      const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+      mq.addEventListener('change', onStoreChange);
+      return () => mq.removeEventListener('change', onStoreChange);
+    },
+    () => (typeof window !== 'undefined' && window.matchMedia)
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false,
+    () => false
   );
+
+  const [phase, setPhase] = useState<SplashPhase>(() => (!fullScreen || isReturning) ? 'logo' : 'line');
   const [dismissed, setDismissed] = useState(false);
 
-  const effectivePhase = (phase === 'line' && isReturning) ? 'logo' : phase;
+  // PERF-AUDIT FASE 4: el timeline se decide UNA sola vez leyendo localStorage en el
+  // primer efecto (momento client-only). No depende de useSyncExternalStore: ese valor
+  // puede volcarse tras la hidratación y reprogramaría los timers (observado: splash
+  // recurrente tardaba ~580ms en vez de 250ms). refs para no re-ejecutar el timeline.
+  const autoDismissRef = useRef(autoDismiss);
+  autoDismissRef.current = autoDismiss;
+  const reducedRef = useRef(prefersReducedMotion);
+  reducedRef.current = prefersReducedMotion;
+  const timelineArmedRef = useRef(false);
 
   useEffect(() => {
     if (fullScreen && typeof window !== 'undefined' && !localStorage.getItem('costpro-visited')) {
@@ -52,39 +98,36 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
   const dismiss = useCallback(() => {
     setPhase('out');
     setTimeout(() => {
-      setDismissed(true);
       window.dispatchEvent(new CustomEvent('costpro:skip-splash'));
-    }, 500);
+      if (autoDismissRef.current) setDismissed(true);
+    }, reducedRef.current ? SPLASH_FADE_REDUCED_MS : SPLASH_FADE_MS);
   }, []);
 
   useEffect(() => {
     if (!fullScreen || dismissed) return;
+    if (timelineArmedRef.current) return;
+    timelineArmedRef.current = true;
 
-    let timers: ReturnType<typeof setTimeout>[] = [];
-    const totalMs = isReturning ? SPLASH_RETURN_MS : SPLASH_FIRST_MS;
+    // Lectura única y determinista (client-only): ¿primera visita?
+    let firstVisit = true;
+    try { firstVisit = !localStorage.getItem('costpro-visited'); } catch {}
+    const reduced = reducedRef.current;
 
-    if (isReturning) {
-      timers.push(setTimeout(() => {
-        dismiss();
-      }, totalMs));
-    } else {
-      timers.push(setTimeout(() => {
-        setPhase('logo');
-      }, 800));
-      timers.push(setTimeout(() => {
-        setPhase('hold');
-      }, 1200));
-      timers.push(setTimeout(() => {
-        dismiss();
-      }, totalMs));
+    if (firstVisit && !reduced) {
+      // Secuencia de marca comprimida: línea (0→350) → logo (350→650)
+      const t1 = setTimeout(() => setPhase('logo'), SPLASH_LINE_PHASE_MS);
+      const t2 = setTimeout(() => dismiss(), SPLASH_FIRST_MS);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
-
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, [fullScreen, dismissed, dismiss, isReturning]);
+    // Recurrentes o reduced-motion: logo estático inmediato, salida corta
+    setPhase('logo');
+    const t = setTimeout(() => dismiss(), SPLASH_RETURN_MS);
+    return () => clearTimeout(t);
+  }, [fullScreen, dismissed, dismiss]);
 
   if (dismissed) return null;
+
+  const fadeMs = prefersReducedMotion ? SPLASH_FADE_REDUCED_MS : SPLASH_FADE_MS;
 
   const content = (
     <>
@@ -96,7 +139,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
         }
         .cp-splash-line-${id} {
           transform-origin: center;
-          animation: cp-line-expand-${id} 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: cp-line-expand-${id} 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
           box-shadow: 0 0 14px rgba(34,197,94,0.35), 0 0 40px rgba(34,197,94,0.12);
         }
 
@@ -105,7 +148,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
           100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
         }
         .cp-splash-logo-${id} {
-          animation: cp-logo-reveal-${id} 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: cp-logo-reveal-${id} 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
 
         @keyframes cp-line-glow-${id} {
@@ -161,17 +204,33 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
           background-clip: text;
           animation: cp-shimmer-${id} 2.5s linear infinite;
         }
+
+        /* PERF-AUDIT FASE 4: sin animaciones para usuarios con motion reducido */
+        @media (prefers-reduced-motion: reduce) {
+          .cp-splash-line-${id}, .cp-splash-logo-${id}, .cp-vignette-${id},
+          .cp-fade-in-${id}, .cp-dot-${id}, .cp-line-draw-${id}, .cp-shimmer-${id} {
+            animation: none !important;
+          }
+        }
       `}} />
 
       {fullScreen ? (
         <div
           className={cn(
-            'min-h-screen w-full flex flex-col items-center justify-center overflow-hidden relative',
-            phase === 'out' ? 'opacity-0 transition-opacity duration-500' : '',
+            'flex flex-col items-center justify-center overflow-hidden',
+            phase === 'out' ? 'opacity-0 transition-opacity pointer-events-none' : '',
             className,
           )}
-          style={{ backgroundColor: '#000' }}
+          // PERF-AUDIT FASE 4: posicionamiento inline (no Tailwind) para que el overlay
+          // sea inmune al orden de aplicación de CSS y no participe en el flujo —
+          // evita el layout shift observado al insertar/mutar el splash.
+          style={overlay
+            ? { position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: '#000', transitionDuration: `${fadeMs}ms` }
+            : { minHeight: '100vh', width: '100%', backgroundColor: '#000', transitionDuration: `${fadeMs}ms` }}
           data-testid="splash-loader"
+          role="status"
+          aria-live="polite"
+          aria-label={[text, subtext].filter(Boolean).join(' — ') || 'Cargando'}
         >
           <div className={`cp-vignette-${id} absolute inset-0 pointer-events-none`}
             style={{
@@ -183,7 +242,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
           <div className="relative z-10 flex flex-col items-center gap-8">
             <div
               className={cn(
-                effectivePhase === 'line' ? 'opacity-0' : `opacity-100 cp-splash-logo-${id}`,
+                phase === 'line' ? 'opacity-0' : `opacity-100 cp-splash-logo-${id}`,
               )}
               style={{ transition: 'opacity 0.15s ease' }}
             >
@@ -203,7 +262,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
               <div
                 className={cn(
                   'h-[5px] w-[300px] rounded-full',
-                  effectivePhase === 'line' ? `cp-splash-line-${id}` : `cp-line-glow-${id}`,
+                  phase === 'line' ? `cp-splash-line-${id}` : `cp-line-glow-${id}`,
                 )}
                 style={{
                   backgroundColor: 'var(--primary)',
@@ -212,7 +271,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
 
               <div className={cn(
                 "flex flex-col items-center gap-2 transition-opacity duration-500",
-                effectivePhase === 'line' ? 'opacity-0' : 'opacity-100 cp-fade-in-${id}'
+                phase === 'line' ? 'opacity-0' : `opacity-100 cp-fade-in-${id}`
               )}>
                 {showText && text && (
                   <p className="text-white/60 text-xs uppercase tracking-[0.4em] font-medium">
@@ -262,8 +321,9 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
     </>
   );
 
-  // Always wrap in <main id="main-content"> if it's the primary content (splash or main app content)
-  if (fullScreen) {
+  // PERF-AUDIT FASE 4: en modo overlay el splash NO envuelve en <main> (el contenido
+  // real detrás ya aporta la semántica); evita <main> duplicado y saltos de layout.
+  if (fullScreen && !overlay) {
     return <main id="main-content">{content}</main>;
   }
 

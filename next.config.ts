@@ -29,7 +29,11 @@ const nextConfig: NextConfig = {
     ];
   },
   typescript: {
-    ignoreBuildErrors: false, // FIX-INF-017
+    // PERF-AUDIT (2026-10-11): en builds de medición (PERF_AUDIT_BUILD=1) el type-check
+    // se omite porque su worker necesita >2GB y en contenedores pequeños agota la RAM.
+    // La verificación de tipos se ejecuta aparte con `tsc --noEmit`. En cualquier otro
+    // entorno el comportamiento es estricto (FIX-INF-017 se conserva).
+    ignoreBuildErrors: process.env.PERF_AUDIT_BUILD === '1',
   },
   reactStrictMode: true, // FIX-INF-018
   // FIX-SPLASH-DEV-ORIGINS (2026-09-20): el matcher de Next.js compara el HOSTNAME
@@ -80,6 +84,11 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lodash', 'd3', '@e965/xlsx'],
   },
+  // PERF-AUDIT (2026-10-11): reservado para afinar límites de memoria de build en
+  // entornos pequeños. Nota verificada: en Next 16.3.3 la clave `turbopack.memoryLimit`
+  // NO es reconocida (warning de config inválida), por lo que no se aplica ninguna
+  // opción por defecto. Los builds de medición usan --debug-build-paths (selectivos),
+  // que caben en la RAM disponible. Ver docs/audits/COSTPRO-PERFORMANCE-AUDIT.md §4.2.
 };
 
 // Bundle analyzer wrapper — activated via ANALYZE=true env var
