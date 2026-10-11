@@ -8,6 +8,7 @@ import {
   Calculator, LayoutGrid, PlayCircle,
 } from 'lucide-react';
 import { enterFichaDeCosto, hasCostproSession } from '@/lib/fcEntry';
+import { BrandWordmark } from './BrandWordmark';
 
 /* ── Typewriter Text Component ── */
 function TypewriterText({ text, start, className }: { text: string; start: boolean; className?: string }) {
@@ -379,14 +380,12 @@ export default function HeroSection({
           transition={{ duration: 0.6, ease: 'easeOut' }}
           className="flex items-center justify-between px-6 sm:px-10 lg:px-16 xl:px-20 py-5"
         >
-          {/* Logo */}
+          {/* Logo — FIX-BRAND-HIERARCHY: wordmark compartido (ver BrandWordmark) */}
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#22c55e]/10 border border-[#22c55e]/15 flex items-center justify-center">
               <Shield className="w-4 h-4 text-[#22c55e]" strokeWidth={1.5} />
             </div>
-            <span className="text-lg font-bold tracking-tight text-white/90 font-[family-name:var(--font-space-grotesk)]">
-              Cost<span className="text-[#22c55e]">Pro</span>
-            </span>
+            <BrandWordmark className="text-lg font-bold tracking-tight text-white/90 font-[family-name:var(--font-space-grotesk)]" />
           </div>
 
           {/* Center nav links — desktop */}
@@ -439,10 +438,11 @@ export default function HeroSection({
           >
             {/* FIX-ENTRY (2026-09-20): tamaño de marca defendido en ultra-small —
                 ver excepción .landing-tokens h1 en base.css (el hardening ≤380px
-                global reducía este h1 a 16px, solapado con el nav). */}
+                global reducía este h1 a 16px, solapado con el nav).
+                FIX-BRAND-HIERARCHY (2026-10-12): jerarquía Cost verde / Pro blanco
+                (sólido, sin gradiente) — ver BrandWordmark para el motivo. */}
             <h1 className="text-[3.75rem] sm:text-7xl md:text-8xl lg:text-[9rem] xl:text-[10rem] font-black tracking-tighter leading-none font-[family-name:var(--font-space-grotesk)]">
-              <span className="text-white">Cost</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#22c55e] via-[#4ade80] to-[#22c55e]">Pro</span>
+              <BrandWordmark />
             </h1>
           </motion.div>
 
