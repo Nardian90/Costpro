@@ -1,0 +1,26 @@
+{
+  "$comment": "Bundle Gate — configuración de vistas protegidas y librerías vigiladas. Ver scripts/bundle-gate/README.md.",
+  "route": "/",
+  "manifestRouteKey": "/page",
+  "manifestBaseName": "page",
+  "pageEntry": "[project]/src/app/page",
+  "watchedLibs": ["jspdf", "html2canvas", "jspdf-autotable", "@e965/xlsx"],
+  "minAnchors": 3,
+  "protectedViews": [
+    {
+      "name": "POS",
+      "viewKey": "pos",
+      "source": "src/components/views/terminal/views/pos/POSView.tsx"
+    },
+    {
+      "name": "SalesCatalog",
+      "viewKey": "sales_catalog",
+      "source": "src/components/views/terminal/views/pos/SalesCatalogView.tsx"
+    },
+    {
+      "name": "StorefrontConfig",
+      "viewKey": "storefront-config",
+      "source": "src/components/views/terminal/views/stores/StorefrontConfigView.tsx"
+    }
+  ]
+}

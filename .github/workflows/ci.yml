@@ -55,6 +55,16 @@ jobs:
       - name: Build
         run: NODE_OPTIONS="--max-old-space-size=4096" bun run build
 
+      # Bundle Gate (W2/W3): verifica contra los artefactos del build de
+      # este commit que jspdf/html2canvas/jspdf-autotable/@e965/xlsx no
+      # vuelvan a entrar en la carga inicial del shell ni de las vistas
+      # protegidas (POS, Tabla de Venta, Vitrina Pública).
+      # Reutiliza el build anterior — NO compila una segunda vez.
+      # Exit 1 = regresión confirmada · Exit 2 = artefactos/formato no
+      # verificable (BLOCKED). Ambos fallan el check.
+      - name: Bundle gate (W2/W3 regression)
+        run: node scripts/bundle-gate/check-bundle-gate.mjs --next-dir .next
+
   e2e:
     name: E2E Tests (Playwright)
     # ⛔ DESHABILITADO POR EL PROPIETARIO (2026-10-09) — NO ELIMINAR ESTE BLOQUE.

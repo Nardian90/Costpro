@@ -28,7 +28,8 @@
     "test:security": "node scripts/security-contract-test.cjs",
     "test:e2e:hygiene": "node e2e/scripts/data-hygiene-guard.cjs",
     "test:e2e:hygiene-before": "node e2e/scripts/data-hygiene-guard.cjs --before",
-    "test:e2e:probe": "playwright test e2e/data-hygiene-probe.spec.ts"
+    "test:e2e:probe": "playwright test e2e/data-hygiene-probe.spec.ts",
+    "gate:bundle": "node scripts/bundle-gate/check-bundle-gate.mjs --next-dir .next"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.2",
