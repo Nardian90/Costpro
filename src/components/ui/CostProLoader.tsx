@@ -79,11 +79,15 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
   const [phase, setPhase] = useState<SplashPhase>(() => (!fullScreen || isReturning) ? 'logo' : 'line');
   const [dismissed, setDismissed] = useState(false);
 
-  // Refs para mantener `dismiss` estable (el timeline se reprograma si cambia el medio)
+  // PERF-AUDIT FASE 4: el timeline se decide UNA sola vez leyendo localStorage en el
+  // primer efecto (momento client-only). No depende de useSyncExternalStore: ese valor
+  // puede volcarse tras la hidratación y reprogramaría los timers (observado: splash
+  // recurrente tardaba ~580ms en vez de 250ms). refs para no re-ejecutar el timeline.
   const autoDismissRef = useRef(autoDismiss);
   autoDismissRef.current = autoDismiss;
   const reducedRef = useRef(prefersReducedMotion);
   reducedRef.current = prefersReducedMotion;
+  const timelineArmedRef = useRef(false);
 
   useEffect(() => {
     if (fullScreen && typeof window !== 'undefined' && !localStorage.getItem('costpro-visited')) {
@@ -101,23 +105,25 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
 
   useEffect(() => {
     if (!fullScreen || dismissed) return;
+    if (timelineArmedRef.current) return;
+    timelineArmedRef.current = true;
 
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const firstVisit = !isReturning;
-    const reduced = prefersReducedMotion;
+    // Lectura única y determinista (client-only): ¿primera visita?
+    let firstVisit = true;
+    try { firstVisit = !localStorage.getItem('costpro-visited'); } catch {}
+    const reduced = reducedRef.current;
 
     if (firstVisit && !reduced) {
       // Secuencia de marca comprimida: línea (0→350) → logo (350→650)
-      timers.push(setTimeout(() => setPhase('logo'), SPLASH_LINE_PHASE_MS));
-      timers.push(setTimeout(() => dismiss(), SPLASH_FIRST_MS));
-    } else {
-      // Recurrentes o reduced-motion: logo estático inmediato, salida corta
-      setPhase('logo');
-      timers.push(setTimeout(() => dismiss(), SPLASH_RETURN_MS));
+      const t1 = setTimeout(() => setPhase('logo'), SPLASH_LINE_PHASE_MS);
+      const t2 = setTimeout(() => dismiss(), SPLASH_FIRST_MS);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
-
-    return () => timers.forEach(clearTimeout);
-  }, [fullScreen, dismissed, dismiss, isReturning, prefersReducedMotion]);
+    // Recurrentes o reduced-motion: logo estático inmediato, salida corta
+    setPhase('logo');
+    const t = setTimeout(() => dismiss(), SPLASH_RETURN_MS);
+    return () => clearTimeout(t);
+  }, [fullScreen, dismissed, dismiss]);
 
   if (dismissed) return null;
 
@@ -211,13 +217,16 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
       {fullScreen ? (
         <div
           className={cn(
-            overlay
-              ? 'fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden relative'
-              : 'min-h-screen w-full flex flex-col items-center justify-center overflow-hidden relative',
+            'flex flex-col items-center justify-center overflow-hidden',
             phase === 'out' ? 'opacity-0 transition-opacity pointer-events-none' : '',
             className,
           )}
-          style={{ backgroundColor: '#000', transitionDuration: `${fadeMs}ms` }}
+          // PERF-AUDIT FASE 4: posicionamiento inline (no Tailwind) para que el overlay
+          // sea inmune al orden de aplicación de CSS y no participe en el flujo —
+          // evita el layout shift observado al insertar/mutar el splash.
+          style={overlay
+            ? { position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: '#000', transitionDuration: `${fadeMs}ms` }
+            : { minHeight: '100vh', width: '100%', backgroundColor: '#000', transitionDuration: `${fadeMs}ms` }}
           data-testid="splash-loader"
           role="status"
           aria-live="polite"
