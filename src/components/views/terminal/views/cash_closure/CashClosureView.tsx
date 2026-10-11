@@ -278,7 +278,15 @@ export default function CashClosureView() {
       icon: RefreshCw,
       onClick: handleRefresh,
       disabled: isRefreshing,
-      className: isRefreshing ? "animate-spin-slow" : ""
+      // FIX (CAMBIO 2026-10): la animación de giro iba en `className` y
+      // ActionMenu la aplicaba al <button> completo — durante la recarga
+      // rotaba el botón entero, no solo el icono. Ahora va en
+      // `iconClassName` (prop nueva de ActionMenu): SOLO gira el icono
+      // RefreshCw mientras isRefreshing; el botón permanece estático.
+      // La clase `animate-spin-slow` (landing.css) no se modifica — otras
+      // vistas ya la aplican al icono con este mismo patrón.
+      // `disabled: isRefreshing` sigue evitando solicitudes duplicadas.
+      iconClassName: isRefreshing ? 'animate-spin-slow' : ''
     },
     {
       id: 'process',
