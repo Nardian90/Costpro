@@ -1,11 +1,19 @@
 # COSTPRO — Auditoría y optimización integral del rendimiento
 
-> **Estado**: 🚧 en progreso · **Rama**: `perf/performance-audit` · **Base**: `main @ 6a08c2686`
+> **Estado**: ✅ fase de medición e implementación completada · **Rama**: `perf/performance-audit` · **Base**: `main @ 6a08c2686` · **PR**: #1392
 > **Fecha de inicio**: 2026-10-11 · **Entorno medido**: contenedor local 2 vCPU / 3.9 GB RAM / Node v24.21.0 / bun 1.3.14
 
 ## 1. Resumen ejecutivo
 
-_(se completará al finalizar las fases de medición e implementación)_
+Se auditó el rendimiento de CostPro (Next.js 16.3.3/Turbopack, React 19, Supabase) midiendo primero y modificando mínimamente después.
+
+**Línea base**: landing anónimo con LCP de 3.12 s (2.3 s son splash de marca intencional), ~500 KB comprimidos de JS eager irreducibles (React, router, supabase-js de bootstrap de auth, framer-motion, código app) y CSS global de 622 KB (76 KB gz). CLS 0 en todas las rutas medidas. Arquitectura verificada: shell único en `/` con ~60 vistas ya code-split vía `next/dynamic` — el code-splitting de vistas existe y funciona.
+
+**Corregido (2 incrementos, verificación completa)**: las librerías de exportación PDF (jspdf 408 KB + html2canvas 193 KB + xlsx) viajaban estáticamente en el grafo de apertura del POS y del Catálogo de Ventas — los dos flujos más frecuentes — aunque solo se usan al pulsar «Exportar». Se diferieron al punto de uso con `import()` dinámico. Resultado: **~600 KB de JS menos (raw) en la apertura de cada una de esas vistas**, con contratos y comportamiento intactos.
+
+**Verificación**: TypeScript completo PASS · build de producción PASS · suite unitaria completa 2.749 tests PASS · ESLint PASS. Sin regresiones funcionales conocidas; sin cambios en lógica de negocio, autorización, RLS ni esquemas.
+
+**Bloqueado por el entorno (documentado, no inventado)**: build completo local (OOM, compila en Vercel), medición autenticada in-situ (sin usuario autorizado), y la paralelización de `sync/batch` (W4) que requeriría verificación E2E no autorizada. Quedan propuestos en el backlog con plan de verificación.
 
 ## 2. Commit y estado inicial del repositorio
 
@@ -154,7 +162,7 @@ _(se completará al finalizar las fases de medición e implementación)_
 | W2 | 600 KB extra al abrir POS | imports estáticos verificados + chunk jspdf 408 KB en grafo POS | imports estáticos de libs de exportación | Alto (flujo más frecuente) | Bajo (clic-path) | 2 archivos | **P1 — implementado** |
 | W4 | latencia sync/batch ∝ N | awaits secuenciales (estático) | bucle secuencial | Medio-Alto (reconexión offline) | Medio (orden RPC) | 1 archivo + verificación e2e | **P1 — propuesto** (bloqueado por verificación) |
 | CB2 | LCP 3.1 s primera visita | medido (3 iter) | splash 1.8 s + fade | Alto percibido | Producto (branding) | trivial | P2 — decisión producto |
-| W3 | 600 KB en SalesCatalog/otros | `salesCatalogExport.ts` L2–3, templates html2canvas | mismo patrón W2 | Medio | Bajo | ~6 archivos | P2 — siguiente incremento |
+| W3 | ~600 KB en SalesCatalog | `salesCatalogExport.ts` L1–3 (jspdf+xlsx estáticos) ← `useSalesCatalog` | mismo patrón W2 | Medio | Bajo | 1 archivo | **P2 — implementado** |
 | CB5 | localStorage carrito con Products completos | `cart.ts` partialize | forma persistida | Bajo-Medio (dispositivos lentos) | Medio (migración offline) | 1 archivo + migración | P2 |
 | CB3 | FCP dependiente de 500 KB JS | DOM 303 nodos vs 1.6 MB JS | `ssr:false` del landing | Medio | Alto (reestructura) | estructural | P3 — fase 2 |
 | — | CSS global 622 KB (76 KB gz) | único CSS para app de 1 ruta | Tailwind global | Bajo comprimido | — | — | P3 — no intervenir |
@@ -177,6 +185,13 @@ Criterios aplicados: beneficio perceptible (CB-1/W2 afecta al flujo más frecuen
 - **Verificación**: `tsc --noEmit` PASS · build producción PASS · 295 unit tests PASS (13 archivos, incl. integración de export de catálogo) · grep de fuente confirma ausencia de imports estáticos en el grafo POS.
 - **Pendiente de verificación in-situ**: latencia real de apertura de POS post-login (requiere sesión autorizada; ver §10).
 
+### Incremento 3 — W3: diferimiento de salesCatalogExport fuera de SalesCatalog (commit `b1bfc94a6`)
+- **Archivos**: `src/components/views/terminal/views/pos/useSalesCatalog.ts`.
+- **Cuello de botella corregido**: CB-1 (variante SalesCatalog: `salesCatalogExport.ts` importa estáticamente jspdf 408 KB + jspdf-autotable + @e965/xlsx).
+- **Cambio**: el hook ya no importa el módulo estáticamente; se resuelve con `import()` en el clic de exportar (Excel/PDF), con toast de error si la carga falla. Contrato preservado (los handlers ya eran void).
+- **Verificación**: `tsc --noEmit` PASS · build producción PASS · vitest completo 2.749 tests PASS.
+- **Nota**: `html2canvas` ya quedó fuera de ambos grafos tras W2 (sus únicos consumidores restantes cargan dinámicamente: `StorefrontConfigView` L323 y los templates vía barrel).
+
 ## 8. Comparativa antes/después
 
 | Métrica | Antes | Después | Variación | Método | Resultado |
@@ -191,16 +206,48 @@ Criterios aplicados: beneficio perceptible (CB-1/W2 afecta al flujo más frecuen
 
 ## 9. Pruebas funcionales, contables y de seguridad ejecutadas
 
-_(FASE 6 — pendiente: TypeScript, lint, unitarios, integridad)_
+| Prueba | Alcance | Resultado |
+|---|---|---|
+| TypeScript (`tsc --noEmit`) | repo completo | **PASS** (exit 0) |
+| ESLint | archivos modificados (3) | **PASS** (0 errores) |
+| Vitest (suite completa) | 146 archivos, 2.749 tests | **PASS** (24 skipped por diseño, 0 fallos) |
+| Build de producción (Turbopack, selectivo) | shell + tienda + fc | **PASS** (exit 0) |
+| Vitest targeted export/integración | 13 archivos, 295 tests | **PASS** |
+| E2E Playwright | — | **NOT RUN** por diseño: los fixtures E2E crean tiendas/usuarios y no se autorizó ejecución (protección de datos); no se reactivaron suites deshabilitadas |
+| Verificación in-situ post-login (POS real) | — | **BLOCKED**: requiere sesión autorizada con usuario dedicado |
+| Integridad contable | — | sin cambios en lógica de negocio: los incrementos solo mueven el punto de carga de librerías de exportación (mismas funciones, mismo orden de llamadas, mismos datos) |
+| Seguridad | — | sin cambios en auth, RLS, CSRF ni permisos; los imports dinámicos no amplían superficie de ataque (mismos chunks, carga diferida) |
 
 ## 10. Regresiones, limitaciones y riesgos pendientes
 
-_(FASE 8 — pendiente)_
+### Limitaciones del entorno (afectan la verificación, no el código)
+- **Build completo de producción**: no ejecutable en este contenedor (3.9 GB RAM sin swap; OOM verificado con webpack 2.8 GB heap y Turbopack). El build completo sí compila en Vercel. Los builds selectivos (`--debug-build-paths`) cubren el shell completo y son la evidencia de build de este informe.
+- **Sesión autenticada**: no hay credenciales de usuario reutilizables autorizadas y crear usuarios está prohibido (protección de datos). Por ello la verificación in-situ de la apertura del POS y la latencia de API autenticadas quedan **BLOCKED**, y el W4 no se implementó.
+- **E2E**: no se ejecutó ninguna suite (los fixtures crean tiendas/usuarios efímeros — prohibido en esta auditoría). Ver §9.
+
+### Riesgos residuales de los cambios
+- **W2/W3**: el primer clic en exportar tras cargar la vista añade la descarga del chunk de la librería (~100–300 ms en red lenta). Es aceptable en una acción de exportación y el patrón ya existía (`lazy-excel.ts`). Si un consumidor futuro añadiera un import estático de estas librerías, la mejora se perdería silenciosamente — mitigación posible: test de bundle-size en CI (recomendación §11).
+
+### Regresiones detectadas
+- Ninguna: `tsc` PASS, ESLint PASS, 2.749 unit tests PASS, build PASS, CLS 0 en rutas medidas.
 
 ## 11. Recomendaciones para una segunda fase
 
-_(FASE 8 — pendiente)_
+1. **W4 — Paralelizar `api/sync/batch`** (y los otros 4 endpoints con awaits secuenciales) con verificación previa del fixture E2E seguro (proyecto/tag aislado) y sesión autorizada.
+2. **CB2 — Splash**: decisión de producto sobre `SPLASH_FIRST_MS` (1.8 s → ~0.8 s) o render del hero tras el splash; medir LCP recurrente antes/después.
+3. **CB3 — Landing RSC**: migrar el landing a Server Components (el shell sigue client-only); reduciría ~500 KB comprimidos del FCP anónimo.
+4. **CB5 — Carrito**: versión de migración de `pos-cart-storage` que persista referencias ligeras en vez de objetos `Product` completos.
+5. **CI de presupuesto de bundles**: añadir un check de tamaño (p. ej. `size-limit`) para los chunks del shell y del POS, para que las regresiones de import estático de librerías pesadas fallen el PR.
+6. **Usuario E2E dedicado de solo-lectura** para mediciones de rendimiento autenticadas (POS, vistas, API) sin tocar el entorno operativo.
+7. **Métricas de campo**: activar web-vitals hacia `/api/monitoring` para interpretar LCP/INP/CLS reales por percentil (p75) en producción, complementando la medición de laboratorio de este informe.
 
 ## 12. Estado final de Git y enlace al PR
 
-_(FASE 8 — pendiente)_
+| Campo | Valor |
+|---|---|
+| Rama | `perf/performance-audit` (base: `main @ 6a08c2686`) |
+| Commits | `ca122c0b7` (tooling+informe) → `a49fc7045` (W2) → `0285673dd` (informe FASE 0-3) → `b1bfc94a6` (W3) → informe final |
+| PR | https://github.com/Nardian90/Costpro/pull/1392 |
+| Auto-merge | **Desactivado** — requiere revisión del propietario |
+| Cambios sobre main | 5 archivos de código (`next.config.ts`, `lazy-pdf.ts`, `usePOSCartExports.ts`, `useSalesCatalog.ts`) + herramientas de medición (`scripts/perf/`) + este informe |
+| Despliegue | No se desplegó nada a producción (política: sin autorización) |
