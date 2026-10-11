@@ -10,22 +10,12 @@ import {
   TEMPLATE_CONFIGS,
 } from "@/components/views/terminal/views/pos/catalog-templates/types";
 import { organizeProducts, buildBrandConfig } from "@/components/views/terminal/views/pos/catalog-templates/shared";
-import {
-  renderWhatsAppTemplate,
-  renderInstagramTemplate,
-  renderPriceListTemplate,
-  renderElegantCatalogTemplate,
-} from "@/components/views/terminal/views/pos/catalog-templates";
+// PERF-AUDIT (2026-10-12): el barrel de templates (WhatsApp/Instagram/PriceList/Elegant)
+// arrastra estáticamente jspdf (~408KB), jspdf-autotable y html2canvas (~193KB) al abrir
+// SalesCatalog y StorefrontConfig, aunque el usuario nunca exporte. Los renderers se
+// resuelven ahora con import() dinámico dentro de exportCatalog (primer clic).
+// `types` y `shared` son módulos puros sin deps pesadas y siguen estáticos.
 import type { Product } from "@/types";
-
-// ── Registry ─────────────────────────────────────────────────
-
-const RENDERERS: Record<string, TemplateRenderer> = {
-  whatsapp: renderWhatsAppTemplate,
-  instagram: renderInstagramTemplate,
-  "price-list": renderPriceListTemplate,
-  elegant: renderElegantCatalogTemplate,
-};
 
 // ── Mappers ──────────────────────────────────────────────────
 
@@ -68,15 +58,29 @@ export function useCatalogExport(products: Product[]) {
         return;
       }
 
-      const renderer = RENDERERS[templateId];
-      if (!renderer) {
-        toast.error("Renderizador no disponible para esta plantilla");
-        return;
-      }
-
       const catalogProducts = products.map(toCatalogProduct);
       if (catalogProducts.length === 0) {
         toast.error("No hay productos para exportar");
+        return;
+      }
+
+      // Lazy: los renderers (y sus deps jspdf/html2canvas) solo se cargan al exportar
+      const {
+        renderWhatsAppTemplate,
+        renderInstagramTemplate,
+        renderPriceListTemplate,
+        renderElegantCatalogTemplate,
+      } = await import("@/components/views/terminal/views/pos/catalog-templates");
+      const RENDERERS: Record<string, TemplateRenderer> = {
+        whatsapp: renderWhatsAppTemplate,
+        instagram: renderInstagramTemplate,
+        "price-list": renderPriceListTemplate,
+        elegant: renderElegantCatalogTemplate,
+      };
+
+      const renderer = RENDERERS[templateId];
+      if (!renderer) {
+        toast.error("Renderizador no disponible para esta plantilla");
         return;
       }
 

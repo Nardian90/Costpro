@@ -42,7 +42,10 @@ import {
 // estático, abrir el catálogo de ventas descargaba esas librerías aunque el usuario
 // nunca exportara. Ahora el módulo completo se resuelve con import() dinámico en el
 // clic de exportación. Sin cambios de comportamiento ni contrato.
-import { readSheetNames, parseImportFile } from './salesCatalogImport';
+// PERF-AUDIT (2026-10-12): salesCatalogImport (y su dep estática @e965/xlsx) ya no
+// se importa aquí estáticamente. Con el import estático, abrir el catálogo descargaba
+// xlsx aunque el usuario nunca importara un Excel. Se resuelve con import() dinámico
+// en los dos handlers de importación; el .catch existente cubre fallos de carga.
 
 // ── Hook ──────────────────────────────────────────────────────
 
@@ -574,8 +577,9 @@ export function useSalesCatalog() {
       setImportWarnings([]);
       setSelectedSheetName(null);
 
-      // Detect sheets via the stateless helper
-      readSheetNames(file)
+      // Detect sheets via the stateless helper (cargado bajo demanda)
+      import('./salesCatalogImport')
+        .then(({ readSheetNames }) => readSheetNames(file))
         .then((names) => setImportSheetNames(names))
         .catch(() => setImportSheetNames([]));
 
@@ -598,7 +602,8 @@ export function useSalesCatalog() {
     setIsImporting(true);
     const prevRowsBackup = new Map(rows); // snapshot for undo
 
-    parseImportFile(file, selectedSheetName, products, rows)
+    import('./salesCatalogImport')
+      .then(({ parseImportFile }) => parseImportFile(file, selectedSheetName, products, rows))
       .then(({ nextRows, warnings, updated, skipped }) => {
         // Apply updated rows
         setRows(nextRows);

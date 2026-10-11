@@ -9,10 +9,13 @@ import JSZip from 'jszip';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
-  renderTelegramProductImages,
   type RenderedTelegramImageWithError,
   type RenderTelegramImageOptions,
 } from '@/lib/telegram/telegram-image-renderer';
+// PERF-AUDIT (2026-10-12): telegram-image-renderer importa html2canvas (~193KB) estáticamente.
+// Antes se importaba también la función renderTelegramProductImages al abrir StorefrontConfig,
+// arrastrando html2canvas a la apertura de la vista. Ahora solo entra el tipo (erased en
+// compilación) y la función se resuelve con import() dentro del flujo de exportación.
 import type { ProductPresentationInput } from '@/lib/storefront/product-presentation';
 
 /**
@@ -143,6 +146,8 @@ export function ExportTelegramCatalogModal({
     setZipBlob(null);
 
     try {
+      // Lazy: html2canvas y el pipeline de render solo se cargan al exportar
+      const { renderTelegramProductImages } = await import('@/lib/telegram/telegram-image-renderer');
       const renderResults = await renderTelegramProductImages(
         selected,
         telegramOptions,
