@@ -105,7 +105,6 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
 
   useEffect(() => {
     if (!fullScreen || dismissed) return;
-    if (timelineArmedRef.current) return;
     timelineArmedRef.current = true;
 
     // Lectura única y determinista (client-only): ¿primera visita?
@@ -113,16 +112,23 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
     try { firstVisit = !localStorage.getItem('costpro-visited'); } catch {}
     const reduced = reducedRef.current;
 
+    // FIX-SPLASH-STRICTMODE (2026-10-12): el guard `timelineArmedRef` evita
+    // re-armados mientras el efecto sigue vivo, pero DEBE resetearse en el
+    // cleanup: con reactStrictMode (dev) React desmonta y remonta el efecto
+    // una vez por montaje — el primer cleanup borraba los timers programados y
+    // el re-run salía temprano por el guard → dismiss() nunca corría y el
+    // splash quedaba pegado en dev. Al resetear, cada ciclo de vida efectivo
+    // (incluido el remontaje de StrictMode) programa sus timers una sola vez.
     if (firstVisit && !reduced) {
       // Secuencia de marca comprimida: línea (0→350) → logo (350→650)
       const t1 = setTimeout(() => setPhase('logo'), SPLASH_LINE_PHASE_MS);
       const t2 = setTimeout(() => dismiss(), SPLASH_FIRST_MS);
-      return () => { clearTimeout(t1); clearTimeout(t2); };
+      return () => { timelineArmedRef.current = false; clearTimeout(t1); clearTimeout(t2); };
     }
     // Recurrentes o reduced-motion: logo estático inmediato, salida corta
     setPhase('logo');
     const t = setTimeout(() => dismiss(), SPLASH_RETURN_MS);
-    return () => clearTimeout(t);
+    return () => { timelineArmedRef.current = false; clearTimeout(t); };
   }, [fullScreen, dismissed, dismiss]);
 
   if (dismissed) return null;
