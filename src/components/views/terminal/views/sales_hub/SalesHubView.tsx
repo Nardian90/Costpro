@@ -90,6 +90,13 @@ interface HubCard {
  * una fila; descripción debajo). Mantiene destinos, permisos, colores
  * semánticos, estados hover/focus/active y la cuadrícula (Vender
  * protagonista a ancho completo; Caja e Historial a 2 columnas).
+ *
+ * CAMBIO 2026-10 §6 — SUPERFICIE SÓLIDA (Enhanced + dark): la superficie de
+ * las tarjetas pasa de un tinte semántico al 5% (casi transparente) a
+ * un token sólido del sistema (bg-card), conservando el tinte semántico en
+ * el chip del icono y el borde. El fondo Enhanced (wordmark, rejilla, halos)
+ * aporta profundidad ALREDEDOR de la tarjeta pero ya no compite con su
+ * contenido. Sin opacidad global: solo la superficie de la tarjeta.
  * ══════════════════════════════════════════════════════════════════════ */
 
 const PRIMARY_CARDS: HubCard[] = [
@@ -407,9 +414,10 @@ export default function SalesHubView() {
             {alerts.map((alert, idx) => {
               const Icon = alert.icon;
               const severityStyles = {
-                warning: 'border-warning/30 bg-warning/5 text-warning',
-                info: 'border-info/30 bg-info/5 text-info',
-                danger: 'border-destructive/30 bg-destructive/5 text-destructive',
+                // §6: tinte reforzado (10%) + blur para no competir con el fondo Enhanced
+                warning: 'border-warning/30 bg-warning/10 backdrop-blur-sm text-warning',
+                info: 'border-info/30 bg-info/10 backdrop-blur-sm text-info',
+                danger: 'border-destructive/30 bg-destructive/10 backdrop-blur-sm text-destructive',
               };
               return (
                 <motion.button
@@ -461,7 +469,8 @@ export default function SalesHubView() {
               className={cn(
                 "group relative flex items-start gap-3.5 rounded-2xl border-2 text-left transition-all hover:shadow-lg active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30",
                 featured ? "p-4 sm:p-5 md:col-span-2" : "p-4",
-                card.bgColor,
+                // §6: superficie sólida (token bg-card) — el tinte semántico vive en el chip del icono
+                "bg-card",
                 card.borderColor,
               )}
             >
@@ -523,7 +532,8 @@ export default function SalesHubView() {
               transition={{ delay: 0.24 + idx * 0.06 }}
               className={cn(
                 "group flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all hover:shadow-md active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-primary/30",
-                card.bgColor,
+                // §6: superficie sólida también en la capa secundaria
+                "bg-card",
                 card.borderColor,
               )}
             >
