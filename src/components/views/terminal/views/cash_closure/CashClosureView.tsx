@@ -9,8 +9,8 @@ import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import PageHeader from '@/components/ui/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
-// FIX-PAYMENT-TRACKING (2026-07-12): Reporte de caja con desglose de billetes
-import { CashReportModal } from '@/components/views/terminal/views/cash/CashReportModal';
+// CAMBIO 2026-10: el botón "Reporte Entrega" navega a la vista dedicada cash_report;
+// el modal CashReportModal fue eliminado (fuente única = CashReportView).
 
 import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSinceLastClosure, useCashShiftExpected } from '@/hooks/api/useCashClosures';
 import { computeArqueo, type CashShiftBreakdown } from '@/lib/cash-arqueo';
@@ -45,8 +45,6 @@ const AccessDenied = () => (
 export default function CashClosureView() {
   const { user } = useAuthStore();
   const { setCurrentView } = useUIStore();
-  // FIX-PAYMENT-TRACKING (2026-07-12): estado para el modal de reporte de caja
-  const [showCashReport, setShowCashReport] = useState(false);
   const {
     data: cashClosuresData,
     isLoading: isLoadingClosures,
@@ -323,10 +321,12 @@ export default function CashClosureView() {
           ) : undefined}
           secondaryActions={
             <div className="w-full sm:w-auto flex items-center gap-2">
-              {/* FIX-PAYMENT-TRACKING: Botón de Reporte de Caja para entrega de dinero */}
+              {/* CAMBIO 2026-10: navega a la VISTA dedicada cash_report (CashReportView).
+                  El modal overlay fue eliminado — acceso coherente con el menú Ventas
+                  y el botón de POS (mismo destino, sin segunda implementación). */}
               <button
                 type="button"
-                onClick={() => setShowCashReport(true)}
+                onClick={() => setCurrentView('cash_report')}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-primary/20 text-primary hover:bg-primary/10 transition-colors text-xs font-medium tracking-normal min-h-[44px]"
                 title="Reporte de caja con desglose de billetes para entrega de dinero"
               >
@@ -822,8 +822,8 @@ export default function CashClosureView() {
         </div>
       </BaseModal>
 
-      {/* FIX-PAYMENT-TRACKING: Modal de Reporte de Caja para entrega de dinero */}
-      <CashReportModal open={showCashReport} onClose={() => setShowCashReport(false)} />
+      {/* CAMBIO 2026-10: el modal de Reporte de Caja fue eliminado; el botón
+          "Reporte Entrega" navega a la vista dedicada cash_report (arriba). */}
     </>
   );
 }

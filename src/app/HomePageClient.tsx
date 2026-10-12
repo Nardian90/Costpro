@@ -116,9 +116,18 @@ export default function HomePageClient() {
               <ViewLoadingSplash label={t('main')} showTips={false} />
             </div>
           }>
-            <CyberShell>
-              <TerminalShell />
-            </CyberShell>
+            {/* FIX-SCROLL-DESKTOP (2026-10): contenedor de altura DEFINIDA para el
+                terminal. Antes CyberShell colgaba de un min-h-screen y TerminalShell
+                usaba h-screen (100vh): el frame de CyberShell (p-2 + borde en ≥sm)
+                excedía el viewport en 18px → scroll documental innecesario en
+                escritorio. Con h-dvh fijo aquí, el shell (h-full) llena exactamente
+                la caja interior del frame y el documento nunca desborda. La landing
+                sigue usando min-h-screen (necesita crecer). */}
+            <div className="h-dvh w-full overflow-hidden">
+              <CyberShell>
+                <TerminalShell />
+              </CyberShell>
+            </div>
           </Suspense>
         )
       ) : (
