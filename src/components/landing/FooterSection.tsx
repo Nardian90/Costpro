@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { BrandWordmark } from './BrandWordmark';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Cookie } from 'lucide-react';
@@ -63,9 +64,7 @@ export default function FooterSection({
                   <path d="M 50,50 m -30,0 a 30,30 0 1,0 60,0 a 30,30 0 1,0 -60,0" stroke="#22c55e" strokeWidth="10" strokeLinecap="round" strokeDasharray="150 189" />
                 </svg>
               </div>
-              <span className="text-lg font-bold text-white">
-                Cost<span className="text-[#22c55e]">Pro</span>
-              </span>
+              <BrandWordmark className="text-lg font-bold text-white" />
             </div>
             <p className="text-sm text-white/50 leading-relaxed">
               Plataforma multi-tienda para gestionar negocios con presencia digital. Inventario, ventas y vitrina digital para cada tienda.

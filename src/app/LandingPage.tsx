@@ -9,6 +9,7 @@ import {
 
 // ── Shared data, animations, hooks ──
 import { sectionIds, sectionLabels } from '@/components/landing/data';
+import { BrandWordmark } from '@/components/landing/BrandWordmark';
 import SectionDivider from '@/components/landing/SectionDivider';
 import { useCookieConsent, usePromoBanner } from '@/components/landing/hooks';
 
@@ -541,9 +542,7 @@ export default function LandingPage() {
                   <div className="w-8 h-8 rounded-lg bg-[#22c55e]/15 border border-[#22c55e]/20 flex items-center justify-center">
                     <Lock className="w-4 h-4 text-[#22c55e]" />
                   </div>
-                  <span className="text-lg font-bold tracking-tight text-white font-[family-name:var(--font-space-grotesk)]">
-                    Cost<span className="text-[#22c55e]">Pro</span>
-                  </span>
+                  <BrandWordmark className="text-lg font-bold tracking-tight text-white font-[family-name:var(--font-space-grotesk)]" />
                 </div>
                 <button onClick={() => setShowMobileNav(false)} className="w-8 h-8 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center hover:bg-white/10 transition-colors" aria-label="Cerrar menú">
                   <X className="w-4 h-4 text-white/60" />

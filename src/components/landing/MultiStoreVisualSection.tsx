@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
   Package,
@@ -19,7 +20,83 @@ import FeatureVisual from './FeatureVisual';
  *
  * AUDIT (2026-08-18): Todos los datos son MOCK estáticos definidos en
  * este archivo. No consulta la DB.
+ *
+ * LANDING-CATALOG-IMAGES (2026-10-12): el paso 2 muestra miniaturas reales de
+ * producto (public/landing/demo-products/*.webp — assets del proyecto,
+ * 1024x1024, añadidos en c4ce1177e y sin referencias hasta ahora;
+ * detergente.webp regenerado sin texto por packaging corrupto "Loundry").
+ * Contenedor cuadrado uniforme + object-contain (conserva la silueta del
+ * producto, sin recortes ni deformaciones) + fallback elegante al icono si la
+ * imagen falla (nunca un icono de imagen rota). Nombres, precios y stocks
+ * originales intactos.
  */
+
+/** Productos de demostración — datos originales sin cambios (mock estático). */
+const DEMO_CATALOG = [
+  {
+    name: 'Arroz Grano Largo 5kg',
+    price: 320,
+    stock: 120,
+    img: '/landing/demo-products/arroz.webp',
+    alt: 'Saco transparente con arroz de grano largo',
+  },
+  {
+    name: 'Aceite Girasol 1L',
+    price: 480,
+    stock: 64,
+    img: '/landing/demo-products/aceite.webp',
+    alt: 'Botella de aceite de girasol',
+  },
+  {
+    name: 'Café Tostado 250g',
+    price: 350,
+    stock: 55,
+    img: '/landing/demo-products/cafe.webp',
+    alt: 'Paquete de café tostado en grano',
+  },
+  {
+    name: 'Detergente 900g',
+    price: 300,
+    stock: 47,
+    img: '/landing/demo-products/detergente.webp',
+    alt: 'Caja de detergente en polvo',
+  },
+] as const;
+
+/**
+ * DemoProductThumb — miniatura cuadrada con fallback elegante.
+ * Si el WebP falla (404/red), muestra el placeholder Package original en vez
+ * de un icono de imagen rota. Alt descriptivo del contenido visual (el nombre
+ * comercial ya está como texto adyacente — no se duplica información).
+ */
+function DemoProductThumb({ img, alt }: { img: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <div className="w-full aspect-square rounded-md bg-white/[0.03] mb-2 flex items-center justify-center" aria-hidden="true">
+        <Package className="w-5 h-5 text-white/15" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full aspect-square rounded-md overflow-hidden bg-white/[0.06] mb-2">
+      <Image
+        src={img}
+        alt={alt}
+        fill
+        loading="lazy"
+        decoding="async"
+        sizes="(max-width: 640px) 45vw, 220px"
+        quality={90}
+        onError={() => setFailed(true)}
+        className="object-contain"
+      />
+    </div>
+  );
+}
+
 export function MultiStoreVisualSection() {
   return (
     <section id="plataforma" className="relative py-20 sm:py-28 px-4 sm:px-6 overflow-hidden">
@@ -92,16 +169,9 @@ export function MultiStoreVisualSection() {
           </div>
           <div className="rounded-2xl border border-white/[0.06] bg-[#0a0f1a] overflow-hidden p-3">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[
-                { name: 'Arroz Grano Largo 5kg', price: 320, stock: 120 },
-                { name: 'Aceite Girasol 1L', price: 480, stock: 64 },
-                { name: 'Café Tostado 250g', price: 350, stock: 55 },
-                { name: 'Detergente 900g', price: 300, stock: 47 },
-              ].map(p => (
+              {DEMO_CATALOG.map(p => (
                 <div key={p.name} className="rounded-lg bg-white/[0.02] p-2.5 border border-white/[0.03]">
-                  <div className="w-full h-12 rounded bg-white/[0.03] mb-2 flex items-center justify-center">
-                    <Package className="w-4 h-4 text-white/10" />
-                  </div>
+                  <DemoProductThumb img={p.img} alt={p.alt} />
                   <p className="text-[10px] font-bold text-white truncate">{p.name}</p>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-[10px] font-black text-[#22c55e] tabular-nums">{formatCurrency(p.price)}</span>

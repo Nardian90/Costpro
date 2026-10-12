@@ -110,41 +110,16 @@ export function ParticleBackground({ viewId, showLoadingBranding }: ParticleBack
       particlesRef.current.push(createParticle(w, h));
     }
 
-    const animate = () => {
-      const html = document.documentElement;
-      modeRef.current = html.classList.contains('mode-enhanced') ? 'enhanced' : 'performance';
+    const isDarkMode = () => document.documentElement.classList.contains('dark');
 
-      if (modeRef.current === 'performance') {
-        ctx.clearRect(0, 0, w, h);
-        animRef.current = requestAnimationFrame(animate);
-        return;
-      }
-
-      ctx.clearRect(0, 0, w, h);
-
-      const isDark = html.classList.contains('dark');
+    /** Dibuja las partículas en su posición actual (sin avanzar el movimiento). */
+    const renderParticles = () => {
+      const isDark = isDarkMode();
       const baseR = isDark ? 74 : 160;
       const baseG = isDark ? 222 : 165;
       const baseB = isDark ? 128 : 175;
 
       for (const p of particlesRef.current) {
-        p.y += p.speedY;
-        p.driftPhase += p.driftSpeed;
-        p.x += Math.sin(p.driftPhase) * p.drift * 0.4 + p.speedX;
-
-        if (p.type === 'streak') {
-          p.trail.push({ x: p.x, y: p.y });
-          if (p.trail.length > 5) p.trail.shift();
-        }
-
-        if (p.y > h + 20) {
-          p.y = -20;
-          p.x = Math.random() * w;
-          p.trail = [];
-        }
-        if (p.x < -20) p.x = w + 20;
-        if (p.x > w + 20) p.x = -20;
-
         const r = Math.min(255, Math.max(0, baseR + p.hue));
         const g = Math.min(255, Math.max(0, baseG + p.hue * 0.5));
         const b = Math.min(255, Math.max(0, baseB - p.hue * 0.3));
@@ -188,14 +163,73 @@ export function ParticleBackground({ viewId, showLoadingBranding }: ParticleBack
           ctx.fill();
         }
       }
+    };
 
+    const animate = () => {
+      const html = document.documentElement;
+      modeRef.current = html.classList.contains('mode-enhanced') ? 'enhanced' : 'performance';
+
+      if (modeRef.current === 'performance') {
+        ctx.clearRect(0, 0, w, h);
+        animRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      ctx.clearRect(0, 0, w, h);
+
+      for (const p of particlesRef.current) {
+        p.y += p.speedY;
+        p.driftPhase += p.driftSpeed;
+        p.x += Math.sin(p.driftPhase) * p.drift * 0.4 + p.speedX;
+
+        if (p.type === 'streak') {
+          p.trail.push({ x: p.x, y: p.y });
+          if (p.trail.length > 5) p.trail.shift();
+        }
+
+        if (p.y > h + 20) {
+          p.y = -20;
+          p.x = Math.random() * w;
+          p.trail = [];
+        }
+        if (p.x < -20) p.x = w + 20;
+        if (p.x > w + 20) p.x = -20;
+      }
+
+      renderParticles();
       animRef.current = requestAnimationFrame(animate);
     };
 
-    animate();
+    // FIX-ENHANCED-REDUCED-MOTION (2026-10-12): con prefers-reduced-motion el
+    // canvas dibuja UNA dispersión estática (profundidad sin movimiento) y no
+    // arranca el bucle rAF. El listener reacciona si el usuario cambia la
+    // preferencia en vivo (estático ↔ animado) y todo se limpia al desmontar.
+    const reducedQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const drawStatic = () => {
+      ctx.clearRect(0, 0, w, h);
+      renderParticles();
+    };
+
+    const handleReducedChange = () => {
+      cancelAnimationFrame(animRef.current);
+      if (reducedQuery.matches) {
+        drawStatic();
+      } else {
+        animRef.current = requestAnimationFrame(animate);
+      }
+    };
+    reducedQuery.addEventListener('change', handleReducedChange);
+
+    if (reducedQuery.matches) {
+      drawStatic();
+    } else {
+      animate();
+    }
 
     return () => {
       window.removeEventListener('resize', resize);
+      reducedQuery.removeEventListener('change', handleReducedChange);
       cancelAnimationFrame(animRef.current);
     };
   }, [createParticle]);
@@ -225,11 +259,19 @@ export function ParticleBackground({ viewId, showLoadingBranding }: ParticleBack
           - "COSTPRO" texto grande con opacity baja
           - Tips debajo (contextual a la vista)
           - SOLO visible cuando showLoadingBranding=true (vista cargando)
-          - SOLO en enhanced mode (display:none via .enhanced-layer en perf)
+          - SOLO en enhanced mode (ver CSS html:not(.mode-enhanced) abajo)
           - SOLO en dark mode (CSS .dark-only)
-          - Desaparece inmediatamente cuando la vista termina de cargar */}
+          - Desaparece inmediatamente cuando la vista termina de cargar
+
+          FIX-ENHANCED-BRANDING-PERSIST (2026-10-12): este contenedor ya NO
+          usa .enhanced-layer. Esa clase aplica `animation: enhanced-fade-in`
+          (opacity → 1, forwards) con especificidad 0-2-1, que ANULABA el
+          fade-out de .loading-branding-hidden (0-1-0): en dark+enhanced el
+          texto COSTPRO quedaba a opacity 1 permanentemente detrás del
+          contenido. La visibilidad ahora la controlan exclusivamente las
+          clases loading-branding-* (+ .dark-only + gate de performance en CSS). */}
       <motion.div
-        className={`absolute inset-0 z-[-1] pointer-events-none flex flex-col items-center justify-center overflow-hidden enhanced-layer dark-only ${showLoadingBranding ? 'loading-branding-visible' : 'loading-branding-hidden'}`}
+        className={`absolute inset-0 z-[-1] pointer-events-none flex flex-col items-center justify-center overflow-hidden dark-only ${showLoadingBranding ? 'loading-branding-visible' : 'loading-branding-hidden'}`}
         aria-hidden="true"
       >
         <span className="bg-costpro-branding select-none" key={`brand-${viewId}`}>
@@ -306,10 +348,9 @@ export function ParticleBackground({ viewId, showLoadingBranding }: ParticleBack
           50% { transform: translate(-8vw, 10vh) scale(1.15); }
         }
 
-        /* ── Respect reduced motion ── */
-        @media (prefers-reduced-motion: reduce) {
-          .mesh-orb { animation: none !important; }
-        }
+        /* ── Respect reduced motion ──
+           (reglas consolidadas en el bloque FIX-ENHANCED-REDUCED-MOTION,
+           más abajo, junto a loading-branding) */
 
         /* ── COSTPRO branding text (loading indicator) ──
            FIX-COSTPRO-LOADING (2026-07-13): texto "COSTPRO" grande con
@@ -353,7 +394,13 @@ export function ParticleBackground({ viewId, showLoadingBranding }: ParticleBack
         /* ── Loading branding visibility ──
            FIX-TIMING (2026-07-13): fade-in al aparecer, fade-out al ocultar.
            Solo visible cuando showLoadingBranding=true.
-           Cuando es false, fade-out 0.5s luego display:none. */
+           Cuando es false, fade-out 0.5s luego display:none.
+
+           FIX-ENHANCED-BRANDING-PERSIST (2026-10-12): el gate de performance
+           va DESPUÉS de .dark-only en la hoja de estilos (misma especificidad
+           0-2-1 → gana el último) para que en modo performance la capa no se
+           muestre ni siquiera en dark. La rama visible/hidden ya no compite
+           con enhanced-fade-in (la capa dejó de ser .enhanced-layer). */
         .loading-branding-hidden {
           opacity: 0;
           animation: branding-fade-out 0.5s ease-out forwards;
@@ -363,11 +410,29 @@ export function ParticleBackground({ viewId, showLoadingBranding }: ParticleBack
           opacity: 0;
           animation: branding-fade-in 0.3s ease-out forwards;
         }
+        html:not(.mode-enhanced) .loading-branding-hidden,
+        html:not(.mode-enhanced) .loading-branding-visible {
+          display: none;
+        }
         @keyframes branding-fade-in {
           to { opacity: 1; }
         }
         @keyframes branding-fade-out {
           to { opacity: 0; }
+        }
+
+        /* ── Respect reduced motion ──
+           FIX-ENHANCED-REDUCED-MOTION (2026-10-12): sin transiciones de
+           opacidad animadas (aparece/desaparece al instante, sin fade) y
+           orbes sin animación. El canvas de partículas se resuelve en JS
+           (frame estático, ver efecto principal). */
+        @media (prefers-reduced-motion: reduce) {
+          .mesh-orb { animation: none !important; }
+          .loading-branding-visible,
+          .loading-branding-hidden {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+          }
         }
 
         /* ── Enhanced mode: frosted glass content panels ── */
