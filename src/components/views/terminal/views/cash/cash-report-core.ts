@@ -29,13 +29,34 @@ export const TEMPLATES: { id: PdfTemplate; label: string; desc: string }[] = [
   { id: 'diario', label: 'Diario (Empresa)', desc: 'Plantilla estilo reporte diario: 3 páginas (CUP/USD/Órdenes) con tabla por producto + desglose billetes + firmas Hecho/Entregado/Recibido por' },
 ];
 
-export const DEFAULT_PDF_TEMPLATE: PdfTemplate = 'estandar';
+/**
+ * AUDITORÍA 2026-10 (§1 del brief): el tipo predeterminado al entrar por
+ * primera vez es Diario (Empresa). Id canónico EXISTENTE ('diario') — sin
+ * variantes duplicadas. Las configuraciones guardadas VÁLIDAS no se tocan
+ * (validatePdfTemplate solo restaura las inválidas/corruptas).
+ */
+export const DEFAULT_PDF_TEMPLATE: PdfTemplate = 'diario';
 
 /** Valida un valor almacenado contra los ids canónicos; si no es válido devuelve el default sin lanzar error. */
 export function validatePdfTemplate(raw: unknown): PdfTemplate {
   return typeof raw === 'string' && TEMPLATES.some(t => t.id === raw)
     ? (raw as PdfTemplate)
     : DEFAULT_PDF_TEMPLATE;
+}
+
+// ── Orientación del documento (§1 del brief: Vertical / Horizontal) ─────────
+export type PdfOrientation = 'vertical' | 'horizontal';
+
+export const PDF_ORIENTATIONS: { id: PdfOrientation; label: string; desc: string }[] = [
+  { id: 'vertical', label: 'Vertical (retrato)', desc: 'A4 clásico del reporte diario' },
+  { id: 'horizontal', label: 'Horizontal (apaisado)', desc: 'Más ancho de tabla, menos filas por página' },
+];
+
+/** Coherente con la configuración de Diario (Empresa): vertical por defecto. */
+export const DEFAULT_PDF_ORIENTATION: PdfOrientation = 'vertical';
+
+export function validatePdfOrientation(raw: unknown): PdfOrientation {
+  return raw === 'horizontal' ? 'horizontal' : raw === 'vertical' ? 'vertical' : DEFAULT_PDF_ORIENTATION;
 }
 
 // ── Denominaciones ──────────────────────────────────────────────────────────
@@ -57,6 +78,8 @@ export const LS_KEYS = {
    *  (los datos del reporte sí se piden por tienda). Coherente con
    *  deliveredBy/recipient, que ya eran globales en el modal. */
   pdfTemplate: 'costpro:cash-report:template',
+  /** Orientación del PDF (§1 del brief). Preferencia de FORMATO global, como la plantilla. */
+  pdfOrientation: 'costpro:cash-report:orientation',
   /** Nueva v1: denominaciones personalizadas por moneda. */
   customDenoms: 'costpro:cash-report:custom-denoms:v1',
   /** Nueva v1: denominaciones activadas de USD (paridad con la clave legacy CUP). */
@@ -83,6 +106,21 @@ export function loadPdfTemplate(): PdfTemplate {
 export function savePdfTemplate(t: PdfTemplate): void {
   if (typeof window === 'undefined') return;
   try { window.localStorage.setItem(LS_KEYS.pdfTemplate, t); } catch {}
+}
+
+// ── Persistencia de orientación (§1: afecta documento + previsualización) ────
+export function loadPdfOrientation(): PdfOrientation {
+  if (typeof window === 'undefined') return DEFAULT_PDF_ORIENTATION;
+  try {
+    return validatePdfOrientation(window.localStorage.getItem(LS_KEYS.pdfOrientation));
+  } catch {
+    return DEFAULT_PDF_ORIENTATION;
+  }
+}
+
+export function savePdfOrientation(o: PdfOrientation): void {
+  if (typeof window === 'undefined') return;
+  try { window.localStorage.setItem(LS_KEYS.pdfOrientation, o); } catch {}
 }
 
 // ── Persistencia de denominaciones activas (defaults toggled) ───────────────

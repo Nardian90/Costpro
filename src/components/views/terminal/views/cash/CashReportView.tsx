@@ -31,7 +31,7 @@ import {
   Printer, Download, DollarSign, TrendingUp, TrendingDown,
   ChevronDown, ChevronRight, Eye, Trash2, Save, RotateCcw, Settings,
   Sparkles, FileText, CheckSquare, Square, RefreshCw, AlertTriangle,
-  Plus, X, ListChecks, FileSearch, Calculator,
+  Plus, X, ListChecks, FileSearch, Calculator, Users, Minus, BookOpen,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
@@ -47,6 +47,8 @@ import {
 import {
   TEMPLATES, CUP_DEFAULT_DENOMS, USD_DEFAULT_DENOMS, LS_KEYS,
   loadPdfTemplate, savePdfTemplate, validatePdfTemplate,
+  loadPdfOrientation, savePdfOrientation,
+  PDF_ORIENTATIONS, DEFAULT_PDF_ORIENTATION,
   loadEnabledDenoms, saveEnabledDenoms,
   loadCustomDenoms, saveCustomDenoms,
   validateCustomDenom, addCustomDenom as addCustomDenomTo,
@@ -54,8 +56,10 @@ import {
   sanitizeCount, breakdownTotal, suggestBreakdown, computeExpectedCash,
   isDateRangeInvalid, isReportStale,
   loadHistory, saveHistory, formatUsd, formatDenomValue,
-  type PdfTemplate, type Breakdown, type Currency, type CustomDenoms, type SavedBreakdown,
+  type PdfTemplate, type PdfOrientation, type Breakdown, type Currency, type CustomDenoms, type SavedBreakdown,
 } from './cash-report-core';
+import { computeDailySummary, computeCuadre, cuadreLabel, type DailySummary } from '@/lib/cash-report/summary';
+import CommissionsManageModal from './CommissionsManageModal';
 
 type ReportTab = 'resultados' | 'desglose' | 'preview';
 
@@ -71,9 +75,15 @@ export default function CashReportView() {
   const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   // ── §3 Plantilla: default legítimo en el primer render; restauración en mount ──
-  const [pdfTemplate, setPdfTemplate] = useState<PdfTemplate>('estandar');
+  // AUDITORÍA 2026-10 (§1): default = Diario (Empresa) ('diario' canónico).
+  const [pdfTemplate, setPdfTemplate] = useState<PdfTemplate>('diario');
+  // §1 del brief: orientación del documento, persistida como la plantilla.
+  const [pdfOrientation, setPdfOrientation] = useState<PdfOrientation>(DEFAULT_PDF_ORIENTATION);
   // Opciones del documento (secciones del PDF) — aplican a vista previa y descarga
   const [pdfOptions, setPdfOptions] = useState<CashReportPdfOptions>(DEFAULT_PDF_OPTIONS);
+
+  // ── §5: modal de gestión de comisiones (documento trazable) ──
+  const [showCommissionsModal, setShowCommissionsModal] = useState(false);
 
   // ── Resultados aplicados (solo cambian al pulsar el botón principal) ──
   const [applied, setApplied] = useState<{ cfg: { startDate: string; endDate: string }; report: CashReport } | null>(null);
@@ -114,6 +124,7 @@ export default function CashReportView() {
   // ── §3 Restauración de preferencias (post-mount, sin tocar hidratación) ──
   useEffect(() => {
     setPdfTemplate(loadPdfTemplate());
+    setPdfOrientation(loadPdfOrientation());
     setCupDenoms(loadEnabledDenoms('CUP'));
     setUsdDenoms(loadEnabledDenoms('USD'));
     setCustomDenoms(loadCustomDenoms());
@@ -129,6 +140,12 @@ export default function CashReportView() {
   const setTemplatePersisted = useCallback((t: PdfTemplate) => {
     setPdfTemplate(t);
     savePdfTemplate(t);
+  }, []);
+
+  // §1: la orientación persiste al cambiar (mismo mecanismo que la plantilla).
+  const setOrientationPersisted = useCallback((o: PdfOrientation) => {
+    setPdfOrientation(o);
+    savePdfOrientation(o);
   }, []);
 
   // ── Info de la tienda activa (misma lógica del modal) ──
@@ -186,11 +203,17 @@ export default function CashReportView() {
     }
   }, [startDate, endDate]);
 
+  // ── AUDITORÍA 2026-10: Resumen del Día con la fórmula centralizada (misma que PDF) ──
+  const cupSummaryMemo = useMemo<DailySummary>(() => computeDailySummary(applied?.report, 'CUP'), [applied]);
+
   // ── Totales y esperados (§5.4: sin conversión, monedas separadas) ──
   const cupTotal = useMemo(() => breakdownTotal(cupBreakdown), [cupBreakdown]);
   const usdTotal = useMemo(() => breakdownTotal(usdBreakdown), [usdBreakdown]);
-  const expectedCup = applied?.report ? (applied.report.cash_balance_cup ?? (applied.report.totals as Record<string, number> | undefined)?.balance_cup ?? 0) : 0;
-  const expectedUsd = applied?.report ? computeExpectedCash(applied.report, 'USD') : 0;
+  // AUDITORÍA 2026-10 (D4): esperado CUP desde la MISMA fórmula centralizada que
+  // el PDF (antes: cash_balance_cup del RPC que excluía el efectivo de mixtas;
+  // fallback a balance_cup del RPC que INCLUÍA transferencias — inconsistente).
+  const expectedCup = cupSummaryMemo.efectivoEsperado;
+  const expectedUsd = useMemo(() => computeDailySummary(applied?.report, 'USD').efectivoEsperado, [applied]);
   const cupDifference = cupTotal - expectedCup;
   const usdDifference = usdTotal - expectedUsd;
 
@@ -339,11 +362,12 @@ export default function CashReportView() {
   // ── §4 Vista previa: mismo builder que la descarga, cache por firma ──
   const previewSignature = useMemo(() => JSON.stringify({
     template: pdfTemplate,
+    orientation: pdfOrientation, // §1: la orientación cambia el documento → invalida el cache
     options: showPdfOptions ? pdfOptions : pdfOptions, // opciones siempre parte de la firma
     cfg: applied?.cfg ?? null,
     cupBreakdown, usdBreakdown, deliveredBy, recipientName,
     cupDenoms, usdDenoms, customDenoms,
-  }), [pdfTemplate, pdfOptions, applied, cupBreakdown, usdBreakdown, deliveredBy, recipientName, cupDenoms, usdDenoms, customDenoms]);
+  }), [pdfTemplate, pdfOrientation, pdfOptions, applied, cupBreakdown, usdBreakdown, deliveredBy, recipientName, cupDenoms, usdDenoms, customDenoms]);
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -389,6 +413,7 @@ export default function CashReportView() {
         cupDenoms: cupDenoms, usdDenoms: usdDenoms,
         cupBreakdown, usdBreakdown,
         options: pdfOptions,
+        orientation: pdfOrientation,
       }, summaries);
       const url = doc.output('bloburl');
       const old = previewUrlRef.current;
@@ -404,7 +429,7 @@ export default function CashReportView() {
       buildingRef.current = false;
       setPreviewLoading(false);
     }
-  }, [applied, pdfTemplate, pdfOptions, storeInfo, deliveredBy, recipientName, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature]);
+  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature]);
 
   // Al abrir la pestaña de vista previa con reporte calculado: construir si no hay cache
   useEffect(() => {
@@ -435,6 +460,7 @@ export default function CashReportView() {
           startDate: applied.cfg.startDate, endDate: applied.cfg.endDate,
           storeInfo, deliveredBy, recipientName,
           cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptions,
+          orientation: pdfOrientation,
         }, summaries);
         if (previewSigRef.current === previewSignature) { previewDocRef.current = doc; }
       }
@@ -449,7 +475,7 @@ export default function CashReportView() {
     } finally {
       setExporting(false);
     }
-  }, [applied, pdfTemplate, pdfOptions, storeInfo, deliveredBy, recipientName, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature, exporting]);
+  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature, exporting]);
 
   // ── Acción principal (§2): Generar (sin resultados) / Actualizar (con resultados) ──
   const generateLabel = !applied ? 'Generar reporte' : 'Actualizar reporte';
@@ -540,6 +566,31 @@ export default function CashReportView() {
               {/* §3: la selección persiste en localStorage al cambiar (setTemplatePersisted). */}
             </div>
 
+            {/* §1 del brief: orientación del documento — afecta PDF y vista previa, persistida */}
+            <div className="border-t border-border/40 pt-3 space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Orientación del documento</p>
+              <div className="space-y-1.5" role="radiogroup" aria-label="Orientación del documento">
+                {PDF_ORIENTATIONS.map(o => (
+                  <button
+                    key={o.id}
+                    role="radio"
+                    aria-checked={pdfOrientation === o.id}
+                    onClick={() => setOrientationPersisted(o.id)}
+                    className={cn(
+                      'w-full flex items-center gap-2 p-2 rounded-lg border text-left transition-colors',
+                      pdfOrientation === o.id ? 'border-primary bg-primary/10' : 'border-border/40 hover:bg-muted/30',
+                    )}
+                  >
+                    <BookOpen className={cn('w-3.5 h-3.5 shrink-0', pdfOrientation === o.id ? 'text-primary' : 'text-muted-foreground')} />
+                    <span className="min-w-0">
+                      <span className={cn('block text-xs font-bold', pdfOrientation === o.id && 'text-primary')}>{o.label}</span>
+                      <span className="block text-[10px] text-muted-foreground leading-snug">{o.desc}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="border-t border-border/40 pt-3 space-y-2">
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Periodo</p>
               <div className="flex items-center gap-2">
@@ -596,6 +647,12 @@ export default function CashReportView() {
                       ['includeBreakdown', 'Desglose billetes'],
                       ['includeUsd', 'Cuadre USD'],
                       ['includeSignature', 'Líneas de firma'],
+                      // §8.1: incluir/omitir el Reporte de Órdenes de Trabajo (patrón checklist del desglose).
+                      ['includeOtReport', 'Reporte de Órdenes de Trabajo'],
+                      // §8.2: columna Comisión conmutable (el cálculo del resumen se conserva).
+                      ['includeCommissionColumn', 'Columna Comisión'],
+                      // §9: false = CUP y USD corridos en la misma hoja; true = hojas separadas.
+                      ['usdSeparatePage', 'USD en hoja separada'],
                     ] as Array<[keyof CashReportPdfOptions, string]>
                   ).map(([key, label]) => (
                     <button
@@ -654,6 +711,10 @@ export default function CashReportView() {
                 applied={applied}
                 loading={loading}
                 expectedCup={expectedCup}
+                summary={cupSummaryMemo}
+                cupTotal={cupTotal}
+                onGestionarComisiones={() => setShowCommissionsModal(true)}
+                onRefresh={handleGenerate}
                 filterCurrency={filterCurrency}
                 filterMethod={filterMethod}
                 setFilterCurrency={setFilterCurrency}
@@ -762,6 +823,18 @@ export default function CashReportView() {
           </div>
         </div>
       )}
+      {/* §5: modal de gestión de comisiones — documento trazable (POST /payments + PATCH pay) */}
+      {showCommissionsModal && (
+        <CommissionsManageModal
+          period={applied?.cfg ?? { startDate, endDate }}
+          onClose={() => setShowCommissionsModal(false)}
+          onConfirmed={() => {
+            setShowCommissionsModal(false);
+            // La comisión pagada se incorpora al reporte: recalcular (§5.4).
+            void handleGenerate();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -791,11 +864,135 @@ function DocDetail({ doc }: { doc: Record<string, unknown> }) {
   );
 }
 
-// ── Pestaña Resultados: KPIs + filtros + acordeones por método ──────────────
+// ── Fila del Resumen del Día ───────────────────────────────────────────
+function SummaryRow({ label, value, strong, negative, note }: { label: string; value: number; strong?: boolean; negative?: boolean; note?: string }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-2">
+      <div className="min-w-0 pr-2">
+        <p className={cn('text-xs', strong ? 'font-black' : 'font-normal', negative && 'text-muted-foreground')}>{label}</p>
+        {note && <p className="text-[9px] text-muted-foreground italic">{note}</p>}
+      </div>
+      <p className={cn('text-sm font-mono font-bold tabular-nums shrink-0', negative ? 'text-destructive' : strong ? 'text-foreground' : 'text-foreground/90')}
+        data-testid="summary-row-value" data-label={label}>
+        {value < 0 ? '−' : ''}{formatCurrency(Math.abs(value))}
+      </p>
+    </div>
+  );
+}
+
+// ── §7: Ajustes extraordinarios (vía excepcional, nota obligatoria, auditada) ─
+function AjustesExtraordinarios({ applied, onRefresh }: { applied: { cfg: { startDate: string; endDate: string }; report: CashReport } | null; onRefresh: () => void }) {
+  const [direction, setDirection] = useState<'in' | 'out'>('out');
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const touch = 'min-h-[44px]';
+
+  const adjustments = ((applied?.report as unknown as { adjustments?: Array<{ id: string; direction: 'in' | 'out'; amount: number; note: string; created_at?: string }> })?.adjustments) || [];
+
+  const canSubmit = applied && Number(amount) > 0 && note.trim().length > 0 && !submitting;
+
+  const handleSubmit = async () => {
+    if (!applied || !canSubmit) return;
+    setFormError(null);
+    setSubmitting(true);
+    try {
+      const amt = Number(amount);
+      if (!Number.isFinite(amt) || amt <= 0) throw new Error('El importe debe ser mayor que cero.');
+      if (!note.trim()) throw new Error('La nota justificativa es obligatoria.');
+      await apiFetch('/api/cash-report/adjustments', {
+        method: 'POST',
+        body: JSON.stringify({
+          amount: amt,
+          direction,
+          note: note.trim(),
+          payment_date: applied.cfg.startDate,
+        }),
+      });
+      toast.success(`Ajuste ${direction === 'in' ? 'positivo' : 'negativo'} de ${formatCurrency(amt)} registrado`);
+      setAmount(''); setNote('');
+      onRefresh(); // recálculo del reporte con el ajuste incorporado
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      const msg = e?.message || 'No se pudo registrar el ajuste.';
+      setFormError(msg);
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <section aria-label="Ajustes extraordinarios" data-testid="ajustes-extraordinarios" className="rounded-2xl border border-warning/30 bg-warning/5 p-4 space-y-3">
+      <div className="flex items-start gap-2">
+        <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-wider">Ajuste extraordinario</h3>
+          <p className="text-[10px] text-muted-foreground leading-snug">
+            Vía excepcional para diferencias no clasificables. Requiere nota justificativa; queda auditado con usuario y fecha.
+            No se usa para compensar errores de fórmulas.
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-[110px_130px_minmax(0,1fr)_auto] gap-2 items-end">
+        <div>
+          <label htmlFor="adj-direction" className="block text-[10px] font-black uppercase text-muted-foreground mb-1">Dirección</label>
+          <select id="adj-direction" value={direction} onChange={e => setDirection(e.target.value as 'in' | 'out')} className={cn('w-full px-3 rounded-lg border border-border/40 bg-background text-xs', touch)}>
+            <option value="out">Negativo (−)</option>
+            <option value="in">Positivo (+)</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="adj-amount" className="block text-[10px] font-black uppercase text-muted-foreground mb-1">Importe CUP</label>
+          <input id="adj-amount" type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)}
+            placeholder="0.00" className={cn('w-full px-3 rounded-lg border border-border/40 bg-background text-xs font-mono', touch)} />
+        </div>
+        <div>
+          <label htmlFor="adj-note" className="block text-[10px] font-black uppercase text-muted-foreground mb-1">Nota justificativa *</label>
+          <input id="adj-note" type="text" value={note} onChange={e => setNote(e.target.value)} maxLength={500}
+            placeholder="Motivo del ajuste (obligatorio)" className={cn('w-full px-3 rounded-lg border border-border/40 bg-background text-xs', touch)} />
+        </div>
+        <button
+          onClick={handleSubmit}
+          disabled={!canSubmit}
+          aria-busy={submitting}
+          className={cn('px-4 rounded-xl bg-warning text-white text-xs font-black uppercase hover:opacity-90 flex items-center gap-1.5', touch, !canSubmit && 'opacity-50 cursor-not-allowed')}
+        >
+          {submitting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+          {submitting ? 'Registrando…' : 'Registrar ajuste'}
+        </button>
+      </div>
+      {formError && <p role="alert" className="text-[11px] text-destructive">{formError}</p>}
+      {adjustments.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[10px] font-black uppercase text-muted-foreground">Ajustes del período ({adjustments.length})</p>
+          {adjustments.map(a => (
+            <div key={a.id} className="flex items-center justify-between rounded-lg border border-border/40 bg-background px-3 py-2">
+              <div className="min-w-0 pr-2">
+                <p className="text-xs font-bold truncate">{a.direction === 'in' ? '+' : '−'}{formatCurrency(a.amount)}</p>
+                <p className="text-[10px] text-muted-foreground truncate" title={a.note}>{a.note}</p>
+              </div>
+              <p className="text-[9px] font-mono text-muted-foreground shrink-0">{(a.created_at || '').slice(0, 10)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ── Pestaña Resultados: Resumen del Día (fórmula centralizada) + ajustes + acordeones ─
 interface ResultadosPanelProps {
   applied: { cfg: { startDate: string; endDate: string }; report: CashReport } | null;
   loading: boolean;
   expectedCup: number;
+  /** AUDITORÍA 2026-10: resumen con la MISMA fórmula que el PDF (computeDailySummary). */
+  summary: DailySummary | null;
+  /** Total contado en el desglose de billetes CUP (efectivo entregado). */
+  cupTotal: number;
+  onGestionarComisiones: () => void;
+  onRefresh: () => void;
   filterCurrency: string;
   filterMethod: string;
   setFilterCurrency: (v: string) => void;
@@ -811,6 +1008,15 @@ function ResultadosPanel(p: ResultadosPanelProps) {
   const fmt = (n: number, cur: string = 'CUP') => cur === 'CUP' ? formatCurrency(n) : `$${n.toFixed(2)}`;
   const touch = 'min-h-[44px]';
   const report = p.applied?.report;
+  // Resumen del Día (fórmula centralizada — misma que el PDF). Null-safe.
+  const s: DailySummary = p.summary ?? {
+    currency: 'CUP', ventasCash: 0, ventasTransfer: 0, ventasZelle: 0, ventasMixed: 0,
+    ventasTotales: 0, otIngresosCash: 0, comisionesCash: 0, comisionesTransfer: 0,
+    serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
+    ajustesNegativos: 0, ajustesNeto: 0, efectivoEsperado: p.expectedCup,
+  };
+  const diferencia = computeCuadre(p.cupTotal, s.efectivoEsperado);
+  const cuadreState = cuadreLabel(diferencia);
 
   const filterSales = (s: Record<string, unknown>) => (!p.filterCurrency || s.currency === p.filterCurrency) && (!p.filterMethod || s.payment_method === p.filterMethod);
   const filterPayments = (q: Record<string, unknown>) => (!p.filterCurrency || q.currency === p.filterCurrency) && (!p.filterMethod || q.payment_method === p.filterMethod);
@@ -931,24 +1137,60 @@ function ResultadosPanel(p: ResultadosPanelProps) {
 
   return (
     <div className="space-y-4">
-      {/* KPIs */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-xl border border-success/20 bg-success/5 p-3 text-center">
-          <TrendingUp className="w-4 h-4 mx-auto text-success mb-1" />
-          <p className="text-[9px] font-black uppercase text-muted-foreground">Ingresos</p>
-          <p className="text-base sm:text-lg font-mono font-black tabular-nums text-success">{formatCurrency(report?.totals?.sales_total_cup ?? 0)}</p>
+      {/* AUDITORÍA 2026-10: Resumen del Día — fórmula centralizada, MISMA que el PDF.
+          Orden lógico §4 del brief. Nombres inequívocos (esperado vs contado vs cuadre). */}
+      <section aria-label="Resumen del Día" data-testid="resumen-del-dia" className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-muted/20">
+          <h3 className="text-xs font-black uppercase tracking-wider">Resumen del Día</h3>
+          {/* §5.1: acción contextual para gestionar el pago de comisiones */}
+          <button
+            onClick={p.onGestionarComisiones}
+            className={cn('px-3 rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 flex items-center gap-1.5', touch)}
+          >
+            <Users className="w-3.5 h-3.5" /> Gestionar comisiones
+          </button>
         </div>
-        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-center">
-          <TrendingDown className="w-4 h-4 mx-auto text-destructive mb-1" />
-          <p className="text-[9px] font-black uppercase text-muted-foreground">Egresos</p>
-          <p className="text-base sm:text-lg font-mono font-black tabular-nums text-destructive">{formatCurrency(report?.totals?.payments_total_cup ?? 0)}</p>
+        <div className="divide-y divide-border/20">
+          <SummaryRow label="Ventas totales (efectivo + transferencia)" value={s.ventasTotales} strong />
+          <SummaryRow label="Ventas en efectivo" value={s.ventasCash} />
+          <SummaryRow label="Ventas por transferencia" value={s.ventasTransfer} />
+          {s.ventasZelle > 0 && <SummaryRow label="Ventas por Zelle" value={s.ventasZelle} />}
+          {s.otIngresosCash > 0 && <SummaryRow label="Órdenes de trabajo (anticipos)" value={s.otIngresosCash} />}
+          {s.comisionesCash > 0 && <SummaryRow label="Comisiones pagadas en efectivo" value={-s.comisionesCash} negative />}
+          {s.comisionesTransfer > 0 && <SummaryRow label="Comisiones pagadas por transferencia" value={-s.comisionesTransfer} negative note="no reduce el efectivo físico" />}
+          {s.serviciosRecibidosCash > 0 && <SummaryRow label="Servicios recibidos pagados en efectivo" value={-s.serviciosRecibidosCash} negative />}
+          {s.recibosProveedoresCash > 0 && <SummaryRow label="Pagos a proveedores (efectivo)" value={-s.recibosProveedoresCash} negative />}
+          {s.ajustesPositivos > 0 && <SummaryRow label="Ajustes extraordinarios (+)" value={s.ajustesPositivos} />}
+          {s.ajustesNegativos > 0 && <SummaryRow label="Ajustes extraordinarios (−)" value={-s.ajustesNegativos} negative />}
         </div>
+        <div className="flex items-center justify-between px-4 py-3 bg-primary/10 border-t-2 border-primary/40">
+          <p className="text-xs font-black uppercase text-primary">Efectivo esperado a entregar</p>
+          <p className="text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(s.efectivoEsperado)}</p>
+        </div>
+      </section>
+
+      {/* Cuadre: esperado vs contado — etiquetas inequívocas (§4) */}
+      <section aria-label="Cuadre de caja" className="grid grid-cols-3 gap-2">
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
-          <DollarSign className="w-4 h-4 mx-auto text-primary mb-1" />
-          <p className="text-[9px] font-black uppercase text-muted-foreground">Balance</p>
-          <p className="text-base sm:text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(p.expectedCup)}</p>
+          <p className="text-[9px] font-black uppercase text-muted-foreground">Efectivo esperado</p>
+          <p className="text-base sm:text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(s.efectivoEsperado)}</p>
         </div>
-      </div>
+        <div className="rounded-xl border border-info/20 bg-info/5 p-3 text-center">
+          <p className="text-[9px] font-black uppercase text-muted-foreground">Efectivo contado</p>
+          <p className="text-base sm:text-lg font-mono font-black tabular-nums text-foreground">{formatCurrency(p.cupTotal)}</p>
+        </div>
+        <div className={cn('rounded-xl border p-3 text-center', cuadreState === 'cuadrado' ? 'border-success/20 bg-success/5' : 'border-warning/30 bg-warning/5')}>
+          <p className="text-[9px] font-black uppercase text-muted-foreground">
+            Diferencia de cuadre {cuadreState === 'cuadrado' ? '(cuadrado)' : cuadreState === 'sobrante' ? '(sobrante)' : '(faltante)'}
+          </p>
+          <p className={cn('text-base sm:text-lg font-mono font-black tabular-nums', cuadreState === 'cuadrado' ? 'text-success' : 'text-warning')}>
+            {diferencia > 0 ? '+' : ''}{formatCurrency(diferencia)}
+          </p>
+        </div>
+      </section>
+
+      {/* §7: Ajustes extraordinarios — vía excepcional con nota obligatoria */}
+      <AjustesExtraordinarios applied={p.applied} onRefresh={p.onRefresh} />
 
       <p className="text-[10px] text-muted-foreground">
         Resultados de <strong className="text-foreground">{p.applied?.cfg.startDate} → {p.applied?.cfg.endDate}</strong>

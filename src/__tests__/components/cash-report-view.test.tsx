@@ -28,6 +28,7 @@ vi.mock('@/components/views/terminal/views/cash/cash-report-pdf', () => ({
   DEFAULT_PDF_OPTIONS: {
     detailPayments: false, detailProduction: false,
     includeBreakdown: true, includeUsd: true, includeSignature: true,
+    includeOtReport: true, includeCommissionColumn: true, usdSeparatePage: true,
   },
   buildCashReportPdf: (ctx?: unknown, summaries?: unknown) => buildPdfMock(ctx, summaries),
   fetchDiarioSummaries: vi.fn(async () => ({})),
@@ -183,10 +184,12 @@ describe('§1/§2 — Vista dedicada: render inicial y separación config/cálcu
     const url = String(reportCalls[0][0]);
     expect(url).toContain('start_date=');
     expect(url).toContain('end_date=');
-    // KPIs visibles con el fixture
-    expect(screen.getByText('Ingresos')).toBeTruthy();
-    expect(screen.getByText('Egresos')).toBeTruthy();
-    expect(screen.getByText('Balance')).toBeTruthy();
+    // AUDITORÍA 2026-10: Resumen del Día (fórmula centralizada) + cuadre inequívoco + acción de comisiones
+    expect(screen.getByText('Resumen del Día')).toBeTruthy();
+    expect(screen.getByText('Efectivo esperado a entregar')).toBeTruthy();
+    expect(screen.getByText('Efectivo contado')).toBeTruthy();
+    expect(bodyText()).toContain('Diferencia de cuadre');
+    expect(screen.getByRole('button', { name: /Gestionar comisiones/i })).toBeTruthy();
     // nota de vigencia con el periodo aplicado (texto fragmentado → textContent)
     expect(bodyText()).toContain('Resultados de 2026-10-01');
   });
@@ -249,7 +252,8 @@ describe('§3 — Persistencia del tipo de reporte', () => {
   it('valor persistido inválido → default legítimo sin errores', async () => {
     localStorage.setItem(LS_KEYS.pdfTemplate, '"antes-eliminado"');
     await renderView();
-    await waitFor(() => expect(screen.getByRole('radio', { name: /Estándar/ }).getAttribute('aria-checked')).toBe('true'));
+    // AUDITORÍA 2026-10 (§1): el default legítimo es Diario (Empresa).
+    await waitFor(() => expect(screen.getByRole('radio', { name: /Diario/ }).getAttribute('aria-checked')).toBe('true'));
     expect(localStorage.getItem(LS_KEYS.pdfTemplate)).toBe('"antes-eliminado"'); // no se sobreescribe hasta que el usuario elige
   });
 });
@@ -374,8 +378,8 @@ describe('§4 — Vista previa del PDF', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
     await user.click(screen.getByRole('tab', { name: /Vista previa/i }));
     await waitFor(() => expect(buildPdfMock).toHaveBeenCalled());
-    // cambiar plantilla (la config está visible en la columna izquierda sin cambiar de tab)
-    await user.click(screen.getByRole('radio', { name: /Diario/ }));
+    // cambiar plantilla (default Diario → Estándar; la config está visible en la columna izquierda)
+    await user.click(screen.getByRole('radio', { name: /Estándar/ }));
     await waitFor(() => expect(screen.getByText(/La vista previa corresponde a la configuración anterior/)).toBeTruthy());
     expect(screen.getByRole('button', { name: /Regenerar vista previa/i })).toBeTruthy();
   });
