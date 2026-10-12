@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
-import { computeDailySummary, type SalesSplit } from '@/lib/cash-report/summary';
+import { computeDailySummary, type SalesSplit, type SalesSplitByCurrency } from '@/lib/cash-report/summary';
 
 /**
  * GET /api/cash-report?start_date=ISO&end_date=ISO
@@ -79,11 +79,15 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       }
       const { data: splitRows, error: splitErr } = await splitQuery;
       if (splitErr) throw splitErr;
-      const acc: Record<string, { cash: number; transfer: number; zelle: number; total: number }> = {};
+      // Acumulador tipado con la interfaz canónica del módulo centralizado
+      // (TS2322 en CI: SalesSplitByCurrency exige mixedUnsplit). mixedUnsplit=0
+      // porque este es el split REAL de transactions: las multi-moneda (cur
+      // 'MIXED') se excluyen explícitamente arriba, no quedan sin desglosar.
+      const acc: Record<string, SalesSplitByCurrency> = {};
       for (const tx of splitRows || []) {
         const cur = (tx.sale_currency as string) || 'CUP';
         if (cur === 'MIXED') continue; // multi-moneda: rara, se excluye como en /payment-totals
-        if (!acc[cur]) acc[cur] = { cash: 0, transfer: 0, zelle: 0, total: 0 };
+        if (!acc[cur]) acc[cur] = { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 };
         acc[cur].cash += Number(tx.cash_amount || 0);
         acc[cur].transfer += Number(tx.transfer_amount || 0);
         acc[cur].zelle += Number(tx.zelle_amount || 0);
