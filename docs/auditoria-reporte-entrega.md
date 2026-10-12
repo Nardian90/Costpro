@@ -94,3 +94,37 @@ No existe mecanismo alguno para registrar diferencias no clasificables con nota 
 - EnerVida-Vitallcons: **0 escrituras** (ni documentos, ni confirmaciones, ni ajustes, ni cambios de active_store; el reporte se reprodujo vía RPC/REST read-only).
 - Pruebas de flujos con escritura: solo contra tienda de pruebas (Puerto Padre VITALLCONS) o fixtures unitarios.
 - Migración mínima justificada (§7 ajustes): extender CHECK `ref_type` de `payment_transactions` con `'adjustment'` reutilizando la tabla existente (RLS, idempotencia_key, store_id, auditoría de actor/fecha ya incluidos) en lugar de crear una tabla nueva.
+
+---
+
+## 6. Fase D — Validación en vivo (SOLO LECTURA sobre EnerVida-Vitallcons)
+
+Ejecutada contra el caso EXACTO de la evidencia del usuario (EnerVida-Vitallcons, 2026-10-02) sin una sola escritura a la tienda (RPC/REST de lectura; PDF generado client-side; modal de comisiones solo lectura; ningún ajuste confirmado; active_store no modificado).
+
+| Cifra | Antes (defecto) | Ahora (verificado en vivo) |
+|---|---:|---:|
+| Ventas totales (resumen PDF) | 31.200,00 | **60.600,00** ✓ |
+| Ventas en efectivo | — (no se mostraba) | **12.600,00** ✓ |
+| Ventas por transferencia | 48.000,00 | 48.000,00 ✓ |
+| Efectivo esperado a entregar | 12.600,00 (vista: 2.600) | **12.600,00** (vista = PDF) ✓ |
+| Cuadre | valor absoluto sin etiqueta | **(FALTANTE): −12.600,00** con signo ✓ |
+| Tabla Cemento TBV (2×19.000) | CUP 19.000 / Transfer 29.230,77 | **CUP − / Transfer 38.000,00** ✓ |
+| Tabla Goma Termo (3×200) | CUP 200 | **CUP 600,00** ✓ |
+| Totales de tabla | 31.200 / 48.000 | **12.600,00 / 48.000,00** ✓ (split real) |
+| Columna Clase | presente (vacía) | **eliminada** ✓ |
+| Fila 1 del PDF | tabla primero | **[Resumen del Día][Desglose de efectivo MN]** + tabla debajo ✓ |
+| Orientación | fija vertical | **Vertical y Horizontal (297×210 mm verificado)** ✓ |
+| Página de Órdenes | siempre | **conmutable (OFF → 1 página)** ✓ |
+| Comisiones sugeridas | 1% plano inventado (312) | **motor real: sin reglas → sin sugerencia («−»)** ✓ |
+| Encabezado | fecha de HOY | **período del reporte (2026-10-02)** ✓ |
+
+PDFs extraídos como evidencia: `reporte-diario-enervida-2026-10-02-vertical.pdf` (2 págs.), `-horizontal.pdf` (297×210 mm), `-sin-OT.pdf` (1 pág.).
+
+### Verificaciones BLOQUEADAS (documentadas)
+
+- **Confirmación viva de comisiones y creación de ajustes**: requiere tienda de pruebas con membresía del usuario de prueba. La membresía de Puerto Padre VITALLCONS fue revocada y el perfil apunta a EnerVida (solo lectura por restricción del brief). No se creó la tienda de pruebas para no añadir artefactos a la base compartida sin autorización. Cobertura alternativa: 9 tests de componente del modal (flujos completos con fixtures) + 20 tests de fórmulas + validación de solo lectura del modal en vivo (estado vacío honesto). **Solicitar**: entorno aislado con membresía para la validación end-to-end de escritura.
+- **Migración 20261012000001** (ref_type='adjustment'): NO aplicada a la base compartida — se aplica al desplegar el PR (degradación limpia documentada: endpoint responde 409 informativo).
+
+### Suite completa
+
+`bunx vitest run` → **2884 tests, 0 fallos** (0 regresiones). tsc 0 errores, ESLint 0 errores (36 warnings preexistentes del patrón `<button>` crudo).
