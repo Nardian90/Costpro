@@ -49,6 +49,16 @@
 
 - (fase 0) Entorno reconstruido: repo clonado, `.env` restituido, `bun install` OK, PM2 online HTTP 200.
 - (fase 0) Auditoría previa ejecutada: ver sección 3. **Movimientos registrados hasta ahora: 0/35.**
+- (fase 0-bis) **Recuento del anexo verificado: contiene 36 filas** (21 VS + 14 Ventas + 1 Entrada), aunque el encabezado declara 35 (22 VS + 12 ventas). La descomposición por grupos del propio encargo (A: 20 VS 10/10; B: 8 ventas 10/10; C: 6 ventas 12/10; D: 1 entrada 12/10; E: 1 VS 12/10) suma 36 y es la única interpretación que cuadra con la tabla de existencias esperadas (verificado SKU a SKU). Se ejecuta fila a fila sin duplicar.
+- (fase 0-bis) **Mapeo documentado SKU 159 → PROD-012 "Cemento Blanco (5kg)"**: el SKU numérico 159 no existe en el catálogo (único ausente de la serie 1-159); PROD-012 es el único producto con esa descripción (stock 0, sin fila de inventario en ENERVIDA).
+- (fase 1) **VS 10/10/2026: 19/20 registradas** (VS-000150 → VS-000168, consecutivos), estado `completed`, notas literales conservadas (`OT/Playa/Juan Carlos`, `Transferencia a Puerto Padre`, `OT/Ferro`, `OT/Yila casa`). Kardex verificado: 19 movimientos `issue_slip_out` con `movement_date` 10/10/2026 y `balance_after` correcto (SKU 29→123, 137→350, 112→45 tras dos vales, 131→0, 121→0, etc.).
+  - **Fila 16 (SKU 127 Transfer 220 x10, nota OT/Ferro) RECHAZADA por el sistema**: `Stock negativo no permitido` — constraint de BD (`inventory_quantity_non_negative`, migración 20260627000003) + trigger `v2_12_47` lo impiden; no existe ajuste oficial de stock negativo por tienda. **Diferencia documentada: stock real quedará en 0 vs esperado -10.** No se fuerza ni se desactiva validación (instrucción del encargo).
+  - **Decisión de vía funcional (vales)**: el modal de UI de vales (`ValeSalidaCreateModal`) registra siempre con fecha actual y no expone selector de fecha; para conservar las fechas del encargo se usó el endpoint funcional de la aplicación `POST /api/vale-salida` con `operation_date` (mecanismo "ENERVIDA import" de la migración 20261004120000, validado por el mismo RPC `create_vale_salida` que dispara la UI, con JWT del operador logueado, CSRF, idempotencia y rate-limit 10/min del sistema). Precedente: los documentos del 09/10 de la auditoría previa (claves `aud-op-*`) se registraron por la misma vía.
+- (pendiente) Fase 2: 8 ventas 10/10 vía UI Tabla de Venta (con Fecha de Operación).
+- (pendiente) Fase 3: 6 ventas 12/10 vía UI.
+- (pendiente) Fase 4: entrada SKU 159 x4 del 12/10 vía UI Recepciones (date picker disponible).
+- (pendiente) Fase 5: VS 12/10 SKU 159 x4 nota `Belki`.
+- (pendiente) Fase 6: conciliación 161 SKU + informe.
 
 ## 6. Persistencia
 
