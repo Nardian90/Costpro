@@ -1,0 +1,1129 @@
+[
+ {
+  "sku": 1,
+  "real": 18.0,
+  "esperado": 18,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 2,
+  "real": 32.0,
+  "esperado": 32,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 3,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 4,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 5,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 6,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 7,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 8,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 9,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 10,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 11,
+  "real": 6.0,
+  "esperado": 6,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 12,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 13,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 14,
+  "real": 16.0,
+  "esperado": 16,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 15,
+  "real": 50.0,
+  "esperado": 50,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 16,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 17,
+  "real": 6.0,
+  "esperado": 6,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 18,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 19,
+  "real": 16.0,
+  "esperado": 16,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 20,
+  "real": 15.0,
+  "esperado": 15,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 21,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 22,
+  "real": 77.0,
+  "esperado": 77,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 23,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 24,
+  "real": 12.0,
+  "esperado": 12,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 25,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 26,
+  "real": 3.0,
+  "esperado": 3,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 27,
+  "real": 3.0,
+  "esperado": 3,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 28,
+  "real": 33.0,
+  "esperado": 33,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 29,
+  "real": 123.0,
+  "esperado": 123,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 30,
+  "real": 9.0,
+  "esperado": 9,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 31,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 32,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 33,
+  "real": 5.0,
+  "esperado": 5,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 34,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 35,
+  "real": 56.0,
+  "esperado": 56,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 36,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 37,
+  "real": 25.0,
+  "esperado": 25,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 38,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 39,
+  "real": 5.0,
+  "esperado": 5,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 40,
+  "real": 7.0,
+  "esperado": 7,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 41,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 42,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 43,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 44,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 45,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 46,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 47,
+  "real": 6.0,
+  "esperado": 6,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 48,
+  "real": 37.0,
+  "esperado": 37,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 49,
+  "real": 8.0,
+  "esperado": 8,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 50,
+  "real": 8.0,
+  "esperado": 8,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 51,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 52,
+  "real": 42.0,
+  "esperado": 42,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 53,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 54,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 55,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 56,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 57,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 58,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 59,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 60,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 61,
+  "real": 19.0,
+  "esperado": 19,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 62,
+  "real": 4.0,
+  "esperado": 4,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 63,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 64,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 65,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 66,
+  "real": 98.0,
+  "esperado": 98,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 67,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 68,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 69,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 70,
+  "real": 76.0,
+  "esperado": 76,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 71,
+  "real": 106.0,
+  "esperado": 106,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 72,
+  "real": 6.0,
+  "esperado": 6,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 73,
+  "real": 6.0,
+  "esperado": 6,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 74,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 75,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 76,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 77,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 78,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 79,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 80,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 81,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 82,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 83,
+  "real": 3.0,
+  "esperado": 3,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 84,
+  "real": 32.0,
+  "esperado": 32,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 85,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 86,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 87,
+  "real": 63.0,
+  "esperado": 63,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 88,
+  "real": 63.0,
+  "esperado": 63,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 89,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 90,
+  "real": 3.0,
+  "esperado": 3,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 91,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 92,
+  "real": 5.0,
+  "esperado": 5,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 93,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 94,
+  "real": 2.0,
+  "esperado": 2,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 95,
+  "real": 36.0,
+  "esperado": 36,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 96,
+  "real": 212.0,
+  "esperado": 212,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 97,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 98,
+  "real": 42.0,
+  "esperado": 42,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 99,
+  "real": 22.0,
+  "esperado": 22,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 100,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 101,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 102,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 103,
+  "real": 2.0,
+  "esperado": 2,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 104,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 105,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 106,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 107,
+  "real": 2.0,
+  "esperado": 2,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 108,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 109,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 110,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 111,
+  "real": 24.0,
+  "esperado": 24,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 112,
+  "real": 45.0,
+  "esperado": 45,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 113,
+  "real": 128.0,
+  "esperado": 122,
+  "diferencia": 6.0,
+  "conforme": false
+ },
+ {
+  "sku": 114,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 115,
+  "real": 31.0,
+  "esperado": 31,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 116,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 117,
+  "real": 2.0,
+  "esperado": 2,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 118,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 119,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 120,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 121,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 122,
+  "real": 2.0,
+  "esperado": 2,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 123,
+  "real": 3.0,
+  "esperado": 3,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 124,
+  "real": 3.0,
+  "esperado": 3,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 125,
+  "real": 2.0,
+  "esperado": 2,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 126,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 127,
+  "real": 0.0,
+  "esperado": -10,
+  "diferencia": 10.0,
+  "conforme": false
+ },
+ {
+  "sku": 128,
+  "real": 8.0,
+  "esperado": 8,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 129,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 130,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 131,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 132,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 133,
+  "real": 12.0,
+  "esperado": 12,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 134,
+  "real": 23.0,
+  "esperado": 23,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 135,
+  "real": 27.5,
+  "esperado": 0,
+  "diferencia": 27.5,
+  "conforme": false
+ },
+ {
+  "sku": 136,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 137,
+  "real": 350.0,
+  "esperado": 350,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 138,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 139,
+  "real": 9.0,
+  "esperado": 9,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 140,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 141,
+  "real": 48.0,
+  "esperado": 38,
+  "diferencia": 10.0,
+  "conforme": false
+ },
+ {
+  "sku": 142,
+  "real": 26.0,
+  "esperado": 26,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 143,
+  "real": 28.0,
+  "esperado": 28,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 144,
+  "real": 300.0,
+  "esperado": 300,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 145,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 146,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 147,
+  "real": 5.0,
+  "esperado": 5,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 148,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 149,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 150,
+  "real": 8.0,
+  "esperado": 8,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 151,
+  "real": 4.0,
+  "esperado": 4,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 152,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 153,
+  "real": 1.0,
+  "esperado": 1,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 154,
+  "real": 6.0,
+  "esperado": 6,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 155,
+  "real": 2.0,
+  "esperado": 2,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 156,
+  "real": 4.0,
+  "esperado": 4,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 157,
+  "real": 83.0,
+  "esperado": 83,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 158,
+  "real": 24.0,
+  "esperado": 24,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 159,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 998,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ },
+ {
+  "sku": 999,
+  "real": 0.0,
+  "esperado": 0,
+  "diferencia": 0.0,
+  "conforme": true
+ }
+]
