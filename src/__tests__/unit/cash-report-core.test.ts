@@ -15,6 +15,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   TEMPLATES, validatePdfTemplate, DEFAULT_PDF_TEMPLATE,
+  PDF_ORIENTATIONS, validatePdfOrientation, DEFAULT_PDF_ORIENTATION,
+  loadPdfOrientation, savePdfOrientation,
   CUP_DEFAULT_DENOMS, USD_DEFAULT_DENOMS, LS_KEYS,
   loadPdfTemplate, savePdfTemplate,
   loadEnabledDenoms, saveEnabledDenoms,
@@ -35,18 +37,19 @@ beforeEach(() => {
 describe('Plantilla PDF — persistencia y validación canónica', () => {
   it('los ids canónicos son estandar/simple/diario', () => {
     expect(TEMPLATES.map(t => t.id)).toEqual(['estandar', 'simple', 'diario']);
-    expect(DEFAULT_PDF_TEMPLATE).toBe('estandar');
+    // AUDITORÍA 2026-10 (§1 del brief): default = Diario (Empresa).
+    expect(DEFAULT_PDF_TEMPLATE).toBe('diario');
   });
 
   it('validatePdfTemplate acepta valores canónicos y rechaza inválidos con default', () => {
     expect(validatePdfTemplate('diario')).toBe('diario');
     expect(validatePdfTemplate('simple')).toBe('simple');
     expect(validatePdfTemplate('estandar')).toBe('estandar');
-    expect(validatePdfTemplate('noexiste')).toBe('estandar');
-    expect(validatePdfTemplate(42)).toBe('estandar');
-    expect(validatePdfTemplate(null)).toBe('estandar');
-    expect(validatePdfTemplate(undefined)).toBe('estandar');
-    expect(validatePdfTemplate({ malicious: true })).toBe('estandar');
+    expect(validatePdfTemplate('noexiste')).toBe('diario');
+    expect(validatePdfTemplate(42)).toBe('diario');
+    expect(validatePdfTemplate(null)).toBe('diario');
+    expect(validatePdfTemplate(undefined)).toBe('diario');
+    expect(validatePdfTemplate({ malicious: true })).toBe('diario');
   });
 
   it('round-trip: se guarda y se restaura la preferencia', () => {
@@ -57,9 +60,32 @@ describe('Plantilla PDF — persistencia y validación canónica', () => {
 
   it('valor corrupto guardado → default legítimo sin errores (§3.4)', () => {
     localStorage.setItem(LS_KEYS.pdfTemplate, '"valor-viejo-incompatible"');
-    expect(loadPdfTemplate()).toBe('estandar');
+    expect(loadPdfTemplate()).toBe('diario');
     localStorage.setItem(LS_KEYS.pdfTemplate, '{"objeto":true}');
-    expect(loadPdfTemplate()).toBe('estandar');
+    expect(loadPdfTemplate()).toBe('diario');
+  });
+});
+
+// ── Orientación del documento (§1 del brief) ────────────────────────
+describe('Orientación PDF — persistencia y validación', () => {
+  it('default vertical (coherente con Diario (Empresa))', () => {
+    expect(DEFAULT_PDF_ORIENTATION).toBe('vertical');
+  });
+
+  it('validatePdfOrientation acepta vertical/horizontal y restaura lo demás', () => {
+    expect(validatePdfOrientation('vertical')).toBe('vertical');
+    expect(validatePdfOrientation('horizontal')).toBe('horizontal');
+    expect(validatePdfOrientation('apaisado')).toBe('vertical');
+    expect(validatePdfOrientation(null)).toBe('vertical');
+    expect(validatePdfOrientation(42)).toBe('vertical');
+  });
+
+  it('round-trip de orientación + restauración de valor inválido', () => {
+    savePdfOrientation('horizontal');
+    expect(localStorage.getItem(LS_KEYS.pdfOrientation)).toBe('horizontal');
+    expect(loadPdfOrientation()).toBe('horizontal');
+    localStorage.setItem(LS_KEYS.pdfOrientation, 'diagonal');
+    expect(loadPdfOrientation()).toBe('vertical');
   });
 });
 

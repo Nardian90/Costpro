@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { computeDailySummary, type SalesSplit, type SalesSplitByCurrency } from '@/lib/cash-report/summary';
 
 /**
  * GET /api/cash-report?start_date=ISO&end_date=ISO
  *
  * Reporte de caja para entrega de dinero.
  * Devuelve: ventas por método+moneda, pagos por método+moneda, balance,
- * y desglose de billetes sugerido.
+ * desglose de billetes sugerido y (AUDITORÍA 2026-10):
+ *   - sales_split: split REAL de ventas por moneda desde transactions
+ *     (cash_amount/transfer_amount/zelle_amount) — corrige D4: cash_balance_cup
+ *     ahora incluye el tramo efectivo de ventas mixed.
+ *   - adjustments: ajustes extraordinarios del periodo (ref_type='adjustment',
+ *     dirección in/out con importe y nota — ver /api/cash-report/adjustments).
+ *   - cash_balance_cup: recalculado con la MISMA fórmula centralizada que
+ *     pantalla y PDF (src/lib/cash-report/summary.ts).
  *
  * FIX (2026-07-14): reescrito con withAuth + getSupabaseForSession.
  * Antes usaba supabase.auth.getUser() sin sesión SSR → 401 siempre.
@@ -53,30 +61,85 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: reportError.message }, { status: 500 });
     }
 
-    // ── Calcular desglose de billetes sugerido para efectivo CUP ──
-    const denominations = [1000, 500, 200, 100, 50, 20, 10, 5, 1];
-    const cashCupSales = (reportData?.sales || []).find(
-      (s: any) => s.payment_method === 'cash' && s.currency === 'CUP'
-    );
-    // FIX (2026-07-15): el RPC ya filtra payments por ref_type IN ('receipt','service'),
-    // así que aquí NO incluimos production_order/work (van en sección aparte como ingresos)
-    const cashCupPayments = (reportData?.payments || []).filter(
-      (p: any) => p.payment_method === 'cash' && p.currency === 'CUP'
-    );
-    const totalCashPaymentsCup = cashCupPayments.reduce((sum: number, p: any) => sum + Number(p.total), 0);
-    const cashCupCommissions = (reportData?.commissions || []).filter(
-      (c: any) => c.payment_method === 'cash' && c.currency === 'CUP'
-    );
-    const totalCashCommissionsCup = cashCupCommissions.reduce((sum: number, c: any) => sum + Number(c.total), 0);
-    // FIX (2026-07-15): producción/servicios (anticipos + pagos recibidos) son INGRESOS en cash
-    const cashCupProduction = (reportData?.production || []).filter(
-      (p: any) => p.payment_method === 'cash' && p.currency === 'CUP'
-    );
-    const totalCashProductionCup = cashCupProduction.reduce((sum: number, p: any) => sum + Number(p.total), 0);
-    // Balance = Ventas cash + Producción cash (ingresos) - Pagos proveedores cash - Comisiones cash (egresos)
-    const cashBalanceCup = (cashCupSales?.total || 0) + totalCashProductionCup - totalCashPaymentsCup - totalCashCommissionsCup;
+    // ── AUDITORÍA 2026-10 (D4): split REAL de ventas por moneda ──
+    // El RPC agrupa por payment_method y NO desglosa 'mixed'; su grupo 'cash'
+    // puro excluye el tramo efectivo de las mixtas. transactions guarda el
+    // split real (cash_amount/transfer_amount/zelle_amount) — misma fuente
+    // que /payment-totals, con el cliente de sesión (RLS respetado).
+    const dateFilter = includeAllDates ? {} : { gte: startDate, lte: endDate };
+    let salesSplit: SalesSplit = {};
+    try {
+      let splitQuery = supabase
+        .from('transactions')
+        .select('sale_currency, cash_amount, transfer_amount, zelle_amount')
+        .eq('store_id', userData.active_store_id)
+        .eq('status', 'completed');
+      if (!includeAllDates) {
+        splitQuery = splitQuery.gte('created_at', startDate).lte('created_at', endDate);
+      }
+      const { data: splitRows, error: splitErr } = await splitQuery;
+      if (splitErr) throw splitErr;
+      // Acumulador tipado con la interfaz canónica del módulo centralizado
+      // (TS2322 en CI: SalesSplitByCurrency exige mixedUnsplit). mixedUnsplit=0
+      // porque este es el split REAL de transactions: las multi-moneda (cur
+      // 'MIXED') se excluyen explícitamente arriba, no quedan sin desglosar.
+      const acc: Record<string, SalesSplitByCurrency> = {};
+      for (const tx of splitRows || []) {
+        const cur = (tx.sale_currency as string) || 'CUP';
+        if (cur === 'MIXED') continue; // multi-moneda: rara, se excluye como en /payment-totals
+        if (!acc[cur]) acc[cur] = { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 };
+        acc[cur].cash += Number(tx.cash_amount || 0);
+        acc[cur].transfer += Number(tx.transfer_amount || 0);
+        acc[cur].zelle += Number(tx.zelle_amount || 0);
+        acc[cur].total += Number(tx.cash_amount || 0) + Number(tx.transfer_amount || 0) + Number(tx.zelle_amount || 0);
+      }
+      salesSplit = acc;
+    } catch (splitErr: unknown) {
+      // Sin split el módulo centralizado cae al fallback de grupos del RPC.
+      console.warn('[cash-report] sales_split no disponible:', (splitErr as { message?: string })?.message);
+    }
+
+    // ── Ajustes extraordinarios del periodo (ref_type='adjustment') ──
+    let adjustments: Array<{ id: string; direction: 'in' | 'out'; amount: number; note: string; created_by: string | null; created_at: string }> = [];
+    try {
+      let adjQuery = supabase
+        .from('payment_transactions')
+        .select('id, direction, amount, notes, paid_by, created_at')
+        .eq('store_id', userData.active_store_id)
+        .eq('ref_type', 'adjustment')
+        .eq('payment_method', 'cash')
+        .eq('currency', 'CUP');
+      if (!includeAllDates) {
+        adjQuery = adjQuery.gte('payment_date', dateFilter.gte as string).lte('payment_date', dateFilter.lte as string);
+      }
+      const { data: adjRows, error: adjErr } = await adjQuery;
+      if (adjErr) throw adjErr;
+      adjustments = (adjRows || []).map((r: { id: string; direction: string | null; amount: number; notes: string | null; paid_by: string | null; created_at: string }) => ({
+        id: r.id,
+        direction: r.direction === 'in' ? 'in' : 'out',
+        amount: Number(r.amount || 0),
+        note: r.notes || '',
+        created_by: r.paid_by,
+        created_at: r.created_at,
+      }));
+    } catch (adjErr: unknown) {
+      // ref_type='adjustment' requiere migración 20261012000001; si el entorno
+      // aún no la tiene, la consulta falla y seguimos sin ajustes (degradación
+      // limpia, sin romper el reporte).
+      console.warn('[cash-report] ajustes no disponibles:', (adjErr as { message?: string })?.message);
+    }
+
+    // AUDITORÍA 2026-10 (D4): balance recalculado con la fórmula centralizada.
+    // El valor antiguo ((cashCupSales?.total || 0) + prod − pagos − comisiones)
+    // EXCLUIA el tramo efectivo de ventas mixed (p. ej. EnerVida 02/10: 2.600
+    // en vez de 12.600). La fórmula única vive en src/lib/cash-report/summary.ts
+    // y la consumen idénticamente vista, previsualización y PDF.
+    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments };
+    const cupSummary = computeDailySummary(enrichedReport, 'CUP');
+    const cashBalanceCup = cupSummary.efectivoEsperado;
 
     // Desglose óptimo (greedy) del balance de efectivo CUP
+    const denominations = [1000, 500, 200, 100, 50, 20, 10, 5, 1];
     let remaining = Math.max(0, cashBalanceCup);
     const breakdown = denominations.map(denom => {
       const count = Math.floor(remaining / denom);
@@ -85,7 +148,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     }).filter(b => b.count > 0);
 
     return NextResponse.json({
-      ...reportData,
+      ...enrichedReport,
       cash_breakdown: breakdown,
       cash_balance_cup: cashBalanceCup,
       period: { start: startDate, end: endDate },

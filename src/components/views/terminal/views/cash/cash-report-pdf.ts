@@ -32,8 +32,12 @@ import type { jsPDF } from 'jspdf';
 import type { CashReport } from '@/types';
 import {
   breakdownTotal, formatUsd,
-  type Breakdown, type PdfTemplate, type Currency,
+  type Breakdown, type PdfTemplate, type Currency, type PdfOrientation,
 } from './cash-report-core';
+import {
+  computeDailySummary, computeCuadre, cuadreLabel, splitItemPortion, lineTotalCup,
+  type DailySummary, type TxSplit,
+} from '@/lib/cash-report/summary';
 
 export interface CashReportStoreInfo {
   name: string; logo_url: string | null; address: string | null;
@@ -41,11 +45,17 @@ export interface CashReportStoreInfo {
 }
 
 export interface CashReportPdfOptions {
-  detailPayments: boolean;   // detalle de pagos a proveedores
-  detailProduction: boolean; // detalle de órdenes de producción/servicios
-  includeBreakdown: boolean; // desglose de billetes CUP
-  includeUsd: boolean;       // cuadre USD si hay
-  includeSignature: boolean; // líneas de firma
+  detailPayments: boolean;      // detalle de pagos a proveedores
+  detailProduction: boolean;    // detalle de órdenes de producción/servicios
+  includeBreakdown: boolean;    // desglose de billetes CUP
+  includeUsd: boolean;          // cuadre USD si hay
+  includeSignature: boolean;    // líneas de firma
+  /** §8.1 del brief: incluir la página/sección «Reporte de Órdenes de Trabajo». */
+  includeOtReport: boolean;
+  /** §8.2: mostrar la columna «Comisión» en la tabla de movimientos (el cálculo del resumen se conserva). */
+  includeCommissionColumn: boolean;
+  /** §9: false = CUP y USD en la misma hoja (corrido/compacto) · true = USD en página propia. */
+  usdSeparatePage: boolean;
 }
 
 export const DEFAULT_PDF_OPTIONS: CashReportPdfOptions = {
@@ -54,6 +64,9 @@ export const DEFAULT_PDF_OPTIONS: CashReportPdfOptions = {
   includeBreakdown: true,
   includeUsd: true,
   includeSignature: true,
+  includeOtReport: true,
+  includeCommissionColumn: true,
+  usdSeparatePage: true,
 };
 
 export interface CashReportPdfContext {
@@ -71,6 +84,8 @@ export interface CashReportPdfContext {
   cupBreakdown: Breakdown;
   usdBreakdown: Breakdown;
   options: CashReportPdfOptions;
+  /** §1 del brief: orientación del documento (persistida en core). */
+  orientation?: PdfOrientation;
 }
 
 /** Datos auxiliares que los builders necesitan (fetchables fuera para cachearlos).
@@ -116,7 +131,9 @@ export async function fetchEstandarSummaries(startDate: string, endDate: string)
  *   descarga → doc.save(nombre) ; vista previa → doc.output('bloburl').
  */
 export async function buildCashReportPdf(ctx: CashReportPdfContext, summaries?: CashReportSummaries): Promise<jsPDF> {
-  const doc = await createPDFDocument('p', 'mm', 'a4');
+  // §1 del brief: la orientación afecta al documento completo (p = vertical, l = horizontal).
+  const orientation: 'p' | 'l' = ctx.orientation === 'horizontal' ? 'l' : 'p';
+  const doc = await createPDFDocument(orientation, 'mm', 'a4');
   // Plantilla 'simple': fidelidad a SU descripción (sin desglose) — ver cabecera.
   const effectiveOptions: CashReportPdfOptions = ctx.template === 'simple'
     ? { ...ctx.options, includeBreakdown: false, includeUsd: false }
@@ -517,12 +534,16 @@ export function denomLabel(d: number, currency: Currency): string {
 // PLANTILLA DIARIO (portado 1:1 del modal — estilo reporte diario de empresa)
 // ═══════════════════════════════════════════════════════════════════════════
 async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?: CashReportSummaries): Promise<jsPDF> {
-  const { report, startDate, endDate, storeInfo, deliveredBy, recipientName, cupBreakdown, usdBreakdown, cupDenoms, usdDenoms } = ctx;
-  const pw = doc.internal.pageSize.getWidth();   // 210
-  const ph = doc.internal.pageSize.getHeight();  // 297
+  const { report, startDate, endDate, storeInfo, deliveredBy, recipientName, cupBreakdown, usdBreakdown, cupDenoms, usdDenoms, options } = ctx;
+  const orientation: PdfOrientation = ctx.orientation === 'horizontal' ? 'horizontal' : 'vertical';
+  // Geometría dinámica: funciona igual en vertical (210×297) y horizontal (297×210).
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
   const m = 10; let y = 14;
+  const contentW = pw - 2 * m;
   const sn = storeInfo?.name || 'Tienda';
-  const fecha = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  // §10: identificación del PERÍODO del reporte (antes: fecha de hoy — defecto).
+  const periodoLbl = startDate === endDate ? startDate : `${startDate} → ${endDate}`;
 
   const C_DARK: [number, number, number] = [17, 24, 39];
   const C_BLACK: [number, number, number] = [0, 0, 0];
@@ -532,40 +553,36 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
   const C_WARN: [number, number, number] = [217, 119, 6];
 
   const setText = (c: [number, number, number]) => { doc.setTextColor(c[0], c[1], c[2]); };
-  const setFill = (c: [number, number, number]) => { doc.setFillColor(c[0], c[1], c[2]); };
   const setDraw = (c: [number, number, number]) => { doc.setDrawColor(c[0], c[1], c[2]); };
   const fmtCup = (n: number) => n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true });
   const fmtUsdFmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true });
 
-  // Resúmenes (fetch una vez, cacheable por el llamador)
+  // ── Resúmenes (fetch una vez, cacheable por el llamador) ──
   let { itemsSummary, paymentTotals, commissionsSummary, productionOrders } = (summaries && summaries.itemsSummary && summaries.commissionsSummary && summaries.paymentTotals && summaries.productionOrders)
     ? summaries as Required<CashReportSummaries>
     : await fetchDiarioSummaries(startDate, endDate);
 
+  // ── AUDITORÍA 2026-10: resumen por moneda con la FÓRMULA CENTRALIZADA ──
+  // Misma fuente para pantalla, previsualización y PDF (src/lib/cash-report/summary.ts).
+  const cupSummary: DailySummary = computeDailySummary(report, 'CUP', paymentTotals);
+  const usdSummary: DailySummary = computeDailySummary(report, 'USD', paymentTotals);
+
+  // ── Comisión sugerida por producto: CÁLCULO REAL DEL SISTEMA (§5.1) ──
+  // POST /api/commissions/calculate (motor de reglas por trabajador con
+  // product_breakdown). Sin reglas → sin sugerencia (antes: 1% plano inventado).
+  const suggestedByProduct = await fetchSuggestedCommissionsByProduct(startDate, endDate);
+
   const sales = report.sales || [];
   const production = (report as any).production || [];
-
-  const paymentTotalsObj = (paymentTotals as any)?.totals || {};
-  const cupCashFromItems = Number(paymentTotalsObj.CUP?.cash || 0);
-  const cupTransferFromItems = Number(paymentTotalsObj.CUP?.transfer || 0);
-  const usdCashFromItems = Number(paymentTotalsObj.USD?.cash || 0);
-  const usdZelleFromItems = Number(paymentTotalsObj.USD?.zelle || 0);
-
   const commissionsWorkers = (commissionsSummary as any)?.workers as any[] || [];
   const totalCommissionsCup = (commissionsSummary as any)?.total_cup as number || 0;
 
-  const DEFAULT_COMMISSION_PCT = 1; // 1% por defecto (regla del modal original)
-  const itemsWithCommission = (((itemsSummary as any)?.items as any[]) || []).map((it: any) => {
-    const total = Number(it.total_cup || 0);
-    const currency = (it.currency as string) || 'CUP';
-    const totalForCurrency = (((itemsSummary as any)?.items as any[]) || [])
-      .filter((x: any) => ((x.currency as string) || 'CUP') === currency)
-      .reduce((s: number, x: any) => s + Number(x.total_cup || 0), 0);
-    const transferPool = currency === 'CUP' ? cupTransferFromItems : 0;
-    const transferPaid = totalForCurrency > 0 ? (transferPool * total / totalForCurrency) : 0;
-    const commissionPaid = total * DEFAULT_COMMISSION_PCT / 100;
-    return { ...it, transfer_paid_calc: transferPaid, commission_paid_calc: commissionPaid };
-  });
+  // Ítems con importes correctos (FIX D1: items-summary ahora devuelve precio×cant
+  // y el split real por transacción) + comisión sugerida por producto.
+  const itemsWithCommission = (((itemsSummary as any)?.items as any[]) || []).map((it: any) => ({
+    ...it,
+    commission_suggested: Number(suggestedByProduct.get(String(it.product_id)) || 0),
+  }));
 
   // Logo
   let logoDataUrl: string | null = null;
@@ -582,14 +599,43 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     } catch {}
   }
 
+  // ── Registro de secciones por página para el pie (dinámico: compacto/separado) ──
+  const sectionPages: Array<{ from: number; to: number; name: string }> = [];
+  const markSection = (name: string) => {
+    const page = doc.getNumberOfPages();
+    const last = sectionPages[sectionPages.length - 1];
+    if (last && last.name === name && last.to === page - 1) {
+      last.to = page;
+    } else {
+      sectionPages.push({ from: page, to: page, name });
+    }
+  };
+
+  // ── Encabezado de página (logo + tienda + título + período + orientación) ──
+  const renderPageHeader = (title: string) => {
+    const headerH = logoDataUrl ? 16 : 8;
+    if (logoDataUrl) {
+      try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 14, 14); } catch {}
+    }
+    setText(C_DARK);
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+    doc.text(`${sn} ${title}`, m + (logoDataUrl ? 18 : 0), y);
+    doc.text(`Período: ${periodoLbl}`, pw - m, y, { align: 'right' });
+    if (orientation === 'horizontal') {
+      doc.setFontSize(7); doc.setFont('helvetica', 'normal'); setText(C_MUTED);
+      doc.text('Horizontal', pw - m, y + 4, { align: 'right' });
+    }
+    y += headerH;
+  };
+
+  // ── Fila 1 · bloque izquierdo: Resumen del Día (§4 — orden lógico) ──
   const renderIncomeBlock = (
     title: string,
-    rows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean }>,
+    rows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean; note?: string }>,
     aEntregar: number,
-    aEntregarLabel: string = 'A entregar',
-    extraSections?: Array<{ title: string; rows: Array<{ label: string; amount: number; isTotal?: boolean }> }>
+    aEntregarLabel = 'Efectivo esperado a entregar',
   ) => {
-    const blockW = (pw - 2 * m) / 2 - 4;
+    const blockW = contentW / 2 - 4;
     const x = m;
     let by = y;
     setText(C_DARK);
@@ -600,39 +646,18 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
       if (r.isTotal) { doc.setFont('helvetica', 'bold'); setText(C_DARK); }
       else if (r.isSubtotal) { doc.setFont('helvetica', 'bold'); setText(C_MUTED); }
       else { doc.setFont('helvetica', 'normal'); setText(C_DARK); }
-      const maxLabel = blockW - 30;
+      const maxLabel = blockW - 32;
       let lbl = r.label;
       if (doc.getTextWidth(lbl) > maxLabel) {
         while (lbl.length > 0 && doc.getTextWidth(lbl + '…') > maxLabel) lbl = lbl.slice(0, -1);
         lbl += '…';
       }
       doc.text(lbl, x, by);
-      const amt = r.amount === 0 ? '-' : fmtCup(r.amount);
+      // Signo explícito para egresos/ajustes: −1.234,56 (auditable a simple vista).
+      const signed = r.isTotal ? r.amount : (r.amount < 0 ? r.amount : (r.note === 'expense' ? -r.amount : r.amount));
+      const amt = r.isTotal || r.amount === 0 || !r.note ? (r.amount === 0 ? '-' : fmtCup(r.amount)) : fmtCup(signed);
       doc.text(amt, x + blockW - 2, by, { align: 'right' });
       by += 4.2;
-    }
-    if (extraSections && extraSections.length > 0) {
-      for (const section of extraSections) {
-        by += 2;
-        setText(C_DARK);
-        doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-        doc.text(section.title, x, by); by += 4;
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-        for (const r of section.rows) {
-          if (r.isTotal) { doc.setFont('helvetica', 'bold'); setText(C_DARK); }
-          else { doc.setFont('helvetica', 'normal'); setText(C_DARK); }
-          const maxLabel = blockW - 30;
-          let lbl = r.label;
-          if (doc.getTextWidth(lbl) > maxLabel) {
-            while (lbl.length > 0 && doc.getTextWidth(lbl + '…') > maxLabel) lbl = lbl.slice(0, -1);
-            lbl += '…';
-          }
-          doc.text(lbl, x, by);
-          const amt = r.amount === 0 ? '-' : fmtCup(r.amount);
-          doc.text(amt, x + blockW - 2, by, { align: 'right' });
-          by += 4.2;
-        }
-      }
     }
     by += 2;
     setDraw(C_BLACK); doc.setLineWidth(0.8);
@@ -641,20 +666,21 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
     doc.text(aEntregarLabel, x + 2, by + 1);
     doc.text(fmtCup(aEntregar), x + blockW - 2, by + 1, { align: 'right' });
-    by += 7;
+    by += 9;
     return by;
   };
 
+  // ── Fila 1 · bloque derecho: Desglose de efectivo (§8.3 — sin filas de importe 0) ──
   const renderBreakdownBlock = (
     title: string,
     denominations: number[],
     breakdown: Breakdown,
     totalEntregado: number,
     cuadre: number,
-    currency: Currency = 'CUP'
+    currency: Currency = 'CUP',
   ) => {
-    const blockW = (pw - 2 * m) / 2 - 4;
-    const x = m + (pw - 2 * m) / 2 + 4;
+    const blockW = contentW / 2 - 4;
+    const x = m + contentW / 2 + 4;
     let by = y;
     setText(C_DARK);
     doc.setFontSize(10); doc.setFont('helvetica', 'bold');
@@ -670,32 +696,45 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     by += 1;
     doc.setFont('helvetica', 'normal');
     setText(C_DARK);
+    let printedRows = 0;
     for (const d of denominations) {
       const cnt = Number(breakdown[d] || 0);
+      // §8.3: cantidad 0 → la fila NO se imprime (vista previa y PDF).
+      if (cnt <= 0) continue;
       const imp = cnt * d;
       const lbl = denomLabel(d, currency);
-      const cntStr = cnt > 0 ? String(cnt) : '-';
-      const impStr = cnt > 0 ? (currency === 'CUP' ? fmtCup(imp) : fmtUsdFmt(imp)) : '-';
       doc.text(lbl, x, by);
-      doc.text(cntStr, x + blockW * 0.55, by, { align: 'center' });
-      doc.text(impStr, x + blockW - 2, by, { align: 'right' });
+      doc.text(String(cnt), x + blockW * 0.55, by, { align: 'center' });
+      doc.text(currency === 'CUP' ? fmtCup(imp) : fmtUsdFmt(imp), x + blockW - 2, by, { align: 'right' });
       by += 4.2;
+      printedRows++;
+    }
+    if (printedRows === 0) {
+      doc.setFont('helvetica', 'italic'); setText(C_MUTED);
+      doc.text('Sin efectivo contado', x, by); by += 4.2;
+      doc.setFont('helvetica', 'normal'); setText(C_DARK);
     }
     by += 2;
     setDraw(C_BORDER); doc.setLineWidth(0.3);
     doc.line(x, by - 1.5, x + blockW, by - 1.5);
     by += 3;
     doc.setFont('helvetica', 'bold'); setText(C_DARK);
-    doc.text('Total entregado', x, by);
+    doc.text('Efectivo contado / entregado', x, by);
     const totStr = currency === 'CUP' ? fmtCup(totalEntregado) : fmtUsdFmt(totalEntregado);
+    // Etiqueta inequívoca (§4): lo contado por denominaciones.
     doc.text(totStr, x + blockW - 2, by, { align: 'right' });
     by += 5;
-    doc.setFont('helvetica', 'normal');
-    const cuadreColor = cuadre === 0 ? C_SUCCESS : C_WARN;
-    setText(cuadreColor);
-    doc.text(`Cuadre`, x, by);
-    const cuadreStr = cuadre === 0 ? '-' : (currency === 'CUP' ? fmtCup(Math.abs(cuadre)) : fmtUsdFmt(Math.abs(cuadre)));
-    doc.text(cuadreStr, x + blockW - 2, by, { align: 'right' });
+    // Cuadre con SIGNO y etiqueta de sentido (antes: valor absoluto ambiguo).
+    const cuadreState = cuadreLabel(cuadre);
+    setText(cuadreState === 'cuadrado' ? C_SUCCESS : C_WARN);
+    doc.setFont('helvetica', 'bold');
+    const labelTxt = cuadreState === 'cuadrado' ? 'Cuadre (cuadrado)' : `Cuadre (${cuadreState.toUpperCase()}): ${cuadre > 0 ? '+' : '-'}${currency === 'CUP' ? fmtCup(Math.abs(cuadre)) : fmtUsdFmt(Math.abs(cuadre))}`;
+    let lbl = labelTxt;
+    if (doc.getTextWidth(lbl) > blockW - 4) {
+      while (lbl.length > 0 && doc.getTextWidth(lbl + '…') > blockW - 4) lbl = lbl.slice(0, -1);
+      lbl += '…';
+    }
+    doc.text(lbl, x, by);
     by += 5;
     setText(C_MUTED); doc.setFont('helvetica', 'italic');
     doc.text('Nota:', x, by);
@@ -705,7 +744,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
 
   const renderFirmas = () => {
     const sigY = ph - 25;
-    const colW = (pw - 2 * m) / 3;
+    const colW = contentW / 3;
     setDraw(C_MUTED); doc.setLineWidth(0.3);
     for (let i = 0; i < 3; i++) {
       const x = m + i * colW;
@@ -721,184 +760,227 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     doc.text(recipientName || 'Belkis Olivera Perez', m + 2 * colW + 5, sigY + 5);
   };
 
-  const renderSalesTable = (currency: 'CUP' | 'USD') => {
-    const cols = [
-      { name: 'Código',    w: 14, align: 'left' as const },
-      { name: 'Clase',    w: 20, align: 'left' as const },
-      { name: 'Descripción',   w: 44, align: 'left' as const },
-      { name: 'Cant.',     w: 13, align: 'right' as const },
-      { name: currency,    w: 30, align: 'right' as const },
-      { name: currency === 'CUP' ? 'Transfer.' : 'Zelle', w: 30, align: 'right' as const },
-      { name: 'Comisión',  w: 23, align: 'right' as const },
-    ];
+  // ── Tabla de movimientos (§2: sin Clase · anchos proporcionales · headers repetidos) ──
+  const renderSalesTable = (currency: 'CUP' | 'USD'): { totCash: number; totTransfer: number; totCommission: number; totalPages: number } => {
+    // §8.2: columna Comisión conmutable; el ancho se redistribuye sin desplazar importes.
+    const includeCommission = options.includeCommissionColumn !== false;
+    // Proporciones sobre el ancho disponible (mismo código para vertical y horizontal).
+    const proportions = includeCommission
+      ? [0.09, 0.30, 0.08, 0.17, 0.17, 0.15]  // Código, Descripción, Cant., CUP/USD, Transfer/Zelle, Comisión
+      : [0.11, 0.38, 0.10, 0.21, 0.20];       // sin Comisión → redistribución
+    const colNames = includeCommission
+      ? ['Código', 'Descripción', 'Cant.', currency, currency === 'CUP' ? 'Transfer.' : 'Zelle', 'Comisión']
+      : ['Código', 'Descripción', 'Cant.', currency, currency === 'CUP' ? 'Transfer.' : 'Zelle'];
+    const aligns: Array<'left' | 'right'> = ['left', 'left', 'right', 'right', 'right'].slice(0, colNames.length) as Array<'left' | 'right'>;
+    if (includeCommission) aligns.push('right');
+    const cols = colNames.map((name, i) => ({ name, w: proportions[i] * contentW, align: aligns[i] }));
     const tableW = cols.reduce((s, c) => s + c.w, 0);
     const rowH = 5;
     const headerH = 6;
     const colX: number[] = [];
     let accX = m;
     for (const c of cols) { colX.push(accX); accX += c.w; }
-    const drawCell = (colIdx: number, rowY: number, text: string, fontSize: number = 8) => {
-      const col = cols[colIdx];
-      const x = colX[colIdx];
-      const pad = 2;
-      doc.setFontSize(fontSize);
-      if (col.align === 'right') doc.text(text, x + col.w - pad, rowY, { align: 'right' });
-      else doc.text(text, x + pad, rowY);
+
+    const drawHeaderRow = (rowY: number) => {
+      setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+      cols.forEach((c, i) => {
+        const pad = 2;
+        if (c.align === 'right') doc.text(c.name, colX[i] + c.w - pad, rowY, { align: 'right' });
+        else doc.text(c.name, colX[i] + pad, rowY);
+      });
     };
+
     const items = itemsWithCommission.filter((it: any) => ((it.currency as string) || 'CUP') === currency);
     const fmtAmt = currency === 'CUP' ? fmtCup : fmtUsdFmt;
-    let totCup = 0, totTransfer = 0, totCommission = 0;
-    const totalRows = items.length + 1;
-    const tableH = headerH + totalRows * rowH;
-    const yStart = y;
-    setDraw(C_BLACK); doc.setLineWidth(0.4);
-    doc.rect(m, yStart, tableW, tableH);
-    for (let i = 0; i < cols.length - 1; i++) doc.line(colX[i + 1], yStart, colX[i + 1], yStart + tableH);
-    doc.line(m, yStart + headerH, m + tableW, yStart + headerH);
-    doc.line(m, yStart + headerH + items.length * rowH, m + tableW, yStart + headerH + items.length * rowH);
-    setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-    const headerY = y + 4;
-    cols.forEach((c, i) => drawCell(i, headerY, c.name, 8));
-    y += headerH;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
-    setText(C_DARK);
-    for (const it of items) {
-      if (y > ph - 80) { doc.addPage(); y = 14; }
-      const unit = Number(it.unit_price || it.price || 0);
-      const qty = Number(it.total_quantity || 0);
-      const total = Number(it.total_cup || (unit * qty) || 0);
-      const transfer = Number(it.transfer_paid_calc || it.transfer_paid || 0);
-      const commission = Number(it.commission_paid_calc || it.commission_paid || 0);
-      totCup += total;
-      totTransfer += transfer;
-      totCommission += commission;
-      const rowY = y + 3.5;
-      drawCell(0, rowY, (it.sku as string || '').toString(), 8);
-      drawCell(1, rowY, ((it.category as string) || '').toString().slice(0, 18), 8);
-      let desc = ((it.product_name as string) || '').toString();
-      const maxDescW = cols[2].w - 4;
-      if (doc.getTextWidth(desc) > maxDescW) {
-        while (desc.length > 0 && doc.getTextWidth(desc + '…') > maxDescW) desc = desc.slice(0, -1);
-        desc += '…';
+
+    // Pre-dibujado del marco de la PRIMERA porción de tabla (la tabla fluye por
+    // páginas: el marco se redibuja por página con sus filas).
+    const drawTableFrame = (x: number, yTop: number, rows: number) => {
+      const h = headerH + rows * rowH + rowH; // + totals row
+      setDraw(C_BLACK); doc.setLineWidth(0.4);
+      doc.rect(x, yTop, tableW, h);
+      for (let i = 0; i < cols.length - 1; i++) doc.line(colX[i + 1], yTop, colX[i + 1], yTop + h);
+      doc.line(x, yTop + headerH, x + tableW, yTop + headerH);
+      doc.line(x, yTop + headerH + rows * rowH, x + tableW, yTop + headerH + rows * rowH);
+    };
+
+    let totCash = 0, totTransfer = 0, totCommission = 0;
+    let pageFirstRow = 0; // índice del primer ítem de la página actual
+    let pages = 1;
+
+    // Página 1 de la tabla (empieza en y actual)
+    let yStart = y;
+    // Cuenta filas que caben antes del pie de firma
+    const fitsBeforeFooter = (yPos: number) => yPos + rowH < ph - 45;
+    let i = 0;
+    const drawTotalsRow = (rowY: number) => {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      setText(C_DARK);
+      const cupIdx = 3, trIdx = 4;
+      drawCellText(cupIdx, rowY, totCash > 0 ? fmtAmt(totCash) : '-', 9);
+      drawCellText(trIdx, rowY, totTransfer > 0 ? fmtAmt(totTransfer) : '-', 9);
+      if (includeCommission) drawCellText(5, rowY, totCommission > 0 ? fmtAmt(totCommission) : '-', 9);
+    };
+    const drawCellText = (colIdx: number, rowY: number, text: string, fontSize: number = 8) => {
+      const col = cols[colIdx];
+      const pad = 2;
+      doc.setFontSize(fontSize);
+      if (col.align === 'right') doc.text(text, colX[colIdx] + col.w - pad, rowY, { align: 'right' });
+      else doc.text(text, colX[colIdx] + pad, rowY);
+    };
+
+    // Bucle con salto de página + REPETICIÓN de encabezados (P3)
+    const renderChunk = () => {
+      const rowsOnPage: any[] = [];
+      let j = i;
+      while (j < items.length && fitsBeforeFooter(y + headerH + (rowsOnPage.length + 1) * rowH + rowH + 4)) {
+        rowsOnPage.push(items[j]); j++;
       }
-      drawCell(2, rowY, desc, 8);
-      drawCell(3, rowY, qty.toFixed(2), 8);
-      drawCell(4, rowY, fmtAmt(total), 8);
-      drawCell(5, rowY, transfer > 0 ? fmtAmt(transfer) : '-', 8);
-      drawCell(6, rowY, commission > 0 ? fmtAmt(commission) : '-', 8);
+      if (rowsOnPage.length === 0 && j < items.length) rowsOnPage.push(items[j++]); // al menos 1 fila
+      drawTableFrame(m, y, rowsOnPage.length);
+      drawHeaderRow(y + 4);
+      y += headerH;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+      setText(C_DARK);
+      for (const it of rowsOnPage) {
+        const cash = Number(it.cash_paid || 0);
+        const transfer = Number(it.transfer_paid || 0) + Number(it.zelle_paid || 0);
+        const commission = Number(it.commission_suggested || 0);
+        totCash += cash;
+        totTransfer += transfer;
+        totCommission += commission;
+        const rowY = y + 3.5;
+        drawCellText(0, rowY, (it.sku as string || '').toString(), 8);
+        let desc = ((it.product_name as string) || '').toString();
+        const maxDescW = cols[1].w - 4;
+        if (doc.getTextWidth(desc) > maxDescW) {
+          while (desc.length > 0 && doc.getTextWidth(desc + '…') > maxDescW) desc = desc.slice(0, -1);
+          desc += '…';
+        }
+        drawCellText(1, rowY, desc, 8);
+        drawCellText(2, rowY, Number(it.total_quantity || 0).toFixed(2), 8);
+        drawCellText(3, rowY, cash > 0 ? fmtAmt(cash) : '-', 8);
+        drawCellText(4, rowY, transfer > 0 ? fmtAmt(transfer) : '-', 8);
+        if (includeCommission) drawCellText(5, rowY, commission > 0 ? fmtAmt(commission) : '-', 8);
+        y += rowH;
+      }
+      i = j;
+    };
+
+    if (items.length === 0) {
+      // Tabla vacía visible (estado vacío explícito, §10)
+      drawTableFrame(m, y, 0);
+      drawHeaderRow(y + 4);
+      y += headerH;
+      setText(C_MUTED); doc.setFont('helvetica', 'italic');
+      drawCellText(1, y + 3.5, 'Sin movimientos en el período', 8);
       y += rowH;
+      return { totCash: 0, totTransfer: 0, totCommission: 0, totalPages: 1 };
     }
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-    const totalsY = y + 3.5;
-    drawCell(4, totalsY, fmtAmt(totCup), 9);
-    drawCell(5, totalsY, totTransfer > 0 ? fmtAmt(totTransfer) : '-', 9);
-    drawCell(6, totalsY, totCommission > 0 ? fmtAmt(totCommission) : '-', 9);
-    y += rowH;
-    return { totCup, totTransfer, totCommission };
+
+    renderChunk();
+    while (i < items.length) {
+      doc.addPage();
+      pages++;
+      y = 14;
+      renderPageHeader(`Reporte de Venta ${currency} (cont.)`);
+      renderChunk();
+    }
+    // Totales al final del detalle (una sola fila — nunca dentro de la suma)
+    drawTotalsRow(y + 3.5);
+    y += rowH + 4;
+    void pageFirstRow;
+    return { totCash, totTransfer, totCommission, totalPages: pages };
   };
 
-  // ── PAGE 1: REPORTE DE VENTA CUP ──
+  // ══════════════ SECCIÓN CUP ══════════════
   {
-    const headerH_mm = logoDataUrl ? 16 : 8;
-    if (logoDataUrl) {
-      try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 14, 14); } catch {}
-    }
-    setText(C_DARK);
-    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-    doc.text(`${sn} Reporte de Venta CUP Día:`, m + (logoDataUrl ? 18 : 0), y);
-    doc.text(fecha, pw - m, y, { align: 'right' });
-    y += headerH_mm;
-    const totals = renderSalesTable('CUP');
-    y += 4;
-    const cupCashSales = cupCashFromItems;
-    const cupTransferSales = cupTransferFromItems;
-    const cupCashPayments = (report.payments || []).filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, p: any) => s + Number(p.total), 0);
-    const cupCashProduction = production.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, p: any) => s + Number(p.total), 0);
-    const cupCashCommissions = (report.commissions || []).filter((c: any) => c.payment_method === 'cash' && c.currency === 'CUP').reduce((s: number, c: any) => s + Number(c.total), 0);
-    const incomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean }> = [
-      { label: 'Ventas Totales', amount: totals.totCup, isTotal: true },
-      { label: 'Venta por Transferencia', amount: cupTransferSales },
+    renderPageHeader('Reporte de Venta CUP');
+    markSection('CUP');
+
+    // FILA 1 (§2): [Resumen del Día] + [Desglose de efectivo MN] contiguos.
+    const s = cupSummary;
+    const incomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean; note?: string }> = [
+      { label: 'Ventas totales (efectivo + transferencia)', amount: s.ventasTotales, isTotal: true },
+      { label: 'Ventas en efectivo', amount: s.ventasCash },
+      { label: 'Ventas por transferencia', amount: s.ventasTransfer },
     ];
-    if (cupCashProduction > 0) incomeRows.push({ label: 'Órdenes de Trabajo (anticipos)', amount: cupCashProduction });
-    if (cupCashPayments > 0) incomeRows.push({ label: 'Pagos a Proveedores', amount: -cupCashPayments });
-    const commissionSection = commissionsWorkers.length > 0
-      ? [{
-          title: 'Comisiones por Trabajador',
-          rows: [
-            ...commissionsWorkers.map((w: any) => ({
-              label: `${w.worker_name || 'Trabajador'}${w.ci ? ` (${w.ci})` : ''}`,
-              amount: Number(w.total_amount_cup || 0),
-            })),
-            { label: 'Total Comisiones', amount: totalCommissionsCup, isTotal: true },
-          ],
-        }]
-      : undefined;
-    const aEntregar = cupCashSales + cupCashProduction - cupCashPayments - (cupCashCommissions || totalCommissionsCup);
-    const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, aEntregar, 'A entregar', commissionSection);
-    const expectedCup = aEntregar;
-    // CAMBIO 2026-10: denominaciones ACTIVAS del usuario (antes fijas [1000..1])
+    if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle });
+    if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true });
+    if (s.otIngresosCash > 0) incomeRows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash });
+    // Comisiones PAGADAS desglosadas por medio (§4): transferencia NO toca el efectivo.
+    if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense' });
+    if (s.comisionesTransfer > 0) incomeRows.push({ label: 'Comisiones pagadas por transferencia', amount: s.comisionesTransfer, note: 'info' });
+    // Servicios recibidos: línea INDEPENDIENTE (§6) — ya no fusionados en proveedores.
+    if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense' });
+    if (s.recibosProveedoresCash > 0) incomeRows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, note: 'expense' });
+    if (s.ajustesPositivos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos });
+    if (s.ajustesNegativos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (−)', amount: s.ajustesNegativos, note: 'expense' });
+
+    const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, s.efectivoEsperado);
+
     const cupDisplayDenoms = displayDenoms(cupDenoms, cupBreakdown, 'CUP');
     const cupTotalCounted = breakdownTotal(cupBreakdown);
-    const cupCuadre = cupTotalCounted - expectedCup;
-    renderBreakdownBlock('Desglose de efectivo MN', cupDisplayDenoms, cupBreakdown, cupTotalCounted, cupCuadre, 'CUP');
-    y = Math.max(blockEndY, y) + 5;
+    const cupCuadre = computeCuadre(cupTotalCounted, s.efectivoEsperado);
+    const breakdownEndY = renderBreakdownBlock('Desglose de efectivo MN', cupDisplayDenoms, cupBreakdown, cupTotalCounted, cupCuadre, 'CUP');
+
+    y = Math.max(blockEndY, breakdownEndY) + 5;
+
+    // SEGUNDA sección (§2): tabla de movimientos DEBAJO de ambos bloques.
+    renderSalesTable('CUP');
     renderFirmas();
   }
 
-  // ── PAGE 2: REPORTE DE VENTA USD ──
-  doc.addPage(); y = 14;
-  {
-    const headerH_mm = logoDataUrl ? 16 : 8;
-    if (logoDataUrl) {
-      try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 14, 14); } catch {}
+  // ══════════════ SECCIÓN USD (§9: compacto o hoja propia) ══════════════
+  if (options.includeUsd !== false) {
+    const usdHasContent = usdSummary.ventasTotales > 0 || usdSummary.ventasCash > 0 || breakdownTotal(usdBreakdown) > 0 || itemsWithCommission.some((it: any) => it.currency === 'USD');
+    if (usdHasContent) {
+      if (options.usdSeparatePage !== false) {
+        doc.addPage(); y = 14;
+      } else {
+        // Compacto: misma hoja si queda espacio legible; si no, página nueva.
+        const needed = 60 + (itemsWithCommission.filter((it: any) => it.currency === 'USD').length * 5);
+        if (y + needed > ph - 30) { doc.addPage(); y = 14; }
+      }
+      renderPageHeader('Reporte de Venta USD');
+      markSection('USD');
+
+      const su = usdSummary;
+      const usdIncomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean; note?: string }> = [
+        { label: 'Ventas totales (efectivo + Zelle)', amount: su.ventasTotales, isTotal: true },
+        { label: 'Ventas en efectivo', amount: su.ventasCash },
+        { label: 'Venta por Zelle', amount: su.ventasZelle },
+      ];
+      if (su.comisionesCash > 0) usdIncomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: su.comisionesCash, note: 'expense' });
+      if (su.serviciosRecibidosCash > 0) usdIncomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: su.serviciosRecibidosCash, note: 'expense' });
+      const usdBlockEndY = renderIncomeBlock('Resumen del Día USD', usdIncomeRows, su.efectivoEsperado, 'Efectivo esperado a entregar (USD)');
+
+      const usdTotalCounted = breakdownTotal(usdBreakdown);
+      const usdCuadre = computeCuadre(usdTotalCounted, su.efectivoEsperado);
+      const usdDisplayDenoms = displayDenoms(usdDenoms, usdBreakdown, 'USD');
+      const usdBreakdownEndY = renderBreakdownBlock('Desglose de efectivo USD', usdDisplayDenoms, usdBreakdown, usdTotalCounted, usdCuadre, 'USD');
+      y = Math.max(usdBlockEndY, usdBreakdownEndY) + 5;
+
+      renderSalesTable('USD');
+      if (options.usdSeparatePage !== false) renderFirmas();
     }
-    setText(C_DARK);
-    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-    doc.text(`${sn} Reporte de Venta USD Día:`, m + (logoDataUrl ? 18 : 0), y);
-    doc.text(fecha, pw - m, y, { align: 'right' });
-    y += headerH_mm;
-    const totals = renderSalesTable('USD');
-    y += 4;
-    const usdCashSales = usdCashFromItems;
-    const usdZelleSales = usdZelleFromItems;
-    const usdIncomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean }> = [
-      { label: 'Ventas Totales', amount: totals.totCup, isTotal: true },
-      { label: 'Venta por Zelle', amount: usdZelleSales },
-    ];
-    const usdAEntregar = usdCashSales;
-    const blockEndY = renderIncomeBlock('Resumen del Día USD', usdIncomeRows, usdAEntregar);
-    const usdTotalCounted = breakdownTotal(usdBreakdown);
-    const usdCuadre = usdTotalCounted - usdAEntregar;
-    // CAMBIO 2026-10: denominaciones ACTIVAS USD del usuario (antes fijas)
-    const usdDisplayDenoms = displayDenoms(usdDenoms, usdBreakdown, 'USD');
-    renderBreakdownBlock('Desglose de efectivo USD', usdDisplayDenoms, usdBreakdown, usdTotalCounted, usdCuadre, 'USD');
-    y = Math.max(blockEndY, y) + 5;
-    setText(C_MUTED); doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
-    doc.text('Fondo de caja:', m, ph - 20);
   }
 
-  // ── PAGE 3: REPORTE DE ÓRDENES DE TRABAJO ──
-  doc.addPage(); y = 14;
-  {
-    const headerH_mm = logoDataUrl ? 16 : 8;
-    if (logoDataUrl) {
-      try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 14, 14); } catch {}
-    }
-    setText(C_DARK);
-    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-    doc.text(`Reporte de Ordenes de trabajo`, m + (logoDataUrl ? 18 : 0), y);
-    doc.text(fecha, pw - m, y, { align: 'right' });
-    y += headerH_mm;
+  // ══════════════ SECCIÓN ÓRDENES DE TRABAJO (§8.1: conmutable) ══════════════
+  if (options.includeOtReport !== false) {
+    doc.addPage(); y = 14;
+    renderPageHeader('Reporte de Órdenes de Trabajo');
+    markSection('Órdenes');
+
     const cols = [
-      { name: 'Código',    w: 18, align: 'left' as const },
-      { name: 'Clasificación', w: 18, align: 'left' as const },
-      { name: 'Descripción',   w: 60, align: 'left' as const },
-      { name: 'Cantidad',  w: 12, align: 'right' as const },
-      { name: 'CUP',       w: 28, align: 'right' as const },
-      { name: 'USD',       w: 25, align: 'right' as const },
-      { name: 'Comisión',  w: 22, align: 'right' as const },
+      { name: 'Código', w: 0.10 * contentW, align: 'left' as const },
+      { name: 'Clasificación', w: 0.13 * contentW, align: 'left' as const },
+      { name: 'Descripción', w: 0.45 * contentW, align: 'left' as const },
+      { name: 'Cantidad', w: 0.08 * contentW, align: 'right' as const },
+      { name: 'CUP', w: 0.13 * contentW, align: 'right' as const },
+      { name: 'USD', w: 0.11 * contentW, align: 'right' as const },
     ];
-    const tableW = cols.reduce((s, c) => s + c.w, 0);
+    const tableW = cols.reduce((sum, c) => sum + c.w, 0);
     const rowH = 5;
     const headerH = 6;
     const colX: number[] = [];
@@ -906,21 +988,22 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     for (const c of cols) { colX.push(accX); accX += c.w; }
     const drawCell = (colIdx: number, rowY: number, text: string, fontSize: number = 8) => {
       const col = cols[colIdx];
-      const x = colX[colIdx];
       const pad = 2;
       doc.setFontSize(fontSize);
-      if (col.align === 'right') doc.text(text, x + col.w - pad, rowY, { align: 'right' });
-      else doc.text(text, x + pad, rowY);
+      if (col.align === 'right') doc.text(text, colX[colIdx] + col.w - pad, rowY, { align: 'right' });
+      else doc.text(text, colX[colIdx] + pad, rowY);
     };
+
     const orders = (productionOrders as any[]) || [];
-    const ordersCount = Math.max(1, orders.length);
-    const tableH = headerH + (ordersCount + 1) * rowH;
-    const yStart = y;
-    setDraw(C_BLACK); doc.setLineWidth(0.4);
-    doc.rect(m, yStart, tableW, tableH);
-    for (let i = 0; i < cols.length - 1; i++) doc.line(colX[i + 1], yStart, colX[i + 1], yStart + tableH);
-    doc.line(m, yStart + headerH, m + tableW, yStart + headerH);
-    doc.line(m, yStart + headerH + ordersCount * rowH, m + tableW, yStart + headerH + ordersCount * rowH);
+    const drawOtFrame = (yTop: number, rows: number) => {
+      const h = headerH + (rows + 1) * rowH;
+      setDraw(C_BLACK); doc.setLineWidth(0.4);
+      doc.rect(m, yTop, tableW, h);
+      for (let i = 0; i < cols.length - 1; i++) doc.line(colX[i + 1], yTop, colX[i + 1], yTop + h);
+      doc.line(m, yTop + headerH, m + tableW, yTop + headerH);
+      doc.line(m, yTop + headerH + rows * rowH, m + tableW, yTop + headerH + rows * rowH);
+    };
+    drawOtFrame(y, Math.max(1, orders.length));
     setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
     const headerY = y + 4;
     cols.forEach((c, i) => drawCell(i, headerY, c.name, 8));
@@ -928,7 +1011,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8); setText(C_DARK);
     let totCup = 0, totUsd = 0;
     for (const ord of orders) {
-      if (y > ph - 80) { doc.addPage(); y = 14; }
+      if (y > ph - 80) { doc.addPage(); y = 14; renderPageHeader('Reporte de Órdenes de Trabajo (cont.)'); }
       const num = (ord.order_number as string || '').toString();
       const desc = ((ord.description || ord.title || ord.customer_name || 'Orden de trabajo') as string).toString();
       const cupAmt = Number(ord.advance_currency === 'CUP' ? ord.advance_amount : (ord.budget_currency === 'CUP' ? ord.budget_total : 0));
@@ -947,38 +1030,62 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
       drawCell(3, rowY, '1.00', 8);
       drawCell(4, rowY, cupAmt > 0 ? fmtCup(cupAmt) : '-', 8);
       drawCell(5, rowY, usdAmt > 0 ? fmtUsdFmt(usdAmt) : '-', 8);
-      drawCell(6, rowY, '-', 8);
       y += rowH;
     }
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
     const totalsY = y + 3.5;
     drawCell(4, totalsY, fmtCup(totCup), 9);
     drawCell(5, totalsY, totUsd > 0 ? fmtUsdFmt(totUsd) : '-', 9);
-    drawCell(6, totalsY, '-', 9);
     y += rowH + 4;
     const incomeRows = [
-      { label: 'Ventas Totales', amount: totCup, isTotal: true },
-      { label: 'Venta por Transferencia', amount: 0 },
+      { label: 'Total órdenes (CUP)', amount: totCup, isTotal: true },
     ];
-    const aEntregar = totCup;
-    const blockEndY = renderIncomeBlock('Resumen Órdenes', incomeRows, aEntregar);
-    // CAMBIO 2026-10: denominaciones ACTIVAS del usuario (antes [200..1])
+    const blockEndY = renderIncomeBlock('Resumen Órdenes', incomeRows, totCup, 'Total anticipos CUP');
     const cupDisplayDenoms = displayDenoms(cupDenoms, cupBreakdown, 'CUP');
     const cupTotalCounted = breakdownTotal(cupBreakdown);
-    const cupCuadre = cupTotalCounted - aEntregar;
+    const cupCuadre = computeCuadre(cupTotalCounted, totCup);
     renderBreakdownBlock('Desglose de efectivo CUP', cupDisplayDenoms, cupBreakdown, cupTotalCounted, cupCuadre, 'CUP');
     y = Math.max(blockEndY, y) + 5;
     renderFirmas();
   }
 
+  // ── Pie de página con sección REAL por página (dinámico: compacto cambia paginación) ──
+  void sales; void production; void commissionsWorkers; void totalCommissionsCup;
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
+    const sec = sectionPages.find(sp => i >= sp.from && i <= sp.to);
     doc.setFontSize(7); setText(C_MUTED); doc.setFont('helvetica', 'normal');
-    const sectionName = i === 1 ? 'CUP' : i === 2 ? 'USD' : i === 3 ? 'Órdenes' : '';
-    doc.text(`CostPro — Reporte Diario · ${sn} · ${sectionName} · Página ${i} de ${pageCount}`, pw / 2, ph - 5, { align: 'center' });
+    const orientLbl = orientation === 'horizontal' ? 'Horizontal' : 'Vertical';
+    doc.text(`CostPro — Reporte Diario (${orientLbl}) · ${sn} · ${sec ? sec.name : ''} · Período ${periodoLbl} · Página ${i} de ${pageCount}`, pw / 2, ph - 5, { align: 'center' });
   }
   return doc;
+}
+
+/** Comisión sugerida por producto desde el MOTOR REAL (§5.1): agrega el
+ *  product_breakdown de /api/commissions/calculate (todos los workers activos).
+ *  Sin reglas configuradas → sugerencia 0 (NUNCA el 1% plano inventado). */
+async function fetchSuggestedCommissionsByProduct(startDate: string, endDate: string): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  try {
+    const res = await apiFetch('/api/commissions/calculate', {
+      method: 'POST',
+      body: JSON.stringify({ date_from: startDate, date_to: endDate, mode: 'rules' }),
+    });
+    const calcs = Array.isArray(res) ? res : (res?.calculations || res?.results || []);
+    for (const calc of calcs) {
+      const breakdown = calc?.product_breakdown || calc?.calculated_breakdown?.product_breakdown;
+      if (!Array.isArray(breakdown)) continue;
+      for (const p of breakdown) {
+        const pid = String(p.product_id || '');
+        const amt = Number(p.commission || 0);
+        if (pid && amt > 0) map.set(pid, (map.get(pid) || 0) + amt);
+      }
+    }
+  } catch {
+    // Endpoint no disponible o sin reglas: columna sin sugerencia (0/'-').
+  }
+  return map;
 }
 
 export { formatUsd };

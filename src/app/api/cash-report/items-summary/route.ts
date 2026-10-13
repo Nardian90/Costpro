@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { lineTotalCup, splitItemPortion, type TxSplit } from '@/lib/cash-report/summary';
 
 /**
  * GET /api/cash-report/items-summary
@@ -9,12 +10,16 @@ import { getSupabaseForSession } from '@/lib/supabase-session';
  *   - product_id, product_name, sku
  *   - total_quantity (sum quantity)
  *   - unit_price (precio promedio ponderado)
- *   - total_cup (importe en CUP)
- *   - cash_paid (importe cobrado en efectivo)
- *   - transfer_paid (importe cobrado en transferencia)
- *   - zelle_paid (importe cobrado en Zelle)
+ *   - total_cup (importe en CUP de la línea — FIX D1: precio × cantidad)
+ *   - cash_paid (importe cobrado en efectivo — reparto por transacción)
+ *   - transfer_paid (importe cobrado en transferencia — reparto)
+ *   - zelle_paid (importe cobrado en Zelle — reparto)
  *
- * Útil para el PDF de Reporte de Caja — tabla de productos vendidos.
+ * AUDITORÍA 2026-10 (FIX D1): total_cup usaba price_at_sale_cup (precio
+ * UNITARIO) sin multiplicar por cantidad — la tabla del reporte sumaba
+ * 31.200 cuando el día real era 60.600. Además, el split del medio de cobro
+ * se reparte ahora a partir del split REAL de cada transacción
+ * (cash_amount/transfer_amount/zelle_amount), no de una cuota global.
  *
  * Query: start_date, end_date (ISO)
  */
@@ -49,7 +54,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         transaction_id,
         product_id,
         products!inner ( id, name, sku ),
-        transactions!inner ( id, store_id, status, created_at, payment_method, sale_currency, sale_exchange_rate, zelle_amount )
+        transactions!inner ( id, store_id, status, created_at, payment_method, sale_currency, sale_exchange_rate, zelle_amount, cash_amount, transfer_amount, total_amount )
       `)
       .eq('transactions.store_id', storeId)
       .neq('transactions.status', 'voided')
@@ -61,7 +66,38 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Consolidar por producto + currency
+    // Split real por transacción (FIX D1): el medio de cobro vive a nivel de
+    // transacción; los ítems reparten proporcionalmente a su valor de línea.
+    // Primera pasada: valor total de líneas por transacción.
+    const txLineTotals: Record<string, number> = {};
+    const itemRows: Array<{
+      key: string; pid: string; pname: string; sku: string; cur: string;
+      qty: number; lineTotal: number; txId: string;
+      storedCash: number; storedTransfer: number; txSplit: TxSplit;
+    }> = [];
+
+    for (const item of (data || [])) {
+      const p = item.products as any;
+      const t = item.transactions as any;
+      const pid = item.product_id;
+      const cur = item.price_currency || t.sale_currency || 'CUP';
+      const qty = Number(item.quantity) || 0;
+      // FIX D1: total de línea = precio unitario CUP × cantidad (antes: solo el unitario).
+      const lineTotal = lineTotalCup(item.price_at_sale_cup, item.price_at_sale, t.sale_exchange_rate, qty);
+      txLineTotals[item.transaction_id] = (txLineTotals[item.transaction_id] || 0) + lineTotal;
+      itemRows.push({
+        key: `${pid}__${cur}`, pid, pname: p?.name || 'Producto', sku: p?.sku || '—', cur,
+        qty, lineTotal, txId: item.transaction_id,
+        storedCash: Number(item.cash_paid) || 0, storedTransfer: Number(item.transfer_paid) || 0,
+        txSplit: {
+          cash: Number(t.cash_amount) || 0,
+          transfer: Number(t.transfer_amount) || 0,
+          zelle: Number(t.zelle_amount) || 0,
+        },
+      });
+    }
+
+    // Consolidar por producto + moneda
     const byProduct: Record<string, {
       product_id: string;
       product_name: string;
@@ -75,18 +111,13 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       transactions_count: Set<string>;
     }> = {};
 
-    for (const item of (data || [])) {
-      const p = item.products as any;
-      const t = item.transactions as any;
-      const pid = item.product_id;
-      const cur = item.price_currency || t.sale_currency || 'CUP';
-      const key = `${pid}__${cur}`;
-      if (!byProduct[key]) {
-        byProduct[key] = {
-          product_id: pid,
-          product_name: p?.name || 'Producto',
-          sku: p?.sku || '—',
-          currency: cur,
+    for (const row of itemRows) {
+      if (!byProduct[row.key]) {
+        byProduct[row.key] = {
+          product_id: row.pid,
+          product_name: row.pname,
+          sku: row.sku,
+          currency: row.cur,
           total_quantity: 0,
           total_cup: 0,
           cash_paid: 0,
@@ -95,18 +126,25 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           transactions_count: new Set(),
         };
       }
-      const qty = Number(item.quantity) || 0;
-      const itemTotalCup = Number(item.price_at_sale_cup) || (Number(item.price_at_sale) * Number(t.sale_exchange_rate || 1));
-      byProduct[key].total_quantity += qty;
-      byProduct[key].total_cup += itemTotalCup;
-      byProduct[key].cash_paid += Number(item.cash_paid) || 0;
-      byProduct[key].transfer_paid += Number(item.transfer_paid) || 0;
-      // Zelle = total_item - cash - transfer (cuando la venta es mixed/zelle)
-      const zellePortion = Math.max(0, itemTotalCup - (Number(item.cash_paid) || 0) - (Number(item.transfer_paid) || 0));
-      if (t.payment_method === 'zelle' || (t.zelle_amount && Number(t.zelle_amount) > 0)) {
-        byProduct[key].zelle_paid += zellePortion;
+      byProduct[row.key].total_quantity += row.qty;
+      byProduct[row.key].total_cup += row.lineTotal;
+      // Split por ítem: si el ítem registró cash_paid/transfer_paid se usan;
+      // si no, reparto proporcional al valor de línea dentro de su transacción.
+      const stored = row.storedCash + row.storedTransfer;
+      let portion = { cash: 0, transfer: 0, zelle: 0 };
+      if (stored > 0) {
+        portion = { cash: row.storedCash, transfer: row.storedTransfer, zelle: 0 };
+      } else {
+        portion = splitItemPortion(row.lineTotal, txLineTotals[row.txId] || 0, row.txSplit);
       }
-      byProduct[key].transactions_count.add(item.transaction_id);
+      byProduct[row.key].cash_paid += portion.cash;
+      byProduct[row.key].transfer_paid += portion.transfer;
+      // Zelle: porción no cubierta por cash/transfer cuando la venta es zelle
+      const zellePortion = Math.max(0, row.lineTotal - portion.cash - portion.transfer);
+      if (portion.zelle > 0 || (row.txSplit.zelle > 0 && row.txSplit.cash === 0 && row.txSplit.transfer === 0)) {
+        byProduct[row.key].zelle_paid += zellePortion;
+      }
+      byProduct[row.key].transactions_count.add(row.txId);
     }
 
     // Convertir a array y agregar unit_price (promedio)
