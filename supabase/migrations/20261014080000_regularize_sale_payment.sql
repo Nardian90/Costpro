@@ -31,20 +31,21 @@
 --   * Datos: restaurar desde audit_logs.old_data (misma función admite valores
 --     explícitos) — procedimiento documentado en el expediente de cierre.
 --   * Capacidad: DROP FUNCTION ...; DROP POLICY cta_family_payment_transactions_update;
+--     DROP POLICY cta_family_audit_logs_select; REVOKE los GRANT de esta migración
 --     (no afecta a otros objetos).
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public.regularize_sale_payment(
     p_transaction_id   uuid,
+    p_reason           text,
+    p_user_id          uuid,
+    p_idempotency_key  text,
     p_new_cash         numeric DEFAULT NULL,
     p_new_zelle_cup    numeric DEFAULT NULL,
     p_new_zelle_usd    numeric DEFAULT NULL,
     p_new_zelle_rate   numeric DEFAULT NULL,
     p_new_transfer     numeric DEFAULT NULL,
-    p_new_subtotal     numeric DEFAULT NULL,
-    p_reason           text,
-    p_user_id          uuid,
-    p_idempotency_key  text
+    p_new_subtotal     numeric DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -53,6 +54,7 @@ SET search_path TO 'public', 'pg_temp'
 AS $function$
 DECLARE
     v_tx public.transactions%ROWTYPE;
+    v_jwt_role text;
     v_cash numeric;
     v_zelle numeric;
     v_transfer numeric;
@@ -64,8 +66,14 @@ DECLARE
     v_sum_pays numeric;
     v_idem_exists boolean := false;
 BEGIN
-    -- 1) Canal de llamada: solo service_role (convención server-to-server del proyecto)
-    IF auth.role() <> 'service_role' THEN
+    -- 1) Canal de llamada: solo service_role (convención server-to-server del
+    --    proyecto). Lectura de claims inline (patrón app_actor_uid) para no
+    --    requerir USAGE del esquema auth al rol owner NOLOGIN.
+    v_jwt_role := COALESCE(
+        NULLIF(current_setting('request.jwt.claim.role', true), ''),
+        (NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')
+    );
+    IF v_jwt_role <> 'service_role' THEN
         RAISE EXCEPTION 'ERR_UNAUTHORIZED' USING ERRCODE = 'PT015';
     END IF;
     IF p_user_id IS NULL THEN
@@ -185,10 +193,28 @@ BEGIN
 END;
 $function$;
 
-ALTER FUNCTION public.regularize_sale_payment(uuid, numeric, numeric, numeric, numeric, numeric, numeric, text, uuid, text)
+-- Requisito de PostgreSQL para ALTER ... OWNER: el nuevo dueño necesita CREATE
+-- en el esquema de la función (se otorga ANTES del ALTER). El rol es NOLOGIN
+-- (solo alcanzable vía SECURITY DEFINER con autorización interna), mismo patrón
+-- de propiedad que adjust_total_amount.
+GRANT CREATE ON SCHEMA public TO costpro_transaction_adjuster;
+
+ALTER FUNCTION public.regularize_sale_payment(uuid, text, uuid, text, numeric, numeric, numeric, numeric, numeric, numeric)
     OWNER TO costpro_transaction_adjuster;
 
-GRANT EXECUTE ON FUNCTION public.regularize_sale_payment(uuid, numeric, numeric, numeric, numeric, numeric, numeric, text, uuid, text)
+-- Privilegios de tabla para el owner (RLS de payment_transactions/audit_logs
+-- se resuelve con las políticas cta_family_* de esta migración y existentes).
+GRANT UPDATE ON public.payment_transactions TO costpro_transaction_adjuster;
+GRANT SELECT ON public.audit_logs TO costpro_transaction_adjuster;
+-- El trigger trg_check_active_user (BEFORE UPDATE ON transactions) lee profiles
+-- bajo el contexto del owner; sin este SELECT el propio adjust_total_amount
+-- (patrón existente) tampoco podría ejecutarse.
+GRANT SELECT ON public.profiles TO costpro_transaction_adjuster;
+
+-- EXECUTE de la función de autorización (su EXECUTE público fue revocado por hardening).
+GRANT EXECUTE ON FUNCTION public.can_admin_reverse_transaction(uuid, uuid) TO costpro_transaction_adjuster;
+
+GRANT EXECUTE ON FUNCTION public.regularize_sale_payment(uuid, text, uuid, text, numeric, numeric, numeric, numeric, numeric, numeric)
     TO service_role;
 
 -- Política espejo de las cta_family_* existentes (rol interno NOLOGIN; la
@@ -199,3 +225,18 @@ CREATE POLICY cta_family_payment_transactions_update
     TO costpro_transaction_adjuster
     USING (true)
     WITH CHECK (true);
+
+-- La función consulta audit_logs para su idempotencia (SELECT).
+CREATE POLICY cta_family_audit_logs_select
+    ON public.audit_logs
+    FOR SELECT
+    TO costpro_transaction_adjuster
+    USING (true);
+
+-- El trigger trg_check_active_user evalúa profiles.is_active bajo el contexto
+-- del owner; sin política SELECT, RLS oculta todas las filas a cta.
+CREATE POLICY cta_family_profiles_select
+    ON public.profiles
+    FOR SELECT
+    TO costpro_transaction_adjuster
+    USING (true);
