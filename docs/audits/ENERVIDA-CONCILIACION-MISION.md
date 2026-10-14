@@ -7,13 +7,13 @@ final de auditoría vivirá en `docs/audits/AUDITORIA_CONCILIACION_ENERVIDA_VITA
 
 | Fase | Contenido | Estado |
 |---|---|---|
-| 1 | Inspección inicial, modelo de datos, respaldo verificable | ⏳ |
-| 2 | Auditoría hoja «Operaciones» (VS/DV/Ventas/Entrada) + caso SKU 127→137 (~fila 873) | ⏳ |
-| 3 | Conciliación de existencias (ExistenciaFinal vs COSTPRO) + análisis Kardex | ⏳ |
-| 4 | Informe `AUDITORIA_CONCILIACION_ENERVIDA_VITALLCONS.md` | ⏳ |
-| 5 | Comisiones por producto (hoja ConfComisiones → Trabajadores y Comisiones → Por producto) | ⏳ |
-| 6 | Pruebas obligatorias (14 casos) | ⏳ |
-| 7 | Informe final + criterios de aceptación | ⏳ |
+| 1 | Inspección inicial, modelo de datos, respaldo verificable | ✅ |
+| 2 | Auditoría hoja «Operaciones» + caso SKU 127→137 | ✅ 837 conciliadas; f873 CORREGIDA (VS-000179); f854 pendiente de decisión |
+| 3 | Conciliación de existencias + análisis Kardex | ✅ 160/161 (SKU 141 +10 = f854, explicado) |
+| 4 | Informe de auditoría | ✅ |
+| 5 | Comisiones por producto | ✅ 110 reglas importadas (idempotente) + fix UI ceros + 6 tests |
+| 6 | Pruebas obligatorias (14 casos) | ✅ 14/14 (suite 2916 ×2, tsc, eslint) |
+| 7 | Informe final + criterios de aceptación | ✅ (f854 queda como pendiente documentada) |
 
 ## Principios de la misión
 
