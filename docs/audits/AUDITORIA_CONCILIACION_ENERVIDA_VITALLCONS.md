@@ -1,6 +1,12 @@
 # AUDITORÍA DE CONCILIACIÓN — ENERVIDA-VITALLCONS
 ## Excel `Costpro.xlsx` vs. COSTPRO (Supabase `wthkddeleylijmonclxg`) + Configuración de comisiones por producto
 
+> **ESTADO ACTUAL (2026-10-14): CONCILIACIÓN CERRADA — corte 14/10/2026.** Las secciones 1–10
+> describen el estado de la auditoría previa y se conservan como historial. La última regularización
+> pendiente (fila 854 / SKU 141) fue resuelta y la conciliación integral quedó en **0 diferencias**.
+> Ver **§11 «Cierre definitivo de conciliación — corte 14/10/2026»** para el estado vigente, la tabla
+> final de los 175 SKUs y el resumen ejecutivo del cierre.
+
 **Fecha de auditoría:** 2026-10-14 · **Ejecutada por:** Agente IA (misión COSTPRO — conciliación y comisiones)
 **Tienda:** ENERVIDA-VITALLCONS `5e6fe821-5465-48b1-b3f1-3aa3182edc38` (tenant `5364ccf8-…`)
 **Fuente de referencia:** `Costpro.xlsx` (3 hojas: Operaciones 897 filas · ExistenciaFinal 175 SKUs · ConfComisiones 175 SKUs) — **el Excel NO fue modificado**
@@ -452,3 +458,293 @@ omitidas 65 (vacías) · pendientes 51 de 161 productos (sin regla definida, ide
 2. `commission_rules` (1 regla) + `commission_rule_products` (110 filas) + `commission_rule_versions` (v1).
 
 *Rama: `feat/enervida-conciliacion-comisiones` · PR: https://github.com/Nardian90/Costpro/pull/1403 (sin merge, pendiente de autorización).*
+
+
+---
+
+## 11. Cierre definitivo de conciliación — corte 14/10/2026
+
+**Fecha y hora de ejecución:** 2026-10-14, 12:55–13:15 (America/Havana) · **Rama:** `cierre/conciliacion-enervida-corte-1410` (PR #1404)
+**Estado de partida verificado:** PR #1403 **mergeado** (merge commit `20c584e`), tras el PR #1402 (`regularize_sale_payment`, merge `e1620b0` — RPC de ajuste de pagos, no necesario para esta misión). Corrección de la fila 873 (VS-000179-2026) **verificada intacta** en producción.
+**Excel de referencia:** `Costpro.xlsx` re-adjuntado por el usuario (`/home/z/my-project/upload/Costpro.xlsx`), 3 hojas (Operaciones 897 filas · ExistenciaFinal 175 SKUs · ConfComisiones 175 SKUs), idéntico en estructura al de la auditoría previa. **No fue modificado.**
+
+### 11.1 Las dos diferencias reales: causas y soluciones ejecutadas
+
+| # | Fila Excel | SKU | Diferencia (COSTPRO − Excel) | Causa raíz (evidencia) | Mecanismo oficial aplicado | Resultado |
+|---|---:|---:|---:|---|---|---|
+| 1 | **854** | **141** Cemento TBV 50 Kg | **+10** (34 vs 24) | Venta 141 ×10 @ 20.000 CUP = **200.000 CUP transferencia** del 09/10/2026 nunca registrada (verificada su ausencia: 0 TX 141×10/200k; la política forward-only impide registrar con fecha 09/10 → `ERR_BACKDATED_DOCUMENT`) | **Venta real registrada vía RPC `create_sale_v2`** (mismo RPC que invoca el POS), **no** un ajuste de inventario: preserva la naturaleza económica de la operación (venta con importe, pago y comisión) | TX `e794db77-2829-424c-9fd8-c653a8922563`; stock 34 → **24 = Excel** |
+| 2 | **873** | **137** Tubo blanco de condulei 1/2 de 5M | −10 (350 vs 340) | VS 137 ×10 (OT/Ferro, 10/10) no registrada al momento (intento previo como SKU 127 rechazado por stock negativo; Excel rectificado 127→137) | **Corregida en la auditoría previa** vía RPC `create_vale_salida` → VS-000179-2026; en este cierre se **verificó su integridad** (documento completed, items 137×10, kardex y saldo) | VS-000179-2026 intacta; stock **340 = Excel** |
+
+La verificación integral contra los datos actuales (no los números heredados) confirma que **no existen más diferencias reales**: tras resolver la fila 854, la comparación ExistenciaFinal↔COSTPRO arroja **0 diferencias** en los 161 SKU con producto en COSTPRO.
+
+### 11.2 Detalle de la fila 854 y el SKU 141
+
+| Campo | Valor Excel (fila 854) | Registro COSTPRO ejecutado |
+|---|---|---|
+| Clasificación | Ventas | `transactions` (venta POS v2) |
+| Código / Producto | 141 · Cemento TBV 50 Kg | product_id `d1afd532-0bad-4af7-8605-b3594c25e864` |
+| Cantidad | 10 | 10 |
+| Precio unitario | 20.000 CUP (total 200.000 / 10) | `price_at_sale` 20.000 = precio catálogo (sin desvío → sin gate de supervisor) |
+| Pago | Transferencia 200.000 CUP | `payment_transactions` transfer 200.000 CUP (rate 1) |
+| Comisión | 2.000 (10 × 200) | Regla vigente `commission_rule_products` = 200 CUP/ud → motor calcula 10 × 200 = **2.000** |
+| Fecha | 2026-10-09 | **Fecha operativa 14/10/2026 13:05:03 Havana** (17:05:03 UTC) — la económica (09/10) queda documentada en `p_discount_reason` |
+| Vendedor / atribución | — | `admin@demo.com` (id `a1111111-…`), atribución estándar de las importaciones ENERVIDA |
+| Idempotencia | — | `recon-enervida-fila854-ven141x10` — reintento verificado → `status:idempotent`, misma TX, 0 duplicados |
+
+**Decisione de mecanismo (Opción B del procedimiento):** la fila 854 ES una venta (clasificación «Ventas» con importe y pago). Registrar la venta real conserva su naturaleza económica (importe, pago por transferencia, comisión y kardex) frente a un ajuste de inventario (Opción C), que habría alterado el stock sin reflejar la operación comercial. La política forward-only se respetó: no se falsificó ninguna fecha ni se modificó el historial; la venta quedó fechada en la fecha operativa actual con mención explícita de la fecha económica 09/10.
+
+### 11.3 Identificadores persistentes y respaldos
+
+| Objeto | Identificador | Evidencia |
+|---|---|---|
+| Venta regularizada (f854) | TX **`e794db77-2829-424c-9fd8-c653a8922563`** | `f854_rpc_result.json` · idempotency_key `recon-enervida-fila854-ven141x10` |
+| Movimiento kardex de la venta | `movement_type=out, qty=10, balance_after=24` | kardex_entries (reference_description «Venta POS v2») |
+| VS regularizada (f873, misión previa) | **VS-000179-2026** (`0ea29335-8d2a-40b1-8524-f17604cf26ba`) | verificada completed, items 137×10 |
+| Respaldo pre-corrección (f854) | `scripts/cierre-1410/backup_pre_f854.json` | product stock 34 · inventory 34 · 26 filas kardex · 637 TX · 0 ventas 141×10/200k previas |
+| Volcados de estado | `scripts/cierre-1410/*.json` | productos, inventario, ops, VS, recepciones, DV, movimientos, kardex (pre y post) |
+
+### 11.4 Saldos anterior y posterior de los SKU afectados
+
+| SKU | Producto | Excel al corte | COSTPRO antes | Corrección | COSTPRO después | Diferencia final |
+|---:|---|---:|---:|---|---:|---:|
+| 141 | Cemento TBV 50 Kg | 24 | 34 | venta f854: −10 | **24** | **0** |
+| 137 | Tubo blanco de condulei 1/2 de 5M | 340 | 340 | — (VS-000179 ya aplicada, verificada) | **340** | **0** |
+| 127 | Transfer 220 | 0 | 0 | — (intacto) | **0** | **0** |
+
+### 11.5 Corte oficial 14/10/2026: saldo de cierre vs existencia operativa
+
+Movimientos registrados en la tienda el día del corte (America/Havana):
+
+| Hora | Documento | Contenido | Origen |
+|---|---|---|---|
+| 00:55 | venta | 147 ×1 (94.800 CUP) | fila 898 (operación que cruzó la medianoche — desfase 1 día ya conciliado §3.1) |
+| 11:54 | VS-000179-2026 | 137 ×10 (f873) | regularización misión previa |
+| 13:05 | venta TX `e794db77` | 141 ×10 (200.000 CUP) | regularización f854 (este cierre) |
+
+**No existe ningún movimiento posterior a la última regularización** (13:05). Por tanto, para cada SKU:
+`Saldo de cierre al 14/10/2026 = Existencia operativa actual = ExistenciaFinal del Excel`. La política forward-only impidió además retrodatar las dos regularizaciones; ambas quedan fechadas dentro del propio día del corte, con la fecha económica original documentada en cada documento. No se alteró ningún saldo inicial ni el Kardex histórico; no se crearon ni cerraron jornadas.
+
+### 11.6 Resultado de la conciliación de todos los SKU (verificación final)
+
+- **175 SKUs** de `ExistenciaFinal` examinados (los 175, no solo los modificados).
+- **161 conciliados** con diferencia exactamente 0 (verificado en las 3 fuentes: `products.stock_current`, `inventory.quantity` y saldo final del Kardex — sin divergencias entre fuentes).
+- **14 SKUs (160–173)**: reservados por el usuario, sin producto dado de alta en COSTPRO y con existencia 0 en el Excel — sin operaciones ni comisión; se mantienen documentados (§6.4).
+- **0 SKUs de COSTPRO sin fila Excel · 0 diferencias sin resolver · sin tolerancias ni redondeos** (comparación decimal exacta).
+
+### 11.7 Tabla final de conciliación (todos los SKUs de ExistenciaFinal)
+
+| SKU | Excel al corte | COSTPRO al corte | Diferencia | Regularización | Resultado |
+|---|---:|---:|---:|---|---|
+| 1 | Abrazadera metálica de 3/4 | 18 | 18 | 0 | — | ✅ Conciliado |
+| 2 | Abrazadera metálica de 1 pulgada | 32 | 32 | 0 | — | ✅ Conciliado |
+| 3 | Araganes | 0 | 0 | 0 | — | ✅ Conciliado |
+| 4 | Bisagra | 1 | 1 | 0 | — | ✅ Conciliado |
+| 5 | Brecker 16A Sencillo | 0 | 0 | 0 | — | ✅ Conciliado |
+| 6 | Brecker 25 A Sencillo | 0 | 0 | 0 | — | ✅ Conciliado |
+| 7 | Brecker 32A Trifasico | 0 | 0 | 0 | — | ✅ Conciliado |
+| 8 | Brecker C32 A Trible | 0 | 0 | 0 | — | ✅ Conciliado |
+| 9 | Brecker D63 A | 1 | 1 | 0 | — | ✅ Conciliado |
+| 10 | Brida 58 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 11 | Cabilla 70 Cm | 6 | 6 | 0 | — | ✅ Conciliado |
+| 12 | Cable Conductor electrico 10 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 13 | Cable Conductor electrico 8 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 14 | Distribuidor de corriente 4 salidas | 16 | 16 | 0 | — | ✅ Conciliado |
+| 15 | Cemento Cola | 49 | 49 | 0 | — | ✅ Conciliado |
+| 16 | Cemento P425 Tudella | 0 | 0 | 0 | — | ✅ Conciliado |
+| 17 | Césped Artificial | 6 | 6 | 0 | — | ✅ Conciliado |
+| 18 | Cheques metálicos | 0 | 0 | 0 | — | ✅ Conciliado |
+| 19 | Codo de 90 | 16 | 16 | 0 | — | ✅ Conciliado |
+| 20 | Codos de 45 grado | 15 | 15 | 0 | — | ✅ Conciliado |
+| 21 | Colchón Milexus | 0 | 0 | 0 | — | ✅ Conciliado |
+| 22 | Conectores MC4 | 77 | 77 | 0 | — | ✅ Conciliado |
+| 23 | Cuchilla 2P 100A | 0 | 0 | 0 | — | ✅ Conciliado |
+| 24 | Cuchilla 2P 63A | 12 | 12 | 0 | — | ✅ Conciliado |
+| 25 | Cuchilla 3P 100A | 0 | 0 | 0 | — | ✅ Conciliado |
+| 26 | Disco de esmeril | 3 | 3 | 0 | — | ✅ Conciliado |
+| 27 | Escobas | 3 | 3 | 0 | — | ✅ Conciliado |
+| 28 | Espejo | 32 | 32 | 0 | — | ✅ Conciliado |
+| 29 | Expansiones 8x80 | 123 | 123 | 0 | — | ✅ Conciliado |
+| 30 | Expansiones anaranjada 6*40mm /Rapita | 9 | 9 | 0 | — | ✅ Conciliado |
+| 31 | Expansiones con tornillos M6 | 1 | 1 | 0 | — | ✅ Conciliado |
+| 32 | Expansiones con tornillos M8 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 33 | Extensiones 5M | 5 | 5 | 0 | — | ✅ Conciliado |
+| 34 | Fregadero | 0 | 0 | 0 | — | ✅ Conciliado |
+| 35 | Fuerte eléctrico | 56 | 56 | 0 | — | ✅ Conciliado |
+| 36 | Impermeable verde 20Kg | 0 | 0 | 0 | — | ✅ Conciliado |
+| 37 | J de techo | 25 | 25 | 0 | — | ✅ Conciliado |
+| 38 | Lampara de 20 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 39 | Tubo de Lampara de 40 | 5 | 5 | 0 | — | ✅ Conciliado |
+| 40 | Latiguillo de media por 3/8 | 7 | 7 | 0 | — | ✅ Conciliado |
+| 41 | Latiguillo MC4 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 42 | Llave de lavamano | 0 | 0 | 0 | — | ✅ Conciliado |
+| 43 | Losa aporcelanada 60x60 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 44 | Losa aporcelanada 60x60 con defectos | 0 | 0 | 0 | — | ✅ Conciliado |
+| 45 | Malla perli | 1 | 1 | 0 | — | ✅ Conciliado |
+| 46 | Masilla interior blanca | 1 | 1 | 0 | — | ✅ Conciliado |
+| 47 | Mortero | 6 | 6 | 0 | — | ✅ Conciliado |
+| 48 | Nudo de media | 37 | 37 | 0 | — | ✅ Conciliado |
+| 49 | Nudos de 3/4 | 8 | 8 | 0 | — | ✅ Conciliado |
+| 50 | Nudos de 50 | 8 | 8 | 0 | — | ✅ Conciliado |
+| 51 | Pintura Casa Blanca 14L | 0 | 0 | 0 | — | ✅ Conciliado |
+| 52 | Pintura Verde 4L | 42 | 42 | 0 | — | ✅ Conciliado |
+| 53 | Planchas de zinc | 0 | 0 | 0 | — | ✅ Conciliado |
+| 54 | Porta Fusibles | 0 | 0 | 0 | — | ✅ Conciliado |
+| 55 | Purles | 0 | 0 | 0 | — | ✅ Conciliado |
+| 56 | Reducido de 3/4 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 57 | Rodillo | 0 | 0 | 0 | — | ✅ Conciliado |
+| 58 | Rosca Chapa | 0 | 0 | 0 | — | ✅ Conciliado |
+| 59 | Soporte de papel higiénico | 1 | 1 | 0 | — | ✅ Conciliado |
+| 60 | Supresores de sobretensiones | 0 | 0 | 0 | — | ✅ Conciliado |
+| 61 | T de media | 19 | 19 | 0 | — | ✅ Conciliado |
+| 62 | T de pulgada a 3/4 | 4 | 4 | 0 | — | ✅ Conciliado |
+| 63 | Tanqueta de Aceite negro 20 L | 1 | 1 | 0 | — | ✅ Conciliado |
+| 64 | Tanqueta de antioxidante gris 20L | 0 | 0 | 0 | — | ✅ Conciliado |
+| 65 | Terminales eléctricas | 0 | 0 | 0 | — | ✅ Conciliado |
+| 66 | Tornillo M10 | 98 | 98 | 0 | — | ✅ Conciliado |
+| 67 | Transfer monofásico | 0 | 0 | 0 | — | ✅ Conciliado |
+| 68 | Transfer trifásico | 0 | 0 | 0 | — | ✅ Conciliado |
+| 69 | Unión universal de 3/4 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 70 | Unión universal de media | 76 | 76 | 0 | — | ✅ Conciliado |
+| 71 | Uniones de media/Niple macho | 106 | 106 | 0 | — | ✅ Conciliado |
+| 72 | Yee de 50 | 6 | 6 | 0 | — | ✅ Conciliado |
+| 73 | Interruptor doble | 6 | 6 | 0 | — | ✅ Conciliado |
+| 74 | Controlador de línea | 0 | 0 | 0 | — | ✅ Conciliado |
+| 75 | Espigas de 15 AMP | 0 | 0 | 0 | — | ✅ Conciliado |
+| 76 | Toma corriente con tapa | 0 | 0 | 0 | — | ✅ Conciliado |
+| 77 | Teipe negro | 0 | 0 | 0 | — | ✅ Conciliado |
+| 78 | Tornillo con tuerca 4.8 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 79 | Interruptor y toma corriente | 0 | 0 | 0 | — | ✅ Conciliado |
+| 80 | Brecker C32A Doble | 0 | 0 | 0 | — | ✅ Conciliado |
+| 81 | Bridas de 4x8 400mm | 0 | 0 | 0 | — | ✅ Conciliado |
+| 82 | Crimpiadora con pela cable Anaranjada | 0 | 0 | 0 | — | ✅ Conciliado |
+| 83 | Crimpiadora Roja con 6 dabas rojas | 3 | 3 | 0 | — | ✅ Conciliado |
+| 84 | Conector XT60 | 31 | 31 | 0 | — | ✅ Conciliado |
+| 85 | Panel 585 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 86 | Panel + 600W | 0 | 0 | 0 | — | ✅ Conciliado |
+| 87 | Cable Solar Negro 4mm | 63 | 63 | 0 | — | ✅ Conciliado |
+| 88 | Cable Solar Rojo 4mm | 63 | 63 | 0 | — | ✅ Conciliado |
+| 89 | Cable Solar Negro 6mm | 0 | 0 | 0 | — | ✅ Conciliado |
+| 90 | Cable Solar Rojo 6mm | 3 | 3 | 0 | — | ✅ Conciliado |
+| 91 | Liquidación OT 16 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 92 | Juego de pata | 5 | 5 | 0 | — | ✅ Conciliado |
+| 93 | Liquidacion de OT 12 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 94 | Barrena 6mm Madera | 2 | 2 | 0 | — | ✅ Conciliado |
+| 95 | Barrena 34mm Madera | 36 | 36 | 0 | — | ✅ Conciliado |
+| 96 | Barrena 5mm Madera | 212 | 212 | 0 | — | ✅ Conciliado |
+| 97 | Disco de corte | 0 | 0 | 0 | — | ✅ Conciliado |
+| 98 | Limpia parabrisa | 42 | 42 | 0 | — | ✅ Conciliado |
+| 99 | Electrodo 4mm | 22 | 22 | 0 | — | ✅ Conciliado |
+| 100 | Autorroscante chiquito | 0 | 0 | 0 | — | ✅ Conciliado |
+| 101 | Canal de media | 0 | 0 | 0 | — | ✅ Conciliado |
+| 102 | Cajas eléctricas | 0 | 0 | 0 | — | ✅ Conciliado |
+| 103 | Perfiles para brecker | 2 | 2 | 0 | — | ✅ Conciliado |
+| 104 | Terminales cubanas | 0 | 0 | 0 | — | ✅ Conciliado |
+| 105 | Cajita breckera sencilla | 0 | 0 | 0 | — | ✅ Conciliado |
+| 106 | Tornillo con arandela | 0 | 0 | 0 | — | ✅ Conciliado |
+| 107 | Caja de distribución TRIC | 2 | 2 | 0 | — | ✅ Conciliado |
+| 108 | Cajita Breckera sencilla gris | 1 | 1 | 0 | — | ✅ Conciliado |
+| 109 | inicio Z | 1 | 1 | 0 | — | ✅ Conciliado |
+| 110 | Intermedio | 0 | 0 | 0 | — | ✅ Conciliado |
+| 111 | Grapas plasticas con clavo de acero | 24 | 24 | 0 | — | ✅ Conciliado |
+| 112 | Grapas metalicas 3/4 con tornillo roscan | 45 | 45 | 0 | — | ✅ Conciliado |
+| 113 | Goma Termo Retractil | 122 | 122 | 0 | — | ✅ Conciliado |
+| 114 | Combustible | 0 | 0 | 0 | — | ✅ Conciliado |
+| 115 | Canaleta  | 31 | 31 | 0 | — | ✅ Conciliado |
+| 116 | Herraje | 1 | 1 | 0 | — | ✅ Conciliado |
+| 117 | Inversor | 2 | 2 | 0 | — | ✅ Conciliado |
+| 118 | Barilla de Tierra | 0 | 0 | 0 | — | ✅ Conciliado |
+| 119 | Yee MC4 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 999 | Servicio de crimpiar | 0 | 0 | 0 | — | ✅ Conciliado |
+| 120 | Estación de carga | 0 | 0 | 0 | — | ✅ Conciliado |
+| 121 | Supresores | 0 | 0 | 0 | — | ✅ Conciliado |
+| 122 | Controladores de voltaje | 2 | 2 | 0 | — | ✅ Conciliado |
+| 123 | Alarma | 3 | 3 | 0 | — | ✅ Conciliado |
+| 124 | Linterna de casa 4.2 V | 3 | 3 | 0 | — | ✅ Conciliado |
+| 125 | Linterna de cabeza de 15W | 2 | 2 | 0 | — | ✅ Conciliado |
+| 126 | Linterna solar | 1 | 1 | 0 | — | ✅ Conciliado |
+| 127 | Transfer 220 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 128 | Brecker 63 AMP Corriente alterna | 8 | 8 | 0 | — | ✅ Conciliado |
+| 129 | Maleta de herramientas | 0 | 0 | 0 | — | ✅ Conciliado |
+| 130 | Breckera SPC | 1 | 1 | 0 | — | ✅ Conciliado |
+| 131 | Panel de 550W | 0 | 0 | 0 | — | ✅ Conciliado |
+| 132 | Brecker 32 A Alternar Doble | 0 | 0 | 0 | — | ✅ Conciliado |
+| 133 | Ventiladores recargables | 12 | 12 | 0 | — | ✅ Conciliado |
+| 134 | U de aluminio o intermedio | 23 | 23 | 0 | — | ✅ Conciliado |
+| 135 | Cable 6 | 0 | 0 | 0 | — | ✅ Conciliado |
+| 998 | Servicio de Carga/Capacidad | 0 | 0 | 0 | — | ✅ Conciliado |
+| 136 | Bateria EKO 5KW | 0 | 0 | 0 | — | ✅ Conciliado |
+| 137 | Tubo blanco de condulei  de 1/2 de 5M | 340 | 340 | 0 | VS-000179-2026 (f873, misión previa — verificada) | ✅ Conciliado |
+| 138 | Kid de 6 K Inversor - 5K Bateria +Acceso | 0 | 0 | 0 | — | ✅ Conciliado |
+| 139 | Panel de 640 W Suntech | 9 | 9 | 0 | — | ✅ Conciliado |
+| 140 | Breckera de 9 posiciones | 1 | 1 | 0 | — | ✅ Conciliado |
+| 141 | Cemento TBV 50 Kg | 24 | 24 | 0 | venta TX e794db77 (f854, −10) | ✅ Conciliado |
+| 142 | Cemento Blanco 2 Kg | 26 | 26 | 0 | — | ✅ Conciliado |
+| 143 | Filtros de Gasolina | 28 | 28 | 0 | — | ✅ Conciliado |
+| 144 | Fusible de auntomovil | 300 | 300 | 0 | — | ✅ Conciliado |
+| 145 | Tunder 24 Vol | 1 | 1 | 0 | — | ✅ Conciliado |
+| 146 | Tunder Grande | 1 | 1 | 0 | — | ✅ Conciliado |
+| 147 | MPPT | 4 | 4 | 0 | — | ✅ Conciliado |
+| 148 | Huncong (Medir corriente) | 0 | 0 | 0 | — | ✅ Conciliado |
+| 149 | Voltímetro | 0 | 0 | 0 | — | ✅ Conciliado |
+| 150 | Batería 7.5 Kilos 21.8 V 314 Ah | 8 | 8 | 0 | — | ✅ Conciliado |
+| 151 | Inversor Sumry | 4 | 4 | 0 | — | ✅ Conciliado |
+| 152 | Equipo Música DAZONE | 1 | 1 | 0 | — | ✅ Conciliado |
+| 153 | Taladro con bateria y barrena | 1 | 1 | 0 | — | ✅ Conciliado |
+| 154 | Breckera de 12 posiciones | 6 | 6 | 0 | — | ✅ Conciliado |
+| 155 | Compresor de aire | 2 | 2 | 0 | — | ✅ Conciliado |
+| 156 | Barilla de Aterramientos | 4 | 4 | 0 | — | ✅ Conciliado |
+| 157 | Royal Cole | 83 | 83 | 0 | — | ✅ Conciliado |
+| 158 | Detergente | 24 | 24 | 0 | — | ✅ Conciliado |
+| 159 | Cemento Blanco 5Kg | 0 | 0 | 0 | — | ✅ Conciliado |
+| 160 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 161 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 162 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 163 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 164 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 165 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 166 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 167 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 168 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 169 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 170 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 171 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 172 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+| 173 | — | 0 | — | — | — | ⬜ Reservado (sin producto en COSTPRO, stock 0) |
+
+### 11.8 Pruebas ejecutadas y resultados
+
+| Prueba | Resultado |
+|---|---|
+| Registro de la venta f854 vía `create_sale_v2` (RPC oficial, service-role) | ✅ TX `e794db77…`, total 200.000, transfer 200.000, item 141×10 @20.000 |
+| Stock e inventario tras la corrección | ✅ `products.stock_current` 34→24 · `inventory.quantity` 24 (= Excel 24) |
+| Kardex | ✅ movimiento `out` 10 → `balance_after` 24 |
+| Idempotencia (reintento de la misma clave) | ✅ `status:idempotent`, misma TX, 1 sola TX con la clave, 0 TX 141×10/200k adicionales |
+| Verificación f873 (VS-000179-2026) | ✅ completed, 137×10, saldo 340 = Excel |
+| Conciliación integral 3 fuentes × 175 SKUs | ✅ 161 conciliados / 0 diferencias / sin divergencia entre fuentes |
+| Aislamiento multi-tienda | ✅ escrituras últimos 3h solo en ENERVIDA (`store_id 5e6fe821…`); TIENDA CENTRAL, Puerto Padre y Sucursal Habana: 0 cambios de producto |
+| Suite de regresión (vitest) | ✅ 56/56 (commission-product 6, kardexPeriod, movementPresentation, pos-checkout-price-integrity) |
+| Aplicación operativa | ✅ PM2 online, HTTP 200 (puerto 3000) |
+
+### 11.9 Limitaciones y observaciones que permanecen
+
+1. **Fecha operativa ≠ fecha económica en las dos regularizaciones**: ambas quedaron fechadas 14/10 (VS 11:54, venta 13:05 Havana) porque la política forward-only (`validate_operation_date` → `ERR_BACKDATED_DOCUMENT`) prohíbe documentos retroactivos. Los reportes agrupados por día mostrarán ambas operaciones el 14/10; la fecha económica original (10/10 y 09/10) queda documentada en las notas de cada documento y en este informe.
+2. **SKUs 160–173 (reservas)**: siguen sin alta en COSTPRO. Si llegan a usarse, deben darse de alta (el flujo de Recepciones lo permite desde el PR #1400).
+3. **Desfase de 1 día en 54 recepciones importadas** (§3.2): se mantiene como convención documentada; el stock no se ve afectado.
+4. **Pares neto-cero f536/f537** (venta+DV ausentes, neto 0): permanecen documentados sin registro (su registro con fecha actual añadiría rastro documental pero ninguna corrección de saldo; se evitó crear documentos artificialmente).
+5. **Comisiones históricas de julio** (20 filas con tarifa antigua): ConfComisiones permanece como configuración vigente; no se reconstruyeron tarifas históricas (fuera del alcance, §6.5).
+6. La venta regularizada f854 registra la **comisión según la regla vigente** (200/ud → 2.000, idéntica a la del Excel); el importe de venta (200.000 CUP) entra en las cifras del 14/10.
+
+### 11.10 Resumen ejecutivo del cierre
+
+| Métrica | Valor |
+|---|---:|
+| Total de SKU examinados (ExistenciaFinal) | **175** |
+| SKU conciliados (diferencia exactamente 0) | **161** |
+| SKU pendientes | **0** (14 reservas 160–173 sin alta en COSTPRO, stock 0 — documentado) |
+| Diferencias reales antes de la regularización | **1** (f854/SKU 141, +10) — de las 2 originales: f873 ya corregida y verificada |
+| Diferencias reales después de la regularización | **0** |
+| Ajustes u operaciones registradas | **1 venta** (TX `e794db77-2829-424c-9fd8-c653a8922563`) vía RPC oficial `create_sale_v2`; 0 ajustes manuales de inventario; 0 documentos falsificados |
+| Pruebas | 56/56 regresión · idempotencia RPC verificada · 3 fuentes coherentes · tiendas aisladas |
+| **Estado final de la misión** | **COMPLETADA** — inventario de ENERVIDA-VITALLCONS idéntico al Excel en el corte 14/10/2026 |
+
+**Datos escritos en producción (trazados):** única escritura nueva = venta TX `e794db77-2829-424c-9fd8-c653a8922563` (+ sus items, pago y kardex) + filas de `idempotency_registry`. Ningún documento histórico fue editado, re-fechado o eliminado; ninguna otra tienda fue tocada.
