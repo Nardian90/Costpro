@@ -148,6 +148,10 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // REC-1 QW-R5: ref del timer de auto-focus (limpieza en unmount — evita
+  // que el callback toque `document` tras el desmontaje/teardown).
+  const focusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // FIX-06: Submit confirmation dialog
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -274,9 +278,12 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     } catch { /* ignore quota errors */ }
   }, [supplier, invoiceNumber, notes, receptionDate, items, draftKey]);
 
-  // FIX-10: Cleanup delete timer on unmount
+  // FIX-10: Cleanup delete timer on unmount (+ focus timer REC-1 QW-R5)
   useEffect(() => {
-    return () => { if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current); };
+    return () => {
+      if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
+      if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
+    };
   }, []);
 
   // FIX-08: Auto-complete cost with cost_price when selecting product
@@ -364,7 +371,10 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     if (!user?.activeStoreId) { toast.error('No hay una tienda activa seleccionada'); return; }
     setIsFormOpen(true);
     // REC-1 QW-R5: auto-focus al search input al abrir el modal.
-    setTimeout(() => {
+    // El timer se registra y limpia en unmount: sin callback huérfano que
+    // sobreviva al desmontaje (documento ya no disponible → error).
+    if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
+    focusTimerRef.current = setTimeout(() => {
       document.getElementById('rec-add-item-search')?.focus();
     }, 100);
   };
