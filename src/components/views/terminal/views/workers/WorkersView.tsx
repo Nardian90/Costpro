@@ -1918,8 +1918,13 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
   const handleSave = async () => {
     setSaving(true);
     try {
+      // FASE 5 CONCILIACIÓN (2026-10-14): los ceros explícitos se PRESERVAN.
+      // Antes se filtraba cfg.amount > 0, lo que descartaba silenciosamente las
+      // comisiones en 0 configuradas deliberadamente (p.ej. importadas de
+      // ConfComisiones con «sin comisión» explícito). Solo se excluyen las
+      // configs vacías (amount == null = producto sin regla).
       const configsToSave = Object.entries(productConfigs)
-        .filter(([_, cfg]) => cfg.amount != null && cfg.amount > 0)
+        .filter(([_, cfg]) => cfg.amount != null)
         .map(([productId, cfg]) => ({ productId, ...cfg }));
 
       if (configsToSave.length === 0) {
@@ -1974,7 +1979,7 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
     }
   };
 
-  const productCount = Object.values(productConfigs).filter(c => c.amount != null && c.amount > 0).length;
+  const productCount = Object.values(productConfigs).filter(c => c.amount != null).length;
 
   if (loading) {
     return (
