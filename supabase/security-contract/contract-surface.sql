@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-09T21:02:24.718Z
+-- Captured  : 2026-10-14T17:36:59.817Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 136 (SECURITY DEFINER write functions, public schema)
+-- Functions : 137 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -1374,43 +1374,6 @@ BEGIN
 END $function$
 
 
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
-END;
-$function$
-
-
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1447,6 +1410,43 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
+END;
+$function$
+
+
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
 END;
 $function$
 
@@ -2944,6 +2944,9 @@ DECLARE
   v_variant_id uuid;
   v_conversion_factor integer := 1;
   v_units numeric;
+  -- FIX-USD-CUP-RATE (2026-10-14): conversión por item a la moneda común CUP
+  v_item_rate numeric := 1.0;
+  v_item_currency text;
   v_stock numeric;
   v_existing uuid;
   v_effective_method text := p_payment_method;
@@ -3135,6 +3138,20 @@ BEGIN
     END IF;
     v_units := v_qty * v_conversion_factor;
 
+    -- FIX-USD-CUP-RATE (2026-10-14): conversión del item a la moneda común CUP.
+    -- La tasa del item (client-sent, persistida en transaction_items.exchange_rate)
+    -- aplica SOLO a items no-CUP; CUP = 1 por definición. Fail-safe: tasa nula o
+    -- <= 0 -> 1.0 (la venta CUP pura NO cambia; regresión cero).
+    v_item_currency := COALESCE(NULLIF(v_item->>'currency', ''), 'CUP');
+    IF v_item_currency = 'CUP' THEN
+      v_item_rate := 1.0;
+    ELSE
+      v_item_rate := COALESCE(NULLIF(v_item->>'exchange_rate', '')::numeric, 1.0);
+      IF v_item_rate <= 0 THEN
+        v_item_rate := 1.0;
+      END IF;
+    END IF;
+
     SELECT stock_current, cost_average, price INTO v_stock, v_wac_prev, v_catalog_price
       FROM public.products
       WHERE id = v_pid AND store_id = p_store_id
@@ -3222,7 +3239,8 @@ BEGIN
       );
     END IF;
 
-    v_calculated_subtotal := v_calculated_subtotal + ROUND((v_price * v_qty), 2);
+    -- FIX-USD-CUP-RATE: el total de la venta es CUP = Σ precio nativo × tasa del item × qty
+    v_calculated_subtotal := v_calculated_subtotal + ROUND((v_price * v_item_rate * v_qty), 2);
   END LOOP;
 
   -- 8. Recalcular descuento (§8: el descuento NEGATIVO queda estructuralmente
@@ -3456,6 +3474,20 @@ BEGIN
     END IF;
     v_price := ROUND(v_price, 2);
 
+    -- FIX-USD-CUP-RATE (2026-10-14): conversión del item a la moneda común CUP.
+    -- La tasa del item (client-sent, persistida en transaction_items.exchange_rate)
+    -- aplica SOLO a items no-CUP; CUP = 1 por definición. Fail-safe: tasa nula o
+    -- <= 0 -> 1.0 (la venta CUP pura NO cambia; regresión cero).
+    v_item_currency := COALESCE(NULLIF(v_item->>'currency', ''), 'CUP');
+    IF v_item_currency = 'CUP' THEN
+      v_item_rate := 1.0;
+    ELSE
+      v_item_rate := COALESCE(NULLIF(v_item->>'exchange_rate', '')::numeric, 1.0);
+      IF v_item_rate <= 0 THEN
+        v_item_rate := 1.0;
+      END IF;
+    END IF;
+
     SELECT e INTO v_snap FROM jsonb_array_elements(v_line_snapshot) AS e
       WHERE (e->>'ord')::bigint = v_ord;
 
@@ -3510,7 +3542,10 @@ BEGIN
       p_discount_type::public.discount_type_enum,
       v_discount_amount,
       p_sale_currency,
-      v_price * v_server_rate,
+      -- FIX-USD-CUP-RATE: precio CUP del item con SU tasa (antes v_server_rate,
+      -- que es la tasa de la VENTA y es 1 en ventas CUP: un item USD quedaba
+      -- registrado con su precio nativo como si fuera CUP).
+      v_price * v_item_rate,
       (v_snap->>'catalog_price')::numeric,
       COALESCE((v_snap->>'discount_value')::numeric, 0),
       COALESCE((v_snap->>'discount_pct')::numeric, 0)
@@ -7488,6 +7523,155 @@ END;
 $function$
 
 
+-- @contract-function name=regularize_sale_payment args="p_transaction_id uuid, p_reason text, p_user_id uuid, p_idempotency_key text, p_new_cash numeric, p_new_zelle_cup numeric, p_new_zelle_usd numeric, p_new_zelle_rate numeric, p_new_transfer numeric, p_new_subtotal numeric" owner=costpro_transaction_adjuster proacl={costpro_transaction_adjuster=X/costpro_transaction_adjuster,service_role=X/costpro_transaction_adjuster}
+CREATE OR REPLACE FUNCTION public.regularize_sale_payment(p_transaction_id uuid, p_reason text, p_user_id uuid, p_idempotency_key text, p_new_cash numeric DEFAULT NULL::numeric, p_new_zelle_cup numeric DEFAULT NULL::numeric, p_new_zelle_usd numeric DEFAULT NULL::numeric, p_new_zelle_rate numeric DEFAULT NULL::numeric, p_new_transfer numeric DEFAULT NULL::numeric, p_new_subtotal numeric DEFAULT NULL::numeric)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+    v_tx public.transactions%ROWTYPE;
+    v_jwt_role text;
+    v_cash numeric;
+    v_zelle numeric;
+    v_transfer numeric;
+    v_new_total numeric;
+    v_subtotal numeric;
+    v_old_tx jsonb;
+    v_old_pays jsonb;
+    v_new_pays jsonb;
+    v_sum_pays numeric;
+    v_idem_exists boolean := false;
+BEGIN
+    -- 1) Canal de llamada: solo service_role (convención server-to-server del
+    --    proyecto). Lectura de claims inline (patrón app_actor_uid) para no
+    --    requerir USAGE del esquema auth al rol owner NOLOGIN.
+    v_jwt_role := COALESCE(
+        NULLIF(current_setting('request.jwt.claim.role', true), ''),
+        (NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')
+    );
+    IF v_jwt_role IS DISTINCT FROM 'service_role' THEN
+        RAISE EXCEPTION 'ERR_UNAUTHORIZED' USING ERRCODE = 'PT015';
+    END IF;
+    IF p_user_id IS NULL THEN
+        RAISE EXCEPTION 'ERR_UNAUTHORIZED' USING ERRCODE = 'PT015';
+    END IF;
+    IF p_reason IS NULL OR btrim(p_reason) = '' THEN
+        RAISE EXCEPTION 'ERR_REASON_REQUIRED' USING ERRCODE = 'PT013';
+    END IF;
+    IF p_idempotency_key IS NULL OR btrim(p_idempotency_key) = '' THEN
+        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REQUIRED' USING ERRCODE = 'PT014';
+    END IF;
+
+    -- 2) Transacción + lock de fila
+    SELECT * INTO v_tx FROM public.transactions WHERE id = p_transaction_id FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'ERR_TRANSACTION_NOT_FOUND' USING ERRCODE = 'PT016';
+    END IF;
+
+    -- 3) Autorización de negocio: admin/manager/encargado EN LA TIENDA de la venta
+    IF NOT public.can_admin_reverse_transaction(p_user_id, v_tx.store_id) THEN
+        RAISE EXCEPTION 'ERR_UNAUTHORIZED' USING ERRCODE = 'PT015';
+    END IF;
+
+    -- 4) Estado: solo ventas completadas
+    IF v_tx.status <> 'completed' THEN
+        RAISE EXCEPTION 'ERR_TRANSACTION_NOT_ADJUSTABLE: status=%', v_tx.status;
+    END IF;
+
+    -- 5) Idempotencia por audit_logs
+    SELECT EXISTS (
+        SELECT 1 FROM public.audit_logs
+        WHERE action = 'REGULARIZE_SALE_PAYMENT'
+          AND record_id = p_transaction_id
+          AND metadata->>'idempotency_key' = btrim(p_idempotency_key)
+    ) INTO v_idem_exists;
+    IF v_idem_exists THEN
+        RETURN jsonb_build_object('status', 'idempotent', 'transaction_id', p_transaction_id);
+    END IF;
+
+    -- 6) Montos nuevos (NULL = mantener actual)
+    v_cash     := COALESCE(p_new_cash, v_tx.cash_amount, 0);
+    v_zelle    := COALESCE(p_new_zelle_cup, v_tx.zelle_amount, 0);
+    v_transfer := COALESCE(p_new_transfer, v_tx.transfer_amount, 0);
+    IF v_cash < 0 OR v_zelle < 0 OR v_transfer < 0 THEN
+        RAISE EXCEPTION 'ERR_INVALID_AMOUNTS' USING ERRCODE = 'PT012';
+    END IF;
+    v_new_total := v_cash + v_zelle + v_transfer;
+    v_subtotal  := COALESCE(p_new_subtotal, v_new_total);
+
+    -- 7) Snapshot BEFORE
+    SELECT jsonb_build_object(
+        'total_amount', v_tx.total_amount, 'subtotal', v_tx.subtotal,
+        'cash_amount', v_tx.cash_amount, 'transfer_amount', v_tx.transfer_amount,
+        'zelle_amount', v_tx.zelle_amount, 'sale_currency', v_tx.sale_currency,
+        'sale_exchange_rate', v_tx.sale_exchange_rate
+    ) INTO v_old_tx;
+    SELECT COALESCE(jsonb_agg(to_jsonb(pt) - 'amount_cup' ORDER BY pt.payment_method), '[]'::jsonb)
+      INTO v_old_pays
+      FROM public.payment_transactions pt
+     WHERE pt.transaction_id = p_transaction_id;
+
+    -- 8) UPDATE transactions — primero el total (invariante ERR_PAYMENT_EXCEEDS_TOTAL)
+    UPDATE public.transactions
+       SET cash_amount = v_cash,
+           zelle_amount = v_zelle,
+           transfer_amount = v_transfer,
+           total_amount = v_new_total,
+           subtotal = v_subtotal,
+           updated_at = now()
+     WHERE id = p_transaction_id;
+
+    -- 9) Libro de pagos (amount_cup GENERATED; respete trg_validate_payment_invariants)
+    UPDATE public.payment_transactions
+       SET amount = v_cash, updated_at = now()
+     WHERE transaction_id = p_transaction_id AND payment_method = 'cash' AND currency = 'CUP';
+
+    IF p_new_zelle_usd IS NOT NULL THEN
+        UPDATE public.payment_transactions
+           SET amount = p_new_zelle_usd,
+               exchange_rate = COALESCE(p_new_zelle_rate, exchange_rate),
+               updated_at = now()
+         WHERE transaction_id = p_transaction_id AND payment_method = 'zelle';
+    END IF;
+
+    -- 10) Post-condición: Σ pagos (no refund) = total
+    SELECT COALESCE(SUM(amount_cup), 0) INTO v_sum_pays
+      FROM public.payment_transactions
+     WHERE transaction_id = p_transaction_id
+       AND (direction IS DISTINCT FROM 'refund');
+    IF ABS(v_sum_pays - v_new_total) > 0.01 THEN
+        RAISE EXCEPTION 'ERR_PAYMENT_INVARIANT_VIOLATED: SUM(amount_cup)=% != total=%', v_sum_pays, v_new_total
+            USING ERRCODE = 'PT011';
+    END IF;
+
+    -- 11) Snapshot AFTER + auditoría
+    SELECT COALESCE(jsonb_agg(to_jsonb(pt) - 'amount_cup' ORDER BY pt.payment_method), '[]'::jsonb)
+      INTO v_new_pays
+      FROM public.payment_transactions pt
+     WHERE pt.transaction_id = p_transaction_id;
+
+    INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, old_data, new_data, metadata)
+    VALUES (
+        'REGULARIZE_SALE_PAYMENT', 'transactions', p_transaction_id, v_tx.store_id, p_user_id,
+        jsonb_build_object('transaction', v_old_tx, 'payment_rows', v_old_pays),
+        jsonb_build_object('transaction', jsonb_build_object(
+            'total_amount', v_new_total, 'subtotal', v_subtotal,
+            'cash_amount', v_cash, 'transfer_amount', v_transfer, 'zelle_amount', v_zelle),
+            'payment_rows', v_new_pays),
+        jsonb_build_object('reason', p_reason, 'idempotency_key', btrim(p_idempotency_key))
+    );
+
+    RETURN jsonb_build_object(
+        'status', 'success', 'transaction_id', p_transaction_id,
+        'old_total', v_old_tx->>'total_amount', 'new_total', v_new_total,
+        'new_cash', v_cash, 'new_zelle', v_zelle
+    );
+END;
+$function$
+
+
 -- @contract-function name=reject_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reject_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -7602,81 +7786,6 @@ BEGIN
     jsonb_build_object('reason', p_reason, 'old_status', 'cerrado', 'reopened_at', NOW()));
 
   RETURN jsonb_build_object('status', 'success', 'closure_id', p_closure_id);
-END;
-$function$
-
-
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
 END;
 $function$
 
@@ -7876,6 +7985,81 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
+$function$
+
+
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
 $function$
 
 
