@@ -151,6 +151,11 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   // FIX-06: Submit confirmation dialog
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // RLS-FIX: guard anti re-entrada de executeSubmit (protección ante doble
+  // invocación del diálogo de confirmación que isSubmitting podría no cubrir
+  // dentro del mismo tick de render). Sincronizado con el guard existente
+  // de handleSubmit.
+  const submitInProgressRef = useRef(false);
 
   // REC-2 MM-R12: Modal de comprobante post-registro
   const [successData, setSuccessData] = useState<SuccessData>({
@@ -947,6 +952,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   };
 
   const executeSubmit = async () => {
+    if (submitInProgressRef.current) return; // anti doble-click / re-entrada
+    submitInProgressRef.current = true;
     setShowSubmitConfirm(false);
     setIsSubmitting(true);
 
@@ -963,8 +970,37 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       if (itemsToCreate.length > 0) {
         toast.loading(`Creando ${itemsToCreate.length} producto(s) nuevo(s)...`, { id: 'auto-create' });
 
+        // RLS-FIX (products_tenant_insert): la política vigente de INSERT en
+        // products exige tenant_id = current_user_tenant_id() AND
+        // store_id ∈ current_user_store_ids(). El cliente no tiene contexto de
+        // tenant (UserContract no lo expone), así que se resuelve desde la BD
+        // leyendo stores.tenant_id con el JWT del usuario: la política
+        // stores_tenant_select solo devuelve tiendas del propio tenant, por lo
+        // que el valor queda validado contra la identidad del usuario (no es
+        // dato arbitrario del cliente). Fail-closed: si la tienda activa no es
+        // legible para este usuario (0 filas o tenant_id nulo), se aborta sin
+        // INSERT. RLS revalida el WITH CHECK server-side.
+        const { data: tenantStore, error: tenantError } = await supabase
+          .from('stores')
+          .select('tenant_id')
+          .eq('id', user!.activeStoreId)
+          .maybeSingle();
+
+        if (tenantError || !tenantStore?.tenant_id) {
+          console.error('RLS-FIX: no se pudo resolver tenant_id de la tienda activa', {
+            hasError: !!tenantError,
+            hasRow: !!tenantStore,
+          });
+          throw new Error(
+            'No se pudo verificar la tienda activa para crear productos. ' +
+            'Comprueba tu sesión y los permisos sobre la tienda, e inténtalo de nuevo.'
+          );
+        }
+        const verifiedTenantId: string = tenantStore.tenant_id;
+
         const productsData = itemsToCreate.map(item => ({
           store_id: user!.activeStoreId,
+          tenant_id: verifiedTenantId,
           sku: item.sku,
           name: item.name,
           cost_price: item.unit_cost,
@@ -1125,9 +1161,29 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           console.error('Rollback exception:', rollbackErr);
         }
       }
-      toast.error(err?.message || 'Error al registrar la recepcion');
+      // RLS-FIX (observabilidad): clasificar el error para dar feedback
+      // accionable sin exponer detalles internos de PostgreSQL (códigos,
+      // SQLSTATE ni mensajes del motor). Solo se registran en console.error
+      // (sin JWT/cookies/secretos); al usuario llega el mensaje clasificado.
+      const rawMsg: string = typeof err?.message === 'string' ? err.message : String(err ?? '');
+      let userMessage = rawMsg || 'Error al registrar la recepcion';
+      if (err?.code === '42501' || /row-level security|violates row-level|42501/i.test(rawMsg)) {
+        userMessage =
+          'Permisos insuficientes para crear productos en esta tienda. ' +
+          'Verifica tu sesión y tu membresía activa en la tienda, e inténtalo de nuevo.';
+      } else if (err?.code === '23505' || /duplicate key|unique constraint/i.test(rawMsg)) {
+        userMessage =
+          'Uno de los SKU ya existe en esta tienda. ' +
+          'Revisa los items marcados como nuevos e inténtalo de nuevo.';
+      } else if (/failed to fetch|networkerror|err_network|load failed/i.test(rawMsg)) {
+        userMessage =
+          'Problema de conexión con el servidor. ' +
+          'Revisa tu red e inténtalo de nuevo; no se registró la recepción.';
+      }
+      toast.error(userMessage);
     } finally {
       setIsSubmitting(false);
+      submitInProgressRef.current = false;
     }
   };
 
