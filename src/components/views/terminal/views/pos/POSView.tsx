@@ -91,6 +91,36 @@ export default function POSView() {
     }
   }, [user?.activeStoreId]);
 
+  // FIX-USD-CUP-RATE (2026-10-14): hidratar las tasas de cambio configuradas de
+  // la tienda (fuente canónica: store_exchange_rates, editadas en el modal
+  // TASAS → /api/store-rates) AL MONTAR la vista Vender y al cambiar de tienda.
+  // Sin esto, los productos con precio en USD entraban al carrito con tasa 1.0:
+  // un producto de 120 USD se comparaba contra pagos reales en CUP (ej. 94 800
+  // a tasa 790) → falso "Sobrepago" y error "Pago mixto descuadrado" al cobrar.
+  // La configuración vigente de COSTPRO es la autoridad de conversión del carrito.
+  React.useEffect(() => {
+    const storeId = user?.activeStoreId;
+    if (!storeId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = useAuthStore.getState().token;
+        const res = await fetch(`/api/store-rates?storeId=${storeId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) return; // sin tasas configuradas → fallback legacy (tasa 1 + edición manual)
+        const data = await res.json().catch(() => null);
+        if (!cancelled && data?.rates && typeof data.rates === 'object') {
+          useCartStore.getState().hydrateStoreRates(data.rates);
+        }
+      } catch {
+        // Silencio deliberado: la POS sigue operable sin tasas (fallback legacy);
+        // el usuario puede fijarlas manualmente con el modal TASAS.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.activeStoreId]);
+
   // QW-9: Toast si hay carrito persistente del turno anterior al cargar POS
   useEffect(() => {
     const cartState = useCartStore.getState();

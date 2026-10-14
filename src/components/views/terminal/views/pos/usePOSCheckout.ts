@@ -415,13 +415,17 @@ export function usePOSCheckout() {
             0,
             (i.subtotal || 0) - globalDiscountAmount * itemWeight,
           );
-          // FIX-BUG-4b (2026-07-06): convertir cada componente a CUP antes de comparar
-          // (cash/transfer en moneda del item, zelle en USD normalmente)
+          // FIX-BUG-4b (2026-07-06): convertir cada componente a CUP antes de comparar.
+          // FIX-USD-CUP-RATE (2026-10-14): usar los helpers CANÓNICOS del store
+          // (getItemPaidCup → getRateToCup: globalRates de la tienda > tasa del
+          // item), exactamente los mismos que alimentan el badge
+          // "Esperado/Sobrepago" del carrito. La fórmula inline anterior trataba
+          // el pago en la MONEDA DEL ITEM como factor ×1 mientras el subtotal se
+          // convertía con la tasa → con tasa real (ej. 790) un pago en USD de
+          // 120 cuadraba el carrito pero este gate lo rechazaba como descuadre
+          // (120 ≠ 94 800): el defecto inverso al reportado (pago CUP).
           const cartSt = useCartStore.getState();
-          const cashCup = (i.cash_paid || 0) * (i.cash_currency === 'CUP' || i.cash_currency === i.currency ? 1 : (i.exchange_rate || 1));
-          const transferCup = (i.transfer_paid || 0) * (i.transfer_currency === 'CUP' || i.transfer_currency === i.currency ? 1 : (i.exchange_rate || 1));
-          const zelleCup = (i.zelle_paid || 0) * (cartSt.globalRates[i.zelle_currency || 'USD'] || cartSt.globalRates['USD'] || (i.exchange_rate || 1));
-          const itemPaidCup = cashCup + transferCup + zelleCup;
+          const itemPaidCup = cartSt.getItemPaidCup(i);
           // Convertir subtotal ajustado a CUP también
           const itemAdjustedSubtotalCup = itemAdjustedSubtotal * (i.currency === 'CUP' ? 1 : (i.exchange_rate || 1));
           return Math.abs(itemPaidCup - itemAdjustedSubtotalCup) > 0.01;

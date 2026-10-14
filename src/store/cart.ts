@@ -169,6 +169,10 @@ interface CartState {
   // FIX-GLOBAL-RATES: tasas de cambio manuales editables (se arrastran hasta actualizar)
   globalRates: Record<string, number>;
   setGlobalRate: (currency: string, rate: number) => void;
+  // FIX-USD-CUP-RATE (2026-10-14): hidratar las tasas configuradas de la tienda
+  // (store_exchange_rates vía /api/store-rates) y re-tasar items no-CUP que
+  // entraron al carrito antes de la hidratación con tasa 1.0.
+  hydrateStoreRates: (rates: Record<string, number>) => void;
   // FIX-MULTI-CURRENCY-CORE: helpers de conversión a CUP
   getItemSubtotalCup: (item: CartItem) => number;
   getItemPaidCup: (item: CartItem) => number;
@@ -381,7 +385,9 @@ export const useCartStore = create<CartState>()(
               state.appliedTaxes = [];
               state.saleCurrency = 'CUP';
               state.saleExchangeRate = 1.0;
-              state.globalRates = {};
+              // FIX-USD-CUP-RATE (2026-10-14): PRESERVAR globalRates — son
+              // configuración de la tienda, no estado del vale. Al volver a
+              // 'sale' la POS conserva la tasa vigente.
             } else {
               // Volver a 'sale': limpiar campos Vale
               state.productionOrderId = null;
@@ -438,6 +444,41 @@ export const useCartStore = create<CartState>()(
       // FIX-GLOBAL-RATES: actualizar tasa manual (se arrastra hasta volver a editar)
       setGlobalRate: (currency, rate) =>
         set((state) => ({ globalRates: { ...state.globalRates, [currency]: rate }, lastUpdated: Date.now() })),
+
+      // FIX-USD-CUP-RATE (2026-10-14): cargar las tasas configuradas de la tienda
+      // (fuente canónica: store_exchange_rates, editadas vía modal TASAS →
+      // /api/store-rates). La configuración vigente de COSTPRO es la autoridad
+      // de conversión: 1 USD = rates.USD CUP (idem EUR/MLC). Además, re-tasa
+      // items no-CUP que entraron al carrito ANTES de la hidratación con tasa
+      // 1.0 (marcador de estado sin tasa: 1 USD = 1 CUP no es válido
+      // económicamente, nunca lo será). Las tasas manuales del usuario
+      // (exchange_rate ≠ 1) se respetan: la edición manual es deliberada.
+      hydrateStoreRates: (rates) =>
+        set(
+          produce((state: CartState) => {
+            state.globalRates = { ...state.globalRates, ...rates };
+            for (const item of state.items) {
+              if (!item.currency || item.currency === 'CUP') continue;
+              const storeRate = rates[item.currency];
+              if (!storeRate || storeRate <= 1) continue;
+              // Respeta tasas manuales explícitas (≠ 1) ya asignadas al item
+              if (item.exchange_rate && item.exchange_rate !== 1) continue;
+              item.exchange_rate = storeRate;
+              // base_price_cup es el ancla CUP inmutable: precio nativo × tasa
+              item.base_price_cup = (item.price || 0) * storeRate;
+              // subtotal permanece en moneda NATIVA del item (price × qty)
+              item.subtotal = (item.price || 0) * (item.quantity || 1);
+              // Sin override manual, la fila de pago por defecto sigue al subtotal nativo
+              if (!item.payment_manual_override && item.payments && item.payments.length > 0) {
+                item.payments[0].amount = item.subtotal;
+                item.cash_paid = item.payments.filter(p => p.method === 'cash').reduce((s, p) => s + p.amount, 0);
+                item.transfer_paid = item.payments.filter(p => p.method === 'transfer').reduce((s, p) => s + p.amount, 0);
+                item.zelle_paid = item.payments.filter(p => p.method === 'zelle').reduce((s, p) => s + p.amount, 0);
+              }
+            }
+            state.lastUpdated = Date.now();
+          }),
+        ),
 
       // FIX-CONSISTENCY (2026-07-10): total esperado considerando ajustes por método.
       // FIX-PAYMENT-ROWS (2026-07-10): ahora itera sobre payments[] para encontrar
@@ -635,6 +676,11 @@ export const useCartStore = create<CartState>()(
             // Sincronizar storeId SIEMPRE: el carrito vacío no tiene nada que limpiar.
             set({ storeId: newStoreId, lastUpdated: Date.now() });
           }
+          // FIX-USD-CUP-RATE (2026-10-14): las tasas son configuración POR TIENDA
+          // (store_exchange_rates). Al cambiar de tienda se descartan y POSView
+          // re-hidrata desde /api/store-rates para la tienda entrante: sin esto,
+          // la tasa de la tienda anterior contaminaba las conversiones de la nueva.
+          set({ globalRates: {}, lastUpdated: Date.now() });
         } else if (!currentStoreId && newStoreId) {
           set({ storeId: newStoreId, lastUpdated: Date.now() });
         }
@@ -730,6 +776,20 @@ export const useCartStore = create<CartState>()(
 
               const cost = product?.cost_price ?? product?.cost_average ?? (productInput as any).cost ?? 0;
               const itemCurrency = (productInput as any).currency || (product as any)?.price_currency || 'CUP';
+              // FIX-USD-CUP-RATE (2026-10-14): resolver la tasa de conversión del
+              // item a CUP desde la configuración vigente de la tienda (globalRates,
+              // hidratada desde store_exchange_rates al montar la POS). Prioridad:
+              // tasa explícita del input > tasa configurada de la tienda > 1.0
+              // (fallback legacy: estado sin tasa, la hidratación lo corrige).
+              // CUP = 1 por definición. Fail-safe: cualquier tasa <= 0 (dato
+              // inválido en config) se descarta y cae al fallback 1.0.
+              const explicitInputRate = (productInput as any).exchange_rate;
+              const storeConfiguredRate = get().globalRates[itemCurrency];
+              const itemExchangeRate = itemCurrency === 'CUP'
+                ? 1.0
+                : (explicitInputRate && explicitInputRate > 0
+                  ? explicitInputRate
+                  : (storeConfiguredRate && storeConfiguredRate > 0 ? storeConfiguredRate : 1.0));
               // FIX-PAYMENT-ROWS: inicializar con 1 fila de pago default (efectivo)
               const initialSubtotal = price * incomingQuantity;
               const newItem: CartItem = {
@@ -740,9 +800,13 @@ export const useCartStore = create<CartState>()(
                 variant: variant || null,
                 price,
                 // FIX-BASE-PRICE: guardar precio original en CUP (inmutable)
-                base_price_cup: (product as any)?.price_currency && (product as any).price_currency !== 'CUP'
-                  ? price * ((product as any).exchange_rate || 1) // si el producto ya viene en USD, convertir a CUP
-                  : price, // si viene en CUP, usar directo
+                // FIX-USD-CUP-RATE: la conversión usa la tasa RESUELTA de la tienda
+                // (antes: product.exchange_rate, que el catálogo no trae → 1.0 y
+                // un producto USD 120 quedaba "120 CUP" → falso sobrepago y error
+                // "Pago mixto descuadrado").
+                base_price_cup: itemCurrency !== 'CUP'
+                  ? price * itemExchangeRate // producto no-CUP: equivalente en CUP con la tasa vigente
+                  : price, // producto CUP: directo
                 cost,
                 subtotal: 0,
                 discount_type: (productInput as any).discount_type || null,
@@ -783,8 +847,9 @@ export const useCartStore = create<CartState>()(
                 zelle_currency: 'USD', // Zelle default USD
                 payment_manual_override: false,
                 // FIX-MULTI-MONEDA: heredar moneda y tasa del producto (POR ITEM, no global)
+                // FIX-USD-CUP-RATE: tasa resuelta desde la configuración de la tienda
                 currency: itemCurrency,
-                exchange_rate: (productInput as any).exchange_rate || 1.0,
+                exchange_rate: itemExchangeRate,
               };
               newItem.subtotal = calculateItemSubtotal(newItem);
               // Asegurar que la primera fila tenga el subtotal correcto
@@ -1245,8 +1310,12 @@ export const useCartStore = create<CartState>()(
         // FIX-MULTI-MONEDA: resetear moneda de venta a CUP al limpiar
         saleCurrency: 'CUP',
         saleExchangeRate: 1.0,
-        // FIX-GLOBAL-RATES: resetear tasas manuales
-        globalRates: {},
+        // FIX-USD-CUP-RATE (2026-10-14): PRESERVAR globalRates al limpiar el
+        // carrito. Las tasas de la tienda son configuración (store_exchange_rates),
+        // no estado del carrito: resetearlas aquí dejaba la POS sin tasa para la
+        // venta siguiente (2.º producto USD de la sesión volvía a tasa 1.0).
+        // Se resetean solo al CAMBIAR de tienda (clearCartOnStoreSwitch +
+        // re-hidratación en POSView).
         // Vale de Salida: reset al limpiar carrito
         operationType: 'sale',
         productionOrderId: null,
