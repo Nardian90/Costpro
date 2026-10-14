@@ -37,6 +37,7 @@ vi.mock('@/components/views/terminal/views/cash/cash-report-pdf', () => ({
 
 // ── MOCK: auth/ui stores ──
 const mockSetCurrentView = vi.fn();
+const mockSetCommissionNavContext = vi.fn();
 const authState = vi.hoisted(() => ({
   user: {
     id: 'u-1',
@@ -50,7 +51,9 @@ vi.mock('@/store', () => ({
   useAuthStore: (sel?: (s: unknown) => unknown) =>
     sel ? sel({ user: authState.user }) : { user: authState.user },
   useUIStore: (sel?: (s: unknown) => unknown) =>
-    sel ? sel({ setCurrentView: mockSetCurrentView }) : { setCurrentView: mockSetCurrentView },
+    sel
+      ? sel({ setCurrentView: mockSetCurrentView, commissionNavContext: null, setCommissionNavContext: mockSetCommissionNavContext })
+      : { setCurrentView: mockSetCurrentView, commissionNavContext: null, setCommissionNavContext: mockSetCommissionNavContext },
 }));
 
 // ── MOCK: apiFetch ──
@@ -126,6 +129,7 @@ beforeEach(() => {
   window.localStorage.clear();
   buildPdfMock.mockClear();
   mockSetCurrentView.mockReset();
+  mockSetCommissionNavContext.mockReset();
   setupFetch();
 });
 
@@ -408,5 +412,30 @@ describe('§1 — Navegación y detalle de documento', () => {
     await waitFor(() => expect(screen.getByText('Detalle de Documento')).toBeTruthy());
     await user.click(screen.getByRole('button', { name: /Ver en módulo/i }));
     await waitFor(() => expect(mockSetCurrentView).toHaveBeenCalledWith('reception_list'));
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NAV-2026-10 — navegación Reporte Entrega ↔ Trabajadores y Comisiones
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('NAV-2026-10 — «Gestionar comisiones» navega a Trabajadores y Comisiones', () => {
+  it('NAV-01: al pulsarlo navega a la vista workers y fija el contexto del período aplicado', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    const desde = document.getElementById('cr-sd') as HTMLInputElement;
+    await act(async () => { fireEvent.change(desde, { target: { value: '2026-10-14' } }); });
+    const hasta = document.getElementById('cr-ed') as HTMLInputElement;
+    await act(async () => { fireEvent.change(hasta, { target: { value: '2026-10-14' } }); });
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Gestionar comisiones/i })).toBeTruthy());
+    await user.click(screen.getByRole('button', { name: /Gestionar comisiones/i }));
+    // abre la vista REAL Trabajadores y Comisiones (no un modal)
+    expect(mockSetCurrentView).toHaveBeenCalledWith('workers');
+    // conserva el período del reporte aplicado (NAV-03) para consumo único
+    expect(mockSetCommissionNavContext).toHaveBeenCalledTimes(1);
+    const ctx = mockSetCommissionNavContext.mock.calls[0][0];
+    expect(ctx.period).toEqual({ startDate: '2026-10-14', endDate: '2026-10-14' });
+    expect(typeof ctx.setAt).toBe('number');
   });
 });

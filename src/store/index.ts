@@ -43,6 +43,16 @@ export interface PendingAuditFilter {
   severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'all';
 }
 
+// NAV-2026-10: contexto de navegación Reporte Entrega ↔ Trabajadores y Comisiones.
+// Se fija al pulsar «Gestionar comisiones» desde Reporte Entrega y se CONSUME UNA
+// sola vez (patrón forceOpenCart): WorkersView lo usa para pre-cargar el período y
+// CashReportView para restaurar el período del reporte al volver. `setAt` permite
+// a los consumidores descartar contextos viejos (>30 min) para no sorprender.
+export interface CommissionNavContext {
+  period: { startDate: string; endDate: string };
+  setAt: number;
+}
+
 interface UIState {
   currentView: ViewType;
   previousView: ViewType | null;
@@ -72,6 +82,9 @@ interface UIState {
   // Flag para forzar apertura del carrito al navegar al POS (usado por Duplicar venta)
   forceOpenCart: boolean;
   setForceOpenCart: (v: boolean) => void;
+  // NAV-2026-10: contexto Reporte Entrega ↔ Trabajadores y Comisiones (consumo único)
+  commissionNavContext: CommissionNavContext | null;
+  setCommissionNavContext: (ctx: CommissionNavContext | null) => void;
   setCurrentView: (view: ViewType) => void;
   setSidebarState: (state: SidebarState) => void;
   toggleSidebar: () => void;
@@ -122,6 +135,8 @@ export const useUIStore = create<UIState>()(
       helpLibraryCollapsed: false,
       forceOpenCart: false,
       setForceOpenCart: (v: boolean) => set({ forceOpenCart: v }),
+      commissionNavContext: null,
+      setCommissionNavContext: (ctx: CommissionNavContext | null) => set({ commissionNavContext: ctx }),
       setCurrentView: (view: ViewType) => set((state: UIState) => {
         // GATE 1: punto ÚNICO de normalización — cualquier emisor que pida un
         // viewId legacy (occ, wrappers viejos) aterriza en su destino canónico.

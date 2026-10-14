@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
-import { useAuthStore, useUIStore } from '@/store';
+import { useAuthStore, useUIStore, type CommissionNavContext } from '@/store';
 import { toast } from 'sonner';
 import type { CashReport } from '@/types';
 import PageHeader from '@/components/ui/PageHeader';
@@ -59,7 +59,6 @@ import {
   type PdfTemplate, type PdfOrientation, type Breakdown, type Currency, type CustomDenoms, type SavedBreakdown,
 } from './cash-report-core';
 import { computeDailySummary, computeCuadre, cuadreLabel, type DailySummary } from '@/lib/cash-report/summary';
-import CommissionsManageModal from './CommissionsManageModal';
 
 type ReportTab = 'resultados' | 'desglose' | 'preview';
 
@@ -68,7 +67,7 @@ const touch = 'min-h-[44px]';
 
 export default function CashReportView() {
   const { user } = useAuthStore();
-  const { setCurrentView } = useUIStore();
+  const { setCurrentView, setCommissionNavContext } = useUIStore();
 
   // ── §2 Configuración (draft) — nunca dispara cálculos por sí misma ──
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -82,14 +81,23 @@ export default function CashReportView() {
   // Opciones del documento (secciones del PDF) — aplican a vista previa y descarga
   const [pdfOptions, setPdfOptions] = useState<CashReportPdfOptions>(DEFAULT_PDF_OPTIONS);
 
-  // ── §5: modal de gestión de comisiones (documento trazable) ──
-  const [showCommissionsModal, setShowCommissionsModal] = useState(false);
+  // ── §5: gestión de comisiones — NAV-2026-10 (callback definido tras `applied`) ──
 
   // ── Resultados aplicados (solo cambian al pulsar el botón principal) ──
   const [applied, setApplied] = useState<{ cfg: { startDate: string; endDate: string }; report: CashReport } | null>(null);
   const [loading, setLoading] = useState(false);
   const generatingRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // ── NAV-2026-10: «Gestionar comisiones» navega a la vista real Trabajadores y
+  // Comisiones (workers) llevando el período del reporte en commissionNavContext
+  // (consumo único, caduca a los 30 min). El flujo de cobro/confirmación vive en
+  // esa vista (CommissionsManageModal reubicado allí); sin módulos duplicados.
+  const gestionarComisiones = useCallback(() => {
+    const period = applied?.cfg ?? { startDate, endDate };
+    setCommissionNavContext({ period, setAt: Date.now() });
+    setCurrentView('workers');
+  }, [applied, startDate, endDate, setCommissionNavContext, setCurrentView]);
 
   // ── Desgloses (estado de conteo del usuario, independiente del cálculo) ──
   const [cupBreakdown, setCupBreakdown] = useState<Breakdown>({});
@@ -131,6 +139,21 @@ export default function CashReportView() {
     setDeliveredBy(localStorage.getItem(LS_KEYS.deliveredBy) || '');
     setRecipientName(localStorage.getItem(LS_KEYS.recipient) || '');
     setSavedHistory(loadHistory());
+  }, []);
+
+  // ── NAV-2026-10 (NAV-03): al Volver a Reporte Entrega, restaurar el período del
+  // reporte que originó «Gestionar comisiones» (contexto consumo único, caduca a
+  // los 30 min para no sorprender en sesiones posteriores).
+  const commissionNavContext = useUIStore((s: { commissionNavContext: CommissionNavContext | null }) => s.commissionNavContext);
+  useEffect(() => {
+    if (!commissionNavContext) return;
+    const fresh = Date.now() - commissionNavContext.setAt < 30 * 60 * 1000;
+    if (fresh) {
+      setStartDate(commissionNavContext.period.startDate);
+      setEndDate(commissionNavContext.period.endDate);
+    }
+    setCommissionNavContext(null); // consumo único
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- consumo único en mount
   }, []);
 
   // Persistencia de datos de entrega (mismo comportamiento que el modal)
@@ -713,7 +736,7 @@ export default function CashReportView() {
                 expectedCup={expectedCup}
                 summary={cupSummaryMemo}
                 cupTotal={cupTotal}
-                onGestionarComisiones={() => setShowCommissionsModal(true)}
+                onGestionarComisiones={gestionarComisiones}
                 onRefresh={handleGenerate}
                 filterCurrency={filterCurrency}
                 filterMethod={filterMethod}
@@ -823,18 +846,9 @@ export default function CashReportView() {
           </div>
         </div>
       )}
-      {/* §5: modal de gestión de comisiones — documento trazable (POST /payments + PATCH pay) */}
-      {showCommissionsModal && (
-        <CommissionsManageModal
-          period={applied?.cfg ?? { startDate, endDate }}
-          onClose={() => setShowCommissionsModal(false)}
-          onConfirmed={() => {
-            setShowCommissionsModal(false);
-            // La comisión pagada se incorpora al reporte: recalcular (§5.4).
-            void handleGenerate();
-          }}
-        />
-      )}
+      {/* NAV-2026-10: el modal de comisiones se reubicó en Trabajadores y Comisiones
+          (WorkersView). «Gestionar comisiones» navega a esa vista conservando tienda y
+          período — ver gestionarComisiones() arriba. */}
     </div>
   );
 }

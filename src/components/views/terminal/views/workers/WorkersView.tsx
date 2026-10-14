@@ -28,6 +28,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ArrowLeft,
   Loader2,
   UserPlus,
   UserX,
@@ -39,9 +40,13 @@ import {
   Layers,
   HelpCircle,
 } from 'lucide-react';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore, type CommissionNavContext, type ViewType } from '@/store';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+// NAV-2026-10: flujo de cobro por período (propuesta del motor + confirmación
+// trazable) — antes vivía dentro de Reporte Entrega; se reubica aquí como parte
+// del módulo Trabajadores y Comisiones (sin módulos duplicados).
+import CommissionsManageModal from '@/components/views/terminal/views/cash/CommissionsManageModal';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -209,6 +214,10 @@ function formatDate(s: string | null): string {
 export function WorkersView() {
   const { user } = useAuthStore();
   const storeId = user?.activeStoreId;
+  // NAV-2026-10: navegación bidireccional Reporte Entrega ↔ Trabajadores y Comisiones
+  const setCurrentView = useUIStore((s: { setCurrentView: (v: ViewType) => void }) => s.setCurrentView);
+  const commissionNavContext = useUIStore((s: { commissionNavContext: CommissionNavContext | null }) => s.commissionNavContext);
+  const setCommissionNavContext = useUIStore((s: { setCommissionNavContext: (ctx: CommissionNavContext | null) => void }) => s.setCommissionNavContext);
 
   const [activeTab, setActiveTab] = useState('workers');
   const [loading, setLoading] = useState(true);
@@ -222,6 +231,25 @@ export function WorkersView() {
     return d.toISOString().split('T')[0];
   });
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
+
+  // NAV-2026-10 (NAV-03): si se llegó desde «Gestionar comisiones» en Reporte
+  // Entrega, pre-cargar el período del reporte (contexto consumo único, caduca a
+  // los 30 min) para que la consulta/confirmación de comisiones use ese período.
+  const [cameFromReport, setCameFromReport] = useState(false);
+  useEffect(() => {
+    if (!commissionNavContext) return;
+    const fresh = Date.now() - commissionNavContext.setAt < 30 * 60 * 1000;
+    if (fresh) {
+      setDateFrom(commissionNavContext.period.startDate);
+      setDateTo(commissionNavContext.period.endDate);
+      setCameFromReport(true);
+    }
+    setCommissionNavContext(null); // consumo único
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- consumo único en mount
+  }, []);
+
+  // Modal de cobro por período (CommissionsManageModal — propuesta del motor)
+  const [showCommissionsModal, setShowCommissionsModal] = useState(false);
 
   // Modal de pago
   const [payModalWorker, setPayModalWorker] = useState<WorkerSummary | null>(null);
@@ -405,6 +433,32 @@ export function WorkersView() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* NAV-2026-10 (NAV-02): regreso directo a Reporte Entrega — acceso siempre
+              visible, sin depender del botón Atrás del navegador ni del menú. */}
+          <Button
+            onClick={() => setCurrentView('cash_report')}
+            variant="outline"
+            className="h-11 px-4 border-2 border-border bg-background hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center gap-2 text-foreground"
+            aria-label="Volver a Reporte Entrega"
+            data-testid="volver-reporte-entrega"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden md:inline">Volver a Reporte Entrega</span>
+            <span className="md:hidden">Reporte</span>
+          </Button>
+          {/* NAV-2026-10: cobro por período del motor de reglas (antes en Reporte Entrega) */}
+          <Button
+            onClick={() => setShowCommissionsModal(true)}
+            disabled={!storeId}
+            variant="outline"
+            className="h-11 px-4 border-2 border-primary/40 bg-primary/10 hover:bg-primary/20 font-black text-xs uppercase tracking-widest flex items-center gap-2 text-primary"
+            aria-label="Cobrar comisiones del período"
+            data-testid="cobrar-comisiones-periodo"
+          >
+            <DollarSign className="w-4 h-4" />
+            <span className="hidden lg:inline">Cobrar comisiones del período</span>
+            <span className="lg:hidden">Cobrar</span>
+          </Button>
           {/* FIX-REGRESSION: Botón "Nuevo trabajador" — UI perdida en regresión, API existe */}
           <Button
             onClick={() => setCreateModalOpen(true)}
@@ -479,6 +533,23 @@ export function WorkersView() {
             setPayModalWorker(null);
             fetchWorkers();
             fetchPayments();
+          }}
+        />
+      )}
+
+      {/* NAV-2026-10: cobro por período (motor de reglas → documento trazable).
+          Antes vivía en Reporte Entrega; ahora es parte del módulo. Usa el rango
+          de fechas de ESTA vista (pre-cargado desde el reporte si llegó por
+          «Gestionar comisiones»). */}
+      {showCommissionsModal && storeId && (
+        <CommissionsManageModal
+          storeId={storeId}
+          period={{ startDate: dateFrom, endDate: dateTo }}
+          onClose={() => setShowCommissionsModal(false)}
+          onConfirmed={() => {
+            setShowCommissionsModal(false);
+            fetchWorkers();  // último pago por trabajador
+            fetchPayments(); // historial del período
           }}
         />
       )}
