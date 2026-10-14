@@ -73,7 +73,7 @@ BEGIN
         NULLIF(current_setting('request.jwt.claim.role', true), ''),
         (NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')
     );
-    IF v_jwt_role <> 'service_role' THEN
+    IF v_jwt_role IS DISTINCT FROM 'service_role' THEN
         RAISE EXCEPTION 'ERR_UNAUTHORIZED' USING ERRCODE = 'PT015';
     END IF;
     IF p_user_id IS NULL THEN
