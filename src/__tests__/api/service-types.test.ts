@@ -96,33 +96,33 @@ function setupAdminMock(opts: { usageRows?: any[]; insertResult?: any; updateRes
         if (table === 'service_types') {
           tableMocks[table]
             .on(
-              (op, args) => op === 'select' && String(args[0]).includes('id, store_id, name'),
+              (op: string, args: any[]) => op === 'select' && String(args[0]).includes('id, store_id, name'),
               awaitable({ data: EXISTING_TYPES.map(t => ({ ...t, store_id: null, is_active: true, description: null, created_at: '2026-06-25' })), error: null }),
             )
             .on(
-              (op, args) => op === 'select' && String(args[0]) === 'id, name, code',
+              (op: string, args: any[]) => op === 'select' && String(args[0]) === 'id, name, code',
               awaitable({ data: EXISTING_TYPES, error: null }),
             )
             .on(
-              (op, args) => op === 'select' && String(args[0]) === 'id, name',
+              (op: string, args: any[]) => op === 'select' && String(args[0]) === 'id, name',
               awaitable({ data: EXISTING_TYPES, error: null }),
             )
             .on(
-              (op, args) => op === 'select' && String(args[0]) === 'id, name, is_active',
+              (op: string, args: any[]) => op === 'select' && String(args[0]) === 'id, name, is_active',
               awaitable({ data: EXISTING_TYPES[0], error: null }),
             )
             .on(
-              (op) => op === 'insert',
+              (op: string) => op === 'insert',
               opts.insertResult ?? awaitable({ data: { id: 't-new', store_id: null, name: 'X', code: 'X1', description: null, is_active: true, created_at: 'now' }, error: null }),
             )
             .on(
-              (op) => op === 'update',
+              (op: string) => op === 'update',
               opts.updateResult ?? awaitable({ data: { id: '11111111-1111-4111-8111-111111111111', name: 'Transporte', is_active: false }, error: null }),
             );
         }
         if (table === 'received_services') {
           tableMocks[table].on(
-            (op, args) => op === 'select' && String(args[0]).includes('service_type_id'),
+            (op: string, args: any[]) => op === 'select' && String(args[0]).includes('service_type_id'),
             awaitable({ data: opts.usageRows ?? [], error: null }),
           );
         }
@@ -148,19 +148,19 @@ function clerkSession() {
   };
 }
 
-function jsonReq(body: any, method = 'POST') {
-  return new Request('http://localhost/api/service-types', {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+function jsonReq(body: any, method = 'POST'): any {
+  // `as any`: el contrato runtime de las rutas conAuth acepta Request;
+  // el tipo exportado por Next exige NextRequest (el mock inyecta sesión).
+  const init: any = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body !== null) init.body = JSON.stringify(body); // GET/HEAD no admiten body
+  return new Request('http://localhost/api/service-types', init) as any;
 }
 
 describe('GET /api/service-types', () => {
   it('cualquier usuario autenticado lee el catálogo', async () => {
     setupAdminMock();
     clerkSession();
-    const res = await GET(new Request('http://localhost/api/service-types'), mockSession.value);
+    const res = await GET(jsonReq(null, 'GET'));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.data).toHaveLength(2);
@@ -170,12 +170,12 @@ describe('GET /api/service-types', () => {
     setupAdminMock({ usageRows: [{ service_type_id: '11111111-1111-4111-8111-111111111111' }, { service_type_id: '11111111-1111-4111-8111-111111111111' }] });
 
     clerkSession();
-    const resClerk = await GET(new Request('http://localhost/api/service-types'), mockSession.value);
+    const resClerk = await GET(jsonReq(null, 'GET'));
     const jsonClerk = await resClerk.json();
     expect(jsonClerk.data.every((t: any) => t.usage_count === 0)).toBe(true);
 
     adminSession();
-    const resAdmin = await GET(new Request('http://localhost/api/service-types'), mockSession.value);
+    const resAdmin = await GET(jsonReq(null, 'GET'));
     const jsonAdmin = await resAdmin.json();
     const transporte = jsonAdmin.data.find((t: any) => t.id === '11111111-1111-4111-8111-111111111111');
     expect(transporte.usage_count).toBe(2);
@@ -188,16 +188,16 @@ describe('POST /api/service-types', () => {
     mockSession.value = {
       id: 'u-mgr', role: 'usuario', memberships: [{ store_id: 'store-1', role: 'manager', status: 'active' }],
     };
-    const res = await POST(jsonReq({ name: 'Montaje' }), mockSession.value);
+    const res = await POST(jsonReq({ name: 'Montaje' }));
     expect(res.status).toBe(403);
   });
 
   it('SR-03: admin crea tipo — persiste con store_id null, code derivado y trim aplicado', async () => {
     const admin = setupAdminMock();
     adminSession();
-    const res = await POST(jsonReq({ name: '  Montaje y Embalaje  ' }), mockSession.value);
+    const res = await POST(jsonReq({ name: '  Montaje y Embalaje  ' }));
     expect(res.status).toBe(201);
-    const insert = admin.from('service_types').calls.find(c => c.op === 'insert');
+    const insert = admin.from('service_types').calls.find((c: any) => c.op === 'insert');
     expect(insert.args[0]).toMatchObject({ store_id: null, name: 'Montaje y Embalaje', code: 'MONTA', is_active: true });
     const json = await res.json();
     expect(json.data.id).toBe('t-new');
@@ -206,22 +206,22 @@ describe('POST /api/service-types', () => {
   it('SR-04: duplicado case/espacio-insensitive → 409 y NO inserta', async () => {
     const admin = setupAdminMock();
     adminSession();
-    const res = await POST(jsonReq({ name: '  transporte' }), mockSession.value);
+    const res = await POST(jsonReq({ name: '  transporte' }));
     expect(res.status).toBe(409);
-    expect(admin.from('service_types').calls.find(c => c.op === 'insert')).toBeUndefined();
+    expect(admin.from('service_types').calls.find((c: any) => c.op === 'insert')).toBeUndefined();
   });
 
   it('nombre solo espacios → 400', async () => {
     setupAdminMock();
     adminSession();
-    const res = await POST(jsonReq({ name: '   ' }), mockSession.value);
+    const res = await POST(jsonReq({ name: '   ' }));
     expect(res.status).toBe(400);
   });
 
   it('nombre con caracteres de control → 400', async () => {
     setupAdminMock();
     adminSession();
-    const res = await POST(jsonReq({ name: 'Tipo\u0000Oculto' }), mockSession.value);
+    const res = await POST(jsonReq({ name: 'Tipo\u0000Oculto' }));
     expect(res.status).toBe(400);
   });
 });
@@ -230,25 +230,25 @@ describe('PATCH /api/service-types', () => {
   it('SR-11: no-admin → 403', async () => {
     setupAdminMock();
     clerkSession();
-    const res = await PATCH(jsonReq({ id: '11111111-1111-4111-8111-111111111111', is_active: false }, 'PATCH'), mockSession.value);
+    const res = await PATCH(jsonReq({ id: '11111111-1111-4111-8111-111111111111', is_active: false }, 'PATCH'));
     expect(res.status).toBe(403);
   });
 
   it('SR-06: desactivación persiste is_active=false (sin borrado físico)', async () => {
     const admin = setupAdminMock();
     adminSession();
-    const res = await PATCH(jsonReq({ id: '11111111-1111-4111-8111-111111111111', is_active: false }, 'PATCH'), mockSession.value);
+    const res = await PATCH(jsonReq({ id: '11111111-1111-4111-8111-111111111111', is_active: false }, 'PATCH'));
     expect(res.status).toBe(200);
-    const update = admin.from('service_types').calls.find(c => c.op === 'update');
+    const update = admin.from('service_types').calls.find((c: any) => c.op === 'update');
     expect(update.args[0]).toEqual({ is_active: false });
   });
 
   it('SR-05: editar nombre preserva identidad (id inmutable, update filtrado por id)', async () => {
     const admin = setupAdminMock();
     adminSession();
-    const res = await PATCH(jsonReq({ id: '11111111-1111-4111-8111-111111111111', name: 'Transporte Express' }, 'PATCH'), mockSession.value);
+    const res = await PATCH(jsonReq({ id: '11111111-1111-4111-8111-111111111111', name: 'Transporte Express' }, 'PATCH'));
     expect(res.status).toBe(200);
-    const update = admin.from('service_types').calls.find(c => c.op === 'update');
+    const update = admin.from('service_types').calls.find((c: any) => c.op === 'update');
     expect(update.args[0]).toMatchObject({ name: 'Transporte Express' });
     expect(update.args[0].id).toBeUndefined(); // el id NUNCA viaja en el update
   });
@@ -256,7 +256,7 @@ describe('PATCH /api/service-types', () => {
   it('renombrar a duplicado → 409', async () => {
     setupAdminMock();
     adminSession();
-    const res = await PATCH(jsonReq({ id: '11111111-1111-4111-8111-111111111111', name: ' OTROS ' }, 'PATCH'), mockSession.value);
+    const res = await PATCH(jsonReq({ id: '11111111-1111-4111-8111-111111111111', name: ' OTROS ' }, 'PATCH'));
     expect(res.status).toBe(409);
   });
 
@@ -266,10 +266,10 @@ describe('PATCH /api/service-types', () => {
     // Fuerza que la búsqueda del tipo no encuentre nada (single → { data: null })
     admin.from('service_types').handlers.length = 0;
     admin.from('service_types').on(
-      (op, args) => op === 'select' && String(args[0]) === 'id, name, is_active',
+      (op: string, args: any[]) => op === 'select' && String(args[0]) === 'id, name, is_active',
       awaitable({ data: null, error: { message: 'PGRST116' } }),
     );
-    const res = await PATCH(jsonReq({ id: '11111111-1111-4111-8111-999999999999', name: 'X' }, 'PATCH'), mockSession.value);
+    const res = await PATCH(jsonReq({ id: '11111111-1111-4111-8111-999999999999', name: 'X' }, 'PATCH'));
     expect(res.status).toBe(404);
   });
 });

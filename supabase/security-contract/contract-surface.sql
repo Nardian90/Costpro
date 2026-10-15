@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-14T17:36:59.817Z
+-- Captured  : 2026-10-15T15:13:54.256Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 137 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -2846,9 +2846,15 @@ BEGIN
     RAISE EXCEPTION 'ERR_INVALID_DISTRIBUTION_METHOD';
   END IF;
 
+  -- 20261015000001: el catálogo de tipos es GLOBAL (store_id IS NULL) con
+  -- soporte de variantes por tienda. Se acepta el tipo si pertenece a la
+  -- tienda activa O es global, y está activo. (Antes: solo store_id =
+  -- p_store_id, lo que excluía a todos los tipos del catálogo oficial.)
   IF p_service_type_id IS NOT NULL THEN
     SELECT COUNT(*) INTO v_count FROM service_types
-    WHERE id = p_service_type_id AND store_id = p_store_id AND is_active = true;
+    WHERE id = p_service_type_id
+      AND (store_id = p_store_id OR store_id IS NULL)
+      AND is_active = true;
     IF v_count = 0 THEN
       RAISE EXCEPTION 'ERR_SERVICE_TYPE_NOT_FOUND';
     END IF;

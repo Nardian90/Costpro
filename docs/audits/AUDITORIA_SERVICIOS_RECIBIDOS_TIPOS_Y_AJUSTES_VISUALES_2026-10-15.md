@@ -76,6 +76,7 @@ La arquitectura ya decidía el alcance: las 9 filas semilla son globales (`store
 - `CREATE OR REPLACE FUNCTION` → 201 OK · `CREATE UNIQUE INDEX` → 201 OK.
 - `pg_get_functiondef` post-aplicación: predicado nuevo presente, predicado viejo ausente.
 - Prueba lógica con `SELECT` (sin escrituras): tipo global aceptado en Central (1), match store-scoped puro correctamente inviable (0), tipo inactivo rechazado (0).
+- **Recertificación del contract surface** (flujo sancionado `scripts/export-contract-surface.cjs`, que exige credenciales y nunca corre en CI): `contract-surface.sql` regenerado con las 137 funciones vivas tras la migración → `security-contract-test-static.cjs` en verde completo: Capa A 137/137 · Capa B 197 verificadas, 0 nuevas · Capa C 137/137, 0 divergencias. Sin esta recertificación, el gate de CI detecta (correctamente) `BODY_DRIFT_FROM_MIGRATION` entre el snapshot anterior y el nuevo replay — señala exactamente que la migración cambió una función certificada y exige re-certificar.
 
 ## 8. Pruebas ejecutadas y resultados exactos
 
