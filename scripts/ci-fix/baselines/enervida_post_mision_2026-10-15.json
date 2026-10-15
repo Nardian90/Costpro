@@ -1,0 +1,13 @@
+{
+  "collected_at": "2026-10-15T04:06:19.502685+00:00",
+  "enervida": {
+    "workers": 1,
+    "commission_rules": 1,
+    "commission_payments": 0,
+    "transactions_14_10": 3,
+    "inventory_sum_qty": 2573,
+    "stock_movements_total": 1092,
+    "payment_transactions_today": 0
+  },
+  "other_stores_new_txs": []
+}

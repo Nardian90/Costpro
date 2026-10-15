@@ -25,7 +25,11 @@
 
 set -euo pipefail
 
-PROJECT_DIR="/home/z/my-project/Costpro"
+# Resolver la ruta del proyecto desde la ubicación de este script (y no de forma
+# hardcodeada): si el contenedor local se reinicia y el clon queda en otra ruta
+# (p. ej. /home/z/my-project/costpro en minúscula tras un git clone fresco),
+# el arranque sigue funcionando sin symlinks ni ediciones manuales.
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PORT="${PORT:-3000}"
 
 # Mata cualquier proceso next/postcss/bun huérfano del proyecto

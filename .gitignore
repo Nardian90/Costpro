@@ -41,6 +41,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 local-*
+# …excepto el tooling de restauración del entorno local, que SÍ se versiona
+# (es la protección contra reinicios del contenedor: docs/OPERACION_ENTORNO_LOCAL.md)
+!scripts/local-env/
+!scripts/local-env/**
 .claude
 .z-ai-config
 *.log
