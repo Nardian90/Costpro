@@ -80,7 +80,18 @@ export function validateOperationDate(
   if (!newDate) return { valid: true };
   if (!minAllowedDate) return { valid: true };
 
-  const newDateObj = typeof newDate === 'string' ? new Date(newDate) : newDate;
+  // AUDIT-2026-10-15 (misión comisiones): un input DATE-ONLY (YYYY-MM-DD, tal como
+  // llega de <input type=date>) se estampa vía formatOperationDateForRPC al MEDIODÍA
+  // (T12:00:00) para evitar TZ edge cases. La validación debe comparar lo que
+  // realmente se enviará: si evaluamos el date-only a medianoche, una 2ª venta del
+  // MISMO día quedaba bloqueada contra un mínimo tipo 2026-10-14T12:00 (venta previa)
+  // aunque el estampado real sería igual, no anterior. Mismo convenio del mediodía.
+  const newDateObj =
+    typeof newDate === 'string'
+      ? /^\d{4}-\d{2}-\d{2}$/.test(newDate)
+        ? new Date(newDate + 'T12:00:00')
+        : new Date(newDate)
+      : newDate;
   const minDateObj = new Date(minAllowedDate);
 
   if (newDateObj < minDateObj) {

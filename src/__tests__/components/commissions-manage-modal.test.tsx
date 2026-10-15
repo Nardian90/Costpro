@@ -84,6 +84,7 @@ function setup({
 }
 
 const PROPS = {
+  storeId: 'store-1',
   period: { startDate: '2026-10-02', endDate: '2026-10-02' },
   onClose: vi.fn(),
   onConfirmed: vi.fn(),
@@ -233,5 +234,48 @@ describe('Estados — sin sugerencias', () => {
     });
     render(<CommissionsManageModal {...PROPS} />);
     await waitFor(() => expect(screen.getByText(/Sin comisiones sugeridas pendientes/)).toBeTruthy());
+  });
+});
+
+describe('AUDIT-2026-10-15 — contrato de tienda (causa raíz del «no se muestra nada»)', () => {
+  it('envía store_id REAL a /calculate y a /payments (antes: sin store_id → 400 y "me" → 500)', async () => {
+    render(<CommissionsManageModal {...PROPS} />);
+    await waitFor(() => expect(screen.getByText('Ana Pérez')).toBeTruthy());
+    const calcCall = apiFetchMock.mock.calls.find((c: unknown[]) => String(c[0]).includes('/api/commissions/calculate'));
+    expect(calcCall).toBeTruthy();
+    const calcBody = JSON.parse((calcCall![1] as { body: string }).body);
+    expect(calcBody.store_id).toBe('store-1'); // requerido por el contrato del endpoint
+    expect(calcBody.date_from).toBe('2026-10-02');
+    expect(calcBody.date_to).toBe('2026-10-02');
+    const payCall = apiFetchMock.mock.calls.find((c: unknown[]) => String(c[0]).includes('/api/commissions/payments?'));
+    expect(payCall).toBeTruthy();
+    expect(String(payCall![0])).toContain('store_id=store-1');
+    expect(String(payCall![0])).not.toContain('store_id=me'); // el centinela "me" provocaba 500
+  });
+
+  it('el POST de confirmación incluye store_id (contrato del documento de comisión)', async () => {
+    const user = userEvent.setup();
+    render(<CommissionsManageModal {...PROPS} />);
+    await waitFor(() => expect(screen.getByText('Ana Pérez')).toBeTruthy());
+    await user.click(screen.getByRole('button', { name: /Confirmar y pagar/i }));
+    await waitFor(() => expect(PROPS.onConfirmed).toHaveBeenCalled());
+    const post = apiFetchMock.mock.calls.find((c: unknown[]) => String(c[0]) === '/api/commissions/payments' && (c[1] as { body?: string }).body);
+    expect(post).toBeTruthy();
+    const body = JSON.parse((post![1] as { body: string }).body);
+    expect(body.store_id).toBe('store-1');
+  });
+
+  it('UI-02: si /calculate falla muestra mensaje comprensible (antes tragaba el error y quedaba vacío)', async () => {
+    apiFetchMock.mockReset();
+    apiFetchMock.mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes('/calculate')) return Promise.reject(new Error('boom'));
+      if (u.includes('/api/commissions/payments?')) return Promise.resolve({ payments: [] });
+      return Promise.resolve({});
+    });
+    render(<CommissionsManageModal {...PROPS} />);
+    await waitFor(() => expect(screen.getByText(/No se pudieron calcular las comisiones sugeridas/)).toBeTruthy());
+    // y NO muestra el estado vacío engañoso
+    expect(screen.queryByText(/Sin comisiones sugeridas pendientes/)).toBeNull();
   });
 });

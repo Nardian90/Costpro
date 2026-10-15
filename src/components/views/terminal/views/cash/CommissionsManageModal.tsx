@@ -83,10 +83,14 @@ interface DraftRow {
 type Tab = 'propuesta' | 'historial';
 
 export default function CommissionsManageModal({
+  storeId,
   period,
   onClose,
   onConfirmed,
 }: {
+  /** Tienda activa — REQUERIDA: el motor y el historial filtran por tienda
+   * (RLS + contrato de /api/commissions/*). Sin store_id el backend responde 400. */
+  storeId: string;
   period: CommissionsModalPeriod;
   onClose: () => void;
   onConfirmed: () => void;
@@ -104,16 +108,32 @@ export default function CommissionsManageModal({
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
+    const loadErrors: string[] = [];
     try {
-      // Sugerencias del MOTOR REAL (reglas por trabajador del período).
+      // AUDIT-2026-10-15: ambos endpoints requieren store_id REAL (contrato API +
+      // RLS). Antes: calculate sin store_id (→ 400) y payments con el centinela
+      // "me" (→ 500 por casteo UUID) — ambos errores tragados mostrando un estado
+      // vacío engañoso. Ahora: store_id real + errores visibles para el usuario.
       const [calc, paid] = await Promise.all([
         apiFetch('/api/commissions/calculate', {
           method: 'POST',
-          body: JSON.stringify({ date_from: period.startDate, date_to: period.endDate, mode: 'rules' }),
-        }).catch(() => null),
-        apiFetch<{ payments?: ExistingPayment[] }>(`/api/commissions/payments?store_id=me&period_start=${period.startDate}&period_end=${period.endDate}&limit=100`)
-          .catch(() => null),
+          body: JSON.stringify({
+            store_id: storeId,
+            date_from: period.startDate,
+            date_to: period.endDate,
+            mode: 'rules',
+          }),
+        }).catch((e: unknown) => {
+          loadErrors.push(`No se pudieron calcular las comisiones sugeridas${e instanceof Error ? `: ${e.message}` : '.'}`);
+          return null;
+        }),
+        apiFetch<{ payments?: ExistingPayment[] }>(`/api/commissions/payments?store_id=${storeId}&period_start=${period.startDate}&period_end=${period.endDate}&limit=100`)
+          .catch((e: unknown) => {
+            loadErrors.push(`No se pudo cargar el historial de pagos del período${e instanceof Error ? `: ${e.message}` : '.'}`);
+            return null;
+          }),
       ]);
+      if (loadErrors.length > 0) setLoadError(loadErrors.join(' '));
       const calcs: WorkerSuggestion[] = Array.isArray(calc) ? calc : (calc?.calculations || calc?.results || []);
       const payments: ExistingPayment[] = paid?.payments || [];
       setSuggestions(calcs);
@@ -180,6 +200,7 @@ export default function CommissionsManageModal({
         const created = await apiFetch<{ payment: { id: string } }>('/api/commissions/payments', {
           method: 'POST',
           body: JSON.stringify({
+            store_id: storeId, // AUDIT-2026-10-15: requerido por contrato (faltaba → 400 al confirmar)
             worker_id: d.worker_id,
             period_start: period.startDate,
             period_end: period.endDate,
@@ -273,6 +294,7 @@ export default function CommissionsManageModal({
           {!loading && tab === 'propuesta' && (
             <>
               {drafts.length === 0 ? (
+                loadError ? null : ( // con error de carga el vacío sería engañoso (AUDIT-2026-10-15)
                 <div className="py-6 text-center space-y-2">
                   <Info className="w-8 h-8 mx-auto text-muted-foreground/40" />
                   <p className="text-xs font-bold">Sin comisiones sugeridas pendientes</p>
@@ -281,6 +303,7 @@ export default function CommissionsManageModal({
                     Las sugerencias provienen de commission_rules (Trabajadores y Comisiones).
                   </p>
                 </div>
+                )
               ) : (
                 <>
                   <p className="text-[10px] text-muted-foreground leading-relaxed">

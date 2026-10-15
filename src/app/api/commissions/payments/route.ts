@@ -26,6 +26,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });
   }
 
+  // AUDIT-2026-10-15: store_id debe ser UUID válido. Antes un valor no-UUID (ej. el
+  // centinela "me") llegaba a Postgres y producía 500 con fuga del error SQL. Ahora
+  // se rechaza de forma limpia (fail-closed) antes de tocar la base de datos.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(storeId)) {
+    return NextResponse.json({ error: 'store_id inválido' }, { status: 400 });
+  }
+
   const supabase = getSupabaseForSession(session);
   let query = supabase
     .from('commission_payments')

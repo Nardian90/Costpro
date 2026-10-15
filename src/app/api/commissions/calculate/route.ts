@@ -174,6 +174,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   // Todas las transactions POS se atribuyen a TODOS los workers activos (el admin
   // decide luego a quién pagar). Esto resuelve el bug donde el cálculo daba 0.
   let posTxIds: string[] = [];
+  // AUDIT-2026-10-15: conservar las filas POS del fallback (dinero + fecha) para el
+  // ramal de pro-rateo: si solo hay transactions POS (sin sales_transactions), el
+  // pro-rateo por sub-períodos quedaba en 0 porque filtraba SOLO sales_transactions
+  // (bug de comisión silenciosa = 0 para reglas % que inician a mitad de período).
+  let posTxRows: Array<Record<string, unknown>> = [];
   if (!sales || sales.length === 0) {
     const nextDayEnd = (() => {
       const [y, m, d] = date_to.split('-').map(Number);
@@ -193,6 +198,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     if (posTxs && posTxs.length > 0) {
       posTxIds = posTxs.map((t: any) => t.id);
+      posTxRows = posTxs as Array<Record<string, unknown>>;
       // Atribuir TODAS las ventas POS a CADA worker activo
       const posTotalCash = posTxs.reduce((sum: number, t: any) => sum + (Number(t.cash_amount) || 0), 0);
       const posTotalTransfer = posTxs.reduce((sum: number, t: any) => sum + (Number(t.transfer_amount) || 0), 0);
@@ -419,9 +425,20 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         s.sale_date >= sub.start &&
         s.sale_date <= sub.end + 'T23:59:59'
       );
-      const cash = subSales.reduce((sum, s) => sum + (Number(s.payment_cash) || 0), 0);
-      const transfer = subSales.reduce((sum, s) => sum + (Number(s.payment_transfer) || 0), 0);
-      const total = subSales.reduce((sum, s) => sum + (Number(s.amount_total) || 0), 0);
+      // AUDIT-2026-10-15: si solo hay transactions POS (fallback 4a), incluir su
+      // dinero en el sub-periodo — igual convención de ventana que el fallback
+      // (created_at >= sub.start T00:00, < (sub.end+1) T00:00, UTC). Sin esto el
+      // pro-rateo calculaba comisión 0 aunque la tienda tuviera ventas POS.
+      const subPos = posTxRows.filter(t => {
+        const d = String(t.created_at || '').slice(0, 10);
+        return d >= sub.start && d <= sub.end;
+      });
+      const cash = subSales.reduce((sum, s) => sum + (Number(s.payment_cash) || 0), 0)
+        + subPos.reduce((sum, t) => sum + (Number(t.cash_amount) || 0), 0);
+      const transfer = subSales.reduce((sum, s) => sum + (Number(s.payment_transfer) || 0), 0)
+        + subPos.reduce((sum, t) => sum + (Number(t.transfer_amount) || 0), 0);
+      const total = subSales.reduce((sum, s) => sum + (Number(s.amount_total) || 0), 0)
+        + subPos.reduce((sum, t) => sum + (Number(t.total_amount) || 0), 0);
 
       // Seleccionar regla vigente para el final de este sub-periodo
       const subRule = selectApplicableRule(workerRules, worker.id, sub.end);
