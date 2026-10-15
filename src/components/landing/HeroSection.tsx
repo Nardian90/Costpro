@@ -380,12 +380,15 @@ export default function HeroSection({
           transition={{ duration: 0.6, ease: 'easeOut' }}
           className="flex items-center justify-between px-6 sm:px-10 lg:px-16 xl:px-20 py-5"
         >
-          {/* Logo — FIX-BRAND-HIERARCHY: wordmark compartido (ver BrandWordmark) */}
-          <div className="flex items-center gap-2.5">
+          {/* MISIÓN 2026-10-15 (LP): la marca pequeña de la nav superior se retira
+              — duplicaba el COSTPRO grande del hero a 40px de distancia. Queda el
+              escudo como marca visual del encabezado; el nombre COSTPRO vive
+              únicamente en el <h1> del hero (BrandWordmark). La nav conserva su
+              altura y equilibrio: el chip del escudo ancla la esquina izquierda. */}
+          <div className="flex items-center gap-2.5" aria-hidden="true">
             <div className="w-8 h-8 rounded-lg bg-[#22c55e]/10 border border-[#22c55e]/15 flex items-center justify-center">
               <Shield className="w-4 h-4 text-[#22c55e]" strokeWidth={1.5} />
             </div>
-            <BrandWordmark className="text-lg font-bold tracking-tight text-white/90 font-[family-name:var(--font-space-grotesk)]" />
           </div>
 
           {/* Center nav links — desktop */}
