@@ -15,7 +15,10 @@
 import { useInfiniteQuery, useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { getCleanStoreId } from './base';
-import { uuidRegex as isUuidRegex } from '@/validation/schemas';
+// FIX UUID-CATALOG-CENTRAL (2026-10-15): importar el uuidRegex canónico del proyecto
+// (permisivo 8-4-4-4-12, alineado con el tipo `uuid` de Postgres que NO exige bits
+// de variante RFC 4122). Ver nota en catalogProductsV2ParamsSchema.
+import { uuidRegex as isUuidRegex, uuidRegex } from '@/validation/schemas';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import { paginatedProductSchema } from '@/validation/schemas';
 import { z } from 'zod';
@@ -24,7 +27,16 @@ import { z } from 'zod';
 export const catalogProductsV2ParamsSchema = z.object({
   p_limit: z.number().int().default(24),
   p_offset: z.number().int().default(0),
-  p_store_id: z.string().uuid().nullable(),
+  // FIX UUID-CATALOG-CENTRAL (2026-10-15): aquí vivía `z.string().uuid()` (Zod 4),
+  // que exige bits de versión [1-8] y variante [89ab] según RFC 4122/9562. El UUID
+  // canónico de TIENDA CENTRAL COSTPRO (d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576,
+  // variante 'e') es válido para Postgres pero era RECHAZADO aquí, abortando la
+  // llamada ANTES de llegar a la red con «Invalid UUID» en p_store_id — de ahí el
+  // «Ha ocurrido un error» solo en Central (Enervida, variante 'b', pasaba).
+  // Mismo patrón ya corregido en accounts-payable (2026-07-14) y reverse (V2.4.4).
+  // Se usa el uuidRegex del proyecto: valida la forma 8-4-4-4-12 que acepta el
+  // contrato real de la RPC (p_store_id uuid de Postgres).
+  p_store_id: z.string().regex(uuidRegex, 'UUID de tienda inválido').nullable(),
   p_search_term: z.string().default(''),
   p_category: z.string().default(''),
   p_sort_key: z.enum(['name', 'sku', 'price', 'cost_price', 'stock_current']).default('name'),
@@ -49,6 +61,30 @@ export interface UseCatalogProductsOptions {
   /** Only for mode='page': current page number (1-indexed). */
   page?: number;
   enabled?: boolean;
+}
+
+/**
+ * Guardia compartida en el límite de la llamada (Fase 2 del incidente UUID).
+ *
+ *   - Sin tienda (null/''/'null'/'undefined'): estado vacío normal — NO se
+ *     llama a la RPC (la función exige p_store_id salvo para admins, y el
+ *     catálogo siempre es por-tienda; evita mostrar mezcla de tiendas).
+ *   - Con un string que NO es UUID: error CONTROLADO con mensaje útil. Antes
+ *     se devolvía un estado vacío silencioso, indistinguible de «tienda sin
+ *     productos», que enmascaraba el defecto real (violación UI-02 del
+ *     requisito de mensajes comprensibles). Nunca consulta datos ni filtra
+ *     por otra tienda: falla antes de tocar la red.
+ */
+function resolveCatalogStoreId(rawStoreId: string | null): string | null {
+  if (rawStoreId === null) return null;
+  if (!isUuidRegex.test(rawStoreId)) {
+    throw new Error(
+      `El identificador de la tienda activa no es un UUID válido para el catálogo. ` +
+      `Vuelva a seleccionar la tienda; si el problema persiste, cierre sesión y vuelva a entrar. `
+      + `(valor recibido: "${rawStoreId.slice(0, 64)}")`
+    );
+  }
+  return rawStoreId;
 }
 
 async function fetchProductsPage(params: CatalogProductsV2Params) {
@@ -93,13 +129,14 @@ export function useCatalogProductsInfinite(opts: UseCatalogProductsOptions) {
       limit,
     ],
     queryFn: async ({ pageParam = 0 }) => {
-      if (cleanStoreId && !isUuidRegex.test(cleanStoreId)) {
-        return { products: [], total: 0, nextOffset: null };
-      }
+      const pStoreId = resolveCatalogStoreId(cleanStoreId);
+      // Sin tienda identificada: estado vacío normal, sin consultar (no hay
+      // contexto de tienda que filtrar y la RPC exige p_store_id no-admin).
+      if (pStoreId === null) return { products: [], total: 0, nextOffset: null };
       const result = await fetchProductsPage({
         p_limit: limit,
         p_offset: pageParam as number,
-        p_store_id: cleanStoreId,
+        p_store_id: pStoreId,
         p_search_term: opts.searchTerm ?? '',
         p_category: opts.category ?? '',
         p_sort_key: (opts.sortKey as any) ?? 'name',
@@ -144,13 +181,13 @@ export function useCatalogProductsPage(opts: UseCatalogProductsOptions) {
       page,
     ],
     queryFn: async () => {
-      if (cleanStoreId && !isUuidRegex.test(cleanStoreId)) {
-        return { products: [], total: 0 };
-      }
+      const pStoreId = resolveCatalogStoreId(cleanStoreId);
+      // Sin tienda identificada: estado vacío normal, sin consultar (ídem).
+      if (pStoreId === null) return { products: [], total: 0 };
       return await fetchProductsPage({
         p_limit: limit,
         p_offset: offset,
-        p_store_id: cleanStoreId,
+        p_store_id: pStoreId,
         p_search_term: opts.searchTerm ?? '',
         p_category: opts.category ?? '',
         p_sort_key: (opts.sortKey as any) ?? 'name',
