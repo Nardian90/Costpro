@@ -512,6 +512,11 @@ export default function CashReportView() {
         title="Reporte de Caja — Entrega"
         description="Cuadre y desglose de efectivo para la entrega de dinero del periodo."
         icon={Printer}
+        // MISIÓN 2026-10-15 (RE): chip neutro para esta acción utilitaria —
+        // en Dark+Enhanced el chip de marca (bg-brand → #39ff14) resultaba un
+        // verde chillón confundible con un estado de éxito. Solo esta vista
+        // opta por 'neutral'; el resto de PageHeaders conserva 'brand'.
+        iconVariant="neutral"
         badge={
           !applied ? { text: 'Sin calcular', variant: 'default' }
             : stale ? { text: 'Resultados anteriores', variant: 'warning' }

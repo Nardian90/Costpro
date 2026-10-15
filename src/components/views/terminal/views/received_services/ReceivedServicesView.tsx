@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Truck, Package, Shield, Link2, Calculator, Eye, RefreshCw, Ban, FileText, Search, CheckCircle2 } from 'lucide-react';
+import { Plus, Truck, Package, Shield, Link2, Calculator, Eye, RefreshCw, Ban, FileText, Search, CheckCircle2, Settings2 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
+import { useServiceTypes, type ServiceType } from '@/hooks/useServiceTypes';
+import { ServiceTypesManagerModal } from './ServiceTypesManagerModal';
 
 /**
  * F2: Servicios Recibidos y Costos Asociados.
@@ -20,6 +22,7 @@ interface ReceivedService {
   id: string;
   service_number: string;
   service_date: string;
+  service_type_id?: string | null;
   service_type_name: string;
   supplier: string | null;
   reference_doc: string | null;
@@ -51,6 +54,11 @@ export default function ReceivedServicesView() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'voided'>('all');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  // MISIÓN 2026-10-15: catálogo de tipos de servicio desde la fuente oficial
+  // (tabla service_types) + acceso «Gestionar tipos de servicio».
+  const { types, activeTypes, loading: typesLoading, refetch: refetchTypes } = useServiceTypes();
+  const [managerOpen, setManagerOpen] = useState(false);
+  const [preselectedTypeId, setPreselectedTypeId] = useState<string | null>(null);
   // FIX-PAYMENT-TRACKING: estado para modal de detalle con tab de pagos
   const [detailService, setDetailService] = useState<ReceivedService | null>(null);
 
@@ -329,8 +337,24 @@ export default function ReceivedServicesView() {
       {/* Modal de creación */}
       <CreateServiceModal
         isOpen={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
+        onClose={() => { setCreateModalOpen(false); setPreselectedTypeId(null); }}
         onCreate={handleCreate}
+        activeTypes={activeTypes}
+        typesLoading={typesLoading}
+        onOpenManager={() => setManagerOpen(true)}
+        preselectTypeId={preselectedTypeId}
+      />
+
+      {/* MISIÓN 2026-10-15: gestión del catálogo de tipos de servicio.
+          Se abre sobre el formulario sin cerrar la operación en curso; al
+          crear un tipo, el selector lo recarga y lo preselecciona. */}
+      <ServiceTypesManagerModal
+        isOpen={managerOpen}
+        onClose={() => setManagerOpen(false)}
+        types={types}
+        loading={typesLoading}
+        onRefresh={refetchTypes}
+        onTypeCreated={(created) => { setPreselectedTypeId(created.id); }}
       />
 
       {/* FIX-PAYMENT-TRACKING (2026-07-12): Modal de detalle con tab de pagos */}
@@ -590,9 +614,24 @@ function ServiceDetailModal({
 // es DOCUMENTAL (service_production_order_links / service_reception_links):
 // no genera movimientos de inventario ni contabilidad; la DISTRIBUCIÓN de
 // costos sigue siendo una operación separada (botón Recalcular).
-function CreateServiceModal({ isOpen, onClose, onCreate }: { isOpen: boolean; onClose: () => void; onCreate: (data: any) => void }) {
+interface CreateServiceModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreate: (data: any) => void;
+  /** MISIÓN 2026-10-15: tipos activos del catálogo oficial (tabla service_types). */
+  activeTypes: ServiceType[];
+  typesLoading: boolean;
+  /** Abre el modal de gestión de tipos sin cerrar la operación en curso. */
+  onOpenManager: () => void;
+  /** Id del tipo recién creado en la gestión → preselección inmediata. */
+  preselectTypeId: string | null;
+}
+
+function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoading, onOpenManager, preselectTypeId }: CreateServiceModalProps) {
   const { user } = useAuthStore();
-  const [type, setType] = useState('Transporte');
+  // Selección por IDENTIDAD (id del catálogo), no por texto: renombrar un tipo
+  // no rompe lo que el usuario tiene en la mano al crear el servicio.
+  const [typeId, setTypeId] = useState('');
   const [supplier, setSupplier] = useState('');
   const [amount, setAmount] = useState('');
   const [referenceDoc, setReferenceDoc] = useState('');
@@ -671,6 +710,22 @@ function CreateServiceModal({ isOpen, onClose, onCreate }: { isOpen: boolean; on
     }
   }, [isOpen]);
 
+  // MISIÓN 2026-10-15: sincronizar la selección de tipo con el catálogo.
+  // 1) Al abrir: si no hay selección válida, toma el primer tipo activo.
+  // 2) Si la gestión acaba de crear un tipo (preselectTypeId), se selecciona
+  //    inmediatamente — sin cerrar la operación ni volver a empezar.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (preselectTypeId && activeTypes.some(t => t.id === preselectTypeId)) {
+      setTypeId(preselectTypeId);
+      return;
+    }
+    if (!typeId || !activeTypes.some(t => t.id === typeId)) {
+      setTypeId(activeTypes[0]?.id || '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, preselectTypeId, activeTypes]);
+
   // Búsqueda con debounce
   useEffect(() => {
     if (!isOpen) return;
@@ -698,13 +753,23 @@ function CreateServiceModal({ isOpen, onClose, onCreate }: { isOpen: boolean; on
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return; // doble envío bloqueado
+    const selectedType = activeTypes.find(t => t.id === typeId);
+    if (!selectedType) {
+      toast.error('Selecciona un tipo de servicio del catálogo');
+      return;
+    }
     if (!amount || parseFloat(amount) <= 0) {
       toast.error('El importe debe ser mayor a 0');
       return;
     }
     setSubmitting(true);
     onCreate({
-      service_type_name: type,
+      // MISIÓN 2026-10-15: identidad (service_type_id) + snapshot del nombre.
+      // El id referencia el catálogo oficial; el nombre se congela en el
+      // registro histórico (renombrar/desactivar tipos no altera el pasado).
+      service_type_id: selectedType.id,
+      service_type_name: selectedType.name,
       supplier: supplier || null,
       total_amount: parseFloat(amount),
       reference_doc: referenceDoc || null,
@@ -716,27 +781,61 @@ function CreateServiceModal({ isOpen, onClose, onCreate }: { isOpen: boolean; on
     });
     setSubmitting(false);
     // Reset
-    setType('Transporte'); setSupplier(''); setAmount(''); setReferenceDoc(''); setObservations('');
+    setSupplier(''); setAmount(''); setReferenceDoc(''); setObservations('');
     setOtSelected([]); setRcptSelected([]); setOtSearch(''); setRcptSearch('');
   };
-
-  const quickTypes = ['Transporte', 'Manipulación', 'Seguro', 'Aduana', 'Estiba', 'Descarga', 'Otros'];
 
   return (
     <BaseModal open={isOpen} onOpenChange={(o) => !o && onClose()} title={<span className="flex items-center gap-2"><Plus className="w-5 h-5" /> Nuevo Servicio Recibido</span>} maxWidth="sm:max-w-2xl">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Tipo de servicio */}
+        {/* Tipo de servicio — catálogo oficial (tabla service_types).
+            MISIÓN 2026-10-15: la lista estática quickTypes se sustituye por el
+            catálogo gestionable; acceso «Gestionar tipos de servicio». */}
         <div>
-          <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Tipo de servicio</label>
-          <div className="flex flex-wrap gap-2">
-            {quickTypes.map(t => (
-              <button key={t} type="button" onClick={() => setType(t)}
-                className={cn("px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all min-h-[44px]",
-                  type === t ? "bg-primary text-primary-foreground shadow-lg" : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary")}>
-                {t}
-              </button>
-            ))}
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              Tipo de servicio <span aria-hidden="true" className="text-destructive">*</span>
+            </label>
+            <button
+              type="button"
+              onClick={onOpenManager}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-primary/30 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 hover:border-primary/50 transition-all min-h-[36px]"
+              aria-label="Gestionar tipos de servicio"
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              Gestionar tipos
+            </button>
           </div>
+          {typesLoading ? (
+            <p className="text-xs text-muted-foreground py-2 flex items-center gap-2">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Cargando tipos de servicio…
+            </p>
+          ) : activeTypes.length === 0 ? (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
+              <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                No hay tipos de servicio activos en el catálogo.
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Usa «Gestionar tipos» para agregar uno o contacta a un administrador.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Tipo de servicio">
+              {activeTypes.map(tp => {
+                const Icon = SERVICE_ICONS[tp.name] || SERVICE_ICONS.default;
+                const selected = typeId === tp.id;
+                return (
+                  <button key={tp.id} type="button" role="radio" aria-checked={selected}
+                    onClick={() => setTypeId(tp.id)}
+                    className={cn("inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all min-h-[44px]",
+                      selected ? "bg-primary text-primary-foreground shadow-lg" : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary")}>
+                    <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                    {tp.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Proveedor */}

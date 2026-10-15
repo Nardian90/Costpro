@@ -30,6 +30,16 @@ interface PageHeaderProps {
   /** Descripción o estado de contexto (texto o nodo dinámico, ej: estado del turno). */
   description?: React.ReactNode;
   icon?: LucideIcon;
+  /**
+   * MISIÓN 2026-10-15 (RE): tratamiento del chip del icono.
+   *  · 'brand' (default): momento de marca — chip bg-brand (comportamiento
+   *    histórico de todas las vistas; no cambia ninguna vista existente).
+   *  · 'neutral': chip neutro (bg-muted + texto muted) para acciones
+   *    utilitarias — Reporte Entrega usa 'neutral' porque en Dark+Enhanced
+   *    el verde neón #39ff14 del chip de marca resultaba chillón y
+   *    confundible con una confirmación de éxito.
+   */
+  iconVariant?: 'brand' | 'neutral';
   badge?: PageHeaderBadge;
   /** Slot de contexto local (breadcrumb local, chips de estado). Opcional. */
   context?: React.ReactNode;
@@ -56,10 +66,19 @@ const badgeVariantMap: Record<PageHeaderBadge['variant'], string> = {
   danger: 'bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400',
 };
 
+// MISIÓN 2026-10-15 (RE): variantes del chip de icono. 'neutral' usa tokens
+// semánticos (bg-muted/text-muted-foreground) → se adapta solo a light,
+// dark, Performance y Enhanced sin colores arbitrarios.
+const iconVariantMap = {
+  brand: 'bg-brand text-brand-foreground',
+  neutral: 'bg-muted text-muted-foreground border border-border/40',
+} as const;
+
 export default function PageHeader({
   title,
   description,
   icon: Icon,
+  iconVariant = 'brand',
   badge,
   context,
   primaryAction,
@@ -90,7 +109,7 @@ export default function PageHeader({
         {/* Left side: icon + title + badge + description */}
         <div className="flex items-center gap-3 min-w-0">
           {Icon && (
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand text-brand-foreground shrink-0">
+            <div className={cn('flex items-center justify-center w-10 h-10 rounded-xl shrink-0', iconVariantMap[iconVariant])}>
               <Icon className="w-5 h-5" />
             </div>
           )}
