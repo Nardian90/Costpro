@@ -181,6 +181,13 @@ Ver §8: 165 archivos / 2.944 passed / 0 failed (incluye los contratos previos d
 ## 15. Rama, commits, PR, CI y despliegue real
 
 - **Rama:** `feat/servicios-recibidos-tipos-configurables` (desde `main` @ `986ac13ed`, que ya incluye los PR #1406, #1407 y #1408 mergeados).
-- **PR:** creado contra `main` (ver cabecera del PR para el número y el estado de CI en vivo).
-- **CI:** la verificación de build/typecheck/lint/test de producción corresponde al runner de GitHub Actions del PR (el build local excede la memoria del contenedor). El estado exacto (6 checks del repo) se consulta en el PR al cierre.
-- **Migración:** ya aplicada en la base de datos de producción (functión-only + índice aditivo, justificada en §7 y reversible). **El código de este PR aún no está en producción** hasta que el PR se mergee y Vercel despliegue `main`; esta distinción se mantiene explícita.
+- **Commits:** `744273cf9` (implementación + tests + informe + migración) y `d9570827d` (tipado del test + recertificación del contract surface).
+- **PR:** [#1409](https://github.com/Nardian90/Costpro/pull/1409) contra `main`.
+- **CI (commit d9570827d, verificado vía API de checks):**
+  - `TypeCheck + Lint + Unit Tests + Build` → **success** (incluye el build de producción que el contenedor local de 4 GB no puede ejecutar; runner de CI = autoridad).
+  - `Unit & Integration Tests` → **success**.
+  - `Security Audit` → **success** (BOLA contract + security contract estático 3 capas).
+  - `TypeScript Security Checks` → **success** · `Allowlist Review` → **success** · `Vercel Preview Comments` → **success**.
+  - `E2E (Playwright)` y `SQL Security Checks` → skipped (por diseño del pipeline).
+  - Incidencias de CI resueltas durante la misión: (1) `TS7006/TS2554/TS2345` en el test nuevo (convención de sesión inyectada del repo) y (2) `BODY_DRIFT_FROM_MIGRATION` del gate de contrato — comportamiento CORRECTO del gate al detectar una función certificada cambiada sin recertificar; resuelto regenerando `contract-surface.sql` con el flujo oficial.
+- **Migración:** aplicada en la base de datos de producción (función-only + índice aditivo, justificada en §7, reversible). **El código de este PR NO está en producción** hasta el merge de #1409 y el despliegue de Vercel; esta distinción se mantiene explícita.
