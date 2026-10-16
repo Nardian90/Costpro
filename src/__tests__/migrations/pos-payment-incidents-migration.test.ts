@@ -29,13 +29,13 @@ describe('migración 20261017000000 — incidencias de pago y venta negativa', (
   it('relaja chk_mixed_payment_consistency SOLO cuando la venta porta payment_incidents', () => {
     const s = sql();
     expect(s).toContain('DROP CONSTRAINT IF EXISTS chk_mixed_payment_consistency');
-    expect(s).toMatch(/payment_method <> 'mixed'\s+OR ABS\(\(cash_amount \+ transfer_amount \+ zelle_amount\) - total_amount\) <= 1\.00\s+OR payment_incidents IS NOT NULL/s);
+    expect(s).toMatch(/payment_method <> 'mixed'\s+OR ABS\(\(cash_amount \+ transfer_amount \+ zelle_amount\) - total_amount\) <= 1\.00\s+OR payment_incidents IS NOT NULL/);
   });
 
   it('REGLA INNEGOCIABLE: CHECK de total no negativo a nivel DDL (NOT VALID)', () => {
     const s = sql();
     expect(s).toContain('ADD CONSTRAINT chk_transaction_total_non_negative');
-    expect(s).toMatch(/CHECK \(total_amount >= 0\) NOT VALID/s);
+    expect(s).toMatch(/CHECK \(total_amount >= 0\) NOT VALID/);
   });
 
   it('create_sale_v2 acepta p_notes y p_payment_incidents opcionales (compatibilidad de firma)', () => {
@@ -46,7 +46,7 @@ describe('migración 20261017000000 — incidencias de pago y venta negativa', (
 
   it('guard explícito ERR_NEGATIVE_SALE antes de persistir la venta', () => {
     const s = sql();
-    expect(s).toMatch(/IF v_calculated_total < 0 THEN\s+RAISE EXCEPTION 'ERR_NEGATIVE_SALE/s);
+    expect(s).toMatch(/IF v_calculated_total < 0 THEN\s+RAISE EXCEPTION 'ERR_NEGATIVE_SALE/);
   });
 
   it('guardrail de tasa: sin tasa real de USD/EUR las incidencias NO se aceptan', () => {
@@ -59,8 +59,8 @@ describe('migración 20261017000000 — incidencias de pago y venta negativa', (
     const s = sql();
     // Paso 14: el rechazo canónico ERR_PAYMENT_MISMATCH se conserva y solo se
     // omite cuando v_incidents está presente
-    expect(s).toMatch(/IF v_incidents IS NULL THEN\s+RAISE EXCEPTION 'ERR_PAYMENT_MISMATCH/s);
-    expect(s).toMatch(/IF v_incidents IS NULL THEN\s+RAISE EXCEPTION 'ERR_PAYMENT_INVARIANT_VIOLATED/s);
+    expect(s).toMatch(/IF v_incidents IS NULL THEN\s+RAISE EXCEPTION 'ERR_PAYMENT_MISMATCH/);
+    expect(s).toMatch(/IF v_incidents IS NULL THEN\s+RAISE EXCEPTION 'ERR_PAYMENT_INVARIANT_VIOLATED/);
   });
 
   it('persiste nota (preservando la manual) e incidencias en la venta', () => {
@@ -74,7 +74,7 @@ describe('migración 20261017000000 — incidencias de pago y venta negativa', (
 
   it('emite el evento de auditoría SALE_PAYMENT_INCIDENT en la misma transacción', () => {
     const s = sql();
-    expect(s).toMatch(/IF v_has_payment_incident THEN\s+INSERT INTO public\.audit_logs/s);
+    expect(s).toMatch(/IF v_has_payment_incident THEN\s+INSERT INTO public\.audit_logs/);
     expect(s).toContain("VALUES ('SALE_PAYMENT_INCIDENT', 'transactions', v_tx_id, p_store_id, v_uid,");
   });
 
