@@ -1,0 +1,52 @@
+{
+ "generated_at": "2026-10-16T15:23:20.764Z",
+ "tz": "America/Havana",
+ "fix": "FIX-RE-1510",
+ "tests": {
+  "A-15-15": {
+   "from": "2026-10-15",
+   "to": "2026-10-15",
+   "api_calls": [
+    "http://localhost:3000/api/cash-report?start_date=2026-10-15T04%3A00%3A00.000Z&end_date=2026-10-16T03%3A59%3A59.999Z"
+   ],
+   "summary": {
+    "comisionesEfectivo": "−$300.00",
+    "comisionesTransfer": null,
+    "efectivoEsperado": "$31,700.00",
+    "ventasEfectivo": "$32,000.00"
+   },
+   "commissions_section_present": false,
+   "detail": null
+  },
+  "B-16-16": {
+   "from": "2026-10-16",
+   "to": "2026-10-16",
+   "api_calls": [
+    "http://localhost:3000/api/cash-report?start_date=2026-10-16T04%3A00%3A00.000Z&end_date=2026-10-17T03%3A59%3A59.999Z"
+   ],
+   "summary": {
+    "comisionesEfectivo": null,
+    "comisionesTransfer": null,
+    "efectivoEsperado": "$0.00",
+    "ventasEfectivo": "$0.00"
+   },
+   "commissions_section_present": false,
+   "detail": null
+  },
+  "C-15-16": {
+   "from": "2026-10-15",
+   "to": "2026-10-16",
+   "api_calls": [
+    "http://localhost:3000/api/cash-report?start_date=2026-10-15T04%3A00%3A00.000Z&end_date=2026-10-17T03%3A59%3A59.999Z"
+   ],
+   "summary": {
+    "comisionesEfectivo": "−$300.00",
+    "comisionesTransfer": null,
+    "efectivoEsperado": "$31,700.00",
+    "ventasEfectivo": "$32,000.00"
+   },
+   "commissions_section_present": false,
+   "detail": null
+  }
+ }
+}

@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/lib/cash-report/period-attribution.ts",
+    "src/lib/cash-report/summary.ts",
+    "src/app/api/cash-report/route.ts",
+    "src/app/api/cash-report/details/route.ts",
+    "src/app/api/cash-report/commissions-summary/route.ts",
+    "src/app/api/commissions/payments/[id]/route.ts",
+    "src/components/views/terminal/views/workers/WorkersView.tsx",
+    "src/__tests__/lib/cash-report-period-attribution.test.ts",
+    "e2e/cash-report-commissions-period.spec.ts"
+  ]
+}

@@ -1,0 +1,52 @@
+bles. Requiere nota justificativa; queda auditado con usuario y fecha. No se usa para compensar errores de fórmulas.
+
+DIRECCIÓN
+Negativo (−)
+Positivo (+)
+IMPORTE CUP
+NOTA JUSTIFICATIVA *
+REGISTRAR AJUSTE
+
+Resultados de 2026-10-15 → 2026-10-15
+
+Todas las monedas
+CUP
+USD
+MLC
+Todos los métodos
+Efectivo
+Transferencia
+Zelle
+VENTAS POR MÉTODO
+💵
+
+Efectivo (CUP)
+
+3 transacciones
+
+$32,000.00
+
+PAGOS A PROVEEDORES
+
+Sin pagos
+
+COMISIONES A TRABAJADORES
+1 PAGOS · $300.00
+💵
+
+Efectivo (CUP) · commission
+
+1 comisiones
+
+−$300.00
+
+FECHA	REFERENCIA / CLIENTE	MONTO CUP	
+2026-10-16 14:25	
+
+Dependiente 1 Pueblo
+
+Periodo 2026-10-15 → 2026-10-15
+
+commission	−$300.00	
+
+TOTAL (1 DOCS)	−$300.00	

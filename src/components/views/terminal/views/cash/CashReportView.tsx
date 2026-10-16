@@ -38,6 +38,9 @@ import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore, useUIStore, type CommissionNavContext } from '@/store';
 import { toast } from 'sonner';
 import type { CashReport } from '@/types';
+// FIX-RE-1510: ventana determinista en TZ de negocio (antes: new Date(day+'T00:00:00')
+// dependía de la TZ del navegador → ventanas distintas según el equipo).
+import { businessDayWindow } from '@/lib/cash-report/period-attribution';
 import PageHeader from '@/components/ui/PageHeader';
 import {
   DEFAULT_PDF_OPTIONS, buildCashReportPdf, fetchDiarioSummaries,
@@ -207,8 +210,10 @@ export default function CashReportView() {
     generatingRef.current = true;
     setLoading(true);
     try {
-      const s = new Date(startDate + 'T00:00:00').toISOString();
-      const e = new Date(endDate + 'T23:59:59.999').toISOString();
+      // FIX-RE-1510: conversión determinista del día calendario a la TZ de negocio
+      // (America/Havana) — misma ventana desde cualquier navegador/servidor.
+      const { startIso: s } = businessDayWindow(startDate);
+      const { endIso: e } = businessDayWindow(endDate);
       const data = await apiFetch(`/api/cash-report?start_date=${encodeURIComponent(s)}&end_date=${encodeURIComponent(e)}`, { signal: ctrl.signal });
       if (ctrl.signal.aborted) return;
       setApplied({ cfg: { startDate, endDate }, report: data });
@@ -367,8 +372,12 @@ export default function CashReportView() {
       try {
         const cfg = applied?.cfg;
         if (!cfg) throw new Error('Sin reporte calculado');
-        const s = new Date(cfg.startDate + 'T00:00:00').toISOString();
-        const e = new Date(cfg.endDate + 'T23:59:59.999').toISOString();
+        // FIX-RE-1510: ventana de negocio determinista (día inicio → día fin)
+        const { startIso: s, endIso: e } = (() => {
+          const a = businessDayWindow(cfg.startDate);
+          const b = businessDayWindow(cfg.endDate);
+          return { startIso: a.startIso, endIso: b.endIso };
+        })();
         let url = `/api/cash-report/details?type=${type}&method=${method}&currency=${currency}&start_date=${encodeURIComponent(s)}&end_date=${encodeURIComponent(e)}`;
         if (refType) url += `&ref_type=${refType}`;
         const data = await apiFetch(url);

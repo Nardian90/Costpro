@@ -1,0 +1,50 @@
+{
+ "generated_at": "2026-10-16T15:00:45.932Z",
+ "tz": "America/Havana",
+ "tests": {
+  "A-15-15": {
+   "from": "2026-10-15",
+   "to": "2026-10-15",
+   "api_urls": [
+    "http://localhost:3000/api/cash-report?start_date=2026-10-15T04%3A00%3A00.000Z&end_date=2026-10-16T03%3A59%3A59.999Z"
+   ],
+   "commissions_section": "(sección Comisiones no presente — 0 comisiones)",
+   "resumen_extract": "",
+   "detail_rows": null
+  },
+  "B-16-16": {
+   "from": "2026-10-16",
+   "to": "2026-10-16",
+   "api_urls": [
+    "http://localhost:3000/api/cash-report?start_date=2026-10-16T04%3A00%3A00.000Z&end_date=2026-10-17T03%3A59%3A59.999Z"
+   ],
+   "commissions_section": "(sección Comisiones no presente — 0 comisiones)",
+   "resumen_extract": "",
+   "detail_rows": null
+  },
+  "C-15-16": {
+   "from": "2026-10-15",
+   "to": "2026-10-16",
+   "api_urls": [
+    "http://localhost:3000/api/cash-report?start_date=2026-10-15T04%3A00%3A00.000Z&end_date=2026-10-17T03%3A59%3A59.999Z"
+   ],
+   "commissions_section": "(sección Comisiones no presente — 0 comisiones)",
+   "resumen_extract": "",
+   "detail_rows": null
+  }
+ },
+ "api_calls_all": [
+  {
+   "url": "http://localhost:3000/api/cash-report?start_date=2026-10-15T04%3A00%3A00.000Z&end_date=2026-10-16T03%3A59%3A59.999Z",
+   "ts": "2026-10-16T15:01:09.058Z"
+  },
+  {
+   "url": "http://localhost:3000/api/cash-report?start_date=2026-10-16T04%3A00%3A00.000Z&end_date=2026-10-17T03%3A59%3A59.999Z",
+   "ts": "2026-10-16T15:01:14.133Z"
+  },
+  {
+   "url": "http://localhost:3000/api/cash-report?start_date=2026-10-15T04%3A00%3A00.000Z&end_date=2026-10-17T03%3A59%3A59.999Z",
+   "ts": "2026-10-16T15:01:19.150Z"
+  }
+ ]
+}

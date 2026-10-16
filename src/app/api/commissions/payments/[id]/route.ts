@@ -3,6 +3,11 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
 import { z } from 'zod';
+import {
+  businessDayOf,
+  instantForBusinessDay,
+  todayBusinessDay,
+} from '@/lib/cash-report/period-attribution';
 
 /**
  * GET / PATCH /api/commissions/payments/[id]
@@ -21,10 +26,24 @@ function extractIdFromUrl(req: NextRequest): string | null {
   return match?.[1] || null;
 }
 
+/**
+ * ADENDA del negocio (2026-10-16): la confirmación de pago acepta `payment_date`
+ * (YYYY-MM-DD, día de negocio de la ejecución del pago). Reglas:
+ *   · No puede ser POSTERIOR al día actual (zona horaria de negocio, Habana).
+ *   · No puede ser ANTERIOR a la fecha del ÚLTIMO PAGO REALIZADO del trabajador
+ *     (día de negocio de su paid_at más reciente, excluyendo el pago en curso).
+ *   · Si no se envía → se asume HOY (comportamiento histórico, compatible).
+ * paid_at resultante:
+ *   · payment_date == hoy → instante actual (igual que siempre).
+ *   · payment_date < hoy  → ese día de negocio a la hora de registro actual (la FECHA
+ *     es la elegida; la hora intradía es la del registro y no afecta al reporte,
+ *     que atribuye por día de negocio).
+ */
 const updateCommissionSchema = z.object({
   action: z.enum(['approve', 'pay', 'cancel']),
   payment_method: z.enum(['cash', 'transfer', 'zelle', 'mixed']).optional(),
   payment_reference: z.string().optional().nullable(),
+  payment_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'payment_date debe ser YYYY-MM-DD').optional(),
   currency: z.string().default('CUP'),
   exchange_rate: z.number().positive().default(1.0),
 });
@@ -96,7 +115,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
       );
     }
 
-    const { action, payment_method, payment_reference, currency, exchange_rate } = parsed.data;
+    const { action, payment_method, payment_reference, payment_date, currency, exchange_rate } = parsed.data;
 
     const supabase = getSupabaseForSession(session);
 
@@ -114,7 +133,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const { data: commission, error: fetchError } = await supabase
       .from('commission_payments')
-      .select('id, status, final_amount, store_id')
+      .select('id, status, final_amount, store_id, worker_id')
       .eq('id', commissionId)
       .eq('store_id', storeId)
       .single();
@@ -146,9 +165,47 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
       if (!payment_method) {
         return NextResponse.json({ error: 'payment_method es requerido para pagar' }, { status: 400 });
       }
+
+      // ── ADENDA del negocio (2026-10-16): fecha del pago elegible ──
+      const today = todayBusinessDay();
+      const payDay = payment_date || today;
+
+      // Regla 1: ningún pago puede ser posterior al día actual.
+      if (payDay > today) {
+        return NextResponse.json(
+          { error: `La fecha del pago (${payDay}) no puede ser posterior al día actual (${today})` },
+          { status: 400 }
+        );
+      }
+
+      // Regla 2: ningún pago puede ser anterior a la fecha del último pago realizado
+      // del trabajador (día de negocio de su paid_at más reciente ya pagado).
+      const { data: lastPaid, error: lastPaidErr } = await supabase
+        .from('commission_payments')
+        .select('id, paid_at')
+        .eq('store_id', storeId)
+        .eq('worker_id', commission.worker_id)
+        .eq('status', 'paid')
+        .neq('id', commissionId)
+        .order('paid_at', { ascending: false })
+        .limit(1);
+      if (lastPaidErr) {
+        return NextResponse.json({ error: lastPaidErr.message }, { status: 500 });
+      }
+      const lastPaidRow = lastPaid?.[0] as { id: string; paid_at: string } | undefined;
+      const lastPaidDay = lastPaidRow?.paid_at ? businessDayOf(lastPaidRow.paid_at) : null;
+      if (lastPaidDay && payDay < lastPaidDay) {
+        return NextResponse.json(
+          { error: `La fecha del pago (${payDay}) no puede ser anterior a la fecha del último pago realizado (${lastPaidDay})` },
+          { status: 400 }
+        );
+      }
+
       updateData.status = 'paid';
       updateData.paid_by = session.user.id;
-      updateData.paid_at = new Date().toISOString();
+      updateData.paid_at = payDay === today
+        ? new Date().toISOString()
+        : instantForBusinessDay(payDay);
       updateData.payment_method = payment_method;
       updateData.payment_reference = payment_reference || null;
       updateData.currency = currency;
