@@ -1,0 +1,14 @@
+[
+  {
+    "p": "estado-fila",
+    "d": {
+      "encontrada": true
+    }
+  },
+  {
+    "p": "limpieza-final",
+    "d": {
+      "desactivado": false
+    }
+  }
+]

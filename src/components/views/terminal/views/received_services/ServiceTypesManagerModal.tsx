@@ -43,15 +43,29 @@ interface ServiceTypesManagerModalProps {
   onRefresh: () => void;
   /** Notifica al formulario creador que un tipo nuevo quedó disponible (preselección). */
   onTypeCreated?: (type: ServiceType) => void;
+  /** FIX SUPERADMIN-TIPOS: error de carga del hook (p. ej. 401) — un error de
+   *  red/autenticación NO es un catálogo vacío y no debe presentarse como tal. */
+  loadError?: string | null;
 }
 
 type FormMode = { kind: 'closed' } | { kind: 'create' } | { kind: 'edit'; target: ServiceType };
 
 export function ServiceTypesManagerModal({
-  isOpen, onClose, types, loading, onRefresh, onTypeCreated,
+  isOpen, onClose, types, loading, onRefresh, onTypeCreated, loadError,
 }: ServiceTypesManagerModalProps) {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const isAdmin = user?.role === 'admin';
+
+  /**
+   * FIX SUPERADMIN-TIPOS (2026-10-17): el fetch crudo sin Authorization daba
+   * 401 en POST/PATCH (getServerSession SEC-024 es fail-closed, SOLO Bearer)
+   * → «Se requiere sesión activa» al crear/editar/desactivar pese a ser admin.
+   * Patrón canónico de la app (useUsers/useOfertas): Bearer del auth store.
+   */
+  const authHeaders = (): Record<string, string> => ({
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  });
 
   const [formMode, setFormMode] = useState<FormMode>({ kind: 'closed' });
   const [name, setName] = useState('');
@@ -103,7 +117,7 @@ export function ServiceTypesManagerModal({
       const cleanName = name.trim().replace(/\s+/g, ' ');
       const res = await fetch('/api/service-types', {
         method: isEdit ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify(
           isEdit
             ? { id: formMode.target.id, name: cleanName, description: description.trim() || null }
@@ -143,7 +157,7 @@ export function ServiceTypesManagerModal({
     try {
       const res = await fetch('/api/service-types', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ id: t.id, is_active: !deactivating }),
       });
       const json = await res.json().catch(() => null);
@@ -247,6 +261,10 @@ export function ServiceTypesManagerModal({
           {loading ? (
             <p className="text-xs text-center py-6 text-muted-foreground flex items-center justify-center gap-2">
               <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Cargando catálogo…
+            </p>
+          ) : loadError ? (
+            <p className="text-xs text-center py-6 text-destructive font-bold flex items-center justify-center gap-2" role="alert">
+              {loadError}
             </p>
           ) : types.length === 0 ? (
             <p className="text-xs text-center py-6 text-muted-foreground">

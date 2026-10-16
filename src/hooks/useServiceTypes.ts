@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useAuthStore } from '@/store';
 
 /**
  * useServiceTypes — fuente oficial del catálogo de tipos de servicio.
@@ -27,13 +28,24 @@ export function useServiceTypes(enabled = true) {
   const [types, setTypes] = useState<ServiceType[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
+  // FIX SUPERADMIN-TIPOS (2026-10-17): token del auth store para Authorization
+  // Bearer. El backend (getServerSession, SEC-024 fail-closed) SOLO autentica
+  // por Bearer; el fetch crudo previo daba 401 «Se requiere sesión activa» en
+  // TODO el módulo (catálogo vacío + creación imposible) pese a que el usuario
+  // fuera admin. Patrón canónico: useUsers/useOfertas.
+  const token = useAuthStore((s) => s.token);
 
   const refetch = useCallback(async () => {
     if (!enabled) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/service-types');
+      const res = await fetch('/api/service-types', {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Error al cargar tipos de servicio');
@@ -45,7 +57,7 @@ export function useServiceTypes(enabled = true) {
     } finally {
       setLoading(false);
     }
-  }, [enabled]);
+  }, [enabled, token]);
 
   useEffect(() => { refetch(); }, [refetch]);
 
