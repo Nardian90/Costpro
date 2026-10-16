@@ -463,4 +463,20 @@ describe('Regla de inclusión y totales filtrados (escenario K — misma ejecuci
     expect(row?.existenciaInicial).toBeNull(); // N/D, no cero
     expect(row?.ventasImporteCup).toBe(18000);
   });
+
+  it('devolución con dinero pero sin movimiento return en ledger → DEVOLUTION_WITHOUT_LEDGER (caso real Central)', () => {
+    const r = computeIpv(base({
+      // Ledger reconstruido post-reset: SOLO apertura, sin 'return'
+      movements: [mov(P1, 'initial', 966, '2026-09-06T20:16:00Z')],
+      salesLines: [sale(P1, 1, 350)],
+      devolutionLines: [{ product_id: P1, quantity: 999, unit_price: 350 }],
+      inventory: [{ product_id: P1, quantity: 966 }],
+    }));
+    const row = rowOf(r, P1);
+    expect(row).toBeDefined();
+    expect(row?.devoluciones).toBe(0);              // el ledger NO tiene return
+    expect(row?.ventasImporteCup).toBe(350 - 349650); // el dinero SÍ se descuenta
+    expect(row?.incidenceTypes).toContain('DEVOLUTION_WITHOUT_LEDGER');
+    expect(row?.incidenceTypes).toContain('SALE_WITHOUT_LEDGER');
+  });
 });

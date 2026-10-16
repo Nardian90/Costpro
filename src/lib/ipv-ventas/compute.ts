@@ -71,7 +71,9 @@ export type IpvIncidenceType =
   | 'PRE_LEDGER'       // producto con stock actual pero sin movimientos en el ledger
   | 'RECONCILIATION'   // Σ ledger ≠ inventory.quantity (deriva documentada)
   | 'UNMAPPED_TYPE'    // movement_type no clasificado (enum futuro) — nunca se descarta
-  | 'PRICE_ANOMALY';   // línea de venta cuya forma legado/unitaria no pudo confirmarse
+  | 'PRICE_ANOMALY'    // línea de venta cuya forma legado/unitaria no pudo confirmarse
+  | 'SALE_WITHOUT_LEDGER'      // dinero vendido en el período pero el producto nunca tuvo movimiento 'sale' en el ledger
+  | 'DEVOLUTION_WITHOUT_LEDGER'; // devolución cobrada en el período pero el producto nunca tuvo movimiento 'return' en el ledger
 
 export interface IpvIncidence {
   productId: string;
@@ -281,12 +283,14 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
     columns: Record<IpvColumn, number>;
     hasAny: boolean;
     hasPeriod: boolean;
+    /** Tipos de movimiento presentes en TODO el ledger del producto (auditoría cruzada). */
+    typesSeen: Set<string>;
     unmapped: Set<string>;
   }
   const blankAcc = (): Acc => ({
     ei: 0, period: 0, post: 0,
     columns: { ventas: 0, vales: 0, entradas: 0, devoluciones: 0, ajustes: 0, transferencias: 0 },
-    hasAny: false, hasPeriod: false, unmapped: new Set<string>(),
+    hasAny: false, hasPeriod: false, typesSeen: new Set<string>(), unmapped: new Set<string>(),
   });
   const acc = new Map<string, Acc>();
 
@@ -297,6 +301,7 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
     let a = acc.get(pid);
     if (!a) { a = blankAcc(); acc.set(pid, a); }
     a.hasAny = true;
+    a.typesSeen.add(m.movement_type);
 
     const mappedType = IPV_COLUMN_BY_TYPE[m.movement_type];
     const col: IpvColumn = mappedType ?? 'ajustes';
@@ -405,7 +410,29 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
       });
     }
 
-    const ventasCup = round2((salesCup.get(pid) ?? 0) - (devCup.get(pid) ?? 0));
+    // Auditoría cruzada documento↔ledger: dinero sin movimiento es evidencia
+    // de pérdida de ledger (p.ej. reset de tienda con reconstrucción de
+    // apertura) o de venta/devolución registrada fuera del stock. Verificado
+    // en producción: Central tiene devoluciones de 2026-08 cuyo movimiento
+    // 'return' no existe (ledger reiniciado con 'initial' en 2026-09).
+    const grossSalesCup = salesCup.get(pid) ?? 0;
+    const devCupPid = devCup.get(pid) ?? 0;
+    if (Math.abs(grossSalesCup) > 0.005 && a && !a.typesSeen.has('sale')) {
+      rowIncidences.push('SALE_WITHOUT_LEDGER');
+      incidences.push({
+        productId: pid, sku, name: nm, type: 'SALE_WITHOUT_LEDGER',
+        detail: 'Hay importe de ventas del período, pero el producto no tiene NINGÚN movimiento de tipo "sale" en el ledger: el ledger no refleja la venta (pérdida de movimientos o venta sin stock). El importe se muestra; la columna de cantidades NO incluye esta venta.',
+      });
+    }
+    if (Math.abs(devCupPid) > 0.005 && a && !a.typesSeen.has('return')) {
+      rowIncidences.push('DEVOLUTION_WITHOUT_LEDGER');
+      incidences.push({
+        productId: pid, sku, name: nm, type: 'DEVOLUTION_WITHOUT_LEDGER',
+        detail: 'Hay devoluciones completadas del período, pero el producto no tiene NINGÚN movimiento de tipo "return" en el ledger: la devolución devolvió stock según el documento comercial, no según el ledger (típico tras un reset con saldo de apertura). El importe se descuenta; la columna Devoluciones no puede reflejarlo.',
+      });
+    }
+
+    const ventasCup = round2(grossSalesCup - devCupPid);
     const ventasUsd = round2(salesUsd.get(pid) ?? 0);
 
     // Regla de inclusión §6: Ei≠0 Ó movimiento en período Ó Ef≠0 Ó incidencia.
