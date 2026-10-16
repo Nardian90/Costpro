@@ -30,6 +30,10 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     if (!userData?.active_store_id) return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
     const storeId = userData.active_store_id;
 
+    // FIX-RE-1510 (2026-10-16): atribución por PERIODO correspondiente (period_start/
+    // period_end) con fallback a paid_at si el periodo es NULL — mismo criterio que el
+    // grupo `commissions` del reporte y el detalle por acordeón (criterio único).
+    const { commissionPeriodOrFilter } = await import('@/lib/cash-report/period-attribution');
     const { data, error } = await supabase
       .from('commission_payments')
       .select(`
@@ -49,8 +53,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       `)
       .eq('store_id', storeId)
       .eq('status', 'paid')
-      .gte('paid_at', startDate)
-      .lte('paid_at', endDate)
+      .or(commissionPeriodOrFilter(startDate, endDate))
       .order('paid_at', { ascending: false });
 
     if (error) {

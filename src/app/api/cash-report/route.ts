@@ -129,12 +129,61 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       console.warn('[cash-report] ajustes no disponibles:', (adjErr as { message?: string })?.message);
     }
 
+    // ── FIX-RE-1510 (MISIÓN 2026-10-16): atribución de comisiones por PERIODO ──
+    // El RPC agrupa comisiones por paid_at (instante de confirmación), pero el negocio
+    // las atribuye al periodo de ventas al que corresponden (period_start/period_end —
+    // mismo criterio de fecha económico que sale_date y el motor de comisiones).
+    // Caso demostrado: pago 7374dfad… (300 CUP) pagado el 16/10 10:25 Habana para el
+    // periodo 15/10 → aparecía en el filtro del 16 y no en el del 15.
+    // Mismo patrón de post-procesamiento que sales_split/adjustments (D4).
+    // (Se consulta aquí y se aplica sobre enrichedReport justo tras declararlo.)
+    let commissionsByPeriod: Array<{ payment_method: string; currency: string; commission_count: number; total: number; total_cup: number }> | null = null;
+    try {
+      const { commissionPeriodOrFilter } = await import('@/lib/cash-report/period-attribution');
+      const { data: cRows, error: cErr } = await supabase
+        .from('commission_payments')
+        .select('payment_method, currency, final_amount, amount_cup')
+        .eq('store_id', userData.active_store_id)
+        .eq('status', 'paid')
+        .not('payment_method', 'is', null)
+        .or(commissionPeriodOrFilter(startDate, endDate));
+      if (cErr) throw cErr;
+      const groups = new Map<string, { payment_method: string; currency: string; commission_count: number; total: number; total_cup: number }>();
+      for (const r of cRows || []) {
+        const k = `${r.payment_method}|${r.currency}`;
+        const g = groups.get(k) ?? { payment_method: r.payment_method, currency: r.currency, commission_count: 0, total: 0, total_cup: 0 };
+        g.commission_count += 1;
+        g.total += Number(r.final_amount || 0);
+        g.total_cup += Number(r.amount_cup || 0);
+        groups.set(k, g);
+      }
+      commissionsByPeriod = [...groups.values()];
+    } catch (commErr: unknown) {
+      console.warn('[cash-report] atribución de comisiones por periodo no disponible:', (commErr as { message?: string })?.message);
+    }
+
     // AUDITORÍA 2026-10 (D4): balance recalculado con la fórmula centralizada.
     // El valor antiguo ((cashCupSales?.total || 0) + prod − pagos − comisiones)
     // EXCLUIA el tramo efectivo de ventas mixed (p. ej. EnerVida 02/10: 2.600
     // en vez de 12.600). La fórmula única vive en src/lib/cash-report/summary.ts
     // y la consumen idénticamente vista, previsualización y PDF.
     const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments };
+    // FIX-RE-1510: override del grupo `commissions` (y totales dependientes) ANTES de
+    // computeDailySummary — pantalla, desglose y PDF heredan el criterio por periodo.
+    if (commissionsByPeriod) {
+      const oldCommissionsCup = Number(reportData?.totals?.commissions_total_cup || 0);
+      const newCommissionsCup = commissionsByPeriod.reduce((s, g) => s + g.total_cup, 0);
+      enrichedReport.commissions = commissionsByPeriod;
+      if (reportData?.totals) {
+        enrichedReport.totals = {
+          ...reportData.totals,
+          commissions_total_cup: newCommissionsCup,
+          ...(typeof reportData.totals.balance_cup === 'number'
+            ? { balance_cup: Number(reportData.totals.balance_cup) + (oldCommissionsCup - newCommissionsCup) }
+            : {}),
+        };
+      }
+    }
     const cupSummary = computeDailySummary(enrichedReport, 'CUP');
     const cashBalanceCup = cupSummary.efectivoEsperado;
 
