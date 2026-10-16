@@ -290,15 +290,18 @@ describe('GATE 1.3 — Vender/Ventas', () => {
     expect(Object.values(labels)).not.toContain('Venta');
   });
 
-  it('el grupo Ventas existe como submenu con hijos Vender + Reporte Entrega + Opciones (CAMBIO 4 + CAMBIO 2026-10)', () => {
+  it('el grupo Ventas existe como submenu con hijos Vender + Reporte Entrega + IPV + Opciones (CAMBIO 4 + CAMBIO 2026-10 + MISIÓN IPV 2026-10-16)', () => {
     const operacion = NAVIGATION_SECTIONS.find(s => s.id === 'operacion');
     const ventas = operacion?.children?.find(c => c.id === 'ventas');
     expect(ventas?.type).toBe('submenu');
     expect(ventas?.label).toBe('Ventas');
     // CAMBIO 2026-10: acceso directo a Reporte Entrega (cash_report) entre
     // Vender y Opciones — misma vista existente, sin segunda implementación.
-    expect(ventas?.children?.map(c => c.id)).toEqual(['pos', 'cash_report', 'sales-hub']);
-    expect(ventas?.children?.map(c => c.label)).toEqual(['Vender', 'Reporte Entrega', 'Opciones']);
+    // MISIÓN 2026-10-16 (IPV): nueva hoja ipv_ventas entre Reporte Entrega y
+    // Opciones — vista canónica única de Ingresos por Ventas (ver
+    // src/__tests__/navigation/ipv-ventas-navigation.test.ts para su contrato).
+    expect(ventas?.children?.map(c => c.id)).toEqual(['pos', 'cash_report', 'ipv_ventas', 'sales-hub']);
+    expect(ventas?.children?.map(c => c.label)).toEqual(['Vender', 'Reporte Entrega', 'IPV — Ingresos por Ventas', 'Opciones']);
   });
 
   it('el acceso directo Reporte Entrega conserva la política de permisos del acceso original en Caja (sin ampliar privilegios)', () => {
