@@ -234,7 +234,7 @@ export function parseImportFile(
             paymentMethod = 'cash';
           } else if (formPagoLabel.includes('mixto') || formPagoLabel === 'mixed' || paymentCount >= 2) {
             paymentMethod = 'mixed';
-          } else if (formPagoLabel.includes('zelle') || (zellePaid > 0 && paymentCount === 1)) {
+          } else if (formPagoLabel.toLowerCase().includes('zelle') || formPagoLabel.toLowerCase().includes('exterior') || (zellePaid > 0 && paymentCount === 1)) {
             paymentMethod = 'zelle';
           } else if (formPagoLabel.includes('trans') || (transferPaid > 0 && paymentCount === 1)) {
             paymentMethod = 'transfer';

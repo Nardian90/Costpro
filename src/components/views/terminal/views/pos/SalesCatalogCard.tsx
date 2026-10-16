@@ -17,7 +17,7 @@ function PaymentBadge({ method }: { method: PaymentMethod }) {
   const config: Partial<Record<PaymentMethod, { label: string; cls: string }>> = {
     cash: { label: 'Efectivo', cls: 'bg-success/10 text-success border-success/20' },
     transfer: { label: 'Transf.', cls: 'bg-primary/10 text-primary border-primary/20' },
-    zelle: { label: 'Zelle', cls: 'bg-primary/10 text-primary border-primary/20' },
+    zelle: { label: 'Transf. Exterior', cls: 'bg-primary/10 text-primary border-primary/20' },
     mixed: { label: 'Mixto', cls: 'bg-warning/10 text-warning border-warning/20' },
     other: { label: 'Otro', cls: 'bg-muted text-muted-foreground border-border' },
   };

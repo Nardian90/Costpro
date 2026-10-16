@@ -432,7 +432,7 @@ export function usePOSCheckout() {
         });
         if (mismatchedItem) {
           const name = mismatchedItem.product?.name || "Un producto";
-          toast.error(`Pago mixto descuadrado en "${name}". Revisa el desglose efectivo/transferencia/Zelle.`, {
+          toast.error(`Pago mixto descuadrado en "${name}". Revisa el desglose efectivo/transferencia/Transf. Exterior.`, {
             duration: 6000,
             action: {
               label: "Ver carrito",

@@ -23,8 +23,13 @@ import type { PaymentMethod } from '@/types';
  * Métodos de pago válidos (alineados con payment_method_enum de PostgreSQL):
  *   - cash (Efectivo)
  *   - transfer (Transferencia)
- *   - zelle (Zelle)
+ *   - zelle (Transf. Exterior — antes «Zelle»; el VALUE de BD sigue siendo
+ *     'zelle' por compatibilidad de datos: ventas, reportes y Excel)
  *   - mixed (Mixto — efectivo + transferencia)
+ *
+ * FIX-TRANSF-EXTERIOR (2026-10-16): «Zelle» es una marca específica; el
+ * concepto real del negocio es una TRANSFERENCIA DEL EXTERIOR (divisa
+ * extranjera). Solo cambia la etiqueta visible — nunca el valor de datos.
  */
 
 export interface PaymentMethodOption {
@@ -55,8 +60,8 @@ const PAYMENT_OPTIONS: PaymentMethodOption[] = [
   },
   {
     value: 'zelle',
-    label: 'Zelle',
-    shortLabel: 'Zelle',
+    label: 'Transf. Exterior',
+    shortLabel: 'Transf. Exterior',
     icon: DollarSign,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10 border-blue-500/30',

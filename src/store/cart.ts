@@ -1105,6 +1105,17 @@ export const useCartStore = create<CartState>()(
                 if (updates.currency && !updates.discount_currency) {
                   row.discount_currency = updates.currency;
                 }
+                // FIX-TRANSF-EXTERIOR (2026-10-16): una transferencia del exterior
+                // (antes «Zelle») es intrínsecamente en moneda extranjera → solo
+                // USD o EUR tienen sentido (CUP = efectivo local, MLC = vale
+                // minorista interno). Regla en el store, fuente única de verdad:
+                // si la fila queda zelle con otra moneda, se corrige a USD y se
+                // sincroniza la moneda del ajuste. Protege a todo consumidor
+                // presente o futuro del store, no solo a este selector.
+                if (row.method === 'zelle' && row.currency !== 'USD' && row.currency !== 'EUR') {
+                  row.currency = 'USD';
+                  row.discount_currency = 'USD';
+                }
                 item.payment_manual_override = true;
                 syncLegacyFields(item);
                 state.lastUpdated = Date.now();

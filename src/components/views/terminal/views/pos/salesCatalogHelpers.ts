@@ -64,7 +64,9 @@ export const hasPaymentMismatch = (row: SalesCatalogRow): boolean => {
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: null }[] = [
   { value: 'cash', label: 'Efectivo', icon: null },
   { value: 'transfer', label: 'Transf.', icon: null },
-  { value: 'zelle', label: 'Zelle', icon: null },
+  // FIX-TRANSF-EXTERIOR (2026-10-16): etiqueta renombrada; el VALUE 'zelle'
+  // se conserva (contrato de datos: ventas, reportes y columna 'Zelle' de Excel).
+  { value: 'zelle', label: 'Transf. Exterior', icon: null },
   { value: 'mixed', label: 'Mixto', icon: null },
 ];
 
