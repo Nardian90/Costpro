@@ -235,11 +235,12 @@ Evaluación basada en pruebas ejecutadas (no certificación formal). Referencias
 
 ## 16. Estado de rama, PR, CI y despliegue
 
-| Ítem | Estado real (sin afirmar lo no verificado) |
+| Ítem | Estado real (verificado) |
 |---|---|
-| Rama | `feat/ipv-ingresos-por-ventas` — commits `c23904c`, `e26761f`, `0533112` pushados a `origin` |
-| PR | (ver tabla final al merge — creada tras este informe) |
-| CI | GitHub Actions (`ci.yml`, `security-gate.yml`, `test-coverage.yml`) se ejecuta en el PR; ver comentario del bot con el resultado exacto |
-| Despliegue | Vercel despliega `main` tras el merge — la verificación en https://costpro4.vercel.app se confirmará DESPUÉS del merge; hasta entonces el IPV NO está en producción |
-| Datos comerciales | NINGÚN dato fue alterado: el IPV es read-only; las pruebas usan datos sintéticos y lecturas; `ENABLE_DEV_BYPASS` se activó solo para el smoke test local y quedó restaurado a `false` |
-| Aislamiento | ENERVIDA: solo lecturas de verificación; cero escrituras; baseline de aislamiento intacta |
+| Rama | `feat/ipv-ingresos-por-ventas` — commits `c23904c`, `e26761f`, `0533112`, `6b5f57c`, `9019683` pushados a `origin` |
+| PR | **#1411** — https://github.com/Nardian90/Costpro/pull/1411 |
+| CI (SHA `9019683`) | **Security CI Gate: success · Test Coverage: success · CI: success** (TypeCheck + Lint + Unit Tests + Build — el build pasa en el runner de CI, autoridad por la limitación local de 4 GB). Primer run (`6b5f57c`) falló por el contrato GATE 1.3 del menú Ventas; el contrato se actualizó CON el nuevo hijo (`ipv_ventas`) sin desactivar la prueba y CI quedó verde |
+| Suite local completa | (ver comentario del PR / resultados finales del run — CI es la referencia autorizada) |
+| Despliegue | Vercel despliega `main` tras el merge — verificación de producción registrada al cierre del informe |
+| Datos comerciales | NINGÚN dato fue alterado: el IPV es read-only; las pruebas usan datos sintéticos y lecturas; `ENABLE_DEV_BYPASS` se activó solo para el smoke test local y quedó restaurado a `false` (+ `pm2 save`) |
+| Aislamiento | ENERVIDA: solo lecturas de verificación; cero escrituras |
