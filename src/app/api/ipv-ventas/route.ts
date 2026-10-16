@@ -11,6 +11,7 @@ import {
   type IpvDevolutionLineRow,
   type IpvProductRow,
 } from '@/lib/ipv-ventas/compute';
+import { fetchAllRows, type FetchAllBuilderLike } from '@/lib/supabase-fetch-all';
 
 /**
  * GET /api/ipv-ventas?from=<ISO>&to=<ISO>[&store_id=<uuid>]
@@ -30,9 +31,15 @@ import {
  *    sin secretos en los errores.
  *  · SOLO LECTURA: ninguna ruta del IPV escribe en datos comerciales.
  *
- * Rendimiento: 5 consultas acotadas por tienda (una por fuente), agregación
- * en Node — el volumen del ledger está acotado por la regla de operación
- * retrodatable ≤ 6 meses de COSTPRO. Sin consulta por producto.
+ * Rendimiento (MISIÓN CORRECTIVA 2026-10-16): las 5 fuentes se descargan con
+ * fetchAllRows — paginación .range() completa con `.order('id')` determinista.
+ * PostgREST trunca en silencio a 1000 filas por consulta y ENERVIDA superó
+ * ese tope en stock_movements (1123): las ventas del 14-15/10/2026 no llegaban
+ * al cálculo → cantidades faltantes, Ei/Ef falsos (26 vs 21) y alertas
+ * RECONCILIATION/PRE_LEDGER espurias. Ver
+ * docs/audits/INCIDENTE_IPV_CANTIDADES_VENTAS_Y_RECONSTRUCCION_HISTORICA_2026-10-16.md
+ * Un error de paginación falla explícitamente (500) — NUNCA se calcula el
+ * informe sobre un subconjunto silencioso de los datos.
  */
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +74,14 @@ function parseParams(req: NextRequest): { ok: true; params: IpvQueryParams } | {
   return { ok: true, params: { fromISO: fromDate.toISOString(), toISO: toDate.toISOString(), storeId: storeRaw || undefined } };
 }
 
+/**
+ * Puente tipado: el builder encadenable de supabase-js satisface la interfaz
+ * mínima FetchAllBuilderLike tras `.order('id')` (clave de paginación estable).
+ */
+function pageable<T>(builder: unknown): FetchAllBuilderLike<T> {
+  return builder as FetchAllBuilderLike<T>;
+}
+
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
     const parsed = parseParams(req);
@@ -98,48 +113,58 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const storeIdFinal: string = effectiveStoreId;
 
     // ── Fuentes (una consulta por tabla, acotadas por tienda) ───────────────
-    const [productsRes, movementsRes, inventoryRes, salesRes, devolutionsRes] = await Promise.all([
-      supabase
-        .from('products')
-        .select('id, sku, name, unit_of_measure')
-        .eq('store_id', storeIdFinal),
-      supabase
-        .from('stock_movements')
-        .select('product_id, movement_type, quantity_change, movement_date')
-        .eq('store_id', storeIdFinal),
-      supabase
-        .from('inventory')
-        .select('product_id, quantity')
-        .eq('store_id', storeIdFinal),
-      supabase
-        .from('transaction_items')
-        .select('product_id, quantity, price_at_sale, price_at_sale_cup, price_currency, exchange_rate, transactions!inner(status, store_id, completed_at, sale_exchange_rate)')
-        .eq('transactions.status', 'completed')
-        .eq('transactions.store_id', storeIdFinal)
-        .gte('transactions.completed_at', fromISO)
-        .lte('transactions.completed_at', toISO),
-      supabase
-        .from('devolution_items')
-        .select('product_id, quantity, unit_price, devolutions!inner(status, store_id, created_at)')
-        .eq('devolutions.status', 'completed')
-        .eq('devolutions.store_id', storeIdFinal)
-        .gte('devolutions.created_at', fromISO)
-        .lte('devolutions.created_at', toISO),
+    // MISIÓN CORRECTIVA 2026-10-16: paginación OBLIGATORIA en las 5 fuentes.
+    const [products, movements, inventory, salesLines, devolutionLines] = await Promise.all([
+      fetchAllRows(
+        pageable(supabase
+          .from('products')
+          .select('id, sku, name, unit_of_measure')
+          .eq('store_id', storeIdFinal)
+          .order('id')),
+      ),
+      fetchAllRows(
+        pageable(supabase
+          .from('stock_movements')
+          .select('product_id, movement_type, quantity_change, movement_date')
+          .eq('store_id', storeIdFinal)
+          .order('id')),
+      ),
+      fetchAllRows(
+        pageable(supabase
+          .from('inventory')
+          .select('product_id, quantity')
+          .eq('store_id', storeIdFinal)
+          .order('id')),
+      ),
+      fetchAllRows(
+        pageable(supabase
+          .from('transaction_items')
+          .select('product_id, quantity, price_at_sale, price_at_sale_cup, price_currency, exchange_rate, transactions!inner(status, store_id, completed_at, sale_exchange_rate)')
+          .eq('transactions.status', 'completed')
+          .eq('transactions.store_id', storeIdFinal)
+          .gte('transactions.completed_at', fromISO)
+          .lte('transactions.completed_at', toISO)
+          .order('id')),
+      ),
+      fetchAllRows(
+        pageable(supabase
+          .from('devolution_items')
+          .select('product_id, quantity, unit_price, devolutions!inner(status, store_id, created_at)')
+          .eq('devolutions.status', 'completed')
+          .eq('devolutions.store_id', storeIdFinal)
+          .gte('devolutions.created_at', fromISO)
+          .lte('devolutions.created_at', toISO)
+          .order('id')),
+      ),
     ]);
-
-    const firstError = productsRes.error || movementsRes.error || inventoryRes.error || salesRes.error || devolutionsRes.error;
-    if (firstError) {
-      console.error('[ipv-ventas] Error de consulta:', firstError.message);
-      return NextResponse.json({ error: 'No se pudieron consultar los datos del reporte' }, { status: 500 });
-    }
 
     const result: IpvResult = computeIpv({
       window: { fromISO, toISO },
-      movements: (movementsRes.data ?? []) as unknown as IpvMovementRow[],
-      inventory: (inventoryRes.data ?? []) as unknown as IpvInventoryRow[],
-      salesLines: (salesRes.data ?? []) as unknown as IpvSalesLineRow[],
-      devolutionLines: (devolutionsRes.data ?? []) as unknown as IpvDevolutionLineRow[],
-      products: (productsRes.data ?? []) as unknown as IpvProductRow[],
+      movements: movements as unknown as IpvMovementRow[],
+      inventory: inventory as unknown as IpvInventoryRow[],
+      salesLines: salesLines as unknown as IpvSalesLineRow[],
+      devolutionLines: devolutionLines as unknown as IpvDevolutionLineRow[],
+      products: products as unknown as IpvProductRow[],
     });
 
     // Nombre de la tienda para el encabezado del informe
@@ -157,6 +182,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     });
   } catch (error) {
     console.error('[ipv-ventas] Error inesperado:', error instanceof Error ? error.message : error);
+    // Sin secretos en la respuesta: el detalle (incluida la fuente que falló) queda en logs.
     return NextResponse.json({ error: 'Error interno al generar el IPV' }, { status: 500 });
   }
 }

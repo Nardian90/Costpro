@@ -118,6 +118,18 @@ export default function IpvVentasView() {
   // Totales de lo VISIBLE → compartidos por pantalla, PDF y Excel (§K)
   const visibleTotals = useMemo(() => totalsFromRows(filteredRows), [filteredRows]);
 
+  // Incidencias agrupadas por categoría (MISIÓN CORRECTIVA §6: la lista debe
+  // seguir siendo legible cuando crece; TODAS permanecen visibles — nada oculto).
+  const incidencesByType = useMemo(() => {
+    const groups = new Map<IpvIncidence['type'], IpvIncidence[]>();
+    for (const inc of applied?.incidences ?? []) {
+      const list = groups.get(inc.type) ?? [];
+      list.push(inc);
+      groups.set(inc.type, list);
+    }
+    return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [applied]);
+
   // ── Tiendas disponibles (mismo endpoint que Reporte Entrega) ─────────────
   useEffect(() => {
     const ctrl = new AbortController();
@@ -506,23 +518,39 @@ export default function IpvVentasView() {
                 </table>
               </div>
 
-              {/* Incidencias de conciliación (§5.6) */}
+              {/* Incidencias de conciliación (§5.6) — agrupadas por tipo.
+                  DEFECTO CORREGIDO (MISIÓN CORRECTIVA §6): antes el span
+                  «calc: …» se renderizaba pegado al nombre (el texto extraíble
+                  quedaba «Cemento Blanco 2 Kgcalc: 26») porque entre ambos
+                  spans no hay nodo de texto. Ahora hay separador explícito
+                  «· » en el DOM y flex gap en la presentación. */}
               {applied.incidences.length > 0 && (
                 <details className="border-t border-border/60 px-4 py-3" open>
                   <summary className="cursor-pointer text-xs font-bold uppercase text-amber-600 dark:text-amber-400">
                     <span className="inline-flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5" aria-hidden /> Incidencias de conciliación ({applied.incidences.length})</span>
                   </summary>
-                  <ul className="mt-3 space-y-2">
-                    {applied.incidences.map((inc, idx) => (
-                      <li key={`${inc.productId}-${inc.type}-${idx}`} className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-xs">
-                        <span className="font-bold">[{inc.type}] {inc.sku} — {inc.name}</span>
-                        {(inc.difference !== null && inc.difference !== undefined) && (
-                          <span className="ml-2 font-mono">calc: {formatIpvQty(inc.calculated ?? null)} · esperado: {formatIpvQty(inc.expected ?? null)} · dif: {formatIpvQty(inc.difference)}</span>
-                        )}
-                        <p className="mt-1 text-muted-foreground">{inc.detail}</p>
-                      </li>
-                    ))}
-                  </ul>
+                  {incidencesByType.map(([type, list]) => (
+                    <div key={type} className="mt-3">
+                      <p className="text-[11px] font-black uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                        {type} — {list.length} producto(s)
+                      </p>
+                      <ul className="mt-1.5 space-y-2">
+                        {list.map((inc, idx) => (
+                          <li key={`${inc.productId}-${inc.type}-${idx}`} className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-xs">
+                            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                              <span className="font-bold">{inc.sku} — {inc.name}</span>
+                              {(inc.difference !== null && inc.difference !== undefined) && (
+                                <span className="font-mono">
+                                  {'· calc: '}{formatIpvQty(inc.calculated ?? null)}{' · esperado: '}{formatIpvQty(inc.expected ?? null)}{' · dif: '}{formatIpvQty(inc.difference)}
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-muted-foreground">{inc.detail}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </details>
               )}
 
