@@ -48,6 +48,57 @@ function safeFileName(s: string): string {
 }
 
 /**
+ * FIX DESBORDE (2026-10-16): las fuentes estándar de jsPDF (Helvetica) se
+ * incrustan con WinAnsiEncoding. Caracteres fuera de WinAnsi — p. ej. el menos
+ * tipográfico U+2212 «−» de la nota de conciliación — fuerzan la ruta de
+ * dibujo UTF-16BE (bytes NUL-padded): el renglón se DIBUJA más ancho de lo que
+ * splitTextToSize MIDIÓ, sobrepasa el borde físico de la hoja y cada visor lo
+ * recorta a mitad de palabra (el final de la línea se pierde), además de
+ * mostrar el glifo equivocado (” en lugar de −). Se sustituyen por
+ * equivalentes WinAnsi seguros antes de medir y dibujar.
+ */
+const WINANSI_SAFE: Array<[RegExp, string]> = [
+  [/[\u2010\u2011\u2012\u2013\u2212\u2796]/g, '-'], // guiones y menos tipográfico
+  [/[\u2018\u2019\u201B]/g, "'"], // comillas simples tipográficas
+  [/[\u201C\u201D]/g, '"'], // comillas dobles tipográficas
+  [/\u2026/g, '...'], // elipsis
+  [/[\u00A0\u2007\u202F]/g, ' '], // espacios no separables
+  [/\u200B/g, ''], // espacio de ancho cero
+];
+
+/** Normaliza un texto a caracteres WinAnsi seguros para fuentes estándar PDF. */
+export function pdfWinAnsi(s: string): string {
+  return WINANSI_SAFE.reduce((acc, [re, rep]) => acc.replace(re, rep), s);
+}
+
+/**
+ * splitTextToSize + verificación dura del ancho dibujado: jsPDF puede devolver
+ * renglones que sobrepasan el maxWidth pedido (medición vs dibujo). Cada
+ * renglón se mide con getTextWidth y, si excede, se vuelve a partir en el
+ * último espacio que quepa → ningún renglón invade el margen derecho.
+ */
+export function splitToWidthVerified(doc: jsPDF, text: string, maxWidth: number): string[] {
+  const raw = doc.splitTextToSize(text, maxWidth) as unknown as string[];
+  const EPS = 0.35; // tolerancia de redondeo flotante (pt)
+  const out: string[] = [];
+  for (const candidate of raw) {
+    let line = candidate;
+    // Reparte mientras el renglón exceda el ancho y existan espacios de corte.
+    while (doc.getTextWidth(line) > maxWidth + EPS && line.includes(' ')) {
+      let cut = line.length;
+      while (cut > 0 && doc.getTextWidth(line.slice(0, cut)) > maxWidth + EPS) {
+        cut = line.lastIndexOf(' ', cut - 1);
+      }
+      if (cut <= 0) break; // palabra única más ancha que la página: no se puede partir
+      out.push(line.slice(0, cut));
+      line = line.slice(cut + 1);
+    }
+    out.push(line);
+  }
+  return out;
+}
+
+/**
  * Construye el documento PDF del IPV (A4 horizontal).
  * El caller decide: preview = doc.output('bloburl'), descarga = doc.save().
  */
@@ -66,7 +117,7 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(60, 60, 60);
-    doc.text(`Tienda: ${payload.storeName}`, PAGE.margin, y0 + (compact ? 22 : 30));
+    doc.text(pdfWinAnsi(`Tienda: ${payload.storeName}`), PAGE.margin, y0 + (compact ? 22 : 30));
     doc.text(`Período: ${dateLabel(payload.startDateLabel)} — ${dateLabel(payload.endDateLabel)}`, PAGE.margin, y0 + (compact ? 33 : 42));
     doc.text(`Generado: ${dateTimeLabel(payload.generatedAt)}`, PAGE.margin, y0 + (compact ? 44 : 54));
 
@@ -111,8 +162,8 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
       ? { fontStyle: 'bold' as const, fontSize: 8.4, fillColor: [255, 247, 231] as [number, number, number] }
       : em;
     return [
-      { content: r.sku, styles: em },
-      { content: r.name, styles: hasMov ? { fontStyle: 'bold' as const } : {} },
+      { content: pdfWinAnsi(r.sku), styles: em },
+      { content: pdfWinAnsi(r.name), styles: hasMov ? { fontStyle: 'bold' as const } : {} },
       { content: formatIpvQty(r.existenciaInicial), styles: em },
       { content: formatIpvQty(r.cantidadesVendidas), styles: em },
       { content: formatIpvQty(r.valesSalidas), styles: em },
@@ -197,13 +248,13 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
     autoTable(doc, {
       head: [['Código', 'Producto', 'Tipo', 'Calculado', 'Esperado', 'Diferencia', 'Detalle']],
       body: payload.incidences.map((i) => [
-        i.sku,
-        i.name,
-        i.type,
+        pdfWinAnsi(i.sku),
+        pdfWinAnsi(i.name),
+        pdfWinAnsi(i.type),
         i.calculated === null || i.calculated === undefined ? 'N/D' : formatIpvQty(i.calculated),
         i.expected === null || i.expected === undefined ? '—' : formatIpvQty(i.expected),
         i.difference === null || i.difference === undefined ? '—' : formatIpvQty(i.difference),
-        i.detail,
+        pdfWinAnsi(i.detail),
       ]),
       startY: cursorY,
       margin: { left: PAGE.margin, right: PAGE.margin, top: PAGE.margin + 58 },
@@ -230,9 +281,16 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(6.8);
   doc.setTextColor(110, 110, 110);
-  const note = 'Conciliación: Existencia final = Existencia inicial + Entradas + Devoluciones − Cantidades vendidas − Vales de salida ± Ajustes ± Transferencias. ' +
-    'Cantidades del ledger de movimientos de inventario; importes de las líneas de venta (CUP, tasa histórica por venta). Los productos sin movimientos ni saldos en el período se excluyen.';
-  const lines = doc.splitTextToSize(note, pageW - PAGE.margin * 2);
+  // FIX DESBORDE (2026-10-16): la nota contenía «−» (U+2212), fuera de
+  // WinAnsi → jsPDF dibujaba el renglón en UTF-16BE más ancho de lo medido y
+  // el visor lo recortaba en el borde derecho de la hoja (se perdía el tramo
+  // final del texto). pdfWinAnsi normaliza los glifos y splitToWidthVerified
+  // garantiza que ningún renglón exceda el ancho imprimible.
+  const note = pdfWinAnsi(
+    'Conciliación: Existencia final = Existencia inicial + Entradas + Devoluciones − Cantidades vendidas − Vales de salida ± Ajustes ± Transferencias. ' +
+      'Cantidades del ledger de movimientos de inventario; importes de las líneas de venta (CUP, tasa histórica por venta). Los productos sin movimientos ni saldos en el período se excluyen.',
+  );
+  const lines = splitToWidthVerified(doc, note, pageW - PAGE.margin * 2);
   doc.text(lines, PAGE.margin, cursorY);
 
   // Pie de página: numeración en todas las páginas
