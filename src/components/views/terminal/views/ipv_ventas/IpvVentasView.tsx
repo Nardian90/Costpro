@@ -31,6 +31,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import PageHeader from '@/components/ui/PageHeader';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   totalsFromRows,
   type IpvRow,
@@ -95,7 +96,10 @@ export default function IpvVentasView() {
   const generatingRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // ── Exportaciones ────────────────────────────────────────────────────────
+  // ── Representaciones y exportaciones ─────────────────────────────────────
+  // Tab de resultados: «tabla» (datos + incidencias) y «pdf» (previsualización
+  // fiel del documento — mismo dataset, escenarios K/L).
+  const [resultTab, setResultTab] = useState<'tabla' | 'pdf'>('tabla');
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -243,6 +247,13 @@ export default function IpvVentasView() {
     }
   }, [applied, previewSignature, buildDoc]);
 
+  // Entrar al tab «pdf» genera/renueva la previsualización (cache por firma;
+  // si está vigente no se regenera). Se define tras handlePreview.
+  useEffect(() => {
+    if (resultTab === 'pdf' && applied) void handlePreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resultTab, applied]);
+
   const handleDownloadPdf = useCallback(async () => {
     if (!applied || exportingPdf) return;
     setExportingPdf(true);
@@ -315,11 +326,6 @@ export default function IpvVentasView() {
         }
         secondaryActions={
           <div className="flex items-center gap-2">
-            <button onClick={handlePreview} disabled={exportDisabled} title="Vista previa del PDF"
-              className={cn(btnSecondary, exportDisabled && disabledCls)} aria-busy={previewLoading}>
-              {previewLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
-              <span className="hidden sm:inline">Vista previa</span>
-            </button>
             <button onClick={handleDownloadPdf} disabled={exportDisabled || exportingPdf} title="Exportar PDF"
               className={cn(btnSecondary, (exportDisabled || exportingPdf) && disabledCls)} aria-busy={exportingPdf}>
               {exportingPdf ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
@@ -450,7 +456,20 @@ export default function IpvVentasView() {
               </p>
             </div>
           ) : (
-            <>
+            <Tabs value={resultTab} onValueChange={(v) => setResultTab(v === 'pdf' ? 'pdf' : 'tabla')}>
+              {/* MISIÓN PRESENTACIÓN 2026-10-16: la previsualización del PDF
+                  pasa a ser un TAB hermano de la tabla (antes iba debajo, al
+                  final del reporte). Ambos tabs consumen el MISMO dataset. */}
+              <div className="border-b border-border/60 px-4 pt-2">
+                <TabsList aria-label="Representaciones del informe IPV">
+                  <TabsTrigger value="tabla" className="min-h-[44px] px-4 text-xs font-bold">Tabla IPV</TabsTrigger>
+                  <TabsTrigger value="pdf" className="min-h-[44px] px-4 text-xs font-bold">
+                    Vista previa PDF
+                    {previewLoading && <RefreshCw className="ml-1.5 w-3 h-3 animate-spin" aria-hidden />}
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              <TabsContent value="tabla" className="mt-0">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[1080px] border-collapse text-sm">
                   <caption className="sr-only">IPV — Ingresos por Ventas: conciliación de existencia inicial a final por producto con importe vendido</caption>
@@ -475,24 +494,33 @@ export default function IpvVentasView() {
                       <tr><td colSpan={12} className="px-4 py-8 text-center text-muted-foreground">Sin coincidencias para «{search}».</td></tr>
                     ) : filteredRows.map((r) => {
                       const hasInc = r.incidenceTypes.length > 0;
+                      // Énfasis de legibilidad (petición 2026-10-16): filas con
+                      // movimientos del período → valores en semibold y algo
+                      // mayores; Ventas (CUP) ≠ 0 → negrita destacada. Los
+                      // valores NO cambian — solo la forma.
+                      const hasMov = r.hasPeriodMovements || Math.abs(r.ventasImporteCup) > 0.005 || Math.abs(r.ventasImporteUsd) > 0.005;
+                      const numCls = hasMov ? 'text-[13px] font-semibold' : 'text-xs';
+                      const cupCls = Math.abs(r.ventasImporteCup) > 0.005
+                        ? 'text-[13px] font-bold'
+                        : 'text-xs text-muted-foreground';
                       return (
-                        <tr key={r.productId} className={cn('border-b border-border/40 hover:bg-muted/30', hasInc && 'border-l-2 border-l-amber-500')}>
-                          <td className="px-3 py-2 font-mono text-xs">{r.sku}</td>
+                        <tr key={r.productId} className={cn('border-b border-border/40 hover:bg-muted/30', hasInc && 'border-l-2 border-l-amber-500', hasMov && 'bg-muted/20')}>
+                          <td className={cn('px-3 py-2 font-mono', hasMov ? 'text-[13px] font-semibold' : 'text-xs')}>{r.sku}</td>
                           <td className="px-3 py-2">
                             <span className="inline-flex items-center gap-1.5">
                               {hasInc && <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" aria-label={`Incidencia: ${r.incidenceTypes.join(', ')}`} />}
-                              <span className="truncate max-w-[280px]" title={r.name}>{r.name}</span>
+                              <span className={cn('truncate max-w-[280px]', hasMov && 'font-semibold')} title={r.name}>{r.name}</span>
                             </span>
                           </td>
-                          <td className={cn('px-3 py-2 text-right font-mono text-xs', r.existenciaInicial === null && 'text-muted-foreground italic')}>{formatIpvQty(r.existenciaInicial)}</td>
-                          <td className="px-3 py-2 text-right font-mono text-xs">{formatIpvQty(r.cantidadesVendidas)}</td>
-                          <td className="px-3 py-2 text-right font-mono text-xs">{formatIpvQty(r.valesSalidas)}</td>
-                          <td className="px-3 py-2 text-right font-mono text-xs">{formatIpvQty(r.entradas)}</td>
-                          <td className="px-3 py-2 text-right font-mono text-xs">{formatIpvQty(r.devoluciones)}</td>
-                          <td className="px-3 py-2 text-right font-mono text-xs">{formatIpvQty(r.ajustes)}</td>
-                          <td className="px-3 py-2 text-right font-mono text-xs">{formatIpvQty(r.transferencias)}</td>
-                          <td className={cn('px-3 py-2 text-right font-mono text-xs font-bold', r.existenciaFinal === null && 'text-muted-foreground italic')}>{formatIpvQty(r.existenciaFinal)}</td>
-                          <td className="px-3 py-2 text-right font-mono text-xs">{formatIpvMoney(r.ventasImporteCup)}</td>
+                          <td className={cn('px-3 py-2 text-right font-mono', numCls, r.existenciaInicial === null && 'text-muted-foreground italic')}>{formatIpvQty(r.existenciaInicial)}</td>
+                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.cantidadesVendidas)}</td>
+                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.valesSalidas)}</td>
+                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.entradas)}</td>
+                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.devoluciones)}</td>
+                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.ajustes)}</td>
+                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.transferencias)}</td>
+                          <td className={cn('px-3 py-2 text-right font-mono font-bold', hasMov ? 'text-[13px]' : 'text-xs', r.existenciaFinal === null && 'text-muted-foreground italic')}>{formatIpvQty(r.existenciaFinal)}</td>
+                          <td className={cn('px-3 py-2 text-right font-mono', cupCls)}>{formatIpvMoney(r.ventasImporteCup)}</td>
                           <td className="px-3 py-2 text-right font-mono text-xs text-muted-foreground">{formatIpvMoney(r.ventasImporteUsd)}</td>
                         </tr>
                       );
@@ -553,14 +581,28 @@ export default function IpvVentasView() {
                   ))}
                 </details>
               )}
+              </TabsContent>
 
-              {/* Vista previa del PDF */}
-              {previewUrl && (
-                <div className="border-t border-border/60 p-3">
-                  <iframe src={previewUrl} title="Vista previa del IPV en PDF" className="h-[560px] w-full rounded-xl border border-border bg-white" />
-                </div>
-              )}
-            </>
+              <TabsContent value="pdf" className="mt-0">
+                {!previewUrl && previewLoading && (
+                  <div role="status" className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
+                    <RefreshCw className="w-4 h-4 animate-spin" aria-hidden /> Generando vista previa del PDF…
+                  </div>
+                )}
+                {!previewUrl && !previewLoading && (
+                  <div className="py-16 text-center">
+                    <button onClick={handlePreview} className={cn(btnSecondary, 'mx-auto')} aria-busy={previewLoading}>
+                      <Eye className="w-4 h-4" aria-hidden /> Generar vista previa
+                    </button>
+                  </div>
+                )}
+                {previewUrl && (
+                  <div className="p-3">
+                    <iframe src={previewUrl} title="Vista previa del IPV en PDF" className="h-[720px] w-full rounded-xl border border-border bg-white" />
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </section>
       )}

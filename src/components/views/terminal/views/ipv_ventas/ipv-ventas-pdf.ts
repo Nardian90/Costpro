@@ -80,24 +80,51 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
 
   const startY = drawHeader(false);
 
+  // ANTI-SOLAPE (2026-10-16): autoTable llama a didDrawPage TAMBIÉN al iniciar
+  // la página 1 → antes se dibujaba el header compacto ENCIMA del completo
+  // (texto superpuesto solo en la 1ª página). Con este registro cada página
+  // se decora UNA sola vez: página 1 = completo; páginas siguientes = compacto.
+  const decoratedPages = new Set<number>();
+  decoratedPages.add(doc.getNumberOfPages());
+  const decoratePageOnce = (compact: boolean): void => {
+    const page = doc.getNumberOfPages();
+    if (decoratedPages.has(page)) return;
+    decoratedPages.add(page);
+    drawHeader(compact);
+  };
+  const decorateNewPage = (): void => decoratePageOnce(true);
+
   const head = [[
     'Código', 'Descripción', 'Exist.\ninicial', 'Cant.\nvendidas', 'Vales\nsalidas', 'Entradas', 'Devolu-\nciones', 'Ajustes', 'Transf.', 'Exist.\nfinal', 'Ventas\n(CUP)', 'Ventas\nUSD',
   ]];
 
-  const body = payload.rows.map((r) => [
-    r.sku,
-    r.name,
-    formatIpvQty(r.existenciaInicial),
-    formatIpvQty(r.cantidadesVendidas),
-    formatIpvQty(r.valesSalidas),
-    formatIpvQty(r.entradas),
-    formatIpvQty(r.devoluciones),
-    formatIpvQty(r.ajustes),
-    formatIpvQty(r.transferencias),
-    formatIpvQty(r.existenciaFinal),
-    formatIpvMoney(r.ventasImporteCup),
-    formatIpvMoney(r.ventasImporteUsd),
-  ]);
+  const autoTable = (await import('jspdf-autotable')).default;
+
+  // Énfasis de legibilidad (petición 2026-10-16): las filas CON movimientos
+  // del período se presentan en negrita y ligeramente mayores; la celda
+  // «Ventas (CUP)» con importe ≠ 0 recibe además un fondo cálido para
+  // destacar el dinero vendido. Los valores NO cambian — solo la forma.
+  const body = payload.rows.map((r) => {
+    const hasMov = r.hasPeriodMovements || Math.abs(r.ventasImporteCup) > 0.005 || Math.abs(r.ventasImporteUsd) > 0.005;
+    const em = hasMov ? { fontStyle: 'bold' as const, fontSize: 8.2, fillColor: [246, 249, 252] as [number, number, number] } : {};
+    const cupEm = hasMov && Math.abs(r.ventasImporteCup) > 0.005
+      ? { fontStyle: 'bold' as const, fontSize: 8.4, fillColor: [255, 247, 231] as [number, number, number] }
+      : em;
+    return [
+      { content: r.sku, styles: em },
+      { content: r.name, styles: hasMov ? { fontStyle: 'bold' as const } : {} },
+      { content: formatIpvQty(r.existenciaInicial), styles: em },
+      { content: formatIpvQty(r.cantidadesVendidas), styles: em },
+      { content: formatIpvQty(r.valesSalidas), styles: em },
+      { content: formatIpvQty(r.entradas), styles: em },
+      { content: formatIpvQty(r.devoluciones), styles: em },
+      { content: formatIpvQty(r.ajustes), styles: em },
+      { content: formatIpvQty(r.transferencias), styles: em },
+      { content: formatIpvQty(r.existenciaFinal), styles: em },
+      { content: formatIpvMoney(r.ventasImporteCup), styles: cupEm },
+      { content: formatIpvMoney(r.ventasImporteUsd), styles: em },
+    ];
+  });
 
   const foot = [[
     { content: 'TOTALES', colSpan: 2, styles: { halign: 'left' as const, fontStyle: 'bold' as const } },
@@ -113,7 +140,6 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
     { content: formatIpvMoney(totals.ventasImporteUsd), styles: { fontStyle: 'bold' as const } },
   ]];
 
-  const autoTable = (await import('jspdf-autotable')).default;
   autoTable(doc, {
     head,
     body,
@@ -138,7 +164,7 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
       11: { cellWidth: 54, halign: 'right' },
     },
     didDrawPage: () => {
-      drawHeader(true);
+      if (doc.getNumberOfPages() > 1) decoratePageOnce(true);
     },
   });
 
@@ -150,7 +176,8 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
   const ensureSpace = (needed: number): void => {
     if (cursorY + needed > pageH - PAGE.margin) {
       doc.addPage();
-      cursorY = PAGE.margin + 58;
+      decorateNewPage();
+      cursorY = PAGE.margin + 66;
     }
   };
 
@@ -191,7 +218,9 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
         5: { cellWidth: 46, halign: 'right' },
         6: { cellWidth: 190 },
       },
-      didDrawPage: () => { drawHeader(true); },
+      didDrawPage: () => {
+        if (doc.getNumberOfPages() > 1) decoratePageOnce(true);
+      },
     });
     cursorY = (doc as DocWithTable).lastAutoTable.finalY + 14;
   }
