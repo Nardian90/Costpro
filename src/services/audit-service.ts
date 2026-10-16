@@ -388,4 +388,65 @@ export const auditService = {
     });
     if (error) console.error('[AuditService] logPriceChange failed:', error);
   },
+
+  /**
+   * MISIÓN (2026-10-17): registra la INTENCIÓN de una venta con total
+   * negativo que fue RECHAZADA (cliente o servidor). La venta NO se aprueba
+   * ni se persiste; solo queda documentada en Auditoría (inicio → OPERACIÓN
+   * → Auditoría) para trazabilidad del intento. Nunca lanza: la auditoría
+   * no bloquea el flujo del cajero.
+   */
+  async logNegativeSaleAttempt(params: {
+    userId: string;
+    storeId: string;
+    total: number;
+    itemCount: number;
+    source: 'client' | 'server';
+    detail?: string;
+  }) {
+    const { error } = await (getAdminClientSync() ?? supabase).from('audit_logs').insert({
+      user_id: params.userId || null,
+      action: 'sale_negative_rejected',
+      table_name: 'transactions',
+      record_id: null,
+      store_id: params.storeId || null,
+      metadata: {
+        total: params.total,
+        item_count: params.itemCount,
+        source: params.source,
+        detail: params.detail,
+        timestamp: new Date().toISOString(),
+        warning: 'Venta ordinaria con total negativo: rechazada, no aprobada ni persistida (regla innegociable).',
+      },
+    });
+    if (error) console.error('[AuditService] logNegativeSaleAttempt failed:', error);
+  },
+
+  /**
+   * MISIÓN-TASAS (2026-10-17): constancia de la confirmación diaria de tasas
+   * de cambio al abrir el carrito POS. La confirmación NO modifica tasas —
+   * deja rastro auditable de quién revisó y confirmó los valores vigentes.
+   */
+  async logRatesConfirmed(params: {
+    userId: string;
+    storeId: string;
+    businessDay: string;
+    rates: Record<string, number>;
+    reason?: string | null;
+  }) {
+    const { error } = await (getAdminClientSync() ?? supabase).from('audit_logs').insert({
+      user_id: params.userId || null,
+      action: 'rates_confirmed',
+      table_name: 'store_exchange_rates',
+      record_id: params.storeId || null,
+      store_id: params.storeId || null,
+      metadata: {
+        business_day: params.businessDay,
+        rates: params.rates,
+        reason: params.reason ?? null,
+        timestamp: new Date().toISOString(),
+      },
+    });
+    if (error) console.error('[AuditService] logRatesConfirmed failed:', error);
+  },
 };

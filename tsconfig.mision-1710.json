@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/lib/pos/payment-incidents.ts",
+    "src/lib/pos/rates-confirmation.ts",
+    "src/lib/audit/eventPresentation.ts",
+    "src/services/audit-service.ts",
+    "src/hooks/api/useDailyRatesConfirmation.ts",
+    "src/hooks/api/useUserPreferences.ts",
+    "src/components/views/terminal/views/pos/usePOSCheckout.ts",
+    "src/components/views/terminal/views/pos/POSView.tsx",
+    "src/components/views/terminal/views/pos/POSCartItem.tsx",
+    "src/components/views/terminal/views/pos/StoreRatesModal.tsx",
+    "src/components/views/terminal/views/pos/RatesConfirmationModal.tsx",
+    "src/components/views/terminal/views/audit/AuditEventCard.tsx",
+    "src/app/api/pos/checkout/route.ts",
+    "src/app/api/store-rates/route.ts",
+    "src/__tests__/lib/pos-payment-incidents.test.ts",
+    "src/__tests__/lib/pos-rates-confirmation.test.ts",
+    "src/__tests__/components/pos-checkout-payment-incidents.test.tsx",
+    "src/__tests__/migrations/pos-payment-incidents-migration.test.ts"
+  ]
+}
