@@ -136,7 +136,7 @@ describe('Prueba A — venta del SKU 142 (apertura 26, venta 2, importe 4.000 CU
     expect(r.cantidadesVendidas).toBe(2);
     expect(r.ventasImporteCup).toBe(4000);
     expect(r.existenciaFinal).toBe(24);
-    expect(r.incidences ?? r.incidenceTypes).toEqual([]);
+    expect(r.incidenceTypes).toEqual([]);
     expect(res.incidences).toHaveLength(0);
   });
 });

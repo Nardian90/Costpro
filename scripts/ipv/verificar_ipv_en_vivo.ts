@@ -20,26 +20,25 @@ import { computeIpv, type IpvResult } from '../../src/lib/ipv-ventas/compute';
 // Seguro (GitHub Push Protection 2026-10-16): las claves se leen del entorno
 // — bun auto-carga el .env untracked de la raíz. El script FALLA si falta la
 // service key: NUNCA se hardcodea un secreto en el repositorio.
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 if (!SUPABASE_URL || !SERVICE_KEY) {
-  console.error('Faltan NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (ejecutar con bun desde la raíz del repo).');
-  process.exit(2);
+  // bun auto-carga el .env untracked de la raíz; sin claves no se ejecuta nada.
+  throw new Error('Faltan NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (ejecutar con bun desde la raíz del repo).');
 }
 const ENERVIDA = '5e6fe821-5465-48b1-b3f1-3aa3182edc38';
 
 async function restPage(table: string, search: string, from: number, to: number): Promise<unknown[]> {
   const url = `${SUPABASE_URL}/rest/v1/${table}?${search}`;
-  const res = await fetch(url, {
-    headers: {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      Range: `${from}-${to}`,
-      'Range-Unit': 'items',
-    },
-  });
+  const headers: Record<string, string> = {
+    apikey: SERVICE_KEY,
+    Authorization: `Bearer ${SERVICE_KEY}`,
+    Range: `${from}-${to}`,
+    'Range-Unit': 'items',
+  };
+  const res = await fetch(url, { headers });
   if (!res.ok) throw new Error(`${table}: HTTP ${res.status} ${await res.text()}`);
-  return res.json();
+  return res.json() as Promise<unknown[]>;
 }
 
 /** Espejo de fetchAllRows para REST crudo (misma semántica de paginación). */
