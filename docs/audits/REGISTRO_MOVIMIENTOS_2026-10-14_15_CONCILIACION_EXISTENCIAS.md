@@ -27,6 +27,7 @@
 | Duplicados | 0 (31/31 con exactamente 1 fila en su tabla de origen; claves de idempotencia `reg1415-opNN-*`) |
 | Aislamiento multitienda | 0 movimientos creados en otras tiendas durante la misión |
 | **Estado global** | **COMPLETADO CON INCIDENCIAS** (todas las incidencias son preexistentes o de contexto; ninguna bloquea el registro ni la conciliación — ver D) |
+| **Adenda 16/10/2026 (post-misión) — cierre D-2** | Por instrucción del negocio se dio de alta en catálogo los SKUs 160–173 (existencia objetivo 0, sin movimientos de stock). Conciliación final: **179/179 SKUs cuadran**, 0 diferencias — ver G |
 
 Nota sobre el desglose solicitado: el encabezado del prompt indica «11 ventas, 6 vales de salida y 14 entradas», pero la columna `Clasificación` fila a fila suma **13 ventas, 5 vales y 13 entradas** (total 31). Se siguió la columna Clasificación como autoridad y el total de 31 coincide.
 
@@ -299,6 +300,8 @@ Ninguna de estas incidencias fue «corregida» artificialmente durante la misió
 | D-7 | Saldo histórico no reconstruible | global | preexistente | la apertura del 14/10 se reconstruyó fiable para los 24 SKUs tocados; no se auditó la fiabilidad del historial para el resto del catálogo | reconstrucción limitada al alcance de la misión | Bajo | Si se requiere conciliación retroactiva total, reconstruir apertura de todos los SKUs |
 | D-8 | Movimientos preexistentes del 14–15/10 (no duplicar) | 15, 28, 84, 141 (x14 y x10), 147, 137, 86–90 | 14/10 | 11 movimientos económicos ya registrados por misiones anteriores | tx `7038beaf…` (23:24 Hab 13/10), `b300e38b…`, `e794db77…` (fila854), VS-000179-2026, 8 `sale_reverse` E2E | Ninguno (documental) | Ninguna; solo referencia cruzada en conciliaciones futuras |
 
+> **Cierre posterior de D-2 (16/10/2026):** el negocio ordenó el alta de los SKUs 160–173 en el catálogo. Ejecutada por el flujo oficial de alta de productos; incidencia **RESUELTA** — ver adenda G. El resto de incidencias (D-1, D-3 a D-8) permanecen abiertas para una segunda misión.
+
 No-aplicaciones de la misión (por regla del prompt): no se corrigió D-1 a D-6; no se crearon los SKUs 160–173; no se alteraron precios ni catálogo existente; no se eliminaron movimientos preexistentes.
 
 ---
@@ -332,6 +335,56 @@ Comandos y resultados reales (solo lectura salvo los flujos de registro):
 
 ---
 
+## G. Adenda — Alta de catálogo SKUs 160–173 (cierre de la incidencia D-2 · post-misión)
+
+**Fecha:** 16/10/2026 · **Orden:** instrucción expresa del negocio tras revisar el informe de conciliación («Solo SKUs 160–173: no existen en la tienda (preexistente; la tabla los lista con 0) — crear estos productos en el catálogo»). Esta adenda ejecuta exactamente la acción recomendada en D-2.
+
+### G.1 Método (mismo rigor que la misión)
+
+- **Canal oficial de alta de productos:** `INSERT` en `products` con el JWT del operador autenticado (`admin@costpro.com`) vía PostgREST — el mismo camino que ejecuta `useCreateProduct` en la interfaz (precedente validado en la misión con los SKUs 174–177).
+- **Pre-chequeo anti-duplicado inmediato antes de escribir:** `products` por SKU en toda la base (todas las tiendas) → 0 filas con SKUs 160–173; también se verificó que no existen soft-deletes (la tabla no tiene `deleted_at`) ni nombres históricos recuperables: los 14 SKUs nunca existieron en la base.
+- **Nomenclatura provisional y trazable:** al no existir nombres en ninguna fuente (base de datos, tabla objetivo, misiones previas), los productos se crean como «Producto SKU N» con descripción que documenta el motivo del alta; **pendiente de renombrado comercial** por el módulo de catálogo cuando el negocio defina los nombres reales.
+- **Existencia objetivo 0 → alta pura de catálogo:** NO se generó ningún movimiento de stock ni asiento de Kardex; `stock_current=0` sin ledger. Configuración uniforme con la tienda: `unit_of_measure=unidad`, `price_currency=CUP`, `price=0`, `cost_price=0` (sin datos comerciales informados — mismo criterio que D-5 para 174–177), `min_stock=1` (convención del 100 % del catálogo de la tienda), `is_active=true`.
+- **Regla intacta:** no se ajustó inventario artificialmente — no había inventario que ajustar; la diferencia D-2 era de catálogo, no de existencias.
+
+### G.2 Productos creados (verificación por producto)
+
+| SKU | Nombre provisional | product_id | stock_current | stock_movements | kardex_entries | Verificación |
+|---|---|---|---|---|---|---|
+| 160 | Producto SKU 160 | `7f7b9529-07be-4730-8d39-ff4c992b4f21` | 0.0 | 0 | 0 | ✓ |
+| 161 | Producto SKU 161 | `405a3312-6e38-47ec-a029-2c35fbe6edb4` | 0.0 | 0 | 0 | ✓ |
+| 162 | Producto SKU 162 | `402ceab9-93c7-4b4f-9b16-016c8d978a01` | 0.0 | 0 | 0 | ✓ |
+| 163 | Producto SKU 163 | `995b2ab1-233e-421a-b565-887517a8bc55` | 0.0 | 0 | 0 | ✓ |
+| 164 | Producto SKU 164 | `46aa777d-e14d-4260-b52a-827aeb3e84de` | 0.0 | 0 | 0 | ✓ |
+| 165 | Producto SKU 165 | `c92c1e47-7f16-4f91-9c29-27051305c7df` | 0.0 | 0 | 0 | ✓ |
+| 166 | Producto SKU 166 | `34ce777a-d255-4688-8075-351961085c2f` | 0.0 | 0 | 0 | ✓ |
+| 167 | Producto SKU 167 | `2bced70e-57f9-4e79-a005-c3a4952a5a4f` | 0.0 | 0 | 0 | ✓ |
+| 168 | Producto SKU 168 | `e2dc6417-1d22-4de7-955e-18cbb4b0193e` | 0.0 | 0 | 0 | ✓ |
+| 169 | Producto SKU 169 | `f9ce8886-6ad6-4a20-b3e8-77800f4938d7` | 0.0 | 0 | 0 | ✓ |
+| 170 | Producto SKU 170 | `8f148ce3-bc69-4975-9f03-5ddea867a8ef` | 0.0 | 0 | 0 | ✓ |
+| 171 | Producto SKU 171 | `767df9ae-41cf-4082-9c82-34aeca0b7916` | 0.0 | 0 | 0 | ✓ |
+| 172 | Producto SKU 172 | `77dd64c0-0694-40c8-bb28-6d8557b4dd8a` | 0.0 | 0 | 0 | ✓ |
+| 173 | Producto SKU 173 | `7af15393-9b78-4893-950d-38f86db809b3` | 0.0 | 0 | 0 | ✓ |
+
+Verificación por producto (14/14 ✓): `store_id` = ENERVIDA-VITALLCONS, `stock_current=0`, `is_active=true`, UoM `unidad`, **0 filas** en `stock_movements` y **0 filas** en `kardex_entries` (alta sin movimientos). Evidencia completa: `scripts/skus160_173_state.json`.
+
+### G.3 Conciliación final tras el alta
+
+| Métrica | Antes (cierre de misión) | Después (adenda) |
+|---|---|---|
+| Productos en la tienda | 165 | **179** |
+| SKUs de la tabla objetivo conciliados | 165/179 (14 no existentes) | **179/179** |
+| Diferencias de inventario | 0 atribuibles a la misión | **0 en total** |
+| SKUs no existentes | 14 (160–173) | **0** |
+| SKUs duplicados | 0 | **0** |
+| SKUs de la tienda fuera de la tabla objetivo | 0 | **0** |
+
+Resultado registrado en `scripts/skus160_173_reconcile.json` (misma regla que la fase 4: diferencia = real − esperada, sin redondeos). La tabla objetivo de 179 SKUs y el catálogo de la tienda quedan en correspondencia 1:1 exacta, incluida la precisión decimal (no afectada: ningún SKU de la adenda tiene decimales).
+
+**Impacto en incidencias:** D-2 **RESUELTA**. Las incidencias D-1, D-3–D-8 permanecen abiertas con sus acciones recomendadas originales. Nota D-5 (productos sin datos comerciales) ahora aplica también a los 14 SKUs de esta adenda (price=0/cost=0 y nombre provisional pendiente de definición comercial).
+
+---
+
 ## Fuentes de evidencia
 
 - Estado de ejecución con IDs y evidencia por operación: `scripts/fase2_state.json` (local a la misión).
@@ -339,5 +392,6 @@ Comandos y resultados reales (solo lectura salvo los flujos de registro):
 - Conciliación: `scripts/fase4_conciliacion.json`.
 - Motor de comisiones: `scripts/fase3_comisiones.json`.
 - Consultas SQL/REST de solo lectura contra PostgREST del proyecto (`rest/v1`), citadas sección por sección.
+- Adenda (sección G): `scripts/skus160_173_state.json` (IDs y verificación por producto) y `scripts/skus160_173_reconcile.json` (conciliación final 179/179).
 
 Hechos comprobados vs hipótesis: cada afirmación de este informe está respaldada por una consulta a la base de datos o por la respuesta HTTP del flujo oficial correspondiente; donde una causa es hipótesis (p. ej. el origen de la apertura negativa del SKU 81), se marca expresamente como no determinada.
