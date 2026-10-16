@@ -54,6 +54,7 @@ import {
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
   Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet, Landmark,
   Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone, Printer,
+  ReceiptText,
   Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson,
   type LucideIcon,
 } from 'lucide-react';
@@ -190,6 +191,23 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             type: 'item',
             roles: ['admin', 'manager', 'encargado', 'clerk'],
             keywords: ['reporte de entrega', 'entrega', 'reporte', 'desglose de billetes', 'cuadre de efectivo', 'entrega de dinero'],
+          },
+          {
+            // MISIÓN 2026-10-16 (IPV): informe profesional IPV — Ingresos por
+            // Ventas con conciliación de inventario. Vista canónica ÚNICA
+            // (ipv_ventas → IpvVentasView); el nombre evita la colisión con el
+            // módulo experimental 'ipv' (Dexie). Ubicación: Ventas, porque el
+            // informe es primariamente de INGRESOS por producto y la audiencia
+            // es la misma del Reporte Entrega. Permisos: misma política
+            // EFECTIVA que cash_report — NO hereda 'usuario' del grupo para no
+            // ampliar privilegios; el backend valida además canViewStore.
+            id: 'ipv_ventas',
+            label: 'IPV — Ingresos por Ventas',
+            description: 'Ingresos por ventas con conciliación de inventario: existencia inicial, movimientos, existencia final e importe vendido por producto.',
+            icon: ReceiptText,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'clerk'],
+            keywords: ['ipv', 'ingresos por ventas', 'ingresos', 'conciliación de inventario', 'existencias', 'kardex', 'saldo inicial', 'reporte de ventas', 'registro de movimientos'],
           },
           {
             id: 'sales-hub',
@@ -1378,6 +1396,8 @@ export const VALID_VIEWS: Set<string> = new Set([
   'whatsapp-group', 'whatsapp-hub', 'telegram-config', 'telegram-conversations',
   'telegram-invitations', 'telegram-dashboard', 'telegram-group', 'telegram-hub',
   'accounts_payable', 'accounts_receivable', 'cash_report', 'production-orders',
+  // MISIÓN 2026-10-16 (IPV): informe de ingresos por ventas con conciliación
+  'ipv_ventas',
   'devolutions', 'customers', 'quotations', 'fiscal-close', 'lots', 'warehouses',
   'abc-analysis', 'bank-reconciliation', 'calculator', 'accounts-payable',
   'punto_venta', 'almacen_gestion', 'almacen_operaciones', 'analitica',

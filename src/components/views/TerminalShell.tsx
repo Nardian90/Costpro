@@ -69,6 +69,9 @@ function ViewErrorBoundary({ children, viewName }: { children: React.ReactNode; 
 // vista de primer nivel con PageHeader, tabs y vista previa. El modal se
 // eliminó: esta es la única implementación del reporte (fuente única).
 const CashReportView = dynamic(() => import('@/components/views/terminal/views/cash/CashReportView'), { ssr: false });
+// MISIÓN 2026-10-16 (IPV): informe de ingresos por ventas con conciliación de
+// inventario — vista canónica única bajo OPERACIÓN → Ventas.
+const IpvVentasView = dynamic(() => import('@/components/views/terminal/views/ipv_ventas/IpvVentasView'), { ssr: false });
 
 const DashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/DashboardView'), { ssr: false });
 // AI COMMAND CENTER: la nueva Inicio (hero conversacional de Darian +
@@ -569,6 +572,8 @@ export default function TerminalShell() {
         case 'accounts_receivable': return <ViewErrorBoundary viewName="Cobros por Antigüedad"><AccountsReceivableView /></ViewErrorBoundary>;
         // CAMBIO 2026-10: reporte de entrega como VISTA dedicada (antes overlay modal)
         case 'cash_report': return <ViewErrorBoundary viewName="Reporte de Entrega"><CashReportView /></ViewErrorBoundary>;
+        // MISIÓN 2026-10-16 (IPV): ingresos por ventas con conciliación de inventario
+        case 'ipv_ventas': return <ViewErrorBoundary viewName="IPV — Ingresos por Ventas"><IpvVentasView /></ViewErrorBoundary>;
         // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
         case 'production-orders': return <ViewErrorBoundary viewName="Órdenes de Producción"><ProductionOrdersView /></ViewErrorBoundary>;
         // V1.2: Devoluciones, Clientes CRM, Cotizaciones, Cierre Fiscal
