@@ -27,7 +27,7 @@
 | Duplicados | 0 (31/31 con exactamente 1 fila en su tabla de origen; claves de idempotencia `reg1415-opNN-*`) |
 | Aislamiento multitienda | 0 movimientos creados en otras tiendas durante la misión |
 | **Estado global** | **COMPLETADO CON INCIDENCIAS** (todas las incidencias son preexistentes o de contexto; ninguna bloquea el registro ni la conciliación — ver D) |
-| **Adenda 16/10/2026 (post-misión) — cierre D-2** | Por instrucción del negocio se dio de alta en catálogo los SKUs 160–173 (existencia objetivo 0, sin movimientos de stock). Conciliación final: **179/179 SKUs cuadran**, 0 diferencias — ver G |
+| **Adenda 16/10/2026 (post-misión) — cierre D-2** | Por instrucción del negocio se dio de alta en catálogo los SKUs 160–173 (existencia objetivo 0, sin movimientos de stock). Conciliación final: **179/179 SKUs cuadran**, 0 diferencias. Renombrado comercial aplicado con el catálogo oficial del negocio (14/14) — ver G |
 
 Nota sobre el desglose solicitado: el encabezado del prompt indica «11 ventas, 6 vales de salida y 14 entradas», pero la columna `Clasificación` fila a fila suma **13 ventas, 5 vales y 13 entradas** (total 31). Se siguió la columna Clasificación como autoridad y el total de 31 coincide.
 
@@ -299,6 +299,7 @@ Ninguna de estas incidencias fue «corregida» artificialmente durante la misió
 | D-6 | Costo de recepción no informado | 13 SKUs con entrada (9,15–21,23–27) | 14–15/10 | `unit_cost=1 CUP` placeholder | `receipt_items.unit_cost=1` (precedente `IMPORT-ENERVIDA-*`); WAC recalculado con ese costo | Medio (márgenes/WAC) | Regularizar costos reales de compra cuando estén disponibles |
 | D-7 | Saldo histórico no reconstruible | global | preexistente | la apertura del 14/10 se reconstruyó fiable para los 24 SKUs tocados; no se auditó la fiabilidad del historial para el resto del catálogo | reconstrucción limitada al alcance de la misión | Bajo | Si se requiere conciliación retroactiva total, reconstruir apertura de todos los SKUs |
 | D-8 | Movimientos preexistentes del 14–15/10 (no duplicar) | 15, 28, 84, 141 (x14 y x10), 147, 137, 86–90 | 14/10 | 11 movimientos económicos ya registrados por misiones anteriores | tx `7038beaf…` (23:24 Hab 13/10), `b300e38b…`, `e794db77…` (fila854), VS-000179-2026, 8 `sale_reverse` E2E | Ninguno (documental) | Ninguna; solo referencia cruzada en conciliaciones futuras |
+| D-9 | Discrepancias de nomenclatura del catálogo (solo reportadas, NO corregidas) | 9, 29, 31, 32, 35, 67, 80, 82, 83, 115, 121, 159, 999 (13 SKUs) | preexistente · detectada 16/10 en adenda | nombres en BD difieren del catálogo oficial provisto por el negocio; destaca el intercambio M6↔M8 entre SKUs 31/32 y el nombre alternativo completo del SKU 115 («Canaleta» vs «Regleta») | `products.name` vs catálogo oficial — detalle completo en G.4 y `scripts/skus160_173_rename.json` | Medio (etiquetas bajo movimientos históricos; 31/32 afectan lectura de Kardex) | Confirmar con el negocio si la autoridad es el catálogo oficial y, en tal caso, renombrar por flujo oficial en una misión específica |
 
 > **Cierre posterior de D-2 (16/10/2026):** el negocio ordenó el alta de los SKUs 160–173 en el catálogo. Ejecutada por el flujo oficial de alta de productos; incidencia **RESUELTA** — ver adenda G. El resto de incidencias (D-1, D-3 a D-8) permanecen abiertas para una segunda misión.
 
@@ -381,6 +382,58 @@ Verificación por producto (14/14 ✓): `store_id` = ENERVIDA-VITALLCONS, `stock
 
 Resultado registrado en `scripts/skus160_173_reconcile.json` (misma regla que la fase 4: diferencia = real − esperada, sin redondeos). La tabla objetivo de 179 SKUs y el catálogo de la tienda quedan en correspondencia 1:1 exacta, incluida la precisión decimal (no afectada: ningún SKU de la adenda tiene decimales).
 
+### G.4 Renombrado comercial (16/10/2026, orden posterior del negocio)
+
+El negocio proporcionó el catálogo oficial SKU→nombre (179 entradas, recibido tras el alta provisional). Ejecución con el mismo rigor:
+
+- **Canal oficial de edición de productos:** `PATCH` en `products` con el JWT del operador autenticado — el mismo camino que `useUpdateProduct` en la interfaz.
+- **Guard anti-colisión:** solo se renombró si el nombre vigente seguía siendo el provisional «Producto SKU N» (ninguna intervención sobre nombres ya definidos).
+- **Nombres aplicados literalmente del catálogo oficial** (sin alterar espaciado interno ni grafía); descripción alineada al nombre (convención del catálogo).
+- **Comparación read-only del catálogo completo** (179 SKUs) contra la base: los 165 restantes NO se tocaron; las discrepancias se reportan, no se corrigen (regla de la misión).
+
+| SKU | Nombre anterior (provisional) | Nombre oficial aplicado | product_id |
+|---|---|---|---|
+| 160 | Producto SKU 160 | Puertas Negras | `7f7b9529-07be-4730-8d39-ff4c992b4f21` |
+| 161 | Producto SKU 161 | Juego de baño | `405a3312-6e38-47ec-a029-2c35fbe6edb4` |
+| 162 | Producto SKU 162 | Ventana | `402ceab9-93c7-4b4f-9b16-016c8d978a01` |
+| 163 | Producto SKU 163 | Calentadores de 50 Litros | `995b2ab1-233e-421a-b565-887517a8bc55` |
+| 164 | Producto SKU 164 | Calentadores de 30 Litros | `46aa777d-e14d-4260-b52a-827aeb3e84de` |
+| 165 | Producto SKU 165 | Bote Sifon | `c92c1e47-7f16-4f91-9c29-27051305c7df` |
+| 166 | Producto SKU 166 | Cafetera (6 tasas) | `34ce777a-d255-4688-8075-351961085c2f` |
+| 167 | Producto SKU 167 | Cafetera (3 tasas) | `2bced70e-57f9-4e79-a005-c3a4952a5a4f` |
+| 168 | Producto SKU 168 | Rollo Lija | `e2dc6417-1d22-4de7-955e-18cbb4b0193e` |
+| 169 | Producto SKU 169 | Lampara Recargable 40W | `f9ce8886-6ad6-4a20-b3e8-77800f4938d7` |
+| 170 | Producto SKU 170 | Lampara Recargable 20W | `8f148ce3-bc69-4975-9f03-5ddea867a8ef` |
+| 171 | Producto SKU 171 | Lampara 40W | `767df9ae-41cf-4082-9c82-34aeca0b7916` |
+| 172 | Producto SKU 172 | Silla de comedor | `77dd64c0-0694-40c8-bb28-6d8557b4dd8a` |
+| 173 | Producto SKU 173 | Banqueta | `7af15393-9b78-4893-950d-38f86db809b3` |
+
+Verificación: 14/14 nombres exactos tras el PATCH (`scripts/skus160_173_rename.json`); sin cambios de stock, movimientos ni Kardex (el renombrado no toca existencias).
+
+#### G.4.1 Discrepancias detectadas en SKUs preexistentes (solo reporte → incidencia D-9)
+
+La comparación del catálogo oficial contra `products.name` para los 165 SKUs preexistentes arrojó **13 diferencias** (se listan tal cual; ninguna fue modificada):
+
+| SKU | Nombre en BD | Catálogo oficial |
+|---|---|---|
+| 9 | Brecker D63 A | Brecker D 63A |
+| 29 | Expansiones 8x80 | Expansiones  8x80 |
+| 31 | Expansiones con tornillos M6 | Expansiones con tornillos M8 |
+| 32 | Expansiones con tornillos M8 | Expansiones con tornillos M6 |
+| 35 | Fuerte eléctrico | Fuete eléctrico |
+| 67 | Transfer monofásico | Transfer monofásico 220 |
+| 80 | Brecker C32A Doble | Brecker C32A  Doble |
+| 82 | Crimpiadora con pela cable Anaranjada | Cripiadora con pela cable Anaranjada |
+| 83 | Crimpiadora Roja con 6 dabas rojas | Cripiadora Roja con 6 dabas rojas |
+| 115 | Canaleta | Regleta |
+| 121 | Supresores | Supresores de voltaje |
+| 159 | Cemento Blanco 5Kg | Cemento blanco 5kg |
+| 999 | Servicio de crimpiar | Servicio de cripiar |
+
+Observaciones: (a) SKUs 31/32 aparecen con los nombres M6/M8 **intercambiados** respecto al catálogo oficial — relevante porque las entradas de la misión (ops 20–21) se registraron bajo esos SKUs con las descripciones del prompt, que coinciden con el catálogo oficial; el inventario concilia por SKU y no se ve afectado, pero la etiqueta bajo los movimientos históricos queda invertida respecto a la nomenclatura oficial. (b) SKU 115 usa en BD un nombre distinto («Canaleta» vs «Regleta»). (c) El resto son variantes menores de grafía/espaciado. La autoridad entre «catálogo oficial del negocio» y «etiquetas históricas en BD» debe definirla el negocio antes de renombrar (D-9).
+
+---
+
 **Impacto en incidencias:** D-2 **RESUELTA**. Las incidencias D-1, D-3–D-8 permanecen abiertas con sus acciones recomendadas originales. Nota D-5 (productos sin datos comerciales) ahora aplica también a los 14 SKUs de esta adenda (price=0/cost=0 y nombre provisional pendiente de definición comercial).
 
 ---
@@ -393,5 +446,6 @@ Resultado registrado en `scripts/skus160_173_reconcile.json` (misma regla que la
 - Motor de comisiones: `scripts/fase3_comisiones.json`.
 - Consultas SQL/REST de solo lectura contra PostgREST del proyecto (`rest/v1`), citadas sección por sección.
 - Adenda (sección G): `scripts/skus160_173_state.json` (IDs y verificación por producto) y `scripts/skus160_173_reconcile.json` (conciliación final 179/179).
+- Renombrado comercial y comparación del catálogo oficial: `scripts/skus160_173_rename.json` (14 renombrados + 13 discrepancias reportadas).
 
 Hechos comprobados vs hipótesis: cada afirmación de este informe está respaldada por una consulta a la base de datos o por la respuesta HTTP del flujo oficial correspondiente; donde una causa es hipótesis (p. ej. el origen de la apertura negativa del SKU 81), se marca expresamente como no determinada.
