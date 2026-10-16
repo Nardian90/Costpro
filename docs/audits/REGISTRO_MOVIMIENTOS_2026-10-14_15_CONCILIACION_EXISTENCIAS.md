@@ -27,7 +27,7 @@
 | Duplicados | 0 (31/31 con exactamente 1 fila en su tabla de origen; claves de idempotencia `reg1415-opNN-*`) |
 | Aislamiento multitienda | 0 movimientos creados en otras tiendas durante la misión |
 | **Estado global** | **COMPLETADO CON INCIDENCIAS** (todas las incidencias son preexistentes o de contexto; ninguna bloquea el registro ni la conciliación — ver D) |
-| **Adenda 16/10/2026 (post-misión) — cierre D-2** | Por instrucción del negocio se dio de alta en catálogo los SKUs 160–173 (existencia objetivo 0, sin movimientos de stock). Conciliación final: **179/179 SKUs cuadran**, 0 diferencias. Renombrado comercial aplicado con el catálogo oficial del negocio (14/14) — ver G |
+| **Adenda 16/10/2026 (post-misión) — cierre D-2** | Por instrucción del negocio se dio de alta en catálogo los SKUs 160–173 (existencia objetivo 0, sin movimientos de stock). Conciliación final: **179/179 SKUs cuadran**, 0 diferencias. Renombrado comercial aplicado con el catálogo oficial del negocio (14/14) + normalización ortográfica completa del catálogo (32 SKUs netos) — ver G |
 
 Nota sobre el desglose solicitado: el encabezado del prompt indica «11 ventas, 6 vales de salida y 14 entradas», pero la columna `Clasificación` fila a fila suma **13 ventas, 5 vales y 13 entradas** (total 31). Se siguió la columna Clasificación como autoridad y el total de 31 coincide.
 
@@ -303,6 +303,8 @@ Ninguna de estas incidencias fue «corregida» artificialmente durante la misió
 
 > **Cierre posterior de D-2 (16/10/2026):** el negocio ordenó el alta de los SKUs 160–173 en el catálogo. Ejecutada por el flujo oficial de alta de productos; incidencia **RESUELTA** — ver adenda G. El resto de incidencias (D-1, D-3 a D-8) permanecen abiertas para una segunda misión.
 
+> **Cierre posterior de D-9 (16/10/2026):** el negocio confirmó el catálogo oficial como autoridad y ordenó revisión ortográfica de todo el catálogo («el consumidor final puede criticar»). Ejecutada la normalización completa: catálogo oficial aplicado en 11 SKUs con cambio neto (de los 13 de D-9) y 21 correcciones ortográficas adicionales — **RESUELTA**, detalle en G.5.
+
 No-aplicaciones de la misión (por regla del prompt): no se corrigió D-1 a D-6; no se crearon los SKUs 160–173; no se alteraron precios ni catálogo existente; no se eliminaron movimientos preexistentes.
 
 ---
@@ -434,6 +436,56 @@ Observaciones: (a) SKUs 31/32 aparecen con los nombres M6/M8 **intercambiados** 
 
 ---
 
+### G.5 Normalización ortográfica del catálogo completo (16/10/2026, orden del negocio)
+
+**Orden:** tras el renombrado G.4, el negocio ordenó revisar que todo el catálogo esté «correctamente sin faltas de ortografía — el consumidor final puede criticar», confirmando el catálogo oficial como autoridad (cierra D-9).
+
+- **Política aplicada:** (T1) el catálogo oficial prevalece sobre las etiquetas históricas de BD en los 13 SKUs de D-9 (11 con cambio neto; 29/80 sin efecto neto); (T2) corrección ortográfica unívoca en todo el catálogo (typos claros, tildes, mayúscula inicial, dobles espacios).
+- **Terminología comercial conservada** (no es falta de ortografía, es nomenclatura establecida del negocio): *Brecker/Breckera* (breakers), *cripiar/cripiadora* (crimpadora), *teipe*, *lavamano*, *malla perli*, *purles*, *condulei*, *losa aporcelanada*, *tunder*, *barilla de tierra*, *Huncong*, *limpia parabrisa*, *araganes*, *Yee*, *grey*, *fuete eléctrico* (término oficial del catálogo), *autorroscante chiquito*, marcas propias (Tudella, EKO, Sumry, DAZONE, Royal Cole, TRIC, Suntech).
+- **Intercambio M6↔M8 corregido (D-9):** SKU 31 → «Expansiones con tornillos M8», SKU 32 → «Expansiones con tornillos M6» — ahora coinciden con las descripciones de las entradas de la misión (ops 20–21). El inventario concilia por SKU y no se vio afectado en ningún momento.
+- **Sin cambios netos:** SKU 29 y 80 (el oficial traía doble espacio; la normalización tipográfica los dejó como ya estaban). Ejecución idempotente con guard anti-colisión y orden seguro en el swap 31/32.
+
+#### G.5.1 Registro de cambios (32 SKUs netos · antes → después)
+
+| SKU | Antes | Después | Tier | Motivo |
+|---|---|---|---|---|
+| 8 | Brecker C32 A Trible | **Brecker C32 A Triple** | T2 (ortografía) | typo unívoco |
+| 9 | Brecker D63 A | **Brecker D 63A** | T1 (oficial) | catálogo oficial (D-9) |
+| 12 | Cable Conductor electrico 10 | **Cable Conductor eléctrico 10** | T2 (ortografía) | tilde |
+| 13 | Cable Conductor electrico 8 | **Cable Conductor eléctrico 8** | T2 (ortografía) | tilde |
+| 31 | Expansiones con tornillos M6 | **Expansiones con tornillos M8** | T1 (oficial) | catálogo oficial (D-9) |
+| 32 | Expansiones con tornillos M8 | **Expansiones con tornillos M6** | T1 (oficial) | catálogo oficial (D-9) |
+| 35 | Fuerte eléctrico | **Fuete eléctrico** | T1 (oficial) | catálogo oficial (D-9) |
+| 38 | Lampara de 20 | **Lámpara de 20** | T2 (ortografía) | tilde |
+| 39 | Tubo de Lampara de 40 | **Tubo de Lámpara de 40** | T2 (ortografía) | tilde |
+| 67 | Transfer monofásico | **Transfer monofásico 220** | T1 (oficial) | catálogo oficial (D-9) |
+| 82 | Crimpiadora con pela cable Anaranjada | **Cripiadora con pela cable Anaranjada** | T1 (oficial) | catálogo oficial (D-9) |
+| 83 | Crimpiadora Roja con 6 dabas rojas | **Cripiadora Roja con 6 dabas rojas** | T1 (oficial) | catálogo oficial (D-9) |
+| 93 | Liquidacion de OT 12 | **Liquidación de OT 12** | T2 (ortografía) | tilde (consistente con SKU 91) |
+| 109 | inicio Z | **Inicio Z** | T2 (ortografía) | mayúscula inicial |
+| 111 | Grapas plasticas con clavo de acero | **Grapas plásticas con clavo de acero** | T2 (ortografía) | tilde |
+| 112 | Grapas metalicas 3/4 con tornillo roscante | **Grapas metálicas 3/4 con tornillo roscante** | T2 (ortografía) | tilde |
+| 113 | Goma Termo Retractil | **Goma Termo Retráctil** | T2 (ortografía) | tilde |
+| 115 | Canaleta  | **Regleta** | T1 (oficial) | catálogo oficial (D-9) |
+| 121 | Supresores | **Supresores de voltaje** | T1 (oficial) | catálogo oficial (D-9) |
+| 132 | Brecker 32 A Alternar Doble | **Brecker 32 A Alterna Doble** | T2 (ortografía) | typo unívoco (corriente alterna) |
+| 136 | Bateria EKO 5KW | **Batería EKO 5KW** | T2 (ortografía) | tilde (consistente con 150/176) |
+| 137 | Tubo blanco de condulei  de 1/2 de 5M | **Tubo blanco de condulei de 1/2 de 5M** | T2 (ortografía) | espacio simple (normalización tipográfica) (fixup) |
+| 138 | Kid de 6 K Inversor - 5K Bateria +Accesorios | **Kit de 6 K Inversor - 5K Batería +Accesorios** | T2 (ortografía) | typo unívoco Kid→Kit + tilde Batería (fixup) |
+| 144 | Fusible de auntomovil | **Fusible de automóvil** | T2 (ortografía) | typo unívoco + tilde |
+| 153 | Taladro con bateria y barrena | **Taladro con batería y barrena** | T2 (ortografía) | tilde |
+| 159 | Cemento Blanco 5Kg | **Cemento blanco 5kg** | T1 (oficial) | catálogo oficial (D-9) |
+| 165 | Bote Sifon | **Bote Sifón** | T2 (ortografía) | tilde |
+| 169 | Lampara Recargable 40W | **Lámpara Recargable 40W** | T2 (ortografía) | tilde |
+| 170 | Lampara Recargable 20W | **Lámpara Recargable 20W** | T2 (ortografía) | tilde |
+| 171 | Lampara 40W | **Lámpara 40W** | T2 (ortografía) | tilde |
+| 174 | Grey ceramico bage 50x50 | **Grey cerámico beige 50x50** | T2 (ortografía) | tilde cerámico + typo unívoco bage→beige (fixup) |
+| 999 | Servicio de crimpiar | **Servicio de cripiar** | T1 (oficial) | catálogo oficial (D-9) |
+
+Verificación final: **179/179 nombres correctos**, 0 dobles espacios, 0 restos de typos («Kid», «bage», «Trible», «auntomovil»), 0 nombres duplicados, sin cambios de stock/movimientos/Kardex (el renombrado no toca existencias). Evidencia: `scripts/catalogo_ortografia.json` (36 PATCH con registro antes/después por SKU; cambio neto final: 32 SKUs).
+
+---
+
 **Impacto en incidencias:** D-2 **RESUELTA**. Las incidencias D-1, D-3–D-8 permanecen abiertas con sus acciones recomendadas originales. Nota D-5 (productos sin datos comerciales) ahora aplica también a los 14 SKUs de esta adenda (price=0/cost=0 y nombre provisional pendiente de definición comercial).
 
 ---
@@ -447,5 +499,6 @@ Observaciones: (a) SKUs 31/32 aparecen con los nombres M6/M8 **intercambiados** 
 - Consultas SQL/REST de solo lectura contra PostgREST del proyecto (`rest/v1`), citadas sección por sección.
 - Adenda (sección G): `scripts/skus160_173_state.json` (IDs y verificación por producto) y `scripts/skus160_173_reconcile.json` (conciliación final 179/179).
 - Renombrado comercial y comparación del catálogo oficial: `scripts/skus160_173_rename.json` (14 renombrados + 13 discrepancias reportadas).
+- Normalización ortográfica del catálogo (G.5): `scripts/catalogo_ortografia.json` (36 PATCH, cambio neto por SKU, verificación final).
 
 Hechos comprobados vs hipótesis: cada afirmación de este informe está respaldada por una consulta a la base de datos o por la respuesta HTTP del flujo oficial correspondiente; donde una causa es hipótesis (p. ej. el origen de la apertura negativa del SKU 81), se marca expresamente como no determinada.
