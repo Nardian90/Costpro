@@ -191,7 +191,7 @@ export function round2(n: number): number {
 
 /**
  * Redondeo de CANTIDADES a 6 decimales: elimina el ruido de flotantes de la
- * suma sin destruir la precisión real del inventario (MISIÓN §8: 10.125, 65.25,
+ * suma sin destruir la precisión real del inventario (MISIÓN §8: 10.125, 65.25, 966.1289,
  * 1.75 se muestran fieles — NUNCA se redondean a 2 decimales ni a enteros).
  */
 export function roundQ(n: number): number {

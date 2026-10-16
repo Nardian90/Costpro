@@ -29,7 +29,7 @@ export interface IpvExcelPayload {
 
 type CellValue = string | number;
 
-const QTY_ZFMT = '#,##0.###';
+const QTY_ZFMT = "#,##0.####";
 const MONEY_ZFMT = '#,##0.00';
 
 /**

@@ -137,7 +137,6 @@ export default function IpvVentasView() {
       } catch { /* selector opcional; el servidor valida la tienda final */ }
     })();
     return () => ctrl.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role, user?.activeStoreId]);
 
   useEffect(() => () => {
