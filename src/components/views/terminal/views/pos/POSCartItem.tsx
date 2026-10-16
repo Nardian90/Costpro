@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Image as ImageIcon,
   CreditCard,
+  Coins,
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
@@ -431,104 +432,23 @@ export const POSCartItem = ({
             </select>
           </div>
         )}
-        {/* FIX-LAYOUT (2026-07-10): Moneda + Tasa + Botón Tasas en una sola fila compacta */}
+        {/* FIX-TRANSF-EXTERIOR (2026-10-16): la moneda junto al botón Tasas
+            deja de ser un selector. La moneda del ítem la define el producto
+            (price_currency) — cambiarla a mano a mitad de venta reconvertía
+            precio, tasa y pagos en silencio y confundía el cuadre del cobro.
+            Las tasas se gestionan ÚNICAMENTE con el botón Tasas (su modal es la
+            fuente de verdad). Para cobrar en otra moneda, el cajero usa la
+            moneda de la FILA DE PAGO, que sí es una decisión del cobro.
+            Moneda = insignia informativa, no interactiva. */}
         <div className="flex gap-1 items-center">
-          <select
-            value={item.currency || 'CUP'}
-            onChange={(e) => {
-              const currency = e.target.value;
-              const gr = useCartStore.getState().globalRates[currency];
-              const rate = (gr && gr > 0) ? gr : 1;
-              let newPrice: number;
-              if (currency === 'CUP') {
-                newPrice = item.base_price_cup || item.price;
-              } else if (rate > 1) {
-                newPrice = (item.base_price_cup || item.price) / rate;
-              } else {
-                newPrice = item.price;
-                if (currency !== 'CUP') toast.info('Edita la TASA o usa el botón Tasas.');
-              }
-              useCartStore.setState((state) => ({
-                items: state.items.map((it) => {
-                  if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
-                    const updatedItem = { ...it, price: newPrice, currency, exchange_rate: rate, cash_currency: currency, transfer_currency: currency };
-                    updatedItem.subtotal = recalcSubtotal(updatedItem);
-                    // FIX-PAYMENT-ROWS: al cambiar moneda del item, resetear payments[] a 1 fila cash con el nuevo subtotal
-                    // (a menos que el usuario ya haya hecho override manual)
-                    if (!updatedItem.payment_manual_override) {
-                      updatedItem.payments = [{
-                        id: `pay_cur_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                        method: 'cash',
-                        amount: updatedItem.subtotal,
-                        currency,
-                        discount_type: null,
-                        discount_value: 0,
-                        discount_currency: currency,
-                      }];
-                    }
-                    // Sincronizar legacy manualmente (syncLegacyFields es internal del store)
-                    updatedItem.cash_paid = updatedItem.payments?.filter(p => p.method === 'cash').reduce((s, p) => s + p.amount, 0) || 0;
-                    updatedItem.transfer_paid = updatedItem.payments?.filter(p => p.method === 'transfer').reduce((s, p) => s + p.amount, 0) || 0;
-                    updatedItem.zelle_paid = updatedItem.payments?.filter(p => p.method === 'zelle').reduce((s, p) => s + p.amount, 0) || 0;
-                    return updatedItem;
-                  }
-                  return it;
-                }),
-                lastUpdated: Date.now(),
-              }));
-              if (currency !== 'CUP' && rate <= 1) {
-                fetch(`/api/exchange-rates?currency=${currency}&source=elToque&days=1`)
-                  .then(res => res.ok ? res.json() : null)
-                  .then(data => {
-                    if (!data) return;
-                    const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
-                    if (Array.isArray(rates) && rates.length > 0) {
-                      const sorted = rates.sort((a: any, b: any) => new Date(b.rate_date || 0).getTime() - new Date(a.rate_date || 0).getTime());
-                      if (sorted[0]?.rate > 0) {
-                        const fetchedRate = sorted[0].rate;
-                        useCartStore.getState().setGlobalRate(currency, fetchedRate);
-                        useCartStore.setState((state) => ({
-                          items: state.items.map((it) => {
-                            if (it.product_id === item.product_id && it.variant_id === item.variant_id && it.currency === currency) {
-                              const np = (item.base_price_cup || item.price) / fetchedRate;
-                              const ui = { ...it, exchange_rate: fetchedRate, price: np };
-                              ui.subtotal = recalcSubtotal(ui);
-                              // FIX-PAYMENT-ROWS: resetear payments[] si no hay override manual
-                              if (!ui.payment_manual_override) {
-                                ui.payments = [{
-                                  id: `pay_rate_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                                  method: 'cash',
-                                  amount: ui.subtotal,
-                                  currency: ui.cash_currency || ui.currency || 'CUP',
-                                  discount_type: null,
-                                  discount_value: 0,
-                                  discount_currency: ui.cash_currency || ui.currency || 'CUP',
-                                }];
-                              }
-                              ui.cash_paid = ui.payments?.filter(p => p.method === 'cash').reduce((s, p) => s + p.amount, 0) || 0;
-                              ui.transfer_paid = ui.payments?.filter(p => p.method === 'transfer').reduce((s, p) => s + p.amount, 0) || 0;
-                              ui.zelle_paid = ui.payments?.filter(p => p.method === 'zelle').reduce((s, p) => s + p.amount, 0) || 0;
-                              return ui;
-                            }
-                            return it;
-                          }),
-                          lastUpdated: Date.now(),
-                        }));
-                        toast.success(`Tasa: 1 ${currency} = ${fetchedRate} CUP`);
-                      }
-                    }
-                  })
-                  .catch(() => {});
-              }
-            }}
-            className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
-            aria-label={`Moneda para ${item.product.name}`}
+          <span
+            className="inline-flex items-center gap-1 bg-muted/40 border border-border/50 rounded-lg px-2 py-2 min-h-[36px] text-[10px] font-black shrink-0 select-none"
+            title="Moneda del producto (la define el producto). Para cobrar en otra moneda usa la moneda de la fila de pago. Las tasas se actualizan con el botón Tasas."
+            aria-label={`Moneda del producto ${item.product.name}: ${item.currency || 'CUP'}`}
           >
-            <option value="CUP">CUP</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="MLC">MLC</option>
-          </select>
+            <Coins className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
+            {item.currency || 'CUP'}
+          </span>
           {item.currency !== 'CUP' && (
             <input
               type="number"
@@ -621,19 +541,44 @@ export const POSCartItem = ({
           return (
             <div key={p.id} className="border border-border/30 rounded-lg p-2 space-y-1">
               <div className="flex flex-wrap gap-1 items-center">
-                {/* Selector de método */}
+                {/* Selector de método — FIX-TRANSF-EXTERIOR (2026-10-16):
+                    «Zelle» pasa a «Transf. Exterior» (el valor de BD sigue siendo
+                    'zelle' por compatibilidad de datos). Al elegir Transf.
+                    Exterior en una fila que estaba en CUP/MLC, la fila pasa a USD
+                    convirtiendo el monto a la tasa vigente → el equivalente en
+                    CUP se mantiene y no aparece un descuadre falso. */}
                 <select
                   value={p.method}
-                  onChange={(e) => useCartStore.getState().updateItemPaymentRow(
-                    item.product_id, item.variant_id, p.id,
-                    { method: e.target.value as 'cash' | 'transfer' | 'zelle' }
-                  )}
+                  onChange={(e) => {
+                    const method = e.target.value as 'cash' | 'transfer' | 'zelle';
+                    if (method === 'zelle' && p.currency !== 'USD' && p.currency !== 'EUR') {
+                      const storeRate = useCartStore.getState().globalRates['USD'];
+                      const validRate = typeof storeRate === 'number' && storeRate > 1 ? storeRate : 0;
+                      const converted = validRate > 0
+                        ? Math.max(0, Number(((p.amount || 0) / validRate).toFixed(2)))
+                        : (p.amount || 0);
+                      useCartStore.getState().updateItemPaymentRow(
+                        item.product_id, item.variant_id, p.id,
+                        { method, currency: 'USD', discount_currency: 'USD', amount: converted },
+                      );
+                      if (validRate > 0) {
+                        toast.info(`Transf. Exterior: moneda USD — monto convertido a la tasa vigente (1 USD = ${validRate} CUP).`);
+                      } else {
+                        toast.info('Transf. Exterior: moneda USD — ajusta el monto o actualiza la tasa en Tasas.');
+                      }
+                      return;
+                    }
+                    useCartStore.getState().updateItemPaymentRow(
+                      item.product_id, item.variant_id, p.id,
+                      { method }
+                    );
+                  }}
                   className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                   aria-label={`Método de pago fila ${idx + 1}`}
                 >
                   <option value="cash">💵 Efect.</option>
                   <option value="transfer">📱 Transf.</option>
-                  <option value="zelle">💳 Zelle</option>
+                  <option value="zelle">💳 Transf. Exterior</option>
                 </select>
 
                 {/* Monto */}
@@ -651,7 +596,11 @@ export const POSCartItem = ({
                   />
                 </div>
 
-                {/* Moneda */}
+                {/* Moneda — FIX-TRANSF-EXTERIOR (2026-10-16): si la fila es
+                    Transf. Exterior (zelle) solo se permiten USD o EUR (moneda
+                    extranjera); CUP/MLC no aplican a una transferencia del
+                    exterior. El store además fuerza esta regla como fuente única
+                    de verdad (updateItemPaymentRow). */}
                 <select
                   value={p.currency || 'CUP'}
                   onChange={(e) => useCartStore.getState().updateItemPaymentRow(
@@ -659,11 +608,11 @@ export const POSCartItem = ({
                     { currency: e.target.value }
                   )}
                   className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
+                  aria-label={`Moneda de pago fila ${idx + 1}`}
                 >
-                  <option value="CUP">CUP</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="MLC">MLC</option>
+                  {(p.method === 'zelle' ? ['USD', 'EUR'] : ['CUP', 'USD', 'EUR', 'MLC']).map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
                 </select>
 
                 {/* Tipo de ajuste (—, %, $) */}

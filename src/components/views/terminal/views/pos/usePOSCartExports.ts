@@ -152,7 +152,7 @@ export function usePOSCartExports({ lastSale }: UsePOSCartExportsOptions) {
       .join("\n");
     const methodLabel = lastSale.paymentMethod === "cash" ? "Efectivo"
       : lastSale.paymentMethod === "transfer" ? "Transferencia"
-      : lastSale.paymentMethod === "zelle" ? "Zelle"
+      : lastSale.paymentMethod === "zelle" ? "Transf. Exterior"
       : lastSale.paymentMethod === "mixed" ? "Mixto"
       : "Otro";
     const message = `¡Hola!\nDetalle de Venta:\n${itemsList}\n\nTotal: ${formatCurrency(lastSale.total)}\nMétodo: ${methodLabel}\n\nGracias por su preferencia.`;
