@@ -33,6 +33,9 @@ export type ViewType = 'occ' | 'dashboard' | 'store-dashboard' | 'wallet' | 'pos
 | 'calculator'
 // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
 | 'accounts-payable'
+// MISIÓN 2026-10-16 (IPV): informe de ingresos por ventas con conciliación de
+// inventario. viewId distinto de 'ipv' (módulo experimental de Dexie).
+| 'ipv_ventas'
 // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
 | 'production-orders';
 

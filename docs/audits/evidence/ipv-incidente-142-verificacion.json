@@ -1,0 +1,231 @@
+{
+  "generado": "2026-10-16T15:27:35.743Z",
+  "tienda": "ENERVIDA-VITALLCONS",
+  "antes": {
+    "filas_descargadas": 1000,
+    "filas_totales": 1123,
+    "truncadas": 123,
+    "sku142": {
+      "ei": 26,
+      "vendidas": 0,
+      "ef": 26,
+      "cup": 10000
+    },
+    "incidencia_sku142": [
+      {
+        "tipo": "RECONCILIATION",
+        "calculado": 26,
+        "esperado": 21,
+        "dif": -5
+      }
+    ]
+  },
+  "periodo_14_15": {
+    "filas_ledger": 1123,
+    "sku142": {
+      "ei": 26,
+      "vendidas": 5,
+      "ef": 21,
+      "cup": 10000,
+      "usd": 0
+    },
+    "incidencias_sku142": [],
+    "incidencias_prioritarias": []
+  },
+  "periodo_solo_15": {
+    "sku142": {
+      "ei": 23,
+      "vendidas": 2,
+      "ef": 21,
+      "cup": 4000
+    },
+    "incidencias_sku142": [],
+    "sku175": {
+      "ei": 0,
+      "entradas": 1.2,
+      "ef": 1.2
+    }
+  },
+  "matriz_skus_prioritarios": [
+    {
+      "sku": "15",
+      "nombre": "Cemento Cola",
+      "inventario_canonico": 39,
+      "movimientos_en_ledger": 33,
+      "ei": 49,
+      "vendidas": 1,
+      "ef": 39,
+      "cup": 10000,
+      "incidencias": []
+    },
+    {
+      "sku": "17",
+      "nombre": "Césped Artificial",
+      "inventario_canonico": 54,
+      "movimientos_en_ledger": 10,
+      "ei": 6,
+      "vendidas": 6,
+      "ef": 54,
+      "cup": 39000,
+      "incidencias": []
+    },
+    {
+      "sku": "81",
+      "nombre": "Bridas de 4x8 400mm",
+      "inventario_canonico": 100,
+      "movimientos_en_ledger": 9,
+      "ei": -100,
+      "vendidas": -100,
+      "ef": 100,
+      "cup": 0,
+      "incidencias": []
+    },
+    {
+      "sku": "87",
+      "nombre": "Cable Solar Negro 4mm",
+      "inventario_canonico": 63,
+      "movimientos_en_ledger": 83,
+      "ei": 58,
+      "vendidas": -5,
+      "ef": 63,
+      "cup": 0,
+      "incidencias": []
+    },
+    {
+      "sku": "88",
+      "nombre": "Cable Solar Rojo 4mm",
+      "inventario_canonico": 63,
+      "movimientos_en_ledger": 81,
+      "ei": 58,
+      "vendidas": -5,
+      "ef": 63,
+      "cup": 0,
+      "incidencias": []
+    },
+    {
+      "sku": "92",
+      "nombre": "Juego de pata",
+      "inventario_canonico": 3,
+      "movimientos_en_ledger": 28,
+      "ei": 3,
+      "vendidas": 0,
+      "ef": 3,
+      "cup": 47400,
+      "incidencias": []
+    },
+    {
+      "sku": "100",
+      "nombre": "Autorroscante chiquito",
+      "inventario_canonico": 150,
+      "movimientos_en_ledger": 11,
+      "ei": 0,
+      "vendidas": 0,
+      "ef": 150,
+      "cup": 0,
+      "incidencias": []
+    },
+    {
+      "sku": "111",
+      "nombre": "Grapas plásticas con clavo de acero",
+      "inventario_canonico": 23,
+      "movimientos_en_ledger": 8,
+      "ei": 24,
+      "vendidas": 1,
+      "ef": 23,
+      "cup": 2000,
+      "incidencias": []
+    },
+    {
+      "sku": "139",
+      "nombre": "Panel de 640 W Suntech",
+      "inventario_canonico": 0,
+      "movimientos_en_ledger": 22,
+      "ei": 9,
+      "vendidas": 1,
+      "ef": 0,
+      "cup": 165900,
+      "incidencias": []
+    },
+    {
+      "sku": "141",
+      "nombre": "Cemento TBV 50 Kg",
+      "inventario_canonico": 20,
+      "movimientos_en_ledger": 30,
+      "ei": 34,
+      "vendidas": 11,
+      "ef": 20,
+      "cup": 220000,
+      "incidencias": []
+    },
+    {
+      "sku": "142",
+      "nombre": "Cemento Blanco 2 Kg",
+      "inventario_canonico": 21,
+      "movimientos_en_ledger": 5,
+      "ei": 26,
+      "vendidas": 5,
+      "ef": 21,
+      "cup": 10000,
+      "incidencias": []
+    },
+    {
+      "sku": "174",
+      "nombre": "Grey cerámico beige 50x50",
+      "inventario_canonico": 1,
+      "movimientos_en_ledger": 1,
+      "ei": 0,
+      "vendidas": 0,
+      "ef": 1,
+      "cup": 0,
+      "incidencias": []
+    },
+    {
+      "sku": "175",
+      "nombre": "Losa Porcelanato 25x60",
+      "inventario_canonico": 1.2,
+      "movimientos_en_ledger": 1,
+      "ei": 0,
+      "vendidas": 0,
+      "ef": 1.2,
+      "cup": 0,
+      "incidencias": []
+    },
+    {
+      "sku": "176",
+      "nombre": "Batería 12.8v100Ah",
+      "inventario_canonico": 1,
+      "movimientos_en_ledger": 1,
+      "ei": 0,
+      "vendidas": 0,
+      "ef": 1,
+      "cup": 0,
+      "incidencias": []
+    },
+    {
+      "sku": "177",
+      "nombre": "MPPT 4000W",
+      "inventario_canonico": 1,
+      "movimientos_en_ledger": 1,
+      "ei": 0,
+      "vendidas": 0,
+      "ef": 1,
+      "cup": 0,
+      "incidencias": []
+    }
+  ],
+  "veredictos": {
+    "ANTES: consulta sin paginar trunca filas": true,
+    "ANTES: SKU 142 mostraba Ef=26 sin ventas en cantidades": true,
+    "DESPUÉS 14-15: Ei=26": true,
+    "DESPUÉS 14-15: V=5": true,
+    "DESPUÉS 14-15: Ef=21": true,
+    "DESPUÉS 14-15: importe 10.000 CUP": true,
+    "DESPUÉS solo-15: Ei=23 (cierre del 14/10)": true,
+    "DESPUÉS solo-15: V=2 y Ef=21": true,
+    "DESPUÉS solo-15: importe 4.000 CUP": true,
+    "SKU 142 sin incidencias tras la corrección": true,
+    "SKUs prioritarios sin RECONCILIATION/PRE_LEDGER espurias": true,
+    "El stock canónico no fue alterado (21.0000)": true
+  },
+  "todas_ok": true
+}
