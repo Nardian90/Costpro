@@ -34,12 +34,13 @@ Respecto a las tasas de cambio, la fuente de verdad ya era correcta (`store_exch
 | `src/hooks/api/useDailyRatesConfirmation.ts` **(nuevo)** | Persistencia servidor (`user_preferences`, clave `rates-confirmation:<tienda>:<día>`), re-pedido si cambian las tasas, auditoría, idempotencia, permisos `canManageStore`. | Frecuencia 1/día/tienda/usuario + caducidad estructural. |
 | `src/services/audit-service.ts` | Métodos `logNegativeSaleAttempt` y `logRatesConfirmed` (nunca lanzan). | Trazabilidad de intentos y confirmaciones. |
 | `src/app/api/pos/checkout/route.ts` | Zod de `payment_incidents`/`sale_notes`; paso condicional al RPC (venta exacta = payload canónico); mapeo `ERR_NEGATIVE_SALE` → 422 + auditoría server-side; mapeo `ERR_RATE_REQUIRED_FOR_INCIDENT` → 409. | Validación y trazabilidad server-side. |
-| `src/app/api/store-rates/route.ts` | GET devuelve `updated_at`; POST registra `UPDATE_STORE_RATES` (old/new) y refresca `updated_at` (la columna no tiene trigger). | Auditar quién cambió la tasa y cuándo. |
+| `src/app/api/store-rates/route.ts` | GET devuelve `updated_at`; POST registra `UPDATE_STORE_RATES` (old/new) y refresca `updated_at` (la columna no tiene trigger). Lectura previa e inserción de auditoría **resilientes** (nunca rompen la escritura). | Auditar quién cambió la tasa y cuándo. |
 | `src/lib/audit/eventPresentation.ts` | Títulos de negocio para los 4 eventos nuevos; `SALE_PAYMENT_INCIDENT` añadido a la whitelist documental («Ver venta»). | Visibilidad en Auditoría. |
 | `src/components/views/terminal/views/audit/AuditEventCard.tsx` | Tarjetas de negocio para los 4 eventos nuevos (diferencia, fuente, día). | Lectura humana del evento. |
 | `supabase/migrations/20261017000000_pos_payment_incidents_negative_guard.sql` **(nueva)** | Columnas `notes`/`payment_incidents`; relajación de `chk_mixed_payment_consistency` SOLO con incidencias; `CHECK (total_amount >= 0) NOT VALID`; redefinición quirúrgica de `create_sale_v2` (params `p_notes`/`p_payment_incidents` al final de la firma, guard `ERR_NEGATIVE_SALE`, guardrail `ERR_RATE_REQUIRED_FOR_INCIDENT`, nota automática, evento `SALE_PAYMENT_INCIDENT`, hash de idempotencia ampliado, auto-total Zelle desactivado con incidencias). | Capa de persistencia de toda la misión. |
 | `tsconfig.mision-1710.json` **(nuevo)** | Typecheck acotado (el `tsc --noEmit` global agota la memoria en el entorno local; CI usa `bunx tsc`). | Verificación local. |
 | Tests (4 archivos nuevos, 36 tests) | Ver §8. | Matriz de pruebas de la misión. |
+| `src/__tests__/api/sec-ts-02-store-rates.test.ts` | Mock ampliado con `insert` (probes de auditoría) + aserciones del nuevo contrato: escritura autorizada audita `UPDATE_STORE_RATES`; un 403 no deja traza. | Contrato de seguridad ampliado con auditoría. |
 
 ## 3. Migraciones
 
@@ -101,7 +102,7 @@ Los metadatos de `CREATE_SALE_V2` ahora incluyen `has_payment_incident`, `paymen
 
 ## 8. Matriz de pruebas con resultados reales
 
-Suite ejecutada con Vitest (entorno jsdom). Resultado: **36/36 tests nuevos verdes** y **153/153 regresión POS existente verdes** (incluye el caso de producción MPPT/ENERVIDA-VITALLCONS y el gate fail-closed sin tasas). Suite completa del repo: ver anexo al final.
+Suite ejecutada con Vitest (entorno jsdom). Resultado final de la **suite completa del repositorio: 179 archivos pasados, 3103 tests pasados, 0 fallidos (24 skipped por diseño)** — incluye los 36 tests nuevos de esta misión y toda la regresión POS existente (153/153, entre ellos el caso de producción MPPT/ENERVIDA-VITALLCONS y el gate fail-closed sin tasas).
 
 **A. Diferencias de pago**
 

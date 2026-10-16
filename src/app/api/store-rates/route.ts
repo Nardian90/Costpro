@@ -124,13 +124,21 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // MISIÓN-TASAS (2026-10-17): trazabilidad completa del cambio (quién,
     // cuándo, valores anteriores vs nuevos) en el mecanismo canónico de
     // auditoría — antes solo quedaba un logger.info sobrescribible.
-    const { data: prevRows } = await admin
-      .from('store_exchange_rates')
-      .select('currency, rate')
-      .eq('store_id', storeId);
+    // Resiliente por diseño: un fallo de auditoría (o de la lectura previa)
+    // JAMÁS rompe ni revierte la actualización de tasas (patrón audit-service).
     const previousRates: Record<string, number> = {};
-    for (const r of prevRows || []) {
-      previousRates[r.currency] = parseFloat(r.rate);
+    try {
+      const { data: prevRows, error: prevError } = await admin
+        .from('store_exchange_rates')
+        .select('currency, rate')
+        .eq('store_id', storeId);
+      if (!prevError && prevRows) {
+        for (const r of prevRows) {
+          previousRates[r.currency] = parseFloat(r.rate);
+        }
+      }
+    } catch (prevEx) {
+      logger.warn('WALLET', `Store rates previous-read failed (no bloquea): ${String(prevEx)}`);
     }
 
     const { error } = await admin.from('store_exchange_rates')
@@ -141,22 +149,24 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: 'Error interno' }, { status: 500 });
     }
 
-    const { error: auditError } = await admin.from('audit_logs').insert({
-      user_id: session.user.id,
-      action: 'UPDATE_STORE_RATES',
-      table_name: 'store_exchange_rates',
-      record_id: storeId,
-      store_id: storeId,
-      metadata: {
-        previous_rates: previousRates,
-        new_rates: rates,
-        timestamp: new Date().toISOString(),
-      },
-    });
-    if (auditError) {
-      // La actualización NO se revierte por un fallo de auditoría: se registra
-      // el fallo y se responde éxito (patrón audit-service, nunca bloquear).
-      logger.error('WALLET', `Store rates audit insert failed: ${auditError.message}`);
+    try {
+      const { error: auditError } = await admin.from('audit_logs').insert({
+        user_id: session.user.id,
+        action: 'UPDATE_STORE_RATES',
+        table_name: 'store_exchange_rates',
+        record_id: storeId,
+        store_id: storeId,
+        metadata: {
+          previous_rates: previousRates,
+          new_rates: rates,
+          timestamp: new Date().toISOString(),
+        },
+      });
+      if (auditError) {
+        logger.error('WALLET', `Store rates audit insert failed: ${auditError.message}`);
+      }
+    } catch (auditEx) {
+      logger.error('WALLET', `Store rates audit exception (no bloquea): ${String(auditEx)}`);
     }
 
     logger.info('WALLET', `Store rates saved by ${session.user.id} for store ${storeId}`);
