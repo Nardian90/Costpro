@@ -1,0 +1,115 @@
+{
+  "log": [
+    {
+      "ts": "2026-10-16T17:03:46.103Z",
+      "paso": "landing",
+      "detalle": "cookies aceptadas"
+    },
+    {
+      "ts": "2026-10-16T17:03:47.850Z",
+      "paso": "navegación",
+      "detalle": "click Entrar a COSTPRO del landing"
+    },
+    {
+      "ts": "2026-10-16T17:03:50.508Z",
+      "paso": "login",
+      "detalle": "credenciales enviadas (admin@demo.com)"
+    },
+    {
+      "ts": "2026-10-16T17:03:56.807Z",
+      "paso": "login",
+      "detalle": {
+        "loggedIn": true
+      }
+    },
+    {
+      "ts": "2026-10-16T17:03:57.233Z",
+      "paso": "nav",
+      "detalle": "click OPERACIÓN"
+    },
+    {
+      "ts": "2026-10-16T17:03:59.432Z",
+      "paso": "nav",
+      "detalle": "click Almacén"
+    },
+    {
+      "ts": "2026-10-16T17:04:02.009Z",
+      "paso": "nav",
+      "detalle": "click Servicios Recibidos"
+    },
+    {
+      "ts": "2026-10-16T17:04:05.379Z",
+      "paso": "modal",
+      "detalle": "click Nuevo Servicio"
+    },
+    {
+      "ts": "2026-10-16T17:04:07.636Z",
+      "paso": "modal",
+      "detalle": "click Gestionar tipos"
+    },
+    {
+      "ts": "2026-10-16T17:04:10.231Z",
+      "paso": "PUNTO CRITICO",
+      "detalle": {
+        "agregarVisible": true
+      }
+    },
+    {
+      "ts": "2026-10-16T17:04:11.124Z",
+      "paso": "submit",
+      "detalle": "click Crear tipo"
+    },
+    {
+      "ts": "2026-10-16T17:04:11.169Z",
+      "paso": "API service-types",
+      "detalle": {
+        "method": "POST",
+        "status": 401,
+        "body": "{\"error\":\"No autorizado\",\"message\":\"Se requiere sesión activa\"}"
+      }
+    },
+    {
+      "ts": "2026-10-16T17:04:14.748Z",
+      "paso": "RESULTADO CREACIÓN",
+      "detalle": {
+        "toastExito": false,
+        "alertas": [
+          "Anulado",
+          "Anulado",
+          "Anulado",
+          "Anulado",
+          "Anulado"
+        ]
+      }
+    },
+    {
+      "ts": "2026-10-16T17:04:14.753Z",
+      "paso": "lista",
+      "detalle": {
+        "nuevoTipoEnLista": false
+      }
+    },
+    {
+      "ts": "2026-10-16T17:04:31.400Z",
+      "paso": "PERSISTENCIA",
+      "detalle": {
+        "persisteTrasRecarga": false
+      }
+    }
+  ],
+  "consoleErrors": [
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "WebSocket is already in CLOSING or CLOSED state."
+  ]
+}

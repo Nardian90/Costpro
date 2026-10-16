@@ -1,0 +1,12 @@
+[
+  {
+    "p": "formulario",
+    "d": "captura con selector de tipos"
+  },
+  {
+    "p": "gestionar-tipos",
+    "d": {
+      "filasVisibles": 10
+    }
+  }
+]

@@ -56,7 +56,7 @@ export default function ReceivedServicesView() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   // MISIÓN 2026-10-15: catálogo de tipos de servicio desde la fuente oficial
   // (tabla service_types) + acceso «Gestionar tipos de servicio».
-  const { types, activeTypes, loading: typesLoading, refetch: refetchTypes } = useServiceTypes();
+  const { types, activeTypes, loading: typesLoading, error: typesError, refetch: refetchTypes } = useServiceTypes();
   const [managerOpen, setManagerOpen] = useState(false);
   const [preselectedTypeId, setPreselectedTypeId] = useState<string | null>(null);
   // FIX-PAYMENT-TRACKING: estado para modal de detalle con tab de pagos
@@ -355,6 +355,7 @@ export default function ReceivedServicesView() {
         loading={typesLoading}
         onRefresh={refetchTypes}
         onTypeCreated={(created) => { setPreselectedTypeId(created.id); }}
+        loadError={typesError}
       />
 
       {/* FIX-PAYMENT-TRACKING (2026-07-12): Modal de detalle con tab de pagos */}

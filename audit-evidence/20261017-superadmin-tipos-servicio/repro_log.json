@@ -1,0 +1,116 @@
+{
+  "log": [
+    {
+      "ts": "2026-10-16T16:52:04.105Z",
+      "paso": "landing",
+      "detalle": "cookies aceptadas"
+    },
+    {
+      "ts": "2026-10-16T16:52:05.862Z",
+      "paso": "navegación",
+      "detalle": "click Entrar a COSTPRO del landing"
+    },
+    {
+      "ts": "2026-10-16T16:52:08.412Z",
+      "paso": "login",
+      "detalle": "credenciales enviadas (admin@demo.com)"
+    },
+    {
+      "ts": "2026-10-16T16:52:14.503Z",
+      "paso": "login",
+      "detalle": {
+        "loggedIn": true
+      }
+    },
+    {
+      "ts": "2026-10-16T16:52:14.978Z",
+      "paso": "nav",
+      "detalle": "click OPERACIÓN"
+    },
+    {
+      "ts": "2026-10-16T16:52:17.210Z",
+      "paso": "nav",
+      "detalle": "click Almacén"
+    },
+    {
+      "ts": "2026-10-16T16:52:19.782Z",
+      "paso": "nav",
+      "detalle": "click Servicios Recibidos"
+    },
+    {
+      "ts": "2026-10-16T16:52:23.222Z",
+      "paso": "modal",
+      "detalle": "click Nuevo Servicio"
+    },
+    {
+      "ts": "2026-10-16T16:52:25.496Z",
+      "paso": "modal",
+      "detalle": "click Gestionar tipos"
+    },
+    {
+      "ts": "2026-10-16T16:52:28.096Z",
+      "paso": "PUNTO CRITICO",
+      "detalle": {
+        "agregarVisible": true
+      }
+    },
+    {
+      "ts": "2026-10-16T16:52:28.537Z",
+      "paso": "submit",
+      "detalle": "click Crear tipo"
+    },
+    {
+      "ts": "2026-10-16T16:52:29.848Z",
+      "paso": "API service-types",
+      "detalle": {
+        "method": "POST",
+        "status": 201,
+        "body": "{\"data\":{\"id\":\"796c309c-0fa6-44b0-bebb-c6a719c596cf\",\"store_id\":null,\"name\":\"QA Prueba SuperAdmin E2E\",\"code\":\"QAPRU\",\"description\":\"Tipo de prueba E2E misión superadmin 2026-10-17\",\"is_active\":true,\"created_at\":\"2026-10-16T16:52:29.635586+00:00\",\"usage_count\":0}}"
+      }
+    },
+    {
+      "ts": "2026-10-16T16:52:32.147Z",
+      "paso": "RESULTADO CREACIÓN",
+      "detalle": {
+        "toastExito": true,
+        "alertas": [
+          "Anulado",
+          "Anulado",
+          "Anulado",
+          "Anulado",
+          "Anulado"
+        ]
+      }
+    },
+    {
+      "ts": "2026-10-16T16:52:32.150Z",
+      "paso": "lista",
+      "detalle": {
+        "nuevoTipoEnLista": true
+      }
+    },
+    {
+      "ts": "2026-10-16T16:52:48.599Z",
+      "paso": "PERSISTENCIA",
+      "detalle": {
+        "persisteTrasRecarga": true
+      }
+    },
+    {
+      "ts": "2026-10-16T16:52:51.924Z",
+      "paso": "LIMPIEZA",
+      "detalle": {
+        "tipoDesactivado": false
+      }
+    }
+  ],
+  "consoleErrors": [
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "WebSocket is already in CLOSING or CLOSED state.",
+    "WebSocket is already in CLOSING or CLOSED state."
+  ]
+}
