@@ -64,9 +64,10 @@ El sufijo `calc` **no venía de la base de datos** ni de un alias de consulta: e
 | Nuevas pruebas de regresión — paginación (`fetch-all.test.ts`) | 7/7 (incluye la reproducción documental: consulta sin paginar = 1000 de 1123) |
 | Nuevas pruebas del incidente (`incidente-142.test.ts`) | 15/15 (Pruebas A, B, C, D, E, F, G, H, I, J, K + reproducción del defecto) |
 | Verificación en vivo con datos reales (solo lectura) | **12/12 veredictos OK** — `docs/audits/evidence/ipv-incidente-142-verificacion.json` |
-| `tsc --noEmit` | limpio (exit 0) |
+| `tsc --noEmit` | limpio (exit 0, incluye `scripts/`) |
 | `eslint` (archivos del IPV) | 0 errores (5 avisos preexistentes de estilo, sin relación) |
-| `next build` local | **No ejecutable en este contenedor (OOM con 4 GB en Turbopack y webpack)** — el build autoritativo corre en CI/Vercel sobre el PR #1411 (§E.6) |
+| `next build` local | No ejecutable en este contenedor (OOM con 4 GB en Turbopack y webpack) — **el build de producción SÍ compila en CI** (check «TypeCheck + Lint + Unit Tests + Build» verde) |
+| CI sobre `2e9bb34` (PR #1411) | **6/6 checks exitosos**: TypeCheck+Lint+UnitTests+Build · Unit & Integration Tests · Security Audit · TypeScript Security Checks · Allowlist Review · Vercel Preview Comments (E2E/SQL skipped por condiciones del workflow, igual que en commits previos) |
 
 ### A.6 Incidencias históricas que permanecen (reales y documentadas, no ocultas)
 
@@ -227,8 +228,11 @@ python3 scripts/ipv/db_query.py "<SQL>"    → auditoría de datos, solo lectura
 
 ### E.6 Git, PR y despliegue real
 
-- **Rama**: `feat/ipv-ingresos-por-ventas` · **PR**: [#1411](https://github.com/Nardian90/Costpro/pull/1411) (abierto, actualizado con esta corrección).
-- **Estado real del despliegue**: la app productiva (costpro4.vercel.app) sirve `main`; el IPV llega a producción al fusionar el PR. El build local **no** fue ejecutable por límite de memoria del contenedor (4 GB, OOM en Turbopack y webpack — documentado, sin alterar configuración del proyecto); **el build autoritativo es el de CI/Vercel sobre el PR**, que se verifica en los checks del commit de esta corrección (estado en §16 del informe original y en el PR).
+- **Rama**: `feat/ipv-ingresos-por-ventas` · **PR**: [#1411](https://github.com/Nardian90/Costpro/pull/1411) (abierto, actualizado con esta corrección y comentario de resumen).
+- **Commits de la misión correctiva**: `19ce3f6` (fix principal) y `2e9bb34` (tipos de los scripts de verificación — detectado por el TypeCheck de CI, corregido y re-verificado).
+- **CI**: verde 6/6 sobre `2e9bb34`, incluido el build de producción. Nota transparente: el primer run falló por (1) dos errores TypeScript en archivos nuevos (corregidos en `2e9bb34`) y (2) un test de UI flaky ajeno al IPV (`ai-command-center` — pasa 16/16 local y en el re-run de CI, sin cambios en ese componente; el commit previo `298de17` tenía CI verde con la misma suite).
+- **Estado real del despliegue**: la app productiva (costpro4.vercel.app) sirve `main`; el IPV llega a producción al fusionar el PR (los previews de Vercel del PR ya compilan la corrección). GitHub Push Protection bloqueó el primer push por tokens de auditoría hardcodeados en los scripts de verificación → externalizados a variables de entorno (`.env` untracked); ningún secreto en el repositorio.
+- **Seguridad de los scripts de auditoría**: `db_query.py` y `verificar_ipv_en_vivo.ts` leen las claves de `SUPABASE_ACCESS_TOKEN` / `SUPABASE_SERVICE_ROLE_KEY` del entorno; fallan explícitamente si faltan.
 
 ### E.7 Compromiso de integridad
 
