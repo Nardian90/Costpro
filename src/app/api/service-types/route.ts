@@ -16,10 +16,12 @@ import { withSecurity } from '@/lib/with-security';
  *     store_id = NULL y el modelo multitienda comparte la misma lista a
  *     todas las tiendas (el selector muestra el mismo catálogo en cualquier
  *     tienda activa; la creación del servicio sigue scoped al store activo).
- *   · Un recurso global lo gestiona el rol GLOBAL 'admin' (doctrina de
- *     src/lib/roles.ts: admin global = cuentas internas de Costpro que ven
- *     y gestionan todas las tiendas). Un manager de tienda NO debe poder
- *     mutar un catálogo que afecta a tiendas de otros tenants.
+ *   · Un recurso global lo gestiona el rol GLOBAL 'admin' y — orden del
+ *     negocio (2026-10-17, FIX ENCARGADO-SERVICIOS) — también el rol GLOBAL
+ *     'encargado'. En ambos casos el gate es sobre profiles.role (cuenta de
+ *     confianza operativa), NUNCA sobre membresías por tienda: un manager o
+ *     encargado de TIENDA (membership store-scoped) sigue sin poder mutar un
+ *     catálogo que afecta a tiendas de otros tenants.
  *   · Lectura: cualquier usuario autenticado (necesita el selector).
  *
  * REGLAS DE INTEGRIDAD:
@@ -55,8 +57,10 @@ const PatchSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-function isAdmin(session: AuthenticatedSession): boolean {
-  return session?.user?.role === 'admin';
+/** Exportado para pruebas unitarias (patrón del archivo: normalizeTypeName). */
+export function isCatalogManager(session: AuthenticatedSession): boolean {
+  const role = session?.user?.role;
+  return role === 'admin' || role === 'encargado';
 }
 
 async function getAdminClient() {
@@ -107,10 +111,11 @@ async function getHandler(_req: NextRequest, session: AuthenticatedSession) {
 
   const types = data || [];
 
-  // usage_count solo para admin (gestión de desactivación). Evita exponer
-  // métricas agregadas de otras tiendas a usuarios operativos.
+  // usage_count solo para gestores del catálogo (admin/encargado global:
+  // gestión de desactivación). Evita exponer métricas agregadas de otras
+  // tiendas a usuarios operativos.
   let usageById: Record<string, number> = {};
-  if (isAdmin(session) && types.length > 0) {
+  if (isCatalogManager(session) && types.length > 0) {
     const { data: usageRows, error: usageErr } = await admin
       .from('received_services')
       .select('service_type_id')
@@ -130,8 +135,8 @@ async function getHandler(_req: NextRequest, session: AuthenticatedSession) {
 }
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
-  if (!isAdmin(session)) {
-    return NextResponse.json({ error: 'Solo un administrador puede gestionar el catálogo de tipos de servicio' }, { status: 403 });
+  if (!isCatalogManager(session)) {
+    return NextResponse.json({ error: 'Solo un administrador o encargado puede gestionar el catálogo de tipos de servicio' }, { status: 403 });
   }
   const rl = await rateLimit(`service-types:write:${session.user.id}`, { windowMs: 60_000, maxRequests: 30 });
   if (!rl.allowed) return NextResponse.json({ error: 'Demasiadas operaciones, intenta en un momento' }, { status: 429 });
@@ -182,8 +187,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
-  if (!isAdmin(session)) {
-    return NextResponse.json({ error: 'Solo un administrador puede gestionar el catálogo de tipos de servicio' }, { status: 403 });
+  if (!isCatalogManager(session)) {
+    return NextResponse.json({ error: 'Solo un administrador o encargado puede gestionar el catálogo de tipos de servicio' }, { status: 403 });
   }
   const rl = await rateLimit(`service-types:write:${session.user.id}`, { windowMs: 60_000, maxRequests: 30 });
   if (!rl.allowed) return NextResponse.json({ error: 'Demasiadas operaciones, intenta en un momento' }, { status: 429 });

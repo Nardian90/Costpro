@@ -5,6 +5,8 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { withSecurity } from '@/lib/with-security';
 import { canManageStore, canViewStore } from '@/lib/roles';
+import { validateServiceCreationDate } from '@/lib/received-services/service-date-validation';
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 
 /**
  * GET /api/received-services?store_id=...&status=...&type=...
@@ -102,8 +104,40 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });
     }
 
+    // FIX ENCARGADO-SERVICIOS: el cliente service-role se crea UNA vez al
+    // inicio del handler (lo usan la validación de fecha y el RPC v2.18.0).
+    const { createClient } = await import('@supabase/supabase-js');
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
+    const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+
     // FIX F3-P0-02: creación requiere rol de gestión en la tienda objetivo
     if (!canManageStore(session.user, storeId)) return forbidden();
+
+    // ─── FIX ENCARGADO-SERVICIOS (2026-10-17): reglas de FECHA DE CREACIÓN ───
+    // La fecha es escogida por el usuario (no inferida). Server-side NUNCA
+    // confía en la UI: (a) no futura respecto al día de negocio Habana,
+    // (b) no anterior a la última fecha NO anulada de la tienda (el igual
+    // pasa). Fuente única de la regla: validateServiceCreationDate.
+    if (body.service_date) {
+      const { data: lastRow } = await admin
+        .from('received_services')
+        .select('service_date')
+        .eq('store_id', storeId)
+        .neq('status', 'voided')
+        .order('service_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const dateCheck = validateServiceCreationDate(
+        body.service_date,
+        lastRow?.service_date ?? null,
+        todayBusinessDay(),
+      );
+      if (!dateCheck.ok) {
+        return NextResponse.json({ error: dateCheck.message }, { status: 400 });
+      }
+    }
 
     const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
@@ -115,12 +149,6 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // actor-explícito (patrón create_sale_v2), transaccional y ya está aplicado
     // y probado en LIVE → el POST no vuelve a depender del flag.
     {
-      const { createClient } = await import('@supabase/supabase-js');
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      if (!url || !key) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
-      const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-
       const { data: rpcResult, error: rpcErr } = await admin.rpc('create_received_service_v2', {
         p_store_id: storeId,
         p_supplier: body.supplier,

@@ -40,10 +40,14 @@ const TYPES: ServiceType[] = [
   { id: 't-3', store_id: null, name: 'Aduana', code: 'ADU', description: null, is_active: false, created_at: '2026-06-25', usage_count: 2 },
 ];
 
-function setup(admin: boolean) {
-  authState.user = admin
-    ? { id: 'u-1', role: 'admin', activeStoreId: 'store-1', memberships: [] }
-    : { id: 'u-2', role: 'clerk', activeStoreId: 'store-1', memberships: [{ store_id: 'store-1', role: 'clerk', status: 'active' }] };
+function setup(admin: boolean, role?: string) {
+  if (role) {
+    authState.user = { id: 'u-3', role, activeStoreId: 'store-1', memberships: [] } as typeof authState.user;
+  } else {
+    authState.user = admin
+      ? { id: 'u-1', role: 'admin', activeStoreId: 'store-1', memberships: [] }
+      : { id: 'u-2', role: 'clerk', activeStoreId: 'store-1', memberships: [{ store_id: 'store-1', role: 'clerk', status: 'active' }] };
+  }
   fetchMock.mockReset().mockResolvedValue({ ok: true, json: async () => ({}) });
 }
 
@@ -88,13 +92,22 @@ describe('ServiceTypesManagerModal', () => {
     expect(screen.getByText(/El catálogo está vacío/)).toBeInTheDocument();
   });
 
-  it('SR-11: clerk (no admin) ve modo lectura — sin botones de crear/editar/desactivar', () => {
+  it('SR-11: clerk (sin rol de gestión) ve modo lectura — sin botones de crear/editar/desactivar', () => {
     setup(false);
     renderModal();
     expect(screen.queryByText('Agregar nuevo tipo')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Editar tipo Transporte')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Desactivar tipo Transporte')).not.toBeInTheDocument();
-    expect(screen.getByText(/Solo un administrador puede modificarlo/)).toBeInTheDocument();
+    expect(screen.getByText(/Solo un administrador o encargado puede modificarlo/)).toBeInTheDocument();
+  });
+
+  it('ENC-SRV (2026-10-17): encargado GLOBAL ve el modo de gestión — puede crear/editar', () => {
+    setup(false, 'encargado');
+    renderModal();
+    expect(screen.getByText('Agregar nuevo tipo')).toBeInTheDocument();
+    expect(screen.getByLabelText('Editar tipo Transporte')).toBeInTheDocument();
+    expect(screen.getByLabelText('Desactivar tipo Transporte')).toBeInTheDocument();
+    expect(screen.getByText(/Agrega, edita o desactiva tipos/)).toBeInTheDocument();
   });
 
   it('SR-03: crear tipo — POST con nombre trimado y notificación al formulario creador', async () => {

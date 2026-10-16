@@ -12,8 +12,10 @@ vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'test-service-role-key');
  * Contrato del catálogo de tipos de servicio:
  *  · Lectura para cualquier usuario autenticado (necesita el selector);
  *    usage_count SOLO para admin global (no expone métricas de otras tiendas).
- *  · Escritura (POST/PATCH) SOLO admin global — catálogo GLOBAL compartido
- *    por todas las tiendas (doctrina roles.ts).
+ *  · Escritura (POST/PATCH) admin global + rol GLOBAL 'encargado' (orden del
+ *    negocio 2026-10-17) — catálogo GLOBAL compartido por todas las tiendas.
+ *    El gate es sobre profiles.role, NUNCA sobre membresías por tienda
+ *    (encargado SOLO por membership sigue bloqueado; doctrina roles.ts).
  *  · Integridad: trim, dedup case/espacio-insensitive, sin borrado físico
  *    (desactivación is_active), identidad preservada (id inmutable).
  */
@@ -189,6 +191,24 @@ describe('POST /api/service-types', () => {
       id: 'u-mgr', role: 'usuario', memberships: [{ store_id: 'store-1', role: 'manager', status: 'active' }],
     };
     const res = await POST(jsonReq({ name: 'Montaje' }));
+    expect(res.status).toBe(403);
+  });
+
+  it('ENC-SRV (2026-10-17): rol GLOBAL encargado → puede crear tipos', async () => {
+    const admin = setupAdminMock();
+    mockSession.value = { id: 'u-enc', role: 'encargado', memberships: [] };
+    const res = await POST(jsonReq({ name: 'Montaje Encargado' }));
+    expect(res.status).toBe(201);
+    const insert = admin.from('service_types').calls.find((c: any) => c.op === 'insert');
+    expect(insert.args[0]).toMatchObject({ store_id: null, name: 'Montaje Encargado', is_active: true });
+  });
+
+  it('ENC-SRV: encargado SOLO por membership (rol global usuario) → 403 (doctrina global)', async () => {
+    setupAdminMock();
+    mockSession.value = {
+      id: 'u-enc-store', role: 'usuario', memberships: [{ store_id: 'store-1', role: 'encargado', status: 'active' }],
+    };
+    const res = await POST(jsonReq({ name: 'Montaje Encargado' }));
     expect(res.status).toBe(403);
   });
 

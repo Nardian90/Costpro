@@ -11,6 +11,7 @@ import { useTranslations } from 'next-intl';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { useServiceTypes, type ServiceType } from '@/hooks/useServiceTypes';
+import { validateServiceCreationDate, todayHavanaISO } from '@/lib/received-services/service-date-validation';
 import { ServiceTypesManagerModal } from './ServiceTypesManagerModal';
 
 /**
@@ -48,7 +49,18 @@ const SERVICE_ICONS: Record<string, any> = {
 
 export default function ReceivedServicesView() {
   const t = useTranslations();
-  const { user } = useAuthStore();
+  // FIX ENCARGADO-SERVICIOS (2026-10-17): el módulo usaba fetch() crudo sin
+  // Authorization → getServerSession (SEC-024 fail-closed, SOLO Bearer)
+  // devolvía 401 «Se requiere sesión activa» en TODAS las operaciones
+  // (crear/activar/anular/recalcular/pagos) para CUALQUIER rol, incluido
+  // encargado cuyo backend (canManageStore + has_store_access_as) SÍ lo
+  // autoriza. Patrón canónico de la app (useUsers/useOfertas, FIX
+  // SUPERADMIN-TIPOS 2026-10-17): Bearer del token del auth store.
+  const { user, token: authToken } = useAuthStore();
+  const authHeaders = (): Record<string, string> => ({
+    'Content-Type': 'application/json',
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+  });
   const [services, setServices] = useState<ReceivedService[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -98,7 +110,7 @@ export default function ReceivedServicesView() {
     try {
       const res = await fetch('/api/received-services', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ ...data, store_id: user?.activeStoreId }),
       });
       if (!res.ok) {
@@ -114,7 +126,7 @@ export default function ReceivedServicesView() {
       if (newId) {
         const act = await fetch('/api/received-services', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders(),
           body: JSON.stringify({ service_id: newId, status: 'active', reason: 'Activación tras creación' }),
         });
         if (!act.ok) {
@@ -137,7 +149,7 @@ export default function ReceivedServicesView() {
     try {
       const res = await fetch('/api/received-services', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ service_id: id, status: 'active', reason: 'Activación desde la tabla' }),
       });
       if (!res.ok) {
@@ -156,7 +168,7 @@ export default function ReceivedServicesView() {
     try {
       const res = await fetch('/api/received-services', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ service_id: id, action: 'void' }),
       });
       if (!res.ok) throw new Error('Error al anular');
@@ -171,7 +183,7 @@ export default function ReceivedServicesView() {
     try {
       const res = await fetch('/api/received-services/distribute', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ service_id: id }),
       });
       if (!res.ok) throw new Error('Error al recalcular');
@@ -181,6 +193,15 @@ export default function ReceivedServicesView() {
       toast.error(e.message);
     }
   };
+
+  // FIX ENCARGADO-SERVICIOS: última fecha NO anulada de un servicio de la
+  // tienda activa (YYYY-MM-DD). Base de la regla «no anterior a la última
+  // fecha registrada» — se calcula de la lista ya cargada (misma fuente que
+  // la tabla) y se recalcula tras cada creación (fetchServices).
+  const lastServiceDate = services.reduce<string | null>((acc, s) => {
+    if (s.status === 'voided' || !s.service_date) return acc;
+    return !acc || s.service_date > acc ? s.service_date : acc;
+  }, null);
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 p-4">
@@ -343,6 +364,7 @@ export default function ReceivedServicesView() {
         typesLoading={typesLoading}
         onOpenManager={() => setManagerOpen(true)}
         preselectTypeId={preselectedTypeId}
+        lastServiceDate={lastServiceDate}
       />
 
       {/* MISIÓN 2026-10-15: gestión del catálogo de tipos de servicio.
@@ -382,7 +404,13 @@ function ServiceDetailModal({
   onClose: () => void;
   onUpdate: () => void;
 }) {
-  const { user } = useAuthStore();
+  const { user, token: detailAuthToken } = useAuthStore();
+  // FIX ENCARGADO-SERVICIOS: Bearer en pagos del servicio (mismo defecto 401
+  // SEC-024 del resto del módulo).
+  const payAuthHeaders = (): Record<string, string> => ({
+    'Content-Type': 'application/json',
+    ...(detailAuthToken ? { Authorization: `Bearer ${detailAuthToken}` } : {}),
+  });
   const [activeTab, setActiveTab] = useState<'info' | 'payments'>('info');
   const [payments, setPayments] = useState<any[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(true);
@@ -401,7 +429,9 @@ function ServiceDetailModal({
       // FIX-AUD5-H1: store_id es OBLIGATORIO en GET /api/payments — sin él la
       // ruta responde 400 y la pestaña mostraba "Sin pagos" en silencio.
       const storeId = user?.activeStoreId || '';
-      const res = await fetch(`/api/payments?ref_type=service&ref_id=${service.id}&store_id=${storeId}`);
+      const res = await fetch(`/api/payments?ref_type=service&ref_id=${service.id}&store_id=${storeId}`, {
+        headers: payAuthHeaders(),
+      });
       if (res.ok) setPayments(await res.json());
     } catch { /* ignore */ } finally { setLoadingPayments(false); }
   }, [service.id, user?.activeStoreId]);
@@ -436,7 +466,7 @@ function ServiceDetailModal({
     try {
       const res = await fetch('/api/payments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: payAuthHeaders(),
         body: JSON.stringify({
           ref_type: 'service',
           ref_id: service.id,
@@ -594,7 +624,7 @@ function ServiceDetailModal({
                   </div>
                   <button onClick={async () => {
                     if (!confirm('¿Anular este pago?')) return;
-                    const res = await fetch(`/api/payments/${p.id}`, { method: 'DELETE' });
+                    const res = await fetch(`/api/payments/${p.id}`, { method: 'DELETE', headers: payAuthHeaders() });
                     if (res.ok) { toast.success('Pago anulado'); fetchPayments(); onUpdate(); }
                   }} className="p-1.5 rounded text-destructive hover:bg-destructive/10" title="Anular">
                     <Ban className="w-3.5 h-3.5" />
@@ -626,9 +656,12 @@ interface CreateServiceModalProps {
   onOpenManager: () => void;
   /** Id del tipo recién creado en la gestión → preselección inmediata. */
   preselectTypeId: string | null;
+  /** FIX ENCARGADO-SERVICIOS: última fecha NO anulada de un servicio de la
+   *  tienda activa (YYYY-MM-DD) — el nuevo servicio no puede ser anterior. */
+  lastServiceDate: string | null;
 }
 
-function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoading, onOpenManager, preselectTypeId }: CreateServiceModalProps) {
+function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoading, onOpenManager, preselectTypeId, lastServiceDate }: CreateServiceModalProps) {
   const { user } = useAuthStore();
   // Selección por IDENTIDAD (id del catálogo), no por texto: renombrar un tipo
   // no rompe lo que el usuario tiene en la mano al crear el servicio.
@@ -639,6 +672,12 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
   const [method, setMethod] = useState<'amount' | 'quantity' | 'manual'>('amount');
   const [observations, setObservations] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // FIX ENCARGADO-SERVICIOS (2026-10-17): el usuario ESCOGE la fecha del
+  // servicio — el sistema NO la infiere. Se propone HOY (Habana) como
+  // comodino, pero es editable. Reglas (también server-side):
+  //   · min = última fecha NO anulada de la tienda (cronología creciente)
+  //   · max = hoy (Habana) — no se admiten fechas futuras
+  const [serviceDate, setServiceDate] = useState(todayHavanaISO());
 
   // ── Vinculación operativa ──
   const [otSearch, setOtSearch] = useState('');
@@ -711,6 +750,12 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
     }
   }, [isOpen]);
 
+  // FIX ENCARGADO-SERVICIOS: al abrir el modal, la fecha se reinicia a HOY
+  // (Habana). Nunca hereda la fecha de una operación anterior del modal.
+  useEffect(() => {
+    if (isOpen) setServiceDate(todayHavanaISO());
+  }, [isOpen]);
+
   // MISIÓN 2026-10-15: sincronizar la selección de tipo con el catálogo.
   // 1) Al abrir: si no hay selección válida, toma el primer tipo activo.
   // 2) Si la gestión acaba de crear un tipo (preselectTypeId), se selecciona
@@ -764,6 +809,13 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
       toast.error('El importe debe ser mayor a 0');
       return;
     }
+    // FIX ENCARGADO-SERVICIOS: misma regla de fecha que el servidor (fuente
+    // única) — feedback inmediato sin esperar el 400 de la API.
+    const dateCheck = validateServiceCreationDate(serviceDate, lastServiceDate, todayHavanaISO());
+    if (!dateCheck.ok) {
+      toast.error(dateCheck.message || 'Fecha del servicio inválida');
+      return;
+    }
     setSubmitting(true);
     onCreate({
       // MISIÓN 2026-10-15: identidad (service_type_id) + snapshot del nombre.
@@ -776,6 +828,8 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
       reference_doc: referenceDoc || null,
       distribution_method: method,
       observations: observations || null,
+      // FIX ENCARGADO-SERVICIOS: la fecha ESCOGIDA por el usuario (no inferida).
+      service_date: serviceDate || null,
       // v2.18.0 — Vinculación operativa (opcional, ambas pueden coexistir)
       receipt_ids: rcptSelected.map(r => r.id),
       production_order_ids: otSelected.map(o => o.id),
@@ -837,6 +891,28 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
               })}
             </div>
           )}
+        </div>
+
+        {/* FIX ENCARGADO-SERVICIOS: fecha del servicio ESCOGIDA por el usuario.
+            min = última fecha no anulada de la tienda · max = hoy (Habana). */}
+        <div>
+          <label htmlFor="service-date" className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">
+            Fecha del servicio <span aria-hidden="true" className="text-destructive">*</span>
+          </label>
+          <input
+            id="service-date"
+            type="date"
+            value={serviceDate}
+            min={lastServiceDate || undefined}
+            max={todayHavanaISO()}
+            onChange={e => setServiceDate(e.target.value)}
+            required
+            className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-bold min-h-[44px]"
+          />
+          <p className="text-[10px] text-muted-foreground mt-1.5">
+            No puede ser anterior a la última fecha registrada de un servicio de la tienda
+            {lastServiceDate ? ` (${lastServiceDate})` : ''} ni posterior al día actual.
+          </p>
         </div>
 
         {/* Proveedor */}

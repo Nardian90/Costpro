@@ -1,0 +1,23 @@
+{
+  "store": "E2E PILOT A CostPro E2E-20261016-26A846",
+  "storeId": "80aefecf-6617-4401-b61c-840de3170b9d",
+  "hoy": "2026-10-16",
+  "encargado": "e2e-e2e2026101626a846-enc@costpro.test",
+  "fecha_default": "2026-10-16",
+  "servicio1": {
+    "service_number": "SRV-20261016-00058",
+    "fecha": "2026-10-16"
+  },
+  "rechazo_anterior": {
+    "fecha_intentada": "2026-10-15",
+    "ultima": "2026-10-16",
+    "bloqueo": "min nativo (rangeUnderflow)"
+  },
+  "api": {
+    "futura": 400,
+    "anterior": 400,
+    "igual": 201,
+    "sin_auth": 401
+  },
+  "tipo_creado_por_encargado": "QA Encargado E2E E2E-20261016-26A846"
+}

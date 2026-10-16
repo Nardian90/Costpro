@@ -31,8 +31,10 @@ import type { ServiceType } from '@/hooks/useServiceTypes';
  *  · Desactivar un tipo EN USO advierte sus consecuencias antes de aplicar.
  *  · Fallo de red: el modal permanece abierto con los datos intactos.
  *
- * Permisos: la escritura exige rol global 'admin' (server-side). En la UI,
- * los usuarios sin el rol ven el catálogo en modo lectura (SR-11).
+ * Permisos: la escritura exige rol global 'admin' o 'encargado' (server-side,
+ * orden del negocio 2026-10-17). En la UI, los usuarios sin esos roles ven
+ * el catálogo en modo lectura (SR-11). El gate es sobre profiles.role —
+ * NUNCA sobre membresías por tienda (doctrina del catálogo GLOBAL).
  */
 
 interface ServiceTypesManagerModalProps {
@@ -54,7 +56,9 @@ export function ServiceTypesManagerModal({
   isOpen, onClose, types, loading, onRefresh, onTypeCreated, loadError,
 }: ServiceTypesManagerModalProps) {
   const { user, token } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  // ENC-SRV (2026-10-17): alineado con el gate server-side del route —
+  // admin global o encargado global gestionan el catálogo; el resto, lectura.
+  const canManageCatalog = user?.role === 'admin' || user?.role === 'encargado';
 
   /**
    * FIX SUPERADMIN-TIPOS (2026-10-17): el fetch crudo sin Authorization daba
@@ -177,16 +181,16 @@ export function ServiceTypesManagerModal({
       onOpenChange={(o) => { if (!o) onClose(); }}
       title={<span className="flex items-center gap-2"><Settings2 className="w-5 h-5" /> Gestionar tipos de servicio</span>}
       description={
-        isAdmin
+        canManageCatalog
           ? 'Catálogo compartido por todas las tiendas. Agrega, edita o desactiva tipos; el historial siempre conserva el tipo con el que cada servicio fue creado.'
-          : 'Catálogo compartido por todas las tiendas. Solo un administrador puede modificarlo (consulta de lectura).'
+          : 'Catálogo compartido por todas las tiendas. Solo un administrador o encargado puede modificarlo (consulta de lectura).'
       }
       maxWidth="sm:max-w-xl"
       aria-label="Gestión de tipos de servicio"
     >
       <div className="space-y-4">
-        {/* Acción crear — solo admin */}
-        {isAdmin && formMode.kind === 'closed' && (
+        {/* Acción crear — admin global o encargado global (ENC-SRV) */}
+        {canManageCatalog && formMode.kind === 'closed' && (
           <Button
             type="button"
             onClick={openCreate}
@@ -268,7 +272,7 @@ export function ServiceTypesManagerModal({
             </p>
           ) : types.length === 0 ? (
             <p className="text-xs text-center py-6 text-muted-foreground">
-              El catálogo está vacío. {isAdmin ? 'Agrega el primer tipo de servicio.' : 'Contacta a un administrador.'}
+              El catálogo está vacío. {canManageCatalog ? 'Agrega el primer tipo de servicio.' : 'Contacta a un administrador.'}
             </p>
           ) : (
             <ul className="divide-y divide-border/50 max-h-[320px] overflow-y-auto">
@@ -289,7 +293,7 @@ export function ServiceTypesManagerModal({
                         {t.description ? ` · ${t.description}` : ''}
                       </p>
                     </div>
-                    {isAdmin && (
+                    {canManageCatalog && (
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           type="button"
