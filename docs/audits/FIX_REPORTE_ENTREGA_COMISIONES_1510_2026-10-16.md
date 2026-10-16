@@ -124,3 +124,82 @@ Identidad: suma(día 15) + suma(día 16) = suma(rango 15–16) = −$300.00, sin
 2. **Mensaje preexistente en el teardown E2E** («E2E DATA CONTAMINATION … users=4», tiendas=0) — ajeno a esta misión (medición posterior al teardown; el run E2E fue net zero). Queda referenciado para su propia limpieza según `docs/audits/E2E-DATA-HYGIENE.md`.
 3. **Criterio canónico en BD (opcional):** el RPC `get_cash_report` mantiene `paid_at` en su interior; el criterio por periodo vive en la capa API. Si se desea moverlo a la BD, preparar migración RPC en una misión con autorización de despliegue.
 4. La columna FECHA del detalle muestra el `paid_at` original (16/10 14:25 UTC) — dato informativo de cuándo se pagó; la atribución del día la define el periodo mostrado en REFERENCIA.
+
+---
+
+# ADENDA 2026-10-16 (mismo día) — Criterio canónico del negocio: FECHA DEL PAGO
+
+## A1. Directivas del negocio que motivan esta adenda
+
+1. **Corregir el dato del pago investigado:** «cambia la fecha del pago de ejecución para el día 15/10/2026 a las 5:00 PM». El pago se ejecutó realmente el 15/10 a las 5:00 PM; la UI no daba a escoger la fecha del pago y el sistema asumió la fecha actual (16/10).
+2. **Feature de UI en Trabajadores y Comisiones → tab «Pagos»:** antes de confirmar el pago debe poder escogerse **la fecha del pago**. Reglas: ningún pago puede ser **inferior a la fecha del último pago realizado** ni **superior al día actual**.
+3. **Criterio canónico del reporte (textual):** «en el reporte siempre mostrará la fecha en que se confirmó el pago, porque puede ser que aunque la comisión corresponde al día 15/octubre/2026 no se haya pagado ese día sino el día 16 — y sí sería correcto que se refleje en el reporte de ese día 16 el pago».
+
+La directiva 3 **sustituye** el criterio por periodo de la §3 de este informe (que era correcto como análisis pero atribuía por un campo que el negocio no considera la fecha contable del pago). Con el dato corregido (directiva 1) y la fecha elegible (directiva 2), el criterio «fecha de confirmación del pago» produce el resultado correcto por construcción: un pago del periodo 15/10 confirmado el 16/10 se refleja en el reporte del 16; el pago investigado, ejecutado realmente el 15/10 17:00, se refleja en el reporte del 15.
+
+## A2. Rectificación de datos (directiva 1) — con auditoría completa
+
+| Campo | Valor |
+|---|---|
+| Pago | `7374dfad-b01b-477a-b2b0-4175f2dd2bfe` (300.00 CUP · cash · ENERVIDA · worker `f840a881…` · periodo 2026-10-15 → 2026-10-15) |
+| `paid_at` ANTES | `2026-10-16T14:25:10Z` (16/10 10:25 AM Habana — asumido por el sistema al no existir selector de fecha) |
+| `paid_at` DESPUÉS | **`2026-10-15T21:00:00Z` = 15/10/2026 17:00:00 Habana (UTC−4 DST)** — orden expresa del negocio |
+| Canal | PATCH PostgREST con JWT del operador admin@costpro.com (idéntico al `.update()` de la app) — script `scripts/fix_pago_comision_1510.py`, evidencia `scripts/fix_pago_comision_1510.json` |
+| Integridad verificada post-PATCH | `created_at` (2026-10-16T14:24:37Z) y `approved_at` (14:24:55Z) **intactos** (marcas de auditoría del sistema); monto, moneda, método, trabajador, periodo y relaciones **intactos**; la tienda sigue teniendo **exactamente 1** pago de comisión (sin duplicados); 0 filas en otras tiendas |
+| Reversibilidad | El valor previo queda registrado arriba y en el JSON de evidencia; un PATCH inverso restablece el estado original |
+
+## A3. Feature de UI (directiva 2) — fecha del pago elegible
+
+| Archivo | Cambio |
+|---|---|
+| `src/app/api/commissions/payments/[id]/route.ts` | Acción `pay` acepta `payment_date` (YYYY-MM-DD, Zod). Reglas server-side: (1) no posterior a HOY en zona de negocio; (2) no anterior al día de negocio del último `paid_at` pagado del trabajador (excluyendo el pago en curso). `paid_at` resultante: hoy → instante actual (compatibilidad); día pasado → ese día de negocio a la hora de registro. Sin fecha → asume HOY (comportamiento histórico). |
+| `src/lib/cash-report/period-attribution.ts` | Nuevas utilidades `todayBusinessDay()` e `instantForBusinessDay()` (día de negocio + hora de registro, convergencia determinista de offset) |
+| `src/components/views/terminal/views/workers/WorkersView.tsx` | Tab «Pagos»: campo **«Fecha del pago»** (móvil y escritorio) con `min` = último pago realizado del trabajador, `max` = hoy, default HOY; validación cliente con toast (defense in depth, el servidor revalida); `payment_date` viaja en el PATCH |
+| `e2e/commissions-payment-date-picker.spec.ts` | **NUEVO** — E2E de UI (tienda piloto aislada, net zero): campo visible con default hoy y max hoy, rechazo de fecha futura SIN pagar, pago con fecha pasada válida atribuido a ese día |
+
+La regla del negocio se interpreta **por trabajador** («ningún pago puede ser inferior a la fecha del último pago realizado» — orden cronológico de los pagos de cada trabajador); el servidor la aplica a TODOS los caminos de pago (también a los que no envían fecha, que asumen hoy y siempre la cumplen).
+
+## A4. Criterio del reporte realineado al canónico (directiva 3)
+
+| Archivo | Cambio |
+|---|---|
+| `src/lib/cash-report/period-attribution.ts` | `commissionPeriodOrFilter` (periodo+fallback) sustituido por `commissionPaidAtFilter` — atribución por `paid_at` en **ventana de negocio determinista (Habana)**; acepta ISO de la vista y date-only del PDF Diario (ventana UTC corregida) |
+| `src/app/api/cash-report/route.ts` · `details/route.ts` · `commissions-summary/route.ts` | Los 3 consumidores usan el mismo filtro por fecha de pago (criterio único total↔detalle) |
+| `src/__tests__/lib/cash-report-period-attribution.test.ts` | Reescrito: 16 pruebas (ventanas, días de negocio, instante de día pasado, filtro paid_at con casos 15/16/rango) |
+| `e2e/cash-report-commissions-period.spec.ts` | Reescrito: 8 E2E — pago pagado HOY aparece HOY y NO en su día de periodo (D−2); pago con `payment_date` retroactiva aparece en el día elegido; rango una sola vez; total==detalle; regresión de suma; fecha futura → 400; fecha anterior al último pago → 400 |
+
+**Nota de arquitectura actualizada (sustituye §3 y §11.3):** el RPC `get_cash_report` ya agrupaba por `paid_at` — con esta adenda, capa API y RPC quedan **alineados al mismo criterio canónico** (la capa API añade la ventana de negocio determinista). Ya no hay criterio mixto ni migración pendiente por este motivo.
+
+## A5. Pruebas ejecutadas (adenda) y resultado individual
+
+| Prueba | Resultado |
+|---|---|
+| Unitarias `cash-report-period-attribution.test.ts` (v2) | **16/16 ✓** |
+| E2E `cash-report-commissions-period.spec.ts` (v2): HOY presente / D−2 ausente / payment_date retroactiva en su día / rango 1 vez / total==detalle / regresión / futura 400 / anterior-al-último 400 | **8/8 ✓** |
+| E2E de UI `commissions-payment-date-picker.spec.ts` (login real → tab Pagos → picker → rechazo → pago confirmado) | **1/1 ✓** |
+| Regresión suites existentes (`commissions-payments` + `reports`) | **21 ✓ / 1 skip preexistente** |
+| Regresión unitarias relacionadas (`cash-report-summary`, `cash-report-view`, `commissions-manage-modal`, `workers-return-navigation`, `workers-commissions-transfers`, `cash-arqueo`, `confcomisiones`) | **102/102 ✓** |
+| TypeScript scoped (`tsconfig.mision-1510.json`) | 0 errores |
+| ESLint (archivos de la adenda) | 0 errores |
+
+## A6. Capturas reales (adenda) — `audit-evidence/20261016-reporte-entrega-1510/adenda-postfix/`
+
+- `adenda-dia15-con-pago.png` / `adenda-dia15-detalle-extendido.png` — 15|15: «Comisiones pagadas en efectivo **−$300.00**», efectivo esperado **$31,700.00**, fila «Periodo 2026-10-15 → 2026-10-15» (atribuida por su **fecha de pago** 15/10 17:00).
+- `adenda-dia16-sin-comision.png` — 16|16 exclusivo: **sin comisiones** (el pago ya no aparece: su fecha de pago es el 15).
+- `ui-date-picker-default-hoy.png` — tab Pagos con el nuevo campo «Fecha del pago» (default HOY, máx. hoy).
+- `ui-date-picker-rechazo-futura.png` — rechazo visible: «La fecha del pago (2026-10-17) no puede ser posterior al día actual (2026-10-16)».
+- `ui-date-picker-pago-confirmado.png` — pago confirmado desde la UI con fecha elegida.
+
+## A7. Totales verificados en la interfaz (adenda, tras dato + criterio)
+
+| Consulta | Comisiones en efectivo | EFECTIVO ESPERADO A ENTREGAR |
+|---|---|---|
+| 15/10/2026 → 15/10/2026 | **−$300.00** (fecha de pago 15/10 17:00) | **$31,700.00** |
+| 16/10/2026 → 16/10/2026 | **$0.00** | **$0.00** |
+| 15–16/10/2026 | −$300.00 (1 vez, sin duplicación — E2E) | $31,700.00 |
+
+Semántica canónica verificada además por E2E: una comisión del periodo 15/10 **pagada el 16** se reflejaría en el reporte del 16 (caso B1 del spec: `payment_date` retroactiva → aparece en el día elegido; caso A1: pago de hoy → aparece hoy y no en su día de periodo).
+
+## A8. Estado
+
+**CORREGIDA Y VERIFICADA (adenda incluida).** Dato rectificado por canal oficial con auditoría, feature de fecha del pago operativa en la UI con las dos reglas del negocio, criterio canónico del reporte alineado en los 3 consumidores, pruebas unitarias/E2E/UI en verde y capturas reales. Sin merge a main (pendiente de autorización del negocio, PR #1412).

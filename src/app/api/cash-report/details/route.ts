@@ -57,11 +57,11 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       // PostgREST usa sintaxis `column:alias` (sin espacios) para renombrar columnas.
       // El SQL `paid_at as payment_date` se concatenaba sin espacio → falla.
       // Solución: NO usar alias en select, mapear manualmente después.
-      // FIX-RE-1510 (2026-10-16): atribución por PERIODO correspondiente (period_start/
-      // period_end, convención del motor de comisiones) con fallback a paid_at cuando el
-      // periodo es NULL. Antes se filtraba solo por paid_at → una comisión del periodo
-      // 15/10 pagada el 16/10 aparecía en el reporte del 16 y no en el del 15.
-      const { commissionPeriodOrFilter } = await import('@/lib/cash-report/period-attribution');
+      // FIX-RE-1510 v2 (2026-10-16, adenda del negocio): atribución por FECHA DEL PAGO
+      // confirmado (paid_at) en ventana de negocio determinista (Habana) — criterio
+      // canónico: «el reporte siempre muestra la fecha en que se confirmó el pago». El
+      // periodo (period_start/period_end) queda como metadata informativa del renglón.
+      const { commissionPaidAtFilter } = await import('@/lib/cash-report/period-attribution');
       const { data, error } = await supabase
         .from('commission_payments')
         .select(`
@@ -74,7 +74,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         .eq('payment_method', method)
         .eq('currency', currency)
         .eq('status', 'paid')
-        .or(commissionPeriodOrFilter(startDate, endDate))
+        .or(commissionPaidAtFilter(startDate, endDate))
         .order('paid_at', { ascending: false })
         .limit(100);
 

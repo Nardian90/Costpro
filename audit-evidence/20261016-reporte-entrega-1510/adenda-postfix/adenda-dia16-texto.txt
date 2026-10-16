@@ -1,0 +1,133 @@
+Saltar al contenido principal
+Saltar al contenido
+COSTPRO
+⌘K
+/
+INICIO
+/
+OPERACIÓN
+DASHBOARD
+VENTAS
+VENDER
+REPORTE ENTREGA
+OPCIONES
+ALMACÉN
+LOGÍSTICA
+COSTO
+TRABAJADORES Y COMISIONES
+GESTIÓN DE TIENDAS
+AUDITORÍA
+REDES
+AC
+
+Admin CostPro
+
+ADMIN
+MI PERFIL
+SALIR
+Reporte Entrega
+ENERVIDA-VITALLCONS
+
+Admin CostPro
+
+3
+⚡
+AC
+Inicio
+OPERACIÓN
+VENTAS
+REPORTE ENTREGA
+Reporte de Caja — Entrega
+AL DÍA
+Cuadre y desglose de efectivo para la entrega de dinero del periodo.
+EXPORTAR PDF
+ACTUALIZAR REPORTE
+
+TIPO DE REPORTE
+
+Estándar
+Cuadre CUP+USD con desglose de billetes
+Simple
+Resumen básico sin desglose
+Diario (Empresa)
+Plantilla estilo reporte diario: 3 páginas (CUP/USD/Órdenes) con tabla por producto + desglose billetes + firmas Hecho/Entregado/Recibido por
+
+ORIENTACIÓN DEL DOCUMENTO
+
+Vertical (retrato)
+A4 clásico del reporte diario
+Horizontal (apaisado)
+Más ancho de tabla, menos filas por página
+
+PERIODO
+
+DESDE
+HASTA
+
+Se calculará 2026-10-16 → 2026-10-16 al pulsar «Actualizar reporte».
+
+OPCIONES DEL DOCUMENTO
+RESULTADOS
+DESGLOSE DE EFECTIVO
+VISTA PREVIA
+RESUMEN DEL DÍA
+GESTIONAR COMISIONES
+
+Ventas totales (efectivo + transferencia)
+
+$0.00
+
+Ventas en efectivo
+
+$0.00
+
+Ventas por transferencia
+
+$0.00
+
+EFECTIVO ESPERADO A ENTREGAR
+
+$0.00
+
+EFECTIVO ESPERADO
+
+$0.00
+
+EFECTIVO CONTADO
+
+$0.00
+
+DIFERENCIA DE CUADRE (CUADRADO)
+
+$0.00
+
+AJUSTE EXTRAORDINARIO
+
+Vía excepcional para diferencias no clasificables. Requiere nota justificativa; queda auditado con usuario y fecha. No se usa para compensar errores de fórmulas.
+
+DIRECCIÓN
+Negativo (−)
+Positivo (+)
+IMPORTE CUP
+NOTA JUSTIFICATIVA *
+REGISTRAR AJUSTE
+
+Resultados de 2026-10-16 → 2026-10-16
+
+Todas las monedas
+CUP
+USD
+MLC
+Todos los métodos
+Efectivo
+Transferencia
+Zelle
+VENTAS POR MÉTODO
+
+Sin ventas
+
+PAGOS A PROVEEDORES
+
+Sin pagos
+
+Reporte calculado: 2026-10-16 → 2026-10-16

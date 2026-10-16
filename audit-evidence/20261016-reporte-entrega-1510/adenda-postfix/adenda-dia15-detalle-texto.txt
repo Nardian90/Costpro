@@ -1,0 +1,161 @@
+Saltar al contenido principal
+Saltar al contenido
+COSTPRO
+⌘K
+/
+INICIO
+/
+OPERACIÓN
+DASHBOARD
+VENTAS
+VENDER
+REPORTE ENTREGA
+OPCIONES
+ALMACÉN
+LOGÍSTICA
+COSTO
+TRABAJADORES Y COMISIONES
+GESTIÓN DE TIENDAS
+AUDITORÍA
+REDES
+AC
+
+Admin CostPro
+
+ADMIN
+MI PERFIL
+SALIR
+Reporte Entrega
+ENERVIDA-VITALLCONS
+
+Admin CostPro
+
+3
+⚡
+AC
+Inicio
+OPERACIÓN
+VENTAS
+REPORTE ENTREGA
+Reporte de Caja — Entrega
+AL DÍA
+Cuadre y desglose de efectivo para la entrega de dinero del periodo.
+EXPORTAR PDF
+ACTUALIZAR REPORTE
+
+TIPO DE REPORTE
+
+Estándar
+Cuadre CUP+USD con desglose de billetes
+Simple
+Resumen básico sin desglose
+Diario (Empresa)
+Plantilla estilo reporte diario: 3 páginas (CUP/USD/Órdenes) con tabla por producto + desglose billetes + firmas Hecho/Entregado/Recibido por
+
+ORIENTACIÓN DEL DOCUMENTO
+
+Vertical (retrato)
+A4 clásico del reporte diario
+Horizontal (apaisado)
+Más ancho de tabla, menos filas por página
+
+PERIODO
+
+DESDE
+HASTA
+
+Se calculará 2026-10-15 → 2026-10-15 al pulsar «Actualizar reporte».
+
+OPCIONES DEL DOCUMENTO
+RESULTADOS
+DESGLOSE DE EFECTIVO
+VISTA PREVIA
+RESUMEN DEL DÍA
+GESTIONAR COMISIONES
+
+Ventas totales (efectivo + transferencia)
+
+$32,000.00
+
+Ventas en efectivo
+
+$32,000.00
+
+Ventas por transferencia
+
+$0.00
+
+Comisiones pagadas en efectivo
+
+−$300.00
+
+EFECTIVO ESPERADO A ENTREGAR
+
+$31,700.00
+
+EFECTIVO ESPERADO
+
+$31,700.00
+
+EFECTIVO CONTADO
+
+$0.00
+
+DIFERENCIA DE CUADRE (FALTANTE)
+
+-$31,700.00
+
+AJUSTE EXTRAORDINARIO
+
+Vía excepcional para diferencias no clasificables. Requiere nota justificativa; queda auditado con usuario y fecha. No se usa para compensar errores de fórmulas.
+
+DIRECCIÓN
+Negativo (−)
+Positivo (+)
+IMPORTE CUP
+NOTA JUSTIFICATIVA *
+REGISTRAR AJUSTE
+
+Resultados de 2026-10-15 → 2026-10-15
+
+Todas las monedas
+CUP
+USD
+MLC
+Todos los métodos
+Efectivo
+Transferencia
+Zelle
+VENTAS POR MÉTODO
+💵
+
+Efectivo (CUP)
+
+3 transacciones
+
+$32,000.00
+
+PAGOS A PROVEEDORES
+
+Sin pagos
+
+COMISIONES A TRABAJADORES
+1 PAGOS · $300.00
+💵
+
+Efectivo (CUP) · commission
+
+1 comisiones
+
+−$300.00
+
+FECHA	REFERENCIA / CLIENTE	MONTO CUP	
+2026-10-15 21:00	
+
+Dependiente 1 Pueblo
+
+Periodo 2026-10-15 → 2026-10-15
+
+commission	−$300.00	
+
+TOTAL (1 DOCS)	−$300.00	

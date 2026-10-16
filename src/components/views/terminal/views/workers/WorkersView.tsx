@@ -43,6 +43,9 @@ import {
 import { useAuthStore, useUIStore, type CommissionNavContext, type ViewType } from '@/store';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+// FIX-RE-1510 v2 (adenda del negocio 2026-10-16): día de negocio determinista para la
+// fecha del pago (no futura; no anterior al último pago realizado del trabajador).
+import { businessDayOf, todayBusinessDay } from '@/lib/cash-report/period-attribution';
 // NAV-2026-10: flujo de cobro por período (propuesta del motor + confirmación
 // trazable) — antes vivía dentro de Reporte Entrega; se reubica aquí como parte
 // del módulo Trabajadores y Comisiones (sin módulos duplicados).
@@ -2404,6 +2407,11 @@ function PaymentsTab({ payments, onRefresh }: any) {
   const [payCurrency, setPayCurrency] = useState('CUP');
   // FIX-B2 (2026-07-12): exchange_rate para conversión correcta a CUP
   const [payRate, setPayRate] = useState('1.0');
+  // ADENDA del negocio (2026-10-16): fecha del pago elegible antes de confirmar.
+  // Default: HOY (día de negocio, Habana). El caso real que motivó esto: un pago
+  // ejecutado el 15/10 5:00 PM se registró el 16/10 porque no había forma de escoger
+  // la fecha y el sistema asumió el instante actual.
+  const [payDate, setPayDate] = useState<string>(() => todayBusinessDay());
   const statusLabels: Record<string, { label: string; color: string }> = {
     draft: { label: 'Borrador', color: 'bg-muted text-muted-foreground border-border' },
     approved: { label: 'Aprobado', color: 'bg-primary/15 text-primary border-primary/30' },
@@ -2411,22 +2419,93 @@ function PaymentsTab({ payments, onRefresh }: any) {
     cancelled: { label: 'Cancelado', color: 'bg-destructive/15 text-destructive border-destructive/30' },
   };
 
-  const handleAction = async (id: string, action: 'approve' | 'pay' | 'cancel', method?: string, currency?: string, rate?: number) => {
+  /** Día de negocio del último pago REALIZADO del trabajador (fuera del pago en curso).
+   * El servidor lo valida autoritativamente; aquí se anticipa para feedback inmediato. */
+  const lastPaidDayOfWorker = (workerId: string, excludeId: string | null): string | null => {
+    let max: string | null = null;
+    for (const p of payments) {
+      if (p.status !== 'paid' || !p.paid_at) continue;
+      if (p.worker?.id !== workerId && p.worker_id !== workerId) continue;
+      if (excludeId && p.id === excludeId) continue;
+      const day = businessDayOf(p.paid_at);
+      if (!max || day > max) max = day;
+    }
+    return max;
+  };
+
+  const openPayForm = (id: string) => {
+    setPayDate(todayBusinessDay()); // cada confirmación arranca en HOY
+    setPayingId(payingId === id ? null : id);
+  };
+
+  const handleAction = async (id: string, action: 'approve' | 'pay' | 'cancel', method?: string, currency?: string, rate?: number, date?: string) => {
+    // FIX-C2 (2026-07-14): usar apiFetch con token JWT (antes fetch crudo → 401 en producción)
+    const { apiFetch } = await import('@/lib/api-fetch');
+    const { toast } = await import('sonner');
     try {
-      // FIX-C2 (2026-07-14): usar apiFetch con token JWT (antes fetch crudo → 401 en producción)
-      const { apiFetch } = await import('@/lib/api-fetch');
-      const { toast } = await import('sonner');
+      // ADENDA 2026-10-16: validación cliente de la fecha del pago (el servidor
+      // revalida autoritativamente — defense in depth).
+      if (action === 'pay') {
+        const today = todayBusinessDay();
+        const day = date || today;
+        const lastDay = lastPaidDayOfWorker(
+          payments.find((p: any) => p.id === id)?.worker?.id,
+          id,
+        );
+        if (day > today) {
+          toast.error(`La fecha del pago (${day}) no puede ser posterior al día actual (${today})`);
+          return;
+        }
+        if (lastDay && day < lastDay) {
+          toast.error(`La fecha del pago (${day}) no puede ser anterior al último pago realizado (${lastDay})`);
+          return;
+        }
+      }
       await apiFetch(`/api/commissions/payments/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ action, payment_method: method, currency: currency || 'CUP', exchange_rate: rate || 1.0 }),
+        body: JSON.stringify({
+          action,
+          payment_method: method,
+          currency: currency || 'CUP',
+          exchange_rate: rate || 1.0,
+          ...(action === 'pay' ? { payment_date: date || todayBusinessDay() } : {}),
+        }),
       });
       toast.success(action === 'approve' ? 'Comisión aprobada' : action === 'pay' ? 'Comisión pagada' : 'Comisión cancelada');
       onRefresh();
       setPayingId(null);
     } catch (e: any) {
-      const { toast } = await import('sonner');
       toast.error(e.message || 'Error al procesar acción');
     }
+  };
+
+  /** Campo de fecha del pago reutilizado por las variantes móvil y escritorio. */
+  const renderPayDateField = (p: any) => {
+    const today = todayBusinessDay();
+    const lastDay = lastPaidDayOfWorker(p.worker?.id, p.id);
+    return (
+      <div>
+        <label
+          htmlFor={`pay-date-${p.id}`}
+          className="block text-[9px] font-black uppercase tracking-wider text-muted-foreground mb-0.5"
+        >
+          Fecha del pago
+        </label>
+        <input
+          id={`pay-date-${p.id}`}
+          data-testid="payment-date-input"
+          type="date"
+          value={payDate}
+          min={lastDay || undefined}
+          max={today}
+          onChange={(e) => setPayDate(e.target.value)}
+          className="h-9 w-full bg-background border border-border/50 rounded px-2 text-xs font-bold min-h-[36px]"
+        />
+        <p className="text-[8.5px] text-muted-foreground leading-tight mt-0.5">
+          Máx. hoy{lastDay ? ` · no anterior al último pago (${lastDay})` : ''}
+        </p>
+      </div>
+    );
   };
 
   return (
@@ -2467,7 +2546,7 @@ function PaymentsTab({ payments, onRefresh }: any) {
                 )}
                 {(p.status === 'draft' || p.status === 'approved') && (
                   <button
-                    onClick={() => setPayingId(payingId === p.id ? null : p.id)}
+                    onClick={() => openPayForm(p.id)}
                     className="flex-1 min-h-[36px] px-2 py-1.5 rounded-lg text-[10px] font-black uppercase bg-success/10 text-success border border-success/30 hover:bg-success/20 active:scale-95 transition-transform"
                   >
                     💰 Pagar
@@ -2497,6 +2576,7 @@ function PaymentsTab({ payments, onRefresh }: any) {
               {/* Formulario de pago inline */}
               {payingId === p.id && (
                 <div className="flex flex-col gap-1.5 p-2 rounded-lg border border-border/30 bg-muted/10">
+                  {renderPayDateField(p)}
                   <div className="grid grid-cols-2 gap-1.5">
                     <select
                       value={payMethod}
@@ -2528,7 +2608,7 @@ function PaymentsTab({ payments, onRefresh }: any) {
                     />
                   )}
                   <button
-                    onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency, parseFloat(payRate) || 1.0)}
+                    onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency, parseFloat(payRate) || 1.0, payDate)}
                     className="h-9 min-h-[36px] rounded-lg bg-success text-white text-[10px] font-black uppercase hover:opacity-90 active:scale-95 transition-transform"
                   >
                     Confirmar Pago
@@ -2588,7 +2668,7 @@ function PaymentsTab({ payments, onRefresh }: any) {
                       )}
                       {(p.status === 'draft' || p.status === 'approved') && (
                         <button
-                          onClick={() => setPayingId(payingId === p.id ? null : p.id)}
+                          onClick={() => openPayForm(p.id)}
                           className="px-2 py-1 rounded text-[10px] font-black uppercase bg-success/10 text-success border border-success/30 hover:bg-success/20 mr-1"
                         >
                           💰 Pagar
@@ -2608,6 +2688,7 @@ function PaymentsTab({ payments, onRefresh }: any) {
                       )}
                       {payingId === p.id && (
                         <div className="mt-2 flex flex-col gap-1.5 p-2 rounded-lg border border-border/30 bg-muted/10">
+                          {renderPayDateField(p)}
                           <select value={payMethod} onChange={(e) => setPayMethod(e.target.value as any)} className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold">
                             <option value="cash">💵 Efectivo</option>
                             <option value="transfer">📱 Transferencia</option>
@@ -2619,7 +2700,7 @@ function PaymentsTab({ payments, onRefresh }: any) {
                           {payCurrency !== 'CUP' && (
                             <input type="number" inputMode="decimal" step="0.01" value={payRate} onChange={(e) => setPayRate(e.target.value)} placeholder="Tasa CUP" className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold" />
                           )}
-                          <button onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency, parseFloat(payRate) || 1.0)} className="h-8 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90">
+                          <button onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency, parseFloat(payRate) || 1.0, payDate)} className="h-8 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90">
                             Confirmar Pago
                           </button>
                         </div>
