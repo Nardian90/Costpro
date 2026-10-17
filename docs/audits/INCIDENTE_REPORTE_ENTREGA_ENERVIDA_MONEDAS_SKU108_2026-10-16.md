@@ -162,7 +162,8 @@ Diferencias documentadas (no corregidas a mano, remitidas a decisión del propie
 ## 10. Rama, commit y PR
 
 - **Rama:** `fix/reporte-entrega-monedas-sku108-1610` (desde `main` @ `9ebdada5b`, worktree limpio verificado antes de modificar).
-- **PR:** abierto contra `main` de `Nardian90/Costpro` para protección del trabajo — número visible en el PR (URL registrada en el resumen de la misión).
+- **Commit:** `6bb4a859c` (+ enmienda de este número de PR).
+- **PR:** [#1420 — fix(cash-report): moneda real de cobro en el Reporte de Entrega](https://github.com/Nardian90/Costpro/pull/1420) (contra `main`, para protección del trabajo).
 - Servidor local reactivado con **pm2** (`costpro`, `bun server.ts`, puerto 3000, `.env` restaurado) y usado para toda la verificación end-to-end.
 
 ## 11. Estado del despliegue y comprobación en el entorno
