@@ -157,7 +157,11 @@ describe('PT-RLS.3 — Backfill tenant_id', () => {
 describe('PT-RLS.4 — Bugs funcionales', () => {
   it('PT-RLS.4.1: Fix B4 — PATCH /api/users/[id] incluye activeStoreId', () => {
     const src = readFileSync(join(process.cwd(), 'src', 'app', 'api', 'users', '[id]', 'route.ts'), 'utf-8');
-    expect(src).toContain('activeStoreId: z.string().uuid().optional()');
+    // CP-SEC-019 (MISIÓN 2, 2026-10-17): el validador estricto z.string().uuid()
+    // se migró al canónico permisivo uuidLoose (misma forma 8-4-4-4-12 que el
+    // tipo uuid de PostgreSQL). El contrato B4 (validar activeStoreId como UUID
+    // en el PATCH) se conserva; la aserción sigue el patrón vigente.
+    expect(src).toContain('activeStoreId: uuidLoose.optional()');
     expect(src).toContain('FIX RLS-B4');
     expect(src).toContain('active_store_id');
   });
