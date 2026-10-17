@@ -124,6 +124,10 @@ const params = (overrides: Partial<any> = {}) => ({
   supplier: 'Proveedor Test',
   invoiceNumber: 'FAC-001',
   receptionDate: '2026-10-17T10:00:00.000Z',
+  // Nota de tipos: los items NUEVOS llevan product_id null en la práctica
+  // (el hook filtra `is_new && !product_id`), aunque la interfaz declara
+  // `product_id: string`. Cast a PendingReceptionItem[] para satisfacer el
+  // contrato del mutationFn sin debilitarlo en producción.
   items: [
     {
       is_new: true,
@@ -137,7 +141,7 @@ const params = (overrides: Partial<any> = {}) => ({
       moneda_recepcion: 'CUP',
       tasa_cambio_recepcion: 1.0,
     },
-  ],
+  ] as any[],
   notes: 'nota de la recepción',
   ...overrides,
 });
