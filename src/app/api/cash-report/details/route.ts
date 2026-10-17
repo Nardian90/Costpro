@@ -38,20 +38,57 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const storeId = userData.active_store_id;
 
     if (type === 'sale') {
+      // INCIDENTE 2026-10-16: la pertenencia al grupo (método, moneda) se
+      // decide por la MONEDA REAL DE COBRO (reconstrucción única en
+      // collection-currency.ts), no por sale_currency — que clasificaba los
+      // cobros USD como CUP. Se devuelve `total` = importe del cobro en ESA
+      // moneda (el acordeón lo muestra como Monto).
+      const { reconstructTxCollections, normCur } = await import('@/lib/cash-report/collection-currency');
       const { data, error } = await supabase
         .from('transactions')
-        .select('id, created_at, total_amount, payment_method, sale_currency, customer_name, status, cash_amount, transfer_amount, zelle_amount')
+        .select('id, created_at, total_amount, payment_method, sale_currency, customer_name, status, cash_amount, transfer_amount, zelle_amount, notes')
         .eq('store_id', storeId)
         .eq('payment_method', method)
-        .eq('sale_currency', currency)
         .neq('status', 'voided')
         .gte('created_at', startDate)
         .lte('created_at', endDate)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(300);
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      return NextResponse.json(data || []);
+
+      const wantedCur = normCur(currency);
+      const ids = (data || []).map((t: { id: string }) => t.id);
+      const itemsByTx = new Map<string, Array<Record<string, unknown>>>();
+      const CHUNK = 150;
+      for (let i = 0; i < ids.length; i += CHUNK) {
+        const chunk = ids.slice(i, i + CHUNK);
+        const { data: itemRows, error: itemErr } = await supabase
+          .from('transaction_items')
+          .select('transaction_id, quantity, price_at_sale, price_at_sale_cup, currency, exchange_rate, cash_paid, cash_currency, transfer_paid, transfer_currency, zelle_paid, zelle_currency')
+          .in('transaction_id', chunk);
+        if (itemErr) return NextResponse.json({ error: itemErr.message }, { status: 500 });
+        for (const it of itemRows || []) {
+          const k = (it as { transaction_id: string }).transaction_id;
+          if (!itemsByTx.has(k)) itemsByTx.set(k, []);
+          itemsByTx.get(k)!.push(it as Record<string, unknown>);
+        }
+      }
+
+      const rows: Array<Record<string, unknown>> = [];
+      for (const tx of (data || []) as Array<Record<string, unknown>>) {
+        const items = itemsByTx.get(tx.id as string) || [];
+        const result = reconstructTxCollections(tx as never, items as never);
+        const bucket = result.buckets.find(b => b.method === method && b.currency === wantedCur);
+        if (!bucket) continue;
+        rows.push({
+          ...tx,
+          // Monto del cobro en la moneda del grupo (40 USD, 12 000 CUP…).
+          total: bucket.amount,
+        });
+        if (rows.length >= 100) break;
+      }
+      return NextResponse.json(rows);
     } else if (refType === 'commission') {
       // FIX (2026-07-20): bug "column commission_payments.paid_ataspayment_date does not exist"
       // PostgREST usa sintaxis `column:alias` (sin espacios) para renombrar columnas.
