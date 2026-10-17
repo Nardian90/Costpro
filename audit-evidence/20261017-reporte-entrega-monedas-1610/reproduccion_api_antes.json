@@ -1,0 +1,215 @@
+{
+  "cash-report": {
+    "status": 200,
+    "body": {
+      "sales": [
+        {
+          "payment_method": "cash",
+          "currency": "CUP",
+          "transaction_count": 10,
+          "total": 172750,
+          "total_cup": 172750
+        },
+        {
+          "payment_method": "transfer",
+          "currency": "CUP",
+          "transaction_count": 3,
+          "total": 2400,
+          "total_cup": 2400
+        }
+      ],
+      "payments": [],
+      "commissions": [],
+      "production": [],
+      "totals": {
+        "sales_total_cup": 175150,
+        "payments_total_cup": 0,
+        "commissions_total_cup": 0,
+        "production_total_cup": 0,
+        "balance_cup": 175150
+      },
+      "start_date": "2026-10-16T04:00:00+00:00",
+      "end_date": "2026-10-17T03:59:59.999+00:00",
+      "include_all_dates": false,
+      "sales_split": {
+        "CUP": {
+          "cash": 184950,
+          "transfer": 2400,
+          "zelle": 0,
+          "mixedUnsplit": 0,
+          "total": 187350
+        }
+      },
+      "adjustments": [],
+      "cash_breakdown": [
+        {
+          "denom": 1000,
+          "count": 184,
+          "total": 184000
+        },
+        {
+          "denom": 500,
+          "count": 1,
+          "total": 500
+        },
+        {
+          "denom": 200,
+          "count": 2,
+          "total": 400
+        },
+        {
+          "denom": 50,
+          "count": 1,
+          "total": 50
+        }
+      ],
+      "cash_balance_cup": 184950,
+      "period": {
+        "start": "2026-10-16T04:00:00.000Z",
+        "end": "2026-10-17T03:59:59.999Z"
+      }
+    }
+  },
+  "items-summary": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "product_id": "d1afd532-0bad-4af7-8605-b3594c25e864",
+          "product_name": "Cemento TBV 50 Kg",
+          "sku": "141",
+          "currency": "CUP",
+          "total_quantity": 5,
+          "unit_price": 20000,
+          "total_cup": 100000,
+          "cash_paid": 100000,
+          "transfer_paid": 0,
+          "zelle_paid": 0,
+          "transactions_count": 2
+        },
+        {
+          "product_id": "2e7b4157-99a4-4b81-b135-33ff2c983d13",
+          "product_name": "Brecker 63 AMP Corriente alterna",
+          "sku": "128",
+          "currency": "CUP",
+          "total_quantity": 3,
+          "unit_price": 15800,
+          "total_cup": 47400,
+          "cash_paid": 47600,
+          "transfer_paid": 0,
+          "zelle_paid": 0,
+          "transactions_count": 2
+        },
+        {
+          "product_id": "2cbc0017-93f5-4d3f-9c12-fc8c8ac44f05",
+          "product_name": "Cemento Cola",
+          "sku": "15",
+          "currency": "CUP",
+          "total_quantity": 1,
+          "unit_price": 10000,
+          "total_cup": 10000,
+          "cash_paid": 10000,
+          "transfer_paid": 0,
+          "zelle_paid": 0,
+          "transactions_count": 1
+        },
+        {
+          "product_id": "ac865b9c-53a2-4048-91e6-40a362adb913",
+          "product_name": "Conector XT60",
+          "sku": "84",
+          "currency": "CUP",
+          "total_quantity": 1,
+          "unit_price": 6500,
+          "total_cup": 6500,
+          "cash_paid": 6500,
+          "transfer_paid": 0,
+          "zelle_paid": 0,
+          "transactions_count": 1
+        },
+        {
+          "product_id": "8769cde9-6135-4011-a56c-86a96e02bf7b",
+          "product_name": "Nudo de media",
+          "sku": "48",
+          "currency": "CUP",
+          "total_quantity": 25,
+          "unit_price": 250,
+          "total_cup": 6250,
+          "cash_paid": 6250,
+          "transfer_paid": 0,
+          "zelle_paid": 0,
+          "transactions_count": 1
+        },
+        {
+          "product_id": "e6fefdbe-ee35-4572-a332-256d55f27d25",
+          "product_name": "Royal Cole",
+          "sku": "157",
+          "currency": "CUP",
+          "total_quantity": 1,
+          "unit_price": 2500,
+          "total_cup": 2500,
+          "cash_paid": 2500,
+          "transfer_paid": 0,
+          "zelle_paid": 0,
+          "transactions_count": 1
+        },
+        {
+          "product_id": "da7bb624-d5d6-4766-b46c-26dead861778",
+          "product_name": "Detergente liquido",
+          "sku": "158",
+          "currency": "CUP",
+          "total_quantity": 3,
+          "unit_price": 800,
+          "total_cup": 2400,
+          "cash_paid": 0,
+          "transfer_paid": 2400,
+          "zelle_paid": 0,
+          "transactions_count": 3
+        },
+        {
+          "product_id": "e356ca7a-b631-4df9-8e3e-a701d9459d25",
+          "product_name": "Goma Termo Retráctil",
+          "sku": "113",
+          "currency": "CUP",
+          "total_quantity": 1,
+          "unit_price": 100,
+          "total_cup": 100,
+          "cash_paid": 100,
+          "transfer_paid": 0,
+          "zelle_paid": 0,
+          "transactions_count": 1
+        },
+        {
+          "product_id": "c2f4df7e-045a-4990-a34a-d211387e3924",
+          "product_name": "Cajita Breckera sencilla gris",
+          "sku": "108",
+          "currency": "CUP",
+          "total_quantity": 1,
+          "unit_price": 0,
+          "total_cup": 0,
+          "cash_paid": 0,
+          "transfer_paid": 0,
+          "zelle_paid": 0,
+          "transactions_count": 1
+        }
+      ],
+      "total_cup": 175150,
+      "total_cash": 172950,
+      "total_transfer": 2400,
+      "total_zelle": 0,
+      "count": 9
+    }
+  },
+  "payment-totals": {
+    "status": 200,
+    "body": {
+      "totals": {
+        "CUP": {
+          "cash": 184950,
+          "transfer": 2400,
+          "zelle": 0,
+          "total": 175150
+        }
+      }
+    }
+  }
+}

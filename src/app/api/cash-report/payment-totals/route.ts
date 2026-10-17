@@ -1,18 +1,24 @@
 /**
  * @file GET /api/cash-report/payment-totals
- * @description Devuelve los totales de pagos por moneda, consultando directamente
- * la tabla transactions (cash_amount, transfer_amount, zelle_amount).
+ * @description Devuelve los totales de cobros por MONEDA REAL DE COBRO,
+ * reconstruyendo desde transaction_items + transactions (fuente única:
+ * src/lib/cash-report/collection-currency.ts).
  *
  * Esto es necesario porque:
  *   - /api/cash-report agrupa por payment_method y no desglosa 'mixed'
  *   - /api/cash-report/items-summary tiene cash_paid=0 cuando el RPC create_sale
  *     no propaga los montos a transaction_items
  *
+ * INCIDENTE 2026-10-16 (ENERVIDA): los pools de transactions están en CUP
+ * canónico; clasificar por sale_currency escondía los cobros en USD. La
+ * reconstrucción identifica la moneda real de cada cobro (filas de pago por
+ * ítem V2 + regla legado de conversión exacta) y separa CUP/USD.
+ *
  * Respuesta:
  *   {
  *     "totals": {
- *       "CUP": { "cash": 55205, "transfer": 45000, "zelle": 0, "total": 100205 },
- *       "USD": { "cash": 5237,  "transfer": 0,     "zelle": 0, "total": 5237  }
+ *       "CUP": { "cash": 153350, "transfer": 2400, "zelle": 0, "total": 155750 },
+ *       "USD": { "cash": 40,     "transfer": 0,    "zelle": 0, "total": 40 }
  *     }
  *   }
  */
@@ -20,6 +26,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
+import { reconstructTxCollections, accumulateSalesSplit, normCur, type CollectionItem, type CollectionTx, type SalesSplitAccum } from '@/lib/cash-report/collection-currency';
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
@@ -45,10 +52,10 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
     }
 
-    // Query transactions for the period
+    // Query transactions for the period (ventana original: fin EXCLUSIVO — se conserva)
     const { data, error } = await supabase
       .from('transactions')
-      .select('sale_currency, cash_amount, transfer_amount, zelle_amount, total_amount')
+      .select('id, sale_currency, cash_amount, transfer_amount, zelle_amount, total_amount')
       .eq('store_id', userData.active_store_id)
       .eq('status', 'completed')
       .gte('created_at', startDate)
@@ -59,20 +66,47 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Aggregate by currency
-    const totals: Record<string, { cash: number; transfer: number; zelle: number; total: number }> = {};
-    for (const tx of (data || [])) {
-      const cur = tx.sale_currency || 'CUP';
-      // 'MIXED' is used when multi-currency transaction; skip (rare)
-      if (cur === 'MIXED') continue;
-      if (!totals[cur]) totals[cur] = { cash: 0, transfer: 0, zelle: 0, total: 0 };
-      totals[cur].cash += Number(tx.cash_amount || 0);
-      totals[cur].transfer += Number(tx.transfer_amount || 0);
-      totals[cur].zelle += Number(tx.zelle_amount || 0);
-      totals[cur].total += Number(tx.total_amount || 0);
+    const txIds = (data || []).map((t: { id: string }) => t.id);
+    const itemsByTx = new Map<string, Array<Record<string, unknown>>>();
+    const CHUNK = 150;
+    for (let i = 0; i < txIds.length; i += CHUNK) {
+      const chunk = txIds.slice(i, i + CHUNK);
+      const { data: itemRows, error: itemErr } = await supabase
+        .from('transaction_items')
+        .select('transaction_id, quantity, price_at_sale, price_at_sale_cup, currency, exchange_rate, cash_paid, cash_currency, transfer_paid, transfer_currency, zelle_paid, zelle_currency')
+        .in('transaction_id', chunk);
+      if (itemErr) {
+        console.error('[payment-totals] items error:', itemErr);
+        break; // degradación limpia: cae al pool por sale_currency
+      }
+      for (const it of itemRows || []) {
+        const k = (it as { transaction_id: string }).transaction_id;
+        if (!itemsByTx.has(k)) itemsByTx.set(k, []);
+        itemsByTx.get(k)!.push(it as Record<string, unknown>);
+      }
     }
 
-    return NextResponse.json({ totals });
+    const acc: SalesSplitAccum = {};
+    const txWithoutItems: Array<Record<string, unknown>> = [];
+    for (const tx of (data || []) as Array<Record<string, unknown>>) {
+      const items = itemsByTx.get(tx.id as string) || [];
+      if (items.length === 0) { txWithoutItems.push(tx); continue; }
+      const result = reconstructTxCollections(tx as unknown as CollectionTx, items as unknown as CollectionItem[]);
+      accumulateSalesSplit(acc, result);
+    }
+    // Transacciones sin ítems: comportamiento previo (pool → sale_currency).
+    for (const tx of txWithoutItems) {
+      const cur = normCur(tx.sale_currency as string);
+      if (cur === 'MIXED') continue;
+      if (!acc[cur]) acc[cur] = { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 };
+      const cash = Number(tx.cash_amount || 0), tr = Number(tx.transfer_amount || 0), ze = Number(tx.zelle_amount || 0);
+      acc[cur].cash += cash;
+      acc[cur].transfer += tr;
+      acc[cur].zelle += ze;
+      acc[cur].total += cash + tr + ze;
+    }
+
+    return NextResponse.json({ totals: acc });
   } catch (err: any) {
     console.error('[payment-totals] Exception:', err);
     return NextResponse.json({ error: err?.message || 'Internal error' }, { status: 500 });

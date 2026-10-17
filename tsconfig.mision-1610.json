@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": false
+  },
+  "include": [
+    "src/lib/cash-report/collection-currency.ts",
+    "src/lib/cash-report/summary.ts",
+    "src/app/api/cash-report/route.ts",
+    "src/app/api/cash-report/items-summary/route.ts",
+    "src/app/api/cash-report/payment-totals/route.ts",
+    "src/app/api/cash-report/details/route.ts",
+    "src/components/views/terminal/views/cash/cash-report-pdf.ts",
+    "src/__tests__/lib/cash-report-collection-currency.test.ts"
+  ]
+}
