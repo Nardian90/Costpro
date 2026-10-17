@@ -188,4 +188,4 @@ Verificado por consulta directa sobre la BD (2026-10-17, umbral de ejecución 14
 
 **Estado final: COMPLETADA.** Los resultados fueron verificados contra la base de datos real (Supabase CostproBD) mediante las consultas de evidencia incluidas en `scripts/mision17_inspeccion.json`, `scripts/mision17_ejecucion.json` y `scripts/mision17_verificacion.json` del entorno de trabajo; los identificadores citados fueron recuperados del sistema, no inventados.
 
-**Pendiente logístico (no afecta el cierre)**: publicar este informe en GitHub (rama + PR de protección). El PAT del repositorio no está disponible en la sesión actual; el commit local está creado en `docs/mision-catalogo-entrada-sku139-precio-sku108` a la espera de credenciales para `push`.
+**Publicación**: informe publicado en GitHub en la rama `docs/mision-catalogo-entrada-sku139-precio-sku108` (commit inicial del informe: `458c74d4d`). PR de protección: **#1418**.
