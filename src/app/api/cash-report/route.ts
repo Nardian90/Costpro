@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
-import { computeDailySummary, type SalesSplit, type SalesSplitByCurrency } from '@/lib/cash-report/summary';
+import { computeDailySummary, type SalesSplit } from '@/lib/cash-report/summary';
 
 /**
  * GET /api/cash-report?start_date=ISO&end_date=ISO
@@ -61,39 +61,85 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: reportError.message }, { status: 500 });
     }
 
-    // ── AUDITORÍA 2026-10 (D4): split REAL de ventas por moneda ──
-    // El RPC agrupa por payment_method y NO desglosa 'mixed'; su grupo 'cash'
-    // puro excluye el tramo efectivo de las mixtas. transactions guarda el
-    // split real (cash_amount/transfer_amount/zelle_amount) — misma fuente
-    // que /payment-totals, con el cliente de sesión (RLS respetado).
+    // ── INCIDENTE 2026-10-16: split REAL de ventas por MONEDA DE COBRO ──
+    // Los pools de transactions están en CUP canónico (usePOSCheckout L129-182):
+    // clasificar por sale_currency escondía los cobros en USD (40 USD × tasa →
+    // 31 600 "CUP") y excluía sale_currency='MIXED'. La reconstrucción única
+    // vive en collection-currency.ts (filas de pago por ítem + legado exacto).
     const dateFilter = includeAllDates ? {} : { gte: startDate, lte: endDate };
     let salesSplit: SalesSplit = {};
+    let salesGroups: Array<{ payment_method: string; currency: string; transaction_count: number; total: number; total_cup: number }> = [];
     try {
-      let splitQuery = supabase
+      // 1) Transacciones del periodo (nivel cabecera — cubre ventas sin ítems).
+      let txQuery = supabase
         .from('transactions')
-        .select('sale_currency, cash_amount, transfer_amount, zelle_amount')
+        .select('id, sale_currency, cash_amount, transfer_amount, zelle_amount')
         .eq('store_id', userData.active_store_id)
         .eq('status', 'completed');
       if (!includeAllDates) {
-        splitQuery = splitQuery.gte('created_at', startDate).lte('created_at', endDate);
+        txQuery = txQuery.gte('created_at', startDate).lte('created_at', endDate);
       }
-      const { data: splitRows, error: splitErr } = await splitQuery;
-      if (splitErr) throw splitErr;
-      // Acumulador tipado con la interfaz canónica del módulo centralizado
-      // (TS2322 en CI: SalesSplitByCurrency exige mixedUnsplit). mixedUnsplit=0
-      // porque este es el split REAL de transactions: las multi-moneda (cur
-      // 'MIXED') se excluyen explícitamente arriba, no quedan sin desglosar.
-      const acc: Record<string, SalesSplitByCurrency> = {};
-      for (const tx of splitRows || []) {
-        const cur = (tx.sale_currency as string) || 'CUP';
-        if (cur === 'MIXED') continue; // multi-moneda: rara, se excluye como en /payment-totals
-        if (!acc[cur]) acc[cur] = { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 };
-        acc[cur].cash += Number(tx.cash_amount || 0);
-        acc[cur].transfer += Number(tx.transfer_amount || 0);
-        acc[cur].zelle += Number(tx.zelle_amount || 0);
-        acc[cur].total += Number(tx.cash_amount || 0) + Number(tx.transfer_amount || 0) + Number(tx.zelle_amount || 0);
+      const { data: txRows, error: txErr } = await txQuery;
+      if (txErr) throw txErr;
+
+      // 2) Ítems de esas transacciones (mismo contrato que items-summary).
+      const txIds = (txRows || []).map((t: { id: string }) => t.id);
+      const itemsByTx = new Map<string, Array<Record<string, unknown>>>();
+      const CHUNK = 150;
+      for (let i = 0; i < txIds.length; i += CHUNK) {
+        const chunk = txIds.slice(i, i + CHUNK);
+        const { data: itemRows, error: itemErr } = await supabase
+          .from('transaction_items')
+          .select('transaction_id, quantity, price_at_sale, price_at_sale_cup, currency, exchange_rate, cash_paid, cash_currency, transfer_paid, transfer_currency, zelle_paid, zelle_currency')
+          .in('transaction_id', chunk);
+        if (itemErr) throw itemErr;
+        for (const it of itemRows || []) {
+          const k = (it as { transaction_id: string }).transaction_id;
+          if (!itemsByTx.has(k)) itemsByTx.set(k, []);
+          itemsByTx.get(k)!.push(it as Record<string, unknown>);
+        }
       }
-      salesSplit = acc;
+
+      const { accumulateSalesSplit, buildSalesGroups, reconstructTxCollections, normCur } = await import('@/lib/cash-report/collection-currency');
+
+      const results: Array<{ tx: Parameters<typeof reconstructTxCollections>[0]; result: ReturnType<typeof reconstructTxCollections> }> = [];
+      const txWithoutItems: Array<Record<string, unknown>> = [];
+      for (const tx of txRows || []) {
+        const items = itemsByTx.get(tx.id) || [];
+        if (items.length === 0) { txWithoutItems.push(tx as Record<string, unknown>); continue; }
+        results.push({
+          tx: tx as unknown as Parameters<typeof reconstructTxCollections>[0],
+          result: reconstructTxCollections(tx as unknown as Parameters<typeof reconstructTxCollections>[0], items as unknown as Parameters<typeof reconstructTxCollections>[1]),
+        });
+      }
+      for (const { result } of results) accumulateSalesSplit(salesSplit as Record<string, { cash: number; transfer: number; zelle: number; mixedUnsplit: number; total: number }>, result);
+
+      // 3) Transacciones SIN ítems (defensiva): comportamiento previo (pool →
+      //    sale_currency), sin romper días históricos sin ítems.
+      for (const tx of txWithoutItems) {
+        const cur = normCur((tx.sale_currency as string) || 'CUP');
+        if (cur === 'MIXED') continue; // indistinguible sin ítems (raro) — como antes
+        if (!salesSplit[cur]) salesSplit[cur] = { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 };
+        const cash = Number(tx.cash_amount || 0), tr = Number(tx.transfer_amount || 0), ze = Number(tx.zelle_amount || 0);
+        salesSplit[cur].cash += cash;
+        salesSplit[cur].transfer += tr;
+        salesSplit[cur].zelle += ze;
+        salesSplit[cur].total += cash + tr + ze;
+        for (const [m, amt] of [['cash', cash], ['transfer', tr], ['zelle', ze]] as const) {
+          if (amt > 0.01) salesGroups.push({ payment_method: m, currency: cur, transaction_count: 1, total: amt, total_cup: amt });
+        }
+      }
+      // 4) Grupos `sales` por (método, moneda de COBRO) — coherentes con el split
+      //    (pantalla, acordeón y plantilla Estándar heredan la clasificación real).
+      const reconGroups = buildSalesGroups(results);
+      const merged = new Map<string, { payment_method: string; currency: string; transaction_count: number; total: number; total_cup: number }>();
+      for (const g of [...reconGroups, ...salesGroups]) {
+        const k = `${g.payment_method}|${g.currency}`;
+        const prev = merged.get(k);
+        if (prev) { prev.transaction_count += g.transaction_count; prev.total += g.total; prev.total_cup += g.total_cup; }
+        else merged.set(k, { ...g });
+      }
+      salesGroups = [...merged.values()];
     } catch (splitErr: unknown) {
       // Sin split el módulo centralizado cae al fallback de grupos del RPC.
       console.warn('[cash-report] sales_split no disponible:', (splitErr as { message?: string })?.message);
@@ -171,6 +217,13 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // en vez de 12.600). La fórmula única vive en src/lib/cash-report/summary.ts
     // y la consumen idénticamente vista, previsualización y PDF.
     const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments };
+    // INCIDENTE 2026-10-16: grupos `sales` por MONEDA DE COBRO (antes por
+    // sale_currency — los cobros USD aparecían como CUP). La vista (acordeón),
+    // el fallback de computeDailySummary y la plantilla Estándar heredan la
+    // clasificación real coherente con sales_split.
+    if (salesGroups.length > 0) {
+      enrichedReport.sales = salesGroups;
+    }
     // FIX-RE-1510 v2: override del grupo `commissions` (y totales dependientes) ANTES de
     // computeDailySummary — pantalla, desglose y PDF heredan el criterio por FECHA DE PAGO.
     if (commissionsByPeriod) {

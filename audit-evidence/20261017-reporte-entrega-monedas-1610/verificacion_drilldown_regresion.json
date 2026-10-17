@@ -1,0 +1,163 @@
+{
+  "ddUsd": [
+    {
+      "id": "d7c8ef72-857d-4072-90eb-56959c089e49",
+      "created_at": "2026-10-16T16:00:00+00:00",
+      "total_amount": 31600,
+      "payment_method": "cash",
+      "sale_currency": "CUP",
+      "customer_name": null,
+      "status": "completed",
+      "cash_amount": 31600,
+      "transfer_amount": 0,
+      "zelle_amount": 0,
+      "notes": "Registro misión 16/10/2026 fila 10.",
+      "total": 40
+    }
+  ],
+  "ddCupCount": 9,
+  "cr15": {
+    "sales": [
+      {
+        "payment_method": "cash",
+        "currency": "CUP",
+        "transaction_count": 3,
+        "total": 32000,
+        "total_cup": 32000
+      }
+    ],
+    "payments": [],
+    "commissions": [
+      {
+        "payment_method": "cash",
+        "currency": "CUP",
+        "commission_count": 1,
+        "total": 300,
+        "total_cup": 300
+      }
+    ],
+    "production": [],
+    "totals": {
+      "sales_total_cup": 32000,
+      "payments_total_cup": 0,
+      "commissions_total_cup": 300,
+      "production_total_cup": 0,
+      "balance_cup": 31700
+    },
+    "start_date": "2026-10-15T04:00:00+00:00",
+    "end_date": "2026-10-16T03:59:59.999+00:00",
+    "include_all_dates": false,
+    "sales_split": {
+      "CUP": {
+        "cash": 32000,
+        "transfer": 0,
+        "zelle": 0,
+        "mixedUnsplit": 0,
+        "total": 32000
+      }
+    },
+    "adjustments": [],
+    "cash_breakdown": [
+      {
+        "denom": 1000,
+        "count": 31,
+        "total": 31000
+      },
+      {
+        "denom": 500,
+        "count": 1,
+        "total": 500
+      },
+      {
+        "denom": 200,
+        "count": 1,
+        "total": 200
+      }
+    ],
+    "cash_balance_cup": 31700,
+    "period": {
+      "start": "2026-10-15T04:00:00.000Z",
+      "end": "2026-10-16T03:59:59.999Z"
+    }
+  },
+  "its15": {
+    "items": [
+      {
+        "product_id": "d1afd532-0bad-4af7-8605-b3594c25e864",
+        "product_name": "Cemento TBV 50 Kg",
+        "sku": "141",
+        "total_quantity": 1,
+        "total_cup": 20000,
+        "cash_cup": 20000,
+        "transfer_cup": 0,
+        "zelle_cup": 0,
+        "cash_usd": 0,
+        "transfer_usd": 0,
+        "zelle_usd": 0,
+        "usd_total": 0,
+        "transactions_count": 1,
+        "has_payment_incident": false,
+        "unit_price": 20000,
+        "currency": "CUP",
+        "cash_paid": 20000,
+        "transfer_paid": 0,
+        "zelle_paid": 0
+      },
+      {
+        "product_id": "6e67d2ac-8f1e-4da1-827a-15f6e6ff8005",
+        "product_name": "Mortero",
+        "sku": "47",
+        "total_quantity": 1,
+        "total_cup": 8000,
+        "cash_cup": 8000,
+        "transfer_cup": 0,
+        "zelle_cup": 0,
+        "cash_usd": 0,
+        "transfer_usd": 0,
+        "zelle_usd": 0,
+        "usd_total": 0,
+        "transactions_count": 1,
+        "has_payment_incident": false,
+        "unit_price": 8000,
+        "currency": "CUP",
+        "cash_paid": 8000,
+        "transfer_paid": 0,
+        "zelle_paid": 0
+      },
+      {
+        "product_id": "504b9b78-bf54-4e66-a659-ce0c30320cdb",
+        "product_name": "Cemento Blanco 2 Kg",
+        "sku": "142",
+        "total_quantity": 2,
+        "total_cup": 4000,
+        "cash_cup": 4000,
+        "transfer_cup": 0,
+        "zelle_cup": 0,
+        "cash_usd": 0,
+        "transfer_usd": 0,
+        "zelle_usd": 0,
+        "usd_total": 0,
+        "transactions_count": 1,
+        "has_payment_incident": false,
+        "unit_price": 2000,
+        "currency": "CUP",
+        "cash_paid": 4000,
+        "transfer_paid": 0,
+        "zelle_paid": 0
+      }
+    ],
+    "total_cup": 32000,
+    "total_cash": 32000,
+    "total_transfer": 0,
+    "total_zelle": 0,
+    "total_quantity": 4,
+    "cash_cup": 32000,
+    "transfer_cup": 0,
+    "zelle_cup": 0,
+    "cash_usd": 0,
+    "transfer_usd": 0,
+    "zelle_usd": 0,
+    "usd_total": 0,
+    "count": 3
+  }
+}
