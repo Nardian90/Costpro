@@ -1,7 +1,7 @@
 # INFORME FINAL — MISIÓN POLÍTICA TEMPORAL COSTPRO (2026-10-18)
 
 **Proyecto:** COSTPRO 4 Multitienda (`Nardian90/Costpro`)
-**Rama:** `feat/politica-temporal-documentos-1810`
+**Rama:** `feat/politica-temporal-documentos-1810` · **Commit:** `16f73166b` · **PR:** [#1422](https://github.com/Nardian90/Costpro/pull/1422) (base `main` `10af2706c`)
 **Estado:** **CORREGIDA Y VERIFICADA** a nivel de aplicación (UI + rutas API + pruebas en BD real); el refuerzo del gate canónico de BD viaja en la migración del PR, pendiente de aplicar por el propietario con el procedimiento autorizado (ver §10).
 **Documentos companion:** `docs/audits/POLITICA_TEMPORAL_COSTPRO_2026-10-18.md` (matriz de flujos completa + especificación formal, entregados ANTES del código, §10 de la misión).
 
@@ -85,7 +85,7 @@ Matriz completa con 30 flujos (21 creadores + reversiones + infraestructura temp
 ## 9. Rama y commit
 
 - Rama: `feat/politica-temporal-documentos-1810` (desde `main` `10af2706c`).
-- Commit + PR: ver cabecera (se completa al crear el PR). **Sin fusiones ni despliegues** (§12 de la misión anterior ratificado: la activación del gate BD reforzado ocurre al aplicar la migración por el procedimiento autorizado).
+- Commit: `16f73166b` (implementación + pruebas + informes + evidencia). PR: **#1422** — https://github.com/Nardian90/Costpro/pull/1422. **Sin fusiones ni despliegues** (§12 de la misión anterior ratificado: la activación del gate BD reforzado ocurre al aplicar la migración por el procedimiento autorizado).
 
 ## 10. Pendientes y limitaciones explícitas
 
