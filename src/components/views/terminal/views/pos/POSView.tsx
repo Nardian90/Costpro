@@ -51,6 +51,9 @@ import { Zap, History } from 'lucide-react';
 import { usePOSCheckout } from './usePOSCheckout';
 import { usePOSShortcuts } from './usePOSShortcuts';
 import { usePOSServerSearch } from '@/hooks/api/usePOSServerSearch';
+// MISIÓN-TASAS (2026-10-17): confirmación diaria de tasas al abrir el carrito
+import { useDailyRatesConfirmation } from '@/hooks/api/useDailyRatesConfirmation';
+import RatesConfirmationModal from './RatesConfirmationModal';
 
 export default function POSView() {
   const { user } = useAuthStore();
@@ -202,6 +205,11 @@ export default function POSView() {
   const [posLayoutMode, setPosLayoutMode] = useState<'grid' | 'table'>('grid');
   const [showCart, setShowCart] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  // MISIÓN-TASAS (2026-10-17): el diálogo se dispara AL ABRIR el carrito —
+  // primera vez del día operativo por usuario+tienda (o si las tasas
+  // cambiaron tras la última confirmación). El hook gestiona persistencia
+  // (user_preferences, servidor) y auditoría (rates_confirmed).
+  const dailyRates = useDailyRatesConfirmation(user?.activeStoreId);
   // FIX (2026-07-23): escaneo directo a cámara sin paso intermedio
   const [showCameraDirect, setShowCameraDirect] = useState(false);
   const [selectedProductForVariants, setSelectedProductForVariants] = useState<Product | null>(null);
@@ -556,6 +564,21 @@ export default function POSView() {
           showPriceWarning={showPriceWarning}
           onPriceWarningChange={setShowPriceWarning}
           onConfirmUnpriced={confirmUnpricedCheckout}
+        />
+
+        {/* MISIÓN-TASAS (2026-10-17): confirmación diaria de tasas al abrir el
+            carrito (primera vez del día operativo por usuario+tienda, o si
+            las tasas cambiaron tras la última confirmación). Persistente en
+            servidor (user_preferences) y auditable (rates_confirmed). */}
+        <RatesConfirmationModal
+          open={showCart && dailyRates.showDialog}
+          reason={dailyRates.reason}
+          businessDay={dailyRates.businessDay}
+          rates={dailyRates.rates}
+          confirming={dailyRates.confirming}
+          onConfirm={dailyRates.confirm}
+          onContinueWithoutConfirm={dailyRates.dismiss}
+          canManageRates={dailyRates.canManageRates}
         />
 
         {/* FIX-EXCHANGE-VALIDATION (2026-07-06): modal custom de advertencia de tasa */}

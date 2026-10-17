@@ -60,6 +60,31 @@ const getBusinessText = (log: AuditLog) => {
     return `realizó una venta por ${formatCurrency(total)}`;
   }
 
+  // MISIÓN-FLEX (2026-10-17): eventos de incidencias de pago y tasas
+  if (action === 'SALE_PAYMENT_INCIDENT') {
+    const total = log.metadata?.total_amount || 0;
+    const diff = log.metadata?.difference_cup;
+    const diffTxt = typeof diff === 'number' && Math.abs(diff) > 0.01
+      ? ` (diferencia ${formatCurrency(diff)})`
+      : ' (desglose descuadrado)';
+    return `registró una venta con incidencia de pago por ${formatCurrency(total)}${diffTxt}`;
+  }
+
+  if (action === 'sale_negative_rejected') {
+    const total = log.metadata?.total;
+    const source = log.metadata?.source === 'server' ? 'servidor' : 'cajero';
+    return `intentó una venta con total negativo${typeof total === 'number' ? ` (${formatCurrency(total)})` : ''} — rechazada en ${source}`;
+  }
+
+  if (action === 'rates_confirmed') {
+    const day = log.metadata?.business_day || '';
+    return `confirmó las tasas de cambio vigentes${day ? ` (día ${day})` : ''}`;
+  }
+
+  if (action === 'UPDATE_STORE_RATES') {
+    return `actualizó las tasas de cambio de la tienda`;
+  }
+
   if (action === 'MANUAL_STOCK_ADJUSTMENT') {
     const name = old_data?.product_name || 'producto';
     const delta = new_data?.delta || 0;

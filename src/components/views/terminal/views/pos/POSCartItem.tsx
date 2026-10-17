@@ -20,6 +20,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCartStore, type CartItem } from "@/store/cart";
 import type { POSCartItemProps } from "./POSCart.types";
+import StoreRatesModal from "./StoreRatesModal";
 
 // FIX-G5: helper local para recalcular subtotal al cambiar variante
 function recalcSubtotal(item: CartItem): number {
@@ -47,25 +48,10 @@ export const POSCartItem = ({
   const maxStock = Math.floor((item.product?.stock_current ?? 999) / safeFactor);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const prefersReducedMotion = useReducedMotion();
-  // FIX-TASAS-MODAL (2026-07-10): modal custom para tasas (no window.prompt)
+  // FIX-TASAS-MODAL (2026-07-10) / MISIÓN-TASAS (2026-10-17): el modal de tasas
+  // se extrajo a StoreRatesModal (compartido con el diálogo de confirmación
+  // diaria). El botón solo abre: el componente carga las tasas vigentes.
   const [showRatesModal, setShowRatesModal] = useState(false);
-  const [ratesModalData, setRatesModalData] = useState<Record<string, string>>({});
-  const ratesModalRef = useRef<HTMLDivElement>(null);
-
-  // FIX-FOCUS-TRAP (2026-07-10): Esc cierra modal + focus trap
-  useEffect(() => {
-    if (!showRatesModal) return;
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowRatesModal(false);
-    };
-    document.addEventListener('keydown', handleEsc);
-    // Focus al primer input
-    setTimeout(() => {
-      const firstInput = ratesModalRef.current?.querySelector('input');
-      firstInput?.focus();
-    }, 50);
-    return () => document.removeEventListener('keydown', handleEsc);
-  }, [showRatesModal]);
 
   // POS-2 MM-4: Input directo de cantidad.
   // El span del número es clicable. Al click entra en modo edición (input),
@@ -491,24 +477,7 @@ export const POSCartItem = ({
           )}
           <button
             type="button"
-            onClick={async () => {
-              const { useAuthStore } = await import('@/store');
-              const token = useAuthStore.getState().token;
-              const user = useAuthStore.getState().user as any;
-              const storeId = user?.activeStoreId;
-              if (!storeId) return;
-              const res = await fetch(`/api/store-rates?storeId=${storeId}`, {
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-              });
-              let currentRates: Record<string, number> = {};
-              if (res.ok) { const data = await res.json(); currentRates = data.rates || {}; }
-              setRatesModalData({
-                USD: String(currentRates.USD || ''),
-                EUR: String(currentRates.EUR || ''),
-                MLC: String(currentRates.MLC || ''),
-              });
-              setShowRatesModal(true);
-            }}
+            onClick={() => setShowRatesModal(true)}
             className="text-[9px] font-black uppercase text-primary border border-primary/30 rounded-lg px-1.5 py-2 min-h-[36px] hover:bg-primary/5 shrink-0"
             title="Actualizar tasas de cambio de la tienda"
             aria-label="Actualizar tasas"
@@ -764,112 +733,14 @@ export const POSCartItem = ({
         );
       })()}
 
-      {/* FIX-TASAS-MODAL (2026-07-10): modal custom para actualizar tasas */}
-      {showRatesModal && (
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm"
-          onClick={() => setShowRatesModal(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="rates-modal-title"
-        >
-          <div
-            ref={ratesModalRef}
-            className="w-full max-w-sm bg-card border border-border/50 rounded-2xl shadow-2xl p-5"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <h2 id="rates-modal-title" className="text-sm font-black uppercase">Tasas de Cambio</h2>
-              <button onClick={() => setShowRatesModal(false)} className="text-muted-foreground hover:text-foreground" aria-label="Cerrar">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <p className="text-[10px] text-muted-foreground mb-3">
-              Se guardan en la tienda y persisten hasta el próximo cambio. Presiona Enter para guardar, Esc para cancelar.
-            </p>
-            <div className="space-y-2 mb-4">
-              {['USD', 'EUR', 'MLC'].map(cur => (
-                <div key={cur} className="flex items-center gap-2">
-                  <span className="text-xs font-black w-12">{cur}</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={ratesModalData[cur] || ''}
-                    onChange={(e) => setRatesModalData(prev => ({ ...prev, [cur]: e.target.value }))}
-                    onKeyDown={(e) => { if (e.key === 'Enter') (ratesModalRef.current?.querySelector('button:last-of-type') as HTMLButtonElement)?.click(); }}
-                    className="flex-1 bg-background border border-border/50 rounded-lg px-2 py-2 text-xs font-bold"
-                    placeholder="0"
-                    aria-label={`Tasa ${cur}`}
-                  />
-                  <span className="text-[10px] text-muted-foreground w-8">CUP</span>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={async () => {
-                const newRates: Record<string, number> = {};
-                for (const cur of ['USD', 'EUR', 'MLC']) {
-                  const val = parseFloat(ratesModalData[cur] || '0');
-                  if (val > 0) newRates[cur] = val;
-                }
-                if (Object.keys(newRates).length === 0) {
-                  toast.error('Ingresa al menos una tasa válida');
-                  return;
-                }
-                const { useAuthStore } = await import('@/store');
-                const token = useAuthStore.getState().token;
-                const user = useAuthStore.getState().user as any;
-                const storeId = user?.activeStoreId;
-                if (!storeId) return;
-
-                const saveRes = await fetch('/api/store-rates', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-                  body: JSON.stringify({ storeId, rates: newRates }),
-                });
-                if (!saveRes.ok) { toast.error('Error al guardar tasas'); return; }
-
-                for (const [cur, rate] of Object.entries(newRates)) {
-                  useCartStore.getState().setGlobalRate(cur, rate);
-                }
-                useCartStore.setState((state) => ({
-                  items: state.items.map((it) => {
-                    if (it.currency !== 'CUP' && newRates[it.currency]) {
-                      const newPrice = (it.base_price_cup || it.price) / newRates[it.currency];
-                      const updatedItem = { ...it, exchange_rate: newRates[it.currency], price: newPrice };
-                      updatedItem.subtotal = recalcSubtotal(updatedItem);
-                      // FIX-PAYMENT-ROWS: resetear payments[] si no hay override manual
-                      if (!updatedItem.payment_manual_override) {
-                        updatedItem.payments = [{
-                          id: `pay_rates_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                          method: 'cash',
-                          amount: updatedItem.subtotal,
-                          currency: updatedItem.cash_currency || updatedItem.currency || 'CUP',
-                          discount_type: null,
-                          discount_value: 0,
-                          discount_currency: updatedItem.cash_currency || updatedItem.currency || 'CUP',
-                        }];
-                      }
-                      updatedItem.cash_paid = updatedItem.payments?.filter(p => p.method === 'cash').reduce((s, p) => s + p.amount, 0) || 0;
-                      updatedItem.transfer_paid = updatedItem.payments?.filter(p => p.method === 'transfer').reduce((s, p) => s + p.amount, 0) || 0;
-                      updatedItem.zelle_paid = updatedItem.payments?.filter(p => p.method === 'zelle').reduce((s, p) => s + p.amount, 0) || 0;
-                      return updatedItem;
-                    }
-                    return it;
-                  }),
-                  lastUpdated: Date.now(),
-                }));
-
-                setShowRatesModal(false);
-                toast.success('Tasas actualizadas y guardadas');
-              }}
-              className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90"
-            >
-              Guardar Tasas
-            </button>
-          </div>
-        </div>
-      )}
+      {/* FIX-TASAS-MODAL (2026-07-10) / MISIÓN-TASAS (2026-10-17): modal de
+          tasas extraído a StoreRatesModal (compartido con la confirmación
+          diaria). Guarda en store_exchange_rates, re-tasa el carrito y
+          registra el cambio en Auditoría (UPDATE_STORE_RATES). */}
+      <StoreRatesModal
+        open={showRatesModal}
+        onClose={() => setShowRatesModal(false)}
+      />
     </motion.div>
   );
 };

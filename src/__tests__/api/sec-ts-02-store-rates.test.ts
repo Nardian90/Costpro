@@ -52,6 +52,7 @@ const db = {
 const probes = {
   upserts: [] as Array<{ table: string; rows: any[] }>,
   selects: [] as string[],
+  audits: [] as Array<{ table: string; row: any }>,
 };
 
 vi.mock('@/lib/supabase-admin', () => ({
@@ -69,6 +70,13 @@ vi.mock('@/lib/supabase-admin', () => ({
         },
         upsert: (rows: any[], opts: any) => {
           probes.upserts.push({ table, rows });
+          return Promise.resolve({ error: null });
+        },
+        // MISIÓN-TASAS: la escritura de tasas registra UPDATE_STORE_RATES en
+        // audit_logs — el contrato de seguridad añade esta escritura SOLO
+        // después de la autorización (nunca para un 403).
+        insert: (row: any) => {
+          probes.audits.push({ table, row });
           return Promise.resolve({ error: null });
         },
       };
@@ -117,6 +125,7 @@ beforeEach(() => {
   sessionState.value = null;
   probes.upserts = [];
   probes.selects = [];
+  probes.audits = [];
   db.profile = { role: 'clerk', roles: ['clerk'] };
   db.memberships = [];
   db.existingRates = [];
@@ -144,6 +153,16 @@ describe('SEC-TS-02 H2 · POST /api/store-rates (cross-store write)', () => {
     expect(probes.upserts[0].table).toBe('store_exchange_rates');
     expect(probes.upserts[0].rows).toHaveLength(3);
     expect(probes.upserts[0].rows[0]).toMatchObject({ store_id: STORE_A, currency: 'USD', rate: 680 });
+    // MISIÓN-TASAS: la escritura autorizada deja traza de auditoría con
+    // valores anteriores/nuevos y del actor de la sesión.
+    expect(probes.audits).toHaveLength(1);
+    expect(probes.audits[0].table).toBe('audit_logs');
+    expect(probes.audits[0].row).toMatchObject({
+      action: 'UPDATE_STORE_RATES',
+      store_id: STORE_A,
+      user_id: USER_X,
+    });
+    expect(probes.audits[0].row.metadata.new_rates).toMatchObject({ USD: 680 });
   });
 
   it('A → B (BOUNDARY OBLIGATORIO): manager de A NO puede escribir tasas de B — 403 y CERO upsert service-role', async () => {
@@ -154,6 +173,8 @@ describe('SEC-TS-02 H2 · POST /api/store-rates (cross-store write)', () => {
     // Evidencia del boundary: la operación privilegiada NUNCA se ejecutó
     expect(probes.upserts).toHaveLength(0);
     expect(probes.selects).not.toContain('store_exchange_rates');
+    // ...y tampoco queda traza de auditoría de una operación denegada
+    expect(probes.audits).toHaveLength(0);
   });
 
   it('usuario autenticado SIN membresía de gestión (clerk de A) → 403 en A', async () => {

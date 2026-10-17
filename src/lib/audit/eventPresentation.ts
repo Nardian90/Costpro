@@ -70,6 +70,12 @@ export const AUDIT_EVENT_TITLES: Record<string, string> = {
   stock_adjustment:         'Ajuste de stock registrado',
   price_change:             'Precio de producto actualizado',
 
+  // MISIÓN-FLEX / MISIÓN-TASAS (2026-10-17)
+  SALE_PAYMENT_INCIDENT:    'Venta con incidencia de pago',
+  sale_negative_rejected:   'Intento de venta negativa rechazado',
+  rates_confirmed:          'Confirmación diaria de tasas',
+  UPDATE_STORE_RATES:       'Tasas de tienda actualizadas',
+
   // Acciones de usuario (triggers + UI)
   CREATE_PRODUCT:           'Producto creado',
   UPDATE_PRODUCT:           'Producto actualizado',
@@ -148,7 +154,7 @@ export type AuditDocumentRef =
  * cambios de estado (UPDATE_STATUS) y alertas de control (record_id = product
  * id) nunca obtienen botón documental.
  */
-const SALE_CREATED_ACTIONS: ReadonlySet<string> = new Set(['CREATE_SALE', 'CREATE_SALE_V2']);
+const SALE_CREATED_ACTIONS: ReadonlySet<string> = new Set(['CREATE_SALE', 'CREATE_SALE_V2', 'SALE_PAYMENT_INCIDENT']);
 const SALE_VOIDED_ACTIONS: ReadonlySet<string> = new Set(['sale_voided', 'REVERSE_TRANSACTION_V2']);
 
 function getDocumentRef(entry: AuditLogEntry): AuditDocumentRef {

@@ -59,11 +59,15 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
     // Convertir a objeto { USD: 680, EUR: 720, MLC: 600 }
     const rates: Record<string, number> = {};
+    const updatedAt: Record<string, string> = {};
     for (const r of data || []) {
       rates[r.currency] = parseFloat(r.rate);
+      if (r.updated_at) updatedAt[r.currency] = r.updated_at;
     }
 
-    return NextResponse.json({ rates });
+    // MISIÓN-TASAS (2026-10-17): el diálogo de confirmación diaria muestra la
+    // fecha de la última actualización real de cada tasa.
+    return NextResponse.json({ rates, updated_at: updatedAt });
   } catch (error: unknown) {
     logger.error('WALLET', `Store rates error: ${error instanceof Error ? error.message : String(error)}`);
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
@@ -112,7 +116,30 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       currency,
       rate,
       updated_by: session.user.id,
+      // La columna carece de trigger ON UPDATE: se refresca explícitamente
+      // para que la "fecha de última actualización" del POS sea real.
+      updated_at: new Date().toISOString(),
     }));
+
+    // MISIÓN-TASAS (2026-10-17): trazabilidad completa del cambio (quién,
+    // cuándo, valores anteriores vs nuevos) en el mecanismo canónico de
+    // auditoría — antes solo quedaba un logger.info sobrescribible.
+    // Resiliente por diseño: un fallo de auditoría (o de la lectura previa)
+    // JAMÁS rompe ni revierte la actualización de tasas (patrón audit-service).
+    const previousRates: Record<string, number> = {};
+    try {
+      const { data: prevRows, error: prevError } = await admin
+        .from('store_exchange_rates')
+        .select('currency, rate')
+        .eq('store_id', storeId);
+      if (!prevError && prevRows) {
+        for (const r of prevRows) {
+          previousRates[r.currency] = parseFloat(r.rate);
+        }
+      }
+    } catch (prevEx) {
+      logger.warn('WALLET', `Store rates previous-read failed (no bloquea): ${String(prevEx)}`);
+    }
 
     const { error } = await admin.from('store_exchange_rates')
       .upsert(rows, { onConflict: 'store_id,currency' });
@@ -120,6 +147,26 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (error) {
       logger.error('WALLET', `Store rates save: ${error.message}`);
       return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+    }
+
+    try {
+      const { error: auditError } = await admin.from('audit_logs').insert({
+        user_id: session.user.id,
+        action: 'UPDATE_STORE_RATES',
+        table_name: 'store_exchange_rates',
+        record_id: storeId,
+        store_id: storeId,
+        metadata: {
+          previous_rates: previousRates,
+          new_rates: rates,
+          timestamp: new Date().toISOString(),
+        },
+      });
+      if (auditError) {
+        logger.error('WALLET', `Store rates audit insert failed: ${auditError.message}`);
+      }
+    } catch (auditEx) {
+      logger.error('WALLET', `Store rates audit exception (no bloquea): ${String(auditEx)}`);
     }
 
     logger.info('WALLET', `Store rates saved by ${session.user.id} for store ${storeId}`);

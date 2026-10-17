@@ -11,6 +11,17 @@ import { canUndoSaleInStore } from "@/lib/roles";
 import { PaymentMethod } from "@/types";
 import { getSupervisorAuth, clearSupervisorAuth } from "./supervisor-auth-store";
 import type { LastSale } from "./POSCart.types";
+// MISIÓN-FLEX (2026-10-17): incidencias de pago — flexibilización temporal
+// de validaciones (faltante/sobrepago/desglose descuadrado ya NO bloquean;
+// se informan, se registran en la venta y quedan visibles en Auditoría).
+import {
+  computePaymentIncidents,
+  buildRateDifferenceIncident,
+  buildIncidentToastMessage,
+  type PaymentIncident,
+} from "@/lib/pos/payment-incidents";
+import { auditService } from "@/services/audit-service";
+import type { CartItem } from "@/store/cart";
 
 export function usePOSCheckout() {
   const { user } = useAuthStore();
@@ -68,6 +79,11 @@ export function usePOSCheckout() {
         type: "fixed" | "percentage";
         value: number;
       } | null,
+      // MISIÓN-FLEX: datos del modal "Descuadre de tasa" cuando el cajero
+      // confirmó continuar con la diferencia (se registra como incidencia).
+      checkoutOpts?: {
+        rateWarning?: { totalCup: number; totalPaidCup: number } | null;
+      } | null,
     ) => {
       if (!user?.activeStoreId || !user?.id) return;
 
@@ -90,57 +106,84 @@ export function usePOSCheckout() {
         // Antes: getTotalCup() que ya NO resta descuento global fantasma (delegaba en getExpectedTotalCup).
         // Ahora: usar directamente getExpectedTotalCup() para consistencia con tab Pago.
         const totalAmountCup = cartState.getExpectedTotalCup();
-        const cashAmountCup = paymentMethod === 'cash' ? totalAmountCup
-          : paymentMethod === 'mixed' ? items.reduce((s, i) => {
-              // FIX-PAYMENT-ROWS: sumar todas las filas cash de payments[]
-              if (i.payments && i.payments.length > 0) {
-                return s + i.payments
-                  .filter(p => p.method === 'cash')
-                  .reduce((ps, p) => {
-                    const rate = cartState.globalRates[p.currency || 'CUP'] || (p.currency === i.currency ? (i.exchange_rate || 1) : 1);
-                    return ps + (p.amount || 0) * (p.currency === 'CUP' ? 1 : rate);
-                  }, 0);
-              }
-              const rate = cartState.globalRates[i.cash_currency || 'CUP'] || (i.cash_currency === i.currency ? (i.exchange_rate || 1) : 1);
-              return s + (i.cash_paid || 0) * (i.cash_currency === 'CUP' ? 1 : rate);
-            }, 0)
-          : 0;
-        const transferAmountCup = paymentMethod === 'transfer' ? totalAmountCup
-          : paymentMethod === 'mixed' ? items.reduce((s, i) => {
-              if (i.payments && i.payments.length > 0) {
-                return s + i.payments
-                  .filter(p => p.method === 'transfer')
-                  .reduce((ps, p) => {
-                    const rate = cartState.globalRates[p.currency || 'CUP'] || (p.currency === i.currency ? (i.exchange_rate || 1) : 1);
-                    return ps + (p.amount || 0) * (p.currency === 'CUP' ? 1 : rate);
-                  }, 0);
-              }
-              const rate = cartState.globalRates[i.transfer_currency || 'CUP'] || (i.transfer_currency === i.currency ? (i.exchange_rate || 1) : 1);
-              return s + (i.transfer_paid || 0) * (i.transfer_currency === 'CUP' ? 1 : rate);
-            }, 0)
-          : 0;
-        const zelleAmountCup = paymentMethod === 'zelle' ? totalAmountCup
-          : paymentMethod === 'mixed' ? items.reduce((s, i) => {
-              if (i.payments && i.payments.length > 0) {
-                return s + i.payments
-                  .filter(p => p.method === 'zelle')
-                  .reduce((ps, p) => {
-                    const rate = cartState.globalRates[p.currency || 'USD'] || cartState.globalRates['USD'] || (i.exchange_rate || 1);
-                    return ps + (p.amount || 0) * (p.currency === 'CUP' ? 1 : rate);
-                  }, 0);
-              }
-              const rate = cartState.globalRates[i.zelle_currency || 'USD'] || cartState.globalRates['USD'] || (i.exchange_rate || 1);
-              return s + (i.zelle_paid || 0) * (i.zelle_currency === 'CUP' ? 1 : rate);
-            }, 0)
-          : 0;
+
+        // MISIÓN-FLEX (2026-10-17): incidencias de pago del carrito (puras).
+        // Una venta exacta → [] (payload canónico intacto). Con diferencias,
+        // las incidencias viajan al RPC para registrar la venta SIN bloquear
+        // al cajero, con nota automática y evento SALE_PAYMENT_INCIDENT.
+        const flexIncidents: PaymentIncident[] = computePaymentIncidents({
+          items,
+          discount: checkoutDiscount || discount || null,
+          getItemPaidCup: (i) => cartState.getItemPaidCup(i as CartItem),
+        });
+        // Diferencia de tasa aceptada por el cajero en el modal "Descuadre de tasa".
+        if (checkoutOpts?.rateWarning
+          && Math.abs(checkoutOpts.rateWarning.totalPaidCup - checkoutOpts.rateWarning.totalCup) > 0.01) {
+          flexIncidents.push(buildRateDifferenceIncident(
+            checkoutOpts.rateWarning.totalCup,
+            checkoutOpts.rateWarning.totalPaidCup,
+          ));
+        }
+        const hasFlexIncidents = flexIncidents.length > 0;
+
+        // Sumas reales por método (filas de pago por item, convertidas a CUP)
+        // — la fuente de lo REALMENTE recibido. Con flexibilización, los
+        // métodos simples también reportan lo recibido (no el total).
+        const cashRowsCup = items.reduce((s, i) => {
+          // FIX-PAYMENT-ROWS: sumar todas las filas cash de payments[]
+          if (i.payments && i.payments.length > 0) {
+            return s + i.payments
+              .filter(p => p.method === 'cash')
+              .reduce((ps, p) => {
+                const rate = cartState.globalRates[p.currency || 'CUP'] || (p.currency === i.currency ? (i.exchange_rate || 1) : 1);
+                return ps + (p.amount || 0) * (p.currency === 'CUP' ? 1 : rate);
+              }, 0);
+          }
+          const rate = cartState.globalRates[i.cash_currency || 'CUP'] || (i.cash_currency === i.currency ? (i.exchange_rate || 1) : 1);
+          return s + (i.cash_paid || 0) * (i.cash_currency === 'CUP' ? 1 : rate);
+        }, 0);
+        const transferRowsCup = items.reduce((s, i) => {
+          if (i.payments && i.payments.length > 0) {
+            return s + i.payments
+              .filter(p => p.method === 'transfer')
+              .reduce((ps, p) => {
+                const rate = cartState.globalRates[p.currency || 'CUP'] || (p.currency === i.currency ? (i.exchange_rate || 1) : 1);
+                return ps + (p.amount || 0) * (p.currency === 'CUP' ? 1 : rate);
+              }, 0);
+          }
+          const rate = cartState.globalRates[i.transfer_currency || 'CUP'] || (i.transfer_currency === i.currency ? (i.exchange_rate || 1) : 1);
+          return s + (i.transfer_paid || 0) * (i.transfer_currency === 'CUP' ? 1 : rate);
+        }, 0);
+        const zelleRowsCup = items.reduce((s, i) => {
+          if (i.payments && i.payments.length > 0) {
+            return s + i.payments
+              .filter(p => p.method === 'zelle')
+              .reduce((ps, p) => {
+                const rate = cartState.globalRates[p.currency || 'USD'] || cartState.globalRates['USD'] || (i.exchange_rate || 1);
+                return ps + (p.amount || 0) * (p.currency === 'CUP' ? 1 : rate);
+              }, 0);
+          }
+          const rate = cartState.globalRates[i.zelle_currency || 'USD'] || cartState.globalRates['USD'] || (i.exchange_rate || 1);
+          return s + (i.zelle_paid || 0) * (i.zelle_currency === 'CUP' ? 1 : rate);
+        }, 0);
+
+        const cashAmountCup = paymentMethod === 'cash'
+          ? (hasFlexIncidents ? cashRowsCup : totalAmountCup)
+          : paymentMethod === 'mixed' ? cashRowsCup : 0;
+        const transferAmountCup = paymentMethod === 'transfer'
+          ? (hasFlexIncidents ? transferRowsCup : totalAmountCup)
+          : paymentMethod === 'mixed' ? transferRowsCup : 0;
+        const zelleAmountCup = paymentMethod === 'zelle'
+          ? (hasFlexIncidents ? zelleRowsCup : totalAmountCup)
+          : paymentMethod === 'mixed' ? zelleRowsCup : 0;
 
         const cashAmount = cashAmountCup;
         const transferAmount = transferAmountCup;
         const zelleAmount = zelleAmountCup;
 
-        if (paymentMethod === 'mixed' && Math.abs(cashAmountCup + transferAmountCup + zelleAmountCup - totalAmountCup) > 0.01) {
-          throw new Error(`Descuadre: efectivo (${cashAmountCup.toFixed(2)}) + transf (${transferAmountCup.toFixed(2)}) + zelle (${zelleAmountCup.toFixed(2)}) ≠ total (${totalAmountCup.toFixed(2)}) CUP`);
-        }
+        // MISIÓN-FLEX: la defensa anti-descuadre (antes: throw) ya NO interrumpe
+        // el flujo — computePaymentIncidents documentó la diferencia (por línea
+        // y global) y el servidor la valida con las mismas incidencias.
 
         // FINALIZE-V2: create_sale_v2 es el ÚNICO camino de venta (path V1 con
         // RPC directo create_sale eliminado — ver migración 20261005140000).
@@ -192,6 +235,10 @@ export function usePOSCheckout() {
               // server-side solo cuando el gate ≥15% dispara y lo persiste en la
               // auditoría asociado a la línea/operación autorizada.
               discount_reason: supervisorAuth?.reason || null,
+              // MISIÓN-FLEX: incidencias de pago estructuradas. Solo se envían
+              // cuando existen — la venta exacta mantiene el payload canónico
+              // (compatible con RPC sin migrar, que las ignora).
+              ...(hasFlexIncidents ? { payment_incidents: flexIncidents } : {}),
               idempotency_key: `sale-${crypto.randomUUID()}`,
               items: items.map((i) => ({
                 product_id: i.product_id,
@@ -272,6 +319,14 @@ export function usePOSCheckout() {
           customerName: customerName || undefined,
         });
         clearCart();
+        // MISIÓN-FLEX: la venta con incidencia NUNCA se presenta como
+        // totalmente pagada — toast diferenciado con el detalle.
+        if (hasFlexIncidents) {
+          toast.warning("Venta registrada CON INCIDENCIA DE PAGO", {
+            description: `${buildIncidentToastMessage(flexIncidents) || "Diferencia de pago"}. Reflejada en Inicio → OPERACIÓN → Auditoría.`,
+            duration: 8000,
+          });
+        }
         toast.success(
           customerName
             ? `Venta a ${customerName} completada`
@@ -389,49 +444,59 @@ export function usePOSCheckout() {
         return;
       }
 
-      // POS-2 MM-8: Validación de pago bloquea checkout.
-      // Si el método es "mixed" o algún ítem tiene cash_paid/transfer_paid definido,
-      // la suma de pagos por ítem debe cuadrar con el subtotal por ítem.
-      // Si es "cash" puro, validamos que no haya residual de pago mixto activo.
+      // POS-2 MM-8 / MISIÓN 2026-10-17: el total ≤ 0 SIGUE bloqueando el
+      // checkout (regla innegociable: una venta negativa jamás se aprueba).
+      // getTotal() acota a 0; por eso el guard se extiende a
+      // getExpectedTotalCup() (sin acotar) para detectar totales negativos
+      // por recargos/descuentos corruptos: se rechaza y la INTENCIÓN queda
+      // registrada en Auditoría (sale_negative_rejected, fuente cliente).
       const total = getTotal();
-      if (total <= 0) {
+      const guardState = useCartStore.getState();
+      const expectedTotalGuard = guardState.getExpectedTotalCup();
+      if (total <= 0 || expectedTotalGuard < 0) {
+        if (expectedTotalGuard < 0 || total < 0) {
+          toast.error(
+            `Venta con total negativo (${expectedTotalGuard.toFixed(2)} CUP) rechazada: no se aprueba ni se registra como venta. La operación quedó documentada en Auditoría.`,
+            { duration: 7000 },
+          );
+          void auditService.logNegativeSaleAttempt({
+            userId: user?.id || "",
+            storeId: user?.activeStoreId || "",
+            total: expectedTotalGuard < 0 ? expectedTotalGuard : total,
+            itemCount: items.length,
+            source: "client",
+          });
+          return;
+        }
         toast.error("No se puede cobrar un total de 0. Agrega productos al carrito.");
         return;
       }
 
-      if (paymentMethod === "mixed" || items.some(i => i.cash_paid > 0 || i.transfer_paid > 0)) {
-        // POS-3b audit P0.2: Validación con descuento global aplicado.
-        // El subtotal esperado por item = bruto - porción del descuento global.
-        const grossSubtotal = items.reduce((acc, i) => acc + (i.subtotal || 0), 0);
-        const globalDiscountAmount = discount && discount.value > 0
-          ? (discount.type === "percentage"
-            ? (grossSubtotal * discount.value) / 100
-            : Math.min(discount.value, grossSubtotal))
-          : 0;
-
-        const mismatchedItem = items.find(i => {
-          const itemWeight = grossSubtotal > 0 ? (i.subtotal || 0) / grossSubtotal : 0;
-          const itemAdjustedSubtotal = Math.max(
-            0,
-            (i.subtotal || 0) - globalDiscountAmount * itemWeight,
-          );
-          // FIX-BUG-4b (2026-07-06): convertir cada componente a CUP antes de comparar.
-          // FIX-USD-CUP-RATE (2026-10-14): usar los helpers CANÓNICOS del store
-          // (getItemPaidCup → getRateToCup: globalRates de la tienda > tasa del
-          // item), exactamente los mismos que alimentan el badge
-          // "Esperado/Sobrepago" del carrito. La fórmula inline anterior trataba
-          // el pago en la MONEDA DEL ITEM como factor ×1 mientras el subtotal se
-          // convertía con la tasa → con tasa real (ej. 790) un pago en USD de
-          // 120 cuadraba el carrito pero este gate lo rechazaba como descuadre
-          // (120 ≠ 94 800): el defecto inverso al reportado (pago CUP).
-          const cartSt = useCartStore.getState();
-          const itemPaidCup = cartSt.getItemPaidCup(i);
-          // Convertir subtotal ajustado a CUP también
-          const itemAdjustedSubtotalCup = itemAdjustedSubtotal * (i.currency === 'CUP' ? 1 : (i.exchange_rate || 1));
-          return Math.abs(itemPaidCup - itemAdjustedSubtotalCup) > 0.01;
-        });
-        if (mismatchedItem) {
-          const name = mismatchedItem.product?.name || "Un producto";
+      // MISIÓN-FLEX (2026-10-17): flexibilización TEMPORAL de diferencias de
+      // pago. Faltante, sobrepago y descuadre del desglose ya NO bloquean el
+      // checkout: se informan y las incidencias viajan al RPC, que las
+      // persiste (nota + payment_incidents + Auditoría). Fail-closed: si un
+      // ítem USD/EUR no tiene tasa REAL (≤ 1.0) la diferencia NO es validable
+      // (p. ej. carrito sin tasas hidratadas) y SE CONSERVA el bloqueo
+      // canónico — no se registra una venta con matemática rota.
+      const cartSt = useCartStore.getState();
+      const shouldCheckBreakdown =
+        paymentMethod === "mixed"
+        || items.some(i => i.cash_paid > 0 || i.transfer_paid > 0 || (i.payments?.length ?? 0) > 0);
+      if (shouldCheckBreakdown) {
+        const effectiveItemRate = (i: typeof items[number]): number => {
+          const cur = (i.currency || "CUP").toUpperCase();
+          if (cur === "CUP") return 1;
+          const storeRate = cartSt.globalRates[cur];
+          if (storeRate && storeRate > 0) return storeRate;
+          return i.exchange_rate || 1;
+        };
+        const unrateableItem = items.find(
+          i => ["USD", "EUR"].includes((i.currency || "CUP").toUpperCase())
+            && effectiveItemRate(i) <= 1.0,
+        );
+        if (unrateableItem) {
+          const name = unrateableItem.product?.name || "Un producto";
           toast.error(`Pago mixto descuadrado en "${name}". Revisa el desglose efectivo/transferencia/Transf. Exterior.`, {
             duration: 6000,
             action: {
@@ -440,6 +505,21 @@ export function usePOSCheckout() {
             },
           });
           return;
+        }
+
+        const computedIncidents = computePaymentIncidents({
+          items,
+          discount,
+          getItemPaidCup: (i) => cartSt.getItemPaidCup(i as CartItem),
+        });
+        if (computedIncidents.length > 0) {
+          // NO bloquea: informa y continúa. El detalle viaja en el payload y
+          // el servidor re-valida (fail-closed sin incidencias).
+          const msg = buildIncidentToastMessage(computedIncidents);
+          toast.warning(
+            `Venta con diferencia de pago: ${msg}. Se registrará como incidencia en Auditoría.`,
+            { duration: 6000 },
+          );
         }
       }
 
@@ -541,16 +621,22 @@ export function usePOSCheckout() {
   }, [pendingCheckoutData, processCheckout]);
 
   // FIX-EXCHANGE-VALIDATION: handlers del modal de advertencia de tasa
+  // MISIÓN-FLEX: al confirmar el modal con diferencia, esta viaja a
+  // processCheckout como incidencia 'rate_difference' (trazable en Auditoría).
   const confirmRateWarning = useCallback(async () => {
     setShowRateWarning(false);
     if (pendingCheckoutData) {
       await processCheckout(
         pendingCheckoutData.paymentMethod,
         pendingCheckoutData.discount,
+        rateWarningData
+          ? { rateWarning: { totalCup: rateWarningData.totalCup, totalPaidCup: rateWarningData.totalPaidCup } }
+          : undefined,
       );
       setPendingCheckoutData(null);
+      setRateWarningData(null);
     }
-  }, [pendingCheckoutData, processCheckout]);
+  }, [pendingCheckoutData, processCheckout, rateWarningData]);
 
   const cancelRateWarning = useCallback(() => {
     setShowRateWarning(false);

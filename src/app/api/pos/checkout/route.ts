@@ -87,6 +87,24 @@ const checkoutSchema = z.object({
   // La OBLIGATORIEDAD se valida server-side en create_sale_v2 (única regla
   // canónica): solo se exige cuando el gate de desvío ≥15% dispara.
   discount_reason: z.string().max(500).nullable().optional(),
+  // MISIÓN-FLEX (2026-10-17): incidencias de pago documentadas por el cliente
+  // (flexibilización temporal). El RPC solo relaja los gates de pago cuando
+  // llegan; sin ellas el rechazo canónico se mantiene.
+  payment_incidents: z.array(
+    z.object({
+      type: z.enum(['insufficient_payment', 'overpayment', 'mixed_breakdown_mismatch', 'rate_difference']),
+      item_index: z.number().int().min(0).optional(),
+      item_name: z.string().max(200).optional(),
+      expected_cup: z.number().finite(),
+      received_cup: z.number().finite(),
+      difference_cup: z.number().finite(),
+      currency: z.string().max(8).optional(),
+      detail: z.string().max(500).optional(),
+    }),
+  ).max(100).optional(),
+  // Nota manual del cajero (opcional; el RPC la preserva y antepone la nota
+  // automática de incidencia sin sobrescribirla).
+  sale_notes: z.string().max(1000).nullable().optional(),
   idempotency_key: z.string().min(1),
   operation_date: z.string().datetime().optional(),
   items: z.array(itemSchema).min(1),
@@ -209,11 +227,54 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_supervisor_token_jti: supervisor_token_jti,
     p_supervisor_scope: supervisor_scope,
     p_discount_reason: d.discount_reason ?? null,
+    // MISIÓN-FLEX: solo se incluyen cuando existen — la venta exacta usa el
+    // payload canónico (compatible con RPC sin migrar). La nota de incidencia
+    // la construye el RPC; sale_notes es la nota manual opcional del cajero.
+    ...(d.payment_incidents?.length ? { p_payment_incidents: d.payment_incidents } : {}),
+    ...(d.sale_notes ? { p_notes: d.sale_notes } : {}),
   });
 
   if (rpcError) {
     const msg = rpcError.message || '';
     logger.error('POS', 'CREATE_SALE_V2_FAILED', { error: msg, storeId: d.store_id });
+
+    // MISIÓN (2026-10-17) REGLA INNEGOCIABLE: venta con total negativo
+    // rechazada en servidor. La venta NO se persiste; el intento queda
+    // documentado en Auditoría (sale_negative_rejected, fuente server).
+    if (msg.includes('ERR_NEGATIVE_SALE')) {
+      const totalMatch = msg.match(/total=(-?[\d.]+)/);
+      const negativeTotal = totalMatch ? parseFloat(totalMatch[1]) : null;
+      try {
+        const { error: auditError } = await supabaseAdmin.from('audit_logs').insert({
+          user_id: session.user.id,
+          action: 'sale_negative_rejected',
+          table_name: 'transactions',
+          record_id: null,
+          store_id: d.store_id,
+          metadata: {
+            total: negativeTotal,
+            item_count: d.items.length,
+            source: 'server',
+            detail: 'Rechazada por create_sale_v2 (ERR_NEGATIVE_SALE). No se aprobó ni descontó inventario.',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        if (auditError) logger.error('POS', 'NEGATIVE_SALE_AUDIT_FAILED', { error: auditError.message });
+      } catch (auditEx) {
+        logger.error('POS', 'NEGATIVE_SALE_AUDIT_EX', { error: String(auditEx) });
+      }
+      return NextResponse.json(
+        { error: 'Venta con total negativo rechazada: no se aprueba. El intento quedó registrado en Auditoría.' },
+        { status: 422 },
+      );
+    }
+    // MISIÓN-FLEX: sin tasa real de USD/EUR no se validan diferencias (fail-closed)
+    if (msg.includes('ERR_RATE_REQUIRED_FOR_INCIDENT')) {
+      return NextResponse.json(
+        { error: 'No se puede registrar la incidencia de pago: falta la tasa de cambio de la tienda (USD/EUR). Configure la tasa e intente de nuevo.' },
+        { status: 409 },
+      );
+    }
 
     // FIX Bug #6 (v2.21.6): Product not found → 400 (not 409)
     if (msg.includes('ERR_PRODUCT_NOT_FOUND')) {
