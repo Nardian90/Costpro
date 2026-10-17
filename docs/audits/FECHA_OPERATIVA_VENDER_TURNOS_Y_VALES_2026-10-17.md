@@ -184,8 +184,8 @@ Evidencia completa: `/home/z/my-project/scripts/mision_fecha_operativa_db.json` 
 ## 11. Commit y PR
 
 - **Rama:** `feat/fecha-operativa-vender` (desde `origin/main` `9ebdada5b`).
-- **Commits:** implementación + informe (ver historial de la rama).
-- **PR:** pendiente de creación al publicar la rama — este número se completa inmediatamente después de abrirlo.
+- **Commits:** `7a31f5a6c` (implementación + informe) + commit de actualización de esta sección.
+- **PR:** **#1419** — https://github.com/Nardian90/Costpro/pull/1419 (base `main`, head `feat/fecha-operativa-vender`).
 - **Despliegue:** NO realizado (ver sección 12). Sin fusiones.
 
 ## 12. Estado del despliegue
