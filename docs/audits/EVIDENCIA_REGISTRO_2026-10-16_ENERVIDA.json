@@ -1,0 +1,300 @@
+{
+ "mision": "Registro operaciones 16/10/2026 ENERVIDA-VITALLCONS",
+ "ejecutado": "2026-10-17",
+ "mecanismo": "RPCs oficiales create_sale_v2 / create_vale_salida (service_role + p_user_id real)",
+ "fecha_max_operativa_pre": "2026-10-16T16:00:00+00:00",
+ "operaciones": [
+  {
+   "tipo": "VS",
+   "fila": 1,
+   "desc": "SKU141 Cemento TBV 50 Kg x1 — nota: Tienda Pueblo",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-vs-f01",
+   "resultado": {
+    "status": "success",
+    "slip_id": "f40b6896-ba10-454f-a92e-afda8efb85e4",
+    "total_cost": 1.0,
+    "slip_number": "VS-000185-2026"
+   }
+  },
+  {
+   "tipo": "VS",
+   "fila": 2,
+   "desc": "SKU81 Bridas de 4x8 400mm x100 — nota: OT/Ferro",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-vs-f02",
+   "resultado": {
+    "status": "success",
+    "slip_id": "96fb6eb6-4bf7-4874-b968-44329277a2f9",
+    "total_cost": 100.0,
+    "slip_number": "VS-000186-2026"
+   }
+  },
+  {
+   "tipo": "VS",
+   "fila": 4,
+   "desc": "SKU87 Cable Solar Negro 4mm x63 (m) — nota: OT/Ferro",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-vs-f04",
+   "resultado": {
+    "status": "success",
+    "slip_id": "2e0adcc4-9330-49fd-bcd5-c5ebdfc9bff8",
+    "total_cost": 49.865954514128184,
+    "slip_number": "VS-000187-2026"
+   }
+  },
+  {
+   "tipo": "VS",
+   "fila": 5,
+   "desc": "SKU88 Cable Solar Rojo 4mm x63 (m) — nota: OT/Ferro",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-vs-f05",
+   "resultado": {
+    "status": "success",
+    "slip_id": "011f0e7e-c19e-49af-aae7-afc0ed642044",
+    "total_cost": 56.45428388746803,
+    "slip_number": "VS-000188-2026"
+   }
+  },
+  {
+   "tipo": "VS",
+   "fila": 6,
+   "desc": "SKU22 Conectores MC4 x10 — nota: OT/Ferro",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-vs-f06",
+   "resultado": {
+    "status": "success",
+    "slip_id": "488f8103-60ac-4864-b0ec-5fd300b1ec0f",
+    "total_cost": 3.007518796992481,
+    "slip_number": "VS-000189-2026"
+   }
+  },
+  {
+   "tipo": "VS",
+   "fila": 11,
+   "desc": "SKU15 Cemento Cola x2 — nota: Belki",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-vs-f11",
+   "resultado": {
+    "status": "success",
+    "slip_id": "8d99b3be-e0d5-41b0-8b0f-76bc9814fc29",
+    "total_cost": 1.8478664192949907,
+    "slip_number": "VS-000190-2026"
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 3,
+   "desc": "SKU158 x1 — transferencia 800 CUP",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f03",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "fa1943c6-abff-491c-b831-6bb31d41485b",
+    "discount_amount": 0,
+    "calculated_total": 800.0,
+    "calculated_subtotal": 800.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 7,
+   "desc": "SKU158 x1 — transferencia 800 CUP",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f07",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "2e1b7f1d-23d5-4274-a0db-03f53b0648b4",
+    "discount_amount": 0,
+    "calculated_total": 800.0,
+    "calculated_subtotal": 800.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 8,
+   "desc": "SKU158 x1 — transferencia 800 CUP",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f08",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "725b0f96-9f27-4fbf-a0de-4af9ba7dbb39",
+    "discount_amount": 0,
+    "calculated_total": 800.0,
+    "calculated_subtotal": 800.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 9,
+   "desc": "SKU48 x25 — efectivo 6,250 CUP",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f09",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "d5d188e0-e82c-4856-812d-b2d93902c716",
+    "discount_amount": 0,
+    "calculated_total": 6250.0,
+    "calculated_subtotal": 6250.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 10,
+   "desc": "SKU128 x2 — USD 40.00 (tasa 790)",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f10",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "d7c8ef72-857d-4072-90eb-56959c089e49",
+    "discount_amount": 0,
+    "calculated_total": 31600.0,
+    "calculated_subtotal": 31600.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 12,
+   "desc": "SKU15 x1 — efectivo 10,000 CUP",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f12",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "be8ab140-bd9d-4fd6-94bb-ca3fb699bca3",
+    "discount_amount": 0,
+    "calculated_total": 10000.0,
+    "calculated_subtotal": 10000.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 13,
+   "desc": "SKU141 x4 — efectivo 80,000 CUP",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f13",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "a1622a80-90f9-42ab-83fb-204968594239",
+    "discount_amount": 0,
+    "calculated_total": 80000.0,
+    "calculated_subtotal": 80000.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 14,
+   "desc": "SKU128 x1 — 16,000 CUP por prod de 20 USD (tasa 790 → 15,800) = sobrepago 200",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f14",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "8ab7becf-8598-4779-b3e4-dbee2b67ee98",
+    "discount_amount": 0,
+    "calculated_total": 15800.0,
+    "calculated_subtotal": 15800.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 15,
+   "desc": "SKU113 x1 — efectivo 100 CUP",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f15",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "f44d7775-352d-4b06-bf2b-7d49d2be549b",
+    "discount_amount": 0,
+    "calculated_total": 100.0,
+    "calculated_subtotal": 100.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 16,
+   "desc": "SKU84 x1 — efectivo 6,500 CUP",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f16",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "89771be2-aa5c-40c1-b76c-f5d2c8f8981f",
+    "discount_amount": 0,
+    "calculated_total": 6500.0,
+    "calculated_subtotal": 6500.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 17,
+   "desc": "SKU108 x1 — precio catálogo 0; efectivo 12,000 CUP → sobrepago 12,000",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f17",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "1df5d727-e6ee-402a-aa51-6c44a0768c5a",
+    "discount_amount": 0,
+    "calculated_total": 0.0,
+    "calculated_subtotal": 0.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 18,
+   "desc": "SKU141 x1 — efectivo 20,000 CUP",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f18",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "9a678987-baf3-43a6-8f31-9e233e4f16e3",
+    "discount_amount": 0,
+    "calculated_total": 20000.0,
+    "calculated_subtotal": 20000.0
+   }
+  },
+  {
+   "tipo": "VENTA",
+   "fila": 19,
+   "desc": "SKU157 x1 — efectivo 2,500 CUP",
+   "http": 200,
+   "ok": true,
+   "idempotency_key": "mision1610-venta-f19",
+   "resultado": {
+    "status": "success",
+    "calculated_tax": 0,
+    "transaction_id": "a8621e02-a81e-4bb0-a189-7a870ef5be83",
+    "discount_amount": 0,
+    "calculated_total": 2500.0,
+    "calculated_subtotal": 2500.0
+   }
+  }
+ ]
+}
