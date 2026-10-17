@@ -12,6 +12,12 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { useServiceTypes, type ServiceType } from '@/hooks/useServiceTypes';
 import { ServiceTypesManagerModal } from './ServiceTypesManagerModal';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): fecha del servicio seleccionable —
+// el RPC create_received_service_v2 ya aceptaba/validaba p_service_date,
+// pero la UI nunca lo exponía y el default CURRENT_DATE (UTC del servidor
+// Postgres) fechaba «mañana» los servicios creados tras las 20:00 Habana.
+import { OperationDatePicker, useOperationDateValidation } from '@/components/ui/OperationDatePicker';
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 
 /**
  * F2: Servicios Recibidos y Costos Asociados.
@@ -49,6 +55,16 @@ const SERVICE_ICONS: Record<string, any> = {
 export default function ReceivedServicesView() {
   const t = useTranslations();
   const { user } = useAuthStore();
+  // MISIÓN POLÍTICA TEMPORAL (2026-10-18), descubrimiento FASE A: los fetch
+  // crudos de este módulo (crear/activar/anular) NO llevaban Authorization
+  // Bearer y el backend (getServerSession, SEC-024 fail-closed) SOLO autentica
+  // por Bearer → 401 «Se requiere sesión activa» en TODA la gestión de
+  // servicios desde la UI. Patrón canónico: useServiceTypes/useUsers/useOfertas.
+  const authToken = useAuthStore((s) => s.token);
+  const authHeaders = {
+    'Content-Type': 'application/json',
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+  };
   const [services, setServices] = useState<ReceivedService[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -98,7 +114,7 @@ export default function ReceivedServicesView() {
     try {
       const res = await fetch('/api/received-services', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({ ...data, store_id: user?.activeStoreId }),
       });
       if (!res.ok) {
@@ -114,7 +130,7 @@ export default function ReceivedServicesView() {
       if (newId) {
         const act = await fetch('/api/received-services', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders,
           body: JSON.stringify({ service_id: newId, status: 'active', reason: 'Activación tras creación' }),
         });
         if (!act.ok) {
@@ -137,7 +153,7 @@ export default function ReceivedServicesView() {
     try {
       const res = await fetch('/api/received-services', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({ service_id: id, status: 'active', reason: 'Activación desde la tabla' }),
       });
       if (!res.ok) {
@@ -156,7 +172,7 @@ export default function ReceivedServicesView() {
     try {
       const res = await fetch('/api/received-services', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({ service_id: id, action: 'void' }),
       });
       if (!res.ok) throw new Error('Error al anular');
@@ -639,6 +655,11 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
   const [method, setMethod] = useState<'amount' | 'quantity' | 'manual'>('amount');
   const [observations, setObservations] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // MISIÓN POLÍTICA TEMPORAL: fecha del servicio. Default HOY (día de negocio
+  // America/Havana). Tope = HOY (nunca futura); mínimo per-store forward-only.
+  const [serviceDate, setServiceDate] = useState<string>(todayBusinessDay());
+  const maxServiceDate = todayBusinessDay();
+  const serviceDateValidation = useOperationDateValidation(serviceDate, user?.activeStoreId, maxServiceDate);
 
   // ── Vinculación operativa ──
   const [otSearch, setOtSearch] = useState('');
@@ -764,6 +785,12 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
       toast.error('El importe debe ser mayor a 0');
       return;
     }
+    // MISIÓN POLÍTICA TEMPORAL: la fecha del servicio debe ser válida antes
+    // de enviar (min per-store inclusivo por día + tope HOY Habana).
+    if (!serviceDateValidation.valid) {
+      toast.error(serviceDateValidation.error || 'La fecha del servicio no es válida.', { duration: 8000 });
+      return;
+    }
     setSubmitting(true);
     onCreate({
       // MISIÓN 2026-10-15: identidad (service_type_id) + snapshot del nombre.
@@ -776,6 +803,10 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
       reference_doc: referenceDoc || null,
       distribution_method: method,
       observations: observations || null,
+      // MISIÓN POLÍTICA TEMPORAL: fecha operativa del documento. HOY → null
+      // (convención canónica: la ruta estampa el día de negocio Habana y el
+      // RPC aplica COALESCE); fecha distinta → 'YYYY-MM-DD' (columna DATE).
+      service_date: serviceDate === maxServiceDate ? null : serviceDate,
       // v2.18.0 — Vinculación operativa (opcional, ambas pueden coexistir)
       receipt_ids: rcptSelected.map(r => r.id),
       production_order_ids: otSelected.map(o => o.id),
@@ -783,6 +814,7 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
     setSubmitting(false);
     // Reset
     setSupplier(''); setAmount(''); setReferenceDoc(''); setObservations('');
+    setServiceDate(todayBusinessDay());
     setOtSelected([]); setRcptSelected([]); setOtSearch(''); setRcptSearch('');
   };
 
@@ -856,6 +888,19 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
             <input type="text" value={referenceDoc} onChange={e => setReferenceDoc(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-medium min-h-[44px]" placeholder="Factura N°" />
           </div>
         </div>
+
+        {/* MISIÓN POLÍTICA TEMPORAL: fecha del servicio (operativa, seleccionable).
+            Min per-store (forward-only inclusivo por día) · max HOY Habana.
+            Antes el documento se fechaba solo con CURRENT_DATE del servidor
+            (UTC) — tras las 20:00 Habana quedaba fechado al día siguiente. */}
+        <OperationDatePicker
+          value={serviceDate}
+          onChange={setServiceDate}
+          label="Fecha del servicio"
+          storeId={user?.activeStoreId}
+          max={maxServiceDate}
+          inputId="received-service-date"
+        />
 
         {/* ─── v2.18.0: Vinculación operativa ─── */}
         <div className="rounded-xl border border-primary/25 bg-primary/[0.03] p-3 sm:p-4 space-y-3">

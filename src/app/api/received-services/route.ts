@@ -5,6 +5,13 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { withSecurity } from '@/lib/with-security';
 import { canManageStore, canViewStore } from '@/lib/roles';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): política temporal del documento —
+// default HOY (día de negocio America/Havana) y tope HOY (nunca futura).
+// El RPC create_received_service_v2 ya valida el rango (gate BD de 6 meses);
+// la ruta revalida el tope estricto y corrige el default CURRENT_DATE (UTC del
+// servidor Postgres), que tras las 20:00 Habana fechaba el servicio «mañana».
+import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 
 /**
  * GET /api/received-services?store_id=...&status=...&type=...
@@ -105,6 +112,22 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // FIX F3-P0-02: creación requiere rol de gestión en la tienda objetivo
     if (!canManageStore(session.user, storeId)) return forbidden();
 
+    // ─── MISIÓN POLÍTICA TEMPORAL (2026-10-18): fecha del servicio ───
+    // Con fecha del cliente → revalidar tope HOY (422 accionable).
+    // Sin fecha → estampar el día de NEGOCIO Habana explícito (no confiar
+    // en CURRENT_DATE del Postgres, que corre en UTC y salta de día a las
+    // 20:00 Habana, creando documentos futuros silenciosos).
+    let serviceDate: string | null;
+    if (typeof body.service_date === 'string' && body.service_date.trim()) {
+      const dateCheck = checkNotFutureOperationDate(body.service_date);
+      if (!dateCheck.ok) {
+        return NextResponse.json({ error: 'Fecha del servicio no admisible', message: dateCheck.error, code: 'ERR_FUTURE_OPERATION_DATE' }, { status: 422 });
+      }
+      serviceDate = body.service_date;
+    } else {
+      serviceDate = todayBusinessDay(); // 'YYYY-MM-DD' — columna DATE
+    }
+
     const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
     // ─── v2.18.0: POST SIEMPRE usa el RPC transaccional ───
@@ -127,7 +150,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         p_total_amount: body.total_amount,
         p_service_type_id: body.service_type_id || null,
         p_service_type_name: body.service_type_name || 'Otro',
-        p_service_date: body.service_date || null,
+        // MISIÓN POLÍTICA TEMPORAL: fecha validada/estampada arriba (Habana).
+        p_service_date: serviceDate,
         p_currency: body.currency || 'CUP',
         p_exchange_rate: body.exchange_rate || 1.0,
         p_payment_terms_days: body.payment_terms_days || 30,
@@ -141,6 +165,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
       if (rpcErr) {
         const msg = rpcErr.message;
+        // MISIÓN POLÍTICA TEMPORAL: rechazos del gate de fechas → 422 accionable.
+        if (msg.includes('ERR_FUTURE_DATED_DOCUMENT')) return NextResponse.json({ error: 'Fecha del servicio no admisible', message: msg, code: 'ERR_FUTURE_DATED_DOCUMENT' }, { status: 422 });
+        if (msg.includes('ERR_BACKDATED_DOCUMENT')) return NextResponse.json({ error: 'Fecha del servicio no admisible', message: msg, code: 'ERR_BACKDATED_DOCUMENT' }, { status: 422 });
         if (msg.includes('ERR_UNAUTHORIZED')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         if (msg.includes('ERR_SUPPLIER_REQUIRED')) return NextResponse.json({ error: 'Supplier requerido' }, { status: 400 });
         if (msg.includes('ERR_INVALID_AMOUNT')) return NextResponse.json({ error: 'total_amount debe ser > 0' }, { status: 400 });

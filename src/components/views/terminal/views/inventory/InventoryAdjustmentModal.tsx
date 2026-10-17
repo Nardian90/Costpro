@@ -11,6 +11,9 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): default y tope del selector en día de
+// NEGOCIO Habana (antes fecha local del navegador, sin tope futuro).
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 import {
   Drawer,
   DrawerContent,
@@ -39,17 +42,18 @@ export default function InventoryAdjustmentModal({
   const [ajusteUnidades, setAjusteUnidades] = useState<number>(0);
   const [ajusteValorUnitario, setAjusteValorUnitario] = useState<number | ''>('');
   const [reason, setReason] = useState<string>('');
-  const [operationDate, setOperationDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [operationDate, setOperationDate] = useState<string>(todayBusinessDay());
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const dateValidation = useOperationDateValidation(operationDate, storeId);
+  // MISIÓN POLÍTICA TEMPORAL: tope HOY (Habana) — sin fechas futuras.
+  const dateValidation = useOperationDateValidation(operationDate, storeId, todayBusinessDay());
 
   // Reset state when product changes
   useEffect(() => {
     setAjusteUnidades(0);
     setAjusteValorUnitario('');
     setReason('');
-    setOperationDate(format(new Date(), 'yyyy-MM-dd'));
+    setOperationDate(todayBusinessDay());
     setIsProcessing(false);
   }, [product.id]);
 

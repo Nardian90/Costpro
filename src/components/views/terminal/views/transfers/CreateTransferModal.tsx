@@ -21,6 +21,10 @@ import { useDebounce } from '@/hooks/ui/useDebounce';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): default y tope del selector en día de
+// NEGOCIO Habana (antes fecha local del navegador, sin tope futuro). El RPC
+// create_transfer no tenía gate — la UI era la única barrera.
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 import type { Product, Store } from '@/types';
 
 interface SelectedItem {
@@ -50,14 +54,15 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
   const storeId = user?.activeStoreId;
   const [destinationStoreId, setDestinationStoreId] = useState('');
   const [notes, setNotes] = useState('');
-  const [operationDate, setOperationDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [operationDate, setOperationDate] = useState<string>(todayBusinessDay());
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItem>>(new Map());
   const [searchTerm, setSearchTerm] = useState('');
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const isSubmittingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const dateValidation = useOperationDateValidation(operationDate, storeId);
+  // MISIÓN POLÍTICA TEMPORAL: tope HOY (Habana) — sin fechas futuras.
+  const dateValidation = useOperationDateValidation(operationDate, storeId, todayBusinessDay());
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -360,11 +365,13 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                 className="neu-input w-full text-sm"
               />
             </div>
-            {/* Política de secuencia global: selector de fecha forward-only */}
+            {/* Política de secuencia global: selector de fecha forward-only.
+                MISIÓN POLÍTICA TEMPORAL: max = HOY (Habana) — sin fechas futuras. */}
             <OperationDatePicker
               value={operationDate}
               onChange={setOperationDate}
               storeId={storeId}
+              max={todayBusinessDay()}
             />
           </div>
 

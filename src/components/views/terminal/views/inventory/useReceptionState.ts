@@ -8,6 +8,10 @@ import { useInventory, useRegisterReception } from '@/hooks/api/useInventory';
 import { useSavePendingReception, useConfirmPendingReception } from '@/hooks/api/useReceptions';
 // Política de secuencia global (forward-only locking)
 import { useGlobalOperationDate, validateOperationDate } from '@/hooks/api/useGlobalOperationDate';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): día de negocio canónico (America/Havana)
+// para el default y el tope del selector — el slice UTC adelantaba el día a
+// partir de las 20:00 Habana y dejaba registrar recepciones fechadas "mañana".
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import { auditService } from '@/services/audit-service';
@@ -125,7 +129,10 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<ReceptionItem[]>([]);
   // REC-1 QW-R4: Fecha de recepción editable (default hoy).
-  const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  // MISIÓN POLÍTICA TEMPORAL: hoy = día de NEGOCIO Habana (no slice UTC del
+  // navegador). Sirve de default del input, de su atributo max (la vista lo
+  // consume como s.todayStr) y de tope de la validación pre-envío.
+  const todayStr = todayBusinessDay(); // YYYY-MM-DD (Habana)
   const [receptionDate, setReceptionDate] = useState(todayStr);
   // Política forward-only: min attribute para el input type="date".
   // Convierte el ISO timestamp del RPC a formato YYYY-MM-DD.
@@ -1047,13 +1054,18 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       }
 
       // Call register_reception RPC
+      // MISIÓN POLÍTICA TEMPORAL: convención de envío unificada al MEDIODÍA
+      // local (misma de Vender/Catálogo). La convención anterior T23:59:59
+      // local desplazaba el día de negocio para navegadores al oeste de
+      // Habana (23:59 PST = madrugada del día siguiente en la zona de negocio).
       const receptionDateIso = receptionDate === todayStr
         ? new Date().toISOString()
-        : new Date(`${receptionDate}T23:59:59`).toISOString();
+        : new Date(`${receptionDate}T12:00:00`).toISOString();
 
       // Política de secuencia global: validar forward-only antes del envío.
-      // El backend también valida, pero esto da feedback inmediato al usuario.
-      const dateValidation = validateOperationDate(receptionDateIso, globalDateInfo?.minAllowedDate || null);
+      // MISIÓN POLÍTICA TEMPORAL: además del mínimo per-store se aplica el
+      // TOPE HOY (Habana) en el cliente — el backend revalida (ruta 422 + RPC).
+      const dateValidation = validateOperationDate(receptionDateIso, globalDateInfo?.minAllowedDate || null, todayStr);
       if (!dateValidation.valid) {
         toast.error(dateValidation.error || 'La fecha de recepción es anterior a la fecha mínima permitida.', { duration: 8000 });
         setIsSubmitting(false);
@@ -1224,9 +1236,10 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
 
     setIsSubmitting(true);
     try {
+      // MISIÓN POLÍTICA TEMPORAL: misma convención mediodía que el envío normal.
       const receptionDateIso = receptionDate === todayStr
         ? new Date().toISOString()
-        : new Date(`${receptionDate}T23:59:59`).toISOString();
+        : new Date(`${receptionDate}T12:00:00`).toISOString();
 
       await savePendingReception.mutateAsync({
         storeId: user.activeStoreId,

@@ -1,0 +1,29 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/hooks/api/useGlobalOperationDate.ts",
+    "src/components/views/terminal/views/inventory/useReceptionState.ts",
+    "src/components/views/terminal/views/inventory/ValeSalidaCreateModal.tsx",
+    "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
+    "src/components/views/terminal/views/received_services/ReceivedServicesView.tsx",
+    "src/components/views/terminal/views/pos/SalesCatalogCheckoutModal.tsx",
+    "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
+    "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
+    "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
+    "src/app/api/inventory/receptions/route.ts",
+    "src/app/api/received-services/route.ts",
+    "src/app/api/transfers/[transferId]/confirm/route.ts",
+    "src/app/api/devolutions/route.ts",
+    "src/app/api/production-orders/[id]/payments/route.ts",
+    "src/app/api/sync/batch/route.ts",
+    "src/lib/pos/operation-date.ts",
+    "src/lib/cash-report/period-attribution.ts",
+    "e2e/politica-temporal-documentos.spec.ts",
+    "src/__tests__/hooks/useGlobalOperationDate-validate.test.ts",
+    "src/__tests__/migrations/politica-temporal-migration.test.ts",
+    "src/__tests__/components/ValeSalidaCreateModal-fecha.test.tsx"
+  ]
+}

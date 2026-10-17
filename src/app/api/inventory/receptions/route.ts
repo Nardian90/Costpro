@@ -21,6 +21,11 @@ import { withTracing } from "@/lib/observability";
 import { registerReceptionParamsSchema } from "@/validation/schemas";
 // F-21: validar tasa_cambio_recepcion antes de llamar a la RPC
 import { validateReceiptItemsTasa } from "@/lib/receipt-items-validation";
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): revalidación server-side del tope
+// superior de la fecha de recepción (día de negocio America/Havana). El gate
+// BD validate_operation_date (dentro del RPC) aplica el piso histórico de
+// 6 meses; aquí se aplica el tope estricto HOY → 422 accionable.
+import { checkNotFutureOperationDate } from "@/lib/pos/operation-date";
 
 async function postHandler(request: NextRequest, session: AuthenticatedSession) {
   const clientId = request.headers.get('x-forwarded-for') || session.user.id;
@@ -53,6 +58,24 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
   }
 
   const params = parseResult.data;
+
+  // ─── MISIÓN POLÍTICA TEMPORAL (2026-10-18): tope HOY Habana ───
+  // La recepción no puede llevar fecha futura. El input nativo de la UI
+  // tenía su tope en fecha UTC del navegador (se adelantaba tras las 20:00
+  // Habana) y el gate BD permitía hoy+1 — una recepción «de mañana»
+  // envenenaba get_global_max_operation_date y bloqueaba la tienda entera.
+  const dateCheck = checkNotFutureOperationDate(params.p_reception_date);
+  if (!dateCheck.ok) {
+    return NextResponse.json(
+      {
+        error: "Fecha de recepción no admisible",
+        message: dateCheck.error,
+        code: "ERR_FUTURE_OPERATION_DATE",
+      },
+      { status: 422 }
+    );
+  }
+
   const authClient = getSupabaseAuthClient(session.token);
   if (!authClient) {
     return NextResponse.json(
@@ -118,6 +141,21 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
 
   if (rpcErr) {
     console.error('[receptions/route] RPC error:', rpcErr);
+    const msg = rpcErr.message || '';
+    // MISIÓN POLÍTICA TEMPORAL: los rechazos del gate canónico de fechas son
+    // 422 accionables (antes caían a 500 con texto crudo del motor SQL).
+    if (msg.includes('ERR_FUTURE_DATED_DOCUMENT')) {
+      return NextResponse.json(
+        { error: "Fecha de recepción no admisible", message: msg, code: "ERR_FUTURE_DATED_DOCUMENT" },
+        { status: 422 }
+      );
+    }
+    if (msg.includes('ERR_BACKDATED_DOCUMENT')) {
+      return NextResponse.json(
+        { error: "Fecha de recepción no admisible", message: msg, code: "ERR_BACKDATED_DOCUMENT" },
+        { status: 422 }
+      );
+    }
     return NextResponse.json(
       {
         error: "RPC Error",
