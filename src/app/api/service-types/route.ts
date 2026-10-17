@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
+import { uuidRegex } from '@/validation/schemas';
 import { rateLimit } from '@/lib/rate-limit';
 import { withSecurity } from '@/lib/with-security';
 
@@ -49,7 +50,7 @@ const CreateSchema = z.object({
 });
 
 const PatchSchema = z.object({
-  id: z.string().uuid('Identificador de tipo inválido'),
+  id: z.string().regex(uuidRegex, 'Identificador de tipo inválido'),
   name: z.string().min(1).max(80).optional(),
   description: z.string().max(300).nullable().optional(),
   is_active: z.boolean().optional(),

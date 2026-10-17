@@ -10,7 +10,7 @@
  *   - getSupabaseAdminSafe en vez de getSupabaseForSession (writes service-role)
  *   - createApiError para errores
  *   - logger en vez de console.error
- *   - uuidRegex del proyecto en vez de z.string().uuid() estricto
+ *   - uuidRegex del proyecto en vez de uuidLoose estricto
  *   - try/catch en body parsing
  */
 import { NextRequest, NextResponse } from 'next/server';
@@ -22,6 +22,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import crypto from 'crypto';
 import { uuidRegex } from '@/validation/schemas';
 

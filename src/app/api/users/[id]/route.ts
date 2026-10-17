@@ -7,17 +7,18 @@ import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
+import { uuidLoose } from '@/validation/api-schemas';
 const updateUserSchema = z.object({
   full_name: z.string().min(1).max(200).optional(),
   role: z.enum(['admin', 'superadmin', 'manager', 'clerk', 'warehouse', 'encargado', 'usuario', 'costo']).optional(),
-  role_id: z.string().uuid().optional().nullable(),
+  role_id: uuidLoose.optional().nullable(),
   is_active: z.boolean().optional(),
   max_stores_limit: z.number().int().min(0).max(1000).optional(),
   max_users_limit: z.number().int().min(0).max(10000).optional(),
   plan: z.enum(['free', 'pro', 'enterprise']).optional(),
   // FIX RLS-B4 (v2.21.0): añadir activeStoreId para que el switch de tienda
   // funcione vía API REST (antes solo funcionaba vía useStoreSwitcher hook).
-  activeStoreId: z.string().uuid().optional(),
+  activeStoreId: uuidLoose.optional(),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

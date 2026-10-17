@@ -6,6 +6,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { logger } from '@/lib/logger';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { getBotInfo, getWebhookInfo } from '@/lib/telegram/bot-client';
@@ -68,7 +69,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 const putSchema = z.object({
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
   bot_token: z.string().min(20).optional(),
   is_active: z.boolean().optional(),
   welcome_enabled: z.boolean().optional(),

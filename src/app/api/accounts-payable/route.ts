@@ -3,6 +3,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
 
+import { uuidLoose } from '@/validation/api-schemas';
 /**
  * GET /api/accounts-payable
  *
@@ -24,9 +25,9 @@ import { z } from 'zod';
  * FASE 3 (próximo): + commission_payments (comisiones approved)
  */
 
-// FIX (2026-07-14): usar regex simple en vez de z.string().uuid()
+// FIX (2026-07-14): usar regex simple en vez de uuidLoose
 // porque el store_id de Tienda Central Costpro (d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576)
-// no es UUID v4 estricto y z.string().uuid() lo rechaza.
+// no es UUID v4 estricto y uuidLoose lo rechaza.
 const uuidLooseRegex = z.string().regex(
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
   'UUID inválido'

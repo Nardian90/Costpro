@@ -7,6 +7,7 @@ import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { logger } from '@/lib/logger';
 
 /**
@@ -32,7 +33,7 @@ import { logger } from '@/lib/logger';
 
 const bulkMembershipsSchema = z.object({
   assignments: z.array(z.object({
-    store_id: z.string().uuid(),
+    store_id: uuidLoose,
     role: z.enum(['admin', 'encargado', 'manager', 'clerk', 'warehouse', 'usuario', 'costo']),
     status: z.enum(['active', 'revoked']).optional().default('active'),
   })).min(1).max(50),

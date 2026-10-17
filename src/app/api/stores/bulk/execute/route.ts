@@ -33,8 +33,9 @@ import { createApiError } from '@/lib/api-errors';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
+import { uuidLoose } from '@/validation/api-schemas';
 const executeSchema = z.object({
-  storeIds: z.array(z.string().uuid()).min(1).max(50),
+  storeIds: z.array(uuidLoose).min(1).max(50),
   action: z.enum(['activate', 'deactivate', 'delete', 'archive']),
   confirmation_text: z.string().optional(),
   reason: z.string().optional(),

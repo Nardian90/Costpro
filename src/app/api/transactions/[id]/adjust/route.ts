@@ -43,6 +43,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withSecurity } from '@/lib/with-security';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { logger } from '@/lib/logger';
 
 const adjustSchema = z.object({
@@ -53,7 +54,7 @@ const adjustSchema = z.object({
   sale_currency: z.enum(['CUP', 'USD', 'EUR', 'MLC']).optional(),
   sale_exchange_rate: z.number().positive().optional(),
   items_price_adjustments: z.array(z.object({
-    product_id: z.string().uuid(),
+    product_id: uuidLoose,
     price_at_sale: z.number().min(0),
   })).optional(),
   discount_type: z.enum(['fixed', 'percentage']).optional(),

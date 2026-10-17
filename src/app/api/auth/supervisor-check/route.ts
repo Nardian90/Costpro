@@ -6,6 +6,7 @@ import { withTracing } from '@/lib/observability';
 import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { issueSupervisorToken } from '@/lib/supervisor-token';
 
 /**
@@ -32,8 +33,8 @@ import { issueSupervisorToken } from '@/lib/supervisor-token';
 
 const supervisorScopeSchema = z.array(
   z.object({
-    pid: z.string().uuid(),
-    vid: z.string().uuid().nullable(),
+    pid: uuidLoose,
+    vid: uuidLoose.nullable(),
     px: z.number().min(0).finite(),
   })
 ).max(200);
@@ -41,7 +42,7 @@ const supervisorScopeSchema = z.array(
 const supervisorCheckSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
   // E-SEC-FINAL (D3): línea(s) autorizada(s) en la emisión (opcional — el
   // descuento global del carrito no autoriza líneas concretas). El caller
   // acumula el scope de autorizaciones previas (supervisor-auth-store).

@@ -6,6 +6,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { saveMessage, validateContactBelongsToStore } from '@/lib/telegram/glm-orchestrator';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { sendMessage as tgSendMessage, sendPhoto as tgSendPhoto, sendDocument as tgSendDocument } from '@/lib/telegram/bot-client';
@@ -22,10 +23,10 @@ import { emitMessage } from '@/lib/telegram/realtime';
  *   - Rate-limit 20 req/min por usuario
  */
 const sendSchema = z.object({
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
   telegram_user_id: z.number().int(),
   message: z.string().min(1).max(4096).optional(),
-  contact_id: z.string().uuid().optional(),
+  contact_id: uuidLoose.optional(),
   // Fase T9: envío multimedia
   media_type: z.enum(['photo', 'document']).optional(),
   media_input: z.string().min(1).optional(), // file_id o URL HTTP

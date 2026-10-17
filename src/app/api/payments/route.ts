@@ -3,6 +3,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { randomUUID } from 'crypto';
 
 // ── Schema de validación para un pago individual ──
@@ -21,7 +22,7 @@ const paymentRowSchema = z.object({
 // en el root, funciona como antes (pago simple).
 const registerPaymentSchema = z.object({
   ref_type: z.enum(['receipt', 'service', 'production_order', 'work']),
-  ref_id: z.string().uuid(),
+  ref_id: uuidLoose,
   // Opción A: pago simple (1 fila)
   payment_method: z.enum(['cash', 'transfer', 'zelle']).optional(),
   amount: z.number().positive().optional(),

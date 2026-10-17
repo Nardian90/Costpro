@@ -5,13 +5,14 @@ import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { invalidateCacheForStore } from '@/app/api/inventory/costeo-dinamico/route';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 // F-21: validar tasa_cambio_recepcion en backfill masivo
 import { TASA_CAMBIO_MINIMA_NO_CUP } from '@/lib/receipt-items-validation';
 
 export const runtime = 'nodejs';
 
 const backfillSchema = z.object({
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
   date_from: z.string().optional(),
   date_to: z.string().optional(),
   moneda: z.enum(['USD', 'EUR', 'MLC']),

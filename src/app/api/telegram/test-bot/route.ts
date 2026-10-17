@@ -6,6 +6,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { generateResponse } from '@/lib/telegram/glm-orchestrator';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 
@@ -15,7 +16,7 @@ import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
  * Espejo de whatsapp/test-bot.
  */
 const testSchema = z.object({
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
   message: z.string().min(1).max(4096),
   contact_name: z.string().optional(),
 });
