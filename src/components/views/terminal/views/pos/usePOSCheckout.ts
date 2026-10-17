@@ -22,6 +22,10 @@ import {
 } from "@/lib/pos/payment-incidents";
 import { auditService } from "@/services/audit-service";
 import type { CartItem } from "@/store/cart";
+// MISIÓN FECHA OPERATIVA (2026-10-17): fecha económica seleccionable en Vender.
+// resolvePosOperationDate → ISO mediodía SOLO si la fecha elegida ≠ hoy (Habana);
+// hoy/null → undefined (el servidor estampa NOW(), comportamiento canónico intacto).
+import { resolvePosOperationDate, checkNotFutureOperationDate } from "@/lib/pos/operation-date";
 
 export function usePOSCheckout() {
   const { user } = useAuthStore();
@@ -86,6 +90,23 @@ export function usePOSCheckout() {
       } | null,
     ) => {
       if (!user?.activeStoreId || !user?.id) return;
+
+      // ── MISIÓN FECHA OPERATIVA (2026-10-17): guard de fecha en cliente ──
+      // La fecha seleccionada en Vender (cart store saleDate) viaja al servidor
+      // SOLO cuando es distinta de hoy (Habana). Si el usuario eligió una fecha
+      // futura (p.ej. reloj del navegador adelantado o edición manual), se
+      // aborta ANTES de llamar al servidor — el servidor revalida igualmente
+      // (checkNotFutureOperationDate en la ruta + validate_operation_date en BD).
+      // El carrito NO se toca: el usuario corrige la fecha y reintenta (misión §4.4/§8).
+      const saleDateSelected = useCartStore.getState().saleDate;
+      const operationDateIso = resolvePosOperationDate(saleDateSelected);
+      if (operationDateIso) {
+        const futureCheck = checkNotFutureOperationDate(operationDateIso);
+        if (!futureCheck.ok) {
+          toast.error(futureCheck.error, { duration: 7000 });
+          return;
+        }
+      }
 
       // FIX P1: Idempotencia — generar key ANTES de procesar, reutilizar en retries.
       // Antes: se generaba dentro de createSale con Date.now()+Math.random()
@@ -239,6 +260,11 @@ export function usePOSCheckout() {
               // cuando existen — la venta exacta mantiene el payload canónico
               // (compatible con RPC sin migrar, que las ignora).
               ...(hasFlexIncidents ? { payment_incidents: flexIncidents } : {}),
+              // MISIÓN FECHA OPERATIVA: fecha económica elegida en Vender.
+              // undefined cuando la fecha es hoy/null → NOW() del servidor
+              // (ventas del día idénticas al flujo anterior: arqueo por ventana,
+              // orden del ledger y timestamps reales sin cambios).
+              ...(operationDateIso ? { operation_date: operationDateIso } : {}),
               idempotency_key: `sale-${crypto.randomUUID()}`,
               items: items.map((i) => ({
                 product_id: i.product_id,
@@ -388,7 +414,11 @@ export function usePOSCheckout() {
         } else if (lowMsg.includes('err_product_not_found')) {
           friendlyMsg = 'Un producto del carrito ya no existe. Recarga la página.';
         } else if (lowMsg.includes('err_backdated_document')) {
-          friendlyMsg = 'La fecha de la venta es anterior a la última venta registrada.';
+          friendlyMsg = 'Fecha de operación fuera de rango: no puede ser anterior al límite histórico (6 meses) ni a la secuencia operativa de la tienda. Ajusta la fecha de venta e intenta de nuevo.';
+        } else if (lowMsg.includes('err_future_dated_document')) {
+          friendlyMsg = 'La fecha de operación no puede ser futura. Ajusta la fecha de venta e intenta de nuevo.';
+        } else if (lowMsg.includes('operation_date') && lowMsg.includes('no puede ser posterior')) {
+          friendlyMsg = rawMsg;
         } else if (lowMsg.includes('unauthorized') || lowMsg.includes('rls') || lowMsg.includes('42501')) {
           friendlyMsg = 'No tienes permisos para vender en esta tienda.';
         } else if (lowMsg.includes('network') || lowMsg.includes('fetch')) {

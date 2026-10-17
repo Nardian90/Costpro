@@ -38,3 +38,30 @@ describe('validateOperationDate — secuencia global forward-only', () => {
     expect(res.valid).toBe(false);
   });
 });
+
+// ── MISIÓN FECHA OPERATIVA (2026-10-17): tope superior opcional (max = hoy Habana) ──
+describe('validateOperationDate — tope superior (maxAllowedDate)', () => {
+  it('rechaza una fecha futura aunque no haya mínimo de tienda', () => {
+    // Tienda sin documentos (minAllowedDate null) pero con tope = hoy: la fecha
+    // de mañana debe inválida (misión §4.1 — no fechas futuras).
+    const res = validateOperationDate('2026-10-18', null, '2026-10-17');
+    expect(res.valid).toBe(false);
+    expect(res.error).toMatch(/no puede ser futura/i);
+  });
+
+  it('acepta el propio día del tope (hoy) y fechas pasadas', () => {
+    expect(validateOperationDate('2026-10-17', null, '2026-10-17').valid).toBe(true);
+    expect(validateOperationDate('2026-10-15', null, '2026-10-17').valid).toBe(true);
+  });
+
+  it('tope y mínimo combinados: rechaza fuera de ambos extremos', () => {
+    expect(validateOperationDate('2026-10-10', '2026-10-14', '2026-10-17').valid).toBe(false);
+    expect(validateOperationDate('2026-10-18', '2026-10-14', '2026-10-17').valid).toBe(false);
+    expect(validateOperationDate('2026-10-15', '2026-10-14', '2026-10-17').valid).toBe(true);
+  });
+
+  it('sin tope (undefined) mantiene el comportamiento original', () => {
+    expect(validateOperationDate('2030-01-01', null).valid).toBe(true);
+    expect(validateOperationDate('2026-10-14', '2026-10-14 12:00:00+00').valid).toBe(true);
+  });
+});

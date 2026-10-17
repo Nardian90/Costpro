@@ -8,6 +8,11 @@ import { logger } from '@/lib/logger';
 import { z } from 'zod';
 import { uuidRegex } from '@/validation/schemas';
 import { verifySupervisorToken } from '@/lib/supervisor-token';
+// MISIÓN FECHA OPERATIVA (2026-10-17): revalidación server-side de la fecha
+// económica elegida en Vender. Día de negocio en America/Havana (convención del
+// proyecto); el tope estricto del flujo Vender es HOY (el gate BD canónico
+// validate_operation_date permite hoy+1 para TODOS los flujos y no se altera).
+import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 
 /**
  * Iteración 11.2 — POST /api/pos/checkout
@@ -135,6 +140,19 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const d = parsed.data;
+
+  // ── MISIÓN FECHA OPERATIVA: revalidación server-side de la fecha ──
+  // No se confía ni en el atributo max del selector ni en la validación del
+  // navegador (misión §4.3/§4.4). La fecha futura se rechaza AQUÍ antes del
+  // RPC; el RPC además aplica validate_operation_date (lookback 6 meses /
+  // hoy+1 Habana) dentro de la transacción con advisory lock de la tienda.
+  if (d.operation_date) {
+    const dateCheck = checkNotFutureOperationDate(d.operation_date);
+    if (!dateCheck.ok) {
+      logger.warn('POS', 'OPERATION_DATE_REJECTED', { storeId: d.store_id, reason: dateCheck.error });
+      return NextResponse.json({ error: dateCheck.error }, { status: 422 });
+    }
+  }
 
   // REM-INV-4A-R (RC-1): bind supervisor authorization to this sale.
   // Under no circumstances may a client-supplied supervisor UUID reach the
@@ -344,7 +362,18 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: 'Conflicto de idempotencia: la clave ya está ligada a otra venta.' }, { status: 409 });
     }
     if (msg.includes('ERR_BACKDATED_DOCUMENT')) {
-      return NextResponse.json({ error: 'La fecha de operación es anterior a la última venta.' }, { status: 422 });
+      // Mensaje actualizado al gate real vigente (validate_operation_date:
+      // lookback 6 meses por tienda + secuencia forward-only del cliente).
+      return NextResponse.json(
+        { error: 'Fecha de operación fuera de rango: no puede ser anterior al límite histórico (6 meses) ni a la secuencia operativa de la tienda. Ajusta la fecha de venta e intenta de nuevo.' },
+        { status: 422 },
+      );
+    }
+    if (msg.includes('ERR_FUTURE_DATED_DOCUMENT')) {
+      return NextResponse.json(
+        { error: 'La fecha de operación no puede ser futura. Ajusta la fecha de venta e intenta de nuevo.' },
+        { status: 422 },
+      );
     }
     return NextResponse.json({ error: msg }, { status: 400 });
   }
