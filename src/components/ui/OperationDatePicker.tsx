@@ -15,6 +15,14 @@ interface OperationDatePickerProps {
   showErrorInline?: boolean;
   /** UUID de la tienda activa para validación per-store. Si se omite, usa global. */
   storeId?: string | null;
+  /** MISIÓN FECHA OPERATIVA (2026-10-17): fecha máxima permitida ('YYYY-MM-DD')
+   *  — en Vender = hoy (Habana). Opcional: los consumidores anteriores no la
+   *  pasan y conservan el comportamiento original (sin tope visual).
+   *  Nota de accesibilidad: el id del input se compone con el label para no
+   *  duplicar ids cuando hay dos pickers montados a la vez (p.ej. POS + modal). */
+  max?: string;
+  /** Id único del input (default derivado del label). */
+  inputId?: string;
 }
 
 /**
@@ -34,6 +42,8 @@ export function OperationDatePicker({
   className,
   showErrorInline = true,
   storeId,
+  max,
+  inputId,
 }: OperationDatePickerProps) {
   const { data: globalDateInfo, isLoading } = useGlobalOperationDate(storeId);
   const [touched, setTouched] = useState(false);
@@ -43,26 +53,28 @@ export function OperationDatePicker({
     : undefined;
 
   const validation = useMemo(
-    () => validateOperationDate(value, globalDateInfo?.minAllowedDate || null),
-    [value, globalDateInfo?.minAllowedDate],
+    () => validateOperationDate(value, globalDateInfo?.minAllowedDate || null, max || null),
+    [value, globalDateInfo?.minAllowedDate, max],
   );
 
   const showValidationError = touched && !validation.valid && showErrorInline;
+  const inputElementId = inputId || 'operation-date-input';
 
   return (
     <div className={cn('space-y-1.5', className)}>
       <label
-        htmlFor="operation-date-input"
+        htmlFor={inputElementId}
         className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground"
       >
         <CalendarClock className="w-3.5 h-3.5" />
         {label}
       </label>
       <input
-        id="operation-date-input"
+        id={inputElementId}
         type="date"
         value={value}
         min={minAllowedDate}
+        max={max}
         onChange={(e) => {
           setTouched(true);
           onChange(e.target.value);
@@ -113,10 +125,15 @@ export function formatOperationDateForRPC(dateStr: string): string | undefined {
  * @param value Fecha a validar (YYYY-MM-DD)
  * @param storeId UUID de la tienda para validación per-store. Si se omite, usa global.
  */
-export function useOperationDateValidation(value: string, storeId?: string | null) {
+export function useOperationDateValidation(
+  value: string,
+  storeId?: string | null,
+  // MISIÓN FECHA OPERATIVA: tope superior opcional ('YYYY-MM-DD', hoy en Vender).
+  maxAllowedDate?: string | null,
+) {
   const { data: globalDateInfo } = useGlobalOperationDate(storeId);
   return useMemo(
-    () => validateOperationDate(value, globalDateInfo?.minAllowedDate || null),
-    [value, globalDateInfo?.minAllowedDate],
+    () => validateOperationDate(value, globalDateInfo?.minAllowedDate || null, maxAllowedDate || null),
+    [value, globalDateInfo?.minAllowedDate, maxAllowedDate],
   );
 }

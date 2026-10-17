@@ -15,11 +15,15 @@ import {
   RotateCcw,
   ChevronDown,
   ChevronRight,
+  CalendarClock,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
 import { POSPortalModal } from "./POSPortalModal";
 import { getPaymentLabel as getPaymentLabelUnified, getPaymentIcon, getPaymentColor } from "./PaymentMethodSelector";
+// MISIÓN FECHA OPERATIVA (2026-10-17): selector de fecha económica + estado de turno.
+import { POSOperationDateSection, usePosSaleDate } from "./POSOperationDateSection";
+import { format } from "date-fns";
 import type { PaymentMethod } from "@/types";
 
 /**
@@ -99,6 +103,9 @@ export function POSCartCheckoutPanel({
   isMobile,
 }: POSCartCheckoutPanelProps) {
   const prefersReducedMotion = useReducedMotion();
+  // MISIÓN FECHA OPERATIVA: fecha económica elegida en Vender (cart store).
+  // Gobierna el gate del botón Confirmar y se muestra en el modal de cobro.
+  const { value: saleDateValue, validation: saleDateValidation } = usePosSaleDate();
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
   const [cashReceived, setCashReceived] = useState("");
   // FIX-CASH-BREAKDOWN (2026-07-10): modal de desglose por billetes/monedas
@@ -364,6 +371,15 @@ export function POSCartCheckoutPanel({
             </div>
           );
         })()}
+      </div>
+
+      {/* ── FECHA DE VENTA (MISIÓN FECHA OPERATIVA 2026-10-17) ──
+          Fecha económica seleccionable junto a la información operativa del
+          carrito. min = fecha MAX de la tienda (forward-only per-store);
+          max = hoy (Habana). El valor viaja al servidor al confirmar el
+          carrito y se propaga a venta, pagos, movimientos e informes. */}
+      <div className="px-4 sm:px-6 py-3 border-b border-border/50 bg-muted/10">
+        <POSOperationDateSection inputId="pos-date-checkout" />
       </div>
 
       {/* ── MÉTODO DE PAGO (INFORMATIVO — auto-detectado) ─────────
@@ -772,6 +788,15 @@ export function POSCartCheckoutPanel({
               {itemCount} {itemCount === 1 ? "producto" : "productos"} ·{" "}
               <strong className="text-foreground">{getPaymentLabelUnified(derivedPaymentMethod)}</strong>
             </p>
+            {/* MISIÓN FECHA OPERATIVA: la fecha económica es visible ANTES de
+                confirmar (misión §3/§8). Muestra la fecha elegida (o hoy). */}
+            <p className="text-[11px] font-bold text-muted-foreground mt-1 flex items-center justify-center gap-1">
+              <CalendarClock className="w-3 h-3" />
+              Fecha de venta: <strong className="text-foreground">{format(new Date(saleDateValue + "T12:00:00"), "dd/MM/yyyy")}</strong>
+              {saleDateValidation.valid ? null : (
+                <span className="text-destructive"> (no válida)</span>
+              )}
+            </p>
             {derivedPaymentMethod === "cash" && cashReceivedNum > 0 && change >= 0 && (
               <p className="text-xs text-success mt-1 font-bold">
                 Vuelto: {formatCurrency(change)}
@@ -794,7 +819,8 @@ export function POSCartCheckoutPanel({
             <button
               type="button"
               onClick={handleConfirmCheckout}
-              disabled={isProcessing}
+              disabled={isProcessing || !saleDateValidation.valid}
+              title={!saleDateValidation.valid ? saleDateValidation.error : undefined}
               className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               {isProcessing ? "Procesando..." : "Confirmar"}

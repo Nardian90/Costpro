@@ -20,6 +20,9 @@ import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 import { useCartStore } from "@/store/cart";
 import { useAuthStore } from "@/store";
+// MISIÓN FECHA OPERATIVA (2026-10-17): el vale emitido desde el carrito usa la
+// misma fecha económica seleccionada en Vender (propagación venta↔vale, misión §6).
+import { resolvePosOperationDate, checkNotFutureOperationDate } from "@/lib/pos/operation-date";
 
 export interface ValeSalidaResult {
   slip_id: string;
@@ -83,6 +86,18 @@ export function useValeSalidaCheckout(): UseValeSalidaCheckoutReturn {
       return null;
     }
 
+    // MISIÓN FECHA OPERATIVA: guard de fecha (idéntico al de venta). Si la fecha
+    // elegida es futura/inválida se aborta sin tocar el carrito ni las notas.
+    const saleDateSelected = useCartStore.getState().saleDate;
+    const operationDateIso = resolvePosOperationDate(saleDateSelected);
+    if (operationDateIso) {
+      const futureCheck = checkNotFutureOperationDate(operationDateIso);
+      if (!futureCheck.ok) {
+        toast.error(futureCheck.error, { duration: 7000 });
+        return null;
+      }
+    }
+
     setIsProcessing(true);
 
     try {
@@ -106,6 +121,11 @@ export function useValeSalidaCheckout(): UseValeSalidaCheckoutReturn {
         production_order_id: productionOrderId ?? null,
         notes: valeNotes.trim(),
         idempotency_key: idempotencyKeyRef.current,
+        // MISIÓN FECHA OPERATIVA: fecha económica del vale = la seleccionada en
+        // Vender. Solo se envía cuando ≠ hoy (Habana); hoy → NOW() del servidor
+        // (comportamiento canónico intacto). El RPC create_vale_salida la
+        // propaga a issue_slips.created_at, items y stock_movements (Kardex).
+        ...(operationDateIso ? { operation_date: operationDateIso } : {}),
       };
 
       // Llamada al endpoint /api/vale-salida (NO directamente a Supabase).
@@ -129,6 +149,10 @@ export function useValeSalidaCheckout(): UseValeSalidaCheckoutReturn {
         const errorMsg = data?.error || 'Error desconocido';
         if (response.status === 409) {
           toast.error('Este vale ya fue procesado (idempotencia). Recarga la página.');
+        } else if (errorMsg.includes('ERR_BACKDATED_DOCUMENT') || errorMsg.includes('anterior al límite histórico')) {
+          toast.error('Fecha de operación fuera de rango: no puede ser anterior al límite histórico (6 meses) ni a la secuencia operativa de la tienda. Ajusta la fecha del vale e intenta de nuevo.', { duration: 7000 });
+        } else if (errorMsg.includes('ERR_FUTURE_DATED_DOCUMENT') || errorMsg.includes('no puede ser posterior')) {
+          toast.error('La fecha de operación no puede ser futura. Ajusta la fecha del vale e intenta de nuevo.', { duration: 7000 });
         } else if (errorMsg.includes('Stock insuficiente') || errorMsg.includes('Stock negativo')) {
           toast.error('Stock insuficiente para uno o más productos');
         } else if (errorMsg.includes('Sobreconsumo')) {

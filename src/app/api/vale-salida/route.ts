@@ -27,6 +27,9 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withSecurity } from '@/lib/with-security';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { z } from 'zod';
+// MISIÓN FECHA OPERATIVA (2026-10-17): revalidación server-side (tope = hoy Habana
+// para el flujo del carrito) + mapeos de error de fecha del RPC.
+import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 
 // =====================================================================
 // Schema de validación — SOLO campos del body que el cliente puede enviar
@@ -72,6 +75,16 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
     );
   }
   const { items, production_order_id, notes, idempotency_key, operation_date } = parsed.data;
+
+  // ── MISIÓN FECHA OPERATIVA: revalidación server-side de la fecha ──
+  // Misma política que /api/pos/checkout: sin confianza en el cliente; el RPC
+  // revalida dentro de la transacción (validate_operation_date).
+  if (operation_date) {
+    const dateCheck = checkNotFutureOperationDate(operation_date);
+    if (!dateCheck.ok) {
+      return NextResponse.json({ error: dateCheck.error, rpc_error: dateCheck.error }, { status: 422 });
+    }
+  }
 
   // -----------------------------------------------------------------
   // 2. Derivar store_id del perfil del usuario (NUNCA del body)
@@ -153,6 +166,10 @@ export function mapValeRpcErrorToHttpStatus(msg: string): number {
   if (msg.includes('ERR_DUPLICATE_PO_ITEM')) return 409;
   // 422 Unprocessable Entity (cost unavailable — server-side state issue)
   if (msg.includes('ERR_PRODUCT_COST_UNAVAILABLE')) return 422;
+  // MISIÓN FECHA OPERATIVA: errores del gate temporal → 422 (antes caían a 500
+  // con mensaje crudo, invisibles para el cajero).
+  if (msg.includes('ERR_BACKDATED_DOCUMENT')) return 422;
+  if (msg.includes('ERR_FUTURE_DATED_DOCUMENT')) return 422;
   // 500 fallback
   return 500;
 }
@@ -179,6 +196,13 @@ export function mapValeRpcErrorToUserMessage(msg: string): string {
   if (msg.includes('ERR_IDEMPOTENCY') || msg.includes('duplicate key value')) return 'Idempotency conflict — request ya procesado';
   if (msg.includes('ERR_DUPLICATE_PO_ITEM')) return 'Línea de OT duplicada en el vale';
   if (msg.includes('ERR_PRODUCT_COST_UNAVAILABLE')) return 'Costo del producto no disponible';
+  // MISIÓN FECHA OPERATIVA: mensajes accionables para los gates de fecha.
+  if (msg.includes('ERR_BACKDATED_DOCUMENT')) {
+    return 'Fecha de operación fuera de rango: no puede ser anterior al límite histórico (6 meses) ni a la secuencia operativa de la tienda. Ajusta la fecha del vale e intenta de nuevo.';
+  }
+  if (msg.includes('ERR_FUTURE_DATED_DOCUMENT')) {
+    return 'La fecha de operación no puede ser futura. Ajusta la fecha del vale e intenta de nuevo.';
+  }
   return msg;
 }
 

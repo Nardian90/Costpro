@@ -76,8 +76,31 @@ function formatDateHavana(isoDate: string): string {
 export function validateOperationDate(
   newDate: Date | string | null,
   minAllowedDate: string | null,
+  // MISIÓN FECHA OPERATIVA (2026-10-17): tope superior opcional ('YYYY-MM-DD').
+  // En Vender = hoy (Habana). Opcional → los consumidores anteriores no cambian.
+  maxAllowedDate?: string | null,
 ): { valid: boolean; error?: string } {
   if (!newDate) return { valid: true };
+
+  // MISIÓN FECHA OPERATIVA: el tope superior se valida INDEPENDIENTE del mínimo
+  // (una tienda sin documentos previos tiene minAllowedDate null y aún así no
+  // puede registrar fechas futuras en el flujo de Vender).
+  if (maxAllowedDate) {
+    const newDateOnly = typeof newDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(newDate)
+      ? newDate
+      : null;
+    const newComparable = newDateOnly
+      ? new Date(newDateOnly + 'T12:00:00')
+      : new Date(newDate as string | Date);
+    const maxComparable = new Date(maxAllowedDate + 'T23:59:59.999');
+    if (newComparable > maxComparable) {
+      return {
+        valid: false,
+        error: `La fecha seleccionada no puede ser futura. La fecha máxima permitida es ${maxAllowedDate}.`,
+      };
+    }
+  }
+
   if (!minAllowedDate) return { valid: true };
 
   // AUDIT-2026-10-15 (misión comisiones): un input DATE-ONLY (YYYY-MM-DD, tal como
