@@ -123,6 +123,17 @@ interface CartState {
   // POS-2 MM-7: Customer attached to the sale (null = walk-in)
   customerId: string | null;
   customerName: string | null;
+  // ── MISIÓN FECHA OPERATIVA (2026-10-17) ──
+  // saleDate: fecha económica elegida por el cajero en el selector de Vender
+  // ('YYYY-MM-DD' de <input type=date>). null = HOY (Habana) implícito — el
+  // servidor estampa NOW() exactamente como antes (cero regresión en ventas
+  // del día). Si el usuario elige otra fecha, se envía operation_date al RPC
+  // (create_sale_v2 / create_vale_salida) y se propaga a venta, vale,
+  // movimientos e informes. Se PRESERVA durante la preparación del carrito
+  // (persistida, sobrevive navegación/recarga) y se REINICIA a null (hoy)
+  // tras cada confirmación exitosa (clearCart) para que una venta retro-fechada
+  // accidentalmente no contamine el siguiente carrito.
+  saleDate: string | null;
 
   // FIX-FASE-D: retorna true si el item fue aceptado, false si un guard lo rechazó
   // (tienda cruzada / stock insuficiente / sin id). Permite UI honesta en el caller.
@@ -205,6 +216,8 @@ interface CartState {
   setValeNotes: (notes: string) => void;
   // setItemProductionOrderLine: asocia/desasocia un item del carrito con una línea de OT.
   setItemProductionOrderLine: (productId: string, variantId: string | null, poItemId: string | null) => void;
+  // MISIÓN FECHA OPERATIVA: fecha económica del carrito ('YYYY-MM-DD' | null = hoy).
+  setSaleDate: (date: string | null) => void;
   // clearValeState: limpia solo los campos Vale (sin tocar items/payments). Útil tras
   // un submit exitoso de vale, para resetear el formulario sin perder el catálogo cargado.
   clearValeState: () => void;
@@ -363,6 +376,11 @@ export const useCartStore = create<CartState>()(
       productionOrderId: null,
       valeNotes: '',
       productionOrderItemIds: {},
+      // MISIÓN FECHA OPERATIVA: default null = hoy (Habana). Se muestra en el
+      // selector como todayBusinessDay() cuando es null.
+      saleDate: null,
+
+      setSaleDate: (date) => set({ saleDate: date, lastUpdated: Date.now() }),
 
       // ── Vale de Salida actions ──
       setOperationType: (op) =>
@@ -1332,6 +1350,10 @@ export const useCartStore = create<CartState>()(
         productionOrderId: null,
         valeNotes: '',
         productionOrderItemIds: {},
+        // MISIÓN FECHA OPERATIVA: tras confirmar (o anular) el carrito, la fecha
+        // vuelve a HOY (null). La fecha elegida de una venta ya confirmada no
+        // debe filtrarse al siguiente carrito (misión §5).
+        saleDate: null,
         lastUpdated: Date.now(),
       }),
 
@@ -1359,6 +1381,10 @@ export const useCartStore = create<CartState>()(
         operationType: state.operationType,
         productionOrderId: state.productionOrderId,
         valeNotes: state.valeNotes,
+        // MISIÓN FECHA OPERATIVA: la fecha elegida sobrevive recargas/navegación
+        // mientras el carrito no se confirme (misión §3 — persistencia durante
+        // la preparación; sin sustitución silenciosa).
+        saleDate: state.saleDate,
         // POS-2 MM-7: deliberately NOT persisting customerId — a stale customer on a
         // fresh session is worse than re-selecting.
       }),
@@ -1375,6 +1401,8 @@ export const useCartStore = create<CartState>()(
           state.productionOrderId = null;
           state.valeNotes = '';
           state.productionOrderItemIds = {};
+          // Fecha operativa también expira con el carrito (vuelve a hoy).
+          state.saleDate = null;
           state.lastUpdated = Date.now();
         }
         // FIX-PAYMENT-ROWS (2026-07-10): migrar items antiguos que no tienen payments[]

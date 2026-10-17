@@ -32,6 +32,8 @@ import { useCartStore, type CartItem } from "@/store/cart";
 import { useAuthStore } from "@/store";
 import { supabase } from "@/lib/supabaseClient";
 import { useValeSalidaCheckout } from "./useValeSalidaCheckout";
+// MISIÓN FECHA OPERATIVA (2026-10-17): fecha económica compartida con la venta.
+import { POSOperationDateSection, usePosSaleDate } from "./POSOperationDateSection";
 import { toast } from "sonner";
 
 interface ProductionOrder {
@@ -90,6 +92,12 @@ export function ValeSalidaPanel({
 
   const { isProcessing: hookIsProcessing, processValeCheckout } = useValeSalidaCheckout();
   const isProcessing = externalIsProcessing || hookIsProcessing;
+
+  // MISIÓN FECHA OPERATIVA: la fecha del vale es la misma seleccionada en Vender
+  // (cart store). Si queda inválida (p.ej. mínimo de la tienda avanzó por una
+  // operación concurrente), el botón Emitir se deshabilita y se pide nueva
+  // selección — sin borrar notas ni items (misión §8).
+  const { validation: saleDateValidation } = usePosSaleDate();
 
   const [productionOrders, setProductionOrders] = useState<ProductionOrder[]>([]);
   const [poItems, setPoItems] = useState<ProductionOrderItem[]>([]);
@@ -206,6 +214,13 @@ export function ValeSalidaPanel({
             </p>
           </div>
         </div>
+      </div>
+
+      {/* ── Fecha de venta (MISIÓN FECHA OPERATIVA 2026-10-17) ──
+          El vale usa la misma fecha económica que la venta: seleccionada aquí,
+          propagada a issue_slips, items y stock_movements (Kardex/IPV). */}
+      <div className="rounded-lg border border-border/60 bg-muted/10 p-3">
+        <POSOperationDateSection inputId="pos-date-vale" />
       </div>
 
       {/* ── Selector de Orden de Producción (opcional) ── */}
@@ -342,12 +357,22 @@ export function ValeSalidaPanel({
         </div>
       )}
 
+      {/* ── Validación de fecha (MISIÓN FECHA OPERATIVA) ── */}
+      {items.length > 0 && !saleDateValidation.valid && (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2.5">
+          <AlertCircle className="w-3.5 h-3.5 mt-0.5 text-destructive shrink-0" />
+          <p className="text-[10px] text-destructive font-medium">
+            {saleDateValidation.error || "La fecha de venta seleccionada no es válida. Elige otra fecha."}
+          </p>
+        </div>
+      )}
+
       {/* ── Botón "Emitir Vale" (id=pos-checkout-cta para que POSCart lo dispare) ── */}
       <button
         id="pos-checkout-cta"
         type="button"
         onClick={handleSubmit}
-        disabled={isProcessing || items.length === 0 || !valeNotes.trim()}
+        disabled={isProcessing || items.length === 0 || !valeNotes.trim() || !saleDateValidation.valid}
         className={cn(
           "w-full h-14 rounded-xl bg-amber-600 text-white font-black text-sm uppercase tracking-widest shadow-lg shadow-amber-600/20",
           "flex items-center justify-center gap-2 transition-all active:scale-[0.98]",

@@ -25,6 +25,8 @@ import { useAuthStore } from "@/store";
 import { useUIStore } from "@/store";
 import { usePOSCheckout } from "./usePOSCheckout";
 import { POSPortalModal } from "./POSPortalModal";
+// MISIÓN FECHA OPERATIVA (2026-10-17): selector de fecha económica también en Express.
+import { POSOperationDateSection, usePosSaleDate } from "./POSOperationDateSection";
 import ProductImage from "@/components/ui/ProductImage";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 
@@ -101,6 +103,9 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
   );
 
   const { startCheckout, isProcessingSale } = usePOSCheckout();
+  // MISIÓN FECHA OPERATIVA: mismo estado del carrito que el flujo normal;
+  // el modal de confirmación muestra el selector y gatea el cobro.
+  const { validation: saleDateValidation } = usePosSaleDate();
 
   const total = getTotal();
   const itemCount = getItemCount();
@@ -433,6 +438,11 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
               </strong>
             </p>
           </div>
+          {/* MISIÓN FECHA OPERATIVA: fecha económica editable también en Express
+              (misma del carrito). El servidor revalida al confirmar. */}
+          <div className="rounded-xl border border-border/60 bg-muted/10 p-3">
+            <POSOperationDateSection inputId="pos-date-express" />
+          </div>
           <div className="flex gap-2">
             <button
               type="button"
@@ -444,7 +454,8 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
             <button
               type="button"
               onClick={handleConfirmSale}
-              disabled={isProcessingSale}
+              disabled={isProcessingSale || !saleDateValidation.valid}
+              title={!saleDateValidation.valid ? saleDateValidation.error : undefined}
               className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               {isProcessingSale ? "Procesando..." : "Confirmar"}
