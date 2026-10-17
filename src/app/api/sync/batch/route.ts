@@ -216,6 +216,11 @@ const handler = withAuth(async (req, session) => {
                 // offline. La obligatoriedad la valida create_sale_v2 (self-
                 // session path: RC-1 exige sup==auth.uid()).
                 p_discount_reason: op.payload.p_discount_reason || null,
+                // FIX CP-POS-007 (auditoría 2026-10-16): la nota del cajero
+                // encolada offline se reenvía al RPC. create_sale_v2 la une con
+                // la nota automática de incidencias SIN sobrescribirla
+                // (v_notes_final, migración 20261017000000).
+                p_notes: op.payload.p_notes || null,
                 p_idempotency_key: op.idempotencyKey,
                 p_operation_date: op.payload.p_operation_date || null,
                 p_user_id: session.user.id,
