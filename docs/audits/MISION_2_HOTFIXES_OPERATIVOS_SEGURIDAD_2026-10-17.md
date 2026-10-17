@@ -2,7 +2,7 @@
 
 **Aplicación:** COSTPRO 4 Multitienda
 **Programa:** MISIÓN 2 — Hotfixes operativos y seguridad inmediata (Plan Priorizado de Correcciones 2026-10-16, Misiones A + B)
-**Branch:** `fix/mision-2-hotfixes-operativos` · **PR:** (ver enlace al final del documento)
+**Branch:** `fix/mision-2-hotfixes-operativos` · **PR:** [#1421](https://github.com/Nardian90/Costpro/pull/1421) (base `main`)
 **Base:** `main` @ `10af2706c` (post PR #1420)
 **Estado:** Implementado en rama de trabajo — **NO desplegado en producción**. Sin migraciones nuevas (la misión es de código de aplicación cliente/API únicamente).
 
@@ -147,5 +147,5 @@ Siguiendo el plan priorizado (Misión A → C → D), la siguiente tarea elegibl
 
 - Inventario maestro actualizado con bloques «REMEDIACIÓN MISIÓN 2» en las 5 fichas: `docs/audits/INVENTARIO_MAESTRO_TAREAS_COSTPRO_2026-10-16.md`.
 - Este informe: `docs/audits/MISION_2_HOTFIXES_OPERATIVOS_SEGURIDAD_2026-10-17.md`.
-- Rama: `fix/mision-2-hotfixes-operativos` (base `main` @ `10af2706c`).
+- Rama: `fix/mision-2-hotfixes-operativos` (base `main` @ `10af2706c`) · PR #1421.
 - Verificación del diff: 42 archivos modificados, 5 tests nuevos, 0 secretos, 0 migraciones, 0 cambios de RLS.
