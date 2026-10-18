@@ -14,6 +14,7 @@
 - La BD ya impide negativos en las dos tablas maestras: `products_stock_current_check (stock_current >= 0)` en `products` y `stock_non_negative (quantity >= 0)` en `inventory`. Ambos CHECK están VIGENTES en la BD viva.
 - Estado de datos: **0 productos con stock negativo sobre 376** en 22 tiendas. No hay deudas estructurales de negativos hoy.
 - El camino de ajuste gobernado ya existe como RPC (`process_inventory_adjustment`) y las transferencias revalidan disponibilidad con lock determinista (DF-06) antes de mover valor.
+- **[ACTUALIZACIÓN 2026-10-18, evidence/20261018-reconciliacion-stock/INFORME_READ_ONLY.md]** Conciliación read-only ejecutada hoy: **las 4 divergencias históricas YA NO EXISTEN** (SKU 113: 121=121 reconciliado; SKU 127: 0=0). Las 41 divergencias actuales son TODAS artefactos de pruebas/QA (0 en negocio real); ~10 productos de prueba contaminan la tienda real TIENDA CENTRAL («WAC Test Product», etc.) → registrada como nueva tarea de higiene, no como bloqueo de negocio.
 
 **Consecuencia de no decidir.** Las 4 divergencias siguen sin clasificar, la tarea CP-INV-005 no puede cerrarse y cualquier incidente futuro (p. ej. venta concurrente que «falla» por el CHECK) se resolverá de forma improvisada, sin criterio.
 
