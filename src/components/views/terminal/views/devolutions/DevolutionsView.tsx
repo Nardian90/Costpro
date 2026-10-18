@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Plus, Search, RotateCcw, Loader2, FileText, X, Undo2, Copy } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
@@ -10,6 +10,15 @@ import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusB
 import { canReverseDocumentInStore } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
+// MISIÓN FECHAS DE TRABAJO (2026-10-18): selector de fecha operativa visible
+// (gap del informe del PR #1422 §10.5: la API soportaba operation_date pero
+// la UI nunca lo exponía). Mismo picker reutilizable + misma convención de
+// envío del proyecto (hoy → no se envía, servidor estampa NOW(); ≠ hoy →
+// mediodía local vía resolvePosOperationDate).
+import { OperationDatePicker } from '@/components/ui/OperationDatePicker';
+import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
+import { resolvePosOperationDate } from '@/lib/pos/operation-date';
 
 const touch = 'min-h-[44px]';
 
@@ -163,6 +172,13 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
   const [productSearch, setProductSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  // MISIÓN FECHAS DE TRABAJO: fecha operativa de la devolución. Default HOY
+  // (día de negocio Habana — no la fecha UTC del navegador) o la preferencia
+  // de trabajo del usuario para este tipo si es válida.
+  const todayBd = useMemo(() => todayBusinessDay(), []);
+  const [devolutionDate, setDevolutionDate] = useState(todayBd);
+  const [dateTouched, setDateTouched] = useState(false);
+  useApplyWorkDateDefault('devolution', !dateTouched && devolutionDate === todayBd, (d) => setDevolutionDate(d));
 
   async function searchProducts(q: string) {
     setProductSearch(q);
@@ -190,7 +206,15 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
     try {
       await apiFetch('/api/devolutions', {
         method: 'POST',
-        body: JSON.stringify({ store_id: storeId, reason, items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price })) }),
+        body: JSON.stringify({
+          store_id: storeId,
+          reason,
+          items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price })),
+          // MISIÓN FECHAS DE TRABAJO: convención canónica — hoy → undefined
+          // (el servidor estampa NOW()); ≠ hoy → ISO mediodía. La ruta
+          // revalida (checkNotFutureOperationDate) y el RPC aplica el gate.
+          operation_date: resolvePosOperationDate(devolutionDate, todayBd),
+        }),
       });
       toast.success('Devolución creada');
       onCreated();
@@ -211,6 +235,17 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
           <input value={reason} onChange={e => setReason(e.target.value)} placeholder="Ej: Producto defectuoso"
             className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm', touch)} />
         </div>
+
+        {/* MISIÓN FECHAS DE TRABAJO: fecha operativa visible y seleccionable.
+            Min per-store (forward-only inclusivo por día) · max HOY Habana. */}
+        <OperationDatePicker
+          value={devolutionDate}
+          onChange={(d) => { setDateTouched(true); setDevolutionDate(d); }}
+          label="Fecha de la devolución"
+          storeId={storeId}
+          max={todayBd}
+          inputId="devolution-create-fecha"
+        />
 
         <div>
           <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Buscar producto</label>

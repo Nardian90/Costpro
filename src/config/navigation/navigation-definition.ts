@@ -55,7 +55,7 @@ import {
   Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet, Landmark,
   Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone, Printer,
   ReceiptText,
-  Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson,
+  Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson, CalendarClock, SlidersHorizontal,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -318,6 +318,30 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             type: 'item',
             roles: ['admin', 'manager', 'encargado', 'warehouse'],
             keywords: ['transferencia', 'mover', 'traslado', 'sucursales', 'almacenes'],
+          },
+        ],
+      },
+      {
+        // MISIÓN FECHAS DE TRABAJO (2026-10-18): grupo «Control operativo» —
+        // centro transversal de control del estado temporal de la operación.
+        // Vista canónica ÚNICA (work_dates → WorkDatesView). Permisos: mismos
+        // roles que el resto de OPERACIÓN (consulta de límites es lectura;
+        // la preferencia es personal usuario+tienda; el backend revalida
+        // toda fecha de documento — el menú no es el mecanismo de seguridad).
+        id: 'control_operativo',
+        label: 'Control operativo',
+        description: 'Control transversal de la operación: fechas de trabajo por tipo de movimiento y límites de la política temporal.',
+        icon: SlidersHorizontal,
+        type: 'submenu',
+        navClass: 'hub',
+        children: [
+          {
+            id: 'work_dates',
+            label: 'Fechas de trabajo',
+            description: 'Consulta y gestiona la fecha efectiva del próximo documento de cada tipo de movimiento: venta, recepción, vale, servicio, transferencia y más, con sus límites mínimo y máximo.',
+            icon: CalendarClock,
+            type: 'item',
+            keywords: ['fechas de trabajo', 'fecha', 'fecha operativa', 'fecha efectiva', 'política temporal', 'backdating', 'retro-fechar', 'mínimo', 'máximo', 'zona horaria', 'control operativo'],
           },
         ],
       },
@@ -1407,6 +1431,9 @@ export const VALID_VIEWS: Set<string> = new Set([
   'costo', // F4 (higiene IA): ViewType real (case SectionHubView) que faltaba aquí
   // CAMBIO 4: submenu hub "Ventas" (Vender + Opciones) — wayfinding SectionHub
   'ventas',
+  // MISIÓN FECHAS DE TRABAJO (2026-10-18): centro de control transversal de
+  // fechas de trabajo (OPERACIÓN → Control operativo → Fechas de trabajo).
+  'control_operativo', 'work_dates',
   // Secciones/hubs nuevos de la arquitectura GATE 1
   'operacion', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
 ]);

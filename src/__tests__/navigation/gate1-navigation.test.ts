@@ -790,6 +790,8 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
         'ipv_datos', 'ipv_procesamiento', 'ipv_avanzado', 'cost_views',
         'cost_gen', 'cost_templates', 'cost_tools', 'costos', 'tienda',
         'ipv_module', 'otros', 'administracion', 'recursos', 'occ',
+        // MISIÓN FECHAS DE TRABAJO (2026-10-18): hub «Control operativo»
+        'control_operativo',
       ].includes(view);
       if (isSectionOrHub) continue;
       // Vistas con camino documentado (hub/contextual/palette/menú) o

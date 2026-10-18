@@ -57,6 +57,9 @@ import { useCrearValeSalida, type CrearValeResult } from './useCrearValeSalida';
 import { OperationDatePicker, useOperationDateValidation } from '@/components/ui/OperationDatePicker';
 import { resolvePosOperationDate } from '@/lib/pos/operation-date';
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
+// MISIÓN FECHAS DE TRABAJO (2026-10-18): default = preferencia de trabajo
+// del usuario para vales (válida contra los límites vivos) o HOY.
+import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
 import { toast } from 'sonner';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -143,6 +146,8 @@ export function ValeSalidaCreateModal({
   const [productionOrderId, setProductionOrderId] = useState<string | null>(null);
   // MISIÓN POLÍTICA TEMPORAL: fecha operativa del vale. Default HOY (Habana).
   const [valeDate, setValeDate] = useState<string>(todayBusinessDay());
+  const [valeDateTouched, setValeDateTouched] = useState(false);
+  useApplyWorkDateDefault('vale_salida', !valeDateTouched && valeDate === todayBusinessDay(), setValeDate, storeId);
   // Tope superior del selector: HOY como día de negocio (America/Havana).
   const maxFechaOperativa = todayBusinessDay();
   const valeDateValidation = useOperationDateValidation(valeDate, storeId, maxFechaOperativa);
@@ -468,7 +473,7 @@ export function ValeSalidaCreateModal({
             <div className="sm:col-span-1">
               <OperationDatePicker
                 value={valeDate}
-                onChange={setValeDate}
+                onChange={(d) => { setValeDateTouched(true); setValeDate(d); }}
                 label="Fecha del vale"
                 storeId={storeId}
                 max={maxFechaOperativa}

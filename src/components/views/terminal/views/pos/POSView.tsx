@@ -16,6 +16,12 @@ import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore, useUIStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
 import { useCartStore, setCartNotificationHandler } from '@/store/cart';
+// MISIÓN FECHAS DE TRABAJO (2026-10-18): default de la fecha de venta del
+// carrito = preferencia de trabajo del usuario para ventas (si es válida
+// contra los límites vivos de la política del PR #1422). El selector visible
+// (POSOperationDateSection en los tres flujos de confirmación) sigue siendo
+// el control autoritativo; esto solo fija el valor inicial.
+import { usePosWorkDateDefault } from './usePosWorkDateDefault';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
 import { auditService } from '@/services/audit-service';
 import { toast } from 'sonner';
@@ -93,6 +99,13 @@ export default function POSView() {
       }
     }
   }, [user?.activeStoreId]);
+
+  // MISIÓN FECHAS DE TRABAJO (2026-10-18): inicializar la fecha de venta del
+  // carrito con la preferencia válida del usuario (una vez por montaje y solo
+  // si el carrito está en «hoy implícito» — saleDate === null). El selector
+  // visible de los tres flujos de confirmación permite cambiarla; el checkout
+  // la envía con la convención canónica (hoy → NOW(); ≠ hoy → mediodía).
+  usePosWorkDateDefault();
 
   // FIX-USD-CUP-RATE (2026-10-14): hidratar las tasas de cambio configuradas de
   // la tienda (fuente canónica: store_exchange_rates, editadas en el modal

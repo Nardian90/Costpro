@@ -116,6 +116,8 @@ const IPVView = dynamic(() => import('@/components/views/terminal/views/ipv/IPVV
 const AcademyView = dynamic(() => import('@/components/views/terminal/views/academy/AcademyView'), { ssr: false });
 const InventoryAdjustmentsView = dynamic(() => import('@/components/views/terminal/views/inventory/InventoryAdjustmentsView'), { ssr: false });
 const ValesSalidaView = dynamic(() => import('@/components/views/terminal/views/inventory/ValesSalidaView'), { ssr: false });
+// MISIÓN FECHAS DE TRABAJO (2026-10-18): centro de control de fechas de trabajo
+const WorkDatesView = dynamic(() => import('@/components/views/terminal/views/work_dates/WorkDatesView'), { ssr: false });
 const LegalView = dynamic(() => import('@/components/views/terminal/views/legal/LegalView'), { ssr: false });
 const SettingsView = dynamic(() => import('@/components/views/terminal/views/settings/SettingsView'), { ssr: false });
 const HelpView = dynamic(() => import('@/components/views/terminal/views/help/HelpView'), { ssr: false });
@@ -498,6 +500,8 @@ export default function TerminalShell() {
         case 'academy': return <ViewErrorBoundary viewName="Academia"><AcademyView /></ViewErrorBoundary>;
         case 'inventory_adjustments': return <ViewErrorBoundary viewName="Ajustes de Inventario"><InventoryAdjustmentsView /></ViewErrorBoundary>;
         case 'vales_salida': return <ViewErrorBoundary viewName="Vales de Salida"><ValesSalidaView /></ViewErrorBoundary>;
+        // MISIÓN FECHAS DE TRABAJO: OPERACIÓN → Control operativo → Fechas de trabajo
+        case 'work_dates': return <ViewErrorBoundary viewName="Fechas de trabajo"><WorkDatesView /></ViewErrorBoundary>;
         case 'legal': return <ViewErrorBoundary viewName="Legal"><LegalView /></ViewErrorBoundary>;
         case 'settings': return <ViewErrorBoundary viewName="Ajustes"><SettingsView /></ViewErrorBoundary>; // F4 (IA-F03): nombre alineado al label de menú "Ajustes"
         case 'help': return <ViewErrorBoundary viewName="Ayuda"><HelpView /></ViewErrorBoundary>;
@@ -553,6 +557,8 @@ export default function TerminalShell() {
         case 'costo':
         case 'redes':
         case 'analitica':
+        // MISIÓN FECHAS DE TRABAJO (2026-10-18): hub «Control operativo»
+        case 'control_operativo':
         case 'ipv_reporting':
         case 'ipv_operaciones':
         case 'ipv_datos':
