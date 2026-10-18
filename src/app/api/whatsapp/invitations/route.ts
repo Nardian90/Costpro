@@ -7,14 +7,15 @@ import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
 import { supabase } from '@/lib/supabaseClient';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { getRiskState } from '@/lib/whatsapp/anti-ban';
 import { registerStore } from '@/lib/whatsapp/invitation-queue';
 
 const addSchema = z.object({
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
   phone_number: z.string().min(5),
   name: z.string().optional(),
-  contact_id: z.string().uuid().optional(),
+  contact_id: uuidLoose.optional(),
 });
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {

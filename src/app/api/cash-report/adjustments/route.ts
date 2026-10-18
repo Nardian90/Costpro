@@ -4,6 +4,7 @@ import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
 import { z } from 'zod';
 
+import { uuidLoose } from '@/validation/api-schemas';
 /**
  * GET /api/cash-report/adjustments?start_date=ISO&end_date=ISO
  * POST /api/cash-report/adjustments
@@ -38,7 +39,7 @@ const ADJUSTMENT_SCHEMA = z.object({
   direction: z.enum(['in', 'out']),
   note: z.string().trim().min(1, 'La nota justificativa es obligatoria').max(500, 'La nota no puede exceder 500 caracteres'),
   payment_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'payment_date debe ser YYYY-MM-DD'),
-  idempotency_key: z.string().uuid().optional(),
+  idempotency_key: uuidLoose.optional(),
 });
 
 function isoRange(startDate: string, endDate: string) {

@@ -31,10 +31,13 @@
 
 ## 1. RESUMEN DE ESTADOS (totales coherentes con la tabla y las fichas)
 
+> **ACTUALIZACIÓN MISIÓN 2 (2026-10-17):** CP-POS-003, CP-POS-007, CP-CAT-004 y CP-SEC-019 pasan a PENDIENTE DE VERIFICACIÓN (corrección implementada + tests de regresión + suite completa 3170/3170 + tsc 0 errores; falta verificación funcional en entorno desplegado). CP-SEC-012 pasa a PARCIALMENTE RESUELTA (BUG-013/017/022 verificados CORREGIDOS con evidencia pasiva local 401; BUG-024 sigue abierto).
+
 | Estado | Cantidad |
 |---|---|
-| PENDIENTE CONFIRMADA | **65** |
-| PARCIALMENTE RESUELTA | **9** |
+| PENDIENTE CONFIRMADA | **60** |
+| PARCIALMENTE RESUELTA | **10** |
+| PENDIENTE DE VERIFICACIÓN | **4** |
 | RESUELTA VERIFICADA | **21** |
 | NO VERIFICABLE | **3** |
 | NO REPRODUCIDA | 0 |
@@ -59,11 +62,11 @@
 | -- | ---- | ------------------ | ----------------- | --------- | ------------------- | ------------------- | ------------ |
 | CP-POS-001 | POS | Kardex de la era V2.1: sin reconciliación automática stock↔ledger | PARCIALMENTE RESUELTA | P2 | [BD] `20261005140000_drop_v1_sale_devolution.sql` + [CÓD] `create_sale_v2` endurecido | Caminos V2.1 parcheados fueron reemplazados por V2 endurecido; falta rutina programada | Ninguna |
 | CP-POS-002 | POS | Offline sync sin reserva de stock ni resolución de conflictos | PENDIENTE CONFIRMADA | P1 | [DOC] audit_v3_multi_store §9 + [CÓD] `sync-engine.ts`, `useSync.ts`, `sync/batch/route.ts` | Diseño offline idempotente parcial (solo 23505) | CP-POS-001 |
-| CP-POS-003 | POS | «Venta por Conteo» rota: «0 de 0 productos» permanente | PENDIENTE CONFIRMADA | P1 | [CÓD] `useInventoryCount.ts:148-155` [VERIFICADO HOY] | fetch sin `storeId`; `/api/inventory/products` exige storeId (400) | Ninguna |
+| CP-POS-003 | POS | «Venta por Conteo» rota: «0 de 0 productos» permanente | PENDIENTE DE VERIFICACIÓN (M2) | P1 | [CÓD] fix en `useInventoryCount.ts` + [TEST] 2/2 `useInventoryCount-storeId.test.tsx` | fetch sin `storeId`; `/api/inventory/products` exige storeId (400) | Ninguna |
 | CP-POS-004 | POS | Fallback de atribución de comisiones POS sobre-atribuye a todos los workers | PENDIENTE CONFIRMADA | P2 | [DOC] AUDITORIA_TRABAJADORES §14.2 | Regla de negocio sin definir (fallback 2026-07-17) | Decisión de negocio |
 | CP-POS-005 | POS | Firmas del Reporte Entrega globales en localStorage (no scoped por tienda) | PENDIENTE CONFIRMADA | P3 | [DOC] AUDITORIA_TRABAJADORES §14.3 | `LS_KEYS.deliveredBy/recipient` sin prefijo de tienda | Ninguna |
 | CP-POS-006 | POS | Falta test de integración del pro-rateo del motor de comisiones | PENDIENTE CONFIRMADA | P2 | [DOC] AUDITORIA_TRABAJADORES §14.4 | Fix verificado en vivo pero sin test que lo proteja | CP-INFRA-011 |
-| CP-POS-007 | POS | Notas de venta del Catálogo de Ventas se descartan silenciosamente | PENDIENTE CONFIRMADA | P1 | [CÓD] `useSalesCatalog.ts` [VERIFICADO HOY] | `confirmCheckout(notes)` no incluye `notes` en el body del checkout | Ninguna |
+| CP-POS-007 | POS | Notas de venta del Catálogo de Ventas se descartan silenciosamente | PENDIENTE DE VERIFICACIÓN (M2) | P1 | [CÓD] fix 4 puntos (`useSalesCatalog`, `schemas.ts`, `sync/batch`) + [TEST] 8/8 | `confirmCheckout(notes)` no incluye `notes` en el body del checkout | Ninguna |
 | CP-POS-008 | POS | Tasa USD 680 hardcodeada como fallback en 8+ puntos del cliente | PENDIENTE CONFIRMADA | P2 | [CÓD] `usePOSCheckout.ts:184`, `useSalesCatalog.ts:416,464`, `salesCatalogImport.ts:102` | Default de硬codificación pre-validación server-side | Ninguna |
 | CP-POS-009 | POS | Selector de fecha date-only a medianoche; Vales de Salida sin selector de fecha en UI | PENDIENTE CONFIRMADA | P2 | [DOC] agent-ctx/informe-final-mision-multitienda | `validate_operation_date` forward-only + UI date-only | Ninguna |
 | CP-POS-010 | POS | Reporte Entrega: 7 discrepancias contables D1-D7 + migración `ref_type` no aplicada | PARCIALMENTE RESUELTA | P1 | [DOC] auditoria-reporte-entrega.md + FIX_REPORTE_ENTREGA_1510 | Correcciones en repo; dato histórico y deploy pendientes | CP-INFRA-009 |
@@ -84,7 +87,7 @@
 | CP-CAT-001 | CAT | Categorías como texto libre en `products.category` | PENDIENTE CONFIRMADA | P3 | [DOC] audit_v3_multi_store §1 | Sin tabla de categorías ni FK | Ninguna |
 | CP-CAT-002 | CAT | `confirm_transfer` casa producto destino solo por SKU | PENDIENTE CONFIRMADA | P3 | [DOC] audit_v3_multi_store §6 | Match sin unidad de medida ni tenant | Ninguna |
 | CP-CAT-003 | CAT | `catalog_selectedCategories` persiste entre sesiones | PENDIENTE CONFIRMADA | P3 | [DOC] INVENTORY-CATALOG-REGRESSION-1379 §9.1 | Misma clase de defecto que F20 (corregida solo para searchTerm) | Ninguna |
-| CP-CAT-004 | CAT | Alta de producto en recepción sin `tenant_id` → 403 RLS | PENDIENTE CONFIRMADA | P1 | [DOC] agent-ctx informe 12/10 + [CÓD] `useReceptions.ts:267` [VERIFICADO HOY] | Insert sin tenant_id contra policy `products_tenant_insert` | Ninguna |
+| CP-CAT-004 | CAT | Alta de producto en recepción sin `tenant_id` → 403 RLS | PENDIENTE DE VERIFICACIÓN (M2) | P1 | [CÓD] fix `useReceptions.ts` (patrón RLS-FIX) + [TEST] 5/5 `useSavePendingReception-tenant-rls.test.tsx` | Insert sin tenant_id contra policy `products_tenant_insert` | Ninguna |
 | CP-CAT-005 | CAT | `/api/catalog/bulk-import` sin Zod por fila + `store_id` del body | PENDIENTE CONFIRMADA | P1 | [CÓD] `route.ts:34,46,75` [VERIFICADO HOY] | Validación manual débil; confianza en body para admin | Ninguna |
 | CP-CAT-006 | CAT | `received_services` históricos con `service_type_id` NULL | PENDIENTE CONFIRMADA | P3 | [DOC] AUDITORIA_SERVICIOS §13.1 | Backfill por nombre no ejecutado (históricos intactos por diseño) | Ninguna |
 | CP-CAT-007 | CAT | Gestión de tipos de servicio por tienda sin UI | PENDIENTE CONFIRMADA | P3 | [DOC] AUDITORIA_SERVICIOS §13.2 | Solo admin global; soporte por tienda documentado como extensión | CP-RES-008 |
@@ -100,14 +103,14 @@
 | CP-SEC-009 | SEC | Modelo de autorización: H-09-AUTH-01..04 (is_admin≡is_global_admin, roles mixtos) | PENDIENTE CONFIRMADA | P2 | [DOC] ITERATION_9_AUTH_MODEL_AUDIT | Duplicación role↔role_id y `manager` global inconsistente | CP-SEC-008 (DT-01) |
 | CP-SEC-010 | SEC | DT-03: decisión single vs multi-tenant sin aprobar | PENDIENTE CONFIRMADA | P2 | [DOC] TENANT_ARCHITECTURE_DECISION | `tenant_id` NULL en 17/18 profiles y 16/16 stores | Aprobación del producto |
 | CP-SEC-011 | SEC | DT-06: reconciliación de auth.users huérfanos sin implementar | PENDIENTE CONFIRMADA | P2 | [DOC] USER_RECONCILIATION_DESIGN | Diseño listo, FK sin CASCADE, implementación pendiente de aprobación | Aprobación |
-| CP-SEC-012 | SEC | Bugs de seguridad ACTIVOS documentados como `test.fail` (BUG-013/017/022/024) | PENDIENTE CONFIRMADA | P0 | [TEST] `e2e/auth.spec.ts:46`, `reports.spec.ts:51`, `academy.spec.ts:71`, `legal.spec.ts:81` | Endpoints sin auth / XSS almacenado / FS efímero, con tests invertidos que «pasan» | Ninguna |
+| CP-SEC-012 | SEC | Bugs de seguridad ACTIVOS documentados como `test.fail` (BUG-013/017/022/024) | PARCIALMENTE RESUELTA (M2) | P0 | [CURL] 401 local 2026-10-17 en los 3 endpoints + [CÓD] withAuth/withRole/sanitización | BUG-013/017/022 corregidos (401 verificado); BUG-024 (FS efímero `data/incidents.json`) abierto | Migrar incidents a BD (BUG-024) |
 | CP-SEC-013 | SEC | Rate limit in-memory; Upstash Redis obligatorio en prod no configurado | PENDIENTE CONFIRMADA | P1 | [CÓD] `rate-limit.ts:77` + [.env.example] | Límites por instancia, no distribuidos | Credenciales Upstash |
 | CP-SEC-014 | SEC | CSP con `'unsafe-inline'` permanente en producción | PENDIENTE CONFIRMADA | P2 | [CÓD] `src/proxy.ts:39-48` | Excepción por compatibilidad con preview Space-Z | Ninguna |
 | CP-SEC-015 | SEC | Enumeración de roles inconsistente (`superadmin` vs `super_admin` vs `encargado`) | PENDIENTE CONFIRMADA | P2 | [CÓD] `users/route.ts:31` vs `pick3/advisor/route.ts:273` | Dos convenciones de nombres de rol conviven | CP-SEC-009 |
 | CP-SEC-016 | SEC | Webhook Telegram: IP allowlist cosmética sin reverse proxy (checklist 8 ítems sin ejecutar) | PENDIENTE CONFIRMADA | P2 | [DOC] reverse-proxy-trusting-x-forwarded-for.md | `getRealClientIp()` prioriza XFF spoofable | Despliegue de proxy |
 | CP-SEC-017 | SEC | Supabase Admin API `/auth/v1/admin/users` devuelve 500 | NO VERIFICABLE | P2 | [DOC] FIX_SUPERADMIN_TIPOS_SERVICIO §9.3 | Causa externa al repo (proyecto Supabase) | Soporte Supabase |
 | CP-SEC-018 | SEC | `/api/users/managed-create` responde 400 ERR_EMAIL_ALREADY_EXISTS tras crear bien | PENDIENTE CONFIRMADA | P2 | [DOC] E2E-FIXTURE-REUSE §9.3 (DEFECT-003) | Doble verificación de email en ruta | Ninguna |
-| CP-SEC-019 | SEC | 35 rutas API con `z.string().uuid()` estricto (fallan con UUID sintético de Central) | PENDIENTE CONFIRMADA | P1 | [CÓD] grep `z.string().uuid()` = 35 archivos [VERIFICADO HOY] | Validación cliente más estricta que Postgres (mismo patrón que F24 resuelto) | Ninguna |
+| CP-SEC-019 | SEC | 35→52 rutas API con `z.string().uuid()` estricto (fallan con UUID sintético de Central) | PENDIENTE DE VERIFICACIÓN (M2: 52→0) | P1 | [CÓD] codemod 36 archivos → `uuidLoose`/`uuidRegex` + [TEST] 5/5 `uuid-loose-central-contract.test.ts` | Validación cliente más estricta que Postgres (mismo patrón que F24 resuelto) | Ninguna |
 | CP-SEC-020 | SEC | RPCs legacy con EXECUTE anon/PUBLIC (5 dropeadas; `manage_user_memberships` queda) | PARCIALMENTE RESUELTA | P2 | [DOC] PT_9_5 + AUDIT_CLOSURE (v2.12.50) | Bloqueo legacy: delete→410, 5 RPCs dropeadas; DT-02 queda abierta | CP-SEC-008 |
 | CP-UI-001 | UI | CRUD de reglas de comisión desde UI + sub-ítems contables | PARCIALMENTE RESUELTA | P2 | [DOC] decisions-complejas §1-5 + [CÓD] `WorkersView.tsx:2770` [VERIFICADO HOY] | RuleFormModal implementado; exclusion constraint y sub-ítems siguen | Query previa de solapes |
 | CP-UI-002 | UI | Fases C/D/E del refinamiento Inventario/Vitrina sin ejecutar | PENDIENTE CONFIRMADA | P3 | [DOC] ux-refinamiento-inventario-vitrina | Fases A/B implementadas (PR #1373); C/D/E con checklists vacíos | Ninguna |
@@ -200,7 +203,7 @@
 - **Limitaciones de la auditoría:** no se ejecutó el flujo offline real (requiere navegador + red manipulada).
 
 #### CP-POS-003 — «Venta por Conteo» rota: «0 de 0 productos» permanente
-- **ID estable:** CP-POS-003 · **Área:** POS · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P1
+- **ID estable:** CP-POS-003 · **Área:** POS · **Estado verificado:** PENDIENTE DE VERIFICACIÓN (M2, 2026-10-17) · **Prioridad:** P1
 - **Descripción del problema:** `useInventoryCount.fetchProducts()` llama `/api/inventory/products` sin `storeId`; el endpoint exige el parámetro y responde 400; la vista muestra «0 de 0 productos» de forma permanente. Reproducido en vivo el 2026-10-15 y documentado como preexistente y fuera del alcance de esa misión.
 - **Comportamiento esperado:** el módulo lista los productos de la tienda activa y permite registrar conteos.
 - **Origen documental:** `docs/audits/AUDITORIA_TRABAJADORES_COMISIONES_REPORTE_ENTREGA_2026-10-14.md` §14.1.
@@ -216,6 +219,13 @@
 - **Criterios de aceptación propuestos:** «Venta por Conteo» lista productos de la tienda activa y permite guardar un conteo.
 - **Método recomendado para verificar la corrección:** abrir el módulo con tienda activa y verificar carga + guardar conteo en BD de prueba.
 - **Limitaciones de la auditoría:** no se ejecutó la UI en vivo (solo evidencia de código + repro documentado del 15/10).
+- **REMEDIACIÓN MISIÓN 2 (2026-10-17):**
+  - **Estado anterior:** PENDIENTE CONFIRMADA → **nuevo estado:** PENDIENTE DE VERIFICACIÓN.
+  - **Cambio aplicado:** `useInventoryCount.fetchProducts()` ahora adjunta `?storeId=<tienda activa>` (patrón de LotsView/DevolutionsView/WorkersView, con `encodeURIComponent`); fail-closed con error accionable si no hay tienda activa; el `useEffect` re-fetch al cambiar de tienda (`user?.activeStoreId` en deps).
+  - **Pruebas de regresión:** `src/__tests__/hooks/useInventoryCount-storeId.test.tsx` — 2/2 ✓ (fetch con storeId + fail-closed sin tienda). Estas pruebas habrían FALLADO con el código anterior (fetch sin query).
+  - **Verificación adicional:** suite completa vitest 3170/3170 ✓; `tsc --noEmit` EXIT 0 ✓.
+  - **Evidencia pendiente para cierre:** pase funcional de la vista «Venta por Conteo» en entorno desplegado con tienda activa real (carga de listado + guardar conteo).
+  - **Rama/PR:** `fix/mision-2-hotfixes-operativos` (MISIÓN 2).
 
 #### CP-POS-004 — Fallback de atribución de comisiones POS sobre-atribuye a todos los workers
 - **ID estable:** CP-POS-004 · **Área:** POS · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
@@ -269,7 +279,7 @@
 - **Limitaciones de la auditoría:** búsqueda de tests no exhaustiva por nombre.
 
 #### CP-POS-007 — Notas de venta del Catálogo de Ventas se descartan silenciosamente
-- **ID estable:** CP-POS-007 · **Área:** POS · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P1
+- **ID estable:** CP-POS-007 · **Área:** POS · **Estado verificado:** PENDIENTE DE VERIFICACIÓN (M2, 2026-10-17) · **Prioridad:** P1
 - **Descripción del problema:** el modal de checkout del Catálogo de Ventas recoge «notas de venta» y se las pasa a `confirmCheckout(notes?, operationDate?)`, pero el body enviado a `/api/pos/checkout` no incluye `notes` (ni online ni offline): las notas se pierden silenciosamente. Contradice el requisito de persistencia de notas del área Ventas.
 - **Comportamiento esperado:** la nota viaja al backend, se persiste con la transacción y es visible en recibo/historial.
 - **Origen documental:** verificación directa de esta auditoría (no hay informe previo que lo documente).
@@ -285,6 +295,17 @@
 - **Criterios de aceptación propuestos:** una venta desde Catálogo con nota la muestra en el detalle/reporte.
 - **Método recomendado para verificar la corrección:** venta E2E con nota + inspección de transacción.
 - **Limitaciones de la auditoría:** no se verificó si algún otro camino (usePOSCheckout) tiene el mismo problema para notas equivalentes.
+- **REMEDIACIÓN MISIÓN 2 (2026-10-17):**
+  - **Estado anterior:** PENDIENTE CONFIRMADA → **nuevo estado:** PENDIENTE DE VERIFICACIÓN.
+  - **Cambio aplicado (4 puntos del camino de venta del catálogo):**
+    1. `useSalesCatalog.ts` (online): `sale_notes: notes?.trim() ? notes.trim().slice(0,1000) : null` en el body de `/api/pos/checkout` (el endpoint ya aceptaba `sale_notes` → `p_notes`).
+    2. `useSalesCatalog.ts` (offline): `p_notes` en el enqueue a `createSale`.
+    3. `src/validation/schemas.ts`: `p_notes: z.string().max(1000).nullable().optional()` declarado en `createSaleParamsSchema` (sin esto, zod `.parse()` eliminaba la clave del payload encolado).
+    4. `src/app/api/sync/batch/route.ts`: `p_notes: op.payload.p_notes || null` propagado al `v2Payload` del replay a `create_sale_v2` (que une la nota manual con la automática de incidencias SIN sobrescribir, `v_notes_final`, migración 20261017000000).
+  - **Pruebas de regresión:** `src/__tests__/hooks/useSalesCatalog-notes.test.tsx` — 5/5 ✓ (nota online en body, null sin nota, truncado 1000, p_notes offline, schema no elimina p_notes) + `src/__tests__/integration/sync-batch-pnotes.test.ts` — 3/3 ✓ (contrato de fuente del replay + contrato RPC). Habrían FALLADO con el código anterior.
+  - **Verificación adicional:** suite completa vitest 3170/3170 ✓; `tsc --noEmit` EXIT 0 ✓.
+  - **Evidencia pendiente para cierre:** venta E2E desde Catálogo con nota y confirmación de la nota visible en detalle/historial de la transacción en entorno desplegado.
+  - **Rama/PR:** `fix/mision-2-hotfixes-operativos` (MISIÓN 2).
 
 #### CP-POS-008 — Tasa USD 680 hardcodeada como fallback en el cliente POS/catálogo
 - **ID estable:** CP-POS-008 · **Área:** POS · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
@@ -633,7 +654,7 @@
 - **Limitaciones de la auditoría:** —
 
 #### CP-CAT-004 — Alta de producto en recepción sin tenant_id → 403
-- **ID estable:** CP-CAT-004 · **Área:** CAT · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P1
+- **ID estable:** CP-CAT-004 · **Área:** CAT · **Estado verificado:** PENDIENTE DE VERIFICACIÓN (M2, 2026-10-17) · **Prioridad:** P1
 - **Descripción del problema:** el alta manual de producto desde la recepción (`useReceptionState.executeSubmit`) inserta en `products` sin `tenant_id`; la policy RLS `products_tenant_insert` (v2.21) lo rechaza con 403. En la misión del 12/10 el producto solo se pudo crear vía JWT con tenant_id.
 - **Comportamiento esperado:** el alta desde recepción funciona con el tenant de la sesión.
 - **Origen documental:** `agent-ctx/informe-final-mision-multitienda.md` (2026-10-12).
@@ -648,6 +669,14 @@
 - **Criterios de aceptación propuestos:** alta de producto desde recepción OK con usuario de tienda.
 - **Método recomendado para verificar la corrección:** E2E de recepción con producto nuevo.
 - **Limitaciones de la auditoría:** no se ejecutó el flujo en vivo hoy.
+- **REMEDIACIÓN MISIÓN 2 (2026-10-17):**
+  - **Estado anterior:** PENDIENTE CONFIRMADA → **nuevo estado:** PENDIENTE DE VERIFICACIÓN.
+  - **Nota de alcance:** la vista nueva (`useReceptionState`, inventario) ya tenía el RLS-FIX propio (verificado en código y protegido por `useReceptionState-tenant-rls.test.tsx`); el insert SIN tenant_id sobrevivía en el camino de fallback `useSavePendingReception` (`useReceptions.ts`) — cualquier caller con items `is_new` sin `product_id` caía ahí. Este fix cubre ese hueco.
+  - **Cambio aplicado:** `useSavePendingReception` ahora resuelve `tenant_id` leyendo `stores.tenant_id` con el JWT del usuario (patrón RLS-FIX canónico: `stores_tenant_select` valida la identidad; el valor no es dato arbitrario del cliente), fail-closed si la tienda no es legible o `tenant_id` es NULL, e incluye `tenant_id: verifiedTenantId` en el insert de products.
+  - **Pruebas de regresión:** `src/__tests__/hooks/useSavePendingReception-tenant-rls.test.tsx` — 5/5 ✓ (insert con tenant verificado, fail-closed NULL, fail-closed error BD, camino sin is_new intacto, consulta de stores por tienda del parámetro). Habrían FALLADO con el código anterior (insert sin tenant_id).
+  - **Verificación adicional:** suite completa vitest 3170/3170 ✓; `tsc --noEmit` EXIT 0 ✓.
+  - **Evidencia pendiente para cierre:** recepción E2E con producto nuevo por usuario de tienda en entorno desplegado (200 + producto creado con tenant correcto).
+  - **Rama/PR:** `fix/mision-2-hotfixes-operativos` (MISIÓN 2).
 
 #### CP-CAT-005 — /api/catalog/bulk-import sin Zod por fila y store_id del body
 - **ID estable:** CP-CAT-005 · **Área:** CAT/SEC · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P1
@@ -889,7 +918,7 @@
 - **Limitaciones de la auditoría:** —
 
 #### CP-SEC-012 — Bugs de seguridad ACTIVOS documentados como test.fail (BUG-013/017/022/024)
-- **ID estable:** CP-SEC-012 · **Área:** SEC · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** **P0**
+- **ID estable:** CP-SEC-012 · **Área:** SEC · **Estado verificado:** PARCIALMENTE RESUELTA (M2, 2026-10-17) · **Prioridad:** **P0**
 - **Descripción del problema:** cuatro bugs con tests invertidos (`test.fail` = el test «pasa» mientras el bug vive): **BUG-017** `/api/legal/incidents` acepta requests sin autenticación (`e2e/auth.spec.ts:46`); **BUG-022** URL de reportes accesible sin autenticación (`e2e/reports.spec.ts:51`, «bug ACTIVO documentado»); **BUG-013** XSS almacenado en filename de academy (`e2e/academy.spec.ts:71`); **BUG-024** incidents.json efímero en serverless (skip permanente, deuda de arquitectura, `e2e/legal.spec.ts:81`).
 - **Comportamiento esperado:** endpoints con auth; XSS sanitizado; persistencia correcta de incidentes.
 - **Origen documental:** `E2E-COVERAGE-REPORT.md` + specs E2E citadas.
@@ -904,6 +933,15 @@
 - **Criterios de aceptación propuestos:** 401 sin token en legal/incidents y reports; XSS neutralizado; specs sin test.fail.
 - **Método recomendado para verificar la corrección:** curl sin token (debe dar 401) + suite E2E.
 - **Limitaciones de la auditoría:** no se ejecutaron los endpoints contra producción (solo lectura); la vigencia real de BUG-017/022 en el deploy actual NO VERIFICABLE funcionalmente.
+- **VERIFICACIÓN PASIVA MISIÓN 2 (2026-10-17, Misión B del plan):**
+  - **Estado anterior:** PENDIENTE CONFIRMADA → **nuevo estado:** PARCIALMENTE RESUELTA.
+  - **BUG-017 CORREGIDO:** POST `/api/legal/incidents` sin token → **401** (verificado con curl contra servidor local dev el 2026-10-17; código: `getServerSession` + 401 en `route.ts:79-84`). Sin escritura residual (`data/incidents.json` permanece vacío y trackeado).
+  - **BUG-022 CORREGIDO:** GET `/api/reports/download/[runId]` sin token → **401** (verificado local; código: `withAuth` + ownership del run en `download/[runId]/route.ts`).
+  - **BUG-013 CORREGIDO:** POST `/api/academy/generate` sin token → **401** (verificado local; código: `getServerSession` en `route.ts:27-28` + sanitización `FIX-SEC-009` de filename con `path.basename` + whitelist `[^a-zA-Z0-9_\-]`). El spec E2E ya está convertido a verificación de neutralización (acepta 400/200/502/404, alerta solo si 200).
+  - **BUG-024 SIGUE ABIERTO:** `/api/legal/incidents` persiste en `data/incidents.json` (sistema de archivos local) → efímero en serverless. Requiere decisión arquitectural (migrar incidents a tabla Supabase). Los tests E2E lo saltan explícitamente por diseño.
+  - **Nota sobre los tests invertidos:** los specs con `test.fail` condicional (`if status===200 → test.fail`) quedan auto-correctos: con el bug corregido, la rama `test.fail` no se ejecuta y el `expect(401)` pasa en verde. No requieren cambios.
+  - **Evidencia pendiente para cierre:** repetir la verificación pasiva contra el DESPLIEGO de producción (Vercel) — aquí solo se verificó el código actual + servidor local — y resolver BUG-024 (migración a BD).
+  - **Rama/PR:** evidencia registrada en `MISION_2_HOTFIXES_OPERATIVOS_SEGURIDAD_2026-10-17.md` (sin cambios de código para esta ficha: los fixes ya existían; la novedad es la EVIDENCIA de que están vigentes).
 
 #### CP-SEC-013 — Rate limit in-memory; Upstash obligatorio en prod no configurado
 - **ID estable:** CP-SEC-013 · **Área:** SEC/INFRA · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P1
@@ -1008,7 +1046,7 @@
 - **Limitaciones de la auditoría:** —
 
 #### CP-SEC-019 — 35 rutas API con z.string().uuid() estricto
-- **ID estable:** CP-SEC-019 · **Área:** SEC/CAT · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P1
+- **ID estable:** CP-SEC-019 · **Área:** SEC/CAT · **Estado verificado:** PENDIENTE DE VERIFICACIÓN (M2: 52→0, 2026-10-17) · **Prioridad:** P1
 - **Descripción del problema:** el incidente UUID documentó 8+ endpoints latentes que fallarían con el UUID sintético de TIENDA CENTRAL (`supervisor-check`, `analytics-views`, `product-cost-sheets/invalidate`, `stores/bulk/*`, `costeo-dinamico/*`, `receptions/backfill-tasas`, `whatsapp/*`); el PR de seguimiento recomendado nunca se hizo.
 - **Comportamiento esperado:** validación canónica de UUID (regex) igual que `useCatalogProducts.ts` (fix F24) en toda la superficie API.
 - **Origen documental:** `docs/audits/INCIDENTE_UUID_INVENTARIO_CATALOGO_CENTRAL_COSTPRO.md` §8.1.
@@ -1023,6 +1061,16 @@
 - **Criterios de aceptación propuestos:** 0 rutas con z.string().uuid(); smoke test de Central en los módulos afectados.
 - **Método recomendado para verificar la corrección:** grep + suite de contratos.
 - **Limitaciones de la auditoría:** no se probó cada ruta individualmente.
+- **REMEDIACIÓN MISIÓN 2 (2026-10-17):**
+  - **Estado anterior:** PENDIENTE CONFIRMADA → **nuevo estado:** PENDIENTE DE VERIFICACIÓN.
+  - **Censo actualizado:** el defecto CRECIÓ desde la auditoría: 35 → **36 archivos con 52 ocurrencias** (51 simples + 1 con mensaje custom) bajo `src/app/api/`.
+  - **Cambio aplicado:** codemod idempotente (`scripts` externo + revisión manual de diffs) sobre 36 archivos: `z.string().uuid()` → `uuidLoose` (fuente única declarada en `@/validation/api-schemas`, patrón ya dominante en 45 archivos); el caso con mensaje custom (`service-types/route.ts`: `'Identificador de tipo inválido'`) → `z.string().regex(uuidRegex, …)` para conservar el mensaje. Verificación post-codemod: grep `z.string().uuid()` en `src/app/api` = **0**.
+  - **Compatibilidad verificada:** `tsc --noEmit` EXIT 0 (uuidLoose es ZodString → type-equivalente en todas las cadenas `.optional()/.nullable()/z.array()`).
+  - **Pruebas de regresión:** `src/__tests__/api/uuid-loose-central-contract.test.ts` — 5/5 ✓: acepta los UUID sintéticos de Central (incluido nil-uuid y mayúsculas), sigue RECHAZANDO basura (no se amplió superficie), uuidRegex consistente, grep-vivo anti-reintroducción (falla si alguien re-añade `z.string().uuid()`), contratos representativos (users/delete + service-types con mensaje). Habrían FALLADO con el código anterior.
+  - **Ajuste de prueba existente:** `iteration-rls.test.ts` PT-RLS.4.1 actualizado de la aserción literal `activeStoreId: z.string().uuid().optional()` al patrón vigente `activeStoreId: uuidLoose.optional()` (el contrato B4 —validar activeStoreId como UUID— se conserva).
+  - **Verificación adicional:** suite completa vitest 3170/3170 ✓.
+  - **Evidencia pendiente para cierre:** smoke test funcional contra TIENDA CENTRAL en los módulos antes afectados (supervisor-check, analytics-views, stores/bulk, whatsapp, etc.) en entorno desplegado.
+  - **Rama/PR:** `fix/mision-2-hotfixes-operativos` (MISIÓN 2).
 
 #### CP-SEC-020 — RPCs legacy con anon/PUBLIC: parcial (manage_user_memberships)
 - **ID estable:** CP-SEC-020 · **Área:** SEC · **Estado verificado:** PARCIALMENTE RESUELTA · **Prioridad:** P2

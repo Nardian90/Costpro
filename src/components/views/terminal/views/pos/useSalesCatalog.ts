@@ -402,6 +402,9 @@ export function useSalesCatalog() {
           p_store_id: user.activeStoreId,
           p_seller_id: user.id,
           p_payment_method: derivedPaymentMethod,
+          // FIX CP-POS-007: las notas también viajan en el enqueue offline
+          // (p_notes → replay por sync/batch → create_sale_v2).
+          p_notes: notes?.trim() ? notes.trim().slice(0, 1000) : null,
           p_total_amount: totals.subtotal,
           p_subtotal: totals.subtotal,
           p_discount_type: 'fixed',
@@ -450,6 +453,12 @@ export function useSalesCatalog() {
             store_id: user.activeStoreId,
             seller_id: user.id,
             payment_method: derivedPaymentMethod,
+            // FIX CP-POS-007 (auditoría 2026-10-16): el modal de checkout recoge
+            // «notas de venta» y las pasa a confirmCheckout(notes), pero el body
+            // nunca las incluía — se perdían silenciosamente. /api/pos/checkout
+            // ya acepta sale_notes (z.string().max(1000).nullable().optional())
+            // y las persiste vía p_notes en create_sale_v2.
+            sale_notes: notes?.trim() ? notes.trim().slice(0, 1000) : null,
             discount_type: 'fixed',
             discount_value: 0,
             applied_taxes: [],

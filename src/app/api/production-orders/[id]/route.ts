@@ -3,6 +3,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import crypto from 'crypto';
 
 
@@ -16,7 +17,7 @@ const updateSchema = z.object({
   budget_total: z.number().positive().optional(),
   description: z.string().optional(),
   notes: z.string().optional(),
-  output_product_id: z.string().uuid().optional().nullable(),
+  output_product_id: uuidLoose.optional().nullable(),
   output_quantity: z.number().positive().optional(),
   action: z.enum(['close', 'receive_output']).optional(),
   // Para close: pago final

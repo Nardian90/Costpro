@@ -23,8 +23,9 @@ import { createApiError } from '@/lib/api-errors';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
+import { uuidLoose } from '@/validation/api-schemas';
 const generateTokenSchema = z.object({
-  storeIds: z.array(z.string().uuid()).min(1).max(50),
+  storeIds: z.array(uuidLoose).min(1).max(50),
   action: z.enum(['delete', 'archive']),
 });
 

@@ -7,6 +7,7 @@ import type { ProductCostInput, CostEngineConfig, CurrentRate, RateSource, Round
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
+import { uuidLoose } from '@/validation/api-schemas';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
@@ -24,7 +25,7 @@ export const maxDuration = 60;
 // NaN/negativo/cero porque solo se hacía `parseFloat(simulated_rate)` tras
 // un truthy check. Ahora zod garantiza que sea un número positivo en [1, 10000].
 const simulateSchema = z.object({
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
   currency: z.string().optional(),
   simulated_rate: z.number().positive().min(1).max(10000),
   source: z.string().optional(),

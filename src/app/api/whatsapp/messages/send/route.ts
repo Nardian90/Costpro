@@ -6,6 +6,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { saveMessage, validateContactBelongsToStore } from '@/lib/whatsapp/glm-orchestrator';
 import { getSocket } from '@/lib/whatsapp/baileys-client';
 import { canInviteNow, getRiskState } from '@/lib/whatsapp/anti-ban';
@@ -14,10 +15,10 @@ import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 
 const sendSchema = z.object({
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
   phone_number: z.string().min(5),
   message: z.string().min(1).max(4096),
-  contact_id: z.string().uuid().optional(),
+  contact_id: uuidLoose.optional(),
 });
 
 /**

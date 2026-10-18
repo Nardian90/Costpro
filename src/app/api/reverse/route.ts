@@ -26,7 +26,8 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
-// V2.4.4: usar uuidRegex del proyecto (permisivo, no exige variant bits como z.string().uuid())
+import { uuidLoose } from '@/validation/api-schemas';
+// V2.4.4: usar uuidRegex del proyecto (permisivo, no exige variant bits como uuidLoose)
 import { uuidRegex } from '@/validation/schemas';
 
 const reverseSchema = z.object({

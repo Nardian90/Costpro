@@ -27,6 +27,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withSecurity } from '@/lib/with-security';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 // MISIÓN FECHA OPERATIVA (2026-10-17): revalidación server-side (tope = hoy Habana
 // para el flujo del carrito) + mapeos de error de fecha del RPC.
 import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
@@ -35,15 +36,15 @@ import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 // Schema de validación — SOLO campos del body que el cliente puede enviar
 // =====================================================================
 const valeItemSchema = z.object({
-  product_id: z.string().uuid(),
-  variant_id: z.string().uuid().nullable().optional(),
+  product_id: uuidLoose,
+  variant_id: uuidLoose.nullable().optional(),
   quantity: z.number().positive({ message: 'quantity debe ser > 0' }),
-  production_order_item_id: z.string().uuid().nullable().optional(),
+  production_order_item_id: uuidLoose.nullable().optional(),
 });
 
 const valeSalidaSchema = z.object({
   items: z.array(valeItemSchema).min(1, { message: 'items no puede estar vacío' }),
-  production_order_id: z.string().uuid().nullable().optional(),
+  production_order_id: uuidLoose.nullable().optional(),
   notes: z.string().min(1, { message: 'notes es requerido' }).max(2000),
   idempotency_key: z.string().min(8, { message: 'idempotency_key requerido (mín 8 chars)' }).max(200),
   // ENERVIDA import (2026-10-05): fecha de operación opcional (retro-compatible).
