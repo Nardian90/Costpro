@@ -1,0 +1,1037 @@
+[
+  {
+    "routine_name": "cash_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "create_sale_v2",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "date_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "float4_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "float8_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bit_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bit_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bit_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bit_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bit_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bit_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bool_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bool_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bool_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bool_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bool_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bool_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bool_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bpchar_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bpchar_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bytea_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bytea_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bytea_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bytea_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bytea_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_bytea_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_cash_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_cash_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_cash_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_cash_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_cash_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_cash_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_cash_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_cash_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_date_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_date_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_date_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_date_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_date_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_date_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_date_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_date_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_decompress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_enum_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_enum_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_enum_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_enum_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_enum_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_enum_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_enum_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float4_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float4_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float4_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float4_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float4_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float4_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float4_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float4_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float8_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float8_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float8_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float8_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float8_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float8_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float8_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_float8_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_inet_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_inet_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_inet_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_inet_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_inet_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_inet_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int2_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int2_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int2_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int2_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int2_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int2_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int2_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int2_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int4_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int4_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int4_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int4_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int4_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int4_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int4_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int4_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int8_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int8_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int8_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int8_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int8_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int8_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int8_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_int8_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_intv_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_intv_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_intv_decompress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_intv_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_intv_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_intv_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_intv_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_intv_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_intv_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad8_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad8_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad8_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad8_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad8_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad8_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad8_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_macad_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_numeric_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_numeric_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_numeric_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_numeric_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_numeric_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_numeric_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_oid_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_oid_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_oid_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_oid_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_oid_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_oid_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_oid_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_oid_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_text_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_text_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_text_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_text_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_text_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_text_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_time_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_time_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_time_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_time_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_time_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_time_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_time_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_time_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_timetz_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_timetz_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_ts_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_ts_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_ts_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_ts_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_ts_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_ts_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_ts_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_ts_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_tstz_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_tstz_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_tstz_distance",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_uuid_compress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_uuid_consistent",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_uuid_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_uuid_penalty",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_uuid_picksplit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_uuid_same",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_uuid_union",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_var_decompress",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbt_var_fetch",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey16_in",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey16_out",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey2_in",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey2_out",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey32_in",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey32_out",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey4_in",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey4_out",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey8_in",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey8_out",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey_var_in",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "gbtreekey_var_out",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "get_paginated_products_v2",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "get_products_for_pos",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "get_transactions",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "int2_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "int4_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "int8_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "interval_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "is_admin_with_access",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "oid_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "prevent_cash_closure_edit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "prevent_fiscal_closing_edit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "prevent_hard_delete_profile",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "prevent_self_privilege_escalation",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "prevent_z_report_edit",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "profiles_block_privileged_update",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "protect_transactions_total_amount",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "set_audit_log_trace_id",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "test_trace_id_setting",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "time_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "ts_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "tstz_dist",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "update_orphaned_users_log_updated_at",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "update_user_invitations_updated_at",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "validate_payment_transactions_invariants",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "w62_df04_classify",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  },
+  {
+    "routine_name": "w62_guard_wac_writer",
+    "grantee": "anon",
+    "privilege_type": "EXECUTE"
+  }
+]

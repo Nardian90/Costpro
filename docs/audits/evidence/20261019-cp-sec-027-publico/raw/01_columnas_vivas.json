@@ -1,0 +1,604 @@
+[
+  {
+    "table_name": "inventory",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "inventory",
+    "ordinal_position": 2,
+    "column_name": "store_id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "inventory",
+    "ordinal_position": 3,
+    "column_name": "product_id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "inventory",
+    "ordinal_position": 4,
+    "column_name": "quantity",
+    "data_type": "numeric",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "inventory",
+    "ordinal_position": 5,
+    "column_name": "low_stock_threshold",
+    "data_type": "numeric",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "inventory",
+    "ordinal_position": 6,
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "inventory",
+    "ordinal_position": 7,
+    "column_name": "version",
+    "data_type": "integer",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "inventory",
+    "ordinal_position": 8,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "inventory",
+    "ordinal_position": 9,
+    "column_name": "tenant_id",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "product_variants",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "product_variants",
+    "ordinal_position": 2,
+    "column_name": "product_id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "product_variants",
+    "ordinal_position": 3,
+    "column_name": "name",
+    "data_type": "text",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "product_variants",
+    "ordinal_position": 4,
+    "column_name": "sku",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "product_variants",
+    "ordinal_position": 5,
+    "column_name": "price",
+    "data_type": "numeric",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "product_variants",
+    "ordinal_position": 6,
+    "column_name": "conversion_factor",
+    "data_type": "integer",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "product_variants",
+    "ordinal_position": 7,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "product_variants",
+    "ordinal_position": 8,
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "product_variants",
+    "ordinal_position": 9,
+    "column_name": "precio_empresa",
+    "data_type": "numeric",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 2,
+    "column_name": "name",
+    "data_type": "text",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 3,
+    "column_name": "description",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 4,
+    "column_name": "sku",
+    "data_type": "text",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 5,
+    "column_name": "price",
+    "data_type": "numeric",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 6,
+    "column_name": "cost_price",
+    "data_type": "numeric",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 7,
+    "column_name": "image_url",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 8,
+    "column_name": "category",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 9,
+    "column_name": "unit_of_measure",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 10,
+    "column_name": "supplier",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 11,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 12,
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 13,
+    "column_name": "stock_current",
+    "data_type": "numeric",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 14,
+    "column_name": "cost_average",
+    "data_type": "numeric",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 15,
+    "column_name": "min_stock",
+    "data_type": "numeric",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 16,
+    "column_name": "store_id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 17,
+    "column_name": "is_active",
+    "data_type": "boolean",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 18,
+    "column_name": "public_image_url",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 19,
+    "column_name": "category_id",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 20,
+    "column_name": "status",
+    "data_type": "USER-DEFINED",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 21,
+    "column_name": "tenant_id",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 22,
+    "column_name": "barcode",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 23,
+    "column_name": "barcode_type",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 24,
+    "column_name": "is_complete",
+    "data_type": "boolean",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 25,
+    "column_name": "visible_en_tienda",
+    "data_type": "boolean",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 26,
+    "column_name": "precio_empresa",
+    "data_type": "numeric",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 27,
+    "column_name": "has_movements",
+    "data_type": "boolean",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 28,
+    "column_name": "cost_sheet_id",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 29,
+    "column_name": "fc_auto_enabled",
+    "data_type": "boolean",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 30,
+    "column_name": "search_vector",
+    "data_type": "tsvector",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 31,
+    "column_name": "price_currency",
+    "data_type": "text",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 32,
+    "column_name": "price_visible",
+    "data_type": "boolean",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 33,
+    "column_name": "stock_visible",
+    "data_type": "boolean",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 34,
+    "column_name": "on_promotion",
+    "data_type": "boolean",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 35,
+    "column_name": "is_service",
+    "data_type": "boolean",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "products",
+    "ordinal_position": 36,
+    "column_name": "precio_empresa_currency",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 1,
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 2,
+    "column_name": "name",
+    "data_type": "text",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 3,
+    "column_name": "address",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 4,
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 5,
+    "column_name": "is_active",
+    "data_type": "boolean",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 6,
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 7,
+    "column_name": "logo_url",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 8,
+    "column_name": "tenant_id",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 9,
+    "column_name": "reeup",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 10,
+    "column_name": "bank_account",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 11,
+    "column_name": "phone",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 12,
+    "column_name": "email",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 13,
+    "column_name": "slug",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 14,
+    "column_name": "plantilla",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 15,
+    "column_name": "nit",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 16,
+    "column_name": "signature_url",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 17,
+    "column_name": "stamp_url",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 18,
+    "column_name": "latitude",
+    "data_type": "double precision",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 19,
+    "column_name": "longitude",
+    "data_type": "double precision",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 20,
+    "column_name": "is_archived",
+    "data_type": "boolean",
+    "is_nullable": "NO"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 21,
+    "column_name": "archived_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 22,
+    "column_name": "archived_by",
+    "data_type": "uuid",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 23,
+    "column_name": "banner_url",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 24,
+    "column_name": "store_tagline",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 25,
+    "column_name": "whatsapp_group_url",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 26,
+    "column_name": "telegram_url",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 27,
+    "column_name": "services",
+    "data_type": "jsonb",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 28,
+    "column_name": "promo_images",
+    "data_type": "jsonb",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 29,
+    "column_name": "opening_hours",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 30,
+    "column_name": "banner_cta_text",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 31,
+    "column_name": "banner_cta_link",
+    "data_type": "text",
+    "is_nullable": "YES"
+  },
+  {
+    "table_name": "stores",
+    "ordinal_position": 32,
+    "column_name": "backup_restore_protected",
+    "data_type": "boolean",
+    "is_nullable": "NO"
+  }
+]

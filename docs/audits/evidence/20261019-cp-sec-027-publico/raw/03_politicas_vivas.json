@@ -1,0 +1,236 @@
+[
+  {
+    "schemaname": "public",
+    "tablename": "inventory",
+    "policyname": "inventory_deny_delete",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "false",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "inventory",
+    "policyname": "inventory_deny_insert",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "false"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "inventory",
+    "policyname": "inventory_deny_update",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "false",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "inventory",
+    "policyname": "inventory_insert_auth",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((store_id IN ( SELECT profiles.active_store_id\n   FROM profiles\n  WHERE (profiles.id = auth.uid()))) OR (EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "inventory",
+    "policyname": "inventory_tenant_select",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))\n    ELSE (is_admin() OR has_store_access(store_id))\nEND",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "product_variants",
+    "policyname": "Variantes públicas - lectura",
+    "roles": "{anon,authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM products\n  WHERE ((products.id = product_variants.product_id) AND (products.visible_en_tienda = true))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "product_variants",
+    "policyname": "Variants delete - member access",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM products p\n  WHERE ((p.id = product_variants.product_id) AND has_store_access(p.store_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "product_variants",
+    "policyname": "Variants insert - member access",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM products p\n  WHERE ((p.id = product_variants.product_id) AND has_store_access(p.store_id))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "product_variants",
+    "policyname": "Variants store isolation",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM products p\n  WHERE ((p.id = product_variants.product_id) AND ((p.store_id IS NULL) OR has_store_access(p.store_id)))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "product_variants",
+    "policyname": "Variants update - member access",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM products p\n  WHERE ((p.id = product_variants.product_id) AND has_store_access(p.store_id))))",
+    "with_check": "(EXISTS ( SELECT 1\n   FROM products p\n  WHERE ((p.id = product_variants.product_id) AND has_store_access(p.store_id))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "products",
+    "policyname": "products_delete_rls",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = products.store_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "products",
+    "policyname": "products_public_read_anon",
+    "roles": "{anon}",
+    "cmd": "SELECT",
+    "qual": "((is_active = true) AND (visible_en_tienda = true))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "products",
+    "policyname": "products_select_rls",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = products.store_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "products",
+    "policyname": "products_tenant_delete",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND is_admin())\n    ELSE is_admin()\nEND",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "products",
+    "policyname": "products_tenant_insert",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((tenant_id = current_user_tenant_id()) AND (store_id = ANY (current_user_store_ids())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "products",
+    "policyname": "products_tenant_select",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))\n    ELSE (is_admin() OR has_store_access(store_id))\nEND",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "products",
+    "policyname": "products_tenant_update",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))",
+    "with_check": "((tenant_id = current_user_tenant_id()) AND (store_id = ANY (current_user_store_ids())))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "products",
+    "policyname": "products_update_rls",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = products.store_id))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "stores",
+    "policyname": "stores_delete_admin_only",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(is_global_admin() OR has_store_role(id, ARRAY['admin'::text]))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "stores",
+    "policyname": "stores_insert_admin_manager",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::user_role, 'manager'::user_role])))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "stores",
+    "policyname": "stores_select_anon",
+    "roles": "{anon}",
+    "cmd": "SELECT",
+    "qual": "(is_active = true)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "stores",
+    "policyname": "stores_select_authenticated",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(is_global_admin() OR is_store_member(id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "stores",
+    "policyname": "stores_tenant_delete",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND is_admin())\n    ELSE is_admin()\nEND",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "stores",
+    "policyname": "stores_tenant_select",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN (tenant_id = current_user_tenant_id())\n    ELSE (is_admin() OR (id = ANY (current_user_store_ids())))\nEND",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "stores",
+    "policyname": "stores_tenant_update",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND is_admin())\n    ELSE (is_admin() OR has_store_access(id))\nEND",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "stores",
+    "policyname": "stores_update_member_roles",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "(is_global_admin() OR has_store_role(id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text]))",
+    "with_check": "(is_global_admin() OR has_store_role(id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text]))"
+  }
+]
