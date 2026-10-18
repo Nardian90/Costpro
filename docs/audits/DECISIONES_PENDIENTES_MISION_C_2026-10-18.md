@@ -94,7 +94,7 @@
 
 **PROPUESTA (técnica):** alternativa 2. Separar explícitamente la corrección técnica (derivar costos con evidencia, sin mutar originales) de la aprobación contable (su decisión posterior sobre contabilizar). La alternativa 1 queda como sub-paso automático para lo «no determinable».
 
-**Qué puedo seguir haciendo sin su decisión:** construir el DATASET read-only de evidencia (para cada una de las 632 entradas: si existe WAC vigente en el período, recepción o historia que la respalde), con un reporte de cobertura que muestre cuánto sería derivable y cuánto quedaría «no determinable». Eso convierte su futura decisión en informada y no bloquea nada mientras tanto.
+**Qué puedo seguir haciendo sin su decisión:** el dataset de evidencia read-only YA está construido (2026-10-18, `evidence/20261018-cogs-cobertura/INFORME_READ_ONLY.md`): **solo 8/632 entradas (1,3%) son derivables con evidencia interna de WAC**; 624 (98,7%) requieren facturas externas o quedan «no determinables». Distribución: ENERVIDA 420 dispersas (ago–oct, coincide con CP-IPV-004 «procedencia 0%») + Puerto Padre 212 TODAS el 2026-08-16 (carga masiva con costo 0). Su decisión puede ser por partes: congelar/anotar (altern. 1) para Puerto Padre y las 616 no derivables de ENERVIDA; derivar (altern. 2) para las 8 con respaldo; re-costeo contable (altern. 3) solo si consigue facturas ENERVIDA.
 
 ---
 
