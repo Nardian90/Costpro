@@ -1,0 +1,65 @@
+[
+  {
+    "proname": "current_user_store_ids",
+    "definition": "CREATE OR REPLACE FUNCTION public.current_user_store_ids()\n RETURNS uuid[]\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_result uuid[];\nBEGIN\n  IF public.is_admin() THEN\n    SELECT array_agg(id) INTO v_result\n    FROM public.stores\n    WHERE tenant_id = public.current_user_tenant_id()\n      AND is_active = true;\n  ELSE\n    SELECT array_agg(store_id) INTO v_result\n    FROM public.user_store_memberships\n    WHERE user_id = auth.uid()\n      AND status = 'active';\n  END IF;\n  RETURN COALESCE(v_result, ARRAY[]::uuid[]);\nEND;\n$function$\n",
+    "proconfig": [
+      "search_path=public"
+    ]
+  },
+  {
+    "proname": "current_user_tenant_id",
+    "definition": "CREATE OR REPLACE FUNCTION public.current_user_tenant_id()\n RETURNS uuid\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT tenant_id FROM public.profiles WHERE id = auth.uid();\n$function$\n",
+    "proconfig": [
+      "search_path=public"
+    ]
+  },
+  {
+    "proname": "has_store_access",
+    "definition": "CREATE OR REPLACE FUNCTION public.has_store_access(p_store_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_user_id uuid := auth.uid();\nBEGIN\n  IF v_user_id IS NULL OR p_store_id IS NULL THEN\n    RETURN false;\n  END IF;\n\n  -- Admin global tiene acceso a todo\n  IF public.is_admin() THEN\n    RETURN true;\n  END IF;\n\n  -- Verificar membership activa en la tienda\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.user_store_memberships m\n    JOIN public.stores s\n      ON s.id = m.store_id\n    JOIN public.profiles p\n      ON p.id = m.user_id\n    WHERE m.user_id = v_user_id\n      AND m.store_id = p_store_id\n      AND m.status::text = 'active'\n      AND (\n        p.tenant_id IS NULL\n        OR s.tenant_id IS NULL\n        OR p.tenant_id = s.tenant_id\n      )\n  );\nEND;\n$function$\n",
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ]
+  },
+  {
+    "proname": "has_store_role",
+    "definition": "CREATE OR REPLACE FUNCTION public.has_store_role(p_store_id uuid, p_roles text[])\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nBEGIN\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.user_store_memberships m\n    WHERE m.user_id = auth.uid()\n      AND m.store_id = p_store_id\n      AND m.status = 'active'\n      AND m.role::text = ANY(p_roles)\n  );\nEND;\n$function$\n",
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ]
+  },
+  {
+    "proname": "has_store_role",
+    "definition": "CREATE OR REPLACE FUNCTION public.has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])\n RETURNS boolean\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  SELECT CASE WHEN auth.role() = 'service_role' THEN\n    EXISTS (\n      SELECT 1 FROM public.user_store_memberships m\n      WHERE m.user_id = p_user_id\n        AND m.store_id = p_store_id\n        AND m.status = 'active'\n        AND m.role::text = ANY(p_roles)\n    )\n  ELSE\n    EXISTS (\n      SELECT 1 FROM public.user_store_memberships m\n      WHERE m.user_id = auth.uid()\n        AND m.store_id = p_store_id\n        AND m.status = 'active'\n        AND m.role::text = ANY(p_roles)\n    )\n  END\n$function$\n",
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ]
+  },
+  {
+    "proname": "has_store_role_as",
+    "definition": "CREATE OR REPLACE FUNCTION public.has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nBEGIN\n  IF p_user_id IS NULL OR p_store_id IS NULL THEN\n    RETURN false;\n  END IF;\n\n  -- Admin global bypasses\n  IF EXISTS (SELECT 1 FROM public.profiles WHERE id = p_user_id AND role IN ('admin', 'superadmin')) THEN\n    RETURN true;\n  END IF;\n\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.user_store_memberships m\n    WHERE m.user_id = p_user_id\n      AND m.store_id = p_store_id\n      AND m.status = 'active'\n      AND m.role::text = ANY(p_roles)\n  );\nEND;\n$function$\n",
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ]
+  },
+  {
+    "proname": "is_admin",
+    "definition": "CREATE OR REPLACE FUNCTION public.is_admin()\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nBEGIN\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.profiles\n    WHERE id = auth.uid()\n      AND role = 'admin'\n  );\nEND;\n$function$\n",
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ]
+  },
+  {
+    "proname": "is_admin_with_access",
+    "definition": "CREATE OR REPLACE FUNCTION public.is_admin_with_access(p_store_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_is_admin boolean;\n  v_user_tenant uuid;\n  v_store_tenant uuid;\nBEGIN\n  v_is_admin := public.is_admin();\n  IF NOT v_is_admin THEN\n    RETURN public.has_store_access(p_store_id);\n  END IF;\n  v_user_tenant := public.current_user_tenant_id();\n  SELECT tenant_id INTO v_store_tenant FROM public.stores WHERE id = p_store_id;\n  RETURN v_store_tenant IS NULL OR v_store_tenant = v_user_tenant;\nEND;\n$function$\n",
+    "proconfig": [
+      "search_path=public"
+    ]
+  },
+  {
+    "proname": "is_tenant_member",
+    "definition": "CREATE OR REPLACE FUNCTION public.is_tenant_member(p_tenant_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT p_tenant_id IS NOT NULL\n   AND p_tenant_id = public.current_user_tenant_id();\n$function$\n",
+    "proconfig": [
+      "search_path=public"
+    ]
+  }
+]

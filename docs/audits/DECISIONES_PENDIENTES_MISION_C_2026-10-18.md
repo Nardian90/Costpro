@@ -1,6 +1,6 @@
-# DECISIONES PENDIENTES DE NEGOCIO — MISIÓN C (2026-10-18)
+# DECISIONES PENDIENTES DE NEGOCIO — MISIÓN C (2026-10-18 · actualizado 2026-10-19)
 
-**Proyecto:** COSTPRO 4 Multitienda · **Sesión:** 2026-10-18 (post-reinicio de entorno)
+**Proyecto:** COSTPRO 4 Multitienda · **Sesión:** 2026-10-18 (post-reinicio de entorno) · **Actualización:** 2026-10-19 (Decisión B CONFIRMADA por el propietario; protocolo de 6 pasos ejecutado)
 **Propósito:** documento corto de aprobación. Cada decisión presenta el problema, la evidencia viva (consultada hoy a la BD), 2–3 alternativas con ventajas/riesgos/efectos sobre datos, y una **recomendación identificada explícitamente como PROPUESTA** (no decisión tomada). Ninguna alternativa relaja el aislamiento multi-tienda ni muta transacciones cerradas.
 **Nota de método:** toda la evidencia numérica de este documento proviene de consultas READ-ONLY ejecutadas hoy contra la BD viva (proyecto Supabase wthkddeleylijmonclxg). Nada de lo aquí registrado implicó escrituras.
 
@@ -36,33 +36,23 @@
 
 ---
 
-## DECISIÓN B — DT-03: estrategia multi-tenant (desbloquea CP-SEC-010)
+## DECISIÓN B — DT-03: estrategia multi-tenant (desbloquea CP-SEC-010) — ✅ CONFIRMADA POR EL PROPIETARIO (2026-10-19)
 
-**Problema concreto.** La arquitectura soporta multi-tenant (columnas `tenant_id`, RLS con `has_store_access()`), pero el negocio real opera con UN solo tenant. La decisión «single vs multi» nunca se firmó y el estado intermedio genera ambigüedad sobre aislamiento real y costo de mantenimiento.
+**Decisión confirmada:** conservar la arquitectura multi-tenant; adoptar single-tenant únicamente como descripción de la situación operativa actual, no como restricción estructural del producto. Un mismo usuario puede tener acceso autorizado a dos o más tiendas; pertenencia a tenant ≠ permisos de acceso a tiendas. No se relaja el aislamiento entre organizaciones.
 
-**Evidencia actual (consultada hoy, read-only).**
-- **20 de 22 tiendas ya tienen `tenant_id` asignado**; solo 2 NULL (ambas QA de pruebas). 11 de 26 perfiles siguen con `tenant_id` NULL.
-- El negocio real (TIENDA CENTRAL COSTPRO, VITALLCONS, ENERVIDA, pilotos) comparte **un único tenant** (`5364ccf8…`). Los otros 3 tenant_id visibles son artefactos de pruebas E2E.
-- Contraste con la auditoría (2026-10-16): «17/18 perfiles y 16/16 tiendas NULL» → el backfill ya avanzó de hecho (sesiones E2E posteriores).
-- 6 políticas RLS dependen de `has_store_access()`/tenant y son NULL-safe (compatibles con ambos modelos). El aislamiento por tienda **no** depende de la decisión: se mantiene igual.
+**Protocolo de 6 pasos exigido por el propietario — EJECUTADO (2026-10-19, read-only):** ver evidencia completa en `evidence/20261019-dt03-matriz-acceso/INFORME.md`.
+1. ✅ Esquema real inspeccionado en VIVO (funciones, RLS, `has_store_access()`; no solo migraciones). Encontrado: dos capas de políticas coexistiendo (legado ungated + tenant flag-gated) → nueva tarea **CP-SEC-025**.
+2. ✅ `tenant_id` de perfiles = pertenencia organizativa (capa tenant-gated); relación con el tenant de la tienda = co-pertenencia con guard NULL-safe. Acceso operativo = `user_store_memberships` (no-admin) o bypass admin global.
+3. ✅ Matriz por usuario construida (30 perfiles × 43 memberships × 24 tiendas × 8 tenants) con pertenencia, tiendas autorizadas, roles, origen (auth.users + linaje) y estado de validación.
+4. ✅ Los 11 NULL clasificados: **1 demostrable** (david9999 → Default Tenant por membership activa en ENERVIDA) + **10 SIN EVIDENCIA** (8 self-signups @uberip.com, 1 google-signup, 1 QA) — estos NO se tocan.
+5. ✅ Pruebas en vivo: usuario de 2 tiendas conserva ambas y no ve una 3ª no autorizada (T1.1=183/T1.2=36/T1.3=0/T1.4=0) ✅.
+6. ✅ Cross-tenant denegado para no-admins (T2.1=0) y perfiles NULL sin permisos implícitos (T4.1–T4.6, T7.1: 0 en todo; solo su propia fila de perfil) ✅.
 
-**Consecuencia de no decidir.** Se mantiene el costo de mantener lógica tenant sin política; nuevos desarrollos (reportes, dashboards, facturación) dudarán entre agrupar por tenant o por tienda; los 11 perfiles NULL heredan una ambigüedad de pertenencia.
+**Nuevas tareas vinculadas registradas:** CP-SEC-025 (convergencia de capas RLS — el flag `USE_TENANT_RLS` no restringe plenamente), CP-SEC-026 (memberships sin auditoría en audit_logs), CP-SEC-027 (anon lee `cost_average`/precios de productos — P1). Detalle y evidencia en el INFORME.
 
-**Alternativas.**
-1. **Ratificar «single-tenant de hecho, arquitectura multi-tenant latente»** (recomendada): documentar la decisión; completar el backfill de los 11 perfiles hacia el tenant único real; conservar columnas/RLS tal cual (ya son NULL-safe); reevaluar solo si llega un segundo cliente real.
-   - Ventajas: costo mínimo; aislamiento por tienda intacto; puerta abierta al SaaS real sin migración.
-   - Riesgos: si algún día se incorpora un segundo tenant real, el backfill histórico de pertenencia será más costoso.
-   - Efecto sobre datos: UPDATE gobernado de 11 perfiles (tenant_id NULL → tenant del negocio) + 2 tiendas QA; reversible y auditable.
-2. **Ratificar multi-tenant pleno ahora**: backfill completo + RLS con tenant como frontera adicional + administración de tenants.
-   - Ventajas: alineación total con el diseño original SaaS.
-   - Riesgos: trabajo considerable sin un segundo tenant que lo justifique; riesgo de sobre-restringir y romper flujos legítimos heredados.
-   - Efecto sobre datos: backfill + recertificación de todas las políticas RLS.
-3. **Retirar la capa tenant** (limpieza de columnas/policies).
-   - **No recomendada**: destruye la capacidad SaaS futura y obliga a una migración de riesgo para ahorrar poco.
+**Pendiente de su autorización (escritura de datos, NO ejecutada):** backfill controlado de EXACTAMENTE 1 perfil (david9999 → Default Tenant; auditable, reversible, con WHERE idempotente; ver INFORME §PROPUESTA). Los otros 10 quedan documentados sin modificación.
 
-**PROPUESTA (técnica y de negocio):** alternativa 1. No relaja ningún aislamiento (la frontera tienda/store_id se mantiene); es la que mejor refleja la realidad operativa actual.
-
-**Qué puedo seguir haciendo sin su decisión:** tests de aislamiento por tienda, verificación de que ninguna política RLS cambia de semántica con `tenant_id` NULL vs seteado, y documentación del modelo latente. El backfill de los 11 perfiles queda en espera de su OK (es una escritura de datos).
+**Nueva sub-decisión B.1 (propuesta, no ejecutada):** el rol admin es GLOBAL hoy (`is_admin()` bypass total, T5.2: admin de Default Tenant ve productos de Grupo Demo) pero `is_admin_with_access` y el modo estricto lo acotan por tenant. Hay que homogeneizar: (a) admin global documentado, o (b) admin acotado a su tenant. Recomendación técnica: (b) para SaaS multi-cliente, (a) mientras exista un solo tenant real y un solo propietario. No se cambió nada.
 
 ---
 
@@ -154,12 +144,12 @@
 
 ## Resumen de decisión para el propietario (checklist de aprobación)
 
-| # | Decisión | Mi propuesta | Qué autoriza usted |
-|---|---|---|---|
-| A | Stock negativo | Ratificar política «nunca negativo» + ajustes gobernados | Política + lote de ajustes de los 4 SKU |
-| B | DT-03 multi-tenant | Single-tenant de hecho, arquitectura latente | Decisión firmada (+ OK backfill de 11 perfiles) |
-| C | COGS histórico | Derivar costos con evidencia sin mutar originales; separar técnico/contable | Política contable por clase de costo |
-| D | BUG-024 incidents | Persistir en `audit_logs` (sin tabla nueva) | Destino de persistencia de evidencia legal |
-| E | Migración 20261018000000 | Aplicar con procedimiento autorizado + re-certificar + merge #1422 | Autorización de DDL en BD viva |
+| # | Decisión | Estado | Mi propuesta | Qué autoriza usted |
+|---|---|---|---|---|
+| A | Stock negativo | Pendiente | Ratificar política «nunca negativo» + ajustes gobernados | Política + lote de ajustes de los 4 SKU |
+| B | DT-03 multi-tenant | **CONFIRMADA 2026-10-19** | Arquitectura multi-tenant conservada; protocolo ejecutado | Backfill de 1 perfil (david9999) + sub-decisión B.1 |
+| C | COGS histórico | Pendiente | Derivar costos con evidencia sin mutar originales; separar técnico/contable | Política contable por clase de costo |
+| D | BUG-024 incidents | Pendiente | Persistir en `audit_logs` (sin tabla nueva) | Destino de persistencia de evidencia legal |
+| E | Migración 20261018000000 | Pendiente | Aplicar con procedimiento autorizado + re-certificar + merge #1422 | Autorización de DDL en BD viva |
 
 Mientras decide, continuaré con: conciliación read-only de stock (A), tests de aislamiento multi-tienda (B), dataset de evidencia de costos (C) y demás tareas de remediación independientes del inventario maestro.

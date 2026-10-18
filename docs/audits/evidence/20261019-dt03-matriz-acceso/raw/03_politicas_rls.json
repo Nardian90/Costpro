@@ -1,0 +1,450 @@
+[
+  {
+    "tablename": "inventory",
+    "policyname": "inventory_deny_delete",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "false",
+    "with_check": null
+  },
+  {
+    "tablename": "inventory",
+    "policyname": "inventory_deny_insert",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": null,
+    "with_check": "false"
+  },
+  {
+    "tablename": "inventory",
+    "policyname": "inventory_deny_update",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "false",
+    "with_check": null
+  },
+  {
+    "tablename": "inventory",
+    "policyname": "inventory_insert_auth",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": null,
+    "with_check": "((store_id IN ( SELECT profiles.active_store_id\n   FROM profiles\n  WHERE (profiles.id = auth.uid()))) OR (EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))"
+  },
+  {
+    "tablename": "inventory",
+    "policyname": "inventory_tenant_select",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))\n    ELSE (is_admin() OR has_store_access(store_id))\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "products",
+    "policyname": "products_delete_rls",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = products.store_id))))",
+    "with_check": null
+  },
+  {
+    "tablename": "products",
+    "policyname": "products_public_read_anon",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "qual": "((is_active = true) AND (visible_en_tienda = true))",
+    "with_check": null
+  },
+  {
+    "tablename": "products",
+    "policyname": "products_select_rls",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = products.store_id))))",
+    "with_check": null
+  },
+  {
+    "tablename": "products",
+    "policyname": "products_tenant_delete",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND is_admin())\n    ELSE is_admin()\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "products",
+    "policyname": "products_tenant_insert",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": null,
+    "with_check": "((tenant_id = current_user_tenant_id()) AND (store_id = ANY (current_user_store_ids())))"
+  },
+  {
+    "tablename": "products",
+    "policyname": "products_tenant_select",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))\n    ELSE (is_admin() OR has_store_access(store_id))\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "products",
+    "policyname": "products_tenant_update",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))",
+    "with_check": "((tenant_id = current_user_tenant_id()) AND (store_id = ANY (current_user_store_ids())))"
+  },
+  {
+    "tablename": "products",
+    "policyname": "products_update_rls",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = products.store_id))))",
+    "with_check": null
+  },
+  {
+    "tablename": "profiles",
+    "policyname": "cta_family_profiles_select",
+    "cmd": "SELECT",
+    "roles": "{costpro_transaction_adjuster}",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "tablename": "profiles",
+    "policyname": "profiles_delete_admin",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "is_admin()",
+    "with_check": null
+  },
+  {
+    "tablename": "profiles",
+    "policyname": "profiles_insert_admin",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": null,
+    "with_check": "is_admin()"
+  },
+  {
+    "tablename": "profiles",
+    "policyname": "profiles_tenant_select",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((id = auth.uid()) OR is_admin_with_access(active_store_id) OR (is_admin() AND (tenant_id = current_user_tenant_id())))\n    ELSE ((id = auth.uid()) OR is_admin() OR (created_by = auth.uid()) OR is_managed_user(id))\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "profiles",
+    "policyname": "profiles_tenant_update",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((id = auth.uid()) OR (is_admin() AND (tenant_id = current_user_tenant_id())))\n    ELSE ((id = auth.uid()) OR is_admin())\nEND",
+    "with_check": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((id = auth.uid()) OR (is_admin() AND (tenant_id = current_user_tenant_id())))\n    ELSE ((id = auth.uid()) OR is_admin())\nEND"
+  },
+  {
+    "tablename": "sales_transactions",
+    "policyname": "sales_transactions_delete",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = 'admin'::user_role))))",
+    "with_check": null
+  },
+  {
+    "tablename": "sales_transactions",
+    "policyname": "sales_transactions_insert",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": null,
+    "with_check": "((EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = 'admin'::user_role)))) OR (EXISTS ( SELECT 1\n   FROM (user_store_memberships m\n     JOIN profiles p ON ((p.id = m.user_id)))\n  WHERE ((m.user_id = auth.uid()) AND (m.store_id = sales_transactions.store_id) AND (m.status = 'active'::membership_status) AND (p.role = ANY (ARRAY['admin'::user_role, 'manager'::user_role]))))))"
+  },
+  {
+    "tablename": "sales_transactions",
+    "policyname": "sales_transactions_select",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "((EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = 'admin'::user_role)))) OR (EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.store_id = sales_transactions.store_id) AND (m.status = 'active'::membership_status)))))",
+    "with_check": null
+  },
+  {
+    "tablename": "sales_transactions",
+    "policyname": "sales_transactions_service_role_all",
+    "cmd": "ALL",
+    "roles": "{service_role}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "tablename": "sales_transactions",
+    "policyname": "sales_transactions_tenant_select",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))\n    ELSE (is_admin() OR (store_id = ANY (current_user_store_ids())))\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "sales_transactions",
+    "policyname": "sales_transactions_update",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "((EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = 'admin'::user_role)))) OR (EXISTS ( SELECT 1\n   FROM (user_store_memberships m\n     JOIN profiles p ON ((p.id = m.user_id)))\n  WHERE ((m.user_id = auth.uid()) AND (m.store_id = sales_transactions.store_id) AND (m.status = 'active'::membership_status) AND (p.role = ANY (ARRAY['admin'::user_role, 'manager'::user_role]))))))",
+    "with_check": null
+  },
+  {
+    "tablename": "stock_movements",
+    "policyname": "Warehouse can insert stock movements",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": null,
+    "with_check": "(has_any_role(ARRAY['admin'::user_role, 'warehouse'::user_role]) AND (store_id = current_user_store_id()))"
+  },
+  {
+    "tablename": "stock_movements",
+    "policyname": "stock_movements_delete_rls",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "false",
+    "with_check": null
+  },
+  {
+    "tablename": "stock_movements",
+    "policyname": "stock_movements_insert_rls",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": null,
+    "with_check": "false"
+  },
+  {
+    "tablename": "stock_movements",
+    "policyname": "stock_movements_tenant_delete",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND is_admin())\n    ELSE false\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "stock_movements",
+    "policyname": "stock_movements_tenant_select",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))\n    ELSE (is_admin() OR has_store_access(store_id))\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "stock_movements",
+    "policyname": "stock_movements_update_rls",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "false",
+    "with_check": null
+  },
+  {
+    "tablename": "stores",
+    "policyname": "stores_delete_admin_only",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "(is_global_admin() OR has_store_role(id, ARRAY['admin'::text]))",
+    "with_check": null
+  },
+  {
+    "tablename": "stores",
+    "policyname": "stores_insert_admin_manager",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::user_role, 'manager'::user_role])))))"
+  },
+  {
+    "tablename": "stores",
+    "policyname": "stores_select_anon",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "qual": "(is_active = true)",
+    "with_check": null
+  },
+  {
+    "tablename": "stores",
+    "policyname": "stores_select_authenticated",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "(is_global_admin() OR is_store_member(id))",
+    "with_check": null
+  },
+  {
+    "tablename": "stores",
+    "policyname": "stores_tenant_delete",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND is_admin())\n    ELSE is_admin()\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "stores",
+    "policyname": "stores_tenant_select",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN (tenant_id = current_user_tenant_id())\n    ELSE (is_admin() OR (id = ANY (current_user_store_ids())))\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "stores",
+    "policyname": "stores_tenant_update",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND is_admin())\n    ELSE (is_admin() OR has_store_access(id))\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "stores",
+    "policyname": "stores_update_member_roles",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "(is_global_admin() OR has_store_role(id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text]))",
+    "with_check": "(is_global_admin() OR has_store_role(id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text]))"
+  },
+  {
+    "tablename": "tenants",
+    "policyname": "tenants_delete_admin_only",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "is_admin()",
+    "with_check": null
+  },
+  {
+    "tablename": "tenants",
+    "policyname": "tenants_insert_admin_only",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": null,
+    "with_check": "is_admin()"
+  },
+  {
+    "tablename": "tenants",
+    "policyname": "tenants_select_own_or_admin",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "(is_admin() OR (owner_id = auth.uid()) OR (id = ( SELECT profiles.tenant_id\n   FROM profiles\n  WHERE (profiles.id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "tablename": "tenants",
+    "policyname": "tenants_select_own_or_store_member",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "(is_admin() OR (EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.tenant_id = tenants.id)))) OR (EXISTS ( SELECT 1\n   FROM (user_store_memberships m\n     JOIN stores s ON ((s.id = m.store_id)))\n  WHERE ((m.user_id = auth.uid()) AND ((m.status)::text = 'active'::text) AND (s.tenant_id = tenants.id)))))",
+    "with_check": null
+  },
+  {
+    "tablename": "tenants",
+    "policyname": "tenants_update_own_or_admin",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "(is_admin() OR (owner_id = auth.uid()))",
+    "with_check": "(is_admin() OR (owner_id = auth.uid()))"
+  },
+  {
+    "tablename": "transactions",
+    "policyname": "cta_family_transactions_select",
+    "cmd": "SELECT",
+    "roles": "{costpro_transaction_adjuster}",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "tablename": "transactions",
+    "policyname": "cta_family_transactions_update",
+    "cmd": "UPDATE",
+    "roles": "{costpro_transaction_adjuster}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "tablename": "transactions",
+    "policyname": "transactions_delete_rls",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = transactions.store_id))))",
+    "with_check": null
+  },
+  {
+    "tablename": "transactions",
+    "policyname": "transactions_select_rls",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = transactions.store_id))))",
+    "with_check": null
+  },
+  {
+    "tablename": "transactions",
+    "policyname": "transactions_tenant_delete",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND is_admin())\n    ELSE is_admin()\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "transactions",
+    "policyname": "transactions_tenant_insert_with_check",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": null,
+    "with_check": "((tenant_id = current_user_tenant_id()) AND (store_id = ANY (current_user_store_ids())))"
+  },
+  {
+    "tablename": "transactions",
+    "policyname": "transactions_tenant_select",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))\n    ELSE (is_admin() OR has_store_access(store_id))\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "transactions",
+    "policyname": "transactions_tenant_update",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))\n    ELSE (is_admin() OR has_store_access(store_id))\nEND",
+    "with_check": null
+  },
+  {
+    "tablename": "transactions",
+    "policyname": "transactions_update_rls",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = transactions.store_id))))",
+    "with_check": null
+  },
+  {
+    "tablename": "user_store_memberships",
+    "policyname": "memberships_delete_admin",
+    "cmd": "DELETE",
+    "roles": "{authenticated}",
+    "qual": "(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text]))",
+    "with_check": null
+  },
+  {
+    "tablename": "user_store_memberships",
+    "policyname": "memberships_insert_admin_manager",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": null,
+    "with_check": "(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text, 'manager'::text]))"
+  },
+  {
+    "tablename": "user_store_memberships",
+    "policyname": "memberships_select_own_and_managed",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "qual": "((user_id = auth.uid()) OR is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text]))",
+    "with_check": null
+  },
+  {
+    "tablename": "user_store_memberships",
+    "policyname": "memberships_update_admin",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text]))",
+    "with_check": "(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text]))"
+  }
+]
