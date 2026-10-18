@@ -34,7 +34,7 @@
  */
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
-import { freshAuthHeaders } from './fixtures/auth.fixture';
+import { freshAuthHeaders, invalidateFreshCache } from './fixtures/auth.fixture';
 import { businessDayOf, todayBusinessDay } from '../src/lib/cash-report/period-attribution';
 
 test.use({ timezoneId: 'America/Havana' });
@@ -94,10 +94,21 @@ async function cerrarModal(page: import('@playwright/test').Page) {
 /** Login UI con el admin del runner (usado al inicio y por la recuperación
  *  de sesión de `navegar` — si la sesión del navegador muere a mitad del
  *  recorrido, la app swap-eara a la landing SIN navegación y el sidebar
- *  desaparecería para siempre; re-autenticar restaura el shell). */
+ *  desaparecería para siempre; re-autenticar restaura el shell).
+ *
+ *  FIX (hallazgo 19:0x — falso negativo de appViva en vista POS): la sesión
+ *  puede seguir VIVA cuando navegar la creyó muerta (sidebar desmontado en
+ *  «Vender»). Tras goto('/') el shell se restaura con sidebar (vista default)
+ *  — si OPERACIÓN ya es visible, NO hay que re-login: saltar el flujo y
+ *  volver (idempotente). Sin esto, el fill de email espera un formulario
+ *  que jamás aparece y quema el timeout del test. */
 async function loginUi(page: import('@playwright/test').Page) {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);
+  if (!!(await page.getByText('OPERACIÓN', { exact: true }).first().isVisible().catch(() => false))) {
+    console.log('[loginUi] sesión ya activa tras reload — login omitido');
+    return;
+  }
   for (const t of ['Iniciar sesión', 'Entrar', 'Acceder']) {
     const btn = page.getByText(t, { exact: false }).first();
     if (await btn.count() && await btn.isVisible().catch(() => false)) { await btn.click().catch(() => {}); break; }
@@ -107,28 +118,95 @@ async function loginUi(page: import('@playwright/test').Page) {
   await page.locator('input[type="password"]').first().fill(process.env.E2E_ADMIN_PASS!);
   await page.locator('button[type="submit"], button:has-text("Entrar"), button:has-text("Iniciar")').first().click();
   await page.waitForTimeout(6000);
+  // Espera explícita del shell (dev mode puede tardar en hidratar). Si ni
+  // así aparece, el navegar posterior hará una última capa de recuperación.
+  await page.getByText('OPERACIÓN', { exact: true }).first().waitFor({ state: 'visible', timeout: 20_000 }).catch(() => {});
   const cookie = page.getByText('Aceptar todas', { exact: false }).first();
   if (await cookie.count() && await cookie.isVisible().catch(() => false)) { await cookie.click(); await page.waitForTimeout(800); }
 }
 
 /** ¿El shell de la app está vivo? Si la sesión murió, la app muta en silencio
  *  a la landing (HomePageClient con useAuthStore sin usuario) y 'OPERACIÓN'
- *  deja de existir. */
+ *  deja de existir.
+ *
+ *  FIX (hallazgo 19:0x): en la vista POS («Vender») el sidebar SE DESMONTA
+ *  (TerminalShell solo lo renderiza si currentView !== 'pos') — la AUSENCIA
+ *  de 'OPERACIÓN' ya no implica sesión muerta. Se añaden señales positivas:
+ *  (1) landing de marketing visible → muerta; (2) token de Supabase en
+ *  localStorage SIN landing → viva (POS fullscreen o transición). */
 async function appViva(page: import('@playwright/test').Page): Promise<boolean> {
-  return !!(await page.getByText('OPERACIÓN', { exact: true }).first().isVisible().catch(() => false));
+  // Señal positiva de vida: sidebar montado con OPERACIÓN
+  if (!!(await page.getByText('OPERACIÓN', { exact: true }).first().isVisible().catch(() => false))) return true;
+  // Señal positiva de muerte: la landing de marketing (botón demo / heading)
+  const landingMuerta = !!(await page.getByRole('button', { name: /Ver demostraci|Ver demo/i })
+    .first().isVisible().catch(() => false));
+  if (landingMuerta) return false;
+  // Ni sidebar ni landing (POS fullscreen / splash / transición): decidir
+  // por presencia del token de sesión (la landing con sesión muerta NO
+  // coexiste con shell — el caso falso-positivo queda cubierto arriba).
+  try {
+    return await page.evaluate(() => {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.endsWith('auth-token')) {
+          const raw = localStorage.getItem(k);
+          if (!raw) continue;
+          try { return !!JSON.parse(raw)?.access_token; } catch { return false; }
+        }
+      }
+      return false;
+    });
+  } catch {
+    return false; // evaluate falló — señal débil
+  }
 }
 
 /** Navegación robusta al menú OPERACIÓN → grupo → ítem (el submenu es
  *  toggle: si el grupo ya estaba activo, el primer click lo colapsa).
  *  RECUPERACIÓN: si el shell no responde (sesión perdida → landing),
- *  re-login UI y reintento una vez antes de fallar. */
+ *  re-login UI y reintento una vez antes de fallar.
+ *
+ *  FIX toggle-idempotente (hallazgo del run 18:5x): tras un re-login el
+ *  shell puede arrancar con OPERACIÓN YA EXPANDIDO — el click incondicional
+ *  en «OPERACIÓN» lo COLAPSA y el click del grupo (bloqueante, espera
+ *  visibilidad) cuelga hasta el timeout del test. Se abre OPERACIÓN SOLO
+ *  si el grupo no es visible, y el click del grupo se protege con un
+ *  guard de visibilidad (nunca click ciego). */
 async function navegar(page: import('@playwright/test').Page, grupo: string, item: string) {
+  const grupoVisible = async (): Promise<boolean> =>
+    !!(await page.getByText(grupo, { exact: true }).first().isVisible().catch(() => false));
+  const operacionVisible = async (): Promise<boolean> =>
+    !!(await page.getByText('OPERACIÓN', { exact: true }).first().isVisible().catch(() => false));
+
+  /** Abre OPERACIÓN si hace falta; true si el grupo quedó visible. */
+  const abrirGrupo = async (): Promise<boolean> => {
+    if (await grupoVisible()) return true; // ya expandido — NO togglear
+    if (!(await operacionVisible())) return false; // sidebar desmontado — no clickear a ciegas
+    await page.getByText('OPERACIÓN', { exact: true }).first().click().catch(() => {});
+    await page.waitForTimeout(900);
+    return grupoVisible();
+  };
+
   if (!(await appViva(page))) {
-    console.log(`[navegar] shell sin 'OPERACIÓN' antes de «${item}» — re-login`);
+    console.log(`[navegar] shell muerto antes de «${item}» — re-login`);
     await loginUi(page);
+  } else if (!(await operacionVisible())) {
+    // FIX POS (hallazgo 19:0x): sesión VIVA pero sidebar desmontado (vista
+    // «Vender» fullscreen). Recargar a la vista default restaura el sidebar
+    // sin perder la sesión — sin esto, el click en OPERACIÓN colgaría.
+    console.log(`[navegar] sidebar desmontado (¿vista POS?) antes de «${item}» — reload a vista default`);
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2000);
   }
-  await page.getByText('OPERACIÓN', { exact: true }).first().click();
-  await page.waitForTimeout(900);
+  if (!(await abrirGrupo())) {
+    // capa de recuperación: la sesión pudo morir ENTRE el check y la apertura,
+    // o el reload no restauró el shell (sesión muerta de verdad)
+    console.log(`[navegar] grupo «${grupo}» invisible tras abrir OPERACIÓN — re-login y reintento`);
+    await loginUi(page);
+    if (!(await abrirGrupo())) {
+      throw new Error(`[navegar] grupo «${grupo}» inalcanzable tras re-login (¿shell caído?)`);
+    }
+  }
   const btn = page.getByText(grupo, { exact: true }).first();
   await btn.click();
   await page.waitForTimeout(900);
@@ -141,8 +219,9 @@ async function navegar(page: import('@playwright/test').Page, grupo: string, ite
     // segunda capa de recuperación: la sesión pudo morir ENTRE el check y el click
     console.log(`[navegar] «${item}» invisible tras toggle — re-login y reintento`);
     await loginUi(page);
-    await page.getByText('OPERACIÓN', { exact: true }).first().click();
-    await page.waitForTimeout(900);
+    if (!(await abrirGrupo())) {
+      throw new Error(`[navegar] grupo «${grupo}» inalcanzable en reintento (¿shell caído?)`);
+    }
     await page.getByText(grupo, { exact: true }).first().click();
     await page.waitForTimeout(900);
   }
@@ -372,6 +451,24 @@ test.describe('Fechas de trabajo — Parte D: documentos con fecha seleccionada 
   const noon = (day: string) => `${day}T12:00:00.000Z`;
   /** txId de la venta de D1 — la devolución D5 la referencia como original. */
   let ventaTxId = '';
+
+  // FIX (hallazgo 19:1x — D1 401 tras Parte C): durante el tour UI puede
+  // dispararse un signOut GLOBAL del admin (useSessionManager ante un fetch
+  // de perfil transitorio fallido) que REVOCÓ el token cacheado por el
+  // beforeAll del archivo. El caché de 5 min de freshAuthHeaders serviría el
+  // token muerto. Se verifica el token contra el servidor y, si está
+  // revocado, se invalida el caché y se re-sign-in.
+  test.beforeAll(async ({ request }) => {
+    const probe = await request.get(`/api/work-dates?store_id=${TEST_STORE_ID}`, { headers });
+    if (probe.status() === 401) {
+      console.log('[Parte D] token del beforeAll revocado a mitad de corrida — re-sign-in');
+      invalidateFreshCache('admin');
+      const refreshed = await freshAuthHeaders('admin');
+      if (refreshed) headers = refreshed;
+    }
+    const probe2 = await request.get(`/api/work-dates?store_id=${TEST_STORE_ID}`, { headers });
+    expect(probe2.ok(), `GET /api/work-dates (Parte D) falló: ${await probe2.text()}`).toBeTruthy();
+  });
 
   test('D1: venta con operation_date retro → persiste el día elegido', async ({ request }) => {
     test.skip(!TEST_PRODUCT_ID, 'producto E2E no disponible');
