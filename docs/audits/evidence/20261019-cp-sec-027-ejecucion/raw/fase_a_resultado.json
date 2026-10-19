@@ -1,0 +1,157 @@
+{
+  "ref": "wthkddeleylijmonclxg",
+  "tipo": "ventana-cp-sec-027",
+  "ts_inicio": "2026-10-19T13:15:35.411Z",
+  "fase": "Fase A aditiva (vistas + grants)",
+  "ejecucion": {
+    "archivo": "/home/z/my-project/download/cp-sec-027-paquete-ejecucion/fase_a_aditiva.sql",
+    "num_statements": 6,
+    "statements": [
+      {
+        "n": 1,
+        "ok": true,
+        "sql": "CREATE OR REPLACE VIEW public.public_catalog_v WITH (security_barrier = true) AS SELECT p.id, p.store_id, p.name, p.description, p.sku, p.price, p.price_currency, p.price_visible, p.stock_visible, p.stock_current, p.on_promotion, p.unit_of_measure, p.image_url, p.public_image_url, p.category, p.is_active, p.visible_en_tienda FROM public.products p WHERE p.is_active = true AND p.visible_en_tienda = true",
+        "filas": 0
+      },
+      {
+        "n": 2,
+        "ok": true,
+        "sql": "CREATE OR REPLACE VIEW public.public_storefronts_v WITH (security_barrier = true) AS SELECT s.id, s.name, s.address, s.phone, s.email, s.logo_url, s.slug, s.plantilla, s.reeup, s.is_active, s.banner_url, s.store_tagline, s.whatsapp_group_url, s.telegram_url, s.services, s.promo_images, s.opening_hours, s.banner_cta_text, s.banner_cta_link FROM public.stores s WHERE s.is_active = true",
+        "filas": 0
+      },
+      {
+        "n": 3,
+        "ok": true,
+        "sql": "CREATE OR REPLACE VIEW public.public_variants_v WITH (security_barrier = true) AS SELECT v.id, v.product_id, v.name, v.sku, v.price, v.conversion_factor FROM public.product_variants v WHERE EXISTS ( SELECT 1 FROM public.products p WHERE p.id = v.product_id AND p.is_active = true AND p.visible_en_tienda = true )",
+        "filas": 0
+      },
+      {
+        "n": 4,
+        "ok": true,
+        "sql": "GRANT SELECT ON public.public_catalog_v TO anon",
+        "filas": 0
+      },
+      {
+        "n": 5,
+        "ok": true,
+        "sql": "GRANT SELECT ON public.public_storefronts_v TO anon",
+        "filas": 0
+      },
+      {
+        "n": 6,
+        "ok": true,
+        "sql": "GRANT SELECT ON public.public_variants_v TO anon",
+        "filas": 0
+      }
+    ],
+    "ts": "2026-10-19T13:15:35.412Z",
+    "ts_fin": "2026-10-19T13:15:46.966Z"
+  },
+  "post_checks": {
+    "vistas": [
+      "public_catalog_v",
+      "public_storefronts_v",
+      "public_variants_v"
+    ],
+    "grants_anon_vistas": [
+      {
+        "table_name": "public_catalog_v",
+        "privilege_type": "INSERT"
+      },
+      {
+        "table_name": "public_catalog_v",
+        "privilege_type": "SELECT"
+      },
+      {
+        "table_name": "public_catalog_v",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "table_name": "public_catalog_v",
+        "privilege_type": "DELETE"
+      },
+      {
+        "table_name": "public_catalog_v",
+        "privilege_type": "TRUNCATE"
+      },
+      {
+        "table_name": "public_catalog_v",
+        "privilege_type": "REFERENCES"
+      },
+      {
+        "table_name": "public_catalog_v",
+        "privilege_type": "TRIGGER"
+      },
+      {
+        "table_name": "public_storefronts_v",
+        "privilege_type": "INSERT"
+      },
+      {
+        "table_name": "public_storefronts_v",
+        "privilege_type": "SELECT"
+      },
+      {
+        "table_name": "public_storefronts_v",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "table_name": "public_storefronts_v",
+        "privilege_type": "DELETE"
+      },
+      {
+        "table_name": "public_storefronts_v",
+        "privilege_type": "TRUNCATE"
+      },
+      {
+        "table_name": "public_storefronts_v",
+        "privilege_type": "REFERENCES"
+      },
+      {
+        "table_name": "public_storefronts_v",
+        "privilege_type": "TRIGGER"
+      },
+      {
+        "table_name": "public_variants_v",
+        "privilege_type": "INSERT"
+      },
+      {
+        "table_name": "public_variants_v",
+        "privilege_type": "SELECT"
+      },
+      {
+        "table_name": "public_variants_v",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "table_name": "public_variants_v",
+        "privilege_type": "DELETE"
+      },
+      {
+        "table_name": "public_variants_v",
+        "privilege_type": "TRUNCATE"
+      },
+      {
+        "table_name": "public_variants_v",
+        "privilege_type": "REFERENCES"
+      },
+      {
+        "table_name": "public_variants_v",
+        "privilege_type": "TRIGGER"
+      }
+    ],
+    "probes_anon": {
+      "public_catalog_v": {
+        "status": 200,
+        "filas": 1
+      },
+      "public_storefronts_v": {
+        "status": 200,
+        "filas": 1
+      },
+      "public_variants_v": {
+        "status": 200,
+        "filas": 0
+      }
+    }
+  }
+}

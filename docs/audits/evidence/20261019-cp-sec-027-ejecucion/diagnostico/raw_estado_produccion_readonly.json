@@ -1,0 +1,71 @@
+{
+  "ts": "2026-10-19T11:07:28.626Z",
+  "tipo": "read-only",
+  "ref": "wthkddeleylijmonclxg",
+  "migraciones_registradas_ultimas12": [
+    "20260615000003",
+    "20260615000002",
+    "20260615000001",
+    "20260614000005",
+    "20260614000004",
+    "20260614000003",
+    "20260614000002",
+    "20260614000001",
+    "20260613000001",
+    "20260612000001",
+    "20260612000000",
+    "202401230001"
+  ],
+  "migraciones_objetivo_registradas": "NINGUNA de las dos está registrada",
+  "validar_gate_temporal": {
+    "funcion_existe": true,
+    "marker_mision_20261018_presente": false,
+    "tope_hoy_estRICTO_aplicado": false,
+    "tope_hoy_mas1_viejo_persiste": false,
+    "conclusion": "INDETERMINADO: cuerpo no coincide con ninguna versión conocida",
+    "extracto": [
+      "v_max_date_business := v_today_business + INTERVAL '1 day';"
+    ]
+  },
+  "vistas_publicas_en_bd": "NO EXISTEN (migración no aplicada)",
+  "policies_anon_vivas": [
+    "product_variants.Variantes públicas - lectura [anon,authenticated]",
+    "stores.stores_select_anon [anon]",
+    "products.products_public_read_anon [anon]"
+  ],
+  "grants_select_anon_tablas": [
+    "product_variants",
+    "products",
+    "stores"
+  ],
+  "muestra_costos": "VALORES NO IMPRESOS (sensibles); solo conteos",
+  "exposicion_products_anon": {
+    "http": 200,
+    "total_filas": 103,
+    "filas_con_cost_average_no_cero": 103,
+    "veredicto": "EXPOSICIÓN ACTIVA: anon lee costos"
+  },
+  "exposicion_stores_anon": {
+    "http": 200,
+    "filas": 10,
+    "veredicto": "EXPOSICIÓN ACTIVA: anon lee tenant_id de tiendas"
+  },
+  "vista_public_catalog_v": {
+    "http": 404,
+    "veredicto": "vista NO disponible"
+  },
+  "david9999_estado_fila": {
+    "id": "84ef824e-8066-4efa-afc7-102918c6c982",
+    "tenant_id": null,
+    "updated_at": "2026-10-09 12:11:09.313885+00",
+    "veredicto": "SIN ESCRITURA: tenant_id sigue NULL (backfill NO ejecutado — correcto)"
+  },
+  "audit_logs_dt03_backfill": {
+    "registros": 0,
+    "veredicto": "cero rastros: backfill nunca ejecutado"
+  },
+  "perfiles_tenant_null": {
+    "total": 11,
+    "nota": "debe ser 11 según clasificación DT-03; cualquier otro valor indicaría escritura no autorizada"
+  }
+}

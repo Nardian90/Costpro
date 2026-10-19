@@ -1,0 +1,105 @@
+{
+  "ts": "2026-10-19T13:18:40.184Z",
+  "ref": "wthkddeleylijmonclxg",
+  "tipo": "read-only",
+  "owners": [
+    {
+      "relname": "public_catalog_v",
+      "owner": "postgres",
+      "rolbypassrls": true,
+      "rolsuper": false
+    },
+    {
+      "relname": "public_storefronts_v",
+      "owner": "postgres",
+      "rolbypassrls": true,
+      "rolsuper": false
+    },
+    {
+      "relname": "public_variants_v",
+      "owner": "postgres",
+      "rolbypassrls": true,
+      "rolsuper": false
+    }
+  ],
+  "auto_actualizables": [
+    {
+      "table_name": "public_catalog_v",
+      "is_insertable_into": "YES",
+      "is_updatable": "YES"
+    },
+    {
+      "table_name": "public_storefronts_v",
+      "is_insertable_into": "YES",
+      "is_updatable": "YES"
+    },
+    {
+      "table_name": "public_variants_v",
+      "is_insertable_into": "YES",
+      "is_updatable": "YES"
+    }
+  ],
+  "reglas": [],
+  "triggers": [],
+  "privilegios": [
+    {
+      "grantee": "anon",
+      "table_name": "public_catalog_v",
+      "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "public_catalog_v",
+      "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "public_catalog_v",
+      "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "public_storefronts_v",
+      "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "public_storefronts_v",
+      "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "public_storefronts_v",
+      "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "public_variants_v",
+      "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "public_variants_v",
+      "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "public_variants_v",
+      "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+    }
+  ],
+  "security_invoker": [
+    {
+      "relname": "public_catalog_v",
+      "reloptions": "security_barrier=true"
+    },
+    {
+      "relname": "public_storefronts_v",
+      "reloptions": "security_barrier=true"
+    },
+    {
+      "relname": "public_variants_v",
+      "reloptions": "security_barrier=true"
+    }
+  ]
+}

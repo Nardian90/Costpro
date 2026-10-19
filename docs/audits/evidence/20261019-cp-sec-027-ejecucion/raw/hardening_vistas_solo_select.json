@@ -1,0 +1,60 @@
+{
+  "ref": "wthkddeleylijmonclxg",
+  "tipo": "ventana-cp-sec-027",
+  "ts_inicio": "2026-10-19T13:19:33.798Z",
+  "fase": "Hardening de ventana: vistas público = SELECT (anula default privileges de escritura)",
+  "revoke": {
+    "ok": true,
+    "sql": "REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.public_catalog_v, public.public_storefronts_v, public.public_variants_v FROM anon, authenticated"
+  },
+  "post_checks": {
+    "privilegios_posteriores": [
+      {
+        "grantee": "anon",
+        "table_name": "public_catalog_v",
+        "privs": "SELECT"
+      },
+      {
+        "grantee": "authenticated",
+        "table_name": "public_catalog_v",
+        "privs": "SELECT"
+      },
+      {
+        "grantee": "service_role",
+        "table_name": "public_catalog_v",
+        "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+      },
+      {
+        "grantee": "anon",
+        "table_name": "public_storefronts_v",
+        "privs": "SELECT"
+      },
+      {
+        "grantee": "authenticated",
+        "table_name": "public_storefronts_v",
+        "privs": "SELECT"
+      },
+      {
+        "grantee": "service_role",
+        "table_name": "public_storefronts_v",
+        "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+      },
+      {
+        "grantee": "anon",
+        "table_name": "public_variants_v",
+        "privs": "SELECT"
+      },
+      {
+        "grantee": "authenticated",
+        "table_name": "public_variants_v",
+        "privs": "SELECT"
+      },
+      {
+        "grantee": "service_role",
+        "table_name": "public_variants_v",
+        "privs": "DELETE,INSERT,REFERENCES,SELECT,TRIGGER,TRUNCATE,UPDATE"
+      }
+    ]
+  },
+  "ts_fin": "2026-10-19T13:19:37.762Z"
+}

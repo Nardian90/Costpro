@@ -1,0 +1,122 @@
+{
+  "ref": "wthkddeleylijmonclxg",
+  "tipo": "ventana-cp-sec-027",
+  "ts_inicio": "2026-10-19T13:22:51.439Z",
+  "fase": "Fase C restricción (policies + revoke)",
+  "ejecucion": {
+    "archivo": "/home/z/my-project/download/cp-sec-027-paquete-ejecucion/fase_c_restriccion.sql",
+    "num_statements": 8,
+    "statements": [
+      {
+        "n": 1,
+        "ok": true,
+        "sql": "DROP POLICY IF EXISTS \"products_public_read_anon\" ON public.products",
+        "filas": 0
+      },
+      {
+        "n": 2,
+        "ok": true,
+        "sql": "DROP POLICY IF EXISTS \"stores_select_anon\" ON public.stores",
+        "filas": 0
+      },
+      {
+        "n": 3,
+        "ok": true,
+        "sql": "DROP POLICY IF EXISTS \"Variantes públicas - lectura\" ON public.product_variants",
+        "filas": 0
+      },
+      {
+        "n": 4,
+        "ok": true,
+        "sql": "DROP POLICY IF EXISTS \"Variantes públicas - lectura autenticada\" ON public.product_variants",
+        "filas": 0
+      },
+      {
+        "n": 5,
+        "ok": true,
+        "sql": "CREATE POLICY \"Variantes públicas - lectura autenticada\" ON public.product_variants FOR SELECT TO authenticated USING (EXISTS ( SELECT 1 FROM public.products WHERE products.id = product_variants.product_id AND products.visible_en_tienda = true ))",
+        "filas": 0
+      },
+      {
+        "n": 6,
+        "ok": true,
+        "sql": "REVOKE SELECT ON public.products FROM anon",
+        "filas": 0
+      },
+      {
+        "n": 7,
+        "ok": true,
+        "sql": "REVOKE SELECT ON public.stores FROM anon",
+        "filas": 0
+      },
+      {
+        "n": 8,
+        "ok": true,
+        "sql": "REVOKE SELECT ON public.product_variants FROM anon",
+        "filas": 0
+      }
+    ],
+    "ts": "2026-10-19T13:22:51.440Z",
+    "ts_fin": "2026-10-19T13:23:06.717Z"
+  },
+  "post_checks": {
+    "policies_restantes": [
+      "product_variants.Variantes públicas - lectura autenticada [authenticated]",
+      "product_variants.Variants delete - member access [authenticated]",
+      "product_variants.Variants insert - member access [authenticated]",
+      "product_variants.Variants store isolation [authenticated]",
+      "product_variants.Variants update - member access [authenticated]",
+      "products.products_delete_rls [authenticated]",
+      "products.products_select_rls [authenticated]",
+      "products.products_tenant_delete [authenticated]",
+      "products.products_tenant_insert [authenticated]",
+      "products.products_tenant_select [authenticated]",
+      "products.products_tenant_update [authenticated]",
+      "products.products_update_rls [authenticated]",
+      "stores.stores_delete_admin_only [authenticated]",
+      "stores.stores_insert_admin_manager [authenticated]",
+      "stores.stores_select_authenticated [authenticated]",
+      "stores.stores_tenant_delete [authenticated]",
+      "stores.stores_tenant_select [authenticated]",
+      "stores.stores_tenant_update [authenticated]",
+      "stores.stores_update_member_roles [authenticated]"
+    ],
+    "grants_anon_tablas": [],
+    "grants_anon_vistas": [
+      "public_catalog_v",
+      "public_storefronts_v",
+      "public_variants_v"
+    ],
+    "vistas": [
+      "public_catalog_v",
+      "public_storefronts_v",
+      "public_variants_v"
+    ],
+    "probes_anon": {
+      "tabla_products": {
+        "status": 401,
+        "filas": null
+      },
+      "tabla_stores": {
+        "status": 401,
+        "filas": null
+      },
+      "tabla_product_variants": {
+        "status": 401,
+        "filas": null
+      },
+      "vista_public_catalog_v": {
+        "status": 200,
+        "filas": 1
+      },
+      "vista_public_storefronts_v": {
+        "status": 200,
+        "filas": 1
+      },
+      "vista_public_variants_v": {
+        "status": 200,
+        "filas": 0
+      }
+    }
+  }
+}
