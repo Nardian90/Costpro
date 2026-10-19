@@ -54,3 +54,17 @@
 - `gate_antes_de_f7.txt`, `gate_despues_de_f7.txt` — salida del gate como `ci_gate_ro`
 - `ci_run2_sql_db_job_antes_de_f7.log` — evidencia CI (run #2, 93+10 hallazgos)
 - `postgrest_anon_despues.txt` — sondas HTTP
+
+## 7. Re-certificación del contrato (post-hardening)
+
+El `Security Audit` (Capa C del contract-test estático) detectó en el primer run de
+este PR que el snapshot certificado (`supabase/security-contract/contract-surface.sql`)
+conservaba los grants PRE-F7 → 2 violaciones `UNEXPECTED_ACL_DRIFT` (bloqueantes,
+correcto comportamiento del control). Resolución conforme al proceso documentado en
+el propio script ("regenerar con scripts/export-contract-surface.cjs — nunca en CI"):
+superficie regenerada en sesión auditada con credenciales del propietario contra la
+BD viva post-F7 (135 funciones, sha256 3f179f1a…). Diff revisado línea a línea:
+eliminación de los 2 bloques e2e dropeadas, pérdida de PUBLIC en los proacl de
+register_reception/reverse_receipt_v2/void_pending_reception y reordenación
+alfabética — CERO divergencias inesperadas. El control queda operativo y verde sin
+relajarse: sigue comparando superficie viva contra replay de migraciones.
