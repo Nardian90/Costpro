@@ -1,0 +1,11 @@
+══ DT-03 backfill david9999 — DRY-RUN (sin escrituras) ══
+✅ 1. Perfil david9999 existe — updated_at=2026-10-09 12:11:09.313885+00
+✅ 2. Perfil activo
+✅ 3. tenant_id AÚN NULL
+✅ 4. Tenant destino existe — Default Tenant (5364ccf8-e6cd-4c38-aea8-b167b3b5576f)
+✅ 5. Membership activa demostrable en ENERVIDA-VITALLCONS — activas: 1
+✅ 6. Cero contradicciones (0 memberships activas en otros tenants) — otras-tenant: 0
+✅ 7. Sin auditoría previa (idempotencia) — filas previas: 0
+
+✅ 7/7 precondiciones OK
+DRY-RUN COMPLETO: 0 escrituras. Para ejecutar: EXECUTE=1 I_CONFIRM_BACKFILL_DAVID9999=YES
