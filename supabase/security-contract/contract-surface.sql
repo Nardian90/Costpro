@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-15T15:13:54.256Z
+-- Captured  : 2026-10-19T11:47:21.823Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 137 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -1374,6 +1374,43 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
+END;
+$function$
+
+
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1410,43 +1447,6 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
-END;
-$function$
-
-
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
 END;
 $function$
 
@@ -2170,6 +2170,11 @@ BEGIN
   IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.destination_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
+
+  -- MISIÓN POLÍTICA TEMPORAL (2026-10-18): gate canónico — la fecha de
+  -- recepción (p_operation_date) se valida ANTES de mover stock/Kardex.
+  -- Antes la ruta /api/transfers/[id]/confirm la propagaba sin validación.
+  PERFORM public.validate_operation_date(COALESCE(p_operation_date, NOW()), v_transfer.origin_store_id);
 
   IF COALESCE(v_transfer.requires_approval, false) = true AND v_transfer.approved_at IS NULL THEN
     RAISE EXCEPTION 'ERR_TRANSFER_REQUIRES_APPROVAL';
@@ -2931,8 +2936,8 @@ END;
 $function$
 
 
--- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text)
+-- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3003,6 +3008,13 @@ DECLARE
   v_param_hash text;
   v_idem_result jsonb;
   v_idem_hash text;
+  -- MISIÓN-FLEX (2026-10-17): incidencias de pago (flexibilización temporal)
+  v_incidents jsonb;
+  v_payment_diff numeric := 0;
+  v_has_payment_incident boolean := false;
+  v_incidence_note text;
+  v_notes_final text;
+  v_it jsonb;
 BEGIN
   -- 1. Advisory lock por store (serializa ventas concurrentes) — sin cambio
   PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
@@ -3060,7 +3072,10 @@ BEGIN
       '|operation_date=' || COALESCE(NULLIF(FLOOR(EXTRACT(EPOCH FROM p_operation_date))::text, ''), '') ||
       '|total_amount=' || COALESCE(p_total_amount::text, '') ||
       '|subtotal=' || COALESCE(p_subtotal::text, '') ||
-      '|tax_amount=' || COALESCE(p_tax_amount::text, '')
+      '|tax_amount=' || COALESCE(p_tax_amount::text, '') ||
+      -- MISIÓN-FLEX: notas e incidencias forman parte de la identidad
+      '|notes=' || COALESCE(p_notes, '') ||
+      '|payment_incidents=' || COALESCE(p_payment_incidents::text, '')
     );
 
     INSERT INTO public.idempotency_registry (idempotency_key, operation, record_id, param_hash, result)
@@ -3117,7 +3132,9 @@ BEGIN
   IF p_zelle_amount > 0 AND p_payment_method <> 'mixed' AND (p_cash_amount > 0 OR p_transfer_amount > 0) THEN
     v_effective_method := 'mixed';
   END IF;
-  IF p_payment_method = 'zelle' AND p_zelle_amount = 0 AND p_cash_amount = 0 AND p_transfer_amount = 0 THEN
+  -- MISIÓN-FLEX: con incidencias de pago NO se infla el importe Zelle al total
+  -- (un Transf. Exterior parcial debe registrarse como lo reportado).
+  IF p_payment_incidents IS NULL AND p_payment_method = 'zelle' AND p_zelle_amount = 0 AND p_cash_amount = 0 AND p_transfer_amount = 0 THEN
     v_zelle_amt := p_total_amount;
   END IF;
 
@@ -3345,6 +3362,37 @@ BEGIN
   -- 11. Calcular total
   v_calculated_total := v_calculated_subtotal - v_discount_amount + v_calculated_tax;
 
+  -- 11.5 REGLA INNEGOCIABLE (MISIÓN 2026-10-17): una venta ordinaria con
+  --     total NEGATIVO jamás se aprueba. Estructuralmente el recálculo ya lo
+  --     impide (precio >= 0, descuento LEAST(subtotal), impuestos >= 0); este
+  --     guard explícito es defensa en profundidad y produce un error
+  --     tipado que la API registra en Auditoría (sale_negative_rejected).
+  IF v_calculated_total < 0 THEN
+    RAISE EXCEPTION 'ERR_NEGATIVE_SALE: total=% — una venta con total negativo no puede aprobarse', v_calculated_total;
+  END IF;
+
+  -- 11.6 MISIÓN-FLEX: normalización de incidencias de pago (flexibilización
+  --     TEMPORAL de diferencias de pago). Solo el flujo del cliente que
+  --     documentó la incidencia puede registrar una venta descuadrada; un
+  --     cliente sin soporte sigue recibiendo el rechazo canónico.
+  v_incidents := NULL;
+  IF p_payment_incidents IS NOT NULL
+     AND jsonb_typeof(p_payment_incidents) = 'array'
+     AND jsonb_array_length(p_payment_incidents) > 0 THEN
+    -- Guardrail de integridad financiera: sin tasa REAL para USD/EUR las
+    -- diferencias NO son validables (fail-closed, ERR_RATE_REQUIRED_FOR_INCIDENT).
+    FOR v_it IN SELECT * FROM jsonb_array_elements(p_items) LOOP
+      v_item_currency := COALESCE(NULLIF(v_it->>'currency', ''), 'CUP');
+      IF v_item_currency IN ('USD', 'EUR') THEN
+        v_item_rate := COALESCE(NULLIF(v_it->>'exchange_rate', '')::numeric, 1.0);
+        IF v_item_rate <= 1.0 THEN
+          RAISE EXCEPTION 'ERR_RATE_REQUIRED_FOR_INCIDENT: currency=%, rate=% — configure la tasa de la tienda antes de registrar incidencias de pago', v_item_currency, v_item_rate;
+        END IF;
+      END IF;
+    END LOOP;
+    v_incidents := p_payment_incidents;
+  END IF;
+
   -- 12. Validar total vs cliente (tolerancia 0.01)
   IF abs(v_calculated_total - p_total_amount) > 0.01 THEN
     RAISE EXCEPTION 'ERR_TOTAL_MISMATCH: calculated=%, client=%', v_calculated_total, p_total_amount;
@@ -3422,18 +3470,72 @@ BEGIN
     END IF;
   END IF;
 
-  -- 14. Validar/setear payment split — sin cambio
+  -- 14. Validar/setear payment split
+  --     MISIÓN-FLEX (2026-10-17): con incidencias documentadas por el cliente
+  --     (v_incidents) se permiten faltante/sobrepago/desglose descuadrado y
+  --     se registran los importes REALMENTE recibidos. Sin incidencias el
+  --     comportamiento canónico anterior queda intacto (fail-closed).
   IF v_effective_method = 'mixed' THEN
     IF abs(v_cash_amt + v_transfer_amt + v_zelle_amt - v_calculated_total) > 1.00 THEN
-      RAISE EXCEPTION 'ERR_PAYMENT_MISMATCH: cash=%, transfer=%, zelle=%, total=%',
-        v_cash_amt, v_transfer_amt, v_zelle_amt, v_calculated_total;
+      IF v_incidents IS NULL THEN
+        RAISE EXCEPTION 'ERR_PAYMENT_MISMATCH: cash=%, transfer=%, zelle=%, total=%',
+          v_cash_amt, v_transfer_amt, v_zelle_amt, v_calculated_total;
+      END IF;
+      -- flexibilizado: la diferencia se documenta en nota + auditoría
     END IF;
   ELSIF v_effective_method = 'cash' THEN
-    v_cash_amt := v_calculated_total;
+    IF v_incidents IS NOT NULL AND p_cash_amount IS NOT NULL AND p_cash_amount >= 0 THEN
+      v_cash_amt := p_cash_amount;  -- lo realmente recibido (puede faltar/sobrar)
+    ELSE
+      v_cash_amt := v_calculated_total;
+    END IF;
   ELSIF v_effective_method = 'transfer' THEN
-    v_transfer_amt := v_calculated_total;
+    IF v_incidents IS NOT NULL AND p_transfer_amount IS NOT NULL AND p_transfer_amount >= 0 THEN
+      v_transfer_amt := p_transfer_amount;
+    ELSE
+      v_transfer_amt := v_calculated_total;
+    END IF;
   ELSIF v_effective_method = 'zelle' THEN
-    v_zelle_amt := v_calculated_total;
+    IF v_incidents IS NOT NULL AND p_zelle_amount IS NOT NULL AND p_zelle_amount >= 0 THEN
+      v_zelle_amt := p_zelle_amount;
+    ELSE
+      v_zelle_amt := v_calculated_total;
+    END IF;
+  END IF;
+
+  -- 14.5 MISIÓN-FLEX: diferencia de pago + nota automática de incidencia.
+  --     La nota respeta la nota manual (p_notes) SIN sobrescribirla: se
+  --     antepone y la incidencia se añade en línea nueva.
+  v_payment_diff := ROUND(v_cash_amt + v_transfer_amt + v_zelle_amt - v_calculated_total, 2);
+  v_has_payment_incident := (v_incidents IS NOT NULL)
+    AND (abs(v_payment_diff) > 0.01 OR jsonb_array_length(v_incidents) > 0);
+  v_incidence_note := NULL;
+  IF v_has_payment_incident THEN
+    IF v_payment_diff < 0 THEN
+      v_incidence_note := 'INCIDENCIA DE PAGO: venta registrada con pago insuficiente. Total: '
+        || to_char(v_calculated_total, 'FM999999990.00') || ' CUP. Importe recibido: '
+        || to_char(v_cash_amt + v_transfer_amt + v_zelle_amt, 'FM999999990.00')
+        || ' CUP. Pendiente: ' || to_char(abs(v_payment_diff), 'FM999999990.00') || ' CUP.';
+    ELSIF v_payment_diff > 0 THEN
+      v_incidence_note := 'INCIDENCIA DE PAGO: sobrepago detectado. Total de venta: '
+        || to_char(v_calculated_total, 'FM999999990.00') || ' CUP. Importe recibido: '
+        || to_char(v_cash_amt + v_transfer_amt + v_zelle_amt, 'FM999999990.00')
+        || ' CUP. Diferencia: ' || to_char(v_payment_diff, 'FM999999990.00')
+        || ' CUP. Revisar el tratamiento del vuelto según los medios de pago utilizados.';
+    ELSE
+      v_incidence_note := 'INCIDENCIA DE PAGO: descuadre en el desglose de medios de pago. Total de venta: '
+        || to_char(v_calculated_total, 'FM999999990.00') || ' CUP. El desglose por línea se conserva documentado en la venta.';
+    END IF;
+    v_incidence_note := v_incidence_note
+      || ' Validación temporal autorizada por la configuración del sistema. ['
+      || to_char(v_eff AT TIME ZONE 'America/Havana', 'YYYY-MM-DD HH24:MI')
+      || ' HV] usuario=' || COALESCE(v_uid::text, 'desconocido');
+  END IF;
+  v_notes_final := NULLIF(btrim(COALESCE(p_notes, '')), '');
+  IF v_notes_final IS NOT NULL AND v_incidence_note IS NOT NULL THEN
+    v_notes_final := v_notes_final || E'\n' || v_incidence_note;
+  ELSIF v_incidence_note IS NOT NULL THEN
+    v_notes_final := v_incidence_note;
   END IF;
 
   -- 15. INSERT transactions — §6.3/§4/§5.4: tasa servidor, seller = v_uid,
@@ -3443,7 +3545,9 @@ BEGIN
     discount_type, discount_value, subtotal, tax_amount, applied_taxes,
     sale_currency, sale_exchange_rate, completed_at, idempotency_key, created_at,
     cash_amount, transfer_amount, zelle_amount,
-    customer_id, customer_name
+    customer_id, customer_name,
+    -- MISIÓN-FLEX: nota (manual + incidencia) e incidencias estructuradas
+    notes, payment_incidents
   ) VALUES (
     v_tx_id, p_store_id, v_uid, v_calculated_total, 'completed',
     v_effective_method::public.payment_method_enum,
@@ -3451,7 +3555,8 @@ BEGIN
     v_calculated_subtotal, v_calculated_tax, v_applied_taxes_canonical,
     p_sale_currency, v_server_rate, v_eff, p_idempotency_key, v_eff,
     v_cash_amt, v_transfer_amt, v_zelle_amt,
-    p_customer_id, p_customer_name
+    p_customer_id, p_customer_name,
+    v_notes_final, v_incidents
   );
 
   -- 16. Segunda pasada: stock movement + transaction_items — MISMA autoridad de costo
@@ -3610,8 +3715,13 @@ BEGIN
     FROM public.payment_transactions WHERE transaction_id = v_tx_id;
 
   IF ABS(v_sum_payments - v_calculated_total) > 0.01 THEN
-    RAISE EXCEPTION 'ERR_PAYMENT_INVARIANT_VIOLATED: SUM(amount_cup)=% != total_amount=% (POS requires full payment)',
-      v_sum_payments, v_calculated_total USING ERRCODE = 'PT011';
+    IF v_incidents IS NULL THEN
+      RAISE EXCEPTION 'ERR_PAYMENT_INVARIANT_VIOLATED: SUM(amount_cup)=% != total_amount=% (POS requires full payment)',
+        v_sum_payments, v_calculated_total USING ERRCODE = 'PT011';
+    END IF;
+    -- MISIÓN-FLEX: venta con incidencia de pago documentada — la diferencia
+    -- entre lo recibido y el total queda registrada en notes +
+    -- payment_incidents + evento SALE_PAYMENT_INCIDENT (trazabilidad).
   END IF;
 
   -- 19. Cerrar el registro de idempotencia con el resultado definitivo
@@ -3657,8 +3767,33 @@ BEGIN
       -- H0-R §7: identidad de idempotencia auditada
       'idempotency_param_hash', v_param_hash,
       -- H0-R §5.4: autoridad fiscal del snapshot
-      'tax_authority', 'tax_configurations_server_side'
+      'tax_authority', 'tax_configurations_server_side',
+      -- MISIÓN-FLEX (2026-10-17): incidencias de pago y nota de la venta
+      'has_payment_incident', v_has_payment_incident,
+      'payment_diff_cup', v_payment_diff,
+      'payment_incidents', COALESCE(v_incidents, '[]'::jsonb),
+      'sale_notes', v_notes_final
     ));
+
+  -- 20.5 MISIÓN-FLEX: evento de auditoría dedicado por venta con incidencia
+  --     de pago (visible y filtrable en Inicio → OPERACIÓN → Auditoría).
+  --     Vive en la MISMA transacción de la venta: sin duplicados en reintentos
+  --     (idempotencia §5) y jamás se registra si la venta no se persiste.
+  IF v_has_payment_incident THEN
+    INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+    VALUES ('SALE_PAYMENT_INCIDENT', 'transactions', v_tx_id, p_store_id, v_uid,
+      jsonb_build_object(
+        'transaction_id', v_tx_id,
+        'total_amount', v_calculated_total,
+        'received_amount_cup', ROUND(v_cash_amt + v_transfer_amt + v_zelle_amt, 2),
+        'difference_cup', v_payment_diff,
+        'incidents', v_incidents,
+        'note', v_notes_final,
+        'payment_method', v_effective_method,
+        'flexibilization', 'temporal_payment_validation',
+        'policy_version', 'MISION-FLEX-2026-10-17'
+      ));
+  END IF;
 
   RETURN jsonb_build_object(
     'status', 'success',
@@ -3775,6 +3910,12 @@ BEGIN
   IF p_origin_store_id = p_destination_store_id THEN
     RAISE EXCEPTION 'ERR_SAME_STORE';
   END IF;
+
+  -- MISIÓN POLÍTICA TEMPORAL (2026-10-18): gate canónico de fechas. Este RPC
+  -- se invoca DIRECTO desde el navegador (transfer-service), por lo que esta
+  -- era la única capa de servidor posible: sin gate, cualquier fecha (futura
+  -- incluida) persistía en transfers.created_at y en el MAX de la tienda.
+  PERFORM public.validate_operation_date(v_effective_date, p_origin_store_id);
 
   INSERT INTO public.transfers (
     id, origin_store_id, destination_store_id, status, notes, total_cost,
@@ -7494,6 +7635,12 @@ BEGIN
     RAISE EXCEPTION 'El documento no pertenece a la tienda especificada';
   END IF;
 
+  -- MISIÓN POLÍTICA TEMPORAL (2026-10-18): gate canónico para la fecha
+  -- financiera del pago. Se conservan las fechas históricas (V2.12.32)
+  -- dentro del piso de 6 meses; NUNCA fechas futuras (tope HOY Habana).
+  -- v_eff_payment_date = COALESCE(p_payment_date, now()) → NOW() siempre pasa.
+  PERFORM public.validate_operation_date(v_eff_payment_date, p_store_id);
+
   -- Calcular monto en CUP
   v_amount_cup := CASE
     WHEN p_currency = 'CUP' THEN p_amount
@@ -7796,6 +7943,81 @@ END;
 $function$
 
 
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
+$function$
+
+
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -7991,81 +8213,6 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
-$function$
-
-
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
 $function$
 
 
