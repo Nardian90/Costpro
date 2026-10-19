@@ -5,6 +5,7 @@ import { validateOrigin } from '@/lib/csrf';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { logger } from '@/lib/logger';
 import { checkTenantRateLimit, rateLimitHeaders, type Plan } from '@/lib/rate-limit/tenant-limiter'; // B1
 import { canManageStore } from '@/lib/roles';
@@ -33,7 +34,7 @@ import { withIdempotency } from '@/lib/idempotency';
  */
 
 const bulkActionSchema = z.object({
-  storeIds: z.array(z.string().uuid()).min(1).max(50),
+  storeIds: z.array(uuidLoose).min(1).max(50),
   action: z.enum(['activate', 'deactivate']),
 });
 

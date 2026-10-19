@@ -252,8 +252,38 @@ export function useSavePendingReception() {
       const createdProductIds: Record<string, string> = {}; // sku -> new product_id
 
       if (newItems.length > 0) {
+        // FIX CP-CAT-004 (auditoría 2026-10-16): la policy products_tenant_insert
+        // (migración 20260827000005, sin flag) exige
+        // tenant_id = current_user_tenant_id() AND store_id ∈ current_user_store_ids().
+        // El insert anterior omitía tenant_id → 403 RLS y la recepción con productos
+        // nuevos quedaba bloqueada. El tenant se resuelve desde la BD leyendo
+        // stores.tenant_id con el JWT del usuario (mismo patrón RLS-FIX que
+        // useReceptionState): la policy stores_tenant_select solo devuelve tiendas
+        // del propio tenant, así que el valor queda validado contra la identidad
+        // del usuario (no es dato arbitrario del cliente). Fail-closed: si la
+        // tienda no es legible o tenant_id es NULL, se aborta sin INSERT.
+        const { data: tenantStore, error: tenantError } = await supabase
+          .from('stores')
+          .select('tenant_id')
+          .eq('id', params.storeId)
+          .maybeSingle();
+
+        if (tenantError || !tenantStore?.tenant_id) {
+          console.error('FIX CP-CAT-004: no se pudo resolver tenant_id de la tienda', {
+            storeId: params.storeId,
+            hasError: !!tenantError,
+            hasRow: !!tenantStore,
+          });
+          throw new Error(
+            'No se pudo verificar la tienda activa para crear productos nuevos. ' +
+            'Comprueba tu sesión y los permisos sobre la tienda, e inténtalo de nuevo.'
+          );
+        }
+        const verifiedTenantId: string = tenantStore.tenant_id;
+
         const productsData = newItems.map(item => ({
           store_id: params.storeId,
+          tenant_id: verifiedTenantId,
           sku: item.sku || `SKU-${Date.now()}-${safeRandomShortId()}`,
           name: item.sku || `Producto ${Date.now()}`, // Se usará temporalmente — el nombre real se setea al confirmar
           cost_price: item.unit_cost,

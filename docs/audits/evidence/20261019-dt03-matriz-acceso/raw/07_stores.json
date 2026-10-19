@@ -1,0 +1,146 @@
+[
+  {
+    "id": "2dabe459-4b37-4be2-b8f4-d102047cc18a",
+    "name": "   ",
+    "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "is_active": false
+  },
+  {
+    "id": "f5ddcc39-1553-4966-a8bc-3d42653e0ace",
+    "name": "E2E Multi blkd1-mv0bd5rl",
+    "tenant_id": "b3f43816-d924-4d9f-b374-18cbe683444b",
+    "is_active": false
+  },
+  {
+    "id": "15c97ed6-c82a-476f-a13d-122c23758bb8",
+    "name": "E2E Multi blkd2-mv0bdwpg",
+    "tenant_id": "b3f43816-d924-4d9f-b374-18cbe683444b",
+    "is_active": false
+  },
+  {
+    "id": "61fa7df8-88c5-4f1f-9051-b3d2e3d54213",
+    "name": "E2E Multi blki-mv0beb5x",
+    "tenant_id": "b3f43816-d924-4d9f-b374-18cbe683444b",
+    "is_active": true
+  },
+  {
+    "id": "c1ef5f7c-0231-481a-af27-d7dd61f6f413",
+    "name": "E2E Multi del-mv0b76gn",
+    "tenant_id": "b3f43816-d924-4d9f-b374-18cbe683444b",
+    "is_active": false
+  },
+  {
+    "id": "efca3ec6-c0c1-48ab-992c-2e8a54f0fb4b",
+    "name": "E2E Multi perm-mv0bf7jo",
+    "tenant_id": "b3f43816-d924-4d9f-b374-18cbe683444b",
+    "is_active": false
+  },
+  {
+    "id": "39c3454c-aa19-4a8e-b58e-a7a837da49a8",
+    "name": "E2E Multi rls1-mv0beebr",
+    "tenant_id": "b3f43816-d924-4d9f-b374-18cbe683444b",
+    "is_active": false
+  },
+  {
+    "id": "e711cebc-8df7-4f12-be6e-873176c7960f",
+    "name": "E2E PILOT A CostPro",
+    "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "is_active": true
+  },
+  {
+    "id": "7e6d4a69-d588-47b8-b15b-f233e99e183b",
+    "name": "E2E PILOT A CostPro E2E-20261009-D0978E",
+    "tenant_id": "b3f43816-d924-4d9f-b374-18cbe683444b",
+    "is_active": true
+  },
+  {
+    "id": "b9474f2c-7f1b-4683-b231-c207b739ff0c",
+    "name": "E2E PILOT A CostPro E2E-20261018-F22F80",
+    "tenant_id": "c3d01a35-ae82-40f9-8151-c4c696f51db9",
+    "is_active": true
+  },
+  {
+    "id": "b5fed991-8357-4edf-88b3-18095369100e",
+    "name": "E2E PILOT B CostPro",
+    "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "is_active": true
+  },
+  {
+    "id": "ec1857b9-ff70-4f41-a413-ee29412b457e",
+    "name": "E2E PILOT B CostPro E2E-20261009-D0978E",
+    "tenant_id": "b3f43816-d924-4d9f-b374-18cbe683444b",
+    "is_active": true
+  },
+  {
+    "id": "a4ab3939-b0b8-4eda-83b6-57072fc4f645",
+    "name": "E2E PILOT B CostPro E2E-20261018-F22F80",
+    "tenant_id": "c3d01a35-ae82-40f9-8151-c4c696f51db9",
+    "is_active": true
+  },
+  {
+    "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+    "name": "ENERVIDA-VITALLCONS",
+    "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "is_active": true
+  },
+  {
+    "id": "2ef293a3-23b4-4816-aa2b-9752627a1175",
+    "name": "No Address",
+    "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "is_active": false
+  },
+  {
+    "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+    "name": "Puerto Padre VITALLCONS",
+    "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "is_active": true
+  },
+  {
+    "id": "a5b81cbf-8ffc-4525-8ac4-f2ec92b912d2",
+    "name": "QA-H1-A",
+    "tenant_id": null,
+    "is_active": true
+  },
+  {
+    "id": "b9cfacda-3731-47a2-8588-f524c6ec3456",
+    "name": "QA-H1-B",
+    "tenant_id": null,
+    "is_active": true
+  },
+  {
+    "id": "dcfd74bf-ebfa-4630-b532-ebbd4c5b42a2",
+    "name": "Store Tenant 2",
+    "tenant_id": "e2d7ae4f-c328-4ac3-8ead-31068f115bc8",
+    "is_active": false
+  },
+  {
+    "id": "9a44b933-c01e-4421-81db-dec552e0e0e4",
+    "name": "Sucursal Habana",
+    "tenant_id": "dd5ab58a-159f-4c82-8c7f-81b2f9a1562f",
+    "is_active": true
+  },
+  {
+    "id": "a0a02bb9-3e0d-4d6d-b5be-30a58c22e20a",
+    "name": "Sucursal Playa",
+    "tenant_id": "dd5ab58a-159f-4c82-8c7f-81b2f9a1562f",
+    "is_active": true
+  },
+  {
+    "id": "63c2f61a-54dd-4fe3-97c0-4c1d7c8e430a",
+    "name": "Sucursal Vedado",
+    "tenant_id": "dd5ab58a-159f-4c82-8c7f-81b2f9a1562f",
+    "is_active": true
+  },
+  {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "name": "Tienda Auditor",
+    "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "is_active": false
+  },
+  {
+    "id": "d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576",
+    "name": "TIENDA CENTRAL COSTPRO",
+    "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "is_active": true
+  }
+]

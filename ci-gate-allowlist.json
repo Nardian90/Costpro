@@ -241,5 +241,34 @@
       "added_by": "REM-INV-6",
       "expires": "2026-12-31"
     }
+  ],
+  "source_of_truth_baseline": [
+    {
+      "function": "confirm_transfer/3",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "PR #1422 (mision politica temporal 2026-10-18): migracion 20261018000000 anade gate validate_operation_date antes de mover stock. Migracion NO aplicada aun a la BD viva — pendiente del procedimiento autorizado del propietario (informe mision §10.1). Drift = solo el gate anadido; cuerpo base exportado con pg_get_functiondef de la BD viva. Al aplicar la migracion: re-certificar contract-surface.sql (scripts/export-contract-surface.cjs) y ELIMINAR esta entrada.",
+      "added_by": "PR-1422-mision-temporal",
+      "expires": "2026-11-30"
+    },
+    {
+      "function": "create_transfer/7",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "PR #1422 (mision politica temporal 2026-10-18): migracion 20261018000000 anade gate validate_operation_date en creacion de transferencias. Migracion NO aplicada a la BD viva — pendiente del procedimiento autorizado del propietario. Drift = solo el gate; cuerpo base = pg_get_functiondef de la BD viva. Nota: esta divergencia era INVISIBLE antes del fix de sintaxis (faltaban los ; de terminacion de statement, que hacian que el replay-parser se saltara esta funcion). Al aplicar la migracion: re-certificar surface y eliminar esta entrada.",
+      "added_by": "PR-1422-mision-temporal",
+      "expires": "2026-11-30"
+    },
+    {
+      "function": "register_supplier_payment/12",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "PR #1422 (mision politica temporal 2026-10-18): migracion 20261018000000 anade gate validate_operation_date para la fecha financiera del pago. Migracion NO aplicada a la BD viva — pendiente del procedimiento autorizado del propietario. Drift = solo el gate; cuerpo base = pg_get_functiondef de la BD viva. Igualmente invisible antes del fix de sintaxis. Al aplicar la migracion: re-certificar surface y eliminar esta entrada.",
+      "added_by": "PR-1422-mision-temporal",
+      "expires": "2026-11-30"
+    }
   ]
 }

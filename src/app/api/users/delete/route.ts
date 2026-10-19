@@ -3,13 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { logger } from '@/lib/logger';
 
 // Iteración 12 (Q6): schema para soft delete con reason
 const softDeleteUserSchema = z.object({
-  user_id: z.string().uuid(),
+  user_id: uuidLoose,
   reason: z.string().min(3, 'Razón requerida (mín 3 chars)').max(500),
 });
 

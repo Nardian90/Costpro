@@ -619,6 +619,11 @@ export const createSaleParamsSchema = z.object({
   p_zelle_amount: z.number().optional(),
   p_transaction_id: z.string().regex(uuidRegex).optional(),
   p_idempotency_key: z.string().optional(),
+  // FIX CP-POS-007 (auditoría 2026-10-16): nota manual del cajero. create_sale_v2
+  // ya acepta p_notes (migración 20261017000000). Sin esta declaración, zod
+  // .parse() la elimina del payload encolado offline y la nota se pierde
+  // silenciosamente en el replay por /api/sync/batch.
+  p_notes: z.string().max(1000).nullable().optional(),
   // Política de secuencia global (forward-only locking):
   // fecha de operación elegida por el usuario. Si se omite, el backend usa NOW().
   // El backend valida que no sea anterior al MAX global (lanza ERR_BACKDATED_DOCUMENT).

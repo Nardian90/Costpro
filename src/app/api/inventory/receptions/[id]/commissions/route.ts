@@ -5,6 +5,7 @@ import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
+import { uuidLoose } from '@/validation/api-schemas';
 /**
  * POST /api/inventory/receptions/[id]/commissions
  *
@@ -16,8 +17,8 @@ import { z } from 'zod';
  */
 
 const linkCommissionSchema = z.object({
-  commission_payment_id: z.string().uuid(),
-  product_id: z.string().uuid().optional(),
+  commission_payment_id: uuidLoose,
+  product_id: uuidLoose.optional(),
   allocated_amount: z.number().positive(),
   distribution_method: z.enum(['quantity', 'cost_value', 'weight', 'manual']).default('cost_value'),
 });

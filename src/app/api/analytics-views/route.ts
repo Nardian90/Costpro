@@ -5,6 +5,7 @@ import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { logger } from '@/lib/logger';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { canManageStore } from '@/lib/roles';
@@ -13,7 +14,7 @@ const viewSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
   module: z.string().max(50).default('costs'),
-  store_id: z.string().uuid().optional(),
+  store_id: uuidLoose.optional(),
   config: z.record(z.string(), z.any()),
   is_default: z.boolean().optional(),
 });

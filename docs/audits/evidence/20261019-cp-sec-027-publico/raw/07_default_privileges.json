@@ -1,0 +1,347 @@
+[
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "r",
+    "acl_entry": "postgres=arwdDxtm/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "r",
+    "acl_entry": "anon=arwdDxtm/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "r",
+    "acl_entry": "authenticated=arwdDxtm/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "r",
+    "acl_entry": "service_role=arwdDxtm/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "f",
+    "acl_entry": "postgres=X/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "f",
+    "acl_entry": "anon=X/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "f",
+    "acl_entry": "authenticated=X/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "f",
+    "acl_entry": "service_role=X/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "S",
+    "acl_entry": "postgres=rwU/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "S",
+    "acl_entry": "anon=rwU/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "S",
+    "acl_entry": "authenticated=rwU/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "S",
+    "acl_entry": "service_role=rwU/postgres"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "postgres=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "anon=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "authenticated=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "service_role=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "postgres=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "anon=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "authenticated=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "service_role=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "postgres=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "anon=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "authenticated=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "service_role=X/supabase_admin"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "r",
+    "acl_entry": "postgres=arwdDxtm/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "r",
+    "acl_entry": "anon=arwdDxtm/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "r",
+    "acl_entry": "authenticated=arwdDxtm/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "r",
+    "acl_entry": "service_role=arwdDxtm/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "f",
+    "acl_entry": "postgres=X/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "f",
+    "acl_entry": "anon=X/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "f",
+    "acl_entry": "authenticated=X/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "f",
+    "acl_entry": "service_role=X/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "S",
+    "acl_entry": "postgres=rwU/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "S",
+    "acl_entry": "anon=rwU/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "S",
+    "acl_entry": "authenticated=rwU/postgres"
+  },
+  {
+    "grantor_role": "postgres",
+    "defaclobjtype": "S",
+    "acl_entry": "service_role=rwU/postgres"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "postgres=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "dashboard_user=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "postgres=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "dashboard_user=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "postgres=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "anon=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "authenticated=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "service_role=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "postgres=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "anon=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "authenticated=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "service_role=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "postgres=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "anon=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "authenticated=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "service_role=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "postgres=a*r*w*d*D*x*t*m*/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "postgres=X*/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "postgres=r*w*U*/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "postgres=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "anon=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "authenticated=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "service_role=arwdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "postgres=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "anon=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "authenticated=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "f",
+    "acl_entry": "service_role=X/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "postgres=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "anon=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "authenticated=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "S",
+    "acl_entry": "service_role=rwU/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "postgres=a*r*wdDxtm/supabase_admin"
+  },
+  {
+    "grantor_role": "supabase_admin",
+    "defaclobjtype": "r",
+    "acl_entry": "dashboard_user=arwdDxtm/supabase_admin"
+  }
+]

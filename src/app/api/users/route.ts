@@ -24,10 +24,11 @@ import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
+import { uuidLoose } from '@/validation/api-schemas';
 const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  store_id: z.string().uuid().optional(),
+  store_id: uuidLoose.optional(),
   role: z.enum(['admin', 'superadmin', 'manager', 'clerk', 'warehouse', 'encargado', 'usuario', 'costo']).optional(),
   search: z.string().min(1).max(100).optional(),
   is_active: z.enum(['true', 'false']).optional(),

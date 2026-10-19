@@ -6,6 +6,7 @@ import { withTracing } from '@/lib/observability';
 import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { uuidRegex } from '@/validation/schemas';
 import { verifySupervisorToken } from '@/lib/supervisor-token';
 // MISIÓN FECHA OPERATIVA (2026-10-17): revalidación server-side de la fecha
@@ -37,7 +38,7 @@ import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 
 const itemSchema = z.object({
   product_id: z.string().regex(uuidRegex),
-  variant_id: z.string().uuid().nullable().optional(),
+  variant_id: uuidLoose.nullable().optional(),
   quantity: z.number().positive(),
   // E-SEC (R-SEC-1): finite() rechaza Infinity/-Infinity (p.ej. JSON `1e999`
   // parsea a Infinity); z.number() ya rechaza NaN. El precio inválido que entre
@@ -72,7 +73,7 @@ const checkoutSchema = z.object({
   // H0-R §10: applied_taxes es una PROPUESTA de ids de tax_configurations —
   // cada entrada debe llevar id uuid (la autoridad fiscal vive en el RPC, que
   // valida y reemplaza desde el catálogo; jamás se persiste el JSONB tal cual)
-  applied_taxes: z.array(z.object({ id: z.string().uuid() }).passthrough()).default([]),
+  applied_taxes: z.array(z.object({ id: uuidLoose }).passthrough()).default([]),
   tax_amount: z.number().min(0).default(0),
   total_amount: z.number().min(0),
   subtotal: z.number().min(0).default(0),

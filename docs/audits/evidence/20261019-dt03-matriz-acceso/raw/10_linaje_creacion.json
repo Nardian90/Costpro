@@ -1,0 +1,242 @@
+[
+  {
+    "user_id": "051c6157-600b-425e-b8c0-72388bacf541",
+    "child_email": "admin@costpro.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "a1111111-1111-1111-1111-111111111111",
+    "child_email": "admin@demo.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "8c90b7b8-3e6a-449e-84e0-ac19ff6c3945",
+    "child_email": "adrianpompasantana@gmail.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "b4444444-4444-4444-4444-444444444444",
+    "child_email": "almacen@demo.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "28ebdfa1-f012-4de3-b5da-137ae9b764c9",
+    "child_email": "belkis9999@gmail.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "c3333333-3333-3333-3333-333333333333",
+    "child_email": "cajero@demo.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "d5555555-5555-5555-5555-555555555555",
+    "child_email": "costo@demo.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "84ef824e-8066-4efa-afc7-102918c6c982",
+    "child_email": "david9999@gmail.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "6df9d679-266d-4a9e-96be-0d0f3b5e44d3",
+    "child_email": "e2e-e2e20261009d0978e-adm@costpro.test",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "87999b93-b00d-4dd8-9492-f706cf38c306",
+    "child_email": "e2e-e2e20261009d0978e-enc@costpro.test",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "232f2446-0af7-4285-9e2e-c64e76f7ec51",
+    "child_email": "e2e-e2e20261009d0978e-usr@costpro.test",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "50cec9fc-479e-43f0-a77a-5a022ae38d64",
+    "child_email": "e2e-e2e20261009d0978e-wh@costpro.test",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "2ec9b449-d544-46d6-bebf-5a5f29d30db1",
+    "child_email": "e2e-e2e20261018f22f80-adm@costpro.test",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "935333c0-fd96-45ce-b8b9-f9cdfe251271",
+    "child_email": "e2e-e2e20261018f22f80-enc@costpro.test",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "b604b20f-7a74-4e37-8b0a-fabc8169b361",
+    "child_email": "e2e-e2e20261018f22f80-usr@costpro.test",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "63975fe3-b87c-4dc8-be93-1d8432262d1f",
+    "child_email": "e2e-e2e20261018f22f80-wh@costpro.test",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "e2222222-2222-2222-2222-222222222222",
+    "child_email": "encargado@demo.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "f5fa6d11-61a8-41eb-9e09-f5ce0d1da83d",
+    "child_email": "f243he2en2ejpm@uberip.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "0a9e3d54-7729-4e5c-ab7d-7e7f57106292",
+    "child_email": "f244ab40u9o0m@uberip.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "ccff0c17-b436-4ecc-95dd-a53bdfe051d2",
+    "child_email": "f244bc7klbb6p@uberip.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "a491c932-1c4e-491f-a006-093b692b7c5e",
+    "child_email": "f244beh00he8i@uberip.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "bfcbc06d-1bd7-4a43-916f-0a4891c169a0",
+    "child_email": "f244zxe5gmk@uberip.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "ca0f16d1-f067-4b2d-9126-396e06dc36d4",
+    "child_email": "f246empresa01@uberip.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "4ac61783-a99c-46ab-ae3f-5e110471cb39",
+    "child_email": "g3g3af38ck3v6@uberip.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "db311037-7527-4647-9ecf-1d1ef0813520",
+    "child_email": "g3g3b4isid7xo@uberip.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "6b0aac3b-5ff4-40d4-9ffb-223832c7ed58",
+    "child_email": "juanmanuelcabreravargas@gmail.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "ab1eb116-eb23-4bab-86de-5a20cfa1d4c3",
+    "child_email": "landing.demo@costpro-e2e.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "6eb29691-d253-4e03-b593-2b0cdd1415bc",
+    "child_email": "qa.h1.a@costpro.test",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "40b264b3-dcff-48c3-86db-abf8d5e268e3",
+    "child_email": "ronaldoguerra984@gmail.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  },
+  {
+    "user_id": "03524340-a81c-4273-94c5-ef9f3da9d340",
+    "child_email": "tery201194@gmail.com",
+    "created_by": null,
+    "creator_email": null,
+    "creator_role": null,
+    "creator_tenant": null
+  }
+]

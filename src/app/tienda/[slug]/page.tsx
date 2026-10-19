@@ -34,9 +34,11 @@ export const revalidate = 0; // FIX-STOREFRONT-CONFIG: always render fresh (conf
 
 export async function generateStaticParams() {
   try {
+    // CP-SEC-027: la vitrina lee la superficie pública de tiendas (vista) en
+    // lugar de la tabla — anon ya no tiene SELECT directo sobre stores.
     const supabase = createServerClient();
     const { data: stores } = await supabase
-      .from('stores')
+      .from('public_storefronts_v')
       .select('slug')
       .eq('is_active', true)
       .not('slug', 'is', null);
@@ -59,8 +61,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const t = await getTranslations('stores.storefront');
 
   // Try exact match first, then normalized match
+  // CP-SEC-027: superficie pública de tiendas (vista) — sin tenant_id/bank_account.
   const { data: store } = await supabase
-    .from('stores')
+    .from('public_storefronts_v')
     .select('id, name, logo_url, slug, plantilla, address, phone, email')
     .eq('is_active', true)
     .or(`slug.eq.${rawSlug},slug.eq.${slug}`)
@@ -125,8 +128,9 @@ export default async function TiendaPublicPage({ params }: PageProps) {
   // la configuración personalizada. Antes el SELECT solo traía campos básicos
   // y el storefront siempre caía al banner por defecto, ignorando la
   // configuración del admin.
+  // CP-SEC-027: superficie pública de tiendas (vista) — sin tenant_id/bank_account.
   const { data: store, error: storeError } = await supabase
-    .from('stores')
+    .from('public_storefronts_v')
     .select('id, name, address, phone, email, logo_url, slug, plantilla, reeup, is_active, banner_url, store_tagline, whatsapp_group_url, telegram_url, services, promo_images, opening_hours, banner_cta_text, banner_cta_link')
     .eq('is_active', true)
     .or(`slug.eq.${rawSlug},slug.eq.${slug}`)
@@ -161,33 +165,24 @@ export default async function TiendaPublicPage({ params }: PageProps) {
       if (rpcError) throw rpcError;
       rpcProducts = (data || []) as Array<Record<string, unknown>>;
     } else {
-      // Fallback: direct query with anon client (no auth needed for public products)
+      // Fallback: catalog público vía vista (CP-SEC-027: anon ya no puede leer
+      // la tabla products; la vista expone SOLO columnas de presentación —
+      // cost_price/cost_average/min_stock/barcode eliminados del fetch).
+      // stock_current viene de la propia vista (el fallback anterior lo pedía
+      // a inventory, tabla a la que anon nunca tuvo acceso por RLS → siempre 0).
       const { data: fallbackData, error: fallbackErr } = await supabase
-        .from('products')
-        .select('id, name, description, sku, price, price_currency, image_url, public_image_url, category, unit_of_measure, price_visible, stock_visible, on_promotion, visible_en_tienda, is_active, cost_price, cost_average, min_stock, store_id, created_at, updated_at, barcode, barcode_type')
+        .from('public_catalog_v')
+        .select('id, name, description, sku, price, price_currency, image_url, public_image_url, category, unit_of_measure, price_visible, stock_visible, stock_current, on_promotion, visible_en_tienda, is_active, store_id')
         .eq('store_id', store.id)
         .eq('is_active', true)
         .eq('visible_en_tienda', true)
         .order('name');
       if (fallbackErr) throw fallbackErr;
-      // Compute stock_current from inventory
-      const productIds = (fallbackData || []).map(p => p.id);
-      if (productIds.length > 0) {
-        const { data: invData } = await supabase
-          .from('inventory')
-          .select('product_id, quantity')
-          .eq('store_id', store.id)
-          .in('product_id', productIds);
-        const invMap = new Map<string, number>();
-        for (const inv of (invData || [])) {
-          invMap.set(inv.product_id, Number(inv.quantity));
-        }
-        rpcProducts = (fallbackData || []).map(p => ({
-          ...p,
-          stock_current: invMap.get(p.id) ?? 0,
-          has_movements: false,
-        }));
-      }
+      // stock_current proviene de la vista (columna de presentación).
+      rpcProducts = (fallbackData || []).map(p => ({
+        ...p,
+        has_movements: false,
+      }));
     }
   } catch (e) {
     console.warn('[Tienda] Product fetch failed:', e);
@@ -205,16 +200,18 @@ export default async function TiendaPublicPage({ params }: PageProps) {
     name: string;
     sku: string | null;
     price: number;
-    precio_empresa: number | null;
     conversion_factor: number;
   }>>();
 
   if (productIds.length > 0) {
+    // CP-SEC-027: variantes públicas vía vista (sin precio_empresa). Nota: el
+    // filtro anterior `.eq('is_active', true)` refería una columna inexistente
+    // en product_variants → la consulta fallaba silenciosamente (variantes
+    // nunca visibles en vitrina). La vista filtra por producto público.
     const { data: variantRows } = await supabase
-      .from('product_variants')
-      .select('id, name, sku, price, precio_empresa, conversion_factor, product_id')
+      .from('public_variants_v')
+      .select('id, name, sku, price, conversion_factor, product_id')
       .in('product_id', productIds)
-      .eq('is_active', true)
       .order('name');
 
     for (const v of (variantRows || [])) {
@@ -224,7 +221,6 @@ export default async function TiendaPublicPage({ params }: PageProps) {
         name: v.name,
         sku: v.sku,
         price: v.price,
-        precio_empresa: v.precio_empresa,
         conversion_factor: v.conversion_factor,
       });
       variantsByProduct.set(v.product_id, list);

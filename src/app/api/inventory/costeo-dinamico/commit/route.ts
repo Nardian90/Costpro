@@ -5,20 +5,21 @@ import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 // F4-GAP1: Import cache invalidation
 import { invalidateCacheForStore } from '../route';
 
 export const runtime = 'nodejs';
 
 const commitSchema = z.object({
-  store_id: z.string().uuid(),
-  product_ids: z.array(z.string().uuid()).min(1),
+  store_id: uuidLoose,
+  product_ids: z.array(uuidLoose).min(1),
   tasa_usada: z.number().positive(),
   fuente_tasa: z.string(),
   motivo: z.string().optional(),
   // Each product_id maps to its suggested_price (pre-calculated by the client)
   price_updates: z.array(z.object({
-    product_id: z.string().uuid(),
+    product_id: uuidLoose,
     new_price: z.number().positive(),
   })),
 });

@@ -4,6 +4,7 @@ import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { logger } from '@/lib/logger';
 import { canManageStore } from '@/lib/roles';
 
@@ -23,7 +24,7 @@ const querySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
   action: z.string().optional(),
-  userId: z.string().uuid().optional(),
+  userId: uuidLoose.optional(),
   from: z.string().optional(),
   to: z.string().optional(),
 });

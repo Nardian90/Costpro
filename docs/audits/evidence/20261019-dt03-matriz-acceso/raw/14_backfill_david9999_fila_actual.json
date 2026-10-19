@@ -1,0 +1,59 @@
+{
+  "capturado": "2026-10-18T18:36:42.396Z",
+  "modo": "READ-ONLY (sin escrituras)",
+  "fila_profiles_completa": [
+    {
+      "id": "84ef824e-8066-4efa-afc7-102918c6c982",
+      "store_id": null,
+      "full_name": "David",
+      "created_at": "2026-10-09 12:11:09.313885+00",
+      "email": "david9999@gmail.com",
+      "updated_at": "2026-10-09 12:11:09.313885+00",
+      "role": "clerk",
+      "is_active": true,
+      "active_store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "max_stores_limit": 0,
+      "max_users_limit": 0,
+      "created_by": null,
+      "roles": "{}",
+      "logo_url": null,
+      "ai_provider": "gemini",
+      "ai_api_key": null,
+      "role_id": null,
+      "tenant_id": null,
+      "plan": "free",
+      "deleted_at": null,
+      "deletion_reason": null,
+      "deleted_by": null
+    }
+  ],
+  "tenant_destino": [
+    {
+      "id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+      "name": "Default Tenant",
+      "created_at": "2026-08-04 05:24:45.016778+00"
+    }
+  ],
+  "memberships": [
+    {
+      "user_id": "84ef824e-8066-4efa-afc7-102918c6c982",
+      "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "role": "clerk",
+      "status": "active",
+      "created_at": "2026-10-09 12:19:07.941793+00",
+      "store_name": "ENERVIDA-VITALLCONS",
+      "store_tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+      "store_is_active": true
+    }
+  ],
+  "contradicciones_en_otro_tenant": [
+    {
+      "otras": 0
+    }
+  ],
+  "resumen_para_dossier": {
+    "id": "84ef824e-8066-4efa-afc7-102918c6c982",
+    "email": "david9999@gmail.com",
+    "tenant_id_actual": null
+  }
+}

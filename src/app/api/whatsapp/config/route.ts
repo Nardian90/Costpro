@@ -8,8 +8,9 @@ import { canManageStore } from '@/lib/roles';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { z } from 'zod';
 
+import { uuidLoose } from '@/validation/api-schemas';
 const configSchema = z.object({
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
   phone_number: z.string().optional(),
   group_jid: z.string().optional(),
   group_name: z.string().optional(),

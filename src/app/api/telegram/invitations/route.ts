@@ -6,6 +6,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 
 /**
@@ -44,7 +45,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 const postSchema = z.object({
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
   telegram_user_id: z.number().int(),
   username: z.string().optional(),
   first_name: z.string().optional(),

@@ -56,7 +56,7 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 END;
-$function$
+$function$;
 
 
 -- ─── 2. create_transfer: gate ───
@@ -194,7 +194,7 @@ BEGIN
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', v_transfer_id, 'total_cost', v_total_cost);
 END;
-$function$
+$function$;
 
 
 -- ─── 3. confirm_transfer: gate ───
@@ -309,7 +309,7 @@ BEGIN
       'dest_blend_df06', true));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
-END $function$
+END $function$;
 
 
 -- ─── 4. register_supplier_payment: gate ───
@@ -401,5 +401,5 @@ BEGIN
 
   RETURN v_id;
 END;
-$function$
+$function$;
 

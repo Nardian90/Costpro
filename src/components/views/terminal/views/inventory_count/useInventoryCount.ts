@@ -117,7 +117,9 @@ export function useInventoryCount() {
     if (user) {
       fetchProducts();
     }
-  }, [user]); // FIX-RCT-130: fetchProducts reads token from auth store getState()
+    // FIX CP-POS-003: re-fetch al cambiar la tienda activa (el listado es por tienda).
+    // FIX-RCT-130: fetchProducts reads token from auth store getState()
+  }, [user, user?.activeStoreId]);
 
   const filteredProducts = useMemo(() => {
     const lowerTerm = searchTerm.toLowerCase();
@@ -148,7 +150,16 @@ export function useInventoryCount() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/inventory/products', {
+      // FIX CP-POS-003 (auditoría 2026-10-16): /api/inventory/products EXIGE
+      // storeId (withStoreAccess + 400 «storeId es requerido»). El fetch anterior
+      // nunca lo enviaba, por lo que «Venta por Conteo» mostraba «0 de 0 productos»
+      // de forma permanente. Se adjunta la tienda activa del usuario autenticado,
+      // igual que en LotsView/DevolutionsView/WorkersView.
+      const storeId = user?.activeStoreId;
+      if (!storeId) {
+        throw new Error('No hay tienda activa seleccionada. Selecciona una tienda y vuelve a intentar el conteo.');
+      }
+      const response = await fetch(`/api/inventory/products?storeId=${encodeURIComponent(storeId)}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

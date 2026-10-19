@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 
 
+import { uuidLoose } from '@/validation/api-schemas';
 /**
  * POST /api/production-orders/[id]/items
  *   Añade un material a una orden existente (solo si status !== 'closed' && status !== 'voided')
@@ -15,8 +16,8 @@ import { z } from 'zod';
  */
 
 const addItemSchema = z.object({
-  product_id: z.string().uuid(),
-  variant_id: z.string().uuid().optional().nullable(),
+  product_id: uuidLoose,
+  variant_id: uuidLoose.optional().nullable(),
   budgeted_qty: z.number().positive('La cantidad debe ser mayor a 0'),
   budgeted_unit_cost: z.number().min(0).default(0),
 });
@@ -138,7 +139,7 @@ async function deleteHandler(request: NextRequest, session: AuthenticatedSession
 // Esto sigue el principio contable de que una vez iniciado el consumo,
 // el presupuesto original debe preservarse para el análisis de desviación.
 const updateItemSchema = z.object({
-  item_id: z.string().uuid(),
+  item_id: uuidLoose,
   budgeted_qty: z.number().positive('La cantidad debe ser mayor a 0').optional(),
   budgeted_unit_cost: z.number().min(0).optional(),
   // V2.12.36: toggle de facturación de exceso al cliente
