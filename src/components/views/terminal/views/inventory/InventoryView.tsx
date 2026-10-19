@@ -189,7 +189,10 @@ export default function InventoryView() {
     // kept in sync with the product being edited via handleOpenEdit/handleCloseEdit.
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [editForm, setEditForm] = useState<EditFormState>({
-        name: '', sku: '', category: '', price: 0, precio_empresa: 0,
+        name: '', sku: '', category: '',
+        // MISIÓN TIPO-DE-ARTÍCULO: default = producto físico.
+        is_service: false,
+        price: 0, precio_empresa: 0,
         precio_empresa_currency: 'CUP', cost_price: 0, unit_of_measure: 'unidad',
         description: '', price_currency: 'CUP', barcode: '', barcode_type: 'EAN13',
         visible_en_tienda: false, price_visible: true, stock_visible: true, on_promotion: false,
@@ -627,6 +630,9 @@ export default function InventoryView() {
             name: product.name || '',
             sku: product.sku || '',
             category: product.category || '',
+            // MISIÓN TIPO-DE-ARTÍCULO: hidratar la naturaleza real del artículo
+            // (llega vía get_paginated_products_v2 tras 20261020000001).
+            is_service: (product as any).is_service === true,
             price: product.price || 0,
             precio_empresa: product.precio_empresa || 0,
             precio_empresa_currency: (product as any).precio_empresa_currency || product.price_currency || 'CUP',
@@ -663,6 +669,8 @@ export default function InventoryView() {
                 name: editForm.name,
                 sku: editForm.sku,
                 category: editForm.category || null,
+                // MISIÓN TIPO-DE-ARTÍCULO: persistir la naturaleza del artículo.
+                is_service: editForm.is_service === true,
                 price: editForm.price,
                 precio_empresa: editForm.precio_empresa || null,
                 precio_empresa_currency: editForm.precio_empresa > 0 ? (editForm.precio_empresa_currency || editForm.price_currency || 'CUP') : null,

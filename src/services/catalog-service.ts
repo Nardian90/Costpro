@@ -13,6 +13,9 @@ interface CatalogExcelRow {
   SKU: string;
   Nombre: string;
   'Categoría': string;
+  // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): naturaleza del artículo en el
+  // intercambio Excel (texto legible: 'Servicio' | 'Producto físico').
+  'Tipo de Artículo': string;
   'Unidad de Medida': string;
   'Costo': number;
   'Precio Venta': number;
@@ -41,6 +44,7 @@ export async function exportCatalogToExcel(products: Product[], storeName?: stri
             SKU: 'PROD-001',
             Nombre: 'Ejemplo: Detergente Multiusos 1L',
             'Categoría': 'Limpieza',
+            'Tipo de Artículo': 'Producto físico',
             'Unidad de Medida': 'unidad',
             'Costo': 85.50,
             'Precio Venta': 120.00,
@@ -53,6 +57,7 @@ export async function exportCatalogToExcel(products: Product[], storeName?: stri
             SKU: 'PROD-002',
             Nombre: 'Ejemplo: Arroz Extra 5kg',
             'Categoría': 'Alimentos',
+            'Tipo de Artículo': 'Producto físico',
             'Unidad de Medida': 'unidad',
             'Costo': 350.00,
             'Precio Venta': 480.00,
@@ -63,21 +68,23 @@ export async function exportCatalogToExcel(products: Product[], storeName?: stri
           },
           {
             SKU: 'PROD-003',
-            Nombre: 'Ejemplo: Aceite Vegetal 900ml',
-            'Categoría': 'Alimentos',
+            Nombre: 'Ejemplo: Mantenimiento de Aire Acondicionado',
+            'Categoría': 'Servicios',
+            'Tipo de Artículo': 'Servicio',
             'Unidad de Medida': 'unidad',
-            'Costo': 210.00,
-            'Precio Venta': 295.00,
-            'Stock Mínimo': 15,
+            'Costo': 0,
+            'Precio Venta': 950.00,
+            'Stock Mínimo': 1,
             'Código de Barras': '7505551234567',
             'Proveedor': '',
-            'Descripción': '',
+            'Descripción': 'Servicio intangible: se vende sin existencias propias',
           },
         ]
       : products.map((p) => ({
           SKU: p.sku || '',
           Nombre: p.name || '',
           'Categoría': p.category || '',
+          'Tipo de Artículo': p.is_service ? 'Servicio' : 'Producto físico',
           'Unidad de Medida': p.unit_of_measure || 'unidad',
           'Costo': p.cost_price || 0,
           'Precio Venta': p.price || 0,
@@ -110,7 +117,8 @@ export async function exportCatalogToExcel(products: Product[], storeName?: stri
       const instructions = [
         { 'Campo': 'SKU', 'Descripción': 'Código único del producto (obligatorio, sin espacios)', 'Ejemplo': 'PROD-001' },
         { 'Campo': 'Nombre', 'Descripción': 'Nombre comercial del producto (obligatorio)', 'Ejemplo': 'Detergente Multiusos 1L' },
-        { 'Campo': 'Categoría', 'Descripción': 'Clasificación del producto (opcional)', 'Ejemplo': 'Limpieza' },
+        { 'Campo': 'Categoría', 'Descripción': 'Clasificación comercial del producto (opcional)', 'Ejemplo': 'Limpieza' },
+        { 'Campo': 'Tipo de Artículo', 'Descripción': 'Naturaleza del artículo (opcional): «Servicio» = intangible sin existencias; cualquier otro valor o vacío = producto físico', 'Ejemplo': 'Servicio' },
         { 'Campo': 'Unidad de Medida', 'Descripción': 'UM base del producto (opcional, defecto: unidad)', 'Ejemplo': 'unidad, kg, litro, caja' },
         { 'Campo': 'Costo', 'Descripción': 'Precio de costo por unidad (obligatorio, numérico)', 'Ejemplo': '85.50' },
         { 'Campo': 'Precio Venta', 'Descripción': 'Precio de venta al público (obligatorio, numérico)', 'Ejemplo': '120.00' },
@@ -172,6 +180,8 @@ export async function importCatalogFromExcel(
           sku: ['sku', 'SKU', 'Sku', 'Identificador', 'Código', 'Codigo', 'ID', 'id'],
           name: ['nombre', 'Nombre', 'name', 'Name', 'Nombre del Producto', 'Producto'],
           category: ['categoría', 'categoria', 'Categoría', 'Categoria', 'category', 'Category', 'Categoría (opcional)'],
+          // MISIÓN TIPO-DE-ARTÍCULO: aliases para la naturaleza del artículo.
+          is_service: ['tipo de artículo', 'tipo de articulo', 'Tipo de Artículo', 'tipo', 'Tipo', 'naturaleza', 'es servicio', 'servicio', 'Servicio', 'is_service', 'item type', 'type'],
           unit_of_measure: ['unidad de medida', 'Unidad de Medida', 'UM', 'um', 'Unidad', 'unidad'],
           cost_price: ['costo', 'Costo', 'cost', 'Cost', 'Precio Costo'],
           price: ['precio venta', 'Precio Venta', 'precio', 'Precio', 'price', 'Price', 'Precio de Venta'],
@@ -244,6 +254,8 @@ export async function importCatalogFromExcel(
             sku,
             name,
             category: String(normalized.category || '').trim() || null,
+            // MISIÓN TIPO-DE-ARTÍCULO: reconocer la naturaleza del artículo.
+            is_service: parseItemTypeAsService(normalized.is_service),
             unit_of_measure: String(normalized.unit_of_measure || 'unidad').trim(),
             cost_price: costPrice,
             price: price,
@@ -269,6 +281,8 @@ export interface CatalogImportProduct {
   sku: string;
   name: string;
   category: string | null;
+  // MISIÓN TIPO-DE-ARTÍCULO: true = servicio intangible (sin existencias).
+  is_service?: boolean;
   unit_of_measure: string;
   cost_price: number;
   price: number;
@@ -276,6 +290,19 @@ export interface CatalogImportProduct {
   barcode: string;
   supplier: string | null;
   description: string | null;
+}
+
+/**
+ * MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): interpreta la celda «Tipo de Artículo».
+ * Acepta «Servicio»/«service» (case-insensitive) y valores booleanos/1/0.
+ * Cualquier otro valor (o ausencia) → producto físico, para NO reclasificar
+ * artículos existentes por accidente durante un import.
+ */
+function parseItemTypeAsService(raw: unknown): boolean {
+  if (raw === true) return true;
+  if (typeof raw === 'number') return raw === 1;
+  const s = String(raw ?? '').trim().toLowerCase();
+  return s === 'servicio' || s === 'service' || s === 'true' || s === '1';
 }
 
 export interface ImportError {
@@ -492,6 +519,8 @@ export async function importCatalogFromCSV(
             sku: ['sku', 'SKU', 'Sku', 'Identificador', 'Código', 'Codigo', 'ID', 'id'],
             name: ['nombre', 'Nombre', 'name', 'Name', 'Nombre del Producto', 'Producto'],
             category: ['categoría', 'categoria', 'Categoría', 'Categoria', 'category', 'Category'],
+            // MISIÓN TIPO-DE-ARTÍCULO: aliases de naturaleza del artículo.
+            is_service: ['tipo de artículo', 'tipo de articulo', 'Tipo de Artículo', 'tipo', 'Tipo', 'naturaleza', 'es servicio', 'servicio', 'Servicio', 'is_service', 'item type', 'type'],
             unit_of_measure: ['unidad de medida', 'Unidad de Medida', 'UM', 'um', 'Unidad', 'unidad'],
             cost_price: ['costo', 'Costo', 'cost', 'Cost', 'Precio Costo'],
             price: ['precio venta', 'Precio Venta', 'precio', 'Precio', 'price', 'Price'],
@@ -560,6 +589,8 @@ export async function importCatalogFromCSV(
               sku,
               name,
               category: String(normalized.category || '').trim() || null,
+              // MISIÓN TIPO-DE-ARTÍCULO: reconocer la naturaleza del artículo.
+              is_service: parseItemTypeAsService(normalized.is_service),
               unit_of_measure: String(normalized.unit_of_measure || 'unidad').trim(),
               cost_price: costPrice,
               price,

@@ -265,6 +265,17 @@ export const productSchema = z.object({
       return val;
     }, z.boolean().optional())
     .default(false),
+  // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): naturaleza del artículo. Es la
+  // bandera que el backend (create_sale_v2 y las RPCs de lectura) ya usan.
+  // Sin declararla aquí, zod safeParse la STRIPPEA silenciosamente y el campo
+  // jamás llega al frontend ni persiste desde los formularios.
+  is_service: z
+    .preprocess((val) => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === "string") return val === "true";
+      return val;
+    }, z.boolean().optional())
+    .default(false),
 });
 
 export const productVariantSchema = z.object({
@@ -351,6 +362,10 @@ export const updateProductInputSchema = productSchema
     fc_auto_enabled: z.boolean().optional(),
     price_visible: z.boolean().optional(),
     stock_visible: z.boolean().optional(),
+    // MISIÓN TIPO-DE-ARTÍCULO: sin default — en updates parciales permanece
+    // `undefined` para no sobrescribir el valor persistido (mismo patrón
+    // HARDENING-CATALOG-EDIT que is_active/visible_en_tienda).
+    is_service: z.boolean().optional(),
   })
   .refine(
     // Q6+HARDENING: misma regla que en create. Solo comparar price vs cost_price

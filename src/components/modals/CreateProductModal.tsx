@@ -7,7 +7,7 @@ import { useUIStore, useAuthStore } from '@/store';
 import { useCreateProduct, useAddVariant } from '@/hooks/api/useProducts';
 import { catalogService } from '@/services/catalog-service';
 import { toast } from 'sonner';
-import { Camera, ImagePlus, X, Upload, Loader2, Package, Plus, Trash2, Info } from 'lucide-react';
+import { Camera, ImagePlus, X, Upload, Loader2, Package, Plus, Trash2, Info, Wrench } from 'lucide-react';
 import { compressImage, validateImageFile } from '@/lib/image-compress';
 import { generateEAN13FromSKU } from '@/lib/barcode-utils';
 import { supabase } from '@/lib/supabaseClient';
@@ -29,6 +29,10 @@ export const CreateProductModal = () => {
     name: '',
     sku: '',
     category: '',
+    // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): naturaleza del artículo.
+    // false = producto físico (default de la BD: products.is_service BOOLEAN
+    // NOT NULL DEFAULT FALSE); true = servicio intangible sin existencias.
+    is_service: false,
     price: 0,
     cost_price: 0,
     barcode: '',
@@ -197,6 +201,8 @@ export const CreateProductModal = () => {
       // 1. Create product
       const result = await createProductMutation.mutateAsync({
         ...form,
+        // MISIÓN TIPO-DE-ARTÍCULO: persistir la naturaleza del artículo.
+        is_service: form.is_service === true,
         barcode: form.barcode ? form.barcode : generateEAN13FromSKU(form.sku),
         barcode_type: form.barcode ? 'CODE128' : 'EAN13',
         store_id: user.activeStoreId
@@ -467,6 +473,50 @@ export const CreateProductModal = () => {
                 <option value="bolsa">Bolsa</option>
               </select>
             </div>
+          </div>
+
+          {/* ── MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): selector de naturaleza ── */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-black uppercase tracking-widest ml-1">Tipo de artículo</label>
+            <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Tipo de artículo">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={!form.is_service}
+                onClick={() => setForm({ ...form, is_service: false })}
+                className={`flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all text-left ${
+                  !form.is_service
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-border bg-card hover:border-primary/40'
+                }`}
+              >
+                <Package className={`w-5 h-5 shrink-0 ${!form.is_service ? 'text-primary' : 'text-muted-foreground'}`} />
+                <div className="min-w-0">
+                  <div className="text-xs font-black uppercase tracking-tight">Producto físico</div>
+                  <div className="text-[10px] text-muted-foreground leading-tight">Controla existencias: valida y descuenta stock al vender</div>
+                </div>
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={form.is_service === true}
+                onClick={() => setForm({ ...form, is_service: true })}
+                className={`flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all text-left ${
+                  form.is_service
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-border bg-card hover:border-primary/40'
+                }`}
+              >
+                <Wrench className={`w-5 h-5 shrink-0 ${form.is_service ? 'text-primary' : 'text-muted-foreground'}`} />
+                <div className="min-w-0">
+                  <div className="text-xs font-black uppercase tracking-tight">Servicio</div>
+                  <div className="text-[10px] text-muted-foreground leading-tight">Intangible: se vende sin existencias propias</div>
+                </div>
+              </button>
+            </div>
+            <p className="text-[10px] text-muted-foreground italic ml-1">
+              La categoría comercial es independiente: una categoría «Servicios» NO convierte un producto físico en servicio.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

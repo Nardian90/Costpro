@@ -272,7 +272,11 @@ export default function POSView() {
 
   // ── Add to cart with stock validation & price<cost audit ────
   const onAddToCart = (product: Product) => {
-    if ((product.stock_current ?? 0) <= 0) {
+    // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los servicios (is_service) no tienen
+    // existencias propias — el servidor (create_sale_v2) ya los exime del check
+    // de stock; el pre-check del POS replica la misma regla. Los productos
+    // físicos conservan íntegra la validación de disponibilidad.
+    if (product.is_service !== true && (product.stock_current ?? 0) <= 0) {
       toast.error(`${product.name} no tiene stock disponible`);
       return;
     }
@@ -298,11 +302,12 @@ export default function POSView() {
   };
 
   const handleAddItem = (product: Product, variant: ProductVariant | null) => {
-    if (!variant && (product.stock_current ?? 0) <= 0) {
+    // MISIÓN TIPO-DE-ARTÍCULO: los servicios se agregan sin exigir existencias.
+    if (!variant && product.is_service !== true && (product.stock_current ?? 0) <= 0) {
       toast.error(`${product.name} no tiene stock disponible`);
       return;
     }
-    if (variant && (product.stock_current ?? 0) < (variant.conversion_factor || 1)) {
+    if (variant && product.is_service !== true && (product.stock_current ?? 0) < (variant.conversion_factor || 1)) {
       toast.error(`${product.name} no tiene stock suficiente para ${variant.name}`);
       return;
     }

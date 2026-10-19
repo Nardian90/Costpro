@@ -40,12 +40,18 @@ export default function POSTableView({ products, onAddToCart }: POSTableViewProp
               </td>
               <td className="p-4 font-mono text-xs text-muted-foreground priority-low">{product.sku || '-'}</td>
               <td className="p-4 text-right">
-                <span className={cn(
-                  "font-bold px-2 py-0.5 rounded-lg text-xs tabular-nums",
-                  product.stock_current <= 0 ? "bg-destructive/10 text-destructive" :
-                  product.stock_current <= 5 ? "bg-warning/10 text-warning" :
-                  "bg-success/10 text-success"
-                )}>{product.stock_current}</span>
+                {/* MISIÓN TIPO-DE-ARTÍCULO: los servicios muestran su naturaleza
+                    en lugar de un stock numérico (no tienen existencias propias). */}
+                {product.is_service ? (
+                  <span className="font-bold px-2 py-0.5 rounded-lg text-xs uppercase tracking-tight bg-primary/10 text-primary">Servicio</span>
+                ) : (
+                  <span className={cn(
+                    "font-bold px-2 py-0.5 rounded-lg text-xs tabular-nums",
+                    product.stock_current <= 0 ? "bg-destructive/10 text-destructive" :
+                    product.stock_current <= 5 ? "bg-warning/10 text-warning" :
+                    "bg-success/10 text-success"
+                  )}>{product.stock_current}</span>
+                )}
               </td>
               <td className="p-4 text-right font-black text-primary">{formatCurrency(product.price)}</td>
               <td className="p-4">

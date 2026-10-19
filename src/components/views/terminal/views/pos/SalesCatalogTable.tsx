@@ -297,18 +297,26 @@ export default function SalesCatalogTable({
 
                 {/* Stock */}
                 <td className="p-3 text-center">
-                  <span
-                    className={cn(
-                      'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase',
-                      (product.stock_current ?? 0) > 10
-                        ? 'bg-primary/10 text-primary'
-                        : (product.stock_current ?? 0) > 0
-                          ? 'bg-warning/10 text-warning'
-                          : 'bg-destructive/10 text-destructive',
-                    )}
-                  >
-                    {product.stock_current ?? 0}
-                  </span>
+                  {/* MISIÓN TIPO-DE-ARTÍCULO: los servicios muestran su naturaleza
+                      en lugar del stock numérico (no tienen existencias propias). */}
+                  {product.is_service ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-primary/10 text-primary">
+                      Servicio
+                    </span>
+                  ) : (
+                    <span
+                      className={cn(
+                        'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase',
+                        (product.stock_current ?? 0) > 10
+                          ? 'bg-primary/10 text-primary'
+                          : (product.stock_current ?? 0) > 0
+                            ? 'bg-warning/10 text-warning'
+                            : 'bg-destructive/10 text-destructive',
+                      )}
+                    >
+                      {product.stock_current ?? 0}
+                    </span>
+                  )}
                 </td>
 
                 {/* Cost */}

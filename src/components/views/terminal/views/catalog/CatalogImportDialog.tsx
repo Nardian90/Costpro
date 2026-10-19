@@ -311,6 +311,9 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
         price: row.price,
         image_url: null,
         category: row.category,
+        // MISIÓN TIPO-DE-ARTÍCULO: persistir la naturaleza del artículo
+        // («Servicio» en la columna Tipo de Artículo del Excel/CSV).
+        is_service: row.is_service === true,
         unit_of_measure: row.unit_of_measure,
         description: row.description,
         is_active: true,

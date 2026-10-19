@@ -262,6 +262,15 @@ export interface Product {
   stock_visible?: boolean;
   /** Marca el producto como en promoción/oferta en la vitrina */
   on_promotion?: boolean;
+  /**
+   * Tipo de artículo (MISIÓN TIPO-DE-ARTÍCULO 2026-10-19):
+   * TRUE = servicio intangible — sin existencias propias; el frontend NO le
+   * aplica guards de stock (carrito, checkout, conteo). La BD lo respeta
+   * desde 20260810000070 y create_sale_v2 desde 20261017000000.
+   * FALSE/undefined = producto físico — sujeto a las validaciones vigentes.
+   * Independiente de la categoría comercial (category).
+   */
+  is_service?: boolean;
   product_variants?: ProductVariant[] | null;
   cost_sheet_id?: string | null;
   fc_auto_enabled?: boolean;

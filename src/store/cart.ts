@@ -739,17 +739,22 @@ export const useCartStore = create<CartState>()(
               const conversionFactor = variant?.conversion_factor || 1;
               // FIX-P2-8: guardar contra conversion_factor=0
               const safeFactor = conversionFactor > 0 ? conversionFactor : 1;
-              const maxVariantQty = Math.floor((product?.stock_current ?? 999999) / safeFactor);
+              // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los servicios (is_service)
+              // no tienen existencias propias — el servidor (create_sale_v2)
+              // ya los exime del check de stock y del movimiento de salida;
+              // el carrito replica la misma regla para no bloquearlos.
+              const isService = product?.is_service === true;
+              const maxVariantQty = isService ? Number.MAX_SAFE_INTEGER : Math.floor((product?.stock_current ?? 999999) / safeFactor);
               // FIX-P1-4: validar stock AGREGADO de todos los items del mismo producto
               const totalBaseUnits = state.items
                 .filter(i => i.product_id === productId)
                 .reduce((sum, i) => sum + (i.quantity * (i.variant?.conversion_factor || 1)), 0);
               const newBaseUnits = totalBaseUnits + (incomingQuantity * safeFactor);
-              if (newBaseUnits > (product?.stock_current ?? 999999)) {
+              if (!isService && newBaseUnits > (product?.stock_current ?? 999999)) {
                 notify("warning", `Stock insuficiente para ${product?.name || "producto"}. Disponible: ${product?.stock_current ?? 0} uds base`);
                 return;
               }
-              if (existing.quantity + incomingQuantity > maxVariantQty) {
+              if (!isService && existing.quantity + incomingQuantity > maxVariantQty) {
                 notify("warning", `Stock insuficiente para ${product?.name || "producto"}. Máx: ${maxVariantQty} ${variant?.name || "uds"}`);
                 return;
               }
@@ -771,16 +776,20 @@ export const useCartStore = create<CartState>()(
               }
             } else {
               const conversionFactor = variant?.conversion_factor || 1;
-              const stock = product?.stock_current ?? 999999;
-              const maxVariantQty = Math.floor(stock / conversionFactor);
-              if (maxVariantQty <= 0) {
+              // MISIÓN TIPO-DE-ARTÍCULO: eximir a los servicios del guard de
+              // existencias (mismo criterio del servidor). Los productos
+              // físicos conservan TODAS las validaciones.
+              const isService = product?.is_service === true;
+              const stock = isService ? Number.MAX_SAFE_INTEGER : (product?.stock_current ?? 999999);
+              const maxVariantQty = isService ? Number.MAX_SAFE_INTEGER : Math.floor(stock / conversionFactor);
+              if (!isService && maxVariantQty <= 0) {
                 notify("error", `Producto ${product?.name || "producto"} sin existencias.`);
                 return;
               }
               // FIX-FASE-D (D8): la ruta de ítem NUEVO no validaba quantity > stock
               // (updateQuantity y la ruta de ítem existente sí lo hacen). Contrato
               // consistente: rechazar con aviso en vez de aceptar líneas imposibles.
-              if (incomingQuantity > maxVariantQty) {
+              if (!isService && incomingQuantity > maxVariantQty) {
                 notify("warning", `Stock insuficiente para ${product?.name || "producto"}. Máx: ${maxVariantQty} ${variant?.name || "uds"}`);
                 return;
               }
@@ -904,9 +913,11 @@ export const useCartStore = create<CartState>()(
             );
             if (item) {
               const conversionFactor = item.variant?.conversion_factor || 1;
-              const stockInBaseUnits = item.product?.stock_current ?? 999999;
-              const maxVariantQty = Math.floor(stockInBaseUnits / conversionFactor);
-              if (quantity > maxVariantQty) {
+              // MISIÓN TIPO-DE-ARTÍCULO: sin clamp de cantidad para servicios.
+              const isService = item.product?.is_service === true;
+              const stockInBaseUnits = isService ? Number.MAX_SAFE_INTEGER : (item.product?.stock_current ?? 999999);
+              const maxVariantQty = isService ? Number.MAX_SAFE_INTEGER : Math.floor(stockInBaseUnits / conversionFactor);
+              if (!isService && quantity > maxVariantQty) {
                 notify("warning", `Stock máximo para ${item.product?.name || "producto"} es ${maxVariantQty} ${item.variant?.name || "uds"}.`);
                 item.quantity = maxVariantQty;
               } else if (quantity > 0) {
