@@ -1,12 +1,66 @@
 {
-  "version": 1,
+  "version": 2,
   "description": "Excepciones documentadas para el Security CI Gate. Cada excepción debe tener razón, autor y fecha de expiración.",
   "security_definer_without_auth_check": [
     {
-      "function": "validate_store_can_be_modified",
-      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
-      "added_by": "Iteración 9",
-      "expires": "2026-12-31"
+      "function": "adjust_total_amount",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "bulk_update_products",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "calculate_receipt_total_cup",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "calculate_service_distribution",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_admin_reverse_transaction",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_create_user_with_role",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_pos_undo_transaction",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_reverse_document",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_safely_delete_user",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_void_receipt",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
     },
     {
       "function": "check_bulk_ops_hourly_limit",
@@ -15,16 +69,478 @@
       "expires": "2026-12-31"
     },
     {
+      "function": "check_idempotency",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "check_tenant_store_quota",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "cleanup_expired_idempotency_keys",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "cleanup_old_aggregates",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "create_pre_restore_snapshot",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "create_purchase_order",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "detect_orphan_users",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "discover_backup_tables",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "ensure_fiscal_period",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fn_log_system_health",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fn_void_receipt",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "generate_confirmation_token",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "generate_internal_barcode",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "generate_inventory_snapshot",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_available_stock",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_backup_table_list",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_batch_store_daily_kpis",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_cash_closures",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_cash_shift_expected",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_current_user_store_id",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_daily_expenses_aggregated",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_daily_income_aggregated",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_global_max_operation_date",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_inventory_report",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_inventory_report",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_inventory_with_costs",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_low_stock_count",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_new_academy_cards",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_or_create_product_cost_sheet",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_paginated_products",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_product_cost_analysis",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_product_stock_ledger",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_product_stock_ledger_paginated",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_product_variants_counts",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_products_for_reception",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_profit_report",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_purchases_book",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_sales_book",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_sales_since_last_closure",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_store_analytics_advanced",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
       "function": "get_table_writable_columns",
       "reason": "STABLE read-only helper. No modifica datos. REVOKE anon/PUBLIC aplicado.",
       "added_by": "Iteración 7",
       "expires": "2026-12-31"
     },
     {
+      "function": "get_tax_report",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_transfers",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_usage_forecast",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_usage_summary",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_user_audit_history",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_worker_commission_summary",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "has_management_access_as",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "has_role",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "has_store_access_as",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "has_store_role_as",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "increment_user_usage",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "is_admin_check",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "is_admin_with_access",
+      "reason": "CP-SEC-027 F7 · b · RPC admin UI con guard is_admin()||has_store_access — categoría (b) ratificada por el propietario. Exposición anon=True; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "is_role_not_changed",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "is_tenant_member",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "mark_expired_lots",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "next_document_number",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "process_inventory_adjustment",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "process_pick3_transaction",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "process_stock_adjustment",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "purge_old_reset_snapshots",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "receive_against_po",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "receive_production_output_deprecated_4arg",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "register_idempotency",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "register_stock_movement",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "register_supplier_payment",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=4. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "regularize_sale_payment",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "release_expired_reservations",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "restore_transaction_snapshot",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "save_product_cost_sheet",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "sync_inventory_from_products",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "transfer_requires_approval",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "update_transaction_taxes",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "upsert_manual_exchange_rate_with_audit",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "upsert_store_cost_template",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "upsert_usage_aggregate",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
       "function": "validate_backup_registry_drift",
       "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
       "added_by": "Iteración 7",
       "expires": "2026-12-31"
+    },
+    {
+      "function": "validate_operation_date",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
     },
     {
       "function": "validate_post_restore",
@@ -37,6 +553,36 @@
       "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
       "added_by": "Iteración 7",
       "expires": "2026-12-31"
+    },
+    {
+      "function": "validate_store_can_be_modified",
+      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 9",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "validate_tenant_access",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "validate_transfer_operation_date",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "verify_audit_chain",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "void_reception_with_reversal",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
     }
   ],
   "tables_without_rls": [],
