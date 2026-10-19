@@ -1,0 +1,110 @@
+secdef_no_auth|adjust_total_amount|p_transaction_id uuid, p_new_total numeric, p_reason text
+secdef_no_auth|bulk_update_products|_products jsonb
+secdef_no_auth|calculate_receipt_total_cup|p_receipt_id uuid
+secdef_no_auth|calculate_service_distribution|p_service_id uuid
+secdef_no_auth|can_admin_reverse_transaction|p_actor uuid, p_store_id uuid
+secdef_no_auth|can_create_user_with_role|p_creator_id uuid, p_role_name text
+secdef_no_auth|can_pos_undo_transaction|p_transaction_id uuid, p_actor uuid
+secdef_no_auth|can_reverse_document|p_actor uuid, p_store_id uuid, p_operation text
+secdef_no_auth|can_safely_delete_user|p_user_id uuid
+secdef_no_auth|can_void_receipt|p_receipt_id uuid
+secdef_no_auth|check_bulk_ops_hourly_limit|p_user_id uuid, p_plan text
+secdef_no_auth|check_idempotency|p_key text, p_operation text, p_record_id uuid, p_param_hash text
+secdef_no_auth|check_tenant_store_quota|p_tenant_id uuid, p_plan plan_t DEFAULT NULL::plan_t
+secdef_no_auth|cleanup_expired_idempotency_keys|
+secdef_no_auth|cleanup_old_aggregates|p_days integer DEFAULT 30
+secdef_no_auth|create_pre_restore_snapshot|p_store_id uuid
+secdef_no_auth|create_purchase_order|p_store_id uuid, p_supplier_name text, p_supplier_id uuid DEFAULT NULL::uuid, p_po_number text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_expected_date date DEFAULT NULL::date, p_created_by uuid DEFAULT NULL::uuid, p_items jsonb DEFAULT '[]'::jsonb
+secdef_no_auth|detect_orphan_users|
+secdef_no_auth|discover_backup_tables|
+secdef_no_auth|e2e_hard_delete_store|p_store_id uuid
+secdef_no_auth|e2e_hard_delete_user|p_user_id uuid
+secdef_no_auth|ensure_fiscal_period|p_store_id uuid, p_year integer, p_month integer
+secdef_no_auth|fn_log_system_health|p_payload jsonb
+secdef_no_auth|fn_void_receipt|p_receipt_id uuid, p_user_id uuid
+secdef_no_auth|generate_confirmation_token|p_session_id uuid
+secdef_no_auth|generate_internal_barcode|
+secdef_no_auth|generate_inventory_snapshot|p_store_id uuid
+secdef_no_auth|get_available_stock|p_store_id uuid, p_product_id uuid
+secdef_no_auth|get_backup_table_list|p_include_excluded boolean DEFAULT false
+secdef_no_auth|get_batch_store_daily_kpis|p_store_ids uuid[], p_date date DEFAULT CURRENT_DATE
+secdef_no_auth|get_cash_closures|p_store_id uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_limit integer DEFAULT 1000
+secdef_no_auth|get_cash_shift_expected|p_store_id uuid
+secdef_no_auth|get_current_user_store_id|
+secdef_no_auth|get_daily_expenses_aggregated|p_store_id uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_limit integer DEFAULT 1000
+secdef_no_auth|get_daily_income_aggregated|p_store_id uuid, p_date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_date_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_limit integer DEFAULT 10000
+secdef_no_auth|get_global_max_operation_date|p_store_id uuid DEFAULT NULL::uuid
+secdef_no_auth|get_inventory_report|p_store_id uuid DEFAULT NULL::uuid, p_from_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_to_date timestamp with time zone DEFAULT NULL::timestamp with time zone
+secdef_no_auth|get_inventory_report|p_from_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_to_date timestamp with time zone DEFAULT NULL::timestamp with time zone
+secdef_no_auth|get_inventory_with_costs|p_store_id uuid DEFAULT NULL::uuid
+secdef_no_auth|get_low_stock_count|p_store_id uuid DEFAULT NULL::uuid
+secdef_no_auth|get_new_academy_cards|p_user_id uuid, p_limit integer
+secdef_no_auth|get_or_create_product_cost_sheet|p_product_id uuid, p_store_id uuid, p_template_id text DEFAULT NULL::text, p_modalidad text DEFAULT NULL::text, p_pdf_format text DEFAULT 'res148'::text
+secdef_no_auth|get_paginated_products|p_store_id uuid, p_search_term text DEFAULT ''::text, p_category text DEFAULT ''::text, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0
+secdef_no_auth|get_product_cost_analysis|p_product_id uuid, p_store_id uuid
+secdef_no_auth|get_product_stock_ledger|p_product_id uuid, p_store_id uuid DEFAULT NULL::uuid
+secdef_no_auth|get_product_stock_ledger_paginated|p_product_id uuid, p_store_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0
+secdef_no_auth|get_product_variants_counts|
+secdef_no_auth|get_products_for_reception|p_store_id uuid, p_search_term text DEFAULT ''::text, p_page integer DEFAULT 1, p_page_size integer DEFAULT 50
+secdef_no_auth|get_profit_report|p_store_id uuid, p_date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_date_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_limit integer DEFAULT 10000
+secdef_no_auth|get_purchases_book|p_store_id uuid, p_year integer, p_month integer
+secdef_no_auth|get_sales_book|p_store_id uuid, p_year integer, p_month integer
+secdef_no_auth|get_sales_since_last_closure|p_store_id uuid
+secdef_no_auth|get_store_analytics_advanced|p_store_id uuid, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_days integer DEFAULT 30
+secdef_no_auth|get_table_writable_columns|p_table_name text
+secdef_no_auth|get_tax_report|p_store_id uuid, p_year integer, p_month integer
+secdef_no_auth|get_transfers|p_store_id uuid, p_date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_date_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_status text DEFAULT NULL::text, p_limit integer DEFAULT 1000
+secdef_no_auth|get_usage_forecast|
+secdef_no_auth|get_usage_summary|p_hours integer DEFAULT 24
+secdef_no_auth|get_user_audit_history|p_user_id uuid, p_limit integer DEFAULT 100, p_offset integer DEFAULT 0
+secdef_no_auth|get_worker_commission_summary|p_store_id uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date
+secdef_no_auth|has_management_access_as|p_user_id uuid, p_store_id uuid
+secdef_no_auth|has_role|p_user_id uuid, p_required_role user_role
+secdef_no_auth|has_store_access_as|p_user_id uuid, p_store_id uuid
+secdef_no_auth|has_store_role_as|p_user_id uuid, p_store_id uuid, p_roles text[]
+secdef_no_auth|increment_user_usage|p_user_id uuid, p_action_type text, p_limit integer
+secdef_no_auth|is_admin_check|p_user_id uuid
+secdef_no_auth|is_admin_with_access|p_store_id uuid
+secdef_no_auth|is_role_not_changed|p_user_id uuid, p_new_role user_role, p_new_role_id uuid
+secdef_no_auth|is_tenant_member|p_tenant_id uuid
+secdef_no_auth|mark_expired_lots|p_store_id uuid DEFAULT NULL::uuid
+secdef_no_auth|next_document_number|p_store_id uuid, p_document_type text, p_user_id uuid DEFAULT NULL::uuid
+secdef_no_auth|process_inventory_adjustment|p_store_id uuid, p_cashier_id uuid, p_items adjustment_item[], p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone
+secdef_no_auth|process_pick3_transaction|p_user_id uuid, p_type text, p_amount bigint, p_reference_draw_id uuid DEFAULT NULL::uuid, p_reference_play_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_metadata jsonb DEFAULT '{}'::jsonb
+secdef_no_auth|process_stock_adjustment|p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone
+secdef_no_auth|purge_old_reset_snapshots|p_days integer DEFAULT 30
+secdef_no_auth|receive_against_po|p_po_id uuid, p_received_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT NULL::text
+secdef_no_auth|receive_production_output_deprecated_4arg|p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid
+secdef_no_auth|register_idempotency|p_key text, p_operation text, p_record_id uuid, p_param_hash text, p_result jsonb
+secdef_no_auth|register_stock_movement|p_product_id uuid, p_store_id uuid, p_quantity numeric, p_movement_type text DEFAULT NULL::text, p_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid, p_variant_id uuid DEFAULT NULL::uuid, p_sale_id uuid DEFAULT NULL::uuid, p_unit_cost numeric DEFAULT NULL::numeric, p_notes text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_skip_access_check boolean DEFAULT false
+secdef_no_auth|register_supplier_payment|p_store_id uuid, p_ref_type text, p_ref_id uuid, p_amount numeric, p_payment_method text, p_paid_by uuid, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_reference text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text, p_payment_date timestamp with time zone DEFAULT NULL::timestamp with time zone
+secdef_no_auth|regularize_sale_payment|p_transaction_id uuid, p_reason text, p_user_id uuid, p_idempotency_key text, p_new_cash numeric DEFAULT NULL::numeric, p_new_zelle_cup numeric DEFAULT NULL::numeric, p_new_zelle_usd numeric DEFAULT NULL::numeric, p_new_zelle_rate numeric DEFAULT NULL::numeric, p_new_transfer numeric DEFAULT NULL::numeric, p_new_subtotal numeric DEFAULT NULL::numeric
+secdef_no_auth|release_expired_reservations|
+secdef_no_auth|restore_transaction_snapshot|p_migration_id text, p_tx_id uuid
+secdef_no_auth|save_product_cost_sheet|p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_calculated_data jsonb, p_cost_price numeric
+secdef_no_auth|sync_inventory_from_products|p_store_id uuid DEFAULT NULL::uuid
+secdef_no_auth|transfer_requires_approval|p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb
+secdef_no_auth|update_transaction_taxes|p_transaction_id uuid, p_applied_taxes jsonb, p_reason text
+secdef_no_auth|upsert_manual_exchange_rate_with_audit|p_actor_id uuid, p_currency text, p_rate numeric, p_rate_date date DEFAULT NULL::date, p_source text DEFAULT 'elToque'::text, p_capture_method text DEFAULT 'real'::text, p_source_ip text DEFAULT NULL::text
+secdef_no_auth|upsert_store_cost_template|p_store_id uuid, p_template_id text, p_template_data jsonb, p_modalidad text, p_pdf_format text DEFAULT 'res148'::text, p_created_by uuid DEFAULT NULL::uuid
+secdef_no_auth|upsert_usage_aggregate|p_bucket_start timestamp with time zone, p_bucket_end timestamp with time zone, p_metric_type text, p_service text DEFAULT 'api'::text, p_endpoint text DEFAULT NULL::text, p_count integer DEFAULT 1, p_sum_value double precision DEFAULT 0
+secdef_no_auth|validate_backup_registry_drift|
+secdef_no_auth|validate_operation_date|p_new_date timestamp with time zone, p_store_id uuid DEFAULT NULL::uuid
+secdef_no_auth|validate_post_restore|p_store_id uuid, p_backup_payload jsonb DEFAULT NULL::jsonb
+secdef_no_auth|validate_pre_restore_fk_integrity|p_store_id uuid
+secdef_no_auth|validate_store_can_be_modified|p_store_id uuid, p_check_type text DEFAULT 'soft_delete'::text
+secdef_no_auth|validate_tenant_access|p_user_id uuid, p_store_id uuid
+secdef_no_auth|validate_transfer_operation_date|p_new_date timestamp with time zone, p_origin_store_id uuid, p_destination_store_id uuid
+secdef_no_auth|verify_audit_chain|
+secdef_no_auth|void_reception_with_reversal|p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT 'Anulacion con reversion'::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone
+secdef_public_grant|e2e_hard_delete_store
+secdef_public_grant|e2e_hard_delete_user
+secdef_public_grant|get_paginated_products_v2
+secdef_public_grant|get_products_for_pos
+secdef_public_grant|get_transactions
+secdef_public_grant|is_admin_with_access
+secdef_public_grant|profiles_block_privileged_update
+secdef_public_grant|register_reception
+secdef_public_grant|reverse_receipt_v2
+secdef_public_grant|void_pending_reception
+__canary__|checks_completed
