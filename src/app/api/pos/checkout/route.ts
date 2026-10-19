@@ -246,11 +246,18 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_supervisor_token_jti: supervisor_token_jti,
     p_supervisor_scope: supervisor_scope,
     p_discount_reason: d.discount_reason ?? null,
-    // MISIÓN-FLEX: solo se incluyen cuando existen — la venta exacta usa el
-    // payload canónico (compatible con RPC sin migrar). La nota de incidencia
-    // la construye el RPC; sale_notes es la nota manual opcional del cajero.
-    ...(d.payment_incidents?.length ? { p_payment_incidents: d.payment_incidents } : {}),
-    ...(d.sale_notes ? { p_notes: d.sale_notes } : {}),
+    // FIX AMBIGÜEDAD DE OVERLOAD (2026-10-18 — hallazgo de la misión Fechas de
+    // Trabajo): la migración 20261017000000 (MISIÓN-FLEX, PR #1415) creó un
+    // SEGUNDO create_sale_v2 de 26 params (+p_notes/+p_payment_incidents) sin
+    // eliminar el legado de 24 → PostgREST no puede desambiguar cuando la
+    // llamada lleva exactamente los 24 args nombrados (PGRST203 «Could not
+    // choose the best candidate function», verificado contra la BD viva) y
+    // TODA venta sin nota/incidencias fallaba con 400. Se envían SIEMPRE ambas
+    // claves (null cuando ausentes — mismo comportamiento en el RPC de 26
+    // params) → resolución única. La migración companion del PR
+    // (20261018000001) elimina además el overload legado de la BD.
+    p_payment_incidents: d.payment_incidents?.length ? d.payment_incidents : null,
+    p_notes: d.sale_notes ?? null,
   });
 
   if (rpcError) {

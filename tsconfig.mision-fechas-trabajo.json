@@ -1,0 +1,34 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/config/work-dates/movement-types.ts",
+    "src/store/work-date-prefs.ts",
+    "src/hooks/ui/useWorkDateDefault.ts",
+    "src/app/api/work-dates/route.ts",
+    "src/components/views/terminal/views/work_dates/WorkDatesView.tsx",
+    "src/components/views/terminal/views/devolutions/DevolutionsView.tsx",
+    "src/components/views/terminal/views/pos/usePosWorkDateDefault.ts",
+    "src/components/views/terminal/views/pos/POSView.tsx",
+    "src/components/views/terminal/views/pos/SalesCatalogCheckoutModal.tsx",
+    "src/components/views/terminal/views/inventory/useReceptionState.ts",
+    "src/components/views/terminal/views/inventory/ValeSalidaCreateModal.tsx",
+    "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
+    "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
+    "src/components/views/terminal/views/received_services/ReceivedServicesView.tsx",
+    "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
+    "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
+    "src/components/views/TerminalShell.tsx",
+    "src/store/index.ts",
+    "src/config/navigation/navigation-definition.ts",
+    "src/hooks/api/useGlobalOperationDate.ts",
+    "src/lib/pos/operation-date.ts",
+    "src/lib/cash-report/period-attribution.ts",
+    "src/__tests__/work-dates/work-date-prefs.test.ts",
+    "src/__tests__/work-dates/movement-types.test.ts",
+    "src/__tests__/work-dates/WorkDatesView.test.tsx",
+    "src/__tests__/work-dates/devolutions-fecha.test.tsx"
+  ]
+}

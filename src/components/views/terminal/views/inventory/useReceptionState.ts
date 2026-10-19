@@ -12,6 +12,9 @@ import { useGlobalOperationDate, validateOperationDate } from '@/hooks/api/useGl
 // para el default y el tope del selector — el slice UTC adelantaba el día a
 // partir de las 20:00 Habana y dejaba registrar recepciones fechadas "mañana".
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
+// MISIÓN FECHAS DE TRABAJO (2026-10-18): default = preferencia de trabajo
+// del usuario para recepciones (válida contra los límites vivos) o HOY.
+import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import { auditService } from '@/services/audit-service';
@@ -134,6 +137,10 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   // consume como s.todayStr) y de tope de la validación pre-envío.
   const todayStr = todayBusinessDay(); // YYYY-MM-DD (Habana)
   const [receptionDate, setReceptionDate] = useState(todayStr);
+  // MISIÓN FECHAS DE TRABAJO: aplicar la preferencia de trabajo del usuario
+  // como default (una vez, si no hubo borrador restaurado ni edición manual).
+  const [receptionDateTouched, setReceptionDateTouched] = useState(false);
+  useApplyWorkDateDefault('reception', !receptionDateTouched && receptionDate === todayStr, setReceptionDate, user?.activeStoreId);
   // Política forward-only: min attribute para el input type="date".
   // Convierte el ISO timestamp del RPC a formato YYYY-MM-DD.
   const globalMinDate = globalDateInfo?.minAllowedDate
@@ -260,7 +267,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       if (draft.supplier) setSupplier(draft.supplier);
       if (draft.invoiceNumber) setInvoiceNumber(draft.invoiceNumber);
       if (draft.notes) setNotes(draft.notes);
-      if (draft.receptionDate) setReceptionDate(draft.receptionDate);
+      if (draft.receptionDate) { setReceptionDate(draft.receptionDate); setReceptionDateTouched(true); }
       if (Array.isArray(draft.items) && draft.items.length > 0) {
         const itemsWithLocalId = draft.items.map((it: any, idx: number) => ({
           ...it,
@@ -1427,6 +1434,9 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     todayStr,
     receptionDate,
     setReceptionDate,
+    // MISIÓN FECHAS DE TRABAJO: marcar edición manual (evita que la
+    // preferencia pise una fecha ya elegida por el usuario o su borrador).
+    markReceptionDateTouched: () => setReceptionDateTouched(true),
     // Política forward-only locking: min attribute para el date input
     globalMinDate,
     editingIndex,

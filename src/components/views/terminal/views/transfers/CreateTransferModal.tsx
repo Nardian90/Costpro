@@ -25,6 +25,9 @@ import { format } from 'date-fns';
 // NEGOCIO Habana (antes fecha local del navegador, sin tope futuro). El RPC
 // create_transfer no tenía gate — la UI era la única barrera.
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
+// MISIÓN FECHAS DE TRABAJO (2026-10-18): default = preferencia de trabajo
+// del usuario para transferencias (válida contra los límites vivos) o HOY.
+import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
 import type { Product, Store } from '@/types';
 
 interface SelectedItem {
@@ -55,6 +58,8 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
   const [destinationStoreId, setDestinationStoreId] = useState('');
   const [notes, setNotes] = useState('');
   const [operationDate, setOperationDate] = useState<string>(todayBusinessDay());
+  const [operationDateTouched, setOperationDateTouched] = useState(false);
+  useApplyWorkDateDefault('transfer', !operationDateTouched && operationDate === todayBusinessDay(), setOperationDate, storeId);
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItem>>(new Map());
   const [searchTerm, setSearchTerm] = useState('');
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
@@ -369,7 +374,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                 MISIÓN POLÍTICA TEMPORAL: max = HOY (Habana) — sin fechas futuras. */}
             <OperationDatePicker
               value={operationDate}
-              onChange={setOperationDate}
+              onChange={(d) => { setOperationDateTouched(true); setOperationDate(d); }}
               storeId={storeId}
               max={todayBusinessDay()}
             />

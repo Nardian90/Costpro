@@ -118,7 +118,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
             id="rec-date"
             type="date"
             value={s.receptionDate}
-            onChange={e => s.setReceptionDate(e.target.value)}
+            onChange={e => { s.markReceptionDateTouched(); s.setReceptionDate(e.target.value); }}
             min={s.globalMinDate}
             max={s.todayStr}
             className="neu-input w-full sm:w-auto font-bold"

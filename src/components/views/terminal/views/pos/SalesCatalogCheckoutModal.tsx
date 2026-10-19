@@ -14,6 +14,9 @@ import { format } from 'date-fns';
 // NEGOCIO Habana (antes fecha local del navegador, sin tope futuro). La ruta
 // /api/pos/checkout ya revalidaba el tope (422) — esto lo lleva a la UI.
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
+// MISIÓN FECHAS DE TRABAJO (2026-10-18): default = preferencia de trabajo
+// del usuario para ventas (válida contra los límites vivos) o HOY.
+import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
 
 interface SalesCatalogCheckoutModalProps {
   open: boolean;
@@ -43,6 +46,8 @@ export default function SalesCatalogCheckoutModal({
   const totalUnits = activeRows.reduce((acc, r) => acc + r.quantity, 0);
   const [notes, setNotes] = useState('');
   const [operationDate, setOperationDate] = useState<string>(todayBusinessDay());
+  const [operationDateTouched, setOperationDateTouched] = useState(false);
+  useApplyWorkDateDefault('catalog_sale', !operationDateTouched && operationDate === todayBusinessDay(), setOperationDate, storeId);
 
   const dateValidation = useOperationDateValidation(operationDate, storeId, todayBusinessDay());
 
@@ -157,7 +162,7 @@ export default function SalesCatalogCheckoutModal({
             MISIÓN POLÍTICA TEMPORAL: max = HOY (Habana) — sin fechas futuras. */}
         <OperationDatePicker
           value={operationDate}
-          onChange={setOperationDate}
+          onChange={(d) => { setOperationDateTouched(true); setOperationDate(d); }}
           storeId={storeId}
           max={todayBusinessDay()}
         />

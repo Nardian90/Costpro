@@ -18,6 +18,9 @@ import { ServiceTypesManagerModal } from './ServiceTypesManagerModal';
 // Postgres) fechaba «mañana» los servicios creados tras las 20:00 Habana.
 import { OperationDatePicker, useOperationDateValidation } from '@/components/ui/OperationDatePicker';
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
+// MISIÓN FECHAS DE TRABAJO (2026-10-18): default = preferencia de trabajo
+// del usuario para servicios (válida contra los límites vivos) o HOY.
+import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
 
 /**
  * F2: Servicios Recibidos y Costos Asociados.
@@ -656,8 +659,12 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
   const [observations, setObservations] = useState('');
   const [submitting, setSubmitting] = useState(false);
   // MISIÓN POLÍTICA TEMPORAL: fecha del servicio. Default HOY (día de negocio
-  // America/Havana). Tope = HOY (nunca futura); mínimo per-store forward-only.
+  // America/Havana) o la preferencia de trabajo del usuario para servicios
+  // si es válida (MISIÓN FECHAS DE TRABAJO). Tope = HOY (nunca futura);
+  // mínimo per-store forward-only.
   const [serviceDate, setServiceDate] = useState<string>(todayBusinessDay());
+  const [serviceDateTouched, setServiceDateTouched] = useState(false);
+  useApplyWorkDateDefault('received_service', !serviceDateTouched && serviceDate === todayBusinessDay(), setServiceDate, user?.activeStoreId);
   const maxServiceDate = todayBusinessDay();
   const serviceDateValidation = useOperationDateValidation(serviceDate, user?.activeStoreId, maxServiceDate);
 
@@ -895,7 +902,7 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
             (UTC) — tras las 20:00 Habana quedaba fechado al día siguiente. */}
         <OperationDatePicker
           value={serviceDate}
-          onChange={setServiceDate}
+          onChange={(d) => { setServiceDateTouched(true); setServiceDate(d); }}
           label="Fecha del servicio"
           storeId={user?.activeStoreId}
           max={maxServiceDate}

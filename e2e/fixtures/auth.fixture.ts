@@ -53,6 +53,15 @@ export async function freshAuthHeaders(role: 'user' | 'admin' = 'user'): Promise
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 }
 
+/** Invalida el caché de sesión fresca del rol (p. ej. tras detectar un 401:
+ * un signOut GLOBAL a mitad de corrida revoca tokens que el caché de 5 min
+ * seguiría sirviendo como "frescos"). El próximo freshAuthHeaders re-sign-in. */
+export function invalidateFreshCache(role: 'user' | 'admin' = 'user'): void {
+  freshCache[role] = { token: '', ts: 0 };
+  if (role === 'admin') process.env.E2E_TEST_ADMIN_TOKEN = '';
+  else process.env.E2E_TEST_USER_TOKEN = '';
+}
+
 export function getAuthHeaders(role: 'user' | 'admin' = 'user') {
   const token = role === 'admin'
     ? process.env.E2E_TEST_ADMIN_TOKEN

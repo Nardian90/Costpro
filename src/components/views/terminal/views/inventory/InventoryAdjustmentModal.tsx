@@ -14,6 +14,9 @@ import { useAuthStore } from '@/store';
 // MISIÓN POLÍTICA TEMPORAL (2026-10-18): default y tope del selector en día de
 // NEGOCIO Habana (antes fecha local del navegador, sin tope futuro).
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
+// MISIÓN FECHAS DE TRABAJO (2026-10-18): default = preferencia de trabajo
+// del usuario para ajustes (válida contra los límites vivos) o HOY.
+import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
 import {
   Drawer,
   DrawerContent,
@@ -43,6 +46,8 @@ export default function InventoryAdjustmentModal({
   const [ajusteValorUnitario, setAjusteValorUnitario] = useState<number | ''>('');
   const [reason, setReason] = useState<string>('');
   const [operationDate, setOperationDate] = useState<string>(todayBusinessDay());
+  const [operationDateTouched, setOperationDateTouched] = useState(false);
+  useApplyWorkDateDefault('inventory_adjustment', !operationDateTouched && operationDate === todayBusinessDay(), setOperationDate, storeId);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // MISIÓN POLÍTICA TEMPORAL: tope HOY (Habana) — sin fechas futuras.
@@ -54,6 +59,7 @@ export default function InventoryAdjustmentModal({
     setAjusteValorUnitario('');
     setReason('');
     setOperationDate(todayBusinessDay());
+    setOperationDateTouched(false);
     setIsProcessing(false);
   }, [product.id]);
 
@@ -290,11 +296,14 @@ export default function InventoryAdjustmentModal({
               />
           </div>
 
-          {/* Política forward-only locking: selector de fecha */}
+          {/* Política forward-only locking: selector de fecha.
+              MISIÓN FECHAS DE TRABAJO: max visible en el input (HOY Habana) —
+              el validador ya lo aplicaba, el calendario no lo restringía. */}
           <OperationDatePicker
             value={operationDate}
-            onChange={setOperationDate}
+            onChange={(d) => { setOperationDateTouched(true); setOperationDate(d); }}
             storeId={storeId}
+            max={todayBusinessDay()}
           />
         </div>
 
