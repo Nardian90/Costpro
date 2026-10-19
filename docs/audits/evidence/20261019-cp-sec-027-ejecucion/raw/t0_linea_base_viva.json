@@ -1,0 +1,578 @@
+{
+  "ref": "wthkddeleylijmonclxg",
+  "tipo": "ventana-cp-sec-027",
+  "ts_inicio": "2026-10-19T13:13:24.158Z",
+  "fase": "T-0 línea base (solo lectura)",
+  "resultado": {
+    "archivo": "/home/z/my-project/download/cp-sec-027-paquete-ejecucion/t0_linea_base_readonly.sql",
+    "num_statements": 6,
+    "statements": [
+      {
+        "n": 1,
+        "ok": true,
+        "sql": "SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check FROM pg_policies WHERE schemaname = 'public' AND tablename IN ('products', 'stores', 'product_variants') ORDER BY tablename, policyname",
+        "filas": 21,
+        "resultado": [
+          {
+            "schemaname": "public",
+            "tablename": "product_variants",
+            "policyname": "Variantes públicas - lectura",
+            "permissive": "PERMISSIVE",
+            "roles": "{anon,authenticated}",
+            "cmd": "SELECT",
+            "qual": "(EXISTS ( SELECT 1\n   FROM products\n  WHERE ((products.id = product_variants.product_id) AND (products.visible_en_tienda = true))))",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "product_variants",
+            "policyname": "Variants delete - member access",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "DELETE",
+            "qual": "(EXISTS ( SELECT 1\n   FROM products p\n  WHERE ((p.id = product_variants.product_id) AND has_store_access(p.store_id))))",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "product_variants",
+            "policyname": "Variants insert - member access",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "INSERT",
+            "qual": null,
+            "with_check": "(EXISTS ( SELECT 1\n   FROM products p\n  WHERE ((p.id = product_variants.product_id) AND has_store_access(p.store_id))))"
+          },
+          {
+            "schemaname": "public",
+            "tablename": "product_variants",
+            "policyname": "Variants store isolation",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "SELECT",
+            "qual": "(EXISTS ( SELECT 1\n   FROM products p\n  WHERE ((p.id = product_variants.product_id) AND ((p.store_id IS NULL) OR has_store_access(p.store_id)))))",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "product_variants",
+            "policyname": "Variants update - member access",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "UPDATE",
+            "qual": "(EXISTS ( SELECT 1\n   FROM products p\n  WHERE ((p.id = product_variants.product_id) AND has_store_access(p.store_id))))",
+            "with_check": "(EXISTS ( SELECT 1\n   FROM products p\n  WHERE ((p.id = product_variants.product_id) AND has_store_access(p.store_id))))"
+          },
+          {
+            "schemaname": "public",
+            "tablename": "products",
+            "policyname": "products_delete_rls",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "DELETE",
+            "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = products.store_id))))",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "products",
+            "policyname": "products_public_read_anon",
+            "permissive": "PERMISSIVE",
+            "roles": "{anon}",
+            "cmd": "SELECT",
+            "qual": "((is_active = true) AND (visible_en_tienda = true))",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "products",
+            "policyname": "products_select_rls",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "SELECT",
+            "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = products.store_id))))",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "products",
+            "policyname": "products_tenant_delete",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "DELETE",
+            "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND is_admin())\n    ELSE is_admin()\nEND",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "products",
+            "policyname": "products_tenant_insert",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "INSERT",
+            "qual": null,
+            "with_check": "((tenant_id = current_user_tenant_id()) AND (store_id = ANY (current_user_store_ids())))"
+          },
+          {
+            "schemaname": "public",
+            "tablename": "products",
+            "policyname": "products_tenant_select",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "SELECT",
+            "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))\n    ELSE (is_admin() OR has_store_access(store_id))\nEND",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "products",
+            "policyname": "products_tenant_update",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "UPDATE",
+            "qual": "((tenant_id = current_user_tenant_id()) AND (is_admin() OR (store_id = ANY (current_user_store_ids()))))",
+            "with_check": "((tenant_id = current_user_tenant_id()) AND (store_id = ANY (current_user_store_ids())))"
+          },
+          {
+            "schemaname": "public",
+            "tablename": "products",
+            "policyname": "products_update_rls",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "UPDATE",
+            "qual": "(EXISTS ( SELECT 1\n   FROM user_store_memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = products.store_id))))",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "stores",
+            "policyname": "stores_delete_admin_only",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "DELETE",
+            "qual": "(is_global_admin() OR has_store_role(id, ARRAY['admin'::text]))",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "stores",
+            "policyname": "stores_insert_admin_manager",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "INSERT",
+            "qual": null,
+            "with_check": "(EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::user_role, 'manager'::user_role])))))"
+          },
+          {
+            "schemaname": "public",
+            "tablename": "stores",
+            "policyname": "stores_select_anon",
+            "permissive": "PERMISSIVE",
+            "roles": "{anon}",
+            "cmd": "SELECT",
+            "qual": "(is_active = true)",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "stores",
+            "policyname": "stores_select_authenticated",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "SELECT",
+            "qual": "(is_global_admin() OR is_store_member(id))",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "stores",
+            "policyname": "stores_tenant_delete",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "DELETE",
+            "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND is_admin())\n    ELSE is_admin()\nEND",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "stores",
+            "policyname": "stores_tenant_select",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "SELECT",
+            "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN (tenant_id = current_user_tenant_id())\n    ELSE (is_admin() OR (id = ANY (current_user_store_ids())))\nEND",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "stores",
+            "policyname": "stores_tenant_update",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "UPDATE",
+            "qual": "\nCASE\n    WHEN (current_setting('app.use_tenant_rls'::text, true) = 'true'::text) THEN ((tenant_id = current_user_tenant_id()) AND is_admin())\n    ELSE (is_admin() OR has_store_access(id))\nEND",
+            "with_check": null
+          },
+          {
+            "schemaname": "public",
+            "tablename": "stores",
+            "policyname": "stores_update_member_roles",
+            "permissive": "PERMISSIVE",
+            "roles": "{authenticated}",
+            "cmd": "UPDATE",
+            "qual": "(is_global_admin() OR has_store_role(id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text]))",
+            "with_check": "(is_global_admin() OR has_store_role(id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text]))"
+          }
+        ]
+      },
+      {
+        "n": 2,
+        "ok": true,
+        "sql": "SELECT grantee, table_schema, table_name, privilege_type FROM information_schema.role_table_grants WHERE table_schema = 'public' AND grantee IN ('anon', 'authenticated') AND table_name IN ('products', 'stores', 'product_variants', 'public_catalog_v', 'public_storefronts_v', 'public_variants_v') ORDER BY grantee, table_name, privilege_type",
+        "filas": 42,
+        "resultado": [
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "DELETE"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "INSERT"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "REFERENCES"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "SELECT"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "TRIGGER"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "TRUNCATE"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "UPDATE"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "DELETE"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "INSERT"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "REFERENCES"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "SELECT"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "TRIGGER"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "TRUNCATE"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "UPDATE"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "DELETE"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "INSERT"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "REFERENCES"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "SELECT"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "TRIGGER"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "TRUNCATE"
+          },
+          {
+            "grantee": "anon",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "UPDATE"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "DELETE"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "INSERT"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "REFERENCES"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "SELECT"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "TRIGGER"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "TRUNCATE"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "product_variants",
+            "privilege_type": "UPDATE"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "DELETE"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "INSERT"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "REFERENCES"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "SELECT"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "TRIGGER"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "TRUNCATE"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "products",
+            "privilege_type": "UPDATE"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "DELETE"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "INSERT"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "REFERENCES"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "SELECT"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "TRIGGER"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "TRUNCATE"
+          },
+          {
+            "grantee": "authenticated",
+            "table_schema": "public",
+            "table_name": "stores",
+            "privilege_type": "UPDATE"
+          }
+        ]
+      },
+      {
+        "n": 3,
+        "ok": false,
+        "sql": "SELECT view_schema, view_name FROM information_schema.views WHERE view_schema = 'public' AND view_name IN ('public_catalog_v', 'public_storefronts_v', 'public_variants_v')",
+        "error": "Error: Management API HTTP 400: {\"message\":\"Failed to run sql query: ERROR:  42703: column \\\"view_schema\\\" does not exist\\nLINE 1: SELECT view_schema, view_name FROM information_schema.views WHERE view_schema = 'public' AND view_name IN ('public_catalog_v', 'public_storefronts_v', 'public_variants_v')\\n               ^\\n\"}"
+      },
+      {
+        "n": 4,
+        "ok": true,
+        "sql": "SELECT c.relname, c.relrowsecurity AS rls_activo, c.relforcerowsecurity AS rls_forzado FROM pg_class c WHERE c.relnamespace = 'public'::regnamespace AND c.relname IN ('products', 'stores', 'product_variants') ORDER BY c.relname",
+        "filas": 3,
+        "resultado": [
+          {
+            "relname": "product_variants",
+            "rls_activo": true,
+            "rls_forzado": false
+          },
+          {
+            "relname": "products",
+            "rls_activo": true,
+            "rls_forzado": false
+          },
+          {
+            "relname": "stores",
+            "rls_activo": true,
+            "rls_forzado": false
+          }
+        ]
+      },
+      {
+        "n": 5,
+        "ok": true,
+        "sql": "SELECT version FROM supabase_migrations.schema_migrations ORDER BY version DESC LIMIT 12",
+        "filas": 12,
+        "resultado": [
+          {
+            "version": "20260615000003"
+          },
+          {
+            "version": "20260615000002"
+          },
+          {
+            "version": "20260615000001"
+          },
+          {
+            "version": "20260614000005"
+          },
+          {
+            "version": "20260614000004"
+          },
+          {
+            "version": "20260614000003"
+          },
+          {
+            "version": "20260614000002"
+          },
+          {
+            "version": "20260614000001"
+          },
+          {
+            "version": "20260613000001"
+          },
+          {
+            "version": "20260612000001"
+          },
+          {
+            "version": "20260612000000"
+          },
+          {
+            "version": "202401230001"
+          }
+        ]
+      },
+      {
+        "n": 6,
+        "ok": true,
+        "sql": "SELECT (SELECT count(*) FROM public.products WHERE is_active = true AND visible_en_tienda = true) AS productos_publicos, (SELECT count(*) FROM public.products WHERE is_active = true AND visible_en_tienda = true AND cost_average IS NOT NULL AND cost_average <> 0) AS con_costo_real, (SELECT count(*) FROM public.stores WHERE is_active = true) AS tiendas_activas",
+        "filas": 1,
+        "resultado": [
+          {
+            "productos_publicos": 103,
+            "con_costo_real": 103,
+            "tiendas_activas": 10
+          }
+        ]
+      }
+    ],
+    "ts": "2026-10-19T13:13:24.158Z",
+    "ts_fin": "2026-10-19T13:13:35.717Z"
+  }
+}

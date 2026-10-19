@@ -1,0 +1,19 @@
+══ HUMO LOCAL (pm2 localhost:3000, main 2be38e21b) ══
+── 1. API storefront puerto-padre-vitallcons ──
+{"store":{"id":"43a4dabc-b8b4-4b66-82b3-0c75335ca5d1","name":"Puerto Padre VITALLCONS","address":"","phone":"56561619","email":"vitallcons@gmail.com","logo_url":"https://wthkddeleylijmonclxg.supabase.co/storage/v1/object/public/stores/store-logos/e480c7cf-4730-448f-9c54-e3220fbbb8fd.jpeg","slug":"puerto-padre-vitallcons","plantilla":null,"reeup":"50004179942","is_active":true,"banner_url":null,"store_tagline":null,"whatsapp_group_url":null,"telegram_url":null,"services":[],"promo_images":[],"opening_hours":null,"banner_cta_text":null,"banner_cta_link":null},"products":[]}
+HTTP=200
+
+── 2. API storefront enervida-vitallcons (incidente D0) ──
+{"store":{"id":"5e6fe821-5465-48b1-b3f1-3aa3182edc38","name":"ENERVIDA-VITALLCONS","address":"Calle Menocal SN, Esquina a Francisco","phone":"56561619","email":"vitallcons@gmail.com","logo_url":"https://wthkddeleylijmonclxg.supabase.co/storage/v1/object/public/stores/store-logos/6001bef9-7ca7-43c0-b97d-0cb879f30d66.jpeg","slug":"enervida-vitallcons","plantilla":"construccion","reeup":"50004179942"
+── 3. Vitrina SSR /tienda/puerto-padre-vitallcons ──
+HTTP=200 bytes=136451
+1
+── 4. Vitrina SSR /tienda/enervida-vitallcons ──
+HTTP=200 bytes=547085
+1
+══ VERCEL PRODUCCIÓN (post-Fase A, sondeo D0 comparativo) ══
+── 5. API Vercel enervida-vitallcons ──
+{"store":{"id":"5e6fe821-5465-48b1-b3f1-3aa3182edc38","name":"ENERVIDA-VITALLCONS","address":"Calle Menocal SN, Esquina a Francisco","phone":"56561619","email":"vitallcons@gmail.com","logo_url":"https://wthkddeleylijmonclxg.supabase.co/storage/v1/object/public/stores/store-logos/6001bef9-7ca7-43c0-b
+── 6. Página Vercel enervida-vitallcons ──
+HTTP=200 bytes=539291
+1
