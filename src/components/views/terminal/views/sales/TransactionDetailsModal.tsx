@@ -15,7 +15,16 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, ShieldAlert, DollarSign, ArrowLeftRight, Banknote } from 'lucide-react';
+import { Check, ShieldAlert, DollarSign, ArrowLeftRight, Banknote, Printer } from 'lucide-react';
+// MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): reimpresión del comprobante POS desde
+// el historial — reconstruye el recibo del registro PERSISTIDO (transacción +
+// ítems + payment_transactions vía resolveSalePayments). 100% lectura: no
+// re-ejecuta la venta, no genera otro documento comercial, no toca stock.
+import { buildReceiptDataFromTransaction } from '@/lib/pos/thermal-receipt';
+import {
+  fetchActiveStoreName,
+  printThermalReceipt,
+} from '../pos/thermal-receipt-print';
 
 interface TransactionDetailsModalProps {
   isOpen: boolean;
@@ -125,6 +134,34 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
       ? 'CUP + USD'
       : 'CUP';
 
+  // MISIÓN IMPRESIÓN TÉRMICA: reimpresión del comprobante al ancho del rollo
+  // configurado. Los importes provienen del registro persistido (misma fuente
+  // que este modal) — cero recálculo. La impresión es independiente del estado
+  // de la venta: incluso una venta anulada se puede reimprimir (queda marcada).
+  const handlePrintReceipt = async () => {
+    if (!transaction) return;
+    const toastId = toast.loading('Preparando comprobante térmico…');
+    try {
+      const storeName = await fetchActiveStoreName(transaction.store_id ?? null);
+      const data = buildReceiptDataFromTransaction(
+        transaction,
+        items,
+        {
+          cashPaid: saleInfo.cashPaid,
+          transferPaid: saleInfo.transferPaid,
+          zellePaidUSD: saleInfo.zellePaidUSD,
+          zellePaidCUP: saleInfo.zellePaidCUP,
+        },
+        { storeName },
+      );
+      toast.dismiss(toastId);
+      await printThermalReceipt(data);
+    } catch {
+      toast.dismiss(toastId);
+      toast.error('No se pudo preparar el comprobante. Intenta de nuevo.', { duration: 6000 });
+    }
+  };
+
   const toggleDraftTax = (tax: TaxConfiguration) => {
     const isApplied = draftTaxes.some(t => t.id === tax.id);
     setDraftTaxes(isApplied ? draftTaxes.filter(t => t.id !== tax.id) : [...draftTaxes, tax]);
@@ -180,6 +217,23 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
             <span className="text-xs font-black uppercase tracking-widest text-destructive">Venta Anulada</span>
           </div>
         )}
+
+        {/* MISIÓN IMPRESIÓN TÉRMICA: reimpresión del comprobante POS. Disponible
+            para cualquier venta consultada (los datos ya cargados mandan; ítems
+            cargando → deshabilitado). Imprimir no altera la venta ni genera un
+            segundo documento comercial — es la MISMA venta re-presentada. */}
+        <div className="mb-4 flex justify-end">
+          <button
+            type="button"
+            onClick={handlePrintReceipt}
+            disabled={isLoading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+            title="Reimprimir comprobante en impresora térmica (rollos de 58/80 mm)"
+          >
+            <Printer className="w-4 h-4" />
+            Imprimir comprobante
+          </button>
+        </div>
 
         {/* Transaction metadata — 4 columns: Fecha, Método, Moneda, Estado */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">

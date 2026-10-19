@@ -82,7 +82,7 @@ export const POSCart = ({
   const isMobile = isMobileProp ?? isMobileHook;
   const prefersReducedMotion = useReducedMotion();
 
-  const { generatePDF, shareWhatsApp, exportAsImage } = usePOSCartExports({ lastSale });
+  const { generatePDF, shareWhatsApp, exportAsImage, printReceipt } = usePOSCartExports({ lastSale });
 
   const Container = motion.div;
   const containerProps = {
@@ -194,6 +194,7 @@ export const POSCart = ({
               onGeneratePDF={generatePDF}
               onShareWhatsApp={shareWhatsApp}
               onExportAsImage={exportAsImage}
+              onPrint={printReceipt}
               onClearLastSale={onClearLastSale}
               lastSale={lastSale ?? undefined}
             />
