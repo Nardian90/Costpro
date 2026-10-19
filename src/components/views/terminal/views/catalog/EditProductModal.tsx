@@ -5,7 +5,7 @@ import {
   Plus, Trash2, CheckCircle2, X,
   Package, Camera, ImagePlus, Info,
   FileText, AlertCircle, AlertTriangle,
-  Eye, EyeOff, DollarSign, Tag,
+  Eye, EyeOff, DollarSign, Tag, Wrench,
 } from 'lucide-react';
 import {
   PrimaryButton, SecondaryButton,
@@ -23,6 +23,9 @@ export interface EditFormState {
   name: string;
   sku: string;
   category: string;
+  // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): naturaleza del artículo
+  // (products.is_service). Independiente de la categoría comercial.
+  is_service: boolean;
   price: number;
   precio_empresa: number;
   precio_empresa_currency: string;
@@ -354,6 +357,52 @@ export default function EditProductModal({
             placeholder="Auto-generado si está vacío al guardar"
           />
           <p className="text-[10px] text-muted-foreground italic ml-1">Si lo dejas vacío, se genera automáticamente al guardar.</p>
+        </div>
+
+        {/* ── MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): selector de naturaleza ── */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-black uppercase tracking-widest ml-1">Tipo de artículo</label>
+          <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Tipo de artículo">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={!editForm.is_service}
+              onClick={() => onFormChange({ ...editForm, is_service: false })}
+              className={cn(
+                'flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all text-left',
+                !editForm.is_service
+                  ? 'border-primary bg-primary/5 shadow-sm'
+                  : 'border-border bg-card hover:border-primary/40'
+              )}
+            >
+              <Package className={cn('w-5 h-5 shrink-0', !editForm.is_service ? 'text-primary' : 'text-muted-foreground')} />
+              <div className="min-w-0">
+                <div className="text-xs font-black uppercase tracking-tight">Producto físico</div>
+                <div className="text-[10px] text-muted-foreground leading-tight">Controla existencias: valida y descuenta stock al vender</div>
+              </div>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={editForm.is_service === true}
+              onClick={() => onFormChange({ ...editForm, is_service: true })}
+              className={cn(
+                'flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all text-left',
+                editForm.is_service
+                  ? 'border-primary bg-primary/5 shadow-sm'
+                  : 'border-border bg-card hover:border-primary/40'
+              )}
+            >
+              <Wrench className={cn('w-5 h-5 shrink-0', editForm.is_service ? 'text-primary' : 'text-muted-foreground')} />
+              <div className="min-w-0">
+                <div className="text-xs font-black uppercase tracking-tight">Servicio</div>
+                <div className="text-[10px] text-muted-foreground leading-tight">Intangible: se vende sin existencias propias</div>
+              </div>
+            </button>
+          </div>
+          <p className="text-[10px] text-muted-foreground italic ml-1">
+            La categoría comercial es independiente: una categoría «Servicios» NO convierte un producto físico en servicio.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

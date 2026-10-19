@@ -253,8 +253,12 @@ export const ProductCard: React.FC<any> = ({
   product, onEdit, onViewPrices, onDelete, onToggleActive, onPrintLabel, onClick, className, variant = 'catalog',
   fcStatus, onViewFC, onClone, onImageClick, onAdjust
 }) => {
-  const isOutOfStock = product.stock_current <= 0;
-  const isLowStock = product.stock_current <= (product.min_stock || 0);
+  // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): un servicio (is_service) nunca está
+  // "agotado" — no tiene existencias propias y siempre es vendible. El badge
+  // muestra su naturaleza en lugar del stock numérico.
+  const isService = product.is_service === true;
+  const isOutOfStock = !isService && product.stock_current <= 0;
+  const isLowStock = !isService && product.stock_current <= (product.min_stock || 0);
   const hasImage = !!(product.public_image_url || product.image_url);
   const variantCount = product.product_variants?.length || 0;
 
@@ -274,7 +278,7 @@ export const ProductCard: React.FC<any> = ({
       <button
         type="button"
         onClick={() => !isOutOfStock && onClick?.(product)}
-        aria-label={`Agregar ${product.name} al carrito. Precio: ${formatCurrency(product.price)}. Stock: ${product.stock_current}`}
+        aria-label={`Agregar ${product.name} al carrito. ${isService ? 'Servicio' : `Precio: ${formatCurrency(product.price)}. Stock: ${product.stock_current}`}`}
         className={cn(
           "flex flex-row items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-border bg-card transition-all w-full text-left relative overflow-hidden",
           isOutOfStock ? "opacity-60 cursor-not-allowed" : "hover:shadow-md active:scale-[0.98]",
@@ -288,14 +292,20 @@ export const ProductCard: React.FC<any> = ({
           <h4 className="font-black text-xs sm:text-xs uppercase truncate mb-0.5 sm:mb-1">{product.name}</h4>
           <div className="flex items-center justify-between gap-2">
             <div className="text-[clamp(0.875rem,4vw,1.125rem)] font-black text-primary leading-none">{formatCurrency(product.price)}</div>
-            <div className={cn(
-              "text-[10px] sm:text-xs font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border shrink-0",
-              isOutOfStock ? "bg-danger/10 text-danger border-danger/20" :
-              isLowStock ? "bg-warning/10 text-warning border-warning/20" :
-              "bg-success/10 text-success border-success/20"
-            )}>
-              Stock: {product.stock_current}
-            </div>
+            {isService ? (
+              <div className="text-[10px] sm:text-xs font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border shrink-0 bg-primary/10 text-primary border-primary/20">
+                Servicio
+              </div>
+            ) : (
+              <div className={cn(
+                "text-[10px] sm:text-xs font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border shrink-0",
+                isOutOfStock ? "bg-danger/10 text-danger border-danger/20" :
+                isLowStock ? "bg-warning/10 text-warning border-warning/20" :
+                "bg-success/10 text-success border-success/20"
+              )}>
+                Stock: {product.stock_current}
+              </div>
+            )}
           </div>
         </div>
         {isOutOfStock && (

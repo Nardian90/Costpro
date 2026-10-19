@@ -45,7 +45,10 @@ export const POSCartItem = ({
   const conversionFactor = item.variant?.conversion_factor || 1;
   // FIX-P2-8: guardar contra conversion_factor=0 (división por cero)
   const safeFactor = conversionFactor > 0 ? conversionFactor : 1;
-  const maxStock = Math.floor((item.product?.stock_current ?? 999) / safeFactor);
+  // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los servicios no tienen tope de
+  // cantidad por existencias — se venden con stock 0 sin límite artificial.
+  const isService = item.product?.is_service === true;
+  const maxStock = isService ? Number.MAX_SAFE_INTEGER : Math.floor((item.product?.stock_current ?? 999) / safeFactor);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   // FIX-TASAS-MODAL (2026-07-10) / MISIÓN-TASAS (2026-10-17): el modal de tasas
@@ -216,14 +219,16 @@ export const POSCartItem = ({
           <div
             className={cn(
               "px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-tight border whitespace-nowrap",
-              item.product.stock_current > 10
+              isService
                 ? "bg-primary/10 text-primary border-primary/20"
-                : item.product.stock_current > 0
-                  ? "bg-warning/10 text-warning border-warning/20"
-                  : "bg-destructive/10 text-destructive border-destructive/20",
+                : item.product.stock_current > 10
+                  ? "bg-primary/10 text-primary border-primary/20"
+                  : item.product.stock_current > 0
+                    ? "bg-warning/10 text-warning border-warning/20"
+                    : "bg-destructive/10 text-destructive border-destructive/20",
             )}
           >
-            Stock: {item.product.stock_current}
+            {isService ? 'Servicio' : `Stock: ${item.product.stock_current}`}
           </div>
         </div>
 

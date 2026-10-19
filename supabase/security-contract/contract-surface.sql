@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-19T11:47:21.823Z
+-- Captured  : 2026-10-19T13:53:45.425Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 137 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -2370,13 +2370,19 @@ BEGIN
     END IF;
     v_devolution_cost := COALESCE(v_devolution_cost, 0);
 
-    PERFORM public.register_stock_movement(
-      p_product_id := v_pid, p_store_id := p_store_id, p_user_id := v_caller_uid,
-      p_quantity := v_qty, p_movement_type := 'return',
-      p_sale_id := v_devolution_id, p_unit_cost := v_devolution_cost,
-      p_reason := ('Devolución: ' || COALESCE(p_reason, ''))::text,
-      p_operation_date := v_eff, p_skip_access_check := TRUE
-    );
+    -- MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los servicios (is_service=true)
+    -- NO tienen existencias propias → NO se registra movimiento de entrada
+    -- de stock (evita stock/inventory/kardex fantasma). El reembolso
+    -- financiero DF-03 y la trazabilidad documental se conservan íntegros.
+    IF NOT EXISTS (SELECT 1 FROM public.products WHERE id = v_pid AND is_service = true) THEN
+      PERFORM public.register_stock_movement(
+        p_product_id := v_pid, p_store_id := p_store_id, p_user_id := v_caller_uid,
+        p_quantity := v_qty, p_movement_type := 'return',
+        p_sale_id := v_devolution_id, p_unit_cost := v_devolution_cost,
+        p_reason := ('Devolución: ' || COALESCE(p_reason, ''))::text,
+        p_operation_date := v_eff, p_skip_access_check := TRUE
+      );
+    END IF;
   END LOOP;
 
   UPDATE public.devolutions SET total_amount = v_total WHERE id = v_devolution_id;
@@ -3934,6 +3940,7 @@ BEGIN
 
     SELECT p.id, p.stock_current, p.cost_average, p.sku, p.name, p.unit_of_measure,
            p.description, p.category, p.price, p.price_currency,
+           COALESCE(p.is_service, false) AS is_service,
            p.stock_current - COALESCE(
              (SELECT SUM(r.quantity) FROM public.inventory_reservations r
               WHERE r.product_id = p.id AND r.store_id = p.store_id AND r.status = 'ACTIVE'),
@@ -3945,6 +3952,14 @@ BEGIN
     FOR UPDATE;
 
     IF NOT FOUND THEN RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: %', v_pid; END IF;
+
+    -- MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): rechazo explícito de servicios.
+    -- Un artículo intangible no tiene existencias transferibles entre
+    -- almacenes; el bloqueo accidental por stock 0 era un error confuso.
+    IF v_origin_product.is_service THEN
+      RAISE EXCEPTION 'ERR_SERVICE_NOT_TRANSFERABLE: el producto % (SKU %) es un servicio (is_service=true) y no tiene existencias transferibles entre almacenes',
+        v_origin_product.name, v_origin_product.sku;
+    END IF;
 
     IF v_origin_product.stock_avail < v_qty THEN
       RAISE EXCEPTION 'ERR_INSUFFICIENT_STOCK: producto %, disponible %, solicitado %',
@@ -3963,11 +3978,12 @@ BEGIN
     LIMIT 1;
 
     -- H-049: Si no existe, crear producto espejo con MÁS campos copiados
+    -- MISIÓN TIPO-DE-ARTÍCULO: el espejo copia también is_service.
     IF v_dest_product IS NULL THEN
       INSERT INTO public.products (
         store_id, sku, name, description, unit_of_measure,
         stock_current, cost_average, cost_price, price, price_currency,
-        is_active, category
+        is_active, category, is_service
       ) VALUES (
         p_destination_store_id,
         v_origin_product.sku,
@@ -3980,7 +3996,8 @@ BEGIN
         COALESCE(v_origin_product.price, v_unit_cost),  -- H-049: precio del origen
         COALESCE(v_origin_product.price_currency, 'CUP'),  -- H-049: moneda del origen
         true,
-        COALESCE(v_origin_product.category, 'General')  -- H-049: categoría del origen
+        COALESCE(v_origin_product.category, 'General'),  -- H-049: categoría del origen
+        v_origin_product.is_service
       ) RETURNING id INTO v_dest_product;
     END IF;
 
@@ -8837,65 +8854,70 @@ BEGIN
   -- Quedan PROHIBIDOS (divergencia corregida):
   --   * UPDATE directo de products.stock_current (antes: GREATEST(0, stock-qty))
   --   * INSERT directo en kardex_entries (antes: 'out' con unit_cost=0)
+  -- MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los ítems de servicio (is_service)
+  -- no pasan por fn_recalc_wac ni por register_stock_movement — no hay
+  -- existencias ni WAC de inventario que tocar en un artículo intangible.
   FOR v_item IN
     SELECT product_id, quantity FROM public.devolution_items WHERE devolution_id = p_devolution_id
   LOOP
-    -- (a) Costo complementario del kardex: del movimiento 'return' original
-    --     (promedio ponderado si hay varios). Si no existe (devoluciones
-    --     pre-pipeline — 13/13 en datos reales), cadena canonica de
-    --     create_devolution_v2: cost_at_sale -> cost_average -> 0.
-    --     Solo atribucion contable: el WAC real NO se toca (ver (b)).
-    SELECT (SUM(sm.unit_cost * sm.quantity_change) / NULLIF(SUM(sm.quantity_change), 0))
-      INTO v_uc_dev
-      FROM public.stock_movements sm
-      WHERE sm.reference_id = p_devolution_id::text
-        AND sm.product_id = v_item.product_id
-        AND sm.movement_type = 'return';
-    IF v_uc_dev IS NULL THEN
-      IF v_dev.original_transaction_id IS NOT NULL THEN
-        SELECT ti.cost_at_sale INTO v_uc_dev
-          FROM public.transaction_items ti
-          WHERE ti.transaction_id = v_dev.original_transaction_id
-            AND ti.product_id = v_item.product_id
-          LIMIT 1;
-      END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.products pr WHERE pr.id = v_item.product_id AND pr.is_service = true) THEN
+      -- (a) Costo complementario del kardex: del movimiento 'return' original
+      --     (promedio ponderado si hay varios). Si no existe (devoluciones
+      --     pre-pipeline — 13/13 en datos reales), cadena canonica de
+      --     create_devolution_v2: cost_at_sale -> cost_average -> 0.
+      --     Solo atribucion contable: el WAC real NO se toca (ver (b)).
+      SELECT (SUM(sm.unit_cost * sm.quantity_change) / NULLIF(SUM(sm.quantity_change), 0))
+        INTO v_uc_dev
+        FROM public.stock_movements sm
+        WHERE sm.reference_id = p_devolution_id::text
+          AND sm.product_id = v_item.product_id
+          AND sm.movement_type = 'return';
       IF v_uc_dev IS NULL THEN
-        SELECT cost_average INTO v_uc_dev FROM public.products WHERE id = v_item.product_id;
+        IF v_dev.original_transaction_id IS NOT NULL THEN
+          SELECT ti.cost_at_sale INTO v_uc_dev
+            FROM public.transaction_items ti
+            WHERE ti.transaction_id = v_dev.original_transaction_id
+              AND ti.product_id = v_item.product_id
+            LIMIT 1;
+        END IF;
+        IF v_uc_dev IS NULL THEN
+          SELECT cost_average INTO v_uc_dev FROM public.products WHERE id = v_item.product_id;
+        END IF;
+        v_uc_dev := COALESCE(v_uc_dev, 0);
       END IF;
-      v_uc_dev := COALESCE(v_uc_dev, 0);
+
+      -- (b) WAC: la devolucion original NO altera cost_average (hotfix A2 v2.22.0,
+      --     "for other paths (transfers, devolutions, etc.), cost_average stays
+      --     as-is"). El reverse conserva esa invariancia via la rama q=0 de
+      --     fn_recalc_wac ("Salida pura / devolucion A1 / evento neutro: WAC
+      --     INVARIANTE"): lock del producto + wac_change_log (before==after).
+      --     Permite llevar el stock a 0 sin division por cero ni WAC corrupto.
+      PERFORM public.fn_recalc_wac(
+        v_dev.store_id, v_item.product_id, 'devolution_reverse',
+        0, 0,
+        jsonb_build_object('rpc', 'reverse_devolution', 'devolution_id', p_devolution_id,
+          'qty_reversed', v_item.quantity));
+
+      -- (c) Mutacion de stock SOLO via pipeline canonico. Signo (GATE 3): la
+      --     devolucion original sumo (+q, 'return') -> el reverse resta (-q).
+      --     Sin clamp: si el stock ya no alcanza, fn_sync_inventory_on_movement
+      --     falla con ERR_INSUFFICIENT_STOCK (deteccion sobre silencio, W7 D-01).
+      --     reference_id = devolutions.id (trazabilidad estructurada, GATE 8).
+      PERFORM public.register_stock_movement(
+        p_product_id := v_item.product_id,
+        p_store_id := v_dev.store_id,
+        p_quantity := -v_item.quantity,
+        p_movement_type := 'devolution_reverse',
+        p_reason := ('Reversión devolución ' || COALESCE(v_dev.devolution_number, p_devolution_id::text))::text,
+        p_user_id := v_uid,
+        p_variant_id := NULL,
+        p_sale_id := p_devolution_id,
+        p_unit_cost := v_uc_dev,
+        p_notes := COALESCE(p_reason, ''),
+        p_operation_date := NOW(),
+        p_skip_access_check := TRUE
+      );
     END IF;
-
-    -- (b) WAC: la devolucion original NO altera cost_average (hotfix A2 v2.22.0,
-    --     "for other paths (transfers, devolutions, etc.), cost_average stays
-    --     as-is"). El reverse conserva esa invariancia via la rama q=0 de
-    --     fn_recalc_wac ("Salida pura / devolucion A1 / evento neutro: WAC
-    --     INVARIANTE"): lock del producto + wac_change_log (before==after).
-    --     Permite llevar el stock a 0 sin division por cero ni WAC corrupto.
-    PERFORM public.fn_recalc_wac(
-      v_dev.store_id, v_item.product_id, 'devolution_reverse',
-      0, 0,
-      jsonb_build_object('rpc', 'reverse_devolution', 'devolution_id', p_devolution_id,
-        'qty_reversed', v_item.quantity));
-
-    -- (c) Mutacion de stock SOLO via pipeline canonico. Signo (GATE 3): la
-    --     devolucion original sumo (+q, 'return') -> el reverse resta (-q).
-    --     Sin clamp: si el stock ya no alcanza, fn_sync_inventory_on_movement
-    --     falla con ERR_INSUFFICIENT_STOCK (deteccion sobre silencio, W7 D-01).
-    --     reference_id = devolutions.id (trazabilidad estructurada, GATE 8).
-    PERFORM public.register_stock_movement(
-      p_product_id := v_item.product_id,
-      p_store_id := v_dev.store_id,
-      p_quantity := -v_item.quantity,
-      p_movement_type := 'devolution_reverse',
-      p_reason := ('Reversión devolución ' || COALESCE(v_dev.devolution_number, p_devolution_id::text))::text,
-      p_user_id := v_uid,
-      p_variant_id := NULL,
-      p_sale_id := p_devolution_id,
-      p_unit_cost := v_uc_dev,
-      p_notes := COALESCE(p_reason, ''),
-      p_operation_date := NOW(),
-      p_skip_access_check := TRUE
-    );
 
     v_count := v_count + 1;
   END LOOP;
@@ -9268,10 +9290,14 @@ BEGIN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED: reversion administrativa requiere rol admin/manager/encargado en la tienda de la venta';
   END IF;
 
+  -- MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): además del product_id IS NOT NULL
+  -- preexistente, se excluyen los servicios: revertir la venta de un
+  -- artículo intangible NO restaura existencias que nunca se descontaron.
   FOR v_item IN
     SELECT ti.product_id, ti.quantity, ti.cost_at_sale
     FROM public.transaction_items ti
     WHERE ti.transaction_id = p_transaction_id AND ti.product_id IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM public.products pr WHERE pr.id = ti.product_id AND pr.is_service = true)
   LOOP
     v_units_to_restore := v_item.quantity;
 
@@ -10976,7 +11002,18 @@ BEGIN
   -- Si transaction_items.variant_id está poblado, buscar conversion_factor.
   -- Si variant_id es NULL (ventas legacy), usar 1 (sin conversión) para
   -- mantener simetría con create_sale legacy.
-  FOR v_item IN SELECT * FROM public.transaction_items WHERE transaction_id = p_transaction_id LOOP
+  -- MISIÓN TIPO-DE-ARTÍCULO (2026-10-19):
+  --   * product_id IS NOT NULL: items sin producto (close_service_order_as_sale)
+  --     no tienen existencias que restaurar.
+  --   * is_service: los servicios intangibles nunca descontaron stock al
+  --     venderse (create_sale_v2 :736-743) → no se les restaura nada.
+  FOR v_item IN
+    SELECT ti.*
+    FROM public.transaction_items ti
+    WHERE ti.transaction_id = p_transaction_id
+      AND ti.product_id IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM public.products pr WHERE pr.id = ti.product_id AND pr.is_service = true)
+  LOOP
     v_conversion_factor := 1;
     IF v_item.variant_id IS NOT NULL THEN
       SELECT conversion_factor INTO v_conversion_factor

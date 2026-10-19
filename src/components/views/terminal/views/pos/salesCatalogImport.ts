@@ -251,9 +251,13 @@ export function parseImportFile(
             : null;
 
           // Check stock limit
+          // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los servicios no se ajustan
+          // a un "stock limit" — importar qty de un servicio respeta la cifra
+          // del Excel (el servidor no descuenta existencias al confirmar).
+          const isService = product.is_service === true;
           const convFactor = selectedVariant?.conversion_factor || 1;
-          const stockLimit = (product.stock_current ?? 999999) / convFactor;
-          if (quantity > stockLimit) {
+          const stockLimit = isService ? Number.MAX_SAFE_INTEGER : (product.stock_current ?? 999999) / convFactor;
+          if (!isService && quantity > stockLimit) {
             warnings.push(`Fila ${rowIdx}: "${product.name}" cantidad (${quantity}) > stock (${product.stock_current ?? 0}), ajustada a ${Math.round(stockLimit * 10000) / 10000}`);
           }
           const finalQty = Math.min(quantity, stockLimit);

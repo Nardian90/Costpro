@@ -454,10 +454,13 @@ export function usePOSCheckout() {
       // ── VALIDACIÓN DE STOCK: impedir overselling (stock negativo) ──
       // FIX-G10: multiplicar cantidad por conversion_factor de la variante
       // antes de comparar con stock_current. Vender 1 docena = 12 unidades.
-      const itemsByProduct = new Map<string, { productName: string; totalQty: number; stock: number }>();
+      // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los servicios (is_service) quedan
+      // exentos del check — el servidor (create_sale_v2) también los exime y
+      // no descuenta existencias. Los productos físicos conservan el guard.
+      const itemsByProduct = new Map<string, { productName: string; totalQty: number; stock: number; isService: boolean }>();
       for (const item of items) {
         const pid = item.product.id;
-        const existing = itemsByProduct.get(pid) || { productName: item.product.name, totalQty: 0, stock: item.product.stock_current ?? 0 };
+        const existing = itemsByProduct.get(pid) || { productName: item.product.name, totalQty: 0, stock: item.product.stock_current ?? 0, isService: item.product.is_service === true };
         // FIX-G10: convertir cantidad a unidades base usando conversion_factor
         const conversionFactor = item.variant?.conversion_factor || 1;
         existing.totalQty += item.quantity * conversionFactor;
@@ -465,7 +468,7 @@ export function usePOSCheckout() {
       }
       const insufficientStock: string[] = [];
       for (const [pid, info] of itemsByProduct) {
-        if (info.totalQty > info.stock) {
+        if (!info.isService && info.totalQty > info.stock) {
           insufficientStock.push(`${info.productName}: pedido ${info.totalQty}, stock ${info.stock}`);
         }
       }

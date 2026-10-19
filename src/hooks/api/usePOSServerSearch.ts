@@ -70,8 +70,10 @@ export function usePOSServerSearch({
     return products.filter((p) => {
       // Categoría
       if (selectedCategory && p.category !== selectedCategory) return false;
-      // Stock: ocultar agotados por default (no hacer ruido visual en POS)
-      if (hideOutOfStock && (p.stock_current ?? 0) <= 0) return false;
+      // Stock: ocultar agotados por default (no hacer ruido visual en POS).
+      // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los servicios NO se ocultan —
+      // no tienen existencias propias y siempre son vendibles.
+      if (hideOutOfStock && p.is_service !== true && (p.stock_current ?? 0) <= 0) return false;
       // Search
       if (!q) return true;
       const name = p.name.toLowerCase();

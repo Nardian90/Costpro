@@ -126,6 +126,9 @@ export function useSalesCatalog() {
         stockFilter === 'with_quantity' ||
         stockFilter === 'without_quantity' ||
         stockFilter === 'with_movements' ||
+        // MISIÓN TIPO-DE-ARTÍCULO: los servicios siempre son vendibles — el
+        // filtro por existencias no les aplica (no se ocultan con 'in_stock').
+        p.is_service === true ||
         (stockFilter === 'in_stock' && (p.stock_current ?? 0) > 0) ||
         (stockFilter === 'out_of_stock' && (p.stock_current ?? 0) <= 0);
       const matchQuantity =
@@ -234,7 +237,9 @@ export function useSalesCatalog() {
   const handleSetQuantity = useCallback((product: Product, qty: number) => {
     updateRow(product.id, (r) => {
       const convFactor = r.selectedVariant?.conversion_factor || 1;
-      const maxQty = (product.stock_current ?? 999999) / convFactor;
+      // MISIÓN TIPO-DE-ARTÍCULO: sin clamp por existencias para servicios.
+      const isService = product.is_service === true;
+      const maxQty = isService ? Number.MAX_SAFE_INTEGER : (product.stock_current ?? 999999) / convFactor;
       const clampedQty = Math.max(0, Math.min(Math.round(qty * 10000) / 10000, maxQty));
       const updated = { ...r, quantity: clampedQty };
       return autoAssignPayment(updated);
