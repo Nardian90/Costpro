@@ -1,0 +1,1 @@
+c39afd27396816cbb5e6658f761b6cfa35ef2d29794df53e31ba48fc552a4784  /home/z/my-project/download/cp-sec-027-fase7-2026-10-20/20261020000002_sec_definer_hardening.sql

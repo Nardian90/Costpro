@@ -1,0 +1,12 @@
+# Sondas PostgREST como anon (publishable key) — DESPUÉS de F7 (2026-10-20)
+# ANTES: las 10 funciones eran invocables por anon (EXECUTE anon/PUBLIC).
+get_transactions -> HTTP 401 {"code":"42501","message":"permission denied for function get_transactions"}
+get_paginated_products_v2 -> HTTP 401 {"code":"42501","message":"permission denied for function get_paginated_products_v2"}
+is_admin_with_access -> HTTP 404 (PGRST202: fuera del API expuesto a anon)
+e2e_hard_delete_store -> HTTP 404 (PGRST202: función eliminada)
+e2e_hard_delete_user -> HTTP 404 (PGRST202: función eliminada)
+register_reception -> HTTP 404 (PGRST202: fuera del API expuesto a anon)
+# Regresión de vitrina — SIN cambios:
+public_catalog_v -> HTTP 200
+public_storefronts_v -> HTTP 200
+public_variants_v -> HTTP 200
