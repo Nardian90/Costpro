@@ -16,8 +16,29 @@ name: SQL Security Gate
 # skipped en las 90+ ejecuciones históricas del workflow (verificado por API,
 # runs #76-#90), incluidos PRs que añadían migraciones.
 
+# El workflow se dispara en dos canales, con el MISMO filtro de rutas:
+#   • pull_request — verificación PRE-fusión (canal principal del repo).
+#   • push a main — defensa en profundidad del canal de fusión directa:
+#     cubre (a) pushes directos que salten el PR y (b) conflictos semánticos
+#     post-fusión donde el RESULTADO del merge difiere del head del PR
+#     (p. ej. PR-A fusionó la allowlist y PR-B añadió una función — cada
+#     PR verde por separado, el estado fusionado rojo). Evidencia viva de
+#     la necesidad (2026-10-19): los PR #1430 y #1431 tocaron
+#     supabase/migrations/** ANTES de que #1428 fusionara este workflow,
+#     por lo que NINGÚN gate corrió sobre ellos como PRs — el estado
+#     post-fusión solo quedó verificado por sonda manual posterior.
+
 on:
   pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/ci-gate-sql-checks.js'
+      - 'scripts/ci-gate-evaluate.js'
+      - 'ci-gate-allowlist.json'
+  push:
+    # Solo main: el gate lee el ESTADO REAL de producción (read-only) y
+    # su semáforo en push valida que el árbol fusionado sigue limpio.
+    branches: [main]
     paths:
       - 'supabase/migrations/**'
       - 'scripts/ci-gate-sql-checks.js'
