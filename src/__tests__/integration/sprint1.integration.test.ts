@@ -168,8 +168,16 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
   }, 120000); // FIX-CI-TIMEOUT: 120s — CI runners are slower than local
 
   it('computeFullQuantReport no retorna ceros fantasma', () => {
+    // FIX-FLAKY-20261019 (PR #1425, corrida 1): este test usaba Math.random()
+    // y fallaba ~2.8% de las corridas — cuando la serie aleatoria sale con
+    // media EXACTAMENTE 0 (10 ganancias de +100 y 20 pérdidas de −50),
+    // sharpe = 0 y la aserción `not.toBe(0)` rompe. Se adopta el PRNG con
+    // semilla que este archivo ya usa en sus tests hermanos («Usar PRNG
+    // determinístico para que el test sea reproducible»). Semilla 12345:
+    // 17 ganancias / 13 pérdidas, media +35 ≠ 0 (verificado).
+    const rng = mulberry32(12345);
     const pnlSeries = Array.from({ length: 30 }, () => {
-      return Math.random() > 0.5 ? 100 : -50;
+      return rng() > 0.5 ? 100 : -50;
     });
     const { report } = computeFullQuantReport(pnlSeries, 1000, 30, 0.5, 2);
 
