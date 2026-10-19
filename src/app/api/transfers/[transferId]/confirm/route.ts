@@ -20,6 +20,11 @@ import { canManageStore } from '@/lib/roles';
 import { validateOrigin } from '@/lib/csrf';
 import { rateLimit } from '@/lib/rate-limit';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): esta ruta aceptaba `operation_date`
+// arbitraria del cliente y la propagaba SIN validación al Kardex/inventario
+// vía register_stock_movement (confirm_transfer no tiene gate BD). Ahora se
+// valida: parseable + no futura (día de negocio America/Havana) → 422.
+import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 
 async function postHandler(
   req: NextRequest,
@@ -87,7 +92,20 @@ async function postHandler(
     }
 
     if (body?.operation_date) {
-      operationDate = new Date(body.operation_date);
+      // MISIÓN POLÍTICA TEMPORAL: la fecha de recepción de la transferencia
+      // es un dato de cliente NO confiable — validar antes de tocar stock.
+      const parsed = new Date(body.operation_date);
+      if (Number.isNaN(parsed.getTime())) {
+        return NextResponse.json({
+          error: 'La fecha de recepción enviada no es una fecha válida.',
+          code: 'ERR_INVALID_OPERATION_DATE',
+        }, { status: 422 });
+      }
+      const dateCheck = checkNotFutureOperationDate(body.operation_date);
+      if (!dateCheck.ok) {
+        return NextResponse.json({ error: dateCheck.error, code: 'ERR_FUTURE_OPERATION_DATE' }, { status: 422 });
+      }
+      operationDate = parsed;
     }
   } catch {
     // body opcional
@@ -110,6 +128,10 @@ async function postHandler(
     }
     if (msg.includes('ERR_TRANSFER_NOT_FOUND') || msg.includes('NOT_FOUND')) {
       return NextResponse.json({ error: 'Transfer no encontrada' }, { status: 404 });
+    }
+    // MISIÓN POLÍTICA TEMPORAL: rechazos del gate de fechas (migración pend)
+    if (msg.includes('ERR_FUTURE_DATED_DOCUMENT') || msg.includes('ERR_BACKDATED_DOCUMENT')) {
+      return NextResponse.json({ error: msg }, { status: 422 });
     }
     return NextResponse.json({ error: msg }, { status: 400 });
   }

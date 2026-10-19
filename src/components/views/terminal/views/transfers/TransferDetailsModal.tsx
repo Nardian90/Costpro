@@ -4,6 +4,10 @@ import { StateRenderer } from '@/components/ui/StateRenderer';
 import { OperationDatePicker, formatOperationDateForRPC, useOperationDateValidation } from '@/components/ui/OperationDatePicker';
 import { useTransferDetails, useConfirmTransfer, useCancelTransfer } from '@/hooks/api/useTransfers';
 import { useAuthStore } from '@/store';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): default y tope del selector en día de
+// NEGOCIO Habana. La ruta /api/transfers/[id]/confirm aceptaba fechas
+// arbitrarias del cliente y las propagaba al Kardex sin validación.
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,8 +65,9 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   // Fecha de operación para confirmar recepción de transferencia (forward-only locking)
-  const [operationDate, setOperationDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
-  const dateValidation = useOperationDateValidation(operationDate, storeId);
+  const [operationDate, setOperationDate] = useState<string>(todayBusinessDay());
+  // MISIÓN POLÍTICA TEMPORAL: tope HOY (Habana) — sin fechas futuras.
+  const dateValidation = useOperationDateValidation(operationDate, storeId, todayBusinessDay());
 
   const handleConfirm = async () => {
     if (!transferId || !user) return;
@@ -264,13 +269,15 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
               La operación no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {/* Selector de fecha de operación (forward-only locking) */}
+          {/* Selector de fecha de operación (forward-only locking).
+              MISIÓN POLÍTICA TEMPORAL: max = HOY (Habana) — sin fechas futuras. */}
           <div className="py-2">
             <OperationDatePicker
               value={operationDate}
               onChange={setOperationDate}
               label="Fecha de recepción"
               storeId={storeId}
+              max={todayBusinessDay()}
             />
           </div>
           <AlertDialogFooter>

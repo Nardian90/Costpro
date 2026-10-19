@@ -4,6 +4,9 @@ import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
 import { z } from 'zod';
 import crypto from 'crypto';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): tope HOY (Habana) para payment_date
+// histórica — el RPC register_supplier_payment no tenía gate de fecha.
+import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 
 
 
@@ -59,6 +62,21 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
     }
 
     const { amount, payment_method, currency, exchange_rate, payment_type, reference, notes, payment_date } = validated.data;
+
+    // MISIÓN POLÍTICA TEMPORAL (2026-10-18): la fecha financiera del pago es
+    // un dato de cliente NO confiable. El backdating legítimo («fechas
+    // históricas», V2.12.32) se conserva, pero NUNCA futuro: tope HOY como día
+    // de negocio (America/Havana) → 422 accionable. El RPC register_supplier_payment
+    // no tenía gate de fecha (hueco documentado en la matriz de flujos).
+    if (payment_date) {
+      const dateCheck = checkNotFutureOperationDate(payment_date);
+      if (!dateCheck.ok) {
+        return NextResponse.json(
+          { error: 'Fecha del pago no admisible', message: dateCheck.error, code: 'ERR_FUTURE_OPERATION_DATE' },
+          { status: 422 }
+        );
+      }
+    }
 
     // Autenticación
     const session_user = session.user;
@@ -154,6 +172,11 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
 
     if (payError) {
       console.error('[production-orders/payments] RPC error:', payError);
+      const payMsg = payError.message || '';
+      // MISIÓN POLÍTICA TEMPORAL: rechazos del gate de fechas → 422 accionable.
+      if (payMsg.includes('ERR_FUTURE_DATED_DOCUMENT') || payMsg.includes('ERR_BACKDATED_DOCUMENT')) {
+        return NextResponse.json({ error: 'Fecha del pago no admisible', message: payMsg, code: payMsg.includes('ERR_FUTURE') ? 'ERR_FUTURE_DATED_DOCUMENT' : 'ERR_BACKDATED_DOCUMENT' }, { status: 422 });
+      }
       return NextResponse.json(
         { error: 'Error al registrar pago: ' + payError.message },
         { status: 500 }

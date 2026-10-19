@@ -50,6 +50,13 @@ import { useProducts } from '@/hooks/api/useProducts';
 import { useDebounce } from '@/hooks/ui/useDebounce';
 import { formatearCantidad } from '@/lib/inventory/kardexPeriod';
 import { useCrearValeSalida, type CrearValeResult } from './useCrearValeSalida';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): fecha operativa seleccionable en el
+// flujo dedicado — MISMA infraestructura que Vender (paridad PR #1419):
+// selector con min per-store + max=hoy (Habana), convención hoy→NOW()/≠hoy→mediodía
+// y revalidación server-side ya existente en /api/vale-salida (422) + RPC gate.
+import { OperationDatePicker, useOperationDateValidation } from '@/components/ui/OperationDatePicker';
+import { resolvePosOperationDate } from '@/lib/pos/operation-date';
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 import { toast } from 'sonner';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -134,6 +141,11 @@ export function ValeSalidaCreateModal({
   // ── Cabecera documental ──
   const [notas, setNotas] = useState('');
   const [productionOrderId, setProductionOrderId] = useState<string | null>(null);
+  // MISIÓN POLÍTICA TEMPORAL: fecha operativa del vale. Default HOY (Habana).
+  const [valeDate, setValeDate] = useState<string>(todayBusinessDay());
+  // Tope superior del selector: HOY como día de negocio (America/Havana).
+  const maxFechaOperativa = todayBusinessDay();
+  const valeDateValidation = useOperationDateValidation(valeDate, storeId, maxFechaOperativa);
 
   // ── Líneas ──
   const [lineas, setLineas] = useState<LineaVale[]>([]);
@@ -154,6 +166,7 @@ export function ValeSalidaCreateModal({
       setResultado(null);
       setNotas('');
       setProductionOrderId(null);
+      setValeDate(todayBusinessDay());
       setLineas([]);
       setSearchTerm('');
     }
@@ -292,7 +305,10 @@ export function ValeSalidaCreateModal({
   const validoParaConfirmar =
     lineas.length > 0 &&
     notas.trim().length > 0 &&
-    lineas.every(l => l.quantity > 0);
+    lineas.every(l => l.quantity > 0) &&
+    // MISIÓN POLÍTICA TEMPORAL: la fecha operativa debe ser válida (min per-store
+    // inclusivo por día + max HOY Habana) para poder pasar a confirmación.
+    valeDateValidation.valid;
 
   const costoEstimado = useMemo(
     () => lineas.reduce((s, l) => s + l.costo * l.quantity, 0),
@@ -308,7 +324,14 @@ export function ValeSalidaCreateModal({
   );
 
   // ── Emisión (paso CONFIRMANDO → REGISTRADO) ──
+  // MISIÓN POLÍTICA TEMPORAL: convención canónica — HOY → no se envía
+  // operation_date (el servidor estampa NOW(), timestamps reales del día);
+  // fecha distinta → mediodía local (misma regla de Vender/Catálogo).
   const emitir = useCallback(async () => {
+    if (!valeDateValidation.valid) {
+      toast.error(valeDateValidation.error || 'La fecha del vale no es válida.', { duration: 8000 });
+      return;
+    }
     const result = await emitirVale({
       items: lineas.map(l => ({
         product_id: l.product_id,
@@ -318,13 +341,14 @@ export function ValeSalidaCreateModal({
       })),
       production_order_id: productionOrderId,
       notes: notas.trim(),
+      operation_date: resolvePosOperationDate(valeDate),
     });
     if (result) {
       setResultado(result);
       setPaso('registrado');
       onEmitido(result);
     }
-  }, [emitirVale, lineas, productionOrderId, notas, onEmitido]);
+  }, [emitirVale, lineas, productionOrderId, notas, onEmitido, valeDate, valeDateValidation]);
 
   // ── Anulación del borrador (paso REVISIÓN → descartar) ──
   // Flujo documental requerido: crear → REVISIÓN → anular o confirmar →
@@ -438,7 +462,19 @@ export function ValeSalidaCreateModal({
           {/* Cabecera documental */}
           <section aria-label="Cabecera del documento" className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
             <DatoCabecera etiqueta="Documento" valor="Vale de Salida · se asignará al emitir" />
-            <DatoCabecera etiqueta="Fecha" valor="Se registrará con la fecha actual" />
+            {/* MISIÓN POLÍTICA TEMPORAL: fecha operativa seleccionable (antes
+                «Se registrará con la fecha actual» — sin opción). Min per-store
+                (forward-only inclusivo por día) y max HOY Habana. */}
+            <div className="sm:col-span-1">
+              <OperationDatePicker
+                value={valeDate}
+                onChange={setValeDate}
+                label="Fecha del vale"
+                storeId={storeId}
+                max={maxFechaOperativa}
+                inputId="vale-create-fecha"
+              />
+            </div>
             <DatoCabecera etiqueta="Almacén" valor={storeName || '—'} />
             <DatoCabecera etiqueta="Responsable" valor={user?.fullName || '—'} />
           </section>
@@ -654,6 +690,9 @@ export function ValeSalidaCreateModal({
               <DatoCabecera etiqueta="Documento" valor="Vale de Salida · se asignará al emitir" />
               <DatoCabecera etiqueta="Almacén" valor={storeName || '—'} />
               <DatoCabecera etiqueta="Responsable" valor={user?.fullName || '—'} />
+              {/* MISIÓN POLÍTICA TEMPORAL: la fecha elegida visible en el resumen
+                  previo a la emisión (hoy = estampado automático NOW()). */}
+              <DatoCabecera etiqueta="Fecha del vale" valor={valeDate === maxFechaOperativa ? 'Hoy · se estampará al emitir' : valeDate.split('-').reverse().join('/')} />
               <DatoCabecera etiqueta="Orden relacionada" valor={productionOrderId ? (productionOrders.find(po => po.id === productionOrderId)?.order_number ?? '—') : '—'} />
               <DatoCabecera etiqueta="Concepto" valor={notas.trim() || '—'} full />
             </div>

@@ -1,0 +1,210 @@
+[
+  {
+    "email": "david9999@gmail.com",
+    "nombre": "David",
+    "role": "clerk",
+    "tenant_declarado": null,
+    "activo": true,
+    "creado_por": "— (self/seed)",
+    "rol_creador": "—",
+    "tenant_creador": null,
+    "memberships": [
+      {
+        "tienda": "ENERVIDA-VITALLCONS",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tenant_tienda": "Default Tenant",
+        "rol": "clerk",
+        "estado": "active",
+        "desde": "2026-10-09 12:19:07.941793+00"
+      }
+    ],
+    "clasificacion": [
+      "TENANT-NULL"
+    ],
+    "tenants_de_sus_tiendas_activas": [
+      "Default Tenant"
+    ],
+    "pertenencia_demostrable": "Default Tenant"
+  },
+  {
+    "email": "f243he2en2ejpm@uberip.com",
+    "nombre": "f243he2en2ejpm",
+    "role": "tenant_admin",
+    "tenant_declarado": null,
+    "activo": true,
+    "creado_por": "— (self/seed)",
+    "rol_creador": "—",
+    "tenant_creador": null,
+    "memberships": [],
+    "clasificacion": [
+      "TENANT_ADMIN",
+      "PRUEBA/QA",
+      "SIN-MEMBERSHIP-ACTIVA",
+      "TENANT-NULL"
+    ],
+    "tenants_de_sus_tiendas_activas": [],
+    "pertenencia_demostrable": "SIN EVIDENCIA (0 tiendas activas)"
+  },
+  {
+    "email": "f244ab40u9o0m@uberip.com",
+    "nombre": "Usuario FC A",
+    "role": "tenant_admin",
+    "tenant_declarado": null,
+    "activo": true,
+    "creado_por": "— (self/seed)",
+    "rol_creador": "—",
+    "tenant_creador": null,
+    "memberships": [],
+    "clasificacion": [
+      "TENANT_ADMIN",
+      "SIN-MEMBERSHIP-ACTIVA",
+      "TENANT-NULL"
+    ],
+    "tenants_de_sus_tiendas_activas": [],
+    "pertenencia_demostrable": "SIN EVIDENCIA (0 tiendas activas)"
+  },
+  {
+    "email": "f244bc7klbb6p@uberip.com",
+    "nombre": "f244bc7klbb6p",
+    "role": "tenant_admin",
+    "tenant_declarado": null,
+    "activo": true,
+    "creado_por": "— (self/seed)",
+    "rol_creador": "—",
+    "tenant_creador": null,
+    "memberships": [],
+    "clasificacion": [
+      "TENANT_ADMIN",
+      "SIN-MEMBERSHIP-ACTIVA",
+      "TENANT-NULL"
+    ],
+    "tenants_de_sus_tiendas_activas": [],
+    "pertenencia_demostrable": "SIN EVIDENCIA (0 tiendas activas)"
+  },
+  {
+    "email": "f244beh00he8i@uberip.com",
+    "nombre": "f244beh00he8i",
+    "role": "tenant_admin",
+    "tenant_declarado": null,
+    "activo": true,
+    "creado_por": "— (self/seed)",
+    "rol_creador": "—",
+    "tenant_creador": null,
+    "memberships": [],
+    "clasificacion": [
+      "TENANT_ADMIN",
+      "SIN-MEMBERSHIP-ACTIVA",
+      "TENANT-NULL"
+    ],
+    "tenants_de_sus_tiendas_activas": [],
+    "pertenencia_demostrable": "SIN EVIDENCIA (0 tiendas activas)"
+  },
+  {
+    "email": "f244zxe5gmk@uberip.com",
+    "nombre": "f244zxe5gmk",
+    "role": "tenant_admin",
+    "tenant_declarado": null,
+    "activo": true,
+    "creado_por": "— (self/seed)",
+    "rol_creador": "—",
+    "tenant_creador": null,
+    "memberships": [],
+    "clasificacion": [
+      "TENANT_ADMIN",
+      "SIN-MEMBERSHIP-ACTIVA",
+      "TENANT-NULL"
+    ],
+    "tenants_de_sus_tiendas_activas": [],
+    "pertenencia_demostrable": "SIN EVIDENCIA (0 tiendas activas)"
+  },
+  {
+    "email": "f246empresa01@uberip.com",
+    "nombre": "Empresa",
+    "role": "tenant_admin",
+    "tenant_declarado": null,
+    "activo": true,
+    "creado_por": "— (self/seed)",
+    "rol_creador": "—",
+    "tenant_creador": null,
+    "memberships": [],
+    "clasificacion": [
+      "TENANT_ADMIN",
+      "SIN-MEMBERSHIP-ACTIVA",
+      "TENANT-NULL"
+    ],
+    "tenants_de_sus_tiendas_activas": [],
+    "pertenencia_demostrable": "SIN EVIDENCIA (0 tiendas activas)"
+  },
+  {
+    "email": "g3g3af38ck3v6@uberip.com",
+    "nombre": "g3g3af38ck3v6",
+    "role": "tenant_admin",
+    "tenant_declarado": null,
+    "activo": true,
+    "creado_por": "— (self/seed)",
+    "rol_creador": "—",
+    "tenant_creador": null,
+    "memberships": [],
+    "clasificacion": [
+      "TENANT_ADMIN",
+      "SIN-MEMBERSHIP-ACTIVA",
+      "TENANT-NULL"
+    ],
+    "tenants_de_sus_tiendas_activas": [],
+    "pertenencia_demostrable": "SIN EVIDENCIA (0 tiendas activas)"
+  },
+  {
+    "email": "g3g3b4isid7xo@uberip.com",
+    "nombre": "g3g3b4isid7xo",
+    "role": "tenant_admin",
+    "tenant_declarado": null,
+    "activo": true,
+    "creado_por": "— (self/seed)",
+    "rol_creador": "—",
+    "tenant_creador": null,
+    "memberships": [],
+    "clasificacion": [
+      "TENANT_ADMIN",
+      "SIN-MEMBERSHIP-ACTIVA",
+      "TENANT-NULL"
+    ],
+    "tenants_de_sus_tiendas_activas": [],
+    "pertenencia_demostrable": "SIN EVIDENCIA (0 tiendas activas)"
+  },
+  {
+    "email": "juanmanuelcabreravargas@gmail.com",
+    "nombre": "JUAN MANUEL CABRERA VARGAS",
+    "role": "tenant_admin",
+    "tenant_declarado": null,
+    "activo": true,
+    "creado_por": "— (self/seed)",
+    "rol_creador": "—",
+    "tenant_creador": null,
+    "memberships": [],
+    "clasificacion": [
+      "TENANT_ADMIN",
+      "SIN-MEMBERSHIP-ACTIVA",
+      "TENANT-NULL"
+    ],
+    "tenants_de_sus_tiendas_activas": [],
+    "pertenencia_demostrable": "SIN EVIDENCIA (0 tiendas activas)"
+  },
+  {
+    "email": "qa.h1.a@costpro.test",
+    "nombre": "qa.h1.a",
+    "role": "usuario",
+    "tenant_declarado": null,
+    "activo": true,
+    "creado_por": "— (self/seed)",
+    "rol_creador": "—",
+    "tenant_creador": null,
+    "memberships": [],
+    "clasificacion": [
+      "PRUEBA/QA",
+      "SIN-MEMBERSHIP-ACTIVA",
+      "TENANT-NULL"
+    ],
+    "tenants_de_sus_tiendas_activas": [],
+    "pertenencia_demostrable": "SIN EVIDENCIA (0 tiendas activas)"
+  }
+]

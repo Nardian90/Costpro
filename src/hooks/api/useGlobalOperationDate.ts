@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
+import { businessDayOf } from '@/lib/cash-report/period-attribution';
 
 // ── Tipos ──────────────────────────────────────────────────────
 
@@ -72,6 +73,15 @@ function formatDateHavana(isoDate: string): string {
 /**
  * Valida que una fecha dada sea válida (no anterior a la fecha MAX de la tienda).
  * Retorna { valid: boolean, error?: string }.
+ *
+ * MISIÓN POLÍTICA TEMPORAL (2026-10-18): AMBOS límites se comparan por DÍA DE
+ * NEGOCIO (America/Havana), no por timestamp completo. Antes el mínimo era una
+ * comparación de instantes: un mínimo tipo 2026-10-15T23:59:59 (recepción del
+ * día, convención T23:59:59) bloqueaba una venta/ajuste del MISMO día estampado
+ * al mediodía (12:00 < 23:59) — dos operaciones legítimas del mismo día quedaban
+ * prohibidas por la HORA intradía, no por el día. La regla del negocio es
+ * inclusiva por día: mismo día operativo = permitido (los RPCs ya comparaban
+ * date-only en Habana; esta corrección alinea el cliente con el servidor).
  */
 export function validateOperationDate(
   newDate: Date | string | null,
@@ -82,50 +92,38 @@ export function validateOperationDate(
 ): { valid: boolean; error?: string } {
   if (!newDate) return { valid: true };
 
+  // Día de negocio de la fecha a validar (date-only entra tal cual; ISO/Date
+  // se convierte con la zona de negocio). Fecha intraducible → inválida.
+  let newDay: string;
+  try {
+    newDay = typeof newDate === 'string' ? businessDayOf(newDate) : businessDayOf(newDate.toISOString());
+  } catch {
+    return { valid: false, error: 'La fecha seleccionada no es válida.' };
+  }
+
   // MISIÓN FECHA OPERATIVA: el tope superior se valida INDEPENDIENTE del mínimo
   // (una tienda sin documentos previos tiene minAllowedDate null y aún así no
   // puede registrar fechas futuras en el flujo de Vender).
-  if (maxAllowedDate) {
-    const newDateOnly = typeof newDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(newDate)
-      ? newDate
-      : null;
-    const newComparable = newDateOnly
-      ? new Date(newDateOnly + 'T12:00:00')
-      : new Date(newDate as string | Date);
-    const maxComparable = new Date(maxAllowedDate + 'T23:59:59.999');
-    if (newComparable > maxComparable) {
-      return {
-        valid: false,
-        error: `La fecha seleccionada no puede ser futura. La fecha máxima permitida es ${maxAllowedDate}.`,
-      };
-    }
+  if (maxAllowedDate && newDay > maxAllowedDate) {
+    return {
+      valid: false,
+      error: `La fecha seleccionada no puede ser futura. La fecha máxima permitida es ${maxAllowedDate}.`,
+    };
   }
 
   if (!minAllowedDate) return { valid: true };
 
-  // AUDIT-2026-10-15 (misión comisiones): un input DATE-ONLY (YYYY-MM-DD, tal como
-  // llega de <input type=date>) se estampa vía formatOperationDateForRPC al MEDIODÍA
-  // (T12:00:00) para evitar TZ edge cases. La validación debe comparar lo que
-  // realmente se enviará: si evaluamos el date-only a medianoche, una 2ª venta del
-  // MISMO día quedaba bloqueada contra un mínimo tipo 2026-10-14T12:00 (venta previa)
-  // aunque el estampado real sería igual, no anterior. Mismo convenio del mediodía.
-  const newDateObj =
-    typeof newDate === 'string'
-      ? /^\d{4}-\d{2}-\d{2}$/.test(newDate)
-        ? new Date(newDate + 'T12:00:00')
-        : new Date(newDate)
-      : newDate;
-  const minDateObj = new Date(minAllowedDate);
+  let minDay: string;
+  try {
+    minDay = businessDayOf(minAllowedDate);
+  } catch {
+    return { valid: true }; // mínimo ilegible: no bloquear por un dato malformado
+  }
 
-  if (newDateObj < minDateObj) {
-    const minFormatted = minDateObj.toLocaleString('es-CU', {
-      timeZone: 'America/Havana',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  if (newDay < minDay) {
+    // Formato DD/MM/YYYY del día mínimo (ya es YYYY-MM-DD de negocio)
+    const [y, m, d] = minDay.split('-');
+    const minFormatted = `${d}/${m}/${y}`;
     return {
       valid: false,
       error: `No se puede retroceder en el tiempo operativo. La fecha mínima permitida es ${minFormatted}.`,

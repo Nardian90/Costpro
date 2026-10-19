@@ -1,0 +1,284 @@
+[
+  {
+    "id": "P0",
+    "desc": "distribución tenant_id en products",
+    "raw": [
+      {
+        "tenant_id": null,
+        "n": 226
+      },
+      {
+        "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+        "n": 151
+      },
+      {
+        "tenant_id": "e2d7ae4f-c328-4ac3-8ead-31068f115bc8",
+        "n": 1
+      }
+    ]
+  },
+  {
+    "id": "T1.1",
+    "desc": "belkis(encargado) VE productos ENERVIDA (tienda autorizada 1)",
+    "esperado": ">0",
+    "obtenido": 183,
+    "raw": [
+      {
+        "n": 183
+      }
+    ]
+  },
+  {
+    "id": "T1.2",
+    "desc": "belkis VE productos Puerto Padre (tienda autorizada 2)",
+    "esperado": ">0",
+    "obtenido": 36,
+    "raw": [
+      {
+        "n": 36
+      }
+    ]
+  },
+  {
+    "id": "T1.3",
+    "desc": "belkis NO VE productos TIENDA CENTRAL (3ª no autorizada, mismo tenant)",
+    "esperado": "0",
+    "obtenido": 0,
+    "raw": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  {
+    "id": "T1.4",
+    "desc": "belkis NO VE productos Sucursal Vedado (otro tenant)",
+    "esperado": "0",
+    "obtenido": 0,
+    "raw": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  {
+    "id": "T1.5",
+    "desc": "has_store_access(belkis→ENERVIDA) = true",
+    "esperado": "true",
+    "obtenido": true,
+    "raw": [
+      {
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": "T1.6",
+    "desc": "has_store_access(belkis→TIENDA CENTRAL) = false",
+    "esperado": "false",
+    "obtenido": false,
+    "raw": [
+      {
+        "ok": false
+      }
+    ]
+  },
+  {
+    "id": "T2.1",
+    "desc": "e2e-usr(clerk, tenant D0978E) NO VE productos ENERVIDA (cross-tenant)",
+    "esperado": "0",
+    "obtenido": 0,
+    "raw": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  {
+    "id": "T2.2",
+    "desc": "e2e-usr VE productos de SU tienda E2E PILOT A",
+    "esperado": ">0",
+    "obtenido": 1,
+    "raw": [
+      {
+        "n": 1
+      }
+    ]
+  },
+  {
+    "id": "T3.1",
+    "desc": "david(clerk, tenant NULL) VE productos ENERVIDA (membership legítima)",
+    "esperado": ">0",
+    "obtenido": 183,
+    "raw": [
+      {
+        "n": 183
+      }
+    ]
+  },
+  {
+    "id": "T3.2",
+    "desc": "david NO VE productos TIENDA CENTRAL (sin membership)",
+    "esperado": "0",
+    "obtenido": 0,
+    "raw": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  {
+    "id": "T3.3",
+    "desc": "has_store_access(david→ENERVIDA) = true (ruta NULL-safe)",
+    "esperado": "true",
+    "obtenido": true,
+    "raw": [
+      {
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": "T4.1",
+    "desc": "juanmanuel(tenant_admin, NULL, 0 memberships) VE 0 productos",
+    "esperado": "0",
+    "obtenido": 0,
+    "raw": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  {
+    "id": "T4.2",
+    "desc": "juanmanuel VE 0 transacciones",
+    "esperado": "0",
+    "obtenido": 0,
+    "raw": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  {
+    "id": "T4.3",
+    "desc": "juanmanuel VE 0 stock_movements",
+    "esperado": "0",
+    "obtenido": 0,
+    "raw": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  {
+    "id": "T4.4",
+    "desc": "juanmanuel VE solo SU perfil (1 fila, no más)",
+    "esperado": "1",
+    "obtenido": 1,
+    "raw": [
+      {
+        "n": 1
+      }
+    ]
+  },
+  {
+    "id": "T4.5",
+    "desc": "juanmanuel VE 0 tiendas",
+    "esperado": "0",
+    "obtenido": 0,
+    "raw": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  {
+    "id": "T4.6",
+    "desc": "juanmanuel VE 0 tenants",
+    "esperado": "0",
+    "obtenido": 0,
+    "raw": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  {
+    "id": "T5.1",
+    "desc": "adminDemo VE productos ENERVIDA (su tenant)",
+    "esperado": ">0",
+    "obtenido": 183,
+    "raw": [
+      {
+        "n": 183
+      }
+    ]
+  },
+  {
+    "id": "T5.2",
+    "desc": "adminDemo VE productos Sucursal Vedado (OTRO tenant — bypass global actual)",
+    "esperado": ">0",
+    "obtenido": 5,
+    "raw": [
+      {
+        "n": 5
+      }
+    ]
+  },
+  {
+    "id": "T5.3",
+    "desc": "adminDemo VE productos QA-H1-A (store tenant NULL)",
+    "esperado": ">=0",
+    "obtenido": 2,
+    "raw": [
+      {
+        "n": 2
+      }
+    ]
+  },
+  {
+    "id": "T6.1",
+    "desc": "[ESTRICTO] david(tenant NULL) PIERDE ENERVIDA → backfill es prerrequisito",
+    "esperado": "0",
+    "obtenido": 183,
+    "raw": [
+      {
+        "n": 183
+      }
+    ]
+  },
+  {
+    "id": "T6.2",
+    "desc": "[ESTRICTO] adminDemo YA NO VE Sucursal Vedado (frontera tenant activa)",
+    "esperado": "0",
+    "obtenido": 0,
+    "raw": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  {
+    "id": "T6.3",
+    "desc": "[ESTRICTO] belkis(tenant OK) VE ENERVIDA (productos con tenant OK)",
+    "esperado": ">=0",
+    "obtenido": 183,
+    "raw": [
+      {
+        "n": 183
+      }
+    ]
+  },
+  {
+    "id": "T7.1",
+    "desc": "qa.h1.a(usuario, NULL, 0 memberships) VE 0 productos",
+    "esperado": "0",
+    "obtenido": 0,
+    "raw": [
+      {
+        "n": 0
+      }
+    ]
+  }
+]

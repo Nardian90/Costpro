@@ -13,6 +13,9 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): tope HOY (Habana) para la fecha
+// operativa de la devolución — paridad con /api/pos/checkout y /api/vale-salida.
+import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 
 const createSchema = z.object({
   store_id: z.string().min(1),
@@ -70,6 +73,18 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   if (!canManageStore(session.user, parsed.data.store_id)) return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
 
+  // MISIÓN POLÍTICA TEMPORAL (2026-10-18): revalidación server-side del tope
+  // superior — la devolución no puede llevar fecha operativa futura (día de
+  // negocio America/Havana). El RPC create_devolution_v2 ya aplica el gate BD
+  // (piso 6 meses / hoy+1); aquí el tope estricto HOY → 422 accionable
+  // (paridad con /api/pos/checkout y /api/vale-salida).
+  if (parsed.data.operation_date) {
+    const dateCheck = checkNotFutureOperationDate(parsed.data.operation_date);
+    if (!dateCheck.ok) {
+      return NextResponse.json({ error: dateCheck.error, code: 'ERR_FUTURE_OPERATION_DATE' }, { status: 422 });
+    }
+  }
+
   const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
@@ -94,6 +109,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const { data, error } = await supabase.rpc('create_devolution_v2', rpcParams);
 
   if (error) {
+    const msg = error.message || '';
+    // MISIÓN POLÍTICA TEMPORAL: rechazos del gate de fechas → 422 accionable.
+    if (msg.includes('ERR_FUTURE_DATED_DOCUMENT') || msg.includes('ERR_BACKDATED_DOCUMENT')) {
+      return NextResponse.json({ error: msg, code: msg.includes('ERR_FUTURE') ? 'ERR_FUTURE_DATED_DOCUMENT' : 'ERR_BACKDATED_DOCUMENT' }, { status: 422 });
+    }
     logger.error('DATABASE', 'CREATE_DEVOLUTION_FAILED', { error: error.message });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

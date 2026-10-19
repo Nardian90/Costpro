@@ -179,11 +179,16 @@ export default function CashClosureView() {
     if (pendingClosure) {
       // FIX F3-01: Al cerrar, NO sobreescribir opening_balance. Solo actualizar declared_cash.
       const shouldFinalize = canClose;
+      // MISIÓN POLÍTICA TEMPORAL (2026-10-18): se elimina `closed_at` calculado
+      // en el cliente (UTC del navegador) del payload — era código muerto en el
+      // camino real de cierre (useUpdateCashClosure solo envía closure_id +
+      // declarados a /api/cash-closures/close y el RPC close_cash_shift estampa
+      // closed_at = NOW() del servidor, autoritativo). Política de caja por
+      // ventana temporal: el turno nunca confía en fechas del cliente.
       updateClosure.mutate({
         id: pendingClosure.id,
         closure: {
           status: shouldFinalize ? 'cerrado' : 'pendiente',
-          closed_at: shouldFinalize ? new Date().toISOString() : null,
           declared_cash: declaredCash,
           declared_vouchers: declaredVouchers,
           declared_total: totalDeclared,

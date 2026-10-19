@@ -1,0 +1,10 @@
+[
+  {
+    "typname": "membership_status",
+    "values": "{active,revoked}"
+  },
+  {
+    "typname": "user_role",
+    "values": "{admin,superadmin,manager,clerk,warehouse,encargado,usuario,costo,tenant_admin}"
+  }
+]

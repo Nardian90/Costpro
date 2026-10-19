@@ -9,6 +9,9 @@ import { withTracing } from '@/lib/observability';
 import { createApiError } from '@/lib/api-errors';
 // F-21: validar tasa_cambio_recepcion antes de llamar a register_reception
 import { validateReceiptItemsTasa } from '@/lib/receipt-items-validation';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): revalidación server-side de las
+// fechas operativas encoladas offline (venta/recepción) — tope HOY Habana.
+import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 
 export const runtime = 'nodejs';
 
@@ -183,6 +186,42 @@ const handler = withAuth(async (req, session) => {
       // 2. Execute operation
       let result;
       try {
+        // ─── MISIÓN POLÍTICA TEMPORAL (2026-10-18) ───
+        // El payload offline encolado es dato de cliente NO confiable: las
+        // fechas operativas (venta: p_operation_date; recepción: p_reception_date)
+        // se revalidan en el servidor antes de ejecutar el RPC — tope HOY como
+        // día de negocio (America/Havana). El offline no puede colar documentos
+        // futuros que el camino online ya rechaza con 422 (paridad de capas).
+        {
+          const opDate =
+            op.entity === 'sale' ? op.payload?.p_operation_date
+            : op.entity === 'reception' ? op.payload?.p_reception_date
+            : undefined;
+          if (opDate) {
+            const dateCheck = checkNotFutureOperationDate(opDate);
+            if (!dateCheck.ok) {
+              results.push({
+                idempotencyKey: op.idempotencyKey,
+                status: 'error',
+                error: 'ERR_FUTURE_OPERATION_DATE',
+                message: dateCheck.error,
+              });
+              queueUpsert({
+                idempotency_key: op.idempotencyKey,
+                user_id: session.user.id,
+                entity: op.entity,
+                operation_type: op.operationType,
+                status: 'error',
+                response_data: {
+                  error: 'ERR_FUTURE_OPERATION_DATE',
+                  message: dateCheck.error,
+                },
+                store_id: op.payload?.p_store_id || null,
+              });
+              continue;
+            }
+          }
+        }
         switch (op.entity) {
           case 'sale':
             // Iteración 11.2 (TD-11.2.1 resolved): Use create_sale_v2 for offline sync.

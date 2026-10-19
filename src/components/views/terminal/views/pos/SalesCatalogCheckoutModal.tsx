@@ -10,6 +10,10 @@ import { useAuthStore } from '@/store';
 import type { SalesCatalogRow } from './useSalesCatalog';
 import { calcSubtotal } from './useSalesCatalog';
 import { format } from 'date-fns';
+// MISIÓN POLÍTICA TEMPORAL (2026-10-18): default y tope del selector en día de
+// NEGOCIO Habana (antes fecha local del navegador, sin tope futuro). La ruta
+// /api/pos/checkout ya revalidaba el tope (422) — esto lo lleva a la UI.
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 
 interface SalesCatalogCheckoutModalProps {
   open: boolean;
@@ -38,14 +42,14 @@ export default function SalesCatalogCheckoutModal({
   const storeId = user?.activeStoreId;
   const totalUnits = activeRows.reduce((acc, r) => acc + r.quantity, 0);
   const [notes, setNotes] = useState('');
-  const [operationDate, setOperationDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [operationDate, setOperationDate] = useState<string>(todayBusinessDay());
 
-  const dateValidation = useOperationDateValidation(operationDate, storeId);
+  const dateValidation = useOperationDateValidation(operationDate, storeId, todayBusinessDay());
 
   React.useEffect(() => {
     if (!open) {
       setNotes('');
-      setOperationDate(format(new Date(), 'yyyy-MM-dd'));
+      setOperationDate(todayBusinessDay());
     }
   }, [open]);
 
@@ -149,11 +153,13 @@ export default function SalesCatalogCheckoutModal({
 
         {/* Operation Date field — política forward-only locking.
             El usuario puede elegir la fecha de la venta, pero nunca anterior
-            a la fecha MAX global (mostrada en el badge del dashboard). */}
+            a la fecha MAX global (mostrada en el badge del dashboard).
+            MISIÓN POLÍTICA TEMPORAL: max = HOY (Habana) — sin fechas futuras. */}
         <OperationDatePicker
           value={operationDate}
           onChange={setOperationDate}
           storeId={storeId}
+          max={todayBusinessDay()}
         />
 
         {/* Notes field */}
