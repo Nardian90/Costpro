@@ -259,15 +259,16 @@ const handler = withAuth(async (req, session) => {
                 // encolada offline se reenvía al RPC. create_sale_v2 la une con
                 // la nota automática de incidencias SIN sobrescribirla
                 // (v_notes_final, migración 20261017000000).
+                //
+                // FIX AMBIGÜEDAD DE OVERLOAD (2026-10-18 — misión Fechas de
+                // Trabajo): p_notes y p_payment_incidents SIEMPRE presentes
+                // (mismas claves que /api/pos/checkout) para resolver el
+                // overload de 26 params (PGRST203 — ver el comentario completo
+                // en esa ruta y la migración companion 20261018000001).
                 p_notes: op.payload.p_notes || null,
                 p_idempotency_key: op.idempotencyKey,
                 p_operation_date: op.payload.p_operation_date || null,
                 p_user_id: session.user.id,
-                // FIX AMBIGÜEDAD DE OVERLOAD (2026-10-18 — misión Fechas de
-                // Trabajo): mismas claves SIEMPRE presentes que /api/pos/checkout
-                // para resolver el overload de 26 params (PGRST203 — ver el
-                // comentario completo en esa ruta y la migración companion).
-                p_notes: op.payload.p_notes ?? null,
                 p_payment_incidents: op.payload.p_payment_incidents ?? null,
               };
               result = await supabase.rpc('create_sale_v2', v2Payload);
