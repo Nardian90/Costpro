@@ -1,0 +1,26 @@
+[
+  {
+    "table_name": "inventory",
+    "rls_enabled": true,
+    "force_rls": false,
+    "owner": "postgres"
+  },
+  {
+    "table_name": "product_variants",
+    "rls_enabled": true,
+    "force_rls": false,
+    "owner": "postgres"
+  },
+  {
+    "table_name": "products",
+    "rls_enabled": true,
+    "force_rls": false,
+    "owner": "postgres"
+  },
+  {
+    "table_name": "stores",
+    "rls_enabled": true,
+    "force_rls": false,
+    "owner": "postgres"
+  }
+]
