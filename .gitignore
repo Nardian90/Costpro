@@ -131,3 +131,6 @@ audit-evidence/*.png
 scripts/qa-h1/state.json
 # E2E-RUNNER-ISOLATION: context files de ejecuciones (nunca en test-results/, que Playwright vacía)
 .e2e-run-contexts/
+
+# CI Gate SQL — artefacto generado por scripts/ci-gate-sql-checks.js (nunca se commitea)
+scripts/ci-gate-checks.sql

@@ -23,26 +23,12 @@ jobs:
       - name: Run TypeScript security checks
         run: node scripts/ci-gate-ts-checks.js
 
-  sql-security-checks:
-    name: SQL Security Checks
-    runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.changed_files, 'supabase/migrations/')
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Generate SQL check file
-        run: node scripts/ci-gate-sql-checks.js
-
-      - name: Run SQL security checks
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          if [ -z "$DATABASE_URL" ]; then
-            echo "⚠️ DATABASE_URL not set — skipping SQL checks"
-            exit 0
-          fi
-          psql "$DATABASE_URL" -f scripts/ci-gate-checks.sql -t -A -F '|' > /tmp/results.txt
-          node scripts/ci-gate-evaluate.js /tmp/results.txt
+  # El job `sql-security-checks` fue RETIRADO y sustituido por el workflow
+  # dedicado .github/workflows/sql-security-gate.yml (selección por rutas).
+  # Motivo: su condición `contains(github.event.pull_request.changed_files,
+  # 'supabase/migrations/')` comparaba un ENTERO (recuento de archivos) contra
+  # una cadena de ruta — estructuralmente falsa, el job resultó SIEMPRE skipped
+  # (runs #76-#90 verificados por API, incluidos PRs con migraciones SQL).
 
   allowlist-review:
     name: Allowlist Review

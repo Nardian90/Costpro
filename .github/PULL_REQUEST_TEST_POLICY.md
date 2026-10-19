@@ -70,7 +70,7 @@ actualizarse cuando cambien los workflows (§17).
 | Security contract (estático, CI-safe) | `node scripts/security-contract-test-static.cjs` | `ci-gate-allowlist.json` | surface LIVE certificado (`supabase/security-contract/contract-surface.sql`) + replay de migraciones |
 | BOLA contract | `node scripts/bola-contract-test.cjs` | — | guards de `store_id` en endpoints multi-tenant |
 | Security Gate TS | `node scripts/ci-gate-ts-checks.js` | — | endpoints API (auth middleware, Zod) |
-| Security Gate SQL | `node scripts/ci-gate-sql-checks.js` + `ci-gate-checks.sql` | requiere secret `DATABASE_URL` | RLS / SECURITY DEFINER |
+| Security Gate SQL | `node scripts/ci-gate-sql-checks.js` (genera) + `psql -f scripts/ci-gate-checks.sql` + `node scripts/ci-gate-evaluate.js` | requiere secret `DATABASE_URL` | RLS / SECURITY DEFINER |
 | Security contract (LIVE) | `node scripts/security-contract-test.cjs` | requiere `SUPABASE_ACCESS_TOKEN` | **NUNCA en CI** (comentario REM-INV-5 del propio repo); reservado a certificación con credenciales dedicadas |
 | Build | `bun run build` (`next build`) | `next.config.ts` | app completa |
 | E2E aislamiento | `bun run test:e2e:isolation-proof` | `e2e/scripts/concurrency-proof.cjs` | prueba de aislamiento de runs |
@@ -81,7 +81,8 @@ actualizarse cuando cambien los workflows (§17).
 |---|---|---|---|
 | `ci.yml` (CI) | push + PR → `main`, `master`, `develop` | `quality` (TypeCheck + Lint + Unit + Build) · `e2e` (Playwright) · `security` (audit + secretos + BOLA + contract estático) | `quality`: gate de facto (pasa consistentemente) · `e2e`: **advisory** (`continue-on-error: true`) · `security`: gate de facto pero con **fallo histórico** (§3.4) |
 | `test-coverage.yml` (Test Coverage) | push + PR → `main`, `develop` | `unit-tests` (Vitest con cobertura) · `e2e-tests` (needs unit-tests) | `unit-tests`: gate de facto · `e2e-tests`: **advisory** (`continue-on-error: true`, duplicado del e2e de CI ya existente — no se añaden más duplicados, §11) |
-| `security-gate.yml` (Security CI Gate) | PR que toca `supabase/migrations/**`, `src/app/api/**`, `ci-gate-allowlist.json`, `scripts/ci-gate-*.js` | `ts-security-checks` · `sql-security-checks` (solo si hay migraciones) · `allowlist-review` | **Selección automática por rutas ya existente** para seguridad (§3.5) |
+| `security-gate.yml` (Security CI Gate) | PR que toca `supabase/migrations/**`, `src/app/api/**`, `ci-gate-allowlist.json`, `scripts/ci-gate-*.js` | `ts-security-checks` · `allowlist-review` | Gate TS + validación de allowlist; el job SQL roto fue retirado (su `contains(changed_files,…)` comparaba un entero y resultó SIEMPRE skipped, runs #76-#90) |
+| `sql-security-gate.yml` (SQL Security Gate) | PR que toca `supabase/migrations/**`, `scripts/ci-gate-sql-checks.js`, `scripts/ci-gate-evaluate.js`, `ci-gate-allowlist.json` | `sql-static-checks` (offline) · `sql-db-security-checks` (live, DATABASE_URL obligatorio: sin el secret FALLA de forma explícita) | Selección por rutas nativa: migraciones SQL SIEMPRE activan los checks; PRs sin SQL no disparan el workflow |
 | `daily-audit.yml` | cron diario + manual | audit agent | Ajeno a PRs |
 
 ### 3.3 Checks required reales

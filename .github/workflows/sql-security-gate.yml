@@ -1,0 +1,90 @@
+name: SQL Security Gate
+
+# Gate de seguridad SQL con selección por rutas — el mecanismo de filtros ya
+# adoptado en este repositorio (idéntico al trigger `paths:` de security-gate.yml).
+#
+# El workflow SOLO se dispara cuando el PR modifica migraciones SQL o la
+# maquinaria del propio gate. Por construcción:
+#   • PR que toca supabase/migrations/**          → los checks SE EJECUTAN.
+#   • PR que no toca SQL (ni maquinaria del gate) → el workflow NO se dispara
+#     (omisión legítima y visible; nada queda en verde por defecto).
+#
+# Historia: el job previo `sql-security-checks` de security-gate.yml usaba
+# `contains(github.event.pull_request.changed_files, 'supabase/migrations/')`,
+# donde changed_files es un ENTERO (recuento de archivos), no una lista de
+# rutas — la condición era estructuralmente falsa y el job resultó SIEMPRE
+# skipped en las 90+ ejecuciones históricas del workflow (verificado por API,
+# runs #76-#90), incluidos PRs que añadían migraciones.
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/ci-gate-sql-checks.js'
+      - 'scripts/ci-gate-evaluate.js'
+      - 'ci-gate-allowlist.json'
+
+permissions:
+  contents: read
+
+jobs:
+  # ── Validación ESTÁTICA (sin base de datos) ────────────────────────────────
+  # Genera el archivo de checks, valida la allowlist y comprueba la estructura
+  # del SQL generado. Verde ≠ "SQL analizado contra BD": eso lo certifica el
+  # job en vivo, que falla de forma explícita sin DATABASE_URL.
+  sql-static-checks:
+    name: SQL Static Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate and validate SQL checks (offline)
+        run: |
+          node scripts/ci-gate-sql-checks.js
+          test -s scripts/ci-gate-checks.sql || { echo "::error::scripts/ci-gate-checks.sql no se generó o está vacío"; exit 1; }
+          for tag in secdef_no_auth secdef_public_grant tables_no_rls __canary__; do
+            grep -q "$tag" scripts/ci-gate-checks.sql || { echo "::error::check esperado ausente en ci-gate-checks.sql: $tag"; exit 1; }
+          done
+          echo "Checks estáticos generados y estructuralmente íntegros."
+
+  # ── Comprobaciones EN VIVO (read-only contra PostgreSQL; DATABASE_URL requerido) ──
+  # Política del repositorio (PULL_REQUEST_TEST_POLICY.md §3.1): este gate
+  # REQUIERE el secret DATABASE_URL. Si falta, el job FALLA con un mensaje
+  # accionable — nunca se omite en silencio ni se declara cubierto un control
+  # que no se ejecutó.
+  sql-db-security-checks:
+    name: SQL DB Security Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Generate SQL checks
+        run: node scripts/ci-gate-sql-checks.js
+
+      - name: Run SQL security checks (live, read-only)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL no está configurado y es OBLIGATORIO para el SQL Security Gate."
+            echo "::error::Este PR toca SQL (o la maquinaria del gate) y las comprobaciones de RLS / SECURITY DEFINER requieren conectividad PostgreSQL (PULL_REQUEST_TEST_POLICY.md §3.1)."
+            echo "::error::Configura el secret DATABASE_URL en Settings → Secrets and variables → Actions, o documenta una excepción explícita en el PR."
+            exit 1
+          fi
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/ci-gate-checks.sql -t -A -F '|' > /tmp/results.txt
+          node scripts/ci-gate-evaluate.js /tmp/results.txt
