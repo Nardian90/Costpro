@@ -26,6 +26,10 @@ import type { CartItem } from "@/store/cart";
 // resolvePosOperationDate → ISO mediodía SOLO si la fecha elegida ≠ hoy (Habana);
 // hoy/null → undefined (el servidor estampa NOW(), comportamiento canónico intacto).
 import { resolvePosOperationDate, checkNotFutureOperationDate } from "@/lib/pos/operation-date";
+// MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): agregación de medios de pago para el
+// comprobante POS — suma las filas YA cobradas (misma fuente que viaja al RPC),
+// sin recálculo de importes.
+import { aggregateItemPayments } from "@/lib/pos/thermal-receipt";
 
 export function usePOSCheckout() {
   const { user } = useAuthStore();
@@ -49,6 +53,16 @@ export function usePOSCheckout() {
   // POS-2 MM-9: Referencia al ID del toast activo para poder dismissarlo
   // si el usuario hace otra venta antes de que expire la ventana de undo.
   const undoToastIdRef = useRef<string | number | null>(null);
+
+  // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): contexto de cobro del panel
+  // (efectivo recibido + vuelto calculado por el PROPIO panel) para el
+  // comprobante. Viaja por ref — sobrevive a los modales pendientes
+  // (precio/tasa) que aplazan processCheckout. SOLO presentación: no altera
+  // el payload del RPC ni ninguna regla de negocio.
+  const paymentContextRef = useRef<{
+    cashReceived?: number;
+    change?: number;
+  } | null>(null);
 
   const {
     items,
@@ -331,19 +345,36 @@ export function usePOSCheckout() {
         setLastSale({
           id: saleId,
           items: items.map((i) => ({
-            product: { name: i.product?.name || "Producto" },
+            product: { name: i.product?.name || "Producto", sku: i.product?.sku ?? null },
+            // MISIÓN IMPRESIÓN TÉRMICA: variante + moneda por línea (el recibo
+            // térmico imprime descripción completa e importes en su moneda).
+            variantName: i.variant?.name ?? null,
             quantity: i.quantity,
             price: i.price,
             subtotal: i.subtotal,
+            currency: i.currency || 'CUP',
           })),
           subtotal: getSubtotal(),
+          // MISIÓN IMPRESIÓN TÉRMICA: importes canónicos en CUP para el recibo —
+          // mismos getters del store que ya alimentan total/checkout (cero
+          // aritmética nueva). getSubtotalCup para que Subtotal y Total (CUP)
+          // sean coherentes entre sí en el comprobante.
+          subtotalCup: useCartStore.getState().getSubtotalCup(),
+          discountAmount: getDiscountAmount(),
+          taxAmount: useCartStore.getState().getTaxAmount(),
           total: getTotal(),
           discount: discount || null,
           paymentMethod: paymentMethod as string,
+          // MISIÓN IMPRESIÓN TÉRMICA: medios de pago reales por moneda
+          // (agregado de las filas ya cobradas) + vuelto del panel de cobro.
+          payments: aggregateItemPayments(items as Parameters<typeof aggregateItemPayments>[0]),
+          cashReceived: paymentContextRef.current?.cashReceived ?? null,
+          change: paymentContextRef.current?.change ?? null,
           date: new Date().toISOString(),
           // POS-3b audit P0.1: incluir cliente en el success view.
           customerName: customerName || undefined,
         });
+        paymentContextRef.current = null;
         clearCart();
         // MISIÓN-FLEX: la venta con incidencia NUNCA se presenta como
         // totalmente pagada — toast diferenciado con el detalle.
@@ -448,8 +479,17 @@ export function usePOSCheckout() {
         type: "fixed" | "percentage";
         value: number;
       } | null,
+      // MISIÓN IMPRESIÓN TÉRMICA: contexto de cobro del panel (solo lectura,
+      // presentación del comprobante). Opcional y retrocompatible.
+      paymentContext?: {
+        cashReceived?: number;
+        change?: number;
+      } | null,
     ) => {
       if (isProcessingSale) return;
+      // MISIÓN IMPRESIÓN TÉRMICA: capturar ANTES de cualquier guard/modal para
+      // que sobreviva a los caminos aplazados (confirmUnpriced/rateWarning).
+      paymentContextRef.current = paymentContext ?? null;
 
       // ── VALIDACIÓN DE STOCK: impedir overselling (stock negativo) ──
       // FIX-G10: multiplicar cantidad por conversion_factor de la variante

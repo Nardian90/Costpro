@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   Check,
@@ -9,12 +9,21 @@ import {
   RefreshCw,
   ExternalLink,
   Image as ImageIcon,
+  Printer,
   ShoppingCart,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PrimaryButton } from "@/components/ui/atomic";
 import { SaleQRCode } from "./SaleQRCode";
 import type { LastSale, POSCartSuccessViewProps } from "./POSCart.types";
+// MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): configuración del ancho del rollo.
+// El ancho NO está verificado para el equipo AXISOFT (sin ficha técnica
+// pública) — el usuario lo confirma aquí; 58 mm es el preset por defecto.
+import {
+  THERMAL_WIDTH_PRESETS,
+  getThermalWidthMm,
+  setThermalWidthMm,
+} from "@/lib/pos/thermal-receipt";
 
 interface EnhancedSuccessViewProps extends POSCartSuccessViewProps {
   lastSale?: LastSale;
@@ -24,10 +33,43 @@ export const POSCartSuccessView = ({
   onGeneratePDF,
   onShareWhatsApp,
   onExportAsImage,
+  onPrint,
   onClearLastSale,
   lastSale,
 }: EnhancedSuccessViewProps) => {
   const prefersReducedMotion = useReducedMotion();
+
+  // MISIÓN IMPRESIÓN TÉRMICA: ancho del rollo (persistido en localStorage).
+  // 'custom' solo cuando el valor guardado no coincide con un preset.
+  const [widthMode, setWidthMode] = useState<"preset" | "custom">(() => {
+    const current = getThermalWidthMm();
+    return (THERMAL_WIDTH_PRESETS as readonly number[]).includes(current) ? "preset" : "custom";
+  });
+  const [presetMm, setPresetMm] = useState<string>(() => {
+    const current = getThermalWidthMm();
+    return (THERMAL_WIDTH_PRESETS as readonly number[]).includes(current)
+      ? String(current)
+      : String(THERMAL_WIDTH_PRESETS[0]);
+  });
+  const [customMm, setCustomMm] = useState<string>(() => {
+    const current = getThermalWidthMm();
+    return (THERMAL_WIDTH_PRESETS as readonly number[]).includes(current) ? "" : String(current);
+  });
+
+  const handlePresetChange = (value: string) => {
+    setPresetMm(value);
+    setWidthMode("preset");
+    setThermalWidthMm(parseFloat(value));
+  };
+
+  const handleCustomMm = (value: string) => {
+    setCustomMm(value);
+    setWidthMode("custom");
+    const parsed = parseFloat(value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      setThermalWidthMm(parsed);
+    }
+  };
 
   return (
   <motion.div
@@ -91,6 +133,74 @@ export const POSCartSuccessView = ({
     )}
 
     <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): acción principal de impresión —
+          primera posición, ancho completo y objetivo táctil cómodo (p-6, igual
+          que las demás acciones). Abre el diálogo nativo del navegador; la
+          venta ya está confirmada y reimprimir no la altera. */}
+      <button
+        type="button"
+        onClick={onPrint}
+        disabled={!onPrint || !lastSale}
+        className="flex items-center justify-between p-6 rounded-2xl bg-success text-primary-foreground shadow-xl shadow-success/20 hover:scale-[1.02] transition-transform group sm:col-span-2 disabled:opacity-50 disabled:pointer-events-none min-h-[64px]"
+      >
+        <div className="text-left flex items-center gap-4">
+          <Printer className="w-8 h-8 group-hover:rotate-12 transition-transform" />
+          <div>
+            <div className="font-black uppercase tracking-widest text-xs opacity-70 mb-1">
+              Impresora térmica
+            </div>
+            <div className="text-xl font-black">Imprimir comprobante</div>
+          </div>
+        </div>
+        <div className="px-3 py-1 bg-primary-foreground/10 rounded-full text-[10px] font-black uppercase tracking-widest text-right">
+          Rollo {getThermalWidthMm()} mm
+        </div>
+      </button>
+
+      {/* Configuración del ancho del rollo — visible junto a la acción de
+          imprimir. El ancho del equipo NO está verificado: el usuario lo
+          confirma aquí (58 mm por defecto) y queda persistido. */}
+      <div className="sm:col-span-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span className="font-black uppercase tracking-widest text-[10px]">Rollo:</span>
+        <select
+          value={widthMode === "preset" ? presetMm : "custom"}
+          onChange={(e) => {
+            if (e.target.value === "custom") {
+              setWidthMode("custom");
+            } else {
+              handlePresetChange(e.target.value);
+            }
+          }}
+          aria-label="Ancho del rollo de papel térmico"
+          title="Ancho nominal del papel de la impresora (verifícalo en el equipo)"
+          className="px-3 py-2 rounded-xl border border-border bg-background text-foreground font-bold min-h-[44px]"
+        >
+          {THERMAL_WIDTH_PRESETS.map((mm) => (
+            <option key={mm} value={String(mm)}>
+              {mm} mm
+            </option>
+          ))}
+          <option value="custom">Personalizado…</option>
+        </select>
+        {widthMode === "custom" && (
+          <input
+            type="number"
+            inputMode="decimal"
+            min={40}
+            max={120}
+            step={0.5}
+            value={customMm}
+            onChange={(e) => handleCustomMm(e.target.value)}
+            placeholder="mm"
+            aria-label="Ancho personalizado del rollo en milímetros"
+            className="w-24 px-3 py-2 rounded-xl border border-border bg-background text-foreground font-bold min-h-[44px]"
+          />
+        )}
+        <span className="text-[10px]">
+          Ancho del papel de tu impresora — verifícalo con una prueba de impresión.
+        </span>
+      </div>
+
       <button
         type="button"
         onClick={onGeneratePDF}

@@ -69,7 +69,17 @@ interface POSCartCheckoutPanelProps {
   onSetSelectedPayment: (m: PaymentMethod) => void;
   isProcessing: boolean;
   itemCount: number;
-  onCheckout: (payment: PaymentMethod, discount: { type: "percentage" | "fixed"; value: number } | null) => void;
+  onCheckout: (
+    payment: PaymentMethod,
+    discount: { type: "percentage" | "fixed"; value: number } | null,
+    // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): contexto de cobro para el
+    // comprobante POS (efectivo recibido + vuelto YA calculados por este
+    // panel). Solo presentación — no altera el checkout ni el RPC.
+    paymentContext?: {
+      cashReceived?: number;
+      change?: number;
+    } | null,
+  ) => void;
   onClearCart: () => void;
   isMobile: boolean;
 }
@@ -260,7 +270,21 @@ export function POSCartCheckoutPanel({
 
   const handleConfirmCheckout = () => {
     setShowCheckoutConfirm(false);
-    onCheckout(derivedPaymentMethod, discount && discount.value > 0 ? discount : null);
+    // MISIÓN IMPRESIÓN TÉRMICA: se reenvía el vuelto que ESTE panel calcula
+    // (cashReceivedNum - totalCashCup, línea 167) — cero aritmética nueva;
+    // el recibo imprime «Efectivo recibido» y «Cambio» solo si aplica.
+    const receiptContext =
+      cashReceivedNum > 0
+        ? {
+            cashReceived: cashReceivedNum,
+            change: change >= 0 ? change : undefined,
+          }
+        : null;
+    onCheckout(
+      derivedPaymentMethod,
+      discount && discount.value > 0 ? discount : null,
+      receiptContext,
+    );
   };
 
   // ── AUTO-DETECT PAYMENT METHOD ──

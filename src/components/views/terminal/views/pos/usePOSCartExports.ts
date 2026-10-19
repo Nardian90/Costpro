@@ -9,7 +9,17 @@ import { toast } from "sonner";
 // Ambas librerías ahora se resuelven con import() dinámico dentro de las funciones
 // que las usan (primer clic en exportar). Sin cambios de comportamiento ni contrato.
 import { formatCurrency } from "@/lib/utils";
+import { useAuthStore } from "@/store";
 import type { LastSale } from "./POSCart.types";
+// MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): comprobante POS para rollo térmico.
+// Reutiliza LastSale (fuente única de la venta confirmada) + el nombre de la
+// tienda del mismo endpoint que usa CashReportView. La impresión NO muta la
+// venta: es 100% lectura y repetible (reimprimir es gratis).
+import { buildReceiptDataFromLastSale } from "@/lib/pos/thermal-receipt";
+import {
+  fetchActiveStoreName,
+  printThermalReceipt,
+} from "./thermal-receipt-print";
 
 interface UsePOSCartExportsOptions {
   lastSale?: LastSale | null;
@@ -181,5 +191,33 @@ export function usePOSCartExports({ lastSale }: UsePOSCartExportsOptions) {
     }
   }, [lastSale]);
 
-  return { generatePDF, shareWhatsApp, exportAsImage };
+  /**
+   * MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): imprime el comprobante POS al ancho
+   * del rollo configurado (58 mm por defecto; configurable en la UI del éxito
+   * de venta). Abre el diálogo nativo del navegador — honesto por diseño: se
+   * informa que el diálogo se abrió, NUNCA que la impresión física ocurrió.
+   * La venta ya está confirmada: imprimir/reimprimir no la altera.
+   */
+  const printReceipt = useCallback(async () => {
+    if (!lastSale) return;
+    const toastId = toast.loading("Preparando comprobante térmico…");
+    try {
+      const { user } = useAuthStore.getState();
+      const storeName = await fetchActiveStoreName(user?.activeStoreId ?? null);
+      const data = buildReceiptDataFromLastSale(lastSale, {
+        storeName,
+        sellerName: user?.fullName ?? null,
+      });
+      toast.dismiss(toastId);
+      await printThermalReceipt(data);
+    } catch {
+      toast.dismiss(toastId);
+      toast.error(
+        "No se pudo preparar el comprobante térmico. Intenta de nuevo o usa «Recibo PDF».",
+        { duration: 6000 },
+      );
+    }
+  }, [lastSale]);
+
+  return { generatePDF, shareWhatsApp, exportAsImage, printReceipt };
 }

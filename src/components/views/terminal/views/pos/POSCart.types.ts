@@ -40,10 +40,14 @@ export type CartDiscount = {
 // ── Last Sale ──────────────────────────────────────────────
 
 export interface SaleItem {
-  product: { name: string };
+  product: { name: string; sku?: string | null };
+  // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): descripción completa (variante) y
+  // moneda de la línea para el comprobante POS.
+  variantName?: string | null;
   quantity: number;
   price: number;
   subtotal: number;
+  currency?: string;
 }
 
 export interface LastSale {
@@ -51,9 +55,19 @@ export interface LastSale {
   date: string;
   items: SaleItem[];
   subtotal: number;
+  // MISIÓN IMPRESIÓN TÉRMICA: importes canónicos en CUP para el comprobante
+  // (mismos getters del store — ver usePOSCheckout.setLastSale).
+  subtotalCup?: number;
+  discountAmount?: number;
+  taxAmount?: number;
   discount: { type: "fixed" | "percentage"; value: number } | null;
   total: number;
   paymentMethod: string;
+  // MISIÓN IMPRESIÓN TÉRMICA: medios de pago reales por moneda (agregado de
+  // filas cobradas) + vuelto/efectivo recibido del panel de cobro (informativo).
+  payments?: import("@/lib/pos/thermal-receipt").ThermalReceiptPayment[] | null;
+  cashReceived?: number | null;
+  change?: number | null;
   // POS-3b audit P0.1: cliente asociado a la venta (si aplica).
   customerName?: string;
   customerId?: string | null;
@@ -84,6 +98,12 @@ export interface POSCartProps {
   onCheckout: (
     paymentMethod: PaymentMethod,
     discount?: CartDiscount,
+    // MISIÓN IMPRESIÓN TÉRMICA: contexto de cobro del panel (efectivo
+    // recibido + vuelto) — SOLO presentación del comprobante. Opcional.
+    paymentContext?: {
+      cashReceived?: number;
+      change?: number;
+    } | null,
   ) => Promise<void>;
   onClose: () => void;
   lastSale?: LastSale | null;
@@ -155,5 +175,9 @@ export interface POSCartSuccessViewProps {
   onGeneratePDF: () => void;
   onShareWhatsApp: () => void;
   onExportAsImage: () => void;
+  // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): imprimir comprobante POS al ancho
+  // del rollo (diálogo nativo del navegador). La venta ya está confirmada —
+  // imprimir es reutilizable y no la altera.
+  onPrint?: () => void;
   onClearLastSale?: () => void;
 }
