@@ -110,6 +110,10 @@ export default function CashReportView() {
   const [customDenoms, setCustomDenoms] = useState<CustomDenoms>({ CUP: [], USD: [] });
   const [deliveredBy, setDeliveredBy] = useState('');
   const [recipientName, setRecipientName] = useState('');
+  // INC-2026-10-19: tercer nombre del pie de firmas del Diario («Hecho por»).
+  // Los tres se definen en la UI (Opciones del documento → Pie de firmas) y
+  // se persisten como deliveredBy/recipient — NADA hardcodeado en el PDF.
+  const [madeBy, setMadeBy] = useState('');
   const [savedHistory, setSavedHistory] = useState<SavedBreakdown[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showCupConfig, setShowCupConfig] = useState(false);
@@ -141,6 +145,7 @@ export default function CashReportView() {
     setCustomDenoms(loadCustomDenoms());
     setDeliveredBy(localStorage.getItem(LS_KEYS.deliveredBy) || '');
     setRecipientName(localStorage.getItem(LS_KEYS.recipient) || '');
+    setMadeBy(localStorage.getItem(LS_KEYS.madeBy) || '');
     setSavedHistory(loadHistory());
   }, []);
 
@@ -162,6 +167,7 @@ export default function CashReportView() {
   // Persistencia de datos de entrega (mismo comportamiento que el modal)
   useEffect(() => { if (deliveredBy) localStorage.setItem(LS_KEYS.deliveredBy, deliveredBy); }, [deliveredBy]);
   useEffect(() => { if (recipientName) localStorage.setItem(LS_KEYS.recipient, recipientName); }, [recipientName]);
+  useEffect(() => { if (madeBy) localStorage.setItem(LS_KEYS.madeBy, madeBy); }, [madeBy]);
 
   const setTemplatePersisted = useCallback((t: PdfTemplate) => {
     setPdfTemplate(t);
@@ -343,6 +349,7 @@ export default function CashReportView() {
       breakdown: cupBreakdown,
       deliveredBy,
       recipientName,
+      madeBy,
       total: cupTotal,
       usdBreakdown: usdBreakdown,
       usdTotal: usdTotal,
@@ -351,13 +358,14 @@ export default function CashReportView() {
     setSavedHistory(u);
     saveHistory(u);
     toast.success(`Guardado (${u.length}/10)`);
-  }, [cupBreakdown, usdBreakdown, cupTotal, usdTotal, deliveredBy, recipientName, savedHistory]);
+  }, [cupBreakdown, usdBreakdown, cupTotal, usdTotal, deliveredBy, recipientName, madeBy, savedHistory]);
 
   const handleRestoreHistory = useCallback((h: SavedBreakdown) => {
     setCupBreakdown(h.breakdown || {});
     setUsdBreakdown(h.usdBreakdown || {});
     setDeliveredBy(h.deliveredBy || '');
     setRecipientName(h.recipientName || '');
+    setMadeBy(h.madeBy || '');
     setShowHistory(false);
     toast.success('Desglose restaurado');
   }, []);
@@ -397,9 +405,9 @@ export default function CashReportView() {
     orientation: pdfOrientation, // §1: la orientación cambia el documento → invalida el cache
     options: showPdfOptions ? pdfOptions : pdfOptions, // opciones siempre parte de la firma
     cfg: applied?.cfg ?? null,
-    cupBreakdown, usdBreakdown, deliveredBy, recipientName,
+    cupBreakdown, usdBreakdown, deliveredBy, recipientName, madeBy,
     cupDenoms, usdDenoms, customDenoms,
-  }), [pdfTemplate, pdfOrientation, pdfOptions, applied, cupBreakdown, usdBreakdown, deliveredBy, recipientName, cupDenoms, usdDenoms, customDenoms]);
+  }), [pdfTemplate, pdfOrientation, pdfOptions, applied, cupBreakdown, usdBreakdown, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, customDenoms]);
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -441,7 +449,7 @@ export default function CashReportView() {
         template: pdfTemplate,
         startDate: applied.cfg.startDate,
         endDate: applied.cfg.endDate,
-        storeInfo, deliveredBy, recipientName,
+        storeInfo, deliveredBy, recipientName, madeBy,
         cupDenoms: cupDenoms, usdDenoms: usdDenoms,
         cupBreakdown, usdBreakdown,
         options: pdfOptions,
@@ -461,7 +469,7 @@ export default function CashReportView() {
       buildingRef.current = false;
       setPreviewLoading(false);
     }
-  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature]);
+  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature]);
 
   // Al abrir la pestaña de vista previa con reporte calculado: construir si no hay cache
   useEffect(() => {
@@ -490,7 +498,7 @@ export default function CashReportView() {
         doc = await buildCashReportPdf({
           report: applied.report, template: pdfTemplate,
           startDate: applied.cfg.startDate, endDate: applied.cfg.endDate,
-          storeInfo, deliveredBy, recipientName,
+          storeInfo, deliveredBy, recipientName, madeBy,
           cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptions,
           orientation: pdfOrientation,
         }, summaries);
@@ -507,7 +515,7 @@ export default function CashReportView() {
     } finally {
       setExporting(false);
     }
-  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature, exporting]);
+  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature, exporting]);
 
   // ── Acción principal (§2): Generar (sin resultados) / Actualizar (con resultados) ──
   const generateLabel = !applied ? 'Generar reporte' : 'Actualizar reporte';
@@ -706,6 +714,51 @@ export default function CashReportView() {
                     </button>
                   ))}
                 </div>
+
+                {/* INC-2026-10-19 · Pie de firmas: los nombres se definen AQUÍ (nada
+                    hardcodeado en el PDF). Visible «si procede»: con la opción
+                    «Líneas de firma» activa. Se imprimen en ambos reportes (CUP y
+                    USD) cuando comparten hoja o cada uno en la suya. */}
+                {pdfOptions.includeSignature && (
+                  <div className="rounded-xl border border-border/30 bg-muted/10 p-3 space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombres del pie de firmas</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div>
+                        <label htmlFor="cr-firmas-hecho" className="text-[9px] font-black uppercase text-muted-foreground">Hecho por</label>
+                        <input
+                          id="cr-firmas-hecho" type="text" value={madeBy}
+                          onChange={(e) => setMadeBy(e.target.value)}
+                          className={cn('w-full px-3 py-2 rounded border border-border/40 bg-background text-xs', touch)}
+                          placeholder="Quien elabora el reporte"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="cr-firmas-entrega" className="text-[9px] font-black uppercase text-muted-foreground">Entregado por</label>
+                        <input
+                          id="cr-firmas-entrega" type="text" value={deliveredBy}
+                          onChange={(e) => setDeliveredBy(e.target.value)}
+                          className={cn('w-full px-3 py-2 rounded border border-border/40 bg-background text-xs', touch)}
+                          placeholder="Quien entrega el dinero"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="cr-firmas-recibe" className="text-[9px] font-black uppercase text-muted-foreground">Recibido por</label>
+                        <input
+                          id="cr-firmas-recibe" type="text" value={recipientName}
+                          onChange={(e) => setRecipientName(e.target.value)}
+                          className={cn('w-full px-3 py-2 rounded border border-border/40 bg-background text-xs', touch)}
+                          placeholder="Quien recibe el dinero"
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground leading-relaxed">
+                      Se imprimen bajo las líneas de firma del PDF (Hecho por / Entregado por / Recibido por). Sin nombre, la línea queda en blanco para firmar a mano — ningún nombre viene fijo del sistema.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -795,10 +848,6 @@ export default function CashReportView() {
                 usdCustomError={usdCustomError}
                 setCupCustomError={setCupCustomError}
                 setUsdCustomError={setUsdCustomError}
-                deliveredBy={deliveredBy}
-                recipientName={recipientName}
-                setDeliveredBy={setDeliveredBy}
-                setRecipientName={setRecipientName}
                 showHistory={showHistory}
                 setShowHistory={setShowHistory}
                 savedHistory={savedHistory}
@@ -1326,10 +1375,6 @@ interface DesglosePanelProps {
   usdCustomError: string | null;
   setCupCustomError: (v: string | null) => void;
   setUsdCustomError: (v: string | null) => void;
-  deliveredBy: string;
-  recipientName: string;
-  setDeliveredBy: (v: string) => void;
-  setRecipientName: (v: string) => void;
   showHistory: boolean;
   setShowHistory: (v: boolean) => void;
   savedHistory: SavedBreakdown[];
@@ -1519,17 +1564,9 @@ function DesglosePanel(p: DesglosePanelProps) {
             </div>
           )}
 
-          {/* Entrega / Recibe (compartido) */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label htmlFor="cr-db" className="text-[9px] font-black uppercase text-muted-foreground">Entrega</label>
-              <input id="cr-db" type="text" value={p.deliveredBy} onChange={(e) => p.setDeliveredBy(e.target.value)} className={cn('w-full px-3 py-2 rounded border border-border/40 bg-background text-xs', touch)} placeholder="Quien entrega" />
-            </div>
-            <div>
-              <label htmlFor="cr-rn" className="text-[9px] font-black uppercase text-muted-foreground">Recibe</label>
-              <input id="cr-rn" type="text" value={p.recipientName} onChange={(e) => p.setRecipientName(e.target.value)} className={cn('w-full px-3 py-2 rounded border border-border/40 bg-background text-xs', touch)} placeholder="Quien recibe" />
-            </div>
-          </div>
+          {/* INC-2026-10-19: los nombres del pie de firmas (antes Entrega/Recibe
+              aquí) se configuran en «Opciones del documento → Nombres del pie
+              de firmas», junto al toggle «Líneas de firma» que los rige. */}
 
           {/* ── CUP ── */}
           <DenomPanel
@@ -1600,7 +1637,7 @@ function DesglosePanel(p: DesglosePanelProps) {
             <button onClick={p.onClearAll} className={cn('px-3 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted flex items-center gap-1.5', touch)}>
               <Trash2 className="w-4 h-4 text-destructive" /> Limpiar todo
             </button>
-            <span className="text-[10px] text-muted-foreground ml-auto">Guarda CUP + USD y los nombres de entrega/recibe.</span>
+            <span className="text-[10px] text-muted-foreground ml-auto">Guarda CUP + USD y los nombres del pie de firmas.</span>
           </div>
           {p.showHistory && (
             <div className="p-3 rounded-xl border border-border/30 bg-muted/10 max-h-40 overflow-y-auto">

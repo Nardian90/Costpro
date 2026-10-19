@@ -439,3 +439,77 @@ describe('NAV-2026-10 — «Gestionar comisiones» navega a Trabajadores y Comis
     expect(typeof ctx.setAt).toBe('number');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INC-2026-10-19 — Nombres del pie de firmas definidos en ESTA UI (nada
+// hardcodeado en el PDF): inputs Hecho/Entregado/Recibido por dentro de
+// «Opciones del documento», visibles «si procede» (toggle Líneas de firma).
+// ═══════════════════════════════════════════════════════════════════════════
+describe('INC-2026-10-19 — Nombres del pie de firmas (UI)', () => {
+  const openOptions = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(screen.getByRole('button', { name: /Opciones del documento/i }));
+    await waitFor(() => expect(screen.getByText('Nombres del pie de firmas')).toBeTruthy());
+  };
+
+  it('los tres inputs (Hecho por / Entregado por / Recibido por) viven en Opciones del documento y persisten', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await openOptions(user);
+    // Tres inputs con sus etiquetas exactas (mapean 1:1 las etiquetas del PDF)
+    const hecho = document.getElementById('cr-firmas-hecho') as HTMLInputElement;
+    const entrega = document.getElementById('cr-firmas-entrega') as HTMLInputElement;
+    const recibe = document.getElementById('cr-firmas-recibe') as HTMLInputElement;
+    expect(hecho).toBeTruthy();
+    expect(entrega).toBeTruthy();
+    expect(recibe).toBeTruthy();
+    expect(screen.getByLabelText('Hecho por')).toBe(hecho);
+    expect(screen.getByLabelText('Entregado por')).toBe(entrega);
+    expect(screen.getByLabelText('Recibido por')).toBe(recibe);
+    // Escritura → persistencia LS (mismo mecanismo que deliveredBy/recipient)
+    await act(async () => { fireEvent.change(hecho, { target: { value: 'Israel Leyva Velazquez' } }); });
+    await act(async () => { fireEvent.change(entrega, { target: { value: 'Israel Leyva Velazquez' } }); });
+    await act(async () => { fireEvent.change(recibe, { target: { value: 'Belkis Olivera Perez' } }); });
+    await waitFor(() => expect(localStorage.getItem(LS_KEYS.madeBy)).toBe('Israel Leyva Velazquez'));
+    expect(localStorage.getItem(LS_KEYS.deliveredBy)).toBe('Israel Leyva Velazquez');
+    expect(localStorage.getItem(LS_KEYS.recipient)).toBe('Belkis Olivera Perez');
+  });
+
+  it('«si procede»: con «Líneas de firma» desactivada la sección de nombres NO se muestra', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await openOptions(user);
+    await user.click(screen.getByRole('button', { name: /^Líneas de firma/i }));
+    await waitFor(() => expect(screen.queryByText('Nombres del pie de firmas')).toBeNull());
+    // al reactivarla vuelve (el toggle gobierna la visibilidad)
+    await user.click(screen.getByRole('button', { name: /^Líneas de firma/i }));
+    await waitFor(() => expect(screen.getByText('Nombres del pie de firmas')).toBeTruthy());
+  });
+
+  it('los nombres definidos LLEGAN al builder del PDF (ctx.madeBy/deliveredBy/recipientName)', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await openOptions(user);
+    await act(async () => { fireEvent.change(document.getElementById('cr-firmas-hecho')!, { target: { value: 'Ana Elabora' } }); });
+    await act(async () => { fireEvent.change(document.getElementById('cr-firmas-entrega')!, { target: { value: 'Israel Leyva Velazquez' } }); });
+    await act(async () => { fireEvent.change(document.getElementById('cr-firmas-recibe')!, { target: { value: 'Belkis Olivera Perez' } }); });
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
+    await user.click(screen.getByRole('tab', { name: /Vista previa/i }));
+    await waitFor(() => expect(buildPdfMock).toHaveBeenCalled());
+    const ctx = buildPdfMock.mock.calls[0][0] as Record<string, unknown>;
+    expect(ctx.madeBy).toBe('Ana Elabora');
+    expect(ctx.deliveredBy).toBe('Israel Leyva Velazquez');
+    expect(ctx.recipientName).toBe('Belkis Olivera Perez');
+  });
+
+  it('los antiguos inputs Entrega/Recibe de la pestaña Desglose ya NO existen (una sola fuente: Opciones)', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
+    await user.click(screen.getByRole('tab', { name: /Desglose de efectivo/i }));
+    await waitFor(() => expect(screen.getByText('Desglose para Entrega — CUP')).toBeTruthy());
+    expect(document.getElementById('cr-db')).toBeNull();
+    expect(document.getElementById('cr-rn')).toBeNull();
+  });
+});

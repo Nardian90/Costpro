@@ -26,7 +26,7 @@ export type PdfTemplate = 'estandar' | 'simple' | 'diario';
 export const TEMPLATES: { id: PdfTemplate; label: string; desc: string }[] = [
   { id: 'estandar', label: 'Estándar', desc: 'Cuadre CUP+USD con desglose de billetes' },
   { id: 'simple', label: 'Simple', desc: 'Resumen básico sin desglose' },
-  { id: 'diario', label: 'Diario (Empresa)', desc: 'Plantilla estilo reporte diario: 3 páginas (CUP/USD/Órdenes) con tabla por producto + desglose billetes + firmas Hecho/Entregado/Recibido por' },
+  { id: 'diario', label: 'Diario (Empresa)', desc: 'Reporte diario con tabla por producto y desglose de billetes; firmas Hecho/Entregado/Recibido por con nombres configurables' },
 ];
 
 /**
@@ -71,6 +71,9 @@ export type Currency = 'CUP' | 'USD';
 export const LS_KEYS = {
   deliveredBy: 'costpro_cash_delivered_by',
   recipient: 'costpro_cash_recipient',
+  /** INC-2026-10-19: nombre «Hecho por» del pie de firmas (mismo estilo global
+   *  que deliveredBy/recipient — preferencia de documento, no por tienda). */
+  madeBy: 'costpro_cash_made_by',
   cupDenoms: 'costpro_cash_denoms_cup',
   history: 'costpro_cash_breakdown_history',
   /** Nueva: plantilla PDF (CAMBIO 2026-10 §3). Alcance GLOBAL: la plantilla es
@@ -261,6 +264,9 @@ export interface SavedBreakdown {
   breakdown: Breakdown;           // CUP (campo legacy)
   deliveredBy: string;
   recipientName: string;
+  /** INC-2026-10-19: nombre «Hecho por» del pie de firmas. Opcional para
+   *  compatibilidad con entradas antiguas del historial. */
+  madeBy?: string;
   total: number;                  // CUP (campo legacy)
   /** CAMBIO 2026-10 (paridad USD): opcional para compatibilidad con entradas antiguas. */
   usdBreakdown?: Breakdown;
