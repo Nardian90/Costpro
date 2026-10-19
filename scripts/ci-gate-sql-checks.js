@@ -81,6 +81,14 @@ ORDER BY p.proname;
     match_column: 2, // proname
   },
   {
+    // NOTA DE ROBUSTEZ (F6, 2026-10-20): la versión original consultaba
+    // information_schema.role_routine_grants, que PostgreSQL FILTRA a los
+    // roles habilitados del usuario actual ("enabled roles"). Con un rol
+    // dedicado de CI restringido (p. ej. ci_gate_ro, sin membresías) esa
+    // vista devuelve 0 filas => FALSO VERDE silencioso (verificado en vivo:
+    // 0 hallazgos como rol restringido vs 10 como superusuario). Se usa la
+    // forma directa sobre pg_proc.proacl/aclexplode, que NO filtra por
+    // usuario y produce resultados idénticos para cualquier rol.
     name: 'Check 2: SECURITY DEFINER con grants anon/PUBLIC',
     check_id: 'secdef_public_grant',
     sql: `
@@ -90,10 +98,13 @@ JOIN pg_namespace n ON p.pronamespace = n.oid
 WHERE n.nspname = 'public'
   AND p.prosecdef = true
   AND EXISTS (
-    SELECT 1 FROM information_schema.role_routine_grants rg
-    WHERE rg.routine_schema = 'public'
-      AND rg.routine_name = p.proname
-      AND rg.grantee IN ('anon', 'PUBLIC')
+    SELECT 1
+    FROM aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) AS a
+    WHERE a.privilege_type = 'EXECUTE'
+      AND (
+        a.grantee = 0  -- PUBLIC
+        OR a.grantee = (SELECT oid FROM pg_roles WHERE rolname = 'anon')
+      )
   )
 ORDER BY p.proname;
 `,
