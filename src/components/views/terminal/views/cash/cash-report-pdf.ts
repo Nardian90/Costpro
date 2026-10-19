@@ -78,6 +78,9 @@ export interface CashReportPdfContext {
   storeInfo: CashReportStoreInfo | null;
   deliveredBy: string;
   recipientName: string;
+  /** INC-2026-10-19: nombre «Hecho por» del pie de firmas (Diario). Opcional
+   *  para no romper llamadas existentes; viene de la UI (nunca hardcodeado). */
+  madeBy?: string;
   /** Denominaciones activas CUP (defaults activadas + personalizadas, desc). */
   cupDenoms: number[];
   /** Denominaciones activas USD. */
@@ -597,7 +600,7 @@ export function denomLabel(d: number, currency: Currency): string {
 // PLANTILLA DIARIO (portado 1:1 del modal — estilo reporte diario de empresa)
 // ═══════════════════════════════════════════════════════════════════════════
 async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?: CashReportSummaries): Promise<jsPDF> {
-  const { report, startDate, endDate, storeInfo, deliveredBy, recipientName, cupBreakdown, usdBreakdown, cupDenoms, usdDenoms, options } = ctx;
+  const { report, startDate, endDate, storeInfo, deliveredBy, recipientName, madeBy, cupBreakdown, usdBreakdown, cupDenoms, usdDenoms, options } = ctx;
   const orientation: PdfOrientation = ctx.orientation === 'horizontal' ? 'horizontal' : 'vertical';
   // Geometría dinámica: funciona igual en vertical (210×297) y horizontal (297×210).
   const pw = doc.internal.pageSize.getWidth();
@@ -805,8 +808,23 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     return by;
   };
 
-  const renderFirmas = () => {
-    const sigY = ph - 25;
+  // ── Pie de firmas (opción «Líneas de firma») ──
+  // INC-2026-10-19 (margen lógico + pies en ambos reportes):
+  //  · NOMBRES 100% CONFIGURABLES desde la UI (Hecho por / Entregado por /
+  //    Recibido por). SIN fallbacks hardcodeados: nombre vacío → la línea
+  //    queda en blanco para rellenar a mano (nada de «Israel…»/«Belkis…»).
+  //  · flow=true → el bloque fluye a continuación del contenido. Se usa cuando
+  //    el reporte USD COMPARTIE hoja con el CUP: cada reporte lleva SU pie,
+  //    sin solaparse, y entre ambos queda el separador visual.
+  //  · flow=false → posición fija al pie de la hoja (clásico, hoja propia).
+  const FIRMAS_BLOCK_H = 24;   // etiqueta + línea + nombre (mm)
+  const SEPARATOR_H = 15;      // margen lógico visual entre reportes (mm)
+  const renderFirmas = (opts: { flow?: boolean } = {}) => {
+    const flow = opts.flow === true;
+    if (flow && y + FIRMAS_BLOCK_H > ph - m - 4) { doc.addPage(); y = 14; }
+    // Fijo: posición clásica al pie de hoja; si el contenido terminó muy abajo
+    // (tabla llena + leyenda de incidencias), se empuja para no solapar.
+    const sigY = flow ? y + 10 : Math.max(ph - 25, y + 8);
     const colW = contentW / 3;
     setDraw(C_MUTED); doc.setLineWidth(0.3);
     for (let i = 0; i < 3; i++) {
@@ -818,9 +836,28 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     doc.text('Entregado por:', m + colW + 5, sigY - 4);
     doc.text('Recibido por:', m + 2 * colW + 5, sigY - 4);
     setText(C_DARK); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-    doc.text(deliveredBy || 'Israel Leyva Velazquez', m + 5, sigY + 5);
-    doc.text('____________________', m + colW + 5, sigY + 5);
-    doc.text(recipientName || 'Belkis Olivera Perez', m + 2 * colW + 5, sigY + 5);
+    const clean = (s: string | undefined) => String(s || '').trim();
+    const hecho = clean(madeBy);
+    const entrega = clean(deliveredBy);
+    const recibe = clean(recipientName);
+    if (hecho) doc.text(hecho, m + 5, sigY + 5);
+    if (entrega) doc.text(entrega, m + colW + 5, sigY + 5);
+    if (recibe) doc.text(recibe, m + 2 * colW + 5, sigY + 5);
+    if (flow) y = sigY + 9;
+  };
+
+  // ── Separador visual entre el reporte CUP y el USD (hoja compartida) ──
+  // INC-2026-10-19: «no deja un margen lógico visual entre ambos reportes».
+  // Aire + doble filete (fino + grueso) + aire: corte inequívoco entre los
+  // dos documentos cuando comparten la misma hoja (§9 compacto).
+  const renderSectionSeparator = () => {
+    y += 6;
+    setDraw(C_BORDER); doc.setLineWidth(0.3);
+    doc.line(m, y, pw - m, y);
+    y += 1.6;
+    setDraw(C_BLACK); doc.setLineWidth(0.9);
+    doc.line(m, y, pw - m, y);
+    y += 7;
   };
 
   // ── Tabla de movimientos (§2: sin Clase · anchos proporcionales · headers repetidos) ──
@@ -836,7 +873,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
   //      se reparten por valor cobrado). La fila de totales suma las
   //      cantidades de ESA hoja — la cantidad física nunca se duplica
   //      (invariante: qty_cup + qty_usd = total_quantity).
-  const renderSalesTable = (currency: 'CUP' | 'USD'): { totCash: number; totTransfer: number; totUsd: number; totCommission: number; totalPages: number } => {
+  const renderSalesTable = (currency: 'CUP' | 'USD', opts: { bottomReserve?: number } = {}): { totCash: number; totTransfer: number; totUsd: number; totCommission: number; totalPages: number } => {
     // §8.2: columna Comisión conmutable (solo página CUP); el ancho se redistribuye sin desplazar importes.
     const includeCommission = currency === 'CUP' && options.includeCommissionColumn !== false;
     const colNames = salesTableColumns(currency, includeCommission);
@@ -886,8 +923,11 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
 
     // Página 1 de la tabla (empieza en y actual)
     let yStart = y;
-    // Cuenta filas que caben antes del pie de firma
-    const fitsBeforeFooter = (yPos: number) => yPos + rowH < ph - 45;
+    // Cuenta filas que caben antes del pie. Reserva por defecto: pie fijo al
+    // fondo (45). En hoja compartida CUP+USD el pie del reporte USD FLUYE tras
+    // su tabla → se reserva además el bloque de firmas (INC-2026-10-19).
+    const bottomReserve = opts.bottomReserve ?? 45;
+    const fitsBeforeFooter = (yPos: number) => yPos + rowH < ph - bottomReserve;
     let i = 0;
     const drawTotalsRow = (rowY: number) => {
       doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
@@ -984,6 +1024,22 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
   };
 
   // ══════════════ SECCIÓN CUP ══════════════
+  // §9 en dos modos: «USD en hoja separada» (true) o compacto (false = CUP y
+  // USD corridos en la MISMA hoja si cabe). INC-2026-10-19: en hoja compartida
+  // cada reporte lleva SU pie de firmas y entre ambos queda el separador
+  // visual (margen lógico) — el USD ya no empieza pegado a la tabla CUP.
+  const usdCompact = options.usdSeparatePage === false;
+  const usdWillRender = options.includeUsd !== false && (
+    usdSummary.ventasTotales > 0 || usdSummary.ventasCash > 0
+    || breakdownTotal(usdBreakdown) > 0
+    || itemsWithCommission.some((it: any) => (Number(it.usd_total || 0)) > 0)
+  );
+  const usdItemsCount = itemsWithCommission.filter((it: any) => (Number(it.usd_total || 0)) > 0).length;
+  // Altura estimada de la sección USD: encabezado + resumen + desglose + tabla
+  // + SU pie de firmas si está activo (+ separador si comparte hoja con el CUP).
+  const firmasH = options.includeSignature !== false ? FIRMAS_BLOCK_H : 0;
+  const usdNeededH = 60 + usdItemsCount * 5 + firmasH + SEPARATOR_H;
+  let usdSharesCupPage = false;
   {
     renderPageHeader('Reporte de Venta CUP');
     markSection('CUP');
@@ -1018,42 +1074,57 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
 
     // SEGUNDA sección (§2): tabla de movimientos DEBAJO de ambos bloques.
     renderSalesTable('CUP');
-    renderFirmas();
+
+    // Decisión de compartición (tras conocer el y real de fin de tabla CUP):
+    // el USD comparte hoja solo si queda espacio para TODO su bloque
+    // (incluido su pie de firmas) por encima del pie de página.
+    usdSharesCupPage = usdCompact && usdWillRender && (y + usdNeededH <= ph - 30);
+
+    // Pie del reporte CUP: fluye tras el contenido cuando el USD comparte hoja
+    // (el contenido USD sigue debajo); fijo al pie de página en el resto de
+    // casos (clásico). Solo si «Líneas de firma» está activa (opción respetada).
+    if (options.includeSignature !== false) renderFirmas({ flow: usdSharesCupPage });
   }
 
   // ══════════════ SECCIÓN USD (§9: compacto o hoja propia) ══════════════
-  if (options.includeUsd !== false) {
-    const usdHasContent = usdSummary.ventasTotales > 0 || usdSummary.ventasCash > 0 || breakdownTotal(usdBreakdown) > 0 || itemsWithCommission.some((it: any) => (Number(it.usd_total || 0)) > 0);
-    if (usdHasContent) {
-      if (options.usdSeparatePage !== false) {
-        doc.addPage(); y = 14;
-      } else {
-        // Compacto: misma hoja si queda espacio legible; si no, página nueva.
-        const needed = 60 + (itemsWithCommission.filter((it: any) => (Number(it.usd_total || 0)) > 0).length * 5);
-        if (y + needed > ph - 30) { doc.addPage(); y = 14; }
-      }
-      renderPageHeader('Reporte de Venta USD');
-      markSection('USD');
-
-      const su = usdSummary;
-      const usdIncomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean; note?: string }> = [
-        { label: 'Ventas totales (efectivo + Zelle)', amount: su.ventasTotales, isTotal: true },
-        { label: 'Ventas en efectivo', amount: su.ventasCash },
-        { label: 'Venta por Zelle', amount: su.ventasZelle },
-      ];
-      if (su.comisionesCash > 0) usdIncomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: su.comisionesCash, note: 'expense' });
-      if (su.serviciosRecibidosCash > 0) usdIncomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: su.serviciosRecibidosCash, note: 'expense' });
-      const usdBlockEndY = renderIncomeBlock('Resumen del Día USD', usdIncomeRows, su.efectivoEsperado, 'Efectivo esperado a entregar (USD)');
-
-      const usdTotalCounted = breakdownTotal(usdBreakdown);
-      const usdCuadre = computeCuadre(usdTotalCounted, su.efectivoEsperado);
-      const usdDisplayDenoms = displayDenoms(usdDenoms, usdBreakdown, 'USD');
-      const usdBreakdownEndY = renderBreakdownBlock('Desglose de efectivo USD', usdDisplayDenoms, usdBreakdown, usdTotalCounted, usdCuadre, 'USD');
-      y = Math.max(usdBlockEndY, usdBreakdownEndY) + 5;
-
-      renderSalesTable('USD');
-      if (options.usdSeparatePage !== false) renderFirmas();
+  if (usdWillRender) {
+    if (options.usdSeparatePage !== false) {
+      doc.addPage(); y = 14;
+    } else if (usdSharesCupPage) {
+      // Compacto y cabe: margen lógico visual entre ambos reportes
+      // (pie CUP → separador → encabezado USD). El USD ya NO arranca pegado.
+      renderSectionSeparator();
+    } else {
+      // Compacto pero NO cabe tras el CUP: página propia (el salto de hoja YA
+      // es el margen visual; sin separador redundante).
+      doc.addPage(); y = 14;
     }
+    renderPageHeader('Reporte de Venta USD');
+    markSection('USD');
+
+    const su = usdSummary;
+    const usdIncomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean; note?: string }> = [
+      { label: 'Ventas totales (efectivo + Zelle)', amount: su.ventasTotales, isTotal: true },
+      { label: 'Ventas en efectivo', amount: su.ventasCash },
+      { label: 'Venta por Zelle', amount: su.ventasZelle },
+    ];
+    if (su.comisionesCash > 0) usdIncomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: su.comisionesCash, note: 'expense' });
+    if (su.serviciosRecibidosCash > 0) usdIncomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: su.serviciosRecibidosCash, note: 'expense' });
+    const usdBlockEndY = renderIncomeBlock('Resumen del Día USD', usdIncomeRows, su.efectivoEsperado, 'Efectivo esperado a entregar (USD)');
+
+    const usdTotalCounted = breakdownTotal(usdBreakdown);
+    const usdCuadre = computeCuadre(usdTotalCounted, su.efectivoEsperado);
+    const usdDisplayDenoms = displayDenoms(usdDenoms, usdBreakdown, 'USD');
+    const usdBreakdownEndY = renderBreakdownBlock('Desglose de efectivo USD', usdDisplayDenoms, usdBreakdown, usdTotalCounted, usdCuadre, 'USD');
+    y = Math.max(usdBlockEndY, usdBreakdownEndY) + 5;
+
+    // En hoja compartida el pie USD fluye tras la tabla → la tabla reserva
+    // además el bloque de firmas para no invadir el pie de página.
+    const usdReserve = usdSharesCupPage && options.includeSignature !== false ? 45 + FIRMAS_BLOCK_H : 45;
+    renderSalesTable('USD', { bottomReserve: usdReserve });
+    // Pie del reporte USD: SIEMPRE presente (hoja propia o compartida).
+    // Fijo al pie en hoja propia; fluyendo tras la tabla en hoja compartida.
+    if (options.includeSignature !== false) renderFirmas({ flow: usdSharesCupPage });
   }
 
   // ══════════════ SECCIÓN ÓRDENES DE TRABAJO (§8.1: conmutable) ══════════════
@@ -1136,7 +1207,8 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     const cupCuadre = computeCuadre(cupTotalCounted, totCup);
     renderBreakdownBlock('Desglose de efectivo CUP', cupDisplayDenoms, cupBreakdown, cupTotalCounted, cupCuadre, 'CUP');
     y = Math.max(blockEndY, y) + 5;
-    renderFirmas();
+    // Pie de firmas de la hoja de Órdenes (opción «Líneas de firma» respetada).
+    if (options.includeSignature !== false) renderFirmas();
   }
 
   // ── Pie de página con sección REAL por página (dinámico: compacto cambia paginación) ──
@@ -1144,10 +1216,12 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    const sec = sectionPages.find(sp => i >= sp.from && i <= sp.to);
+    // Hoja compartida CUP+USD (§9 compacto): ambas secciones se listan.
+    const names = sectionPages.filter(sp => i >= sp.from && i <= sp.to).map(sp => sp.name);
+    const secLbl = [...new Set(names)].join(' + ');
     doc.setFontSize(7); setText(C_MUTED); doc.setFont('helvetica', 'normal');
     const orientLbl = orientation === 'horizontal' ? 'Horizontal' : 'Vertical';
-    doc.text(`CostPro — Reporte Diario (${orientLbl}) · ${sn} · ${sec ? sec.name : ''} · Período ${periodoLbl} · Página ${i} de ${pageCount}`, pw / 2, ph - 5, { align: 'center' });
+    doc.text(`CostPro — Reporte Diario (${orientLbl}) · ${sn} · ${secLbl} · Período ${periodoLbl} · Página ${i} de ${pageCount}`, pw / 2, ph - 5, { align: 'center' });
   }
   return doc;
 }
