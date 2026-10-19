@@ -22,7 +22,7 @@ REVOKE EXECUTE ON FUNCTION public.profiles_block_privileged_update FROM PUBLIC, 
 REVOKE EXECUTE ON FUNCTION public.get_paginated_products_v2 FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.get_products_for_pos FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.get_transactions FROM PUBLIC, anon;
-REVOKE EXECUTE ON FUNCTION public.register_reception FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.register_reception(p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.reverse_receipt_v2 FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.void_pending_reception FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.is_admin_with_access FROM PUBLIC, anon;

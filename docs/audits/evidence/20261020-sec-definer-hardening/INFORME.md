@@ -68,3 +68,19 @@ eliminación de los 2 bloques e2e dropeadas, pérdida de PUBLIC en los proacl de
 register_reception/reverse_receipt_v2/void_pending_reception y reordenación
 alfabética — CERO divergencias inesperadas. El control queda operativo y verde sin
 relajarse: sigue comparando superficie viva contra replay de migraciones.
+
+## 8. Nota de precisión de firma (post-aplicación, hash v2)
+
+El replay del contract-test estático no aplica REVOKE de nombre simple cuando el
+nombre tiene definiciones históricas con firmas distintas en el stream
+(register_reception: la definición viva /7 coexiste con una firma previa en el
+historial de migraciones → ambigüedad → el modelo no revoca). La BD real quedó
+correcta con el REVOKE bare aplicado (semántica PostgreSQL: afecta a todas las
+sobrecargas vivas, verificada en vivo). Para que el replay reproduzca la
+realidad sin excepciones permanentes, el REVOKE de register_reception del
+fichero se precisó con su firma exacta /7. Transparencia de hash: el artefacto
+aplicado original = c39afd27…; el fichero tras la precisión = ver migracion_sha256.txt
+(v2). Equivalencia semántica documentada: la única sobrecarga viva de
+register_reception es /7, por lo que bare y firma exacta producen el mismo
+estado en la BD. Ningún otro REVOKE requirió precisión (verificado por el
+propio audit: sin ambigüedad).
