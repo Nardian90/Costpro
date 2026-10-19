@@ -8,7 +8,10 @@ import { buildItemsSummary, type CollectionItem, type CollectionTx } from '@/lib
  *
  * Devuelve los items vendidos en el periodo, consolidados por producto
  * (UNA fila por producto) con los COBROS en su moneda real:
- *   - total_quantity, unit_price (promedio CUP), total_cup (total histórico CUP)
+ *   - total_quantity (física) y qty_cup/qty_usd (AUDITORÍA 2026-10-19: cantidad
+ *     atribuible por moneda de cobro — la hoja CUP del PDF usa qty_cup y la
+ *     hoja USD usa qty_usd; invariante qty_cup + qty_usd = total_quantity)
+ *   - unit_price (promedio CUP), total_cup (total histórico CUP)
  *   - cash_cup / transfer_cup / zelle_cup  → cobros en CUP por método
  *   - cash_usd / transfer_usd / zelle_usd / usd_total → cobros en USD (original)
  *   - has_payment_incident → el cobro difiere del total histórico (incidencia)
@@ -119,12 +122,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
     return NextResponse.json({
       items: result,
-      // Totales legacy (CUP) + totales por moneda de cobro.
+      // Totales legacy (CUP) + totales por moneda de cobro + cantidades por moneda.
       total_cup: totals.total_cup,
       total_cash: totals.cash_cup,
       total_transfer: totals.transfer_cup,
       total_zelle: totals.zelle_cup,
       total_quantity: totals.total_quantity,
+      total_qty_cup: totals.qty_cup,
+      total_qty_usd: totals.qty_usd,
       cash_cup: totals.cash_cup,
       transfer_cup: totals.transfer_cup,
       zelle_cup: totals.zelle_cup,

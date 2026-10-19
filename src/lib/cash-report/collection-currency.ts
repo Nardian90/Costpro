@@ -320,7 +320,19 @@ export interface ProductCollectionRow {
   product_id: string;
   product_name: string;
   sku: string;
+  /** Cantidad FÍSICA total (Σ quantity de todas las líneas, ambas monedas). */
   total_quantity: number;
+  /**
+   * Cantidad atribuible a cobros en CUP (AUDITORÍA 2026-10-19, defecto B):
+   * reparto por línea — una línea cobrada en UNA sola moneda atribuye su
+   * cantidad completa a esa moneda (verdad documental); una línea cobrada en
+   * AMBAS monedas se reparte proporcionalmente al valor cobrado; una línea
+   * sin cobro atribuido cae a su moneda original. Invariante:
+   * qty_cup + qty_usd = total_quantity.
+   */
+  qty_cup: number;
+  /** Cantidad atribuible a cobros en USD (mismas reglas que qty_cup). */
+  qty_usd: number;
   /** Total histórico CUP de las líneas (precio de venta histórico — NUNCA recalculado). */
   total_cup: number;
   /** Cobros en CUP por método (la moneda del cobro, no la del precio). */
@@ -341,6 +353,8 @@ export interface ItemsSummaryResult {
   items: ProductCollectionRow[];
   totals: {
     total_quantity: number;
+    qty_cup: number;
+    qty_usd: number;
     total_cup: number;
     cash_cup: number;
     transfer_cup: number;
@@ -357,9 +371,42 @@ interface AggState extends Omit<ProductCollectionRow, 'transactions_count' | 'us
 }
 
 /**
+ * Atribución de la CANTIDAD de una línea a la moneda de cobro (AUDITORÍA
+ * 2026-10-19, defecto B del reporte Entrega en tienda):
+ *   · línea cobrada en UNA moneda → cantidad completa a esa moneda (exacto);
+ *   · línea cobrada en AMBAS → reparto proporcional al valor cobrado
+ *     (CUP : USD×tasa — atribución derivada, documentada);
+ *   · línea sin cobro atribuido (venta total 0 absorbida por otras líneas,
+ *     incidencias) → moneda ORIGINAL de la línea.
+ * Determinista y sin inventar: la cantidad física (total_quantity) NUNCA se
+ * duplica — qty_cup + qty_usd = total_quantity en todo momento.
+ */
+function attributeQuantity(
+  qty: number,
+  cupCollected: number,
+  usdCollected: number,
+  rate: number,
+  lineCurrency: string,
+): { qtyCup: number; qtyUsd: number } {
+  if (usdCollected > COLLECTION_EPS && cupCollected <= COLLECTION_EPS) {
+    return { qtyCup: 0, qtyUsd: qty };
+  }
+  if (cupCollected > COLLECTION_EPS && usdCollected <= COLLECTION_EPS) {
+    return { qtyCup: qty, qtyUsd: 0 };
+  }
+  if (cupCollected > COLLECTION_EPS && usdCollected > COLLECTION_EPS) {
+    const wUsd = usdCollected * rate;
+    const w = cupCollected + wUsd;
+    return { qtyCup: qty * (cupCollected / w), qtyUsd: qty * (wUsd / w) };
+  }
+  return normCur(lineCurrency) === 'USD' ? { qtyCup: 0, qtyUsd: qty } : { qtyCup: qty, qtyUsd: 0 };
+}
+
+/**
  * Agrega filas (transaction_items ⨝ transactions ⨝ products) a UNA fila por
- * producto con los cobros por moneda — la tabla de referencia del negocio:
- * `Código | Descripción | Cant. | Efectivo (CUP) | Transfer. (CUP) | USD`.
+ * producto con los cobros por moneda y las CANTIDADES atribuidas por moneda
+ * (qty_cup/qty_usd — AUDITORÍA 2026-10-19). La cantidad física
+ * (total_quantity) y los importes NO cambian.
  */
 export function buildItemsSummary(rows: Array<{ item: CollectionItem; tx: CollectionTx; txId: string }>): ItemsSummaryResult {
   // Agrupar por transacción y reconstruir una vez por transacción (sin duplicar).
@@ -377,10 +424,6 @@ export function buildItemsSummary(rows: Array<{ item: CollectionItem; tx: Collec
       const pid = String(item.product_id || '');
       if (!pid) return;
       const col = perItem[idx];
-      const lineCup = lineCupOf(item);
-      const cupEquiv = col.cup.cash + col.cup.transfer + col.cup.zelle
-        + (col.usd.cash + col.usd.transfer + col.usd.zelle) * (num(item.exchange_rate) > 0 ? num(item.exchange_rate) : 1);
-      const incident = Math.abs(cupEquiv - lineCup) > COLLECTION_EPS;
       let a = agg.get(pid);
       if (!a) {
         a = {
@@ -388,6 +431,8 @@ export function buildItemsSummary(rows: Array<{ item: CollectionItem; tx: Collec
           product_name: item.product_name || 'Producto',
           sku: item.sku || '—',
           total_quantity: 0,
+          qty_cup: 0,
+          qty_usd: 0,
           total_cup: 0,
           cash_cup: 0, transfer_cup: 0, zelle_cup: 0,
           cash_usd: 0, transfer_usd: 0, zelle_usd: 0,
@@ -396,7 +441,16 @@ export function buildItemsSummary(rows: Array<{ item: CollectionItem; tx: Collec
         };
         agg.set(pid, a);
       }
+      const rate = num(item.exchange_rate) > 0 ? num(item.exchange_rate) : 1;
+      const cupCollected = col.cup.cash + col.cup.transfer + col.cup.zelle;
+      const usdCollected = col.usd.cash + col.usd.transfer + col.usd.zelle;
+      const { qtyCup, qtyUsd } = attributeQuantity(num(item.quantity), cupCollected, usdCollected, rate, item.currency || 'CUP');
+      const cupEquiv = cupCollected + usdCollected * rate;
+      const lineCup = lineCupOf(item);
+      const incident = Math.abs(cupEquiv - lineCup) > COLLECTION_EPS;
       a.total_quantity += num(item.quantity);
+      a.qty_cup += qtyCup;
+      a.qty_usd += qtyUsd;
       a.total_cup += lineCup;
       a.cash_cup += col.cup.cash;
       a.transfer_cup += col.cup.transfer;
@@ -415,6 +469,8 @@ export function buildItemsSummary(rows: Array<{ item: CollectionItem; tx: Collec
     product_name: a.product_name,
     sku: a.sku,
     total_quantity: a.total_quantity,
+    qty_cup: a.qty_cup,
+    qty_usd: a.qty_usd,
     total_cup: a.total_cup,
     cash_cup: a.cash_cup,
     transfer_cup: a.transfer_cup,
@@ -429,6 +485,8 @@ export function buildItemsSummary(rows: Array<{ item: CollectionItem; tx: Collec
 
   const totals = items.reduce((s, i) => ({
     total_quantity: s.total_quantity + i.total_quantity,
+    qty_cup: s.qty_cup + i.qty_cup,
+    qty_usd: s.qty_usd + i.qty_usd,
     total_cup: s.total_cup + i.total_cup,
     cash_cup: s.cash_cup + i.cash_cup,
     transfer_cup: s.transfer_cup + i.transfer_cup,
@@ -438,7 +496,7 @@ export function buildItemsSummary(rows: Array<{ item: CollectionItem; tx: Collec
     zelle_usd: s.zelle_usd + i.zelle_usd,
     usd_total: s.usd_total + i.usd_total,
   }), {
-    total_quantity: 0, total_cup: 0, cash_cup: 0, transfer_cup: 0, zelle_cup: 0,
+    total_quantity: 0, qty_cup: 0, qty_usd: 0, total_cup: 0, cash_cup: 0, transfer_cup: 0, zelle_cup: 0,
     cash_usd: 0, transfer_usd: 0, zelle_usd: 0, usd_total: 0,
   });
 
