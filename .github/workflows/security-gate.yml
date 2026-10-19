@@ -7,6 +7,17 @@ on:
       - 'src/app/api/**'
       - 'ci-gate-allowlist.json'
       - 'scripts/ci-gate-*.js'
+  push:
+    # Defensa en profundidad (CP-SEC-027 v3): la allowlist solo puede
+    # vencer sin revisión si un push directo a main la modifica saltando
+    # el PR — este canal cierra ese hueco. allowlist-review es barato
+    # (validación JSON pura) y fail-closed ante entradas vencidas.
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'src/app/api/**'
+      - 'ci-gate-allowlist.json'
+      - 'scripts/ci-gate-*.js'
 
 jobs:
   ts-security-checks:
