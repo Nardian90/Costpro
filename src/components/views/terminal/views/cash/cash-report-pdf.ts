@@ -1062,6 +1062,10 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     if (s.recibosProveedoresCash > 0) incomeRows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, note: 'expense' });
     if (s.ajustesPositivos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos });
     if (s.ajustesNegativos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (−)', amount: s.ajustesNegativos, note: 'expense' });
+    // MISIÓN INGRESOS/EGRESOS 2026-10-20: documentos de caja (fondo de cambio
+    // y otros) — filas independientes de los ajustes, auditables por separado.
+    if (s.ingresosCaja > 0) incomeRows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja });
+    if (s.egresosCaja > 0) incomeRows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, note: 'expense' });
 
     const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, s.efectivoEsperado);
 

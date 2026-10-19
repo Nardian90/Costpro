@@ -167,6 +167,25 @@ export const MOVEMENT_TYPES: MovementTypeInfo[] = [
     policyNote:
       'FIJA por diseño: el turno mide lo realmente cobrado en su ventana. No se elige fecha de trabajo en caja; las ventas retro-fechadas fuera de la ventana quedan fuera del arqueo (aviso no bloqueante en Vender).',
   },
+  {
+    // MISIÓN INGRESOS/EGRESOS (2026-10-20): documento Ingreso/Egreso de caja.
+    id: 'cash_flow',
+    label: 'Caja — ingresos/egresos documentados',
+    area: 'Caja',
+    description:
+      'Entradas y salidas físicas de efectivo (constitución/reposición/devolución del fondo de cambio y otros autorizados). Fecha operativa con selector, SIEMPRE dentro de la ventana del turno abierto.',
+    targetView: 'ingresos_egresos',
+    selectorLocation: 'Modal de registro (OperationDatePicker, tope HOY Habana)',
+    status: 'configurable',
+    dateFields: {
+      effective: 'cash_flow_documents.operation_date (mediodía del día elegido; NOW() si es hoy)',
+      technical: 'payment_transactions.payment_date = operation_date',
+    },
+    writesTo: 'cash_flow_documents + payment_transactions(ref_type=cash_flow) / create_cash_flow_document (/api/cash-flow)',
+    preferenceEnabled: true,
+    policyNote:
+      'CONFIGURABLE dentro de la ventana del turno: el RPC valida validate_operation_date (piso 6 meses, sin futuro) Y que la fecha caiga tras la apertura del turno pendiente (doctrina FIJA heredada de cash_shift) — un documento fuera de ventana haría invisible su dinero en el arqueo. La anulación estampa NOW() (fila contraria).',
+  },
 
   // ── Flujos descubiertos con selector visible (auditoría #7–#11, #17) ──
   {

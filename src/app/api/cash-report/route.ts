@@ -175,6 +175,41 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       console.warn('[cash-report] ajustes no disponibles:', (adjErr as { message?: string })?.message);
     }
 
+    // ── Ingresos/Egresos de caja documentados (ref_type='cash_flow' — MISIÓN
+    //    2026-10-20). Filas del LEDGER por payment_date (fondo de cambio y
+    //    otros; un anulado aporta original + contra). Mismo patrón de
+    //    post-procesamiento que adjustments (degradación limpia si la
+    //    migración 20261021000001 aún no se aplicó al entorno).
+    let cashFlows: Array<{ id: string; direction: 'in' | 'out'; amount: number; currency: string; amount_cup: number; note: string; document_number: string | null; created_by: string | null; created_at: string }> = [];
+    try {
+      let cfQuery = supabase
+        .from('payment_transactions')
+        .select('id, direction, amount, currency, amount_cup, notes, paid_by, created_at, payment_date')
+        .eq('store_id', userData.active_store_id)
+        .eq('ref_type', 'cash_flow')
+        .eq('payment_method', 'cash');
+      if (!includeAllDates) {
+        cfQuery = cfQuery.gte('payment_date', dateFilter.gte as string).lte('payment_date', dateFilter.lte as string);
+      }
+      const { data: cfRows, error: cfErr } = await cfQuery;
+      if (cfErr) throw cfErr;
+      cashFlows = (cfRows || []).map((r: { id: string; direction: string | null; amount: number | string | null; currency: string | null; amount_cup: number | string | null; notes: string | null; paid_by: string | null; created_at: string; payment_date?: string }) => ({
+        id: r.id,
+        direction: r.direction === 'in' ? 'in' : 'out',
+        amount: Number(r.amount || 0),
+        currency: r.currency || 'CUP',
+        amount_cup: Number(r.amount_cup || 0),
+        note: r.notes || '',
+        document_number: (r.notes || '').split(' · ')[0] || null,
+        created_by: r.paid_by,
+        created_at: r.created_at,
+      }));
+    } catch (cfErr: unknown) {
+      // ref_type='cash_flow' requiere migración 20261021000001; sin ella el
+      // reporte sigue cuadrando sin estos movimientos.
+      console.warn('[cash-report] ingresos/egresos de caja no disponibles:', (cfErr as { message?: string })?.message);
+    }
+
     // ── FIX-RE-1510 v2 (ADENDA del negocio 2026-10-16): criterio canónico = FECHA DEL PAGO ──
     // El negocio define: el reporte SIEMPRE atribuye cada comisión al día de negocio en que
     // se CONFIRMÓ el pago (paid_at) — «aunque la comisión corresponda al 15/10, si no se
@@ -216,7 +251,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // EXCLUIA el tramo efectivo de ventas mixed (p. ej. EnerVida 02/10: 2.600
     // en vez de 12.600). La fórmula única vive en src/lib/cash-report/summary.ts
     // y la consumen idénticamente vista, previsualización y PDF.
-    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments };
+    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows };
     // INCIDENTE 2026-10-16: grupos `sales` por MONEDA DE COBRO (antes por
     // sale_currency — los cobros USD aparecían como CUP). La vista (acordeón),
     // el fallback de computeDailySummary y la plantilla Estándar heredan la

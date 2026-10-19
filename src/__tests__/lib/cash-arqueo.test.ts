@@ -3,8 +3,9 @@ import { computeArqueo, type CashShiftBreakdown } from '@/lib/cash-arqueo';
 
 /**
  * FASE 4.6 de la misión — escenarios numéricos obligatorios del arqueo.
- * Fórmula espejo de close_cash_shift v2.18.0 / get_cash_shift_expected
- * (migración 20261010000002_v2_18_0_servicios_actor_y_caja.sql).
+ * Fórmula espejo de close_cash_shift v2.21.0 / get_cash_shift_expected
+ * (migraciones 20261010000002 v2.18.0 + 20261021000001 v2.21.0 — MISIÓN
+ * INGRESOS/EGRESOS: documentos de caja como términos in/out).
  */
 
 const base: CashShiftBreakdown = {
@@ -14,6 +15,8 @@ const base: CashShiftBreakdown = {
   cash_outflows: 0,
   cash_production: 0,
   cash_commissions: 0,
+  cash_flow_in: 0,
+  cash_flow_out: 0,
   transfer_sales: 0,
   zelle_sales: 0,
 };
@@ -96,6 +99,46 @@ describe('Arqueo de caja v2.18.0 — escenarios de la misión (Fase 4.6)', () =>
   it('Tolerante a entradas faltantes/NaN (defensivo)', () => {
     const r = computeArqueo({ ...base, opening_balance: NaN }, undefined as any, null as any);
     expect(r.expected_cash).toBe(0);
+    expect(r.difference).toBe(0);
+  });
+});
+
+describe('Arqueo de caja v2.21.0 — documentos Ingresos/Egresos (MISIÓN 2026-10-20)', () => {
+  it('Constitución del fondo 5.000 → el efectivo esperado sube 5.000 (una sola vez)', () => {
+    const b: CashShiftBreakdown = { ...base, opening_balance: 0, cash_flow_in: 5000 };
+    expect(computeArqueo(b, 5000, 0).expected_cash).toBe(5000);
+    expect(computeArqueo(b, 5000, 0).difference).toBe(0);
+  });
+
+  it('Fondo 5.000 + constitución 5.000 − devolución parcial 2.000 → esperado 8.000 (ejemplo del brief)', () => {
+    const b: CashShiftBreakdown = { ...base, opening_balance: 5000, cash_flow_in: 5000, cash_flow_out: 2000 };
+    expect(computeArqueo(b, 8000, 0).expected_cash).toBe(8000);
+    expect(computeArqueo(b, 8000, 0).difference).toBe(0); // cuadrado
+  });
+
+  it('Documento anulado = neto cero (fila original + fila contra se cancelan)', () => {
+    // El RPC suma filas del ledger: anulado aporta in X y out X → neto 0.
+    const b: CashShiftBreakdown = { ...base, opening_balance: 3000, cash_flow_in: 5000, cash_flow_out: 5000 };
+    expect(computeArqueo(b, 3000, 0).expected_cash).toBe(3000);
+  });
+
+  it('Con ventas y egresos documentados juntos: sin doble conteo', () => {
+    const b: CashShiftBreakdown = {
+      ...base,
+      opening_balance: 5000,
+      cash_sales: 169000,
+      cash_flow_in: 5000,
+      cash_flow_out: 2000,
+    };
+    expect(computeArqueo(b, 177000, 0).expected_cash).toBe(177000);
+    expect(computeArqueo(b, 177000, 0).difference).toBe(0);
+  });
+
+  it('vouchers (transfer/zelle) intactos: los documentos de caja NO los tocan', () => {
+    const b: CashShiftBreakdown = { ...base, cash_flow_in: 9000, transfer_sales: 4000, zelle_sales: 150 };
+    const r = computeArqueo(b, 9000, 4150);
+    expect(r.expected_vouchers).toBe(4150);
+    expect(r.expected_total).toBe(13150);
     expect(r.difference).toBe(0);
   });
 });

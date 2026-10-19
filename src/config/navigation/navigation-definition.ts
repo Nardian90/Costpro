@@ -54,7 +54,7 @@ import {
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
   Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet, Landmark,
   Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone, Printer,
-  ReceiptText,
+  ReceiptText, Coins,
   Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson, CalendarClock, SlidersHorizontal,
   type LucideIcon,
 } from 'lucide-react';
@@ -218,6 +218,53 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             navClass: 'hub',
             roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
             keywords: ['opciones', 'ventas', 'venta', 'gestión de ventas', 'tabla de venta', 'historial', 'arqueo', 'conteo', 'devoluciones', 'cotizaciones', 'cuentas'],
+          },
+        ],
+      },
+      {
+        // MISIÓN INGRESOS/EGRESOS DE CAJA (2026-10-20): grupo «Caja» —
+        // gestión del efectivo físico de la tienda. La vista 'cash' (arqueo +
+        // cierre + reporte) se GRADÚA de extensión del palette a hoja de menú
+        // de PRIMER nivel (misma vista, mismo ViewType: sin segunda
+        // implementación; el palette la deriva ahora del árbol) y se añade la
+        // vista canónica única 'ingresos_egresos' (documento Ingreso/Egreso:
+        // constitución/reposición/devolución del fondo de cambio y otros).
+        // Permisos 'cash': idénticos a los de la extensión retirada
+        // (admin/manager/encargado/clerk/usuario — móvil la sigue alcanzando
+        // por su tab inferior dedicado, por eso mobileHide).
+        id: 'caja',
+        label: 'Caja',
+        description: 'Efectivo de la tienda: turnos y arqueo, e ingresos/egresos documentados (fondo de cambio y otros).',
+        icon: Landmark,
+        type: 'submenu',
+        navClass: 'hub',
+        children: [
+          {
+            id: 'cash',
+            label: 'Caja',
+            description: 'Abre y cierra turnos, declara fondos, reconcilia efectivo y genera el reporte de entrega del día.',
+            icon: DollarSign,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+            mobileHide: true,
+            keywords: ['caja', 'arqueo', 'turno', 'cierre de caja', 'efectivo', 'fondo', 'reporte de entrega'],
+          },
+          {
+            // MISIÓN 2026-10-20: documento «Ingresos/Egresos» — registro de
+            // entradas/salidas físicas de efectivo (fondo de cambio y otros
+            // autorizados). Permisos: espejo del backend (registrar exige
+            // admin/manager/encargado/clerk con membresía) — 'usuario' y
+            // 'warehouse' NO ven la hoja para no ampliar la superficie de
+            // operaciones financieras. Keywords SIN «caja» (Gate 1: la
+            // búsqueda «caja» debe resolver UNA acción — la vista Caja).
+            id: 'ingresos_egresos',
+            label: 'Ingresos/Egresos',
+            description: 'Documentos de entrada y salida de efectivo: constitución, reposición y devolución del fondo de cambio, y otros movimientos autorizados.',
+            icon: Coins,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'clerk'],
+            isNew: true,
+            keywords: ['ingresos', 'egresos', 'ingresos y egresos', 'fondo de cambio', 'fondo', 'constitución del fondo', 'reposición del fondo', 'devolución del fondo', 'movimientos de efectivo', 'entrada de dinero', 'salida de dinero', 'comprobante'],
           },
         ],
       },
@@ -786,18 +833,11 @@ const SALES_HUB_PALETTE_ENTRIES: (NavEntry & { route: NavRoute })[] = [
     keywords: ['historial', 'ventas', 'ventas anteriores', 'registro de ventas', 'anulaciones', 'duplicar venta', 'facturas'],
   },
   {
-    // UN solo concepto Caja (arqueo + cierre de turno + reporte de entrega)
-    id: 'cash',
-    label: 'Caja',
-    description: 'Abre y cierra turnos, declara fondos, reconcilia efectivo y genera el reporte de entrega del día.',
-    icon: DollarSign,
-    type: 'item',
-    route: { view: 'cash' },
-    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
-    mobileHide: true,
-    keywords: ['caja', 'arqueo', 'turno', 'cierre de caja', 'efectivo', 'fondo', 'reporte de entrega'],
-  },
-  {
+    // MISIÓN INGRESOS/EGRESOS 2026-10-20: 'cash' se GRADUÓ de aquí al árbol
+    // de navegación (hoja del submenú «Caja» de OPERACIÓN, idénticos
+    // label/desc/icon/roles/keywords/mobileHide) — el palette la DERIVA ahora
+    // de flattenNavigation (fuente única). Mantenerla aquí duplicaría la
+    // acción «Caja» en ⌘K (SYSTEM_ACTIONS = árbol + extensiones, sin dedup).
     id: 'inventory_count',
     label: 'Venta por Conteo',
     description: 'Cuenta existencias físicas al final del día y el sistema calcula ventas por diferencia.',
@@ -1398,7 +1438,9 @@ export const MOBILE_MAIN_TABS: MobileMainTab[] = [
     id: 'cash',
     label: 'Caja',
     icon: DollarSign,
-    activeViews: ['cash'],
+    // MISIÓN INGRESOS/EGRESOS 2026-10-20: el tab Caja también resalta la
+    // vista Ingresos/Egresos (mismo dominio de efectivo).
+    activeViews: ['cash', 'ingresos_egresos'],
   },
 ];
 
@@ -1435,6 +1477,9 @@ export const VALID_VIEWS: Set<string> = new Set([
   // fechas de trabajo (OPERACIÓN → Control operativo → Fechas de trabajo).
   'control_operativo', 'work_dates',
   // Secciones/hubs nuevos de la arquitectura GATE 1
+  // MISIÓN INGRESOS/EGRESOS 2026-10-20: submenú «Caja» de OPERACIÓN (hub
+  // SectionHubView) + vista canónica del documento Ingreso/Egreso.
+  'caja', 'ingresos_egresos',
   'operacion', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
 ]);
 

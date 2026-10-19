@@ -99,15 +99,21 @@ export default function CashClosureView() {
     total_transfer: shiftExpected?.transfer_sales ?? salesData?.total_transfer ?? 0,
   };
 
-  // ── v2.18.0 — Arqueo con desglose completo (fórmula espejo del RPC) ──
+  // ── v2.21.0 — Arqueo con desglose completo (fórmula espejo del RPC) ──
   // Efectivo esperado = Fondo + Ventas cash + Anticipos producción cash
+  //                     + Ingresos de caja documentados (fondo de cambio y otros)
   //                     − Pagos proveedores cash − Comisiones cash
+  //                     − Egresos de caja documentados (devolución del fondo y otros)
   // Transferencias y Zelle NO son efectivo (lado vouchers del arqueo).
+  // MISIÓN INGRESOS/EGRESOS (2026-10-20): los documentos de caja entran UNA
+  // vez (ref_type='cash_flow'); los anulados aportan neto cero (fila contra).
   const salesCash = summary.total_cash || 0;
   const salesTransfer = summary.total_transfer || 0;
   const cashOutflows = Number(shiftExpected?.cash_outflows) || 0;
   const cashCommissions = Number(shiftExpected?.cash_commissions) || 0;
   const cashProduction = Number(shiftExpected?.cash_production) || 0;
+  const cashFlowIn = Number(shiftExpected?.cash_flow_in) || 0;
+  const cashFlowOut = Number(shiftExpected?.cash_flow_out) || 0;
   const systemVouchers = (Number(shiftExpected?.transfer_sales) || 0) + (Number(shiftExpected?.zelle_sales) || 0);
 
   const arqueo = computeArqueo(
@@ -118,6 +124,8 @@ export default function CashClosureView() {
       cash_outflows: 0,
       cash_production: 0,
       cash_commissions: 0,
+      cash_flow_in: 0,
+      cash_flow_out: 0,
       transfer_sales: salesTransfer,
       zelle_sales: 0,
     }) as CashShiftBreakdown,
@@ -126,13 +134,17 @@ export default function CashClosureView() {
   );
   const systemCash = arqueo.expected_cash;
 
-  // Desglose del balance del sistema (solo cuando hay turno abierto)
+  // Desglose del balance del sistema (solo cuando hay turno abierto) — cada
+  // componente visible suma/resta exactamente al Efectivo Esperado (cifra
+  // reconstruible a partir de los movimientos válidos).
   const summaryItems = pendingClosure ? [
     { label: 'Fondo Inicial', value: openingBalance, color: 'text-muted-foreground' },
     { label: 'Ventas en Efectivo', value: salesCash, color: 'text-foreground' },
     ...(cashProduction > 0 ? [{ label: 'Anticipos Producción (Efectivo)', value: cashProduction, color: 'text-foreground' }] : []),
+    ...(cashFlowIn > 0 ? [{ label: 'Ingresos de Caja (Fondo y Otros)', value: cashFlowIn, color: 'text-success' }] : []),
     ...(cashOutflows > 0 ? [{ label: 'Pagos a Proveedores (Efectivo)', value: -cashOutflows, color: 'text-destructive' }] : []),
     ...(cashCommissions > 0 ? [{ label: 'Comisiones (Efectivo)', value: -cashCommissions, color: 'text-destructive' }] : []),
+    ...(cashFlowOut > 0 ? [{ label: 'Egresos de Caja (Devolución y Otros)', value: -cashFlowOut, color: 'text-destructive' }] : []),
     { label: 'Efectivo Esperado', value: systemCash, color: 'text-success' },
     { label: `Transferencias/Zelle (Sistema)`, value: systemVouchers, color: 'text-primary' },
   ] : [];

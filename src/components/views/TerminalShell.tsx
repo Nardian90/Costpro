@@ -116,6 +116,9 @@ const IPVView = dynamic(() => import('@/components/views/terminal/views/ipv/IPVV
 const AcademyView = dynamic(() => import('@/components/views/terminal/views/academy/AcademyView'), { ssr: false });
 const InventoryAdjustmentsView = dynamic(() => import('@/components/views/terminal/views/inventory/InventoryAdjustmentsView'), { ssr: false });
 const ValesSalidaView = dynamic(() => import('@/components/views/terminal/views/inventory/ValesSalidaView'), { ssr: false });
+// MISIÓN INGRESOS/EGRESOS DE CAJA (2026-10-20): documento Ingreso/Egreso
+// (fondo de cambio y otros) — OPERACIÓN → Caja → Ingresos/Egresos.
+const IngresosEgresosView = dynamic(() => import('@/components/views/terminal/views/cash_flow/IngresosEgresosView'), { ssr: false });
 // MISIÓN FECHAS DE TRABAJO (2026-10-18): centro de control de fechas de trabajo
 const WorkDatesView = dynamic(() => import('@/components/views/terminal/views/work_dates/WorkDatesView'), { ssr: false });
 const LegalView = dynamic(() => import('@/components/views/terminal/views/legal/LegalView'), { ssr: false });
@@ -514,6 +517,9 @@ export default function TerminalShell() {
         case 'transferencias': return <ViewErrorBoundary viewName="Transferencias"><TransferenciasView /></ViewErrorBoundary>;
         case 'inventory_count': return <ViewErrorBoundary viewName="Venta por Conteo"><InventoryCountView /></ViewErrorBoundary>;
         case 'cash': return <ViewErrorBoundary viewName="Caja"><CashClosureView /></ViewErrorBoundary>;
+        // MISIÓN INGRESOS/EGRESOS 2026-10-20: documentos de entrada/salida de
+        // efectivo (constitución/reposición/devolución del fondo de cambio).
+        case 'ingresos_egresos': return <ViewErrorBoundary viewName="Ingresos/Egresos"><IngresosEgresosView /></ViewErrorBoundary>;
         case 'history': return <ViewErrorBoundary viewName="Historial de Stock"><StockHistoryView /></ViewErrorBoundary>;
         case 'news': return <ViewErrorBoundary viewName="Noticias"><NewsView /></ViewErrorBoundary>;
         case 'rss_management': return <ViewErrorBoundary viewName="Gestión RSS"><RSSManagementView /></ViewErrorBoundary>;
@@ -552,6 +558,8 @@ export default function TerminalShell() {
         // tienen tabs internas y duplicar tarjetas sería redundante).
         case 'punto_venta':
         case 'ventas': // CAMBIO 4: hub "Ventas" (Vender + Opciones) — wayfinding
+        // MISIÓN INGRESOS/EGRESOS 2026-10-20: hub "Caja" (Caja + Ingresos/Egresos)
+        case 'caja':
         case 'almacen_gestion':
         case 'almacen_operaciones':
         case 'costo':

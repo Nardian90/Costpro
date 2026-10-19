@@ -294,3 +294,73 @@ describe('USD — comisiones/servicios en USD afectan solo al esperado USD', () 
     expect(computeDailySummary(r, 'USD').efectivoEsperado).toBe(180);
   });
 });
+
+describe('MISIÓN INGRESOS/EGRESOS (2026-10-20) — documentos de caja en el reporte', () => {
+  it('ingresos de caja suman y egresos restan al efectivo esperado (por moneda)', () => {
+    const r = S({
+      sales_split: { CUP: { cash: 10000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 10000 } },
+      cash_flows: [
+        { id: 'cf1', direction: 'in', amount: 5000, currency: 'CUP' },
+        { id: 'cf2', direction: 'out', amount: 2000, currency: 'CUP' },
+      ],
+    });
+    const s = computeDailySummary(r, 'CUP');
+    expect(s.ingresosCaja).toBe(5000);
+    expect(s.egresosCaja).toBe(2000);
+    expect(s.efectivoEsperado).toBe(10000 + 5000 - 2000);
+  });
+
+  it('fondo 5.000 + constitución 5.000 − devolución 2.000 + ventas cash → esperado correcto (ejemplo del brief)', () => {
+    const r = S({
+      sales_split: { CUP: { cash: 169000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 169000 } },
+      cash_flows: [
+        { id: 'cf1', direction: 'in', amount: 5000, currency: 'CUP' },
+        { id: 'cf2', direction: 'out', amount: 2000, currency: 'CUP' },
+      ],
+    });
+    const s = computeDailySummary(r, 'CUP');
+    expect(s.efectivoEsperado).toBe(169000 + 5000 - 2000);
+    expect(computeCuadre(172000, s.efectivoEsperado)).toBe(0); // cuadrado
+  });
+
+  it('documento anulado: original + contra se cancelan (filas del ledger)', () => {
+    const r = S({
+      cash_flows: [
+        { id: 'cf1', direction: 'in', amount: 5000, currency: 'CUP' },
+        { id: 'cf1c', direction: 'out', amount: 5000, currency: 'CUP' }, // fila contra de la anulación
+      ],
+    });
+    const s = computeDailySummary(r, 'CUP');
+    expect(s.ingresosCaja).toBe(5000);
+    expect(s.egresosCaja).toBe(5000);
+    expect(s.efectivoEsperado).toBe(0); // neto cero
+  });
+
+  it('USD: los documentos USD afectan solo al esperado USD (nunca sumados a CUP)', () => {
+    const r = S({
+      sales_split: {
+        CUP: { cash: 1000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 1000 },
+        USD: { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 },
+      },
+      cash_flows: [
+        { id: 'cf1', direction: 'in', amount: 150, currency: 'USD' },
+      ],
+    });
+    const cup = computeDailySummary(r, 'CUP');
+    const usd = computeDailySummary(r, 'USD');
+    expect(cup.efectivoEsperado).toBe(1000);
+    expect(cup.ingresosCaja).toBe(0);
+    expect(usd.ingresosCaja).toBe(150);
+    expect(usd.efectivoEsperado).toBe(150);
+  });
+
+  it('compatibilidad: reportes sin cash_flows cuadran igual que antes (cero por omisión)', () => {
+    const r = S({
+      sales_split: { CUP: { cash: 12600, transfer: 48000, zelle: 0, mixedUnsplit: 0, total: 60600 } },
+    });
+    const s = computeDailySummary(r, 'CUP');
+    expect(s.ingresosCaja).toBe(0);
+    expect(s.egresosCaja).toBe(0);
+    expect(s.efectivoEsperado).toBe(12600);
+  });
+});
