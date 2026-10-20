@@ -281,7 +281,10 @@ const VIEW_TO_HUB_MAP: Record<string, { hubId: string; leafLabel: string }> = {
   // definición: Inicio > Operación > Vender).
   sales_catalog: { hubId: 'sales-hub', leafLabel: 'Tabla de Venta' },
   sales: { hubId: 'sales-hub', leafLabel: 'Historial de Ventas' },
-  cash: { hubId: 'sales-hub', leafLabel: 'Caja' },
+  // MISIÓN INGRESOS/EGRESOS 2026-10-20: 'cash' retirado de este mapa — ahora
+  // es hoja de menú del submenú «Caja» de OPERACIÓN y su breadcrumb se deriva
+  // del árbol de la definición (fuente única): Inicio > OPERACIÓN > Caja > Caja
+  // (idéntico patrón al retiro de 'cash_report' en CAMBIO 2026-10).
   inventory_count: { hubId: 'sales-hub', leafLabel: 'Venta por Conteo' },
   devolutions: { hubId: 'sales-hub', leafLabel: 'Devoluciones' },
   quotations: { hubId: 'sales-hub', leafLabel: 'Cotizaciones' },

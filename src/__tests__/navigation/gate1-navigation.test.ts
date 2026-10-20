@@ -341,7 +341,19 @@ describe('GATE 1.3 — Vender/Ventas', () => {
 
   it('las extensiones del hub Ventas NO aparecen en el sheet móvil (mobileHide)', () => {
     const ext = ACTION_EXTENSIONS.filter(e => e.mobileHide);
-    expect(ext.map(e => e.id)).toEqual(expect.arrayContaining(['sales', 'cash', 'devolutions']));
+    // MISIÓN INGRESOS/EGRESOS 2026-10-20: 'cash' se GRADUÓ de extensión a hoja
+    // de menú del submenú «Caja» (mismo ViewType, sin segunda implementación)
+    // — ya no es extensión; conserva mobileHide como hoja (el móvil la alcanza
+    // por su tab inferior dedicado, no por el sheet «Más»).
+    expect(ext.map(e => e.id)).toEqual(expect.arrayContaining(['sales', 'devolutions']));
+    expect(ext.map(e => e.id)).not.toContain('cash');
+    // La hoja de menú «Caja» conserva mobileHide (móvil = tab inferior dedicado).
+    const cajaSubmenu = NAVIGATION_SECTIONS.find(s => s.id === 'operacion')
+      ?.children?.find(c => c.id === 'caja');
+    const cashLeaf = cajaSubmenu?.children?.find(c => c.id === 'cash');
+    expect(cashLeaf?.mobileHide).toBe(true);
+    // Sin duplicación: la acción «Caja» del palette se deriva del árbol.
+    expect(SYSTEM_ACTIONS.filter(a => a.id === 'cash')).toHaveLength(1);
   });
 
   it('los roles del dominio venta siguen intactos (clerk sí, warehouse no)', () => {
@@ -792,6 +804,8 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
         'ipv_module', 'otros', 'administracion', 'recursos', 'occ',
         // MISIÓN FECHAS DE TRABAJO (2026-10-18): hub «Control operativo»
         'control_operativo',
+        // MISIÓN INGRESOS/EGRESOS (2026-10-20): hub «Caja» (submenú wrapper)
+        'caja',
       ].includes(view);
       if (isSectionOrHub) continue;
       // Vistas con camino documentado (hub/contextual/palette/menú) o

@@ -32,7 +32,7 @@ import {
  *                      la "devolución" es la reversión contable reverse_vale_salida)
  */
 
-type DocType = 'transaction' | 'receipt' | 'transfer' | 'devolution' | 'adjustment' | 'production_order' | 'issue_slip';
+type DocType = 'transaction' | 'receipt' | 'transfer' | 'devolution' | 'adjustment' | 'production_order' | 'issue_slip' | 'cash_flow';
 
 interface BadgeConfig {
   label: string;
@@ -92,6 +92,14 @@ const STATUS_CONFIG: Record<DocType, Record<string, BadgeConfig>> = {
     completed:   { label: 'Completado',  icon: CheckCircle2,  className: 'bg-success/10 text-success' },
     voided:      { label: 'Anulado',     icon: Ban,           className: 'bg-destructive/10 text-destructive' },
     reversed:    { label: 'Devuelto',    icon: RefreshCcw,    className: 'bg-purple-500/10 text-purple-500 dark:text-purple-400' },
+  },
+  cash_flow: {
+    // MISIÓN INGRESOS/EGRESOS 2026-10-20: estados REALES de
+    // cash_flow_documents (CHECK DB). No existe borrador: el documento nace
+    // 'confirmado' (el efectivo es un evento físico puntual) y su corrección
+    // es la anulación con fila contraria en el ledger.
+    confirmado:  { label: 'Confirmado',  icon: CheckCircle2,  className: 'bg-success/10 text-success' },
+    anulado:     { label: 'Anulado',     icon: Ban,           className: 'bg-destructive/10 text-destructive' },
   },
 };
 
@@ -175,6 +183,7 @@ export function isTerminalStatus(type: DocType, status: string): boolean {
     adjustment: ['reversed'],
     production_order: ['voided', 'reversed'],
     issue_slip: ['voided', 'reversed'],
+    cash_flow: ['anulado'],
   };
   return terminal[type]?.includes(status) ?? false;
 }
@@ -191,6 +200,7 @@ export function canReverse(type: DocType, status: string): boolean {
     adjustment: ['confirmed'],
     production_order: ['in_progress', 'paused', 'completed', 'closed'],
     issue_slip: ['completed'],
+    cash_flow: ['confirmado'],
   };
   return reversible[type]?.includes(status) ?? false;
 }

@@ -17,6 +17,9 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
+// MISIÓN INGRESOS/EGRESOS (2026-10-20): la tira de caja del Inicio usa hooks
+// react-query reales (useActiveShift/useCashShiftExpected) → provider en los renders.
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { create } from 'zustand';
 
@@ -353,7 +356,7 @@ describe('DashboardView embebido — mini-stats con calidad de datos (FASE 2)', 
       },
       isLoading: false,
     };
-    render(<DashboardView embedded />);
+    render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><DashboardView embedded /></QueryClientProvider>);
     expect(screen.getByTestId('kpi-mini-stats')).toBeInTheDocument();
     expect(screen.getByTestId('mini-stat-costs').textContent).toBe('N/D');
     expect(screen.getByTestId('mini-stat-profit').textContent).toBe('N/D');
@@ -465,7 +468,7 @@ describe('PerformanceKpi anclado — modo Año (FASE 7)', () => {
 describe('DashboardView embebido — sin duplicación de KPIs (FASE 15-17)', () => {
   it('NO renderiza ExecutiveKpiCards; el bloque de actividad conserva los datos únicos', async () => {
     mockDashboardData = rpcResponse(125000, 3);
-    render(<DashboardView embedded />);
+    render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><DashboardView embedded /></QueryClientProvider>);
     await waitFor(() => {
       expect(screen.getByTestId('performance-kpi')).toBeInTheDocument();
     });
@@ -478,7 +481,7 @@ describe('DashboardView embebido — sin duplicación de KPIs (FASE 15-17)', () 
 
   it('el anillo anclado comparte la MISMA queryKey que la página (cache compartida)', async () => {
     mockDashboardData = rpcResponse(125000, 3);
-    render(<DashboardView embedded />);
+    render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><DashboardView embedded /></QueryClientProvider>);
     await waitFor(() => {
       expect(screen.getByTestId('performance-kpi')).toBeInTheDocument();
     });

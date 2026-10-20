@@ -48,6 +48,25 @@ export interface AdjustmentRow {
   created_at?: string;
 }
 
+/**
+ * Documento Ingreso/Egreso de caja (payment_transactions ref_type='cash_flow',
+ * MISIÓN 2026-10-20). Filas del LEDGER: un documento anulado aporta la fila
+ * original + la fila contra (movimientos físicos reales por fecha), igual
+ * criterio que el arqueo v2.21.0.
+ */
+export interface CashFlowRow {
+  id: string;
+  /** 'in' = ingreso de efectivo · 'out' = egreso. */
+  direction: 'in' | 'out';
+  amount: number;
+  currency: string;
+  amount_cup?: number;
+  note?: string | null;
+  document_number?: string | null;
+  created_by?: string | null;
+  created_at?: string;
+}
+
 export interface CashReportLike {
   sales?: Array<{ payment_method: string; currency: string; total: number }>;
   payments?: Array<{ payment_method: string; currency: string; ref_type: string; total: number }>;
@@ -57,6 +76,8 @@ export interface CashReportLike {
   sales_split?: SalesSplit;
   /** Nuevo campo: ajustes extraordinarios del periodo. */
   adjustments?: AdjustmentRow[];
+  /** MISIÓN INGRESOS/EGRESOS 2026-10-20: movimientos de caja documentados. */
+  cash_flows?: CashFlowRow[];
 }
 
 export interface DailySummary {
@@ -87,6 +108,10 @@ export interface DailySummary {
   ajustesNegativos: number;
   /** ajustesPositivos − ajustesNegativos. */
   ajustesNeto: number;
+  /** Ingresos de caja documentados en la moneda (fondo de cambio y otros). */
+  ingresosCaja: number;
+  /** Egresos de caja documentados en la moneda (devolución del fondo y otros). */
+  egresosCaja: number;
   /** Efectivo que debe existir en caja al final del periodo. */
   efectivoEsperado: number;
 }
@@ -109,7 +134,8 @@ export function computeDailySummary(
     currency, ventasCash: 0, ventasTransfer: 0, ventasZelle: 0, ventasMixed: 0,
     ventasTotales: 0, otIngresosCash: 0, comisionesCash: 0, comisionesTransfer: 0,
     serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
-    ajustesNegativos: 0, ajustesNeto: 0, efectivoEsperado: 0,
+    ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0,
+    efectivoEsperado: 0,
   };
   if (!report) return zero;
 
@@ -169,17 +195,28 @@ export function computeDailySummary(
     else ajustesNegativos += amt;
   }
 
+  // ── Ingresos/Egresos de caja documentados (MISIÓN 2026-10-20) ──
+  // Por moneda (cada hoja del reporte cuenta sus movimientos en moneda
+  // nativa, igual que pagos/comisiones). Fondo de cambio incluido.
+  let ingresosCaja = 0, egresosCaja = 0;
+  for (const cf of report.cash_flows || []) {
+    if (cf.currency !== currency) continue;
+    const amt = Math.abs(n(cf.amount));
+    if (cf.direction === 'in') ingresosCaja += amt;
+    else egresosCaja += amt;
+  }
+
   const ventasTotales = ventasCash + ventasTransfer + ventasZelle + ventasMixed;
   const ajustesNeto = ajustesPositivos - ajustesNegativos;
   const efectivoEsperado =
-    ventasCash + otIngresosCash + ajustesPositivos
-    - comisionesCash - serviciosRecibidosCash - recibosProveedoresCash - ajustesNegativos;
+    ventasCash + otIngresosCash + ajustesPositivos + ingresosCaja
+    - comisionesCash - serviciosRecibidosCash - recibosProveedoresCash - ajustesNegativos - egresosCaja;
 
   return {
     currency, ventasCash, ventasTransfer, ventasZelle, ventasMixed, ventasTotales,
     otIngresosCash, comisionesCash, comisionesTransfer, serviciosRecibidosCash,
     recibosProveedoresCash, ajustesPositivos, ajustesNegativos, ajustesNeto,
-    efectivoEsperado,
+    ingresosCaja, egresosCaja, efectivoEsperado,
   };
 }
 

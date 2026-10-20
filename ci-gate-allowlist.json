@@ -788,5 +788,42 @@
       "expires": "2026-12-31"
     }
   ],
-  "source_of_truth_baseline": []
+  "source_of_truth_baseline": [
+    {
+      "function": "close_cash_shift/5",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISION INGRESOS/EGRESOS 2026-10-20: migracion 20261021000001 extiende la formula v2.18.0 a v2.21.0 (+ cash_flow_in/out, documentos Ingresos/Egresos de caja ref_type='cash_flow'). Migracion pendiente de aplicar a la BD viva; tras aplicar, re-exportar contract-surface y retirar esta entrada (patron PR #1422).",
+      "added_by": "mision-ingresos-egresos-caja",
+      "expires": "2026-11-30"
+    },
+    {
+      "function": "get_cash_shift_expected/1",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISION INGRESOS/EGRESOS 2026-10-20: migracion 20261021000001 extiende el espejo de arqueo a v2.21.0 (+ cash_flow_in/out en respuesta). Pendiente de aplicar a la BD viva; re-exportar surface y retirar tras aplicar (patron PR #1422).",
+      "added_by": "mision-ingresos-egresos-caja",
+      "expires": "2026-11-30"
+    },
+    {
+      "function": "get_cash_report/4",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISION INGRESOS/EGRESOS 2026-10-20: migracion 20261021000001 anade grupo cash_flows y totales cash_flow_in/out_total_cup al reporte de entrega. Pendiente de aplicar a la BD viva; re-exportar surface y retirar tras aplicar (patron PR #1422).",
+      "added_by": "mision-ingresos-egresos-caja",
+      "expires": "2026-11-30"
+    },
+    {
+      "function": "next_document_number/3",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISION INGRESOS/EGRESOS 2026-10-20: migracion 20261021000001 anade el tipo documental 'cash_flow' (prefijo IE) a la numeracion secuencial. Pendiente de aplicar a la BD viva; re-exportar surface y retirar tras aplicar (patron PR #1422).",
+      "added_by": "mision-ingresos-egresos-caja",
+      "expires": "2026-11-30"
+    }
+  ]
 }

@@ -27,6 +27,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { NoStorePrompt } from '@/components/ui/NoStoreGuard';
 import { withChunkRetry } from '@/components/ui/ChunkErrorBoundary';
+// MISIÓN INGRESOS/EGRESOS 2026-10-20: indicadores de caja en el Inicio.
+import { CajaStatusStrip } from './CajaStatusStrip';
 
 // Lazy load heavy dashboard components to improve TBT and LCP
 // REMEDIACIÓN (fix/dashboard-contextual-kpi-actions): el Inicio usa el KPI
@@ -354,6 +356,11 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
                   />
                 </div>
               </section>
+
+              {/* MISIÓN INGRESOS/EGRESOS 2026-10-20 (requisito §7): indicadores
+                  de caja en Inicio — saldo (efectivo esperado del turno, incluye
+                  los documentos Ingreso/Egreso UNA vez) y fondo de cambio. */}
+              <CajaStatusStrip />
 
               {/* Action Buttons — removed dead "Reporte" button, kept "Ajustes" */}
               <div className="flex justify-end">

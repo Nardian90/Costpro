@@ -187,6 +187,18 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["view_details", "reverse_vale"]
   },
   {
+    id: "caja",
+    route: "/?view=caja",
+    description: "Hub de Caja (OPERACIÓN): turnos/arqueo de la vista Caja y documentos de Ingresos/Egresos de efectivo.",
+    actions: ["open_cash", "open_ingresos_egresos"]
+  },
+  {
+    id: "ingresos_egresos",
+    route: "/?view=ingresos_egresos",
+    description: "Documentos Ingreso/Egreso de caja: registro de entradas y salidas físicas de efectivo (constitución, reposición y devolución del fondo de cambio, y otros autorizados) con KPIs de saldo y fondo, filtros, modo tarjetas/tabla, detalle con comprobante PDF y anulación con motivo obligatorio.",
+    actions: ["create_cash_flow_document", "view_details", "print_comprobante", "annul_document", "filter_by_date"]
+  },
+  {
     id: "inventory_count",
     route: "/?view=inventory_count",
     description: "Realización de conteos físicos y auditoría de stock.",

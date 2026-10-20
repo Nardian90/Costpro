@@ -96,6 +96,10 @@ export interface CashShiftExpected {
   cash_outflows: number;
   cash_production: number;
   cash_commissions: number;
+  /** v2.21.0 (MISIÓN INGRESOS/EGRESOS): ingresos de caja documentados (fondo de cambio y otros). */
+  cash_flow_in: number;
+  /** v2.21.0: egresos de caja documentados (devolución del fondo y otros). */
+  cash_flow_out: number;
   expected_cash: number;
   transfer_sales: number;
   zelle_sales: number;
@@ -103,9 +107,10 @@ export interface CashShiftExpected {
 }
 
 /**
- * v2.18.0: desglose del turno en curso para el arqueo (RPC get_cash_shift_expected).
+ * v2.21.0: desglose del turno en curso para el arqueo (RPC get_cash_shift_expected).
  * Misma ventana y fórmula que close_cash_shift → la UI muestra siempre lo que
- * el cierre calculará server-side (fondo + entradas de efectivo − salidas).
+ * el cierre calculará server-side (fondo + entradas de efectivo − salidas, con
+ * los documentos Ingresos/Egresos incluidos una sola vez).
  */
 export function useCashShiftExpected(storeId?: string | null) {
   const cleanStoreId = getCleanStoreId(storeId);

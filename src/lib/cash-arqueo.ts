@@ -1,19 +1,23 @@
 /**
- * v2.18.0 — Lógica de arqueo de caja (espejo EXACTO del RPC close_cash_shift
- * v2.18.0 y get_cash_shift_expected).
+ * v2.21.0 — Lógica de arqueo de caja (espejo EXACTO del RPC close_cash_shift
+ * v2.21.0 y get_cash_shift_expected).
  *
  * Fórmula (misma convención server-side y client-side):
  *   Efectivo esperado = Fondo inicial
  *                     + Ventas en efectivo (incluye parte cash de ventas mixtas)
  *                     + Anticipos de producción/trabajo en efectivo
+ *                     + Ingresos de caja documentados (fondo de cambio y otros)
  *                     − Pagos a proveedores en efectivo (recepciones + servicios)
  *                     − Comisiones pagadas en efectivo
+ *                     − Egresos de caja documentados (devolución del fondo y otros)
  *   Total esperado    = Efectivo esperado + Transferencias + Zelle
  *   Diferencia        = (Efectivo contado + Vouchers contados) − Total esperado
  *
  * NO son efectivo: transferencias, zelle, pagos pendientes, cuentas por pagar
  * no ejecutadas, ni cobros de ventas (ref_type='sale' — ya contados como
- * ventas). Ver migración 20261010000002_v2_18_0_servicios_actor_y_caja.sql.
+ * ventas). Los documentos Ingresos/Egresos anulados aportan fila original +
+ * fila contra ⇒ neto cero. Ver migraciones 20261010000002 (v2.18.0) y
+ * 20261021000001 (v2.21.0 — MISIÓN INGRESOS/EGRESOS).
  */
 
 export interface CashShiftBreakdown {
@@ -28,6 +32,10 @@ export interface CashShiftBreakdown {
   cash_production: number;
   /** Comisiones pagadas en efectivo */
   cash_commissions: number;
+  /** Ingresos de caja documentados (fondo de cambio y otros — cash_flow in) */
+  cash_flow_in: number;
+  /** Egresos de caja documentados (devolución del fondo y otros — cash_flow out) */
+  cash_flow_out: number;
   /** Ventas por transferencia */
   transfer_sales: number;
   /** Ventas por zelle */
@@ -70,12 +78,15 @@ export function computeArqueo(
     cash_outflows: Number(breakdown?.cash_outflows) || 0,
     cash_production: Number(breakdown?.cash_production) || 0,
     cash_commissions: Number(breakdown?.cash_commissions) || 0,
+    cash_flow_in: Number(breakdown?.cash_flow_in) || 0,
+    cash_flow_out: Number(breakdown?.cash_flow_out) || 0,
     transfer_sales: Number(breakdown?.transfer_sales) || 0,
     zelle_sales: Number(breakdown?.zelle_sales) || 0,
   };
 
   const expected_cash = r2(
-    b.opening_balance + b.cash_sales + b.cash_production - b.cash_outflows - b.cash_commissions,
+    b.opening_balance + b.cash_sales + b.cash_production + b.cash_flow_in
+    - b.cash_outflows - b.cash_commissions - b.cash_flow_out,
   );
   const expected_vouchers = r2(b.transfer_sales + b.zelle_sales);
   const expected_total = r2(expected_cash + expected_vouchers);

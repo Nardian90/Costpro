@@ -502,17 +502,23 @@ export interface ReceiptItem {
 export interface PaymentTransaction {
   id: string;
   store_id: string;
-  ref_type: 'receipt' | 'service';
+  // PR-4.4I + ajustes (2026-10) + ingresos/egresos de caja (2026-10-20):
+  // 'adjustment' = ajuste extraordinario del reporte; 'cash_flow' = documento
+  // Ingreso/Egreso de caja (fondo de cambio y otros) — ver CashFlowDocument.
+  ref_type: 'receipt' | 'service' | 'production_order' | 'work' | 'sale' | 'commission' | 'adjustment' | 'cash_flow';
   ref_id: string;
   amount: number;
-  payment_method: 'cash' | 'transfer' | 'zelle';
+  payment_method: 'cash' | 'transfer' | 'zelle' | 'card' | 'wallet' | 'other' | 'mixed';
   currency: string;
   exchange_rate: number;
   amount_cup: number;
+  /** Dirección del flujo: in = entra efectivo, out = sale, refund = reembolso */
+  direction?: 'in' | 'out' | 'refund';
   payment_date: string;
   reference?: string | null;
   notes?: string | null;
   paid_by?: string | null;
+  idempotency_key?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -546,11 +552,24 @@ export interface CashReport {
     payment_count: number;
     total: number;
   }>;
+  // MISIÓN INGRESOS/EGRESOS 2026-10-20: movimientos de caja documentados
+  // (fondo de cambio y otros). GRUPOS agregados del RPC get_cash_report
+  // (las FILAS del ledger las enriquece /api/cash-report como `cash_flows`).
+  cash_flow_groups?: Array<{
+    payment_method: string;
+    currency: string;
+    direction: 'in' | 'out';
+    flow_count: number;
+    total: number;
+    total_cup: number;
+  }>;
   totals: {
     sales_total_cup: number;
     payments_total_cup: number;
     commissions_total_cup: number;
     production_total_cup?: number;
+    cash_flow_in_total_cup?: number;
+    cash_flow_out_total_cup?: number;
     balance_cup: number;
   };
   start_date: string;
@@ -558,6 +577,86 @@ export interface CashReport {
   cash_balance_cup: number;
   cash_breakdown: Array<{ denom: number; count: number; total: number }>;
   period?: { start: string; end: string };
+}
+
+// ============================================
+// Ingresos/Egresos de Caja — MISIÓN 2026-10-20
+// ============================================
+
+/** Conceptos autorizados del documento Ingresos/Egresos (extensible). */
+export type CashFlowConcept =
+  | 'constitucion_fondo'
+  | 'reposicion_fondo'
+  | 'devolucion_total_fondo'
+  | 'devolucion_parcial_fondo'
+  | 'otro_ingreso'
+  | 'otro_egreso';
+
+export interface CashFlowDocument {
+  id: string;
+  store_id: string;
+  document_number: string;
+  doc_type: 'ingreso' | 'egreso';
+  concept: CashFlowConcept;
+  amount: number;
+  currency: 'CUP' | 'USD';
+  exchange_rate: number;
+  amount_cup: number;
+  payment_method: 'cash';
+  operation_date: string;
+  status: 'confirmado' | 'anulado';
+  closure_id: string | null;
+  responsible_user_id: string;
+  counterparty: string | null;
+  justification: string;
+  notes: string | null;
+  related_document_id: string | null;
+  payment_transaction_id: string | null;
+  annulment_payment_transaction_id: string | null;
+  idempotency_key: string | null;
+  created_at: string;
+  created_by: string;
+  confirmed_at: string;
+  confirmed_by: string;
+  annulled_at: string | null;
+  annulled_by: string | null;
+  annulment_reason: string | null;
+  /** Embeds opcionales de la consulta */
+  responsible?: { full_name: string } | null;
+  annulled_by_profile?: { full_name: string } | null;
+  related_document?: { document_number: string; concept: CashFlowConcept } | null;
+}
+
+/** Respuesta del RPC get_cash_flow_summary (KPIs de la vista). */
+export interface CashFlowSummary {
+  window_start: string;
+  has_pending_shift: boolean;
+  opening_balance: number;
+  total_sales: number;
+  cash_sales: number;
+  cash_outflows: number;
+  cash_production: number;
+  cash_commissions: number;
+  cash_flow_in: number;
+  cash_flow_out: number;
+  expected_cash: number;
+  transfer_sales: number;
+  zelle_sales: number;
+  expected_total: number;
+  fondo_vigente: number;
+  fondo_ingresado: number;
+  fondo_devuelto: number;
+  period: {
+    from: string;
+    to: string;
+    in_cup: number;
+    out_cup: number;
+    in_usd: number;
+    out_usd: number;
+    ingresos_count: number;
+    egresos_count: number;
+    annulled_count: number;
+  };
 }
 
 // ============================================
