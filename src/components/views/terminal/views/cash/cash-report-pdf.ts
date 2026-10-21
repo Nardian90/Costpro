@@ -1066,6 +1066,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     // y otros) — filas independientes de los ajustes, auditables por separado.
     if (s.ingresosCaja > 0) incomeRows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja });
     if (s.egresosCaja > 0) incomeRows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, note: 'expense' });
+    if (s.reembolsosCash > 0) incomeRows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, note: 'expense' });
 
     const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, s.efectivoEsperado);
 

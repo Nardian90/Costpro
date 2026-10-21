@@ -364,3 +364,86 @@ describe('MISIÓN INGRESOS/EGRESOS (2026-10-20) — documentos de caja en el rep
     expect(s.efectivoEsperado).toBe(12600);
   });
 });
+
+
+describe('MISIÓN DE SEGUIMIENTO 2026-10-21 — reembolsos de devoluciones (regla P1, v2.22.0)', () => {
+  it('reembolso de devolución EN EFECTIVO reduce el esperado (fila refund cash)', () => {
+    const r = S({
+      sales_split: { CUP: { cash: 1000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 1000 } },
+      refund_rows: [
+        { id: 'rf1', payment_method: 'cash', currency: 'CUP', amount: 300, amount_cup: 300 },
+      ],
+    });
+    const s = computeDailySummary(r, 'CUP');
+    expect(s.reembolsosCash).toBe(300);
+    expect(s.efectivoEsperado).toBe(700);
+  });
+
+  it('reembolso por TRANSFERENCIA/ZELLE queda en el detalle pero NO reduce el efectivo', () => {
+    const r = S({
+      sales_split: { CUP: { cash: 1000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 1000 } },
+      refund_rows: [
+        { id: 'rf1', payment_method: 'transfer', currency: 'CUP', amount: 500, amount_cup: 500 },
+        { id: 'rf2', payment_method: 'zelle', currency: 'CUP', amount: 200, amount_cup: 200 },
+      ],
+    });
+    const s = computeDailySummary(r, 'CUP');
+    expect(s.reembolsosCash).toBe(0);
+    expect(s.efectivoEsperado).toBe(1000);
+  });
+
+  it('devolución parcial + total: refunds cash acumulan (200+100)', () => {
+    const r = S({
+      sales_split: { CUP: { cash: 1000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 1000 } },
+      refund_rows: [
+        { id: 'rf1', payment_method: 'cash', currency: 'CUP', amount: 200, amount_cup: 200 },
+        { id: 'rf2', payment_method: 'cash', currency: 'CUP', amount: 100, amount_cup: 100 },
+      ],
+    });
+    expect(computeDailySummary(r, 'CUP').efectivoEsperado).toBe(700);
+  });
+
+  it('refund USD solo afecta la hoja USD (nunca sumado a CUP)', () => {
+    const r = S({
+      sales_split: {
+        CUP: { cash: 1000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 1000 },
+        USD: { cash: 50, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 50 },
+      },
+      refund_rows: [
+        { id: 'rf1', payment_method: 'cash', currency: 'USD', amount: 20, amount_cup: 8200 },
+      ],
+    });
+    const cup = computeDailySummary(r, 'CUP');
+    const usd = computeDailySummary(r, 'USD');
+    expect(cup.reembolsosCash).toBe(0);
+    expect(cup.efectivoEsperado).toBe(1000);
+    expect(usd.reembolsosCash).toBe(20);
+    expect(usd.efectivoEsperado).toBe(30);
+  });
+
+  it('compatibilidad: reportes sin refund_rows cuadran igual que antes (cero por omisión)', () => {
+    const r = S({
+      sales_split: { CUP: { cash: 12600, transfer: 48000, zelle: 0, mixedUnsplit: 0, total: 60600 } },
+    });
+    const s = computeDailySummary(r, 'CUP');
+    expect(s.reembolsosCash).toBe(0);
+    expect(s.efectivoEsperado).toBe(12600);
+  });
+
+  it('fórmula completa v2.22.0 con todos los términos (ventas+OT+ajustes+caja−comisiones−servicios−recibos−refunds)', () => {
+    const r = S({
+      sales_split: { CUP: { cash: 169000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 169000 } },
+      adjustments: [{ id: 'a1', direction: 'in', amount: 100 }],
+      cash_flows: [
+        { id: 'cf1', direction: 'in', amount: 5000, currency: 'CUP' },
+        { id: 'cf2', direction: 'out', amount: 2000, currency: 'CUP' },
+      ],
+      refund_rows: [{ id: 'rf1', payment_method: 'cash', currency: 'CUP', amount: 300, amount_cup: 300 }],
+      commissions: [{ payment_method: 'cash', currency: 'CUP', total: 100 }],
+      payments: [{ payment_method: 'cash', currency: 'CUP', ref_type: 'receipt', total: 400 }],
+    });
+    // 169000 + 100 + 5000 − 100 − 400 − 2000 − 300 = 171300
+    const s = computeDailySummary(r, 'CUP');
+    expect(s.efectivoEsperado).toBe(171300);
+  });
+});

@@ -1,6 +1,6 @@
 /**
- * v2.21.0 — Lógica de arqueo de caja (espejo EXACTO del RPC close_cash_shift
- * v2.21.0 y get_cash_shift_expected).
+ * v2.22.0 — Lógica de arqueo de caja (espejo EXACTO del RPC close_cash_shift
+ * v2.22.0 y get_cash_shift_expected).
  *
  * Fórmula (misma convención server-side y client-side):
  *   Efectivo esperado = Fondo inicial
@@ -10,14 +10,19 @@
  *                     − Pagos a proveedores en efectivo (recepciones + servicios)
  *                     − Comisiones pagadas en efectivo
  *                     − Egresos de caja documentados (devolución del fondo y otros)
+ *                     − Reembolsos en efectivo de devoluciones comerciales
  *   Total esperado    = Efectivo esperado + Transferencias + Zelle
  *   Diferencia        = (Efectivo contado + Vouchers contados) − Total esperado
  *
  * NO son efectivo: transferencias, zelle, pagos pendientes, cuentas por pagar
  * no ejecutadas, ni cobros de ventas (ref_type='sale' — ya contados como
  * ventas). Los documentos Ingresos/Egresos anulados aportan fila original +
- * fila contra ⇒ neto cero. Ver migraciones 20261010000002 (v2.18.0) y
- * 20261021000001 (v2.21.0 — MISIÓN INGRESOS/EGRESOS).
+ * fila contra ⇒ neto cero. Reembolsos de devolución: SOLO los pagados en
+ * efectivo (payment_method='cash', direction='refund') reducen el esperado —
+ * los de transferencia/zelle no tocan el cajón y el crédito de tienda no
+ * genera fila (MISIÓN DE SEGUIMIENTO 2026-10-21, regla P1). Ver migraciones
+ * 20261010000002 (v2.18.0), 20261021000001 (v2.21.0) y 20261021120000
+ * (v2.22.0 — refunds de devolución).
  */
 
 export interface CashShiftBreakdown {
@@ -36,6 +41,8 @@ export interface CashShiftBreakdown {
   cash_flow_in: number;
   /** Egresos de caja documentados (devolución del fondo y otros — cash_flow out) */
   cash_flow_out: number;
+  /** Reembolsos EN EFECTIVO de devoluciones comerciales (devolution/refund/cash) */
+  cash_refunds: number;
   /** Ventas por transferencia */
   transfer_sales: number;
   /** Ventas por zelle */
@@ -80,13 +87,14 @@ export function computeArqueo(
     cash_commissions: Number(breakdown?.cash_commissions) || 0,
     cash_flow_in: Number(breakdown?.cash_flow_in) || 0,
     cash_flow_out: Number(breakdown?.cash_flow_out) || 0,
+    cash_refunds: Number(breakdown?.cash_refunds) || 0,
     transfer_sales: Number(breakdown?.transfer_sales) || 0,
     zelle_sales: Number(breakdown?.zelle_sales) || 0,
   };
 
   const expected_cash = r2(
     b.opening_balance + b.cash_sales + b.cash_production + b.cash_flow_in
-    - b.cash_outflows - b.cash_commissions - b.cash_flow_out,
+    - b.cash_outflows - b.cash_commissions - b.cash_flow_out - b.cash_refunds,
   );
   const expected_vouchers = r2(b.transfer_sales + b.zelle_sales);
   const expected_total = r2(expected_cash + expected_vouchers);

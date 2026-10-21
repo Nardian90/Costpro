@@ -3,9 +3,11 @@ import { computeArqueo, type CashShiftBreakdown } from '@/lib/cash-arqueo';
 
 /**
  * FASE 4.6 de la misión — escenarios numéricos obligatorios del arqueo.
- * Fórmula espejo de close_cash_shift v2.21.0 / get_cash_shift_expected
+ * Fórmula espejo de close_cash_shift v2.22.0 / get_cash_shift_expected
  * (migraciones 20261010000002 v2.18.0 + 20261021000001 v2.21.0 — MISIÓN
- * INGRESOS/EGRESOS: documentos de caja como términos in/out).
+ * INGRESOS/EGRESOS: documentos de caja como términos in/out — y
+ * 20261021120000 v2.22.0 — MISIÓN DE SEGUIMIENTO: reembolsos de devolución
+ * en efectivo como término cash_refunds).
  */
 
 const base: CashShiftBreakdown = {
@@ -17,6 +19,7 @@ const base: CashShiftBreakdown = {
   cash_commissions: 0,
   cash_flow_in: 0,
   cash_flow_out: 0,
+  cash_refunds: 0,
   transfer_sales: 0,
   zelle_sales: 0,
 };
@@ -139,6 +142,67 @@ describe('Arqueo de caja v2.21.0 — documentos Ingresos/Egresos (MISIÓN 2026-1
     const r = computeArqueo(b, 9000, 4150);
     expect(r.expected_vouchers).toBe(4150);
     expect(r.expected_total).toBe(13150);
+    expect(r.difference).toBe(0);
+  });
+});
+
+describe('Arqueo de caja v2.22.0 — reembolsos de devoluciones (MISIÓN DE SEGUIMIENTO 2026-10-21)', () => {
+  it('Reembolso EN EFECTIVO de devolución resta del esperado (ejemplo vivo NC: 1000 venta − 300 refund)', () => {
+    // Evidencia real de producción: ENERVIDA NC-000014/NC-000015 — el dinero
+    // salió del cajón y el esperado v2.21.0 NO lo restaba (defecto P1).
+    const b: CashShiftBreakdown = { ...base, opening_balance: 100, cash_sales: 1000, cash_refunds: 300 };
+    const r = computeArqueo(b, 800, 0);
+    expect(r.expected_cash).toBe(800);
+    expect(r.difference).toBe(0);
+  });
+
+  it('Reembolso por transferencia/zelle NO toca el efectivo (cae del lado de vouchers si acaso)', () => {
+    // La regla: solo el medio por el que salió REALMENTE el dinero reduce el
+    // efectivo físico. Un refund transfer queda fuera del término cash.
+    const b: CashShiftBreakdown = { ...base, opening_balance: 100, cash_sales: 1000, cash_refunds: 0 };
+    const r = computeArqueo(b, 1100, 0);
+    expect(r.expected_cash).toBe(1100);
+    expect(r.difference).toBe(0);
+  });
+
+  it('Devolución parcial + total: refunds acumulados 200+100 sobre venta 1000', () => {
+    const b: CashShiftBreakdown = { ...base, opening_balance: 0, cash_sales: 1000, cash_refunds: 300 };
+    expect(computeArqueo(b, 700, 0).expected_cash).toBe(700);
+  });
+
+  it('Crédito de tienda (store_credit) NO genera fila de refund → esperado intacto', () => {
+    const b: CashShiftBreakdown = { ...base, opening_balance: 0, cash_sales: 1000 };
+    expect(computeArqueo(b, 1000, 0).expected_cash).toBe(1000);
+  });
+
+  it('Sin doble conteo: la venta cobrada sigue completa y el refund se resta UNA vez', () => {
+    const b: CashShiftBreakdown = { ...base, opening_balance: 0, cash_sales: 1000, cash_flow_in: 0, cash_refunds: 300 };
+    const r = computeArqueo(b, 700, 0);
+    expect(r.expected_cash).toBe(700); // no 400 (doble resta) ni 1000 (resta omitida)
+  });
+
+  it('Refunds + documentos de caja + comisiones juntos: fórmula completa v2.22.0', () => {
+    const b: CashShiftBreakdown = {
+      ...base,
+      opening_balance: 100,
+      cash_sales: 1000,
+      cash_production: 500,
+      cash_flow_in: 2000,
+      cash_outflows: 300,
+      cash_commissions: 100,
+      cash_flow_out: 400,
+      cash_refunds: 250,
+    };
+    // 100 + 1000 + 500 + 2000 − 300 − 100 − 400 − 250 = 2550
+    expect(computeArqueo(b, 2550, 0).expected_cash).toBe(2550);
+    expect(computeArqueo(b, 2550, 0).difference).toBe(0);
+  });
+
+  it('Tolerante a breakdown sin cash_refunds (RPC v2.21.0 antiguo → tratado como 0)', () => {
+    const legacy = { ...base, cash_sales: 1000 } as Record<string, unknown>;
+    delete legacy.cash_refunds;
+    const r = computeArqueo(legacy as unknown as CashShiftBreakdown, 1000, 0);
+    expect(r.expected_cash).toBe(1000); // sin NaN ni degradación
     expect(r.difference).toBe(0);
   });
 });

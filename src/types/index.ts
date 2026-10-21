@@ -563,6 +563,15 @@ export interface CashReport {
     total: number;
     total_cup: number;
   }>;
+  // MISIÓN DE SEGUIMIENTO 2026-10-21 (v2.22.0): reembolsos de devoluciones
+  // comerciales por método (informativo; SOLO el tramo cash resta al balance).
+  refunds?: Array<{
+    payment_method: string;
+    currency: string;
+    refund_count: number;
+    total: number;
+    total_cup: number;
+  }>;
   totals: {
     sales_total_cup: number;
     payments_total_cup: number;
@@ -570,6 +579,8 @@ export interface CashReport {
     production_total_cup?: number;
     cash_flow_in_total_cup?: number;
     cash_flow_out_total_cup?: number;
+    /** v2.22.0: reembolsos de devolución SOLO en efectivo (término del balance). */
+    refunds_cash_total_cup?: number;
     balance_cup: number;
   };
   start_date: string;
@@ -639,6 +650,8 @@ export interface CashFlowSummary {
   cash_commissions: number;
   cash_flow_in: number;
   cash_flow_out: number;
+  /** v2.22.0 (MISIÓN DE SEGUIMIENTO): reembolsos EN EFECTIVO de devoluciones. */
+  cash_refunds: number;
   expected_cash: number;
   transfer_sales: number;
   zelle_sales: number;

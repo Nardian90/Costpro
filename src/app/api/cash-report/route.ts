@@ -210,6 +210,43 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       console.warn('[cash-report] ingresos/egresos de caja no disponibles:', (cfErr as { message?: string })?.message);
     }
 
+    // ── Reembolsos de devoluciones comerciales (ref_type='devolution',
+    //    direction='refund' — MISIÓN DE SEGUIMIENTO 2026-10-21, regla P1).
+    //    TODOS los métodos (el desglose del reporte muestra por dónde salió
+    //    el dinero); la fórmula del efectivo solo descuenta el tramo CASH
+    //    (summary.ts). Ventana por payment_date. Degradación limpia: sin
+    //    migración 20261021120000 el RPC aún no expone `refunds`, pero estas
+    //    filas del ledger existen desde DF-03 y enriquecen el detalle.
+    let refunds: Array<{ id: string; payment_method: string; currency: string; amount: number; amount_cup: number; devolution_id: string | null; transaction_id: string | null; note: string; payment_date: string }> = [];
+    try {
+      let rfQuery = supabase
+        .from('payment_transactions')
+        .select('id, payment_method, currency, amount, amount_cup, ref_id, transaction_id, notes, payment_date')
+        .eq('store_id', userData.active_store_id)
+        .eq('ref_type', 'devolution')
+        .eq('direction', 'refund');
+      if (!includeAllDates) {
+        rfQuery = rfQuery.gte('payment_date', dateFilter.gte as string).lte('payment_date', dateFilter.lte as string);
+      }
+      const { data: rfRows, error: rfErr } = await rfQuery;
+      if (rfErr) throw rfErr;
+      refunds = (rfRows || []).map((r: { id: string; payment_method: string; currency: string | null; amount: number | string | null; amount_cup: number | string | null; ref_id: string | null; transaction_id: string | null; notes: string | null; payment_date: string }) => ({
+        id: r.id,
+        payment_method: r.payment_method || 'cash',
+        currency: r.currency || 'CUP',
+        amount: Number(r.amount || 0),
+        amount_cup: Number(r.amount_cup || 0),
+        devolution_id: r.ref_id,
+        transaction_id: r.transaction_id,
+        note: r.notes || '',
+        payment_date: r.payment_date,
+      }));
+    } catch (rfErr: unknown) {
+      // direction='refund' existe desde DF-03; si el entorno es anterior,
+      // el reporte sigue cuadrando sin reembolsos (degradación limpia).
+      console.warn('[cash-report] reembolsos de devoluciones no disponibles:', (rfErr as { message?: string })?.message);
+    }
+
     // ── FIX-RE-1510 v2 (ADENDA del negocio 2026-10-16): criterio canónico = FECHA DEL PAGO ──
     // El negocio define: el reporte SIEMPRE atribuye cada comisión al día de negocio en que
     // se CONFIRMÓ el pago (paid_at) — «aunque la comisión corresponda al 15/10, si no se
@@ -251,7 +288,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // EXCLUIA el tramo efectivo de ventas mixed (p. ej. EnerVida 02/10: 2.600
     // en vez de 12.600). La fórmula única vive en src/lib/cash-report/summary.ts
     // y la consumen idénticamente vista, previsualización y PDF.
-    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows };
+    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows, refund_rows: refunds };
     // INCIDENTE 2026-10-16: grupos `sales` por MONEDA DE COBRO (antes por
     // sale_currency — los cobros USD aparecían como CUP). La vista (acordeón),
     // el fallback de computeDailySummary y la plantilla Estándar heredan la

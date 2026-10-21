@@ -114,6 +114,7 @@ export default function CashClosureView() {
   const cashProduction = Number(shiftExpected?.cash_production) || 0;
   const cashFlowIn = Number(shiftExpected?.cash_flow_in) || 0;
   const cashFlowOut = Number(shiftExpected?.cash_flow_out) || 0;
+  const cashRefunds = Number((shiftExpected as { cash_refunds?: number } | null | undefined)?.cash_refunds) || 0;
   const systemVouchers = (Number(shiftExpected?.transfer_sales) || 0) + (Number(shiftExpected?.zelle_sales) || 0);
 
   const arqueo = computeArqueo(
@@ -126,6 +127,7 @@ export default function CashClosureView() {
       cash_commissions: 0,
       cash_flow_in: 0,
       cash_flow_out: 0,
+      cash_refunds: 0,
       transfer_sales: salesTransfer,
       zelle_sales: 0,
     }) as CashShiftBreakdown,
@@ -145,6 +147,7 @@ export default function CashClosureView() {
     ...(cashOutflows > 0 ? [{ label: 'Pagos a Proveedores (Efectivo)', value: -cashOutflows, color: 'text-destructive' }] : []),
     ...(cashCommissions > 0 ? [{ label: 'Comisiones (Efectivo)', value: -cashCommissions, color: 'text-destructive' }] : []),
     ...(cashFlowOut > 0 ? [{ label: 'Egresos de Caja (Devolución y Otros)', value: -cashFlowOut, color: 'text-destructive' }] : []),
+    ...(cashRefunds > 0 ? [{ label: 'Reembolsos de Devoluciones (Efectivo)', value: -cashRefunds, color: 'text-destructive' }] : []),
     { label: 'Efectivo Esperado', value: systemCash, color: 'text-success' },
     { label: `Transferencias/Zelle (Sistema)`, value: systemVouchers, color: 'text-primary' },
   ] : [];

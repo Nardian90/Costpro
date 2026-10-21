@@ -15,12 +15,17 @@
  *
  *   ventasTotales = ventasCash + ventasTransfer + ventasZelle + ventasMixed
  *   efectivoEsperado = ventasCash + otIngresosCash + ajustesPositivos
- *                    − comisionesCash − serviciosRecibidosCash
- *                    − recibosProveedoresCash − ajustesNegativos
+ *                    + ingresosCaja − comisionesCash − serviciosRecibidosCash
+ *                    − recibosProveedoresCash − ajustesNegativos − egresosCaja
+ *                    − reembolsosCash
  *   diferenciaCuadre = efectivoContado − efectivoEsperado
  *                      (negativo ⇒ FALTANTE · positivo ⇒ SOBRANTE)
  *
  * Las comisiones pagadas por transferencia NO reducen el efectivo físico.
+ * Los reembolsos de devolución SOLO reducen el efectivo cuando se pagaron EN
+ * EFECTIVO (payment_transactions ref_type='devolution', direction='refund',
+ * payment_method='cash' — MISIÓN DE SEGUIMIENTO 2026-10-21, regla P1):
+ * transfer/zelle no tocan el cajón; el crédito de tienda no genera fila.
  */
 
 export type Currency = 'CUP' | 'USD';
@@ -67,6 +72,26 @@ export interface CashFlowRow {
   created_at?: string;
 }
 
+/**
+ * Reembolso de devolución comercial (payment_transactions ref_type='devolution',
+ * direction='refund' — MISIÓN DE SEGUIMIENTO 2026-10-21). Solo las filas con
+ * payment_method='cash' reducen el efectivo esperado; el resto (transfer/zelle)
+ * es informativo para el desglose del reporte.
+ */
+export interface RefundRow {
+  id: string;
+  payment_method: string;
+  currency: string;
+  amount: number;
+  amount_cup?: number;
+  /** Documento de devolución que originó el reembolso (trazabilidad). */
+  devolution_id?: string | null;
+  /** Venta original reembolsada (trazabilidad). */
+  transaction_id?: string | null;
+  note?: string | null;
+  payment_date?: string;
+}
+
 export interface CashReportLike {
   sales?: Array<{ payment_method: string; currency: string; total: number }>;
   payments?: Array<{ payment_method: string; currency: string; ref_type: string; total: number }>;
@@ -78,6 +103,8 @@ export interface CashReportLike {
   adjustments?: AdjustmentRow[];
   /** MISIÓN INGRESOS/EGRESOS 2026-10-20: movimientos de caja documentados. */
   cash_flows?: CashFlowRow[];
+  /** MISIÓN DE SEGUIMIENTO 2026-10-21: filas de reembolsos del ledger (enriquecidas por /api/cash-report — nombre distinto a los GRUPOS `refunds` del RPC, misma convención que cash_flows vs cash_flow_groups). */
+  refund_rows?: RefundRow[];
 }
 
 export interface DailySummary {
@@ -112,6 +139,8 @@ export interface DailySummary {
   ingresosCaja: number;
   /** Egresos de caja documentados en la moneda (devolución del fondo y otros). */
   egresosCaja: number;
+  /** Reembolsos de devoluciones pagados EN EFECTIVO en la moneda (MISIÓN DE SEGUIMIENTO 2026-10-21). */
+  reembolsosCash: number;
   /** Efectivo que debe existir en caja al final del periodo. */
   efectivoEsperado: number;
 }
@@ -135,7 +164,7 @@ export function computeDailySummary(
     ventasTotales: 0, otIngresosCash: 0, comisionesCash: 0, comisionesTransfer: 0,
     serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0,
-    efectivoEsperado: 0,
+    reembolsosCash: 0, efectivoEsperado: 0,
   };
   if (!report) return zero;
 
@@ -206,17 +235,31 @@ export function computeDailySummary(
     else egresosCaja += amt;
   }
 
+  // ── Reembolsos de devoluciones en EFECTIVO (MISIÓN DE SEGUIMIENTO
+  //    2026-10-21, regla P1): solo el tramo cash reduce el esperado; los
+  //    reembolsos por transferencia/zelle se listan en el detalle pero NO
+  //    tocan el efectivo físico. Por moneda, igual que cash_flows.
+  let reembolsosCash = 0;
+  for (const rf of report.refund_rows || []) {
+    if (rf.currency !== currency) continue;
+    if (rf.payment_method !== 'cash') continue;
+    // Moneda nativa, misma convención que cash_flows (cada hoja cuenta sus
+    // propios movimientos; amount == amount_cup en CUP).
+    reembolsosCash += Math.abs(n(rf.amount));
+  }
+
   const ventasTotales = ventasCash + ventasTransfer + ventasZelle + ventasMixed;
   const ajustesNeto = ajustesPositivos - ajustesNegativos;
   const efectivoEsperado =
     ventasCash + otIngresosCash + ajustesPositivos + ingresosCaja
-    - comisionesCash - serviciosRecibidosCash - recibosProveedoresCash - ajustesNegativos - egresosCaja;
+    - comisionesCash - serviciosRecibidosCash - recibosProveedoresCash - ajustesNegativos - egresosCaja
+    - reembolsosCash;
 
   return {
     currency, ventasCash, ventasTransfer, ventasZelle, ventasMixed, ventasTotales,
     otIngresosCash, comisionesCash, comisionesTransfer, serviciosRecibidosCash,
     recibosProveedoresCash, ajustesPositivos, ajustesNegativos, ajustesNeto,
-    ingresosCaja, egresosCaja, efectivoEsperado,
+    ingresosCaja, egresosCaja, reembolsosCash, efectivoEsperado,
   };
 }
 
