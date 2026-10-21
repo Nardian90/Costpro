@@ -1,6 +1,7 @@
 import * as XLSX from "@e965/xlsx";
 import { Product, PaymentMethod } from '@/types';
 import { SalesCatalogRow, calcSubtotal } from './salesCatalogHelpers';
+import { USD_CUP_RATE } from '@/lib/utils';
 
 // ── Public types ──────────────────────────────────────────────
 
@@ -99,7 +100,8 @@ export function parseImportFile(
         const nextRows = new Map(currentRows);
 
         // PR-4.4D: constantes para importación histórica
-        const DEFAULT_USD_RATE = 680; // CUP/USD
+        // CP-POS-008: fuente única del fallback (documentada en utils.ts)
+const DEFAULT_USD_RATE = USD_CUP_RATE; // CUP/USD
         const MAX_HISTORICAL_DAYS = 60; // 2 meses
         const today = new Date();
         const minDate = new Date(today.getTime() - MAX_HISTORICAL_DAYS * 24 * 60 * 60 * 1000);

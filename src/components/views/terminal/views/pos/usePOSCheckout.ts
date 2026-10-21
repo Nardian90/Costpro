@@ -30,6 +30,7 @@ import { resolvePosOperationDate, checkNotFutureOperationDate } from "@/lib/pos/
 // comprobante POS — suma las filas YA cobradas (misma fuente que viaja al RPC),
 // sin recálculo de importes.
 import { aggregateItemPayments } from "@/lib/pos/thermal-receipt";
+import { USD_CUP_RATE } from '@/lib/utils';
 
 export function usePOSCheckout() {
   const { user } = useAuthStore();
@@ -259,7 +260,7 @@ export function usePOSCheckout() {
               zelle_amount: zelleAmount,
               // PR-4.4I: Zelle currency + rate (USD with rate, or CUP if no Zelle)
               sale_currency: zelleAmount > 0 ? 'USD' : 'CUP',
-              sale_exchange_rate: zelleAmount > 0 ? (useCartStore.getState().saleExchangeRate > 1 ? useCartStore.getState().saleExchangeRate : 680) : 1.0,
+              sale_exchange_rate: zelleAmount > 0 ? (useCartStore.getState().saleExchangeRate > 1 ? useCartStore.getState().saleExchangeRate : USD_CUP_RATE) : 1.0,
               customer_id: safeCustomerId,
               customer_name: customerName || null,
               // REM-INV-4A-R (RC-1): forward the server-issued supervisor authorization

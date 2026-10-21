@@ -255,3 +255,47 @@ describe('Catálogo — regresión INVENTORY-CATALOG-REGRESSION-1379 (búsqueda 
     }, { timeout: 3000 });
   });
 });
+
+describe('Catálogo — CP-CAT-003: categorías persistidas (misma clase que F20)', () => {
+  it('5-GUARDIÁN: NO restaura catalog_selectedCategories persistido al montar — consulta con categoría vacía', async () => {
+    // Estado del navegador que produce el síntoma: el usuario filtró por
+    // una categoría, cerró sesión/recargó, y el catálogo aparece
+    // silenciosamente filtrado a un subconjunto del total real.
+    localStorage.setItem('catalog_selectedCategories', JSON.stringify(['Pinturería']));
+
+    renderCatalog();
+
+    await waitFor(() => {
+      expect(capturedOpts.filter(o => o.mode === 'page').length).toBeGreaterThan(0);
+    });
+
+    const pageCalls = capturedOpts.filter(o => o.mode === 'page');
+    for (const call of pageCalls) {
+      expect(call.category).toBe('');
+    }
+  });
+
+  it('6-PURGA: elimina las claves legacy catalog_selectedCategories y catalog_selectedCategory', async () => {
+    localStorage.setItem('catalog_selectedCategories', JSON.stringify(['Pinturería']));
+    localStorage.setItem('catalog_selectedCategory', 'Limpieza'); // formato antiguo single-string
+
+    renderCatalog();
+
+    await waitFor(() => {
+      expect(localStorage.getItem('catalog_selectedCategories')).toBeNull();
+      expect(localStorage.getItem('catalog_selectedCategory')).toBeNull();
+    });
+  });
+
+  it('7-NO-REGRESIÓN: layoutMode (preferencia de formato real) SIGUE persistiéndose', async () => {
+    localStorage.setItem('catalog_layoutMode', 'grid');
+
+    renderCatalog();
+
+    // La preferencia de formato no es un filtro de consulta: se conserva.
+    await waitFor(() => {
+      expect(capturedOpts.filter(o => o.mode === 'page').length).toBeGreaterThan(0);
+    });
+    expect(localStorage.getItem('catalog_layoutMode')).toBe('grid');
+  });
+});

@@ -24,6 +24,40 @@ export const maxDuration = 30;
  * estructural del .trm lo sigue validando validateTrmFormat (módulo
  * transfermovil) después del schema.
  */
+/**
+ * CP-INFRA-012 (2026-10-21): upserts de filas INDEPENDIENTES con
+ * concurrencia ACOTADA. Los .trm reales traen hasta ~17k transacciones: en
+ * serie son minutos de latencia de importación; con Promise.all sin tope
+ * serían miles de requests concurrentes (agotamiento del pool). El pool de
+ * `concurrency` workers preserva:
+ *   - aislamiento de fallos (un error de fila NO aborta el lote);
+ *   - el resultado por fila en su orden original (conteo exacto);
+ *   - la semántica de upsert idempotente (onConflict único por fila).
+ * El ORDEN entre fases (cuentas antes que transacciones) lo conserva el
+ * llamador con un único await por fase.
+ */
+async function upsertRowsBounded<T>(
+  rows: T[],
+  concurrency: number,
+  makeUpsert: (row: T) => PromiseLike<{ error: unknown }> | any,
+): Promise<Array<{ ok: boolean }>> {
+  const results: Array<{ ok: boolean }> = new Array(rows.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < rows.length) {
+      const idx = next++;
+      try {
+        const r = await makeUpsert(rows[idx]);
+        results[idx] = { ok: !r?.error };
+      } catch {
+        results[idx] = { ok: false };
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, Math.max(rows.length, 1)) }, worker));
+  return results;
+}
+
 async function postHandler(req: NextRequest) {
   try {
     const session = await getServerSession(req);
@@ -115,11 +149,11 @@ async function postHandler(req: NextRequest) {
     }
 
     // 1. Guardar cuentas en wallet_accounts (upsert)
-    let accountsSaved = 0;
-    for (const acc of accounts) {
+    // CP-INFRA-012: filas con onConflict único e independiente → pool acotado.
+    const accountRows = accounts.map(acc => {
       const bankFromTx = accountBankMap[acc.accountNumber] || extractBankFromSource(acc.source);
       const maskedNum = maskAccount(acc.accountNumber);
-      const { error } = await admin.from('wallet_accounts').upsert({
+      return {
         user_id: session.user.id,
         source: acc.source,
         bank: bankFromTx,
@@ -129,16 +163,19 @@ async function postHandler(req: NextRequest) {
         movil: acc.movil || null,
         tipo_cuenta: acc.tipo_cuenta || null,
         currency: 'CUP',
-      }, { onConflict: 'user_id,source,account_number' });
-      if (!error) accountsSaved++;
-    }
+      };
+    });
+    const accountResults = await upsertRowsBounded(accountRows, 8,
+      (row) => admin.from('wallet_accounts').upsert(row, { onConflict: 'user_id,source,account_number' }));
+    const accountsSaved = accountResults.filter(r => r.ok).length;
 
     // 2. Guardar transacciones en wallet_transactions (upsert)
     // FIX-BANK-DETECTION: inferir banco desde la cuenta asociada si serviceType no tiene
-    let txSaved = 0;
-    let txSkipped = 0;
+    // CP-INFRA-012: computación pura por fila (banco/máscara/categoría) en
+    // orden + upserts independientes en pool acotado (onConflict
+    // user_id+trm_transaction_id único por transacción).
     let unknownCount = 0;
-    for (const tx of transactions) {
+    const txRows = transactions.map(tx => {
       // 1. Intentar detectar banco desde serviceType
       let bankName = extractBankFromService(tx.serviceType);
       // 2. Si no se detecta, usar el banco de la cuenta asociada
@@ -166,7 +203,7 @@ async function postHandler(req: NextRequest) {
       // - Amortizar → DB (pago de préstamo)
       const operation = determineOperation(tx.service, tx.serviceType, tx.raw.cuenta || '');
 
-      const { error } = await admin.from('wallet_transactions').upsert({
+      return {
         user_id: session.user.id,
         trm_transaction_id: tx.transactionId,
         date: dateStr,
@@ -181,10 +218,12 @@ async function postHandler(req: NextRequest) {
         counterparty: tx.raw.cuenta || null,
         note: tx.serviceType,
         is_statement: false,
-      }, { onConflict: 'user_id,trm_transaction_id' });
-      if (!error) txSaved++;
-      else txSkipped++;
-    }
+      };
+    });
+    const txResults = await upsertRowsBounded(txRows, 8,
+      (row) => admin.from('wallet_transactions').upsert(row, { onConflict: 'user_id,trm_transaction_id' }));
+    const txSaved = txResults.filter(r => r.ok).length;
+    const txSkipped = txRows.length - txSaved;
 
     // 3. Calcular saldos por banco Y por cuenta (account_number)
     // FIX-SALDOS-SOURCE (2026-07-06): actualizar saldos por account_number

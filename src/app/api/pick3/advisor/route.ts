@@ -270,7 +270,10 @@ async function advisorHandler(req: NextRequest) {
     // FIX-ADMIN-UNLIMITED (2026-07-05): Admin tiene acceso ILIMITADO al Asesor IA.
     // El admin es el dueño/gerente del sistema, necesita acceso completo para auditar
     // y probar el asesor sin restricciones. No pasa por tier gating ni usage tracking.
-    const isAdmin = session.user.role === 'admin' || session.user.role === 'super_admin';
+    // CP-SEC-015 (2026-10-21): el valor canónico en la BD es 'superadmin' (sin
+    // guion bajo — 13 migraciones, p. ej. 20260820000001_security_fix_spoofable_caller_uid);
+    // la forma con guion bajo era un valor muerto que nunca hacia match.
+    const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin';
 
     let body: AdvisorRequestBody;
     try {

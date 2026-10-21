@@ -14,6 +14,7 @@ import { Product, ProductVariant, PaymentMethod } from '@/types';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { useHaptics } from '@/hooks/ui/useHaptics';
+import { USD_CUP_RATE } from '@/lib/utils';
 
 // ── Re-exports for backward compatibility ────────────────────
 // Components that import these from './useSalesCatalog' keep working.
@@ -177,7 +178,7 @@ export function useSalesCatalog() {
         transferPaid: 0,
         zellePaid: 0,
         usdOriginal: 0,
-        usdExchangeRate: 680,
+        usdExchangeRate: USD_CUP_RATE,
         operationDate: null,
         documentNumber: null,
         priceDiffersFromCatalog: false,
@@ -207,7 +208,7 @@ export function useSalesCatalog() {
             transferPaid: 0,
             zellePaid: 0,
             usdOriginal: 0,
-            usdExchangeRate: 680,
+            usdExchangeRate: USD_CUP_RATE,
             operationDate: null,
             documentNumber: null,
             priceDiffersFromCatalog: false,
@@ -263,7 +264,7 @@ export function useSalesCatalog() {
       transferPaid: 0,
       zellePaid: 0,
       usdOriginal: 0,
-      usdExchangeRate: 680,
+      usdExchangeRate: USD_CUP_RATE,
       operationDate: null,
       documentNumber: null,
       priceDiffersFromCatalog: false,
@@ -421,7 +422,7 @@ export function useSalesCatalog() {
           // PR-4.4I: persist currency + exchange rate for Zelle component
           p_sale_currency: totals.zelleTotal > 0 ? 'USD' : 'CUP',
           p_sale_exchange_rate: totals.zelleTotal > 0
-            ? (activeRows.find(r => r.usdExchangeRate > 0)?.usdExchangeRate || 680)
+            ? (activeRows.find(r => r.usdExchangeRate > 0)?.usdExchangeRate || USD_CUP_RATE)
             : 1.0,
           p_items: activeRows.map((r) => ({
             product_id: r.product.id,
@@ -475,7 +476,7 @@ export function useSalesCatalog() {
             zelle_amount: totals.zelleTotal,
             sale_currency: totals.zelleTotal > 0 ? 'USD' : 'CUP',
             sale_exchange_rate: totals.zelleTotal > 0
-              ? (activeRows.find(r => r.usdExchangeRate > 0)?.usdExchangeRate || 680)
+              ? (activeRows.find(r => r.usdExchangeRate > 0)?.usdExchangeRate || USD_CUP_RATE)
               : 1.0,
             customer_id: null,
             customer_name: null,
