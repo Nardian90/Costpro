@@ -1,0 +1,22 @@
+══ CP-SEC-027 — Verificación post-migración (read-only) ══
+
+✅ anon NO puede leer tabla products — HTTP 401
+✅ anon NO puede leer tabla stores — HTTP 401
+✅ anon NO puede leer tabla product_variants — HTTP 401
+✅ cost_average inaccesible vía tabla — HTTP 401
+✅ tenant_id inaccesible vía tabla stores — HTTP 401
+✅ public_catalog_v legible por anon — HTTP 200, 3 filas
+✅ public_storefronts_v legible por anon — HTTP 200
+✅ public_variants_v legible por anon — HTTP 200
+✅ public_catalog_v SIN cost_average — HTTP 400 (esperado 400: columna inexistente)
+✅ public_catalog_v SIN cost_price — HTTP 400
+✅ public_variants_v SIN precio_empresa — HTTP 400
+✅ public_storefronts_v SIN tenant_id — HTTP 400
+✅ public_storefronts_v SIN bank_account — HTTP 400
+✅ policy products_public_read_anon retirada
+✅ policy stores_select_anon retirada
+✅ ninguna policy de products/stores/product_variants incluye anon — OK
+✅ grants SELECT anon sobre tablas revocados — 0 restantes
+✅ grants SELECT anon sobre las 3 vistas presentes — public_catalog_v, public_storefronts_v, public_variants_v
+
+══ Resultado: TODO PASS — fix CP-SEC-027 verificado en vivo ══
