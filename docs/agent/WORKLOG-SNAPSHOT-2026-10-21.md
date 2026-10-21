@@ -280,3 +280,29 @@ Work Log:
 
 Stage Summary:
 - MISIÓN INGRESOS/EGRESOS DE CAJA completa y verificada: PR #1435 con CI 100% verde. Pendiente del propietario: (1) revisar/fusionar, (2) aplicar la migración 20261021000001 a la BD viva, (3) tras aplicarla re-exportar contract-surface y retirar las 4 baselines source_of_truth_baseline.
+
+---
+Task ID: 8
+Agent: main (Z.ai)
+Task: MISIÓN CRÍTICA 2026-10-20/21 — Aplicar la migración de Ingresos/Egresos a producción y certificar la coherencia contable de Caja (apertura, fondo inicial, fondo de cambio, documentos, saldo, arqueo, cierre, Reporte de Entrega, Inicio). + Reactivar entorno (pm2/.env) y crear PR de respaldo.
+
+Work Log:
+- Entorno re-construido desde cero (se había reseteado): clon con PAT, .env del usuario, restore_local_env.sh (bun install + pm2) → localhost:3000 HTTP 200 + /api/health OK.
+- PR de respaldo #1436 (rama agent/respaldo-certificacion-caja) con worklog-snapshot + doc de certificación viva.
+- FASE 1 (auditoría pre-aplicación): main contiene el merge c08a4038c (#1435). BD viva = proyecto wthkddeleylijmonclxg confirmado (postgres, PG 17.6). Diff integral cadena-vs-vivo (script propio con la maquinaria del contract-test): solo 2 migraciones sin aplicar (20261012000001 ajustes-constraint, 20261021000001 objetivo).
+- DISCREPANCIAS BLOQUEANTES halladas (la migración fusionada era NO-APLICABLE a la BD viva):
+  · R1: CHECK vivo ref_type incluye 'devolution' (release W7 20260830 fuera de cadena; 2 filas reales 2026-09-10/18) — el ADD CONSTRAINT del #1435 habría rebotado atómicamente.
+  · R2: direction_check vivo ('in','refund') — egresos/anulaciones usan 'out' → runtime roto.
+  · R4: TRAMPA DE NULIDAD COMPUESTA: cash_closures.session_reference NULL ⇒ '<record> IS NOT NULL' SIEMPRE falso ⇒ get_cash_shift_expected v2.18.0 VIVO ignoraba el turno abierto (evidencia: TIENDA CENTRAL esperado 9.950/ventana Aug-7/fondo 0 vs real 10.050/Aug-16/100; HABANA 22.300/epoch vs real 2.005). 4 funciones vivas más comparten el patrón (catalogadas, no tocadas).
+  · R5 (hallado por la matriz S21): close_cash_shift referenciaba cash_closures.updated_at (columna INEXISTENTE) — cierre de turno ROTO en producción desde 2026-10-10 (latente).
+- Rama fix/caja-migracion-compat-live: migración 20261021000001 reconciliada (unión constraints + ADD COLUMN IF NOT EXISTS direction + subsume ajustes + FOUND en espejos + R5) + allowlist +get_cash_flow_summary (REM-R2-READ) + test actualizado.
+- Dry-run BEGIN…ROLLBACK en vivo: aplicación limpia + objetos + espejos corregidos. APLICACIÓN REAL vía apply-migration.cjs (Management API, BEGIN…COMMIT, 2733 ms) + re-aplicación idempotente tras R5 (3253 ms).
+- Post-aplicación verificado: 6 funciones v2.21.0 con cash_flow + fix FOUND; constraints unión; ACLs (mutaciones service_role-only; summary authenticated); RLS + policy select_own_store; grants; censo ledger INTACTO (1148); cierres históricos congelados; REST/PostgREST recargado (summary responde; mutaciones 404 para anon); espejos corregidos (has_pending=true, ventanas reales).
+- MATRIZ CONTABLE 21/21 en PostgreSQL real (BEGIN…ROLLBACK no destructivo; cero residuo verificado): constitución/reposición/devolución parcial (5.000→3.000 canónico)/total/superdevolución rechazada/egreso>efectivo rechazado/idempotencia/doble anulación rechazada/USD@410=41.000/fecha/caja cerrada/permisos/precisión/justificación/tipo-concepto/numeración IE secuencial/cierre-arqueo diferencia 0/apertura+doc sin doble conteo/coherencia reporte+KPIs.
+- Gates: contract-static CONTRATO OK (137/137, 0 divergencias, 0 baselines — re-exportado 2 veces) · sql-gate offline OK · ts-gate OK · vitest COMPLETO 3532/3532 (14 skipped preexistentes) · API local 401 correcto en /api/cash-flow y /reverse.
+- PR #1438 (fix/caja-migracion-compat-live, 4 commits) + comentario de evidencia. Backup PR #1436 actualizado con el informe final.
+
+Stage Summary:
+- Migración APLICADA y verificada; módulo Ingresos/Egresos operativo en BD viva (vía REST/app). PR de seguimiento #1438 a la espera del propietario (alinea árbol↔BD).
+- Estado: CERTIFICADO CON LIMITACIONES (login-navegación real y concurrencia-parallel pendientes; defectos preexistentes documentados: 4 funciones con trampa de nulidad, refunds de devolución invisibles a fórmulas, W7 fuera de cadena).
+- Fixes al blueprint fusionado: R1-R5 documentados en la propia migración; informe completo en docs/CERTIFICACION-CAJA-2026-10-21.md.
