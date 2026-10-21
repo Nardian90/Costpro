@@ -233,6 +233,11 @@ export default function ValesSalidaView() {
     queryClient.invalidateQueries({ queryKey: ['vales-salida'] });
     queryClient.invalidateQueries({ queryKey: ['inventory'] });
     queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+    // CP-INV-009: el vale genera movimientos issue_slip_out visibles en el
+    // Kardex — invalidar sus caches para que la reversión/emisión se refleje
+    // sin esperar refresco manual (misma convención que useReverseDocument).
+    queryClient.invalidateQueries({ queryKey: ['kardex'] });
+    queryClient.invalidateQueries({ queryKey: ['product-kardex'] });
     toast.success('Vale de Salida emitido', {
       description: 'El stock fue descontado y el documento ya aparece en el listado.',
     });
@@ -242,6 +247,10 @@ export default function ValesSalidaView() {
     queryClient.invalidateQueries({ queryKey: ['vales-salida'] });
     queryClient.invalidateQueries({ queryKey: ['inventory'] });
     queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+    // CP-INV-009: la reversión genera movimientos issue_slip_reverse que deben
+    // verse en el Kardex de inmediato (criterio de aceptación de la tarea).
+    queryClient.invalidateQueries({ queryKey: ['kardex'] });
+    queryClient.invalidateQueries({ queryKey: ['product-kardex'] });
   }, [queryClient]);
 
   const isLoading = query.isLoading;
