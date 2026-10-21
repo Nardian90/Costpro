@@ -1066,6 +1066,11 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     // y otros) — filas independientes de los ajustes, auditables por separado.
     if (s.ingresosCaja > 0) incomeRows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja });
     if (s.egresosCaja > 0) incomeRows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, note: 'expense' });
+    if (s.reembolsosCash > 0) incomeRows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, note: 'expense' });
+    // v2.23.0 (decisión del propietario 2026-10-21): reembolsos por voucher —
+    // INFORMATIVO (nota 'info', igual que comisiones por transferencia): no
+    // tocan el efectivo esperado; documenta el neto del lado vouchers.
+    if (s.reembolsosVoucher > 0) incomeRows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, note: 'info' });
 
     const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, s.efectivoEsperado);
 
@@ -1232,8 +1237,10 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
 
 /** Comisión sugerida por producto desde el MOTOR REAL (§5.1): agrega el
  *  product_breakdown de /api/commissions/calculate (todos los workers activos).
- *  Sin reglas configuradas → sugerencia 0 (NUNCA el 1% plano inventado). */
-async function fetchSuggestedCommissionsByProduct(startDate: string, endDate: string): Promise<Map<string, number>> {
+ *  Sin reglas configuradas → sugerencia 0 (NUNCA el 1% plano inventado).
+ *  Exportada (MISIÓN EXCEL 2026-10-21): el exportador Excel reutiliza EXACTA-
+ *  MENTE la misma fuente de comisiones que el PDF — sin segundas lógicas. */
+export async function fetchSuggestedCommissionsByProduct(startDate: string, endDate: string): Promise<Map<string, number>> {
   const map = new Map<string, number>();
   try {
     const res = await apiFetch('/api/commissions/calculate', {

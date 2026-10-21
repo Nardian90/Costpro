@@ -100,6 +100,10 @@ export interface CashShiftExpected {
   cash_flow_in: number;
   /** v2.21.0: egresos de caja documentados (devolución del fondo y otros). */
   cash_flow_out: number;
+  /** v2.22.0 (MISIÓN DE SEGUIMIENTO): reembolsos EN EFECTIVO de devoluciones comerciales. */
+  cash_refunds: number;
+  /** v2.23.0 (decisión del propietario 2026-10-21): reembolsos por VOUCHER (transfer/zelle) de devoluciones — base NETA del lado vouchers. */
+  voucher_refunds: number;
   expected_cash: number;
   transfer_sales: number;
   zelle_sales: number;

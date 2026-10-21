@@ -23,8 +23,12 @@
  *   NO se mezclan saldos de productos con unidades distintas (§11):
  *   en modo global no existe «saldo total», solo conteos de movimientos.
  *
- * Fuente única de verdad (§34): tabla `stock_movements`, saldos
- * `balance_after` calculados server-side. Esta vista NUNCA recalcula saldos.
+ * Fuente única de verdad (§34): tabla `stock_movements`. El saldo corrido
+ * cronológico se DERIVA desde el origen (§34-bis, corrección del defecto
+ * SKU 15 2026-10-21): saldo de cada fila = saldo anterior + entrada − salida
+ * en el orden canónico (created_at ASC, id ASC). El `balance_after`
+ * almacenado se encadena por ORDEN DE INSERCIÓN (trigger) y NO se muestra
+ * como saldo cronológico; queda como evidencia de auditoría del detalle.
  * Las etiquetas de movimiento SIEMPRE pasan por el diccionario central
  * `movementPresentation` (§7): jamás se imprime el enum interno.
  */
@@ -299,7 +303,7 @@ export default function StockHistoryView() {
         obtenerEtiquetaMovimiento(m.movement_type),
         qc > 0 ? formatearCantidad(qc) : '',
         qc < 0 ? formatearCantidad(Math.abs(qc)) : '',
-        formatearCantidad(m.balance_after),
+        formatearCantidad(m.saldo),
       ]);
     }
     rows.push(['', '', 'SALDO FINAL', '', '', formatearCantidad(k.resumen.saldoFinal)]);
@@ -538,6 +542,27 @@ export default function StockHistoryView() {
           </div>
         )}
 
+        {/* §34-bis — Conciliación del ledger contra la existencia autoritativa:
+            Σ de TODO el ledger del producto+tienda vs existencias registradas
+            (inventory.quantity / products.stock_current). Visible SOLO cuando
+            hay descalce (hueco de movimientos o dato divergente): nunca se
+            oculta, y el saldo del submayor no se “cuadra” artificialmente. */}
+        {(() => {
+          const sumaTotal = kardex.data?.sumaTotal;
+          const existencias = selectedProduct?.stock_current;
+          if (
+            sumaTotal === null || sumaTotal === undefined ||
+            existencias === null || existencias === undefined
+          ) return null;
+          const descalce = Number(existencias) - Number(sumaTotal);
+          if (Math.abs(descalce) < 0.00005) return null;
+          return (
+            <div className="p-3 rounded-xl border border-warning/40 bg-warning/10 text-xs font-bold text-warning" role="alert">
+              Descalce de conciliación: el ledger acumula {formatearCantidad(sumaTotal)}{sufijoUnidad} pero las existencias registradas son {formatearCantidad(existencias)}{sufijoUnidad} (diferencia {descalce > 0 ? '+' : '−'}{formatearCantidad(Math.abs(descalce))}{sufijoUnidad}). Audite el producto: puede existir un hueco de movimientos no registrados.
+            </div>
+          );
+        })()}
+
         {/* Acciones: exportar / actualizar */}
         <div className="flex items-center justify-end gap-2">
           {resumen && resumen.cantidadMovimientos > 0 && (
@@ -637,8 +662,8 @@ export default function StockHistoryView() {
                         <td className="p-3 text-right font-bold text-destructive tabular-nums">
                           {qc < 0 ? `−${formatearCantidad(Math.abs(qc))}` : '—'}
                         </td>
-                        <td className="p-3 text-right font-black tabular-nums">
-                          {formatearCantidad(mov.balance_after)}
+                        <td className="p-3 text-right font-black tabular-nums" title="Saldo cronológico derivado (saldo anterior + entrada − salida)">
+                          {formatearCantidad(mov.saldo)}
                         </td>
                       </tr>
                     );
@@ -687,8 +712,8 @@ export default function StockHistoryView() {
                       </div>
                       <div className="text-right">
                         <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Saldo</div>
-                        <div className="text-lg font-black tabular-nums leading-none">
-                          {formatearCantidad(mov.balance_after)}{sufijoUnidad}
+                        <div className="text-lg font-black tabular-nums leading-none" title="Saldo cronológico derivado (saldo anterior + entrada − salida)">
+                          {formatearCantidad(mov.saldo)}{sufijoUnidad}
                         </div>
                       </div>
                     </div>
@@ -1023,7 +1048,7 @@ export default function StockHistoryView() {
                   <th className="p-3 text-left text-xs font-black uppercase text-muted-foreground">Documento</th>
                   <th className="p-3 text-right text-xs font-black uppercase text-muted-foreground">Entrada</th>
                   <th className="p-3 text-right text-xs font-black uppercase text-muted-foreground">Salida</th>
-                  <th className="p-3 text-right text-xs font-black uppercase text-muted-foreground">Saldo del producto</th>
+                  <th className="p-3 text-right text-xs font-black uppercase text-muted-foreground" title="Saldo registrado por la BD al contabilizar el movimiento (orden de inserción). Para el submayor cronológico, abra el Kardex del producto.">Saldo del producto</th>
                   <th className="p-3 text-right text-xs font-black uppercase text-muted-foreground">
                     <span className="sr-only">Ver detalle</span>
                   </th>
@@ -1130,7 +1155,7 @@ export default function StockHistoryView() {
                       {qc === 0 && <span className="text-muted-foreground font-bold">Sin variación</span>}
                     </div>
                     <div className="text-right">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Saldo del producto</div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" title="Saldo registrado por la BD al contabilizar el movimiento (orden de inserción)">Saldo del producto</div>
                       <div className="text-lg font-black tabular-nums leading-none">
                         {mov.balance_after === null || mov.balance_after === undefined
                           ? '—'
@@ -1220,7 +1245,7 @@ export default function StockHistoryView() {
                       </dd>
                     </div>
                     <div className="flex justify-between gap-4">
-                      <dt className="text-xs font-black uppercase tracking-widest text-muted-foreground">Saldo del producto</dt>
+                      <dt className="text-xs font-black uppercase tracking-widest text-muted-foreground" title="Existencia registrada por la BD inmediatamente después de insertar este movimiento (orden de inserción, no cronológico)">Saldo registrado (inserción)</dt>
                       <dd className="font-black tabular-nums">
                         {detalle.balance_after === null || detalle.balance_after === undefined
                           ? '—'
