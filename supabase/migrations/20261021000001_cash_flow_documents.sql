@@ -69,6 +69,36 @@
 -- queda invisible para todos los flujos previos hasta que las fórmulas (D3)
 -- lo incorporan deliberadamente. Los cierres pasados no se recalculan.
 --
+-- RECONCILIACIÓN CON LA BD VIVA (auditoría pre-aplicación 2026-10-21 — rama
+-- fix/caja-migracion-compat-live, PR de seguimiento del #1435):
+--   R1 · El CHECK vivo de payment_transactions.ref_type incluye 'devolution'
+--       (columna direction + direction_check + devolution_ref_check vienen del
+--       release de auditoría W7 20260830, aplicado fuera de la cadena de
+--       migraciones). Existen 2 filas reales ref_type='devolution' (refunds
+--       2026-09-10 y 2026-09-18). La lista original de esta migración omitía
+--       'devolution' ⇒ su ADD CONSTRAINT habría rebotado ATÓMICAMENTE contra
+--       esas filas (la migración era NO-APLICABLE a la BD viva tal como se
+--       fusionó). Se corrige a la UNIÓN: valores de la cadena + valores vivos
+--       + los dos nuevos.
+--   R2 · El direction_check vivo es ('in','refund') (W7): los egresos de caja
+--       y las filas contra de anulación de ingresos usan direction='out' ⇒ sin
+--       extenderlo, todo egreso y toda anulación de ingreso rebotaría en
+--       runtime. UNIÓN: ('in','out','refund'). El ADD COLUMN IF NOT EXISTS
+--       direction hace la cadena autocontenida en replay fresco (en la BD viva
+--       es no-op: la columna existe desde W7 con igual definición).
+--   R3 · 20261012000001 (ajustes del Reporte de Entrega) NO está aplicado a la
+--       BD viva y su ADD CONSTRAINT rebotaría contra las filas 'devolution':
+--       su semántica de constraint queda SUBSUMIDA aquí (unión + índice parcial
+--       idempotente idx_payment_txn_adjustments).
+--   R4 · Trampa de nulidad compuesta de PostgreSQL: `<record> IS NOT NULL`
+--       exige que TODOS los campos del registro sean no-nulos. cash_closures
+--       lleva session_reference (legacy) NULL en sus filas reales ⇒ el test
+--       compuesto era SIEMPRE falso y get_cash_shift_expected v2.18.0 (vivo)
+--       ignoraba el turno abierto (ventana del último cierre/epoch y fondo 0).
+--       Los espejos v2.21.0 pasan a FOUND tras SELECT INTO (detección real de
+--       fila). Auditoría 2026-10-21: evidencia con la fila pendiente de
+--       TIENDA CENTRAL (e525004e): r IS NULL=false ∧ r IS NOT NULL=false.
+--
 -- NOTA CONTRACT-SURFACE: close_cash_shift/5, get_cash_shift_expected/1,
 -- get_cash_report/4 y next_document_number/3 están certificadas en vivo; esta
 -- migración las modifica → se cubren con entradas temporales
@@ -175,22 +205,45 @@ GRANT SELECT ON TABLE public.cash_flow_documents TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.cash_flow_documents TO service_role;
 
 -- ══════════════════════════════════════════════════════════════════════════
--- PARTE 2 — payment_transactions: ref_type 'cash_flow' (patrón ajustes)
+-- PARTE 2 — payment_transactions: ref_type 'cash_flow' + reconciliación LIVE
 -- ══════════════════════════════════════════════════════════════════════════
 
+-- R2: columna direction (W7 en la BD viva; en replay fresco se crea aquí y la
+-- cadena deja de depender del cambio fuera de banda).
+ALTER TABLE public.payment_transactions
+  ADD COLUMN IF NOT EXISTS direction text NOT NULL DEFAULT 'in';
+
+ALTER TABLE public.payment_transactions
+  DROP CONSTRAINT IF EXISTS payment_transactions_direction_check;
+
+ALTER TABLE public.payment_transactions
+  ADD CONSTRAINT payment_transactions_direction_check
+  CHECK (direction IN ('in', 'out', 'refund'));
+
+COMMENT ON COLUMN public.payment_transactions.direction IS
+  'Origen del flujo (columna W7 2026-08 + ajustes 2026-10 + caja 2026-10): in = entrada de efectivo; out = salida (egreso de caja, ajuste negativo, contra-asiento de anulación de ingreso); refund = contra-asiento de trazabilidad (devoluciones comerciales — NO suma como pago hacia el total del documento).';
+
+-- R1: UNIÓN reconciliada — la lista de la cadena (con 'adjustment') + 'devolution'
+-- (release W7 vivo, con 2 filas reales) + 'cash_flow' (este módulo).
 ALTER TABLE public.payment_transactions
   DROP CONSTRAINT IF EXISTS payment_transactions_ref_type_check;
 
 ALTER TABLE public.payment_transactions
   ADD CONSTRAINT payment_transactions_ref_type_check
-  CHECK (ref_type IN ('receipt', 'service', 'production_order', 'work', 'sale', 'commission', 'adjustment', 'cash_flow'));
+  CHECK (ref_type IN ('receipt', 'service', 'production_order', 'work', 'sale', 'commission', 'devolution', 'adjustment', 'cash_flow'));
 
 COMMENT ON CONSTRAINT payment_transactions_ref_type_check ON public.payment_transactions IS
-  'PR-4.4I + ajustes (2026-10) + ingresos/egresos de caja (2026-10): receipt, service, production_order, work, sale, commission, adjustment, cash_flow. Para ref_type=cash_flow: direction in = ingreso de efectivo (fondo de cambio y otros), out = egreso; la fila referencia cash_flow_documents.id; anulación = fila contraria, nunca DELETE (PT007).';
+  'PR-4.4I + W7 devolution (vivo 2026-08) + ajustes (2026-10) + ingresos/egresos de caja (2026-10): receipt, service, production_order, work, sale, commission, devolution, adjustment, cash_flow — UNIÓN reconciliada con la BD viva (auditoría 2026-10-21). Para ref_type=cash_flow: direction in = ingreso de efectivo (fondo de cambio y otros), out = egreso; la fila referencia cash_flow_documents.id; anulación = fila contraria, nunca DELETE (PT007).';
 
 CREATE INDEX IF NOT EXISTS idx_payment_txn_cash_flow
   ON public.payment_transactions (store_id, ref_type, payment_date)
   WHERE ref_type = 'cash_flow';
+
+-- R3: índice parcial de los ajustes (de 20261012000001, no aplicado en vivo;
+-- en replay fresco ya existe ⇒ IF NOT EXISTS lo hace idempotente).
+CREATE INDEX IF NOT EXISTS idx_payment_txn_adjustments
+  ON public.payment_transactions (store_id, ref_type, payment_date)
+  WHERE ref_type = 'adjustment';
 
 -- ══════════════════════════════════════════════════════════════════════════
 -- PARTE 3 — Numeración: tipo 'cash_flow' (prefijo IE) en el mecanismo común
@@ -835,6 +888,10 @@ AS $function$
 DECLARE
   v_result jsonb;
   v_shift RECORD;
+  -- R4: FOUND tras SELECT INTO (la nulidad compuesta de RECORD no sirve:
+  -- cash_closures.session_reference es NULL en las filas reales y
+  -- `<record> IS NOT NULL` exige TODOS los campos no-nulos ⇒ siempre falso).
+  v_has_shift boolean := false;
   v_window_start timestamptz;
   v_opening numeric := 0;
   v_total_sales numeric := 0;
@@ -879,7 +936,8 @@ BEGIN
   SELECT * INTO v_shift FROM public.cash_closures
     WHERE store_id = p_store_id AND status = 'pendiente'
     ORDER BY created_at DESC LIMIT 1;
-  IF v_shift IS NOT NULL THEN
+  v_has_shift := FOUND;
+  IF v_has_shift THEN
     v_window_start := v_shift.created_at;
     v_opening := COALESCE(v_shift.opening_balance, 0);
   ELSE
@@ -966,7 +1024,7 @@ BEGIN
 
   v_result := jsonb_build_object(
     'window_start', v_window_start,
-    'has_pending_shift', (v_shift IS NOT NULL),
+    'has_pending_shift', v_has_shift,
     'opening_balance', v_opening,
     'total_sales', v_total_sales,
     'cash_sales', v_cash_sales,
@@ -1215,6 +1273,10 @@ DECLARE
   v_result jsonb;
   v_window_start timestamptz;
   v_pending RECORD;
+  -- R4: FOUND tras SELECT INTO (la nulidad compuesta de RECORD no sirve:
+  -- cash_closures.session_reference es NULL en las filas reales y
+  -- `<record> IS NOT NULL` exige TODOS los campos no-nulos ⇒ siempre falso).
+  v_has_pending boolean := false;
   v_opening numeric := 0;
   v_total_sales numeric := 0;
   v_cash_sales numeric := 0;
@@ -1238,8 +1300,9 @@ BEGIN
   SELECT * INTO v_pending FROM public.cash_closures
     WHERE store_id = p_store_id AND status = 'pendiente'
     ORDER BY created_at DESC LIMIT 1;
+  v_has_pending := FOUND;
 
-  IF v_pending IS NOT NULL THEN
+  IF v_has_pending THEN
     v_window_start := v_pending.created_at;
     v_opening := COALESCE(v_pending.opening_balance, 0);
   ELSE
@@ -1301,7 +1364,7 @@ BEGIN
 
   v_result := jsonb_build_object(
     'window_start', v_window_start,
-    'has_pending_shift', (v_pending IS NOT NULL),
+    'has_pending_shift', v_has_pending,
     'opening_balance', v_opening,
     'total_sales', v_total_sales,
     'cash_sales', v_cash_sales,
