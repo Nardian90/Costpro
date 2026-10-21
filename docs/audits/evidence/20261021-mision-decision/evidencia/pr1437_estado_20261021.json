@@ -1,0 +1,17 @@
+{
+ "number": 1437,
+ "state": "closed",
+ "merged": true,
+ "merged_at": "2026-10-21T01:26:29Z",
+ "merged_by": "Nardian90",
+ "merge_commit_sha": "299bc8f6fbaf51ba107c0f3bac5e8802903500d4",
+ "head_sha": "c284e749bc3f482b1e84626bb6461a7c3914f86b",
+ "head_ref": "agent/worklog-certificaciones-v5-20261021",
+ "base_ref": "main",
+ "base_sha": "c08a4038cc081dbd317f529781a0b0935bcb35d3",
+ "changed_files": 39,
+ "additions": 3250,
+ "deletions": 0,
+ "title": "docs(expediente-v5): worklog de resolución + 24 certificaciones + decisiones operativas CP-SEC-027 v5 (2026-10-21)",
+ "created_at": "2026-10-21T00:54:10Z"
+}

@@ -1,0 +1,35 @@
+{
+ "total": 6,
+ "runs": [
+  {
+   "name": "E2E Tests (Playwright)",
+   "status": "completed",
+   "conclusion": "skipped"
+  },
+  {
+   "name": "Vercel Preview Comments",
+   "status": "completed",
+   "conclusion": "success"
+  },
+  {
+   "name": "E2E Tests (Playwright)",
+   "status": "completed",
+   "conclusion": "skipped"
+  },
+  {
+   "name": "TypeCheck + Lint + Unit Tests + Build",
+   "status": "completed",
+   "conclusion": "success"
+  },
+  {
+   "name": "Unit & Integration Tests",
+   "status": "completed",
+   "conclusion": "success"
+  },
+  {
+   "name": "Security Audit",
+   "status": "completed",
+   "conclusion": "success"
+  }
+ ]
+}

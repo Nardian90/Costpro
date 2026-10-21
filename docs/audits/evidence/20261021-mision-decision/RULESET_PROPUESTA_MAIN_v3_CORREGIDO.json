@@ -1,0 +1,83 @@
+{
+  "_meta": {
+    "nombre": "ruleset-propuesta-main v3 (CORREGIDO tras verificación empírica 2026-10-21)",
+    "fecha": "2026-10-21",
+    "autor": "agente — Misión de decisión COSTPRO 4, Dictamen A2",
+    "estado": "PREPARADO — PENDIENTE DE AUTORIZACIÓN. NO APLICADO (main verificado SIN protección ni rulesets: GET /rulesets → [], GET /branches/main/protection → 404, re-verificado 2026-10-21 ~01:55Z).",
+    "correccion_vs_v2": "La v2 exigía 7 checks requeridos; 4 de ellos (TypeScript Security Checks, Allowlist Review, SQL Static Checks, SQL DB Security Checks) viven en workflows con filtro paths: (supabase/migrations/**, src/app/api/**, ci-gate-allowlist.json, scripts/ci-gate-*.js) y NO se disparan en PRs que no tocan esas rutas. Prueba empírica de dos casos (2026-10-21): PR #1437 (docs-only) → 4 de 7 checks AUSENTES del head; PR #1438 (tocó migraciones+allowlist) → 7 de 7 presentes en verde. Con la v2 en active, TODO PR solo-docs quedaría bloqueado indefinidamente (checks requeridos que nunca reportan). La v3 exige ÚNICAMENTE los 3 checks incondicionales, verificados empíricamente en AMBOS casos. Los 4 checks de rutas conservan su función como gates de workflow a nivel PR (se disparan por rutas).",
+    "migracion_desde_v2": "Si ya existiera un ruleset v2 activo, parchear con PATCH /rulesets/{id} sustituyendo required_status_checks por los 3 contexts de abajo. En este corte NO existe ningún ruleset: crear directamente la v3.",
+    "rriesgo_conocido": "El check 'Unit & Integration Tests' presentó 1 flake (timeout 120s del test Pick3 'BacktestEngine incluye los 4 tests estadísticos', push 299bc8f6f 21/10; mismo código pasó en el head del PR y en 11 pushes previos). Política de mitigación: re-run del propietario. Endurecimiento opcional (PR aparte + autorización): presupuesto de timeout mayor para el test Pick3."
+  },
+  "ruleset": {
+    "name": "protect-main-v3",
+    "target": "branch",
+    "enforcement": "evaluate",
+    "_nota_enforcement": "PRIMERO 'evaluate' (observacional, NO bloquea fusiones — documentado: 'you can still merge the pull request since the ruleset is not enforced'). 7-14 días de evaluaciones limpias. Pasar a 'active' SOLO con segunda autorización expresa del propietario: PATCH enforcement='active'.",
+    "conditions": {
+      "ref_name": {
+        "include": ["refs/heads/main"],
+        "exclude": []
+      }
+    },
+    "rules": [
+      {
+        "type": "deletion",
+        "_nota": "Prohíbe borrar main."
+      },
+      {
+        "type": "non_fast_forward",
+        "_nota": "Prohíbe force-push a main."
+      },
+      {
+        "type": "required_status_checks",
+        "parameters": {
+          "strict_required_status_checks_policy": false,
+          "_nota_strict": "false = cuentan los checks del ÚLTIMO commit del PR (no re-corre contra el sha del merge). Endurecer a true cuando la CI E2E vuelva a ser bloqueante (CP-INFRA-001).",
+          "required_status_checks": [
+            { "context": "TypeCheck + Lint + Unit Tests + Build", "integration_id": null, "app_id": 15368 },
+            { "context": "Unit & Integration Tests", "integration_id": null, "app_id": 15368 },
+            { "context": "Security Audit", "integration_id": null, "app_id": 15368 }
+          ]
+        },
+        "_nota_contextos": "SOLO los 3 checks INCONDICIONALES (sin filtro paths:) — verificados en workflow files y en los heads reales de #1437 (docs-only) y #1438 (rutas filtradas): corren en TODOS los PRs hacia main. Los 4 checks de rutas (TypeScript Security Checks, Allowlist Review, SQL Static Checks, SQL DB Security Checks) quedan FUERA de los requeridos: siguen operando como gates de workflow cuando el PR toca supabase/migrations/**, src/app/api/**, ci-gate-allowlist.json o scripts/ci-gate-*.js (diseño documentado en sql-security-gate.yml). E2E Tests (Playwright) sigue excluido (skipped por orden del propietario del 09/10, CP-INFRA-001)."
+      }
+    ],
+    "_reglas_excluidas_deliberadamente": {
+      "pull_request_reviews": "Opción A (aprobación independiente) — DESCARTADA: repo de propietario único; exigir approval externa = deadlock (todos los PRs históricos los fusiona Nardian90, incluidos #1436-#1438 esta madrugada).",
+      "required_deployments": "sin ambientes configurados.",
+      "commit_message_pattern": "sin política de mensajes ratificada."
+    },
+    "_bypass": "Repo PERSONAL: sin bypass_actors de actor (mecanismo de contexto organización). El escape del propietario es administrativo y auditable: editar/desactivar el ruleset (Settings → Rules), registrado en el audit log de GitHub. Toda excepción deja huella — más fuerte que un bypass silencioso permanente."
+  },
+  "instrucciones_de_aplicacion": {
+    "precondiciones": [
+      "1. Autorización EXPRESA del propietario para CREAR el ruleset en evaluate (orden de esta Misión de Decisión: 'No crees ni actives el ruleset todavía').",
+      "2. evaluate NO altera ninguna fusión: observación pura.",
+      "3. Antes de active: revisar 7-14 días de evaluaciones (rule insights del UI o GET /repos/Nardian90/Costpro/rulesets/{id}); exigir que TODO PR del periodo (incluidos docs-only) evalúe 'would pass' con los 3 requeridos.",
+      "4. Verificar que en el periodo de observación ningún PR tuvo que tocar supabase/migrations/** fuera de flujo (los 4 gates de rutas deben seguir disparándose por workflow)."
+    ],
+    "comandos": [
+      {
+        "paso": "crear en modo evaluate",
+        "curl": "curl -X POST -H 'Authorization: Bearer $GITHUB_TOKEN' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/Nardian90/Costpro/rulesets -d @ruleset-v3-body.json",
+        "nota": "Enviar ÚNICAMENTE el bloque 'ruleset' de este JSON (sin _meta ni instrucciones)."
+      },
+      {
+        "paso": "verificar creación",
+        "curl": "curl -H 'Authorization: Bearer $GITHUB_TOKEN' https://api.github.com/repos/Nardian90/Costpro/rulesets"
+      },
+      {
+        "paso": "activar tras observación (SEGUNDA autorización)",
+        "curl": "curl -X PATCH -H 'Authorization: Bearer $GITHUB_TOKEN' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/Nardian90/Costpro/rulesets/{id} -d '{\"enforcement\":\"active\"}'"
+      }
+    ],
+    "post_verificaciones": [
+      "evaluate: confirmar que un PR docs-only de prueba evalúa 'would pass' (los 3 requeridos corren en verde) y que un PR con check rojo evalúa 'would fail'.",
+      "active: push directo de prueba a main → debe ser RECHAZADO (el SHA nuevo no trae checks en verde).",
+      "active: PR de prueba con 'TypeCheck + Lint + Unit Tests + Build' en rojo → merge bloqueado hasta re-run verde.",
+      "active: PR docs-only → merge DISPONIBLE con solo los 3 requeridos en verde (regresión del defecto v2 resuelta).",
+      "Los 4 gates de rutas siguen disparándose por workflow en PRs que tocan sus dominios (independiente del ruleset)."
+    ],
+    "reversión": "DELETE /repos/Nardian90/Costpro/rulesets/{id} (o Settings → Rules). Acción visible en el audit log de GitHub — bypass administrativo auditable del propietario."
+  }
+}

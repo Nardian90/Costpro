@@ -1,0 +1,54 @@
+{
+ "C_columnas_derivadas": {
+  "http": 201,
+  "rows": []
+ },
+ "C_estados": {
+  "http": 400,
+  "rows": {
+   "message": "Failed to run sql query: ERROR:  42703: column \"cogs_derivation_status\" does not exist\nLINE 1: SELECT cogs_derivation_status, count(*) FROM public.stock_movements WHERE unit_cost = 0 GROUP BY cogs_derivation_status\n               ^\n"
+  }
+ },
+ "C_sin_estado": {
+  "http": 400,
+  "rows": {
+   "message": "Failed to run sql query: ERROR:  42703: column \"cogs_derivation_status\" does not exist\nLINE 1: SELECT count(*) AS n FROM public.stock_movements WHERE unit_cost = 0 AND cogs_derivation_status IS NULL\n                                                                                 ^\n"
+  }
+ },
+ "D_indice": {
+  "http": 201,
+  "rows": []
+ },
+ "D_filas_legajo": {
+  "http": 201,
+  "rows": [
+   {
+    "n": 0
+   }
+  ]
+ },
+ "R1_schema_migrations": {
+  "http": 400,
+  "rows": {
+   "message": "Failed to run sql query: ERROR:  42P01: relation \"public.schema_migrations\" does not exist\nLINE 1: SELECT count(*) AS filas, max(version::text) AS ultima FROM public.schema_migrations\n                                                                    ^\n"
+  }
+ },
+ "backfill_david9999": {
+  "http": 201,
+  "rows": [
+   {
+    "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "updated_at": "2026-10-19 18:29:50.876932+00"
+   }
+  ]
+ },
+ "backfill_audit": {
+  "http": 201,
+  "rows": [
+   {
+    "action": "dt03_backfill_tenant",
+    "created_at": "2026-10-19 18:29:50.876932+00"
+   }
+  ]
+ }
+}
