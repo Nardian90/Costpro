@@ -338,7 +338,7 @@ describe('cash-report-excel — FÓRMULAS REALES (§4 misión profesional)', () 
   it('round-trip XLSX.write→XLSX.read: las fórmulas sobreviven y el resultado IF es texto', async () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
     const raw = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
-    const back = XLSX.read(raw, { bookType: 'xlsx' });
+    const back = XLSX.read(raw);
     expect(back.SheetNames).toEqual(wb.SheetNames);
 
     const rsBack = rows(back.Sheets['Resumen']);

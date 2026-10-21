@@ -56,14 +56,14 @@ export async function resolveStoreTenantId(storeId: string): Promise<string> {
     .maybeSingle();
 
   if (error) {
-    logger.error('resolveStoreTenantId: fallo de lectura de stores (fail-closed)', {
+    logger.error('DATABASE', 'resolveStoreTenantId: fallo de lectura de stores (fail-closed)', {
       storeId,
       error: error.message,
     });
     throw new StoreTenantResolutionError(storeId, 'db_error');
   }
   if (!data?.tenant_id) {
-    logger.error('resolveStoreTenantId: tienda ilegible o sin tenant_id (fail-closed)', {
+    logger.error('DATABASE', 'resolveStoreTenantId: tienda ilegible o sin tenant_id (fail-closed)', {
       storeId,
       hasRow: !!data,
     });
