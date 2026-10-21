@@ -1,12 +1,12 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getServerSession } from '@/lib/auth';
 import { logInfo, logError } from '@/lib/observability/logger';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { createApiError } from '@/lib/api-errors';
+import { bulkImportProductSchema, type BulkImportProduct } from '@/validation/api-schemas';
 
 /**
  * POST /api/catalog/bulk-import
@@ -31,7 +31,7 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
     console.log(`[${route}] Authenticated user: ${session.user.id}`);
 
     // ── Step 2: Parse body ────────────────────────────────────
-    let body: { products: any[] };
+    let body: { products?: unknown[] };
     try {
       body = await req.json();
     } catch (parseErr: unknown) {
@@ -42,20 +42,7 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
       );
     }
 
-    const { products } = body;
-
-    // REM-COSTPRO4-CI: contrato del body con Zod (products = array; la
-    // requeridad y el límite de 500 los aplica la lógica de negocio).
-    const BulkImportSchema = z.object({
-      products: z.array(z.unknown()).optional(),
-    }).passthrough();
-    const parsedBody = BulkImportSchema.safeParse(body);
-    if (!parsedBody.success) {
-      return NextResponse.json(
-        createApiError('INVALID_JSON'),
-        { status: 400 }
-      );
-    }
+    const products = body.products;
 
     if (!products || !Array.isArray(products) || products.length === 0) {
       return NextResponse.json(
@@ -71,20 +58,39 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
       );
     }
 
-    // ── Step 3: Validate each product ─────────────────────────
-    for (const p of products) {
-      if (!p.store_id || !p.sku || !p.name) {
-        return NextResponse.json(
-          { ...createApiError('BULK_IMPORT_INVALID_PRODUCT'), sku: p.sku || 'sin SKU' },
-          { status: 400 }
-        );
+    // ── Step 3: Validate each product (CP-CAT-005: Zod fail-closed por fila) ─
+    // El contrato completo vive en @/validation/api-schemas (fuente única).
+    // .strict() rechaza propiedades desconocidas: nada fuera del contrato
+    // documentado del importador llega al upsert (antes, cualquier propiedad
+    // extra viajaba al INSERT confiando en el error PGRST204 de PostgREST).
+    const rowErrors: Array<{ row: number; sku: string; issues: string[] }> = [];
+    const validatedProducts: BulkImportProduct[] = [];
+    products.forEach((p: unknown, idx: number) => {
+      const parsed = bulkImportProductSchema.safeParse(p);
+      if (!parsed.success) {
+        const issues = parsed.error.issues
+          .slice(0, 5)
+          .map(i => `${i.path.join('.') || '(fila)'}: ${i.message}`);
+        const rawSku = (p as Record<string, unknown> | null)?.sku;
+        rowErrors.push({
+          row: idx,
+          sku: rawSku !== undefined && rawSku !== null ? String(rawSku) : 'sin SKU',
+          issues,
+        });
+      } else {
+        validatedProducts.push(parsed.data);
       }
-      if (typeof p.cost_price !== 'number' || typeof p.price !== 'number') {
-        return NextResponse.json(
-          { ...createApiError('BULK_IMPORT_INVALID_PRICES'), sku: p.sku },
-          { status: 400 }
-        );
-      }
+    });
+
+    if (rowErrors.length > 0) {
+      return NextResponse.json(
+        {
+          ...createApiError('BULK_IMPORT_INVALID_PRODUCT'),
+          sku: rowErrors[0].sku,
+          errors: rowErrors,
+        },
+        { status: 400 }
+      );
     }
 
     // ── Step 4: Create Supabase client ────────────────────────
@@ -120,8 +126,11 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
     }
 
     // ── FIX-SEC-H2: Validate store membership ────────────────
-    // User must have active membership for every store_id in the import
-    const uniqueStoreIds = [...new Set(products.map(p => p.store_id))];
+    // User must have active membership for every store_id in the import.
+    // NOTA (Decisión B.1 ratificada 2026-10-20): el admin global NO se filtra
+    // por membresías — su alcance global está documentado con hoja de ruta
+    // SaaS; este fix no reabre esa decisión.
+    const uniqueStoreIds = [...new Set(validatedProducts.map(p => p.store_id))];
     const isAdmin = (session.user as any).role === 'admin';
     const memberships = (session.user as any).memberships || [];
     const accessibleStoreIds = new Set(memberships.filter((m: any) => m.status === 'active').map((m: any) => m.store_id));
@@ -141,7 +150,7 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
 
     // FIX-SEC-H2: When using service_role, add store_id filter to ensure RLS-equivalent isolation
     // Filter products to only those stores the user has access to (defense in depth)
-    const authorizedProducts = isAdmin ? products : products.filter(p => accessibleStoreIds.has(p.store_id));
+    const authorizedProducts = isAdmin ? validatedProducts : validatedProducts.filter(p => accessibleStoreIds.has(p.store_id));
 
     // Use explicit any cast for the array to avoid 'any[]' to 'never[]' assignment error
     let upsertResult = await (client
