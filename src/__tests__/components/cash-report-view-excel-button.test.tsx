@@ -16,7 +16,7 @@ import { render, screen, fireEvent, act, cleanup } from '@testing-library/react'
 import CashReportView from '@/components/views/terminal/views/cash/CashReportView';
 
 // ── MOCK del exportador Excel (unidad bajo prueba: la VISTA, no el libro) ──
-const descargarExcelMock = vi.hoisted(() => vi.fn(async () => 'reporte_diario_Tienda_Central_2026-10-01.xlsx'));
+const descargarExcelMock = vi.hoisted(() => vi.fn(async (..._args: unknown[]) => 'reporte_diario_Tienda_Central_2026-10-01.xlsx'));
 vi.mock('@/components/views/terminal/views/cash/cash-report-excel', () => ({
   descargarCashReportExcel: (...args: unknown[]) => descargarExcelMock(...args),
 }));
@@ -107,7 +107,6 @@ describe('Vista Reporte Entrega — botón «Exportar Excel» (B1/B6)', () => {
 
     expect(descargarExcelMock).toHaveBeenCalledTimes(1);
     const ctx = descargarExcelMock.mock.calls[0][0] as Record<string, unknown>;
-    // MISMA fuente que el PDF: el reporte APLICADO y sus fechas
     expect(ctx.report).toBe(REPORT);
     expect(ctx.startDate).toBe('2026-10-01');
     expect(ctx.endDate).toBe('2026-10-01');

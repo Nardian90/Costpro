@@ -35,7 +35,7 @@ import {
   type CashReportPdfContext,
   type CashReportSummaries,
 } from './cash-report-pdf';
-import { breakdownTotal } from './cash-report-core';
+import { breakdownTotal, type Breakdown } from './cash-report-core';
 import {
   computeDailySummary,
   computeCuadre,
@@ -212,7 +212,7 @@ export async function buildCashReportExcelWorkbook(
     aoa.push([]);
   };
 
-  const renderDesglose = (currency: 'CUP' | 'USD', denoms: number[], breakdown: Record<number, string | number>) => {
+  const renderDesglose = (currency: 'CUP' | 'USD', denoms: number[], breakdown: Breakdown) => {
     sectionHeader(`DESGLOSE DE EFECTIVO ${currency}`);
     aoa.push(['Denominación', '', 'Cantidad', 'Importe']);
     headerRows.push(aoa.length - 1);
@@ -228,7 +228,7 @@ export async function buildCashReportExcelWorkbook(
       printed++;
     }
     if (printed === 0) aoa.push(['Sin efectivo contado', '', '', 0]);
-    const totalCounted = breakdownTotal(breakdown as Record<number, number>);
+    const totalCounted = breakdownTotal(breakdown);
     aoa.push(['Efectivo contado / entregado', '', '', totalCounted]);
     moneyCells.push({ r: aoa.length - 1, c: 3 });
     totalRows.push(aoa.length - 1);

@@ -69,7 +69,7 @@ function buildContext(over?: Partial<CashReportPdfContext>): CashReportPdfContex
       ],
       commissions: [], payments: [], production: [], adjustments: [], cash_flows: [], refund_rows: [],
       totals: {}, start_date: '2026-10-17', end_date: '2026-10-17',
-    } as CashReportPdfContext['report'],
+    } as unknown as CashReportPdfContext['report'],
     template: 'diario',
     startDate: '2026-10-17',
     endDate: '2026-10-17',
@@ -82,8 +82,8 @@ function buildContext(over?: Partial<CashReportPdfContext>): CashReportPdfContex
     madeBy: 'Ana Torres',
     cupDenoms: [1000, 500, 200, 100, 50, 20, 10, 5, 1],
     usdDenoms: [100, 50, 20, 10, 5, 1],
-    cupBreakdown: { 1000: 169 }, // 169.000 CUP contados
-    usdBreakdown: { 100: 1, 50: 1 }, // 150 USD contados
+    cupBreakdown: { 1000: '169' }, // 169.000 CUP contados
+    usdBreakdown: { 100: '1', 50: '1' }, // 150 USD contados
     options: DEFAULT_PDF_OPTIONS,
     orientation: 'vertical',
     ...over,
