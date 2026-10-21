@@ -250,14 +250,51 @@ export function useUpdateUser(options?: UserMutationOptions) {
         }
       });
 
+      // FIX-MISIÓN-ROLES (2026-10-21): este PATCH iba SIN header Authorization.
+      // withRole('admin') → getServerSession es fail-closed desde SEC-024 y SOLO
+      // acepta Bearer: sin header respondía 401 {error:'No autorizado'} aunque
+      // el llamador fuera admin legítimo (el sintoma «la UI muestra el cambio
+      // pero da error» se debe a que manage_user_memberships —RPC directa con
+      // JWT— corre ANTES y sí persiste). Patrón idéntico a useCreateUser y
+      // handleToggleUserStatus: sesión FRESCA de Supabase (no token cacheado).
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error('Sesión inválida o expirada. Inicia sesión de nuevo.');
+      }
+
       const response = await fetch(`/api/users/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify(cleanUpdates),
       });
 
       if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: response.statusText }));
+        const err = await response.json().catch(() => ({ error: response.statusText, message: undefined }));
+        // Errores diferenciados (misión §4.B): sesión inválida, permisos
+        // insuficientes, usuario inexistente y fallo de persistencia — sin
+        // exponer secretos ni detalles internos del servidor.
+        if (response.status === 401) {
+          throw new Error(err.message || 'Sesión inválida o expirada. Inicia sesión de nuevo.');
+        }
+        if (response.status === 403) {
+          // Mensaje SIEMPRE específico: el genérico «No autorizado» del backend
+          // ocultaba la causa real al usuario (misión §4.C).
+          const detail = typeof err.error === 'string' && err.error && !['No autorizado', 'Forbidden'].includes(err.error)
+            ? ` (${err.error})`
+            : '';
+          throw new Error(`Permisos insuficientes para actualizar este usuario${detail}.`);
+        }
+        if (response.status === 404) {
+          throw new Error('Usuario no encontrado.');
+        }
+        if (response.status === 400 && typeof err.error === 'string' && err.error.includes('SELF_DEACTIVATE')) {
+          throw new Error('No puedes desactivar tu propia cuenta.');
+        }
         throw new Error(err.error || `HTTP ${response.status}`);
       }
 
@@ -270,7 +307,18 @@ export function useUpdateUser(options?: UserMutationOptions) {
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : String(error);
+      // FIX-MISIÓN-ROLES: un fallo de red no permite afirmar que la
+      // actualización fracasó — el backend pudo completarla.
+      if (/fetch failed|failed to fetch|networkerror|load failed/i.test(message)) {
+        toast.error('No se pudo contactar al servidor. Verifica tu conexión y comprueba el estado real del usuario antes de reintentar, para no repetir una operación ya aplicada.');
+        return;
+      }
       toast.error(`Error al actualizar usuario: ${message}`);
+      // FIX-MISIÓN-ROLES: si el PATCH falla, re-consultar el estado real del
+      // usuario para que la lista/modal no muestren un rol que el servidor
+      // no confirmó (coherencia UI ↔ servidor; la mutación de memberships,
+      // que corre antes, ya pudo persistir parte del cambio).
+      queryClient.invalidateQueries({ queryKey: ['users'] });
     }
   });
 }

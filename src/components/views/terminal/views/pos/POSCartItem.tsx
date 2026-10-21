@@ -15,12 +15,14 @@ import {
   Coins,
   TrendingUp,
   TrendingDown,
+  Pencil,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCartStore, type CartItem } from "@/store/cart";
 import type { POSCartItemProps } from "./POSCart.types";
 import StoreRatesModal from "./StoreRatesModal";
+import { POSCartItemEditModal } from "./POSCartItemEditModal";
 
 // FIX-G5: helper local para recalcular subtotal al cambiar variante
 function recalcSubtotal(item: CartItem): number {
@@ -55,6 +57,16 @@ export const POSCartItem = ({
   // se extrajo a StoreRatesModal (compartido con el diálogo de confirmación
   // diaria). El botón solo abre: el componente carga las tasas vigentes.
   const [showRatesModal, setShowRatesModal] = useState(false);
+
+  // MISIÓN EDICIÓN-CARRITO (2026-10-21): modal de edición de la línea
+  // (precio de operación, cantidad, descuento, unidad).
+  const [showEditModal, setShowEditModal] = useState(false);
+  // FIX-MISIÓN-VS (2026-10-21): suscripción REACTIVA al tipo de operación.
+  // En modo Vale de Salida no se muestran los controles/badges de pago:
+  // el VS no ejecuta validaciones de cobro y mostrarlas era la fuente del
+  // falso «sobrepago/falta» al convertir el carrito en Vale.
+  const operationType = useCartStore((s) => s.operationType);
+  const isValeMode = operationType === 'issue_slip';
 
   // POS-2 MM-4: Input directo de cantidad.
   // El span del número es clicable. Al click entra en modo edición (input),
@@ -278,14 +290,28 @@ export const POSCartItem = ({
 
         {/* Right: Subtotal */}
         <div className="flex flex-col items-end gap-3 sm:gap-2">
-          <button
-            type="button"
-            onClick={() => onRemoveItem(item.product_id, item.variant_id)}
-            className="w-11 h-11 flex items-center justify-center text-muted-foreground/30 hover:text-destructive transition-all active:scale-95"
-            aria-label={`Eliminar ${item.product.name} del carrito`}
-          >
-            <X className="w-6 h-6 sm:w-5 sm:h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {/* MISIÓN EDICIÓN-CARRITO (2026-10-21): acceso a la edición de la
+                línea (precio de operación, cantidad, descuento, unidad) sin
+                abandonar la venta ni navegar al catálogo. */}
+            <button
+              type="button"
+              onClick={() => setShowEditModal(true)}
+              className="w-11 h-11 flex items-center justify-center text-muted-foreground/50 hover:text-primary transition-all active:scale-95"
+              aria-label={`Editar ${item.product.name} en el carrito`}
+              title="Editar producto (precio, cantidad, descuento, unidad)"
+            >
+              <Pencil className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onRemoveItem(item.product_id, item.variant_id)}
+              className="w-11 h-11 flex items-center justify-center text-muted-foreground/30 hover:text-destructive transition-all active:scale-95"
+              aria-label={`Eliminar ${item.product.name} del carrito`}
+            >
+              <X className="w-6 h-6 sm:w-5 sm:h-5" />
+            </button>
+          </div>
           <div className="text-right">
             <div
               className={cn(
@@ -305,7 +331,9 @@ export const POSCartItem = ({
         onClick={() => setShowAdvanced(!showAdvanced)}
         className="w-full mt-3 pt-2 border-t border-border/50 flex items-center justify-between text-xs font-black uppercase text-muted-foreground tracking-widest"
       >
-        <span>Descuento / Pago Mixto / Moneda</span>
+        {/* FIX-MISIÓN-VS: en modo Vale la etiqueta refleja lo que realmente
+            aplica (unidad/moneda) — descuento y pago mixto no existen en un VS. */}
+        <span>{isValeMode ? 'Unidad / Moneda' : 'Descuento / Pago Mixto / Moneda'}</span>
         <span className="text-primary">{showAdvanced ? '-' : '+'}</span>
       </button>
       {showAdvanced && (
@@ -319,97 +347,16 @@ export const POSCartItem = ({
             <select
               value={item.variant_id || ''}
               onChange={(e) => {
-                const variantId = e.target.value;
-                const selectedVariant = item.product.product_variants?.find(v => v.id === variantId) || null;
-
-                // FIX-P1-3: fusionar con item existente si ya hay uno con la misma variante
-                const state = useCartStore.getState();
-                const currentIdx = state.items.findIndex(
-                  it => it.product_id === item.product_id && (it.variant_id || null) === (item.variant_id || null)
+                // MISIÓN EDICIÓN-CARRITO (2026-10-21): lógica de cambio de
+                // variante/unidad extraída al store (switchItemVariant) —
+                // único punto de verdad compartido con el modal de edición.
+                // Preserva FIX-P1-3 (fusión con línea existente) y
+                // FIX-MISIÓN-VS (sin recreación de pagos en modo Vale).
+                useCartStore.getState().switchItemVariant(
+                  item.product_id,
+                  item.variant_id,
+                  e.target.value || null,
                 );
-                if (currentIdx === -1) return;
-
-                const currentItem = state.items[currentIdx];
-                let newPrice: number;
-                let newCost: number;
-                let newVariantId: string | null;
-                let newVariant: any;
-
-                if (selectedVariant) {
-                  const cf = selectedVariant.conversion_factor || 1;
-                  newPrice = selectedVariant.price || 0;
-                  newCost = (item.product.cost_price || 0) * cf;
-                  newVariantId = selectedVariant.id;
-                  newVariant = selectedVariant;
-                } else {
-                  newPrice = item.product.price;
-                  newCost = item.product.cost_price || 0;
-                  newVariantId = null;
-                  newVariant = null;
-                }
-
-                // Verificar si ya existe un item con la variante destino
-                const existingDestIdx = state.items.findIndex(
-                  it => it.product_id === item.product_id && (it.variant_id || null) === newVariantId
-                );
-
-                if (existingDestIdx !== -1 && existingDestIdx !== currentIdx) {
-                  // FIX-P1-3: fusionar — sumar cantidad al item existente, remover el actual
-                  const destItem = state.items[existingDestIdx];
-                  const mergedItem = {
-                    ...destItem,
-                    quantity: destItem.quantity + currentItem.quantity,
-                  };
-                  mergedItem.subtotal = recalcSubtotal(mergedItem);
-                  // FIX-PAYMENT-ROWS: resetear payments[] a 1 fila cash
-                  mergedItem.payments = [{
-                    id: `pay_merge_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                    method: 'cash',
-                    amount: mergedItem.subtotal,
-                    currency: mergedItem.cash_currency || mergedItem.currency || 'CUP',
-                    discount_type: null,
-                    discount_value: 0,
-                    discount_currency: mergedItem.cash_currency || mergedItem.currency || 'CUP',
-                  }];
-                  mergedItem.cash_paid = mergedItem.subtotal;
-                  mergedItem.transfer_paid = 0;
-                  mergedItem.zelle_paid = 0;
-
-                  // Remover item actual y actualizar destino
-                  const newItems = state.items.filter((_, i) => i !== currentIdx);
-                  const adjustIdx = existingDestIdx > currentIdx ? existingDestIdx - 1 : existingDestIdx;
-                  newItems[adjustIdx] = mergedItem;
-                  useCartStore.setState({ items: newItems, lastUpdated: Date.now() });
-                } else {
-                  // No hay duplicado — simplemente actualizar el item actual
-                  const updatedItem = {
-                    ...currentItem,
-                    variant_id: newVariantId,
-                    variant: newVariant,
-                    price: newPrice,
-                    cost: newCost,
-                    currency: currentItem.currency,
-                    exchange_rate: currentItem.exchange_rate,
-                  };
-                  updatedItem.subtotal = recalcSubtotal(updatedItem);
-                  // FIX-PAYMENT-ROWS: resetear payments[] a 1 fila cash
-                  updatedItem.payments = [{
-                    id: `pay_var_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                    method: 'cash',
-                    amount: updatedItem.subtotal,
-                    currency: updatedItem.cash_currency || updatedItem.currency || 'CUP',
-                    discount_type: null,
-                    discount_value: 0,
-                    discount_currency: updatedItem.cash_currency || updatedItem.currency || 'CUP',
-                  }];
-                  updatedItem.cash_paid = updatedItem.subtotal;
-                  updatedItem.transfer_paid = 0;
-                  updatedItem.zelle_paid = 0;
-                  useCartStore.setState((s) => ({
-                    items: s.items.map((it2, i2) => i2 === currentIdx ? updatedItem : it2),
-                    lastUpdated: Date.now(),
-                  }));
-                }
               }}
               className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold"
               aria-label={`Unidad de venta para ${item.product.name}`}
@@ -496,6 +443,10 @@ export const POSCartItem = ({
           - + Agregar: añade una nueva fila (efectivo por defecto)
           - ⧉ Duplicar: clona la fila actual
           - ✕: elimina la fila (mínimo 1 siempre) */}
+      {/* FIX-MISIÓN-VS (2026-10-21): el Pago Mixto NO se renderiza en modo
+          Vale — un VS no registra cobros y editar pagos aquí recreaba estado
+          fantasma que alimentaba las validaciones de pago del flujo VS. */}
+      {!isValeMode && (
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase text-muted-foreground">
@@ -671,11 +622,16 @@ export const POSCartItem = ({
           </button>
         </div>
       </div>
+      )}
       </div>
       )}
       {/* FIX-VALIDATION (2026-07-10): validación con descuento/recargo + monto esperado visible */}
       {/* FIX-PAYMENT-ROWS: ahora busca el ajuste activo en payments[] */}
-      {(() => {
+      {/* FIX-MISIÓN-VS (2026-10-21): esta validación de cuadre (Pago completo /
+          Sobrepago / Falta) SOLO aplica a VENTAS que requieren cobro. En modo
+          Vale de Salida no se ejecuta ni se muestra — era el falso «sobrepago»
+          que aparecía al convertir el carrito en VS (problema 2 de la misión). */}
+      {!isValeMode && (() => {
         const cartStore = useCartStore.getState();
         const subtotalCup = cartStore.getItemSubtotalCup(item);
         const paidCup = cartStore.getItemPaidCup(item);
@@ -745,6 +701,16 @@ export const POSCartItem = ({
       <StoreRatesModal
         open={showRatesModal}
         onClose={() => setShowRatesModal(false)}
+      />
+
+      {/* MISIÓN EDICIÓN-CARRITO (2026-10-21): modal de edición de la línea.
+          Separa precio de operación (editable) del precio maestro del catálogo
+          (solo referencia); aplica el gate de supervisor ≥15% reutilizado. */}
+      <POSCartItemEditModal
+        item={item}
+        open={showEditModal}
+        isValeMode={isValeMode}
+        onClose={() => setShowEditModal(false)}
       />
     </motion.div>
   );

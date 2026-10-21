@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
 
 /**
  * F2-T05: Hook para obtener y gestionar los usuarios asignados a una tienda específica.
@@ -109,13 +110,33 @@ export function useStoreTeam(storeId: string | null) {
   // Iteración 12 (Q3 + H-5): Mutación via API endpoint PATCH
   const updateRoleMutation = useMutation({
     mutationFn: async ({ membershipId, newRole }: { membershipId: string; newRole: StoreTeamMember['role'] }) => {
+      // FIX-MISIÓN-ROLES (2026-10-21): este PATCH iba sin header Authorization →
+      // 401 'No autorizado' (withAuth es fail-closed desde SEC-024 y SOLO acepta
+      // Bearer). Mismo patrón que useUpdateUser/useCreateUser: sesión fresca.
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error('Sesión inválida o expirada. Inicia sesión de nuevo.');
+      }
       const response = await fetch(`/api/users/_/memberships/${membershipId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ role: newRole }),
       });
       if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: response.statusText }));
+        const err = await response.json().catch(() => ({ error: response.statusText, message: undefined }));
+        if (response.status === 401) {
+          throw new Error(err.message || 'Sesión inválida o expirada. Inicia sesión de nuevo.');
+        }
+        if (response.status === 403) {
+          const detail = typeof err.error === 'string' && err.error && !['No autorizado', 'Forbidden'].includes(err.error)
+            ? ` (${err.error})`
+            : '';
+          throw new Error(`Permisos insuficientes para cambiar este rol de tienda${detail}.`);
+        }
         throw new Error(err.error || `HTTP ${response.status}`);
       }
       return await response.json();
@@ -125,16 +146,43 @@ export function useStoreTeam(storeId: string | null) {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['store-user-counts'] });
     },
+    // FIX-MISIÓN-ROLES: feedback explícito + refetch del estado real del equipo
+    // para que la UI no muestre un rol que el servidor no confirmó.
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/fetch failed|failed to fetch|networkerror|load failed/i.test(message)) {
+        toast.error(`Error al cambiar rol: ${message}`);
+      } else {
+        toast.error('No se pudo contactar al servidor. Comprueba el estado real del rol antes de reintentar.');
+      }
+      queryClient.invalidateQueries({ queryKey: ['store-team', storeId] });
+    },
   });
 
   // Iteración 12 (H-5): Mutación via API endpoint DELETE (revoke)
   const removeMemberMutation = useMutation({
     mutationFn: async (membershipId: string) => {
+      // FIX-MISIÓN-ROLES (2026-10-21): header Authorization (withAuth fail-closed).
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error('Sesión inválida o expirada. Inicia sesión de nuevo.');
+      }
       const response = await fetch(`/api/users/_/memberships/${membershipId}`, {
         method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: response.statusText }));
+        const err = await response.json().catch(() => ({ error: response.statusText, message: undefined }));
+        if (response.status === 401) {
+          throw new Error(err.message || 'Sesión inválida o expirada. Inicia sesión de nuevo.');
+        }
+        if (response.status === 403) {
+          const detail = typeof err.error === 'string' && err.error && !['No autorizado', 'Forbidden'].includes(err.error)
+            ? ` (${err.error})`
+            : '';
+          throw new Error(`Permisos insuficientes para revocar este acceso${detail}.`);
+        }
         throw new Error(err.error || `HTTP ${response.status}`);
       }
       return await response.json();
