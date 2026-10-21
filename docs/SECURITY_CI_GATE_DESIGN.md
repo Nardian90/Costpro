@@ -306,11 +306,24 @@ export async function POST(req: NextRequest) {
 
 ## 9. Estado
 
+> **Actualización 2026-10-21 (Misión Continua, CP-SEC-007):** este bloque reflejaba
+> el estado del diseño original. La implementación real evolucionó y hoy está
+> operativa: verificación empírica del dictamen A2 (caso B, PR #1438): los 7 checks
+> del security gate presentes y en verde en un PR que tocaba `supabase/migrations/**`
+> + `ci-gate-allowlist.json`.
+
 ```
 Diseño:                  ✅ Completo
-Scripts:                 ⏳ Pendiente implementación
-Workflow CI:             ⏳ Pendiente configuración
-Allowlist:               ⏳ Pendiente creación
+Scripts:                 ✅ Implementados (ci-gate-ts-checks.js, ci-gate-sql-checks.js, ci-gate-evaluate.js)
+Workflow CI:             ✅ Configurado y operativo (security-gate.yml + sql-security-gate.yml)
+                         - PR #1428 (2026-10-19): SQL Security Gate con path filter nativo + evaluador real;
+                           el job ahora FALLA de forma explícita si falta DATABASE_URL (fail-closed,
+                           eliminado el skip silencioso con exit 0 que motivó esta tarea)
+                         - PR #1433 (2026-10-19): gates SQL/TS también en push directo a main
+Allowlist:               ✅ Creada (ci-gate-allowlist.json; 27 supresiones — ver CP-INFRA-004)
 Documentación de uso:    ✅ Este documento
 Ejemplos de fallos:      ✅ 3 ejemplos
+Residual conocido:       CP-INFRA-004 (supresiones expiran 2026-12-31) y CP-SEC-006 (52 endpoints
+                         sin Zod que motivaron la allowlist). Ventana A2 (hasta 2026-11-04): los
+                         workflows/scripts del gate no se modifican durante la observación.
 ```

@@ -1,0 +1,15 @@
+=== Demo aislada sanitización BUG-013 (FIX-SEC-009, route.ts:43-44) — 2026-10-21 ===
+Input | safeName | neutralizado | nota
+---|---|---|---
+"<script>alert(1)</script>.pdf" | "script_" | SÍ | payload exacto e2e/academy.spec.ts:63 (BUG-013)
+"../../etc/passwd.pdf" | "passwd" | SÍ | path traversal e2e/academy.spec.ts:84
+"../../../etc/shadow.pdf" | "shadow" | SÍ | traversal profundo
+"..\\..\\windows\\system32\\config.pdf" | "______windows_system32_config" | SÍ | traversal Windows
+"manual\"><img src=x onerror=alert(2)>.pdf" | "manual___img_src_x_onerror_alert_2__" | SÍ | XSS con atributos HTML
+"manual'-alert(1)-'.pdf" | "manual_-alert_1_-_" | SÍ | XSS contextual JS/HTML
+"manual_onload=alert(3).pdf" | "manual_onload_alert_3_" | SÍ | payload de atributo
+"normal_manual.pdf" | "normal_manual" | SÍ | caso válido (no debe alterarse)
+"Resumen CostPro 2026.pdf" | "Resumen_CostPro_2026" | SÍ | nombre válido con espacios (se normaliza)
+---
+RESULTADO: TODOS los vectores neutralizados (sin <,>,",',/,\, ni ..).
+EXIT=0

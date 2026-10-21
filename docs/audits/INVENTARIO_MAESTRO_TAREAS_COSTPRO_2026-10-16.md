@@ -74,7 +74,7 @@
 | CP-INV-002 | INV | Productos 160-177 sin precio/costo y nombre provisional | PENDIENTE CONFIRMADA | P2 | [DOC] REGISTRO_MOVIMIENTOS D-5 | Alta sin datos comerciales (negocio aún no los informó) | Dato de negocio |
 | CP-INV-003 | INV | `unit_cost=1 CUP` placeholder en 13 recepciones | PENDIENTE CONFIRMADA | P2 | [DOC] REGISTRO_MOVIMIENTOS D-6 | Costo no informado al registrar | Dato de negocio |
 | CP-INV-004 | INV | Precios de catálogo obsoletos (SKU 92, 134, 111) | PENDIENTE CONFIRMADA | P1 | [DOC] REGISTRO_MOVIMIENTOS D-3/D-4 | Gate de supervisor inoperativo al vender sobre precio viejo | Ninguna |
-| CP-INV-005 | INV | 4 divergencias de conciliación (SKU 113/127/135/141) + política de stock negativo sin decidir | PENDIENTE CONFIRMADA | P2 | [DOC] agent-ctx/informe-final-mision-multitienda | SKUs 127 rechazados por CHECK stock≥0; política pendiente | Decisión de negocio |
+| CP-INV-005 | INV | 4 divergencias de conciliación (SKU 113/127/135/141) + política de stock negativo sin decidir | DECISIÓN RATIFICADA — EFECTO PENDIENTE (MC, 2026-10-21) | P2 | [DOC] DECISION_A_STOCK_NEGATIVO_2026-10-20 + PR #1431 (merge cc4ce985f) | Política «nunca negativo» ratificada 2026-10-20; 4 divergencias ya reconciliadas; regularización de artefactos QA pendiente de autorización por lote | Autorizar lotes de ajustes QA |
 | CP-INV-006 | INV | Desfase de 1 día en 54 recepciones importadas (`reception_date` 16:00 UTC) | PENDIENTE CONFIRMADA | P3 | [DOC] AUDITORIA_CONCILIACION §3.2 | Artefacto de importación del 04/10; UPDATE opcional no ejecutado | Autorización de UPDATE |
 | CP-INV-007 | INV | SKU 81: ledger «inconsistente» (apertura −100) | OBSOLETA O REEMPLAZADA | P3 | [DOC] REGISTRO_MOVIMIENTOS D-1 + INCIDENTE_IPV §A.6 | Era historial real (venta 100u revertida + recepción +100), no defecto | — |
 | CP-INV-008 | INV | `transfer-service.ts:142` con comentario «stubs pendientes» ambiguo | PENDIENTE CONFIRMADA | P3 | [CÓD] `src/services/transfer-service.ts:142-143` | Comentario obsoleto sobre `cancelTransfer` ya implementado | Ninguna |
@@ -101,9 +101,9 @@
 | CP-SEC-007 | SEC | Security CI Gate: checks SQL se auto-desactivan sin `DATABASE_URL`; doc desactualizado | PARCIALMENTE RESUELTA | P2 | [CÓD] `.github/workflows/security-gate.yml` + [DOC] SECURITY_CI_GATE_DESIGN §9 | Diseño implementado a medias; skip silencioso con exit 0 | Ninguna |
 | CP-SEC-008 | SEC | Backlog formal DT-01..DT-18 (is_admin duplicada, cleanup jobs, store laboratorio…) | PENDIENTE CONFIRMADA | P2 | [DOC] AUDIT_CLOSURE_REPORT_v1 + SECURITY_BASELINE_SNAPSHOT_v1 | Deuda registrada sin resolución por ítem | Varias (DT-03/06 propias) |
 | CP-SEC-009 | SEC | Modelo de autorización: H-09-AUTH-01..04 (is_admin≡is_global_admin, roles mixtos) | PENDIENTE CONFIRMADA | P2 | [DOC] ITERATION_9_AUTH_MODEL_AUDIT | Duplicación role↔role_id y `manager` global inconsistente | CP-SEC-008 (DT-01) |
-| CP-SEC-010 | SEC | DT-03: decisión single vs multi-tenant sin aprobar | PENDIENTE CONFIRMADA | P2 | [DOC] TENANT_ARCHITECTURE_DECISION | `tenant_id` NULL en 17/18 profiles y 16/16 stores | Aprobación del producto |
+| CP-SEC-010 | SEC | DT-03: decisión single vs multi-tenant sin aprobar | DECISIÓN RATIFICADA — EFECTO PARCIAL (MC, 2026-10-21) | P2 | [DOC] DECISIONES_PENDIENTES_MISION_C §B (confirmada 2026-10-19) + evidence/20261019-dt03-matriz-acceso | Arquitectura multi-tenant conservada; single-tenant solo descriptivo; 1 backfill ejecutado (ratificación A7 pendiente) + 10 perfiles SIN EVIDENCIA sin tocar | Ratificar A7 + evidencia individual de 10 perfiles |
 | CP-SEC-011 | SEC | DT-06: reconciliación de auth.users huérfanos sin implementar | PENDIENTE CONFIRMADA | P2 | [DOC] USER_RECONCILIATION_DESIGN | Diseño listo, FK sin CASCADE, implementación pendiente de aprobación | Aprobación |
-| CP-SEC-012 | SEC | Bugs de seguridad ACTIVOS documentados como `test.fail` (BUG-013/017/022/024) | PARCIALMENTE RESUELTA (M2) | P0 | [CURL] 401 local 2026-10-17 en los 3 endpoints + [CÓD] withAuth/withRole/sanitización | BUG-013/017/022 corregidos (401 verificado); BUG-024 (FS efímero `data/incidents.json`) abierto | Migrar incidents a BD (BUG-024) |
+| CP-SEC-012 | SEC | Bugs de seguridad ACTIVOS documentados como `test.fail` (BUG-013/017/022/024) | RESUELTA EN CÓDIGO — VERIFICADA (MB, 2026-10-21) | P0 | [TEST] 24/24 contrato+regresión ejecutados en SHA e6d885 (2026-10-21) + [CI] 3 checks success en e6d885 + [CURL] 401 local M2 2026-10-17 | 4/4 subcasos corregidos; BUG-024 resuelto por Decisión D ratificada (audit_logs, PR #1431 fusionado por el propietario); cierre formal pendiente | Índice 20261020000005 (A4); actualización de specs E2E (test.fail/skip obsoletos); sonda de despliegue |
 | CP-SEC-013 | SEC | Rate limit in-memory; Upstash Redis obligatorio en prod no configurado | PENDIENTE CONFIRMADA | P1 | [CÓD] `rate-limit.ts:77` + [.env.example] | Límites por instancia, no distribuidos | Credenciales Upstash |
 | CP-SEC-014 | SEC | CSP con `'unsafe-inline'` permanente en producción | PENDIENTE CONFIRMADA | P2 | [CÓD] `src/proxy.ts:39-48` | Excepción por compatibilidad con preview Space-Z | Ninguna |
 | CP-SEC-015 | SEC | Enumeración de roles inconsistente (`superadmin` vs `super_admin` vs `encargado`) | PENDIENTE CONFIRMADA | P2 | [CÓD] `users/route.ts:31` vs `pick3/advisor/route.ts:273` | Dos convenciones de nombres de rol conviven | CP-SEC-009 |
@@ -393,6 +393,10 @@
 - **Criterios de aceptación propuestos:** 0 productos vendibles con price=0 sin justificación.
 - **Método recomendado para verificar la corrección:** query de completitud (product-completeness) sobre el catálogo.
 - **Limitaciones de la auditoría:** no se consultó la BD en vivo.
+- **CONCILIACIÓN MISIÓN C (2026-10-21):**
+  - **Estado de la decisión:** `PENDIENTE DE DATOS` — el mecanismo está probado (precedente verificado 2026-10-17, PR #1418: creaciones SKU 178–181, nombres 158/162/176, precio SKU 108→12.000 CUP por flujos oficiales); falta el dato comercial oficial.
+  - **Qué debe aportarse:** lista oficial (papel/Excel) con nombre final, `price`, `price_currency`, `cost_price` por SKU con precio/costo 0 (160–177 y otros «Incompleto»). Actualizar sin valores oficiales sería inventar datos (prohibido).
+  - **Referencias:** `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.5/§6 + `docs/decisions/2026-10-21-propuestas-pendientes.md` PD-3.
 
 #### CP-INV-003 — unit_cost=1 CUP placeholder en 13 recepciones
 - **ID estable:** CP-INV-003 · **Área:** INV · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
@@ -410,6 +414,10 @@
 - **Criterios de aceptación propuestos:** 0 recepciones con unit_cost placeholder sin marcar.
 - **Método recomendado para verificar la corrección:** query de unit_cost=1 en recepciones.
 - **Limitaciones de la auditoría:** no verificable contra BD en vivo.
+- **CONCILIACIÓN MISIÓN C (2026-10-21):**
+  - **Estado de la decisión:** `PENDIENTE DE DATOS` — sin factura o costo declarado por recepción no es posible corregir sin inventar valores; bloqueo registrado.
+  - **Qué debe aportarse:** costo real unitario + moneda por cada una de las 13 recepciones. Con datos: corrección gobernada (UPDATE auditado + recálculo WAC con `wac_change_log` + delta 0) o marcado como provisional en columna derivada sin mutar el original.
+  - **Referencias:** `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.6/§6 + PD-4.
 
 #### CP-INV-004 — Precios de catálogo obsoletos (SKU 92, 134, 111)
 - **ID estable:** CP-INV-004 · **Área:** INV/CAT · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P1
@@ -427,6 +435,10 @@
 - **Criterios de aceptación propuestos:** 0 SKUs con desvío catálogo/venta > 5% sin autorización documentada.
 - **Método recomendado para verificar la corrección:** comparar products.price vs últimas ventas por SKU.
 - **Limitaciones de la auditoría:** listado de la misión limitado a esos 3 SKUs detectados; puede haber más.
+- **CONCILIACIÓN MISIÓN C (2026-10-21):**
+  - **Estado de la decisión:** `PENDIENTE DE DATOS` — desvíos documentados (SKU 92: 30 vs 23.700; SKU 134: 5 vs 3.950; SKU 111: 2.500 vs 2.000) siguen sin corregir por falta del precio oficial vigente; el gate de supervisor sigue inoperante.
+  - **Qué debe aportarse:** precios vigentes oficiales de los 3 SKUs (+ decisión sobre auditoría extendida de catálogo con criterio desvío >5%). Precedente de actualización oficial: SKU 108 (PR #1418). Solapa con la resolución en origen de las 26 PRICE_ANOMALY de CP-IPV-001.
+  - **Referencias:** `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.7/§6 + PD-5.
 
 #### CP-INV-005 — 4 divergencias de conciliación 161 SKU + política de stock negativo sin decidir
 - **ID estable:** CP-INV-005 · **Área:** INV · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
@@ -444,6 +456,11 @@
 - **Criterios de aceptación propuestos:** 0 divergencias sin clasificar en la próxima conciliación.
 - **Método recomendado para verificar la corrección:** re-ejecutar conciliación (read-only) y comparar.
 - **Limitaciones de la auditoría:** estado post-14/10 de esos SKUs no verificado en vivo.
+- **CONCILIACIÓN MISIÓN C (2026-10-21):**
+  - **Estado de la decisión:** `DECISIÓN RATIFICADA` — política «nunca negativo» ratificada por el propietario el 2026-10-20 (`DECISION_A_STOCK_NEGATIVO_2026-10-20.md`; PR #1431, merge `cc4ce985f`). Las 4 divergencias históricas YA NO EXISTEN (`evidence/20261018-reconciliacion-stock/`: SKU 113: 121=121; SKU 127: 0=0).
+  - **Política vs. mecanismo:** política de negocio ratificada (nunca negativo; flujos que «necesiten» negativo se rediseñan como ajuste gobernado + reposición); mecanismo técnico ya vigente (CHECKs BD + `process_inventory_adjustment` + lock DF-06 + tests de regresión). Nada nuevo fue implementado en esta misión.
+  - **Efecto pendiente:** regularización de artefactos QA restantes (~10 productos de prueba en TIENDA CENTRAL; 41 divergencias actuales, todas de pruebas/QA) — tarea de higiene separada con autorización por lote del propietario.
+  - **Referencias:** `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.1 + `docs/decisions/2026-10-20-decision-A-stock-negativo.md`.
 
 #### CP-INV-006 — Desfase de 1 día en 54 recepciones importadas
 - **ID estable:** CP-INV-006 · **Área:** INV/DATA · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P3
@@ -531,6 +548,11 @@
 - **Criterios de aceptación propuestos:** incidencias históricas clasificadas como «históricas» o eliminadas tras backfill autorizado.
 - **Método recomendado para verificar la corrección:** correr verificar_ipv_en_vivo.ts (solo lectura) y comparar conteo de incidencias.
 - **Limitaciones de la auditoría:** conteos actuales de incidencias no recalcados hoy (BD solo lectura).
+- **CONCILIACIÓN MISIÓN C (2026-10-21):**
+  - **Estado de la decisión:** `PENDIENTE DEL PROPIETARIO` — no existe decisión ratificada sobre el backfill del ledger; la auditoría IPv lo dejó expresamente fuera de alcance («requeriría escritura en datos de producción»); el diseño declara que las diferencias «se reportan — NUNCA se ocultan». NADA fue ejecutado.
+  - **Delimitación crítica:** este backfill de LEDGER es distinto del backfill de COGS (paquete C `20261020000004` → CP-IPV-002, autorizaciones A5/A6 del expediente CP-SEC-027 v5). A5/A6 NO autorizan este backfill. Las 26 PRICE_ANOMALY se resuelven en origen (precios — solapa CP-INV-004).
+  - **Precondiciones propuestas (ninguna ejecutada):** inventario de incidencias por tienda/tipo (baseline antes); evidencia contable de apertura por tienda (papel/Excel de carga inicial); escritura aditiva marcada `backfill` (sin UPDATE de movimientos existentes); reversibilidad; verificación con `verificar_ipv_en_vivo.ts` antes/después; autorización específica por tienda/lote.
+  - **Referencias:** `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.8/§6 + PD-6.
 
 #### CP-IPV-002 — TAREA 3: re-costeo de COGS histórico no iniciado
 - **ID estable:** CP-IPV-002 · **Área:** IPV · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
@@ -711,6 +733,9 @@
 - **Criterios de aceptación propuestos:** 0 received_services con NULL si se autoriza el backfill.
 - **Método recomendado para verificar la corrección:** query post-backfill.
 - **Limitaciones de la auditoría:** —
+- **CONCILIACIÓN MISIÓN C (2026-10-21):**
+  - **Estado de la decisión:** `PENDIENTE DEL PROPIETARIO` — no existe decisión sobre el backfill por nombre. Opciones: (1) backfill gobernado autorizado (escritura histórica auditada, verificación 0 NULL) o (2) decisión formal de mantener históricos intactos (subestimación permanente documentada).
+  - **Referencias:** `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.11 + PD-9.
 
 #### CP-CAT-007 — Gestión de tipos de servicio por tienda sin UI
 - **ID estable:** CP-CAT-007 · **Área:** CAT/UI · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P3
@@ -899,6 +924,10 @@
 - **Criterios de aceptación propuestos:** decisión firmada en docs/decisions.
 - **Método recomendado para verificar la corrección:** registro de decisión.
 - **Limitaciones de la auditoría:** —
+- **CONCILIACIÓN MISIÓN C (2026-10-21):**
+  - **Estado de la decisión:** `DECISIÓN RATIFICADA — EFECTO PARCIAL` — el propietario CONFIRMÓ el 2026-10-19 conservar la arquitectura multi-tenant; single-tenant únicamente como descripción de la situación operativa actual (`DECISIONES_PENDIENTES_MISION_C_2026-10-18.md` §B; protocolo de 6 pasos con evidencia viva en `evidence/20261019-dt03-matriz-acceso/`). Sin contradicción concreta que obligue a reabrir. `TENANT_ARCHITECTURE_DECISION.md` (2026-08-02, «pendiente») quedó sustituido — requiere solo anotación de cierre.
+  - **Perfiles pendientes — NO asignados automáticamente:** david9999 = backfill EJECUTADO (2026-10-19 18:29:50Z, transaccional + auditado; autorización original D-3 conversacional) → **ratificación a posteriori pendiente (A7 del expediente CP-SEC-027 v5)**; 10 perfiles restantes clasificados SIN EVIDENCIA → validación individual exigida por la propia decisión DT-03.
+  - **Registros:** `docs/decisions/2026-10-19-decision-B-dt03-multi-tenant.md` + `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.3/§4.
 
 #### CP-SEC-011 — DT-06: reconciliación de auth.users huérfanos sin implementar
 - **ID estable:** CP-SEC-011 · **Área:** SEC · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
@@ -916,9 +945,13 @@
 - **Criterios de aceptación propuestos:** 0 huérfanos > 24 h en producción.
 - **Método recomendado para verificar la corrección:** query de huérfanos semanal.
 - **Limitaciones de la auditoría:** —
+- **CONCILIACIÓN MISIÓN C (2026-10-21):**
+  - **Estado de la decisión:** `PENDIENTE DEL PROPIETARIO` — el diseño (`USER_RECONCILIATION_DESIGN.md`, 2026-08-02, «pendiente aprobación») sigue sin aprobación; DT-06 NO figuró en ninguna de las decisiones ratificadas de octubre (A/B/B.1/C/D/E). No hay decisión previa que respetar ni reabrir.
+  - **Opciones preparadas:** (1) implementación completa (tabla `orphaned_users_log` + cron + auto-delete con ban list de pilotos A/B); (2) detección automática + borrado humano (`OrphanUsersPanel.tsx` existe); (3) diferir. Antecedente: 364 huérfanos ya limpiados a mano.
+  - **Referencias:** `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.4 + PD-2.
 
 #### CP-SEC-012 — Bugs de seguridad ACTIVOS documentados como test.fail (BUG-013/017/022/024)
-- **ID estable:** CP-SEC-012 · **Área:** SEC · **Estado verificado:** PARCIALMENTE RESUELTA (M2, 2026-10-17) · **Prioridad:** **P0**
+- **ID estable:** CP-SEC-012 · **Área:** SEC · **Estado verificado:** RESUELTA EN CÓDIGO — VERIFICADA (MISIÓN B, 2026-10-21); cierre formal pendiente de sonda de despliegue + índice A4 + actualización de specs · **Prioridad:** **P0**
 - **Descripción del problema:** cuatro bugs con tests invertidos (`test.fail` = el test «pasa» mientras el bug vive): **BUG-017** `/api/legal/incidents` acepta requests sin autenticación (`e2e/auth.spec.ts:46`); **BUG-022** URL de reportes accesible sin autenticación (`e2e/reports.spec.ts:51`, «bug ACTIVO documentado»); **BUG-013** XSS almacenado en filename de academy (`e2e/academy.spec.ts:71`); **BUG-024** incidents.json efímero en serverless (skip permanente, deuda de arquitectura, `e2e/legal.spec.ts:81`).
 - **Comportamiento esperado:** endpoints con auth; XSS sanitizado; persistencia correcta de incidentes.
 - **Origen documental:** `E2E-COVERAGE-REPORT.md` + specs E2E citadas.
@@ -942,6 +975,14 @@
   - **Nota sobre los tests invertidos:** los specs con `test.fail` condicional (`if status===200 → test.fail`) quedan auto-correctos: con el bug corregido, la rama `test.fail` no se ejecuta y el `expect(401)` pasa en verde. No requieren cambios.
   - **Evidencia pendiente para cierre:** repetir la verificación pasiva contra el DESPLIEGO de producción (Vercel) — aquí solo se verificó el código actual + servidor local — y resolver BUG-024 (migración a BD).
   - **Rama/PR:** evidencia registrada en `MISION_2_HOTFIXES_OPERATIVOS_SEGURIDAD_2026-10-17.md` (sin cambios de código para esta ficha: los fixes ya existían; la novedad es la EVIDENCIA de que están vigentes).
+- **VERIFICACIÓN MISIÓN B (2026-10-21, triage P0 — SHA e6d885):**
+  - **Estado anterior:** PARCIALMENTE RESUELTA (M2, 2026-10-17) → **nuevo estado:** RESUELTA EN CÓDIGO — VERIFICADA; cierre formal pendiente de sonda de despliegue + índice A4 + actualización de specs.
+  - **BUG-017 CORREGIDO VERIFICADO:** contrato vitest ejecutado hoy (8/8, `withRole` REAL): POST sin sesión → 401 con CERO escrituras; GET sin sesión → 401; rol clerk → 403; admin → 200 paginado. Código: `incidents/route.ts:54-58,222-223`. CI «Unit & Integration Tests» success en e6d885.
+  - **BUG-022 CORREGIDO VERIFICADO:** regresión ejecutada hoy (16/16): generate sin signed/public URLs (devuelve `/api/reports/download/<runId>`), download con `withAuth` + ownership + UUID estricto, migración de bucket privado `20261005120001`, frontend Bearer+blob. Código: `download/[runId]/route.ts:23-47,76-79`; `generate/route.ts:160-179,188-191`; `useReportState.ts:304-315`.
+  - **BUG-013 CORREGIDO VERIFICADO:** sanitización FIX-SEC-009 (`academy/generate/route.ts:43-44`: `path.basename` + whitelist `[^a-zA-Z0-9_\-]`) + solo se persiste `safeName` (`:172`) + endpoint admin-only (`:191`). Demo aislada hoy: 9/9 vectores XSS/traversal neutralizados (`<script>alert(1)</script>.pdf` → `script_`). DEUDA registrada: sin test unitario propio del endpoint; spec E2E débil (solo `console.warn` si 200) y desalineado con el admin-only (403 no contemplado en `[400,200,502,404]`).
+  - **BUG-024 CORREGIDO VERIFICADO EN CÓDIGO — Decisión D YA RATIFICADA por el propietario (2026-10-20, Misión C):** persistencia en `audit_logs` (`action='legal_incident'`), `data/incidents.json` DEPRECADO (vacío, verificado hoy). Implementado en PR #1431, fusionado por el propietario (2026-10-19T19:01:52Z, verificado vía API). Contrato hoy 8/8: 201 → exactamente 1 fila audit_logs. PENDIENTES: índice `20261020000005` (autorización A4 — rendimiento del GET admin) y skip E2E obsoleto (`legal.spec.ts:80-82`).
+  - **Evidencia de esta misión:** `MISION_B_VERIFICACION_CP-SEC-012_2026-10-21.md` + `evidence/20261021-mision-b/` (salidas vitest, demo de sanitización, check-runs de CI en e6d885, estado del PR #1431). Ediciones sin commit/push (pendiente de decisión del propietario).
+  - **Limitaciones:** sonda HTTP contra el despliegue vivo NO ejecutada (URL de producción ausente en el expediente; POST de prueba prohibido por protocolo). Suite E2E Playwright no ejecutada (requiere servidor + `E2E_TEST_USER_TOKEN`; en CI corre skipped). Cero escrituras a producción/BD.
 
 #### CP-SEC-013 — Rate limit in-memory; Upstash obligatorio en prod no configurado
 - **ID estable:** CP-SEC-013 · **Área:** SEC/INFRA · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P1
@@ -1211,6 +1252,10 @@
 - **Criterios de aceptación propuestos:** guard AFTER del fixture en verde.
 - **Método recomendado para verificar la corrección:** correr data-hygiene-guard.
 - **Limitaciones de la auditoría:** —
+- **CONCILIACIÓN MISIÓN C (2026-10-21):**
+  - **Estado de la decisión:** `PENDIENTE DEL PROPIETARIO` — sin decisión sobre los lotes; regla de oro vigente respetada (nada fue borrado ni alterado en esta misión).
+  - **Lotes delimitados:** L1 = 6 tiendas D-indeterminadas; L2 = 16 usuarios D-indeterminados; L3 = residuos 9-oct (8 tiendas + 4 usuarios + 3 tenants; RUN IDs `D0978E`/`8DEF57`/`7DAE03`); L4 = 3 vales manuales del propietario (VS-000001/000023/000002) — solo requieren confirmación de titularidad. Salvaguardas: listas A/B intocables, borrado solo por RUN ID con dry-run + evidencia, cero CASCADE.
+  - **Referencias:** `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.2 + PD-1.
 
 #### CP-DATA-002 — security.spec desactualizado — RESUELTA
 - **ID estable:** CP-DATA-002 · **Área:** DATA/TEST · **Estado verificado:** RESUELTA VERIFICADA
@@ -1270,6 +1315,9 @@
 - **Criterios de aceptación propuestos:** —
 - **Método recomendado para verificar la corrección:** —
 - **Limitaciones de la auditoría:** —
+- **CONCILIACIÓN MISIÓN C (2026-10-21):**
+  - **Estado de la decisión:** `PENDIENTE DEL PROPIETARIO` — existe decisión TÉCNICA previa documentada (mantener sin registro por valor dudoso del registro a fecha actual; sistema forward-only), pero no cierre formal de negocio. Opciones: (1) cerrar como «no representable» (formalizar criterio actual, cero escrituras) o (2) registrar con nota a fecha actual (documentos artificiales sin corrección de saldo). Sin impacto económico (neto 0).
+  - **Referencias:** `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.9 + PD-7.
 
 #### CP-DATA-006 — 20 filas de comisiones de julio con tarifa antigua
 - **ID estable:** CP-DATA-006 · **Área:** DATA · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P3
@@ -1287,6 +1335,9 @@
 - **Criterios de aceptación propuestos:** —
 - **Método recomendado para verificar la corrección:** —
 - **Limitaciones de la auditoría:** —
+- **CONCILIACIÓN MISIÓN C (2026-10-21):**
+  - **Estado de la decisión:** `PENDIENTE DEL PROPIETARIO` (+ de datos si se reconstruye) — ConfComisiones importada como configuración VIGENTE; reconstrucción histórica documentada como fuera de alcance (§6.5/§11.9.5). Opciones: (1) aceptar como documentado o (2) reconstruir con la escala de tarifas de julio de 2026 aportada por el negocio (backfill autorizado por lote sobre las 20 filas).
+  - **Referencias:** `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.10 + PD-8.
 
 ### 3.8 Área INFRA — Infraestructura y calidad
 
@@ -1678,3 +1729,24 @@ Las fichas de esta sección son compactas por diseño: consolidan 1-N hallazgos 
 6. **Settings de GitHub** (branch protection, secrets): no verificables sin API admin (CP-INFRA-014).
 7. **Supabase Admin API / producción Vercel**: no se invocaron servicios externos.
 
+
+---
+
+## 5. ACTUALIZACIÓN MISIÓN CONTINUA DE RESOLUCIÓN — CICLO 1 (2026-10-22)
+
+**Inventario de trabajo del ciclo:** `scripts/extracted/tareas.csv` (101 filas, generado por extracción fiel de la tabla maestra; actualizado fila a fila).
+**Informe maestro del ciclo:** `MISION_CONTINUA_CICLO1_INFORME_MAESTRO_2026-10-22.md` (este directorio).
+
+Resumen del ciclo (detalle y evidencia por tarea: CSV + informe maestro):
+
+| Resultado | Filas | Detalle |
+|---|---|---|
+| RESUELTA_VERIFICADA (verificadas este ciclo; el inventario estaba desactualizado) | +5 | CP-POS-009 (PRs #1419/#1422/#1423), CP-UI-005 (plan 7 commits ejecutado), CP-SEC-007 (#1428/#1433), CP-SEC-020 (rem_inv_6), CP-SEC-018 (v2_16_0/v2_16_1) |
+| CORREGIDA_POR_ESTE_CICLO — código en PRs sin fusionar | 8 | CP-CAT-005, CP-SEC-004, CP-INV-009 (PRs #1441/#1442), CP-CAT-003, CP-SEC-015, CP-INFRA-012, CP-INV-008 (PR #1443) |
+| Migraciones PREPARADAS (no aplicadas; guards fail-closed) | 2 | CP-SEC-003 y CP-UI-001 ítem 2/5 (PR #1444) |
+| Decisión del propietario registrada (vales, 2026-10-21) | 1 | CP-DATA-001 sub-ítem vales RESUELTO; resto de lotes sigue pendiente de autorización |
+| Sin cambio (superada por diseño posterior / por diseño) | 2 | CP-POS-005 (INC-2026-10-19/#1432), CP-UI-004 |
+| Clasificación del resto por bloqueo real | 41 | A2 (5), autorización (12), datos (3), despliegue (4), entorno/credenciales/dependencias/decisiones (17) — fila a fila en el CSV |
+
+- Los PRs #1441–#1444 contienen las correcciones; NINGUNO fusionado por el agente.
+- La fila CP-SEC-012 (Misión B) y los bloques de conciliación de la Misión C NO se sobrescriben; este bloque solo se añade.
