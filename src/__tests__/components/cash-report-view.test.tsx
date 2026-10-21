@@ -33,6 +33,15 @@ vi.mock('@/components/views/terminal/views/cash/cash-report-pdf', () => ({
   buildCashReportPdf: (ctx?: unknown, summaries?: unknown) => buildPdfMock(ctx, summaries),
   fetchDiarioSummaries: vi.fn(async () => ({})),
   methodLabel: (m: string) => (m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Zelle'),
+  // MISIÓN EXCEL 2026-10-21: helpers que cash-report-excel reutiliza del módulo PDF.
+  fetchSuggestedCommissionsByProduct: vi.fn(async () => new Map()),
+  salesTableColumns: (currency: string, includeCommission: boolean) =>
+    currency === 'CUP'
+      ? (includeCommission ? ['Código', 'Descripción', 'Cant.', 'Efectivo (CUP)', 'Transfer. (CUP)', 'Comisión'] : ['Código', 'Descripción', 'Cant.', 'Efectivo (CUP)', 'Transfer. (CUP)'])
+      : ['Código', 'Descripción', 'Cant.', 'Efectivo (USD)', 'Zelle'],
+  salesTableItems: () => [],
+  salesTableQty: () => 0,
+  periodISO: () => ({ sISO: '', eISO: '' }),
 }));
 
 // ── MOCK: auth/ui stores ──
