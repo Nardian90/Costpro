@@ -55,7 +55,10 @@ function makeProductsTable() {
   return t;
 }
 
-const createClientMock = vi.fn(() => ({ from: () => makeProductsTable() }));
+// La implementación necesita un rest param: vi.fn(impl sin parámetros)
+// infiere firma [] y CUALQUIER spread sobre ella es TS2556 (el patrón
+// service-types funciona porque su vi.fn() va sin implementación).
+const createClientMock = vi.fn((..._args: unknown[]) => ({ from: () => makeProductsTable() }));
 vi.mock('@supabase/supabase-js', () => ({
   // any[] (no unknown[]): el spread sobre createClientMock requiere tipo
   // tupla/rest — TS2556 en CI con unknown[] (mismo patrón que service-types.test.ts).
