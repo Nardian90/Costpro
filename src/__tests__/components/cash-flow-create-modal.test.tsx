@@ -55,6 +55,7 @@ const SUMMARY: CashFlowSummary = {
   cash_flow_in: 0,
   cash_flow_out: 0,
   cash_refunds: 0,
+  voucher_refunds: 0,
   expected_cash: 174000, // fondo 5.000 + ventas 169.000
   transfer_sales: 0,
   zelle_sales: 0,
