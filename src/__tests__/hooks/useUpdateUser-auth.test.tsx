@@ -22,7 +22,9 @@ import React from 'react';
 const mockFetch = vi.fn();
 global.fetch = mockFetch as any;
 
-const getSessionMock = vi.fn(async () => ({
+// Tipo explícito: session puede ser null (caso «sin sesión activa» del test 2).
+type GetSessionResult = { data: { session: { access_token: string } | null } };
+const getSessionMock = vi.fn<() => Promise<GetSessionResult>>(async () => ({
   data: { session: { access_token: 'jwt-admin-test' } },
 }));
 

@@ -6,9 +6,10 @@ import type { Product, ProductVariant, TaxConfiguration, PaymentMethod } from "@
 // ── Notification callback (injected by UI layer) ────────────────
 let _onCartNotification: ((type: "warning" | "error", message: string) => void) | null = null;
 
-/** Inject a notification handler to decouple toasts from the store */
+/** Inject a notification handler to decouple toasts from the store.
+ *  Acepta null para resetear (usado por tests y por el teardown de la UI). */
 export function setCartNotificationHandler(
-  handler: (type: "warning" | "error", message: string) => void,
+  handler: ((type: "warning" | "error", message: string) => void) | null,
 ) {
   _onCartNotification = handler;
 }
