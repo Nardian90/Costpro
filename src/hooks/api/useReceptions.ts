@@ -97,9 +97,36 @@ export function useUpdateReception() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['receptions'] });
       queryClient.invalidateQueries({ queryKey: ['receipt-items', variables.receiptId] });
+      // CP-SEC-004: toda edición de cabecera de recepción deja rastro en
+      // audit_logs (actor + campos cambiados + valores nuevos) — paridad
+      // con la anulación (PR-3) y la creación (logReceptionCreated).
+      const user = useAuthStore.getState().user;
+      if (user?.id && data?.store_id) {
+        const fields: string[] = [];
+        const changes: Record<string, unknown> = {};
+        if (variables.supplier !== undefined) {
+          fields.push('supplier');
+          changes.supplier = variables.supplier;
+        }
+        if (variables.referenceDoc !== undefined) {
+          fields.push('reference_doc');
+          changes.reference_doc = variables.referenceDoc;
+        }
+        if (variables.notes !== undefined) {
+          fields.push('notes');
+          changes.notes = variables.notes;
+        }
+        await auditService.logReceptionUpdated({
+          userId: user.id,
+          receiptId: variables.receiptId,
+          storeId: data.store_id,
+          fields,
+          changes,
+        });
+      }
     }
   });
 }

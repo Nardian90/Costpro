@@ -180,6 +180,38 @@ export const auditService = {
     if (error) console.error('[AuditService] logReceptionCreated failed:', error);
   },
 
+  /**
+   * CP-SEC-004: registra la EDICIÓN de cabecera de una recepción
+   * (proveedor / nro. factura / notas). Antes de este método, el UPDATE
+   * directo de useUpdateReception no dejaba rastro de quién cambió qué —
+   * el único hueco de auditoría restante del hallazgo audit_v3 §7, ya que
+   * voids (PR-3 RPCs) y creación (logReceptionCreated) sí auditan.
+   */
+  async logReceptionUpdated(params: {
+    userId: string;
+    receiptId: string;
+    storeId: string;
+    /** Campos DB efectivamente editados: supplier, reference_doc, notes */
+    fields: string[];
+    /** Nuevos valores por campo (los antiguos no viajan al cliente) */
+    changes: Record<string, unknown>;
+  }): Promise<void> {
+    const { error } = await (getAdminClientSync() ?? supabase).from('audit_logs').insert({
+      user_id: params.userId,
+      action: 'reception_updated',
+      table_name: 'receipts',
+      record_id: params.receiptId,
+      store_id: params.storeId,
+      metadata: {
+        receipt_id: params.receiptId,
+        fields_updated: params.fields,
+        changes: params.changes,
+        updated_at: new Date().toISOString()
+      }
+    });
+    if (error) console.error('[AuditService] logReceptionUpdated failed:', error);
+  },
+
   // ============================================
   // FC Automatizada — Audit Methods (Res. 148/2023)
   // ============================================

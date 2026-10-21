@@ -521,3 +521,48 @@ export const walletImportTrmSchema = z.object({
     .min(1, 'El contenido del archivo .trm es requerido')
     .max(WALLET_TRM_MAX_CHARS, 'El archivo excede el límite de 10 MiB'),
 });
+
+// ─── Catalog Bulk Import (CP-CAT-005) ────────────────────────────────────────
+//
+// Contrato por fila de POST /api/catalog/bulk-import. Antes de este schema la
+// ruta validaba con checks manuales sueltos (`p.store_id/sku/name` truthy +
+// typeof de precios) y dejaba pasar CUALQUIER propiedad extra al upsert — un
+// payload malicioso podía intentar escribir columnas no documentadas
+// (p. ej. tenant_id/is_active arbitrarios) confiando solo en el error
+// PGRST204 de PostgREST. El cliente legítimo (CatalogImportDialog) envía
+// exactamente este conjunto de campos.
+//
+// Decisiones:
+//   - `.strict()`: propiedad desconocida → 400 con detalle por fila
+//     (fail-closed, convención del repo; si el importador añade un campo,
+//     se actualiza este schema deliberadamente).
+//   - store_id usa uuidLoose (CP-SEC-019): acepta los UUID sintéticos de
+//     Tienda Central que el z.string().uuid() estricto rechazaba.
+//   - Precios >= 0: costes/precios negativos no tienen sentido de negocio
+//     en la importación de catálogo.
+//   - El límite de 500 filas lo sigue aplicando la ruta (respuesta
+//     BULK_IMPORT_LIMIT específica), no el schema, para conservar el
+//     contrato de errores existente.
+export const bulkImportProductSchema = z.object({
+  store_id: uuidLoose,
+  sku: z.string().min(1, 'SKU requerido').max(100),
+  name: z.string().min(1, 'Nombre requerido').max(200),
+  cost_price: z.number().min(0, 'cost_price no puede ser negativo'),
+  price: z.number().min(0, 'price no puede ser negativo'),
+  image_url: z.string().max(500).nullable().optional(),
+  category: z.string().max(100).nullable().optional(),
+  is_service: z.boolean().optional(),
+  unit_of_measure: z.string().max(30).nullable().optional(),
+  description: z.string().max(2000).nullable().optional(),
+  is_active: z.boolean().optional(),
+  barcode: z.string().max(64).nullable().optional(),
+  barcode_type: z.string().max(32).nullable().optional(),
+  min_stock: z.number().min(0).nullable().optional(),
+  supplier: z.string().max(200).nullable().optional(),
+}).strict();
+
+export const bulkImportBodySchema = z.object({
+  products: z.array(bulkImportProductSchema).min(1).max(500),
+}).strict();
+
+export type BulkImportProduct = z.infer<typeof bulkImportProductSchema>;
