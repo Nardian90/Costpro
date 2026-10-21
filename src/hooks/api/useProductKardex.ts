@@ -4,17 +4,29 @@
  * ARQUITECTURA — UNA SOLA FUENTE DE VERDAD (§34 del requisito):
  * - Lee la MISMA tabla `stock_movements` que el RPC del Kardex existente
  *   (`get_product_stock_ledger_paginated`).
- * - El saldo oficial de cada movimiento es `balance_after` calculado
- *   server-side (mismo contrato que FIX H-12 en useKardex).
- * - NO recalcula existencias: saldo inicial = balance_after del último
- *   movimiento ANTES del período; saldo final = balance_after del último
- *   movimiento DENTRO del período.
+ * - Los movimientos y sus `quantity_change` son los de la BD — jamás se
+ *   recalculan client-side.
+ * - El SALDO CORRIDO se DERIVA cronológicamente desde el origen (§34-bis):
+ *   saldo inicial = Σ quantity_change de los movimientos ANTES del período;
+ *   saldo de cada fila = saldo anterior + entrada − salida en el orden
+ *   canónico (created_at ASC, id ASC). CORRECCIÓN DEL DEFECTO SKU 15
+ *   (2026-10-21): el `balance_after` almacenado se encadena por ORDEN DE
+ *   INSERCIÓN (trigger) y los escritores sellan `created_at` con fechas
+ *   operativas retro-datables ⇒ mostrar `balance_after` en orden cronológico
+ *   produce saltos imposibles (41 − 1 → 55). La suma previa al período y la
+ *   derivación por fila son independientes del orden de inserción.
+ * - `sumaTotal` (Σ de TODO el ledger del producto+tienda) permite conciliar
+ *   el submayor con la existencia autoritativa (`inventory.quantity` /
+ *   `products.stock_current`) y detectar huecos de datos.
  *
  * Consultas:
- *  1. Saldo inicial (§10): último movimiento antes de `dateFrom` (limit 1).
+ *  1. Saldo inicial (§10): Σ quantity_change de los movimientos antes de
+ *     `dateFrom` (por lotes de 1000, columna única).
  *  2. Movimientos del período (§11): product_id + store_id + rango de
  *     fechas, orden ASC (created_at, id) — determinista (§21/§22),
  *     por lotes de 1000 filas (§31 rendimiento).
+ *  3. Suma total del ledger (sin fechas): para conciliación con la
+ *     existencia autoritativa.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -22,6 +34,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { withTableLogging, getCleanStoreId } from './base';
 import {
   calcularResumenPeriodo,
+  derivarSaldosCronologicos,
   ordenarCronologico,
   type KardexMovementLike,
   type ResumenPeriodo,
@@ -33,14 +46,54 @@ const BATCH_SIZE = 1000;
 const MAX_MOVEMENTS = 10000;
 
 export interface ProductKardexResult {
-  /** Existencia acumulada antes del primer movimiento del período. */
+  /** Existencia acumulada antes del primer movimiento del período (§10):
+   *  Σ quantity_change de los movimientos previos al período. */
   saldoInicial: number;
-  /** Movimientos del período en orden cronológico ascendente. */
-  movimientos: KardexMovementLike[];
+  /** Movimientos del período en orden cronológico ascendente, cada uno con
+   *  su saldo corrido derivado (`saldo`). */
+  movimientos: Array<KardexMovementLike & { saldo: number }>;
   /** Resumen del período: entradas, salidas, saldo final, conteo. */
   resumen: ResumenPeriodo;
   /** true si se alcanzó el techo MAX_MOVEMENTS (período demasiado amplio). */
   isTruncated: boolean;
+  /** Σ quantity_change de TODOS los movimientos del producto+tienda (sin
+   *  filtro de período) para conciliar con la existencia autoritativa.
+   *  null si el techo impidió computarla exactamente. */
+  sumaTotal: number | null;
+}
+
+/**
+ * Suma `quantity_change` de los movimientos de un producto+tienda (opcionalmente
+ * acotados por fecha superior), por lotes y con techo de seguridad. Devuelve
+ * null si el techo se alcanza (suma no exacta — la UI no debe fingirla).
+ */
+async function sumarCantidadCambios(
+  productId: string,
+  cleanStoreId: string | null,
+  dateLt?: string
+): Promise<number | null> {
+  let suma = 0;
+  let total = 0;
+  for (let offset = 0; offset < MAX_MOVEMENTS; offset += BATCH_SIZE) {
+    let q = supabase
+      .from('stock_movements')
+      .select('quantity_change')
+      .eq('product_id', productId)
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(offset, offset + BATCH_SIZE - 1);
+    if (cleanStoreId) q = q.eq('store_id', cleanStoreId);
+    if (dateLt) q = q.lt('created_at', dateLt);
+
+    const data = await withTableLogging('select', 'stock_movements', () => q);
+    const rows = (data || []) as Record<string, unknown>[];
+    for (const r of rows) suma += Number(r.quantity_change) || 0;
+    total += rows.length;
+
+    if (rows.length < BATCH_SIZE) return suma;
+    if (total >= MAX_MOVEMENTS) return null; // techo: suma no garantizada
+  }
+  return null;
 }
 
 export function useProductKardex(
@@ -60,28 +113,21 @@ export function useProductKardex(
           movimientos: [],
           resumen: calcularResumenPeriodo([], 0),
           isTruncated: false,
+          sumaTotal: null,
         };
       }
 
       // ── Consulta 1: saldo inicial (§10) ────────────────────────────────
-      // Último movimiento ANTES del inicio del período → balance_after.
+      // Σ quantity_change de los movimientos ANTES del inicio del período.
+      // Independiente del orden: una suma no depende del orden de inserción
+      // ni del encadenamiento del trigger (CORRECCIÓN SKU 15: leer el
+      // `balance_after` del «último movimiento anterior» daba el saldo del
+      // encadenado de INSERCIÓN, no el acumulado cronológico real).
       // Si no hay movimientos previos, nada movió la existencia: 0.
       let saldoInicial = 0;
       if (dateFrom) {
-        let prevQuery = supabase
-          .from('stock_movements')
-          .select('balance_after')
-          .eq('product_id', productId)
-          .lt('created_at', dateFrom)
-          .order('created_at', { ascending: false })
-          .limit(1);
-        if (cleanStoreId) prevQuery = prevQuery.eq('store_id', cleanStoreId);
-
-        // withTableLogging lanza error tipado y retorna directamente los datos
-        const prevData = await withTableLogging('select', 'stock_movements', () => prevQuery);
-        if (prevData && prevData.length > 0 && prevData[0].balance_after !== null) {
-          saldoInicial = Number(prevData[0].balance_after) || 0;
-        }
+        const sumaPre = await sumarCantidadCambios(productId, cleanStoreId, dateFrom);
+        saldoInicial = sumaPre ?? 0;
       }
 
       // ── Consulta 2: movimientos del período, por lotes (§31) ───────────
@@ -137,12 +183,18 @@ export function useProductKardex(
         }
       }
 
-      // Orden cronológico ascendente determinista (§21/§22) — el saldo
-      // mostrado de cada fila sigue siendo el balance_after de la BD.
+      // ── Consulta 3: Σ total del ledger (conciliación con existencia) ────
+      const sumaTotal = await sumarCantidadCambios(productId, cleanStoreId);
+
+      // Orden cronológico ascendente determinista (§21/§22) + saldo corrido
+      // DERIVADO desde el origen (§34-bis): saldo de cada fila = saldo
+      // anterior + entrada − salida en el orden canónico — independiente
+      // del orden de inserción del `balance_after` almacenado.
       const ordenados = ordenarCronologico(movimientos);
+      const conSaldo = derivarSaldosCronologicos(ordenados, saldoInicial);
       const resumen = calcularResumenPeriodo(ordenados, saldoInicial);
 
-      return { saldoInicial, movimientos: ordenados, resumen, isTruncated };
+      return { saldoInicial, movimientos: conSaldo, resumen, isTruncated, sumaTotal };
     },
     enabled: !!productId,
     staleTime: 15 * 1000,

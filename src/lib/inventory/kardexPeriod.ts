@@ -2,11 +2,27 @@
  * Lógica pura del Kardex por producto (Trazabilidad).
  *
  * Regla de oro (§34 del requisito): UNA SOLA FUENTE DE VERDAD.
- * - El saldo oficial de cada movimiento es `balance_after`, calculado
- *   server-side en la tabla `stock_movements`.
- * - Estas funciones NUNCA recalculan saldos: solo ordenan, filtran,
- *   suman entradas/salidas del período y toman el saldo final del
- *   último movimiento del período tal como la BD lo registró.
+ * - La fuente es la tabla `stock_movements` (movimientos y sus
+ *   `quantity_change` NUNCA se recalculan client-side).
+ * - El SALDO CORRIDO CRONOLÓGICO se deriva de forma canónica y determinista:
+ *   `saldo(n) = saldo inicial + Σ quantity_change(0..n)` siguiendo el orden
+ *   `(created_at ASC, id ASC)` — el MISMO criterio del RPC
+ *   `get_product_stock_ledger_paginated` (ventana SUM OVER (ORDER BY
+ *   created_at ASC, id ASC)).
+ *
+ * AUDITORÍA SUBMAYOR 2026-10-21 (defecto SKU 15 Cemento Cola): la columna
+ * `balance_after` almacenada se encadena por el trigger en ORDEN DE INSERCIÓN
+ * (NEW.balance_after := inventory.quantity + NEW.quantity_change al insertar),
+ * mientras que los escritores sellan `created_at` con la fecha OPERATIVA
+ * (retro-datables, p.ej. create_sale_v2/register_reception/create_vale_salida).
+ * Cuando un movimiento se inserta con fecha anterior a movimientos ya
+ * insertados, el orden de inserción ≠ orden cronológico y el `balance_after`
+ * almacenado, mostrado en orden cronológico, produce saltos aritméticamente
+ * imposibles (saldo 41 → salida 1 → 55). El saldo cronológico del submayor
+ * se DERIVA desde el origen con la fórmula contable
+ * `saldo posterior = saldo anterior + entrada − salida`, que es independiente
+ * del orden de inserción. El `balance_after` almacenado se conserva como
+ * evidencia de auditoría del orden de registro (se expone en el detalle).
  *
  * Funciones puras y testeables (sin dependencias de React ni Supabase).
  */
@@ -85,7 +101,8 @@ export interface ResumenPeriodo {
   entradas: number;
   /** Σ salidas del período (valor absoluto). */
   salidas: number;
-  /** balance_after del último movimiento del período; saldoInicial si no hay movimientos. */
+  /** Saldo cronológico derivado después del último movimiento del período
+   * (= saldoInicial + entradas − salidas); saldoInicial si no hay movimientos. */
   saldoFinal: number;
   /** Cantidad de movimientos del período. */
   cantidadMovimientos: number;
@@ -98,8 +115,9 @@ export interface ResumenPeriodo {
  * - Entrada/Salida de cada movimiento se derivan del SIGNO de
  *   `quantity_change` (misma convención que el motor RPC de Kardex:
  *   entry = max(0, qc); exit = min(0, qc) * -1).
- * - `saldoFinal` se toma SIEMPRE del `balance_after` registrado por la BD
- *   del último movimiento — jamás se recalcula client-side.
+ * - `saldoFinal` se DERIVA como saldoInicial + entradas − salidas:
+ *   es la única forma cronológicamente coherente cuando existen
+ *   movimientos retro-datados (ver cabecera del archivo).
  */
 export function calcularResumenPeriodo(
   movimientos: KardexMovementLike[],
@@ -115,10 +133,9 @@ export function calcularResumenPeriodo(
   }
 
   const ultimo = movimientos.length > 0 ? movimientos[movimientos.length - 1] : null;
-  const saldoFinal =
-    ultimo && ultimo.balance_after !== null && ultimo.balance_after !== undefined
-      ? ultimo.balance_after
-      : saldoInicial;
+  const saldoFinal = ultimo
+    ? saldoInicial + entradas - salidas
+    : saldoInicial;
 
   return {
     saldoInicial,
@@ -155,8 +172,8 @@ export function formatearCantidad(n: number | null | undefined): string {
  * Ordena cronológicamente ascendente (más antiguo → más reciente) con
  * criterio determinista para movimientos de la misma fecha:
  * `created_at` ascendente, luego `id` ascendente.
- * El saldo corrido mostrado corresponde al `balance_after` de cada
- * movimiento registrado por la BD.
+ * Este es el ORDEN CANÓNICO del submayor (mismo criterio que la ventana
+ * SUM del RPC `get_product_stock_ledger_paginated`).
  */
 export function ordenarCronologico<T extends KardexMovementLike>(movimientos: T[]): T[] {
   return [...movimientos].sort((a, b) => {
@@ -164,5 +181,44 @@ export function ordenarCronologico<T extends KardexMovementLike>(movimientos: T[
     const tb = new Date(b.created_at).getTime() || 0;
     if (ta !== tb) return ta - tb;
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §34-bis — SALDO CORRIDO CRONOLÓGICO DERIVADO DESDE EL ORIGEN
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Movimiento del submayor enriquecido con su saldo cronológico derivado. */
+export interface KardexMovementConSaldo extends KardexMovementLike {
+  /** Saldo acumulado inmediatamente después de contabilizar este movimiento
+   * en el orden canónico (created_at ASC, id ASC):
+ *   `saldo = saldo anterior + entrada − salida`. */
+  saldo: number;
+}
+
+/**
+ * Deriva el saldo corrido cronológico de cada movimiento desde el origen:
+ *
+ *   saldo(0) = saldoInicial + quantity_change(0)
+ *   saldo(n) = saldo(n−1) + quantity_change(n)
+ *
+ * PRECONDICIÓN: `movimientos` debe estar en el orden canónico
+ * (usar `ordenarCronologico` antes). La derivación es independiente del
+ * orden de INSERCIÓN con que la BD encadenó `balance_after` — exactamente
+ * la corrección del defecto del submayor (SKU 15, 2026-10-21): cada fila
+ * muestra el saldo acumulado inmediatamente después de contabilizar ESE
+ * movimiento, y el saldo final reconcilia con Σ quantity_change de todo el
+ * ledger (verificable contra `inventory.quantity` / `products.stock_current`).
+ *
+ * No muta el argumento: devuelve filas nuevas (spread) con el campo `saldo`.
+ */
+export function derivarSaldosCronologicos<T extends KardexMovementLike>(
+  movimientos: T[],
+  saldoInicial: number
+): Array<T & { saldo: number }> {
+  let acumulado = saldoInicial;
+  return movimientos.map((m) => {
+    acumulado += m.quantity_change ?? 0;
+    return { ...m, saldo: acumulado };
   });
 }
