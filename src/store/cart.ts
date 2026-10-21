@@ -146,6 +146,20 @@ interface CartState {
     type: "percentage" | "fixed" | null,
     value: number,
   ) => void;
+  // MISIÓN EDICIÓN-CARRITO (2026-10-21): editar el precio unitario APLICADO a la
+  // operación desde el carrito. Nunca toca el precio maestro del catálogo
+  // (products.price / product_variants.price) — esa separación es la regla
+  // central de la misión; actualizar el catálogo es una acción explícita
+  // independiente con sus propios permisos y validaciones.
+  updateItemPrice: (productId: string, variantId: string | null, price: number) => void;
+  // MISIÓN EDICIÓN-CARRITO: cambiar unidad/variante de una línea (lógica
+  // extraída del handler inline de POSCartItem — FIX-P1-3 merge incluido —
+  // para un único punto de verdad compartido por la línea y el modal).
+  switchItemVariant: (
+    productId: string,
+    currentVariantId: string | null,
+    newVariantId: string | null,
+  ) => void;
   updateItemPayment: (
     productId: string,
     variantId: string | null,
@@ -770,7 +784,10 @@ export const useCartStore = create<CartState>()(
                   existing.payments[0].amount = existing.subtotal;
                 }
                 syncLegacyFields(existing);
-              } else {
+              } else if (state.operationType !== 'issue_slip') {
+                // FIX-MISIÓN-VS (2026-10-21): en modo Vale NO se fabrican pagos
+                // legacy (cash_paid=subtotal) — el vale no es una venta cobrada y
+                // esos pagos fantasma alimentaban los badges de pago del flujo VS.
                 existing.cash_paid = existing.subtotal;
                 existing.transfer_paid = 0;
               }
@@ -840,7 +857,12 @@ export const useCartStore = create<CartState>()(
                 discount_value: (productInput as any).discount_value || 0,
                 discount_currency: (productInput as any).discount_currency || 'CUP',
                 // FIX-PAYMENT-ROWS: 1 fila default en efectivo con el subtotal
-                payments: [{
+                // FIX-MISIÓN-VS (2026-10-21): SOLO en modo VENTA se inicializan
+                // filas de pago. En modo Vale de Salida el item se crea SIN
+                // pagos: el vale no ejecuta validaciones de cobro y las filas
+                // fantasma provocaban badges «Sobrepago/Falta» en un flujo que
+                // no maneja pagos (raíz del problema 2 de la misión).
+                payments: state.operationType === 'issue_slip' ? [] : [{
                   id: generatePaymentId(),
                   method: 'cash',
                   amount: initialSubtotal,
@@ -880,7 +902,12 @@ export const useCartStore = create<CartState>()(
               };
               newItem.subtotal = calculateItemSubtotal(newItem);
               // Asegurar que la primera fila tenga el subtotal correcto
-              newItem.payments[0].amount = newItem.subtotal;
+              // FIX-MISIÓN-VS (2026-10-21): en modo Vale el item nace SIN filas
+              // de pago (payments = []) — no indexar un arreglo vacío y dejar
+              // los legacy en cero (syncLegacyFields itera payments vacío).
+              if (newItem.payments.length > 0) {
+                newItem.payments[0].amount = newItem.subtotal;
+              }
               syncLegacyFields(newItem);
               state.items.push(newItem);
             }
@@ -931,7 +958,10 @@ export const useCartStore = create<CartState>()(
               }
               item.subtotal = calculateItemSubtotal(item);
               // FIX-PAYMENT-ROWS: si el item NO tiene override manual, resetear a 1 fila cash con el nuevo subtotal
-              if (!item.payment_manual_override) {
+              // FIX-MISIÓN-VS (2026-10-21): SOLO en modo VENTA — en modo Vale los
+              // cambios de cantidad no deben recrear filas de pago (el vale no
+              // maneja pagos y su recreación mostraba validaciones ajenas al flujo).
+              if (state.operationType !== 'issue_slip' && !item.payment_manual_override) {
                 item.payments = [{
                   id: generatePaymentId(),
                   method: 'cash',
@@ -942,7 +972,7 @@ export const useCartStore = create<CartState>()(
                   discount_currency: item.cash_currency || item.currency || 'CUP',
                 }];
               }
-              syncLegacyFields(item);
+              if (state.operationType !== 'issue_slip') syncLegacyFields(item);
               state.lastUpdated = Date.now();
             }
           }),
@@ -958,8 +988,11 @@ export const useCartStore = create<CartState>()(
               item.discount_type = type;
               item.discount_value = value;
               item.subtotal = calculateItemSubtotal(item);
-              // FIX-PAYMENT-ROWS: si el item NO tiene override manual, resetear a 1 fila cash
-              if (!item.payment_manual_override) {
+              // FIX-PAYMENT-ROWS: si el item NO tiene override manual, resetear a 1 fila cash con el nuevo subtotal
+              // FIX-MISIÓN-VS (2026-10-21): SOLO en modo VENTA — en modo Vale los
+              // cambios de cantidad no deben recrear filas de pago (el vale no
+              // maneja pagos y su recreación mostraba validaciones ajenas al flujo).
+              if (state.operationType !== 'issue_slip' && !item.payment_manual_override) {
                 item.payments = [{
                   id: generatePaymentId(),
                   method: 'cash',
@@ -970,9 +1003,144 @@ export const useCartStore = create<CartState>()(
                   discount_currency: item.cash_currency || item.currency || 'CUP',
                 }];
               }
-              syncLegacyFields(item);
+              if (state.operationType !== 'issue_slip') syncLegacyFields(item);
               state.lastUpdated = Date.now();
             }
+          }),
+        ),
+
+      // MISIÓN EDICIÓN-CARRITO (2026-10-21): precio unitario aplicado a la
+      // operación. Valida no-negativo/inválido, redondea a la precisión
+      // monetaria del sistema (round2 — misma semántica que ROUND(numeric,2)
+      // del servidor) y recalcula el importe de la línea. El precio maestro
+      // del catálogo NO se modifica jamás desde aquí.
+      updateItemPrice: (productId, variantId, price) =>
+        set(
+          produce((state: CartState) => {
+            const item = state.items.find(
+              (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
+            );
+            if (!item) return;
+            // Validación de negocio (misión §2.C): precio no negativo ni
+            // inválido. NaN/Infinity pueden llegar de inputs del navegador.
+            if (!Number.isFinite(price) || price < 0) {
+              notify("error", "El precio debe ser un número mayor o igual a 0");
+              return;
+            }
+            item.price = round2(price);
+            // FIX-MISIÓN-EDICIÓN (2026-10-21): el ancla CUP del item (base_price_cup)
+            // es el equivalente en CUP del PRECIO APLICADO a la operación — es la
+            // semántica que usan addItem/cambio de tasa. Debe seguir al precio
+            // editado o getExpectedTotalCup() (badge «Falta/Sobrepago», CTA y el
+            // total_amount del checkout) divergen del precio enviado por ítem y
+            // el servidor responde ERR_TOTAL_MISMATCH. El precio MAESTRO del
+            // catálogo (item.product.price / variant.price) sigue intacto: esa es
+            // la separación que exige la misión (§2.B).
+            item.base_price_cup = item.currency && item.currency !== 'CUP'
+              ? round2(item.price * (item.exchange_rate || 1))
+              : item.price;
+            item.subtotal = calculateItemSubtotal(item);
+            // FIX-PAYMENT-ROWS / FIX-MISIÓN-VS: re-sincronizar pagos SOLO en
+            // modo venta y sin override manual del cajero.
+            if (state.operationType !== 'issue_slip' && !item.payment_manual_override) {
+              item.payments = [{
+                id: generatePaymentId(),
+                method: 'cash',
+                amount: item.subtotal,
+                currency: item.cash_currency || item.currency || 'CUP',
+                discount_type: null,
+                discount_value: 0,
+                discount_currency: item.cash_currency || item.currency || 'CUP',
+              }];
+              syncLegacyFields(item);
+            }
+            state.lastUpdated = Date.now();
+          }),
+        ),
+
+      // MISIÓN EDICIÓN-CARRITO (2026-10-21): cambiar unidad/variante de una
+      // línea. Único punto de verdad (antes: handler inline duplicado en
+      // POSCartItem). Preserva FIX-P1-3 (fusión con línea existente) y
+      // FIX-MISIÓN-VS (en modo Vale no se recrean filas de pago). Usa el
+      // cálculo canónico calculateItemSubtotal (antes recalcSubtotal local
+      // divergía en descuentos fijos por línea).
+      switchItemVariant: (productId, currentVariantId, newVariantId) =>
+        set(
+          produce((state: CartState) => {
+            const currentIdx = state.items.findIndex(
+              (it) => it.product_id === productId && (it.variant_id || null) === (currentVariantId || null),
+            );
+            if (currentIdx === -1) return;
+            const currentItem = state.items[currentIdx];
+            const selectedVariant = currentItem.product?.product_variants?.find(
+              (v) => v.id === newVariantId,
+            ) || null;
+
+            // Nombres sin colisión con el parámetro newVariantId (TDZ)
+            let resolvedPrice: number;
+            let resolvedCost: number;
+            let resolvedVariantId: string | null;
+            let resolvedVariant: ProductVariant | null;
+
+            if (selectedVariant) {
+              const cf = selectedVariant.conversion_factor || 1;
+              resolvedPrice = selectedVariant.price || 0;
+              resolvedCost = (currentItem.product.cost_price || 0) * cf;
+              resolvedVariantId = selectedVariant.id;
+              resolvedVariant = selectedVariant;
+            } else {
+              resolvedPrice = currentItem.product.price;
+              resolvedCost = currentItem.product.cost_price || 0;
+              resolvedVariantId = null;
+              resolvedVariant = null;
+            }
+
+            // ¿Ya existe una línea con la variante destino?
+            const existingDestIdx = state.items.findIndex(
+              (it) => it.product_id === productId && (it.variant_id || null) === resolvedVariantId,
+            );
+
+            const isVale = state.operationType === 'issue_slip';
+            const resetPayments = (sub: number, cur: string) =>
+              isVale
+                ? []
+                : [{
+                    id: generatePaymentId(),
+                    method: 'cash' as const,
+                    amount: sub,
+                    currency: cur,
+                    discount_type: null,
+                    discount_value: 0,
+                    discount_currency: cur,
+                  }];
+
+            if (existingDestIdx !== -1 && existingDestIdx !== currentIdx) {
+              // FIX-P1-3: fusionar — sumar cantidad al item existente, remover el actual
+              const destItem = state.items[existingDestIdx];
+              destItem.quantity += currentItem.quantity;
+              destItem.subtotal = calculateItemSubtotal(destItem);
+              if (!isVale) {
+                destItem.payments = resetPayments(destItem.subtotal, destItem.cash_currency || destItem.currency || 'CUP');
+                destItem.cash_paid = destItem.subtotal;
+                destItem.transfer_paid = 0;
+                destItem.zelle_paid = 0;
+              }
+              state.items.splice(currentIdx, 1);
+            } else {
+              // No hay duplicado — actualizar la línea actual
+              currentItem.variant_id = resolvedVariantId;
+              currentItem.variant = resolvedVariant;
+              currentItem.price = resolvedPrice;
+              currentItem.cost = resolvedCost;
+              currentItem.subtotal = calculateItemSubtotal(currentItem);
+              if (!isVale) {
+                currentItem.payments = resetPayments(currentItem.subtotal, currentItem.cash_currency || currentItem.currency || 'CUP');
+                currentItem.cash_paid = currentItem.subtotal;
+                currentItem.transfer_paid = 0;
+                currentItem.zelle_paid = 0;
+              }
+            }
+            state.lastUpdated = Date.now();
           }),
         ),
 
