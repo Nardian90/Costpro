@@ -1,0 +1,13 @@
+=== Vitest contrato F9.D + regresión BUG-022 — SHA e6d885 — 2026-10-21 ===
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 /home/z/my-project/costpro-app/Costpro
+
+ ✓ src/__tests__/api/legal-incidents-audit.test.ts (8 tests) 20ms
+ ✓ src/__tests__/integration/e2e-product-fix-round1.test.ts (16 tests) 5ms
+
+ Test Files  2 passed (2)
+      Tests  24 passed (24)
+   Start at  03:42:47
+   Duration  1.72s (transform 142ms, setup 131ms, import 193ms, tests 26ms, environment 1.11s)
+

@@ -1,0 +1,3 @@
+e6dfd885b5d610005ccb53edb4b22f32e215e186 | 2026-10-20 23:25:50 -0400 | Merge pull request #1439 from Nardian90/agent/mision-decision-20261021
+0eca8137f5121798b617e7fe5504880c37655a82 | 2026-10-21 01:59:23 +0000 | docs(misión-decisión): dictámenes A1/A2 + ruleset v3 corregido + conciliación MISIÓN A (25/25 vivas) + informe único
+2d77b73f42a609b84e3ebf36f046cadacf447b22 | 2026-10-20 21:46:18 -0400 | Merge pull request #1438 from Nardian90/fix/caja-migracion-compat-live
