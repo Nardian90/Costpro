@@ -85,12 +85,21 @@ describe('migración 20261021000001 — tabla documental cash_flow_documents', (
 });
 
 describe('migración 20261021000001 — ledger: una sola escritura del dinero', () => {
-  it('extiende el CHECK de ref_type con cash_flow (patrón ajustes) + índice parcial', () => {
+  it('extiende el CHECK de ref_type con cash_flow + reconciliación viva (R1-R3) + índices', () => {
     const s = sql();
     expect(s).toContain('DROP CONSTRAINT IF EXISTS payment_transactions_ref_type_check');
-    expect(s).toMatch(/CHECK \(ref_type IN \('receipt', 'service', 'production_order', 'work', 'sale', 'commission', 'adjustment', 'cash_flow'\)\)/);
+    // R1 — UNIÓN reconciliada con la BD viva (auditoría 2026-10-21): 'devolution'
+    // (release W7 vivo, 2 filas reales) se conserva; 'adjustment' y 'cash_flow' se añaden.
+    expect(s).toMatch(/CHECK \(ref_type IN \('receipt', 'service', 'production_order', 'work', 'sale', 'commission', 'devolution', 'adjustment', 'cash_flow'\)\)/);
     expect(s).toContain('CREATE INDEX IF NOT EXISTS idx_payment_txn_cash_flow');
     expect(s).toContain("WHERE ref_type = 'cash_flow'");
+    // R2 — columna direction (autocontención del replay) + check unión ('in','out','refund'):
+    // los egresos y las contra-filas de anulación de ingreso usan direction='out'.
+    expect(s).toContain("ADD COLUMN IF NOT EXISTS direction text NOT NULL DEFAULT 'in'");
+    expect(s).toMatch(/CHECK \(direction IN \('in', 'out', 'refund'\)\)/);
+    expect(s).toContain('DROP CONSTRAINT IF EXISTS payment_transactions_direction_check');
+    // R3 — índice parcial de ajustes subsumido (20261012000001 no aplicado en vivo).
+    expect(s).toContain('CREATE INDEX IF NOT EXISTS idx_payment_txn_adjustments');
   });
 
   it('NO escribe en cash_movements (legacy write-only — anti doble conteo)', () => {
