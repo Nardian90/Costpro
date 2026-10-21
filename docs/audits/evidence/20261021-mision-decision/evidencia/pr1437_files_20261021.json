@@ -1,0 +1,236 @@
+[
+ {
+  "status": "added",
+  "filename": "docs/audits/CP-SEC-027_v5_INFORME_DECISIONES_2026-10-21.md",
+  "additions": 78,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/WORKLOG_RESOLUCION_TAREAS_COSTPRO.md",
+  "additions": 249,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-DATA-002_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-INV-005_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-001_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-002_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-003_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-004_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-005_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-006_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-007_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-008_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-009_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-010_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-011_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-012_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-013_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-014_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-015_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-016_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-017_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-RES-018_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-SEC-001_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-SEC-002_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-SEC-010_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/certificaciones/CERT_CP-SEC-027_2026-10-21.md",
+  "additions": 35,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/ALLOWLIST_6_ENTRADAS_2026-12-31.md",
+  "additions": 75,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/FASE1_DICTAMEN_PR1433.md",
+  "additions": 47,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/FASE2_PROTECCION_MAIN.md",
+  "additions": 36,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/FICHA_DECISION_BACKFILL_DAVID9999.md",
+  "additions": 66,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/PAQUETE_C_COGS_DERIVED.md",
+  "additions": 115,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/PAQUETE_D_LEGAL_INCIDENTS.md",
+  "additions": 102,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/README.md",
+  "additions": 30,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/RULESET_PROPUESTA_MAIN_v2.json",
+  "additions": 81,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/evidencia/checks_main_c08a4038cc_20261021.json",
+  "additions": 1058,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/evidencia/pr1433_estado_20261021.json",
+  "additions": 371,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/evidencia/pr1433_files_20261021.json",
+  "additions": 26,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/evidencia/verify_18x18_20261021.txt",
+  "additions": 22,
+  "deletions": 0
+ },
+ {
+  "status": "added",
+  "filename": "docs/audits/evidence/20261021-decisiones-operativas/evidencia/verify_cd_r1_readonly_20261021.json",
+  "additions": 54,
+  "deletions": 0
+ }
+]

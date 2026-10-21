@@ -1,0 +1,12 @@
+  hasError: true,
+  hasRow: false
+}
+
+ ✓ src/__tests__/hooks/useSavePendingReception-tenant-rls.test.tsx (5 tests) 36ms
+ ✓ src/__tests__/api/uuid-loose-central-contract.test.ts (5 tests) 19ms
+
+ Test Files  5 passed (5)
+      Tests  25 passed (25)
+   Start at  01:55:10
+   Duration  5.20s (transform 427ms, setup 282ms, import 1.26s, tests 249ms, environment 2.70s)
+

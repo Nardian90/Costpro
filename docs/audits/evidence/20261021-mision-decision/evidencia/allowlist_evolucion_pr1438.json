@@ -1,0 +1,35 @@
+{
+ "corte": "2026-10-21",
+ "pre_pr1438_head_c284e749b": {
+  "security_definer_total_bruto": 97,
+  "funciones_distintas": 96,
+  "duplicada": [
+   "get_inventory_report"
+  ],
+  "source_of_truth_baseline": 4,
+  "expires": {
+   "2027-06-30": 91,
+   "2026-12-31": 6
+  }
+ },
+ "post_pr1438_main_2d77b73f": {
+  "security_definer_total_bruto": 98,
+  "funciones_distintas": 97,
+  "agregada_por_pr1438": [
+   "get_cash_flow_summary"
+  ],
+  "source_of_truth_baseline": 0,
+  "expires": {
+   "2027-06-30": 92,
+   "2026-12-31": 6
+  },
+  "las_6_vencimiento_2026-12-31": [
+   "check_bulk_ops_hourly_limit",
+   "get_table_writable_columns",
+   "validate_backup_registry_drift",
+   "validate_post_restore",
+   "validate_pre_restore_fk_integrity",
+   "validate_store_can_be_modified"
+  ]
+ }
+}
