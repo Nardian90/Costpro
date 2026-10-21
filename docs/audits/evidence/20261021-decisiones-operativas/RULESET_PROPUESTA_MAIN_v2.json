@@ -1,0 +1,81 @@
+{
+  "_meta": {
+    "nombre": "ruleset-propuesta-main v2 (CORREGIDO)",
+    "fecha": "2026-10-21",
+    "autor": "agente — expediente CP-SEC-027 v5 Fase 2",
+    "estado": "PREPARADO — PENDIENTE DE AUTORIZACIÓN. NO APLICADO (main verificado SIN protección: GET /branches/main/protection → 404; GET /rulesets → []).",
+    "diferencias_con_la_v1_perdida": "La v1 (`ruleset-propuesta-main.json` del expediente conversacional v4/v5) se perdió con el sandbox del 19-21/10. Esta v2 se reconstruye DESDE CERO con los nombres de checks VERIFICADOS contra la API el 21/10 (check-runs del commit c08a4038cc) en lugar de los nombres de documento. Incluye la corrección estructural de las instrucciones: en un repositorio PERSONAL los bypass_actors NO están disponibles (feature de org-level), por lo que el bypass del propietario se materializa como control administrativo (editar/desactivar el ruleset, auditable en el audit log de GitHub) — no como bypass silencioso."
+  },
+  "ruleset": {
+    "name": "protect-main-v2",
+    "target": "branch",
+    "enforcement": "evaluate",
+    "_nota_enforcement": "PRIMERO 'evaluate' (observación sin bloqueo, ~14 días). Pasar a 'active' SOLO con autorización expresa del propietario tras revisar las evaluaciones. API: PATCH enforcement='active'.",
+    "conditions": {
+      "ref_name": {
+        "include": ["refs/heads/main"],
+        "exclude": []
+      }
+    },
+    "rules": [
+      {
+        "type": "deletion",
+        "_nota": "Prohíbe borrar main."
+      },
+      {
+        "type": "non_fast_forward",
+        "_nota": "Prohíbe force-push a main."
+      },
+      {
+        "type": "required_status_checks",
+        "parameters": {
+          "strict_required_status_checks_policy": false,
+          "_nota_strict": "false = los checks del ÚLTIMO commit del PR cuentan (no exige re-correr contra el sha del merge). Con 'true' cada merge re-dispara checks contra el sha resultante: más seguro pero duplica minutos de CI en un repo con 12 PRs/día. Recomendado iniciar con false y endurecer a true cuando la CI E2E vuelva a ser bloqueante (CP-INFRA-001).",
+          "required_status_checks": [
+            { "context": "Security Audit", "integration_id": null, "app_id": 15368 },
+            { "context": "Unit & Integration Tests", "integration_id": null, "app_id": 15368 },
+            { "context": "TypeCheck + Lint + Unit Tests + Build", "integration_id": null, "app_id": 15368 },
+            { "context": "TypeScript Security Checks", "integration_id": null, "app_id": 15368 },
+            { "context": "Allowlist Review", "integration_id": null, "app_id": 15368 },
+            { "context": "SQL Static Checks", "integration_id": null, "app_id": 15368 },
+            { "context": "SQL DB Security Checks", "integration_id": null, "app_id": 15368 }
+          ]
+        },
+        "_nota_contextos": "Los 7 contexts son EXACTAMENTE los publicados por GitHub Actions (app_id 15368) verificados el 21/10 en el commit c08a4038cc (7 success + 2 'E2E Tests (Playwright)' skipped). E2E NO se exige: hoy corre skipped (CP-INFRA-001) — hacerlo required rompería TODO merge hasta reactivar E2E."
+      }
+    ],
+    "_reglas_excluidas_deliberadamente": {
+      "pull_request_reviews": "Opción A (aprobación independiente obligatoria) — DESCARTADA: el repositorio tiene UN propietario como único revisor posible (todos los PRs históricos los fusiona Nardian90); exigir approval externa = deadlock permanente hasta que exista un segundo revisor.",
+      "required_deployments": "sin ambientes configurados en el repo.",
+      "commit_message_pattern": "sin política de mensajes ratificada."
+    }
+  },
+  "instrucciones_de_aplicacion": {
+    "precondiciones": [
+      "1. El propietario autoriza EXPRESAMENTE la creación del ruleset (restricción v5: no modificar configuración de GitHub sin orden).",
+      "2. main avanza libremente durante el modo evaluate (no bloquea nada).",
+      "3. Antes de pasar a active: revisar 7-14 días de 'evaluate' (GET /repos/Nardian90/Costpro/rulesets/{id} → evaluation... / el insight de 'rule insights' del UI)."
+    ],
+    "comandos": [
+      {
+        "paso": "crear en modo evaluate",
+        "curl": "curl -X POST -H 'Authorization: Bearer $GITHUB_TOKEN' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/Nardian90/Costpro/rulesets -d @ruleset-propuesta-main-v2.json",
+        "nota": "Enviar ÚNICAMENTE el bloque 'ruleset' de este JSON (sin _meta ni instrucciones)."
+      },
+      {
+        "paso": "verificar",
+        "curl": "curl -H 'Authorization: Bearer $GITHUB_TOKEN' https://api.github.com/repos/Nardian90/Costpro/rulesets"
+      },
+      {
+        "paso": "activar tras la observación (autorización aparte)",
+        "curl": "curl -X PATCH -H 'Authorization: Bearer $GITHUB_TOKEN' -H 'Accept: application/vnd.github+json' https://api.github.com/repos/Nardian90/Costpro/rulesets/{id} -d '{\"enforcement\":\"active\"}'"
+      }
+    ],
+    "post_verificaciones": [
+      "En modo active: intentar un push directo de prueba que toque supabase/migrations/** desde una rama temporal → debe ser RECHAZADO con el mensaje del ruleset.",
+      "Un PR con un check en rojo (o any de los 7 ausente) → el botón de merge debe quedar bloqueado.",
+      "Un PR con los 7 checks en verde → el merge queda habilitado para el propietario (comportamiento esperado: los checks corrigen en el PR; el push directo es lo que queda bloqueado)."
+    ],
+    "reversión": "DELETE /repos/Nardian90/Costpro/rulesets/{id} (el propietario puede eliminar el ruleset en cualquier momento desde Settings → Rules → Rulesets; la acción queda registrada en el audit log de GitHub — ese es el 'bypass de emergencia' auditable del propietario en un repo personal)."
+  }
+}

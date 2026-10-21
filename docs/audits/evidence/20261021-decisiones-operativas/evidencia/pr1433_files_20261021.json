@@ -1,0 +1,26 @@
+[
+  {
+    "sha": "75139af8d7bdee9bac8d94f436ae8f82e657b1d7",
+    "filename": ".github/workflows/security-gate.yml",
+    "status": "modified",
+    "additions": 11,
+    "deletions": 0,
+    "changes": 11,
+    "blob_url": "https://github.com/Nardian90/Costpro/blob/f76fe090006557649f53df0d1ed937fc7cc3b2cf/.github%2Fworkflows%2Fsecurity-gate.yml",
+    "raw_url": "https://github.com/Nardian90/Costpro/raw/f76fe090006557649f53df0d1ed937fc7cc3b2cf/.github%2Fworkflows%2Fsecurity-gate.yml",
+    "contents_url": "https://api.github.com/repos/Nardian90/Costpro/contents/.github%2Fworkflows%2Fsecurity-gate.yml?ref=f76fe090006557649f53df0d1ed937fc7cc3b2cf",
+    "patch": "@@ -7,6 +7,17 @@ on:\n       - 'src/app/api/**'\n       - 'ci-gate-allowlist.json'\n       - 'scripts/ci-gate-*.js'\n+  push:\n+    # Defensa en profundidad (CP-SEC-027 v3): la allowlist solo puede\n+    # vencer sin revisión si un push directo a main la modifica saltando\n+    # el PR — este canal cierra ese hueco. allowlist-review es barato\n+    # (validación JSON pura) y fail-closed ante entradas vencidas.\n+    branches: [main]\n+    paths:\n+      - 'supabase/migrations/**'\n+      - 'src/app/api/**'\n+      - 'ci-gate-allowlist.json'\n+      - 'scripts/ci-gate-*.js'\n \n jobs:\n   ts-security-checks:"
+  },
+  {
+    "sha": "5bb9e2b8682ad16c0a5a2249c2d9d7ae70ae3b6a",
+    "filename": ".github/workflows/sql-security-gate.yml",
+    "status": "modified",
+    "additions": 21,
+    "deletions": 0,
+    "changes": 21,
+    "blob_url": "https://github.com/Nardian90/Costpro/blob/f76fe090006557649f53df0d1ed937fc7cc3b2cf/.github%2Fworkflows%2Fsql-security-gate.yml",
+    "raw_url": "https://github.com/Nardian90/Costpro/raw/f76fe090006557649f53df0d1ed937fc7cc3b2cf/.github%2Fworkflows%2Fsql-security-gate.yml",
+    "contents_url": "https://api.github.com/repos/Nardian90/Costpro/contents/.github%2Fworkflows%2Fsql-security-gate.yml?ref=f76fe090006557649f53df0d1ed937fc7cc3b2cf",
+    "patch": "@@ -16,13 +16,34 @@ name: SQL Security Gate\n # skipped en las 90+ ejecuciones históricas del workflow (verificado por API,\n # runs #76-#90), incluidos PRs que añadían migraciones.\n \n+# El workflow se dispara en dos canales, con el MISMO filtro de rutas:\n+#   • pull_request — verificación PRE-fusión (canal principal del repo).\n+#   • push a main — defensa en profundidad del canal de fusión directa:\n+#     cubre (a) pushes directos que salten el PR y (b) conflictos semánticos\n+#     post-fusión donde el RESULTADO del merge difiere del head del PR\n+#     (p. ej. PR-A fusionó la allowlist y PR-B añadió una función — cada\n+#     PR verde por separado, el estado fusionado rojo). Evidencia viva de\n+#     la necesidad (2026-10-19): los PR #1430 y #1431 tocaron\n+#     supabase/migrations/** ANTES de que #1428 fusionara este workflow,\n+#     por lo que NINGÚN gate corrió sobre ellos como PRs — el estado\n+#     post-fusión solo quedó verificado por sonda manual posterior.\n+\n on:\n   pull_request:\n     paths:\n       - 'supabase/migrations/**'\n       - 'scripts/ci-gate-sql-checks.js'\n       - 'scripts/ci-gate-evaluate.js'\n       - 'ci-gate-allowlist.json'\n+  push:\n+    # Solo main: el gate lee el ESTADO REAL de producción (read-only) y\n+    # su semáforo en push valida que el árbol fusionado sigue limpio.\n+    branches: [main]\n+    paths:\n+      - 'supabase/migrations/**'\n+      - 'scripts/ci-gate-sql-checks.js'\n+      - 'scripts/ci-gate-evaluate.js'\n+      - 'ci-gate-allowlist.json'\n \n permissions:\n   contents: read"
+  }
+]
