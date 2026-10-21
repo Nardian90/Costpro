@@ -38,6 +38,16 @@ vi.mock('@/store', () => ({
   ),
 }));
 
+// DETERMINISMO MULTI-ENTORNO (fallo de CI 2026-10-22): auditService usa
+// `getAdminClientSync() ?? supabase`. En CI existen env vars de Supabase
+// → getSupabaseAdminSafe devuelve un cliente → los inserts de auditoría
+// iban al cliente admin (no capturados) y los tests 1-2 fallaban con
+// `expected [] to have a length of 1`. Forzando null, el fallback al mock
+// `supabase` es idéntico en local y en CI.
+vi.mock('@/lib/supabase-admin', () => ({
+  getSupabaseAdminSafe: () => null,
+}));
+
 import { useUpdateReception } from '@/hooks/api/useReceptions';
 
 const RECEIPT = {

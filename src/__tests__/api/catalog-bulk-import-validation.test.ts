@@ -57,7 +57,9 @@ function makeProductsTable() {
 
 const createClientMock = vi.fn(() => ({ from: () => makeProductsTable() }));
 vi.mock('@supabase/supabase-js', () => ({
-  createClient: (...args: unknown[]) => createClientMock(...args),
+  // any[] (no unknown[]): el spread sobre createClientMock requiere tipo
+  // tupla/rest — TS2556 en CI con unknown[] (mismo patrón que service-types.test.ts).
+  createClient: (...args: any[]) => createClientMock(...args),
 }));
 
 function jsonReq(payload: unknown) {
