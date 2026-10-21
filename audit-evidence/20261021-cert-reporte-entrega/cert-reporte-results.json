@@ -1,0 +1,628 @@
+{
+ "generated_at": "2026-10-21T05:52:30.648Z",
+ "metodologia": "PG 18 aislado (embedded-postgres) + migración v2.23.0 aplicada (estado VIVO) + RPC get_cash_report real + capa TS real del repo (collection-currency.ts + summary.ts — mismas funciones de /api/cash-report, vista, PDF y Excel)",
+ "matrix": [
+  {
+   "id": "F-01",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 50000,
+    "USD": 100
+   },
+   "obtenido": {
+    "CUP": 50000,
+    "USD": 100,
+    "cupSplit": {
+     "cash": 0,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 0
+    },
+    "ingresosCajaCUP": 50000,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 50000,
+     "obtenido": 50000
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 100,
+     "obtenido": 100
+    }
+   ]
+  },
+  {
+   "id": "F-01b",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 0,
+    "USD": 0
+   },
+   "obtenido": {
+    "CUP": 0,
+    "USD": 0,
+    "cupSplit": {
+     "cash": 0,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 0
+    },
+    "ingresosCajaCUP": 0,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 0,
+     "obtenido": 0
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 0,
+     "obtenido": 0
+    }
+   ]
+  },
+  {
+   "id": "F-01c",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 30000,
+    "USD": 0
+   },
+   "obtenido": {
+    "CUP": 30000,
+    "USD": 0,
+    "cupSplit": {
+     "cash": 0,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 0
+    },
+    "ingresosCajaCUP": 30000,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 30000,
+     "obtenido": 30000
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 0,
+     "obtenido": 0
+    }
+   ]
+  },
+  {
+   "id": "M-01",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 20000,
+    "USD": 20,
+    "ventaTotalUsdEq": 40
+   },
+   "obtenido": {
+    "CUP": 20000,
+    "USD": 20,
+    "cupSplit": {
+     "cash": 20000,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 20
+    },
+    "ingresosCajaCUP": 0,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 20000,
+     "obtenido": 20000
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 20,
+     "obtenido": 20
+    }
+   ],
+   "extra": "ventaTotal=40 USD-eq (esperado 40) · sin doble conteo: SÍ"
+  },
+  {
+   "id": "M-04",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 5000,
+    "USD": 0
+   },
+   "obtenido": {
+    "CUP": 5000,
+    "USD": 0,
+    "cupSplit": {
+     "cash": 5000,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 0
+    },
+    "ingresosCajaCUP": 0,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 5000,
+     "obtenido": 5000
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 0,
+     "obtenido": 0
+    }
+   ]
+  },
+  {
+   "id": "M-05",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 0,
+    "USD": 30
+   },
+   "obtenido": {
+    "CUP": 0,
+    "USD": 30,
+    "cupSplit": {
+     "cash": 0,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 30
+    },
+    "ingresosCajaCUP": 0,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 0,
+     "obtenido": 0
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 30,
+     "obtenido": 30
+    }
+   ]
+  },
+  {
+   "id": "M-06",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 5000,
+    "USD": 0,
+    "transferCUP": 3000
+   },
+   "obtenido": {
+    "CUP": 5000,
+    "USD": 0,
+    "cupSplit": {
+     "cash": 5000,
+     "transfer": 3000
+    },
+    "usdSplit": {
+     "cash": 0
+    },
+    "ingresosCajaCUP": 0,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 5000,
+     "obtenido": 5000
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 0,
+     "obtenido": 0
+    },
+    {
+     "name": "transfer CUP (no efectivo)",
+     "esperado": 3000,
+     "obtenido": 3000
+    }
+   ]
+  },
+  {
+   "id": "M-08",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 5000,
+    "USD": 0
+   },
+   "obtenido": {
+    "CUP": 5000,
+    "USD": 0,
+    "cupSplit": {
+     "cash": 5000,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 0
+    },
+    "ingresosCajaCUP": 0,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 5000,
+     "obtenido": 5000
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 0,
+     "obtenido": 0
+    }
+   ]
+  },
+  {
+   "id": "M-12",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 25000,
+    "USD": 20,
+    "transferCUP": 3000
+   },
+   "obtenido": {
+    "CUP": 25000,
+    "USD": 20,
+    "cupSplit": {
+     "cash": 25000,
+     "transfer": 3000
+    },
+    "usdSplit": {
+     "cash": 20
+    },
+    "ingresosCajaCUP": 0,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 25000,
+     "obtenido": 25000
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 20,
+     "obtenido": 20
+    },
+    {
+     "name": "transfer CUP (no efectivo)",
+     "esperado": 3000,
+     "obtenido": 3000
+    }
+   ]
+  },
+  {
+   "id": "M-13",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 5000,
+    "USD": 0
+   },
+   "obtenido": {
+    "CUP": 5000,
+    "USD": 0,
+    "cupSplit": {
+     "cash": 5000,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 0
+    },
+    "ingresosCajaCUP": 0,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 5000,
+     "obtenido": 5000
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 0,
+     "obtenido": 0
+    }
+   ],
+   "extra": "venta voided excluida del RPC: SÍ · historial intacto"
+  },
+  {
+   "id": "M-14-15",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 9700,
+    "USD": 0,
+    "voucherInformativo": 500
+   },
+   "obtenido": {
+    "CUP": 9700,
+    "USD": 0,
+    "cupSplit": {
+     "cash": 10000,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 0
+    },
+    "ingresosCajaCUP": 0,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 300,
+    "reembolsosVoucherCUP": 500,
+    "voucherInformativo": 500
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 9700,
+     "obtenido": 9700
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 0,
+     "obtenido": 0
+    }
+   ],
+   "extra": "cash −300 aplicado · voucher 500 informativo (esperado neto 9700)"
+  },
+  {
+   "id": "M-17",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 30000,
+    "USD": 0
+   },
+   "obtenido": {
+    "CUP": 30000,
+    "USD": 0,
+    "cupSplit": {
+     "cash": 0,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 0
+    },
+    "ingresosCajaCUP": 50000,
+    "egresosCajaCUP": 20000,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 30000,
+     "obtenido": 30000
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 0,
+     "obtenido": 0
+    }
+   ]
+  },
+  {
+   "id": "M-18",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 0,
+    "USD": 100,
+    "tasaAplicada": 800
+   },
+   "obtenido": {
+    "CUP": 0,
+    "USD": 100,
+    "cupSplit": {
+     "cash": 0,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 100
+    },
+    "ingresosCajaCUP": 0,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 0,
+     "obtenido": 0
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 100,
+     "obtenido": 100
+    }
+   ],
+   "extra": "tasa aplicada 800 (histórica) — amount_cup generado por fila, no por tasa vigente"
+  },
+  {
+   "id": "M-19",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 66700,
+    "USD": 30,
+    "cierreDif": 0
+   },
+   "obtenido": {
+    "CUP": 66700,
+    "USD": 30,
+    "cupSplit": {
+     "cash": 20000,
+     "transfer": 5000
+    },
+    "usdSplit": {
+     "cash": 30
+    },
+    "ingresosCajaCUP": 50000,
+    "egresosCajaCUP": 3000,
+    "reembolsosCashCUP": 300,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 66700,
+     "obtenido": 66700
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 30,
+     "obtenido": 30
+    }
+   ],
+   "extra": "reporte por moneda: 66.700 CUP + 30 USD · arqueo canónico: cash_sales=50000 (incluye 30 USD valorados a la tasa), system_cash=96700 — declarando CUP-canónico la diferencia es 0 (bases de conciliación distintas y coherentes, documentadas)"
+  },
+  {
+   "id": "M-20",
+   "status": "PASS",
+   "esperado": {
+    "identical": true
+   },
+   "obtenido": {
+    "CUP": 66700,
+    "USD": 30,
+    "cupSplit": {
+     "cash": 20000,
+     "transfer": 5000
+    },
+    "usdSplit": {
+     "cash": 30
+    },
+    "ingresosCajaCUP": 50000,
+    "egresosCajaCUP": 3000,
+    "reembolsosCashCUP": 300,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [],
+   "extra": "reporte ×2 idéntico y ledger sin mutaciones: SÍ"
+  },
+  {
+   "id": "ISO",
+   "status": "PASS",
+   "esperado": {
+    "CUP": 20000,
+    "USD": 20
+   },
+   "obtenido": {
+    "CUP": 20000,
+    "USD": 20,
+    "cupSplit": {
+     "cash": 20000,
+     "transfer": 0
+    },
+    "usdSplit": {
+     "cash": 20
+    },
+    "ingresosCajaCUP": 0,
+    "egresosCajaCUP": 0,
+    "reembolsosCashCUP": 0,
+    "reembolsosVoucherCUP": 0,
+    "voucherInformativo": 0
+   },
+   "checks": [
+    {
+     "name": "esperado CUP",
+     "esperado": 20000,
+     "obtenido": 20000
+    },
+    {
+     "name": "esperado USD",
+     "esperado": 20,
+     "obtenido": 20
+    }
+   ],
+   "extra": "aislamiento entre tiendas: correcto"
+  }
+ ],
+ "noEjecutados": [
+  {
+   "id": "M-02",
+   "escenario": "Vuelto en moneda distinta a la recibida (venta 20 USD, cliente entrega 30 USD, vuelto 10.000 CUP)",
+   "estado": "NO EJECUTADO — LIMITACIÓN DEL MODELO",
+   "causa": "El modelo de transactions no tiene campos de vuelto ni de moneda de cambio: los pools registran lo que entra al cajón y las incidencias de sobrepago (payment_incidents.received_cup) documentan diferencias en CUP. Un vuelto entregado en CUP por una cobranza en USD NO es representable sin anotación manual — el brief prohíbe simularlo.",
+   "cambio_minimo_propuesto": "1) Columna change_amount + change_currency en transactions (o payment_transactions ref_type='change', direction='out'); 2) término change_out por moneda en las fórmulas v2.24; 3) fila «Vuelto entregado» en el reporte (PDF/Excel/UI). Requiere decisión del propietario."
+  },
+  {
+   "id": "M-03B",
+   "escenario": "Variante M-03B: vuelto de 5 USD entregado en CUP (5.000 CUP)",
+   "estado": "NO EJECUTADO — LIMITACIÓN DEL MODELO",
+   "causa": "Misma limitación que M-02 (sin modelo de vuelto cross-moneda).",
+   "cambio_minimo_propuesto": "Ídem M-02."
+  },
+  {
+   "id": "M-07",
+   "escenario": "Pago insuficiente (rechazar o dejar pendiente sin cerrar cobro incompleto)",
+   "estado": "NO EJECUTADO — FUERA DE LA CAPA DEL REPORTE",
+   "causa": "La validación de cobro insuficiente pertenece al flujo POS (create_sale_v2 / checkout): el reporte solo ve ventas ya contabilizadas. El caso se valida en la capa RPC del POS, no en el Reporte Entrega."
+  },
+  {
+   "id": "M-11",
+   "escenario": "Pago parte CUP + parte USD con vuelto",
+   "estado": "NO EJECUTADO — LIMITACIÓN DEL MODELO (vuelto)",
+   "causa": "El pago mixto cross-moneda SÍ está soportado y certificado (M-01/M-12); el VUELTO asociado comparte la limitación de M-02.",
+   "cambio_minimo_propuesto": "Ídem M-02."
+  }
+ ],
+ "summary": {
+  "total": 20,
+  "pass": 16,
+  "fail": 0,
+  "noEjecutados": 4
+ }
+}
