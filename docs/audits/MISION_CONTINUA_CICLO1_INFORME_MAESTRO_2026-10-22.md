@@ -143,3 +143,33 @@ están en §6 del informe de conciliación de Misión C y en las notas fila a
 fila del CSV: la más inmediata es decidir el commit/fusión de los PRs
 documentales y, si quiere activar las migraciones preparadas, correr antes
 las dos queries de verificación que viven en sus encabezados.
+
+---
+
+## ADENDA — CI de los 5 PRs (cierre del ciclo, 2026-10-22)
+
+Los checks de los 5 PRs terminaron **todos en verde** (success/skip, cero
+fallos). #1441 requirió 3 commits de corrección de CI, cada uno con causa
+raíz identificada:
+
+1. **TS2556** (TypeCheck de CI): `vi.fn(impl)` con implementación sin
+   parámetros infiere firma `[]` y todo spread sobre ella es ilegal — fix:
+   rest param en la implementación del mock. (tsc local no verificable por
+   el OOM documentado CP-INFRA-002; CI es la autoridad de typecheck.)
+2. **Fallo real de determinismo multi-entorno** (Unit & Integration): en CI
+   existen env vars de Supabase → `getSupabaseAdminSafe()` devolvía un
+   cliente y los inserts de auditoría del test iban por el camino admin (no
+   capturados). Fix: mock del admin a `null` + reproducida la condición de
+   CI localmente (env vars presentes → 413/413).
+3. **Higiene de aislamiento**: la config de vitest no tiene `unstubEnvs`, por
+   lo que los `vi.stubEnv` persisten en el `process.env` del worker y pueden
+   contaminar archivos posteriores del mismo pool (el fallo transitorio de
+   `ai-command-center` — componente ajeno al diff del PR — coincidió con el
+   cambio de scheduling por la adición de archivos). Fix:
+   `afterAll(() => vi.unstubAllEnvs())`. Los 3 tests del archivo de
+   recepciones-audit que afirban CERO inserts ganaron además valor real con
+   el fix 2 (antes pasaban de forma espuria en CI).
+
+Estado final de checks por PR (heads): #1441 `ac02f4308` 6 ok + 2 skip ·
+#1442 `5a2bbf957` · #1443 `484d936d3` · #1444 `128e9077e` · #1445 `110e23075`
+— cero fallos. Ninguna fusión realizada (decisión del propietario).
