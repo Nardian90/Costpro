@@ -505,3 +505,59 @@ describe('ValesSalidaView — botón VER: contraste WCAG 2.2 AA + coherencia', (
     expect(contrastRatio('#e4e4e7', '#1a1a1a')).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+describe('ValesSalidaView — invalidación de kardex tras emitir/devolver (CP-INV-009)', () => {
+  function renderViewWithSpy() {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const spy = vi.spyOn(qc, 'invalidateQueries');
+    render(
+      <QueryClientProvider client={qc}>
+        <ValesSalidaView />
+      </QueryClientProvider>,
+    );
+    return spy;
+  }
+
+  it('17 · DEVOLVER un vale invalida kardex y product-kardex (reflejo inmediato en Kardex)', async () => {
+    const spy = renderViewWithSpy();
+    const user = userEvent.setup();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Devolver vale VS-000001-2026' })).toBeTruthy());
+    await user.click(screen.getByRole('button', { name: 'Devolver vale VS-000001-2026' }));
+    await user.type(screen.getByLabelText(/Motivo de la devolución/i), 'Registrado dos veces por error');
+
+    apiFetchMock.mockResolvedValueOnce({ status: 'success', slip_id: '11111111-1111-1111-1111-111111111111', slip_number: 'VS-000001-2026', new_status: 'reversed' });
+    await user.click(screen.getByRole('button', { name: /Devolver Vale$/i }));
+
+    await waitFor(() => expect(spy).toHaveBeenCalledWith({ queryKey: ['kardex'] }));
+    expect(spy).toHaveBeenCalledWith({ queryKey: ['product-kardex'] });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ['stock-movements'] });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ['inventory'] });
+  });
+
+  it('18 · EMITIR un vale desde el modal dedicado también invalida kardex y product-kardex', async () => {
+    const spy = renderViewWithSpy();
+    const user = userEvent.setup();
+    await waitFor(() => expect(screen.getByRole('button', { name: /Crear Vale de Salida/i })).toBeTruthy());
+    await user.click(screen.getByRole('button', { name: /Crear Vale de Salida/i }));
+
+    const search = await screen.findByLabelText(/Buscar productos/i);
+    await user.type(search, 'Tor');
+    await waitFor(() => expect(screen.getByRole('option', { name: /Tornillo M8/ })).toBeTruthy());
+    await user.click(screen.getByRole('option', { name: /Tornillo M8/ }));
+    await user.type(screen.getByLabelText(/Concepto \/ notas/i), 'Consumo interno de mantenimiento');
+    await user.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    await screen.findByText(/Impacto en inventario/i);
+
+    apiFetchMock.mockResolvedValueOnce({
+      status: 'success',
+      slip_id: '22222222-2222-2222-2222-222222222222',
+      slip_number: 'VS-000004-2026',
+    });
+    await user.click(screen.getByRole('button', { name: /Emitir Vale/i }));
+
+    await waitFor(() => expect(spy).toHaveBeenCalledWith({ queryKey: ['kardex'] }));
+    expect(spy).toHaveBeenCalledWith({ queryKey: ['product-kardex'] });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ['stock-movements'] });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ['vales-salida'] });
+  });
+});
