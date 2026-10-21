@@ -31,7 +31,7 @@ import {
   Printer, Download, DollarSign, TrendingUp, TrendingDown,
   ChevronDown, ChevronRight, Eye, Trash2, Save, RotateCcw, Settings,
   Sparkles, FileText, CheckSquare, Square, RefreshCw, AlertTriangle,
-  Plus, X, ListChecks, FileSearch, Calculator, Users, Minus, BookOpen,
+  Plus, X, ListChecks, FileSearch, Calculator, Users, Minus, BookOpen, Sheet,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
@@ -47,6 +47,7 @@ import {
   methodLabel,
   type CashReportStoreInfo, type CashReportPdfOptions, type CashReportSummaries,
 } from './cash-report-pdf';
+import { descargarCashReportExcel } from './cash-report-excel';
 import {
   TEMPLATES, CUP_DEFAULT_DENOMS, USD_DEFAULT_DENOMS, LS_KEYS,
   loadPdfTemplate, savePdfTemplate, validatePdfTemplate,
@@ -482,6 +483,38 @@ export default function CashReportView() {
   const previewStale = !!applied && !!previewSigRef.current && previewSigRef.current !== previewSignature;
 
   // ── Exportar PDF (acción explícita e independiente de la vista previa) ──
+  const [exportingExcel, setExportingExcel] = useState(false);
+
+  // ── MISIÓN EXCEL 2026-10-21 (Parte B): exportar Excel .xlsx real ──
+  // MISMA fuente de datos y parámetros que el PDF: reporte APLICADO (no el
+  // borrador), mismos summaries (fetch una sola vez), mismas opciones. Sin
+  // efectos contables: solo lectura del reporte ya calculado.
+  const handleExportExcel = useCallback(async () => {
+    if (!applied?.report) {
+      toast.info('Genera el reporte primero: pulsa «Generar reporte».');
+      return;
+    }
+    if (exportingExcel || exporting) return;
+    setExportingExcel(true);
+    try {
+      let summaries: CashReportSummaries | undefined;
+      if (pdfTemplate === 'diario') summaries = await fetchDiarioSummaries(applied.cfg.startDate, applied.cfg.endDate);
+      const filename = await descargarCashReportExcel({
+        report: applied.report, template: pdfTemplate,
+        startDate: applied.cfg.startDate, endDate: applied.cfg.endDate,
+        storeInfo, deliveredBy, recipientName, madeBy,
+        cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptions,
+        orientation: pdfOrientation,
+      }, summaries);
+      toast.success(`Excel generado: ${filename}`);
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      toast.error(e?.message || 'Error al generar el Excel.');
+    } finally {
+      setExportingExcel(false);
+    }
+  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, exporting, exportingExcel]);
+
   const handleExport = useCallback(async () => {
     if (!applied?.report) {
       toast.info('Genera el reporte primero: pulsa «Generar reporte».');
@@ -555,19 +588,37 @@ export default function CashReportView() {
           </button>
         }
         secondaryActions={
-          <button
-            onClick={handleExport}
-            disabled={exporting || !applied}
-            title={applied ? `Descarga el PDF de ${applied.cfg.startDate} → ${applied.cfg.endDate}` : 'Genera el reporte antes de exportar'}
-            className={cn(
-              'px-3 rounded-xl border border-border/40 text-xs font-black uppercase hover:bg-muted flex items-center justify-center gap-1.5',
-              touch,
-              (exporting || !applied) && 'opacity-60 cursor-not-allowed',
-            )}
-          >
-            {exporting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            Exportar PDF
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleExport}
+              disabled={exporting || !applied}
+              title={applied ? `Descarga el PDF de ${applied.cfg.startDate} → ${applied.cfg.endDate}` : 'Genera el reporte antes de exportar'}
+              className={cn(
+                'px-3 rounded-xl border border-border/40 text-xs font-black uppercase hover:bg-muted flex items-center justify-center gap-1.5',
+                touch,
+                (exporting || !applied) && 'opacity-60 cursor-not-allowed',
+              )}
+            >
+              {exporting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Exportar PDF
+            </button>
+            {/* MISIÓN EXCEL 2026-10-21: exportación .xlsx junto al PDF —
+                misma fuente de datos, parámetros y reglas de negocio. */}
+            <button
+              onClick={handleExportExcel}
+              disabled={exportingExcel || !applied}
+              title={applied ? `Descarga el Excel (.xlsx) de ${applied.cfg.startDate} → ${applied.cfg.endDate}` : 'Genera el reporte antes de exportar'}
+              data-testid="cash-report-export-excel"
+              className={cn(
+                'px-3 rounded-xl border border-border/40 text-xs font-black uppercase hover:bg-muted flex items-center justify-center gap-1.5',
+                touch,
+                (exportingExcel || !applied) && 'opacity-60 cursor-not-allowed',
+              )}
+            >
+              {exportingExcel ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sheet className="w-4 h-4" />}
+              Exportar Excel
+            </button>
+          </div>
         }
       />
 
