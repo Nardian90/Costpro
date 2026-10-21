@@ -12,6 +12,7 @@ import {
 } from '@/validation/schemas';
 import { getSupabaseUrl } from '@/lib/utils';
 import { withLogging, withTableLogging, getCleanStoreId } from './base';
+import { resolveStoreTenantId } from '@/lib/store-tenant';
 import { z } from 'zod';
 // R2-4: imports para auditoría
 import { useAuthStore } from '@/store';
@@ -132,9 +133,21 @@ export function useCreateProduct() {
   return useMutation({
     mutationFn: async (rawProduct: z.input<typeof createProductInputSchema>) => {
       const newProduct = createProductInputSchema.parse(rawProduct);
+      // FIX CP-CAT-004 (productos): la policy products_tenant_insert exige
+      // tenant_id = current_user_tenant_id() AND store_id ∈ current_user_store_ids().
+      // El insert anterior omitía tenant_id (columna nullable sin default) → 42501
+      // «new row violates row-level security policy» que la UI mostraba como
+      // «No autorizado» aunque el admin tuviera permisos correctos. El tenant se
+      // resuelve leyendo stores.tenant_id con el JWT del usuario (fail-closed):
+      // stores_tenant_select solo devuelve tiendas del propio tenant, así que el
+      // valor queda validado contra la identidad autenticada y no es dato del cliente.
+      if (!newProduct.store_id) {
+        throw new Error('No hay una tienda activa seleccionada para crear el producto.');
+      }
+      const verifiedTenantId = await resolveStoreTenantId(newProduct.store_id);
       return await withTableLogging('insert', 'products', () => supabase
         .from('products')
-        .insert([newProduct]));
+        .insert([{ ...newProduct, tenant_id: verifiedTenantId }]));
     },
     onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -413,8 +426,17 @@ export function useBulkUpdateProducts() {
     mutationFn: async (rawInput: z.infer<typeof bulkUpdateProductsInputSchema>) => {
       const input = bulkUpdateProductsInputSchema.parse(rawInput);
       // Direct Supabase upsert (RPC bulk_update_products does not exist)
+      // FIX CP-CAT-004 (productos): resolver tenant_id verificado por tienda
+      // (fail-closed) — las filas nuevas del upsert también pasan por
+      // products_tenant_insert y las actualizadas por products_tenant_update,
+      // que exigen tenant_id = current_user_tenant_id().
+      const tenantByStore = new Map<string, string>();
+      for (const storeId of new Set(input.products.map(p => p.store_id))) {
+        tenantByStore.set(storeId, await resolveStoreTenantId(storeId));
+      }
       const rows = input.products.map(p => ({
         store_id: p.store_id,
+        tenant_id: tenantByStore.get(p.store_id),
         sku: p.sku,
         name: p.name,
         cost_price: p.cost_price,

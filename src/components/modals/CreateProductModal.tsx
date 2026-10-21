@@ -256,9 +256,16 @@ export const CreateProductModal = () => {
       if (lowMsg.includes('duplicate key') || lowMsg.includes('unique constraint') || lowMsg.includes('23505')) {
         friendlyMsg = 'Ya existe un producto con ese SKU en esta tienda. Usa un SKU diferente o genera uno automáticamente.';
       } else if (lowMsg.includes('row-level security') || lowMsg.includes('42501') || lowMsg.includes('rls')) {
-        friendlyMsg = 'No tienes permisos para crear productos en esta tienda.';
+        friendlyMsg = 'No tienes permisos para crear productos en esta tienda. Si crees que es un error, cierra sesión, vuelve a iniciarla e inténtalo de nuevo.';
+      } else if (lowMsg.includes('no se pudo verificar la tienda activa')) {
+        // StoreTenantResolutionError (FIX CP-CAT-004): sesión o permisos de tienda
+        friendlyMsg = rawMsg;
       } else if (lowMsg.includes('margin') || lowMsg.includes('precio de venta no puede ser menor')) {
         friendlyMsg = 'El precio de venta no puede ser menor que el costo (margen negativo).';
+      } else if (lowMsg.includes('22p02') || lowMsg.includes('invalid input syntax for type uuid')) {
+        friendlyMsg = 'Datos inválidos: hay un identificador de tienda o producto mal formado. Recarga la página e inténtalo de nuevo.';
+      } else if (lowMsg.includes('23503') || lowMsg.includes('violates foreign key constraint')) {
+        friendlyMsg = 'La tienda indicada no existe o no es válida. Selecciona de nuevo la tienda activa e inténtalo de nuevo.';
       } else if (lowMsg.includes('network') || lowMsg.includes('fetch')) {
         friendlyMsg = 'Error de conexión. Verifica tu internet e intenta de nuevo.';
       }
