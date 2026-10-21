@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-21T01:05:05.948Z
+-- Captured  : 2026-10-21T01:12:36.525Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 137 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -1374,6 +1374,43 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
+END;
+$function$
+
+
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1410,43 +1447,6 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
-END;
-$function$
-
-
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
 END;
 $function$
 
@@ -1658,7 +1658,9 @@ BEGIN
   v_system_expected_total := v_system_cash + v_transfer_sales + v_zelle_sales;
   v_difference := (COALESCE(p_declared_cash, 0) + COALESCE(p_declared_vouchers, 0)) - v_system_expected_total;
 
-  -- 5. UPDATE closure con valores recalculados
+  -- 5. UPDATE closure con valores recalculados (R5: sin updated_at — la
+  --    tabla cash_closures NO tiene esa columna; v2.18.0 vivo la referenciaba
+  --    y el cierre de turno rebotaba en runtime desde 2026-10-10)
   UPDATE public.cash_closures SET
     status = 'cerrado',
     closed_at = NOW(),
@@ -1667,8 +1669,7 @@ BEGIN
     declared_total = COALESCE(p_declared_cash, 0) + COALESCE(p_declared_vouchers, 0),
     system_expected_total = v_system_expected_total,
     difference = v_difference,
-    notes = p_notes,
-    updated_at = NOW()
+    notes = p_notes
   WHERE id = p_closure_id;
 
   -- 6. Audit log atómico

@@ -98,6 +98,11 @@
 --       Los espejos v2.21.0 pasan a FOUND tras SELECT INTO (detección real de
 --       fila). Auditoría 2026-10-21: evidencia con la fila pendiente de
 --       TIENDA CENTRAL (e525004e): r IS NULL=false ∧ r IS NOT NULL=false.
+--   R5 · close_cash_shift (v2.18.0 vivo y v2.21.0 fusionada) referenciaba
+--       cash_closures.updated_at — columna INEXISTENTE (el UPDATE rebotaba
+--       en runtime: cierre de turno roto en producción desde 2026-10-10,
+--       hallazgo de la matriz contable S21 en BEGIN…ROLLBACK). Se elimina la
+--       referencia; el único sello temporal del cierre es closed_at = NOW().
 --
 -- NOTA CONTRACT-SURFACE: close_cash_shift/5, get_cash_shift_expected/1,
 -- get_cash_report/4 y next_document_number/3 están certificadas en vivo; esta
@@ -1200,7 +1205,9 @@ BEGIN
   v_system_expected_total := v_system_cash + v_transfer_sales + v_zelle_sales;
   v_difference := (COALESCE(p_declared_cash, 0) + COALESCE(p_declared_vouchers, 0)) - v_system_expected_total;
 
-  -- 5. UPDATE closure con valores recalculados
+  -- 5. UPDATE closure con valores recalculados (R5: sin updated_at — la
+  --    tabla cash_closures NO tiene esa columna; v2.18.0 vivo la referenciaba
+  --    y el cierre de turno rebotaba en runtime desde 2026-10-10)
   UPDATE public.cash_closures SET
     status = 'cerrado',
     closed_at = NOW(),
@@ -1209,8 +1216,7 @@ BEGIN
     declared_total = COALESCE(p_declared_cash, 0) + COALESCE(p_declared_vouchers, 0),
     system_expected_total = v_system_expected_total,
     difference = v_difference,
-    notes = p_notes,
-    updated_at = NOW()
+    notes = p_notes
   WHERE id = p_closure_id;
 
   -- 6. Audit log atómico
