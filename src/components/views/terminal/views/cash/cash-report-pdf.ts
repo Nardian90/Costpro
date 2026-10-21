@@ -1067,6 +1067,10 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     if (s.ingresosCaja > 0) incomeRows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja });
     if (s.egresosCaja > 0) incomeRows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, note: 'expense' });
     if (s.reembolsosCash > 0) incomeRows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, note: 'expense' });
+    // v2.23.0 (decisión del propietario 2026-10-21): reembolsos por voucher —
+    // INFORMATIVO (nota 'info', igual que comisiones por transferencia): no
+    // tocan el efectivo esperado; documenta el neto del lado vouchers.
+    if (s.reembolsosVoucher > 0) incomeRows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, note: 'info' });
 
     const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, s.efectivoEsperado);
 

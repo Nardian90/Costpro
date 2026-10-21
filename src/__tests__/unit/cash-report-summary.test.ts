@@ -390,6 +390,57 @@ describe('MISIÓN DE SEGUIMIENTO 2026-10-21 — reembolsos de devoluciones (regl
     const s = computeDailySummary(r, 'CUP');
     expect(s.reembolsosCash).toBe(0);
     expect(s.efectivoEsperado).toBe(1000);
+    // v2.23.0: expuestos como reembolsosVoucher (informativo, base NETA)
+    expect(s.reembolsosVoucher).toBe(700);
+  });
+
+  it('v2.23.0 — reembolsos por voucher (transfer+zelle) se exponen informativos sin tocar el esperado', () => {
+    // Decisión del propietario 2026-10-21 «según estándar internacional»:
+    // conciliación contra estado externo = movimiento NETO del período. El
+    // reporte documenta los brutos y los vouchers netos; el balance de la
+    // hoja permanece SOLO efectivo.
+    const r = S({
+      sales_split: { CUP: { cash: 1000, transfer: 800, zelle: 200, mixedUnsplit: 0, total: 2000 } },
+      refund_rows: [
+        { id: 'rf1', payment_method: 'transfer', currency: 'CUP', amount: 300, amount_cup: 300 },
+      ],
+    });
+    const s = computeDailySummary(r, 'CUP');
+    expect(s.reembolsosVoucher).toBe(300);
+    expect(s.reembolsosCash).toBe(0);
+    expect(s.efectivoEsperado).toBe(1000); // intacto
+  });
+
+  it('v2.23.0 — refund cash + voucher en el mismo día: cada medio en su término', () => {
+    const r = S({
+      sales_split: { CUP: { cash: 1000, transfer: 500, zelle: 0, mixedUnsplit: 0, total: 1500 } },
+      refund_rows: [
+        { id: 'rf1', payment_method: 'cash', currency: 'CUP', amount: 100, amount_cup: 100 },
+        { id: 'rf2', payment_method: 'transfer', currency: 'CUP', amount: 50, amount_cup: 50 },
+      ],
+    });
+    const s = computeDailySummary(r, 'CUP');
+    expect(s.reembolsosCash).toBe(100);
+    expect(s.reembolsosVoucher).toBe(50);
+    expect(s.efectivoEsperado).toBe(900); // 1000 − 100 (el voucher no toca el cajón)
+  });
+
+  it('v2.23.0 — refund voucher USD solo afecta la hoja USD (aislamiento por moneda)', () => {
+    const r = S({
+      sales_split: {
+        CUP: { cash: 1000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 1000 },
+        USD: { cash: 50, transfer: 100, zelle: 0, mixedUnsplit: 0, total: 150 },
+      },
+      refund_rows: [
+        { id: 'rf1', payment_method: 'transfer', currency: 'USD', amount: 20, amount_cup: 8200 },
+      ],
+    });
+    const cup = computeDailySummary(r, 'CUP');
+    const usd = computeDailySummary(r, 'USD');
+    expect(cup.reembolsosVoucher).toBe(0);
+    expect(usd.reembolsosVoucher).toBe(20);
+    expect(usd.reembolsosCash).toBe(0);
+    expect(usd.efectivoEsperado).toBe(50); // intacto
   });
 
   it('devolución parcial + total: refunds cash acumulan (200+100)', () => {
@@ -427,6 +478,7 @@ describe('MISIÓN DE SEGUIMIENTO 2026-10-21 — reembolsos de devoluciones (regl
     });
     const s = computeDailySummary(r, 'CUP');
     expect(s.reembolsosCash).toBe(0);
+    expect(s.reembolsosVoucher).toBe(0);
     expect(s.efectivoEsperado).toBe(12600);
   });
 

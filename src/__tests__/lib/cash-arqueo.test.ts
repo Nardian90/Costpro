@@ -7,7 +7,9 @@ import { computeArqueo, type CashShiftBreakdown } from '@/lib/cash-arqueo';
  * (migraciones 20261010000002 v2.18.0 + 20261021000001 v2.21.0 — MISIÓN
  * INGRESOS/EGRESOS: documentos de caja como términos in/out — y
  * 20261021120000 v2.22.0 — MISIÓN DE SEGUIMIENTO: reembolsos de devolución
- * en efectivo como término cash_refunds).
+ * en efectivo como término cash_refunds; v2.23.0 — decisión del propietario
+ * 2026-10-21 «según estándar internacional»: reembolsos por voucher como
+ * término voucher_refunds (base NETA del lado vouchers).
  */
 
 const base: CashShiftBreakdown = {
@@ -20,6 +22,7 @@ const base: CashShiftBreakdown = {
   cash_flow_in: 0,
   cash_flow_out: 0,
   cash_refunds: 0,
+  voucher_refunds: 0,
   transfer_sales: 0,
   zelle_sales: 0,
 };
@@ -165,6 +168,38 @@ describe('Arqueo de caja v2.22.0 — reembolsos de devoluciones (MISIÓN DE SEGU
     expect(r.difference).toBe(0);
   });
 
+  it('v2.23.0: refund por VOUCHER reduce el lado vouchers (base NETA), no el efectivo', () => {
+    // Decisión del propietario 2026-10-21 (estándar internacional: la
+    // conciliación contra el estado externo es movimiento NETO del período).
+    // Ventas 1000 cash + 800 transfer + 200 zelle; refund por transfer de 300.
+    const b: CashShiftBreakdown = {
+      ...base, cash_sales: 1000, transfer_sales: 800, zelle_sales: 200, voucher_refunds: 300,
+    };
+    const r = computeArqueo(b, 1000, 700);
+    expect(r.expected_cash).toBe(1000); // intacto
+    expect(r.expected_vouchers).toBe(700); // 800+200−300
+    expect(r.expected_total).toBe(1700);
+    expect(r.voucher_diff).toBe(0);
+    expect(r.difference).toBe(0);
+  });
+
+  it('v2.23.0: refund por voucher + refund en efectivo — ambos medios, cada uno en su lado', () => {
+    const b: CashShiftBreakdown = {
+      ...base, cash_sales: 1000, transfer_sales: 500, cash_refunds: 100, voucher_refunds: 50,
+    };
+    const r = computeArqueo(b, 900, 450);
+    expect(r.expected_cash).toBe(900);
+    expect(r.expected_vouchers).toBe(450);
+    expect(r.difference).toBe(0);
+  });
+
+  it('v2.23.0: voucher_refunds con cero (comportamiento idéntico a v2.22.0)', () => {
+    const b: CashShiftBreakdown = { ...base, cash_sales: 1000, transfer_sales: 500, zelle_sales: 0 };
+    const r = computeArqueo(b, 1000, 500);
+    expect(r.expected_vouchers).toBe(500);
+    expect(r.difference).toBe(0);
+  });
+
   it('Devolución parcial + total: refunds acumulados 200+100 sobre venta 1000', () => {
     const b: CashShiftBreakdown = { ...base, opening_balance: 0, cash_sales: 1000, cash_refunds: 300 };
     expect(computeArqueo(b, 700, 0).expected_cash).toBe(700);
@@ -181,7 +216,7 @@ describe('Arqueo de caja v2.22.0 — reembolsos de devoluciones (MISIÓN DE SEGU
     expect(r.expected_cash).toBe(700); // no 400 (doble resta) ni 1000 (resta omitida)
   });
 
-  it('Refunds + documentos de caja + comisiones juntos: fórmula completa v2.22.0', () => {
+  it('Refunds + documentos de caja + comisiones juntos: fórmula completa v2.23.0', () => {
     const b: CashShiftBreakdown = {
       ...base,
       opening_balance: 100,
@@ -192,17 +227,24 @@ describe('Arqueo de caja v2.22.0 — reembolsos de devoluciones (MISIÓN DE SEGU
       cash_commissions: 100,
       cash_flow_out: 400,
       cash_refunds: 250,
+      transfer_sales: 600,
+      zelle_sales: 100,
+      voucher_refunds: 150,
     };
-    // 100 + 1000 + 500 + 2000 − 300 − 100 − 400 − 250 = 2550
+    // Efectivo: 100 + 1000 + 500 + 2000 − 300 − 100 − 400 − 250 = 2550
+    // Vouchers netos: 600 + 100 − 150 = 550
     expect(computeArqueo(b, 2550, 0).expected_cash).toBe(2550);
-    expect(computeArqueo(b, 2550, 0).difference).toBe(0);
+    expect(computeArqueo(b, 2550, 550).expected_vouchers).toBe(550);
+    expect(computeArqueo(b, 2550, 550).difference).toBe(0);
   });
 
-  it('Tolerante a breakdown sin cash_refunds (RPC v2.21.0 antiguo → tratado como 0)', () => {
-    const legacy = { ...base, cash_sales: 1000 } as Record<string, unknown>;
+  it('Tolerante a breakdown sin cash_refunds/voucher_refunds (RPC v2.21.0 antiguo → tratado como 0)', () => {
+    const legacy = { ...base, cash_sales: 1000, transfer_sales: 400 } as Record<string, unknown>;
     delete legacy.cash_refunds;
-    const r = computeArqueo(legacy as unknown as CashShiftBreakdown, 1000, 0);
+    delete legacy.voucher_refunds;
+    const r = computeArqueo(legacy as unknown as CashShiftBreakdown, 1000, 400);
     expect(r.expected_cash).toBe(1000); // sin NaN ni degradación
+    expect(r.expected_vouchers).toBe(400);
     expect(r.difference).toBe(0);
   });
 });

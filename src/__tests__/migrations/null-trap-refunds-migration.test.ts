@@ -12,9 +12,15 @@
  *     regla deliberada fase0 restaurado (solo transfers_in/open_cash_sessions
  *     bloquean; el filtro de tipos NO se cambió).
  *   - adjust_sale_payment: detección de cambio de payment_method null-safe.
- *   - Las SEIS fórmulas de caja v2.22.0 con el término cash_refunds
+ *   - Las SEIS fórmulas de caja con el término cash_refunds v2.22.0
  *     (ref_type='devolution' AND direction='refund' AND payment_method='cash',
  *     ventana por payment_date) — autoritativa + espejos + validaciones.
+ *   - v2.23.0 (decisión del propietario 2026-10-21 «según estándar
+ *     internacional»): término voucher_refunds (base NETA del lado vouchers)
+ *     en las 3 fórmulas de expectativa (close_cash_shift + espejo + KPIs) y
+ *     clave informativa refunds_voucher_total_cup en get_cash_report; las
+ *     validaciones de DISPONIBILIDAD (create/reverse) no cambian (los
+ *     vouchers no son efectivo).
  *   - ACLs re-declaradas idénticas (service_role-only en mutaciones de caja;
  *     authenticated en lecturas REM-R2-READ).
  *   - Sin recalculo de saldos, sin tocar cierres históricos, sin cambiar el
@@ -103,7 +109,7 @@ describe('migración 20261021120000 — término cash_refunds en las 6 fórmulas
     { name: 'get_cash_shift_expected (espejo)', decl: /'cash_refunds', v_cash_refunds/, term: /ref_type = 'devolution'\s*\n\s*AND direction = 'refund'\s*\n\s*AND payment_date > v_window_start/ },
     { name: 'get_cash_flow_summary (KPIs)', decl: /'cash_refunds', v_cash_refunds/, term: /ref_type = 'devolution' AND direction = 'refund'\s*\n\s*AND payment_date > v_window_start AND payment_date <= now\(\);/ },
     { name: 'get_cash_report (Reporte de Entrega)', decl: /'refunds_cash_total_cup', v_refunds_cash_total_cup/, term: /ref_type = 'devolution' AND direction = 'refund' AND payment_method = 'cash'/ },
-    { name: 'create_cash_flow_document (validación)', decl: /'formula', 'v2\.22\.0'/, term: /ref_type = 'devolution' AND direction = 'refund'\s*\n\s*AND payment_date > v_shift\.created_at AND payment_date <= now\(\);/ },
+    { name: 'create_cash_flow_document (validación)', decl: /'formula', 'v2\.23\.0'/, term: /ref_type = 'devolution' AND direction = 'refund'\s*\n\s*AND payment_date > v_shift\.created_at AND payment_date <= now\(\);/ },
     { name: 'reverse_cash_flow_document (validación)', decl: /'cf-anul-' \|\| v_doc\.id::text/, term: /ref_type = 'devolution' AND direction = 'refund'\s*\n\s*AND payment_date > v_shift\.created_at AND payment_date <= now\(\);/ },
   ];
 
@@ -131,6 +137,50 @@ describe('migración 20261021120000 — término cash_refunds en las 6 fórmulas
       if (t.trim() === '') continue;
     }
     expect(s).toMatch(/AND payment_method = 'cash'\s*\n\s*AND ref_type = 'devolution'/);
+  });
+
+  it('v2.23.0 — término voucher_refunds (base NETA) en las 3 fórmulas de expectativa', () => {
+    const s = sql();
+    // decl + SELECT en las 3 fórmulas de expectativa (formato expandido y compacto)
+    expect((s.match(/v_voucher_refunds numeric := 0;/g) || []).length).toBe(3);
+    expect((s.match(/INTO v_voucher_refunds/g) || []).length).toBe(3);
+    expect((s.match(/AND payment_method IN \('transfer', 'zelle'\)/g) || []).length).toBe(4);
+    // la resta del lado vouchers aparece en las 3 (autoritativa + espejo + KPIs)
+    expect((s.match(/- v_voucher_refunds/g) || []).length).toBe(3);
+    // el JSON de desglose expone el término (auditoría + return + espejo + KPIs)
+    expect((s.match(/'voucher_refunds', v_voucher_refunds/g) || []).length).toBeGreaterThanOrEqual(3);
+    expect(s).toMatch(/'voucher_refunds_devolution', v_voucher_refunds/);
+    // los términos de voucher excluyen cash (medio real de pago)
+    expect(s).toMatch(/AND payment_method IN \('transfer', 'zelle'\)\s*\n\s*AND ref_type = 'devolution'/);
+  });
+
+  it('v2.23.0 — get_cash_report expone refunds_voucher_total_cup informativo (balance sigue solo-efectivo)', () => {
+    const s = sql();
+    expect(s).toMatch(/'refunds_voucher_total_cup', v_refunds_voucher_total_cup/);
+    // el balance NO resta vouchers: solo el tramo cash
+    expect(s).toMatch(/- v_refunds_cash_total_cup\s*\n\s*\)\s*INTO v_totals;/);
+    expect(s).not.toMatch(/balance_cup[^;]*v_refunds_voucher_total_cup/);
+  });
+
+  it('v2.23.0 — validaciones de disponibilidad SIN término voucher (el voucher no es efectivo)', () => {
+    const s = sql();
+    // create/reverse calculan disponibilidad de EFECTIVO: sin voucher_refunds
+    // dentro de sus cuerpos. Aislamos por secciones.
+    const createStart = s.indexOf('CREATE OR REPLACE FUNCTION public.create_cash_flow_document(');
+    const reverseStart = s.indexOf('CREATE OR REPLACE FUNCTION public.reverse_cash_flow_document(');
+    const createEnd = s.indexOf('-- ── 5f. reverse_cash_flow_document');
+    const createBody = s.slice(createStart, createEnd > -1 ? createEnd : s.length);
+    const reverseBody = s.slice(reverseStart);
+    expect(createBody).not.toContain('v_voucher_refunds');
+    expect(reverseBody).not.toContain('v_voucher_refunds');
+  });
+
+  it('documentación de la decisión del propietario (estándar internacional) en la migración', () => {
+    const s = sql();
+    expect(s).toContain('DECISIÓN DEL PROPIETARIO (2026-10-21');
+    expect(s).toContain('REFUNDS DE VOUCHERS — BASE NETA');
+    expect(s).toContain('R-DEV2 MANTENIDO');
+    expect(s).toContain('NIC 1.27');
   });
 
   it('sin doble conteo: los cobros ref_type=sale siguen excluidos y la venta original no se toca', () => {

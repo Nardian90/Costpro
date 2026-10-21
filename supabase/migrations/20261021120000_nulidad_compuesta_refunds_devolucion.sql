@@ -85,9 +85,29 @@
 --       cobros ref_type='sale' siguen excluidos de los términos de pagos.
 --     · Trazabilidad intacta: la fila refund conserva ref_id (devolution_id)
 --       + transaction_id (venta original).
---     · residual documentado (R-DEV2): reverse_devolution NO inserta fila
+--     · residual documentado (R-DEV2): reverse_devolución NO inserta fila
 --       contra financiera — el dinero reingresado por el cliente se registra
 --       operativamente como documento de Ingreso de caja (cash_flow 'in').
+--
+-- DECISIÓN DEL PROPIETARIO (2026-10-21, delegada «según estándar
+-- internacional» — secciones 7/9 del informe de auditoría):
+--   · R-DEV2 MANTENIDO tal cual (procedimiento operativo documentado). Bajo
+--     base de acumulación (NIC 1.27) la recuperación del dinero por el
+--     cliente es un evento DISTINTO del reversal comercial: un auto-contra
+--     reconocería efectivo aún no recibido y generaría arqueos falsamente
+--     descuadrados. El Ingreso de caja manual registra el evento cuando
+--     ocurre, con trazabilidad completa. Sin cambio de código.
+--   · REFUNDS DE VOUCHERS — BASE NETA (ampliación v2.23.0 de esta misma
+--     migración, aún no aplicada): el lado vouchers del arqueo descuenta los
+--     reembolsos pagados por transferencia/zelle (voucher_refunds),
+--     simétrico al término cash_refunds. Fundamento: la conciliación contra
+--     el estado externo (banco/zelle) es movimiento NETO del período
+--     (práctica de conciliación bancaria; reversión de ingresos NIC-I 15.42);
+--     la simetría de la regla P1 (el esperado baja por el medio real de
+--     pago) exige el mismo tratamiento en el lado vouchers. Censo vivo
+--     2026-10-21: 0 refunds de vouchers (2 filas cash) — término preventivo,
+--     neto cero con los datos actuales. El desglose expone voucher_refunds
+--     para reconstruir brutos → netos con transparencia en UI/PDF.
 --
 -- Compatibilidad: DDL-only sobre funciones (CREATE OR REPLACE), sin cambios
 -- de esquema, sin recalculo de saldos, sin tocar cierres históricos ni el
@@ -923,18 +943,24 @@ COMMENT ON FUNCTION public.adjust_sale_payment(uuid, uuid, text, numeric, numeri
   'Ajusta método/medios de pago, moneda/tasa o precios de ítems de una venta completada con snapshot BEFORE/AFTER y audit NIIF 15 + IAS 8. AUDITORÍA 2026-10-21: detección de cambio de payment_method null-safe (IS DISTINCT FROM — columna NULLABLE; antes un ajuste sobre una venta con payment_method NULL se descartaba en silencio).';
 
 -- ══════════════════════════════════════════════════════════════════════════
--- PARTE 5 — Fórmulas de caja v2.22.0: REEMBOLSOS EN EFECTIVO de devoluciones
--- comerciales (P1). Regla (misma en las 6 fórmulas — una sola fuente de
--- verdad):
---   cash_refunds = SUM(amount_cup) WHERE ref_type='devolution'
---                   AND direction='refund' AND payment_method='cash'
---                   AND payment_date EN LA VENTANA DEL TURNO
+-- PARTE 5 — Fórmulas de caja v2.23.0: REEMBOLSOS de devoluciones comerciales
+-- (P1 + decisión vouchers del propietario 2026-10-21). Regla (misma en las
+-- fórmulas — una sola fuente de verdad):
+--   cash_refunds   = SUM(amount_cup) WHERE ref_type='devolution'
+--                    AND direction='refund' AND payment_method='cash'
+--                    AND payment_date EN LA VENTANA DEL TURNO
+--   voucher_refunds = SUM(amount_cup) WHERE ref_type='devolution'
+--                    AND direction='refund' AND payment_method IN
+--                    ('transfer','zelle') AND payment_date EN LA VENTANA
 --   Efectivo esperado = fondo + entradas − salidas − cash_refunds
+--   Vouchers esperados (NETOS) = transferencias + zelle − voucher_refunds
 -- Evidencia viva al cierre de la auditoría: 2 filas por 239.405 CUP
 -- (ENERVIDA NC-000014/NC-000015) invisibles a las 5 fórmulas v2.21.0.
 -- Sin doble conteo: la devolución NO toca la venta original; los cobros
 -- ref_type='sale' siguen fuera de los términos de pagos. Cierres históricos:
 -- congelados (ventana por payment_date; nunca se recalcula hacia atrás).
+-- La validación de DISPONIBILIDAD de efectivo (create/reverse_cash_flow)
+-- usa solo el lado efectivo de la fórmula: voucher_refunds no la afecta.
 -- ══════════════════════════════════════════════════════════════════════════
 
 -- ── 5a. close_cash_shift (AUTORITATIVA — cierre/arqueo) ──
@@ -963,6 +989,7 @@ DECLARE
   v_cash_flow_in numeric := 0;
   v_cash_flow_out numeric := 0;
   v_cash_refunds numeric := 0;
+  v_voucher_refunds numeric := 0;
   v_system_cash numeric := 0;
   v_system_expected_total numeric := 0;
   v_difference numeric := 0;
@@ -985,7 +1012,7 @@ BEGIN
   -- 3. Advisory lock por store
   PERFORM pg_advisory_xact_lock(hashtext(v_closure.store_id::text));
 
-  -- 4. Fórmula v2.22.0 — Efectivo esperado =
+  -- 4. Fórmula v2.23.0 — Efectivo esperado =
   --      Fondo inicial + Entradas de efectivo − Salidas de efectivo
   --        − Reembolsos en efectivo de devoluciones
   --    Entradas: ventas cobradas en efectivo (parte cash de ventas mixtas
@@ -998,9 +1025,13 @@ BEGIN
   --      AL CLIENTE en EFECTIVO por una devolución comercial sale físicamente
   --      del cajón (payment_transactions ref_type='devolution',
   --      direction='refund', payment_method='cash'). Reembolsos por
-  --      transferencia/zelle NO tocan el efectivo; el crédito de tienda no
-  --      genera fila. Ventana por payment_date efectiva — un refund de un
-  --      turno cerrado queda congelado en ese cierre (historia intacta).
+  --      transferencia/zelle NO tocan el efectivo — desde v2.23.0 (decisión
+  --      del propietario 2026-10-21, base NETA) restan en el LADO VOUCHERS
+  --      del arqueo (voucher_refunds): el dinero salió por ese medio y la
+  --      conciliación contra el estado externo es movimiento neto. El crédito
+  --      de tienda no genera fila. Ventana por payment_date efectiva — un
+  --      refund de un turno cerrado queda congelado en ese cierre (historia
+  --      intacta).
   --    NO son efectivo: transferencias y zelle (van a su propio lado del
   --      arqueo); pagos pendientes de documentos (no hay salida de dinero);
   --      cobros de ventas (ref_type='sale') — ya están contados como ventas.
@@ -1084,12 +1115,27 @@ BEGIN
       AND payment_date > v_closure.created_at
       AND payment_date <= NOW();
 
+  -- Reembolsos por VOUCHERS de devoluciones (v2.23.0 — decisión del
+  -- propietario 2026-10-21, base NETA): el dinero salió por transferencia/
+  -- zelle ⇒ el lado vouchers del arqueo baja por el medio real de pago.
+  -- Simétrico al término cash_refunds (regla P1); neto cero con los datos
+  -- vivos actuales (censo: 0 refunds de vouchers).
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_voucher_refunds
+    FROM public.payment_transactions
+    WHERE store_id = v_closure.store_id
+      AND payment_method IN ('transfer', 'zelle')
+      AND ref_type = 'devolution'
+      AND direction = 'refund'
+      AND payment_date > v_closure.created_at
+      AND payment_date <= NOW();
+
   -- Calcular totales
   v_system_cash := COALESCE(v_closure.opening_balance, 0)
                  + v_cash_sales + v_cash_production + v_cash_flow_in
                  - v_cash_outflows - v_cash_commissions - v_cash_flow_out
                  - v_cash_refunds;
-  v_system_expected_total := v_system_cash + v_transfer_sales + v_zelle_sales;
+  v_system_expected_total := v_system_cash + v_transfer_sales + v_zelle_sales
+                             - v_voucher_refunds;
   v_difference := (COALESCE(p_declared_cash, 0) + COALESCE(p_declared_vouchers, 0)) - v_system_expected_total;
 
   -- 5. UPDATE closure con valores recalculados
@@ -1112,7 +1158,7 @@ BEGIN
       'system_cash', v_system_cash,
       'expected_total', v_system_expected_total,
       'difference', v_difference,
-      'formula', 'v2.22.0',
+      'formula', 'v2.23.0',
       'cash_sales', v_cash_sales,
       'cash_production_income', v_cash_production,
       'cash_outflows_suppliers', v_cash_outflows,
@@ -1120,6 +1166,7 @@ BEGIN
       'cash_flow_in', v_cash_flow_in,
       'cash_flow_out', v_cash_flow_out,
       'cash_refunds_devolution', v_cash_refunds,
+      'voucher_refunds_devolution', v_voucher_refunds,
       'transfer_sales', v_transfer_sales,
       'zelle_sales', v_zelle_sales
     )
@@ -1137,6 +1184,7 @@ BEGIN
     'cash_flow_in', v_cash_flow_in,
     'cash_flow_out', v_cash_flow_out,
     'cash_refunds', v_cash_refunds,
+    'voucher_refunds', v_voucher_refunds,
     'transfer_sales', v_transfer_sales,
     'zelle_sales', v_zelle_sales
   );
@@ -1148,7 +1196,7 @@ REVOKE EXECUTE ON FUNCTION public.close_cash_shift(uuid, numeric, numeric, text,
 GRANT EXECUTE ON FUNCTION public.close_cash_shift(uuid, numeric, numeric, text, uuid) TO service_role;
 
 COMMENT ON FUNCTION public.close_cash_shift(uuid, numeric, numeric, text, uuid) IS
-  'v2.22.0: fórmula de arqueo sin doble conteo + documentos Ingresos/Egresos de caja + REEMBOLSOS EN EFECTIVO de devoluciones (ref_type=devolution, direction=refund, method=cash — MISIÓN DE SEGUIMIENTO 2026-10-21: el dinero devuelto al cliente en efectivo reduce el esperado; transfer/zelle/store_credit no tocan el cajón; ventana por payment_date, cierres históricos congelados). Egresos = pagos proveedores cash + egresos documentados; ingresos = ventas cash (split, soporta mixed) + anticipos producción/work cash + ingresos documentados; comisiones solo cash. Transfer/Zelle NO son efectivo.';
+  'v2.23.0: fórmula de arqueo sin doble conteo + documentos Ingresos/Egresos de caja + REEMBOLSOS de devoluciones (efectivo: cash_refunds resta del esperado — el dinero devuelto al cliente en efectivo salió del cajón; vouchers: voucher_refunds resta del lado vouchers — base NETA, decisión del propietario 2026-10-21; store_credit no genera fila; ventana por payment_date, cierres históricos congelados). Egresos = pagos proveedores cash + egresos documentados; ingresos = ventas cash (split, soporta mixed) + anticipos producción/work cash + ingresos documentados; comisiones solo cash. Transfer/Zelle NO son efectivo.';
 
 -- ── 5b. get_cash_shift_expected (ESPEJO UI/arqueo en vivo) ──
 
@@ -1178,6 +1226,7 @@ DECLARE
   v_cash_flow_in numeric := 0;
   v_cash_flow_out numeric := 0;
   v_cash_refunds numeric := 0;
+  v_voucher_refunds numeric := 0;
   v_expected_cash numeric := 0;
   v_expected_total numeric := 0;
 BEGIN
@@ -1250,7 +1299,7 @@ BEGIN
       AND payment_date <= NOW();
 
   -- Reembolsos EN EFECTIVO de devoluciones comerciales (P1, 2026-10-21):
-  -- mismo término que close_cash_shift v2.22.0 (coherencia espejo↔autoridad).
+  -- mismo término que close_cash_shift v2.23.0 (coherencia espejo↔autoridad).
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_refunds
     FROM public.payment_transactions
     WHERE store_id = p_store_id
@@ -1260,10 +1309,22 @@ BEGIN
       AND payment_date > v_window_start
       AND payment_date <= NOW();
 
+  -- Reembolsos por VOUCHERS (v2.23.0 — base NETA, decisión del propietario
+  -- 2026-10-21): mismo término que close_cash_shift (lado vouchers).
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_voucher_refunds
+    FROM public.payment_transactions
+    WHERE store_id = p_store_id
+      AND payment_method IN ('transfer', 'zelle')
+      AND ref_type = 'devolution'
+      AND direction = 'refund'
+      AND payment_date > v_window_start
+      AND payment_date <= NOW();
+
   v_expected_cash := v_opening + v_cash_sales + v_cash_production + v_cash_flow_in
                      - v_cash_outflows - v_cash_commissions - v_cash_flow_out
                      - v_cash_refunds;
-  v_expected_total := v_expected_cash + v_transfer_sales + v_zelle_sales;
+  v_expected_total := v_expected_cash + v_transfer_sales + v_zelle_sales
+                      - v_voucher_refunds;
 
   v_result := jsonb_build_object(
     'window_start', v_window_start,
@@ -1277,6 +1338,7 @@ BEGIN
     'cash_flow_in', v_cash_flow_in,
     'cash_flow_out', v_cash_flow_out,
     'cash_refunds', v_cash_refunds,
+    'voucher_refunds', v_voucher_refunds,
     'expected_cash', v_expected_cash,
     'transfer_sales', v_transfer_sales,
     'zelle_sales', v_zelle_sales,
@@ -1292,7 +1354,7 @@ GRANT EXECUTE ON FUNCTION public.get_cash_shift_expected(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_cash_shift_expected(uuid) TO service_role;
 
 COMMENT ON FUNCTION public.get_cash_shift_expected(uuid) IS
-  'v2.22.0: espejo STABLE del arqueo — mismo término cash_refunds que close_cash_shift (reembolsos de devolución en efectivo dentro de la ventana del turno). Ventana R4 con FOUND. Barrera por tienda.';
+  'v2.23.0: espejo STABLE del arqueo — mismo término cash_refunds que close_cash_shift (reembolsos de devolución en efectivo dentro de la ventana del turno) + voucher_refunds (base NETA del lado vouchers, decisión del propietario 2026-10-21). Ventana R4 con FOUND. Barrera por tienda.';
 
 -- ── 5c. get_cash_flow_summary (KPIs del módulo Ingresos/Egresos) ──
 
@@ -1326,6 +1388,7 @@ DECLARE
   v_cash_flow_in numeric := 0;
   v_cash_flow_out numeric := 0;
   v_cash_refunds numeric := 0;
+  v_voucher_refunds numeric := 0;
   v_expected_cash numeric := 0;
   v_expected_total numeric := 0;
   v_fondo numeric := 0;
@@ -1355,7 +1418,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- Ventana del turno (idéntica a get_cash_shift_expected v2.22.0)
+  -- Ventana del turno (idéntica a get_cash_shift_expected v2.23.0)
   SELECT * INTO v_shift FROM public.cash_closures
     WHERE store_id = p_store_id AND status = 'pendiente'
     ORDER BY created_at DESC LIMIT 1;
@@ -1404,17 +1467,26 @@ BEGIN
       AND payment_date > v_window_start AND payment_date <= now();
 
   -- Reembolsos EN EFECTIVO de devoluciones comerciales (P1, 2026-10-21):
-  -- mismo término que close_cash_shift v2.22.0.
+  -- mismo término que close_cash_shift v2.23.0.
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_refunds
     FROM public.payment_transactions
     WHERE store_id = p_store_id AND payment_method = 'cash'
       AND ref_type = 'devolution' AND direction = 'refund'
       AND payment_date > v_window_start AND payment_date <= now();
 
+  -- Reembolsos por VOUCHERS (v2.23.0 — base NETA, decisión del propietario
+  -- 2026-10-21): mismo término que close_cash_shift (lado vouchers).
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_voucher_refunds
+    FROM public.payment_transactions
+    WHERE store_id = p_store_id AND payment_method IN ('transfer', 'zelle')
+      AND ref_type = 'devolution' AND direction = 'refund'
+      AND payment_date > v_window_start AND payment_date <= now();
+
   v_expected_cash := v_opening + v_cash_sales + v_cash_production + v_cash_flow_in
                      - v_cash_outflows - v_cash_commissions - v_cash_flow_out
                      - v_cash_refunds;
-  v_expected_total := v_expected_cash + v_transfer_sales + v_zelle_sales;
+  v_expected_total := v_expected_cash + v_transfer_sales + v_zelle_sales
+                      - v_voucher_refunds;
 
   -- Fondo de cambio vigente (misma definición que create_cash_flow_document)
   SELECT
@@ -1466,6 +1538,7 @@ BEGIN
     'cash_flow_in', v_cash_flow_in,
     'cash_flow_out', v_cash_flow_out,
     'cash_refunds', v_cash_refunds,
+    'voucher_refunds', v_voucher_refunds,
     'expected_cash', v_expected_cash,
     'transfer_sales', v_transfer_sales,
     'zelle_sales', v_zelle_sales,
@@ -1494,14 +1567,17 @@ GRANT EXECUTE ON FUNCTION public.get_cash_flow_summary(uuid, timestamptz, timest
 GRANT EXECUTE ON FUNCTION public.get_cash_flow_summary(uuid, timestamptz, timestamptz) TO service_role;
 
 COMMENT ON FUNCTION public.get_cash_flow_summary(uuid, timestamptz, timestamptz) IS
-  'MISIÓN INGRESOS/EGRESOS 2026-10 + seguimiento 2026-10-21: KPIs de la vista — mismo desglose que get_cash_shift_expected v2.22.0 (incluye cash_flow_in/out y cash_refunds de devoluciones en efectivo) + fondo de cambio vigente + totales del período por moneda y conteos. Barrera REM-R2-READ por tienda.';
+  'MISIÓN INGRESOS/EGRESOS 2026-10 + seguimiento 2026-10-21: KPIs de la vista — mismo desglose que get_cash_shift_expected v2.23.0 (incluye cash_flow_in/out, cash_refunds de devoluciones en efectivo y voucher_refunds — base NETA del lado vouchers, decisión del propietario 2026-10-21) + fondo de cambio vigente + totales del período por moneda y conteos. Barrera REM-R2-READ por tienda.';
 
 -- ── 5d. get_cash_report (Reporte de Entrega — grupos + balance) ──
 -- Cambios: nuevo grupo `refunds` (reembolsos de devoluciones agrupados por
 -- método/moneda — informativo para el desglose del reporte) + total
--- `refunds_cash_total_cup` (SOLO efectivo — término del balance, misma regla
--- que el arqueo v2.22.0). El balance de la hoja resta únicamente los
--- reembolsos en efectivo: los de transferencia/zelle no tocan el cajón.
+-- refunds_cash_total_cup (término del balance — SOLO efectivo, regla del
+-- arqueo) + refunds_voucher_total_cup (v2.23.0 — informativo: reembolsos por
+-- transferencia/zelle; el lado vouchers NETO vive en las fórmulas de arqueo
+-- close_cash_shift/get_cash_shift_expected/get_cash_flow_summary; el balance
+-- de este reporte permanece SOLO efectivo porque documenta lo que se
+-- entrega físicamente en caja).
 
 CREATE OR REPLACE FUNCTION public.get_cash_report(
   p_store_id UUID,
@@ -1526,6 +1602,7 @@ DECLARE
   v_cash_flow_in_total_cup NUMERIC := 0;
   v_cash_flow_out_total_cup NUMERIC := 0;
   v_refunds_cash_total_cup NUMERIC := 0;
+  v_refunds_voucher_total_cup NUMERIC := 0;
 BEGIN
   -- Ventas por método y moneda (siempre filtradas por fecha)
   SELECT COALESCE(json_agg(row_to_json(t)), '[]'::json) INTO v_sales
@@ -1576,7 +1653,7 @@ BEGIN
   -- GRUPOS agregados por moneda+dirección (las FILAS del ledger las enriquece
   -- /api/cash-report como `cash_flows`). Un documento anulado aporta
   -- original + contra (movimientos físicos reales por fecha), igual criterio
-  -- que el arqueo v2.22.0.
+  -- que el arqueo v2.23.0.
   SELECT COALESCE(json_agg(row_to_json(t)), '[]'::json) INTO v_cash_flow_groups
   FROM (
     SELECT payment_method, currency, direction, COUNT(*) AS flow_count,
@@ -1631,10 +1708,21 @@ BEGIN
   AND (p_include_all_dates OR (payment_date >= p_start_date AND payment_date <= p_end_date));
 
   -- Término del balance: SOLO reembolsos en EFECTIVO (misma regla que el
-  -- arqueo v2.22.0 — transfer/zelle no tocan el cajón).
+  -- arqueo v2.23.0 — transfer/zelle no tocan el cajón; el lado vouchers
+  -- NETO vive en las fórmulas de arqueo, no en el balance de este reporte
+  -- que documenta el efectivo a entregar).
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_refunds_cash_total_cup
   FROM payment_transactions WHERE store_id = p_store_id
   AND ref_type = 'devolution' AND direction = 'refund' AND payment_method = 'cash'
+  AND (p_include_all_dates OR (payment_date >= p_start_date AND payment_date <= p_end_date));
+
+  -- Informativo v2.23.0: reembolsos por VOUCHERS (transferencia/zelle) del
+  -- período — alimenta el desglose por método del reporte y la conciliación
+  -- de vouchers netos (decisión del propietario 2026-10-21).
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_refunds_voucher_total_cup
+  FROM payment_transactions WHERE store_id = p_store_id
+  AND ref_type = 'devolution' AND direction = 'refund'
+  AND payment_method IN ('transfer', 'zelle')
   AND (p_include_all_dates OR (payment_date >= p_start_date AND payment_date <= p_end_date));
 
   SELECT json_build_object(
@@ -1645,6 +1733,7 @@ BEGIN
     'cash_flow_in_total_cup', v_cash_flow_in_total_cup,
     'cash_flow_out_total_cup', v_cash_flow_out_total_cup,
     'refunds_cash_total_cup', v_refunds_cash_total_cup,
+    'refunds_voucher_total_cup', v_refunds_voucher_total_cup,
     'balance_cup', v_sales_total_cup + v_production_total_cup
                    + v_cash_flow_in_total_cup
                    - v_payments_total_cup - v_commissions_total_cup - v_cash_flow_out_total_cup
@@ -1666,7 +1755,7 @@ GRANT EXECUTE ON FUNCTION public.get_cash_report(UUID, TIMESTAMPTZ, TIMESTAMPTZ,
 GRANT EXECUTE ON FUNCTION public.get_cash_report(UUID, TIMESTAMPTZ, TIMESTAMPTZ, BOOLEAN) TO service_role;
 
 COMMENT ON FUNCTION public.get_cash_report(UUID, TIMESTAMPTZ, TIMESTAMPTZ, BOOLEAN) IS
-  'Reporte de Entrega: ventas/pagos/comisiones/producción/ingresos-egresos de caja + REEMBOLSOS de devoluciones (grupo refunds por método; balance resta SOLO los de efectivo — regla arqueo v2.22.0, MISIÓN DE SEGUIMIENTO 2026-10-21).';
+  'Reporte de Entrega: ventas/pagos/comisiones/producción/ingresos-egresos de caja + REEMBOLSOS de devoluciones (grupo refunds por método; balance resta SOLO los de efectivo — regla arqueo v2.23.0; refunds_voucher_total_cup informativo para la conciliación de vouchers NETOS — decisión del propietario 2026-10-21, MISIÓN DE SEGUIMIENTO 2026-10-21).';
 
 -- ── 5e. create_cash_flow_document (validación interna bajo advisory lock:
 -- el efectivo disponible debe reflejar los reembolsos en efectivo del turno) ──
@@ -1841,7 +1930,7 @@ BEGIN
     RAISE EXCEPTION 'ERR_DATE_OUTSIDE_SHIFT: la fecha operativa debe caer dentro del turno abierto (apertura %)', v_shift.created_at;
   END IF;
 
-  -- 8. SALDO Y FONDO VIGENTES — misma fórmula v2.22.0 que el cierre calculará
+  -- 8. SALDO Y FONDO VIGENTES — misma fórmula v2.23.0 que el cierre calculará
   --    (una sola fuente de verdad; se recalcula AHORA bajo advisory lock).
   SELECT COALESCE(SUM(cash_amount), 0) INTO v_cash_sales
     FROM public.transactions
@@ -1875,7 +1964,8 @@ BEGIN
       AND payment_date > v_shift.created_at AND payment_date <= now();
 
   -- Reembolsos EN EFECTIVO de devoluciones (P1, 2026-10-21): el disponible
-  -- real del cajón ya los restó — la validación de egresos también.
+  -- real del cajón ya los restó — la validación de egresos también. (Los
+  -- refunds por transferencia/zelle NO entran aquí: no afectan el efectivo.)
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_refunds
     FROM public.payment_transactions
     WHERE store_id = p_store_id AND payment_method = 'cash'
@@ -1993,7 +2083,7 @@ BEGIN
       'cash_before', round(v_expected_cash, 2),
       'fondo_before', round(v_fondo, 2),
       'payment_transaction_id', v_payment_id,
-      'formula', 'v2.22.0'
+      'formula', 'v2.23.0'
     )
   );
 
@@ -2037,9 +2127,9 @@ REVOKE EXECUTE ON FUNCTION public.create_cash_flow_document(uuid, text, text, nu
 GRANT EXECUTE ON FUNCTION public.create_cash_flow_document(uuid, text, text, numeric, text, numeric, timestamptz, text, text, text, uuid, text, uuid) TO service_role;
 
 COMMENT ON FUNCTION public.create_cash_flow_document(uuid, text, text, numeric, text, numeric, timestamptz, text, text, text, uuid, text, uuid) IS
-  'MISIÓN INGRESOS/EGRESOS 2026-10 + seguimiento 2026-10-21: registra un documento Ingreso/Egreso de caja confirmado (fondo de cambio y otros) + UNA fila en payment_transactions(ref_type=cash_flow). Actor-explícito, advisory lock por tienda, turno abierto obligatorio, fecha operativa en ventana (doctrina FIJA), tasa USD server-side, egreso ≤ efectivo disponible (fórmula v2.22.0 — descuenta reembolsos de devolución en efectivo), devolución ≤ fondo vigente, numeración IE atómica, idempotencia v2.26 y auditoría atómica. service_role-only.';
+  'MISIÓN INGRESOS/EGRESOS 2026-10 + seguimiento 2026-10-21: registra un documento Ingreso/Egreso de caja confirmado (fondo de cambio y otros) + UNA fila en payment_transactions(ref_type=cash_flow). Actor-explícito, advisory lock por tienda, turno abierto obligatorio, fecha operativa en ventana (doctrina FIJA), tasa USD server-side, egreso ≤ efectivo disponible (fórmula v2.23.0 — descuenta reembolsos de devolución en efectivo; el término voucher_refunds no afecta la disponibilidad de EFECTIVO), devolución ≤ fondo vigente, numeración IE atómica, idempotencia v2.26 y auditoría atómica. service_role-only.';
 
--- ── 5f. reverse_cash_flow_document (coherencia de la misma fórmula v2.22.0
+-- ── 5f. reverse_cash_flow_document (coherencia de la misma fórmula v2.23.0
 -- en la validación de anulación de ingresos) ──
 
 CREATE OR REPLACE FUNCTION public.reverse_cash_flow_document(
@@ -2105,7 +2195,7 @@ BEGIN
   -- 6. Anular un INGRESO saca dinero de la caja (fila contra 'out'): exigir
   --    efectivo disponible suficiente para absorber la reversión. Anular un
   --    EGRESO devuelve dinero ('in'): siempre físicamente posible.
-  --    El disponible se calcula con la fórmula v2.22.0 (incluye el término
+  --    El disponible se calcula con la fórmula v2.23.0 (incluye el término
   --    de reembolsos en efectivo — MISIÓN DE SEGUIMIENTO 2026-10-21).
   IF v_doc.doc_type = 'ingreso' THEN
     SELECT * INTO v_shift FROM public.cash_closures
@@ -2217,7 +2307,7 @@ REVOKE EXECUTE ON FUNCTION public.reverse_cash_flow_document(uuid, text, uuid) F
 GRANT EXECUTE ON FUNCTION public.reverse_cash_flow_document(uuid, text, uuid) TO service_role;
 
 COMMENT ON FUNCTION public.reverse_cash_flow_document(uuid, text, uuid) IS
-  'MISIÓN INGRESOS/EGRESOS 2026-10 + seguimiento 2026-10-21: anula un documento confirmado (motivo obligatorio >= 3, rol admin/manager/encargado). Inserta fila CONTRARIA en payment_transactions (payment_date=now()) — nunca borra history ni reabre cierres pasados; valida efectivo disponible con la fórmula v2.22.0 (incluye reembolsos de devolución en efectivo). Segunda anulación => ERR_ALREADY_ANNULLED. service_role-only.';
+  'MISIÓN INGRESOS/EGRESOS 2026-10 + seguimiento 2026-10-21: anula un documento confirmado (motivo obligatorio >= 3, rol admin/manager/encargado). Inserta fila CONTRARIA en payment_transactions (payment_date=now()) — nunca borra history ni reabre cierres pasados; valida efectivo disponible con la fórmula v2.23.0 (incluye reembolsos de devolución en efectivo; voucher_refunds no afecta la disponibilidad de EFECTIVO). Segunda anulación => ERR_ALREADY_ANNULLED. service_role-only.';
 
 NOTIFY pgrst, 'reload schema';
 

@@ -127,7 +127,7 @@ describeIf('Fase LIVE — los defectos se materializan (versiones vivas)', () =>
     expect(after.m).toBe(null); // DEFECTO: no aplicado
   });
 
-  it('fórmulas v2.21.0: refund cash de 300 invisible (esperado 1100 en vez de 800)', async () => {
+  it('fórmulas v2.21.0: refund cash de 300 invisible (esperado 1100 en vez de 800) + refund voucher invisible', async () => {
     await q(`INSERT INTO public.stores (id,name) VALUES ($1,'CAJA-TEST')`, [ST6]);
     await q(`INSERT INTO public.cash_closures (store_id, status, opening_balance, created_at)
       VALUES ($1,'pendiente',100, now() - interval '2 hours')`, [ST6]);
@@ -140,6 +140,16 @@ describeIf('Fase LIVE — los defectos se materializan (versiones vivas)', () =>
     const r = await tryCall('public.get_cash_shift_expected', `'${ST6}'`);
     expect(Number(r.res.expected_cash)).toBe(1100); // DEFECTO: no resta 300
     expect(r.res.cash_refunds).toBeUndefined();     // campo inexistente en v2.21.0
+    // DEFECTO adicional (decisión vouchers 2026-10-21): refund por TRANSFERENCIA
+    // totalmente invisible en v2.21.0 — ni el efectivo ni el lado vouchers lo netean
+    const devV = (await one(`INSERT INTO public.devolutions (store_id,devolution_number,status,total_amount)
+      VALUES ($1,'NC-T1V','completed',250) RETURNING id`, [ST6])).id;
+    await q(`INSERT INTO public.payment_transactions (store_id, ref_type, ref_id, transaction_id, amount, payment_method, currency, exchange_rate, direction, payment_date)
+      VALUES ($1,'devolution',$2,NULL,250,'transfer','CUP',1,'refund', now() - interval '55 minutes')`, [ST6, devV]);
+    const rV = await tryCall('public.get_cash_shift_expected', `'${ST6}'`);
+    expect(Number(rV.res.expected_cash)).toBe(1100);  // DEFECTO: intacto
+    expect(Number(rV.res.expected_total)).toBe(1100); // DEFECTO: el lado vouchers NO lo netea
+    expect(rV.res.voucher_refunds).toBeUndefined();   // campo inexistente en v2.21.0
   });
 });
 
@@ -209,10 +219,14 @@ describeIf('Fase FIXED — 20261021120000 corrige y preserva', () => {
     expect(a2.m).toBe('transfer');
   });
 
-  it('término cash_refunds: esperado 800 con refund 300; transfer no resta; ventana y tienda correctas', async () => {
+  it('término cash_refunds + voucher_refunds v2.23.0: esperado 800; transfer al lado vouchers; ventana y tienda correctas', async () => {
     const rA = await tryCall('public.get_cash_shift_expected', `'${ST6}'`);
     expect(Number(rA.res.expected_cash)).toBe(800);
     expect(Number(rA.res.cash_refunds)).toBe(300);
+    // v2.23.0: el refund voucher de la fase LIVE (250, transfer) ahora es visible
+    expect(Number(rA.res.voucher_refunds)).toBe(250);
+    // expected_total = 800 + 0 + 0 − 250 = 550 (base NETA del lado vouchers)
+    expect(Number(rA.res.expected_total)).toBe(550);
     // refund por transferencia NO toca el efectivo
     const devT = (await one(`INSERT INTO public.devolutions (store_id,devolution_number,status,total_amount)
       VALUES ($1,'NC-T2','completed',500) RETURNING id`, [ST6])).id;
@@ -220,6 +234,8 @@ describeIf('Fase FIXED — 20261021120000 corrige y preserva', () => {
       VALUES ($1,'devolution',$2,500,'transfer','CUP',1,'refund', now() - interval '50 minutes')`, [ST6, devT]);
     const rB = await tryCall('public.get_cash_shift_expected', `'${ST6}'`);
     expect(Number(rB.res.expected_cash)).toBe(800);
+    expect(Number(rB.res.voucher_refunds)).toBe(750); // 250 + 500
+    expect(Number(rB.res.expected_total)).toBe(50);   // 800 − 750
     // refund de otra tienda NO contamina
     const devO = (await one(`INSERT INTO public.devolutions (store_id,devolution_number,status,total_amount)
       VALUES ($1,'NC-T3','completed',999) RETURNING id`, [STORE])).id;
@@ -227,26 +243,76 @@ describeIf('Fase FIXED — 20261021120000 corrige y preserva', () => {
       VALUES ($1,'devolution',$2,999,'cash','CUP',1,'refund', now() - interval '40 minutes')`, [STORE, devO]);
     const rC = await tryCall('public.get_cash_shift_expected', `'${ST6}'`);
     expect(Number(rC.res.cash_refunds)).toBe(300);
+    expect(Number(rC.res.voucher_refunds)).toBe(750);
     // dirección 'in' NO resta
     await q(`INSERT INTO public.payment_transactions (store_id,ref_type,ref_id,amount,payment_method,currency,exchange_rate,direction,payment_date)
       VALUES ($1,'devolution',$2,50,'cash','CUP',1,'in', now() - interval '20 minutes')`, [ST6, devO]);
     const rD = await tryCall('public.get_cash_shift_expected', `'${ST6}'`);
     expect(Number(rD.res.cash_refunds)).toBe(300);
+    expect(Number(rD.res.voucher_refunds)).toBe(750);
   });
 
-  it('close_cash_shift v2.22.0: audit con cash_refunds y fórmula; cierre histórico congelado', async () => {
+  it('v2.23.0 — refund por voucher: tienda con ventas reales en los tres medios, neteo completo', async () => {
+    // Escenario canónico de la decisión del propietario 2026-10-21:
+    // fondo 100 + venta cash 1000 + venta transfer 800 + venta zelle 200;
+    // devolución reembolsada por transferencia de 300 dentro de la ventana.
+    // Efectivo esperado = 100 + 1000 = 1100 (el refund transfer NO toca el cajón).
+    // Vouchers netos = 800 + 200 − 300 = 700 (base NETA — conciliación contra
+    // estado externo = movimiento neto del período).
+    const ST8 = '77777777-7777-7777-7777-777777777777';
+    await q(`INSERT INTO public.stores (id,name) VALUES ($1,'VOUCHER-NETEO')`, [ST8]);
+    const closure8 = (await one(`INSERT INTO public.cash_closures (store_id, status, opening_balance, created_at)
+      VALUES ($1,'pendiente',100, now() - interval '2 hours') RETURNING id`, [ST8])).id;
+    await q(`INSERT INTO public.transactions (store_id,total_amount,subtotal,payment_method,status,cash_amount,created_at)
+      VALUES ($1,1000,1000,'cash','completed',1000, now() - interval '90 minutes')`, [ST8]);
+    await q(`INSERT INTO public.transactions (store_id,total_amount,subtotal,payment_method,status,transfer_amount,created_at)
+      VALUES ($1,800,800,'transfer','completed',800, now() - interval '85 minutes')`, [ST8]);
+    await q(`INSERT INTO public.transactions (store_id,total_amount,subtotal,payment_method,status,zelle_amount,created_at)
+      VALUES ($1,200,200,'zelle','completed',200, now() - interval '80 minutes')`, [ST8]);
+    const dev8 = (await one(`INSERT INTO public.devolutions (store_id,devolution_number,status,total_amount)
+      VALUES ($1,'NC-V1','completed',300) RETURNING id`, [ST8])).id;
+    await q(`INSERT INTO public.payment_transactions (store_id,ref_type,ref_id,amount,payment_method,currency,exchange_rate,direction,payment_date)
+      VALUES ($1,'devolution',$2,300,'transfer','CUP',1,'refund', now() - interval '45 minutes')`, [ST8, dev8]);
+    const r = await tryCall('public.get_cash_shift_expected', `'${ST8}'`);
+    expect(Number(r.res.expected_cash)).toBe(1100);
+    expect(Number(r.res.voucher_refunds)).toBe(300);
+    expect(Number(r.res.expected_total)).toBe(1800); // 1100 + 800 + 200 − 300
+    // espejo KPIs coherente
+    const rs = await tryCall('public.get_cash_flow_summary', `'${ST8}', NULL, NULL`);
+    expect(Number(rs.res.voucher_refunds)).toBe(300);
+    expect(Number(rs.res.expected_total)).toBe(1800);
+    // cierre con lo contado = lo esperado neto → diferencia 0
+    const rc = await tryCall('public.close_cash_shift', `'${closure8}', 1100, 700, 'arqueo vouchers netos', '${ACTOR}'`);
+    expect(Number(rc.res.difference)).toBe(0);
+    const audit8 = await one(`SELECT metadata->>'voucher_refunds_devolution' AS vr, metadata->>'formula' AS f
+      FROM public.audit_logs WHERE action='CASH_CLOSURE_FINALIZED' AND record_id=$1`, [closure8]);
+    expect(Number(audit8.vr)).toBe(300);
+    expect(audit8.f).toBe('v2.23.0');
+    // reporte: grupo refunds por método + total informativo de vouchers
+    const rr = await tryCall('public.get_cash_report', `'${ST8}', now() - interval '1 day', now(), false`);
+    const grupoTransfer = (rr.res?.refunds || []).find((g: { payment_method: string }) => g.payment_method === 'transfer');
+    expect(Number(grupoTransfer?.total_cup)).toBe(300);
+    expect(Number(rr.res.totals.refunds_voucher_total_cup)).toBe(300);
+    expect(Number(rr.res.totals.refunds_cash_total_cup)).toBe(0);
+  });
+
+  it('close_cash_shift v2.23.0: audit con cash_refunds + voucher_refunds y fórmula; cierre histórico congelado', async () => {
     const closure = (await one(`SELECT id FROM public.cash_closures WHERE store_id=$1 AND status='pendiente'`, [ST6])).id;
-    const r = await tryCall('public.close_cash_shift', `'${closure}', 800, 0, 'arqueo con refunds', '${ACTOR}'`);
+    // Contado: efectivo 800; vouchers = movimiento NETO de la cuenta = −750
+    // (no hubo ventas voucher en el turno; se enviaron 250+500 de refunds).
+    const r = await tryCall('public.close_cash_shift', `'${closure}', 800, -750, 'arqueo con refunds', '${ACTOR}'`);
     expect(Number(r.res.difference)).toBe(0);
-    const audit = await one(`SELECT metadata->>'cash_refunds_devolution' AS cr, metadata->>'formula' AS f
+    const audit = await one(`SELECT metadata->>'cash_refunds_devolution' AS cr, metadata->>'voucher_refunds_devolution' AS vr, metadata->>'formula' AS f
       FROM public.audit_logs WHERE action='CASH_CLOSURE_FINALIZED' AND record_id=$1`, [closure]);
     expect(Number(audit.cr)).toBe(300);
-    expect(audit.f).toBe('v2.22.0');
+    expect(Number(audit.vr)).toBe(750);
+    expect(audit.f).toBe('v2.23.0');
     // operaciones posteriores no recalculan el cierre congelado
     await q(`INSERT INTO public.payment_transactions (store_id,ref_type,ref_id,amount,payment_method,currency,exchange_rate,direction,payment_date)
       VALUES ($1,'devolution',NULL,77,'cash','CUP',1,'refund', now())`, [ST6]);
     const frozen = await one(`SELECT system_expected_total AS t, difference AS d FROM public.cash_closures WHERE id=$1`, [closure]);
-    expect(Number(frozen.t)).toBe(800);
+    // congelado: 800 (efectivo) + 0 + 0 − 750 (vouchers) = 50
+    expect(Number(frozen.t)).toBe(50);
     expect(Number(frozen.d)).toBe(0);
   });
 

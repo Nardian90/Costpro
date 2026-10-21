@@ -26,6 +26,14 @@
  * EFECTIVO (payment_transactions ref_type='devolution', direction='refund',
  * payment_method='cash' — MISIÓN DE SEGUIMIENTO 2026-10-21, regla P1):
  * transfer/zelle no tocan el cajón; el crédito de tienda no genera fila.
+ * v2.23.0 (decisión del propietario 2026-10-21 «según estándar
+ * internacional»): los reembolsos pagados por transferencia/zelle se
+ * exponen como reembolsosVoucher (INFORMATIVO en este reporte — espejo de
+ * refunds_voucher_total_cup del RPC get_cash_report; alimenta la
+ * conciliación de vouchers NETOS del período). El balance de la hoja sigue
+ * siendo SOLO efectivo porque documenta lo que se entrega físicamente en
+ * caja; el neteo de vouchers vive en las fórmulas de arqueo
+ * (close_cash_shift / get_cash_shift_expected / get_cash_flow_summary).
  */
 
 export type Currency = 'CUP' | 'USD';
@@ -141,6 +149,8 @@ export interface DailySummary {
   egresosCaja: number;
   /** Reembolsos de devoluciones pagados EN EFECTIVO en la moneda (MISIÓN DE SEGUIMIENTO 2026-10-21). */
   reembolsosCash: number;
+  /** Reembolsos de devoluciones por VOUCHER (transfer/zelle) en la moneda — INFORMATIVO, base NETA v2.23.0 (decisión del propietario 2026-10-21). No afecta efectivoEsperado. */
+  reembolsosVoucher: number;
   /** Efectivo que debe existir en caja al final del periodo. */
   efectivoEsperado: number;
 }
@@ -164,7 +174,7 @@ export function computeDailySummary(
     ventasTotales: 0, otIngresosCash: 0, comisionesCash: 0, comisionesTransfer: 0,
     serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0,
-    reembolsosCash: 0, efectivoEsperado: 0,
+    reembolsosCash: 0, reembolsosVoucher: 0, efectivoEsperado: 0,
   };
   if (!report) return zero;
 
@@ -235,17 +245,19 @@ export function computeDailySummary(
     else egresosCaja += amt;
   }
 
-  // ── Reembolsos de devoluciones en EFECTIVO (MISIÓN DE SEGUIMIENTO
-  //    2026-10-21, regla P1): solo el tramo cash reduce el esperado; los
-  //    reembolsos por transferencia/zelle se listan en el detalle pero NO
-  //    tocan el efectivo físico. Por moneda, igual que cash_flows.
-  let reembolsosCash = 0;
+  // ── Reembolsos de devoluciones (MISIÓN DE SEGUIMIENTO 2026-10-21, regla
+  //    P1 + decisión vouchers v2.23.0 del propietario): solo el tramo cash
+  //    reduce el esperado; los reembolsos por transferencia/zelle se exponen
+  //    como reembolsosVoucher (INFORMATIVO — base NETA del lado vouchers,
+  //    conciliación contra estado externo) pero NO tocan el efectivo físico.
+  //    Por moneda, igual que cash_flows.
+  let reembolsosCash = 0, reembolsosVoucher = 0;
   for (const rf of report.refund_rows || []) {
     if (rf.currency !== currency) continue;
-    if (rf.payment_method !== 'cash') continue;
     // Moneda nativa, misma convención que cash_flows (cada hoja cuenta sus
     // propios movimientos; amount == amount_cup en CUP).
-    reembolsosCash += Math.abs(n(rf.amount));
+    if (rf.payment_method === 'cash') reembolsosCash += Math.abs(n(rf.amount));
+    else if (rf.payment_method === 'transfer' || rf.payment_method === 'zelle') reembolsosVoucher += Math.abs(n(rf.amount));
   }
 
   const ventasTotales = ventasCash + ventasTransfer + ventasZelle + ventasMixed;
@@ -259,7 +271,7 @@ export function computeDailySummary(
     currency, ventasCash, ventasTransfer, ventasZelle, ventasMixed, ventasTotales,
     otIngresosCash, comisionesCash, comisionesTransfer, serviciosRecibidosCash,
     recibosProveedoresCash, ajustesPositivos, ajustesNegativos, ajustesNeto,
-    ingresosCaja, egresosCaja, reembolsosCash, efectivoEsperado,
+    ingresosCaja, egresosCaja, reembolsosCash, reembolsosVoucher, efectivoEsperado,
   };
 }
 

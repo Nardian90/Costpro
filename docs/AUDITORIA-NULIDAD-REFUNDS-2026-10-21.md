@@ -183,6 +183,15 @@ efectivo_esperado = fondo + entradas − salidas − cash_refunds
 ```
 
 - **SOLO el medio por el que salió REALMENTE el dinero reduce el efectivo físico.** Un reembolso por transferencia/zelle NO toca el cajón (queda como detalle informativo en el reporte); el crédito de tienda ni siquiera genera fila.
+- **Ampliación v2.23.0 (DECISIÓN DEL PROPIETARIO, 2026-10-21 — delegada «según estándar internacional», véanse §4.4 y §7):** los reembolsos pagados por transferencia/zelle restan del **lado VOUCHERS** del arqueo (base NETA — conciliación contra estado externo = movimiento neto del período, práctica de conciliación bancaria; reversión de ingresos NIC-I 15.42):
+```
+voucher_refunds = SUM(amount_cup) WHERE ref_type='devolution'
+                  AND direction='refund' AND payment_method IN ('transfer','zelle')
+                  AND payment_date ∈ (ventana del turno, ahora]
+vouchers_esperados_netos = transferencias + zelle − voucher_refunds
+total_esperado = efectivo_esperado + vouchers_esperados_netos
+```
+El término es **preventivo** (censo vivo 2026-10-21: 0 refunds de vouchers — los 2 existentes son cash) y las validaciones de DISPONIBILIDAD de efectivo (`create/reverse_cash_flow_document`) no cambian: un voucher no es efectivo del cajón.
 - **Sin doble conteo:** la devolución NO modifica la venta original (`create_devolution_v2` inserta solo la fila contra DF-03; `transactions.cash_amount` intacto) y los cobros `ref_type='sale'` siguen excluidos de los términos de pagos. Un refund se cuenta UNA vez (idempotencia estructural `dev-<id>-refund`).
 - **Trazabilidad conservada:** la fila refund mantiene `ref_id` (devolución) + `transaction_id` (venta original).
 - **Cierres históricos congelados:** ventana por `payment_date` efectiva — un refund de un turno CERRADO quedó absorbido en ese cierre y jamás se recalcula hacia atrás (verificado: B6l).
@@ -210,6 +219,16 @@ efectivo_esperado = fondo + entradas − salidas − cash_refunds
 
 **Clasificación del defecto:** estaba en la **consulta** (las fórmulas), no en el modelo de datos ni en la clasificación de operaciones: el ledger ya registra todo lo necesario (`ref_type`+`direction`+`payment_method`+`payment_date`), y `create_devolution_v2` ya clasifica correctamente por medio. Las fórmulas v2.18.0/v2.21.0 simplemente no consumían el término.
 
+### 4.4 Decisión del propietario sobre vouchers (2026-10-21) — base NETA
+
+El residual «refunds de vouchers» (antes §7.2: decisión de política pendiente — ¿el cajero declara vales brutos o netos?) fue **resuelto por el propietario** con la regla «según estándar internacional»: **base NETA**. Fundamento y consecuencias:
+
+- **Conciliación contra estado externo:** lo que se concilia contra el banco/zelle es el **movimiento neto** del período (práctica universal de conciliación bancaria; NIC-I 15.42 trata la reversión de ingresos como reducción de los ingresos del período).
+- **Simetría de la regla P1:** el esperado baja por el **medio real de pago** — si el dinero salió por transferencia, baja el lado transferencias; si salió en efectivo, baja el efectivo. Bajo base bruta, un arqueo con 800 transferidos y 300 reembolsados por transferencia exigiría al cajero «declarar» 800 cuando el banco solo verá 500 — diferencia estructural imposible de cuadrar.
+- **Transparencia:** el desglose expone `transfer_sales`, `zelle_sales` y `voucher_refunds` por separado (brutos → netos reconstruibles) en arqueo, KPIs, UI de cierre y PDF.
+- **Reporte de Entrega:** el balance de la hoja permanece **SOLO efectivo** (documenta lo que se entrega físicamente en caja); `get_cash_report` expone `refunds_voucher_total_cup` **informativo** (espejo TS: `reembolsosVoucher` + fila del PDF «Reembolsos por voucher (transfer/Zelle)» con nota informativa) para alimentar la conciliación de vouchers netos.
+- **R-DEV2 MANTENIDO** (decisión de la misma fecha): bajo base de acumulación (NIC 1.27), la recuperación del dinero por el cliente es un evento DISTINTO del reversal comercial — un auto-contra reconocería efectivo aún no recibido y generaría arqueos falsamente descuadrados. El Ingreso de caja manual registra el evento cuando ocurre, con trazabilidad completa. Sin cambio de código.
+
 ---
 
 ## 5. Cambios realizados y justificación
@@ -222,19 +241,19 @@ efectivo_esperado = fondo + entradas − salidas − cash_refunds
 | 2 | `approve_transfer`: `status IS DISTINCT FROM 'PENDIENTE'` + `NOT COALESCE(requires_approval,false)` | D2/D3 — fail-closed, patrón existente de `confirm_transfer` |
 | 3 | `reset_store_data`(3-arg): fail-closed 2 niveles + EXISTS + comentario fase0 restaurado | D4 — endurecimiento defensivo SIN cambiar la regla de negocio |
 | 4 | `adjust_sale_payment`: `payment_method IS DISTINCT FROM` | D5 — solo la comparación nullable; las seguras por esquema intactas |
-| 5a | `close_cash_shift` v2.22.0: término `cash_refunds` + audit | P1 — autoritativa |
-| 5b | `get_cash_shift_expected` v2.22.0: término + campo `cash_refunds` en respuesta | P1 — espejo UI |
-| 5c | `get_cash_flow_summary` v2.22.0: término + campo | P1 — KPIs del módulo |
-| 5d | `get_cash_report` v2.22.0: grupo `refunds` (por método) + `refunds_cash_total_cup` + término en balance | P1 — Reporte de Entrega |
-| 5e | `create_cash_flow_document`: validación de egreso con v2.22.0 | P1 — `ERR_INSUFFICIENT_CASH` con el disponible real |
-| 5f | `reverse_cash_flow_document`: validación de anulación con v2.22.0 | P1 — coherencia de la misma fórmula |
+| 5a | `close_cash_shift` v2.23.0: `cash_refunds` + `voucher_refunds` (lado vouchers) + audit | P1 + decisión vouchers — autoritativa |
+| 5b | `get_cash_shift_expected` v2.23.0: términos + campos en respuesta | P1 + decisión — espejo UI |
+| 5c | `get_cash_flow_summary` v2.23.0: términos + campos | P1 + decisión — KPIs del módulo |
+| 5d | `get_cash_report` v2.23.0: grupo `refunds` (por método) + `refunds_cash_total_cup` (término del balance) + `refunds_voucher_total_cup` **informativo** | P1 + decisión — Reporte de Entrega |
+| 5e | `create_cash_flow_document`: validación de egreso con el lado EFECTIVO (sin término voucher) | P1 — `ERR_INSUFFICIENT_CASH` con el disponible real |
+| 5f | `reverse_cash_flow_document`: validación de anulación igual | P1 — coherencia de la misma fórmula |
 
 **Espejos TypeScript** (misma fórmula, una sola fuente de verdad):
-- `src/lib/cash-arqueo.ts` — `cash_refunds` en `CashShiftBreakdown` + fórmula v2.22.0
-- `src/hooks/api/useCashClosures.ts` + `src/types/index.ts` — tipos con `cash_refunds`, grupo `refunds`, `refunds_cash_total_cup`
-- `src/lib/cash-report/summary.ts` — `RefundRow`/`refund_rows` (filas del ledger, nombre distinto de los grupos RPC — convención cash_flows/cash_flow_groups) + `reembolsosCash` en `DailySummary` + fórmula; convención por moneda nativa alineada a cash_flows
+- `src/lib/cash-arqueo.ts` — `cash_refunds` + `voucher_refunds` en `CashShiftBreakdown` + fórmula v2.23.0 (vouchers esperados NETOS)
+- `src/hooks/api/useCashClosures.ts` + `src/types/index.ts` — tipos con `cash_refunds`/`voucher_refunds`, grupo `refunds`, `refunds_cash_total_cup`/`refunds_voucher_total_cup`
+- `src/lib/cash-report/summary.ts` — `RefundRow`/`refund_rows` + `reembolsosCash` (término) y `reembolsosVoucher` (INFORMATIVO v2.23.0) en `DailySummary`; balance de la hoja SOLO efectivo
 - `src/app/api/cash-report/route.ts` — enriquecimiento `refund_rows` (todos los métodos; degradación limpia)
-- `CashClosureView.tsx` (línea «Reembolsos de Devoluciones (Efectivo)» en el desglose reconstruible), `cash-report-pdf.ts` (fila del reporte), `CashReportView.tsx`
+- `CashClosureView.tsx` (desglose reconstruible: línea de efectivo + línea de vouchers brutos y su resta), `cash-report-pdf.ts` (fila «Reembolsos de devoluciones (efectivo)» + fila informativa «Reembolsos por voucher (transfer/Zelle)»), `CashReportView.tsx`
 - `ci-gate-allowlist.json` — 7 entradas `source_of_truth_baseline` (drift cadena-vs-vivo esperado mientras el propietario no aplique la migración; patrón #1422, expiry 2026-11-30)
 
 **NO hecho (explícito):** no se cambió el significado de `ref_type`; no se añadieron excepciones por tienda/documento; no se duplicaron efectos devolución/refund/reverso; no se tocaron cierres históricos; no se introdujeron privilegios ni se eludió RLS; no se modificó la migración aplicada 20261021000001; el overload 2-arg de reset quedó intacto; `confirm_transfer`/`apply_physical_count` y otras expresiones auditadas sin defecto práctico quedaron documentadas y sin cambios.
@@ -245,11 +264,11 @@ efectivo_esperado = fondo + entradas − salidas − cash_refunds
 
 | Tipo | Ejecutadas | Resultado real |
 |---|---|---|
-| **Batería empírica PostgreSQL 18 aislado** (embedded-postgres desechable, fixture con nulabilidad IDÉNTICA a la viva; versiones VIVAS vs migración corregida) | 41 escenarios: tablas de verdad + D1–D5 en vivo + controles + correcciones + regresión no-nula + 10 escenarios de refunds | **41/41** — 13 defectos LIVE demostrados + 27 verificaciones FIXED (`pgtest/audit-results.json`) |
+| **Batería empírica PostgreSQL 18 aislado** (embedded-postgres desechable, fixture con nulabilidad IDÉNTICA a la viva; versiones VIVAS vs migración corregida) | 47 escenarios: tablas de verdad + D1–D5 en vivo + controles + correcciones + regresión no-nula + 10 escenarios de refunds + B7 neteo de vouchers v2.23.0 (ST8: 3 medios de venta + refund transfer; cierre/arqueo/reporte coherentes) | **47/47** — 14 defectos LIVE demostrados + 32 verificaciones FIXED (`pgtest/audit-results.json`) |
 | **Suite de integración gated** (`src/__tests__/integration/null-trap-sql-scenarios.test.ts`) ejecutada contra PG aislado real | 14 pruebas | **14/14** (`NULL_TRAP_INTEGRATION_DB=1` + URL de BD desechable; en CI queda auto-skip como `cash-flow-sql-scenarios` — patrón preexistente) |
 | Unitarias (vitest, suite completa) | 220 archivos | **3541 pasadas / 0 fallos / 45 saltadas** (gated por entorno — 14 de cash-flow + 14 de null-trap + resto preexistente) |
-| Tests estáticos del contrato de la migración | `null-trap-refunds-migration.test.ts` | **12/12** (guardas, término en 6 fórmulas, ACLs, no-doble-conteo, cierres congelados) |
-| Unitarias de fórmulas | cash-arqueo (+8 refunds) + cash-report-summary (+6 refunds) | **53/53** |
+| Tests estáticos del contrato de la migración | `null-trap-refunds-migration.test.ts` | **16/16** (guardas, términos cash+voucher en las fórmulas, ACLs, no-doble-conteo, cierres congelados, documentación de la decisión) |
+| Unitarias de fórmulas | cash-arqueo (+8 refunds +3 vouchers v2.23.0) + cash-report-summary (+6 refunds +4 vouchers v2.23.0) + PDF (+3 filas voucher v2.23.0) | **63/63** |
 | Typecheck | `tsc --noEmit` | **0 errores** |
 | Lint | eslint (archivos tocados) | **0 errores** (38 warnings de la familia preexistente `<button>`) |
 | Contrato de seguridad | `security-contract-test-static.cjs` | **CONTRATO OK — Capa A 137/137 · Capa B 200, 0 nuevas · Capa C 137/137 representadas, 0 divergencias** (con las 7 baselines documentadas) |
@@ -262,11 +281,11 @@ efectivo_esperado = fondo + entradas − salidas − cash_refunds
 ## 7. Riesgos residuales
 
 1. **R-DEV2 (diseño):** `reverse_devolution` revierte stock/estado pero NO el efecto financiero del refund (la fila `devolution/refund` permanece). Correcto por fecha efectiva (el dinero salió en su ventana), pero el **reingreso** del dinero del cliente no queda registrado automáticamente: procedimiento operativo documentado — registrar un **Ingreso de caja** (documento cash_flow 'in') al reversar una devolución reembolsada en efectivo. Alternativa (auto-contra) rechazada para no duplicar efectos.
-2. **Refunds de vouchers:** un reembolso por transferencia/zelle no reduce `expected_vouchers` (la expectativa de banco/zelle cuenta solo las ventas). Los 2 refunds vivos son cash, así que el caso no se materializa hoy; extender el término a vouchers es una decisión de política de arqueo (¿el cajero declara vales brutos o netos?) que corresponde al propietario. Documentado, no implementado.
+2. **Refunds de vouchers — RESUELTO por decisión del propietario (2026-10-21, §4.4):** los reembolsos por transferencia/zelle restan del lado vouchers como `voucher_refunds` (base NETA — «según estándar internacional»: conciliación contra estado externo = movimiento neto del período). Los 2 refunds vivos son cash (censo: 0 vouchers), así que el término es preventivo — neto cero con los datos actuales. El desglose expone brutos y la resta para reconstruir la conciliación con transparencia.
 3. **12 devoluciones legadas sin fila refund** (pre-DF-03): su efecto financiero no existe en el ledger; si el negocio decide reconocerlas, requiere una decisión de datos (no de código).
 4. **Latentes no corregidos fuera de alcance (familia del mismo patrón, documentados):** `confirm_transfer` usa `v_transfer.status <> 'PENDIENTE'` (status nullable — mismo fail-open latente que D2); `apply_physical_count` usa `IF v_count IS NULL` (seguro en la práctica: la tabla tiene PK NOT NULL); `close_production_order_v2`:`IF p_final_amount > 0` con NULL explícito omite el pago final en silencio (la ruta API envía `final_amount || 0` — seguro por caller). Ninguno tiene datos NULL hoy; se dejan para una decisión del propietario de endurecimiento general.
 5. **Drift cadena-vs-vivo intencional:** hasta que el propietario aplique `20261021120000`, el árbol va por delante de la BD (7 baselines con expiry 2026-11-30). El riesgo de olvidarlo es acotado por la expiración del gate.
-6. **Impacto de la fórmula v2.22.0 al aplicarse:** los arqueos en curso reflejarán los refunds de devolución de su ventana — para las ventanas abiertas de TIENDA CENTRAL y Sucursal Habana el censo vivo muestra **0 refunds en ventana** (los 239.405 CUP son de ENERVIDA, sin cierres), así que la transición no cambia ningún arqueo abierto hoy; ENERVIDA, al abrir caja por primera vez, verá el esperado correcto desde su apertura.
+6. **Impacto de la fórmula v2.23.0 al aplicarse:** los arqueos en curso reflejarán los refunds de devolución de su ventana — para las ventanas abiertas de TIENDA CENTRAL y Sucursal Habana el censo vivo muestra **0 refunds en ventana** (los 239.405 CUP son de ENERVIDA, sin cierres), así que la transición no cambia ningún arqueo abierto hoy; ENERVIDA, al abrir caja por primera vez, verá el esperado correcto desde su apertura. El término `voucher_refunds` es preventivo (0 filas vivas) — neto cero con los datos actuales.
 
 ---
 
@@ -288,8 +307,8 @@ efectivo_esperado = fondo + entradas − salidas − cash_refunds
    ROLLBACK;
    ```
 3. **Aplicar** `20261021120000_nulidad_compuesta_refunds_devolucion.sql` vía Management API (transacción explícita BEGIN…COMMIT — mecanismo establecido del proyecto). Solo redefine funciones + ACLs idénticas + comentarios + NOTIFY: sin cambios de esquema, sin datos.
-4. **Re-exportar el contract-surface** (`scripts/export-contract-surface.cjs`) y **retirar las 7 entradas** `source_of_truth_baseline` de `ci-gate-allowlist.json` (patrón #1422/#1438): el contrato queda auto-limpio con la fórmula v2.22.0 viva.
-5. **Verificación post-aplicación** (solo lectura): `get_cash_shift_expected('ENERVIDA…')` debe exponer `cash_refunds` y, para ENERVIDA, un esperado que descuenta los refunds de su ventana; censo de cierres históricos intactos.
+4. **Re-exportar el contract-surface** (`scripts/export-contract-surface.cjs`) y **retirar las 7 entradas** `source_of_truth_baseline` de `ci-gate-allowlist.json` (patrón #1422/#1438): el contrato queda auto-limpio con la fórmula v2.23.0 viva.
+5. **Verificación post-aplicación** (solo lectura): `get_cash_shift_expected('ENERVIDA…')` debe exponer `cash_refunds` y `voucher_refunds` y, para ENERVIDA, un esperado que descuenta los refunds de su ventana; censo de cierres históricos intactos.
 6. **Plan de recuperación:** reaplicar las definiciones previas (20260911000100, 20260727000008, 20260916000001, 20260727000011 y 20261021000001 para las seis de caja) — DDL reversible sin tocar datos; el DOWN está documentado en la propia migración.
 
 ---

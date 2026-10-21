@@ -1,6 +1,6 @@
 /**
- * v2.22.0 — Lógica de arqueo de caja (espejo EXACTO del RPC close_cash_shift
- * v2.22.0 y get_cash_shift_expected).
+ * v2.23.0 — Lógica de arqueo de caja (espejo EXACTO del RPC close_cash_shift
+ * v2.23.0 y get_cash_shift_expected).
  *
  * Fórmula (misma convención server-side y client-side):
  *   Efectivo esperado = Fondo inicial
@@ -11,18 +11,22 @@
  *                     − Comisiones pagadas en efectivo
  *                     − Egresos de caja documentados (devolución del fondo y otros)
  *                     − Reembolsos en efectivo de devoluciones comerciales
- *   Total esperado    = Efectivo esperado + Transferencias + Zelle
+ *   Vouchers esperados (NETOS) = Transferencias + Zelle
+ *                     − Reembolsos por voucher de devoluciones comerciales
+ *   Total esperado    = Efectivo esperado + Vouchers esperados netos
  *   Diferencia        = (Efectivo contado + Vouchers contados) − Total esperado
  *
  * NO son efectivo: transferencias, zelle, pagos pendientes, cuentas por pagar
  * no ejecutadas, ni cobros de ventas (ref_type='sale' — ya contados como
  * ventas). Los documentos Ingresos/Egresos anulados aportan fila original +
- * fila contra ⇒ neto cero. Reembolsos de devolución: SOLO los pagados en
- * efectivo (payment_method='cash', direction='refund') reducen el esperado —
- * los de transferencia/zelle no tocan el cajón y el crédito de tienda no
- * genera fila (MISIÓN DE SEGUIMIENTO 2026-10-21, regla P1). Ver migraciones
- * 20261010000002 (v2.18.0), 20261021000001 (v2.21.0) y 20261021120000
- * (v2.22.0 — refunds de devolución).
+ * fila contra ⇒ neto cero. Reembolsos de devolución: los pagados en EFECTIVO
+ * (payment_method='cash', direction='refund') reducen el efectivo esperado;
+ * los pagados por transferencia/zelle reducen el lado VOUCHERS (base NETA —
+ * decisión del propietario 2026-10-21 «según estándar internacional»:
+ * conciliación contra estado externo = movimiento neto del período); el
+ * crédito de tienda no genera fila (MISIÓN DE SEGUIMIENTO 2026-10-21, regla
+ * P1). Ver migraciones 20261010000002 (v2.18.0), 20261021000001 (v2.21.0) y
+ * 20261021120000 (v2.22.0 refunds de efectivo + v2.23.0 refunds de vouchers).
  */
 
 export interface CashShiftBreakdown {
@@ -43,6 +47,8 @@ export interface CashShiftBreakdown {
   cash_flow_out: number;
   /** Reembolsos EN EFECTIVO de devoluciones comerciales (devolution/refund/cash) */
   cash_refunds: number;
+  /** Reembolsos por VOUCHER de devoluciones (devolution/refund/transfer|zelle) — base NETA v2.23.0 */
+  voucher_refunds: number;
   /** Ventas por transferencia */
   transfer_sales: number;
   /** Ventas por zelle */
@@ -52,7 +58,7 @@ export interface CashShiftBreakdown {
 export interface ArqueoResult {
   /** Efectivo esperado en caja (fondo + entradas − salidas de efectivo) */
   expected_cash: number;
-  /** Vouchers esperados (transferencias + zelle del sistema) */
+  /** Vouchers esperados NETOS (transferencias + zelle − reembolsos por voucher) */
   expected_vouchers: number;
   /** Total esperado (efectivo + vouchers) */
   expected_total: number;
@@ -88,6 +94,7 @@ export function computeArqueo(
     cash_flow_in: Number(breakdown?.cash_flow_in) || 0,
     cash_flow_out: Number(breakdown?.cash_flow_out) || 0,
     cash_refunds: Number(breakdown?.cash_refunds) || 0,
+    voucher_refunds: Number(breakdown?.voucher_refunds) || 0,
     transfer_sales: Number(breakdown?.transfer_sales) || 0,
     zelle_sales: Number(breakdown?.zelle_sales) || 0,
   };
@@ -96,7 +103,7 @@ export function computeArqueo(
     b.opening_balance + b.cash_sales + b.cash_production + b.cash_flow_in
     - b.cash_outflows - b.cash_commissions - b.cash_flow_out - b.cash_refunds,
   );
-  const expected_vouchers = r2(b.transfer_sales + b.zelle_sales);
+  const expected_vouchers = r2(b.transfer_sales + b.zelle_sales - b.voucher_refunds);
   const expected_total = r2(expected_cash + expected_vouchers);
 
   const cash_diff = r2((Number(countedCash) || 0) - expected_cash);

@@ -260,3 +260,52 @@ describe('INC-2026-10-19 · PDF Diario — hoja compartida CUP+USD: margen visua
     expect(p1).not.toContain('11.00');
   });
 });
+
+describe('MISIÓN DE SEGUIMIENTO v2.23.0 · PDF Diario — reembolsos por voucher (informativo, base NETA)', () => {
+  beforeEach(() => { textLog.length = 0; lineLog.length = 0; });
+
+  it('refund por transferencia/zelle: fila informativa impresa y esperado CUP INTACTO', async () => {
+    const ctx = buildContext({ usdSeparatePage: false });
+    // Devolución reembolsada por transferencia (300 CUP) dentro del día del reporte
+    ctx.report = {
+      ...ctx.report,
+      refund_rows: [
+        { id: 'rf1', payment_method: 'transfer', currency: 'CUP', amount: 300, amount_cup: 300 },
+        { id: 'rf2', payment_method: 'zelle', currency: 'CUP', amount: 200, amount_cup: 200 },
+      ],
+    } as any;
+    await buildCashReportPdf(ctx, summaries());
+    const p1 = textsOf(1);
+    // Fila informativa del lado vouchers (brutos documentados; neto en arqueo)
+    expect(p1).toContain('Reembolsos por voucher (transfer/Zelle)');
+    expect(p1.some(t => /^500[.,]00$/.test(t))).toBe(true); // 300 + 200
+    // El efectivo esperado NO se reduce por refunds de voucher: 169.000,00 intacto
+    expect(p1.some(t => /^169[.,]000[.,]00$/.test(t))).toBe(true);
+    // Sin fila de reembolsos en efectivo (no hay refunds cash)
+    expect(p1).not.toContain('Reembolsos de devoluciones (efectivo)');
+  });
+
+  it('refund cash + voucher: AMBAS filas, cada medio en su término', async () => {
+    const ctx = buildContext({ usdSeparatePage: false });
+    ctx.report = {
+      ...ctx.report,
+      refund_rows: [
+        { id: 'rf1', payment_method: 'cash', currency: 'CUP', amount: 100, amount_cup: 100 },
+        { id: 'rf2', payment_method: 'transfer', currency: 'CUP', amount: 50, amount_cup: 50 },
+      ],
+    } as any;
+    await buildCashReportPdf(ctx, summaries());
+    const p1 = textsOf(1);
+    expect(p1).toContain('Reembolsos de devoluciones (efectivo)');
+    expect(p1).toContain('Reembolsos por voucher (transfer/Zelle)');
+    // Esperado = 169.000 − 100 (solo el tramo cash): 168.900,00
+    expect(p1.some(t => /^168[.,]900[.,]00$/.test(t))).toBe(true);
+  });
+
+  it('sin refunds de voucher: la fila NO se imprime (regresión de presentación)', async () => {
+    await buildCashReportPdf(buildContext({ usdSeparatePage: false }), summaries());
+    const p1 = textsOf(1);
+    expect(p1).not.toContain('Reembolsos por voucher (transfer/Zelle)');
+    expect(p1).not.toContain('Reembolsos de devoluciones (efectivo)');
+  });
+});
