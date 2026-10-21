@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 import { POST } from '@/app/api/catalog/bulk-import/route';
 
 /**
@@ -106,6 +106,13 @@ const VALID_ROW = {
   min_stock: 5,
   supplier: 'Ferretería Central',
 };
+
+afterAll(() => {
+  // Higiene de aislamiento: sin unstubEnves en la config, los stubEnv
+  // persisten en el process.env del worker y contaminan archivos
+  // posteriores del mismo pool (lección de la corrida de CI 2026-10-22).
+  vi.unstubAllEnvs();
+});
 
 beforeEach(() => {
   upsertCalls.length = 0;
