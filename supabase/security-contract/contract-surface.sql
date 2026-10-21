@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-19T18:39:55.580Z
+-- Captured  : 2026-10-21T01:05:05.948Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 135 (SECURITY DEFINER write functions, public schema)
+-- Functions : 137 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -1546,6 +1546,8 @@ DECLARE
   v_cash_outflows numeric := 0;
   v_cash_production numeric := 0;
   v_cash_commissions numeric := 0;
+  v_cash_flow_in numeric := 0;
+  v_cash_flow_out numeric := 0;
   v_system_cash numeric := 0;
   v_system_expected_total numeric := 0;
   v_difference numeric := 0;
@@ -1568,15 +1570,21 @@ BEGIN
   -- 3. Advisory lock por store
   PERFORM pg_advisory_xact_lock(hashtext(v_closure.store_id::text));
 
-  -- 4. Fórmula v2.18.0 — Efectivo esperado =
+  -- 4. Fórmula v2.21.0 — Efectivo esperado =
   --      Fondo inicial + Entradas de efectivo − Salidas de efectivo
   --    Entradas: ventas cobradas en efectivo (parte cash de ventas mixtas
-  --      incluida) + anticipos de órdenes de producción/trabajo en efectivo.
+  --      incluida) + anticipos de órdenes de producción/trabajo en efectivo
+  --      + ingresos de caja documentados (fondo de cambio y otros —
+  --      ref_type='cash_flow', MISIÓN 2026-10-20).
   --    Salidas: pagos a proveedores en efectivo (recepciones + servicios
-  --      recibidos) + comisiones pagadas en efectivo.
+  --      recibidos) + comisiones pagadas en efectivo + egresos de caja
+  --      documentados (devolución del fondo y otros — ref_type='cash_flow').
   --    NO son efectivo: transferencias y zelle (van a su propio lado del
   --      arqueo); pagos pendientes de documentos (no hay salida de dinero);
   --      cobros de ventas (ref_type='sale') — ya están contados como ventas.
+  --    La anulación de un documento inserta fila contraria: el efecto neto
+  --      de un documento anulado es CERO en esta fórmula (in + out mismo
+  --    importe), sin excluir filas por estado — el ledger siempre manda.
 
   -- Ventas por canal (columnas de desglose: soportan pago 'mixed')
   SELECT COALESCE(SUM(cash_amount), 0) INTO v_cash_sales
@@ -1600,10 +1608,9 @@ BEGIN
       AND created_at > v_closure.created_at
       AND created_at <= NOW();
 
-  -- FIX D3: SOLO egresos reales de caja — pagos a proveedores en efectivo
-  -- (recepciones y servicios recibidos). Excluye ref_type='sale' (cobros de
-  -- ventas — doble conteo), 'production_order'/'work' (anticipos = ingresos)
-  -- y 'commission' (término aparte).
+  -- Egresos reales de caja — pagos a proveedores en efectivo (recepciones y
+  -- servicios recibidos). Excluye ref_type='sale' (cobros de ventas — doble
+  -- conteo), 'production_order'/'work' (anticipos = ingresos) y 'commission'.
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_outflows
     FROM public.payment_transactions
     WHERE store_id = v_closure.store_id
@@ -1612,7 +1619,7 @@ BEGIN
       AND payment_date > v_closure.created_at
       AND payment_date <= NOW();
 
-  -- FIX D3: anticipos de producción/trabajo EN EFECTIVO son ENTRADAS de caja.
+  -- Anticipos de producción/trabajo EN EFECTIVO son ENTRADAS de caja.
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_production
     FROM public.payment_transactions
     WHERE store_id = v_closure.store_id
@@ -1621,8 +1628,7 @@ BEGIN
       AND payment_date > v_closure.created_at
       AND payment_date <= NOW();
 
-  -- FIX D3: comisiones SOLO en efectivo (antes se restaban todas del
-  -- efectivo, incluidas las pagadas por transferencia/zelle).
+  -- Comisiones SOLO en efectivo.
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_commissions
     FROM public.commission_payments
     WHERE store_id = v_closure.store_id
@@ -1631,10 +1637,24 @@ BEGIN
       AND paid_at > v_closure.created_at
       AND paid_at <= NOW();
 
+  -- MISIÓN 2026-10-20: documentos Ingresos/Egresos de caja (fondo de cambio
+  -- y otros autorizados). direction in = entrada de efectivo, out = salida.
+  -- Los anulados aportan fila original + fila contra ⇒ neto cero.
+  SELECT
+    COALESCE(SUM(CASE WHEN direction = 'in' THEN amount_cup ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN direction = 'out' THEN amount_cup ELSE 0 END), 0)
+    INTO v_cash_flow_in, v_cash_flow_out
+    FROM public.payment_transactions
+    WHERE store_id = v_closure.store_id
+      AND payment_method = 'cash'
+      AND ref_type = 'cash_flow'
+      AND payment_date > v_closure.created_at
+      AND payment_date <= NOW();
+
   -- Calcular totales
   v_system_cash := COALESCE(v_closure.opening_balance, 0)
-                 + v_cash_sales + v_cash_production
-                 - v_cash_outflows - v_cash_commissions;
+                 + v_cash_sales + v_cash_production + v_cash_flow_in
+                 - v_cash_outflows - v_cash_commissions - v_cash_flow_out;
   v_system_expected_total := v_system_cash + v_transfer_sales + v_zelle_sales;
   v_difference := (COALESCE(p_declared_cash, 0) + COALESCE(p_declared_vouchers, 0)) - v_system_expected_total;
 
@@ -1659,11 +1679,13 @@ BEGIN
       'system_cash', v_system_cash,
       'expected_total', v_system_expected_total,
       'difference', v_difference,
-      'formula', 'v2.18.0',
+      'formula', 'v2.21.0',
       'cash_sales', v_cash_sales,
       'cash_production_income', v_cash_production,
       'cash_outflows_suppliers', v_cash_outflows,
       'cash_commissions', v_cash_commissions,
+      'cash_flow_in', v_cash_flow_in,
+      'cash_flow_out', v_cash_flow_out,
       'transfer_sales', v_transfer_sales,
       'zelle_sales', v_zelle_sales
     )
@@ -1678,6 +1700,8 @@ BEGIN
     'cash_outflows', v_cash_outflows,
     'cash_production', v_cash_production,
     'cash_commissions', v_cash_commissions,
+    'cash_flow_in', v_cash_flow_in,
+    'cash_flow_out', v_cash_flow_out,
     'transfer_sales', v_transfer_sales,
     'zelle_sales', v_zelle_sales
   );
@@ -2255,6 +2279,345 @@ BEGIN
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
 END $function$
+
+
+-- @contract-function name=create_cash_flow_document args="p_store_id uuid, p_doc_type text, p_concept text, p_amount numeric, p_currency text, p_exchange_rate numeric, p_operation_date timestamp with time zone, p_counterparty text, p_justification text, p_notes text, p_related_document_id uuid, p_idempotency_key text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_cash_flow_document(p_store_id uuid, p_doc_type text, p_concept text, p_amount numeric, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT NULL::numeric, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_counterparty text DEFAULT NULL::text, p_justification text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_related_document_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_doc_type text := lower(btrim(p_doc_type));
+  v_concept text := lower(btrim(COALESCE(p_concept, '')));
+  v_amount numeric;
+  v_currency text := upper(btrim(COALESCE(p_currency, 'CUP')));
+  v_rate numeric;
+  v_rate_effective timestamptz;
+  v_amount_cup numeric;
+  v_op_date timestamptz := COALESCE(p_operation_date, now());
+  v_justification text;
+  v_shift RECORD;
+  v_number text;
+  v_doc_id uuid;
+  v_payment_id uuid;
+  v_opening numeric := 0;
+  v_cash_sales numeric := 0;
+  v_cash_outflows numeric := 0;
+  v_cash_production numeric := 0;
+  v_cash_commissions numeric := 0;
+  v_cash_flow_in numeric := 0;
+  v_cash_flow_out numeric := 0;
+  v_expected_cash numeric := 0;
+  v_fondo numeric := 0;
+  v_param_hash text;
+  v_idem jsonb;
+  v_result jsonb;
+  v_related public.cash_flow_documents%ROWTYPE;
+BEGIN
+  -- 1. AUTH actor-explícito (fail-closed) + rol con autoridad para registrar
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF NOT public.has_store_role_as(v_caller_uid, p_store_id, ARRAY['admin', 'manager', 'encargado', 'clerk']::text[]) THEN
+    RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: requiere admin, manager, encargado o clerk en la tienda';
+  END IF;
+
+  -- 2. Validación del documento
+  IF v_doc_type NOT IN ('ingreso', 'egreso') THEN
+    RAISE EXCEPTION 'ERR_INVALID_DOC_TYPE: %', p_doc_type;
+  END IF;
+  IF v_concept = '' THEN
+    RAISE EXCEPTION 'ERR_CONCEPT_REQUIRED';
+  END IF;
+  IF NOT (
+       (v_doc_type = 'ingreso' AND v_concept IN ('constitucion_fondo', 'reposicion_fondo', 'otro_ingreso'))
+    OR (v_doc_type = 'egreso'  AND v_concept IN ('devolucion_total_fondo', 'devolucion_parcial_fondo', 'otro_egreso'))
+  ) THEN
+    RAISE EXCEPTION 'ERR_CONCEPT_TYPE_MISMATCH: concepto % no válido para tipo %', v_concept, v_doc_type;
+  END IF;
+  v_justification := btrim(COALESCE(p_justification, ''));
+  IF v_justification = '' THEN
+    RAISE EXCEPTION 'ERR_JUSTIFICATION_REQUIRED';
+  END IF;
+  IF length(v_justification) > 500 THEN
+    RAISE EXCEPTION 'ERR_JUSTIFICATION_TOO_LONG';
+  END IF;
+
+  v_amount := COALESCE(p_amount, 0);
+  IF v_amount <= 0 THEN
+    RAISE EXCEPTION 'ERR_INVALID_AMOUNT: %', p_amount;
+  END IF;
+  IF v_amount <> round(v_amount, 2) THEN
+    RAISE EXCEPTION 'ERR_AMOUNT_PRECISION: máximo 2 decimales';
+  END IF;
+  IF v_currency NOT IN ('CUP', 'USD') THEN
+    RAISE EXCEPTION 'ERR_INVALID_CURRENCY: %', v_currency;
+  END IF;
+
+  -- 3. Tasa de cambio (D8): resolución SERVER-SIDE exclusiva. La tasa del
+  --    cliente NO tiene autoridad financiera (se ignora, como en ventas).
+  IF v_currency = 'CUP' THEN
+    v_rate := 1;
+  ELSE
+    v_rate := NULL;
+    v_rate_effective := NULL;
+    SELECT ser.rate, ser.updated_at INTO v_rate, v_rate_effective
+      FROM public.store_exchange_rates ser
+      WHERE ser.store_id = p_store_id AND ser.currency = 'USD';
+    IF v_rate IS NULL THEN
+      SELECT er.rate, er.rate_date::timestamptz INTO v_rate, v_rate_effective
+        FROM public.exchange_rates er
+        WHERE er.currency = 'USD' AND er.source = 'BCC' AND er.segment = '3'
+        ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+    END IF;
+    IF v_rate IS NULL THEN
+      SELECT er.rate, er.rate_date::timestamptz INTO v_rate, v_rate_effective
+        FROM public.exchange_rates er
+        WHERE er.currency = 'USD' AND er.source = 'elToque'
+        ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+    END IF;
+    IF v_rate IS NULL OR v_rate <= 1 THEN
+      RAISE EXCEPTION 'ERR_EXCHANGE_RATE_UNAVAILABLE: configure la tasa USD de la tienda antes de operar en esa moneda';
+    END IF;
+    IF v_rate_effective < now() - INTERVAL '45 days' THEN
+      RAISE EXCEPTION 'ERR_RATE_STALE: effective=%', v_rate_effective;
+    END IF;
+  END IF;
+
+  v_amount_cup := CASE WHEN v_currency = 'CUP' THEN v_amount ELSE v_amount * v_rate END;
+
+  -- 4. Advisory lock por tienda: serializa creaciones/anulaciones concurrentes
+  --    sobre la misma caja (evita doble gasto y carreras sobre el fondo).
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+
+  -- 5. IDEMPOTENCIA (replay seguro ante reintentos de red)
+  v_param_hash := md5(
+    p_store_id::text || '|' || v_caller_uid::text || '|' || v_doc_type || '|' || v_concept || '|'
+    || v_amount::text || '|' || v_currency || '|' || COALESCE(p_operation_date, 'now')::text || '|'
+    || COALESCE(btrim(p_counterparty), '') || '|' || v_justification || '|'
+    || COALESCE(btrim(p_notes), '') || '|' || COALESCE(p_related_document_id::text, '')
+  );
+  IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
+    SELECT ir.result INTO v_idem
+      FROM public.idempotency_registry ir
+      WHERE ir.idempotency_key = p_idempotency_key
+        AND ir.operation = 'create_cash_flow_document'
+      LIMIT 1;
+    IF v_idem IS NOT NULL THEN
+      SELECT ir.param_hash INTO v_param_hash
+        FROM public.idempotency_registry ir
+        WHERE ir.idempotency_key = p_idempotency_key
+          AND ir.operation = 'create_cash_flow_document'
+        LIMIT 1;
+      IF v_param_hash IS NULL OR v_idem IS NULL THEN
+        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE';
+      END IF;
+      -- hash idéntico ⇒ devolver el resultado original (reintento benigno)
+      RETURN v_idem;
+    END IF;
+  END IF;
+
+  -- 6. TURNO ABIERTO obligatorio (D5): sin sesión pendiente no se opera.
+  SELECT * INTO v_shift FROM public.cash_closures
+    WHERE store_id = p_store_id AND status = 'pendiente'
+    ORDER BY created_at DESC
+    LIMIT 1
+    FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_NO_OPEN_SHIFT: la caja no tiene un turno abierto — abra el turno en Caja antes de registrar ingresos o egresos';
+  END IF;
+
+  -- 7. FECHA OPERATIVA: política temporal global (piso 6 meses, no futuro,
+  --    días hábiles Habana) + ventana del turno (doctrina caja FIJA).
+  PERFORM public.validate_operation_date(v_op_date, p_store_id);
+  IF v_op_date <= v_shift.created_at OR v_op_date > now() THEN
+    RAISE EXCEPTION 'ERR_DATE_OUTSIDE_SHIFT: la fecha operativa debe caer dentro del turno abierto (apertura %)', v_shift.created_at;
+  END IF;
+
+  -- 8. SALDO Y FONDO VIGENTES — misma fórmula v2.21.0 que el cierre calculará
+  --    (una sola fuente de verdad; se recalcula AHORA bajo advisory lock).
+  SELECT COALESCE(SUM(cash_amount), 0) INTO v_cash_sales
+    FROM public.transactions
+    WHERE store_id = p_store_id AND status = 'completed'
+      AND created_at > v_shift.created_at AND created_at <= now();
+
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_outflows
+    FROM public.payment_transactions
+    WHERE store_id = p_store_id AND payment_method = 'cash'
+      AND ref_type IN ('receipt', 'service')
+      AND payment_date > v_shift.created_at AND payment_date <= now();
+
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_production
+    FROM public.payment_transactions
+    WHERE store_id = p_store_id AND payment_method = 'cash'
+      AND ref_type IN ('production_order', 'work')
+      AND payment_date > v_shift.created_at AND payment_date <= now();
+
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_commissions
+    FROM public.commission_payments
+    WHERE store_id = p_store_id AND status = 'paid' AND payment_method = 'cash'
+      AND paid_at > v_shift.created_at AND paid_at <= now();
+
+  SELECT
+    COALESCE(SUM(CASE WHEN direction = 'in' THEN amount_cup ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN direction = 'out' THEN amount_cup ELSE 0 END), 0)
+    INTO v_cash_flow_in, v_cash_flow_out
+    FROM public.payment_transactions
+    WHERE store_id = p_store_id AND payment_method = 'cash'
+      AND ref_type = 'cash_flow'
+      AND payment_date > v_shift.created_at AND payment_date <= now();
+
+  v_opening := COALESCE(v_shift.opening_balance, 0);
+  v_expected_cash := v_opening + v_cash_sales + v_cash_production + v_cash_flow_in
+                     - v_cash_outflows - v_cash_commissions - v_cash_flow_out;
+
+  -- Fondo de cambio vigente (D2): apertura + constituciones/reposiciones −
+  -- devoluciones (documentos CONFIRMADOS de fondo en la ventana del turno).
+  SELECT COALESCE(SUM(
+           CASE WHEN doc_type = 'ingreso' THEN amount_cup ELSE -amount_cup END
+         ), 0)
+    INTO v_fondo
+    FROM public.cash_flow_documents
+    WHERE store_id = p_store_id
+      AND status = 'confirmado'
+      AND concept IN ('constitucion_fondo', 'reposicion_fondo',
+                      'devolucion_total_fondo', 'devolucion_parcial_fondo')
+      AND operation_date > v_shift.created_at
+      AND operation_date <= now();
+  v_fondo := v_opening + v_fondo;
+
+  -- 9. REGLAS DE NEGOCIO por tipo
+  IF v_doc_type = 'egreso' THEN
+    -- Imposibilidad de egresar más efectivo del disponible (canonical CUP)
+    IF v_amount_cup > v_expected_cash + 0.005 THEN
+      RAISE EXCEPTION 'ERR_INSUFFICIENT_CASH: disponible=%, egreso=%', round(v_expected_cash, 2), round(v_amount_cup, 2);
+    END IF;
+    -- Devolución de fondo: nunca más del fondo vigente (5.000 − 2.000 ⇒ quedan 3.000)
+    IF v_concept IN ('devolucion_total_fondo', 'devolucion_parcial_fondo') THEN
+      IF v_amount_cup > v_fondo + 0.005 THEN
+        RAISE EXCEPTION 'ERR_FUND_INSUFFICIENT: fondo vigente=%, devolución=%', round(v_fondo, 2), round(v_amount_cup, 2);
+      END IF;
+    END IF;
+  END IF;
+
+  -- 10. Vínculo opcional devolución → documento de fondo que la origina
+  IF p_related_document_id IS NOT NULL THEN
+    IF v_concept NOT IN ('devolucion_total_fondo', 'devolucion_parcial_fondo') THEN
+      RAISE EXCEPTION 'ERR_RELATED_DOC_NOT_ALLOWED: solo las devoluciones de fondo pueden vincular un documento origen';
+    END IF;
+    SELECT * INTO v_related FROM public.cash_flow_documents
+      WHERE id = p_related_document_id AND store_id = p_store_id
+      FOR UPDATE;
+    IF NOT FOUND
+       OR v_related.status <> 'confirmado'
+       OR v_related.doc_type <> 'ingreso'
+       OR v_related.concept NOT IN ('constitucion_fondo', 'reposicion_fondo') THEN
+      RAISE EXCEPTION 'ERR_RELATED_DOC_INVALID: el documento origen debe ser una constitución/reposición de fondo confirmada de la misma tienda';
+    END IF;
+  END IF;
+
+  -- 11. NUMERACIÓN (atómica: FOR UPDATE dentro de esta misma transacción)
+  v_number := public.next_document_number(p_store_id, 'cash_flow', v_caller_uid);
+
+  -- 12. INSERT documento (confirmado — D4) + efecto financiero UNA vez (D1)
+  INSERT INTO public.cash_flow_documents (
+    store_id, document_number, doc_type, concept,
+    amount, currency, exchange_rate, payment_method,
+    operation_date, status, closure_id, responsible_user_id,
+    counterparty, justification, notes, related_document_id,
+    created_by, confirmed_by, idempotency_key
+  ) VALUES (
+    p_store_id, v_number, v_doc_type, v_concept,
+    v_amount, v_currency, v_rate, 'cash',
+    v_op_date, 'confirmado', v_shift.id, v_caller_uid,
+    NULLIF(btrim(COALESCE(p_counterparty, '')), ''),
+    v_justification,
+    NULLIF(btrim(COALESCE(p_notes, '')), ''),
+    p_related_document_id,
+    v_caller_uid, v_caller_uid,
+    NULLIF(btrim(COALESCE(p_idempotency_key, '')), '')
+  )
+  RETURNING id INTO v_doc_id;
+
+  INSERT INTO public.payment_transactions (
+    store_id, ref_type, ref_id, amount, payment_method,
+    currency, exchange_rate, payment_date, notes, paid_by,
+    idempotency_key, direction
+  ) VALUES (
+    p_store_id, 'cash_flow', v_doc_id, v_amount, 'cash',
+    v_currency, v_rate, v_op_date,
+    v_number || ' · ' || v_concept || ': ' || v_justification,
+    v_caller_uid,
+    'cf-' || v_doc_id::text,
+    CASE v_doc_type WHEN 'ingreso' THEN 'in' ELSE 'out' END
+  )
+  RETURNING id INTO v_payment_id;
+
+  UPDATE public.cash_flow_documents
+    SET payment_transaction_id = v_payment_id
+    WHERE id = v_doc_id;
+
+  -- 13. AUDITORÍA atómica (misma transacción)
+  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (
+    v_caller_uid, p_store_id, 'CASH_FLOW_CREATED', 'cash_flow_documents', v_doc_id,
+    jsonb_build_object(
+      'document_number', v_number,
+      'doc_type', v_doc_type,
+      'concept', v_concept,
+      'amount', v_amount,
+      'currency', v_currency,
+      'exchange_rate', v_rate,
+      'amount_cup', round(v_amount_cup, 2),
+      'operation_date', v_op_date,
+      'closure_id', v_shift.id,
+      'counterparty', NULLIF(btrim(COALESCE(p_counterparty, '')), ''),
+      'justification', v_justification,
+      'related_document_id', p_related_document_id,
+      'cash_before', round(v_expected_cash, 2),
+      'fondo_before', round(v_fondo, 2),
+      'payment_transaction_id', v_payment_id,
+      'formula', 'v2.21.0'
+    )
+  );
+
+  v_result := jsonb_build_object(
+    'status', 'success',
+    'document_id', v_doc_id,
+    'document_number', v_number,
+    'doc_type', v_doc_type,
+    'concept', v_concept,
+    'amount', v_amount,
+    'currency', v_currency,
+    'exchange_rate', v_rate,
+    'amount_cup', round(v_amount_cup, 2),
+    'operation_date', v_op_date,
+    'status_doc', 'confirmado',
+    'payment_transaction_id', v_payment_id,
+    'cash_before', round(v_expected_cash, 2),
+    'cash_after', round(v_expected_cash + CASE WHEN v_doc_type = 'ingreso' THEN v_amount_cup ELSE -v_amount_cup END, 2),
+    'fondo_before', round(v_fondo, 2),
+    'fondo_after', round(
+      v_fondo + CASE
+        WHEN v_concept IN ('constitucion_fondo', 'reposicion_fondo') THEN v_amount_cup
+        WHEN v_concept IN ('devolucion_total_fondo', 'devolucion_parcial_fondo') THEN -v_amount_cup
+        ELSE 0
+      END, 2)
+  );
+
+  -- 14. Registro de idempotencia (después del éxito — patrón v2.26)
+  IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
+    INSERT INTO public.idempotency_registry (idempotency_key, operation, record_id, param_hash, result)
+    VALUES (btrim(p_idempotency_key), 'create_cash_flow_document', v_doc_id, v_param_hash, v_result)
+    ON CONFLICT (idempotency_key, operation) DO NOTHING;
+  END IF;
+
+  RETURN v_result;
+END;
+$function$
 
 
 -- @contract-function name=create_devolution_v2 args="p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
@@ -6059,11 +6422,13 @@ DECLARE
   v_prefix text;
   v_result text;
 BEGIN
-  IF p_document_type NOT IN ('invoice', 'credit_note', 'quotation', 'z_report', 'vale_salida') THEN
+  IF p_document_type NOT IN ('invoice', 'credit_note', 'quotation', 'z_report', 'vale_salida', 'cash_flow') THEN
     RAISE EXCEPTION 'ERR_INVALID_DOCUMENT_TYPE: %', p_document_type;
   END IF;
 
-  -- SELECT FOR UPDATE para atomicidad
+  -- SELECT FOR UPDATE para atomicidad (dos usuarios concurrentes jamás
+  -- obtienen el mismo número: la serialización ocurre dentro de la transacción
+  -- del RPC creador, que además toma advisory lock por tienda).
   SELECT last_number INTO v_last
     FROM public.document_sequences
     WHERE store_id = p_store_id AND document_type = p_document_type AND year = v_year
@@ -6099,6 +6464,7 @@ BEGIN
     WHEN 'quotation' THEN 'COT'
     WHEN 'z_report' THEN 'ZR'
     WHEN 'vale_salida' THEN 'VS'
+    WHEN 'cash_flow' THEN 'IE'
   END;
 
   v_result := v_prefix || '-' || LPAD(v_next::text, 6, '0') || '-' || v_year::text;
@@ -7615,6 +7981,81 @@ END;
 $function$
 
 
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
+$function$
+
+
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -7810,81 +8251,6 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
-$function$
-
-
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
 $function$
 
 
@@ -8406,6 +8772,166 @@ BEGIN
   );
   v_result := jsonb_build_object('status', 'success', 'migration_id', p_migration_id, 'transaction_id', p_tx_id, 'ledger_xid', v_xid::text, 'advisory_lock_acquired', true, 'store_id', v_store_id, 'rows_restored', jsonb_build_object('transactions', 1, 'transaction_items', 1, 'payment_transactions', 1, 'stock_movements_target', 1), 'rows_updated', jsonb_build_object('stock_movements_subsequent', v_updated_bal_count, 'products', v_updated_stock_count), 'rpc_version', 'v2.3.8+lock');
   RETURN v_result;
+END;
+$function$
+
+
+-- @contract-function name=reverse_cash_flow_document args="p_document_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reverse_cash_flow_document(p_document_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_doc public.cash_flow_documents%ROWTYPE;
+  v_reason text;
+  v_contra_id uuid;
+  v_opening numeric := 0;
+  v_cash_sales numeric := 0;
+  v_cash_outflows numeric := 0;
+  v_cash_production numeric := 0;
+  v_cash_commissions numeric := 0;
+  v_cash_flow_in numeric := 0;
+  v_cash_flow_out numeric := 0;
+  v_expected_cash numeric := 0;
+  v_shift RECORD;
+BEGIN
+  -- 1. Documento con lock de fila (evita doble anulación concurrente)
+  SELECT * INTO v_doc FROM public.cash_flow_documents
+    WHERE id = p_document_id
+    FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_DOCUMENT_NOT_FOUND';
+  END IF;
+
+  -- 2. AUTH actor-explícito contra la tienda del documento + rol superior
+  --    (anular exige admin/manager/encargado — doctrina de reversas)
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_doc.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF NOT public.has_store_role_as(v_caller_uid, v_doc.store_id, ARRAY['admin', 'manager', 'encargado']::text[]) THEN
+    RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: anular requiere admin, manager o encargado';
+  END IF;
+
+  -- 3. Motivo obligatorio (>= 3 caracteres, como el resto de reversas)
+  v_reason := btrim(COALESCE(p_reason, ''));
+  IF length(v_reason) < 3 THEN
+    RAISE EXCEPTION 'ERR_REASON_REQUIRED';
+  END IF;
+  IF length(v_reason) > 500 THEN
+    RAISE EXCEPTION 'ERR_REASON_TOO_LONG';
+  END IF;
+
+  -- 4. Advisory lock por tienda (serializa contra creaciones concurrentes)
+  PERFORM pg_advisory_xact_lock(hashtext(v_doc.store_id::text));
+
+  -- 5. Estado: solo un confirmado puede anularse (idempotencia de anulación)
+  IF v_doc.status <> 'confirmado' THEN
+    RAISE EXCEPTION 'ERR_ALREADY_ANNULLED: status=%', v_doc.status;
+  END IF;
+
+  -- 6. Anular un INGRESO saca dinero de la caja (fila contra 'out'): exigir
+  --    efectivo disponible suficiente para absorber la reversión. Anular un
+  --    EGRESO devuelve dinero ('in'): siempre físicamente posible.
+  IF v_doc.doc_type = 'ingreso' THEN
+    SELECT * INTO v_shift FROM public.cash_closures
+      WHERE store_id = v_doc.store_id AND status = 'pendiente'
+      ORDER BY created_at DESC LIMIT 1;
+    IF v_shift IS NULL THEN
+      RAISE EXCEPTION 'ERR_NO_OPEN_SHIFT: no hay turno abierto para registrar la reversión del efectivo';
+    END IF;
+    SELECT COALESCE(SUM(cash_amount), 0) INTO v_cash_sales
+      FROM public.transactions
+      WHERE store_id = v_doc.store_id AND status = 'completed'
+        AND created_at > v_shift.created_at AND created_at <= now();
+    SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_outflows
+      FROM public.payment_transactions
+      WHERE store_id = v_doc.store_id AND payment_method = 'cash'
+        AND ref_type IN ('receipt', 'service')
+        AND payment_date > v_shift.created_at AND payment_date <= now();
+    SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_production
+      FROM public.payment_transactions
+      WHERE store_id = v_doc.store_id AND payment_method = 'cash'
+        AND ref_type IN ('production_order', 'work')
+        AND payment_date > v_shift.created_at AND payment_date <= now();
+    SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_commissions
+      FROM public.commission_payments
+      WHERE store_id = v_doc.store_id AND status = 'paid' AND payment_method = 'cash'
+        AND paid_at > v_shift.created_at AND paid_at <= now();
+    SELECT
+      COALESCE(SUM(CASE WHEN direction = 'in' THEN amount_cup ELSE 0 END), 0),
+      COALESCE(SUM(CASE WHEN direction = 'out' THEN amount_cup ELSE 0 END), 0)
+      INTO v_cash_flow_in, v_cash_flow_out
+      FROM public.payment_transactions
+      WHERE store_id = v_doc.store_id AND payment_method = 'cash'
+        AND ref_type = 'cash_flow'
+        AND payment_date > v_shift.created_at AND payment_date <= now();
+    v_opening := COALESCE(v_shift.opening_balance, 0);
+    v_expected_cash := v_opening + v_cash_sales + v_cash_production + v_cash_flow_in
+                       - v_cash_outflows - v_cash_commissions - v_cash_flow_out;
+    IF v_doc.amount_cup > v_expected_cash + 0.005 THEN
+      RAISE EXCEPTION 'ERR_INSUFFICIENT_CASH: anular este ingreso dejaría el efectivo esperado en negativo (disponible=%, reversión=%)', round(v_expected_cash, 2), round(v_doc.amount_cup, 2);
+    END IF;
+  END IF;
+
+  -- 7. Fila CONTRARIA en el ledger (nunca DELETE ni UPDATE de importes; la
+  --    corrección física ocurre AHORA — payment_date = now()). Si el documento
+  --    original pertenecía a un turno ya cerrado, ese cierre histórico queda
+  --    intacto (sus sumas están congeladas) y la reversión entra a la ventana
+  --    del turno actual: procedimiento de corrección sin reabrir historia.
+  INSERT INTO public.payment_transactions (
+    store_id, ref_type, ref_id, amount, payment_method,
+    currency, exchange_rate, payment_date, notes, paid_by,
+    idempotency_key, direction
+  ) VALUES (
+    v_doc.store_id, 'cash_flow', v_doc.id, v_doc.amount, 'cash',
+    v_doc.currency, v_doc.exchange_rate, now(),
+    'Anulación ' || v_doc.document_number || ': ' || v_reason,
+    v_caller_uid,
+    'cf-anul-' || v_doc.id::text,
+    CASE v_doc.doc_type WHEN 'ingreso' THEN 'out' ELSE 'in' END
+  )
+  RETURNING id INTO v_contra_id;
+
+  -- 8. Estado terminal + trazabilidad completa de la anulación
+  UPDATE public.cash_flow_documents SET
+    status = 'anulado',
+    annulled_at = now(),
+    annulled_by = v_caller_uid,
+    annulment_reason = v_reason,
+    annulment_payment_transaction_id = v_contra_id
+  WHERE id = v_doc.id;
+
+  -- 9. Auditoría atómica
+  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (
+    v_caller_uid, v_doc.store_id, 'CASH_FLOW_ANNULLED', 'cash_flow_documents', v_doc.id,
+    jsonb_build_object(
+      'document_number', v_doc.document_number,
+      'doc_type', v_doc.doc_type,
+      'concept', v_doc.concept,
+      'amount', v_doc.amount,
+      'currency', v_doc.currency,
+      'amount_cup', v_doc.amount_cup,
+      'reason', v_reason,
+      'before_status', v_doc.status,
+      'after_status', 'anulado',
+      'annulment_payment_transaction_id', v_contra_id,
+      'original_payment_transaction_id', v_doc.payment_transaction_id
+    )
+  );
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'document_id', v_doc.id,
+    'document_number', v_doc.document_number,
+    'status_doc', 'anulado',
+    'annulled_at', now(),
+    'annulled_by', v_caller_uid,
+    'annulment_payment_transaction_id', v_contra_id
+  );
 END;
 $function$
 
