@@ -70,22 +70,21 @@ export default function CatalogView() {
   useEffect(() => {
     if (typeof window !== 'undefined') localStorage.removeItem('catalog_searchTerm');
   }, []);
-  // CM-3.8: Multi-categoría con Set (antes era string single-select)
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => {
-    if (typeof window === 'undefined') return new Set();
-    const saved = localStorage.getItem('catalog_selectedCategories');
-    if (saved) {
-      try { return new Set(JSON.parse(saved)); } catch { return new Set(); }
-    }
-    // Migrar del formato anterior (single string)
-    const old = localStorage.getItem('catalog_selectedCategory');
-    return old ? new Set([old]) : new Set();
-  });
-
-  // CM-3.8: Persistir multi-categoría
+  // CM-3.8: Multi-categoría con Set (antes era string single-select).
+  // CP-CAT-003 (2026-10-21, Misión Continua): la selección de categorías es
+  // estado de consulta EFÍMERO — misma clase que el searchTerm de F20
+  // (regresión INVENTORY-CATALOG-REGRESSION-1379): persistirla dejaba el
+  // catálogo filtrado silenciosamente tras una recarga (el usuario volvía y
+  // veía un subconjunto sin saber por qué). Se inicia vacía y se purgan las
+  // claves legacy al montar. layoutMode SÍ sigue persistido: es una
+  // preferencia de formato real, no un filtro de consulta.
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   useEffect(() => {
-    localStorage.setItem('catalog_selectedCategories', JSON.stringify(Array.from(selectedCategories)));
-  }, [selectedCategories]);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('catalog_selectedCategories');
+      localStorage.removeItem('catalog_selectedCategory');
+    }
+  }, []);
 
   // Helper: toggle categoría en el Set
   const toggleCategory = useCallback((cat: string) => {

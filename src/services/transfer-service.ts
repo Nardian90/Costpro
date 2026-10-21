@@ -139,8 +139,9 @@ export const transferService = {
     return data;
   },
 
-  // --- Stubs: funcionalidades pendientes de cablear con Supabase ---
-  // Descomentar e implementar cuando la RPC correspondiente exista en Supabase.
+  // CP-INV-008 (2026-10-21): el comentario «stubs pendientes de cablear» era
+  // OBSOLETO — cancelTransfer ya está implementado contra la RPC cancel_transfer
+  // (mismo patrón Zod que el resto del servicio). No queda ningún stub aquí.
 
   async cancelTransfer(transferId: string, userId: string) {
     const params = z.object({

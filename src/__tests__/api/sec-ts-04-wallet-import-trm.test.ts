@@ -78,6 +78,9 @@ vi.mock('@/lib/transfermovil/transfermovil', async (importOriginal) => {
 
 // supabase mock — upserts por fila + recálculo de saldos
 const upsertMock = vi.fn();
+// CP-INFRA-012: hook para tests de concurrencia/aislamiento — null = comportamiento
+// original (error: null inmediato).
+const upsertResultImpl = { value: null as null | ((table: string, row: any) => any) };
 const thenable = (result: any) => ({
   then: (res: any, rej: any) => Promise.resolve(result).then(res, rej),
 });
@@ -87,7 +90,9 @@ vi.mock('@supabase/supabase-js', () => ({
       const chain: any = {
         upsert: (...a: any[]) => {
           upsertMock(table, ...a);
-          return thenable({ error: null });
+          const custom = upsertResultImpl.value;
+          const result = custom ? custom(table, a[0]) : { error: null };
+          return thenable(result);
         },
         select: () => chain,
         update: () => chain,
@@ -324,5 +329,85 @@ describe('SEC-TS-04 · H7-TRM — schema puro (walletImportTrmSchema)', () => {
       expect((result.data as any).user_id).toBeUndefined();
       expect(result.data.content).toBe('abc');
     }
+  });
+});
+
+describe('CP-INFRA-012 · import-trm — upserts con concurrencia ACOTADA', () => {
+  beforeEach(() => {
+    upsertResultImpl.value = null;
+  });
+
+  function makeBigBackup(nTx: number) {
+    const txs = Array.from({ length: nTx }, (_, i) => ({
+      id: i + 1,
+      fecha: `Jul ${String((i % 28) + 1).padStart(2, '0')}, 2026 7:28:50 AM`,
+      monto: '10.00',
+      moneda: 'CUP',
+      servicio: 'Recarga Nauta',
+      tipo_servicio: 'Recarga',
+      idTransaccion: `T-BIG-${String(i).padStart(4, '0')}`,
+      cuenta: '',
+      mostrar: true,
+    }));
+    return {
+      ...BACKUP,
+      datos: [BACKUP.datos[0], { tabla: 'RecordSMS', dataJSON: txs }],
+    };
+  }
+
+  it('nunca supera 8 upserts simultáneos y persiste TODAS las filas (30 tx)', async () => {
+    authedSession();
+    let inFlight = 0;
+    let maxInFlight = 0;
+    let total = 0;
+    upsertResultImpl.value = () =>
+      new Promise(res => {
+        total++;
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        setTimeout(() => { inFlight--; res({ error: null }); }, 4);
+      });
+
+    const res = await POST(makePostReq({ content: makeTrm(makeBigBackup(30)) }) as any);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    // Concurrencia acotada: jamás más de 8 en vuelo
+    expect(maxInFlight).toBeLessThanOrEqual(8);
+    expect(maxInFlight).toBeGreaterThan(1); // efectivamente paralelo
+    // 1 cuenta + 30 transacciones = 31 upserts
+    expect(total).toBe(31);
+    expect(json.accounts).toBe(1);
+    expect(json.transactions).toBe(30);
+    expect(json.skipped).toBe(0);
+  }, 15000);
+
+  it('el fallo de UNA fila NO aborta el lote — conteo exacto saved/skipped', async () => {
+    authedSession();
+    upsertResultImpl.value = (_table, row) =>
+      row && row.trm_transaction_id === 'T-002'
+        ? { error: { message: 'duplicate key on concurrent upsert', code: '23505' } }
+        : { error: null };
+
+    const res = await POST(makePostReq({ content: makeTrm(BACKUP) }) as any);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    // 2 transacciones: T-002 falla, T-001 pasa — mismo conteo que el loop secuencial
+    expect(json.transactions).toBe(1);
+    expect(json.skipped).toBe(1);
+  });
+
+  it('un rechazo de red (promise rejected) cuenta como skipped, sin abortar', async () => {
+    authedSession();
+    upsertResultImpl.value = (_table, row) =>
+      row && row.trm_transaction_id === 'T-001'
+        ? Promise.reject(new Error('network down'))
+        : { error: null };
+
+    const res = await POST(makePostReq({ content: makeTrm(BACKUP) }) as any);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.transactions).toBe(1);
+    expect(json.skipped).toBe(1);
   });
 });

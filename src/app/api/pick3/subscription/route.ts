@@ -129,8 +129,10 @@ async function postHandler(req: NextRequest) {
       }
 
       case 'admin_metrics': {
-        // Solo admin puede ver métricas
-        if (session.user.role !== 'admin' && session.user.role !== 'super_admin') {
+        // Solo admin puede ver métricas.
+        // CP-SEC-015 (2026-10-21): valor canónico de la BD 'superadmin' (sin
+        // guion bajo) — la forma con guion bajo era una comparación muerta.
+        if (session.user.role !== 'admin' && session.user.role !== 'superadmin') {
           return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
         }
         const metrics = await SubscriptionService.getAdminMetrics();

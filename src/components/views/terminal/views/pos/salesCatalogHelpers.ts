@@ -1,4 +1,5 @@
 import { Product, ProductVariant, PaymentMethod } from '@/types';
+import { USD_CUP_RATE } from '@/lib/utils';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -17,7 +18,7 @@ export interface SalesCatalogRow {
   // PR-4.4D: nuevas columnas para soporte de importación histórica
   zellePaid: number;            // Zelle en CUP (incluye USD convertido si aplica)
   usdOriginal: number;          // USD original del Excel (trazabilidad)
-  usdExchangeRate: number;      // Tasa USD→CUP usada (default 680)
+  usdExchangeRate: number;      // Tasa USD→CUP usada (default USD_CUP_RATE, fuente única)
   operationDate: string | null; // Fecha histórica ISO (null = usar NOW())
   documentNumber: string | null;// Documento para agrupar items en 1 venta
   priceDiffersFromCatalog: boolean; // WARNING: precio histórico ≠ catálogo
@@ -49,7 +50,7 @@ export const calcTotalPaid = (row: SalesCatalogRow): number => {
 
 // PR-4.4D: zelle total = zelle directo + USD convertido
 export const calcZelleTotal = (row: SalesCatalogRow): number => {
-  const usdConverted = (row.usdOriginal || 0) * (row.usdExchangeRate || 680);
+  const usdConverted = (row.usdOriginal || 0) * (row.usdExchangeRate || USD_CUP_RATE);
   return (row.zellePaid || 0) + usdConverted;
 };
 

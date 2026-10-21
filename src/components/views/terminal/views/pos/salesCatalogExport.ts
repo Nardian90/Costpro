@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'sonner';
 import { Product, PaymentMethod } from '@/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, USD_CUP_RATE } from '@/lib/utils';
 import { SalesCatalogRow, calcSubtotal, PAYMENT_METHODS } from './salesCatalogHelpers';
 
 // ── Public types ──────────────────────────────────────────────
@@ -66,7 +66,7 @@ export function exportSalesCatalogExcel(params: ExportExcelParams): void {
       transferPaid: 0,
       zellePaid: 0,
       usdOriginal: 0,
-      usdExchangeRate: 680,
+      usdExchangeRate: USD_CUP_RATE,
       operationDate: null,
       documentNumber: null,
       priceDiffersFromCatalog: false,
@@ -87,7 +87,7 @@ export function exportSalesCatalogExcel(params: ExportExcelParams): void {
       isMixed ? row.cashPaid : '',
       isMixed ? row.transferPaid : '',
       isMixed ? (row.usdOriginal || '') : '',
-      isMixed ? (row.usdExchangeRate || 680) : '',
+      isMixed ? (row.usdExchangeRate || USD_CUP_RATE) : '',
       isMixed ? (row.zellePaid || '') : '',
       row.quantity > 0 ? sub : '',
       row.operationDate ? row.operationDate.substring(0, 10) : '',

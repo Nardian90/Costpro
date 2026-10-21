@@ -86,6 +86,14 @@ export const formatLabeledCurrency = (amount: number, currency: string = 'CUP'):
  * PR-4.4H: Standard USD↔CUP conversion rate used across the app.
  * Historical E2E imports used 680 CUP/USD. Future sales may store the rate
  * explicitly in transactions.sale_exchange_rate, but the default fallback is 680.
+ *
+ * CP-POS-008 (2026-10-21, Misión Continua): esta constante es la FUENTE ÚNICA
+ * del fallback USD de legacy. La fuente AUTORIZITATIVA de la tasa es la tasa
+ * configurada de la tienda (/api/store-rates); este valor solo se usa como
+ * último recurso de compatibilidad cuando ninguna tasa está disponible, y el
+ * servidor mantiene la validación de integridad de precios (create_sale_v2
+ * endurecido). NINGÚN otro archivo puede declarar su propio 680 — el guardián
+ * pos-checkout-rate-literals.test.ts lo impide.
  */
 export const USD_CUP_RATE = 680;
 
