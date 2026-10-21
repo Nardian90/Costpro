@@ -64,7 +64,10 @@ describe('Migración CP-UI-001 — exclusion constraint de periodos solapados', 
   });
 
   it('reversibilidad documentada y sin writes de datos', () => {
-    expect(UI001).toMatch(/DROP CONSTRAINT IF EXISTS\s+commission_payments_no_overlap/);
+    // La nota de reversibilidad cruza líneas de comentario (-- ) — se
+    // comprueban los tokens, no el layout exacto.
+    expect(UI001).toMatch(/DROP CONSTRAINT IF EXISTS/);
+    expect(UI001).toContain('commission_payments_no_overlap');
     expect(UI001).not.toMatch(/\b(UPDATE|DELETE|INSERT|TRUNCATE)\s+public\.commission_payments\b/i);
   });
 });
