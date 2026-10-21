@@ -433,7 +433,7 @@ describe('MISIÓN DE SEGUIMIENTO 2026-10-21 — reembolsos de devoluciones (regl
   it('fórmula completa v2.22.0 con todos los términos (ventas+OT+ajustes+caja−comisiones−servicios−recibos−refunds)', () => {
     const r = S({
       sales_split: { CUP: { cash: 169000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 169000 } },
-      adjustments: [{ id: 'a1', direction: 'in', amount: 100 }],
+      adjustments: [{ id: 'a1', direction: 'in', amount: 100, note: 'ajuste de prueba' }],
       cash_flows: [
         { id: 'cf1', direction: 'in', amount: 5000, currency: 'CUP' },
         { id: 'cf2', direction: 'out', amount: 2000, currency: 'CUP' },
