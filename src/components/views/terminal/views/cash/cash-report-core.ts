@@ -87,6 +87,23 @@ export const LS_KEYS = {
   customDenoms: 'costpro:cash-report:custom-denoms:v1',
   /** Nueva v1: denominaciones activadas de USD (paridad con la clave legacy CUP). */
   usdDenoms: 'costpro_cash_denoms_usd',
+  /** MISIÓN 2026-10-22 (Parte A): opciones del documento (CashReportPdfOptions).
+   *  Esquema v1: objeto JSON plano { [optionKey]: boolean } con SOLO claves
+   *  conocidas del dominio (se validan una a una al cargar; las desconocidas
+   *  o no booleanas se descartan). Preferencia de FORMATO global — igual que
+   *  plantilla y orientación: no depende de la tienda activa ni contiene
+   *  datos de negocio. El versionado (:v1) en la clave evita colisiones con
+   *  otros esquemas del producto y permite migrar en el futuro sin romper
+   *  valores guardados. */
+  pdfOptions: 'costpro:cash-report:pdf-options:v1',
+  /** MISIÓN 2026-10-22 (Parte A): desglose de efectivo LABORAL (conteo por
+   *  denominaciones que el usuario deja en marcha entre sesiones). Esquema v1:
+   *  { CUP: Breakdown, USD: Breakdown, savedAt: string }. Se persiste SOLO con
+   *  el guardado explícito («Guardar desglose» / restaurar historial) y se
+   *  borra con «Limpiar». Mismo nivel de sensibilidad que el historial de
+   *  desgloses que YA se guardaba (savedHistory): conteos físicos de entrega,
+   *  sin datos de ventas ni información sensible. */
+  workingBreakdown: 'costpro:cash-report:working-breakdown:v1',
 } as const;
 
 export type Breakdown = Record<number, string>;
@@ -281,6 +298,63 @@ export function loadHistory(): SavedBreakdown[] {
 
 export function saveHistory(entries: SavedBreakdown[]): void {
   writeLS(LS_KEYS.history, JSON.stringify(entries.slice(0, 10)));
+}
+
+// ── Desglose de efectivo laboral (MISIÓN 2026-10-22 · Parte A) ─────────────
+/** Conteo en marcha entre sesiones. Breakdown = { denominación → cantidad };
+ *  SOLO conteos físicos del usuario (ni ventas ni datos sensibles). */
+export interface WorkingBreakdown {
+  CUP: Breakdown;
+  USD: Breakdown;
+  /** ISO de la última guarda explícita (auditable en la UI). */
+  savedAt: string;
+}
+
+/** Valida y sanea un conteo crudo con la MISMA semántica que sanitizeCount:
+ *  claves numéricas finitas > 0 · cantidades enteras no negativas ('' legítimo
+ *  del input en marcha, negativos → '0', decimales → floor). Descarta lo que
+ *  no cumpla — recuperación segura ante JSON antiguo o corrupto. */
+function cleanBreakdown(raw: unknown): Breakdown {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: Breakdown = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    const d = Number(k);
+    if (!Number.isFinite(d) || d <= 0) continue;
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      out[d] = String(Math.max(0, Math.floor(v)));
+    } else if (typeof v === 'string') {
+      if (v === '') { out[d] = ''; continue; }
+      const n = Number(v);
+      if (Number.isFinite(n) && n >= 0) out[d] = String(Math.floor(n));
+    }
+  }
+  return out;
+}
+
+/** Restaura el desglose laboral; ante ausencia/corrupción → conteos vacíos
+ *  (comportamiento legítimo previo, sin inventar cantidades). */
+export function loadWorkingBreakdown(): WorkingBreakdown {
+  if (typeof window === 'undefined') return { CUP: {}, USD: {}, savedAt: '' };
+  const parsed = safeParse<Partial<WorkingBreakdown>>(readLS(LS_KEYS.workingBreakdown), {});
+  return {
+    CUP: cleanBreakdown(parsed?.CUP),
+    USD: cleanBreakdown(parsed?.USD),
+    savedAt: typeof parsed?.savedAt === 'string' ? parsed.savedAt : '',
+  };
+}
+
+export function saveWorkingBreakdown(wb: WorkingBreakdown): void {
+  writeLS(LS_KEYS.workingBreakdown, JSON.stringify({
+    CUP: cleanBreakdown(wb.CUP),
+    USD: cleanBreakdown(wb.USD),
+    savedAt: typeof wb.savedAt === 'string' ? wb.savedAt : new Date().toISOString(),
+  }));
+}
+
+/** «Limpiar» retira también la preferencia persistida: al volver a abrir no
+ *  reaparecen conteos que el usuario ya descartó explícitamente. */
+export function clearWorkingBreakdown(): void {
+  try { window.localStorage.removeItem(LS_KEYS.workingBreakdown); } catch {}
 }
 
 // ── Formato ─────────────────────────────────────────────────────────────────

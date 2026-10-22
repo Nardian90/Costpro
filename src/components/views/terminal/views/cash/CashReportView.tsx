@@ -44,7 +44,7 @@ import { businessDayWindow } from '@/lib/cash-report/period-attribution';
 import PageHeader from '@/components/ui/PageHeader';
 import {
   DEFAULT_PDF_OPTIONS, buildCashReportPdf, fetchDiarioSummaries,
-  methodLabel,
+  loadPdfOptions, savePdfOptions, methodLabel,
   type CashReportStoreInfo, type CashReportPdfOptions, type CashReportSummaries,
 } from './cash-report-pdf';
 import { descargarCashReportExcel } from './cash-report-excel';
@@ -55,6 +55,7 @@ import {
   PDF_ORIENTATIONS, DEFAULT_PDF_ORIENTATION,
   loadEnabledDenoms, saveEnabledDenoms,
   loadCustomDenoms, saveCustomDenoms,
+  loadWorkingBreakdown, saveWorkingBreakdown, clearWorkingBreakdown,
   validateCustomDenom, addCustomDenom as addCustomDenomTo,
   removeCustomDenom as removeCustomDenomFrom,
   sanitizeCount, breakdownTotal, suggestBreakdown, computeExpectedCash,
@@ -82,7 +83,11 @@ export default function CashReportView() {
   const [pdfTemplate, setPdfTemplate] = useState<PdfTemplate>('diario');
   // §1 del brief: orientación del documento, persistida como la plantilla.
   const [pdfOrientation, setPdfOrientation] = useState<PdfOrientation>(DEFAULT_PDF_ORIENTATION);
-  // Opciones del documento (secciones del PDF) — aplican a vista previa y descarga
+  // Opciones del documento (secciones del PDF) — aplican a vista previa y descarga.
+  // MISIÓN 2026-10-22 (Parte A): restauradas de localStorage en mount y
+  // persistidas al cambiar (patrón AUTO de plantilla/orientación — no hay
+  // botón Guardar para las opciones, el guardado es explícito SOLO para el
+  // conteo del desglose). El default solo aplica sin preferencia previa válida.
   const [pdfOptions, setPdfOptions] = useState<CashReportPdfOptions>(DEFAULT_PDF_OPTIONS);
 
   // ── §5: gestión de comisiones — NAV-2026-10 (callback definido tras `applied`) ──
@@ -106,6 +111,11 @@ export default function CashReportView() {
   // ── Desgloses (estado de conteo del usuario, independiente del cálculo) ──
   const [cupBreakdown, setCupBreakdown] = useState<Breakdown>({});
   const [usdBreakdown, setUsdBreakdown] = useState<Breakdown>({});
+  // MISIÓN 2026-10-22 (Parte A): snapshot del último conteo GUARDADO explícitamente
+  // («Guardar desglose» / Restaurar). Comparado con el conteo en marcha → indicador
+  // discreto de cambios pendientes de guardar (nunca «guardado» falso).
+  const [savedWorking, setSavedWorking] = useState<{ CUP: Breakdown; USD: Breakdown }>({ CUP: {}, USD: {} });
+  const [workingSavedAt, setWorkingSavedAt] = useState('');
   const [cupDenoms, setCupDenoms] = useState<number[]>(CUP_DEFAULT_DENOMS);
   const [usdDenoms, setUsdDenoms] = useState<number[]>(USD_DEFAULT_DENOMS);
   const [customDenoms, setCustomDenoms] = useState<CustomDenoms>({ CUP: [], USD: [] });
@@ -119,7 +129,6 @@ export default function CashReportView() {
   const [showHistory, setShowHistory] = useState(false);
   const [showCupConfig, setShowCupConfig] = useState(false);
   const [showUsdConfig, setShowUsdConfig] = useState(false);
-  const [showPdfOptions, setShowPdfOptions] = useState(false);
   const [showSuggested, setShowSuggested] = useState(false);
   const [cupCustomInput, setCupCustomInput] = useState('');
   const [usdCustomInput, setUsdCustomInput] = useState('');
@@ -141,6 +150,9 @@ export default function CashReportView() {
   useEffect(() => {
     setPdfTemplate(loadPdfTemplate());
     setPdfOrientation(loadPdfOrientation());
+    // MISIÓN 2026-10-22 (Parte A): las OPCIONES del documento también se
+    // restauran — antes vivían solo en memoria y se perdían al reabrir el módulo.
+    setPdfOptions(loadPdfOptions());
     setCupDenoms(loadEnabledDenoms('CUP'));
     setUsdDenoms(loadEnabledDenoms('USD'));
     setCustomDenoms(loadCustomDenoms());
@@ -148,6 +160,13 @@ export default function CashReportView() {
     setRecipientName(localStorage.getItem(LS_KEYS.recipient) || '');
     setMadeBy(localStorage.getItem(LS_KEYS.madeBy) || '');
     setSavedHistory(loadHistory());
+    // MISIÓN 2026-10-22 (Parte A): desglose de efectivo LABORAL — el conteo que
+    // el usuario guardó explícitamente se restaura al abrir el módulo.
+    const wb = loadWorkingBreakdown();
+    setCupBreakdown(wb.CUP);
+    setUsdBreakdown(wb.USD);
+    setSavedWorking({ CUP: wb.CUP, USD: wb.USD });
+    setWorkingSavedAt(wb.savedAt);
   }, []);
 
   // ── NAV-2026-10 (NAV-03): al Volver a Reporte Entrega, restaurar el período del
@@ -179,6 +198,17 @@ export default function CashReportView() {
   const setOrientationPersisted = useCallback((o: PdfOrientation) => {
     setPdfOrientation(o);
     savePdfOrientation(o);
+  }, []);
+
+  // MISIÓN 2026-10-22 (Parte A): las opciones del documento persisten al
+  // cambiar (patrón AUTO de plantilla/orientación — no existe botón Guardar
+  // para ellas; el guardado explícito es SOLO del conteo del desglose).
+  const togglePdfOption = useCallback((key: keyof CashReportPdfOptions) => {
+    setPdfOptions(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      savePdfOptions(next);
+      return next;
+    });
   }, []);
 
   // ── Info de la tienda activa (misma lógica del modal) ──
@@ -290,7 +320,15 @@ export default function CashReportView() {
     if (currency === 'CUP') setCupBreakdown({}); else setUsdBreakdown({});
   }, []);
 
-  const handleClearAll = useCallback(() => { setCupBreakdown({}); setUsdBreakdown({}); }, []);
+  // «Limpiar todo» descarta también el conteo guardado explícitamente: al
+  // reabrir el módulo NO reaparecen conteos que el usuario ya descartó.
+  const handleClearAll = useCallback(() => {
+    setCupBreakdown({});
+    setUsdBreakdown({});
+    clearWorkingBreakdown();
+    setSavedWorking({ CUP: {}, USD: {} });
+    setWorkingSavedAt('');
+  }, []);
 
   const handleCountChange = useCallback((currency: Currency, denom: number, raw: string) => {
     const v = sanitizeCount(raw);
@@ -358,7 +396,15 @@ export default function CashReportView() {
     const u = [entry, ...savedHistory].slice(0, 10);
     setSavedHistory(u);
     saveHistory(u);
-    toast.success(`Guardado (${u.length}/10)`);
+    // MISIÓN 2026-10-22 (Parte A): además del historial, el conteo queda como
+    // DESGLOSE LABORAL persistido — al reabrir el módulo se restaura tal cual
+    // (el defecto original: «Guardar desglose» solo creaba una entrada de
+    // historial y el conteo en marcha se perdía al salir del módulo).
+    const now = new Date().toISOString();
+    saveWorkingBreakdown({ CUP: cupBreakdown, USD: usdBreakdown, savedAt: now });
+    setSavedWorking({ CUP: cupBreakdown, USD: usdBreakdown });
+    setWorkingSavedAt(now);
+    toast.success(`Guardado (${u.length}/10) — el conteo queda activo al reabrir`);
   }, [cupBreakdown, usdBreakdown, cupTotal, usdTotal, deliveredBy, recipientName, madeBy, savedHistory]);
 
   const handleRestoreHistory = useCallback((h: SavedBreakdown) => {
@@ -368,6 +414,12 @@ export default function CashReportView() {
     setRecipientName(h.recipientName || '');
     setMadeBy(h.madeBy || '');
     setShowHistory(false);
+    // Restaurar también persiste el conteo restaurado como desglose laboral
+    // (el usuario lo acaba de traer a la mesa de trabajo deliberadamente).
+    const now = new Date().toISOString();
+    saveWorkingBreakdown({ CUP: h.breakdown || {}, USD: h.usdBreakdown || {}, savedAt: now });
+    setSavedWorking({ CUP: h.breakdown || {}, USD: h.usdBreakdown || {} });
+    setWorkingSavedAt(now);
     toast.success('Desglose restaurado');
   }, []);
 
@@ -404,7 +456,7 @@ export default function CashReportView() {
   const previewSignature = useMemo(() => JSON.stringify({
     template: pdfTemplate,
     orientation: pdfOrientation, // §1: la orientación cambia el documento → invalida el cache
-    options: showPdfOptions ? pdfOptions : pdfOptions, // opciones siempre parte de la firma
+    options: pdfOptions, // opciones siempre parte de la firma
     cfg: applied?.cfg ?? null,
     cupBreakdown, usdBreakdown, deliveredBy, recipientName, madeBy,
     cupDenoms, usdDenoms, customDenoms,
@@ -553,6 +605,47 @@ export default function CashReportView() {
   // ── Acción principal (§2): Generar (sin resultados) / Actualizar (con resultados) ──
   const generateLabel = !applied ? 'Generar reporte' : 'Actualizar reporte';
 
+  // ══ MISIÓN 2026-10-22 (Parte C): panel lateral desplegable de configuración ══
+  // La configuración de documento (tipo/orientación/opciones/firmas) vive en un
+  // drawer derecho; la vista principal prioriza filtros esenciales, reporte,
+  // vista previa y acciones de generación/exportación. El panel conserva los
+  // valores al abrir/cerrar (mismo estado React — nada se reinicia), no toca el
+  // contexto de la vista previa y se cierra con botón explícito o Escape.
+  const [configOpen, setConfigOpen] = useState(false);
+  const configPanelRef = useRef<HTMLDivElement>(null);
+  const configTriggerRef = useRef<HTMLButtonElement>(null);
+
+  const closeConfig = useCallback(() => {
+    setConfigOpen(false);
+    // Devolver el foco al disparador (patrón dialog accesible).
+    configTriggerRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!configOpen) return;
+    // Foco inicial dentro del panel: el contenedor mismo (tabIndex -1); el Tab
+    // fluye luego por los controles en orden natural.
+    configPanelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeConfig(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [configOpen, closeConfig]);
+
+  // Opción «Desglose de efectivo» OFF → la pestaña de conteo no forma parte del
+  // reporte (efecto consistente UI/PDF/Excel). Si estaba activa, volver a Resultados.
+  const cashBreakdownEnabled = pdfOptions.includeCashBreakdown !== false;
+  useEffect(() => {
+    if (!cashBreakdownEnabled && activeTab === 'desglose') setActiveTab('resultados');
+  }, [cashBreakdownEnabled, activeTab]);
+
+  // Indicador discreto de cambios pendientes de guardar (conteo del desglose —
+  // guardado EXPLÍCITO): compara el conteo en marcha con el último guardado.
+  const workingDirty = useMemo(
+    () => JSON.stringify(cupBreakdown) !== JSON.stringify(savedWorking.CUP)
+      || JSON.stringify(usdBreakdown) !== JSON.stringify(savedWorking.USD),
+    [cupBreakdown, usdBreakdown, savedWorking],
+  );
+
   const fmt = (n: number, cur: string = 'CUP') => cur === 'CUP' ? formatCurrency(n) : `$${n.toFixed(2)}`;
   const btnIcn = `p-2 rounded-lg border border-border/40 hover:bg-muted ${touch} flex items-center justify-center`;
 
@@ -589,6 +682,22 @@ export default function CashReportView() {
         }
         secondaryActions={
           <div className="flex flex-wrap items-center gap-2">
+            {/* Parte C: control visible y reconocible del panel de configuración. */}
+            <button
+              ref={configTriggerRef}
+              onClick={() => setConfigOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={configOpen}
+              data-testid="cash-report-config-trigger"
+              title="Tipo de reporte, orientación y opciones del documento"
+              className={cn(
+                'px-3 rounded-xl border border-primary/40 bg-primary/10 text-primary text-xs font-black uppercase hover:bg-primary/20 flex items-center justify-center gap-1.5',
+                touch,
+              )}
+            >
+              <Settings className="w-4 h-4" />
+              Configuración del reporte
+            </button>
             <button
               onClick={handleExport}
               disabled={exporting || !applied}
@@ -633,195 +742,54 @@ export default function CashReportView() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-4 items-start">
-        {/* ══ Columna de configuración (escritorio) ══ */}
-        <div className="space-y-4">
-          <section aria-label="Configuración del reporte" className="rounded-2xl border border-border bg-card p-4 space-y-4">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Tipo de reporte</p>
-              <div className="space-y-1.5" role="radiogroup" aria-label="Tipo de reporte">
-                {TEMPLATES.map(t => (
-                  <button
-                    key={t.id}
-                    role="radio"
-                    aria-checked={pdfTemplate === t.id}
-                    onClick={() => setTemplatePersisted(t.id)}
-                    className={cn(
-                      'w-full flex items-start gap-2 p-2.5 rounded-lg border text-left transition-colors',
-                      pdfTemplate === t.id ? 'border-primary bg-primary/10' : 'border-border/40 hover:bg-muted/30',
-                    )}
-                  >
-                    <FileText className={cn('w-4 h-4 mt-0.5 shrink-0', pdfTemplate === t.id ? 'text-primary' : 'text-muted-foreground')} />
-                    <span className="min-w-0">
-                      <span className={cn('block text-xs font-bold', pdfTemplate === t.id && 'text-primary')}>{t.label}</span>
-                      <span className="block text-[10px] text-muted-foreground leading-snug">{t.desc}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-              {/* §3: la selección persiste en localStorage al cambiar (setTemplatePersisted). */}
-            </div>
-
-            {/* §1 del brief: orientación del documento — afecta PDF y vista previa, persistida */}
-            <div className="border-t border-border/40 pt-3 space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Orientación del documento</p>
-              <div className="space-y-1.5" role="radiogroup" aria-label="Orientación del documento">
-                {PDF_ORIENTATIONS.map(o => (
-                  <button
-                    key={o.id}
-                    role="radio"
-                    aria-checked={pdfOrientation === o.id}
-                    onClick={() => setOrientationPersisted(o.id)}
-                    className={cn(
-                      'w-full flex items-center gap-2 p-2 rounded-lg border text-left transition-colors',
-                      pdfOrientation === o.id ? 'border-primary bg-primary/10' : 'border-border/40 hover:bg-muted/30',
-                    )}
-                  >
-                    <BookOpen className={cn('w-3.5 h-3.5 shrink-0', pdfOrientation === o.id ? 'text-primary' : 'text-muted-foreground')} />
-                    <span className="min-w-0">
-                      <span className={cn('block text-xs font-bold', pdfOrientation === o.id && 'text-primary')}>{o.label}</span>
-                      <span className="block text-[10px] text-muted-foreground leading-snug">{o.desc}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-border/40 pt-3 space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Periodo</p>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 min-w-0">
-                  <label htmlFor="cr-sd" className="text-[10px] font-black uppercase text-muted-foreground">Desde</label>
-                  <input
-                    id="cr-sd" type="date" value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className={cn('w-full px-3 py-2 rounded-lg border border-border/40 bg-background text-xs', touch)}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <label htmlFor="cr-ed" className="text-[10px] font-black uppercase text-muted-foreground">Hasta</label>
-                  <input
-                    id="cr-ed" type="date" value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className={cn('w-full px-3 py-2 rounded-lg border border-border/40 bg-background text-xs', touch)}
-                  />
-                </div>
-              </div>
-              {rangeInvalid && (
-                <p role="alert" className="text-[11px] text-destructive flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5" /> El intervalo es inválido: «Desde» no puede ser posterior a «Hasta».
-                </p>
-              )}
-              {!rangeInvalid && (
-                <p className="text-[10px] text-muted-foreground">
-                  Se calculará <strong className="text-foreground">{startDate} → {endDate}</strong> al pulsar «{generateLabel}».
-                </p>
-              )}
-            </div>
-          </section>
-
-          <section aria-label="Opciones del documento PDF" className="rounded-2xl border border-border bg-card p-4">
-            <button
-              onClick={() => setShowPdfOptions(!showPdfOptions)}
-              aria-expanded={showPdfOptions}
-              className="w-full flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors py-1"
-            >
-              <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Opciones del documento</span>
-              {showPdfOptions ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {showPdfOptions && (
-              <div className="mt-3 space-y-3">
-                <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  Se aplican a la vista previa y al PDF exportado de la plantilla <strong>{TEMPLATES.find(t => t.id === pdfTemplate)?.label}</strong>.
-                  Las secciones Productos Vendidos y Comisiones se incluyen siempre.
-                </p>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {(
-                    [
-                      ['detailPayments', 'Detalle pagos'],
-                      ['detailProduction', 'Detalle producción'],
-                      ['includeBreakdown', 'Desglose billetes'],
-                      ['includeUsd', 'Cuadre USD'],
-                      ['includeSignature', 'Líneas de firma'],
-                      // §8.1: incluir/omitir el Reporte de Órdenes de Trabajo (patrón checklist del desglose).
-                      ['includeOtReport', 'Reporte de Órdenes de Trabajo'],
-                      // §8.2: columna Comisión conmutable (el cálculo del resumen se conserva).
-                      ['includeCommissionColumn', 'Columna Comisión'],
-                      // §9: false = CUP y USD corridos en la misma hoja; true = hojas separadas.
-                      ['usdSeparatePage', 'USD en hoja separada'],
-                    ] as Array<[keyof CashReportPdfOptions, string]>
-                  ).map(([key, label]) => (
-                    <button
-                      key={key}
-                      onClick={() => setPdfOptions(prev => ({ ...prev, [key]: !prev[key] }))}
-                      aria-pressed={!!pdfOptions[key]}
-                      className={cn(
-                        'flex items-center gap-2 p-2 rounded-lg border text-left text-xs',
-                        pdfOptions[key] ? 'border-primary bg-primary/10 text-primary' : 'border-border/40 text-muted-foreground',
-                      )}
-                    >
-                      {pdfOptions[key] ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
-                      <span className="font-bold">{label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* INC-2026-10-19 · Pie de firmas: los nombres se definen AQUÍ (nada
-                    hardcodeado en el PDF). Visible «si procede»: con la opción
-                    «Líneas de firma» activa. Se imprimen en ambos reportes (CUP y
-                    USD) cuando comparten hoja o cada uno en la suya. */}
-                {pdfOptions.includeSignature && (
-                  <div className="rounded-xl border border-border/30 bg-muted/10 p-3 space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombres del pie de firmas</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <div>
-                        <label htmlFor="cr-firmas-hecho" className="text-[9px] font-black uppercase text-muted-foreground">Hecho por</label>
-                        <input
-                          id="cr-firmas-hecho" type="text" value={madeBy}
-                          onChange={(e) => setMadeBy(e.target.value)}
-                          className={cn('w-full px-3 py-2 rounded border border-border/40 bg-background text-xs', touch)}
-                          placeholder="Quien elabora el reporte"
-                          autoComplete="off"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="cr-firmas-entrega" className="text-[9px] font-black uppercase text-muted-foreground">Entregado por</label>
-                        <input
-                          id="cr-firmas-entrega" type="text" value={deliveredBy}
-                          onChange={(e) => setDeliveredBy(e.target.value)}
-                          className={cn('w-full px-3 py-2 rounded border border-border/40 bg-background text-xs', touch)}
-                          placeholder="Quien entrega el dinero"
-                          autoComplete="off"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="cr-firmas-recibe" className="text-[9px] font-black uppercase text-muted-foreground">Recibido por</label>
-                        <input
-                          id="cr-firmas-recibe" type="text" value={recipientName}
-                          onChange={(e) => setRecipientName(e.target.value)}
-                          className={cn('w-full px-3 py-2 rounded border border-border/40 bg-background text-xs', touch)}
-                          placeholder="Quien recibe el dinero"
-                          autoComplete="off"
-                        />
-                      </div>
-                    </div>
-                    <p className="text-[9px] text-muted-foreground leading-relaxed">
-                      Se imprimen bajo las líneas de firma del PDF (Hecho por / Entregado por / Recibido por). Sin nombre, la línea queda en blanco para firmar a mano — ningún nombre viene fijo del sistema.
-                    </p>
-                  </div>
-                )}
-              </div>
+      {/* ══ MISIÓN 2026-10-22 (Parte C): filtro esencial en la vista principal ══ */}
+      {/* La vista prioriza el reporte: periodo + tabs + generación/exportación
+          (acciones en el encabezado). La configuración de documento (tipo,
+          orientación y opciones) vive en el panel lateral desplegable. */}
+      <section aria-label="Periodo del reporte" className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[150px] max-w-[240px]">
+            <label htmlFor="cr-sd" className="text-[10px] font-black uppercase text-muted-foreground">Desde</label>
+            <input
+              id="cr-sd" type="date" value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className={cn('w-full px-3 py-2 rounded-lg border border-border/40 bg-background text-xs', touch)}
+            />
+          </div>
+          <div className="flex-1 min-w-[150px] max-w-[240px]">
+            <label htmlFor="cr-ed" className="text-[10px] font-black uppercase text-muted-foreground">Hasta</label>
+            <input
+              id="cr-ed" type="date" value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className={cn('w-full px-3 py-2 rounded-lg border border-border/40 bg-background text-xs', touch)}
+            />
+          </div>
+          <div className="flex-1 min-w-[220px] pt-1">
+            {rangeInvalid && (
+              <p role="alert" className="text-[11px] text-destructive flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" /> El intervalo es inválido: «Desde» no puede ser posterior a «Hasta».
+              </p>
             )}
-          </section>
+            {!rangeInvalid && (
+              <p className="text-[10px] text-muted-foreground">
+                Se calculará <strong className="text-foreground">{startDate} → {endDate}</strong> al pulsar «{generateLabel}».
+              </p>
+            )}
+          </div>
         </div>
+      </section>
 
-        {/* ══ Columna de contenido con tabs ══ */}
-        <div className="min-w-0">
+      {/* ══ Contenido del reporte (ancho completo, sin columna de configuración) ══ */}
+      <div className="min-w-0">
           <div className="flex border-b border-border bg-card rounded-t-xl overflow-hidden" role="tablist" aria-label="Secciones del reporte">
             {(
               [
                 ['resultados', 'Resultados', ListChecks],
-                ['desglose', 'Desglose de efectivo', Calculator],
+                // MISIÓN 2026-10-22 (Parte B): la pestaña de conteo solo existe con
+                // la opción «Desglose de efectivo» activa (efecto consistente UI/PDF/Excel).
+                ...(cashBreakdownEnabled
+                  ? ([['desglose', 'Desglose de efectivo', Calculator]] as Array<[ReportTab, string, React.ElementType]>)
+                  : []),
                 ['preview', 'Vista previa', FileSearch],
               ] as Array<[ReportTab, string, React.ElementType]>
             ).map(([id, label, Icon]) => (
@@ -854,6 +822,7 @@ export default function CashReportView() {
                 expectedCup={expectedCup}
                 summary={cupSummaryMemo}
                 cupTotal={cupTotal}
+                showCuadre={cashBreakdownEnabled}
                 onGestionarComisiones={gestionarComisiones}
                 onRefresh={handleGenerate}
                 filterCurrency={filterCurrency}
@@ -902,6 +871,8 @@ export default function CashReportView() {
                 showHistory={showHistory}
                 setShowHistory={setShowHistory}
                 savedHistory={savedHistory}
+                workingDirty={workingDirty}
+                workingSavedAt={workingSavedAt}
                 onCountChange={handleCountChange}
                 onToggleDefault={toggleDefaultDenom}
                 onSubmitCustom={submitCustomDenom}
@@ -927,8 +898,190 @@ export default function CashReportView() {
               />
             )}
           </div>
-        </div>
       </div>
+
+      {/* ══ MISIÓN 2026-10-22 (Parte C): panel lateral desplegable de configuración ══ */}
+      {/* Drawer derecho (escritorio) / hoja completa (móvil). No desplaza la
+          interfaz, conserva los valores al abrir/cerrar, no reinicia la vista
+          previa ni los filtros, se cierra con botón explícito, backdrop o
+          Escape, y devuelve el foco al disparador. Controles nativos →
+          navegación por teclado en orden natural y foco visible. */}
+      {configOpen && (
+        <div className="fixed inset-0 z-[205]" role="dialog" aria-modal="true" aria-labelledby="cr-config-title">
+          <div
+            className="absolute inset-0 bg-background/70 backdrop-blur-[2px]"
+            onClick={closeConfig}
+            aria-hidden="true"
+            data-testid="cash-report-config-backdrop"
+          />
+          <div
+            ref={configPanelRef}
+            tabIndex={-1}
+            data-testid="cash-report-config-panel"
+            className="absolute right-0 top-0 h-full w-full sm:w-[420px] bg-card border-l border-border shadow-2xl flex flex-col focus:outline-none"
+          >
+            <header className="flex items-center justify-between px-4 py-3 border-b border-border/60 shrink-0">
+              <h2 id="cr-config-title" className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                <Settings className="w-4 h-4 text-primary" /> Configuración del reporte
+              </h2>
+              <button
+                onClick={closeConfig}
+                aria-label="Cerrar configuración"
+                data-testid="cash-report-config-close"
+                className={cn('p-2 rounded-lg hover:bg-muted', touch)}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </header>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-5">
+              {/* ── Tipo de reporte ── */}
+              <section aria-label="Tipo de reporte" className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo de reporte</p>
+                <div className="space-y-1.5" role="radiogroup" aria-label="Tipo de reporte">
+                  {TEMPLATES.map(t => (
+                    <button
+                      key={t.id}
+                      role="radio"
+                      aria-checked={pdfTemplate === t.id}
+                      onClick={() => setTemplatePersisted(t.id)}
+                      className={cn(
+                        'w-full flex items-start gap-2 p-2.5 rounded-lg border text-left transition-colors',
+                        pdfTemplate === t.id ? 'border-primary bg-primary/10' : 'border-border/40 hover:bg-muted/30',
+                      )}
+                    >
+                      <FileText className={cn('w-4 h-4 mt-0.5 shrink-0', pdfTemplate === t.id ? 'text-primary' : 'text-muted-foreground')} />
+                      <span className="min-w-0">
+                        <span className={cn('block text-xs font-bold', pdfTemplate === t.id && 'text-primary')}>{t.label}</span>
+                        <span className="block text-[10px] text-muted-foreground leading-snug">{t.desc}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {/* §3: la selección persiste en localStorage al cambiar (setTemplatePersisted). */}
+              </section>
+
+              {/* ── Orientación del documento ── */}
+              <section aria-label="Orientación del documento" className="border-t border-border/40 pt-4 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Orientación del documento</p>
+                <div className="space-y-1.5" role="radiogroup" aria-label="Orientación del documento">
+                  {PDF_ORIENTATIONS.map(o => (
+                    <button
+                      key={o.id}
+                      role="radio"
+                      aria-checked={pdfOrientation === o.id}
+                      onClick={() => setOrientationPersisted(o.id)}
+                      className={cn(
+                        'w-full flex items-center gap-2 p-2 rounded-lg border text-left transition-colors',
+                        pdfOrientation === o.id ? 'border-primary bg-primary/10' : 'border-border/40 hover:bg-muted/30',
+                      )}
+                    >
+                      <BookOpen className={cn('w-3.5 h-3.5 shrink-0', pdfOrientation === o.id ? 'text-primary' : 'text-muted-foreground')} />
+                      <span className="min-w-0">
+                        <span className={cn('block text-xs font-bold', pdfOrientation === o.id && 'text-primary')}>{o.label}</span>
+                        <span className="block text-[10px] text-muted-foreground leading-snug">{o.desc}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* ── Opciones del documento ── */}
+              <section aria-label="Opciones del documento" className="border-t border-border/40 pt-4 space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Opciones del documento</p>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  Se aplican a la vista previa, el PDF y el Excel de la plantilla <strong>{TEMPLATES.find(t => t.id === pdfTemplate)?.label}</strong>.
+                  Las secciones Productos Vendidos y Comisiones se incluyen siempre.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {(
+                    [
+                      // MISIÓN 2026-10-22 (Parte B): «Desglose de efectivo» — bloque
+                      // completo (denominaciones + contado + cuadre) en UI/PDF/Excel.
+                      ['includeCashBreakdown', 'Desglose de efectivo'],
+                      ['includeBreakdown', 'Desglose billetes'],
+                      ['includeUsd', 'Cuadre USD'],
+                      ['includeSignature', 'Líneas de firma'],
+                      // §9: false = CUP y USD corridos en la misma hoja; true = hojas separadas.
+                      ['usdSeparatePage', 'USD en hoja separada'],
+                      // §8.1: incluir/omitir el Reporte de Órdenes de Trabajo.
+                      ['includeOtReport', 'Reporte de Órdenes de Trabajo'],
+                      // §8.2: columna Comisión conmutable (el cálculo del resumen se conserva).
+                      ['includeCommissionColumn', 'Columna Comisión'],
+                      ['detailPayments', 'Detalle pagos'],
+                      ['detailProduction', 'Detalle producción'],
+                    ] as Array<[keyof CashReportPdfOptions, string]>
+                  ).map(([key, label]) => (
+                    <button
+                      key={key}
+                      onClick={() => togglePdfOption(key)}
+                      aria-pressed={!!pdfOptions[key]}
+                      data-testid={`cr-option-${key}`}
+                      className={cn(
+                        'flex items-center gap-2 p-2 rounded-lg border text-left text-xs transition-colors',
+                        pdfOptions[key] ? 'border-primary bg-primary/10 text-primary' : 'border-border/40 text-muted-foreground hover:bg-muted/30',
+                      )}
+                    >
+                      {pdfOptions[key] ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      <span className="font-bold">{label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* INC-2026-10-19 · Pie de firmas: los nombres se definen AQUÍ (nada
+                    hardcodeado en el PDF). Visible «si procede»: con la opción
+                    «Líneas de firma» activa. Se imprimen en ambos reportes (CUP y
+                    USD) cuando comparten hoja o cada uno en la suya. */}
+                {pdfOptions.includeSignature && (
+                  <div className="rounded-xl border border-border/30 bg-muted/10 p-3 space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombres del pie de firmas</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      <div>
+                        <label htmlFor="cr-firmas-hecho" className="text-[9px] font-black uppercase text-muted-foreground">Hecho por</label>
+                        <input
+                          id="cr-firmas-hecho" type="text" value={madeBy}
+                          onChange={(e) => setMadeBy(e.target.value)}
+                          className={cn('w-full px-3 py-2 rounded border border-border/40 bg-background text-xs', touch)}
+                          placeholder="Quien elabora el reporte"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="cr-firmas-entrega" className="text-[9px] font-black uppercase text-muted-foreground">Entregado por</label>
+                        <input
+                          id="cr-firmas-entrega" type="text" value={deliveredBy}
+                          onChange={(e) => setDeliveredBy(e.target.value)}
+                          className={cn('w-full px-3 py-2 rounded border border-border/40 bg-background text-xs', touch)}
+                          placeholder="Quien entrega el dinero"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="cr-firmas-recibe" className="text-[9px] font-black uppercase text-muted-foreground">Recibido por</label>
+                        <input
+                          id="cr-firmas-recibe" type="text" value={recipientName}
+                          onChange={(e) => setRecipientName(e.target.value)}
+                          className={cn('w-full px-3 py-2 rounded border border-border/40 bg-background text-xs', touch)}
+                          placeholder="Quien recibe el dinero"
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground leading-relaxed">
+                      Se imprimen bajo las líneas de firma del PDF (Hecho por / Entregado por / Recibido por). Sin nombre, la línea queda en blanco para firmar a mano — ningún nombre viene fijo del sistema.
+                    </p>
+                  </div>
+                )}
+              </section>
+            </div>
+
+            <footer className="px-4 py-3 border-t border-border/60 text-[10px] text-muted-foreground leading-relaxed shrink-0">
+              Los cambios se guardan automáticamente en este navegador y se aplican a la vista previa, el PDF y el Excel.
+              El conteo del desglose se guarda con «Guardar desglose».
+            </footer>
+          </div>
+        </div>
+      )}
 
       {/* Overlay de detalle de documento (ojo) — portado del modal */}
       {selectedDoc && (
@@ -1119,6 +1272,10 @@ interface ResultadosPanelProps {
   summary: DailySummary | null;
   /** Total contado en el desglose de billetes CUP (efectivo entregado). */
   cupTotal: number;
+  /** MISIÓN 2026-10-22 (Parte B): con «Desglose de efectivo» desactivado el
+   *  bloque de cuadre (contado/diferencia) no forma parte del reporte — solo
+   * se muestra el efectivo esperado (efecto consistente UI/PDF/Excel). */
+  showCuadre: boolean;
   onGestionarComisiones: () => void;
   onRefresh: () => void;
   filterCurrency: string;
@@ -1252,7 +1409,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
         <ListChecks className="w-10 h-10 mx-auto text-muted-foreground/40" />
         <p className="text-sm font-bold">Sin reporte calculado</p>
         <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-          Configura el tipo de reporte y el intervalo de fechas en el panel izquierdo y pulsa «Generar reporte» en el encabezado.
+          Configura el intervalo de fechas, abre «Configuración del reporte» para el tipo y las opciones del documento, y pulsa «Generar reporte» en el encabezado.
           No se calcula nada automáticamente al cambiar la configuración.
         </p>
       </div>
@@ -1298,24 +1455,29 @@ function ResultadosPanel(p: ResultadosPanelProps) {
         </div>
       </section>
 
-      {/* Cuadre: esperado vs contado — etiquetas inequívocas (§4) */}
-      <section aria-label="Cuadre de caja" className="grid grid-cols-3 gap-2">
+      {/* Cuadre: esperado vs contado — etiquetas inequívocas (§4). Con «Desglose
+          de efectivo» OFF, el contado/diferencia no existe en el reporte. */}
+      <section aria-label="Cuadre de caja" className={cn('grid gap-2', p.showCuadre ? 'grid-cols-3' : 'grid-cols-1')}>
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
           <p className="text-[9px] font-black uppercase text-muted-foreground">Efectivo esperado</p>
           <p className="text-base sm:text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(s.efectivoEsperado)}</p>
         </div>
-        <div className="rounded-xl border border-info/20 bg-info/5 p-3 text-center">
-          <p className="text-[9px] font-black uppercase text-muted-foreground">Efectivo contado</p>
-          <p className="text-base sm:text-lg font-mono font-black tabular-nums text-foreground">{formatCurrency(p.cupTotal)}</p>
-        </div>
-        <div className={cn('rounded-xl border p-3 text-center', cuadreState === 'cuadrado' ? 'border-success/20 bg-success/5' : 'border-warning/30 bg-warning/5')}>
-          <p className="text-[9px] font-black uppercase text-muted-foreground">
-            Diferencia de cuadre {cuadreState === 'cuadrado' ? '(cuadrado)' : cuadreState === 'sobrante' ? '(sobrante)' : '(faltante)'}
-          </p>
-          <p className={cn('text-base sm:text-lg font-mono font-black tabular-nums', cuadreState === 'cuadrado' ? 'text-success' : 'text-warning')}>
-            {diferencia > 0 ? '+' : ''}{formatCurrency(diferencia)}
-          </p>
-        </div>
+        {p.showCuadre && (
+          <>
+            <div className="rounded-xl border border-info/20 bg-info/5 p-3 text-center">
+              <p className="text-[9px] font-black uppercase text-muted-foreground">Efectivo contado</p>
+              <p className="text-base sm:text-lg font-mono font-black tabular-nums text-foreground">{formatCurrency(p.cupTotal)}</p>
+            </div>
+            <div className={cn('rounded-xl border p-3 text-center', cuadreState === 'cuadrado' ? 'border-success/20 bg-success/5' : 'border-warning/30 bg-warning/5')}>
+              <p className="text-[9px] font-black uppercase text-muted-foreground">
+                Diferencia de cuadre {cuadreState === 'cuadrado' ? '(cuadrado)' : cuadreState === 'sobrante' ? '(sobrante)' : '(faltante)'}
+              </p>
+              <p className={cn('text-base sm:text-lg font-mono font-black tabular-nums', cuadreState === 'cuadrado' ? 'text-success' : 'text-warning')}>
+                {diferencia > 0 ? '+' : ''}{formatCurrency(diferencia)}
+              </p>
+            </div>
+          </>
+        )}
       </section>
 
       {/* §7: Ajustes extraordinarios — vía excepcional con nota obligatoria */}
@@ -1430,6 +1592,10 @@ interface DesglosePanelProps {
   showHistory: boolean;
   setShowHistory: (v: boolean) => void;
   savedHistory: SavedBreakdown[];
+  /** MISIÓN 2026-10-22 (Parte A): indicador discreto de conteo pendiente de
+   *  guardar (guardado explícito) y marca temporal del último guardado. */
+  workingDirty: boolean;
+  workingSavedAt: string;
   onCountChange: (currency: Currency, denom: number, raw: string) => void;
   onToggleDefault: (currency: Currency, d: number) => void;
   onSubmitCustom: (currency: Currency) => void;
@@ -1680,8 +1846,14 @@ function DesglosePanel(p: DesglosePanelProps) {
 
           {/* Historial + acciones globales */}
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <button onClick={p.onSaveHistory} className={cn('px-3 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted flex items-center gap-1.5', touch)}>
+            <button onClick={p.onSaveHistory} className={cn('px-3 rounded-lg border text-xs font-black uppercase flex items-center gap-1.5', touch, p.workingDirty ? 'border-primary/50 bg-primary/10 text-primary hover:bg-primary/20' : 'border-border/40 hover:bg-muted')}>
               <Save className="w-4 h-4 text-primary" /> Guardar desglose
+              {/* Indicador discreto de cambios pendientes (Parte A/C): solo con
+                  conteo sin guardar — nunca «guardado» falso. */}
+              {p.workingDirty && (
+                <span data-testid="cr-working-dirty" title="Conteo sin guardar" aria-label="Conteo sin guardar"
+                  className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
+              )}
             </button>
             <button onClick={() => p.setShowHistory(!p.showHistory)} aria-expanded={p.showHistory} className={cn('px-3 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted flex items-center gap-1.5', touch)}>
               <RotateCcw className="w-4 h-4" /> Restaurar
@@ -1689,7 +1861,13 @@ function DesglosePanel(p: DesglosePanelProps) {
             <button onClick={p.onClearAll} className={cn('px-3 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted flex items-center gap-1.5', touch)}>
               <Trash2 className="w-4 h-4 text-destructive" /> Limpiar todo
             </button>
-            <span className="text-[10px] text-muted-foreground ml-auto">Guarda CUP + USD y los nombres del pie de firmas.</span>
+            <span className="text-[10px] text-muted-foreground ml-auto" data-testid="cr-working-status">
+              {p.workingDirty
+                ? 'Conteo sin guardar — pulsa «Guardar desglose» para conservarlo al reabrir.'
+                : p.workingSavedAt
+                  ? `Guardado ${new Date(p.workingSavedAt).toLocaleString('es')} — se restaura al reabrir el módulo.`
+                  : 'Guarda CUP + USD y los nombres del pie de firmas.'}
+            </span>
           </div>
           {p.showHistory && (
             <div className="p-3 rounded-xl border border-border/30 bg-muted/10 max-h-40 overflow-y-auto">

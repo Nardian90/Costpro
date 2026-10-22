@@ -37,7 +37,16 @@ vi.mock('@/components/views/terminal/views/cash/cash-report-pdf', () => ({
     detailPayments: false, detailProduction: false,
     includeBreakdown: true, includeUsd: true, includeSignature: true,
     includeOtReport: true, includeCommissionColumn: true, usdSeparatePage: true,
+    includeCashBreakdown: true,
   },
+  // MISIÓN 2026-10-22 (Parte A): persistencia de opciones (mock mínimo fiel).
+  loadPdfOptions: () => ({
+    detailPayments: false, detailProduction: false,
+    includeBreakdown: true, includeUsd: true, includeSignature: true,
+    includeOtReport: true, includeCommissionColumn: true, usdSeparatePage: true,
+    includeCashBreakdown: true,
+  }),
+  savePdfOptions: vi.fn(),
   buildCashReportPdf: vi.fn(async () => ({ output: vi.fn(() => 'blob:mock'), save: vi.fn() })),
   fetchDiarioSummaries: vi.fn(async () => ({})),
   methodLabel: (m: string) => (m === 'cash' ? 'Efectivo' : 'Transferencia'),

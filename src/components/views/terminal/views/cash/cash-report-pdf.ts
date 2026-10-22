@@ -32,7 +32,7 @@ import { COLLECTION_EPS } from '@/lib/cash-report/collection-currency';
 import type { jsPDF } from 'jspdf';
 import type { CashReport } from '@/types';
 import {
-  breakdownTotal, formatUsd,
+  breakdownTotal, formatUsd, LS_KEYS,
   type Breakdown, type PdfTemplate, type Currency, type PdfOrientation,
 } from './cash-report-core';
 import {
@@ -57,6 +57,13 @@ export interface CashReportPdfOptions {
   includeCommissionColumn: boolean;
   /** §9: false = CUP y USD en la misma hoja (corrido/compacto) · true = USD en página propia. */
   usdSeparatePage: boolean;
+  /** MISIÓN 2026-10-22 (Parte A/B): «Desglose de efectivo» — controla el bloque
+   *  de desglose (denominaciones + contado + cuadre) de forma consistente en
+   *  UI, PDF y Excel. DISTINTO de includeBreakdown («Desglose de billetes»):
+   *  este omite las FILAS por denominación dentro del bloque; includeCashBreakdown
+   *  omite el bloque completo. Valor inicial true = coherente con el
+   *  comportamiento pre-existente (Diario renderizaba el bloque incondicionalmente). */
+  includeCashBreakdown: boolean;
 }
 
 export const DEFAULT_PDF_OPTIONS: CashReportPdfOptions = {
@@ -68,7 +75,48 @@ export const DEFAULT_PDF_OPTIONS: CashReportPdfOptions = {
   includeOtReport: true,
   includeCommissionColumn: true,
   usdSeparatePage: true,
+  includeCashBreakdown: true,
 };
+
+// ── Persistencia de las opciones del documento (MISIÓN 2026-10-22 · Parte A) ─
+// Clave: LS_KEYS.pdfOptions = 'costpro:cash-report:pdf-options:v1' (core).
+// Esquema: { [clave de CashReportPdfOptions]: boolean } — se valida clave a
+// clave contra las conocidas del dominio; los defaults SOLO se aplican cuando
+// no existe preferencia guardada VÁLIDA para esa clave (regla B-1). Un JSON
+// antiguo/corrupto se recupera con los defaults en las claves afectadas, sin
+// bloquear la interfaz (try/catch, mismo patrón que loadPdfTemplate).
+const PDF_OPTION_KEYS = Object.keys(DEFAULT_PDF_OPTIONS) as Array<keyof CashReportPdfOptions>;
+
+export function loadPdfOptions(): CashReportPdfOptions {
+  if (typeof window === 'undefined') return { ...DEFAULT_PDF_OPTIONS };
+  try {
+    const raw = window.localStorage.getItem(LS_KEYS.pdfOptions);
+    if (!raw) return { ...DEFAULT_PDF_OPTIONS };
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { ...DEFAULT_PDF_OPTIONS };
+    const obj = parsed as Record<string, unknown>;
+    const out = { ...DEFAULT_PDF_OPTIONS };
+    for (const key of PDF_OPTION_KEYS) {
+      const v = obj[key];
+      if (typeof v === 'boolean') out[key] = v; // válido → preferencia guardada
+      // ausente/no boolean → conserva el default (no sobrescribe con basura)
+    }
+    return out;
+  } catch {
+    return { ...DEFAULT_PDF_OPTIONS };
+  }
+}
+
+export function savePdfOptions(options: CashReportPdfOptions): void {
+  if (typeof window === 'undefined') return;
+  try {
+    // Solo claves conocidas y valores booleanos: el esquema queda estable aunque
+    // el objeto crezca en futuras versiones (la clave v1 se documenta en core).
+    const out: Record<string, boolean> = {};
+    for (const key of PDF_OPTION_KEYS) out[key] = options[key] === true;
+    window.localStorage.setItem(LS_KEYS.pdfOptions, JSON.stringify(out));
+  } catch {}
+}
 
 export interface CashReportPdfContext {
   report: CashReport;
@@ -140,7 +188,7 @@ export async function buildCashReportPdf(ctx: CashReportPdfContext, summaries?: 
   const doc = await createPDFDocument(orientation, 'mm', 'a4');
   // Plantilla 'simple': fidelidad a SU descripción (sin desglose) — ver cabecera.
   const effectiveOptions: CashReportPdfOptions = ctx.template === 'simple'
-    ? { ...ctx.options, includeBreakdown: false, includeUsd: false }
+    ? { ...ctx.options, includeBreakdown: false, includeUsd: false, includeCashBreakdown: false }
     : ctx.options;
   if (ctx.template === 'diario') {
     return buildDiarioPdf(doc, ctx, summaries);
@@ -450,13 +498,18 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
   }
 
   // ── Desglose + firmas ──
-  if (y + 80 > ph - m - 10) { doc.addPage(); y = m; }
-  sectionTitle('DESGLOSE DE BILLETES PARA ENTREGA', 'Conteo físico de efectivo');
+  // MISIÓN 2026-10-22 (Parte B): «Desglose de efectivo» (includeCashBreakdown)
+  // gobierna la SECCIÓN completa; «Desglose de billetes» (includeBreakdown)
+  // gobierna las tablas por denominación DENTRO de la sección.
+  if (options.includeCashBreakdown !== false) {
+    if (y + 80 > ph - m - 10) { doc.addPage(); y = m; }
+    sectionTitle('DESGLOSE DE BILLETES PARA ENTREGA', 'Conteo físico de efectivo');
+  }
   const cupTotal = breakdownTotal(cupBreakdown);
   const expectedCup = report?.cash_balance_cup ?? (report?.totals as any | undefined)?.balance_cup as number ?? 0;
   const cupDifference = cupTotal - expectedCup;
 
-  if (options.includeBreakdown) {
+  if (options.includeCashBreakdown !== false && options.includeBreakdown) {
     es(8);
     setText(C_DARK); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
     doc.text('Desglose CUP', m, y); y += 5;
@@ -479,7 +532,20 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     }
   }
 
-  if (options.includeUsd) {
+  if (options.includeCashBreakdown !== false && !options.includeBreakdown) {
+    // Bloque presente sin filas por denominación: totales y cuadre directos.
+    es(6);
+    setText(C_DARK); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+    doc.text('Desglose CUP', m, y); y += 5;
+    setText(C_DARK); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+    doc.text(`Efectivo contado: ${fmt(cupTotal)}`, m, y); y += 5;
+    setText(cupDifference === 0 ? C_SUCCESS : cupDifference > 0 ? C_WARN : C_DANGER);
+    doc.setFont('helvetica', 'bold');
+    const dl = cupDifference === 0 ? '(cuadrado)' : cupDifference > 0 ? '(sobrante)' : '(faltante)';
+    doc.text(`Diferencia: ${fmt(Math.abs(cupDifference))} ${dl}`, m, y); y += 6;
+  }
+
+  if (options.includeCashBreakdown !== false && options.includeUsd) {
     const usdCashSales = sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'USD').reduce((s: number, x: any) => s + Number(x.total), 0);
     const usdTotal = breakdownTotal(usdBreakdown);
     if (usdCashSales > 0 || usdTotal > 0) {
@@ -737,6 +803,9 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
   };
 
   // ── Fila 1 · bloque derecho: Desglose de efectivo (§8.3 — sin filas de importe 0) ──
+  // MISIÓN 2026-10-22 (Parte B): «Desglose de billetes» (includeBreakdown)
+  // controla las FILAS por denominación; «Desglose de efectivo» (la existencia
+  // misma del bloque) se decide en cada llamada (includeCashBreakdown).
   const renderBreakdownBlock = (
     title: string,
     denominations: number[],
@@ -751,34 +820,39 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     setText(C_DARK);
     doc.setFontSize(10); doc.setFont('helvetica', 'bold');
     doc.text(title, x, by); by += 5;
-    doc.setFontSize(8); doc.setFont('helvetica', 'bold');
-    setText(C_MUTED);
-    doc.text('Denominación', x, by);
-    doc.text('Cantidad', x + blockW * 0.55, by, { align: 'center' });
-    doc.text('Importe', x + blockW - 2, by, { align: 'right' });
-    by += 4;
-    setDraw(C_BORDER); doc.setLineWidth(0.3);
-    doc.line(x, by - 1.5, x + blockW, by - 1.5);
-    by += 1;
-    doc.setFont('helvetica', 'normal');
-    setText(C_DARK);
-    let printedRows = 0;
-    for (const d of denominations) {
-      const cnt = Number(breakdown[d] || 0);
-      // §8.3: cantidad 0 → la fila NO se imprime (vista previa y PDF).
-      if (cnt <= 0) continue;
-      const imp = cnt * d;
-      const lbl = denomLabel(d, currency);
-      doc.text(lbl, x, by);
-      doc.text(String(cnt), x + blockW * 0.55, by, { align: 'center' });
-      doc.text(currency === 'CUP' ? fmtCup(imp) : fmtUsdFmt(imp), x + blockW - 2, by, { align: 'right' });
-      by += 4.2;
-      printedRows++;
+    const showDenoms = options.includeBreakdown !== false;
+    if (showDenoms) {
+      doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+      setText(C_MUTED);
+      doc.text('Denominación', x, by);
+      doc.text('Cantidad', x + blockW * 0.55, by, { align: 'center' });
+      doc.text('Importe', x + blockW - 2, by, { align: 'right' });
+      by += 4;
+      setDraw(C_BORDER); doc.setLineWidth(0.3);
+      doc.line(x, by - 1.5, x + blockW, by - 1.5);
+      by += 1;
+      doc.setFont('helvetica', 'normal');
+      setText(C_DARK);
     }
-    if (printedRows === 0) {
-      doc.setFont('helvetica', 'italic'); setText(C_MUTED);
-      doc.text('Sin efectivo contado', x, by); by += 4.2;
-      doc.setFont('helvetica', 'normal'); setText(C_DARK);
+    let printedRows = 0;
+    if (showDenoms) {
+      for (const d of denominations) {
+        const cnt = Number(breakdown[d] || 0);
+        // §8.3: cantidad 0 → la fila NO se imprime (vista previa y PDF).
+        if (cnt <= 0) continue;
+        const imp = cnt * d;
+        const lbl = denomLabel(d, currency);
+        doc.text(lbl, x, by);
+        doc.text(String(cnt), x + blockW * 0.55, by, { align: 'center' });
+        doc.text(currency === 'CUP' ? fmtCup(imp) : fmtUsdFmt(imp), x + blockW - 2, by, { align: 'right' });
+        by += 4.2;
+        printedRows++;
+      }
+      if (printedRows === 0) {
+        doc.setFont('helvetica', 'italic'); setText(C_MUTED);
+        doc.text('Sin efectivo contado', x, by); by += 4.2;
+        doc.setFont('helvetica', 'normal'); setText(C_DARK);
+      }
     }
     by += 2;
     setDraw(C_BORDER); doc.setLineWidth(0.3);
@@ -1077,7 +1151,11 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     const cupDisplayDenoms = displayDenoms(cupDenoms, cupBreakdown, 'CUP');
     const cupTotalCounted = breakdownTotal(cupBreakdown);
     const cupCuadre = computeCuadre(cupTotalCounted, s.efectivoEsperado);
-    const breakdownEndY = renderBreakdownBlock('Desglose de efectivo CUP', cupDisplayDenoms, cupBreakdown, cupTotalCounted, cupCuadre, 'CUP');
+    // «Desglose de efectivo» OFF → bloque omitido (la fila 1 queda solo con el
+    // Resumen; breakdownEndY = y mantiene la geometría intacta).
+    const breakdownEndY = options.includeCashBreakdown === false
+      ? y
+      : renderBreakdownBlock('Desglose de efectivo CUP', cupDisplayDenoms, cupBreakdown, cupTotalCounted, cupCuadre, 'CUP');
 
     y = Math.max(blockEndY, breakdownEndY) + 5;
 
@@ -1124,7 +1202,9 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     const usdTotalCounted = breakdownTotal(usdBreakdown);
     const usdCuadre = computeCuadre(usdTotalCounted, su.efectivoEsperado);
     const usdDisplayDenoms = displayDenoms(usdDenoms, usdBreakdown, 'USD');
-    const usdBreakdownEndY = renderBreakdownBlock('Desglose de efectivo USD', usdDisplayDenoms, usdBreakdown, usdTotalCounted, usdCuadre, 'USD');
+    const usdBreakdownEndY = options.includeCashBreakdown === false
+      ? y
+      : renderBreakdownBlock('Desglose de efectivo USD', usdDisplayDenoms, usdBreakdown, usdTotalCounted, usdCuadre, 'USD');
     y = Math.max(usdBlockEndY, usdBreakdownEndY) + 5;
 
     // En hoja compartida el pie USD fluye tras la tabla → la tabla reserva
@@ -1214,7 +1294,9 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     const cupDisplayDenoms = displayDenoms(cupDenoms, cupBreakdown, 'CUP');
     const cupTotalCounted = breakdownTotal(cupBreakdown);
     const cupCuadre = computeCuadre(cupTotalCounted, totCup);
-    renderBreakdownBlock('Desglose de efectivo CUP', cupDisplayDenoms, cupBreakdown, cupTotalCounted, cupCuadre, 'CUP');
+    if (options.includeCashBreakdown !== false) {
+      renderBreakdownBlock('Desglose de efectivo CUP', cupDisplayDenoms, cupBreakdown, cupTotalCounted, cupCuadre, 'CUP');
+    }
     y = Math.max(blockEndY, y) + 5;
     // Pie de firmas de la hoja de Órdenes (opción «Líneas de firma» respetada).
     if (options.includeSignature !== false) renderFirmas();
