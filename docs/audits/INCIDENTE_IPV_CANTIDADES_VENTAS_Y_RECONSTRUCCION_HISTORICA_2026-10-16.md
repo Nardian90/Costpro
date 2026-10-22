@@ -171,6 +171,29 @@ Categorías sobre las alertas que reportaba el IPV:
 3. **(b) Datos históricos incompletos — PERMANECEN REPORTADOS**: en TIENDA CENTRAL COSTPRO existen productos con carga inicial previa al registro de movimientos y devoluciones de agosto cuyo movimiento `return` no existe (reinicio del ledger en septiembre, documentado en `AUDITORIA_IPV_INGRESOS_POR_VENTAS.md` §5.6). El IPV **seguirá** mostrando `PRE_LEDGER` (apertura N/D, nunca cero inventado), `RECONCILIATION` (diferencia calculado/esperado/dif) y `DEVOLUTION_WITHOUT_LEDGER` para esos casos. No se ocultaron, no se crearon movimientos retroactivos ni saldos de apertura sin fuente (§5.2: requiere autorización explícita).
 4. **Sin evidencia de categoría (d)–(h) adicional** en las tiendas auditadas en este período; el tope de seguridad de `fetchAllRows` garantiza que si una tienda creciera más allá del tope, el reporte **fallaría visiblemente** en vez de truncar.
 
+> **ANOTACIÓN EXPLÍCITA DE CLASIFICACIÓN HISTÓRICA (2026-10-22 — decisión del propietario).**
+> Por la «Resolución del propietario — Misión C» (2026-10-21, ítem A.4, opción 1 de PD-6;
+> registro en `docs/decisions/2026-10-21-resolucion-propietario-mision-c.md`), las
+> incidencias **permanentes** documentadas en este expediente quedan clasificadas
+> formalmente como **HISTÓRICAS**:
+>
+> - **TIENDA CENTRAL COSTPRO**: `PRE_LEDGER` (cargas iniciales previas al registro de
+>   movimientos) y `DEVOLUTION_WITHOUT_LEDGER` (devoluciones de agosto sin `return`
+>   tras el reinicio del ledger de septiembre, §5.6 de `AUDITORIA_IPV_INGRESOS_POR_VENTAS.md`).
+> - **ENERVIDA-VITALLCONS**: `RECONCILIATION` persistentes por deriva documentada (51 en
+>   el corte del 16-oct) y `PRE_LEDGER` (4).
+> - **26 `PRICE_ANOMALY` de ENERVIDA**: también históricas a efectos del IPV; su
+>   resolución se produce **en origen** (precios vigentes de catálogo → CP-INV-004,
+>   PENDIENTE DE DATOS), no dentro del IPV.
+>
+> Consecuencias de la clasificación: (i) NO se crean movimientos ni se alteran saldos
+> históricos; (ii) las incidencias nuevas siguen reportándose con normalidad — la
+> clasificación no silencia el monitoreo; (iii) cualquier backfill futuro de saldos de
+> apertura requerirá **evidencia contable de apertura + autorización separada por
+> tienda/lote** (precondiciones 1–6 de PD-6), y ninguna autorización existente
+> (incluidas A5/A6 del expediente CP-SEC-027 v5) lo cubre. Cero escrituras de BD al
+> registrar esta anotación.
+
 ---
 
 ## E. CAMBIOS Y PRUEBAS

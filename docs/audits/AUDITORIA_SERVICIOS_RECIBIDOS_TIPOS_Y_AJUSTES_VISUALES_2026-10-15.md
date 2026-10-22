@@ -154,6 +154,15 @@ Ver §8: 165 archivos / 2.944 passed / 0 failed (incluye los contratos previos d
 
 ## 13. Riesgos residuales
 
+> **ANOTACIÓN DE FORMALIZACIÓN (2026-10-22 — decisión del propietario).** Por la
+> «Resolución del propietario — Misión C» (2026-10-21, ítem A.7, opción 2 de PD-9;
+> registro en `docs/decisions/2026-10-21-resolucion-propietario-mision-c.md`), el
+> riesgo residual 1 de esta sección queda **formalizado como limitación aceptada de
+> las métricas**: los servicios históricos con `service_type_id = NULL` se mantienen
+> intactos y el contador de uso de tipos queda subestimado de forma permanente y
+> documentada. No se ejecutará backfill en esta fase; reabrirlo exigiría una nueva
+> decisión del propietario. Cero escrituras de BD al registrar esta anotación.
+
 1. **Tipos históricos sin FK:** los servicios creados antes de este cambio tienen `service_type_id = NULL`; el contador de uso subestima su cantidad. Mitigación posible fuera de alcance: backfill por coincidencia de nombre (no ejecutado para no alterar registros históricos).
 2. **Gestión del catálogo limitada a admin global:** un manager de tienda que necesite una categoría debe solicitarla; el diseño por-tienda existe en schema pero no tiene UI (documentado, no improvisado).
 3. **Residuo de prueba:** 1 servicio anulado `SRV-20261015-00053` (proveedor `TEST-MISION-SR-2026-10-15`) en la tienda de pruebas Central, trazable y anulable-visible; no interfiere en listados activos por defecto.
