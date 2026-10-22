@@ -1,37 +1,54 @@
 /**
  * cash-report-excel.ts — Exportación Excel (.xlsx) del Reporte de Entrega.
  *
- * MISIÓN EXCEL 2026-10-21 (Parte B) + MISIÓN EXCEL PROFESIONAL 2026-10-22:
- *  · .xlsx REAL (no CSV renombrado) generado client-side con `xlsx-js-style`
- *    (fork de SheetJS con estilos de celda: negrita, relleno, bordes,
- *    alineación y formatos numéricos; el chunk se carga en diferido SOLO al
- *    exportar, igual que jspdf).
- *  · FIDELIDAD AL PDF: MISMA fuente de datos y parámetros que
- *    cash-report-pdf.ts (plantilla Diario): mismo report, mismos summaries
- *    (fetchDiarioSummaries), mismas fórmulas centralizadas (computeDailySummary),
- *    mismos helpers de tabla (salesTableColumns/Items/Qty) y misma fuente de
- *    comisiones sugeridas (fetchSuggestedCommissionsByProduct — exportada
- *    del módulo PDF para reutilización EXACTA).
- *  · 2026-10-22 — FÓRMULAS REALES (misión «Exportación profesional»): los
- *    totales ya NO son solo valores escritos: cada celda de total lleva la
- *    fórmula de Excel real (=SUM, =COUNT, productos por denominación, cuadre,
- *    comprobaciones Detalle↔Resumen) referenciando las celdas de detalle.
- *    El VALOR cacheado (v) sigue siendo el determinado por la lógica central
- *    (computeDailySummary), de modo que el libro es fiel al sistema al abrirse
- *    y, si el auditor edita una celda de detalle, Excel recalcula en vivo
- *    (CalcPr.fullCalcOnLoad). Nunca se suman CUP y USD en una misma fórmula.
- *  · Estructura del libro (§3.2 de la misión): Hoja 1 «Resumen» (identidad
- *    COSTPRO 4 + tienda + período + generación + resumen por moneda con
- *    fórmulas + indicadores + comprobaciones de consistencia), Hoja 2
- *    «Detalle» (tablas de ventas CUP/USD con autofiltro y totales =SUM),
- *    Hoja 3 «Desglose» (efectivo por denominaciones con importes =A*C y
- *    cuadre en vivo), Hoja 4 «Órdenes de Trabajo» (si procede) y Hoja 5
- *    «Nota metodológica». Encabezado de la tabla de detalle repetido al
- *    imprimir (Print_Titles), paneles congelados y configuración de
- *    impresión inyectadas vía post-proceso JSZip.
+ * MISIÓN 2026-10-22 (Partes D + E):
+ *  · D — REPARACIÓN DEL ARCHIVO DAÑADO. Causa raíz demostrada (reproducción
+ *    forense del binario): el post-proceso JSZip inyectaba <calcPr> entre
+ *    </sheets> y <definedNames> — el regex alternado (/<\/definedNames>|<\/sheets>/)
+ *    empareja </sheets> PRIMERO porque en el XML va antes. El esquema
+ *    CT_Workbook (ECMA-376 §18.2.10) exige la secuencia … sheets →
+ *    functionGroups → externalReferences → definedNames → calcPr …, de modo
+ *    que Excel de escritorio rechaza el orden y declara el archivo dañado
+ *    («hemos detectado un problema con el contenido»). openpyxl y LibreOffice
+ *    toleran el desorden (por eso el round-trip del CI nunca lo detectó).
+ *    Fix: inyección SIEMPRE tras </definedNames> cuando existe + prueba de
+ *    regresión que valida el ORDEN de los elementos del workbook.xml.
+ *  · E — ESTRUCTURA ESPEJO DEL PDF: hoja principal «Reporte Entrega»
+ *    (identidad compacta — título + tienda/dirección + período/generación en
+ *    dos filas, SIN filas de metadatos: feedback del propietario 2026-10-22
+ *    eliminó «Tipo de reporte» y «Monedas» de la hoja — la metodología vive
+ *    en su hoja propia —, la nota al pie de incidencias y la sección
+ *    «COMPROBACIÓN DE CONSISTENCIA»; el documento queda igual que el PDF de
+ *    entrega: RESUMEN DEL DÍA, DESGLOSE DE EFECTIVO, VENTAS DEL DÍA con
+ *    TOTALES y fórmulas reales, FIRMAS). Con «USD en hoja separada» activo →
+ *    hoja «Reporte Entrega USD» independiente con título, tienda y período
+ *    identificables; desactivado → secciones USD corridas en la hoja
+ *    principal (sin duplicar totales). «Órdenes de Trabajo» (opción
+ *    includeOtReport) y «Nota metodológica» completan el libro.
+ *  · IMPRESIÓN PROFESIONAL (E3): A4; orientación según columnas (horizontal
+ *    para hojas con tabla, vertical para la nota); fitToWidth=1 fitToHeight=0
+ *    (el largo fluye a varias páginas legibles); márgenes equilibrados; área
+ *    de impresión delimitada (_xlnm.Print_Area al rango usado); repetición de
+ *    la fila de encabezado al imprimir (_xlnm.Print_Titles, solo en hojas de
+ *    una tabla — en modo compacto no se repite un encabezado CUP sobre filas
+ *    USD); encabezado y pie de página con numeración (&P de &N); SIN paneles
+ *    congelados (feedback del propietario 2026-10-22 — filas inmovilizadas
+ *    innecesarias); anchos de columna por contenido.
+ *  · OPCIONES DEL DOCUMENTO respetadas (misma fuente que pantalla y PDF):
+ *    includeCashBreakdown (bloque «Desglose de efectivo» completo),
+ *    includeBreakdown (filas por denominación dentro del bloque),
+ *    includeUsd (secciones USD), usdSeparatePage (hoja USD propia),
+ *    includeSignature (firmas), includeOtReport (hoja OT),
+ *    includeCommissionColumn (columna Comisión en la tabla CUP).
+ *  · FIDELIDAD CONTABLE (heredada de las misiones anteriores): mismas fuentes
+ *    y parámetros que el PDF (fetchDiarioSummaries + computeDailySummary +
+ *    salesTableColumns/Items/Qty + fetchSuggestedCommissionsByProduct); los
+ *    totales son NÚMEROS con fórmulas REALES (=SUM, =A*C, cuadre y
+ *    comprobaciones) cuyo valor cacheado es el determinado por el sistema;
+ *    CUP y USD JAMÁS se suman entre sí; fullCalcOnLoad recalcula al abrir.
  *  · SEGURIDAD (B5): sanitizeExcelText prefija ' sobre = + - @ \t \r; la
- *    descarga no crea ventas ni movimientos (solo lectura del reporte
- *    aplicado); nombre de archivo descriptivo sin caracteres inválidos.
+ *    exportación es de solo lectura (no crea ventas ni movimientos); nombre
+ *    de archivo descriptivo sin caracteres inválidos.
  */
 
 import {
@@ -85,17 +102,23 @@ async function loadXlsx(): Promise<XLSXModule> {
 }
 
 // ── Estilos (aplicados por celda tras aoa_to_sheet) ─────────────────────────
-interface CellStyle { bold?: boolean; sz?: number; fill?: string; right?: boolean; top?: boolean; z?: string }
+interface CellStyle {
+  bold?: boolean; sz?: number; fill?: string; right?: boolean;
+  top?: boolean; bottom?: boolean; z?: string; italic?: boolean;
+}
 
 function styleCell(ws: WorkSheetLike, XLSX: XLSXModule, r: number, c: number, st: CellStyle) {
   const addr = XLSX.utils.encode_cell({ r, c });
   const cell = ws[addr] as (Record<string, unknown> | undefined);
   if (!cell) return;
+  const border: Record<string, { style: string; color: { rgb: string } }> = {};
+  if (st.top) border.top = { style: 'thin', color: { rgb: '6B7280' } };
+  if (st.bottom) border.bottom = { style: 'thin', color: { rgb: '6B7280' } };
   cell.s = {
-    font: { bold: st.bold === true, sz: st.sz, color: { rgb: '1F2937' } },
+    font: { bold: st.bold === true, sz: st.sz, italic: st.italic, color: { rgb: '1F2937' } },
     fill: st.fill ? { patternType: 'solid', fgColor: { rgb: st.fill } } : undefined,
     alignment: { horizontal: st.right ? 'right' : 'left', vertical: 'center' },
-    border: st.top ? { top: { style: 'thin', color: { rgb: '6B7280' } } } : undefined,
+    border: Object.keys(border).length > 0 ? border : undefined,
   };
   if (st.z && cell.t === 'n') cell.z = st.z;
 }
@@ -106,8 +129,8 @@ interface FormulaRef { r: number; c: number; f: string }
 /**
  * Adjunta las fórmulas a las celdas (el valor v ya está como resultado cacheado).
  * NOTA: las celdas cuyo resultado es TEXTO (p. ej. =IF(...,"COHERENTE","REVISAR"))
- * conservan t='s' (shared string): xlsx-js-style no soporta t='str' y con t='s'
- * tanto sheet_to_json como Excel (tras fullCalcOnLoad) muestran el valor correcto.
+ * conservan t='str' (xlsx-js-style lo escribe así): Excel (tras fullCalcOnLoad)
+ * muestra el valor correcto.
  */
 function attachFormulas(ws: WorkSheetLike, XLSX: XLSXModule, refs: FormulaRef[]) {
   for (const { r, c, f } of refs) {
@@ -154,44 +177,61 @@ function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD'): IncomeRow[] {
   return rows;
 }
 
-export interface CashReportExcelResult {
-  /** Workbook completo (inspeccionable en pruebas con sheet_to_json). */
-  wb: WorkBookLike;
-  /** Nombre de archivo descriptivo (COSTPRO_Reporte_Entrega_<Tienda>_<fecha>.xlsx). */
-  filename: string;
-  /** Configuración de congelado/impresión por hoja (la consume buildCashReportExcelBlob). */
-  sheetFeatures: Array<{ freezeAfterRow?: number; landscape?: boolean } | undefined>;
+// ── Constructor de hoja (estado por hoja — espejo del PDF) ──────────────────
+interface SheetCtx {
+  aoa: CellValue[][];
+  sectionRows: number[];   // filas de título de sección (merged + fill)
+  headerRows: number[];    // filas de encabezado de tabla
+  totalRows: number[];     // filas de totales (negrita + relleno)
+  moneyCells: Array<{ r: number; c: number }>;
+  qtyCells: Array<{ r: number; c: number }>;
+  countCells: Array<{ r: number; c: number }>;
+  underlineCells: Array<{ r: number; c: number }>; // líneas de firma
+  formulas: FormulaRef[];
+  merges: Array<{ s: { r: number; c: number }; e: { r: number; c: number } }>;
+  lastCol: number;         // índice 0-based de la última columna (5 = F)
 }
 
-// ── Registro de coordenadas por hoja (para cablear fórmulas entre hojas) ────
-interface VentasCoords {
-  headerRow: number;
-  firstDataRow: number;
-  lastDataRow: number;
-  totRow: number;
+function newSheetCtx(lastCol: number): SheetCtx {
+  return {
+    aoa: [], sectionRows: [], headerRows: [], totalRows: [],
+    moneyCells: [], qtyCells: [], countCells: [], underlineCells: [],
+    formulas: [], merges: [], lastCol,
+  };
 }
-interface DesgloseCoords {
-  firstDenomRow: number;
-  lastDenomRow: number;
-  contadoRow: number;
-  cuadreRow: number;
+
+/** Título de sección: merged A..lastCol, negrita, relleno sobrio. */
+function pushSectionTitle(s: SheetCtx, title: string, subtitle?: string) {
+  s.aoa.push(subtitle ? [title, '', '', '', '', ''] : [title]);
+  const r = s.aoa.length - 1;
+  s.sectionRows.push(r);
+  s.merges.push({ s: { r, c: 0 }, e: { r, c: s.lastCol } });
+  return r;
 }
-interface ResumenCoords {
+
+/** Coordenadas de un bloque de reporte (una moneda) dentro de su hoja. */
+interface BlockCoords {
   rowsByLabel: Map<string, number>;
   esperadoRow: number;
-  kpiLineasRow: number;
-  checkEfectivoRow: number;
-  checkTransferRow: number;
-  estadoEfectivoRow: number;
-  estadoTransferRow: number;
+  contadoRow: number;
+  cuadreRow: number;
+  ventasHeaderRow: number;
+  ventasFirstDataRow: number;
+  ventasLastDataRow: number;
+  ventasTotRow: number;
 }
 
-/**
- * Construye el workbook Excel del Reporte de Entrega (plantilla Diario —
- * la misma del PDF por defecto). NO descarga: la descarga es responsabilidad
- * de descargarCashReportExcel (separación para testear la estructura del
- * libro sin efectos secundarios de navegador).
- */
+export interface CashReportExcelResult {
+  wb: WorkBookLike;
+  filename: string;
+  /** Congelado/impresión por hoja (lo consume buildCashReportExcelBlob). */
+  sheetFeatures: Array<SheetPrint | undefined>;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONSTRUCTOR PRINCIPAL
+// ═══════════════════════════════════════════════════════════════════════════
+
 export async function buildCashReportExcelWorkbook(
   ctx: CashReportPdfContext,
   summaries?: CashReportSummaries,
@@ -220,242 +260,48 @@ export async function buildCashReportExcelWorkbook(
   const sn = storeInfo?.name || 'Tienda';
   const generatedAt = new Date().toLocaleString('es');
 
+  // ── Opciones del documento (misma fuente que pantalla y PDF) ──
   const usdWillRender = options.includeUsd !== false && (
     usdSummary.ventasTotales > 0 || usdSummary.ventasCash > 0
     || breakdownTotal(usdBreakdown) > 0
     || itemsWithCommission.some((it: any) => (Number(it.usd_total || 0)) > 0)
   );
+  const usdSeparate = options.usdSeparatePage !== false;
+  const showDesglose = options.includeCashBreakdown !== false;
+  const showDenoms = options.includeBreakdown !== false;
+  const showFirmas = options.includeSignature !== false;
+  const showOt = options.includeOtReport !== false;
+  const includeCommissionCup = options.includeCommissionColumn !== false;
 
   const wb = XLSX.utils.book_new();
-  // Recalcular TODAS las fórmulas al abrir el archivo en Excel: garantiza que
-  // lo que muestra la app coincida siempre con el libro vivo.
+  // Recalcular TODAS las fórmulas al abrir el archivo en Excel (el escritor de
+  // xlsx-js-style no serializa CalcPr: se inyecta vía post-proceso JSZip).
   (wb as unknown as { Workbook?: Record<string, unknown> }).Workbook = {
     CalcPr: { fullCalcOnLoad: true },
   };
 
-  // ═══════════════════ HOJA 2 · «Detalle» (tablas de ventas) ═══════════════════
-  // Se construye primero: el «Resumen» referencia sus rangos de totales.
-  const dAoa: CellValue[][] = [];
-  dAoa.push([`DETALLE DE VENTAS — ${sn.toUpperCase()}`]);
-  dAoa.push(['Período:', periodoLbl]);
-  dAoa.push([]);
-
-  const dSectionRows: number[] = [];
-  const dHeaderRows: number[] = [];
-  const dTotalRows: number[] = [];
-  const dMoneyCells: Array<{ r: number; c: number }> = [];
-  const dQtyCells: Array<{ r: number; c: number }> = [];
-  const dFormulas: FormulaRef[] = [];
-  const ventasCoords: Partial<Record<'CUP' | 'USD', VentasCoords>> = {};
-  let firstVentasHeaderRow = -1; // autofiltro: SOLO la primera tabla (limitación
-  let firstVentasLastRow = -1;   // de xlsx: un AutoFilter por hoja)
-
-  const renderVentasEn = (currency: 'CUP' | 'USD') => {
-    const includeCommission = currency === 'CUP' && options.includeCommissionColumn !== false;
-    const cols = salesTableColumns(currency, includeCommission);
-    dAoa.push([`VENTAS DEL DÍA — ${currency}`]);
-    dSectionRows.push(dAoa.length - 1);
-    dAoa.push(cols);
-    dHeaderRows.push(dAoa.length - 1);
-    const headerRow = dAoa.length - 1;
-    if (firstVentasHeaderRow === -1) firstVentasHeaderRow = headerRow;
-    const items = salesTableItems(itemsWithCommission, currency);
-    let totCash = 0, totTransfer = 0, totQty = 0;
-    const firstDataRow = dAoa.length;
-    for (const it of items) {
-      // Cobros en la MONEDA REAL — MISMA regla del PDF (nunca se suman CUP y USD)
-      const cash = currency === 'CUP' ? Number(it.cash_cup || 0) : Number(it.cash_usd || 0) + Number(it.transfer_usd || 0);
-      const transfer = currency === 'CUP' ? Number(it.transfer_cup || 0) + Number(it.zelle_cup || 0) : Number(it.zelle_usd || 0);
-      const qty = salesTableQty(it, currency);
-      totCash += cash; totTransfer += transfer; totQty += qty;
-      const desc = (it.has_payment_incident ? '* ' : '') + String(it.product_name || '');
-      const row: CellValue[] = [sanitizeExcelText(String(it.sku || '')), sanitizeExcelText(desc), qty, cash, transfer];
-      if (includeCommission) row.push(Number(it.commission_suggested || 0));
-      dAoa.push(row);
-      dQtyCells.push({ r: dAoa.length - 1, c: 2 });
-      dMoneyCells.push({ r: dAoa.length - 1, c: 3 });
-      dMoneyCells.push({ r: dAoa.length - 1, c: 4 });
-      if (includeCommission) dMoneyCells.push({ r: dAoa.length - 1, c: 5 });
-    }
-    if (items.length === 0) {
-      // Sin movimientos: fila informativa SIN números (no cuenta como línea
-      // en el COUNT ni suma en los =SUM — el texto se ignora aritméticamente)
-      dAoa.push(['', 'Sin movimientos en el período']);
-    }
-    const lastDataRow = dAoa.length - 1;
-    const totRowIdx = dAoa.length;
-    // TOTALES como fórmulas reales =SUM (misma columna que los datos)
-    const totRow: CellValue[] = ['TOTALES', '', totQty, totCash, totTransfer];
-    if (includeCommission) {
-      const totCommission = items.reduce((s, it) => s + Number(it.commission_suggested || 0), 0);
-      totRow.push(totCommission);
-    }
-    dAoa.push(totRow);
-    dTotalRows.push(dAoa.length - 1);
-    dFormulas.push({ r: totRowIdx, c: 2, f: `SUM(C${firstDataRow + 1}:C${lastDataRow + 1})` });
-    dFormulas.push({ r: totRowIdx, c: 3, f: `SUM(D${firstDataRow + 1}:D${lastDataRow + 1})` });
-    dFormulas.push({ r: totRowIdx, c: 4, f: `SUM(E${firstDataRow + 1}:E${lastDataRow + 1})` });
-    if (includeCommission) dFormulas.push({ r: totRowIdx, c: 5, f: `SUM(F${firstDataRow + 1}:F${lastDataRow + 1})` });
-    if (firstVentasLastRow === -1 && items.length > 0) {
-      firstVentasLastRow = lastDataRow; // última fila de datos (totales aún no empujada)
-    }
-    ventasCoords[currency] = { headerRow, firstDataRow, lastDataRow, totRow: totRowIdx };
-    if (currency === 'CUP' && itemsWithCommission.some((it: any) => it.has_payment_incident)) {
-      dAoa.push(['* Importe cobrado difiere del total histórico de la venta (incidencia de pago documentada).']);
-    }
-    dAoa.push([]);
-  };
-
-  renderVentasEn('CUP');
-  if (usdWillRender) renderVentasEn('USD');
-
-  const wsDetalle = XLSX.utils.aoa_to_sheet(dAoa);
-  for (const r of dSectionRows) styleCell(wsDetalle, XLSX, r, 0, { bold: true, sz: 11, fill: C_SECTION_FILL, top: true });
-  for (const r of dHeaderRows) {
-    for (let c = 0; c <= 5; c += 1) {
-      styleCell(wsDetalle, XLSX, r, c, { bold: true, fill: C_HEADER_FILL, right: c >= 2, top: true });
-    }
-  }
-  for (const m of dMoneyCells) {
-    const isTotal = dTotalRows.includes(m.r);
-    styleCell(wsDetalle, XLSX, m.r, m.c, {
-      bold: isTotal, right: true, z: MONEY_ZFMT,
-      fill: isTotal ? C_TOTAL_FILL : undefined, top: isTotal,
-    });
-  }
-  for (const q of dQtyCells) styleCell(wsDetalle, XLSX, q.r, q.c, { right: true, z: QTY_ZFMT });
-  styleCell(wsDetalle, XLSX, 0, 0, { bold: true, sz: 13, fill: C_SECTION_FILL });
-  attachFormulas(wsDetalle, XLSX, dFormulas);
-  wsDetalle['!cols'] = [
-    { wch: 16 }, // A: Código
-    { wch: 44 }, // B: Descripción
-    { wch: 11 }, // C: Cant.
-    { wch: 17 }, // D: Efectivo
-    { wch: 17 }, // E: Transfer./Zelle
-    { wch: 14 }, // F: Comisión
-  ];
-  wsDetalle['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
-  wsDetalle['!margins'] = { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 };
-  if (firstVentasHeaderRow !== -1 && firstVentasLastRow !== -1) {
-    const lastCol = XLSX.utils.encode_col(5);
-    wsDetalle['!autofilter'] = { ref: `A${firstVentasHeaderRow + 1}:${lastCol}${firstVentasLastRow + 1}` };
-  }
-
-  // ═══════════════════ HOJA 3 · «Desglose» (efectivo por denominaciones) ═══════════════════
-  const gAoa: CellValue[][] = [];
-  gAoa.push([`DESGLOSE DE EFECTIVO — ${sn.toUpperCase()}`]);
-  gAoa.push(['Período:', periodoLbl]);
-  gAoa.push([]);
-
-  const gSectionRows: number[] = [];
-  const gHeaderRows: number[] = [];
-  const gTotalRows: number[] = [];
-  const gMoneyCells: Array<{ r: number; c: number }> = [];
-  const gCountCells: Array<{ r: number; c: number }> = [];
-  const gFormulas: FormulaRef[] = [];
-  const desgloseCoords: Partial<Record<'CUP' | 'USD', DesgloseCoords>> = {};
-  const resumenCoords: Partial<Record<'CUP' | 'USD', ResumenCoords>> = {}; // se llena al construir Resumen
-
-  const renderDesgloseEn = (currency: 'CUP' | 'USD', denoms: number[], breakdown: Breakdown) => {
-    gAoa.push([`DESGLOSE DE EFECTIVO ${currency}`]);
-    gSectionRows.push(gAoa.length - 1);
-    gAoa.push(['Denominación', '', 'Cantidad', 'Importe']);
-    gHeaderRows.push(gAoa.length - 1);
-    const set = new Set<number>([...denoms, ...Object.keys(breakdown).map(Number)]);
-    const ordered = [...set].sort((a, b) => b - a);
-    let printed = 0;
-    const firstDenomRow = gAoa.length;
-    for (const d of ordered) {
-      const cnt = Number(breakdown[d] || 0);
-      if (cnt <= 0) continue; // §8.3 del PDF: cantidad 0 → fila no se imprime
-      gAoa.push([d, '', cnt, cnt * d]);
-      const r = gAoa.length - 1;
-      gCountCells.push({ r, c: 2 });
-      gMoneyCells.push({ r, c: 3 });
-      // Fórmula real por línea: importe = denominación × cantidad
-      gFormulas.push({ r, c: 3, f: `A${r + 1}*C${r + 1}` });
-      printed++;
-    }
-    const lastDenomRow = firstDenomRow + Math.max(printed - 1, 0);
-    if (printed === 0) gAoa.push(['Sin efectivo contado', '', '', 0]);
-    const totalCounted = breakdownTotal(breakdown);
-    const contadoRow = gAoa.length;
-    gAoa.push(['Efectivo contado / entregado', '', '', totalCounted]);
-    gMoneyCells.push({ r: contadoRow, c: 3 });
-    gTotalRows.push(contadoRow);
-    if (printed > 0) gFormulas.push({ r: contadoRow, c: 3, f: `SUM(D${firstDenomRow + 1}:D${lastDenomRow + 1})` });
-    const cuadreRow = gAoa.length;
-    const cuadre = computeCuadre(totalCounted, currency === 'CUP' ? cupSummary.efectivoEsperado : usdSummary.efectivoEsperado);
-    const state = cuadreLabel(cuadre);
-    gAoa.push([`Cuadre (${state.toUpperCase()})`, '', '', cuadre]);
-    gMoneyCells.push({ r: cuadreRow, c: 3 });
-    // Fórmula de cuadre en vivo: contado (esta hoja) − esperado (Resumen).
-    // La referencia a Resumen se cablea DESPUÉS de construir esa hoja.
-    desgloseCoords[currency] = { firstDenomRow, lastDenomRow, contadoRow, cuadreRow };
-    gAoa.push([]);
-  };
-
-  renderDesgloseEn('CUP', cupDenoms, cupBreakdown);
-  if (usdWillRender) renderDesgloseEn('USD', usdDenoms, usdBreakdown);
-
-  const wsDesglose = XLSX.utils.aoa_to_sheet(gAoa);
-  for (const r of gSectionRows) styleCell(wsDesglose, XLSX, r, 0, { bold: true, sz: 11, fill: C_SECTION_FILL, top: true });
-  for (const r of gHeaderRows) {
-    for (let c = 0; c <= 3; c += 1) {
-      styleCell(wsDesglose, XLSX, r, c, { bold: true, fill: C_HEADER_FILL, right: c >= 2, top: true });
-    }
-  }
-  for (const m of gMoneyCells) {
-    const isTotal = gTotalRows.includes(m.r);
-    styleCell(wsDesglose, XLSX, m.r, m.c, {
-      bold: isTotal, right: true, z: MONEY_ZFMT,
-      fill: isTotal ? C_TOTAL_FILL : undefined, top: isTotal,
-    });
-  }
-  for (const q of gCountCells) styleCell(wsDesglose, XLSX, q.r, q.c, { right: true, z: COUNT_ZFMT });
-  styleCell(wsDesglose, XLSX, 0, 0, { bold: true, sz: 13, fill: C_SECTION_FILL });
-  // (las fórmulas del Desglose se adjuntan tras cablear el cuadre con el Resumen)
-  wsDesglose['!cols'] = [
-    { wch: 34 }, // A: Denominación / etiquetas
-    { wch: 6 },  // B: separador
-    { wch: 12 }, // C: Cantidad
-    { wch: 18 }, // D: Importe
-  ];
-  wsDesglose['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }];
-  wsDesglose['!margins'] = { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 };
-
-  // ═══════════════════ HOJA 1 · «Resumen» ═══════════════════
-  const rAoa: CellValue[][] = [];
-  rAoa.push(['COSTPRO 4 — REPORTE DE ENTREGA']);
-  rAoa.push(['Tienda:', sanitizeExcelText(sn)]);
-  if (storeInfo?.address) rAoa.push(['Dirección:', sanitizeExcelText(String(storeInfo.address))]);
-  rAoa.push(['Período:', periodoLbl]);
-  rAoa.push(['Generado:', generatedAt]);
-  rAoa.push(['Monedas:', 'CUP y USD por separado — los importes NUNCA se suman entre monedas']);
-  const resumenFreezeAfterRow = rAoa.length; // filas de identidad congeladas (0-based count)
-  rAoa.push([]);
-
-  const rSectionRows: number[] = [];
-  const rTotalRows: number[] = [];
-  const rKpiRows: number[] = [];
-  const rCheckRows: number[] = [];
-  const rMoneyCells: Array<{ r: number; c: number }> = [];
-  const rCountCells: Array<{ r: number; c: number }> = [];
-  const rFormulas: FormulaRef[] = [];
-
-  const renderResumenEn = (s: DailySummary, currency: 'CUP' | 'USD') => {
-    rAoa.push([`RESUMEN DEL DÍA — ${currency}`]);
-    rSectionRows.push(rAoa.length - 1);
+  // ── Renderiza un bloque de reporte (una moneda) dentro de una hoja ──
+  const renderReportBlock = (
+    s: SheetCtx,
+    currency: 'CUP' | 'USD',
+    summary: DailySummary,
+    denoms: number[],
+    breakdown: Breakdown,
+  ): BlockCoords => {
     const rowsByLabel = new Map<string, number>();
-    const rows = incomeRowsFor(s, currency);
+
+    // ══ RESUMEN DEL DÍA (mismas filas condicionales que el PDF §4) ══
+    pushSectionTitle(s, `RESUMEN DEL DÍA — ${currency}`);
+    const rows = incomeRowsFor(summary, currency);
     for (const r of rows) {
       // Regla B4 + paridad PDF §4: los egresos llevan SU signo contable
       // (negativo — igual que el PDF imprime −); las filas info, positivo.
       const amount = r.kind === 'expense' ? -Math.abs(r.amount) : r.amount;
-      rAoa.push([r.label, '', '', amount]);
-      const rowIdx = rAoa.length - 1;
+      s.aoa.push([r.label, '', '', amount]);
+      const rowIdx = s.aoa.length - 1;
       rowsByLabel.set(r.label, rowIdx);
-      if (r.kind !== 'total') rMoneyCells.push({ r: rowIdx, c: 3 });
+      s.merges.push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 2 } }); // etiqueta A:C
+      if (r.kind !== 'total') s.moneyCells.push({ r: rowIdx, c: 3 });
     }
     // Total de ventas como FÓRMULA viva: suma exacta de los componentes
     // renderizados (ventasTotales = cash + transfer + zelle + mixed).
@@ -468,22 +314,24 @@ export async function buildCashReportExcelWorkbook(
       rowsByLabel.get('Venta por Zelle'),
       rowsByLabel.get('Ventas mixtas sin desglosar'),
     ].filter((v): v is number => v !== undefined);
-    rFormulas.push({
+    s.formulas.push({
       r: totalRowIdx, c: 3,
       f: components.map((row) => `D${row + 1}`).join('+'),
     });
-    rTotalRows.push(totalRowIdx);
-    rMoneyCells.push({ r: totalRowIdx, c: 3 });
+    s.totalRows.push(totalRowIdx);
+    s.moneyCells.push({ r: totalRowIdx, c: 3 });
 
     // Efectivo esperado como FÓRMULA viva (misma cadena contable del sistema):
     // efectivoEsperado = ventasCash + otIngresos + ajustes(+) + ingresosCaja
     //                    − comisiones − servicios − proveedores − ajustes(−)
     //                    − egresosCaja − reembolsosCash
     const esperadoLbl = currency === 'CUP' ? 'Efectivo esperado a entregar' : 'Efectivo esperado a entregar (USD)';
-    rAoa.push([esperadoLbl, '', '', s.efectivoEsperado]);
-    const esperadoRow = rAoa.length - 1;
-    rMoneyCells.push({ r: esperadoRow, c: 3 });
-    rTotalRows.push(esperadoRow);
+    s.aoa.push([esperadoLbl, '', '', summary.efectivoEsperado]);
+    const esperadoRow = s.aoa.length - 1;
+    rowsByLabel.set(esperadoLbl, esperadoRow);
+    s.merges.push({ s: { r: esperadoRow, c: 0 }, e: { r: esperadoRow, c: 2 } });
+    s.moneyCells.push({ r: esperadoRow, c: 3 });
+    s.totalRows.push(esperadoRow);
     const posTerms = [
       rowsByLabel.get('Ventas en efectivo'),
       rowsByLabel.get('Órdenes de trabajo (anticipos)'),
@@ -501,250 +349,306 @@ export async function buildCashReportExcelWorkbook(
     const esperadoFormula =
       posTerms.map((row) => `D${row + 1}`).join('+') +
       (negTerms.length > 0 ? (posTerms.length > 0 ? '-' : '') + negTerms.map((row) => `D${row + 1}`).join('-') : '');
-    rFormulas.push({ r: esperadoRow, c: 3, f: esperadoFormula.length > 0 ? esperadoFormula : '0' });
-    rAoa.push([]);
+    s.formulas.push({ r: esperadoRow, c: 3, f: esperadoFormula.length > 0 ? esperadoFormula : '0' });
+    s.aoa.push([]);
 
-    // ── Indicadores (verificables con el Detalle) ──
-    rAoa.push([`INDICADORES — ${currency}`]);
-    rSectionRows.push(rAoa.length - 1);
-    const vCoords = ventasCoords[currency];
-    const items = salesTableItems(itemsWithCommission, currency);
-    // Líneas de detalle: fórmula COUNT sobre la columna Cant. de «Detalle»
-    rAoa.push(['Líneas de detalle (productos)', '', '', items.length]);
-    const lineasRow = rAoa.length - 1;
-    rCountCells.push({ r: lineasRow, c: 3 });
-    rKpiRows.push(lineasRow);
-    if (vCoords && vCoords.lastDataRow >= vCoords.firstDataRow) {
-      rFormulas.push({ r: lineasRow, c: 3, f: `COUNT('Detalle'!C${vCoords.firstDataRow + 1}:C${vCoords.lastDataRow + 1})` });
-    }
-    // Operaciones registradas: conteo de transacciones del origen (items-summary)
-    const opsCount = items.reduce((acc, it: any) => acc + Number(it.transactions_count || 0), 0);
-    rAoa.push(['Operaciones registradas', '', '', opsCount]);
-    rCountCells.push({ r: rAoa.length - 1, c: 3 });
-    rKpiRows.push(rAoa.length - 1);
-    rAoa.push([]);
-
-    // ── Comprobaciones de consistencia Detalle ↔ Resumen (fórmulas vivas) ──
-    rAoa.push([`COMPROBACIONES DE CONSISTENCIA — ${currency}`]);
-    rSectionRows.push(rAoa.length - 1);
-    if (vCoords) {
-      // Efectivo: columna «Efectivo» del Detalle vs filas del Resumen con la
-      // MISMA composición que el PDF:
-      //  · CUP → ventas en efectivo.
-      //  · USD → la columna del Detalle agrupa cash+transfer, y el Resumen USD
-      //    no imprime fila de transferencia ⇒ base = total − zelle (ambas
-      //    filas existen y son celdas reales).
-      const zelleRowIdx = rowsByLabel.get('Venta por Zelle') ?? rowsByLabel.get('Ventas por Zelle');
-      const efResumenExpr = currency === 'CUP'
-        ? `D${(rowsByLabel.get('Ventas en efectivo')! ) + 1}`
-        : (zelleRowIdx !== undefined
-            ? `D${totalRowIdx + 1}-D${zelleRowIdx + 1}`
-            : `D${totalRowIdx + 1}`);
-      const efCheckLabel = currency === 'CUP' ? 'Efectivo' : 'Efectivo (cash + tarjeta)';
-      rAoa.push([`${efCheckLabel}: Detalle − Resumen (${currency})`, '', '', 0]);
-      const checkEfRow = rAoa.length - 1;
-      rMoneyCells.push({ r: checkEfRow, c: 3 });
-      rCheckRows.push(checkEfRow);
-      rFormulas.push({
-        r: checkEfRow, c: 3,
-        f: `ROUND('Detalle'!D${vCoords.totRow + 1}-(${efResumenExpr}),2)`,
-      });
-      rAoa.push(['Estado de la comprobación (efectivo)', '', '', 'COHERENTE']);
-      const estadoEfRow = rAoa.length - 1;
-      rCheckRows.push(estadoEfRow);
-      rFormulas.push({ r: estadoEfRow, c: 3, f: `IF(ABS(D${checkEfRow + 1})<0.005,"COHERENTE","REVISAR")` });
-
-      // Transferencia/Zelle: columna «Transfer.» (CUP: transfer+zelle) o
-      // «Zelle» (USD) del Detalle vs las filas correspondientes del Resumen.
-      const trRefRows = currency === 'CUP'
-        ? [
-            rowsByLabel.get('Ventas por transferencia'),
-            rowsByLabel.get('Ventas por Zelle'),
-          ].filter((v): v is number => v !== undefined)
-        : [rowsByLabel.get('Venta por Zelle')].filter((v): v is number => v !== undefined);
-      const trResumenExpr = trRefRows.length > 0 ? trRefRows.map((row) => `D${row + 1}`).join('+') : '0';
-      const trCheckLabel = currency === 'CUP' ? 'Transferencia' : 'Zelle';
-      rAoa.push([`${trCheckLabel}: Detalle − Resumen (${currency})`, '', '', 0]);
-      const checkTrRow = rAoa.length - 1;
-      rMoneyCells.push({ r: checkTrRow, c: 3 });
-      rCheckRows.push(checkTrRow);
-      rFormulas.push({
-        r: checkTrRow, c: 3,
-        f: `ROUND('Detalle'!E${vCoords.totRow + 1}-(${trResumenExpr}),2)`,
-      });
-      rAoa.push([`Estado de la comprobación (${trCheckLabel.toLowerCase()})`, '', '', 'COHERENTE']);
-      const estadoTrRow = rAoa.length - 1;
-      rCheckRows.push(estadoTrRow);
-      rFormulas.push({ r: estadoTrRow, c: 3, f: `IF(ABS(D${checkTrRow + 1})<0.005,"COHERENTE","REVISAR")` });
-
-      // Cuadre (referencia viva al Desglose): contado − esperado
-      const gCoords = desgloseCoords[currency];
-      if (gCoords) {
-        rAoa.push([`Cuadre según desglose (${currency})`, '', '', 0]);
-        const cuadreRefRow = rAoa.length - 1;
-        rMoneyCells.push({ r: cuadreRefRow, c: 3 });
-        rCheckRows.push(cuadreRefRow);
-        rFormulas.push({ r: cuadreRefRow, c: 3, f: `Desglose!D${gCoords.cuadreRow + 1}` });
+    // ══ DESGLOSE DE EFECTIVO (opción «Desglose de efectivo») ══
+    let contadoRow = -1;
+    let cuadreRow = -1;
+    if (showDesglose) {
+      pushSectionTitle(s, `DESGLOSE DE EFECTIVO — ${currency}`, 'Conteo físico por denominaciones');
+      const set = new Set<number>([...denoms, ...Object.keys(breakdown).map(Number)]);
+      const ordered = [...set].sort((a, b) => b - a);
+      const counted = ordered.filter(d => Number(breakdown[d] || 0) > 0);
+      if (showDenoms) {
+        // «Desglose de billetes»: filas por denominación (§8.3: cantidad 0 no se imprime)
+        s.aoa.push(['Denominación', '', 'Cantidad', 'Importe']);
+        const hr = s.aoa.length - 1;
+        s.headerRows.push(hr);
+        const firstDenomRow = s.aoa.length;
+        let printed = 0;
+        for (const d of counted) {
+          const cnt = Number(breakdown[d] || 0);
+          s.aoa.push([d, '', cnt, cnt * d]);
+          const r = s.aoa.length - 1;
+          s.countCells.push({ r, c: 2 });
+          s.moneyCells.push({ r, c: 3 });
+          // Fórmula real por línea: importe = denominación × cantidad
+          s.formulas.push({ r, c: 3, f: `A${r + 1}*C${r + 1}` });
+          printed++;
+        }
+        if (printed === 0) s.aoa.push(['Sin efectivo contado', '', '', '']);
+        const lastDenomRow = firstDenomRow + Math.max(printed - 1, 0);
+        // Contado = SUMA de los importes por denominación
+        const totalCounted = breakdownTotal(breakdown);
+        s.aoa.push(['Efectivo contado / entregado', '', '', totalCounted]);
+        contadoRow = s.aoa.length - 1;
+        s.merges.push({ s: { r: contadoRow, c: 0 }, e: { r: contadoRow, c: 2 } });
+        s.moneyCells.push({ r: contadoRow, c: 3 });
+        s.totalRows.push(contadoRow);
+        if (printed > 0) s.formulas.push({ r: contadoRow, c: 3, f: `SUM(D${firstDenomRow + 1}:D${lastDenomRow + 1})` });
+      } else {
+        // Bloque presente sin filas por denominación: contado directo.
+        const totalCounted = breakdownTotal(breakdown);
+        s.aoa.push(['Efectivo contado / entregado', '', '', totalCounted]);
+        contadoRow = s.aoa.length - 1;
+        s.merges.push({ s: { r: contadoRow, c: 0 }, e: { r: contadoRow, c: 2 } });
+        s.moneyCells.push({ r: contadoRow, c: 3 });
+        s.totalRows.push(contadoRow);
       }
+      // Cuadre en vivo: contado (esta hoja) − esperado (RESUMEN de esta hoja).
+      const cuadre = computeCuadre(breakdownTotal(breakdown), summary.efectivoEsperado);
+      const state = cuadreLabel(cuadre);
+      s.aoa.push([`Cuadre (${state.toUpperCase()})`, '', '', cuadre]);
+      cuadreRow = s.aoa.length - 1;
+      s.merges.push({ s: { r: cuadreRow, c: 0 }, e: { r: cuadreRow, c: 2 } });
+      s.moneyCells.push({ r: cuadreRow, c: 3 });
+      s.formulas.push({ r: cuadreRow, c: 3, f: `D${contadoRow + 1}-D${esperadoRow + 1}` });
+      s.aoa.push([]);
     }
-    rAoa.push([]);
 
-    resumenCoords[currency] = {
-      rowsByLabel,
-      esperadoRow,
-      kpiLineasRow: lineasRow,
-      checkEfectivoRow: -1,
-      checkTransferRow: -1,
-      estadoEfectivoRow: -1,
-      estadoTransferRow: -1,
+    // ══ VENTAS DEL DÍA (mismas columnas/orden que el PDF) ══
+    pushSectionTitle(s, `VENTAS DEL DÍA — ${currency}`);
+    const includeCommission = currency === 'CUP' && includeCommissionCup;
+    const cols = salesTableColumns(currency, includeCommission);
+    s.aoa.push(cols);
+    const ventasHeaderRow = s.aoa.length - 1;
+    s.headerRows.push(ventasHeaderRow);
+    const items = salesTableItems(itemsWithCommission, currency);
+    const ventasFirstDataRow = s.aoa.length;
+    for (const it of items) {
+      // Cobros en la MONEDA REAL — MISMA regla del PDF (nunca se suman CUP y USD)
+      const cash = currency === 'CUP' ? Number(it.cash_cup || 0) : Number(it.cash_usd || 0) + Number(it.transfer_usd || 0);
+      const transfer = currency === 'CUP' ? Number(it.transfer_cup || 0) + Number(it.zelle_cup || 0) : Number(it.zelle_usd || 0);
+      const qty = salesTableQty(it, currency);
+      // Sin asterisco de incidencia (feedback 2026-10-22): la tabla queda
+      // limpia — sin nota al pie — y los importes cobrados son los reales.
+      const desc = String(it.product_name || '');
+      const row: CellValue[] = [sanitizeExcelText(String(it.sku || '')), sanitizeExcelText(desc), qty, cash, transfer];
+      if (includeCommission) row.push(Number(it.commission_suggested || 0));
+      s.aoa.push(row);
+      s.qtyCells.push({ r: s.aoa.length - 1, c: 2 });
+      s.moneyCells.push({ r: s.aoa.length - 1, c: 3 });
+      s.moneyCells.push({ r: s.aoa.length - 1, c: 4 });
+      if (includeCommission) s.moneyCells.push({ r: s.aoa.length - 1, c: 5 });
+    }
+    if (items.length === 0) {
+      // Sin movimientos: fila informativa SIN números (no cuenta en los =SUM)
+      s.aoa.push(['', 'Sin movimientos en el período']);
+    }
+    const ventasLastDataRow = s.aoa.length - 1;
+    const ventasTotRow = s.aoa.length;
+    const totCash = items.reduce((acc, it) => acc + (currency === 'CUP' ? Number(it.cash_cup || 0) : Number(it.cash_usd || 0) + Number(it.transfer_usd || 0)), 0);
+    const totTransfer = items.reduce((acc, it) => acc + (currency === 'CUP' ? Number(it.transfer_cup || 0) + Number(it.zelle_cup || 0) : Number(it.zelle_usd || 0)), 0);
+    const totQty = items.reduce((acc, it) => acc + salesTableQty(it, currency), 0);
+    const totRow: CellValue[] = ['TOTALES', '', totQty, totCash, totTransfer];
+    if (includeCommission) totRow.push(items.reduce((acc, it) => acc + Number(it.commission_suggested || 0), 0));
+    s.aoa.push(totRow);
+    s.totalRows.push(ventasTotRow);
+    // Estilo de la fila TOTALES (gap preexistente detectado al refinar): la
+    // fila no entraba en qty/moneyCells → salía sin negrita, sin relleno y
+    // con formato General. Ahora lleva la misma distinción que los demás
+    // totales (§E: números con formato real + fila visualmente distinguida).
+    s.qtyCells.push({ r: ventasTotRow, c: 2 });
+    s.moneyCells.push({ r: ventasTotRow, c: 3 });
+    s.moneyCells.push({ r: ventasTotRow, c: 4 });
+    if (includeCommission) s.moneyCells.push({ r: ventasTotRow, c: 5 });
+    // TOTALES como fórmulas reales =SUM (misma columna que los datos)
+    s.formulas.push({ r: ventasTotRow, c: 2, f: `SUM(C${ventasFirstDataRow + 1}:C${ventasLastDataRow + 1})` });
+    s.formulas.push({ r: ventasTotRow, c: 3, f: `SUM(D${ventasFirstDataRow + 1}:D${ventasLastDataRow + 1})` });
+    s.formulas.push({ r: ventasTotRow, c: 4, f: `SUM(E${ventasFirstDataRow + 1}:E${ventasLastDataRow + 1})` });
+    if (includeCommission) s.formulas.push({ r: ventasTotRow, c: 5, f: `SUM(F${ventasFirstDataRow + 1}:F${ventasLastDataRow + 1})` });
+    s.aoa.push([]);
+
+    return {
+      rowsByLabel, esperadoRow, contadoRow, cuadreRow,
+      ventasHeaderRow, ventasFirstDataRow, ventasLastDataRow, ventasTotRow,
     };
   };
 
-  renderResumenEn(cupSummary, 'CUP');
-  if (usdWillRender) renderResumenEn(usdSummary, 'USD');
-
-  // ── Cuadre del Desglose: cablear referencia al esperado del Resumen ──
-  for (const currency of ['CUP', 'USD'] as const) {
-    const gCoords = desgloseCoords[currency];
-    const rCoords = resumenCoords[currency];
-    if (gCoords && rCoords) {
-      gFormulas.push({
-        r: gCoords.cuadreRow, c: 3,
-        f: `D${gCoords.contadoRow + 1}-Resumen!D${rCoords.esperadoRow + 1}`,
-      });
-    }
-  }
-  attachFormulas(wsDesglose, XLSX, gFormulas); // importes =A*C, contado =SUM, cuadre en vivo
-
   // ── Firmas (paridad con el PDF: solo si «Líneas de firma» está activa) ──
-  if (options.includeSignature !== false) {
-    rAoa.push(['FIRMAS']);
-    rSectionRows.push(rAoa.length - 1);
-    rAoa.push(['Hecho por:', sanitizeExcelText(madeBy || '')]);
-    rAoa.push(['Entregado por:', sanitizeExcelText(deliveredBy || '')]);
-    rAoa.push(['Recibido por:', sanitizeExcelText(recipientName || '')]);
+  const renderFirmas = (s: SheetCtx) => {
+    pushSectionTitle(s, 'FIRMAS');
+    const pairs: Array<[string, string]> = [
+      ['Hecho por:', madeBy || ''],
+      ['Entregado por:', deliveredBy || ''],
+      ['Recibido por:', recipientName || ''],
+    ];
+    for (const [label, name] of pairs) {
+      // Etiqueta en A:B (merged) · nombre sobre línea de firma en C:D (merged
+      // con borde inferior — sin nombre, la línea queda en blanco a mano).
+      s.aoa.push([label, '', name, '', '', '']);
+      const r = s.aoa.length - 1;
+      s.merges.push({ s: { r, c: 0 }, e: { r, c: 1 } });
+      s.merges.push({ s: { r, c: 2 }, e: { r, c: 3 } });
+      s.underlineCells.push({ r, c: 2 });
+      s.underlineCells.push({ r, c: 3 });
+    }
+    s.aoa.push([]);
+  };
+
+  // ═══════════════ HOJA 1 · «Reporte Entrega» (bloque CUP) ═══════════════
+  const main = newSheetCtx(5); // A..F
+  main.aoa.push(['COSTPRO 4 MULTITIENDA — REPORTE DE ENTREGA']);
+  main.merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } });
+  // Identidad COMPACTA (feedback del propietario 2026-10-22): los 4 datos
+  // (tienda, dirección, período, generación) en 2 filas — sin filas de
+  // metadatos («Tipo de reporte», «Monedas»): la metodología vive en su hoja
+  // propia y el documento queda espejo del PDF de entrega.
+  main.aoa.push(['Tienda:', sanitizeExcelText(sn), '', 'Período:', periodoLbl]);
+  main.merges.push({ s: { r: 1, c: 1 }, e: { r: 1, c: 2 } });
+  main.merges.push({ s: { r: 1, c: 4 }, e: { r: 1, c: 5 } });
+  main.aoa.push(['Dirección:', sanitizeExcelText(String(storeInfo?.address || '')), '', 'Generado:', generatedAt]);
+  main.merges.push({ s: { r: 2, c: 1 }, e: { r: 2, c: 2 } });
+  main.merges.push({ s: { r: 2, c: 4 }, e: { r: 2, c: 5 } });
+  main.aoa.push([]);
+
+  const cupCoords = renderReportBlock(main, 'CUP', cupSummary, cupDenoms, cupBreakdown);
+  // Modo compacto (§9, «USD en hoja separada» OFF): secciones USD corridas en
+  // la MISMA hoja, tras el bloque CUP (sin duplicar totales: cada bloque trae
+  // los suyos y ninguno se repite entre hojas).
+  if (usdWillRender && !usdSeparate) {
+    renderReportBlock(main, 'USD', usdSummary, usdDenoms, usdBreakdown);
+  }
+  if (showFirmas) renderFirmas(main);
+
+  const mainCols = includeCommissionCup
+    ? [{ wch: 18 }, { wch: 46 }, { wch: 9 }, { wch: 16 }, { wch: 16 }, { wch: 14 }]
+    : [{ wch: 18 }, { wch: 50 }, { wch: 9 }, { wch: 17 }, { wch: 17 }, { wch: 12 }];
+  const wsMain = materialize(XLSX, main, mainCols, {
+    // Autofiltro SOLO sobre la tabla de ventas CUP (una por hoja).
+    autofilter: cupCoords.ventasLastDataRow >= cupCoords.ventasFirstDataRow
+      ? `A${cupCoords.ventasHeaderRow + 1}:F${cupCoords.ventasLastDataRow + 1}`
+      : undefined,
+  });
+
+  // ═══════════════ HOJA «Reporte Entrega USD» (si separada) ═══════════════
+  let wsUsd: WorkSheetLike | null = null;
+  let usdCoordsSep: BlockCoords | null = null;
+  let usdSheetLastRow = 0;
+  if (usdWillRender && usdSeparate) {
+    const usd = newSheetCtx(4); // A..E (la tabla USD no lleva Comisión)
+    usd.aoa.push(['REPORTE DE ENTREGA — USD']);
+    usd.merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } });
+    // Identidad compacta (mismo criterio que la hoja principal): tienda y
+    // período en una fila, generación en la siguiente.
+    usd.aoa.push(['Tienda:', sanitizeExcelText(sn), '', 'Período:', periodoLbl]);
+    usd.merges.push({ s: { r: 1, c: 1 }, e: { r: 1, c: 2 } });
+    usd.aoa.push(['Generado:', generatedAt]);
+    usd.merges.push({ s: { r: 2, c: 1 }, e: { r: 2, c: 4 } });
+    usd.aoa.push([]);
+    usdCoordsSep = renderReportBlock(usd, 'USD', usdSummary, usdDenoms, usdBreakdown);
+    if (showFirmas) renderFirmas(usd);
+    usdSheetLastRow = usd.aoa.length;
+    wsUsd = materialize(XLSX, usd, [{ wch: 18 }, { wch: 50 }, { wch: 9 }, { wch: 17 }, { wch: 16 }], {
+      autofilter: usdCoordsSep.ventasLastDataRow >= usdCoordsSep.ventasFirstDataRow
+        ? `A${usdCoordsSep.ventasHeaderRow + 1}:E${usdCoordsSep.ventasLastDataRow + 1}`
+        : undefined,
+    });
   }
 
-  const wsResumen = XLSX.utils.aoa_to_sheet(rAoa);
-  for (const r of rSectionRows) styleCell(wsResumen, XLSX, r, 0, { bold: true, sz: 11, fill: C_SECTION_FILL, top: true });
-  for (const r of rTotalRows) {
-    styleCell(wsResumen, XLSX, r, 3, { bold: true, right: true, z: MONEY_ZFMT, fill: C_TOTAL_FILL, top: true });
-  }
-  for (const m of rMoneyCells) {
-    if (rTotalRows.includes(m.r)) continue;
-    styleCell(wsResumen, XLSX, m.r, m.c, { right: true, z: MONEY_ZFMT });
-  }
-  for (const q of rCountCells) {
-    const isKpi = rKpiRows.includes(q.r);
-    styleCell(wsResumen, XLSX, q.r, q.c, { bold: isKpi, right: true, z: COUNT_ZFMT, fill: isKpi ? C_TOTAL_FILL : undefined });
-  }
-  for (const r of rCheckRows) {
-    styleCell(wsResumen, XLSX, r, 3, { right: true, z: MONEY_ZFMT });
-  }
-  styleCell(wsResumen, XLSX, 0, 0, { bold: true, sz: 14, fill: C_SECTION_FILL });
-  attachFormulas(wsResumen, XLSX, rFormulas);
-  wsResumen['!cols'] = [
-    { wch: 44 }, // A: etiquetas
-    { wch: 22 }, // B: valores de identidad
-    { wch: 6 },  // C: separador
-    { wch: 18 }, // D: importes
-  ];
-  wsResumen['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }];
-  wsResumen['!margins'] = { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 };
-
-  // ═══════════════════ HOJA 4 · «Órdenes de Trabajo» (§8.1 conmutable) ═══════════════════
+  // ═══════════════ HOJA «Órdenes de Trabajo» (§8.1 conmutable) ═══════════════
   const orders = (productionOrders as any[]) || [];
   let wsOt: WorkSheetLike | null = null;
-  if (options.includeOtReport !== false) {
-    const otAoa: CellValue[][] = [
-      ['REPORTE DE ÓRDENES DE TRABAJO'],
-      ['Tienda:', sanitizeExcelText(sn)],
-      ['Período:', periodoLbl],
-      [],
-      ['Código', 'Clasificación', 'Descripción', 'Cantidad', 'CUP', 'USD'],
-    ];
+  let otLastRow = 0;
+  if (showOt) {
+    const ot = newSheetCtx(5);
+    ot.aoa.push(['REPORTE DE ÓRDENES DE TRABAJO']);
+    ot.merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } });
+    ot.aoa.push(['Tienda:', sanitizeExcelText(sn)]);
+    ot.aoa.push(['Período:', periodoLbl]);
+    ot.aoa.push([]);
+    ot.aoa.push(['Código', 'Clasificación', 'Descripción', 'Cantidad', 'CUP', 'USD']);
+    ot.headerRows.push(4);
     let totCup = 0, totUsd = 0;
-    const otFirstDataRow = otAoa.length;
+    const otFirstDataRow = ot.aoa.length;
     for (const ord of orders) {
       const num = String(ord.order_number || '');
       const desc = String(ord.description || ord.title || ord.customer_name || 'Orden de trabajo');
       const cupAmt = Number(ord.advance_currency === 'CUP' ? ord.advance_amount : (ord.budget_currency === 'CUP' ? ord.budget_total : 0));
       const usdAmt = Number(ord.advance_currency === 'USD' ? ord.advance_amount : (ord.budget_currency === 'USD' ? ord.budget_total : 0));
       totCup += cupAmt; totUsd += usdAmt;
-      otAoa.push([sanitizeExcelText(num), 'Trabajo', sanitizeExcelText(desc), 1, cupAmt, usdAmt]);
+      ot.aoa.push([sanitizeExcelText(num), 'Trabajo', sanitizeExcelText(desc), 1, cupAmt, usdAmt]);
     }
-    const otLastDataRow = otAoa.length - 1;
-    if (orders.length === 0) otAoa.push(['', '', 'Sin órdenes en el período']);
-    const otTotRow = otAoa.length;
-    otAoa.push(['TOTALES', '', '', orders.length, totCup, totUsd]);
-    const wsOtLocal = XLSX.utils.aoa_to_sheet(otAoa);
-    for (let c = 3; c <= 5; c += 1) {
-      for (let r = 5; r < otAoa.length; r += 1) {
-        const isTotal = r === otAoa.length - 1;
-        styleCell(wsOtLocal, XLSX, r, c, {
-          bold: isTotal, right: true, z: c === 3 ? COUNT_ZFMT : MONEY_ZFMT,
-          fill: isTotal ? C_TOTAL_FILL : undefined, top: isTotal,
-        });
-      }
-    }
-    for (let c = 0; c <= 5; c += 1) styleCell(wsOtLocal, XLSX, 4, c, { bold: true, fill: C_HEADER_FILL, top: true, right: c >= 3 });
-    styleCell(wsOtLocal, XLSX, 0, 0, { bold: true, sz: 13, fill: C_SECTION_FILL });
+    const otLastDataRow = ot.aoa.length - 1;
+    if (orders.length === 0) ot.aoa.push(['', '', 'Sin órdenes en el período']);
+    const otTotRow = ot.aoa.length;
+    ot.aoa.push(['TOTALES', '', '', orders.length, totCup, totUsd]);
+    ot.totalRows.push(otTotRow);
     // TOTALES como fórmulas =SUM reales (monedas en columnas separadas)
-    const otFormulas: FormulaRef[] = [
-      { r: otTotRow, c: 3, f: `SUM(D${otFirstDataRow + 1}:D${otLastDataRow + 1})` },
-      { r: otTotRow, c: 4, f: `SUM(E${otFirstDataRow + 1}:E${otLastDataRow + 1})` },
-      { r: otTotRow, c: 5, f: `SUM(F${otFirstDataRow + 1}:F${otLastDataRow + 1})` },
-    ];
-    attachFormulas(wsOtLocal, XLSX, otFormulas);
-    wsOtLocal['!cols'] = [{ wch: 16 }, { wch: 14 }, { wch: 48 }, { wch: 11 }, { wch: 15 }, { wch: 12 }];
-    wsOtLocal['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
-    wsOtLocal['!margins'] = { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 };
-    if (orders.length > 0) {
-      wsOtLocal['!autofilter'] = { ref: `A5:F${5 + orders.length}` };
+    ot.formulas.push({ r: otTotRow, c: 3, f: `SUM(D${otFirstDataRow + 1}:D${otLastDataRow + 1})` });
+    ot.formulas.push({ r: otTotRow, c: 4, f: `SUM(E${otFirstDataRow + 1}:E${otLastDataRow + 1})` });
+    ot.formulas.push({ r: otTotRow, c: 5, f: `SUM(F${otFirstDataRow + 1}:F${otLastDataRow + 1})` });
+    for (let r = otFirstDataRow; r <= otTotRow; r += 1) {
+      ot.moneyCells.push({ r, c: 4 });
+      ot.moneyCells.push({ r, c: 5 });
+      ot.countCells.push({ r, c: 3 });
     }
-    wsOt = wsOtLocal;
+    otLastRow = ot.aoa.length;
+    wsOt = materialize(XLSX, ot, [{ wch: 16 }, { wch: 14 }, { wch: 48 }, { wch: 11 }, { wch: 15 }, { wch: 12 }], {
+      autofilter: orders.length > 0 ? `A5:F${5 + orders.length}` : undefined,
+    });
   }
 
-  // ═══════════════════ HOJA 5 · «Nota metodológica» (B3) ═══════════════════
-  const notaAoa: CellValue[][] = [
-    ['NOTA METODOLÓGICA — REPORTE ENTREGA'],
-    [],
+  // ═══════════════ HOJA «Nota metodológica» (auditoría del documento) ═══════════════
+  const nota = newSheetCtx(1);
+  nota.aoa.push(['NOTA METODOLÓGICA — REPORTE ENTREGA']);
+  nota.merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } });
+  nota.aoa.push([]);
+  const notaRows: Array<[string, string]> = [
     ['Fórmula central (por moneda):', 'Efectivo esperado = ventas en efectivo + anticipos de OT + ajustes (+) + ingresos de caja − comisiones en efectivo − servicios recibidos − pagos a proveedores − ajustes (−) − egresos de caja − reembolsos en efectivo'],
     ['Cuadre:', 'Efectivo contado (desglose por denominaciones) − efectivo esperado. Negativo = FALTANTE · Positivo = SOBRANTE · |dif| < 0,005 = cuadrado.'],
     ['Monedas:', 'CUP y USD se contabilizan por separado en secciones propias; NUNCA se suman importes de monedas distintas — tampoco en las fórmulas de Excel.'],
+    ['Estructura:', 'Hoja «Reporte Entrega» espejo del PDF (identidad compacta + resumen + desglose + ventas + firmas). Con «USD en hoja separada» activo, el detalle USD vive en su propia hoja con título, tienda y período; desactivado, corre en la hoja principal sin duplicar totales.'],
     ['Fuente de datos:', 'Mismo origen que el PDF: /api/cash-report (RPC get_cash_report v2.23.0) + items-summary + payment-totals + commissions-summary + production-orders.'],
-    ['Fórmulas de Excel:', 'Los totales llevan fórmulas REALES (=SUM, =COUNT, =A*C, cuadre y comprobaciones Detalle↔Resumen) referenciando las celdas de detalle; el valor mostrado al generar es el calculado por el sistema (computeDailySummary) y Excel recalcula al abrir el libro (fullCalcOnLoad). Editar una celda de detalle recalcula totales y comprobaciones en vivo.'],
-    ['Comprobaciones:', 'La hoja Resumen compara el total de la hoja Detalle contra el Resumen por moneda y por medio de pago (=IF(|dif|<0,005;"COHERENTE";"REVISAR")). Una incidencia de pago documentada (*) puede producir REVISAR — es información de auditoría, no un defecto de la exportación.'],
+    ['Fórmulas de Excel:', 'Los totales llevan fórmulas REALES (=SUM, =A*C, cuadre) referenciando las celdas de detalle; el valor mostrado al generar es el calculado por el sistema (computeDailySummary) y Excel recalcula al abrir el libro (fullCalcOnLoad). Editar una celda de detalle recalcula los totales en vivo.'],
+    ['Comprobaciones:', 'La coincidencia tabla↔resumen es verificable en vivo: los TOTALES son =SUM de las filas de detalle y el resumen usa la fórmula central por moneda — cualquier divergencia se ve al editar.'],
     ['Comisiones sugeridas:', 'Motor real de reglas (/api/commissions/calculate) — idéntico al PDF; sin reglas configuradas la sugerencia es 0.'],
     ['Reembolsos:', 'Solo los pagados EN EFECTIVO reducen el esperado (regla P1). Los reembolsos por voucher (transfer/Zelle) son informativos (base NETA v2.23.0, decisión del propietario 2026-10-21).'],
+    ['Impresión:', 'A4 con ajuste al ancho de una página (fitToWidth) — el largo fluye a varias páginas con el encabezado de tabla repetido; numeración en el pie (Página N de M).'],
     ['Seguridad:', 'Los textos que podrían interpretarse como fórmulas (= + - @) se exportan prefijados con apóstrofo — inyección neutralizada. La descarga es de solo lectura: no crea ventas, ni movimientos, ni altera datos.'],
     ['Reproducibilidad:', 'Repetir la exportación del mismo período produce los mismos datos de negocio (solo cambia la fecha de generación).'],
   ];
-  const wsNota = XLSX.utils.aoa_to_sheet(notaAoa);
-  wsNota['!cols'] = [{ wch: 24 }, { wch: 120 }];
-  wsNota['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
-  styleCell(wsNota, XLSX, 0, 0, { bold: true, sz: 13, fill: C_SECTION_FILL });
+  for (const [k, v] of notaRows) nota.aoa.push([k, v]);
+  const notaLastRow = nota.aoa.length;
+  const wsNota = materialize(XLSX, nota, [{ wch: 24 }, { wch: 120 }], {});
 
-  // ═══════════════════ ORDEN DE HOJAS + encabezados de impresión ═══════════════════
-  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
-  XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle');
-  XLSX.utils.book_append_sheet(wb, wsDesglose, 'Desglose');
-  if (wsOt) XLSX.utils.book_append_sheet(wb, wsOt, 'Órdenes de Trabajo');
-  XLSX.utils.book_append_sheet(wb, wsNota, 'Nota metodológica');
+  // ═══════════════ ORDEN DE HOJAS + nombres de impresión ═══════════════
+  const MAIN_SHEET = 'Reporte Entrega';
+  const USD_SHEET = 'Reporte Entrega USD';
+  const OT_SHEET = 'Órdenes de Trabajo';
+  const NOTA_SHEET = 'Nota metodológica';
 
-  // Encabezado de la tabla de detalle repetido al imprimir varias páginas
-  // (_xlnm.Print_Titles — definido a nivel de workbook, índice 0-based de hoja).
-  const detalleSheetIdx = 1; // «Detalle» es la segunda hoja
-  const cupHeaderRow = ventasCoords.CUP?.headerRow;
-  if (cupHeaderRow !== undefined) {
-    (wb as unknown as { Workbook?: Record<string, unknown> }).Workbook!.Names = [
-      {
-        Name: '_xlnm.Print_Titles',
-        Sheet: detalleSheetIdx,
-        Ref: `Detalle!$${cupHeaderRow + 1}:$${cupHeaderRow + 1}`,
-      },
-    ];
+  XLSX.utils.book_append_sheet(wb, wsMain, MAIN_SHEET);
+  if (wsUsd) XLSX.utils.book_append_sheet(wb, wsUsd, USD_SHEET);
+  if (wsOt) XLSX.utils.book_append_sheet(wb, wsOt, OT_SHEET);
+  XLSX.utils.book_append_sheet(wb, wsNota, NOTA_SHEET);
+  // Índices 0-based de hoja (mismo orden de append):
+  const usdSheetIdx = wsUsd ? 1 : -1;
+  const otSheetIdx = wsOt ? (wsUsd ? 2 : 1) : -1;
+  const notaSheetIdx = (wsUsd ? 2 : 1) + (wsOt ? 1 : 0);
+
+  // Encabezados y áreas de impresión (_xlnm.Print_Titles / _xlnm.Print_Area,
+  // definidos a nivel de workbook con índice 0-based de hoja).
+  // Print_Titles SOLO en hojas de UNA tabla: en modo compacto (CUP+USD en la
+  // misma hoja) no se repite el encabezado CUP sobre filas USD.
+  const workbookNames: Array<{ Name: string; Sheet: number; Ref: string }> = [];
+  const q = (sheet: string) => (sheet.includes(' ') ? `'${sheet}'` : sheet);
+  const mainLastRow = main.aoa.length;
+  workbookNames.push({ Name: '_xlnm.Print_Area', Sheet: 0, Ref: `${q(MAIN_SHEET)}!$A$1:$F$${mainLastRow}` });
+  if (usdSeparate || !usdWillRender) {
+    workbookNames.push({ Name: '_xlnm.Print_Titles', Sheet: 0, Ref: `${q(MAIN_SHEET)}!$${cupCoords.ventasHeaderRow + 1}:$${cupCoords.ventasHeaderRow + 1}` });
   }
+  if (wsUsd && usdCoordsSep) {
+    workbookNames.push({ Name: '_xlnm.Print_Area', Sheet: usdSheetIdx, Ref: `${q(USD_SHEET)}!$A$1:$E$${usdSheetLastRow}` });
+    workbookNames.push({ Name: '_xlnm.Print_Titles', Sheet: usdSheetIdx, Ref: `${q(USD_SHEET)}!$${usdCoordsSep.ventasHeaderRow + 1}:$${usdCoordsSep.ventasHeaderRow + 1}` });
+  }
+  if (wsOt) {
+    workbookNames.push({ Name: '_xlnm.Print_Area', Sheet: otSheetIdx, Ref: `${q(OT_SHEET)}!$A$1:$F$${otLastRow}` });
+    workbookNames.push({ Name: '_xlnm.Print_Titles', Sheet: otSheetIdx, Ref: `${q(OT_SHEET)}!$5:$5` });
+  }
+  workbookNames.push({ Name: '_xlnm.Print_Area', Sheet: notaSheetIdx, Ref: `${q(NOTA_SHEET)}!$A$1:$B$${notaLastRow}` });
+  (wb as unknown as { Workbook?: Record<string, unknown> }).Workbook!.Names = workbookNames;
 
   // ── Nombre de archivo descriptivo (misión §6), sin caracteres inválidos ──
   const snFile = sn.replace(/[^a-zA-Z0-9]+/g, '_');
@@ -752,51 +656,123 @@ export async function buildCashReportExcelWorkbook(
     .replace(/[^a-zA-Z0-9._\-]+/g, '_');
 
   // Congelado/impresión por hoja (lo consume buildCashReportExcelBlob):
-  // Resumen: bloque de identidad visible; Detalle: título + cabecera CUP fijas.
+  // SIN paneles congelados (feedback del propietario 2026-10-22 — las filas
+  // inmovilizadas eran innecesarias); A4 horizontal + pie con numeración.
   const sheetFeatures: CashReportExcelResult['sheetFeatures'] = [
-    { freezeAfterRow: resumenFreezeAfterRow, landscape: true },
-    { freezeAfterRow: (ventasCoords.CUP?.headerRow ?? 2) + 1, landscape: true },
-    undefined,
-    undefined,
-    undefined,
+    { orientation: 'landscape', headerTitle: `Reporte de Entrega — ${sn}` },
+    wsUsd
+      ? { orientation: 'landscape', headerTitle: `Reporte de Entrega USD — ${sn}` }
+      : undefined,
+    wsOt
+      ? { orientation: 'landscape', headerTitle: `Órdenes de Trabajo — ${sn}` }
+      : undefined,
+    { orientation: 'portrait', headerTitle: 'Nota metodológica' },
   ];
 
   return { wb, filename, sheetFeatures };
 }
 
+// ── Materialización de una hoja (estilos + fórmulas + formato) ──────────────
+function materialize(
+  XLSX: XLSXModule,
+  s: SheetCtx,
+  cols: Array<{ wch: number }>,
+  opts: { autofilter?: string },
+): WorkSheetLike {
+  const ws = XLSX.utils.aoa_to_sheet(s.aoa);
+  for (const r of s.sectionRows) {
+    styleCell(ws, XLSX, r, 0, { bold: true, sz: 11, fill: C_SECTION_FILL, top: true });
+    for (let c = 1; c <= s.lastCol; c += 1) styleCell(ws, XLSX, r, c, { fill: C_SECTION_FILL, top: true });
+  }
+  for (const r of s.headerRows) {
+    for (let c = 0; c <= s.lastCol; c += 1) {
+      styleCell(ws, XLSX, r, c, { bold: true, fill: C_HEADER_FILL, right: c >= 2, top: true });
+    }
+  }
+  for (const m of s.moneyCells) {
+    const isTotal = s.totalRows.includes(m.r);
+    styleCell(ws, XLSX, m.r, m.c, {
+      bold: isTotal, right: true, z: MONEY_ZFMT,
+      fill: isTotal ? C_TOTAL_FILL : undefined, top: isTotal,
+    });
+  }
+  for (const qc of s.qtyCells) styleCell(ws, XLSX, qc.r, qc.c, { right: true, z: QTY_ZFMT });
+  for (const cc of s.countCells) styleCell(ws, XLSX, cc.r, cc.c, { right: true, z: COUNT_ZFMT });
+  for (const u of s.underlineCells) styleCell(ws, XLSX, u.r, u.c, { bottom: true });
+  // Etiqueta (columna A) de las filas de totales: negrita con línea superior
+  // — la fila completa se distingue como total (§E distinción visual).
+  for (const r of s.totalRows) styleCell(ws, XLSX, r, 0, { bold: true, top: true });
+  styleCell(ws, XLSX, 0, 0, { bold: true, sz: 14, fill: C_SECTION_FILL });
+  attachFormulas(ws, XLSX, s.formulas);
+  ws['!cols'] = cols;
+  ws['!merges'] = s.merges;
+  ws['!margins'] = { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 };
+  if (opts.autofilter) ws['!autofilter'] = { ref: opts.autofilter };
+  return ws;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
-// POST-PROCESO (JSZip): pane de congelado + configuración de impresión.
-// xlsx-js-style no las escribe nativamente; se inyectan en el XML de la hoja
-// ANTES de descargar. JSZip ya es dependencia directa del stack.
+// POST-PROCESO (JSZip): configuración de impresión + encabezado/pie con
+// numeración + CalcPr. xlsx-js-style no escribe estas piezas; se inyectan
+// en el XML ANTES de descargar. JSZip ya es dependencia directa del stack.
 // ═══════════════════════════════════════════════════════════════════════════
 
-interface SheetPrint { freezeAfterRow?: number; landscape?: boolean }
+export interface SheetPrint {
+  /** Orientación del papel (hojas con tabla: horizontal; nota: vertical). */
+  orientation?: 'portrait' | 'landscape';
+  /** Título del encabezado de impresión (el pie lleva la numeración &P/&N). */
+  headerTitle?: string;
+}
+
+/** Escapa un texto para incrustarlo en un atributo/elemento XML. */
+function escapeXmlText(t: string): string {
+  return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 function patchSheetXml(xml: string, feat: SheetPrint): string {
   let out = xml;
-  if (feat.freezeAfterRow && feat.freezeAfterRow > 0) {
-    const topLeft = `A${feat.freezeAfterRow + 1}`;
-    const pane = `<pane ySplit="${feat.freezeAfterRow}" topLeftCell="${topLeft}" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="${topLeft}" sqref="${topLeft}"/>`;
-    // xlsx-js-style escribe <sheetViews><sheetView …/></sheetViews>
-    out = out.replace(
-      /<sheetView([^>]*?)\/>/,
-      `<sheetView$1>${pane}</sheetView>`,
-    );
-  }
-  if (feat.landscape) {
+  const orientation = feat.orientation ?? 'landscape';
+  if (orientation) {
     // fitToPage: <sheetPr> debe preceder a <dimension>
     if (!out.includes('<sheetPr')) {
       out = out.replace(/(<worksheet[^>]*>)/, `$1<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>`);
     }
-    // pageSetup: inmediatamente tras <pageMargins>
-    const ps = '<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>';
-    if (out.includes('<pageMargins')) {
-      out = out.replace(/(<pageMargins[^>]*\/>)/, `$1${ps}`);
+    // A4 (paperSize 9) + ajuste al ancho de UNA página; el largo fluye a
+    // varias páginas (fitToHeight 0 = sin límite vertical) — E3.
+    const ps = `<pageSetup paperSize="9" orientation="${orientation}" fitToWidth="1" fitToHeight="0"/>`;
+    // Encabezado (título centrado en negrita) y pie con numeración de páginas.
+    // Códigos de formato: &C centra · &B negrita · &P página · &N total.
+    const hf = feat.headerTitle
+      ? `<headerFooter><oddHeader>&amp;C&amp;B${escapeXmlText(feat.headerTitle)}</oddHeader><oddFooter>&amp;C Página &amp;P de &amp;N</oddFooter></headerFooter>`
+      : `<headerFooter><oddFooter>&amp;C Página &amp;P de &amp;N</oddFooter></headerFooter>`;
+    if (out.includes('<pageSetup')) {
+      out = out.replace(/(<pageSetup[^>]*\/>)/, `$1${hf}`);
+    } else if (out.includes('<pageMargins')) {
+      out = out.replace(/(<pageMargins[^>]*\/>)/, `$1${ps}${hf}`);
     } else {
-      out = out.replace(/<\/sheetData>/, `</sheetData>${ps}`);
+      out = out.replace(/<\/sheetData>/, `</sheetData>${ps}${hf}`);
     }
   }
   return out;
+}
+
+/**
+ * MISIÓN 2026-10-22 (Parte D) — LA CORRECCIÓN DE LA CORRUPCIÓN:
+ * inyecta <calcPr> SIEMPRE en posición válida del esquema CT_Workbook
+ * (ECMA-376 §18.2.10): … <sheets> → <functionGroups>? → <externalReferences>?
+ * → <definedNames>? → <calcPr>? … ⇒ calcPr va TRAS </definedNames> cuando
+ * existen (Print_Titles/Print_Area/_FilterDatabase los generan), y solo tras
+ * </sheets> en su ausencia. El código anterior usaba el regex alternado
+ * /(<\/definedNames>|<\/sheets>)/ que empareja </sheets> PRIMERO (va antes
+ * en el documento) ⇒ calcPr ANTES de <definedNames> ⇒ orden inválido ⇒
+ * Excel de escritorio declara el archivo dañado.
+ */
+export function injectCalcPrInWorkbookXml(wbXml: string): string {
+  if (wbXml.includes('<calcPr')) return wbXml;
+  const calc = '<calcPr fullCalcOnLoad="1" calcId="191029"/>';
+  if (wbXml.includes('</definedNames>')) return wbXml.replace('</definedNames>', `</definedNames>${calc}`);
+  if (wbXml.includes('<definedNames/>')) return wbXml.replace('<definedNames/>', `<definedNames/>${calc}`);
+  return wbXml.replace('</sheets>', `</sheets>${calc}`);
 }
 
 async function patchWorkbook(
@@ -818,23 +794,21 @@ async function patchWorkbook(
     zip.file(path, patchSheetXml(xml, feat));
   }
   // Recalcular TODAS las fórmulas al abrir en Excel: xlsx-js-style no escribe
-  // CalcPr, se inyecta en el XML del workbook (después de definedNames).
+  // CalcPr, se inyecta en el XML del workbook en posición de esquema válida.
   const wbPath = 'xl/workbook.xml';
   const wbFile = zip.file(wbPath);
   if (wbFile) {
     const wbXml = await wbFile.async('string');
-    if (!wbXml.includes('<calcPr')) {
-      zip.file(wbPath, wbXml.replace(/(<\/definedNames>|<\/sheets>)/, `$1<calcPr fullCalcOnLoad="1" calcId="191029"/>`));
-    }
+    zip.file(wbPath, injectCalcPrInWorkbookXml(wbXml));
   }
   const out = await zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
   return out as unknown as ArrayBuffer;
 }
 
 /**
- * Construye el .xlsx final (estilos + pane congelado + impresión) y devuelve
- * el Blob listo para descargar. Sin efectos contables: consume el reporte ya
- * aplicado (misma fuente que el PDF).
+ * Construye el .xlsx final (estilos + pane congelado + impresión + CalcPr) y
+ * devuelve el Blob listo para descargar. Sin efectos contables: consume el
+ * reporte ya aplicado (misma fuente que el PDF).
  */
 export async function buildCashReportExcelBlob(
   ctx: CashReportPdfContext,

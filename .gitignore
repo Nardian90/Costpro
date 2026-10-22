@@ -134,3 +134,4 @@ scripts/qa-h1/state.json
 
 # CI Gate SQL — artefacto generado por scripts/ci-gate-sql-checks.js (nunca se commitea)
 scripts/ci-gate-checks.sql
+scripts-tmp/

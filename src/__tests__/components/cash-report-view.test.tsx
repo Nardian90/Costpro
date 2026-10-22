@@ -24,13 +24,39 @@ const buildPdfMock = vi.fn(async (_ctx?: unknown, _summaries?: unknown) => ({
   output: vi.fn(() => 'blob:mock-preview-url'),
   save: vi.fn(),
 }));
-vi.mock('@/components/views/terminal/views/cash/cash-report-pdf', () => ({
-  DEFAULT_PDF_OPTIONS: {
+vi.mock('@/components/views/terminal/views/cash/cash-report-pdf', () => {
+  const DEFAULTS = {
     detailPayments: false, detailProduction: false,
     includeBreakdown: true, includeUsd: true, includeSignature: true,
     includeOtReport: true, includeCommissionColumn: true, usdSeparatePage: true,
-  },
-  buildCashReportPdf: (ctx?: unknown, summaries?: unknown) => buildPdfMock(ctx, summaries),
+    includeCashBreakdown: true,
+  };
+  // MISIÓN 2026-10-22 (Parte A): mock fiel de la persistencia de opciones —
+  // valida contra las claves conocidas y aplica defaults solo si no hay
+  // preferencia booleana guardada (misma semántica que el módulo real).
+  const loadPdfOptions = () => {
+    try {
+      const raw = window.localStorage.getItem('costpro:cash-report:pdf-options:v1');
+      if (!raw) return { ...DEFAULTS };
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const out: Record<string, boolean> = { ...DEFAULTS };
+      for (const k of Object.keys(DEFAULTS)) if (typeof parsed[k] === 'boolean') out[k] = parsed[k] as boolean;
+      return out;
+    } catch {
+      return { ...DEFAULTS };
+    }
+  };
+  return {
+    DEFAULT_PDF_OPTIONS: DEFAULTS,
+    loadPdfOptions,
+    savePdfOptions: (opts: Record<string, boolean>) => {
+      try {
+        const out: Record<string, boolean> = {};
+        for (const k of Object.keys(DEFAULTS)) out[k] = opts[k] === true;
+        window.localStorage.setItem('costpro:cash-report:pdf-options:v1', JSON.stringify(out));
+      } catch {}
+    },
+    buildCashReportPdf: (ctx?: unknown, summaries?: unknown) => buildPdfMock(ctx, summaries),
   fetchDiarioSummaries: vi.fn(async () => ({})),
   methodLabel: (m: string) => (m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Zelle'),
   // MISIÓN EXCEL 2026-10-21: helpers que cash-report-excel reutiliza del módulo PDF.
@@ -42,7 +68,8 @@ vi.mock('@/components/views/terminal/views/cash/cash-report-pdf', () => ({
   salesTableItems: () => [],
   salesTableQty: () => 0,
   periodISO: () => ({ sISO: '', eISO: '' }),
-}));
+  };
+});
 
 // ── MOCK: auth/ui stores ──
 const mockSetCurrentView = vi.fn();
@@ -133,6 +160,18 @@ const bodyText = () => document.body.textContent ?? '';
 /** Etiqueta de conteo según la convención de cada moneda (espeja formatDenomValue del core). */
 const countLabel = (d: number, cur = 'CUP') => `Cantidad de billetes de ${cur === 'CUP' ? d.toLocaleString('es-ES') : d.toFixed(2)} ${cur}`;
 
+/** MISIÓN 2026-10-22 (Parte C): la configuración vive en el panel lateral
+ *  desplegable — se abre con «Configuración del reporte» antes de tocar
+ *  radios/toggles/nombres de firmas. */
+async function openConfigPanel(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: /Configuración del reporte/i }));
+  await waitFor(() => expect(screen.getByTestId('cash-report-config-panel')).toBeTruthy());
+}
+async function closeConfigPanel(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByTestId('cash-report-config-close'));
+  await waitFor(() => expect(screen.queryByTestId('cash-report-config-panel')).toBeNull());
+}
+
 beforeEach(() => {
   cleanup();
   window.localStorage.clear();
@@ -163,6 +202,7 @@ describe('§1/§2 — Vista dedicada: render inicial y separación config/cálcu
   it('§2: cambiar el tipo de reporte NO dispara cálculo y SÍ persiste la preferencia', async () => {
     const user = userEvent.setup();
     await renderView();
+    await openConfigPanel(user);
     await waitFor(() => expect(screen.getByRole('radio', { name: /Diario/ })).toBeTruthy());
     await user.click(screen.getByRole('radio', { name: /Diario/ }));
     expect(screen.getByRole('radio', { name: /Diario/ }).getAttribute('aria-checked')).toBe('true');
@@ -258,13 +298,17 @@ describe('§1/§2 — Vista dedicada: render inicial y separación config/cálcu
 describe('§3 — Persistencia del tipo de reporte', () => {
   it('restaura la plantilla persistida al entrar (diario → radio marcado)', async () => {
     localStorage.setItem(LS_KEYS.pdfTemplate, 'diario');
+    const user = userEvent.setup();
     await renderView();
+    await openConfigPanel(user);
     await waitFor(() => expect(screen.getByRole('radio', { name: /Diario/ }).getAttribute('aria-checked')).toBe('true'));
   });
 
   it('valor persistido inválido → default legítimo sin errores', async () => {
     localStorage.setItem(LS_KEYS.pdfTemplate, '"antes-eliminado"');
+    const user = userEvent.setup();
     await renderView();
+    await openConfigPanel(user);
     // AUDITORÍA 2026-10 (§1): el default legítimo es Diario (Empresa).
     await waitFor(() => expect(screen.getByRole('radio', { name: /Diario/ }).getAttribute('aria-checked')).toBe('true'));
     expect(localStorage.getItem(LS_KEYS.pdfTemplate)).toBe('"antes-eliminado"'); // no se sobreescribe hasta que el usuario elige
@@ -391,8 +435,10 @@ describe('§4 — Vista previa del PDF', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
     await user.click(screen.getByRole('tab', { name: /Vista previa/i }));
     await waitFor(() => expect(buildPdfMock).toHaveBeenCalled());
-    // cambiar plantilla (default Diario → Estándar; la config está visible en la columna izquierda)
+    // cambiar plantilla (default Diario → Estándar; la config vive en el panel lateral)
+    await openConfigPanel(user);
     await user.click(screen.getByRole('radio', { name: /Estándar/ }));
+    await closeConfigPanel(user);
     await waitFor(() => expect(screen.getByText(/La vista previa corresponde a la configuración anterior/)).toBeTruthy());
     expect(screen.getByRole('button', { name: /Regenerar vista previa/i })).toBeTruthy();
   });
@@ -456,7 +502,7 @@ describe('NAV-2026-10 — «Gestionar comisiones» navega a Trabajadores y Comis
 // ═══════════════════════════════════════════════════════════════════════════
 describe('INC-2026-10-19 — Nombres del pie de firmas (UI)', () => {
   const openOptions = async (user: ReturnType<typeof userEvent.setup>) => {
-    await user.click(screen.getByRole('button', { name: /Opciones del documento/i }));
+    await openConfigPanel(user);
     await waitFor(() => expect(screen.getByText('Nombres del pie de firmas')).toBeTruthy());
   };
 
@@ -520,5 +566,207 @@ describe('INC-2026-10-19 — Nombres del pie de firmas (UI)', () => {
     await waitFor(() => expect(screen.getByText('Desglose para Entrega — CUP')).toBeTruthy());
     expect(document.getElementById('cr-db')).toBeNull();
     expect(document.getElementById('cr-rn')).toBeNull();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MISIÓN 2026-10-22 — Persistencia de opciones, defaults del documento,
+// panel lateral desplegable y desglose laboral (Partes A/B/C · F1-F12).
+// ═══════════════════════════════════════════════════════════════════════════
+const OPTIONS_KEY = 'costpro:cash-report:pdf-options:v1';
+const WORKING_KEY = 'costpro:cash-report:working-breakdown:v1';
+
+describe('MISIÓN 2026-10-22 · Parte A/B — persistencia de las opciones del documento', () => {
+  it('F-1: primera apertura sin preferencias → las cuatro opciones del documento aparecen activadas', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await openConfigPanel(user);
+    for (const label of ['Desglose de efectivo', 'Desglose billetes', 'Cuadre USD', 'Líneas de firma', 'USD en hoja separada']) {
+      const btn = screen.getByRole('button', { name: new RegExp(`^${label}`, 'i') });
+      expect(btn.getAttribute('aria-pressed'), `${label} debe venir activada por defecto`).toBe('true');
+    }
+  });
+
+  it('F-2: desactivar «Desglose billetes», persiste al cambiar y se conserva al reabrir (remount)', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await openConfigPanel(user);
+    await user.click(screen.getByRole('button', { name: /^Desglose billetes/i }));
+    expect(screen.getByRole('button', { name: /^Desglose billetes/i }).getAttribute('aria-pressed')).toBe('false');
+    const stored = JSON.parse(localStorage.getItem(OPTIONS_KEY) || '{}');
+    expect(stored.includeBreakdown).toBe(false); // persistido al cambiar (patrón auto)
+    // reabrir el módulo (remount completo) → preferencia conservada
+    cleanup();
+    await renderView();
+    await openConfigPanel(user);
+    expect(screen.getByRole('button', { name: /^Desglose billetes/i }).getAttribute('aria-pressed')).toBe('false');
+    // reactivar y volver a comprobar (regla B-3)
+    await user.click(screen.getByRole('button', { name: /^Desglose billetes/i }));
+    expect(JSON.parse(localStorage.getItem(OPTIONS_KEY) || '{}').includeBreakdown).toBe(true);
+  });
+
+  it('F-5: «USD en hoja separada» desactivada persiste aunque cambie el tipo de reporte', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await openConfigPanel(user);
+    await user.click(screen.getByRole('button', { name: /^USD en hoja separada/i }));
+    expect(JSON.parse(localStorage.getItem(OPTIONS_KEY) || '{}').usdSeparatePage).toBe(false);
+    // cambiar el tipo de reporte NO resetea preferencias (regla B-4)
+    await user.click(screen.getByRole('radio', { name: /Estándar/ }));
+    expect(JSON.parse(localStorage.getItem(OPTIONS_KEY) || '{}').usdSeparatePage).toBe(false);
+    cleanup();
+    await renderView();
+    await openConfigPanel(user);
+    expect(screen.getByRole('button', { name: /^USD en hoja separada/i }).getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('F-7: preferencia antigua o corrupta → recuperación segura con defaults', async () => {
+    localStorage.setItem(OPTIONS_KEY, '{esto no es json');
+    const user = userEvent.setup();
+    await renderView();
+    await openConfigPanel(user);
+    // corrupto → defaults legítimos (las 4 opciones activadas), sin errores
+    expect(screen.getByRole('button', { name: /^Líneas de firma/i }).getAttribute('aria-pressed')).toBe('true');
+    // valor no booleano en una clave → esa clave conserva el default, el resto se respeta
+    localStorage.setItem(OPTIONS_KEY, JSON.stringify({ includeSignature: 'no-bool', includeUsd: false }));
+    cleanup();
+    await renderView();
+    await openConfigPanel(user);
+    expect(screen.getByRole('button', { name: /^Líneas de firma/i }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: /^Cuadre USD/i }).getAttribute('aria-pressed')).toBe('false');
+  });
+});
+
+describe('MISIÓN 2026-10-22 · Parte A — desglose de efectivo laboral (guardado explícito)', () => {
+  it('F-6: «Guardar desglose» persiste el conteo y se restaura al reabrir el módulo', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
+    await user.click(screen.getByRole('tab', { name: /Desglose de efectivo/i }));
+    await waitFor(() => expect(screen.getByText('Desglose para Entrega — CUP')).toBeTruthy());
+    const d1000 = screen.getByLabelText(countLabel(1000)) as HTMLInputElement;
+    await act(async () => { fireEvent.change(d1000, { target: { value: '15' } }); });
+    // indicador discreto de cambios pendientes (F-9)
+    expect(screen.getByTestId('cr-working-dirty')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: /Guardar desglose/i }));
+    await waitFor(() => {
+      const stored = JSON.parse(localStorage.getItem(WORKING_KEY) || '{}');
+      expect(stored.CUP['1000']).toBe('15');
+      expect(typeof stored.savedAt).toBe('string');
+    });
+    // reabrir el módulo → el conteo guardado se restaura (el defecto original)
+    cleanup();
+    await renderView();
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
+    await user.click(screen.getByRole('tab', { name: /Desglose de efectivo/i }));
+    await waitFor(() => expect((screen.getByLabelText(countLabel(1000)) as HTMLInputElement).value).toBe('15'));
+    // sin cambios pendientes tras restaurar
+    expect(screen.queryByTestId('cr-working-dirty')).toBeNull();
+  });
+
+  it('«Limpiar todo» descarta también el conteo persistido (no reaparece al reabrir)', async () => {
+    localStorage.setItem(WORKING_KEY, JSON.stringify({ CUP: { 1000: '15' }, USD: { 100: '1' }, savedAt: new Date().toISOString() }));
+    const user = userEvent.setup();
+    await renderView();
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
+    await user.click(screen.getByRole('tab', { name: /Desglose de efectivo/i }));
+    await waitFor(() => expect((screen.getByLabelText(countLabel(1000)) as HTMLInputElement).value).toBe('15'));
+    await user.click(screen.getByRole('button', { name: /Limpiar todo/i }));
+    await waitFor(() => expect(localStorage.getItem(WORKING_KEY)).toBeNull());
+    cleanup();
+    await renderView();
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
+    await user.click(screen.getByRole('tab', { name: /Desglose de efectivo/i }));
+    await waitFor(() => expect((screen.getByLabelText(countLabel(1000)) as HTMLInputElement).value).toBe(''));
+  });
+
+  it('conteo laboral corrupto → recuperación segura (vacío, sin inventar cantidades)', async () => {
+    localStorage.setItem(WORKING_KEY, 'not-json');
+    const user = userEvent.setup();
+    await renderView();
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
+    await user.click(screen.getByRole('tab', { name: /Desglose de efectivo/i }));
+    await waitFor(() => expect((screen.getByLabelText(countLabel(1000)) as HTMLInputElement).value).toBe(''));
+  });
+});
+
+describe('MISIÓN 2026-10-22 · Parte B — la opción «Desglose de efectivo» tiene efecto real en la UI', () => {
+  it('desactivada: la pestaña «Desglose de efectivo» desaparece y el cuadre de Resultados solo muestra el esperado', async () => {
+    localStorage.setItem(OPTIONS_KEY, JSON.stringify({ includeCashBreakdown: false }));
+    const user = userEvent.setup();
+    await renderView();
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
+    expect(screen.queryByRole('tab', { name: /Desglose de efectivo/i })).toBeNull();
+    expect(screen.queryByText('Efectivo contado')).toBeNull();
+    expect(screen.queryByText(/Diferencia de cuadre/)).toBeNull();
+    expect(screen.getByText('Efectivo esperado')).toBeTruthy();
+  });
+
+  it('activada (default): pestaña presente y cuadre completo en Resultados', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
+    expect(screen.getByRole('tab', { name: /Desglose de efectivo/i })).toBeTruthy();
+    expect(screen.getByText('Efectivo contado')).toBeTruthy();
+    expect(bodyText()).toContain('Diferencia de cuadre');
+  });
+});
+
+describe('MISIÓN 2026-10-22 · Parte C — panel lateral desplegable de configuración', () => {
+  it('F-8: abrir y cerrar el panel SIN perder los valores (ni la vista previa ni los filtros)', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    const desde = document.getElementById('cr-sd') as HTMLInputElement;
+    await act(async () => { fireEvent.change(desde, { target: { value: '2026-09-15' } }); });
+    await openConfigPanel(user);
+    await user.click(screen.getByRole('radio', { name: /Estándar/ }));
+    await closeConfigPanel(user);
+    // el periodo (filtro esencial) NO se reinicia al cerrar
+    expect((document.getElementById('cr-sd') as HTMLInputElement).value).toBe('2026-09-15');
+    // reabrir: los valores seleccionados se conservan
+    await openConfigPanel(user);
+    expect(screen.getByRole('radio', { name: /Estándar/ }).getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('F-10: Escape cierra el panel y el foco vuelve al disparador', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await openConfigPanel(user);
+    const trigger = screen.getByRole('button', { name: /Configuración del reporte/i });
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('cash-report-config-panel')).toBeNull());
+    // El foco vuelve al disparador (o a un ancestro suyo, según el jsdom).
+    expect(document.activeElement === trigger || (document.activeElement?.contains(trigger) ?? false)).toBe(true);
+  });
+
+  it('el backdrop cierra el panel y este es un dialog accesible con cierre explícito', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await openConfigPanel(user);
+    expect(screen.getByRole('dialog', { name: /Configuración del reporte/i })).toBeTruthy();
+    await user.click(screen.getByTestId('cash-report-config-backdrop'));
+    await waitFor(() => expect(screen.queryByTestId('cash-report-config-panel')).toBeNull());
+  });
+
+  it('F-12: la vista previa no se recalcula por abrir/cerrar el panel (mismo builder, cache)', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
+    await user.click(screen.getByRole('tab', { name: /Vista previa/i }));
+    await waitFor(() => expect(buildPdfMock).toHaveBeenCalledTimes(1));
+    await openConfigPanel(user);
+    await closeConfigPanel(user);
+    await openConfigPanel(user);
+    await closeConfigPanel(user);
+    // sin cambios de configuración → el builder NO se vuelve a llamar
+    expect(buildPdfMock).toHaveBeenCalledTimes(1);
   });
 });
