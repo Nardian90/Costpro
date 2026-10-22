@@ -133,27 +133,32 @@ jobs:
           echo "Filtro: $FILTER"
           bunx playwright test --project=core --reporter=line,json --retries=0 "$FILTER"
 
+      # NOTA (heredoc): el terminador PY debe quedar en COLUMNA 0 tras el
+      # stripping del bloque YAML — por eso el cuerpo de python vive en la
+      # indentación base del run:| (un terminador indentado dentro de un if
+      # hace que bash nunca lo encuentre: syntax error SIEMPRE, con o sin
+      # reporte — hallazgo de la corrida 39774127538).
       - name: Resumen de pruebas (sin secretos)
         if: always()
         run: |
-          if [ -f test-results/report.json ]; then
-            python3 - << 'PY'
-            import json
-            try:
-                r = json.load(open('test-results/report.json'))
-                s = r.get('stats', {})
-                print(f"Resumen E2E: total={s.get('total')} passed={s.get('expected')} flaky={s.get('unexpected')} skipped={s.get('skipped')} failed={s.get('unexpected', 0) + s.get('expectedFailed', 0)}")
-                for suite in r.get('suites', []):
-                    for spec in suite.get('specs', []):
-                        for t in spec.get('tests', []):
-                            status = t.get('status', t.get('results', [{}])[0].get('status', '?'))
-                            print(f"  {status.upper():8s} {spec.get('title', '?')[:100]}")
-            except Exception as e:
-                print('No se pudo parsear test-results/report.json:', e)
-            PY
-          else
+          if [ ! -f test-results/report.json ]; then
             echo 'Sin reporte JSON disponible (la corrida no llegó a ejecutar pruebas).'
+            exit 0
           fi
+          python3 - << 'PY'
+          import json
+          try:
+              r = json.load(open('test-results/report.json'))
+              s = r.get('stats', {})
+              print(f"Resumen E2E: total={s.get('total')} passed={s.get('expected')} flaky={s.get('unexpected')} skipped={s.get('skipped')} failed={s.get('unexpected', 0) + s.get('expectedFailed', 0)}")
+              for suite in r.get('suites', []):
+                  for spec in suite.get('specs', []):
+                      for t in spec.get('tests', []):
+                          status = t.get('status', t.get('results', [{}])[0].get('status', '?'))
+                          print(f"  {status.upper():8s} {spec.get('title', '?')[:100]}")
+          except Exception as e:
+              print('No se pudo parsear test-results/report.json:', e)
+          PY
 
       - name: Subir artefactos de fallo (opt-in del propietario — SEC-TS-07)
         if: failure() && vars.E2E_ISOLATED_UPLOAD_ARTIFACTS == 'true'
