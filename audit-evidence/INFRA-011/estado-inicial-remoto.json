@@ -1,0 +1,159 @@
+{
+  "generado": "2026-10-22T02:36:59.776Z",
+  "proyecto": {
+    "ref": "lguovmvrozxgssupkwpf",
+    "via": "Management API /database/query (solo lectura)"
+  },
+  "usuario_actual": {
+    "label": "usuario_actual",
+    "rows": [
+      {
+        "current_user": "postgres",
+        "current_database": "postgres"
+      }
+    ]
+  },
+  "esquemas": {
+    "label": "esquemas",
+    "rows": [
+      {
+        "nspname": "auth",
+        "owner": "supabase_admin"
+      },
+      {
+        "nspname": "extensions",
+        "owner": "postgres"
+      },
+      {
+        "nspname": "graphql",
+        "owner": "supabase_admin"
+      },
+      {
+        "nspname": "graphql_public",
+        "owner": "supabase_admin"
+      },
+      {
+        "nspname": "pgbouncer",
+        "owner": "pgbouncer"
+      },
+      {
+        "nspname": "public",
+        "owner": "pg_database_owner"
+      },
+      {
+        "nspname": "realtime",
+        "owner": "supabase_admin"
+      },
+      {
+        "nspname": "storage",
+        "owner": "supabase_admin"
+      },
+      {
+        "nspname": "vault",
+        "owner": "supabase_admin"
+      }
+    ]
+  },
+  "tablas_public": {
+    "label": "tablas_public",
+    "rows": []
+  },
+  "funciones_public": {
+    "label": "funciones_public",
+    "rows": [
+      {
+        "n": 0
+      }
+    ]
+  },
+  "extensiones_instaladas": {
+    "label": "extensiones_instaladas",
+    "rows": [
+      {
+        "extname": "pg_stat_statements",
+        "extversion": "1.11"
+      },
+      {
+        "extname": "pgcrypto",
+        "extversion": "1.3"
+      },
+      {
+        "extname": "plpgsql",
+        "extversion": "1.0"
+      },
+      {
+        "extname": "supabase_vault",
+        "extversion": "0.3.1"
+      },
+      {
+        "extname": "uuid-ossp",
+        "extversion": "1.1"
+      }
+    ]
+  },
+  "extensiones_disponibles": {
+    "label": "extensiones_disponibles",
+    "rows": [
+      {
+        "name": "btree_gist",
+        "default_version": "1.7"
+      },
+      {
+        "name": "pg_cron",
+        "default_version": "1.6.4"
+      },
+      {
+        "name": "pg_trgm",
+        "default_version": "1.6"
+      },
+      {
+        "name": "pgcrypto",
+        "default_version": "1.3"
+      },
+      {
+        "name": "uuid-ossp",
+        "default_version": "1.1"
+      },
+      {
+        "name": "vector",
+        "default_version": "0.8.2"
+      }
+    ]
+  },
+  "atributos_postgres": {
+    "label": "atributos_postgres",
+    "rows": [
+      {
+        "rolname": "postgres",
+        "rolsuper": false,
+        "rolcreaterole": true,
+        "rolbypassrls": true
+      }
+    ]
+  },
+  "roles_migracion": {
+    "label": "roles_migracion",
+    "rows": []
+  },
+  "buckets": {
+    "label": "buckets",
+    "rows": []
+  },
+  "supabase_migrations": {
+    "label": "supabase_migrations",
+    "http": 400,
+    "error": "{\"message\":\"Failed to run sql query: ERROR:  42P01: relation \\\"supabase_migrations.schema_migrations\\\" does not exist\\nLINE 1: select count(*) as n from supabase_migrations.schema_migrations\\n        "
+  },
+  "owner_auth_users": {
+    "label": "owner_auth_users",
+    "rows": [
+      {
+        "tableowner": "supabase_auth_admin"
+      }
+    ]
+  },
+  "rls_public": {
+    "label": "rls_public",
+    "rows": []
+  }
+}

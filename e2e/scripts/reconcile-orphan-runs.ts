@@ -29,6 +29,8 @@
  * ============================================================================
  */
 import { config as loadEnv } from 'dotenv';
+// CP-INFRA-011: guard centralizado de aislamiento antes de cualquier limpieza.
+import { assertIsolatedDb } from '../fixtures/assert-isolated-db';
 
 loadEnv({ path: './.env' });
 
@@ -229,6 +231,9 @@ async function reconcileByRunId(runId: string, execute: boolean): Promise<void> 
 
 // ── main ─────────────────────────────────────────────────────────────────────
 async function main(): Promise<void> {
+  // CP-INFRA-011: ninguna limpieza antes de validar el destino aislado.
+  await assertIsolatedDb();
+
   if (!SUPABASE_URL || !SERVICE_KEY) {
     console.error('[reconcile] Faltan NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY en .env');
     process.exit(2);

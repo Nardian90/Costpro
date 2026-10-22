@@ -37,6 +37,7 @@
 import { config as loadEnv } from 'dotenv';
 import { getPilotEnv } from './fixtures/pilot-env';
 import { isIsolatedRun, provisionRunEnv } from './fixtures/run-env';
+import { assertIsolatedDb } from './fixtures/assert-isolated-db';
 
 loadEnv({ path: './.env' });
 
@@ -73,6 +74,11 @@ async function supabaseSignIn(email: string, password: string): Promise<Supabase
 }
 
 export default async function globalSetup(): Promise<void> {
+  // CP-INFRA-011: NINGUNA operación E2E (sesiones, provisioning, escrituras)
+  // antes de que el guard centralizado valide el destino aislado. Fail-closed.
+  await assertIsolatedDb();
+  console.log('[global-setup] destino validado por el guard de aislamiento (CP-INFRA-011)');
+
   if (!SUPABASE_URL || !ANON_KEY || !SERVICE_KEY) {
     throw new Error('[global-setup] Faltan NEXT_PUBLIC_SUPABASE_URL / ANON_KEY / SERVICE_ROLE_KEY en .env');
   }

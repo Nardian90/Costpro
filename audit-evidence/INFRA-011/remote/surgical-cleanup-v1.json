@@ -1,0 +1,52 @@
+{
+  "modo": "--surgical-cleanup-v1",
+  "transporte": "api",
+  "ref": "lguovmvrozxgssupkwpf",
+  "inicio": "2026-10-22T03:07:47.437Z",
+  "pasos": [
+    {
+      "nombre": "guard-normal-centinela",
+      "ok": true,
+      "detalle": "destino validado con centinela true",
+      "ts": "2026-10-22T03:07:47.980Z"
+    },
+    {
+      "nombre": "limpieza-7-funciones-v1",
+      "ok": true,
+      "detalle": "eliminadas=7, restantes=0",
+      "ts": "2026-10-22T03:07:53.735Z"
+    },
+    {
+      "nombre": "estado-v1-marcado",
+      "ok": true,
+      "detalle": "filas v1 => limpiada_para_baseline (histórico conservado)",
+      "ts": "2026-10-22T03:07:59.602Z"
+    }
+  ],
+  "estado_pre_limpieza": [
+    {
+      "nombre": "202401230001_add_get_users_for_encargado.sql",
+      "estado": "aplicada"
+    },
+    {
+      "nombre": "202401230002_update_rls_for_encargado.sql",
+      "estado": "fallida"
+    },
+    {
+      "nombre": "20240325000000_harden_audit_triggers.sql",
+      "estado": "aplicada"
+    },
+    {
+      "nombre": "20240725_add_paginated_stock_ledger.sql",
+      "estado": "aplicada"
+    },
+    {
+      "nombre": "20240801_create_inventory_adjustments.sql",
+      "estado": "fallida"
+    },
+    {
+      "nombre": "BASELINE:production-schema-snapshot-20260828.sql",
+      "estado": "fallida"
+    }
+  ]
+}

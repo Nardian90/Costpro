@@ -135,3 +135,8 @@ scripts/qa-h1/state.json
 # CI Gate SQL — artefacto generado por scripts/ci-gate-sql-checks.js (nunca se commitea)
 scripts/ci-gate-checks.sql
 scripts-tmp/
+
+# CP-INFRA-011 — capa REGENERABLE de reproducción de migraciones E2E
+# (la genera scripts/e2e/build-migrations-replay.mjs; el MANIFIESTO determinista
+# SÍ se commitea como evidencia en audit-evidence/INFRA-011/)
+.e2e-migrations/
