@@ -126,6 +126,14 @@ export interface POSCartProps {
   // FIX-PAYMENT-MODE (2026-07-06): props para detección de modo
   isPaymentModeByProduct?: () => boolean;
   getConsolidatedPayments?: () => Record<string, { cash: number; transfer: number; zelle: number }>;
+  // MISIÓN CARRITO-VENTAS (2026-10-23): panel redimensionable en escritorio.
+  // POSView posee el hook useCartPanelResize y comparte el estado para que el
+  // padding compensatorio del catálogo y el ancho real del sidebar coincidan.
+  panelWidth?: number;
+  isResizingPanel?: boolean;
+  onPanelResizeStart?: (e: React.PointerEvent) => void;
+  onPanelResizeKeyDown?: (e: React.KeyboardEvent) => void;
+  onPanelResizeReset?: () => void;
 }
 
 // ── Sub-component Props ────────────────────────────────────

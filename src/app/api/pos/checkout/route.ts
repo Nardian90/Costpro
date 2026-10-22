@@ -39,7 +39,15 @@ import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 const itemSchema = z.object({
   product_id: z.string().regex(uuidRegex),
   variant_id: uuidLoose.nullable().optional(),
-  quantity: z.number().positive(),
+  // MISIÓN CARRITO-DECIMALES (2026-10-23): la cantidad admite hasta 4 posiciones
+  // decimales (1 / 1.5 / 1.25 / 1.125 / 1.2345 / 0.0001). El refine re-valida
+  // server-side la precisión con tolerancia de polvo binario (1e-9): un float
+  // como 0.30000000000000004 pasa; 0.3333333333333333 (>4dp) se rechaza con
+  // mensaje explícito. create_sale_v2 ya persiste NUMERIC sin truncar.
+  quantity: z.number().positive().finite().refine(
+    (q) => Math.abs(Math.round(q * 10000) / 10000 - q) < 1e-9,
+    { message: 'La cantidad admite hasta 4 posiciones decimales' },
+  ),
   // E-SEC (R-SEC-1): finite() rechaza Infinity/-Infinity (p.ej. JSON `1e999`
   // parsea a Infinity); z.number() ya rechaza NaN. El precio inválido que entre
   // por RPC directo se rechaza igualmente en create_sale_v2 (ERR_INVALID_PRICE).

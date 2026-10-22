@@ -272,8 +272,8 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold truncate">{item.name}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <input type="number" min="1" value={item.quantity} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: Number(e.target.value) } : it))}
-                      className="w-16 px-2 py-1 rounded border border-border text-xs" />
+                    <input type="number" min="0.0001" step="0.0001" inputMode="decimal" aria-label={`Cantidad a devolver de ${item.name}`} value={item.quantity} onChange={e => setItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: Number(e.target.value) } : it))}
+                      className="w-16 px-2 py-1 rounded border border-border text-xs tabular-nums" />
                     <span className="text-xs text-muted-foreground">×</span>
                     <span className="text-xs font-mono">${item.unit_price}</span>
                     <span className="text-xs text-muted-foreground">=</span>

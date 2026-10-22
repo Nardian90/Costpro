@@ -39,6 +39,9 @@ import {
   useCartStore,
   effectiveUnitPrice,
   round2,
+  roundQty,
+  floorQty,
+  QTY_EPSILON,
   type CartItem,
 } from "@/store/cart";
 import {
@@ -140,11 +143,13 @@ export function POSCartItemEditModal({
 
   // Tope de stock con la variante destino (consistente con updateQuantity:
   // servicios exentos; fraccionarios permitidos hasta el máximo calculado)
+  // MISIÓN CARRITO-DECIMALES (2026-10-23): floorQty (suelo 4dp) en vez de
+  // Math.floor — el tope admite existencias fraccionarias sin exceder stock.
   const targetFactor = targetVariant?.conversion_factor || 1;
   const safeFactor = targetFactor > 0 ? targetFactor : 1;
   const maxVariantQty = isService
     ? Number.MAX_SAFE_INTEGER
-    : Math.floor((product?.stock_current ?? 999999) / safeFactor);
+    : floorQty((product?.stock_current ?? 999999) / safeFactor);
 
   // ¿La variante destino corresponde a OTRA línea existente? (fusión FIX-P1-3)
   const willMerge = useMemo(() => {
@@ -169,8 +174,11 @@ export function POSCartItemEditModal({
       store.switchItemVariant(item.product_id, item.variant_id, targetVariantId);
     }
     // 2) Cantidad (el store clampea por stock y recalcula subtotal)
-    if (qtyValidNumber && parsedQty !== item.quantity) {
-      store.updateQuantity(item.product_id, targetVariantId, parsedQty);
+    // MISIÓN CARRITO-DECIMALES: se normaliza a 4dp antes de tocar el store
+    // (coherente con la validación de 4 decimales del endpoint de checkout).
+    const normalizedQty = roundQty(parsedQty);
+    if (qtyValidNumber && Math.abs(normalizedQty - item.quantity) > QTY_EPSILON) {
+      store.updateQuantity(item.product_id, targetVariantId, normalizedQty);
     }
     // 3) Precio aplicado a la operación (NUNCA toca el precio maestro)
     if (!isValeMode && priceValidNumber && round2(parsedPrice) !== round2(item.price)) {
