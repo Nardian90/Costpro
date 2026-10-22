@@ -126,3 +126,24 @@ Las tres superficies comparten fuente (`fetchDiarioSummaries` + `computeDailySum
 PR nuevo sobre `main` con la rama `fix/reporte-entrega-config-panel-excel`. Sin merge, sin despliegue, sin modificaciones de producción (solo lecturas del reporte ya calculado; la exportación es de solo lectura y no crea ventas ni movimientos). Ninguna funcionalidad existente eliminada: se conservan fórmulas reales, comprobaciones de consistencia (ahora en la misma hoja), autofiltro, OT, nota metodológica, historial y todas las capacidades del desglose.
 
 **Criterios de cierre:** las preferencias persisten (§2-3, probado en vivo con recarga), las cuatro opciones tienen los defaults solicitados (§4, probado), el panel lateral funciona con a11y (§5, probado incl. Escape/foco), y el Excel abre como libro válido con presentación profesional de impresión (§6-9, probado incl. el archivo real descargado de la app).
+
+---
+
+## 13. REFINAMIENTO 2026-10-22 (feedback del propietario sobre el Excel exportado)
+
+Tras revisar el Excel real exportado, el propietario pidió cuatro ajustes de limpieza («la tercera imagen es como espero que quede, lo mismo aplica para el USD»). Todos aplicados a las hojas «Reporte Entrega» y «Reporte Entrega USD»:
+
+| # | Feedback | Implementación |
+|---|----------|----------------|
+| 1 | «Tipo de reporte» y «Monedas…» no son necesarios | Filas eliminadas de la hoja; la metodología de monedas vive en «Nota metodológica» |
+| 2 | Tienda/Dirección/Período/Generado «puede estar en dos filas y no en 4» | Identidad compacta: fila 1 = Tienda \| Período, fila 2 = Dirección \| Generado (hoja USD: fila 1 = Tienda \| Período, fila 2 = Generado) |
+| 3 | «* Importe cobrado difiere…» tampoco es necesario | Nota al pie eliminada y el asterisco ya no se prefija al nombre del producto (tabla limpia; los importes cobrados reales se conservan) |
+| 4 | «las filas que pone inmovilizadas son innecesarias» | Paneles congelados eliminados de TODAS las hojas (sin `<pane>` en ningún XML de hoja) |
+
+**Corrección adicional (gap preexistente detectado al refinar):** la fila `TOTALES` de la tabla de ventas no entraba en las listas de estilo → salía con formato «General», sin negrita ni relleno (a diferencia de los demás totales). Ahora lleva `#,##0.00`, negrita, relleno y línea superior — igual que «Efectivo esperado» y «Efectivo contado», como en el PDF de entrega.
+
+**Sección «COMPROBACIÓN DE CONSISTENCIA» retirada del documento** (CUP y USD): era verificación de auditoría redundante para el documento de entrega (los TOTALES son `=SUM` vivos, por lo que la coincidencia tabla↔resumen se verifica al editar cualquier celda). La «Nota metodológica» ahora lo explica así. El PDF de entrega nunca la imprimió — el Excel queda más espejo del PDF.
+
+**Pruebas:** 30/30 en `cash-report-excel.test.tsx` (3 nuevas de regresión: identidad compacta sin metadatos, incidencias sin asterisco ni nota al pie, ninguna hoja con `<pane>`; round-trip y cuadre actualizados; aserción del estilo de TOTALES). Relacionadas: vista 37/37, botón 3/3, persistencia 13/13. tsc 0 errores · eslint 0 errores.
+
+**Evidencia real:** `download/reporte-entrega-evidencia-excel.xlsx` regenerado con el builder de producción (fixture 17/10 EnerVida) e inspeccionado con openpyxl (aplicación compatible): identidad 2 filas, sin metadatos/comprobación/nota al pie/congelado, A4 landscape fitToWidth=1, numeración «Página N de M», Print_Titles por hoja, TOTALES con `=SUM` + `#,##0.00` + negrita. Vista de impresión LibreOffice → PDF 4 páginas A4 apaisadas, verificada visualmente (VLM): encabezado compacto, sin secciones extrañas, TOTALES destacado, sin paneles, numeración correcta.

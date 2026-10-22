@@ -10,11 +10,12 @@
  *       calcPr inyectado ANTES de definedNames);
  *     · el ZIP es válido: [Content_Types].xml, _rels/.rels, xl/workbook.xml y
  *       todas las hojas presentes y parseables;
- *     · pane congelado + pageSetup A4 landscape fitToWidth=1 + headerFooter
- *       con numeración (&P de &N) + sheetPr fitToPage en el XML de hoja.
+ *     · pageSetup A4 landscape fitToWidth=1 + headerFooter con numeración
+ *       (&P de &N) + sheetPr fitToPage en el XML de hoja — y NINGUNA hoja
+ *       lleva paneles congelados (<pane>).
  *   E — ESTRUCTURA ESPEJO DEL PDF:
- *     · hoja principal «Reporte Entrega» (identidad + resumen + desglose +
- *       ventas + comprobación + firmas);
+ *     · hoja principal «Reporte Entrega» (identidad compacta + resumen +
+ *       desglose + ventas + firmas);
  *     · «USD en hoja separada» ON → «Reporte Entrega USD» propia; OFF →
  *       secciones USD corridas en la principal (sin duplicar totales);
  *     · opciones con efecto real: includeCashBreakdown OFF omite el bloque;
@@ -22,9 +23,15 @@
  *       OFF omite firmas; includeUsd OFF omite secciones USD.
  *   Fidelidad contable (heredada): importes NUMÉRICOS (t='n', z=#,##0.00),
  *     CUP/USD separados, totales = fórmula del PDF (computeDailySummary,
- *     fixture 17/10 EnerVida), fórmulas reales (=SUM, =A*C, cuadre,
- *     comprobaciones =ROUND/=IF), round-trip con valores cacheados,
- *     anti-inyección = + - @, nombre descriptivo, reproducibilidad.
+ *     fixture 17/10 EnerVida), fórmulas reales (=SUM, =A*C, cuadre),
+ *     round-trip con valores cacheados, anti-inyección = + - @, nombre
+ *     descriptivo, reproducibilidad.
+ *   REFINAMIENTO 2026-10-22 (feedback del propietario sobre el Excel):
+ *     · identidad en 2 filas (tienda+dirección | período+generado), SIN
+ *       «Tipo de reporte» ni «Monedas»;
+ *     · SIN nota al pie de incidencias ni asterisco en productos;
+ *     · SIN sección «COMPROBACIÓN DE CONSISTENCIA»;
+ *     · SIN filas congeladas (ninguna hoja lleva <pane>).
  *
  * El builder recibe summaries + comisiones sugeridas INYECTADOS (misma vía
  * que el PDF en producción) — cero red en las pruebas.
@@ -168,10 +175,10 @@ describe('PARTE D — el .xlsx final es un libro Office Open XML VÁLIDO', () =>
     expect(findRow(rs, 'Tienda:').row[1]).toBe('ENERVIDA-VITALLCONS');
   });
 
-  it('E-3: impresión completa en el XML — A4 landscape, fitToWidth=1/fitToHeight=0, pane congelado, headerFooter con numeración, fitToPage', async () => {
+  it('E-3: impresión completa en el XML — A4 landscape, fitToWidth=1/fitToHeight=0, SIN pane congelado, headerFooter con numeración, fitToPage', async () => {
     const zip = await blobZip(buildContext());
     const s1 = await zip.file('xl/worksheets/sheet1.xml')!.async('string');
-    expect(s1).toContain('<pane ');
+    expect(s1).not.toContain('<pane '); // feedback 2026-10-22: sin filas congeladas
     expect(s1).toContain('pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"');
     expect(s1).toContain('<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>');
     expect(s1).toContain('<headerFooter>');
@@ -181,6 +188,17 @@ describe('PARTE D — el .xlsx final es un libro Office Open XML VÁLIDO', () =>
     const wbXml = await zip.file('xl/workbook.xml')!.async('string');
     expect(wbXml).toContain('_xlnm.Print_Area');
     expect(wbXml).toContain('_xlnm.Print_Titles');
+  });
+
+  it('E-3/refinamiento: NINGUNA hoja del libro lleva paneles congelados (<pane>)', async () => {
+    const zip = await blobZip(buildContext());
+    const sheets = Object.keys(zip.files).filter(n => /^xl\/worksheets\/sheet\d+\.xml$/.test(n));
+    expect(sheets.length).toBeGreaterThan(0);
+    for (const name of sheets) {
+      const xml = await zip.file(name)!.async('string');
+      expect(xml, `${name} no debe llevar <pane>`).not.toContain('<pane ');
+      expect(xml, `${name} no debe llevar state="frozen"`).not.toContain('state="frozen"');
+    }
   });
 
   it('injectCalcPrInWorkbookXml: con definedNames inserta DESPUÉS; sin ellos, tras sheets; idempotente', () => {
@@ -200,24 +218,57 @@ describe('PARTE D — el .xlsx final es un libro Office Open XML VÁLIDO', () =>
 // ═══════════════════════════════════════════════════════════════════════════
 // PARTE E — estructura espejo del PDF + opciones con efecto real
 // ═══════════════════════════════════════════════════════════════════════════
+/** Valor de la celda que sigue a una etiqueta, buscada en TODAS las columnas. */
+function valueAfterLabel(rs: Row[], label: string): string | number | undefined {
+  for (const r of rs) {
+    const i = r.findIndex(v => String(v ?? '') === label);
+    if (i >= 0) return r[i + 1];
+  }
+  expect(false, `etiqueta "${label}" debe existir en alguna columna`).toBe(true);
+  return undefined;
+}
+
 describe('PARTE E — estructura del libro espejo del PDF', () => {
-  it('E2: hoja principal «Reporte Entrega» con identidad completa + las 5 secciones + firmas', async () => {
+  it('E2/refinamiento: identidad COMPACTA — 4 datos en 2 filas, sin «Tipo de reporte» ni «Monedas»', async () => {
+    const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
+    const rs = rows(wb.Sheets['Reporte Entrega']);
+    expect(rs[0][0]).toContain('COSTPRO 4');
+    // Fila 1: tienda | período · Fila 2: dirección | generado
+    expect(rs[1][0]).toBe('Tienda:');
+    expect(rs[1][1]).toBe('ENERVIDA-VITALLCONS');
+    expect(rs[1][3]).toBe('Período:');
+    expect(rs[1][4]).toBe('2026-10-17');
+    expect(rs[2][0]).toBe('Dirección:');
+    expect(rs[2][1]).toBe('Calle 23');
+    expect(rs[2][3]).toBe('Generado:');
+    expect(String(rs[2][4] ?? '')).toBeTruthy();
+    // La identidad termina en la fila 2 → el bloque de datos empieza en la 4
+    expect(rs[3].join('')).toBe('');
+    // SIN filas de metadatos (feedback del propietario)
+    expect(rs.find(r => String(r[0] ?? '') === 'Tipo de reporte:')).toBeUndefined();
+    expect(rs.find(r => String(r[0] ?? '') === 'Monedas:')).toBeUndefined();
+    expect(rs.flat().find(v => String(v ?? '').includes('NUNCA se suman'))).toBeUndefined();
+  });
+
+  it('E2: hoja principal «Reporte Entrega» con identidad compacta + las 4 secciones + firmas', async () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
     expect(wb.SheetNames[0]).toBe('Reporte Entrega');
     const rs = rows(wb.Sheets['Reporte Entrega']);
-    // Identidad (título, tienda, período, generación, tipo de reporte)
+    // Identidad (título + 2 filas compactas con los 4 datos)
     expect(rs[0][0]).toContain('COSTPRO 4');
     expect(findRow(rs, 'Tienda:').row[1]).toBe('ENERVIDA-VITALLCONS');
     expect(findRow(rs, 'Dirección:').row[1]).toBe('Calle 23');
-    expect(findRow(rs, 'Período:').row[1]).toBe('2026-10-17');
-    expect(findRow(rs, 'Tipo de reporte:').row[1]).toBe('Diario (Empresa)');
-    expect(findRow(rs, 'Generado:').row[1]).toBeTruthy();
+    expect(valueAfterLabel(rs, 'Período:')).toBe('2026-10-17');
+    expect(String(valueAfterLabel(rs, 'Generado:') ?? '')).toBeTruthy();
     // Secciones del documento (espejo del PDF Diario)
     expect(findRow(rs, 'RESUMEN DEL DÍA — CUP').idx).toBeGreaterThanOrEqual(0);
     expect(findRow(rs, 'DESGLOSE DE EFECTIVO — CUP').idx).toBeGreaterThanOrEqual(0);
     expect(findRow(rs, 'VENTAS DEL DÍA — CUP').idx).toBeGreaterThanOrEqual(0);
-    expect(findRow(rs, 'COMPROBACIÓN DE CONSISTENCIA — CUP').idx).toBeGreaterThanOrEqual(0);
     expect(findRow(rs, 'FIRMAS').idx).toBeGreaterThanOrEqual(0);
+    // SIN sección de comprobación (feedback del propietario)
+    expect(rs.find(r => String(r[0] ?? '').startsWith('COMPROBACIÓN'))).toBeUndefined();
+    expect(rs.find(r => String(r[0] ?? '').includes('tabla − resumen'))).toBeUndefined();
+    expect(rs.flat().find(v => String(v ?? '') === 'COHERENTE')).toBeUndefined();
     // Firmas con los nombres configurables de la UI (nada hardcodeado)
     expect(findRow(rs, 'Hecho por:').row[2]).toBe('Ana Torres');
     expect(findRow(rs, 'Entregado por:').row[2]).toBe('Israel Leyva');
@@ -230,7 +281,8 @@ describe('PARTE E — estructura del libro espejo del PDF', () => {
     const rs = rows(wb.Sheets['Reporte Entrega USD']);
     expect(rs[0][0]).toContain('REPORTE DE ENTREGA — USD');
     expect(findRow(rs, 'Tienda:').row[1]).toBe('ENERVIDA-VITALLCONS');
-    expect(findRow(rs, 'Período:').row[1]).toBe('2026-10-17');
+    expect(valueAfterLabel(rs, 'Período:')).toBe('2026-10-17');
+    expect(String(valueAfterLabel(rs, 'Generado:') ?? '')).toBeTruthy();
     expect(findRow(rs, 'RESUMEN DEL DÍA — USD').idx).toBeGreaterThanOrEqual(0);
     expect(findRow(rs, 'VENTAS DEL DÍA — USD').idx).toBeGreaterThanOrEqual(0);
     // sin duplicar: la hoja principal NO contiene las secciones USD
@@ -299,6 +351,27 @@ describe('PARTE E — estructura del libro espejo del PDF', () => {
     expect(findRow(rs, 'VENTAS DEL DÍA — CUP').idx).toBeGreaterThanOrEqual(0);
   });
 
+  it('E2/refinamiento: con incidencia de pago documentada → tabla LIMPIA (sin asterisco ni nota al pie)', async () => {
+    // Feedback del propietario 2026-10-22: «* Importe cobrado difiere…» no es
+    // necesario en el Excel. El producto conserva su nombre e importes reales.
+    const summaries = {
+      ...SUMMARIES,
+      itemsSummary: {
+        ...SUMMARIES.itemsSummary,
+        items: [{ ...ITEMS_1710[0], has_payment_incident: true }],
+      },
+    };
+    const { wb } = await buildCashReportExcelWorkbook(buildContext(), summaries as Required<CashReportSummaries>, COMMISSIONS);
+    const rs = rows(wb.Sheets['Reporte Entrega']);
+    // Sin asterisco prefijado al nombre del producto
+    expect(findRow(rs, '141').row[1]).toBe('Cemento TBV 50 Kg');
+    // Sin nota al pie de incidencias (en NINGUNA columna/fila)
+    expect(rs.flat().find(v => String(v ?? '').includes('Importe cobrado difiere'))).toBeUndefined();
+    // La hoja USD tampoco la lleva
+    const usd = rows(wb.Sheets['Reporte Entrega USD']);
+    expect(usd.flat().find(v => String(v ?? '').includes('Importe cobrado difiere'))).toBeUndefined();
+  });
+
   it('nombre de archivo descriptivo y sin caracteres inválidos (misión §6)', async () => {
     const { filename } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
     expect(filename).toBe('COSTPRO_Reporte_Entrega_ENERVIDA_VITALLCONS_2026-10-17.xlsx');
@@ -317,7 +390,8 @@ describe('Fidelidad contable al PDF (misma fuente, mismas fórmulas)', () => {
     expect(findRow(rs, 'Ventas totales (efectivo + transferencia)').row[3]).toBe(s.ventasTotales);
     expect(findRow(rs, 'Ventas en efectivo').row[3]).toBe(s.ventasCash);
     expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(s.efectivoEsperado);
-    const c = cell(ws, 'D11'); // Ventas en efectivo (fila del fixture)
+    const cashIdx = findRow(rs, 'Ventas en efectivo').idx;
+    const c = cell(ws, `D${cashIdx + 1}`); // importe NUMÉRICO en la fila del fixture
     expect(c.t).toBe('n');
     expect(c.z).toBe('#,##0.00');
   });
@@ -391,6 +465,13 @@ describe('Fórmulas reales del libro (misma hoja: tabla ↔ resumen ↔ desglose
       const c = cell(ws, `${col}${totIdx + 1}`);
       expect(c.f, `TOTALES ${col} debe llevar fórmula`).toMatch(/^SUM\(/);
     }
+    // Refinamiento (gap preexistente): la fila TOTALES lleva formato de dinero
+    // real y negrita — antes salía con formato General y sin estilo.
+    const dTot = cell(ws, `D${totIdx + 1}`) as unknown as { z?: string; s?: { font?: { bold?: boolean } } };
+    expect(dTot.z).toBe('#,##0.00');
+    expect(dTot.s?.font?.bold).toBe(true);
+    const aTot = cell(ws, `A${totIdx + 1}`) as unknown as { s?: { font?: { bold?: boolean } } };
+    expect(aTot.s?.font?.bold).toBe(true); // etiqueta «TOTALES» en negrita
     const denomIdx = findRow(rs, 1000).idx;
     expect(cell(ws, `D${denomIdx + 1}`).f).toBe(`A${denomIdx + 1}*C${denomIdx + 1}`);
     const contadoIdx = findRow(rs, 'Efectivo contado / entregado').idx;
@@ -407,7 +488,7 @@ describe('Fórmulas reales del libro (misma hoja: tabla ↔ resumen ↔ desglose
     expect(cell(ws, `D${espIdx + 1}`).f).toMatch(/^D\d+$/); // componentes del fixture
   });
 
-  it('cuadre = contado − esperado (misma hoja) y comprobaciones =ROUND + =IF COHERENTE/REVISAR', async () => {
+  it('cuadre = contado − esperado (misma hoja, fórmula viva)', async () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
     const ws = wb.Sheets['Reporte Entrega'];
     const rs = rows(ws);
@@ -415,26 +496,17 @@ describe('Fórmulas reales del libro (misma hoja: tabla ↔ resumen ↔ desglose
     const espIdx = findRow(rs, 'Efectivo esperado a entregar').idx;
     const cuadreRow = rs.findIndex(r => String(r[0] ?? '').startsWith('Cuadre ('));
     expect(cell(ws, `D${cuadreRow + 1}`).f).toBe(`D${contadoIdx + 1}-D${espIdx + 1}`);
-    const checkEfIdx = findRow(rs, 'Efectivo: tabla − resumen').idx;
-    expect(cell(ws, `D${checkEfIdx + 1}`).f).toMatch(/^ROUND\(D\d+-\(D\d+\),2\)$/);
-    const estadoIdx = findRow(rs, 'Estado de la comprobación (efectivo)').idx;
-    const estadoCell = cell(ws, `D${estadoIdx + 1}`);
-    expect(estadoCell.f).toContain('IF(ABS(');
-    expect(estadoCell.v).toBe('COHERENTE'); // valor cacheado del sistema
   });
 
-  it('round-trip XLSX.write→XLSX.read: las fórmulas sobreviven y el resultado IF es texto', async () => {
+  it('round-trip XLSX.write→XLSX.read: las fórmulas =SUM sobreviven con su valor cacheado', async () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
     const rt = XLSX.read(XLSX.write(wb, { bookType: 'xlsx', type: 'array' }), { type: 'array' });
     const ws = rt.Sheets['Reporte Entrega'];
     const rs = rows(ws);
     const totIdx = findRow(rs, 'TOTALES').idx;
-    expect(cell(ws, `D${totIdx + 1}`).f).toMatch(/^SUM\(/);
-    const estadoIdx = findRow(rs, 'Estado de la comprobación (efectivo)').idx;
-    const c = cell(ws, `D${estadoIdx + 1}`);
-    // El resultado textual del =IF sobrevive al round-trip ('s'/'str' según el lector).
-    expect(['s', 'str']).toContain(String(c.t));
-    expect(c.v).toBe('COHERENTE');
+    const c = cell(ws, `D${totIdx + 1}`);
+    expect(c.f).toMatch(/^SUM\(/);
+    expect(c.v).toBe(169000); // valor cacheado del sistema sobrevive al round-trip
   });
 
   it('reporte sin datos: fila informativa sin números y las fórmulas no la cuentan', async () => {
