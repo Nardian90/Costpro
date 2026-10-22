@@ -9,8 +9,11 @@
 -- ESTRUCTURA EN SECCIONES (procesadas por el apilador, no aplicadas a ciegas):
 --   SECCION A — BOOTSTRAP MÍNIMO: extensiones + roles shim. La aplica
 --     --bootstrap (idempotente) ANTES de cualquier otra cosa.
---   SECCION C — CENTINELA: public.e2e_is_isolated_db(). La aplica el
---     apilador al FINAL de --apply-replay (tras baseline + pre-tamo + tramo).
+--   SECCION C — CENTINELA + INFRA POST-BASELINE: public.e2e_is_isolated_db()
+--     y el trigger de alta de usuarios tr_on_auth_user_created (vive sobre
+--     auth.users, schema NO cubierto por el snapshot public-only del
+--     baseline). La aplica el apilador al FINAL de --apply-replay
+--     (tras baseline + pre-tamo + tramo).
 --
 -- DESVIACIÓN DOCUMENTADA del mandato §3.3 (orden bootstrap→centinela→
 -- migraciones): los guards de inventario del propio stream de migraciones
@@ -75,3 +78,28 @@ comment on function public.e2e_is_isolated_db() is
   'CP-INFRA-011 centinela: true SOLO en la base E2E aislada (CostproE2E). Infraestructura exclusiva de E2E — nunca en producción. El guard e2e/fixtures/assert-isolated-db.ts exige true antes de cualquier operación E2E.';
 
 grant execute on function public.e2e_is_isolated_db() to anon, authenticated, service_role;
+
+-- ----------------------------------------------------------------------------
+-- C.2 — TRIGGER DE ALTA DE USUARIOS (fidelidad con producción)
+-- ----------------------------------------------------------------------------
+-- Hallazgo CICLO 2 (corrida 39777819072 del workflow aislado): el baseline
+-- es un snapshot del esquema PUBLIC únicamente; el trigger de alta
+-- tr_on_auth_user_created vive sobre auth.users (schema auth, NO cubierto
+-- por el snapshot) y no está versionado en ningún artefacto del repo
+-- (creado out-of-band, como el esquema core — inventario FASE 0). Sin él,
+-- los usuarios creados vía Auth Admin API quedan SIN fila en
+-- public.profiles y el provisioning de e2e/fixtures/run-env.ts muere en
+-- el FK tenants_owner_id_fkey (23503) al crear el tenant del run.
+--
+-- La función public.on_auth_user_created() YA proviene del baseline
+-- (schema public ✓, SECURITY DEFINER verificado en la base aislada).
+-- Solo el trigger (auth.users) hay que materializar.
+-- Definición replicada de producción (lectura read-only autorizada,
+-- 2026-10-22):
+--   CREATE TRIGGER tr_on_auth_user_created AFTER INSERT ON auth.users
+--     FOR EACH ROW EXECUTE FUNCTION on_auth_user_created()
+-- Idempotente: drop + create.
+drop trigger if exists tr_on_auth_user_created on auth.users;
+create trigger tr_on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.on_auth_user_created();
