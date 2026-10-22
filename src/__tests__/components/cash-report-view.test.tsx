@@ -160,16 +160,26 @@ const bodyText = () => document.body.textContent ?? '';
 /** Etiqueta de conteo según la convención de cada moneda (espeja formatDenomValue del core). */
 const countLabel = (d: number, cur = 'CUP') => `Cantidad de billetes de ${cur === 'CUP' ? d.toLocaleString('es-ES') : d.toFixed(2)} ${cur}`;
 
-/** MISIÓN 2026-10-22 (Parte C): la configuración vive en el panel lateral
- *  desplegable — se abre con «Configuración del reporte» antes de tocar
+/** MISIÓN 2026-10-22 (rediseño Parte B): la configuración vive en el panel
+ *  lateral INTEGRADO (aside siempre montado; la visibilidad gobierna el
+ *  acceso) — se abre con «Configuración del reporte» antes de tocar
  *  radios/toggles/nombres de firmas. */
+const panel = () => screen.getByTestId('cash-report-config-panel');
 async function openConfigPanel(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: /Configuración del reporte/i }));
-  await waitFor(() => expect(screen.getByTestId('cash-report-config-panel')).toBeTruthy());
+  await waitFor(() => {
+    expect(panel().getAttribute('data-open')).toBe('true');
+    expect(panel().getAttribute('aria-hidden')).toBe('false'); // abierto = accesible
+  });
 }
 async function closeConfigPanel(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByTestId('cash-report-config-close'));
-  await waitFor(() => expect(screen.queryByTestId('cash-report-config-panel')).toBeNull());
+  // Cerrado: permanece montado (transición de anchura) pero OCULTO al árbol
+  // de accesibilidad y sin interacción (aria-hidden + invisible por clases).
+  await waitFor(() => {
+    expect(panel().getAttribute('data-open')).toBe('false');
+    expect(panel().getAttribute('aria-hidden')).toBe('true');
+  });
 }
 
 beforeEach(() => {
@@ -741,18 +751,32 @@ describe('MISIÓN 2026-10-22 · Parte C — panel lateral desplegable de configu
     await openConfigPanel(user);
     const trigger = screen.getByRole('button', { name: /Configuración del reporte/i });
     await user.keyboard('{Escape}');
-    await waitFor(() => expect(screen.queryByTestId('cash-report-config-panel')).toBeNull());
+    await waitFor(() => {
+      expect(panel().getAttribute('data-open')).toBe('false');
+      expect(panel().getAttribute('aria-hidden')).toBe('true');
+    });
     // El foco vuelve al disparador (o a un ancestro suyo, según el jsdom).
     expect(document.activeElement === trigger || (document.activeElement?.contains(trigger) ?? false)).toBe(true);
   });
 
-  it('el backdrop cierra el panel y este es un dialog accesible con cierre explícito', async () => {
+  it('el backdrop (solo móvil) cierra el panel; en escritorio es un dialog no-modal accesible', async () => {
     const user = userEvent.setup();
     await renderView();
     await openConfigPanel(user);
-    expect(screen.getByRole('dialog', { name: /Configuración del reporte/i })).toBeTruthy();
+    // jsdom corre a 1024px → viewport de escritorio: aria-modal ausente (panel
+    // INTEGRADO no-modal — el reporte sigue siendo interactivo, a diferencia
+    // del defecto original donde el overlay bloqueaba toda la vista).
+    const dlg = screen.getByRole('dialog', { name: /Configuración del reporte/i });
+    expect(dlg.getAttribute('aria-modal')).toBeNull();
+    // El backdrop existe solo <lg (clase lg:hidden) y cierra al pulsarlo.
+    expect(screen.getByTestId('cash-report-config-backdrop').className).toContain('lg:hidden');
     await user.click(screen.getByTestId('cash-report-config-backdrop'));
-    await waitFor(() => expect(screen.queryByTestId('cash-report-config-panel')).toBeNull());
+    await waitFor(() => {
+      expect(panel().getAttribute('data-open')).toBe('false');
+      expect(panel().getAttribute('aria-hidden')).toBe('true');
+    });
+    // Cierre explícito accesible siempre presente.
+    expect(screen.getByTestId('cash-report-config-close')).toBeTruthy();
   });
 
   it('F-12: la vista previa no se recalcula por abrir/cerrar el panel (mismo builder, cache)', async () => {
@@ -768,5 +792,77 @@ describe('MISIÓN 2026-10-22 · Parte C — panel lateral desplegable de configu
     await closeConfigPanel(user);
     // sin cambios de configuración → el builder NO se vuelve a llamar
     expect(buildPdfMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('MISIÓN 2026-10-22 · Parte B (rediseño) — panel INTEGRADO, reporte visible y utilizable', () => {
+  it('RB-1: el panel es un aside integrado (columna del layout), SIN overlay que cubra la vista', async () => {
+    await renderView();
+    const root = screen.getByTestId('cash-report-view');
+    // La raíz es una fila flex en escritorio: columna del reporte + panel —
+    // redistribución controlada del espacio (patrón del menú principal).
+    expect(root.className).toContain('lg:flex-row');
+    // El panel es hijo directo de la raíz (aside del layout, no un fixed inset-0).
+    const aside = panel();
+    expect(aside.tagName).toBe('ASIDE');
+    expect(aside.parentElement).toBe(root);
+    // En escritorio es static (columna del layout); fixed SOLO en móvil (<lg).
+    expect(aside.className).toContain('lg:static');
+    expect(aside.className).toContain('fixed');
+    // REGRESIÓN del defecto original: sin velo oscuro ni blur sobre el reporte
+    // (el overlay bg-background/70 backdrop-blur lo ocultaba por completo).
+    expect(aside.className).not.toContain('bg-background/70');
+    expect(aside.className).not.toContain('backdrop-blur');
+    expect(document.querySelector('.backdrop-blur-\\[2px\\]')).toBeNull();
+  });
+
+  it('RB-2: con el panel ABIERTO el reporte sigue UTILIZABLE (sin bloqueo de interacción)', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await openConfigPanel(user);
+    // El foco inicial aterrizó en el panel (contexto de teclado al abrir).
+    expect(document.activeElement === panel() || panel().contains(document.activeElement)).toBe(true);
+    // El contenido del reporte permanece montado e interactivo: los filtros
+    // aceptan cambios y las pestañas responden mientras el panel está abierto.
+    const desde = document.getElementById('cr-sd') as HTMLInputElement;
+    await act(async () => { fireEvent.change(desde, { target: { value: '2026-09-10' } }); });
+    expect(desde.value).toBe('2026-09-10');
+    await user.click(screen.getByRole('tab', { name: /Vista previa/i }));
+    expect(screen.getByRole('tab', { name: /Vista previa/i }).getAttribute('aria-selected')).toBe('true');
+    // El disparador sigue visible/accesible (aria-expanded refleja el estado).
+    expect(screen.getByRole('button', { name: /Configuración del reporte/i }).getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('RB-3: abrir/cerrar repetido no acumula estado ni reinicia el reporte', async () => {
+    const user = userEvent.setup();
+    await renderView();
+    await user.click(screen.getByRole('button', { name: /Generar reporte/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy());
+    const desde = document.getElementById('cr-sd') as HTMLInputElement;
+    await act(async () => { fireEvent.change(desde, { target: { value: '2026-09-01' } }); });
+    for (let i = 0; i < 3; i += 1) {
+      await openConfigPanel(user);
+      await closeConfigPanel(user);
+    }
+    // El periodo y los resultados SOBREVIVEN a los ciclos (mismo árbol React).
+    expect((document.getElementById('cr-sd') as HTMLInputElement).value).toBe('2026-09-01');
+    expect(screen.getByRole('button', { name: /Actualizar reporte/i })).toBeTruthy();
+    // El panel cerrado queda fuera del árbol de accesibilidad (tab order limpio).
+    expect(panel().getAttribute('aria-hidden')).toBe('true');
+    expect(screen.queryByRole('radio', { name: /Estándar/ })).toBeNull();
+  });
+
+  it('RB-4: transición coherente con el menú principal (300ms ease-in-out) y movimiento reducido', async () => {
+    await renderView();
+    const aside = panel();
+    // Misma curva de animación que el Sidebar del menú principal izquierdo.
+    expect(aside.className).toContain('duration-300');
+    expect(aside.className).toContain('ease-in-out');
+    // Respeto a prefers-reduced-motion (B5).
+    expect(aside.className).toContain('motion-reduce:transition-none');
+    // El contenido interno mantiene ancho fijo en escritorio (sin reflujo de
+    // controles durante la transición de anchura).
+    const inner = aside.firstElementChild as HTMLElement;
+    expect(inner.className).toContain('lg:w-[400px]');
   });
 });

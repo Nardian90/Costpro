@@ -7,6 +7,19 @@
  * - Mutaciones: rutas API /api/cash-flow y /api/cash-flow/reverse con
  *   Bearer de la sesión (los RPC de mutación son service_role-only y el
  *   actor viaja SIEMPRE como p_user_id de la sesión verificada).
+ *
+ * FIX 2026-10-22 («No se pudieron cargar los movimientos» — PGRST200): el
+ * embed autoreferencial usaba el hint por NOMBRE DE CONSTRAINT
+ * (cash_flow_documents_related_document_id_fkey). La FK existe y está
+ * validada en PostgreSQL con ese nombre exacto, pero la caché de esquema de
+ * PostgREST quedó desincronizada (el constraint fue recreado después de la
+ * última recarga; las migraciones aplicadas vía Management API no envían
+ * `NOTIFY pgrst, 'reload schema'`) → el hint por constraint no resolvía.
+ * El hint por NOMBRE DE COLUMNA (related_document_id) resuelve bajo la
+ * caché actual Y bajo una caché recién cargada, y es inmune a recreaciones/
+ * renombres de constraints. Verificado contra la API viva (read-only) antes
+ * y después del fix. Los hints hacia profiles no están afectados (auditados
+ * todos los hints del código: solo este self-embed estaba roto).
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -41,7 +54,7 @@ const CF_SELECT = `
   annulled_at, annulled_by, annulment_reason,
   responsible:profiles!cash_flow_documents_responsible_user_id_fkey(full_name),
   annulled_by_profile:profiles!cash_flow_documents_annulled_by_fkey(full_name),
-  related_document:cash_flow_documents!cash_flow_documents_related_document_id_fkey(document_number, concept, doc_type, amount, currency)
+  related_document:cash_flow_documents!related_document_id(document_number, concept, doc_type, amount, currency)
 `;
 
 export interface CashFlowListResult {
