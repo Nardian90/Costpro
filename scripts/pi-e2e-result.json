@@ -1,0 +1,221 @@
+{
+  "date": "2026-10-22T21:25:58.007Z",
+  "results": [
+    {
+      "id": "A1",
+      "name": "crear inventario",
+      "ok": true,
+      "detail": "status=201"
+    },
+    {
+      "id": "A2",
+      "name": "preparar (hoja de líneas generada)",
+      "ok": true,
+      "detail": "lines=1"
+    },
+    {
+      "id": "A3",
+      "name": "iniciar conteo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "A4",
+      "name": "registrar cantidad IGUAL a la teórica",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "A5",
+      "name": "NO se proponen ajustes sin diferencias",
+      "ok": true,
+      "detail": "short=0, surp=0"
+    },
+    {
+      "id": "A6",
+      "name": "cerrar inventario (flujo autorizado)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "B1",
+      "name": "crear inventario con faltante",
+      "ok": true,
+      "detail": "stock antes=11"
+    },
+    {
+      "id": "B2",
+      "name": "cantidad física inferior (−2) y diferencia calculada",
+      "ok": true,
+      "detail": "teórica=11, contada=9, dif=−2"
+    },
+    {
+      "id": "B3",
+      "name": "conciliación muestra faltante",
+      "ok": true,
+      "detail": "{\"drift\":0,\"match\":0,\"counted\":1,\"pending\":0,\"surplus\":0,\"shortfall\":1,\"total_items\":1,\"post_cutoff_affected\":0}"
+    },
+    {
+      "id": "B4",
+      "name": "revisar motivo del faltante",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "B5",
+      "name": "ajuste por faltante generado (borrador)",
+      "ok": true,
+      "detail": "doc=3a884577"
+    },
+    {
+      "id": "B6",
+      "name": "identificado como «Ajuste por inventario físico» (persistido)",
+      "ok": true,
+      "detail": "reason=STOCKTAKE_SHRINKAGE, source_pi=4c646eb6"
+    },
+    {
+      "id": "B7",
+      "name": "aprobar y aplicar (confirm_inventory_adjustment)",
+      "ok": true,
+      "detail": "{\"id\":\"3a884577-15c5-42eb-929a-caebbc535219\",\"status\":\"success\",\"items_applied\":1}"
+    },
+    {
+      "id": "B8",
+      "name": "movimiento aplicado al inventario",
+      "ok": true,
+      "detail": "11 → 9 (esperado 9)"
+    },
+    {
+      "id": "B9",
+      "name": "kardex y logs oficiales registrados",
+      "ok": true,
+      "detail": "mov=-2.0000, ref=Ajuste por inventario físico IF-2026-00017"
+    },
+    {
+      "id": "C1",
+      "name": "ajuste por sobrante generado (ENTRADA, no venta ni recepción)",
+      "ok": true,
+      "detail": "doc=98fdcacc"
+    },
+    {
+      "id": "C2",
+      "name": "clase documental correcta (STOCKTAKE_SURPLUS)",
+      "ok": true,
+      "detail": "reason=STOCKTAKE_SURPLUS"
+    },
+    {
+      "id": "C3",
+      "name": "entrada por sobrante aplicada (sin simular compra)",
+      "ok": true,
+      "detail": "6 → 9"
+    },
+    {
+      "id": "D1",
+      "name": "inventario ciego creado y en conteo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "D2",
+      "name": "líneas SIN teóricas para el contador (API)",
+      "ok": "ADMIN ve teóricas (correcto para este usuario)",
+      "detail": "showTheoretical=true, claves=CONTIENE teóricas (rol admin)"
+    },
+    {
+      "id": "D3",
+      "name": "comparación realizada por personal autorizado",
+      "ok": true,
+      "detail": "shortfall=1"
+    },
+    {
+      "id": "D4",
+      "name": "hoja de conteo CIEGA registrada (versión auditable)",
+      "ok": true,
+      "detail": "seq=1"
+    },
+    {
+      "id": "E1",
+      "name": "cantidad negativa rechazada (validación Zod/RPC)",
+      "ok": true,
+      "detail": "status=400"
+    },
+    {
+      "id": "E2",
+      "name": "ID de línea ajeno identificado para revisión",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "E3",
+      "name": "cero EXPLÍCITO importado (≠ vacío)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "E4",
+      "name": "importación fallida NO modifica parcialmente",
+      "ok": true,
+      "detail": "eventos import=1"
+    },
+    {
+      "id": "F1",
+      "name": "teórica al corte histórico reconstruida desde el ledger",
+      "ok": true,
+      "detail": "teórica=212, saldo actual=202, esperada=212, source=ledger"
+    },
+    {
+      "id": "F2",
+      "name": "sin diferencias falsas por movimientos post-corte",
+      "ok": true,
+      "detail": "match=1, post_mov=2, net=-3, dif=0"
+    },
+    {
+      "id": "G1",
+      "name": "rol no privilegiado (warehouse) NO puede crear inventarios",
+      "ok": true,
+      "detail": "status=403"
+    },
+    {
+      "id": "G1b",
+      "name": "sin sesión → 401",
+      "ok": true,
+      "detail": "status=401"
+    },
+    {
+      "id": "G2",
+      "name": "doble generación de ajustes RECHAZADA",
+      "ok": true,
+      "detail": "status=400"
+    },
+    {
+      "id": "G3",
+      "name": "transición inválida desde cerrado RECHAZADA",
+      "ok": true,
+      "detail": "status=400"
+    },
+    {
+      "id": "G4",
+      "name": "PI con ajustes aplicados se cierra correctamente",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "H1",
+      "name": "conteo con cantidad decimal aceptado",
+      "ok": true,
+      "detail": "contada=2"
+    },
+    {
+      "id": "H2",
+      "name": "ajuste con decimal generado sin falsas diferencias por redondeo",
+      "ok": true,
+      "detail": "counted=2"
+    },
+    {
+      "id": "H3",
+      "name": "stock resultante con precisión decimal",
+      "ok": true,
+      "detail": "2.5 → 2 (esperado 2)"
+    }
+  ]
+}

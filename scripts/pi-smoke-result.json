@@ -1,0 +1,120 @@
+{
+  "piId": "f39bbe94-e276-4283-9f5b-729316b08771",
+  "results": [
+    {
+      "step": "1. create_physical_inventory",
+      "ok": true,
+      "detail": "pi_id=f39bbe94-e276-4283-9f5b-729316b08771"
+    },
+    {
+      "step": "2. prepare_physical_inventory",
+      "ok": true,
+      "detail": "{\"lines\":3,\"pi_id\":\"f39bbe94-e276-4283-9f5b-729316b08771\",\"status\":\"success\",\"theoretical_method\":\"inventory\",\"ledger_drift_products\":0}"
+    },
+    {
+      "step": "2b. snapshot teórico congelado",
+      "ok": true,
+      "detail": "líneas=3, teórico(CAT-0002)=966 vs stock=966.0000"
+    },
+    {
+      "step": "2c. numeración IF-YYYY-#####",
+      "ok": true,
+      "detail": "pi_number=IF-2026-00001"
+    },
+    {
+      "step": "3. start_physical_inventory_count",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "4. record_physical_inventory_counts (igual/-3/+2)",
+      "ok": true,
+      "detail": "applied=3"
+    },
+    {
+      "step": "4b. indicadores derivados",
+      "ok": true,
+      "detail": "{\"counted_items\":3,\"pending_items\":0,\"shortfall_items\":1,\"surplus_items\":1}"
+    },
+    {
+      "step": "4c. vacío ≠ cero (clear restaura a pendiente)",
+      "ok": true,
+      "detail": "counted_qty tras clear=null, status=pending"
+    },
+    {
+      "step": "5. complete→reconcile→authorize",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "6. generate_adjustments (borradores)",
+      "ok": true,
+      "detail": "shortfall=1, surplus=1"
+    },
+    {
+      "step": "6b. generación NO modifica existencias",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "6c. ajustes vinculados con source_pi",
+      "ok": true,
+      "detail": "shortfall_id=4e2a295e, surplus_id=85dbb930"
+    },
+    {
+      "step": "6d. items faltante (expected=actual, counted=físico)",
+      "ok": true,
+      "detail": "{\"product_id\":\"e47421ea-f9aa-452b-b20b-4601ec12410f\",\"expected_quantity\":18,\"counted_quantity\":15,\"difference\":-3}"
+    },
+    {
+      "step": "7. confirm_inventory_adjustment (faltante)",
+      "ok": true,
+      "detail": "{\"id\":\"4e2a295e-0d0a-4b29-9500-762deb91e81c\",\"status\":\"success\",\"items_applied\":1}"
+    },
+    {
+      "step": "7b. stock tras confirmar faltante",
+      "ok": true,
+      "detail": "antes=18, después=15, esperado=15"
+    },
+    {
+      "step": "7c. kardex movimiento adjustment",
+      "ok": true,
+      "detail": "type=adjustment, qty=-3.0000, ref=Ajuste por inventario físico IF-2026-00001"
+    },
+    {
+      "step": "7d. kardex_entries generado por trigger",
+      "ok": true,
+      "detail": "{\"movement_type\":\"adjustment\",\"quantity\":\"3.00\",\"reference_description\":\"Ajuste por inventario físico IF-2026-00001\"}"
+    },
+    {
+      "step": "8. doble aplicación RECHAZADA",
+      "ok": true,
+      "detail": "status=400"
+    },
+    {
+      "step": "9. cierre bloqueado con ajustes pendientes",
+      "ok": true,
+      "detail": "ERR_ADJUSTMENTS_PENDING: hay 1 ajuste(s) pendiente(s) de confirmar; el inventari"
+    },
+    {
+      "step": "10. void ajuste sobrante (sin tocar stock)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "step": "10b. close_physical_inventory",
+      "ok": true,
+      "detail": "{\"pi_id\":\"f39bbe94-e276-4283-9f5b-729316b08771\",\"status\":\"success\",\"new_status\":\"closed\"}"
+    },
+    {
+      "step": "11. conteo tras cierre RECHAZADO",
+      "ok": true,
+      "detail": "status=400"
+    },
+    {
+      "step": "12. count_log con historial",
+      "ok": true,
+      "detail": "eventos=5"
+    }
+  ]
+}

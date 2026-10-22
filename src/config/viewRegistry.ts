@@ -181,6 +181,12 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["create_adjustment"]
   },
   {
+    id: "physical_inventory",
+    route: "/?view=physical_inventory",
+    description: "Inventario físico por tienda y fecha de corte: hojas de conteo PDF (con existencias o modo ciego), conteo manual e importación Excel validada, conciliación de diferencias (faltantes/sobrantes) y generación de ajustes documentales autorizados.",
+    actions: ["create_physical_inventory", "generate_count_sheet", "import_count_excel", "generate_adjustments"]
+  },
+  {
     id: "vales_salida",
     route: "/?view=vales_salida",
     description: "Centro documental de Vales de Salida: listado (tarjetas/tabla), detalle documental con trazabilidad y movimientos, devolución (reversión) y flujo dedicado de creación propio del módulo (misma RPC que Vender).",
