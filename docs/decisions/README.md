@@ -1,10 +1,13 @@
 # Registro de Decisiones — COSTPRO 4 MULTITIENDA
 
-> **Estado de este directorio:** PROPUESTA DE CONTENIDO preparada por el agente en la
-> Misión C (2026-10-21). El propietario no ha ratificado ninguna decisión nueva en esta
-> misión. Este directorio consolida (i) decisiones **ya ratificadas** por el propietario
-> con anterioridad, registradas aquí con su fuente primaria verificable, y (ii)
-> **propuestas pendientes** que requieren aprobación expresa del propietario.
+> **Estado de este directorio:** consolidado por el agente en la Misión C
+> (2026-10-21) y actualizado en el ciclo 2 de la Misión Continua (2026-10-22)
+> tras la **Resolución del propietario — Misión C** (2026-10-21), que respondió a
+> las 10 propuestas pendientes. Este directorio contiene (i) decisiones **ya
+> ratificadas** por el propietario, registradas con su fuente primaria
+> verificable, y (ii) **propuestas pendientes** que requieren aprobación
+> expresa del propietario (estado actualizado tras la resolución: ver
+> `2026-10-21-resolucion-propietario-mision-c.md`).
 
 ## Convenciones de estado
 
@@ -34,11 +37,15 @@
 | `2026-10-20-decision-A-stock-negativo.md` | Política de stock negativo | `RATIFICADA` (2026-10-20) | CP-INV-005 (desbloquea) |
 | `2026-10-20-decision-B1-alcance-admin.md` | Alcance del rol admin (B.1) | `RATIFICADA` (2026-10-20) | CP-SEC-010/CP-SEC-025 (documenta estado operativo) |
 | `2026-10-20-decision-D-persistencia-incidentes.md` | Persistencia de incidentes legales (BUG-024) | `RATIFICADA` (2026-10-20) | CP-SEC-012 (cierre del subcaso BUG-024) |
-| `2026-10-21-propuestas-pendientes.md` | 7 decisiones pendientes + 1 ratificación a posteriori | `PROPUESTA` / `PENDIENTE DE DATOS` | CP-DATA-001 · CP-SEC-011 · CP-INV-002/003/004 · CP-IPV-001 · CP-DATA-005/006 · CP-CAT-006 |
+| `2026-10-21-decision-propietario-vales.md` | VALES: confirmación de vales del propietario + regla permanente ENERVIDA | `RATIFICADA` (2026-10-21) | CP-DATA-001 (sub-ítem vales), regla ENERVIDA |
+| `2026-10-21-propuestas-pendientes.md` | 7 decisiones pendientes + 1 ratificación a posteriori | `PROPUESTA` → **RESUELTAS por la resolución del propietario 2026-10-21** (ver archivo siguiente) | CP-DATA-001 · CP-SEC-011 · CP-INV-002/003/004 · CP-IPV-001 · CP-DATA-005/006 · CP-CAT-006 |
+| `2026-10-21-resolucion-propietario-mision-c.md` | Resolución del propietario — Misión C: 7 decisiones de política + límites + preparación D/E/F/G | `RATIFICADA` (2026-10-21; registrada 2026-10-22) | CP-DATA-001 · CP-SEC-010/011 · CP-INV-002/003/004 · CP-IPV-001/002 · CP-DATA-005/006 · CP-CAT-006 |
 
 ## Fuente de este registro
 
-Elaborado en la **Misión C** (2026-10-21) a partir de: inventario maestro vigente,
+Elaborado en la **Misión C** (2026-10-21), actualizado en el **ciclo 2 de la Misión
+Continua** (2026-10-22) con la resolución del propietario. Fuentes: inventario maestro
+vigente,
 `docs/audits/DECISIONES_PENDIENTES_MISION_C_2026-10-18.md` (actualizado 2026-10-19),
 `docs/audits/DECISION_A_STOCK_NEGATIVO_2026-10-20.md`,
 `docs/audits/DECISION_B1_ADMIN_GLOBAL_2026-10-20.md`,

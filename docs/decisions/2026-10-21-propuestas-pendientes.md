@@ -1,6 +1,17 @@
 # PROPUESTAS PENDIENTES DE DECISIÓN DEL PROPIETARIO — Misión C (2026-10-21)
 
-> **Estado:** `PROPUESTA — PENDIENTE DEL PROPIETARIO` / `PENDIENTE DE DATOS`.
+> **⚠️ ACTUALIZACIÓN (2026-10-22):** este paquete fue **RESUELTO por el
+> propietario** el 2026-10-21. Su documento «Resolución del propietario —
+> Misión C» está registrado en
+> `2026-10-21-resolucion-propietario-mision-c.md` con las 10 respuestas (PD-1…PD-10),
+> los límites de ejecución y los próximos pasos. Este archivo se conserva
+> íntegro como fuente histórica de las opciones presentadas; donde dice
+> «Recomendación técnica», la recomendación del agente correspondiente ya fue
+> aceptada, modificada o diferida por el propietario según dicha resolución.
+> No ejecutar nada de lo aquí descrito sin verificar primero el estado vigente
+> en el registro de decisiones y en `scripts/extracted/tareas.csv`.
+
+> **Estado al momento de su emisión:** `PROPUESTA — PENDIENTE DEL PROPIETARIO` / `PENDIENTE DE DATOS`.
 > **Ninguna de estas decisiones está ratificada.** Ninguna autoriza ejecución técnica
 > alguna. Las opciones se presentan con sus consecuencias para que el propietario
 > elija; donde se indica «Recomendación técnica», es la opinión documentada del agente
