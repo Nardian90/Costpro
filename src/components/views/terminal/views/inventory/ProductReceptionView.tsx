@@ -6,13 +6,14 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import {
   Package, X, Plus, Trash2, FileSpreadsheet, Upload, Download,
   AlertCircle, CheckCircle2, AlertTriangle, ChevronLeft, Loader2,
-  Camera, Zap, ClipboardList, Clock,
+  Camera, Zap, ClipboardList, Clock, SearchX,
 } from 'lucide-react';
 import { SupplierSelector } from './SupplierSelector';
 import { ReceptionSuccessModal } from './ReceptionSuccessModal';
 import { ReceptionExpressMode } from './ReceptionExpressMode';
 import { ReceptionOfflineIndicator } from './ReceptionOfflineIndicator';
 import { InvoiceOCRModal } from './InvoiceOCRModal';
+import { ReceptionItemsTable } from './ReceptionItemsTable';
 import {
   ReceiveAgainstPOModal,
   type ReceiveAgainstPOPayload,
@@ -212,108 +213,32 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-border">
-            {s.items.map((item, index) => {
-              const itemKey = item.sku ? `${item.sku}-${index}` : `new-${index}`;
-              return (
-                <div key={itemKey} className="flex items-center justify-between py-3 gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">{index + 1}</span>
-                      <p className="font-bold text-sm truncate">{item.name}</p>
-                      {item.is_new && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-info/10 text-info border border-info/20">Nuevo</span>
-                      )}
-                      {item.update_price && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-warning/10 text-warning border border-warning/20">Precio: {formatCurrency(item.sale_price || 0)}</span>
-                      )}
-                    </div>
-                    {s.editingIndex === index ? (
-                      <div className="flex flex-wrap items-center gap-2 ml-6 mt-1">
-                        {/* FIX-MULTI-MONEDA: editor completo con moneda, tasa, costo, venta */}
-                        <div className="flex items-center gap-1">
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Cant:</label>
-                          <input type="number" inputMode="decimal" min="0.0001" step="0.01" value={s.editQuantity} onChange={e => s.setEditQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="w-16 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" autoFocus />
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Moneda:</label>
-                          <select value={s.editMoneda} onChange={e => { s.setEditMoneda(e.target.value); if (e.target.value === 'CUP') s.setEditTasa(1.0); }} className="w-16 px-1 py-1 text-xs font-bold rounded-lg border border-border bg-background">
-                            <option value="CUP">CUP</option>
-                            <option value="USD">USD</option>
-                            <option value="EUR">EUR</option>
-                            <option value="MLC">MLC</option>
-                          </select>
-                        </div>
-                        {s.editMoneda !== 'CUP' && (
-                          <div className="flex items-center gap-1">
-                            <label className="text-[10px] font-bold uppercase text-muted-foreground">Tasa:</label>
-                            <input type="number" inputMode="decimal" min="0" step="0.01" value={s.editTasa || ''} onChange={e => s.setEditTasa(parseFloat(e.target.value) || 1.0)} className="w-20 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" />
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1">
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Costo ({s.editMoneda}):</label>
-                          <input type="number" inputMode="decimal" min="0" step="0.01" value={s.editCost || ''} onChange={e => s.setEditCost(parseFloat(e.target.value) || 0)} className="w-20 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" />
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Venta:</label>
-                          <input type="number" inputMode="decimal" min="0" step="0.01" value={s.editSalePrice ?? ''} onChange={e => s.setEditSalePrice(e.target.value ? parseFloat(e.target.value) : null)} className="w-20 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" placeholder="—" />
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Mon. Venta:</label>
-                          <select value={s.editPriceCurrency} onChange={e => s.setEditPriceCurrency(e.target.value)} className="w-16 px-1 py-1 text-xs font-bold rounded-lg border border-border bg-background">
-                            <option value="CUP">CUP</option>
-                            <option value="USD">USD</option>
-                            <option value="EUR">EUR</option>
-                            <option value="MLC">MLC</option>
-                          </select>
-                        </div>
-                        <button onClick={s.handleSaveEdit} className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-primary/10 text-primary hover:bg-primary/20" type="button">OK</button>
-                        <button type="button" onClick={() => s.setEditingIndex(null)} className="px-2 py-1 text-[10px] font-bold uppercase rounded-lg bg-muted text-muted-foreground hover:bg-muted/80">X</button>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground ml-6">
-                        SKU: {item.sku || '--'} · UM: {item.unit_of_measure} · Cant: {item.quantity} · Costo: {formatCurrency(item.unit_cost)} {item.moneda_recepcion !== 'CUP' && `(${item.moneda_recepcion} × ${item.tasa_cambio_recepcion})`}
-                        {item.sale_price != null && ` · Venta: ${formatCurrency(item.sale_price)} ${item.price_currency || 'CUP'}`}
-                        {item.variant_name && <span className="ml-2 text-info font-bold"> · Var: {item.variant_name}</span>}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-sm text-primary tabular-nums">{formatCurrency(item.quantity * item.unit_cost)}</span>
-                    {s.editingIndex !== index && (
-                      <button type="button" onClick={() => s.handleStartEdit(index)} className="p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-primary/10 rounded-lg text-muted-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/30" aria-label={`Editar ${item.name}`}>
-                        <Package className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button type="button" onClick={() => s.handleRequestRemove(item.local_id)} className="p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-destructive/10 rounded-lg text-destructive/70 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/30" aria-label={`Eliminar ${item.name}`}>
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {s.items.length > 0 && (
-          <div className="flex items-center justify-between pt-2 border-t">
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground">{s.items.length} producto(s)</span>
-              {s.items.some(i => i.is_new) && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-info/10 text-info border border-info/20">
-                  {s.items.filter(i => i.is_new).length} nuevo(s)
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Total:</span>
-              {s.totalCost === null ? (
-                <span className="font-black text-lg text-destructive tabular-nums">Tasa inválida</span>
-              ) : (
-                <span className="font-black text-lg text-primary tabular-nums">{formatCurrency(s.totalCost)}</span>
-              )}
-            </div>
-          </div>
+          /* MISIÓN UI/UX RECEPCIONES: tabla profesional (escritorio) +
+             tarjetas compactas (móvil). Presentación únicamente — la lógica,
+             los cálculos y los datos provienen intactos de useReceptionState. */
+          <ReceptionItemsTable
+            items={s.items}
+            totalCost={s.totalCost}
+            unitsSummary={s.unitsSummary}
+            newCount={s.items.filter(i => i.is_new).length}
+            editingIndex={s.editingIndex}
+            editQuantity={s.editQuantity}
+            setEditQuantity={s.setEditQuantity}
+            editMoneda={s.editMoneda}
+            setEditMoneda={s.setEditMoneda}
+            editTasa={s.editTasa}
+            setEditTasa={s.setEditTasa}
+            editCost={s.editCost}
+            setEditCost={s.setEditCost}
+            editSalePrice={s.editSalePrice}
+            setEditSalePrice={s.setEditSalePrice}
+            editPriceCurrency={s.editPriceCurrency}
+            setEditPriceCurrency={s.setEditPriceCurrency}
+            onSaveEdit={s.handleSaveEdit}
+            onCancelEdit={() => s.setEditingIndex(null)}
+            onStartEdit={s.handleStartEdit}
+            onRequestRemove={s.handleRequestRemove}
+          />
         )}
       </div>
 
@@ -578,7 +503,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
         open={s.isFormOpen}
         onOpenChange={(open) => { if (!open) s.handleCloseForm(); }}
         title="Agregar Producto"
-        maxWidth="sm:max-w-md"
+        maxWidth="sm:max-w-lg"
         footer={
           <>
             <SecondaryButton onClick={s.handleCloseForm} label="Cancelar" className="flex-1" />
@@ -591,189 +516,386 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
         }
       >
         <div className="space-y-4">
-          {/* Search existing products
-              REC-2 MM-R2: Enter en search → scanner mode (match SKU/barcode → agregar directo) */}
+          {/* ─────────────────────────────────────────────────────────
+              MISIÓN UI/UX RECEPCIONES: búsqueda en servidor sobre TODO el
+              catálogo (RPC get_paginated_products: FTS 'spanish' + ILIKE
+              name/sku/barcode). Combobox accesible con navegación por teclado,
+              indicador de carga, estados diferenciados y paginación
+              transparente (scroll automático o «Ver más resultados»).
+              REC-2 MM-R2: Enter sin resaltado → scanner mode (SKU/barcode).
+              ───────────────────────────────────────────────────────── */}
           <div className="space-y-1.5">
             <span className="text-xs font-black uppercase tracking-widest ml-1">
               Buscar Producto
               <span className="text-muted-foreground font-normal ml-2 normal-case tracking-normal">
-                (Enter = agregar por SKU/barcode)
+                (nombre, código o barcode · ↑↓ navegar · Enter seleccionar)
               </span>
             </span>
             <form onSubmit={(e) => { e.preventDefault(); s.handleSearchSubmit(); }}>
-              <SearchInput id="rec-add-item-search" value={s.addItemSearch} onChange={s.setAddItemSearch} placeholder="Buscar por nombre, SKU o escanear..." aria-label="Buscar producto" />
+              <div className="relative">
+                <SearchInput
+                  id="rec-add-item-search"
+                  value={s.addItemSearch}
+                  onChange={s.setAddItemSearch}
+                  onKeyDown={s.handleSearchKeyDown}
+                  placeholder="Ej: tornillo, BRE-16, código de barras..."
+                  aria-label="Buscar producto por nombre, código o código de barras"
+                  autoComplete="off"
+                  role="combobox"
+                  aria-expanded="true"
+                  aria-controls="rec-search-results"
+                  aria-autocomplete="list"
+                />
+                {s.inventoryFetching && (
+                  <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-primary pointer-events-none" aria-hidden="true" />
+                )}
+              </div>
             </form>
+            {/* Estado de búsqueda para lectores de pantalla y confirmación visual */}
+            <p aria-live="polite" className="text-[11px] text-muted-foreground ml-1 min-h-[14px]">
+              {s.inventoryLoading && s.filteredFormProducts.length === 0
+                ? 'Buscando productos…'
+                : s.inventoryError && s.filteredFormProducts.length === 0
+                  ? 'No se pudo completar la búsqueda.'
+                  : s.addItemSearch.trim() && s.filteredFormProducts.length > 0
+                    ? `${s.filteredFormProducts.length} de ${s.searchTotal} coincidencia${s.searchTotal !== 1 ? 's' : ''} en el catálogo`
+                    : s.addItemSearch.trim() && s.searchTotal === 0
+                      ? 'Sin coincidencias en el catálogo'
+                      : ''}
+            </p>
           </div>
 
-          <div className="max-h-40 overflow-y-auto rounded-xl border divide-y divide-border">
-            {s.filteredFormProducts.length === 0 && !s.addItemSearch ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">No se encontraron productos</div>
-            ) : s.filteredFormProducts.length === 0 ? (
-              <div className="py-4 text-center text-sm text-muted-foreground">Sin resultados</div>
-            ) : (
-              s.filteredFormProducts.slice(0, 50).map(product => (
-                <button type="button" key={product.id} onClick={() => s.setSelectedProductId(product.id)} className={cn(
-                  'w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-muted/50',
-                  s.selectedProductId === product.id && 'bg-primary/10 ring-1 ring-primary/30'
-                )}>
-                  <span className="font-bold">{product.name}</span>
-                  <span className="ml-2 text-xs text-muted-foreground font-mono">{product.sku}</span>
-                  {product.cost_price > 0 && <span className="ml-2 text-xs text-primary font-mono">{formatCurrency(product.cost_price)}</span>}
+          {/* Resultados — role=listbox con navegación ↑↓ y selección inequívoca */}
+          <div
+            id="rec-search-results"
+            role="listbox"
+            aria-label="Resultados de búsqueda de productos"
+            className="max-h-72 overflow-y-auto rounded-xl border divide-y divide-border"
+            onScroll={(e) => {
+              // Carga adicional automática al desplazarse (paginación
+              // transparente — sin botón «Cargar más» obligatorio).
+              const el = e.currentTarget;
+              if (s.hasMoreProducts && !s.isFetchingNextPage && el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+                s.loadMoreProducts();
+              }
+            }}
+          >
+            {s.inventoryLoading && s.filteredFormProducts.length === 0 ? (
+              <div className="py-10 flex flex-col items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                Buscando productos…
+              </div>
+            ) : s.inventoryError && s.filteredFormProducts.length === 0 ? (
+              <div className="py-10 flex flex-col items-center gap-2 text-sm text-destructive">
+                <AlertCircle className="w-5 h-5" />
+                No se pudo completar la búsqueda
+                <button
+                  type="button"
+                  onClick={() => s.refetchInventory()}
+                  className="px-3 py-1.5 min-h-[36px] rounded-lg bg-primary/10 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/20 transition-colors"
+                >
+                  Reintentar
                 </button>
-              ))
+              </div>
+            ) : s.filteredFormProducts.length === 0 ? (
+              <div className="py-8 px-4 text-center">
+                {s.addItemSearch.trim() ? (
+                  <>
+                    <SearchX className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
+                    <p className="text-sm font-bold text-foreground">No se encontraron productos para «{s.addItemSearch.trim()}»</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Se buscó en todo el catálogo (nombre, código y barcode). Revisa la escritura o agrégalo como producto nuevo abajo.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('manual-name')?.focus()}
+                      className="mt-3 px-3 py-1.5 min-h-[36px] rounded-lg bg-primary/10 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/20 transition-colors"
+                    >
+                      Agregar como nuevo
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No hay productos en el catálogo de esta tienda</p>
+                )}
+              </div>
+            ) : (
+              s.filteredFormProducts.map((product, idx) => {
+                const selected = s.selectedProductId === product.id;
+                const highlighted = s.highlightIndex === idx;
+                return (
+                  <button
+                    type="button"
+                    key={product.id}
+                    id={`rec-option-${idx}`}
+                    role="option"
+                    aria-selected={selected}
+                    onClick={() => s.handleSelectProduct(product.id)}
+                    className={cn(
+                      'w-full text-left px-4 py-3 text-sm transition-colors focus:outline-none',
+                      selected
+                        ? 'bg-primary/10 border-l-4 border-primary'
+                        : highlighted
+                          ? 'bg-muted/60 border-l-4 border-transparent'
+                          : 'hover:bg-muted/50 border-l-4 border-transparent'
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className={cn('text-sm leading-snug truncate', selected ? 'font-black text-primary' : 'font-bold')}>
+                          {product.name}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          {product.sku && (
+                            <span className={cn('text-[10px] font-mono px-1.5 py-0.5 rounded', selected ? 'bg-primary/15 text-primary font-bold' : 'bg-muted/70 text-muted-foreground')}>
+                              {product.sku}
+                            </span>
+                          )}
+                          {product.unit_of_measure && (
+                            <span className="text-[10px] text-muted-foreground bg-muted/70 px-1.5 py-0.5 rounded">{product.unit_of_measure}</span>
+                          )}
+                          {product.category && (
+                            <span className="text-[10px] text-muted-foreground truncate max-w-[140px]">{product.category}</span>
+                          )}
+                          {product.barcode && (
+                            <span className="text-[10px] font-mono text-muted-foreground" title="Código de barras">#{product.barcode}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        {product.cost_price > 0 && (
+                          <span className="text-xs font-mono text-primary">{formatCurrency(product.cost_price)}</span>
+                        )}
+                        {selected && (
+                          <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-primary">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Seleccionado
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
 
-          {/* FIX-07: Load more */}
-          {s.hasMoreProducts && (
-            <button type="button" onClick={() => s.setSearchLimit(prev => prev + 20)} className="text-xs text-primary hover:underline mx-auto block">
-              Cargar mas productos...
-            </button>
+          {/* Paginación transparente — solo informativa, el scroll ya carga solo */}
+          {(s.hasMoreProducts || s.isFetchingNextPage) && (
+            <div className="text-center space-y-1">
+              <button
+                type="button"
+                onClick={s.loadMoreProducts}
+                disabled={s.isFetchingNextPage}
+                className="text-xs text-primary hover:underline mx-auto block font-bold disabled:opacity-60"
+              >
+                {s.isFetchingNextPage
+                  ? 'Cargando más resultados…'
+                  : `Ver más resultados (${s.searchTotal - s.filteredFormProducts.length} restantes)`}
+              </button>
+              <p className="text-[10px] text-muted-foreground">
+                Mostrando {s.filteredFormProducts.length} de {s.searchTotal} coincidencias · también puedes desplazarte en la lista
+              </p>
+            </div>
           )}
 
-          {s.selectedProductId && (
-            <div className="space-y-3 pt-2 border-t border-border">
-              {/* FIX-UX: Moneda y tasa PRIMERO (lo más visible) — el usuario necesita
-                  saber en qué moneda está comprando antes de poner el costo */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label htmlFor="item-moneda" className="text-xs font-black uppercase tracking-widest ml-1">
-                    Moneda <span className="text-muted-foreground font-normal normal-case tracking-normal">(compra)</span>
-                  </label>
-                  <select
-                    id="item-moneda"
-                    value={s.newMoneda}
-                    onChange={async (e) => {
-                      s.setNewMoneda(e.target.value);
-                      // FIX-MULTI-MONEDA: al cambiar moneda de compra, actualizar moneda de venta por defecto
-                      s.setNewPriceCurrency(e.target.value);
-                      if (e.target.value === 'CUP') {
-                        s.setNewTasa(1.0);
-                      } else {
-                        // F4-GAP3: Auto-fill tasa from exchange_rates when currency changes
-                        // FIX-P1.5: la API devuelve { rates: [...] } no un array directo.
-                        try {
-                          const res = await fetch(`/api/exchange-rates?currency=${e.target.value}&source=BCC&segment=3&days=1`);
-                          if (res.ok) {
-                            const data = await res.json();
-                            const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
-                            if (Array.isArray(rates) && rates.length > 0) {
-                              const sorted = rates.sort((a: any, b: any) =>
-                                new Date(b.rate_date || b.date || 0).getTime() - new Date(a.rate_date || a.date || 0).getTime()
-                              );
-                              const latestRate = sorted[0]?.rate;
-                              if (latestRate && typeof latestRate === 'number' && latestRate > 0) {
-                                s.setNewTasa(latestRate);
-                              }
-                            }
-                          }
-                        } catch {
-                          // Silent fail — user can type tasa manually
-                        }
-                      }
-                    }}
-                    className="neu-input w-full font-bold"
-                  >
-                    <option value="CUP">CUP</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="MLC">MLC</option>
-                  </select>
+          {/* ─────────────────────────────────────────────────────────
+              MISIÓN UI/UX RECEPCIONES: bloque de confirmación «Producto
+              seleccionado» — identidad inequívoca antes de introducir datos.
+              Sustitución coherente: cambiar de producto recarga costo/venta/
+              variante (efectos del hook) sin arrastrar datos incompatibles.
+              ───────────────────────────────────────────────────────── */}
+          {s.selectedProduct && (
+            <div
+              className="rounded-xl border-2 border-primary/40 bg-primary/5 p-4 space-y-4"
+              data-testid="producto-seleccionado"
+              aria-label="Producto seleccionado para la recepción"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="shrink-0 w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center" aria-hidden="true">
+                    <CheckCircle2 className="w-5 h-5 text-primary" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-primary">Producto seleccionado</p>
+                    <p className="font-black text-sm leading-snug truncate" title={s.selectedProduct.name}>{s.selectedProduct.name}</p>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="item-tasa" className="text-xs font-black uppercase tracking-widest ml-1">
-                    Tasa <span className="text-muted-foreground font-normal normal-case tracking-normal">(CUP por unidad)</span>
-                  </label>
-                  <input
-                    id="item-tasa"
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="0.01"
-                    value={s.newTasa || ''}
-                    onChange={e => s.setNewTasa(parseFloat(e.target.value) || 1.0)}
-                    className="neu-input w-full font-bold"
-                    placeholder="1.0"
-                    disabled={s.newMoneda === 'CUP'}
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={s.clearProductSelection}
+                  className="shrink-0 p-2 min-w-[36px] min-h-[36px] rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  aria-label="Cambiar de producto (limpiar selección)"
+                  title="Elegir otro producto"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="item-qty" className="text-xs font-black uppercase tracking-widest ml-1">Cantidad</label>
-                  <input id="item-qty" type="number" inputMode="decimal" min="0.0001" step="0.01" value={s.newQuantity} onChange={e => s.setNewQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="neu-input w-full font-bold" />
+              <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-2 text-xs">
+                <div>
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Código</dt>
+                  <dd className="font-mono font-bold truncate">{s.selectedProduct.sku || '—'}</dd>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="item-cost" className="text-xs font-black uppercase tracking-widest ml-1">
-                    Costo Unit. {s.newMoneda !== 'CUP' && <span className="text-primary font-normal normal-case tracking-normal">({s.newMoneda})</span>}
-                  </label>
-                  <input id="item-cost" type="number" inputMode="decimal" min="0" step="0.01" value={s.newUnitCost || ''} onChange={e => s.setNewUnitCost(parseFloat(e.target.value) || 0)} className="neu-input w-full font-bold text-primary" placeholder="0.00" />
+                <div>
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Unidad de medida</dt>
+                  <dd className="font-bold">{s.selectedProduct.unit_of_measure || 'unidad'}</dd>
                 </div>
-              </div>
+                {s.selectedProduct.category && (
+                  <div className="min-w-0">
+                    <dt className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Categoría</dt>
+                    <dd className="font-bold truncate" title={s.selectedProduct.category}>{s.selectedProduct.category}</dd>
+                  </div>
+                )}
+                {s.selectedProduct.cost_price > 0 && (
+                  <div>
+                    <dt className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Costo de referencia</dt>
+                    <dd className="font-bold text-primary tabular-nums">{formatCurrency(s.selectedProduct.cost_price)}</dd>
+                  </div>
+                )}
+              </dl>
 
-              {/* REC-2 MM-R9: Precio de venta editable con selector de moneda */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label htmlFor="item-sale-price" className="text-xs font-black uppercase tracking-widest ml-1">
-                    Precio Venta <span className="text-muted-foreground font-normal normal-case tracking-normal">(opcional)</span>
-                  </label>
-                  <input
-                    id="item-sale-price"
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="0.01"
-                    value={s.newSalePrice ?? ''}
-                    onChange={e => s.setNewSalePrice(e.target.value ? parseFloat(e.target.value) : null)}
-                    className="neu-input w-full font-bold text-success"
-                    placeholder="0.00 (dejar vacío)"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="item-price-currency" className="text-xs font-black uppercase tracking-widest ml-1">
-                    Mon. Venta
-                  </label>
-                  <select
-                    id="item-price-currency"
-                    value={s.newPriceCurrency}
-                    onChange={e => s.setNewPriceCurrency(e.target.value)}
-                    className="neu-input w-full font-bold"
-                  >
-                    <option value="CUP">CUP</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="MLC">MLC</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* REC-2 MM-R4: Selector de variante si el producto las tiene */}
-              {(() => {
-                const selected = s.products.find(p => p.id === s.selectedProductId) as Product | undefined;
-                const variants = selected?.product_variants;
-                if (!variants || variants.length === 0) return null;
-                return (
+              <div className="pt-3 border-t border-primary/20 space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Datos de recepción</p>
+                {/* FIX-UX: Moneda y tasa PRIMERO (lo más visible) — el usuario necesita
+                    saber en qué moneda está comprando antes de poner el costo */}
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label htmlFor="item-variant" className="text-xs font-black uppercase tracking-widest ml-1">
-                      Variante <span className="text-muted-foreground font-normal normal-case tracking-normal">(unidad base si no seleccionas)</span>
+                    <label htmlFor="item-moneda" className="text-xs font-black uppercase tracking-widest ml-1">
+                      Moneda <span className="text-muted-foreground font-normal normal-case tracking-normal">(compra)</span>
                     </label>
                     <select
-                      id="item-variant"
-                      value={s.selectedVariantId || ''}
-                      onChange={e => s.setSelectedVariantId(e.target.value || null)}
+                      id="item-moneda"
+                      value={s.newMoneda}
+                      onChange={async (e) => {
+                        s.setNewMoneda(e.target.value);
+                        // FIX-MULTI-MONEDA: al cambiar moneda de compra, actualizar moneda de venta por defecto
+                        s.setNewPriceCurrency(e.target.value);
+                        if (e.target.value === 'CUP') {
+                          s.setNewTasa(1.0);
+                        } else {
+                          // F4-GAP3: Auto-fill tasa from exchange_rates when currency changes
+                          // FIX-P1.5: la API devuelve { rates: [...] } no un array directo.
+                          try {
+                            const res = await fetch(`/api/exchange-rates?currency=${e.target.value}&source=BCC&segment=3&days=1`);
+                            if (res.ok) {
+                              const data = await res.json();
+                              const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
+                              if (Array.isArray(rates) && rates.length > 0) {
+                                const sorted = rates.sort((a: any, b: any) =>
+                                  new Date(b.rate_date || b.date || 0).getTime() - new Date(a.rate_date || a.date || 0).getTime()
+                                );
+                                const latestRate = sorted[0]?.rate;
+                                if (latestRate && typeof latestRate === 'number' && latestRate > 0) {
+                                  s.setNewTasa(latestRate);
+                                }
+                              }
+                            }
+                          } catch {
+                            // Silent fail — user can type tasa manually
+                          }
+                        }
+                      }}
                       className="neu-input w-full font-bold"
                     >
-                      <option value="">Unidad base</option>
-                      {variants.map(v => (
-                        <option key={v.id} value={v.id}>
-                          {v.name} {v.conversion_factor ? `(×${v.conversion_factor})` : ''}
-                        </option>
-                      ))}
+                      <option value="CUP">CUP</option>
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="MLC">MLC</option>
                     </select>
                   </div>
-                );
-              })()}
+                  <div className="space-y-1.5">
+                    <label htmlFor="item-tasa" className="text-xs font-black uppercase tracking-widest ml-1">
+                      Tasa <span className="text-muted-foreground font-normal normal-case tracking-normal">(CUP por unidad)</span>
+                    </label>
+                    <input
+                      id="item-tasa"
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.01"
+                      value={s.newTasa || ''}
+                      onChange={e => s.setNewTasa(parseFloat(e.target.value) || 1.0)}
+                      className="neu-input w-full font-bold"
+                      placeholder="1.0"
+                      disabled={s.newMoneda === 'CUP'}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label htmlFor="item-qty" className="text-xs font-black uppercase tracking-widest ml-1">Cantidad</label>
+                    <input id="item-qty" type="number" inputMode="decimal" min="0.0001" step="0.01" value={s.newQuantity} onChange={e => s.setNewQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="neu-input w-full font-bold" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="item-cost" className="text-xs font-black uppercase tracking-widest ml-1">
+                      Costo Unit. {s.newMoneda !== 'CUP' && <span className="text-primary font-normal normal-case tracking-normal">({s.newMoneda})</span>}
+                    </label>
+                    <input id="item-cost" type="number" inputMode="decimal" min="0" step="0.01" value={s.newUnitCost || ''} onChange={e => s.setNewUnitCost(parseFloat(e.target.value) || 0)} className="neu-input w-full font-bold text-primary" placeholder="0.00" />
+                  </div>
+                </div>
+
+                {/* REC-2 MM-R9: Precio de venta editable con selector de moneda */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label htmlFor="item-sale-price" className="text-xs font-black uppercase tracking-widest ml-1">
+                      Precio Venta <span className="text-muted-foreground font-normal normal-case tracking-normal">(opcional)</span>
+                    </label>
+                    <input
+                      id="item-sale-price"
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.01"
+                      value={s.newSalePrice ?? ''}
+                      onChange={e => s.setNewSalePrice(e.target.value ? parseFloat(e.target.value) : null)}
+                      className="neu-input w-full font-bold text-success"
+                      placeholder="0.00 (dejar vacío)"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="item-price-currency" className="text-xs font-black uppercase tracking-widest ml-1">
+                      Mon. Venta
+                    </label>
+                    <select
+                      id="item-price-currency"
+                      value={s.newPriceCurrency}
+                      onChange={e => s.setNewPriceCurrency(e.target.value)}
+                      className="neu-input w-full font-bold"
+                    >
+                      <option value="CUP">CUP</option>
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="MLC">MLC</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* REC-2 MM-R4: Selector de variante si el producto las tiene */}
+                {(() => {
+                  const variants = s.selectedProduct.product_variants;
+                  if (!variants || variants.length === 0) return null;
+                  return (
+                    <div className="space-y-1.5">
+                      <label htmlFor="item-variant" className="text-xs font-black uppercase tracking-widest ml-1">
+                        Variante <span className="text-muted-foreground font-normal normal-case tracking-normal">(unidad base si no seleccionas)</span>
+                      </label>
+                      <select
+                        id="item-variant"
+                        value={s.selectedVariantId || ''}
+                        onChange={e => s.setSelectedVariantId(e.target.value || null)}
+                        className="neu-input w-full font-bold"
+                      >
+                        <option value="">Unidad base</option>
+                        {variants.map(v => (
+                          <option key={v.id} value={v.id}>
+                            {v.name} {v.conversion_factor ? `(×${v.conversion_factor})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           )}
 
@@ -786,7 +908,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                 <div className="flex-1 h-px bg-border" />
               </div>
               <div className="space-y-2">
-                <input type="text" value={s.manualName} onChange={e => s.setManualName(e.target.value)} className="neu-input w-full text-sm" placeholder="Nombre del producto nuevo" aria-label="Nombre del producto nuevo" />
+                <input id="manual-name" type="text" value={s.manualName} onChange={e => s.setManualName(e.target.value)} className="neu-input w-full text-sm" placeholder="Nombre del producto nuevo" aria-label="Nombre del producto nuevo" />
                 <div className="grid grid-cols-3 gap-2">
                   <input type="text" value={s.manualSku} onChange={e => s.setManualSku(e.target.value)} className="neu-input w-full text-xs" placeholder="SKU (opcional)" aria-label="SKU del producto nuevo" />
                   <input type="number" inputMode="decimal" min="0.0001" step="0.01" value={s.newQuantity} onChange={e => s.setNewQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="neu-input w-full text-xs" placeholder="Cantidad" aria-label="Cantidad" />

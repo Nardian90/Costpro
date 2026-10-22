@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import type { DragEvent, ChangeEvent } from 'react';
+import type { DragEvent, ChangeEvent, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useReceptionShortcuts } from './useReceptionShortcuts';
 import { useDebounce } from '@/hooks/ui/useDebounce';
 import { useAuthStore, useUIStore } from '@/store';
@@ -201,16 +201,51 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   // FIX-MULTI-MONEDA: moneda del precio de venta (puede diferir de la compra)
   const [newPriceCurrency, setNewPriceCurrency] = useState<string>('CUP');
 
-  // FIX-07: Search with pagination
-  const [searchLimit, setSearchLimit] = useState(20);
-  const { data: inventoryData, isLoading: inventoryLoading } = useInventory(
-    user?.activeStoreId || '', '', '', searchLimit
+  // ─────────────────────────────────────────────────────────────
+  // MISIÓN UI/UX RECEPCIONES (2026-10-22): búsqueda en SERVIDOR.
+  //
+  // Defecto previo (FIX-07): useInventory(storeId, '', '', searchLimit) pedía
+  // los PRIMEROS 20 productos (término vacío) y `filteredFormProducts` filtraba
+  // client-side sobre esa ventana → cualquier producto en posición >20 era
+  // imposible de encontrar sin pulsar «Cargar más» repetidamente (p. ej.
+  // «tornillo» → «Sin resultados» con 6 coincidencias en posiciones #83–#169).
+  //
+  // Ahora: el término debounced viaja al RPC `get_paginated_products`
+  // (FTS 'spanish' sobre search_vector + ILIKE name/sku/barcode, ORDER BY name)
+  // que busca en TODO el catálogo de la tienda. La paginación es transparente
+  // (infinite query: scroll o «Ver más resultados»), sin límites artificiales.
+  // ─────────────────────────────────────────────────────────────
+  const RECEPTION_SEARCH_PAGE_SIZE = 60;
+  const debouncedSearch = useDebounce(addItemSearch.trim(), 250);
+
+  const {
+    data: inventoryData,
+    isLoading: inventoryLoading,
+    isFetching: inventoryFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    error: inventoryError,
+    refetch: refetchInventory,
+  } = useInventory(
+    user?.activeStoreId || '', debouncedSearch, '', RECEPTION_SEARCH_PAGE_SIZE
   );
   const products = useMemo(
     () => (inventoryData?.pages || []).flatMap(p => p.products || []),
     [inventoryData]
   );
-  const hasMoreProducts = products.length < (inventoryData?.pages?.[0]?.total ?? 0);
+  // Total de coincidencias según el SERVIDOR para el término actual
+  // (no confundir con products.length = resultados ya cargados).
+  const searchTotal = inventoryData?.pages?.[0]?.total ?? 0;
+  const hasMoreProducts = products.length < searchTotal;
+  const loadMoreProducts = useCallback(() => {
+    if (!fetchNextPage || !hasNextPage || isFetchingNextPage) return;
+    fetchNextPage();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  // ── Selección de producto (combobox accesible) ─────────────
+  // Índice resaltado por teclado (ArrowUp/ArrowDown); -1 = sin resaltado.
+  const [highlightIndex, setHighlightIndex] = useState(-1);
 
   // ── Import Wizard (FIX-01) ───────────────────────────────
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -352,14 +387,28 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     return total;
   }, [items]);
 
-  // REC-2 MM-R5: debounce del search input (200ms).
-  const debouncedSearch = useDebounce(addItemSearch, 200);
-
+  // MISIÓN UI/UX RECEPCIONES: los resultados YA vienen filtrados por el
+  // servidor (todo el catálogo). Aquí solo se aplica ORDEN DE RELEVANCIA
+  // client-side sobre la página cargada: 1) código/barcode exacto,
+  // 2) código por prefijo, 3) nombre por prefijo, 4) código parcial,
+  // 5) nombre parcial, 6) coincidencia FTS (descripción/sinónimos).
+  // No se descarta ningún resultado del servidor — solo se reordena.
   const filteredFormProducts = useMemo(() => {
-    if (!debouncedSearch) return products;
-    return products.filter(p =>
-      p.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      (p.sku && p.sku.toLowerCase().includes(debouncedSearch.toLowerCase()))
+    const q = debouncedSearch.trim().toLowerCase();
+    if (!q) return products;
+    const score = (p: Product): number => {
+      const sku = (p.sku || '').toLowerCase();
+      const barcode = (p.barcode || '').toLowerCase();
+      const name = p.name.toLowerCase();
+      if (sku === q || (barcode !== '' && barcode === q)) return 0;
+      if (sku.startsWith(q)) return 1;
+      if (name.startsWith(q)) return 2;
+      if (sku.includes(q)) return 3;
+      if (name.includes(q)) return 4;
+      return 5;
+    };
+    return [...products].sort((a, b) =>
+      score(a) - score(b) || a.name.localeCompare(b.name)
     );
   }, [products, debouncedSearch]);
 
@@ -376,6 +425,87 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     const p = products.find(pr => pr.id === selectedProductId) as Product | undefined;
     return p?.product_variants?.find(v => v.id === selectedVariantId) || null;
   }, [selectedProductId, selectedVariantId, products]);
+
+  // ──────────────────────────────────────────────────────────
+  // MISIÓN UI/UX RECEPCIONES: selección inequívoca
+  // ──────────────────────────────────────────────────────────
+
+  // Producto seleccionado (objeto completo para el bloque de confirmación).
+  // Busca en `products` (página cargada); si el producto seleccionado no está
+  // en la página actual (p. ej. tras nueva búsqueda), cae a undefined sin error.
+  const selectedProduct = useMemo(
+    () => (selectedProductId
+      ? products.find(p => p.id === selectedProductId) as Product | undefined
+      : undefined),
+    [products, selectedProductId]
+  );
+
+  // Reset del resaltado de teclado cuando cambian los resultados o el término.
+  useEffect(() => { setHighlightIndex(-1); }, [debouncedSearch, products.length]);
+
+  // Seleccionar producto: sustitución coherente de la selección anterior.
+  // Los efectos FIX-08 / REC-2 MM-R4 recargan costo, venta y variante desde el
+  // producto; aquí solo se marca la selección y se lleva el foco a Cantidad
+  // (el usuario siempre sabe qué completar a continuación).
+  const handleSelectProduct = useCallback((productId: string) => {
+    setSelectedProductId(productId);
+    setHighlightIndex(-1);
+    if (focusTimerRef.current) clearTimeout(focusTimerRef.current);
+    focusTimerRef.current = setTimeout(() => {
+      document.getElementById('item-qty')?.focus();
+    }, 80);
+  }, []);
+
+  // Volver al estado "sin selección" (modo búsqueda / alta manual).
+  // No conserva costo/venta de la selección anterior (evita arrastrar datos
+  // de un producto a otro); la cantidad se conserva porque es agnóstica.
+  const clearProductSelection = useCallback(() => {
+    setSelectedProductId(null);
+    setSelectedVariantId(null);
+    setNewUnitCost(0);
+    setNewSalePrice(null);
+  }, []);
+
+  // Navegación por teclado del combobox de búsqueda.
+  // ArrowDown/ArrowUp mueven el resaltado; Enter con resaltado activo
+  // selecciona el producto resaltado (configuración de recepción); Enter sin
+  // resaltado mantiene el flujo de escáner REC-2 MM-R2 (submit del form);
+  // Escape limpia el término.
+  const handleSearchKeyDown = useCallback((e: ReactKeyboardEvent<HTMLInputElement>) => {
+    const count = filteredFormProducts.length;
+    const scrollHighlighted = () => {
+      if (highlightIndex < 0) return;
+      document.getElementById(`rec-option-${highlightIndex}`)?.scrollIntoView({ block: 'nearest' });
+    };
+    if (e.key === 'ArrowDown' && count > 0) {
+      e.preventDefault();
+      setHighlightIndex(prev => (prev + 1) % count);
+      setTimeout(scrollHighlighted, 0);
+    } else if (e.key === 'ArrowUp' && count > 0) {
+      e.preventDefault();
+      setHighlightIndex(prev => (prev <= 0 ? count - 1 : prev - 1));
+      setTimeout(scrollHighlighted, 0);
+    } else if (e.key === 'Enter' && highlightIndex >= 0 && highlightIndex < count) {
+      e.preventDefault();
+      const p = filteredFormProducts[highlightIndex];
+      if (p) handleSelectProduct(p.id);
+    } else if (e.key === 'Escape' && addItemSearch) {
+      e.preventDefault();
+      setAddItemSearch('');
+    }
+  }, [filteredFormProducts, highlightIndex, addItemSearch, handleSelectProduct]);
+
+  // Resumen de unidades: solo con sentido si TODAS las líneas comparten la
+  // misma unidad de medida (la misión prohíbe sumar kg + unidad + caja).
+  const unitsSummary = useMemo(() => {
+    if (items.length === 0) return null;
+    const firstUm = items[0].unit_of_measure;
+    if (!items.every(i => i.unit_of_measure === firstUm)) return null;
+    return {
+      unit: firstUm,
+      total: items.reduce((acc, i) => acc + i.quantity, 0),
+    };
+  }, [items]);
 
   // ──────────────────────────────────────────────────────────
   // Add Product Modal
@@ -1465,6 +1595,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setAddItemSearch,
     selectedProductId,
     setSelectedProductId,
+    handleSelectProduct,
+    clearProductSelection,
     newQuantity,
     setNewQuantity,
     newUnitCost,
@@ -1492,9 +1624,17 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     classifiedRows,
     isImporting,
     isDragOver,
-    searchLimit,
-    setSearchLimit,
     inventoryLoading,
+    // MISIÓN UI/UX RECEPCIONES: estado de búsqueda server-side + selección
+    inventoryFetching,
+    isFetchingNextPage,
+    inventoryError,
+    refetchInventory,
+    loadMoreProducts,
+    searchTotal,
+    highlightIndex,
+    handleSearchKeyDown,
+    unitsSummary,
 
     // ── Computed ───────────────────────────────────────────
     products,
@@ -1502,6 +1642,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     filteredFormProducts,
     totalCost,
     importCounts,
+    selectedProduct,
     registerReceptionIsPending: registerReception.isPending,
 
     // ── Handlers ───────────────────────────────────────────
