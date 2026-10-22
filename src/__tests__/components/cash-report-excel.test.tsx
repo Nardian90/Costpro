@@ -432,7 +432,8 @@ describe('Fórmulas reales del libro (misma hoja: tabla ↔ resumen ↔ desglose
     expect(cell(ws, `D${totIdx + 1}`).f).toMatch(/^SUM\(/);
     const estadoIdx = findRow(rs, 'Estado de la comprobación (efectivo)').idx;
     const c = cell(ws, `D${estadoIdx + 1}`);
-    expect(c.t === 's' || c.t === 'str').toBe(true);
+    // El resultado textual del =IF sobrevive al round-trip ('s'/'str' según el lector).
+    expect(['s', 'str']).toContain(String(c.t));
     expect(c.v).toBe('COHERENTE');
   });
 

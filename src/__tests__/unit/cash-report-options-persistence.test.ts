@@ -74,7 +74,7 @@ describe('loadPdfOptions / savePdfOptions — opciones del documento (Parte A)',
     expect(loaded.includeSignature).toBe(false);
     expect(loaded.usdSeparatePage).toBe(false);
     expect(loaded.includeBreakdown).toBe(true); // default conservado
-    expect((loaded as Record<string, unknown>).unaClaveDesconocida).toBeUndefined();
+    expect((loaded as unknown as Record<string, unknown>).unaClaveDesconocida).toBeUndefined();
   });
 
   it('el esquema persistido NO contiene datos de ventas ni información sensible', () => {
@@ -115,7 +115,8 @@ describe('loadWorkingBreakdown / saveWorkingBreakdown — desglose laboral (Part
   });
 
   it('valores negativos o decimales se sanean al persistir (enteros no negativos)', () => {
-    saveWorkingBreakdown({ CUP: { 1000: -3, 500: '2.7' }, USD: {}, savedAt: 'x' });
+    // Cantidad numérica negativa (vía JSON externo) → '0'; decimal → floor.
+    saveWorkingBreakdown({ CUP: { 1000: -3, 500: '2.7' }, USD: {}, savedAt: 'x' } as unknown as Parameters<typeof saveWorkingBreakdown>[0]);
     const wb = loadWorkingBreakdown();
     expect(wb.CUP['1000']).toBe('0');
     expect(wb.CUP['500']).toBe('2');
