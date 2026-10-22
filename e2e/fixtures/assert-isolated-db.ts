@@ -246,7 +246,7 @@ export async function assertIsolatedDb(opts: {
       sentinelOk = await fetchSentinel(url, serviceKey, opts.fetchImpl);
     } catch (e) {
       if (e instanceof IsolationError) throw e;
-      throw new IsolationError({ ok: false, ...decision, code: 'E_SENTINEL_ERROR', reason: 'No se pudo verificar el centinela (error de red). Fail-closed: se rechaza la operación.' });
+      throw new IsolationError({ ...decision, ok: false, code: 'E_SENTINEL_ERROR', reason: 'No se pudo verificar el centinela (error de red). Fail-closed: se rechaza la operación.' });
     }
     if (!sentinelOk) {
       throw new IsolationError({ ...decision, ok: false, code: 'E_SENTINEL_FALSO', reason: 'El centinela public.e2e_is_isolated_db() NO devolvió true. Destino NO certificado como base E2E aislada.' });
