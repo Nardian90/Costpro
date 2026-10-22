@@ -67,6 +67,7 @@ import {
   PROTECTED_STORE_IDS,
 } from './hard-cleanup';
 import { isProtectedStore } from './protected-resources';
+import { assertIsolatedDb } from './assert-isolated-db';
 
 loadEnv({ path: './.env' });
 
@@ -488,6 +489,9 @@ export async function verifyProtectedResources(): Promise<void> {
  * workers — mismo contrato que el global-setup original).
  */
 export async function provisionRunEnv(): Promise<RunContext> {
+  // CP-INFRA-011: guard de aislamiento antes de crear usuarios/tenant/pilotos.
+  await assertIsolatedDb();
+
   if (!SUPABASE_URL || !ANON_KEY || !SERVICE_KEY) {
     throw new Error('[run-env] Faltan NEXT_PUBLIC_SUPABASE_URL / ANON_KEY / SERVICE_ROLE_KEY en .env');
   }
@@ -682,6 +686,9 @@ export async function teardownRunEnv(contextPath = runContextPath()): Promise<vo
     console.log('[run-env] Sin context file del run — nada que limpiar (¿modo legacy?).');
     return;
   }
+  // CP-INFRA-011: la limpieza del run también valida el destino (fail-closed).
+  await assertIsolatedDb();
+
   if (!SUPABASE_URL || !SERVICE_KEY) {
     throw new Error('[run-env] Faltan NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY para el teardown');
   }

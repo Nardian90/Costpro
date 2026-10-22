@@ -31,6 +31,8 @@
  */
 const path = require('path');
 const fs = require('fs');
+// CP-INFRA-011: guard de aislamiento (espejo CJS del canónico .ts — paridad probada en src/__tests__/e2e).
+const { assertIsolatedDb } = require('../fixtures/assert-isolated-db.cjs');
 
 // Carga .env (misma convención que playwright.config.ts)
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
@@ -154,6 +156,9 @@ async function verifyProtectedIdentity() {
 }
 
 (async () => {
+  // CP-INFRA-011: el guard corre antes de CUALQUIER consulta con service role.
+  await assertIsolatedDb();
+
   const mode = process.argv.includes('--before') ? 'BEFORE' : 'AFTER';
   const source = PROTECTED_CONFIG ? 'config' : 'fallback';
   const stores = await count('stores', STORE_OR, STORE_EXCLUDE);

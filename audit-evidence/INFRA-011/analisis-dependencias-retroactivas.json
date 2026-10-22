@@ -1,0 +1,25 @@
+{
+ "violaciones": [
+  [
+   7,
+   "20260112_ensure_audit_rls.sql",
+   "receipt_items",
+   53,
+   "20260216_create_receipt_items.sql"
+  ],
+  [
+   18,
+   "20260118_multi_store_audit.sql",
+   "user_store_access",
+   19,
+   "20260118_multi_store_base.sql"
+  ],
+  [
+   30,
+   "20260125_fix_receipt_items_schema.sql",
+   "receipt_items",
+   53,
+   "20260216_create_receipt_items.sql"
+  ]
+ ]
+}

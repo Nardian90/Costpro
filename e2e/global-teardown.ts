@@ -28,11 +28,15 @@
  */
 import { config as loadEnv } from 'dotenv';
 import { isIsolatedRun, teardownRunEnv, getRunTenantId } from './fixtures/run-env';
+import { assertIsolatedDb } from './fixtures/assert-isolated-db';
 import { hardDeleteRunTenantStores, deleteRunTenantIfEmpty, countE2EResiduals } from './fixtures/hard-cleanup';
 
 loadEnv({ path: './.env' });
 
 export default async function globalTeardown(): Promise<void> {
+  // CP-INFRA-011: la limpieza también queda bajo el guard de aislamiento.
+  await assertIsolatedDb();
+
   // Limpieza del run (hard delete de pilotos + tenant del run + usuarios)
   if (!isIsolatedRun()) {
     console.log('[global-teardown] Modo legacy (E2E_ISOLATION=0) — sin teardown de run.');

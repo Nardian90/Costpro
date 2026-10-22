@@ -1,0 +1,42 @@
+{
+  "modo": "--reconcile-table-acl",
+  "transporte": "api",
+  "ref": "lguovmvrozxgssupkwpf",
+  "inicio": "2026-10-22T03:47:28.911Z",
+  "pasos": [
+    {
+      "nombre": "guard-normal-centinela",
+      "ok": true,
+      "detalle": "destino validado con centinela true",
+      "ts": "2026-10-22T03:47:29.719Z"
+    },
+    {
+      "nombre": "exceso-derivado",
+      "ok": true,
+      "detalle": "tablas=0 secuencias=0 (derivadas del baseline vs estado actual; tablas W7/trama excluidas por diseño)",
+      "ts": "2026-10-22T03:47:33.658Z"
+    },
+    {
+      "nombre": "revocacion-exceso",
+      "ok": true,
+      "detalle": "revoke anon,authenticated en 1 tablas y 0 secuencias",
+      "ts": "2026-10-22T03:47:36.233Z"
+    },
+    {
+      "nombre": "re-grant-snapshot",
+      "ok": true,
+      "detalle": "0 GRANTs del snapshot re-aplicados a las tablas reconciliadas",
+      "ts": "2026-10-22T03:47:36.233Z"
+    },
+    {
+      "nombre": "verificacion-post",
+      "ok": true,
+      "detalle": "tablas con anon=148 (esperado=148: 143 snapshot + 5 W7)",
+      "ts": "2026-10-22T03:47:38.210Z"
+    }
+  ],
+  "exceso_tablas": [],
+  "exceso_secuencias": [],
+  "post_tablas_con_anon": 148,
+  "esperado_tablas_con_anon": 148
+}

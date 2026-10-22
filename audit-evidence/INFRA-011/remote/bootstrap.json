@@ -1,0 +1,157 @@
+{
+  "modo": "--bootstrap",
+  "transporte": "api",
+  "ref": "lguovmvrozxgssupkwpf",
+  "inicio": "2026-10-22T03:04:18.554Z",
+  "pasos": [
+    {
+      "nombre": "identidad-management-api",
+      "ok": true,
+      "detalle": "nombre=CostproE2E ref=lguovmvrozxgssupkwpf region=us-east-1 estado=ACTIVE_HEALTHY",
+      "ts": "2026-10-22T03:04:18.784Z"
+    },
+    {
+      "nombre": "guard-identidad-sin-centinela",
+      "ok": true,
+      "detalle": "identidad validada (excepción §3.3)",
+      "ts": "2026-10-22T03:04:18.784Z"
+    },
+    {
+      "nombre": "bootstrap-top-up-idempotente",
+      "ok": true,
+      "detalle": "centinela preexistente; roles+extensiones+grants re-aplicados; roles=4/4",
+      "ts": "2026-10-22T03:04:48.229Z"
+    }
+  ],
+  "identidad": {
+    "ref": "lguovmvrozxgssupkwpf",
+    "name": "CostproE2E",
+    "region": "us-east-1",
+    "status": "ACTIVE_HEALTHY"
+  },
+  "estado_inicial": {
+    "public_tablas": [
+      "e2e_migrations_replay_state"
+    ],
+    "public_funciones": 196,
+    "extensiones": [
+      "btree_gist@1.7",
+      "pg_cron@1.6.4",
+      "pg_stat_statements@1.11",
+      "pgcrypto@1.3",
+      "plpgsql@1.0",
+      "supabase_vault@0.3.1",
+      "uuid-ossp@1.1"
+    ],
+    "roles": [
+      "anon",
+      "authenticated",
+      "authenticator",
+      "dashboard_user",
+      "pgbouncer",
+      "postgres",
+      "service_role",
+      "supabase_admin",
+      "supabase_auth_admin",
+      "supabase_etl_admin",
+      "supabase_privileged_role",
+      "supabase_read_only_user",
+      "supabase_realtime_admin",
+      "supabase_replication_admin",
+      "supabase_storage_admin"
+    ],
+    "buckets": [],
+    "centinela_sql": true,
+    "replay_estado": [
+      {
+        "nombre": "202401230001_add_get_users_for_encargado.sql",
+        "estado": "aplicada",
+        "sha256": "66149ee38960399e1f88bdd0464dc9199883a0de92cc2103fe24340ce9dae1f5"
+      },
+      {
+        "nombre": "202401230002_update_rls_for_encargado.sql",
+        "estado": "fallida",
+        "sha256": "ecfe7b5119f56ea30166476f5534378e8559099130959479990afe6cab3b4ebc"
+      },
+      {
+        "nombre": "20240325000000_harden_audit_triggers.sql",
+        "estado": "aplicada",
+        "sha256": "0d46958a2cb7494f61b7959ea504f513d069667c7987e1f1b63570dac7a5ae13"
+      },
+      {
+        "nombre": "20240725_add_paginated_stock_ledger.sql",
+        "estado": "aplicada",
+        "sha256": "b5d489638aff96f2b3e856399efc58878930da4a8c8d493d670dd9b672c2f73a"
+      },
+      {
+        "nombre": "20240801_create_inventory_adjustments.sql",
+        "estado": "fallida",
+        "sha256": "f6d8da3a7e14ec4489c413274fea116918214c213d9f58641aea40e58ff3094e"
+      }
+    ]
+  },
+  "estado_post": {
+    "public_tablas": [
+      "e2e_migrations_replay_state"
+    ],
+    "public_funciones": 196,
+    "extensiones": [
+      "btree_gist@1.7",
+      "pg_cron@1.6.4",
+      "pg_stat_statements@1.11",
+      "pgcrypto@1.3",
+      "plpgsql@1.0",
+      "supabase_vault@0.3.1",
+      "uuid-ossp@1.1"
+    ],
+    "roles": [
+      "anon",
+      "authenticated",
+      "authenticator",
+      "costpro_snapshot_restorer",
+      "costpro_transaction_adjuster",
+      "dashboard_user",
+      "pgbouncer",
+      "postgres",
+      "service_role",
+      "supabase_admin",
+      "supabase_auth_admin",
+      "supabase_etl_admin",
+      "supabase_privileged_role",
+      "supabase_read_only_user",
+      "supabase_realtime_admin",
+      "supabase_replication_admin",
+      "supabase_storage_admin",
+      "warehouse_staff"
+    ],
+    "buckets": [],
+    "centinela_sql": true,
+    "replay_estado": [
+      {
+        "nombre": "202401230001_add_get_users_for_encargado.sql",
+        "estado": "aplicada",
+        "sha256": "66149ee38960399e1f88bdd0464dc9199883a0de92cc2103fe24340ce9dae1f5"
+      },
+      {
+        "nombre": "202401230002_update_rls_for_encargado.sql",
+        "estado": "fallida",
+        "sha256": "ecfe7b5119f56ea30166476f5534378e8559099130959479990afe6cab3b4ebc"
+      },
+      {
+        "nombre": "20240325000000_harden_audit_triggers.sql",
+        "estado": "aplicada",
+        "sha256": "0d46958a2cb7494f61b7959ea504f513d069667c7987e1f1b63570dac7a5ae13"
+      },
+      {
+        "nombre": "20240725_add_paginated_stock_ledger.sql",
+        "estado": "aplicada",
+        "sha256": "b5d489638aff96f2b3e856399efc58878930da4a8c8d493d670dd9b672c2f73a"
+      },
+      {
+        "nombre": "20240801_create_inventory_adjustments.sql",
+        "estado": "fallida",
+        "sha256": "f6d8da3a7e14ec4489c413274fea116918214c213d9f58641aea40e58ff3094e"
+      }
+    ]
+  }
+}

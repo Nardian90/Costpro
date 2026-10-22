@@ -38,6 +38,8 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+// CP-INFRA-011: guard de aislamiento (espejo CJS del canónico .ts — paridad probada en src/__tests__/e2e).
+const { assertIsolatedDb } = require('../fixtures/assert-isolated-db.cjs');
 
 const repoRoot = path.join(__dirname, '..', '..');
 loadEnvFile(path.join(repoRoot, '.env'));
@@ -118,6 +120,10 @@ async function confirmHealthy() {
 }
 
 async function main() {
+  // CP-INFRA-011: NINGUNA operación antes de validar el destino aislado.
+  await assertIsolatedDb();
+  console.log('[provision-pilot-env] destino validado por el guard de aislamiento (CP-INFRA-011)');
+
   const checkOnly = process.argv.includes('--check');
   console.log('SEC-TS-08 — Entorno Piloto Multi-Tienda (proyecto Supabase ACTUAL)\n');
 

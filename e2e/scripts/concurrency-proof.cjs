@@ -32,6 +32,8 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+// CP-INFRA-011: guard de aislamiento (espejo CJS — paridad probada en src/__tests__/e2e).
+const { assertIsolatedDb } = require('../fixtures/assert-isolated-db.cjs');
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
 loadEnvFile(path.join(REPO_ROOT, '.env'));
@@ -118,6 +120,9 @@ function log(msg) {
 // ── main ───────────────────────────────────────────────────────────────────
 
 async function main() {
+  // CP-INFRA-011: validar el destino aislado antes de cualquier operación.
+  await assertIsolatedDb();
+
   const evidence = {
     startedAt: new Date().toISOString(),
     runs: {},

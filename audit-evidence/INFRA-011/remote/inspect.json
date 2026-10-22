@@ -1,0 +1,74 @@
+{
+  "modo": "--inspect",
+  "transporte": "api",
+  "ref": "lguovmvrozxgssupkwpf",
+  "inicio": "2026-10-22T02:48:20.009Z",
+  "pasos": [
+    {
+      "nombre": "identidad-management-api",
+      "ok": true,
+      "detalle": "nombre=CostproE2E ref=lguovmvrozxgssupkwpf region=us-east-1 estado=ACTIVE_HEALTHY",
+      "ts": "2026-10-22T02:48:20.193Z"
+    },
+    {
+      "nombre": "guard-identidad-sin-centinela",
+      "ok": true,
+      "detalle": "identidad validada (excepción §3.3; --inspect es solo lectura)",
+      "ts": "2026-10-22T02:48:20.194Z"
+    },
+    {
+      "nombre": "inspeccion-read-only",
+      "ok": true,
+      "detalle": "tablas_public=0 funciones_public=0 centinela=false",
+      "ts": "2026-10-22T02:48:36.246Z"
+    }
+  ],
+  "identidad": {
+    "ref": "lguovmvrozxgssupkwpf",
+    "name": "CostproE2E",
+    "region": "us-east-1",
+    "status": "ACTIVE_HEALTHY"
+  },
+  "estado": {
+    "public_tablas": [],
+    "public_funciones": 0,
+    "esquemas": [
+      "auth",
+      "extensions",
+      "graphql",
+      "graphql_public",
+      "pgbouncer",
+      "public",
+      "realtime",
+      "storage",
+      "vault"
+    ],
+    "extensiones": [
+      "pg_stat_statements@1.11",
+      "pgcrypto@1.3",
+      "plpgsql@1.0",
+      "supabase_vault@0.3.1",
+      "uuid-ossp@1.1"
+    ],
+    "roles": [
+      "anon",
+      "authenticated",
+      "authenticator",
+      "dashboard_user",
+      "pgbouncer",
+      "postgres",
+      "service_role",
+      "supabase_admin",
+      "supabase_auth_admin",
+      "supabase_etl_admin",
+      "supabase_privileged_role",
+      "supabase_read_only_user",
+      "supabase_realtime_admin",
+      "supabase_replication_admin",
+      "supabase_storage_admin"
+    ],
+    "buckets": [],
+    "centinela_sql": false,
+    "replay_estado": []
+  }
+}

@@ -1,0 +1,166 @@
+name: E2E Aislado (CostproE2E)
+
+# ============================================================================
+# CP-INFRA-011 — Workflow E2E INDEPENDIENTE y EXCLUSIVAMENTE MANUAL.
+# ============================================================================
+# - Solo workflow_dispatch (mandato FASE 7 §8.1). NUNCA en push/PR. La
+#   activación por PR solo podrá PROPONERSE tras 3 ejecuciones verdes
+#   consecutivas + orden explícita del propietario (documentado en
+#   docs/e2e/E2E_AISLADO.md §criterios-trigger-pr).
+# - Environment separado `e2e-isolated` (NO reutiliza `e2e`). Los jobs
+#   antiguos con if:false (ci.yml / test-coverage.yml) quedan INTACTOS.
+# - Modo project: verifica (no construye) la base aislada vía REST y corre
+#   la suite contra ella. Producción está PROHIBIDA por el guard
+#   (e2e/fixtures/assert-isolated-db.ts) — fail-closed, sin fallbacks.
+# - Modo local: el repo NO tiene procedimiento oficial de stack local
+#   (sin supabase/config.toml) → fail-fast con instrucción (PENDING_OWNER).
+# - Secretos (Settings → Environments → e2e-isolated): E2E_SUPABASE_URL,
+#   E2E_SUPABASE_ANON_KEY, E2E_SUPABASE_SERVICE_ROLE_KEY,
+#   E2E_ALLOWED_REMOTE_REF (+ E2E_TARGET_KIND=project como variable).
+# - Sin continue-on-error. Artefactos SOLO en fallo, con opt-in del
+#   propietario (vars.E2E_ISOLATED_UPLOAD_ARTIFACTS=true — convención
+#   SEC-TS-07: repo público, trazas contienen JWTs de usuarios sintéticos).
+# ============================================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      spec_filter:
+        description: 'Filtro regex de specs Playwright (vacío = smoke set CP-INFRA-011)'
+        required: false
+        default: ''
+        type: string
+      target:
+        description: 'Destino de la base'
+        required: false
+        default: 'project'
+        type: choice
+        options:
+          - project
+          - local
+
+concurrency:
+  group: e2e-isolated
+  cancel-in-progress: false
+
+jobs:
+  e2e-isolated:
+    name: E2E Aislado (${{ github.event.inputs.target || 'project' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    environment: e2e-isolated
+
+    env:
+      # Secrets del Environment (jamás en archivos versionados)
+      E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      E2E_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      E2E_ALLOWED_REMOTE_REF: ${{ secrets.E2E_ALLOWED_REMOTE_REF }}
+      E2E_TARGET_KIND: 'project'
+      # Alias que usa la app y los fixtures (misma fuente de verdad)
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_APP_URL: 'http://localhost:3000'
+      NEXT_PUBLIC_SITE_URL: 'http://localhost:3000'
+      NEXTAUTH_URL: 'http://localhost:3000'
+      NEXT_TELEMETRY_DISABLED: '1'
+      CI: 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Instalar dependencias (frozen)
+        run: bun install --frozen-lockfile
+
+      - name: Validar configuración y destino (fail-closed, sin valores)
+        run: node scripts/e2e/check-e2e-config.mjs --target ${{ github.event.inputs.target || 'project' }}
+
+      - name: Verificar determinismo de la capa de reproducción (manifiesto)
+        run: node scripts/e2e/build-migrations-replay.mjs --check
+
+      - name: Verificar base aislada (project) / stack local (local)
+        if: ${{ (github.event.inputs.target || 'project') == 'project' }}
+        run: node scripts/e2e/verify-remote-e2e.mjs
+
+      - name: Modo local — procedimiento pendiente (PENDING_OWNER)
+        if: ${{ (github.event.inputs.target || 'project') == 'local' }}
+        run: |
+          echo "::error::El repositorio NO tiene stack Supabase local configurado (falta supabase/config.toml) — no existe un procedimiento oficial que este workflow pueda ejecutar. Vea docs/e2e/E2E_AISLADO.md §ejecución-local para crearlo (decisión del propietario). El modo local falla aquí por diseño (fail-closed), sin tocar ningún proyecto remoto."
+          exit 1
+
+      - name: Generar NEXTAUTH_SECRET efímero (no versionado)
+        run: echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+
+      - name: Build de la aplicación (variables públicas definidas antes de compilar)
+        run: NODE_OPTIONS="--max-old-space-size=4096" bun run build
+
+      - name: Arrancar servidor (puerto 3000)
+        run: |
+          bunx next start -p 3000 &
+          for i in $(seq 1 45); do
+            if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "Servidor listo (health 200) tras ${i} intentos"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::El servidor no respondió /api/health en 90s"
+          exit 1
+
+      - name: Instalar Chromium para Playwright
+        run: bunx playwright install --with-deps chromium
+
+      - name: Ejecutar suite E2E (smoke set CP-INFRA-011 o filtro indicado)
+        run: |
+          FILTER="${{ github.event.inputs.spec_filter }}"
+          if [ -z "$FILTER" ]; then
+            FILTER='health-api|isolated-db-sentinel|auth.spec.ts|data-hygiene-probe|isolation-proof|inventory.spec.ts|pos-checkout|inventory-integrity'
+          fi
+          echo "Filtro: $FILTER"
+          bunx playwright test --project=core --reporter=line,json --retries=0 "$FILTER"
+
+      - name: Resumen de pruebas (sin secretos)
+        if: always()
+        run: |
+          if [ -f test-results/report.json ]; then
+            python3 - << 'PY'
+            import json
+            try:
+                r = json.load(open('test-results/report.json'))
+                s = r.get('stats', {})
+                print(f"Resumen E2E: total={s.get('total')} passed={s.get('expected')} flaky={s.get('unexpected')} skipped={s.get('skipped')} failed={s.get('unexpected', 0) + s.get('expectedFailed', 0)}")
+                for suite in r.get('suites', []):
+                    for spec in suite.get('specs', []):
+                        for t in spec.get('tests', []):
+                            status = t.get('status', t.get('results', [{}])[0].get('status', '?'))
+                            print(f"  {status.upper():8s} {spec.get('title', '?')[:100]}")
+            except Exception as e:
+                print('No se pudo parsear test-results/report.json:', e)
+            PY
+          else
+            echo 'Sin reporte JSON disponible (la corrida no llegó a ejecutar pruebas).'
+          fi
+
+      - name: Subir artefactos de fallo (opt-in del propietario — SEC-TS-07)
+        if: failure() && vars.E2E_ISOLATED_UPLOAD_ARTIFACTS == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-isolated-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 1
