@@ -19,7 +19,8 @@
 │         (4) centinela public.e2e_is_isolated_db() === true (fail-closed)    │
 │    └─ fixtures/run-env.ts · scripts .cjs standalone ──► mismo guard           │
 │  App Next.js (localhost:3000) ──► PROYECTO AISLADO CostproE2E                 │
-│  149 tablas · 264 funciones SECURITY DEFINER · RLS 149/149 · centinela ✓      │
+│  149 tablas · 264 funciones SECURITY DEFINER · RLS 149/149 · centinela ✓ ·
+│  trigger de alta de usuarios (auth.users → public.on_auth_user_created) ✓ │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -273,3 +274,13 @@ smoke set del workflow SOLO si la prueba es estable (3 corridas verdes).
    sin DDL versionado): no existe en E2E — su REVOKE se omitió documentado;
    los flujos que dependan de esa protección divergen (sin impacto en smoke).
 5. Modo local PENDING_OWNER (sin stack local en el repo).
+6. El baseline (snapshot 2026-08-28) cubre SOLO el esquema public: el
+   trigger de alta de usuarios `tr_on_auth_user_created` (auth.users →
+   `public.on_auth_user_created`, creado out-of-band y no versionado en
+   ningún artefacto del repo) NO es reproducido por la capa de replay. Se
+   materializa por el bootstrap (sección C.2 de `supabase/e2e-bootstrap.sql`)
+   al final de `--apply-replay`. Hallazgo de la corrida 39777819072
+   (CICLO 2): sin él, el provisioning de run-env muere en el FK
+   `tenants_owner_id_fkey` (23503) porque los usuarios sintéticos creados vía
+   Admin API no obtienen fila en `public.profiles`. Definición replicada
+   verbatim de producción (lectura read-only autorizada, 2026-10-22).
