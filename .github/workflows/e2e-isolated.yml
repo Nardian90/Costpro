@@ -74,6 +74,11 @@ jobs:
       # el propio guard para bootstrap/entorno aislado
       # (e2e/fixtures/run-env.ts §verifyProtectedResources).
       E2E_SKIP_PROTECTED_GUARD: '1'
+      # FIX (hallazgo corrida 39779247845): con --reporter=line,json en CLI,
+      # el JSON va a STDOUT y test-results/report.json nunca se crea → el
+      # paso "Resumen de pruebas" siempre decía "Sin reporte JSON". Con esta
+      # variable el json reporter escribe el archivo (relativo al cwd).
+      PLAYWRIGHT_JSON_OUTPUT_NAME: 'test-results/report.json'
       # Alias que usa la app y los fixtures (misma fuente de verdad)
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}

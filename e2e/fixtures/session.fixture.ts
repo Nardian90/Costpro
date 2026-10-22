@@ -21,7 +21,7 @@
  */
 import { type Page } from '@playwright/test';
 import { PILOT_A_NAME, PILOT_B_NAME, getPilotEnv, type PilotEnv } from './pilot-env';
-import { getRunId, getRunTenantId } from './run-env';
+import { getRunId, getRunTenantId, isIsolatedRun } from './run-env';
 import { hardDeleteTestStore } from './hard-cleanup';
 import { isProtectedStore } from './protected-resources';
 
@@ -285,7 +285,13 @@ export async function createTestStore(
     // Fail-closed: si la gobernanza de protegidos rotara y el piloto dejara
     // de estar en la lista, el spec aborta en vez de operar sobre una tienda
     // sin protección (defensa en profundidad sobre pilot-env).
-    if (!isProtectedStore(pick.id, pick.name)) {
+    // CP-INFRA-011 (hallazgo corrida 39779247845): el check aplica a los
+    // pilotos PERSISTENTES del modo legacy (producción). En run AISLADO los
+    // pilotos son EFÍMEROS por corrida (nombre 'E2E PILOT X CostPro <runId>',
+    // tenant propio del run, hard-delete en el teardown): no existen ni
+    // deben existir en protected-resources.json — su protección ES su
+    // efimeridad y el alcance del tenant del run.
+    if (!isIsolatedRun() && !isProtectedStore(pick.id, pick.name)) {
       throw new Error(
         `[fixture:reuse] La piloto ${pick.name} (${pick.id}) NO está en protected-resources.json — ` +
           'actualizar la gobernanza antes de reutilizarla (FASE 4).',
