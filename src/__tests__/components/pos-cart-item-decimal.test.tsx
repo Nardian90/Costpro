@@ -138,7 +138,7 @@ describe('POSCartItem — campo de cantidad decimal (misión 2026-10-23)', () =>
   });
 
   it('clampa al tope de stock (stock 2.5 → máximo 2.5, no al entero anterior 2)', () => {
-    const { onUpdateQuantity } = setup(makeItem({ product: { id: 'prod-157', name: 'Royal Cole', sku: '157', price: 45.5, stock_current: 2.5, is_service: false, product_variants: [] } as CartItem['product'] }));
+    const { onUpdateQuantity } = setup(makeItem({ product: { id: 'prod-157', name: 'Royal Cole', sku: '157', price: 45.5, stock_current: 2.5, is_service: false, product_variants: [] } as unknown as CartItem['product'] }));
     const input = openEditorAndType('9');
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onUpdateQuantity).toHaveBeenCalledWith('prod-157', null, 2.5);
