@@ -59,6 +59,21 @@ jobs:
       E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
       E2E_ALLOWED_REMOTE_REF: ${{ secrets.E2E_ALLOWED_REMOTE_REF }}
       E2E_TARGET_KIND: 'project'
+      # FIX (hallazgo de la corrida 39775796843): sin E2E_ISOLATION=1 el
+      # global-setup cae en MODO LEGACY (usuarios seed admin@costpro.com /
+      # cajero@demo.com) que NO existen en la base aislada (schema-only,
+      # 0 INSERTs top-level) → 400 invalid_credentials y la corrida muere
+      # antes de ejecutar un solo spec. El modo aislado provisiona identidad
+      # sintética por corrida — mandato CP-INFRA-011 §11 (E2E_AISLADO.md):
+      # «los usuarios y datos nacen de e2e/fixtures/run-env.ts, nunca datos
+      # reales de ENERVIDA/CENTRAL/Puerto Padre».
+      E2E_ISOLATION: '1'
+      # Los recursos protegidos (pilotos persistentes / tiendas de negocio,
+      # ids de producción) NO existen —ni deben existir— en la base aislada:
+      # el guard de entorno los exigiría y abortaría. Escape documentado por
+      # el propio guard para bootstrap/entorno aislado
+      # (e2e/fixtures/run-env.ts §verifyProtectedResources).
+      E2E_SKIP_PROTECTED_GUARD: '1'
       # Alias que usa la app y los fixtures (misma fuente de verdad)
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
