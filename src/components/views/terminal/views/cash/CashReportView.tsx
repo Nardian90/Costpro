@@ -605,15 +605,30 @@ export default function CashReportView() {
   // ── Acción principal (§2): Generar (sin resultados) / Actualizar (con resultados) ──
   const generateLabel = !applied ? 'Generar reporte' : 'Actualizar reporte';
 
-  // ══ MISIÓN 2026-10-22 (Parte C): panel lateral desplegable de configuración ══
-  // La configuración de documento (tipo/orientación/opciones/firmas) vive en un
-  // drawer derecho; la vista principal prioriza filtros esenciales, reporte,
-  // vista previa y acciones de generación/exportación. El panel conserva los
-  // valores al abrir/cerrar (mismo estado React — nada se reinicia), no toca el
-  // contexto de la vista previa y se cierra con botón explícito o Escape.
+  // ══ MISIÓN 2026-10-22 (rediseño Parte B): panel lateral INTEGRADO ══
+  // Defecto corregido: el panel anterior era un overlay modal (fixed inset-0
+  // + backdrop bg-background/70 backdrop-blur) — en tema oscuro el velo
+  // oscurecía el reporte entero ("el contenido principal desaparece") y el
+  // backdrop interceptaba los clics ("queda inutilizable"). Rediseño tomando
+  // como referencia el patrón del MENÚ PRINCIPAL IZQUIERDO de COSTPRO
+  // (Sidebar fija + redistribución del espacio con transición de 300ms
+  // ease-in-out; en móvil, hoja superpuesta con backdrop) y el aside integrado
+  // de POSExpressMode: en escritorio el panel es una COLUMNA REAL del layout
+  // (flex) que cede espacio del reporte mediante redistribución controlada —
+  // el reporte permanece VISIBLE y UTILIZABLE mientras el panel está abierto.
   const [configOpen, setConfigOpen] = useState(false);
-  const configPanelRef = useRef<HTMLDivElement>(null);
+  const configPanelRef = useRef<HTMLElement>(null);
   const configTriggerRef = useRef<HTMLButtonElement>(null);
+
+  // Escritorio (≥lg): panel integrado no-modal. Móvil/tablet: hoja modal.
+  // Mismo patrón de lectura que useIsMobile (innerWidth + resize).
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+  useEffect(() => {
+    const onResize = () => setIsDesktopViewport(window.innerWidth >= 1024);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const closeConfig = useCallback(() => {
     setConfigOpen(false);
@@ -624,7 +639,8 @@ export default function CashReportView() {
   useEffect(() => {
     if (!configOpen) return;
     // Foco inicial dentro del panel: el contenedor mismo (tabIndex -1); el Tab
-    // fluye luego por los controles en orden natural.
+    // fluye luego por los controles en orden natural (escritorio: no-modal —
+    // el reporte sigue siendo alcanzable con Tab, como el resto de la app).
     configPanelRef.current?.focus();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeConfig(); };
     window.addEventListener('keydown', onKey);
@@ -650,7 +666,13 @@ export default function CashReportView() {
   const btnIcn = `p-2 rounded-lg border border-border/40 hover:bg-muted ${touch} flex items-center justify-center`;
 
   return (
-    <div className="space-y-4 sm:space-y-6" data-testid="cash-report-view">
+    // MISIÓN 2026-10-22 (rediseño Parte B): fila flex en escritorio — columna del
+    // reporte (flex-1, TODO el contenido de la vista) + panel de configuración
+    // integrado. Al abrir el panel, la columna cede espacio con la MISMA
+    // transición del menú principal (300ms ease-in-out) — redistribución
+    // controlada, sin overlay que oculte o bloquee el reporte.
+    <div className="flex flex-col lg:flex-row lg:items-stretch" data-testid="cash-report-view">
+      <div className="min-w-0 flex-1 space-y-4 sm:space-y-6">
       <PageHeader
         title="Reporte de Caja — Entrega"
         description="Cuadre y desglose de efectivo para la entrega de dinero del periodo."
@@ -900,26 +922,56 @@ export default function CashReportView() {
           </div>
       </div>
 
-      {/* ══ MISIÓN 2026-10-22 (Parte C): panel lateral desplegable de configuración ══ */}
-      {/* Drawer derecho (escritorio) / hoja completa (móvil). No desplaza la
-          interfaz, conserva los valores al abrir/cerrar, no reinicia la vista
-          previa ni los filtros, se cierra con botón explícito, backdrop o
-          Escape, y devuelve el foco al disparador. Controles nativos →
-          navegación por teclado en orden natural y foco visible. */}
+      {/* ══ MISIÓN 2026-10-22 (rediseño Parte B): fin de la columna del reporte ══ */}
+      </div>
+
+      {/* Backdrop SOLO en móvil/tablet (<lg) — mismo patrón del menú principal
+          izquierdo en móvil (bg-black/50 + cierre al pulsar). En escritorio NO
+          existe: el panel está integrado y el reporte queda visible y clicable. */}
       {configOpen && (
-        <div className="fixed inset-0 z-[205]" role="dialog" aria-modal="true" aria-labelledby="cr-config-title">
-          <div
-            className="absolute inset-0 bg-background/70 backdrop-blur-[2px]"
-            onClick={closeConfig}
-            aria-hidden="true"
-            data-testid="cash-report-config-backdrop"
-          />
-          <div
-            ref={configPanelRef}
-            tabIndex={-1}
-            data-testid="cash-report-config-panel"
-            className="absolute right-0 top-0 h-full w-full sm:w-[420px] bg-card border-l border-border shadow-2xl flex flex-col focus:outline-none"
-          >
+        <div
+          className="fixed inset-0 z-[204] bg-black/50 lg:hidden"
+          onClick={closeConfig}
+          aria-hidden="true"
+          data-testid="cash-report-config-backdrop"
+        />
+      )}
+
+      {/* ══ MISIÓN 2026-10-22 (rediseño Parte B): panel lateral INTEGRADO ══ */}
+      {/* Escritorio (lg+): columna real del layout (patrón POSExpressMode aside
+          + redistribución del menú principal): lg:w-[400px] con transición de
+          anchura de 300ms ease-in-out — el reporte cede espacio sin ocultarse
+          NI bloquearse (sin velo bg-background/70, sin backdrop). El contenido
+          interno mantiene su ancho fijo (lg:w-[400px]) para no refluidar durante
+          la transición. Móvil/tablet: hoja lateral derecha (fixed) con backdrop
+          — patrón del menú izquierdo en móvil. Cierre: botón explícito, backdrop
+          (móvil) o Escape; foco devuelto al disparador. Siempre montado: la
+          visibilidad (visible/invisible + aria-hidden) gobierna el acceso — no
+          hay desmontaje del reporte ni de la vista previa al abrir/cerrar. */}
+      <aside
+        ref={configPanelRef}
+        tabIndex={-1}
+        data-testid="cash-report-config-panel"
+        data-open={configOpen}
+        aria-hidden={!configOpen}
+        role="dialog"
+        aria-modal={configOpen && !isDesktopViewport ? true : undefined}
+        aria-labelledby="cr-config-title"
+        className={cn(
+          // Móvil/tablet: hoja lateral derecha superpuesta.
+          'fixed inset-y-0 right-0 z-[205] w-full max-w-[420px] bg-card border-l border-border shadow-2xl flex flex-col',
+          'transition-[transform,width,opacity,visibility] duration-300 ease-in-out motion-reduce:transition-none',
+          configOpen
+            ? 'translate-x-0 visible opacity-100'
+            : 'translate-x-full invisible opacity-0 pointer-events-none',
+          // Escritorio: columna INTEGRADA (static) — empuja, no tapa.
+          'lg:static lg:z-auto lg:max-w-none lg:translate-x-0 lg:shadow-none lg:rounded-2xl lg:border lg:border-border lg:border-l-0 lg:overflow-hidden lg:shrink-0 lg:min-w-0',
+          configOpen ? 'lg:w-[400px] lg:visible lg:opacity-100' : 'lg:w-0 lg:invisible lg:opacity-0',
+        )}
+      >
+        {/* Ancho fijo del contenido en escritorio: sin reflujo de controles
+            durante la transición de anchura del aside. */}
+        <div className="h-full w-full lg:w-[400px] flex flex-col">
             <header className="flex items-center justify-between px-4 py-3 border-b border-border/60 shrink-0">
               <h2 id="cr-config-title" className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
                 <Settings className="w-4 h-4 text-primary" /> Configuración del reporte
@@ -1079,9 +1131,8 @@ export default function CashReportView() {
               Los cambios se guardan automáticamente en este navegador y se aplican a la vista previa, el PDF y el Excel.
               El conteo del desglose se guarda con «Guardar desglose».
             </footer>
-          </div>
         </div>
-      )}
+      </aside>
 
       {/* Overlay de detalle de documento (ojo) — portado del modal */}
       {selectedDoc && (

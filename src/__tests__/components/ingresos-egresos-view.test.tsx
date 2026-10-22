@@ -291,6 +291,23 @@ describe('IngresosEgresosView — render, consulta RLS y KPIs', () => {
     expect(c.range).toHaveBeenCalledWith(0, 26); // pageSize 25 + 1 fila de detección (range inclusivo)
   });
 
+  it('2-bis · MISIÓN 2026-10-22 Parte A: el select usa el hint por COLUMNA en el embed autoreferencial (regresión PGRST200)', async () => {
+    // El defecto: «No se pudieron cargar los movimientos» — PGRST200 porque el
+    // hint por NOMBRE DE CONSTRAINT no resolvía en la caché de PostgREST
+    // (desincronizada tras recrearse el constraint). El hint por columna
+    // `!related_document_id` resuelve bajo ambas cachés.
+    renderView();
+    await waitFor(() => expect(fromMock).toHaveBeenCalledWith('cash_flow_documents'));
+    const idx = fromMock.mock.calls.findIndex(c => c[0] === 'cash_flow_documents');
+    const c = fromMock.mock.results[idx]?.value;
+    const selectArg = String(c.select.mock.calls[0]?.[0] ?? '');
+    expect(selectArg).toContain('related_document:cash_flow_documents!related_document_id(');
+    expect(selectArg).not.toContain('cash_flow_documents!cash_flow_documents_related_document_id_fkey');
+    // Embeds hacia profiles intactos (auditados contra la caché viva: OK).
+    expect(selectArg).toContain('profiles!cash_flow_documents_responsible_user_id_fkey');
+    expect(selectArg).toContain('profiles!cash_flow_documents_annulled_by_fkey');
+  });
+
   it('3 · KPIs del RPC get_cash_flow_summary (una sola fuente de verdad)', async () => {
     renderView();
     // Saldo de caja = fórmula v2.21.0 con los documentos dentro (una sola vez)

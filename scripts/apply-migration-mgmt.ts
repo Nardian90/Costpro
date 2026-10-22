@@ -28,6 +28,24 @@ async function main() {
   if (!res.ok) { console.error(text.slice(0, 800)); process.exit(1); }
   console.log('OK ✓ (result sample):', text.slice(0, 200) || '(empty)');
 
+  // MISIÓN 2026-10-22 (Parte A): recargar la caché de esquema de PostgREST
+  // tras aplicar cualquier migración. La Management API NO envía el NOTIFY
+  // que el SQL editor envía automáticamente; sin él, migraciones que
+  // crean/recreean constraints dejan la caché desincronizada y los embeds
+  // con hint por constraint fallan con PGRST200 (causa raíz demostrada del
+  // defecto de Ingresos/Egresos). Si este NOTIFY no llega al listener (ver
+  // scripts/pgrst-reload-schema.mjs), ejecutarlo desde el SQL editor.
+  try {
+    const reload = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: "NOTIFY pgrst, 'reload schema'" }),
+    });
+    console.log(`pgrst schema-cache reload notify: HTTP ${reload.status}`);
+  } catch (e) {
+    console.warn('pgrst reload notify falló (ejecutarlo desde el SQL editor):', e);
+  }
+
   // Post-verify: the email check must exclude v_user_id
   const verify = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {
     method: 'POST',
