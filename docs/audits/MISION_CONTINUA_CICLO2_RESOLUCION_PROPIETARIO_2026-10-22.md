@@ -130,12 +130,13 @@ fila a fila en el CSV.
 
 ## 9. PR propuesto en este ciclo (NINGUNO fusionado por el agente)
 
-**Un único PR documental** desde la rama `docs/mision-continua-ciclo2-resolucion-propietario`
-con TODO el ciclo: registro de la resolución + índice/banner del registro de
-decisiones + CSV (22 filas) + 2 anotaciones explícitas + 3 planes de preparación
-D/E/F/G + evidencia del ciclo + este informe. Sin cambios de código de aplicación
-(cero riesgo funcional; CI del PR verificará el árbol). La fusión, como siempre,
-corresponde al propietario.
+**PR #1449** (abierto 2026-10-22, rama `docs/mision-continua-ciclo2-resolucion-propietario`
+→ `main`, base `7b6ce8bff` post-#1448) con TODO el ciclo: registro de la resolución +
+índice/banner del registro de decisiones + CSV (22 filas) + 2 anotaciones explícitas +
+3 planes de preparación D/E/F/G + evidencia del ciclo + este informe. Sin cambios de
+código de aplicación (cero riesgo funcional; CI del PR verificará el árbol).
+**La fusión, como siempre, corresponde al propietario.**
+https://github.com/Nardian90/Costpro/pull/1449
 
 ## 10. Resumen ejecutivo para el propietario
 
