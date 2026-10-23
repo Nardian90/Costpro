@@ -135,10 +135,12 @@ export const MOVEMENT_TYPES: MovementTypeInfo[] = [
   {
     id: 'received_service',
     label: 'Servicio recibido',
-    area: 'Almacén',
+    // MISIÓN ARQUITECTURA UX (2026-10-23): el módulo se trasladó de Almacén a
+    // Logística (OPERACIÓN) — el área refleja su nueva ubicación en el menú.
+    area: 'Logística',
     description: 'Costo de servicio del período (transporte, aduana, seguro) distribuido al inventario.',
     targetView: 'received-services',
-    selectorLocation: 'Servicios Recibidos → Registrar (campo «Fecha del servicio»)',
+    selectorLocation: 'Logística → Servicios Recibidos → Registrar (campo «Fecha del servicio»)',
     status: 'configurable',
     dateFields: {
       effective: 'received_services.service_date',

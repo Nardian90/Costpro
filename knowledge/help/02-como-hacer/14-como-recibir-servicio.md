@@ -17,9 +17,10 @@ Ambos son "compras" pero el sistema los trata diferente porque los servicios **n
 
 ## Paso 1 — Ir a Servicios Recibidos
 
-1. En el menú izquierdo, haga clic en **Multi-Tienda**.
-2. Haga clic en **Servicios Recibidos**.
-3. Verá una lista con los servicios anteriores y un botón **"+ Nuevo servicio"**.
+1. En el menú izquierdo, abra **OPERACIÓN**.
+2. Abra el grupo **Logística**.
+3. Haga clic en **Servicios Recibidos**.
+4. Verá una lista con los servicios anteriores y un botón **"+ Nuevo Servicio"**.
 
 ## Paso 2 — Iniciar un nuevo registro de servicio
 

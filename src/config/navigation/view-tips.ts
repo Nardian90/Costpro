@@ -47,7 +47,7 @@ export const VIEW_TIPS: Record<string, string> = {
   'sales-hub': 'Vender, Caja e Historial al frente; el resto en Otras opciones',
   'ofertas': 'Crea promociones y combos activos',
   'inventory': 'Filtra por stock bajo para reabastecer',
-  'received-services': 'Distribuye costos de servicios entre recepciones',
+  'received-services': 'Registra servicios de terceros, distribuye su costo y controla los pagos',
   'inventory_adjustments': 'Documenta cada ajuste con justificación',
   'physical_inventory': 'Corte congelado: la teórica se fija al preparar, no al abrir la vista',
   'vales_salida': 'Un vale completado se devuelve con reversión — nunca se edita',

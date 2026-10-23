@@ -157,7 +157,8 @@ test.describe('Política temporal — Parte B: UI de las 5 vistas prioritarias',
     await page.waitForTimeout(800);
 
     // ═══ B4 · SERVICIOS RECIBIDOS ═══
-    await navegar(page, 'Almacén', 'Servicios Recibidos');
+    // MISIÓN ARQUITECTURA UX (2026-10-23): el módulo vive ahora en Logística.
+    await navegar(page, 'Logística', 'Servicios Recibidos');
     await page.waitForTimeout(2000);
     await page.screenshot({ path: `${OUT_DIR}/b4-servicios-vista.png`, fullPage: false });
     await page.getByRole('button', { name: /Nuevo Servicio/i }).first().click();

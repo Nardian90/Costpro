@@ -380,7 +380,8 @@ test.describe('Fechas de trabajo — Parte C: vista y formularios (UI)', () => {
     }
 
     // C5c — Servicios Recibidos: selector visible (PR #1422) sin preferencia.
-    await navegar(page, 'Almacén', 'Servicios Recibidos');
+    // MISIÓN ARQUITECTURA UX (2026-10-23): el módulo vive ahora en Logística.
+    await navegar(page, 'Logística', 'Servicios Recibidos');
     await page.waitForTimeout(2000);
     const nuevoSvc = page.getByRole('button', { name: /Nuevo Servicio/i }).first();
     if (await nuevoSvc.count() && await nuevoSvc.isVisible().catch(() => false)) {
