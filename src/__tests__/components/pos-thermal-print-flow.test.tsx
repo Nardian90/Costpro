@@ -147,10 +147,13 @@ describe('printThermalReceipt — flujo real hasta el diálogo nativo', () => {
 
   it('restaura las clases también vía afterprint (diálogo cerrado por evento)', async () => {
     document.documentElement.setAttribute('class', 'h-full dark');
-    let onAfterPrint: (() => void) | null = null;
+    // Holder por referencia: evita el narrowing de TS a través de closures
+    // (la asignación ocurre dentro del mock; con variable suelta tsc puede
+    // estrechar a never y fallar en CI con caché limpia).
+    const afterPrintRef: { fn: (() => void) | null } = { fn: null };
     const addSpy = vi.spyOn(window, 'addEventListener').mockImplementation(
       ((type: string, listener: EventListenerOrEventListenerObject) => {
-        if (type === 'afterprint') onAfterPrint = listener as () => void;
+        if (type === 'afterprint') afterPrintRef.fn = listener as () => void;
         return window;
       }) as typeof window.addEventListener,
     );
@@ -161,7 +164,7 @@ describe('printThermalReceipt — flujo real hasta el diálogo nativo', () => {
       const promise = printThermalReceipt(FIXTURE);
       // El flujo aún no retornó (el diálogo está "abierto") — clases fuera
       expect(document.documentElement.getAttribute('class') ?? '').not.toContain('dark');
-      onAfterPrint?.();
+      afterPrintRef.fn?.();
       await promise;
       expect(document.documentElement.getAttribute('class')).toBe('h-full dark');
       expect(document.querySelector('[data-thermal-print-overlay]')).toBeNull();
