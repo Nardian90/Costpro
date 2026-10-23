@@ -48,6 +48,15 @@ export interface IpvSalesLineRow {
   price_at_sale: string | number | null;
   price_at_sale_cup: string | number | null;
   price_currency: string | null;
+  /**
+   * MISIÓN MULTIMONEDA (2026-10-23): moneda NATIVA del ítem (transaction_items.currency).
+   * create_sale_v2 estampa price_currency = p_sale_currency (moneda de la VENTA,
+   * 'CUP' en ventas sin zelle) — para un ítem USD cobrado en efectivo USD el
+   * price_at_sale nativo (7) queda etiquetado 'CUP'. La columna informativa
+   * VENTAS USD se clasifica por la moneda nativa del ítem con fallback a
+   * price_currency (histórico V1 sin currency).
+   */
+  currency?: string | null;
   exchange_rate: string | number | null;
   sale_exchange_rate: string | number | null;
 }
@@ -332,7 +341,10 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
     const { total, anomaly } = computeLineTotalCup(line);
     salesCup.set(pid, (salesCup.get(pid) ?? 0) + total);
     if (anomaly) priceAnomalyProducts.add(pid);
-    if ((line.price_currency ?? '').toUpperCase() === 'USD') {
+    if (((line.currency ?? line.price_currency) ?? '').toUpperCase() === 'USD') {
+      // MISIÓN MULTIMONEDA: moneda nativa del ítem (fallback price_currency para
+      // filas V1). El canónico CUP NO cambia (sigue viniendo de
+      // price_at_sale_cup con la tasa de cada venta).
       const qty = num(line.quantity);
       const price = num(line.price_at_sale);
       salesUsd.set(pid, (salesUsd.get(pid) ?? 0) + round2(price * qty));

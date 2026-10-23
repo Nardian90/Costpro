@@ -193,13 +193,29 @@ export function computeDailySummary(
     ventasZelle = n(pt.zelle);
     // payment-totals sí desglosa mixed vía cash_amount/transfer_amount.
   } else {
+    // Fallback: grupos `sales` (por MONEDA DE COBRO desde el incidente
+    // 2026-10-16). Cada hoja de moneda cuenta sus cobros NATIVOS; la hoja
+    // CUP (hoja CANÓNICA — el modelo v2.24: "el canónico CUP es el
+    // equivalente contable, con tasa trazable") añade además la equivalencia
+    // total_cup de los cobros en efectivo recibidos en OTRA moneda, para que
+    // el efectivo esperado a entregar del día no pierda los cobros USD/EUR
+    // (p.ej. venta 7 USD cobrada en efectivo USD: hoja CUP +5.600, hoja USD +7).
     for (const s of report.sales || []) {
-      if (s.currency !== currency) continue;
       const t = n(s.total);
-      if (s.payment_method === 'cash') ventasCash += t;
-      else if (s.payment_method === 'transfer') ventasTransfer += t;
-      else if (s.payment_method === 'zelle') ventasZelle += t;
-      else ventasMixed += t; // mixed sin split: al total, no al efectivo
+      if (s.payment_method === 'cash') {
+        if (s.currency === currency) ventasCash += t;
+        else if (currency === 'CUP') ventasCash += n(s.total_cup ?? t);
+        // Cobro CUP: no toca hojas de moneda no-CUP (solo su hoja nativa).
+      } else if (s.currency === currency) {
+        if (s.payment_method === 'transfer') ventasTransfer += t;
+        else if (s.payment_method === 'zelle') ventasZelle += t;
+        else ventasMixed += t; // mixed sin split: al total, no al efectivo
+      } else if (currency === 'CUP') {
+        // Canónicos de vouchers en otra moneda: informativos en ventasTotales
+        if (s.payment_method === 'transfer') ventasTransfer += n(s.total_cup ?? 0);
+        else if (s.payment_method === 'zelle') ventasZelle += n(s.total_cup ?? 0);
+        else ventasMixed += n(s.total_cup ?? 0);
+      }
     }
   }
 

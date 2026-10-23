@@ -139,7 +139,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       fetchAllRows(
         pageable(supabase
           .from('transaction_items')
-          .select('product_id, quantity, price_at_sale, price_at_sale_cup, price_currency, exchange_rate, transactions!inner(status, store_id, completed_at, sale_exchange_rate)')
+          .select('product_id, quantity, price_at_sale, price_at_sale_cup, price_currency, currency, exchange_rate, transactions!inner(status, store_id, completed_at, sale_exchange_rate)')
           .eq('transactions.status', 'completed')
           .eq('transactions.store_id', storeIdFinal)
           .gte('transactions.completed_at', fromISO)
