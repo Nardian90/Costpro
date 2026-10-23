@@ -226,8 +226,13 @@ describe('AICommandCenterView (Inicio)', () => {
     const embedded = screen.getByTestId('store-dashboard-embedded');
     expect(embedded.getAttribute('data-embedded')).toBe('true');
     // DASHBOARD V3: recents viajan como aside DENTRO del dashboard (única
-    // instancia canónica, al lado del gráfico circular)
-    expect(screen.getByTestId('recent-activity-empty')).toBeInTheDocument();
+    // instancia canónica, al lado del gráfico circular). El panel carga sus
+    // entradas con useState+useEffect: el testid aparece UN TICK después del
+    // dashboard embebido — waitFor evita la carrera en los runners lentos de
+    // CI (reproducido en 39913657254, dos corridas consecutivas).
+    await waitFor(() => {
+      expect(screen.getByTestId('recent-activity-empty')).toBeInTheDocument();
+    });
   });
 
   it('GATE 9 + CAMBIO 1: conversación activa → recents Y dashboard desmontados; idle → regresan', async () => {
