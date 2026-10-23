@@ -839,6 +839,15 @@
       "reason": "REVISIÓN FINAL v2.24.1 2026-10-24 · gate de rol admin/manager/encargado en servidor (la UI ya lo restringe; has_store_access_as aceptaba cualquier membresía activa vía POST directo) versionado en 20261024120000 y PENDIENTE de aplicación autorizada en producción. Fórmula del arqueo byte-idéntica. El cuerpo LIVE pre-v2.24.1 está certificado; drift INTENCIONAL y temporal.",
       "added_by": "revision-final-pr1465",
       "expires": "2027-01-31"
+    },
+    {
+      "function": "create_sale_v2/31",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "REVISIÓN FINAL v2.24.1 2026-10-24 · bloqueo preventivo del vuelto NO registrable (ERR_OVERPAYMENT_UNREGISTERED_CHANGE) versionado en 20261024120000 y PENDIENTE de aplicación autorizada en producción. Drift INTENCIONAL y temporal.",
+      "added_by": "revision-final-pr1465",
+      "expires": "2027-01-31"
     }
   ]
 }

@@ -372,6 +372,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (msg.includes('ERR_CASH_SETTLEMENT_MISMATCH')) {
       return NextResponse.json({ error: 'La liquidación del cobro (recibido − vuelto) no cuadra con el efectivo de la venta según la tasa aplicable. Revisa los importes o la moneda del vuelto.' }, { status: 422 });
     }
+    // REVISIÓN FINAL v2.24.1 (F4): bloqueo del vuelto NO registrable —
+    // sobrepago sin liquidación (el cambio físico quedaría sin registrar y el
+    // libro sobreestimaría el efectivo disponible).
+    if (msg.includes('ERR_OVERPAYMENT_UNREGISTERED_CHANGE')) {
+      return NextResponse.json({ error: 'El importe recibido excede el total de la venta y sin liquidación de vuelto el cambio entregado no quedaría registrado. Ajusta el desglose a importes exactos o registra el cobro con su vuelto (cobro simple en efectivo).' }, { status: 422 });
+    }
     if (msg.includes('ERR_CASH_SETTLEMENT_NOT_APPLICABLE')) {
       return NextResponse.json({ error: 'La venta no tiene componente en efectivo: no aplica liquidación de vuelto.' }, { status: 422 });
     }

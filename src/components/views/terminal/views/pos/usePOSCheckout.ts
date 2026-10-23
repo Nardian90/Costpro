@@ -225,6 +225,22 @@ export function usePOSCheckout() {
         const transferAmount = transferAmountCup;
         const zelleAmount = zelleAmountCup;
 
+        // REVISIÓN FINAL v2.24.1 (F4): bloqueo preventivo del vuelto NO
+        // registrable. Si lo recibido excede el total debido y NO viaja
+        // liquidación (cobro mixto, o cobro simple con incidencias), el vuelto
+        // físico no quedaría registrado en ninguna moneda y el libro
+        // sobreestimaría el efectivo disponible (create_sale_v2 lo rechaza con
+        // ERR_OVERPAYMENT_UNREGISTERED_CHANGE — se valida también aquí para
+        // fallar temprano con mensaje claro antes del POST).
+        const willSendSettlement = !hasFlexIncidents && Boolean(paymentContextRef.current?.settlement);
+        if (!willSendSettlement && (cashAmount + transferAmount + zelleAmount) - totalAmountCup > 0.01) {
+          const excess = Math.round((cashAmount + transferAmount + zelleAmount - totalAmountCup) * 100) / 100;
+          throw new Error(
+            `ERR_OVERPAYMENT_UNREGISTERED_CHANGE: recibido ${excess.toFixed(2)} CUP de más sin liquidación de vuelto. ` +
+            `Ajusta el desglose a importes exactos o registra el cobro con su vuelto (cobro simple en efectivo).`,
+          );
+        }
+
         // MISIÓN-FLEX: la defensa anti-descuadre (antes: throw) ya NO interrumpe
         // el flujo — computePaymentIncidents documentó la diferencia (por línea
         // y global) y el servidor la valida con las mismas incidencias.

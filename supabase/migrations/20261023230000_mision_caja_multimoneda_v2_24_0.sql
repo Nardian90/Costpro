@@ -270,9 +270,7 @@ BEGIN
     'net', jsonb_build_object('CUP', round(v_net_cup, 2), 'USD', round(v_net_usd, 2))
   );
 END;
-$function$
-
-
+$function$;
 -- ═════════════════════════════════════════════════════════════════════
 -- get_cash_shift_expected (definición viva certificada — pg_get_functiondef 2026-10-24)
 -- ═════════════════════════════════════════════════════════════════════
@@ -434,9 +432,7 @@ BEGIN
   );
   RETURN v_result;
 END;
-$function$
-
-
+$function$;
 -- ═════════════════════════════════════════════════════════════════════
 -- close_cash_shift (definición viva certificada — pg_get_functiondef 2026-10-24)
 -- ═════════════════════════════════════════════════════════════════════
@@ -679,9 +675,7 @@ BEGIN
     'zelle_sales', v_zelle_sales
   );
 END;
-$function$
-
-
+$function$;
 -- ═════════════════════════════════════════════════════════════════════
 -- create_cash_flow_document (definición viva certificada — pg_get_functiondef 2026-10-24)
 -- ═════════════════════════════════════════════════════════════════════
@@ -1072,9 +1066,7 @@ BEGIN
 
   RETURN v_result;
 END;
-$function$
-
-
+$function$;
 -- ═════════════════════════════════════════════════════════════════════
 -- create_sale_v2 (definición viva certificada — pg_get_functiondef 2026-10-24)
 -- ═════════════════════════════════════════════════════════════════════
@@ -2036,9 +2028,7 @@ BEGIN
     'calculated_tax', v_calculated_tax,
     'discount_amount', v_discount_amount
   );
-END $function$
-
-
+END $function$;
 -- ═════════════════════════════════════════════════════════════════════
 -- create_devolution_v2 (definición viva certificada — pg_get_functiondef 2026-10-24)
 -- ═════════════════════════════════════════════════════════════════════
@@ -2280,9 +2270,7 @@ BEGIN
     'total_amount', v_total,
     'financial_effect', CASE WHEN p_payment_method = 'store_credit' THEN 'store_credit_ledger' ELSE 'cash_out_and_refund' END
   );
-END $function$
-
-
+END $function$;
 -- ───────────────────────────────────────────────────────────────────────────
 -- ACLs — espejo del estado vivo de producción (2026-10-24)
 -- ───────────────────────────────────────────────────────────────────────────

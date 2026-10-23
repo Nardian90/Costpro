@@ -354,6 +354,23 @@ export function POSCartCheckoutPanel({
         });
   const settlementError = settlement?.error ?? null;
 
+  // ── REVISIÓN FINAL v2.24.1 (F4): bloqueo preventivo del vuelto NO registrable ──
+  // Un cobro cuyo importe recibido excede el total debido exige entregar vuelto
+  // físico. Sin liquidación (mixto siempre, o cobro simple con incidencias),
+  // ese vuelto no queda registrado en ninguna moneda y el libro sobreestima el
+  // efectivo disponible. El servidor lo rechaza (ERR_OVERPAYMENT_UNREGISTERED_
+  // CHANGE); aquí se bloquea ANTES con mensaje comprensible y alternativas.
+  // Cobros exactos y el faltante documentado siguen funcionando igual.
+  const noSettlementOverpay = (() => {
+    if (settlement) return false; // cobro simple con liquidación: identidad RPC
+    const st = useCartStore.getState();
+    const its = st.items;
+    if (!its.length) return false;
+    const received = its.reduce((s, i) => s + (st.getItemPaidCup ? st.getItemPaidCup(i) : 0), 0);
+    return received - st.getExpectedTotalCup() > 0.01;
+  })();
+  const confirmBlocked = Boolean(settlementError) || noSettlementOverpay;
+
   // Auto-sync store's selectedPayment with derived method (for backward compat with usePOSCheckout)
   // This ensures the store always reflects the real payment state.
   if (selectedPayment !== derivedPaymentMethod) {
@@ -944,6 +961,19 @@ export function POSCartCheckoutPanel({
                 Faltante: {formatCurrency(Math.abs(change))}
               </p>
             )}
+            {/* REVISIÓN FINAL v2.24.1 (F4): bloqueo del vuelto NO registrable —
+                mensaje comprensible + alternativas conservadas (desglose exacto
+                o cobro simple con liquidación). El Confirm queda deshabilitado. */}
+            {noSettlementOverpay && (
+              <div role="alert" className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-left">
+                <p className="text-[11px] font-black text-destructive">
+                  El importe recibido excede el total: el vuelto quedaría sin registrar
+                </p>
+                <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
+                  {getPaymentLabelUnified(derivedPaymentMethod)} no permite registrar el vuelto físico por moneda. Ajusta el desglose a importes exactos, o cobra simple en efectivo indicando lo recibido para que el sistema liquide el vuelto. El faltante (pago insuficiente) sí puede documentarse como incidencia.
+                </p>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <button
@@ -959,8 +989,12 @@ export function POSCartCheckoutPanel({
               // REVISIÓN FINAL v2.24.1: bloquear la confirmación cuando la
               // liquidación del cobro es inválida (antes el error era solo
               // visual y la venta salía SIN liquidación → vuelto sin registro).
-              disabled={isProcessing || !saleDateValidation.valid || Boolean(settlementError)}
-              title={settlementError ? settlementErrorMessage(settlementError) : (!saleDateValidation.valid ? saleDateValidation.error : undefined)}
+              // F4: también cuando lo recibido excede el total sin liquidación
+              // (vuelto físico no registrable — el servidor lo rechazaría).
+              disabled={isProcessing || !saleDateValidation.valid || confirmBlocked}
+              title={noSettlementOverpay
+                ? "El vuelto no sería registrable: ajusta el desglose o cobra simple en efectivo"
+                : settlementError ? settlementErrorMessage(settlementError) : (!saleDateValidation.valid ? saleDateValidation.error : undefined)}
               className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               {isProcessing ? "Procesando..." : "Confirmar"}

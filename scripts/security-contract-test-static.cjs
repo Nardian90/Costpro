@@ -228,6 +228,15 @@ function extractFunctions(cleanText, sourceFile) {
     let stmtEnd = bodyEnd;
     while (stmtEnd < cleanText.length && cleanText[stmtEnd] !== ';') stmtEnd++;
     if (stmtEnd < cleanText.length) stmtEnd++;
+    // REVISIÓN FINAL v2.24.1 — guarda anti-salto: si el scan del trailer pasó
+    // por alto el próximo CREATE FUNCTION (streams con cierres $function$ SIN
+    // ';' — p.ej. 20261023230000 v2.24.0), limita el avance para que la
+    // siguiente función SIGA siendo emparejada. Sin esta guarda, las funciones
+    // adosadas a un cuerpo sin ';' desaparecen silenciosamente del replay y
+    // sus sentencias ACL no encuentran key en finalState (UNEXPECTED_ACL_DRIFT
+    // fantasma + reconciliación ciega).
+    const nextFnRel = cleanText.slice(bodyEnd).search(/create\s+(?:or\s+replace\s+)?function\s/i);
+    if (nextFnRel !== -1 && bodyEnd + nextFnRel < stmtEnd) stmtEnd = bodyEnd + nextFnRel;
     defs.push({
       file: sourceFile,
       pos: start,
@@ -330,7 +339,12 @@ function parseFnAttrs(nonBodyText) {
 // position-tagged so they can be applied in stream order.
 function extractAclStmts(cleanText) {
   const out = [];
-  const re = /\b(grant|revoke)\s+execute\s+on\s+function\s+/gi;
+  // REVISIÓN FINAL v2.24.1: también casa `REVOKE ALL [PRIVILEGES] ON FUNCTION`
+  // — en una función, ALL ≡ EXECUTE (único privilegio otorgable) y las
+  // migraciones de la casa usan `revoke all ... from public` (p.ej.
+  // 20261023230000:2289-2305). Sin esto, el replay dejaba PUBLIC=true y
+  // fabricaba UNEXPECTED_ACL_DRIFT fantasma contra el surface vivo.
+  const re = /\b(grant|revoke)\s+(?:all(?:\s+privileges)?|execute)\s+on\s+function\s+/gi;
   let m;
   while ((m = re.exec(cleanText))) {
     let i = m.index + m[0].length;
@@ -358,6 +372,38 @@ function extractAclStmts(cleanText) {
     if (!toM) continue;
     const roles = toM[1].split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
     out.push({ verb: m[1].toLowerCase(), fname: fname.toLowerCase().replace(/^public\./, ''), args, roles, pos: m.index });
+  }
+  return out;
+}
+
+// REVISIÓN FINAL v2.24.1 — modelado de DROP FUNCTION en el replay Capa C:
+// un overload reemplazado fuera de banda (p.ej. create_sale_v2/26 → /31) deja
+// de existir en la BD real; el replay debe reflejarlo o el surface queda
+// ensombrecido por definiciones muertas.
+function extractDropStmts(cleanText) {
+  const out = [];
+  const re = /\bdrop\s+function\s+(?:if\s+exists\s+)?/gi;
+  let m;
+  while ((m = re.exec(cleanText))) {
+    let i = m.index + m[0].length;
+    while (i < cleanText.length && /\s/.test(cleanText[i])) i++;
+    const nameStart = i;
+    while (i < cleanText.length && /[\w.$"]/.test(cleanText[i])) i++;
+    const fname = cleanText.slice(nameStart, i).replace(/"/g, '');
+    while (i < cleanText.length && /\s/.test(cleanText[i])) i++;
+    let args = null;
+    if (cleanText[i] === '(') {
+      let depth = 0, j = i, inStr = null;
+      for (; j < cleanText.length; j++) {
+        const c = cleanText[j];
+        if (inStr) { if (c === inStr) inStr = null; continue; }
+        if (c === "'") { inStr = c; continue; }
+        if (c === '(') depth++;
+        if (c === ')') { depth--; if (depth === 0) break; }
+      }
+      args = cleanText.slice(i + 1, j);
+    }
+    out.push({ fname: fname.toLowerCase().replace(/^public\./, ''), args, pos: m.index });
   }
   return out;
 }
@@ -613,6 +659,11 @@ function normSearchPath(headerText) {
     const knownKeysAt = new Map(); // bare name -> Set of keys (for ambiguity detection)
     const finalState = new Map(); // key -> { body, header, secdef, file, schema, name }
     const aclState = new Map(); // key -> { PUBLIC, anon, authenticated, service_role }
+    // REVISIÓN FINAL v2.24.1 — trazas de shadowing (REM-INV-6): última
+    // definición por NOMBRE y por KEY, para advertir cuando el surface
+    // certificado casa con una aridad superseded (surface obsoleto).
+    const latestDefByName = new Map(); // name -> { key, file }
+    const lastDefByKey = new Map(); // key -> { key, file }
     function aclOf(key) {
       if (!aclState.has(key)) aclState.set(key, { PUBLIC: true, anon: false, authenticated: false, service_role: false });
       return aclState.get(key);
@@ -627,6 +678,7 @@ function normSearchPath(headerText) {
       for (const d of extractFunctions(clean, f)) events.push({ kind: 'fn', pos: d.pos, d });
       for (const a of extractAclStmts(clean)) events.push({ kind: 'acl', pos: a.pos, a });
       for (const a of extractAlterStmts(clean)) events.push({ kind: 'alter', pos: a.pos, a });
+      for (const a of extractDropStmts(clean)) events.push({ kind: 'drop', pos: a.pos, a });
       events.sort((x, y) => x.pos - y.pos);
       for (const ev of events) {
         if (ev.kind === 'fn') {
@@ -645,6 +697,8 @@ function normSearchPath(headerText) {
             file: f, schema: d.schema, name: d.name,
           });
           trackName(d.name, key);
+          latestDefByName.set(d.name, { key, file: f });
+          lastDefByKey.set(key, { key, file: f });
         } else if (ev.kind === 'alter') {
           const a = ev.a;
           let key = null;
@@ -662,6 +716,17 @@ function normSearchPath(headerText) {
           if (a.volatility !== null) mig.volatility = a.volatility;
           if (a.parallel !== null) mig.parallel = a.parallel;
           if (a.leakproof !== null) mig.leakproof = a.leakproof;
+        } else if (ev.kind === 'drop') {
+          // REVISIÓN FINAL v2.24.1: DROP FUNCTION elimina el overload del estado
+          // del replay (paridad con la BD real — sin overloads muertos que
+          // ensombrezcan la reconciliación).
+          const a = ev.a;
+          const dropKey = a.args !== null ? `public.${a.fname}/${countArgs(a.args)}` : null;
+          if (dropKey) { finalState.delete(dropKey); aclState.delete(dropKey); }
+          else {
+            const keys = knownKeysAt.get(a.fname);
+            if (keys) for (const k of [...keys]) { finalState.delete(k); aclState.delete(k); }
+          }
         } else {
           const a = ev.a;
           const roleNames = a.roles.filter(r => ['public', 'anon', 'authenticated', 'service_role'].includes(r));
@@ -692,6 +757,18 @@ function normSearchPath(headerText) {
         issues.push({ severity: 'CRITICAL', rule: 'LIVE_FUNCTION_NOT_REPRESENTED', msg: 'función del surface certificado sin representación en el stream de migraciones (replay no puede reproducirla)' });
       } else {
         layerCRepresented++;
+        // REVISIÓN FINAL v2.24.1 — detector de shadowing (surface obsoleto):
+        // si la key del surface casa con una definición del stream PERO existe
+        // una definición posterior del mismo nombre con OTRA aridad en otro
+        // archivo, el surface puede estar desactualizado (el vivo ya migró de
+        // firma y el gate estaría reconciliando contra una versión muerta —
+        // ocurrió con create_sale_v2/26 vs /31 durante la misión v2.24).
+        const latest = latestDefByName.get(s.name);
+        const mine = lastDefByKey.get(key);
+        if (latest && mine && latest.key !== key && latest.file !== mine.file) {
+          warnings++;
+          console.log(`  ⚠️ [Capa C][WARNING] ${s.name}: el surface certifica ${key} pero el stream define LUEGO ${latest.key} (${latest.file}) — verificar frescura del surface (posible firma viva ya migrada).`);
+        }
         // verbatim body comparison (both sides carry the body verbatim; do NOT
         // strip comments — the migration-side body keeps in-body comments that
         // dollar-quote tag scanning correctly preserves)

@@ -157,7 +157,8 @@ En el panel de checkout verá:
 - El descuento se aplica **al subtotal del item** donde está configurado. Si quiere un descuento global, configúrelo en cada item o use el descuento global del carrito (campo `discount` en el CartState).
 
 **¿Qué pasa si el cliente paga de más?**
-- El sistema lo marca como **Sobrepago** (badge ámbar) pero permite completar la venta. El cajero debería verificar con el cliente si quiere cambio o si es propina.
+- Si cobra en **Efectivo simple** indicando lo recibido, el sistema calcula y registra el vuelto por moneda y la venta se completa normalmente.
+- Si el sobrepago viene de un **desglose mixto** (o de un cobro con incidencias) sin liquidación de vuelto, la venta **se bloquea**: el cambio físico entregado no quedaría registrado en ninguna moneda y la caja mostraría un efectivo disponible mayor al real. Ajuste el desglose a importes exactos o use el cobro simple en efectivo para que el sistema liquide el vuelto.
 
 **¿Qué pasa si el cliente paga de menos?**
 - El sistema lo marca como **Falta** (badge rojo). La venta **no se puede completar** hasta que el total recibido iguale o supere al esperado.
@@ -183,6 +184,14 @@ En el panel de checkout verá:
 ---
 
 ## Casos especiales y errores comunes
+
+### "El importe recibido excede el total: el vuelto quedaría sin registrar"
+
+Es el bloqueo de seguridad de caja (v2.24.1). Ocurre cuando lo recibido supera el total de la venta y el medio de pago elegido no permite registrar el vuelto por moneda (pagos mixtos). Alternativas:
+
+1. **Ajustar el desglose** a importes exactos (lo que realmente se queda en caja).
+2. **Cobrar simple en efectivo**: indique lo recibido y el sistema calcula y registra el vuelto (incluso en USD, con la tasa autoritativa del servidor).
+3. El **faltante** (pago insuficiente) sí puede documentarse como incidencia: no exige salida física de caja.
 
 ### "El consolidado no cuadra pero yo cobré bien"
 

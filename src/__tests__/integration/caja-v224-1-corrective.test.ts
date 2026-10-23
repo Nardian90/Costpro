@@ -112,3 +112,71 @@ describe('cobertura estructural de gaps de auditoría (migración original = est
     expect(body('create_cash_flow_document', MIG_V241)).toContain('v_idem_hash');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REVISIÓN FINAL v2.24.1 — F4 (vuelto no registrable) + F5 (open_cash_shift)
+// + cierre ';' del stream v2.24.0 (ejecutabilidad + parser del gate)
+// ═══════════════════════════════════════════════════════════════════════════
+describe('v2.24.1 — create_sale_v2: bloqueo del vuelto NO registrable (F4)', () => {
+  const fn = body('create_sale_v2', MIG_V241);
+
+  it('rechaza recibido > total sin liquidación (ERR_OVERPAYMENT_UNREGISTERED_CHANGE)', () => {
+    expect(fn).toContain('ERR_OVERPAYMENT_UNREGISTERED_CHANGE');
+    expect(fn).toContain('IF NOT v_settlement_present AND v_payment_diff > 0.01 THEN');
+  });
+
+  it('el gate solo aplica SIN liquidación (con liquidación manda la identidad recibido − vuelto)', () => {
+    // la validación de identidad de la liquidación precede al gate F4
+    const settleIdx = fn.indexOf('ERR_CASH_SETTLEMENT_MISMATCH');
+    const f4Idx = fn.indexOf('ERR_OVERPAYMENT_UNREGISTERED_CHANGE');
+    expect(settleIdx).toBeGreaterThan(-1);
+    expect(f4Idx).toBeGreaterThan(settleIdx);
+  });
+
+  it('conserva los invariantes v2.24: identidad de liquidación, tasa servidor fail-closed, idempotencia', () => {
+    expect(fn).toContain('ERR_CASH_SETTLEMENT_MISMATCH');
+    expect(fn).toContain('ERR_EXCHANGE_RATE_UNAVAILABLE');
+    expect(fn).toContain("operation = 'create_sale_v2'");
+    expect(fn).toContain('v_param_hash');
+  });
+
+  it('el pago insuficiente NO se toca (sin salida física de caja) y la venta negativa sigue prohibida', () => {
+    expect(fn).toContain('ERR_NEGATIVE_SALE');
+    // el gate F4 solo dispara con v_payment_diff > 0.01 (sobrepago), jamás con faltante
+    expect(fn).not.toContain('v_payment_diff < -0.01');
+  });
+});
+
+describe('v2.24.1 — open_cash_shift: completitud del stream (F5)', () => {
+  const fn = body('open_cash_shift', MIG_V241);
+
+  it('la función viva (aplicada fuera de banda) ya está versionada byte-idéntica', () => {
+    expect(fn).toContain('CREATE OR REPLACE FUNCTION public.open_cash_shift(');
+    expect(fn).toContain('SECURITY DEFINER');
+    expect(fn).toContain("SET search_path TO 'public', 'pg_temp'");
+  });
+
+  it('conserva idempotencia con param_hash y el arqueo de apertura contado vs esperado', () => {
+    expect(fn).toContain('v_param_hash');
+    expect(fn).toContain('opening_balance');
+  });
+
+  it('ACL espejo del vivo: service_role únicamente', () => {
+    expect(MIG_V241).toMatch(/revoke all on function public\.open_cash_shift\(uuid, numeric, numeric, text, text, text, uuid\) from public;/i);
+    expect(MIG_V241).toMatch(/grant execute on function public\.open_cash_shift\(uuid, numeric, numeric, text, text, text, uuid\) to service_role;/i);
+  });
+});
+
+describe('v2.24.0 — stream ejecutable como unidad (cierres \';\')', () => {
+  it('todos los cierres $function$ de la migración original terminan en \';\'', () => {
+    const closers = MIG_ORIG.match(/^\s*(?:END )?\$function\$\s*;?\s*$/gm) || [];
+    expect(closers.length).toBe(6);
+    for (const c of closers) expect(c.trim().endsWith(';')).toBe(true);
+  });
+
+  it('los GRANT/REVOKE ALL de v2.24.0 quedan parseables (sin PUBLIC residual en el replay)', () => {
+    expect(MIG_ORIG).toMatch(/revoke all on function public\.create_sale_v2\(/i);
+    expect(MIG_ORIG).toMatch(/grant execute on function public\.create_sale_v2\(/i);
+    expect(MIG_ORIG).toMatch(/revoke all on function public\.create_devolution_v2\(/i);
+  });
+});
