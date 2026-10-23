@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-23T19:13:58.929Z
+-- Captured  : 2026-10-23T19:46:37.585Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 150 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -1588,6 +1588,15 @@ BEGIN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
+  -- 2b. REVISIÓN FINAL v2.24.1: gate de rol de autoridad — el CIERRE es
+  --     operación sensible y la UI ya lo restringe a admin/manager/encargado
+  --     (CashClosureView). El servidor lo replica fail-closed (antes un clerk
+  --     podía cerrar vía POST directo: has_store_access_as acepta cualquier
+  --     membresía activa).
+  IF NOT public.has_store_role_as(v_caller_uid, v_closure.store_id, ARRAY['admin', 'manager', 'encargado']::text[]) THEN
+    RAISE EXCEPTION 'ERR_CLOSURE_ROLE: el cierre de turno requiere rol admin, manager o encargado';
+  END IF;
+
   -- 3. Advisory lock por store
   PERFORM pg_advisory_xact_lock(hashtext(v_closure.store_id::text));
 
@@ -2502,6 +2511,7 @@ DECLARE
   v_fondo numeric := 0;
   v_param_hash text;
   v_idem jsonb;
+  v_idem_hash text;
   v_result jsonb;
   v_related public.cash_flow_documents%ROWTYPE;
   v_has_shift boolean := false;
@@ -2603,19 +2613,19 @@ BEGIN
     || COALESCE(btrim(p_notes), '') || '|' || COALESCE(p_related_document_id::text, '')
   );
   IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
-    SELECT ir.result INTO v_idem
+    -- REVISIÓN FINAL v2.24.1: comparar el hash del payload NUEVO contra el hash
+    -- ALMACENADO. (Defecto corregido: la variable v_param_hash se sobrescribía
+    -- con el hash almacenado y la comparación nunca ocurría — misma clave con
+    -- payload distinto devolvía el documento original EN SILENCIO.) Paridad
+    -- con create_sale_v2: conflicto SIN retorno silencioso.
+    SELECT ir.result, ir.param_hash INTO v_idem, v_idem_hash
       FROM public.idempotency_registry ir
       WHERE ir.idempotency_key = p_idempotency_key
         AND ir.operation = 'create_cash_flow_document'
       LIMIT 1;
     IF v_idem IS NOT NULL THEN
-      SELECT ir.param_hash INTO v_param_hash
-        FROM public.idempotency_registry ir
-        WHERE ir.idempotency_key = p_idempotency_key
-          AND ir.operation = 'create_cash_flow_document'
-        LIMIT 1;
-      IF v_param_hash IS NULL OR v_idem IS NULL THEN
-        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE';
+      IF v_idem_hash IS DISTINCT FROM v_param_hash THEN
+        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE: la clave % ya está ligada a otra identidad de documento (payload/actor/tienda)', p_idempotency_key;
       END IF;
       -- hash idéntico ⇒ devolver el resultado original (reintento benigno)
       RETURN v_idem;
@@ -2887,13 +2897,42 @@ DECLARE
   v_refund_currency text := upper(btrim(COALESCE(NULLIF(p_refund_currency, ''), 'CUP')));
   v_refund_rate numeric := 1.0;
   v_refund_amount numeric := 0;
+  -- REVISIÓN FINAL v2.24.1: identidad de idempotencia + precio anclado al servidor
+  v_param_hash text;
+  v_idem_hash text;
+  v_sale_unit_cup numeric;
 BEGIN
   v_eff := COALESCE(p_operation_date, NOW());
   PERFORM public.validate_operation_date(v_eff, p_store_id);
 
+  -- REVISIÓN FINAL v2.24.1: advisory lock por tienda (misma llave que
+  -- create_cash_flow_document / close_cash_shift / create_sale_v2) — serializa
+  -- devoluciones frente a entregas/cierres concurrentes sobre el cajón físico
+  -- (cierra la ventana de carrera entrega-vs-reembolso detectada en revisión).
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+
+  -- REVISIÓN FINAL v2.24.1: identidad de idempotencia con hash de payload
+  -- (paridad create_sale_v2). Misma clave + payload distinto ⇒ conflicto
+  -- explícito; jamás retorno silencioso de la devolución previa.
+  v_param_hash := md5(
+    p_store_id::text || '|' || COALESCE(v_caller_uid::text, '') || '|'
+    || COALESCE(p_original_transaction_id::text, '') || '|' || COALESCE(p_reason, '') || '|'
+    || COALESCE(p_payment_method, '') || '|' || v_refund_currency || '|'
+    || COALESCE(p_customer_id::text, '') || '|'
+    || (SELECT COALESCE(jsonb_agg(x ORDER BY x), '[]'::jsonb) FROM jsonb_array_elements(p_items) x) || '|'
+    || COALESCE(p_operation_date::text, '')
+  );
   IF p_idempotency_key IS NOT NULL THEN
+    SELECT ir.param_hash INTO v_idem_hash
+      FROM public.idempotency_registry ir
+      WHERE ir.idempotency_key = p_idempotency_key
+        AND ir.operation = 'create_devolution_v2'
+      LIMIT 1;
     SELECT id INTO v_existing FROM public.devolutions WHERE idempotency_key = p_idempotency_key LIMIT 1;
     IF v_existing IS NOT NULL THEN
+      IF v_idem_hash IS DISTINCT FROM v_param_hash THEN
+        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE: la clave % ya está ligada a otra identidad de devolución (payload/actor/tienda)', p_idempotency_key;
+      END IF;
       RETURN jsonb_build_object('status','idempotent','devolution_id',v_existing);
     END IF;
   END IF;
@@ -2985,7 +3024,21 @@ BEGIN
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
     v_pid := (v_item->>'product_id')::uuid;
     v_qty := (v_item->>'quantity')::numeric;
-    v_price := COALESCE((v_item->>'unit_price')::numeric, (v_item->>'price')::numeric, 0);
+    -- REVISIÓN FINAL v2.24.1 (anti-sobre-reembolso): el precio del reembolso
+    -- lo fija el SERVIDOR a partir de la venta original — price_at_sale_cup
+    -- ponderado por cantidad; fallback price_at_sale × tasa del ítem con la
+    -- convención fail-safe de la casa (tasa ausente ⇒ 1, nunca > pagado en
+    -- CUP). El unit_price del payload se IGNORA: DF-07 topa la CANTIDAD y
+    -- este gate topa el PRECIO — un payload manipulado ya no puede reembolsar
+    -- más de lo cobrado.
+    SELECT COALESCE(
+             SUM(ti.price_at_sale_cup * ti.quantity) / NULLIF(SUM(ti.quantity), 0),
+             SUM(ti.price_at_sale * COALESCE(ti.exchange_rate, 1) * ti.quantity) / NULLIF(SUM(ti.quantity), 0)
+           )
+      INTO v_sale_unit_cup
+    FROM public.transaction_items ti
+    WHERE ti.transaction_id = p_original_transaction_id AND ti.product_id = v_pid;
+    v_price := COALESCE(v_sale_unit_cup, 0);
 
     INSERT INTO public.devolution_items (devolution_id, product_id, quantity, unit_price, total, reason)
     VALUES (v_devolution_id, v_pid, v_qty, v_price, v_qty * v_price, COALESCE(v_item->>'reason', p_reason));
@@ -3019,6 +3072,15 @@ BEGIN
   END LOOP;
 
   UPDATE public.devolutions SET total_amount = v_total WHERE id = v_devolution_id;
+
+  -- REVISIÓN FINAL v2.24.1: registrar la identidad en el registry (paridad
+  -- create_sale_v2) — hace posible la comparación de hash en reintentos.
+  IF p_idempotency_key IS NOT NULL THEN
+    INSERT INTO public.idempotency_registry (idempotency_key, operation, record_id, param_hash, result)
+    VALUES (p_idempotency_key, 'create_devolution_v2', v_devolution_id, v_param_hash,
+            jsonb_build_object('status', 'pending'))
+    ON CONFLICT (idempotency_key, operation) DO NOTHING;
+  END IF;
 
   -- ═══ DF-03: CONTRA-ASIENTO FINANCIERO en la MISMA TX ═══
   IF v_total <= 0 THEN
@@ -3084,6 +3146,8 @@ BEGIN
       'refund_currency', v_refund_currency,
       'refund_rate', v_refund_rate,
       'refund_amount', v_refund_amount,
+      'pricing_source', 'server_price_at_sale_cup_v2_24_1',
+      'idempotency_param_hash', COALESCE(v_param_hash, ''),
       'financial_contra_entry_df03',
         jsonb_build_object('method', p_payment_method, 'amount', v_total,
           'cash_out', (p_payment_method <> 'store_credit'),
@@ -4306,6 +4370,23 @@ BEGIN
       RAISE EXCEPTION 'ERR_CASH_SETTLEMENT_MISMATCH: la liquidación (%) no cuadra con el efectivo de la venta (%)',
         round(v_settle_net_cup + v_settle_net_usd * COALESCE(v_chg_rate, v_server_rate), 2), round(v_cash_amt, 2);
     END IF;
+  END IF;
+
+  -- 14.9 REVISIÓN FINAL v2.24.1 (F4) — bloqueo preventivo del vuelto NO
+  --     registrable (cobros mixtos / sobrepagos sin liquidación). Un cobro
+  --     cuyo importe recibido excede el total debido exige entregar vuelto
+  --     físico. Sin liquidación (cash_received_*/change_given_*), ese vuelto
+  --     no queda registrado en NINGUNA moneda y el libro sobreestima el
+  --     efectivo disponible (defecto medio del escenario C de la auditoría).
+  --     La venta se RECHAZA: el cajero debe (a) ajustar el desglose a
+  --     importes exactos, (b) registrar el cobro con la liquidación de
+  --     vuelto (identidad recibido − vuelto = cash de la venta, ya soportada
+  --     para cualquier método), o (c) cobrar el faltante como incidencia —
+  --     el pago insuficiente NO se toca: no exige salida física de caja.
+  --     Ventas históricas: intactas (el gate solo aplica a INSERT nuevos).
+  IF NOT v_settlement_present AND v_payment_diff > 0.01 THEN
+    RAISE EXCEPTION 'ERR_OVERPAYMENT_UNREGISTERED_CHANGE: recibido (%) > total (%) sin liquidación de vuelto — el vuelto físico no sería registrable por el backend; ajuste el desglose o registre la liquidación',
+      ROUND(v_cash_amt + v_transfer_amt + v_zelle_amt, 2), ROUND(v_calculated_total, 2);
   END IF;
 
   -- 15. INSERT transactions — §6.3/§4/§5.4: tasa servidor, seller = v_uid,

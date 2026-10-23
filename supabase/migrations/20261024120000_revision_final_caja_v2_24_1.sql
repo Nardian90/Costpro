@@ -47,10 +47,12 @@
 --
 -- Despliegue:
 --   · Entorno nuevo: 20261023230000 + esta migración (orden secuencial).
---   · Producción (v2.24 aplicada fuera de banda): aplicar ESTA migración
---     cuando el propietario lo autorice — es CREATE OR REPLACE, no destructiva,
---     y deja las funciones byte-idénticas a las vivas salvo los 4 gates +
---     open_cash_shift (idéntica al vivo por construcción).
+--   · Producción: APLICADA Y VERIFICADA el 2026-10-24 (Management API, una
+--     sola transacción; commit 7ee0edba8; paridad pg_get_functiondef ≡
+--     versionado 5/5; ACLs correctas; smoke read-only OK; evidencia en
+--     audit/deploy-v241-evidence.json). CREATE OR REPLACE, no destructiva.
+--     Baselines source_of_truth RETIRADAS tras verificar el despliegue
+--     (surface regenerado: 150/150 sin divergencias).
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- ── create_cash_flow_document (v2.24.1) ────────────────────────────────────────────────────────
