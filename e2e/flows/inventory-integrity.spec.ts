@@ -203,11 +203,19 @@ test.describe('Inventario — ajustes e integridad de stock', () => {
   });
 
   test('E2E-INV-007 (P0) clerk sin membership no puede ajustar en tienda ajena → 403', async ({ request }) => {
+    // CICLO 2 (corrida 39781104338): en run AISLADO el cajero ES miembro del
+    // piloto A (provisión §5 de run-env.ts — réplica del demo compartido),
+    // por lo que la 'tienda ajena' del cajero es el PILOTO B. En modo legacy
+    // la tienda ajena es el propio piloto A (el cajero demo no tiene
+    // membership en los pilotos persistentes).
+    const tiendaAjena = process.env.E2E_ISOLATION === '1' && process.env.E2E_PILOT_STORE_B
+      ? process.env.E2E_PILOT_STORE_B
+      : store.id;
     const res = await request.post('/api/inventory/adjust', {
       headers: apiHeaders(clerkToken),
       data: {
         productId: product.id,
-        storeId: store.id,
+        storeId: tiendaAjena,
         quantity: 1,
         movementType: 'add',
         version: 1,
