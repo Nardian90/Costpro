@@ -1,6 +1,20 @@
 /**
  * GET /api/production-orders?status=X&order_type=Y
+ *     &start_date=ISO&end_date=ISO&limit=N&status_group=operative|terminal
  * POST /api/production-orders — crear orden de producción/servicio/trabajo
+ *
+ * MISIÓN 2026-10-23 (§7 — órdenes de trabajo en Reporte Entrega):
+ *   El GET ahora RESPETA los parámetros start_date/end_date/limit que el
+ *   Reporte de Entrega le pasa (antes se descartaban silenciosamente y el
+ *   reporte listaba las 200 órdenes más recientes de CUALQUIER fecha y
+ *   CUALQUIER estado — órdenes cerradas aparecían como pendientes).
+ *   Semántica documentada del listado operativo (status_group=operative):
+ *   órdenes CREADAS en el período cuyo estado NO es terminal
+ *   (draft/approved/in_progress/paused). Las cerradas/completadas/anuladas
+ *   son registros históricos que NO requieren entrega ni gestión → se
+ *   excluyen del listado operativo (no se borran ni se alteran).
+ *   El módulo de gestión de OT (ProductionOrdersView) NO usa este GET
+ *   (consulta directa a Supabase), por lo que su comportamiento no cambia.
  *
  * V2.4.5: Migración a patrones canónicos de CostPro (T4 de auditoría).
  *   - withTracing en exports
@@ -161,6 +175,14 @@ async function getHandler(request: NextRequest, session: AuthenticatedSession) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
   const order_type = searchParams.get('order_type');
+  // MISIÓN 2026-10-23 (§7): ventana del período y tamaño de página que el
+  // Reporte de Entrega ya enviaba pero el handler descartaba.
+  const start_date = searchParams.get('start_date');
+  const end_date = searchParams.get('end_date');
+  const limitRaw = Number(searchParams.get('limit'));
+  const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(Math.floor(limitRaw), 500) : 200;
+  // status_group: 'operative' (no terminales) | 'terminal' (terminales) | sin valor → todos.
+  const status_group = searchParams.get('status_group');
 
   const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
   const supabase = getSupabaseAdminSafe();
@@ -187,8 +209,23 @@ async function getHandler(request: NextRequest, session: AuthenticatedSession) {
 
   if (status) query = query.eq('status', status);
   if (order_type) query = query.eq('order_type', order_type);
+  // Grupo de estado (semántica del listado operativo — ver cabecera).
+  // Estados terminales según el CHECK de production_orders (migración
+  // 20260712000004): completed (trabajo finalizado), closed (cerrada) y
+  // voided (anulada). 'draft' se conserva como estado abierto: es el estado
+  // inicial de una orden recién creada pendiente de gestión.
+  if (status_group === 'operative') {
+    query = query.in('status', ['draft', 'approved', 'in_progress', 'paused']);
+  } else if (status_group === 'terminal') {
+    query = query.in('status', ['completed', 'closed', 'voided']);
+  }
+  // Ventana del período por FECHA DE CREACIÓN de la orden (mismo criterio de
+  // fecha que aplica el RPC get_cash_report a las entidades del reporte).
+  // Los valores llegan como ISO completos (T00:00:00Z … T23:59:59.999Z).
+  if (start_date) query = query.gte('created_at', start_date);
+  if (end_date) query = query.lte('created_at', end_date);
 
-  const { data, error } = await query.limit(200); // H5: paginación
+  const { data, error } = await query.limit(limit); // H5: paginación (cap 500)
   if (error) {
     logger.error('DATABASE', 'LIST_PO_FAILED', { error: error.message, userId: session.user.id });
     return NextResponse.json({ error: error.message }, { status: 500 });
