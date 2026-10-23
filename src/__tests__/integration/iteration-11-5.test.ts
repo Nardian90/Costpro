@@ -87,11 +87,25 @@ describe('PT-11.5.2 — CP-INFRA-002b: cero imports de OpenTelemetry en runtime'
   it('src/types/otel-modules.d.ts fue eliminado', () => {
     expect(existsSync(join(SRC_DIR, 'types', 'otel-modules.d.ts'))).toBe(false);
   });
-  it('package.json ya no declara dependencias @opentelemetry/*', () => {
+  it('package.json ya no declara el SDK OTel propio (los 5 paquetes retirados)', () => {
+    const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'));
+    const all = { ...pkg.dependencies, ...pkg.devDependencies };
+    // Los 5 paquetes del SDK propio (retirados por CP-INFRA-002b) deben seguir fuera.
+    expect(all['@opentelemetry/api']).toBeUndefined();
+    expect(all['@opentelemetry/sdk-node']).toBeUndefined();
+    expect(all['@opentelemetry/resources']).toBeUndefined();
+    expect(all['@opentelemetry/sdk-trace-base']).toBeUndefined();
+    expect(all['@opentelemetry/semantic-conventions']).toBeUndefined();
+  });
+  it('solo permanecen los 2 pares @opentelemetry/* que @sentry/node-core REQUIERE (peers declarados)', () => {
+    // Evidencia del build fallido dpl_FZyM2zM9ALHC (e1fac2535): sin copia
+    // top-level de estos peers, @sentry/node-core no carga en el build de
+    // Vercel (Sentry v10 se construye sobre OTel). Son dependencias de la
+    // arquitectura de Sentry, NO de nuestro tracing (retirado).
     const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'));
     const all = { ...pkg.dependencies, ...pkg.devDependencies };
     const otel = Object.keys(all).filter((k) => k.startsWith('@opentelemetry/'));
-    expect(otel).toEqual([]);
+    expect(otel.sort()).toEqual(['@opentelemetry/exporter-trace-otlp-http', '@opentelemetry/instrumentation']);
   });
   it('next.config.ts ya no externaliza paquetes OTel', () => {
     const cfg = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf-8');
