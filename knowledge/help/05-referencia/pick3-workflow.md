@@ -1,4 +1,6 @@
-# Diagrama de Flujo de Usuario: Módulo Pick 3 (v9.0)
+# Diagrama de Flujo de Usuario: Módulo Pick 3 (v9.0) — MÓDULO RETIRADO
+
+> ⚠️ **Estado: RETIRADO DEL PRODUCTO (CP-INFRA-002, octubre 2026).** El módulo Pick 3 ya no está disponible en la aplicación: fue retirado junto con Billetera y la Conciliación Bancaria independiente para simplificar el despliegue. Este documento se conserva como referencia histórica de diseño; **no describa a los usuarios cómo acceder a esta vista porque no existe en el menú actual**.
 
 ## Contenido
 

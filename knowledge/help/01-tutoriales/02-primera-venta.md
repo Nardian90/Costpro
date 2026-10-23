@@ -9,10 +9,10 @@
 Para hacer una venta necesita:
 
 - Estar **conectado a Internet** (la primera vez).
-- Tener **una caja abierta** (turno abierto). Si no la tiene, el sistema le avisará con un letrero amarillo que dice *"No tiene turno abierto"*.
+- Tener **una caja abierta** (turno abierto). Si no la tiene, verá un aviso en el POS indicándolo; el aviso no impide explorar, pero antes de cobrar conviene abrir el turno.
 - Tener **productos cargados** en el catálogo. Si no hay productos, pida al administrador que los dé de alta primero.
 
-> 💡 Si el sistema le dice que no tiene turno abierto, vaya al menú izquierdo, busque **Multi-Tienda → Cierre de Caja**, y allí verá un botón **"Abrir turno"**. Siga las instrucciones en pantalla.
+> 💡 Si el aviso dice que no tiene turno abierto, pulse el botón del propio aviso (o vaya a **OPERACIÓN → Caja → Caja**) y abra el turno con el **Fondo Inicial de Efectivo**. Vea **Cómo abrir y cerrar la caja**.
 
 ## Mapa visual del flujo de venta
 
@@ -27,7 +27,8 @@ Para hacer una venta necesita:
 │         ↓                                          │
 │  4. Cobrar (botón verde)                           │
 │         ↓                                          │
-│  5. Elegir cómo paga: efectivo / tarjeta / mixto  │
+│  5. Elegir cómo paga: efectivo / transferencia    │
+│     / Transf. Exterior / mixto                    │
 │         ↓                                          │
 │  6. Confirmar → entrega el recibo                  │
 │         ↓                                          │
@@ -61,15 +62,15 @@ Para hacer una venta necesita:
 
 ## Paso 1 — Ir a la caja (POS)
 
-1. En el menú de la izquierda, haga clic en **Multi-Tienda**.
-2. Aparece una lista de opciones. Haga clic en **Terminal POS**.
-3. Espere 2 segundos. Verá la pantalla de la caja con los productos visibles al fondo.
+1. En el menú de la izquierda, abra la sección **OPERACIÓN**.
+2. Abra el grupo **Ventas** y haga clic en **Vender**.
+3. Verá la pantalla de la caja con el buscador de productos y el carrito a la derecha.
 
 La pantalla real de la caja (POS) se ve así:
 
 ![Terminal POS con el buscador de productos, categorías y la cuadrícula de productos con precio y stock](/help/capturas/pos-terminal.webp "Figura 1. Terminal POS — búsqueda, categorías y cuadrícula de productos")
 
-> 💡 **Atajo**: Si recuerda atajos, presione **Alt + 2** para ir directo a Multi-Tienda.
+> 💡 **Atajo**: presione `Ctrl + 2` para ir directo al POS, y `F9` para cobrar cuando el carrito esté listo.
 
 ## Paso 2 — Buscar el producto que el cliente quiere comprar
 
@@ -109,9 +110,9 @@ Abajo del todo verá el **TOTAL** a pagar, en letras grandes.
 1. Haga clic en el botón verde grande que dice **Cobrar** (abajo a la derecha del carrito).
 2. Se abre una ventana nueva que pregunta **cómo va a pagar el cliente**:
    - **Efectivo**: billetes y monedas.
-   - **Tarjeta**: débito o crédito.
-   - **Transferencia**: por banca móvil.
-   - **Mixto**: parte en efectivo y parte en tarjeta.
+   - **Transferencia**: por banca móvil (vouchers).
+   - **Transf. Exterior**: cobros en divisas por Zelle u otro mecanismo exterior (solo USD/EUR; el sistema convierte a CUP con la tasa configurada).
+   - **Mixto**: combinación de efectivo y transferencia en el mismo cobro.
 3. Seleccione la opción correcta.
 
 ### Si eligió "Efectivo"
@@ -120,23 +121,24 @@ Abajo del todo verá el **TOTAL** a pagar, en letras grandes.
 3. El sistema calculará el **cambio** automáticamente (en este ejemplo, 50 pesos).
 4. Haga clic en **Confirmar**.
 
-### Si eligió "Tarjeta" o "Transferencia"
+### Si eligió "Transferencia" o "Transf. Exterior"
 1. Solo confirme el monto.
-2. El sistema no pide "recibido" porque no hay cambio.
+2. El sistema no pide "recibido" porque no hay cambio físico.
 
 ### Si eligió "Mixto"
-1. Escriba cuánto pagó en efectivo.
-2. El sistema calculará cuánto falta para completar con tarjeta.
+1. Escriba cuánto paga en cada método (efectivo y transferencia).
+2. El sistema verifica que las partes cubran el total antes de confirmar.
 
 ## Paso 5 — Entregar el recibo
 
 Después de confirmar el pago:
 
-1. Aparece una pantalla que dice **"Venta exitosa"**.
-2. El sistema le pregunta si quiere **imprimir o enviar el recibo**:
-   - Si tiene impresora térmica conectada, haga clic en **Imprimir**.
+1. Aparece una pantalla que confirma la venta, con un **código QR de verificación** del comprobante.
+2. El sistema le ofrece **imprimir o enviar el recibo**:
+   - Si tiene impresora térmica conectada, haga clic en **Imprimir** (formato térmico de 55 u 80 mm).
    - Si no tiene impresora, haga clic en **Enviar por WhatsApp** y escriba el número del cliente.
-   - Si el cliente no quiere recibo, haga clic en **Cerrar**.
+   - Si el cliente no quiere recibo, cierre la pantalla.
+3. Acaba de cobrar y se arrepintió porque fue un error suyo: pulse **Deshacer** durante los primeros 30 segundos (solo para ventas propias y recién hechas); la venta se revierte completa.
 
 > ⚠️ **Importante**: Aunque el cliente no quiera recibo, la venta **ya quedó registrada** en el sistema. El inventario se descontó automáticamente. No necesita hacer nada más.
 
@@ -151,14 +153,13 @@ Puede seguir vendiendo así todo el día. Al final del día, recuerde hacer el *
 ## Preguntas frecuentes
 
 **¿Y si me equivoco y cobro de menos?**
-- La venta ya quedó registrada con el monto que dijo. No puede modificarla después.
-- Lo correcto es anotar la diferencia en una hoja y comentarlo con el encargado al cierre.
-- Si el error es grande (más de 100 pesos), llame al administrador para que anule la venta y la haga de nuevo.
+- Si pasa inmediatamente después, use **Deshacer** (30 segundos) y vuelva a cobrar bien.
+- Pasado ese momento, la venta no se edita: anote la diferencia y coméntelo con el encargado al cierre.
+- El encargado o administrador puede **revertir** la venta desde el Historial de Ventas indicando el motivo, y se vuelve a cobrar.
 
 **¿Y si el cliente quiere devolver un producto después de comprarlo?**
 - No se puede "borrar" una venta desde la caja.
-- El administrador puede hacer una **devolución** desde `Operación → Auditoría` y desde **Ventas → Opciones → Devoluciones**.
-- El producto vuelve al inventario y el dinero sale de la caja.
+- Se hace una **devolución** desde **OPERACIÓN → Ventas → Opciones → Devoluciones** (genera una nota NC y el producto vuelve al inventario), o el administrador **revierte** la venta desde el Historial.
 
 **¿Qué pasa si se va la luz o el Internet en medio de la venta?**
 - Si ya había presionado **Cobrar** y confirmó, la venta quedó registrada localmente.
@@ -166,8 +167,8 @@ Puede seguir vendiendo así todo el día. Al final del día, recuerde hacer el *
 - No pierde ninguna venta.
 
 **¿Puedo ver las ventas que hice hoy?**
-- Sí. Haga clic en el botón **Historial** (arriba, en la caja) o vaya a Multi-Tienda → Historial de Ventas.
-- Ahí verá todas las ventas con su hora, monto y método de pago.
+- Sí. Haga clic en el botón **Historial** (arriba, en la caja) o abra **Ventas → Opciones → Historial de Ventas**.
+- Ahí verá las ventas de la tienda con su hora, monto, método y estado.
 
 ---
 

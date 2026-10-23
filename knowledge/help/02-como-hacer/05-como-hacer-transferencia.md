@@ -1,124 +1,95 @@
-# Cómo Hacer: Enviar Productos a Otra Tienda (Transferencia)
+# Cómo Hacer: Transferir Stock entre Tiendas
 
-> **Necesita esto cuando**: Una tienda se quedó sin stock de un producto y otra tienda tiene de sobra, y quiere mover mercancía entre las dos.
+> **Necesita esto cuando**: una tienda necesita enviar mercancía a otra tienda del grupo y quiere que el movimiento quede trazado, con el stock reservado en origen y aplicado en destino.
 
-## ¿Qué es una transferencia?
+## ¿Para qué sirve?
 
-Es el movimiento de productos **de una tienda a otra** dentro de la misma empresa. No es una venta (no hay dinero de por medio) y no es una recepción de proveedor (no viene de afuera). Es simplemente: *"de la tienda A, mandé X unidades a la tienda B"*.
+Las **Transferencias de Stock** mueven mercancía entre tiendas **sin intervenir dinero ni ventas**. Una transferencia no genera cobros ni comprobantes fiscales: es un movimiento interno documentado, con dos lados bien definidos:
 
-El sistema lleva un control estricto porque cada transferencia **afecta el inventario de ambas tiendas** y debe estar firmada por ambas partes.
+- **Origen**: la tienda que envía (la tienda activa con la que crea la transferencia).
+- **Destino**: la tienda que recibe y confirma.
 
-## Paso 1 — Ir a Transferencias
+Mientras la transferencia está **Pendiente**, el stock asignado queda **reservado** en origen: no está disponible para otras salidas (ventas, vales), pero todavía no se ha movido. El movimiento real ocurre cuando la tienda destino **confirma la recepción**.
 
-1. En el menú izquierdo, haga clic en **Multi-Tienda**.
-2. Haga clic en **Transferencias**.
-3. Verá una lista con las transferencias anteriores y un botón **"+ Nueva transferencia"**.
+## ¿Dónde encontrarlo?
 
-## Paso 2 — Iniciar una nueva transferencia
+- **Escritorio**: Inicio → **OPERACIÓN** → **Logística** → **Transferencia Stock**.
+- **Móvil**: pestaña inferior **Recibir** → la misma vista.
+- **Búsqueda global**: `Ctrl/Cmd + K` y escriba «transferencia» o «transferir».
 
-1. Haga clic en **"+ Nueva transferencia"**.
-2. Se abre un formulario. Llene:
+## Antes de comenzar
 
-| Campo | Qué escribir |
-|-------|--------------|
-| **Tienda origen*** | La tienda desde donde salen los productos. Por defecto es la tienda activa. |
-| **Tienda destino*** | La tienda que va a recibir los productos. |
-| **Fecha*** | Hoy (ya viene por defecto). |
-| **Responsable*** | Su nombre de usuario. |
-| **Motivo** | Una nota corta explicando por qué transfiere. Ej: *"Tienda Centro se quedó sin leche"*. |
+- Necesita rol de gestión o almacén en su tienda (admin, manager, encargado o warehouse).
+- El producto debe existir en el catálogo; si el SKU no existe en la tienda destino, el sistema crea el producto espejo al confirmar.
+- Debe haber **stock disponible suficiente** en origen: el sistema valida contra el stock real, no contra el teórico.
+- Para confirmar la recepción, el usuario de destino debe tener acceso a esa tienda.
 
-3. Haga clic en **"Continuar"**.
+## Cómo crear una transferencia
 
-> ⚠️ **Importante**: La tienda origen debe ser **una tienda donde usted tiene permiso**. Si no tiene acceso, el sistema le impedirá continuar.
+1. Vaya a **OPERACIÓN → Logística → Transferencia Stock**.
+2. Haga clic en **+ Nueva Transferencia**.
+3. La **tienda origen es la tienda activa** con la que está trabajando (no se elige en el formulario).
+4. Elija el **almacén destino**.
+5. Agregue los productos y las cantidades a enviar.
+6. Escriba **Notas/Observaciones** si aplica (opcional, pero recomendado para el receptor).
+7. Revise la **fecha de operación** (por defecto hoy o su fecha de trabajo; nunca futura).
+8. Haga clic en **Enviar Solicitud**.
 
-![Vista de Transferencias con la gestión de traslados entre tiendas](/help/capturas/transferencias.webp "Figura 1. Transferencias — gestión de traslados entre tiendas")
+La transferencia queda en estado **Pendiente** y el stock de los productos queda reservado en origen.
 
-## Paso 3 — Agregar los productos a transferir
+## Cómo recibir una transferencia (tienda destino)
 
-1. Verá una tabla vacía con un campo de búsqueda arriba.
-2. Escriba el nombre del primer producto que quiere transferir.
-3. Haga clic en el producto cuando aparezca.
-4. Se agrega una fila con:
-   - **Stock disponible**: cuánto hay en la tienda origen.
-   - **Cantidad a transferir**: escriba cuántas unidades quiere enviar.
-5. Repita para cada producto que quiera mandar.
+1. La tienda destino abre la vista y va a la pestaña **Entrantes** (o abre el detalle desde la notificación de la lista).
+2. Abre la transferencia en estado Pendiente y revisa productos y cantidades.
+3. Hace clic en **Confirmar Recepción** y ajusta la **fecha de recepción** si corresponde.
 
-> ⚠️ **No puede transferir más del stock disponible**. Si la tienda origen tiene 10 unidades y usted quiere transferir 15, el sistema le impedirá continuar.
+En ese instante el movimiento se aplica **de forma atómica**: el stock sale de origen y entra a destino en el mismo acto. No hay un estado intermedio "en tránsito" con el stock desaparecido: mientras no se confirma, el stock sigue en origen (reservado).
 
-## Paso 4 — Verificar y guardar como borrador
+## Estados y acciones
 
-1. Revise la tabla completa.
-2. Verifique que las cantidades son correctas.
-3. Haga clic en **"Guardar borrador"** (arriba a la derecha).
-4. La transferencia queda con estado **"Pendiente"**.
+| Estado | Qué significa | Acciones disponibles |
+|--------|--------------|---------------------|
+| **Pendiente** | Solicitud enviada; stock reservado en origen. | El destino **Confirma Recepción**; el origen **Cancela Transferencia**. |
+| **Confirmada** | Mercancía aplicada en destino. | **Revertir** (con rol en la tienda origen) y **Duplicar**. |
+| **Cancelada** | Solicitud anulada antes de confirmar. | El stock reservado se libera. |
+| **Revertida** | Una transferencia confirmada que se deshizo: el stock volvió a origen. | Consulta y auditoría. |
 
-> 💡 **Consejo**: Siempre guarde como borrador primero. Así puede revisar una vez más antes de enviar. Una vez que la transferencia se "envía", no se puede borrar, solo se puede anular con un proceso más largo.
+El listado tiene pestañas **Salientes/Entrantes**, filtro por estado y búsqueda. Desde el detalle puede **Exportar PDF** (comprobante interno del movimiento, sin código QR) y desde el listado exportar a Excel. **Duplicar** crea una nueva transferencia pendiente con las mismas líneas, útil para envíos recurrentes.
 
-## Paso 5 — Imprimir el reporte de transferencia
+## Restricciones importantes
 
-1. Con la transferencia abierta, haga clic en **"Imprimir reporte"**.
-2. Se descarga un PDF con:
-   - Los datos de la transferencia (origen, destino, fecha, responsable).
-   - La lista de productos con sus cantidades.
-   - Un **código QR** que la tienda destino debe escanear al recibir.
-3. Imprima el PDF.
+- No se puede enviar más stock del **disponible** en origen (las reservas de otras transferencias pendientes cuentan).
+- Solo se cancela una transferencia **Pendiente**; una **Confirmada** solo puede **revertirse**.
+- Confirmar requiere usuario con acceso a la **tienda destino**; revertir requiere rol en la **tienda origen**.
+- Las cantidades se confirman tal cual: no hay flujo de "discrepancias parciales". Si llegó menos de lo enviado, confirme la transferencia y resuelva la diferencia con un ajuste documental.
+- No hay "Guardar borrador": la transferencia nace directamente como Pendiente al enviar la solicitud.
+- El PDF del detalle es un comprobante interno de movimiento, no un documento fiscal.
 
-## Paso 6 — Despachar físicamente la mercancía
+## Errores frecuentes
 
-1. Saque los productos del estante según la lista.
-2. Empáquelos.
-3. Pegue el reporte impreso en el paquete.
-4. Entréguelo al transportista (o llévelo usted mismo).
-
-## Paso 7 — Cambiar el estado a "En tránsito"
-
-1. Vuelva a la transferencia en el sistema.
-2. Haga clic en **"Marcar como en tránsito"**.
-3. El estado cambia a **"En tránsito"**.
-4. En este momento, el sistema **descuenta el stock de la tienda origen**, pero **aún no lo suma a la tienda destino**.
-
-> ⚠️ **Importante**: Si una tienda hace un reporte de stock en este momento, verá que las unidades transferidas "desaparecieron" de la tienda origen. Esto es correcto: están en camino, no en el estante.
-
-## Paso 8 — Confirmación en la tienda destino
-
-Cuando el paquete llega a la tienda destino:
-
-1. El encargado de esa tienda entra al sistema.
-2. Va a **Multi-Tienda → Transferencias**.
-3. Filtra por estado **"En tránsito"**.
-4. Encuentra la transferencia y la abre.
-5. **Cuenta los productos físicamente** y compara con la lista.
-6. Si todo coincide: hace clic en **"Confirmar recepción"**.
-7. Si hay diferencias: hace clic en **"Registrar discrepancia"** y anota qué faltó o sobró.
-
-## Paso 9 — Cierre de la transferencia
-
-Después de la confirmación en destino:
-
-- El stock se **suma a la tienda destino**.
-- El estado cambia a **"Completada"**.
-- Ya no se puede modificar.
-
----
+| Mensaje / síntoma | Causa | Solución |
+|-------------------|-------|----------|
+| No permite agregar la cantidad solicitada | Stock disponible insuficiente en origen. | Reduzca la cantidad o despache primero otra transferencia pendiente que reserve ese stock. |
+| No veo el botón Confirmar Recepción | La transferencia no está en estado Pendiente, o no tiene acceso a la tienda destino. | Verifique el estado y su tienda activa. |
+| El producto no aparece en destino | El SKU aún no existía en la tienda destino. | Al confirmar se crea el producto espejo; verifique su ficha en el catálogo destino. |
+| Cancelé por error y ya no está | Las canceladas no se recuperan. | Use **Duplicar** desde el detalle para recrear la solicitud. |
 
 ## Preguntas frecuentes
 
-**¿Qué pasa si la mercancía se pierde en el camino?**
-- La transferencia queda en estado "En tránsito" para siempre.
-- El administrador debe hacer un **ajuste de inventario** en la tienda destino para registrar la pérdida.
-- Se recomienda investigar con el transportista.
+**¿Cuándo se descuenta el stock de origen?**
+Solo al confirmar la recepción en destino. Antes de eso, el stock queda reservado (no disponible para ventas ni vales), pero visible en la tienda origen.
 
-**¿Puedo anular una transferencia ya enviada?**
-- Solo si está en estado "Pendiente" o "En tránsito".
-- Si está "Completada", no se puede anular. Tendría que hacer una **transferencia inversa**.
+**¿Puedo transferir entre dos tiendas siendo yo mismo usuario de ambas?**
+Sí: cree desde la tienda origen y confirme cambiando su tienda activa a la destino.
 
-**¿Una transferencia afecta la caja de alguna tienda?**
-- No. Las transferencias no involucran dinero. Solo mueven inventario.
+**¿La transferencia afecta la caja o las ventas?**
+No. Es un movimiento de inventario sin dinero.
 
-**¿Cuánto tarda una transferencia en completarse?**
-- Depende del transporte. Si es entre tiendas de la misma ciudad, normalmente el mismo día.
-- Si es entre ciudades, puede tardar días.
-- El sistema no tiene límite de tiempo. La transferencia puede estar "En tránsito" indefinidamente.
+**¿Qué hago si llegó mercancía dañada o faltante?**
+Confirme la transferencia con las cantidades recibidas y documente la diferencia con un **Ajuste Documental** (OPERACIÓN → Almacén → Ajustes Documentales) en la tienda correspondiente.
 
-**¿Puedo transferir a una tienda de otra empresa?**
-- No. Las transferencias son dentro de la misma empresa. Para mover mercancía a otra empresa, se hace una **venta** normal.
+## Información relacionada
+
+- **Estados de una transferencia** (referencia rápida de estados y transiciones).
+- **Cómo ajustar el inventario** — para diferencias posteriores a la recepción.
+- **Cómo recibir mercancía** — el flujo de recepción de proveedores externos.

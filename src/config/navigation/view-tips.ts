@@ -38,13 +38,13 @@ export const VIEW_TIPS: Record<string, string> = {
   'tool-import': 'Importa JSON de fichas existentes',
 
   // Multi-Tienda
-  'management-hub': 'Gestiona noticias, vitrina y tiendas en un solo lugar',
+  'management-hub': 'Gestiona tiendas, dashboards y vitrina en un solo lugar',
   'workers': 'Configura reglas de comisión por trabajador',
   'cost-analytics': 'Arrastra campos para crear vistas dinámicas',
   'exchange-intelligence': 'Simula escenarios de devaluación cambiaria',
   'reports': 'Diseña reportes con filtros personalizados',
   'pos': 'Escáner de código de barras integrado — presiona F2',
-  'sales-hub': 'Vender, Caja e Historial al frente; el resto en Otras opciones',
+  'sales-hub': 'Opciones de ventas: Historial, Devoluciones, Cotizaciones, Cuentas y más',
   'ofertas': 'Crea promociones y combos activos',
   'inventory': 'Filtra por stock bajo para reabastecer',
   'received-services': 'Registra servicios de terceros, distribuye su costo y controla los pagos',
@@ -71,7 +71,7 @@ export const VIEW_TIPS: Record<string, string> = {
 
   // Más Recursos
   'settings': 'Personaliza tema, idioma y accesibilidad',
-  'legal': 'Términos, privacidad y RGPD',
+  'legal': 'Consultor de normativa cubana y generador de formularios oficiales',
   'help': 'Tutoriales, FAQ y contacto con soporte',
   'wiki': 'Glosario contable y normativas cubanas',
 

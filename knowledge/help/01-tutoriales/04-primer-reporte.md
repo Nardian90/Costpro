@@ -12,8 +12,8 @@ CostPro puede generar **11 tipos de reportes**. En este tutorial aprenderá a ha
 
 ## Paso 1 — Ir al Generador de Reportes
 
-1. En el menú de la izquierda, haga clic en **Multi-Tienda**.
-2. En la lista, busque y haga clic en **Generador de Reportes**.
+1. En el menú de la izquierda, abra la sección **ANÁLISIS**.
+2. Haga clic en **Reportes**.
 3. Verá una pantalla con varias opciones: tipo de reporte, fechas, tienda y un botón verde "Generar".
 
 ## Paso 2 — Elegir el tipo de reporte
@@ -35,10 +35,9 @@ CostPro puede generar **11 tipos de reportes**. En este tutorial aprenderá a ha
 
 > 💡 **Atajos**: Arriba de los calendarios verá botones rápidos:
 > - **Hoy**: pone desde y hasta en la fecha de hoy.
-> - **Ayer**: el día anterior.
-> - **Esta semana**: de lunes a hoy.
-> - **Este mes**: del 1 del mes a hoy.
-> - **Mes pasado**: el mes completo anterior.
+> - **Semana**: de la semana a hoy.
+> - **Mes**: del 1 del mes a hoy.
+> - **Mes anterior**: el mes completo anterior.
 > Úselos para no tener que navegar el calendario.
 
 ## Paso 4 — Elegir la tienda
@@ -62,19 +61,19 @@ El reporte de ventas muestra una tabla con estas columnas:
 | Columna | Qué significa |
 |---------|---------------|
 | **Fecha** | Día y hora de la venta. |
-| **Folio / Recibo** | Número único de la venta. Sirve para buscarla después. |
+| **Referencia** | Identificador único de la venta. Sirve para buscarla después. |
 | **Tienda** | En qué sucursal se hizo. |
 | **Cajero** | Qué usuario la cobró. |
 | **Productos** | Cuántos artículos se vendieron en esa venta. |
 | **Total** | Cuánto dinero se cobró. |
-| **Método de pago** | Efectivo, tarjeta, mixto o transferencia. |
+| **Método de pago** | Efectivo, transferencia, Transf. Exterior o mixto. |
 
 Abajo de la tabla verá un **resumen** con los totales:
 
 - **Cantidad de ventas**: cuántas ventas se hicieron en el período.
 - **Total vendido**: cuánto dinero entró en total.
 - **Ticket promedio**: total dividido entre cantidad de ventas. Le dice cuánto gasta en promedio cada cliente.
-- **Por método de pago**: desglose de cuánto entró en efectivo, cuánto en tarjeta, etc.
+- **Por método de pago**: desglose de cuánto entró en efectivo y cuánto por vouchers (transferencias/Zelle).
 
 ## Paso 7 — Exportar a PDF o Excel
 
@@ -93,30 +92,25 @@ Si quiere guardar el reporte o imprimirlo:
 
 > 💡 **Tip**: Si va a presentar el reporte a su jefe o al dueño, **exporte a PDF**. Si va a trabajar con los datos (hacer gráficos, sumar, filtrar), **exporte a Excel**.
 
-## Paso 8 — Filtrar el reporte (opcional)
+## Paso 8 — Ajustar las columnas del reporte (opcional)
 
-Si quiere ver solo ciertas ventas, puede agregar filtros antes de generar:
-
-- **Por categoría**: ver solo ventas de productos de cierta categoría (ej: solo "Lácteos").
-- **Por cajero**: ver solo las ventas de un cajero específico.
-- **Por método de pago**: ver solo ventas en efectivo, por ejemplo.
-
-Para activar un filtro, márquelo en la sección "Filtros avanzados" antes de pulsar "Generar".
+Antes de generar, puede elegir qué **columnas** incluir en el reporte (por ejemplo, ocultar las que no use). La configuración del generador es tipo de reporte + fechas + tienda + columnas: no filtra por categoría, cajero ni método de pago. Si necesita ese nivel de detalle, exporte a Excel y filtre ahí.
 
 ---
 
 ## Preguntas frecuentes
 
 **¿El reporte incluye las ventas anuladas?**
-- No. Las ventas anuladas se excluyen por defecto.
-- Si quiere verlas, hay una opción "Incluir anuladas" en los filtros avanzados.
+- No. El reporte trabaja sobre las ventas del período tal como quedaron.
+- Para revisar anulaciones, consulte el Historial de Ventas o el reporte de Auditoría.
 
 **¿Por qué mi reporte sale en blanco?**
 - Posiblemente no hubo ventas en ese período. Cambie las fechas y vuelva a intentar.
 - Verifique que seleccionó la tienda correcta. A veces uno mira la tienda equivocada.
 
-**¿Puedo ver el reporte del mismo día de ayer para hoy, sin fechas?**
-- Sí. Use el botón rápido **"Ayer"**. Genera el reporte del día anterior completo.
+**¿Puedo ver el reporte del día de ayer sin tocar fechas?**
+- Los botones rápidos son Hoy, Semana, Mes y Mes anterior; no hay botón "Ayer".
+- Para ayer, ponga «Fecha desde» y «Fecha hasta» en la fecha de ayer manualmente.
 
 **¿Los reportes se guardan en algún lado?**
 - Sí, cada reporte que genera se guarda en el historial de reportes (botón "Historial").

@@ -156,12 +156,12 @@ El avatar es una **imagen de banner promocional** que se incluye en la portada d
 
 | Avatar | Descripción |
 |--------|-------------|
-| **Ven tenemos lo mejor** | Banner general de invitación a comprar |
-| **Ofertas especiales** | Banner para promociones y descuentos |
-| **Nuevas llegadas** | Banner para productos recién ingresados |
-| **Liquidación total** | Banner para ventas de liquidación |
-| **Lo mejor del mes** | Banner destacando productos del mes |
-| **Envío gratis** | Banner promocionando envío sin costo |
+| **Ferretería** | Banner de estilo ferretero/herramientas |
+| **Tienda** | Banner general de tienda |
+| **Taller** | Banner de servicios de taller |
+| **Ofertas** | Banner para promociones y descuentos |
+| **Premium** | Banner de gama alta |
+| **Corporativo** | Banner sobrio para clientes empresariales |
 
 El avatar se muestra como una franja horizontal en la sección inferior de la portada del Catálogo Elegante, entre el producto destacado y la fila de productos de vista previa. Para seleccionarlo, haz clic en la miniatura del avatar dentro del modal de exportación.
 

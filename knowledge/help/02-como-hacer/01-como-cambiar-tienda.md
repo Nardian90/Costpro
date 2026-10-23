@@ -28,7 +28,7 @@
 ## Preguntas frecuentes
 
 **¿Puedo cambiar de tienda en medio de una venta?**
-- No es recomendable. Termine la venta primero. Si cambia en medio, el carrito se vacía y la venta se pierde.
+- No es recomendable. Termine la venta primero: si cambia de tienda con un carrito con productos, el sistema le pedirá confirmación antes de vaciarlo.
 
 **¿Por qué no veo una tienda en la lista?**
 - El administrador no le ha dado acceso a esa tienda. Pídale que se lo habilite.

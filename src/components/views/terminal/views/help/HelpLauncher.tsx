@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 export const HELP_DOC_BY_VIEW: Record<string, string> = {
   // Tutoriales principales
   'occ': 'help/01-tutoriales/01-primer-inicio.md', // alias legacy (normalizado a dashboard)
-  'dashboard': 'help/01-tutoriales/04-primer-reporte.md',
+  'dashboard': 'help/01-tutoriales/01-primer-inicio.md',
 
   // Operaciones multi-tienda
   'pos': 'help/02-como-hacer/03-como-cerrar-caja.md',
@@ -34,6 +34,8 @@ export const HELP_DOC_BY_VIEW: Record<string, string> = {
   'catalog': 'help/01-tutoriales/03-primer-producto.md',
   'inventory': 'help/02-como-hacer/10-como-ajustar-inventario.md',
   'inventory_adjustments': 'help/02-como-hacer/10-como-ajustar-inventario.md',
+  'physical_inventory': 'help/02-como-hacer/25-como-hacer-inventario-fisico.md',
+  'vales_salida': 'help/02-como-hacer/24-como-emitir-vale-salida.md',
   'history': 'help/03-referencia/08-estados-transferencia.md',
   'inventory_count': 'help/02-como-hacer/18-como-usar-venta-por-conteo.md',
   'labels': 'help/02-como-hacer/08-como-imprimir-etiqueta.md',

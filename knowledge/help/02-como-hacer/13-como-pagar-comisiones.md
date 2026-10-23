@@ -1,126 +1,86 @@
-# Cómo Hacer: Pagar Comisiones a Trabajadores
+# Cómo Hacer: Gestionar y Pagar Comisiones
 
-> **Necesita esto cuando**: Tiene trabajadores (cajeros, vendedores) que ganan comisión por ventas y debe calcular cuánto pagarles al final del período.
+> **Necesita esto cuando**: paga a sus trabajadores por las ventas que realizan y necesita que el cálculo sea automático, trazable y cuadre con la caja y con Cuentas por Pagar.
 
-## ¿Qué es una comisión?
+## ¿Para qué sirve?
 
-Una comisión es un **porcentaje de las ventas** que se le paga al trabajador como incentivo. Por ejemplo: si un cajero vende 1000 pesos en el mes y su comisión es del 3%, gana 30 pesos extra en su salario.
+El módulo **Trabajadores y Comisiones** define **reglas de comisión** por trabajador, calcula lo devengado a partir de las ventas reales de la tienda y registra los **pagos de comisión** como documentos formales. Cada venta queda asociada al usuario que la cobró; las ventas anuladas o revertidas no computan (la base considera devoluciones).
 
-CostPro lleva el control automático de:
+## ¿Dónde encontrarlo?
 
-- **Quién vendió qué**: cada venta queda registrada con el usuario que la cobró.
-- **Cuánto vendió cada uno en el período**: ventas totales por trabajador.
-- **Qué comisión le corresponde**: según el porcentaje configurado para ese trabajador.
-- **Qué ventas fueron anuladas**: las anuladas no cuentan para comisión.
+- **Escritorio**: Inicio → **OPERACIÓN** → **Trabajadores y Comisiones** (entrada de primer nivel, debajo del hub Costo).
+- **Búsqueda global**: `Ctrl/Cmd + K` y escriba «comisiones» o «trabajadores».
 
-## Paso 1 — Configurar el porcentaje de comisión de cada trabajador (primera vez)
+## Antes de comenzar
 
-1. Vaya a **Multi-Tienda → Trabajadores y Comisiones**.
-2. Verá una lista con todos los trabajadores de la tienda.
-3. Haga clic en el trabajador que quiere configurar.
-4. En el campo **"% Comisión"**, escriba el porcentaje (ej: 3 para 3%).
-5. Haga clic en **"Guardar"**.
+- Necesita rol admin, manager o encargado en la tienda.
+- Los trabajadores deben estar dados de alta en el módulo (pestaña **Trabajadores**).
+- Las ventas deben estar registradas: la comisión se calcula sobre ventas reales de la tienda, no manualmente.
 
-> 💡 **Consejo**: Configure las comisiones al inicio, cuando contrata al trabajador. No las cambie en medio del período porque el cálculo se vuelve confuso.
+## Las 4 pestañas del módulo
 
-## Paso 2 — Al final del período, ir al módulo
+| Pestaña | Para qué sirve |
+|---------|---------------|
+| **Trabajadores** | Ficha de cada trabajador, su último pago y el botón **Pagar comisión**. |
+| **Reglas Comisión** | Crear y editar las reglas de cálculo por trabajador. |
+| **Pagos** | Listado de pagos de comisión registrados. |
+| **Historial** | Versiones de las reglas: qué regla estaba vigente en cada momento. |
 
-1. Vaya a **Multi-Tienda → Trabajadores y Comisiones**.
-2. Verá un panel con dos pestañas:
-   - **Resumen**: totales por trabajador.
-   - **Detalle**: ventas individuales de cada trabajador.
+## Cómo definir una regla de comisión
 
-## Paso 3 — Elegir el período a pagar
+1. Abra la pestaña **Reglas Comisión** y cree una regla para el trabajador.
+2. Elija el **tipo de regla**:
+   - **Porcentaje de ventas**: un % sobre lo vendido.
+   - **Monto fijo**: importe fijo por período.
+   - **Basada en salario**: relacionada con el sueldo.
+   - **Híbrida**: combinación de las anteriores.
+   - **Por producto específico**: monto por producto vendido (con modo por venta o por unidad).
+   - **Porcentaje escalonado**: el % cambia según el rango de precio.
+3. Defina la **base de cálculo**: sobre el total de ventas, solo efectivo, solo transferencia o sobre ventas netas (descontando devoluciones).
+4. Establezca **prioridad y vigencia** si el trabajador tiene varias reglas.
 
-1. Arriba, en los campos de fecha, elija:
-   - **Desde**: primer día del período (ej: 1ro del mes).
-   - **Hasta**: último día del período (ej: último día del mes).
-2. Haga clic en **"Calcular"**.
-3. El sistema procesa y muestra los resultados.
+## Cómo pagar una comisión
 
-## Paso 4 — Revisar el resumen por trabajador
+1. En la pestaña **Trabajadores**, pulse **Pagar comisión** del trabajador.
+2. En el asistente de pago:
+   - El sistema **calcula automáticamente** lo devengado según las reglas vigentes, o puede **cargar los productos** vendidos y ajustar la comisión **línea a línea**.
+   - Elija el período (fechas desde/hasta) y revise el detalle.
+3. Confirme el pago. Se crea un **documento de pago de comisión** trazable: queda en la pestaña **Pagos**, entra en **Cuentas por Pagar** y, si se paga en efectivo, **descuenta del arqueo** del turno.
+4. Desde el **Reporte Entrega** (OPERACIÓN → Ventas → Reporte Entrega) puede gestionar el pago de comisiones del día con **Confirmar y pagar**: al confirmar, el reporte se recalcula.
 
-Verá una tabla como esta:
+## Restricciones importantes
 
-| Trabajador | Ventas totales | Ventas anuladas | Ventas válidas | % Comisión | Comisión a pagar |
-|------------|----------------|-----------------|----------------|------------|------------------|
-| Juan Pérez | 5,200 CUP | 100 CUP | 5,100 CUP | 3% | 153 CUP |
-| María López | 8,400 CUP | 200 CUP | 8,200 CUP | 3% | 246 CUP |
-| Carlos Ruiz | 3,100 CUP | 0 CUP | 3,100 CUP | 2% | 62 CUP |
+- Las comisiones se calculan sobre **ventas reales de la tienda**; las anuladas y revertidas no computan.
+- Cada regla tiene **historial de versiones**: cambiar una regla no altera los pagos ya hechos.
+- Un pago de comisión no se borra; queda como documento y en auditoría.
+- La comisión es **por tienda**: cada tienda calcula y paga las suyas.
+- Pagar en efectivo afecta el efectivo esperado del arqueo del turno correspondiente.
 
-**Columnas explicadas:**
+## Errores frecuentes
 
-- **Ventas totales**: todo lo que cobró el trabajador, incluyendo anuladas.
-- **Ventas anuladas**: lo que se anuló después (no cuenta para comisión).
-- **Ventas válidas**: totales menos anuladas. Es la base para calcular comisión.
-- **% Comisión**: el porcentaje configurado en el paso 1.
-- **Comisión a pagar**: ventas válidas × % comisión. Es lo que hay que pagarle.
-
-## Paso 5 — Revisar el detalle (opcional pero recomendado)
-
-1. Haga clic en la pestaña **"Detalle"**.
-2. Seleccione un trabajador en el desplegable de arriba.
-3. Verá todas sus ventas del período:
-   - Folio, fecha, monto, método de pago, estado.
-4. Verifique que las ventas sean correctas.
-5. Si ve alguna venta que no debería contar (por ejemplo, una venta grande a un familiar que se hizo para inflar comisión), puede **excluirla** marcando la casilla "Excluir".
-
-## Paso 6 — Generar el reporte de comisiones
-
-1. Vuelva a la pestaña **"Resumen"**.
-2. Haga clic en **"Generar reporte de comisiones"** (arriba a la derecha).
-3. Elija el formato: PDF o Excel.
-4. Se descarga el reporte con:
-   - Los totales por trabajador.
-   - El detalle de cada venta.
-   - La firma del trabajador (espacio en blanco en PDF para firmar a mano).
-   - La firma del encargado.
-
-## Paso 7 — Imprimir y entregar
-
-1. Imprima el reporte PDF.
-2. Entréguelo a cada trabajador para que lo revise.
-3. El trabajador debe firmar conforme está de acuerdo con el monto.
-4. El encargado también firma.
-5. Archive el reporte firmado para sus registros contables.
-
-## Paso 8 — Marcar como pagado
-
-1. En el sistema, vuelva a **Trabajadores y Comisiones**.
-2. Seleccione el período que acaba de pagar.
-3. Haga clic en **"Marcar como pagado"**.
-4. Esto evita que ese período se vuelva a calcular por error en el futuro.
-
----
+| Síntoma | Causa | Solución |
+|---------|-------|----------|
+| El cálculo automático da 0 | El trabajador no tiene regla vigente o no hubo ventas en el período. | Revise **Reglas Comisión** y las fechas del período. |
+| No veo el botón Pagar comisión | Su rol no es de gestión o el trabajador no está activo. | Verifique su rol y la ficha del trabajador. |
+| La comisión pagada no coincide con el reporte del día | Pagó después de generar el Reporte Entrega. | El reporte se recalcula al confirmar el pago; regenérelo. |
+| Un pago quedó con un monto equivocado | Ajuste manual línea a línea mal aplicado. | Verifique el documento en la pestaña Pagos; consulte al administrador si requiere corrección. |
 
 ## Preguntas frecuentes
 
-**¿Las devoluciones afectan la comisión?**
-- Sí. Si una venta se anula, no cuenta para comisión.
-- Si ya pagó la comisión y después se anula la venta, no se puede "descontar" automáticamente. Tendrá que descontarlo del próximo pago.
+**¿Puedo pagar comisiones en transferencia?**
+Sí. El pago de comisión admite los métodos de pago habituales; solo el efectivo reduce el efectivo esperado del arqueo.
 
-**¿Puedo tener diferentes porcentajes para diferentes productos?**
-- Sí, en la configuración avanzada puede asignar % por categoría o por producto.
-- Por ejemplo: 5% en electrónica, 2% en alimentos.
+**¿Las comisiones aparecen como deuda?**
+Sí: los pagos de comisión pendientes entran en **Cuentas por Pagar** junto a recepciones y servicios.
 
-**¿Qué pasa si un trabajador tiene dos tiendas?**
-- Las comisiones se calculan por separado para cada tienda.
-- Genere el reporte para cada tienda donde trabajó.
+**¿Puedo excluir una venta del cálculo?**
+No existe una casilla de exclusión por venta. La base de cálculo se define en la regla (total, efectivo, transferencia o neto); las ventas anuladas quedan fuera automáticamente.
 
-**¿Las horas extra afectan la comisión?**
-- No. Las comisiones son por ventas. Las horas extra se pagan aparte en nómina.
-- CostPro no maneja nómina, solo comisiones por venta.
+**¿Dónde veo qué regla se aplicó a un pago?**
+En la pestaña **Historial**, que conserva las versiones de las reglas con su vigencia.
 
-**¿Puedo pagar comisiones por períodos más cortos (quincenal)?**
-- Sí. En el paso 3, elija las fechas de la quincena (1-15 o 16-fin de mes).
-- Calcule, genere el reporte y pague.
+## Información relacionada
 
-**¿Cómo evito fraudes en las comisiones?**
-- Configure que ventas de más de X monto requieren autorización de supervisor.
-- Revise siempre el detalle antes de pagar.
-- Esté atento a trabajadores con picos anómalos de ventas en el último día del período.
-- Compare el % de ventas anuladas por trabajador. Si uno anula muy poco y otro mucho, investigue.
-
-**¿Las comisiones se registran en la contabilidad automáticamente?**
-- No. CostPro calcula y genera el reporte, pero el registro contable lo hace el contador aparte.
-- El reporte PDF es el documento fuente para el asiento contable.
+- **Cómo consultar Cuentas por Cobrar y Pagar** — dónde aparecen las comisiones por pagar.
+- **Cómo cerrar la caja (arqueo)** — el efecto de las comisiones pagadas en efectivo.
+- **Reporte Entrega** — gestión diaria de comisiones junto a la entrega de efectivo.

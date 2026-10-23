@@ -4,7 +4,7 @@
 
 ## Estados de una orden de producción
 
-Una orden de producción (o de servicio/trabajo) pasa por 7 estados posibles. Cada estado determina qué acciones se pueden realizar.
+Una orden de producción (o de servicio/trabajo) pasa por **8 estados** posibles. Cada estado determina qué acciones se pueden realizar.
 
 ### Tabla de estados
 
@@ -17,23 +17,25 @@ Una orden de producción (o de servicio/trabajo) pasa por 7 estados posibles. Ca
 | `completed` | ✓ | Verde | **Completada** — El trabajo terminó pero aún no se ha cerrado formalmente. |
 | `closed` | ✓ | Gris | **Cerrada** — Finalizada formalmente. Pago registrado. No se puede editar. |
 | `voided` | ✕ | Rojo | **Anulada** — Cancelada. No se puede reactivar. |
+| `reversed` | ↩ | Morado | **Revertida** — Una orden completada/cerrada que se revirtió contablemente: devuelve insumos, descuenta el producto terminado y corrige caja/kardex. |
 
 ### Transiciones válidas
 
 ```
 draft → approved → in_progress ⇄ paused → completed → closed
-   ↓        ↓          ↓             ↓          ↓
- voided  voided     voided       voided     voided
+   ↓        ↓          ↓             ↓          ↓        ↓
+ voided  voided     voided       voided     (revertir) (revertir)
 ```
 
 - **Desde draft**: puede ir a `approved` o `voided`.
 - **Desde approved**: puede ir a `in_progress` o `voided`.
 - **Desde in_progress**: puede ir a `paused` (y viceversa), a `completed`, o a `voided`.
 - **Desde paused**: puede volver a `in_progress` o ir a `voided`.
-- **Desde completed**: solo puede ir a `closed`.
-- **Desde closed o voided**: NO se puede cambiar (son estados terminales).
+- **Desde completed**: puede ir a `closed` o **revertirse** (`reversed`).
+- **Desde closed**: solo puede **revertirse** (`reversed`) por un rol de gestión.
+- **Desde voided**: NO se puede cambiar (estado terminal).
 
-> **Importante**: Una vez cerrada o anulada, la orden queda congelada para auditoría. No se puede modificar ni reabrir. Si necesita corregir algo, debe crear una nueva orden que referencie la anterior en la descripción.
+> **Importante**: La reversión (`reversed`) invierte el efecto contable de la orden: reabastece los insumos consumidos, descuenta el producto terminado recibido y corrige los pagos asociados. Queda registrada en auditoría con usuario y motivo. Una vez cerrada o anulada, la orden no se reabre; si necesita repetir el trabajo, cree una nueva orden que referencie la anterior en la descripción.
 
 ### Acciones disponibles por estado
 

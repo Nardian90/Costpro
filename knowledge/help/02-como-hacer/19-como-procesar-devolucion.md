@@ -22,8 +22,7 @@ También con `Ctrl + K` escribiendo "devoluciones".
 2. Haga clic en **"Nueva Devolución"**.
 3. **Busque el producto** devuelto (por nombre o código).
 4. Indique la **cantidad** devuelta y seleccione o escriba el **Motivo**.
-5. Agregue notas si el caso lo requiere.
-6. Confirme. El sistema muestra el **Total** devuelto y genera el documento correspondiente.
+5. Confirme. El sistema muestra el **Total** devuelto y registra la nota de crédito con su número.
 
 ## Qué significa cada dato
 
@@ -36,7 +35,7 @@ También con `Ctrl + K` escribiendo "devoluciones".
 ## Reglas del sistema (importantes)
 
 - **Toda devolución exige la venta original**: el sistema valida que el producto realmente se vendió en esa venta y que no se haya devuelto ya la misma cantidad (no se puede devolver dos veces lo mismo; el tope es acumulado por venta y producto).
-- La devolución se registra como **nota de crédito** con método de reembolso (efectivo, transferencia, Zelle o crédito en tienda) y genera el **contra-asiento de caja** correspondiente: el dinero sale de la caja en el mismo método.
+- El formulario pide **motivo, fecha operativa y productos con cantidad**. El método de reembolso no se elige en el formulario (el sistema lo registra como efectivo por defecto): si el reembolso real fue por otro canal, documente el acuerdo en el motivo y refleje la salida de dinero por el canal correspondiente.
 - La **cantidad** devuelta vuelve al inventario de la misma tienda de la venta original.
 - No se puede registrar una devolución "huérfana" sin venta original: el sistema la rechaza.
 

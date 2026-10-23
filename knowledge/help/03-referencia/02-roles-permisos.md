@@ -21,12 +21,12 @@ CostPro tiene **6 roles jerárquicos**. Los permisos son **acumulativos**: un ro
 | **manager** | 5 | Gerente. Administra tiendas y usuarios. |
 | **encargado** | 4 | Encargado de tienda. Supervisa operaciones. |
 | **clerk** | 3 | Cajero / Vendedor. Atiende clientes. |
-| **almacen** | 2 | Almacenista. Maneja inventario, no atiende público. |
+| **warehouse** | 2 | Almacenista. Maneja inventario y logística (recepciones, transferencias, servicios recibidos), no atiende público. |
 | **usuario** | 1 (mínimo) | Usuario básico. Solo lectura. |
 
 ## Tabla de permisos por rol
 
-| Acción | usuario | almacen | clerk | encargado | manager | admin |
+| Acción | usuario | warehouse | clerk | encargado | manager | admin |
 |--------|---------|---------|-------|-----------|---------|-------|
 | Ver Dashboard | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Hacer ventas (POS) | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
@@ -85,7 +85,7 @@ CostPro tiene **6 roles jerárquicos**. Los permisos son **acumulativos**: un ro
 - Puede anular sus ventas dentro de 24h.
 - Aplica descuentos hasta 20%.
 
-### almacen (Almacenista)
+### warehouse (Almacenista)
 - Maneja el inventario físico.
 - Recibe mercancía, hace ajustes, hace transferencias.
 - No atiende público.

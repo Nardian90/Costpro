@@ -1,136 +1,90 @@
 # Cómo Hacer: Crear una Orden de Compra
 
-> **Necesita esto cuando**: Va a pedir mercancía a un proveedor y quiere registrar el pedido en el sistema antes de que llegue, para poder comparar lo pedido contra lo recibido.
+> **Necesita esto cuando**: planea comprar mercancía a un proveedor y quiere dejar documentado qué pedirá, cuánto cuesta y compararlo después con lo que realmente llega.
 
-## ¿Qué es una Orden de Compra (OC)?
+## ¿Para qué sirve?
 
-Es un **documento formal** que usted le envía al proveedor diciendo: *"Quiero pedir estos productos, en estas cantidades, a estos precios"*. El proveedor luego le envía la mercancía con una factura, y usted compara la factura con la OC.
+Las **Órdenes de Compra (OC)** documentan la intención de compra antes de recibir mercancía. La OC **no descuenta inventario ni genera gastos**: es un documento de planificación. Su valor aparece al recibir: las recepciones pueden validarse contra la OC para comparar lo pedido contra lo recibido.
 
-En CostPro, la OC sirve para:
+## ¿Dónde encontrarlo?
 
-- Tener un registro de lo que pidió.
-- Comparar lo pedido con lo recibido (¿me mandaron todo? ¿me cobraron más?).
-- Llevar control de proveedores.
-- Generar reportes de compras.
+- **Escritorio**: Inicio → **OPERACIÓN** → **Logística** → **Órdenes de Compra** (después de Servicios Recibidos).
+- **Móvil**: pestaña inferior **Recibir** → la misma vista.
+- **Búsqueda global**: `Ctrl/Cmd + K` y escriba «orden de compra» u «OC».
 
-## Paso 1 — Ir a Órdenes de Compra
+## Antes de comenzar
 
-1. En el menú izquierdo, haga clic en **Multi-Tienda**.
-2. Haga clic en **Órdenes de Compra**.
-3. Verá una lista con las OC anteriores y un botón **"+ Nueva OC"** arriba.
+- Necesita rol admin, manager, encargado o warehouse en la tienda.
+- Ten a mano el nombre del proveedor y la lista de productos con cantidades y costos estimados.
+- La OC se registra en la **tienda activa**; no se elige tienda en el formulario.
 
-## Paso 2 — Iniciar una nueva OC
+## Cómo crear una OC
 
-1. Haga clic en **"+ Nueva OC"**.
-2. Se abre un formulario. Llene:
+1. Vaya a **OPERACIÓN → Logística → Órdenes de Compra**.
+2. Pulse **Nueva OC** / **Crear OC (Borrador)**.
+3. Complete la cabecera:
+   - **Proveedor**: nombre del proveedor (texto; el sistema le sugiere proveedores ya usados).
+   - **N° OC**: número propio de referencia (opcional).
+   - **Fecha esperada**: cuándo debería llegar (opcional).
+   - **Notas**: aclaraciones para quien recibe (opcional).
+4. Agregue los ítems: nombre del producto, SKU (opcional), cantidad pedida, costo unitario y unidad de medida. El total se calcula automáticamente.
+5. Guarde la orden. Nace en estado **Borrador**.
 
-| Campo | Qué escribir |
-|-------|--------------|
-| **Proveedor*** | Elija de la lista. Si no existe, hay que crearlo en Configuración. |
-| **Tienda*** | La tienda que va a recibir la mercancía. |
-| **Fecha esperada** | Cuándo cree que llegará la mercancía. |
-| **Moneda*** | Pesos, USD, EUR, etc. |
-| **Tasa de cambio** | Si la moneda no es pesos, escriba la tasa del día. |
-| **Notas** | Cualquier comentario para el proveedor. |
+## Estados y acciones
 
-3. Haga clic en **"Continuar"**.
+| Estado | Qué significa | Acciones |
+|--------|--------------|----------|
+| **Borrador** | Recién creada, aún sin vigencia. | Editar el contenido según su flujo de trabajo; ver detalle. |
+| **Pendiente** | Confirmada como pedido vigente al proveedor. | **Cancelar** (con confirmación). |
+| **Parcial** | Recibió una parte de la mercancía. | Seguir recibiendo; **Cancelar** si no va a completarse. |
+| **Recibida** | Todo lo pedido fue recibido. | Consulta y comparación pedido vs. recibido. |
+| **Cancelada** | Anulada antes de completarse. | Solo consulta. |
 
-## Paso 3 — Agregar productos a la OC
+La OC no tiene flujo de "envío al proveedor" ni respuesta del proveedor dentro del sistema: el pedido en sí se hace por sus canales habituales y CostPro documenta y controla el cumplimiento.
 
-1. En la tabla vacía, escriba el nombre del primer producto en el campo de búsqueda.
-2. Haga clic en el producto correcto.
-3. Se agrega una fila. Llene:
-   - **Cantidad pedida**: cuántas unidades quiere.
-   - **Precio unitario**: el precio acordado con el proveedor.
-   - **Descuento** (opcional): si el proveedor le dio descuento.
-4. El sistema calcula el subtotal automáticamente.
-5. Repita para cada producto.
+## Cómo recibir contra una OC
 
-## Paso 4 — Verificar los totales
+1. Cuando llegue la mercancía, vaya a **Recepciones** (OPERACIÓN → Logística → Recepciones) y cree la recepción.
+2. Use la opción **Recibir contra OC** y seleccione la orden.
+3. Registre las cantidades que realmente llegan: la recepción valida contra lo pedido.
+4. Al confirmar la recepción, la OC avanza a **Parcial** o **Recibida** según lo recibido.
 
-Abajo de la tabla verá:
+## Órdenes sugeridas (Premium)
 
-- **Subtotal**: suma de todos los productos sin impuestos.
-- **Impuestos**: si aplica (normalmente IVA).
-- **Total**: lo que va a costar toda la OC.
+El botón **Sugerir OC Inteligente** genera una propuesta automática con los productos críticos (stock bajo) y frecuentes de la tienda. Puede definir un **presupuesto** y el sistema ajusta las cantidades para caber en él, avisándole de los recortes. Revise siempre la propuesta antes de guardarla como OC.
 
-Compare con su presupuesto. Si el total es mayor a lo esperado, revise los precios unitarios: a veces el proveedor subió precios y no le avisó.
+## Restricciones importantes
 
-## Paso 5 — Guardar como borrador
+- La OC **no toca inventario**: el stock solo cambia al confirmar la recepción.
+- No hay cálculo de impuestos ni conversión de moneda en la OC: los costos se anotan tal cual se acordaron.
+- Solo se cancelan órdenes **Pendientes** o **Parciales**; una Recibida ya es historia.
+- El proveedor es texto libre: si escribe un nombre nuevo, no se vincula automáticamente a proveedores anteriores.
 
-1. Revise todo.
-2. Haga clic en **"Guardar borrador"**.
-3. La OC queda con estado **"Borrador"**.
+## Errores frecuentes
 
-> 💡 En estado "Borrador", la OC no afecta el inventario ni la contabilidad. Es solo un documento en preparación.
-
-## Paso 6 — Enviar la OC al proveedor
-
-1. Con la OC abierta, haga clic en **"Enviar al proveedor"** (arriba a la derecha).
-2. El estado cambia a **"Enviada"**.
-3. Aparece un botón **"Descargar PDF"**. Descargue el PDF.
-4. Envíe el PDF al proveedor por correo o WhatsApp.
-
-> ⚠️ **Importante**: Solo el estado "Enviada" es válido para el proveedor. Si le manda un PDF en estado "Borrador", el proveedor podría rechazarlo o confundirse.
-
-## Paso 7 — Esperar la respuesta del proveedor
-
-El proveedor puede:
-
-- **Confirmar**: dice que sí, va a enviar todo lo pedido.
-- **Confirmar parcialmente**: dice que sí, pero algunos productos no los tiene. Le enviará los que tiene.
-- **Rechazar**: dice que no puede cumplir con el pedido (sin stock, sin transporte, etc.).
-
-Cuando el proveedor le conteste:
-
-1. Vuelva a la OC en el sistema.
-2. Haga clic en **"Registrar respuesta"**.
-3. Seleccione el tipo de respuesta y, si es parcial, ajuste las cantidades.
-4. Guarde.
-
-## Paso 8 — Recibir la mercancía (cuando llegue)
-
-Cuando llegue el camión del proveedor:
-
-1. Abra la OC correspondiente.
-2. Haga clic en **"Recibir mercancía"**.
-3. Esto lo lleva a la pantalla de Recepciones, pero con la OC ya cargada.
-4. Solo tiene que contar las cantidades reales y ajustar si hay diferencias.
-5. Confirme la recepción.
-
-> 💡 **Beneficio clave**: Si usa OC, el sistema **compara automáticamente** lo que pidió contra lo que recibió. Le alerta si el proveedor mandó de menos o si cobró un precio diferente.
-
----
-
-## Estados de una Orden de Compra
-
-| Estado | Significado |
-|--------|-------------|
-| **Borrador** | Está creando la OC. Aún no es oficial. |
-| **Enviada** | Ya se la mandó al proveedor. Esperando respuesta. |
-| **Confirmada** | El proveedor aceptó el pedido. |
-| **Parcial** | El proveedor aceptó pero con menos productos. |
-| **Recibida** | Llegó toda la mercancía y se registró. |
-| **Parcialmente recibida** | Llegó parte de la mercancía. Falta el resto. |
-| **Cerrada** | Se completó todo el proceso. |
-| **Anulada** | Se canceló por algún motivo. |
+| Síntoma | Causa | Solución |
+|---------|-------|----------|
+| No veo la opción "Recibir contra OC" | La OC está cancelada o ya recibida. | Verifique el estado de la orden. |
+| La OC quedó con cantidades equivocadas | Error de carga. | Según el estado: corrígala si está en Borrador o cancélela y cree una nueva. |
+| El total de la OC no coincide con la factura | Diferencia de costo o cantidades reales. | Registre la recepción con los valores reales; la comparación pedido vs. recibido se consulta en el detalle. |
+| No puedo cancelar la OC | Ya está Recibida. | Una recibida no se cancela; si la mercancía debe devolverse, coordine con el proveedor fuera de la OC. |
 
 ## Preguntas frecuentes
 
-**¿Puedo modificar una OC ya enviada?**
-- No directamente. Tiene que **anularla** y crear una nueva.
-- O crear una OC "modificatoria" que reemplaza a la original.
+**¿La OC genera un gasto o afecta la caja?**
+No. Solo al confirmar la recepción se incorpora la mercancía y su costo al inventario. El pago al proveedor se gestiona después (Cuentas por Pagar / pagos de recepción).
 
-**¿Qué hago si el proveedor me cobra más caro que en la OC?**
-- Reciba la mercancía con el precio **real** de la factura.
-- El sistema registrará la diferencia y se la mostrará en el reporte de recepción.
-- Llame al proveedor para reclamar.
+**¿Puedo crear la OC con productos que no están en el catálogo?**
+Sí: los ítems son texto libre. Al recibir, si el producto no existe, la recepción puede agregarlo como nuevo.
 
-**¿Puedo tener varias OCs abiertas con el mismo proveedor?**
-- Sí. Cada OC es independiente.
+**¿Se puede enviar la OC al proveedor desde CostPro?**
+No hay envío ni PDF de la OC: el documento es de control interno. Use sus canales habituales para el pedido.
 
-**¿La OC descuenta el inventario?**
-- No. La OC es solo un pedido. El inventario se descuenta recién cuando **recibe** la mercancía.
+**¿Qué pasa si recibo más de lo pedido?**
+La recepción registra lo que realmente llega y la comparación con lo pedido queda en el detalle de la OC; la OC se marca Recibida al completar las cantidades.
 
-**¿Cómo veo todas mis OCs?**
-- En Multi-Tienda → Órdenes de Compra. Puede filtrar por estado, proveedor o fecha.
+## Información relacionada
+
+- **Cómo recibir mercancía** — el paso siguiente: recibir contra OC.
+- **Cómo registrar y pagar un Servicio Recibido** — los servicios del abastecimiento que complementan la compra.
+- **Cómo transferir stock entre tiendas** — para mover mercancía ya recibida.

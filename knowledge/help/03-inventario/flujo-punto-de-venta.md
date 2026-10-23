@@ -125,14 +125,12 @@ Antes de procesar el pago, revisa el resumen del carrito:
 
 - **Lista de productos**: nombre, precio unitario, cantidad y subtotal por línea
 - **Conteo de artículos**: número total de unidades en el carrito
-- **Subtotal**: suma de todos los subtotales antes de impuestos
-- **Total**: monto final a cobrar (incluye impuestos aplicables)
+- **Subtotal y Total**: monto final a cobrar (el POS no calcula impuestos automáticamente)
 
 ### Acciones disponibles en el carrito
 
 - **Eliminar producto**: haz clic en el ícono de eliminación junto al producto
-- **Vaciar carrito**: usa la opción "Vaciar" para eliminar todos los productos
-- **Poner en espera**: guarda la venta temporalmente para retomarla después
+- **Vaciar carrito**: usa la opción de vaciado para eliminar todos los productos
 
 ### Descuentos por Ítem
 
@@ -161,11 +159,9 @@ Haz clic en el botón **"Cobrar"** o **"Procesar Pago"** y selecciona el método
 | Método | Descripción | Cuándo usarlo |
 |--------|-------------|---------------|
 | **Efectivo** | Pago en billetes y monedas | Ventas en mostrador con efectivo |
-| **Tarjeta** | Pago con tarjeta de crédito o débito | Clientes que pagan con tarjeta |
-| **Transferencia** | Pago por transferencia bancaria | Ventas a cuentas corrientes o facturas |
-| **Billetera Digital** | Pago mediante aplicaciones móviles (Yape, Plin, etc.) | Clientes que prefieren pagos digitales instantáneos |
-| **Mixto** | Combinación de dos o más métodos de pago | Cuando el cliente desea pagar con varios medios |
-| **Otro** | Método de pago no clasificado en las opciones anteriores | Pagos con vales, bonos, créditos internos u otros |
+| **Transferencia** | Pago por banca móvil (voucher) | Ventas cobradas por transferencia |
+| **Transf. Exterior** | Cobros en divisas por Zelle u otro mecanismo exterior (solo USD/EUR; el sistema convierte a CUP) | Clientes que pagan desde el exterior |
+| **Mixto** | Combinación de efectivo y transferencia en el mismo cobro | Cuando el cliente desea pagar con varios medios |
 
 ### 6.2 Ingresar el Monto (Efectivo)
 
@@ -187,7 +183,7 @@ Cambio:           $   250.00
 Si seleccionas **mixto**:
 
 1. Ingresa el **monto en efectivo** que entrega el cliente
-2. El sistema calcula la **diferencia** que se cubrirá con tarjeta
+2. El sistema calcula la **diferencia** que se cubrirá con transferencia
 3. Confirma ambos montos antes de procesar
 
 ### 6.4 Confirmar la Transacción
@@ -198,20 +194,9 @@ Revisa los datos y haz clic en **"Confirmar"** para finalizar la venta.
 
 #### Auditoría de Precio Bajo Costo
 
-Si al momento de confirmar la venta alguno de los productos del carrito tiene un **precio de venta inferior a su costo de adquisición**, el sistema activa una alerta de **auditoría de precio bajo costo**. Este mecanismo de seguridad previene ventas con margen negativo que puedan pasar desapercibidas.
+Si agregas al carrito un producto cuyo **precio de venta es inferior a su costo de adquisición**, el sistema muestra una **advertencia en pantalla** al añadirlo: la venta no se bloquea, pero el evento queda registrado en el **log de auditoría** (tipo `sale_below_cost`) con el precio, el costo y el margen de la operación.
 
-Cuando se detecta esta condición:
-
-1. Se despliega un **modal de advertencia** que lista los productos con precio debajo de costo
-2. Para cada producto se muestra:
-   - Precio de venta actual
-   - Costo base del producto
-   - Diferencia (pérdida) por unidad vendida
-   - Impacto total en la transacción
-3. El operador debe **confirmar explícitamente** la venta a precio bajo costo para continuar
-4. El evento queda registrado en el **log de auditoría** con el usuario, fecha y motivo
-
-> ⚠️ **Importante**: Esta alerta no bloquea la venta, pero requiere confirmación manual. Las ventas recurrentes bajo costo pueden indicar errores en la configuración de precios o requiren autorización gerencial según las políticas de tu negocio.
+> ⚠️ **Importante**: No hay modal de confirmación ni motivo que completar: la responsabilidad es del operador. Las ventas recurrentes bajo costo aparecen en la auditoría y pueden revisarse después; las políticas de tu negocio deben definir quién puede vender bajo costo.
 
 ---
 
@@ -279,45 +264,46 @@ Para revisar las ventas realizadas:
 - Información del operador
 - Opciones para reimprimir comprobante o generar nota de crédito
 
-### Anular una Transacción
+### Revertir una Transacción
 
-Si necesitas cancelar o anular una venta ya procesada, el Historial de Ventas ofrece la opción de **anulación de transacción**:
+Si necesitas deshacer una venta ya procesada:
 
-1. Selecciona la venta que deseas anular desde el listado
-2. Haz clic en **"Anular Venta"** (solo disponible para ventas del día en curso)
-3. El sistema solicita un **motivo de anulación** (campo obligatorio)
-4. Confirma la anulación
+- **Inmediatamente después de cobrar**: el propio cajero puede usar **Deshacer** (ventana de 30 segundos, solo ventas propias recién hechas) y la venta se revierte completa.
+- **Después**: un admin/manager/encargado usa **Revertir venta** desde el Historial de Ventas:
 
-Al anular una transacción:
+1. Selecciona la venta y haz clic en **Revertir**
+2. El sistema solicita un **motivo** (campo obligatorio)
+3. Confirma la reversión
+
+Al revertir:
 
 - El stock de los productos vendidos se **restaura automáticamente** en la tienda correspondiente
-- Se genera un registro de anulación en el log de auditoría con el usuario y el motivo
-- El comprobante original queda marcado como **anulado** y se genera un comprobante de anulación complementario
-- Las ventas ya cerradas en un arqueo de caja no pueden anularse desde esta vista
+- Se genera un registro en el log de auditoría con el usuario y el motivo
+- La venta queda marcada como **anulada** (visible con badge en el historial, no se borra)
+- La reversión depende del rol del usuario, no de una ventana de 24 horas
 
-### Cálculo de Impuestos (Modal de Desglose)
+### Ajuste de Impuestos (post-venta)
 
-Desde el detalle de cualquier venta, puedes acceder al **modal de cálculo de impuestos** que muestra el desglose tributario completo:
+El POS no calcula impuestos automáticamente. Si necesitas reflejar impuestos en una venta ya registrada, un admin/encargado/manager puede aplicar un **Ajuste de Impuestos** desde el detalle de la venta en el Historial de Ventas:
 
-- **Base imponible**: monto sujeto a impuestos antes de aplicar las tasas
-- **IGV / Impuesto al valor agregado**: monto calculado según la tasa configurada
-- **Otros impuestos aplicables**: tasas adicionales según la jurisdicción o tipo de producto
-- **Total con impuestos**: suma final
+- Elige una **configuración de impuesto** (monto fijo o porcentaje, con exento mínimo si aplica)
+- El sistema recalcula los totales en el servidor y registra el ajuste con **motivo obligatorio**
+- También puedes **quitar** un ajuste aplicado
 
-Este desglose es especialmente útil para la elaboración de reportes fiscales y la conciliación con los sistemas contables.
+Este desglose ayuda a la conciliación con los sistemas contables cuando corresponde.
 
 ### Exportar Historial de Ventas
 
 El Historial de Ventas permite **exportar los registros** a formatos externos para su análisis o archivo:
 
-1. Aplica los filtros deseados (fecha, tienda, método de pago, etc.)
+1. Aplica los filtros deseados (estado, rango de fechas, búsqueda)
 2. Haz clic en el botón de **"Exportar"**
-3. Selecciona el formato de salida:
-   - **Excel (.xlsx)**: para análisis en hojas de cálculo y reportes personalizados
-   - **PDF**: para archivo impreso o envío por correo electrónico
-   - **CSV**: para integración con sistemas externos o herramientas de Business Intelligence
+3. Se descarga el archivo:
+   - **Excel (.xlsx)**: con las ventas del período y el desglose por método (efectivo/transferencia/Zelle)
 
-La exportación respeta los filtros activos, por lo que puedes generar reportes parciales (solo una tienda, solo un día, solo un método de pago, etc.) o reportes completos del período seleccionado.
+Para reportes PDF, use el Generador de Reportes (ANÁLISIS → Reportes).
+
+La exportación respeta los filtros activos, por lo que puedes generar reportes parciales (solo un estado, solo un rango de fechas) o completos del período seleccionado.
 
 > 💡 **Tip**: Exporta el historial de ventas periódicamente para mantener respaldos externos y facilitar las conciliaciones contables mensuales.
 
@@ -353,14 +339,16 @@ Diferencia:             $     10.00  (sobrante / faltante)
 
 ## 10. Tabla Comparativa: Métodos de Pago
 
-| Característica | Efectivo | Tarjeta | Transferencia | Billetera Digital | Mixto | Otro |
-|---------------|----------|---------|---------------|-------------------|-------|------|
-| **Cambio** | Sí (calculado automáticamente) | No aplica | No aplica | No aplica | Parcial (solo efectivo) | No aplica |
-| **Desglose** | Monto recibido vs. cambio | Monto cargado | Referencia bancaria | Nro. de operación / voucher | Montos por cada medio | Descripción libre |
-| **Conciliación** | Arqueo de caja físico | Liquidación bancaria | Conciliación bancaria | Estado de aplicación | Ambos métodos involucrados | Registro manual |
-| **Velocidad** | Rápido | Rápido | Requiere confirmación | Inmediato | Requiere dos o más pasos | Variable |
-| **Ideal para** | Ventas menores y mostrador | Clientes con tarjeta | Cuentas corrientes | Pagos digitales instantáneos | Pagos parciales | Vales, bonos, créditos internos |
-| **Requiere dato extra** | Monto recibido | Número de aprobación | Nro. de referencia | Nro. de operación | Montos por cada medio | Descripción del medio |
+| Característica | Efectivo | Transferencia | Transf. Exterior | Mixto |
+|---------------|----------|---------------|------------------|-------|
+| **Cambio** | Sí (calculado automáticamente) | No aplica | No aplica | Parcial (solo efectivo) |
+| **Desglose** | Monto recibido vs. cambio | Referencia bancaria | Monto en USD/EUR convertido a CUP | Montos por cada medio |
+| **Monedas** | CUP/USD/EUR/MLC | CUP/USD/EUR/MLC | USD/EUR | Según las filas |
+| **Conciliación** | Arqueo de caja físico (efectivo esperado) | Vouchers netos del turno | Vouchers netos del turno | Ambos lados del arqueo |
+| **Velocidad** | Rápido | Requiere confirmación | Conversión automática | Requiere varios pasos |
+| **Ideal para** | Ventas menores y mostrador | Banca móvil nacional | Clientes desde el exterior | Pagos combinados |
+
+> 💡 Si un cobro no cuadra (sobrepago, faltante o mixto descuadrado), el checkout lo marca como **incidencia de pago** antes de confirmar para que lo corrija en el momento.
 
 ---
 

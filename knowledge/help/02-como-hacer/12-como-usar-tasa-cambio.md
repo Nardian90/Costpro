@@ -1,121 +1,87 @@
-# Cómo Hacer: Usar la Inteligencia Cambiaria (Tasa Inteligente)
+# Cómo Hacer: Usar la Tasa de Cambio
 
-> **Necesita esto cuando**: Su negocio compra en dólares (USD) o euros (EUR) pero vende en pesos (CUP), y necesita saber qué tasa aplicar hoy para no perder dinero.
+> **Necesita esto cuando**: vende o compra en divisas (USD, EUR, MLC) y necesita que CostPro convierta correctamente a CUP, o cuando quiere analizar el comportamiento del tipo de cambio antes de fijar precios.
 
-## ¿Qué es la "Inteligencia Cambiaria"?
+## ¿Para qué sirve?
 
-En Cuba y otros países con doble moneda, el valor del dólar cambia todos los días (a veces varias veces al día). Si usted compra mercancía en USD y vende en CUP, **tiene que actualizar la tasa** constantemente, porque si usa una tasa vieja, puede estar perdiendo dinero sin darse cuenta.
+CostPro tiene **dos piezas distintas** que no debe confundir:
 
-La **Inteligencia Cambiaria** de CostPro es un módulo que:
+1. **Tasas de la tienda** — las que **trabajan**: convierten precios y pagos en el punto de venta. Cada tienda define sus propias tasas USD, EUR y MLC.
+2. **Inteligencia Cambiaria** — la que **informa**: un módulo analítico con la tasa oficial del Banco Central de Cuba (BCC) y fuentes informales, con histórico, variaciones e impacto en precios. **No modifica las tasas de su tienda**: es una referencia para decidir.
 
-- **Consulta automáticamente** la tasa oficial del día (Banco Central, mercado informal, etc.).
-- **Sugiere** la tasa a aplicar en sus ventas y recepciones.
-- **Le avisa** cuando la tasa cambia significativamente.
-- **Mantiene el historial** de todas las tasas usadas, con fecha y hora.
+## ¿Dónde encontrarlo?
 
-## Paso 1 — Ir a Inteligencia Cambiaria
+- **Tasas de la tienda**: dentro del POS, botón **Tasas** del carrito; y al iniciar el día de negocio, el sistema le pedirá confirmarlas.
+- **Inteligencia Cambiaria**: Inicio → **ANÁLISIS** → **Inteligencia Cambiaria**.
+- **Búsqueda global**: `Ctrl/Cmd + K` y escriba «tasa», «cambio» o «divisa».
 
-1. En el menú izquierdo, haga clic en **Multi-Tienda**.
-2. Haga clic en **Inteligencia Cambiaria** (a veces llamado "Tasa Inteligente").
-3. Verá un panel con la tasa actual y un gráfico de cómo ha cambiado en los últimos días.
+## Antes de comenzar
 
-## Paso 2 — Entender la pantalla principal
+- Ver las tasas: cualquier usuario de la tienda. Editarlas: roles de gestión (admin/manager/encargado).
+- Monedas operativas: **CUP, USD, EUR y MLC**. En filas de pago por Transferencia Exterior solo se usan USD/EUR.
+- La Inteligencia Cambiaria necesita conexión a internet; las tasas de la tienda funcionan también en modo offline con el último valor confirmado.
 
-El panel muestra:
+## Cómo actualizar las tasas de su tienda
 
-### Tasa actual (arriba, en grande)
-- **Moneda**: USD, EUR, etc.
-- **Tasa oficial**: la que reporta el Banco Central.
-- **Tasa de mercado**: la que se usa en el mercado informal (informalCADEC).
-- **Tasa recomendada**: la que CostPro sugiere aplicar (calculada con un promedio inteligente).
-- **Última actualización**: hace cuántos minutos se actualizó.
+1. Abra el **POS** (OPERACIÓN → Ventas → Vender).
+2. En el carrito, pulse el botón **Tasas**.
+3. Edite los valores de USD, EUR y MLC respecto a CUP.
+4. Guarde. Las nuevas tasas aplican a las operaciones que haga desde ese momento.
 
-### Gráfico histórico (al centro)
-- Línea que muestra cómo ha cambiado la tasa en los últimos 7, 30 o 90 días (puede cambiar el período).
-- Pase el mouse sobre la línea para ver la tasa exacta de un día específico.
+**Confirmación diaria**: al abrir el carrito cada **día de negocio**, el sistema le pregunta si las tasas vigentes siguen siendo válidas. Confírmelas o actualícelas antes de vender. Si cambia las tasas a mitad del día, el sistema vuelve a preguntar. Cada venta guarda la tasa con la que se cobró: cambiar la tasa no recalcula ventas anteriores.
 
-### Botones de acción (abajo)
-- **Actualizar tasa ahora**: consulta las fuentes en tiempo real.
-- **Aplicar tasa recomendada**: actualiza la tasa de la tienda con la sugerencia.
-- **Aplicar tasa personalizada**: si quiere usar un valor diferente.
+## Cómo se usa la tasa al vender
 
-## Paso 3 — Actualizar la tasa
+- Cada producto del carrito puede tener su **moneda** y su **tasa** de conversión.
+- En pagos por **Transferencia Exterior** (USD/EUR), el sistema convierte el monto automáticamente a CUP con la tasa correspondiente.
+- Si un cobro combina monedas o paga de más/de menos, el checkout lo marca como **incidencia de pago** antes de confirmar.
 
-Recomendado hacer esto **cada mañana** antes de abrir la tienda:
+## Cómo aprovechar la Inteligencia Cambiaria
 
-1. Haga clic en **"Actualizar tasa ahora"**.
-2. Espere 5 segundos. El sistema consulta las fuentes.
-3. Verá la nueva tasa en la pantalla.
-4. Si la tasa cambió más de un 5% desde ayer, verá un letrero amarillo: *"Cambio significativo detectado"*.
+1. Vaya a **ANÁLISIS → Inteligencia Cambiaria**.
+2. Navegue por sus pestañas:
+   - **Dashboard**: panorama actual de la tasa.
+   - **Histórico**: evolución de la tasa en 7, 30 o 90 días.
+   - **Variaciones**: cuánto y cómo cambió la tasa.
+   - **Impacto Precios / Mi Producto**: cómo afecta a su catálogo.
+   - **Alertas**: avisos informativos de cambios significativos.
+   - **Simulador**: estime efectos de escenarios de tasa.
+3. (Solo administrador) En **Configuración** puede cargar tasas masivamente desde Excel y actualizar la base de datos oficial con el histórico de la BCC.
 
-## Paso 4 — Aplicar la tasa a la tienda
+**Uso recomendado**: consulte la Inteligencia Cambiaria en la mañana, decida la tasa del día con su equipo y fíjela en **Tasas** del POS. Ese es el único mecanismo por el que una tasa entra en las ventas.
 
-1. Haga clic en **"Aplicar tasa recomendada"**.
-2. Aparece una ventana de confirmación: *"¿Aplicar tasa X a todas las operaciones de hoy?"*.
-3. Haga clic en **"Sí, aplicar"**.
-4. La tasa queda activa para:
-   - Recepciones de mercancía en moneda extranjera.
-   - Cálculo de precios de venta (si la ficha de costo lo requiere).
-   - Reportes consolidados en una sola moneda.
+## Restricciones importantes
 
-> ⚠️ **Importante**: La tasa se aplica desde el momento en que la confirma. Las ventas y recepciones **anteriores** no se recalculan. Cada operación queda registrada con la tasa que estaba activa en ese momento.
+- La Inteligencia Cambiaria **no aplica** tasas automáticas a la tienda: es informativa.
+- Las tasas de tienda son **por tienda**, no globales: cada tienda confirma la suya.
+- Las operaciones quedan con la **tasa del momento** de la venta; el sistema no recalcula el pasado.
+- No existe "congelar tasa" ni "aplicar tasa recomendada": la tasa se edita y confirma manualmente.
 
-## Paso 5 — Usar una tasa personalizada (avanzado)
+## Errores frecuentes
 
-Si por algún motivo quiere usar una tasa diferente a la recomendada:
-
-1. Haga clic en **"Aplicar tasa personalizada"**.
-2. Escriba el valor numérico (ej: 320 para 1 USD = 320 CUP).
-3. Escriba un motivo (obligatorio). Ej: *"Proveedor cobró en USD a tasa diferente"*.
-4. Haga clic en **"Aplicar"**.
-
-> ⚠️ **Auditoría**: Las tasas personalizadas quedan registradas con el usuario, la fecha y el motivo. El administrador puede revisar el historial.
-
-## Paso 6 — Ver el historial de tasas
-
-1. Haga clic en la pestaña **"Historial"** (arriba del panel).
-2. Verá una tabla con todas las tasas aplicadas:
-   - Fecha y hora.
-   - Moneda.
-   - Tasa.
-   - Tipo (Oficial, Mercado, Recomendada, Personalizada).
-   - Usuario que la aplicó.
-   - Motivo (si fue personalizada).
-
-## Paso 7 — Configurar alertas automáticas (recomendado)
-
-1. Haga clic en el ícono de **engrane** (arriba a la derecha).
-2. En la sección **Alertas**, configure:
-   - **Cambio mínimo para alertar**: por defecto 5%. Si la tasa cambia más de eso, recibe notificación.
-   - **Hora de actualización automática**: por defecto 8:00 AM. El sistema actualiza solo a esa hora.
-   - **Fuentes a consultar**: marque las que quiera usar (Banco Central, mercado informal, etc.).
-3. Haga clic en **"Guardar configuración"**.
-
----
+| Síntoma | Causa | Solución |
+|---------|-------|----------|
+| Me pide confirmar las tasas cada día | Es el flujo esperado del día de negocio. | Confirme o edite y continúe; tomará un segundo. |
+| Un cobro en USD no suma lo esperado en CUP | La tasa del ítem quedó con un valor viejo. | Revise la tasa del ítem en el carrito o actualice las tasas de tienda. |
+| No puedo editar tasas | Su rol no es de gestión. | Pida a un admin/manager/encargado que las actualice. |
+| La tasa oficial no se actualiza | Falta conexión o la actualización de la BCC no se ha ejecutado. | Un administrador puede actualizar la base desde la pestaña Configuración. |
 
 ## Preguntas frecuentes
 
-**¿La tasa se aplica automáticamente cada día?**
-- Sí, si activó "actualización automática" en el paso 7.
-- Si no la activó, tiene que actualizar manualmente cada mañana.
+**¿CostPro toma la tasa oficial automáticamente para vender?**
+No. La oficial está en la Inteligencia Cambiaria como referencia. La que vale para ventas es la **tasa de su tienda**, confirmada manualmente.
 
-**¿Qué pasa si olvido actualizar la tasa?**
-- El sistema sigue usando la última tasa aplicada.
-- Si la tasa real cambió mucho, usted puede estar vendiendo barato o caro sin saberlo.
-- Por eso es importante actualizar cada día.
+**¿Puedo tener una tasa distinta por producto?**
+Sí: cada ítem del carrito admite moneda y tasa propias, además de la tasa general de la tienda.
 
-**¿La tasa del sistema es la "oficial" o la del "mercado informal"?**
-- Puede elegir. Por defecto, CostPro usa un **promedio inteligente** entre varias fuentes, para ser realista.
-- Pero usted puede aplicar la oficial o la informal si lo prefiere.
+**¿Qué pasa si vendo con una tasa equivocada?**
+La venta queda registrada con esa tasa. Corrija la tasa de tienda para las siguientes ventas; para corregir la venta ya registrada, use la reversión administrativa desde el Historial de Ventas si su rol lo permite.
 
-**¿Puedo tener tasas diferentes para comprar y vender?**
-- Sí. En la configuración avanzada hay "tasa de compra" (la que usa al recibir mercancía) y "tasa de venta" (la que usa al calcular precios).
-- Por defecto son la misma, pero pueden ser diferentes.
+**¿Qué fuentes usa la Inteligencia Cambiaria?**
+La tasa oficial del BCC y referencias informales publicadas, con su histórico. En Configuración (admin) se alimenta la base de datos oficial.
 
-**¿El sistema usa la tasa para el reporte de ganancias?**
-- Sí. El reporte de ganancias convierte todo a una sola moneda usando la tasa activa al momento del reporte.
-- Si la tasa cambia entre dos reportes, los valores pueden variar un poco. Es normal.
+## Información relacionada
 
-**¿Puedo bloquear la tasa para que nadie la cambie?**
-- Sí, el administrador puede bloquear la tasa con una nota: *"Tasa congelada hasta el 15 por acuerdo con el dueño"*.
-- Hasta que pase la fecha o se quite el bloqueo, nadie puede cambiarla.
+- **Métodos de pago y monedas del POS** — cómo se combinan efectivo, transferencias y divisas.
+- **Cómo hacer una venta (tutorial)** — el flujo completo del POS.
+- **Inteligencia Cambiaria** (ANÁLISIS) — histórico y simulador de tasas.

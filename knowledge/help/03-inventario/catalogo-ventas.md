@@ -1,6 +1,8 @@
 # Guía del Catálogo de Ventas (Tabla de Venta)
 
-Tutorial completo sobre el sistema de Catálogo de Ventas en CostPro, que permite consultar productos con precios indexados según las tablas oficiales de IPV, filtrar por categorías, seleccionar productos en tabla o cuadrícula visual, y procesar ventas directamente desde la vista de catálogo.
+Tutorial completo sobre la **Tabla de Venta** en CostPro: una hoja de venta editable que muestra todos los productos con su stock, costo y precio de venta, permite fijar cantidad, descuento y forma de pago por fila, y procesar la venta directamente desde la vista. Es la herramienta ideal para ventas por volumen, pedidos armados y consultas de precios.
+
+> **Nota de nombre**: la vista se llama «Tabla de Venta» en el menú (Ventas → Opciones). El nombre histórico «Tabla IPV» viene del informe IPV de ventas, no de una indexación de precios: aquí no hay precios indexados ni tablas oficiales.
 
 ## Contenido
 
@@ -28,16 +30,14 @@ Tutorial completo sobre el sistema de Catálogo de Ventas en CostPro, que permit
 
 ## 1. Qué es el Catálogo de Ventas
 
-El **Catálogo de Ventas** es una vista especializada que muestra todos los productos disponibles para la venta organizados en una tabla o cuadrícula visual. A diferencia de **Vender (POS)** — que está optimizado para ventas rápidas una por una — el Catálogo de Ventas permite **visualizar el portafolio completo** de productos con sus precios indexados, aplicar filtros avanzados, comparar productos y procesar ventas de forma selectiva.
+El **Catálogo de Ventas** es una vista especializada que muestra todos los productos disponibles para la venta organizados en una tabla o cuadrícula visual. A diferencia de **Vender (POS)** — que está optimizado para ventas rápidas una por una — la Tabla de Venta permite **visualizar el portafolio completo**, editar cantidades, descuentos y formas de pago por fila, y procesar la venta completa de una vez.
 
 Esta vista es especialmente útil cuando:
 
-- Necesitas **consultar precios** de múltiples productos antes de vender.
-- Un cliente desea **comparar opciones** dentro de una categoría.
-- Realizas **ventas al por mayor** seleccionando múltiples productos a la vez.
+- Necesitas **consultar precios y stock** de múltiples productos a la vez.
+- Un cliente lleva **un pedido grande** y quieres armarlo fila por fila.
+- Atiendes **ventas al por mayor** con descuentos por producto.
 - Requieres **exportar el catálogo** completo o filtrado para compartir con clientes.
-
-El catálogo se integra con el sistema de **Tabla de Venta** (Índice de Precios y Variaciones), lo que significa que los precios mostrados reflejan las actualizaciones oficiales de precios cuando estén configuradas.
 
 ---
 
@@ -61,29 +61,28 @@ La vista de tabla presenta los productos en un formato tabular denso, similar a 
 
 ### 3.1 Columnas Disponibles
 
-La tabla incluye las siguientes columnas:
+La tabla es una **hoja de venta editable**; sus columnas:
 
 | Columna | Descripción |
 |---------|-------------|
-| **Imagen** | Miniatura del producto (40x40 px). Muestra la primera letra del nombre si no hay imagen. |
-| **Nombre** | Nombre completo del producto. |
-| **SKU** | Código interno del producto. |
-| **Categoría** | Clasificación a la que pertenece el producto. |
-| **Precio Base** | Precio original del producto antes de cualquier ajuste IPV. |
-| **Precio Indexado** | Precio ajustado según la tabla de variaciones IPV vigente (si aplica). |
+| **Producto** | Nombre e imagen del producto. |
 | **Stock** | Cantidad disponible en la tienda activa. |
-| **Estado** | Indicador visual (activo/inactivo/sin stock). |
+| **Costo** | Costo del producto (referencia interna). |
+| **Unidad Medida** | Unidad de venta del producto. |
+| **Precio Venta** | Precio unitario vigente. |
+| **Cantidad** | Unidades a vender de la fila (editable). |
+| **Descuento** | Descuento de la fila, en % o monto (editable). |
+| **Forma Pago** | Método de pago de la fila: Efectivo, Transferencia o mixto (editable). |
+| **Valor Venta** | Importe total de la fila (cantidad × precio − descuento). |
 
 ### 3.2 Operaciones en la Tabla
 
-Desde la vista de tabla puedes realizar las siguientes acciones directamente sobre cada producto:
+Desde la vista de tabla puedes:
 
-- **Seleccionar**: Haz clic en la fila para seleccionar el producto (aparece un indicador de selección).
-- **Vista rápida**: Haz doble clic para abrir un panel lateral con los detalles completos del producto.
-- **Agregar al carrito**: Haz clic en el botón de agregar (icono de carrito) para incluir el producto en la cesta de compra del catálogo.
-- **Venta directa**: Haz clic en el botón de venta rápida para procesar la venta de ese producto inmediatamente.
-
-> **Tip**: Puedes seleccionar múltiples productos manteniendo presionada la tecla `Ctrl` (o `Cmd` en Mac) mientras haces clic en las filas. Esto permite agregar varios productos al carrito de una sola vez.
+- **Editar la fila**: fijar cantidad, descuento y forma de pago de cada producto directamente en su fila.
+- **Agregar más productos**: usa el buscador para incorporar más filas a la venta.
+- **Quitar filas**: elimina del pedido los productos que el cliente ya no lleva.
+- **Cobrar la venta**: el botón de checkout procesa toda la tabla como una venta.
 
 ---
 
@@ -139,10 +138,9 @@ El filtro de stock permite controlar qué productos se muestran según su nivel 
 
 | Opción | Descripción |
 |--------|-------------|
-| **Todos** | Muestra productos con y sin stock. |
-| **Con stock** | Solo muestra productos con stock mayor a cero. |
-| **Sin stock** | Solo muestra productos agotados. |
-| **Stock bajo** | Solo muestra productos por debajo del mínimo configurado. |
+| **Todos** | Muestra todos los productos. |
+| **Con Stock** | Solo muestra productos con stock mayor a cero. |
+| **Sin Stock** | Solo muestra productos agotados. |
 
 ### 5.4 Ordenamiento
 
@@ -156,17 +154,13 @@ Los productos pueden ordenarse por cualquier columna de la tabla:
 
 ## 6. Resumen de Totales
 
-En la parte inferior del catálogo se muestra un panel de **resumen de totales** que incluye:
+En la parte inferior se muestra el **resumen de la venta en curso** (no del inventario):
 
 | Métrica | Descripción |
 |---------|-------------|
-| **Total productos** | Cantidad de productos mostrados (después de aplicar filtros). |
-| **Productos con stock** | Cantidad de productos que tienen stock disponible. |
-| **Productos sin stock** | Cantidad de productos agotados. |
-| **Valor total del inventario** | Suma del valor de stock (precio x cantidad) de todos los productos mostrados. |
-| **Productos seleccionados** | Cantidad de productos actualmente seleccionados (para operaciones por lotes). |
-
-Este resumen se actualiza automáticamente cada vez que aplicas un filtro, cambias la búsqueda o seleccionas productos.
+| **Subtotal / Total** | Suma del valor de venta de las filas con cantidad definida. |
+| **Por forma de pago** | Cuánto va en efectivo y cuánto en transferencia según las filas. |
+| **Descuentos** | El efecto de los descuentos aplicados por fila. |
 
 ---
 
@@ -187,10 +181,10 @@ Para vender un producto directamente desde el catálogo:
 
 Cuando procesas una venta desde el catálogo, se abre el **Modal de Checkout** que muestra:
 
-- **Lista de productos** en el carrito con cantidades y subtotales.
-- **Controles de cantidad** para ajustar las unidades de cada producto.
-- **Subtotal** de la venta.
-- **Total** con impuestos incluidos.
+- **Lista de productos** en la venta con cantidades y subtotales.
+- **Controles de cantidad** para ajustar las unidades.
+- **Subtotal y Total** de la venta (el POS no aplica impuestos automáticamente).
+- **Métodos de pago** de la venta.
 - **Botón de confirmar venta** que finaliza la transacción.
 
 Al confirmar la venta, se ejecutan los mismos procesos automáticos que en Vender (POS):
@@ -239,7 +233,7 @@ Aunque tanto el Catálogo de Ventas como Vender (POS) permiten procesar ventas, 
 
 > **🔄 Filtros activos:** Antes de procesar una venta desde el catálogo, verifica que no tengas filtros activos que puedan ocultar productos disponibles. Un cliente podría solicitar un producto que no se muestra porque un filtro de categoría está aplicado.
 >
-> **📊 Revisión de precios indexados:** Si tu tienda utiliza tablas IPV, revisa regularmente que los precios indexados se actualicen correctamente. Los cambios en las tablas oficiales deben reflejarse automáticamente en el catálogo de ventas.
+> **📊 Precios al día:** La tabla muestra el precio de venta vigente de cada producto. Si vas a vender con precios distintos a los habituales, usa el descuento por fila en lugar de editar el precio del producto.
 >
 > **🖼️ Mantén imágenes actualizadas:** La vista de cuadrícula depende completamente de las imágenes de producto. Sin imágenes, la experiencia visual se degrada significativamente y el catálogo pierde su utilidad como herramienta de venta visual.
 >

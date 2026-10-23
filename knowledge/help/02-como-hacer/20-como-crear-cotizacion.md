@@ -21,7 +21,7 @@ También con `Ctrl + K` escribiendo "cotizaciones".
 3. Registre los datos del cliente: **nombre** y **teléfono**.
 4. **Busque los productos** y agréguelos con sus cantidades.
 5. Revise el **Total** del presupuesto.
-6. Guarde la cotización y dé seguimiento a su estado hasta cerrar o descartar.
+6. Guarde la cotización. La vista muestra su **estado** (Borrador, Enviada, Aceptada, Rechazada, Expirada, Facturada) como referencia; no ofrece botones para cambiar el estado ni para convertir la cotización en venta.
 
 ## Qué significa cada dato
 
@@ -34,7 +34,7 @@ También con `Ctrl + K` escribiendo "cotizaciones".
 ## Precauciones
 
 - Una cotización **no es una venta**: no afecta inventario ni caja.
-- Cuando el cliente acepta, procese la venta en **Vender** con los productos cotizados.
+- Cuando el cliente acepta, procese la venta en **Vender** (o en la **Tabla de Venta**) agregando los productos cotizados manualmente; la cotización no se convierte en venta automáticamente.
 
 ## Preguntas frecuentes
 
@@ -42,4 +42,4 @@ También con `Ctrl + K` escribiendo "cotizaciones".
 - Cada tienda trabaja con sus propios datos. Verifique la tienda activa antes de cotizar.
 
 **¿Puedo imprimir la cotización?**
-- La vista genera el documento de la cotización para compartir con el cliente.
+- La vista no genera PDF ni documento compartible: registre el acuerdo con su cliente por sus canales habituales.

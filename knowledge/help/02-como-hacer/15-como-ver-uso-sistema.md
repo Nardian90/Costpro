@@ -14,8 +14,8 @@ Como dueño o administrador, usted paga licencias por usuario. Si tiene 10 licen
 
 ## Paso 1 — Ir a Monitoreo de Uso
 
-1. En el menú izquierdo, haga clic en **Multi-Tienda**.
-2. Haga clic en **Monitoreo de Uso** (a veces llamado "Uso del Sistema").
+1. Inicie sesión con una cuenta **administradora**.
+2. En el menú izquierdo, abra la sección **SISTEMA** y haga clic en **Monitoreo**.
 3. Verá un panel con varias pestañas.
 
 ## Paso 2 — Conocer las pestañas del panel

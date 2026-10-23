@@ -17,7 +17,7 @@ CostPro puede generar el catálogo en **4 formatos diferentes**, cada uno pensad
 
 1. En el menú izquierdo, abra **Operación → Ventas → Opciones**.
 2. Haga clic en **Tabla de Venta**.
-3. Verá una tabla con todos los productos y sus precios indexados.
+3. Verá una tabla con todos los productos, su stock y su precio de venta.
 
 ## Paso 2 — Filtrar los productos a incluir (opcional)
 
@@ -35,29 +35,17 @@ Si no quiere incluir todos los productos:
 
 ## Paso 4 — Configurar el formato (depende del formato elegido)
 
-### Para WhatsApp
-1. **Color de marca**: elija el color principal de su tienda (8 opciones).
-2. **Avatar promocional**: elija un avatar (6 opciones: promociones, descuentos, etc.).
-3. **Datos de la tienda**: verifique el nombre, teléfono y dirección.
+El modal de exportación ofrece **plantilla + color de marca + avatar** (los datos de la tienda —nombre, teléfono, dirección, WhatsApp— se toman de la configuración de la tienda activa):
+
+### Para todas las plantillas
+1. **Plantilla**: ya elegida en el paso 3 (WhatsApp, Instagram, Lista de precios o Catálogo elegante).
+2. **Color de marca**: elija el color principal de su tienda (8 opciones: Verde, Azul, Rojo, Naranja, Morado, Teal, Grafito, Dorado).
+3. **Avatar promocional** (solo Catálogo elegante): elija uno de los 6 avatares (Ferretería, Tienda, Taller, Ofertas, Premium, Corporativo).
 4. Haga clic en **"Generar"**.
 
-### Para Instagram
-1. **Color de marca**: igual que WhatsApp.
-2. **Estilo del carrusel**: elija si quiere 1 producto por imagen o 2.
-3. Haga clic en **"Generar"**.
-
-### Para Lista de precios PDF
-1. **Título**: el nombre del catálogo (por defecto: "Lista de Precios [Tienda]").
-2. **Incluir imágenes**: marque si quiere fotos de los productos.
-3. **Mostrar columnas**: elija qué columnas incluir (SKU, precio, stock, etc.).
-4. Haga clic en **"Generar"**.
-
-### Para Catálogo elegante PDF
-1. **Color de portada**: elija el color de la portada.
-2. **Foto de portada**: suba una foto (opcional).
-3. **Logo de la tienda**: suba su logo (recomendado).
-4. **Secciones**: elija si quiere agrupar por categoría.
-5. Haga clic en **"Generar"**.
+> 💡 Las demás características de cada formato (12 productos por imagen de WhatsApp, una imagen por producto en Instagram, tabla en Lista de Precios, portada con producto destacado en Catálogo elegante) son fijas del diseño: no hay opciones adicionales por formato.
+>
+> 💡 Además del exportador de marketing, la Tabla de Venta ofrece **exportar datos a Excel y PDF** con los productos filtrados, desde los botones de exportación de la propia vista.
 
 ## Paso 5 — Esperar la generación
 

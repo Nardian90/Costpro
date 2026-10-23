@@ -1,109 +1,68 @@
 # Referencia: Estados de una Transferencia
 
-> **Use esta tabla** cuando quiera saber en qué estado está una transferencia y qué significa.
+> **Use esta tabla** cuando quiera saber en qué estado está una transferencia de stock y qué acciones tiene disponibles.
 
 ## Los 4 estados de una transferencia
 
-| Estado | Significado | Acción requerida |
+| Estado | Significado | Siguiente acción |
 |--------|-------------|------------------|
-| **Pendiente** | Creada como borrador, no enviada. | Revisar y enviar, o anular. |
-| **En tránsito** | Enviada de la tienda origen, no confirmada en destino. | Esperar que llegue. Confirmar en destino. |
-| **Completada** | Recibida y confirmada en la tienda destino. | Ninguna. Transferencia cerrada. |
-| **Anulada** | Cancelada antes de completarse. | Ninguna. Solo quedó registro. |
+| **Pendiente** | Solicitud enviada por la tienda origen; stock **reservado** en origen. | Destino: **Confirmar Recepción**. Origen: **Cancelar Transferencia**. |
+| **Confirmada** | El destino recibió: stock descontado de origen y sumado a destino en el mismo acto. | Origen (con rol): **Revertir**. Ambas: **Duplicar**. |
+| **Cancelada** | Solicitud anulada antes de confirmarse. | Ninguna. El stock reservado se liberó. |
+| **Revertida** | Una confirmada que se deshizo: el stock regresó a origen. | Ninguna. Queda con rastro de auditoría. |
 
 ## Detalle de cada estado
 
 ### 1. Pendiente
-- **Quién la ve**: El creador (tienda origen).
+- **Quién la ve**: la tienda origen (pestaña Salientes) y la tienda destino (pestaña Entrantes).
+- **Inventario**: origen tiene el stock **reservado** — no disponible para ventas, vales u otras transferencias, pero todavía en la tienda.
 - **Qué se puede hacer**:
-  - **Enviar**: cambia a "En tránsito".
-  - **Editar**: cambiar productos, cantidades.
-  - **Anular**: cancela la transferencia.
-- **Afecta inventario**: No. Mientras esté pendiente, no se mueve nada.
-- **Recomendación**: No deje transferencias pendientes por muchos días. O se envían o se anulan.
+  - Destino: **Confirmar Recepción** (pasa a Confirmada).
+  - Origen: **Cancelar Transferencia** (pasa a Cancelada y libera la reserva).
+- **Recomendación**: no deje transferencias pendientes por muchos días; el stock reservado queda bloqueado para el resto de operaciones.
 
-### 2. En tránsito
-- **Quién la ve**: Ambas tiendas (origen y destino).
+### 2. Confirmada
+- **Inventario**: origen **descuenta** y destino **suma**, atómicamente al confirmar. No existe un estado intermedio con el stock "en camino".
 - **Qué se puede hacer**:
-  - En tienda destino: **confirmar recepción** (cambia a Completada) o **registrar discrepancia** (si hay diferencias).
-  - En tienda origen: ya no se puede editar ni anular. Solo ver.
-- **Afecta inventario**:
-  - Origen: **descuenta** el stock (los productos ya salieron).
-  - Destino: **no suma** todavía (los productos están en camino).
-- **Recomendación**: Si va a tardar más de 7 días en llegar, póngalo en las notas para que el destino sepa que esperar.
+  - **Revertir** (usuario con rol en la tienda origen): devuelve el stock a origen; pasa a Revertida.
+  - **Duplicar**: crea una nueva transferencia Pendiente con las mismas líneas.
+  - **Exportar PDF** del detalle como comprobante interno.
 
-### 3. Completada
-- **Quién la ve**: Ambas tiendas.
-- **Qué se puede hacer**: Solo ver y descargar reporte. No se puede modificar.
-- **Afecta inventario**:
-  - Origen: ya está descontado (desde "En tránsito").
-  - Destino: **suma** el stock (los productos llegaron).
-- **Recomendación**: Si detecta un error después de completada, debe hacer un **ajuste de inventario** para corregir.
+### 3. Cancelada
+- **Inventario**: sin cambios; la reserva se liberó al cancelar.
+- No se puede reactivar. Si necesita reenviar, use **Duplicar** desde el detalle o cree una nueva.
 
-### 4. Anulada
-- **Quién la ve**: Ambas tiendas.
-- **Qué se puede hacer**: Solo ver. Queda como registro histórico.
-- **Afecta inventario**: Ninguno. Si se anuló en "Pendiente", no se había movido nada. Si se anuló en "En tránsito", debe revertirse manualmente con un ajuste.
-- **Recomendación**: Si anula una transferencia "En tránsito", recuerde hacer el ajuste de inventario para devolver el stock a la tienda origen.
+### 4. Revertida
+- **Inventario**: el stock volvió a la tienda origen (se generan los movimientos inversos en el Kardex de ambas tiendas).
+- Útil cuando el destino confirma por error o la mercancía regresa física.
 
-## Flujo de estados
+## Transiciones válidas
 
 ```
-   [Pendiente]
-       │
-       ├─→ Enviar ─→ [En tránsito]
-       │                  │
-       │                  ├─→ Confirmar ─→ [Completada]
-       │                  │
-       │                  └─→ Anular ─→ [Anulada]
-       │
-       └─→ Anular ─→ [Anulada]
+            ┌──────────────► Cancelada (origen cancela)
+Pendiente ──┤
+            └──────────────► Confirmada (destino confirma)
+                               │
+                               └──────────────► Revertida (origen revierte)
 ```
 
-## Discrepancias
-
-Cuando la tienda destino recibe la transferencia y **el conteo físico no coincide** con lo que dice el sistema:
-
-1. El encargado de destino selecciona **"Registrar discrepancia"** en lugar de "Confirmar recepción".
-2. Aparece un formulario para anotar qué productos y cuántas unidades difieren.
-3. Tipos de discrepancia:
-   - **Faltante**: llegaron menos unidades de las que salieron.
-   - **Sobrante**: llegaron más unidades (raro, suele ser error de conteo).
-   - **Daño**: llegaron productos dañados.
-   - **Equivocado**: llegó un producto diferente al que se transfirió.
-4. El sistema ajusta automáticamente:
-   - Si es faltante: descuenta de la tienda origen (porque ya salió) y NO suma a la tienda destino.
-   - Si es sobrante: descuenta de origen y suma más a destino (ambos ajustados).
-   - Si es daño: descuenta de origen y NO suma a destino. Se recomienda ajuste adicional con causa "Daño".
-   - Si es equivocado: se anula la transferencia y se crea una nueva correcta.
-5. La transferencia queda con estado **"Completada con discrepancia"**.
-6. Se genera un reporte de discrepancia que se archiva.
+- Solo las **Pendientes** se cancelan.
+- Solo las **Confirmadas** se revierten.
+- No hay edición de líneas una vez enviada la solicitud: si cambió el contenido, cancele y cree otra.
 
 ## Preguntas frecuentes
 
-**¿Cuánto tiempo puede estar una transferencia "En tránsito"?**
-- No hay límite. Pero si pasa de 30 días, el sistema le avisa para que investigue.
+**¿Existe el estado "En tránsito"?**
+No. Mientras está Pendiente, el stock sigue contando en origen (reservado). El descontado y la suma en destino ocurren en el mismo momento de la confirmación.
 
-**¿Puedo anular una transferencia "Completada"?**
-- No. Ya modificó el inventario de ambas tiendas.
-- Si necesita revertir, haga una **transferencia inversa** (de destino a origen).
+**¿Puedo recibir menos de lo enviado?**
+La confirmación aplica las cantidades tal cual están en el documento. Si llegó menos, confirme y registre la diferencia como **Ajuste Documental** en la tienda que corresponda.
 
-**¿Qué pasa si el transportista pierde la mercancía?**
-- La transferencia queda "En tránsito" hasta que se resuelva.
-- Si se confirma la pérdida: haga ajuste de inventario en la tienda origen con causa "Robo" o "Diferencia de conteo".
-- Anule la transferencia después del ajuste.
+**¿Quién puede confirmar y quién revertir?**
+Confirmar: un usuario con acceso a la **tienda destino**. Revertir: un usuario con rol en la **tienda origen**.
 
-**¿Una transferencia genera documentos legales?**
-- No es un documento fiscal (como una factura), pero sí es un documento interno válido para auditoría.
-- El PDF con código QR sirve como comprobante entre las dos tiendas.
+## Información relacionada
 
-**¿Puedo transferir productos a una tienda de otra empresa?**
-- No. Las transferencias son dentro de la misma empresa. Para mover mercancía a otra empresa, use una **venta** normal.
-
-**¿El sistema me avisa si tengo transferencias pendientes de recibir?**
-- Sí. Al iniciar sesión en la tienda destino, si hay transferencias "En tránsito" dirigidas a esa tienda, verá un letrero amarillo: *"Tiene N transferencias pendientes de recibir"*.
-
-**¿Cómo encuentro una transferencia específica?**
-- Vaya a Multi-Tienda → Transferencias.
-- Use los filtros: por fecha, por tienda origen, por tienda destino, por estado.
-- Si tiene el folio, búsquelo directamente.
+- **Cómo transferir stock entre tiendas** — la guía paso a paso.
+- **Cómo ajustar el inventario** — diferencias posteriores a la recepción.
+- **Kardex y trazabilidad** — dónde ver los movimientos generados (transfer_out / transfer_in).
