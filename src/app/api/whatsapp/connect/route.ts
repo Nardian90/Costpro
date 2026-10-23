@@ -6,14 +6,17 @@ import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
-import { connectStore } from '@/lib/whatsapp/baileys-client';
 import { WHATSAPP_SESSIONS_ENABLED } from '@/lib/messaging-flags';
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   // CP-INFRA-002 (2026-10-23): desconexión reversible — no se crean sesiones
   // Baileys nuevas (el WebSocket de WhatsApp queda sin conexiones nuevas).
-  // Reactivación: WHATSAPP_SESSIONS_ENABLED=true (docs/CP-INFRA-002-REACTIVACION.md).
+  // CP-INFRA-002b (2026-10-23): además, el cliente Baileys fue RETIRADO del
+  // runtime (dependencia desinstalada). La bandera ya no basta para
+  // reactivar: ver el procedimiento completo en
+  // docs/CP-INFRA-002-REACTIVACION.md (reinstalar @whiskeysockets/baileys y
+  // restaurar baileys-client.ts/handlers.ts desde git).
   if (!WHATSAPP_SESSIONS_ENABLED) {
     return NextResponse.json(
       { error: 'WHATSAPP_SESSIONS_DISABLED', reason: 'Integración WhatsApp desconectada (CP-INFRA-002). Reactivar con WHATSAPP_SESSIONS_ENABLED=true.' },
@@ -39,8 +42,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
   }
 
-  await connectStore(storeId);
-  return NextResponse.json({ success: true, message: 'Conectando…' });
+  // CP-INFRA-002b: con la bandera habilitada pero el runtime retirado,
+  // se responde 503 con el procedimiento — nunca un éxito falso.
+  return NextResponse.json(
+    { error: 'WHATSAPP_RUNTIME_UNAVAILABLE', reason: 'Cliente Baileys retirado del runtime (CP-INFRA-002b). Seguir docs/CP-INFRA-002-REACTIVACION.md para reinstalarlo antes de conectar.' },
+    { status: 503 },
+  );
 }
 
 export const POST = withTracing(withAuth(postHandler) as any, 'POST /api/whatsapp/connect');

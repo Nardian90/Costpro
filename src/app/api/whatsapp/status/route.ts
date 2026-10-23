@@ -4,7 +4,7 @@ import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
-import { getSessionInfo } from '@/lib/whatsapp/baileys-client';
+import { getSessionInfo } from '@/lib/whatsapp/session-info'; // CP-INFRA-002b: sin Baileys
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const url = new URL(req.url);

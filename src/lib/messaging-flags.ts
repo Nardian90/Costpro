@@ -7,10 +7,15 @@
  * sesiones ni historial.
  *
  * Bandera (todas false por defecto = desconectado):
- *   - WHATSAPP_SESSIONS_ENABLED   → /api/whatsapp/connect puede crear sesiones
- *                                   Baileys nuevas (conexiones WebSocket).
+ *   - WHATSAPP_SESSIONS_ENABLED   → /api/whatsapp/connect. CP-INFRA-002b: el
+ *                                   cliente Baileys fue retirado del runtime;
+ *                                   con la bandera en true la ruta responde
+ *                                   503 RUNTIME_UNAVAILABLE indicando el
+ *                                   procedimiento de reinstalación (la bandera
+ *                                   por sí sola ya NO reactiva WhatsApp).
  *   - WHATSAPP_AUTOPUBLISH_ENABLED→ /api/cron/whatsapp-auto-publish ejecuta la
- *                                   publicación programada.
+ *                                   publicación programada (degrada a
+ *                                   reason 'no_session' sin socket).
  *   - TELEGRAM_AUTOPUBLISH_ENABLED → /api/cron/telegram-auto-publish ejecuta la
  *                                   publicación programada.
  *   - MESSAGING_REALTIME_ENABLED  → server.ts adjunta el Socket.IO de WhatsApp

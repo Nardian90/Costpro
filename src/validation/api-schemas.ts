@@ -121,17 +121,7 @@ export const reportsGenerateSchema = z.object({
   options: z.record(z.string(), z.unknown()).optional(),
 });
 
-// ─── Academy ─────────────────────────────────────────────────────────────────
-export const academyGenerateSchema = z.object({
-  filename: z.string().min(1).max(200),
-  limit: z.number().int().min(1).max(20).optional().default(3),
-  aiProvider: z.string().min(1).max(50),
-  aiApiKey: z.string().optional(),
-});
-
-export const academyReviewSchema = z.object({
-  score: z.number().int().min(0).max(5),
-});
+// CP-INFRA-002b (2026-10-23): schemas de Academy retirados junto con /api/academy/*.
 
 // ─── Logs ─────────────────────────────────────────────────────────────────────
 export const logsSchema = z.object({

@@ -8,7 +8,7 @@ import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
 import { uuidLoose } from '@/validation/api-schemas';
 import { saveMessage, validateContactBelongsToStore } from '@/lib/whatsapp/glm-orchestrator';
-import { getSocket } from '@/lib/whatsapp/baileys-client';
+import { getSocket } from '@/lib/whatsapp/session-info'; // CP-INFRA-002b: sin Baileys (null → solo se guarda en BD)
 import { canInviteNow, getRiskState } from '@/lib/whatsapp/anti-ban';
 import { emitMessage } from '@/lib/whatsapp/realtime-server';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';

@@ -2,7 +2,8 @@
  * Next.js Instrumentation Hook
  *
  * This file is automatically loaded by Next.js at startup (before the server begins
- * handling requests). It initializes Sentry + OpenTelemetry tracing for the Node.js runtime.
+ * handling requests). It registers process-level error handlers and initializes
+ * Sentry tracing for the Node.js runtime (opt-in: solo con DSN + production).
  *
  * IMPORTANT: This file MUST be at the project root (not inside src/).
  * See: https://nextjs.org/docs/app/api-reference/config/instrumentation
@@ -10,51 +11,22 @@
  * The instrumentation hook does NOT run in Edge Runtime — we check NEXT_RUNTIME
  * to avoid importing Node.js-only packages in Edge contexts.
  *
- * OpenTelemetry SDK is only initialized when OTEL_ENABLED=true env var is set.
- * In development with Turbopack, OTel SDK packages may not resolve correctly
- * (they use Node.js-specific module resolution), so tracing is opt-in.
+ * CP-INFRA-002b (2026-10-23): OpenTelemetry RETIRADO del arranque de la app y
+ * del runtime serverless (dependencias @opentelemetry/* eliminadas). Este hook
+ * ya no inicializa tracing; el logging estructurado (observability/logger),
+ * la auditoría de negocio y /api/health siguen intactos. src/instrumentation.ts
+ * (entry point OTel puro de la Iteración 11.5) fue eliminado en esta misión.
+ * Reactivación: ver docs/CP-INFRA-002-REACTIVACION.md.
  */
 
 export async function register() {
-  // Only initialize tracing in Node.js runtime (not Edge)
+  // Only initialize in Node.js runtime (not Edge)
   if (process.env.NEXT_RUNTIME === 'edge') {
     return;
   }
 
-  // FIX-PERF (2026-07-13): desactivar Sentry y OTel en dev para reducir overhead.
-  // El dev server consumía 2.8GB de RAM — Sentry y OTel contribuían al overhead
-  // con tracing de cada request. En dev no necesitamos telemetría.
-  //
-  // Iteración 11.5 (hot-test patch): si OTEL_ENABLED=true está seteado explícitamente,
-  // NO saltamos el bloque de dev — permitimos inicializar OTel (manual tracing only,
-  // sin Sentry) para habilitar hot tests con observabilidad. Sentry sigue desactivado
-  // en dev (su overhead es el principal motivo del FIX-PERF).
-  const otelExplicitlyEnabled = process.env.OTEL_ENABLED === 'true';
-  if (process.env.NODE_ENV === 'development' && !otelExplicitlyEnabled) {
-     
-    console.log('[Instrumentation] Dev mode — skipping Sentry and OpenTelemetry (set OTEL_ENABLED=true to enable OTel)');
-    // Solo registrar process-level error handlers (sin overhead)
-    try {
-      if (typeof process !== 'undefined' && typeof process.on === 'function') {
-        process.on('unhandledRejection', (reason) => {
-          console.error('[Process] Unhandled rejection:', reason);
-        });
-        process.on('uncaughtException', (error) => {
-          console.error('[Process] Uncaught exception:', error);
-        });
-      }
-    } catch {
-      // process.on not available in this runtime
-    }
-    return;
-  }
-
-  if (process.env.NODE_ENV === 'development' && otelExplicitlyEnabled) {
-    console.log('[Instrumentation] Dev mode + OTEL_ENABLED=true — initializing OTel (Sentry still skipped)');
-  }
-
   // Initialize Sentry in server runtime (solo en production — Sentry queda desactivado
-  // en dev incluso con OTEL_ENABLED=true, porque su overhead es el principal motivo del FIX-PERF)
+  // en dev; su overhead es el motivo del FIX-PERF 2026-07-13. No se toca en esta misión.)
   if (process.env.NEXT_RUNTIME === 'nodejs' && process.env.NODE_ENV === 'production') {
     try {
       await import('./sentry.server.config');
@@ -64,7 +36,7 @@ export async function register() {
     }
   }
 
-  // FIX-INF-023: Process-level error handlers (Node.js only — already guarded above)
+  // FIX-INF-023: Process-level error handlers (Node.js only)
   try {
     if (typeof process !== 'undefined' && typeof process.on === 'function') {
       process.on('unhandledRejection', (reason) => {
@@ -76,20 +48,5 @@ export async function register() {
     }
   } catch {
     // process.on not available in this runtime
-  }
-
-  // Opt-in: only initialize when explicitly enabled or in production
-  const otelEnabled = process.env.OTEL_ENABLED === 'true' || process.env.NODE_ENV === 'production';
-  if (!otelEnabled) {
-    return;
-  }
-
-  try {
-    // Dynamic import to avoid bundling OTel packages into Edge runtime
-    const { setupTracing } = await import('./src/lib/observability/tracing');
-    await setupTracing();
-  } catch (err) {
-    // Tracing is optional — never crash the app if it fails
-    console.error('[Instrumentation] Failed to initialize OpenTelemetry:', err);
   }
 }

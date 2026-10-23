@@ -42,9 +42,11 @@ vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
-vi.mock('@/lib/whatsapp/baileys-client', () => ({
+// CP-INFRA-002b (2026-10-23): baileys-client fue retirado del runtime junto con
+// la dependencia @whiskeysockets/baileys. Las rutas leen el estado de sesión
+// desde session-info.ts (stub puro, sin Baileys). El mock replica su contrato.
+vi.mock('@/lib/whatsapp/session-info', () => ({
   getSessionInfo: vi.fn(() => ({ status: 'disconnected', qrCode: null })),
-  connectStore: vi.fn(),
   disconnectStore: vi.fn(),
   getSocket: vi.fn(() => null),
 }));
@@ -180,10 +182,15 @@ describe('WhatsApp Module — 4 Fases', () => {
       expect(res.status).toBe(400);
     });
 
-    it('POST /api/whatsapp/connect — con permisos → 200 (bandera habilitada, baileys-client mockeado)', async () => {
+    it('POST /api/whatsapp/connect — con permisos → 503 RUNTIME_UNAVAILABLE (CP-INFRA-002b: cliente Baileys retirado)', async () => {
+      // CP-INFRA-002b: con la bandera habilitada la ruta ya NO devuelve 200:
+      // el runtime de Baileys fue desinstalado. La respuesta honesta es 503
+      // con el procedimiento de reinstalación (docs/CP-INFRA-002-REACTIVACION.md).
       waFlags.WHATSAPP_SESSIONS_ENABLED = true;
       const res = await (connectPOST as any)(makeRequest('/api/whatsapp/connect', 'POST', { store_id: STORE_A }), makeSession());
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(503);
+      const json = await res.json();
+      expect(json.error).toBe('WHATSAPP_RUNTIME_UNAVAILABLE');
     });
 
     it('POST /api/whatsapp/disconnect — sin permisos → 403', async () => {
@@ -391,7 +398,7 @@ describe('WhatsApp Module — 4 Fases', () => {
       });
       // Sin socket activo, el handler ahora invoca getRiskState+canInviteNow solo
       // cuando hay socket. Para forzar el test, mockeamos getSocket con uno truthy.
-      const { getSocket } = await import('@/lib/whatsapp/baileys-client');
+      const { getSocket } = await import('@/lib/whatsapp/session-info');
       vi.mocked(getSocket).mockReturnValueOnce({
         sendMessage: vi.fn(),
       } as any);
@@ -443,7 +450,7 @@ describe('WhatsApp Module — 4 Fases', () => {
       });
 
       // Mockear socket activo para que el código entre al bloque del anti-ban
-      const { getSocket } = await import('@/lib/whatsapp/baileys-client');
+      const { getSocket } = await import('@/lib/whatsapp/session-info');
       const sendMessageMock = vi.fn().mockResolvedValue({});
       vi.mocked(getSocket).mockReturnValueOnce({ sendMessage: sendMessageMock } as any);
 
@@ -488,7 +495,7 @@ describe('WhatsApp Module — 4 Fases', () => {
         nextAllowedAt: new Date(Date.now() + 3600_000),
       });
 
-      const { getSocket } = await import('@/lib/whatsapp/baileys-client');
+      const { getSocket } = await import('@/lib/whatsapp/session-info');
       vi.mocked(getSocket).mockReturnValueOnce({
         sendMessage: vi.fn(),
       } as any);
@@ -517,7 +524,7 @@ describe('WhatsApp Module — 4 Fases', () => {
         nextAllowedAt: new Date(Date.now() + 3600_000),
       });
 
-      const { getSocket } = await import('@/lib/whatsapp/baileys-client');
+      const { getSocket } = await import('@/lib/whatsapp/session-info');
       vi.mocked(getSocket).mockReturnValueOnce({
         sendMessage: vi.fn(),
       } as any);
