@@ -11,6 +11,12 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store';
+// MISIÓN SERVICIOS RECIBIDOS (2026-10-23): paridad con el modal de pagos de
+// Servicios Recibidos — fecha financiera del pago seleccionable (V2.12.32),
+// nunca futura, validada en ambas capas.
+import { OperationDatePicker, useOperationDateValidation, formatOperationDateForRPC } from '@/components/ui/OperationDatePicker';
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 
 interface ReceptionDetailsModalProps {
   receipt: Receipt | null;
@@ -714,9 +720,15 @@ function CostsAssociatedTab({ receiptId }: { receiptId: string }) {
       return;
     }
     try {
+      // MISIÓN SERVICIOS RECIBIDOS: + Authorization Bearer — la ruta usa
+      // withAuth y el fetch crudo recibía 401 en silencio.
+      const authToken = useAuthStore.getState().token;
       const res = await fetch('/api/received-services', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({
           service_type_name: type,
           total_amount: parseFloat(amount),
@@ -735,9 +747,14 @@ function CostsAssociatedTab({ receiptId }: { receiptId: string }) {
 
   const handleRecalculate = async (serviceId: string) => {
     try {
+      // MISIÓN SERVICIOS RECIBIDOS: + Authorization Bearer (withAuth).
+      const authToken = useAuthStore.getState().token;
       const res = await fetch('/api/received-services/distribute', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({ service_id: serviceId }),
       });
       if (!res.ok) throw new Error('Error al recalcular');
@@ -1032,6 +1049,16 @@ function QuickCreateRow({ type, onCreate }: { type: string; onCreate: (type: str
 // Permite registrar pagos (parciales o totales) y ver el historial de pagos.
 // ============================================================================
 function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: number }) {
+  // MISIÓN SERVICIOS RECIBIDOS (2026-10-23), causa raíz del «Error al
+  // registrar el pago» también en recepciones: fetches sin Authorization
+  // Bearer → 401 (SEC-024 fail-closed) y, en el GET, falta además el
+  // store_id obligatorio (FIX-AUD5-H1) → la pestaña nunca mostró pagos.
+  const { user } = useAuthStore();
+  const authToken = useAuthStore((s) => s.token);
+  const authHeaders = {
+    'Content-Type': 'application/json',
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+  };
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -1039,11 +1066,21 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
   const [method, setMethod] = useState<'cash' | 'transfer' | 'zelle'>('cash');
   const [reference, setReference] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // V2.12.32 (paridad con OT/Servicios): fecha financiera del pago, default
+  // HOY (día de negocio Habana), tope HOY, backdating legítimo validado.
+  const [paymentDate, setPaymentDate] = useState<string>(todayBusinessDay());
+  const maxPaymentDate = todayBusinessDay();
+  const paymentDateValidation = useOperationDateValidation(paymentDate, user?.activeStoreId, maxPaymentDate);
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/payments?ref_type=receipt&ref_id=${receiptId}`);
+      // FIX-AUD5-H1: store_id OBLIGATORIO (antes 400 silencioso) +
+      // MISIÓN SERVICIOS RECIBIDOS: Authorization Bearer (antes 401).
+      const storeId = user?.activeStoreId || '';
+      const res = await fetch(`/api/payments?ref_type=receipt&ref_id=${receiptId}&store_id=${storeId}`, {
+        headers: { ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+      });
       if (res.ok) {
         const data = await res.json();
         setPayments(data);
@@ -1053,7 +1090,7 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
     } finally {
       setLoading(false);
     }
-  }, [receiptId]);
+  }, [receiptId, user?.activeStoreId, authToken]);
 
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
@@ -1064,11 +1101,17 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
   const handleSubmit = async () => {
     const amt = parseFloat(amount);
     if (!amt || amt <= 0) { toast.error('Monto inválido'); return; }
+    // MISIÓN SERVICIOS RECIBIDOS: la fecha del pago se valida ANTES de enviar
+    // (misma convención que el resto de los formularios) — nunca futura.
+    if (!paymentDateValidation.valid) {
+      toast.error(paymentDateValidation.error || 'Fecha del pago no válida');
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch('/api/payments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({
           ref_type: 'receipt',
           ref_id: receiptId,
@@ -1077,15 +1120,19 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
           currency: 'CUP',
           exchange_rate: 1.0,
           reference: reference || null,
+          // V2.12.32: fecha financiera (mediodía) + idempotencia por envío.
+          payment_date: formatOperationDateForRPC(paymentDate),
+          idempotency_key: crypto.randomUUID(),
         }),
       });
       if (res.ok) {
         toast.success('Pago registrado');
         setAmount(''); setReference(''); setShowForm(false);
+        setPaymentDate(todayBusinessDay());
         fetchPayments();
       } else {
-        const err = await res.json();
-        toast.error(err.error || 'Error al registrar pago');
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || err.message || 'Error al registrar pago');
       }
     } catch (e) {
       toast.error('Error de conexión');
@@ -1170,6 +1217,15 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
               className="w-full h-12 bg-background border border-border/50 rounded-lg px-3 text-sm"
             />
           </div>
+          {/* V2.12.32: fecha financiera del pago — nunca futura, backdating legítimo */}
+          <OperationDatePicker
+            label="Fecha del pago"
+            value={paymentDate}
+            onChange={setPaymentDate}
+            storeId={user?.activeStoreId}
+            max={maxPaymentDate}
+            inputId="payment-date-receipt"
+          />
           <div className="flex gap-2">
             <button
               type="button"
@@ -1181,7 +1237,7 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || !paymentDateValidation.valid}
               className="flex-1 h-12 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50"
             >
               {submitting ? 'Guardando...' : 'Confirmar Pago'}
@@ -1230,7 +1286,14 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
                 onClick={async () => {
                   if (!confirm('¿Anular este pago? El saldo se recalculará automáticamente.')) return;
                   try {
-                    const res = await fetch(`/api/payments/${p.id}`, { method: 'DELETE' });
+                    // MISIÓN SERVICIOS RECIBIDOS: + Authorization (antes 401
+                    // garantizado). La BD prohíbe el borrado directo de pagos
+                    // por diseño (PT007) — limitación documentada, reportada.
+                    const authToken = useAuthStore.getState().token;
+                    const res = await fetch(`/api/payments/${p.id}`, {
+                      method: 'DELETE',
+                      headers: { ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+                    });
                     if (res.ok) {
                       toast.success('Pago anulado');
                       fetchPayments();
