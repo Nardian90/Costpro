@@ -401,6 +401,19 @@ export interface Transaction {
   sale_exchange_rate?: number | null;
   customer_name?: string | null;
   invoice_number?: string | null;
+  // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — vuelto multimoneda
+  // persistido ENLAZADO a la venta (sin fila de caja aparte). NULL en ventas
+  // legacy y en ventas sin efectivo: la identidad canónica es
+  // (recibido − vuelto) CUP + (recibido − vuelto) USD × tasa ≈ cash_amount.
+  cash_received_cup?: number | null;
+  cash_received_usd?: number | null;
+  change_given_cup?: number | null;
+  change_given_usd?: number | null;
+  change_currency?: 'CUP' | 'USD' | null;
+  /** Tasa USD usada en la liquidación (cobro o vuelto en USD). */
+  change_exchange_rate?: number | null;
+  /** Fuente de la tasa (store_exchange_rates | global_bcc_seg3 | global_eltoque). */
+  change_rate_source?: string | null;
 }
 
 export interface TransactionItem {
@@ -601,7 +614,12 @@ export type CashFlowConcept =
   | 'devolucion_total_fondo'
   | 'devolucion_parcial_fondo'
   | 'otro_ingreso'
-  | 'otro_egreso';
+  | 'otro_egreso'
+  /** MISIÓN CAJA v2.24.0 (D4): entrega del efectivo acumulado — el ÚNICO
+   *  concepto autorizable SIN turno abierto (outside_shift, closure_id NULL,
+   *  rol admin/manager/encargado + contraparte obligatoria, validación POR
+   *  MONEDA contra el libro físico get_cash_currency_summary). */
+  | 'entrega_efectivo';
 
 export interface CashFlowDocument {
   id: string;
@@ -910,8 +928,22 @@ export interface CashClosure {
   declared_total: number;
   system_expected_total: number;
   difference: number;
-  opening_balance?: number; // FIX F3-01: fondo inicial preservado al cerrar
+  opening_balance?: number; // FIX F3-01: fondo inicial preservado al cerrar (lado canónico CUP)
   cash_movements_total?: number; // FIX F3-03: total de movimientos (entradas/salidas)
+  // MISIÓN CAJA v2.24.0 (D8): apertura/arqueo por moneda — el lado canónico
+  // CUP se conserva; el lado USD es el efectivo físico nativo del cajón.
+  opening_balance_cup?: number | null;
+  opening_balance_usd?: number | null;
+  /** Diferencia documentada al abrir: contado − esperado (NO se autoajusta). */
+  opening_difference_cup?: number | null;
+  opening_difference_usd?: number | null;
+  opening_difference_note?: string | null;
+  /** Efectivo USD contado al cerrar (p_declared_cash_usd del RPC v2.24.0). */
+  declared_cash_usd?: number | null;
+  /** Efectivo USD esperado por el sistema al cerrar. */
+  system_expected_cash_usd?: number | null;
+  /** Diferencia USD = contado − esperado (se registra tal cual). */
+  difference_usd?: number | null;
   profile?: {
     full_name: string;
   };

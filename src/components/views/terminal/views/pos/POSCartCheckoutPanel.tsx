@@ -25,6 +25,9 @@ import { getPaymentLabel as getPaymentLabelUnified, getPaymentIcon, getPaymentCo
 import { POSOperationDateSection, usePosSaleDate } from "./POSOperationDateSection";
 import { format } from "date-fns";
 import type { PaymentMethod } from "@/types";
+// MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — vuelto multimoneda
+// persistido ENLAZADO a la venta (sin fila de caja aparte).
+import { buildCashSettlement, settlementErrorMessage, type CashSettlement } from "@/lib/pos/cash-settlement";
 
 /**
  * POS-3a-2 / 3a-3 / 3a-4: POSCartCheckoutPanel
@@ -118,6 +121,11 @@ export function POSCartCheckoutPanel({
   const { value: saleDateValue, validation: saleDateValidation } = usePosSaleDate();
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
   const [cashReceived, setCashReceived] = useState("");
+  // MISIÓN CAJA v2.24.0 (D6): moneda del VUELTO — el cliente paga en una
+  // moneda y recibe el cambio en otra (misión §8: paga CUP → vuelto USD).
+  // La tasa la revalida el servidor (jerarquía tienda → BCC → elToque).
+  const [changeCurrency, setChangeCurrency] = useState<"CUP" | "USD">("CUP");
+  const [changeUsdOverride, setChangeUsdOverride] = useState("");
   // FIX-CASH-BREAKDOWN (2026-07-10): modal de desglose por billetes/monedas
   // separado por moneda. Cada moneda tiene su propio desglose y total.
   const [showCashBreakdown, setShowCashBreakdown] = useState(false);
@@ -273,11 +281,16 @@ export function POSCartCheckoutPanel({
     // MISIÓN IMPRESIÓN TÉRMICA: se reenvía el vuelto que ESTE panel calcula
     // (cashReceivedNum - totalCashCup, línea 167) — cero aritmética nueva;
     // el recibo imprime «Efectivo recibido» y «Cambio» solo si aplica.
+    // MISIÓN CAJA v2.24.0 (D6): la liquidación (recibido/vuelto por moneda)
+    // viaja en el contexto → usePOSCheckout la incluye en el payload del RPC.
     const receiptContext =
       cashReceivedNum > 0
         ? {
             cashReceived: cashReceivedNum,
             change: change >= 0 ? change : undefined,
+            changeCurrency,
+            changeUsd: changeCurrency === "USD" ? (settlement?.settlement?.change_given_usd ?? undefined) : undefined,
+            settlement: settlement?.settlement ?? undefined,
           }
         : null;
     onCheckout(
@@ -316,6 +329,29 @@ export function POSCartCheckoutPanel({
     if (methodsUsed.size === 1) return Array.from(methodsUsed)[0] as PaymentMethod;
     return 'mixed';
   })();
+
+  // ── MISIÓN CAJA v2.24.0 (D6): liquidación del cobro (vuelto multimoneda) ──
+  // Identidad canónica revalidada por el RPC: (recibido − vuelto) = cash de la
+  // venta ±0.01. La tasa USD se propone con la hidratada del POS y el servidor
+  // la fija con la suya (jerarquía tienda → BCC → elToque — sin tasas ocultas).
+  // Solo cobro simple en efectivo (v1 de la liquidación); mixto mantiene el
+  // flujo previo (el RPC acepta liquidación parcial por diseño).
+  const usdRate = useCartStore.getState().globalRates["USD"] || 0;
+  const changeDueUsd = change > 0 && usdRate > 1 ? Math.round((change / usdRate) * 100) / 100 : null;
+  const changeUsdNum = parseFloat(changeUsdOverride) || 0;
+  const settlement: { settlement: CashSettlement | null; changeDueCup: number; error?: string } | null =
+    derivedPaymentMethod !== "cash" || cashReceivedNum <= 0
+      ? null
+      : buildCashSettlement({
+          receivedByCurrency: { CUP: cashReceivedNum },
+          cashAmountCup: expectedTotal,
+          usdRate,
+          changeCurrency,
+          changeAmountNative: changeCurrency === "USD"
+            ? (changeUsdOverride === "" ? (changeDueUsd ?? 0) : changeUsdNum)
+            : undefined,
+        });
+  const settlementError = settlement?.error ?? null;
 
   // Auto-sync store's selectedPayment with derived method (for backward compat with usePOSCheckout)
   // This ensures the store always reflects the real payment state.
@@ -701,6 +737,82 @@ export function POSCartCheckoutPanel({
           </div>
         );
       })()}
+
+      {/* ── MISIÓN CAJA v2.24.0 (D6): LIQUIDACIÓN DEL COBRO — vuelto multimoneda ──
+          Escenario de la misión (§8): el cliente paga en CUP y recibe el vuelto
+          en USD. La identidad canónica la revalida el servidor con la tasa
+          autoritativa; aquí se propone con la tasa hidratada del POS. */}
+      {derivedPaymentMethod === 'cash' && cashReceivedNum > 0 && change > 0 && (
+        <div className="mx-3 my-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2.5 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+              Vuelto a entregar
+            </span>
+            <div className="flex items-center rounded-lg border border-border overflow-hidden" role="group" aria-label="Moneda del vuelto">
+              {(['CUP', 'USD'] as const).map(cur => (
+                <button
+                  key={cur}
+                  type="button"
+                  onClick={() => { setChangeCurrency(cur); setChangeUsdOverride(""); }}
+                  aria-pressed={changeCurrency === cur}
+                  className={cn(
+                    'px-2.5 py-1 text-[10px] font-black uppercase transition-colors',
+                    changeCurrency === cur ? 'bg-emerald-500 text-white' : 'hover:bg-muted',
+                    cur === 'USD' && 'border-l border-border',
+                  )}
+                >
+                  {cur}
+                </button>
+              ))}
+            </div>
+          </div>
+          {changeCurrency === 'CUP' ? (
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              Vuelto en CUP: <span className="font-black text-foreground">{formatCurrency(change)}</span> — queda registrado enlazado a la venta (recibido {formatCurrency(cashReceivedNum)} − vuelto = efectivo de la venta).
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <label htmlFor="change-usd" className="text-[10px] font-black uppercase text-muted-foreground whitespace-nowrap">
+                  Importe USD
+                </label>
+                <input
+                  id="change-usd"
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  inputMode="decimal"
+                  value={changeUsdOverride === "" && changeDueUsd != null ? String(changeDueUsd) : changeUsdOverride}
+                  onChange={e => setChangeUsdOverride(e.target.value)}
+                  className="w-28 px-2 py-1 rounded-lg border border-border bg-background text-sm font-mono font-bold"
+                  aria-label="Importe del vuelto en USD"
+                />
+                <span className="text-[10px] text-muted-foreground">
+                  sugerido: {changeDueUsd != null ? `$${changeDueUsd.toFixed(2)}` : '—'} (tasa POS {usdRate > 1 ? usdRate.toFixed(2) : '—'})
+                </span>
+              </div>
+              {settlementError === 'ERR_CHANGE_EXCEEDS_DUE' && (
+                <p role="alert" className="text-[10px] font-bold text-destructive">
+                  {settlementErrorMessage('ERR_CHANGE_EXCEEDS_DUE')}
+                </p>
+              )}
+              {settlementError === 'ERR_RATE_INVALID' && (
+                <p role="alert" className="text-[10px] font-bold text-destructive">
+                  {settlementErrorMessage('ERR_RATE_INVALID')}
+                </p>
+              )}
+              {!settlementError && (
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  El cajón USD baja {`$${(settlement?.settlement?.change_given_usd ?? 0).toFixed(2)}`} y el CUP conserva todo lo recibido — la identidad (recibido − vuelto) la revalida el servidor con la tasa autoritativa.
+                </p>
+              )}
+            </div>
+          )}
+          {settlementError === 'ERR_UNDERPAID' && (
+            <p role="alert" className="text-[10px] font-bold text-destructive">{settlementErrorMessage('ERR_UNDERPAID')}</p>
+          )}
+        </div>
+      )}
 
       {/* ── DESCUENTO + RECARGO (read-only, lado a lado) ───────────
           FIX-LAYOUT (2026-07-10): unir Descuento y Recargo en una sola

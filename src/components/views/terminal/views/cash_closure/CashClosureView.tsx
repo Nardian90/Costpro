@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DollarSign, CreditCard, Layers, Edit, History, Eye, CheckCircle2, RefreshCw, AlertTriangle, ShieldCheck, FileText, Clock, Wallet, ArrowRight, Play, Square, Printer } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
@@ -77,6 +77,8 @@ export default function CashClosureView() {
   const updateClosure = useUpdateCashClosure();
 
   const [declaredCash, setDeclaredCash] = useState<number>(0);
+  // MISIÓN CAJA v2.24.0 (D8): lado USD FÍSICO — contado/apertura por moneda.
+  const [declaredCashUsd, setDeclaredCashUsd] = useState<number>(0);
   const [declaredVouchers, setDeclaredVouchers] = useState<number>(0);
   const [notes, setNotes] = useState<string>('');
 
@@ -164,17 +166,55 @@ export default function CashClosureView() {
         //   - El fondo inicial (si se acaba de abrir y no se ha editado)
         //   - El efectivo contado (si el cajero lo actualizó)
         setDeclaredCash(Number(pendingClosure.declared_cash) || 0);
+        setDeclaredCashUsd(Number(pendingClosure.declared_cash_usd) || 0);
         setDeclaredVouchers(Number(pendingClosure.declared_vouchers) || 0);
         setNotes(pendingClosure.notes || '');
-      } else {
-        setDeclaredCash(0);
-        setDeclaredVouchers(0);
-        setNotes('');
       }
     });
   }, [pendingClosure]);
 
+  // MISIÓN CAJA v2.24.0 (§10): APERTURA con saldo heredado por moneda.
+  // El saldo inicial esperado = efectivo acumulado según movimientos
+  // persistidos (CUP canónico + USD físico del libro). Se PRELLLENA para que
+  // el cajero CONFIRME el efectivo contado; si declara otra cosa, la
+  // diferencia se DOCUMENTA (opening_difference_*) — jamás se sobreescribe
+  // el saldo silenciosamente ni se impone cero por conveniencia.
+  const prefillDoneRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (pendingClosure || isLoadingExpected || !shiftExpected) return;
+    const key = `${user?.activeStoreId ?? ''}:${shiftExpected.window_start}`;
+    if (prefillDoneRef.current === key) return;
+    prefillDoneRef.current = key;
+    const expCup = Math.round((Number(shiftExpected.expected_cash) || 0) * 100) / 100;
+    const expUsd = Math.round((Number(shiftExpected.expected_cash_usd) || 0) * 100) / 100;
+    setDeclaredCash(expCup);
+    setDeclaredCashUsd(expUsd);
+    setDeclaredVouchers(0);
+  }, [pendingClosure, isLoadingExpected, shiftExpected, user?.activeStoreId]);
+
   const totalDeclared = declaredCash + declaredVouchers;
+
+  // MISIÓN CAJA v2.24.0 (D8): arqueo USD — diferencia = contado − esperado.
+  // Espejo del RPC close_cash_shift v2.24.0 (se registra tal cual, sin
+  // autoajuste: no se marca cuadrado un turno con diferencia real).
+  const expectedCashUsd = Number(shiftExpected?.expected_cash_usd) || 0;
+  const openingUsdExpected = pendingClosure
+    ? (Number(pendingClosure.opening_balance_usd) || 0)
+    : expectedCashUsd;
+  const usdDiff = pendingClosure
+    ? Math.round((declaredCashUsd - expectedCashUsd) * 100) / 100
+    : 0;
+  // Diferencias de APERTURA documentadas (contado al abrir − esperado heredado).
+  const openingDiffCup = Math.round((declaredCash - (Number(shiftExpected?.expected_cash) || 0)) * 100) / 100;
+  const openingDiffUsd = Math.round((declaredCashUsd - expectedCashUsd) * 100) / 100;
+
+  // MISIÓN CAJA v2.24.0 (§9): lado USD FÍSICO del arqueo — equivalente
+  // contable identificado como tal; no reemplaza el control de cantidades
+  // físicas en USD ni se suma al CUP como si fueran unidades iguales.
+  const usdItems = pendingClosure ? [
+    { label: 'Fondo Inicial USD', value: openingUsdExpected },
+    { label: 'Efectivo USD Esperado (libro físico)', value: expectedCashUsd },
+  ] : [];
 
   // v2.18.0: diferencia con convención explícita (contado − esperado),
   // espejo del cálculo server-side de close_cash_shift (fuente autoritativa).
@@ -208,6 +248,7 @@ export default function CashClosureView() {
         closure: {
           status: shouldFinalize ? 'cerrado' : 'pendiente',
           declared_cash: declaredCash,
+          declared_cash_usd: declaredCashUsd,
           declared_vouchers: declaredVouchers,
           declared_total: totalDeclared,
           // FIX F3-04: system_expected_total = fondo inicial + ventas cash + transferencias
@@ -220,16 +261,35 @@ export default function CashClosureView() {
     } else {
       // FIX F3-01: Al abrir, guardar fondo inicial en opening_balance Y en declared_cash
       // (declared_cash se sobreescriirá al cerrar, opening_balance se preserva)
+      // MISIÓN CAJA v2.24.0 (§10): apertura POR MONEDA — el lado canónico CUP
+      // se conserva (opening_balance) y se descompone físicamente
+      // (opening_balance_cup/usd). Si lo contado difiere del esperado heredado,
+      // la diferencia se DOCUMENTA en opening_difference_* + nota de auditoría.
+      const r2v24 = (n: number) => Math.round(n * 100) / 100;
+      const expCup = Number(shiftExpected?.expected_cash) || 0;
+      const expUsd = Number(shiftExpected?.expected_cash_usd) || 0;
+      const diffCup = r2v24(declaredCash - expCup);
+      const diffUsd = r2v24(declaredCashUsd - expUsd);
+      const diffNote = (Math.abs(diffCup) > 0.004 || Math.abs(diffUsd) > 0.004)
+        ? `[APERTURA CON DIFERENCIA DOCUMENTADA] esperado CUP ${r2v24(expCup)} / USD ${r2v24(expUsd)}; contado CUP ${r2v24(declaredCash)} / USD ${r2v24(declaredCashUsd)}.`
+        : null;
       createClosure.mutate({
         store_id: user.activeStoreId,
         user_id: user.id,
         declared_cash: declaredCash, // fondo inicial (se sobreescribe al cerrar)
         opening_balance: declaredCash, // FIX F3-01: preservar fondo inicial
+        // MISIÓN CAJA v2.24.0 (D8): descomposición física por moneda
+        opening_balance_cup: declaredCash,
+        opening_balance_usd: declaredCashUsd,
+        opening_difference_cup: Math.abs(diffCup) > 0.004 ? diffCup : null,
+        opening_difference_usd: Math.abs(diffUsd) > 0.004 ? diffUsd : null,
+        opening_difference_note: diffNote,
+        declared_cash_usd: declaredCashUsd,
         declared_vouchers: declaredVouchers,
         declared_total: totalDeclared,
         system_expected_total: 0,
         difference: 0,
-        notes: notes,
+        notes: [notes, diffNote].filter(Boolean).join(' ') || null,
         status: 'pendiente'
       });
     }
@@ -284,11 +344,15 @@ export default function CashClosureView() {
   const buttonVariant = (pendingClosure && canClose ? 'success' : 'primary') as 'success' | 'primary';
 
   // Labels de campos según contexto
-  const cashInputLabel = isOpening ? 'Fondo Inicial de Efectivo' : 'Efectivo Contado (Final)';
+  const cashInputLabel = isOpening ? 'Fondo Inicial de Efectivo (CUP)' : 'Efectivo Contado CUP (Final)';
   const cashInputPlaceholder = isOpening ? 'Ej. 100.00 (cambio inicial)' : '0.00';
   const cashInputHint = isOpening
-    ? 'Cuánto efectivo dejas en la caja para dar vueltos.'
-    : 'Cuenta el efectivo físico al final del turno.';
+    ? 'Cuánto efectivo en CUP dejas en la caja (prellenado con el saldo heredado — ajusta al conteo real).'
+    : 'Cuenta el efectivo físico en CUP al final del turno.';
+  const cashUsdInputLabel = isOpening ? 'Fondo Inicial USD (físico)' : 'Efectivo Contado USD (Final)';
+  const cashUsdInputHint = isOpening
+    ? 'Billetes USD con los que arranca el cajón (prellenado con el libro físico).'
+    : 'Billetes USD contados al cerrar — el arqueo USD se registra sin autoajuste.';
   const vouchersInputLabel = isOpening ? 'Otros Fondos Iniciales (opcional)' : 'Transferencias Contadas (Final)';
   const notesLabel = isOpening ? 'Notas de Apertura' : 'Observaciones del Cierre';
 
@@ -529,6 +593,28 @@ export default function CashClosureView() {
                     <p className="text-[10px] text-muted-foreground ml-1">{cashInputHint}</p>
                   </div>
 
+                  {/* MISIÓN CAJA v2.24.0 (D8): lado USD FÍSICO por moneda */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="cash-declared-usd" className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">
+                      {cashUsdInputLabel}
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 w-5 h-5" />
+                      <input
+                        id="cash-declared-usd"
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        aria-label={cashUsdInputLabel}
+                        value={declaredCashUsd || ''}
+                        onChange={(e) => setDeclaredCashUsd(Math.max(0, Number(e.target.value)))}
+                        className="w-full p-4 pl-12 rounded-xl border border-border bg-background text-2xl font-black font-mono focus:ring-1 focus:ring-emerald-500 outline-none"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground ml-1">{cashUsdInputHint}</p>
+                  </div>
+
                   <div className="space-y-1.5">
                     <label htmlFor="cash-vouchers" className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">
                       {vouchersInputLabel}
@@ -601,6 +687,22 @@ export default function CashClosureView() {
                       </div>
                     ))}
 
+                    {/* MISIÓN CAJA v2.24.0 (§9): lado USD físico — equivalente identificado,
+                        saldos físicos separados (no se suman al canónico CUP) */}
+                    {usdItems.length > 0 && (
+                      <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3 space-y-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                          Efectivo USD del turno · físico (no sumado al canónico CUP)
+                        </p>
+                        {usdItems.map((row) => (
+                          <div key={row.label} className="flex justify-between items-center text-xs">
+                            <span className="text-muted-foreground font-bold uppercase">{row.label}</span>
+                            <span className="font-black font-mono tabular-nums">{formatCurrency(row.value, 'USD')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <div className={cn(
                       "flex justify-between items-center p-6 rounded-2xl mt-4 shadow-xl transition-colors border-2",
                       difference === 0 ? "bg-success/15 border-success/30" :
@@ -614,6 +716,27 @@ export default function CashClosureView() {
                         </span>
                       </div>
                       <span className="text-3xl font-black font-mono text-foreground tabular-nums">{formatCurrency(difference)}</span>
+                    </div>
+
+                    {/* MISIÓN CAJA v2.24.0 (D8): diferencia USD — se registra tal cual,
+                        jamás se autoajusta; un turno con diferencia real no se marca cuadrado */}
+                    <div className={cn(
+                      "flex justify-between items-center p-4 rounded-xl border",
+                      usdDiff === 0 ? "bg-success/10 border-success/25" :
+                      usdDiff < 0 ? "bg-destructive/10 border-destructive/25" : "bg-warning/10 border-warning/25"
+                    )}>
+                      <div className="text-left">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground block">Diferencia USD (físico)</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Contado {formatCurrency(declaredCashUsd, 'USD')} · esperado {formatCurrency(expectedCashUsd, 'USD')}
+                        </span>
+                      </div>
+                      <span className={cn(
+                        "text-xl font-black font-mono tabular-nums",
+                        usdDiff === 0 ? "text-success" : usdDiff < 0 ? "text-destructive" : "text-warning"
+                      )}>
+                        {usdDiff > 0 ? '+' : ''}{formatCurrency(usdDiff, 'USD')}
+                      </span>
                     </div>
                   </div>
                 ) : (
@@ -728,13 +851,29 @@ export default function CashClosureView() {
           </p>
           <div className="rounded-xl bg-muted/50 border border-border p-4 space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-muted-foreground uppercase">Fondo Inicial</span>
+              <span className="text-xs font-bold text-muted-foreground uppercase">Fondo Inicial CUP</span>
+              <span className="text-xs font-black text-primary tabular-nums">{formatCurrency(declaredCash)}</span>
+            </div>
+            {/* MISIÓN CAJA v2.24.0: apertura por moneda */}
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-muted-foreground uppercase">Fondo Inicial USD (físico)</span>
+              <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{formatCurrency(declaredCashUsd, 'USD')}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-muted-foreground uppercase">Total (CUP canónico + vouchers)</span>
               <span className="text-xs font-black text-primary tabular-nums">{formatCurrency(totalDeclared)}</span>
             </div>
             <div className="text-[10px] text-muted-foreground">
               Este fondo se usará como base para calcular la diferencia al cerrar el turno.
             </div>
           </div>
+          {(Math.abs(openingDiffCup) > 0.004 || Math.abs(openingDiffUsd) > 0.004) && (
+            <div className="p-3 rounded-xl bg-warning/10 border border-warning/25 text-[11px] font-bold text-warning text-center leading-relaxed">
+              Diferencia de apertura documentada: esperado CUP {formatCurrency(Number(shiftExpected?.expected_cash) || 0)} / USD {formatCurrency(Number(shiftExpected?.expected_cash_usd) || 0, 'USD')} —
+              lo contado difiere ({openingDiffCup > 0 ? '+' : ''}{formatCurrency(openingDiffCup)} CUP, {openingDiffUsd > 0 ? '+' : ''}{formatCurrency(openingDiffUsd, 'USD')}).
+              La diferencia queda registrada en auditoría (no se sobreescribe el saldo silenciosamente).
+            </div>
+          )}
           <p className="text-xs text-muted-foreground text-center leading-relaxed">
             Tras abrir el turno podrás vender en el POS. Al final del día, vuelve aquí para cerrar y contar el efectivo.
           </p>
@@ -781,6 +920,11 @@ export default function CashClosureView() {
               <span className="text-xs font-bold text-muted-foreground uppercase">Efectivo Esperado (Sistema)</span>
               <span className="text-xs font-black tabular-nums">{formatCurrency(arqueo.expected_cash)}</span>
             </div>
+            {/* MISIÓN CAJA v2.24.0 (D8): lado USD físico del arqueo */}
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-muted-foreground uppercase">Efectivo USD Esperado (físico)</span>
+              <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{formatCurrency(expectedCashUsd, 'USD')}</span>
+            </div>
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-muted-foreground uppercase">Transferencias/Zelle (Sistema)</span>
               <span className="text-xs font-black tabular-nums">{formatCurrency(arqueo.expected_vouchers)}</span>
@@ -796,6 +940,13 @@ export default function CashClosureView() {
                 difference === 0 ? "text-success" :
                 difference < 0 ? "text-destructive" : "text-warning"
               )}>{formatCurrency(difference)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-black uppercase">Diferencia USD (físico)</span>
+              <span className={cn(
+                "text-sm font-black tabular-nums",
+                usdDiff === 0 ? "text-success" : usdDiff < 0 ? "text-destructive" : "text-warning"
+              )}>{usdDiff > 0 ? '+' : ''}{formatCurrency(usdDiff, 'USD')}</span>
             </div>
           </div>
 

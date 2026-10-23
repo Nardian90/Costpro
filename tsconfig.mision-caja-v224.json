@@ -1,0 +1,32 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/types/index.ts",
+    "src/lib/cash-flow/constants.ts",
+    "src/lib/pos/cash-settlement.ts",
+    "src/lib/cash-ledger/build-ledger.ts",
+    "src/lib/cash-arqueo.ts",
+    "src/app/api/cash-flow/route.ts",
+    "src/app/api/cash-flow/ledger/route.ts",
+    "src/app/api/cash-closures/close/route.ts",
+    "src/app/api/pos/checkout/route.ts",
+    "src/app/api/devolutions/route.ts",
+    "src/hooks/api/useCashClosures.ts",
+    "src/hooks/api/useCashFlow.ts",
+    "src/hooks/api/useCashLedger.ts",
+    "src/hooks/api/useActiveShift.ts",
+    "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
+    "src/components/views/terminal/views/cash_flow/IngresosEgresosView.tsx",
+    "src/components/views/terminal/views/cash_flow/CashFlowCreateModal.tsx",
+    "src/components/views/terminal/views/cash_flow/CashLedgerPanel.tsx",
+    "src/components/views/terminal/views/devolutions/DevolutionsView.tsx",
+    "src/components/views/terminal/views/pos/POSCartCheckoutPanel.tsx",
+    "src/components/views/terminal/views/pos/usePOSCheckout.ts",
+    "src/store/cart.ts",
+    "src/__tests__/lib/cash-settlement.test.ts",
+    "src/__tests__/lib/cash-ledger-balance.test.ts"
+  ]
+}

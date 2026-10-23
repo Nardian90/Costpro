@@ -28,6 +28,10 @@ const createSchema = z.object({
   reason: z.string().min(1),
   original_transaction_id: z.string().min(1).optional(),
   payment_method: z.enum(['cash', 'transfer', 'zelle', 'store_credit']).default('cash'),
+  // MISIÓN CAJA v2.24.0: moneda REAL por la que sale el dinero del reembolso
+  // (v2.24 añade p_refund_currency al RPC; el reembolso en USD registra la
+  // fila PT en USD con tasa servidor — ya no hardcodeada CUP×1.0).
+  refund_currency: z.enum(['CUP', 'USD']).default('CUP'),
   customer_id: z.string().min(1).optional(),
   customer_name: z.string().optional(),
   notes: z.string().optional(),
@@ -104,6 +108,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_notes: parsed.data.notes || null,
     p_idempotency_key: `dev-${crypto.randomUUID()}`,
     p_operation_date: parsed.data.operation_date ?? null, // ENERVIDA import: paridad con checkout
+    // MISIÓN CAJA v2.24.0: moneda real del reembolso (CUP por defecto —
+    // paridad total con las llamadas previas de 11 args).
+    p_refund_currency: parsed.data.refund_currency || 'CUP',
   };
 
   const { data, error } = await supabase.rpc('create_devolution_v2', rpcParams);

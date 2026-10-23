@@ -49,6 +49,8 @@ import { Button } from '@/components/ui/button';
 import { CashFlowCreateModal } from './CashFlowCreateModal';
 import { CashFlowDetailModal } from './CashFlowDetailModal';
 import { CashFlowReverseModal } from './CashFlowReverseModal';
+import CashLedgerPanel from './CashLedgerPanel';
+import { useCashCurrencySummary } from '@/hooks/api/useCashLedger';
 
 type ViewMode = 'cards' | 'table';
 type TypeFilter = 'all' | 'ingreso' | 'egreso';
@@ -139,6 +141,13 @@ export default function IngresosEgresosView() {
   const query = useCashFlowDocuments(storeId, filters);
   const summaryQuery = useCashFlowSummary(storeId, periodFrom, periodTo);
   const activeShift = useActiveShift(storeId);
+  // MISIÓN CAJA v2.24.0 (§9): libro físico por moneda — fuente de los saldos
+  // físicos (CUP/USD separados) y de la validación de entregas sin turno.
+  const currencySummary = useCashCurrencySummary(storeId);
+  const saldoFisico = {
+    CUP: currencySummary.data?.net?.CUP ?? null,
+    USD: currencySummary.data?.net?.USD ?? null,
+  };
 
   const docs = useMemo(() => query.data?.docs ?? [], [query.data]);
   const hasNextPage = query.data?.hasMore ?? false;
@@ -202,11 +211,11 @@ export default function IngresosEgresosView() {
         <Button
           type="button"
           onClick={() => setCreateOpen(true)}
-          disabled={!canCreate || !storeId || !turnoAbierto}
+          disabled={!canCreate || !storeId || activeShift.isLoading}
           title={!storeId
             ? 'Selecciona una tienda activa'
-            : !turnoAbierto
-              ? 'La caja no tiene un turno abierto — ábrelo en Caja para registrar movimientos'
+            : !turnoAbierto && !activeShift.isLoading
+              ? 'Sin turno abierto: solo la ENTREGA de efectivo puede registrarse (rol admin/manager/encargado)'
               : canCreate
                 ? 'Registrar un ingreso o egreso de efectivo'
                 : 'No tienes permisos para registrar movimientos de caja'}
@@ -242,24 +251,43 @@ export default function IngresosEgresosView() {
           </span>
         )}
         {!turnoAbierto && !turnoCargando && (
-          <button
-            type="button"
-            onClick={() => setCurrentView('cash')}
-            className="ml-auto text-xs font-black uppercase tracking-widest text-warning underline underline-offset-4 hover:opacity-80"
-          >
-            Abrir turno en Caja →
-          </button>
+          <span className="ml-auto text-xs font-bold text-warning">
+            Sin turno: solo ENTREGA de efectivo autorizable (misión v2.24) ·
+            <button
+              type="button"
+              onClick={() => setCurrentView('cash')}
+              className="ml-1 underline underline-offset-4 hover:opacity-80 uppercase tracking-widest"
+            >
+              Abrir turno en Caja →
+            </button>
+          </span>
         )}
       </div>
 
       {/* ── KPIs (RPC get_cash_flow_summary — una sola fuente) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
         <KpiCard
           icon={<Landmark className="w-4 h-4" />}
           label="Saldo de caja (ahora)"
           value={resumen ? formatCurrency(resumen.expected_cash) : '—'}
           tone="primary"
-          hint={resumen ? `Efectivo esperado del turno · CUP canónico` : undefined}
+          hint={resumen ? `Efectivo esperado · CUP canónico (equivalente contable, incluye USD a tasa)` : undefined}
+        />
+        {/* MISIÓN CAJA v2.24.0 (§9): saldos físicos por moneda separados — no se
+            suman al canónico como si fueran unidades iguales */}
+        <KpiCard
+          icon={<Coins className="w-4 h-4" />}
+          label="Saldo físico CUP"
+          value={saldoFisico.CUP != null ? formatCurrency(saldoFisico.CUP) : '—'}
+          tone="primary"
+          hint="Libro físico de billetes CUP (movimientos persistidos)"
+        />
+        <KpiCard
+          icon={<Coins className="w-4 h-4" />}
+          label="Saldo físico USD"
+          value={saldoFisico.USD != null ? formatCurrency(saldoFisico.USD, 'USD') : '—'}
+          tone="warning"
+          hint="Libro físico de billetes USD (movimientos persistidos)"
         />
         <KpiCard
           icon={<Coins className="w-4 h-4" />}
@@ -287,13 +315,6 @@ export default function IngresosEgresosView() {
           hint={resumen ? `${resumen.period.egresos_count} documento(s)` : undefined}
         />
         <KpiCard
-          icon={<Wallet className="w-4 h-4" />}
-          label="Fondo pendiente de devolución"
-          value={resumen ? formatCurrency(resumen.fondo_vigente) : '—'}
-          tone="warning"
-          hint="Parte del fondo aún en cajón al cierre"
-        />
-        <KpiCard
           icon={<Ban className="w-4 h-4" />}
           label="Anulados del período"
           value={resumen ? String(resumen.period.annulled_count) : '—'}
@@ -301,6 +322,9 @@ export default function IngresosEgresosView() {
           hint={resumen ? `Período: ${formatDate(resumen.period.from)} → ${formatDate(resumen.period.to)}` : undefined}
         />
       </div>
+
+      {/* ── MISIÓN CAJA v2.24.0 (§7): movimientos que explican el saldo ── */}
+      <CashLedgerPanel storeId={storeId ?? null} canonicalCup={resumen?.expected_cash ?? null} />
 
       {/* ── Filtros y búsqueda ── */}
       <div className="space-y-2">
@@ -548,6 +572,7 @@ export default function IngresosEgresosView() {
         storeName={storeName}
         summary={resumen}
         onRegistrado={() => { /* invalidaciones en el hook */ }}
+        saldoFisico={saldoFisico}
       />
 
       {/* ── Detalle del documento + comprobante ── */}

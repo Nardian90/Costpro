@@ -231,6 +231,12 @@ vi.mock('@/store', () => ({
 }));
 
 // ── MOCK: sonner ──
+// MISIÓN CAJA v2.24.0: el libro físico (get_cash_currency_summary) viaja por
+// /api/cash-flow/ledger — mock ligero (los KPIs físicos muestran '—').
+vi.mock('@/lib/api-fetch', () => ({
+  apiFetch: vi.fn().mockResolvedValue({ currency_summary_now: null, rows: [], opening: { cup: 0, usd: 0 }, balance_now: { cup: 0, usd: 0 }, count: 0, truncated: false }),
+}));
+
 vi.mock('sonner', () => ({
   toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() },
 }));
@@ -313,10 +319,15 @@ describe('IngresosEgresosView — render, consulta RLS y KPIs', () => {
     // Saldo de caja = fórmula v2.21.0 con los documentos dentro (una sola vez)
     await waitFor(() => expect(screen.getAllByText('$172,000.00').length).toBeGreaterThanOrEqual(1));
     // Fondo vigente = 5.000 apertura + 5.000 constitución − 2.000 devolución
-    expect(screen.getAllByText('$8,000.00').length).toBeGreaterThanOrEqual(2); // vigente + pendiente
+    // MISIÓN CAJA v2.24: la tarjeta duplicada «Fondo pendiente de devolución»
+    // fue retirada (redundante) — el fondo aparece en UNA tarjeta.
+    expect(screen.getAllByText('$8,000.00').length).toBeGreaterThanOrEqual(1);
     // Ingresos y egresos del período separados (nunca CUP+USD sumados)
     expect(screen.getAllByText('$5,000.00').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('$2,000.00').length).toBeGreaterThanOrEqual(1);
+    // MISIÓN CAJA v2.24 (§9): KPIs de saldos FÍSICOS por moneda añadidos
+    expect(screen.getByText('Saldo físico CUP')).toBeTruthy();
+    expect(screen.getByText('Saldo físico USD')).toBeTruthy();
     expect(rpcMock).toHaveBeenCalledWith('get_cash_flow_summary', expect.anything());
   });
 
@@ -337,7 +348,7 @@ describe('IngresosEgresosView — render, consulta RLS y KPIs', () => {
 });
 
 describe('IngresosEgresosView — caja cerrada y sin tienda (escenarios 7/11)', () => {
-  it('5 · sin turno abierto: botón bloqueado con explicación + CTA a Caja', async () => {
+  it('5 · sin turno abierto: botón habilitado SOLO para entrega de efectivo (misión v2.24 §6) + CTA a Caja', async () => {
     fromMock.mockImplementation((table: string) => {
       if (table === 'cash_closures') return chain({ data: null, error: null });
       return chain({ data: DOCS, error: null });
@@ -349,8 +360,10 @@ describe('IngresosEgresosView — caja cerrada y sin tienda (escenarios 7/11)', 
     renderView();
     await waitFor(() => expect(screen.getByText('Caja cerrada')).toBeTruthy());
     const btn = screen.getByRole('button', { name: /Registrar ingreso/i });
-    expect(btn).toBeDisabled();
-    expect(btn.getAttribute('title')).toContain('turno abierto');
+    // MISIÓN CAJA v2.24.0: la entrega de efectivo ES autorizable sin turno
+    // (el modal restringe los conceptos y el RPC revalida rol + saldo físico).
+    expect(btn).toBeEnabled();
+    expect(btn.getAttribute('title')).toContain('ENTREGA');
     const cta = screen.getByRole('button', { name: /Abrir turno en Caja/i });
     fireEvent.click(cta);
     expect(mockSetCurrentView).toHaveBeenCalledWith('cash');
