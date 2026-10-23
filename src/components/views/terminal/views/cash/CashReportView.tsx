@@ -38,6 +38,12 @@ import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore, useUIStore, type CommissionNavContext } from '@/store';
 import { toast } from 'sonner';
 import type { CashReport } from '@/types';
+// MISIÓN 2026-10-23 (§8): flag central de desactivación temporal del ajuste
+// extraordinario — la MISMA fuente que consulta el backend (feature-flags.ts).
+import {
+  CASH_ADJUSTMENT_DISABLED_MSG,
+  isCashReportExtraordinaryAdjustmentEnabled,
+} from '@/lib/feature-flags';
 // FIX-RE-1510: ventana determinista en TZ de negocio (antes: new Date(day+'T00:00:00')
 // dependía de la TZ del navegador → ventanas distintas según el equipo).
 import { businessDayWindow } from '@/lib/cash-report/period-attribution';
@@ -1213,6 +1219,13 @@ function SummaryRow({ label, value, strong, negative, note }: { label: string; v
 }
 
 // ── §7: Ajustes extraordinarios (vía excepcional, nota obligatoria, auditada) ─
+// MISIÓN 2026-10-23 (§8) — DESACTIVACIÓN TEMPORAL:
+//   · No administradores: el contenedor NO se renderiza (ni inputs ni envío).
+//   · Administradores: el apartado se MUESTRA en modo deshabilitado con el
+//     aviso del flag central — pueden ver el estado y los ajustes históricos
+//     del período, pero NO ejecutar (inputs/select/botón deshabilitados).
+//   · El control REAL vive en el backend (POST /api/cash-report/adjustments
+//     devuelve 503 para todos): manipular el frontend no permite ejecutar.
 function AjustesExtraordinarios({ applied, onRefresh }: { applied: { cfg: { startDate: string; endDate: string }; report: CashReport } | null; onRefresh: () => void }) {
   const [direction, setDirection] = useState<'in' | 'out'>('out');
   const [amount, setAmount] = useState('');
@@ -1221,9 +1234,14 @@ function AjustesExtraordinarios({ applied, onRefresh }: { applied: { cfg: { star
   const [formError, setFormError] = useState<string | null>(null);
   const touch = 'min-h-[44px]';
 
+  // Flag central único (misma fuente que el backend) + rol GLOBAL admin
+  // (no confundir con el acceso a una tienda específica — roles.ts).
+  const ajusteActivo = isCashReportExtraordinaryAdjustmentEnabled();
+  const isAdmin = useAuthStore(s => s.user?.role === 'admin');
+
   const adjustments = ((applied?.report as unknown as { adjustments?: Array<{ id: string; direction: 'in' | 'out'; amount: number; note: string; created_at?: string }> })?.adjustments) || [];
 
-  const canSubmit = applied && Number(amount) > 0 && note.trim().length > 0 && !submitting;
+  const canSubmit = ajusteActivo && applied && Number(amount) > 0 && note.trim().length > 0 && !submitting;
 
   const handleSubmit = async () => {
     if (!applied || !canSubmit) return;
@@ -1255,8 +1273,12 @@ function AjustesExtraordinarios({ applied, onRefresh }: { applied: { cfg: { star
     }
   };
 
+  // No administradores: contenedor OCULTO por completo (§8 — no pueden
+  // seleccionar dirección, introducir importes, registrar notas ni confirmar).
+  if (!isAdmin) return null;
+
   return (
-    <section aria-label="Ajustes extraordinarios" data-testid="ajustes-extraordinarios" className="rounded-2xl border border-warning/30 bg-warning/5 p-4 space-y-3">
+    <section aria-label="Ajustes extraordinarios" data-testid="ajustes-extraordinarios" aria-disabled={!ajusteActivo} className={cn('rounded-2xl border border-warning/30 bg-warning/5 p-4 space-y-3', !ajusteActivo && 'opacity-70')}>
       <div className="flex items-start gap-2">
         <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
         <div>
@@ -1267,28 +1289,34 @@ function AjustesExtraordinarios({ applied, onRefresh }: { applied: { cfg: { star
           </p>
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-[110px_130px_minmax(0,1fr)_auto] gap-2 items-end">
+      {!ajusteActivo && (
+        <p role="note" data-testid="ajustes-extraordinarios-desactivado" className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] font-bold text-warning">
+          {CASH_ADJUSTMENT_DISABLED_MSG}
+        </p>
+      )}
+      <div className={cn('grid grid-cols-1 sm:grid-cols-[110px_130px_minmax(0,1fr)_auto] gap-2 items-end', !ajusteActivo && 'pointer-events-none opacity-60')}>
         <div>
           <label htmlFor="adj-direction" className="block text-[10px] font-black uppercase text-muted-foreground mb-1">Dirección</label>
-          <select id="adj-direction" value={direction} onChange={e => setDirection(e.target.value as 'in' | 'out')} className={cn('w-full px-3 rounded-lg border border-border/40 bg-background text-xs', touch)}>
+          <select id="adj-direction" value={direction} disabled={!ajusteActivo} onChange={e => setDirection(e.target.value as 'in' | 'out')} className={cn('w-full px-3 rounded-lg border border-border/40 bg-background text-xs', touch)}>
             <option value="out">Negativo (−)</option>
             <option value="in">Positivo (+)</option>
           </select>
         </div>
         <div>
           <label htmlFor="adj-amount" className="block text-[10px] font-black uppercase text-muted-foreground mb-1">Importe CUP</label>
-          <input id="adj-amount" type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)}
+          <input id="adj-amount" type="number" min="0" step="0.01" value={amount} disabled={!ajusteActivo} onChange={e => setAmount(e.target.value)}
             placeholder="0.00" className={cn('w-full px-3 rounded-lg border border-border/40 bg-background text-xs font-mono', touch)} />
         </div>
         <div>
           <label htmlFor="adj-note" className="block text-[10px] font-black uppercase text-muted-foreground mb-1">Nota justificativa *</label>
-          <input id="adj-note" type="text" value={note} onChange={e => setNote(e.target.value)} maxLength={500}
+          <input id="adj-note" type="text" value={note} disabled={!ajusteActivo} onChange={e => setNote(e.target.value)} maxLength={500}
             placeholder="Motivo del ajuste (obligatorio)" className={cn('w-full px-3 rounded-lg border border-border/40 bg-background text-xs', touch)} />
         </div>
         <button
           onClick={handleSubmit}
           disabled={!canSubmit}
           aria-busy={submitting}
+          aria-disabled={!canSubmit}
           className={cn('px-4 rounded-xl bg-warning text-white text-xs font-black uppercase hover:opacity-90 flex items-center gap-1.5', touch, !canSubmit && 'opacity-50 cursor-not-allowed')}
         >
           {submitting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}

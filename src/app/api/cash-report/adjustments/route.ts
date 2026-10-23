@@ -3,6 +3,10 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
 import { z } from 'zod';
+import {
+  CASH_ADJUSTMENT_DISABLED_MSG,
+  isCashReportExtraordinaryAdjustmentEnabled,
+} from '@/lib/feature-flags';
 
 import { uuidLoose } from '@/validation/api-schemas';
 /**
@@ -11,6 +15,14 @@ import { uuidLoose } from '@/validation/api-schemas';
  *
  * Ajustes extraordinarios del Reporte de Entrega (§7 del brief — auditoría
  * 2026-10). Vía EXCEPCIONAL y controlada; no compensa errores de fórmulas.
+ *
+ * ⚠️ MISIÓN 2026-10-23 (§8) — DESACTIVACIÓN TEMPORAL:
+ * POST rechaza TODA solicitud (503) mientras el flag central esté apagado
+ * (src/lib/feature-flags.ts): ni admin, ni manager, ni encargado pueden
+ * registrar ajustes extraordinarios; manipular el frontend no sirve porque
+ * el control vive aquí. El GET se conserva para que los ajustes HISTÓRICOS
+ * sigan visibles y auditables (no se borra ni altera ningún registro).
+ * Reactivación formal: flag a true tras revisión + autorización + pruebas.
  *
  * POST body:
  *   {
@@ -27,7 +39,7 @@ import { uuidLoose } from '@/validation/api-schemas';
  * ref_type IN ('receipt','service')): el ajuste se integra SOLO en el
  * resumen del reporte vía /api/cash-report (campo `adjustments`).
  *
- * Restricciones de seguridad:
+ * Restricciones de seguridad (cuando la función esté reactivada):
  *   - Rol admin/manager/encargado (el reporte lo usan esos roles).
  *   - Membresía de tienda del caller (canManageStore).
  *   - amount estrictamente > 0; dirección explícita; nota obligatoria.
@@ -91,6 +103,20 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
+    // ── MISIÓN 2026-10-23 (§8): control central ANTES de cualquier lógica. ──
+    // La desactivación es para TODOS los roles (admin incluido): el backend
+    // es la barrera real — deshabilitar botones en el frontend no basta.
+    if (!isCashReportExtraordinaryAdjustmentEnabled()) {
+      return NextResponse.json(
+        {
+          error: CASH_ADJUSTMENT_DISABLED_MSG,
+          code: 'FEATURE_DISABLED',
+          feature: 'cash_report_extraordinary_adjustment',
+        },
+        { status: 503 },
+      );
+    }
+
     const body = await req.json();
     const parsed = ADJUSTMENT_SCHEMA.safeParse(body);
     if (!parsed.success) {

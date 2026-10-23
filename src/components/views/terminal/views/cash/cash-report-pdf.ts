@@ -163,7 +163,14 @@ export async function fetchDiarioSummaries(startDate: string, endDate: string): 
     apiFetch(`/api/cash-report/items-summary?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}`).catch(() => ({ items: [], total_cup: 0, total_cash: 0, total_transfer: 0, total_zelle: 0 })),
     apiFetch(`/api/cash-report/payment-totals?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}`).catch(() => ({ totals: {} })),
     apiFetch(`/api/cash-report/commissions-summary?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}`).catch(() => ({ workers: [], total_cup: 0 })),
-    apiFetch(`/api/production-orders?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}&limit=100`).then(d => Array.isArray(d) ? d : (d?.data || d?.orders || [])).catch(() => []),
+    // MISIÓN 2026-10-23 (§7): listado OPERATIVO — órdenes creadas en el
+    // período cuyo estado NO es terminal (cerradas/completadas/anuladas no
+    // requieren entrega ni gestión → fuera del reporte; los registros
+    // históricos se conservan íntegros en la base). El API ahora RESPETA
+    // start_date/end_date/limit (antes los descartaba y devolvía las 200
+    // órdenes más recientes de cualquier estado — causa raíz de «aparecen
+    // numerosas órdenes de trabajo» en el Reporte Entrega).
+    apiFetch(`/api/production-orders?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}&status_group=operative&limit=100`).then(d => Array.isArray(d) ? d : (d?.data || d?.orders || [])).catch(() => []),
   ]);
   return { itemsSummary, paymentTotals: paymentTotalsRes, commissionsSummary: commissionsRes, productionOrders };
 }
@@ -338,7 +345,9 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
   doc.setFontSize(13); doc.setFont('helvetica', 'bold');
   doc.text('REPORTE DE CAJA — ENTREGA DE DINERO', m, y); y += 5;
   doc.setFontSize(8); doc.setFont('helvetica', 'normal'); setText(C_MUTED);
-  doc.text(`Periodo: ${startDate} → ${endDate}`, m, y); y += 3.5;
+  // MISIÓN 2026-10-23 (§6): período con flecha VECTORIAL (la fuente estándar
+  // no codifica U+2192 en WinAnsi — el texto salía corrupto) y SIN truncar.
+  drawTextWithArrow(doc, m, y, `Periodo: ${startDate}`, endDate, startDate === endDate, { fontSize: 8, color: C_MUTED }); y += 3.5;
   if (deliveredBy || recipientName) {
     doc.text(`Entrega: ${deliveredBy || '—'}    Recibe: ${recipientName || '—'}`, m, y); y += 3.5;
   }
@@ -372,13 +381,13 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     ['  Anticipos/Liquidaciones de Órdenes', `${production.reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(cupCashProduction + cupTransferProduction)],
     ['SUBTOTAL INGRESOS', '', '', fmt(cupCashSales + cupTransferSales + cupZelleSales + cupCashProduction + cupTransferProduction)],
     ['', '', '', ''],
-    ['EGRESOS (−)', '', '', ''],
+    ['EGRESOS (-)', '', '', ''],
     ['  Pagos a Proveedores (Recepciones)', `${payments.filter((p: any) => p.ref_type === 'receipt').reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(payments.filter((p: any) => p.ref_type === 'receipt').reduce((s: number, x: any) => s + Number(x.total), 0))],
     ['  Pagos por Servicios Recibidos', `${payments.filter((p: any) => p.ref_type === 'service').reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(payments.filter((p: any) => p.ref_type === 'service').reduce((s: number, x: any) => s + Number(x.total), 0))],
     ['  Comisiones a Trabajadores', `${commissions.reduce((s: number, x: any) => s + Number(x.commission_count), 0)} pagos`, '', fmt(commissions.reduce((s: number, x: any) => s + Number(x.total), 0))],
     ['SUBTOTAL EGRESOS', '', '', fmt(cupCashPayments + cupTransferPayments + cupCashCommissions)],
     ['', '', '', ''],
-    ['(−) Transferencias (no se entregan en efectivo)', '', '', fmt(cupTransferSales + cupTransferProduction)],
+    ['(-) Transferencias (no se entregan en efectivo)', '', '', fmt(cupTransferSales + cupTransferProduction)],
   ];
   const dineroEntregar = cupCashSales + cupCashProduction - cupCashPayments - cupCashCommissions;
   renderTable(
@@ -480,7 +489,7 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
       doc.setFontSize(9); doc.setFont('helvetica', 'bold');
       doc.text(`${methodLabel(String(p.payment_method))} (${p.currency}) · ${p.ref_type === 'receipt' ? 'Recepción de Mercancía' : 'Servicio Recibido'}`, m, y); y += 4;
       doc.setFontSize(7); doc.setFont('helvetica', 'normal'); setText(C_DANGER);
-      doc.text(`${p.payment_count} pagos · Total: −${fmt(Number(p.total), String(p.currency))}`, m, y); y += 5;
+      doc.text(`${p.payment_count} pagos · Total: -${fmt(Number(p.total), String(p.currency))}`, m, y); y += 5;
       try {
         const items = await fetchDetailRows(startDate, endDate, 'payment', String(p.payment_method), String(p.currency), String(p.ref_type));
         if (items.length > 0) {
@@ -488,7 +497,7 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
             const date = String(it.payment_date || it.created_at || '').slice(0, 16).replace('T', ' ');
             const amt = Number(it.amount_cup || it.amount || 0);
             const ref = String(it.reference || it.notes || '');
-            return [date, ref.substring(0, 35), `−${fmt(amt)}`];
+            return [date, ref.substring(0, 35), `-${fmt(amt)}`];
           });
           renderTable(['Fecha', 'Referencia', 'Monto CUP'], payRows, [35, 95, 35], { align: ['left', 'left', 'right'] });
         }
@@ -662,6 +671,73 @@ export function denomLabel(d: number, currency: Currency): string {
   return currency === 'CUP' ? `${d.toLocaleString('es-ES')}.00` : `${d.toFixed(2)}`;
 }
 
+// ── MISIÓN 2026-10-23 (§6): FLECHA DEL PERÍODO 100% IMPRIMIBLE ──────────────
+// Causa raíz corregida: '→' (U+2192) NO existe en WinAnsiEncoding (la
+// codificación de las fuentes estándar de jsPDF) → el texto salía corrupto
+// ("!'" en vez de la flecha) y el período aparecía cortado/parcial. La flecha
+// se dibuja AHORA como vector (línea + triángulo relleno): idéntica en
+// pantalla, impresión y cualquier visor PDF, sin depender de la codificación.
+// Verificado empíricamente: pdftoppm + VLM mostraban el carácter roto.
+interface ArrowTextOpts {
+  align?: 'left' | 'right' | 'center';
+  fontSize?: number;
+  bold?: boolean;
+  color?: [number, number, number];
+}
+
+/** Ancho total que ocupará `before [→] after` con la fuente activa (mm). */
+export function arrowTextWidth(doc: jsPDF, before: string, after: string, single: boolean): number {
+  const wBefore = doc.getTextWidth(before);
+  const wAfter = single ? 0 : doc.getTextWidth(after);
+  return single ? wBefore : wBefore + 4.4 + wAfter;
+}
+
+/**
+ * Dibuja `before [→] after` (o solo `before` cuando single=true) con la flecha
+ * como gráfico vectorial. El color de la flecha acompaña al del texto.
+ */
+export function drawTextWithArrow(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  before: string,
+  after: string,
+  single: boolean,
+  opts: ArrowTextOpts = {},
+): void {
+  const fs = opts.fontSize ?? 9;
+  doc.setFontSize(fs);
+  doc.setFont('helvetica', opts.bold === true ? 'bold' : 'normal');
+  const color = opts.color ?? [17, 24, 39];
+  doc.setTextColor(color[0], color[1], color[2]);
+  doc.setDrawColor(color[0], color[1], color[2]);
+  doc.setFillColor(color[0], color[1], color[2]);
+  const wBefore = doc.getTextWidth(before);
+  const wAfter = single ? 0 : doc.getTextWidth(after);
+  const total = single ? wBefore : wBefore + 4.4 + wAfter;
+  let sx = x;
+  if (opts.align === 'right') sx = x - total;
+  else if (opts.align === 'center') sx = x - total / 2;
+  doc.text(before, sx, y);
+  if (single) return;
+  // Flecha vectorial: caña fina + punta sólida, centrada en la altura media
+  // de la línea (aprox. un tercio del tamaño de fuente por encima de la base).
+  const midY = y - fs * 0.30;
+  const ax = sx + wBefore + 0.9;            // inicio de la caña
+  const aw = 2.6;                            // largo de la caña
+  const headW = 1.15;
+  const headH = fs * 0.26;
+  doc.setLineWidth(0.32);
+  doc.line(ax, midY, ax + aw, midY);
+  doc.triangle(ax + aw + headW, midY, ax + aw, midY - headH, ax + aw, midY + headH, 'F');
+  doc.text(after, sx + wBefore + 4.4, y);
+}
+
+/** ¿El período es un solo día? (sin flecha — solo la fecha) */
+export function isSingleDayPeriod(startDate: string, endDate: string): boolean {
+  return startDate === endDate;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // PLANTILLA DIARIO (portado 1:1 del modal — estilo reporte diario de empresa)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -675,7 +751,9 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
   const contentW = pw - 2 * m;
   const sn = storeInfo?.name || 'Tienda';
   // §10: identificación del PERÍODO del reporte (antes: fecha de hoy — defecto).
-  const periodoLbl = startDate === endDate ? startDate : `${startDate} → ${endDate}`;
+  // MISIÓN 2026-10-23 (§6): la representación del período se compone con la
+  // flecha VECTORIAL (drawTextWithArrow) — sin '→' literal (U+2192 no existe
+  // en WinAnsi y jsPDF lo codificaba como basura visible "!'").
 
   const C_DARK: [number, number, number] = [17, 24, 39];
   const C_BLACK: [number, number, number] = [0, 0, 0];
@@ -743,21 +821,41 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     }
   };
 
-  // ── Encabezado de página (logo + tienda + título + período + orientación) ──
+  // ── Encabezado de página (MISIÓN 2026-10-23 §3/§6 — TRES líneas) ──
+  // Antes: tienda+título (izq) y Período (der) COMPARTÍAN una línea 12pt →
+  // colisión con nombres largos y período cortado. Ahora cada dato tiene su
+  // línea propia — el período SIEMPRE se imprime completo, con la flecha
+  // dibujada como vector (WinAnsi no codifica U+2192 — salía corrupto).
+  // Estructura (misma en la sección de resumen y en la de detalle):
+  //   Línea 1: ENERVIDA-VITALLCONS          (negrita 12 — reduce si excede)
+  //   Línea 2: Reporte de Venta CUP         (negrita 10.5)
+  //   Línea 3: Período: 2026-10-21 → 2026-10-22  (normal 9, línea propia)
   const renderPageHeader = (title: string) => {
-    const headerH = logoDataUrl ? 16 : 8;
+    const headerH = logoDataUrl ? 21 : 15.5;
     if (logoDataUrl) {
-      try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 14, 14); } catch {}
+      try { doc.addImage(logoDataUrl, 'PNG', m, y - 2, 12, 12); } catch {}
     }
+    const tx = m + (logoDataUrl ? 16 : 0);
+    const maxW = pw - m - tx;
     setText(C_DARK);
-    doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-    doc.text(`${sn} ${title}`, m + (logoDataUrl ? 18 : 0), y);
-    doc.text(`Período: ${periodoLbl}`, pw - m, y, { align: 'right' });
+    // Línea 1 — tienda (ajusta el cuerpo antes que truncar: nunca se corta).
+    doc.setFont('helvetica', 'bold');
+    let storeFs = 12;
+    doc.setFontSize(storeFs);
+    while (doc.getTextWidth(sn) > maxW && storeFs > 7.5) { storeFs -= 0.5; doc.setFontSize(storeFs); }
+    doc.text(sn, tx, y);
+    y += 5.4;
+    // Línea 2 — título del reporte.
+    doc.setFontSize(10.5);
+    doc.text(title, tx, y);
+    y += 4.8;
+    // Línea 3 — período COMPLETO en línea propia (flecha vectorial).
+    drawTextWithArrow(doc, tx, y, `Período: ${startDate}`, endDate, startDate === endDate, { fontSize: 9, color: C_MUTED });
     if (orientation === 'horizontal') {
       doc.setFontSize(7); doc.setFont('helvetica', 'normal'); setText(C_MUTED);
-      doc.text('Horizontal', pw - m, y + 4, { align: 'right' });
+      doc.text('Horizontal', pw - m, y, { align: 'right' });
     }
-    y += headerH;
+    y += headerH - 10.2;
   };
 
   // ── Fila 1 · bloque izquierdo: Resumen del Día (§4 — orden lógico) ──
@@ -892,7 +990,6 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
   //    sin solaparse, y entre ambos queda el separador visual.
   //  · flow=false → posición fija al pie de la hoja (clásico, hoja propia).
   const FIRMAS_BLOCK_H = 24;   // etiqueta + línea + nombre (mm)
-  const SEPARATOR_H = 15;      // margen lógico visual entre reportes (mm)
   const renderFirmas = (opts: { flow?: boolean } = {}) => {
     const flow = opts.flow === true;
     if (flow && y + FIRMAS_BLOCK_H > ph - m - 4) { doc.addPage(); y = 14; }
@@ -1097,123 +1194,150 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     return { totCash, totTransfer, totUsd, totCommission, totalPages: pages };
   };
 
-  // ══════════════ SECCIÓN CUP ══════════════
-  // §9 en dos modos: «USD en hoja separada» (true) o compacto (false = CUP y
-  // USD corridos en la MISMA hoja si cabe). INC-2026-10-19: en hoja compartida
-  // cada reporte lleva SU pie de firmas y entre ambos queda el separador
-  // visual (margen lógico) — el USD ya no empieza pegado a la tabla CUP.
-  const usdCompact = options.usdSeparatePage === false;
+  // ══════════════ DOS SECCIONES SEPARABLES POR MONEDA (MISIÓN 2026-10-23 §3) ══════════════
+  // Cada moneda se imprime como DOS documentos identificables por sí mismos:
+  //   SECCIÓN 1 — RESUMEN Y ENTREGA DE EFECTIVO: encabezado completo + resumen
+  //     del día + desglose por denominaciones + contado/cuadre + pie de firmas.
+  //     Funciona como COMPROBANTE DE ENTREGA sin depender de la sección 2.
+  //   SEPARADOR FÍSICO: línea fina de corte con marcas en los extremos y aire
+  //     a ambos lados (no atraviesa textos, tablas ni firmas) — permite cortar
+  //     la hoja y separar ambas partes.
+  //   SECCIÓN 2 — DETALLE DE VENTAS: encabezado COMPLETO repetido (tienda,
+  //     título y período — identificable tras separarse) + tabla de ventas con
+  //     totales + SU PROPIO pie de firmas.
+  // §9 en dos modos: «USD en hoja separada» (true) o compacto (false = el
+  // reporte USD fluye tras el CUP con separador de sección).
   const usdWillRender = options.includeUsd !== false && (
     usdSummary.ventasTotales > 0 || usdSummary.ventasCash > 0
     || breakdownTotal(usdBreakdown) > 0
     || itemsWithCommission.some((it: any) => (Number(it.usd_total || 0)) > 0)
   );
-  const usdItemsCount = itemsWithCommission.filter((it: any) => (Number(it.usd_total || 0)) > 0).length;
-  // Altura estimada de la sección USD: encabezado + resumen + desglose + tabla
-  // + SU pie de firmas si está activo (+ separador si comparte hoja con el CUP).
-  const firmasH = options.includeSignature !== false ? FIRMAS_BLOCK_H : 0;
-  const usdNeededH = 60 + usdItemsCount * 5 + firmasH + SEPARATOR_H;
-  let usdSharesCupPage = false;
-  {
-    renderPageHeader('Reporte de Venta CUP');
-    markSection('CUP');
 
-    // FILA 1 (§2): [Resumen del Día] + [Desglose de efectivo MN] contiguos.
-    const s = cupSummary;
-    const incomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean; note?: string }> = [
-      { label: 'Ventas totales (efectivo + transferencia)', amount: s.ventasTotales, isTotal: true },
-      { label: 'Ventas en efectivo', amount: s.ventasCash },
-      { label: 'Ventas por transferencia', amount: s.ventasTransfer },
-    ];
-    if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle });
-    if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true });
-    if (s.otIngresosCash > 0) incomeRows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash });
-    // Comisiones PAGADAS desglosadas por medio (§4): transferencia NO toca el efectivo.
-    if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense' });
-    if (s.comisionesTransfer > 0) incomeRows.push({ label: 'Comisiones pagadas por transferencia', amount: s.comisionesTransfer, note: 'info' });
-    // Servicios recibidos: línea INDEPENDIENTE (§6) — ya no fusionados en proveedores.
-    if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense' });
-    if (s.recibosProveedoresCash > 0) incomeRows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, note: 'expense' });
-    if (s.ajustesPositivos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos });
-    if (s.ajustesNegativos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (−)', amount: s.ajustesNegativos, note: 'expense' });
-    // MISIÓN INGRESOS/EGRESOS 2026-10-20: documentos de caja (fondo de cambio
-    // y otros) — filas independientes de los ajustes, auditables por separado.
-    if (s.ingresosCaja > 0) incomeRows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja });
-    if (s.egresosCaja > 0) incomeRows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, note: 'expense' });
-    if (s.reembolsosCash > 0) incomeRows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, note: 'expense' });
-    // v2.23.0 (decisión del propietario 2026-10-21): reembolsos por voucher —
-    // INFORMATIVO (nota 'info', igual que comisiones por transferencia): no
-    // tocan el efectivo esperado; documenta el neto del lado vouchers.
-    if (s.reembolsosVoucher > 0) incomeRows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, note: 'info' });
+  // ── SEPARADOR FÍSICO DE CORTE (§3): fina línea horizontal + marcas ──
+  // Claramente visible al imprimir; aire prudente arriba/abajo para no
+  // confundirla con los bordes de tablas ni tocar firmas.
+  const renderCutSeparator = () => {
+    y += 7;
+    if (y > ph - m - 6) { doc.addPage(); y = 14; }
+    setDraw(C_BLACK);
+    doc.setLineWidth(0.25);
+    doc.line(m, y, pw - m, y);
+    // Marcas de corte en los extremos (convención de imprenta — sin glifos).
+    doc.setLineWidth(0.6);
+    doc.line(m, y - 1.6, m, y + 1.6);
+    doc.line(pw - m, y - 1.6, pw - m, y + 1.6);
+    y += 8;
+  };
 
-    const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, s.efectivoEsperado);
+  /**
+   * Renderiza el reporte COMPLETO de una moneda en dos secciones separables.
+   * `firstOnPage` indica si la moneda arranca página (USD separado / CUP).
+   * En modo compacto, la sección 1 del USD fluye tras el detalle CUP con el
+   * separador de sección (margen lógico INC-2026-10-19).
+   */
+  const renderCurrencyReport = (currency: 'CUP' | 'USD', firstOnPage: boolean) => {
+    const curSummary = currency === 'CUP' ? cupSummary : usdSummary;
+    const curBreakdown = currency === 'CUP' ? cupBreakdown : usdBreakdown;
+    const curDenoms = currency === 'CUP' ? cupDenoms : usdDenoms;
+    const title = `Reporte de Venta ${currency}`;
 
-    const cupDisplayDenoms = displayDenoms(cupDenoms, cupBreakdown, 'CUP');
-    const cupTotalCounted = breakdownTotal(cupBreakdown);
-    const cupCuadre = computeCuadre(cupTotalCounted, s.efectivoEsperado);
-    // «Desglose de efectivo» OFF → bloque omitido (la fila 1 queda solo con el
-    // Resumen; breakdownEndY = y mantiene la geometría intacta).
+    // Modo compacto: si el resto de la hoja no puede acoger la sección 1
+    // completa (encabezado + bloques + pie), el reporte abre hoja propia — el
+    // SALTO ya es el margen visual (sin separador redundante) y NUNCA se
+    // dibuja contenido por debajo del pie de página. El separador de doble
+    // filete solo se dibuja cuando AMBOS reportes comparten la hoja.
+    if (!firstOnPage) {
+      if (y + 150 > ph - m - 4) { doc.addPage(); y = 14; }
+      else renderSectionSeparator();
+    }
+
+    // ══ SECCIÓN 1 — RESUMEN Y ENTREGA DE EFECTIVO ══
+    renderPageHeader(title);
+    markSection(currency);
+
+    const s = curSummary;
+    const incomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean; note?: string }> = currency === 'CUP'
+      ? [
+          { label: 'Resumen del día (efectivo + transferencia)', amount: s.ventasTotales, isTotal: true },
+          { label: 'Ventas en efectivo', amount: s.ventasCash },
+          { label: 'Ventas por transferencia', amount: s.ventasTransfer },
+        ]
+      : [
+          { label: 'Resumen del día (efectivo + Zelle)', amount: s.ventasTotales, isTotal: true },
+          { label: 'Ventas en efectivo', amount: s.ventasCash },
+          { label: 'Venta por Zelle', amount: s.ventasZelle },
+        ];
+    if (currency === 'CUP') {
+      if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle });
+      if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true });
+      if (s.otIngresosCash > 0) incomeRows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash });
+      // Comisiones PAGADAS desglosadas por medio (§4): transferencia NO toca el efectivo.
+      if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense' });
+      if (s.comisionesTransfer > 0) incomeRows.push({ label: 'Comisiones pagadas por transferencia', amount: s.comisionesTransfer, note: 'info' });
+      // Servicios recibidos: línea INDEPENDIENTE (§6) — ya no fusionados en proveedores.
+      if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense' });
+      if (s.recibosProveedoresCash > 0) incomeRows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, note: 'expense' });
+      if (s.ajustesPositivos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos });
+      if (s.ajustesNegativos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (-)', amount: s.ajustesNegativos, note: 'expense' });
+      // MISIÓN INGRESOS/EGRESOS 2026-10-20: documentos de caja (fondo de cambio
+      // y otros) — filas independientes de los ajustes, auditables por separado.
+      if (s.ingresosCaja > 0) incomeRows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja });
+      if (s.egresosCaja > 0) incomeRows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, note: 'expense' });
+      if (s.reembolsosCash > 0) incomeRows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, note: 'expense' });
+      // v2.23.0 (decisión del propietario 2026-10-21): reembolsos por voucher —
+      // INFORMATIVO (nota 'info', igual que comisiones por transferencia): no
+      // tocan el efectivo esperado; documenta el neto del lado vouchers.
+      if (s.reembolsosVoucher > 0) incomeRows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, note: 'info' });
+    } else {
+      if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense' });
+      if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense' });
+    }
+    const esperadoLabel = currency === 'CUP' ? 'Efectivo esperado a entregar' : 'Efectivo esperado a entregar (USD)';
+    const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, s.efectivoEsperado, esperadoLabel);
+
+    const totalCounted = breakdownTotal(curBreakdown);
+    const cuadre = computeCuadre(totalCounted, s.efectivoEsperado);
+    const displayDenomsList = displayDenoms(curDenoms, curBreakdown, currency);
+    // «Desglose de efectivo» OFF → bloque omitido (la sección queda solo con
+    // el Resumen; breakdownEndY = y mantiene la geometría intacta).
     const breakdownEndY = options.includeCashBreakdown === false
       ? y
-      : renderBreakdownBlock('Desglose de efectivo CUP', cupDisplayDenoms, cupBreakdown, cupTotalCounted, cupCuadre, 'CUP');
-
+      : renderBreakdownBlock(`Desglose de efectivo ${currency}`, displayDenomsList, curBreakdown, totalCounted, cuadre, currency);
     y = Math.max(blockEndY, breakdownEndY) + 5;
 
-    // SEGUNDA sección (§2): tabla de movimientos DEBAJO de ambos bloques.
-    renderSalesTable('CUP');
+    // Pie de firmas de la SECCIÓN 1 (comprobante de entrega de efectivo).
+    if (options.includeSignature !== false) renderFirmas({ flow: true });
 
-    // Decisión de compartición (tras conocer el y real de fin de tabla CUP):
-    // el USD comparte hoja solo si queda espacio para TODO su bloque
-    // (incluido su pie de firmas) por encima del pie de página.
-    usdSharesCupPage = usdCompact && usdWillRender && (y + usdNeededH <= ph - 30);
+    // ══ SEPARADOR FÍSICO entre las dos secciones (línea de corte) ══
+    renderCutSeparator();
 
-    // Pie del reporte CUP: fluye tras el contenido cuando el USD comparte hoja
-    // (el contenido USD sigue debajo); fijo al pie de página en el resto de
-    // casos (clásico). Solo si «Líneas de firma» está activa (opción respetada).
-    if (options.includeSignature !== false) renderFirmas({ flow: usdSharesCupPage });
-  }
+    // ══ SECCIÓN 2 — DETALLE DE VENTAS (encabezado COMPLETO repetido) ══
+    // Salto de hoja solo si no cabe un mínimo inicial (encabezado + cabecera
+    // de tabla + ~5 filas + firmas): la sección es identificable por sí misma
+    // en la MISMA hoja (separada por la línea de corte) o en hoja propia.
+    const firmasH2 = options.includeSignature !== false ? FIRMAS_BLOCK_H : 0;
+    if (y + 62 + firmasH2 > ph - 12) { doc.addPage(); y = 14; }
+    renderPageHeader(title);
+    markSection(currency);
+    // La tabla fluye con encabezados repetidos por página; reserva el pie de
+    // firmas de la sección 2 (fluye tras el detalle).
+    const reserve = options.includeSignature !== false ? 30 + FIRMAS_BLOCK_H : 30;
+    renderSalesTable(currency, { bottomReserve: reserve });
+    // Pie de firmas de la SECCIÓN 2 (al final del detalle — §3).
+    if (options.includeSignature !== false) renderFirmas({ flow: true });
+  };
 
-  // ══════════════ SECCIÓN USD (§9: compacto o hoja propia) ══════════════
+  // Reporte CUP: siempre abre el documento en página propia.
+  renderCurrencyReport('CUP', true);
+  // Reporte USD (§9): hoja propia (default) o compacto tras el CUP con
+  // separador de sección (margen lógico visual entre ambos reportes).
   if (usdWillRender) {
     if (options.usdSeparatePage !== false) {
       doc.addPage(); y = 14;
-    } else if (usdSharesCupPage) {
-      // Compacto y cabe: margen lógico visual entre ambos reportes
-      // (pie CUP → separador → encabezado USD). El USD ya NO arranca pegado.
-      renderSectionSeparator();
+      renderCurrencyReport('USD', true);
     } else {
-      // Compacto pero NO cabe tras el CUP: página propia (el salto de hoja YA
-      // es el margen visual; sin separador redundante).
-      doc.addPage(); y = 14;
+      renderCurrencyReport('USD', false);
     }
-    renderPageHeader('Reporte de Venta USD');
-    markSection('USD');
-
-    const su = usdSummary;
-    const usdIncomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean; note?: string }> = [
-      { label: 'Ventas totales (efectivo + Zelle)', amount: su.ventasTotales, isTotal: true },
-      { label: 'Ventas en efectivo', amount: su.ventasCash },
-      { label: 'Venta por Zelle', amount: su.ventasZelle },
-    ];
-    if (su.comisionesCash > 0) usdIncomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: su.comisionesCash, note: 'expense' });
-    if (su.serviciosRecibidosCash > 0) usdIncomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: su.serviciosRecibidosCash, note: 'expense' });
-    const usdBlockEndY = renderIncomeBlock('Resumen del Día USD', usdIncomeRows, su.efectivoEsperado, 'Efectivo esperado a entregar (USD)');
-
-    const usdTotalCounted = breakdownTotal(usdBreakdown);
-    const usdCuadre = computeCuadre(usdTotalCounted, su.efectivoEsperado);
-    const usdDisplayDenoms = displayDenoms(usdDenoms, usdBreakdown, 'USD');
-    const usdBreakdownEndY = options.includeCashBreakdown === false
-      ? y
-      : renderBreakdownBlock('Desglose de efectivo USD', usdDisplayDenoms, usdBreakdown, usdTotalCounted, usdCuadre, 'USD');
-    y = Math.max(usdBlockEndY, usdBreakdownEndY) + 5;
-
-    // En hoja compartida el pie USD fluye tras la tabla → la tabla reserva
-    // además el bloque de firmas para no invadir el pie de página.
-    const usdReserve = usdSharesCupPage && options.includeSignature !== false ? 45 + FIRMAS_BLOCK_H : 45;
-    renderSalesTable('USD', { bottomReserve: usdReserve });
-    // Pie del reporte USD: SIEMPRE presente (hoja propia o compartida).
-    // Fijo al pie en hoja propia; fluyendo tras la tabla en hoja compartida.
-    if (options.includeSignature !== false) renderFirmas({ flow: usdSharesCupPage });
   }
 
   // ══════════════ SECCIÓN ÓRDENES DE TRABAJO (§8.1: conmutable) ══════════════
@@ -1221,6 +1345,13 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     doc.addPage(); y = 14;
     renderPageHeader('Reporte de Órdenes de Trabajo');
     markSection('Órdenes');
+    // MISIÓN 2026-10-23 (§7): semántica del listado documentada en el propio
+    // documento — órdenes ABIERTAS del período (draft/approved/in_progress/
+    // paused); las cerradas/completadas/anuladas son históricas y no requieren
+    // entrega ni gestión (quedan en la base, fuera del listado operativo).
+    setText(C_MUTED); doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5);
+    doc.text('Órdenes abiertas del período (pendientes de gestión). Las cerradas, completadas o anuladas no se listan.', m, y);
+    y += 5;
 
     const cols = [
       { name: 'Código', w: 0.10 * contentW, align: 'left' as const },
@@ -1303,16 +1434,24 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
   }
 
   // ── Pie de página con sección REAL por página (dinámico: compacto cambia paginación) ──
+  // MISIÓN 2026-10-23 (§6): el período del pie usa la flecha VECTORIAL (el
+  // carácter U+2192 no es codificable en WinAnsi — salía corrupto).
   void sales; void production; void commissionsWorkers; void totalCommissionsCup;
   const pageCount = doc.getNumberOfPages();
+  const singleDay = startDate === endDate;
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     // Hoja compartida CUP+USD (§9 compacto): ambas secciones se listan.
     const names = sectionPages.filter(sp => i >= sp.from && i <= sp.to).map(sp => sp.name);
     const secLbl = [...new Set(names)].join(' + ');
-    doc.setFontSize(7); setText(C_MUTED); doc.setFont('helvetica', 'normal');
     const orientLbl = orientation === 'horizontal' ? 'Horizontal' : 'Vertical';
-    doc.text(`CostPro — Reporte Diario (${orientLbl}) · ${sn} · ${secLbl} · Período ${periodoLbl} · Página ${i} de ${pageCount}`, pw / 2, ph - 5, { align: 'center' });
+    const pageTail = ` · Página ${i} de ${pageCount}`;
+    const before = `CostPro — Reporte Diario (${orientLbl}) · ${sn} · ${secLbl} · Período ${startDate}`;
+    if (singleDay) {
+      drawTextWithArrow(doc, pw / 2, ph - 5, before + pageTail, '', true, { fontSize: 7, color: C_MUTED, align: 'center' });
+    } else {
+      drawTextWithArrow(doc, pw / 2, ph - 5, before, `${endDate}${pageTail}`, false, { fontSize: 7, color: C_MUTED, align: 'center' });
+    }
   }
   return doc;
 }
