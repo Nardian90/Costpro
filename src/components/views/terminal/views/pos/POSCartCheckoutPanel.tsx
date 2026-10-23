@@ -121,6 +121,12 @@ export function POSCartCheckoutPanel({
   const { value: saleDateValue, validation: saleDateValidation } = usePosSaleDate();
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
   const [cashReceived, setCashReceived] = useState("");
+  // MISIÓN MULTIMONEDA (2026-10-23): moneda del BILLETE RECIBIDO — el cliente
+  // puede entregar efectivo físico en USD (p.ej. billete de $10) aunque la
+  // venta se liquide en su equivalente canónico CUP. El modelo D6 ya soporta
+  // cash_received_usd en el RPC; aquí se expone la elección al cajero.
+  // Default CUP: el flujo legacy queda intacto (venta exacta y desglose CUP).
+  const [receivedCurrency, setReceivedCurrency] = useState<"CUP" | "USD">("CUP");
   // MISIÓN CAJA v2.24.0 (D6): moneda del VUELTO — el cliente paga en una
   // moneda y recibe el cambio en otra (misión §8: paga CUP → vuelto USD).
   // La tasa la revalida el servidor (jerarquía tienda → BCC → elToque).
@@ -176,13 +182,31 @@ export function POSCartCheckoutPanel({
 
   const taxAmount = getTaxAmount?.() ?? 0;
   const cashReceivedNum = parseFloat(cashReceived) || 0;
+  // Tasa USD vigente del POS (hidratada de store_exchange_rates al montar).
+  const usdRate = useCartStore.getState().globalRates["USD"] || 0;
+  // MISIÓN MULTIMONEDA (2026-10-23): equivalente canónico CUP del billete
+  // recibido según su moneda. Si el recibido es USD y la tasa del POS no es
+  // válida (<=1), el equivalente es inválido → el vuelto canónico queda 0 y
+  // la liquidación falla con ERR_RATE_INVALID (módulo puro), bloqueando el
+  // Confirm — nunca se inventa una tasa.
+  const receivedCupEquivalent =
+    receivedCurrency === "USD"
+      ? usdRate > 1
+        ? cashReceivedNum * usdRate
+        : Number.NaN
+      : cashReceivedNum;
   // FIX-CONSISTENCY (2026-07-10): el vuelto y todos los montos se calculan contra
   // el total esperado (con recargos/descuentos por método), no contra getTotal()
   // que puede tener un descuento global fantasma restado.
   const expectedTotal = useCartStore.getState().getExpectedTotalCup();
   // FIX-CASH-BREAKDOWN: el vuelto se calcula contra el efectivo total (en CUP),
   // NO contra el total de la venta. Si hay transfer/zelle, no se incluyen en el vuelto.
-  const change = cashReceivedNum > 0 ? cashReceivedNum - totalCashCup : 0;
+  // MISIÓN MULTIMONEDA: con recibido USD, el cambio canónico usa el equivalente
+  // CUP del billete (10 USD × tasa − efectivo de la venta), no el número crudo.
+  const change =
+    cashReceivedNum > 0 && Number.isFinite(receivedCupEquivalent)
+      ? receivedCupEquivalent - totalCashCup
+      : 0;
   const cashPresets = [20, 50, 100, 200];
 
   // ── DENOMINATION BREAKDOWN helpers (component scope, not IIFE) ──
@@ -336,7 +360,6 @@ export function POSCartCheckoutPanel({
   // la fija con la suya (jerarquía tienda → BCC → elToque — sin tasas ocultas).
   // Solo cobro simple en efectivo (v1 de la liquidación); mixto mantiene el
   // flujo previo (el RPC acepta liquidación parcial por diseño).
-  const usdRate = useCartStore.getState().globalRates["USD"] || 0;
   const changeDueUsd = change > 0 && usdRate > 1 ? Math.round((change / usdRate) * 100) / 100 : null;
   const changeUsdNum = parseFloat(changeUsdOverride) || 0;
   // REVISIÓN FINAL v2.24.1: sin anotación amplia de `error?: string` — se
@@ -344,7 +367,13 @@ export function POSCartCheckoutPanel({
   const settlement = derivedPaymentMethod !== "cash" || cashReceivedNum <= 0
     ? null
     : buildCashSettlement({
-          receivedByCurrency: { CUP: cashReceivedNum },
+          // MISIÓN MULTIMONEDA (2026-10-23): el billete físico se registra en SU
+          // moneda (cash_received_usd: 10 / cash_received_cup: 8.000) — el libro
+          // por moneda refleja el movimiento real del cajón y el servidor
+          // revalida la identidad canónica con su tasa autoritativa.
+          receivedByCurrency: receivedCurrency === "USD"
+            ? { USD: cashReceivedNum }
+            : { CUP: cashReceivedNum },
           cashAmountCup: expectedTotal,
           usdRate,
           changeCurrency,
@@ -520,13 +549,19 @@ export function POSCartCheckoutPanel({
                 <ChevronRight className="w-3.5 h-3.5 text-success" />
               )}
               <DollarSign className="w-3.5 h-3.5 text-success" />
-              <span className="text-[10px] font-black uppercase text-success tracking-widest">Efectivo CUP</span>
+              <span className="text-[10px] font-black uppercase text-success tracking-widest">
+                Efectivo{receivedCurrency === 'USD' ? ' USD' : ''}
+              </span>
             </div>
             <div className="flex items-center gap-3">
               {/* Always show total recibido + a cobrar in header */}
               <div className="text-right">
                 <span className="text-[9px] font-bold uppercase text-muted-foreground">Recibido:</span>
-                <span className="ml-1 text-[11px] font-black text-success tabular-nums">{formatCurrency(breakdownTotal)}</span>
+                <span className="ml-1 text-[11px] font-black text-success tabular-nums">
+                  {cashReceivedNum > 0 && Number.isFinite(receivedCupEquivalent)
+                    ? formatCurrency(receivedCupEquivalent)
+                    : formatCurrency(breakdownTotal)}
+                </span>
               </div>
               <div className="text-right">
                 <span className="text-[9px] font-bold uppercase text-muted-foreground">A cobrar:</span>
@@ -554,7 +589,59 @@ export function POSCartCheckoutPanel({
           {/* ── ACCORDION CONTENT (collapsible) ── */}
           {cashAccordionOpen && (
             <div id="cash-breakdown-content" className="pb-2 space-y-1.5">
-              {/* Denomination breakdown — inline grid */}
+              {/* ── MISIÓN MULTIMONEDA (2026-10-23): MONEDA DEL BILLETE RECIBIDO +
+                  IMPORTE MANUAL. El cliente puede entregar USD físicos (billete
+                  $10) aunque la venta se liquide en su canónico CUP. La
+                  liquidación D6 registra el físico por moneda (cash_received_usd)
+                  y el servidor revalida la identidad con su tasa autoritativa. */}
+              <div className="flex items-center justify-between gap-2 px-1">
+                <span className="text-[10px] font-black uppercase text-muted-foreground">
+                  Billete recibido
+                </span>
+                <div className="flex items-center rounded-lg border border-border overflow-hidden" role="group" aria-label="Moneda del billete recibido">
+                  {(['CUP', 'USD'] as const).map(cur => (
+                    <button
+                      key={cur}
+                      type="button"
+                      onClick={() => { setReceivedCurrency(cur); setCashReceived(""); setCashBreakdownByCurrency(prev => ({ ...prev, CUP: {} })); setExactoNotAvailable(false); }}
+                      aria-pressed={receivedCurrency === cur}
+                      className={cn(
+                        'px-2.5 py-1 text-[10px] font-black uppercase transition-colors',
+                        receivedCurrency === cur ? 'bg-success text-white' : 'hover:bg-muted',
+                        cur === 'USD' && 'border-l border-border',
+                      )}
+                    >
+                      {cur}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-1">
+                <input
+                  id="pos-cash-received-input"
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  inputMode="decimal"
+                  value={cashReceived}
+                  onChange={e => { setCashReceived(e.target.value); setExactoNotAvailable(false); }}
+                  placeholder="0.00"
+                  className="w-28 px-2 py-1.5 rounded-lg border border-border bg-background text-sm font-mono font-bold text-right tabular-nums"
+                  aria-label={`Importe recibido en ${receivedCurrency}`}
+                />
+                <span className="text-[11px] font-black text-success uppercase">{receivedCurrency}</span>
+                {receivedCurrency === 'USD' && cashReceivedNum > 0 && (
+                  <span className="text-[10px] font-bold text-muted-foreground">
+                    ≈ {Number.isFinite(receivedCupEquivalent) ? formatCurrency(receivedCupEquivalent) : '—'} CUP (tasa POS {usdRate > 1 ? usdRate.toFixed(2) : 'no válida'})
+                  </span>
+                )}
+              </div>
+
+              {/* Denomination breakdown — inline grid (solo recibido CUP; el
+                  desglose físico de billetes USD queda para una iteración: el
+                  importe manual cubre la operación de la misión) */}
+              {receivedCurrency === 'CUP' && (
+              <>
               <div className="space-y-1 max-h-[200px] overflow-y-auto no-scrollbar">
                 {activeDenoms.map(d => {
                   const denomKey = String(d.value);
@@ -664,6 +751,9 @@ export function POSCartCheckoutPanel({
                   ⚠ Exacto no disponible para este importe con las denominaciones configuradas. Ajuste manualmente.
                 </div>
               )}
+              </>
+              )}
+
             </div>
           )}
 
@@ -786,7 +876,11 @@ export function POSCartCheckoutPanel({
           </div>
           {changeCurrency === 'CUP' ? (
             <p className="text-[10px] text-muted-foreground leading-relaxed">
-              Vuelto en CUP: <span className="font-black text-foreground">{formatCurrency(change)}</span> — queda registrado enlazado a la venta (recibido {formatCurrency(cashReceivedNum)} − vuelto = efectivo de la venta).
+              Vuelto en CUP: <span className="font-black text-foreground">{formatCurrency(change)}</span> — queda registrado enlazado a la venta (
+              {receivedCurrency === 'USD'
+                ? <>recibido ${cashReceivedNum.toFixed(2)} USD ≈ {formatCurrency(receivedCupEquivalent)} CUP</>
+                : <>recibido {formatCurrency(cashReceivedNum)} CUP</>}
+              {' '}− vuelto = efectivo de la venta).
             </p>
           ) : (
             <div className="space-y-1.5">
@@ -953,7 +1047,7 @@ export function POSCartCheckoutPanel({
             </p>
             {derivedPaymentMethod === "cash" && cashReceivedNum > 0 && change >= 0 && (
               <p className="text-xs text-success mt-1 font-bold">
-                Vuelto: {formatCurrency(change)}
+                Vuelto: {formatCurrency(change)}{changeCurrency === 'USD' && (settlement?.settlement?.change_given_usd ?? 0) > 0 ? ` (en $${(settlement?.settlement?.change_given_usd ?? 0).toFixed(2)} USD)` : ''}
               </p>
             )}
             {derivedPaymentMethod === "cash" && cashReceivedNum > 0 && change < 0 && (
