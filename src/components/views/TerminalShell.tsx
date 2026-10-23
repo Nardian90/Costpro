@@ -115,6 +115,7 @@ const ReceivedServicesView = dynamic(() => import('@/components/views/terminal/v
 const IPVView = dynamic(() => import('@/components/views/terminal/views/ipv/IPVView'), { ssr: false });
 const AcademyView = dynamic(() => import('@/components/views/terminal/views/academy/AcademyView'), { ssr: false });
 const InventoryAdjustmentsView = dynamic(() => import('@/components/views/terminal/views/inventory/InventoryAdjustmentsView'), { ssr: false });
+const PhysicalInventoryView = dynamic(() => import('@/components/views/terminal/views/physical_inventory/PhysicalInventoryView'), { ssr: false });
 const ValesSalidaView = dynamic(() => import('@/components/views/terminal/views/inventory/ValesSalidaView'), { ssr: false });
 // MISIÓN INGRESOS/EGRESOS DE CAJA (2026-10-20): documento Ingreso/Egreso
 // (fondo de cambio y otros) — OPERACIÓN → Caja → Ingresos/Egresos.
@@ -502,6 +503,10 @@ export default function TerminalShell() {
         case 'ipv': return <ViewErrorBoundary viewName="IPV"><IPVView /></ViewErrorBoundary>;
         case 'academy': return <ViewErrorBoundary viewName="Academia"><AcademyView /></ViewErrorBoundary>;
         case 'inventory_adjustments': return <ViewErrorBoundary viewName="Ajustes de Inventario"><InventoryAdjustmentsView /></ViewErrorBoundary>;
+        // MÓDULO DE INVENTARIO FÍSICO (misión 2026-10-23): conteos por tienda y
+        // fecha de corte, hojas PDF (con teóricas o ciegas), importación Excel,
+        // conciliación y ajustes documentales vinculados.
+        case 'physical_inventory': return <ViewErrorBoundary viewName="Inventario Físico"><PhysicalInventoryView /></ViewErrorBoundary>;
         case 'vales_salida': return <ViewErrorBoundary viewName="Vales de Salida"><ValesSalidaView /></ViewErrorBoundary>;
         // MISIÓN FECHAS DE TRABAJO: OPERACIÓN → Control operativo → Fechas de trabajo
         case 'work_dates': return <ViewErrorBoundary viewName="Fechas de trabajo"><WorkDatesView /></ViewErrorBoundary>;

@@ -54,6 +54,7 @@ import {
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
   Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet, Landmark,
   Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone, Printer,
+  ClipboardCheck,
   ReceiptText, Coins,
   Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson, CalendarClock, SlidersHorizontal,
   type LucideIcon,
@@ -285,6 +286,20 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             navClass: 'primary',
             roles: ['admin', 'manager', 'encargado', 'warehouse'],
             keywords: ['stock', 'inventario', 'existencias', 'productos', 'catálogo', 'trazabilidad'],
+          },
+          {
+            // MÓDULO DE INVENTARIO FÍSICO (misión 2026-10-23): conteos por tienda
+            // y fecha de corte, hojas PDF (con teóricas o CIEGAS), importación
+            // Excel validada, conciliación de diferencias y ajustes documentales
+            // generados desde el propio proceso (vinculados por
+            // inventory_adjustments.source_physical_inventory_id).
+            id: 'physical_inventory',
+            label: 'Inventario Físico',
+            description: 'Conteos físicos por tienda y fecha de corte: hojas de conteo PDF (incluye modo ciego), importación Excel validada, conciliación de diferencias y ajustes documentales autorizados.',
+            icon: ClipboardCheck,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'warehouse'],
+            keywords: ['inventario físico', 'conteo', 'almacén', 'conciliación', 'faltante', 'sobrante', 'stocktake', 'hoja de conteo', 'conteo ciego'],
           },
           {
             id: 'received-services',
@@ -1452,7 +1467,7 @@ export const MOBILE_MAIN_TABS: MobileMainTab[] = [
 export const VALID_VIEWS: Set<string> = new Set([
   'occ', 'dashboard', 'store-dashboard', 'wallet', 'pos', 'inventory', 'recepcion', 'reception_list',
   'transferencias', 'sales', 'inventory_count', 'cost-sheets', 'reports', 'catalog',
-  'history', 'inventory_adjustments', 'vales_salida', 'audit', 'cash', 'users', 'roles', 'stores',
+  'history', 'inventory_adjustments', 'vales_salida', 'physical_inventory', 'audit', 'cash', 'users', 'roles', 'stores',
   'storefront-config', 'settings', 'help', 'wiki', 'news', 'rss_management',
   'management-hub', 'ipv', 'academy', 'legal', 'health', 'pick3-intelligence',
   'labels', 'sales_catalog', 'ofertas', 'purchase-orders', 'sales-hub',

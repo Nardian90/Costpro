@@ -49,6 +49,7 @@ export const VIEW_TIPS: Record<string, string> = {
   'inventory': 'Filtra por stock bajo para reabastecer',
   'received-services': 'Distribuye costos de servicios entre recepciones',
   'inventory_adjustments': 'Documenta cada ajuste con justificación',
+  'physical_inventory': 'Corte congelado: la teórica se fija al preparar, no al abrir la vista',
   'vales_salida': 'Un vale completado se devuelve con reversión — nunca se edita',
   'labels': 'Genera etiquetas con código de barras y QR',
   'reception_list': 'OCR automático al subir fotos de la factura',

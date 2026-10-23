@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Plus, Search, Ban, Undo2, Copy, X, Loader2, Eye, RefreshCcw, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
+import { Plus, Search, Ban, Undo2, Copy, X, Loader2, Eye, RefreshCcw, ChevronDown, ChevronUp, CheckCircle2, ClipboardCheck } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
@@ -31,6 +31,10 @@ interface AdjustmentDoc {
   confirmed_at: string | null;
   reversed_at: string | null;
   reversal_reason: string | null;
+  // Trazabilidad de inventario físico (misión 2026-10-23): el ajuste recuerda
+  // su inventario de origen — etiqueta persistida, no texto manual.
+  source_physical_inventory_id?: string | null;
+  source_physical_inventory?: { pi_number: string; cutoff_date: string; blind_mode: boolean } | null;
   items?: AdjustmentItem[];
   creator?: { full_name: string } | null;
 }
@@ -87,7 +91,11 @@ export default function InventoryAdjustmentsView() {
       if (!storeId) return [] as AdjustmentDoc[];
       const { data, error } = await supabase
         .from('inventory_adjustments')
-        .select('*, items:inventory_adjustment_items(*, products(name, sku)), creator:profiles(full_name)')
+        // FIX PGRST201 (misión 2026-10-23): el embed de profiles era ambiguo
+        // desde que v2.2 añadió el FK confirmed_by → hint !fk_created_by.
+        // Añade source_physical_inventory para la etiqueta «Ajuste por
+        // inventario físico» persistida (source_physical_inventory_id).
+        .select('*, items:inventory_adjustment_items(*, products(name, sku)), creator:profiles!fk_created_by(full_name), source_physical_inventory:physical_inventories(pi_number, cutoff_date, blind_mode)')
         .eq('store_id', storeId)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -198,9 +206,22 @@ export default function InventoryAdjustmentsView() {
             <div key={d.id} className="p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-all">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="font-mono text-xs font-black text-primary">{d.id.slice(0, 8)}</span>
                     <DocumentStatusBadge type="adjustment" status={d.status} size="xs" />
+                    {d.source_physical_inventory_id && d.source_physical_inventory && (
+                      <button
+                        onClick={() => {
+                          window.history.pushState({}, '', '/?view=physical_inventory');
+                          window.dispatchEvent(new PopStateEvent('popstate'));
+                        }}
+                        className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-primary hover:bg-primary/20"
+                        title={`Ajuste generado desde el inventario físico ${d.source_physical_inventory.pi_number} (corte ${formatDate(d.source_physical_inventory.cutoff_date)})${d.source_physical_inventory.blind_mode ? ' · conteo ciego' : ''} — clic para abrir Inventario Físico`}
+                      >
+                        <ClipboardCheck className="w-3 h-3" />
+                        Inventario Físico {d.source_physical_inventory.pi_number}
+                      </button>
+                    )}
                     {diff !== 0 && (
                       <span className={cn('text-[10px] font-black', diff > 0 ? 'text-success' : 'text-destructive')}>
                         {diff > 0 ? '+' : ''}{diff} uds
@@ -208,7 +229,14 @@ export default function InventoryAdjustmentsView() {
                     )}
                   </div>
                   <p className="text-sm font-bold truncate">{d.notes || d.reason}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(d.created_at)} • {d.creator?.full_name || '—'}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(d.created_at)} • {d.creator?.full_name || '—'}
+                    {d.source_physical_inventory && (
+                      <span className="text-muted-foreground/70">
+                        {' '}• motivo: {d.reason === 'STOCKTAKE_SHRINKAGE' ? 'faltante de inventario físico' : d.reason === 'STOCKTAKE_SURPLUS' ? 'sobrante de inventario físico' : d.reason}
+                      </span>
+                    )}
+                  </p>
                   {d.items && d.items.length > 0 && (
                     <button
                       onClick={() => setExpandedDoc(expandedDoc === d.id ? null : d.id)}
