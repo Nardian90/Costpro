@@ -9,7 +9,7 @@
  *
  * Recorrido real (cuenta demo autorizada, credenciales por env con fallback
  * demo documentado en auth.fixture.ts — nunca en logs ni informes):
- *   Login UI → OPERACIÓN → Almacén → Servicios Recibidos → Nuevo Servicio →
+ *   Login UI → OPERACIÓN → Logística → Servicios Recibidos → Nuevo Servicio →
  *   Gestionar tipos → catálogo cargado (NO vacío) → crear tipo de prueba con
  *   nombre determinista → toast + lista → persiste tras recarga →
  *   desactivación (procedimiento permitido; sin borrado físico) → badge Inactivo.
@@ -45,7 +45,8 @@ test.describe('Super Admin — Gestionar tipos de servicio (Servicios Recibidos)
 
     await page.getByText('OPERACIÓN', { exact: false }).first().click();
     await page.waitForTimeout(1200);
-    await page.getByText('Almacén', { exact: false }).first().click();
+    // MISIÓN ARQUITECTURA UX (2026-10-23): el módulo vive ahora en Logística.
+    await page.getByText('Logística', { exact: false }).first().click();
     await page.waitForTimeout(1200);
     await page.getByText('Servicios Recibidos', { exact: false }).first().click();
     await page.waitForTimeout(2200);
@@ -94,7 +95,8 @@ test.describe('Super Admin — Gestionar tipos de servicio (Servicios Recibidos)
       await page.waitForTimeout(5000);
       await page.getByText('OPERACIÓN', { exact: false }).first().click();
       await page.waitForTimeout(1200);
-      await page.getByText('Almacén', { exact: false }).first().click();
+      // MISIÓN ARQUITECTURA UX (2026-10-23): el módulo vive ahora en Logística.
+      await page.getByText('Logística', { exact: false }).first().click();
       await page.waitForTimeout(1200);
       await page.getByText('Servicios Recibidos', { exact: false }).first().click();
       await page.waitForTimeout(2200);

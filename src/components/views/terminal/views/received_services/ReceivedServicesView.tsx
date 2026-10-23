@@ -24,7 +24,9 @@ import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
 
 /**
  * F2: Servicios Recibidos y Costos Asociados.
- * Vista principal del módulo Inventario → Servicios Recibidos.
+ * MISIÓN ARQUITECTURA UX (2026-10-23): vista principal del módulo
+ * OPERACIÓN → Logística → Servicios Recibidos (antes: Almacén).
+ * Mismo ViewType 'received-services' — sin cambio de rutas ni APIs.
  */
 
 interface ReceivedService {
@@ -216,7 +218,7 @@ export default function ReceivedServicesView() {
               Servicios Recibidos
             </h1>
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
-              Registro y distribución de costos asociados a recepciones
+              Registro, distribución de costos y pago de servicios de terceros
             </p>
           </div>
         </div>

@@ -305,15 +305,6 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             keywords: ['inventario físico', 'conteo', 'almacén', 'conciliación', 'faltante', 'sobrante', 'stocktake', 'hoja de conteo', 'conteo ciego'],
           },
           {
-            id: 'received-services',
-            label: 'Servicios Recibidos',
-            description: 'Registro y distribución de costos de servicios: transporte, manipulación, seguro, aduana.',
-            icon: Warehouse,
-            type: 'item',
-            roles: ['admin', 'manager', 'encargado', 'warehouse'],
-            keywords: ['servicios', 'transporte', 'aduana', 'seguro', 'costos distribución'],
-          },
-          {
             id: 'inventory_adjustments',
             label: 'Ajustes Documentales',
             description: 'Ajustes de inventario con justificación documental (mermas, sobrantes, correcciones).',
@@ -351,7 +342,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
       {
         id: 'almacen_operaciones',
         label: 'Logística',
-        description: 'Abastecimiento: recepciones, órdenes de compra y transferencias entre tiendas.',
+        description: 'Abastecimiento: recepciones, servicios recibidos (gastos de servicios), órdenes de compra y transferencias entre tiendas.',
         icon: Truck,
         type: 'submenu',
         navClass: 'hub',
@@ -365,6 +356,26 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             navClass: 'primary',
             roles: ['admin', 'manager', 'encargado', 'warehouse'],
             keywords: ['recibir', 'recepciones', 'mercancía', 'entradas', 'proveedor'],
+          },
+          {
+            // MISIÓN ARQUITECTURA UX (2026-10-23): «Servicios Recibidos» se MUEVE
+            // desde Almacén a Logística — NO se renombra ni se duplica. Mismo
+            // ViewType 'received-services', mismas rutas/APIs/BD, mismos roles
+            // (admin/manager/encargado/warehouse — idénticos a los del hub).
+            // Justificación: el módulo registra costos de servicios de terceros
+            // ligados a la llegada de mercancía (recepciones/OC, distribución al
+            // costo y pago) — su tarea nace en el abastecimiento, no en la
+            // custodia de stock. NO es «Gastos»: no registra rentas/servicios
+            // básicos (eso es Ingresos/Egresos de Caja) y su núcleo es la
+            // distribución al costo de la mercancía. Keywords ampliadas:
+            // buscar «gasto»/«flete» en ⌘K ahora lo encuentra.
+            id: 'received-services',
+            label: 'Servicios Recibidos',
+            description: 'Registro, distribución al costo y pago de servicios de terceros: transporte, aduana, seguro, manipulación y otros gastos de servicios.',
+            icon: Truck,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'warehouse'],
+            keywords: ['servicios', 'servicios recibidos', 'gastos', 'gasto', 'gastos de servicios', 'flete', 'transporte', 'aduana', 'seguro', 'manipulación', 'proveedores', 'pago a proveedores', 'distribución de costos', 'costos distribución'],
           },
           {
             id: 'purchase-orders',
@@ -1399,7 +1410,10 @@ export const MOBILE_MAIN_TABS: MobileMainTab[] = [
     id: 'reception_list',
     label: 'Recibir',
     icon: Warehouse,
-    activeViews: ['reception_list', 'recepcion', 'purchase-orders', 'transferencias'],
+    // MISIÓN ARQUITECTURA UX (2026-10-23): 'received-services' pasa de la tab
+    // Inventario a la tab Recibir — espejo del traslado en escritorio
+    // (OPERACIÓN → Logística).
+    activeViews: ['reception_list', 'recepcion', 'purchase-orders', 'transferencias', 'received-services'],
   },
   {
     id: 'inventory',
@@ -1407,7 +1421,7 @@ export const MOBILE_MAIN_TABS: MobileMainTab[] = [
     icon: Package,
     activeViews: [
       'inventory', 'history', 'catalog', 'inventory_adjustments', 'vales_salida',
-      'labels', 'received-services', 'lots', 'warehouses',
+      'labels', 'lots', 'warehouses',
     ],
   },
   {
