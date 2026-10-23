@@ -172,6 +172,10 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
   const [productSearch, setProductSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  // REVISIÓN FINAL v2.24.1: clave de idempotencia estable POR APERTURA del
+  // modal — reintentos del mismo envío (doble clic, reintento tras error de
+  // red) reutilizan la clave; el RPC v2.24.1 compara hash del payload.
+  const [idempotencyKey] = useState(() => `dev-${crypto.randomUUID()}`);
   // MISIÓN CAJA v2.24.0 (§8-C): el RPC create_devolution_v2 EXIGE la venta
   // original (ERR_DEVOLUTION_NO_ORIGINAL) — el modal anterior NO la enviaba y
   // TODA devolución manual fallaba. Además: método del reembolso y su MONEDA
@@ -248,6 +252,8 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
           original_transaction_id: originalSale.id,
           payment_method: refundMethod,
           refund_currency: refundCurrency,
+          // REVISIÓN FINAL v2.24.1: idempotencia cooperativa (estable por apertura)
+          idempotency_key: idempotencyKey,
           // MISIÓN FECHAS DE TRABAJO: convención canónica — hoy → undefined
           // (el servidor estampa NOW()); ≠ hoy → ISO mediodía. La ruta
           // revalida (checkNotFutureOperationDate) y el RPC aplica el gate.

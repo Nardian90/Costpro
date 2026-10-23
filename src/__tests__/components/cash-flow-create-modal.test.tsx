@@ -276,6 +276,10 @@ describe('CashFlowCreateModal — paso 1 EDICIÓN (validaciones junto al campo)'
     expect(body.doc_type).toBe('egreso');
     expect(body.concept).toBe('entrega_efectivo');
     expect(body.counterparty).toBe('Receptor autorizado');
+    // REVISIÓN FINAL v2.24.1: idempotencia cooperativa — el modal envía la
+    // clave estable por apertura (el RPC v2.24.1 la usa contra el registry).
+    expect(typeof body.idempotency_key).toBe('string');
+    expect(body.idempotency_key).toMatch(/^cf-/);
   });
 });
 

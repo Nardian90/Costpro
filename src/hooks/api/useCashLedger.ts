@@ -48,7 +48,7 @@ export interface CashLedgerResponse {
   opening: CashLedgerOpening;
   rows: CashLedgerRow[];
   totals: { entry_cup: number; exit_cup: number; entry_usd: number; exit_usd: number };
-  balance_now: { cup: number; usd: number };
+  balance_now: { cup: number; usd: number; reconciled?: boolean };
   balance_at_cutoff: { cup: number; usd: number; as_of: string | null } | null;
   count: number;
   truncated: boolean;

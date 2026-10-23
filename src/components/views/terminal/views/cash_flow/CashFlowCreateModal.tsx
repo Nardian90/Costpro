@@ -82,6 +82,11 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
     document_number: string; cash_after: number; fondo_after: number; amount: number; currency: string;
   } | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // REVISIÓN FINAL v2.24.1: clave de idempotencia estable POR APERTURA del
+  // modal — reintentos del mismo documento reutilizan la clave; el RPC v2.24.1
+  // compara hash del payload (mismo payload ⇒ resultado original benigno;
+  // payload distinto ⇒ ERR_IDEMPOTENCY_KEY_REUSE → 409).
+  const [idempotencyKey, setIdempotencyKey] = useState(() => `cf-${crypto.randomUUID()}`);
 
   const mostrarVinculo = canLinkRelatedDocument(concept);
   const fondoSources = useFondoSourceDocuments(storeId, mostrarVinculo && open);
@@ -89,6 +94,11 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
   // Reset completo al abrir (patrón ValeSalidaCreateModal)
   useEffect(() => {
     if (open) {
+      // REVISIÓN FINAL v2.24.1: el modal queda MONTADO (prop open) — la clave
+      // se regenera en cada apertura para que cada NUEVO documento tenga su
+      // propia identidad; los reintentos DENTRO de la misma apertura la
+      // conservan (replay benigno del RPC v2.24.1).
+      setIdempotencyKey(`cf-${crypto.randomUUID()}`);
       setPaso('editando');
       setDocType('ingreso');
       setConcept('constitucion_fondo');
@@ -204,6 +214,8 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
         concept,
         amount: Math.round(amount * 100) / 100,
         currency,
+        // REVISIÓN FINAL v2.24.1: idempotencia cooperativa (estable por apertura)
+        idempotency_key: idempotencyKey,
         // Doctrina de la casa (resolvePosOperationDate): hoy → undefined → el
         // servidor estampa NOW() (siempre dentro de la ventana del turno);
         // otro día → mediodía ISO, validado contra la ventana por el RPC.

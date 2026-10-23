@@ -205,6 +205,14 @@ export default function CashLedgerPanel({ storeId, canonicalCup }: Props) {
                   <AlertTriangle className="w-3 h-3" /> El período excede el límite de filas por consulta — reduce el rango para ver el historial completo.
                 </p>
               )}
+              {/* REVISIÓN FINAL v2.24.1: los KPIs vigentes salen del RPC autoritativo;
+                  si el payload no lo trajo, el saldo viene de la corrida local (posible
+                  truncamiento) — se declara explícitamente. */}
+              {balanceNow && balanceNow.reconciled === false && (
+                <p className="text-[10px] text-warning font-bold flex items-center gap-1.5">
+                  <AlertTriangle className="w-3 h-3" /> Saldo vigente reconstruido localmente (sin conciliar con el libro autoritativo) — puede estar incompleto.
+                </p>
+              )}
               <div className="table-scroll-wrapper overflow-x-auto rounded-xl border border-border">
                 <table className="data-table w-full text-xs">
                   <thead>

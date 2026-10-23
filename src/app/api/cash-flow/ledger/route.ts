@@ -11,6 +11,8 @@ import {
   buildCashLedger,
   applyLedgerDisplayFilters,
   balanceAtCutoff,
+  resolveBalanceNow,
+  cutoffNeedsSummary,
   type CashLedgerRowInput,
   type CashLedgerRow,
   type CashLedgerOpening,
@@ -144,7 +146,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
   // Carve USD legacy: ítems cobrados en efectivo USD (sin liquidación explícita).
   const saleIds = (sales ?? []).map(s => s.id);
-  const carveUsdBySale = new Map<string, { usd: number; cup: number }>();
+  const carveUsdBySale = new Map<string, { usd: number; cup: number; uncertain: boolean }>();
   if (saleIds.length) {
     const { data: usdItems, error: itemsErr } = await supabase
       .from('transaction_items')
@@ -155,9 +157,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       .gt('cash_paid', 0);
     if (itemsErr) return NextResponse.json({ error: itemsErr.message }, { status: 500 });
     for (const it of usdItems ?? []) {
-      const acc = carveUsdBySale.get(it.transaction_id) ?? { usd: 0, cup: 0 };
+      const acc = carveUsdBySale.get(it.transaction_id) ?? { usd: 0, cup: 0, uncertain: false };
       acc.usd = r2(acc.usd + Number(it.cash_paid ?? 0));
-      acc.cup = r2(acc.cup + Number(it.cash_paid ?? 0) * Number(it.exchange_rate ?? 1));
+      // REVISIÓN FINAL v2.24.1: paridad EXACTA con el RPC — los ítems USD sin
+      // tasa histórica registrada NO aportan al carve CUP (contribución 0; el
+      // canónico queda en el balde CUP). Antes la ruta asumía tasa 1 y
+      // divergía del espejo en ese borde.
+      acc.cup = r2(acc.cup + Number(it.cash_paid ?? 0) * (it.exchange_rate == null ? 0 : Number(it.exchange_rate)));
+      if (it.exchange_rate == null) acc.uncertain = true;
       carveUsdBySale.set(it.transaction_id, acc);
     }
   }
@@ -166,7 +173,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   for (const s of sales ?? []) {
     if (s.seller_id) sellerIds.add(s.seller_id);
     const legs = saleLegs(s as never);
-    const carve = carveUsdBySale.get(s.id) ?? { usd: 0, cup: 0 };
+    const carve = carveUsdBySale.get(s.id) ?? { usd: 0, cup: 0, uncertain: false };
     const ref = s.invoice_number || `Venta ${s.id.slice(0, 8)}`;
     if (legs.settled) {
       // Liquidación explícita (vuelto multimoneda persistido ENLAZADO a la venta).
@@ -224,7 +231,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           movement_type: 'venta_efectivo', movement_label: 'Venta en efectivo',
           currency: 'CUP', amount_native: legacyCup, amount_cup_signed: legacyCup,
           reference: ref, description: carve.usd > 0
-            ? `Efectivo de la venta (canónico, excluye ${r2(carve.usd)} USD cobrados en USD)`
+            ? `Efectivo de la venta (canónico, excluye ${r2(carve.usd)} USD cobrados en USD${carve.uncertain ? ' · tasa histórica de algún ítem no registrada: su canónico permanece en CUP' : ''})`
             : 'Efectivo de la venta (canónico)',
           user_name: null, status: 'completed', origin_view: 'sales', origin_id: s.id,
         });
@@ -387,16 +394,39 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // ── 6. Construcción del libro + saldo histórico a fecha de corte ──
-  if (rows.length >= p.limit) truncated = true;
+  // REVISIÓN FINAL v2.24.1: truncamiento REAL por fuente (antes solo miraba
+  // el total de filas, que puede superar p.limit con múltiples fuentes).
+  if ((sales?.length ?? 0) >= p.limit || (pts?.length ?? 0) >= p.limit || (commissions?.length ?? 0) >= p.limit) truncated = true;
   const ledger = buildCashLedger(rows, opening);
   const allRows: CashLedgerRow[] = ledger.rows;
 
-  const cutoff = p.as_of ? balanceAtCutoff(allRows, p.as_of, opening) : null;
   const last = allRows[allRows.length - 1] ?? null;
-  const balanceNow = {
-    cup: last?.balance_cup ?? opening.cup,
-    usd: last?.balance_usd ?? opening.usd,
-  };
+  // REVISIÓN FINAL v2.24.1 (defecto ALTO): el saldo vigente de los KPIs es el
+  // neto AUTORITATIVO del RPC (viaja en el mismo payload). La corrida local
+  // truncada infraestimaba los KPIs físicos sin conciliar.
+  const balanceNow = resolveBalanceNow({
+    walkLast: last,
+    opening,
+    summaryNowNet: currencySummaryNow?.net ?? null,
+  });
+
+  // REVISIÓN FINAL v2.24.1 (defecto medio): corte ANTERIOR al inicio de la
+  // ventana — la corrida local no alcanza; pedir el neto autoritativo al RPC
+  // hasta as_of (antes devolvía el saldo de apertura de la ventana sin guard).
+  let cutoff: { cup: number; usd: number; as_of: string; source: 'summary_rpc' | 'ledger_walk' } | null = null;
+  if (p.as_of && cutoffNeedsSummary(p.as_of, from)) {
+    const { data: cutData, error: cutErr } = await supabase.rpc('get_cash_currency_summary', {
+      p_store_id: p.store_id,
+      p_from: null,
+      p_to: p.as_of,
+    });
+    if (cutErr) return NextResponse.json({ error: cutErr.message }, { status: 400 });
+    const net = (cutData as { net?: { CUP?: number; USD?: number } } | null)?.net;
+    cutoff = { cup: r2(Number(net?.CUP ?? 0)), usd: r2(Number(net?.USD ?? 0)), as_of: p.as_of, source: 'summary_rpc' };
+  } else if (p.as_of) {
+    const c = balanceAtCutoff(allRows, p.as_of, opening);
+    if (c) cutoff = { cup: c.cup, usd: c.usd, as_of: p.as_of, source: 'ledger_walk' };
+  }
 
   // Filtros de visualización DESPUÉS de la corrida (los saldos quedan reales).
   const displayRows = applyLedgerDisplayFilters(allRows, {
@@ -412,7 +442,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     rows: displayRows.slice().reverse(), // más reciente primero (voz de la casa)
     totals: ledger.totals,
     balance_now: balanceNow,
-    balance_at_cutoff: cutoff ? { cup: cutoff.cup, usd: cutoff.usd, as_of: p.as_of } : null,
+    balance_at_cutoff: cutoff,
     count: displayRows.length,
     truncated,
   });

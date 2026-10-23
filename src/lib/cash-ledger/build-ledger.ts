@@ -216,3 +216,43 @@ export function balanceAtCutoff(
     lastRow: last,
   };
 }
+
+/**
+ * REVISIÓN FINAL v2.24.1 — Saldo vigente del libro por moneda.
+ *
+ * La fuente AUTORITATIVA es el neto del RPC get_cash_currency_summary (única
+ * fuente de verdad del libro físico). La corrida local del ledger puede venir
+ * TRUNCADA por los límites de consulta (p.limit por fuente): usar el último
+ * saldo corrido solo como FALLBACK cuando el RPC no esté disponible, y
+ * reportar `reconciled` para que la UI distinga ambas situaciones.
+ */
+export function resolveBalanceNow(args: {
+  walkLast: Pick<CashLedgerRow, 'balance_cup' | 'balance_usd'> | null;
+  opening: CashLedgerOpening;
+  summaryNowNet: { CUP: number; USD: number } | null;
+}): { cup: number; usd: number; reconciled: boolean } {
+  const net = args.summaryNowNet;
+  if (net && (net.CUP != null || net.USD != null)) {
+    return {
+      cup: r2(Number(net.CUP ?? 0)),
+      usd: r2(Number(net.USD ?? 0)),
+      reconciled: true,
+    };
+  }
+  return {
+    cup: r2(Number(args.walkLast?.balance_cup ?? args.opening?.cup ?? 0)),
+    usd: r2(Number(args.walkLast?.balance_usd ?? args.opening?.usd ?? 0)),
+    reconciled: false,
+  };
+}
+
+/** REVISIÓN FINAL v2.24.1: el corte ANTERIOR al inicio de la ventana no puede
+ *  reconstruirse con la corrida local (esta empieza en `from`) — el route debe
+ *  pedir el neto autoritativo al RPC hasta as_of. true ⇒ usar RPC. */
+export function cutoffNeedsSummary(asOf: string | undefined, from: string): boolean {
+  if (!asOf) return false;
+  const t = new Date(asOf).getTime();
+  const f = new Date(from).getTime();
+  if (Number.isNaN(t) || Number.isNaN(f)) return false;
+  return t < f;
+}

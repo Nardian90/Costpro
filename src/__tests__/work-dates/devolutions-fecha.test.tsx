@@ -167,6 +167,9 @@ describe('DevolutionsView — selector de fecha (misión fechas de trabajo)', ()
     )!;
     const body = JSON.parse((post[1] as RequestInit).body as string);
     expect(body.operation_date).toBeUndefined();
+    // REVISIÓN FINAL v2.24.1: idempotencia cooperativa — clave estable por
+    // apertura del modal (el RPC v2.24.1 la compara contra el registry).
+    expect(body.idempotency_key).toMatch(/^dev-/);
   });
 
   it('fecha ≠ hoy → envía operation_date al mediodía local', async () => {

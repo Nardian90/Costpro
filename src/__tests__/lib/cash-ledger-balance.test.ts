@@ -139,3 +139,54 @@ describe('balanceAtCutoff — saldo histórico a fecha de corte (misión §7)', 
     expect(usd.rows[1].balance_usd).toBe(0);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REVISIÓN FINAL v2.24.1 — saldo vigente autoritativo + guard de corte
+// anterior a la ventana (defectos detectados en la auditoría del PR #1465).
+// ═══════════════════════════════════════════════════════════════════════════
+import { resolveBalanceNow, cutoffNeedsSummary } from '@/lib/cash-ledger/build-ledger';
+
+describe('resolveBalanceNow — REVISIÓN FINAL v2.24.1 (saldo autoritativo)', () => {
+  const opening = { cup: 100, usd: 5 };
+
+  it('el neto del RPC autoritativo GANA a la corrida local (aunque difiera)', () => {
+    const r = resolveBalanceNow({
+      walkLast: { balance_cup: 999.5, balance_usd: 42 },
+      opening,
+      summaryNowNet: { CUP: 8438079.98, USD: 357 },
+    });
+    expect(r).toEqual({ cup: 8438079.98, usd: 357, reconciled: true });
+  });
+
+  it('sin RPC disponible → fallback a la corrida local (reconciled=false)', () => {
+    const r = resolveBalanceNow({ walkLast: { balance_cup: 1500, balance_usd: 7 }, opening, summaryNowNet: null });
+    expect(r).toEqual({ cup: 1500, usd: 7, reconciled: false });
+  });
+
+  it('sin RPC ni corrida (sin filas) → apertura', () => {
+    const r = resolveBalanceNow({ walkLast: null, opening, summaryNowNet: null });
+    expect(r).toEqual({ cup: 100, usd: 5, reconciled: false });
+  });
+
+  it('redondeo r2 del neto autoritativo', () => {
+    const r = resolveBalanceNow({ walkLast: null, opening, summaryNowNet: { CUP: 10.005, USD: 1.004 } });
+    expect(r.cup).toBe(10.01);
+    expect(r.usd).toBe(1);
+  });
+});
+
+describe('cutoffNeedsSummary — REVISIÓN FINAL v2.24.1 (corte anterior a la ventana)', () => {
+  it('as_of < from ⇒ true (la corrida local no alcanza: usar RPC)', () => {
+    expect(cutoffNeedsSummary('2026-09-01T00:00:00Z', '2026-10-01T00:00:00Z')).toBe(true);
+  });
+
+  it('as_of >= from ⇒ false (la corrida reconstruye el corte)', () => {
+    expect(cutoffNeedsSummary('2026-10-20T12:00:00Z', '2026-10-01T00:00:00Z')).toBe(false);
+    expect(cutoffNeedsSummary('2026-10-01T00:00:00Z', '2026-10-01T00:00:00Z')).toBe(false);
+  });
+
+  it('sin as_of ⇒ false; fechas inválidas ⇒ false (no romper la ruta)', () => {
+    expect(cutoffNeedsSummary(undefined, '2026-10-01T00:00:00Z')).toBe(false);
+    expect(cutoffNeedsSummary('no-es-fecha', '2026-10-01T00:00:00Z')).toBe(false);
+  });
+});

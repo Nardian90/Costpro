@@ -339,10 +339,11 @@ export function POSCartCheckoutPanel({
   const usdRate = useCartStore.getState().globalRates["USD"] || 0;
   const changeDueUsd = change > 0 && usdRate > 1 ? Math.round((change / usdRate) * 100) / 100 : null;
   const changeUsdNum = parseFloat(changeUsdOverride) || 0;
-  const settlement: { settlement: CashSettlement | null; changeDueCup: number; error?: string } | null =
-    derivedPaymentMethod !== "cash" || cashReceivedNum <= 0
-      ? null
-      : buildCashSettlement({
+  // REVISIÓN FINAL v2.24.1: sin anotación amplia de `error?: string` — se
+  // infiere SettlementError para que el title del botón pueda traducirlo.
+  const settlement = derivedPaymentMethod !== "cash" || cashReceivedNum <= 0
+    ? null
+    : buildCashSettlement({
           receivedByCurrency: { CUP: cashReceivedNum },
           cashAmountCup: expectedTotal,
           usdRate,
@@ -955,8 +956,11 @@ export function POSCartCheckoutPanel({
             <button
               type="button"
               onClick={handleConfirmCheckout}
-              disabled={isProcessing || !saleDateValidation.valid}
-              title={!saleDateValidation.valid ? saleDateValidation.error : undefined}
+              // REVISIÓN FINAL v2.24.1: bloquear la confirmación cuando la
+              // liquidación del cobro es inválida (antes el error era solo
+              // visual y la venta salía SIN liquidación → vuelto sin registro).
+              disabled={isProcessing || !saleDateValidation.valid || Boolean(settlementError)}
+              title={settlementError ? settlementErrorMessage(settlementError) : (!saleDateValidation.valid ? saleDateValidation.error : undefined)}
               className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               {isProcessing ? "Procesando..." : "Confirmar"}
