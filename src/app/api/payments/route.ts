@@ -5,6 +5,13 @@ import { withSecurity } from '@/lib/with-security';
 import { z } from 'zod';
 import { uuidLoose } from '@/validation/api-schemas';
 import { randomUUID } from 'crypto';
+// MISIÓN SERVICIOS RECIBIDOS (2026-10-23): misma convención que
+// /api/production-orders/[id]/payments — la fecha financiera del pago es un
+// dato de cliente NO confiable; el backdating legítimo («fechas históricas»,
+// V2.12.32) se conserva, pero NUNCA futuro: tope HOY (día de negocio
+// America/Havana) → 422 accionable. El RPC register_supplier_payment ya
+// acepta p_payment_date (DEFAULT NULL → NOW()); esta ruta nunca lo pasaba.
+import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 
 // ── Schema de validación para un pago individual ──
 const paymentRowSchema = z.object({
@@ -34,6 +41,11 @@ const registerPaymentSchema = z.object({
   payments: z.array(paymentRowSchema).optional(),
   // Idempotencia: si se envía, previene doble-click
   idempotency_key: z.string().optional(),
+  // V2.12.32 (paridad con production-orders/payments): fecha financiera del
+  // pago, opcional para soportar fechas históricas. Si se omite, el RPC usa
+  // NOW(). Formato ISO 8601 (ej: "2026-07-20T12:00:00Z"). Aplica a TODAS las
+  // filas del envío (pago simple o mixto comparten la fecha del dinero).
+  payment_date: z.string().datetime().optional(),
 }).refine(
   (data) => data.payments || (data.amount !== undefined && data.payment_method !== undefined),
   { message: 'Debe enviar `payments` (array) o `amount` + `payment_method` en el root' }
@@ -52,7 +64,21 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       );
     }
 
-    const { ref_type, ref_id, idempotency_key } = parsed.data;
+    const { ref_type, ref_id, idempotency_key, payment_date } = parsed.data;
+
+    // MISIÓN SERVICIOS RECIBIDOS: gate de fecha — nunca futuro (tope HOY día
+    // de negocio Habana). El piso de 6 meses y la semántica completa los
+    // impone validate_operation_date en la BD (fuente de verdad); aquí solo
+    // se rechaza lo inmediatamente inadmisible con un 422 accionable.
+    if (payment_date) {
+      const dateCheck = checkNotFutureOperationDate(payment_date);
+      if (!dateCheck.ok) {
+        return NextResponse.json(
+          { error: 'Fecha del pago no admisible', message: dateCheck.error, code: 'ERR_FUTURE_OPERATION_DATE' },
+          { status: 422 }
+        );
+      }
+    }
 
     // Normalizar a array de pagos
     const payments = parsed.data.payments || [{
@@ -105,9 +131,20 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         p_notes: p.notes || null,
         p_paid_by: session.user.id,
         p_idempotency_key: idemKey,
+        // V2.12.32: fecha financiera del pago (fechas históricas). Solo se
+        // pasa si se especificó — el RPC usa NOW() por defecto.
+        ...(payment_date ? { p_payment_date: payment_date } : {}),
       });
 
       if (error) {
+        // MISIÓN SERVICIOS RECIBIDOS: rechazos del gate de fechas de la BD
+        // (validate_operation_date) → 422 accionable, no 500 opaco.
+        if (error.code === 'P0001' && (error.message.includes('ERR_FUTURE_DATED_DOCUMENT') || error.message.includes('ERR_BACKDATED_DOCUMENT'))) {
+          return NextResponse.json(
+            { error: 'Fecha del pago no admisible', message: error.message, code: error.message.includes('ERR_FUTURE') ? 'ERR_FUTURE_DATED_DOCUMENT' : 'ERR_BACKDATED_DOCUMENT' },
+            { status: 422 }
+          );
+        }
         // Si ya existe (idempotency replay), el RPC devuelve el ID existente
         // pero Supabase puede reportar error. Verificamos el código.
         if (error.code === 'P0001' && error.message.includes('excede el saldo')) {
