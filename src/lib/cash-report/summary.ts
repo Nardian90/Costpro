@@ -101,7 +101,10 @@ export interface RefundRow {
 }
 
 export interface CashReportLike {
-  sales?: Array<{ payment_method: string; currency: string; total: number }>;
+  /** MISIÓN MULTIMONEDA (2026-10-23): los grupos reconstruidos por /api/cash-report
+   * (incidente 2026-10-16, collection-currency) traen total_cup (equivalencia
+   * canónica del grupo) y transaction_count — opcionales en el fallback legacy. */
+  sales?: Array<{ payment_method: string; currency: string; total: number; total_cup?: number; transaction_count?: number }>;
   payments?: Array<{ payment_method: string; currency: string; ref_type: string; total: number }>;
   commissions?: Array<{ payment_method: string; currency: string; total: number }>;
   production?: Array<{ payment_method: string; currency: string; total: number }>;
