@@ -812,5 +812,15 @@
       "expires": "2026-12-31"
     }
   ],
-  "source_of_truth_baseline": []
+  "source_of_truth_baseline": [
+    {
+      "function": "create_cash_flow_document/13",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISIÓN AUDITORÍA CAJA 2026-10-24 · idempotencia DETERMINISTA: el hash incluía COALESCE(p_operation_date,'now')::text que incrusta el instante actual cuando el cliente no envía fecha (convención de la casa) ⇒ TODO reintento de red con misma clave+payload era rechazado ERR_IDEMPOTENCY_KEY_REUSE (demostrado en BD aislada y con prueba determinista). Correctiva versionada en 20261024180000_auditoria_caja_idempotencia_determinista.sql y PENDIENTE de aplicación autorizada en producción. El cuerpo LIVE v2.24.1 está certificado; el drift es INTENCIONAL y temporal (1 línea funcional: COALESCE(p_operation_date::text,'') — paridad create_devolution_v2). Sin cambios contables. Expira al aplicar la correctiva o en la fecha.",
+      "added_by": "auditoria-caja-pr1468",
+      "expires": "2027-01-31"
+    }
+  ]
 }
