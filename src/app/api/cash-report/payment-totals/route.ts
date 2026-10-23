@@ -91,7 +91,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // (ref_type='sale') por venta — moneda REAL por componente con la tasa de
     // la operación persistida. Ventas con componentes (v2.25.0) se clasifican
     // por LEDGER directo; históricas conservan la heurística.
-    const paymentsByTx = await fetchSalePaymentsByTx(supabase, txIds);
+    const paymentsByTx = await fetchSalePaymentsByTx(
+      ids => supabase
+        .from('payment_transactions')
+        .select('transaction_id, payment_method, currency, amount, exchange_rate')
+        .eq('ref_type', 'sale')
+        .in('transaction_id', ids),
+      txIds,
+    );
 
     const acc: SalesSplitAccum = {};
     const txWithoutItems: Array<Record<string, unknown>> = [];

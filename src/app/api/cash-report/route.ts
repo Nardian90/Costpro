@@ -105,7 +105,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       // de la operación persistida. Cuando son autoritativas (flujo con
       // componentes, v2.25.0) la reconstrucción las usa DIRECTO.
       const { fetchSalePaymentsByTx } = await import('@/lib/cash-report/fetch-sale-payments');
-      const paymentsByTx = await fetchSalePaymentsByTx(supabase, txIds);
+      const paymentsByTx = await fetchSalePaymentsByTx(
+        ids => supabase
+          .from('payment_transactions')
+          .select('transaction_id, payment_method, currency, amount, exchange_rate')
+          .eq('ref_type', 'sale')
+          .in('transaction_id', ids),
+        txIds,
+      );
 
       const { accumulateSalesSplit, buildSalesGroups, reconstructTxCollections, normCur } = await import('@/lib/cash-report/collection-currency');
 

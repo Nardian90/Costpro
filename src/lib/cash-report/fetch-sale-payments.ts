@@ -11,41 +11,39 @@
  * el filtro IN de PostgREST tiene límite práctico). Degradación limpia: si
  * la consulta falla, se devuelve un mapa vacío y el reporte usa la
  * reconstrucción heurística previa (ventas históricas).
+ *
+ * NOTA DE TIPIFICACIÓN: el helper recibe una FÁBRICA de consulta (no el
+ * cliente Supabase completo) para mantener el tipado estructural superficial
+ * — pasar el SupabaseClient genérico completo dispara TS2589 (Type
+ * instantiation is excessively deep) en la CI.
  */
 
 import type { LedgerPayment } from './collection-currency';
 
 const CHUNK = 150;
 
-/** Cliente Supabase mínimo para esta consulta (session o admin). */
-interface SupabaseLike {
-  from: (table: string) => {
-    select: (columns: string) => {
-      eq: (column: string, value: string) => {
-        in: (column: string, values: string[]) => PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>;
-      };
-    };
-  };
+/** Resultado mínimo de una consulta PostgREST (data/error). */
+export interface PaymentsQueryResult {
+  data: unknown[] | null;
+  error: { message: string } | null;
 }
 
 /**
  * Devuelve Map<transaction_id, LedgerPayment[]> para las ventas dadas.
+ * `buildQuery` construye la consulta para un chunk de ids:
+ *   `.from('payment_transactions').select('…').eq('ref_type','sale').in('transaction_id', ids)`
  * Solo filas ref_type='sale' (las creadas por create_sale_v2 junto a la
  * venta — direction 'in' histórico).
  */
 export async function fetchSalePaymentsByTx(
-  supabase: SupabaseLike,
+  buildQuery: (txIds: string[]) => PromiseLike<PaymentsQueryResult>,
   txIds: string[],
 ): Promise<Map<string, LedgerPayment[]>> {
   const map = new Map<string, LedgerPayment[]>();
   if (txIds.length === 0) return map;
   for (let i = 0; i < txIds.length; i += CHUNK) {
     const chunk = txIds.slice(i, i + CHUNK);
-    const { data, error } = await supabase
-      .from('payment_transactions')
-      .select('transaction_id, payment_method, currency, amount, exchange_rate')
-      .eq('ref_type', 'sale')
-      .in('transaction_id', chunk);
+    const { data, error } = await buildQuery(chunk);
     if (error) throw new Error(error.message);
     for (const row of (data || []) as Array<Record<string, unknown>>) {
       const txId = String(row.transaction_id || '');

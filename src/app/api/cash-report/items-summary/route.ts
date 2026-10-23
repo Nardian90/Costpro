@@ -82,7 +82,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const txIdsAll = [...new Set((data || []).map((row: Record<string, unknown>) => String(row.transaction_id || '')))].filter(Boolean);
     let paymentsByTx = new Map<string, Parameters<typeof buildItemsSummary>[0][number]['payments']>();
     try {
-      paymentsByTx = await fetchSalePaymentsByTx(supabase, txIdsAll);
+      paymentsByTx = await fetchSalePaymentsByTx(
+        ids => supabase
+          .from('payment_transactions')
+          .select('transaction_id, payment_method, currency, amount, exchange_rate')
+          .eq('ref_type', 'sale')
+          .in('transaction_id', ids),
+        txIdsAll,
+      );
     } catch (payErr: unknown) {
       console.warn('[cash-report/items-summary] ledger de pagos no disponible:', (payErr as { message?: string })?.message);
     }
