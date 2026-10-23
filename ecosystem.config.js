@@ -89,71 +89,75 @@ module.exports = {
       merge_logs: true,
       time: true,
     },
-    // ───────────────────────────────────────────────────────────
-    // Telegram auto-publish local poller (Phase 4 — see scripts/telegram-cron-poller.sh)
-    //
-    // Why this exists: vercel.json declares a cron that hits
-    // /api/cron/telegram-auto-publish every 5 minutes, but Vercel Cron
-    // only fires for VERCEL DEPLOYMENTS. When running locally via PM2
-    // (or when Vercel/Render deployments are outdated), no cron runs
-    // and auto-publish silently stops.
-    //
-    // This poller fixes that: it runs under PM2 alongside the main app
-    // and periodically hits the local cron endpoint. The endpoint is
-    // idempotent (per-store interval check), so calling it more often
-    // than the configured interval is safe.
-    //
-    // Logs: pm2 logs telegram-cron-poller
-    // ───────────────────────────────────────────────────────────
-    {
-      name: 'telegram-cron-poller',
-      script: 'scripts/telegram-cron-poller.sh',
-      interpreter: 'none',
-      cwd: __dirname,
-      autorestart: true,
-      restart_delay: 5000,
-      max_restarts: 10,
-      restart_time: 60_000,
-      min_uptime: '10s',
-      watch: false,
-      kill_timeout: 3000,
-      env: {
-        POLL_INTERVAL_SECONDS: 60,
-        CRON_HIT_INTERVAL_SECONDS: 300, // 5 minutes — matches vercel.json schedule
-        TARGET_URL: 'http://localhost:3000/api/cron/telegram-auto-publish',
-        STATE_FILE: '/tmp/telegram-cron-poller-last-run',
-      },
-      out_file: './logs/telegram-cron-poller-out.log',
-      error_file: './logs/telegram-cron-poller-error.log',
-      merge_logs: true,
-      time: true,
-    },
-    // ───────────────────────────────────────────────────────────
-    // WhatsApp auto-publish local poller (Phase 2 — parity with Telegram)
-    // Same pattern as telegram-cron-poller but for WhatsApp.
-    // ───────────────────────────────────────────────────────────
-    {
-      name: 'whatsapp-cron-poller',
-      script: 'scripts/whatsapp-cron-poller.sh',
-      interpreter: 'none',
-      cwd: __dirname,
-      autorestart: true,
-      restart_delay: 5000,
-      max_restarts: 10,
-      restart_time: 60_000,
-      min_uptime: '10s',
-      watch: false,
-      kill_timeout: 3000,
-      env: {
-        POLL_INTERVAL_SECONDS: 60,
-        CRON_HIT_INTERVAL_SECONDS: 300, // 5 minutes — same as Telegram
-        TARGET_URL: 'http://localhost:3000/api/cron/whatsapp-auto-publish',
-        STATE_FILE: '/tmp/whatsapp-cron-poller-last-run',
-      },
-      out_file: './logs/whatsapp-cron-poller-out.log',
-      error_file: './logs/whatsapp-cron-poller-error.log',
-      merge_logs: true,
-      time: true,
-    },
+    // CP-INFRA-002 (2026-10-23): pollers de Telegram y WhatsApp DESCONECTADOS.
+    // Reactivación: descomentar este bloque y ejecutar `pm2 start ecosystem.config.js`
+    // (ver docs/CP-INFRA-002-REACTIVACION.md). El endpoint responde 'disabled' hasta
+    // que TELEGRAM_AUTOPUBLISH_ENABLED=true / WHATSAPP_AUTOPUBLISH_ENABLED=true.
+    //     // ───────────────────────────────────────────────────────────
+    //     // Telegram auto-publish local poller (Phase 4 — see scripts/telegram-cron-poller.sh)
+    //     //
+    //     // Why this exists: vercel.json declares a cron that hits
+    //     // /api/cron/telegram-auto-publish every 5 minutes, but Vercel Cron
+    //     // only fires for VERCEL DEPLOYMENTS. When running locally via PM2
+    //     // (or when Vercel/Render deployments are outdated), no cron runs
+    //     // and auto-publish silently stops.
+    //     //
+    //     // This poller fixes that: it runs under PM2 alongside the main app
+    //     // and periodically hits the local cron endpoint. The endpoint is
+    //     // idempotent (per-store interval check), so calling it more often
+    //     // than the configured interval is safe.
+    //     //
+    //     // Logs: pm2 logs telegram-cron-poller
+    //     // ───────────────────────────────────────────────────────────
+    //     {
+    //       name: 'telegram-cron-poller',
+    //       script: 'scripts/telegram-cron-poller.sh',
+    //       interpreter: 'none',
+    //       cwd: __dirname,
+    //       autorestart: true,
+    //       restart_delay: 5000,
+    //       max_restarts: 10,
+    //       restart_time: 60_000,
+    //       min_uptime: '10s',
+    //       watch: false,
+    //       kill_timeout: 3000,
+    //       env: {
+    //         POLL_INTERVAL_SECONDS: 60,
+    //         CRON_HIT_INTERVAL_SECONDS: 300, // 5 minutes — matches vercel.json schedule
+    //         TARGET_URL: 'http://localhost:3000/api/cron/telegram-auto-publish',
+    //         STATE_FILE: '/tmp/telegram-cron-poller-last-run',
+    //       },
+    //       out_file: './logs/telegram-cron-poller-out.log',
+    //       error_file: './logs/telegram-cron-poller-error.log',
+    //       merge_logs: true,
+    //       time: true,
+    //     },
+    //     // ───────────────────────────────────────────────────────────
+    //     // WhatsApp auto-publish local poller (Phase 2 — parity with Telegram)
+    //     // Same pattern as telegram-cron-poller but for WhatsApp.
+    //     // ───────────────────────────────────────────────────────────
+    //     {
+    //       name: 'whatsapp-cron-poller',
+    //       script: 'scripts/whatsapp-cron-poller.sh',
+    //       interpreter: 'none',
+    //       cwd: __dirname,
+    //       autorestart: true,
+    //       restart_delay: 5000,
+    //       max_restarts: 10,
+    //       restart_time: 60_000,
+    //       min_uptime: '10s',
+    //       watch: false,
+    //       kill_timeout: 3000,
+    //       env: {
+    //         POLL_INTERVAL_SECONDS: 60,
+    //         CRON_HIT_INTERVAL_SECONDS: 300, // 5 minutes — same as Telegram
+    //         TARGET_URL: 'http://localhost:3000/api/cron/whatsapp-auto-publish',
+    //         STATE_FILE: '/tmp/whatsapp-cron-poller-last-run',
+    //       },
+    //       out_file: './logs/whatsapp-cron-poller-out.log',
+    //       error_file: './logs/whatsapp-cron-poller-error.log',
+    //       merge_logs: true,
+    //       time: true,
+    //     },
   ],
 }

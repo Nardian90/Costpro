@@ -7,9 +7,19 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
 import { connectStore } from '@/lib/whatsapp/baileys-client';
+import { WHATSAPP_SESSIONS_ENABLED } from '@/lib/messaging-flags';
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
+  // CP-INFRA-002 (2026-10-23): desconexión reversible — no se crean sesiones
+  // Baileys nuevas (el WebSocket de WhatsApp queda sin conexiones nuevas).
+  // Reactivación: WHATSAPP_SESSIONS_ENABLED=true (docs/CP-INFRA-002-REACTIVACION.md).
+  if (!WHATSAPP_SESSIONS_ENABLED) {
+    return NextResponse.json(
+      { error: 'WHATSAPP_SESSIONS_DISABLED', reason: 'Integración WhatsApp desconectada (CP-INFRA-002). Reactivar con WHATSAPP_SESSIONS_ENABLED=true.' },
+      { status: 503 },
+    );
+  }
   const { allowed } = await rateLimit(`wa:connect:${session.user.id}`, { windowMs: 60_000, maxRequests: 5 });
   if (!allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
 

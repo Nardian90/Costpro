@@ -1459,48 +1459,8 @@ Records all operations in sync_log.`,
     },
   };
 
-  // 26. POST /api/pick3/sync
-  paths['/api/pick3/sync'] = {
-    post: {
-      tags: ['Other'],
-      operationId: 'syncPick3',
-      summary: 'Sync Pick3 lottery results',
-      description: `Synchronizes Pick3 lottery results from web sources and PDF.
-Supports cron authentication via Bearer CRON_SECRET.
-Can force a full sync with query parameter \`full=true\`.`,
-      security: [
-        { bearerAuth: [] },
-        { cookieAuth: [] },
-        { cronAuth: [] },
-      ],
-      parameters: [
-        { name: 'full', in: 'query', required: false, description: 'Force full sync', schema: { type: 'boolean', default: false } },
-      ],
-      requestBody: { required: false, content: {} },
-      responses: {
-        '200': {
-          description: 'Sync results',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  success: { type: 'boolean' },
-                  web_count: { type: 'integer', description: 'Results from web scraping' },
-                  pdf_count: { type: 'integer', description: 'Results from PDF parsing' },
-                  timestamp: { type: 'string', format: 'date-time' },
-                  message: { type: 'string', description: 'Present on failure' },
-                },
-              },
-            },
-          },
-        },
-        '401': errorResponse401,
-        '429': errorResponse429,
-        '500': errorResponse500,
-      },
-    },
-  };
+  // 26. (CP-INFRA-002 2026-10-23) /api/pick3/sync retirado del producto activo junto
+  // al módulo Pick3; vercel.json ya no lo declara como cron.
 
   // 27. GET /api/rss
   paths['/api/rss'] = {

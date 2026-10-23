@@ -87,10 +87,8 @@ export const HELP_DOC_BY_VIEW: Record<string, string> = {
   'academy': 'help/00-diataxis-map.md',
   'legal': 'help/00-diataxis-map.md',
 
-  // Otros
-  'pick3-intelligence': 'help/05-referencia/pick3-workflow.md',
+  // Otros (CP-INFRA-002: mapeos de pick3 y wallet retirados junto a sus vistas)
   'news': 'help/04-configuracion/herramientas-sistema.md',
-  'wallet': 'help/04-explicacion/08-seccion-en-desarrollo.md',
 };
 
 export interface HelpLauncherProps {

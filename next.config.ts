@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
       { source: '/wiki', destination: '/?view=wiki', permanent: false },
       { source: '/cost-sheets', destination: '/?view=cost-sheets', permanent: false },
       { source: '/system/health', destination: '/?view=health', permanent: false },
-      { source: '/pick3', destination: '/?view=pick3-intelligence', permanent: false },
+      // CP-INFRA-002: redirect /pick3 retirado junto con la vista (módulo fuera del producto activo).
       { source: '/cashier/close-session', destination: '/?view=cash', permanent: false },
     ];
   },

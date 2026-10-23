@@ -52,7 +52,7 @@ import {
   Home, Zap, ShoppingCart, Package, Warehouse, ArrowLeftRight, FileText, Calculator,
   Factory, UserCog, LayoutGrid, MessageCircle, Send, TrendingUp, Table2, DollarSign, Truck,
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
-  Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Wallet, Landmark,
+  Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Landmark,
   Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone, Printer,
   ClipboardCheck,
   ReceiptText, Coins,
@@ -747,26 +747,6 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         keywords: ['ipv', 'conciliación', 'extracto', 'bancario', 'matching'],
       },
       {
-        id: 'pick3-intelligence',
-        label: 'Pick3',
-        description: 'Gestor de riesgo de inversión: métricas cuantitativas, motores Markov, backtest y gestión de bankroll.',
-        icon: BarChart3,
-        type: 'item',
-        navClass: 'experimental',
-        roles: ['admin'],
-        keywords: ['pick3', 'riesgo', 'inversión', 'markov', 'backtest', 'bankroll', 'lotería'],
-      },
-      {
-        id: 'wallet',
-        label: 'Billetera',
-        description: 'Billetera digital experimental: ingresos por transferencias, pagos digitales e importación de backups de Transfermóvil.',
-        icon: Wallet,
-        type: 'item',
-        navClass: 'experimental',
-        roles: ['admin'],
-        keywords: ['billetera', 'wallet', 'transferencias', 'transfermóvil', 'pagos', 'sms'],
-      },
-      {
         // Trasladada desde AYUDA (fix/navigation-orphaned-development):
         // funcionalidad de conocimiento contable, no ayuda de la app.
         // Universal (sin roles) — igual que en Ayuda. Deep-link intacto.
@@ -798,29 +778,15 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         type: 'item',
         keywords: ['legal', 'normativa', 'cubana', 'formularios', 'fiscal', 'leyes'],
       },
-      {
-        // HUÉRFANA RESCATADA (fix/navigation-orphaned-development): vista
-        // real (BankReconciliationView) alcanzable SOLO por deep-link
-        // /?view=bank-reconciliation sin ubicación de navegación. La decisión
-        // FASE B (UX-010) la mantenía fuera de la navegación hasta que
-        // Producto decidiera su dominio — este mandato ES esa decisión.
-        // EN DESARROLLO resuelve ambas cosas: ubicación coherente Y etiqueta
-        // honesta de capacidad parcial (no aparenta función completa).
-        // COSTPRO 4: hereda roles:['admin'] de la sección. El guard
-        // default-open histórico desaparece por mandato: la seguridad real
-        // vive en backend (withRole en /api/bank-reconciliation/*).
-        // Sin mobileHide: una sola fuente de verdad para desktop y móvil.
-        id: 'bank-reconciliation',
-        label: 'Conciliación Bancaria',
-        description: 'Capacidad parcial (beta): vista de extractos y estado de conciliación en solo lectura. Sin importación ni matching automático todavía.',
-        icon: Landmark,
-        type: 'item',
-        navClass: 'experimental',
-        keywords: ['conciliación', 'bancaria', 'extracto', 'banco', 'estado de cuenta'],
-      },
     ],
   },
 ];
+
+// CP-INFRA-002 (2026-10-23): retirada del producto activo de Pick3, Billetera y
+// Conciliación Bancaria por decisión operativa (límite de funciones serverless
+// del plan Hobby). Las entradas de navegación se eliminan; el historial de la
+// implementación queda en git (revertir este commit reactiva menús y vistas).
+// IPV, Wiki, Academia y Marco Legal permanecen en EN DESARROLLO.
 
 // ────────────────────────────────────────────────────────────────────
 // ACTION_EXTENSIONS — acciones que NO son navegación a una vista del menú
@@ -1465,11 +1431,12 @@ export const MOBILE_MAIN_TABS: MobileMainTab[] = [
 
 /** Conjunto de ViewTypes válidos declarados en el store. */
 export const VALID_VIEWS: Set<string> = new Set([
-  'occ', 'dashboard', 'store-dashboard', 'wallet', 'pos', 'inventory', 'recepcion', 'reception_list',
+  'occ', 'dashboard', 'store-dashboard', 'pos', 'inventory', 'recepcion', 'reception_list',
   'transferencias', 'sales', 'inventory_count', 'cost-sheets', 'reports', 'catalog',
   'history', 'inventory_adjustments', 'vales_salida', 'physical_inventory', 'audit', 'cash', 'users', 'roles', 'stores',
   'storefront-config', 'settings', 'help', 'wiki', 'news', 'rss_management',
-  'management-hub', 'ipv', 'academy', 'legal', 'health', 'pick3-intelligence',
+  'management-hub', 'ipv', 'academy', 'legal', 'health',
+  // CP-INFRA-002 (2026-10-23): 'pick3-intelligence' y 'wallet' retirados del producto activo.
   'labels', 'sales_catalog', 'ofertas', 'purchase-orders', 'sales-hub',
   'exchange-intelligence', 'received-services', 'usage-monitoring', 'workers',
   'chat', 'costeo-dinamico', 'estructura-costo', 'whatsapp-config',
@@ -1480,7 +1447,8 @@ export const VALID_VIEWS: Set<string> = new Set([
   // MISIÓN 2026-10-16 (IPV): informe de ingresos por ventas con conciliación
   'ipv_ventas',
   'devolutions', 'customers', 'quotations', 'fiscal-close', 'lots', 'warehouses',
-  'abc-analysis', 'bank-reconciliation', 'calculator', 'accounts-payable',
+  'abc-analysis', 'calculator', 'accounts-payable',
+  // CP-INFRA-002: 'bank-reconciliation' retirado del producto activo.
   'punto_venta', 'almacen_gestion', 'almacen_operaciones', 'analitica',
   'ipv_reporting', 'ipv_operaciones', 'ipv_datos', 'ipv_procesamiento', 'ipv_avanzado',
   'cost_views', 'cost_gen', 'cost_templates', 'cost_tools',

@@ -11,6 +11,14 @@ import { NextRequest } from 'next/server';
 
 // ── Mocks ──────────────────────────────────────────────────────────────
 
+const waFlags = vi.hoisted(() => ({ WHATSAPP_SESSIONS_ENABLED: false }));
+vi.mock('@/lib/messaging-flags', () => ({
+  get WHATSAPP_SESSIONS_ENABLED() { return waFlags.WHATSAPP_SESSIONS_ENABLED; },
+  WHATSAPP_AUTOPUBLISH_ENABLED: false,
+  TELEGRAM_AUTOPUBLISH_ENABLED: false,
+  MESSAGING_REALTIME_ENABLED: false,
+}));
+
 vi.mock('@/lib/supabase-admin', () => ({
   getSupabaseAdminSafe: vi.fn(() => null),
 }));
@@ -158,12 +166,22 @@ describe('WhatsApp Module — 4 Fases', () => {
       expect(res.status).toBe(200);
     });
 
-    it('POST /api/whatsapp/connect — sin store_id → 400', async () => {
+    it('POST /api/whatsapp/connect — CP-INFRA-002 default: integración desconectada → 503 sin crear sesión', async () => {
+      waFlags.WHATSAPP_SESSIONS_ENABLED = false;
+      const res = await (connectPOST as any)(makeRequest('/api/whatsapp/connect', 'POST', { store_id: STORE_A }), makeSession());
+      expect(res.status).toBe(503);
+      const json = await res.json();
+      expect(json.error).toBe('WHATSAPP_SESSIONS_DISABLED');
+    });
+
+    it('POST /api/whatsapp/connect — sin store_id → 400 (bandera habilitada para probar la lógica de ruta)', async () => {
+      waFlags.WHATSAPP_SESSIONS_ENABLED = true;
       const res = await (connectPOST as any)(makeRequest('/api/whatsapp/connect', 'POST', {}), makeSession());
       expect(res.status).toBe(400);
     });
 
-    it('POST /api/whatsapp/connect — con permisos → 200', async () => {
+    it('POST /api/whatsapp/connect — con permisos → 200 (bandera habilitada, baileys-client mockeado)', async () => {
+      waFlags.WHATSAPP_SESSIONS_ENABLED = true;
       const res = await (connectPOST as any)(makeRequest('/api/whatsapp/connect', 'POST', { store_id: STORE_A }), makeSession());
       expect(res.status).toBe(200);
     });

@@ -76,9 +76,7 @@ export const VIEW_TIPS: Record<string, string> = {
   'wiki': 'Glosario contable y normativas cubanas',
   'academy': 'Cursos de costos ABC, IPv y multi-tienda',
 
-  // En Desarrollo
-  'pick3-intelligence': 'Gestión de riesgo con métricas cuantitativas',
-  'wallet': 'Monitorea ingresos por transferencias en tiempo real',
+  // En Desarrollo (CP-INFRA-002: tips de pick3 y wallet retirados junto a sus vistas)
 
   // Calculator
   'calculator': 'M+/M-/MR/MC para memoria, desglose de billetes automático',
