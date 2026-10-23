@@ -99,6 +99,14 @@ interface SuccessData {
 // Hook
 // ────────────────────────────────────────────────────────────
 
+// FIX FLAKY (useReceptionSearch-ux «devuelve null con unidades de medida mixtas»):
+// el SKU AUTO- de "Date.now()" colisionaba cuando dos altas manuales ocurrían
+// en el mismo milisegundo (CI con carga paralela) — la segunda línea se
+// rechazaba como «SKU duplicado» y el resumen de unidades mezclaba líneas.
+// Secuencia monotónica por módulo: SKU determinísticamente único incluso
+// dentro del mismo ms.
+let autoSkuSeq = 0;
+
 interface UseReceptionStateOptions {
   preselectedProduct?: Product | null;
   onCancel?: () => void;
@@ -584,7 +592,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     const name = manualName.trim();
     if (!name) { toast.error('El nombre del producto es obligatorio'); return; }
 
-    const sku = manualSku.trim() || `AUTO-${Date.now().toString(36).toUpperCase()}`;
+    const sku = manualSku.trim() || `AUTO-${Date.now().toString(36).toUpperCase()}-${(++autoSkuSeq).toString(36).toUpperCase()}`;
 
     if (items.some(i => i.sku.toLowerCase() === sku.toLowerCase())) {
       toast.error(`Ya existe un producto con SKU "${sku}" en esta recepcion`);
