@@ -345,15 +345,21 @@ function generatePaymentId(): string {
 // Esto mantiene compatibilidad con el backend RPC (create_sale) y código no migrado
 // que todavía lee cash_paid/transfer_paid/zelle_paid directamente.
 // Se llama después de cada mutación a payments[].
-function syncLegacyFields(item: CartItem): void {
+//
+// MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24): cuando un método tiene filas
+// en VARIAS monedas (p. ej. efectivo 5 USD + 15 000 CUP), la suma NOMINAL de
+// importes de monedas distintas es un sinsentido contable (15 005 «CUP»).
+// Regla nueva: en ese caso el campo legacy guarda la suma CANÓNICA en CUP
+// (convertida con `rates` — globalRates hidratadas de la tienda, misma
+// prioridad que usePOSCheckout) y la moneda legacy pasa a 'CUP' (moneda de
+// cuenta interna). Con una sola moneda por método el comportamiento previo
+// se conserva (importe real + su moneda). El desglose REAL por moneda viaja
+// al servidor por `payment_components` (src/lib/pos/payment-components.ts).
+function syncLegacyFields(item: CartItem, rates?: Record<string, number>): void {
   // Reset legacy fields
   item.cash_paid = 0;
   item.transfer_paid = 0;
   item.zelle_paid = 0;
-  // Para monedas legacy: tomar la del primer pago de cada método
-  let cashCur = item.cash_currency || 'CUP';
-  let transferCur = item.transfer_currency || 'CUP';
-  let zelleCur = item.zelle_currency || 'USD';
   // Reset discount legacy fields
   item.cash_discount_type = null;
   item.cash_discount_value = 0;
@@ -365,37 +371,57 @@ function syncLegacyFields(item: CartItem): void {
   item.zelle_discount_value = 0;
   item.zelle_discount_currency = 'USD';
 
+  // MISIÓN PAGOS MIXTOS: acumuladores por método — importe real por moneda y
+  // equivalente canónico CUP (para el caso multi-moneda).
+  const methodAcc: Record<string, { cup: number; usdLike: number; foreign: number; lastCur: string }> = {
+    cash: { cup: 0, usdLike: 0, foreign: 0, lastCur: 'CUP' },
+    transfer: { cup: 0, usdLike: 0, foreign: 0, lastCur: 'CUP' },
+    zelle: { cup: 0, usdLike: 0, foreign: 0, lastCur: 'USD' },
+  };
+  const rateOf = (p: { currency: string }): number => {
+    if (p.currency === 'CUP') return 1;
+    const r = rates?.[p.currency];
+    if (r && r > 0) return r;
+    return p.currency === item.currency ? (item.exchange_rate || 1) : 1;
+  };
+
   for (const p of item.payments) {
-    if (p.method === 'cash') {
-      item.cash_paid += p.amount;
-      cashCur = p.currency;
-      // Si la fila tiene ajuste, reflejarlo en legacy (última fila con ajuste gana)
-      if (p.discount_type && p.discount_value) {
-        item.cash_discount_type = p.discount_type;
-        item.cash_discount_value = p.discount_value;
-        item.cash_discount_currency = p.discount_currency;
-      }
-    } else if (p.method === 'transfer') {
-      item.transfer_paid += p.amount;
-      transferCur = p.currency;
-      if (p.discount_type && p.discount_value) {
-        item.transfer_discount_type = p.discount_type;
-        item.transfer_discount_value = p.discount_value;
-        item.transfer_discount_currency = p.discount_currency;
-      }
-    } else if (p.method === 'zelle') {
-      item.zelle_paid += p.amount;
-      zelleCur = p.currency;
-      if (p.discount_type && p.discount_value) {
-        item.zelle_discount_type = p.discount_type;
-        item.zelle_discount_value = p.discount_value;
-        item.zelle_discount_currency = p.discount_currency;
-      }
+    const acc = methodAcc[p.method];
+    if (!acc) continue;
+    acc.cup += (p.amount || 0) * rateOf(p);
+    if (p.currency === 'CUP') acc.usdLike += p.amount || 0;
+    else acc.foreign += p.amount || 0;
+    acc.lastCur = p.currency;
+    // Si la fila tiene ajuste, reflejarlo en legacy (última fila con ajuste gana)
+    if (p.discount_type && p.discount_value) {
+      const typeKey = `${p.method}_discount_type` as 'cash_discount_type';
+      const valueKey = `${p.method}_discount_value` as 'cash_discount_value';
+      const curKey = `${p.method}_discount_currency` as 'cash_discount_currency';
+      (item as unknown as Record<string, unknown>)[typeKey] = p.discount_type;
+      (item as unknown as Record<string, unknown>)[valueKey] = p.discount_value;
+      (item as unknown as Record<string, unknown>)[curKey] = p.discount_currency;
     }
   }
-  item.cash_currency = cashCur;
-  item.transfer_currency = transferCur;
-  item.zelle_currency = zelleCur;
+
+  // Volcado a los campos legacy con la regla de moneda única vs multi-moneda.
+  const flush = (method: 'cash' | 'transfer' | 'zelle'): void => {
+    const acc = methodAcc[method];
+    const paidKey = `${method}_paid` as 'cash_paid';
+    const curKey = `${method}_currency` as 'cash_currency';
+    const singleCurrency = acc.foreign === 0 || acc.usdLike === 0;
+    if (singleCurrency) {
+      // Una sola moneda: importe real + esa moneda (comportamiento previo).
+      (item as unknown as Record<string, unknown>)[paidKey] = acc.foreign > 0 ? acc.foreign : acc.usdLike;
+      (item as unknown as Record<string, unknown>)[curKey] = acc.lastCur;
+    } else {
+      // Multi-moneda: suma canónica CUP + moneda CUP (documentado arriba).
+      (item as unknown as Record<string, unknown>)[paidKey] = Math.round((acc.cup + Number.EPSILON) * 100) / 100;
+      (item as unknown as Record<string, unknown>)[curKey] = 'CUP';
+    }
+  };
+  flush('cash');
+  flush('transfer');
+  flush('zelle');
 }
 
 // FIX-MULTI-CURRENCY-CORE (2026-07-07): función auxiliar para obtener la tasa
@@ -838,7 +864,7 @@ export const useCartStore = create<CartState>()(
                   // Si no hay fila cash, asegurar que la primera fila tenga el subtotal
                   existing.payments[0].amount = existing.subtotal;
                 }
-                syncLegacyFields(existing);
+                syncLegacyFields(existing, state.globalRates);
               } else if (state.operationType !== 'issue_slip') {
                 // FIX-MISIÓN-VS (2026-10-21): en modo Vale NO se fabrican pagos
                 // legacy (cash_paid=subtotal) — el vale no es una venta cobrada y
@@ -964,7 +990,7 @@ export const useCartStore = create<CartState>()(
               if (newItem.payments.length > 0) {
                 newItem.payments[0].amount = newItem.subtotal;
               }
-              syncLegacyFields(newItem);
+              syncLegacyFields(newItem, state.globalRates);
               state.items.push(newItem);
             }
             state.lastUpdated = Date.now();
@@ -1032,7 +1058,7 @@ export const useCartStore = create<CartState>()(
                   discount_currency: item.cash_currency || item.currency || 'CUP',
                 }];
               }
-              if (state.operationType !== 'issue_slip') syncLegacyFields(item);
+              if (state.operationType !== 'issue_slip') syncLegacyFields(item, state.globalRates);
               state.lastUpdated = Date.now();
             }
           }),
@@ -1063,7 +1089,7 @@ export const useCartStore = create<CartState>()(
                   discount_currency: item.cash_currency || item.currency || 'CUP',
                 }];
               }
-              if (state.operationType !== 'issue_slip') syncLegacyFields(item);
+              if (state.operationType !== 'issue_slip') syncLegacyFields(item, state.globalRates);
               state.lastUpdated = Date.now();
             }
           }),
@@ -1112,7 +1138,7 @@ export const useCartStore = create<CartState>()(
                 discount_value: 0,
                 discount_currency: item.cash_currency || item.currency || 'CUP',
               }];
-              syncLegacyFields(item);
+              syncLegacyFields(item, state.globalRates);
             }
             state.lastUpdated = Date.now();
           }),
@@ -1268,7 +1294,7 @@ export const useCartStore = create<CartState>()(
               }
               // FIX-PAYMENT-MODE: marcar override manual
               item.payment_manual_override = true;
-              syncLegacyFields(item);
+              syncLegacyFields(item, state.globalRates);
               state.lastUpdated = Date.now();
             }
           }),
@@ -1295,7 +1321,7 @@ export const useCartStore = create<CartState>()(
                 discount_currency: currency,
               });
               item.payment_manual_override = true;
-              syncLegacyFields(item);
+              syncLegacyFields(item, state.globalRates);
               state.lastUpdated = Date.now();
             }
           }),
@@ -1311,7 +1337,7 @@ export const useCartStore = create<CartState>()(
             );
             if (item && item.payments && item.payments.length > 1) {
               item.payments = item.payments.filter(p => p.id !== paymentId);
-              syncLegacyFields(item);
+              syncLegacyFields(item, state.globalRates);
               state.lastUpdated = Date.now();
             }
           }),
@@ -1339,7 +1365,7 @@ export const useCartStore = create<CartState>()(
                 };
                 item.payments.splice(idx + 1, 0, clone);
                 item.payment_manual_override = true;
-                syncLegacyFields(item);
+                syncLegacyFields(item, state.globalRates);
                 state.lastUpdated = Date.now();
               }
             }
@@ -1374,7 +1400,7 @@ export const useCartStore = create<CartState>()(
                   row.discount_currency = 'USD';
                 }
                 item.payment_manual_override = true;
-                syncLegacyFields(item);
+                syncLegacyFields(item, state.globalRates);
                 state.lastUpdated = Date.now();
               }
             }
@@ -1484,7 +1510,7 @@ export const useCartStore = create<CartState>()(
                   discount_currency: item.cash_currency || item.currency || 'CUP',
                 });
               }
-              syncLegacyFields(item);
+              syncLegacyFields(item, state.globalRates);
             });
             state.lastUpdated = Date.now();
           }),

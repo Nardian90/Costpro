@@ -27,6 +27,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
 import { reconstructTxCollections, accumulateSalesSplit, normCur, type CollectionItem, type CollectionTx, type SalesSplitAccum } from '@/lib/cash-report/collection-currency';
+import { fetchSalePaymentsByTx } from '@/lib/cash-report/fetch-sale-payments';
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
@@ -86,12 +87,33 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       }
     }
 
+    // MISIÓN PAGOS MIXTOS (2026-10-24): filas de payment_transactions
+    // (ref_type='sale') por venta — moneda REAL por componente con la tasa de
+    // la operación persistida. Ventas con componentes (v2.25.0) se clasifican
+    // por LEDGER directo; históricas conservan la heurística.
+    const paymentsByTx = await fetchSalePaymentsByTx(
+      ids => supabase
+        .from('payment_transactions')
+        .select('transaction_id, payment_method, currency, amount, exchange_rate')
+        .eq('ref_type', 'sale')
+        .in('transaction_id', ids),
+      txIds,
+    );
+
     const acc: SalesSplitAccum = {};
     const txWithoutItems: Array<Record<string, unknown>> = [];
     for (const tx of (data || []) as Array<Record<string, unknown>>) {
       const items = itemsByTx.get(tx.id as string) || [];
-      if (items.length === 0) { txWithoutItems.push(tx); continue; }
-      const result = reconstructTxCollections(tx as unknown as CollectionTx, items as unknown as CollectionItem[]);
+      const payments = paymentsByTx.get(tx.id as string);
+      if (items.length === 0) {
+        if (payments && payments.length > 0) {
+          accumulateSalesSplit(acc, reconstructTxCollections(tx as unknown as CollectionTx, [], payments));
+        } else {
+          txWithoutItems.push(tx);
+        }
+        continue;
+      }
+      const result = reconstructTxCollections(tx as unknown as CollectionTx, items as unknown as CollectionItem[], payments);
       accumulateSalesSplit(acc, result);
     }
     // Transacciones sin ítems: comportamiento previo (pool → sale_currency).

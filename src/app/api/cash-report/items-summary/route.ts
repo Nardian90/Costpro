@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { buildItemsSummary, type CollectionItem, type CollectionTx } from '@/lib/cash-report/collection-currency';
+import { fetchSalePaymentsByTx } from '@/lib/cash-report/fetch-sale-payments';
 
 /**
  * GET /api/cash-report/items-summary
@@ -74,6 +75,25 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // MISIÓN PAGOS MIXTOS (2026-10-24): filas de payment_transactions
+    // (ref_type='sale') por venta — moneda REAL de cada componente y tasa de
+    // la operación persistida. Ventas con componentes (v2.25.0) se clasifican
+    // por LEDGER directo; históricas conservan la heurística.
+    const txIdsAll = [...new Set((data || []).map((row: Record<string, unknown>) => String(row.transaction_id || '')))].filter(Boolean);
+    let paymentsByTx = new Map<string, Parameters<typeof buildItemsSummary>[0][number]['payments']>();
+    try {
+      paymentsByTx = await fetchSalePaymentsByTx(
+        ids => supabase
+          .from('payment_transactions')
+          .select('transaction_id, payment_method, currency, amount, exchange_rate')
+          .eq('ref_type', 'sale')
+          .in('transaction_id', ids),
+        txIdsAll,
+      );
+    } catch (payErr: unknown) {
+      console.warn('[cash-report/items-summary] ledger de pagos no disponible:', (payErr as { message?: string })?.message);
+    }
+
     const rows = (data || []).map((row: Record<string, unknown>) => {
       const p = row.products as Record<string, unknown> | null;
       const t = row.transactions as Record<string, unknown> | null;
@@ -104,10 +124,10 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         sale_currency: t?.sale_currency as string,
         sale_exchange_rate: t?.sale_exchange_rate as number,
       };
-      return { item, tx, txId: String(t?.id || row.transaction_id || '') };
+      return { item, tx, txId: String(t?.id || row.transaction_id || ''), payments: paymentsByTx.get(String(t?.id || row.transaction_id || '')) };
     });
 
-    const { items, totals } = buildItemsSummary(rows);
+    const { items, totals, sales_classification } = buildItemsSummary(rows);
 
     // unit_price legacy = promedio ponderado CUP de la línea (se mantiene).
     const result = items.map(p => ({
@@ -137,6 +157,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       transfer_usd: totals.transfer_usd,
       zelle_usd: totals.zelle_usd,
       usd_total: totals.usd_total,
+      // MISIÓN PAGOS MIXTOS (2026-10-24): clasificación por moneda
+      // predominante de cada venta (componentes, tasa persistida, empates).
+      sales_classification: sales_classification,
       count: result.length,
     });
   } catch (error: any) {

@@ -128,6 +128,24 @@ const checkoutSchema = z.object({
   change_given_cup: z.number().min(0).nullable().optional(),
   change_given_usd: z.number().min(0).nullable().optional(),
   change_currency: z.enum(['CUP', 'USD']).nullable().optional(),
+  // MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24): desglose REAL por moneda de
+  // lo efectivamente cobrado — [{method, currency, amount}] con importes
+  // ORIGINALES (sin convertir). El RPC (create_sale_v2 §13.7) valida la
+  // estructura, resuelve la tasa USD de la operación con su jerarquía
+  // autoritativa, DERIVA los pools canónicos (los pools del cuerpo pierden
+  // autoridad financiera) y persiste UNA FILA de payment_transactions POR
+  // COMPONENTE (moneda real + tasa persistida — trazabilidad del Reporte
+  // Entrega). Opcional: sin componentes el flujo es el previo.
+  payment_components: z
+    .array(
+      z.object({
+        method: z.enum(['cash', 'transfer', 'zelle']),
+        currency: z.enum(['CUP', 'USD']),
+        amount: z.number().positive().finite(),
+      }),
+    )
+    .max(20)
+    .optional(),
   idempotency_key: z.string().min(1),
   operation_date: z.string().datetime().optional(),
   items: z.array(itemSchema).min(1),
@@ -283,6 +301,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_change_given_cup: d.change_given_cup ?? null,
     p_change_given_usd: d.change_given_usd ?? null,
     p_change_currency: d.change_currency ?? null,
+    // MISIÓN PAGOS MIXTOS (2026-10-24): desglose real por moneda. NULL cuando
+    // no viaja (venta CUP pura / zelle puro) — comportamiento previo intacto.
+    p_payment_components: d.payment_components?.length ? d.payment_components : null,
   });
 
   if (rpcError) {
@@ -367,6 +388,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
     if (msg.includes('ERR_PAYMENT_MISMATCH')) {
       return NextResponse.json({ error: 'Los pagos no cuadran con el total.' }, { status: 422 });
+    }
+    // MISIÓN PAGOS MIXTOS (2026-10-24): componente de pago inválido.
+    if (msg.includes('ERR_PAYMENT_COMPONENTS_INVALID')) {
+      return NextResponse.json({ error: 'Desglose de pago por moneda inválido: cada componente debe tener método (efectivo/transferencia/zelle), moneda (CUP/USD) e importe positivo. Zelle solo admite USD.' }, { status: 422 });
     }
     // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — errores del vuelto.
     if (msg.includes('ERR_CASH_SETTLEMENT_MISMATCH')) {

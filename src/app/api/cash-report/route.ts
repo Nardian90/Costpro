@@ -100,16 +100,53 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         }
       }
 
+      // 2b) MISIÓN PAGOS MIXTOS (2026-10-24): filas de payment_transactions
+      // (ref_type='sale') de esas ventas — moneda REAL por componente y tasa
+      // de la operación persistida. Cuando son autoritativas (flujo con
+      // componentes, v2.25.0) la reconstrucción las usa DIRECTO.
+      const { fetchSalePaymentsByTx } = await import('@/lib/cash-report/fetch-sale-payments');
+      const paymentsByTx = await fetchSalePaymentsByTx(
+        ids => supabase
+          .from('payment_transactions')
+          .select('transaction_id, payment_method, currency, amount, exchange_rate')
+          .eq('ref_type', 'sale')
+          .in('transaction_id', ids),
+        txIds,
+      );
+
       const { accumulateSalesSplit, buildSalesGroups, reconstructTxCollections, normCur } = await import('@/lib/cash-report/collection-currency');
 
       const results: Array<{ tx: Parameters<typeof reconstructTxCollections>[0]; result: ReturnType<typeof reconstructTxCollections> }> = [];
       const txWithoutItems: Array<Record<string, unknown>> = [];
       for (const tx of txRows || []) {
         const items = itemsByTx.get(tx.id) || [];
-        if (items.length === 0) { txWithoutItems.push(tx as Record<string, unknown>); continue; }
+        const payments = paymentsByTx.get(tx.id);
+        // Ventas CON ítems: reconstrucción con ledger si está disponible
+        // (ventas con componentes) o heurística previa (históricas).
+        if (items.length === 0) {
+          // Sin ítems solo el ledger puede hablar: si la venta tiene filas de
+          // pago autoritativas se reconstruye igual (buckets a nivel venta).
+          if (payments && payments.length > 0) {
+            results.push({
+              tx: tx as unknown as Parameters<typeof reconstructTxCollections>[0],
+              result: reconstructTxCollections(
+                tx as unknown as Parameters<typeof reconstructTxCollections>[0],
+                [],
+                payments as Parameters<typeof reconstructTxCollections>[2],
+              ),
+            });
+          } else {
+            txWithoutItems.push(tx as Record<string, unknown>);
+          }
+          continue;
+        }
         results.push({
           tx: tx as unknown as Parameters<typeof reconstructTxCollections>[0],
-          result: reconstructTxCollections(tx as unknown as Parameters<typeof reconstructTxCollections>[0], items as unknown as Parameters<typeof reconstructTxCollections>[1]),
+          result: reconstructTxCollections(
+            tx as unknown as Parameters<typeof reconstructTxCollections>[0],
+            items as unknown as Parameters<typeof reconstructTxCollections>[1],
+            payments as Parameters<typeof reconstructTxCollections>[2] | undefined,
+          ),
         });
       }
       for (const { result } of results) accumulateSalesSplit(salesSplit as Record<string, { cash: number; transfer: number; zelle: number; mixedUnsplit: number; total: number }>, result);
