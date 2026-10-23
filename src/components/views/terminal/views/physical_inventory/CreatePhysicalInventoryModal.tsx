@@ -46,7 +46,7 @@ export const CreatePhysicalInventoryModal: React.FC<Props> = ({ open, onOpenChan
     return d.toISOString().slice(0, 16); // datetime-local value
   });
   const [description, setDescription] = useState('');
-  const [responsible, setResponsible] = useState(user?.name || user?.email || '');
+  const [responsible, setResponsible] = useState(user?.fullName || user?.email || '');
   const [scopeType, setScopeType] = useState<'full' | 'category' | 'selection'>('full');
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [productSearch, setProductSearch] = useState('');
@@ -57,16 +57,18 @@ export const CreatePhysicalInventoryModal: React.FC<Props> = ({ open, onOpenChan
 
   // Tiendas autorizadas: membresías activas del usuario
   const storeOptions = useMemo<StoreOpt[]>(() => {
-    const active = user?.memberships?.filter((m: { status: string; store?: { id: string; name: string } | string }) => m.status === 'active') || [];
+    const active = (user?.memberships || []).filter((m) => m.status === 'active');
     return active
-      .map((m: { store?: { id: string; name: string } | string }) =>
-        typeof m.store === 'object' ? { id: m.store.id, name: m.store.name } : null)
-      .filter((s: StoreOpt | null): s is StoreOpt => !!s);
+      .map((m) => (m.store ? { id: m.store.id, name: m.store.name } : null))
+      .filter((s): s is StoreOpt => !!s);
   }, [user]);
 
   // Fallback: si las membresías no traen el objeto store, consultar por ids
   const membershipIds = useMemo(
-    () => (user?.memberships || []).filter((m: { status: string }) => m.status === 'active').map((m: { store_id: string }) => m.store_id),
+    () => (user?.memberships || [])
+      .filter((m) => m.status === 'active')
+      .map((m) => m.store_id)
+      .filter((id): id is string => !!id),
     [user]
   );
 
@@ -183,14 +185,13 @@ export const CreatePhysicalInventoryModal: React.FC<Props> = ({ open, onOpenChan
       maxWidth="sm:max-w-2xl"
       footer={
         <div className="flex gap-2">
-          <SecondaryButton className="flex-1" onClick={() => onOpenChange(false)} type="button">
+          <SecondaryButton className="flex-1" onClick={() => onOpenChange(false)}>
             Cancelar
           </SecondaryButton>
           <PrimaryButton
             className="flex-1"
             onClick={handleSubmit}
             disabled={!canSubmit || submitting}
-            type="button"
           >
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardCheck className="h-4 w-4" />}
             Crear inventario

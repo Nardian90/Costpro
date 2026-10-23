@@ -85,9 +85,8 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
   const canSeeTheoretical = useMemo(() => {
     if (user?.role === 'admin') return true;
     const m = (user?.memberships || []).find(
-      (mm: { store_id: string; status: string }) =>
-        mm.store_id === pi?.store_id && mm.status === 'active'
-    ) as { role?: string } | undefined;
+      (mm) => mm.store_id === pi?.store_id && mm.status === 'active'
+    );
     return ['admin', 'manager', 'encargado'].includes(m?.role || '');
   }, [user, pi?.store_id]);
 
@@ -95,9 +94,8 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
   const canClose = useMemo(() => {
     if (user?.role === 'admin') return true;
     const m = (user?.memberships || []).find(
-      (mm: { store_id: string; status: string }) =>
-        mm.store_id === pi?.store_id && mm.status === 'active'
-    ) as { role?: string } | undefined;
+      (mm) => mm.store_id === pi?.store_id && mm.status === 'active'
+    );
     return ['admin', 'manager'].includes(m?.role || '');
   }, [user, pi?.store_id]);
 
@@ -946,7 +944,7 @@ function AuditPanel({ piId, pi, sheets, onChanged }: { piId: string; pi: PIHeade
         .eq('pi_id', piId)
         .order('created_at', { ascending: false })
         .range(from, from + PAGE - 1);
-      return (data || []) as Array<{
+      return (data || []) as unknown as Array<{
         action: string; old_counted_qty: number | null; new_counted_qty: number | null;
         source: string; created_at: string; user?: { full_name: string } | null;
       }>;

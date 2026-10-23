@@ -251,7 +251,7 @@ export async function buildCountSheetPdf(payload: CountSheetPayload): Promise<js
         M, H - 24
       );
       doc.text(
-        `Página ${data.pageNumber} de ${doc.internal.getNumberOfPages()}`,
+        `Página ${data.pageNumber} de ${doc.getNumberOfPages()}`,
         W - M, H - 24, { align: 'right' }
       );
     },

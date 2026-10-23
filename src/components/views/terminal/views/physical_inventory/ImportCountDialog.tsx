@@ -148,7 +148,7 @@ export const ImportCountDialog: React.FC<Props> = ({ open, onOpenChange, pi, lin
             <PrimaryButton
               className="flex-1"
               onClick={apply}
-              disabled={applying || report.valid.length === 0 || (report.conflicts.length > 0 && !overrideConflicts)}
+              disabled={applying || !report || report.valid.length === 0 || (report.conflicts.length > 0 && !overrideConflicts)}
             >
               {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
               Confirmar e importar ({report?.valid.length || 0} línea{report?.valid.length === 1 ? '' : 's'})
@@ -177,7 +177,7 @@ export const ImportCountDialog: React.FC<Props> = ({ open, onOpenChange, pi, lin
                   piNumber: pi.pi_number || 'IF-?',
                   storeName: pi.store?.name || 'Tienda',
                   cutoffDate: pi.cutoff_date,
-                  responsible: pi.responsible_name,
+                  responsible: pi.responsible_name ?? '',
                   blind: pi.blind_mode,
                   lines,
                 })

@@ -328,7 +328,10 @@ CREATE OR REPLACE FUNCTION public.create_physical_inventory(
   p_observations TEXT DEFAULT NULL,
   p_user_id UUID DEFAULT NULL
 ) RETURNS UUID
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
                             THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
@@ -374,7 +377,10 @@ CREATE OR REPLACE FUNCTION public.prepare_physical_inventory(
   p_pi_id UUID,
   p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
@@ -471,7 +477,10 @@ CREATE OR REPLACE FUNCTION public.start_physical_inventory_count(
   p_pi_id UUID,
   p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
@@ -508,7 +517,10 @@ CREATE OR REPLACE FUNCTION public.record_physical_inventory_counts(
   p_source TEXT DEFAULT 'manual',
   p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
@@ -608,7 +620,10 @@ CREATE OR REPLACE FUNCTION public.complete_physical_inventory_count(
   p_accept_pending BOOLEAN DEFAULT false,
   p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
@@ -649,7 +664,10 @@ CREATE OR REPLACE FUNCTION public.submit_physical_inventory_reconciliation(
   p_pi_id UUID,
   p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
@@ -690,7 +708,10 @@ CREATE OR REPLACE FUNCTION public.review_physical_inventory_item(
   p_review_notes TEXT,
   p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
@@ -727,7 +748,10 @@ CREATE OR REPLACE FUNCTION public.submit_physical_inventory_authorization(
   p_pi_id UUID,
   p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
@@ -763,7 +787,10 @@ CREATE OR REPLACE FUNCTION public.generate_adjustments_from_physical_inventory(
   p_pi_id UUID,
   p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
@@ -892,7 +919,10 @@ CREATE OR REPLACE FUNCTION public.close_physical_inventory(
   p_pi_id UUID,
   p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
@@ -936,7 +966,10 @@ CREATE OR REPLACE FUNCTION public.void_physical_inventory(
   p_reason TEXT,
   p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
@@ -975,7 +1008,10 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_physical_inventory_count_lines(
   p_pi_id UUID
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := auth.uid();
@@ -1035,7 +1071,10 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_physical_inventory_reconciliation(
   p_pi_id UUID
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := auth.uid();
@@ -1101,7 +1140,10 @@ CREATE OR REPLACE FUNCTION public.register_physical_inventory_sheet(
   p_filter_summary JSONB DEFAULT NULL,
   p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public' AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
 DECLARE
   v_pi public.physical_inventories%ROWTYPE;
   v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
@@ -1152,7 +1194,8 @@ AS $$
 DECLARE
   v_adj RECORD;
   v_item RECORD;
-  v_caller_uid UUID := COALESCE(p_user_id, auth.uid());
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
+                            THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
   v_new_stock NUMERIC;
   v_count INTEGER := 0;
   v_pi_number TEXT;
@@ -1164,8 +1207,9 @@ BEGIN
     RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden confirmar ajustes pendientes (estado actual: %)', v_adj.status;
   END IF;
 
-  -- Autorización por tienda
-  IF v_caller_uid IS NOT NULL AND NOT public.has_store_access_as(v_caller_uid, v_adj.store_id) THEN
+  -- Autorización por tienda (fail-closed: sin usuario autenticado no se confirma)
+  IF v_caller_uid IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHENTICATED'; END IF;
+  IF NOT public.has_store_access_as(v_caller_uid, v_adj.store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
@@ -1222,6 +1266,8 @@ BEGIN
 END;
 $$;
 
+-- Anti-spoofing: EXECUTE nunca queda expuesto a PUBLIC/anon (default de PostgreSQL)
+REVOKE EXECUTE ON FUNCTION public.confirm_inventory_adjustment(UUID, UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.confirm_inventory_adjustment(UUID, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.confirm_inventory_adjustment(UUID, UUID) TO service_role;
 
@@ -1361,19 +1407,23 @@ GRANT EXECUTE ON FUNCTION public.get_physical_inventory_count_lines(UUID) TO aut
 GRANT EXECUTE ON FUNCTION public.get_physical_inventory_reconciliation(UUID) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.register_physical_inventory_sheet(UUID, TEXT, INTEGER, JSONB, UUID) TO authenticated, service_role;
 
-REVOKE EXECUTE ON FUNCTION public.create_physical_inventory(UUID, TIMESTAMPTZ, TEXT, TEXT, TEXT, TEXT[], UUID[], BOOLEAN, TEXT, UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.prepare_physical_inventory(UUID, UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.start_physical_inventory_count(UUID, UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.record_physical_inventory_counts(UUID, JSONB, TEXT, UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.complete_physical_inventory_count(UUID, BOOLEAN, UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.submit_physical_inventory_reconciliation(UUID, UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.review_physical_inventory_item(UUID, UUID, TEXT, UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.submit_physical_inventory_authorization(UUID, UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.generate_adjustments_from_physical_inventory(UUID, UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.close_physical_inventory(UUID, UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.void_physical_inventory(UUID, TEXT, UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.get_physical_inventory_count_lines(UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.get_physical_inventory_reconciliation(UUID) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.register_physical_inventory_sheet(UUID, TEXT, INTEGER, JSONB, UUID) FROM anon;
+-- PostgreSQL concede EXECUTE a PUBLIC por defecto al crear funciones; un
+-- REVOKE FROM anon NO cubre PUBLIC. Se revoca de PUBLIC y anon explícitamente
+-- (patrón 20260616000001_create_bulk_assign_memberships_rpc.sql) para que
+-- ningún SECURITY DEFINER nuevo quede alcanzable por roles anónimos.
+REVOKE EXECUTE ON FUNCTION public.create_physical_inventory(UUID, TIMESTAMPTZ, TEXT, TEXT, TEXT, TEXT[], UUID[], BOOLEAN, TEXT, UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.prepare_physical_inventory(UUID, UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.start_physical_inventory_count(UUID, UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.record_physical_inventory_counts(UUID, JSONB, TEXT, UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.complete_physical_inventory_count(UUID, BOOLEAN, UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.submit_physical_inventory_reconciliation(UUID, UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.review_physical_inventory_item(UUID, UUID, TEXT, UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.submit_physical_inventory_authorization(UUID, UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.generate_adjustments_from_physical_inventory(UUID, UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.close_physical_inventory(UUID, UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.void_physical_inventory(UUID, TEXT, UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_physical_inventory_count_lines(UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_physical_inventory_reconciliation(UUID) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.register_physical_inventory_sheet(UUID, TEXT, INTEGER, JSONB, UUID) FROM PUBLIC, anon;
 
 NOTIFY pgrst, 'reload schema';

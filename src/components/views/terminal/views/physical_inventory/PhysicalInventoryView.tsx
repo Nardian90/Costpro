@@ -44,9 +44,9 @@ export default function PhysicalInventoryView() {
 
   // Tiendas autorizadas del usuario (para el filtro de tienda)
   const authorizedStores = useMemo(() => {
-    const active = (user?.memberships || []).filter((m: { status: string }) => m.status === 'active');
-    const ids = active.map((m: { store_id: string }) => m.store_id);
-    return ids as string[];
+    const active = (user?.memberships || []).filter((m) => m.status === 'active');
+    const ids = active.map((m) => m.store_id).filter((id): id is string => !!id);
+    return ids;
   }, [user]);
 
   const [storeFilter, setStoreFilter] = useState<string>('');

@@ -16,6 +16,7 @@
  */
 
 import { createWorkbook } from '@/lib/export/lazy-excel';
+import type { WorkBook } from '@e965/xlsx';
 import type { PILine } from './pi-types';
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ export async function downloadCountTemplate(payload: TemplatePayload): Promise<v
   const lastCol = XLSX.utils.encode_col(nCols - 1);
   // Encabezado en negrita + fondo (xlsx-js-style NO mezclado aquí: la plantilla
   // usa @e965/xlsx; los estilos de celda se aplican con z === '@' de texto simple)
-  (ws as unknown as { ['!format' as string]: unknown })['!freeze'] = 'A2';
+  ws['!freeze'] = 'A2';
   ws['!cols'] = payload.blind
     ? [{ wch: 6 }, { wch: 38 }, { wch: 16 }, { wch: 42 }, { wch: 10 }, { wch: 16 }, { wch: 32 }]
     : [{ wch: 6 }, { wch: 38 }, { wch: 16 }, { wch: 42 }, { wch: 10 }, { wch: 20 }, { wch: 16 }, { wch: 32 }];
@@ -132,7 +133,7 @@ export async function parseCountImport(
 ): Promise<{ report: ImportReport; fatal?: string }> {
   const XLSX = await createWorkbook();
   const buf = await file.arrayBuffer();
-  let wb: ReturnType<typeof XLSX.read> extends Promise<infer T> ? T : never;
+  let wb: WorkBook;
   try {
     wb = XLSX.read(buf, { type: 'array' });
   } catch {
