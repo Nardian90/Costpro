@@ -34,7 +34,10 @@ import {
   type ThermalReceiptData,
 } from "@/lib/pos/thermal-receipt";
 
-export type ThermalPrintOutcome = "dialog-opened" | "no-print-api";
+export type ThermalPrintOutcome =
+  | "dialog-opened"
+  | "no-print-api"
+  | "insufficient-data";
 
 // ── Caché del nombre de la tienda (misma fuente que CashReportView) ─────────
 
@@ -77,9 +80,14 @@ let activeCleanup: (() => void) | null = null;
 /**
  * Imprime el comprobante térmico con el ancho de rollo configurado.
  *
- * Pasos: monta el recibo fuera del árbol de React → inyecta el CSS @page →
- * espera 2 frames (render + layout) → window.print() → limpieza en afterprint
- * (fallback de tiempo por si el evento no dispara en el navegador).
+ * Pasos: valida que haya datos suficientes → monta el recibo fuera del árbol
+ * de React → inyecta el CSS @page + @media print → espera 2 frames (render +
+ * layout) → window.print() → limpieza en afterprint (fallback de tiempo por
+ * si el evento no dispara en el navegador).
+ *
+ * VALIDACIÓN DE DATOS (misión 2026-10-23 §7): si la venta no tiene artículos
+ * o carece de identificador, NO se abre el diálogo — un comprobante aparente
+ * con datos incompletos es peor que un error claro. Se informa al usuario.
  *
  * Los toasts informan con precisión: apertura del diálogo, NUNCA éxito físico.
  */
@@ -96,10 +104,45 @@ export async function printThermalReceipt(
     return "no-print-api";
   }
 
+  // Guardia de suficiencia de datos (misión §7.4): sin identificador o sin
+  // líneas no existe un comprobante imprimible — error comprensible y aborto
+  // ANTES de montar nada o abrir el diálogo.
+  if (
+    !data ||
+    !data.saleId ||
+    !Array.isArray(data.items) ||
+    data.items.length === 0
+  ) {
+    toast.error(
+      "El comprobante no tiene datos suficientes (venta sin artículos o sin identificar). Reintenta desde el registro de la venta.",
+      { duration: 7000 },
+    );
+    return "insufficient-data";
+  }
+
   // Recoger una impresión previa aún viva (dialogo olvidado abierto, etc.)
   activeCleanup?.();
 
   const widthMm = getThermalWidthMm();
+
+  // 0. CANVAS DE IMPRESIÓN CLARO (causa raíz #2 del comprobante "en blanco",
+  //    misión 2026-10-23): la app compila reglas del tipo
+  //    `html.mode-performance:not(:has(#landing-root)).dark { background:
+  //    var(--background-solid, #121212) !important }` — especificidad ~(1,2,1)
+  //    con !important que ningún CSS de impresión razonable puede superar, y ese
+  //    fondo oscuro del <html> se propaga al canvas de impresión (páginas 100%
+  //    negras — verificado empíricamente con matched-styles CDP). Solución
+  //    robusta: durante la ventana de impresión se retiran del <html> las clases
+  //    de tema/modo oscuro (con snapshot verbatim para restaurarlas EXACTAMENTE
+  //    al cerrar el diálogo en cleanup). Sin .dark/.mode-performance esas reglas
+  //    dejan de aplicar y el canvas vuelve a blanco. La pantalla puede traslucir
+  //    un instante en modo claro detrás del diálogo — comportamiento estándar
+  //    de las librerías de impresión tipo react-to-print.
+  const htmlEl = document.documentElement;
+  const savedHtmlClass: string | null = htmlEl.getAttribute("class");
+  const savedDataTheme: string | null = htmlEl.getAttribute("data-theme");
+  htmlEl.classList.remove("dark", "theme-dark", "mode-performance");
+  htmlEl.removeAttribute("data-theme");
 
   // 1. Contenedor fuera del árbol de React, fuera de pantalla en pantalla.
   const container = document.createElement("div");
@@ -127,8 +170,15 @@ export async function printThermalReceipt(
 
   // 4. Limpieza: afterprint + fallback (algunos navegadores no disparan el
   //    evento si el diálogo se cancela rápido; 120s cubre diálogos abiertos).
+  //    Restaura además las clases del <html> retiradas en el paso 0.
   let cleaned = false;
   const fallbackTimer = window.setTimeout(() => cleanup(), 120_000);
+  function restoreHtmlTheme() {
+    if (savedHtmlClass === null) htmlEl.removeAttribute("class");
+    else htmlEl.setAttribute("class", savedHtmlClass);
+    if (savedDataTheme === null) htmlEl.removeAttribute("data-theme");
+    else htmlEl.setAttribute("data-theme", savedDataTheme);
+  }
   function cleanup() {
     if (cleaned) return;
     cleaned = true;
@@ -142,6 +192,7 @@ export async function printThermalReceipt(
     root = null;
     container.remove();
     styleEl.remove();
+    restoreHtmlTheme();
     if (activeCleanup === cleanup) activeCleanup = null;
   }
   function onAfterPrint() {

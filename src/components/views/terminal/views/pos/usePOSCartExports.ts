@@ -193,7 +193,7 @@ export function usePOSCartExports({ lastSale }: UsePOSCartExportsOptions) {
 
   /**
    * MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): imprime el comprobante POS al ancho
-   * del rollo configurado (58 mm por defecto; configurable en la UI del éxito
+   * del rollo configurado (55 mm por defecto — rollo de la misión 2026-10-23 —; configurable en la UI del éxito
    * de venta). Abre el diálogo nativo del navegador — honesto por diseño: se
    * informa que el diálogo se abrió, NUNCA que la impresión física ocurrió.
    * La venta ya está confirmada: imprimir/reimprimir no la altera.

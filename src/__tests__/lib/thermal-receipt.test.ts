@@ -1,11 +1,15 @@
 /**
- * MISIÓN IMPRESIÓN TÉRMICA (2026-10-20) — Tests de la lib pura thermal-receipt.
+ * MISIÓN IMPRESIÓN TÉRMICA (2026-10-20) + MISIÓN 55 MM (2026-10-23) — Tests
+ * de la lib pura thermal-receipt.
  *
  * Cobertura:
- *  - Configuración de ancho de rollo (default 58 mm, sanitización, persistencia
- *    en localStorage, presets 58/80).
- *  - CSS de impresión: @page al ancho configurado, ocultación de la interfaz,
- *    comprobante visible en blanco/negro.
+ *  - Configuración de ancho de rollo (default 55 mm — rollo de la misión
+ *    2026-10-23 —, sanitización, persistencia en localStorage, presets 55/58/80).
+ *  - CSS de impresión (estrategia 2026-10-23): @page AL NIVEL SUPERIOR al
+ *    ancho configurado, app oculta con display:none (sin páginas vacías),
+ *    overlay contenedor NEUTRALIZADO a static (el viejo absolute dentro de un
+ *    contenedor fijo en -10000px era la causa raíz del comprobante en blanco),
+ *    canvas claro (color-scheme: light — la app dark pintaba páginas negras).
  *  - aggregateItemPayments: filas payments[] + legacy, por método y moneda,
  *    orden estable, importes ≤ 0 ignorados, redondeo a 2 decimales.
  *  - buildReceiptDataFromLastSale: mapeo de sku/variante/moneda, importes CUP
@@ -36,13 +40,13 @@ describe('MISIÓN IMPRESIÓN TÉRMICA — configuración de ancho de rollo', () 
     window.localStorage.clear();
   });
 
-  it('default honesto: 58 mm cuando no hay configuración guardada', () => {
-    expect(DEFAULT_THERMAL_WIDTH_MM).toBe(58);
-    expect(getThermalWidthMm()).toBe(58);
+  it('default honesto: 55 mm (rollo de la misión 2026-10-23) cuando no hay configuración guardada', () => {
+    expect(DEFAULT_THERMAL_WIDTH_MM).toBe(55);
+    expect(getThermalWidthMm()).toBe(55);
   });
 
-  it('presets disponibles: 58 y 80 mm (el ancho del equipo NO se presupone verificado)', () => {
-    expect([...THERMAL_WIDTH_PRESETS]).toEqual([58, 80]);
+  it('presets disponibles: 55, 58 y 80 mm (el ancho del equipo NO se presupone verificado)', () => {
+    expect([...THERMAL_WIDTH_PRESETS]).toEqual([55, 58, 80]);
   });
 
   it('persiste y recupera un ancho válido (80 mm)', () => {
@@ -59,17 +63,17 @@ describe('MISIÓN IMPRESIÓN TÉRMICA — configuración de ancho de rollo', () 
     expect(sanitizeThermalWidthMm(NaN)).toBeNull();
     expect(sanitizeThermalWidthMm(72)).toBe(72);
     // setThermalWidthMm con valor inválido → conserva el default
-    expect(setThermalWidthMm(500)).toBe(58);
-    expect(getThermalWidthMm()).toBe(58);
+    expect(setThermalWidthMm(500)).toBe(55);
+    expect(getThermalWidthMm()).toBe(55);
   });
 
-  it('localStorage corrupto/ilegible → default 58 sin lanzar', () => {
+  it('localStorage corrupto/ilegible → default 55 sin lanzar', () => {
     window.localStorage.setItem('costpro_thermal_receipt_width_mm', 'no-es-numero');
-    expect(getThermalWidthMm()).toBe(58);
+    expect(getThermalWidthMm()).toBe(55);
     const spy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('storage bloqueado');
     });
-    expect(getThermalWidthMm()).toBe(58);
+    expect(getThermalWidthMm()).toBe(55);
     spy.mockRestore();
   });
 });
@@ -85,22 +89,34 @@ describe('MISIÓN IMPRESIÓN TÉRMICA — CSS de impresión (@page + ocultación
     expect(css).toContain('@page { size: 80mm auto; margin: 3mm; }');
   });
 
-  it('oculta TODA la interfaz salvo el comprobante (#thermal-receipt-root visible)', () => {
-    const css = buildThermalPrintCss(58);
-    expect(css).toContain('body * { visibility: hidden !important; }');
-    expect(css).toContain('#thermal-receipt-root, #thermal-receipt-root * { visibility: visible !important; }');
-    expect(css).toContain('position: absolute !important');
+  it('oculta TODA la interfaz salvo el comprobante (display:none + overlay static — fix 2026-10-23)', () => {
+    const css = buildThermalPrintCss(55);
+    // La app se oculta SIN conservar altura (la vieja estrategia visibility
+    // dejaba 3 páginas vacías — causa del comprobante "en blanco")
+    expect(css).toContain(
+      'body > *:not([data-thermal-print-overlay]) { display: none !important; }',
+    );
+    // El contenedor del recibo vuelve al flujo (antes quedaba fijo en -10000px
+    // y arrastraba al recibo fuera de la página imprimible)
+    expect(css).toContain('[data-thermal-print-overlay] {');
+    expect(css).toContain('position: static !important;');
+    // El recibo raíz también estático, al 100% del ancho imprimible
+    expect(css).toContain('#thermal-receipt-root {');
+    expect(css).not.toContain('visibility: hidden');
+    expect(css).not.toContain('position: absolute !important');
   });
 
-  it('fuerza fondo blanco y cuerpo sin márgenes (compatibilidad monocromática)', () => {
-    const css = buildThermalPrintCss(58);
+  it('canvas de impresión claro: color-scheme light + fondo blanco (app dark → páginas negras)', () => {
+    const css = buildThermalPrintCss(55);
+    expect(css).toContain('color-scheme: light !important;');
+    expect(css).toContain('html.dark, html[data-theme="dark"]');
     expect(css).toContain('background: #ffffff !important');
     expect(css).toContain('color: #000000 !important');
   });
 
-  it('ancho inválido en el CSS → cae al default 58 (fail-safe)', () => {
+  it('ancho inválido en el CSS → cae al default 55 (fail-safe)', () => {
     const css = buildThermalPrintCss(999);
-    expect(css).toContain('@page { size: 58mm auto');
+    expect(css).toContain('@page { size: 55mm auto');
   });
 });
 
