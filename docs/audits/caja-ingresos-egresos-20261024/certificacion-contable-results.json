@@ -1,0 +1,419 @@
+{
+  "generated": "2026-10-23T23:20:48.710Z",
+  "db": "cajamision (aislada, PG 18.4)",
+  "pass": 51,
+  "fail": 0,
+  "results": [
+    {
+      "id": "A1",
+      "desc": "constitución 5000 CUP: documento confirmado",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "A1-net",
+      "desc": "net CUP tras constitución = 5000",
+      "expected": {
+        "CUP": 5000
+      },
+      "observed": {
+        "CUP": 5000
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "A1-fondo",
+      "desc": "fondo vigente = 5000 (sin turno-declarado, fondo=flujo)",
+      "expected": 5000,
+      "observed": 5000,
+      "status": "PASS"
+    },
+    {
+      "id": "A2",
+      "desc": "reposición 2000 CUP OK",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "A2-net",
+      "desc": "net CUP 7000 (reposición = movimiento posterior, sin doble conteo)",
+      "expected": 7000,
+      "observed": 7000,
+      "status": "PASS"
+    },
+    {
+      "id": "A3",
+      "desc": "devolución parcial 1500 OK (vinculada al origen)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "A3-net",
+      "desc": "net CUP 5500",
+      "expected": 5500,
+      "observed": 5500,
+      "status": "PASS"
+    },
+    {
+      "id": "A4",
+      "desc": "devolución total 5500 OK",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "A4-net",
+      "desc": "net CUP 0 · fondo agotado",
+      "expected": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "A5",
+      "desc": "devolución > fondo disponible RECHAZADA (fondo agotado: ERR_FUND_INSUFFICIENT o el guard de efectivo disponible)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "A6",
+      "desc": "reintento (misma clave + mismo payload) → replay benigno con MISMO documento",
+      "expected": "089ab2b2-f929-46ac-a638-e49ae624fda1",
+      "observed": "089ab2b2-f929-46ac-a638-e49ae624fda1",
+      "status": "PASS"
+    },
+    {
+      "id": "A6-rows",
+      "desc": "replay NO crea filas nuevas",
+      "expected": 4,
+      "observed": 4,
+      "status": "PASS"
+    },
+    {
+      "id": "A6-net",
+      "desc": "replay NO altera el saldo",
+      "expected": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "B1",
+      "desc": "ingreso válido 1000 CUP",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B1-net",
+      "desc": "net CUP 1000",
+      "expected": 1000,
+      "observed": 1000,
+      "status": "PASS"
+    },
+    {
+      "id": "B2",
+      "desc": "egreso válido 300 CUP",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B2-net",
+      "desc": "net CUP 700",
+      "expected": 700,
+      "observed": 700,
+      "status": "PASS"
+    },
+    {
+      "id": "B3",
+      "desc": "justificación ausente RECHAZADA",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B4a",
+      "desc": "importe cero RECHAZADO",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B4b",
+      "desc": "importe negativo RECHAZADO",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B4c",
+      "desc": "importe con 3 decimales RECHAZADO",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B5a",
+      "desc": "fecha futura RECHAZADA (gate global)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B5b",
+      "desc": "fecha >6 meses atrás RECHAZADA",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B5c",
+      "desc": "fecha anterior a la apertura del turno RECHAZADA (ERR_DATE_OUTSIDE_SHIFT)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B7a",
+      "desc": "solicitud duplicada (misma clave+payload) → replay benigno",
+      "expected": "97f0a49c-5bf0-4ff3-9498-05d8d266fd1c",
+      "observed": "97f0a49c-5bf0-4ff3-9498-05d8d266fd1c",
+      "status": "PASS"
+    },
+    {
+      "id": "B7b",
+      "desc": "misma clave + payload DISTINTO RECHAZADO (reuse)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B8a",
+      "desc": "usuario de OTRA tienda RECHAZADO (aislamiento multitienda)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B8b",
+      "desc": "clerk NO puede entregar efectivo (rol de autoridad)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "B8c",
+      "desc": "usuario inexistente RECHAZADO (fail-closed)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "C1",
+      "desc": "ingreso 20 USD OK (tasa elToque 480)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "C1-doc",
+      "desc": "documento USD: canónico amount_cup = 9600",
+      "expected": 9600,
+      "observed": 9600,
+      "status": "PASS"
+    },
+    {
+      "id": "C2",
+      "desc": "net por moneda SEPARADO: CUP 700 · USD 20 (sin conversión implícita)",
+      "expected": {
+        "CUP": 700,
+        "USD": 20
+      },
+      "observed": {
+        "CUP": 700,
+        "USD": 20
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "C3",
+      "desc": "flujo del período por moneda (in_usd 20 · in_cup 8000)",
+      "expected": {
+        "in_cup": 8000,
+        "in_usd": 20
+      },
+      "observed": {
+        "in_cup": 8000,
+        "in_usd": 20
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "D1",
+      "desc": "reversión del egreso 300 OK",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "D1-net",
+      "desc": "reversión compensa EXACTAMENTE (+300 CUP, una sola vez)",
+      "expected": 1000,
+      "observed": 1000,
+      "status": "PASS"
+    },
+    {
+      "id": "D1-doc",
+      "desc": "documento original marcado anulado (no borrado) + contra-movimiento vinculado",
+      "expected": {
+        "status": "anulado",
+        "contra": true
+      },
+      "observed": {
+        "status": "anulado",
+        "contra": true
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "D1-contra",
+      "desc": "contra-movimiento: direction in · 300 CUP · ref cash_flow (trazabilidad)",
+      "expected": {
+        "direction": "in",
+        "amount": 300,
+        "ref": "cash_flow"
+      },
+      "observed": {
+        "direction": "in",
+        "amount": 300,
+        "ref": "cash_flow"
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "D2",
+      "desc": "segundo intento de reversión RECHAZADO (sin efecto duplicado)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "D2-net",
+      "desc": "saldo intacto tras el segundo intento",
+      "expected": 1000,
+      "observed": 1000,
+      "status": "PASS"
+    },
+    {
+      "id": "D3",
+      "desc": "reversión CONCURRENTE: exactamente UNA de las dos prevalece",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS"
+    },
+    {
+      "id": "D3-net",
+      "desc": "efecto de la reversión concurrente = +100 (una vez)",
+      "expected": 1000,
+      "observed": 1000,
+      "status": "PASS"
+    },
+    {
+      "id": "D4",
+      "desc": "doble gasto concurrente: solo UN egreso pasa (advisory lock)",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS"
+    },
+    {
+      "id": "D4-net",
+      "desc": "canónico final tras doble gasto = 50 (no negativo)",
+      "expected": 50,
+      "observed": 50,
+      "status": "PASS"
+    },
+    {
+      "id": "E1",
+      "desc": "fecha efectiva ≠ creación: payment_date = fecha operativa (no NOW())",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "E2",
+      "desc": "libro por moneda = espejo SQL independiente (mismas fuentes y reglas)",
+      "expected": {
+        "CUP": -9540,
+        "USD": 20
+      },
+      "observed": {
+        "CUP": -9540,
+        "USD": 20
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "F1",
+      "desc": "cada documento confirmado=1 PT · anulado=2 PT (original+contra) · sin huérfanos",
+      "expected": 0,
+      "observed": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "F2",
+      "desc": "venta 500 CUP (cobro 600, vuelto 100): net CUP += 500 — contada UNA vez",
+      "expected": -9040,
+      "observed": -9040,
+      "status": "PASS"
+    },
+    {
+      "id": "F2b",
+      "desc": "la venta no genera PT ref_type=sale (una sola contabilización)",
+      "expected": 0,
+      "observed": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "F3",
+      "desc": "aislamiento multitienda: S2 net 0/0 (nada de S1)",
+      "expected": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "F3b",
+      "desc": "S2 sin documentos",
+      "expected": 0,
+      "observed": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "F4",
+      "desc": "usuario de otra tienda NO puede anular documentos ajenos",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    }
+  ]
+}
