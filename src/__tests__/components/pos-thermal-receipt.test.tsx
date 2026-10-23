@@ -10,7 +10,7 @@
  *     montaje fuera del árbol, llamada al diálogo nativo (window.print),
  *     limpieza, y caso 'no-print-api' (navegador sin soporte).
  *  3. POSCartSuccessView: botón «Imprimir comprobante» dispara onPrint;
- *     selector de ancho de rollo persiste 58/80/personalizado.
+ *     selector de ancho de rollo persiste 55/58/80/personalizado.
  *  4. usePOSCheckout: lastSale enriquecido (sku, moneda, subtotalCup, pagos
  *     agregados, vuelto del panel) tras checkout exitoso — mismo harness que
  *     pos-checkout-usd-cup.test.tsx.
@@ -135,7 +135,7 @@ const RECEIPT_FIXTURE: ThermalReceiptData = {
 beforeEach(() => {
   vi.clearAllMocks();
   window.localStorage.clear();
-  // Ancho por defecto en cada test (58 mm)
+  // Ancho por defecto en cada test (55 mm — misión 2026-10-23)
   window.localStorage.removeItem('costpro_thermal_receipt_width_mm');
 });
 
@@ -282,6 +282,17 @@ describe('POSCartSuccessView — acción «Imprimir comprobante» y ancho de rol
     fireEvent.change(select, { target: { value: '80' } });
     expect(getThermalWidthMm()).toBe(80);
     expect(window.localStorage.getItem('costpro_thermal_receipt_width_mm')).toBe('80');
+  });
+
+  it('ancho por defecto 55 mm (misión 2026-10-23) + presets 55/58/80 en el selector', () => {
+    window.localStorage.removeItem('costpro_thermal_receipt_width_mm');
+    expect(getThermalWidthMm()).toBe(55);
+    render(<POSCartSuccessView {...baseProps} onPrint={vi.fn()} />);
+    const select = screen.getByLabelText('Ancho del rollo de papel térmico') as HTMLSelectElement;
+    const options = Array.from(select.options).map((o) => o.value);
+    expect(options).toEqual(['55', '58', '80', 'custom']);
+    // El badge del botón imprincipal anuncia el rollo activo
+    expect(screen.getByText(/Rollo 55 mm/i)).toBeInTheDocument();
   });
 
   it('selector de ancho: modo personalizado (72 mm) persiste sanitizado', () => {

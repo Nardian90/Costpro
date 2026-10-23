@@ -1,19 +1,34 @@
 /**
- * MISIÓN IMPRESIÓN TÉRMICA (2026-10-20) — Tests del flujo REAL de impresión
- * (thermal-receipt-print.tsx, SIN mock del módulo).
+ * MISIÓN IMPRESIÓN TÉRMICA (2026-10-20) + MISIÓN 55 MM (2026-10-23) — Tests
+ * del flujo REAL de impresión (thermal-receipt-print.tsx, SIN mock del módulo).
  *
  * Valida lo automatizable en jsdom:
- *  - El CSS @page se inyecta con el ancho configurado ANTES de window.print().
- *  - El comprobante se monta fuera del árbol de React (#thermal-receipt-root)
- *    con la tienda/ítems/totales correctos.
+ *  - El CSS @page se inyecta con el ancho configurado (55 mm default) ANTES
+ *    de window.print(), AL NIVEL SUPERIOR (no anidado en @media print).
+ *  - ESTRATEGIA 2026-10-23 (fix del comprobante en blanco):
+ *    · `body > *:not([data-thermal-print-overlay]) { display: none }` — la
+ *      app se oculta SIN conservar altura (antes `visibility: hidden` dejaba
+ *      3 páginas vacías y el recibo se posicionaba fuera de página).
+ *    · El overlay contenedor se NEUTRALIZA a `position: static` (antes vivía
+ *      fijo en left:-10000px y arrastraba al recibo fuera del papel).
+ *    · El canvas de impresión se fuerza claro (color-scheme: light + fondos
+ *      blancos) — la app es dark por defecto y pintaba páginas 100% negras.
+ *    · Las clases dark/theme-dark/mode-performance del <html> se RETIRAN
+ *      durante la ventana de impresión y se RESTAURAN verbatim al cerrarla
+ *      (las reglas `!important` de la app con especificidad ~(1,2,1) son
+ *      imposibles de superar solo con CSS).
+ *  - Guardia de suficiencia de datos: venta sin artículos/sin ID → NADA se
+ *    monta, NO se abre el diálogo y hay un error comprensible (misión §7.4).
  *  - Tras cerrar el diálogo (window.print retorna), el DOM se limpia por
- *    completo (style + contenedor) — sin residuos entre impresiones.
+ *    completo (style + contenedor + clases restauradas) — sin residuos.
  *  - 'no-print-api' cuando el navegador no expone window.print (bloqueo) —
  *    con toast de error honesto y SIN montar nada.
  *  - fetchActiveStoreName: caché por tienda + degradación suave ante error.
  *
  * La impresión FÍSICA en papel térmico NO es verificable aquí (requiere el
- * equipo AXISOFT real) — estos tests cubren el flujo hasta el diálogo nativo.
+ * equipo real) — estos tests cubren el flujo hasta el diálogo nativo. La
+ * verificación del DOCUMENTO de impresión (PDF al ancho del rollo) se hace
+ * con Playwright + page.pdf en la verificación de la misión (ver worklog).
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
@@ -74,18 +89,22 @@ afterEach(() => {
   // Recoger cualquier residuo del DOM entre tests
   document.getElementById('thermal-print-style')?.remove();
   document.querySelector('[data-thermal-print-overlay]')?.remove();
+  // Restaurar clases de tema que un test pudo dejar retiradas
+  document.documentElement.classList.add('dark', 'mode-performance');
 });
 
 describe('printThermalReceipt — flujo real hasta el diálogo nativo', () => {
-  it('inyecta el CSS @page (58 mm default) + monta el recibo + llama window.print + limpia', async () => {
+  it('inyecta el CSS @page (55 mm default, nivel superior) + monta el recibo + llama window.print + limpia', async () => {
     let during: {
       style: HTMLElement | null;
       receipt: HTMLElement | null;
-    } = { style: null, receipt: null };
+      htmlClass: string | null;
+    } = { style: null, receipt: null, htmlClass: null };
     printSpy.mockImplementation(() => {
       // Inspección SÍNCRONA del DOM mientras el diálogo está "abierto"
       during.style = document.getElementById('thermal-print-style');
       during.receipt = document.getElementById('thermal-receipt-root');
+      during.htmlClass = document.documentElement.getAttribute('class');
     });
 
     const outcome = await printThermalReceipt(FIXTURE);
@@ -94,14 +113,80 @@ describe('printThermalReceipt — flujo real hasta el diálogo nativo', () => {
     expect(printSpy).toHaveBeenCalledTimes(1);
     // DURANTE la impresión: CSS @page al ancho por defecto + recibo presente
     expect(during.style?.getAttribute('id')).toBe('thermal-print-style');
-    expect(during.style?.textContent).toContain('@page { size: 58mm auto; margin: 2mm; }');
-    expect(during.style?.textContent).toContain('body * { visibility: hidden !important; }');
+    expect(during.style?.textContent).toContain('@page { size: 55mm auto; margin: 2mm; }');
+    // Estrategia 2026-10-23: display:none (no visibility) + overlay static
+    expect(during.style?.textContent).toContain(
+      'body > *:not([data-thermal-print-overlay]) { display: none !important; }',
+    );
+    expect(during.style?.textContent).toContain('[data-thermal-print-overlay] {');
+    expect(during.style?.textContent).toContain('position: static !important;');
+    expect(during.style?.textContent).toContain('color-scheme: light !important;');
+    // La vieja estrategia del comprobante en blanco YA NO está
+    expect(during.style?.textContent).not.toContain('visibility: hidden');
     expect(during.receipt).not.toBeNull();
     expect(during.receipt?.textContent).toContain('EnerVida');
     expect(during.receipt?.textContent).toContain('Brecker 63 AMP');
+    // DURANTE: clases oscuras del <html> retiradas (canvas claro)
+    expect(during.htmlClass ?? '').not.toContain('dark');
+    expect(during.htmlClass ?? '').not.toContain('mode-performance');
     // DESPUÉS del diálogo: DOM completamente limpio (sin residuos)
     expect(document.getElementById('thermal-print-style')).toBeNull();
     expect(document.querySelector('[data-thermal-print-overlay]')).toBeNull();
+  });
+
+  it('retira dark/theme-dark/mode-performance del <html> durante la impresión y los RESTAURA verbatim al cerrar', async () => {
+    document.documentElement.setAttribute('class', 'h-full dark mode-performance extra-clase');
+    document.documentElement.setAttribute('data-theme', 'dark');
+    await printThermalReceipt(FIXTURE);
+    // Restauración exacta (incluye clases ajenas como h-full/extra-clase)
+    expect(document.documentElement.getAttribute('class')).toBe(
+      'h-full dark mode-performance extra-clase',
+    );
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+  });
+
+  it('restaura las clases también vía afterprint (diálogo cerrado por evento)', async () => {
+    document.documentElement.setAttribute('class', 'h-full dark');
+    // Holder por referencia: evita el narrowing de TS a través de closures
+    // (la asignación ocurre dentro del mock; con variable suelta tsc puede
+    // estrechar a never y fallar en CI con caché limpia).
+    const afterPrintRef: { fn: (() => void) | null } = { fn: null };
+    const addSpy = vi.spyOn(window, 'addEventListener').mockImplementation(
+      ((type: string, listener: EventListenerOrEventListenerObject) => {
+        if (type === 'afterprint') afterPrintRef.fn = listener as () => void;
+        return window;
+      }) as typeof window.addEventListener,
+    );
+    try {
+      // window.print que NO dispara la limpieza por retorno de llamada:
+      // simulamos el cierre del diálogo vía afterprint únicamente.
+      printSpy.mockImplementation(() => {});
+      const promise = printThermalReceipt(FIXTURE);
+      // El flujo aún no retornó (el diálogo está "abierto") — clases fuera
+      expect(document.documentElement.getAttribute('class') ?? '').not.toContain('dark');
+      afterPrintRef.fn?.();
+      await promise;
+      expect(document.documentElement.getAttribute('class')).toBe('h-full dark');
+      expect(document.querySelector('[data-thermal-print-overlay]')).toBeNull();
+    } finally {
+      addSpy.mockRestore();
+    }
+  });
+
+  it('guardia de suficiencia (misión §7.4): sin artículos → NADA montado, sin diálogo, error comprensible', async () => {
+    const outcome = await printThermalReceipt({ ...FIXTURE, items: [] });
+    expect(outcome).toBe('insufficient-data');
+    expect(printSpy).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith(
+      expect.stringContaining('no tiene datos suficientes'),
+      expect.anything(),
+    );
+    expect(document.querySelector('[data-thermal-print-overlay]')).toBeNull();
+    expect(document.getElementById('thermal-print-style')).toBeNull();
+    // Sin saleId tampoco hay comprobante
+    const outcome2 = await printThermalReceipt({ ...FIXTURE, saleId: '' });
+    expect(outcome2).toBe('insufficient-data');
+    expect(printSpy).not.toHaveBeenCalled();
   });
 
   it('respeta el ancho configurado (80 mm) en el @page inyectado', async () => {

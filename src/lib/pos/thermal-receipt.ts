@@ -6,7 +6,7 @@
  *     el renderizador del comprobante (POSThermalReceipt.tsx). Dos fuentes la
  *     alimentan: la venta recién confirmada (LastSale enriquecido en Vender) y
  *     la reimpresión desde el historial (Transaction + items + resolveSalePayments).
- *  2. La configuración de ancho del rollo (58 mm / 80 mm / personalizado),
+ *  2. La configuración de ancho del rollo (55 mm / 58 mm / 80 mm / personalizado),
  *     persistida en localStorage. NOTA HONESTA: el equipo AXISOFT de destino NO
  *     tiene ficha técnica pública verificable — el ancho NO se fija como si
  *     estuviera verificado; se configura en la UI y debe confirmarse en el
@@ -89,14 +89,15 @@ export interface ThermalReceiptData {
 // ── 2. Configuración de ancho del rollo ────────────────────────────────────
 
 /**
- * Presets del ancho NOMINAL del rollo. 58 mm (≈48 mm imprimibles) es el más
+ * Presets del ancho NOMINAL del rollo. 55 mm (≈48-51 mm imprimibles tras
+ * márgenes y cabezal) es el rollo del terminal de la misión; 58 mm es el más
  * común en terminales todo-en-uno compactas; 80 mm (≈72 mm imprimibles) es el
- * estándar de mostrador. El equipo AXISOFT no tiene ancho verificado desde
+ * estándar de mostrador. El ancho exacto del cabezal NO es verificable desde
  * aquí — el usuario lo confirma/configura en la UI (éxito de venta o historial).
  */
-export const THERMAL_WIDTH_PRESETS = [58, 80] as const;
+export const THERMAL_WIDTH_PRESETS = [55, 58, 80] as const;
 
-export const DEFAULT_THERMAL_WIDTH_MM = 58;
+export const DEFAULT_THERMAL_WIDTH_MM = 55;
 
 /** Ancho mínimo/máximo razonable para no romper el diseño (según presets ± margen). */
 export const THERMAL_WIDTH_MIN_MM = 40;
@@ -112,7 +113,7 @@ export function sanitizeThermalWidthMm(raw: number | null | undefined): number |
   return Math.round(mm * 10) / 10;
 }
 
-/** Lee el ancho configurado (localStorage) con fallback honrado a 58 mm. */
+/** Lee el ancho configurado (localStorage) con fallback honrado a 55 mm. */
 export function getThermalWidthMm(): number {
   if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
     return DEFAULT_THERMAL_WIDTH_MM;
@@ -152,14 +153,27 @@ export const DEFAULT_THERMAL_MARGIN_MM = 2;
 /**
  * Genera el CSS de impresión del comprobante.
  *
- * Estrategia (receta estándar para POS web, verificable en Chrome/Edge de
- * Windows con impresora térmica instalada como impresora del sistema):
- *  - `@page { size: Wmm auto; margin: Mmm }` — el navegador escala la página
- *    al ancho del rollo y el alto fluye (auto) para no paginar el comprobante.
- *  - `body * { visibility: hidden }` + contenedor del comprobante visible en
- *    posición absoluta — oculta menús, carrito, botones y toda la interfaz SIN
- *    depender de clases Tailwind de la app (robusto ante dark mode/reflujos).
- *  - fondo blanco forzado — sin fondos oscuros ni decoración en papel térmico.
+ * Estrategia (reescrita 2026-10-23 tras el diagnóstico del comprobante en
+ * blanco — ver pos-thermal-print-flow.test.tsx y la evidencia del repro):
+ *  - `@page { size: Wmm auto; margin: Mmm }` AL NIVEL SUPERIOR: el pipeline de
+ *    impresión de Chromium IGNORA `size` si se declara `auto` de altura en el
+ *    pipeline headless (verificado con micro-test A/B/C), y el diálogo real lo
+ *    respeta mejor sin anidar. La altura `auto` deja que el comprobante fluya.
+ *  - `color-scheme: light` + fondo blanco EXPLÍCITO en html/body con
+ *    especificidad suficiente (html.dark / html[data-theme='dark']): la app es
+ *    dark por defecto y `color-scheme: dark` pintaba el CANVAS de impresión
+ *    completamente negro (100% de píxeles < 26/255 en el repro) — esta era una
+ *    de las causas del comprobante "en blanco".
+ *  - `body > *:not([data-thermal-print-overlay]) { display: none }`: oculta
+ *    menús, carrito, botones, toasts y navegación SIN conservar su altura (a
+ *    diferencia de `visibility: hidden`, que mantenía el layout de la app y
+ *    producía 3 páginas vacías/negras extra) y sin depender de clases Tailwind.
+ *  - El overlay contenedor se NEUTRALIZA a `position: static`: en pantalla vive
+ *    en `position: fixed; left: -10000px` para no verse, y el CSS anterior solo
+ *    reubicaba el div INTERIOR (#thermal-receipt-root → position:absolute), cuyo
+ *    bloque contenedor seguía siendo el overlay fijo → el recibo se renderizaba
+ *    a -10000px, fuera de la página. Causa raíz #1 del comprobante en blanco.
+ *  - Sin fondos oscuros ni decoración: blanco y negro puro para papel térmico.
  */
 export function buildThermalPrintCss(
   widthMm: number = getThermalWidthMm(),
@@ -168,24 +182,48 @@ export function buildThermalPrintCss(
   const w = sanitizeThermalWidthMm(widthMm) ?? DEFAULT_THERMAL_WIDTH_MM;
   const m = Math.max(0, Math.min(10, Number(marginMm) || 0));
   return [
+    // Nivel superior (no anidado): máxima compatibilidad con el diálogo real.
+    `@page { size: ${w}mm auto; margin: ${m}mm; }`,
     '@media print {',
-    `  @page { size: ${w}mm auto; margin: ${m}mm; }`,
-    '  html, body {',
-    `    width: ${w}mm !important;`,
+    '  /* Canvas de impresión claro: la app es dark por defecto y sin esto el',
+    '     lienzo entero se imprime negro (color-scheme:dark en .dark). La',
+    '     especificidad html.dark/html[data-theme=dark] gana a .dark { … !important } */',
+    '  html, html.dark, html[data-theme="dark"] {',
+    '    color-scheme: light !important;',
+    '    background: #ffffff !important;',
+    '  }',
+    '  body {',
+    '    background: #ffffff !important;',
+    '    color: #000000 !important;',
     '    margin: 0 !important;',
     '    padding: 0 !important;',
-    '    background: #ffffff !important;',
+    '    width: auto !important;',
     '    height: auto !important;',
     '    overflow: visible !important;',
     '  }',
-    '  body * { visibility: hidden !important; }',
-    '  #thermal-receipt-root, #thermal-receipt-root * { visibility: visible !important; }',
-    '  #thermal-receipt-root {',
+    '  /* Toda la interfaz oculta SIN conservar altura (display:none): ni menús',
+    '     en el papel ni páginas vacías extra. El único hijo visible de body es',
+    '     el contenedor del comprobante. */',
+    '  body > *:not([data-thermal-print-overlay]) { display: none !important; }',
+    '  /* Neutralizar el posicionamiento fuera de pantalla del contenedor: en',
+    '     pantalla vive en fixed/-10000px; para imprimir debe volver al flujo. */',
+    '  [data-thermal-print-overlay] {',
+    '    position: static !important;',
     '    display: block !important;',
-    '    position: absolute !important;',
-    '    left: 0 !important;',
-    '    top: 0 !important;',
+    '    visibility: visible !important;',
+    '    left: auto !important;',
+    '    top: auto !important;',
+    '    width: auto !important;',
+    '    max-width: none !important;',
+    '    z-index: auto !important;',
+    '    background: #ffffff !important;',
+    '  }',
+    '  #thermal-receipt-root {',
+    '    position: static !important;',
+    '    left: auto !important;',
+    '    top: auto !important;',
     '    width: 100% !important;',
+    '    max-width: 100% !important;',
     '    margin: 0 !important;',
     '    padding: 0 !important;',
     '    background: #ffffff !important;',

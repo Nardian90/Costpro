@@ -5,8 +5,7 @@
  *
  * Componente PURAMENTE presentacional: recibe ThermalReceiptData ya calculado
  * (venta confirmada o registro del historial) y lo pinta al ancho del rollo
- * configurado (58 mm por defecto, configurable — el ancho del equipo AXISOFT
- * NO está verificado desde aquí).
+ * configurado (55 mm por defecto — rollo de la misión 2026-10-23 —, configurable).
  *
  * Decisiones de diseño para papel térmico monocromático (requisitos de la misión):
  *  - Estilos INLINE (no Tailwind): determinismo total en @media print — el
@@ -36,9 +35,14 @@ const FONT_STACK =
 
 export interface POSThermalReceiptProps {
   data: ThermalReceiptData;
-  /** Ancho nominal del rollo en mm (default 58 — ver thermal-receipt.ts). */
+  /** Ancho nominal del rollo en mm (default 55 — ver thermal-receipt.ts). */
   widthMm?: number;
 }
+
+/** Espacio final anti-guillotina: la última línea del comprobante nunca queda
+ *  pegada al borde de corte del rollo (misión 2026-10-23 §4: «espacio final
+ *  suficiente para que el contenido no quede cortado»). 30px ≈ 7,9 mm. */
+const RECEIPT_TRAILING_PADDING_PX = 30;
 
 /** Línea separadora punteada (económica en tinta térmica). */
 const Separator: React.FC<{ mt?: number; mb?: number }> = ({ mt = 4, mb = 4 }) => (
@@ -88,7 +92,7 @@ const Row: React.FC<{
 
 export const POSThermalReceipt: React.FC<POSThermalReceiptProps> = ({
   data,
-  widthMm = 58,
+  widthMm = 55,
 }) => {
   const items = data.items;
   const hasDiscount = data.discountAmount > 0.005;
@@ -110,7 +114,7 @@ export const POSThermalReceipt: React.FC<POSThermalReceiptProps> = ({
         fontFamily: FONT_STACK,
         fontSize: 10,
         lineHeight: 1.35,
-        padding: 0,
+        padding: `0 0 ${RECEIPT_TRAILING_PADDING_PX}px 0`,
         boxSizing: "border-box",
         WebkitPrintColorAdjust: "exact",
         printColorAdjust: "exact",

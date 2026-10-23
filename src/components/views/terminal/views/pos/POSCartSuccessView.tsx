@@ -18,7 +18,7 @@ import { SaleQRCode } from "./SaleQRCode";
 import type { LastSale, POSCartSuccessViewProps } from "./POSCart.types";
 // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): configuración del ancho del rollo.
 // El ancho NO está verificado para el equipo AXISOFT (sin ficha técnica
-// pública) — el usuario lo confirma aquí; 58 mm es el preset por defecto.
+// pública) — el usuario lo confirma aquí; 55 mm es el preset por defecto (rollo de la misión 2026-10-23).
 import {
   THERMAL_WIDTH_PRESETS,
   getThermalWidthMm,
@@ -159,7 +159,7 @@ export const POSCartSuccessView = ({
 
       {/* Configuración del ancho del rollo — visible junto a la acción de
           imprimir. El ancho del equipo NO está verificado: el usuario lo
-          confirma aquí (58 mm por defecto) y queda persistido. */}
+          confirma aquí (55 mm por defecto) y queda persistido. */}
       <div className="sm:col-span-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span className="font-black uppercase tracking-widest text-[10px]">Rollo:</span>
         <select
