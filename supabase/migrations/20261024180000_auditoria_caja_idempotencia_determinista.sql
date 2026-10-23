@@ -425,7 +425,7 @@ BEGIN
   RETURN v_result;
 END;
 $function$;
--- Grants espejo de v2.24.1
-REVOKE EXECUTE ON FUNCTION public.create_cash_flow_document(uuid, text, text, numeric, text, numeric, timestamp with time zone, text, text, text, uuid, text, uuid) FROM anon;
-GRANT EXECUTE ON FUNCTION public.create_cash_flow_document(uuid, text, text, numeric, text, numeric, timestamp with time zone, text, text, text, uuid, text, uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.create_cash_flow_document(uuid, text, text, numeric, text, numeric, timestamp with time zone, text, text, text, uuid, text, uuid) TO service_role;
+-- ACL espejo EXACTO de v2.24.0 (20261023230000 L2286-2287): solo service_role
+-- (revoke all from public + grant to service_role — nunca authenticated).
+revoke all on function public.create_cash_flow_document(uuid, text, text, numeric, timestamptz, text, text, text, uuid, text, uuid) from public;
+grant execute on function public.create_cash_flow_document(uuid, text, text, numeric, timestamptz, text, text, text, uuid, text, uuid) to service_role;
