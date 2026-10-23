@@ -29,6 +29,8 @@ import { usePOSCartExports } from "./usePOSCartExports";
 import { CustomerSelector } from "./CustomerSelector";
 import { POSCartCheckoutPanel } from "./POSCartCheckoutPanel";
 import { ValeSalidaPanel } from "./ValeSalidaPanel";
+// MISIÓN CARRITO-VENTAS (2026-10-23): límites del separador redimensionable.
+import { CART_MIN_WIDTH, CART_MAX_WIDTH_LIMIT } from "./useCartPanelResize";
 import type { POSCartProps } from "./POSCart.types";
 
 /**
@@ -64,6 +66,12 @@ export const POSCart = ({
   updateItemPayment,
   prorateGlobalPayment,
   getTaxAmount,
+  // MISIÓN CARRITO-VENTAS (2026-10-23): redimensionado del panel (desktop).
+  panelWidth,
+  isResizingPanel,
+  onPanelResizeStart,
+  onPanelResizeKeyDown,
+  onPanelResizeReset,
 }: POSCartProps) => {
   const { user } = useAuthStore();
   const { selectedPayment, setSelectedPayment, operationType, setOperationType } = useCartStore(useShallow((s) => ({
@@ -92,6 +100,11 @@ export const POSCart = ({
     transition: { type: "spring", damping: 25, stiffness: 200 } as const,
   };
 
+  // MISIÓN CARRITO-VENTAS: ancho dinámico del sidebar (redimensionable). Si no
+  // hay props de resize (p.ej. usos legacy del componente sin POSView), se
+  // conservan las clases de ancho histórico 440/480/520px.
+  const resizable = typeof panelWidth === "number" && !isMobile;
+
   const itemCount = items.length;
   // FIX-CONSISTENCY (2026-07-10): el CTA y el header del carrito deben mostrar el total
   // esperado (con recargos/descuentos por método) para coincidir con el tab Pago.
@@ -114,10 +127,48 @@ export const POSCart = ({
           // Ahora: fixed right-0 top-0 h-screen, border-l para separar del contenido.
           // POS-3a-v3 Fix: z-50 (no z-30) para que el modal de cobro dentro del sidebar
           // se vea por encima del sticky search bar (z-40) del POSView.
-          : "hidden lg:flex fixed right-0 top-0 h-screen w-[440px] xl:w-[480px] 2xl:w-[520px] flex-col overflow-hidden border-l border-border bg-card z-50",
+          // MISIÓN CARRITO-VENTAS: sin clases de ancho fijo cuando hay redimensionado
+          // (el ancho lo fija el style inline del hook compartido con POSView).
+          : cn(
+              "hidden lg:flex fixed right-0 top-0 h-screen flex-col overflow-hidden border-l border-border bg-card z-50",
+              !resizable && "w-[440px] xl:w-[480px] 2xl:w-[520px]",
+            ),
         isEasyReading && "text-xl",
       )}
+      style={!isMobile && resizable ? { width: panelWidth } : undefined}
     >
+      {/* ── Separador de redimensionado (solo desktop) ────────────
+          Franja fina sobre el borde interior del sidebar. Cursor col-resize,
+          hover/arrastre con acento discreto, teclado (←/→, Shift = ±48px) y
+          doble clic = restablecer. touch-none evita que un gesto táctil
+          disparite el scroll del panel; el drag usa Pointer Events con
+          captura y listeners de ventana (useCartPanelResize). */}
+      {!isMobile && onPanelResizeStart && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Redimensionar panel del carrito. Flechas para ajustar; doble clic para restablecer."
+          aria-valuenow={resizable ? Math.round(panelWidth!) : undefined}
+          aria-valuemin={CART_MIN_WIDTH}
+          aria-valuemax={CART_MAX_WIDTH_LIMIT}
+          tabIndex={0}
+          onPointerDown={onPanelResizeStart}
+          onKeyDown={onPanelResizeKeyDown}
+          onDoubleClick={onPanelResizeReset}
+          className={cn(
+            // MISIÓN CARRITO-VENTAS: franja interior de 12px — el panel tiene
+            // overflow-hidden, así que una franja a caballo (-translate-x-1/2)
+            // perdería la mitad exterior en el hit-testing. w-3 completo dentro
+            // del borde da un objetivo de puntero cómodo sin tapar contenido
+            // (la lista de items tiene p-3 de padding).
+            "absolute left-0 top-0 z-[60] h-full w-3 cursor-col-resize touch-none outline-none transition-colors",
+            isResizingPanel
+              ? "bg-primary/60"
+              : "bg-transparent hover:bg-primary/30 focus-visible:bg-primary/40",
+          )}
+          title="Arrastra para redimensionar el carrito · doble clic: restablecer"
+        />
+      )}
       <div
         className={cn(
           "flex-1 flex flex-col w-full bg-card overflow-hidden",

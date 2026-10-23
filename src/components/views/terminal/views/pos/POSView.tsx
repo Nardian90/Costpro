@@ -52,6 +52,9 @@ import { LoadMoreIndicator } from './LoadMoreIndicator';
 import { POSExpressMode } from './POSExpressMode';
 import { OfflineStatusIndicator } from './OfflineStatusIndicator';
 import { Zap, History } from 'lucide-react';
+// MISIÓN CARRITO-VENTAS (2026-10-23): panel del carrito redimensionable —
+// un solo dueño del estado (ancho + arrastre) para sidebar y padding.
+import { useCartPanelResize, CART_PANEL_GAP } from './useCartPanelResize';
 
 // Extracted hooks
 import { usePOSCheckout } from './usePOSCheckout';
@@ -420,6 +423,11 @@ export default function POSView() {
   const cartCount = getItemCount();
   const cartTotal = getTotal();
 
+  // MISIÓN CARRITO-VENTAS (2026-10-23): ancho del carrito compartido entre el
+  // sidebar (POSCart) y el padding compensatorio del catálogo (abajo). Solo
+  // activo en viewport lg+; en móvil el carrito es overlay full-screen.
+  const cartPanel = useCartPanelResize();
+
   // ── POSCart shared props (DRY — single definition) ──────────
   const posCartProps = {
     items,
@@ -443,6 +451,12 @@ export default function POSView() {
     lastSale,
     isMobile,
     onClearLastSale: handleClearLastSale,
+    // MISIÓN CARRITO-VENTAS (2026-10-23): panel redimensionable (desktop).
+    panelWidth: cartPanel.width,
+    isResizingPanel: cartPanel.isResizing,
+    onPanelResizeStart: cartPanel.startResize,
+    onPanelResizeKeyDown: cartPanel.handleResizeKeyDown,
+    onPanelResizeReset: cartPanel.resetWidth,
   };
 
   // ── Render ─────────────────────────────────────────────────
@@ -658,12 +672,21 @@ export default function POSView() {
         )}
 
         {/* POS-3a: cuando el carrito está abierto en desktop, añadimos padding-right
-            para que el grid de productos no quede tapado por el sidebar fijo. */}
+            para que el grid de productos no quede tapado por el sidebar fijo.
+            MISIÓN CARRITO-VENTAS (2026-10-23): el padding sigue al ancho REAL del
+            panel (redimensionable) vía estilo inline; la transición se congela
+            durante el arrastre para evitar saltos/lag. */}
         <div
           className={cn(
-            "flex-1 w-full space-y-4 sm:space-y-6 transition-[padding] duration-300",
-            (showCart || lastSale) && "lg:pr-[460px] xl:pr-[500px] 2xl:pr-[540px]",
+            "flex-1 w-full space-y-4 sm:space-y-6",
+            !cartPanel.isResizing && "transition-[padding] duration-300",
+            (showCart || lastSale) && cartPanel.isLgViewport && "lg:pr-[460px]",
           )}
+          style={
+            (showCart || lastSale) && cartPanel.isLgViewport
+              ? { paddingRight: cartPanel.width + CART_PANEL_GAP }
+              : undefined
+          }
         >
           <div className="space-y-3 sm:space-y-4 sticky top-[calc(env(safe-area-inset-top)+56px)] sm:top-[76px] z-40 bg-background/95 backdrop-blur-md pb-3 sm:pb-4 pt-2 -mx-3 sm:-mx-4 px-3 sm:px-4 shadow-xl">
             <div className="flex items-center gap-2">

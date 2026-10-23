@@ -268,6 +268,46 @@ export function round2(x: number): number {
 }
 
 /**
+ * MISIÓN CARRITO-DECIMALES (2026-10-23): precisión de CANTIDADES de venta.
+ *
+ * La venta admite hasta 4 posiciones decimales (requisito de misión: 1.5,
+ * 1.25, 1.125, 1.2345, 0.0001) — la unidad de medida NO restringe a enteros
+ * (create_sale_v2 guarda transaction_items.quantity NUMERIC y valida stock
+ * con comparación numeric directa, sin floor). Estos helpers dan a toda la
+ * cadena frontend la misma semántica exacta sobre decimal que round2 da a
+ * los importes monetarios:
+ *
+ *  - roundQty: redondeo HALF-UP a 4dp (entrada de usuario / normalización).
+ *  - floorQty: suelo a 4dp (topes de stock — garantiza max ≤ existencias).
+ *  - QTY_EPSILON: tolerancia de comparación para NO generar falsos rechazos
+ *    por polvo binario (0.1*3 = 0.30000000000000004 vs stock 0.3).
+ *  - QTY_MIN: cantidad mínima representable (>0) en el sistema.
+ *
+ * NOTA: la unidad «unidad» NO activa paso entero en ningún punto; solo
+ * products.is_service exime del tope de existencias (regla preexistente).
+ */
+export const QTY_EPSILON = 1e-9;
+export const QTY_MIN = 0.0001;
+export const QTY_MAX_DECIMALS = 4;
+
+export function roundQty(x: number): number {
+  if (!Number.isFinite(x)) return x;
+  const sign = x < 0 ? -1 : 1;
+  const abs = Math.abs(x);
+  // Mismo truco "eN" de round2: escala ×10000 exacta sobre el decimal
+  // representable, evitando el polvo binario del float (Math.round directo).
+  const scaled = Number(`${Number(abs.toFixed(12))}e4`);
+  return sign * Math.round(scaled) / 10000;
+}
+
+export function floorQty(x: number): number {
+  if (!Number.isFinite(x)) return x;
+  // toFixed(12) recorta el polvo binario ANTES del suelo: 0.3/3 (0.0999…998)
+  // se trima a 0.1 exacto y el tope queda en la cota real, no 4dp por debajo.
+  return Math.floor(Number(`${Number(x.toFixed(12))}e4`)) / 10000;
+}
+
+/**
  * E-SEC (R-SEC-1): precio unitario efectivo de un ítem tras su descuento
  * comercial por línea. La UI negocia el precio vía descuento por ítem
  * (SalesCatalogCard/Table); el payload V2 debe enviar el precio REALMENTE
@@ -727,7 +767,15 @@ export const useCartStore = create<CartState>()(
           produce((state: CartState) => {
             const product = (productInput as any).product || ((productInput as any).id ? productInput : null) as Product | null;
             const productId = product?.id || (productInput as any).product_id;
-            const incomingQuantity = (productInput as any).quantity || 1;
+            // MISIÓN CARRITO-DECIMALES (2026-10-23): la cantidad entra decimal
+            // (1.5, 0.25, …) y se normaliza a 4dp; jamás parseInt/trunc. Un
+            // valor por debajo de la precisión del sistema no se convierte en
+            // cero silencioso: sube a la mínima representable (0.0001) y 0/
+            // ausencia conserva el default histórico (1).
+            const rawIncomingQty = Number((productInput as any).quantity);
+            const incomingQuantity = Number.isFinite(rawIncomingQty) && rawIncomingQty > 0
+              ? Math.max(roundQty(rawIncomingQty), QTY_MIN)
+              : 1;
 
             if (!productId) return;
 
@@ -759,17 +807,23 @@ export const useCartStore = create<CartState>()(
               // ya los exime del check de stock y del movimiento de salida;
               // el carrito replica la misma regla para no bloquearlos.
               const isService = product?.is_service === true;
-              const maxVariantQty = isService ? Number.MAX_SAFE_INTEGER : Math.floor((product?.stock_current ?? 999999) / safeFactor);
+              // MISIÓN CARRITO-DECIMALES: floorQty (suelo 4dp) sustituye a
+              // Math.floor — el tope admite existencias fraccionarias (2.5 ud)
+              // sin permitir vender por encima del stock real.
+              const maxVariantQty = isService ? Number.MAX_SAFE_INTEGER : floorQty((product?.stock_current ?? 999999) / safeFactor);
               // FIX-P1-4: validar stock AGREGADO de todos los items del mismo producto
               const totalBaseUnits = state.items
                 .filter(i => i.product_id === productId)
                 .reduce((sum, i) => sum + (i.quantity * (i.variant?.conversion_factor || 1)), 0);
               const newBaseUnits = totalBaseUnits + (incomingQuantity * safeFactor);
-              if (!isService && newBaseUnits > (product?.stock_current ?? 999999)) {
+              // QTY_EPSILON: la comparación tolera el polvo binario de la
+              // multiplicación float (0.1×3 = 0.30000000000000004 vs stock 0.3)
+              // para no generar falsos «stock insuficiente».
+              if (!isService && newBaseUnits > (product?.stock_current ?? 999999) + QTY_EPSILON) {
                 notify("warning", `Stock insuficiente para ${product?.name || "producto"}. Disponible: ${product?.stock_current ?? 0} uds base`);
                 return;
               }
-              if (!isService && existing.quantity + incomingQuantity > maxVariantQty) {
+              if (!isService && existing.quantity + incomingQuantity > maxVariantQty + QTY_EPSILON) {
                 notify("warning", `Stock insuficiente para ${product?.name || "producto"}. Máx: ${maxVariantQty} ${variant?.name || "uds"}`);
                 return;
               }
@@ -799,7 +853,8 @@ export const useCartStore = create<CartState>()(
               // físicos conservan TODAS las validaciones.
               const isService = product?.is_service === true;
               const stock = isService ? Number.MAX_SAFE_INTEGER : (product?.stock_current ?? 999999);
-              const maxVariantQty = isService ? Number.MAX_SAFE_INTEGER : Math.floor(stock / conversionFactor);
+              // MISIÓN CARRITO-DECIMALES: tope fraccionario exacto (floor 4dp).
+              const maxVariantQty = isService ? Number.MAX_SAFE_INTEGER : floorQty(stock / conversionFactor);
               if (!isService && maxVariantQty <= 0) {
                 notify("error", `Producto ${product?.name || "producto"} sin existencias.`);
                 return;
@@ -807,7 +862,7 @@ export const useCartStore = create<CartState>()(
               // FIX-FASE-D (D8): la ruta de ítem NUEVO no validaba quantity > stock
               // (updateQuantity y la ruta de ítem existente sí lo hacen). Contrato
               // consistente: rechazar con aviso en vez de aceptar líneas imposibles.
-              if (!isService && incomingQuantity > maxVariantQty) {
+              if (!isService && incomingQuantity > maxVariantQty + QTY_EPSILON) {
                 notify("warning", `Stock insuficiente para ${product?.name || "producto"}. Máx: ${maxVariantQty} ${variant?.name || "uds"}`);
                 return;
               }
@@ -944,12 +999,16 @@ export const useCartStore = create<CartState>()(
               // MISIÓN TIPO-DE-ARTÍCULO: sin clamp de cantidad para servicios.
               const isService = item.product?.is_service === true;
               const stockInBaseUnits = isService ? Number.MAX_SAFE_INTEGER : (item.product?.stock_current ?? 999999);
-              const maxVariantQty = isService ? Number.MAX_SAFE_INTEGER : Math.floor(stockInBaseUnits / conversionFactor);
-              if (!isService && quantity > maxVariantQty) {
+              // MISIÓN CARRITO-DECIMALES: tope fraccionario (floor 4dp) + normalización
+              // de la cantidad entrante a 4dp. La unidad de medida no restringe a
+              // enteros; la comparación usa QTY_EPSILON contra el polvo binario.
+              const maxVariantQty = isService ? Number.MAX_SAFE_INTEGER : floorQty(stockInBaseUnits / conversionFactor);
+              const normalizedQty = roundQty(quantity);
+              if (!isService && normalizedQty > maxVariantQty + QTY_EPSILON) {
                 notify("warning", `Stock máximo para ${item.product?.name || "producto"} es ${maxVariantQty} ${item.variant?.name || "uds"}.`);
                 item.quantity = maxVariantQty;
-              } else if (quantity > 0) {
-                item.quantity = quantity;
+              } else if (normalizedQty >= QTY_MIN) {
+                item.quantity = normalizedQty;
               } else {
                 state.items = state.items.filter(
                   (i) =>

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import { useCartStore, type CartItem } from "@/store/cart";
+import { useCartStore, type CartItem, roundQty, floorQty, QTY_EPSILON } from "@/store/cart";
 import type { POSCartItemProps } from "./POSCart.types";
 import StoreRatesModal from "./StoreRatesModal";
 import { POSCartItemEditModal } from "./POSCartItemEditModal";
@@ -50,7 +50,11 @@ export const POSCartItem = ({
   // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los servicios no tienen tope de
   // cantidad por existencias — se venden con stock 0 sin límite artificial.
   const isService = item.product?.is_service === true;
-  const maxStock = isService ? Number.MAX_SAFE_INTEGER : Math.floor((item.product?.stock_current ?? 999) / safeFactor);
+  // MISIÓN CARRITO-DECIMALES (2026-10-23): tope fraccionario exacto (floor 4dp).
+  // Sustituye al Math.floor entero: con stock 2.5 se puede vender hasta 2.5,
+  // no 2 — coherente con create_sale_v2 (comparación NUMERIC directa) y con
+  // el catálogo de ventas (useSalesCatalog ya usaba el cociente sin floor).
+  const maxStock = isService ? Number.MAX_SAFE_INTEGER : floorQty((item.product?.stock_current ?? 999) / safeFactor);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   // FIX-TASAS-MODAL (2026-07-10) / MISIÓN-TASAS (2026-10-17): el modal de tasas
@@ -97,17 +101,25 @@ export const POSCartItem = ({
   }
 
   const commitQty = () => {
-    const n = parseInt(qtyDraft, 10);
-    if (!isNaN(n) && n >= 1 && n <= maxStock) {
-      if (n !== item.quantity) {
-        onUpdateQuantity(item.product_id, item.variant_id, n);
-      }
-    } else if (!isNaN(n) && n <= 0) {
+    // MISIÓN CARRITO-DECIMALES (2026-10-23): parseFloat (nunca parseInt) con
+    // normalización de coma decimal → punto. Admite 1 / 1.5 / 1.25 / 1.125 /
+    // 1.2345 / 0.0001 (y «1,5» en teclados con coma). El tope de stock clampea
+    // (misma semántica que el store y el modal de edición); 0 → elimina la
+    // línea (regla preexistente); inválido → restaura la cantidad vigente sin
+    // perder datos ni foco-artefactos.
+    const normalized = qtyDraft.trim().replace(",", ".");
+    const n = parseFloat(normalized);
+    if (!Number.isFinite(n)) {
+      // Inválido (vacío, texto) → revertir al valor vigente
+      setQtyDraft(String(item.quantity));
+    } else if (n <= 0) {
       // 0 o negativo → eliminar item
       onRemoveItem(item.product_id, item.variant_id);
     } else {
-      // Inválido → revertir
-      setQtyDraft(String(item.quantity));
+      const target = Math.min(roundQty(n), maxStock);
+      if (target > 0 && Math.abs(target - item.quantity) > QTY_EPSILON) {
+        onUpdateQuantity(item.product_id, item.variant_id, target);
+      }
     }
     setIsEditingQty(false);
   };
@@ -172,19 +184,24 @@ export const POSCartItem = ({
             {isEditingQty ? (
               <input
                 ref={qtyInputRef}
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={maxStock}
+                // MISIÓN CARRITO-DECIMALES: text+inputMode=decimal (no
+                // type=number: su validación nativa borra el draft en valores
+                // intermedios como «1.» y bloquea la coma regional). Ancho
+                // suficiente para 1234.5678 sin ocultar contenido.
+                type="text"
+                inputMode="decimal"
+                autoComplete="off"
+                spellCheck={false}
+                dir="ltr"
                 value={qtyDraft}
                 onChange={(e) => setQtyDraft(e.target.value)}
                 onBlur={commitQty}
                 onKeyDown={handleQtyKeyDown}
                 className={cn(
-                  "text-center font-black px-1 bg-background border-2 border-primary rounded-md outline-none tabular-nums",
+                  "text-center font-black px-1.5 bg-background border-2 border-primary rounded-md outline-none tabular-nums",
                   isEasyReading
-                    ? "min-w-[48px] w-12 text-xl h-10"
-                    : "min-w-[40px] w-10 text-sm sm:text-base h-9",
+                    ? "min-w-[96px] w-28 text-xl h-10"
+                    : "min-w-[72px] w-24 text-sm sm:text-base h-9",
                 )}
                 aria-label={`Editar cantidad de ${item.product.name}`}
               />
@@ -223,7 +240,9 @@ export const POSCartItem = ({
                 isEasyReading ? "w-12 h-12" : "w-11 h-11 sm:w-11 sm:h-11",
               )}
               aria-label={`Aumentar cantidad de ${item.product.name}`}
-              disabled={item.quantity >= maxStock}
+              // QTY_EPSILON: evita el disabled falso por polvo binario cuando la
+              // cantidad ya está exactamente en el tope fraccionario (2.5 vs 2.5).
+              disabled={item.quantity >= maxStock - QTY_EPSILON}
             >
               <Plus className="w-4 h-4" />
             </button>
