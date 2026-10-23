@@ -269,7 +269,7 @@ describe('CashFlowCreateModal — paso 1 EDICIÓN (validaciones junto al campo)'
     fireEvent.click(screen.getByRole('button', { name: /Confirmar Documento/i }));
     await waitFor(() => expect(apiFetchMock).toHaveBeenCalled());
     const postCall = apiFetchMock.mock.calls.find(
-      (c: [string, { method?: string; body?: string }]) => c[1]?.method === 'POST',
+      (c: unknown[]) => (c[1] as { method?: string } | undefined)?.method === 'POST',
     ) as [string, { body: string }] | undefined;
     expect(postCall).toBeTruthy();
     const body = JSON.parse(postCall![1].body);

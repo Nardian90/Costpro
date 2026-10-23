@@ -183,6 +183,24 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "get_cash_currency_summary",
+      "reason": "MISIÓN CAJA MULTIMONEDA v2.24 2026-10-23 · READ-SERVICE-ROLE-ONLY · Función de lectura STABLE SECURITY DEFINER sin exposición autenticada: REVOKE de PUBLIC/anon/authenticated y GRANT EXECUTE únicamente a service_role (migración 20261023230000 §ACLs). Llamada exclusiva desde rutas servidor (/api/cash-flow/ledger) con service role; nunca expuesta al cliente ni a anon. El detector literal del gate exige patrones auth.uid/ERR_PERMISSION_DENIED que no aplican a una función sin exposición autenticada. Clasificación viva 2026-10-24 (pg_get_functiondef).",
+      "added_by": "mision-caja-multimoneda-v224",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_cash_ledger",
+      "reason": "MISIÓN CAJA MULTIMONEDA v2.24 2026-10-23 · REM-R2-READ · Función de lectura STABLE SECURITY DEFINER con barrera por tienda real: IF auth.role() <> 'service_role' THEN IF NOT has_store_access(p_store_id) RAISE ERR_UNAUTHORIZED_STORE (42501). El detector literal del gate busca 'auth.uid'/'ERR_PERMISSION_DENIED' y no reconoce el patrón REM-R2-READ — mismo caso documentado que get_cash_flow_summary. Sin exposición anon (EXECUTE solo authenticated/postgres/service_role). Definición viva certificada 2026-10-24 (pg_get_functiondef).",
+      "added_by": "mision-caja-multimoneda-v224",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_cash_balances_by_currency",
+      "reason": "MISIÓN CAJA MULTIMONEDA v2.24 2026-10-23 · REM-R2-READ · Función de lectura STABLE SECURITY DEFINER con barrera por tienda real: IF auth.role() <> 'service_role' THEN IF NOT has_store_access(p_store_id) RAISE ERR_UNAUTHORIZED_STORE (42501). El detector literal del gate busca 'auth.uid'/'ERR_PERMISSION_DENIED' y no reconoce el patrón REM-R2-READ — mismo caso documentado que get_cash_flow_summary. Sin exposición anon (EXECUTE solo authenticated/postgres/service_role). Definición viva certificada 2026-10-24 (pg_get_functiondef).",
+      "added_by": "mision-caja-multimoneda-v224",
+      "expires": "2027-06-30"
+    },
+    {
       "function": "get_cash_shift_expected",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",

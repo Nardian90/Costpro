@@ -49,6 +49,38 @@ vi.mock('@/lib/api-fetch', () => ({
   apiFetch: (...args: unknown[]) => apiFetchMock(...(args as [string, RequestInit])),
 }));
 
+// MISIÓN CAJA v2.24.0 (§8-C): la devolución EXIGE venta original vinculada
+// (el RPC create_devolution_v2 la rechaza sin ella y el botón «Crear
+// Devolución» permanece deshabilitado). searchSales consulta
+// supabase.from('transactions') con builder encadenable + thenable: mock
+// mínimo que devuelve 1 venta completada para poder vincularla.
+const saleSearch = vi.hoisted(() => {
+  const ORIGINAL_SALE = {
+    id: '9d2e0f6a-1111-4222-8333-444455556666',
+    invoice_number: 'FA-2026-0042',
+    total_amount: 100,
+    customer_name: 'Cliente Mostrador',
+    sale_currency: 'CUP',
+    created_at: '2026-10-20T17:00:00+00:00',
+  };
+  function saleQueryChain() {
+    const api: Record<string, unknown> = {
+      select: () => api,
+      eq: () => api,
+      order: () => api,
+      limit: () => api,
+      ilike: () => api,
+      then: (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
+        Promise.resolve({ data: [ORIGINAL_SALE], error: null }).then(res, rej),
+    };
+    return api;
+  }
+  return { ORIGINAL_SALE, saleQueryChain };
+});
+vi.mock('@/lib/supabaseClient', () => ({
+  supabase: { from: (_table: string) => saleSearch.saleQueryChain() },
+}));
+
 // Buscador de productos: devuelve 1 producto real para poder armar la devolución.
 apiFetchMock.mockImplementation(async (url: string) => {
   if (url.includes('/api/inventory/products')) {
@@ -89,6 +121,11 @@ async function openCreateModal() {
 
 async function fillMinimumFields() {
   fireEvent.change(screen.getByPlaceholderText('Ej: Producto defectuoso'), { target: { value: 'Producto defectuoso' } });
+  // MISIÓN CAJA v2.24: vincular la VENTA ORIGINAL (obligatoria — sin ella el
+  // botón «Crear Devolución» queda deshabilitado y el submit nunca dispara
+  // el POST; ver devolutions-fecha suite tras el endurecimiento v2.24).
+  fireEvent.change(screen.getByPlaceholderText('Nº de factura o ID de la venta…'), { target: { value: 'FA-2026' } });
+  fireEvent.click((await screen.findByText('FA-2026-0042')).closest('button')!);
   // Agregar 1 producto (submit exige motivo + ≥1 item).
   fireEvent.change(screen.getByPlaceholderText('Nombre del producto...'), { target: { value: 'Producto' } });
   const productoBtn = await screen.findByText('Producto Prueba', { selector: 'button span' });
