@@ -140,7 +140,7 @@
 **Requisitos previos:** Contar con rol de administrador o manager.
 
 ### Crear una Tienda
-1. Acceder a **Multi-Tienda > Administrar Tiendas**.
+1. Acceder a **OPERACIÓN → Gestión de Tiendas**.
 2. Completar los datos: nombre, dirección, teléfono, correo y logo.
 3. Guardar. La tienda queda disponible en el selector de tienda activa.
 

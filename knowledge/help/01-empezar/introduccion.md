@@ -48,7 +48,7 @@ Presiona `Ctrl + K` para abrir la **paleta de comandos**. Esta herramienta permi
 
 ### Barra Superior
 
-La barra superior contiene el **selector de tienda activa**, notificaciones, el botón de cambio de tema, el selector de idioma y el menú de usuario. El selector de tienda es fundamental en entornos multi-sucursal, ya que filtra toda la información según la tienda seleccionada.
+La barra superior contiene el **selector de tienda activa**, notificaciones, el botón de cambio de tema, el botón de ayuda (?) y el menú de usuario. El selector de tienda es fundamental en entornos multi-sucursal, ya que filtra toda la información según la tienda seleccionada.
 
 ## Temas Visuales
 
@@ -128,7 +128,7 @@ La interfaz de CostPro está disponible en **dos idiomas**:
 | **Español** | ES |
 | **Inglés** | EN |
 
-El idioma se puede cambiar desde la barra superior o desde **Sistema → Ajustes**. La preferencia se guarda por usuario.
+La interfaz opera en español. El selector de idioma existe como componente interno, pero hoy no está expuesto en la barra superior: considere el español como el idioma vigente de la aplicación.
 
 ### Generador de Reportes
 

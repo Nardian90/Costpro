@@ -1,141 +1,107 @@
-# Cómo Hacer: Ajustar el Inventario Cuando Hay Diferencia
+# Cómo Hacer: Ajustar el Inventario
 
-> **Necesita esto cuando**: Hace un conteo físico de los productos y encuentra que la cantidad real **no coincide** con lo que el sistema dice. Por ejemplo: el sistema dice que hay 10 leches, pero usted cuenta 8. Hay 2 que "desaparecieron".
+> **Necesita esto cuando**: el stock del sistema no coincide con el stock real — por un conteo, un producto dañado, un error de registro o una venta omitida — y necesita corregir las cantidades dejando constancia documentada del motivo.
 
-## ¿Por qué el inventario se desajusta?
+## ¿Para qué sirve?
 
-Es normal que con el tiempo haya pequeñas diferencias. Las causas más comunes son:
+CostPro ofrece **dos mecanismos de ajuste**, y elegir el correcto evita errores:
 
-- **Robo hormiga**: alguien se lleva un producto pequeño sin pagar.
-- **Producto dañado**: se rompe y se tira sin registrarlo.
-- **Venta mal cobrada**: el cajero cobró 1 pero entregó 2.
-- **Recepción mal contada**: el proveedor mandó 20 pero usted anotó 25.
-- **Vencimiento**: productos que se vencen y se retiran del estante.
+1. **Ajustes Documentales** (OPERACIÓN → Almacén → Ajustes Documentales): un documento formal que corrige **varios productos a la vez**, comparando stock esperado vs. contado. Es el mecanismo que usa el **Inventario Físico** para volcar sus resultados.
+2. **Ajuste rápido por producto** (desde la pestaña Stock Actual del Inventario): corrige **un solo producto** sumando o restando unidades al momento.
 
-> ⚠️ **Importante**: Un ajuste de inventario **deja rastro**. El sistema registra quién lo hizo, cuándo, por qué motivo y cuánto se ajustó. No se puede "borrar" un ajuste. Por eso hay que hacerlo con cuidado y justificar bien.
+Ambos dejan rastro en el Kardex y en la auditoría. Ninguno se puede "borrar": se anulan o revierten.
 
-## Paso 1 — Hacer el conteo físico
+## ¿Dónde encontrarlo?
 
-Antes de tocar la computadora:
+- **Ajustes Documentales**: Inicio → **OPERACIÓN** → **Almacén** → **Ajustes Documentales**.
+- **Ajuste rápido**: **OPERACIÓN → Almacén → Inventario** → pestaña **Stock Actual** → botón de ajuste del producto.
+- **Búsqueda global**: `Ctrl/Cmd + K` y escriba «ajuste» o «merma».
 
-1. Vaya al estante físico del producto.
-2. Cuente las unidades **una por una**.
-3. Anote el número en una hoja.
-4. Repita el conteo para verificar (a veces uno se equivoca contando).
-5. Si los dos conteos coinciden, ese es el número real.
+## Antes de comenzar
 
-> 💡 **Consejo para personas mayores**: Si tiene muchos productos, use la **Auditoría de Conteo** del sistema (Multi-Tienda → Auditoría de Conteo), que le da una hoja impresa para anotar los conteos físicos y luego cargarlos.
+- Necesita rol admin, manager o encargado en la tienda.
+- Tenga a mano el conteo físico o la evidencia de la diferencia.
+- El motivo es **obligatorio** en ambos mecanismos.
+- Las cantidades nunca quedan negativas: el mínimo es 0.
 
-## Paso 2 — Ir a Ajustes de Inventario
+## Cómo crear un Ajuste Documental
 
-1. En el menú izquierdo, haga clic en **Multi-Tienda**.
-2. Haga clic en **Ajustes de Inventario** (o "Ajustes Documentales").
-3. Verá una lista de ajustes anteriores y un botón **"+ Nuevo ajuste"**.
+1. Vaya a **OPERACIÓN → Almacén → Ajustes Documentales**.
+2. Cree el documento y agregue los productos a corregir.
+3. Para cada producto verá tres columnas: **Esperado** (el stock del sistema), **Contado** (el que usted ingresa) y **Diferencia** (calculada automáticamente, en rojo si resta y en verde si suma). Ingrese la **cantidad contada**, no la diferencia.
+4. Escriba el **motivo** obligatorio del ajuste.
+5. Revise los totales del documento (unidades y valor).
+6. El documento se crea **En Proceso** (pendiente). Revíselo y aplíquelo:
+   - **Confirmar y Aplicar**: el stock se corrige y el movimiento queda en el Kardex.
+   - **Anular**: retira el documento sin efecto en stock.
+7. Si un documento confirmado estuvo mal, puede **Revertir** (devuelve el stock al estado anterior) o **Duplicar** (crea uno nuevo con las mismas líneas).
 
-## Paso 3 — Iniciar un nuevo ajuste
+### Motivos documentales
 
-1. Haga clic en **"+ Nuevo ajuste"**.
-2. Se abre un formulario. Llene:
-
-| Campo | Qué escribir |
-|-------|--------------|
-| **Tienda*** | La tienda donde está haciendo el ajuste. |
-| **Tipo de ajuste*** | Entrada (agregar stock) o Salida (restar stock). |
-| **Motivo*** | Elija de la lista (ver tabla abajo). |
-| **Notas** | Explique en sus palabras qué pasó. |
-
-3. Haga clic en **"Continuar"**.
-
-![Vista de Ajustes de Inventario con el registro de ajustes por tienda](/help/capturas/ajustes-inventario.webp "Figura 1. Ajustes de Inventario — nuevo ajuste con motivo y justificación")
-
-## Los 7 motivos de ajuste
+El sistema clasifica el motivo en 4 categorías oficiales, que también usa el Inventario Físico al volcar sus diferencias:
 
 | Motivo | Cuándo usarlo |
-|--------|---------------|
-| 1. **Daño / Merma** | Producto se rompió, se venció o se echó a perder. |
-| 2. **Robo confirmado** | Se descubrió un robo y se sabe cuánto se llevó. |
-| 3. **Error de recepción** | Al recibir mercancía, se contó mal y se registró más o menos. |
-| 4. **Error de venta** | En una venta pasada, el cajero se equivocó en la cantidad. |
-| 5. **Diferencia de conteo** | En un inventario físico, no cuadró y no se sabe la causa. |
-| 6. **Devolución de cliente** | Un cliente devolvió un producto que ya se había vendido. |
-| 7. **Reclasificación** | El producto cambió de SKU o de categoría. |
+|--------|--------------|
+| **Faltante de conteo** (shrinkage) | El conteo dio menos que el sistema. |
+| **Sobrante de conteo** (surplus) | El conteo dio más que el sistema. |
+| **Producto dañado** | Mercancía averiada, vencida o inservible. |
+| **Otro** | Cualquier otro caso; explíquelo en el motivo libre. |
 
-## Paso 4 — Agregar los productos a ajustar
+## Cómo hacer un ajuste rápido de un producto
 
-1. En la tabla vacía, busque el primer producto a ajustar.
-2. Haga clic en él para agregarlo a la tabla.
-3. Llene:
-   - **Stock actual**: el sistema lo muestra automáticamente.
-   - **Stock real**: el número que usted contó físicamente.
-   - **Diferencia**: el sistema la calcula (real - actual).
-4. La diferencia puede ser:
-   - **Negativa** (en rojo): se van a restar unidades.
-   - **Positiva** (en verde): se van a sumar unidades.
-5. Repita para cada producto que necesite ajustar.
+1. Vaya a **Inventario → Stock Actual** y busque el producto.
+2. Abra el ajuste del producto y registre el cambio de unidades (± delta).
+3. Si lo necesita, ajuste también el **costo unitario** para revalorizar el stock.
+4. Elija el motivo entre las opciones rápidas: **Merma**, **Error de conteo**, **Venta omitida** o **Ajuste manual**.
+5. Confirme la **fecha de operación** (por defecto hoy o su fecha de trabajo) y aplique.
 
-## Paso 5 — Verificar los totales
+El ajuste rápido es ideal para correcciones puntuales de una unidad o un paquete. Para conteos grandes o de toda la tienda, use Ajustes Documentales o el **Inventario Físico**.
 
-Abajo verá:
+## Estados y resultados
 
-- **Total de productos ajustados**: cuántos artículos diferentes.
-- **Total de unidades sumadas**: si es ajuste de entrada.
-- **Total de unidades restadas**: si es ajuste de salida.
-- **Valor monetario del ajuste**: cuánto dinero representa (a precio de costo).
+| Estado (documento) | Qué significa |
+|--------------------|---------------|
+| **En Proceso** | Creado pero no aplicado: no toca el stock. |
+| **Confirmado** | Aplicado: el stock quedó corregido y el Kardex registra el movimiento. |
+| **Revertido** | Un confirmado que se deshizo: el stock volvió a su valor previo. |
+| **Anulado** | Retirado sin efecto. |
 
-## Paso 6 — Revisar y justificar
+Los ajustes generados por el Inventario Físico llevan el badge **IF-…** del conteo que los originó.
 
-1. Antes de confirmar, **lea cada fila** una por una.
-2. Verifique que el stock real sea el que usted contó físicamente.
-3. En el campo *"Notas"*, escriba una explicación clara. Ejemplo: *"Conteo físico del 15 de marzo. Diferencia en leche posiblemente por productos vencidos tirados sin registrar."*
+## Restricciones importantes
 
-> ⚠️ **Importante**: Una nota vaga como "ajuste" no sirve. Si después alguien revisa, no entenderá qué pasó. Sea específico.
+- El motivo es obligatorio; sin motivo no se guarda.
+- No hay cantidades negativas: si el sistema dice 3 y el conteo da 0, contado es 0 (diferencia −3).
+- Un Ajuste Documental confirmado no se edita: se revierte o se duplica y se corrige.
+- No existe autorización por umbral de unidades o importe: quien tiene el rol, puede ajustar; la auditoría registra quién y cuándo.
+- Los ajustes afectan la **valorización del inventario** y aparecen en el reporte **Gastos/Costos por Día** cuando implican pérdidas.
 
-## Paso 7 — Confirmar el ajuste
+## Errores frecuentes
 
-1. Haga clic en el botón **"Confirmar ajuste"** (arriba a la derecha).
-2. Aparece una ventana de confirmación: *"¿Está seguro? Esta acción no se puede deshacer."*
-3. Si está seguro, haga clic en **"Sí, confirmar"**.
-4. Aparece un mensaje: *"Ajuste registrado. El inventario se actualizó."*
-
-## Paso 8 — Verificar el stock actualizado
-
-1. Vaya a **Multi-Tienda → Stock Actual**.
-2. Busque uno de los productos ajustados.
-3. El stock debe mostrar el número "real" que usted escribió.
-
-## Paso 9 — Descargar el reporte de ajuste (recomendado)
-
-1. Vuelva a la lista de Ajustes de Inventario.
-2. Busque el ajuste que acaba de hacer.
-3. Haga clic en el ícono de PDF.
-4. Se descarga un reporte con todos los detalles.
-5. Archívelo para sus registros.
-
----
+| Síntoma | Causa | Solución |
+|---------|-------|----------|
+| Ingresé la diferencia en lugar del contado | Confusión de columnas. | En Ajustes Documentales se ingresa la cantidad **contada total**; la diferencia la calcula el sistema. En el ajuste rápido sí se registra el delta (± unidades a corregir). |
+| El stock quedó negativo | Intento de ajuste inválido. | El mínimo es 0; verifique el valor ingresado. |
+| No veo el botón Confirmar | El documento está En Proceso y falta su acción, o su rol no lo permite. | Pida a admin/manager/encargado que confirme. |
+| El ajuste no aparece en el Kardex | El documento sigue En Proceso. | Confírmelo para que genere movimiento. |
 
 ## Preguntas frecuentes
 
-**¿Puedo anular un ajuste después de confirmarlo?**
-- No directamente. Tiene que hacer un **ajuste inverso** (con el motivo "Diferencia de conteo" o "Error de ajuste anterior").
-- Pero el ajuste original queda registrado en el historial para siempre.
+**¿Cuál es la diferencia con el Inventario Físico?**
+El Inventario Físico (OPERACIÓN → Almacén → Inventario Físico) es el proceso formal de contar toda la tienda (o una categoría) con corte de inventario, hoja de conteo y conciliación. Al finalizar, genera automáticamente los Ajustes Documentales de faltantes y sobrantes. El ajuste manual es para correcciones sueltas entre conteos.
 
-**¿Qué pasa si hago un ajuste grande (más de 100 unidades)?**
-- El sistema pide **autorización de supervisor** si el ajuste supera cierto valor (configurable, por defecto 50 unidades o 1000 pesos).
-- El supervisor debe ingresar su clave.
+**¿Puedo transferir stock entre dos productos con un ajuste?**
+No existe la "reclasificación" entre SKUs. Si un producto estaba mal registrado, ajuste ambos productos por separado con motivo "Otro" y explique.
 
-**¿Cada cuánto debo hacer ajustes?**
-- Recomendado: una vez al mes, como parte del **inventario mensual**.
-- También: cada vez que note una diferencia grande (robo, daño, etc.).
+**¿El ajuste corrige el costo del producto?**
+El ajuste rápido le permite revalorizar el costo unitario. Los Ajustes Documentales corrigen cantidades y su valor se calcula al costo vigente.
 
-**¿El ajuste afecta la contabilidad?**
-- Sí. Si el ajuste es de salida, el valor de los productos sale como pérdida. Si es de entrada, se registra como ganancia de inventario.
-- El contador verá estos movimientos en el reporte de auditoría.
+**¿Quién puede ajustar?**
+Admin, manager y encargado de la tienda. El rol warehouse ve el inventario pero el flujo de ajuste documental está reservado a la gestión.
 
-**¿Puedo hacer ajuste de varios productos a la vez?**
-- Sí. Puede agregar tantos productos como quiera a un solo ajuste. Recomendado agrupar por motivo (un ajuste para daños, otro para robos, etc.).
+## Información relacionada
 
-**¿Cómo evito tener que hacer muchos ajustes?**
-- Reciba bien la mercancía desde el principio (cuente al recibir).
-- Registre los daños inmediatamente cuando ocurran.
-- Haga auditorías de conteo frecuentes.
-- Capacite al cajero para que cobre bien.
+- **Causas y motivos de ajuste** — referencia rápida de motivos válidos.
+- **Cómo hacer un Inventario Físico** — el conteo formal que genera ajustes automáticos.
+- **Cómo transferir stock entre tiendas** — si la diferencia es mercancía en tránsito entre tiendas.
+- **Kardex y trazabilidad** — dónde quedan los movimientos del ajuste.

@@ -28,7 +28,7 @@ Antes, los trabajos "a medida" se anotaban en una libreta o en un Excel aparte. 
 
 ## Paso 1 — Abrir el módulo
 
-1. En el menú izquierdo, vaya a **Operaciones**.
+1. En el menú izquierdo, abra **OPERACIÓN → Costo → Órdenes de Producción y Trabajo**.
 2. Haga clic en **Órdenes de Producción y Trabajo**.
 3. Verá la lista de órdenes existentes con su estado actual (Borrador, Aprobada, En Progreso, etc.).
 4. Haga clic en el botón **"+ Nueva Orden"** (arriba a la derecha).
@@ -72,7 +72,7 @@ El presupuesto es **obligatorio** (no se puede crear la orden sin un monto mayor
    - **USD** — dólares estadounidenses
    - **EUR** — euros
    - **MLC** — moneda libremente convertible
-3. Si la moneda no es CUP, el sistema usará la tasa de cambio configurada en Tasa Inteligente para mostrar equivalentes.
+3. Si la moneda no es CUP (CUP/USD/EUR/MLC disponibles), los pagos usan la **tasa manual que se indica en cada pago** (pestaña Pagos del detalle) y las tasas de tienda; no usan la Inteligencia Cambiaria.
 
 > **Importante**: El presupuesto es una **estimación**. Al cerrar la orden, podrá registrar el monto final real (que puede ser diferente si hubo cambios durante el trabajo).
 
@@ -256,8 +256,8 @@ Es obligatorio para órdenes de tipo **Producción**. Si su trabajo no genera un
 
 ### "El saldo no cuadra con lo que pagó el cliente"
 
-Revise el tab **Pagos** del detalle. Cada pago aparece con su monto y moneda. Si pagó en USD pero la orden está en CUP, verifique que la tasa de cambio esté correcta en la configuración de Tasa Inteligente.
+Revise el tab **Pagos** del detalle. Cada pago aparece con su monto y moneda. Si pagó en USD pero la orden está en CUP, verifique la **tasa a CUP indicada en cada pago** de la pestaña Pagos.
 
 ### "Aprobé la orden por error"
 
-Si la orden está aprobada pero aún no ha empezado, puede anularla (cambiar estado a `voided`) y crear una nueva. Si ya está en progreso, debe cerrarla con pago 0 (si no hubo consumo) o registrar los materiales usados.
+Si la orden está aprobada pero aún no ha empezado, puede anularla desde el detalle (estado `voided`) y crear una nueva. Si ya está en progreso, debe cerrarla con pago 0 (si no hubo consumo) o registrar los materiales usados.

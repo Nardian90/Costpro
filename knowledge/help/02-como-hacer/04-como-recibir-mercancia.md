@@ -1,12 +1,12 @@
 # Cómo Hacer: Recibir Mercancía del Proveedor
 
-> **Necesita esto cuando**: Llega el camión del proveedor con productos que pidió, y debe registrarlos en el sistema para que el inventario se actualice.
+> **Necesita esto cuando**: llega el camión del proveedor con productos que pidió, y debe registrarlos en el sistema para que el inventario se actualice y el costo quede correcto.
 
 ## ¿Por qué no basta con poner los productos en el estante?
 
 Porque el sistema no "ve" el estante. El sistema solo sabe lo que usted le dice. Si pone 20 leches en el estante pero no las registra, el sistema sigue diciendo que hay 0 leches, y cuando un cajero quiera vender una, el sistema le dirá que no hay stock.
 
-**Recibir mercancía** es la operación de decirle al sistema: *"Hoy entraron X unidades de estos productos"*.
+**Recibir mercancía** es la operación de decirle al sistema: *"Hoy entraron X unidades de estos productos, con estos costos"*. Al confirmar la recepción, el inventario sube y el costo promedio de los productos se recalcula.
 
 ## Paso 1 — Preparar la factura del proveedor
 
@@ -21,93 +21,85 @@ Antes de tocar la computadora:
 
 ## Paso 2 — Ir a Recepciones
 
-1. En el menú izquierdo, haga clic en **Multi-Tienda**.
-2. Busque y haga clic en **Recepciones** (también llamado "Recepción de Mercancía").
-3. Verá la pantalla de recepciones con un botón **"+ Nueva recepción"** arriba a la derecha.
+1. En el menú izquierdo, abra la sección **OPERACIÓN**.
+2. Abra el grupo **Logística** y haga clic en **Recepciones**.
+3. Ahí está el historial de recepciones de la tienda y el acceso a una nueva recepción.
 
 ## Paso 3 — Iniciar una nueva recepción
 
-1. Haga clic en **"+ Nueva recepción"**.
-2. Se abre un formulario. Llene los campos siguientes:
+1. Abra una **nueva recepción**.
+2. Complete la cabecera:
 
 | Campo | Qué escribir |
 |-------|--------------|
-| **Proveedor*** | Elija de la lista. Si no existe, hay que crearlo primero (en Configuración). |
+| **Proveedor** | El proveedor del envío. |
 | **Número de factura** | El número que aparece en la factura del proveedor. |
-| **Fecha** | Hoy (ya viene por defecto). |
-| **Tienda** | La tienda donde está recibiendo (ya viene por defecto). |
 
-3. Haga clic en **"Continuar"**.
+La recepción se registra en su **tienda activa** (la que ve en la barra superior); no se elige en el formulario.
 
-![Formulario de nueva recepción con proveedor, número de factura, fecha y productos](/help/capturas/recepcion-mercancia.webp "Figura 1. Nueva Recepción — datos de la recepción y productos recibidos")
+> 💡 **Escanear Factura**: si tiene cámara, puede subir la foto de la factura y el sistema hace **OCR** para ayudarte a llenar los datos. También puede **Importar/Exportar Excel** para recepciones grandes.
 
 ## Paso 4 — Agregar los productos recibidos
 
-Verá una tabla vacía con un campo de búsqueda arriba.
-
-1. En el campo de búsqueda, escriba el nombre del primer producto que recibió.
-2. Haga clic en el producto correcto cuando aparezca.
-3. Se agrega una fila a la tabla con estos campos:
-   - **Cantidad recibida**: escriba cuántas unidades entraron.
-   - **Precio de costo**: el precio unitario que viene en la factura.
-   - **Lote / Vencimiento** (opcional): si el producto tiene fecha de vencimiento.
-4. Repita este paso para cada producto de la factura.
-
-> 💡 **Atajo**: Si ya tenía una **Orden de Compra** creada para este envío, haga clic en **"Cargar desde OC"** y seleccione la OC. El sistema llena la tabla automáticamente. Solo tiene que verificar las cantidades reales y corregir las que no coincidan.
+1. En el buscador, escriba el nombre o código del primer producto y agréguelo.
+2. En la fila del producto complete:
+   - **Cantidad recibida**: cuántas unidades entraron.
+   - **Precio de costo**: el precio unitario de la factura. Si su factura viene en otra moneda, use la moneda y la tasa del formulario: el sistema convierte a CUP al confirmar.
+3. Repita con cada producto de la factura.
+4. Si el producto **no existe en el catálogo**, use **Agregar como nuevo** para darlo de alta desde la misma recepción.
+5. Si ya tenía una **Orden de Compra** para este envío, use **Recibir contra OC**: el sistema carga lo pedido y usted ajusta las cantidades reales.
 
 ## Paso 5 — Verificar los totales
 
-Abajo de la tabla verá:
+Abajo verá el **costo total** de la recepción y las cantidades. Compare con la factura del proveedor: deben coincidir. Si no, revise cantidades y precios antes de confirmar.
 
-- **Total de productos**: cuántos artículos diferentes recibió.
-- **Total de unidades**: sumando todas las cantidades.
-- **Costo total**: cuánto dinero vale toda la recepción.
+## Paso 6 — Guardar o confirmar
 
-Compare estos totales con la factura del proveedor. **Deben coincidir**. Si no coinciden, hay un error en el formulario. Revise las cantidades y los precios.
+- **Guardar Pendiente**: deja la recepción como borrador **sin tocar el inventario**. Útil si el camión sigue descargando.
+- **Confirmar Registro**: aplica la recepción. El stock sube, el costo promedio se recalcula y la recepción queda registrada con su documento.
 
-## Paso 6 — Guardar y confirmar
+> ⚠️ **Importante**: Hasta que **Confirma**, el inventario **no se actualiza**. Las recepciones pendientes no cuentan como stock disponible.
 
-1. Revise todo una vez más.
-2. Haga clic en el botón verde **"Confirmar Recepción"** (arriba a la derecha).
-3. Aparece un mensaje de confirmación: *"Recepción registrada. El inventario se actualizó."*
-4. Aparece un botón **"Descargar PDF"**. Descargue el documento y archívelo con la factura del proveedor.
-
-> ⚠️ **Importante**: Hasta que no hace clic en **"Confirmar Recepción"**, el inventario **no se actualiza**. Si solo guarda como borrador, los productos no aparecen en el stock.
+Al confirmar aparece la pantalla de éxito con la opción de descargar el documento de la recepción.
 
 ## Paso 7 — Verificar que el stock subió
 
-1. Vaya a **Multi-Tienda → Stock Actual**.
+1. Vaya a **OPERACIÓN → Almacén → Inventario** (pestaña **Stock Actual**).
 2. Busque uno de los productos que acaba de recibir.
-3. La columna **"Stock actual"** debe mostrar el número anterior + la cantidad que acaba de entrar.
-
-Si no se actualizó, espere 5 segundos y refresque con F5. Si sigue sin actualizarse, llame al administrador.
+3. El stock debe mostrar el número anterior + la cantidad que entró.
 
 ---
 
 ## Preguntas frecuentes
 
 **¿Qué hago si un producto viene dañado?**
-- Recíbalo en el sistema con cantidad 0 o no lo reciba.
+- Recíbalo con cantidad 0 o no lo incluya.
 - Anote en la factura del proveedor que ese producto venía dañado.
 - Pida al repartidor una nota de crédito o un reemplazo.
 
 **¿Puedo recibir productos que no están en el catálogo?**
-- No. Primero debe darlos de alta en el catálogo (lea **Tutorial: Cómo dar de alta mi primer producto**).
-- Después puede recibirlos.
+- Sí: use **Agregar como nuevo** en la fila del buscador para crear el producto desde la recepción.
+- También la importación de Excel puede crear productos nuevos.
 
 **¿Qué pasa si recibí 20 y la factura decía 25?**
 - Reciba solo las 20 que llegaron físicamente.
 - Anote la diferencia en la factura del repartidor.
-- El sistema guardará la recepción por 20. El proveedor debe enviar las 5 restantes después (en otra recepción).
+- El proveedor debe enviar las 5 restantes después (en otra recepción contra la misma OC, si aplica).
 
 **¿Puedo modificar una recepción después de confirmada?**
-- Solo el administrador puede hacerlo, y solo dentro de las 24 horas siguientes.
-- Después de 24 horas, la recepción queda bloqueada para auditoría.
+- No. Las recepciones confirmadas **no se editan**.
+- Si hubo un error grave, un admin/manager/encargado puede **revertir** la recepción (la reversión genera los movimientos inversos en el Kardex) y recibir de nuevo correctamente. No existe una "ventana de 24 horas": el control es por rol y por auditoría.
 
 **¿Cómo veo el historial de recepciones?**
-- Vaya a **Multi-Tienda → Historial de Recepciones**.
-- Ahí puede ver todas las recepciones pasadas, con su fecha, proveedor y monto.
+- La propia vista **Recepciones** (OPERACIÓN → Logística) es el historial: busque por proveedor o factura y filtre por estado (Pendiente, Confirmada, Anulada, Revertida).
 
-**¿Y si recibí un servicio (limpieza, mantenimiento) en lugar de mercancía?**
-- Eso es diferente. Use **Multi-Tienda → Servicios Recibidos** en lugar de Recepciones.
-- Lea **Cómo recibir un servicio** para más detalles.
+**¿Y si recibí un servicio (transporte, aduana, estiba) en lugar de mercancía?**
+- Eso es diferente: use **OPERACIÓN → Logística → Servicios Recibidos**.
+- Lea **Cómo registrar y pagar un Servicio Recibido** para más detalles. Un servicio no toca el inventario y puede distribuirse al costo de la mercancía recibida.
+
+## Información relacionada
+
+- **Cómo crear una Orden de Compra** — recibir contra OC.
+- **Cómo registrar y pagar un Servicio Recibido** — servicios del abastecimiento.
+- **Cómo ajustar el inventario** — si la diferencia aparece después de confirmar.
+- **Gestión del Inventario** — dónde consultar el stock actualizado.

@@ -24,9 +24,9 @@ Este tutorial cubre el ciclo completo de gestión de inventario en CostPro, desd
 - [6. Ajustes Documentales](#6-ajustes-documentales)
   - [6.1 ¿Cuándo Usar Ajustes Documentales?](#61-cuándo-usar-ajustes-documentales)
   - [6.2 Proceso de Ajuste](#62-proceso-de-ajuste)
-- [7. Auditoría de Conteo](#7-auditoría-de-conteo)
+- [7. Inventario Físico](#7-inventario-físico)
   - [7.1 Ruta de Navegación](#71-ruta-de-navegación)
-  - [7.2 Proceso de Auditoría Paso a Paso](#72-proceso-de-auditoría-paso-a-paso)
+  - [7.2 Proceso Paso a Paso](#72-proceso-paso-a-paso)
 - [8. Tabla de Rutas de Navegación](#8-tabla-de-rutas-de-navegación)
 - [9. Buenas Prácticas de Gestión de Inventario](#9-buenas-prácticas-de-gestión-de-inventario)
 
@@ -46,10 +46,11 @@ Dentro de este módulo encontrarás los siguientes sub-módulos:
 
 | Sub-módulo | Función principal |
 |------------|-------------------|
-| **Catálogo Maestro** | Crear, editar y gestionar todos los productos |
-| **Stock Actual** | Consultar niveles de inventario en tiempo real |
-| **Trazabilidad Stock** | Historial completo de movimientos de inventario |
-| **Ajustes Documentales** | Correcciones manuales con registro de auditoría |
+| **Catálogo** (pestaña) | Crear, editar y gestionar todos los productos |
+| **Stock Actual** (pestaña) | Consultar niveles de inventario en tiempo real |
+| **Trazabilidad** (pestaña) | Historial completo de movimientos de inventario |
+| **Ajustes Documentales** (módulo aparte) | Correcciones documentales con registro de auditoría |
+| **Inventario Físico** (módulo aparte) | Conteos formales con corte, conciliación y ajustes generados |
 
 > 💡 **Tip**: Utiliza la paleta de comandos (`Ctrl+K`) para acceder rápidamente a cualquiera de estos sub-módulos sin necesidad de navegar por el menú.
 
@@ -71,11 +72,12 @@ El Catálogo Maestro es el registro central de todos los productos del sistema. 
 |-------|-------------|---------|
 | **Nombre del producto** | Descripción completa del artículo | `Camiseta Algodón Premium` |
 | **SKU** | Código interno único del producto | `CAM-ALG-PRE-001` |
-| **Código de barras** | Código EAN-13, UPC o personalizado | `7501234567890` |
 | **Categoría** | Clasificación del producto | `Ropa > Camisetas` |
-| **Precio de venta** | Precio al público (con impuestos) | `$ 25.00` |
+| **Precio de venta** | Precio al público | `$ 25.00` |
 | **Costo base** | Costo de adquisición o producción | `$ 12.00` |
 | **Stock inicial** | Cantidad disponible al crear el producto | `100` |
+
+El **código de barras** es opcional: si el producto no trae código, el sistema puede generar uno automáticamente (EAN-13) a partir del SKU.
 
 #### Campos adicionales recomendados
 
@@ -116,24 +118,18 @@ Cuando un producto ya no forma parte de tu inventario activo, puedes eliminarlo 
 
 ### 2.3 Generación de Código de Barras
 
-CostPro permite generar códigos de barras directamente desde la ficha del producto:
+CostPro genera códigos de barras automáticamente desde la ficha del producto:
 
 1. Abre la ficha del producto
-2. Haz clic en **"Generar Código de Barras"**
-3. Selecciona el formato (EAN-13, Code 128, etc.)
-4. El sistema genera el código y lo asocia al producto
-5. Puedes **imprimir etiquetas** con el código de barras para pegar en los productos
+2. Si el producto no tiene código, usa la opción de **generación automática**: el sistema crea un **EAN-13** a partir del SKU
+3. El código queda asociado al producto
+4. Puedes **imprimir etiquetas** con el código de barras para pegar en los productos
+
+No se elige el formato: si el código del producto tiene 13 dígitos se imprime como EAN-13; en cualquier otro caso se imprime como Code 128.
 
 #### Sección Etiquetas y Códigos
 
-Además de la generación individual desde la ficha del producto, CostPro cuenta con una sección dedicada llamada **Etiquetas y Códigos**, accesible desde el Catálogo Maestro. Esta sección permite imprimir **hasta 4 etiquetas por página** en formato carta (letter size), optimizando el uso del papel y facilitando la producción masiva de etiquetas.
-
-Características de la sección Etiquetas y Códigos:
-
-- **Selección de productos**: elige uno o varios productos para generar etiquetas simultáneamente
-- **Formato de impresión**: 4 etiquetas por página (carta) con código de barras, nombre del producto y precio
-- **Personalización**: incluye nombre del producto, código de barras, SKU y precio de venta en cada etiqueta
-- **Impresión directa**: envía las etiquetas directamente a la impresora conectada
+La sección **Etiquetas y Códigos** es una entrada propia del menú Almacén (Operación → Almacén → Etiquetas y Códigos). Imprime **4 etiquetas por página** en formato carta, cada una con **nombre, precio y código de barras**, con cantidad por producto y modo repetición (un producto en las 4 etiquetas de la hoja).
 
 > 💡 **Tip**: Si trabajas con productos que no tienen código de barras de fábrica, genera códigos internos con el prefijo de tu empresa para mantener trazabilidad completa. Utiliza la sección de Etiquetas y Códigos para imprimir lotes de etiquetas de forma eficiente.
 
@@ -257,14 +253,14 @@ El Kardex presenta la siguiente información por cada movimiento registrado:
 - **Cantidad entrante** (entradas positivas)
 - **Cantidad saliente** (salidas negativas)
 - **Saldo acumulado** (stock resultante después del movimiento)
-- **Costo unitario** y **valor total en stock** al momento del movimiento
+- **Costo promedio** vigente del producto
 
 ```
-Fecha       | Tipo      | Referencia    | Entrada | Salida | Saldo | Valor Total
-2024-01-01  | Inicial   | Saldo inicial |   100   |    -   |  100  | $ 1,200.00
-2024-01-05  | Venta     | TXN-0042      |    -    |   -5   |   95  | $ 1,140.00
-2024-01-10  | Recepción | REC-0123      |   +50   |    -   |  145  | $ 1,740.00
-2024-01-15  | Ajuste    | AJU-0007      |    -    |   -2   |  143  | $ 1,716.00
+Fecha       | Tipo      | Referencia    | Entrada | Salida | Saldo | Costo Prom.
+2024-01-01  | Inicial   | Saldo inicial |   100   |    -   |  100  | $ 12.00
+2024-01-05  | Venta     | TXN-0042      |    -    |   -5   |   95  | $ 12.00
+2024-01-10  | Recepción | REC-0123      |   +50   |    -   |  145  | $ 12.35
+2024-01-15  | Ajuste    | AJU-0007      |    -    |   -2   |  143  | $ 12.35
 ```
 
 Para abrir el Kardex de un producto:
@@ -342,36 +338,30 @@ Las transferencias en CostPro funcionan con un **flujo de confirmación en dos p
 
 #### Paso 1: Crear la Transferencia (Tienda Origen)
 
-1. Selecciona la **tienda de origen** (donde sale la mercancía)
-2. Selecciona la **tienda de destino** (donde llega la mercancía)
-3. Agrega los **productos** y las cantidades a transferir
-4. El sistema verifica que haya stock suficiente en la tienda de origen
-5. Haz clic en **"Crear Transferencia"**
+1. La **tienda de origen** es tu tienda activa
+2. Selecciona el **almacén de destino** y agrega los productos y cantidades
+3. El sistema verifica que haya stock **disponible** en la tienda de origen
+4. Haz clic en **"Enviar Solicitud"**
 
 ```
-Estado: 📤 ENVIADA (pendiente de confirmación por tienda destino)
+Estado: 📤 PENDIENTE (stock reservado en origen; no disponible para ventas)
 ```
 
 #### Paso 2: Confirmar la Recepción (Tienda Destino)
 
-1. El operador de la **tienda destino** recibe la notificación
-2. Navega a **Transferencias > Pendientes**
-3. Verifica físicamente que los productos y cantidades coincidan
-4. Haz clic en **"Confirmar Recepción"**
+1. El operador de la **tienda destino** abre la transferencia (pestaña Entrantes)
+2. Verifica físicamente que los productos y cantidades coincidan
+3. Haz clic en **"Confirmar Recepción"**
 
 ```
-Estado: ✅ COMPLETADA (stock actualizado en ambas tiendas)
+Estado: ✅ CONFIRMADA (stock sale de origen y entra a destino en el mismo acto)
 ```
 
-### 5.3 Manejo de Discrepancias
+Si la transferencia confirmada estuvo mal, un usuario con rol en la tienda origen puede **Revertir** (estado REVERSADA); las pendientes pueden **Cancelarse**. Consulta **Estados de una transferencia** para el detalle completo.
 
-Si la cantidad recibida no coincide con la enviada:
+### 5.3 Discrepancias al recibir
 
-- Registra la **cantidad real recibida** al confirmar
-- El sistema genera automáticamente un **ajuste** en la tienda destino
-- La discrepancia queda registrada con un motivo en el historial
-
-> ⚠️ **Importante**: Nunca confirmes una transferencia sin verificar físicamente la mercancía. Las discrepancias no verificadas pueden causar errores de inventario que se propagan a ventas y reportes financieros.
+La confirmación aplica las cantidades del documento tal cual: no hay flujo de "discrepancia parcial" en la transferencia. Si llegó menos de lo enviado, confirme la transferencia y registre la diferencia como **Ajuste Documental** en la tienda correspondiente, con su motivo.
 
 ---
 
@@ -392,83 +382,59 @@ Utiliza ajustes documentales en estas situaciones:
 
 ### 6.2 Proceso de Ajuste
 
-1. Navega a **Gestión Inventario > Ajustes Documentales**
-2. Haz clic en **"Nuevo Ajuste"**
-3. Selecciona el **producto** a ajustar
-4. Ingresa la **nueva cantidad correcta** (no la diferencia)
-5. El sistema calcula automáticamente la **diferencia** (positiva o negativa)
-6. **Selecciona un motivo de auditoría** (campo obligatorio):
+1. Navega a **Operación → Almacén → Ajustes Documentales**
+2. Crea el ajuste y selecciona los **productos** a corregir
+3. Ingresa la **cantidad contada** (no la diferencia)
+4. El sistema calcula automáticamente la **diferencia** (positiva o negativa)
+5. Escribe el **motivo** (campo obligatorio); el sistema lo clasifica en uno de los 4 motivos oficiales:
 
 | Motivo | Descripción |
 |--------|-------------|
-| `DAÑO` | Producto dañado o inservible |
-| `PERDIDA` | Pérdida o extravío |
-| `ERROR_REGISTRO` | Error en registro anterior |
-| `MUESTRA` | Muestra gratuita |
-| `DEVOLUCION` | Devolución de cliente |
-| `CADUCIDAD` | Producto vencido |
-| `OTRO` | Otro motivo (requiere descripción) |
+| `FALTANTE DE CONTEO` | El conteo dio menos que el sistema |
+| `SOBRANTE DE CONTEO` | El conteo dio más que el sistema |
+| `PRODUCTO DAÑADO` | Producto dañado o inservible |
+| `OTRO` | Otro motivo (se clasifica según el texto) |
 
-7. Agrega una **descripción adicional** si es necesario
-8. Confirma el ajuste
+6. El documento se crea **En Proceso**; revísalo y aplica con **Confirmar y Aplicar** (o anúlalo si estuvo mal)
+7. Los documentos confirmados pueden **Revertirse** o **Duplicarse** desde su detalle
 
 > ⚠️ **Importante**: Todos los ajustes documentales quedan registrados permanentemente en el **log de auditoría**. Este registro es inmutable y puede ser consultado en cualquier momento por supervisores o auditores.
 
 ---
 
-## 7. Auditoría de Conteo
+## 7. Inventario Físico
 
-La auditoría de conteo permite verificar físicamente el inventario y detectar discrepancias entre el stock del sistema y el stock real.
+El **Inventario Físico** es el proceso formal de conteo de la tienda (o de una categoría/selección de productos), con corte de existencias, conteo (opcionalmente ciego), conciliación de diferencias y generación automática de ajustes documentales. Cada inventario recibe un número **IF-AAAA-NNNNN** y recorre los estados Borrador → Preparado → En conteo → Conteo completado → En conciliación → (Pendiente de autorización) → Conciliado → Cerrado.
 
 ### 7.1 Ruta de Navegación
 
 ```
-Operación → Ventas → Opciones → Venta por Conteo
+Operación → Almacén → Inventario Físico
 ```
 
-### 7.2 Proceso de Auditoría Paso a Paso
+### 7.2 Proceso Paso a Paso
 
-#### Paso 1: Crear una Nueva Auditoría
+#### Paso 1: Crear el Inventario
 
-1. Haz clic en **"Nueva Auditoría"**
-2. Selecciona la **tienda** a auditar
-3. Define el **alcance**:
-   - **Conteo total**: todos los productos del inventario
-   - **Por categoría**: solo productos de ciertas categorías
-   - **Por producto**: productos seleccionados individualmente
-4. Inicia la auditoría
+1. Haz clic en **Nuevo Inventario Físico**
+2. Define la **fecha y hora de corte**, la descripción y el **responsable del conteo**
+3. Define el **alcance**: catálogo completo, por categoría o selección de productos
+4. Decide si el conteo será **ciego** (oculta las teóricas a quien cuenta)
 
-#### Paso 2: Registrar los Conteos Físicos
+#### Paso 2: Contar
 
-Para cada producto incluido en la auditoría:
+1. Pulsa **Preparar conteo**: el stock teórico se congela al corte
+2. Pulsa **Iniciar conteo** y captura las cantidades (con autosave) o usa la **Hoja de conteo PDF** / **Importar Excel**
+3. Pulsa **Completar conteo** al terminar
 
-1. El sistema muestra el **stock registrado** (lo que dice el sistema)
-2. Ingresa el **stock físico** (lo que cuentas en la estantería)
-3. El sistema marca automáticamente si hay **discrepancia**:
+#### Paso 3: Conciliar y Cerrar
 
-```
-Producto              | Stock Sistema | Stock Físico | Discrepancia
-──────────────────────|---------------|--------------|─────────────
-Camiseta Algodón      |      50       |      48      |    -2 ⚠️
-Pantalón Jean         |      30       |      30      |     0 ✅
-Zapatos Cuero         |      15       |      12      |    -3 ⚠️
-```
+1. Pulsa **Enviar a conciliación**: revisa teórico vs. contado, diferencias con su valor y movimientos post-corte
+2. Si tu flujo lo requiere, **Enviar a autorización** y que un rol de gestión apruebe
+3. Pulsa **Generar ajustes documentales**: se crean los ajustes de faltante y sobrante, enlazados al inventario (badge IF-…)
+4. Pulsa **Cerrar inventario** para sellar el ciclo
 
-#### Paso 3: Revisar y Confirmar
-
-1. Revisa el reporte de discrepancias generado por el sistema
-2. Para cada discrepancia, **investiga la causa** y selecciona un motivo
-3. Haz clic en **"Confirmar Auditoría"**
-
-#### Paso 4: Aplicar Ajustes (Opcional)
-
-Si detectas discrepancias, puedes:
-
-- **Aplicar ajustes automáticos**: el sistema corrige el stock al valor físico
-- **Generar ajustes documentales**: crea ajustes individuales con motivos de auditoría
-- **No aplicar cambios**: solo registrar las discrepancias para investigación posterior
-
-> 💡 **Tip**: Programa auditorías de conteo de forma periódica (semanal o mensual) para mantener la precisión del inventario. Las discrepancias frecuentes en un producto pueden indicar problemas de proceso (errores en el POS, recepciones incorrectas, etc.).
+> 💡 **Tip**: Programa inventarios físicos periódicos (mensuales como mínimo). La herramienta **Venta por Conteo** (Ventas → Opciones) es otra cosa: sirve para liquidar por diferencia de conteo, no para auditar inventario.
 
 ---
 
@@ -477,16 +443,20 @@ Si detectas discrepancias, puedes:
 | Función | Ruta en el menú |
 |---------|-----------------|
 | Catálogo de productos | `Operación → Almacén → Inventario (tab Catálogo)` |
-| Niveles de stock | `Operación → Almacén → Inventario (tab Stock)` |
+| Niveles de stock | `Operación → Almacén → Inventario (tab Stock Actual)` |
 | Historial de movimientos | `Operación → Almacén → Inventario (tab Trazabilidad)` |
-| Ajustes manuales | `Operación → Almacén → Ajustes Documentales` |
-| Nueva recepción | `Operación → Logística → Recepciones (botón Nueva recepción)` |
+| Ajustes documentales | `Operación → Almacén → Ajustes Documentales` |
+| Inventario físico | `Operación → Almacén → Inventario Físico` |
+| Etiquetas y códigos | `Operación → Almacén → Etiquetas y Códigos` |
+| Vales de salida | `Operación → Almacén → Vales de Salida` |
+| Nueva recepción | `Operación → Logística → Recepciones (nueva recepción)` |
 | Historial de recepciones | `Operación → Logística → Recepciones` |
+| Servicios recibidos | `Operación → Logística → Servicios Recibidos` |
+| Órdenes de compra | `Operación → Logística → Órdenes de Compra` |
 | Nueva transferencia | `Operación → Logística → Transferencia Stock` |
-| Auditoría de conteo | `Ventas → Opciones → Venta por Conteo` |
 | Punto de venta | `Operación → Ventas → Vender` |
 | Historial de ventas | `Operación → Ventas → Opciones → Historial de Ventas` |
-| Cierre de caja | `Operación → Ventas → Opciones → Caja` |
+| Caja (turnos y arqueo) | `Operación → Caja → Caja` |
 
 ---
 
@@ -500,7 +470,7 @@ Si detectas discrepancias, puedes:
 >
 > **📊 Stock mínimo realista**: Configura el stock mínimo basándote en el **historial de ventas** y el **tiempo de reposición** de cada producto, no en estimaciones arbitrarias.
 >
-> **🔍 Auditorías regulares**: Programa auditorías de conteo al menos una vez al mes. Las tiendas con alto volumen deberían realizar conteos semanales de las categorías de mayor rotación.
+> **🔍 Inventarios físicos regulares**: Programa inventarios físicos al menos una vez al mes. Las tiendas con alto volumen deberían realizar conteos semanales de las categorías de mayor rotación.
 >
 > **📝 Motivos claros en ajustes**: Siempre escribe descripciones claras y detalladas en los ajustes documentales. "Error" no es suficiente — indica qué error ocurrió y cómo se detectó.
 >

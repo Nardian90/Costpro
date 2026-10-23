@@ -104,11 +104,11 @@ La Tienda Pública dispone de 4 plantillas visuales que definen el estilo de la 
 
 > **Tip:** Usa la plantilla **En Construcción** mientras configuras el catálogo y los datos de la tienda. Una vez que todo esté listo, cambia a **Moderna** o **Minimalista** para publicar el catálogo.
 
-## Diferencia entre Tienda Pública y Terminal POS
+## Diferencia entre Tienda Pública y Vender (POS)
 
 Es importante entender la distinción entre ambos conceptos:
 
-| Aspecto | Tienda Pública | Terminal POS |
+| Aspecto | Tienda Pública | Vender (POS) |
 |---------|---------------|--------------|
 | **Audiencia** | Clientes externos | Personal de la tienda |
 | **Autenticación** | No requerida | Requiere inicio de sesión |

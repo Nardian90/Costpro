@@ -4,7 +4,7 @@
 
 ## Qué es
 
-La **paleta de comandos** es un buscador universal que encuentra y ejecuta cualquier acción de CostPro: vistas, fichas de costo, herramientas y funciones. Funciona con búsqueda difusa —no necesita escribir el nombre exacto— y es la forma más rápida de navegar.
+La **paleta de comandos** (Centro de Comando Operativo) es un buscador universal que encuentra y ejecuta acciones de CostPro: navegación a vistas, cambio de tienda y acciones rápidas. Funciona con búsqueda difusa —no necesita escribir el nombre exacto— y es la forma más rápida de navegar.
 
 ## Dónde está
 
@@ -14,7 +14,7 @@ Está disponible desde cualquier vista. No tiene ubicación en el menú: se abre
 En cualquier momento → Ctrl + K
 ```
 
-También puede abrirla con el botón de búsqueda de la barra superior.
+El buscador del **sidebar** también la abre: escriba `Ctrl + K` o pulse la pista ⌘K del propio buscador del menú.
 
 ## Cómo usarla
 
@@ -22,7 +22,8 @@ También puede abrirla con el botón de búsqueda de la barra superior.
 2. Escriba parte del nombre de lo que busca. Ejemplos:
    - `recep` → muestra Recepciones.
    - `devol` → muestra Devoluciones.
-   - El nombre de una ficha de costo → la abre directamente.
+   - `gasto` o `flete` → muestra Servicios Recibidos.
+   - El nombre de una tienda → cambia a esa tienda directamente.
 3. Use las flechas **↑ ↓** para moverse entre resultados.
 4. Presione **Enter** para ir al resultado seleccionado.
 5. Presione **Escape** para cerrar la paleta sin navegar.
@@ -31,9 +32,9 @@ También puede abrirla con el botón de búsqueda de la barra superior.
 
 ## Qué significa cada resultado
 
-- **Vistas y módulos**: lo llevan a la pantalla correspondiente (Inventario, Reportes, IPV...).
-- **Fichas de costo**: abren la ficha en el editor.
-- **Acciones**: ejecutan la función directamente (crear producto, abrir calculadora...).
+- **Vistas y módulos**: lo llevan a la pantalla correspondiente (Inventario, Reportes, Servicios Recibidos...).
+- **Tiendas**: cambian la tienda activa al instante.
+- **Acciones**: ejecutan la función directamente (Nueva Recepción, Calculadora, Vitrina Pública...).
 
 La paleta también descubre vistas que no están en el menú lateral, como las capacidades experimentales de la sección **En desarrollo**.
 
@@ -48,7 +49,7 @@ La paleta también descubre vistas que no están en el menú lateral, como las c
 - Sí. `Ctrl + K` funciona incluso con el foco en un campo de texto.
 
 **¿Funciona en móvil?**
-- El móvil no tiene teclado físico; use el botón de búsqueda de la barra superior.
+- En móvil no hay teclado físico; use el buscador del menú lateral (drawer) o navegue por las pestañas inferiores.
 
 **¿Cuál es la diferencia con Ctrl + /?**
 - `Ctrl + /` abre la lista de atajos de teclado; `Ctrl + K` abre el buscador de acciones.

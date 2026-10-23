@@ -939,7 +939,7 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
 
         {/* Proveedor */}
         <div>
-          <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Proveedor (opcional)</label>
+          <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Proveedor *</label>
           <input type="text" value={supplier} onChange={e => setSupplier(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-medium min-h-[44px]" placeholder="Ej: TransCaribe S.A." />
         </div>
 

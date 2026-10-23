@@ -51,22 +51,16 @@ Antes de aplicar descuento:
    - Total final (subtotal menos descuento).
 3. Si el número no es el esperado, revise los pasos anteriores.
 
-## Paso 4 — Justificar el descuento (obligatorio)
+## Paso 4 — Autorización de supervisor (solo descuentos grandes)
 
-El sistema le pedirá un **motivo de descuento**. Esto es para evitar fraudes y para que el dueño sepa por qué se vendió más barato.
+Solo si el descuento alcanza el **15% o más** (medido como porcentaje efectivo, también en los descuentos de monto fijo), el sistema pide **autorización de supervisor**:
 
-1. Aparece un campo *"Motivo"*.
-2. Seleccione una opción:
-   - *Cliente frecuente*
-   - *Promoción del día*
-   - *Producto dañado*
-   - *Por cantidad (compra grande)*
-   - *Ajuste de precio*
-   - *Otro*
-3. Si elige "Otro", escriba el motivo en sus palabras.
-4. Haga clic en **"Confirmar"**.
+1. Aparece el modal de autorización de supervisor.
+2. El supervisor escribe sus **credenciales** (usuario y contraseña de una cuenta con rol admin/manager de la tienda); el sistema las valida en el servidor.
+3. El supervisor escribe el **motivo** (texto libre obligatorio, 1–500 caracteres): ej. *"Cliente frecuente"*, *"Producto con detalle estético"*.
+4. Confirmado, el descuento se aplica y el motivo queda en la **auditoría** junto a la venta.
 
-> ⚠️ **Importante**: Si el descuento es mayor al 20%, el sistema pide **autorización de supervisor**. El supervisor debe ingresar su clave para aprobarlo.
+Los descuentos menores al 15% se aplican sin autorización ni motivo.
 
 ## Paso 5 — Cobrar normalmente
 
@@ -77,21 +71,20 @@ Ya con el descuento aplicado, proceda a cobrar como de costumbre (lea **Tutorial
 ## Preguntas frecuentes
 
 **¿Puedo quitar un descuento después de aplicarlo?**
-- Sí, mientras no haya cobrado. Haga clic en el **X** que aparece al lado del descuento en el carrito.
+- Sí, mientras no haya cobrado: quite el descuento del producto o el global desde el carrito.
 
 **¿El descuento aparece en el recibo del cliente?**
-- Sí. El recibo muestra el precio original, el descuento aplicado y el precio final. Esto da transparencia al cliente.
+- Sí. El comprobante muestra el desglose con el descuento aplicado.
 
 **¿Puedo combinar descuento por producto y descuento global?**
-- Sí, pero cuidado: el descuento global se aplica al subtotal **ya descontado** por los descuentos por producto. Puede acumularse más de lo esperado.
+- Sí: se acumulan (línea + global). Cuidado con el total: revise el carrito antes de cobrar.
 
 **¿Qué pasa si aplico descuento a un producto que tiene oferta activa?**
-- El sistema le preguntará si quiere reemplazar la oferta por el descuento manual, o si quiere mantener ambas (en cuyo caso se suman).
+- Los descuentos manuales y las ofertas son independientes: revise el precio final en el carrito antes de cobrar.
 
 **¿El descuento afecta la comisión del cajero?**
-- Depende de la configuración. Algunos negocios calculan comisión sobre el total con descuento; otros sobre el precio original. Consulte a su administrador.
+- Depende de la **base de cálculo** definida en la regla de comisión del trabajador (total, efectivo, transferencia o neto). Vea **Cómo gestionar y pagar comisiones**.
 
 **¿Hay un límite de descuento?**
-- Por defecto, 20% sin autorización, 50% con autorización del supervisor.
-- Más de 50% requiere autorización del administrador.
-- El administrador puede cambiar estos límites en Configuración.
+- El umbral de autorización es **15%**: por debajo, el vendedor aplica libremente; al llegar o superar el 15%, interviene un supervisor con sus credenciales y motivo.
+- No existen niveles adicionales (20/50) ni configuración de umbrales en la interfaz.

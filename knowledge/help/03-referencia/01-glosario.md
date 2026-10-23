@@ -10,7 +10,7 @@
 Clasificación de los productos en 3 grupos: A (los más importantes, 20% de los productos que generan 80% de las ventas), B (importancia media), C (los menos importantes, 80% de los productos que generan 20% de las ventas). Sirve para enfocar los esfuerzos en lo que más importa.
 
 **Ajuste de inventario**
-Cambio manual en la cantidad de stock de un producto, hecho cuando el conteo físico no coincide con el sistema. Debe justificarse con uno de 7 motivos. Ver: *Cómo ajustar el inventario*.
+Cambio documentado en la cantidad de stock de un producto, hecho cuando el conteo físico no coincide con el sistema. Siempre exige motivo (faltante/sobrante de conteo, producto dañado u otro). Ver: *Cómo ajustar el inventario*.
 
 **Arqueo de caja**
 Conteo físico del dinero en la caja registradora para compararlo con lo que el sistema dice que debería haber. Se hace al final del turno o del día. Ver: *Cómo cerrar la caja*.
@@ -18,8 +18,8 @@ Conteo físico del dinero en la caja registradora para compararlo con lo que el 
 **Auditoría**
 Registro automático de todas las acciones importantes que hacen los usuarios (anular ventas, ajustar inventario, cambiar precios, etc.). Sirve para detectar fraudes y errores. No se puede borrar.
 
-**Auditoría de Conteo**
-Proceso de hacer un inventario físico completo, generalmente mensual. El sistema imprime una hoja de conteo donde el encargado anota las cantidades reales producto por producto.
+**Inventario Físico**
+Proceso formal de conteo de mercancía (todo el catálogo, una categoría o una selección), con fecha de corte, hoja de conteo, conciliación de diferencias y generación automática de ajustes documentales. Cada inventario recibe un número IF-AAAA-NNNNN. Ver: *Cómo hacer un Inventario Físico*.
 
 ---
 

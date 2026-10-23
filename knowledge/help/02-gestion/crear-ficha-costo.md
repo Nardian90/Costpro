@@ -41,13 +41,13 @@ Guía paso a paso para construir una ficha de costo desde cero, incluyendo estru
 
 ### Desde el Explorador de Plantillas
 
-1. Navega a **COSTOS > Plantillas** en el menú lateral
+1. Abra la paleta de comandos (`Ctrl + K`) y busque **"Plantillas de Fichas"**, o navegue a **OPERACIÓN → Costo → Fichas de Costo** (los accesos de plantillas y modos están en la paleta)
 2. Explora las plantillas disponibles por categoría
 3. Selecciona una plantilla base o usa la **plantilla predeterminada**
 
 ### Desde la Vista de Fichas
 
-1. Navega a **COSTOS > Fichas de Costo**
+1. Navega a **OPERACIÓN → Costo → Fichas de Costo**
 2. Haz clic en **Crear Nueva Ficha**
 3. El sistema genera una ficha con la estructura estándar de 16 secciones (filas 1 a 16) con filas hijas predefinidas
 

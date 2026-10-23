@@ -69,62 +69,60 @@ Si un cliente le dice *"¿por qué tan caro?"*, usted puede mostrarle la ficha d
 
 El cliente entiende y respeta el precio.
 
-## Las 6 formas de calcular el costo (métodos)
+## El método de costeo de CostPro
 
-CostPro soporta 6 métodos de cálculo, dependiendo del tipo de negocio:
+La ficha de CostPro sigue el esquema de **costeo absorbente**: incluye materiales, mano de obra y gastos indirectos hasta llegar al costo total, más el margen. Además, el **Costeo Dinámico** recalcula el costo de reposición absorbiendo servicios, comisiones y la tasa de cambio vigente.
 
-| Método | Cuándo usarlo | Ejemplo |
-|--------|---------------|---------|
-| **Costeo absorbente** | Quando quieres incluir todos los costos (materiales + mano de obra + indirectos). | Manufactura tradicional. |
-| **Costeo directo** | Cuando solo quieres materiales + mano de obra (sin indirectos). | Servicios simples. |
-| **Costeo por actividad (ABC)** | Cuando quieres mucha precisión y asignar costos por actividad. | Empresas grandes. |
-| **Costeo estándar** | Cuando usas costos promedio predefinidos y comparas con lo real. | Producción repetitiva. |
-| **Costeo por orden** | Cuando cada trabajo es único y se costea aparte. | Construcción, proyectos. |
-| **Costeo por proceso** | Cuando produces en serie y el costo se promedia. | Alimentos, bebidas. |
+| Componente | Qué incluye | Ejemplo |
+|-----------|-------------|---------|
+| **Materiales** | Insumos directos del producto. | Harina, huevos, azúcar. |
+| **Mano de obra** | Trabajo aplicado a la elaboración. | Horas del pastelero. |
+| **Gastos indirectos** | Electricidad, depreciación, embalaje. | Costo proporcional del horno. |
 
-> 💡 **Para personas mayores**: No se asuste por los 6 métodos. El más usado en pequeños negocios es el **costeo absorbente**. Si no sabe cuál usar, empiece por ese.
+> 💡 **Para personas mayores**: No se asuste por la terminología. La ficha le va pidiendo cada componente con ejemplos; si duda, use el **modo asistido**.
 
 ## El motor de cálculo de CostPro
 
 CostPro tiene un **motor de cálculo avanzado** que le permite:
 
 ### 1. Usar fórmulas
-En lugar de escribir números fijos, puede escribir fórmulas que se calculan solas.
-- `=ref("harina_precio_kg") * 1.5` → multiplica el precio de la harina por la cantidad usada.
-- Si cambia el precio de la harina, todas las fichas que la usan se actualizan automáticamente.
+En lugar de escribir números fijos, puede escribir fórmulas que se calculan solas dentro de la ficha.
+- `ref("12.1") * 0.3` → toma el valor de otra fila de la ficha y le aplica un factor.
+- Si cambia un valor de origen, las filas que lo referencian se recalculan en cadena dentro de la misma ficha.
 
-### 2. Referenciar otras fichas
-Si usted hace "Bizcocho base" como insumo para varios pasteles, puede referenciar el costo del bizcocho desde las otras fichas. Si el bizcocho cambia de precio, todas las fichas se actualizan.
-
-### 3. Anexos (I, II, III, IV, V, VI, VII, VIII, IX, X)
-Hasta 10 anexos por ficha para detallar cálculos auxiliares:
+### 2. Anexos (I, II, III, IV…)
+Anexos con numeración romana para detallar cálculos auxiliares:
 - Anexo I: detalle de costos de empaque.
 - Anexo II: depreciación de equipos.
 - etc.
 
-### 4. Auditoría automática
-Cada cambio en la ficha queda registrado:
-- Quién lo cambió.
-- Cuándo.
+Las fórmulas pueden referenciar totales de anexos (por ejemplo `AnexoI`).
+
+### 3. Auditoría automática
+Cada cambio en la ficha queda registrado en su **Bitácora**:
+- Cuándo se cambió.
 - Qué cambió (antes → después).
 
-### 5. Solver (Goal Seek)
+Los eventos de generación, recálculo y exportación de fichas quedan además en la **Auditoría global**, ya con el usuario que los ejecutó.
+
+### 4. Solver (Goal Seek)
 Herramienta que resuelve el problema inverso: en lugar de *"dame el costo para este precio"*, pregunta *"¿qué cantidad debo producir para que el costo unitario sea X?"*.
 
-### 6. Firmas digitales
-Para fichas críticas, se pueden requerir firmas digitales del supervisor y del contador. Así nadie puede modificar la ficha sin autorización.
+### 5. Firmas y aprobaciones
+La ficha incluye bloques de **Firmas** ("Elaborado por" / "Aprobado por", obligatorios) para dejar constancia de los responsables del documento.
 
-## Los 5 modos de visualización
+## Los modos de visualización
 
-CostPro le permite ver una ficha de costo de 5 maneras diferentes, según su necesidad:
+CostPro le permite ver una ficha de costo de varias maneras, según su necesidad:
 
 | Modo | Para qué sirve |
 |------|----------------|
-| **Tabla principal** | Vista normal, con todas las secciones. |
-| **Modo asistido** | Wizard paso a paso con diagramas. Para principiantes. |
-| **Modo lectura** | Narrativa del costo, explicado en palabras. Para presentar a clientes. |
-| **Modo experto** | Vista en columnas paralelas, para comparar variantes. |
-| **Modo auditoría** | Resalta los cambios recientes. Para revisión. |
+| **Resumen** | Vista compacta de los datos clave. |
+| **Completo (editor por secciones)** | El editor completo: plantillas, datos generales, estructura y anexos. |
+| **Asistido** | Wizard paso a paso con diagramas. Para principiantes. |
+| **Informe** | Narrativa del costo, explicado en palabras. Para presentar a clientes. |
+| **Vistazo** | Lectura rápida de los totales. |
+| **Auditoría** | Resalta los cambios recientes (antes → después). Para revisión. |
 
 > 💡 **Recomendación para personas mayores**: Use el **modo asistido**. Le va guiando paso a paso con explicaciones en lenguaje sencillo.
 
@@ -147,11 +145,9 @@ CostPro le permite ver una ficha de costo de 5 maneras diferentes, según su nec
 - Sí, en el **Arena FC** (módulo de comparación). Sirve para simular qué pasaría si cambia algún insumo o algún proceso.
 - La ficha "oficial" es una sola.
 
-**¿Qué es el "índice de precios" (IPV) y cómo se relaciona?**
-- El IPV mide cómo cambian los precios en el tiempo a nivel macroeconómico.
-- CostPro puede usar el IPV para **indexar** automáticamente los precios de las fichas.
-- Si el IPV sube 5% en el mes, las fichas se ajustan automáticamente.
-- Ver: *Explicación: ¿Qué es el IPV?* para más detalles.
+**¿Qué pasa si cambian los costos de los insumos? ¿Se ajustan los precios solos?**
+- El sistema no usa un índice de precios externo para indexar fichas.
+- Lo que sí hace: el **Costeo Dinámico** (OPERACIÓN → Costo) recalcula el costo de reposición absorbiendo servicios, comisiones y la tasa de cambio vigente; usted simula los nuevos precios y confirma cuándo aplicarlos.
 
 **¿Las fichas de costo son obligatorias?**
 - No, son opcionales. Puede operar CostPro sin usarlas.

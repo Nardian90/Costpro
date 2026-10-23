@@ -39,14 +39,13 @@ Si cambia a la **Tienda B**, todo lo anterior cambia: ahora ve los datos de la T
 
 Arriba del todo, en la barra negra, siempre verá el **nombre de la tienda activa**. Esa es la tienda cuyo cuaderno está abierto ahora mismo. Si quiere cambiar de cuaderno, haga clic en el nombre y elija otra.
 
-### El catálogo maestro es compartido
+### El catálogo de productos es por tienda
 
-Hay una excepción: el **catálogo de productos** (la lista maestra de qué productos existen) **es compartido entre todas las tiendas**. Esto significa:
+Cada tienda tiene **su propio catálogo de productos**: si crea un producto "Leche entera 1L" en la Tienda A, ese producto **no existe automáticamente** en la Tienda B, C, D o E. Para tenerlo ahí, se crea en esa tienda o se importa.
 
-- Si crea un producto "Leche entera 1L" en la Tienda A, ese producto existe también para la Tienda B, C, D y E.
-- Pero el **stock** de ese producto es **por tienda**: la Tienda A puede tener 20 unidades, la Tienda B 5, etc.
+El **stock** de cada producto es **por tienda**: la Tienda A puede tener 20 unidades, la Tienda B 5, etc.
 
-> 💡 **Por qué**: Es así para que no tenga que crear 5 veces el mismo producto si vende en 5 tiendas. Pero el stock sí es independiente porque cada tienda tiene su propio estante físico.
+> 💡 **Por qué**: cada tienda opera como un negocio independiente con sus propios precios y su propio estante físico. Si vende el mismo producto en 5 tiendas, se crea o importa en cada una.
 
 ### Los usuarios pueden pertenecer a varias tiendas
 
@@ -54,12 +53,9 @@ Un cajero llamado Juan puede trabajar en la Tienda A de día y en la Tienda B de
 
 Otros usuarios, en cambio, pueden tener acceso solo a una tienda. Todo depende de los permisos que el administrador les dé.
 
-### Los reportes pueden ser por tienda o consolidados
+### Los reportes son por tienda; el consolidado está en el tablero de Gestión de Tiendas
 
-Si usted es administrador, puede generar reportes:
-
-- **De una tienda específica**: solo ve los datos de esa tienda.
-- **De todas las tiendas**: ve el consolidado. Por ejemplo, las ventas totales de las 5 tiendas juntas.
+Si usted es administrador o manager, el **Generador de Reportes** (Análisis → Reportes) genera **por tienda** (la tienda activa). El consolidado multi-tienda está en el tablero del hub **Gestión de Tiendas**.
 
 Esto es muy útil para tomar decisiones estratégicas: *"La Tienda C vende poco, ¿debería cerrarla?"*
 
@@ -97,14 +93,9 @@ No todas las empresas necesitan multi-tienda. CostPro es multi-tienda desde el d
 Si su administrador quiere crear una nueva tienda:
 
 1. Va a **Operación → Gestión de Tiendas**.
-2. Hace clic en **"+ Nueva tienda"**.
-3. Llena:
-   - Nombre de la tienda.
-   - Slug (la dirección web pública, ej: `/tienda/mi-tienda-centro`).
-   - Dirección física.
-   - Moneda principal.
-   - Plantilla de diseño (4 opciones visuales).
-4. Asigna usuarios a la nueva tienda.
+2. Hace clic en **Nueva Sucursal**.
+3. En el modal **Nueva Tienda** basta con el **nombre** (el **slug** público se propone automáticamente a partir del nombre y puede ajustarse); los detalles (dirección, teléfono) se completan después desde la **Configuración de Tienda**, y el asistente de creación guía la plantilla de ficha de costo y la asignación de usuarios.
+4. La plantilla de diseño (4 opciones visuales) se elige desde la **edición** de la tienda.
 5. La tienda queda creada y aparece en el selector de tienda activa.
 
 > ⚠️ **Importante**: Una vez creada, la tienda **no se debe borrar**. Si quiere "desactivarla", cámbiele el estado a "Inactiva". Así se conserva el historial.
@@ -112,10 +103,7 @@ Si su administrador quiere crear una nueva tienda:
 ## Lo que NO cambia entre tiendas
 
 - **Su usuario y contraseña**: son los mismos en todas las tiendas.
-- **El catálogo maestro de productos**: compartido (aunque el stock es por tienda).
-- **Los clientes y proveedores**: compartidos (aunque puede filtrarlos por tienda).
 - **La configuración global**: tema visual, idioma, etc.
-- **Las categorías de productos**: compartidas.
 
 ## Lo que SÍ cambia entre tiendas
 
@@ -125,6 +113,7 @@ Si su administrador quiere crear una nueva tienda:
 - **Las recepciones** de mercancía.
 - **Las transferencias** (entre tiendas).
 - **Los reportes**.
+- **Las categorías de productos** (cada tienda gestiona las suyas).
 - **Los usuarios asignados** (un usuario puede estar en una tienda pero no en otra).
 - **La tienda pública** (cada tienda tiene su propia página web pública).
 
@@ -137,11 +126,10 @@ Si su administrador quiere crear una nueva tienda:
 - No. Cada venta queda en la caja de la tienda donde se hizo. No se mezclan.
 
 **¿Un cliente que compra en la Tienda A, puede devolver en la Tienda B?**
-- Técnicamente sí, pero no es recomendable. La devolución debe registrarse en la misma tienda donde se hizo la venta, para que la caja cuadre.
+- No: la devolución se procesa en la misma tienda donde se hizo la venta (el backend lo verifica con su membresía). Atienda al cliente en la tienda original.
 
 **¿Cómo veo el total de ventas de todas mis tiendas juntas?**
-- Genere un reporte de ventas con filtro "Todas las tiendas".
-- El reporte muestra el consolidado.
+- Abra el tablero consolidado del hub **Gestión de Tiendas** (OPERACIÓN → Gestión de Tiendas): reúne los KPIs de todas sus tiendas.
 
 **¿Puedo tener una tienda solo online, sin local físico?**
 - Sí. Cree la tienda en el sistema y active su tienda pública. Los clientes compran por la web y usted gestiona el envío.

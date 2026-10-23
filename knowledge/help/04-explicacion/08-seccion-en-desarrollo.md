@@ -5,15 +5,13 @@
 CostPro crece rápido. Algunas capacidades **existen y funcionan**, pero todavía no están lo bastante maduras o integradas como para formar parte del flujo principal del producto. En lugar de esconderlas o presentarlas como terminadas, CostPro las reúne en una sección propia del menú:
 
 ```
-EN DESARROLLO
+EN DESARROLLO (solo administradores)
 ├── IPV
-├── Pick3
-├── Billetera
 ├── Wiki
-├── Academia
-├── Marco Legal
-└── Conciliación Bancaria
+└── Marco Legal
 ```
+
+> **Nota (CP-INFRA-002, octubre 2026)**: Pick3, Billetera, Academia y la Conciliación Bancaria independiente fueron **retiradas del producto activo**. Si busca esas capacidades, hoy no están disponibles en la aplicación.
 
 ## Qué significa estar "en desarrollo"
 
@@ -27,13 +25,11 @@ Una vista en esta sección:
 
 | Vista | Qué es | Estado |
 |-------|--------|--------|
-| **IPV** | Banco de trabajo experimental de conciliación: reportes, extractos, catálogos, procesamiento IA y auditoría (navegación interna por rail). Solo administradores. | Experimental |
-| **Pick3** | Gestor de riesgo de inversión: métricas cuantitativas, motores Markov, backtest y gestión de bankroll. Solo administradores. | Experimental |
-| **Billetera** | Billetera digital experimental: ingresos por transferencias, pagos digitales e importación de backups de Transfermóvil. Solo administradores. | Experimental |
+| **IPV** | Banco de trabajo experimental de conciliación: reportes, extractos, catálogos, procesamiento IA y auditoría (navegación interna por rail). | Experimental |
 | **Wiki** | Conocimiento contable cubano: asientos con Debe/Haber, plan de cuentas, normativas NC-29 y ONAT. | En integración |
-| **Academia** | Flashcards con repetición espaciada (SRS) para dominar conceptos del sistema; progreso guardado en su cuenta. | En integración |
 | **Marco Legal** | Consultor de normativa cubana (fiscal, laboral, mercantil) y generador de formularios oficiales en PDF. | En integración |
-| **Conciliación Bancaria** | Vista de extractos y estado de conciliación en **solo lectura**. Sin importación ni matching automático todavía. | Beta — capacidad parcial |
+
+Toda la sección es visible **solo para administradores**.
 
 ## Cómo debe usarla usted
 

@@ -4,7 +4,7 @@
 
 ## Resumen rápido
 
-CostPro soporta **3 métodos de pago** (efectivo, transferencia, Zelle) que pueden combinarse en un mismo carrito con **4 monedas distintas** (CUP, USD, EUR, MLC). Cada item del carrito puede tener **múltiples filas de pago** del mismo método en distintas monedas, con ajustes (descuento o recargo) independientes por fila.
+CostPro soporta **3 métodos de pago** (efectivo, transferencia, Transf. Exterior) que pueden combinarse en un mismo carrito con **4 monedas distintas** (CUP, USD, EUR, MLC); además existe el método **Mixto** como combinación explícita. Cada item del carrito puede tener **múltiples filas de pago** del mismo método en distintas monedas, con ajustes (descuento o recargo) independientes por fila.
 
 ---
 
@@ -14,9 +14,9 @@ CostPro soporta **3 métodos de pago** (efectivo, transferencia, Zelle) que pued
 |--------|-------|---------------|-------------|----------------------|
 | **Efectivo** | 💵 | Cliente paga con billetes y monedas (CUP, USD, EUR, MLC) | Sí | Sí, suma el monto recibido |
 | **Transferencia** | 📱 | Cliente hace transferencia bancaria nacional | No | No, va al banco |
-| **Zelle** | 💳 | Cliente envía dinero desde el extranjero vía Zelle | No | No, va al banco extranjero |
+| **Transf. Exterior** | 💳 | Cliente envía dinero desde el exterior (Zelle u otro mecanismo) | No | No, va al banco extranjero |
 
-> **Nota histórica**: Antes se ofrecía "Tarjeta" y "Mixto" como métodos separados. Ahora **Mixto** no es un método: es simplemente usar 2 o más métodos en el mismo carrito. Y **Tarjeta** se reemplazó por **Transferencia** o **Zelle** según el origen del dinero.
+> **Nota sobre nombres**: el método de cobros desde el exterior se etiqueta **"Transf. Exterior"** en la interfaz (antes se mostraba como "Zelle"). En filas de Transf. Exterior solo se usan USD/EUR y el sistema convierte el monto automáticamente a CUP. **Mixto** sigue existiendo como método explícito del selector.
 
 ---
 
@@ -27,7 +27,7 @@ Cada fila de pago puede estar en una moneda distinta. El sistema convierte autom
 | Moneda | Uso típico | Tasa de cambio |
 |--------|------------|----------------|
 | **CUP** | Pesos cubanos, moneda base | 1 (siempre) |
-| **USD** | Dólares estadounidenses (Zelle, efectivo en divisas) | Configurable en Tasa Inteligente |
+| **USD** | Dólares estadounidenses (Transf. Exterior, efectivo en divisas) | Tasas de la tienda (botón Tasas del POS) |
 | **EUR** | Euros (efectivo en divisas) | Configurable en Tasa Inteligente |
 | **MLC** | Moneda Libremente Convertible (tarjetas magnéticas cubanas) | Configurable en Tasa Inteligente |
 
@@ -41,7 +41,7 @@ Cada fila de pago puede estar en una moneda distinta. El sistema convierte autom
 
 Cada item del carrito tiene una lista de **filas de pago**. Cada fila representa un pago individual con:
 
-- **Método** (efectivo / transferencia / Zelle)
+- **Método** (efectivo / transferencia / Transf. Exterior)
 - **Monto** (cuánto se paga en esa fila)
 - **Moneda** (CUP / USD / EUR / MLC)
 - **Ajuste** (ninguno / porcentaje / fijo, puede ser descuento o recargo)
@@ -74,7 +74,7 @@ Antes del modelo multi-fila, esto era imposible porque solo había un campo `cas
 Un **ajuste** modifica el monto esperado para ese método de pago. Puede ser:
 
 - **Descuento**: el cliente paga MENOS del subtotal (ej: -10% por pago en efectivo)
-- **Recargo**: el cliente paga MÁS del subtotal (ej: +5% por pago con Zelle)
+- **Recargo**: el cliente paga MÁS del subtotal (ej: +5% por pago con Transf. Exterior)
 
 > **Convención de signos**: en el sistema interno, un valor **positivo** es recargo y un valor **negativo** es descuento. En la interfaz solo ve "Descuento" o "Recargo" con el valor absoluto.
 
@@ -90,7 +90,7 @@ Un **ajuste** modifica el monto esperado para ese método de pago. Puede ser:
 | Caso | Configuración |
 |------|---------------|
 | "10% off por pago en efectivo CUP" | Efectivo CUP, descuento 10% |
-| "Recargo 5% por Zelle (cubre comisión)" | Zelle USD, recargo 5% |
+| "Recargo 5% por Transf. Exterior (cubre comisión)" | Transf. Exterior USD, recargo 5% |
 | "Descuento de $20 CUP por transferencia" | Transferencia CUP, descuento fijo $20 |
 | "Precio especial en USD sin ajuste" | Efectivo USD, sin ajuste |
 
@@ -124,10 +124,10 @@ En el panel de checkout verá:
 - Esperado: $900 CUP
 - Consolidado: $900 CUP ✓ Cuadrado
 
-### Ejemplo 3: Venta con recargo por Zelle (5%)
+### Ejemplo 3: Venta con recargo por Transf. Exterior (5%)
 
 - Producto: $1,000 CUP
-- 1 fila: Zelle USD $5.25 con recargo 5% (tasa 200)
+- 1 fila: Transf. Exterior USD $5.25 con recargo 5% (tasa 200)
 - Esperado: $1,050 CUP = $5.25 USD
 - Consolidado: $5.25 USD = $1,050 CUP ✓ Cuadrado
 
@@ -163,7 +163,7 @@ En el panel de checkout verá:
 - El sistema lo marca como **Falta** (badge rojo). La venta **no se puede completar** hasta que el total recibido iguale o supere al esperado.
 
 **¿Puedo cobrar el mismo item en 3 métodos distintos?**
-- Sí. Agregue 3 filas: efectivo, transferencia y Zelle. Cada una con su monto. El sistema consolida automáticamente.
+- Sí. Agregue 3 filas: efectivo, transferencia y Transf. Exterior. Cada una con su monto. El sistema consolida automáticamente.
 
 **¿La tasa de cambio se guarda por item o por venta?**
 - Por item. Cada item del carrito tiene su propia `currency` y `exchange_rate`. Esto permite tener items con precios en distintas monedas en el mismo carrito (útil cuando se compran productos a proveedores en distintas divisas).

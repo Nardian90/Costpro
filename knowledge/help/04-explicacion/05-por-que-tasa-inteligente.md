@@ -84,7 +84,7 @@ Una vez que usted acepta la tasa recomendada, todas las operaciones de ese día 
 
 **Lunes 8:00 AM**
 - El encargado entra a CostPro.
-- Va a Multi-Tienda → Inteligencia Cambiaria.
+- Va a ANÁLISIS → Inteligencia Cambiaria.
 - Hace clic en "Actualizar tasa ahora".
 - El sistema consulta las fuentes y muestra:
   - Tasa oficial: 280 CUP/USD

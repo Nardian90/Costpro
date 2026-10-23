@@ -21,7 +21,7 @@ CostPro registra automáticamente:
 - Cada venta creada (con usuario, fecha, monto).
 - Cada venta anulada (con motivo, usuario, fecha).
 - Cada descuento aplicado (con monto, motivo, autorizador si requiere).
-- Cada cambio de precio en el POS.
+- Cada cambio de precio de catálogo (el precio aplicado en cada venta queda registrado en la propia venta).
 
 ### Acciones de inventario
 - Cada recepción de mercancía (con usuario, proveedor, monto).
@@ -29,9 +29,7 @@ CostPro registra automáticamente:
 - Cada transferencia creada, enviada, recibida.
 
 ### Acciones de caja
-- Cada apertura de turno.
-- Cada cierre de turno (con diferencias).
-- Cada arqueo parcial.
+- Cada cierre de caja (con diferencias).
 
 ### Acciones administrativas
 - Cada creación / edición / desactivación de usuario.
@@ -40,10 +38,10 @@ CostPro registra automáticamente:
 - Cada cambio de tasa de cambio.
 
 ### Acciones críticas
-- Cada intento de acceso fallido.
-- Cada inicio de sesión exitoso.
-- Cada exportación de datos masiva.
 - Cada cambio en una ficha de costo.
+- Las exportaciones de datos relevantes (cada módulo define las suyas).
+
+> ℹ️ Los inicios de sesión y accesos fallidos no se escriben hoy en la auditoría global: si su cuenta muestra acciones que no hizo, cambie la contraseña y avise al administrador.
 
 ## ¿Qué NO se audita?
 
@@ -57,12 +55,12 @@ Para no invadir la privacidad ni saturar el sistema, **NO** se audita:
 
 ## ¿Quién puede ver la auditoría?
 
-- **admin**: ve todo.
-- **manager**: ve todo de sus tiendas.
-- **encargado**: ve la auditoría de su tienda.
-- **clerk, almacen, usuario**: NO pueden ver la auditoría.
+- **admin**: ve todo desde la vista global **Auditoría**, cuya entrada solo aparece para administradores.
+- **manager y encargado** no abren esa vista global, pero pueden consultar los eventos de **su tienda** (por ejemplo, la Bitácora de Auditoría del Generador de Reportes).
 
-> ⚠️ **Importante**: Si usted es cajero y le preocupa que "alguien esté viendo lo que hace", sepa que sus compañeros cajeros no pueden verlo. Solo los supervisores. Y ellos no ven cada clic suyo, solo las acciones importantes.
+Los registros quedan igualmente protegidos contra borrado, aunque usted no pueda consultarlos.
+
+> ⚠️ **Importante**: Si usted es cajero y le preocupa que "alguien esté viendo lo que hace", sepa que sus compañeros cajeros no pueden verlo. Solo el administrador. Y no ve cada clic suyo, solo las acciones importantes.
 
 ## ¿Por qué es bueno para usted?
 
@@ -96,29 +94,25 @@ En muchos países, la ley exige llevar un registro de ciertas operaciones (sobre
 
 ## ¿Cuánto tiempo se guarda la auditoría?
 
-- **Por defecto**: 5 años.
-- **Configurable**: el administrador puede extender a 7 o 10 años si la ley lo exige.
-- **No se puede borrar**: ni siquiera el admin puede eliminar registros de auditoría. Solo se pueden archivar (dejan de verse en la lista pero siguen en la base de datos).
+- **No se puede borrar desde la aplicación**: la base de datos lo impide para ningún usuario, admin incluido.
+- El producto no define hoy una retención fija para la auditoría; las tablas fiscales (ventas, devoluciones, cierres de caja) documentan retenciones de 7–10 años.
 
 ## El reporte de auditoría
 
 Desde **Operación → Auditoría**, puede generar reportes con filtros:
 
 ### Filtros disponibles
-- Por usuario.
-- Por tipo de acción (venta, ajuste, anulación, etc.).
-- Por fecha y hora.
+- Por tipo de evento (venta, ajuste, anulación, etc.).
+- Por fecha y hora (desde / hasta).
 - Por tienda.
-- Por monto (ej: solo acciones que involucran más de 1000 pesos).
-- Por severidad (info, advertencia, crítica).
+- Por búsqueda de texto (también encuentra por nombre de usuario).
 
 ### El timeline
 La auditoría se muestra como un **timeline** (línea de tiempo) con:
 - Hora exacta.
-- Usuario (con foto si está cargada).
+- Usuario (nombre y correo).
 - Acción realizada.
 - Detalle (qué cambió, antes → después).
-- IP desde donde se hizo (útil si alguien dice "no fui yo").
 
 ## Auditoría vs Monitoreo de uso
 
@@ -126,12 +120,12 @@ Es fácil confundirlos, pero son diferentes:
 
 | Aspecto | Auditoría | Monitoreo de uso |
 |---------|----------|-------------------|
-| **Qué registra** | Acciones específicas importantes | Patrones agregados |
-| **Granularidad** | Cada acción individual | Totales por día/semana/mes |
-| **Propósito** | Investigación y compliance | Estadísticas y optimización |
-| **Quién lo ve** | admin, manager, encargado | admin, manager |
-| **Tiempo de retención** | 5+ años | 90 días |
-| **Ejemplo** | "Juan anuló venta V-001 a las 3:15pm" | "Hoy hubo 23 sesiones, 8h total" |
+| **Qué registra** | Acciones específicas importantes | Consumo de infraestructura (Vercel + Supabase) |
+| **Granularidad** | Cada acción individual | Totales con alertas al 60/80/90 % del plan y forecast |
+| **Propósito** | Investigación y compliance | Estadísticas y optimización de costos |
+| **Quién lo ve** | admin | admin (sección Sistema) |
+| **Ventana de datos** | Historial conservado (no borrable) | Agregados de los últimos 30 días |
+| **Ejemplo** | "Juan anuló venta V-001 a las 3:15pm" | "Uso de ejecuciones al 72 % del plan" |
 
 ## Preguntas frecuentes
 
@@ -150,7 +144,7 @@ Es fácil confundirlos, pero son diferentes:
 **¿Qué hago si veo una acción en la auditoría que yo no hice?**
 - Cambie su contraseña inmediatamente (lea *Cómo cambiar mi contraseña*).
 - Avise al administrador.
-- Posiblemente alguien entró con su cuenta. La auditoría mostrará desde qué IP.
+- Posiblemente alguien entró con su cuenta.
 
 **¿La auditoría sirve para algo más allá de investigar problemas?**
 - Sí. Para análisis:
@@ -159,10 +153,8 @@ Es fácil confundirlos, pero son diferentes:
   - "¿Qué productos se ajustan más?" → mejorar el control de esos productos.
 
 **¿Las auditorías se pueden exportar?**
-- Sí. En formato PDF o Excel.
+- Sí. En formato **CSV** (abrible en Excel).
 - Útil para enviar al contador o a un auditor externo.
 
 **¿Quién audita al propio auditor?**
-- El sistema registra también cuándo alguien **ve** un registro de auditoría.
-- Es decir, si el admin consulta la auditoría para ver qué hizo Juan, esa consulta también queda registrada.
-- Esto evita que alguien "vigile" a otros sin dejar rastro.
+- La auditoría registra **acciones de negocio** (ventas, ajustes, cierres, cambios de fichas…), no lecturas de la propia auditoría: consultar un registro no genera hoy un registro nuevo.

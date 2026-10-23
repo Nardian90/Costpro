@@ -14,7 +14,7 @@ El Generador se abre como una vista dedicada que permite configurar y previsuali
 
 ![Generador de Reportes con la configuración base y la vista previa del reporte](/help/capturas/reportes-generador.webp "Figura 1. Generador de Reportes — configuración, vista previa y exportación")
 
-> **Nota:** Los roles `admin` y `manager` pueden generar reportes de cualquier tienda. Los roles `encargado` y `clerk` solo acceden a reportes de su tienda asignada.
+> **Nota:** Solo los roles `admin` y `manager` acceden al Generador de Reportes. El `admin` puede generar de cualquier tienda; el `manager`, de las tiendas con membresía activa. Los datos generados corresponden a la **tienda activa** seleccionada en la barra superior.
 
 ## Panel de Configuración
 
@@ -26,15 +26,16 @@ Un menú desplegable permite elegir entre los 11 tipos de reporte disponibles. C
 
 ### Filtros de Rango de Fechas
 
-Todos los reportes admiten filtrado por rango de fechas:
+La mayoría de los reportes admiten filtrado por rango de fechas (Inventario y Kardex trabajan sobre el estado actual o el producto, no sobre el rango):
 
 | Filtro | Descripción |
 |--------|-------------|
-| **Fecha inicio** | Fecha inicial del período a analizar (inclusive) |
-| **Fecha fin** | Fecha final del período a analizar (inclusive) |
+| **Desde** | Fecha inicial del período a analizar (inclusive) |
+| **Hasta** | Fecha final del período a analizar (inclusive) |
 | **Hoy** | Atajo para filtrar solo el día actual |
-| **Esta semana** | Atajo para filtrar la semana en curso (lunes a domingo) |
-| **Este mes** | Atajo para filtrar el mes calendario actual |
+| **Semana** | Atajo para filtrar la semana en curso |
+| **Mes** | Atajo para filtrar el mes calendario actual |
+| **Mes anterior** | Atajo para filtrar el mes calendario anterior |
 
 Los atajos de fecha se aplican automáticamente y actualizan ambos campos de fecha.
 
@@ -50,7 +51,6 @@ El formato de salida determina la disposición visual del reporte:
 |---------|--------|-----------------|
 | **A4** | 210 × 297 mm | Impresión estándar en Europa y Latinoamérica |
 | **Carta** | 216 × 279 mm | Impresión estándar en Estados Unidos y Canadá |
-| **Legal** | 216 × 356 mm | Documentos legales y reportes con muchas columnas |
 
 ## Catálogo de Tipos de Reporte
 
@@ -63,50 +63,44 @@ La siguiente tabla detalla los 11 tipos de reporte disponibles en el sistema:
 | **Inventario** | `inventory` | Estado actual del inventario con niveles de stock y valoración | Stock disponible, valor en inventario, productos con bajo stock, categorías | `products`, `inventory` |
 | **Kardex** | `kardex` | Movimiento detallado de entradas y salidas por producto | Entradas, salidas, saldo actual, tipo de movimiento, fecha | `inventory_movements`, `products` |
 | **Compras** | `purchases` | Registro de adquisiciones y recepciones de mercancía | Total comprado, proveedor, cantidad recibida, precio unitario | `purchases`, `receptions` |
-| **Auditoría** | `audit` | Registro de acciones realizadas en el sistema por usuarios | Usuario, acción, módulo, fecha/hora, dirección IP, detalles del cambio | `audit_logs` |
+| **Auditoría** | `audit` | Registro de acciones realizadas en el sistema por usuarios | Usuario, acción, tabla, tienda, fecha/hora | `audit_logs` |
 | **Ficha de Costo** | `cost_sheet` | Resumen de fichas de costeo con cálculos y métodos | Costo total, método de cálculo, secciones, estado de auditoría | `cost_sheets`, `cost_items` |
 | **Ingresos Diarios** | `daily_income` | Desglose de ingresos por día dentro del período seleccionado | Ingreso total por día, número de ventas, métodos de pago predominantes | `sales` |
 | **Egresos Diarios** | `daily_expenses` | Desglose de egresos y gastos operativos por día | Egreso total por día, conceptos de gasto, frecuencia | `expenses` |
 | **Transferencias** | `transfer` | Registro de transferencias de inventario entre tiendas | Origen, destino, productos transferidos, cantidades, estado | `transfers`, `transfer_items` |
 | **Caja** | `cash` | Detalle de cierres de caja y arqueos | Efectivo inicial, ventas del período, efectivo final, diferencia | `cash_closures` |
 
+> **Nota (Implementación Parcial):** los reportes **Kardex** y **Auditoría** muestran hoy un aviso de implementación parcial: el PDF generado puede venir con datos vacíos. El reporte Kardex exige además seleccionar un producto concreto en el selector «Producto (Kardex)».
+
 ## Vista Previa del Reporte
 
-Tras configurar los parámetros y hacer clic en **Generar**, el sistema renderiza una vista previa del reporte directamente en el navegador. La vista previa incluye:
+Al configurar los parámetros, la vista **Vista Previa (Borrador)** muestra en vivo un anticipo del reporte con los **primeros 5 registros** del resultado. Es un borrador HTML de referencia: el PDF final se genera al pulsar **Generar**.
 
-- **Encabezado:** Logo de la tienda, nombre de la empresa, fecha de generación y título del reporte.
-- **Cuerpo:** Tabla con los datos filtrados según la configuración seleccionada.
-- **Pie de página:** Número de páginas, generación automática de código de identificación del reporte.
-
-> **Tip:** La vista previa utiliza renderizado PDF embebido, lo que garantiza que lo que ves en pantalla es exactamente lo que se imprimirá o descargará.
+> **Tip:** Ajuste columnas y filtros mirando el borrador antes de generar: evita regeneraciones innecesarias.
 
 ## Exportación del Reporte
 
-Una vez satisfecho con la vista previa, el reporte puede exportarse en formato **PDF** mediante el botón de descarga. El archivo PDF generado conserva:
+Al pulsar **Generar**, el reporte se abre en formato **PDF en una pestaña nueva del navegador** desde donde puede imprimirse o guardarse. También puede exportarlo a **Excel** con el botón correspondiente. Ambas salidas conservan:
 
-- El formato de página seleccionado (A4, Carta, Legal)
 - Las columnas elegidas en la configuración
 - Los filtros de fecha aplicados
-- El logo y datos de la tienda activa
+- El formato de página seleccionado (A4, Carta) en el caso del PDF
 
-El archivo se descarga automáticamente al navegador con un nombre que incluye el tipo de reporte, la tienda y la fecha de generación.
+## Historial de Reportes Generados
 
-## Registro de Auditoría
+Cada reporte generado queda registrado en el historial del generador (no en la auditoría global). Para consultarlo:
 
-Cada reporte generado queda registrado en el sistema de auditoría. Para consultar el historial de reportes generados:
+1. Pulse el botón **Historial** en la vista de Reportes.
+2. Revise las ejecuciones previas: nombre y tipo de reporte, fecha/hora de ejecución, estado (Completado/Fallido) y, si falló, el error reportado.
 
-1. Accede al **AuditLogsModal** desde la barra superior o desde CONFIGURACIÓN.
-2. Filtra por acción `report_generated` para ver todos los reportes emitidos.
-3. Cada registro incluye: usuario que generó el reporte, tipo de reporte, parámetros de configuración, fecha/hora de generación.
-
-> **Importante:** El registro de auditoría no puede ser modificado ni eliminado por ningún usuario, garantizando la trazabilidad completa de los reportes emitidos.
+> **Importante:** El historial de ejecuciones es la trazabilidad de los reportes emitidos.
 
 ## Consejos para una Generación Óptima
 
 - **Rangos amplios:** Para reportes con períodos superiores a un año, considera reducir las columnas para mejorar la legibilidad.
-- **Kardex por producto:** El reporte Kardex puede generar un volumen alto de datos. Utiliza filtros de fecha cortos (semana o mes) para obtener resultados manejables.
+- **Kardex por producto:** El reporte Kardex requiere seleccionar un producto y puede generar un volumen alto de datos; el resultado se acota por producto y límite de registros (el rango de fechas no lo afecta). Recuerde el aviso de Implementación Parcial.
 - **Inventario:** El reporte de Inventario refleja el estado actual y no requiere rango de fechas, aunque puedes comparar con instantáneas anteriores.
-- **Auditoría:** Evita rangos superiores a 30 días para el reporte de Auditoría, ya que registra cada acción individual del sistema.
+- **Auditoría:** Evita rangos superiores a 30 días para el reporte de Auditoría, ya que registra cada acción individual del sistema. Recuerde el aviso de Implementación Parcial.
 
 ## Mejores Prácticas por Tipo de Reporte
 

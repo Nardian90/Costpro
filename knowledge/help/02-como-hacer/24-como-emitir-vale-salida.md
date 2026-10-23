@@ -15,21 +15,28 @@ Un **Vale de Salida (VS)** es una salida de inventario **sin venta**:
 
 ## Dónde está
 
-El vale **no tiene vista propia**: es un modo dentro del POS.
+El vale tiene **dos caminos**:
 
 ```text
-Operación → Vender → (toggle del carrito) [Venta] [VS]
+Camino principal:  Operación → Almacén → Vales de Salida (vista propia con historial)
+Camino rápido:     Operación → Ventas → Vender → (toggle del carrito) [Venta] [VS]
 ```
+
+La vista **Vales de Salida** reúne el historial completo con filtro por estado (Completados, Devueltos, Anulados), modo tabla o tarjetas y el botón **Crear Vale de Salida**.
 
 ## Cómo emitirlo
 
-1. Abra **Vender** y mueva el toggle del carrito a **VS**.
-2. Agregue los productos y cantidades al carrito (igual que en una venta).
+**Desde la vista de Vales de Salida:**
+
+1. Abra **OPERACIÓN → Almacén → Vales de Salida** y pulse **Crear Vale de Salida**.
+2. Agregue productos y cantidades (si un producto se vende en cajas y unidades, elija la **variante con su factor de conversión**: ej. 1 caja = ×24 unidades base).
 3. **Orden de Producción (opcional)**: si la salida es material de un trabajo, seleccione la orden (aparecen las que están Aprobadas, En Progreso o Pausadas). Si no, deje **"— Sin OT (solo descuenta stock) —"**.
-4. Si eligió OT, el sistema permite **asociar cada ítem a una línea de la orden**; al emitir, se descuenta también la cantidad **Real** de esa línea (no puede exceder lo presupuestado).
-5. Escriba las **Notas** (obligatorias): describa el motivo (consumo interno, merma, traslado, a quién se entrega...).
-6. Revise el **costo estimado** y haga clic en **"Emitir Vale"**.
-7. El sistema muestra el número del vale (ej: `VS-000126-2026`) y limpia el carrito.
+4. Si eligió OT, el sistema permite **asociar cada ítem a una línea de la orden**; al emitir, se descuenta también la cantidad **Real** de esa línea (no puede exceder lo presupuestado; el sistema avisa si supera el presupuesto restante).
+5. Escriba el **Concepto / notas** (obligatorio): describa el motivo (consumo interno, merma, traslado, a quién se entrega...).
+6. Revise la **fecha de operación** (por defecto hoy o su fecha de trabajo; nunca futura) y el **costo estimado**, y confirme.
+7. El sistema muestra el número del vale (ej: `VS-000126-2026`) y queda en el historial en estado **Completado**.
+
+**Desde el POS:** el toggle del carrito a **VS** hace el mismo flujo sin salir de la venta; útil para el encargado de almacén que ya está en la caja.
 
 ## Qué ocurre automáticamente
 
@@ -39,13 +46,18 @@ Operación → Vender → (toggle del carrito) [Venta] [VS]
 
 ## Cómo consultarlo después
 
+- **Operación → Almacén → Vales de Salida**: historial completo con detalle documental, filtros por estado y búsqueda.
 - **Inventario → Trazabilidad (kardex)**: cada salida muestra el documento `VS-000NNN-AAAA`, la cantidad y el costo.
 - Los vales también quedan registrados con su nota, por lo que buscar por el texto de la nota (por ejemplo el nombre de la OT o del técnico) permite reconstruir el histórico.
+
+## Cómo devolver (revertir) un vale
+
+Si un vale se emitió por error, ábralo desde el historial de **Vales de Salida** y pulse **Devolver vale**: el sistema registra el movimiento compensatorio (el stock vuelve), restaura la línea de la OT si aplica y deja auditoría. Solo los vales en estado **Completado** se pueden devolver (protección anti doble reversión); después, el vale queda como **Devuelto**.
 
 ## Precauciones
 
 - **Las notas son obligatorias** y son la única explicación del motivo: escriba algo que entienda dentro de 6 meses.
-- **Reversión de un vale**: el mecanismo funcional existe — `POST /api/vale-salida/{id}/reverse` (RPC `reverse_vale_salida`) marca el vale como `reversed`, registra el movimiento compensatorio `issue_slip_reverse` (+cantidad, kardex `in`), restaura la línea de la OT si aplica y deja auditoría `REVERSE_VALE_SALIDA`. Solo vale en estado `completed` es reversible (protección anti doble reversión). **Gap actual**: no existe todavía una vista o botón en la UI que invoque esa reversión (no hay historial de vales en pantalla); hasta que exista, la reversión queda como operación de administrador vía API y el ajuste documental de inventario (Inventario → Ajustes) es la alternativa disponible desde la interfaz.
+- **Solo se devuelven los vales Completados** y la devolución es total: no hay devolución parcial de un vale.
 - No use el vale para "regalar" sin permiso: el costo del vale impacta el costo de la tienda aunque no haya ingreso.
 
 ## Preguntas frecuentes

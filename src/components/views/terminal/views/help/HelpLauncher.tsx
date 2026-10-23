@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 export const HELP_DOC_BY_VIEW: Record<string, string> = {
   // Tutoriales principales
   'occ': 'help/01-tutoriales/01-primer-inicio.md', // alias legacy (normalizado a dashboard)
-  'dashboard': 'help/01-tutoriales/04-primer-reporte.md',
+  'dashboard': 'help/01-tutoriales/01-primer-inicio.md',
 
   // Operaciones multi-tienda
   'pos': 'help/02-como-hacer/03-como-cerrar-caja.md',
@@ -34,6 +34,8 @@ export const HELP_DOC_BY_VIEW: Record<string, string> = {
   'catalog': 'help/01-tutoriales/03-primer-producto.md',
   'inventory': 'help/02-como-hacer/10-como-ajustar-inventario.md',
   'inventory_adjustments': 'help/02-como-hacer/10-como-ajustar-inventario.md',
+  'physical_inventory': 'help/02-como-hacer/25-como-hacer-inventario-fisico.md',
+  'vales_salida': 'help/02-como-hacer/24-como-emitir-vale-salida.md',
   'history': 'help/03-referencia/08-estados-transferencia.md',
   'inventory_count': 'help/02-como-hacer/18-como-usar-venta-por-conteo.md',
   'labels': 'help/02-como-hacer/08-como-imprimir-etiqueta.md',
@@ -41,6 +43,8 @@ export const HELP_DOC_BY_VIEW: Record<string, string> = {
   'reception_list': 'help/02-como-hacer/04-como-recibir-mercancia.md',
   'transferencias': 'help/02-como-hacer/05-como-hacer-transferencia.md',
   'cash': 'help/02-como-hacer/03-como-cerrar-caja.md',
+  'ingresos_egresos': 'help/02-como-hacer/26-como-registrar-ingresos-egresos.md',
+  'work_dates': 'help/02-como-hacer/27-como-usar-fechas-trabajo.md',
   'purchase-orders': 'help/02-como-hacer/06-como-crear-orden-compra.md',
   'devolutions': 'help/02-como-hacer/19-como-procesar-devolucion.md',
   'quotations': 'help/02-como-hacer/20-como-crear-cotizacion.md',
@@ -74,6 +78,8 @@ export const HELP_DOC_BY_VIEW: Record<string, string> = {
 
   // Reportes
   'reports': 'help/01-tutoriales/04-primer-reporte.md',
+  'cash_report': 'help/02-como-hacer/29-como-generar-reporte-entrega.md',
+  'ipv_ventas': 'help/02-como-hacer/28-como-consultar-ipv-ventas.md',
 
   // IPV
   'ipv': 'help/04-explicacion/03-que-es-ipv.md',

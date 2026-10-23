@@ -2,7 +2,7 @@
 
 > **Necesita esto cuando**: Administra la plataforma y necesita el estado, el consumo, las fuentes de noticias o el cierre de periodos.
 
-Todas las herramientas de esta página requieren rol **administrador** y viven en la sección **Sistema**.
+Las herramientas de la sección **Sistema** (Salud, Monitoreo, Gestión RSS, Cierre Fiscal) requieren rol **administrador**. El **Tablón de Noticias** (sección Análisis) está abierto a todos los roles.
 
 ## Salud
 
@@ -37,7 +37,7 @@ Todas las herramientas de esta página requieren rol **administrador** y viven e
 
 ## Cierre Fiscal
 
-**Qué es**: el cierre de periodo fiscal **con inmutabilidad de registros**: consolida el periodo mensual y lo bloquea para que nadie pueda modificar los documentos cerrados.
+**Qué es**: el cierre de periodo fiscal con consolidación mensual. El **bloqueo de inmutabilidad** es una acción de administrador aparte, posterior al cierre: primero se cierra el periodo y después se bloquea para que nadie pueda modificar los documentos cerrados.
 
 **Dónde**: `Sistema → Cierre Fiscal`.
 
@@ -49,7 +49,8 @@ Todas las herramientas de esta página requieren rol **administrador** y viven e
 
 **Precauciones**:
 
-- Un periodo cerrado queda **bloqueado por diseño**: no se reabre desde la interfaz.
+- **Cerrar** un periodo no impide aún las modificaciones: para protegerlo del todo, un administrador debe usar después **Bloquear Periodo**.
+- Un periodo **bloqueado** no se reabre desde la interfaz.
 - Cierre solo cuando el mes esté completamente conciliado (ventas, caja, devoluciones).
 
 ## Preguntas frecuentes

@@ -55,9 +55,10 @@ Antes de poder vender algo en la caja, ese "algo" tiene que existir en el sistem
 
 ## Paso 1 — Ir al Catálogo
 
-1. En el menú de la izquierda, haga clic en **Multi-Tienda**.
-2. En la lista que se abre, busque y haga clic en **Catálogo Maestro** (a veces llamado solo "Catálogo").
-3. Verá una tabla con todos los productos que ya existen.
+1. En el menú de la izquierda, abra la sección **OPERACIÓN**.
+2. Abra el grupo **Almacén** y haga clic en **Inventario**.
+3. Dentro del Inventario, abra la pestaña **Catálogo** para ver la tabla de productos.
+4. Verá una tabla con todos los productos que ya existen.
 
 ![Catálogo maestro con la tabla de productos: imagen, SKU, categoría, stock, costo y precios](/help/capturas/catalogo-productos.webp "Figura 1. Catálogo Maestro — tabla de productos con stock y precios")
 
@@ -119,7 +120,7 @@ Verá muchos campos, pero **solo los marcados con asterisco (*) son obligatorios
 
 Para confirmar que el producto quedó bien cargado:
 
-1. Vaya a **Multi-Tienda → Terminal POS**.
+1. Vaya a **OPERACIÓN → Ventas → Vender**.
 2. En la barra de búsqueda, escriba el nombre del producto que acaba de crear.
 3. Debe aparecer en la lista. Si aparece, ¡todo está perfecto!
 4. Si no aparece, espere 5 segundos y vuelva a intentar (a veces tarda en refrescar).

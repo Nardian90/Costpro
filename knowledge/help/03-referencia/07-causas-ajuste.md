@@ -1,110 +1,52 @@
-# Referencia: Las 7 Causas de Ajuste de Inventario
+# Referencia: Motivos de Ajuste de Inventario
 
-> **Use esta tabla** cuando vaya a hacer un ajuste de inventario y no sepa qué motivo elegir.
+> **Use esta referencia** cuando vaya a hacer un ajuste de inventario y no sepa qué motivo registrar.
 
-## Las 7 causas
+## Motivos documentales (Ajustes Documentales e Inventario Físico)
 
-| # | Causa | Cuándo usarla | Ejemplo |
-|---|-------|---------------|---------|
-| 1 | **Daño / Merma** | Producto se rompió, se venció o se echó a perder. | Una botella de leche se cayó y se rompió. |
-| 2 | **Robo confirmado** | Se descubrió un robo y se sabe cuánto se llevó. | Un empleado confesó haberse llevado 5 cajas de cigarrillos. |
-| 3 | **Error de recepción** | Al recibir mercancía, se contó mal y se registró más o menos. | El proveedor mandó 20 unidades pero se anotaron 25. |
-| 4 | **Error de venta** | En una venta pasada, el cajero se equivocó en la cantidad. | Cobró 2 pero entregó 3. |
-| 5 | **Diferencia de conteo** | En un inventario físico, no cuadró y no se sabe la causa. | El sistema dice 50, el conteo físico dice 47. No se sabe por qué. |
-| 6 | **Devolución de cliente** | Un cliente devolvió un producto que ya se había vendido. | Cliente compró una camisa, al día siguiente la devolvió porque no le servía. |
-| 7 | **Reclasificación** | El producto cambió de SKU o de categoría. | Se decidió que "Refresco 250ml lata" y "Refresco 250ml botella" sean SKUs diferentes. |
+Los ajustes documentales —incluidos los que genera automáticamente el **Inventario Físico**— se clasifican en **4 motivos oficiales**:
 
-## Detalle de cada causa
+| Motivo | Cuándo usarlo | Ejemplo |
+|--------|--------------|---------|
+| **Faltante de conteo** (shrinkage) | El conteo dio **menos** que el stock del sistema. | El sistema dice 50 y el conteo físico da 47. |
+| **Sobrante de conteo** (surplus) | El conteo dio **más** que el stock del sistema. | El sistema dice 30 y el conteo físico da 33. |
+| **Producto dañado** | Mercancía averiada, vencida o inservible que hay que retirar. | Una botella se rompió; un paquete de harina llegó mojado. |
+| **Otro** | Cualquier caso no cubierto; se acompaña de un motivo en texto libre. | Error de digitación al recibir; consumo interno autorizado. |
 
-### 1. Daño / Merma
-- **Tipo de ajuste**: Salida (restar stock).
-- **Requiere autorización**: No, si es menos de 50 unidades.
-- **Impacto contable**: Se registra como pérdida.
-- **Recomendación**: Anote en las notas qué específicamente se dañó y por qué. Si es recurrente (mucho daño del mismo producto), investigue la causa raíz (manipulación, almacenamiento, transporte).
+Al crear un Ajuste Documental, usted escribe el motivo en texto libre (obligatorio) y el sistema lo clasifica en una de esas 4 categorías.
 
-### 2. Robo confirmado
-- **Tipo de ajuste**: Salida (restar stock).
-- **Requiere autorización**: Sí, siempre. Aunque sea una unidad.
-- **Impacto contable**: Se registra como pérdida por robo.
-- **Recomendación**: Adjunte el reporte del incidente. Si hubo denuncia policial, ponga el número de denuncia en las notas.
+## Motivos del ajuste rápido (por producto)
 
-### 3. Error de recepción
-- **Tipo de ajuste**: Puede ser Entrada o Salida, según si se registró de menos o de más.
-- **Requiere autorización**: No, si es menos de 50 unidades.
-- **Impacto contable**: Ajusta el valor del inventario.
-- **Recomendación**: Identifique la recepción original (por folio) y anótela en las notas. Avise al proveedor si fue error de él.
+El **ajuste rápido** desde la pestaña Stock Actual del Inventario ofrece estas opciones:
 
-### 4. Error de venta
-- **Tipo de ajuste**: Puede ser Entrada o Salida.
-- **Requiere autorización**: Sí, porque significa que una venta pasada fue incorrecta.
-- **Impacto contable**: Ajusta inventario. La venta original NO se modifica (ya fue cobrada).
-- **Recomendación**: Identifique la venta original (por folio). Considere si debe devolver dinero al cliente.
+| Motivo | Cuándo usarlo |
+|--------|--------------|
+| **Merma** | El producto se dañó, venció o se perdió. |
+| **Error de conteo** | Se registró mal una cantidad y se corrige al valor real. |
+| **Venta omitida** | Salió mercancía sin registrarse la venta; se descuenta del stock. |
+| **Ajuste manual** | Cualquier otra corrección autorizada por la gestión. |
 
-### 5. Diferencia de conteo
-- **Tipo de ajuste**: Puede ser Entrada o Salida.
-- **Requiere autorización**: No, si es menos de 50 unidades o menos de 1000 pesos.
-- **Impacto contable**: Se registra como ajuste de inventario.
-- **Recomendación**: Úselo como **último recurso**. Siempre intente identificar la causa real primero. Si usa esta causa con frecuencia, su control de inventario está fallando.
+## Reglas comunes a todos los ajustes
 
-### 6. Devolución de cliente
-- **Tipo de ajuste**: Entrada (sumar stock).
-- **Requiere autorización**: No.
-- **Impacto contable**: Revierte el costo de la mercancía vendida.
-- **Recomendación**: Identifique la venta original. Decida si va a devolver el dinero al cliente (anulación) o si solo acepta la devolución de la mercancía (nota de crédito).
-
-### 7. Reclasificación
-- **Tipo de ajuste**: Salida de un SKU y entrada a otro SKU (transferencia interna).
-- **Requiere autorización**: Sí, del administrador.
-- **Impacto contable**: Ninguno (el valor total del inventario no cambia, solo se mueve entre SKUs).
-- **Recomendación**: Úselo con cuidado. Asegúrese de que el SKU nuevo esté correctamente creado antes de reclasificar.
-
-## Decisiones comunes
-
-### "Se cayó una botella de refresco"
-→ Causa 1 (Daño / Merma). Salida de 1 unidad.
-
-### "El sistema dice 100, conté 95, no sé por qué"
-→ Causa 5 (Diferencia de conteo). Salida de 5 unidades.
-
-### "Un cliente devolvió una camisa que compró ayer"
-→ Causa 6 (Devolución de cliente). Entrada de 1 unidad.
-
-### "El proveedor mandó 50 pero anoté 60 en el sistema"
-→ Causa 3 (Error de recepción). Salida de 10 unidades.
-
-### "El cajero cobró 2 leches pero entregó 3"
-→ Causa 4 (Error de venta). Salida de 1 unidad.
-
-### "Se decidió que el refresco en lata y en botella sean SKUs diferentes"
-→ Causa 7 (Reclasificación). Salida del SKU original, entrada al SKU nuevo.
-
-### "Sospechamos robo pero no estamos seguros"
-→ NO use "Robo confirmado". Use "Diferencia de conteo" e investigue.
-→ Si confirma el robo después, haga otro ajuste con causa 2.
+- El **motivo es obligatorio** siempre: no hay ajuste sin justificación.
+- Los ajustes **no se editan ni se borran**: los documentos se anulan o revierten, y todo queda en la auditoría y en el Kardex.
+- No hay autorización por umbral de unidades o importe: el control es por **rol** (admin, manager o encargado) y por **auditoría** posterior.
+- Las devoluciones de clientes **no** se registran como ajuste: usan el módulo de **Devoluciones** (OPERACIÓN → Ventas → Opciones → Devoluciones), que repone el stock con su propio documento NC.
+- Los errores de recepción se previenen al recibir; si la recepción ya se confirmó con error, corrija con un ajuste documental con motivo «Otro» y detalle en el texto.
 
 ## Preguntas frecuentes
 
-**¿Qué causa uso si el producto se venció?**
-- Causa 1 (Daño / Merma). El vencimiento es un tipo de daño.
+**¿Existen los motivos "Robo confirmado" o "Reclasificación"?**
+No. Para un faltante sospechoso use «Faltante de conteo» y explique el caso en el motivo libre; la auditoría registrará quién hizo el ajuste. Para separar un producto en otro SKU, ajuste ambos productos por separado con «Otro».
 
-**¿Qué causa uso si el producto lo regalé a un cliente fiel?**
-- Ninguna de las 7 encaja perfectamente. Use "Diferencia de conteo" y explique en las notas.
-- Considere crear una "venta" con descuento del 100% en lugar de un ajuste. Es más limpio.
+**¿Qué motivo uso si el conteo del Inventario Físico dio faltante?**
+Ninguno manual: al conciliar el inventario físico, el sistema genera los ajustes de faltante y sobrante automáticamente, enlazados al conteo (badge IF-…).
 
-**¿Qué causa uso si el producto lo usé para una promoción (ej: degustación)?**
-- Causa 1 (Daño / Merma). La promoción es un "consumo" del producto.
+**¿Dónde veo quién hizo un ajuste?**
+En el historial del documento y en la Auditoría (visible para admin), junto con la fecha y el motivo.
 
-**¿Puedo hacer un ajuste sin especificar causa?**
-- No. El sistema exige una de las 7. Esto es para evitar ajustes "fantasma".
+## Información relacionada
 
-**¿El ajuste se puede modificar después?**
-- No. Una vez confirmado, queda registrado. Si se equivocó, tiene que hacer un ajuste inverso.
-
-**¿Los ajustes afectan al reporte de ganancias?**
-- Sí. Los ajustes de salida restan del inventario y se registran como pérdida, lo que reduce la ganancia.
-- Los ajustes de entrada suman al inventario y se registran como ganancia de inventario.
-
-**¿Cada cuánto debo hacer ajustes?**
-- Recomendado: una vez al mes, como parte del inventario mensual.
-- También inmediatamente cuando detecte un problema (daño, robo, error).
-- No acumule muchos ajustes pequeños. Haga uno grande mensual con todo.
+- **Cómo ajustar el inventario** — guía paso a paso de ambos mecanismos.
+- **Cómo hacer un Inventario Físico** — el conteo formal que genera ajustes automáticos.
+- **Cómo procesar una devolución** — reposición de stock por devolución de cliente.

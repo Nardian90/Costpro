@@ -8,6 +8,13 @@
 > ">24h SOLO admin" de este documento NUNCA llegaron a implementarse
 > server-side y quedan **supersesadas**. Este archivo se conserva como
 > referencia histórica del diseño original de 6 roles.
+>
+> **Otras diferencias con el modelo vigente** (verificado en el código actual):
+> el sistema tiene además el rol **`costo`**; el POS incluye a **`usuario`**;
+> y la autorización de descuentos ≥ 15 % hoy se hace con **correo y contraseña
+> de un admin o manager de la tienda** (no existe un PIN dedicado y el
+> encargado no autoriza). La política vigente completa está en
+> `04-configuracion/roles-y-permisos.md`.
 
 > **Use esta tabla** cuando quiera saber qué puede hacer cada tipo de usuario.
 
@@ -21,12 +28,12 @@ CostPro tiene **6 roles jerárquicos**. Los permisos son **acumulativos**: un ro
 | **manager** | 5 | Gerente. Administra tiendas y usuarios. |
 | **encargado** | 4 | Encargado de tienda. Supervisa operaciones. |
 | **clerk** | 3 | Cajero / Vendedor. Atiende clientes. |
-| **almacen** | 2 | Almacenista. Maneja inventario, no atiende público. |
+| **warehouse** | 2 | Almacenista. Maneja inventario y logística (recepciones, transferencias, servicios recibidos), no atiende público. |
 | **usuario** | 1 (mínimo) | Usuario básico. Solo lectura. |
 
 ## Tabla de permisos por rol
 
-| Acción | usuario | almacen | clerk | encargado | manager | admin |
+| Acción | usuario | warehouse | clerk | encargado | manager | admin |
 |--------|---------|---------|-------|-----------|---------|-------|
 | Ver Dashboard | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Hacer ventas (POS) | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
@@ -40,18 +47,16 @@ CostPro tiene **6 roles jerárquicos**. Los permisos son **acumulativos**: un ro
 | Confirmar transferencias recibidas | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ |
 | Cerrar caja (propia) | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Cerrar caja (de otros) | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Anular ventas (< 24h) | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Anular ventas (> 24h) | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Aplicar descuento < 20% | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Aplicar descuento 20-50% | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Aplicar descuento > 50% | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Ver reportes de tienda | ❌ | ✅ | Solo propios | ✅ | ✅ | ✅ |
+| Anular ventas (según su rol) | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Aplicar descuento < 15% | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Aplicar descuento ≥ 15% (requiere PIN de supervisor) | ❌ | ❌ | Con autorización | Con autorización | Con autorización | ✅ |
+| Ver reportes de tienda (Generador de Reportes) | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | Ver reportes de todas las tiendas | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | Crear / editar productos del catálogo | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ |
 | Crear / editar tiendas | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | Crear / editar usuarios | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Ver auditoría | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Ver monitoreo de uso | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Ver auditoría | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Ver monitoreo de uso | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Cambiar configuración global | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Cambiar tasa de cambio | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Pagar comisiones | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
@@ -69,23 +74,23 @@ CostPro tiene **6 roles jerárquicos**. Los permisos son **acumulativos**: un ro
 ### manager (Gerente)
 - Administra una o varias tiendas.
 - Puede crear usuarios pero no cambiar configuración global.
-- Ve reportes de todas las tiendas a su cargo.
-- Autoriza operaciones especiales (descuentos grandes, ajustes grandes).
+- Genera reportes (Análisis → Reportes) de las tiendas con su membresía.
+- Autoriza operaciones especiales (descuentos ≥ 15 %, ajustes grandes).
 
 ### encargado
 - Supervisa UNA tienda.
-- Ve reportes de su tienda.
-- Autoriza descuentos hasta 50%.
-- Puede ajustar inventario y anular ventas de cualquier cajero de su tienda.
+- Opera ventas, inventario, caja y el dominio Costo de su tienda.
+- Autoriza descuentos ≥ 15 % con su PIN de supervisor.
+- Puede ajustar inventario y anular ventas según su rol.
 - No crea usuarios.
 
 ### clerk (Cajero)
 - Atiende la terminal POS.
 - Ve solo sus propias ventas.
-- Puede anular sus ventas dentro de 24h.
-- Aplica descuentos hasta 20%.
+- Puede deshacer su venta con el Undo de 30 s (según el modelo vigente de reversión).
+- Aplica descuentos < 15 %; por encima requiere autorización de supervisor.
 
-### almacen (Almacenista)
+### warehouse (Almacenista)
 - Maneja el inventario físico.
 - Recibe mercancía, hace ajustes, hace transferencias.
 - No atiende público.
@@ -116,7 +121,7 @@ CostPro tiene **6 roles jerárquicos**. Los permisos son **acumulativos**: un ro
 - **clerk**. Es el rol mínimo para poder vender.
 
 **¿Qué rol debo dar al contador?**
-- **manager** con permisos de reportes y auditoría.
+- **manager** si necesita generar reportes (el Generador de Reportes es admin/manager).
 - O un rol personalizado si solo necesita ver ciertas cosas.
 
 **¿Puedo crear roles personalizados?**

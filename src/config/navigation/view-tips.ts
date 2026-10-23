@@ -38,13 +38,15 @@ export const VIEW_TIPS: Record<string, string> = {
   'tool-import': 'Importa JSON de fichas existentes',
 
   // Multi-Tienda
-  'management-hub': 'Gestiona noticias, vitrina y tiendas en un solo lugar',
+  'management-hub': 'Gestiona tiendas, dashboards y vitrina en un solo lugar',
   'workers': 'Configura reglas de comisión por trabajador',
   'cost-analytics': 'Arrastra campos para crear vistas dinámicas',
   'exchange-intelligence': 'Simula escenarios de devaluación cambiaria',
   'reports': 'Diseña reportes con filtros personalizados',
   'pos': 'Escáner de código de barras integrado — presiona F2',
-  'sales-hub': 'Vender, Caja e Historial al frente; el resto en Otras opciones',
+  'sales-hub': 'Opciones de ventas: Historial, Devoluciones, Cotizaciones, Cuentas y más',
+  'cash_report': 'Cuadre y desglose de billetes para la entrega de dinero del día',
+  'ipv_ventas': 'Conciliación de existencias e ingresos por producto — genera el informe con tus fechas',
   'ofertas': 'Crea promociones y combos activos',
   'inventory': 'Filtra por stock bajo para reabastecer',
   'received-services': 'Registra servicios de terceros, distribuye su costo y controla los pagos',
@@ -55,6 +57,8 @@ export const VIEW_TIPS: Record<string, string> = {
   'reception_list': 'OCR automático al subir fotos de la factura',
   'purchase-orders': 'Recibe mercancía contra OC pendiente',
   'transferencias': 'Trackea envíos entre tiendas en tránsito',
+  'ingresos_egresos': 'Documenta entradas y salidas de efectivo: fondo de cambio y movimientos autorizados',
+  'work_dates': 'Fija la fecha efectiva del próximo documento de cada tipo de movimiento',
   'estructura-costo': 'Visualiza componentes: base, transporte, comisiones',
   'costeo-dinamico': 'Calcula costo de reposición por absorción',
   'production-orders': 'Anticipos y cierre con entrada de producto',
@@ -71,7 +75,7 @@ export const VIEW_TIPS: Record<string, string> = {
 
   // Más Recursos
   'settings': 'Personaliza tema, idioma y accesibilidad',
-  'legal': 'Términos, privacidad y RGPD',
+  'legal': 'Consultor de normativa cubana y generador de formularios oficiales',
   'help': 'Tutoriales, FAQ y contacto con soporte',
   'wiki': 'Glosario contable y normativas cubanas',
 

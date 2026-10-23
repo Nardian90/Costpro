@@ -74,47 +74,38 @@ Cuando usted entra como usuario de la Tienda A, el sistema automáticamente filt
 ### 2. Cada usuario tiene un "alcance" (scope)
 Cuando usted inicia sesión, el sistema verifica a qué tiendas tiene acceso. Si solo tiene acceso a la Tienda A, el sistema bloquea cualquier intento de ver datos de la Tienda B.
 
-Aunque usted cambie la URL manualmente a `/tienda-b/ventas`, el sistema le dirá: *"No tiene acceso a esta tienda"*.
+Aunque manipule la solicitud para pedir datos de otra tienda, el backend verifica su membresía y responde: *"No tienes acceso a esta tienda"*. El filtrado ocurre en el servidor, no solo en la pantalla.
 
 ### 3. La tienda activa se guarda en la sesión
 Cuando usted selecciona "Tienda A" en el selector, esa información se guarda. Hasta que usted cambie de tienda, todas las consultas se hacen con ese filtro.
 
 ### 4. Los reportes consolidados requieren permiso especial
-Solo admin y manager pueden generar reportes de "Todas las tiendas". Los demás roles solo pueden ver su propia tienda.
+El **Generador de Reportes** (Análisis → Reportes) está reservado a los roles admin y manager, y genera por tienda. El consolidado multi-tienda está en el tablero del hub **Gestión de Tiendas** (roles admin, manager y encargado).
 
 ## Excepciones al aislamiento
 
-Hay algunos datos que **sí** se comparten entre tiendas:
+Hay algunos datos que **sí** son transversales, y otros que son **estrictamente por tienda**:
 
-### 1. El catálogo maestro de productos
-- La lista de productos y sus datos básicos (nombre, SKU, categoría) es compartida.
-- Pero el **stock** es por tienda.
-- Y los **precios** pueden ser por tienda (configurable).
+### Por tienda (no compartidos)
+- **El catálogo de productos**: cada tienda tiene sus propios productos con su SKU, precio y stock (el SKU es único por tienda). Para tener el mismo producto en otra tienda se crea ahí o se importa.
+- **Los clientes**: cada cliente pertenece a una tienda.
+- **Los proveedores**: existe un catálogo de proveedores **por tienda** (alta y gestión desde el inventario); no se comparte entre tiendas.
+- El **stock**, obviamente, es por tienda.
 
-### 2. Los clientes
-- Un cliente registrado puede comprar en cualquiera de sus tiendas.
-- El sistema lleva el historial consolidado del cliente.
-
-### 3. Los proveedores
-- Los proveedores son compartidos.
-- Pero las recepciones son por tienda.
-
-### 4. Los usuarios
-- Un usuario puede pertenecer a varias tiendas con diferentes roles en cada una.
-- El usuario es el mismo, solo cambia su "membresía" en cada tienda.
+### Transversales
+- **Los usuarios**: un usuario puede pertenecer a varias tiendas con diferentes roles en cada una. El usuario es el mismo, solo cambia su "membresía" en cada tienda.
 
 ## ¿Cómo veo el consolidado cuando lo necesito?
 
-Como administrador o manager, usted **sí** puede ver datos consolidados:
+Como administrador, manager o encargado, usted **sí** puede ver datos consolidados:
 
-### En reportes
-- Genere un reporte (ventas, ganancias, etc.).
-- En el filtro "Tienda", elija **"Todas las tiendas"**.
-- El sistema le muestra el consolidado.
+### En el tablero de Gestión de Tiendas
+- Vaya a **OPERACIÓN → Gestión de Tiendas**.
+- Abra el tablero consolidado: KPIs de **todas las tiendas** en un solo lugar.
 
 ### En Inicio y en el Dashboard de la tienda
 - La información de **Inicio** y del **Dashboard** corresponde siempre a la **tienda activa**.
-- Para comparar tiendas, cambie la tienda activa con el selector de la barra superior o genere reportes con el filtro "Todas las tiendas".
+- Para comparar tiendas, cambie la tienda activa con el selector de la barra superior o use el tablero consolidado.
 - Identifique cuál está mejor y cuál peor comparando los indicadores de cada una.
 
 ## Preguntas frecuentes
@@ -124,26 +115,22 @@ Como administrador o manager, usted **sí** puede ver datos consolidados:
 - Esto es para que el sistema siempre cuadre: si sale de A, tiene que entrar en B.
 
 **¿Si cambio el precio de un producto en la Tienda A, cambia también en la Tienda B?**
-- Depende de la configuración:
-  - Si los precios son **por tienda** (default): no cambia en B.
-  - Si los precios son **compartidos**: cambia en B también.
-- El administrador decide esto al crear el producto.
+- No. El catálogo es **por tienda**: cada tienda tiene su propio producto con su precio. Cambiar el precio en A no afecta al producto de B.
 
 **¿Puedo desactivar el aislamiento para ver todo mezclado?**
 - No. El aislamiento es una característica de seguridad que no se puede desactivar.
 - Pero los reportes consolidados le dan la vista mezclada cuando la necesita.
 
 **¿Si un cliente devuelve un producto en la tienda equivocada, qué pasa?**
-- El sistema le permite registrar la devolución, pero queda como "anomalía".
-- Lo correcto es anular la venta en la tienda original y hacer una nueva venta en la tienda donde se devuelve.
-- Si esto ocurre con frecuencia, considere capacitar al personal.
+- No es posible: solo puede procesar la devolución de una venta de **su propia tienda** (el backend lo verifica con su membresía).
+- Para ese caso, el cliente debe ser atendido en la tienda donde se hizo la venta original.
 
 **¿Cómo se si un usuario está intentando acceder a otra tienda?**
-- La auditoría registra los intentos fallidos de acceso.
-- Si ve muchos intentos de un usuario a tiendas donde no tiene acceso, investigue.
+- El sistema rechaza el intento y deja registro técnico del mismo en los logs del servidor (no en la Auditoría de la interfaz).
+- Si sospecha de un patrón, pida al administrador revisar esos logs.
 
 **¿El aislamiento afecta el rendimiento?**
-- No significativamente. Las bases de datos modernas filtran por "tienda_id" de forma muy eficiente.
+- No significativamente: las consultas filtran por tienda de forma eficiente en la base de datos.
 - Es como buscar en un directorio telefónico solo las personas cuyo apellido empieza con "P". Es rápido.
 
 **¿Si tengo una sola tienda, el aislamiento me afecta?**

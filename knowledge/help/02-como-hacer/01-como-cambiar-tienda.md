@@ -5,11 +5,11 @@
 ## Cómo hacerlo
 
 1. Mire la **barra superior** (arriba del todo, en negro).
-2. En el centro, verá el **nombre de la tienda activa** actual. Por ejemplo: *"Tienda Centro"*.
+2. En el centro, verá el **nombre de la tienda activa** actual (en móvil, el selector es un icono de edificio). Por ejemplo: *"Tienda Centro"*.
 3. Haga clic en ese nombre.
 4. Se abre una lista desplegable con **todas las tiendas** a las que usted tiene acceso.
 5. Haga clic en la tienda a la que quiere cambiar.
-6. Espere 2 segundos. Verá un mensaje que dice *"Tienda cambiada a..."*.
+6. Verá el mensaje *"Tienda cambiada exitosamente"*.
 7. Todo el contenido de la pantalla se actualiza automáticamente para mostrar solo los datos de la nueva tienda.
 
 ## ¿Qué cambia al cambiar de tienda?
@@ -22,13 +22,15 @@
 ## Lo que NO cambia
 
 - Su usuario y contraseña siguen siendo los mismos.
-- Los productos del catálogo maestro se comparten (aunque el stock es por tienda).
-- Los clientes y proveedores son los mismos en todas las tiendas.
+- La configuración global (tema visual, idioma, etc.) es la misma.
+- Las categorías de productos se gestionan **por tienda**: cada tienda tiene las suyas.
+
+> ℹ️ El catálogo de productos, los clientes y el stock son **por tienda**: cada tienda tiene los suyos. Lo compartido entre tiendas se mueve con transferencias.
 
 ## Preguntas frecuentes
 
 **¿Puedo cambiar de tienda en medio de una venta?**
-- No es recomendable. Termine la venta primero. Si cambia en medio, el carrito se vacía y la venta se pierde.
+- No es recomendable. Termine la venta primero: si cambia de tienda con un carrito con productos, el sistema le pedirá confirmación antes de vaciarlo.
 
 **¿Por qué no veo una tienda en la lista?**
 - El administrador no le ha dado acceso a esa tienda. Pídale que se lo habilite.

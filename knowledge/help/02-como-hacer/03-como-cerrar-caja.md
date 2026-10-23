@@ -1,118 +1,99 @@
-# Cómo Hacer: Cerrar la Caja (Arqueo de Caja)
+# Cómo Hacer: Abrir y Cerrar la Caja (Arqueo)
 
-> **Necesita esto cuando**: Termina su turno de trabajo y debe entregar la caja al siguiente cajero, o al final del día para cuadrar las ventas.
+> **Necesita esto cuando**: comienza su turno y debe poner el fondo inicial de efectivo, o termina su jornada y debe declarar cuánto dinero hay en caja y cerrar el turno.
 
-## ¿Qué es el arqueo de caja?
+## ¿Para qué sirve?
 
-Es **contar el dinero físico** que hay en la caja registradora y compararlo con lo que el sistema dice que debería haber. Si los dos números coinciden, todo está bien. Si no coinciden, hay una diferencia que explicar.
+La vista **Caja** gestiona los **turnos de caja** de la tienda. Un turno comienza al abrir con un fondo inicial de efectivo y termina al cerrar con un **arqueo**: comparar lo que el sistema calcula que debería haber con lo que usted declara contar físicamente.
 
-## Paso 1 — Ir al cierre de caja
+El arqueo no es solo de billetes: el sistema separa el dinero en dos lados:
 
-1. En el menú izquierdo, haga clic en **Multi-Tienda**.
-2. Haga clic en **Cierre de Caja** (también llamado "Arqueo").
-3. Verá la pantalla de cierre con su turno actual.
+- **Efectivo**: billetes y monedas en la gaveta.
+- **Vouchers**: ventas por transferencia y Zelle (no son efectivo físico, pero también se declaran).
 
-![Vista de Caja con la apertura de turno, el fondo inicial y el balance del sistema](/help/capturas/caja-arqueo.webp "Figura 1. Caja — apertura y cierre de turno con arqueo de efectivo")
+## ¿Dónde encontrarlo?
 
-## Paso 2 — Contar el dinero físico
+- **Escritorio**: Inicio → **OPERACIÓN** → **Caja** → **Caja**.
+- **Móvil**: pestaña inferior **Caja**.
+- Desde el punto de venta: si intenta vender sin turno abierto, un banner en el POS le lleva directo a esta vista.
 
-Antes de tocar la computadora:
+## Antes de comenzar
 
-1. Abra la caja registradora física.
-2. Saque todo el dinero: billetes y monedas.
-3. Cuente los billetes por separado de las monedas.
-4. Haga dos conteos para asegurarse de que está bien.
-5. Anote en un papel el total de dinero físico.
+- **Abrir turno**: cualquier usuario con acceso al POS puede abrir el turno con su fondo inicial.
+- **Cerrar turno**: solo **admin, manager o encargado**. Un cajero (clerk) puede declarar su conteo y actualizarlo, pero el cierre lo ejecuta un rol de gestión (el sistema le mostrará el aviso correspondiente).
+- Solo puede haber **un turno abierto por tienda** a la vez.
 
-> 💡 **Tip para personas mayores**: Si le tiemblan las manos al contar, ponga los billetes en pilas de a 10. Así es más fácil contar y no se pierde.
+## Cómo abrir un turno
 
-## Paso 3 — Llenar el arqueo en el sistema
+1. Vaya a **OPERACIÓN → Caja → Caja**.
+2. En la tarjeta **Apertura de Turno**, escriba el **Fondo Inicial de Efectivo**: el dinero físico que coloca en la gaveta.
+3. *(Opcional)* Escriba **Otros Fondos Iniciales** (por ejemplo, si recibió transferencias como fondo) y **Notas de Apertura**.
+4. Confirme. El turno queda abierto y el POS habilitado para vender.
 
-De vuelta en la computadora:
+## Cómo cerrar el turno (arqueo)
 
-1. En la pantalla de Cierre de Caja, verá una tabla con los **métodos de pago**:
-   - Efectivo
-   - Tarjeta
-   - Transferencia
-   - Mixto
-2. Para **efectivo**, escriba en el campo *"Conteo físico"* cuánto dinero contó.
-3. Para **tarjeta** y **transferencia**, el sistema ya trae el total automático (no se puede editar porque es lo que pasó por el sistema bancario).
-4. Haga clic en **"Calcular diferencias"**.
+1. Al terminar la jornada, vaya a **OPERACIÓN → Caja → Caja**.
+2. En la tarjeta **Declaración de Cierre** verá el desglose del sistema:
 
-## Paso 4 — Revisar las diferencias
+   | Concepto | Qué es |
+   |----------|--------|
+   | **Fondo Inicial** | El efectivo con el que abrió el turno. |
+   | Ventas en efectivo | Suma de las ventas cobradas en efectivo del turno. |
+   | Otros conceptos de efectivo | Ingresos/egresos de caja, anticipos, pagos a proveedores en efectivo, comisiones en efectivo y reembolsos: cada uno suma o resta al esperado. |
+   | **Efectivo Esperado (Sistema)** | El total que debería haber en la gaveta. |
 
-El sistema le mostrará, para cada método de pago:
+3. Cuente el dinero físico de la gaveta (conviene contar dos veces) y escríbalo en **Efectivo Contado (Final)**.
+4. Cuente o verifique las transferencias y Zelle del turno y escríbalas en **Transferencias Contadas (Final)**. Este campo es editable: declare lo que realmente entró por vouchers.
+5. Agregue **Observaciones del Cierre** (texto libre, hasta 1000 caracteres) si hay algo que explicar: un vuelto mal dado, un billete rechazado, una venta con incidente. No existe una lista de motivos predefinidos: escriba la explicación con sus palabras.
+6. El sistema muestra la **Diferencia de Arqueo** automáticamente para efectivo y para vouchers (contado − esperado). No hay botón de "calcular": la diferencia se actualiza mientras escribe.
+7. Si tiene rol de gestión, haga clic en **Cerrar Turno** y confirme con **Sí, Cerrar Turno**. Si es cajero, asegure su declaración con **Actualizar Declaración** y pida a un encargado que ejecute el cierre.
 
-- **Esperado**: lo que el sistema dice que debería haber.
-- **Contado**: lo que usted escribió que contó.
-- **Diferencia**: la resta entre los dos.
+## Después del cierre: Reporte Entrega
 
-Las diferencias pueden ser:
+Al cerrar no se genera un PDF automático. El comprobante formal de entrega de dinero se produce desde la vista **Reporte Entrega** (OPERACIÓN → Ventas → Reporte Entrega), que permite generar un **PDF/Excel con desglose de billetes CUP y USD** y campos de firma (Entrega / Recibe / Hecho por). Es el documento que acompaña la entrega física del dinero.
 
-| Color | Significado |
-|-------|-------------|
-| 🟢 Verde | Sin diferencia. Todo cuadra. |
-| 🟡 Amarillo | Diferencia pequeña (menos de 50 pesos). Aceptable pero hay que comentar. |
-| 🔴 Rojo | Diferencia grande (50 pesos o más). Hay que investigar. |
+## Si el cierre quedó mal
 
-## Paso 5 — Explicar la diferencia (si la hay)
+Un cierre confirmado puede **reabrirse** por un admin o manager indicando un **motivo obligatorio**. Tras corregir la declaración, cierre de nuevo. Toda reapertura queda registrada en auditoría.
 
-Si hay diferencia:
+## Restricciones importantes
 
-1. Aparecerá un campo *"Motivo de la diferencia"*.
-2. Haga clic en él y seleccione una opción:
-   - *Cambio mal entregado*
-   - *Billete falso recibido*
-   - *Error al cobrar*
-   - *Venta no registrada*
-   - *Robo o pérdida*
-   - *Otro*
-3. Si eligió "Otro", escriba en sus propias palabras qué pasó.
-4. Sea honesto. El sistema guarda esta explicación para siempre.
+- Solo hay **un turno abierto por tienda**: para abrir otro, primero debe cerrarse el vigente.
+- El **efectivo esperado** no se calcula "a mano": el sistema suma fondo + ventas en efectivo + ingresos de caja + anticipos, y resta pagos a proveedores en efectivo (incluidos servicios recibidos pagados en efectivo), comisiones pagadas en efectivo, egresos de caja y reembolsos.
+- Las ventas por transferencia/Zelle son **vouchers**: no deben meterse en la gaveta ni contarse como billetes.
+- Los cierres guardan quién declaró, quién cerró y cuándo; el historial no se borra.
+- Si la tienda trabaja con **fechas de trabajo** configuradas, el cierre respeta la fecha operativa del día de negocio.
 
-> ⚠️ **Importante**: Una diferencia grande no es necesariamente su culpa. Pero **no explicarla** sí es un problema serio. Es mejor explicar y que se investigue, que callar y que se descubra después.
+## Errores frecuentes
 
-## Paso 6 — Cerrar el turno
-
-1. Haga clic en el botón rojo **"Cerrar Turno"** (abajo a la derecha).
-2. Aparece una ventana de confirmación: *"¿Está seguro de cerrar el turno?"*.
-3. Haga clic en **"Sí, cerrar"**.
-4. El sistema genera un **reporte de cierre** en PDF automáticamente.
-5. Puede descargarlo o imprimirlo.
-
-## Paso 7 — Entregar el dinero
-
-1. Saque el dinero de la caja.
-2. Entrégueselo al encargado junto con el reporte de cierre impreso.
-3. El encargado debe firmar el reporte.
-4. Guarde una copia del reporte para sus registros personales.
-
-> 💡 **Consejo**: Siempre guarde sus reportes de cierre por 30 días. Si después hay una pregunta sobre una venta, usted tiene la prueba de que cuadró su caja ese día.
-
----
+| Situación | Causa probable | Solución |
+|-----------|---------------|----------|
+| No aparece el botón Cerrar Turno, solo "Actualizar Declaración" | Su rol es cajero (clerk). | Guarde su declaración y pida a un encargado que cierre. |
+| La diferencia de efectivo no cuadra y no encuentra el motivo | Vuelto mal dado, venta duplicada o gasto anotado fuera del sistema. | Revise el Historial de Ventas del día y los ingresos/egresos de caja; ajuste la declaración a lo físico y explíquelo en Observaciones. |
+| "Transferencias Contadas" no coincide con el sistema | Cobró vouchers fuera del turno o hay reembolsos por voucher. | Verifique las ventas por transferencia/Zelle del turno y los reembolsos; declare el valor real. |
+| Quiero abrir turno y no me deja | Ya existe un turno abierto en la tienda. | Cierre el turno vigente primero (o pida que lo cierren). |
+| Cerré con un valor equivocado | Error de digitación. | Un admin/manager puede **reabrir** el cierre con motivo y corregirlo. |
 
 ## Preguntas frecuentes
 
-**¿Qué hago si la diferencia es muy grande (más de 200 pesos)?**
-- No cierre el turno todavía.
-- Llame al encargado o administrador.
-- Revise las ventas del día una por una (use el Historial de Ventas).
-- A veces el problema es una venta que se registró dos veces o un cambio mal dado.
-
 **¿Puedo hacer un arqueo sin cerrar el turno?**
-- Sí. Haga clic en **"Arqueo parcial"** en lugar de "Cerrar Turno".
-- Sirve para verificar a mitad del día sin terminar la jornada.
+Sí: mientras escribe sus conteos, la diferencia se muestra en vivo sin cerrar nada. Si no confirma el cierre, el turno sigue abierto. No existe un botón de "arqueo parcial": simplemente no confirme el cierre hasta estar listo.
 
-**¿Qué pasa si olvidé hacer el cierre y me voy?**
-- El sistema no le permite iniciar un turno nuevo al día siguiente sin cerrar el anterior.
-- Tendrá que cerrarlo con la fecha anterior (lo cual queda registrado como "cierre tardío").
+**¿Qué pasa si olvidé cerrar el turno ayer?**
+El turno sigue abierto hasta que alguien lo cierre. Cierre normalmente; el sistema maneja la fecha operativa del día de negocio correspondiente.
 
-**¿El sistema me avisa si falta cerrar la caja?**
-- Sí. Al iniciar sesión al día siguiente, verá un letrero amarillo: *"Tiene un turno sin cerrar del día [fecha]"*.
+**¿El sistema me avisa si no hay turno abierto?**
+Sí. El POS muestra un banner con la opción de abrir turno o llevarlo a la vista de Caja.
 
-**¿Cuál es el horario recomendado para cerrar?**
-- Al final de su jornada laboral, **antes** de irse.
-- Si trabaja de 9 a 5, cierre entre 4:50 y 5:00 pm.
+**¿Las comisiones y los pagos a proveedores afectan el efectivo esperado?**
+Sí: los pagos en efectivo a proveedores (incluidos servicios recibidos) y las comisiones pagadas en efectivo restan del efectivo esperado del turno. Los pagos por transferencia/Zelle no afectan el efectivo físico.
 
-**¿Puedo imprimir el reporte de cierre para el dueño?**
-- Sí. Después de cerrar, haga clic en "Descargar PDF" e imprímalo con Ctrl + P.
+**¿Dónde veo los cierres anteriores?**
+Desde la propia vista de Caja puede consultar los turnos cerrados y su resultado; el detalle completo de entregas está en Reporte Entrega.
+
+## Información relacionada
+
+- **Cómo registrar y pagar un Servicio Recibido** — pagos en efectivo que restan del arqueo.
+- **Cómo hacer una venta (tutorial)** — el flujo del POS que alimenta el arqueo.
+- **Cómo usar la tasa de cambio** — vouchers en divisas y su conversión.
+- **Glosario de términos** — arqueo, vouchers, fondo inicial.

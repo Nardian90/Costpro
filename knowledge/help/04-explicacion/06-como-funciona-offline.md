@@ -12,20 +12,22 @@ CostPro está diseñado para **seguir funcionando sin Internet**. Esto se llama 
 
 | Acción | ¿Funciona offline? |
 |--------|-------------------|
-| Hacer ventas en el POS | ✅ Sí |
-| Ver el catálogo de productos | ✅ Sí |
+| Hacer ventas por catálogo (Tabla de Venta) | ✅ Sí (quedan en cola, se sincronizan al reconectar) |
+| Checkout del POS (carrito / express) | ❌ No (requiere conexión) |
+| Ver el catálogo de productos | ✅ Sí (copia local) |
 | Recibir mercancía | ✅ Sí (queda pendiente de sincronizar) |
-| Hacer ajustes de inventario | ✅ Sí |
-| Ver el historial de ventas | ✅ Sí (solo lo que ya está cargado) |
-| Cerrar caja | ✅ Sí |
-| Generar reportes | ✅ Sí (con datos locales) |
-| Cambiar de tienda activa | ❌ No (necesita cargar datos de otra tienda) |
-| Crear nuevos productos en el catálogo | ⚠️ Parcial (queda pendiente) |
+| Hacer ajustes de inventario | ✅ Sí (queda pendiente de sincronizar) |
+| Crear transferencias | ✅ Sí (la creación queda en cola; la confirmación en destino requiere conexión) |
+| Crear nuevos productos en el catálogo | ❌ No (requiere conexión) |
+| Ver el historial de ventas | ❌ No (consulta el servidor; las ventas en cola aparecen al sincronizar) |
+| Cerrar caja | ❌ No (requiere conexión) |
+| Generar reportes | ❌ No (requiere conexión) |
+| Cambiar de tienda activa | ❌ No (requiere conexión) |
 | Ver reportes consolidados | ❌ No (necesita datos del servidor) |
 | Recibir notificaciones | ❌ No |
 | Hablar con el asistente IA Darian | ❌ No |
 
-> 💡 **Resumen**: Lo esencial (vender, recibir mercancía, cerrar caja) funciona offline. Lo que requiere datos del servidor o de Internet, no.
+> 💡 **Resumen**: La venta por catálogo (con cola local) y algunos movimientos de almacén funcionan offline. El checkout del POS y lo que requiere datos del servidor (reportes, cierres, historial), no.
 
 ## ¿Cómo funciona técnicamente?
 
@@ -37,16 +39,15 @@ CostPro guarda en su computadora (o teléfono) una **copia local** de los datos 
 - Las ventas del día.
 - La configuración básica.
 
-Esta copia está en el navegador, en una zona llamada **localStorage** o **IndexedDB**. No se borra aunque cierre el navegador o apague la computadora.
+Esta copia está en el navegador, en una zona llamada **IndexedDB** (almacenamiento local del navegador). No se borra aunque cierre el navegador o apague la computadora.
 
 ### 2. Cola de operaciones pendientes
 Cuando usted hace una venta sin Internet:
 
-1. La venta se guarda en la cola local.
-2. El sistema marca la venta como **"pendiente de sincronizar"**.
-3. El inventario se descuenta localmente.
-4. La caja se actualiza localmente.
-5. Usted ve todo normal, como si tuviera Internet.
+1. La venta se guarda en la cola local del dispositivo.
+2. El indicador del POS la marca como **"pendiente de sincronizar"**.
+3. El inventario y la caja **se actualizan en el servidor cuando la venta se sincroniza**: la cola no modifica datos del servidor por sí sola.
+4. Usted sigue vendiendo con normalidad.
 
 ### 3. Sincronización automática
 Cuando vuelve el Internet:
@@ -54,18 +55,18 @@ Cuando vuelve el Internet:
 1. El sistema detecta que hay conexión.
 2. Empieza a enviar las ventas pendientes al servidor.
 3. El servidor procesa cada venta.
-4. Si hay conflictos (ej: el stock en el servidor ya cambió), los resuelve inteligentemente.
+4. Si hay conflictos (ej: el stock en el servidor ya cambió), el sistema los detecta y le muestra el **modal de conflictos de sincronización** para que usted resuelva cada uno.
 5. Cuando todo está sincronizado, borra la cola local.
 
 ### 4. Indicador visual
-En la barra superior verá un ícono que le indica el estado:
+El **indicador offline** vive en la cabecera del POS y de Recepción (no en la barra superior general). Cuando todo está en orden —conectado, sin cola ni errores— permanece **oculto**; cuando hay algo que mostrar, aparece con su estado:
 
-| Ícono | Significado |
-|-------|-------------|
-| 🟢 Punto verde | Conectado. Todo se sincroniza en tiempo real. |
-| 🟡 Punto amarillo | Sin conexión. Operando offline. |
-| 🔴 Punto rojo | Error de sincronización. Revisar. |
-| 🔵 Punto azul girando | Sincronizando... |
+| Aparición | Significado |
+|-----------|-------------|
+| Marca de conexión restaurada | Todo sincronizado. |
+| Icono de sin señal | Sin conexión: operando offline. |
+| Contador de pendientes | Operaciones en cola esperando sincronización. |
+| Icono de alerta | Sincronización con errores: revisar. |
 
 ## ¿Qué pasa si dos tiendas operan offline al mismo tiempo?
 
@@ -79,13 +80,12 @@ Imagine: la Tienda A y la Tienda B están ambas offline. En la Tienda A venden 5
 
 ## ¿Qué pasa si hago una transferencia offline?
 
-Esto es más delicado. Una transferencia afecta dos tiendas. Si las dos están offline:
+Es posible crear la transferencia sin conexión: queda **pendiente** en la cola local. Pero:
 
-- La transferencia queda **pendiente** en la tienda origen.
-- No se confirma en destino hasta que ambos recuperen Internet.
-- El stock NO se descuenta de origen hasta que la transferencia se envíe al servidor.
+- El stock se reserva y confirma en el servidor cuando la transferencia se sincroniza.
+- No se confirma en destino hasta que ambos extremos recuperen Internet.
 
-Recomendación: **No haga transferencias offline**. Espere a tener Internet.
+Recomendación: **evite transferencias offline** si puede. Espere a tener Internet para operar con la confirmación del destino a la vista.
 
 ## ¿Qué pasa si el corte dura muchas horas?
 
@@ -96,7 +96,7 @@ Si el corte dura mucho (varias horas o días):
 3. **No apague la computadora**. Si la apaga, la cola se conserva, pero no se sincroniza hasta que la encienda de nuevo.
 4. **Cuando vuelva el Internet**, deje la computadora encendida al menos 30 minutos para que sincronice todo.
 
-> ⚠️ **Límite práctico**: CostPro puede manejar hasta 10,000 ventas en cola offline sin problemas. Más de eso, puede hacerse lento. Si su negocio hace más de 10,000 ventas sin Internet, necesita un servidor local (consulte al administrador).
+> ⚠️ **Límite práctico**: la cola es local al dispositivo. Si acumula miles de operaciones sin sincronizar, la sincronización puede tardar. Si su corte es muy largo, priorice las ventas y avise al administrador.
 
 ## ¿Qué puedo hacer para prepararme?
 
@@ -118,7 +118,7 @@ CostPro es una **Progressive Web App (PWA)**. Si la instala en su computadora o 
 ### 2. Actualice los datos cuando tenga Internet
 Antes de un corte previsto (ej: apagón programado):
 1. Entre a CostPro.
-2. Espere a que sincronice todo (punto verde).
+2. Espere a que sincronice todo (el indicador offline no muestra avisos).
 3. Navegue por las pantallas que va a necesitar (catálogo, POS).
 4. Esto asegura que la copia local esté actualizada.
 
@@ -129,17 +129,17 @@ Si vende por transferencia bancaria y no hay Internet, el cliente no puede hacer
 
 ### 4. Capacite a los cajeros
 Asegúrese de que todos los cajeros sepan:
-- Reconocer el ícono amarillo (offline).
-- Saber que pueden seguir vendiendo.
-- Saber que NO deben hacer transferencias offline.
+- Reconocer el indicador offline (sin conexión).
+- Saber que pueden seguir vendiendo (la venta queda en cola).
+- Entender que las ventas en cola se sincronizan al reconectar.
 - Saber que al volver el Internet, hay que esperar a que sincronice antes de apagar.
 
 ## ¿Cómo sé que todo se sincronizó bien?
 
 Después de un corte:
 
-1. Mire el ícono de estado. Debe estar verde.
-2. Vaya al **Centro de Errores** (en Configuración) y vea si hay errores de sincronización.
+1. Mire el indicador offline: no debe mostrar avisos de desconexión ni errores.
+2. Revise el **indicador offline del POS/Recepción** y el **modal de conflictos de sincronización** (en la cabecera) para ver si hay operaciones con error.
 3. Genere un reporte de ventas del día y compare con sus ventas reales.
 4. Si todo cuadra, está perfecto.
 
@@ -150,11 +150,11 @@ Si hay errores (algunas ventas no se sincronizaron):
 ## Preguntas frecuentes
 
 **¿Las ventas hechas offline aparecen con una marca diferente?**
-- Sí. En el historial de ventas, las offline tienen un ícono de "nube" tachada.
-- Útil para auditoría: saber que esa venta se hizo sin conexión.
+- En el POS/Recepción, el **indicador offline** muestra cuántas operaciones hay en cola esperando sincronización.
+- Las ventas en cola no aparecen en el historial hasta que se sincronizan (el historial consulta el servidor).
 
 **¿Puedo editar una venta hecha offline?**
-- No, igual que las ventas online. Pero puede anularla (dentro de 24h).
+- No, igual que las ventas online. Puede anularla según su rol (no existe ventana de 24 horas: el control de anulación es por rol).
 
 **¿Qué pasa si el servidor se cae pero yo tengo Internet?**
 - Mismo comportamiento que sin Internet. La cola local acumula las ventas.
@@ -165,23 +165,17 @@ Si hay errores (algunas ventas no se sincronizaron):
 - Si los datos se acaban, entra en modo offline hasta que vuelva.
 
 **¿La app consume muchos datos?**
-- No. CostPro está optimizada para usar pocos datos.
-- Aproximadamente 1-2 MB por hora de uso activo.
+- CostPro está optimizada para usar pocos datos; el consumo depende del uso (catálogo, fotos de factura, reportes).
 
 **¿Si alguien entra a mi cuenta desde otra computadora mientras yo estoy offline, qué pasa?**
-- El sistema permite múltiples sesiones simultáneas.
-- Pero las ventas offline se guardan en la computadora local, no en el servidor.
-- Cuando sincronizan ambas, el servidor las ordena por timestamp (fecha y hora exacta).
-- Puede haber pequeñas diferencias en el orden de las ventas, pero los totales cuadran.
+- Las ventas offline se guardan en la computadora local, no en el servidor.
+- Cuando sincroniza, el servidor las procesa con su marca de tiempo y las reglas de idempotencia evitan duplicados.
 
 **¿El modo offline es seguro?**
-- Sí. Los datos locales están encriptados.
-- Si alguien roba la computadora, no puede leer las ventas sin la contraseña de CostPro.
-- Al detectar actividad sospechosa, el sistema pide re-autenticación.
+- Los datos en cola se guardan en el almacenamiento local del navegador (IndexedDB) del dispositivo donde usted inició sesión.
+- Proteja el dispositivo: quien tenga acceso físico a su sesión del navegador puede ver esos datos locales.
 
 **¿Cuánto tarda la sincronización después de un corte largo?**
-- Depende de cuántas ventas haya en cola.
-- 100 ventas: 30 segundos.
-- 1,000 ventas: 5 minutos.
-- 10,000 ventas: hasta 1 hora.
-- Mientras sincroniza, puede seguir usando el sistema (no se bloquea).
+- Depende de cuántas operaciones haya en cola.
+- El motor de sincronización trabaja automáticamente (también al reconectar); mientras sincroniza, puede seguir usando el sistema.
+- Si alguna operación falla, puede **reintentarla** o **descartarla** desde el indicador de sincronización.
