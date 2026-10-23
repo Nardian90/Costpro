@@ -28,6 +28,8 @@ import type { CartItem } from "@/store/cart";
 import { resolvePosOperationDate, checkNotFutureOperationDate } from "@/lib/pos/operation-date";
 // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — vuelto multimoneda
 import type { CashSettlement } from "@/lib/pos/cash-settlement";
+// MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24): desglose real por moneda
+import { buildPaymentComponents, requiresPaymentComponents } from "@/lib/pos/payment-components";
 // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): agregación de medios de pago para el
 // comprobante POS — suma las filas YA cobradas (misma fuente que viaja al RPC),
 // sin recálculo de importes.
@@ -225,6 +227,17 @@ export function usePOSCheckout() {
         const transferAmount = transferAmountCup;
         const zelleAmount = zelleAmountCup;
 
+        // MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24): desglose REAL por moneda
+        // de lo efectivamente cobrado (filas de pago por ítem, importes
+        // ORIGINALES sin convertir). Viaja al RPC como p_payment_components:
+        // el servidor deriva los pools con su tasa autoritativa y persiste UNA
+        // FILA de payment_transactions POR COMPONENTE con la tasa de la
+        // operación (trazabilidad por moneda en el Reporte Entrega).
+        // Regla de envío: solo cuando hay componente USD de cash/transfer —
+        // exactamente los cobros mixtos que el pool canónico CUP no representa.
+        const paymentComponents = buildPaymentComponents(items);
+        const sendPaymentComponents = requiresPaymentComponents(paymentComponents);
+
         // REVISIÓN FINAL v2.24.1 (F4): bloqueo preventivo del vuelto NO
         // registrable. Si lo recibido excede el total debido y NO viaja
         // liquidación (cobro mixto, o cobro simple con incidencias), el vuelto
@@ -299,6 +312,10 @@ export function usePOSCheckout() {
               // cuando existen — la venta exacta mantiene el payload canónico
               // (compatible con RPC sin migrar, que las ignora).
               ...(hasFlexIncidents ? { payment_incidents: flexIncidents } : {}),
+              // MISIÓN PAGOS MIXTOS: componentes por moneda (ver comentario
+              // en buildPaymentComponents). El servidor valida la estructura,
+              // resuelve la tasa y deriva los pools (fail-closed).
+              ...(sendPaymentComponents ? { payment_components: paymentComponents } : {}),
               // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — recibido y
               // vuelto por moneda. Solo cuando el panel la construyó (cobro
               // simple en efectivo con dato de recibido) y SIN incidencias:

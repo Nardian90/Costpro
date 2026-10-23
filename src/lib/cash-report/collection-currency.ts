@@ -44,9 +44,32 @@
  *      por partes iguales (con 1 ítem: el cobro completo — caso SKU 108).
  *   5. NUNCA se suma CUP + USD: buckets separados por moneda en todo el módulo.
  *
+ * MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24) — fuente LEDGER autoritativa:
+ *   Las ventas creadas con `payment_components` (create_sale_v2 §13.7, migración
+ *   20261024150000) persisten en payment_transactions UNA FILA POR COMPONENTE
+ *   con su moneda real y la TASA DE LA OPERACIÓN. Para esas ventas la
+ *   reconstrucción heurística NO se usa: el ledger es la verdad directa
+ *   (marcador: filas cash/transfer en USD — imposibles en el flujo previo,
+ *   que solo insertaba CUP canónico para esos métodos; o venta zelle pura,
+ *   donde ambas fuentes coinciden). Ventas históricas: reconstrucción previa.
+ *
+ * REGLA DE MONEDA PREDOMINANTE (misión §2 — clasificación del Reporte
+ * Entrega): la venta completa se asigna al reporte de la moneda cuyo
+ * componente de pago tenga MAYOR PESO ECONÓMICO convertido a base común
+ * (CUP) con la TASA PERSISTIDA de la operación:
+ *   · equivalente_cup_usd = importe_usd × tasa_operación
+ *   · predomina USD ⇔ equivalente_cup_usd > importe_cup + 0,01
+ *   · predomina CUP ⇔ importe_cup > equivalente_cup_usd + 0,01
+ *   · EMPATE (±0,01) ⇒ CUP — regla determinista documentada: CUP es la moneda
+ *     de cuenta interna del sistema (§ 20260702000003); evita clasificar
+ *     arbitrariamente en puntos distintos del sistema.
+ * Las UNIDADES FÍSICAS van TODAS al reporte de la moneda predominante; el
+ * reporte de la moneda secundaria refleja SOLO su componente monetario
+ * cobrado, con cantidad CERO (sin duplicar unidades ni ingreso — misión §4).
+ *
  * Consumidores:
  *   - /api/cash-report           → sales_split + grupos `sales` por (método, moneda)
- *   - /api/cash-report/items-summary → tabla por producto del reporte
+ *   - /api/cash-report/items-summary → tabla por producto + clasificación por venta
  *   - /api/cash-report/payment-totals → fuente 2 de computeDailySummary
  *   - /api/cash-report/details   → pertenencia de cada venta al grupo (método, moneda)
  */
@@ -54,6 +77,37 @@
 import { lineTotalCup } from './summary';
 
 export const COLLECTION_EPS = 0.01;
+
+/**
+ * Fila de payment_transactions (ref_type='sale') de UNA venta — la fuente
+ * autoritativa del cobro cuando la venta se creó con componentes (v2.25.0).
+ */
+export interface LedgerPayment {
+  payment_method: string;
+  currency: string;
+  /** Importe REAL en la moneda de la fila (sin convertir). */
+  amount: number;
+  /** Tasa de la operación persistida en la fila (USD > 1; CUP = 1). */
+  exchange_rate: number;
+}
+
+/**
+ * ¿El ledger de esta venta es autoritativo para la moneda real de cobro?
+ * Marcadores del flujo con componentes (create_sale_v2 §13.7):
+ *   · cualquier fila cash/transfer en USD — el flujo previo SOLO insertaba
+ *     CUP canónico para esos métodos (la USD era invisible);
+ *   · venta zelle pura (todas las filas zelle-USD): ambas fuentes producen
+ *     el mismo resultado, se usa la directa (tasa exacta persistida).
+ */
+export function ledgerIsAuthoritative(payments: LedgerPayment[]): boolean {
+  if (payments.length === 0) return false;
+  const hasCashOrTransferUsd = payments.some(
+    p => (p.payment_method === 'cash' || p.payment_method === 'transfer') && normCur(p.currency) === 'USD',
+  );
+  if (hasCashOrTransferUsd) return true;
+  const nonZelle = payments.filter(p => p.payment_method !== 'zelle');
+  return nonZelle.length === 0 && payments.every(p => normCur(p.currency) === 'USD');
+}
 
 export interface CollectionTx {
   id?: string;
@@ -107,6 +161,10 @@ export interface TxCollectionResult {
   perItem: ItemCollections[];
   /** Líneas de monedas originales mezcladas reconstruidas como CUP (limitación). */
   mixedUnresolved: boolean;
+  /** MISIÓN PAGOS MIXTOS: 'ledger' cuando la moneda real vino de las filas de
+   * payment_transactions (flujo con componentes); 'reconstruction' para el
+   * análisis heurístico previo (ventas históricas). */
+  source: 'ledger' | 'reconstruction';
 }
 
 const num = (v: unknown): number => {
@@ -167,11 +225,57 @@ function addBucket(
  * Reconstruye las colecciones reales (método × moneda) de UNA transacción.
  * `items` deben ser los transaction_items de ESA transacción (puede ser vacío:
  * los buckets quedan a nivel transacción y perItem queda vacío).
+ *
+ * MISIÓN PAGOS MIXTOS (2026-10-24): si `payments` (filas de payment_transactions
+ * ref_type='sale') es autoritativo (ver ledgerIsAuthoritative), los buckets
+ * se toman DIRECTO del ledger — moneda real y tasa persistida por fila, sin
+ * heurística. El reparto por ítem (tabla por producto) de cada moneda es
+ * proporcional al valor CUP de la línea (Σ=0 → partes iguales), documentado.
  */
-export function reconstructTxCollections(tx: CollectionTx, items: CollectionItem[]): TxCollectionResult {
+export function reconstructTxCollections(
+  tx: CollectionTx,
+  items: CollectionItem[],
+  payments?: LedgerPayment[],
+): TxCollectionResult {
   const buckets: CollectionBucket[] = [];
   const perItem = items.map(() => emptyCollections());
   let mixedUnresolved = false;
+
+  // ── 0. LEDGER autoritativo (ventas con componentes, v2.25.0) ──
+  if (payments && payments.length > 0 && ledgerIsAuthoritative(payments)) {
+    const byKey = new Map<string, CollectionBucket & { amountCupRaw: number }>();
+    for (const p of payments) {
+      const method = (p.payment_method as PayMethod) || 'cash';
+      if (!PAY_METHODS.includes(method)) continue;
+      const cur = normCur(p.currency);
+      const amount = num(p.amount);
+      const rate = num(p.exchange_rate) > 0 ? num(p.exchange_rate) : (cur === 'USD' ? num(tx.sale_exchange_rate) || 1 : 1);
+      const amountCup = cur === 'USD' ? amount * rate : amount;
+      const key = `${method}|${cur}`;
+      const b = byKey.get(key);
+      if (b) {
+        b.amount += amount;
+        b.amountCup += amountCup;
+      } else {
+        byKey.set(key, { method, currency: cur, amount, amountCup, origin: 'explicit-row', amountCupRaw: amountCup });
+      }
+    }
+    for (const b of byKey.values()) {
+      if (Math.abs(b.amount) > COLLECTION_EPS || Math.abs(b.amountCup) > COLLECTION_EPS) {
+        buckets.push({ method: b.method, currency: b.currency, amount: b.amount, amountCup: b.amountCup, origin: 'explicit-row' });
+      }
+    }
+    // Reparto por ítem: cada moneda se reparte proporcional al valor CUP de la
+    // línea (Σ=0 → partes iguales). Distribución derivada y documentada: la
+    // verdad documental por moneda vive a nivel VENTA (ledger).
+    const lineCup = items.map(lineCupOf);
+    const sumLineCup = lineCup.reduce((s, v) => s + v, 0);
+    for (const b of buckets) {
+      const side = b.currency === 'USD' ? 'usd' : 'cup';
+      distribute(perItem, items.map((_, idx) => idx), b.method, side, b.amount, lineCup, sumLineCup);
+    }
+    return { buckets, perItem, mixedUnresolved: false, source: 'ledger' };
+  }
 
   const lineCup = items.map(lineCupOf);
   const lineUsd = items.map(lineUsdOf);
@@ -256,7 +360,47 @@ export function reconstructTxCollections(tx: CollectionTx, items: CollectionItem
     }
   }
 
-  return { buckets, perItem, mixedUnresolved };
+  return { buckets, perItem, mixedUnresolved, source: 'reconstruction' };
+}
+
+// ── REGLA DE MONEDA PREDOMINANTE (misión §2 — 2026-10-24) ─────────────────────
+
+export interface PredominantClassification {
+  /** Moneda cuyo componente tiene mayor peso económico (empate ⇒ CUP). */
+  currency: 'CUP' | 'USD';
+  /** Importe efectivamente cobrado en CUP (buckets CUP). */
+  cupCollected: number;
+  /** Importe efectivamente cobrado en USD (buckets USD). */
+  usdCollected: number;
+  /** Equivalente CUP del componente USD con la TASA PERSISTIDA de la operación. */
+  usdCollectedCup: number;
+  /** Tasa de la operación (usdCollectedCup / usdCollected; 0 sin componente USD). */
+  rate: number;
+  /** Empate económico exacto (±0.01) — la regla determinista asignó CUP. */
+  tie: boolean;
+}
+
+/**
+ * Clasifica una venta por MONEDA PREDOMINANTE con la tasa persistida de la
+ * operación (misión §2): comparación del peso económico en base común CUP.
+ * Empate (±0.01) ⇒ CUP (moneda de cuenta interna — determinista, documentada).
+ */
+export function resolvePredominantCurrency(result: TxCollectionResult): PredominantClassification {
+  let cupCollected = 0;
+  let usdCollected = 0;
+  let usdCollectedCup = 0;
+  for (const b of result.buckets) {
+    if (b.currency === 'USD') {
+      usdCollected += b.amount;
+      usdCollectedCup += b.amountCup;
+    } else {
+      cupCollected += b.amount;
+    }
+  }
+  const rate = usdCollected > COLLECTION_EPS ? usdCollectedCup / usdCollected : 0;
+  const tie = Math.abs(usdCollectedCup - cupCollected) <= COLLECTION_EPS && usdCollected > COLLECTION_EPS && cupCollected > COLLECTION_EPS;
+  const currency: 'CUP' | 'USD' = usdCollectedCup > cupCollected + COLLECTION_EPS ? 'USD' : 'CUP';
+  return { currency, cupCollected, usdCollected, usdCollectedCup, rate, tie };
 }
 
 /** Reparto por ítem: proporcional al valor de línea; si Σlínea=0, partes iguales. */
@@ -323,15 +467,16 @@ export interface ProductCollectionRow {
   /** Cantidad FÍSICA total (Σ quantity de todas las líneas, ambas monedas). */
   total_quantity: number;
   /**
-   * Cantidad atribuible a cobros en CUP (AUDITORÍA 2026-10-19, defecto B):
-   * reparto por línea — una línea cobrada en UNA sola moneda atribuye su
-   * cantidad completa a esa moneda (verdad documental); una línea cobrada en
-   * AMBAS monedas se reparte proporcionalmente al valor cobrado; una línea
-   * sin cobro atribuido cae a su moneda original. Invariante:
-   * qty_cup + qty_usd = total_quantity.
+   * Cantidad atribuida a la moneda PREDOMINANTE de cada venta (MISIÓN PAGOS
+   * MIXTOS 2026-10-24 — reemplaza el reparto por línea del 2026-10-19): la
+   * venta completa se clasifica por peso económico con la tasa persistida
+   * (misión §2) y TODAS sus unidades van al reporte de la moneda
+   * predominante; el reporte de la moneda secundaria muestra su componente
+   * monetario con cantidad CERO. Invariante: qty_cup + qty_usd =
+   * total_quantity (nunca se duplica la cantidad física — misión §4).
    */
   qty_cup: number;
-  /** Cantidad atribuible a cobros en USD (mismas reglas que qty_cup). */
+  /** Cantidad atribuible a ventas clasificadas como USD (mismas reglas). */
   qty_usd: number;
   /** Total histórico CUP de las líneas (precio de venta histórico — NUNCA recalculado). */
   total_cup: number;
@@ -364,6 +509,23 @@ export interface ItemsSummaryResult {
     zelle_usd: number;
     usd_total: number;
   };
+  /**
+   * MISIÓN PAGOS MIXTOS (2026-10-24): clasificación por MONEDA PREDOMINANTE de
+   * cada venta del periodo — evidencia de la regla §2 (componentes cobrados,
+   * tasa persistida, clasificación y empates) para el Reporte Entrega y las
+   * pruebas de cuadre.
+   */
+  sales_classification: Array<{
+    txId: string;
+    predominant: 'CUP' | 'USD';
+    cup_collected: number;
+    usd_collected: number;
+    usd_collected_cup: number;
+    rate: number;
+    tie: boolean;
+    source: 'ledger' | 'reconstruction';
+    total_cup: number;
+  }>;
 }
 
 interface AggState extends Omit<ProductCollectionRow, 'transactions_count' | 'usd_total'> {
@@ -371,59 +533,65 @@ interface AggState extends Omit<ProductCollectionRow, 'transactions_count' | 'us
 }
 
 /**
- * Atribución de la CANTIDAD de una línea a la moneda de cobro (AUDITORÍA
- * 2026-10-19, defecto B del reporte Entrega en tienda):
- *   · línea cobrada en UNA moneda → cantidad completa a esa moneda (exacto);
- *   · línea cobrada en AMBAS → reparto proporcional al valor cobrado
- *     (CUP : USD×tasa — atribución derivada, documentada);
- *   · línea sin cobro atribuido (venta total 0 absorbida por otras líneas,
- *     incidencias) → moneda ORIGINAL de la línea.
- * Determinista y sin inventar: la cantidad física (total_quantity) NUNCA se
- * duplica — qty_cup + qty_usd = total_quantity en todo momento.
+ * Atribución de la CANTIDAD de una venta a su moneda PREDOMINANTE (MISIÓN
+ * PAGOS MIXTOS 2026-10-24 — sustituye al reparto por línea de la auditoría
+ * 2026-10-19): TODAS las unidades de la venta van a la moneda predominante
+ * (misión §2: peso económico con la tasa persistida); la moneda secundaria
+ * recibe cantidad CERO y solo su componente monetario. Determinista y sin
+ * duplicar: qty_cup + qty_usd = total_quantity en todo momento.
  */
-function attributeQuantity(
+function attributeQuantityByPredominant(
   qty: number,
-  cupCollected: number,
-  usdCollected: number,
-  rate: number,
-  lineCurrency: string,
+  predominant: 'CUP' | 'USD',
 ): { qtyCup: number; qtyUsd: number } {
-  if (usdCollected > COLLECTION_EPS && cupCollected <= COLLECTION_EPS) {
-    return { qtyCup: 0, qtyUsd: qty };
-  }
-  if (cupCollected > COLLECTION_EPS && usdCollected <= COLLECTION_EPS) {
-    return { qtyCup: qty, qtyUsd: 0 };
-  }
-  if (cupCollected > COLLECTION_EPS && usdCollected > COLLECTION_EPS) {
-    const wUsd = usdCollected * rate;
-    const w = cupCollected + wUsd;
-    return { qtyCup: qty * (cupCollected / w), qtyUsd: qty * (wUsd / w) };
-  }
-  return normCur(lineCurrency) === 'USD' ? { qtyCup: 0, qtyUsd: qty } : { qtyCup: qty, qtyUsd: 0 };
+  return predominant === 'USD' ? { qtyCup: 0, qtyUsd: qty } : { qtyCup: qty, qtyUsd: 0 };
 }
 
 /**
  * Agrega filas (transaction_items ⨝ transactions ⨝ products) a UNA fila por
- * producto con los cobros por moneda y las CANTIDADES atribuidas por moneda
- * (qty_cup/qty_usd — AUDITORÍA 2026-10-19). La cantidad física
- * (total_quantity) y los importes NO cambian.
+ * producto con los cobros por moneda y las CANTIDADES atribuidas por MONEDA
+ * PREDOMINANTE de cada venta (qty_cup/qty_usd — MISIÓN PAGOS MIXTOS
+ * 2026-10-24). La cantidad física (total_quantity) y los importes NO cambian.
+ * `rows` puede llevar las filas de payment_transactions (ref_type='sale') de
+ * cada venta — cuando son autoritativas (ledgerIsAuthoritative) la moneda
+ * real de cobro y la tasa se leen DIRECTO del ledger.
  */
-export function buildItemsSummary(rows: Array<{ item: CollectionItem; tx: CollectionTx; txId: string }>): ItemsSummaryResult {
+export function buildItemsSummary(
+  rows: Array<{ item: CollectionItem; tx: CollectionTx; txId: string; payments?: LedgerPayment[] }>,
+): ItemsSummaryResult {
   // Agrupar por transacción y reconstruir una vez por transacción (sin duplicar).
-  const byTx = new Map<string, { tx: CollectionTx; items: CollectionItem[] }>();
+  const byTx = new Map<string, { tx: CollectionTx; items: CollectionItem[]; payments?: LedgerPayment[] }>();
   for (const r of rows) {
     const g = byTx.get(r.txId);
     if (g) g.items.push(r.item);
-    else byTx.set(r.txId, { tx: r.tx, items: [r.item] });
+    else byTx.set(r.txId, { tx: r.tx, items: [r.item], payments: r.payments });
   }
 
   const agg = new Map<string, AggState>();
-  for (const { tx, items } of byTx.values()) {
-    const { perItem } = reconstructTxCollections(tx, items);
+  const salesClassification: ItemsSummaryResult['sales_classification'] = [];
+  for (const { tx, items, payments } of byTx.values()) {
+    const result = reconstructTxCollections(tx, items, payments);
+    const predominant = resolvePredominantCurrency(result);
+    salesClassification.push({
+      txId: String(tx.id || items[0]?.transaction_id || ''),
+      predominant: predominant.currency,
+      cup_collected: predominant.cupCollected,
+      usd_collected: predominant.usdCollected,
+      usd_collected_cup: predominant.usdCollectedCup,
+      rate: predominant.rate,
+      tie: predominant.tie,
+      source: result.source,
+      total_cup: items.reduce((s, it) => s + lineCupOf(it), 0),
+    });
+    // Incidencia a nivel VENTA: el cobro total (a tasa de la operación)
+    // difiere del total histórico CUP de las líneas.
+    const saleCupEquiv = predominant.cupCollected + predominant.usdCollectedCup;
+    const saleLineCup = items.reduce((s, it) => s + lineCupOf(it), 0);
+    const saleIncident = Math.abs(saleCupEquiv - saleLineCup) > COLLECTION_EPS;
     items.forEach((item, idx) => {
       const pid = String(item.product_id || '');
       if (!pid) return;
-      const col = perItem[idx];
+      const col = result.perItem[idx];
       let a = agg.get(pid);
       if (!a) {
         a = {
@@ -441,17 +609,20 @@ export function buildItemsSummary(rows: Array<{ item: CollectionItem; tx: Collec
         };
         agg.set(pid, a);
       }
-      const rate = num(item.exchange_rate) > 0 ? num(item.exchange_rate) : 1;
       const cupCollected = col.cup.cash + col.cup.transfer + col.cup.zelle;
       const usdCollected = col.usd.cash + col.usd.transfer + col.usd.zelle;
-      const { qtyCup, qtyUsd } = attributeQuantity(num(item.quantity), cupCollected, usdCollected, rate, item.currency || 'CUP');
-      const cupEquiv = cupCollected + usdCollected * rate;
-      const lineCup = lineCupOf(item);
-      const incident = Math.abs(cupEquiv - lineCup) > COLLECTION_EPS;
+      // CANTIDAD por moneda predominante de la VENTA (misión §2) — ya no por línea.
+      const { qtyCup, qtyUsd } = attributeQuantityByPredominant(num(item.quantity), predominant.currency);
+      // Incidencia por ítem: cobro atribuido (convertido a tasa de la línea)
+      // vs valor CUP de la línea; además la incidencia a nivel venta marca
+      // todas sus líneas (misión §7: trazabilidad de diferencias documentadas).
+      const itemRate = num(item.exchange_rate) > 0 ? num(item.exchange_rate) : 1;
+      const itemCupEquiv = cupCollected + usdCollected * itemRate;
+      const incident = saleIncident || Math.abs(itemCupEquiv - lineCupOf(item)) > COLLECTION_EPS;
       a.total_quantity += num(item.quantity);
       a.qty_cup += qtyCup;
       a.qty_usd += qtyUsd;
-      a.total_cup += lineCup;
+      a.total_cup += lineCupOf(item);
       a.cash_cup += col.cup.cash;
       a.transfer_cup += col.cup.transfer;
       a.zelle_cup += col.cup.zelle;
@@ -500,5 +671,5 @@ export function buildItemsSummary(rows: Array<{ item: CollectionItem; tx: Collec
     cash_usd: 0, transfer_usd: 0, zelle_usd: 0, usd_total: 0,
   });
 
-  return { items, totals };
+  return { items, totals, sales_classification: salesClassification };
 }

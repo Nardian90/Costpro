@@ -646,6 +646,21 @@ export const createSaleParamsSchema = z.object({
   // FIX-MULTI-MONEDA: moneda de venta y tasa de cambio
   p_sale_currency: z.string().optional().default('CUP'),
   p_sale_exchange_rate: z.number().optional().default(1.0),
+  // MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24): desglose real por moneda de
+  // lo cobrado — [{method, currency, amount}] con importes ORIGINALES. El
+  // replay offline (/api/sync/batch → create_sale_v2 §13.7) lo pasa al RPC,
+  // que valida estructura, resuelve la tasa USD y deriva los pools.
+  p_payment_components: z
+    .array(
+      z.object({
+        method: z.enum(['cash', 'transfer', 'zelle']),
+        currency: z.enum(['CUP', 'USD']),
+        amount: z.number().positive().finite(),
+      }),
+    )
+    .max(20)
+    .nullable()
+    .optional(),
 });
 
 export const registerReceptionParamsSchema = z.object({

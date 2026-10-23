@@ -270,6 +270,10 @@ const handler = withAuth(async (req, session) => {
                 p_operation_date: op.payload.p_operation_date || null,
                 p_user_id: session.user.id,
                 p_payment_incidents: op.payload.p_payment_incidents ?? null,
+                // MISIÓN PAGOS MIXTOS (2026-10-24): desglose real por moneda
+                // encolado offline — passthrough al RPC (la validación de
+                // estructura/tasas/pools derivados vive en create_sale_v2 §13.7).
+                p_payment_components: op.payload.p_payment_components ?? null,
               };
               result = await supabase.rpc('create_sale_v2', v2Payload);
             }
