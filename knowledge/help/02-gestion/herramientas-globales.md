@@ -25,7 +25,7 @@ La Calculadora Flotante es una herramienta de cálculo rápido accesible desde c
 
 ### Cómo Accederla
 
-Haz clic en el icono de calculadora en la barra superior, o bien actívala desde la Paleta de Comandos buscando "calculadora".
+Haz clic en el icono de calculadora de la barra lateral (grupo inferior de iconos), o bien actívala desde la Paleta de Comandos buscando "calculadora".
 
 ### Funcionalidades
 
@@ -46,6 +46,7 @@ El sistema soporta múltiples proveedores de modelos de lenguaje, configurables 
 
 | Proveedor | Modelo | Notas |
 |-----------|--------|-------|
+| **z.ai** | GLM-4 | **Proveedor por defecto**: funciona sin configurar clave API |
 | **Gemini** | Google Gemini | Integración nativa con Google Cloud |
 | **GPT** | OpenAI GPT | Requiere clave API de OpenAI |
 | **Qwen** | Alibaba Qwen | Alternativa de alto rendimiento multilingüe |
@@ -56,13 +57,13 @@ El sistema soporta múltiples proveedores de modelos de lenguaje, configurables 
 
 Para gestionar las claves de API de los proveedores de IA:
 
-1. Navega a **CONFIGURACIÓN > Ajustes > Configuración de IA Darian**.
-2. Haz clic en **Agregar Proveedor** para registrar una nueva clave API.
+1. Navega a **SISTEMA > Ajustes** y abre **Configuración de Darian AI**.
+2. Haz clic en **Agregar** para registrar una nueva clave API.
 3. Completa el nombre del proveedor y la clave API correspondiente.
 4. Activa o desactiva cada proveedor mediante el toggle de estado.
-5. El proveedor activo será el utilizado por el ChatBot y el asistente de fichas de costo.
+5. El proveedor activo será el utilizado por el ChatBot y el asistente de fichas de costo. Darian funciona con **z.ai (GLM-4)** sin necesidad de configurar clave API.
 
-> **Importante:** Las claves API se almacenan de forma segura y encriptada en el sistema. Nunca se comparten entre instancias ni se exponen en la interfaz tras su registro.
+> **Importante:** No compartas tus claves API: se registran en el sistema y no se vuelven a mostrar en la interfaz tras su registro.
 
 ## Atajos de Teclado Completos
 
@@ -101,12 +102,12 @@ CostPro ofrece 5 temas visuales y 2 modos de conectividad para adaptar la interf
 
 | Modo | Descripción |
 |------|-------------|
-| **4G Fast** | Modo predeterminado. Todas las animaciones, transiciones y efectos visuales activos. Requiere buena conexión a internet. |
-| **3G Savings** | Modo de ahorro de datos. Reduce animaciones, precarga selectiva y optimiza las peticiones de red. Ideal para conexiones inestables o planes de datos limitados. |
+| **4G Rápido** | Modo predeterminado. Todas las animaciones, transiciones y efectos visuales activos. Requiere buena conexión a internet. |
+| **3G Ahorro** | Modo de ahorro de datos. Reduce animaciones, precarga selectiva y optimiza las peticiones de red. Ideal para conexiones inestables o planes de datos limitados. |
 
-> **Nota:** Los temas Fast y el modo 3G Savings son particularmente útiles para usuarios que operan desde dispositivos móviles o en zonas con cobertura de red limitada. Las funciones del sistema no se ven afectadas, solo la presentación visual.
+> **Nota:** Los temas Fast y el modo 3G Ahorro son particularmente útiles para usuarios que operan desde dispositivos móviles o en zonas con cobertura de red limitada. Las funciones del sistema no se ven afectadas, solo la presentación visual.
 
-Para cambiar el tema, haz clic en el icono de sol/luna en la barra superior. Para cambiar el modo de conectividad, accede a CONFIGURACIÓN > Ajustes.
+Para cambiar el tema, haz clic en el icono de sol/luna en la barra superior. Para cambiar el modo de conectividad, accede a **SISTEMA > Ajustes**.
 
 ## Soporte PWA (Progressive Web App)
 
@@ -122,28 +123,19 @@ CostPro es una aplicación web progresiva (PWA), lo que permite instalarla direc
 ### Funcionamiento Offline
 
 - **Almacenamiento local:** Los datos de la sesión actual se almacenan en caché local.
-- **Modo offline:** Si se pierde la conexión, la aplicación sigue accesible para consultas de datos en caché.
-- **Sincronización:** Al recuperar la conexión, los cambios pendientes se sincronizan automáticamente con el servidor.
+- **Modo offline:** Si se pierde la conexión, la operativa esencial sigue funcionando: las **ventas se quedan en cola local** y se sincronizan automáticamente al reconectar.
+- **Sincronización:** Al recuperar la conexión, los cambios pendientes se envían al servidor y el inventario y la caja se actualizan con ellos.
 - **Notificaciones:** La PWA puede enviar notificaciones push al dispositivo incluso cuando la aplicación está cerrada.
 
-> **Importante:** La operativa completa (ventas, modificaciones) requiere conexión activa. El modo offline permite solo lectura de datos en caché.
+> **Importante:** La operación normal requiere conexión activa. Si se pierde, las ventas quedan en cola local esperando sincronización; consulte *Cómo funciona el modo offline* para el detalle de qué funciona y qué no.
 
-## Configuración de Impuestos
+## Gestión de Impuestos
 
-CostPro permite configurar el comportamiento de los impuestos de forma flexible para adaptarse a la normativa fiscal de cada jurisdicción.
+La sección **Gestión de Impuestos** lista los impuestos existentes de la tienda y permite **activarlos o desactivarlos** para las ventas. La creación y los parámetros fiscales (tipo, valor, umbral exento) no se editan desde esta pantalla.
 
-### Parámetros Configurables
+Para ver los impuestos, navega a **SISTEMA > Ajustes > Gestión de Impuestos**.
 
-| Parámetro | Descripción |
-|-----------|-------------|
-| **Impuesto habilitado** | Activar o desactivar el cálculo automático de impuestos en las ventas |
-| **Tipo de cálculo** | Por porcentaje (ej. 16% IVA) o por monto fijo (ej. $2.00 por transacción) |
-| **Valor del impuesto** | El porcentaje o monto fijo a aplicar |
-| **Umbral mínimo exento** | Monto mínimo de venta por debajo del cual no se aplica impuesto |
-
-Para configurar impuestos, navega a **CONFIGURACIÓN > Ajustes > Impuestos**.
-
-> **Tip:** Si tu jurisdicción exige exenciones para ventas menores (por ejemplo, ventas menores a $100 no tributan), configura el umbral mínimo exento para automatizar el cálculo.
+> **Tip:** Para ventas con ITBIS manual en ofertas y promociones, consulte *Cómo crear una oferta*.
 
 ## Notificaciones del Sistema
 
@@ -151,9 +143,7 @@ CostPro genera notificaciones automáticas para mantener al usuario informado de
 
 | Tipo de Notificación | Descripción | Configurable |
 |---------------------|-------------|:---:|
-| **Alerta de stock bajo** | Se emite cuando un producto cae por debajo del mínimo de stock configurado | ✅ |
-| **Confirmación de venta** | Notificación al registrar una venta exitosa | ✅ |
-| **Recepción de transferencia** | Aviso cuando una tienda destino recibe mercancía transferida | ✅ |
-| **Recordatorio de cierre** | Aviso para realizar el cierre de caja al finalizar el turno | ✅ |
+| **Alertas de Stock Bajo** | Se emite cuando un producto cae por debajo del mínimo de stock configurado | ✅ |
+| **Confirmación de Ventas** | Notificación al registrar una venta exitosa | ✅ |
 
-Las notificaciones aparecen en el icono de campana de la barra superior y pueden configurarse desde **CONFIGURACIÓN > Ajustes > Notificaciones**.
+Las notificaciones aparecen en el icono de campana de la barra superior y pueden activarse o desactivarse desde **SISTEMA > Ajustes > Notificaciones**.

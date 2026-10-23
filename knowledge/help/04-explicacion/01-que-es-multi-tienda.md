@@ -39,14 +39,13 @@ Si cambia a la **Tienda B**, todo lo anterior cambia: ahora ve los datos de la T
 
 Arriba del todo, en la barra negra, siempre verá el **nombre de la tienda activa**. Esa es la tienda cuyo cuaderno está abierto ahora mismo. Si quiere cambiar de cuaderno, haga clic en el nombre y elija otra.
 
-### El catálogo maestro es compartido
+### El catálogo de productos es por tienda
 
-Hay una excepción: el **catálogo de productos** (la lista maestra de qué productos existen) **es compartido entre todas las tiendas**. Esto significa:
+Cada tienda tiene **su propio catálogo de productos**: si crea un producto "Leche entera 1L" en la Tienda A, ese producto **no existe automáticamente** en la Tienda B, C, D o E. Para tenerlo ahí, se crea en esa tienda o se importa.
 
-- Si crea un producto "Leche entera 1L" en la Tienda A, ese producto existe también para la Tienda B, C, D y E.
-- Pero el **stock** de ese producto es **por tienda**: la Tienda A puede tener 20 unidades, la Tienda B 5, etc.
+El **stock** de cada producto es **por tienda**: la Tienda A puede tener 20 unidades, la Tienda B 5, etc.
 
-> 💡 **Por qué**: Es así para que no tenga que crear 5 veces el mismo producto si vende en 5 tiendas. Pero el stock sí es independiente porque cada tienda tiene su propio estante físico.
+> 💡 **Por qué**: cada tienda opera como un negocio independiente con sus propios precios y su propio estante físico. Si vende el mismo producto en 5 tiendas, se crea o importa en cada una.
 
 ### Los usuarios pueden pertenecer a varias tiendas
 
@@ -112,8 +111,6 @@ Si su administrador quiere crear una nueva tienda:
 ## Lo que NO cambia entre tiendas
 
 - **Su usuario y contraseña**: son los mismos en todas las tiendas.
-- **El catálogo maestro de productos**: compartido (aunque el stock es por tienda).
-- **Los clientes y proveedores**: compartidos (aunque puede filtrarlos por tienda).
 - **La configuración global**: tema visual, idioma, etc.
 - **Las categorías de productos**: compartidas.
 

@@ -18,22 +18,22 @@ Telegram  → Operación → Redes → Telegram
 
 ## Qué ofrece cada bot
 
-Cada hub se organiza en las mismas pestañas:
+Cada hub se organiza en pestañas equivalentes (con pequeñas diferencias de nombre entre WhatsApp y Telegram):
 
 | Pestaña | Contenido |
 |---------|-----------|
 | **Dashboard** | Estado y actividad del bot en la tienda |
-| **Config** | Conexión y parámetros del bot |
+| **Conexión y Config** (WhatsApp) / **Bot y Config** (Telegram) | Conexión y parámetros del bot |
 | **Conversaciones** | Mensajes recibidos y respuestas del asistente |
-| **Grupo** | Gestión del grupo de ventas vinculado |
+| **Grupo de Ventas** | Gestión del grupo de ventas vinculado |
 | **Invitaciones** | Enlaces para invitar participantes |
 
 ## Cómo usarlo
 
 1. Abra la sección **Redes** y elija **WhatsApp** o **Telegram**.
 2. Si la vista indica **"Sin tienda activa"**, seleccione primero la tienda en la barra superior: cada bot pertenece a una tienda.
-3. Conecte el bot en **Config**.
-4. Revise **Conversaciones** y administre el **Grupo** y las **Invitaciones**.
+3. Conecte el bot en **Conexión y Config** (WhatsApp) o **Bot y Config** (Telegram).
+4. Revise **Conversaciones** y administre el **Grupo de Ventas** y las **Invitaciones**.
 
 ## Precauciones
 

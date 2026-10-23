@@ -1,9 +1,9 @@
 # Inventario de Auditoría Documental — Ayuda de COSTPRO 4 Multitienda
 
-**Fecha**: 2026-10-24
-**Base de verificación**: `main` @ `1327feb3d` (incluye merge del PR #1463)
-**Rama de trabajo**: `docs/auditoria-ayuda-integral-costpro`
+**Fecha**: 2026-10-24 (actualizado con misión complementaria de cierre de cobertura)
+**Base de verificación**: `main` @ `1327feb3d` (incluye merge del PR #1463) · rama de trabajo `docs/auditoria-ayuda-integral-costpro`
 **Método**: cada afirmación relevante de la ayuda se contrastó con el código real (vistas, APIs, RPCs, migraciones, navegación y tests). Fuente única de navegación: `src/config/navigation/navigation-definition.ts`.
+**Actualización**: segunda pasada completa sobre los documentos pendientes (§2.5) y ayudas nuevas para las 4 vistas sin documentación (§4.4). Ver §6.
 
 ---
 
@@ -78,11 +78,30 @@ Inventario auditado: **68 documentos** en `knowledge/help/` (67 Markdown + `user
 
 `01-tutoriales/01-primer-inicio.md`, `02-como-hacer/02-como-cambiar-contrasena.md`, `02-como-hacer/18-como-usar-venta-por-conteo.md` (verificada a fondo: AL DÍA), `02-como-hacer/21-como-gestionar-clientes.md`, `02-como-hacer/22-como-crear-oferta.md` (AL DÍA, incluye ITBIS manual), `02-como-hacer/23-como-consultar-cuentas.md` (AL DÍA), `03-referencia/05-tipos-reportes.md` (AL DÍA: 11 tipos reales), `03-referencia/03-atajos-teclado.md`, `01-empezar/glosario.md` (resto), `01-empezar/primeros-pasos.md`, `04-explicacion/01-que-es-multi-tienda.md` (concepto de producto, vigente), `compliance/*` (fuera del alcance funcional).
 
-### 2.5 PENDIENTES DE CONFIRMACIÓN (9) — sin discrepancias detectadas, verificación de detalle pendiente
+### 2.5 PENDIENTES DE SEGUNDA PASADA → RESUELTOS (10 documentos)
 
-Estos documentos se revisaron a nivel de rutas/afirmaciones evidentes sin encontrar errores, pero no recibieron verificación campo-a-campo por prioridad de criticidad:
+Estos documentos se revisaron a nivel de rutas/afirmaciones evidentes sin encontrar errores en la primera pasada, pero sin verificación campo-a-campo. **La segunda pasada (misión complementaria) los verificó contra la implementación y TODOS presentaban defectos demostrables; fueron corregidos con fixes dirigidos.** Nota de conteo: la primera pasada etiquetó «9» pero listaba 10 archivos; el conteo correcto es 10.
 
-`04-configuracion/administrar-tiendas.md`, `04-configuracion/herramientas-sistema.md`, `04-configuracion/redes-sociales.md`, `04-explicacion/02-que-es-ficha-costo.md`, `04-explicacion/03-que-es-ipv.md`, `04-explicacion/04-por-que-auditoria.md`, `04-explicacion/06-como-funciona-offline.md`, `04-explicacion/07-aislamiento-por-tienda.md`, `02-gestion/herramientas-globales.md` y `02-gestion/reportes.md` (rutas verificadas en lote; detalle pendiente). Se recomienda segunda pasada con el mismo método.
+| Documento | Veredicto | Correcciones aplicadas |
+|-----------|-----------|------------------------|
+| `04-configuracion/administrar-tiendas.md` | **CORREGIDO** | Rutas fantasma «CONFIGURACIÓN > Administrativa» → reales (OPERACIÓN > Gestión de Tiendas; SISTEMA > Usuarios/Roles); flujo de creación de tienda real (**Nueva Sucursal** → modal con Nombre + URL pública → **Crear Tienda**, detalles después en Configuración de Tienda); **Nuevo Usuario** con «Asignar Contraseña (Opcional)»; restablecer contraseña = **Enviar correo de recuperación** (enlace, no contraseña temporal) + Cambiar contraseña; añadido rol **costo**; Costo accesible a manager/encargado; cierres de caja = admin/manager/**encargado**; eliminación de usuario = soft delete bloqueado por **membresías activas**; logo en recibos matizado (recibo térmico lleva nombre de tienda) |
+| `04-configuracion/herramientas-sistema.md` | **CORREGIDO** | El Tablón de Noticias (Análisis) NO es admin-only: intro separa herramientas de Sistema (admin) del Tablón (todos los roles); Cierre Fiscal: **cerrar ≠ bloquear** (Bloquear Periodo es acción aparte de admin, posterior al cierre) |
+| `04-configuracion/redes-sociales.md` | **CORREGIDO** | Pestañas reales: **Conexión y Config** (WhatsApp) / **Bot y Config** (Telegram); **Grupo de Ventas** (no «Grupo») |
+| `04-explicacion/02-que-es-ficha-costo.md` | **CORREGIDO** | FAQ de indexación por IPV eliminada (no existe; lo real es **Costeo Dinámico**); «6 métodos de costeo» → esquema real de **costeo absorbente** + Costeo Dinámico; modos reales (Resumen/Completo/Asistido/Informe/Vistazo/Auditoría — no «5 modos» con nombres inventados); `ref()` referencia filas de la misma ficha (no otras fichas); «firmas digitales» → bloques de **Firmas** («Elaborado por»/«Aprobado por», campos obligatorios); typo «Quando» |
+| `04-explicacion/03-que-es-ipv.md` | **CORREGIDO** | **Desambiguación explícita de los 3 sentidos de IPV** (aviso en cabecera: vista activa `ipv_ventas` «IPV — Ingresos por Ventas» vs módulo experimental EN DESARROLLO vs «Tabla IPV» histórica); estado experimental/admin-only alineado con CP-INFRA-002; reglas de matching corregidas contra el motor real (`engine.ts`: HARD_REF busca código de producto, CASH_FILL = Inyección de Efectivo, AUTO_SUPPLY = Auto-Suplencia; GOAL_WITH_TOLERANCE/PRICE_FLEX sin implementar); eliminada la promesa de comparación con índices oficiales (ONEI/Banco Central) y reportes fiscales «en el formato que piden»; enlace roto a «Cómo usar el IPV» (no existe) sustituido por la guía nueva de ipv_ventas |
+| `04-explicacion/04-por-que-auditoria.md` | **CORREGIDO** | **Solo admin accede a la vista de Auditoría** (roles:['admin']; manager/encargado NO); filtros reales (evento, fechas, tienda, búsqueda — sin monto/severidad/usuario); exportación = **CSV** (no PDF/Excel); sin dirección IP (no existe en audit_logs ni UI); retención: sin política fija para auditoría (tablas fiscales 7–10 años documentales); «quién audita al auditor» corregido (no se registran lecturas); tabla Auditoría vs Monitoreo corregida (Monitoreo = consumo infra Vercel+Supabase, admin-only, 30 días); logins no se escriben en auditoría global |
+| `04-explicacion/06-como-funciona-offline.md` | **CORREGIDO** | Tabla offline realista: cerrar caja/reportes/historial/crear productos NO funcionan offline; la venta offline queda **en cola local** y el inventario/caja se actualizan **al sincronizar** (no localmente); transferencias SÍ se pueden crear offline (la confirmación en destino requiere conexión); eliminada la «nube tachada» en historial; sin cifrado local (IndexedDB en claro — protección = dispositivo con sesión); «Centro de Errores» (no existe) → indicador offline POS/Recepción + modal de conflictos; ventana «24h» eliminada (control por rol); límites de cola (10.000 ventas, tiempos) y consumo «1-2 MB/h» sin base en el código — retirados o matizados |
+| `04-explicacion/07-aislamiento-por-tienda.md` | **CORREGIDO** | El catálogo **NO es compartido** (products.store_id, SKU único por tienda); clientes por tienda; proveedores no son entidad compartida; sin URLs `/tienda-b` (el bloqueo real es backend RLS+canViewStore); el consolidado real es el tablero de **Gestión de Tiendas** (no «Todas las tiendas» en Reportes); intentos de acceso rechazados van a logs del servidor (no a la Auditoría de la interfaz) |
+| `02-gestion/herramientas-globales.md` | **CORREGIDO** | Rutas «CONFIGURACIÓN > Ajustes» → **SISTEMA > Ajustes**; proveedor **z.ai (GLM-4)** por defecto (sin API key) añadido a la tabla; «Configuración de Darian AI» + botón **Agregar**; notificaciones reales: 2 (Alertas de Stock Bajo, Confirmación de Ventas) — retiradas «Recepción de transferencia» y «Recordatorio de cierre»; impuestos = Gestión de Impuestos (listar/activar-desactivar, sin edición de tipo/valor/umbral); conectividad = **4G Rápido / 3G Ahorro**; offline: las ventas se encolan y sincronizan (no «solo lectura»); calculadora en la **barra lateral**; «encriptadas» → aviso de no exposición tras registro |
+| `02-gestion/reportes.md` | **CORREGIDO** | Acceso real: **solo admin y manager** (manager limitado a sus membresías); formato **Legal eliminado** (solo A4/Carta); atajos reales (Hoy/Semana/Mes/Mes anterior) y campos **Desde/Hasta**; vista previa = **borrador HTML con 5 registros** (no PDF embebido); PDF final se abre en **pestaña nueva** + exportación **Excel** añadida; PDF sin logo/encabezado/pie inventados; «Registro de Auditoría» con acción `report_generated` inexistente → **Historial** (tabla report_runs); Kardex/Auditoría con aviso **Implementación Parcial** (PDF puede venir vacío) y Kardex exige producto; dirección IP retirada de las métricas de Auditoría |
+
+**Correcciones replicadas por verificación cruzada** (mismos defectos hallados en otros documentos, corregidos en esta pasada):
+
+| Documento | Corrección |
+|-----------|-----------|
+| `03-referencia/02-roles-permisos.md` | Tabla de permisos: Ver auditoría → **solo admin**; Ver monitoreo → **solo admin**; Generador de Reportes → admin/manager (warehouse/clerk/encargado fuera); ventana «24h» eliminada (Anular ventas según rol, coherente con MODELO C); descuentos: umbral real **15%** con PIN de supervisor (sin niveles 20/50); secciones por rol alineadas; FAQ del contador sin «auditoría» para manager |
+| `04-explicacion/01-que-es-multi-tienda.md` | «El catálogo maestro es compartido» → **catálogo por tienda** (SKU/precio/stock por tienda); «Lo que NO cambia»: retirados catálogo compartido y clientes/proveedores compartidos |
+| `02-como-hacer/01-como-cambiar-tienda.md` | «Lo que NO cambia»: catálogo/clientes compartidos → por tienda (coherente con products.store_id y customers.store_id) |
 
 ---
 
@@ -104,7 +123,7 @@ Estos documentos se revisaron a nivel de rutas/afirmaciones evidentes sin encont
 1. **Topología de navegación**: 31 menciones a la sección «Multi-Tienda» (retirada en la reorganización GATE 1) repartidas en 19 documentos; todas corregidas a las secciones reales (OPERACIÓN/ANÁLISIS/SISTEMA/AYUDA/EN DESARROLLO).
 2. **Estados documentados que no existen** (transferencias «En tránsito/Completada», OC «Enviada/Confirmada/Cerrada», ajustes con 7 motivos): riesgo alto de inducir operaciones incorrectas; corregidos con los enums/BD reales.
 3. **Efectos financieros mal descritos**: la ayuda anterior sugería que registrar modificaba caja/inventario inmediatamente (servicios, transferencias). Corregido: registrar ≠ confirmar ≠ pagar, con la evidencia de RPCs y arqueo.
-4. **Módulos sin ayuda**: Inventario Físico (documentado en este PR); vistas nuevas sin doc (`ingresos_egresos`, `work_dates`, `ipv_ventas`, `cash_report`) quedan pendientes como recomendación.
+4. **Módulos sin ayuda**: Inventario Físico (documentado en este PR); las vistas `ingresos_egresos`, `work_dates`, `ipv_ventas` y `cash_report` **documentadas en la misión complementaria** (ver §6) — todas existían en la navegación activa y recibieron guía propia, mapeo contextual y alias de búsqueda.
 5. **Funcionalidades retiradas presentadas como activas**: Pick3/Billetera/Academia/Conciliación (CP-INFRA-002) — marcadas como retiradas.
 6. **Limitación conocida documentada**: «Anular pago» en el historial de pagos de Servicios Recibidos falla contra BD (SQLSTATE PT007, sin flujo de reversión) — hallazgo funcional fuera del alcance de este PR, documentado en la ayuda con advertencia al usuario.
 
@@ -114,12 +133,56 @@ Estos documentos se revisaron a nivel de rutas/afirmaciones evidentes sin encont
 
 | Métrica | Valor |
 |---------|-------|
-| Documentos de ayuda inventariados | 68 (+ índice de búsqueda) |
-| Verificados en profundidad contra código | 48 |
+| Documentos de ayuda inventariados | 72 (+ índice de búsqueda) |
+| Verificados en profundidad contra código | 62 (48 primera pasada + 14 segunda pasada y replicados) |
 | Reescritos por completo | 10 |
-| Nuevos | 1 |
-| Corregidos (fixes dirigidos) | 25 |
+| Nuevos | 5 (25 inventario físico + 26/27/28/29 misión complementaria) |
+| Corregidos (fixes dirigidos) | 28 (25 primera pasada + 10 segunda pasada − 3 solapados + 3 replicados) |
 | Verificados sin cambios | 12 |
-| Pendientes de segunda pasada | 9 |
 | Capturas referenciadas rotas | 0 |
 | Cambios de lógica de negocio / BD / permisos | 0 |
+
+> Detalle del recálculo: los 10 documentos de la §2.5 pasaron de «pendientes» a «corregidos»; se añadieron 3 correcciones replicadas (02-roles-permisos, 01-que-es-multi-tienda, 01-como-cambiar-tienda); las 4 vistas nuevas se suman como documentos nuevos. La métrica «corregidos» cuenta documentos únicos tocados con fixes dirigidos.
+
+---
+
+## 6. Misión complementaria — cierre de cobertura y validación contextual (2026-10-24)
+
+### 6.1 Ayudas nuevas para las 4 vistas sin documentación
+
+Todas las vistas **existen en la navegación activa** (no están en EN DESARROLLO) y fueron auditadas contra el código con evidencia archivo:línea antes de escribir una sola línea:
+
+| Documento nuevo | Vista | Ubicación real en menú | Contenido verificado |
+|----------------|-------|------------------------|---------------------|
+| `02-como-hacer/26-como-registrar-ingresos-egresos.md` | `ingresos_egresos` «Ingresos/Egresos» | OPERACIÓN → Caja | Tabla `cash_flow_documents` + RPCs (migración 20261021000001): 2 tipos × 6 conceptos (constitución/reposición/devolución total-parcial del fondo de cambio, otro ingreso/egreso), numeración IE-AAAA-NNNNN, estados Confirmado/Anulado (sin borrador ni edición), monedas CUP/USD (sin EUR), tasa resuelta por el servidor (tienda → BCC → elToque), 6 KPIs, comprobante PDF, efectos en arqueo v2.21.0 y Reporte Entrega, anulación con fila contraria y turno vigente, permisos (registrar +clerk; anular admin/manager/encargado). Diferencia explícita con Reporte Entrega (entrega de dinero), CxP, comisiones y Servicios Recibidos |
+| `02-como-hacer/27-como-usar-fechas-trabajo.md` | `work_dates` «Fechas de trabajo» | OPERACIÓN → Control operativo | Preferencia personal por usuario+tienda+tipo (localStorage, sin entidad BD); 12 tipos de movimiento de `movement-types.ts` con estados Configurable/Fija/Informativa; matriz de 8 columnas; forward-only (mín = MAX de la tienda), máx = hoy Habana, piso 6 meses; convención NOW()/mediodía; NO confunde jornada con turno de caja (advertencia explícita); no hay totales monetarios; desambigua la preferencia caducada |
+| `02-como-hacer/28-como-consultar-ipv-ventas.md` | `ipv_ventas` «IPV — Ingresos por Ventas» | OPERACIÓN → Ventas | IPV = **Ingresos por Ventas** (desambiguación de los 3 sentidos del acrónimo); informe de solo lectura bajo demanda («Generar informe»), 12 columnas verificadas contra tabla/PDF/Excel, identidad Ef = Ei + EN + DV − V − VS + AJ + TR; devoluciones con columna propia de cantidades Y resta del importe; incidencias informativas («Reportado, no ajustado»); límite 366 días; por tienda; PDF (nota metodológica) y Excel (3 hojas) |
+| `02-como-hacer/29-como-generar-reporte-entrega.md` | `cash_report` «Reporte Entrega» | OPERACIÓN → Ventas (+ accesos desde Caja, POS y Trabajadores) | «Reporte de Caja — Entrega»: cuadre esperado vs contado por denominaciones (cuadrado/sobrante/faltante), CUP/USD **nunca se suman**, métodos Efectivo/Transferencia/Zelle (+ «Ventas mixtas sin desglosar»), Resumen del Día con fórmula del efectivo esperado, atribución por día de negocio (ventas por registro; ajustes/pagos por payment_date; comisiones por paid_at), ajustes extraordinarios **deshabilitados** (flag off, 503), 3 plantillas PDF con firmas configurables, Excel 4 hojas |
+
+**Regla respetada**: no se inventó ningún tipo de movimiento, moneda ni automatización; las diferencias informativas de conciliación (IPV) y las limitaciones (ajustes 503) se documentaron como tales, no como órdenes de acción.
+
+### 6.2 Integración contextual verificada
+
+| Mecanismo | Cambio | Verificación |
+|-----------|--------|--------------|
+| `HelpLauncher.tsx` (`HELP_DOC_BY_VIEW`) | +4 mapeos: `ingresos_egresos`, `work_dates`, `ipv_ventas`, `cash_report` → sus guías | El botón «?» del Header y el botón flotante usan este mapa globalmente: ayuda correcta desde cada vista, sin tocar pantallas |
+| `search-keywords.json` | 100 → **132 alias** (33 términos nuevos + 8 rutas ampliadas; integridad validada: ninguna clave/ruta perdida vs HEAD) | `/api/help-docs?search=…` en vivo: «fondo de cambio»→26, «fechas de trabajo»→27, «retro-fechar»→27, «ingresos por ventas»→28, «entrega de dinero»→29, «desglose de billetes»→29, «jornada»→27+caja, «ipv ventas»→28 |
+| `view-tips.ts` | +4 tips para las vistas nuevas (con labels coherentes con la UI) | Tips mostrados en el splash de cada vista |
+| Listado del Centro de Ayuda | Los 4 docs aparecen en la sección «Cómo Hacer» (29 docs) | `/api/help-docs` estructura: 200 OK para los 4 `path` |
+
+No se añadió ningún botón de ayuda a pantallas concretas ni un segundo sistema de documentación: se reutilizó el mecanismo existente (HELP_DOC_BY_VIEW + búsqueda por alias).
+
+### 6.3 Limitaciones funcionales documentadas (sin corregir, fuera de alcance)
+
+| Hallazgo | Tratamiento documental |
+|----------|----------------------|
+| **Anular pago** en Servicios Recibidos falla contra BD (SQLSTATE PT007, sin flujo de reversión) | Mantenida la advertencia en la guía de Servicios Recibidos (misión anterior); no se sugiere procedimiento alternativo no soportado |
+| **Ajustes extraordinarios del Reporte Entrega deshabilitados** (flag `cashReportExtraordinaryAdjustment:false`, backend 503 «Función temporalmente desactivada») | Documentado en la guía 29 como estado actual (histórico visible, registros nuevos bloqueados) |
+| **Kardex/Auditoría del Generador de Reportes devuelven PDF con datos vacíos** (aviso «Implementación Parcial» en la UI) | Documentado en reportes.md con la advertencia literal de la interfaz |
+| **Cierre Fiscal**: existe texto de código «Solo un admin puede desbloquearlo» sin acción de desbloqueo | Incidencia funcional anotada aquí (no corregible en misión documental); la ayuda documenta cerrar ≠ bloquear y que el bloqueado no se reabre desde la interfaz |
+| **3 sentidos de «IPV» conviviendo en el producto** (vista activa / módulo experimental / nombre histórico) | Desambiguación documental explícita en 03-que-es-ipv.md y en la guía 28 |
+| `viewRegistry.ts` no registra `ipv_ventas`, `work_dates`, `cash_report` (registro parcial legacy; navegación resuelve por navigation-map/VALID_VIEWS) | Observación técnica anotada; no afecta navegación (cubierta por tests) ni la ayuda contextual (que usa HELP_DOC_BY_VIEW) |
+
+### 6.4 Segunda pasada — método
+
+Cada uno de los 10 documentos pendientes fue leído completo y verificado contra: navegación real (labels exactos de `navigation-definition.ts`), componentes de las vistas descritas, APIs/RPCs, permisos declarados, capturas referenciadas (public/help/capturas/), enlaces internos y contradicciones con los documentos reescritos en la primera pasada. Solo se corrigieron defectos demostrables (contradicción literal con el código); no hubo reescrituras estilísticas. Tres puntos quedan como PENDIENTE DE CONFIRMACIÓN (no demostrables por código estático): protección contra borrado de roles admin/manager, cifrado en reposo de claves API, columna de IP en el RPC de auditoría.

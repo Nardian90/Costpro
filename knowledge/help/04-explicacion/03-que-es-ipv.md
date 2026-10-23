@@ -1,6 +1,8 @@
 # Explicación: ¿Qué es el IPV?
 
-> **Lea esto cuando**: Quiere entender qué es el IPV (Índice de Precios y Variaciones), para qué sirve y cómo se relaciona con su negocio.
+> **Lea esto cuando**: Quiere entender el módulo **IPV** de la sección **EN DESARROLLO** (conciliación bancaria experimental, solo administradores).
+
+> ⚠️ **Atención: en CostPro hay dos vistas con las siglas IPV.** La activa es **«IPV — Ingresos por Ventas»** (OPERACIÓN → Ventas): un informe de ingresos por producto con conciliación de inventario. Este documento describe la **otra**: el módulo **IPV** de la sección **EN DESARROLLO** (visible **solo para administradores**), un banco de trabajo experimental de conciliación de transferencias bancarias que **no forma parte del flujo principal del producto**. También existe el nombre histórico «Tabla IPV» de la Tabla de Venta, que viene del informe de ingresos y no implica precios indexados.
 
 ## La pregunta básica: ¿cómo sé si los precios están subiendo?
 
@@ -12,45 +14,40 @@ Eso es exactamente lo que hace un **índice de precios**: toma una canasta de pr
 
 ![Vista IPV con el índice de precios y la conciliación de transferencias bancarias](/help/capturas/ipv-conciliacion.webp "Figura 1. IPV — índice de precios y conciliación de transferencias")
 
-En CostPro, el **IPV (Índice de Precios y Variaciones)** es un módulo avanzado que permite:
+En CostPro, el **IPV** (módulo experimental, registrado como «Índice de Precios de Venta») es un banco de trabajo de conciliación que apunta a:
 
-1. **Calcular el índice** de precios de su negocio.
-2. **Comparar** sus precios con índices oficiales (Banco Central, ONEI, etc.).
-3. **Conciliar** los extractos bancarios con las ventas registradas.
-4. **Simular escenarios**: *"¿Qué pasa si subo todos los precios 5%?"*
-5. **Generar reportes** para el contador y para la auditoría fiscal.
+1. **Conciliar** los extractos bancarios con los productos y ventas registradas.
+2. **Calcular métricas** de sus ingresos y transferencias.
+3. **Simular escenarios** de emparejamiento antes de confirmar.
+4. **Exportar MVT** para el contador.
+
+> ℹ️ **Estado real**: es un módulo **experimental en desarrollo** (sección EN DESARROLLO, roles admin). No construya su operación diaria sobre él: la conciliación de inventario e ingresos del producto es la vista activa **IPV — Ingresos por Ventas**.
 
 ## ¿Por qué es importante para su negocio?
 
-### 1. Para ajustar precios inteligentemente
-Si el IPV general subió 8% en el trimestre, probablemente sus costos también subieron. Si no ajusta sus precios, está perdiendo margen. El IPV le da una **señal objetiva** de cuándo y cuánto ajustar.
+### 1. Para conciliar con el banco
+Cuando el banco le manda el extracto mensual, los depósitos que aparecen deben coincidir con lo que usted registró. Si no coinciden, hay un problema (ventas sin registrar, depósitos mal identificados, etc.). El módulo IPV aplica reglas de emparejamiento para ayudar a conciliar.
 
-### 2. Para conciliar con el banco
-Cuando el banco le manda el extracto mensual, los depósitos que aparecen deben coincidir con las ventas que usted registró. Si no coinciden, hay un problema (ventas sin registrar, depósitos mal identificados, etc.). El módulo IPV hace esta conciliación **automáticamente** con 9 reglas diferentes.
-
-### 3. Para reportes fiscales
-En muchos países, las autoridades fiscales piden reportes de variación de precios. El IPV de CostPro genera estos reportes en el formato que piden.
-
-### 4. Para auditoría interna
+### 2. Para auditoría interna
 Si un día detecta que sus ingresos no cuadran con lo que debería, el IPV le permite rastrear dónde está la diferencia: ¿una venta sin registrar? ¿un depósito no identificado? ¿un error de cálculo?
 
-## Las 9 reglas de matching (emparejamiento)
+## Las reglas de matching (emparejamiento)
 
-El módulo IPV usa 9 reglas diferentes para intentar emparejar automáticamente las transacciones bancarias con las ventas registradas:
+El motor del IPV aplica reglas para intentar emparejar automáticamente las transacciones bancarias con productos del catálogo (por código y precio). Las reglas implementadas hoy:
 
-| # | Regla | Qué hace |
-|---|-------|----------|
-| 1 | **HARD_REF** | Empareja por número de referencia exacto (ej: venta V-2024-0315-001 → depósito con referencia "V-2024-0315-001"). |
-| 2 | **EXACT_SUM** | Empareja cuando una suma de ventas coincide con un depósito (ej: 3 ventas de 100, 200 y 300 → un depósito de 600). |
-| 3 | **TOLERANCE** | Empareja si la diferencia es menor a una tolerancia configurable (ej: ±5 pesos). |
-| 4 | **CASH_FILL** | Empareja depósitos en efectivo con ventas en efectivo del mismo día. |
-| 5 | **PRICE_FLEX** | Empareja si los montos coinciden dentro de un rango de precio flexible (para clientes que pagan con descuentos). |
-| 6 | **WILDCARDS** | Usa patrones con comodines en las descripciones bancarias. |
-| 7 | **GOAL_WITH_TOLERANCE** | Busca combinaciones de ventas que sumen un monto específico, dentro de una tolerancia. |
-| 8 | **STOCK_LIMIT** | Verifica que el stock vendido concuerde con el stock que salió de inventario. |
-| 9 | **AUTO_SUPPLY** | Empareja depósitos automáticos (ej: pago de servicios recurrentes). |
+| Regla | Qué hace |
+|-------|----------|
+| **HARD_REF** | Busca el código de producto en la referencia/observación del movimiento bancario. |
+| **EXACT_SUM** | Empareja cuando un conjunto de productos suma exactamente el monto del movimiento. |
+| **TOLERANCE** | Empareja si la diferencia es menor a una tolerancia configurable (ej: ±5 pesos). |
+| **CASH_FILL** | Asigna un producto cuyo precio cubra el remanente del movimiento («Inyección de Efectivo»). |
+| **WILDCARDS** | Usa patrones con comodines en las descripciones bancarias. |
+| **AUTO_SUPPLY** | Asigna productos para agotar un sobrepago, priorizando stock bajo («Auto-Suplencia»). |
+| **STOCK_LIMIT** | Limita la cantidad asignada al stock disponible. |
 
-> 💡 **Para personas mayores**: No necesita entender estas 9 reglas en detalle. El sistema las aplica automáticamente. Solo sepa que existen y que el sistema hace el trabajo duro por usted.
+Otras reglas del diseño (GOAL_WITH_TOLERANCE, PRICE_FLEX) aún no están activas en el motor.
+
+> 💡 **Para personas mayores**: No necesita entender estas reglas en detalle. El sistema las aplica automáticamente. Solo sepa que existen y que es un módulo experimental.
 
 ## El flujo de trabajo típico del IPV
 
@@ -82,41 +79,20 @@ El módulo IPV usa 9 reglas diferentes para intentar emparejar automáticamente 
 
 ## ¿Quién usa el IPV?
 
-No todos los usuarios necesitan el IPV. Es un módulo **avanzado**, pensado para:
-
-- **Contadores**: para cerrar el mes y generar reportes.
-- **Administradores**: para auditar y tomar decisiones.
-- **Auditores externos**: para verificar la consistencia de los datos.
-
-Los cajeros y encargados normalmente no lo usan.
+Es un módulo **experimental restringido a administradores** (sección EN DESARROLLO). Está pensado para explorar la conciliación bancaria; no forma parte de la operación diaria de cajeros, encargados ni otros roles.
 
 ## ¿El IPV es obligatorio?
 
-No. Es un módulo opcional. Puede operar CostPro sin usarlo. Pero si su negocio:
-
-- Tiene muchas ventas por transferencia o tarjeta.
-- Necesita reportes fiscales detallados.
-- Quiere detectar fraudes o errores bancarios.
-- Tiene más de 100 transacciones bancarias al mes.
-
-→ Entonces el IPV le va a ahorrar muchas horas de trabajo manual.
+No. Es un módulo experimental y opcional. Puede operar CostPro sin usarlo.
 
 ## Preguntas frecuentes
 
 **¿El IPV es lo mismo que el IPC (Índice de Precios al Consumidor)?**
-- No exactamente. El IPC lo calcula el gobierno con una canasta representativa nacional.
-- El IPV en CostPro es **su propio índice**, basado en sus productos y sus ventas.
-- Pero puede compararse con el IPC oficial para ver si su negocio está alineado con la economía general.
+- No. El IPC lo calcula el gobierno con una canasta representativa nacional.
+- El módulo IPV de CostPro no calcula un índice de precios: es una herramienta de conciliación de transferencias bancarias (en desarrollo experimental).
 
 **¿Cada cuánto debo hacer conciliación?**
-- Mensualmente, al cierre del mes.
-- Empresas grandes: semanalmente.
-- Empresas pequeñas con pocas transacciones: mensual es suficiente.
-
-**¿Qué pasa si no concilio un mes?**
-- No pasa nada grave. Pero se acumula el trabajo para el mes siguiente.
-- Las transacciones no conciliadas se arrastran.
-- Recomendado: no deje pasar más de 2 meses sin conciliar.
+- El módulo está en desarrollo: no forma parte hoy del cierre mensual obligatorio del producto.
 
 **¿El IPV reemplaza al contador?**
 - No. Reemplaza el trabajo manual de conciliación, pero el contador sigue siendo necesario para:
@@ -126,16 +102,11 @@ No. Es un módulo opcional. Puede operar CostPro sin usarlo. Pero si su negocio:
   - Presentar las declaraciones fiscales.
 
 **¿Qué es el MVT?**
-- Movement Transaction. Formato estándar de exportación contable.
-- Es un archivo que contiene todos los movimientos del período en formato estructurado.
-- El contador lo importa en su software contable (QuickBooks, SAP, etc.).
+- Formato de exportación de movimientos del módulo experimental, pensado para entregar al contador.
 
 **¿El IPV trabaja con cualquier banco?**
-- Acepta CSV genérico (cualquier banco que exporte en CSV).
-- Tiene formatos específicos para BANDEC (Cuba) y otros bancos cubanos.
-- Para otros bancos, configure el mapeo de columnas una vez y queda guardado.
+- Acepta CSV genérico y tiene un parser específico para BANDEC (Cuba). El soporte de otros bancos depende del mapeo de columnas del módulo experimental.
 
 **¿Es difícil aprender a usar el IPV?**
-- Sí, tiene curva de aprendizaje. Es el módulo más complejo de CostPro.
-- Pero está documentado: lea *Cómo usar el IPV* en la sección de How-To.
-- Y el asistente IA Darian puede ayudarle paso a paso.
+- Es el módulo más complejo de CostPro y está **en desarrollo**: úselo para explorar, no como proceso crítico del negocio.
+- Para el informe activo de ingresos, vea *Cómo consultar el IPV — Ingresos por Ventas* en la sección Cómo Hacer.

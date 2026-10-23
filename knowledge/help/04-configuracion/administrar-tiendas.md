@@ -38,27 +38,24 @@ Las tiendas representan sucursales físicas o puntos de venta dentro de tu organ
 
 ### Pasos para Crear una Tienda
 
-1. Navega a **CONFIGURACIÓN > Administrativa > Tiendas**
-2. Haz clic en **Agregar Tienda**
-3. Completa los campos del formulario:
+1. Navega a **OPERACIÓN > Gestión de Tiendas**
+2. Haz clic en **Nueva Sucursal**
+3. En el modal **Nueva Tienda**, completa los dos campos iniciales:
 
 | Campo | Descripción | Obligatorio |
 |-------|-------------|:-----------:|
-| **Nombre** | Nombre comercial de la tienda (ej. `Sucursal Centro`) | ✅ |
-| **Dirección** | Dirección física completa | ✅ |
-| **Teléfono** | Número de contacto de la tienda | ✅ |
-| **Logo** | Imagen corporativa de la sucursal | ❌ |
-| **Email** | Correo de contacto de la tienda | ❌ |
-| **Horario** | Horario de atención | ❌ |
+| **Nombre de la Tienda** | Nombre comercial de la tienda (ej. `Sucursal Centro`) | ✅ |
+| **URL pública (slug)** | Identificador de la tienda para la vitrina pública | ✅ |
 
-4. Haz clic en **Guardar**
+4. Haz clic en **Crear Tienda**
+5. Completa después los detalles desde **Configuración de Tienda**: nombre, **Dirección**, **Teléfono**, **Email** y **Logo**
 
-> **💡 Tip:** Puedes asignar un logo diferente para cada tienda. Esto se reflejará en los recibos y reportes generados desde esa sucursal.
+> **💡 Tip:** Puedes asignar un logo diferente para cada tienda desde su configuración. El nombre de la tienda aparece en los recibos emitidos desde esa sucursal.
 
 ### Editar una Tienda Existente
 
-1. Navega a **CONFIGURACIÓN > Administrativa > Tiendas**
-2. Selecciona la tienda de la lista
+1. Navega a **OPERACIÓN > Gestión de Tiendas**
+2. Selecciona la tienda de la lista y abre su **Configuración de Tienda**
 3. Modifica los campos necesarios
 4. Haz clic en **Guardar Cambios**
 
@@ -68,15 +65,15 @@ Las tiendas representan sucursales físicas o puntos de venta dentro de tu organ
 
 ### Crear un Nuevo Usuario
 
-1. Navega a **CONFIGURACIÓN > Administrativa > Usuarios**
-2. Haz clic en **Crear Usuario**
+1. Navega a **SISTEMA > Usuarios**
+2. Haz clic en **Nuevo Usuario**
 3. Completa los datos del usuario:
 
 | Campo | Descripción |
 |-------|-------------|
 | **Nombre completo** | Nombre y apellido del usuario |
 | **Correo electrónico** | Email que usará para iniciar sesión |
-| **Contraseña** | Contraseña temporal (el usuario deberá cambiarla al primer acceso) |
+| **Asignar Contraseña (Opcional)** | Si la dejas vacía, el usuario define su contraseña con el correo de recuperación |
 | **Rol** | Rol asignado (ver sección de Roles abajo) |
 | **Tiendas asignadas** | Sucursales a las que tiene acceso |
 
@@ -90,15 +87,14 @@ Las tiendas representan sucursales físicas o puntos de venta dentro de tu organ
 |--------|-------------|--------------|
 | **Editar perfil** | Modificar nombre, email, rol | Seleccionar usuario > Editar |
 | **Habilitar/Deshabilitar** | Activar o desactivar cuenta sin eliminarla | Toggle en la columna de estado |
-| **Restablecer contraseña** | Enviar nueva contraseña temporal | Botón de reset junto al usuario |
-| **Eliminar** | Eliminar permanentemente la cuenta | Botón de eliminar (solo si no tiene transacciones) |
+| **Restablecer contraseña** | Enviar enlace de recuperación o definir una nueva | Menú del usuario > **Enviar correo de recuperación** / **Cambiar contraseña** |
+| **Eliminar** | Retirar la cuenta del acceso activo | Botón de eliminar (solo si no tiene membresías activas en tiendas) |
 
 ### Restablecer Contraseña
 
-1. En la lista de usuarios, haz clic en el icono de **restablecer contraseña** junto al usuario
-2. El sistema genera una contraseña temporal
-3. La nueva contraseña se envía al correo del usuario
-4. Al iniciar sesión por primera vez, el usuario deberá cambiarla
+1. En la lista de usuarios, abre el menú de acciones del usuario
+2. Usa **Enviar correo de recuperación**: el sistema envía al correo del usuario un enlace para que defina su propia contraseña
+3. También puedes usar **Cambiar contraseña** para definirla directamente como administrador
 
 > **⚠️ Nota:** Los usuarios deshabilitados no pueden iniciar sesión, pero sus datos históricos (ventas, movimientos) se conservan en el sistema.
 
@@ -114,9 +110,10 @@ Los roles definen los permisos y funcionalidades a las que un usuario tiene acce
 |-----|-------------|---------------------|
 | **admin** | Administrador total del sistema | Acceso completo a todos los módulos, configuración, usuarios, tiendas, reportes, costos |
 | **manager** | Gerente de tienda | Gestión de la tienda asignada: ventas, inventario, cierres de caja, reportes locales, usuarios de su tienda |
-| **encargado** | Encargado de operaciones | Ventas, consulta de inventario, cierres de caja, reportes básicos |
+| **encargado** | Encargado de operaciones | Ventas, consulta de inventario, cierres de caja, Costo de su tienda |
 | **clerk** | Cajero / Vendedor | Registro de ventas, consulta de precios, emisión de recibos |
 | **warehouse** | Responsable de almacén | Gestión de inventario, entradas, salidas, ajustes de stock |
+| **costo** | Especialista de costos | Fichas de costo y operaciones del dominio Costo |
 | **usuario** | Usuario básico | Consulta limitada de información y reportes de lectura |
 
 ### Detalle de Permisos por Rol
@@ -149,14 +146,14 @@ manager
 ├── ✅ INVENTARIO de su tienda
 ├── ✅ CIERRES DE CAJA de su tienda
 ├── ✅ REPORTES de su tienda
-└── ❌ CONFIGURACIÓN, COSTOS, IPV global
+└── ❌ CONFIGURACIÓN SISTEMA, Usuarios y Roles
 
 encargado
 ├── ✅ REGISTRO DE VENTAS
 ├── ✅ CONSULTA DE INVENTARIO (lectura)
 ├── ✅ CIERRES DE CAJA
-├── ✅ REPORTES BÁSICOS
-└── ❌ CONFIGURACIÓN, COSTOS, IPV
+├── ✅ COSTO de su tienda
+└── ❌ CONFIGURACIÓN SISTEMA, Usuarios y Roles
 
 clerk
 ├── ✅ REGISTRO DE VENTAS
@@ -177,7 +174,7 @@ usuario
 
 ### Crear y Editar Roles
 
-1. Navega a **CONFIGURACIÓN > Administrativa > Roles**
+1. Navega a **SISTEMA > Roles**
 2. Haz clic en **Crear Rol** o selecciona uno existente para editar
 3. Configura los permisos marcando/desmarcando las casillas por módulo
 4. Haz clic en **Guardar**
@@ -209,7 +206,7 @@ Cada tienda mantiene sus datos **completamente aislados**:
 - **Reportes:** Métricas exclusivas de cada sucursal
 - **Catálogos:** Productos disponibles pueden diferir por tienda
 
-> **💡 Tip:** Si necesitas ver datos consolidados de todas las tiendas, usa los **reportes globales** disponibles únicamente para roles `admin`.
+> **💡 Tip:** Si necesitas ver datos consolidados de varias tiendas, usa el tablero consolidado del hub **Gestión de Tiendas** (accesible a admin, manager y encargado) o el **Generador de Reportes** (roles admin y manager).
 
 ---
 
@@ -221,7 +218,7 @@ Un usuario habilitado puede iniciar sesión y realizar todas las operaciones per
 
 ### Deshabilitar un Usuario
 
-1. Navega a **CONFIGURACIÓN > Administrativa > Usuarios**
+1. Navega a **SISTEMA > Usuarios**
 2. Busca el usuario en la lista
 3. Haz clic en el **toggle de estado** para deshabilitarlo
 4. El usuario no podrá iniciar sesión hasta que se vuelva a habilitar
@@ -234,12 +231,12 @@ Un usuario habilitado puede iniciar sesión y realizar todas las operaciones per
 
 ### Restablecer Contraseña
 
-1. Busca el usuario en la lista de **CONFIGURACIÓN > Administrativa > Usuarios**
-2. Haz clic en el icono de **restablecer contraseña**
+1. Busca el usuario en la lista de **SISTEMA > Usuarios**
+2. Abre el menú de acciones y usa **Enviar correo de recuperación**
 3. Confirma la acción
-4. El sistema envía una nueva contraseña temporal al correo del usuario
+4. El usuario recibe un enlace por correo para definir su propia contraseña; como alternativa, usa **Cambiar contraseña** para definirla directamente
 
-> **⚠️ Importante:** No se puede eliminar un usuario que tiene transacciones registradas. En su lugar, **deshabilita** la cuenta.
+> **⚠️ Importante:** No se puede eliminar un usuario con membresías activas en tiendas. Retira primero sus membresías o, si prefieres conservar su historial, **deshabilita** la cuenta.
 
 ---
 
@@ -267,7 +264,7 @@ Un usuario habilitado puede iniciar sesión y realizar todas las operaciones per
 
 - Cada tienda gestiona sus propios cierres de caja
 - Los cierres incluyen: ventas del período, métodos de pago, diferencia de caja
-- Solo los roles `admin` y `manager` pueden ejecutar cierres
+- Los roles `admin`, `manager` y `encargado` pueden ejecutar cierres
 
 ---
 
@@ -275,17 +272,17 @@ Un usuario habilitado puede iniciar sesión y realizar todas las operaciones per
 
 ```
 1. Crear Tiendas
-   └── CONFIGURACIÓN > Administrativa > Tiendas
+   └── OPERACIÓN > Gestión de Tiendas
 
 2. Crear Roles
-   └── CONFIGURACIÓN > Administrativa > Roles
+   └── SISTEMA > Roles
 
 3. Crear Usuarios
-   └── CONFIGURACIÓN > Administrativa > Usuarios
+   └── SISTEMA > Usuarios
    └── Asignar rol + tiendas
 
 4. Configurar Inventario por Tienda
-   └── INVENTARIO > Productos (en cada tienda)
+   └── OPERACIÓN > Almacén > Inventario (en cada tienda)
 
 5. Operar
    └── Cada usuario selecciona su tienda activa

@@ -22,8 +22,10 @@
 ## Lo que NO cambia
 
 - Su usuario y contraseña siguen siendo los mismos.
-- Los productos del catálogo maestro se comparten (aunque el stock es por tienda).
-- Los clientes y proveedores son los mismos en todas las tiendas.
+- La configuración global (tema visual, idioma, etc.) es la misma.
+- Las categorías de productos son las mismas en todas las tiendas.
+
+> ℹ️ El catálogo de productos, los clientes y el stock son **por tienda**: cada tienda tiene los suyos. Lo compartido entre tiendas se mueve con transferencias.
 
 ## Preguntas frecuentes
 
