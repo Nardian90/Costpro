@@ -69,6 +69,13 @@ async function main() {
   });
 
   // Attach Socket.io
+  // CP-INFRA-002 (2026-10-23): desconexión reversible — el Socket.IO de WhatsApp
+  // no se adjunta mientras MESSAGING_REALTIME_ENABLED no sea "true".
+  // Reactivación: docs/CP-INFRA-002-REACTIVACION.md.
+  const messagingRealtimeEnabled = process.env.MESSAGING_REALTIME_ENABLED === 'true';
+  if (!messagingRealtimeEnabled) {
+    console.log('[server] Socket.io de WhatsApp NO adjuntado (CP-INFRA-002: integraciones desconectadas).');
+  } else {
   try {
     // Dynamic import to avoid bundling issues
     const realtimeModule = await import('./src/lib/whatsapp/realtime-server');
@@ -77,6 +84,7 @@ async function main() {
   } catch (err: any) {
     console.error('[server] Failed to attach Socket.io:', err.message);
     // Don't crash — app still works without realtime (polling fallback)
+  }
   }
 
   httpServer.listen(PORT, HOSTNAME, () => {

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { publishProductToTelegram } from '@/lib/telegram/publish';
 import { verifyCronAuthorization } from '@/lib/cron-auth';
 import { logger } from '@/lib/logger';
+import { TELEGRAM_AUTOPUBLISH_ENABLED } from '@/lib/messaging-flags';
 
 /**
  * GET /api/cron/telegram-auto-publish
@@ -37,6 +38,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       { error: 'Unauthorized', hint: 'Incluye Authorization: Bearer <CRON_SECRET>, o usa x-vercel-signature JWT (con VERCEL_PROJECT_ID configurado)' },
       { status: 401 },
+    );
+  }
+
+  // CP-INFRA-002 (2026-10-23): desconexión reversible — la publicación automática
+  // de Telegram está desactivada. El cron de vercel.json fue retirado en este
+  // mismo commit y los pollers pm2 quedan comentados. Reactivación:
+  // TELEGRAM_AUTOPUBLISH_ENABLED=true (docs/CP-INFRA-002-REACTIVACION.md).
+  if (!TELEGRAM_AUTOPUBLISH_ENABLED) {
+    logger.info('DATABASE', 'CRON_SKIPPED_DISABLED', { module: 'telegram' });
+    return NextResponse.json(
+      { status: 'disabled', reason: 'Telegram auto-publish desconectado (CP-INFRA-002). Reactivar con TELEGRAM_AUTOPUBLISH_ENABLED=true.' },
+      { status: 200 },
     );
   }
 

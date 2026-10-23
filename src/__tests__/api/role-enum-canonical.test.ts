@@ -42,13 +42,13 @@ describe('CP-SEC-015 — enumeración canónica de roles', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('2 · las rutas pick3 reconocen al superadmin con el valor canónico', () => {
-    const advisor = readFileSync(
-      join(SRC_ROOT, 'app/api/pick3/advisor/route.ts'), 'utf8');
-    const subscription = readFileSync(
-      join(SRC_ROOT, 'app/api/pick3/subscription/route.ts'), 'utf8');
-    expect(advisor).toContain("session.user.role === 'superadmin'");
-    expect(subscription).toContain("session.user.role !== 'superadmin'");
+  it('2 · el enum canónico superadmin es el único válido en la BD (CP-INFRA-002: rutas pick3 retiradas)', async () => {
+    // Las rutas /api/pick3/* que usaban el valor canónico fueron retiradas del
+    // producto activo; el invariante de BD (valor 'superadmin', nunca
+    // 'super_admin') sigue verificado por el schema en el test 3.
+    const { managedCreateUserSchema } = await import('@/validation/api-schemas');
+    expect(managedCreateUserSchema.shape.p_role.safeParse('superadmin').success).toBe(true);
+    expect(managedCreateUserSchema.shape.p_role.safeParse('super_admin').success).toBe(false);
   });
 
   it('3 · el schema de creación gestionada usa el mismo enum canónico', async () => {
