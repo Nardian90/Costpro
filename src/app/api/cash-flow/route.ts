@@ -72,11 +72,16 @@ function mapRpcError(msg: string): NextResponse | null {
   const map: Array<[string, number, string]> = [
     ['ERR_UNAUTHORIZED', 403, 'No autorizado'],
     ['ERR_FORBIDDEN_ROLE', 403, 'No tienes permisos para registrar ingresos o egresos en esta tienda'],
-    ['ERR_NO_OPEN_SHIFT', 409, 'La caja no tiene un turno abierto. Abre el turno en Caja antes de registrar movimientos.'],
+    // MISIÓN CAJA v2.24.0 (D4): la entrega de efectivo exige rol de autoridad.
+    ['ERR_DELIVERY_ROLE', 403, 'La entrega de efectivo requiere rol admin, manager o encargado (clerk no puede entregar).'],
+    ['ERR_COUNTERPARTY_REQUIRED', 422, 'Identifica a la persona que recibe el efectivo (contraparte obligatoria).'],
+    ['ERR_NO_OPEN_SHIFT', 409, 'La caja no tiene un turno abierto. Abre el turno en Caja antes de registrar movimientos (la entrega de efectivo es la única operación autorizada sin turno).'],
     ['ERR_DATE_OUTSIDE_SHIFT', 422, 'La fecha operativa debe caer dentro del turno abierto.'],
     ['ERR_BACKDATED_DOCUMENT', 422, 'La fecha operativa es anterior al mínimo permitido (6 meses).'],
     ['ERR_FUTURE_DATED_DOCUMENT', 422, 'La fecha operativa no puede ser futura.'],
     ['ERR_INSUFFICIENT_CASH', 422, 'El egreso supera el efectivo disponible en caja.'],
+    // MISIÓN CAJA v2.24.0: la entrega valida POR MONEDA contra el libro físico.
+    ['ERR_INSUFFICIENT_CURRENCY', 422, 'La entrega supera el saldo físico disponible de esa moneda en caja.'],
     ['ERR_FUND_INSUFFICIENT', 422, 'La devolución supera el fondo de cambio vigente.'],
     ['ERR_EXCHANGE_RATE_UNAVAILABLE', 409, 'No hay tasa USD disponible. Configura la tasa de la tienda antes de operar en USD.'],
     ['ERR_RATE_STALE', 409, 'La tasa de cambio disponible está desactualizada (más de 45 días).'],

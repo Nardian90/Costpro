@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Plus, Search, RotateCcw, Loader2, FileText, X, Undo2, Copy } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
@@ -172,6 +172,20 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
   const [productSearch, setProductSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  // REVISIÓN FINAL v2.24.1: clave de idempotencia estable POR APERTURA del
+  // modal — reintentos del mismo envío (doble clic, reintento tras error de
+  // red) reutilizan la clave; el RPC v2.24.1 compara hash del payload.
+  const [idempotencyKey] = useState(() => `dev-${crypto.randomUUID()}`);
+  // MISIÓN CAJA v2.24.0 (§8-C): el RPC create_devolution_v2 EXIGE la venta
+  // original (ERR_DEVOLUTION_NO_ORIGINAL) — el modal anterior NO la enviaba y
+  // TODA devolución manual fallaba. Además: método del reembolso y su MONEDA
+  // real (v2.24: p_refund_currency — el reembolso en USD registra USD nativo
+  // con tasa servidor; ya no se hardcodea CUP×1.0).
+  const [saleQuery, setSaleQuery] = useState('');
+  const [saleResults, setSaleResults] = useState<any[]>([]);
+  const [originalSale, setOriginalSale] = useState<any | null>(null);
+  const [refundMethod, setRefundMethod] = useState<'cash' | 'transfer' | 'zelle' | 'store_credit'>('cash');
+  const [refundCurrency, setRefundCurrency] = useState<'CUP' | 'USD'>('CUP');
   // MISIÓN FECHAS DE TRABAJO: fecha operativa de la devolución. Default HOY
   // (día de negocio Habana — no la fecha UTC del navegador) o la preferencia
   // de trabajo del usuario para este tipo si es válida.
@@ -179,6 +193,27 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
   const [devolutionDate, setDevolutionDate] = useState(todayBd);
   const [dateTouched, setDateTouched] = useState(false);
   useApplyWorkDateDefault('devolution', !dateTouched && devolutionDate === todayBd, (d) => setDevolutionDate(d));
+
+  async function searchSales(q: string) {
+    setSaleQuery(q);
+    if (q.trim().length < 4) { setSaleResults([]); return; }
+    try {
+      const { supabase } = await import('@/lib/supabaseClient');
+      let query = supabase
+        .from('transactions')
+        .select('id, invoice_number, total_amount, customer_name, payment_method, sale_currency, created_at')
+        .eq('store_id', storeId)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(8);
+      const isUuid = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(q.trim());
+      if (isUuid) query = query.eq('id', q.trim());
+      else query = query.ilike('invoice_number', `%${q.trim()}%`);
+      const { data, error } = await query;
+      if (error) throw error;
+      setSaleResults(data || []);
+    } catch { setSaleResults([]); }
+  }
 
   async function searchProducts(q: string) {
     setProductSearch(q);
@@ -202,6 +237,9 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
 
   async function handleSubmit() {
     if (!reason.trim() || items.length === 0) { toast.error('Motivo y al menos 1 producto requeridos'); return; }
+    // MISIÓN CAJA v2.24.0 (§8-C): la venta original es OBLIGATORIA (el RPC
+    // rechaza sin ella — devolución comercial, no vuelto de cobro).
+    if (!originalSale?.id) { toast.error('Vincula la venta original de la devolución'); return; }
     setSubmitting(true);
     try {
       await apiFetch('/api/devolutions', {
@@ -210,6 +248,12 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
           store_id: storeId,
           reason,
           items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price })),
+          // Venta original obligatoria + método y moneda real del reembolso
+          original_transaction_id: originalSale.id,
+          payment_method: refundMethod,
+          refund_currency: refundCurrency,
+          // REVISIÓN FINAL v2.24.1: idempotencia cooperativa (estable por apertura)
+          idempotency_key: idempotencyKey,
           // MISIÓN FECHAS DE TRABAJO: convención canónica — hoy → undefined
           // (el servidor estampa NOW()); ≠ hoy → ISO mediodía. La ruta
           // revalida (checkNotFutureOperationDate) y el RPC aplica el gate.
@@ -234,6 +278,62 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
           <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Motivo</label>
           <input value={reason} onChange={e => setReason(e.target.value)} placeholder="Ej: Producto defectuoso"
             className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm', touch)} />
+        </div>
+
+        {/* MISIÓN CAJA v2.24.0 (§8-C): venta original OBLIGATORIA (trazabilidad
+            venta→devolución; el RPC la exige y topea lo ya devuelto DF-07) */}
+        <div>
+          <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Venta original (obligatoria)</label>
+          {originalSale ? (
+            <div className="mt-1 flex items-center justify-between gap-2 p-2 rounded-lg border border-success/30 bg-success/5">
+              <div className="min-w-0 text-xs">
+                <p className="font-black truncate">{originalSale.invoice_number || originalSale.id.slice(0, 8)} · {formatCurrency(originalSale.total_amount)}</p>
+                <p className="text-muted-foreground truncate">{originalSale.customer_name || 'Cliente eventual'} · {formatDate(originalSale.created_at)}</p>
+              </div>
+              <button type="button" onClick={() => setOriginalSale(null)} className="p-1 rounded hover:bg-destructive/10 text-destructive shrink-0" aria-label="Quitar venta original">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <div className="relative mt-1">
+              <input value={saleQuery} onChange={e => searchSales(e.target.value)} placeholder="Nº de factura o ID de la venta…"
+                className={cn('w-full px-3 rounded-xl border border-border bg-background text-sm', touch)} />
+              {saleResults.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 rounded-xl border border-border bg-card shadow-lg max-h-44 overflow-y-auto">
+                  {saleResults.map(s => (
+                    <button key={s.id} type="button" onClick={() => { setOriginalSale(s); setSaleResults([]); setSaleQuery(''); }}
+                      className="w-full text-left p-2 hover:bg-muted text-xs border-b border-border/30 last:border-0">
+                      <span className="font-black">{s.invoice_number || s.id.slice(0, 8)}</span>
+                      <span className="ml-2">{formatCurrency(s.total_amount)}</span>
+                      <span className="text-muted-foreground ml-2">{s.customer_name || 'Cliente eventual'} · {formatDate(s.created_at)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* MISIÓN CAJA v2.24.0: método + moneda REAL del reembolso (§8-B/C) */}
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Reembolso por</label>
+            <select value={refundMethod} onChange={e => setRefundMethod(e.target.value as typeof refundMethod)}
+              className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm font-bold', touch)}>
+              <option value="cash">Efectivo</option>
+              <option value="transfer">Transferencia</option>
+              <option value="zelle">Transf. Exterior</option>
+              <option value="store_credit">Crédito de tienda</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Moneda del reembolso</label>
+            <select value={refundCurrency} onChange={e => setRefundCurrency(e.target.value as 'CUP' | 'USD')} disabled={refundMethod !== 'cash'}
+              className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm font-bold disabled:opacity-50', touch)}>
+              <option value="CUP">CUP</option>
+              <option value="USD">USD (tasa del servidor)</option>
+            </select>
+          </div>
         </div>
 
         {/* MISIÓN FECHAS DE TRABAJO: fecha operativa visible y seleccionable.
@@ -290,7 +390,7 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
           </div>
         )}
 
-        <button onClick={handleSubmit} disabled={submitting || !reason.trim() || items.length === 0}
+        <button onClick={handleSubmit} disabled={submitting || !reason.trim() || items.length === 0 || !originalSale}
           className={cn('w-full rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2', touch)}>
           {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Creando...</> : <><RotateCcw className="w-4 h-4" /> Crear Devolución</>}
         </button>

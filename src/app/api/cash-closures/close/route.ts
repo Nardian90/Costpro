@@ -11,6 +11,9 @@ const closeSchema = z.object({
   closure_id: z.string().regex(uuidRegex),
   declared_cash: z.number().min(0),
   declared_vouchers: z.number().min(0),
+  // MISIÓN CAJA v2.24.0 (D8): efectivo USD contado al cerrar (lado físico
+  // USD del arqueo). DEFAULT 0 — compatibilidad con cierres que no lo cuenten.
+  declared_cash_usd: z.number().min(0).default(0),
   notes: z.string().max(1000).optional(),
 });
 
@@ -30,6 +33,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_closure_id: parsed.data.closure_id,
     p_declared_cash: parsed.data.declared_cash,
     p_declared_vouchers: parsed.data.declared_vouchers,
+    // MISIÓN CAJA v2.24.0 (D8): parámetro posicional 4 del RPC vivo
+    // (p_declared_cash_usd) — el arqueo USD se registra sin autoajuste.
+    p_declared_cash_usd: parsed.data.declared_cash_usd ?? 0,
     p_notes: parsed.data.notes || null,
     p_user_id: session.user.id,
   });

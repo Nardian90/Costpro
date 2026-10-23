@@ -33,7 +33,7 @@ import { Button } from '@/components/ui/button';
 import { OperationDatePicker, useOperationDateValidation } from '@/components/ui/OperationDatePicker';
 import {
   CASH_FLOW_CONCEPTS, conceptLabel, conceptsForType, canLinkRelatedDocument,
-  isFondoConcept, hasValidMonetaryPrecision,
+  isFondoConcept, hasValidMonetaryPrecision, allowedWithoutShift, DELIVERY_AUTH_ROLES,
   COUNTERPARTY_MAX_LENGTH, JUSTIFICATION_MAX_LENGTH, NOTES_MAX_LENGTH,
   type CashFlowDocType,
 } from '@/lib/cash-flow/constants';
@@ -41,6 +41,7 @@ import { useCreateCashFlow, useFondoSourceDocuments } from '@/hooks/api/useCashF
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 import { resolvePosOperationDate } from '@/lib/pos/operation-date';
 import { useActiveShift } from '@/hooks/api/useActiveShift';
+import { useAuthStore } from '@/store';
 import { formatCurrency, cn, touch } from '@/lib/utils';
 import type { CashFlowSummary } from '@/types';
 
@@ -53,12 +54,19 @@ interface Props {
   storeName: string | null;
   summary: CashFlowSummary | null;
   onRegistrado?: () => void;
+  /** MISIÓN CAJA v2.24.0 (§9): saldos físicos por moneda (libro) — los trae la vista padre. */
+  saldoFisico?: { CUP: number | null; USD: number | null };
 }
 
-export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary, onRegistrado }: Props) {
+export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary, onRegistrado, saldoFisico = { CUP: null, USD: null } }: Props) {
   const activeShift = useActiveShift(storeId);
   const turnoAbierto = activeShift.data != null;
   const createMutation = useCreateCashFlow();
+  // MISIÓN CAJA v2.24.0 (§9): libro físico por moneda — la ENTREGA valida
+  // contra el saldo físico de la MONEDA del documento (no contra el canónico).
+  // El libro lo consulta la vista padre (fuente única) y llega por props.
+
+  const { user } = useAuthStore();
 
   const [paso, setPaso] = useState<Paso>('editando');
   const [docType, setDocType] = useState<CashFlowDocType>('ingreso');
@@ -74,6 +82,11 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
     document_number: string; cash_after: number; fondo_after: number; amount: number; currency: string;
   } | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // REVISIÓN FINAL v2.24.1: clave de idempotencia estable POR APERTURA del
+  // modal — reintentos del mismo documento reutilizan la clave; el RPC v2.24.1
+  // compara hash del payload (mismo payload ⇒ resultado original benigno;
+  // payload distinto ⇒ ERR_IDEMPOTENCY_KEY_REUSE → 409).
+  const [idempotencyKey, setIdempotencyKey] = useState(() => `cf-${crypto.randomUUID()}`);
 
   const mostrarVinculo = canLinkRelatedDocument(concept);
   const fondoSources = useFondoSourceDocuments(storeId, mostrarVinculo && open);
@@ -81,6 +94,11 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
   // Reset completo al abrir (patrón ValeSalidaCreateModal)
   useEffect(() => {
     if (open) {
+      // REVISIÓN FINAL v2.24.1: el modal queda MONTADO (prop open) — la clave
+      // se regenera en cada apertura para que cada NUEVO documento tenga su
+      // propia identidad; los reintentos DENTRO de la misma apertura la
+      // conservan (replay benigno del RPC v2.24.1).
+      setIdempotencyKey(`cf-${crypto.randomUUID()}`);
       setPaso('editando');
       setDocType('ingreso');
       setConcept('constitucion_fondo');
@@ -106,6 +124,21 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
     }
   }, [docType]);
 
+  // MISIÓN CAJA v2.24.0 (D4): SIN turno abierto, el ÚNICO concepto autorizado
+  // es la ENTREGA de efectivo (egreso, fuera de turno, con rol de autoridad).
+  // La forzosa solo aplica cuando la consulta del turno YA RESOLVIÓ (evita
+  // forzar 'entrega_efectivo' durante el loading inicial del query).
+  const shiftSettled = !activeShift.isLoading && !activeShift.isPending;
+  const sinTurno = shiftSettled && !turnoAbierto;
+  const modoEntregaSinTurno = sinTurno && concept === 'entrega_efectivo';
+  useEffect(() => {
+    if (sinTurno) {
+      setDocType('egreso');
+      setConcept('entrega_efectivo');
+      setRelatedDocumentId('');
+    }
+  }, [sinTurno]);
+
   const amount = Number(amountStr);
   const dateValidation = useOperationDateValidation(movDate, storeId, todayBusinessDay());
 
@@ -115,14 +148,31 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
 
   const errores: Array<string> = useMemo(() => {
     const errs: string[] = [];
-    if (!turnoAbierto) errs.push('La caja no tiene un turno abierto: ábrelo en Caja antes de registrar.');
+    // MISIÓN CAJA v2.24.0 (D4): sin turno SOLO se permite la entrega de
+    // efectivo (fuera de turno, rol de autoridad). Los demás conceptos exigen
+    // turno abierto (espejo del RPC — la DB es la última barrera).
+    if (sinTurno && !modoEntregaSinTurno) errs.push('La caja no tiene un turno abierto: solo la ENTREGA de efectivo puede registrarse sin turno.');
+    if (modoEntregaSinTurno && !user?.roles?.some(r => (DELIVERY_AUTH_ROLES as readonly string[]).includes(r))) {
+      errs.push('La entrega de efectivo requiere rol admin, manager o encargado.');
+    }
     if (!amountStr) errs.push('Introduce el importe.');
     else if (!Number.isFinite(amount) || amount <= 0) errs.push('El importe debe ser mayor que cero.');
     else if (!hasValidMonetaryPrecision(amount)) errs.push('El importe admite máximo 2 decimales.');
     if (!justification.trim()) errs.push('La justificación es obligatoria.');
     if (justification.trim().length > JUSTIFICATION_MAX_LENGTH) errs.push(`La justificación no puede exceder ${JUSTIFICATION_MAX_LENGTH} caracteres.`);
+    // MISIÓN CAJA v2.24.0 (D4): contraparte OBLIGATORIA en la entrega (quien recibe).
+    if (concept === 'entrega_efectivo' && !counterparty.trim()) {
+      errs.push('Identifica a la persona que RECIBE el efectivo (contraparte obligatoria).');
+    }
     if (!dateValidation.valid) errs.push(dateValidation.error || 'La fecha operativa no es válida.');
-    if (docType === 'egreso' && saldoCaja != null && Number.isFinite(amount) && amount > 0 && currency === 'CUP' && amount > saldoCaja + 0.005) {
+    if (docType === 'egreso' && concept === 'entrega_efectivo') {
+      // Validación POR MONEDA contra el libro físico (misma regla del RPC:
+      // ERR_INSUFFICIENT_CURRENCY — get_cash_currency_summary net).
+      const saldoMoneda = saldoFisico[currency];
+      if (saldoMoneda != null && Number.isFinite(amount) && amount > 0 && amount > saldoMoneda + 0.005) {
+        errs.push(`La entrega supera el saldo físico ${currency} en caja (${formatCurrency(saldoMoneda, currency)}).`);
+      }
+    } else if (docType === 'egreso' && saldoCaja != null && Number.isFinite(amount) && amount > 0 && currency === 'CUP' && amount > saldoCaja + 0.005) {
       errs.push(`El egreso supera el efectivo disponible (${formatCurrency(saldoCaja)}).`);
     }
     if (docType === 'egreso' && isFondoConcept(concept) && fondoVigente != null
@@ -130,21 +180,28 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
       errs.push(`La devolución supera el fondo de cambio vigente (${formatCurrency(fondoVigente)}).`);
     }
     return errs;
-  }, [turnoAbierto, amountStr, amount, justification, dateValidation, docType, saldoCaja, fondoVigente, concept, currency]);
+  }, [sinTurno, modoEntregaSinTurno, user?.roles, amountStr, amount, justification, counterparty, dateValidation, docType, saldoCaja, fondoVigente, concept, currency, saldoFisico]);
 
   const advertencias: Array<string> = useMemo(() => {
     const warns: string[] = [];
+    // MISIÓN CAJA v2.24.0 (D4): entrega FUERA de turno — identificada como tal.
+    if (modoEntregaSinTurno) {
+      warns.push('Operación FUERA DE TURNO: se registrará identificada como entrega sin turno abierto (sin turno artificial), con tu usuario, la fecha efectiva y el receptor documentados. La DB valida el rol y el saldo físico de la moneda.');
+    }
+    if (concept === 'entrega_efectivo' && turnoAbierto) {
+      warns.push('Entrega DENTRO del turno vigente: entrará en la ventana del arqueo actual y reducirá el efectivo esperado de la moneda entregada.');
+    }
     if (concept === 'constitucion_fondo' && (summary?.opening_balance ?? 0) > 0) {
       warns.push(`La apertura del turno ya declaró un fondo inicial de ${formatCurrency(summary?.opening_balance ?? 0)}. Registra la constitución SOLO si entra dinero NUEVO (reposición) — nunca dos veces el mismo billete.`);
     }
     if (currency === 'USD') {
       warns.push('El equivalente en CUP lo resuelve el servidor con la tasa vigente de la tienda (jerarquía tienda → BCC → elToque).');
     }
-    if (docType === 'egreso' && !isFondoConcept(concept)) {
+    if (docType === 'egreso' && !isFondoConcept(concept) && concept !== 'entrega_efectivo') {
       warns.push('Los gastos de proveedores, servicios y comisiones tienen su propio módulo (Cuentas por Pagar) — usa «Otro egreso» solo para salidas autorizadas sin módulo propio.');
     }
     return warns;
-  }, [concept, summary?.opening_balance, currency, docType]);
+  }, [modoEntregaSinTurno, concept, summary?.opening_balance, currency, docType, turnoAbierto]);
 
   const validoParaConfirmar = errores.length === 0;
 
@@ -157,6 +214,8 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
         concept,
         amount: Math.round(amount * 100) / 100,
         currency,
+        // REVISIÓN FINAL v2.24.1: idempotencia cooperativa (estable por apertura)
+        idempotency_key: idempotencyKey,
         // Doctrina de la casa (resolvePosOperationDate): hoy → undefined → el
         // servidor estampa NOW() (siempre dentro de la ventana del turno);
         // otro día → mediodía ISO, validado contra la ventana por el RPC.
@@ -331,7 +390,9 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
           {/* Contraparte */}
           <div>
             <label htmlFor="cf-counterparty" className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
-              Quien {docType === 'ingreso' ? 'entrega' : 'recibe'} el dinero (opcional)
+              {concept === 'entrega_efectivo'
+                ? 'Quien RECIBE el dinero (obligatorio) *'
+                : `Quien ${docType === 'ingreso' ? 'entrega' : 'recibe'} el dinero (opcional)`}
             </label>
             <input
               id="cf-counterparty"
@@ -339,9 +400,16 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
               maxLength={COUNTERPARTY_MAX_LENGTH}
               value={counterparty}
               onChange={e => setCounterparty(e.target.value)}
-              placeholder={docType === 'ingreso' ? 'Ej. Encargado que entrega el fondo' : 'Ej. Encargado que recibe la devolución'}
+              placeholder={concept === 'entrega_efectivo'
+                ? 'Ej. Nombre del receptor del efectivo (trazabilidad de la entrega)'
+                : docType === 'ingreso' ? 'Ej. Encargado que entrega el fondo' : 'Ej. Encargado que recibe la devolución'}
               className={cn('w-full px-3 rounded-xl border border-border bg-background text-sm', touch)}
             />
+            {concept === 'entrega_efectivo' && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                La entrega registra quién entrega (tu usuario) y quién recibe (contraparte) — trazabilidad completa del dinero.
+              </p>
+            )}
           </div>
 
           {/* Vínculo con documento de fondo (solo devoluciones) */}
@@ -405,7 +473,11 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
           <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-1.5">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estado de caja</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-              <span>Saldo disponible: <span className="font-black tabular-nums">{saldoCaja != null ? formatCurrency(saldoCaja) : '—'}</span></span>
+              {/* MISIÓN CAJA v2.24.0 (§9): saldos físicos por moneda separados +
+                  equivalente canónico identificado como tal */}
+              <span>Saldo físico CUP: <span className="font-black tabular-nums">{saldoFisico.CUP != null ? formatCurrency(saldoFisico.CUP) : '—'}</span></span>
+              <span>Saldo físico USD: <span className="font-black tabular-nums">{saldoFisico.USD != null ? formatCurrency(saldoFisico.USD, 'USD') : '—'}</span></span>
+              <span>Canónico CUP (equiv. contable): <span className="font-black tabular-nums">{saldoCaja != null ? formatCurrency(saldoCaja) : '—'}</span></span>
               <span>Fondo de cambio: <span className="font-black tabular-nums">{fondoVigente != null ? formatCurrency(fondoVigente) : '—'}</span></span>
             </div>
             {errores.length > 0 && (
@@ -458,7 +530,16 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
           {/* Efecto esperado sobre el saldo (requisito §6) */}
           <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-1 text-xs">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Efecto esperado sobre el saldo</p>
-            {saldoCaja != null && currency === 'CUP' && (
+            {concept === 'entrega_efectivo' ? (
+              <p className="tabular-nums">
+                Saldo físico {currency}: <span className="font-black">{saldoFisico[currency] != null ? formatCurrency(saldoFisico[currency]!, currency) : '—'}</span>
+                {' → '}
+                <span className="font-black text-destructive">
+                  {saldoFisico[currency] != null ? formatCurrency((saldoFisico[currency] ?? 0) - amount, currency) : '—'}
+                </span>
+                {modoEntregaSinTurno && <span className="text-muted-foreground"> · documento fuera de turno (closure_id nulo)</span>}
+              </p>
+            ) : saldoCaja != null && currency === 'CUP' && (
               <p className="tabular-nums">
                 Efectivo en caja: <span className="font-black">{formatCurrency(saldoCaja)}</span>
                 {' → '}
@@ -479,7 +560,7 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
                 </span>
               </p>
             )}
-            {currency === 'USD' && (
+            {currency === 'USD' && concept !== 'entrega_efectivo' && (
               <p className="text-muted-foreground">Documento en USD: el equivalente CUP y el efecto final los fija el servidor con la tasa vigente.</p>
             )}
           </div>

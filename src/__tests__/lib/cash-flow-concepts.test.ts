@@ -17,7 +17,7 @@ import {
 } from '@/lib/cash-flow/constants';
 
 describe('CASH_FLOW_CONCEPTS — matriz tipo↔concepto (espejo del CHECK DB)', () => {
-  it('los 6 conceptos iniciales existen con etiquetas en español', () => {
+  it('los 7 conceptos existen con etiquetas en español (v2.24 añade entrega_efectivo)', () => {
     expect(CASH_FLOW_CONCEPTS.map(c => c.value)).toEqual([
       'constitucion_fondo',
       'reposicion_fondo',
@@ -25,6 +25,7 @@ describe('CASH_FLOW_CONCEPTS — matriz tipo↔concepto (espejo del CHECK DB)', 
       'devolucion_parcial_fondo',
       'otro_ingreso',
       'otro_egreso',
+      'entrega_efectivo',
     ]);
     for (const c of CASH_FLOW_CONCEPTS) {
       expect(c.label.length).toBeGreaterThan(3);
@@ -38,9 +39,9 @@ describe('CASH_FLOW_CONCEPTS — matriz tipo↔concepto (espejo del CHECK DB)', 
     ]);
   });
 
-  it('egresos: devolución total, devolución parcial y otro egreso', () => {
+  it('egresos: devolución total, devolución parcial, otro egreso y entrega de efectivo (v2.24)', () => {
     expect(CONCEPTS_BY_TYPE.egreso.map(c => c.value)).toEqual([
-      'devolucion_total_fondo', 'devolucion_parcial_fondo', 'otro_egreso',
+      'devolucion_total_fondo', 'devolucion_parcial_fondo', 'otro_egreso', 'entrega_efectivo',
     ]);
   });
 

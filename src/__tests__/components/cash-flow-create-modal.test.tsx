@@ -108,6 +108,9 @@ vi.mock('@/store', () => ({
         id: 'u-1',
         fullName: 'Ana Torres',
         activeStoreId: 'store-1',
+        // MISIÓN CAJA v2.24.0: la entrega de efectivo exige rol de autoridad
+        // (admin/manager/encargado) — espejo de ERR_DELIVERY_ROLE del RPC.
+        roles: ['admin'],
         memberships: [{ store_id: 'store-1', role: 'admin', status: 'active' }],
       },
     };
@@ -165,7 +168,7 @@ describe('CashFlowCreateModal — paso 1 EDICIÓN (validaciones junto al campo)'
     expect(screen.getByText('Introduce el importe.')).toBeTruthy();
     expect(screen.getByText('La justificación es obligatoria.')).toBeTruthy();
     // Estado de caja visible (requisito: caja, saldo y fondo identificados)
-    expect(screen.getByText(/Saldo disponible:/)).toBeTruthy();
+    expect(screen.getByText(/Saldo físico CUP:/)).toBeTruthy();
     expect(screen.getByText(/Fondo de cambio:/)).toBeTruthy();
   });
 
@@ -185,9 +188,10 @@ describe('CashFlowCreateModal — paso 1 EDICIÓN (validaciones junto al campo)'
     await waitFor(() => expect(screen.getByRole('radio', { name: /Egreso/ })).toBeTruthy());
     fireEvent.click(screen.getByRole('radio', { name: /Egreso/ }));
     const conceptSelect = screen.getByLabelText(/Motivo \*/);
-    // Matriz: solo conceptos de egreso
+    // Matriz: solo conceptos de egreso (v2.24 añade entrega_efectivo — con
+    // turno abierto sigue siendo egreso autorizable dentro de la ventana)
     const options = Array.from(conceptSelect.querySelectorAll('option')).map(o => o.value);
-    expect(options).toEqual(['devolucion_total_fondo', 'devolucion_parcial_fondo', 'otro_egreso']);
+    expect(options).toEqual(['devolucion_total_fondo', 'devolucion_parcial_fondo', 'otro_egreso', 'entrega_efectivo']);
     // Devolución parcial → aparece el vínculo opcional al documento origen
     fireEvent.change(conceptSelect, { target: { value: 'devolucion_parcial_fondo' } });
     expect(await screen.findByLabelText(/Fondo de origen/)).toBeTruthy();
@@ -232,14 +236,50 @@ describe('CashFlowCreateModal — paso 1 EDICIÓN (validaciones junto al campo)'
     expect(screen.getByText(/jerarquía tienda → BCC → elToque/i)).toBeTruthy();
   });
 
-  it('7 · sin turno abierto: bloqueado con explicación clara (escenario 11)', async () => {
+  it('7 · sin turno abierto: modo ENTREGA de efectivo (única operación autorizada — misión v2.24 §6)', async () => {
     fromMock.mockImplementation((table: string) => {
       if (table === 'cash_closures') return chain({ data: null, error: null });
       return chain({ data: [], error: null });
     });
     renderModal({ ...SUMMARY, has_pending_shift: false, expected_cash: 0, fondo_vigente: 0 });
-    expect(await screen.findByText(/turno abierto: ábrelo en Caja antes de registrar/i)).toBeTruthy();
+    // El concepto se fuerza a entrega_efectivo (egreso sin turno, closure_id nulo)
+    const concepto = await screen.findByLabelText(/Motivo \*/) as HTMLSelectElement;
+    await waitFor(() => expect(concepto.value).toBe('entrega_efectivo'));
+    // Contraparte OBLIGATORIA (quien recibe el dinero) — sin ella no se confirma
+    expect(await screen.findByText(/contraparte obligatoria/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Revisar y confirmar/i })).toBeDisabled();
+  });
+
+  it('7b · entrega sin turno completa: receptor + importe ≤ saldo físico → confirmable (prueba 3 de la misión)', async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'cash_closures') return chain({ data: null, error: null });
+      return chain({ data: [], error: null });
+    });
+    renderModal({ ...SUMMARY, has_pending_shift: false, expected_cash: 0, fondo_vigente: 0 });
+    const concepto = (await screen.findByLabelText(/Motivo \*/)) as HTMLSelectElement;
+    await waitFor(() => expect(concepto.value).toBe('entrega_efectivo'));
+    fireEvent.change(screen.getByLabelText(/Importe \*/), { target: { value: '5000' } });
+    fireEvent.change(screen.getByLabelText(/Justificación \*/), { target: { value: 'Entrega del efectivo acumulado CUP' } });
+    fireEvent.change(screen.getByLabelText(/Quien RECIBE el dinero/), { target: { value: 'Receptor autorizado' } });
+    // Aviso de operación FUERA DE TURNO visible (trazabilidad §6)
+    expect(await screen.findByText(/FUERA DE TURNO/i)).toBeTruthy();
+    await waitFor(() => expect(screen.getByRole('button', { name: /Revisar y confirmar/i })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    await waitFor(() => expect(screen.getByText('Resumen de la operación')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: /Confirmar Documento/i }));
+    await waitFor(() => expect(apiFetchMock).toHaveBeenCalled());
+    const postCall = apiFetchMock.mock.calls.find(
+      (c: unknown[]) => (c[1] as { method?: string } | undefined)?.method === 'POST',
+    ) as [string, { body: string }] | undefined;
+    expect(postCall).toBeTruthy();
+    const body = JSON.parse(postCall![1].body);
+    expect(body.doc_type).toBe('egreso');
+    expect(body.concept).toBe('entrega_efectivo');
+    expect(body.counterparty).toBe('Receptor autorizado');
+    // REVISIÓN FINAL v2.24.1: idempotencia cooperativa — el modal envía la
+    // clave estable por apertura (el RPC v2.24.1 la usa contra el registry).
+    expect(typeof body.idempotency_key).toBe('string');
+    expect(body.idempotency_key).toMatch(/^cf-/);
   });
 });
 

@@ -73,6 +73,18 @@ export const CASH_FLOW_CONCEPTS: readonly CashFlowConceptDef[] = [
     isFondo: false,
     description: 'Salida de efectivo autorizada distinta del fondo de cambio (no es gasto de proveedor ni comisión).',
   },
+  {
+    // MISIÓN CAJA v2.24.0 (D4): entrega del efectivo acumulado (CUP o USD).
+    // ÚNICO concepto autorizable SIN turno abierto: el RPC exige rol
+    // admin/manager/encargado + contraparte (quien recibe el dinero) y valida
+    // POR MONEDA contra el saldo físico del libro (get_cash_currency_summary).
+    value: 'entrega_efectivo',
+    label: 'Entrega de efectivo (CUP/USD)',
+    shortLabel: 'Entrega efectivo',
+    docType: 'egreso',
+    isFondo: false,
+    description: 'Entrega del efectivo acumulado de la caja por moneda (CUP o USD). Autorizable sin turno abierto; requiere receptor documentado y no excede el saldo físico de la moneda.',
+  },
 ] as const;
 
 export const CONCEPTS_BY_TYPE: Record<CashFlowDocType, readonly CashFlowConceptDef[]> = {
@@ -105,6 +117,17 @@ export function conceptsForType(docType: CashFlowDocType): readonly CashFlowConc
 export function canLinkRelatedDocument(concept: string): boolean {
   return concept === 'devolucion_total_fondo' || concept === 'devolucion_parcial_fondo';
 }
+
+/** MISIÓN CAJA v2.24.0 (D4): ¿el concepto es autorizable SIN turno abierto? */
+export function allowedWithoutShift(concept: string): boolean {
+  return concept === 'entrega_efectivo';
+}
+
+/**
+ * MISIÓN CAJA v2.24.0 (D4): roles con autoridad para ENTREGAR efectivo.
+ * Espejo del RPC: clerk NO entrega efectivo (los conceptos ordinarios sí).
+ */
+export const DELIVERY_AUTH_ROLES = ['admin', 'manager', 'encargado'] as const;
 
 export const CASH_FLOW_DOC_TYPE_LABEL: Record<CashFlowDocType, string> = {
   ingreso: 'Ingreso',

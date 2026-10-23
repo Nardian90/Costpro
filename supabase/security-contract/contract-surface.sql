@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-23T02:58:37.549Z
+-- Captured  : 2026-10-23T19:46:37.585Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 149 (SECURITY DEFINER write functions, public schema)
+-- Functions : 150 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -1390,43 +1390,6 @@ BEGIN
 END $function$
 
 
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
-END;
-$function$
-
-
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1463,6 +1426,43 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
+END;
+$function$
+
+
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
 END;
 $function$
 
@@ -1546,8 +1546,8 @@ END;
 $function$
 
 
--- @contract-function name=close_cash_shift args="p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.close_cash_shift(p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+-- @contract-function name=close_cash_shift args="p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_declared_cash_usd numeric, p_notes text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.close_cash_shift(p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_declared_cash_usd numeric DEFAULT 0, p_notes text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -1569,6 +1569,9 @@ DECLARE
   v_system_cash numeric := 0;
   v_system_expected_total numeric := 0;
   v_difference numeric := 0;
+  v_window_usd_net numeric := 0;
+  v_system_cash_usd numeric := 0;
+  v_difference_usd numeric := 0;
 BEGIN
   -- 1. SELECT FOR UPDATE + validar status
   SELECT * INTO v_closure FROM public.cash_closures WHERE id = p_closure_id FOR UPDATE;
@@ -1583,6 +1586,15 @@ BEGIN
   -- 2. Auth (actor-explícito, sin cambios respecto a v2.18.2)
   IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_closure.store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- 2b. REVISIÓN FINAL v2.24.1: gate de rol de autoridad — el CIERRE es
+  --     operación sensible y la UI ya lo restringe a admin/manager/encargado
+  --     (CashClosureView). El servidor lo replica fail-closed (antes un clerk
+  --     podía cerrar vía POST directo: has_store_access_as acepta cualquier
+  --     membresía activa).
+  IF NOT public.has_store_role_as(v_caller_uid, v_closure.store_id, ARRAY['admin', 'manager', 'encargado']::text[]) THEN
+    RAISE EXCEPTION 'ERR_CLOSURE_ROLE: el cierre de turno requiere rol admin, manager o encargado';
   END IF;
 
   -- 3. Advisory lock por store
@@ -1714,15 +1726,29 @@ BEGIN
                              - v_voucher_refunds;
   v_difference := (COALESCE(p_declared_cash, 0) + COALESCE(p_declared_vouchers, 0)) - v_system_expected_total;
 
+  -- MISIÓN CAJA 2026-10-23 (D8): lado USD FÍSICO del turno. Esperado USD =
+  -- apertura USD + términos USD de la MISMA ventana (clasificación por moneda
+  -- del ledger — única fuente: get_cash_currency_summary). El arqueo canónico
+  -- CUP de arriba NO se toca. La diferencia USD se REGISTRA tal cual:
+  -- jamás se autoajusta el saldo para cuadrar.
+  SELECT COALESCE((public.get_cash_currency_summary(
+             v_closure.store_id, v_closure.created_at, NULL)->'net'->>'USD')::numeric, 0)
+    INTO v_window_usd_net;
+  v_system_cash_usd := COALESCE(v_closure.opening_balance_usd, 0) + v_window_usd_net;
+  v_difference_usd := round(COALESCE(p_declared_cash_usd, 0) - v_system_cash_usd, 2);
+
   -- 5. UPDATE closure con valores recalculados
   UPDATE public.cash_closures SET
     status = 'cerrado',
     closed_at = NOW(),
     declared_cash = p_declared_cash,
     declared_vouchers = p_declared_vouchers,
+    declared_cash_usd = COALESCE(p_declared_cash_usd, 0),
     declared_total = COALESCE(p_declared_cash, 0) + COALESCE(p_declared_vouchers, 0),
     system_expected_total = v_system_expected_total,
+    system_expected_cash_usd = v_system_cash_usd,
     difference = v_difference,
+    difference_usd = v_difference_usd,
     notes = p_notes
   WHERE id = p_closure_id;
 
@@ -1734,7 +1760,9 @@ BEGIN
       'system_cash', v_system_cash,
       'expected_total', v_system_expected_total,
       'difference', v_difference,
-      'formula', 'v2.23.0',
+      'system_cash_usd', v_system_cash_usd,
+      'difference_usd', v_difference_usd,
+      'formula', 'v2.24.0',
       'cash_sales', v_cash_sales,
       'cash_production_income', v_cash_production,
       'cash_outflows_suppliers', v_cash_outflows,
@@ -1753,6 +1781,8 @@ BEGIN
     'system_cash', v_system_cash,
     'system_expected_total', v_system_expected_total,
     'difference', v_difference,
+    'system_cash_usd', v_system_cash_usd,
+    'difference_usd', v_difference_usd,
     'cash_sales', v_cash_sales,
     'cash_outflows', v_cash_outflows,
     'cash_production', v_cash_production,
@@ -2481,8 +2511,11 @@ DECLARE
   v_fondo numeric := 0;
   v_param_hash text;
   v_idem jsonb;
+  v_idem_hash text;
   v_result jsonb;
   v_related public.cash_flow_documents%ROWTYPE;
+  v_has_shift boolean := false;
+  v_balance_currency numeric := 0;
 BEGIN
   -- 1. AUTH actor-explícito (fail-closed) + rol con autoridad para registrar
   IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
@@ -2490,6 +2523,18 @@ BEGIN
   END IF;
   IF NOT public.has_store_role_as(v_caller_uid, p_store_id, ARRAY['admin', 'manager', 'encargado', 'clerk']::text[]) THEN
     RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: requiere admin, manager, encargado o clerk en la tienda';
+  END IF;
+
+  -- 1b. MISIÓN CAJA 2026-10-23 (D4): la ENTREGA de efectivo acumulado exige rol
+  --     de autoridad (admin/manager/encargado — clerk NO entrega efectivo) y
+  --     contraparte OBLIGATORIA (la persona que recibe el dinero).
+  IF v_concept = 'entrega_efectivo' THEN
+    IF NOT public.has_store_role_as(v_caller_uid, p_store_id, ARRAY['admin', 'manager', 'encargado']::text[]) THEN
+      RAISE EXCEPTION 'ERR_DELIVERY_ROLE: la entrega de efectivo requiere rol admin, manager o encargado';
+    END IF;
+    IF NULLIF(btrim(COALESCE(p_counterparty, '')), '') IS NULL THEN
+      RAISE EXCEPTION 'ERR_COUNTERPARTY_REQUIRED: identifique a la persona que recibe el efectivo (contraparte)';
+    END IF;
   END IF;
 
   -- 2. Validación del documento
@@ -2501,7 +2546,7 @@ BEGIN
   END IF;
   IF NOT (
        (v_doc_type = 'ingreso' AND v_concept IN ('constitucion_fondo', 'reposicion_fondo', 'otro_ingreso'))
-    OR (v_doc_type = 'egreso'  AND v_concept IN ('devolucion_total_fondo', 'devolucion_parcial_fondo', 'otro_egreso'))
+    OR (v_doc_type = 'egreso'  AND v_concept IN ('devolucion_total_fondo', 'devolucion_parcial_fondo', 'otro_egreso', 'entrega_efectivo'))
   ) THEN
     RAISE EXCEPTION 'ERR_CONCEPT_TYPE_MISMATCH: concepto % no válido para tipo %', v_concept, v_doc_type;
   END IF;
@@ -2568,40 +2613,49 @@ BEGIN
     || COALESCE(btrim(p_notes), '') || '|' || COALESCE(p_related_document_id::text, '')
   );
   IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
-    SELECT ir.result INTO v_idem
+    -- REVISIÓN FINAL v2.24.1: comparar el hash del payload NUEVO contra el hash
+    -- ALMACENADO. (Defecto corregido: la variable v_param_hash se sobrescribía
+    -- con el hash almacenado y la comparación nunca ocurría — misma clave con
+    -- payload distinto devolvía el documento original EN SILENCIO.) Paridad
+    -- con create_sale_v2: conflicto SIN retorno silencioso.
+    SELECT ir.result, ir.param_hash INTO v_idem, v_idem_hash
       FROM public.idempotency_registry ir
       WHERE ir.idempotency_key = p_idempotency_key
         AND ir.operation = 'create_cash_flow_document'
       LIMIT 1;
     IF v_idem IS NOT NULL THEN
-      SELECT ir.param_hash INTO v_param_hash
-        FROM public.idempotency_registry ir
-        WHERE ir.idempotency_key = p_idempotency_key
-          AND ir.operation = 'create_cash_flow_document'
-        LIMIT 1;
-      IF v_param_hash IS NULL OR v_idem IS NULL THEN
-        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE';
+      IF v_idem_hash IS DISTINCT FROM v_param_hash THEN
+        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE: la clave % ya está ligada a otra identidad de documento (payload/actor/tienda)', p_idempotency_key;
       END IF;
       -- hash idéntico ⇒ devolver el resultado original (reintento benigno)
       RETURN v_idem;
     END IF;
   END IF;
 
-  -- 6. TURNO ABIERTO obligatorio (D5): sin sesión pendiente no se opera.
+  -- 6. TURNO (D5 v2.23.0 + MISIÓN CAJA 2026-10-23): los conceptos ordinarios
+  --    exigen turno ABIERTO. La ENTREGA DE EFECTIVO es la única operación
+  --    autorizada FUERA de turno: queda identificada como outside_shift con
+  --    closure_id NULL (no se fabrica un turno artificial — misión §6).
   SELECT * INTO v_shift FROM public.cash_closures
     WHERE store_id = p_store_id AND status = 'pendiente'
     ORDER BY created_at DESC
     LIMIT 1
     FOR UPDATE;
-  IF NOT FOUND THEN
+  v_has_shift := FOUND;
+  IF NOT v_has_shift AND v_concept <> 'entrega_efectivo' THEN
     RAISE EXCEPTION 'ERR_NO_OPEN_SHIFT: la caja no tiene un turno abierto — abra el turno en Caja antes de registrar ingresos o egresos';
   END IF;
 
   -- 7. FECHA OPERATIVA: política temporal global (piso 6 meses, no futuro,
-  --    días hábiles Habana) + ventana del turno (doctrina caja FIJA).
+  --    días hábiles Habana). Ventana del turno SOLO cuando hay turno.
+  --    La entrega fuera de turno conserva su fecha operativa REAL (misión
+  --    §5: la entrega del 22/10 se registra con fecha 22/10) y la fecha
+  --    física de registro queda en created_at.
   PERFORM public.validate_operation_date(v_op_date, p_store_id);
-  IF v_op_date <= v_shift.created_at OR v_op_date > now() THEN
-    RAISE EXCEPTION 'ERR_DATE_OUTSIDE_SHIFT: la fecha operativa debe caer dentro del turno abierto (apertura %)', v_shift.created_at;
+  IF v_has_shift THEN
+    IF v_op_date <= v_shift.created_at OR v_op_date > now() THEN
+      RAISE EXCEPTION 'ERR_DATE_OUTSIDE_SHIFT: la fecha operativa debe caer dentro del turno abierto (apertura %)', v_shift.created_at;
+    END IF;
   END IF;
 
   -- 8. SALDO Y FONDO VIGENTES — misma fórmula v2.23.0 que el cierre calculará
@@ -2668,14 +2722,30 @@ BEGIN
 
   -- 9. REGLAS DE NEGOCIO por tipo
   IF v_doc_type = 'egreso' THEN
-    -- Imposibilidad de egresar más efectivo del disponible (canonical CUP)
-    IF v_amount_cup > v_expected_cash + 0.005 THEN
-      RAISE EXCEPTION 'ERR_INSUFFICIENT_CASH: disponible=%, egreso=%', round(v_expected_cash, 2), round(v_amount_cup, 2);
-    END IF;
-    -- Devolución de fondo: nunca más del fondo vigente (5.000 − 2.000 ⇒ quedan 3.000)
-    IF v_concept IN ('devolucion_total_fondo', 'devolucion_parcial_fondo') THEN
-      IF v_amount_cup > v_fondo + 0.005 THEN
-        RAISE EXCEPTION 'ERR_FUND_INSUFFICIENT: fondo vigente=%, devolución=%', round(v_fondo, 2), round(v_amount_cup, 2);
+    IF v_concept = 'entrega_efectivo' THEN
+      -- MISIÓN CAJA 2026-10-23 (D4): la entrega se valida contra el SALDO
+      -- FÍSICO DEL LIBRO en la MONEDA del documento (acumulado desde los
+      -- movimientos persistidos — misión §6: «validar que el importe no
+      -- exceda el saldo disponible de la moneda correspondiente»). Con o
+      -- sin turno, el cajón es el cajón: la validación NO depende de la
+      -- ventana canónica del turno.
+      SELECT COALESCE((public.get_cash_currency_summary(p_store_id, NULL, NULL)
+                       -> 'net' ->> v_currency)::numeric, 0)
+        INTO v_balance_currency;
+      IF v_amount > v_balance_currency + 0.005 THEN
+        RAISE EXCEPTION 'ERR_INSUFFICIENT_CURRENCY: saldo físico % disponible=%, entrega=%', v_currency, round(v_balance_currency, 2), round(v_amount, 2);
+      END IF;
+    ELSE
+      -- Imposibilidad de egresar más efectivo del disponible (canonical CUP,
+      -- ventana del turno — concepto ordinario: turno garantizado arriba)
+      IF v_amount_cup > v_expected_cash + 0.005 THEN
+        RAISE EXCEPTION 'ERR_INSUFFICIENT_CASH: disponible=%, egreso=%', round(v_expected_cash, 2), round(v_amount_cup, 2);
+      END IF;
+      -- Devolución de fondo: nunca más del fondo vigente (5.000 − 2.000 ⇒ quedan 3.000)
+      IF v_concept IN ('devolucion_total_fondo', 'devolucion_parcial_fondo') THEN
+        IF v_amount_cup > v_fondo + 0.005 THEN
+          RAISE EXCEPTION 'ERR_FUND_INSUFFICIENT: fondo vigente=%, devolución=%', round(v_fondo, 2), round(v_amount_cup, 2);
+        END IF;
       END IF;
     END IF;
   END IF;
@@ -2709,7 +2779,7 @@ BEGIN
   ) VALUES (
     p_store_id, v_number, v_doc_type, v_concept,
     v_amount, v_currency, v_rate, 'cash',
-    v_op_date, 'confirmado', v_shift.id, v_caller_uid,
+    v_op_date, 'confirmado', CASE WHEN v_has_shift THEN v_shift.id ELSE NULL END, v_caller_uid,
     NULLIF(btrim(COALESCE(p_counterparty, '')), ''),
     v_justification,
     NULLIF(btrim(COALESCE(p_notes, '')), ''),
@@ -2750,14 +2820,15 @@ BEGIN
       'exchange_rate', v_rate,
       'amount_cup', round(v_amount_cup, 2),
       'operation_date', v_op_date,
-      'closure_id', v_shift.id,
+      'closure_id', CASE WHEN v_has_shift THEN v_shift.id ELSE NULL END,
+      'outside_shift', (v_concept = 'entrega_efectivo' AND NOT v_has_shift),
       'counterparty', NULLIF(btrim(COALESCE(p_counterparty, '')), ''),
       'justification', v_justification,
       'related_document_id', p_related_document_id,
       'cash_before', round(v_expected_cash, 2),
       'fondo_before', round(v_fondo, 2),
       'payment_transaction_id', v_payment_id,
-      'formula', 'v2.23.0'
+      'formula', 'v2.24.0'
     )
   );
 
@@ -2773,6 +2844,7 @@ BEGIN
     'amount_cup', round(v_amount_cup, 2),
     'operation_date', v_op_date,
     'status_doc', 'confirmado',
+    'outside_shift', (v_concept = 'entrega_efectivo' AND NOT v_has_shift),
     'payment_transaction_id', v_payment_id,
     'cash_before', round(v_expected_cash, 2),
     'cash_after', round(v_expected_cash + CASE WHEN v_doc_type = 'ingreso' THEN v_amount_cup ELSE -v_amount_cup END, 2),
@@ -2797,8 +2869,8 @@ END;
 $function$
 
 
--- @contract-function name=create_devolution_v2 args="p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid DEFAULT NULL::uuid, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
+-- @contract-function name=create_devolution_v2 args="p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text, p_operation_date timestamp with time zone, p_refund_currency text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid DEFAULT NULL::uuid, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_refund_currency text DEFAULT 'CUP'::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -2821,13 +2893,46 @@ DECLARE
   v_session_id uuid;
   v_pt_id uuid;
   v_eff timestamptz;
+  -- MISIÓN CAJA 2026-10-23: moneda real del reembolso
+  v_refund_currency text := upper(btrim(COALESCE(NULLIF(p_refund_currency, ''), 'CUP')));
+  v_refund_rate numeric := 1.0;
+  v_refund_amount numeric := 0;
+  -- REVISIÓN FINAL v2.24.1: identidad de idempotencia + precio anclado al servidor
+  v_param_hash text;
+  v_idem_hash text;
+  v_sale_unit_cup numeric;
 BEGIN
   v_eff := COALESCE(p_operation_date, NOW());
   PERFORM public.validate_operation_date(v_eff, p_store_id);
 
+  -- REVISIÓN FINAL v2.24.1: advisory lock por tienda (misma llave que
+  -- create_cash_flow_document / close_cash_shift / create_sale_v2) — serializa
+  -- devoluciones frente a entregas/cierres concurrentes sobre el cajón físico
+  -- (cierra la ventana de carrera entrega-vs-reembolso detectada en revisión).
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+
+  -- REVISIÓN FINAL v2.24.1: identidad de idempotencia con hash de payload
+  -- (paridad create_sale_v2). Misma clave + payload distinto ⇒ conflicto
+  -- explícito; jamás retorno silencioso de la devolución previa.
+  v_param_hash := md5(
+    p_store_id::text || '|' || COALESCE(v_caller_uid::text, '') || '|'
+    || COALESCE(p_original_transaction_id::text, '') || '|' || COALESCE(p_reason, '') || '|'
+    || COALESCE(p_payment_method, '') || '|' || v_refund_currency || '|'
+    || COALESCE(p_customer_id::text, '') || '|'
+    || (SELECT COALESCE(jsonb_agg(x ORDER BY x), '[]'::jsonb) FROM jsonb_array_elements(p_items) x) || '|'
+    || COALESCE(p_operation_date::text, '')
+  );
   IF p_idempotency_key IS NOT NULL THEN
+    SELECT ir.param_hash INTO v_idem_hash
+      FROM public.idempotency_registry ir
+      WHERE ir.idempotency_key = p_idempotency_key
+        AND ir.operation = 'create_devolution_v2'
+      LIMIT 1;
     SELECT id INTO v_existing FROM public.devolutions WHERE idempotency_key = p_idempotency_key LIMIT 1;
     IF v_existing IS NOT NULL THEN
+      IF v_idem_hash IS DISTINCT FROM v_param_hash THEN
+        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE: la clave % ya está ligada a otra identidad de devolución (payload/actor/tienda)', p_idempotency_key;
+      END IF;
       RETURN jsonb_build_object('status','idempotent','devolution_id',v_existing);
     END IF;
   END IF;
@@ -2877,6 +2982,33 @@ BEGIN
     RAISE EXCEPTION 'ERR_DEVOLUTION_INVALID_METHOD: %', p_payment_method;
   END IF;
 
+  -- MISIÓN CAJA 2026-10-23: moneda del reembolso (por la que SALE el dinero).
+  -- La tasa SIEMPRE server-side (jerarquía tienda→BCC→elToque, fail-closed) —
+  -- sin tasas inventadas. CUP ⇒ rate 1 (comportamiento previo exacto).
+  IF v_refund_currency NOT IN ('CUP', 'USD') THEN
+    RAISE EXCEPTION 'ERR_DEVOLUTION_INVALID_CURRENCY: %', v_refund_currency;
+  END IF;
+  IF p_payment_method IN ('cash','transfer','zelle') AND v_refund_currency = 'USD' THEN
+    SELECT ser.rate INTO v_refund_rate
+      FROM public.store_exchange_rates ser
+      WHERE ser.store_id = p_store_id AND ser.currency = 'USD';
+    IF v_refund_rate IS NULL THEN
+      SELECT er.rate INTO v_refund_rate
+        FROM public.exchange_rates er
+        WHERE er.currency = 'USD' AND er.source = 'BCC' AND er.segment = '3'
+        ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+    END IF;
+    IF v_refund_rate IS NULL THEN
+      SELECT er.rate INTO v_refund_rate
+        FROM public.exchange_rates er
+        WHERE er.currency = 'USD' AND er.source = 'elToque'
+        ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+    END IF;
+    IF v_refund_rate IS NULL OR v_refund_rate <= 1 THEN
+      RAISE EXCEPTION 'ERR_EXCHANGE_RATE_UNAVAILABLE: reembolso en USD exige tasa USD de la tienda (jerarquía tienda→BCC→elToque)';
+    END IF;
+  END IF;
+
   v_dev_number := public.next_document_number(p_store_id, 'credit_note', v_caller_uid);
 
   INSERT INTO public.devolutions (
@@ -2892,7 +3024,21 @@ BEGIN
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
     v_pid := (v_item->>'product_id')::uuid;
     v_qty := (v_item->>'quantity')::numeric;
-    v_price := COALESCE((v_item->>'unit_price')::numeric, (v_item->>'price')::numeric, 0);
+    -- REVISIÓN FINAL v2.24.1 (anti-sobre-reembolso): el precio del reembolso
+    -- lo fija el SERVIDOR a partir de la venta original — price_at_sale_cup
+    -- ponderado por cantidad; fallback price_at_sale × tasa del ítem con la
+    -- convención fail-safe de la casa (tasa ausente ⇒ 1, nunca > pagado en
+    -- CUP). El unit_price del payload se IGNORA: DF-07 topa la CANTIDAD y
+    -- este gate topa el PRECIO — un payload manipulado ya no puede reembolsar
+    -- más de lo cobrado.
+    SELECT COALESCE(
+             SUM(ti.price_at_sale_cup * ti.quantity) / NULLIF(SUM(ti.quantity), 0),
+             SUM(ti.price_at_sale * COALESCE(ti.exchange_rate, 1) * ti.quantity) / NULLIF(SUM(ti.quantity), 0)
+           )
+      INTO v_sale_unit_cup
+    FROM public.transaction_items ti
+    WHERE ti.transaction_id = p_original_transaction_id AND ti.product_id = v_pid;
+    v_price := COALESCE(v_sale_unit_cup, 0);
 
     INSERT INTO public.devolution_items (devolution_id, product_id, quantity, unit_price, total, reason)
     VALUES (v_devolution_id, v_pid, v_qty, v_price, v_qty * v_price, COALESCE(v_item->>'reason', p_reason));
@@ -2927,6 +3073,15 @@ BEGIN
 
   UPDATE public.devolutions SET total_amount = v_total WHERE id = v_devolution_id;
 
+  -- REVISIÓN FINAL v2.24.1: registrar la identidad en el registry (paridad
+  -- create_sale_v2) — hace posible la comparación de hash en reintentos.
+  IF p_idempotency_key IS NOT NULL THEN
+    INSERT INTO public.idempotency_registry (idempotency_key, operation, record_id, param_hash, result)
+    VALUES (p_idempotency_key, 'create_devolution_v2', v_devolution_id, v_param_hash,
+            jsonb_build_object('status', 'pending'))
+    ON CONFLICT (idempotency_key, operation) DO NOTHING;
+  END IF;
+
   -- ═══ DF-03: CONTRA-ASIENTO FINANCIERO en la MISMA TX ═══
   IF v_total <= 0 THEN
     RAISE EXCEPTION 'ERR_DEVOLUTION_AMOUNT_POSITIVE';
@@ -2948,14 +3103,20 @@ BEGIN
     VALUES (v_session_id, 'out', p_payment_method::payment_method_enum, v_total,
             'Devolución ' || v_dev_number || ': ' || COALESCE(p_reason,''), p_store_id);
 
-    -- asiento financiero trazable: venta → devolución → reversión
+    -- asiento financiero trazable: venta → devolución → reversión.
+    -- MISIÓN CAJA 2026-10-23: moneda REAL del reembolso (física por la que
+    -- salió el dinero). amount = canónico / tasa para USD ⇒ amount_cup
+    -- generado conserva el total canónico (invariante intacta).
+    v_refund_amount := CASE WHEN v_refund_currency = 'USD'
+                            THEN round(v_total / v_refund_rate, 2)
+                            ELSE v_total END;
     INSERT INTO public.payment_transactions (
       store_id, ref_type, ref_id, transaction_id,
       amount, payment_method, currency, exchange_rate,
       payment_date, direction, paid_by, idempotency_key
     ) VALUES (
       p_store_id, 'devolution', v_devolution_id, p_original_transaction_id,
-      v_total, p_payment_method, 'CUP', 1.0,
+      v_refund_amount, p_payment_method, v_refund_currency, v_refund_rate,
       v_eff, 'refund', v_caller_uid, 'dev-' || v_devolution_id::text || '-refund'
     ) RETURNING id INTO v_pt_id;
 
@@ -2967,7 +3128,7 @@ BEGIN
     INSERT INTO public.store_credit_ledger
       (store_id, customer_id, amount, devolution_id, origin_transaction_id, idempotency_key, created_by)
     VALUES
-      (p_store_id, v_caller_uid, v_total, v_devolution_id, p_original_transaction_id,
+      (p_store_id, p_customer_id, v_total, v_devolution_id, p_original_transaction_id,
        'dev-' || v_devolution_id::text || '-credit', v_caller_uid);
   END IF;
 
@@ -2982,6 +3143,11 @@ BEGIN
       'operation_date', v_eff,
       'import_origin', 'ENERVIDA-EXCEL-IMPORT',
       'cap_lock_df07', true,
+      'refund_currency', v_refund_currency,
+      'refund_rate', v_refund_rate,
+      'refund_amount', v_refund_amount,
+      'pricing_source', 'server_price_at_sale_cup_v2_24_1',
+      'idempotency_param_hash', COALESCE(v_param_hash, ''),
       'financial_contra_entry_df03',
         jsonb_build_object('method', p_payment_method, 'amount', v_total,
           'cash_out', (p_payment_method <> 'store_credit'),
@@ -3530,8 +3696,8 @@ END;
 $function$
 
 
--- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb)
+-- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb, p_cash_received_cup numeric, p_cash_received_usd numeric, p_change_given_cup numeric, p_change_given_usd numeric, p_change_currency text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb, p_cash_received_cup numeric DEFAULT NULL::numeric, p_cash_received_usd numeric DEFAULT NULL::numeric, p_change_given_cup numeric DEFAULT NULL::numeric, p_change_given_usd numeric DEFAULT NULL::numeric, p_change_currency text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3565,6 +3731,12 @@ DECLARE
   v_tax_value numeric;
   v_effective_discount_pct numeric := 0;
   v_cash_amt numeric := p_cash_amount;
+  -- MISIÓN CAJA 2026-10-23 (D6): liquidación del cobro (vuelto multimoneda)
+  v_settlement_present boolean := false;
+  v_chg_rate numeric := NULL;
+  v_chg_rate_src text := NULL;
+  v_settle_net_cup numeric := 0;
+  v_settle_net_usd numeric := 0;
   v_transfer_amt numeric := p_transfer_amount;
   v_zelle_amt numeric := p_zelle_amount;
   v_pt_id uuid;
@@ -3669,7 +3841,14 @@ BEGIN
       '|tax_amount=' || COALESCE(p_tax_amount::text, '') ||
       -- MISIÓN-FLEX: notas e incidencias forman parte de la identidad
       '|notes=' || COALESCE(p_notes, '') ||
-      '|payment_incidents=' || COALESCE(p_payment_incidents::text, '')
+      '|payment_incidents=' || COALESCE(p_payment_incidents::text, '') ||
+      -- MISIÓN CAJA 2026-10-23: la liquidación del cobro es parte de la
+      -- identidad de la venta (misma clave + liquidación distinta = conflicto)
+      '|cash_settlement=' || COALESCE(p_cash_received_cup::text, '') || '/' ||
+      COALESCE(p_cash_received_usd::text, '') || '/' ||
+      COALESCE(p_change_given_cup::text, '') || '/' ||
+      COALESCE(p_change_given_usd::text, '') || '/' ||
+      COALESCE(p_change_currency, '')
     );
 
     INSERT INTO public.idempotency_registry (idempotency_key, operation, record_id, param_hash, result)
@@ -4132,6 +4311,84 @@ BEGIN
     v_notes_final := v_incidence_note;
   END IF;
 
+  -- 14.7 MISIÓN CAJA 2026-10-23 (D6): LIQUIDACIÓN DEL COBRO — vuelto por
+  --      moneda, ENLAZADO a la venta. El efecto en caja sigue siendo UNO
+  --      (cash_amount neto canónico): NO se crea fila de caja aparte para el
+  --      vuelto (prohibido duplicar — misión §8). Validación server-side:
+  --        · importes no negativos; vuelto ≤ recibido POR MONEDA;
+  --        · moneda de vuelto ∈ (CUP, USD);
+  --        · cobro/vuelto en USD ⇒ tasa SERVIDOR obligatoria (jerarquía de
+  --          ventas, fail-closed) con fuente registrada — sin tasas ocultas;
+  --        · (recibido CUP − vuelto CUP) + (recibido USD − vuelto USD)×tasa =
+  --          componente cash de la venta (±0.01) ⇒ sin diferencias contables.
+  --      Sin liquidación (ventas legacy/transfer/zelle) el flujo queda
+  --      IDÉNTICO a v2.23.0 (columnas NULL).
+  v_settlement_present := (p_cash_received_cup IS NOT NULL OR p_cash_received_usd IS NOT NULL
+    OR p_change_given_cup IS NOT NULL OR p_change_given_usd IS NOT NULL);
+  IF v_settlement_present THEN
+    IF COALESCE(p_cash_received_cup, 0) < 0 OR COALESCE(p_cash_received_usd, 0) < 0
+       OR COALESCE(p_change_given_cup, 0) < 0 OR COALESCE(p_change_given_usd, 0) < 0 THEN
+      RAISE EXCEPTION 'ERR_CASH_SETTLEMENT_INVALID: los importes de la liquidación no pueden ser negativos';
+    END IF;
+    IF p_change_currency IS NOT NULL AND upper(btrim(p_change_currency)) NOT IN ('CUP', 'USD') THEN
+      RAISE EXCEPTION 'ERR_CASH_SETTLEMENT_INVALID: moneda de vuelto no admitida (%)', p_change_currency;
+    END IF;
+    IF COALESCE(p_cash_received_cup, 0) + COALESCE(p_cash_received_usd, 0)
+       + COALESCE(p_change_given_cup, 0) + COALESCE(p_change_given_usd, 0) > 0
+       AND v_cash_amt <= 0 THEN
+      RAISE EXCEPTION 'ERR_CASH_SETTLEMENT_NOT_APPLICABLE: la venta no tiene componente en efectivo';
+    END IF;
+    -- NOTA: NO se exige «vuelto ≤ recibido POR MONEDA»: el vuelto puede darse
+    -- en una moneda NO recibida (misión §8: paga 60.000 CUP → recibe 80 USD de
+    -- vuelto — el cajón USD puede quedar momentáneamente negativo si no había
+    -- billetes; el LIBRO por moneda lo refleja y la ENTREGA valida contra el
+    -- saldo acumulado). La restricción real es CANÓNICA y se valida abajo:
+    -- recibido − vuelto (a tasa servidor) = cash de la venta ≥ 0.
+    IF COALESCE(p_cash_received_usd, 0) > 0 OR COALESCE(p_change_given_usd, 0) > 0 THEN
+      SELECT ser.rate, 'store_exchange_rates' INTO v_chg_rate, v_chg_rate_src
+        FROM public.store_exchange_rates ser
+        WHERE ser.store_id = p_store_id AND ser.currency = 'USD';
+      IF v_chg_rate IS NULL THEN
+        SELECT er.rate, 'global_bcc_seg3' INTO v_chg_rate, v_chg_rate_src
+          FROM public.exchange_rates er
+          WHERE er.currency = 'USD' AND er.source = 'BCC' AND er.segment = '3'
+          ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+      END IF;
+      IF v_chg_rate IS NULL THEN
+        SELECT er.rate, 'global_eltoque' INTO v_chg_rate, v_chg_rate_src
+          FROM public.exchange_rates er
+          WHERE er.currency = 'USD' AND er.source = 'elToque'
+          ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+      END IF;
+      IF v_chg_rate IS NULL OR v_chg_rate <= 1 THEN
+        RAISE EXCEPTION 'ERR_EXCHANGE_RATE_UNAVAILABLE: el cobro/vuelto en USD exige tasa USD de la tienda (jerarquía tienda→BCC→elToque) — sin tasa no se completa la operación (tienda %)', p_store_id;
+      END IF;
+    END IF;
+    v_settle_net_cup := COALESCE(p_cash_received_cup, 0) - COALESCE(p_change_given_cup, 0);
+    v_settle_net_usd := COALESCE(p_cash_received_usd, 0) - COALESCE(p_change_given_usd, 0);
+    IF abs((v_settle_net_cup + v_settle_net_usd * COALESCE(v_chg_rate, v_server_rate)) - v_cash_amt) > 0.01 THEN
+      RAISE EXCEPTION 'ERR_CASH_SETTLEMENT_MISMATCH: la liquidación (%) no cuadra con el efectivo de la venta (%)',
+        round(v_settle_net_cup + v_settle_net_usd * COALESCE(v_chg_rate, v_server_rate), 2), round(v_cash_amt, 2);
+    END IF;
+  END IF;
+
+  -- 14.9 REVISIÓN FINAL v2.24.1 (F4) — bloqueo preventivo del vuelto NO
+  --     registrable (cobros mixtos / sobrepagos sin liquidación). Un cobro
+  --     cuyo importe recibido excede el total debido exige entregar vuelto
+  --     físico. Sin liquidación (cash_received_*/change_given_*), ese vuelto
+  --     no queda registrado en NINGUNA moneda y el libro sobreestima el
+  --     efectivo disponible (defecto medio del escenario C de la auditoría).
+  --     La venta se RECHAZA: el cajero debe (a) ajustar el desglose a
+  --     importes exactos, (b) registrar el cobro con la liquidación de
+  --     vuelto (identidad recibido − vuelto = cash de la venta, ya soportada
+  --     para cualquier método), o (c) cobrar el faltante como incidencia —
+  --     el pago insuficiente NO se toca: no exige salida física de caja.
+  --     Ventas históricas: intactas (el gate solo aplica a INSERT nuevos).
+  IF NOT v_settlement_present AND v_payment_diff > 0.01 THEN
+    RAISE EXCEPTION 'ERR_OVERPAYMENT_UNREGISTERED_CHANGE: recibido (%) > total (%) sin liquidación de vuelto — el vuelto físico no sería registrable por el backend; ajuste el desglose o registre la liquidación',
+      ROUND(v_cash_amt + v_transfer_amt + v_zelle_amt, 2), ROUND(v_calculated_total, 2);
+  END IF;
+
   -- 15. INSERT transactions — §6.3/§4/§5.4: tasa servidor, seller = v_uid,
   --     impuestos = snapshot canónico del catálogo
   INSERT INTO public.transactions (
@@ -4141,7 +4398,10 @@ BEGIN
     cash_amount, transfer_amount, zelle_amount,
     customer_id, customer_name,
     -- MISIÓN-FLEX: nota (manual + incidencia) e incidencias estructuradas
-    notes, payment_incidents
+    notes, payment_incidents,
+    -- MISIÓN CAJA 2026-10-23 (D6): liquidación del cobro (vuelto multimoneda)
+    cash_received_cup, cash_received_usd, change_given_cup, change_given_usd,
+    change_currency, change_exchange_rate, change_rate_source
   ) VALUES (
     v_tx_id, p_store_id, v_uid, v_calculated_total, 'completed',
     v_effective_method::public.payment_method_enum,
@@ -4150,7 +4410,14 @@ BEGIN
     p_sale_currency, v_server_rate, v_eff, p_idempotency_key, v_eff,
     v_cash_amt, v_transfer_amt, v_zelle_amt,
     p_customer_id, p_customer_name,
-    v_notes_final, v_incidents
+    v_notes_final, v_incidents,
+    p_cash_received_cup, p_cash_received_usd, p_change_given_cup, p_change_given_usd,
+    CASE WHEN v_settlement_present THEN COALESCE(upper(btrim(p_change_currency)),
+      CASE WHEN COALESCE(p_change_given_usd, 0) > 0 THEN 'USD' ELSE 'CUP' END) END,
+    CASE WHEN v_settlement_present AND (COALESCE(p_cash_received_usd, 0) > 0 OR COALESCE(p_change_given_usd, 0) > 0)
+      THEN v_chg_rate END,
+    CASE WHEN v_settlement_present AND (COALESCE(p_cash_received_usd, 0) > 0 OR COALESCE(p_change_given_usd, 0) > 0)
+      THEN v_chg_rate_src END
   );
 
   -- 16. Segunda pasada: stock movement + transaction_items — MISMA autoridad de costo
@@ -4366,7 +4633,15 @@ BEGIN
       'has_payment_incident', v_has_payment_incident,
       'payment_diff_cup', v_payment_diff,
       'payment_incidents', COALESCE(v_incidents, '[]'::jsonb),
-      'sale_notes', v_notes_final
+      'sale_notes', v_notes_final,
+      -- MISIÓN CAJA 2026-10-23 (D6): liquidación del cobro auditada
+      'cash_settlement_present', v_settlement_present,
+      'cash_received_cup', p_cash_received_cup,
+      'cash_received_usd', p_cash_received_usd,
+      'change_given_cup', p_change_given_cup,
+      'change_given_usd', p_change_given_usd,
+      'change_rate', v_chg_rate,
+      'change_rate_source', v_chg_rate_src
     ));
 
   -- 20.5 MISIÓN-FLEX: evento de auditoría dedicado por venta con incidencia
@@ -6917,6 +7192,187 @@ BEGIN
   );
 
   RETURN NEW;
+END;
+$function$
+
+
+-- @contract-function name=open_cash_shift args="p_store_id uuid, p_opening_balance_cup numeric, p_opening_balance_usd numeric, p_opening_note text, p_difference_note text, p_idempotency_key text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.open_cash_shift(p_store_id uuid, p_opening_balance_cup numeric, p_opening_balance_usd numeric DEFAULT 0, p_opening_note text DEFAULT NULL::text, p_difference_note text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_counted_cup numeric;
+  v_counted_usd numeric;
+  v_expected_cup numeric := 0;
+  v_expected_usd numeric := 0;
+  v_diff_cup numeric := 0;
+  v_diff_usd numeric := 0;
+  v_diff_note text;
+  v_usd_rate numeric;
+  v_usd_rate_source text;
+  v_opening_canonical numeric := 0;
+  v_existing public.cash_closures%ROWTYPE;
+  v_closure_id uuid;
+  v_param_hash text;
+  v_idem jsonb;
+  v_summary jsonb;
+  v_result jsonb;
+BEGIN
+  -- 1. AUTH actor-explícito + rol de operación de caja (paridad con el INSERT
+  --    directo que hoy hace la UI con las policies de cash_closures)
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF NOT public.has_store_role_as(v_caller_uid, p_store_id, ARRAY['admin', 'manager', 'encargado', 'clerk']::text[]) THEN
+    RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: requiere admin, manager, encargado o clerk en la tienda';
+  END IF;
+
+  -- 2. Validación de los importes declarados: no negativos, 2 decimales
+  v_counted_cup := COALESCE(p_opening_balance_cup, 0);
+  v_counted_usd := COALESCE(p_opening_balance_usd, 0);
+  IF v_counted_cup < 0 OR v_counted_usd < 0 THEN
+    RAISE EXCEPTION 'ERR_INVALID_AMOUNT: el efectivo declarado no puede ser negativo';
+  END IF;
+  IF v_counted_cup <> round(v_counted_cup, 2) OR v_counted_usd <> round(v_counted_usd, 2) THEN
+    RAISE EXCEPTION 'ERR_AMOUNT_PRECISION: máximo 2 decimales';
+  END IF;
+
+  -- 3. Advisory lock por tienda (serializa aperturas/cierres/entregas)
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+
+  -- 4. IDEMPOTENCIA (patrón v2.26)
+  v_param_hash := md5(
+    p_store_id::text || '|' || v_caller_uid::text || '|'
+    || v_counted_cup::text || '|' || v_counted_usd::text
+    || '|' || COALESCE(btrim(p_opening_note), '')
+  );
+  IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
+    SELECT ir.result INTO v_idem
+      FROM public.idempotency_registry ir
+      WHERE ir.idempotency_key = p_idempotency_key
+        AND ir.operation = 'open_cash_shift'
+      LIMIT 1;
+    IF v_idem IS NOT NULL THEN
+      SELECT ir.param_hash INTO v_param_hash
+        FROM public.idempotency_registry ir
+        WHERE ir.idempotency_key = p_idempotency_key
+          AND ir.operation = 'open_cash_shift'
+        LIMIT 1;
+      IF v_param_hash IS NULL OR v_idem IS NULL THEN
+        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE';
+      END IF;
+      RETURN v_idem;
+    END IF;
+  END IF;
+
+  -- 5. Un solo turno pendiente por tienda (índice único vivo one_pending_*)
+  SELECT * INTO v_existing FROM public.cash_closures
+    WHERE store_id = p_store_id AND status = 'pendiente'
+    LIMIT 1
+    FOR UPDATE;
+  IF FOUND THEN
+    RAISE EXCEPTION 'ERR_SHIFT_ALREADY_OPEN: ya existe un turno pendiente (abierto %) — ciérralo antes de abrir uno nuevo', v_existing.created_at;
+  END IF;
+
+  -- 6. Tasa USD server-side para la apertura canónica (jerarquía de ventas)
+  v_usd_rate := NULL;
+  v_usd_rate_source := NULL;
+  IF v_counted_usd > 0 THEN
+    SELECT ser.rate, 'store_exchange_rates' INTO v_usd_rate, v_usd_rate_source
+      FROM public.store_exchange_rates ser
+      WHERE ser.store_id = p_store_id AND ser.currency = 'USD';
+    IF v_usd_rate IS NULL THEN
+      SELECT er.rate, 'global_bcc_seg3' INTO v_usd_rate, v_usd_rate_source
+        FROM public.exchange_rates er
+        WHERE er.currency = 'USD' AND er.source = 'BCC' AND er.segment = '3'
+        ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+    END IF;
+    IF v_usd_rate IS NULL THEN
+      SELECT er.rate, 'global_eltoque' INTO v_usd_rate, v_usd_rate_source
+        FROM public.exchange_rates er
+        WHERE er.currency = 'USD' AND er.source = 'elToque'
+        ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+    END IF;
+    IF v_usd_rate IS NULL OR v_usd_rate <= 1 THEN
+      RAISE EXCEPTION 'ERR_EXCHANGE_RATE_UNAVAILABLE: configure la tasa USD de la tienda antes de declarar apertura en USD';
+    END IF;
+  END IF;
+
+  -- 7. SALDO ESPERADO del libro por moneda (sin semillas de apertura — D2)
+  v_summary := public.get_cash_currency_summary(p_store_id, NULL, NULL);
+  v_expected_cup := COALESCE((v_summary->'net'->>'CUP')::numeric, 0);
+  v_expected_usd := COALESCE((v_summary->'net'->>'USD')::numeric, 0);
+  v_diff_cup := round(v_counted_cup - v_expected_cup, 2);
+  v_diff_usd := round(v_counted_usd - v_expected_usd, 2);
+
+  -- 8. Gestión AUTORIZADA de la diferencia (misión §10.8): jamás silenciosa
+  v_diff_note := NULLIF(btrim(COALESCE(p_difference_note, '')), '');
+  IF (abs(v_diff_cup) > 0.01 OR abs(v_diff_usd) > 0.01) AND (v_diff_note IS NULL OR length(v_diff_note) < 10) THEN
+    RAISE EXCEPTION 'ERR_OPENING_DIFFERENCE_NOTE_REQUIRED: lo contado difiere del saldo del libro (CUP %, USD %) — documente la causa autorizada de la diferencia',
+      round(v_diff_cup, 2), round(v_diff_usd, 2);
+  END IF;
+
+  -- 9. INSERT del turno: apertura canónica (fórmulas v2.23.0 intactas) +
+  --    desglose físico + diferencias registradas
+  v_opening_canonical := v_counted_cup + (v_counted_usd * COALESCE(v_usd_rate, 0));
+  INSERT INTO public.cash_closures (
+    store_id, user_id, status,
+    opening_balance, opening_balance_cup, opening_balance_usd,
+    opening_difference_cup, opening_difference_usd, opening_difference_note,
+    notes
+  ) VALUES (
+    p_store_id, v_caller_uid, 'pendiente',
+    v_opening_canonical, v_counted_cup, v_counted_usd,
+    v_diff_cup, v_diff_usd, v_diff_note,
+    NULLIF(btrim(COALESCE(p_opening_note, '')), '')
+  )
+  RETURNING id INTO v_closure_id;
+
+  -- 10. Auditoría atómica
+  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (
+    v_caller_uid, p_store_id, 'CASH_SHIFT_OPENED', 'cash_closures', v_closure_id,
+    jsonb_build_object(
+      'opening_balance_cup', v_counted_cup,
+      'opening_balance_usd', v_counted_usd,
+      'opening_canonical_cup', round(v_opening_canonical, 2),
+      'expected_cup', round(v_expected_cup, 2),
+      'expected_usd', round(v_expected_usd, 2),
+      'difference_cup', v_diff_cup,
+      'difference_usd', v_diff_usd,
+      'difference_note', v_diff_note,
+      'usd_rate', v_usd_rate,
+      'usd_rate_source', v_usd_rate_source,
+      'formula', 'v1.0.0'
+    )
+  );
+
+  v_result := jsonb_build_object(
+    'status', 'success',
+    'closure_id', v_closure_id,
+    'counted_cup', v_counted_cup,
+    'counted_usd', v_counted_usd,
+    'expected_cup', round(v_expected_cup, 2),
+    'expected_usd', round(v_expected_usd, 2),
+    'difference_cup', v_diff_cup,
+    'difference_usd', v_diff_usd,
+    'opening_canonical_cup', round(v_opening_canonical, 2),
+    'usd_rate', v_usd_rate,
+    'usd_rate_source', v_usd_rate_source
+  );
+
+  -- 11. Registro de idempotencia (después del éxito — patrón v2.26)
+  IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
+    INSERT INTO public.idempotency_registry (idempotency_key, operation, record_id, param_hash, result)
+    VALUES (btrim(p_idempotency_key), 'open_cash_shift', v_closure_id, v_param_hash, v_result)
+    ON CONFLICT (idempotency_key, operation) DO NOTHING;
+  END IF;
+
+  RETURN v_result;
 END;
 $function$
 

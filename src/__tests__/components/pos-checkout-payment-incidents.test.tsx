@@ -231,3 +231,108 @@ describe('usePOSCheckout — flexibilización de diferencias de pago (MISIÓN-FL
     expect(auditService.logNegativeSaleAttempt).not.toHaveBeenCalled();
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REVISIÓN FINAL v2.24.1 (F4) — bloqueo preventivo del vuelto NO registrable.
+// Un cobro cuyo importe recibido excede el total debido exige entregar vuelto
+// físico. Sin liquidación (mixto siempre; cobro simple con incidencias), ese
+// vuelto no quedaría registrado en NINGUNA moneda y el libro sobreestimaría
+// el efectivo disponible. create_sale_v2 lo rechaza
+// (ERR_OVERPAYMENT_UNREGISTERED_CHANGE); el hook lo valida ANTES del POST.
+// Cobros exactos y el faltante documentado siguen funcionando igual.
+describe('usePOSCheckout — F4: vuelto no registrable (sobrepago sin liquidación)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetStores();
+    fetchMock.mockReset();
+  });
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('F4.a cobro mixto con sobrepago (producto CUP): NO se envía la venta y el error explica el vuelto no registrable', async () => {
+    // Producto CUP → sin modal de tasa multi-moneda: el guard del hook actúa directo
+    useCartStore.getState().addItem({ ...usdProduct, price_currency: 'CUP', price: 94800 });
+    const item = useCartStore.getState().items[0];
+    useCartStore.getState().updateItemPaymentRow(
+      item.product_id, null, item.payments![0].id,
+      { amount: 100000, currency: 'CUP', method: 'cash' },
+    );
+    mockCheckoutOk();
+
+    const { result } = renderHook(() => usePOSCheckout());
+    await act(async () => { await result.current.startCheckout('mixed'); });
+
+    // El intento NUNCA llega al servidor (defensa en profundidad del cliente)
+    expect(checkoutBodies()).toHaveLength(0);
+    // El toast explica el bloqueo y las alternativas
+    const errCalls = (toast.error as any).mock.calls.map((c: any[]) => String(c[0]));
+    expect(errCalls.some((m: string) => m.includes('vuelto'))).toBe(true);
+  });
+
+  it('F4.b cobro mixto exacto sigue funcionando (payload canónico, sin bloqueo)', async () => {
+    buildCart(94800);
+    mockCheckoutOk();
+
+    const { result } = renderHook(() => usePOSCheckout());
+    await act(async () => { await result.current.startCheckout('mixed'); });
+
+    expect(checkoutBodies()).toHaveLength(1);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('F4.c faltante documentado sigue permitido (no exige salida física de caja)', async () => {
+    buildCart(94000); // faltante 800 CUP → incidencia, sin bloqueo
+    mockCheckoutOk();
+
+    const { result } = renderHook(() => usePOSCheckout());
+    await act(async () => { await result.current.startCheckout('mixed'); });
+
+    expect(checkoutBodies()).toHaveLength(1);
+  });
+
+  it('F4.d sobrepago CON liquidación de vuelto sí se envía (identidad recibido − vuelto = cash)', async () => {
+    buildCart(94800); // filas por item = total exacto
+    mockCheckoutOk();
+
+    const { result } = renderHook(() => usePOSCheckout());
+    // Cobro simple en efectivo con liquidación: el cliente entrega 100 000 CUP
+    // y recibe 5 200 de vuelto (la identidad la revalida el RPC con tasa servidor)
+    await act(async () => {
+      await result.current.startCheckout('cash', null, {
+        cashReceived: 100000,
+        change: 5200,
+        changeCurrency: 'CUP',
+        settlement: {
+          cash_received_cup: 100000,
+          cash_received_usd: null,
+          change_given_cup: 5200,
+          change_given_usd: null,
+          change_currency: 'CUP',
+        },
+      });
+    });
+
+    const bodies = checkoutBodies();
+    expect(bodies).toHaveLength(1);
+    const body = bodies[0];
+    expect(body.cash_received_cup).toBe(100000);
+    expect(body.change_given_cup).toBe(5200);
+    expect(body.cash_amount).toBe(94800);
+  });
+
+  it('F4.e sobrepago en cobro simple SIN liquidación: pausa en modal de descuadre y al confirmar queda bloqueado', async () => {
+    buildCart(100000); // sobrepago 5 200 (5.5% > 2%) → modal de descuadre
+    mockCheckoutOk();
+
+    const { result } = renderHook(() => usePOSCheckout());
+    await act(async () => { await result.current.startCheckout('cash'); });
+    expect(result.current.showRateWarning).toBe(true);
+    expect(checkoutBodies()).toHaveLength(0);
+
+    // El cajero confirma continuar → el guard del hook rechaza el vuelto no registrable
+    await act(async () => { await result.current.confirmRateWarning(); });
+
+    expect(checkoutBodies()).toHaveLength(0);
+    const errCalls = (toast.error as any).mock.calls.map((c: any[]) => String(c[0]));
+    expect(errCalls.some((m: string) => m.includes('vuelto'))).toBe(true);
+  });
+});

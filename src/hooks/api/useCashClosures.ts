@@ -62,6 +62,9 @@ export function useUpdateCashClosure() {
             closure_id: id,
             declared_cash: closure.declared_cash || 0,
             declared_vouchers: closure.declared_vouchers || 0,
+            // MISIÓN CAJA v2.24.0 (D8): efectivo USD contado al cerrar — el
+            // RPC calcula difference_usd y la PERSISTE sin autoajuste.
+            declared_cash_usd: closure.declared_cash_usd || 0,
             notes: closure.notes || null,
           }),
         });
@@ -108,6 +111,10 @@ export interface CashShiftExpected {
   transfer_sales: number;
   zelle_sales: number;
   expected_total: number;
+  /** v2.24.0 (MISIÓN CAJA 2026-10-23): lado USD FÍSICO — apertura USD del turno. */
+  opening_balance_usd?: number;
+  /** v2.24.0: efectivo USD esperado en el cajón (libro físico por moneda). */
+  expected_cash_usd?: number;
 }
 
 /**

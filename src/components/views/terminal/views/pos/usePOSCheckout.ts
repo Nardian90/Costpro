@@ -26,6 +26,8 @@ import type { CartItem } from "@/store/cart";
 // resolvePosOperationDate → ISO mediodía SOLO si la fecha elegida ≠ hoy (Habana);
 // hoy/null → undefined (el servidor estampa NOW(), comportamiento canónico intacto).
 import { resolvePosOperationDate, checkNotFutureOperationDate } from "@/lib/pos/operation-date";
+// MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — vuelto multimoneda
+import type { CashSettlement } from "@/lib/pos/cash-settlement";
 // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): agregación de medios de pago para el
 // comprobante POS — suma las filas YA cobradas (misma fuente que viaja al RPC),
 // sin recálculo de importes.
@@ -60,9 +62,15 @@ export function usePOSCheckout() {
   // comprobante. Viaja por ref — sobrevive a los modales pendientes
   // (precio/tasa) que aplazan processCheckout. SOLO presentación: no altera
   // el payload del RPC ni ninguna regla de negocio.
+  // MISIÓN CAJA v2.24.0 (D6): además transporta la LIQUIDACIÓN DEL COBRO
+  // (recibido/vuelto por moneda) que SÍ entra al payload del RPC — el vuelto
+  // queda persistido enlazado a la venta (sin fila de caja aparte).
   const paymentContextRef = useRef<{
     cashReceived?: number;
     change?: number;
+    changeCurrency?: 'CUP' | 'USD';
+    changeUsd?: number;
+    settlement?: CashSettlement | null;
   } | null>(null);
 
   const {
@@ -217,6 +225,22 @@ export function usePOSCheckout() {
         const transferAmount = transferAmountCup;
         const zelleAmount = zelleAmountCup;
 
+        // REVISIÓN FINAL v2.24.1 (F4): bloqueo preventivo del vuelto NO
+        // registrable. Si lo recibido excede el total debido y NO viaja
+        // liquidación (cobro mixto, o cobro simple con incidencias), el vuelto
+        // físico no quedaría registrado en ninguna moneda y el libro
+        // sobreestimaría el efectivo disponible (create_sale_v2 lo rechaza con
+        // ERR_OVERPAYMENT_UNREGISTERED_CHANGE — se valida también aquí para
+        // fallar temprano con mensaje claro antes del POST).
+        const willSendSettlement = !hasFlexIncidents && Boolean(paymentContextRef.current?.settlement);
+        if (!willSendSettlement && (cashAmount + transferAmount + zelleAmount) - totalAmountCup > 0.01) {
+          const excess = Math.round((cashAmount + transferAmount + zelleAmount - totalAmountCup) * 100) / 100;
+          throw new Error(
+            `ERR_OVERPAYMENT_UNREGISTERED_CHANGE: recibido ${excess.toFixed(2)} CUP de más sin liquidación de vuelto. ` +
+            `Ajusta el desglose a importes exactos o registra el cobro con su vuelto (cobro simple en efectivo).`,
+          );
+        }
+
         // MISIÓN-FLEX: la defensa anti-descuadre (antes: throw) ya NO interrumpe
         // el flujo — computePaymentIncidents documentó la diferencia (por línea
         // y global) y el servidor la valida con las mismas incidencias.
@@ -275,6 +299,17 @@ export function usePOSCheckout() {
               // cuando existen — la venta exacta mantiene el payload canónico
               // (compatible con RPC sin migrar, que las ignora).
               ...(hasFlexIncidents ? { payment_incidents: flexIncidents } : {}),
+              // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — recibido y
+              // vuelto por moneda. Solo cuando el panel la construyó (cobro
+              // simple en efectivo con dato de recibido) y SIN incidencias:
+              // el RPC revalida la identidad canónica ±0.01 con tasa servidor.
+              ...(!hasFlexIncidents && paymentContextRef.current?.settlement ? {
+                cash_received_cup: paymentContextRef.current.settlement.cash_received_cup,
+                cash_received_usd: paymentContextRef.current.settlement.cash_received_usd,
+                change_given_cup: paymentContextRef.current.settlement.change_given_cup,
+                change_given_usd: paymentContextRef.current.settlement.change_given_usd,
+                change_currency: paymentContextRef.current.settlement.change_currency,
+              } : {}),
               // MISIÓN FECHA OPERATIVA: fecha económica elegida en Vender.
               // undefined cuando la fecha es hoy/null → NOW() del servidor
               // (ventas del día idénticas al flujo anterior: arqueo por ventana,
@@ -482,9 +517,14 @@ export function usePOSCheckout() {
       } | null,
       // MISIÓN IMPRESIÓN TÉRMICA: contexto de cobro del panel (solo lectura,
       // presentación del comprobante). Opcional y retrocompatible.
+      // MISIÓN CAJA v2.24.0 (D6): settlement = liquidación del cobro (vuelto
+      // multimoneda) que entra al payload del RPC create_sale_v2.
       paymentContext?: {
         cashReceived?: number;
         change?: number;
+        changeCurrency?: 'CUP' | 'USD';
+        changeUsd?: number;
+        settlement?: CashSettlement | null;
       } | null,
     ) => {
       if (isProcessingSale) return;

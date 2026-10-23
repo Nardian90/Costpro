@@ -119,6 +119,15 @@ const checkoutSchema = z.object({
   // Nota manual del cajero (opcional; el RPC la preserva y antepone la nota
   // automática de incidencia sin sobrescribirla).
   sale_notes: z.string().max(1000).nullable().optional(),
+  // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — vuelto multimoneda
+  // persistido ENLAZADO a la venta. Todos opcionales/nullables: ausentes ⇒
+  // flujo legacy idéntico (venta exacta sin dato de recibido). El RPC valida
+  // la identidad canónica ±0.01 y la tasa USD server-side (fail-closed).
+  cash_received_cup: z.number().min(0).nullable().optional(),
+  cash_received_usd: z.number().min(0).nullable().optional(),
+  change_given_cup: z.number().min(0).nullable().optional(),
+  change_given_usd: z.number().min(0).nullable().optional(),
+  change_currency: z.enum(['CUP', 'USD']).nullable().optional(),
   idempotency_key: z.string().min(1),
   operation_date: z.string().datetime().optional(),
   items: z.array(itemSchema).min(1),
@@ -266,6 +275,14 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // (20261018000001) elimina además el overload legado de la BD.
     p_payment_incidents: d.payment_incidents?.length ? d.payment_incidents : null,
     p_notes: d.sale_notes ?? null,
+    // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro (vuelto multimoneda).
+    // NULL cuando no se registró recibido/vuelto — comportamiento previo
+    // idéntico (columnas NULL en la venta, libro legacy).
+    p_cash_received_cup: d.cash_received_cup ?? null,
+    p_cash_received_usd: d.cash_received_usd ?? null,
+    p_change_given_cup: d.change_given_cup ?? null,
+    p_change_given_usd: d.change_given_usd ?? null,
+    p_change_currency: d.change_currency ?? null,
   });
 
   if (rpcError) {
@@ -350,6 +367,22 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
     if (msg.includes('ERR_PAYMENT_MISMATCH')) {
       return NextResponse.json({ error: 'Los pagos no cuadran con el total.' }, { status: 422 });
+    }
+    // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — errores del vuelto.
+    if (msg.includes('ERR_CASH_SETTLEMENT_MISMATCH')) {
+      return NextResponse.json({ error: 'La liquidación del cobro (recibido − vuelto) no cuadra con el efectivo de la venta según la tasa aplicable. Revisa los importes o la moneda del vuelto.' }, { status: 422 });
+    }
+    // REVISIÓN FINAL v2.24.1 (F4): bloqueo del vuelto NO registrable —
+    // sobrepago sin liquidación (el cambio físico quedaría sin registrar y el
+    // libro sobreestimaría el efectivo disponible).
+    if (msg.includes('ERR_OVERPAYMENT_UNREGISTERED_CHANGE')) {
+      return NextResponse.json({ error: 'El importe recibido excede el total de la venta y sin liquidación de vuelto el cambio entregado no quedaría registrado. Ajusta el desglose a importes exactos o registra el cobro con su vuelto (cobro simple en efectivo).' }, { status: 422 });
+    }
+    if (msg.includes('ERR_CASH_SETTLEMENT_NOT_APPLICABLE')) {
+      return NextResponse.json({ error: 'La venta no tiene componente en efectivo: no aplica liquidación de vuelto.' }, { status: 422 });
+    }
+    if (msg.includes('ERR_CASH_SETTLEMENT_INVALID')) {
+      return NextResponse.json({ error: 'Liquidación del cobro inválida: importes negativos o moneda de vuelto no admitida (CUP/USD).' }, { status: 422 });
     }
     if (msg.includes('ERR_UNAUTHORIZED')) {
       return NextResponse.json({ error: 'No autorizado para vender en esta tienda.' }, { status: 403 });

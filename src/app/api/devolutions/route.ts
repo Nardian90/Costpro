@@ -28,6 +28,10 @@ const createSchema = z.object({
   reason: z.string().min(1),
   original_transaction_id: z.string().min(1).optional(),
   payment_method: z.enum(['cash', 'transfer', 'zelle', 'store_credit']).default('cash'),
+  // MISIÓN CAJA v2.24.0: moneda REAL por la que sale el dinero del reembolso
+  // (v2.24 añade p_refund_currency al RPC; el reembolso en USD registra la
+  // fila PT en USD con tasa servidor — ya no hardcodeada CUP×1.0).
+  refund_currency: z.enum(['CUP', 'USD']).default('CUP'),
   customer_id: z.string().min(1).optional(),
   customer_name: z.string().optional(),
   notes: z.string().optional(),
@@ -35,6 +39,10 @@ const createSchema = z.object({
   // El RPC create_devolution_v2 ya la soporta (migración 20261004120001,
   // p_operation_date DEFAULT NULL) — paridad con /api/pos/checkout.
   operation_date: z.string().datetime().optional(),
+  // REVISIÓN FINAL v2.24.1: idempotencia cooperativa — el cliente envía una
+  // clave estable por intento de envío (UI). Si falta, se mintea (retro-compat);
+  // el RPC v2.24.1 compara hash del payload ante claves repetidas.
+  idempotency_key: z.string().min(8).max(128).optional(),
 });
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -102,8 +110,14 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_customer_id: parsed.data.customer_id || null,
     p_customer_name: parsed.data.customer_name || null,
     p_notes: parsed.data.notes || null,
-    p_idempotency_key: `dev-${crypto.randomUUID()}`,
+    // REVISIÓN FINAL v2.24.1: respetar la clave del cliente cuando llega
+    // (reintentos del mismo envío reutilizan clave → el RPC devuelve la
+    // devolución original o conflicto explícito, nunca duplica reembolso).
+    p_idempotency_key: parsed.data.idempotency_key || `dev-${crypto.randomUUID()}`,
     p_operation_date: parsed.data.operation_date ?? null, // ENERVIDA import: paridad con checkout
+    // MISIÓN CAJA v2.24.0: moneda real del reembolso (CUP por defecto —
+    // paridad total con las llamadas previas de 11 args).
+    p_refund_currency: parsed.data.refund_currency || 'CUP',
   };
 
   const { data, error } = await supabase.rpc('create_devolution_v2', rpcParams);
