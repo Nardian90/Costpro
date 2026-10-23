@@ -65,9 +65,10 @@ vi.mock('@/lib/auth-middleware', () => ({
   AuthenticatedSession: {},
 }));
 
-vi.mock('@/lib/whatsapp/baileys-client', () => ({
+// CP-INFRA-002b (2026-10-23): baileys-client retirado del runtime; las rutas
+// usan session-info (stub puro sin Baileys).
+vi.mock('@/lib/whatsapp/session-info', () => ({
   getSessionInfo: vi.fn(() => ({ status: 'disconnected', qrCode: null })),
-  connectStore: vi.fn(),
   disconnectStore: vi.fn(),
   getSocket: vi.fn(() => null),
 }));
@@ -98,15 +99,7 @@ vi.mock('@/lib/whatsapp/anti-ban', () => ({
   LIMITS: { maxInvitationsPerDay: 20 },
 }));
 
-// Mock baileys + boom para que baileys-client.ts cargue sin errores
-vi.mock('@whiskeysockets/baileys', () => ({
-  makeWASocket: vi.fn(),
-  useMultiFileAuthState: vi.fn(),
-  fetchLatestBaileysVersion: vi.fn(),
-  DisconnectReason: { loggedOut: 401 },
-}));
-
-vi.mock('@hapi/boom', () => ({ Boom: class {} }));
+// CP-INFRA-002b: mocks de @whiskeysockets/baileys y @hapi/boom eliminados — los paquetes ya no existen.
 
 vi.mock('@/lib/whatsapp/invitation-queue', () => ({
   registerStore: vi.fn(),
@@ -168,90 +161,12 @@ describe('Fase 5: Realtime Socket.io', () => {
     });
   });
 
-  describe('handlers.ts emite eventos en los puntos correctos', () => {
-    it('handleIncomingMessage emite message_incoming + typing + typing_stop + message_outgoing', async () => {
-      // Importar después de resetModules para obtener mocks frescos
-      const { emitMessage, emitTyping, emitToStore } = await import('@/lib/whatsapp/realtime-server');
-      const { handleIncomingMessage } = await import('@/lib/whatsapp/handlers');
-
-      // Construir un WAMessage mínimo
-      const fakeMessage = {
-        key: {
-          remoteJid: '5312345678@s.whatsapp.net',
-          fromMe: false,
-        },
-        message: {
-          conversation: 'Hola, ¿tienen productos disponibles?',
-        },
-        pushName: 'Cliente Test',
-      };
-
-      const fakeCtx = {
-        storeId: STORE_A,
-        sock: {
-          user: { id: 'bot@s.whatsapp.net' },
-          sendMessage: vi.fn().mockResolvedValue(undefined),
-        },
-      } as any;
-
-      await handleIncomingMessage(fakeCtx, fakeMessage as any);
-
-      // message_incoming emitido al guardar mensaje entrante
-      expect(vi.mocked(emitMessage)).toHaveBeenCalledWith(
-        STORE_A,
-        'incoming',
-        expect.objectContaining({
-          contact_id: 'test-contact-001',
-          phone_number: '5312345678',
-          content: 'Hola, ¿tienen productos disponibles?',
-          sender_name: 'Cliente Test',
-        })
-      );
-
-      // typing emitido antes de generar respuesta
-      expect(vi.mocked(emitTyping)).toHaveBeenCalledWith(STORE_A, 'test-contact-001', '5312345678');
-
-      // typing_stop emitido después de generar respuesta
-      expect(vi.mocked(emitToStore)).toHaveBeenCalledWith(
-        STORE_A,
-        'typing_stop',
-        expect.objectContaining({
-          phone_number: '5312345678',
-        })
-      );
-
-      // message_outgoing emitido al guardar respuesta saliente
-      expect(vi.mocked(emitMessage)).toHaveBeenCalledWith(
-        STORE_A,
-        'outgoing',
-        expect.objectContaining({
-          phone_number: '5312345678',
-          tokens_used: 50,
-        })
-      );
-    });
-
-    it('handleIncomingMessage NO emite nada si el mensaje es propio (fromMe=true)', async () => {
-      const { emitMessage, emitTyping } = await import('@/lib/whatsapp/realtime-server');
-      const { handleIncomingMessage } = await import('@/lib/whatsapp/handlers');
-
-      const fakeMessage = {
-        key: {
-          remoteJid: '5312345678@s.whatsapp.net',
-          fromMe: true, // ← mensaje propio, debe ser ignorado
-        },
-        message: { conversation: 'Hola' },
-      };
-
-      const fakeCtx = {
-        storeId: STORE_A,
-        sock: { user: { id: 'bot@s.whatsapp.net' } },
-      } as any;
-
-      await handleIncomingMessage(fakeCtx, fakeMessage as any);
-
-      expect(vi.mocked(emitMessage)).not.toHaveBeenCalled();
-      expect(vi.mocked(emitTyping)).not.toHaveBeenCalled();
+  describe('CP-INFRA-002b: handlers.ts retirado junto con Baileys', () => {
+    it('el archivo ya no existe en el runtime (reactivación: git revert)', async () => {
+      const fs = await import('fs');
+      const path = await import('path');
+      expect(fs.existsSync(path.resolve(process.cwd(), 'src/lib/whatsapp/handlers.ts'))).toBe(false);
+      expect(fs.existsSync(path.resolve(process.cwd(), 'src/lib/whatsapp/baileys-client.ts'))).toBe(false);
     });
   });
 
@@ -289,29 +204,14 @@ describe('Fase 5: Realtime Socket.io', () => {
     });
   });
 
-  describe('baileys-client.ts emite connection_status en cambios', () => {
-    it('disconnectStore emite connection_status: disconnected', async () => {
-      // Verificación estática: el source de baileys-client.ts invoca emitToStore
-      // con status: 'disconnected' dentro de disconnectStore. Hacemos la
-      // verificación leyendo el source en vez de cargar el módulo (que tiene
-      // muchas dependencias transitivas que complican el setup del mock).
+  describe('CP-INFRA-002b: el paquete @whiskeysockets/baileys no está instalado', () => {
+    it('package.json no declara la dependencia', async () => {
       const fs = await import('fs');
       const path = await import('path');
-      const src = fs.readFileSync(
-        path.resolve(process.cwd(), 'src/lib/whatsapp/baileys-client.ts'),
-        'utf-8'
-      );
-
-      // Verificar que disconnectStore invoca emitToStore con status: 'disconnected'
-      const disconnectMatch = src.match(/export function disconnectStore[\s\S]+?^}/m);
-      expect(disconnectMatch).toBeTruthy();
-      const disconnectBlock = disconnectMatch![0];
-      expect(disconnectBlock).toContain("emitToStore(storeId, 'connection_status'");
-      expect(disconnectBlock).toContain("status: 'disconnected'");
-
-      // Verificar que connection.update (open) también emite
-      expect(src).toContain("emitToStore(storeId, 'connection_status'");
-      expect(src).toContain("status: 'connected'");
+      const pkg = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf-8'));
+      const all = { ...pkg.dependencies, ...pkg.devDependencies };
+      expect(all['@whiskeysockets/baileys']).toBeUndefined();
+      expect(all['@hapi/boom']).toBeUndefined();
     });
   });
 });

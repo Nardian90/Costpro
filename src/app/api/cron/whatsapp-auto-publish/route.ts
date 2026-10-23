@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { publishProductToWhatsApp } from '@/lib/whatsapp/publish';
 import { verifyCronAuthorization } from '@/lib/cron-auth';
 import { logger } from '@/lib/logger';
+import { WHATSAPP_AUTOPUBLISH_ENABLED } from '@/lib/messaging-flags';
 
 /**
  * GET /api/cron/whatsapp-auto-publish
@@ -34,6 +35,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       { error: 'Unauthorized', hint: 'Incluye Authorization: Bearer <CRON_SECRET>, o usa x-vercel-signature JWT (con VERCEL_PROJECT_ID configurado)' },
       { status: 401 },
+    );
+  }
+
+  // CP-INFRA-002 (2026-10-23): desconexión reversible — la publicación automática
+  // de WhatsApp está desactivada. El cron de vercel.json fue retirado en este
+  // mismo commit y los pollers pm2 quedan comentados. Reactivación:
+  // WHATSAPP_AUTOPUBLISH_ENABLED=true (docs/CP-INFRA-002-REACTIVACION.md).
+  if (!WHATSAPP_AUTOPUBLISH_ENABLED) {
+    logger.info('DATABASE', 'WA_CRON_SKIPPED_DISABLED', { module: 'whatsapp' });
+    return NextResponse.json(
+      { status: 'disabled', reason: 'WhatsApp auto-publish desconectado (CP-INFRA-002). Reactivar con WHATSAPP_AUTOPUBLISH_ENABLED=true.' },
+      { status: 200 },
     );
   }
 

@@ -1,20 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/pick3/sync",
-      "schedule": "0 6 * * *"
-    },
-    {
       "path": "/api/cron/purge-snapshots",
       "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/telegram-auto-publish",
-      "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/cron/whatsapp-auto-publish",
-      "schedule": "0 9 * * *"
     }
   ],
   "functions": {

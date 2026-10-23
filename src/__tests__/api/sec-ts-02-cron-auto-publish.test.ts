@@ -4,6 +4,23 @@ import { GET as GET_TG } from '@/app/api/cron/telegram-auto-publish/route';
 import { verifyCronAuthorization } from '@/lib/cron-auth';
 
 /**
+ * CP-INFRA-002: las rutas cron de auto-publicación llevan una compuerta reversible
+ * (src/lib/messaging-flags.ts, default false = desconectado). Para seguir probando
+ * el CONTRATO DE SEGURIDAD de la ruta completa, los tests de SEC-TS-02 habilitan
+ * las banderas via mock mutable; un describe propio verifica la compuerta.
+ */
+const messagingFlags = vi.hoisted(() => ({
+  WHATSAPP_AUTOPUBLISH_ENABLED: true,
+  TELEGRAM_AUTOPUBLISH_ENABLED: true,
+}));
+vi.mock('@/lib/messaging-flags', () => ({
+  get WHATSAPP_AUTOPUBLISH_ENABLED() { return messagingFlags.WHATSAPP_AUTOPUBLISH_ENABLED; },
+  get TELEGRAM_AUTOPUBLISH_ENABLED() { return messagingFlags.TELEGRAM_AUTOPUBLISH_ENABLED; },
+  WHATSAPP_SESSIONS_ENABLED: false,
+  MESSAGING_REALTIME_ENABLED: false,
+}));
+
+/**
  * SEC-TS-02 · H3/H4 — GET /api/cron/{whatsapp,telegram}-auto-publish
  *
  * Antes: GET SIN ninguna autenticación → cualquier anónimo disparaba la
@@ -82,6 +99,11 @@ beforeEach(() => {
   jwtVerifyMock.mockReset();
   delete process.env.CRON_SECRET;
   delete process.env.VERCEL_PROJECT_ID;
+  // CP-INFRA-002: banderas de auto-publicación HABILITADAS para los tests de
+  // contrato de seguridad de la ruta completa (el default del producto es
+  // desconectado; se verifica en el describe de CP-INFRA-002 al final).
+  messagingFlags.WHATSAPP_AUTOPUBLISH_ENABLED = true;
+  messagingFlags.TELEGRAM_AUTOPUBLISH_ENABLED = true;
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key';
   db.waConfigs = [
@@ -259,3 +281,41 @@ describe.each([
     });
   },
 );
+
+describe('CP-INFRA-002 · Desconexión reversible de auto-publicación (default del producto)', () => {
+  // El estado REAL desplegado: banderas false. La compuerta debe:
+  //   1. NO ejecutar publish (ninguna tienda tocada).
+  //   2. Responder 200 {"status":"disabled"} (idempotente, sin datos de tienda).
+  //   3. La AUTENTICACIÓN fail-closed SIGUE DELANTE de la compuerta.
+  it('WHATSAPP: bandera false + secret correcto → 200 disabled, publish NUNCA invocado', async () => {
+    messagingFlags.WHATSAPP_AUTOPUBLISH_ENABLED = false;
+    process.env.CRON_SECRET = 'sekret';
+    const res = await GET_WA(makeGetReq({ authorization: 'Bearer sekret' }));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.status).toBe('disabled');
+    expect(waPublish).not.toHaveBeenCalled();
+  });
+
+  it('WHATSAPP: bandera false + SIN secret → 401 (fail-closed se conserva por delante de la compuerta)', async () => {
+    messagingFlags.WHATSAPP_AUTOPUBLISH_ENABLED = false;
+    const res = await GET_WA(makeGetReq());
+    expect(res.status).toBe(401);
+  });
+
+  it('TELEGRAM: bandera false + secret correcto → 200 disabled, publish NUNCA invocado', async () => {
+    messagingFlags.TELEGRAM_AUTOPUBLISH_ENABLED = false;
+    process.env.CRON_SECRET = 'sekret';
+    const res = await GET_TG(makeGetReq({ authorization: 'Bearer sekret' }));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.status).toBe('disabled');
+    expect(tgPublish).not.toHaveBeenCalled();
+  });
+
+  it('TELEGRAM: bandera false + SIN secret → 401 (fail-closed se conserva)', async () => {
+    messagingFlags.TELEGRAM_AUTOPUBLISH_ENABLED = false;
+    const res = await GET_TG(makeGetReq());
+    expect(res.status).toBe(401);
+  });
+});

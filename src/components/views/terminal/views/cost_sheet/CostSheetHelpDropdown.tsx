@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { HelpCircle, LifeBuoy, GraduationCap, ChevronDown } from 'lucide-react';
+import { HelpCircle, LifeBuoy, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,16 +10,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { useTranslations } from 'next-intl';
+// CP-INFRA-002b (2026-10-23): entrada «Academia» retirada junto con el módulo
+// Academia (onOpenAcademy eliminado). Reactivación: git revert de esta misión.
 interface CostSheetHelpDropdownProps {
   onOpenViewHelp: () => void;
   onOpenSystemHelp: () => void;
-  onOpenAcademy: () => void;
 }
 
 export function CostSheetHelpDropdown({
   onOpenViewHelp,
   onOpenSystemHelp,
-  onOpenAcademy,
 }: CostSheetHelpDropdownProps) {
   const t = useTranslations('costSheet');
   return (
@@ -46,10 +46,6 @@ export function CostSheetHelpDropdown({
         <DropdownMenuItem onClick={onOpenSystemHelp} className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
           <LifeBuoy className="w-4 h-4 text-muted-foreground" />
           <span className="text-xs font-black uppercase tracking-widest">Ayuda del sistema</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onOpenAcademy} className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
-          <GraduationCap className="w-4 h-4 text-muted-foreground" />
-          <span className="text-xs font-black uppercase tracking-widest">Academia</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
       { source: '/wiki', destination: '/?view=wiki', permanent: false },
       { source: '/cost-sheets', destination: '/?view=cost-sheets', permanent: false },
       { source: '/system/health', destination: '/?view=health', permanent: false },
-      { source: '/pick3', destination: '/?view=pick3-intelligence', permanent: false },
+      // CP-INFRA-002: redirect /pick3 retirado junto con la vista (módulo fuera del producto activo).
       { source: '/cashier/close-session', destination: '/?view=cash', permanent: false },
     ];
   },
@@ -50,18 +50,29 @@ const nextConfig: NextConfig = {
     '127.0.0.1',
     '0.0.0.0',
   ],
+  // CP-INFRA-002b (2026-10-23): paquetes OTel, @whiskeysockets/baileys y
+  // @hapi/boom retirados de serverExternalPackages junto con sus dependencias
+  // (eliminadas de package.json — ya no deben trazearse en ningún bundle).
   serverExternalPackages: [
-    '@opentelemetry/api',
-    '@opentelemetry/sdk-node',
-    '@opentelemetry/resources',
-    '@opentelemetry/sdk-trace-base',
-    '@opentelemetry/semantic-conventions',
     '@google/generative-ai',
     'z-ai-web-dev-sdk',
-    '@whiskeysockets/baileys',
-    '@hapi/boom',
     'crypto-js', // FIX-TRM (2026-07-05): evitar que Turbopack intente bundlear crypto-js
   ],
+  // CP-INFRA-002b (2026-10-23): file tracing PRECISO para las rutas que leen
+  // archivos en runtime con process.cwd() + paths dinámicos (readdirSync).
+  // Los accesos dinámicos no siempre son resolubles por el tracer; estos
+  // includes garantizan que cada ruta reciba EXACTAMENTE los directorios que
+  // lee (knowledge/, docs/knowledge/, data/) — sin exclusiones globales.
+  // No se usa outputFileTracingExcludes: ningún directorio trazado resulta
+  // innecesario para la ruta que lo lee.
+  outputFileTracingIncludes: {
+    '/api/help-docs': ['./knowledge/help/**'],
+    '/api/system-health': ['./knowledge/**', './data/**', './public/architecture_audit.json', './docs/automation/**'],
+    '/api/system-health/knowledge': ['./knowledge/**', './public/system_architecture.json'],
+    '/api/intelligence': ['./knowledge/**', './docs/architecture_audit.json'],
+    '/api/bot/chat': ['./docs/knowledge/**', './knowledge/help/**'],
+    '/api/legal/retention': ['./data/**'],
+  },
   images: {
     // FIX CALIDAD (2026-10-06, feat/landing-product-demo): Next 16 restringe
     // los valores de `quality` por imagen a esta lista (default [75]). Las

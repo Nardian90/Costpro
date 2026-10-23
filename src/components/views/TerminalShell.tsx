@@ -97,8 +97,8 @@ const TelegramConversationsView = dynamic(() => import('@/components/views/termi
 const TelegramInvitationsView = dynamic(() => import('@/components/views/terminal/views/telegram/TelegramInvitationsView'), { ssr: false });
 const TelegramDashboardView = dynamic(() => import('@/components/views/terminal/views/telegram/TelegramDashboardView'), { ssr: false });
 const TelegramGroupView = dynamic(() => import('@/components/views/terminal/views/telegram/TelegramGroupView'), { ssr: false });
-const Pick3IntelligenceView = dynamic(() => import('@/components/views/terminal/views/pick3/Pick3IntelligenceView'), { ssr: false });
-const WalletView = dynamic(() => import('@/components/views/terminal/views/wallet/WalletView'), { ssr: false });
+// CP-INFRA-002: Pick3IntelligenceView y WalletView retirados del producto activo
+// (reactivación: restaurar import dinámico + case en renderView).
 const POSView = dynamic(() => import('@/components/views/terminal/views/pos/POSView'), { ssr: false });
 const SalesHistoryView = dynamic(() => import('@/components/views/terminal/views/sales/SalesHistoryView'), { ssr: false });
 const UsersManagementView = dynamic(() => import('@/components/views/terminal/views/users/UsersManagementView'), { ssr: false });
@@ -113,7 +113,7 @@ const ReportsView = dynamic(() => import('@/components/views/terminal/views/repo
 const ExchangeIntelligenceView = dynamic(() => import('@/components/views/terminal/views/exchange_intelligence/ExchangeIntelligenceView'), { ssr: false });
 const ReceivedServicesView = dynamic(() => import('@/components/views/terminal/views/received_services/ReceivedServicesView'), { ssr: false });
 const IPVView = dynamic(() => import('@/components/views/terminal/views/ipv/IPVView'), { ssr: false });
-const AcademyView = dynamic(() => import('@/components/views/terminal/views/academy/AcademyView'), { ssr: false });
+// CP-INFRA-002b (2026-10-23): AcademyView retirado junto con el módulo Academia.
 const InventoryAdjustmentsView = dynamic(() => import('@/components/views/terminal/views/inventory/InventoryAdjustmentsView'), { ssr: false });
 const PhysicalInventoryView = dynamic(() => import('@/components/views/terminal/views/physical_inventory/PhysicalInventoryView'), { ssr: false });
 const ValesSalidaView = dynamic(() => import('@/components/views/terminal/views/inventory/ValesSalidaView'), { ssr: false });
@@ -165,11 +165,10 @@ const DevolutionsView = dynamic(() => import('@/components/views/terminal/views/
 const CustomersView = dynamic(() => import('@/components/views/terminal/views/customers/CustomersView').then(m => ({ default: m.CustomersView })), { ssr: false });
 const QuotationsView = dynamic(() => import('@/components/views/terminal/views/quotations/QuotationsView').then(m => ({ default: m.QuotationsView })), { ssr: false });
 const FiscalCloseView = dynamic(() => import('@/components/views/terminal/views/fiscal_close/FiscalCloseView').then(m => ({ default: m.FiscalCloseView })), { ssr: false });
-// V2.0: Lotes, Almacenes, ABC, Conciliación Bancaria
+// V2.0: Lotes, Almacenes, ABC (CP-INFRA-002: BankReconciliationView retirado del producto activo)
 const LotsView = dynamic(() => import('@/components/views/terminal/views/lots/LotsView').then(m => ({ default: m.LotsView })), { ssr: false });
 const WarehousesView = dynamic(() => import('@/components/views/terminal/views/warehouses/WarehousesView').then(m => ({ default: m.WarehousesView })), { ssr: false });
 const ABCView = dynamic(() => import('@/components/views/terminal/views/abc_analysis/ABCView').then(m => ({ default: m.ABCView })), { ssr: false });
-const BankReconciliationView = dynamic(() => import('@/components/views/terminal/views/bank_reconciliation/BankReconciliationView').then(m => ({ default: m.BankReconciliationView })), { ssr: false });
 const CreateProductModal = dynamic(() => import('@/components/modals/CreateProductModal').then(m => m.CreateProductModal), { ssr: false });
 const CommandPalette = dynamic(() => import('@/components/ui/CommandPalette').then(m => m.CommandPalette), { ssr: false });
 const SyncConflictModal = dynamic(() => import('@/components/modals/SyncConflictModal').then(m => m.SyncConflictModal), { ssr: false });
@@ -214,7 +213,7 @@ export default function TerminalShell() {
   const { getNextStore, getPrevStore } = useRecentStores();
   // F5-T03: swipe horizontal para cambiar entre tiendas recientes
   // Solo en mobile y en rutas operativas (no en config/admin)
-  const isOperationalRoute = !['stores', 'users', 'roles', 'health', 'audit', 'settings', 'help', 'wiki', 'academy', 'legal'].includes(currentView);
+  const isOperationalRoute = !['stores', 'users', 'roles', 'health', 'audit', 'settings', 'help', 'wiki', 'legal'].includes(currentView);
   useSwipeNavigation({
     onSwipeLeft: async () => {
       const nextId = getNextStore(user?.activeStoreId);
@@ -484,8 +483,6 @@ export default function TerminalShell() {
         // componente que Gestión de Tiendas abre por tarjeta. El Panel de
         // Control queda solo como widget embebido del Inicio.
         case 'store-dashboard': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
-        case 'pick3-intelligence': return <ViewErrorBoundary viewName="Gestor de Riesgo"><Pick3IntelligenceView /></ViewErrorBoundary>;
-        case 'wallet': return <ViewErrorBoundary viewName="Wallet"><WalletView /></ViewErrorBoundary>;
         case 'pos': return <ViewErrorBoundary viewName="Vender"><POSView /></ViewErrorBoundary>;
         case 'sales_catalog': return <ViewErrorBoundary viewName="Tabla de Venta"><SalesCatalogView /></ViewErrorBoundary>;
         case 'sales': return <ViewErrorBoundary viewName="Historial de Ventas"><SalesHistoryView /></ViewErrorBoundary>;
@@ -501,7 +498,6 @@ export default function TerminalShell() {
         case 'exchange-intelligence': return <ViewErrorBoundary viewName="Inteligencia Cambiaria"><ExchangeIntelligenceView /></ViewErrorBoundary>;
         case 'received-services': return <ViewErrorBoundary viewName="Servicios Recibidos"><ReceivedServicesView /></ViewErrorBoundary>;
         case 'ipv': return <ViewErrorBoundary viewName="IPV"><IPVView /></ViewErrorBoundary>;
-        case 'academy': return <ViewErrorBoundary viewName="Academia"><AcademyView /></ViewErrorBoundary>;
         case 'inventory_adjustments': return <ViewErrorBoundary viewName="Ajustes de Inventario"><InventoryAdjustmentsView /></ViewErrorBoundary>;
         // MÓDULO DE INVENTARIO FÍSICO (misión 2026-10-23): conteos por tienda y
         // fecha de corte, hojas PDF (con teóricas o ciegas), importación Excel,
@@ -600,11 +596,10 @@ export default function TerminalShell() {
         case 'customers': return <ViewErrorBoundary viewName="Clientes"><CustomersView /></ViewErrorBoundary>;
         case 'quotations': return <ViewErrorBoundary viewName="Cotizaciones"><QuotationsView /></ViewErrorBoundary>;
         case 'fiscal-close': return <ViewErrorBoundary viewName="Cierre Fiscal"><FiscalCloseView /></ViewErrorBoundary>;
-        // V2.0: Lotes, Almacenes, ABC, Conciliación Bancaria
+        // V2.0: Lotes, Almacenes, ABC (CP-INFRA-002: Conciliación Bancaria retirada)
         case 'lots': return <ViewErrorBoundary viewName="Lotes"><LotsView /></ViewErrorBoundary>;
         case 'warehouses': return <ViewErrorBoundary viewName="Almacenes"><WarehousesView /></ViewErrorBoundary>;
         case 'abc-analysis': return <ViewErrorBoundary viewName="ABC"><ABCView /></ViewErrorBoundary>;
-        case 'bank-reconciliation': return <ViewErrorBoundary viewName="Conciliación"><BankReconciliationView /></ViewErrorBoundary>;
         case 'costeo-dinamico': return <ViewErrorBoundary viewName="Costeo Dinámico"><CosteoDinamicoView /></ViewErrorBoundary>;
         case 'estructura-costo': return <ViewErrorBoundary viewName="Estructura de Costo"><EstructuraCostoView /></ViewErrorBoundary>;
         case 'whatsapp-config': return <ViewErrorBoundary viewName="WhatsApp Config"><WhatsAppConfigView /></ViewErrorBoundary>;

@@ -6,7 +6,7 @@ import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
 import { supabase } from '@/lib/supabaseClient';
 import { getRiskState } from '@/lib/whatsapp/anti-ban';
-import { getSessionInfo } from '@/lib/whatsapp/baileys-client';
+import { getSessionInfo } from '@/lib/whatsapp/session-info'; // CP-INFRA-002b: sin Baileys
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const { allowed } = await rateLimit(`wa:metrics:${session.user.id}`, { windowMs: 60_000, maxRequests: 30 });

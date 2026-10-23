@@ -30,7 +30,7 @@ import {
   type ProductPresentationInput,
   type TelegramShowPrice,
 } from '@/lib/storefront/product-presentation';
-import { getSocket } from '@/lib/whatsapp/baileys-client';
+import { getSocket } from '@/lib/whatsapp/session-info'; // CP-INFRA-002b: stub sin Baileys (null → reason 'no_session')
 import { canInviteNow } from '@/lib/whatsapp/anti-ban';
 import { logger } from '@/lib/logger';
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { canManageStore } from '@/lib/roles';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
-import { getSessionInfo, getSocket } from '@/lib/whatsapp/baileys-client';
+import { getSessionInfo, getSocket } from '@/lib/whatsapp/session-info'; // CP-INFRA-002b: sin Baileys
 
 /**
  * GET /api/whatsapp/health?store_id=UUID

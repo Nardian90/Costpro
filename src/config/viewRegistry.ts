@@ -43,12 +43,6 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["view_kpis", "refresh_data", "generate_oc"]
   },
   {
-    id: "wallet",
-    route: "/?view=wallet",
-    description: "Billetera digital para el control de finanzas personales y empresariales, con importación de SMS.",
-    actions: ["import_sms", "view_analytics", "export_backup"]
-  },
-  {
     id: "cost-sheets",
     route: "/?view=cost-sheets",
     description: "Gestión de fichas de costo para productos procesados y servicios.",
@@ -143,12 +137,6 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     route: "/?view=reports",
     description: "Generación de reportes avanzados y analítica de datos.",
     actions: ["generate_custom_report"]
-  },
-  {
-    id: "academy",
-    route: "/?view=academy",
-    description: "Academia de capacitación y aprendizaje para el personal.",
-    actions: ["start_lesson", "view_progress"]
   },
   {
     id: "wiki",

@@ -170,12 +170,16 @@ jobs:
           try:
               r = json.load(open('test-results/report.json'))
               s = r.get('stats', {})
-              print(f"Resumen E2E: total={s.get('total')} passed={s.get('expected')} flaky={s.get('unexpected')} skipped={s.get('skipped')} failed={s.get('unexpected', 0) + s.get('expectedFailed', 0)}")
-              for suite in r.get('suites', []):
+              print(f"Resumen E2E: total={s.get('total')} passed={s.get('expected')} failed={s.get('unexpected', 0) + s.get('expectedFailed', 0)} flaky={s.get('flaky', 0)} skipped={s.get('skipped')}")
+              def walk(suite):
                   for spec in suite.get('specs', []):
-                      for t in spec.get('tests', []):
-                          status = t.get('status', t.get('results', [{}])[0].get('status', '?'))
-                          print(f"  {status.upper():8s} {spec.get('title', '?')[:100]}")
+                      tests = spec.get('tests', [])
+                      status = tests[0].get('status', '?') if tests else '?'
+                      print(f"  {status.upper():10s} {spec.get('title', '?')[:100]}")
+                  for sub in suite.get('suites', []):
+                      walk(sub)
+              for suite in r.get('suites', []):
+                  walk(suite)
           except Exception as e:
               print('No se pudo parsear test-results/report.json:', e)
           PY

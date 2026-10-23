@@ -121,17 +121,7 @@ export const reportsGenerateSchema = z.object({
   options: z.record(z.string(), z.unknown()).optional(),
 });
 
-// ─── Academy ─────────────────────────────────────────────────────────────────
-export const academyGenerateSchema = z.object({
-  filename: z.string().min(1).max(200),
-  limit: z.number().int().min(1).max(20).optional().default(3),
-  aiProvider: z.string().min(1).max(50),
-  aiApiKey: z.string().optional(),
-});
-
-export const academyReviewSchema = z.object({
-  score: z.number().int().min(0).max(5),
-});
+// CP-INFRA-002b (2026-10-23): schemas de Academy retirados junto con /api/academy/*.
 
 // ─── Logs ─────────────────────────────────────────────────────────────────────
 export const logsSchema = z.object({
@@ -457,70 +447,10 @@ export function zodError(errors: z.ZodError) {
   };
 }
 
-// ─── Wallet Import Excel (SEC-TS-03 · H7) ────────────────────────────────────
-//
-// Body de POST /api/wallet/import-excel: { content: "<base64 del .xlsx>" }.
-// Límite elegido: 10 MiB de base64 (≈ 7.5 MiB de xlsx decodificado).
-// Coherencia del límite:
-//   - Flujo real del cliente (WalletView): convierte con
-//     btoa(String.fromCharCode(...new Uint8Array(buf))) — el spread limita
-//     de facto los archivos legítimos a bien menos de 1 MiB.
-//   - Round-trip con /api/wallet/export (motivo de existencia del endpoint,
-//     FIX-IMPORT-EXCEL): el export escribe TODAS las transacciones del
-//     usuario; wallets reales (cientos a miles de filas) ocupan KB–pocos MB.
-//     10 MiB da margen de un orden de magnitud sin romper el flujo legítimo.
-//   - Payload HTTP: la App Router no impone body-size-limit en route
-//     handlers, y el deploy real (Docker persistente) no tiene tope de
-//     plataforma — este límite ES el tope real de memoria por request
-//     (en Vercel, el body ya está acotado a 4.5 MB por la plataforma).
-//   - Alfabeto base64 estricto (btoa no produce espacios/newlines): el
-//     tamaño decodificado queda acotado por el tamaño del string
-//     (≤ 3/4 × 10 MiB), SIN depender de Content-Length (que puede faltar
-//     o ser mentira). La ruta añade un rechazo temprano por Content-Length
-//     declarado como mera optimización, no como barrera única.
-export const WALLET_EXCEL_MAX_BASE64_CHARS = 10 * 1024 * 1024; // 10 MiB de base64
-
-export const walletImportExcelSchema = z.object({
-  content: z.string()
-    .min(1, 'El contenido del archivo Excel es requerido (base64)')
-    .regex(
-      /^[A-Za-z0-9+/=]+$/,
-      'El contenido debe ser base64 válido (sin espacios ni newlines)'
-    )
-    .max(WALLET_EXCEL_MAX_BASE64_CHARS, 'El archivo excede el límite de 10 MiB'),
-});
-
-// ─── Wallet Import TRM (SEC-TS-04) ───────────────────────────────────────────
-//
-// Body de POST /api/wallet/import-trm: { content: "<texto crudo del .trm>" }.
-// El cliente legítimo (WalletView) envía el texto del archivo tal cual
-// (file.text()): 128 hex (H1) + 128 hex (H2) + base64 (C), con saltos de línea
-// opcionales (validateTrmBackup los elimina).
-// Límite elegido: 10 MiB de texto crudo. Coherencia del valor:
-//   - Backups reales (evidencia del propio módulo transfermovil.ts): ~17,000
-//     filas RecordSMS ≈ 1.5–2.5 MiB de JSON plano → ~2–3.3 MiB de ciphertext
-//     base64. 10 MiB da margen 3–5× sin romper el flujo legítimo.
-//   - Paridad de dominio: mismo tope 10 MiB que WALLET_EXCEL_MAX_BASE64_CHARS.
-//   - La App Router no impone body-size-limit en route handlers y el deploy
-//     Docker no tiene tope de plataforma — este límite ES el tope real de
-//     memoria por request (en Vercel, el body ya está acotado a 4.5 MB).
-//   - Antes de este tope no existía NINGÚN límite: el body se bufferizaba
-//     (req.json()), se descifraba por AES el ciphertext completo, JSON.parse
-//     materializaba el árbol, y decryptAllFields lo recorría recursivamente
-//     duplicándolo — amplificación de memoria/CPU/DB sin cota (SEC-TS-04).
-//   - El formato estructural del .trm lo sigue validando validateTrmFormat
-//     (transfermovil.ts) DESPUÉS del schema: H1/H2 hex + C base64 + múltiplo
-//     de 16. El schema NO duplica esa lógica: su trabajo de seguridad es
-//     acotar tamaño/tipo ANTES de descifrar.
-//   - Content-Length: la ruta añade rechazo temprano del declarado como mera
-//     optimización, no como barrera (puede faltar o ser mentira).
-export const WALLET_TRM_MAX_CHARS = 10 * 1024 * 1024; // 10 MiB de texto .trm
-
-export const walletImportTrmSchema = z.object({
-  content: z.string()
-    .min(1, 'El contenido del archivo .trm es requerido')
-    .max(WALLET_TRM_MAX_CHARS, 'El archivo excede el límite de 10 MiB'),
-});
+// ─── CP-INFRA-002 (2026-10-23) ─────────────────────────────────────────────
+// Esquemas de wallet (import-excel / import-trm, SEC-TS-03/H7/SEC-TS-04) retirados
+// junto con las rutas /api/wallet/* (módulo Billetera fuera del producto activo).
+// Reactivación: git revert del commit CP-INFRA-002 restaura ambos esquemas.
 
 // ─── Catalog Bulk Import (CP-CAT-005) ────────────────────────────────────────
 //

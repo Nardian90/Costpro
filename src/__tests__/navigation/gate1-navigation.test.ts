@@ -114,8 +114,8 @@ describe('Guard isViewAllowedForRole', () => {
     }
   });
 
-  it('EN DESARROLLO: el trío experimental sigue admin-only (roles por entrada desde fix/navigation-orphaned-development)', () => {
-    for (const view of ['ipv', 'pick3-intelligence', 'wallet']) {
+  it('EN DESARROLLO: IPV sigue admin-only (CP-INFRA-002: pick3 y wallet retirados del producto activo)', () => {
+    for (const view of ['ipv'] as const) {
       expect(isViewAllowedForRole(view, 'manager')).toBe(false);
       expect(isViewAllowedForRole(view, 'admin')).toBe(true);
     }
@@ -151,7 +151,9 @@ describe('Guard isViewAllowedForRole', () => {
     // eran universales. El mandato COSTPRO 4 revoca ese acceso: TODA la
     // sección EN DESARROLLO queda reservada al rol admin (herencia de la
     // sección + refuerzo backend withRole en las APIs exclusivas).
-    const desarrolloViews = ['wiki', 'academy', 'legal', 'bank-reconciliation'];
+    // CP-INFRA-002b (2026-10-23): academy retirado del producto activo — se
+    // verifica explícitamente que YA NO es una vista permitida.
+    const desarrolloViews = ['wiki', 'legal'];
     for (const view of desarrolloViews) {
       expect(isViewAllowedForRole(view, 'admin')).toBe(true);
       for (const role of ['manager', 'encargado', 'clerk', 'usuario', 'warehouse', 'costo']) {
@@ -369,7 +371,7 @@ describe('GATE 1.3 — Vender/Ventas', () => {
 describe('Command Palette por rol', () => {
   it('clerk no ve acciones admin (users, roles, audit, ipv)', () => {
     const ids = getActionsForUser('clerk').map(a => a.id);
-    for (const admin of ['users', 'roles', 'audit', 'health', 'rss_management', 'ipv', 'pick3-intelligence', 'wallet']) {
+    for (const admin of ['users', 'roles', 'audit', 'health', 'rss_management', 'ipv']) {
       expect(ids).not.toContain(admin);
     }
   });
@@ -775,8 +777,10 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
   it('B — En desarrollo contiene las existentes no integradas (orden por madurez, no alfabético)', () => {
     const desarrollo = NAVIGATION_SECTIONS.find(s => s.id === 'desarrollo');
     // 1. experimentales relacionadas · 2. existentes no integradas · 3. incompletas
+    // CP-INFRA-002: pick3-intelligence y wallet retirados del producto activo.
+    // CP-INFRA-002b: academy retirado junto con el módulo Academia.
     expect(desarrollo?.children?.map(c => c.id)).toEqual([
-      'ipv', 'pick3-intelligence', 'wallet', 'wiki', 'academy', 'legal', 'bank-reconciliation',
+      'ipv', 'wiki', 'legal',
     ]);
   });
 
@@ -786,9 +790,12 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
     // Toda vista con componente real en TerminalShell y sin otra vía de
     // descubrimiento documentada (hub, contextual, chat, calculator) debe
     // ser hoja de menú o extensión de palette.
-    for (const orphanCandidate of ['wiki', 'academy', 'legal', 'bank-reconciliation']) {
+    for (const orphanCandidate of ['wiki', 'legal']) {
       expect(menuIds).toContain(orphanCandidate);
     }
+    // CP-INFRA-002b: academy retirado — ya no es vista de menú.
+    expect(menuIds).not.toContain('academy');
+    expect(VALID_VIEWS.has('academy')).toBe(false);
     // El conjunto de "huérfana" (componente + deep-link + sin ubicación) está
     // vacío: toda hoja del menú es única y ninguna queda fuera de ambas vías.
     const classified = new Set([...menuIds, ...paletteIds, ...TECHNICAL_VIEW_IDS]);
@@ -824,13 +831,13 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
   it('D — integridad: ViewType/label/ruta de cada vista trasladada, sin duplicados', () => {
     const menuIds = flattenNavigation().map(l => l.id);
     // Aparecen UNA sola vez (sin duplicados por id).
-    for (const id of ['help', 'wiki', 'academy', 'legal', 'bank-reconciliation', 'ipv', 'pick3-intelligence', 'wallet']) {
+    for (const id of ['help', 'wiki', 'legal', 'ipv']) {
       expect(menuIds.filter(x => x === id)).toHaveLength(1);
     }
     // Ninguna coexiste en otra sección (categoría única).
     const categories = Object.fromEntries(flattenNavigation().map(l => [l.id, l.category]));
     expect(categories['help']).toBe('AYUDA');
-    for (const id of ['wiki', 'academy', 'legal', 'bank-reconciliation', 'ipv', 'pick3-intelligence', 'wallet']) {
+    for (const id of ['wiki', 'legal', 'ipv']) {
       expect(categories[id]).toBe('EN DESARROLLO');
     }
     // Sin duplicados por label en hojas + extensiones.
@@ -840,7 +847,7 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
     ];
     expect(new Set(labels).size).toBe(labels.length);
     // Deep-links intactos (rutas directas, sin tab ni redirección).
-    for (const id of ['help', 'wiki', 'academy', 'legal', 'bank-reconciliation']) {
+    for (const id of ['help', 'wiki', 'legal']) {
       expect(getNavigationRoute(id)).toEqual({ type: 'direct', view: id });
     }
   });
@@ -851,37 +858,42 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
     const clerkTree = filterModulesByRole(SIDEBAR_STRUCTURE, 'clerk');
     expect(clerkTree.find(g => g.id === 'desarrollo')).toBeUndefined();
     expect(clerkTree.find(g => g.id === 'ayuda')?.children?.map(c => c.id)).toEqual(['help']);
-    // admin: las 7 entradas.
+    // admin: las 3 entradas restantes (CP-INFRA-002: pick3, wallet y bank-reconciliation
+    // retirados; CP-INFRA-002b: academy retirado).
     const adminTree = filterModulesByRole(SIDEBAR_STRUCTURE, 'admin');
     expect(adminTree.find(g => g.id === 'desarrollo')?.children?.map(c => c.id)).toEqual([
-      'ipv', 'pick3-intelligence', 'wallet', 'wiki', 'academy', 'legal', 'bank-reconciliation',
+      'ipv', 'wiki', 'legal',
     ]);
   });
 
   it('F — breadcrumbs derivados del árbol (sin sección antigua ni Módulo No Disponible)', () => {
     expect(getBreadcrumbForView('help').map(i => i.label)).toEqual(['AYUDA', 'Centro de Ayuda']);
     expect(getBreadcrumbForView('wiki').map(i => i.label)).toEqual(['EN DESARROLLO', 'Wiki']);
-    expect(getBreadcrumbForView('academy').map(i => i.label)).toEqual(['EN DESARROLLO', 'Academia']);
+    expect(getBreadcrumbForView('academy').map(i => i.label)).not.toEqual(['EN DESARROLLO', 'Academia']);
     expect(getBreadcrumbForView('legal').map(i => i.label)).toEqual(['EN DESARROLLO', 'Marco Legal']);
-    expect(getBreadcrumbForView('bank-reconciliation').map(i => i.label)).toEqual(['EN DESARROLLO', 'Conciliación Bancaria']);
-    for (const view of ['help', 'wiki', 'academy', 'legal', 'bank-reconciliation']) {
+    // CP-INFRA-002b: academy ya no tiene breadcrumb de menú — la vista fue retirada.
+    for (const view of ['help', 'wiki', 'legal']) {
       expect(getBreadcrumbForView(view).some(i => i.label === 'Módulo No Disponible')).toBe(false);
     }
   });
 
   it('G — palette por rol: TODA la sección EN DESARROLLO solo admin (COSTPRO 4)', () => {
     const clerkIds = getActionsForUser('clerk').map(a => a.id);
-    for (const id of ['ipv', 'pick3-intelligence', 'wallet', 'wiki', 'academy', 'legal', 'bank-reconciliation']) {
+    for (const id of ['ipv', 'wiki', 'legal']) {
       expect(clerkIds).not.toContain(id);
     }
     const adminIds = getActionsForUser('admin').map(a => a.id);
-    for (const id of ['ipv', 'pick3-intelligence', 'wallet', 'wiki', 'academy', 'legal', 'bank-reconciliation']) {
+    for (const id of ['ipv', 'wiki', 'legal']) {
       expect(adminIds).toContain(id);
+    }
+    // CP-INFRA-002b: academy ya no es accesible por palette para ningún rol.
+    for (const ids of [clerkIds, adminIds]) {
+      expect(ids).not.toContain('academy');
     }
   });
 
   it('H — sheet móvil derivado: la misma fuente para desktop y móvil (sin listas paralelas)', () => {
-    // Las 7 entradas viven en NAVIGATION_SECTIONS (el sheet móvil las recoge
+    // Las entradas viven en NAVIGATION_SECTIONS (el sheet móvil las recoge
     // por sección; ninguna declara mobileHide).
     const desarrollo = NAVIGATION_SECTIONS.find(s => s.id === 'desarrollo');
     for (const child of desarrollo?.children ?? []) {
@@ -894,23 +906,8 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
   });
 });
 
-describe('FASE B — Conciliación Bancaria: estatus navegacional (actualizado por fix/navigation-orphaned-development)', () => {
-  it('es hoja de menú EN DESARROLLO y comando de palette (huérfana rescatada, mandato de producto)', () => {
-    const ids = getActionsForUser('admin').map(a => a.id);
-    expect(ids).toContain('bank-reconciliation');
-    const menuIds = flattenNavigation().map(l => l.id);
-    expect(menuIds).toContain('bank-reconciliation');
-  });
-
-  it('deep-link funcional con breadcrumb derivado del árbol (sin módulo falso)', () => {
-    const items = getBreadcrumbForView('bank-reconciliation');
-    expect(items.map(i => i.label)).toEqual(['EN DESARROLLO', 'Conciliación Bancaria']);
-    expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
-    // La vista sigue siendo un destino válido (deep-link /case del shell).
-    expect(VALID_VIEWS.has('bank-reconciliation')).toBe(true);
-    expect(getNavigationRoute('bank-reconciliation')).toEqual({ type: 'direct', view: 'bank-reconciliation' });
-  });
-});
+// CP-INFRA-002 (2026-10-23): el describe FASE B de Conciliación Bancaria fue retirado
+// junto con la vista (módulo fuera del producto activo; git revert lo restaura).
 
 describe('FASE B — Palette sin pistas falsas (dispatch por route.view)', () => {
   it('acciones con id ≠ view resuelven el ViewType canónico', () => {
@@ -931,8 +928,9 @@ describe('FASE B — Palette sin pistas falsas (dispatch por route.view)', () =>
     expect(byKeyword('información').map(a => a.id)).toContain('news');
     expect(byKeyword('ofertas').map(a => a.id)).toContain('ofertas');
     expect(byKeyword('clientes').map(a => a.id)).toContain('clientes');
-    // La conciliación es hoy hoja de EN DESARROLLO (huérfana rescatada).
-    expect(byKeyword('conciliación').map(a => a.id)).toContain('bank-reconciliation');
+    // CP-INFRA-002: la búsqueda de «conciliación» ya no listará bank-reconciliation
+    // (vista retirada); IPV sigue cubriendo la conciliación experimental.
+    expect(byKeyword('ipv').map(a => a.id)).toContain('ipv');
   });
 
   it('"caja" sigue resolviendo UNA acción (sin contaminación de keywords)', () => {
@@ -954,7 +952,7 @@ describe('FASE B — Hub Gestión de Tiendas sin el Tablón', () => {
   });
 
   it('ninguna vista conocida de las 4 capacidades cae en Módulo No Disponible', () => {
-    for (const view of ['news', 'ofertas', 'customers', 'bank-reconciliation']) {
+    for (const view of ['news', 'ofertas', 'customers']) {
       const items = getBreadcrumbForView(view);
       expect(items.some(i => i.label === 'Módulo No Disponible')).toBe(false);
     }

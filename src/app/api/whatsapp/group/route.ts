@@ -5,7 +5,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
 import { supabase } from '@/lib/supabaseClient';
-import { getSocket } from '@/lib/whatsapp/baileys-client';
+import { getSocket } from '@/lib/whatsapp/session-info'; // CP-INFRA-002b: sin Baileys (null → lista vacía)
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const { allowed } = await rateLimit(`wa:group:${session.user.id}`, { windowMs: 60_000, maxRequests: 20 });

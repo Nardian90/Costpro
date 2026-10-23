@@ -6,7 +6,7 @@
  * Each log should have a clear category, a specific event name, and an optional data payload.
  */
 interface LogEntry {
-  category: 'AUTH' | 'POS' | 'INVENTORY' | 'COST_SHEET' | 'DATABASE' | 'PICK3' | 'SYNC' | 'ACADEMY' | 'AI' | 'REPORTS' | 'LEGAL' | 'SYSTEM' | 'VALIDATION' | 'UI' | 'FC' | 'HEALTH' | 'QUOTA' | 'TELEMETRY' | 'AUDIT' | 'WALLET' | 'BILLING'; // Iteración 13: añadido BILLING
+  category: 'AUTH' | 'POS' | 'INVENTORY' | 'COST_SHEET' | 'DATABASE' | 'PICK3' | 'SYNC' | 'AI' | 'REPORTS' | 'LEGAL' | 'SYSTEM' | 'VALIDATION' | 'UI' | 'FC' | 'HEALTH' | 'QUOTA' | 'TELEMETRY' | 'AUDIT' | 'WALLET' | 'BILLING'; // Iteración 13: añadido BILLING
   event: string;
   data?: Record<string, unknown>;
   level: 'info' | 'warn' | 'error';
