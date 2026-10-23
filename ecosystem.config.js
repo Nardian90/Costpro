@@ -74,7 +74,6 @@ module.exports = {
         EMERGENCY_GOOGLE_API_KEY: process.env.EMERGENCY_GOOGLE_API_KEY,
         UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
         UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
-        OTEL_ENABLED: process.env.OTEL_ENABLED,
         USE_TENANT_RLS: process.env.USE_TENANT_RLS,
         RLS_GLOBAL: process.env.RLS_GLOBAL,
         RLS_PILOT_STORES: process.env.RLS_PILOT_STORES,

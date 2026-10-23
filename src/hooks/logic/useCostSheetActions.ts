@@ -341,7 +341,6 @@ export const useCostSheetActions = ({
     else if (activeSection === 'templates') { handleSetViewMode('expert', activeSection); }
     else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); handleSetActiveSection('main'); }
     else if (activeSection === 'res-system-help') { setCurrentView('help'); handleSetActiveSection('main'); }
-    else if (activeSection === 'res-academy') { setCurrentView('academy'); handleSetActiveSection('main'); }
     else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); handleSetActiveSection('main'); }
     else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); handleSetActiveSection('main'); }
   }, [activeSection, handleSetViewMode, handleSetActiveSection, handleImportJSON, handleExportJSON, handleSaveToSupabase, handleExportExcel, setCurrentView, setIsQuickModeGenerating, setIsExportModalOpen, setIsHelpPanelOpen, setIsSectionsSidebarOpen, setIsAnnexesSidebarOpen]);

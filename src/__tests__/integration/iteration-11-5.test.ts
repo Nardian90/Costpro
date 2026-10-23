@@ -1,13 +1,58 @@
 /**
- * Iteración 11.5 — Pruebas PT-11.5.x (Observabilidad OTel)
+ * Iteración 11.5 → CP-INFRA-002b — Pruebas PT-11.5.x ACTUALIZADAS.
+ *
+ * CP-INFRA-002b (2026-10-23): OpenTelemetry fue RETIRADO del runtime por
+ * decisión del propietario (mandato §4: «El propietario no necesita
+ * OpenTelemetry en este momento»). Este archivo originalmente verificaba la
+ * IMPLEMENTACIÓN de OTel; ahora verifica el CONTRATO DE RETIRADA:
+ *
+ *   PT-11.5.1 — Las migraciones históricas de BD NO se tocan (datos preservados).
+ *   PT-11.5.2 — Ningún archivo runtime importa @opentelemetry/*.
+ *   PT-11.5.3 — El barril observability conserva la superficie pública
+ *               (withTracing, logger, spans no-op) para los ~130 importadores.
+ *   PT-11.5.4 — withTracing sigue haciendo logging estructurado (sin spans).
+ *   PT-11.5.5 — sanitizer.ts se conserva (utilidad de sanitización pura).
+ *   PT-11.5.6 — supabase-traced.ts eliminado; supabase-admin devuelve el
+ *               cliente sin envolver (auditoría de negocio intacta).
+ *   PT-11.5.7 — logger.ts conserva getTraceContext en su interfaz (ahora {}).
+ *   PT-11.5.10/11 — El esquema SQL de trace_id en audit_logs se conserva
+ *               (columnas/triggers intactos en BD; solo ya no se rellenan).
+ *   PT-11.5.12 — Regresión de iteraciones anteriores.
  */
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 const MIGRATIONS_DIR = join(process.cwd(), 'supabase', 'migrations');
+const SRC_DIR = join(process.cwd(), 'src');
 
-describe('PT-11.5.1 — Migrations de Iteración 11.5', () => {
+
+/**
+ * Strips comments (block + line) so that the negative assertions below test
+ * ACTIVE code only — the retirement explanations themselves legitimately
+ * mention the retired symbols in comments.
+ */
+function stripComments(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^[ \t]*\/\/.*$/gm, '');
+}
+
+/** Recolecta todos los archivos .ts/.tsx de src/ (excluye tests). */
+function collectRuntimeFiles(dir: string, acc: string[] = []): string[] {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === '__tests__') continue;
+      collectRuntimeFiles(full, acc);
+    } else if (/\.(ts|tsx)$/.test(entry.name)) {
+      acc.push(full);
+    }
+  }
+  return acc;
+}
+
+describe('PT-11.5.1 — Migrations de Iteración 11.5 (datos históricos preservados)', () => {
   const expected = [
     '20260811000001_v2_20_1_audit_logs_trace_id.sql',
     '20260811000002_v2_20_2_rpc_trace_id.sql',
@@ -22,132 +67,108 @@ describe('PT-11.5.1 — Migrations de Iteración 11.5', () => {
   }
 });
 
-describe('PT-11.5.2 — instrumentation.ts', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'instrumentation.ts'), 'utf-8');
-  it('existe y exporta register()', () => {
-    expect(src).toContain('export async function register()');
+describe('PT-11.5.2 — CP-INFRA-002b: cero imports de OpenTelemetry en runtime', () => {
+  it('ningún archivo .ts/.tsx de src/ (fuera de tests) importa @opentelemetry', () => {
+    const offenders: string[] = [];
+    for (const file of collectRuntimeFiles(SRC_DIR)) {
+      const src = stripComments(readFileSync(file, 'utf-8'));
+      if (/from\s+['"]@opentelemetry|require\(['"]@opentelemetry|import\(['"]@opentelemetry/.test(src)) {
+        offenders.push(file);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
-  it('try/catch silencioso (no bloquea boot)', () => {
-    expect(src).toContain('try');
-    expect(src).toContain('catch');
-    expect(src).toContain('console.warn');
+  it('src/instrumentation.ts (entry OTel puro) fue eliminado', () => {
+    expect(existsSync(join(SRC_DIR, 'instrumentation.ts'))).toBe(false);
   });
-  it('solo activa en production o OTEL_ENABLED', () => {
-    expect(src).toContain("NODE_ENV === 'production'");
-    expect(src).toContain("OTEL_ENABLED === 'true'");
+  it('src/lib/observability/tracing.ts (setupTracing del SDK) fue eliminado', () => {
+    expect(existsSync(join(SRC_DIR, 'lib', 'observability', 'tracing.ts'))).toBe(false);
   });
-});
-
-describe('PT-11.5.3 — tracing-core.ts real (no no-op)', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'lib', 'observability', 'tracing-core.ts'), 'utf-8');
-  it('importa @opentelemetry/api', () => {
-    expect(src).toContain('@opentelemetry/api');
+  it('src/types/otel-modules.d.ts fue eliminado', () => {
+    expect(existsSync(join(SRC_DIR, 'types', 'otel-modules.d.ts'))).toBe(false);
   });
-  it('getTraceContext usa trace.getSpan(context.active())', () => {
-    expect(src).toContain('trace.getSpan(context.active())');
+  it('package.json ya no declara dependencias @opentelemetry/*', () => {
+    const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'));
+    const all = { ...pkg.dependencies, ...pkg.devDependencies };
+    const otel = Object.keys(all).filter((k) => k.startsWith('@opentelemetry/'));
+    expect(otel).toEqual([]);
   });
-  it('getActiveTraceId retorna string o null', () => {
-    expect(src).toContain('getActiveTraceId');
+  it('next.config.ts ya no externaliza paquetes OTel', () => {
+    const cfg = readFileSync(join(process.cwd(), 'next.config.ts'), 'utf-8');
+    expect(cfg).not.toContain("'@opentelemetry/");
   });
-  it('no contiene "DISABLED" ni "no-op" en descripción', () => {
-    expect(src).not.toContain('OpenTelemetry DISABLED');
-  });
-});
-
-describe('PT-11.5.4 — tracing.ts (sin auto-instrumentations)', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'lib', 'observability', 'tracing.ts'), 'utf-8');
-  it('Aclaración 1: NO importa auto-instrumentations-node en código activo', () => {
-    const activeLines = src.split('\n').filter(l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
-    const activeCode = activeLines.join('\n');
-    expect(activeCode).not.toContain('getNodeAutoInstrumentations');
-    expect(activeCode).not.toContain("import('@opentelemetry/auto-instrumentations-node')");
-  });
-  it('usa BatchSpanProcessor (no Simple)', () => {
-    expect(src).toContain('BatchSpanProcessor');
-  });
-  it('usa ConsoleSpanExporter', () => {
-    expect(src).toContain('ConsoleSpanExporter');
+  it('instrumentation.ts raíz conserva Sentry y los handlers de proceso', () => {
+    const src = readFileSync(join(process.cwd(), 'instrumentation.ts'), 'utf-8');
+    expect(src).toContain('unhandledRejection');
+    expect(src).toContain('uncaughtException');
+    const active = stripComments(src);
+    expect(active).not.toContain('setupTracing');
+    expect(active).not.toContain('@opentelemetry');
   });
 });
 
-describe('PT-11.5.5 — sanitizer.ts', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'lib', 'observability', 'sanitizer.ts'), 'utf-8');
-  it('filtra customer_name', () => expect(src).toContain("'customer_name'"));
-  it('filtra password', () => expect(src).toContain("'password'"));
-  it('filtra total_amount', () => expect(src).toContain("'total_amount'"));
-  it('filtra cash_amount', () => expect(src).toContain("'cash_amount'"));
-  it('filtra api_key', () => expect(src).toContain("'api_key'"));
-  it('filtra token', () => expect(src).toContain("'token'"));
-  it('tiene patterns regex', () => {
-    expect(src).toContain('/password/i');
-    expect(src).toContain('/token/i');
+describe('PT-11.5.3 — Barril observability: superficie pública intacta (spans no-op)', () => {
+  const barrel = readFileSync(join(SRC_DIR, 'lib', 'observability', 'index.ts'), 'utf-8');
+  it('exporta withTracing', () => expect(barrel).toContain('withTracing'));
+  it('exporta logger (logInfo/logWarn/logError/logDebug)', () => {
+    expect(barrel).toContain('logInfo');
+    expect(barrel).toContain('logError');
+  });
+  it('exporta la superficie de tracing (no-op, misma interfaz)', () => {
+    expect(barrel).toContain('withActiveSpan');
+    expect(barrel).toContain('SpanStatusCode');
+  });
+  it('tracing-core.ts ya no importa @opentelemetry/api', () => {
+    const src = readFileSync(join(SRC_DIR, 'lib', 'observability', 'tracing-core.ts'), 'utf-8');
+    expect(stripComments(src)).not.toContain('@opentelemetry');
+  });
+});
+
+describe('PT-11.5.4 — withTracing: logging estructurado conservado (sin spans)', () => {
+  const src = readFileSync(join(SRC_DIR, 'lib', 'observability', 'api-tracing.ts'), 'utf-8');
+  it('registra duración y status de cada request', () => {
+    expect(src).toContain('Date.now()');
+    expect(src).toContain('statusCode');
+  });
+  it('logError en fallos y re-throw del error original', () => {
+    expect(src).toContain('logError');
+    expect(src).toContain('throw error');
+  });
+  it('sin spans ni OTel', () => {
+    const active = stripComments(src);
+    expect(active).not.toContain('withActiveSpan');
+    expect(active).not.toContain('@opentelemetry');
+  });
+});
+
+describe('PT-11.5.5 — sanitizer.ts (utilidad pura conservada)', () => {
+  const src = readFileSync(join(SRC_DIR, 'lib', 'observability', 'sanitizer.ts'), 'utf-8');
+  it('filtra datos sensibles', () => {
+    expect(src).toContain("'password'");
+    expect(src).toContain("'token'");
   });
   it('exporta sanitizeAttributes', () => {
     expect(src).toContain('export function sanitizeAttributes');
   });
 });
 
-describe('PT-11.5.6 — supabase-traced.ts wrapper', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'lib', 'supabase-traced.ts'), 'utf-8');
-  it('usa Proxy', () => expect(src).toContain('new Proxy'));
-  it('intercepta solo rpc()', () => {
-    expect(src).toContain("prop === 'rpc'");
+describe('PT-11.5.6 — supabase-traced retirado; clientes sin envolver', () => {
+  it('src/lib/supabase-traced.ts fue eliminado', () => {
+    expect(existsSync(join(SRC_DIR, 'lib', 'supabase-traced.ts'))).toBe(false);
   });
-  it('crea span con nombre rpc.method', () => {
-    expect(src).toContain('startActiveSpan');
-    expect(src).toContain('rpc.');
+  it('supabase-admin.ts ya no envuelve con wrapRpcWithTracing', () => {
+    const src = readFileSync(join(SRC_DIR, 'lib', 'supabase-admin.ts'), 'utf-8');
+    expect(stripComments(src)).not.toContain('wrapRpcWithTracing');
   });
-  it('sanitiza params', () => expect(src).toContain('sanitizeAttributes'));
-  it('en dev retorna cliente sin modificar', () => {
-    expect(src).toContain("NODE_ENV === 'development'");
-  });
-  it('finally { span.end() }', () => {
-    expect(src).toContain('finally');
-    expect(src).toContain('span.end()');
+  it('supabase-session.ts ya no envuelve con wrapRpcWithTracing', () => {
+    const src = readFileSync(join(SRC_DIR, 'lib', 'supabase-session.ts'), 'utf-8');
+    expect(stripComments(src)).not.toContain('wrapRpcWithTracing');
   });
 });
 
-describe('PT-11.5.7 — supabase-admin integrado con wrapper', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'lib', 'supabase-admin.ts'), 'utf-8');
-  it('importa wrapRpcWithTracing', () => {
-    expect(src).toContain('wrapRpcWithTracing');
-  });
-  it('getSupabaseAdminSafe usa wrapper', () => {
-    expect(src).toContain('wrapRpcWithTracing(client)');
-  });
-});
-
-describe('PT-11.5.8 — logger.ts integrado con getTraceContext real', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'lib', 'observability', 'logger.ts'), 'utf-8');
-  it('Aclaración 2: importa getTraceContext de tracing-core', () => {
-    expect(src).toContain("from './tracing-core'");
-    expect(src).toContain('getTraceContext');
-  });
-  it('NO define getTraceContext como no-op local', () => {
-    const activeLines = src.split('\n').filter(l => !l.trim().startsWith('//') && !l.trim().startsWith('*'));
-    const activeCode = activeLines.join('\n');
-    expect(activeCode).not.toContain('function getTraceContext()');
-  });
-});
-
-describe('PT-11.5.9 — api-tracing withTracing', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'lib', 'observability', 'api-tracing.ts'), 'utf-8');
-  it('Aclaración 3: lee x-costpro-trace-id del header', () => {
-    expect(src).toContain("x-costpro-trace-id");
-  });
-  it('sigue siendo passthrough en dev', () => {
-    expect(src).toContain("NODE_ENV === 'development'");
-  });
-  it('registra http.method, http.route, http.status_code', () => {
-    expect(src).toContain("'http.method'");
-    expect(src).toContain("'http.route'");
-    expect(src).toContain("'http.status_code'");
-  });
-});
-
-describe('PT-11.5.10 — audit_logs.trace_id', () => {
+describe('PT-11.5.10 — audit_logs.trace_id: esquema SQL preservado', () => {
   const sql = readFileSync(join(MIGRATIONS_DIR, '20260811000001_v2_20_1_audit_logs_trace_id.sql'), 'utf-8');
-  it('ADD COLUMN trace_id text', () => {
+  it('ADD COLUMN trace_id text (columna conservada en BD)', () => {
     expect(sql).toContain('ADD COLUMN IF NOT EXISTS trace_id text');
   });
   it('CREATE INDEX', () => {
@@ -155,19 +176,12 @@ describe('PT-11.5.10 — audit_logs.trace_id', () => {
   });
 });
 
-describe('PT-11.5.11 — Trigger set_audit_log_trace_id', () => {
+describe('PT-11.5.11 — Trigger set_audit_log_trace_id (intacto en BD)', () => {
   const sql = readFileSync(join(MIGRATIONS_DIR, '20260811000002_v2_20_2_rpc_trace_id.sql'), 'utf-8');
   it('trigger function existe', () => {
     expect(sql).toContain('set_audit_log_trace_id');
   });
-  it('lee app.trace_id session variable', () => {
-    expect(sql).toContain("current_setting('app.trace_id'");
-  });
-  it('BEFORE INSERT trigger', () => {
-    expect(sql).toContain('BEFORE INSERT');
-  });
   it('NO modifica ningún RPC existente', () => {
-    // The migration should NOT contain CREATE OR REPLACE FUNCTION for any of the 5 RPCs
     expect(sql).not.toContain('CREATE OR REPLACE FUNCTION public.create_sale_v2');
     expect(sql).not.toContain('CREATE OR REPLACE FUNCTION public.close_cash_shift');
     expect(sql).not.toContain('CREATE OR REPLACE FUNCTION public.reverse_transaction_v2');

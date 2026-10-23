@@ -2,7 +2,7 @@
  * openapi-spec.ts — Full OpenAPI 3.0.3 specification for CostPro Enterprise API.
  *
  * Covers all 30 API routes grouped by tag:
- *   System (3), AI (2), CostSheets (6), Academy (3), Inventory (5),
+ *   System (3), AI (2), CostSheets (6), Inventory (5),
  *   Reports (1), Users (4), Sync (1), Sales (1), Other (4)
  *
  * Rate limits:
@@ -21,8 +21,6 @@ import {
   costSheetSaveSchema,
   aiChatSchema,
   reportsGenerateSchema,
-  academyGenerateSchema,
-  academyReviewSchema,
   logsSchema,
   botChatSchema,
 } from '@/validation/api-schemas';
@@ -112,7 +110,6 @@ const tags = [
   { name: 'System', description: 'Health checks, help docs, and system diagnostics' },
   { name: 'AI', description: 'AI-powered chat and Darian cost sheet assistant' },
   { name: 'CostSheets', description: 'Cost sheet calculation, import/export, and persistence' },
-  { name: 'Academy', description: 'AI-generated learning cards and spaced repetition' },
   { name: 'Inventory', description: 'Product inventory management and stock adjustments' },
   { name: 'Reports', description: 'PDF report generation for business data' },
   { name: 'Users', description: 'User management (admin only)' },
@@ -132,7 +129,7 @@ export function createOpenAPISpec() {
 
 **Rate Limits:**
 - **Standard endpoints:** 30 requests/minute
-- **AI endpoints** (bot/chat, cost-sheets/ai/chat, academy/generate): 10 requests/minute
+- **AI endpoints** (bot/chat, cost-sheets/ai/chat): 10 requests/minute
 - **Cost Engine** (cost-sheets/calculate): 60 requests/minute
 
 **Authentication:**
@@ -265,9 +262,7 @@ All JSON responses use a consistent format:
         CostSheetSaveRequest: zodToOpenApi(costSheetSaveSchema),
         AIChatRequest: zodToOpenApi(aiChatSchema),
 
-        // ─── Academy schemas ─────────────────────────────────────────
-        AcademyGenerateRequest: zodToOpenApi(academyGenerateSchema),
-        AcademyReviewRequest: zodToOpenApi(academyReviewSchema),
+        // CP-INFRA-002b: schemas Academy retiradas junto con /api/academy/*.
 
         // ─── Report schemas ──────────────────────────────────────────
         ReportsGenerateRequest: zodToOpenApi(reportsGenerateSchema),
@@ -771,139 +766,8 @@ Supports scenario data and reset functionality.`,
     },
   };
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // ACADEMY (3 endpoints)
-  // ═══════════════════════════════════════════════════════════════════════════════
-
-  // 11. POST /api/academy/generate
-  paths['/api/academy/generate'] = {
-    post: {
-      tags: ['Academy'],
-      operationId: 'generateLearningCards',
-      summary: 'Generate AI learning cards from manual',
-      description: `Generates educational flashcards from a manual PDF (pre-indexed as .txt).
-Uses AI to chunk the manual text and create scenario-based questions.
-
-**Rate limit:** 10 req/min
-**Timeout:** 120 seconds (maxDuration)`,
-      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: { $ref: '#/components/schemas/AcademyGenerateRequest' },
-            example: {
-              filename: 'Resolucion 148-2023.pdf',
-              limit: 3,
-              aiProvider: 'gemini',
-            },
-          },
-        },
-      },
-      responses: {
-        '200': {
-          description: 'Generated learning cards count',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  message: { type: 'string', example: 'Generadas 15 tarjetas desde Resolucion 148-2023.pdf' },
-                  count: { type: 'integer', description: 'Number of cards generated' },
-                },
-              },
-            },
-          },
-        },
-        '400': errorResponse400,
-        '401': errorResponse401,
-        '404': { description: 'Manual text file not found' },
-        '429': errorResponse429,
-        '500': errorResponse500,
-      },
-    },
-  };
-
-  // 12. GET /api/academy/review
-  paths['/api/academy/review'] = {
-    get: {
-      tags: ['Academy'],
-      operationId: 'getAcademyReview',
-      summary: 'Get cards due for review',
-      description: 'Returns learning cards that are due for spaced repetition review and new cards (up to 10) that the user has not seen yet.',
-      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
-      responses: {
-        '200': {
-          description: 'Due and new cards',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  due: { type: 'array', items: { type: 'object', description: 'User progress records with learning_cards relation' } },
-                  new: { type: 'array', items: { type: 'object', description: 'New cards for the user (max 10)' } },
-                },
-              },
-            },
-          },
-        },
-        '401': errorResponse401,
-        '429': errorResponse429,
-        '500': errorResponse500,
-      },
-    },
-  };
-
-  // 13. POST /api/academy/review/{cardId}
-  paths['/api/academy/review/{cardId}'] = {
-    post: {
-      tags: ['Academy'],
-      operationId: 'reviewLearningCard',
-      summary: 'Submit card review score (SM2 algorithm)',
-      description: 'Records a review score (0-5) for a learning card. Uses the SM-2 spaced repetition algorithm to calculate the next review date and interval.',
-      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
-      parameters: [
-        { name: 'cardId', in: 'path', required: true, description: 'Learning card UUID', schema: { type: 'string', format: 'uuid' } },
-      ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: { $ref: '#/components/schemas/AcademyReviewRequest' },
-            example: { score: 4 },
-          },
-        },
-      },
-      responses: {
-        '200': {
-          description: 'Review recorded with new SM2 values',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  success: { type: 'boolean' },
-                  result: {
-                    type: 'object',
-                    properties: {
-                      ease_factor: { type: 'number' },
-                      interval_days: { type: 'integer' },
-                      repetitions: { type: 'integer' },
-                    },
-                  },
-                  newMastery: { type: 'number', description: 'Updated mastery score (0-100)' },
-                },
-              },
-            },
-          },
-        },
-        '400': errorResponse400,
-        '401': errorResponse401,
-        '429': errorResponse429,
-        '500': errorResponse500,
-      },
-    },
-  };
+  // CP-INFRA-002b (2026-10-23): los 3 endpoints /api/academy/* fueron retirados
+  // junto con el módulo Academia (generación, repaso SM-2 y revisión).
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // INVENTORY (5 endpoints)

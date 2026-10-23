@@ -7,7 +7,7 @@ import {
   Download, Settings, Table2, LayoutGrid, ChevronDown,
   BarChart3, Layout, ListFilter, PenTool, Zap, Wand2,
   BookOpen, Eye, Activity, Sparkles, FolderOpen, Bot, HelpCircle, Calculator,
-  LifeBuoy, GraduationCap, Scale, ClipboardList
+  LifeBuoy, Scale, ClipboardList
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { APP_DISPLAY_VERSION } from '@/config/app';
@@ -41,7 +41,6 @@ interface CostSheetActionsPanelProps {
   onOpenAnnexes?: () => void;
   onOpenHelp?: () => void;
   onOpenSystemHelp?: () => void;
-  onOpenAcademy?: () => void;
   onQuickGenerate?: () => void;
   onExpertGenerate?: () => void;
 }
@@ -120,7 +119,6 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
   onOpenAnnexes,
   onOpenHelp,
   onOpenSystemHelp,
-  onOpenAcademy,
   onQuickGenerate,
   onExpertGenerate
 }) => {
@@ -335,7 +333,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
               <AccordionGroup
                 title="Soporte y Herramientas"
-                isVisible={hasMatchingActions(['Calculadora Pro', 'Calculadora Estructura', 'Ayuda de esta vista', 'Ayuda del sistema', 'Academia'])}
+                isVisible={hasMatchingActions(['Calculadora Pro', 'Calculadora Estructura', 'Ayuda de esta vista', 'Ayuda del sistema'])}
                 isSearchActive={!!searchTerm}
                 icon={HelpCircle}
                 isOpen={openGroups.includes('soporte')}
@@ -345,7 +343,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 {('Calculadora Estructura'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('steel-calculator', 'Calculadora Estructura', Scale, () => setActiveSection?.('steel-calculator'), 'outline', activeSection === 'steel-calculator')}
                 {('Ayuda de esta vista'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('help', 'Ayuda de esta vista', HelpCircle, onOpenHelp)}
                 {('Ayuda del sistema'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('system-help', 'Ayuda del sistema', LifeBuoy, onOpenSystemHelp)}
-                {('Academia'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('academy', 'Academia', GraduationCap, onOpenAcademy)}
+                {/* CP-INFRA-002b (2026-10-23): botón «Academia» retirado junto con el módulo Academia. */}
               </AccordionGroup>
 
             </div>

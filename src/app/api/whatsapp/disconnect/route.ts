@@ -6,7 +6,7 @@ import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { canManageStore } from '@/lib/roles';
-import { disconnectStore } from '@/lib/whatsapp/baileys-client';
+import { disconnectStore } from '@/lib/whatsapp/session-info'; // CP-INFRA-002b: no-op (no hay sesiones)
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }

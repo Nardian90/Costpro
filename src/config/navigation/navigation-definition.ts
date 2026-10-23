@@ -14,9 +14,12 @@
  *   SISTEMA     → Ajustes · Usuarios · Roles · Salud · Monitoreo · Auditoría ·
  *                 Gestión RSS · Cierre Fiscal   (admin)
  *   AYUDA       → Centro de Ayuda
- *   EN DESARROLLO → IPV · Pick3 · Billetera · Wiki · Academia · Marco
- *                 Legal · Conciliación Bancaria
+ *   EN DESARROLLO → IPV · Wiki · Marco Legal
  *                 (existentes pero no integradas / experimentales)
+ *
+ * CP-INFRA-002 (2026-10-23): Pick3, Billetera y Conciliación Bancaria retiradas
+ * del producto activo. CP-INFRA-002b (2026-10-23): Academia retirada igualmente
+ * (enlaces, vistas, rutas /api/academy/* y servicios exclusivos).
  *
  * REORGANIZACIÓN (fix/navigation-orphaned-development): Ayuda contiene
  * EXCLUSIVAMENTE el Centro de Ayuda. Wiki/Academia/Marco Legal (antes en
@@ -52,7 +55,7 @@ import {
   Home, Zap, ShoppingCart, Package, Warehouse, ArrowLeftRight, FileText, Calculator,
   Factory, UserCog, LayoutGrid, MessageCircle, Send, TrendingUp, Table2, DollarSign, Truck,
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
-  Scale, HelpCircle, Book, GraduationCap, FlaskConical, Layers, Landmark,
+  Scale, HelpCircle, Book, FlaskConical, Layers, Landmark,
   Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone, Printer,
   ClipboardCheck,
   ReceiptText, Coins,
@@ -719,11 +722,11 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
   // flattenNavigation), móvil (mismo filtro), deep-links (isViewAllowedForRole
   // → «Acceso Denegado» en TerminalShell) y widgets (RecommendedActions).
   // ipv/pick3/wallet ya declaraban roles:['admin'] por entrada (se conservan);
-  // wiki/academy/legal/bank-reconciliation heredan ['admin'] de la sección
+  // wiki/legal heredan ['admin'] de la sección
   // (antes universales — el mandato revoca ese acceso universal).
   // El nivel de datos se refuerza aparte con withRole('admin') en las APIs
-  // exclusivas de estas vistas (/api/wallet/*, /api/pick3/*, /api/academy/*,
-  // /api/bank-reconciliation/*).
+  // exclusivas de estas vistas (/api/wallet/*, /api/pick3/*,
+  // /api/bank-reconciliation/*). /api/academy/* fue retirada en CP-INFRA-002b.
   {
     id: 'desarrollo',
     label: 'EN DESARROLLO',
@@ -759,16 +762,6 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
       },
       {
         // Trasladada desde AYUDA (fix/navigation-orphaned-development).
-        // Universal (sin roles) — igual que en Ayuda. Deep-link intacto.
-        id: 'academy',
-        label: 'Academia',
-        description: 'Flashcards con repetición espaciada (SRS) para dominar conceptos del sistema. Progreso guardado en tu cuenta.',
-        icon: GraduationCap,
-        type: 'item',
-        keywords: ['academia', 'aprender', 'flashcards', 'estudio', 'capacitación'],
-      },
-      {
-        // Trasladada desde AYUDA (fix/navigation-orphaned-development).
         // Descripción REAL (la anterior decía "RGPD" — falso, eso vive en /privacy).
         // Universal (sin roles) — igual que en Ayuda. Deep-link intacto.
         id: 'legal',
@@ -786,7 +779,9 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
 // Conciliación Bancaria por decisión operativa (límite de funciones serverless
 // del plan Hobby). Las entradas de navegación se eliminan; el historial de la
 // implementación queda en git (revertir este commit reactiva menús y vistas).
-// IPV, Wiki, Academia y Marco Legal permanecen en EN DESARROLLO.
+// CP-INFRA-002b (2026-10-23): Academia también retirada del producto activo
+// (mismo mecanismo: git revert reactiva menú, vistas y rutas).
+// IPV, Wiki y Marco Legal permanecen en EN DESARROLLO.
 
 // ────────────────────────────────────────────────────────────────────
 // ACTION_EXTENSIONS — acciones que NO son navegación a una vista del menú
@@ -1435,8 +1430,9 @@ export const VALID_VIEWS: Set<string> = new Set([
   'transferencias', 'sales', 'inventory_count', 'cost-sheets', 'reports', 'catalog',
   'history', 'inventory_adjustments', 'vales_salida', 'physical_inventory', 'audit', 'cash', 'users', 'roles', 'stores',
   'storefront-config', 'settings', 'help', 'wiki', 'news', 'rss_management',
-  'management-hub', 'ipv', 'academy', 'legal', 'health',
+  'management-hub', 'ipv', 'legal', 'health',
   // CP-INFRA-002 (2026-10-23): 'pick3-intelligence' y 'wallet' retirados del producto activo.
+  // CP-INFRA-002b (2026-10-23): 'academy' retirado del producto activo junto con el módulo Academia.
   'labels', 'sales_catalog', 'ofertas', 'purchase-orders', 'sales-hub',
   'exchange-intelligence', 'received-services', 'usage-monitoring', 'workers',
   'chat', 'costeo-dinamico', 'estructura-costo', 'whatsapp-config',

@@ -13,7 +13,7 @@
 
 import { logger } from '@/lib/logger';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
-import { getSocket } from './baileys-client';
+import { getSocket } from './session-info'; // CP-INFRA-002b: stub sin Baileys (null → la invitación queda pendiente en BD)
 import {
   canInviteNow, handleInvitationBlock, resetRiskIfStale,
   getRiskState, saveRiskState, LIMITS, type RiskState,

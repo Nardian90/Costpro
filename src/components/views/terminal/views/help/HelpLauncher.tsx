@@ -84,10 +84,10 @@ export const HELP_DOC_BY_VIEW: Record<string, string> = {
   // Más recursos
   'help': 'help/00-diataxis-map.md',
   'wiki': 'help/03-referencia/01-glosario.md',
-  'academy': 'help/00-diataxis-map.md',
   'legal': 'help/00-diataxis-map.md',
 
-  // Otros (CP-INFRA-002: mapeos de pick3 y wallet retirados junto a sus vistas)
+  // Otros (CP-INFRA-002: mapeos de pick3 y wallet retirados junto a sus vistas;
+  // CP-INFRA-002b: mapeo de academia retirado junto con el módulo)
   'news': 'help/04-configuracion/herramientas-sistema.md',
 };
 

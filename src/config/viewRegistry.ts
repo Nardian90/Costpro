@@ -139,12 +139,6 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["generate_custom_report"]
   },
   {
-    id: "academy",
-    route: "/?view=academy",
-    description: "Academia de capacitación y aprendizaje para el personal.",
-    actions: ["start_lesson", "view_progress"]
-  },
-  {
     id: "wiki",
     route: "/?view=wiki",
     description: "Wiki de contabilidad con términos, definiciones y conceptos del área financiera y tributaria.",

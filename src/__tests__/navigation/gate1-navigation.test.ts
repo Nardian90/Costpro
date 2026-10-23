@@ -151,7 +151,9 @@ describe('Guard isViewAllowedForRole', () => {
     // eran universales. El mandato COSTPRO 4 revoca ese acceso: TODA la
     // sección EN DESARROLLO queda reservada al rol admin (herencia de la
     // sección + refuerzo backend withRole en las APIs exclusivas).
-    const desarrolloViews = ['wiki', 'academy', 'legal'];
+    // CP-INFRA-002b (2026-10-23): academy retirado del producto activo — se
+    // verifica explícitamente que YA NO es una vista permitida.
+    const desarrolloViews = ['wiki', 'legal'];
     for (const view of desarrolloViews) {
       expect(isViewAllowedForRole(view, 'admin')).toBe(true);
       for (const role of ['manager', 'encargado', 'clerk', 'usuario', 'warehouse', 'costo']) {
@@ -776,8 +778,9 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
     const desarrollo = NAVIGATION_SECTIONS.find(s => s.id === 'desarrollo');
     // 1. experimentales relacionadas · 2. existentes no integradas · 3. incompletas
     // CP-INFRA-002: pick3-intelligence y wallet retirados del producto activo.
+    // CP-INFRA-002b: academy retirado junto con el módulo Academia.
     expect(desarrollo?.children?.map(c => c.id)).toEqual([
-      'ipv', 'wiki', 'academy', 'legal',
+      'ipv', 'wiki', 'legal',
     ]);
   });
 
@@ -787,9 +790,12 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
     // Toda vista con componente real en TerminalShell y sin otra vía de
     // descubrimiento documentada (hub, contextual, chat, calculator) debe
     // ser hoja de menú o extensión de palette.
-    for (const orphanCandidate of ['wiki', 'academy', 'legal']) {
+    for (const orphanCandidate of ['wiki', 'legal']) {
       expect(menuIds).toContain(orphanCandidate);
     }
+    // CP-INFRA-002b: academy retirado — ya no es vista de menú.
+    expect(menuIds).not.toContain('academy');
+    expect(VALID_VIEWS.has('academy')).toBe(false);
     // El conjunto de "huérfana" (componente + deep-link + sin ubicación) está
     // vacío: toda hoja del menú es única y ninguna queda fuera de ambas vías.
     const classified = new Set([...menuIds, ...paletteIds, ...TECHNICAL_VIEW_IDS]);
@@ -825,13 +831,13 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
   it('D — integridad: ViewType/label/ruta de cada vista trasladada, sin duplicados', () => {
     const menuIds = flattenNavigation().map(l => l.id);
     // Aparecen UNA sola vez (sin duplicados por id).
-    for (const id of ['help', 'wiki', 'academy', 'legal', 'ipv']) {
+    for (const id of ['help', 'wiki', 'legal', 'ipv']) {
       expect(menuIds.filter(x => x === id)).toHaveLength(1);
     }
     // Ninguna coexiste en otra sección (categoría única).
     const categories = Object.fromEntries(flattenNavigation().map(l => [l.id, l.category]));
     expect(categories['help']).toBe('AYUDA');
-    for (const id of ['wiki', 'academy', 'legal', 'ipv']) {
+    for (const id of ['wiki', 'legal', 'ipv']) {
       expect(categories[id]).toBe('EN DESARROLLO');
     }
     // Sin duplicados por label en hojas + extensiones.
@@ -841,7 +847,7 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
     ];
     expect(new Set(labels).size).toBe(labels.length);
     // Deep-links intactos (rutas directas, sin tab ni redirección).
-    for (const id of ['help', 'wiki', 'academy', 'legal']) {
+    for (const id of ['help', 'wiki', 'legal']) {
       expect(getNavigationRoute(id)).toEqual({ type: 'direct', view: id });
     }
   });
@@ -852,31 +858,37 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
     const clerkTree = filterModulesByRole(SIDEBAR_STRUCTURE, 'clerk');
     expect(clerkTree.find(g => g.id === 'desarrollo')).toBeUndefined();
     expect(clerkTree.find(g => g.id === 'ayuda')?.children?.map(c => c.id)).toEqual(['help']);
-    // admin: las 4 entradas restantes (CP-INFRA-002: pick3, wallet y bank-reconciliation retirados).
+    // admin: las 3 entradas restantes (CP-INFRA-002: pick3, wallet y bank-reconciliation
+    // retirados; CP-INFRA-002b: academy retirado).
     const adminTree = filterModulesByRole(SIDEBAR_STRUCTURE, 'admin');
     expect(adminTree.find(g => g.id === 'desarrollo')?.children?.map(c => c.id)).toEqual([
-      'ipv', 'wiki', 'academy', 'legal',
+      'ipv', 'wiki', 'legal',
     ]);
   });
 
   it('F — breadcrumbs derivados del árbol (sin sección antigua ni Módulo No Disponible)', () => {
     expect(getBreadcrumbForView('help').map(i => i.label)).toEqual(['AYUDA', 'Centro de Ayuda']);
     expect(getBreadcrumbForView('wiki').map(i => i.label)).toEqual(['EN DESARROLLO', 'Wiki']);
-    expect(getBreadcrumbForView('academy').map(i => i.label)).toEqual(['EN DESARROLLO', 'Academia']);
+    expect(getBreadcrumbForView('academy').map(i => i.label)).not.toEqual(['EN DESARROLLO', 'Academia']);
     expect(getBreadcrumbForView('legal').map(i => i.label)).toEqual(['EN DESARROLLO', 'Marco Legal']);
-    for (const view of ['help', 'wiki', 'academy', 'legal']) {
+    // CP-INFRA-002b: academy ya no tiene breadcrumb de menú — la vista fue retirada.
+    for (const view of ['help', 'wiki', 'legal']) {
       expect(getBreadcrumbForView(view).some(i => i.label === 'Módulo No Disponible')).toBe(false);
     }
   });
 
   it('G — palette por rol: TODA la sección EN DESARROLLO solo admin (COSTPRO 4)', () => {
     const clerkIds = getActionsForUser('clerk').map(a => a.id);
-    for (const id of ['ipv', 'wiki', 'academy', 'legal']) {
+    for (const id of ['ipv', 'wiki', 'legal']) {
       expect(clerkIds).not.toContain(id);
     }
     const adminIds = getActionsForUser('admin').map(a => a.id);
-    for (const id of ['ipv', 'wiki', 'academy', 'legal']) {
+    for (const id of ['ipv', 'wiki', 'legal']) {
       expect(adminIds).toContain(id);
+    }
+    // CP-INFRA-002b: academy ya no es accesible por palette para ningún rol.
+    for (const ids of [clerkIds, adminIds]) {
+      expect(ids).not.toContain('academy');
     }
   });
 

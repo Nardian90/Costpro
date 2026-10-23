@@ -11,7 +11,10 @@
  */
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { wrapRpcWithTracing } from './supabase-traced';
+// CP-INFRA-002b (2026-10-23): wrapRpcWithTracing (spans OTel sobre rpc()) retirado
+// junto con OpenTelemetry. El cliente se devuelve sin envolver; la auditoría de
+// negocio (triggers SQL sobre audit_logs) NO cambia. La columna trace_id de
+// audit_logs se conserva en BD; simplemente ya no se rellena (no hay trazas).
 
 const ADMIN_CLIENT_OPTIONS = {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -28,7 +31,7 @@ export async function getSupabaseAdminClient(): Promise<SupabaseClient> {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error('Supabase URL o Service Role Key no configurados');
   const client = createClient(url, key, ADMIN_CLIENT_OPTIONS);
-  return wrapRpcWithTracing(client);
+  return client;
 }
 
 /**
@@ -40,7 +43,7 @@ export function getSupabaseAdminSafe(): SupabaseClient | null {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   const client = createClient(url, key, ADMIN_CLIENT_OPTIONS);
-  return wrapRpcWithTracing(client);
+  return client;
 }
 
 // Backward-compatible aliases

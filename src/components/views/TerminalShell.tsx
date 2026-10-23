@@ -113,7 +113,7 @@ const ReportsView = dynamic(() => import('@/components/views/terminal/views/repo
 const ExchangeIntelligenceView = dynamic(() => import('@/components/views/terminal/views/exchange_intelligence/ExchangeIntelligenceView'), { ssr: false });
 const ReceivedServicesView = dynamic(() => import('@/components/views/terminal/views/received_services/ReceivedServicesView'), { ssr: false });
 const IPVView = dynamic(() => import('@/components/views/terminal/views/ipv/IPVView'), { ssr: false });
-const AcademyView = dynamic(() => import('@/components/views/terminal/views/academy/AcademyView'), { ssr: false });
+// CP-INFRA-002b (2026-10-23): AcademyView retirado junto con el módulo Academia.
 const InventoryAdjustmentsView = dynamic(() => import('@/components/views/terminal/views/inventory/InventoryAdjustmentsView'), { ssr: false });
 const PhysicalInventoryView = dynamic(() => import('@/components/views/terminal/views/physical_inventory/PhysicalInventoryView'), { ssr: false });
 const ValesSalidaView = dynamic(() => import('@/components/views/terminal/views/inventory/ValesSalidaView'), { ssr: false });
@@ -213,7 +213,7 @@ export default function TerminalShell() {
   const { getNextStore, getPrevStore } = useRecentStores();
   // F5-T03: swipe horizontal para cambiar entre tiendas recientes
   // Solo en mobile y en rutas operativas (no en config/admin)
-  const isOperationalRoute = !['stores', 'users', 'roles', 'health', 'audit', 'settings', 'help', 'wiki', 'academy', 'legal'].includes(currentView);
+  const isOperationalRoute = !['stores', 'users', 'roles', 'health', 'audit', 'settings', 'help', 'wiki', 'legal'].includes(currentView);
   useSwipeNavigation({
     onSwipeLeft: async () => {
       const nextId = getNextStore(user?.activeStoreId);
@@ -498,7 +498,6 @@ export default function TerminalShell() {
         case 'exchange-intelligence': return <ViewErrorBoundary viewName="Inteligencia Cambiaria"><ExchangeIntelligenceView /></ViewErrorBoundary>;
         case 'received-services': return <ViewErrorBoundary viewName="Servicios Recibidos"><ReceivedServicesView /></ViewErrorBoundary>;
         case 'ipv': return <ViewErrorBoundary viewName="IPV"><IPVView /></ViewErrorBoundary>;
-        case 'academy': return <ViewErrorBoundary viewName="Academia"><AcademyView /></ViewErrorBoundary>;
         case 'inventory_adjustments': return <ViewErrorBoundary viewName="Ajustes de Inventario"><InventoryAdjustmentsView /></ViewErrorBoundary>;
         // MÓDULO DE INVENTARIO FÍSICO (misión 2026-10-23): conteos por tienda y
         // fecha de corte, hojas PDF (con teóricas o ciegas), importación Excel,
