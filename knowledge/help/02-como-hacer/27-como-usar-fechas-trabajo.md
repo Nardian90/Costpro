@@ -22,10 +22,10 @@ Una «fecha de trabajo» **no es una entidad del sistema**: es una **preferencia
 
 - La vista está disponible para todos los roles de la sección OPERACIÓN (admin, manager, encargado, clerk, usuario, warehouse).
 - Necesita una **tienda activa** seleccionada: la política temporal es **por tienda**.
-- Conozca las reglas que el servidor aplicará a cualquier fecha (fije la preferencia que fije):
-  - **Máximo permitido**: hoy (día de negocio de América/La Habana). No se aceptan fechas futuras.
-  - **Mínimo permitido**: la última fecha operativa de la tienda (la fecha más alta ya registrada). El tiempo operativo **no retrocede**.
-  - **Piso histórico**: no se aceptan documentos con más de **6 meses** de antigüedad.
+- Conozca las reglas que aplicará el sistema a cualquier fecha (fije la preferencia que fije):
+  - **Máximo permitido** (servidor): hoy (día de negocio de América/La Habana). No se aceptan fechas futuras.
+  - **Mínimo permitido** (formulario): la última fecha operativa de la tienda (la fecha más alta ya registrada). El tiempo operativo **no retrocede**.
+  - **Piso histórico** (servidor): no se aceptan documentos con más de **6 meses** de antigüedad.
 
 ## Cómo usar la vista
 
@@ -49,7 +49,7 @@ Una «fecha de trabajo» **no es una entidad del sistema**: es una **preferencia
 | **Fecha de trabajo actual** | Su preferencia para el próximo documento de ese tipo, o «hoy implícito» si no fijó ninguna. Puede mostrar la preferencia como **caducada** si quedó bajo el mínimo actual: en ese caso el formulario usará HOY. |
 | **Última fecha operativa** | Fecha del documento más reciente de ese tipo en la tienda (con conteo de documentos). |
 | **Mín. permitida / Máx. permitida** | Ventana válida para la fecha del próximo documento. |
-| **Estado** | **Configurable** (puede fijar fecha), **Fija** (la fecha la determina el sistema: turnos de caja) o **Informativa** (solo lectura: orden de compra). |
+| **Estado** | **Configurable** (puede fijar fecha, salvo «Pago a proveedor (CxP / OT)», que fija su fecha en su propio flujo), **Fija** (la fecha la determina el sistema: turnos de caja) o **Informativa** (solo lectura: orden de compra). |
 | **Acción** | Cambiar fecha / Fijar fecha, o Ir al flujo. |
 
 ## Estados y resultados
@@ -66,8 +66,8 @@ Al guardar una preferencia verá el resultado en la fila correspondiente:
 ## Restricciones importantes
 
 - La preferencia es **local de su puesto** (por usuario + tienda + tipo) y **no edita documentos ya registrados**: para corregir un documento existente use su propia reversión/anulación en su módulo.
-- Fijar una fecha **no autoriza nada**: el servidor valida cada documento contra el mínimo de la tienda, el piso de 6 meses y la prohibición de fechas futuras, aunque su formulario traiga otra cosa.
-- Los tipos **Fija** (Caja — turnos y arqueo) e **Informativa** (Orden de compra) no permiten fijar fecha.
+- Fijar una fecha **no autoriza nada**: aunque su formulario traiga otra cosa, al registrar el servidor impone el tope de hoy y el piso histórico de 6 meses, y el formulario impone el mínimo de la tienda (forward-only).
+- Los tipos **Fija** (Caja — turnos y arqueo) e **Informativa** (Orden de compra) no permiten fijar fecha; «Pago a proveedor (CxP / OT)» tampoco acepta preferencia: su fecha se define en su propio flujo de pago.
 - Convención de estampado: si la fecha elegida es hoy, el servidor usa la hora real; si es un día anterior, se registra al mediodía de ese día.
 - Trabajar después de medianoche pertenece al **nuevo día de negocio** (zona América/La Habana): el mínimo y el máximo se recalculan por día de negocio.
 - En el POS, si elige una fecha anterior a la apertura del turno activo, la venta se registra con su fecha económica y **no entrará en el arqueo de este turno** (aviso en pantalla).
@@ -80,7 +80,7 @@ Al guardar una preferencia verá el resultado en la fila correspondiente:
 | «No se puede retroceder en el tiempo operativo. La fecha mínima permitida es …» | La fecha está por debajo de la última registrada en la tienda. | Use la fecha mínima indicada o posterior. |
 | «La fecha … es anterior al límite histórico permitido de 6 meses» | Fecha bajo el piso histórico. | No es posible registrarla: es una política del sistema. |
 | Mi preferencia aparece «Caducada» | La tienda avanzó su mínimo operativo por encima de la fecha fijada. | Fije una nueva fecha o use **Restaurar HOY**. |
-| No veo el botón «Cambiar fecha» en una fila | El tipo es Fija o Informativa. | Solo los tipos Configurables aceptan preferencia. |
+| No veo el botón «Cambiar fecha» en una fila | El tipo es Fija o Informativa, o es Pago a proveedor (sin preferencia). | Solo los tipos Configurables con preferencia activada aceptan fijar fecha. |
 | No puedo fijar nada y no hay matriz | No hay tienda activa. | Seleccione una tienda activa en el selector superior. |
 
 ## Preguntas frecuentes
@@ -92,7 +92,7 @@ No. La preferencia es suya, de este puesto y esta tienda. Otro usuario seguirá 
 No. El turno se abre y cierra en Caja y define la ventana del arqueo. La fecha de trabajo solo preselecciona la fecha del próximo documento. Un turno puede abarcar documentos de un mismo día de negocio; las fechas de trabajo son por tipo de documento.
 
 **¿Puedo retro-fechar una venta de hace 3 meses?**
-Solo si ese día no está bajo el piso histórico (hoy − 6 meses) y no es anterior al mínimo operativo de la tienda. El servidor lo valida al registrar, no solo el formulario.
+Solo si ese día no está bajo el piso histórico (hoy − 6 meses) y no es anterior al mínimo operativo de la tienda. El piso y el tope los impone el servidor al registrar; el mínimo operativo lo impone el formulario.
 
 **¿Dónde se ve la fecha que llevará el documento?**
 En el selector de fecha del propio formulario de cada flujo (Fecha de venta, Fecha de Recepción, Fecha del vale, Fecha operativa, etc.). La preferencia solo define con qué valor arranca ese selector.

@@ -11,7 +11,7 @@ Es un módulo de **documentos de caja**, no un registro de gastos generales: las
 ## ¿Dónde encontrarlo?
 
 - **Escritorio**: Inicio → **OPERACIÓN** → **Caja** → **Ingresos/Egresos**.
-- **Móvil**: pestaña **Caja** del menú inferior → **Ingresos/Egresos**.
+- **Móvil**: menú inferior → **Más** → grupo OPERACIÓN → **Ingresos/Egresos** (o el acceso directo «Ingresos/Egresos» de la tarjeta Caja en Inicio).
 - **Búsqueda global**: `Ctrl/Cmd + K` y escriba «ingresos», «egresos», «fondo de cambio» o «comprobante».
 
 ## Antes de comenzar
@@ -52,9 +52,9 @@ Es un módulo de **documentos de caja**, no un registro de gastos generales: las
 
 | Tarjeta | Qué muestra |
 |---------|-------------|
-| **Saldo de caja (ahora)** | El efectivo esperado del turno vigente en CUP canónico: fondo inicial + ventas en efectivo + anticipos + ingresos de caja − pagos a proveedores − comisiones − egresos de caja. **No** es solo la suma de esta vista. |
+| **Saldo de caja (ahora)** | El efectivo esperado del turno vigente en CUP canónico: fondo inicial + ventas en efectivo + anticipos + ingresos de caja − pagos a proveedores y servicios recibidos en efectivo − comisiones − egresos de caja. **No** es solo la suma de esta vista. |
 | **Fondo de cambio vigente** | Apertura + constituciones/reposiciones − devoluciones confirmadas en la ventana del turno. |
-| **Ingresos / Egresos del período** | Totales de los documentos confirmados del período (CUP y, si existe, USD). |
+| **Ingresos del período / Egresos del período** | Dos tarjetas con los totales de los documentos confirmados del período (CUP y, si existe, USD). |
 | **Fondo pendiente de devolución** | Fondo constituido o repuesto que aún no ha sido devuelto. |
 | **Anulados del período** | Documentos anulados en el rango visible. |
 
@@ -100,8 +100,8 @@ No existen borrador ni edición: el documento se crea confirmado y su única cor
 | «La devolución supera el fondo de cambio vigente (X).» | Devuelve más fondo del que existe. | Use «Devolución parcial» por un monto menor. |
 | «No hay tasa USD disponible. Configura la tasa de la tienda antes de operar en USD.» | Falta la tasa del día. | Configúrela en la gestión de tasas de la tienda (o confirme la tasa diaria). |
 | «La fecha operativa debe caer dentro del turno abierto.» | Fecha fuera de la ventana del turno. | Elija la fecha operativa actual o amplíe la ventana abriendo el turno correspondiente. |
-| «El motivo de la anulación es obligatorio (mínimo 3 caracteres).» | Motivo vacío o demasiado corto. | Describa el motivo de la anulación. |
-| «Anular este ingreso dejaría el efectivo esperado en negativo.» | El ingreso ya salió físicamente por otro concepto. | Anule primero el movimiento posterior o corrija el orden de operaciones. |
+| «El motivo de la anulación es obligatorio (mínimo 3 caracteres)» | Motivo vacío o demasiado corto. | Describa el motivo de la anulación. |
+| «Anular este ingreso dejaría el efectivo esperado en negativo» | El ingreso ya salió físicamente por otro concepto. | Anule primero el movimiento posterior o corrija el orden de operaciones. |
 
 ## Preguntas frecuentes
 

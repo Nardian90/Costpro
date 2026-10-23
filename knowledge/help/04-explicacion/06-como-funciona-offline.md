@@ -12,7 +12,8 @@ CostPro está diseñado para **seguir funcionando sin Internet**. Esto se llama 
 
 | Acción | ¿Funciona offline? |
 |--------|-------------------|
-| Hacer ventas en el POS | ✅ Sí (queda en cola, se sincroniza al reconectar) |
+| Hacer ventas por catálogo (Tabla de Venta) | ✅ Sí (quedan en cola, se sincronizan al reconectar) |
+| Checkout del POS (carrito / express) | ❌ No (requiere conexión) |
 | Ver el catálogo de productos | ✅ Sí (copia local) |
 | Recibir mercancía | ✅ Sí (queda pendiente de sincronizar) |
 | Hacer ajustes de inventario | ✅ Sí (queda pendiente de sincronizar) |
@@ -26,7 +27,7 @@ CostPro está diseñado para **seguir funcionando sin Internet**. Esto se llama 
 | Recibir notificaciones | ❌ No |
 | Hablar con el asistente IA Darian | ❌ No |
 
-> 💡 **Resumen**: Lo esencial de la venta (POS con cola local) y algunos movimientos de almacén funcionan offline. Lo que requiere datos del servidor (reportes, cierres, historial), no.
+> 💡 **Resumen**: La venta por catálogo (con cola local) y algunos movimientos de almacén funcionan offline. El checkout del POS y lo que requiere datos del servidor (reportes, cierres, historial), no.
 
 ## ¿Cómo funciona técnicamente?
 
@@ -38,7 +39,7 @@ CostPro guarda en su computadora (o teléfono) una **copia local** de los datos 
 - Las ventas del día.
 - La configuración básica.
 
-Esta copia está en el navegador, en una zona llamada **localStorage** o **IndexedDB**. No se borra aunque cierre el navegador o apague la computadora.
+Esta copia está en el navegador, en una zona llamada **IndexedDB** (almacenamiento local del navegador). No se borra aunque cierre el navegador o apague la computadora.
 
 ### 2. Cola de operaciones pendientes
 Cuando usted hace una venta sin Internet:
@@ -54,18 +55,18 @@ Cuando vuelve el Internet:
 1. El sistema detecta que hay conexión.
 2. Empieza a enviar las ventas pendientes al servidor.
 3. El servidor procesa cada venta.
-4. Si hay conflictos (ej: el stock en el servidor ya cambió), los resuelve inteligentemente.
+4. Si hay conflictos (ej: el stock en el servidor ya cambió), el sistema los detecta y le muestra el **modal de conflictos de sincronización** para que usted resuelva cada uno.
 5. Cuando todo está sincronizado, borra la cola local.
 
 ### 4. Indicador visual
-En la barra superior verá un ícono que le indica el estado:
+El **indicador offline** vive en la cabecera del POS y de Recepción (no en la barra superior general). Cuando todo está en orden —conectado, sin cola ni errores— permanece **oculto**; cuando hay algo que mostrar, aparece con su estado:
 
-| Ícono | Significado |
-|-------|-------------|
-| 🟢 Punto verde | Conectado. Todo se sincroniza en tiempo real. |
-| 🟡 Punto amarillo | Sin conexión. Operando offline. |
-| 🔴 Punto rojo | Error de sincronización. Revisar. |
-| 🔵 Punto azul girando | Sincronizando... |
+| Aparición | Significado |
+|-----------|-------------|
+| Marca de conexión restaurada | Todo sincronizado. |
+| Icono de sin señal | Sin conexión: operando offline. |
+| Contador de pendientes | Operaciones en cola esperando sincronización. |
+| Icono de alerta | Sincronización con errores: revisar. |
 
 ## ¿Qué pasa si dos tiendas operan offline al mismo tiempo?
 
@@ -117,7 +118,7 @@ CostPro es una **Progressive Web App (PWA)**. Si la instala en su computadora o 
 ### 2. Actualice los datos cuando tenga Internet
 Antes de un corte previsto (ej: apagón programado):
 1. Entre a CostPro.
-2. Espere a que sincronice todo (punto verde).
+2. Espere a que sincronice todo (el indicador offline no muestra avisos).
 3. Navegue por las pantallas que va a necesitar (catálogo, POS).
 4. Esto asegura que la copia local esté actualizada.
 
@@ -128,7 +129,7 @@ Si vende por transferencia bancaria y no hay Internet, el cliente no puede hacer
 
 ### 4. Capacite a los cajeros
 Asegúrese de que todos los cajeros sepan:
-- Reconocer el ícono amarillo (offline).
+- Reconocer el indicador offline (sin conexión).
 - Saber que pueden seguir vendiendo (la venta queda en cola).
 - Entender que las ventas en cola se sincronizan al reconectar.
 - Saber que al volver el Internet, hay que esperar a que sincronice antes de apagar.
@@ -137,7 +138,7 @@ Asegúrese de que todos los cajeros sepan:
 
 Después de un corte:
 
-1. Mire el ícono de estado. Debe estar verde.
+1. Mire el indicador offline: no debe mostrar avisos de desconexión ni errores.
 2. Revise el **indicador offline del POS/Recepción** y el **modal de conflictos de sincronización** (en la cabecera) para ver si hay operaciones con error.
 3. Genere un reporte de ventas del día y compare con sus ventas reales.
 4. Si todo cuadra, está perfecto.

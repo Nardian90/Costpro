@@ -8,6 +8,13 @@
 > ">24h SOLO admin" de este documento NUNCA llegaron a implementarse
 > server-side y quedan **supersesadas**. Este archivo se conserva como
 > referencia histórica del diseño original de 6 roles.
+>
+> **Otras diferencias con el modelo vigente** (verificado en el código actual):
+> el sistema tiene además el rol **`costo`**; el POS incluye a **`usuario`**;
+> y la autorización de descuentos ≥ 15 % hoy se hace con **correo y contraseña
+> de un admin o manager de la tienda** (no existe un PIN dedicado y el
+> encargado no autoriza). La política vigente completa está en
+> `04-configuracion/roles-y-permisos.md`.
 
 > **Use esta tabla** cuando quiera saber qué puede hacer cada tipo de usuario.
 

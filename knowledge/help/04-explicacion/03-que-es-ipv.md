@@ -2,7 +2,7 @@
 
 > **Lea esto cuando**: Quiere entender el módulo **IPV** de la sección **EN DESARROLLO** (conciliación bancaria experimental, solo administradores).
 
-> ⚠️ **Atención: en CostPro hay dos vistas con las siglas IPV.** La activa es **«IPV — Ingresos por Ventas»** (OPERACIÓN → Ventas): un informe de ingresos por producto con conciliación de inventario. Este documento describe la **otra**: el módulo **IPV** de la sección **EN DESARROLLO** (visible **solo para administradores**), un banco de trabajo experimental de conciliación de transferencias bancarias que **no forma parte del flujo principal del producto**. También existe el nombre histórico «Tabla IPV» de la Tabla de Venta, que viene del informe de ingresos y no implica precios indexados.
+> ⚠️ **Atención: en CostPro hay dos vistas con las siglas IPV.** La activa es **«IPV — Ingresos por Ventas»** (OPERACIÓN → Ventas): un informe de ingresos por producto con conciliación de inventario. Este documento describe la **otra**: el módulo **IPV** de la sección **EN DESARROLLO** (visible **solo para administradores**), un banco de trabajo experimental de conciliación de transferencias bancarias que **no forma parte del flujo principal del producto**. También existe el nombre histórico «Tabla IPV» de la Tabla de Venta: la vista llevó ese nombre antes de renombrarse a «Tabla de Venta» precisamente para evitar la colisión de siglas con este módulo; no implica precios indexados.
 
 ## La pregunta básica: ¿cómo sé si los precios están subiendo?
 
@@ -33,19 +33,26 @@ Si un día detecta que sus ingresos no cuadran con lo que debería, el IPV le pe
 
 ## Las reglas de matching (emparejamiento)
 
-El motor del IPV aplica reglas para intentar emparejar automáticamente las transacciones bancarias con productos del catálogo (por código y precio). Las reglas implementadas hoy:
+El motor del IPV aplica reglas para intentar emparejar automáticamente las transacciones bancarias con productos del catálogo (por código y precio). Estado actual:
+
+**Activas por defecto:**
 
 | Regla | Qué hace |
 |-------|----------|
 | **HARD_REF** | Busca el código de producto en la referencia/observación del movimiento bancario. |
 | **EXACT_SUM** | Empareja cuando un conjunto de productos suma exactamente el monto del movimiento. |
-| **TOLERANCE** | Empareja si la diferencia es menor a una tolerancia configurable (ej: ±5 pesos). |
 | **CASH_FILL** | Asigna un producto cuyo precio cubra el remanente del movimiento («Inyección de Efectivo»). |
-| **WILDCARDS** | Usa patrones con comodines en las descripciones bancarias. |
-| **AUTO_SUPPLY** | Asigna productos para agotar un sobrepago, priorizando stock bajo («Auto-Suplencia»). |
 | **STOCK_LIMIT** | Limita la cantidad asignada al stock disponible. |
 
-Otras reglas del diseño (GOAL_WITH_TOLERANCE, PRICE_FLEX) aún no están activas en el motor.
+**Implementadas, pero inactivas por defecto** (se activan desde el editor de reglas del módulo):
+
+| Regla | Qué hace |
+|-------|----------|
+| **TOLERANCE** | Empareja si la diferencia es menor a una tolerancia fija (100 centavos). |
+| **WILDCARDS** | Usa patrones con comodines en las descripciones bancarias. |
+| **AUTO_SUPPLY** | Asigna productos para agotar un sobrepago, priorizando stock bajo («Auto-Suplencia»). |
+
+Del diseño original, **GOAL_WITH_TOLERANCE** aún no está implementada en el motor y **PRICE_FLEX** está implementada pero inactiva por defecto.
 
 > 💡 **Para personas mayores**: No necesita entender estas reglas en detalle. El sistema las aplica automáticamente. Solo sepa que existen y que es un módulo experimental.
 
@@ -61,7 +68,7 @@ Otras reglas del diseño (GOAL_WITH_TOLERANCE, PRICE_FLEX) aún no están activa
 - Se puede clasificar: venta, gasto, transferencia interna, etc.
 
 ### 3. Reglas de matching
-- El sistema aplica las 9 reglas automáticamente.
+- El sistema aplica automáticamente sus reglas activas (4 por defecto).
 - Empareja tantas transacciones como pueda.
 
 ### 4. Conciliación manual

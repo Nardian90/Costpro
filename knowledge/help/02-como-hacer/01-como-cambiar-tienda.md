@@ -5,11 +5,11 @@
 ## Cómo hacerlo
 
 1. Mire la **barra superior** (arriba del todo, en negro).
-2. En el centro, verá el **nombre de la tienda activa** actual. Por ejemplo: *"Tienda Centro"*.
+2. En el centro, verá el **nombre de la tienda activa** actual (en móvil, el selector es un icono de edificio). Por ejemplo: *"Tienda Centro"*.
 3. Haga clic en ese nombre.
 4. Se abre una lista desplegable con **todas las tiendas** a las que usted tiene acceso.
 5. Haga clic en la tienda a la que quiere cambiar.
-6. Espere 2 segundos. Verá un mensaje que dice *"Tienda cambiada a..."*.
+6. Verá el mensaje *"Tienda cambiada exitosamente"*.
 7. Todo el contenido de la pantalla se actualiza automáticamente para mostrar solo los datos de la nueva tienda.
 
 ## ¿Qué cambia al cambiar de tienda?
@@ -23,7 +23,7 @@
 
 - Su usuario y contraseña siguen siendo los mismos.
 - La configuración global (tema visual, idioma, etc.) es la misma.
-- Las categorías de productos son las mismas en todas las tiendas.
+- Las categorías de productos se gestionan **por tienda**: cada tienda tiene las suyas.
 
 > ℹ️ El catálogo de productos, los clientes y el stock son **por tienda**: cada tienda tiene los suyos. Lo compartido entre tiendas se mueve con transferencias.
 

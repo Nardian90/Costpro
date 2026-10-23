@@ -43,7 +43,7 @@ No es el arqueo del turno (ese vive en la vista Caja al cerrar turno): es el doc
 | **Comisiones pagadas por transferencia** | Se listan pero **no reducen el efectivo físico**. |
 | **Servicios recibidos pagados en efectivo** | Pagos en efectivo a servicios de terceros. |
 | **Pagos a proveedores (efectivo)** | Pagos en efectivo registrados. |
-| **Ajustes extraordinarios (+) / (−)** | Hoy **deshabilitados**: la función está temporalmente desactivada («Función temporalmente desactivada. Pendiente de revisión e implementación.») y no admite registros nuevos; los históricos se muestran. |
+| **Ajustes extraordinarios (+) / (−)** | Hoy **deshabilitados** (apartado visible solo para administradores): la función está temporalmente desactivada («Función temporalmente desactivada. Pendiente de revisión e implementación.») y no admite registros nuevos; los históricos se muestran. |
 | **Efectivo esperado a entregar** | Total: ventas en efectivo + anticipos + ajustes (+) + ingresos de caja − comisiones efectivo − servicios en efectivo − pagos a proveedores − ajustes (−) − egresos de caja − reembolsos en efectivo. |
 
 ## El cuadre de efectivo
@@ -52,7 +52,7 @@ Con el desglose activo, cuente billetes y monedas por denominación. El informe 
 
 | Resultado | Significado |
 |-----------|-------------|
-| **Cuadrado** | Contado igual al esperado (diferencia menor a un céntimo). |
+| **Cuadrado** | Contado igual al esperado (diferencia menor que medio céntimo). |
 | **Sobrante** | Contado mayor que el esperado (diferencia positiva). |
 | **Faltante** | Contado menor que el esperado (diferencia negativa). |
 
@@ -68,7 +68,7 @@ El cuadre se calcula **por moneda**: el efectivo físico CUP y el efectivo físi
 ## Exportaciones
 
 - **PDF** con plantillas **Estándar**, **Simple** y **Diario (Empresa)**: la plantilla Diario produce dos secciones cortadas — «Reporte de Venta CUP» y «Reporte de Venta USD» — con Resumen y Entrega de Efectivo (desglose de billetes + cuadre), Detalle de Ventas y firmas; la Estándar añade flujo de caja CUP, productos vendidos, comisiones y el desglose para entrega. Las firmas («Hecho por», «Entregado por», «Recibido por») son configurables con nombres propios.
-- **Excel** con hojas «Reporte Entrega» (CUP), «Reporte Entrega USD» (si hay), «Órdenes de Trabajo» y «Nota metodológica», con totales calculados.
+- **Excel** con hojas «Reporte Entrega» (CUP), «Reporte Entrega USD» (si hay USD y la opción «USD en hoja separada» está activa), «Órdenes de Trabajo» y «Nota metodológica», con totales calculados.
 - Las opciones (plantilla, orientación, denominaciones, líneas de firma, desglose laboral) se recuerdan para próximas veces.
 
 ## Restricciones importantes
@@ -76,7 +76,7 @@ El cuadre se calcula **por moneda**: el efectivo físico CUP y el efectivo físi
 - **Cada dimensión por separado**: efectivo CUP, efectivo USD, transferencias y Zelle no se suman entre sí. El «Efectivo esperado a entregar» es efectivo físico (CUP + USD en sus hojas propias), no el total cobrado.
 - Las ventas se atribuyen por su fecha de registro; los ajustes, reembolsos e ingresos/egresos de caja por su fecha de pago; las **comisiones por el día de negocio en que se confirmó su pago** — una comisión pagada hoy por ventas de ayer aparece en el reporte de hoy.
 - Una venta retro-fechada (fecha operativa de un día anterior) aparece en el reporte de **su fecha operativa**, no del día en que se registró.
-- Los **ajustes extraordinarios** están temporalmente deshabilitados para registros nuevos (la opción muestra el aviso y el backend rechaza con «Función temporalmente desactivada»).
+- Los **ajustes extraordinarios** están temporalmente deshabilitados para registros nuevos (el apartado, visible solo para administradores, muestra el aviso y el backend rechaza con «Función temporalmente desactivada»).
 - El cuadre es orientativo para la entrega: el arqueo oficial del turno se ejecuta en la vista Caja.
 
 ## Errores frecuentes

@@ -3,7 +3,7 @@
 **Fecha**: 2026-10-24 (actualizado con misión complementaria de cierre de cobertura)
 **Base de verificación**: `main` @ `1327feb3d` (incluye merge del PR #1463) · rama de trabajo `docs/auditoria-ayuda-integral-costpro`
 **Método**: cada afirmación relevante de la ayuda se contrastó con el código real (vistas, APIs, RPCs, migraciones, navegación y tests). Fuente única de navegación: `src/config/navigation/navigation-definition.ts`.
-**Actualización**: segunda pasada completa sobre los documentos pendientes (§2.5) y ayudas nuevas para las 4 vistas sin documentación (§4.4). Ver §6.
+**Actualización**: segunda pasada completa sobre los documentos pendientes (§2.5) y ayudas nuevas para las 4 vistas sin documentación (§4.4). Ver §6. Revisión independiente final (verificación del PR): §7.
 
 ---
 
@@ -186,3 +186,41 @@ No se añadió ningún botón de ayuda a pantallas concretas ni un segundo siste
 ### 6.4 Segunda pasada — método
 
 Cada uno de los 10 documentos pendientes fue leído completo y verificado contra: navegación real (labels exactos de `navigation-definition.ts`), componentes de las vistas descritas, APIs/RPCs, permisos declarados, capturas referenciadas (public/help/capturas/), enlaces internos y contradicciones con los documentos reescritos en la primera pasada. Solo se corrigieron defectos demostrables (contradicción literal con el código); no hubo reescrituras estilísticas. Tres puntos quedan como PENDIENTE DE CONFIRMACIÓN (no demostrables por código estático): protección contra borrado de roles admin/manager, cifrado en reposo de claves API, columna de IP en el RPC de auditoría.
+
+---
+
+## 7. Revisión independiente final del PR (2026-10-24)
+
+Tercera pasada de verificación ejecutada sobre el estado real del PR #1464 (HEAD `f9d8232b8`), con 6 agentes de auditoría independientes (uno por vista nueva, dos para los 10 documentos de la segunda pasada) y verificación dirigida posterior de cada hallazgo. Ninguna afirmación del informe anterior se dio por cierta sin comprobarla contra el código.
+
+### 7.1 Resultado por bloque
+
+| Bloque | Resultado |
+|--------|-----------|
+| Guía 26 (Ingresos/Egresos) | 21 afirmaciones verificadas; 0 bloqueantes. Corregidos: ruta móvil real (Más → OPERACIÓN, no el tab Caja), fórmula del saldo incluye servicios recibidos en efectivo, dos tarjetas separadas Ingresos/Egresos del período, 2 mensajes de anulación sin punto final (literal del backend) |
+| Guía 27 (Fechas de trabajo) | 18 verificadas; 0 bloqueantes. Corregidos: «Pago a proveedor (CxP / OT)» es configurable SIN preferencia (3er tipo sin botón); reparto real de validación (servidor: tope hoy + piso 6 meses; formulario: mínimo forward-only de la tienda) |
+| Guía 28 (IPV ventas) | 19 verificadas; 0 bloqueantes. Corregido: origen del nombre histórico «Tabla IPV» (la vista se llamó así ANTES de este informe; renombrada por colisión de siglas) — fix replicado en `catalogo-ventas.md` y `03-que-es-ipv.md` |
+| Guía 29 (Reporte Entrega) | 25 verificadas; 0 bloqueantes. Corregidos: umbral del cuadrado = 0.005 (medio céntimo), apartado de ajustes extraordinarios visible solo para admin, hoja Excel USD requiere opción «USD en hoja separada». La incidencia 503 quedó doble-verificada (frontend flag + backend `FEATURE_DISABLED`) |
+| Segunda pasada (10 docs) | Confirmados y corregidos 7 defectos reales que la pasada anterior no detectó: matriz de roles de `administrar-tiendas.md` (manager sin usuarios; usuario sin reportes; protección de roles = «en uso», no admin/manager; recibos sin logo), PWA sin push real, historial de reportes sin usuario/parámetros, consejo Kardex-fechas inefectivo, auditoría de ficha sin «quién» en Bitácora, IPV con 4 reglas activas (no 9), auditoría accesible a manager/encargado por RLS+Reportes, offline solo venta por catálogo (POS checkout online-only), indicador offline en cabecera POS/Recepción, proveedores con catálogo por tienda, devolución cruzada rechazada, categorías por tienda (×2), creación de tienda sin «moneda principal» |
+| Consistencia cruzada | `02-roles-permisos.md` (banner ampliado: rol `costo`, POS incluye `usuario`, autorización ≥15 % con email+contraseña de admin/manager, no PIN), `01-que-es-multi-tienda.md` y `01-como-cambiar-tienda.md` (creación real de tienda, categorías por tienda, consolidado en Gestión de Tiendas, toast literal) |
+
+### 7.2 Pendientes de confirmación — actualización
+
+| Punto (§6.4) | Estado tras esta revisión |
+|--------------|---------------------------|
+| Protección contra borrado de roles admin/manager | **CONFIRMADO como NO implementado**: el único guard es «rol en uso por usuarios» (`useRoles.ts:72-74`). Documentación corregida en `administrar-tiendas.md` |
+| Cifrado en reposo de claves API | Sin cambios: sigue sin verificarse por código estático |
+| Columna de IP en el RPC de auditoría | Sin cambios: sigue sin verificarse por código estático |
+
+### 7.3 Incidencia `viewRegistry.ts` — veredicto revisado
+
+La observación de §6.3 se reprecisa: la ausencia de `work_dates`, `ipv_ventas` y `cash_report` en `src/config/viewRegistry.ts` **sí tiene un efecto real** — el asistente Darian (`bot-service.ts` + `ai/tools` `open_view`/`explain_view`) no puede abrir ni explicar esas 3 vistas («Vista … no encontrada»), y su prompt de sistema no las conoce. **No** afecta navegación, ayuda contextual (`HELP_DOC_BY_VIEW`), permisos ni pruebas. Estado preexistente de `main` (no es regresión del PR). Tarea independiente propuesta: añadir las 3 entradas de metadatos.
+
+### 7.4 Tareas funcionales independientes (fuera de este PR documental)
+
+1. `/api/work-dates`: la columna «Última fecha operativa» de «Caja — ingresos/egresos documentados» muestra siempre «Sin documentos aún» (`byType` no consulta `cash_flow_documents`) — fix de una línea en backend.
+2. `viewRegistry.ts`: registrar `work_dates`, `ipv_ventas`, `cash_report` para el asistente IA.
+3. Cierre Fiscal: implementar (o eliminar) la acción de desbloqueo que insinúa `FiscalCloseView.tsx:142`.
+4. Toggles de Notificaciones en Ajustes no persisten entre recargas (estado local `SettingsView.tsx:68-71`).
+5. PWA: definir el flujo real de push (suscripción + envío server-side) o eliminar el handler residual de `sw.js`.
+6. Mantener las limitaciones ya documentadas (PT007 anular pago SR, 503 ajustes extraordinarios, PDF Kardex/Auditoría) como tareas de reparación propias.

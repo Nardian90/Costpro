@@ -21,7 +21,7 @@ CostPro registra automáticamente:
 - Cada venta creada (con usuario, fecha, monto).
 - Cada venta anulada (con motivo, usuario, fecha).
 - Cada descuento aplicado (con monto, motivo, autorizador si requiere).
-- Cada cambio de precio en el POS.
+- Cada cambio de precio de catálogo (el precio aplicado en cada venta queda registrado en la propia venta).
 
 ### Acciones de inventario
 - Cada recepción de mercancía (con usuario, proveedor, monto).
@@ -29,9 +29,7 @@ CostPro registra automáticamente:
 - Cada transferencia creada, enviada, recibida.
 
 ### Acciones de caja
-- Cada apertura de turno.
-- Cada cierre de turno (con diferencias).
-- Cada arqueo parcial.
+- Cada cierre de caja (con diferencias).
 
 ### Acciones administrativas
 - Cada creación / edición / desactivación de usuario.
@@ -57,8 +55,8 @@ Para no invadir la privacidad ni saturar el sistema, **NO** se audita:
 
 ## ¿Quién puede ver la auditoría?
 
-- **admin**: ve todo.
-- **Ningún otro rol tiene acceso a la vista de Auditoría** (manager y encargado incluidos): la entrada solo aparece para administradores.
+- **admin**: ve todo desde la vista global **Auditoría**, cuya entrada solo aparece para administradores.
+- **manager y encargado** no abren esa vista global, pero pueden consultar los eventos de **su tienda** (por ejemplo, la Bitácora de Auditoría del Generador de Reportes).
 
 Los registros quedan igualmente protegidos contra borrado, aunque usted no pueda consultarlos.
 

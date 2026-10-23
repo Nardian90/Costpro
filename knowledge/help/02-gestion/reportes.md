@@ -26,7 +26,7 @@ Un menú desplegable permite elegir entre los 11 tipos de reporte disponibles. C
 
 ### Filtros de Rango de Fechas
 
-Todos los reportes admiten filtrado por rango de fechas:
+La mayoría de los reportes admiten filtrado por rango de fechas (Inventario y Kardex trabajan sobre el estado actual o el producto, no sobre el rango):
 
 | Filtro | Descripción |
 |--------|-------------|
@@ -74,7 +74,7 @@ La siguiente tabla detalla los 11 tipos de reporte disponibles en el sistema:
 
 ## Vista Previa del Reporte
 
-Al configurar los parámetros, la vista **Vista Previa (Borrador)** muestra en vivo un anticipo del reporte con los **primeros 5 registros** del resultado, con el formato de página seleccionado. Es un borrador HTML de referencia: el PDF final se genera al pulsar **Generar**.
+Al configurar los parámetros, la vista **Vista Previa (Borrador)** muestra en vivo un anticipo del reporte con los **primeros 5 registros** del resultado. Es un borrador HTML de referencia: el PDF final se genera al pulsar **Generar**.
 
 > **Tip:** Ajuste columnas y filtros mirando el borrador antes de generar: evita regeneraciones innecesarias.
 
@@ -82,23 +82,23 @@ Al configurar los parámetros, la vista **Vista Previa (Borrador)** muestra en v
 
 Al pulsar **Generar**, el reporte se abre en formato **PDF en una pestaña nueva del navegador** desde donde puede imprimirse o guardarse. También puede exportarlo a **Excel** con el botón correspondiente. Ambas salidas conservan:
 
-- El formato de página seleccionado (A4, Carta)
 - Las columnas elegidas en la configuración
 - Los filtros de fecha aplicados
+- El formato de página seleccionado (A4, Carta) en el caso del PDF
 
 ## Historial de Reportes Generados
 
 Cada reporte generado queda registrado en el historial del generador (no en la auditoría global). Para consultarlo:
 
 1. Pulse el botón **Historial** en la vista de Reportes.
-2. Revise las ejecuciones previas: usuario que generó cada reporte, parámetros de configuración, fecha/hora y estado.
+2. Revise las ejecuciones previas: nombre y tipo de reporte, fecha/hora de ejecución, estado (Completado/Fallido) y, si falló, el error reportado.
 
 > **Importante:** El historial de ejecuciones es la trazabilidad de los reportes emitidos.
 
 ## Consejos para una Generación Óptima
 
 - **Rangos amplios:** Para reportes con períodos superiores a un año, considera reducir las columnas para mejorar la legibilidad.
-- **Kardex por producto:** El reporte Kardex requiere seleccionar un producto y puede generar un volumen alto de datos. Utiliza filtros de fecha cortos (semana o mes) para obtener resultados manejables. Recuerde el aviso de Implementación Parcial.
+- **Kardex por producto:** El reporte Kardex requiere seleccionar un producto y puede generar un volumen alto de datos; el resultado se acota por producto y límite de registros (el rango de fechas no lo afecta). Recuerde el aviso de Implementación Parcial.
 - **Inventario:** El reporte de Inventario refleja el estado actual y no requiere rango de fechas, aunque puedes comparar con instantáneas anteriores.
 - **Auditoría:** Evita rangos superiores a 30 días para el reporte de Auditoría, ya que registra cada acción individual del sistema. Recuerde el aviso de Implementación Parcial.
 

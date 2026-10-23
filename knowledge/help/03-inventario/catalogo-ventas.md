@@ -2,7 +2,7 @@
 
 Tutorial completo sobre la **Tabla de Venta** en CostPro: una hoja de venta editable que muestra todos los productos con su stock, costo y precio de venta, permite fijar cantidad, descuento y forma de pago por fila, y procesar la venta directamente desde la vista. Es la herramienta ideal para ventas por volumen, pedidos armados y consultas de precios.
 
-> **Nota de nombre**: la vista se llama «Tabla de Venta» en el menú (Ventas → Opciones). El nombre histórico «Tabla IPV» viene del informe IPV de ventas, no de una indexación de precios: aquí no hay precios indexados ni tablas oficiales.
+> **Nota de nombre**: la vista se llama «Tabla de Venta» en el menú (Ventas → Opciones). Llevó antes el nombre histórico «Tabla IPV» y se renombró precisamente para evitar la colisión de siglas con el IPV; no implica indexación de precios: aquí no hay precios indexados ni tablas oficiales.
 
 ## Contenido
 

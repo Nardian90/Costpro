@@ -89,7 +89,7 @@ Hay algunos datos que **sí** son transversales, y otros que son **estrictamente
 ### Por tienda (no compartidos)
 - **El catálogo de productos**: cada tienda tiene sus propios productos con su SKU, precio y stock (el SKU es único por tienda). Para tener el mismo producto en otra tienda se crea ahí o se importa.
 - **Los clientes**: cada cliente pertenece a una tienda.
-- **Los proveedores**: se registran como datos de cada producto/recepción; no existe un catálogo global de proveedores.
+- **Los proveedores**: existe un catálogo de proveedores **por tienda** (alta y gestión desde el inventario); no se comparte entre tiendas.
 - El **stock**, obviamente, es por tienda.
 
 ### Transversales
@@ -122,9 +122,8 @@ Como administrador, manager o encargado, usted **sí** puede ver datos consolida
 - Pero los reportes consolidados le dan la vista mezclada cuando la necesita.
 
 **¿Si un cliente devuelve un producto en la tienda equivocada, qué pasa?**
-- El sistema le permite registrar la devolución, pero queda como "anomalía".
-- Lo correcto es anular la venta en la tienda original y hacer una nueva venta en la tienda donde se devuelve.
-- Si esto ocurre con frecuencia, considere capacitar al personal.
+- No es posible: solo puede procesar la devolución de una venta de **su propia tienda** (el backend lo verifica con su membresía).
+- Para ese caso, el cliente debe ser atendido en la tienda donde se hizo la venta original.
 
 **¿Cómo se si un usuario está intentando acceder a otra tienda?**
 - El sistema rechaza el intento y deja registro técnico del mismo en los logs del servidor (no en la Auditoría de la interfaz).

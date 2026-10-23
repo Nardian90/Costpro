@@ -13,7 +13,7 @@ Presiona `Ctrl + K` (o `Cmd + K` en macOS) desde cualquier pantalla. Se abrirá 
 ### Características
 
 - **Búsqueda difusa (fuzzy search):** Escribe parte del nombre de un módulo, acción o documento y el sistema encontrará coincidencias en tiempo real, incluso con errores tipográficos menores.
-- **Búsqueda global:** Los resultados incluyen módulos de navegación, acciones contextuales (crear venta, nueva ficha, exportar) y documentos del sistema.
+- **Búsqueda global:** Los resultados incluyen módulos de navegación, acciones contextuales (crear venta, nueva ficha, exportar) y las tiendas a las que perteneces.
 - **Filtrado instantáneo:** Los resultados se actualizan con cada tecla presionada, sin necesidad de esperar ni presionar Enter.
 - **Navegación por teclado:** Utiliza las flechas arriba/abajo para seleccionar un resultado y Enter para ejecutarlo.
 
@@ -125,7 +125,7 @@ CostPro es una aplicación web progresiva (PWA), lo que permite instalarla direc
 - **Almacenamiento local:** Los datos de la sesión actual se almacenan en caché local.
 - **Modo offline:** Si se pierde la conexión, la operativa esencial sigue funcionando: las **ventas se quedan en cola local** y se sincronizan automáticamente al reconectar.
 - **Sincronización:** Al recuperar la conexión, los cambios pendientes se envían al servidor y el inventario y la caja se actualizan con ellos.
-- **Notificaciones:** La PWA puede enviar notificaciones push al dispositivo incluso cuando la aplicación está cerrada.
+- **Notificaciones:** Las notificaciones de la aplicación se muestran mientras CostPro está en uso; no existe envío push externo cuando la aplicación está cerrada.
 
 > **Importante:** La operación normal requiere conexión activa. Si se pierde, las ventas quedan en cola local esperando sincronización; consulte *Cómo funciona el modo offline* para el detalle de qué funciona y qué no.
 

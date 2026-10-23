@@ -9,7 +9,7 @@
 > ⚠️ **En CostPro hay más de una cosa llamada «IPV»**:
 > - Esta vista activa: **IPV — Ingresos por Ventas** (OPERACIÓN → Ventas) — el informe que documenta esta guía.
 > - Un módulo **IPV** en la sección **EN DESARROLLO** (solo administradores): banco de trabajo experimental de conciliación bancaria. Vea «¿Qué es el IPV?» para ese módulo.
-> - El nombre histórico **«Tabla IPV»** de la Tabla de Venta, que viene de este informe y no implica precios indexados.
+> - El nombre histórico **«Tabla IPV»** de la Tabla de Venta: la vista llevó ese nombre antes de renombrarse a «Tabla de Venta» (justamente para evitar la colisión de siglas); no implica precios indexados.
 
 ## ¿Dónde encontrarlo?
 
@@ -108,7 +108,7 @@ Tres hojas: **IPV** (tabla completa con totales), **Incidencias** (con el detall
 ## Información relacionada
 
 - **¿Qué es el IPV?** — el módulo experimental de conciliación bancaria (EN DESARROLLO; distinto de esta vista).
-- **Catálogo de Ventas** — de dónde viene el nombre histórico «Tabla IPV».
+- **Catálogo de Ventas** — la vista que llevó el nombre histórico «Tabla IPV».
 - **Gestión del Inventario** — Kardex y trazabilidad de los movimientos que este informe clasifica.
 - **Cómo hacer un inventario físico** — el proceso formal para corregir desbalances de stock.
 - **Cómo emitir un vale de salida** — las salidas que aparecen en la columna «Vales salidas».

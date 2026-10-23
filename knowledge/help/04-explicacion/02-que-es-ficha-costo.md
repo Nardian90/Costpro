@@ -99,10 +99,11 @@ Anexos con numeración romana para detallar cálculos auxiliares:
 Las fórmulas pueden referenciar totales de anexos (por ejemplo `AnexoI`).
 
 ### 3. Auditoría automática
-Cada cambio en la ficha queda registrado:
-- Quién lo cambió.
-- Cuándo.
+Cada cambio en la ficha queda registrado en su **Bitácora**:
+- Cuándo se cambió.
 - Qué cambió (antes → después).
+
+Los eventos de generación, recálculo y exportación de fichas quedan además en la **Auditoría global**, ya con el usuario que los ejecutó.
 
 ### 4. Solver (Goal Seek)
 Herramienta que resuelve el problema inverso: en lugar de *"dame el costo para este precio"*, pregunta *"¿qué cantidad debo producir para que el costo unitario sea X?"*.

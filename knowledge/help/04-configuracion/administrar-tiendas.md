@@ -45,7 +45,7 @@ Las tiendas representan sucursales físicas o puntos de venta dentro de tu organ
 | Campo | Descripción | Obligatorio |
 |-------|-------------|:-----------:|
 | **Nombre de la Tienda** | Nombre comercial de la tienda (ej. `Sucursal Centro`) | ✅ |
-| **URL pública (slug)** | Identificador de la tienda para la vitrina pública | ✅ |
+| **URL pública (slug)** | Identificador de la tienda para la vitrina pública (se propone automáticamente a partir del nombre) | ✅ |
 
 4. Haz clic en **Crear Tienda**
 5. Completa después los detalles desde **Configuración de Tienda**: nombre, **Dirección**, **Teléfono**, **Email** y **Logo**
@@ -77,7 +77,7 @@ Las tiendas representan sucursales físicas o puntos de venta dentro de tu organ
 | **Rol** | Rol asignado (ver sección de Roles abajo) |
 | **Tiendas asignadas** | Sucursales a las que tiene acceso |
 
-4. Haz clic en **Guardar**
+4. Haz clic en **Crear Usuario**
 
 > **⚠️ Importante:** Un usuario puede tener acceso a **múltiples tiendas**. Los datos que ve en cada momento dependen de la tienda activa seleccionada en la barra superior.
 
@@ -109,12 +109,12 @@ Los roles definen los permisos y funcionalidades a las que un usuario tiene acce
 | Rol | Descripción | Permisos principales |
 |-----|-------------|---------------------|
 | **admin** | Administrador total del sistema | Acceso completo a todos los módulos, configuración, usuarios, tiendas, reportes, costos |
-| **manager** | Gerente de tienda | Gestión de la tienda asignada: ventas, inventario, cierres de caja, reportes locales, usuarios de su tienda |
-| **encargado** | Encargado de operaciones | Ventas, consulta de inventario, cierres de caja, Costo de su tienda |
+| **manager** | Gerente de tienda | Gestión de la tienda asignada: ventas, inventario, cierres de caja, reportes locales |
+| **encargado** | Encargado de operaciones | Ventas, gestión de inventario (recepciones, ajustes), cierres de caja, Costo de su tienda |
 | **clerk** | Cajero / Vendedor | Registro de ventas, consulta de precios, emisión de recibos |
-| **warehouse** | Responsable de almacén | Gestión de inventario, entradas, salidas, ajustes de stock |
+| **warehouse** | Responsable de almacén | Gestión de inventario: entradas (recepciones), salidas, transferencias y consultas de stock |
 | **costo** | Especialista de costos | Fichas de costo y operaciones del dominio Costo |
-| **usuario** | Usuario básico | Consulta limitada de información y reportes de lectura |
+| **usuario** | Usuario básico | Acceso básico de ventas: POS, Caja y Vales de Salida de su tienda |
 
 ### Detalle de Permisos por Rol
 
@@ -150,7 +150,7 @@ manager
 
 encargado
 ├── ✅ REGISTRO DE VENTAS
-├── ✅ CONSULTA DE INVENTARIO (lectura)
+├── ✅ INVENTARIO de su tienda (recepciones, ajustes, consultas)
 ├── ✅ CIERRES DE CAJA
 ├── ✅ COSTO de su tienda
 └── ❌ CONFIGURACIÓN SISTEMA, Usuarios y Roles
@@ -163,23 +163,23 @@ clerk
 
 warehouse
 ├── ✅ INVENTARIO (completo en su tienda)
-│   ├── Entradas, Salidas, Ajustes
+│   ├── Entradas (recepciones), Salidas, Transferencias
 │   └── Consultas de stock
-└── ❌ VENTAS, CONFIGURACIÓN, COSTOS, IPV
+└── ❌ VENTAS, CONFIGURACIÓN, COSTOS, IPV, AJUSTES DOCUMENTALES
 
 usuario
-├── ✅ CONSULTA DE REPORTES (lectura)
+├── ✅ POS, CAJA Y VALES DE SALIDA (básico)
 └── ❌ Todo lo demás
 ```
 
 ### Crear y Editar Roles
 
 1. Navega a **SISTEMA > Roles**
-2. Haz clic en **Crear Rol** o selecciona uno existente para editar
+2. Haz clic en **Nuevo Rol** o selecciona uno existente para editar
 3. Configura los permisos marcando/desmarcando las casillas por módulo
-4. Haz clic en **Guardar**
+4. Haz clic en **Crear Rol** (o **Guardar Cambios** si editas)
 
-> **⚠️ Importante:** Los roles `admin` y `manager` no se pueden eliminar. Solo se pueden modificar sus permisos.
+> **⚠️ Importante:** No se puede eliminar un rol que está siendo utilizado por uno o más usuarios (revoca o reasigna esas membresías primero). Los roles sin uso sí pueden eliminarse.
 
 ---
 
@@ -253,12 +253,12 @@ Un usuario habilitado puede iniciar sesión y realizar todas las operaciones per
 
 - Cada transacción de venta queda registrada en la tienda donde se realizó
 - Los cierres de caja son por tienda y por turno
-- Los recibos incluyen el nombre y logo de la tienda
+- Los recibos incluyen el nombre de la tienda
 
 ### Reportes
 
 - Los reportes operativos se generan con datos de la tienda activa
-- Los administradores pueden acceder a reportes consolidados multi-tienda
+- El consolidado multi-tienda está en el tablero del hub **Gestión de Tiendas** (no en el Generador de Reportes, que es por tienda)
 
 ### Cash Closures (Cierres de Caja)
 
