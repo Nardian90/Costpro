@@ -425,7 +425,7 @@ BEGIN
 
   RETURN v_result;
 END;
-$function$
+$function$;
 
 -- ── create_devolution_v2 (v2.24.1) ────────────────────────────────────────────────────────
 
@@ -721,7 +721,7 @@ BEGIN
     'total_amount', v_total,
     'financial_effect', CASE WHEN p_payment_method = 'store_credit' THEN 'store_credit_ledger' ELSE 'cash_out_and_refund' END
   );
-END $function$
+END $function$;
 
 -- ── close_cash_shift (v2.24.1) ────────────────────────────────────────────────────────
 
@@ -973,5 +973,5 @@ BEGIN
     'zelle_sales', v_zelle_sales
   );
 END;
-$function$
+$function$;
 

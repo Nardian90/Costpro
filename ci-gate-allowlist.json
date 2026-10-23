@@ -812,5 +812,33 @@
       "expires": "2026-12-31"
     }
   ],
-  "source_of_truth_baseline": []
+  "source_of_truth_baseline": [
+    {
+      "function": "create_cash_flow_document/13",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "REVISIÓN FINAL v2.24.1 2026-10-24 · corrección de idempotencia (comparación REAL del param_hash — antes la variable se sobrescribía y una clave repetida con payload distinto devolvía el documento original en silencio) versionada en 20261024120000_revision_final_caja_v2_24_1.sql y PENDIENTE de aplicación autorizada en producción. El cuerpo LIVE pre-v2.24.1 está certificado; el drift es INTENCIONAL y temporal. Sin cambios contables (términos del ledger byte-idénticos). Expira al aplicar la correctiva o en la fecha.",
+      "added_by": "revision-final-pr1465",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "create_devolution_v2/12",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "REVISIÓN FINAL v2.24.1 2026-10-24 · 3 correcciones de seguridad versionadas en 20261024120000 y PENDIENTES de aplicación autorizada en producción: (a) precio del reembolso anclado al servidor (price_at_sale_cup ponderado — anti-sobre-reembolso, DF-07 solo topa cantidad); (b) advisory lock por tienda (cierra carrera entrega-vs-reembolso); (c) idempotencia con hash de payload + registry. El cuerpo LIVE pre-v2.24.1 está certificado; drift INTENCIONAL y temporal.",
+      "added_by": "revision-final-pr1465",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "close_cash_shift/6",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "REVISIÓN FINAL v2.24.1 2026-10-24 · gate de rol admin/manager/encargado en servidor (la UI ya lo restringe; has_store_access_as aceptaba cualquier membresía activa vía POST directo) versionado en 20261024120000 y PENDIENTE de aplicación autorizada en producción. Fórmula del arqueo byte-idéntica. El cuerpo LIVE pre-v2.24.1 está certificado; drift INTENCIONAL y temporal.",
+      "added_by": "revision-final-pr1465",
+      "expires": "2027-01-31"
+    }
+  ]
 }
