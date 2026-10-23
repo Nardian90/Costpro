@@ -141,7 +141,12 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     console.log(`[AUDIT] Is Random: ${result.statisticalTests!.isRandom}`);
     console.log(`[AUDIT] Confidence: ${result.statisticalTests!.confidence.toFixed(1)}%`);
     console.log(`[AUDIT] Summary: ${result.statisticalTests!.summary.substring(0, 100)}...`);
-  }, 120000); // FIX-CI-TIMEOUT: 120s — CI runners are slower than local
+    // FIX-CI-TIMEOUT (2026-10-23, PR #1458): medido en CI con coverage a 121,7s
+    // vs límite de 120s (local sin coverage: ~40s; con instrumentación ~3x).
+    // Este test usa generateRealisticHistory(500) — doble de historia que sus
+    // hermanos — y days=15 (los 4 tests estadísticos necesitan las muestras).
+    // Subimos a 180s (margen 1,5x sobre lo medido); sin cambios de semántica.
+  }, 180000);
 
   it('BacktestEngine incluye drift detection', () => {
     const history = generateRealisticHistory(200);

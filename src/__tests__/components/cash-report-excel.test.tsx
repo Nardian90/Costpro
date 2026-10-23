@@ -175,15 +175,18 @@ describe('PARTE D — el .xlsx final es un libro Office Open XML VÁLIDO', () =>
     expect(findRow(rs, 'Tienda:').row[1]).toBe('ENERVIDA-VITALLCONS');
   });
 
-  it('E-3: impresión completa en el XML — A4 landscape, fitToWidth=1/fitToHeight=0, SIN pane congelado, headerFooter con numeración, fitToPage', async () => {
+  it('E-3: impresión completa en el XML — A4 VERTICAL (misión 2026-10-23 §5), fitToWidth=1/fitToHeight=0, SIN pane congelado, headerFooter con numeración, fitToPage y SALTO MANUAL antes de la sección 2', async () => {
     const zip = await blobZip(buildContext());
     const s1 = await zip.file('xl/worksheets/sheet1.xml')!.async('string');
     expect(s1).not.toContain('<pane '); // feedback 2026-10-22: sin filas congeladas
-    expect(s1).toContain('pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"');
+    expect(s1).toContain('pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"');
     expect(s1).toContain('<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>');
     expect(s1).toContain('<headerFooter>');
     expect(s1).toContain('Página &amp;P de &amp;N');
     expect(s1).toContain('&amp;BReporte de Entrega — ENERVIDA-VITALLCONS');
+    // MISIÓN 2026-10-23: salto de página manual antes del banner SECCIÓN 2 —
+    // cada sección se imprime como unidad (sin división accidental).
+    expect(s1).toMatch(/<rowBreaks count="\d+" manualBreakCount="\d+"><brk id="\d+" max="16383" man="1"\/>/);
     // Print_Area + Print_Titles definidos a nivel de workbook (encabezado repetido)
     const wbXml = await zip.file('xl/workbook.xml')!.async('string');
     expect(wbXml).toContain('_xlnm.Print_Area');
@@ -229,10 +232,12 @@ function valueAfterLabel(rs: Row[], label: string): string | number | undefined 
 }
 
 describe('PARTE E — estructura del libro espejo del PDF', () => {
-  it('E2/refinamiento: identidad COMPACTA — 4 datos en 2 filas, sin «Tipo de reporte» ni «Monedas»', async () => {
+  it('E2/refinamiento: identidad — tienda/título/período completos, sin «Tipo de reporte» ni «Monedas» (misión 2026-10-23)', async () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
     const rs = rows(wb.Sheets['Reporte Entrega']);
-    expect(rs[0][0]).toContain('COSTPRO 4');
+    // Título del documento: tienda + título + moneda (misión §5)
+    expect(rs[0][0]).toContain('ENERVIDA-VITALLCONS');
+    expect(rs[0][0]).toContain('Reporte de Venta CUP');
     // Fila 1: tienda | período · Fila 2: dirección | generado
     expect(rs[1][0]).toBe('Tienda:');
     expect(rs[1][1]).toBe('ENERVIDA-VITALLCONS');
@@ -242,7 +247,7 @@ describe('PARTE E — estructura del libro espejo del PDF', () => {
     expect(rs[2][1]).toBe('Calle 23');
     expect(rs[2][3]).toBe('Generado:');
     expect(String(rs[2][4] ?? '')).toBeTruthy();
-    // La identidad termina en la fila 2 → el bloque de datos empieza en la 4
+    // La identidad termina en la fila 2 → la sección 1 empieza en la 5
     expect(rs[3].join('')).toBe('');
     // SIN filas de metadatos (feedback del propietario)
     expect(rs.find(r => String(r[0] ?? '') === 'Tipo de reporte:')).toBeUndefined();
@@ -250,21 +255,35 @@ describe('PARTE E — estructura del libro espejo del PDF', () => {
     expect(rs.flat().find(v => String(v ?? '').includes('NUNCA se suman'))).toBeUndefined();
   });
 
-  it('E2: hoja principal «Reporte Entrega» con identidad compacta + las 4 secciones + firmas', async () => {
+  it('E2: hoja principal con DOS SECCIONES separables + identidad repetida + doble pie de firmas (misión 2026-10-23 §5)', async () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
     expect(wb.SheetNames[0]).toBe('Reporte Entrega');
     const rs = rows(wb.Sheets['Reporte Entrega']);
-    // Identidad (título + 2 filas compactas con los 4 datos)
-    expect(rs[0][0]).toContain('COSTPRO 4');
+    // Identidad (título + 2 filas con los 4 datos)
+    expect(rs[0][0]).toContain('Reporte de Venta CUP');
     expect(findRow(rs, 'Tienda:').row[1]).toBe('ENERVIDA-VITALLCONS');
     expect(findRow(rs, 'Dirección:').row[1]).toBe('Calle 23');
     expect(valueAfterLabel(rs, 'Período:')).toBe('2026-10-17');
     expect(String(valueAfterLabel(rs, 'Generado:') ?? '')).toBeTruthy();
-    // Secciones del documento (espejo del PDF Diario)
-    expect(findRow(rs, 'RESUMEN DEL DÍA — CUP').idx).toBeGreaterThanOrEqual(0);
-    expect(findRow(rs, 'DESGLOSE DE EFECTIVO — CUP').idx).toBeGreaterThanOrEqual(0);
-    expect(findRow(rs, 'VENTAS DEL DÍA — CUP').idx).toBeGreaterThanOrEqual(0);
-    expect(findRow(rs, 'FIRMAS').idx).toBeGreaterThanOrEqual(0);
+    // SECCIÓN 1 — RESUMEN Y ENTREGA DE EFECTIVO (comprobante independiente)
+    const sec1 = findRow(rs, 'SECCIÓN 1 — RESUMEN Y ENTREGA DE EFECTIVO (CUP)');
+    expect(sec1.idx).toBeGreaterThanOrEqual(0);
+    expect(findRow(rs, 'DESGLOSE DE EFECTIVO — CUP').idx).toBeGreaterThan(sec1.idx);
+    expect(findRow(rs, 'Efectivo contado / entregado').idx).toBeGreaterThan(sec1.idx);
+    // SECCIÓN 2 — DETALLE DE VENTAS (encabezado de tabla + TOTALES)
+    const sec2 = findRow(rs, 'SECCIÓN 2 — DETALLE DE VENTAS (CUP)');
+    expect(sec2.idx).toBeGreaterThan(sec1.idx);
+    expect(rs.findIndex(r => String(r[0] ?? '') === 'Código')).toBeGreaterThan(sec2.idx);
+    // Identidad REPETIDA dentro de la sección 2 (identificable por sí misma)
+    const tiendaRows = rs.filter(r => String(r[0] ?? '') === 'Tienda:');
+    expect(tiendaRows.length).toBe(2);
+    expect(tiendaRows[1][1]).toBe('ENERVIDA-VITALLCONS');
+    expect(tiendaRows[1][3]).toBe('Período:');
+    expect(tiendaRows[1][4]).toBe('2026-10-17');
+    // Doble pie de firmas: una por sección
+    const firmas = rs.filter(r => String(r[0] ?? '') === 'FIRMAS');
+    expect(firmas.length).toBe(2);
+    expect(rs.indexOf(firmas[1])).toBeGreaterThan(sec2.idx);
     // SIN sección de comprobación (feedback del propietario)
     expect(rs.find(r => String(r[0] ?? '').startsWith('COMPROBACIÓN'))).toBeUndefined();
     expect(rs.find(r => String(r[0] ?? '').includes('tabla − resumen'))).toBeUndefined();
@@ -279,15 +298,15 @@ describe('PARTE E — estructura del libro espejo del PDF', () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
     expect(wb.SheetNames).toContain('Reporte Entrega USD');
     const rs = rows(wb.Sheets['Reporte Entrega USD']);
-    expect(rs[0][0]).toContain('REPORTE DE ENTREGA — USD');
+    expect(rs[0][0]).toContain('Reporte de Venta USD');
     expect(findRow(rs, 'Tienda:').row[1]).toBe('ENERVIDA-VITALLCONS');
     expect(valueAfterLabel(rs, 'Período:')).toBe('2026-10-17');
     expect(String(valueAfterLabel(rs, 'Generado:') ?? '')).toBeTruthy();
-    expect(findRow(rs, 'RESUMEN DEL DÍA — USD').idx).toBeGreaterThanOrEqual(0);
-    expect(findRow(rs, 'VENTAS DEL DÍA — USD').idx).toBeGreaterThanOrEqual(0);
+    expect(findRow(rs, 'SECCIÓN 1 — RESUMEN Y ENTREGA DE EFECTIVO (USD)').idx).toBeGreaterThanOrEqual(0);
+    expect(findRow(rs, 'SECCIÓN 2 — DETALLE DE VENTAS (USD)').idx).toBeGreaterThanOrEqual(0);
     // sin duplicar: la hoja principal NO contiene las secciones USD
     const main = rows(wb.Sheets['Reporte Entrega']);
-    expect(main.find(r => String(r[0] ?? '').includes('— USD'))).toBeUndefined();
+    expect(main.find(r => String(r[0] ?? '').includes('(USD)'))).toBeUndefined();
   });
 
   it('E2: «USD en hoja separada» OFF → secciones USD corridas en la hoja principal (compacto)', async () => {
@@ -295,9 +314,9 @@ describe('PARTE E — estructura del libro espejo del PDF', () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext({ options }), SUMMARIES, COMMISSIONS);
     expect(wb.SheetNames).not.toContain('Reporte Entrega USD');
     const rs = rows(wb.Sheets['Reporte Entrega']);
-    expect(findRow(rs, 'RESUMEN DEL DÍA — USD').idx).toBeGreaterThanOrEqual(0);
+    expect(findRow(rs, 'SECCIÓN 1 — RESUMEN Y ENTREGA DE EFECTIVO (USD)').idx).toBeGreaterThanOrEqual(0);
     expect(findRow(rs, 'DESGLOSE DE EFECTIVO — USD').idx).toBeGreaterThanOrEqual(0);
-    expect(findRow(rs, 'VENTAS DEL DÍA — USD').idx).toBeGreaterThanOrEqual(0);
+    expect(findRow(rs, 'SECCIÓN 2 — DETALLE DE VENTAS (USD)').idx).toBeGreaterThanOrEqual(0);
   });
 
   it('E2: «Desglose de efectivo» OFF → el bloque de desglose se OMITE (PDF/Excel/UI consistentes)', async () => {
@@ -347,8 +366,8 @@ describe('PARTE E — estructura del libro espejo del PDF', () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext({ options }), SUMMARIES, COMMISSIONS);
     expect(wb.SheetNames).toEqual(['Reporte Entrega', 'Nota metodológica']);
     const rs = rows(wb.Sheets['Reporte Entrega']);
-    expect(findRow(rs, 'RESUMEN DEL DÍA — CUP').idx).toBeGreaterThanOrEqual(0);
-    expect(findRow(rs, 'VENTAS DEL DÍA — CUP').idx).toBeGreaterThanOrEqual(0);
+    expect(findRow(rs, 'SECCIÓN 1 — RESUMEN Y ENTREGA DE EFECTIVO (CUP)').idx).toBeGreaterThanOrEqual(0);
+    expect(findRow(rs, 'SECCIÓN 2 — DETALLE DE VENTAS (CUP)').idx).toBeGreaterThanOrEqual(0);
   });
 
   it('E2/refinamiento: con incidencia de pago documentada → tabla LIMPIA (sin asterisco ni nota al pie)', async () => {
@@ -387,7 +406,7 @@ describe('Fidelidad contable al PDF (misma fuente, mismas fórmulas)', () => {
     const ws = wb.Sheets['Reporte Entrega'];
     const rs = rows(ws);
     const s = computeDailySummary(buildContext().report, 'CUP', SUMMARIES.paymentTotals);
-    expect(findRow(rs, 'Ventas totales (efectivo + transferencia)').row[3]).toBe(s.ventasTotales);
+    expect(findRow(rs, 'Resumen del día (efectivo + transferencia)').row[3]).toBe(s.ventasTotales);
     expect(findRow(rs, 'Ventas en efectivo').row[3]).toBe(s.ventasCash);
     expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(s.efectivoEsperado);
     const cashIdx = findRow(rs, 'Ventas en efectivo').idx;
@@ -482,7 +501,7 @@ describe('Fórmulas reales del libro (misma hoja: tabla ↔ resumen ↔ desglose
     const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
     const ws = wb.Sheets['Reporte Entrega'];
     const rs = rows(ws);
-    const totalIdx = findRow(rs, 'Ventas totales (efectivo + transferencia)').idx;
+    const totalIdx = findRow(rs, 'Resumen del día (efectivo + transferencia)').idx;
     expect(cell(ws, `D${totalIdx + 1}`).f).toMatch(/^D\d+\+D\d+$/);
     const espIdx = findRow(rs, 'Efectivo esperado a entregar').idx;
     expect(cell(ws, `D${espIdx + 1}`).f).toMatch(/^D\d+$/); // componentes del fixture
