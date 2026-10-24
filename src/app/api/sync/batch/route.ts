@@ -270,10 +270,20 @@ const handler = withAuth(async (req, session) => {
                 p_operation_date: op.payload.p_operation_date || null,
                 p_user_id: session.user.id,
                 p_payment_incidents: op.payload.p_payment_incidents ?? null,
-                // MISIÓN PAGOS MIXTOS (2026-10-24): desglose real por moneda
+                // CP-MONEY-002 (D1, posmerge #1467): desglose real por moneda
                 // encolado offline — passthrough al RPC (la validación de
                 // estructura/tasas/pools derivados vive en create_sale_v2 §13.7).
-                p_payment_components: op.payload.p_payment_components ?? null,
+                // La clave viaja SOLO si el payload encolado la trae: enviarla
+                // SIEMPRE (null incluido) rompía la resolución de PostgREST
+                // contra la BD sin migrar (PGRST202 — verificado contra la BD
+                // viva 2026-10-24) y TODO replay offline de ventas fallaba,
+                // incluidas las encoladas por builds legados (CUP canónico).
+                // Sin la clave el RPC usa p_payment_components DEFAULT NULL
+                // (firma 32-param) o la firma legada de 31 params — en ambos
+                // casos el flujo es el previo (compatibilidad de contrato).
+                ...(op.payload.p_payment_components
+                  ? { p_payment_components: op.payload.p_payment_components }
+                  : {}),
               };
               result = await supabase.rpc('create_sale_v2', v2Payload);
             }
