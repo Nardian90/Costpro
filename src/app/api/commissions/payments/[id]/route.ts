@@ -201,21 +201,80 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
         );
       }
 
-      updateData.status = 'paid';
-      updateData.paid_by = session.user.id;
-      updateData.paid_at = payDay === today
+      // Fase A (misión integral 2026-10-24): el UPDATE directo se reemplaza por
+      // el RPC pay_commission — protocolo del cajón (advisory por tienda) +
+      // validación física por moneda para efectivo + idempotencia natural,
+      // ATÓMICOS en el servidor. Las reglas de negocio de fecha (tope HOY,
+      // no anterior al último pago del trabajador) ya se validaron arriba.
+      const paidAtIso = payDay === today
         ? new Date().toISOString()
         : instantForBusinessDay(payDay);
-      updateData.payment_method = payment_method;
-      updateData.payment_reference = payment_reference || null;
-      updateData.currency = currency;
-      updateData.exchange_rate = exchange_rate;
+      const { data: rpcData, error: rpcError } = await supabase.rpc('pay_commission', {
+        p_payment_id: commissionId,
+        p_payment_method: payment_method,
+        p_reference: payment_reference || null,
+        p_currency: currency,
+        p_exchange_rate: exchange_rate,
+        p_paid_at: paidAtIso,
+        p_user_id: session.user.id || null,
+      });
+      if (rpcError) {
+        const msg = String(rpcError.message || '');
+        if (msg.includes('ERR_INSUFFICIENT_CURRENCY')) {
+          return NextResponse.json(
+            { error: `Saldo físico insuficiente en caja: ${msg}`, code: 'ERR_INSUFFICIENT_CURRENCY' },
+            { status: 422 },
+          );
+        }
+        if (msg.includes('ERR_COMMISSION_STATE_CHANGED')) {
+          return NextResponse.json({ error: 'La comisión cambió de estado concurrentemente — reintentar' }, { status: 409 });
+        }
+        if (msg.includes('ERR_INVALID_COMMISSION_STATUS')) {
+          return NextResponse.json({ error: `No se puede pagar una comisión con estado "${currentStatus}"` }, { status: 400 });
+        }
+        if (msg.includes('ERR_FORBIDDEN_ROLE') || msg.includes('ERR_UNAUTHORIZED')) {
+          return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
+        }
+        // Entorno sin el RPC (migración 20261026000000 pendiente): fallback al
+        // UPDATE directo previo para no interrumpir la operación registrada.
+        if (msg.includes('does not exist') || msg.includes('PGRST202')) {
+          const updateData: any = { updated_at: new Date().toISOString() };
+          updateData.status = 'paid';
+          updateData.paid_by = session.user.id;
+          updateData.paid_at = paidAtIso;
+          updateData.payment_method = payment_method;
+          updateData.payment_reference = payment_reference || null;
+          updateData.currency = currency;
+          updateData.exchange_rate = exchange_rate;
+          const { data, error } = await supabase
+            .from('commission_payments')
+            .update(updateData)
+            .eq('id', commissionId)
+            .eq('store_id', storeId)
+            .select()
+            .single();
+          if (error) {
+            console.error('[commissions/patch] Error:', error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+          }
+          return NextResponse.json(data);
+        }
+        console.error('[commissions/patch] RPC error:', rpcError);
+        return NextResponse.json({ error: rpcError.message }, { status: 500 });
+      }
+      if (rpcData?.idempotent_replay) {
+        return NextResponse.json({ ...rpcData.payment, message: rpcData.message });
+      }
+      return NextResponse.json(rpcData?.payment ?? rpcData);
     } else if (action === 'cancel') {
       if (currentStatus === 'paid') {
         return NextResponse.json({ error: 'No se puede cancelar una comisión ya pagada' }, { status: 400 });
       }
       updateData.status = 'cancelled';
     }
+
+    // Nota: action='pay' YA retornó dentro de su rama (RPC pay_commission);
+    // este UPDATE directo solo sirve a approve/cancel.
 
     const { data, error } = await supabase
       .from('commission_payments')

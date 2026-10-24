@@ -1,0 +1,46 @@
+{
+  "close_cash_shift": {
+    "last": "20261024400000_de",
+    "applied": "NO-MATCH"
+  },
+  "create_cash_flow_document": {
+    "last": "20261024220000_sa",
+    "applied": "MATCH-OLDER(20261024180000_au#0)"
+  },
+  "create_devolution_v2": {
+    "last": "20261024400000_de",
+    "applied": "NO-MATCH"
+  },
+  "get_cash_currency_summary": {
+    "last": "20261024400000_de",
+    "applied": "NO-MATCH"
+  },
+  "get_cash_flow_summary": {
+    "last": "20261024400000_de",
+    "applied": "NO-MATCH"
+  },
+  "get_cash_ledger": {
+    "last": "20261024400000_de",
+    "applied": "NO-MATCH"
+  },
+  "get_cash_report": {
+    "last": "20261024400000_de",
+    "applied": "NO-MATCH"
+  },
+  "get_cash_shift_expected": {
+    "last": "20261024400000_de",
+    "applied": "NO-MATCH"
+  },
+  "reverse_cash_flow_document": {
+    "last": "20261024400000_de",
+    "applied": "NO-MATCH"
+  },
+  "reverse_devolution": {
+    "last": "20261024400000_de",
+    "applied": "NO-MATCH"
+  },
+  "validate_payment_transactions_invariants": {
+    "last": "20261024400000_de",
+    "applied": "NO-MATCH"
+  }
+}

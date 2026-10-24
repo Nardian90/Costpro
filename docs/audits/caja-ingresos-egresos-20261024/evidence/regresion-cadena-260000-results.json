@@ -1,0 +1,42 @@
+{
+  "descripcion": "Regresión integral con cadena COMPLETA 1818→2222→23000→40000→260000 (serialización commit-coherente + reducers unificados bajo protocolo del cajón). BD aislada cajamision reconstruida desde cero antes de cada suite.",
+  "fecha": "2026-10-24T12:04:56.040Z",
+  "fase_reversa_fixed": {
+    "pass": 80,
+    "total": 80,
+    "fail": 0,
+    "defects": 0
+  },
+  "cert_contable": {
+    "pass": 51,
+    "fail": 0,
+    "total": 51,
+    "defects": 0,
+    "phase": "cert"
+  },
+  "faseE_saldo_fisico": {
+    "pass": 27,
+    "fail": 0,
+    "defects": 0,
+    "total": 27,
+    "phase": "fixed"
+  },
+  "faseB_devoluciones": {
+    "pass": 86,
+    "fail": 0,
+    "total": 86,
+    "defects": 0,
+    "phase": "fixed"
+  },
+  "faseE_seguridad": {
+    "pass": 14,
+    "total": 14,
+    "fail": 0,
+    "defects": 0,
+    "phase": "seg"
+  },
+  "concurrencia_faseA": {
+    "parse": "REVISAR",
+    "phase": "race"
+  }
+}

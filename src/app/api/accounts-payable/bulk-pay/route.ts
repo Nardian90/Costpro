@@ -72,23 +72,62 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     for (const item of items) {
       try {
         if (item.ref_type === 'commission') {
-          // R2: comisiones se pagan completo en CUP
-          const { error: commissionError } = await supabase
-            .from('commission_payments')
-            .update({
-              status: 'paid',
-              paid_at: new Date().toISOString(),
-              paid_by: session.user.id,
-              payment_method,
-              payment_reference: payment_reference || null,
-            })
-            .eq('id', item.ref_id)
-            .eq('store_id', storeId)
-            .eq('status', 'approved');
+          // R2: comisiones se pagan completo en CUP.
+          // Fase A (misión integral 2026-10-24): UPDATE directo → RPC
+          // pay_commission (protocolo del cajón: advisory por tienda +
+          // validación física por moneda para efectivo + idempotencia natural).
+          const { data: rpcData, error: rpcError } = await supabase.rpc('pay_commission', {
+            p_payment_id: item.ref_id,
+            p_payment_method: payment_method,
+            p_reference: payment_reference || null,
+            p_currency: 'CUP',
+            p_exchange_rate: 1.0,
+            p_paid_at: new Date().toISOString(),
+            p_user_id: session.user.id || null,
+          });
+          if (rpcError) {
+            const msg = String(rpcError.message || '');
+            if (msg.includes('ERR_INSUFFICIENT_CURRENCY')) {
+              results.push({ ...item, success: false, error: `Saldo físico insuficiente: ${msg}` });
+              errorCount++;
+              continue;
+            }
+            if (msg.includes('ERR_COMMISSION_STATE_CHANGED')) {
+              results.push({ ...item, success: false, error: 'La comisión cambió de estado concurrentemente — reintentar' });
+              errorCount++;
+              continue;
+            }
+            // Entorno sin el RPC (migración 20261026000000 pendiente): fallback
+            // al UPDATE directo previo.
+            if (msg.includes('does not exist') || msg.includes('PGRST202')) {
+              const { error: commissionError } = await supabase
+                .from('commission_payments')
+                .update({
+                  status: 'paid',
+                  paid_at: new Date().toISOString(),
+                  paid_by: session.user.id,
+                  payment_method,
+                  payment_reference: payment_reference || null,
+                })
+                .eq('id', item.ref_id)
+                .eq('store_id', storeId)
+                .eq('status', 'approved');
 
-          if (commissionError) {
-            results.push({ ...item, success: false, error: commissionError.message });
-            errorCount++;
+              if (commissionError) {
+                results.push({ ...item, success: false, error: commissionError.message });
+                errorCount++;
+                continue;
+              }
+            } else {
+              results.push({ ...item, success: false, error: rpcError.message });
+              errorCount++;
+              continue;
+            }
+          }
+          if (rpcData?.idempotent_replay) {
+            // Ya estaba pagada: éxito idempotente (misma semántica previa).
+            results.push({ ...item, success: true });
+            successCount++;
             continue;
           }
 
