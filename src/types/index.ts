@@ -556,6 +556,27 @@ export interface CashReport {
     commission_count: number;
     total: number;
   }>;
+  // MISIÓN PERSONALIZACIÓN REPORTE ENTREGA (2026-10-25): filas de venta
+  // individuales del período con su composición REAL de pagos (buckets
+  // método × moneda de la MISMA reconstrucción que sales_split). Input de la
+  // selección de ventas en pantalla/PDF/Excel — capa de presentación, sin
+  // migraciones. `items`/`tx`/`payments` permiten recomputar la tabla por
+  // producto del conjunto seleccionado con buildItemsSummary (misma función
+  // del servidor). sales_rows_truncated: el payload se acotó a 1000 filas
+  // (el split/grupos se calculan siempre sobre el universo completo).
+  sales_rows?: Array<{
+    id: string;
+    created_at: string;
+    customer_name?: string | null;
+    reference?: string | null;
+    status?: string;
+    source: 'ledger' | 'reconstruction' | 'no-items';
+    buckets: Array<{ method: 'cash' | 'transfer' | 'zelle'; currency: string; amount: number; amount_cup: number }>;
+    tx?: Record<string, unknown>;
+    items?: Array<Record<string, unknown>>;
+    payments?: Array<Record<string, unknown>>;
+  }>;
+  sales_rows_truncated?: boolean;
   // FIX (2026-07-15): Órdenes de producción/servicios (anticipos + pagos recibidos).
   // Son INGRESOS del cliente, van en sección aparte del reporte de caja.
   production?: Array<{

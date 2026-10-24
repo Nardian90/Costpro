@@ -55,6 +55,14 @@ import {
   cuadreLabel,
   type DailySummary,
 } from '@/lib/cash-report/summary';
+// MISIÓN PERSONALIZACIÓN REPORTE ENTREGA (2026-10-25): selección de conceptos
+// (misma fuente que pantalla y PDF) + metadatos del conjunto de ventas.
+import {
+  hasAnySummaryConcept,
+  isDefaultSummaryConcepts,
+  type SummaryConceptKey,
+  type SummaryConceptsSelection,
+} from '@/lib/cash-report/report-selection';
 
 type CellValue = string | number;
 
@@ -137,27 +145,32 @@ function attachFormulas(ws: WorkSheetLike, XLSX: XLSXModule, refs: FormulaRef[])
 }
 
 // ── Filas del resumen (MISMA lógica condicional del PDF Diario §4) ─────────
-interface IncomeRow { label: string; amount: number; kind: 'total' | 'normal' | 'expense' | 'info' }
+interface IncomeRow { label: string; amount: number; kind: 'total' | 'normal' | 'expense' | 'info'; concept?: SummaryConceptKey }
 
-function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD'): IncomeRow[] {
+function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD', concepts?: SummaryConceptsSelection | null): IncomeRow[] {
+  // MISIÓN PERSONALIZACIÓN: cada fila lleva su CONCEPTO; las desactivadas se
+  // OMITEN realmente (sin dejar títulos/subtotales huérfanos). Presentación
+  // pura: los valores contables no se alteran (el literal de la fórmula del
+  // esperado conserva el aporte de las filas ocultas — ver abajo).
+  const off = (k: SummaryConceptKey) => concepts?.[k] === false;
   const rows: IncomeRow[] = currency === 'CUP'
     ? [
-        { label: 'Resumen del día (efectivo + transferencia)', amount: s.ventasTotales, kind: 'total' },
-        { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal' },
-        { label: 'Ventas por transferencia', amount: s.ventasTransfer, kind: 'normal' },
+        { label: 'Resumen del día (efectivo + transferencia)', amount: s.ventasTotales, kind: 'total', concept: 'resumenDia' },
+        { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal', concept: 'ventasEfectivo' },
+        { label: 'Ventas por transferencia', amount: s.ventasTransfer, kind: 'normal', concept: 'ventasTransferencia' },
       ]
     : [
-        { label: 'Resumen del día (efectivo + Zelle)', amount: s.ventasTotales, kind: 'total' },
-        { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal' },
-        { label: 'Venta por Zelle', amount: s.ventasZelle, kind: 'normal' },
+        { label: 'Resumen del día (efectivo + Zelle)', amount: s.ventasTotales, kind: 'total', concept: 'resumenDia' },
+        { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal', concept: 'ventasEfectivo' },
+        { label: 'Venta por Zelle', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' },
       ];
   if (currency === 'CUP') {
-    if (s.ventasZelle > 0) rows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, kind: 'normal' });
+    if (s.ventasZelle > 0) rows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' });
     if (s.ventasMixed > 0) rows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, kind: 'info' });
     // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
     // (contrato único §2) — no es una segunda venta; la de efectivo SÍ entra
     // al esperado (posTerms abajo), la de vouchers es informativa.
-    if (s.equivCashOtraMoneda > 0) rows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, kind: 'normal' });
+    if (s.equivCashOtraMoneda > 0) rows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, kind: 'normal', concept: 'equivalenciaCup' });
     if (s.equivVouchersOtraMoneda > 0) rows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, kind: 'info' });
     if (s.otIngresosCash > 0) rows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash, kind: 'normal' });
     if (s.comisionesCash > 0) rows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, kind: 'expense' });
@@ -167,14 +180,14 @@ function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD'): IncomeRow[] {
     if (s.ajustesPositivos > 0) rows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos, kind: 'normal' });
     if (s.ajustesNegativos > 0) rows.push({ label: 'Ajustes extraordinarios (−)', amount: s.ajustesNegativos, kind: 'expense' });
     if (s.ingresosCaja > 0) rows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja, kind: 'normal' });
-    if (s.egresosCaja > 0) rows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, kind: 'expense' });
+    if (s.egresosCaja > 0) rows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, kind: 'expense', concept: 'egresosCaja' });
     if (s.reembolsosCash > 0) rows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, kind: 'expense' });
     if (s.reembolsosVoucher > 0) rows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, kind: 'info' });
   } else {
     if (s.comisionesCash > 0) rows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, kind: 'expense' });
     if (s.serviciosRecibidosCash > 0) rows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, kind: 'expense' });
   }
-  return rows;
+  return concepts ? rows.filter(r => !r.concept || !off(r.concept)) : rows;
 }
 
 // ── Constructor de hoja (estado por hoja — espejo del PDF) ──────────────────
@@ -240,7 +253,12 @@ export async function buildCashReportExcelWorkbook(
   suggestedCommissions?: Map<string, number>,
 ): Promise<CashReportExcelResult> {
   const XLSX = await loadXlsx();
-  const { report, startDate, endDate, storeInfo, deliveredBy, recipientName, madeBy, cupBreakdown, usdBreakdown, cupDenoms, usdDenoms, options } = ctx;
+  const { report, startDate, endDate, storeInfo, deliveredBy, recipientName, madeBy, cupBreakdown, usdBreakdown, cupDenoms, usdDenoms, options, selectionMeta } = ctx;
+  // MISIÓN PERSONALIZACIÓN: sin conceptos activados NO se exporta un reporte
+  // aparentemente vacío — el llamador bloquea la acción; aquí fail-closed.
+  if (!hasAnySummaryConcept(ctx.concepts)) {
+    throw new Error('Selecciona al menos un concepto para el reporte.');
+  }
 
   // ── Mismos summaries que el PDF (fetch una vez si no vienen inyectados) ──
   const { itemsSummary, paymentTotals, productionOrders } = (summaries && summaries.itemsSummary && summaries.paymentTotals && summaries.productionOrders !== undefined)
@@ -304,6 +322,17 @@ export async function buildCashReportExcelWorkbook(
     s.identityRows.push(r2);
     s.merges.push({ s: { r: r2, c: 1 }, e: { r: r2, c: 2 } });
     if (s.lastCol > 4) s.merges.push({ s: { r: r2, c: 4 }, e: { r: r2, c: s.lastCol } });
+    // MISIÓN PERSONALIZACIÓN (2026-10-25): metadatos del conjunto de ventas
+    // seleccionado — el destinatario sabe QUÉ conjunto muestra el documento
+    // (misión §5: los filtros se reflejan en los metadatos del reporte).
+    if (selectionMeta && selectionMeta.total > 0 && selectionMeta.included < selectionMeta.total) {
+      const selLbl = `Ventas incluidas: ${selectionMeta.included} de ${selectionMeta.total}` + (selectionMeta.filterLabel ? ` · Filtro: ${selectionMeta.filterLabel}` : '');
+      s.aoa.push([selLbl, '', '', 'Conceptos:', isDefaultSummaryConcepts(ctx.concepts) ? 'todos' : 'personalizados']);
+      const r3 = s.aoa.length - 1;
+      s.identityRows.push(r3);
+      s.merges.push({ s: { r: r3, c: 0 }, e: { r: r3, c: 2 } });
+      if (s.lastCol > 4) s.merges.push({ s: { r: r3, c: 4 }, e: { r: r3, c: s.lastCol } });
+    }
     s.aoa.push([]);
   };
 
@@ -328,12 +357,13 @@ export async function buildCashReportExcelWorkbook(
     summary: DailySummary,
     denoms: number[],
     breakdown: Breakdown,
+    concepts?: SummaryConceptsSelection | null,
   ): { esperadoRow: number } => {
     const rowsByLabel = new Map<string, number>();
 
     // ══ RESUMEN DEL DÍA (mismas filas condicionales que el PDF §4) ══
     pushSectionTitle(s, `SECCIÓN 1 — RESUMEN Y ENTREGA DE EFECTIVO (${currency})`);
-    const rows = incomeRowsFor(summary, currency);
+    const rows = incomeRowsFor(summary, currency, concepts);
     for (const r of rows) {
       // Regla B4 + paridad PDF §4: los egresos llevan SU signo contable
       // (negativo — igual que el PDF imprime −); las filas info, positivo.
@@ -345,9 +375,12 @@ export async function buildCashReportExcelWorkbook(
       if (r.kind !== 'total') s.moneyCells.push({ r: rowIdx, c: 3 });
     }
     // Total de ventas como FÓRMULA viva: suma exacta de los componentes
-    // renderizados (ventasTotales = cash + transfer + zelle + mixed).
+    // renderizados (ventasTotales = cash + transfer + zelle + mixed) + el
+    // LITERAL de los componentes ocultos por concepto (presentación pura:
+    // el total contable NUNCA cambia al ocultar una fila — misión §4/§7).
     const totalLabel = rows[0].label;
     const totalRowIdx = rowsByLabel.get(totalLabel)!;
+    const off = (k: SummaryConceptKey) => concepts?.[k] === false;
     const components = [
       rowsByLabel.get('Ventas en efectivo'),
       rowsByLabel.get('Ventas por transferencia'),
@@ -355,9 +388,17 @@ export async function buildCashReportExcelWorkbook(
       rowsByLabel.get('Venta por Zelle'),
       rowsByLabel.get('Ventas mixtas sin desglosar'),
     ].filter((v): v is number => v !== undefined);
+    const hiddenComponents =
+      (off('ventasEfectivo') ? summary.ventasCash : 0) +
+      (off('ventasTransferencia') ? summary.ventasTransfer : 0) +
+      (off('ventasZelle') ? summary.ventasZelle : 0);
+    const totalTerms = [
+      ...components.map((row) => `D${row + 1}`),
+      ...(Math.abs(hiddenComponents) > 0.005 ? [String(Number(hiddenComponents.toFixed(2)))] : []),
+    ];
     s.formulas.push({
       r: totalRowIdx, c: 3,
-      f: components.map((row) => `D${row + 1}`).join('+'),
+      f: totalTerms.length > 0 ? totalTerms.join('+') : '0',
     });
     s.totalRows.push(totalRowIdx);
     s.moneyCells.push({ r: totalRowIdx, c: 3 });
@@ -366,6 +407,13 @@ export async function buildCashReportExcelWorkbook(
     // efectivoEsperado = ventasCash + otIngresos + ajustes(+) + ingresosCaja
     //                    − comisiones − servicios − proveedores − ajustes(−)
     //                    − egresosCaja − reembolsosCash
+    // CORRECCIÓN DE SIGNO (misión 2026-10-25, defecto preexistente demostrado
+    // por prueba): las filas de egreso ya llevan SU SIGNO CONTABLE en D
+    // (negativo — regla B4), de modo que la fórmula las SUMA; el join con
+    // '-' producía doble negación (p. ej. 20 000 − (−3 000) − (−500) =
+    // 23 500 en lugar de 16 500) y Excel recalculaba MAL al abrir
+    // (fullCalcOnLoad). El literal de conceptos ocultos conserva su aporte
+    // contable sin fila visible (presentación pura — nunca cambia el saldo).
     const esperadoLbl = currency === 'CUP' ? 'Efectivo esperado a entregar' : 'Efectivo esperado a entregar (USD)';
     s.aoa.push([esperadoLbl, '', '', summary.efectivoEsperado]);
     const esperadoRow = s.aoa.length - 1;
@@ -388,10 +436,19 @@ export async function buildCashReportExcelWorkbook(
       rowsByLabel.get('Egresos de caja (fondo y otros)'),
       rowsByLabel.get('Reembolsos de devoluciones (efectivo)'),
     ].filter((v): v is number => v !== undefined);
-    const esperadoFormula =
-      posTerms.map((row) => `D${row + 1}`).join('+') +
-      (negTerms.length > 0 ? (posTerms.length > 0 ? '-' : '') + negTerms.map((row) => `D${row + 1}`).join('-') : '');
-    s.formulas.push({ r: esperadoRow, c: 3, f: esperadoFormula.length > 0 ? esperadoFormula : '0' });
+    // Aporte contable de los términos de fórmula OCULTOS por concepto: sus
+    // filas no se renderizaron — el literal preserva el saldo exacto.
+    const hiddenEsperadoTerms =
+      (off('ventasEfectivo') ? summary.ventasCash : 0) +
+      (off('equivalenciaCup') ? summary.equivCashOtraMoneda : 0) -
+      (off('egresosCaja') ? summary.egresosCaja : 0);
+    const esperadoTerms = [
+      ...posTerms.map((row) => `D${row + 1}`),
+      ...negTerms.map((row) => `D${row + 1}`),
+      ...(Math.abs(hiddenEsperadoTerms) > 0.005 ? [`${hiddenEsperadoTerms >= 0 ? '' : '-'}${Math.abs(Number(hiddenEsperadoTerms.toFixed(2)))}`] : []),
+    ];
+    const esperadoFormula = esperadoTerms.length > 0 ? esperadoTerms.join('+') : '0';
+    s.formulas.push({ r: esperadoRow, c: 3, f: esperadoFormula });
     s.aoa.push([]);
 
     // ══ DESGLOSE DE EFECTIVO (opción «Desglose de efectivo») ══
@@ -521,7 +578,7 @@ export async function buildCashReportExcelWorkbook(
     breakdown: Breakdown,
   ): { section2StartRow: number; ventasHeaderRow: number } => {
     renderIdentity(s, currency, true);
-    renderSection1(s, currency, summary, denoms, breakdown);
+    renderSection1(s, currency, summary, denoms, breakdown, ctx.concepts);
     if (showFirmas) renderFirmas(s);
     // La línea de corte cierra la sección 1 (línea negra al imprimir).
     renderCutLine(s);

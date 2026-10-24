@@ -70,6 +70,32 @@ import {
   type PdfTemplate, type PdfOrientation, type Breakdown, type Currency, type CustomDenoms, type SavedBreakdown,
 } from './cash-report-core';
 import { computeDailySummary, computeCuadre, cuadreLabel, type DailySummary } from '@/lib/cash-report/summary';
+// MISIÓN PERSONALIZACIÓN REPORTE ENTREGA (2026-10-25): selección de
+// conceptos del Resumen del Día (persistida POR TIENDA) + selección de las
+// ventas que se computan (filtro por composición real de pagos + checkbox
+// por fila). Capa de presentación sobre las fuentes existentes: pantalla,
+// vista previa, PDF y Excel consumen el MISMO reporte ajustado.
+import {
+  SUMMARY_CONCEPTS,
+  DEFAULT_SUMMARY_CONCEPTS,
+  SUMMARY_CONCEPT_KEYS,
+  hasAnySummaryConcept,
+  isDefaultSummaryConcepts,
+  loadSummaryConcepts,
+  saveSummaryConcepts,
+  selectAllSummaryConcepts,
+  deselectAllSummaryConcepts,
+  classifySaleByPayments,
+  buildSelectionAdjustedReport,
+  buildSalesMethodGroups,
+  buildItemsSummaryForSales,
+  computeSelectedSalesTotals,
+  selectionMethodLabel,
+  type SaleRow,
+  type SummaryConceptsSelection,
+  type SummaryConceptKey,
+  type SaleCurrencyClass,
+} from '@/lib/cash-report/report-selection';
 
 type ReportTab = 'resultados' | 'desglose' | 'preview';
 
@@ -152,6 +178,23 @@ export default function CashReportView() {
   const [filterMethod, setFilterMethod] = useState<string>('');
   const [exporting, setExporting] = useState(false);
 
+  // ══ MISIÓN PERSONALIZACIÓN (2026-10-25) · FUNCIÓN A — conceptos ══
+  // Todos activados por defecto: reproduce el comportamiento actual para quien
+  // aún no personaliza el reporte. Se restaura post-mount desde localStorage
+  // AISLADO POR TIENDA (cada tienda entrega un dinero distinto — misión §6).
+  const [summaryConcepts, setSummaryConcepts] = useState<SummaryConceptsSelection>(DEFAULT_SUMMARY_CONCEPTS);
+
+  // ══ MISIÓN PERSONALIZACIÓN · FUNCIÓN B — selección de ventas ══
+  // Estado natural = TODO seleccionado ( Set de ids EXCLUIDOS). NO se
+  // persiste: un reporte de otro día/tienda/período nunca hereda selecciones
+  // (misión §6) — se reconstruye al cambiar de tienda o período.
+  const [excludedSales, setExcludedSales] = useState<ReadonlySet<string>>(() => new Set<string>());
+  // Filtro por composición REAL de los pagos (CUP/USD/Mixta) — no conversión.
+  const [saleClassFilter, setSaleClassFilter] = useState<'' | SaleCurrencyClass>('');
+  // Acordeón de grupos de ventas (solo con sales_rows) + carga incremental.
+  const [expandedSaleGroups, setExpandedSaleGroups] = useState<Set<string>>(new Set());
+  const [saleRowsLimit, setSaleRowsLimit] = useState<Record<string, number>>({});
+
   // ── §3 Restauración de preferencias (post-mount, sin tocar hidratación) ──
   useEffect(() => {
     setPdfTemplate(loadPdfTemplate());
@@ -173,6 +216,10 @@ export default function CashReportView() {
     setUsdBreakdown(wb.USD);
     setSavedWorking({ CUP: wb.CUP, USD: wb.USD });
     setWorkingSavedAt(wb.savedAt);
+    // MISIÓN PERSONALIZACIÓN: conceptos del Resumen del Día — restaurados de
+    // localStorage PROPIEDAD DE LA TIENDA ACTIVA (aislamiento §6).
+    setSummaryConcepts(loadSummaryConcepts(user?.activeStoreId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restauración post-mount
   }, []);
 
   // ── NAV-2026-10 (NAV-03): al Volver a Reporte Entrega, restaurar el período del
@@ -274,8 +321,37 @@ export default function CashReportView() {
     }
   }, [startDate, endDate]);
 
+  // ══ MISIÓN PERSONALIZACIÓN · estado derivado de la selección ══
+  // El reporte AJUSTADO sustituye SOLO lo derivado de las ventas (grupos,
+  // split, equivalencias) por el recalculado con el conjunto seleccionado —
+  // los cálculos existentes (computeDailySummary, PDF, Excel) operan sobre
+  // este objeto: UNA sola fuente para pantalla, vista previa, PDF y Excel.
+  const salesRows = useMemo<readonly SaleRow[]>(
+    () => ((applied?.report as { sales_rows?: SaleRow[] } | undefined)?.sales_rows) ?? [],
+    [applied],
+  );
+  const selection = useMemo(() => {
+    if (!applied?.report) {
+      return {
+        report: null as CashReport | null,
+        selectionActive: false,
+        totals: computeSelectedSalesTotals([], new Set<string>()),
+        rows: [] as readonly SaleRow[],
+      };
+    }
+    return buildSelectionAdjustedReport(applied.report, salesRows, excludedSales);
+  }, [applied, salesRows, excludedSales]);
+  // La selección se RECONSTRUYE al cambiar de tienda o período (misión §6:
+  // nunca hereda registros de otro día/tienda). El cambio de filtro de
+  // composición NO la borra (misión §3.2).
+  useEffect(() => {
+    setExcludedSales(new Set<string>());
+    setExpandedSaleGroups(new Set());
+    setSaleRowsLimit({});
+  }, [applied?.cfg.startDate, applied?.cfg.endDate, user?.activeStoreId]);
+
   // ── AUDITORÍA 2026-10: Resumen del Día con la fórmula centralizada (misma que PDF) ──
-  const cupSummaryMemo = useMemo<DailySummary>(() => computeDailySummary(applied?.report, 'CUP'), [applied]);
+  const cupSummaryMemo = useMemo<DailySummary>(() => computeDailySummary(selection.report, 'CUP'), [selection]);
 
   // ── Totales y esperados (§5.4: sin conversión, monedas separadas) ──
   const cupTotal = useMemo(() => breakdownTotal(cupBreakdown), [cupBreakdown]);
@@ -284,9 +360,70 @@ export default function CashReportView() {
   // el PDF (antes: cash_balance_cup del RPC que excluía el efectivo de mixtas;
   // fallback a balance_cup del RPC que INCLUÍA transferencias — inconsistente).
   const expectedCup = cupSummaryMemo.efectivoEsperado;
-  const expectedUsd = useMemo(() => computeDailySummary(applied?.report, 'USD').efectivoEsperado, [applied]);
+  const expectedUsd = useMemo(() => computeDailySummary(selection.report, 'USD').efectivoEsperado, [selection]);
   const cupDifference = cupTotal - expectedCup;
   const usdDifference = usdTotal - expectedUsd;
+
+  // ── MISIÓN PERSONALIZACIÓN: conceptos — persistencia y acciones ──
+  // Persistencia AUTO (patrón de plantilla/orientación/opciones), POR TIENDA.
+  // Al CAMBIAR de tienda se recarga la preferencia de la tienda activa.
+  useEffect(() => {
+    setSummaryConcepts(loadSummaryConcepts(user?.activeStoreId));
+  }, [user?.activeStoreId]);
+  const toggleSummaryConcept = useCallback((key: SummaryConceptKey) => {
+    setSummaryConcepts(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      saveSummaryConcepts(user?.activeStoreId, next);
+      return next;
+    });
+  }, [user?.activeStoreId]);
+  const setAllSummaryConcepts = useCallback((all: boolean) => {
+    const next = all ? selectAllSummaryConcepts() : deselectAllSummaryConcepts();
+    setSummaryConcepts(next);
+    saveSummaryConcepts(user?.activeStoreId, next);
+    toast.info(all
+      ? 'Todos los conceptos activados: el reporte reproduce el contenido completo.'
+      : 'Todos los conceptos desactivados: selecciona al menos uno para poder exportar.',
+      { duration: 5000 });
+  }, [user?.activeStoreId]);
+  const conceptsNone = !hasAnySummaryConcept(summaryConcepts);
+
+  // ── MISIÓN PERSONALIZACIÓN: selección de ventas — acciones ──
+  // «Seleccionar todas» = todas las ventas del período que cumplen el filtro
+  // de composición ACTIVO (cargadas o no — el conjunto vive en memoria y es
+  // determinista; se comunica con toast para que no sorprenda).
+  const salesRowsForFilter = useMemo(
+    () => (saleClassFilter ? salesRows.filter(r => classifySaleByPayments(r) === saleClassFilter) : salesRows),
+    [salesRows, saleClassFilter],
+  );
+  const toggleSaleExcluded = useCallback((id: string) => {
+    setExcludedSales(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+  const setSalesIncluded = useCallback((included: boolean, scopeNote: string) => {
+    setExcludedSales(prev => {
+      const next = new Set(prev);
+      for (const row of salesRowsForFilter) {
+        if (included) next.delete(row.id);
+        else next.add(row.id);
+      }
+      return next;
+    });
+    const n = salesRowsForFilter.length;
+    toast.info(included
+      ? `Seleccionadas las ${n} ${n === 1 ? 'venta' : 'ventas'} del filtro${scopeNote ? ` (${scopeNote})` : ''}.`
+      : `Desmarcadas las ${n} ${n === 1 ? 'venta' : 'ventas'} del filtro${scopeNote ? ` (${scopeNote})` : ''}: no computan en el reporte.`,
+      { duration: 4000 });
+  }, [salesRowsForFilter]);
+  // Metadatos del documento (misión §5: el destinatario sabe qué conjunto ve).
+  const selectionMeta = useMemo(() => ({
+    included: selection.totals.includedCount,
+    total: selection.totals.totalCount,
+    filterLabel: saleClassFilter ? (saleClassFilter === 'MIXTA' ? 'Mixta' : saleClassFilter === 'OTRA' ? 'Otra moneda' : saleClassFilter) : undefined,
+  }), [selection.totals, saleClassFilter]);
 
   // Denominaciones visibles: activadas ∪ personalizadas ∪ con conteo (nada contado se oculta)
   const cupDisplayDenoms = useMemo(() => {
@@ -459,14 +596,20 @@ export default function CashReportView() {
   }, [expandedItems, itemDetails, loadingDetails, applied]);
 
   // ── §4 Vista previa: mismo builder que la descarga, cache por firma ──
+  // MISIÓN PERSONALIZACIÓN: la firma incluye conceptos + selección de ventas
+  // (invalida el cache al cambiar CUALQUIER entrada del documento) y el ctx
+  // inyecta el reporte AJUSTADO + concepts + selectionMeta, de modo que vista
+  // previa y descarga son IDÉNTICAS por construcción (misma fuente).
   const previewSignature = useMemo(() => JSON.stringify({
     template: pdfTemplate,
     orientation: pdfOrientation, // §1: la orientación cambia el documento → invalida el cache
     options: pdfOptions, // opciones siempre parte de la firma
+    concepts: summaryConcepts,
+    excludedSales: [...excludedSales].sort(),
     cfg: applied?.cfg ?? null,
     cupBreakdown, usdBreakdown, deliveredBy, recipientName, madeBy,
     cupDenoms, usdDenoms, customDenoms,
-  }), [pdfTemplate, pdfOrientation, pdfOptions, applied, cupBreakdown, usdBreakdown, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, customDenoms]);
+  }), [pdfTemplate, pdfOrientation, pdfOptions, summaryConcepts, excludedSales, applied, cupBreakdown, usdBreakdown, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, customDenoms]);
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -490,8 +633,29 @@ export default function CashReportView() {
     if (previewUrlRef.current) { try { URL.revokeObjectURL(String(previewUrlRef.current)); } catch {} }
   }, []);
 
+  // MISIÓN PERSONALIZACIÓN: helper compartido por vista previa y exportaciones.
+  // Aplica el reporte AJUSTADO (selección de ventas), los conceptos y los
+  // metadatos del filtro; con selección activa, la tabla por producto se
+  // recalcula del conjunto seleccionado con la MISMA función del servidor
+  // (buildItemsSummary) — sin algoritmo paralelo.
+  const buildSelectionCtx = useCallback(() => ({
+    report: (selection.report ?? applied?.report)!,
+    concepts: summaryConcepts,
+    selectionMeta,
+  }), [selection, applied, summaryConcepts, selectionMeta]);
+  const applySelectionToSummaries = useCallback((summaries: CashReportSummaries | undefined): CashReportSummaries | undefined => {
+    if (!summaries || !selection.selectionActive) return summaries;
+    const selectedRows = salesRows.filter(r => !excludedSales.has(r.id));
+    return { ...summaries, itemsSummary: buildItemsSummaryForSales(selectedRows) };
+  }, [selection.selectionActive, salesRows, excludedSales]);
+
   const buildPreview = useCallback(async (force = false) => {
     if (!applied?.report) return;
+    if (conceptsNone) {
+      setPreviewError('Selecciona al menos un concepto del Resumen del Día para generar el reporte.');
+      setPreviewUrl(null);
+      return;
+    }
     if (buildingRef.current) return;
     if (!force && previewUrlRef.current && previewSigRef.current === previewSignature) return; // cache vigente
     buildingRef.current = true;
@@ -503,8 +667,10 @@ export default function CashReportView() {
         // El diario necesita 4 resúmenes: fetch una vez y reutilizable por export
         summaries = await fetchDiarioSummaries(applied.cfg.startDate, applied.cfg.endDate);
       }
+      summaries = applySelectionToSummaries(summaries);
+      const selCtx = buildSelectionCtx();
       const doc = await buildCashReportPdf({
-        report: applied.report,
+        report: selCtx.report,
         template: pdfTemplate,
         startDate: applied.cfg.startDate,
         endDate: applied.cfg.endDate,
@@ -513,6 +679,8 @@ export default function CashReportView() {
         cupBreakdown, usdBreakdown,
         options: pdfOptions,
         orientation: pdfOrientation,
+        concepts: selCtx.concepts,
+        selectionMeta: selCtx.selectionMeta,
       }, summaries);
       const url = doc.output('bloburl');
       const old = previewUrlRef.current;
@@ -528,7 +696,7 @@ export default function CashReportView() {
       buildingRef.current = false;
       setPreviewLoading(false);
     }
-  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature]);
+  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature, conceptsNone, applySelectionToSummaries, buildSelectionCtx]);
 
   // Al abrir la pestaña de vista previa con reporte calculado: construir si no hay cache
   useEffect(() => {
@@ -552,17 +720,26 @@ export default function CashReportView() {
       toast.info('Genera el reporte primero: pulsa «Generar reporte».');
       return;
     }
+    if (conceptsNone) {
+      toast.error('Selecciona al menos un concepto del Resumen del Día: un reporte sin conceptos quedaría aparentemente vacío.');
+      setActiveTab('resultados');
+      return;
+    }
     if (exportingExcel || exporting) return;
     setExportingExcel(true);
     try {
       let summaries: CashReportSummaries | undefined;
       if (pdfTemplate === 'diario') summaries = await fetchDiarioSummaries(applied.cfg.startDate, applied.cfg.endDate);
+      summaries = applySelectionToSummaries(summaries);
+      const selCtx = buildSelectionCtx();
       const filename = await descargarCashReportExcel({
-        report: applied.report, template: pdfTemplate,
+        report: selCtx.report, template: pdfTemplate,
         startDate: applied.cfg.startDate, endDate: applied.cfg.endDate,
         storeInfo, deliveredBy, recipientName, madeBy,
         cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptions,
         orientation: pdfOrientation,
+        concepts: selCtx.concepts,
+        selectionMeta: selCtx.selectionMeta,
       }, summaries);
       toast.success(`Excel generado: ${filename}`);
     } catch (err: unknown) {
@@ -571,11 +748,16 @@ export default function CashReportView() {
     } finally {
       setExportingExcel(false);
     }
-  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, exporting, exportingExcel]);
+  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, exporting, exportingExcel, conceptsNone, applySelectionToSummaries, buildSelectionCtx]);
 
   const handleExport = useCallback(async () => {
     if (!applied?.report) {
       toast.info('Genera el reporte primero: pulsa «Generar reporte».');
+      return;
+    }
+    if (conceptsNone) {
+      toast.error('Selecciona al menos un concepto del Resumen del Día: un reporte sin conceptos quedaría aparentemente vacío.');
+      setActiveTab('resultados');
       return;
     }
     if (exporting) return;
@@ -586,12 +768,16 @@ export default function CashReportView() {
       if (!doc || previewSigRef.current !== previewSignature) {
         let summaries: CashReportSummaries | undefined;
         if (pdfTemplate === 'diario') summaries = await fetchDiarioSummaries(applied.cfg.startDate, applied.cfg.endDate);
+        summaries = applySelectionToSummaries(summaries);
+        const selCtx = buildSelectionCtx();
         doc = await buildCashReportPdf({
-          report: applied.report, template: pdfTemplate,
+          report: selCtx.report, template: pdfTemplate,
           startDate: applied.cfg.startDate, endDate: applied.cfg.endDate,
           storeInfo, deliveredBy, recipientName, madeBy,
           cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptions,
           orientation: pdfOrientation,
+          concepts: selCtx.concepts,
+          selectionMeta: selCtx.selectionMeta,
         }, summaries);
         if (previewSigRef.current === previewSignature) { previewDocRef.current = doc; }
       }
@@ -606,7 +792,7 @@ export default function CashReportView() {
     } finally {
       setExporting(false);
     }
-  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature, exporting]);
+  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, previewSignature, exporting, conceptsNone, applySelectionToSummaries, buildSelectionCtx]);
 
   // ── Acción principal (§2): Generar (sin resultados) / Actualizar (con resultados) ──
   const generateLabel = !applied ? 'Generar reporte' : 'Actualizar reporte';
@@ -862,6 +1048,20 @@ export default function CashReportView() {
                 itemDetails={itemDetails}
                 loadingDetails={loadingDetails}
                 setSelectedDoc={setSelectedDoc}
+                concepts={summaryConcepts}
+                onToggleConcept={toggleSummaryConcept}
+                onSetAllConcepts={setAllSummaryConcepts}
+                salesRows={salesRows}
+                salesRowsTruncated={!!(applied?.report as { sales_rows_truncated?: boolean } | undefined)?.sales_rows_truncated}
+                excludedSales={excludedSales}
+                onToggleSale={toggleSaleExcluded}
+                onSetSalesIncluded={setSalesIncluded}
+                saleClassFilter={saleClassFilter}
+                setSaleClassFilter={setSaleClassFilter}
+                expandedSaleGroups={expandedSaleGroups}
+                setExpandedSaleGroups={setExpandedSaleGroups}
+                saleRowsLimit={saleRowsLimit}
+                setSaleRowsLimit={setSaleRowsLimit}
               />
             )}
 
@@ -1218,6 +1418,294 @@ function SummaryRow({ label, value, strong, negative, note }: { label: string; v
   );
 }
 
+// ══ MISIÓN PERSONALIZACIÓN (2026-10-25) · FUNCIÓN A ════════════════════════
+// «Conceptos que se incluirán en el reporte»: checkbox independiente por
+// concepto del Resumen del Día. Todos activados por defecto (= contenido
+// actual). Desactivar un concepto lo omite de pantalla, vista previa, PDF e
+// Excel. Seleccionar todos / Desmarcar todos + conteo activo. Sin conceptos
+// activos: aviso claro y bloqueo de exportación (nada de reporte vacío).
+function ConceptosSelector({ concepts, onToggle, onSetAll }: {
+  concepts: SummaryConceptsSelection;
+  onToggle: (key: SummaryConceptKey) => void;
+  onSetAll: (all: boolean) => void;
+}) {
+  const activeCount = SUMMARY_CONCEPT_KEYS.filter(k => concepts[k]).length;
+  const none = activeCount === 0;
+  return (
+    <section aria-label="Conceptos que se incluirán en el reporte" data-testid="conceptos-selector" className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-border/40 bg-muted/20">
+        <h3 className="text-xs font-black uppercase tracking-wider">Conceptos que se incluirán en el reporte</h3>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground" aria-live="polite">
+            {activeCount}/{SUMMARY_CONCEPT_KEYS.length} activos
+          </span>
+          <button
+            onClick={() => onSetAll(true)}
+            className="px-2.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
+            data-testid="conceptos-seleccionar-todos"
+          >
+            Seleccionar todos
+          </button>
+          <button
+            onClick={() => onSetAll(false)}
+            className="px-2.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
+            data-testid="conceptos-desmarcar-todos"
+          >
+            Desmarcar todos
+          </button>
+        </div>
+      </div>
+      <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+        {SUMMARY_CONCEPTS.map(c => (
+          <label
+            key={c.key}
+            className={cn(
+              'flex items-start gap-2 p-2 rounded-lg border cursor-pointer transition-colors',
+              concepts[c.key] ? 'border-primary/40 bg-primary/5' : 'border-border/40 opacity-70 hover:bg-muted/30',
+            )}
+          >
+            <input
+              type="checkbox"
+              checked={concepts[c.key]}
+              onChange={() => onToggle(c.key)}
+              aria-label={c.label}
+              data-testid={`concepto-${c.key}`}
+              className="mt-0.5 w-4 h-4 accent-primary shrink-0 cursor-pointer"
+            />
+            <span className="min-w-0">
+              <span className={cn('block text-xs font-bold leading-snug', concepts[c.key] ? 'text-foreground' : 'text-muted-foreground')}>{c.label}</span>
+              {c.hint && <span className="block text-[10px] text-muted-foreground leading-snug">{c.hint}</span>}
+            </span>
+          </label>
+        ))}
+      </div>
+      {none && (
+        <p role="alert" className="px-4 py-2.5 border-t border-warning/30 bg-warning/10 text-[11px] text-warning flex items-center gap-1.5">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+          No hay conceptos seleccionados: el reporte quedaría aparentemente vacío. Activa al menos un concepto para poder previsualizarlo y exportarlo.
+        </p>
+      )}
+      <p className="px-4 py-2 text-[10px] text-muted-foreground border-t border-border/20">
+        Solo cambia la PRESENTACIÓN del reporte (pantalla, PDF e impresión y Excel): no modifica saldos, el libro de caja ni registros almacenados.
+      </p>
+    </section>
+  );
+}
+
+// ══ MISIÓN PERSONALIZACIÓN · FUNCIÓN B ════════════════════════════════════
+// «Ventas por Método» con selección de ventas: filtro por composición REAL de
+// los pagos (CUP/USD/Mixta — jamás la equivalencia contable) + checkbox por
+// fila + acciones sobre el conjunto del filtro. Los importes de los grupos y
+// del Resumen corresponden SOLO a las ventas seleccionadas; cada componente de
+// pago se cuenta una sola vez en su grupo (método × moneda) y las monedas
+// NUNCA se mezclan entre sí. La selección se conserva al cambiar el filtro.
+function VentasSeleccionables(p: {
+  salesRows: readonly SaleRow[];
+  salesRowsTruncated: boolean;
+  excludedSales: ReadonlySet<string>;
+  onToggleSale: (id: string) => void;
+  onSetSalesIncluded: (included: boolean, scopeNote: string) => void;
+  saleClassFilter: '' | SaleCurrencyClass;
+  setSaleClassFilter: (v: '' | SaleCurrencyClass) => void;
+  expandedSaleGroups: ReadonlySet<string>;
+  setExpandedSaleGroups: (v: Set<string>) => void;
+  saleRowsLimit: Record<string, number>;
+  setSaleRowsLimit: (v: Record<string, number>) => void;
+  filterMethod: string;
+}) {
+  const fmtNative = (n: number, cur: string) => cur === 'CUP' ? formatCurrency(n) : `$${n.toFixed(2)}`;
+  const ROWS_PER_PAGE = 30;
+  // La opción «Otra moneda» solo aparece cuando existen ventas en monedas
+  // distintas de CUP/USD (p. ej. MLC): nunca se excluyen silenciosamente.
+  const hasOtra = p.salesRows.some(r => classifySaleByPayments(r) === 'OTRA');
+  const filteredRows = useMemo(
+    () => (p.saleClassFilter ? p.salesRows.filter(r => classifySaleByPayments(r) === p.saleClassFilter) : p.salesRows),
+    [p.salesRows, p.saleClassFilter],
+  );
+  const groups = useMemo(
+    () => buildSalesMethodGroups(filteredRows, p.excludedSales).filter(g => !p.filterMethod || g.method === p.filterMethod),
+    [filteredRows, p.excludedSales, p.filterMethod],
+  );
+  const includedCount = filteredRows.length - filteredRows.filter(r => p.excludedSales.has(r.id)).length;
+  const filterLabel = p.saleClassFilter === '' ? 'todas las ventas del período'
+    : p.saleClassFilter === 'MIXTA' ? 'ventas mixtas (CUP + USD u otra)'
+      : p.saleClassFilter === 'OTRA' ? 'ventas en otra moneda'
+        : `ventas cobradas íntegramente en ${p.saleClassFilter}`;
+
+  const toggleGroup = (key: string) => {
+    const next = new Set(p.expandedSaleGroups);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    p.setExpandedSaleGroups(next);
+  };
+
+  return (
+    <div data-testid="ventas-seleccionables">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <h3 className="text-[11px] font-black uppercase text-muted-foreground">Ventas por Método</h3>
+        <p className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground" aria-live="polite" data-testid="ventas-seleccion-contador">
+          {includedCount} de {filteredRows.length} ventas seleccionadas
+        </p>
+      </div>
+
+      {/* Filtro por composición REAL de los pagos + acciones del conjunto */}
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        <label htmlFor="cr-sale-class" className="text-[10px] font-black uppercase text-muted-foreground">Composición del pago</label>
+        <select
+          id="cr-sale-class"
+          value={p.saleClassFilter}
+          onChange={(e) => p.setSaleClassFilter(e.target.value as '' | SaleCurrencyClass)}
+          aria-label="Filtrar ventas por composición real de los pagos"
+          className="px-3 py-2 rounded-lg border border-border/40 bg-background text-xs min-h-[44px]"
+          data-testid="ventas-filtro-composicion"
+        >
+          <option value="">Todas</option>
+          <option value="CUP">CUP</option>
+          <option value="USD">USD</option>
+          <option value="MIXTA">Mixta</option>
+          {hasOtra && <option value="OTRA">Otra moneda</option>}
+        </select>
+        <button
+          onClick={() => p.onSetSalesIncluded(true, filterLabel)}
+          disabled={filteredRows.length === 0}
+          className="px-2.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted disabled:opacity-50 min-h-[36px]"
+          data-testid="ventas-seleccionar-todas"
+          title={`Selecciona ${filterLabel} del período (cargadas o no)`}
+        >
+          Seleccionar todas
+        </button>
+        <button
+          onClick={() => p.onSetSalesIncluded(false, filterLabel)}
+          disabled={filteredRows.length === 0}
+          className="px-2.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted disabled:opacity-50 min-h-[36px]"
+          data-testid="ventas-desmarcar-todas"
+          title={`Desmarca ${filterLabel} del período`}
+        >
+          Desmarcar todas
+        </button>
+      </div>
+      <p className="text-[10px] text-muted-foreground mb-2">
+        «Seleccionar todas» actúa sobre <strong className="text-foreground">{filterLabel}</strong> del período consultado. Cambiar el filtro no borra la selección anterior.
+      </p>
+      {p.salesRowsTruncated && (
+        <p role="status" className="text-[10px] text-warning mb-2 flex items-center gap-1.5">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+          El período excede el límite de filas cargables (1000): la selección cubre las ventas mostradas; los totales del reporte se calculan siempre sobre el período completo.
+        </p>
+      )}
+
+      {/* Grupos (método × moneda): importes SOLO de las ventas seleccionadas */}
+      <div className="space-y-1">
+        {groups.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-2">Sin ventas para el filtro actual</p>
+        ) : groups.map(g => {
+          const expanded = p.expandedSaleGroups.has(g.key);
+          const limit = p.saleRowsLimit[g.key] ?? ROWS_PER_PAGE;
+          const visibleRows = g.rows.slice(0, limit);
+          const remaining = g.rows.length - visibleRows.length;
+          const groupAmountLabel = g.selectedBuckets.length === 0
+            ? fmtNative(0, g.currency)
+            : g.selectedBuckets.map(b => `${fmtNative(b.amount, b.currency)}`).join(' + ');
+          return (
+            <div key={g.key} className="rounded-lg border border-border/30 overflow-hidden" data-testid={`venta-grupo-${g.key}`}>
+              <button
+                onClick={() => toggleGroup(g.key)}
+                aria-expanded={expanded}
+                aria-controls={`vg-${g.key}`}
+                className="w-full flex items-center justify-between p-3 bg-muted/10 hover:bg-muted/20 transition-colors min-h-[44px]"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{g.method === 'cash' ? '💵' : g.method === 'transfer' ? '📱' : '💳'}</span>
+                  <div className="text-left">
+                    <p className="text-xs font-bold">{selectionMethodLabel(g.method)} ({g.currency})</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {g.includedCount} de {g.totalCount} seleccionadas · {g.rows.length} {g.rows.length === 1 ? 'venta' : 'ventas'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-mono font-black tabular-nums">{groupAmountLabel}</p>
+                  {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                </div>
+              </button>
+              {expanded && (
+                <div id={`vg-${g.key}`} role="region" className="border-t border-border/20 bg-background">
+                  <div className="max-h-80 overflow-y-auto">
+                    <table className="w-full text-[10px]">
+                      <thead className="sticky top-0 bg-muted/30 z-10">
+                        <tr className="text-[9px] font-black uppercase text-muted-foreground border-b border-border/30">
+                          <th className="p-1.5 w-8 text-center" scope="col">
+                            <span className="sr-only">Incluir en el reporte</span>
+                          </th>
+                          <th className="p-1.5 text-left" scope="col">Fecha</th>
+                          <th className="p-1.5 text-left" scope="col">Referencia / Cliente</th>
+                          <th className="p-1.5 text-left" scope="col">Composición</th>
+                          <th className="p-1.5 text-right shrink-0" scope="col">Monto ({g.currency})</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visibleRows.map(row => {
+                          const excluded = p.excludedSales.has(row.id);
+                          const bucket = row.buckets.find(b => (b.method === 'transfer' || b.method === 'zelle' ? b.method : 'cash') === g.method && String(b.currency).toUpperCase() === g.currency);
+                          const amount = bucket ? Number(bucket.amount) : 0;
+                          const date = String(row.created_at || '').slice(0, 16).replace('T', ' ') || '—';
+                          const composition = row.buckets
+                            .map(b => `${selectionMethodLabel((b.method === 'transfer' || b.method === 'zelle') ? b.method : 'cash')} ${fmtNative(Math.abs(Number(b.amount)), String(b.currency).toUpperCase())}`)
+                            .join(' + ');
+                          return (
+                            <tr key={row.id} className={cn('border-b border-border/10 hover:bg-muted/20', excluded && 'opacity-50')} data-testid={`venta-fila-${row.id}`} data-excluded={excluded}>
+                              <td className="p-1.5 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={!excluded}
+                                  onChange={() => p.onToggleSale(row.id)}
+                                  aria-label={`Incluir la venta del ${date}${row.customer_name ? ` de ${row.customer_name}` : ''} por ${fmtNative(amount, g.currency)} ${g.currency} en el reporte`}
+                                  className="w-4 h-4 accent-primary cursor-pointer"
+                                />
+                              </td>
+                              <td className="p-1.5 font-mono text-[9px] whitespace-nowrap">{date}</td>
+                              <td className="p-1.5">
+                                {row.customer_name && <p className="text-[10px] font-bold truncate max-w-[160px]">{String(row.customer_name)}</p>}
+                                {row.reference && <p className="text-[9px] text-muted-foreground truncate max-w-[160px]">{String(row.reference)}</p>}
+                              </td>
+                              <td className="p-1.5 text-[9px] text-muted-foreground">{composition}</td>
+                              <td className="p-1.5 text-right font-mono tabular-nums font-bold whitespace-nowrap">
+                                {fmtNative(amount, g.currency)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot className="sticky bottom-0 bg-primary/10 border-t-2 border-primary/30">
+                        <tr className="text-[10px] font-black uppercase">
+                          <td className="p-1.5" colSpan={4}>TOTAL SELECCIONADO ({g.includedCount} de {g.totalCount})</td>
+                          <td className="p-1.5 text-right font-mono tabular-nums">{groupAmountLabel}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                    {remaining > 0 && (
+                      <div className="p-2 border-t border-border/20 text-center">
+                        <button
+                          onClick={() => p.setSaleRowsLimit({ ...p.saleRowsLimit, [g.key]: limit + ROWS_PER_PAGE })}
+                          className="px-3 py-1.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
+                        >
+                          Ver más ({remaining} restantes)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-[10px] text-muted-foreground mt-2">
+        Las ventas desmarcadas no computan en los totales, los desgloses por método ni las exportaciones (PDF, impresión y Excel). Los egresos de caja y demás conceptos no dependen de esta selección.
+      </p>
+    </div>
+  );
+}
+
 // ── §7: Ajustes extraordinarios (vía excepcional, nota obligatoria, auditada) ─
 // MISIÓN 2026-10-23 (§8) — DESACTIVACIÓN TEMPORAL:
 //   · No administradores: el contenedor NO se renderiza (ni inputs ni envío).
@@ -1366,6 +1854,23 @@ interface ResultadosPanelProps {
   itemDetails: Record<string, unknown[]>;
   loadingDetails: Set<string>;
   setSelectedDoc: (d: Record<string, unknown> | null) => void;
+  // ══ MISIÓN PERSONALIZACIÓN (2026-10-25) ══
+  /** Conceptos activos (todos activados = comportamiento actual). */
+  concepts: SummaryConceptsSelection;
+  onToggleConcept: (key: SummaryConceptKey) => void;
+  onSetAllConcepts: (all: boolean) => void;
+  /** Filas de venta individuales (vacío ⇔ no disponibles: fallback acordeón). */
+  salesRows: readonly SaleRow[];
+  salesRowsTruncated: boolean;
+  excludedSales: ReadonlySet<string>;
+  onToggleSale: (id: string) => void;
+  onSetSalesIncluded: (included: boolean, scopeNote: string) => void;
+  saleClassFilter: '' | SaleCurrencyClass;
+  setSaleClassFilter: (v: '' | SaleCurrencyClass) => void;
+  expandedSaleGroups: ReadonlySet<string>;
+  setExpandedSaleGroups: (v: Set<string>) => void;
+  saleRowsLimit: Record<string, number>;
+  setSaleRowsLimit: (v: Record<string, number>) => void;
 }
 
 function ResultadosPanel(p: ResultadosPanelProps) {
@@ -1503,8 +2008,18 @@ function ResultadosPanel(p: ResultadosPanelProps) {
 
   return (
     <div className="space-y-4">
+      {/* ══ MISIÓN PERSONALIZACIÓN · FUNCIÓN A: conceptos del Resumen ══ */}
+      <ConceptosSelector
+        concepts={p.concepts}
+        onToggle={p.onToggleConcept}
+        onSetAll={p.onSetAllConcepts}
+      />
+
       {/* AUDITORÍA 2026-10: Resumen del Día — fórmula centralizada, MISMA que el PDF.
-          Orden lógico §4 del brief. Nombres inequívocos (esperado vs contado vs cuadre). */}
+          Orden lógico §4 del brief. Nombres inequívocos (esperado vs contado vs cuadre).
+          MISIÓN PERSONALIZACIÓN: las filas cuyos conceptos están desactivados se
+          OMITEN (misma regla que PDF/Excel — presentación pura: el esperado del
+          pie NO se recalcula por ocultar una fila). */}
       <section aria-label="Resumen del Día" data-testid="resumen-del-dia" className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-muted/20">
           <h3 className="text-xs font-black uppercase tracking-wider">Resumen del Día</h3>
@@ -1517,13 +2032,13 @@ function ResultadosPanel(p: ResultadosPanelProps) {
           </button>
         </div>
         <div className="divide-y divide-border/20">
-          <SummaryRow label="Ventas totales (efectivo + transferencia)" value={s.ventasTotales} strong />
-          <SummaryRow label="Ventas en efectivo" value={s.ventasCash} />
-          <SummaryRow label="Ventas por transferencia" value={s.ventasTransfer} />
-          {s.ventasZelle > 0 && <SummaryRow label="Ventas por Zelle" value={s.ventasZelle} />}
+          {p.concepts.resumenDia && <SummaryRow label="Ventas totales (efectivo + transferencia)" value={s.ventasTotales} strong />}
+          {p.concepts.ventasEfectivo && <SummaryRow label="Ventas en efectivo" value={s.ventasCash} />}
+          {p.concepts.ventasTransferencia && <SummaryRow label="Ventas por transferencia" value={s.ventasTransfer} />}
+          {p.concepts.ventasZelle && s.ventasZelle > 0 && <SummaryRow label="Ventas por Zelle" value={s.ventasZelle} />}
           {/* MISIÓN DEFINITIVA 2026-10-24: la equivalencia canónica NO es una
               segunda venta — línea propia de consolidación (contrato único §2). */}
-          {s.equivCashOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de cobros en efectivo en otras monedas" value={s.equivCashOtraMoneda} note="consolidación contable — no es una segunda venta" />}
+          {p.concepts.equivalenciaCup && s.equivCashOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de cobros en efectivo en otras monedas" value={s.equivCashOtraMoneda} note="consolidación contable — no es una segunda venta" />}
           {s.equivVouchersOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de vouchers en otras monedas" value={s.equivVouchersOtraMoneda} note="informativo — no es efectivo físico" />}
           {s.otIngresosCash > 0 && <SummaryRow label="Órdenes de trabajo (anticipos)" value={s.otIngresosCash} />}
           {s.comisionesCash > 0 && <SummaryRow label="Comisiones pagadas en efectivo" value={-s.comisionesCash} negative />}
@@ -1532,6 +2047,11 @@ function ResultadosPanel(p: ResultadosPanelProps) {
           {s.recibosProveedoresCash > 0 && <SummaryRow label="Pagos a proveedores (efectivo)" value={-s.recibosProveedoresCash} negative />}
           {s.ajustesPositivos > 0 && <SummaryRow label="Ajustes extraordinarios (+)" value={s.ajustesPositivos} />}
           {s.ajustesNegativos > 0 && <SummaryRow label="Ajustes extraordinarios (−)" value={-s.ajustesNegativos} negative />}
+          {/* MISIÓN PERSONALIZACIÓN: los documentos de caja (fondo y otros) se
+              muestran igual que en el PDF/Excel — la vista prevé el MISMO
+              contenido del documento; «Egresos de caja» es concepto gobernable. */}
+          {s.ingresosCaja > 0 && <SummaryRow label="Ingresos de caja (fondo y otros)" value={s.ingresosCaja} />}
+          {p.concepts.egresosCaja && s.egresosCaja > 0 && <SummaryRow label="Egresos de caja (fondo y otros)" value={-s.egresosCaja} negative />}
         </div>
         <div className="flex items-center justify-between px-4 py-3 bg-primary/10 border-t-2 border-primary/40">
           <p className="text-xs font-black uppercase text-primary">Efectivo esperado a entregar</p>
@@ -1587,14 +2107,40 @@ function ResultadosPanel(p: ResultadosPanelProps) {
         </select>
       </div>
 
-      {/* Ventas */}
-      <div>
-        <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">Ventas por Método</h3>
-        <div className="space-y-1">
-          {sales.filter(filterSales).length === 0 ? <p className="text-xs text-muted-foreground text-center py-2">Sin ventas</p> :
-            sales.filter(filterSales).map((s, i) => renderAccordionItem(`s-${s.payment_method}-${s.currency}-${i}`, String(s.payment_method), String(s.currency), `${s.transaction_count} transacciones`, Number(s.total)))}
+      {/* Ventas — MISIÓN PERSONALIZACIÓN: con sales_rows (reconstrucción por
+          venta) la sección se rige por la SELECCIÓN de ventas: filtro por
+          composición real de pagos + checkbox por fila + totales del conjunto
+          seleccionado. Sin sales_rows (entorno sin reconstrucción) conserva el
+          acordeón agregado previo, con la selección no disponible (documentada). */}
+      {p.salesRows.length > 0 ? (
+        <VentasSeleccionables
+          salesRows={p.salesRows}
+          salesRowsTruncated={p.salesRowsTruncated}
+          excludedSales={p.excludedSales}
+          onToggleSale={p.onToggleSale}
+          onSetSalesIncluded={p.onSetSalesIncluded}
+          saleClassFilter={p.saleClassFilter}
+          setSaleClassFilter={p.setSaleClassFilter}
+          expandedSaleGroups={p.expandedSaleGroups}
+          setExpandedSaleGroups={p.setExpandedSaleGroups}
+          saleRowsLimit={p.saleRowsLimit}
+          setSaleRowsLimit={p.setSaleRowsLimit}
+          filterMethod={p.filterMethod}
+        />
+      ) : (
+        <div>
+          <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">Ventas por Método</h3>
+          {(sales.length > 0) && (
+            <p className="text-[10px] text-muted-foreground italic mb-2">
+              La selección individual de ventas no está disponible para este período (sin reconstrucción por venta); se muestran todas las ventas del reporte.
+            </p>
+          )}
+          <div className="space-y-1">
+            {sales.filter(filterSales).length === 0 ? <p className="text-xs text-muted-foreground text-center py-2">Sin ventas</p> :
+              sales.filter(filterSales).map((s, i) => renderAccordionItem(`s-${s.payment_method}-${s.currency}-${i}`, String(s.payment_method), String(s.currency), `${s.transaction_count} transacciones`, Number(s.total)))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Pagos */}
       <div>
