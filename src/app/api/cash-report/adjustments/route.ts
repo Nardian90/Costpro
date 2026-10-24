@@ -33,11 +33,13 @@ import { uuidLoose } from '@/validation/api-schemas';
  *     idempotency_key?: string      — anti doble envío (uuid)
  *   }
  *
- * Persistencia: payment_transactions con ref_type='adjustment' (reutiliza
- * RLS por tienda, actor, fecha, nota e idempotencia — migración
- * 20261012000001). El RPC get_cash_report NO los incluye (filtra
- * ref_type IN ('receipt','service')): el ajuste se integra SOLO en el
- * resumen del reporte vía /api/cash-report (campo `adjustments`).
+ * Persistencia: RPC register_cash_adjustment (migración 20261026000000 —
+ * Fase A de la misión integral): advisory lock por tienda + validación de
+ * saldo físico CUP para direction='out' + idempotencia, ATÓMICOS en el
+ * servidor. Fila idéntica a la histórica (payment_transactions,
+ * ref_type='adjustment', CUP, exchange_rate=1). El RPC get_cash_report NO los
+ * incluye (filtra ref_type IN ('receipt','service')): el ajuste se integra
+ * SOLO en el resumen del reporte vía /api/cash-report (campo `adjustments`).
  *
  * Restricciones de seguridad (cuando la función esté reactivada):
  *   - Rol admin/manager/encargado (el reporte lo usan esos roles).
@@ -144,57 +146,95 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: 'No tienes acceso a esta tienda' }, { status: 403 });
     }
 
-    // Idempotencia: la misma clave ya registrada devuelve el documento original
-    // (nunca un segundo registro) — un doble clic no duplica el ajuste.
+    // Idempotencia + INSERT + validación FÍSICA por moneda (Fase A — misión
+    // integral 2026-10-24): el INSERT directo se reemplaza por el RPC
+    // register_cash_adjustment para que el ajuste participe del protocolo de
+    // serialización del cajón (advisory por tienda) y valide el saldo físico
+    // CUP para direction='out' — fail-closed, misma doctrina que egresos.
+    // La validación DEFINITIVA vive en PostgreSQL; los checks de arriba son UX.
     const key = idempotency_key || crypto.randomUUID();
-    const { data: existing } = await supabase
-      .from('payment_transactions')
-      .select('id, direction, amount, notes, payment_date')
-      .eq('store_id', storeId)
-      .eq('ref_type', 'adjustment')
-      .eq('idempotency_key', key)
-      .maybeSingle();
-    if (existing) {
-      return NextResponse.json({ adjustment: existing, idempotent_replay: true }, { status: 200 });
-    }
+    const { data: rpcData, error: rpcError } = await supabase.rpc('register_cash_adjustment', {
+      p_store_id: storeId,
+      p_direction: direction,
+      p_amount: amount,
+      p_note: note,
+      p_payment_date: `${payment_date}T12:00:00+00:00`,
+      p_idempotency_key: key,
+      p_user_id: session.user.id || null,
+    });
 
-    const { data, error } = await supabase
-      .from('payment_transactions')
-      .insert({
-        store_id: storeId,
-        ref_type: 'adjustment',
-        ref_id: null,
-        transaction_id: null,
-        direction,
-        amount,
-        payment_method: 'cash',
-        currency: 'CUP',
-        exchange_rate: 1,
-        payment_date: `${payment_date}T12:00:00+00:00`,
-        notes: note,
-        paid_by: session.user.id || null,
-        idempotency_key: key,
-        // amount_cup es GENERATED: currency CUP → amount_cup = amount.
-      })
-      .select('id, direction, amount, notes, payment_date, paid_by, created_at')
-      .single();
-
-    if (error) {
-      if (error.code === '23514') {
-        // CHECK ref_type: entorno sin la migración 20261012000001.
+    if (rpcError) {
+      const msg = String(rpcError.message || '');
+      if (msg.includes('ERR_INSUFFICIENT_CURRENCY')) {
         return NextResponse.json(
-          { error: 'El entorno no soporta ajustes todavía (migración 20261012000001 pendiente). Coordinar con el mantenedor.' },
-          { status: 409 },
+          {
+            error: `Saldo físico insuficiente en caja: ${msg}`,
+            code: 'ERR_INSUFFICIENT_CURRENCY',
+          },
+          { status: 422 },
         );
       }
-      if (error.code === '23505') {
-        return NextResponse.json({ error: 'El ajuste ya fue registrado (idempotencia).' }, { status: 409 });
+      if (msg.includes('ERR_FORBIDDEN_ROLE') || msg.includes('ERR_UNAUTHORIZED')) {
+        return NextResponse.json({ error: 'Forbidden — requiere rol admin, manager o encargado' }, { status: 403 });
       }
-      console.error('[cash-report/adjustments] POST error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      if (msg.includes('ERR_PAYMENT_DATE') || msg.includes('ERR_BACKDATED_DOCUMENT')) {
+        return NextResponse.json({ error: `Fecha inválida: ${msg}` }, { status: 400 });
+      }
+      // Entorno sin el RPC (migración 20261026000000 pendiente): fallback al
+      // INSERT directo previo para no interrumpir la operación registrada.
+      if (msg.includes('does not exist') || msg.includes('PGRST202')) {
+        const { data: existing } = await supabase
+          .from('payment_transactions')
+          .select('id, direction, amount, notes, payment_date')
+          .eq('store_id', storeId)
+          .eq('ref_type', 'adjustment')
+          .eq('idempotency_key', key)
+          .maybeSingle();
+        if (existing) {
+          return NextResponse.json({ adjustment: existing, idempotent_replay: true }, { status: 200 });
+        }
+        const { data, error } = await supabase
+          .from('payment_transactions')
+          .insert({
+            store_id: storeId,
+            ref_type: 'adjustment',
+            ref_id: null,
+            transaction_id: null,
+            direction,
+            amount,
+            payment_method: 'cash',
+            currency: 'CUP',
+            exchange_rate: 1,
+            payment_date: `${payment_date}T12:00:00+00:00`,
+            notes: note,
+            paid_by: session.user.id || null,
+            idempotency_key: key,
+          })
+          .select('id, direction, amount, notes, payment_date, paid_by, created_at')
+          .single();
+        if (error) {
+          if (error.code === '23514') {
+            return NextResponse.json(
+              { error: 'El entorno no soporta ajustes todavía (migración 20261012000001 pendiente). Coordinar con el mantenedor.' },
+              { status: 409 },
+            );
+          }
+          if (error.code === '23505') {
+            return NextResponse.json({ error: 'El ajuste ya fue registrado (idempotencia).' }, { status: 409 });
+          }
+          console.error('[cash-report/adjustments] POST error:', error);
+          return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+        return NextResponse.json({ adjustment: data }, { status: 201 });
+      }
+      console.error('[cash-report/adjustments] RPC error:', rpcError);
+      return NextResponse.json({ error: rpcError.message }, { status: 500 });
     }
 
-    return NextResponse.json({ adjustment: data }, { status: 201 });
+    if (rpcData?.idempotent_replay) {
+      return NextResponse.json({ adjustment: rpcData.adjustment, idempotent_replay: true }, { status: 200 });
+    }
+    return NextResponse.json({ adjustment: rpcData?.adjustment }, { status: 201 });
   } catch (err: unknown) {
     const e = err as { message?: string };
     return NextResponse.json({ error: e?.message || 'Error interno' }, { status: 500 });

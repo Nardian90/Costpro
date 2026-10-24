@@ -453,3 +453,54 @@ Código del PR: **NO fusionado** · despliegue: **ninguno** · producción: **so
 ### 18.8 Declaración final del ciclo
 
 **APTO PARA REVISIÓN:** el riesgo nuclear de esta misión está cerrado y probado en aislamiento con la cadena completa: ninguna reversión libera tope sin recuperación real de la moneda correcta (RC1/RC2/RC3), la devolución mixta tiene flujo único probado de punta a punta (RC4), el reembolso USD devuelve exactamente lo cobrado a la tasa histórica (RC5) y el crédito de tienda compensa y respeta su tope (RC6). Matriz 80/80 + regresión íntegra (51/51 · 27/27 · 86/86 · 14/14) + gates verdes (tsc/eslint/contrato/BOLA/TS-security) + 31 tests nuevos. Pendiente exclusivo del propietario: fusión del PR #1470, aplicación autorizada 2222→23000→40000 (protocolo §15/§18.6), y las decisiones de §18.7. No se fusionó, no se desplegó, no se ejecutaron escrituras en producción.
+
+## 19. Adenda INTEGRAL — Serialización commit-coherente del cajón (2026-10-24T12:2xZ)
+
+Misión «AUTÓNOMA INTEGRAL» tras el merge del PR #1470 (main a4a43df, CI todo verde). El propietario delegó la ejecución completa: fusión autónoma de PRs adicionales, despliegue, aplicación de la cadena y certificación. Esta adenda cierra el residual §18.7.1 (carrera sub-2ms entre escritores del cajón) con la correctiva estructural exigida por la misión §3.
+
+### 19.1 Estado inicial verificado (§2)
+
+- main = a4a43df (merge del PR #1470, 2026-10-24T11:05Z) sin commits posteriores; Vercel check success en el commit; costpro4.vercel.app HTTP 200.
+- Migraciones (verificación verbatim por comparación de cuerpos vivos vs cadena — `estado-migraciones.py`, evidencia `estado-migraciones-vivo-20261024.json`): `20261024180000` APLICADA (create_cash_flow_document vivo == cuerpo 18000 verbatim) · `20261024220000/230000/400000` NO APLICADAS · cp-money-002 (20261025120000+130000) APLICADAS por el propietario (create_sale_v2/32 vivo). Nota metodológica: los mensajes «ERR_INSUFFICIENT_CURRENCY: ... egreso=%» existen desde v2.24.0 con semántica canónica (v_amount_cup > v_expected_cash); el patrón 2222 se distingue por el chequeo nativo (v_amount > v_balance_currency) — la comparación verbatim es la única evidencia concluyente.
+- 6 baselines de caja en ci-gate-allowlist.json (5 previas + register_supplier_payment/12 nueva).
+
+### 19.2 Fase A — Causa raíz DEMOSTRADA y correctiva estructural
+
+**Mecanismo (residual §18.7.1, ahora con repro determinista)**: el advisory lock por tienda SÍ serializa las escrituras del cajón; la carrera vivía en la VENTANA DE LECTURA. Las lecturas de autorización agregan con `<= now()` y `now()` es el INICIO DE LA TRANSACCIÓN DEL LECTOR. Con desfase <~2ms el orden de inicio y el orden de adquisición del lock pueden invertirse: el lector que empezó ANTES y adquirió el lock DESPUÉS del commit ajeno NO ve las filas confirmadas del otro — quedan fuera de su ventana (timestamp > now() del lector). Evidencia: experimento `ventana-decisiva.mjs` (evidencia/faseA/) — reproducible al 100%: cB (empezó antes, lock después) valida contra el saldo PRE-cA y ambos egresos pasan → físico −1000. La micro-carrera «20/20» del expediente anterior era un experimento con umbral mal calibrado (permitía ambas por diseño); la reproducción 1/12 con funciones reales (R1 #7, net −1000) era genuina y este mecanismo la explica.
+
+**Correctiva (misma fuente de verdad — el ledger — sin saldos materializados que requieran reconciliación)**:
+
+1. **Lecturas de autorización ancladas al lock**: upper bound `'infinity'::timestamptz` en TODOS los agregados que autorizan salidas (create_cash_flow_document 7+2 · reverse_cash_flow_document 7+1 · create_devolution_v2 3 · close_cash_shift 11+1 · get_cash_shift_expected 9). Todo movimiento confirmado es un hecho físico YA ocurrido; la lectura post-lock ve todo lo confirmado (coherente con el orden del lock). Los REPORTES (get_cash_ledger / get_cash_report / get_cash_flow_summary) conservan su contrato as-of. Los stamps de hechos (closed_at, annulled_at, payment_date de compensaciones) siguen siendo now(). La validación semántica de fechas futuras (v_op_date > now()) se conserva.
+2. **Todos los reducers del cajón bajo el MISMO protocolo** (advisory por tienda ANTES de las lecturas que autorizan la salida, mantenido hasta commit): `register_supplier_payment` (ANTES sin lock NI validación física — los pagos a proveedor/comisión en efectivo podían dejar el físico negativo solos o en carrera con egresos; ahora advisory + validación por moneda) · **NUEVO register_cash_adjustment/7** (reemplaza el INSERT directo de /api/cash-report/adjustments; fila idéntica ref_type='adjustment' CUP + lock + validación física para direction='out' + idempotencia) · **NUEVO pay_commission/7** (reemplaza el UPDATE directo de /api/commissions/payments/[id] y la rama commission de /api/accounts-payable/bulk-pay; marca 'paid' bajo lock + validación física por moneda para efectivo + idempotencia natural + ERR_PAYMENT_DATE_FUTURE en servidor; p_currency/p_exchange_rate preservan la semántica de la ruta).
+3. **App**: 3 rutas migradas a los RPCs con fallback documentado si el entorno aún no tiene la migración (degradación limpia, no interrupción). mapRpcError 422/403/409/400 accionables.
+
+**Por qué no un saldo materializado**: habría creado una segunda fuente de verdad que TODOS los writers (incluidos ventas en efectivo, ajustes y comisiones) debieran mantener transaccionalmente; la misión §3 exige no introducirla «sin una estrategia probada de reconciliación». La solución elegida conserva el ledger como única fuente, cierra el hueco temporal de la ventana y unifica el protocolo de bloqueos (advisory → locks de fila → escrituras, sin ciclos).
+
+### 19.3 Batería obligatoria de concurrencia (misión §3) — post-fix
+
+Expectativas pre-calculadas ANTES de ejecutar. BD aislada cajamision (cadena 1818→2222→23000→40000→260000). Invariante global: `saldo físico final por moneda = inicial + entradas confirmadas − salidas confirmadas`, nunca negativo por carrera. Resultados (evidencia `faseA-concurrencia-postfix-results.json`):
+
+- **T0 mecanismo (ventana-decisiva, 10×)**: cB RECHAZADO con ERR_INSUFFICIENT_CURRENCY — ve el egreso confirmado post-lock. ✅ CERRADO.
+- **R1 dos egresos CUP 3000 (físico 5000)**, desfases 0/1/2 ms + estrés 200×: exactamente 1 OK, net 2000. ✅
+- **R2 dos egresos USD 60 (físico USD 100 vía ingreso)**: exactamente 1 OK, USD net 40. ✅
+- **R3 egreso 3000 + reembolso 3000**, 0/1 ms: exactamente 1, net 2000. ✅
+- **R4 egreso 6000 + reversión de ingreso 3000 (físico 8000)**: exactamente 1 (net 2000 o 5000). ✅
+- **R5 reembolso + reembolso misma venta**: 1 (lock de fila de la venta). ✅
+- **R6 reembolso 4000 (venta A) + egreso 7000 (físico 10000)**: exactamente 1 (net 6000 o 3000). ✅
+- **R7 devolución + cierre**: arqueo congelado consistente con el ledger (el reembolso o cuenta en el arqueo o se rechaza por turno cerrado — nunca commits sin ser contado). ✅
+- **R8 reintentos simultáneos misma clave idempotente**: exactamente 1 documento. ✅
+- **R9 egreso 3000 + pago a proveedor en efectivo 3000**: exactamente 1, net ≥ 0 (ANTES: supplier payment sin lock NI validación). ✅
+- **R10 egreso 3000 + ajuste out 3000**: exactamente 1, net 2000 (ANTES: INSERT directo sin lock ni validación). ✅
+- **R11 egreso 3000 + pago de comisión en efectivo 2400**: exactamente 1, net ≥ 0 (ANTES: UPDATE directo sin lock ni validación). ✅
+
+**FASE A POST-FIX: 16 PASS · 0 FAIL · 0 defectos.**
+
+### 19.4 Regresión íntegra con la cadena extendida (evidencia `regresion-cadena-260000-results.json`)
+
+BD reconstruida desde cero por suite (UUIDs fijos): fase-reversa FIXED 80/80 · cert-contable 51/51 · faseE saldo físico 27/27 · faseB devoluciones 86/86 · faseE seguridad 14/14 · batería Fase A 16/16. Gates: tsc 0 errores · eslint 0 errores en rutas modificadas · contrato estático CONTRATO OK (0 divergencias con baseline register_supplier_payment/12) · 3809 tests de app (+11 nuevos de contrato de migración) todos verdes.
+
+### 19.5 Residuales nuevos (documentados, no corregidos por decisión de alcance)
+
+1. **Pagos de comisión `mixed`**: el libro (término v_comm) solo cuenta payment_method='cash' — un pago mixto de comisión no participa del físico en la fórmula vigente (gap contable PREEXISTENTE). El RPC valida estrictamente 'cash' para no alterar la aceptación de 'mixed'; la incorporación de mixtos al libro requiere decisión de fórmula del propietario.
+2. Restos previos §18.7.2-4 (prorrateo de descuento global, 12 devoluciones históricas sin traza, recuperación parcial sin reversión) — sin cambios.
+3. E2E Playwright: sigue deshabilitado por el propietario (no simulado).
