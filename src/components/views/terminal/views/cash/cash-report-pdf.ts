@@ -28,6 +28,14 @@
 import { formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
+// MISIÓN PERSONALIZACIÓN REPORTE ENTREGA (2026-10-25): selección de conceptos
+// (filas del Resumen del Día que aparecen en el documento) y metadatos del
+// conjunto de ventas seleccionado — misma fuente que pantalla y Excel.
+import {
+  hasAnySummaryConcept,
+  type SummaryConceptKey,
+  type SummaryConceptsSelection,
+} from '@/lib/cash-report/report-selection';
 import { COLLECTION_EPS } from '@/lib/cash-report/collection-currency';
 import type { jsPDF } from 'jspdf';
 import type { CashReport } from '@/types';
@@ -138,6 +146,20 @@ export interface CashReportPdfContext {
   options: CashReportPdfOptions;
   /** §1 del brief: orientación del documento (persistida en core). */
   orientation?: PdfOrientation;
+  /** MISIÓN PERSONALIZACIÓN (2026-10-25) · FUNCIÓN A: conceptos del Resumen
+   *  del Día que se INCLUYEN en el documento (default: todos — undefined se
+   *  interpreta como todos activados, comportamiento previo intacto). Un
+   *  concepto desactivado se OMITE realmente (sin título/subtotal huérfano):
+   *  es presentación, no altera saldos ni registros. */
+  concepts?: SummaryConceptsSelection;
+  /** MISIÓN PERSONALIZACIÓN · FUNCIÓN B: metadatos del conjunto de ventas
+   *  seleccionado (N de M + etiqueta del filtro) — se imprimen junto al
+   *  período para que el destinatario sepa qué conjunto se está mostrando. */
+  selectionMeta?: {
+    included: number;
+    total: number;
+    filterLabel?: string;
+  };
 }
 
 /** Datos auxiliares que los builders necesitan (fetchables fuera para cachearlos).
@@ -193,6 +215,11 @@ export async function buildCashReportPdf(ctx: CashReportPdfContext, summaries?: 
   // §1 del brief: la orientación afecta al documento completo (p = vertical, l = horizontal).
   const orientation: 'p' | 'l' = ctx.orientation === 'horizontal' ? 'l' : 'p';
   const doc = await createPDFDocument(orientation, 'mm', 'a4');
+  // MISIÓN PERSONALIZACIÓN: sin conceptos activados NO se genera un reporte
+  // aparentemente vacío — el llamador bloquea la acción; aquí fail-closed.
+  if (!hasAnySummaryConcept(ctx.concepts)) {
+    throw new Error('Selecciona al menos un concepto para el reporte.');
+  }
   // Plantilla 'simple': fidelidad a SU descripción (sin desglose) — ver cabecera.
   const effectiveOptions: CashReportPdfOptions = ctx.template === 'simple'
     ? { ...ctx.options, includeBreakdown: false, includeUsd: false, includeCashBreakdown: false }
@@ -201,6 +228,30 @@ export async function buildCashReportPdf(ctx: CashReportPdfContext, summaries?: 
     return buildDiarioPdf(doc, ctx, summaries);
   }
   return buildEstandarPdf(doc, ctx, effectiveOptions, summaries);
+}
+
+// ── MISIÓN PERSONALIZACIÓN (2026-10-25): filtro de conceptos del Resumen ──
+// Las filas del bloque de ingresos llevan un `concept` opcional (clave del
+// concepto que gobierna su aparición). Sin selección o con el concepto
+// activado la fila se conserva; desactivado se OMITE (presentación pura —
+// el «Efectivo esperado a entregar» y los saldos NUNCA se recalculan por
+// ocultar un concepto; solo la selección de ventas recalcula lo que de
+// ella deriva, vía el reporte ajustado que inyecta la vista).
+export interface ConceptTaggedRow {
+  label: string;
+  amount: number;
+  isTotal?: boolean;
+  isSubtotal?: boolean;
+  note?: string;
+  concept?: SummaryConceptKey;
+}
+
+export function filterIncomeRowsByConcepts(
+  rows: ConceptTaggedRow[],
+  concepts?: SummaryConceptsSelection | null,
+): ConceptTaggedRow[] {
+  if (!concepts) return rows;
+  return rows.filter(r => !r.concept || concepts[r.concept] !== false);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -373,13 +424,36 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
   const cupTransferProduction = production.filter((p: any) => p.payment_method === 'transfer' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
 
   sectionTitle('RESUMEN — FLUJO DE CAJA CUP', `${sales.length} grupos de ventas · ${payments.length} grupos de pagos`);
+  // MISIÓN PERSONALIZACIÓN (2026-10-25): las filas de ventas del resumen de
+  // la plantilla Estándar también respetan la selección de conceptos (misma
+  // clave que el Diario) — el SUBTOTAL INGRESOS se recalcula con las filas
+  // visibles (nunca queda un total que incluya conceptos ocultos). Los
+  // importes provienen del reporte AJUSTADO que inyecta la vista cuando hay
+  // ventas excluidas (mismo mecanismo que el Diario).
+  const showVentasEfectivo = ctx.concepts?.ventasEfectivo !== false;
+  const showVentasTransferencia = ctx.concepts?.ventasTransferencia !== false;
+  const showVentasZelle = ctx.concepts?.ventasZelle !== false;
+  const ventasRowsVisible =
+    (showVentasEfectivo ? cupCashSales : 0) +
+    (showVentasTransferencia ? cupTransferSales : 0) +
+    (showVentasZelle ? cupZelleSales : 0);
   const summaryRows: (string | number)[][] = [
     ['INGRESOS', '', '', ''],
-    ['  Ventas en Efectivo', `${sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`, '', fmt(cupCashSales)],
-    ['  Ventas por Transferencia', `${sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`, '', fmt(cupTransferSales)],
-    ...(cupZelleSales > 0 ? [['  Ventas por Zelle', `${sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`, '', fmt(cupZelleSales)]] : []),
+    ...(showVentasEfectivo ? [[
+      '  Ventas en Efectivo',
+      `${sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`,
+      '',
+      fmt(cupCashSales),
+    ]] : []),
+    ...(showVentasTransferencia ? [[
+      '  Ventas por Transferencia',
+      `${sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`,
+      '',
+      fmt(cupTransferSales),
+    ]] : []),
+    ...(showVentasZelle && cupZelleSales > 0 ? [['  Ventas por Zelle', `${sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`, '', fmt(cupZelleSales)]] : []),
     ['  Anticipos/Liquidaciones de Órdenes', `${production.reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(cupCashProduction + cupTransferProduction)],
-    ['SUBTOTAL INGRESOS', '', '', fmt(cupCashSales + cupTransferSales + cupZelleSales + cupCashProduction + cupTransferProduction)],
+    ['SUBTOTAL INGRESOS', '', '', fmt(ventasRowsVisible + cupCashProduction + cupTransferProduction)],
     ['', '', '', ''],
     ['EGRESOS (-)', '', '', ''],
     ['  Pagos a Proveedores (Recepciones)', `${payments.filter((p: any) => p.ref_type === 'receipt').reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(payments.filter((p: any) => p.ref_type === 'receipt').reduce((s: number, x: any) => s + Number(x.total), 0))],
@@ -389,6 +463,11 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     ['', '', '', ''],
     ['(-) Transferencias (no se entregan en efectivo)', '', '', fmt(cupTransferSales + cupTransferProduction)],
   ];
+  // MISIÓN PERSONALIZACIÓN — regla de presentación pura (misión §4/§7): el
+  // DINERO A ENTREGAR es un SALDO contable (equivalente al «Efectivo esperado
+  // a entregar» del Diario) y NO se recalcula al ocultar conceptos: solo la
+  // selección de VENTAS (reporte ajustado) recalcula lo que de ella deriva.
+  // La nota memo de transferencias conserva su valor contable completo.
   const dineroEntregar = cupCashSales + cupCashProduction - cupCashPayments - cupCashCommissions;
   renderTable(
     ['Concepto', 'Documentos', '', 'Monto CUP'],
@@ -742,7 +821,7 @@ export function isSingleDayPeriod(startDate: string, endDate: string): boolean {
 // PLANTILLA DIARIO (portado 1:1 del modal — estilo reporte diario de empresa)
 // ═══════════════════════════════════════════════════════════════════════════
 async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?: CashReportSummaries): Promise<jsPDF> {
-  const { report, startDate, endDate, storeInfo, deliveredBy, recipientName, madeBy, cupBreakdown, usdBreakdown, cupDenoms, usdDenoms, options } = ctx;
+  const { report, startDate, endDate, storeInfo, deliveredBy, recipientName, madeBy, cupBreakdown, usdBreakdown, cupDenoms, usdDenoms, options, concepts, selectionMeta } = ctx;
   const orientation: PdfOrientation = ctx.orientation === 'horizontal' ? 'horizontal' : 'vertical';
   // Geometría dinámica: funciona igual en vertical (210×297) y horizontal (297×210).
   const pw = doc.internal.pageSize.getWidth();
@@ -851,6 +930,15 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     y += 4.8;
     // Línea 3 — período COMPLETO en línea propia (flecha vectorial).
     drawTextWithArrow(doc, tx, y, `Período: ${startDate}`, endDate, startDate === endDate, { fontSize: 9, color: C_MUTED });
+    // MISIÓN PERSONALIZACIÓN (2026-10-25): metadatos del conjunto de ventas
+    // seleccionado — el destinatario sabe QUÉ conjunto se está mostrando
+    // (misión §5: los filtros se reflejan en los metadatos del documento).
+    if (selectionMeta && selectionMeta.total > 0 && selectionMeta.included < selectionMeta.total) {
+      y += 3.6;
+      doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); setText(C_MUTED);
+      const selTxt = `Ventas incluidas: ${selectionMeta.included} de ${selectionMeta.total}` + (selectionMeta.filterLabel ? ` · Filtro: ${selectionMeta.filterLabel}` : '');
+      doc.text(selTxt, tx, y, { maxWidth: maxW });
+    }
     if (orientation === 'horizontal') {
       doc.setFontSize(7); doc.setFont('helvetica', 'normal'); setText(C_MUTED);
       doc.text('Horizontal', pw - m, y, { align: 'right' });
@@ -1256,24 +1344,27 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     markSection(currency);
 
     const s = curSummary;
-    const incomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean; note?: string }> = currency === 'CUP'
+    // MISIÓN PERSONALIZACIÓN: las filas llevan su CONCEPTO (clave) y el bloque
+    // se filtra por la selección — un concepto desactivado se OMITE realmente
+    // del documento (presentación: el esperado y los saldos no se recalculan).
+    const incomeRows: ConceptTaggedRow[] = filterIncomeRowsByConcepts(currency === 'CUP'
       ? [
-          { label: 'Resumen del día (efectivo + transferencia)', amount: s.ventasTotales, isTotal: true },
-          { label: 'Ventas en efectivo', amount: s.ventasCash },
-          { label: 'Ventas por transferencia', amount: s.ventasTransfer },
+          { label: 'Resumen del día (efectivo + transferencia)', amount: s.ventasTotales, isTotal: true, concept: 'resumenDia' },
+          { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
+          { label: 'Ventas por transferencia', amount: s.ventasTransfer, concept: 'ventasTransferencia' },
         ]
       : [
-          { label: 'Resumen del día (efectivo + Zelle)', amount: s.ventasTotales, isTotal: true },
-          { label: 'Ventas en efectivo', amount: s.ventasCash },
-          { label: 'Venta por Zelle', amount: s.ventasZelle },
-        ];
+          { label: 'Resumen del día (efectivo + Zelle)', amount: s.ventasTotales, isTotal: true, concept: 'resumenDia' },
+          { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
+          { label: 'Venta por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' },
+        ], ctx.concepts);
     if (currency === 'CUP') {
-      if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle });
+      if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' });
       if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true });
       // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
       // (contrato único §2) — jamás sumada a las filas de venta (no es una
       // segunda venta); la de efectivo SÍ alimenta el esperado a entregar.
-      if (s.equivCashOtraMoneda > 0) incomeRows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda });
+      if (s.equivCashOtraMoneda > 0 && ctx.concepts?.equivalenciaCup !== false) incomeRows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, concept: 'equivalenciaCup' });
       if (s.equivVouchersOtraMoneda > 0) incomeRows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, note: 'info' });
       if (s.otIngresosCash > 0) incomeRows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash });
       // Comisiones PAGADAS desglosadas por medio (§4): transferencia NO toca el efectivo.
@@ -1287,7 +1378,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
       // MISIÓN INGRESOS/EGRESOS 2026-10-20: documentos de caja (fondo de cambio
       // y otros) — filas independientes de los ajustes, auditables por separado.
       if (s.ingresosCaja > 0) incomeRows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja });
-      if (s.egresosCaja > 0) incomeRows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, note: 'expense' });
+      if (s.egresosCaja > 0 && ctx.concepts?.egresosCaja !== false) incomeRows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, note: 'expense', concept: 'egresosCaja' });
       if (s.reembolsosCash > 0) incomeRows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, note: 'expense' });
       // v2.23.0 (decisión del propietario 2026-10-21): reembolsos por voucher —
       // INFORMATIVO (nota 'info', igual que comisiones por transferencia): no

@@ -69,14 +69,23 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const dateFilter = includeAllDates ? {} : { gte: startDate, lte: endDate };
     let salesSplit: SalesSplit = {};
     let salesGroups: Array<{ payment_method: string; currency: string; transaction_count: number; total: number; total_cup: number }> = [];
+    // MISIÓN PERSONALIZACIÓN REPORTE ENTREGA (2026-10-25): filas de venta
+    // INDIVIDUALES con su composición real de pagos (buckets por método ×
+    // moneda) — misma reconstrucción que sales_split. Soporta la selección de
+    // ventas en pantalla/PDF/Excel SIN migraciones (capa de presentación).
+    let salesRows: Array<Record<string, unknown>> = [];
+    let salesRowsTruncated = false;
+    const SALES_ROWS_CAP = 1000;
     // MISIÓN DEFINITIVA (2026-10-24): equivalencias canónicas de la MISMA
     // reconstrucción (se rellenan junto a salesGroups; 0 si la reconstrucción falla).
     let equivFields: { sales_equiv_cash_other_cup: number; sales_equiv_voucher_other_cup: number } = { sales_equiv_cash_other_cup: 0, sales_equiv_voucher_other_cup: 0 };
     try {
       // 1) Transacciones del periodo (nivel cabecera — cubre ventas sin ítems).
+      //    PERSONALIZACIÓN: created_at/customer_name/notes/sale_exchange_rate
+      //    alimentan las filas individuales (solo lectura, sin migraciones).
       let txQuery = supabase
         .from('transactions')
-        .select('id, sale_currency, cash_amount, transfer_amount, zelle_amount')
+        .select('id, created_at, customer_name, notes, sale_currency, sale_exchange_rate, cash_amount, transfer_amount, zelle_amount')
         .eq('store_id', userData.active_store_id)
         .eq('status', 'completed');
       if (!includeAllDates) {
@@ -93,7 +102,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         const chunk = txIds.slice(i, i + CHUNK);
         const { data: itemRows, error: itemErr } = await supabase
           .from('transaction_items')
-          .select('transaction_id, quantity, price_at_sale, price_at_sale_cup, currency, exchange_rate, cash_paid, cash_currency, transfer_paid, transfer_currency, zelle_paid, zelle_currency')
+          .select('transaction_id, quantity, price_at_sale, price_at_sale_cup, currency, exchange_rate, cash_paid, cash_currency, transfer_paid, transfer_currency, zelle_paid, zelle_currency, product_id, products (name, sku)')
           .in('transaction_id', chunk);
         if (itemErr) throw itemErr;
         for (const it of itemRows || []) {
@@ -118,6 +127,45 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       );
 
       const { accumulateSalesSplit, buildSalesGroups, reconstructTxCollections, normCur } = await import('@/lib/cash-report/collection-currency');
+
+      // PERSONALIZACIÓN: fila de venta individual (misma reconstrucción que el
+      // split). items/tx/payments son el input EXACTO de buildItemsSummary para
+      // que el cliente recalibre la tabla por producto con la MISMA función.
+      const toSaleRow = (tx: Record<string, unknown>, result: { buckets: Array<{ method: string; currency: string; amount: number; amountCup: number }>; source: string }, items: Array<Record<string, unknown>>, payments: Array<Record<string, unknown>> | undefined): Record<string, unknown> => ({
+        id: String(tx.id ?? ''),
+        created_at: String(tx.created_at ?? ''),
+        customer_name: (tx.customer_name as string | null) ?? null,
+        reference: (tx.notes as string | null) ?? null,
+        status: 'completed',
+        source: result.source === 'ledger' ? 'ledger' : 'reconstruction',
+        buckets: (result.buckets || []).map(b => ({ method: b.method, currency: normCur(b.currency), amount: Number(b.amount) || 0, amount_cup: Number(b.amountCup) || 0 })),
+        tx: {
+          id: tx.id ?? undefined,
+          cash_amount: tx.cash_amount ?? 0,
+          transfer_amount: tx.transfer_amount ?? 0,
+          zelle_amount: tx.zelle_amount ?? 0,
+          sale_currency: tx.sale_currency ?? null,
+          sale_exchange_rate: tx.sale_exchange_rate ?? null,
+        },
+        items: items.map(it => ({
+          transaction_id: it.transaction_id,
+          product_id: String(it.product_id ?? ''),
+          product_name: ((it.products as Record<string, unknown> | null)?.name as string) || 'Producto',
+          sku: ((it.products as Record<string, unknown> | null)?.sku as string) || '—',
+          quantity: it.quantity ?? 0,
+          price_at_sale: it.price_at_sale ?? 0,
+          price_at_sale_cup: it.price_at_sale_cup ?? 0,
+          currency: it.currency ?? null,
+          exchange_rate: it.exchange_rate ?? null,
+          cash_paid: it.cash_paid ?? null,
+          cash_currency: it.cash_currency ?? null,
+          transfer_paid: it.transfer_paid ?? null,
+          transfer_currency: it.transfer_currency ?? null,
+          zelle_paid: it.zelle_paid ?? null,
+          zelle_currency: it.zelle_currency ?? null,
+        })),
+        payments: (payments || []).map(p => ({ payment_method: p.payment_method, currency: p.currency, amount: p.amount, exchange_rate: p.exchange_rate })),
+      });
 
       const results: Array<{ tx: Parameters<typeof reconstructTxCollections>[0]; result: ReturnType<typeof reconstructTxCollections> }> = [];
       const txWithoutItems: Array<Record<string, unknown>> = [];
@@ -154,8 +202,23 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       }
       for (const { result } of results) accumulateSalesSplit(salesSplit as Record<string, { cash: number; transfer: number; zelle: number; mixedUnsplit: number; total: number }>, result);
 
+      // PERSONALIZACIÓN: filas individuales de las ventas reconstruidas (con
+      // ítems o con ledger). El split/los grupos se calculan SIEMPRE sobre el
+      // universo completo; sales_rows solo acota el payload de selección.
+      for (const { tx, result } of results) {
+        const txRec = tx as Record<string, unknown>;
+        salesRows.push(toSaleRow(
+          txRec,
+          result as unknown as { buckets: Array<{ method: string; currency: string; amount: number; amountCup: number }>; source: string },
+          (itemsByTx.get(String(txRec.id)) || []).map(x => x as Record<string, unknown>),
+          (paymentsByTx.get(String(txRec.id)) || []).map(x => x as unknown as Record<string, unknown>),
+        ));
+      }
+
       // 3) Transacciones SIN ítems (defensiva): comportamiento previo (pool →
-      //    sale_currency), sin romper días históricos sin ítems.
+      //    sale_currency), sin romper días históricos sin ítems. También se
+      //    exponen como filas (buckets sintéticos del pool) para que la
+      //    selección cubra TODO el universo del split.
       for (const tx of txWithoutItems) {
         const cur = normCur((tx.sale_currency as string) || 'CUP');
         if (cur === 'MIXED') continue; // indistinguible sin ítems (raro) — como antes
@@ -165,8 +228,33 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         salesSplit[cur].transfer += tr;
         salesSplit[cur].zelle += ze;
         salesSplit[cur].total += cash + tr + ze;
+        const synthBuckets: Array<{ method: string; currency: string; amount: number; amountCup: number }> = [];
         for (const [m, amt] of [['cash', cash], ['transfer', tr], ['zelle', ze]] as const) {
-          if (amt > 0.01) salesGroups.push({ payment_method: m, currency: cur, transaction_count: 1, total: amt, total_cup: amt });
+          if (amt > 0.01) {
+            salesGroups.push({ payment_method: m, currency: cur, transaction_count: 1, total: amt, total_cup: amt });
+            synthBuckets.push({ method: m, currency: cur, amount: amt, amountCup: amt });
+          }
+        }
+        if (synthBuckets.length > 0) {
+          salesRows.push({
+            id: String(tx.id ?? ''),
+            created_at: String(tx.created_at ?? ''),
+            customer_name: (tx.customer_name as string | null) ?? null,
+            reference: (tx.notes as string | null) ?? null,
+            status: 'completed',
+            source: 'no-items',
+            buckets: synthBuckets.map(b => ({ method: b.method, currency: b.currency, amount: b.amount, amount_cup: b.amountCup })),
+            tx: {
+              id: tx.id ?? undefined,
+              cash_amount: tx.cash_amount ?? 0,
+              transfer_amount: tx.transfer_amount ?? 0,
+              zelle_amount: tx.zelle_amount ?? 0,
+              sale_currency: tx.sale_currency ?? null,
+              sale_exchange_rate: tx.sale_exchange_rate ?? null,
+            },
+            items: [],
+            payments: [],
+          });
         }
       }
       // 4) Grupos `sales` por (método, moneda de COBRO) — coherentes con el split
@@ -194,6 +282,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         else equivVoucherOtherCup += g.total_cup;
       }
       equivFields = { sales_equiv_cash_other_cup: equivCashOtherCup, sales_equiv_voucher_other_cup: equivVoucherOtherCup };
+
+      // PERSONALIZACIÓN: tope defensivo del payload de filas (el split y los
+      // grupos ya se calcularon sobre el universo COMPLETO — el reporte no
+      // cambia; solo la selección quedaría limitada, y se señala explícitamente).
+      if (salesRows.length > SALES_ROWS_CAP) {
+        salesRows = salesRows.slice(0, SALES_ROWS_CAP);
+        salesRowsTruncated = true;
+      }
     } catch (splitErr: unknown) {
       // Sin split el módulo centralizado cae al fallback de grupos del RPC.
       console.warn('[cash-report] sales_split no disponible:', (splitErr as { message?: string })?.message);
@@ -342,7 +438,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // EXCLUIA el tramo efectivo de ventas mixed (p. ej. EnerVida 02/10: 2.600
     // en vez de 12.600). La fórmula única vive en src/lib/cash-report/summary.ts
     // y la consumen idénticamente vista, previsualización y PDF.
-    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows, refund_rows: refunds, ...equivFields };
+    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows, refund_rows: refunds, sales_rows: salesRows, sales_rows_truncated: salesRowsTruncated, ...equivFields };
     // INCIDENTE 2026-10-16: grupos `sales` por MONEDA DE COBRO (antes por
     // sale_currency — los cobros USD aparecían como CUP). La vista (acordeón),
     // el fallback de computeDailySummary y la plantilla Estándar heredan la
