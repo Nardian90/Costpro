@@ -504,3 +504,37 @@ BD reconstruida desde cero por suite (UUIDs fijos): fase-reversa FIXED 80/80 · 
 1. **Pagos de comisión `mixed`**: el libro (término v_comm) solo cuenta payment_method='cash' — un pago mixto de comisión no participa del físico en la fórmula vigente (gap contable PREEXISTENTE). El RPC valida estrictamente 'cash' para no alterar la aceptación de 'mixed'; la incorporación de mixtos al libro requiere decisión de fórmula del propietario.
 2. Restos previos §18.7.2-4 (prorrateo de descuento global, 12 devoluciones históricas sin traza, recuperación parcial sin reversión) — sin cambios.
 3. E2E Playwright: sigue deshabilitado por el propietario (no simulado).
+
+### 19.6 Fase D — Aplicación de la cadena a PRODUCCIÓN (protocolo §6 completo)
+
+Cada migración aplicada vía Management API como UNA query (transacción única implícita) con: backup verificable de definiciones previas (`/download/backup-pre-cadena-caja-20261024/manifest-*.json`), precondiciones del estado vivo, ventana tranquila (0 escrituras de caja en 5 min), post-verificación inmediata (patrones/firmas/ACL):
+
+1. **20261024220000** — aplicada y verificada (create_cash_flow_document + reverse_cash_flow_document con físico por moneda; 2 backups).
+2. **20261024230000** — aplicada y verificada (create_devolution_v2 con tope y físico por moneda).
+3. **20261024400000** — aplicada y verificada (reverse_devolution/4 única con p_recovery jsonb · recovery atómica · AS_PAID · tasa histórica · 10 backups). Nota: la primera post-verificación abortó por un REGEX del propio script (buscaba el nombre del parámetro en la firma renderizada); la verificación independiente confirmó la firma correcta `reverse_devolution(uuid,text,uuid,jsonb)` y las 6 funciones del módulo con firma única (anti-PGRST203).
+4. **20261026000000** — aplicada y verificada (infinity en los 5 writers · register_supplier_payment con lock+validación · register_cash_adjustment + pay_commission creadas · 6 backups).
+
+### 19.7 Fase E — Contrato vivo, ACL efectivos y baselines
+
+- Contrato de seguridad EN VIVO (`security-contract-test.cjs` contra producción): 0 CRITICAL · 0 HIGH · 3 MEDIUM `ANON_EXECUTE_GRANTED` (reverse_devolution/4 heredó default privileges al crearse; register_cash_adjustment + pay_commission — el `REVOKE FROM PUBLIC` de 260000 no alcanza los default privileges de Supabase, que son grants EXPLÍCITOS por rol).
+- **Correctiva 20261026100000_caja_acl_anon_revoke.sql** (PR #1475): REVOKE anon explícito en las 3; reverse_devolution/4 a service_role-only (la app la invoca con el cliente admin); las nuevas conservan authenticated+service_role (autorización real por has_store_role_as dentro). Aplicada a producción y verificada (anon_exec=false ×3). El check CI `SQL DB Security Checks` pasó tras la aplicación (antes fallaba por el drift — orden aplicado→verificado→fusionado documentado en el propio PR).
+- **Surface re-exportado**: `contract-surface.sql` con 152 funciones (150 + register_cash_adjustment + pay_commission), sha256 1b85bafd…a5384.
+- **Verbatim final**: las 7 funciones del módulo (create_cash_flow_document, reverse_cash_flow_document, create_devolution_v2, reverse_devolution, close_cash_shift, get_cash_shift_expected, register_supplier_payment) coinciden VERBATIM con la cadena aplicada; las 2 nuevas viven idénticas al cuerpo de 260000 (diferencia solo de render de tipos en la firma, timestamptz→timestamp with time zone).
+- **Baselines RETIRADAS**: las 6 de source_of_truth_baseline (5 de caja + register_supplier_payment/12) — contrato estático CONTRATO OK con 0 divergencias SIN exenciones. Ninguna baseline ajena al módulo fue tocada.
+
+### 19.8 Fase F — Validación operativa del despliegue (lecturas, sin efectos financieros)
+
+- Despliegue: PR #1474 fusionado (82a7129) → Vercel success en el commit → costpro4.vercel.app sirve el código fusionado; PR #1475 fusionado (09f848e) → Vercel success.
+- **GET /api/cash-flow/ledger (ENERVIDA, producción real)**: HTTP 200 · 121 filas (truncated señalizado) · net CUP 8.435.679,98 · net USD 367 · balance_now reconciled:true — EXACTO a la línea base certificada del incidente original (§16). Desglose: venta_efectivo 114 · anticipo_produccion 3 · reembolso_devolucion 2 · pago_proveedor 1 · comision 1 (la fila del incidente, presente y única).
+- **GET /api/devolutions (ENERVIDA)**: HTTP 200 · 2 devoluciones completed.
+- **Reconciliación SQL por moneda** (función autoritativa): net as-of-now == net total-físico (infinity) = CUP 8.435.679,98 · USD 367 (sin filas futuras en producción, la ventana no distorsiona) · directions ENERVIDA: 583 in · 0 out · 2 refunds · 0 recoveries.
+
+### 19.9 Fase H — Incidencias históricas (solo lectura)
+
+17 devoluciones totales (16 completed + 1 reversed). 4 con fila refund (post-v2.24.1). **13 sin traza financiera** (12 completed + 1 reversed), todas de agosto 2026, tienda d1c4ba0e…: VERIFICADO que carecen de `original_transaction_id` (modelo pre-v2.24.1) → la venta original, su moneda y el importe pagado NO son reconstruibles con evidencia del sistema → **indeterminables** (documentadas como incidencias de conciliación; sin contra-asientos retroactivos, sin alterar saldos). No cuentan en tope ni libro — consistente entre ambas fuentes. Anomalía puntual documentada: una de 349.650,00 CUP frente a hermanas de 350,00 (dato de entrada histórico, no corregido).
+
+### 19.10 Declaración final de la misión integral
+
+**CERTIFICACIÓN COMPLETA DEL ALCANCE PROBADO.** El código fusionado (82a7129 + 09f848e) está desplegado (Vercel success en ambos commits de fusión; dominio de producción responde); la cadena completa 20261024220000 → 20261024230000 → 20261024400000 → 20261026000000 → 20261026100000 está APLICADA a producción y verificada (patrones, firmas únicas, ACL efectivos, verbatim); los saldos físicos por moneda no pueden quedar negativos por concurrencia entre las operaciones cubiertas (mecanismo de ventana demostrado y cerrado; batería 16/16 con desfases 0/1/2ms y estrés 200×); las devoluciones y recuperaciones representan fielmente el dinero (cadena 23000/40000, matriz 80/80); ningún límite de reembolso se libera sin recuperación financiera (RC1-RC3); los pagos mixtos se devuelven por el flujo AS_PAID probado (RC4); el crédito de tienda compensa y respeta su tope (RC6); los reportes, arqueos y libros están reconciliados (producción: ledger 200, reconciled:true, as-of == total); permisos, ACL y aislamiento intactos (14/14 en aislado, 0 CRITICAL/HIGH en vivo, anon revocado); todas las suites críticas pasan (80/51/27/86/14/16 + app 3809 + CI verde en ambos PRs); los defectos históricos no reconstruibles están documentados sin alterar datos (§19.9); el expediente refleja lo desplegado y probado.
+
+Distingo de evidencia: las verificaciones de producción de este ciclo son LECTURAS (ledger/devoluciones/SQL) sin efectos financieros; las pruebas mutativas se ejecutaron en BD aislada reconstruida desde cero. Limitaciones reales: E2E Playwright deshabilitado por el propietario (no simulado); residuales §19.5 (mixto de comisiones no contabiliza el físico — fórmula preexistente; prorrateo de descuento global; recuperación parcial sin reversión).

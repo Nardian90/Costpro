@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-24T04:16:11.661Z
+-- Captured  : 2026-10-24T13:00:46.446Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 150 (SECURITY DEFINER write functions, public schema)
+-- Functions : 152 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -1566,6 +1566,8 @@ DECLARE
   v_cash_flow_out numeric := 0;
   v_cash_refunds numeric := 0;
   v_voucher_refunds numeric := 0;
+  v_cash_recoveries numeric := 0;
+  v_voucher_recoveries numeric := 0;
   v_system_cash numeric := 0;
   v_system_expected_total numeric := 0;
   v_difference numeric := 0;
@@ -1633,21 +1635,21 @@ BEGIN
     WHERE store_id = v_closure.store_id
       AND status = 'completed'
       AND created_at > v_closure.created_at
-      AND created_at <= NOW();
+      AND created_at <= 'infinity'::timestamptz;
 
   SELECT COALESCE(SUM(transfer_amount), 0) INTO v_transfer_sales
     FROM public.transactions
     WHERE store_id = v_closure.store_id
       AND status = 'completed'
       AND created_at > v_closure.created_at
-      AND created_at <= NOW();
+      AND created_at <= 'infinity'::timestamptz;
 
   SELECT COALESCE(SUM(zelle_amount), 0) INTO v_zelle_sales
     FROM public.transactions
     WHERE store_id = v_closure.store_id
       AND status = 'completed'
       AND created_at > v_closure.created_at
-      AND created_at <= NOW();
+      AND created_at <= 'infinity'::timestamptz;
 
   -- Egresos reales de caja — pagos a proveedores en efectivo (recepciones y
   -- servicios recibidos). Excluye ref_type='sale' (cobros de ventas — doble
@@ -1658,7 +1660,7 @@ BEGIN
       AND payment_method = 'cash'
       AND ref_type IN ('receipt', 'service')
       AND payment_date > v_closure.created_at
-      AND payment_date <= NOW();
+      AND payment_date <= 'infinity'::timestamptz;
 
   -- Anticipos de producción/trabajo EN EFECTIVO son ENTRADAS de caja.
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_production
@@ -1667,7 +1669,7 @@ BEGIN
       AND payment_method = 'cash'
       AND ref_type IN ('production_order', 'work')
       AND payment_date > v_closure.created_at
-      AND payment_date <= NOW();
+      AND payment_date <= 'infinity'::timestamptz;
 
   -- Comisiones SOLO en efectivo.
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_commissions
@@ -1676,7 +1678,7 @@ BEGIN
       AND status = 'paid'
       AND payment_method = 'cash'
       AND paid_at > v_closure.created_at
-      AND paid_at <= NOW();
+      AND paid_at <= 'infinity'::timestamptz;
 
   -- Documentos Ingresos/Egresos de caja (fondo de cambio y otros
   -- autorizados). direction in = entrada de efectivo, out = salida.
@@ -1690,7 +1692,7 @@ BEGIN
       AND payment_method = 'cash'
       AND ref_type = 'cash_flow'
       AND payment_date > v_closure.created_at
-      AND payment_date <= NOW();
+      AND payment_date <= 'infinity'::timestamptz;
 
   -- Reembolsos EN EFECTIVO de devoluciones comerciales (P1, 2026-10-21):
   -- el dinero salió del cajón — el esperado baja por el medio real de pago.
@@ -1701,7 +1703,7 @@ BEGIN
       AND ref_type = 'devolution'
       AND direction = 'refund'
       AND payment_date > v_closure.created_at
-      AND payment_date <= NOW();
+      AND payment_date <= 'infinity'::timestamptz;
 
   -- Reembolsos por VOUCHERS de devoluciones (v2.23.0 — decisión del
   -- propietario 2026-10-21, base NETA): el dinero salió por transferencia/
@@ -1715,15 +1717,34 @@ BEGIN
       AND ref_type = 'devolution'
       AND direction = 'refund'
       AND payment_date > v_closure.created_at
-      AND payment_date <= NOW();
+      AND payment_date <= 'infinity'::timestamptz;
 
   -- Calcular totales
+  -- RECUPERACIONES de reembolsos revertidos (MISIÓN DE CIERRE 2026-10-24 §4):
+  -- simétrico a los refunds — el dinero que VOLVIÓ por el medio real de cobro.
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_recoveries
+    FROM public.payment_transactions
+    WHERE store_id = v_closure.store_id
+      AND payment_method = 'cash'
+      AND ref_type = 'devolution'
+      AND direction = 'recovery'
+      AND payment_date > v_closure.created_at
+      AND payment_date <= 'infinity'::timestamptz;
+
+  SELECT COALESCE(SUM(amount_cup), 0) INTO v_voucher_recoveries
+    FROM public.payment_transactions
+    WHERE store_id = v_closure.store_id
+      AND payment_method IN ('transfer', 'zelle')
+      AND ref_type = 'devolution'
+      AND direction = 'recovery'
+      AND payment_date > v_closure.created_at
+      AND payment_date <= 'infinity'::timestamptz;
   v_system_cash := COALESCE(v_closure.opening_balance, 0)
                  + v_cash_sales + v_cash_production + v_cash_flow_in
                  - v_cash_outflows - v_cash_commissions - v_cash_flow_out
-                 - v_cash_refunds;
+                 - v_cash_refunds + v_cash_recoveries;
   v_system_expected_total := v_system_cash + v_transfer_sales + v_zelle_sales
-                             - v_voucher_refunds;
+                             - v_voucher_refunds + v_voucher_recoveries;
   v_difference := (COALESCE(p_declared_cash, 0) + COALESCE(p_declared_vouchers, 0)) - v_system_expected_total;
 
   -- MISIÓN CAJA 2026-10-23 (D8): lado USD FÍSICO del turno. Esperado USD =
@@ -1732,7 +1753,7 @@ BEGIN
   -- CUP de arriba NO se toca. La diferencia USD se REGISTRA tal cual:
   -- jamás se autoajusta el saldo para cuadrar.
   SELECT COALESCE((public.get_cash_currency_summary(
-             v_closure.store_id, v_closure.created_at, NULL)->'net'->>'USD')::numeric, 0)
+             v_closure.store_id, v_closure.created_at, 'infinity'::timestamptz)->'net'->>'USD')::numeric, 0)
     INTO v_window_usd_net;
   v_system_cash_usd := COALESCE(v_closure.opening_balance_usd, 0) + v_window_usd_net;
   v_difference_usd := round(COALESCE(p_declared_cash_usd, 0) - v_system_cash_usd, 2);
@@ -1771,6 +1792,8 @@ BEGIN
       'cash_flow_out', v_cash_flow_out,
       'cash_refunds_devolution', v_cash_refunds,
       'voucher_refunds_devolution', v_voucher_refunds,
+      'cash_recoveries_devolution', v_cash_recoveries,
+      'voucher_recoveries_devolution', v_voucher_recoveries,
       'transfer_sales', v_transfer_sales,
       'zelle_sales', v_zelle_sales
     )
@@ -2663,24 +2686,24 @@ BEGIN
   SELECT COALESCE(SUM(cash_amount), 0) INTO v_cash_sales
     FROM public.transactions
     WHERE store_id = p_store_id AND status = 'completed'
-      AND created_at > v_shift.created_at AND created_at <= now();
+      AND created_at > v_shift.created_at AND created_at <= 'infinity'::timestamptz;
 
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_outflows
     FROM public.payment_transactions
     WHERE store_id = p_store_id AND payment_method = 'cash'
       AND ref_type IN ('receipt', 'service')
-      AND payment_date > v_shift.created_at AND payment_date <= now();
+      AND payment_date > v_shift.created_at AND payment_date <= 'infinity'::timestamptz;
 
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_production
     FROM public.payment_transactions
     WHERE store_id = p_store_id AND payment_method = 'cash'
       AND ref_type IN ('production_order', 'work')
-      AND payment_date > v_shift.created_at AND payment_date <= now();
+      AND payment_date > v_shift.created_at AND payment_date <= 'infinity'::timestamptz;
 
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_commissions
     FROM public.commission_payments
     WHERE store_id = p_store_id AND status = 'paid' AND payment_method = 'cash'
-      AND paid_at > v_shift.created_at AND paid_at <= now();
+      AND paid_at > v_shift.created_at AND paid_at <= 'infinity'::timestamptz;
 
   SELECT
     COALESCE(SUM(CASE WHEN direction = 'in' THEN amount_cup ELSE 0 END), 0),
@@ -2689,7 +2712,7 @@ BEGIN
     FROM public.payment_transactions
     WHERE store_id = p_store_id AND payment_method = 'cash'
       AND ref_type = 'cash_flow'
-      AND payment_date > v_shift.created_at AND payment_date <= now();
+      AND payment_date > v_shift.created_at AND payment_date <= 'infinity'::timestamptz;
 
   -- Reembolsos EN EFECTIVO de devoluciones (P1, 2026-10-21): el disponible
   -- real del cajón ya los restó — la validación de egresos también. (Los
@@ -2698,7 +2721,7 @@ BEGIN
     FROM public.payment_transactions
     WHERE store_id = p_store_id AND payment_method = 'cash'
       AND ref_type = 'devolution' AND direction = 'refund'
-      AND payment_date > v_shift.created_at AND payment_date <= now();
+      AND payment_date > v_shift.created_at AND payment_date <= 'infinity'::timestamptz;
 
   v_opening := COALESCE(v_shift.opening_balance, 0);
   v_expected_cash := v_opening + v_cash_sales + v_cash_production + v_cash_flow_in
@@ -2717,7 +2740,7 @@ BEGIN
       AND concept IN ('constitucion_fondo', 'reposicion_fondo',
                       'devolucion_total_fondo', 'devolucion_parcial_fondo')
       AND operation_date > v_shift.created_at
-      AND operation_date <= now();
+      AND operation_date <= 'infinity'::timestamptz;
   v_fondo := v_opening + v_fondo;
 
   -- 9. REGLAS DE NEGOCIO por tipo
@@ -2729,15 +2752,30 @@ BEGIN
       -- exceda el saldo disponible de la moneda correspondiente»). Con o
       -- sin turno, el cajón es el cajón: la validación NO depende de la
       -- ventana canónica del turno.
-      SELECT COALESCE((public.get_cash_currency_summary(p_store_id, NULL, NULL)
+      SELECT COALESCE((public.get_cash_currency_summary(p_store_id, NULL, 'infinity'::timestamptz)
                        -> 'net' ->> v_currency)::numeric, 0)
         INTO v_balance_currency;
       IF v_amount > v_balance_currency + 0.005 THEN
         RAISE EXCEPTION 'ERR_INSUFFICIENT_CURRENCY: saldo físico % disponible=%, entrega=%', v_currency, round(v_balance_currency, 2), round(v_amount, 2);
       END IF;
     ELSE
+      -- MISIÓN POST-MERGE 2026-10-24 (riesgo contable cerrado): un egreso
+      -- ordinario entrega BILLETES de la moneda del documento. La existencia
+      -- de saldo económico equivalente en la OTRA moneda NO sustituye esos
+      -- billetes: una conversión solo puede ocurrir mediante una operación
+      -- de cambio explícita (este modelo nunca convierte implícitamente).
+      -- Misma fuente autoritativa que entrega_efactivo: net por moneda del
+      -- libro físico (get_cash_currency_summary — una sola fuente de verdad).
+      SELECT COALESCE((public.get_cash_currency_summary(p_store_id, NULL, 'infinity'::timestamptz)
+                       -> 'net' ->> v_currency)::numeric, 0)
+        INTO v_balance_currency;
+      IF v_amount > v_balance_currency + 0.005 THEN
+        RAISE EXCEPTION 'ERR_INSUFFICIENT_CURRENCY: saldo físico % disponible=%, egreso=%', v_currency, round(v_balance_currency, 2), round(v_amount, 2);
+      END IF;
       -- Imposibilidad de egresar más efectivo del disponible (canonical CUP,
-      -- ventana del turno — concepto ordinario: turno garantizado arriba)
+      -- ventana del turno — concepto ordinario: turno garantizado arriba).
+      -- Se CONSERVA como disciplina contable del turno (v2.23.0): el egreso
+      -- debe caber TAMBIÉN en el arqueo canónico de la ventana.
       IF v_amount_cup > v_expected_cash + 0.005 THEN
         RAISE EXCEPTION 'ERR_INSUFFICIENT_CASH: disponible=%, egreso=%', round(v_expected_cash, 2), round(v_amount_cup, 2);
       END IF;
@@ -2901,6 +2939,31 @@ DECLARE
   v_param_hash text;
   v_idem_hash text;
   v_sale_unit_cup numeric;
+  -- MISIÓN POST-MERGE FINAL (2026-10-24): regla contable del reembolso —
+  -- tope por moneda (neto pagado − ya reembolsado no convertido) y saldo
+  -- físico por moneda (misma fuente autoritativa que el libro de caja).
+  v_paid_rows integer := 0;
+  v_row_cash_cup numeric := 0;
+  v_row_cash_usd numeric := 0;
+  v_row_bank_cup numeric := 0;
+  v_row_bank_usd numeric := 0;
+  v_settle_present boolean := false;
+  v_carve_usd numeric := 0;
+  v_carve_cup numeric := 0;
+  v_paid_cup numeric := 0;
+  v_paid_usd numeric := 0;
+  v_refunded_cup numeric := 0;
+  v_refunded_usd numeric := 0;
+  v_refundable numeric := 0;
+  v_balance_currency numeric := 0;
+  -- MISIÓN DE CIERRE (2026-10-24): tasa histórica implícita + mixto + crédito
+  v_rate_sale numeric := NULL;
+  v_usd_rows_amt numeric := 0;
+  v_usd_rows_cup numeric := 0;
+  v_comp_cup numeric := 0;
+  v_comp_usd numeric := 0;
+  v_credit_refundable numeric := 0;
+  v_refund_components jsonb := '[]'::jsonb;
 BEGIN
   v_eff := COALESCE(p_operation_date, NOW());
   PERFORM public.validate_operation_date(v_eff, p_store_id);
@@ -2985,29 +3048,22 @@ BEGIN
   -- MISIÓN CAJA 2026-10-23: moneda del reembolso (por la que SALE el dinero).
   -- La tasa SIEMPRE server-side (jerarquía tienda→BCC→elToque, fail-closed) —
   -- sin tasas inventadas. CUP ⇒ rate 1 (comportamiento previo exacto).
-  IF v_refund_currency NOT IN ('CUP', 'USD') THEN
-    RAISE EXCEPTION 'ERR_DEVOLUTION_INVALID_CURRENCY: %', v_refund_currency;
+  IF v_refund_currency NOT IN ('CUP', 'USD', 'AS_PAID') THEN
+    RAISE EXCEPTION 'ERR_DEVOLUTION_INVALID_CURRENCY: % (CUP|USD|AS_PAID)', v_refund_currency;
   END IF;
-  IF p_payment_method IN ('cash','transfer','zelle') AND v_refund_currency = 'USD' THEN
-    SELECT ser.rate INTO v_refund_rate
-      FROM public.store_exchange_rates ser
-      WHERE ser.store_id = p_store_id AND ser.currency = 'USD';
-    IF v_refund_rate IS NULL THEN
-      SELECT er.rate INTO v_refund_rate
-        FROM public.exchange_rates er
-        WHERE er.currency = 'USD' AND er.source = 'BCC' AND er.segment = '3'
-        ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
-    END IF;
-    IF v_refund_rate IS NULL THEN
-      SELECT er.rate INTO v_refund_rate
-        FROM public.exchange_rates er
-        WHERE er.currency = 'USD' AND er.source = 'elToque'
-        ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
-    END IF;
-    IF v_refund_rate IS NULL OR v_refund_rate <= 1 THEN
-      RAISE EXCEPTION 'ERR_EXCHANGE_RATE_UNAVAILABLE: reembolso en USD exige tasa USD de la tienda (jerarquía tienda→BCC→elToque)';
-    END IF;
+  -- MISIÓN DE CIERRE (§6): el multi-moneda «según lo pagado» exige entrega
+  -- física simultánea de ambas monedas → solo efectivo. Zelle es riel USD.
+  IF v_refund_currency = 'AS_PAID' AND p_payment_method <> 'cash' THEN
+    RAISE EXCEPTION 'ERR_DEVOLUTION_AS_PAID_CASH_ONLY: el reembolso según lo pagado (multi-moneda) exige entrega en efectivo (ambas monedas simultáneamente)';
   END IF;
+  IF p_payment_method = 'zelle' AND v_refund_currency = 'CUP' THEN
+    RAISE EXCEPTION 'ERR_DEVOLUTION_ZELLE_CURRENCY: zelle opera en USD (riel del exterior) — un reembolso por zelle no puede emitirse en CUP';
+  END IF;
+  -- MISIÓN DE CIERRE (Fase E §7): el importe USD del reembolso NO usa la
+  -- tasa VIGENTE de la tienda (jerarquía retirada): se ancla a la TASA
+  -- IMPLÍCITA HISTÓRICA de los pagos USD de ESTA venta, calculada más abajo
+  -- (tras la determinación del pagado — mismas fuentes). Sin tasa histórica
+  -- reconstruible el flujo USD falla cerrado: ERR_DEVOLUTION_RATE_UNDETERMINED.
 
   v_dev_number := public.next_document_number(p_store_id, 'credit_note', v_caller_uid);
 
@@ -3107,22 +3163,273 @@ BEGIN
     -- MISIÓN CAJA 2026-10-23: moneda REAL del reembolso (física por la que
     -- salió el dinero). amount = canónico / tasa para USD ⇒ amount_cup
     -- generado conserva el total canónico (invariante intacta).
-    v_refund_amount := CASE WHEN v_refund_currency = 'USD'
-                            THEN round(v_total / v_refund_rate, 2)
-                            ELSE v_total END;
-    INSERT INTO public.payment_transactions (
-      store_id, ref_type, ref_id, transaction_id,
-      amount, payment_method, currency, exchange_rate,
-      payment_date, direction, paid_by, idempotency_key
-    ) VALUES (
-      p_store_id, 'devolution', v_devolution_id, p_original_transaction_id,
-      v_refund_amount, p_payment_method, v_refund_currency, v_refund_rate,
-      v_eff, 'refund', v_caller_uid, 'dev-' || v_devolution_id::text || '-refund'
-    ) RETURNING id INTO v_pt_id;
+    -- MISIÓN DE CIERRE: el importe del reembolso se fija MÁS ABAJO, tras la
+    -- determinación del pagado y de la tasa implícita histórica (v_rate_sale).
+
+    -- ═══ MISIÓN POST-MERGE FINAL 2026-10-24 — REGLA CONTABLE DEL REEMBOLSO ═══
+    -- (misión §3/§10, estándar SAS Premium). Un reembolso monetario devuelve
+    -- valor por la MONEDA en que SALE el dinero. Dos validaciones DEFINITIVAS
+    -- en PostgreSQL (la del frontend es solo espejo):
+    --
+    -- (a) TOPE POR MONEDA: nunca más efectivo de X que lo NETO pagado por
+    --     esta venta en X menos lo ya reembolsado (no convertido) en X. La
+    --     equivalencia canónica CUP NO autoriza por sí sola una salida en CUP
+    --     de una venta cobrada en USD, ni al revés: la conversión implícita
+    --     queda estructuralmente imposible (el modelo NO tiene operación de
+    --     cambio; una conversión solo podría existir como operación explícita
+    --     con tasa, importes en ambas monedas y doble asiento — hoy inexistente).
+    -- (b) FÍSICO POR MONEDA (solo efectivo): misma fuente autoritativa que el
+    --     libro (get_cash_currency_summary → net → v_refund_currency) — el
+    --     reembolso no puede llevar el cajón a negativo (paridad con la
+    --     correctiva 20261024220000 de egresos ordinarios y reversiones).
+    --
+    -- NETO PAGADO por moneda — mismas fuentes de verdad que el libro usa para
+    -- explicar el saldo (§1 liquidación / §2 legacy+carve de get_cash_currency_
+    -- summary), más las filas de pago reales (v2.25: una por componente) para
+    -- los rieles bancarios:
+    --   1) liquidación explícita (cash_received_* − change_given_*, v2.24+)
+    --      + filas transfer/zelle;
+    --   2) sin liquidación, con filas reales no-CUP (v2.25 sin liquidación);
+    --   3) legacy: filas/pools canónicos CUP + carve USD por ítems
+    --      (la fila canónica CUP de v2.24 NUNCA se toma como CUP físico pagado
+    --      cuando la liquidación declara USD — no asumir que amount_cup son
+    --      billetes CUP, misión §3);
+    --   4) sin ninguna fuente ⇒ pagos indeterminables ⇒ flujo AMBIGUO
+    --      bloqueado (fail-closed, misión §10: no inventar la conversión).
+    -- Lo YA REEMBOLSADO cuenta las filas refund de devoluciones NO revertidas
+    -- (la reversión deshace la devolución a efectos del tope; su fila refund
+    -- persiste en el libro — residual documentado en el expediente). El
+    -- store_credit NO consume el tope por moneda: es pasivo CUP-canónico ya
+    -- acotado por el tope de cantidad DF-07 y no mueve efectivo.
+    SELECT COUNT(*),
+           COALESCE(SUM(CASE WHEN pt.payment_method = 'cash'     AND pt.currency = 'CUP' THEN pt.amount END), 0),
+           COALESCE(SUM(CASE WHEN pt.payment_method = 'cash'     AND pt.currency = 'USD' THEN pt.amount END), 0),
+           COALESCE(SUM(CASE WHEN pt.payment_method IN ('transfer','zelle') AND pt.currency = 'CUP' THEN pt.amount END), 0),
+           COALESCE(SUM(CASE WHEN pt.payment_method IN ('transfer','zelle') AND pt.currency = 'USD' THEN pt.amount END), 0)
+      INTO v_paid_rows, v_row_cash_cup, v_row_cash_usd, v_row_bank_cup, v_row_bank_usd
+      FROM public.payment_transactions pt
+      WHERE pt.transaction_id = p_original_transaction_id
+        AND pt.ref_type = 'sale';
+
+    SELECT COALESCE(SUM(ti.cash_paid), 0),
+           COALESCE(SUM(ti.cash_paid * ti.exchange_rate), 0)
+      INTO v_carve_usd, v_carve_cup
+      FROM public.transaction_items ti
+      WHERE ti.transaction_id = p_original_transaction_id
+        AND ti.cash_currency = 'USD' AND ti.currency = 'USD'
+        AND COALESCE(ti.cash_paid, 0) > 0;
+
+    SELECT (t.cash_received_cup IS NOT NULL OR t.cash_received_usd IS NOT NULL
+            OR t.change_given_cup IS NOT NULL OR t.change_given_usd IS NOT NULL),
+           COALESCE(t.cash_received_cup, 0) - COALESCE(t.change_given_cup, 0),
+           COALESCE(t.cash_received_usd, 0) - COALESCE(t.change_given_usd, 0)
+      INTO v_settle_present, v_paid_cup, v_paid_usd
+      FROM public.transactions t
+      WHERE t.id = p_original_transaction_id;
+
+    IF v_settle_present THEN
+      -- (1) liquidación explícita: billetes reales ± vuelto + rieles bancarios
+      v_paid_cup := v_paid_cup + v_row_bank_cup;
+      v_paid_usd := v_paid_usd + v_row_bank_usd;
+    ELSIF v_row_cash_usd > 0 THEN
+      -- (2) filas reales no-CUP sin liquidación (v2.25 defensivo)
+      v_paid_cup := v_row_cash_cup + v_row_bank_cup;
+      v_paid_usd := v_row_cash_usd + v_row_bank_usd;
+    ELSIF v_paid_rows > 0 THEN
+      -- (3) legacy con filas canónicas: split por carve USD de los ítems.
+      --     Las filas transfer/zelle son SIEMPRE reales (ambas eras) y se
+      --     cuentan íntegras en su moneda.
+      v_paid_cup := v_row_cash_cup - v_carve_cup + v_row_bank_cup;
+      v_paid_usd := v_carve_usd + v_row_bank_usd;
+    ELSE
+      -- (3b) muy legacy: pools de la venta + carve
+      SELECT COALESCE(t.cash_amount, 0) - v_carve_cup + COALESCE(t.transfer_amount, 0),
+             v_carve_usd
+        INTO v_paid_cup, v_paid_usd
+        FROM public.transactions t
+        WHERE t.id = p_original_transaction_id;
+    END IF;
+
+    -- MISIÓN DE CIERRE (§5): el tope cuenta DINERO, no estado documental —
+    -- reembolsos NO recuperados = Σ refunds − Σ recoveries de la venta, sin
+    -- filtro de estado: una reversión documental ya no libera capacidad.
+    SELECT COALESCE(SUM(CASE WHEN pt.direction = 'refund'   AND pt.currency = 'CUP' THEN pt.amount
+                              WHEN pt.direction = 'recovery' AND pt.currency = 'CUP' THEN -pt.amount END), 0),
+           COALESCE(SUM(CASE WHEN pt.direction = 'refund'   AND pt.currency = 'USD' THEN pt.amount
+                              WHEN pt.direction = 'recovery' AND pt.currency = 'USD' THEN -pt.amount END), 0)
+      INTO v_refunded_cup, v_refunded_usd
+      FROM public.payment_transactions pt
+      WHERE pt.transaction_id = p_original_transaction_id
+        AND pt.ref_type = 'devolution'
+        AND pt.direction IN ('refund', 'recovery');
+
+    -- MISIÓN DE CIERRE (Fase E §7): TASA IMPLÍCITA HISTÓRICA de los pagos USD
+    -- de ESTA venta — misma jerarquía de fuentes que el tope: (a) filas de
+    -- pago USD (v2.25, tasa persistida por fila) → media ponderada;
+    -- (b) liquidación explícita pura (v2.24, sin rieles bancarios) →
+    -- (canónico − CUP neto)/USD neto; (c) carve por ítems (legacy) → media
+    -- ponderada de cash_paid×tasa. Indeterminable → NULL y fail-closed.
+    SELECT COALESCE(SUM(pt.amount), 0), COALESCE(SUM(pt.amount * pt.exchange_rate), 0)
+      INTO v_usd_rows_amt, v_usd_rows_cup
+      FROM public.payment_transactions pt
+      WHERE pt.transaction_id = p_original_transaction_id
+        AND pt.ref_type = 'sale' AND pt.currency = 'USD' AND pt.exchange_rate > 1;
+    IF v_usd_rows_amt > 0 THEN
+      v_rate_sale := v_usd_rows_cup / v_usd_rows_amt;
+    ELSIF v_settle_present AND v_paid_usd > 0
+          AND v_row_bank_cup = 0 AND v_row_bank_usd = 0 THEN
+      SELECT (COALESCE(t.total_amount, 0)
+                - (COALESCE(t.cash_received_cup, 0) - COALESCE(t.change_given_cup, 0)))
+             / NULLIF(COALESCE(t.cash_received_usd, 0) - COALESCE(t.change_given_usd, 0), 0)
+        INTO v_rate_sale
+        FROM public.transactions t WHERE t.id = p_original_transaction_id;
+    ELSE
+      SELECT COALESCE(SUM(ti.cash_paid), 0), COALESCE(SUM(ti.cash_paid * ti.exchange_rate), 0)
+        INTO v_usd_rows_amt, v_usd_rows_cup
+        FROM public.transaction_items ti
+        WHERE ti.transaction_id = p_original_transaction_id
+          AND ti.cash_currency = 'USD' AND ti.currency = 'USD'
+          AND COALESCE(ti.cash_paid, 0) > 0;
+      IF v_usd_rows_amt > 0 THEN
+        v_rate_sale := v_usd_rows_cup / v_usd_rows_amt;
+      END IF;
+    END IF;
+    IF v_rate_sale IS NOT NULL AND v_rate_sale <= 1 THEN
+      v_rate_sale := NULL;  -- tasa implícita sin sentido contable → indeterminada
+    END IF;
+
+    -- ═══ MISIÓN DE CIERRE (§6/§7): IMPORTE DEL REEMBOLSO (tras la tasa) ═══
+    IF v_refund_currency = 'AS_PAID' THEN
+      -- §6 criterio de diseño: la devolución multi-moneda representa CADA
+      -- componente con su importe y moneda, bajo UNA transacción atómica.
+      -- Componentes = restante reembolsable POR MONEDA (pagado − reembolsado
+      -- no recuperado). Sin regla inequívoca de asignación por artículo, el
+      -- caso ambiguo (parcial de mixta en AS_PAID) se BLOQUEA: la validación
+      -- canónica exige consumir íntegramente lo reembolsable.
+      v_comp_cup := v_paid_cup - v_refunded_cup;
+      v_comp_usd := v_paid_usd - v_refunded_usd;
+      IF v_comp_cup < 0 OR v_comp_usd < 0 THEN
+        RAISE EXCEPTION 'ERR_DEVOLUTION_REFUND_CAP: reembolsado no recuperado excede lo pagado (CUP %/%, USD %/%) — inconsistencia de datos',
+          v_paid_cup, v_refunded_cup, v_paid_usd, v_refunded_usd;
+      END IF;
+      IF v_comp_usd > 0 AND v_rate_sale IS NULL THEN
+        RAISE EXCEPTION 'ERR_DEVOLUTION_RATE_UNDETERMINED: la venta pagó USD pero su tasa histórica no es reconstruible (sin filas con tasa, liquidación pura o carve) — el reembolso mixto queda bloqueado';
+      END IF;
+      IF abs(v_total - (v_comp_cup + v_comp_usd * COALESCE(v_rate_sale, 1))) > 0.05 THEN
+        RAISE EXCEPTION 'ERR_DEVOLUTION_MIXED_ALLOCATION: la devolución mixta exige consumir íntegramente lo reembolsable por moneda (valor devuelto=%, componentes=% CUP + % USD a tasa %) — no existe regla de asignación por artículo: el caso ambiguo se bloquea',
+          round(v_total, 2), round(v_comp_cup, 2), round(v_comp_usd, 2), COALESCE(v_rate_sale, 1);
+      END IF;
+      v_refund_components := jsonb_build_object('CUP', v_comp_cup, 'USD', v_comp_usd, 'rate_sale', v_rate_sale);
+    ELSIF v_refund_currency = 'USD' THEN
+      IF v_rate_sale IS NULL THEN
+        RAISE EXCEPTION 'ERR_DEVOLUTION_RATE_UNDETERMINED: la venta pagó USD pero su tasa histórica no es reconstruible — el reembolso USD queda bloqueado (regla §7: devolver la moneda y el importe neto realmente cobrados)';
+      END IF;
+      v_refund_rate := v_rate_sale;
+      v_refund_amount := round(v_total / v_rate_sale, 2);
+    ELSE
+      v_refund_amount := v_total;
+    END IF;
+
+    IF v_paid_cup = 0 AND v_paid_usd = 0
+       AND v_refunded_cup = 0 AND v_refunded_usd = 0 THEN
+      RAISE EXCEPTION 'ERR_DEVOLUTION_PAYMENTS_UNDETERMINED: la venta original no tiene pagos determinables (sin filas de pago, liquidación ni efectivo registrado) — el reembolso monetario queda bloqueado (regla contable: sin conversión implícita entre monedas)';
+    END IF;
+
+    v_refundable := CASE v_refund_currency
+                      WHEN 'USD' THEN v_paid_usd - v_refunded_usd
+                      ELSE v_paid_cup - v_refunded_cup
+                    END;
+    IF v_refund_currency <> 'AS_PAID' AND v_refund_amount > v_refundable + 0.005 THEN
+      RAISE EXCEPTION 'ERR_DEVOLUTION_REFUND_CAP: reembolso en % excede lo reembolsable de esa moneda para esta venta (pagado neto=%, ya reembolsado=%, solicitado=%) — no se convierte implícitamente el pago de otra moneda',
+        v_refund_currency,
+        round(CASE v_refund_currency WHEN 'USD' THEN v_paid_usd ELSE v_paid_cup END, 2),
+        round(CASE v_refund_currency WHEN 'USD' THEN v_refunded_usd ELSE v_refunded_cup END, 2),
+        round(v_refund_amount, 2);
+    END IF;
+
+    IF p_payment_method = 'cash' THEN
+      IF v_refund_currency = 'AS_PAID' THEN
+        IF v_comp_cup > 0 THEN
+          SELECT COALESCE((public.get_cash_currency_summary(p_store_id, NULL, 'infinity'::timestamptz)
+                           -> 'net' ->> 'CUP')::numeric, 0) INTO v_balance_currency;
+          IF v_comp_cup > v_balance_currency + 0.005 THEN
+            RAISE EXCEPTION 'ERR_INSUFFICIENT_CURRENCY: saldo físico CUP disponible=%, reembolso=%',
+              round(v_balance_currency, 2), round(v_comp_cup, 2);
+          END IF;
+        END IF;
+        IF v_comp_usd > 0 THEN
+          SELECT COALESCE((public.get_cash_currency_summary(p_store_id, NULL, 'infinity'::timestamptz)
+                           -> 'net' ->> 'USD')::numeric, 0) INTO v_balance_currency;
+          IF v_comp_usd > v_balance_currency + 0.005 THEN
+            RAISE EXCEPTION 'ERR_INSUFFICIENT_CURRENCY: saldo físico USD disponible=%, reembolso=%',
+              round(v_balance_currency, 2), round(v_comp_usd, 2);
+          END IF;
+        END IF;
+      ELSE
+        SELECT COALESCE((public.get_cash_currency_summary(p_store_id, NULL, 'infinity'::timestamptz)
+                         -> 'net' ->> v_refund_currency)::numeric, 0)
+          INTO v_balance_currency;
+        IF v_refund_amount > v_balance_currency + 0.005 THEN
+          RAISE EXCEPTION 'ERR_INSUFFICIENT_CURRENCY: saldo físico % disponible=%, reembolso=%',
+            v_refund_currency, round(v_balance_currency, 2), round(v_refund_amount, 2);
+        END IF;
+      END IF;
+    END IF;
+    -- ═══ fin de la regla contable del reembolso ═══
+    IF v_refund_currency = 'AS_PAID' THEN
+      IF v_comp_cup > 0 THEN
+        INSERT INTO public.payment_transactions (
+          store_id, ref_type, ref_id, transaction_id,
+          amount, payment_method, currency, exchange_rate,
+          payment_date, direction, paid_by, idempotency_key
+        ) VALUES (
+          p_store_id, 'devolution', v_devolution_id, p_original_transaction_id,
+          v_comp_cup, p_payment_method, 'CUP', 1,
+          v_eff, 'refund', v_caller_uid, 'dev-' || v_devolution_id::text || '-refund-CUP'
+        ) RETURNING id INTO v_pt_id;
+      END IF;
+      IF v_comp_usd > 0 THEN
+        INSERT INTO public.payment_transactions (
+          store_id, ref_type, ref_id, transaction_id,
+          amount, payment_method, currency, exchange_rate,
+          payment_date, direction, paid_by, idempotency_key
+        ) VALUES (
+          p_store_id, 'devolution', v_devolution_id, p_original_transaction_id,
+          v_comp_usd, p_payment_method, 'USD', v_rate_sale,
+          v_eff, 'refund', v_caller_uid, 'dev-' || v_devolution_id::text || '-refund-USD'
+        ) RETURNING id INTO v_pt_id;
+      END IF;
+    ELSE
+      INSERT INTO public.payment_transactions (
+        store_id, ref_type, ref_id, transaction_id,
+        amount, payment_method, currency, exchange_rate,
+        payment_date, direction, paid_by, idempotency_key
+      ) VALUES (
+        p_store_id, 'devolution', v_devolution_id, p_original_transaction_id,
+        v_refund_amount, p_payment_method, v_refund_currency, v_refund_rate,
+        v_eff, 'refund', v_caller_uid, 'dev-' || v_devolution_id::text || '-refund'
+      ) RETURNING id INTO v_pt_id;
+    END IF;
 
   ELSIF p_payment_method = 'store_credit' THEN
     IF p_customer_id IS NULL THEN
       RAISE EXCEPTION 'ERR_STORE_CREDIT_REQUIRES_CUSTOMER';
+    END IF;
+    -- MISIÓN DE CIERRE (§8): tope canónico del crédito — lo EMITIDO no
+    -- compensado no puede exceder lo pagado canónico de la venta (las
+    -- compensaciones de reversión son filas negativas → SUM = neto vigente).
+    -- Sin este tope, revertir sin compensar y re-devolver duplicaba el pasivo.
+    SELECT COALESCE(t.total_amount, 0)
+         - COALESCE((SELECT SUM(scl.amount) FROM public.store_credit_ledger scl
+                     WHERE scl.origin_transaction_id = p_original_transaction_id), 0)
+      INTO v_credit_refundable
+      FROM public.transactions t WHERE t.id = p_original_transaction_id;
+    IF v_total > v_credit_refundable + 0.005 THEN
+      RAISE EXCEPTION 'ERR_DEVOLUTION_CREDIT_CAP: el crédito de tienda excede lo emitible canónico de la venta (pagado=%, crédito vigente=%, solicitado=%)',
+        round(COALESCE((SELECT t2.total_amount FROM public.transactions t2 WHERE t2.id = p_original_transaction_id), 0), 2),
+        round(COALESCE((SELECT t2.total_amount FROM public.transactions t2 WHERE t2.id = p_original_transaction_id), 0)
+              - v_credit_refundable, 2),
+        round(v_total, 2);
     END IF;
     -- pasivo visible y auditable; la caja NO se toca (el dinero ya no sale)
     INSERT INTO public.store_credit_ledger
@@ -3146,6 +3453,8 @@ BEGIN
       'refund_currency', v_refund_currency,
       'refund_rate', v_refund_rate,
       'refund_amount', v_refund_amount,
+      'refund_components', v_refund_components,
+      'rate_sale', v_rate_sale,
       'pricing_source', 'server_price_at_sale_cup_v2_24_1',
       'idempotency_param_hash', COALESCE(v_param_hash, ''),
       'financial_contra_entry_df03',
@@ -3160,6 +3469,9 @@ BEGIN
     'devolution_id', v_devolution_id,
     'devolution_number', v_dev_number,
     'total_amount', v_total,
+    'refund_currency', v_refund_currency,
+    'refund_components', v_refund_components,
+    'rate_sale', v_rate_sale,
     'financial_effect', CASE WHEN p_payment_method = 'store_credit' THEN 'store_credit_ledger' ELSE 'cash_out_and_refund' END
   );
 END $function$
@@ -7557,6 +7869,106 @@ END;
 $function$
 
 
+-- @contract-function name=pay_commission args="p_payment_id uuid, p_payment_method text, p_reference text, p_currency text, p_exchange_rate numeric, p_paid_at timestamp with time zone, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.pay_commission(p_payment_id uuid, p_payment_method text, p_reference text DEFAULT NULL::text, p_currency text DEFAULT NULL::text, p_exchange_rate numeric DEFAULT NULL::numeric, p_paid_at timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_comm record;
+  v_currency text;
+  v_phys_out numeric := 0;
+  v_phys_available numeric := 0;
+BEGIN
+  IF v_uid IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHORIZED'; END IF;
+
+  SELECT id, store_id, status, currency, exchange_rate, amount_cup, final_amount
+    INTO v_comm
+    FROM public.commission_payments
+    WHERE id = p_payment_id;
+  IF v_comm.id IS NULL THEN
+    RAISE EXCEPTION 'ERR_COMMISSION_NOT_FOUND: %', p_payment_id;
+  END IF;
+
+  IF NOT public.has_store_role_as(v_uid, v_comm.store_id, 'admin')
+     AND NOT public.has_store_role_as(v_uid, v_comm.store_id, 'manager') THEN
+    RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: pagar comisiones requiere admin o manager';
+  END IF;
+
+  -- Idempotencia natural (misma semántica que la ruta: ya pagada → replay)
+  IF v_comm.status = 'paid' THEN
+    RETURN jsonb_build_object('payment', to_jsonb(v_comm), 'idempotent_replay', true,
+      'message', 'La comisión ya estaba pagada');
+  END IF;
+  IF v_comm.status NOT IN ('approved', 'draft') THEN
+    RAISE EXCEPTION 'ERR_INVALID_COMMISSION_STATUS: no se puede pagar una comisión con estado "%"', v_comm.status;
+  END IF;
+  IF lower(trim(p_payment_method)) NOT IN ('cash', 'transfer', 'zelle', 'mixed') THEN
+    RAISE EXCEPTION 'ERR_INVALID_PAYMENT_METHOD: %', p_payment_method;
+  END IF;
+  IF p_currency IS NOT NULL AND upper(trim(p_currency)) NOT IN ('CUP', 'USD') THEN
+    RAISE EXCEPTION 'ERR_INVALID_CURRENCY: %', p_currency;
+  END IF;
+
+  -- Fecha del pago: nunca futura (regla 1 del negocio, validada en servidor)
+  IF p_paid_at IS NOT NULL AND p_paid_at > now() THEN
+    RAISE EXCEPTION 'ERR_PAYMENT_DATE_FUTURE: la fecha del pago (%) no puede ser posterior a ahora (%)', p_paid_at, now();
+  END IF;
+
+  v_currency := COALESCE(upper(btrim(p_currency)), v_comm.currency);
+
+  -- Protocolo del cajón: advisory ANTES de la lectura que autoriza la salida
+  PERFORM pg_advisory_xact_lock(hashtext(v_comm.store_id::text));
+
+  -- Fase A: una comisión pagada en EFECTIVO entrega BILLETES de su moneda.
+  -- Efecto físico por moneda = final_amount en la moneda efectiva del pago
+  -- (término v_comm del libro — misma fuente autoritativa). Fail-closed;
+  -- lectura post-lock con upper bound 'infinity' (coherente con el lock).
+  -- NOTA 'mixed': el libro (v_comm) solo cuenta payment_method='cash' — los
+  -- pagos mixtos de comisión no participan del físico en la fórmula vigente
+  -- (gap contable PREEXISTENTE, documentado como residual): se valida
+  -- estrictamente 'cash' para no alterar la aceptación de 'mixed'.
+  IF lower(trim(p_payment_method)) = 'cash' THEN
+    v_phys_out := v_comm.final_amount;
+    v_phys_available := COALESCE((public.get_cash_currency_summary(
+      v_comm.store_id, NULL, 'infinity'::timestamptz) -> 'net' ->> v_currency)::numeric, 0);
+    IF COALESCE(v_phys_out, 0) > v_phys_available + 0.005 THEN
+      RAISE EXCEPTION 'ERR_INSUFFICIENT_CURRENCY: saldo físico % disponible=%, comisión=%',
+        v_currency, round(v_phys_available, 2), round(COALESCE(v_phys_out, 0), 2);
+    END IF;
+  END IF;
+
+  UPDATE public.commission_payments SET
+    status = 'paid',
+    paid_at = COALESCE(p_paid_at, now()),
+    paid_by = v_uid,
+    payment_method = lower(trim(p_payment_method)),
+    payment_reference = p_reference,
+    currency = COALESCE(upper(btrim(p_currency)), currency),
+    exchange_rate = CASE WHEN p_exchange_rate IS NOT NULL THEN p_exchange_rate
+                         WHEN upper(btrim(COALESCE(p_currency, currency))) <> 'CUP' THEN COALESCE(exchange_rate, 1.0)
+                         ELSE 1.0 END,
+    updated_at = now()
+  WHERE id = p_payment_id
+    AND status IN ('approved', 'draft')
+    AND store_id = v_comm.store_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_COMMISSION_STATE_CHANGED: la comisión cambió de estado concurrentemente — reintentar';
+  END IF;
+
+  SELECT id, store_id, status, currency, amount_cup, final_amount, paid_at, paid_by, payment_method
+    INTO v_comm
+    FROM public.commission_payments
+    WHERE id = p_payment_id;
+
+  RETURN jsonb_build_object('payment', to_jsonb(v_comm), 'idempotent_replay', false);
+END;
+$function$
+
+
 -- @contract-function name=perform_inventory_adjustment args="p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.perform_inventory_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric DEFAULT NULL::numeric, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS jsonb
@@ -8578,6 +8990,86 @@ END;
 $function$
 
 
+-- @contract-function name=register_cash_adjustment args="p_store_id uuid, p_direction text, p_amount numeric, p_note text, p_payment_date timestamp with time zone, p_idempotency_key text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.register_cash_adjustment(p_store_id uuid, p_direction text, p_amount numeric, p_note text, p_payment_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_existing record;
+  v_phys_available numeric := 0;
+BEGIN
+  -- Actor y aislamiento multitienda (doctrina del módulo)
+  IF v_uid IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHORIZED'; END IF;
+  IF NOT public.has_store_role_as(v_uid, p_store_id, 'admin')
+     AND NOT public.has_store_role_as(v_uid, p_store_id, 'manager')
+     AND NOT public.has_store_role_as(v_uid, p_store_id, 'encargado') THEN
+    RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: ajustes requieren admin, manager o encargado';
+  END IF;
+
+  -- Validaciones (espejo del zod de la ruta)
+  IF lower(trim(p_direction)) NOT IN ('in', 'out') THEN
+    RAISE EXCEPTION 'ERR_INVALID_DIRECTION: %', p_direction;
+  END IF;
+  IF p_amount IS NULL OR p_amount <= 0 THEN
+    RAISE EXCEPTION 'ERR_INVALID_AMOUNT: %', p_amount;
+  END IF;
+  IF p_amount <> round(p_amount, 2) THEN
+    RAISE EXCEPTION 'ERR_AMOUNT_PRECISION: máximo 2 decimales';
+  END IF;
+
+  -- Gate canónico de fecha financiera (tope HOY Habana — nunca futuro)
+  PERFORM public.validate_operation_date(COALESCE(p_payment_date, now()), p_store_id);
+
+  -- Protocolo del cajón: advisory ANTES de la lectura que autoriza la salida
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+
+  -- Idempotencia: la misma clave devuelve la fila original (nunca un segundo
+  -- registro — un doble clic no duplica el ajuste)
+  IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
+    SELECT id, direction, amount, notes, payment_date, paid_by, created_at
+      INTO v_existing
+      FROM public.payment_transactions
+      WHERE store_id = p_store_id AND ref_type = 'adjustment'
+        AND idempotency_key = btrim(p_idempotency_key)
+      LIMIT 1;
+    IF v_existing.id IS NOT NULL THEN
+      RETURN jsonb_build_object('adjustment', to_jsonb(v_existing), 'idempotent_replay', true);
+    END IF;
+  END IF;
+
+  -- Fase A: un ajuste direction='out' entrega BILLETES CUP del cajón —
+  -- valida el saldo físico por moneda (misma fuente autoritativa y fail-closed
+  -- que egresos; lectura post-lock con upper bound 'infinity').
+  IF lower(trim(p_direction)) = 'out' THEN
+    v_phys_available := COALESCE((public.get_cash_currency_summary(
+      p_store_id, NULL, 'infinity'::timestamptz) -> 'net' ->> 'CUP')::numeric, 0);
+    IF p_amount > v_phys_available + 0.005 THEN
+      RAISE EXCEPTION 'ERR_INSUFFICIENT_CURRENCY: saldo físico CUP disponible=%, ajuste=%',
+        round(v_phys_available, 2), round(p_amount, 2);
+    END IF;
+  END IF;
+
+  INSERT INTO public.payment_transactions (
+    store_id, ref_type, ref_id, transaction_id, direction, amount,
+    payment_method, currency, exchange_rate, payment_date, notes,
+    paid_by, idempotency_key
+  ) VALUES (
+    p_store_id, 'adjustment', NULL, NULL, lower(trim(p_direction)), p_amount,
+    'cash', 'CUP', 1, COALESCE(p_payment_date, now()), btrim(COALESCE(p_note, '')),
+    v_uid, btrim(COALESCE(p_idempotency_key, ''))
+  )
+  RETURNING id, direction, amount, notes, payment_date, paid_by, created_at
+    INTO v_existing;
+
+  RETURN jsonb_build_object('adjustment', to_jsonb(v_existing), 'idempotent_replay', false);
+END;
+$function$
+
+
 -- @contract-function name=register_idempotency args="p_key text, p_operation text, p_record_id uuid, p_param_hash text, p_result jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.register_idempotency(p_key text, p_operation text, p_record_id uuid, p_param_hash text, p_result jsonb)
  RETURNS void
@@ -8873,7 +9365,12 @@ DECLARE
   v_balance numeric;
   v_doc_store_id uuid;
   v_eff_payment_date timestamptz := COALESCE(p_payment_date, now());
+  v_phys_available numeric := 0;
 BEGIN
+  -- MISIÓN INTEGRAL (Fase A): protocolo común del cajón — advisory por tienda
+  -- ANTES de cualquier lectura que autorice una salida de efectivo.
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+
   -- Idempotencia
   IF p_idempotency_key IS NOT NULL THEN
     SELECT id INTO v_existing_id
@@ -8929,6 +9426,20 @@ BEGIN
     RAISE EXCEPTION
       'El pago (%) excede el saldo pendiente (%). Overpay no permitido.',
       v_amount_cup, v_balance;
+  END IF;
+
+  -- MISIÓN INTEGRAL (Fase A): un pago en EFECTIVO entrega BILLETES de la moneda
+  -- del pago. Misma regla que los egresos (2222): sin conversión implícita,
+  -- saldo físico por moneda, fail-closed. Lectura post-lock con upper bound
+  -- 'infinity' (todo lo confirmado ES un hecho físico ya — coherente con el
+  -- orden de adquisición del advisory).
+  IF lower(trim(p_payment_method)) = 'cash' THEN
+    v_phys_available := COALESCE((public.get_cash_currency_summary(
+      p_store_id, NULL, 'infinity'::timestamptz) -> 'net' ->> upper(trim(p_currency)))::numeric, 0);
+    IF p_amount > v_phys_available + 0.005 THEN
+      RAISE EXCEPTION 'ERR_INSUFFICIENT_CURRENCY: saldo físico % disponible=%, pago=%',
+        upper(trim(p_currency)), round(v_phys_available, 2), round(p_amount, 2);
+    END IF;
   END IF;
 
   -- Insertar pago con payment_date personalizada (o now() por defecto)
@@ -9215,81 +9726,6 @@ END;
 $function$
 
 
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
-$function$
-
-
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -9513,6 +9949,81 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
+$function$
+
+
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
 $function$
 
 
@@ -10058,7 +10569,9 @@ DECLARE
   v_cash_flow_in numeric := 0;
   v_cash_flow_out numeric := 0;
   v_cash_refunds numeric := 0;
+  v_cash_recoveries numeric := 0;
   v_expected_cash numeric := 0;
+  v_balance_currency numeric := 0;
   v_shift RECORD;
 BEGIN
   -- 1. Documento con lock de fila (evita doble anulación concurrente)
@@ -10110,21 +10623,21 @@ BEGIN
     SELECT COALESCE(SUM(cash_amount), 0) INTO v_cash_sales
       FROM public.transactions
       WHERE store_id = v_doc.store_id AND status = 'completed'
-        AND created_at > v_shift.created_at AND created_at <= now();
+        AND created_at > v_shift.created_at AND created_at <= 'infinity'::timestamptz;
     SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_outflows
       FROM public.payment_transactions
       WHERE store_id = v_doc.store_id AND payment_method = 'cash'
         AND ref_type IN ('receipt', 'service')
-        AND payment_date > v_shift.created_at AND payment_date <= now();
+        AND payment_date > v_shift.created_at AND payment_date <= 'infinity'::timestamptz;
     SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_production
       FROM public.payment_transactions
       WHERE store_id = v_doc.store_id AND payment_method = 'cash'
         AND ref_type IN ('production_order', 'work')
-        AND payment_date > v_shift.created_at AND payment_date <= now();
+        AND payment_date > v_shift.created_at AND payment_date <= 'infinity'::timestamptz;
     SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_commissions
       FROM public.commission_payments
       WHERE store_id = v_doc.store_id AND status = 'paid' AND payment_method = 'cash'
-        AND paid_at > v_shift.created_at AND paid_at <= now();
+        AND paid_at > v_shift.created_at AND paid_at <= 'infinity'::timestamptz;
     SELECT
       COALESCE(SUM(CASE WHEN direction = 'in' THEN amount_cup ELSE 0 END), 0),
       COALESCE(SUM(CASE WHEN direction = 'out' THEN amount_cup ELSE 0 END), 0)
@@ -10132,16 +10645,32 @@ BEGIN
       FROM public.payment_transactions
       WHERE store_id = v_doc.store_id AND payment_method = 'cash'
         AND ref_type = 'cash_flow'
-        AND payment_date > v_shift.created_at AND payment_date <= now();
+        AND payment_date > v_shift.created_at AND payment_date <= 'infinity'::timestamptz;
     SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_refunds
       FROM public.payment_transactions
       WHERE store_id = v_doc.store_id AND payment_method = 'cash'
         AND ref_type = 'devolution' AND direction = 'refund'
-        AND payment_date > v_shift.created_at AND payment_date <= now();
+        AND payment_date > v_shift.created_at AND payment_date <= 'infinity'::timestamptz;
+    -- MISIÓN DE CIERRE (2026-10-24 §4): recuperaciones simétricas — el dinero
+    -- que VOLVIÓ al cajón por reversiones de devoluciones suma al esperado.
+    SELECT COALESCE(SUM(amount_cup), 0) INTO v_cash_recoveries
+      FROM public.payment_transactions
+      WHERE store_id = v_doc.store_id AND payment_method = 'cash'
+        AND ref_type = 'devolution' AND direction = 'recovery'
+        AND payment_date > v_shift.created_at AND payment_date <= 'infinity'::timestamptz;
     v_opening := COALESCE(v_shift.opening_balance, 0);
     v_expected_cash := v_opening + v_cash_sales + v_cash_production + v_cash_flow_in
                        - v_cash_outflows - v_cash_commissions - v_cash_flow_out
-                       - v_cash_refunds;
+                       - v_cash_refunds + v_cash_recoveries;
+    -- MISIÓN POST-MERGE 2026-10-24: anular un ingreso retira BILLETES de su
+    -- moneda del cajón; el saldo físico de ESA moneda no puede quedar en
+    -- negativo (el canónico con la otra moneda no compensa billetes).
+    SELECT COALESCE((public.get_cash_currency_summary(v_doc.store_id, NULL, 'infinity'::timestamptz)
+                     -> 'net' ->> v_doc.currency)::numeric, 0)
+      INTO v_balance_currency;
+    IF v_doc.amount > v_balance_currency + 0.005 THEN
+      RAISE EXCEPTION 'ERR_INSUFFICIENT_CURRENCY: anular este ingreso dejaría el saldo físico % en negativo (disponible=%, reversión=%)', v_doc.currency, round(v_balance_currency, 2), round(v_doc.amount, 2);
+    END IF;
     IF v_doc.amount_cup > v_expected_cash + 0.005 THEN
       RAISE EXCEPTION 'ERR_INSUFFICIENT_CASH: anular este ingreso dejaría el efectivo esperado en negativo (disponible=%, reversión=%)', round(v_expected_cash, 2), round(v_doc.amount_cup, 2);
     END IF;
@@ -10265,8 +10794,8 @@ END;
 $function$
 
 
--- @contract-function name=reverse_devolution args="p_devolution_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reverse_devolution(p_devolution_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+-- @contract-function name=reverse_devolution args="p_devolution_id uuid, p_reason text, p_user_id uuid, p_recovery jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reverse_devolution(p_devolution_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid, p_recovery jsonb DEFAULT NULL::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -10278,12 +10807,32 @@ DECLARE
   v_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
   v_count INTEGER := 0;
   v_uc_dev NUMERIC;
+  v_store_id UUID;
+  v_rec JSONB;              -- componente de recuperación solicitado (elemento jsonb)
+  v_refund RECORD;         -- fila refund de esta devolución
+  v_credit RECORD;         -- fila de crédito de tienda de esta devolución
+  v_credit_outstanding NUMERIC := 0;
+  v_requested_cup INTEGER := 0;
+  v_requested_usd INTEGER := 0;
+  v_expected_cup INTEGER := 0;
+  v_expected_usd INTEGER := 0;
+  v_rec_date TIMESTAMPTZ;
+  v_rec_method TEXT;
+  v_recovered JSONB := '[]'::jsonb;
 BEGIN
+  -- 0) tienda ANTES del lock (store_id es inmutable en devolutions)
+  SELECT store_id INTO v_store_id FROM public.devolutions WHERE id = p_devolution_id;
+  IF v_store_id IS NULL THEN RAISE EXCEPTION 'ERR_DEVOLUTION_NOT_FOUND'; END IF;
+
+  -- 1) advisory lock por tienda (misma llave que create_devolution_v2 /
+  --    create_cash_flow_document / close_cash_shift): serializa la reversión
+  --    contra reembolsos/entregas/cierres concurrentes del cajón físico.
+  PERFORM pg_advisory_xact_lock(hashtext(v_store_id::text));
+
   SELECT * INTO v_dev FROM public.devolutions WHERE id = p_devolution_id FOR UPDATE;
   IF v_dev IS NULL THEN RAISE EXCEPTION 'ERR_DEVOLUTION_NOT_FOUND'; END IF;
   IF v_dev.status = 'reversed' THEN RAISE EXCEPTION 'ERR_ALREADY_REVERSED'; END IF;
 
-  -- W9.5 B-10: guard de estado explicito (GATE G) — solo completed reversible.
   IF v_dev.status <> 'completed' THEN
     RAISE EXCEPTION 'ERR_INVALID_STATUS: reverse_devolution solo permite completed (status=%)', v_dev.status;
   END IF;
@@ -10292,84 +10841,174 @@ BEGIN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
-  -- W9.5 B-10: capa normativa (fuente unica). Politica congelada (C conservar):
-  -- cualquier membresia ACTIVA en la tienda, simetrica a la creacion de
-  -- devoluciones (modulo dormant, sin puerta de navegacion).
-  -- W9.5 B-10b: la autorizacion NO cambia; solo la mutacion.
   IF NOT public.can_reverse_document(v_uid, v_dev.store_id, 'devolution') THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED: reversion de devolucion requiere membresia activa en la tienda';
   END IF;
 
-  -- ── W9.5 B-10b: mutacion EXCLUSIVAMENTE via pipeline canonico ──
-  -- register_stock_movement -> stock_movements -> triggers (fn_sync_inventory_
-  -- on_movement / auto_kardex / sync_product_stock) -> inventory + products.
-  -- Quedan PROHIBIDOS (divergencia corregida):
-  --   * UPDATE directo de products.stock_current (antes: GREATEST(0, stock-qty))
-  --   * INSERT directo en kardex_entries (antes: 'out' con unit_cost=0)
-  -- MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los ítems de servicio (is_service)
-  -- no pasan por fn_recalc_wac ni por register_stock_movement — no hay
-  -- existencias ni WAC de inventario que tocar en un artículo intangible.
+  -- 2) lock de la venta original (serializa contra el tope de reembolso de
+  --    create_devolution_v2, que lockea la venta ANTES de leer el tope)
+  IF v_dev.original_transaction_id IS NOT NULL THEN
+    PERFORM 1 FROM public.transactions WHERE id = v_dev.original_transaction_id FOR UPDATE;
+  END IF;
+
+  -- 3) efecto financiero de ESTA devolución (validado TODO antes de escribir)
+  SELECT
+    COUNT(*) FILTER (WHERE pt.currency = 'CUP'),
+    COUNT(*) FILTER (WHERE pt.currency = 'USD')
+    INTO v_expected_cup, v_expected_usd
+  FROM public.payment_transactions pt
+  WHERE pt.ref_type = 'devolution' AND pt.ref_id = p_devolution_id AND pt.direction = 'refund';
+
+  IF v_expected_cup + v_expected_usd > 0 THEN
+    IF p_recovery IS NULL THEN
+      RAISE EXCEPTION 'ERR_DEVOLUTION_REFUND_NOT_RECOVERED: la devolución tiene reembolso(s) liquidado(s) (% componente CUP, % componente USD) y el dinero no ha vuelto a la caja. La reversión es ATÓMICA con la recuperación: envíe p_recovery = [{currency, method, operation_date?, notes?}] con la moneda y el riel reales de cobro (el importe lo fija el servidor). Una reversión documental no puede liberar el tope de reembolso como si el dinero hubiera regresado.',
+        v_expected_cup, v_expected_usd;
+    END IF;
+    IF jsonb_typeof(p_recovery) <> 'array' THEN
+      RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_INVALID: p_recovery debe ser un array jsonb de componentes {currency, method, operation_date?, notes?}';
+    END IF;
+    SELECT
+      COUNT(*) FILTER (WHERE upper(btrim(comp->>'currency')) = 'CUP'),
+      COUNT(*) FILTER (WHERE upper(btrim(comp->>'currency')) = 'USD')
+      INTO v_requested_cup, v_requested_usd
+    FROM jsonb_array_elements(p_recovery) comp;
+    IF v_requested_cup <> v_expected_cup OR v_requested_usd <> v_expected_usd THEN
+      RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_COMPONENTS: los componentes de recuperación deben cubrir EXACTAMENTE las monedas reembolsadas (esperado: % CUP + % USD; recibido: % CUP + % USD). La recuperación de una moneda no compensa la otra.',
+        v_expected_cup, v_expected_usd, v_requested_cup, v_requested_usd;
+    END IF;
+    -- validación de cada componente (antes de cualquier escritura)
+    FOR v_rec IN SELECT comp FROM jsonb_array_elements(p_recovery) comp LOOP
+      v_rec_method := lower(btrim(COALESCE(v_rec->>'method', '')));
+      IF upper(btrim(COALESCE(v_rec->>'currency', ''))) NOT IN ('CUP', 'USD') THEN
+        RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_INVALID: moneda de recuperación % no reconocida (CUP|USD)',
+          COALESCE(v_rec->>'currency', '');
+      END IF;
+      IF v_rec_method NOT IN ('cash', 'transfer', 'zelle') THEN
+        RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_INVALID: método de cobro % no reconocido (cash|transfer|zelle)',
+          COALESCE(v_rec->>'method', '');
+      END IF;
+      -- espejo del invariante PT005 de payment_transactions (fail-closed limpio)
+      IF v_rec_method = 'zelle' AND upper(btrim(v_rec->>'currency')) = 'CUP' THEN
+        RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_INVALID: zelle no opera en CUP (riel USD)';
+      END IF;
+      IF length(COALESCE(v_rec->>'notes', '')) > 500 THEN
+        RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_INVALID: notes > 500 caracteres';
+      END IF;
+      v_rec_date := NULL;
+      IF COALESCE(v_rec->>'operation_date', '') <> '' THEN
+        v_rec_date := (v_rec->>'operation_date')::timestamptz;
+      END IF;
+      IF v_rec_date IS NOT NULL THEN
+        PERFORM public.validate_operation_date(v_rec_date, v_dev.store_id);
+      END IF;
+      IF EXISTS (SELECT 1 FROM public.payment_transactions
+                 WHERE ref_type = 'devolution' AND ref_id = p_devolution_id
+                   AND direction = 'recovery'
+                   AND currency = upper(btrim(v_rec->>'currency'))) THEN
+        RAISE EXCEPTION 'ERR_DEVOLUTION_ALREADY_RECOVERED: ya existe una recuperación en % para esta devolución (idempotencia dev-%%-recovery-%%)',
+          upper(btrim(v_rec->>'currency'));
+      END IF;
+    END LOOP;
+  ELSIF p_recovery IS NOT NULL THEN
+    RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_UNNECESSARY: la devolución no tiene reembolsos monetarios que recuperar (reversión documental pura)';
+  END IF;
+
+  -- 4) RECUPERACIÓN: una fila por componente, importe y tasa FIJADOS por el
+  --    servidor desde la fila refund de esa moneda (misma moneda, mismo
+  --    importe, misma tasa → el canónico generado espeja y cancela EXACTO).
+  --    direction='recovery' = entrada real de dinero por el riel declarado.
+  FOR v_refund IN
+    SELECT pt.currency, pt.payment_method, pt.amount, pt.exchange_rate
+    FROM public.payment_transactions pt
+    WHERE pt.ref_type = 'devolution' AND pt.ref_id = p_devolution_id AND pt.direction = 'refund'
+    ORDER BY pt.currency
+  LOOP
+    SELECT lower(btrim(COALESCE(comp->>'method', ''))),
+           CASE WHEN COALESCE(comp->>'operation_date', '') <> ''
+                THEN (comp->>'operation_date')::timestamptz ELSE NULL END
+      INTO v_rec_method, v_rec_date
+      FROM jsonb_array_elements(p_recovery) comp
+      WHERE upper(btrim(comp->>'currency')) = v_refund.currency LIMIT 1;
+    INSERT INTO public.payment_transactions (
+      store_id, ref_type, ref_id, transaction_id,
+      amount, payment_method, currency, exchange_rate,
+      payment_date, direction, paid_by, idempotency_key
+    ) VALUES (
+      v_dev.store_id, 'devolution', p_devolution_id, v_dev.original_transaction_id,
+      v_refund.amount, v_rec_method::text, v_refund.currency, v_refund.exchange_rate,
+      COALESCE(v_rec_date, NOW()), 'recovery', v_uid,
+      'dev-' || p_devolution_id::text || '-recovery-' || v_refund.currency
+    );
+    v_recovered := v_recovered || jsonb_build_object(
+      'currency', v_refund.currency, 'amount', v_refund.amount,
+      'method', v_rec_method, 'rate', v_refund.exchange_rate);
+  END LOOP;
+
+  -- 5) STORE CREDIT: compensación trazable del pasivo (fila negativa con
+  --    vínculo a la devolución). El efectivo NO se toca: el crédito nunca fue
+  --    billetes. (El modelo no tiene redención/consumo de créditos hoy; cuando
+  --    exista deberá respetar estas compensaciones.)
+  FOR v_credit IN
+    SELECT scl.customer_id, scl.amount
+    FROM public.store_credit_ledger scl
+    WHERE scl.devolution_id = p_devolution_id AND scl.amount > 0
+    ORDER BY scl.created_at
+  LOOP
+    SELECT COALESCE(SUM(s2.amount), 0) INTO v_credit_outstanding
+    FROM public.store_credit_ledger s2 WHERE s2.devolution_id = p_devolution_id;
+    IF v_credit_outstanding > 0 THEN
+      INSERT INTO public.store_credit_ledger
+        (store_id, customer_id, amount, devolution_id, origin_transaction_id, idempotency_key, created_by)
+      VALUES
+        (v_dev.store_id, v_credit.customer_id, -v_credit_outstanding, p_devolution_id,
+         v_dev.original_transaction_id, 'dev-' || p_devolution_id::text || '-credit-comp', v_uid);
+    END IF;
+  END LOOP;
+
+  -- 6) Inventario: pipeline canónico (W9.5 B-10b byte-conservado)
   FOR v_item IN
     SELECT product_id, quantity FROM public.devolution_items WHERE devolution_id = p_devolution_id
   LOOP
-    IF NOT EXISTS (SELECT 1 FROM public.products pr WHERE pr.id = v_item.product_id AND pr.is_service = true) THEN
-      -- (a) Costo complementario del kardex: del movimiento 'return' original
-      --     (promedio ponderado si hay varios). Si no existe (devoluciones
-      --     pre-pipeline — 13/13 en datos reales), cadena canonica de
-      --     create_devolution_v2: cost_at_sale -> cost_average -> 0.
-      --     Solo atribucion contable: el WAC real NO se toca (ver (b)).
-      SELECT (SUM(sm.unit_cost * sm.quantity_change) / NULLIF(SUM(sm.quantity_change), 0))
-        INTO v_uc_dev
-        FROM public.stock_movements sm
-        WHERE sm.reference_id = p_devolution_id::text
-          AND sm.product_id = v_item.product_id
-          AND sm.movement_type = 'return';
-      IF v_uc_dev IS NULL THEN
-        IF v_dev.original_transaction_id IS NOT NULL THEN
-          SELECT ti.cost_at_sale INTO v_uc_dev
-            FROM public.transaction_items ti
-            WHERE ti.transaction_id = v_dev.original_transaction_id
-              AND ti.product_id = v_item.product_id
-            LIMIT 1;
-        END IF;
-        IF v_uc_dev IS NULL THEN
-          SELECT cost_average INTO v_uc_dev FROM public.products WHERE id = v_item.product_id;
-        END IF;
-        v_uc_dev := COALESCE(v_uc_dev, 0);
+    SELECT (SUM(sm.unit_cost * sm.quantity_change) / NULLIF(SUM(sm.quantity_change), 0))
+      INTO v_uc_dev
+      FROM public.stock_movements sm
+      WHERE sm.reference_id = p_devolution_id::text
+        AND sm.product_id = v_item.product_id
+        AND sm.movement_type = 'return';
+    IF v_uc_dev IS NULL THEN
+      IF v_dev.original_transaction_id IS NOT NULL THEN
+        SELECT ti.cost_at_sale INTO v_uc_dev
+          FROM public.transaction_items ti
+          WHERE ti.transaction_id = v_dev.original_transaction_id
+            AND ti.product_id = v_item.product_id
+          LIMIT 1;
       END IF;
-
-      -- (b) WAC: la devolucion original NO altera cost_average (hotfix A2 v2.22.0,
-      --     "for other paths (transfers, devolutions, etc.), cost_average stays
-      --     as-is"). El reverse conserva esa invariancia via la rama q=0 de
-      --     fn_recalc_wac ("Salida pura / devolucion A1 / evento neutro: WAC
-      --     INVARIANTE"): lock del producto + wac_change_log (before==after).
-      --     Permite llevar el stock a 0 sin division por cero ni WAC corrupto.
-      PERFORM public.fn_recalc_wac(
-        v_dev.store_id, v_item.product_id, 'devolution_reverse',
-        0, 0,
-        jsonb_build_object('rpc', 'reverse_devolution', 'devolution_id', p_devolution_id,
-          'qty_reversed', v_item.quantity));
-
-      -- (c) Mutacion de stock SOLO via pipeline canonico. Signo (GATE 3): la
-      --     devolucion original sumo (+q, 'return') -> el reverse resta (-q).
-      --     Sin clamp: si el stock ya no alcanza, fn_sync_inventory_on_movement
-      --     falla con ERR_INSUFFICIENT_STOCK (deteccion sobre silencio, W7 D-01).
-      --     reference_id = devolutions.id (trazabilidad estructurada, GATE 8).
-      PERFORM public.register_stock_movement(
-        p_product_id := v_item.product_id,
-        p_store_id := v_dev.store_id,
-        p_quantity := -v_item.quantity,
-        p_movement_type := 'devolution_reverse',
-        p_reason := ('Reversión devolución ' || COALESCE(v_dev.devolution_number, p_devolution_id::text))::text,
-        p_user_id := v_uid,
-        p_variant_id := NULL,
-        p_sale_id := p_devolution_id,
-        p_unit_cost := v_uc_dev,
-        p_notes := COALESCE(p_reason, ''),
-        p_operation_date := NOW(),
-        p_skip_access_check := TRUE
-      );
+      IF v_uc_dev IS NULL THEN
+        SELECT cost_average INTO v_uc_dev FROM public.products WHERE id = v_item.product_id;
+      END IF;
+      v_uc_dev := COALESCE(v_uc_dev, 0);
     END IF;
+
+    PERFORM public.fn_recalc_wac(
+      v_dev.store_id, v_item.product_id, 'devolution_reverse',
+      0, 0,
+      jsonb_build_object('rpc', 'reverse_devolution', 'devolution_id', p_devolution_id,
+        'qty_reversed', v_item.quantity));
+
+    PERFORM public.register_stock_movement(
+      p_product_id := v_item.product_id,
+      p_store_id := v_dev.store_id,
+      p_quantity := -v_item.quantity,
+      p_movement_type := 'devolution_reverse',
+      p_reason := ('Reversión devolución ' || COALESCE(v_dev.devolution_number, p_devolution_id::text))::text,
+      p_user_id := v_uid,
+      p_variant_id := NULL,
+      p_sale_id := p_devolution_id,
+      p_unit_cost := v_uc_dev,
+      p_notes := COALESCE(p_reason, ''),
+      p_operation_date := NOW(),
+      p_skip_access_check := TRUE
+    );
 
     v_count := v_count + 1;
   END LOOP;
@@ -10378,17 +11017,18 @@ BEGIN
     SET status = 'reversed', reversed_at = now(), reversed_by = v_uid, reversal_reason = p_reason
     WHERE id = p_devolution_id;
 
-  -- W9.5 B-10 (GATE J): la operacion deja audit explicito. B-10b mantiene
-  -- action/operation congelados y enriquece metadata (aditivo).
   INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
   VALUES ('REVERSE_DEVOLUTION', 'devolutions', p_devolution_id, v_dev.store_id, v_uid,
     jsonb_build_object('reason', p_reason, 'items_reversed', v_count,
       'old_status', v_dev.status, 'new_status', 'reversed',
       'operation', 'ADMIN_REVERSE_DEVOLUTION',
       'pipeline', 'register_stock_movement',
-      'movement_type', 'devolution_reverse'));
+      'movement_type', 'devolution_reverse',
+      'financial_recovery', v_recovered,
+      'store_credit_compensated', (SELECT COALESCE(SUM(scl.amount) < 0, false) FROM public.store_credit_ledger scl WHERE scl.devolution_id = p_devolution_id)));
 
-  RETURN jsonb_build_object('status', 'success', 'items_reversed', v_count, 'devolution_id', p_devolution_id);
+  RETURN jsonb_build_object('status', 'success', 'items_reversed', v_count,
+    'devolution_id', p_devolution_id, 'recovered', v_recovered);
 END;
 $function$
 
