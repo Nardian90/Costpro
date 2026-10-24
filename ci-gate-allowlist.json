@@ -814,15 +814,6 @@
   ],
   "source_of_truth_baseline": [
     {
-      "function": "create_sale_v2/31",
-      "rules": [
-        "LIVE_FUNCTION_NOT_REPRESENTED"
-      ],
-      "reason": "CP-MONEY-002 (posmerge PR #1467) 2026-10-25 · La companion 20261025120000 (D2) retira del stream de migraciones el overload legado de 31 params que la 20261024150000 dejó vivo al crear la firma de 32 con CREATE OR REPLACE — dos firmas coexistiendo reproducen el incidente PGRST203 del 2026-10-18 para llamadas legadas de 31 claves. El cuerpo LIVE /31 está certificado por el surface; su desaparición del stream es INTENCIONAL y temporal: PENDIENTE de aplicación autorizada en producción de 20261024150000 + 20261025120000 (misma ventana) y posterior regeneración del surface certificando create_sale_v2/32 — mismo procedimiento que la REVISIÓN FINAL v2.24.1 (5920348: baselines retiradas, surface regenerado). Sin cambios contables: el cuerpo /32 es el de la 20261024150000 + rechazo de componentes duplicados (D3); sin componentes el flujo es byte-idéntico a v2.24.1. Evidencia de incompatibilidad código↔BD en el PR #1469 (sondas PGRST202).",
-      "added_by": "cp-money-002-pr1469",
-      "expires": "2027-01-31"
-    },
-    {
       "function": "create_cash_flow_document/13",
       "rules": [
         "BODY_DRIFT_FROM_MIGRATION"
