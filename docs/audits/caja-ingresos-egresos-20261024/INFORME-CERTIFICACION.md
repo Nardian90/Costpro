@@ -206,3 +206,39 @@ Navegación real autenticada contra la tienda **ENERVIDA-VITALLCONS** a través 
 ## 14. Declaración final
 
 **APTO PARA REVISIÓN:** pruebas críticas completadas en entorno aislado (51/51 contables + 275 tests de regresión + E2E de solo lectura contra datos reales de la tienda afectada); el PR está preparado. **Sin merge, sin despliegue y sin escrituras en producción** — el despliegue del fix del ledger y la aplicación de la migración de idempotencia quedan pendientes de autorización expresa del propietario. Limitaciones documentadas: suite completa de vitest y build de producción no ejecutados por RAM del entorno; E2E Playwright deshabilitado por el propietario (sustituido por navegación real de solo lectura con evidencia).
+
+---
+
+## 15. Adenda — Aplicación autorizada de la migración (2026-10-24T00:11Z)
+
+### 15.1 Defecto latente descubierto al preparar la aplicación
+
+Al preparar la aplicación autorizada se descubrió que el `revoke/grant` final de `20261024180000` llevaba la firma de **11 argumentos** (huella pre-v2.24.0) mientras la función viva tiene **13**. PostgreSQL errora con `42883 function ... does not exist` al aplicar el archivo (reproducido en la BD aislada PG 18.4). El replay estático de CI lo saltaba en silencio (statement para una firma no definida en el stream → sin efecto), por lo que el Security Audit había quedado verde con el archivo roto. La prueba «aplicada en aislado» de la fase original era parcialmente ilusoria: `apply_idem_fix.mjs` erroraba en la última sentencia pero el cuerpo ya estaba instalado por `setup_cajamision.mjs`, y los casos D certificaron ese cuerpo — no la aplicabilidad del archivo.
+
+**Corrección:** firmas corregidas a los 13 argumentos reales, idénticas a v2.24.0 L2286-2287 (`revoke ... from public` + `grant execute ... to service_role`). Registrada en el propio archivo.
+
+### 15.2 Re-certificación completa ANTES de aplicar (cadena de archivos, no solo cuerpos)
+
+1. `setup_cajamision.mjs` — BD aislada reconstruida: tablas fieles a producción + RPC v2.24.1 con el patrón NO determinista (estado pre-migración).
+2. `apply_idem_fix.mjs` — el archivo corregido aplica **limpio** (CREATE OR REPLACE + revoke/grant 13-arg, sin error).
+3. `cert-contable.mjs` — **51/51 PASS** contra el cuerpo aplicado por el archivo (evidencia `certificacion-contable-results.json` regenerada).
+
+### 15.3 Aplicación a producción (autorizada por el propietario)
+
+- **Autorización:** «autorizada la migracion» (2026-10-24).
+- **Pre-vuelo (solo lectura):** cuerpo LIVE = v2.24.1 con patrón viejo (única firma 13-arg, ACL `{postgres=X, service_role=X}`); 0 consultas activas; 0 documentos de caja en los últimos 5 min. Diff del cuerpo LIVE vs cuerpo del archivo verificado = **exactamente 1 línea funcional** (la del hash).
+- **Aplicación:** archivo completo como transacción única vía Supabase Management API (rol postgres), HTTP 201, 2026-10-24T00:11Z.
+- **Post-verificación (solo lectura):** patrón viejo ausente · patrón nuevo presente · ACL intacta · hash de la nueva expresión determinista (SELECT puro: `md5(...COALESCE(NULL::timestamptz::text,'')...)` estable entre llamadas) · el patrón viejo diverge en 60 ms (defecto documentado).
+- **Regresión del incidente:** `GET /api/cash-flow/ledger` ENERVIDA → **HTTP 200**, saldos idénticos (net CUP 8.435.679,98 · USD 367), libro con 60 filas y comisiones presentes.
+
+### 15.4 Re-certificación del contrato de seguridad
+
+- `contract-surface.sql` re-exportado de producción (solo lectura): 150 funciones, **diff = exactamente 1 línea** (la del hash) + timestamp de captura — ninguna otra función cambió.
+- Baseline temporal `BODY_DRIFT_FROM_MIGRATION` para `create_cash_flow_document/13` **retirada** (su razón de ser caducó al aplicarse la correctiva): la Capa C del gate ahora reconcilia activamente LIVE == migraciones.
+- Auditoría estática local: **150/150 representadas · 0 divergencias bloqueantes** (2 warnings MEDIUM/LOW preexistentes de frescura de firma en `cancel_transfer` y `reset_store_data`, ajenos a este cambio).
+
+### 15.5 Impacto operativo del cambio aplicado
+
+Los reintentos de red de `create_cash_flow_document` con MISMA clave de idempotencia y MISMO payload (sin fecha operativa explícita) ahora devuelven el documento original (replay benigno) en lugar de rechazarse con `ERR_IDEMPOTENCY_KEY_REUSE`. Las filas previas de `idempotency_registry` conservan su hash antiguo: los reintentos tardíos de documentos ya registrados siguen rechazándose como hoy. Sin cambios contables (clasificación, saldos, fondo, turnos y validaciones intactos — verificado por diff de 1 línea + 51/51).
+
+**Nota:** el fix del ledger (ruta `/api/cash-flow/ledger`) es código de aplicación y sigue pendiente de merge + despliegue por el propietario (PR #1468) — la migración aplicada NO lo despliega. El error de producción «No se pudo cargar el libro de caja» se corrige en producción únicamente cuando el propietario despliegue el PR.

@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-23T19:46:37.585Z
+-- Captured  : 2026-10-24T00:11:46.875Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 150 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -2608,7 +2608,7 @@ BEGIN
   -- 5. IDEMPOTENCIA (replay seguro ante reintentos de red)
   v_param_hash := md5(
     p_store_id::text || '|' || v_caller_uid::text || '|' || v_doc_type || '|' || v_concept || '|'
-    || v_amount::text || '|' || v_currency || '|' || COALESCE(p_operation_date, 'now')::text || '|'
+    || v_amount::text || '|' || v_currency || '|' || COALESCE(p_operation_date::text, '') || '|'
     || COALESCE(btrim(p_counterparty), '') || '|' || v_justification || '|'
     || COALESCE(btrim(p_notes), '') || '|' || COALESCE(p_related_document_id::text, '')
   );
