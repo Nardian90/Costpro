@@ -28,7 +28,16 @@ export async function apiFetch<T = any>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-    throw new Error(body.error || body.message || `HTTP ${res.status}`);
+    const base = body.error || body.message || `HTTP ${res.status}`;
+    // MISIÓN CUERPO INVÁLIDO (2026-10-24): las rutas devuelven `details`
+    // (issues de Zod) junto al mensaje genérico; descartarlas ocultaba la
+    // causa real (p. ej. «Cuerpo inválido» sin saber qué campo falló). Se
+    // añaden hasta 3 detalles textuales al mensaje lanzado — aditivo y
+    // seguro para todos los módulos que usan apiFetch.
+    const details = Array.isArray(body.details)
+      ? body.details.filter((d: unknown): d is string => typeof d === 'string').slice(0, 3)
+      : [];
+    throw new Error(details.length > 0 ? `${base} (${details.join(' · ')})` : base);
   }
 
   return res.json();

@@ -29,13 +29,27 @@ import {
  *     amount: number > 0 (máx. 2 decimales),
  *     currency: 'CUP' | 'USD',
  *     exchange_rate?: number (informativo — la tasa la resuelve el servidor),
- *     operation_date?: ISO (default NOW; debe caer en la ventana del turno),
- *     counterparty?: string (quién entrega/recibe el dinero),
+ *     operation_date?: ISO | null (default NOW; debe caer en la ventana del turno),
+ *     counterparty?: string | null (quién entrega/recibe el dinero),
  *     justification: string (1..500, OBLIGATORIA),
- *     notes?: string,
- *     related_document_id?: uuid (solo devoluciones de fondo),
- *     idempotency_key?: uuid
+ *     notes?: string | null,
+ *     related_document_id?: uuid | null (solo devoluciones de fondo),
+ *     idempotency_key?: string | null (texto, p. ej. 'cf-<uuid>' — MISMA
+ *       convención del default de esta ruta, del hook useCreateCashFlow y
+ *       del flujo de anulación 'cf-anul-<doc>'; la columna DB es text y la
+ *       RPC solo exige no-vacía)
  *   }
+ *
+ * MISIÓN CUERPO INVÁLIDO (2026-10-24): el esquema anterior exigía UUID puro
+ * en idempotency_key y rechazaba null explícito en campos opcionales (Zod 4
+ * .optional() ≠ nullable), mientras que el modal real SIEMPRE envía
+ * 'cf-<uuid>' + notes/related_document_id/counterparty null ⇒ TODA
+ * confirmación desde la UI caía en 400 «Cuerpo inválido» antes de llegar a
+ * la RPC. El esquema ahora replica el contrato real (texto la clave,
+ * nullish los opcionales) SIN tocar las validaciones financieras: importe
+ * numérico > 0 con 2 decimales, moneda, concepto, justificación y longitudes
+ * siguen intactos; las reglas de negocio (rol, turno, saldo por moneda,
+ * entrega) siguen viviendo en la RPC.
  *
  * Persistencia: RPC create_cash_flow_document (service_role-only, actor
  * explícito p_user_id de la sesión) — documento cash_flow_documents +
@@ -54,17 +68,28 @@ const CREATE_SCHEMA = z.object({
     .positive({ message: 'El importe debe ser mayor que cero' })
     .refine(hasValidMonetaryPrecision, { message: 'El importe admite máximo 2 decimales' }),
   currency: z.enum(['CUP', 'USD']),
-  exchange_rate: z.number().positive().optional(),
-  operation_date: z.string().datetime().optional(),
-  counterparty: z.string().trim().max(COUNTERPARTY_MAX_LENGTH).optional(),
+  // MISIÓN CUERPO INVÁLIDO (2026-10-24): los opcionales aceptan null
+  // explícito (.nullish) — el modal los estampa siempre; Zod 4 .optional()
+  // solo acepta undefined y rechazaba el contrato real de la UI.
+  exchange_rate: z.number().positive().nullish(),
+  operation_date: z.string().datetime().nullish(),
+  counterparty: z.string().trim().max(COUNTERPARTY_MAX_LENGTH).nullish(),
   justification: z
     .string()
     .trim()
     .min(1, 'La justificación es obligatoria')
     .max(JUSTIFICATION_MAX_LENGTH, `Máximo ${JUSTIFICATION_MAX_LENGTH} caracteres`),
-  notes: z.string().trim().max(NOTES_MAX_LENGTH).optional(),
-  related_document_id: uuidLoose.optional(),
-  idempotency_key: uuidLoose.optional(),
+  notes: z.string().trim().max(NOTES_MAX_LENGTH).nullish(),
+  related_document_id: uuidLoose.nullish(),
+  // Clave de idempotencia TEXTO (contrato real: 'cf-<uuid>' del modal/hook/
+  // default de esta ruta y 'cf-anul-<doc>' de la anulación; columna DB text,
+  // RPC solo exige no-vacía). Se acota a 128 y '' ⇒ default cf- de la ruta.
+  idempotency_key: z
+    .string()
+    .trim()
+    .max(128, 'La clave de idempotencia no puede exceder 128 caracteres')
+    .nullish()
+    .transform(v => (v && v.length > 0 ? v : undefined)),
 });
 
 /** Mapa de errores ERR_* del RPC → status HTTP + mensaje humano. */
