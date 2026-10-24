@@ -32,7 +32,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Plus, Search, Loader2, Eye, RefreshCcw, LayoutList, List, AlertTriangle,
   ArrowDownToLine, ArrowUpFromLine, Ban, Wallet, Coins, Landmark, FileText,
-  ChevronLeft, ChevronRight, XCircle,
+  ChevronLeft, ChevronRight, XCircle, History,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime, touch } from '@/lib/utils';
 import { useAuthStore } from '@/store';
@@ -51,12 +51,15 @@ import { CashFlowDetailModal } from './CashFlowDetailModal';
 import { CashFlowReverseModal } from './CashFlowReverseModal';
 import CashLedgerPanel from './CashLedgerPanel';
 import { useCashCurrencySummary } from '@/hooks/api/useCashLedger';
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 
-type ViewMode = 'cards' | 'table';
+ type ViewMode = 'cards' | 'table';
 type TypeFilter = 'all' | 'ingreso' | 'egreso';
 type StatusFilter = 'all' | 'confirmado' | 'anulado';
 type CurrencyFilter = 'all' | 'CUP' | 'USD';
 type SortKey = 'operation_date' | 'amount' | 'document_number';
+/** MISIÓN AUDITORÍA CAJA (2026-10-24) §Fase 2: pestañas del módulo. */
+type SectionTab = 'documentos' | 'libro';
 
 const VIEW_MODE_KEY = 'cash_flow_view_mode';
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
@@ -87,15 +90,31 @@ export default function IngresosEgresosView() {
     try { window.localStorage.setItem(VIEW_MODE_KEY, viewMode); } catch { /* SSR/private */ }
   }, [viewMode]);
 
+  // ── MISIÓN AUDITORÍA CAJA (2026-10-24) §Fase 2: pestañas reales ──
+  // El bloque «Movimientos que explican el saldo» deja de ser un acordeón y
+  // pasa a ser una pestaña de navegación. Ambos paneles permanecen MONTADOS
+  // (el inactivo se oculta con `hidden`) para conservar filtros, fechas y
+  // datos de formulario no enviados al alternar — sin remontar ni duplicar
+  // solicitudes (react-query mantiene la caché por clave).
+  const [activeTab, setActiveTab] = useState<SectionTab>('documentos');
+
   // ── Filtros ──
+  // MISIÓN AUDITORÍA CAJA (2026-10-24) §Fase 3: los selectores de fecha parten
+  // de la FECHA ACTUAL de negocio (convención COSTPRO: America/Havana, vía
+  // todayBusinessDay() — nunca una conversión UTC que cambie el día del
+  // usuario). Se calculan UNA vez al montar: si el día gira con la vista
+  // abierta, la selección inicial se conserva (estabilidad exigida §Fase 3.5:
+  // la fecha no debe cambiar inesperadamente). El usuario puede ampliar el
+  // rango libremente; «Limpiar filtros» restaura la fecha actual.
+  const hoy = useState(() => todayBusinessDay())[0];
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [conceptFilter, setConceptFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [currencyFilter, setCurrencyFilter] = useState<CurrencyFilter>('all');
   const [responsibleFilter, setResponsibleFilter] = useState<string>('all');
-  const [dateFrom, setDateFrom] = useState<string>('');
-  const [dateTo, setDateTo] = useState<string>('');
+  const [dateFrom, setDateFrom] = useState<string>(hoy);
+  const [dateTo, setDateTo] = useState<string>(hoy);
   const [sortKey, setSortKey] = useState<SortKey>('operation_date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
@@ -118,9 +137,13 @@ export default function IngresosEgresosView() {
   const [detalleDoc, setDetalleDoc] = useState<CashFlowDocument | null>(null);
   const [anularTarget, setAnularTarget] = useState<CashFlowDocument | null>(null);
 
-  // ── Rango del período (para KPIs): filtros de fecha o turno/hoy ──
-  const periodFrom = dateFrom ? new Date(dateFrom + 'T00:00:00').toISOString() : null;
-  const periodTo = dateTo ? new Date(dateTo + 'T23:59:59.999').toISOString() : null;
+  // ── Rango del período (para KPIs y filtros): fechas locales → ISO ──
+  // Guard §Fase 3.6: intervalo invertido (Desde > Hasta) NO se aplica como
+  // rango contable — se avisa igual que en CashReportView y las fechas quedan
+  // como las dejó el usuario (sin reescritura silenciosa).
+  const rangoInvalido = dateFrom !== '' && dateTo !== '' && dateFrom > dateTo;
+  const periodFrom = dateFrom && !rangoInvalido ? new Date(dateFrom + 'T00:00:00').toISOString() : null;
+  const periodTo = dateTo && !rangoInvalido ? new Date(dateTo + 'T23:59:59.999').toISOString() : null;
 
   const filters: CashFlowFilters = useMemo(() => ({
     search,
@@ -182,18 +205,43 @@ export default function IngresosEgresosView() {
   const limpiarFiltros = useCallback(() => {
     setSearch(''); setTypeFilter('all'); setConceptFilter('all');
     setStatusFilter('all'); setCurrencyFilter('all'); setResponsibleFilter('all');
-    setDateFrom(''); setDateTo(''); setPage(1);
-  }, []);
+    // §Fase 3.4: restablecer devuelve al comportamiento predeterminado → la
+    // fecha ACTUAL de negocio (no cadena vacía, no fecha fija de test).
+    setDateFrom(hoy); setDateTo(hoy); setPage(1);
+  }, [hoy]);
 
+  // Filtros activos: los dates cuentan SOLO si difieren del predeterminado
+  // (hoy → hoy). Así «Limpiar filtros» aparece cuando hay algo que restablecer.
   const hayFiltrosActivos = search.trim() !== '' || typeFilter !== 'all' || conceptFilter !== 'all'
     || statusFilter !== 'all' || currencyFilter !== 'all' || responsibleFilter !== 'all'
-    || dateFrom !== '' || dateTo !== '';
+    || dateFrom !== hoy || dateTo !== hoy;
 
   const resumen = summaryQuery.data ?? null;
   const turnoAbierto = activeShift.data != null;
   const turnoCargando = activeShift.isLoading || summaryQuery.isLoading;
 
   const totalPages = hasNextPage ? page + 1 : page;
+
+  // ── Navegación por teclado de las pestañas (patrón WAI-ARIA Tabs,
+  //    estética de CashReportView — módulo Caja) ──
+  const TABS: Array<{ id: SectionTab; label: string; icon: React.ElementType }> = [
+    { id: 'documentos', label: 'Ingresos / Egresos', icon: FileText },
+    { id: 'libro', label: 'Movimientos que explican el saldo', icon: History },
+  ];
+  const onTablistKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const idx = TABS.findIndex(t => t.id === activeTab);
+    let next: number | null = null;
+    if (e.key === 'ArrowRight') next = (idx + 1) % TABS.length;
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + TABS.length) % TABS.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = TABS.length - 1;
+    if (next != null) {
+      e.preventDefault();
+      const t = TABS[next];
+      setActiveTab(t.id);
+      document.getElementById(`ie-tab-${t.id}`)?.focus();
+    }
+  }, [activeTab]);
 
   const isLoading = query.isLoading;
   const queryError = query.error;
@@ -264,6 +312,47 @@ export default function IngresosEgresosView() {
         )}
       </div>
 
+      {/* ── MISIÓN AUDITORÍA CAJA (2026-10-24) §Fase 2: pestañas reales ──
+          El acordeón «Movimientos que explican el saldo» se sustituye por un
+          sistema de tabs (patrón del módulo Caja). Ambos paneles permanecen
+          montados: el inactivo se oculta — filtros/fechas/scroll conservados. */}
+      <div
+        className="flex border-b border-border bg-card rounded-t-xl overflow-x-auto"
+        role="tablist"
+        aria-label="Secciones de Ingresos/Egresos de caja"
+        onKeyDown={onTablistKeyDown}
+      >
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            id={`ie-tab-${id}`}
+            aria-selected={activeTab === id}
+            aria-controls={`ie-panel-${id}`}
+            tabIndex={activeTab === id ? 0 : -1}
+            onClick={() => setActiveTab(id)}
+            className={cn(
+              'flex-1 py-2.5 px-3 text-[11px] sm:text-xs font-black uppercase tracking-widest transition-colors border-b-2 -mb-px flex items-center justify-center gap-1.5 min-h-[44px] whitespace-nowrap',
+              activeTab === id
+                ? 'border-primary text-primary bg-primary/5'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30',
+            )}
+          >
+            <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* ── Panel: Documentos (pestaña Ingresos/Egresos) ── */}
+      <div
+        role="tabpanel"
+        id="ie-panel-documentos"
+        aria-labelledby="ie-tab-documentos"
+        hidden={activeTab !== 'documentos'}
+        className={cn(activeTab === 'documentos' ? 'space-y-4' : '')}
+      >
       {/* ── KPIs (RPC get_cash_flow_summary — una sola fuente) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
         <KpiCard
@@ -323,8 +412,8 @@ export default function IngresosEgresosView() {
         />
       </div>
 
-      {/* ── MISIÓN CAJA v2.24.0 (§7): movimientos que explican el saldo ── */}
-      <CashLedgerPanel storeId={storeId ?? null} canonicalCup={resumen?.expected_cash ?? null} />
+      {/* ── MISIÓN CAJA v2.24.0 (§7): movimientos que explican el saldo ──
+          Ahora pestaña dedicada (antes acordeón). Ver panel abajo. */}
 
       {/* ── Filtros y búsqueda ── */}
       <div className="space-y-2">
@@ -403,6 +492,7 @@ export default function IngresosEgresosView() {
               max={dateTo || undefined}
               onChange={e => { setDateFrom(e.target.value); setPage(1); }}
               aria-label="Fecha operativa desde"
+              aria-invalid={rangoInvalido || undefined}
               className="px-2 py-1.5 rounded-lg border border-border bg-background"
             />
           </label>
@@ -414,9 +504,15 @@ export default function IngresosEgresosView() {
               min={dateFrom || undefined}
               onChange={e => { setDateTo(e.target.value); setPage(1); }}
               aria-label="Fecha operativa hasta"
+              aria-invalid={rangoInvalido || undefined}
               className="px-2 py-1.5 rounded-lg border border-border bg-background"
             />
           </label>
+          {rangoInvalido && (
+            <p role="alert" className="w-full text-[11px] text-destructive flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" /> El intervalo es inválido: «Desde» no puede ser posterior a «Hasta».
+            </p>
+          )}
           {hayFiltrosActivos && (
             <Button
               type="button"
@@ -563,6 +659,22 @@ export default function IngresosEgresosView() {
           </div>
         </div>
       )}
+
+      </div>{/* ── fin panel documentos ── */}
+
+      {/* ── Panel: Movimientos que explican el saldo (antes acordeón) ── */}
+      <div
+        role="tabpanel"
+        id="ie-panel-libro"
+        aria-labelledby="ie-tab-libro"
+        hidden={activeTab !== 'libro'}
+      >
+        <CashLedgerPanel
+          storeId={storeId ?? null}
+          canonicalCup={resumen?.expected_cash ?? null}
+          active={activeTab === 'libro'}
+        />
+      </div>
 
       {/* ── Registro (flujo dedicado de 2 pasos) ── */}
       <CashFlowCreateModal

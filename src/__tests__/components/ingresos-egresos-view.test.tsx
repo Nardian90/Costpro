@@ -325,9 +325,12 @@ describe('IngresosEgresosView — render, consulta RLS y KPIs', () => {
     // Ingresos y egresos del período separados (nunca CUP+USD sumados)
     expect(screen.getAllByText('$5,000.00').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('$2,000.00').length).toBeGreaterThanOrEqual(1);
-    // MISIÓN CAJA v2.24 (§9): KPIs de saldos FÍSICOS por moneda añadidos
-    expect(screen.getByText('Saldo físico CUP')).toBeTruthy();
-    expect(screen.getByText('Saldo físico USD')).toBeTruthy();
+    // MISIÓN CAJA v2.24 (§9): KPIs de saldos FÍSICOS por moneda añadidos.
+    // MISIÓN AUDITORÍA CAJA (2026-10-24) §Fase 2: con el sistema de tabs ambos
+    // paneles permanecen montados (el inactivo oculto) — el KPI físico aparece
+    // en la pestaña Documentos Y en el panel del libro → getAllByText.
+    expect(screen.getAllByText('Saldo físico CUP').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Saldo físico USD').length).toBeGreaterThanOrEqual(1);
     expect(rpcMock).toHaveBeenCalledWith('get_cash_flow_summary', expect.anything());
   });
 

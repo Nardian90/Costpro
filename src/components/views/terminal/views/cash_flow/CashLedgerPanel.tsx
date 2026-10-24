@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * CashLedgerPanel — MISIÓN CAJA v2.24.0 (§7).
+ * CashLedgerPanel — MISIÓN CAJA v2.24.0 (§7) · MISIÓN AUDITORÍA CAJA (2026-10-24).
  *
  * «Los movimientos que explican el saldo»: libro mayor de caja con
  *  · saldo físico CUP y USD separados (el canónico CUP es el equivalente
@@ -12,12 +12,19 @@
  *    que NO destruyen el saldo real de cada fila.
  *
  * Fuente: /api/cash-flow/ledger (clasificación espejo de get_cash_currency_summary).
+ *
+ * MISIÓN AUDITORÍA CAJA (2026-10-24) §Fase 2: este bloque YA NO es un acordeón
+ * — es el CONTENIDO de la pestaña «Movimientos que explican el saldo» de
+ * IngresosEgresosView. El panel permanece montado (la vista padre lo oculta
+ * con `hidden` cuando la pestaña está inactiva) para conservar filtros y
+ * fechas al navegar. La consulta se activa con la pestaña (primera visita)
+ * y permanece suscrita — sin solicitudes redundantes al alternar.
  */
 
 import React, { useMemo, useState } from 'react';
 import {
   Loader2, RefreshCcw, AlertTriangle, History, ArrowDownToLine, ArrowUpFromLine,
-  ChevronDown, ChevronUp, Landmark,
+  Landmark,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -25,6 +32,7 @@ import {
   useCashLedger,
 } from '@/hooks/api/useCashLedger';
 import { movementLabel, type CashLedgerMovementType } from '@/lib/cash-ledger/build-ledger';
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 
 const MOVEMENT_TYPE_OPTIONS: Array<{ value: CashLedgerMovementType | 'all'; label: string }> = [
   { value: 'all', label: 'Todos los tipos' },
@@ -46,10 +54,11 @@ interface Props {
   storeId: string | null;
   /** Equivalente contable en CUP canónico (expected_cash del arqueo — get_cash_flow_summary). */
   canonicalCup: number | null;
+  /** §Fase 2: la pestaña está activa (el panel siempre montado, oculto si inactivo). */
+  active?: boolean;
 }
 
-export default function CashLedgerPanel({ storeId, canonicalCup }: Props) {
-  const [open, setOpen] = useState(false);
+export default function CashLedgerPanel({ storeId, canonicalCup, active = true }: Props) {
   const [currency, setCurrency] = useState<'all' | 'CUP' | 'USD'>('all');
   const [type, setType] = useState<CashLedgerMovementType | 'all'>('all');
   const [q, setQ] = useState('');
@@ -70,7 +79,10 @@ export default function CashLedgerPanel({ storeId, canonicalCup }: Props) {
     };
   }, [days, asOf, type, currency, q]);
 
-  const query = useCashLedger(storeId, filters, open && !!storeId);
+  // La carga se activa con la pestaña (primera visita) y PERMANECE suscrita
+  // al volver (react-query reutiliza la caché por clave — cero refetch extra
+  // por alternar pestañas mientras los datos no estén obsoletos).
+  const query = useCashLedger(storeId, filters, active && !!storeId);
 
   const rows = query.data?.rows ?? [];
   const balanceNow = query.data?.balance_now;
@@ -79,31 +91,22 @@ export default function CashLedgerPanel({ storeId, canonicalCup }: Props) {
 
   return (
     <div className="rounded-2xl border border-border bg-card shadow-sm">
-      {/* Encabezado colapsable */}
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between gap-3 p-4 sm:p-6 text-left"
-        aria-expanded={open}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="p-2 bg-primary/10 rounded-xl shrink-0">
-            <History className="w-5 h-5 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="font-black text-sm sm:text-base uppercase tracking-widest">
-              Movimientos que explican el saldo
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5 truncate">
-              Libro físico por moneda con saldo corrido e histórico · ventas en efectivo, vueltos, ingresos/egresos, entregas, reembolsos y turnos
-            </p>
-          </div>
+      {/* Encabezado del panel ( YA NO colapsable — pestaña dedicada §Fase 2) */}
+      <div className="flex items-center gap-3 min-w-0 p-4 sm:p-6 pb-3 sm:pb-3">
+        <div className="p-2 bg-primary/10 rounded-xl shrink-0">
+          <History className="w-5 h-5 text-primary" aria-hidden="true" />
         </div>
-        {open ? <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" /> : <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />}
-      </button>
+        <div className="min-w-0">
+          <h3 className="font-black text-sm sm:text-base uppercase tracking-widest">
+            Movimientos que explican el saldo
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            Libro físico por moneda con saldo corrido e histórico · ventas en efectivo, vueltos, ingresos/egresos, entregas, reembolsos y turnos
+          </p>
+        </div>
+      </div>
 
-      {open && (
-        <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
+      <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
           {/* Saldos físicos por moneda (§9) */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Kpi label="Saldo físico CUP" value={balanceNow ? formatCurrency(balanceNow.cup) : '—'} tone="primary" />
@@ -157,6 +160,7 @@ export default function CashLedgerPanel({ storeId, canonicalCup }: Props) {
               <input
                 type="date"
                 value={asOf}
+                max={todayBusinessDay()}
                 onChange={e => setAsOf(e.target.value)}
                 aria-label="Fecha de corte del saldo histórico"
                 className="px-2 py-1.5 rounded-lg border border-border bg-background"
@@ -281,8 +285,7 @@ export default function CashLedgerPanel({ storeId, canonicalCup }: Props) {
               </p>
             </>
           )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
