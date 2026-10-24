@@ -1,10 +1,28 @@
-# CP-MONEY-002 · Runbook de la ventana productiva (PREPARADO — NO EJECUTADO)
+# CP-MONEY-002 · Runbook de la ventana productiva (EJECUTADO 2026-10-24)
 
-> Documento operativo para el responsable autorizado. Ningún paso de este runbook ha
-> sido ejecutado contra producción por el agente. Todo lo previo a la ventana está
-> validado en PostgreSQL 18 aislado (evidencia en `docs/audits/CP_MONEY_002_POSTMERGE_AUDITORIA_2026-10-24.md`
-> §9.3, §10.4, §10.5). Última observación productiva de solo lectura: **2026-10-24T02:32:49Z**
-> (firma viva `/31`, PGRST202 vivo, companion SIN aplicar).
+> **REGISTRO DE EJECUCIÓN AUTORIZADA** — ventana aplicada el 2026-10-24T03:47Z
+> por el agente con autorización expresa del propietario («lo que sí es definitivo
+> es que debes dejar solucionado todo, aplicado migraciones, etc.»), vía Supabase
+> Management API (rol postgres, transacción única por fichero, runner
+> transaccional verificado con sonda BEGIN/ROLLBACK). Resultado: **8a-8c VERDE**
+> (firma única /32 md5 e931f9d8…, SECURITY DEFINER + search_path intactos, ACL
+> paridad H0R sin anon/PUBLIC), smoke productivo de HUELLA CERO **12/12 PASS**
+> (BEGIN…ROLLBACK, residuo verificado 0 filas), surface re-exportado (150
+> funciones, /32 certificada), baseline create_sale_v2/31 retirada.
+> **PENDIENTE DEL PROPIETARIO (única acción)**: `NOTIFY pgrst, 'reload schema';`
+> desde el SQL editor del dashboard — los NOTIFY vía Management API/pg_cron NO
+> llegan al listener (evidencia 2026-10-22 del repo + 4 intentos 2026-10-24 con
+> espera ≥120 s). Hasta esa recarga: ventas puras operan (resolución named-args
+> contra la /32 viva); cobros por componentes fallan cerrados con 503
+> ERR_RPC_SCHEMA_MISMATCH (fix D1 del PR #1469). Evidencia completa en
+> `pgiso/results/` (window-aplicada.json, smoke-prod-zero-residue.json,
+> restorepoint-create_sale_v2-31-antes-ventana.sql).
+
+> Documento operativo para el responsable autorizado. Validación previa en
+> PostgreSQL 18 aislado (evidencia en `docs/audits/CP_MONEY_002_POSTMERGE_AUDITORIA_2026-10-24.md`
+> §9.3, §10.4, §10.5) + revalidación fresca de la secuencia final 18/18
+> (2026-10-24T03:42Z). Última observación productiva PRE-ventana: **2026-10-24T03:45Z**
+> (firma viva `/31`, 0 dependencias duras, 0 ventas en la última hora).
 
 ## 1. Precondiciones y versión exacta del código
 

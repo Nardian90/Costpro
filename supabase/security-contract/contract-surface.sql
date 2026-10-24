@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-24T00:11:46.875Z
+-- Captured  : 2026-10-24T04:16:11.661Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 150 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -3696,8 +3696,8 @@ END;
 $function$
 
 
--- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb, p_cash_received_cup numeric, p_cash_received_usd numeric, p_change_given_cup numeric, p_change_given_usd numeric, p_change_currency text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb, p_cash_received_cup numeric DEFAULT NULL::numeric, p_cash_received_usd numeric DEFAULT NULL::numeric, p_change_given_cup numeric DEFAULT NULL::numeric, p_change_given_usd numeric DEFAULT NULL::numeric, p_change_currency text DEFAULT NULL::text)
+-- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb, p_cash_received_cup numeric, p_cash_received_usd numeric, p_change_given_cup numeric, p_change_given_usd numeric, p_change_currency text, p_payment_components jsonb" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb, p_cash_received_cup numeric DEFAULT NULL::numeric, p_cash_received_usd numeric DEFAULT NULL::numeric, p_change_given_cup numeric DEFAULT NULL::numeric, p_change_given_usd numeric DEFAULT NULL::numeric, p_change_currency text DEFAULT NULL::text, p_payment_components jsonb DEFAULT NULL::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -3741,6 +3741,21 @@ DECLARE
   v_zelle_amt numeric := p_zelle_amount;
   v_pt_id uuid;
   v_zelle_original_amount numeric;
+  -- MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24): componentes de pago por
+  -- moneda REAL — importe efectivamente cobrado en CUP y en USD por método.
+  v_comp jsonb;
+  v_comp_method text;
+  v_comp_cur text;
+  v_comp_amt numeric;
+  v_components_ok boolean := false;
+  v_usd_rate numeric := NULL;
+  v_usd_rate_source text := NULL;
+  v_usd_rate_eff timestamptz := NULL;
+  v_comp_cash_cup numeric := 0;
+  v_comp_cash_usd numeric := 0;
+  v_comp_transfer_cup numeric := 0;
+  v_comp_transfer_usd numeric := 0;
+  v_comp_zelle_usd numeric := 0;
   v_sum_payments numeric;
   v_wac_prev numeric;
   -- E-SEC (R-SEC-1): precio de referencia server-side y desvío comercial por ítem
@@ -3848,7 +3863,11 @@ BEGIN
       COALESCE(p_cash_received_usd::text, '') || '/' ||
       COALESCE(p_change_given_cup::text, '') || '/' ||
       COALESCE(p_change_given_usd::text, '') || '/' ||
-      COALESCE(p_change_currency, '')
+      COALESCE(p_change_currency, '') ||
+      -- MISIÓN PAGOS MIXTOS (2026-10-24): los componentes por moneda forman
+      -- parte de la identidad de idempotencia (misma clave + componentes
+      -- distintos = conflicto limpio, sin duplicar filas del ledger).
+      '|payment_components=' || COALESCE(p_payment_components::text, '')
     );
 
     INSERT INTO public.idempotency_registry (idempotency_key, operation, record_id, param_hash, result)
@@ -4243,6 +4262,121 @@ BEGIN
     END IF;
   END IF;
 
+  -- 13.7 MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24): COMPONENTES DE PAGO
+  --      POR MONEDA REAL. El cliente declara lo efectivamente cobrado en cada
+  --      moneda: [{method, currency, amount}] con importes ORIGINALES (sin
+  --      convertir). El servidor:
+  --        1. Valida la estructura (método ∈ cash|transfer|zelle, moneda ∈
+  --           CUP|USD, importe > 0; zelle es riel USD por diseño).
+  --        2. Resuelve la TASA USD de la operación con la jerarquía autoritaria
+  --           (tienda → BCC seg3 → elToque, fail-closed, staleness 45 días) —
+  --           la MISMA fuente del §10; para venta USD reutiliza v_server_rate.
+  --        3. DERIVA los pools canónicos (v_cash_amt/v_transfer_amt/
+  --           v_zelle_amt) desde los componentes a la tasa servidor — el
+  --           desglose por moneda del cliente deja de tener autoridad
+  --           financiera (paridad con D-EXR-02).
+  --      Sin componentes (p_payment_components NULL): flujo previo IDÉNTICO
+  --      (compatibilidad con /api/sync/batch y clientes legados).
+  v_components_ok := false;
+  IF p_payment_components IS NOT NULL THEN
+    IF jsonb_typeof(p_payment_components) <> 'array' THEN
+      RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: p_payment_components debe ser un array [{method, currency, amount}]';
+    END IF;
+    IF jsonb_array_length(p_payment_components) > 20 THEN
+      RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: máximo 20 componentes por venta';
+    END IF;
+    v_comp_cash_cup := 0; v_comp_cash_usd := 0;
+    v_comp_transfer_cup := 0; v_comp_transfer_usd := 0;
+    v_comp_zelle_usd := 0;
+    FOR v_comp IN SELECT * FROM jsonb_array_elements(p_payment_components) LOOP
+      v_comp_method := lower(btrim(COALESCE(v_comp->>'method', '')));
+      v_comp_cur := upper(btrim(COALESCE(v_comp->>'currency', '')));
+      v_comp_amt := COALESCE(NULLIF(v_comp->>'amount', '')::numeric, NULL);
+      IF v_comp_method NOT IN ('cash', 'transfer', 'zelle')
+         OR v_comp_cur NOT IN ('CUP', 'USD')
+         OR v_comp_amt IS NULL OR v_comp_amt <= 0 THEN
+        RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: componente inválido (method=%, currency=%, amount=%)',
+          v_comp_method, v_comp_cur, COALESCE(v_comp->>'amount', 'NULL');
+      END IF;
+      IF v_comp_method = 'zelle' AND v_comp_cur <> 'USD' THEN
+        RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: zelle es un riel USD (currency=%)', v_comp_cur;
+      END IF;
+      IF v_comp_method = 'cash' THEN
+        IF v_comp_cur = 'CUP' THEN
+          v_comp_cash_cup := v_comp_cash_cup + v_comp_amt;
+        ELSE
+          v_comp_cash_usd := v_comp_cash_usd + v_comp_amt;
+        END IF;
+      ELSIF v_comp_method = 'transfer' THEN
+        IF v_comp_cur = 'CUP' THEN
+          v_comp_transfer_cup := v_comp_transfer_cup + v_comp_amt;
+        ELSE
+          v_comp_transfer_usd := v_comp_transfer_usd + v_comp_amt;
+        END IF;
+      ELSE
+        v_comp_zelle_usd := v_comp_zelle_usd + v_comp_amt;
+      END IF;
+    END LOOP;
+
+    -- CP-MONEY-002 (D3, posmerge #1467): UNICIDAD de (método, moneda). El
+    -- cliente AGRUPA por (método, moneda) (buildPaymentComponents); un payload
+    -- con duplicados solo puede venir de un cliente no estándar y §17
+    -- insertaría DOS filas del ledger con la MISMA idempotency_key
+    -- 'pay-<method>-<currency>-<tx>' — payment_transactions no tiene
+    -- UNIQUE(idempotency_key) (verificado contra la BD viva 2026-10-24: solo
+    -- PK) → filas duplicadas en la fuente autoritativa del Reporte Entrega.
+    -- Fail-closed coherente con la regla de la misión (Fase B: «Rechaza
+    -- componentes duplicados») y con la agregación previa de pools (§13.7).
+    IF EXISTS (
+      SELECT 1
+      FROM jsonb_array_elements(p_payment_components) c
+      GROUP BY lower(btrim(c->>'method')), upper(btrim(c->>'currency'))
+      HAVING count(*) > 1
+    ) THEN
+      RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: componentes duplicados — agrupa los importes del mismo método y moneda en un solo componente [{method, currency, amount}]';
+    END IF;
+
+    -- Tasa USD de la operación (jerarquía §6.1 — misma fuente que v_server_rate)
+    IF upper(COALESCE(p_sale_currency, 'CUP')) = 'USD' AND v_server_rate > 1 THEN
+      v_usd_rate := v_server_rate;  -- venta USD: la tasa ya resuelta ES la tasa USD
+    END IF;
+    IF (v_comp_cash_usd + v_comp_transfer_usd + v_comp_zelle_usd) > 0
+       AND (v_usd_rate IS NULL OR v_usd_rate <= 1) THEN
+      SELECT ser.rate, 'store_exchange_rates', ser.updated_at
+        INTO v_usd_rate, v_usd_rate_source, v_usd_rate_eff
+        FROM public.store_exchange_rates ser
+        WHERE ser.store_id = p_store_id AND ser.currency = 'USD';
+      IF v_usd_rate IS NULL THEN
+        SELECT er.rate, 'global_bcc_seg3', er.rate_date
+          INTO v_usd_rate, v_usd_rate_source, v_usd_rate_eff
+          FROM public.exchange_rates er
+          WHERE er.currency = 'USD' AND er.source = 'BCC' AND er.segment = '3'
+          ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+      END IF;
+      IF v_usd_rate IS NULL THEN
+        SELECT er.rate, 'global_eltoque', er.rate_date
+          INTO v_usd_rate, v_usd_rate_source, v_usd_rate_eff
+          FROM public.exchange_rates er
+          WHERE er.currency = 'USD' AND er.source = 'elToque'
+          ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
+      END IF;
+      IF v_usd_rate IS NULL OR v_usd_rate <= 1 THEN
+        RAISE EXCEPTION 'ERR_EXCHANGE_RATE_UNAVAILABLE: componentes en USD exigen tasa USD (jerarquía tienda→BCC→elToque) — tienda %', p_store_id;
+      END IF;
+      IF v_usd_rate_eff < now() - INTERVAL '45 days' THEN
+        RAISE EXCEPTION 'ERR_RATE_STALE: currency=USD, store=%, source=%, effective=%',
+          p_store_id, v_usd_rate_source, v_usd_rate_eff;
+      END IF;
+    END IF;
+
+    -- Pools canónicos DERIVADOS (autoridad servidor, fail-closed): la suma de
+    -- componentes convertidos a la tasa de la operación.
+    v_cash_amt := v_comp_cash_cup + v_comp_cash_usd * COALESCE(v_usd_rate, 1);
+    v_transfer_amt := v_comp_transfer_cup + v_comp_transfer_usd * COALESCE(v_usd_rate, 1);
+    v_zelle_amt := v_comp_zelle_usd * COALESCE(v_usd_rate, 1);
+    v_components_ok := true;
+  END IF;
+
   -- 14. Validar/setear payment split
   --     MISIÓN-FLEX (2026-10-17): con incidencias documentadas por el cliente
   --     (v_incidents) se permiten faltante/sobrepago/desglose descuadrado y
@@ -4256,6 +4390,14 @@ BEGIN
       END IF;
       -- flexibilizado: la diferencia se documenta en nota + auditoría
     END IF;
+  ELSIF v_components_ok THEN
+    -- MISIÓN PAGOS MIXTOS (2026-10-24): los pools DERIVADOS de los
+    -- componentes (§13.7) son la autoridad — el importe realmente recibido
+    -- por moneda ya está validado contra la tasa servidor. Las sobreescritas
+    -- por método (total canónico / pool del cliente) NO aplican: destruirían
+    -- el desglose por moneda. La suma sigue validándose abajo (14.5/14.9/18)
+    -- con las mismas reglas e incidencias MISIÓN-FLEX.
+    NULL;
   ELSIF v_effective_method = 'cash' THEN
     IF v_incidents IS NOT NULL AND p_cash_amount IS NOT NULL AND p_cash_amount >= 0 THEN
       v_cash_amt := p_cash_amount;  -- lo realmente recibido (puede faltar/sobrar)
@@ -4526,7 +4668,41 @@ BEGIN
 
   -- 17. payment_transactions (fuente autoritativa de pagos) — §6.3: zelle
   --     siempre con la tasa servidor
-  IF v_cash_amt > 0 THEN
+  -- MISIÓN PAGOS MIXTOS (2026-10-24): con componentes, el ledger registra
+  -- UNA FILA POR COMPONENTE con su MONEDA REAL y la TASA DE LA OPERACIÓN
+  -- persistida (exchange_rate de la fila USD = tasa servidor §13.7). El
+  -- invariante PT011 (Σ amount_cup = total) se preserva EXACTO porque los
+  -- pools del INSERT de la venta se derivaron de estos mismos componentes a
+  -- esta misma tasa. Sin componentes: flujo previo (pool canónico CUP).
+  IF v_components_ok THEN
+    FOR v_comp IN SELECT * FROM jsonb_array_elements(p_payment_components) LOOP
+      v_comp_method := lower(btrim(COALESCE(v_comp->>'method', '')));
+      v_comp_cur := upper(btrim(COALESCE(v_comp->>'currency', '')));
+      v_comp_amt := COALESCE(NULLIF(v_comp->>'amount', '')::numeric, NULL);
+      IF v_comp_method = 'zelle' THEN
+        -- Zelle: mismas reglas canónicas del flujo previo (riel USD, tasa > 1,
+        -- moneda de venta USD/EUR/MLC).
+        IF p_sale_currency = 'CUP' OR v_usd_rate IS NULL OR v_usd_rate <= 1 THEN
+          RAISE EXCEPTION 'ERR_ZELLE_REQUIRES_RATE: zelle payment requires p_sale_currency != CUP and server_exchange_rate > 1. Got: currency=%, rate=%',
+            p_sale_currency, v_usd_rate USING ERRCODE = 'PT009';
+        END IF;
+        IF p_sale_currency NOT IN ('USD', 'EUR', 'MLC') THEN
+          RAISE EXCEPTION 'ERR_INVALID_CURRENCY: p_sale_currency must be USD, EUR, or MLC. Got: %',
+            p_sale_currency USING ERRCODE = 'PT004';
+        END IF;
+      END IF;
+      INSERT INTO public.payment_transactions (
+        store_id, ref_type, ref_id, transaction_id,
+        amount, payment_method, currency, exchange_rate,
+        payment_date, paid_by, idempotency_key
+      ) VALUES (
+        p_store_id, 'sale', v_tx_id, v_tx_id,
+        v_comp_amt, v_comp_method, v_comp_cur,
+        CASE WHEN v_comp_cur = 'USD' THEN v_usd_rate ELSE 1.0 END,
+        v_eff, v_uid, 'pay-' || v_comp_method || '-' || v_comp_cur || '-' || v_tx_id::text
+      ) RETURNING id INTO v_pt_id;
+    END LOOP;
+  ELSIF v_cash_amt > 0 THEN
     INSERT INTO public.payment_transactions (
       store_id, ref_type, ref_id, transaction_id,
       amount, payment_method, currency, exchange_rate,
@@ -4550,7 +4726,7 @@ BEGIN
     ) RETURNING id INTO v_pt_id;
   END IF;
 
-  IF v_zelle_amt > 0 THEN
+  IF NOT v_components_ok AND v_zelle_amt > 0 THEN
     IF p_sale_currency = 'CUP' OR v_server_rate IS NULL OR v_server_rate <= 1 THEN
       RAISE EXCEPTION 'ERR_ZELLE_REQUIRES_RATE: zelle payment requires p_sale_currency != CUP and server_exchange_rate > 1. Got: currency=%, rate=%',
         p_sale_currency, v_server_rate USING ERRCODE = 'PT009';
@@ -4641,7 +4817,11 @@ BEGIN
       'change_given_cup', p_change_given_cup,
       'change_given_usd', p_change_given_usd,
       'change_rate', v_chg_rate,
-      'change_rate_source', v_chg_rate_src
+      'change_rate_source', v_chg_rate_src,
+      -- MISIÓN PAGOS MIXTOS (2026-10-24): desglose por moneda auditado
+      'payment_components', COALESCE(p_payment_components, 'null'::jsonb),
+      'usd_operation_rate', v_usd_rate,
+      'usd_operation_rate_source', v_usd_rate_source
     ));
 
   -- 20.5 MISIÓN-FLEX: evento de auditoría dedicado por venta con incidencia
