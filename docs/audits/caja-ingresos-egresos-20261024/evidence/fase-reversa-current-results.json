@@ -1,0 +1,496 @@
+{
+  "phase": "current",
+  "total": 45,
+  "pass": 41,
+  "fail": 0,
+  "defects": [
+    {
+      "id": "R1",
+      "why": "reversión documental libera el tope de reembolso sin recuperación: 160 CUP reembolsados de 100 pagados (doble reembolso íntegro)"
+    },
+    {
+      "id": "R2",
+      "why": "no existe mecanismo para registrar la recuperación del dinero: el libro no puede volver a reflejar la entrada"
+    },
+    {
+      "id": "R4",
+      "why": "reversión USD libera el tope sin recuperación: 12 USD reembolsados de 10 pagados"
+    },
+    {
+      "id": "R7",
+      "why": "reversión de store_credit no compensa el pasivo ni existe tope de crédito: 120 de crédito por una venta de 100"
+    },
+    {
+      "id": "R8",
+      "why": "venta mixta 2000 CUP + 5 USD: NO existe camino de devolución total — el usuario no puede completar la devolución prevista (fail-closed sin flujo)"
+    },
+    {
+      "id": "R11",
+      "why": "arbitraje de tasa: el mismo importe comercial devuelve 4.94 USD o 12.5 USD según la tasa VIGENTE del día (pagados 10 USD a tasa 400)"
+    },
+    {
+      "id": "R14",
+      "why": "la UI bloquea la moneda en rieles bancarios (disabled) y el RPC defaultea CUP: una venta cobrada por zelle USD no puede reembolsarse por su riel natural"
+    }
+  ],
+  "results": [
+    {
+      "id": "R1.refund",
+      "desc": "reembolso 60 CUP aceptado; neto 600−60=540",
+      "expected": {
+        "CUP": 540,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 540,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R1.rev-current",
+      "desc": "ACTUAL: la reversión administrativa SE ACEPTA sin recuperar el dinero",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R1.ledger-current",
+      "desc": "el libro CONSERVA la salida (neto 540 — el dinero no volvió)",
+      "expected": {
+        "CUP": 540,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 540,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R1.double-current",
+      "desc": "ACTUAL: segunda devolución de los MISMOS 60 CUP aceptada",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R1.double-net",
+      "desc": "neto 480 → salieron 120 CUP de 100 pagados",
+      "expected": {
+        "CUP": 480,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 480,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R1.triple-current",
+      "desc": "ACTUAL: tercera devolución (40 CUP) aceptada → 160 de 100",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R1.triple-net",
+      "desc": "neto 440 → 160 CUP salieron de una venta de 100",
+      "expected": {
+        "CUP": 440,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 440,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R2.pre",
+      "desc": "neto tras venta y reembolso 60: 540",
+      "expected": {
+        "CUP": 540,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 540,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R2.current",
+      "desc": "en el estado ACTUAL no existe operación de recuperación (reversión puramente documental)",
+      "expected": null,
+      "observed": {
+        "reversal_ok": true,
+        "recovery_rows": 0
+      },
+      "status": "INFO",
+      "phase": "current"
+    },
+    {
+      "id": "R3.first",
+      "desc": "primera reversión aceptada",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R3.second",
+      "desc": "segunda reversión rechazada (ERR_ALREADY_REVERSED)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R4.pre",
+      "desc": "neto USD: 100+10−6 = 104",
+      "expected": {
+        "CUP": 0,
+        "USD": 104
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 104
+      },
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R4.rev-current",
+      "desc": "ACTUAL: reversión USD sin recuperación aceptada",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R4.double-current",
+      "desc": "segunda devolución de 6 USD aceptada → 12 de 10 pagados",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R4.double-net",
+      "desc": "neto USD 98",
+      "expected": {
+        "CUP": 0,
+        "USD": 98
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 98
+      },
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R5.current",
+      "desc": "en el estado ACTUAL la reversión no escribe nada financiero: no hay estados parciales que simular (el defecto es la AUSENCIA de la escritura)",
+      "expected": null,
+      "observed": {
+        "stock0": 1000,
+        "net": {
+          "CUP": 550,
+          "USD": 0
+        }
+      },
+      "status": "INFO",
+      "phase": "current"
+    },
+    {
+      "id": "R6.current",
+      "desc": "ACTUAL: exactamente UNA reversión documental exitosa",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R6.current-net",
+      "desc": "neto 550 (una sola salida de 50)",
+      "expected": {
+        "CUP": 550,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 550,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R7.no-cash",
+      "desc": "el crédito NO toca el efectivo (neto 600)",
+      "expected": {
+        "CUP": 600,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 600,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R7.credit-issued",
+      "desc": "pasivo emitido una sola vez: +60",
+      "expected": [
+        {
+          "amount": 60
+        }
+      ],
+      "observed": [
+        {
+          "amount": 60
+        }
+      ],
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R7.rev-current",
+      "desc": "ACTUAL: reversión del crédito aceptada",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R7.liability-current",
+      "desc": "el pasivo NO se compensa (+60 persiste)",
+      "expected": [
+        {
+          "amount": 60
+        }
+      ],
+      "observed": [
+        {
+          "amount": 60
+        }
+      ],
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R7.double-credit",
+      "desc": "segundo crédito de 60 emitido → pasivo total 120 de 100 pagados",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R7.double-credit-rows",
+      "desc": "filas: +60, +60",
+      "expected": [
+        60,
+        60
+      ],
+      "observed": [
+        60,
+        60
+      ],
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R8.pre",
+      "desc": "neto (2000 CUP, 5 USD)",
+      "expected": {
+        "CUP": 2000,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 2000,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R8.cup-blocked",
+      "desc": "devolución total en CUP rechazada (4000 > 2000 pagados)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R8.usd-blocked",
+      "desc": "devolución total en USD rechazada (10 > 5 pagados)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R9.partials",
+      "desc": "parciales aceptados (1000 CUP · 2.5 USD)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R9.partials-net",
+      "desc": "neto (1000 CUP, 2.5 USD)",
+      "expected": {
+        "CUP": 1000,
+        "USD": 2.5
+      },
+      "observed": {
+        "CUP": 1000,
+        "USD": 2.5
+      },
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R9.current",
+      "desc": "AS_PAID no existe en el estado actual (param no reconocido→ moneda inválida)",
+      "expected": null,
+      "observed": {
+        "err": "ERR_DEVOLUTION_INVALID_CURRENCY: AS_PAID"
+      },
+      "status": "INFO",
+      "phase": "current"
+    },
+    {
+      "id": "R10.cup-reject",
+      "desc": "4000 CUP de 2000 pagados → ERR_DEVOLUTION_REFUND_CAP",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R10.usd-reject",
+      "desc": "8.75 USD de 5 pagados → ERR_DEVOLUTION_REFUND_CAP",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R11.accept-current",
+      "desc": "ACTUAL: la devolución total se ACEPTA",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R11.amount-current",
+      "desc": "reembolso emitido: 4000/810 = 4.94 USD por 10 USD pagados (deriva de tasa)",
+      "expected": 4.94,
+      "observed": 4.94,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R11b.reject-current",
+      "desc": "ACTUAL: 8100/400 = 20.25 USD rechazado SOLO por el tope (no por la tasa)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R12.idem",
+      "desc": "reintento idempotente (misma devolución, sin duplicar)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R12.rows",
+      "desc": "una sola fila refund (30 CUP)",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R13.undetermined",
+      "desc": "sin pagos determinables → ERR_DEVOLUTION_PAYMENTS_UNDETERMINED",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R14.accept-current",
+      "desc": "reembolso zelle USD aceptado (5 USD a tasa de tienda 400 = la de la venta)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R14.cup-current",
+      "desc": "ACTUAL: zelle en «CUP» rechazado por tope (pagado CUP=0) — la UI solo permite CUP en rieles bancarios",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R15",
+      "desc": "validaciones de recuperación no aplican al estado actual (no existe la operación)",
+      "expected": null,
+      "status": "INFO",
+      "phase": "current"
+    },
+    {
+      "id": "R16.plain",
+      "desc": "la reversión documental pura (sin efecto financiero) SIGUE permitida",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R17.cross-store",
+      "desc": "usuario de OTRA tienda → ERR_UNAUTHORIZED",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R18.retry",
+      "desc": "el reintento devuelve la devolución original (idempotente, sin nuevo reembolso)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "R18.rows",
+      "desc": "una sola fila refund (60)",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS",
+      "phase": "current"
+    }
+  ]
+}

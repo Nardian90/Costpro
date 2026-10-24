@@ -31,6 +31,16 @@ export type ReversibleDocType =
   | 'devolution'
   | 'production_order';
 
+/** MISIÓN DE CIERRE (§4): componente de recuperación del dinero de una
+ * devolución con reembolso liquidado. Moneda e importe los FIJA el servidor
+ * desde las filas refund — aquí solo se declara el riel real de cobro. */
+export interface RecoveryComponent {
+  currency: 'CUP' | 'USD';
+  method: 'cash' | 'transfer' | 'zelle';
+  operation_date?: string;
+  notes?: string;
+}
+
 interface ReverseOptions {
   /** Tipo de documento a revertir */
   type: ReversibleDocType;
@@ -38,6 +48,9 @@ interface ReverseOptions {
   id: string;
   /** Motivo de la reversión (mín 3 caracteres) */
   reason: string;
+  /** Recuperación explícita (solo devoluciones con reembolso liquidado):
+   *  la reversión es ATÓMICA con la recuperación del dinero. */
+  recovery?: RecoveryComponent[];
 }
 
 export function useReverseDocument() {
@@ -45,15 +58,15 @@ export function useReverseDocument() {
   const { user } = useAuthStore();
 
   return useMutation({
-    mutationFn: async ({ type, id, reason }: ReverseOptions) => {
-      logger.info('DATABASE', `[Reverse] type=${type} id=${id} reason="${reason}"`);
+    mutationFn: async ({ type, id, reason, recovery }: ReverseOptions) => {
+      logger.info('DATABASE', `[Reverse] type=${type} id=${id} reason="${reason}"${recovery ? ` recovery=${JSON.stringify(recovery)}` : ''}`);
 
       const result = await apiFetch('/api/reverse', {
         method: 'POST',
-        body: JSON.stringify({ type, id, reason }),
+        body: JSON.stringify({ type, id, reason, ...(recovery ? { recovery } : {}) }),
       });
 
-      return result as { status: string; items_reversed: number };
+      return result as { status: string; items_reversed: number; recovered?: Array<{ currency: string; amount: number; method: string; rate: number }> };
     },
     onSuccess: async (data, variables) => {
       // Invalidar TODAS las queries que puedan verse afectadas

@@ -185,7 +185,14 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
   const [saleResults, setSaleResults] = useState<any[]>([]);
   const [originalSale, setOriginalSale] = useState<any | null>(null);
   const [refundMethod, setRefundMethod] = useState<'cash' | 'transfer' | 'zelle' | 'store_credit'>('cash');
-  const [refundCurrency, setRefundCurrency] = useState<'CUP' | 'USD'>('CUP');
+  // MISIÓN DE CIERRE (§6): 'AS_PAID' = multi-moneda «según lo pagado» (solo
+  // efectivo): el servidor emite un componente por moneda en una transacción
+  // atómica. La moneda única sigue disponible para CUP/USD y, desde esta
+  // misión, TAMBIÉN para los rieles bancarios (zelle=USD, transfer=CUP/USD).
+  const [refundCurrency, setRefundCurrency] = useState<'CUP' | 'USD' | 'AS_PAID'>('CUP');
+  // Composición de pagos de la venta seleccionada (lectura RLS de tienda):
+  // pagado por moneda + reembolsado no recuperado → reembolsable por moneda.
+  const [saleComposition, setSaleComposition] = useState<{ paidCup: number; paidUsd: number; refundedCup: number; refundedUsd: number } | null>(null);
   // MISIÓN FECHAS DE TRABAJO: fecha operativa de la devolución. Default HOY
   // (día de negocio Habana — no la fecha UTC del navegador) o la preferencia
   // de trabajo del usuario para este tipo si es válida.
@@ -231,6 +238,55 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
 
   function removeItem(idx: number) {
     setItems(prev => prev.filter((_, i) => i !== idx));
+  }
+
+  // MISIÓN DE CIERRE (§6): composición de pagos de la venta (pagado neto por
+  // moneda según las MISMAS fuentes que el tope del RPC: filas de pago reales
+  // + liquidación) y reembolsos no recuperados (refund − recovery). Solo lectura
+  // informativa: la validación DEFINITIVA es del servidor (fail-closed).
+  async function loadSaleComposition(saleId: string) {
+    setSaleComposition(null);
+    try {
+      const { supabase } = await import('@/lib/supabaseClient');
+      const [payRes, refundRes, saleRes] = await Promise.all([
+        supabase.from('payment_transactions')
+          .select('payment_method, currency, amount, direction')
+          .eq('transaction_id', saleId)
+          .eq('ref_type', 'sale'),
+        supabase.from('payment_transactions')
+          .select('currency, amount, direction')
+          .eq('transaction_id', saleId)
+          .eq('ref_type', 'devolution')
+          .in('direction', ['refund', 'recovery']),
+        supabase.from('transactions')
+          .select('cash_received_cup, cash_received_usd, change_given_cup, change_given_usd')
+          .eq('id', saleId).single(),
+      ]);
+      const pays = (payRes.data ?? []) as Array<{ payment_method: string; currency: string; amount: number }>;
+      const refundRows = (refundRes.data ?? []) as Array<{ currency: string; amount: number; direction: string }>;
+      const settle = saleRes.data as { cash_received_cup: number | null; cash_received_usd: number | null; change_given_cup: number | null; change_given_usd: number | null } | null;
+      let paidCup = 0, paidUsd = 0;
+      const rowsCup = pays.filter(p => p.currency === 'CUP').reduce((s2, p) => s2 + Number(p.amount), 0);
+      const rowsUsd = pays.filter(p => p.currency === 'USD').reduce((s2, p) => s2 + Number(p.amount), 0);
+      const bankCup = pays.filter(p => (p.payment_method === 'transfer' || p.payment_method === 'zelle') && p.currency === 'CUP').reduce((s2, p) => s2 + Number(p.amount), 0);
+      const bankUsd = pays.filter(p => (p.payment_method === 'transfer' || p.payment_method === 'zelle') && p.currency === 'USD').reduce((s2, p) => s2 + Number(p.amount), 0);
+      const hasSettle = settle && (settle.cash_received_cup != null || settle.cash_received_usd != null || settle.change_given_cup != null || settle.change_given_usd != null);
+      if (hasSettle && settle) {
+        paidCup = (Number(settle.cash_received_cup ?? 0) - Number(settle.change_given_cup ?? 0)) + bankCup;
+        paidUsd = (Number(settle.cash_received_usd ?? 0) - Number(settle.change_given_usd ?? 0)) + bankUsd;
+      } else if (rowsUsd > 0) {
+        paidCup = rowsCup + bankCup;
+        paidUsd = rowsUsd + bankUsd;
+      } else if (pays.length > 0) {
+        paidCup = rowsCup + bankCup;  // legacy canónico: el RPC hace el carve por ítems
+        paidUsd = bankUsd;
+      }
+      const refundedCup = refundRows.filter(r => r.currency === 'CUP').reduce((s2, r) => s2 + (r.direction === 'refund' ? Number(r.amount) : -Number(r.amount)), 0);
+      const refundedUsd = refundRows.filter(r => r.currency === 'USD').reduce((s2, r) => s2 + (r.direction === 'refund' ? Number(r.amount) : -Number(r.amount)), 0);
+      setSaleComposition({ paidCup, paidUsd, refundedCup, refundedUsd });
+    } catch {
+      setSaleComposition(null);
+    }
   }
 
   const total = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
@@ -290,7 +346,7 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
                 <p className="font-black truncate">{originalSale.invoice_number || originalSale.id.slice(0, 8)} · {formatCurrency(originalSale.total_amount)}</p>
                 <p className="text-muted-foreground truncate">{originalSale.customer_name || 'Cliente eventual'} · {formatDate(originalSale.created_at)}</p>
               </div>
-              <button type="button" onClick={() => setOriginalSale(null)} className="p-1 rounded hover:bg-destructive/10 text-destructive shrink-0" aria-label="Quitar venta original">
+              <button type="button" onClick={() => { setOriginalSale(null); setSaleComposition(null); }} className="p-1 rounded hover:bg-destructive/10 text-destructive shrink-0" aria-label="Quitar venta original">
                 <X className="w-3 h-3" />
               </button>
             </div>
@@ -314,6 +370,36 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
           )}
         </div>
 
+        {originalSale && saleComposition && (
+          <div data-testid="sale-payment-composition" className="p-2.5 rounded-lg border border-border bg-muted/30 text-xs space-y-1">
+            <p className="font-bold uppercase tracking-wider text-[10px] text-muted-foreground">Composición del pago</p>
+            <p className="font-mono">
+              Pagado neto: {saleComposition.paidCup > 0 ? `${saleComposition.paidCup.toLocaleString('es-CU')} CUP` : ''}
+              {saleComposition.paidCup > 0 && saleComposition.paidUsd > 0 ? ' + ' : ''}
+              {saleComposition.paidUsd > 0 ? `${saleComposition.paidUsd.toLocaleString('es-CU')} USD` : ''}
+              {saleComposition.paidCup === 0 && saleComposition.paidUsd === 0 ? 'indeterminable — el reembolso monetario queda bloqueado' : ''}
+            </p>
+            {(saleComposition.refundedCup > 0 || saleComposition.refundedUsd > 0) && (
+              <p className="font-mono text-muted-foreground">
+                Ya reembolsado (no recuperado): {[
+                  saleComposition.refundedCup > 0 ? `${saleComposition.refundedCup.toLocaleString('es-CU')} CUP` : '',
+                  saleComposition.refundedUsd > 0 ? `${saleComposition.refundedUsd.toLocaleString('es-CU')} USD` : '',
+                ].filter(Boolean).join(' + ')}
+                {' → reembolsable: '}
+                {[
+                  (saleComposition.paidCup - saleComposition.refundedCup) > 0 ? `${(saleComposition.paidCup - saleComposition.refundedCup).toLocaleString('es-CU')} CUP` : '',
+                  (saleComposition.paidUsd - saleComposition.refundedUsd) > 0 ? `${(saleComposition.paidUsd - saleComposition.refundedUsd).toLocaleString('es-CU')} USD` : '',
+                ].filter(Boolean).join(' + ') || '0'}
+              </p>
+            )}
+            {saleComposition.paidCup > 0 && saleComposition.paidUsd > 0 && (
+              <p className="text-[10px] text-muted-foreground">
+                Pago mixto: para devolver TODO lo restante use «Según lo pagado (CUP + USD)».
+              </p>
+            )}
+          </div>
+        )}
+
         {/* MISIÓN CAJA v2.24.0: método + moneda REAL del reembolso (§8-B/C) */}
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -327,12 +413,15 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
             </select>
           </div>
           <div>
-            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Moneda del reembolso</label>
-            <select value={refundCurrency} onChange={e => setRefundCurrency(e.target.value as 'CUP' | 'USD')} disabled={refundMethod !== 'cash'}
+            <label htmlFor="devolution-refund-currency" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Moneda del reembolso</label>
+            <select id="devolution-refund-currency" value={refundCurrency} onChange={e => setRefundCurrency(e.target.value as 'CUP' | 'USD' | 'AS_PAID')} disabled={refundMethod === 'store_credit'}
               className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm font-bold disabled:opacity-50', touch)}>
               <option value="CUP">CUP</option>
-              <option value="USD">USD (tasa del servidor)</option>
+              <option value="USD">USD (tasa histórica de la venta)</option>
+              {refundMethod === 'cash' && <option value="AS_PAID">Según lo pagado (CUP + USD)</option>}
             </select>
+            {refundMethod === 'zelle' && <p className="text-[10px] text-muted-foreground mt-1">Zelle opera en USD.</p>}
+            {refundMethod === 'store_credit' && <p className="text-[10px] text-muted-foreground mt-1">El crédito de tienda se emite en CUP canónico.</p>}
           </div>
         </div>
 

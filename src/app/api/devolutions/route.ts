@@ -31,7 +31,10 @@ const createSchema = z.object({
   // MISIÓN CAJA v2.24.0: moneda REAL por la que sale el dinero del reembolso
   // (v2.24 añade p_refund_currency al RPC; el reembolso en USD registra la
   // fila PT en USD con tasa servidor — ya no hardcodeada CUP×1.0).
-  refund_currency: z.enum(['CUP', 'USD']).default('CUP'),
+  // MISIÓN DE CIERRE (§6): 'AS_PAID' = reembolso multi-moneda «según lo
+  // pagado» — el servidor calcula un componente por moneda (CUP+USD) bajo
+  // una transacción atómica; requiere entrega física en efectivo.
+  refund_currency: z.enum(['CUP', 'USD', 'AS_PAID']).default('CUP'),
   customer_id: z.string().min(1).optional(),
   customer_name: z.string().optional(),
   notes: z.string().optional(),
@@ -59,6 +62,15 @@ function mapRpcError(msg: string): NextResponse | null {
     ['ERR_DEVOLUTION_REFUND_CAP', 422, 'El reembolso excede lo reembolsable de esa moneda para la venta original (pagado neto, ya reembolsado y solicitado vienen en el detalle). No se convierte implícitamente entre monedas: devuelva dentro de lo pagado por moneda o use crédito de tienda.'],
     // Pagos indeterminables de la venta (sin filas/liquidación/efectivo).
     ['ERR_DEVOLUTION_PAYMENTS_UNDETERMINED', 422, 'La venta original no tiene pagos determinables (sin filas de pago ni liquidación): el reembolso monetario queda bloqueado. Revise la venta original.'],
+    // Tasa histórica no reconstruible (MISIÓN DE CIERRE §7).
+    ['ERR_DEVOLUTION_RATE_UNDETERMINED', 422, 'La venta pagó USD pero su tasa histórica no es reconstruible (sin filas con tasa, liquidación pura o carve): el reembolso en USD queda bloqueado — se devuelve la moneda y el importe neto realmente cobrados, nunca un arbitraje de tasa vigente.'],
+    // Asignación ambigua en devolución mixta parcial (MISIÓN DE CIERRE §6).
+    ['ERR_DEVOLUTION_MIXED_ALLOCATION', 422, 'El reembolso mixto «según lo pagado» exige consumir íntegramente lo reembolsable por moneda (devolución total de lo restante). No existe regla de asignación por artículo: el caso ambiguo se bloquea.'],
+    // Tope canónico del crédito de tienda (MISIÓN DE CIERRE §8).
+    ['ERR_DEVOLUTION_CREDIT_CAP', 422, 'El crédito de tienda excede lo emitible canónico de la venta (pagado neto − crédito vigente).'],
+    // Guards de moneda/riel (MISIÓN DE CIERRE §6).
+    ['ERR_DEVOLUTION_AS_PAID_CASH_ONLY', 422, 'El reembolso multi-moneda «según lo pagado» exige entrega física en efectivo (ambas monedas simultáneamente).'],
+    ['ERR_DEVOLUTION_ZELLE_CURRENCY', 422, 'Zelle opera en USD: un reembolso por zelle no puede emitirse en CUP.'],
     // Físico por moneda (paridad con la correctiva 20261024220000 de caja).
     ['ERR_INSUFFICIENT_CURRENCY', 422, 'El reembolso supera el saldo físico disponible de esa moneda en caja.'],
     ['ERR_IDEMPOTENCY_KEY_REUSE', 409, 'Conflicto de idempotencia: la clave ya fue usada con otros datos.'],
