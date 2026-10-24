@@ -301,9 +301,21 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_change_given_cup: d.change_given_cup ?? null,
     p_change_given_usd: d.change_given_usd ?? null,
     p_change_currency: d.change_currency ?? null,
-    // MISIÓN PAGOS MIXTOS (2026-10-24): desglose real por moneda. NULL cuando
-    // no viaja (venta CUP pura / zelle puro) — comportamiento previo intacto.
-    p_payment_components: d.payment_components?.length ? d.payment_components : null,
+    // CP-MONEY-002 (D1, posmerge #1467): la clave p_payment_components viaja
+    // SOLO cuando existe desglose real por moneda. Enviarla SIEMPRE (aunque
+    // fuera null — patrón de la 2026-10-18) rompía la resolución de PostgREST
+    // contra la BD SIN migrar: PGRST202 «Could not find the function
+    // public.create_sale_v2(p_payment_components)», verificado contra la BD
+    // viva el 2026-10-24, y TODA venta fallaba — incluidas las CUP/zelle puras
+    // y TODO replay offline de /api/sync/batch. Con la clave condicional: las
+    // ventas sin componentes resuelven contra la firma legada de 31 params Y
+    // contra la nueva de 32 (p_payment_components jsonb DEFAULT NULL); los
+    // cobros mixtos exigen la BD migrada (fail-closed correcto: sin ledger
+    // multimoneda es mejor rechazar que corromper el desglose — error 503
+    // accionable, abajo). No hay ambigüedad de overloads: la companion
+    // 20261025120000 (CP-MONEY-002) deja UNA sola firma de 32 params, y la
+    // llamada que OMITE la clave resuelve por DEFAULT NULL.
+    ...(d.payment_components?.length ? { p_payment_components: d.payment_components } : {}),
   });
 
   if (rpcError) {
@@ -392,6 +404,20 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // MISIÓN PAGOS MIXTOS (2026-10-24): componente de pago inválido.
     if (msg.includes('ERR_PAYMENT_COMPONENTS_INVALID')) {
       return NextResponse.json({ error: 'Desglose de pago por moneda inválido: cada componente debe tener método (efectivo/transferencia/zelle), moneda (CUP/USD) e importe positivo. Zelle solo admite USD.' }, { status: 422 });
+    }
+    // CP-MONEY-002 (D1): la BD no acepta la firma esperada — migración pendiente
+    // (20261024150000 + companion 20261025120000) o desalineada con el código
+    // desplegado. Sin esta rama el operador veía un 500 opaco con el mensaje
+    // crudo de PostgREST. 503 = infraestructura, reintentar tras migrar.
+    if (msg.includes('PGRST202') || msg.includes('PGRST203') || msg.includes('Could not find the function') || msg.includes('Could not choose the best candidate')) {
+      return NextResponse.json(
+        {
+          error:
+            'La base de datos no acepta la operación: firma del RPC create_sale_v2 desactualizada (migraciones v2.25.0 pendientes de aplicar). Coordina con el administrador para aplicar las migraciones y reintenta. Los cobros en una sola moneda no se ven afectados.',
+          code: 'ERR_RPC_SCHEMA_MISMATCH',
+        },
+        { status: 503 },
+      );
     }
     // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — errores del vuelto.
     if (msg.includes('ERR_CASH_SETTLEMENT_MISMATCH')) {
