@@ -140,6 +140,7 @@ Cobertura automatizada: `src/__tests__/lib/cp-money-002-reference-cases.test.ts`
 | `src/app/api/sync/batch/route.ts` | D1: clave condicional en el replay (solo si el payload encolado la trae) |
 | `src/lib/cash-report/fetch-sale-payments.ts` | D4: degradación limpia según contrato (catch → warn + mapa vacío) |
 | `supabase/migrations/20261025120000_cp_money_002_postmerge_integrity.sql` | D2+D3: DROP del overload legado + §13.7 anti-duplicados (generada por script, sintaxis validada) |
+| `ci-gate-allowlist.json` | Baseline `source_of_truth_baseline` TEMPORAL para `create_sale_v2/31` (`LIVE_FUNCTION_NOT_REPRESENTED`) — drift INTENCIONAL mientras el propietario aplica las migraciones; se retira al regenerar el surface (mismo procedimiento que la REVISIÓN FINAL v2.24.1, commit 5920348). Expira 2027-01-31 |
 | `src/__tests__/...` (5 archivos) | 37 pruebas: payload, errores, migración, degradación, tabla A–J |
 | `docs/audits/CP_MONEY_002_...md` | Este documento |
 
@@ -148,6 +149,7 @@ Cobertura automatizada: `src/__tests__/lib/cp-money-002-reference-cases.test.ts`
 ## 8. Riesgos residuales y decisiones de negocio pendientes
 
 - **Orden de despliegue:** aplicar AMBAS migraciones en la misma ventana ANTES de exponer el frontend de pagos mixtos. Con este PR, desplegar el frontend antes de migrar ya no rompe las ventas puras (regresión D1 eliminada); los cobros mixtos fallan cerrado con 503 accionable hasta migrar.
+- **Retiro de la baseline y regeneración del surface** tras aplicar (precedente 5920348): regenerar `supabase/security-contract/contract-surface.sql` certificando `create_sale_v2/32` y retirar la entrada `source_of_truth_baseline` de `ci-gate-allowlist.json`.
 - **Devolución proporcional por componentes** (ventas mixtas): pendiente de aprobación del propietario — modelo vigente intacto.
 - **`schema_migrations` desactualizada** en producción: el mecanismo de aplicación de migraciones no registra versiones recientes; se recomienda reconciliar el tracking (tarea operativa aparte, fuera de alcance).
 - **Test flaky preexistente** (`payments-route-payment-date`): fix sugerido, no aplicado aquí.
