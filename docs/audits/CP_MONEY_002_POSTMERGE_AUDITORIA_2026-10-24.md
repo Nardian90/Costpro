@@ -229,3 +229,40 @@ El defecto D4 original era de ruta (helper lanzaba; `cash-report` no capturaba �
 - **Ejecución de las migraciones contra staging REAL:** no existe entorno de staging accesible con el esquema productivo; la validación semántica se completó en BD aislada local (PostgreSQL 18 real, fixture fiel — §9.3), que cubre sintaxis + semántica + atomicidad. Lo pendiente queda reducido al smoke funcional end-to-end contra la BD de staging (§9.6.4), que requiere ventana autorizada.
 - **Build completo local:** la fase TypeScript embebida de `next build` excede la RAM del sandbox (4 GB, SIGKILL 137). Compilación de producción ✓ (68 s); CI la valida en verde en runners con memoria suficiente.
 - **Confirmación del runner de migraciones usado en producción:** `schema_migrations` está desactualizado (última 2026-06-15) y el mecanismo real de aplicación no está documentado en el repo; los DOS posibles comportamientos ante 20261024150000 (rollback transaccional vs overloads parciales) están cubiertos por la companion (demostrado §9.2), por lo que ninguna ambigüedad afecta el procedimiento §9.6.
+
+---
+
+## 10. ADENDA D5-ACL (2026-10-24, orden definitiva posmerge #1469 — fusión verificada dd5aedc9)
+
+PR #1469 fue **fusionado** por el propietario el **2026-10-24T02:23:29Z** (merge commit `dd5aedc9`, head `0a8f7be`, 4 commits, 8 checks CI verde, E2E skipped por política). Producción re-verificada en SOLO LECTURA a las **02:32:49Z**: firma viva **/31** (md5 `e25a939d`), **0** helpers de tasa, sonda con `p_payment_components` → **PGRST202 persiste**, `schema_migrations` obsoleta → **la companion sigue SIN aplicar**. Con el código fusionado, las ventas puras resuelven (spread condicional) y los cobros mixtos fallan cerrado con 503 accionable hasta la ventana.
+
+### 10.1 Hallazgo D5-ACL (nuevo, empírico, PostgreSQL 18 aislado con réplica del default ACL de prod)
+
+La companion hace `DROP` de la /31 y `CREATE` de la /32 como función **NUEVA**. En Supabase, los entries de `pg_default_acl` se aplican como **delta sobre `acldefault('f')`** (`{=X/PUBLIC, owner=X}`) — verificado empíricamente: una función nueva de `postgres` en `public` hereda **PUBLIC y anon** además de los grants del entry `{postgres, anon, authenticated, service_role}` (probado: `has_function_privilege('pg_monitor', …, 'EXECUTE') = true`). La /31 viva NO tiene anon porque fue **endurecida a nivel de objeto** (REVOKE PUBLIC/anon: `20260807000003` v2.16.3, `20260810000070` pr4_4e, `20260927000001` «vector #6 de resurrección», `20261004130000` §17.2 H0R). La companion y la 20261024150000 **no** reproducen ese REVOKE → tras aplicarlas, la /32 quedaría con `{=X, postgres, anon, authenticated, service_role}`:
+
+1. **Regresión de superficie ejecutable** respecto a la /31 endurecida (el guard interno `ERR_UNAUTHORIZED` mitiga, pero la exposición RPC a anónimos revive).
+2. **El check EN VIVO `secdef_public_grant`** (ci-gate-sql-checks.js, allowlist VACÍA, tolerancia cero) pondría **SQL DB Security Checks en ROJO** en el primer run de CI posterior a la ventana.
+
+### 10.2 Corrección preparada (PR correctivo, NO fusionado)
+
+`supabase/migrations/20261025130000_cp_money_002_acl_revoke_anon.sql` (sha256 `93911010…`): `REVOKE EXECUTE … FROM PUBLIC` + `REVOKE EXECUTE … FROM anon` sobre la identidad EXACTA de 32 params + `NOTIFY pgrst, 'reload schema'`. Idempotente, forward-only, aplicable desde CUALQUIER estado post-companion. Validado en BD aislada (31/31 + 6/6): ACL final `{authenticated, postgres, service_role}` — paridad EXACTA con la /31 endurecida; authenticated/service_role conservan EXECUTE; re-ejecución sin deriva.
+
+### 10.3 Procedimiento §9.6 ACTUALIZADO (orden de la ventana)
+
+El paso 2 pasa a ser: **apregar `20261025120000_cp_money_002_postmerge_integrity.sql` y A CONTINUACIÓN, en la misma ventana, `20261025130000_cp_money_002_acl_revoke_anon.sql`** (checksums `c75a31fb…` y `93911010…`; ambos transaccionales por fichero; el segundo no hace nada si se repite). La verificación del paso 3 añade: `has_function_privilege('anon','public.create_sale_v2(<32 args>)','EXECUTE')` = **false** y proacl SIN `=X`. Si entre ambos files corriera un CI, `secdef_public_grant` fallaría por diseño (red de seguridad) — aplicarlos consecutivos lo evita. El resto de §9.6 (verificación de firma única, surface regenerado certificando /32 y RETIRADA de la entrada `source_of_truth_baseline` de `ci-gate-allowlist.json`, smoke, reversión) permanece sin cambios.
+
+### 10.4 Fase C — auditoría de la companion desde los 5 estados iniciales (PostgreSQL 18 aislado, 31/31 PASS)
+
+| Estado inicial | Resultado |
+|---|---|
+| 1. Solo /31 (prod-like endurecida) | companion converge a /32 única (md5 ref); llamada legada resuelve; fix aplicable |
+| 2. Solo /32 (ya migrada) | 2ª ejecución de la companion sin error ni deriva (CREATE OR REPLACE con identidad idéntica preserva ACL); fix doble idempotente |
+| 3. AMBAS sobrecargas (p1467 statement-a-statement: CREATE+GRANTs persisten, su COMMENT final aborta 42725 — runner no transaccional) | companion retira SOLO la /31 (identidad EXACTA) y converge; su COMMENT sin lista de args NO es ambiguo porque el DROP precede |
+| 4. /31 con comment custom / ACL extra / dependencias | (a) wrapper plpgsql NO bloquea el DROP y sigue resolviendo por DEFAULT NULL; (b) una VIEW con dependencia DURA aborta la companion SIN MUTAR NADA (fail-safe transaccional; prod tiene 0 dependencias duras — pg_depend verificado 02:35:55Z); (c) grantee extra de /31 NO se traslada (prod no tiene grantees extra: pro ACL = {postgres, authenticated, service_role}); (d) COMMENT reemplazado por el de la companion sin ambigüedad |
+| 5. Companion interrumpida parcialmente (runner no transaccional) | (a) tras el DROP (cero firmas): re-ejecutar converge; (b) tras el CREATE (sin GRANT/COMMENT/NOTIFY): re-ejecutar converge y COMPLETA ACL+comment+NOTIFY |
+
+Condiciones de la misión verificadas: firma final única (PGRST203 estructuralmente imposible), sin pérdida de permisos necesarios (paridad restaurada por el fix), SECURITY DEFINER + `search_path` + autorización intactos, aislamiento por tienda/RLS intactos (T-01..T-04), transaccionalidad demostrada (estado 4b), segunda ejecución inocua (E2), orden de migraciones correcto (secuencias A/B/C previas + estados), referencias gestionadas explícitamente (los 4 helpers externos existen en prod).
+
+### 10.5 Fase F — integridad de reportes/ledger/inventario (6/6 PASS, PostgreSQL 18 aislado)
+
+Venta mixta A (5 USD + 15 000 CUP, tasa 1000) creada por la /32: ledger de 2 filas por componente con tasa PERSISTIDA (5000 + 15000 = 20 000 ✓ PT011), `cost_at_sale` = coste medio del producto (4) intacto, UN solo movimiento de inventario (−2), `cost_average` sin tocar. **Reversión por el modelo VIGENTE** (reverse_transaction_v2 real del repo): status `voided`, existencias restauradas 98→100 con un único `sale_reverse` (+2), sin duplicación de cobros en el ledger, doble reversión → `idempotent` sin segundo incremento. El Reporte Entrega excluye la venta voided por el filtro `status='completed'` (contrato verificado a nivel de ruta en `cash-report-route-d4.test.ts`). La devolución PROPORCIONAL por componentes sigue PENDIENTE de decisión de negocio — no se inventó política.
