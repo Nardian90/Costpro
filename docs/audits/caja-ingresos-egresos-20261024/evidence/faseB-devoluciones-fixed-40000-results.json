@@ -1,0 +1,940 @@
+{
+  "summary": {
+    "phase": "fixed",
+    "pass": 86,
+    "fail": 0,
+    "defects": 0
+  },
+  "results": [
+    {
+      "id": "B1.pre",
+      "desc": "saldo inicial tras venta (CUP 5000, USD 0)",
+      "expected": {
+        "CUP": 5000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 5000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B1.accept",
+      "desc": "devolución parcial 2 u (1000 CUP) aceptada — tope 5000, físico 5000",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B1.net",
+      "desc": "saldo final (CUP 4000, USD 0 — USD intacto)",
+      "expected": {
+        "CUP": 4000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 4000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B1.row",
+      "desc": "única fila de reembolso (CUP, 1000, rate 1, refund, cash)",
+      "expected": [
+        {
+          "currency": "CUP",
+          "amount": 1000,
+          "exchange_rate": 1,
+          "direction": "refund",
+          "payment_method": "cash"
+        }
+      ],
+      "observed": [
+        {
+          "currency": "CUP",
+          "amount": 1000,
+          "exchange_rate": 1,
+          "direction": "refund",
+          "payment_method": "cash"
+        }
+      ],
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B2.pre",
+      "desc": "saldo inicial (CUP 0, USD 10)",
+      "expected": {
+        "CUP": 0,
+        "USD": 10
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 10
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B2.accept",
+      "desc": "devolución parcial 5 u (5 USD) aceptada — sin usar el equivalente CUP como sustituto",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B2.net",
+      "desc": "saldo final (CUP 0, USD 5)",
+      "expected": {
+        "CUP": 0,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B2b.accept",
+      "desc": "forma v2.24: reembolso USD 5 aceptado — la fila canónica CUP NO se toma como CUP pagado",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B2b.net",
+      "desc": "saldo final (CUP 0, USD 5)",
+      "expected": {
+        "CUP": 0,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B3.pre",
+      "desc": "saldo inicial (CUP 2000, USD 5)",
+      "expected": {
+        "CUP": 2000,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 2000,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B3a.accept",
+      "desc": "devolución parcial 2 u (1000 CUP ≤ 2000 pagados) aceptada",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B3a.net",
+      "desc": "saldo (CUP 1000, USD 5)",
+      "expected": {
+        "CUP": 1000,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 1000,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B3b.reject",
+      "desc": "CORREGIDO: ERR_DEVOLUTION_REFUND_CAP (pagado CUP 2000, ya reembolsado 1000, solicitado 2000)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B3b.net",
+      "desc": "saldo SIN cambios (CUP 1000, USD 5) — rechazo sin efectos parciales",
+      "expected": {
+        "CUP": 1000,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 1000,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B3c.reject",
+      "desc": "CORREGIDO: ERR_DEVOLUTION_REFUND_CAP (USD pagado 5, solicitado 10)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B3c.net",
+      "desc": "saldo intacto (CUP 2000, USD 5)",
+      "expected": {
+        "CUP": 2000,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 2000,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B3d.accept-cup",
+      "desc": "devolución 4 u en CUP (2000 = tope exacto) aceptada",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B3d.accept-usd",
+      "desc": "devolución 4 u en USD (5 = tope exacto) aceptada",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B3d.net",
+      "desc": "saldo final (CUP 0, USD 0) — el cliente recuperó EXACTAMENTE lo pagado",
+      "expected": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B4a.pre",
+      "desc": "saldo inicial (CUP 5000, USD 10)",
+      "expected": {
+        "CUP": 5000,
+        "USD": 10
+      },
+      "observed": {
+        "CUP": 5000,
+        "USD": 10
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B4a.reject",
+      "desc": "CORREGIDO: ERR_DEVOLUTION_REFUND_CAP — CUP pagado 0, solicitado 4000",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B4a.net",
+      "desc": "saldo intacto (CUP 5000, USD 10) — sin conversión implícita",
+      "expected": {
+        "CUP": 5000,
+        "USD": 10
+      },
+      "observed": {
+        "CUP": 5000,
+        "USD": 10
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B4b.reject",
+      "desc": "CORREGIDO: ERR_DEVOLUTION_RATE_UNDETERMINED — venta cobrada solo en CUP no tiene tasa USD histórica (fail-closed antes del tope)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B4b.net",
+      "desc": "saldo intacto (CUP 5000, USD 20)",
+      "expected": {
+        "CUP": 5000,
+        "USD": 20
+      },
+      "observed": {
+        "CUP": 5000,
+        "USD": 20
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B5a.drain",
+      "desc": "drenaje OK — CUP físico 5000→100",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B5a.pre",
+      "desc": "saldo pre-reembolso (CUP 100, USD 5000)",
+      "expected": {
+        "CUP": 100,
+        "USD": 5000
+      },
+      "observed": {
+        "CUP": 100,
+        "USD": 5000
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B5a.reject",
+      "desc": "CORREGIDO: ERR_INSUFFICIENT_CURRENCY — físico CUP 100 < reembolso 3000",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B5a.net",
+      "desc": "saldo intacto (CUP 100, USD 5000) — rechazo sin efectos parciales",
+      "expected": {
+        "CUP": 100,
+        "USD": 5000
+      },
+      "observed": {
+        "CUP": 100,
+        "USD": 5000
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B5b.drain",
+      "desc": "drenaje OK — USD físico 20→5",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B5b.pre",
+      "desc": "saldo pre-reembolso (CUP 500000, USD 5)",
+      "expected": {
+        "CUP": 500000,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 500000,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B5b.reject",
+      "desc": "CORREGIDO: ERR_INSUFFICIENT_CURRENCY — físico USD 5 < reembolso 10",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B5b.net",
+      "desc": "saldo intacto (CUP 500000, USD 5)",
+      "expected": {
+        "CUP": 500000,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 500000,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B6.accept1-3",
+      "desc": "tres devoluciones parciales (1000 CUP c/u) aceptadas",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B6.cap-qty",
+      "desc": "4.ª devolución (8 u) RECHAZADA por tope acumulado DF-07 (6+8 > 10)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B6.net",
+      "desc": "saldo final (CUP 2000) — Σ reembolsos 3000 ≤ pagado 5000",
+      "expected": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B6b.replay",
+      "desc": "reintento de red (misma clave+payload) → replay benigno idempotent",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B6b.net",
+      "desc": "saldo SIN cambios tras el reintento (CUP 2000)",
+      "expected": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B6b.rows",
+      "desc": "exactamente 3 filas de reembolso (sin duplicar la reintentada)",
+      "expected": 3,
+      "observed": 3,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B6c.reject",
+      "desc": "CORREGIDO: reversión SIN recuperación rechazada (ERR_DEVOLUTION_REFUND_NOT_RECOVERED)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B6c.reverse2",
+      "desc": "reversión CON recuperación (1000 CUP en efectivo) aceptada — atómica",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B6c.accept2",
+      "desc": "nueva devolución de las mismas unidades aceptada (capacidad liberada por recuperación REAL)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B6c.net",
+      "desc": "saldo (CUP 4000): 5000 − 1000 + 1000 (recuperada) − 1000 (nueva) — dinero y documento conciliados",
+      "expected": {
+        "CUP": 4000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 4000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7a.replay",
+      "desc": "doble clic (misma clave+payload) → idempotent, sin duplicar salida",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7a.net",
+      "desc": "saldo (CUP 3500) — UNA sola salida de 1500",
+      "expected": {
+        "CUP": 3500,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 3500,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7a.row",
+      "desc": "exactamente 1 fila de reembolso",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7b.reuse",
+      "desc": "misma clave con payload DISTINTO → ERR_IDEMPOTENCY_KEY_REUSE",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7c.one",
+      "desc": "dos devoluciones simultáneas de 6 u con claves DISTINTAS (tope 10): exactamente UNA confirmada",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7c.net",
+      "desc": "saldo (CUP 2000) — una sola salida de 3000",
+      "expected": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7d.egreso-ok",
+      "desc": "egreso ordinario 3000 confirmado (físico 5000)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7d.reject",
+      "desc": "CORREGIDO: ERR_INSUFFICIENT_CURRENCY — físico 2000 < reembolso 3000",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7d.net",
+      "desc": "saldo (CUP 2000) — el reembolso ya no consume efectivo gastado",
+      "expected": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7d2.one",
+      "desc": "concurrente (escalonada 6ms): exactamente UNA operación confirmada (3000+3000 > 5000)",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7d2.net",
+      "desc": "saldo final (CUP 2000) — nunca negativo",
+      "expected": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7e.invariant-qty",
+      "desc": "invariante: unidades devueltas activas ≤ 10 (tope DF-07 en carrera)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7e.invariant-net",
+      "desc": "invariante: saldo final ≥ 3000 (máx 2 salidas de 1000)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7e.no-error",
+      "desc": "ninguna de las dos operaciones produjo error no controlado",
+      "expected": 0,
+      "observed": 0,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7e.outcome",
+      "desc": "resultado de la carrera (orden no determinista, invariantes garantizadas)",
+      "expected": null,
+      "observed": {
+        "reversal": true,
+        "devolution2": true,
+        "net": {
+          "CUP": 4000,
+          "USD": 0
+        }
+      },
+      "status": "INFO",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7f.pre",
+      "desc": "saldo tras drenaje (CUP 2000) — cada reembolso pide 2000 (tope por venta OK)",
+      "expected": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 2000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7f.reject2",
+      "desc": "CORREGIDO: el segundo reembolso RECHAZADO (ERR_INSUFFICIENT_CURRENCY — físico 0)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7f.net",
+      "desc": "saldo final (CUP 0) — nunca negativo",
+      "expected": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7f2.one",
+      "desc": "concurrente: exactamente UNO confirmado (el segundo ve el físico ya consumido)",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "B7f2.net",
+      "desc": "saldo final (CUP 0) — nunca negativo",
+      "expected": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T8.reject",
+      "desc": "fallo a mitad (stub de stock) → error propagado, sin éxito parcial",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T8.net",
+      "desc": "saldo SIN cambios (CUP 5000)",
+      "expected": {
+        "CUP": 5000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 5000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T8.no-doc",
+      "desc": "cero documentos de devolución persistidos",
+      "expected": 0,
+      "observed": 0,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T8.no-reg",
+      "desc": "cero entradas de idempotencia persistidas",
+      "expected": 0,
+      "observed": 0,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T8.no-row",
+      "desc": "cero filas de reembolso",
+      "expected": 0,
+      "observed": 0,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T9.cross-store",
+      "desc": "usuario autorizado de A con venta ajena (de B) → ERR_CROSS_STORE",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T9.foreign",
+      "desc": "usuario de otra tienda (sin acceso a A) → ERR_UNAUTHORIZED",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T9.no-member",
+      "desc": "usuario sin membresía → ERR_UNAUTHORIZED",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T9.net",
+      "desc": "saldo de A intacto (CUP 5000)",
+      "expected": {
+        "CUP": 5000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 5000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T9.netB",
+      "desc": "saldo de B intacto (CUP 5000)",
+      "expected": {
+        "CUP": 5000,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 5000,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T10.exact",
+      "desc": "CORREGIDO: reembolso de 10 USD EXACTOS (tasa histórica 400 de la venta, no la vigente 320)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T10.net",
+      "desc": "saldo (USD 0): los 10 pagados volvieron íntegros al cliente",
+      "expected": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 0
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T11a.accept",
+      "desc": "venta cobrada por transferencia CUP → reembolso CUP aceptado (moneda homogénea)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T11b.accept",
+      "desc": "venta cobrada por zelle USD → reembolso USD aceptado (moneda homogénea, físico suficiente)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T11c.reject",
+      "desc": "CORREGIDO: ERR_DEVOLUTION_REFUND_CAP — CUP pagado 0, solicitado 2000",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T11d.accept",
+      "desc": "reembolso íntegro store_credit aceptado (la caja NO se toca)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T11d.credit",
+      "desc": "crédito emitido 4000 (CUP canónico, acotado por el tope de cantidad DF-07)",
+      "expected": 4000,
+      "observed": 4000,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T11d.net",
+      "desc": "saldo físico intacto (CUP 2000, USD 5)",
+      "expected": {
+        "CUP": 2000,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 2000,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T11e.accept",
+      "desc": "reembolso por transferencia USD de venta cobrada USD aceptado",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T13.pre",
+      "desc": "saldo inicial legacy (CUP 0, USD 10 — carve reclasificado)",
+      "expected": {
+        "CUP": 0,
+        "USD": 10
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 10
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T13.usd-ok",
+      "desc": "legacy cobrado en USD: reembolso USD 5 (≤ 10 pagados) aceptado",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T13.cup-reject",
+      "desc": "CORREGIDO: ERR_DEVOLUTION_REFUND_CAP — CUP pagado 0, solicitado 800",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T13.net",
+      "desc": "saldo final (CUP 0, USD 5)",
+      "expected": {
+        "CUP": 0,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T14.usd-ok",
+      "desc": "filas reales sin liquidación: reembolso USD 5 de 10 pagados aceptado",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "T14.net",
+      "desc": "saldo final (CUP 0, USD 5)",
+      "expected": {
+        "CUP": 0,
+        "USD": 5
+      },
+      "observed": {
+        "CUP": 0,
+        "USD": 5
+      },
+      "status": "PASS",
+      "phase": "fixed"
+    }
+  ],
+  "defectProven": []
+}

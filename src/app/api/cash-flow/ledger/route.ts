@@ -274,7 +274,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       service: 'pago_proveedor',
       cash_flow: (pt.direction === 'in') ? 'ingreso_caja'
         : (String(pt.notes ?? '').includes('entrega_efectivo') ? 'entrega_efectivo' : 'egreso_caja'),
-      devolution: 'reembolso_devolucion',
+      // MISIÓN DE CIERRE (§4): refund = salida; recovery = ENTRADA del dinero
+      // recuperado al revertir una devolución con reembolso liquidado.
+      devolution: (pt.direction === 'recovery') ? 'recuperacion_devolucion' : 'reembolso_devolucion',
       adjustment: 'ajuste_caja',
     };
     const isOut = pt.ref_type === 'receipt' || pt.ref_type === 'service'

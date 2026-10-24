@@ -81,7 +81,10 @@ function mapRpcError(msg: string): NextResponse | null {
     ['ERR_FUTURE_DATED_DOCUMENT', 422, 'La fecha operativa no puede ser futura.'],
     ['ERR_INSUFFICIENT_CASH', 422, 'El egreso supera el efectivo disponible en caja.'],
     // MISIÓN CAJA v2.24.0: la entrega valida POR MONEDA contra el libro físico.
-    ['ERR_INSUFFICIENT_CURRENCY', 422, 'La entrega supera el saldo físico disponible de esa moneda en caja.'],
+    // MISIÓN POST-MERGE 20261024220000: el egreso ordinario y la reversión de
+    // ingreso TAMBIÉN validan por moneda física (ERR_INSUFFICIENT_CURRENCY) —
+    // el mensaje se generaliza (antes mencionaba solo «la entrega»).
+    ['ERR_INSUFFICIENT_CURRENCY', 422, 'La operación supera el saldo físico disponible de esa moneda en caja.'],
     ['ERR_FUND_INSUFFICIENT', 422, 'La devolución supera el fondo de cambio vigente.'],
     ['ERR_EXCHANGE_RATE_UNAVAILABLE', 409, 'No hay tasa USD disponible. Configura la tasa de la tienda antes de operar en USD.'],
     ['ERR_RATE_STALE', 409, 'La tasa de cambio disponible está desactualizada (más de 45 días).'],

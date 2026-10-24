@@ -242,3 +242,214 @@ Al preparar la aplicación autorizada se descubrió que el `revoke/grant` final 
 Los reintentos de red de `create_cash_flow_document` con MISMA clave de idempotencia y MISMO payload (sin fecha operativa explícita) ahora devuelven el documento original (replay benigno) en lugar de rechazarse con `ERR_IDEMPOTENCY_KEY_REUSE`. Las filas previas de `idempotency_registry` conservan su hash antiguo: los reintentos tardíos de documentos ya registrados siguen rechazándose como hoy. Sin cambios contables (clasificación, saldos, fondo, turnos y validaciones intactos — verificado por diff de 1 línea + 51/51).
 
 **Nota:** el fix del ledger (ruta `/api/cash-flow/ledger`) es código de aplicación y sigue pendiente de merge + despliegue por el propietario (PR #1468) — la migración aplicada NO lo despliega. El error de producción «No se pudo cargar el libro de caja» se corrige en producción únicamente cuando el propietario despliegue el PR.
+
+---
+
+## 16. Adenda POST-MERGE — Verificación en producción y cierre del riesgo contable (2026-10-24T01:20Z)
+
+> Misión posterior a la fusión del PR #1468 (commit de merge `a082d54`, 2026-10-23 20:30 −0400). Esta sección NO reescribe la historia: añade el seguimiento con los estados separados que exige la misión. Las pruebas de las secciones anteriores conservan su fecha y alcance original.
+
+### 16.1 Estados separados (lo fusionado ≠ lo desplegado ≠ lo probado)
+
+| Estado | Valor | Evidencia |
+|---|---|---|
+| Código fusionado | `main` = `a082d540ef` (merge de #1468; sin commits posteriores ni reverts) | `git log origin/main` |
+| CI en el commit de fusión | TODO VERDE (TypeCheck+Lint+Unit+Build ✅ · Unit & Integration ✅ · Security Audit ✅ · Allowlist ✅ · TS Security ✅ · SQL Static ✅ · SQL DB Security ✅ · Vercel ✅ · **E2E skipped — deshabilitado por el propietario**) | GitHub check-runs de `a082d54` |
+| Migración 20261024180000 | **Aplicada y re-verificada** (2026-10-24T00:39Z, solo lectura): firma única 13-arg · patrón determinista presente · patrón viejo ausente · ACL `{postgres=X, service_role=X}` · expresión de hash del cuerpo vivo **idéntica verbatim** a la del archivo | `faseA3-migracion-readonly.mjs` |
+| Código desplegado en producción | **dpl_2oXyxKv3eKum** = `a082d540ef` · READY 2026-10-24T00:30Z · dominio `costpro4.vercel.app` (HTTP 200) — el despliegue de PRODUCCIÓN corre el commit fusionado | Vercel API v6 |
+| Incidente de carga | **RESUELTO EN PRODUCCIÓN DESPLEGADA**: `GET /api/cash-flow/ledger` ENERVIDA → HTTP 200 (antes: 500 «No se pudo cargar el libro de caja»). La fila de comisión del incidente (`comm-7374dfad`, 300 CUP) renderiza con saldo corrido | Fase B (16.2) |
+| Validación de producción en la app | Navegación REAL autenticada de solo lectura contra `costpro4.vercel.app` con la tienda ENERVIDA-VITALLCONS activa (login demo documentado) — pestañas, libro, KPIs, filtros, fechas | Fases B/C · capturas 01–04 |
+| Pruebas en BD aislada | Fase E: 5 defectos reproducidos contra el código fusionado; 27/27 PASS contra el correctivo · certificación previa 51/51 (recalibrada a la semántica física, invariante intacta) | `evidence/faseE-*-results.json` |
+| E2E Playwright autenticado | **NO EJECUTADO** (deshabilitado por el propietario; la navegación manual de solo lectura NO se etiqueta como suite E2E) | — |
+| Migración correctiva 20261024220000 | **PENDIENTE de aplicación autorizada** (probada en aislado; plan de aplicación en el archivo) | §16.5 |
+
+### 16.2 Fase B — Libro de caja en producción desplegada (solo lectura, 2026-10-24T00:41Z)
+
+- `GET /api/cash-flow/ledger?store_id=ENERVIDA&limit=200` → **HTTP 200**: 121 filas visibles, `truncated: true` (señalizado), desglose `venta_efectivo 114 · reembolso_devolucion 2 · anticipo_produccion 3 · pago_proveedor 1 · comision 1`.
+- **Reconciliación por moneda contra la fuente autoritativa** (RPC `get_cash_currency_summary`, mismo corte): `net CUP 8.435.679,98` · `net USD 367` = `balance_now` de la app (`reconciled: true`) — **coincidencia exacta en ambas monedas**. Corrida USD verificada fila a fila: 150 (17/10) → 357 (19/10) → 367 (23/10).
+- Términos RPC: entradas `sales_cash CUP 8.454.434,98 + USD 367 · production_cash CUP 223.350` · salidas `supplier_cash CUP 2.400 · commissions_cash CUP 300 · devolution_refunds CUP 239.405` — aritmética del neto verificada (= 8.435.679,98).
+- Filtros de fecha (día de negocio Habana 2026-10-23 → límites UTC): HTTP 200, 2 filas del día. Rango invertido → conjunto vacío + bloqueo preventivo en la UI (alerta «El intervalo es inválido»). `as_of` futuro no altera el saldo presente.
+- Semántica de error: sin token → 401; tienda ajena → 403 (`canManageStore`); parámetros inválidos → 400 con detalle. Un error real NO se enmascara como tabla vacía (el antipatrón corregido en #1468 era exactamente el 500 oculto).
+- Sin escrituras en producción (GET exclusivo).
+
+### 16.3 Fase C — Interfaz fusionada verificada en la app desplegada
+
+- **Pestañas reales** (no acordeón): `role=tablist/tab/tabpanel` · `aria-selected` · roving tabindex · teclado ←/→ verificado en vivo.
+- La pestaña del libro carga sin el error del incidente; KPIs por moneda correctos y **separación explícita** «SALDO FÍSICO CUP / SALDO FÍSICO USD / EQUIVALENTE CONTABLE (CUP canónico) — identificado como equivalente, no sustituye los saldos físicos».
+- Filtros de fecha por defecto = **2026-10-23** (día de negocio Habana; servidor en UTC 24/10 — sin salto de día). «Limpiar filtros» restaura hoy (probado: cambio → botón aparece → clic → restaura). Selección conservada al alternar pestañas; **sin consultas redundantes** al alternar (contador de peticiones estable). Filtro de moneda USD → solo filas USD. Recarga conserva valores. Sin errores de página (consola limpia).
+- Capturas: `01-prod-tab-documentos-fechas.png` · `02-prod-tab-libro-kpis.png` · `03-prod-tab-libro-movil.png` · `04-prod-tab-libro-despues-de-recarga.png`.
+
+### 16.4 Fase D/E — El riesgo contable documentado en §13.1 era REAL: 5 repros con expectativas pre-calculadas
+
+La asimetría §13.1 (`otro_egreso` valida canónico CUP que **incluye** USD a tasa; `entrega_efectivo` valida físico por moneda) se confirmó como defecto reproducible en BD aislada con esperados calculados ANTES de ejecutar (tasa sintética 400):
+
+| # | Escenario (físico real) | Esperado | Observado con código fusionado |
+|---|---|---|---|
+| 1 | 100 CUP + 100 USD; egreso 150 CUP | RECHAZADO | **ACEPTADO** → físico CUP **−50** |
+| 3b | 500.000 CUP + 100 USD; egreso 150 USD | RECHAZADO | **ACEPTADO** → físico USD **−50** |
+| 5 | 100 CUP + 100 USD; dos egresos concurrentes de 60 CUP | solo UNO | **AMBOS** → físico CUP **−20** |
+| M4 | fondo 300, físico 50; devolución 200 (≤ fondo) | RECHAZADO | **ACEPTADO** |
+| M10 | físico USD 20; reversión del ingreso USD 100 | RECHAZADO | **ACEPTADO** → físico USD **−80** |
+
+Caso 4 (cambio explícito): el modelo NO tiene operación de cambio — verificado que ningún documento de una moneda altera el físico de la otra (la conversión implícita no existe; con el correctivo queda estructuralmente imposible usarla para financiar salidas).
+
+### 16.5 Fase F — Correctiva (PR nuevo, sin aplicar a producción)
+
+- **Migración `20261024220000_saldo_fisico_egresos_multimoneda.sql`** (generada desde los cuerpos VIVOS verbatim + inserciones quirúrgicas): la rama ordinaria de egresos AÑADE la validación física por moneda (misma fuente autoritativa que `entrega_efectivo`: `get_cash_currency_summary → net → v_currency`, importe NATIVO); `reverse_cash_flow_document` AÑADE la misma validación para revertir ingresos. **Se conservan** la disciplina canónica del turno (ERR_INSUFFICIENT_CASH), la regla del fondo (ERR_FUND_INSUFFICIENT), roles, contraparte, advisory lock, idempotencia determinista (patrón 20261024180000 intacto) y RLS. ACL service_role-only con firmas reales. **Sin cambios de esquema.**
+- **Fase E fixed: 27/27 PASS, 0 defectos** (mismos esperados). **Certificación previa 51/51** (A5/D4 recalibrados a la semántica física: el cierre fail-closed y la prevención de doble gasto se conservan — documentado en el propio test).
+- App: mensaje API generalizado por moneda (422) · espejo en el modal (egreso ordinario valida físico por moneda + aviso canónico del turno) · 107/107 tests relacionados · tsc 0 errores · eslint 0 errores (1 warning preexistente).
+- Contrato de seguridad: baseline temporal `BODY_DRIFT_FROM_MIGRATION` para las 2 funciones (patrón REM-INV-5/6, precedente b7d9358) — **expira al aplicar la correctiva o 2027-01-31**; tras la aplicación se re-exporta el surface y se retira la baseline (protocolo de §15.4).
+- **Aplicación a producción: PENDIENTE DE AUTORIZACIÓN del propietario** (protocolo idéntico a §15: pre-vuelo fail-closed → transacción única → post-verificación solo lectura).
+
+### 16.6 Declaración de esta adenda
+
+**APTO PARA REVISIÓN:** la corrección del incidente está fusionada, desplegada y comprobada en producción mediante solo lectura (fases A–C); la corrección de saldo físico está implementada y probada en aislamiento (fases D–F) y queda un **PR nuevo pendiente de decisión del propietario**, cuya migración NO se aplica sin autorización expresa. Pendientes explícitos: aplicación autorizada de `20261024220000`, E2E Playwright autenticado (deshabilitado por el propietario), y la decisión sobre reembolsos de devolución en efectivo (ver §16.7).
+
+### 16.7 Riesgo residual documentado (decisión del propietario, NO corregido)
+
+`create_devolution_v2` reembolsa en efectivo sin validación de saldo físico por moneda (acotado por el tope de lo pagado por el cliente — la devolución devuelve lo recibido). Un reembolso CUP de una venta cobrada en USD es una conversión implícita hacia el cliente que puede llevar el físico CUP a negativo si el cajón está corto. Recomendación: exigir moneda del reembolso con físico suficiente (mismo patrón del correctivo) o documentar la excepción. Se deja sin cambiar para no romper flujos legítimos de devolución sin decisión expresa (misión §6: «no imponer la regla ciegamente a operaciones que no representen una salida real de efectivo» — este caso SÍ lo es, pero el acotamiento por lo pagado reduce el perfil de riesgo frente al defecto corregido).
+
+---
+
+## 17. Adenda FINAL — Cierre del riesgo de devoluciones en efectivo (2026-10-24T02:35Z)
+
+> Misión POST-MERGE FINAL: seguimiento del PR #1470 y cierre del riesgo residual §16.7 (`create_devolution_v2`). Esta adenda NO reescribe la historia: las secciones anteriores conservan su fecha y alcance. Los estados quedan separados como exige el estándar: código fusionado ≠ desplegado ≠ migración aplicada ≠ probado en producción.
+
+### 17.1 Causa raíz confirmada en `create_devolution_v2` (Fase A, auditoría del flujo real)
+
+Reconstrucción del flujo completo contra el cuerpo VIVO de producción (extraído en solo-lectura): `solicitud → validación de fecha → advisory lock por tienda → idempotencia determinista → autorización → lock FOR UPDATE de la venta original → tope de cantidad DF-07 → método/moneda/tasa servidor → numeración → documento → ítems (precio servidor v2.24.1) → registro de idempotencia → contra-asiento DF-03 (cash_movements + payment_transactions refund) → auditoría`.
+
+Causa raíz del riesgo §16.7 — DOS defectos estructurales confirmados:
+
+1. **Sin validación de saldo físico por moneda**: el reembolso persiste directamente la fila `payment_transactions (ref_type='devolution', direction='refund', currency=v_refund_currency, amount=v_refund_amount)`; el libro (§7 de `get_cash_currency_summary`) la resta del neto de ESA moneda. Ningún punto del flujo comprueba que exista efectivo disponible de esa moneda.
+2. **Moneda del reembolso = elección libre del operador** (`p_refund_currency`, default CUP) sin consultar los pagos reales de la venta: la venta registra sus cobros en `payment_transactions (ref_type='sale')` por componente (v2.25) y en `transactions.cash_received_{cup,usd}` (liquidación v2.24), pero el RPC jamás los lee. El importe reembolsable se calcula en CUP canónico desde `price_at_sale_cup` (precio servidor) — la equivalencia canónica NO representa billetes.
+
+Hechos del modelo verificados (Fase A): NO existe operación de cambio entre monedas (invariante de la misión anterior, caso 4); el reembolso afecta la MISMA fuente de saldo físico que el libro (la fila refund), pero no valida contra ella; los locks existentes (advisory por tienda + `FOR UPDATE` de venta + relección del tope tras el lock) ya impiden dobles devoluciones por cantidad.
+
+### 17.2 Regla contable adoptada (y su justificación)
+
+**Un reembolso monetario devuelve valor por la moneda en que SALE el dinero, acotado por lo que esa venta NETAMENTE recibió en esa moneda:**
+
+- **(a) Tope por moneda** (`ERR_DEVOLUTION_REFUND_CAP`): `reembolso_físico[X] ≤ pagado_neto[X] − reembolsado_no_revertido[X]`, con tolerancia 0,005. La conversión implícita USD↔CUP queda **estructuralmente imposible**: sin operación de cambio explícita (inexistente en el modelo), el pago de una moneda nunca financia la obligación de devolver la otra. Cubre también el arbitraje de tasa (pagado 10 USD a 400; reembolso a 320 = 12,5 USD → rechazado).
+- **(b) Físico por moneda, solo efectivo** (`ERR_INSUFFICIENT_CURRENCY`): misma fuente autoritativa que el libro (`get_cash_currency_summary → net → v_refund_currency`) — paridad exacta con la correctiva 20261024220000 de egresos ordinarios y reversiones. Transfer/zelle solo reciben el tope (a) — no tocan el cajón. `store_credit` NO cambia (pasivo CUP-canónico ya acotado por DF-07; sin salida física).
+
+**Determinación del pagado neto** (mismas fuentes de verdad que el ledger, prioridad): ① liquidación explícita v2.24+ (`cash_received − change` por moneda) + filas bancarias; ② filas reales no-CUP sin liquidación (v2.25 defensivo); ③ legacy con filas canónicas: split por carve USD de ítems (la fila canónica CUP de v2.24 **NUNCA** se toma como CUP físico pagado — `amount_cup` no son billetes); ④ pools legacy + carve. Sin ninguna fuente → pagos indeterminables → flujo **bloqueado** fail-closed (`ERR_DEVOLUTION_PAYMENTS_UNDETERMINED`, misión §10: no inventar la conversión).
+
+**Cuatro magnitudes diferenciadas** (misión §9.3): *importe pagado* (billetes netos por moneda, de las fuentes anteriores) ≠ *importe reembolsable* (tope por moneda + tope de cantidad DF-07 en canónico) ≠ *moneda de entrega* (`v_refund_currency`, salida física) ≠ *equivalencia contable* (`v_total` canónico CUP que documenta la devolución; NO autoriza salida física alguna).
+
+### 17.3 Bloqueos, transacciones e idempotencia (Fase C — reglas de implementación)
+
+La validación ocurre en PostgreSQL, dentro de la transacción del RPC, **después** del advisory lock por tienda (misma llave que `create_cash_flow_document`/`close_cash_shift`) y del `FOR UPDATE` de la venta — la disponibilidad se RELEE bajo el lock (regla §5.3). Orden de locks coherente (tienda → documento; sin inversión respecto a otras rutas — sin deadlocks nuevos). Persistencia atómica: documento + ítems + stock + registro de idempotencia + contra-asiento + auditoría en UNA transacción; cualquier excepción revierte todo (probado con fallo inyectado a mitad: T8, cero efectos parciales). Idempotencia determinista intacta: misma clave + mismo payload → replay benigno; misma clave + payload distinto → `ERR_IDEMPOTENCY_KEY_REUSE` (B7a/B7b). Concurrencia: dos devoluciones simultáneas de la misma venta → exactamente UNA (B7c); egreso+reembolso concurrentes → exactamente UNA y físico nunca negativo (B7d-2/B7f-2); reembolso ∥ reversión → invariantes garantizados en cualquier orden (B7e). El saldo del frontend NO es autoridad contable: la UI solo espeja mensajes 422.
+
+### 17.4 Matriz de pruebas (expectativas pre-calculadas ANTES de ejecutar; misión §4)
+
+BD aislada cajamision (PG 18.4), tasa sintética 400, RPC VIVOS verbatim de producción + cadena completa 1818→2222→23000. **Fase current** (estado PR #1470 head): 81/81 comprobaciones PASS con **11 defectos reproducidos**. **Fase fixed** (con 23000): **85/85 PASS, 0 defectos** (los 4 casos extra son los invariantes concurrentes B7d-2/B7f-2). Los 11 defectos y su corrección:
+
+| # | Escenario (esperado pre-calculado) | Current (defecto) | Fixed |
+|---|---|---|---|
+| B3b | Mixto 2000 CUP+5 USD; reembolso 2000 CUP (reembolsable CUP 1000) | ACEPTADO → CUP −1000 | RECHAZADO `REFUND_CAP`, saldo intacto |
+| B3c | Mixto; devolución total 10 USD (pagados 5) | ACEPTADO → USD −5 | RECHAZADO `REFUND_CAP` |
+| B4a | Venta cobrada 10 USD; reembolso 4000 CUP | ACEPTADO (conversión implícita) | RECHAZADO `REFUND_CAP` (CUP pagado 0) |
+| B4b | Venta cobrada 5000 CUP; reembolso 12,5 USD | ACEPTADO (conversión implícita) | RECHAZADO `REFUND_CAP` (USD pagado 0) |
+| B5a | Físico 100 CUP + 5000 USD; reembolso 3000 CUP | ACEPTADO → CUP −2900 | RECHAZADO `INSUFFICIENT_CURRENCY` |
+| B5b | Físico 500.000 CUP + 5 USD; reembolso 10 USD | ACEPTADO → USD −5 | RECHAZADO `INSUFFICIENT_CURRENCY` |
+| B7d | Egreso 3000 confirmado + reembolso 3000 (físico 5000) | AMBOS → CUP −1000 | Reembolso RECHAZADO; físico 2000 |
+| B7f | Dos ventas, reembolsos 2000+2000 (físico 2000) | AMBOS → CUP −2000 | El 2.º RECHAZADO; físico 0 |
+| T10 | Pagado 10 USD a 400; tasa 320 → reembolso 12,5 USD | ACEPTADO → USD −2,5 | RECHAZADO `REFUND_CAP` |
+| T11c | Venta zelle-USD; reembolso 2000 CUP | ACEPTADO (conversión implícita) | RECHAZADO `REFUND_CAP` |
+| T13 | Legacy carve-USD; reembolso 800 CUP | ACEPTADO → CUP −800 | RECHAZADO `REFUND_CAP` |
+
+**Flujos legítimos preservados** (aceptados en AMBAS fases): B1 (CUP puro), B2/B2b (USD puro, formas v2.25 y v2.24), B3a (mixto parcial dentro del tope), **B3d (mixto dividido: 2000 CUP + 5 USD = exactamente lo pagado)**, B6 (parciales repetidas + tope DF-07), B6b (reintento de red → replay benigno), B6c (reversión libera el tope), B7a/b (idempotencia), B7c (concurrencia misma venta), T8 (atomicidad), T9 (aislamiento multitienda: CROSS_STORE/UNAUTHORIZED), T11a (transfer-CUP → reembolso CUP), T11b (zelle-USD → reembolso USD), T11d (store_credit íntegro: la caja NO se toca), T11e (transfer USD), T13-USD/T14 (legacy y v2.25 sin liquidación).
+
+**Regresión con la cadena completa**: certificación contable previa **51/51** · faseE saldo físico fixed **27/27** (la correctiva 2222 NO se regresa) · seguridad **14/14** (ACL efectiva: anon/authenticated rechazados en ejecución real; service_role conserva el contrato; SECURITY DEFINER + search_path + patrón actor-explícito intactos). Local: 126/126 tests relacionados + 58/58 patrón devolution + 20/20 integración reverse-devolution + tsc 0 + eslint 0 + auditoría estática CONTRATO OK.
+
+### 17.5 Correcciones realizadas y archivos modificados
+
+- **`supabase/migrations/20261024230000_devoluciones_reembolso_fisico_moneda.sql`** (NUEVO, consecutiva de 2222): `create_devolution_v2` = cuerpo VIVO verbatim + DOS inserciones quirúrgicas (bloque DECLARE + bloque de validación tras `v_refund_amount`; verificación de generación: 0 líneas del cuerpo vivo eliminadas, +139 netas). Sin cambios de esquema. ACL service_role-only con firma real de 12 args.
+- **`src/app/api/devolutions/route.ts`**: `mapRpcError` — traducción a 422/409/403 accionable de los rechazos contables (la validación DEFINITIVA es del RPC; la API nunca valida por sí misma).
+- **`src/__tests__/migrations/devoluciones-reembolso-migration.test.ts`** (NUEVO, 9 tests): contrato estático de la migración.
+- **`src/__tests__/api/devolutions-route.test.ts`** (NUEVO, 9 tests): contrato de la ruta (actor de sesión, `p_refund_currency`, mapeos 422/409/403/500).
+- **`ci-gate-allowlist.json`**: baseline temporal `BODY_DRIFT_FROM_MIGRATION` para `create_devolution_v2/12` (drift INTENCIONAL hasta la aplicación autorizada; verificado: sin ella el gate bloquea, con ella reconcilia — expira al aplicar o 2027-01-31).
+- **Evidencias**: `evidence/faseB-devoluciones-{current,fixed}-results.json` · `evidence/faseE-seguridad-results.json` · `evidence/regresion-cadena-23000-results.json`.
+
+### 17.6 Impacto sobre el PR #1470 y estado de las migraciones
+
+El PR #1470 amplía su alcance con la correctiva de devoluciones como **migración consecutiva** (misión §6: unidad de despliegue clara — no se edita 2222, ya certificada por su propio contrato y suite): el plan de revisión del propietario pasa a abarcar la cadena **1818 (APLICADA en producción) → 2222 (preparada, pendiente) → 23000 (preparada, pendiente)**. Ambas pendientes comparten protocolo de aplicación §15 (pre-vuelo fail-closed → transacción única → post-verificación solo-lectura → re-exportar surface y retirar baselines). Estados separados: código del PR **NO fusionado** · migración 1818 **aplicada y re-verificada** · migraciones 2222/23000 **preparadas y probadas en aislamiento, NO aplicadas** (prohibido aplicar sin autorización expresa) · validación en producción desplegada: **solo lectura** (sin registrar devoluciones reales de prueba, misión §11).
+
+### 17.7 Limitaciones y pruebas NO ejecutadas
+
+E2E Playwright autenticado: **NO EJECUTADO** (deshabilitado por el propietario — la navegación manual de la misión anterior NO se etiqueta como suite E2E). Pruebas de rendimiento/estrés: fuera de alcance. Prueba de aplicación real de 23000 a producción: pendiente de autorización (el apply se probó en aislado con la cadena completa). La suite faseB usa stubs funcionales para `register_stock_movement`/`fn_recalc_wac`/`can_reverse_document` (firmas reales; el RPC bajo certificación es el cuerpo VIVO verbatim; el inventario no es objeto de esta misión).
+
+### 17.8 Riesgos restantes que requieren decisión del propietario
+
+1. **`reverse_devolution` no compensa el efecto financiero** (hallazgo Fase A, preexistente): la reversión restaca y cambia el estado, pero NO escribe contra-asiento — la fila refund persiste restando del libro (conservador: nunca sobreestima el cajón) y el `store_credit_ledger` tampoco se compensa. Alternativas: contra-fila automática (patrón `reverse_cash_flow_document`) o proceso operativo documentado. El tope por moneda ya excluye devoluciones revertidas (B6c), por lo que el riesgo es de **presentación del saldo**, no de autorización de salidas.
+2. **Reembolso total de venta mixta en UNA moneda**: bloqueado por diseño (misión §4 B3). El operador puede dividir en dos devoluciones (B3d lo demuestra) o usar store_credit. Alternativas de producto: reembolso dividido por moneda en una sola operación, operación de cambio explícita, o reembolso a la tasa histórica de la venta.
+3. **Deriva de tasa** (T10): el reembolso USD a tasa vigente > tasa de la venta excede lo pagado → rechazado. El remanente queda sin entrega monetaria posible (crédito de tienda como salida). Decisión de política: tasa histórica vs vigente vs aceptar costo FX.
+4. **store_credit de venta mixta absorbe canónicamente la parte USD** (crédito CUP-canónico): política vigente conservada; conversión vía crédito documentada para decisión expresa.
+5. Pendientes previos: aplicación autorizada de 2222 y 23000 (en ese orden), E2E Playwright, y la fusión del PR #1470 (propietario).
+
+### 17.9 Declaración de esta adenda
+
+**APTO PARA REVISIÓN:** los flujos críticos de reembolso respetan la disponibilidad física por moneda y el tope de lo pagado por moneda en las pruebas aisladas (85/85, 0 defectos; 11 defectos pre-calculados reproducidos y cerrados; regresión 51/51 + 27/27 + 14/14; tests locales 213/213 relacionados). Queda pendiente la decisión del propietario sobre la fusión del PR #1470 y la aplicación autorizada de las migraciones 2222/23000 (en ese orden, protocolo §15). No se fusionó, no se desplegó y no se escribió en producción (solo lecturas).
+
+## 18. Adenda de CIERRE — Reversión financiera de devoluciones, pagos mixtos y certificación final (2026-10-24T04:5xZ)
+
+Misión «CIERRE» sobre el head real del PR #1470 (debe93c, cadena aislada 1818+2222+23000). Fases A-I completas. Esta adenda **cierra** los residuales §17.8.1-4 y define la declaración final del ciclo de caja.
+
+### 18.1 Fase A — Diagnóstico exacto: las 8 preguntas obligatorias (misión §3)
+
+Flujo reconstruido desde los cuerpos VIVOS de producción (extracción read-only 2026-10-24) + stream del PR. Respuestas verificadas con repro aislada (matriz R, §18.3):
+
+1. **Movimiento de la salida física al confirmar una devolución en efectivo**: DOS escrituras en la MISMA TX — (a) `payment_transactions` fila `ref_type='devolution', direction='refund', currency=p_refund_currency, amount=nativo` (fuente autoritativa del libro, §7 de `get_cash_currency_summary`) y (b) `cash_movements` fila `out` canónica (sesión de caja, bookkeeping legacy — NINGÚN consumidor de app/SQL la lee: censo de referencias). La moneda de la salida era elección libre del operador (default CUP) hasta 23000 (tope por moneda); desde 40000 el importe USD además se ancla a la tasa histórica de la venta.
+2. **Qué hace `reverse_devolution` (estado/inventario/financiero)**: lock `FOR UPDATE` de la devolución → guard de estado (solo `completed`) → autorización (`has_store_access_as` + `can_reverse_document`) → inventario: pipeline canónico (`register_stock_movement` −q tipo `devolution_reverse` + `fn_recalc_wac` invariante + kardex `devolution_out`) → estado: `status='reversed', reversed_at/by, reversal_reason` → auditoría. **NO tocaba nada financiero** (hallazgo confirmado del §17.8.1).
+3. **¿La reversión generaba recuperación del dinero?**: **NO** — ni contra-asiento, ni fila compensatoria, ni liberación verificada. El dinero reembolsado quedaba fuera del cajón para siempre mientras el documento pasaba a `reversed` (R2).
+4. **¿El libro conserva la salida tras revertir?**: **SÍ** (conservador — nunca sobreestima el cajón). La fila `refund` persiste y sigue restando del neto por moneda. Correcto como historia; el defecto era la ausencia del mecanismo de devolución del dinero al cajón (ahora `direction='recovery'`, §7b del summary).
+5. **¿El tope contaba los reembolsos revertidos?**: **NO** — 23000 filtraba `d.status IN ('pending','completed')` (y DF-07 igual). Tras revertir, la capacidad se liberaba aunque el dinero no hubiera vuelto → **doble reembolso íntegro reproducido** (R1: 160 CUP reembolsados de 100 pagados; R4 espejo USD: 12 de 10).
+6. **¿Qué operación económica justificaba liberarlo?**: **NINGUNA** — ese es el defecto contable nuclear de esta misión. La liberación solo es legítima cuando el dinero regresa (recuperación real, misma moneda).
+7. **¿Reversión parcial si falla la escritura financiera?**: imposible por diseño en el contrato nuevo (R5): validación TODA antes de la primera escritura + transacción única del RPC → cualquier fallo (unique de idempotencia provocado) revierte íntegro (estado, stock, kardex, filas).
+8. **store_credit / transfer / zelle vs efectivo**: `store_credit` emite pasivo (`store_credit_ledger` +importe canónico, sin tocar efectivo; la reversión NO lo compensaba → doble pasivo reproducido R7: 120 de crédito por una venta de 100); `transfer`/`zelle` emiten fila refund bancaria (fuera del efectivo físico, dentro del tope por moneda; su reversión tampoco recuperaba — R14); la UI además FORZABA moneda CUP en rieles bancarios (select deshabilitado) haciendo imposible reembolsar por el riel natural una venta cobrada en USD por zelle.
+
+**Cinco estados diferenciados** (misión §3 final): documental (`devolutions.status`) · inventario (stock/kardex) · efecto financiero (filas refund/recovery por moneda y riel) · físico por moneda (`get_cash_currency_summary` net) · reembolsable por moneda (tope por dinero + DF-07 cantidad). La correctiva los mantiene explícitos y reconciliados.
+
+### 18.2 Reglas adoptadas (migración 20261024400000, RC1-RC7)
+
+- **RC1 (§4)**: la reversión de una devolución con reembolso liquidado **exige la recuperación atómica** (`p_recovery jsonb`): una sola transacción RPC con advisory por tienda + lock de venta + `FOR UPDATE` de la devolución. Sin `p_recovery` → `ERR_DEVOLUTION_REFUND_NOT_RECOVERED` (fail-closed). Devoluciones sin efecto financiero (históricas/documentales): reversión pura como antes (R16).
+- **RC2 (§5)**: `importe reembolsable[moneda] = neto pagado[moneda] − reembolsos NO recuperados[moneda]` — el tope cuenta **dinero** (`Σ refunds − Σ recoveries`, sin filtro de estado): el estado documental ya no libera capacidad (R1/R2/R4).
+- **RC3 (§4)**: la recuperación usa la **moneda real** (misma del reembolso — `ERR_DEVOLUTION_RECOVERY_COMPONENTS` si el set no coincide exacto; CUP no compensa USD, R4.currency-guard, R15) y el **riel real** de cobro (cash/transfer/zelle; zelle nunca CUP — espejo de PT005). **Importe, moneda y tasa los fija el servidor** desde la fila refund (cero aritmética manual del operador). Idempotencia: `'dev-<id>-recovery-<MONEDA>'` (índice único) + guard limpio `ERR_DEVOLUTION_ALREADY_RECOVERED` (R3/R6/R15).
+- **RC4 (§6)**: devolución mixta **AS_PAID** — reembolso multi-moneda «según lo pagado»: un componente por moneda (filas refund separadas CUP/USD) bajo UNA transacción atómica; validación canónica de asignación completa (`ERR_DEVOLUTION_MIXED_ALLOCATION` bloquea el caso ambiguo — no existe regla de asignación por artículo); solo efectivo (`ERR_DEVOLUTION_AS_PAID_CASH_ONLY`); físico por componente. Antes NO existía ningún camino de devolución total de venta mixta (R8); ahora el flujo real UI→payload→RPC→filas→saldos lo completa (R8/R9) y la UI muestra la composición del pago y el reembolsable por moneda.
+- **RC5 (§7)**: el importe USD del reembolso se ancla a la **tasa implícita histórica de la venta** (filas v2.25 → liquidación pura → carve legacy; `ERR_DEVOLUTION_RATE_UNDETERMINED` si no es reconstruible). La jerarquía de tasa VIGENTE (tienda→BCC→elToque) queda RETIRADA del reembolso: el mismo importe comercial ya no devuelve 4.94 ni 12.5 USD de 10 pagados según el día (R11/R11b) — se devuelven 10 USD exactos. Comparativa de alternativas (misión §7): (a) moneda+importe neto cobrados = **adoptada** (extensible a parcial proporcional sin arbitraje); (b) conversión explícita con tasa documentada = requiere operación de cambio inexistente (BLOCKED, decisión de producto); (c) equivalencia histórica = la tasa implícita ES la histórica de la venta (subcaso de (a)); (d) bloqueo por detalle irreconstruible = ya vigente (23000 `ERR_DEVOLUTION_PAYMENTS_UNDETERMINED`, R13).
+- **RC6 (§8)**: `store_credit` — la reversión **compensa el pasivo** (fila negativa trazable `'dev-<id>-credit-comp'`, sin tocar efectivo: R7) y el crédito emitido no compensado respeta el **tope canónico** de la venta (`ERR_DEVOLUTION_CREDIT_CAP`); el crédito nunca se suma al efectivo (neto intacto en R7) y no se duplica con clave idempotente. La valoración canónica CUP del crédito de venta mixta se conserva (política vigente; documentada).
+- **RC7 (§4)**: la recuperación por riel bancario no toca el efectivo físico (solo el tope y el pasivo), igual que los refunds bancarios (R14).
+
+**Dependientes simétricas** (censo vivo de lectores de `direction`): `get_cash_currency_summary` §7b (+`devolution_recoveries` por moneda, neto) · `validate_payment_transactions_invariants` (`'recovery'` excluido de la suma de pagos PT001 y de la consistencia de tasa PT006 — DF-03 simétrico; sin esto toda recuperación violaría PT001) · `close_cash_shift` / `get_cash_shift_expected` / `get_cash_flow_summary` (términos `v_cash_recoveries`/`v_voucher_recoveries` — sin ellos el arqueo mostraría diferencia = dinero recuperado) · `get_cash_report` (desglose y totales) · `get_cash_ledger` (rama 6b `recuperacion_devolucion`) · `reverse_cash_flow_document` (esperado + recuperaciones).
+
+### 18.3 Matriz fase-reversa (expectativas pre-calculadas ANTES de ejecutar; BD aislada por tienda)
+
+**Current (head del PR: 1818+2222+23000): 41/41 PASS con 7 defectos reproducidos** — R1 reversión documental libera el tope (160 de 100; espejo USD R4) · R2 no existe mecanismo de recuperación · R7 store_credit sin compensar ni tope (120 de 100) · R8 venta mixta sin camino de devolución total · R11 arbitraje de tasa (4.94 de 10) · R14 UI bloquea moneda en rieles (zelle-USD irrembolsable por su riel). **Fixed (cadena + 40000): 80/80 PASS, 0 defectos** — incluye Casos 1-5 de la misión §5 (parcial+reversión administrativa rechazada; recuperación explícita conciliada; espejo USD; error parcial → transacción íntegra R5; concurrencia R6 con guard explícito), los 10 casos de §6 (mixta total R8, parciales consecutivos R9, sobre-reembolso por moneda R10, reintento idempotente R12, histórica indeterminable R13, zelle R14), guards de recuperación (R15), reversión documental pura intacta (R16), aislamiento multitienda (R17) y reintento de la devolución original tras reversión (R18).
+
+### 18.4 Fase G — Regresión contable completa (cadena 1818→2222→23000→40000, BD reconstruida desde cero por suite)
+
+`regresion-cadena-40000-results.json`: fase-reversa fixed **80/80** · cert-contable **51/51** · faseE saldo físico **27/27** (2222 intacta) · faseB devoluciones **86/86** (recalibrada a la cadena extendida: B4b fail-closed por tasa indeterminada — más preciso que el tope; B6c reversión exige recuperación y libera legítimamente con ella — neto 4000 conciliado; T10 10 USD exactos por tasa histórica; B7e reversión concurrente con recuperación) · seguridad **14/14** (ACL efectiva, SECURITY DEFINER + search_path + actor explícito, cadena 2222 conservada). **Carrera núcleo de la misión** (doble reembolso de la MISMA venta): devolución+devolución concurrente ajustada **0/12 doble pase** — el lock de fila de la venta (DF-07) serializa y releé correctamente. Tests locales nuevos: 13 contrato de migración + 7 ruta devoluciones (AS_PAID + errores) + 6 ruta reverse (recovery + guards) + 5 modal de recuperación = **31**; suites relacionadas existentes 158/158. tsc 0 · eslint 0 errores · auditoría estática **CONTRATO OK** (2 warnings preexistentes de frescura) · BOLA 5/5 · TS security checks ✓.
+
+### 18.5 Cambios y archivos
+
+- **`supabase/migrations/20261024400000_devoluciones_recuperacion_reversa.sql`** (NUEVA, consecutiva de 23000): 10 funciones — `reverse_devolution`/4 nueva (recuperación atómica + compensación de crédito + retiro del overload /3 anti-PGRST203) · `create_devolution_v2`/12 (tope por dinero + AS_PAID + tasa histórica + tope de crédito) · `get_cash_currency_summary` §7b · `validate_payment_transactions_invariants` · `close_cash_shift` · `get_cash_shift_expected` · `get_cash_flow_summary` · `get_cash_report` · `get_cash_ledger` (rama 6b) · `reverse_cash_flow_document`. Generada por gen-migracion-cierre.mjs (reemplazos quirúrgicos con assert de coincidencia única: cuerpos VIVOS verbatim + stream 2222/23000). Sin DDL de esquema. ACL service_role-only con firmas reales.
+- **App**: `/api/devolutions` (AS_PAID + mapRpcError con 6 códigos nuevos) · `/api/reverse` (schema+envío `recovery`, 422/409 accionables) · `useReverseDocument` (recovery) · `ReverseDocumentModal` (panel de recuperación: importes fijos por moneda, riel, a11y) · `DevolutionsView` (AS_PAID solo efectivo, moneda habilitada en rieles, composición del pago + reembolsable por moneda) · `/api/cash-flow/ledger` + `build-ledger.ts` (`recuperacion_devolucion` como entrada).
+- **`ci-gate-allowlist.json`**: baselines nuevas `reverse_devolution/3` (LIVE_FUNCTION_NOT_REPRESENTED) y `close_cash_shift/6` (BODY_DRIFT); razones de `create_devolution_v2/12` y `reverse_cash_flow_document/3` actualizadas a la cadena extendida. Las 4 expiran al aplicar la cadena o 2027-01-31.
+- **Evidencias**: `evidence/fase-reversa-{current,fixed}-results.json` · `evidence/regresion-cadena-40000-results.json` · `evidence/faseB-devoluciones-fixed-40000-results.json`.
+
+### 18.6 Estados (separados) y plan de aplicación futura (NO ejecutado)
+
+Código del PR: **NO fusionado** · despliegue: **ninguno** · producción: **solo lecturas** (censo de devoluciones/filas/trigger + cuerpos; sin registrar devoluciones de prueba) · migración 1818: **aplicada** (no re-ejecutar) · migraciones 2222/23000/40000: **preparadas y probadas en aislamiento con la cadena completa, NO aplicadas**. Plan autorizado (mismo protocolo §15): ① merge del PR → ② aplicar en ORDEN 2222 → 23000 → 40000 (transacción única cada una, pre-vuelo fail-closed: cuerpo esperado + firma única + 0 consultas activas) → ③ post-verificación read-only (patrones presentes/ausentes, ACL, arqueo con recuperaciones en 0) → ④ re-exportar `contract-surface.sql` y retirar las 4 baselines → ⑤ smoke de libro/arqueo/devoluciones en producción desplegada. Reversión: cuerpos previos re-aplicables; filas recovery quedan como historia (el ledger las explica como entradas).
+
+### 18.7 Limitaciones y residuales (decisiones del propietario)
+
+1. **Carrera sub-~2ms entre dos writers del cajón (preexistente, sistémica)**: dos operaciones que escriben el cajón (p.ej. egreso ordinario + reembolso; también egreso+egreso) lanzadas con desfase <~2ms pueden ambas pasar la validación física por agregado (reproducida 5-7/12 en aislado en 23000 y en 40000 — NO introducida por esta misión; micro-carrera mínima 20/20; ≥5ms de desfase: rechazo correcto 6/6). El **núcleo de esta misión NO está afectado**: doble reembolso de la misma venta = 0/12 (lock de fila de la venta, releído). Correctivas estructurales (ambas exceden el alcance quirúrgico): (a) fila de saldo materializado por tienda (todo writer la toma `FOR UPDATE` y la actualiza — el re-read de fila ve la versión última), o (b) aislamiento SERIALIZABLE con reintentos en los writers de caja. **Decisión del propietario.** Entre tanto, la ventana práctica es ínfima (2 RPCs dentro de 2ms sobre la misma tienda).
+2. **Devolución total de venta con descuento global**: el precio del reembolso se fija por `price_at_sale_cup` por ítem (doctrina v2.24.1 servidor) — con descuento, el valor devuelto bruto puede exceder el neto pagado y el tope lo bloquea (fail-closed, nunca sobre-reembolso). Regla de prorrateo pendiente de decisión de política.
+3. **12 devoluciones históricas (ago 2026) sin traza financiera** (pre-v2.24.1): ni filas refund ni contra-asientos — no cuentan en tope ni libro (consistente entre ambas fuentes). Conciliación documental de ese período: ámbito del propietario.
+4. **Recuperación parcial sin reversión** (cliente devuelve solo parte del reembolso, devolución en pie): no implementada por diseño (la recuperación solo existe atómica con la reversión; misión §4 opción adoptada). Necesitaría política de créditos/recibos.
+5. Pendientes previos: E2E Playwright (deshabilitado por el propietario — no simulado), fusión del PR, aplicación autorizada de la cadena.
+
+### 18.8 Declaración final del ciclo
+
+**APTO PARA REVISIÓN:** el riesgo nuclear de esta misión está cerrado y probado en aislamiento con la cadena completa: ninguna reversión libera tope sin recuperación real de la moneda correcta (RC1/RC2/RC3), la devolución mixta tiene flujo único probado de punta a punta (RC4), el reembolso USD devuelve exactamente lo cobrado a la tasa histórica (RC5) y el crédito de tienda compensa y respeta su tope (RC6). Matriz 80/80 + regresión íntegra (51/51 · 27/27 · 86/86 · 14/14) + gates verdes (tsc/eslint/contrato/BOLA/TS-security) + 31 tests nuevos. Pendiente exclusivo del propietario: fusión del PR #1470, aplicación autorizada 2222→23000→40000 (protocolo §15/§18.6), y las decisiones de §18.7. No se fusionó, no se desplegó, no se ejecutaron escrituras en producción.

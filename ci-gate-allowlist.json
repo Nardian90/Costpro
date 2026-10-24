@@ -812,5 +812,51 @@
       "expires": "2026-12-31"
     }
   ],
-  "source_of_truth_baseline": []
+  "source_of_truth_baseline": [
+    {
+      "function": "create_cash_flow_document/13",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISIÓN POST-MERGE 2026-10-24 (PR saldo físico) · egresos ordinarios validan SALDO FÍSICO POR MONEDA: la rama canónica (v_expected_cash, incluye USD a tasa) autorizaba egresos CUP/USD sin billetes de esa moneda (5 repros con expectativas pre-calculadas: egreso CUP, egreso USD con CUP abundante, doble gasto concurrente, devolución de fondo, reversión de ingreso USD — físico negativo). Correctiva 20261024220000_saldo_fisico_egresos_multimoneda.sql probada en BD aislada (faseE 27/27 + certificación previa 51/51) y PENDIENTE de aplicación autorizada en producción. El cuerpo LIVE sigue certificado; drift INTENCIONAL y temporal: bloque de validación física por moneda (misma fuente que entrega_efectivo) + conservación de disciplina canónica y regla de fondo. Expira al aplicar la correctiva o en la fecha.",
+      "added_by": "saldo-fisico-postmerge-pr",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "reverse_cash_flow_document/3",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISIÓN POST-MERGE 2026-10-24 + MISIÓN DE CIERRE · reversión de INGRESO valida FÍSICO por moneda del documento (2222) y su guard de efectivo esperado incluye las RECUPERACIONES de reembolsos revertidos (40000 — simétrico a refunds). Cuerpo LIVE sigue certificado; drift INTENCIONAL y temporal: cadena probada en BD aislada, PENDIENTE de aplicación autorizada. Expira al aplicar la cadena o en la fecha.",
+      "added_by": "mision-cierre-pr1470",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "create_devolution_v2/12",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISIÓN POST-MERGE FINAL + MISIÓN DE CIERRE 2026-10-24 (PR #1470) · reembolsos de devoluciones: TOPE POR MONEDA y FÍSICO POR MONEDA (23000) + tope por DINERO (refunds−recoveries, sin filtro de estado), reembolso mixto AS_PAID (un componente por moneda, transacción atómica) y TASA IMPLÍCITA HISTÓRICA de la venta (40000 — nunca la vigente: deriva 4.94/12.5 USD de 10 reproducida). Cuerpo LIVE (v2.25) sigue certificado; drift INTENCIONAL y temporal: cadena 20261024220000→20261024230000→20261024400000 probada en BD aislada (fase-reversa 80/80 + regresión 51/51 + 27/27 + 86/86 + 14/14), PENDIENTE de aplicación autorizada en producción (protocolo §15/§18). Expira al aplicar la cadena o en la fecha.",
+      "added_by": "mision-cierre-pr1470",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "reverse_devolution/3",
+      "rules": [
+        "LIVE_FUNCTION_NOT_REPRESENTED"
+      ],
+      "reason": "MISIÓN DE CIERRE 2026-10-24 (PR #1470) · la reversión de devoluciones se AMPLÍA a firma /4 (p_recovery jsonb): la reversión de una devolución con reembolso liquidado es ATÓMICA con la RECUPERACIÓN del dinero (filas direction='recovery', importe/tasa/moneda fijados por el servidor) — una reversión documental ya no libera el tope de reembolso (R1: 160 CUP reembolsados de 100 pagados). El overload /3 se RETIRA del stream (DROP FUNCTION — patrón create_sale_v2/31→32, anti PGRST203): la firma viva /3 queda sin representación HASTA la aplicación autorizada de la cadena 2222→23000→40000, cuando el surface se regenerará con la firma /4. Firmas coexistentes reproducirían el incidente PGRST203 del 2026-10-18. Evidencia: fase-reversa fixed 80/80 (R1-R18).",
+      "added_by": "mision-cierre-pr1470",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "close_cash_shift/6",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISIÓN DE CIERRE 2026-10-24 (PR #1470) · el arqueo canónico del turno suma las RECUPERACIONES de reembolsos revertidos (términos v_cash_recoveries / v_voucher_recoveries, simétricos a los refunds P1): sin ellas, un turno con recuperaciones mostraría una diferencia arqueal igual al dinero recuperado. El cuerpo LIVE sigue certificado; drift INTENCIONAL y temporal hasta la aplicación autorizada de la cadena 2222→23000→40000 (probada en BD aislada: cert-contable 51/51 con la cadena completa).",
+      "added_by": "mision-cierre-pr1470",
+      "expires": "2027-01-31"
+    }
+  ]
 }

@@ -1,0 +1,247 @@
+{
+  "generated": "2026-10-24T01:11:06.796Z",
+  "db": "cajamision (aislada, PG 18.4)",
+  "phase": "current",
+  "pass": 26,
+  "fail": 1,
+  "defects_reproduced": [
+    {
+      "id": "caso 1",
+      "why": "egreso 150 CUP aceptado con solo 100 CUP físicos (el USD compensó en canónico)"
+    },
+    {
+      "id": "caso 3b",
+      "why": "egreso 150 USD aceptado con solo 100 USD físicos (CUP abundante cubrió el canónico)"
+    },
+    {
+      "id": "caso 5",
+      "why": "dos egresos concurrentes de 60 CUP ambos aceptados con físico CUP 100 (canónico 40.100 con USD cubrió al segundo)"
+    },
+    {
+      "id": "M4",
+      "why": "devolución de fondo 200 CUP aceptada con 50 CUP físicos"
+    },
+    {
+      "id": "M10",
+      "why": "reversión de ingreso USD dejando físico USD negativo"
+    }
+  ],
+  "results": [
+    {
+      "id": "1-obs",
+      "desc": "[CÓDIGO ACTUAL] egreso 150 CUP contra canónico 40.100",
+      "expected": "ACEPTADO (defecto: usa saldo canónico con USD)",
+      "observed": "ACEPTADO (defecto: usa saldo canónico con USD)",
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "1-net",
+      "desc": "[CÓDIGO ACTUAL] saldo físico CUP tras el egreso inválido",
+      "expected": -50,
+      "observed": -50,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "2",
+      "desc": "egreso 80 CUP ACEPTADO",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "2-net",
+      "desc": "[CÓDIGO ACTUAL] físico CUP −50 − 80 = −130 (arrastra el defecto del caso 1)",
+      "expected": -130,
+      "observed": -130,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "3a",
+      "desc": "egreso 150 USD RECHAZADO (físico USD=100)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "3b-obs",
+      "desc": "[CÓDIGO ACTUAL] egreso 150 USD contra canónico 540.100",
+      "expected": "ACEPTADO (defecto)",
+      "observed": "ACEPTADO (defecto)",
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "3b-net",
+      "desc": "[CÓDIGO ACTUAL] físico USD tras egreso inválido",
+      "expected": -50,
+      "observed": -50,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "4",
+      "desc": "egreso CUP solo mueve CUP; USD intacto (sin conversión implícita)",
+      "expected": 200,
+      "observed": 200,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "5-obs",
+      "desc": "[CÓDIGO ACTUAL] egresos confirmados tras concurrencia (canónico 40.100 cubre a ambos)",
+      "expected": "2 (defecto)",
+      "observed": "2",
+      "status": "FAIL",
+      "phase": "current"
+    },
+    {
+      "id": "5-net",
+      "desc": "[CÓDIGO ACTUAL] físico CUP tras doble gasto",
+      "expected": -20,
+      "observed": -20,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "6",
+      "desc": "reintento benigno: mismo documento, sin duplicar",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "6-docid",
+      "desc": "replay devuelve el documento original",
+      "expected": "6e3b082a-d003-4e4d-ae35-32740fb3d502",
+      "observed": "6e3b082a-d003-4e4d-ae35-32740fb3d502",
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "6-reuse",
+      "desc": "misma clave con payload distinto → ERR_IDEMPOTENCY_KEY_REUSE",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "7",
+      "desc": "segunda reversión rechazada (ERR_ALREADY_ANNULLED)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "7-net",
+      "desc": "efecto monetario una sola vez (original + contra = 2 filas)",
+      "expected": 2,
+      "observed": 2,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "8",
+      "desc": "ambos egresos aceptados (físico suficiente por moneda)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "8-cup",
+      "desc": "físico CUP = 700 (1000 − 200 − 100 del caso 4)",
+      "expected": 700,
+      "observed": 700,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "8-usd",
+      "desc": "físico USD = 50 (200 − 150)",
+      "expected": 50,
+      "observed": 50,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "M1",
+      "desc": "clerk NO puede entregar efectivo",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "M2",
+      "desc": "entrega 500 CUP con físico 20 → ERR_INSUFFICIENT_CURRENCY",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "M3",
+      "desc": "devolución 400 > fondo 300 → ERR_FUND_INSUFFICIENT",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "M4-obs",
+      "desc": "[CÓDIGO ACTUAL] devolución 200 con físico 50 (fondo 300)",
+      "expected": "ACEPTADO (defecto)",
+      "observed": "ACEPTADO (defecto)",
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "M5",
+      "desc": "fecha futura rechazada",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "M6",
+      "desc": "fallo a mitad de transacción → rollback, saldo intacto",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "M8",
+      "desc": "usuario ajeno a la tienda rechazado",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "M10-obs",
+      "desc": "[CÓDIGO ACTUAL] reversión de ingreso 100 USD con físico 20",
+      "expected": "ACEPTADO (defecto)",
+      "observed": "ACEPTADO (defecto)",
+      "status": "PASS",
+      "phase": "current"
+    },
+    {
+      "id": "M10-net",
+      "desc": "[CÓDIGO ACTUAL] físico USD tras reversión",
+      "expected": -80,
+      "observed": -80,
+      "status": "PASS",
+      "phase": "current"
+    }
+  ]
+}

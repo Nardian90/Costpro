@@ -1,0 +1,226 @@
+{
+  "generated": "2026-10-24T01:11:06.191Z",
+  "db": "cajamision (aislada, PG 18.4)",
+  "phase": "fixed",
+  "pass": 27,
+  "fail": 0,
+  "defects_reproduced": [],
+  "results": [
+    {
+      "id": "1",
+      "desc": "egreso 150 CUP RECHAZADO (físico CUP=100)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "1-net",
+      "desc": "saldo físico CUP intacto tras rechazo",
+      "expected": 100,
+      "observed": 100,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "2",
+      "desc": "egreso 80 CUP ACEPTADO",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "2-net",
+      "desc": "quedan 20 CUP físicos",
+      "expected": 20,
+      "observed": 20,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "3a",
+      "desc": "egreso 150 USD RECHAZADO (físico USD=100)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "3b",
+      "desc": "egreso 150 USD RECHAZADO pese a CUP abundante",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "3b-net",
+      "desc": "físico USD intacto",
+      "expected": 100,
+      "observed": 100,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "4",
+      "desc": "egreso CUP solo mueve CUP; USD intacto (sin conversión implícita)",
+      "expected": 200,
+      "observed": 200,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "5",
+      "desc": "solo UN egreso concurrente se aprueba",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "5-net",
+      "desc": "físico CUP tras concurrencia = 40",
+      "expected": 40,
+      "observed": 40,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "6",
+      "desc": "reintento benigno: mismo documento, sin duplicar",
+      "expected": 1,
+      "observed": 1,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "6-docid",
+      "desc": "replay devuelve el documento original",
+      "expected": "5bf3a1b2-6f33-4631-a604-bbc6be6d4e77",
+      "observed": "5bf3a1b2-6f33-4631-a604-bbc6be6d4e77",
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "6-reuse",
+      "desc": "misma clave con payload distinto → ERR_IDEMPOTENCY_KEY_REUSE",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "7",
+      "desc": "segunda reversión rechazada (ERR_ALREADY_ANNULLED)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "7-net",
+      "desc": "efecto monetario una sola vez (original + contra = 2 filas)",
+      "expected": 2,
+      "observed": 2,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "8",
+      "desc": "ambos egresos aceptados (físico suficiente por moneda)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "8-cup",
+      "desc": "físico CUP = 700 (1000 − 200 − 100 del caso 4)",
+      "expected": 700,
+      "observed": 700,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "8-usd",
+      "desc": "físico USD = 50 (200 − 150)",
+      "expected": 50,
+      "observed": 50,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "M1",
+      "desc": "clerk NO puede entregar efectivo",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "M2",
+      "desc": "entrega 500 CUP con físico 20 → ERR_INSUFFICIENT_CURRENCY",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "M3",
+      "desc": "devolución 400 > fondo 300 → ERR_FUND_INSUFFICIENT",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "M4",
+      "desc": "devolución 200 con físico 50 → rechazo por físico",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "M5",
+      "desc": "fecha futura rechazada",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "M6",
+      "desc": "fallo a mitad de transacción → rollback, saldo intacto",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "M8",
+      "desc": "usuario ajeno a la tienda rechazado",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "M10",
+      "desc": "reversión de ingreso 100 USD con físico 20 → rechazo físico",
+      "expected": true,
+      "observed": true,
+      "status": "PASS",
+      "phase": "fixed"
+    },
+    {
+      "id": "M10-net",
+      "desc": "físico USD permanece 20",
+      "expected": 20,
+      "observed": 20,
+      "status": "PASS",
+      "phase": "fixed"
+    }
+  ]
+}

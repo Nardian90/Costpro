@@ -34,6 +34,17 @@ const reverseSchema = z.object({
   type: z.enum(['transaction', 'receipt', 'transfer', 'adjustment', 'devolution', 'production_order']),
   id: z.string().regex(uuidRegex, 'ID de documento inválido'),
   reason: z.string().min(3).max(500),
+  // MISIÓN DE CIERRE (§4): recuperación explícita del dinero de una devolución
+  // con reembolso liquidado. La reversión es ATÓMICA con la recuperación: la
+  // moneda y el importe los fija el SERVIDOR desde las filas refund (el
+  // payload solo declara el riel real de cobro y la fecha). Sin esto, una
+  // reversión documental liberaba el tope como si el dinero hubiera vuelto.
+  recovery: z.array(z.object({
+    currency: z.enum(['CUP', 'USD']),
+    method: z.enum(['cash', 'transfer', 'zelle']),
+    operation_date: z.string().datetime().optional(),
+    notes: z.string().max(500).optional(),
+  })).max(2).optional(),
 });
 
 /**
@@ -172,6 +183,13 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_reason: parsed.data.reason,
     p_user_id: session.user.id,
   };
+  // MISIÓN DE CIERRE: la recuperación acompaña la reversión de devoluciones
+  // (p_recovery jsonb — firma 4-arg de 20261024400000). SOLO se envía para
+  // devolution: el resto de las RPC no tiene el parámetro y PostgREST
+  // resolvería PGRST202 si llegara un nombre inexistente.
+  if (parsed.data.type === 'devolution' && parsed.data.recovery) {
+    rpcParams.p_recovery = parsed.data.recovery;
+  }
 
   const { data: rpcResult, error: rpcError } = await supabase.rpc(mapping.rpc, rpcParams);
 
@@ -188,6 +206,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     else if (msg.includes('ERR_INVALID_TRANSITION')) status = 422;
     else if (msg.includes('ERR_UNAUTHORIZED')) status = 403;
     else if (msg.includes('ERR_') && msg.includes('_NOT_FOUND')) status = 404;
+    // MISIÓN DE CIERRE (§4): la reversión de una devolución con reembolso
+    // liquidado exige la recuperación atómica → 422 accionable (el modal
+    // muestra el formulario de recuperación cuando el frontend detecta el código).
+    else if (msg.includes('ERR_DEVOLUTION_REFUND_NOT_RECOVERED')) status = 422;
+    else if (msg.includes('ERR_DEVOLUTION_RECOVERY')) status = 422;
+    else if (msg.includes('ERR_DEVOLUTION_ALREADY_RECOVERED')) status = 409;
     return NextResponse.json({ error: msg }, { status });
   }
 

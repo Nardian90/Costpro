@@ -1,0 +1,76 @@
+{
+  "descripcion": "Regresión integral con cadena COMPLETA 1818→2222→23000→20261024400000 (recuperación y reversión financiera de devoluciones). BD aislada cajamision reconstruida desde cero antes de cada suite (UUIDs fijos por script).",
+  "fecha": "2026-10-24T04:26:06.683Z",
+  "fase_reversa": {
+    "current": {
+      "pass": 41,
+      "total": 41,
+      "fail": 0,
+      "defects": 7,
+      "defectos": [
+        {
+          "id": "R1",
+          "why": "reversión documental libera el tope de reembolso sin recuperación: 160 CUP reembolsados de 100 pagados (doble reembolso íntegro)"
+        },
+        {
+          "id": "R2",
+          "why": "no existe mecanismo para registrar la recuperación del dinero: el libro no puede volver a reflejar la entrada"
+        },
+        {
+          "id": "R4",
+          "why": "reversión USD libera el tope sin recuperación: 12 USD reembolsados de 10 pagados"
+        },
+        {
+          "id": "R7",
+          "why": "reversión de store_credit no compensa el pasivo ni existe tope de crédito: 120 de crédito por una venta de 100"
+        },
+        {
+          "id": "R8",
+          "why": "venta mixta 2000 CUP + 5 USD: NO existe camino de devolución total — el usuario no puede completar la devolución prevista (fail-closed sin flujo)"
+        },
+        {
+          "id": "R11",
+          "why": "arbitraje de tasa: el mismo importe comercial devuelve 4.94 USD o 12.5 USD según la tasa VIGENTE del día (pagados 10 USD a tasa 400)"
+        },
+        {
+          "id": "R14",
+          "why": "la UI bloquea la moneda en rieles bancarios (disabled) y el RPC defaultea CUP: una venta cobrada por zelle USD no puede reembolsarse por su riel natural"
+        }
+      ]
+    },
+    "fixed": {
+      "pass": 80,
+      "total": 80,
+      "fail": 0,
+      "defects": 0
+    }
+  },
+  "cert_contable": {
+    "pass": 51,
+    "fail": 0,
+    "total": 51,
+    "defects": 0,
+    "phase": "cert"
+  },
+  "faseE_saldo_fisico": {
+    "pass": 27,
+    "fail": 0,
+    "total": 27,
+    "defects": 0,
+    "phase": "fixed"
+  },
+  "faseB_devoluciones": {
+    "pass": 86,
+    "fail": 0,
+    "total": 86,
+    "defects": 0,
+    "phase": "fixed"
+  },
+  "faseE_seguridad": {
+    "pass": 14,
+    "total": 14,
+    "fail": 0,
+    "defects": 0,
+    "phase": "seg"
+  }
+}

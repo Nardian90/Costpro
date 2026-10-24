@@ -26,6 +26,7 @@ export type CashLedgerMovementType =
   | 'egreso_caja'
   | 'entrega_efectivo'
   | 'reembolso_devolucion'
+  | 'recuperacion_devolucion'
   | 'ajuste_caja'
   | 'apertura_turno'
   | 'cierre_turno';
@@ -73,7 +74,7 @@ export interface CashLedgerOpening {
 const r2 = (n: number): number => Math.round((Number(n) || 0) * 100) / 100;
 
 const IN_TYPES: ReadonlySet<string> = new Set([
-  'venta_efectivo', 'anticipo_produccion', 'ingreso_caja',
+  'venta_efectivo', 'anticipo_produccion', 'ingreso_caja', 'recuperacion_devolucion',
 ]);
 const INFO_TYPES: ReadonlySet<string> = new Set(['apertura_turno', 'cierre_turno']);
 
@@ -87,6 +88,7 @@ const MOVEMENT_LABELS: Record<CashLedgerMovementType, string> = {
   egreso_caja: 'Egreso de caja',
   entrega_efectivo: 'Entrega de efectivo',
   reembolso_devolucion: 'Reembolso de devolución',
+  recuperacion_devolucion: 'Recuperación de reembolso',
   ajuste_caja: 'Ajuste de caja',
   apertura_turno: 'Apertura de turno',
   cierre_turno: 'Cierre de turno',
