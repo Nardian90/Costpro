@@ -45,6 +45,35 @@ const createSchema = z.object({
   idempotency_key: z.string().min(8).max(128).optional(),
 });
 
+/**
+ * MISIÓN POST-MERGE FINAL (20261024230000): mapa de errores ERR_* del RPC
+ * create_devolution_v2 → status HTTP + mensaje humano accionable. La regla
+ * contable del reembolso es DEFINITIVA en PostgreSQL (tope por moneda +
+ * saldo físico); esta capa solo traduce el rechazo a 422 accionable — nunca
+ * valida por sí misma (misión §10: la solución no depende del frontend).
+ */
+function mapRpcError(msg: string): NextResponse | null {
+  const map: Array<[string, number, string]> = [
+    // Tope por moneda: nunca más de lo neto pagado en esa moneda menos lo ya
+    // reembolsado — la conversión implícita USD↔CUP no existe en el modelo.
+    ['ERR_DEVOLUTION_REFUND_CAP', 422, 'El reembolso excede lo reembolsable de esa moneda para la venta original (pagado neto, ya reembolsado y solicitado vienen en el detalle). No se convierte implícitamente entre monedas: devuelva dentro de lo pagado por moneda o use crédito de tienda.'],
+    // Pagos indeterminables de la venta (sin filas/liquidación/efectivo).
+    ['ERR_DEVOLUTION_PAYMENTS_UNDETERMINED', 422, 'La venta original no tiene pagos determinables (sin filas de pago ni liquidación): el reembolso monetario queda bloqueado. Revise la venta original.'],
+    // Físico por moneda (paridad con la correctiva 20261024220000 de caja).
+    ['ERR_INSUFFICIENT_CURRENCY', 422, 'El reembolso supera el saldo físico disponible de esa moneda en caja.'],
+    ['ERR_IDEMPOTENCY_KEY_REUSE', 409, 'Conflicto de idempotencia: la clave ya fue usada con otros datos.'],
+    ['ERR_DEVOLUTION_CAP_EXCEEDED', 422, 'La devolución supera la cantidad vendida aún no devuelta (tope acumulado).'],
+    ['ERR_CROSS_STORE', 403, 'La venta original pertenece a otra tienda.'],
+    ['ERR_UNAUTHORIZED', 403, 'No autorizado para crear devoluciones en esta tienda.'],
+  ];
+  for (const [code, status, message] of map) {
+    if (msg.includes(code)) {
+      return NextResponse.json({ error: message, code, detail: msg }, { status });
+    }
+  }
+  return null;
+}
+
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const url = new URL(req.url);
   const storeId = url.searchParams.get('store_id');
@@ -128,6 +157,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (msg.includes('ERR_FUTURE_DATED_DOCUMENT') || msg.includes('ERR_BACKDATED_DOCUMENT')) {
       return NextResponse.json({ error: msg, code: msg.includes('ERR_FUTURE') ? 'ERR_FUTURE_DATED_DOCUMENT' : 'ERR_BACKDATED_DOCUMENT' }, { status: 422 });
     }
+    // MISIÓN POST-MERGE FINAL (20261024230000): reglas contables del reembolso
+    // → 422 accionable (tope por moneda, pagos indeterminables, físico).
+    const mapped = mapRpcError(msg);
+    if (mapped) return mapped;
     logger.error('DATABASE', 'CREATE_DEVOLUTION_FAILED', { error: error.message });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

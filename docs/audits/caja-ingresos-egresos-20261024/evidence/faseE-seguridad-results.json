@@ -1,0 +1,104 @@
+{
+  "pass": 14,
+  "total": 14,
+  "results": [
+    {
+      "id": "SEC-1",
+      "desc": "anon SIN ejecución efectiva",
+      "expected": false,
+      "observed": false,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-2",
+      "desc": "authenticated SIN ejecución efectiva",
+      "expected": false,
+      "observed": false,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-3",
+      "desc": "service_role CON ejecución efectiva (contrato vigente)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-4",
+      "desc": "postgres CON ejecución (dueño del objeto, requerido por Management API)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-5",
+      "desc": "SECURITY DEFINER conservado",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-6",
+      "desc": "search_path acotado ('public','pg_temp') conservado",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-7",
+      "desc": "autorización has_store_access_as presente (fail-closed)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-8",
+      "desc": "guard ERR_CROSS_STORE de venta ajena presente",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-9",
+      "desc": "service_role NUNCA se usa para eludir RLS (patrón actor-explícito p_user_id conservado)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-10",
+      "desc": "create_cash_flow_document conserva la correctiva 2222 (validación física en rama ordinaria)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-11",
+      "desc": "reverse_cash_flow_document conserva la correctiva 2222 (reversión de ingreso)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-12",
+      "desc": "llamada como rol anon RECHAZADA (permisos, no lógica)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-13",
+      "desc": "llamada como rol authenticated RECHAZADA (permisos, no lógica)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    },
+    {
+      "id": "SEC-14",
+      "desc": "errores de autorización sin efectos parciales (faseB T9: sin filas refund ni documentos)",
+      "expected": true,
+      "observed": true,
+      "status": "PASS"
+    }
+  ]
+}

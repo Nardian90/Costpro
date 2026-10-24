@@ -1,0 +1,31 @@
+{
+  "descripcion": "Regresión de la certificación previa con la cadena COMPLETA de migraciones aplicada en BD aislada (20261024180000 → 20261024220000 → 20261024230000)",
+  "fecha": "2026-10-24T02:2xZ (cajamision, PG 18.4)",
+  "cert_contable": {
+    "pass": 51,
+    "fail": 0,
+    "nota": "suite cert-contable.mjs íntegra tras aplicar 23000"
+  },
+  "faseE_saldo_fisico_fixed": {
+    "pass": 27,
+    "fail": 0,
+    "nota": "correctiva 2222 intacta — 23000 no la regresa"
+  },
+  "faseB_devoluciones": {
+    "current": {
+      "pass": 81,
+      "fail": 0,
+      "defectos": 11
+    },
+    "fixed": {
+      "pass": 85,
+      "fail": 0,
+      "defectos": 0
+    }
+  },
+  "faseE_seguridad": {
+    "pass": 14,
+    "fail": 0,
+    "nota": "ACL efectiva + roles + SECURITY DEFINER + search_path + cadena 2222 conservada"
+  }
+}

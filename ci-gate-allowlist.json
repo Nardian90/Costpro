@@ -830,6 +830,15 @@
       "reason": "MISIÓN POST-MERGE 2026-10-24 (PR saldo físico) · reversión de INGRESO valida FÍSICO por moneda del documento: anular un ingreso USD con el USD físico ya gastado dejaba el saldo físico USD en negativo (repro M10). Correctiva 20261024220000_saldo_fisico_egresos_multimoneda.sql probada en BD aislada y PENDIENTE de aplicación autorizada. El cuerpo LIVE sigue certificado; drift INTENCIONAL y temporal: bloque de validación física + conservación del chequeo canónico y protecciones previas (advisory lock, doble anulación). Expira al aplicar la correctiva o en la fecha.",
       "added_by": "saldo-fisico-postmerge-pr",
       "expires": "2027-01-31"
+    },
+    {
+      "function": "create_devolution_v2/12",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISIÓN POST-MERGE FINAL 2026-10-24 (PR #1470, cierre del riesgo residual §16.7) · reembolsos en efectivo de devoluciones comerciales validan TOPE POR MONEDA y SALDO FÍSICO POR MONEDA: create_devolution_v2 persistía la fila refund sin comprobar el efectivo disponible de esa moneda, y la moneda era elección libre del operador sin consultar los pagos reales de la venta (11 repros con expectativas pre-calculadas). Correctiva consecutiva 20261024230000_devoluciones_reembolso_fisico_moneda.sql (cadena 1818→2222→23000) probada en BD aislada: faseB 85/85 PASS 0 defectos + regresión cert-contable 51/51 + faseE 27/27 + seguridad 14/14; PENDIENTE de aplicación autorizada en producción (protocolo §15). El cuerpo LIVE sigue certificado; drift INTENCIONAL y temporal: bloque DECLARE + validación tope-por-moneda/físico-por-moneda tras v_refund_amount, con DF-07, precio servidor v2.24.1, advisory lock, idempotencia determinista, DF-03, store_credit y ACL 12-arg intactos. Expira al aplicar la correctiva o en la fecha.",
+      "added_by": "devoluciones-reembolso-fisico-pr",
+      "expires": "2027-01-31"
     }
   ]
 }
