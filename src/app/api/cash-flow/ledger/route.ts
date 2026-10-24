@@ -298,9 +298,17 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // ── 3. Comisiones pagadas en efectivo ──
+  // FIX MISIÓN AUDITORÍA CAJA (2026-10-24): el select anterior referenciaba
+  // `amount` y `notes`, columnas que NO EXISTEN en commission_payments (ni en
+  // el esquema de producción ni en ninguna migración — verificado en vivo vía
+  // introspección de solo lectura y reproducido en BD aislada: PSQL 42703
+  // «column commission_payments.amount does not exist»). Las columnas reales
+  // son `final_amount` (importe nativo editable) y, para descripción,
+  // `payment_reference` / `manual_adjustment_reason`. Este error provocaba el
+  // 500 «No se pudo cargar el libro de caja» en ENERVIDA-VITALLCONS.
   const { data: commissions, error: commErr } = await supabase
     .from('commission_payments')
-    .select('id, amount, amount_cup, currency, exchange_rate, payment_method, status, paid_at, paid_by, notes')
+    .select('id, final_amount, amount_cup, currency, exchange_rate, payment_method, status, paid_at, paid_by, payment_reference, manual_adjustment_reason')
     .eq('store_id', p.store_id)
     .eq('status', 'paid')
     .eq('payment_method', 'cash')
@@ -312,16 +320,24 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   for (const c of commissions ?? []) {
     if (c.paid_by) ptUserIds.add(c.paid_by);
     const currency = c.currency === 'USD' ? 'USD' : 'CUP';
+    // Importe nativo para visualización — MISMA clasificación canónica que el
+    // espejo RPC get_cash_currency_summary (única fuente de verdad del libro
+    // físico): CUP → final_amount (nativo; respaldo amount_cup); USD → el
+    // canónico CUP dividido por la tasa registrada (tasa ≤ 0 o ausente → se
+    // muestra el canónico CUP como nativo, sin inventar tasa).
     const native = currency === 'USD'
-      ? Math.abs(Number(c.amount_cup ?? 0) / Number(c.exchange_rate || 1))
-      : Math.abs(Number(c.amount ?? c.amount_cup ?? 0));
+      ? (Number(c.exchange_rate) > 0
+          ? Math.abs(Number(c.amount_cup ?? 0) / Number(c.exchange_rate))
+          : Math.abs(Number(c.amount_cup ?? 0)))
+      : Math.abs(Number(c.final_amount ?? c.amount_cup ?? 0));
     rows.push({
       id: `comm-${c.id}`, effective_at: c.paid_at,
       operational_date: c.paid_at.slice(0, 10),
       movement_type: 'comision', movement_label: 'Comisión pagada (efectivo)',
       currency, amount_native: native,
       amount_cup_signed: -Math.abs(Number(c.amount_cup ?? 0)),
-      reference: null, description: c.notes || 'Comisión pagada en efectivo',
+      reference: c.payment_reference || null,
+      description: c.payment_reference || 'Comisión pagada en efectivo',
       user_name: null, status: 'paid', origin_view: 'commissions', origin_id: c.id,
     });
   }

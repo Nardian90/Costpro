@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/payments/route';
+import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 
 /**
  * MISIÓN SERVICIOS RECIBIDOS (2026-10-23) — contrato de /api/payments:
@@ -139,11 +140,18 @@ describe('POST /api/payments — fecha financiera del pago (V2.12.32)', () => {
   });
 
   it('hoy al mediodía es admisible (tope = HOY, no ayer)', async () => {
-    const todayNoon = new Date();
-    todayNoon.setUTCHours(12, 0, 0, 0);
-    const res = await POST(makeRequest(baseBody({ payment_date: todayNoon.toISOString() })));
+    // Determinista a cualquier hora UTC del runner: «hoy» se toma del día de
+    // negocio America/Havana (misma fuente que el gate de la ruta). Entre
+    // 00:00–04:00 UTC el runner ya está en el día calendario siguiente y el
+    // «hoy UTC al mediodía» anterior era FUTURO para el gate Habana → fallo
+    // flaky diario en esa ventana (reproducido 2026-10-24T00:16Z en CI del
+    // PR #1468 y 00:20Z local). Mediodía LOCAL del día de negocio — misma
+    // convención del cliente (operation-date.ts resolvePosOperationDate):
+    // con |offset| < 12h cae SIEMPRE dentro del mismo día civil Habana.
+    const todayNoon = new Date(`${todayBusinessDay()}T12:00:00`).toISOString();
+    const res = await POST(makeRequest(baseBody({ payment_date: todayNoon })));
     expect(res.status).toBe(201);
-    expect(rpcCalls[0].p_payment_date).toBe(todayNoon.toISOString());
+    expect(rpcCalls[0].p_payment_date).toBe(todayNoon);
   });
 
   it('rechazo del gate de la BD (ERR_FUTURE_DATED_DOCUMENT) → 422, no 500', async () => {
