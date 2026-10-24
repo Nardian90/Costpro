@@ -659,11 +659,11 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
       {
         id: 'health',
         label: 'Salud',
-        description: 'Estado de servicios, latencia de API, conexión a BD y servicios externos en tiempo real.',
+        description: 'Estado comprobado de COSTPRO bajo demanda: comprobaciones de API, base de datos y sesión, fuentes de conocimiento y documentación.',
         icon: HeartPulse,
         type: 'item',
         navClass: 'admin',
-        keywords: ['salud', 'status', 'salud plataforma', 'diagnóstico', 'latencia'],
+        keywords: ['salud', 'status', 'salud plataforma', 'diagnóstico', 'comprobaciones', 'latencia'],
       },
       {
         id: 'usage-monitoring',

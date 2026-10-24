@@ -1,207 +1,194 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Activity,
-  Share2,
-  Database,
-  Book,
-  ShieldCheck,
-  RefreshCw,
-  Search,
-  Bell,
-  Cpu,
-  Clock,
-  HardDrive,
-  Server
-} from 'lucide-react';
+import { Activity, Database, Book, RefreshCw, AlertTriangle } from 'lucide-react';
 import { OverviewTab } from './tabs/OverviewTab';
-import { ArchitectureTab } from './tabs/ArchitectureTab';
 import { KnowledgeTab } from './tabs/KnowledgeTab';
 import { DocumentationTab } from './tabs/DocumentationTab';
-import { AuditTab } from './tabs/AuditTab';
-import { PipelineTab } from './tabs/PipelineTab';
-import { HealthData } from './hooks/useHealthData';
+import { HealthData, RefreshState } from './hooks/useHealthData';
 import { cn } from '@/lib/utils';
+
+/**
+ * SALUD — Layout compacto (rediseño 2026-10-24, FASE C).
+ *
+ * Cabecera de dos líneas:
+ *  1) Título + estado general comprobado (N/M comprobaciones) + Refrescar núcleo.
+ *  2) Indicadores compactos: versión real, latencia API, latencia BD y
+ *     última comprobación con su estado de datos.
+ *
+ * Eliminados por obsoletos o sin fuente real (FASE A): eslogan «Observabilidad
+ * y Evolución Autónoma», v9.0.0 inventado (la versión real viene de la API),
+ * RAM/CPU/uptime del host, «Integridad 100%» sin comprobaciones y el footer
+ * decorativo.
+ */
 
 interface HealthLayoutProps {
   data: HealthData;
-  loading: boolean;
-  error: string | null;
   onRefresh: () => void;
-  lastRefresh?: Date | null;
+  isRefreshing: boolean;
+  refreshState: RefreshState;
+  dataStale: boolean;
+  error: string | null;
+  lastRefresh: Date | null;
+  graphData: HealthData['knowledgeGraph'] | null;
+  graphLoading: boolean;
+  graphError: string | null;
+  onLoadGraph: () => void;
 }
 
-export const HealthLayout: React.FC<HealthLayoutProps> = ({ data, loading, error, onRefresh, lastRefresh }) => {
-  const health = data.healthSummary || {};
-  const sysMetrics = data.systemMetrics;
-  const projMetrics = data.projectMetrics;
+/** Etiqueta honesta del estado de datos según la semántica de FASE D. */
+function dataStateLabel(refreshState: RefreshState, dataStale: boolean): { text: string; tone: 'ok' | 'partial' | 'stale' | 'pending' } {
+  if (refreshState === 'refreshing') return { text: 'Comprobando…', tone: 'pending' };
+  if (dataStale || refreshState === 'failed') return { text: 'Datos anteriores', tone: 'stale' };
+  if (refreshState === 'partial') return { text: 'Actualizado parcialmente', tone: 'partial' };
+  if (refreshState === 'ok') return { text: 'Actualizado', tone: 'ok' };
+  return { text: 'Sin comprobación', tone: 'pending' };
+}
+
+export const HealthLayout: React.FC<HealthLayoutProps> = ({
+  data,
+  onRefresh,
+  isRefreshing,
+  refreshState,
+  dataStale,
+  error,
+  lastRefresh,
+  graphData,
+  graphLoading,
+  graphError,
+  onLoadGraph,
+}) => {
+  const summary = data.checkSummary;
+  const db = data.checks.database;
+  const api = data.checks.api;
+  const allOk = summary.status === 'ok' && summary.failed === 0;
+
+  const dataState = dataStateLabel(refreshState, dataStale);
+
+  const lastCheckText = lastRefresh ? lastRefresh.toLocaleTimeString('es-CU') : '—';
+
+  const toneClasses: Record<string, string> = {
+    ok: 'text-emerald-500',
+    partial: 'text-amber-500',
+    stale: 'text-amber-500',
+    pending: 'text-muted-foreground',
+  };
+
+  const showAlert = dataStale || refreshState === 'failed' || summary.failed > 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-primary/20">
-      {/* HEADER SECTION - Editorial Precision */}
-      <header className="px-6 sm:px-12 py-10 sm:py-16 border-b border-border/30 bg-card/20 relative overflow-hidden backdrop-blur-md">
-        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary via-blue-500 to-purple-600 animate-pulse" />
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-[100px]" />
-
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-10 relative z-10">
-          <div className="flex items-center gap-6 sm:gap-10">
-            <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-[32px] sm:rounded-[40px] bg-primary flex items-center justify-center shadow-[0_0_50px_rgba(var(--primary),0.2)] shrink-0 border-4 border-background group hover:scale-105 transition-transform duration-500">
-              <Cpu className="w-8 h-8 sm:w-12 sm:h-12 text-primary-foreground group-hover:rotate-12 transition-transform" />
-            </div>
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                 <h1 className="text-3xl sm:text-6xl font-black uppercase tracking-tighter leading-none italic">Salud del Sistema</h1>
-                 <span className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary tracking-widest mt-2 uppercase">v9.0.0</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-                <span className="text-[10px] sm:text-[12px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-muted-foreground opacity-60">Observabilidad y Evolución Autónoma de Arquitectura</span>
-                <div className={cn(
-                  "w-fit px-4 py-1.5 rounded-full border text-[8px] sm:text-[10px] font-black uppercase tracking-widest flex items-center gap-3",
-                  health.status === 'HEALTHY' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
-                  health.status === 'STABLE' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
-                  health.status === 'DEGRADED' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
-                  'bg-destructive/10 border-destructive/20 text-destructive'
-                )}>
-                   <div className={cn(
-                     "w-2 h-2 rounded-full animate-pulse",
-                     health.status === 'HEALTHY' || health.status === 'STABLE' ? 'bg-emerald-500' :
-                     health.status === 'DEGRADED' ? 'bg-amber-500' : 'bg-destructive'
-                   )} />
-                   {health.status === 'HEALTHY' || health.status === 'STABLE' ? 'Sistema Operativo' :
-                    health.status === 'DEGRADED' ? 'Degradado' : 'Crítico'}
-                </div>
-              </div>
-            </div>
+      {/* HEADER COMPACTO — 2 líneas */}
+      <header className="px-4 sm:px-6 py-4 border-b border-border/30 bg-card/20 backdrop-blur-md">
+        {/* Línea 1: título + estado comprobado + acción */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight leading-none truncate">Salud del Sistema</h1>
+            <span
+              className={cn(
+                'shrink-0 inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest',
+                allOk ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'
+              )}
+            >
+              <span className={cn('w-2 h-2 rounded-full', allOk ? 'bg-emerald-500' : 'bg-amber-500')} />
+              {allOk ? 'Operativo' : 'Degradado'}
+              <span className="opacity-60">·</span>
+              <span>{summary.passed}/{summary.total} comprobaciones</span>
+            </span>
           </div>
 
-          <div className="flex items-center gap-4 sm:gap-6 w-full lg:w-auto justify-center lg:justify-end">
-             {/* Real-time System Info */}
-             <div className="hidden md:flex flex-col items-end mr-2 gap-1.5">
-                <div className="flex items-center gap-2 text-[8px] font-bold uppercase tracking-widest text-muted-foreground/50">
-                   <HardDrive className="w-3 h-3" />
-                   {sysMetrics ? `${sysMetrics.memoryUsagePercent}% RAM · ${sysMetrics.processMemoryMB}MB` : '—'}
-                </div>
-                <div className="flex items-center gap-2 text-[8px] font-bold uppercase tracking-widest text-muted-foreground/50">
-                   <Server className="w-3 h-3" />
-                   {sysMetrics ? `${sysMetrics.cpuCount} CPUs · ${sysMetrics.uptimeHuman}` : '—'}
-                </div>
-                {lastRefresh && (
-                  <div className="flex items-center gap-2 text-[8px] font-bold uppercase tracking-widest text-muted-foreground/50">
-                     <Clock className="w-3 h-3" />
-                     {lastRefresh.toLocaleTimeString('es-CU')}
-                  </div>
-                )}
-             </div>
-
-             {/* Integrity Score Badge */}
-             <div className="hidden sm:flex flex-col items-end mr-4">
-                <span className="text-[9px] font-black uppercase tracking-widest">Integridad</span>
-                <span className={cn(
-                  "text-xs font-black",
-                  (health.integrityScore || 0) >= 85 ? 'text-emerald-500' :
-                  (health.integrityScore || 0) >= 70 ? 'text-amber-500' : 'text-destructive'
-                )}>{health.integrityScore || 0}%</span>
-             </div>
-
-             <button
-               onClick={onRefresh}
-               className="h-12 sm:h-16 px-6 sm:px-10 rounded-2xl sm:rounded-[32px] bg-primary text-primary-foreground font-black text-[10px] sm:text-[12px] uppercase tracking-widest shadow-2xl hover:scale-[1.05] active:scale-[0.95] transition-all duration-300 flex items-center gap-3 sm:gap-5 group"
-             >
-                <RefreshCw className={cn("w-4 h-4 sm:w-5 sm:h-5", loading && "animate-spin")} />
-                <span className="whitespace-nowrap">{loading ? 'SINCRONIZANDO...' : 'REFRESCAR NÚCLEO'}</span>
-             </button>
-          </div>
+          <button
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="h-10 px-5 rounded-xl bg-primary text-primary-foreground font-black text-[11px] uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2.5 disabled:opacity-60 disabled:hover:scale-100"
+          >
+            <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
+            <span className="whitespace-nowrap">{isRefreshing ? 'Comprobando…' : 'Refrescar núcleo'}</span>
+          </button>
         </div>
+
+        {/* Línea 2: indicadores compactos */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <span>
+            COSTPRO <span className="text-foreground font-black">v{data.app.version}</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className={cn('w-1.5 h-1.5 rounded-full', api.status === 'ok' ? 'bg-emerald-500' : 'bg-destructive')} />
+            API {api.latencyMs != null ? `${api.latencyMs} ms` : '—'}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className={cn('w-1.5 h-1.5 rounded-full', db.status === 'ok' ? 'bg-emerald-500' : 'bg-destructive')} />
+            BD {db.status === 'ok' ? `${db.latencyMs ?? '—'} ms` : 'Sin conectar'}
+          </span>
+          <span>
+            Última comprobación: <span className="text-foreground font-black">{lastCheckText}</span>
+          </span>
+          <span className={cn('font-black', toneClasses[dataState.tone])}>{dataState.text}</span>
+        </div>
+
+        {/* Alerta visible solo si hay un fallo que requiere atención */}
+        {showAlert && (
+          <div
+            role="alert"
+            className={cn(
+              'mt-3 flex items-start gap-3 rounded-xl border px-4 py-2.5 text-[11px] font-semibold leading-relaxed',
+              dataStale || refreshState === 'failed'
+                ? 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400'
+                : 'bg-destructive/10 border-destructive/20 text-destructive'
+            )}
+          >
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div>
+              {dataStale || refreshState === 'failed' ? (
+                <>
+                  La última actualización no pudo completarse
+                  {error ? `: ${error}` : ''}. Se muestran los datos de la última comprobación válida
+                  {lastRefresh ? ` (${lastRefresh.toLocaleTimeString('es-CU')})` : ''}.
+                </>
+              ) : (
+                <>
+                  La comprobación de base de datos falló: {db.detail}. Verifique la conexión y reintente con «Refrescar núcleo».
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
-      {/* MAIN CONTENT WITH TABS - Precision Navigation */}
-      <main className="flex-1 px-6 sm:px-12 py-10 sm:py-12 overflow-auto no-scrollbar bg-background">
+      {/* CONTENIDO — solo Panorama, Conocimiento y Documentación */}
+      <main className="flex-1 px-4 sm:px-6 py-6 overflow-auto no-scrollbar bg-background">
         <Tabs defaultValue="overview" className="w-full">
-          <div className="sticky top-0 z-50 mb-12 sm:mb-16 bg-background/60 backdrop-blur-2xl border border-border/30 rounded-[32px] sm:rounded-[48px] p-2 sm:p-3 shadow-2xl overflow-hidden max-w-6xl mx-auto">
-            <TabsList className="flex flex-row flex-nowrap h-auto w-full items-center justify-start gap-2 overflow-x-auto bg-transparent p-0 no-scrollbar scroll-smooth">
+          <div className="sticky top-0 z-50 mb-6 bg-background/80 backdrop-blur-xl border border-border/30 rounded-2xl p-1.5 shadow-sm max-w-6xl mx-auto">
+            <TabsList className="flex flex-row w-full items-center justify-start gap-1.5 bg-transparent p-0 no-scrollbar">
               {[
                 { id: 'overview', label: 'Panorama', icon: Activity },
-                { id: 'architecture', label: 'Arquitectura', icon: Share2 },
                 { id: 'knowledge', label: 'Conocimiento', icon: Database },
                 { id: 'documentation', label: 'Documentación', icon: Book },
-                { id: 'audit', label: 'Gobernanza', icon: ShieldCheck },
-                { id: 'pipeline', label: 'Ciclo Evolutivo', icon: RefreshCw },
               ].map((tab) => (
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="inline-flex shrink-0 items-center justify-center gap-3 whitespace-nowrap rounded-2xl px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-2xl sm:flex-1 sm:rounded-[32px] sm:py-5 sm:text-[11px] group"
+                  className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 sm:px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg sm:flex-1"
                 >
-                  <tab.icon className="size-4 shrink-0 sm:size-5 group-data-[state=active]:animate-pulse" />
+                  <tab.icon className="size-3.5 shrink-0" />
                   <span>{tab.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
           </div>
 
-          <div className="min-h-[800px] max-w-7xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <TabsContent value="overview" className="mt-0 focus-visible:outline-none ring-0 border-none outline-none">
-              <OverviewTab data={data} />
-            </TabsContent>
-            <TabsContent value="architecture" className="mt-0 focus-visible:outline-none ring-0 border-none outline-none">
-              <ArchitectureTab data={data} />
+              <OverviewTab data={data} refreshState={refreshState} dataStale={dataStale} lastRefresh={lastRefresh} />
             </TabsContent>
             <TabsContent value="knowledge" className="mt-0 focus-visible:outline-none ring-0 border-none outline-none">
-              <KnowledgeTab data={data} />
+              <KnowledgeTab data={data} graphData={graphData} graphLoading={graphLoading} graphError={graphError} onLoadGraph={onLoadGraph} />
             </TabsContent>
             <TabsContent value="documentation" className="mt-0 focus-visible:outline-none ring-0 border-none outline-none">
               <DocumentationTab data={data} />
             </TabsContent>
-            <TabsContent value="audit" className="mt-0 focus-visible:outline-none ring-0 border-none outline-none">
-              <AuditTab data={data} />
-            </TabsContent>
-            <TabsContent value="pipeline" className="mt-0 focus-visible:outline-none ring-0 border-none outline-none">
-              <PipelineTab data={data} />
-            </TabsContent>
           </div>
         </Tabs>
       </main>
-
-      {/* FOOTER INTELLIGENCE BAR - Global Status */}
-      <footer className="px-8 sm:px-12 py-6 sm:py-10 border-t border-border/30 bg-card/20 flex flex-col sm:flex-row items-center justify-between gap-6 backdrop-blur-md">
-         <div className="flex items-center gap-5 group cursor-default">
-            <div className={cn(
-              "w-3 h-3 rounded-full animate-pulse",
-              health.status === 'HEALTHY' || health.status === 'STABLE' ? 'bg-emerald-500' :
-              health.status === 'DEGRADED' ? 'bg-amber-500' : 'bg-destructive'
-            )} />
-            <div>
-               <span className="text-[10px] sm:text-[12px] font-black uppercase tracking-[0.3em] block leading-none mb-1 group-hover:text-primary transition-colors">Salud del Sistema v9.0.0</span>
-               <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest opacity-60 italic">Fuente de Verdad: knowledge/architecture/</span>
-            </div>
-         </div>
-         <div className="flex items-center gap-6 sm:gap-12">
-            <div className="flex flex-col items-end">
-               <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap mb-1">Integridad</span>
-               <span className={cn(
-                 "text-sm font-black",
-                 (health.integrityScore || 0) >= 85 ? 'text-emerald-500' :
-                 (health.integrityScore || 0) >= 70 ? 'text-amber-500' : 'text-destructive'
-               )}>{health.integrityScore || 0}% — {health.status || 'UNKNOWN'}</span>
-            </div>
-            <div className="w-[1px] h-10 bg-border/50 hidden sm:block" />
-            <div className="flex flex-col items-end">
-               <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap mb-1">Plataforma</span>
-               <span className="text-sm font-black group hover:text-primary transition-colors cursor-default italic">
-                 {sysMetrics ? `${sysMetrics.nodeVersion} · ${sysMetrics.platform}/${sysMetrics.arch}` : '—'}
-               </span>
-            </div>
-            {lastRefresh && (
-              <>
-                <div className="w-[1px] h-10 bg-border/50 hidden sm:block" />
-                <div className="flex flex-col items-end">
-                  <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap mb-1">Última Sincronización</span>
-                  <span className="text-sm font-black text-muted-foreground">{lastRefresh.toLocaleTimeString('es-CU')}</span>
-                </div>
-              </>
-            )}
-         </div>
-      </footer>
     </div>
   );
 };

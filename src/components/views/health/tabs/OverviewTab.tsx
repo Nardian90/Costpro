@@ -1,307 +1,176 @@
 import React from 'react';
 import { MetricCard } from '../components/MetricCard';
-import { ShieldCheck, Share2, FileText, Layers, Activity, Clock, Zap, TrendingUp, TrendingDown, Server, HardDrive, Cpu, GitBranch, Box, Monitor } from 'lucide-react';
-import { HealthData } from '../hooks/useHealthData';
+import { StatusBadge } from '../components/StatusBadge';
+import { ShieldCheck, Database, Book, CheckCircle2, XCircle, Clock, HelpCircle, Server, Activity, UserCheck } from 'lucide-react';
+import { HealthData, RefreshState } from '../hooks/useHealthData';
 import { cn } from '@/lib/utils';
+
+/**
+ * SALUD — Panorama (rediseño 2026-10-24).
+ *
+ * Solo métricas con fuente identificada y significado operativo:
+ *  - Comprobaciones ejecutadas (API, BD, sesión) con latencia y timestamp.
+ *  - Fuentes de conocimiento leídas y documentación indexada (recuento real).
+ *  - Estado de datos: cuándo se comprobó y si el resultado es actual,
+ *    parcial o de una lectura anterior.
+ *  - Lo que NO está disponible se declara explícitamente («No disponible»),
+ *    en lugar de exhibir métricas decorativas del host (FASE A).
+ */
 
 interface OverviewTabProps {
   data: HealthData;
+  refreshState: RefreshState;
+  dataStale: boolean;
+  lastRefresh: Date | null;
 }
 
-export const OverviewTab: React.FC<OverviewTabProps> = ({ data }) => {
-  const metrics = data.metrics?.summary || {};
-  const pipelineState = data.pipelineState || {};
-  const health = data.healthSummary || {};
-  const sysMetrics = data.systemMetrics;
-  const projMetrics = data.projectMetrics;
+const formatTime = (iso: string | undefined): string => {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleTimeString('es-CU');
+  } catch {
+    return '—';
+  }
+};
 
-  // Real data
-  const integrityScore = health.integrityScore ?? projMetrics?.integrityScore ?? 0;
-  const couplingScore = projMetrics?.couplingScore ?? 0;
-  const totalComponents = projMetrics?.totalComponents ?? metrics.total_components ?? 0;
-  const viewsCount = projMetrics?.viewsCount ?? 0;
-  const layerCount = projMetrics?.layerCount ?? 0;
-  const totalLinks = (projMetrics as any)?.totalLinks ?? metrics.total_links ?? 0;
-  const instability = projMetrics?.instability ?? 0;
-  const avgFanIn = (projMetrics as any)?.avgFanIn ?? 0;
-  const avgFanOut = (projMetrics as any)?.avgFanOut ?? 0;
+export const OverviewTab: React.FC<OverviewTabProps> = ({ data, refreshState, dataStale, lastRefresh }) => {
+  const { checks, checkSummary, sourcesSummary, docsSummary, app } = data;
+  const failedChecks = Object.values(checks).filter((c) => c.status !== 'ok');
+  const allOk = failedChecks.length === 0;
 
-  const getStatusColor = (score: number) => {
-    if (score >= 75) return 'success';
-    if (score >= 50) return 'warning';
-    return 'destructive';
-  };
+  const checkList = [
+    { key: 'api', icon: Activity, check: checks.api },
+    { key: 'database', icon: Database, check: checks.database },
+    { key: 'auth', icon: UserCheck, check: checks.auth },
+  ];
 
-  const isPositive = integrityScore >= 50;
-  const delta = integrityScore - 50;
-
-  // Layer distribution from metrics
-  const layerDist = metrics.layer_distribution || {};
+  const dataStateText =
+    refreshState === 'refreshing'
+      ? 'Comprobando…'
+      : dataStale || refreshState === 'failed'
+        ? 'Datos anteriores (última lectura válida)'
+        : refreshState === 'partial'
+          ? 'Actualizado parcialmente: alguna comprobación falló'
+          : 'Actualizado: todas las comprobaciones respondieron';
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* ── KPI Strip ────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Indicadores comprobados */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <MetricCard
-          title="Integridad"
-          value={`${integrityScore}%`}
-          subtitle="Salud Arquitectónica v9.0"
+          title="Comprobaciones"
+          value={`${checkSummary.passed}/${checkSummary.total}`}
+          subtitle={allOk ? 'Todas superadas en la última comprobación' : `${checkSummary.failed} sin superar en la última comprobación`}
           icon={ShieldCheck}
-          color={getStatusColor(integrityScore)}
-          progress={integrityScore}
+          color={allOk ? 'success' : 'warning'}
+          progress={(checkSummary.passed / Math.max(1, checkSummary.total)) * 100}
         />
         <MetricCard
-          title="Independencia"
-          value={`${couplingScore}%`}
-          subtitle={`Inestabilidad promedio: ${(instability * 100).toFixed(0)}%`}
-          icon={Share2}
-          color={getStatusColor(couplingScore)}
-          progress={couplingScore}
+          title="Fuentes de conocimiento"
+          value={`${sourcesSummary.ok}/${sourcesSummary.total}`}
+          subtitle="Artefactos leídos correctamente en el servidor"
+          icon={Database}
+          color={sourcesSummary.failed === 0 ? 'success' : 'warning'}
+          progress={(sourcesSummary.ok / Math.max(1, sourcesSummary.total)) * 100}
         />
         <MetricCard
-          title="Componentes"
-          value={totalComponents}
-          subtitle={`${layerCount} capas · ${totalLinks} dependencias`}
-          icon={Box}
+          title="Documentos indexados"
+          value={docsSummary.count}
+          subtitle="Archivos .md disponibles en el servidor"
+          icon={Book}
           color="primary"
-          progress={Math.min(100, (totalComponents / 600) * 100)}
-        />
-        <MetricCard
-          title="Vistas UI"
-          value={viewsCount}
-          subtitle="Interfaces + Aplicaciones"
-          icon={Monitor}
-          color="blue"
-          progress={Math.min(100, (viewsCount / 400) * 100)}
+          progress={Math.min(100, (docsSummary.count / 25) * 100)}
         />
       </div>
 
-      {/* ── Secondary Metrics ────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <MetricCard
-          title="Documentación"
-          value={data.docsList?.length || 0}
-          subtitle="Archivos .md indexados"
-          icon={FileText}
-          color="primary"
-          progress={Math.min(100, ((data.docsList?.length || 0) / 25) * 100)}
-        />
-        <MetricCard
-          title="Fan-In Prom."
-          value={avgFanIn.toFixed(1)}
-          subtitle={`Fan-Out prom: ${avgFanOut.toFixed(1)}`}
-          icon={GitBranch}
-          color="primary"
-          progress={Math.min(100, avgFanIn * 15)}
-        />
-        <MetricCard
-          title="Pipeline"
-          value={pipelineState.status === 'IDLE' ? 'Completado' : `${pipelineState.currentPhase || 0}/${pipelineState.totalPhases || 18}`}
-          subtitle={`Ciclo #${pipelineState.cycle || 1} · ${pipelineState.status || 'IDLE'}`}
-          icon={Clock}
-          color={pipelineState.status === 'RUNNING' ? 'success' : 'primary'}
-          progress={((pipelineState.currentPhase || 0) / (pipelineState.totalPhases || 18)) * 100}
-        />
-        <MetricCard
-          title="Conectividad"
-          value={totalLinks}
-          subtitle={`Ratio: ${totalComponents > 0 ? (totalLinks / totalComponents).toFixed(1) : '0'} dep/comp`}
-          icon={Layers}
-          color="blue"
-          progress={Math.min(100, (totalLinks / (totalComponents * 8)) * 100)}
-        />
-      </div>
+      {/* Comprobaciones ejecutadas: fuente real de cada veredicto */}
+      <section className="rounded-2xl bg-card border border-border/50 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <h2 className="text-xs font-black uppercase tracking-tight">Comprobaciones ejecutadas</h2>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+            <Clock className="w-3 h-3" />
+            Última comprobación: {lastRefresh ? lastRefresh.toLocaleTimeString('es-CU') : '—'} · {dataStateText}
+          </span>
+        </div>
 
-      {/* ── Main Content ────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        {/* Left: Governance Panel */}
-        <div className="lg:col-span-8 space-y-6">
-
-          {/* Pipeline + Architecture Distribution */}
-          <div className="p-8 rounded-3xl bg-card border border-border/50 relative overflow-hidden group shadow-xl">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shadow-inner border border-primary/20">
-                  <Activity className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-black uppercase tracking-tight leading-none">Gobernanza del Sistema</h2>
-                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest italic opacity-40">Motor de Inteligencia v9.0.0</p>
-                </div>
-              </div>
-              <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-xl border", isPositive ? "bg-emerald-500/5 border-emerald-500/15" : "bg-destructive/5 border-destructive/15")}>
-                {isPositive ? <TrendingUp className="w-3 h-3 text-emerald-500" /> : <TrendingDown className="w-3 h-3 text-destructive" />}
-                <span className={cn("text-[9px] font-black uppercase", isPositive ? "text-emerald-500" : "text-destructive")}>
-                  {delta >= 0 ? '+' : ''}{delta}% Integridad
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {checkList.map(({ key, icon: Icon, check }) => (
+            <div
+              key={key}
+              className={cn(
+                'rounded-xl border p-4',
+                check.status === 'ok' ? 'border-border/50 bg-background/50' : 'border-destructive/30 bg-destructive/5'
+              )}
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest">
+                  <Icon className="w-4 h-4 text-primary" />
+                  {check.name}
                 </span>
+                <StatusBadge status={check.status === 'ok' ? 'success' : 'destructive'} label={check.status === 'ok' ? 'Ok' : 'Falló'} />
+              </div>
+              <div className="text-[10px] font-semibold text-muted-foreground leading-relaxed">
+                {check.latencyMs != null && <div>Latencia: {check.latencyMs} ms</div>}
+                <div>Comprobado: {formatTime(check.checkedAt)}</div>
+                <div className="opacity-70">{check.detail}</div>
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Pipeline State */}
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  Pipeline de Inteligencia
-                </h4>
-                <div className="space-y-3">
-                  {[
-                    { label: 'Ciclo', value: `#${pipelineState.cycle || 1}`, sub: 'Operacional' },
-                    { label: 'Scheduler', value: pipelineState.schedulerMode || 'NORMAL', sub: 'Modo orquestador' },
-                    { label: 'Confianza', value: `${pipelineState.confidenceThreshold || 90}%`, sub: 'Umbral mínimo' },
-                    { label: 'Revisión Manual', value: `${pipelineState.repairThreshold || 80}%`, sub: 'Umbral manual' },
-                    { label: 'Última Ejecución', value: pipelineState.lastExecution ? new Date(pipelineState.lastExecution).toLocaleTimeString('es-CU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—', sub: 'Timestamp' },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl bg-muted/20 border border-border/30 hover:bg-muted/30 transition-all">
-                      <div>
-                        <span className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/60 block">{item.label}</span>
-                        <span className="text-[7px] font-bold text-muted-foreground/30 uppercase">{item.sub}</span>
-                      </div>
-                      <span className="text-[11px] font-black tracking-tighter">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Architecture Distribution */}
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  Distribución Arquitectónica
-                </h4>
-                <div className="p-5 rounded-2xl bg-muted/15 border border-border/30 space-y-3">
-                  {Object.entries(layerDist).sort((a: any, b: any) => (b[1] as number) - (a[1] as number)).map(([layer, count]: [string, any]) => {
-                    const pct = totalComponents > 0 ? Math.round((count / totalComponents) * 100) : 0;
-                    const color = getColor(layer);
-                    return (
-                      <div key={layer} className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/60 truncate">{layer}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[8px] font-bold text-muted-foreground/30">{pct}%</span>
-                            <span className="text-[10px] font-black tracking-tighter">{count}</span>
-                          </div>
-                        </div>
-                        <div className="h-1 w-full bg-background rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-1000"
-                            style={{ width: `${pct}%`, backgroundColor: color }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {Object.keys(layerDist).length === 0 && (
-                    <p className="text-[9px] font-bold text-muted-foreground/30 uppercase tracking-widest italic text-center py-6">
-                      Sin datos de distribución disponibles
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Right: Health Status */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-
-          {/* Main Health Card */}
-          <div className={cn(
-            "p-8 rounded-3xl text-white flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden group",
-            health.status === 'HEALTHY' || health.status === 'STABLE'
-              ? 'bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-600'
-              : health.status === 'DEGRADED'
-              ? 'bg-gradient-to-br from-amber-700 via-amber-600 to-orange-600'
-              : 'bg-gradient-to-br from-red-800 via-red-700 to-red-600'
-          )}>
-            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 30% 20%, white 0%, transparent 60%)' }} />
-            <div className="relative z-10">
-              <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-500">
-                <ShieldCheck className="w-10 h-10 text-white" />
-              </div>
-              <div className="text-4xl font-black tracking-tighter mb-1">{integrityScore}%</div>
-              <h3 className="text-sm font-black uppercase tracking-wider mb-4">
-                {health.status === 'HEALTHY' || health.status === 'STABLE' ? 'OPERATIVO' : health.status === 'DEGRADED' ? 'DEGRADADO' : 'CRÍTICO'}
-              </h3>
-              <div className="w-10 h-0.5 bg-white/20 rounded-full mb-4 mx-auto" />
-              <p className="text-[9px] font-bold uppercase tracking-wider max-w-[200px] leading-relaxed opacity-70">
-                {health.status === 'HEALTHY' || health.status === 'STABLE'
-                  ? 'Todos los sistemas operan bajo el umbral de confianza'
-                  : health.status === 'DEGRADED'
-                  ? 'Métricas por debajo del umbral óptimo'
-                  : 'Anomalías detectadas. Intervención requerida.'}
-              </p>
-              <div className="mt-6 pt-4 border-t border-white/10 grid grid-cols-2 gap-6 w-full">
-                <div className="text-center">
-                  <div className="text-[10px] font-black tracking-tight">{health.status || '—'}</div>
-                  <div className="text-[7px] font-bold uppercase tracking-widest opacity-40">Estado</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-[10px] font-black tracking-tight">v9.0.0</div>
-                  <div className="text-[7px] font-bold uppercase tracking-widest opacity-40">Motor</div>
-                </div>
-              </div>
+        {failedChecks.length > 0 && (
+          <div role="alert" className="mt-4 flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-[11px] font-semibold text-destructive">
+            <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div>
+              {failedChecks.length === 1 ? 'Una comprobación requiere atención:' : `${failedChecks.length} comprobaciones requieren atención:`}{' '}
+              {failedChecks.map((c) => `${c.name} — ${c.detail}`).join(' · ')}
             </div>
           </div>
+        )}
+      </section>
 
-          {/* System Resources */}
-          {sysMetrics && (
-            <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-xl space-y-4">
-              <h4 className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <Server className="w-3 h-3 text-primary" />
-                Recursos del Sistema
-              </h4>
-              <div className="space-y-3">
-                {[
-                  { label: 'CPU', value: `${sysMetrics.loadAvg1m}`, pct: Math.min(100, (sysMetrics.loadAvg1m / sysMetrics.cpuCount) * 50), icon: Cpu },
-                  { label: 'RAM', value: `${sysMetrics.memoryUsagePercent}%`, pct: sysMetrics.memoryUsagePercent, icon: HardDrive },
-                  { label: 'Proceso', value: `${sysMetrics.processMemoryMB} MB`, pct: Math.min(100, (sysMetrics.processMemoryMB / sysMetrics.totalMemoryMB) * 100), icon: Zap },
-                ].map((item, idx) => (
-                  <div key={idx} className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-widest text-muted-foreground/50">
-                        <item.icon className="w-2.5 h-2.5" />
-                        {item.label}
-                      </div>
-                      <span className={cn(
-                        "text-[9px] font-black",
-                        item.pct > 80 ? 'text-destructive' : item.pct > 60 ? 'text-amber-500' : 'text-emerald-500'
-                      )}>{item.value}</span>
-                    </div>
-                    <div className="h-1 w-full bg-muted/20 rounded-full overflow-hidden">
-                      <div
-                        className={cn("h-full rounded-full transition-all duration-1000",
-                          item.pct > 80 ? 'bg-destructive' : item.pct > 60 ? 'bg-amber-500' : 'bg-emerald-500'
-                        )}
-                        style={{ width: `${Math.min(100, item.pct)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="pt-2 border-t border-border/30 flex items-center justify-between">
-                <span className="text-[7px] font-bold uppercase tracking-widest text-muted-foreground/25">{sysMetrics.cpuCount} CPUs · {sysMetrics.uptimeHuman}</span>
-                <span className="text-[7px] font-bold uppercase tracking-widest text-muted-foreground/25">{sysMetrics.nodeVersion}</span>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* Qué se sabe del sistema y qué no */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <section className="lg:col-span-7 rounded-2xl bg-card border border-border/50 p-5">
+          <h2 className="text-xs font-black uppercase tracking-tight mb-3 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            Información comprobada
+          </h2>
+          <ul className="space-y-2 text-[11px] font-semibold text-muted-foreground leading-relaxed">
+            <li>· Versión de la aplicación: <span className="text-foreground font-black">v{app.version}</span> (entorno: {app.environment}).</li>
+            <li>· Endpoint de salud ({'/api/intelligence'}) operativo y con sesión de administrador validada.</li>
+            <li>· Conectividad a la base de datos verificada con una consulta de solo lectura.</li>
+            <li>· {sourcesSummary.ok} de {sourcesSummary.total} fuentes de conocimiento leídas correctamente en el servidor.</li>
+            <li>· {docsSummary.count} documentos indexados y accesibles desde la pestaña Documentación.</li>
+            <li className="opacity-70">Los datos se obtienen en el momento de cada comprobación; no hay series históricas ni seguimiento continuo.</li>
+          </ul>
+        </section>
+
+        <section className="lg:col-span-5 rounded-2xl bg-card border border-border/50 p-5">
+          <h2 className="text-xs font-black uppercase tracking-tight mb-3 flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-muted-foreground" />
+            No disponible en esta vista
+          </h2>
+          <ul className="space-y-2 text-[11px] font-semibold text-muted-foreground leading-relaxed">
+            <li className="flex items-start gap-2">
+              <Server className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-50" />
+              <span>Recursos del servidor (RAM, CPU, tiempo de actividad): esta vista no recibe métricas de infraestructura de forma verificable.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Activity className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-50" />
+              <span>Estado de servicios externos (mensajería, tasas de cambio): sin comprobación implementada.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Clock className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-50" />
+              <span>Historial y tendencias de salud: sin almacenamiento de métricas implementado.</span>
+            </li>
+          </ul>
+          <p className="mt-3 pt-3 border-t border-border/30 text-[10px] font-semibold text-muted-foreground/70 leading-relaxed">
+            «No disponible» significa que COSTPRO no implementa hoy una fuente para ese dato. Se prefiere esta señal a presentar valores
+            estimados o estáticos como si estuvieran vivos.
+          </p>
+        </section>
       </div>
     </div>
   );
 };
-
-function getColor(layer: string): string {
-  const colors: Record<string, string> = {
-    'Application': '#3fff8b',
-    'Business Logic': '#fbbf24',
-    'UI Components': '#c084fc',
-    'Services': '#60a5fa',
-    'Hooks': '#22d3ee',
-    'Types': '#f472b6',
-    'Infrastructure': '#818cf8',
-    'State Management': '#f87171',
-  };
-  return colors[layer] || '#71717a';
-}

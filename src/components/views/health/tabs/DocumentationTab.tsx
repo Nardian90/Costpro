@@ -113,7 +113,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
            <div className="p-8 rounded-[40px] bg-card border border-border/50 shadow-sm flex-1 overflow-hidden flex flex-col">
               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-8 flex items-center gap-2">
                  <Hash className="w-3 h-3" />
-                 Documentación Viva
+                 Documentación
               </h4>
 
               <div className="flex-1 overflow-auto no-scrollbar space-y-4 pr-2">
@@ -194,7 +194,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
                  <div>
                     <h2 className="text-xl font-black uppercase tracking-tighter leading-none mb-1">{currentDoc?.title || 'Documento'}</h2>
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                      {currentDoc?.type || 'Documento'} · v9.0
+                      {currentDoc?.type || 'Documento'}
                     </p>
                  </div>
               </div>
