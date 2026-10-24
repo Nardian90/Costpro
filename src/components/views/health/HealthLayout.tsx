@@ -12,8 +12,10 @@ import { cn } from '@/lib/utils';
  *
  * Cabecera de dos líneas:
  *  1) Título + estado general comprobado (N/M comprobaciones) + Refrescar núcleo.
- *  2) Indicadores compactos: versión real, latencia API, latencia BD y
- *     última comprobación con su estado de datos.
+ *  2) Indicadores compactos: versión real, tiempo de respuesta del endpoint
+ *     (procesamiento total de la solicitud, incluye la comprobación de BD),
+ *     latencia BD (medida interna de la misma operación) y última
+ *     comprobación con su estado de datos.
  *
  * Eliminados por obsoletos o sin fuente real (FASE A): eslogan «Observabilidad
  * y Evolución Autónoma», v9.0.0 inventado (la versión real viene de la API),
@@ -111,9 +113,11 @@ export const HealthLayout: React.FC<HealthLayoutProps> = ({
           <span>
             COSTPRO <span className="text-foreground font-black">v{data.app.version}</span>
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className={cn('w-1.5 h-1.5 rounded-full', api.status === 'ok' ? 'bg-emerald-500' : 'bg-destructive')} />
-            API {api.latencyMs != null ? `${api.latencyMs} ms` : '—'}
+          <span
+            title="Tiempo total de procesamiento de esta solicitud (incluye la comprobación de BD); no se suma con la latencia de BD."
+          >
+            <span className={cn('w-1.5 h-1.5 rounded-full inline-block', api.status === 'ok' ? 'bg-emerald-500' : 'bg-destructive')} />
+            {' '}Respuesta del endpoint {api.latencyMs != null ? `${api.latencyMs} ms` : '—'}
           </span>
           <span className="flex items-center gap-1.5">
             <span className={cn('w-1.5 h-1.5 rounded-full', db.status === 'ok' ? 'bg-emerald-500' : 'bg-destructive')} />

@@ -112,7 +112,7 @@ describe('useHealthData — Refrescar núcleo', () => {
     const degraded = fixture({
       checks: {
         api: { name: 'API', status: 'ok', latencyMs: 5, checkedAt: '2026-10-24T12:00:00.000Z', detail: 'Endpoint operativo' },
-        database: { name: 'Base de datos', status: 'error', latencyMs: null, checkedAt: '2026-10-24T12:00:00.000Z', detail: 'connection refused' },
+        database: { name: 'Base de datos', status: 'error', latencyMs: null, checkedAt: '2026-10-24T12:00:00.000Z', detail: 'No se pudo conectar con la base de datos (categoría: conectividad)' },
         auth: { name: 'Sesión', status: 'ok', latencyMs: null, checkedAt: '2026-10-24T12:00:00.000Z', detail: 'Sesión de administrador validada' },
       },
       checkSummary: { total: 3, passed: 2, failed: 1, status: 'degraded' },

@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
  *
  * Solo métricas con fuente identificada y significado operativo:
  *  - Comprobaciones ejecutadas (API, BD, sesión) con latencia y timestamp.
- *  - Fuentes de conocimiento leídas y documentación indexada (recuento real).
+ *  - Fuentes de conocimiento leídas y archivos Markdown enumerados (recuento real).
  *  - Estado de datos: cuándo se comprobó y si el resultado es actual,
  *    parcial o de una lectura anterior.
  *  - Lo que NO está disponible se declara explícitamente («No disponible»),
@@ -39,9 +39,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ data, refreshState, da
   const allOk = failedChecks.length === 0;
 
   const checkList = [
-    { key: 'api', icon: Activity, check: checks.api },
-    { key: 'database', icon: Database, check: checks.database },
-    { key: 'auth', icon: UserCheck, check: checks.auth },
+    { key: 'api', icon: Activity, check: checks.api, latencyLabel: 'Respuesta del endpoint' },
+    { key: 'database', icon: Database, check: checks.database, latencyLabel: 'Latencia' },
+    { key: 'auth', icon: UserCheck, check: checks.auth, latencyLabel: 'Latencia' },
   ];
 
   const dataStateText =
@@ -74,12 +74,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ data, refreshState, da
           progress={(sourcesSummary.ok / Math.max(1, sourcesSummary.total)) * 100}
         />
         <MetricCard
-          title="Documentos indexados"
+          title="Archivos Markdown disponibles"
           value={docsSummary.count}
-          subtitle="Archivos .md disponibles en el servidor"
+          subtitle="Recuento real de archivos .md en las rutas declaradas por la API"
           icon={Book}
           color="primary"
-          progress={Math.min(100, (docsSummary.count / 25) * 100)}
         />
       </div>
 
@@ -94,7 +93,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ data, refreshState, da
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {checkList.map(({ key, icon: Icon, check }) => (
+          {checkList.map(({ key, icon: Icon, check, latencyLabel }) => (
             <div
               key={key}
               className={cn(
@@ -110,7 +109,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ data, refreshState, da
                 <StatusBadge status={check.status === 'ok' ? 'success' : 'destructive'} label={check.status === 'ok' ? 'Ok' : 'Falló'} />
               </div>
               <div className="text-[10px] font-semibold text-muted-foreground leading-relaxed">
-                {check.latencyMs != null && <div>Latencia: {check.latencyMs} ms</div>}
+                {check.latencyMs != null && <div>{latencyLabel}: {check.latencyMs} ms</div>}
                 <div>Comprobado: {formatTime(check.checkedAt)}</div>
                 <div className="opacity-70">{check.detail}</div>
               </div>
@@ -127,6 +126,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ data, refreshState, da
             </div>
           </div>
         )}
+
+        {/* Semántica de las duraciones: precisión sobre qué se mide (corrección post-fusión). */}
+        <p className="mt-4 text-[9px] font-semibold text-muted-foreground/70 leading-relaxed">
+          «Respuesta del endpoint» mide el tiempo total de procesamiento de la solicitud (incluye la consulta de BD y la
+          lectura de artefactos). La «Latencia» de BD es una medida interna de esa misma operación: ambas duraciones no
+          deben sumarse.
+        </p>
       </section>
 
       {/* Qué se sabe del sistema y qué no */}
@@ -141,7 +147,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ data, refreshState, da
             <li>· Endpoint de salud ({'/api/intelligence'}) operativo y con sesión de administrador validada.</li>
             <li>· Conectividad a la base de datos verificada con una consulta de solo lectura.</li>
             <li>· {sourcesSummary.ok} de {sourcesSummary.total} fuentes de conocimiento leídas correctamente en el servidor.</li>
-            <li>· {docsSummary.count} documentos indexados y accesibles desde la pestaña Documentación.</li>
+            <li>· {docsSummary.count} archivos Markdown enumerados en la pestaña Documentación (listado real del sistema de archivos; no hay indexación).</li>
             <li className="opacity-70">Los datos se obtienen en el momento de cada comprobación; no hay series históricas ni seguimiento continuo.</li>
           </ul>
         </section>

@@ -11,7 +11,7 @@ interface MetricCardProps {
   progress?: number;
 }
 
-export const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon: Icon, color = 'primary', progress = 85 }) => {
+export const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon: Icon, color = 'primary', progress }) => {
   const colorMap = {
     primary: 'bg-primary/10 text-primary border-primary/20',
     success: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
@@ -28,7 +28,10 @@ export const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, 
     blue: 'bg-blue-500',
   };
 
-  const clampedProgress = Math.max(0, Math.min(100, progress));
+  // La barra SOLO se renderiza con un valor real calculado por el consumidor
+  // (p. ej. N/M comprobaciones). Sin `progress` no hay barra: nunca un valor
+  // arbitrario por defecto (corrección post-fusión 2026-10-24).
+  const clampedProgress = progress != null ? Math.max(0, Math.min(100, progress)) : null;
 
   return (
     <div className="p-8 rounded-[40px] bg-card border border-border/50 shadow-sm hover:shadow-2xl hover:border-primary/30 transition-all duration-500 group relative overflow-hidden">
@@ -44,9 +47,18 @@ export const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, 
         </div>
       </div>
 
-      <div className="w-full h-1 bg-muted/20 rounded-full overflow-hidden mb-3">
-         <div className={cn("h-full rounded-full transition-all duration-1000", barColorMap[color])} style={{ width: `${clampedProgress}%` }} />
-      </div>
+      {clampedProgress != null && (
+        <div
+          role="progressbar"
+          aria-valuenow={clampedProgress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Progreso real de ${title}`}
+          className="w-full h-1 bg-muted/20 rounded-full overflow-hidden mb-3"
+        >
+          <div className={cn("h-full rounded-full transition-all duration-1000", barColorMap[color])} style={{ width: `${clampedProgress}%` }} />
+        </div>
+      )}
 
       <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-60 leading-tight">
         {subtitle}

@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  *
  * | Fuente            | Consulta                                     | Tipo        | Frecuencia                | Éxito                          | Errores                     |
  * |-------------------|----------------------------------------------|-------------|---------------------------|--------------------------------|-----------------------------|
- * | api               | Respuesta de ESTE endpoint                   | Instantáneo | Carga de vista + refresco | HTTP 200 con payload válido    | 401/403/500 (no hay body)   |
+ * | api               | Tiempo TOTAL de procesamiento de ESTE handler | Instantáneo | Carga de vista + refresco | HTTP 200 con payload válido    | 401/403/500 (no hay body)   |
  * | database          | head-count de SOLO LECTURA sobre `stores`    | Instantáneo | Carga de vista + refresco | Sin error y < 5 s              | status 'error' + detalle    |
  * | auth              | Sesión admin validada por `withRole`         | Instantáneo | Cada solicitud            | Middleware no rechazó          | 401 antes de llegar aquí    |
  * | knowledgeSources  | fs.statSync + JSON.parse por artefacto       | Instantáneo | Carga de vista + refresco | existe + parsea sin errores    | missing / parse_error       |
@@ -26,6 +26,19 @@ export const dynamic = 'force-dynamic';
  * - La comprobación de BD usa el cliente admin EXISTENTE (mismo que usa el
  *   middleware de autenticación), es de solo lectura (head-count, sin filas)
  *   y NO devuelve datos de tiendas a la respuesta.
+ * - SEMÁNTICA DE LATENCIAS (corrección post-fusión, 2026-10-24):
+ *   `checks.api.latencyMs` mide el TIEMPO TOTAL DE PROCESAMIENTO de la
+ *   solicitud en este handler (incluye la consulta de BD y la lectura de
+ *   artefactos del repo), NO la latencia de red pura del endpoint.
+ *   `checks.database.latencyMs` es una medida INTERNA de esa misma
+ *   operación (duración de la consulta de BD). Ambas duraciones describen
+ *   la misma solicitud y NO deben sumarse.
+ * - ERRORES PÚBLICOS DE BD: el detalle de la comprobación nunca transporta
+ *   el mensaje interno del proveedor (SQL, objetos internos, hosts, puertos
+ *   o credenciales). Los errores conocidos se traducen a categorías públicas
+ *   («conectividad», «autenticación», «tiempo de espera», …) y los
+ *   desconocidos reciben un mensaje genérico. En logs solo se registra la
+ *   categoría, nunca el texto original.
  * - El grafo de conocimiento (404 KB) solo se incluye con `?include=graph`
  *   para no penalizar cada refresco.
  * - Los artefactos de knowledge/ son instantáneas ESTÁTICAS del repositorio:
@@ -114,29 +127,108 @@ function readAppVersion(): string {
 
 const DB_CHECK_TIMEOUT_MS = 5_000;
 
+// ─── Saneamiento de errores de BD (mensajes públicos, sin detalles internos) ──
+
+/** Categorías públicas de fallo de BD: suficientes para diagnosticar, sin filtrar internos. */
+type DbErrorCategory =
+  | 'timeout'
+  | 'auth'
+  | 'rate_limited'
+  | 'not_found'
+  | 'config'
+  | 'network'
+  | 'server'
+  | 'unknown';
+
+/**
+ * Traduce un mensaje de error interno del proveedor a una categoría pública.
+ * El texto original NUNCA se devuelve ni se registra: solo se inspecciona
+ * en minúsculas para clasificarlo. Patrones basados en errores habituales de
+ * PostgREST/Postgres y del cliente Supabase (connection refused, JWT/invalid
+ * api key, rate limit, relation does not exist, fetch failed, 5xx…).
+ */
+function classifyDbError(rawMessage: string): DbErrorCategory {
+  const msg = (rawMessage ?? '').toLowerCase();
+  if (!msg) return 'unknown';
+  if (msg.includes('db_check_timeout') || msg.includes('timed out') || msg.includes('timeout')) return 'timeout';
+  if (
+    msg.includes('invalid api key') || msg.includes('jwt') || msg.includes('unauthorized') ||
+    msg.includes('permission denied') || msg.includes('401') || msg.includes('403')
+  ) return 'auth';
+  if (msg.includes('rate limit') || msg.includes('too many requests') || msg.includes('429')) return 'rate_limited';
+  if (
+    msg.includes('relation') || msg.includes('does not exist') || msg.includes('not found') ||
+    msg.includes('404') || msg.includes('schema')
+  ) return 'not_found';
+  if (
+    msg.includes('not configured') || msg.includes('missing') || msg.includes('is required') ||
+    msg.includes('environment') || msg.trim().endsWith('env') || msg.includes('env var')
+  ) return 'config';
+  if (
+    msg.includes('connection') || msg.includes('network') || msg.includes('fetch failed') ||
+    msg.includes('econnrefused') || msg.includes('enotfound') || msg.includes('ehostunreach') ||
+    msg.includes('etimedout') || msg.includes('econnreset')
+  ) return 'network';
+  if (msg.includes('500') || msg.includes('internal server') || msg.includes('server error')) return 'server';
+  return 'unknown';
+}
+
+/** Mensajes públicos comprensibles por categoría (sin SQL, hosts, puertos ni credenciales). */
+const DB_PUBLIC_ERROR_DETAILS: Record<DbErrorCategory, string> = {
+  timeout: `Tiempo de espera agotado (${DB_CHECK_TIMEOUT_MS / 1000} s): la consulta no completó`,
+  auth: 'Autenticación o permisos insuficientes para la comprobación de base de datos',
+  rate_limited: 'Se alcanzó el límite de solicitudes de la base de datos',
+  not_found: 'El recurso de la base de datos no está disponible',
+  config: 'La configuración de conexión de la base de datos está incompleta',
+  network: 'No se pudo conectar con la base de datos',
+  server: 'El servidor de base de datos devolvió un error interno',
+  unknown: 'La consulta a la base de datos no pudo completarse',
+};
+
+/** Etiqueta corta de la categoría para el detalle público (diagnóstico sin internos). */
+const DB_CATEGORY_LABELS: Record<DbErrorCategory, string> = {
+  timeout: 'tiempo de espera',
+  auth: 'autenticación',
+  rate_limited: 'límite de solicitudes',
+  not_found: 'recurso no disponible',
+  config: 'configuración',
+  network: 'conectividad',
+  server: 'error del servidor',
+  unknown: 'desconocido',
+};
+
+function publicDbErrorDetail(category: DbErrorCategory): string {
+  return `${DB_PUBLIC_ERROR_DETAILS[category]} (categoría: ${DB_CATEGORY_LABELS[category]})`;
+}
+
 /** Comprobación de conectividad a BD: head-count de SOLO lectura sobre `stores`. */
 async function checkDatabase(): Promise<CheckResult> {
   const checkedAt = new Date().toISOString();
   const startedAt = Date.now();
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
   try {
     const client = await getSupabaseAdminClient();
     const query = client.from('stores').select('id', { count: 'exact', head: true });
     // Evita unhandled rejection si el timeout gana la carrera.
     Promise.resolve(query).catch(() => undefined);
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('DB_CHECK_TIMEOUT')), DB_CHECK_TIMEOUT_MS)
-    );
+    const timeout = new Promise<never>((_, reject) => {
+      // Referencia guardada: el temporizador se cancela en `finally` si la
+      // consulta (exitosa o fallida) gana la carrera — nunca queda residual.
+      timeoutId = setTimeout(() => reject(new Error('DB_CHECK_TIMEOUT')), DB_CHECK_TIMEOUT_MS);
+    });
     const result = (await Promise.race([query, timeout])) as { error?: { message?: string } } | undefined;
     const latencyMs = Date.now() - startedAt;
 
     if (result && result.error) {
-      const raw = typeof result.error.message === 'string' ? result.error.message.slice(0, 120) : 'Error de conexión';
+      // Solo se clasifica; el mensaje interno no viaja en la respuesta ni en logs.
+      const category = classifyDbError(String(result.error.message ?? ''));
+      console.warn('[salud] Comprobación de BD falló (categoría: %s)', DB_CATEGORY_LABELS[category]);
       return {
         name: 'Base de datos',
         status: 'error',
         latencyMs,
         checkedAt,
-        detail: raw,
+        detail: publicDbErrorDetail(category),
       };
     }
     return {
@@ -148,11 +240,14 @@ async function checkDatabase(): Promise<CheckResult> {
     };
   } catch (err: any) {
     const latencyMs = Date.now() - startedAt;
-    const detail =
-      err?.message === 'DB_CHECK_TIMEOUT'
-        ? `Tiempo de espera agotado (${DB_CHECK_TIMEOUT_MS / 1000} s)`
-        : 'No se pudo conectar con la base de datos';
-    return { name: 'Base de datos', status: 'error', latencyMs, checkedAt, detail };
+    const isTimeout = err?.message === 'DB_CHECK_TIMEOUT';
+    const category: DbErrorCategory = isTimeout ? 'timeout' : classifyDbError(String(err?.message ?? ''));
+    console.warn('[salud] Comprobación de BD falló (categoría: %s)', DB_CATEGORY_LABELS[category]);
+    return { name: 'Base de datos', status: 'error', latencyMs, checkedAt, detail: publicDbErrorDetail(category) };
+  } finally {
+    // El temporizador nunca sobrevive a la comprobación: se cancela tanto si
+    // la consulta ganó (éxito o error) como si ganó el propio timeout.
+    if (timeoutId !== null) clearTimeout(timeoutId);
   }
 }
 
@@ -193,7 +288,7 @@ const handler = withRole('admin', async (req: NextRequest) => {
     status: 'ok',
     latencyMs: null, // Se completa justo antes de responder.
     checkedAt: now,
-    detail: 'Endpoint operativo',
+    detail: 'Respuesta del endpoint: tiempo total de procesamiento (incluye la comprobación de BD)',
   };
   const auth: CheckResult = {
     name: 'Sesión',

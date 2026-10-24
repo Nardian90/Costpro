@@ -135,9 +135,12 @@ describe('Salud — Interfaz simplificada', () => {
     // Versión REAL de la aplicación (package.json), etiquetada como COSTPRO
     // (aparece en cabecera y en Panorama — «Información comprobada»).
     expect(screen.getAllByText('v0.2.0').length).toBeGreaterThanOrEqual(1);
-    // Latencias medidas de las comprobaciones visibles en la línea de indicadores.
-    expect(screen.getByText(/API 5 ms/)).toBeInTheDocument();
+    // Latencias medidas visibles en la línea de indicadores: la de API se
+    // etiqueta como tiempo total de respuesta del endpoint (corrección post-fusión).
+    expect(screen.getByText(/Respuesta del endpoint 5 ms/)).toBeInTheDocument();
     expect(screen.getByText(/BD 120 ms/)).toBeInTheDocument();
+    // Nota de no-suma entre duración del endpoint y latencia interna de BD.
+    expect(screen.getByText(/no deben sumarse/i)).toBeInTheDocument();
     // Botón de refresco presente.
     expect(screen.getByRole('button', { name: /Refrescar núcleo/i })).toBeInTheDocument();
 
@@ -154,12 +157,12 @@ describe('Salud — Interfaz simplificada', () => {
     expect(within(header).queryByText(/uptime/i)).toBeNull();
   });
 
-  it('4a. Comprobación de BD fallida → Degradado 2/3 con alerta y detalle real', () => {
+  it('4a. Comprobación de BD fallida → Degradado 2/3 con alerta y detalle público saneado', () => {
     renderLayout({
       data: fixture({
         checks: {
-          api: { name: 'API', status: 'ok', latencyMs: 5, checkedAt: '2026-10-24T12:00:00.000Z', detail: 'Endpoint operativo' },
-          database: { name: 'Base de datos', status: 'error', latencyMs: null, checkedAt: '2026-10-24T12:00:00.000Z', detail: 'connection refused' },
+          api: { name: 'API', status: 'ok', latencyMs: 5, checkedAt: '2026-10-24T12:00:00.000Z', detail: 'Respuesta del endpoint: tiempo total de procesamiento (incluye la comprobación de BD)' },
+          database: { name: 'Base de datos', status: 'error', latencyMs: null, checkedAt: '2026-10-24T12:00:00.000Z', detail: 'No se pudo conectar con la base de datos (categoría: conectividad)' },
           auth: { name: 'Sesión', status: 'ok', latencyMs: null, checkedAt: '2026-10-24T12:00:00.000Z', detail: 'Sesión de administrador validada' },
         },
         checkSummary: { total: 3, passed: 2, failed: 1, status: 'degraded' },
@@ -170,10 +173,10 @@ describe('Salud — Interfaz simplificada', () => {
     expect(screen.getByText('Degradado')).toBeInTheDocument();
     expect(screen.getByText('2/3 comprobaciones')).toBeInTheDocument();
     // Al menos una alerta (cabecera y/o Panorama) cita la comprobación fallida
-    // y su detalle real (nada de «éxito»).
+    // y su detalle público (nada de «éxito», nada de texto interno del proveedor).
     const alerts = screen.getAllByRole('alert');
     expect(alerts.length).toBeGreaterThanOrEqual(1);
-    const withDetail = alerts.filter((el) => /connection refused/i.test(el.textContent ?? ''));
+    const withDetail = alerts.filter((el) => /no se pudo conectar con la base de datos/i.test(el.textContent ?? ''));
     expect(withDetail.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Actualizado parcialmente')).toBeInTheDocument();
   });
@@ -202,5 +205,25 @@ describe('Salud — Interfaz simplificada', () => {
     renderLayout();
     expect(screen.getByText('No disponible en esta vista')).toBeInTheDocument();
     expect(screen.getByText(/Recursos del servidor \(RAM, CPU, tiempo de actividad\)/)).toBeInTheDocument();
+  });
+
+  it('7. Métrica de documentación precisa: archivos disponibles, sin indexación ni objetivo arbitrario', () => {
+    renderLayout();
+
+    // Título preciso: recuento real de archivos .md, no «documentos indexados».
+    expect(screen.getByText('Archivos Markdown disponibles')).toBeInTheDocument();
+    // Sin barra de progreso con objetivo arbitrario: solo las 2 tarjetas con
+    // ratios reales (Comprobaciones 3/3, Fuentes 5/5) renderizan barra.
+    const bars = screen.getAllByRole('progressbar');
+    expect(bars.length).toBe(2);
+    expect(bars.map((b) => b.getAttribute('aria-valuenow'))).toEqual(['100', '100']);
+    // El recuento real sigue visible en la tarjeta y en «Información comprobada».
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText(/1 archivos Markdown enumerados/i)).toBeInTheDocument();
+
+    // La pestaña Documentación tampoco afirma indexación (Radix activa en mousedown).
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /Documentación/i }));
+    expect(screen.getByText(/Archivos Markdown disponibles/i)).toBeInTheDocument();
+    expect(screen.queryByText(/indexad/i)).toBeNull();
   });
 });
