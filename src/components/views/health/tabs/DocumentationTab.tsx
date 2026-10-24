@@ -167,7 +167,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
                 {docs.length <= 1 && (
                   <div className="p-6 rounded-2xl bg-muted/20 border border-border/50 text-center">
                     <p className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-widest italic">
-                      No hay documentos indexados
+                      No hay documentos disponibles
                     </p>
                   </div>
                 )}
@@ -176,7 +176,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
               <div className="mt-8 pt-6 border-t border-border/50">
                  <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-between">
                     <span className="text-[8px] font-bold text-muted-foreground uppercase leading-relaxed tracking-widest">
-                      {docsList.length} documentos indexados
+                      {docsList.length} archivos Markdown disponibles
                     </span>
                     <Clock className="w-3 h-3 text-primary/30" />
                  </div>

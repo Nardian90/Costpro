@@ -184,7 +184,7 @@ All JSON responses use a consistent format:
           properties: {
             name: { type: 'string', example: 'Base de datos' },
             status: { type: 'string', enum: ['ok', 'error'] },
-            latencyMs: { type: 'integer', nullable: true, description: 'Latencia medida; null cuando no aplica (p. ej. sesión).' },
+            latencyMs: { type: 'integer', nullable: true, description: 'Duración medida. Para «api»: tiempo total de respuesta del endpoint (incluye la comprobación de BD). Para «database»: duración interna de la consulta de BD, parte de la misma operación — no deben sumarse. Null cuando no aplica (p. ej. sesión).' },
             checkedAt: { type: 'string', format: 'date-time' },
             detail: { type: 'string', description: 'Detalle del resultado o error saneado (sin secretos).' },
           },
@@ -1401,11 +1401,14 @@ Detects exchange rate data from Banco Central de Cuba.
       operationId: 'getIntelligence',
       summary: 'Ejecuta las comprobaciones de salud del sistema (vista «Sistema → Salud»)',
       description:
-        'Admin only (withRole). Ejecuta comprobaciones reales en el momento de la solicitud: latencia del endpoint, ' +
-        'conectividad a BD (head-count de solo lectura sobre `stores`, sin filas devueltas) y sesión validada por el ' +
-        'middleware. Además: estado de las fuentes de conocimiento (existencia/lectura/mtime reales), listado de ' +
-        'documentación .md y versión real de la aplicación (package.json). El grafo de conocimiento (404 KB) solo se ' +
-        'incluye con `?include=graph`. No hay métricas almacenadas: cada dato se comprueba bajo demanda.',
+        'Admin only (withRole). Ejecuta comprobaciones reales en el momento de la solicitud: tiempo total de respuesta del endpoint ' +
+        '(procesamiento completo del handler, INCLUYE la comprobación de BD — no es latencia de red pura; la latencia de BD es una ' +
+        'medida interna de la misma operación y no debe sumarse), conectividad a BD (head-count de solo lectura sobre `stores`, sin ' +
+        'filas devueltas; errores traducidos a categorías públicas sin detalles internos) y sesión validada por el middleware. ' +
+        'Además: estado de las fuentes de conocimiento (existencia/lectura/mtime reales), listado de archivos .md encontrados en las ' +
+        'rutas documentales declaradas (recuento real del sistema de archivos, SIN indexación) y versión real de la aplicación ' +
+        '(package.json). El grafo de conocimiento (404 KB) solo se incluye con `?include=graph`. No hay métricas almacenadas: cada ' +
+        'dato se comprueba bajo demanda.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       parameters: [
         {
@@ -1468,9 +1471,14 @@ Detects exchange rate data from Banco Central de Cuba.
                     nullable: true,
                     description: 'Resumen del contenido de las instantáneas estáticas (componentes, capas, vistas, flujos, grafo).',
                   },
-                  docsList: { type: 'array', items: { type: 'string' } },
+                  docsList: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Rutas relativas de los archivos .md encontrados en las rutas documentales declaradas (listado del sistema de archivos, sin indexación).',
+                  },
                   docsSummary: {
                     type: 'object',
+                    description: 'Recuento real de archivos Markdown disponibles (coincide con docsList.length); no representa un objetivo ni una capacidad indexada.',
                     properties: { count: { type: 'integer' } },
                   },
                   knowledgeGraph: {

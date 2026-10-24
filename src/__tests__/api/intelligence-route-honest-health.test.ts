@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 /**
  * MISIÓN «SISTEMA → SALUD» (2026-10-24) — Contrato honesto de /api/intelligence.
+ * Corrección post-fusión (PR #1473 → #1475): timeout con temporizador cancelado
+ * y errores públicos categorizados (sin detalles internos del proveedor).
  *
- * La ruta reemplaza la «Integridad 100%» fabricada por comprobaciones reales
- * ejecutadas en el momento de la solicitud. La suite verifica:
+ * La suite verifica:
  *
  *   1. Gate de rol: withRole('admin', …) — vista admin-only (alineada con la
  *      navegación y con el precedente FIX-SEC-018 de /api/system-health).
@@ -16,6 +17,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
  *      una fuente ausente o ilegible queda marcada, no oculta.
  *   6. Versión real de package.json (adiós «v9.0.0» inventado).
  *   7. Grafo solo con ?include=graph (el refresco base queda ligero).
+ *   8. TIMEOUT: el temporizador se cancela en los tres caminos (éxito rápido,
+ *      error rápido, timeout) y un timeout se reporta como fallo, jamás éxito.
+ *   9. SANEAMIENTO: el detalle público nunca contiene el mensaje interno
+ *      (SQL, hosts, puertos, claves); los logs solo registran la categoría.
  */
 
 const { roleGate, dbResult, dbCalls, fsState, FIXTURES, keyFor } = vi.hoisted(() => {
@@ -39,7 +44,7 @@ const { roleGate, dbResult, dbCalls, fsState, FIXTURES, keyFor } = vi.hoisted(()
     Object.keys(FIXTURES).find((k) => absPath.endsWith(k));
   return {
     roleGate: { value: '' },
-    dbResult: { value: { error: null as { message: string } | null } },
+    dbResult: { value: { error: null as { message: string } | null }, hang: false },
     dbCalls: { selectArgs: [] as any[], writes: [] as string[] },
     fsState: { forceMissing: new Set<string>(), overrides: {} as Record<string, string> },
     FIXTURES,
@@ -92,10 +97,12 @@ vi.mock('@/lib/supabase-admin', () => ({
       return {
         select: (...args: any[]) => {
           dbCalls.selectArgs.push(args);
+          // `hang` simula una consulta que nunca responde (gana el timeout).
+          const outcome = () =>
+            dbResult.hang ? new Promise<any>(() => {}) : Promise.resolve({ ...dbResult.value });
           return {
-            then: (onFulfilled: any, onRejected: any) =>
-              Promise.resolve({ ...dbResult.value }).then(onFulfilled, onRejected),
-            catch: (cb: any) => Promise.resolve({ ...dbResult.value }).catch(cb),
+            then: (onFulfilled: any, onRejected: any) => outcome().then(onFulfilled, onRejected),
+            catch: (cb: any) => outcome().catch(cb),
           };
         },
         insert: () => {
@@ -123,6 +130,8 @@ vi.mock('@/lib/supabase-admin', () => ({
 
 import { GET } from '@/app/api/intelligence/route';
 
+let warnSpy: ReturnType<typeof vi.spyOn>;
+
 function makeRequest(includeGraph = false) {
   const url = `http://localhost:3000/api/intelligence${includeGraph ? '?include=graph' : ''}`;
   return { nextUrl: new URL(url), method: 'GET' } as any;
@@ -138,10 +147,17 @@ beforeEach(() => {
   // vez en la importación del módulo (declaración del gate) y su valor debe
   // persistir para poder afirmarlo.
   dbResult.value = { error: null };
+  dbResult.hang = false;
   dbCalls.selectArgs = [];
   dbCalls.writes = [];
   fsState.forceMissing.clear();
   fsState.overrides = {};
+  // Silencia (y permite inspeccionar) el warn de categoría de la ruta.
+  warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  warnSpy.mockRestore();
 });
 
 describe('GET /api/intelligence — Salud honesta', () => {
@@ -180,7 +196,10 @@ describe('GET /api/intelligence — Salud honesta', () => {
     const { body } = await callRoute();
     expect(body.checkSummary).toMatchObject({ total: 3, passed: 2, failed: 1, status: 'degraded' });
     expect(body.checks.database.status).toBe('error');
-    expect(body.checks.database.detail).toContain('connection refused');
+    // Detalle público categorizado: el texto interno «connection refused» NO viaja.
+    expect(body.checks.database.detail).toMatch(/no se pudo conectar con la base de datos/i);
+    expect(body.checks.database.detail).toMatch(/categoría: conectividad/i);
+    expect(body.checks.database.detail).not.toContain('connection refused');
   });
 
   it('marca una fuente de conocimiento ausente como «missing» (no la oculta ni la inventa)', async () => {
@@ -239,5 +258,89 @@ describe('GET /api/intelligence — Salud honesta', () => {
       graphNodes: 2,
       graphLinks: 1,
     });
+  });
+});
+
+describe('GET /api/intelligence — Gestión del temporizador de BD (corrección post-fusión)', () => {
+  it('cancela el temporizador cuando la consulta responde antes del timeout (éxito rápido)', async () => {
+    const clearSpy = vi.spyOn(globalThis, 'clearTimeout');
+    try {
+      const { body } = await callRoute();
+      expect(body.checks.database.status).toBe('ok');
+      // El temporizador de 5 s quedó cancelado: nada residual tras el éxito.
+      expect(clearSpy).toHaveBeenCalled();
+    } finally {
+      clearSpy.mockRestore();
+    }
+  });
+
+  it('cancela el temporizador cuando la consulta falla antes del timeout (error rápido)', async () => {
+    const clearSpy = vi.spyOn(globalThis, 'clearTimeout');
+    try {
+      dbResult.value = { error: { message: 'connect ECONNREFUSED 10.0.2.15:5432' } };
+      const { body } = await callRoute();
+      expect(body.checks.database.status).toBe('error');
+      expect(clearSpy).toHaveBeenCalled();
+    } finally {
+      clearSpy.mockRestore();
+    }
+  });
+
+  it('un timeout se comunica como fallo (degraded 2/3), nunca como éxito', async () => {
+    vi.useFakeTimers();
+    try {
+      dbResult.hang = true; // la consulta nunca responde → gana el timeout de 5 s
+      const pending = callRoute();
+      await vi.advanceTimersByTimeAsync(5_100);
+      const { body } = await pending;
+      expect(body.checks.database.status).toBe('error');
+      expect(body.checks.database.detail).toMatch(/tiempo de espera agotado/i);
+      expect(body.checks.database.detail).toMatch(/categoría: tiempo de espera/i);
+      expect(body.checkSummary).toMatchObject({ total: 3, passed: 2, failed: 1, status: 'degraded' });
+      // El resto de comprobaciones se reporta con su estado real.
+      expect(body.checks.api.status).toBe('ok');
+      expect(body.checks.auth.status).toBe('ok');
+    } finally {
+      vi.useRealTimers();
+      dbResult.hang = false;
+    }
+  });
+});
+
+describe('GET /api/intelligence — Errores públicos saneados (sin detalles internos)', () => {
+  it('traduce un error de conexión conocido a mensaje público categorizado (sin host, puerto ni texto interno)', async () => {
+    dbResult.value = { error: { message: 'connect ECONNREFUSED 10.0.2.15:5432 - connection refused' } };
+    const { body } = await callRoute();
+    expect(body.checks.database.status).toBe('error');
+    expect(body.checks.database.detail).toMatch(/no se pudo conectar con la base de datos/i);
+    expect(body.checks.database.detail).toMatch(/categoría: conectividad/i);
+    // Ningún detalle interno viaja en la respuesta completa.
+    const serialized = JSON.stringify(body);
+    expect(serialized).not.toContain('ECONNREFUSED');
+    expect(serialized).not.toContain('10.0.2.15');
+    expect(serialized).not.toContain('5432');
+    expect(serialized).not.toContain('connection refused');
+    // Los logs solo registran la categoría, nunca el mensaje original.
+    const logged = warnSpy.mock.calls.flat().join(' ');
+    expect(logged).not.toContain('ECONNREFUSED');
+    expect(logged).toContain('conectividad');
+  });
+
+  it('devuelve un mensaje genérico para errores desconocidos (sin texto interno)', async () => {
+    dbResult.value = { error: { message: 'unexpected token in GSS API request while negotiating' } };
+    const { body } = await callRoute();
+    expect(body.checks.database.status).toBe('error');
+    expect(body.checks.database.detail).toMatch(/no pudo completarse/i);
+    expect(body.checks.database.detail).toMatch(/categoría: desconocido/i);
+    expect(JSON.stringify(body)).not.toContain('GSS');
+  });
+
+  it('traduce errores de autenticación sin exponer claves ni tokens', async () => {
+    dbResult.value = { error: { message: 'Invalid API key: sb_secret_123456' } };
+    const { body } = await callRoute();
+    expect(body.checks.database.detail).toMatch(/autenticación o permisos insuficientes/i);
+    const serialized = JSON.stringify(body);
+    expect(serialized).not.toContain('sb_secret');
+    expect(serialized).not.toContain('Invalid API key');
   });
 });
