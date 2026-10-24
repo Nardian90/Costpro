@@ -178,6 +178,17 @@ All JSON responses use a consistent format:
         },
       },
       schemas: {
+        HealthCheck: {
+          type: 'object',
+          description: 'Resultado de una comprobación de salud ejecutada en el momento de la solicitud.',
+          properties: {
+            name: { type: 'string', example: 'Base de datos' },
+            status: { type: 'string', enum: ['ok', 'error'] },
+            latencyMs: { type: 'integer', nullable: true, description: 'Latencia medida; null cuando no aplica (p. ej. sesión).' },
+            checkedAt: { type: 'string', format: 'date-time' },
+            detail: { type: 'string', description: 'Detalle del resultado o error saneado (sin secretos).' },
+          },
+        },
         ErrorResponse: {
           type: 'object',
           properties: {
@@ -1388,39 +1399,84 @@ Detects exchange rate data from Banco Central de Cuba.
     get: {
       tags: ['Other'],
       operationId: 'getIntelligence',
-      summary: 'Get system intelligence data',
-      description: 'Returns comprehensive system intelligence including architecture data, knowledge graph, audit info, pipeline state, and health summary.',
+      summary: 'Ejecuta las comprobaciones de salud del sistema (vista «Sistema → Salud»)',
+      description:
+        'Admin only (withRole). Ejecuta comprobaciones reales en el momento de la solicitud: latencia del endpoint, ' +
+        'conectividad a BD (head-count de solo lectura sobre `stores`, sin filas devueltas) y sesión validada por el ' +
+        'middleware. Además: estado de las fuentes de conocimiento (existencia/lectura/mtime reales), listado de ' +
+        'documentación .md y versión real de la aplicación (package.json). El grafo de conocimiento (404 KB) solo se ' +
+        'incluye con `?include=graph`. No hay métricas almacenadas: cada dato se comprueba bajo demanda.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'include',
+          in: 'query',
+          required: false,
+          schema: { type: 'string', enum: ['graph'] },
+          description: 'Incluye `knowledgeGraph` (nodos y enlaces de la instantánea estática) en la respuesta.',
+        },
+      ],
       responses: {
         '200': {
-          description: 'Intelligence data bundle',
+          description: 'Resultado de las comprobaciones de salud ejecutadas',
           content: {
             'application/json': {
               schema: {
                 type: 'object',
                 properties: {
-                  audit: { type: 'object', description: 'Architecture audit data' },
-                  metrics: { type: 'object', description: 'Architecture metrics' },
-                  graph: { type: 'object', description: 'Architecture graph' },
-                  system: { type: 'object', description: 'System architecture' },
-                  manifest: { type: 'object', description: 'Architecture manifest' },
-                  changes: { type: 'object', description: 'Architecture changes' },
-                  reviewQueue: { type: 'object', description: 'Pending review queue' },
-                  pipelineState: { type: 'object', description: 'Pipeline state' },
-                  integrityReport: { type: 'string', description: 'Integrity report content' },
-                  knowledgeGraph: { type: 'object' },
-                  userHelp: { type: 'object' },
-                  views: { type: 'object' },
-                  workflows: { type: 'object' },
-                  components: { type: 'object' },
-                  docsList: { type: 'array', items: { type: 'string' } },
-                  healthSummary: {
+                  app: {
                     type: 'object',
                     properties: {
-                      timestamp: { type: 'string', format: 'date-time' },
-                      integrityScore: { type: 'integer' },
-                      status: { type: 'string', enum: ['STABLE', 'DEGRADED', 'CRITICAL'] },
+                      version: { type: 'string', description: 'Versión real de la aplicación (package.json)' },
+                      environment: { type: 'string', description: 'NODE_ENV del servidor' },
                     },
+                  },
+                  generatedAt: { type: 'string', format: 'date-time' },
+                  checks: {
+                    type: 'object',
+                    description: 'Comprobaciones ejecutadas: api (endpoint), database (head-count de solo lectura), auth (sesión admin).',
+                    properties: {
+                      api: { $ref: '#/components/schemas/HealthCheck' },
+                      database: { $ref: '#/components/schemas/HealthCheck' },
+                      auth: { $ref: '#/components/schemas/HealthCheck' },
+                    },
+                  },
+                  checkSummary: {
+                    type: 'object',
+                    properties: {
+                      total: { type: 'integer' },
+                      passed: { type: 'integer' },
+                      failed: { type: 'integer' },
+                      status: { type: 'string', enum: ['ok', 'degraded', 'failed'] },
+                    },
+                  },
+                  knowledgeSources: {
+                    type: 'array',
+                    description: 'Fuentes de conocimiento con estado real de lectura (ok/missing/parse_error), tamaño y última modificación.',
+                    items: { type: 'object' },
+                  },
+                  sourcesSummary: {
+                    type: 'object',
+                    properties: {
+                      total: { type: 'integer' },
+                      ok: { type: 'integer' },
+                      failed: { type: 'integer' },
+                    },
+                  },
+                  contentSummary: {
+                    type: 'object',
+                    nullable: true,
+                    description: 'Resumen del contenido de las instantáneas estáticas (componentes, capas, vistas, flujos, grafo).',
+                  },
+                  docsList: { type: 'array', items: { type: 'string' } },
+                  docsSummary: {
+                    type: 'object',
+                    properties: { count: { type: 'integer' } },
+                  },
+                  knowledgeGraph: {
+                    type: 'object',
+                    nullable: true,
+                    description: 'Solo con ?include=graph: nodos y enlaces de la instantánea estática del repositorio.',
                   },
                 },
               },
@@ -1428,6 +1484,7 @@ Detects exchange rate data from Banco Central de Cuba.
           },
         },
         '401': errorResponse401,
+        '403': errorResponse403,
         '429': errorResponse429,
         '500': errorResponse500,
       },
