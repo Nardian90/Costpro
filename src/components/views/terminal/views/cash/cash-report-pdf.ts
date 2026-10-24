@@ -1270,6 +1270,11 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     if (currency === 'CUP') {
       if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle });
       if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true });
+      // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
+      // (contrato único §2) — jamás sumada a las filas de venta (no es una
+      // segunda venta); la de efectivo SÍ alimenta el esperado a entregar.
+      if (s.equivCashOtraMoneda > 0) incomeRows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda });
+      if (s.equivVouchersOtraMoneda > 0) incomeRows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, note: 'info' });
       if (s.otIngresosCash > 0) incomeRows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash });
       // Comisiones PAGADAS desglosadas por medio (§4): transferencia NO toca el efectivo.
       if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense' });

@@ -19,7 +19,11 @@
  *     "totals": {
  *       "CUP": { "cash": 153350, "transfer": 2400, "zelle": 0, "total": 155750 },
  *       "USD": { "cash": 40,     "transfer": 0,    "zelle": 0, "total": 40 }
- *     }
+ *     },
+ *     "equiv_cash_other_cup": 31600,   — MISIÓN DEFINITIVA 2026-10-24: canónico
+ *        CUP de los cobros EN EFECTIVO de otra moneda (Σ amountCup buckets no-CUP;
+ *        consolidación de la hoja canónica CUP — NO es una segunda venta)
+ *     "equiv_voucher_other_cup": 0      — ídem vouchers (informativo)
  *   }
  */
 
@@ -101,13 +105,25 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     );
 
     const acc: SalesSplitAccum = {};
+    // MISIÓN DEFINITIVA (2026-10-24): equivalencia canónica CUP de los cobros
+    // de OTRA moneda — de la MISMA reconstrucción (buckets amountCup). El
+    // consumidor (computeDailySummary) la usa para la consolidación de la hoja
+    // canónica CUP — nunca como segunda venta.
+    let equivCashOtherCup = 0;
+    let equivVoucherOtherCup = 0;
     const txWithoutItems: Array<Record<string, unknown>> = [];
     for (const tx of (data || []) as Array<Record<string, unknown>>) {
       const items = itemsByTx.get(tx.id as string) || [];
       const payments = paymentsByTx.get(tx.id as string);
       if (items.length === 0) {
         if (payments && payments.length > 0) {
-          accumulateSalesSplit(acc, reconstructTxCollections(tx as unknown as CollectionTx, [], payments));
+          const r = reconstructTxCollections(tx as unknown as CollectionTx, [], payments);
+          accumulateSalesSplit(acc, r);
+          for (const b of r.buckets) {
+            if (b.currency === 'CUP') continue;
+            if (b.method === 'cash') equivCashOtherCup += b.amountCup;
+            else equivVoucherOtherCup += b.amountCup;
+          }
         } else {
           txWithoutItems.push(tx);
         }
@@ -115,11 +131,23 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       }
       const result = reconstructTxCollections(tx as unknown as CollectionTx, items as unknown as CollectionItem[], payments);
       accumulateSalesSplit(acc, result);
+      for (const b of result.buckets) {
+        if (b.currency === 'CUP') continue;
+        if (b.method === 'cash') equivCashOtherCup += b.amountCup;
+        else equivVoucherOtherCup += b.amountCup;
+      }
     }
     // Transacciones sin ítems: comportamiento previo (pool → sale_currency).
+    // Los pools están en CUP canónico: un grupo no-CUP aquí aporta su pool a
+    // la equivalencia (mismo canónico que reporta el fallback de grupos).
     for (const tx of txWithoutItems) {
       const cur = normCur(tx.sale_currency as string);
       if (cur === 'MIXED') continue;
+      if (cur !== 'CUP') {
+        const cash = Number(tx.cash_amount || 0), tr = Number(tx.transfer_amount || 0), ze = Number(tx.zelle_amount || 0);
+        equivCashOtherCup += cash;
+        equivVoucherOtherCup += tr + ze;
+      }
       if (!acc[cur]) acc[cur] = { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 };
       const cash = Number(tx.cash_amount || 0), tr = Number(tx.transfer_amount || 0), ze = Number(tx.zelle_amount || 0);
       acc[cur].cash += cash;
@@ -128,7 +156,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       acc[cur].total += cash + tr + ze;
     }
 
-    return NextResponse.json({ totals: acc });
+    return NextResponse.json({ totals: acc, equiv_cash_other_cup: equivCashOtherCup, equiv_voucher_other_cup: equivVoucherOtherCup });
   } catch (err: any) {
     console.error('[payment-totals] Exception:', err);
     return NextResponse.json({ error: err?.message || 'Internal error' }, { status: 500 });
