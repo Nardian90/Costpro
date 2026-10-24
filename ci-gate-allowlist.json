@@ -812,5 +812,24 @@
       "expires": "2026-12-31"
     }
   ],
-  "source_of_truth_baseline": []
+  "source_of_truth_baseline": [
+    {
+      "function": "create_cash_flow_document/13",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISIÓN POST-MERGE 2026-10-24 (PR saldo físico) · egresos ordinarios validan SALDO FÍSICO POR MONEDA: la rama canónica (v_expected_cash, incluye USD a tasa) autorizaba egresos CUP/USD sin billetes de esa moneda (5 repros con expectativas pre-calculadas: egreso CUP, egreso USD con CUP abundante, doble gasto concurrente, devolución de fondo, reversión de ingreso USD — físico negativo). Correctiva 20261024220000_saldo_fisico_egresos_multimoneda.sql probada en BD aislada (faseE 27/27 + certificación previa 51/51) y PENDIENTE de aplicación autorizada en producción. El cuerpo LIVE sigue certificado; drift INTENCIONAL y temporal: bloque de validación física por moneda (misma fuente que entrega_efectivo) + conservación de disciplina canónica y regla de fondo. Expira al aplicar la correctiva o en la fecha.",
+      "added_by": "saldo-fisico-postmerge-pr",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "reverse_cash_flow_document/3",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "MISIÓN POST-MERGE 2026-10-24 (PR saldo físico) · reversión de INGRESO valida FÍSICO por moneda del documento: anular un ingreso USD con el USD físico ya gastado dejaba el saldo físico USD en negativo (repro M10). Correctiva 20261024220000_saldo_fisico_egresos_multimoneda.sql probada en BD aislada y PENDIENTE de aplicación autorizada. El cuerpo LIVE sigue certificado; drift INTENCIONAL y temporal: bloque de validación física + conservación del chequeo canónico y protecciones previas (advisory lock, doble anulación). Expira al aplicar la correctiva o en la fecha.",
+      "added_by": "saldo-fisico-postmerge-pr",
+      "expires": "2027-01-31"
+    }
+  ]
 }

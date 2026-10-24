@@ -149,6 +149,8 @@ describe('POST /api/cash-flow — contrato del RPC create_cash_flow_document', (
       ['ERR_NO_OPEN_SHIFT: la caja no tiene un turno abierto', 409],
       ['ERR_DATE_OUTSIDE_SHIFT: la fecha operativa debe caer dentro del turno', 422],
       ['ERR_INSUFFICIENT_CASH: disponible=100, egreso=500', 422],
+      ['ERR_INSUFFICIENT_CURRENCY: saldo físico USD disponible=100, egreso=150', 422],
+      ['ERR_INSUFFICIENT_CURRENCY: anular este ingreso dejaría el saldo físico USD en negativo (disponible=20, reversión=100)', 422],
       ['ERR_FUND_INSUFFICIENT: fondo vigente=3000, devolución=4000', 422],
       ['ERR_EXCHANGE_RATE_UNAVAILABLE: configure la tasa USD', 409],
       ['ERR_RATE_STALE: effective=2026-01-01', 409],
@@ -224,5 +226,17 @@ describe('POST /api/cash-flow/reverse — contrato del RPC reverse_cash_flow_doc
     rpcResult.value = { data: null, error: { message: 'ERR_INSUFFICIENT_CASH: anular este ingreso dejaría el efectivo esperado en negativo' } };
     const res = await REVERSE(makeReq(OK_REV, 'x'));
     expect(res.status).toBe(422);
+  });
+
+  it('ERR_INSUFFICIENT_CURRENCY → 422 con mensaje GENERALIZADO por moneda (egreso ordinario y reversión, no solo entrega)', async () => {
+    // MISIÓN POST-MERGE 20261024220000: el código ahora dispara también para
+    // egresos ordinarios y reversiones de ingreso — el mensaje humano ya no
+    // menciona «la entrega» únicamente.
+    rpcResult.value = { data: null, error: { message: 'ERR_INSUFFICIENT_CURRENCY: saldo físico CUP disponible=100, egreso=150' } };
+    const res = await CREATE(makeReq(OK_DOC));
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.error).toContain('saldo físico disponible de esa moneda');
+    expect(body.error).not.toContain('La entrega supera');
   });
 });

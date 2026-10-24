@@ -242,3 +242,69 @@ Al preparar la aplicación autorizada se descubrió que el `revoke/grant` final 
 Los reintentos de red de `create_cash_flow_document` con MISMA clave de idempotencia y MISMO payload (sin fecha operativa explícita) ahora devuelven el documento original (replay benigno) en lugar de rechazarse con `ERR_IDEMPOTENCY_KEY_REUSE`. Las filas previas de `idempotency_registry` conservan su hash antiguo: los reintentos tardíos de documentos ya registrados siguen rechazándose como hoy. Sin cambios contables (clasificación, saldos, fondo, turnos y validaciones intactos — verificado por diff de 1 línea + 51/51).
 
 **Nota:** el fix del ledger (ruta `/api/cash-flow/ledger`) es código de aplicación y sigue pendiente de merge + despliegue por el propietario (PR #1468) — la migración aplicada NO lo despliega. El error de producción «No se pudo cargar el libro de caja» se corrige en producción únicamente cuando el propietario despliegue el PR.
+
+---
+
+## 16. Adenda POST-MERGE — Verificación en producción y cierre del riesgo contable (2026-10-24T01:20Z)
+
+> Misión posterior a la fusión del PR #1468 (commit de merge `a082d54`, 2026-10-23 20:30 −0400). Esta sección NO reescribe la historia: añade el seguimiento con los estados separados que exige la misión. Las pruebas de las secciones anteriores conservan su fecha y alcance original.
+
+### 16.1 Estados separados (lo fusionado ≠ lo desplegado ≠ lo probado)
+
+| Estado | Valor | Evidencia |
+|---|---|---|
+| Código fusionado | `main` = `a082d540ef` (merge de #1468; sin commits posteriores ni reverts) | `git log origin/main` |
+| CI en el commit de fusión | TODO VERDE (TypeCheck+Lint+Unit+Build ✅ · Unit & Integration ✅ · Security Audit ✅ · Allowlist ✅ · TS Security ✅ · SQL Static ✅ · SQL DB Security ✅ · Vercel ✅ · **E2E skipped — deshabilitado por el propietario**) | GitHub check-runs de `a082d54` |
+| Migración 20261024180000 | **Aplicada y re-verificada** (2026-10-24T00:39Z, solo lectura): firma única 13-arg · patrón determinista presente · patrón viejo ausente · ACL `{postgres=X, service_role=X}` · expresión de hash del cuerpo vivo **idéntica verbatim** a la del archivo | `faseA3-migracion-readonly.mjs` |
+| Código desplegado en producción | **dpl_2oXyxKv3eKum** = `a082d540ef` · READY 2026-10-24T00:30Z · dominio `costpro4.vercel.app` (HTTP 200) — el despliegue de PRODUCCIÓN corre el commit fusionado | Vercel API v6 |
+| Incidente de carga | **RESUELTO EN PRODUCCIÓN DESPLEGADA**: `GET /api/cash-flow/ledger` ENERVIDA → HTTP 200 (antes: 500 «No se pudo cargar el libro de caja»). La fila de comisión del incidente (`comm-7374dfad`, 300 CUP) renderiza con saldo corrido | Fase B (16.2) |
+| Validación de producción en la app | Navegación REAL autenticada de solo lectura contra `costpro4.vercel.app` con la tienda ENERVIDA-VITALLCONS activa (login demo documentado) — pestañas, libro, KPIs, filtros, fechas | Fases B/C · capturas 01–04 |
+| Pruebas en BD aislada | Fase E: 5 defectos reproducidos contra el código fusionado; 27/27 PASS contra el correctivo · certificación previa 51/51 (recalibrada a la semántica física, invariante intacta) | `evidence/faseE-*-results.json` |
+| E2E Playwright autenticado | **NO EJECUTADO** (deshabilitado por el propietario; la navegación manual de solo lectura NO se etiqueta como suite E2E) | — |
+| Migración correctiva 20261024220000 | **PENDIENTE de aplicación autorizada** (probada en aislado; plan de aplicación en el archivo) | §16.5 |
+
+### 16.2 Fase B — Libro de caja en producción desplegada (solo lectura, 2026-10-24T00:41Z)
+
+- `GET /api/cash-flow/ledger?store_id=ENERVIDA&limit=200` → **HTTP 200**: 121 filas visibles, `truncated: true` (señalizado), desglose `venta_efectivo 114 · reembolso_devolucion 2 · anticipo_produccion 3 · pago_proveedor 1 · comision 1`.
+- **Reconciliación por moneda contra la fuente autoritativa** (RPC `get_cash_currency_summary`, mismo corte): `net CUP 8.435.679,98` · `net USD 367` = `balance_now` de la app (`reconciled: true`) — **coincidencia exacta en ambas monedas**. Corrida USD verificada fila a fila: 150 (17/10) → 357 (19/10) → 367 (23/10).
+- Términos RPC: entradas `sales_cash CUP 8.454.434,98 + USD 367 · production_cash CUP 223.350` · salidas `supplier_cash CUP 2.400 · commissions_cash CUP 300 · devolution_refunds CUP 239.405` — aritmética del neto verificada (= 8.435.679,98).
+- Filtros de fecha (día de negocio Habana 2026-10-23 → límites UTC): HTTP 200, 2 filas del día. Rango invertido → conjunto vacío + bloqueo preventivo en la UI (alerta «El intervalo es inválido»). `as_of` futuro no altera el saldo presente.
+- Semántica de error: sin token → 401; tienda ajena → 403 (`canManageStore`); parámetros inválidos → 400 con detalle. Un error real NO se enmascara como tabla vacía (el antipatrón corregido en #1468 era exactamente el 500 oculto).
+- Sin escrituras en producción (GET exclusivo).
+
+### 16.3 Fase C — Interfaz fusionada verificada en la app desplegada
+
+- **Pestañas reales** (no acordeón): `role=tablist/tab/tabpanel` · `aria-selected` · roving tabindex · teclado ←/→ verificado en vivo.
+- La pestaña del libro carga sin el error del incidente; KPIs por moneda correctos y **separación explícita** «SALDO FÍSICO CUP / SALDO FÍSICO USD / EQUIVALENTE CONTABLE (CUP canónico) — identificado como equivalente, no sustituye los saldos físicos».
+- Filtros de fecha por defecto = **2026-10-23** (día de negocio Habana; servidor en UTC 24/10 — sin salto de día). «Limpiar filtros» restaura hoy (probado: cambio → botón aparece → clic → restaura). Selección conservada al alternar pestañas; **sin consultas redundantes** al alternar (contador de peticiones estable). Filtro de moneda USD → solo filas USD. Recarga conserva valores. Sin errores de página (consola limpia).
+- Capturas: `01-prod-tab-documentos-fechas.png` · `02-prod-tab-libro-kpis.png` · `03-prod-tab-libro-movil.png` · `04-prod-tab-libro-despues-de-recarga.png`.
+
+### 16.4 Fase D/E — El riesgo contable documentado en §13.1 era REAL: 5 repros con expectativas pre-calculadas
+
+La asimetría §13.1 (`otro_egreso` valida canónico CUP que **incluye** USD a tasa; `entrega_efectivo` valida físico por moneda) se confirmó como defecto reproducible en BD aislada con esperados calculados ANTES de ejecutar (tasa sintética 400):
+
+| # | Escenario (físico real) | Esperado | Observado con código fusionado |
+|---|---|---|---|
+| 1 | 100 CUP + 100 USD; egreso 150 CUP | RECHAZADO | **ACEPTADO** → físico CUP **−50** |
+| 3b | 500.000 CUP + 100 USD; egreso 150 USD | RECHAZADO | **ACEPTADO** → físico USD **−50** |
+| 5 | 100 CUP + 100 USD; dos egresos concurrentes de 60 CUP | solo UNO | **AMBOS** → físico CUP **−20** |
+| M4 | fondo 300, físico 50; devolución 200 (≤ fondo) | RECHAZADO | **ACEPTADO** |
+| M10 | físico USD 20; reversión del ingreso USD 100 | RECHAZADO | **ACEPTADO** → físico USD **−80** |
+
+Caso 4 (cambio explícito): el modelo NO tiene operación de cambio — verificado que ningún documento de una moneda altera el físico de la otra (la conversión implícita no existe; con el correctivo queda estructuralmente imposible usarla para financiar salidas).
+
+### 16.5 Fase F — Correctiva (PR nuevo, sin aplicar a producción)
+
+- **Migración `20261024220000_saldo_fisico_egresos_multimoneda.sql`** (generada desde los cuerpos VIVOS verbatim + inserciones quirúrgicas): la rama ordinaria de egresos AÑADE la validación física por moneda (misma fuente autoritativa que `entrega_efectivo`: `get_cash_currency_summary → net → v_currency`, importe NATIVO); `reverse_cash_flow_document` AÑADE la misma validación para revertir ingresos. **Se conservan** la disciplina canónica del turno (ERR_INSUFFICIENT_CASH), la regla del fondo (ERR_FUND_INSUFFICIENT), roles, contraparte, advisory lock, idempotencia determinista (patrón 20261024180000 intacto) y RLS. ACL service_role-only con firmas reales. **Sin cambios de esquema.**
+- **Fase E fixed: 27/27 PASS, 0 defectos** (mismos esperados). **Certificación previa 51/51** (A5/D4 recalibrados a la semántica física: el cierre fail-closed y la prevención de doble gasto se conservan — documentado en el propio test).
+- App: mensaje API generalizado por moneda (422) · espejo en el modal (egreso ordinario valida físico por moneda + aviso canónico del turno) · 107/107 tests relacionados · tsc 0 errores · eslint 0 errores (1 warning preexistente).
+- Contrato de seguridad: baseline temporal `BODY_DRIFT_FROM_MIGRATION` para las 2 funciones (patrón REM-INV-5/6, precedente b7d9358) — **expira al aplicar la correctiva o 2027-01-31**; tras la aplicación se re-exporta el surface y se retira la baseline (protocolo de §15.4).
+- **Aplicación a producción: PENDIENTE DE AUTORIZACIÓN del propietario** (protocolo idéntico a §15: pre-vuelo fail-closed → transacción única → post-verificación solo lectura).
+
+### 16.6 Declaración de esta adenda
+
+**APTO PARA REVISIÓN:** la corrección del incidente está fusionada, desplegada y comprobada en producción mediante solo lectura (fases A–C); la corrección de saldo físico está implementada y probada en aislamiento (fases D–F) y queda un **PR nuevo pendiente de decisión del propietario**, cuya migración NO se aplica sin autorización expresa. Pendientes explícitos: aplicación autorizada de `20261024220000`, E2E Playwright autenticado (deshabilitado por el propietario), y la decisión sobre reembolsos de devolución en efectivo (ver §16.7).
+
+### 16.7 Riesgo residual documentado (decisión del propietario, NO corregido)
+
+`create_devolution_v2` reembolsa en efectivo sin validación de saldo físico por moneda (acotado por el tope de lo pagado por el cliente — la devolución devuelve lo recibido). Un reembolso CUP de una venta cobrada en USD es una conversión implícita hacia el cliente que puede llevar el físico CUP a negativo si el cajón está corto. Recomendación: exigir moneda del reembolso con físico suficiente (mismo patrón del correctivo) o documentar la excepción. Se deja sin cambiar para no romper flujos legítimos de devolución sin decisión expresa (misión §6: «no imponer la regla ciegamente a operaciones que no representen una salida real de efectivo» — este caso SÍ lo es, pero el acotamiento por lo pagado reduce el perfil de riesgo frente al defecto corregido).

@@ -125,7 +125,7 @@ vi.mock('sonner', () => ({
   toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() },
 }));
 
-function renderModal(summary: CashFlowSummary | null = SUMMARY) {
+function renderModal(summary: CashFlowSummary | null = SUMMARY, saldoFisico: { CUP: number | null; USD: number | null } = { CUP: 174000, USD: 100 }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
@@ -135,6 +135,7 @@ function renderModal(summary: CashFlowSummary | null = SUMMARY) {
         storeId="store-1"
         storeName="Tienda Central"
         summary={summary}
+        saldoFisico={saldoFisico}
       />
     </QueryClientProvider>,
   );
@@ -215,14 +216,44 @@ describe('CashFlowCreateModal — paso 1 EDICIÓN (validaciones junto al campo)'
     expect(screen.getByRole('button', { name: /Revisar y confirmar/i })).toBeEnabled();
   });
 
-  it('5 · egreso mayor que el efectivo disponible → bloqueado (no egresar más del disponible)', async () => {
+  it('5 · egreso mayor que el saldo físico CUP → bloqueado (no egresar más del físico de SU moneda)', async () => {
     renderModal();
     await waitFor(() => expect(screen.getByRole('radio', { name: /Egreso/ })).toBeTruthy());
     fireEvent.click(screen.getByRole('radio', { name: /Egreso/ }));
     fireEvent.change(screen.getByLabelText(/Motivo \*/), { target: { value: 'otro_egreso' } });
     fireEvent.change(screen.getByLabelText(/Importe \*/), { target: { value: '999999' } });
     fireEvent.change(screen.getByLabelText(/Justificación \*/), { target: { value: 'Salida autorizada' } });
-    expect(await screen.findByText(/supera el efectivo disponible/)).toBeTruthy();
+    // MISIÓN POST-MERGE 20261024220000: espejo del RPC — validación FÍSICA por
+    // moneda (la disciplina canónica del turno también se muestra si aplica).
+    expect(await screen.findByText(/supera el saldo físico CUP en caja/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Revisar y confirmar/i })).toBeDisabled();
+  });
+
+  it('5b · egreso USD que supera el físico USD → bloqueado (el CUP abundante NO financia USD)', async () => {
+    // Físico: CUP 174.000 · USD 100. Egreso 150 USD: el canónico (USD a tasa)
+    // podría cubrirlo, el físico USD NO — espejo del ERR_INSUFFICIENT_CURRENCY.
+    renderModal();
+    await waitFor(() => expect(screen.getByRole('radio', { name: /Egreso/ })).toBeTruthy());
+    fireEvent.click(screen.getByRole('radio', { name: /Egreso/ }));
+    fireEvent.change(screen.getByLabelText(/Motivo \*/), { target: { value: 'otro_egreso' } });
+    fireEvent.change(screen.getByLabelText(/Importe \*/), { target: { value: '150' } });
+    fireEvent.change(screen.getByLabelText(/Moneda \*/), { target: { value: 'USD' } });
+    fireEvent.change(screen.getByLabelText(/Justificación \*/), { target: { value: 'Compra insumos' } });
+    expect(await screen.findByText(/supera el saldo físico USD en caja/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Revisar y confirmar/i })).toBeDisabled();
+  });
+
+  it('5c · egreso CUP dentro del físico pero sobre el canónico del turno → bloqueado (disciplina del turno intacta)', async () => {
+    // Físico CUP 174.000, canónico esperado del turno 5.000: un egreso de
+    // 10.000 CUP cabe en el FÍSICO pero excede el arqueo canónico — el RPC
+    // conserva ERR_INSUFFICIENT_CASH (regla legítima v2.23.0).
+    renderModal({ ...SUMMARY, expected_cash: 5000 });
+    await waitFor(() => expect(screen.getByRole('radio', { name: /Egreso/ })).toBeTruthy());
+    fireEvent.click(screen.getByRole('radio', { name: /Egreso/ }));
+    fireEvent.change(screen.getByLabelText(/Motivo \*/), { target: { value: 'otro_egreso' } });
+    fireEvent.change(screen.getByLabelText(/Importe \*/), { target: { value: '10000' } });
+    fireEvent.change(screen.getByLabelText(/Justificación \*/), { target: { value: 'Gasto operativo' } });
+    expect(await screen.findByText(/supera el efectivo esperado del turno/)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Revisar y confirmar/i })).toBeDisabled();
   });
 

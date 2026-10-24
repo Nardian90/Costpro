@@ -172,8 +172,19 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
       if (saldoMoneda != null && Number.isFinite(amount) && amount > 0 && amount > saldoMoneda + 0.005) {
         errs.push(`La entrega supera el saldo físico ${currency} en caja (${formatCurrency(saldoMoneda, currency)}).`);
       }
-    } else if (docType === 'egreso' && saldoCaja != null && Number.isFinite(amount) && amount > 0 && currency === 'CUP' && amount > saldoCaja + 0.005) {
-      errs.push(`El egreso supera el efectivo disponible (${formatCurrency(saldoCaja)}).`);
+    } else if (docType === 'egreso') {
+      // MISIÓN POST-MERGE 20261024220000: TODO egreso ordinario valida POR
+      // MONEDA contra el libro físico (espejo del RPC — la DB es la barrera
+      // real). El saldo de la OTRA moneda no financia billetes de esta.
+      const saldoMoneda = saldoFisico[currency];
+      if (saldoMoneda != null && Number.isFinite(amount) && amount > 0 && amount > saldoMoneda + 0.005) {
+        errs.push(`El egreso supera el saldo físico ${currency} en caja (${formatCurrency(saldoMoneda, currency)}).`);
+      }
+      // Disciplina canónica del turno (espejo ERR_INSUFFICIENT_CASH del RPC):
+      // información temprana; la DB decide con la ventana autoritativa.
+      if (saldoCaja != null && Number.isFinite(amount) && amount > 0 && currency === 'CUP' && amount > saldoCaja + 0.005) {
+        errs.push(`El egreso supera el efectivo esperado del turno (${formatCurrency(saldoCaja)}).`);
+      }
     }
     if (docType === 'egreso' && isFondoConcept(concept) && fondoVigente != null
         && Number.isFinite(amount) && amount > 0 && currency === 'CUP' && amount > fondoVigente + 0.005) {
