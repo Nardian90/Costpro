@@ -95,6 +95,14 @@ function findModuleAndAncestors(
 export function isViewAllowedForRole(viewId: string, userRole: string | undefined | null): boolean {
   if (!userRole) return false;
 
+  // Misión organizaciones (2026-10-26): el rol de plataforma 'superadmin'
+  // satisface los requisitos de rol de 'admin' en toda la navegación. Sin
+  // esta normalización, la cuenta designada quedaba excluida de SISTEMA
+  // (roles: ['admin']) pese a tener MÁS privilegios. El menú NO es el
+  // mecanismo de seguridad (la validación real es server-side/RLS); esto
+  // solo corrige el wayfinding.
+  const effectiveRole = userRole === 'superadmin' ? 'admin' : userRole;
+
   // Home única (GATE 1 §1): el dashboard es la home role-aware; 'occ' es
   // alias técnico de migración que el store normaliza a 'dashboard'.
   if (viewId === 'dashboard' || viewId === 'occ') return true;
@@ -121,5 +129,5 @@ export function isViewAllowedForRole(viewId: string, userRole: string | undefine
   // Sin roles definidos en ningún nivel → acceso universal
   if (!allowedRoles || allowedRoles.length === 0) return true;
 
-  return allowedRoles.includes(userRole);
+  return allowedRoles.includes(effectiveRole);
 }

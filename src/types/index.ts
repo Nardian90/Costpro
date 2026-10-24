@@ -2,7 +2,14 @@
 // Tipos de la Aplicación - Plataforma Tienda Online
 // ============================================
 
-export type UserRole = 'admin' | 'encargado' | 'usuario' | 'manager' | 'clerk' | 'warehouse' | 'costo';
+// 'superadmin' (misión organizaciones 2026-10-26): rol de PLATAFORMA global —
+// solo la cuenta designada (admin@demo.com). No es un rol de tienda ni de
+// tenant: concede administración transversal validada por el servidor
+// (is_superadmin() en la DB, ROLES_HIERARCHY en la app).
+// 'tenant_admin': existe en el enum user_role de la DB (auto-provisionado
+// por el flujo de landing); se declara aquí para no degradarlo en
+// validación de cliente (antes userRoleSchema hacía .catch('clerk')).
+export type UserRole = 'admin' | 'superadmin' | 'encargado' | 'usuario' | 'manager' | 'clerk' | 'warehouse' | 'costo' | 'tenant_admin';
 
 export type PaymentMethod = 'cash' | 'transfer' | 'zelle' | 'other' | 'mixed';
 
@@ -1025,6 +1032,12 @@ export type Profile = {
   ai_provider?: string | null;
   ai_api_key?: string | null;
   plan?: "free" | "pro" | string;
+  // Misión organizaciones (2026-10-26): empresa a la que pertenece el
+  // usuario (invariante: una sola por usuario ordinario). NULL = sin
+  // asignar (incidencia visible en SISTEMA → Usuarios).
+  tenant_id?: string | null;
+  tenant_name?: string | null;
+  deleted_at?: string | null;
 };
 
 export interface SalesKPIs {

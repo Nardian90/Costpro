@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Edit, UserPlus, ShieldAlert, Trash2, MoreVertical, Store, KeyRound, MailQuestion } from 'lucide-react';
+import { Plus, Edit, ShieldAlert, Trash2, MoreVertical, Store, KeyRound, MailQuestion, Building2, AlertTriangle, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
@@ -20,15 +20,25 @@ import {
 import { useUsersView } from './useUsersView';
 import { UserFormModal } from './UserFormModal';
 import { SetPasswordModal } from './SetPasswordModal';
+import { AssignOrganizationModal } from './AssignOrganizationModal';
 
 export default function UsersManagementView() {
   const {
     searchTerm,
     setSearchTerm,
+    orgFilter,
+    setOrgFilter,
+    roleFilter,
+    setRoleFilter,
+    statusFilter,
+    setStatusFilter,
     userFormMode,
     selectedUserContract,
+    assignTarget,
+    setAssignTarget,
     users,
     stores,
+    orgOptions,
     handleEditUser,
     handleCreateUser,
     handleCloseModal,
@@ -39,6 +49,7 @@ export default function UsersManagementView() {
     isSubmittingUser,
     allowedRoles,
     isAdmin,
+    isSuperAdmin,
     canCreateMoreUsers,
     limitReachedMessage,
     user
@@ -48,6 +59,8 @@ export default function UsersManagementView() {
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
       admin: 'Administrador',
+      superadmin: 'SuperAdmin',
+      tenant_admin: 'Admin Tenant',
       encargado: 'Encargado',
       manager: 'Gestor',
       clerk: 'Cajero',
@@ -56,6 +69,38 @@ export default function UsersManagementView() {
       costo: 'Costo',
     };
     return labels[role] || role;
+  };
+
+  // MISIÓN ORGANIZACIONES (FASE 2 §1): celda Empresa/Organización.
+  // · SuperAdmin → etiqueta de plataforma (no es una empresa comercial).
+  // · Sin asignar → incidencia visible + acción de resolución.
+  // · Usuario normal → nombre canónico de su organización (nunca el UUID).
+  const renderOrganizationCell = (u: typeof users[number]) => {
+    if (u.role === 'superadmin') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-primary/15 text-primary text-[10px] font-black uppercase tracking-widest" title="Cuenta de plataforma global — no pertenece a una empresa">
+          <ShieldAlert className="w-3 h-3" aria-hidden="true" />
+          SuperAdmin
+        </span>
+      );
+    }
+    if (!u.tenant_id) {
+      return (
+        <span
+          className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-destructive/10 text-destructive text-[10px] font-black uppercase tracking-widest"
+          title="Usuario sin empresa asignada — resuélvelo con «Asignar empresa»"
+        >
+          <AlertTriangle className="w-3 h-3" aria-hidden="true" />
+          Sin asignar
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs font-bold" title={u.tenant_name || 'Empresa'}>
+        <Building2 className="w-3 h-3 text-muted-foreground shrink-0" aria-hidden="true" />
+        {u.tenant_name || 'Empresa sin nombre'}
+      </span>
+    );
   };
 
   return (
@@ -92,12 +137,56 @@ export default function UsersManagementView() {
 
         <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar usuarios por nombre, email o rol..." />
 
+        {/* MISIÓN ORGANIZACIONES (FASE 2 §2): filtros de empresa / rol / estado.
+            «Todas las empresas» y «Sin asignar» solo para SuperAdmin (un
+            admin ordinario no debe conocer otras empresas). */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Select value={orgFilter} onValueChange={setOrgFilter}>
+            <SelectTrigger className="w-full sm:w-[210px] h-10 text-[10px] font-black uppercase" aria-label="Filtrar por empresa">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-[10px] font-black uppercase">
+                {isSuperAdmin ? 'Todas las empresas' : 'Mi empresa'}
+              </SelectItem>
+              {isSuperAdmin && (
+                <SelectItem value="unassigned" className="text-[10px] font-black uppercase">Sin asignar</SelectItem>
+              )}
+              {orgOptions.map(o => (
+                <SelectItem key={o.id} value={o.id} className="text-[10px] font-black uppercase">{o.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-full sm:w-[160px] h-10 text-[10px] font-black uppercase" aria-label="Filtrar por rol">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-[10px] font-black uppercase">Todos los roles</SelectItem>
+              {(isSuperAdmin ? (['superadmin', 'admin', 'tenant_admin', 'encargado', 'manager', 'clerk', 'warehouse', 'usuario', 'costo'] as const) : allowedRoles as readonly string[]).map(r => (
+                <SelectItem key={r} value={r} className="text-[10px] font-black uppercase">{getRoleLabel(r)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[150px] h-10 text-[10px] font-black uppercase" aria-label="Filtrar por estado">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-[10px] font-black uppercase">Todos los estados</SelectItem>
+              <SelectItem value="active" className="text-[10px] font-black uppercase">Activos</SelectItem>
+              <SelectItem value="inactive" className="text-[10px] font-black uppercase">Inactivos</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="table-scroll-wrapper rounded-xl border border-border bg-card shadow-sm">
           <table className="data-table sticky-column-1 w-full text-sm">
             <thead>
               <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
                 <th className="p-4 text-left">Perfil</th>
                 <th className="p-4 text-left">Email</th>
+                <th className="p-4 text-left">Empresa / Organización</th>
                 <th className="p-4 text-left hidden sm:table-cell">Inscripción</th>
                 <th className="p-4 text-center hidden sm:table-cell">Días Activos</th>
                 <th className="p-4 text-left hidden sm:table-cell">Accesos Multi-Tienda</th>
@@ -118,6 +207,9 @@ export default function UsersManagementView() {
                      </div>
                   </td>
                   <td className="p-4 font-mono text-xs text-muted-foreground">{u.email}</td>
+                  <td className="p-4">
+                    {renderOrganizationCell(u)}
+                  </td>
                   <td className="p-4 font-mono text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
                     {u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}
                   </td>
@@ -276,6 +368,14 @@ export default function UsersManagementView() {
                           Editar usuario
                         </DropdownMenuItem>
                         <DropdownMenuItem
+                          onSelect={() => setAssignTarget(u)}
+                          disabled={u.id === user?.id || (!isSuperAdmin && !!u.tenant_id)}
+                          className="gap-2 text-xs font-bold"
+                        >
+                          <ArrowRightLeft className="w-3.5 h-3.5" />
+                          Asignar empresa
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onSelect={() => openSetPassword(u)}
                           disabled={u.id === user?.id}
                           className="gap-2 text-xs font-bold"
@@ -303,7 +403,7 @@ export default function UsersManagementView() {
               ))}
               {users.length === 0 && (
                 <tr aria-label="Sin resultados de usuarios">
-                  <td colSpan={8} className="p-12 text-center py-20">
+                  <td colSpan={9} className="p-12 text-center py-20">
                     <p className="text-muted-foreground uppercase font-black tracking-widest text-xs mb-2">
                       No se encontraron usuarios
                     </p>
@@ -333,6 +433,11 @@ export default function UsersManagementView() {
         onClose={closeSetPassword}
         onSubmit={submitSetPassword}
         user={setPasswordTarget ? { id: setPasswordTarget.id, full_name: setPasswordTarget.full_name, email: setPasswordTarget.email } : null}
+      />
+      <AssignOrganizationModal
+        user={assignTarget}
+        isSuperAdmin={!!isSuperAdmin}
+        onOpenChange={(open) => { if (!open) setAssignTarget(null); }}
       />
     </>
   );

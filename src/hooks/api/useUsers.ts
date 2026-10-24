@@ -9,9 +9,9 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store'; // F4-T02: para token en bulk assign
 
-export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: boolean, activeStoreId?: string | null) {
+export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: boolean, activeStoreId?: string | null, isSuperAdmin = false) {
   return useQuery({
-    queryKey: ['users', currentUserId, isAdmin, isEncargado, activeStoreId],
+    queryKey: ['users', currentUserId, isAdmin, isEncargado, activeStoreId, isSuperAdmin],
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       if (!currentUserId) {
@@ -19,8 +19,32 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
         return [];
       }
 
-      if (isAdmin || isEncargado) {
+      // MISIÓN ORGANIZACIONES (2026-10-26): admins y SuperAdmin consumen la
+      // API route (server-side): rate limit, Zod, aislamiento por empresa
+      // (superadmin = todas), columna Empresa/Organización y memb/responses
+      // uniformes. La lectura directa de Supabase queda SOLO para encargados
+      // (su alcance por membresía la resuelve RLS).
+      if (isAdmin || isSuperAdmin || isEncargado) {
         try {
+          if (isAdmin || isSuperAdmin) {
+            const { supabase: sb } = await import('@/lib/supabaseClient');
+            const { data: { session } } = await sb.auth.getSession();
+            const token = session?.access_token;
+            if (!token) return [];
+
+            const res = await fetch('/api/users?limit=100', {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) {
+              logger.error('DATABASE', 'FETCH_USERS_API_FAILED', { status: res.status });
+              return [];
+            }
+            const body = (await res.json()) as { data: Profile[] };
+            const apiProfiles = Array.isArray(body.data) ? body.data : [];
+            return await validateRPCArrayResponse(apiProfiles, profileSchema, 'fetch_users_api');
+          }
+
+          // Camino encargado: lectura directa (aislada por RLS), como antes.
           const profileColumns = 'id, full_name, email, role, role_id, roles, active_store_id, logo_url, is_active, store_id, created_at, plan';
 
           // Fetch profiles and memberships separately to avoid "memberships column not found" cache errors

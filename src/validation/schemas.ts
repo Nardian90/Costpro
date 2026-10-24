@@ -7,12 +7,14 @@ import { STORE_TEMPLATES } from "@/config/app";
 
 export const userRoleSchema = z.enum([
   "admin",
+  "superadmin",
   "encargado",
   "usuario",
   "manager",
   "clerk",
   "warehouse",
   "costo",
+  "tenant_admin",
 ]);
 
 /**
@@ -173,6 +175,11 @@ export const profileSchema = z.object({
   bank_account: z.string().nullable().optional(),
   ai_provider: z.string().optional(),
   ai_api_key: z.string().nullable().optional(),
+  // MISIÓN ORGANIZACIONES (2026-10-26): empresa del usuario (una sola por
+  // usuario ordinario) + nombre resuelto para la columna Empresa/Organización.
+  tenant_id: resilientUuid,
+  tenant_name: z.string().nullable().optional().catch(null),
+  deleted_at: z.string().nullable().optional(),
   max_stores_limit: z.number().optional(),
   max_users_limit: z.number().optional(),
   created_by: resilientUuid,
