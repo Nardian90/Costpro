@@ -26,14 +26,22 @@
 --   para TODOS los reintentos); los reintentos NUEVOS serán benignos. Efecto
 --   neto: estrictamente mejor, sin migración de datos ni reescritura de historia.
 --
--- PLAN DE APLICACIÓN (pendiente de autorización del propietario — NO aplicar
--- a producción desde esta misión):
---   1. Revisión del diff (solo 1 línea funcional).
---   2. Aplicar en ventana de baja actividad (CREATE OR REPLACE atómico; las
---      transacciones en vuelo completan con la definición que tomaron al
---      inicio — sin estados intermedios).
---   3. Verificación post-aplicación: repro del escenario D (misma clave+payload
---      dos veces → mismo document_id, cero filas nuevas).
+-- REGISTRO DE APLICACIÓN A PRODUCCIÓN (wthkddeleylijmonclxg):
+--   AUTORIZADA por el propietario el 2026-10-24 («autorizada la migracion») y
+--   aplicada el 2026-10-24T00:11Z vía Supabase Management API (rol postgres),
+--   como transacción única, en ventana verificada de baja actividad
+--   (0 consultas activas, 0 documentos de caja en los últimos 5 min).
+--   Pre-vuelo: cuerpo LIVE = v2.24.1 (patrón NO determinista) verificado, única
+--   firma de 13 args, diff contra el cuerpo previo = EXACTAMENTE 1 línea
+--   funcional (la del hash). Post-verificación solo-lectura: patrón nuevo
+--   presente, patrón viejo ausente, ACL intacta {postgres=X, service_role=X},
+--   hash de la nueva expresión determinista (SELECT puro, sin llamadas).
+--   Regresión del incidente: GET /api/cash-flow/ledger ENERVIDA → HTTP 200,
+--   saldos idénticos (net CUP 8.435.679,98 · USD 367). Surface del contrato
+--   de seguridad re-exportado (150 funciones, diff = 1 línea) y baseline
+--   temporal BODY_DRIFT retirada: el gate reconcilia LIVE == migraciones.
+--   Re-certificación en BD aislada ANTES de aplicar: cadena completa
+--   (setup fiel a producción → este archivo aplicado limpio → 51/51 PASS).
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public.create_cash_flow_document(p_store_id uuid, p_doc_type text, p_concept text, p_amount numeric, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT NULL::numeric, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_counterparty text DEFAULT NULL::text, p_justification text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_related_document_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
@@ -427,5 +435,11 @@ END;
 $function$;
 -- ACL espejo EXACTO de v2.24.0 (20261023230000 L2286-2287): solo service_role
 -- (revoke all from public + grant to service_role — nunca authenticated).
-revoke all on function public.create_cash_flow_document(uuid, text, text, numeric, timestamptz, text, text, text, uuid, text, uuid) from public;
-grant execute on function public.create_cash_flow_document(uuid, text, text, numeric, timestamptz, text, text, text, uuid, text, uuid) to service_role;
+-- FIX POST-AUDITORÍA (2026-10-24): el revoke/grant original de este archivo
+-- llevaba la firma de 11 argumentos (huella pre-v2.24.0) mientras la función
+-- viva tiene 13 — PostgreSQL errora con 42883 «function ... does not exist»
+-- al aplicar el archivo (verificado en BD aislada PG 18.4; el replay estático
+-- de CI lo saltaba en silencio porque la firma no existía en el stream).
+-- Corregido a la firma real de 13 argumentos, idéntica a v2.24.0.
+revoke all on function public.create_cash_flow_document(uuid, text, text, numeric, text, numeric, timestamptz, text, text, text, uuid, text, uuid) from public;
+grant execute on function public.create_cash_flow_document(uuid, text, text, numeric, text, numeric, timestamptz, text, text, text, uuid, text, uuid) to service_role;

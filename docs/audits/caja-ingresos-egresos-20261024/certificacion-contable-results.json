@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-23T23:20:48.710Z",
+  "generated": "2026-10-24T00:09:46.236Z",
   "db": "cajamision (aislada, PG 18.4)",
   "pass": 51,
   "fail": 0,
@@ -87,8 +87,8 @@
     {
       "id": "A6",
       "desc": "reintento (misma clave + mismo payload) → replay benigno con MISMO documento",
-      "expected": "089ab2b2-f929-46ac-a638-e49ae624fda1",
-      "observed": "089ab2b2-f929-46ac-a638-e49ae624fda1",
+      "expected": "ea6d7160-c55d-49b4-9b72-c404255a23d7",
+      "observed": "ea6d7160-c55d-49b4-9b72-c404255a23d7",
       "status": "PASS"
     },
     {
@@ -191,8 +191,8 @@
     {
       "id": "B7a",
       "desc": "solicitud duplicada (misma clave+payload) → replay benigno",
-      "expected": "97f0a49c-5bf0-4ff3-9498-05d8d266fd1c",
-      "observed": "97f0a49c-5bf0-4ff3-9498-05d8d266fd1c",
+      "expected": "4b6e26c1-230c-4a1c-a330-03b6cd91c2ad",
+      "observed": "4b6e26c1-230c-4a1c-a330-03b6cd91c2ad",
       "status": "PASS"
     },
     {
