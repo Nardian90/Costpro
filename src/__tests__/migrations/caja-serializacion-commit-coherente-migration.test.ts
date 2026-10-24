@@ -158,7 +158,7 @@ describe('migración 20261026000000 — serialización commit-coherente del caj�
     expect(body).toMatch(/IF lower\(trim\(p_direction\)\) = 'out' THEN/);
     expect(body).toMatch(/ERR_INSUFFICIENT_CURRENCY: saldo físico CUP disponible=%, ajuste=/);
     // Idempotencia por clave (replay devuelve la fila original)
-    expect(body).toMatch(/idempotent_replay.*true/s);
+    expect(body).toMatch(/idempotent_replay[\s\S]*true/);
     // Gate de fecha canónico
     expect(body).toMatch(/PERFORM public\.validate_operation_date/);
     // Roles: admin, manager o encargado (espejo de la ruta)
