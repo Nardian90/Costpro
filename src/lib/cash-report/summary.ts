@@ -14,12 +14,47 @@
  * Identidades contables (verificadas contra el modelo real):
  *
  *   ventasTotales = ventasCash + ventasTransfer + ventasZelle + ventasMixed
- *   efectivoEsperado = ventasCash + otIngresosCash + ajustesPositivos
- *                    + ingresosCaja − comisionesCash − serviciosRecibidosCash
+ *   efectivoEsperado = ventasCash + equivalenciaCanónicaEfectivoOtraMoneda
+ *                    + otIngresosCash + ajustesPositivos + ingresosCaja
+ *                    − comisionesCash − serviciosRecibidosCash
  *                    − recibosProveedoresCash − ajustesNegativos − egresosCaja
  *                    − reembolsosCash
  *   diferenciaCuadre = efectivoContado − efectivoEsperado
  *                      (negativo ⇒ FALTANTE · positivo ⇒ SOBRANTE)
+ *
+ * ══════════════════════════════════════════════════════════════════════════
+ * MISIÓN DEFINITIVA (2026-10-24) — CONTRATO ÚNICO DE CLASIFICACIÓN MONETARIA
+ * (fuente de verdad compartida con collection-currency.ts — §5 del brief):
+ *
+ *   1. INGRESO POR VENTAS: cada hoja (CUP/USD) cuenta SOLO los cobros cuya
+ *      MONEDA REAL DE COBRO es la de la hoja (fuente: sales_split de
+ *      collection-currency.ts — ledger autoritativo v2.25.0 o reconstrucción
+ *      heurística histórica). UNA venta se contabiliza UNA vez, en la hoja
+ *      de la moneda cobrada. La moneda ORIGINAL de la venta (p. ej. ítems
+ *      USD) NO crea una segunda fila: lo que clasifica es el COBRO real.
+ *   2. EQUIVALENCIA CONTABLE: el canónico CUP de los cobros recibidos en
+ *      OTRA moneda (p. ej. 7 USD × 800 = 5.600) NO es una segunda venta NI
+ *      entra en ventasCash/ventasTransfer/ventasZelle/ventasMixed. Se expone
+ *      SEPARADO como equivCashOtraMoneda (efectivo) y equivVouchersOtraMoneda
+ *      (transfer/zelle, informativo) — SOLO en la hoja CUP (hoja canónica del
+ *      modelo v2.24: «el canónico CUP es el equivalente contable, con tasa
+ *      trazable»). equivCashOtraMoneda alimenta el EFECTIVO ESPERADO a
+ *      entregar (consolidación contable — misión 23/10: el día con cobros
+ *      solo-USD no pierde su valor del comprobante de entrega);
+ *      equivVouchersOtraMoneda es puramente informativo (el voucher no es
+ *      efectivo físico).
+ *   3. VENTA MIXTA: los componentes se muestran en la moneda efectiva de
+ *      cada uno (buckets por moneda del ledger/reconstrucción); la CANTIDAD
+ *      física va a la moneda predominante (regla §2 de collection-currency).
+ *      Jamás se suma el importe completo en ambas hojas.
+ *   4. MEDIO DE PAGO ≠ MONEDA: el método (cash/transfer/zelle) no cambia la
+ *      moneda del ingreso; la moneda la fija el componente cobrado.
+ *   5. ANULADAS/REVERTIDAS: las ventas voided/reversed no llegan aquí (la
+ *      API filtra status='completed' / RPC excluye 'voided'); las filas de
+ *      caja (cash_flows/refunds) usan el ledger con original+contra.
+ *   6. UNA SOLA FUENTE: pantalla, PDF, Excel y cash_balance_cup consumen
+ *      ESTA MISMA función — sin algoritmos paralelos de clasificación.
+ * ══════════════════════════════════════════════════════════════════════════
  *
  * Las comisiones pagadas por transferencia NO reducen el efectivo físico.
  * Los reembolsos de devolución SOLO reducen el efectivo cuando se pagaron EN
@@ -116,6 +151,13 @@ export interface CashReportLike {
   cash_flows?: CashFlowRow[];
   /** MISIÓN DE SEGUIMIENTO 2026-10-21: filas de reembolsos del ledger (enriquecidas por /api/cash-report — nombre distinto a los GRUPOS `refunds` del RPC, misma convención que cash_flows vs cash_flow_groups). */
   refund_rows?: RefundRow[];
+  /** MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica CUP de los cobros EN
+   *  EFECTIVO recibidos en OTRA moneda (Σ amountCup de buckets no-CUP). La
+   *  calcula /api/cash-report y /api/cash-report/payment-totals con la MISMA
+   *  reconstrucción de sales_split — nunca un algoritmo paralelo. */
+  sales_equiv_cash_other_cup?: number;
+  /** Ídem para vouchers (transfer/zelle) en otra moneda — informativo. */
+  sales_equiv_voucher_other_cup?: number;
 }
 
 export interface DailySummary {
@@ -154,6 +196,15 @@ export interface DailySummary {
   reembolsosCash: number;
   /** Reembolsos de devoluciones por VOUCHER (transfer/zelle) en la moneda — INFORMATIVO, base NETA v2.23.0 (decisión del propietario 2026-10-21). No afecta efectivoEsperado. */
   reembolsosVoucher: number;
+  /** MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica CUP de los cobros EN
+   *  EFECTIVO recibidos en OTRA moneda — consolidación contable de la hoja CUP
+   *  (hoja canónica v2.24). NO es un ingreso de ventas de esta hoja (no entra
+   *  en ventasCash/ventasTotales — jamás aparece como «segunda venta»);
+   *  SÍ alimenta el efectivo esperado a entregar. En la hoja USD vale 0. */
+  equivCashOtraMoneda: number;
+  /** Ídem para vouchers (transfer/zelle) en otra moneda — puramente
+   *  informativo, NO toca el efectivo esperado. En la hoja USD vale 0. */
+  equivVouchersOtraMoneda: number;
   /** Efectivo que debe existir en caja al final del periodo. */
   efectivoEsperado: number;
 }
@@ -170,19 +221,27 @@ const n = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ?
 export function computeDailySummary(
   report: CashReportLike | null | undefined,
   currency: Currency,
-  paymentTotals?: { totals?: Record<string, Record<string, number>> } | null,
+  paymentTotals?: { totals?: Record<string, Record<string, number>>; equiv_cash_other_cup?: number; equiv_voucher_other_cup?: number } | null,
 ): DailySummary {
   const zero: DailySummary = {
     currency, ventasCash: 0, ventasTransfer: 0, ventasZelle: 0, ventasMixed: 0,
     ventasTotales: 0, otIngresosCash: 0, comisionesCash: 0, comisionesTransfer: 0,
     serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0,
-    reembolsosCash: 0, reembolsosVoucher: 0, efectivoEsperado: 0,
+    reembolsosCash: 0, reembolsosVoucher: 0, equivCashOtraMoneda: 0,
+    equivVouchersOtraMoneda: 0, efectivoEsperado: 0,
   };
   if (!report) return zero;
 
   // ── Ventas: split real con fallback ──
+  // MISIÓN DEFINITIVA (2026-10-24): el INGRESO por ventas es SIEMPRE nativo
+  // de la hoja — el fallback ya NO añade la equivalencia total_cup de cobros
+  // en otra moneda a las filas de venta (eso presentaba la MISMA venta como
+  // una segunda venta en la hoja CUP: «hoja CUP +5.600, hoja USD +7»). La
+  // equivalencia se calcula aparte y alimenta SOLO la consolidación contable
+  // (efectivo esperado de la hoja canónica CUP) con su propia línea.
   let ventasCash = 0, ventasTransfer = 0, ventasZelle = 0, ventasMixed = 0;
+  let equivCash = 0, equivVouchers = 0;
   const split = report.sales_split?.[currency];
   const pt = paymentTotals?.totals?.[currency];
   if (split) {
@@ -190,36 +249,46 @@ export function computeDailySummary(
     ventasTransfer = n(split.transfer);
     ventasZelle = n(split.zelle);
     ventasMixed = n(split.mixedUnsplit);
+    // Equivalencia de la MISMA reconstrucción que produjo el split (la ruta
+    // la expone; 0 por omisión en fixtures antiguos — nunca inventada aquí).
+    equivCash = n(report.sales_equiv_cash_other_cup);
+    equivVouchers = n(report.sales_equiv_voucher_other_cup);
   } else if (pt) {
     ventasCash = n(pt.cash);
     ventasTransfer = n(pt.transfer);
     ventasZelle = n(pt.zelle);
     // payment-totals sí desglosa mixed vía cash_amount/transfer_amount.
+    equivCash = n(paymentTotals?.equiv_cash_other_cup);
+    equivVouchers = n(paymentTotals?.equiv_voucher_other_cup);
   } else {
     // Fallback: grupos `sales` (por MONEDA DE COBRO desde el incidente
-    // 2026-10-16). Cada hoja de moneda cuenta sus cobros NATIVOS; la hoja
-    // CUP (hoja CANÓNICA — el modelo v2.24: "el canónico CUP es el
-    // equivalente contable, con tasa trazable") añade además la equivalencia
-    // total_cup de los cobros en efectivo recibidos en OTRA moneda, para que
-    // el efectivo esperado a entregar del día no pierda los cobros USD/EUR
-    // (p.ej. venta 7 USD cobrada en efectivo USD: hoja CUP +5.600, hoja USD +7).
+    // 2026-10-16). Cada hoja cuenta SOLO sus cobros NATIVOS — sin conversión
+    // automática a ingreso de otra hoja (contrato único, regla 1).
     for (const s of report.sales || []) {
       const t = n(s.total);
       if (s.payment_method === 'cash') {
         if (s.currency === currency) ventasCash += t;
-        else if (currency === 'CUP') ventasCash += n(s.total_cup ?? t);
-        // Cobro CUP: no toca hojas de moneda no-CUP (solo su hoja nativa).
       } else if (s.currency === currency) {
         if (s.payment_method === 'transfer') ventasTransfer += t;
         else if (s.payment_method === 'zelle') ventasZelle += t;
         else ventasMixed += t; // mixed sin split: al total, no al efectivo
-      } else if (currency === 'CUP') {
-        // Canónicos de vouchers en otra moneda: informativos en ventasTotales
-        if (s.payment_method === 'transfer') ventasTransfer += n(s.total_cup ?? 0);
-        else if (s.payment_method === 'zelle') ventasZelle += n(s.total_cup ?? 0);
-        else ventasMixed += n(s.total_cup ?? 0);
       }
     }
+    // Equivalencia canónica (regla 2): canónico total_cup de los cobros de
+    // OTRA moneda — efectivo a la consolidación del esperado, vouchers solo
+    // informativos. Nunca a las filas de ingreso de la hoja.
+    for (const s of report.sales || []) {
+      if (s.currency === currency) continue;
+      const canon = n(s.total_cup ?? s.total);
+      if (s.payment_method === 'cash') equivCash += canon;
+      else equivVouchers += canon;
+    }
+  }
+  // La hoja canónica de equivalencias es CUP (regla 2): la hoja USD no
+  // consolida equivalencias de cobros CUP (el CUP nativo ya es canónico).
+  if (currency !== 'CUP') {
+    equivCash = 0;
+    equivVouchers = 0;
   }
 
   // ── Egresos/ingresos en efectivo (misma moneda) ──
@@ -282,7 +351,7 @@ export function computeDailySummary(
   const ventasTotales = ventasCash + ventasTransfer + ventasZelle + ventasMixed;
   const ajustesNeto = ajustesPositivos - ajustesNegativos;
   const efectivoEsperado =
-    ventasCash + otIngresosCash + ajustesPositivos + ingresosCaja
+    ventasCash + equivCash + otIngresosCash + ajustesPositivos + ingresosCaja
     - comisionesCash - serviciosRecibidosCash - recibosProveedoresCash - ajustesNegativos - egresosCaja
     - reembolsosCash;
 
@@ -290,7 +359,9 @@ export function computeDailySummary(
     currency, ventasCash, ventasTransfer, ventasZelle, ventasMixed, ventasTotales,
     otIngresosCash, comisionesCash, comisionesTransfer, serviciosRecibidosCash,
     recibosProveedoresCash, ajustesPositivos, ajustesNegativos, ajustesNeto,
-    ingresosCaja, egresosCaja, reembolsosCash, reembolsosVoucher, efectivoEsperado,
+    ingresosCaja, egresosCaja, reembolsosCash, reembolsosVoucher,
+    equivCashOtraMoneda: equivCash, equivVouchersOtraMoneda: equivVouchers,
+    efectivoEsperado,
   };
 }
 

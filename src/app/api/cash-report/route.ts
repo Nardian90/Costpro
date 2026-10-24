@@ -69,6 +69,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const dateFilter = includeAllDates ? {} : { gte: startDate, lte: endDate };
     let salesSplit: SalesSplit = {};
     let salesGroups: Array<{ payment_method: string; currency: string; transaction_count: number; total: number; total_cup: number }> = [];
+    // MISIÓN DEFINITIVA (2026-10-24): equivalencias canónicas de la MISMA
+    // reconstrucción (se rellenan junto a salesGroups; 0 si la reconstrucción falla).
+    let equivFields: { sales_equiv_cash_other_cup: number; sales_equiv_voucher_other_cup: number } = { sales_equiv_cash_other_cup: 0, sales_equiv_voucher_other_cup: 0 };
     try {
       // 1) Transacciones del periodo (nivel cabecera — cubre ventas sin ítems).
       let txQuery = supabase
@@ -177,6 +180,20 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         else merged.set(k, { ...g });
       }
       salesGroups = [...merged.values()];
+
+      // 5) MISIÓN DEFINITIVA (2026-10-24): equivalencia canónica CUP de los
+      //    cobros de OTRA moneda — de la MISMA reconstrucción que produjo
+      //    sales_split/grupos (buckets amountCup + grupos de ventas sin ítems).
+      //    Efectivo a la consolidación del esperado (hoja CUP); vouchers solo
+      //    informativos. JAMÁS vuelven a presentarse como una segunda venta.
+      let equivCashOtherCup = 0;
+      let equivVoucherOtherCup = 0;
+      for (const g of salesGroups) {
+        if (g.currency === 'CUP') continue;
+        if (g.payment_method === 'cash') equivCashOtherCup += g.total_cup;
+        else equivVoucherOtherCup += g.total_cup;
+      }
+      equivFields = { sales_equiv_cash_other_cup: equivCashOtherCup, sales_equiv_voucher_other_cup: equivVoucherOtherCup };
     } catch (splitErr: unknown) {
       // Sin split el módulo centralizado cae al fallback de grupos del RPC.
       console.warn('[cash-report] sales_split no disponible:', (splitErr as { message?: string })?.message);
@@ -325,7 +342,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // EXCLUIA el tramo efectivo de ventas mixed (p. ej. EnerVida 02/10: 2.600
     // en vez de 12.600). La fórmula única vive en src/lib/cash-report/summary.ts
     // y la consumen idénticamente vista, previsualización y PDF.
-    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows, refund_rows: refunds };
+    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows, refund_rows: refunds, ...equivFields };
     // INCIDENTE 2026-10-16: grupos `sales` por MONEDA DE COBRO (antes por
     // sale_currency — los cobros USD aparecían como CUP). La vista (acordeón),
     // el fallback de computeDailySummary y la plantilla Estándar heredan la

@@ -1378,6 +1378,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
     ventasTotales: 0, otIngresosCash: 0, comisionesCash: 0, comisionesTransfer: 0,
     serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0, reembolsosCash: 0, reembolsosVoucher: 0,
+    equivCashOtraMoneda: 0, equivVouchersOtraMoneda: 0,
     efectivoEsperado: p.expectedCup,
   };
   const diferencia = computeCuadre(p.cupTotal, s.efectivoEsperado);
@@ -1520,6 +1521,10 @@ function ResultadosPanel(p: ResultadosPanelProps) {
           <SummaryRow label="Ventas en efectivo" value={s.ventasCash} />
           <SummaryRow label="Ventas por transferencia" value={s.ventasTransfer} />
           {s.ventasZelle > 0 && <SummaryRow label="Ventas por Zelle" value={s.ventasZelle} />}
+          {/* MISIÓN DEFINITIVA 2026-10-24: la equivalencia canónica NO es una
+              segunda venta — línea propia de consolidación (contrato único §2). */}
+          {s.equivCashOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de cobros en efectivo en otras monedas" value={s.equivCashOtraMoneda} note="consolidación contable — no es una segunda venta" />}
+          {s.equivVouchersOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de vouchers en otras monedas" value={s.equivVouchersOtraMoneda} note="informativo — no es efectivo físico" />}
           {s.otIngresosCash > 0 && <SummaryRow label="Órdenes de trabajo (anticipos)" value={s.otIngresosCash} />}
           {s.comisionesCash > 0 && <SummaryRow label="Comisiones pagadas en efectivo" value={-s.comisionesCash} negative />}
           {s.comisionesTransfer > 0 && <SummaryRow label="Comisiones pagadas por transferencia" value={-s.comisionesTransfer} negative note="no reduce el efectivo físico" />}

@@ -154,6 +154,11 @@ function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD'): IncomeRow[] {
   if (currency === 'CUP') {
     if (s.ventasZelle > 0) rows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, kind: 'normal' });
     if (s.ventasMixed > 0) rows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, kind: 'info' });
+    // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
+    // (contrato único §2) — no es una segunda venta; la de efectivo SÍ entra
+    // al esperado (posTerms abajo), la de vouchers es informativa.
+    if (s.equivCashOtraMoneda > 0) rows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, kind: 'normal' });
+    if (s.equivVouchersOtraMoneda > 0) rows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, kind: 'info' });
     if (s.otIngresosCash > 0) rows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash, kind: 'normal' });
     if (s.comisionesCash > 0) rows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, kind: 'expense' });
     if (s.comisionesTransfer > 0) rows.push({ label: 'Comisiones pagadas por transferencia', amount: s.comisionesTransfer, kind: 'info' });
@@ -370,6 +375,7 @@ export async function buildCashReportExcelWorkbook(
     s.totalRows.push(esperadoRow);
     const posTerms = [
       rowsByLabel.get('Ventas en efectivo'),
+      rowsByLabel.get('Equivalencia CUP de cobros en efectivo en otras monedas'),
       rowsByLabel.get('Órdenes de trabajo (anticipos)'),
       rowsByLabel.get('Ajustes extraordinarios (+)'),
       rowsByLabel.get('Ingresos de caja (fondo y otros)'),
