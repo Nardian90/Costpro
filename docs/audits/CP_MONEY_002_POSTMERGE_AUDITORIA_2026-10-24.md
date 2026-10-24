@@ -266,3 +266,49 @@ Condiciones de la misión verificadas: firma final única (PGRST203 estructuralm
 ### 10.5 Fase F — integridad de reportes/ledger/inventario (6/6 PASS, PostgreSQL 18 aislado)
 
 Venta mixta A (5 USD + 15 000 CUP, tasa 1000) creada por la /32: ledger de 2 filas por componente con tasa PERSISTIDA (5000 + 15000 = 20 000 ✓ PT011), `cost_at_sale` = coste medio del producto (4) intacto, UN solo movimiento de inventario (−2), `cost_average` sin tocar. **Reversión por el modelo VIGENTE** (reverse_transaction_v2 real del repo): status `voided`, existencias restauradas 98→100 con un único `sale_reverse` (+2), sin duplicación de cobros en el ledger, doble reversión → `idempotent` sin segundo incremento. El Reporte Entrega excluye la venta voided por el filtro `status='completed'` (contrato verificado a nivel de ruta en `cash-report-route-d4.test.ts`). La devolución PROPORCIONAL por componentes sigue PENDIENTE de decisión de negocio — no se inventó política.
+
+---
+
+## 11. ADENDA DE VENTANA EJECUTADA (2026-10-24T03:47Z — AUTORIZADA POR EL PROPIETARIO)
+
+### 11.1 Cadena de cierre
+
+| Paso | Evidencia | Resultado |
+|---|---|---|
+| Fusión PR #1471 (autorizada: «dejar solucionado todo, aplicado migraciones») | merge `a37334a3` (2026-10-24, checks 8/8 verde en head `bdbad1a3`) | main contiene companion + D5-ACL; baseline `/31` preservada hasta este commit |
+| Revalidación aislada de la SECUENCIA FINAL EXACTA (fresca) | `pgiso/results/cp-money-002-fase3-final-sequence-evidence.json` (03:42Z) | **18/18 PASS**: orden, firma única /32, ACL paridad H0R, idempotencia de la secuencia, rechazos, atomicidad, secdef_public_grant |
+| Punto de restauración pre-ventana (PITR no operativo: `pitr_enabled=false`) | `pgiso/results/restorepoint-create_sale_v2-31-antes-ventana.sql` (definición /31 + ACL + COMMENT verbatim) | Inversa versionada posible desde la captura |
+| Checksums verificados ANTES de aplicar | c75a31fb… (companion) / 93911010… (D5-ACL) — coincidencia EXACTA con §4 del runbook | Sin desviaciones |
+| Precondiciones de ventana | firma única /31 (md5 e25a939d…), 0 dependencias duras, 0 ventas en la última hora (03:39Z), runner transaccional verificado (sonda BEGIN/ROLLBACK) | Ventana tranquila confirmada |
+| **Aplicación 20261025120000 → 20261025130000** (Management API, rol postgres, transacción por fichero, consecutivas) | `pgiso/results/window-aplicada.json` (03:47Z) | 8a/8b/8c **VERDE**: firma única /32 (md5 **e931f9d88d3ce04abcdbc72eafc9e775** = convergencia aislada 31/31 y 18/18), SECURITY DEFINER + `search_path=public, pg_temp`, ACL `{postgres=X, authenticated=X, service_role=X}` — anon `false`, authenticated/service_role `true` |
+| Smoke productivo de HUELLA CERO | `pgiso/results/smoke-prod-zero-residue.json` (04:0xZ) | **12/12 PASS** — ver §11.2; residuo verificado **0 filas** (tienda/usuario/producto/rate/tx/movimientos QA ausentes tras ROLLBACK) |
+| Surface re-exportado | `scripts/export-contract-surface.cjs` → contract-surface.sql (150 funciones, sha256 3c100915…) | `/32` certificada con ACL endurecida; `/31` fuera del surface; diff = swap exacto de la función (+187/−7 = bloque §13.7) |
+| Baseline temporal retirada | `ci-gate-allowlist.json` — `source_of_truth_baseline: []` | El gate reconcilia LIVE == migraciones sin excepciones CP-MONEY-002 (mismo procedimiento que 5920348 / f53ab605) |
+
+### 11.2 Smoke productivo de huella cero — 12/12 PASS (datos QA identificados, BEGIN…ROLLBACK, sin COMMIT)
+
+Ejecutado contra la BD PRODUCTIVA real con `request.jwt.claims` de un usuario QA (usuario 77700003-…, tienda QA-CP-MONEY-002-SMOKE, producto QA 10 USD, tasa 1000):
+
+1. **S1** Venta CUP pura LEGADA (31 claves, sin `p_payment_components`) contra la /32 viva → `completed` 40 000; ledger 1 fila CUP@1; 1 movimiento; stock 100→98.
+2. **S2** Mixta 5 USD + 15 000 CUP (2×10 USD, tasa 1000): **ledger 2 filas POR COMPONENTE con tasa PERSISTIDA** — USD 5@1000→5 000 CUP y CUP 15 000@1; `cost_at_sale`=4 intacto; 1 movimiento; stock 98.
+3. **S3** Insuficiente (8 USD + 2 000 CUP): `ERR_PAYMENT_MISMATCH` fail-closed ANTES de persistir; 0 filas.
+4. **S4a** Sobrepago con componentes reales (25 USD = 25 000 > 20 000) sin liquidación → guard §14.9 `ERR_OVERPAYMENT_UNREGISTERED_CHANGE`; 0 filas. (Método único SIN componentes normaliza cash al total: comportamiento canónico legado intacto.)
+5. **S4b** Liquidación D6 CON vuelto registrado (recibido 25 USD, vuelto 5 000 CUP): `completed`, total 20 000, `change_given_cup`=5 000 persistido; **ledger Σ=20 000 CUP: el vuelto NO es ingreso**; stock 98.
+6. **S5** Idempotencia (misma clave + mismo payload, dos llamadas): 1 transacción (mismo id), ledger 2, ítems 1, movimientos 1 — cero duplicados.
+7. **S6** Reversión por el modelo VIGENTE (`reverse_transaction_v2`): `voided`, existencias restauradas 98→100 UNA vez; doble reversión neutralizada por el modelo.
+8. **S7a/b/c** Inválidos: EUR → `ERR_PAYMENT_COMPONENTS_INVALID`; componentes duplicados → anti-duplicados D3; array vacío → `ERR_PAYMENT_MISMATCH`; 0 filas en todos.
+9. **S8** Aislamiento: actor SIN membership → `ERR_UNAUTHORIZED` temprano; 0 filas.
+10. **HUELLA CERO**: `transactions`/`stores`/`products`/`profiles`/`store_exchange_rates`/`stock_movements` QA = 0 filas tras los ROLLBACK — la prueba corrió realmente en producción sin dejar efectos.
+
+### 11.3 Estado productivo tras la ventana (verificado 2026-10-24T03:47Z–04:10Z)
+
+- **BD**: firma ÚNICA `create_sale_v2/32` con `p_payment_components`; ACL endurecida; helpers de tasa por tienda operativos (tasa real de las tiendas 800–810; smoke QA a 1000); `SECURITY DEFINER` + `search_path` seguros; 0 dependencias duras.
+- **Ventas puras (CUP o método único)**: OPERATIVAS — el código fusionado envía 31 claves y la resolución named-args opera contra la /32 viva (demostrado S1 en producción).
+- **Cobros por componentes (mixtos USD/CUP)**: la BD los ejecuta correctamente (demostrado S2), PERO la caché de PostgREST conserva la firma /31 hasta recarga: los NOTIFY vía Management API y vía pg_cron local NO llegan al listener (evidencia del repo 2026-10-22 + 4 intentos con espera ≥120 s + terminación/reconexión de backends postgrest). El fix D1 convierte el PGRST202 persistente en **503 ERR_RPC_SCHEMA_MISMATCH fail-closed accionable** — sin éxito falso ni corrupción contable.
+- **ÚNICA ACCIÓN PENDIENTE DEL PROPIETARIO**: ejecutar `NOTIFY pgrst, 'reload schema';` en el SQL editor del dashboard Supabase (camino fiable verificado 2026-10-22). Inmediatamente después, el smoke PGRST esperado: llamada con `p_payment_components` → 401/42501 para anon (resolución) y funcionamiento completo por componentes desde la app.
+
+### 11.4 Decisiones y pendientes que NO son de esta ventana
+
+- **Devolución proporcional por componentes**: sigue siendo DECISIÓN DE NEGOCIO PENDIENTE (§8). El modelo vigente (reversión a nivel de transacción) quedó verificado en producción (S6) y el Reporte Entrega excluye ventas voided. El sistema impide devoluciones incorrectas sobre ventas mixtas revertidas (inventario y ledger idempotentes).
+- **PR #1470 (caja)**: su rama añade 3 entradas `source_of_truth_baseline` propias tras la entrada `/31` que este retiro elimina. Resolución mínima documentada: rebase sobre main actualizado preservando SUS 3 entradas (ya NO necesita preservar la `/31` — la baseline fue retirada con la /32 certificada).
+- **`schema_migrations`**: sigue obsoleta por diseño del propietario (reconciliation doc); el registro de aplicación autorizada vive en este expediente y en los encabezados de ambas migraciones.

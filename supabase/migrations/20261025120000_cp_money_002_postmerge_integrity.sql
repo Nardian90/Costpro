@@ -47,6 +47,40 @@
 --   * BD con la 20261024150000 aplicada (dos overloads) → DROP 31 + OR REPLACE 32.
 --   * BD sin migrar (solo firma 31)                   → DROP 31 + CREATE 32.
 -- Ambos caminos terminan en UNA firma de 32 params.
+--
+-- REGISTRO DE APLICACIÓN A PRODUCCIÓN (wthkddeleylijmonclxg):
+--   AUTORIZADA por el propietario el 2026-10-24 («lo que sí es definitivo es
+--   que debes dejar solucionado todo, aplicado migraciones, etc.») y aplicada
+--   el 2026-10-24T03:47:xxZ vía Supabase Management API (rol postgres) como
+--   transacción única por fichero (runner transaccional verificado con sonda
+--   BEGIN/ROLLBACK), en ventana de baja actividad verificada (0 ventas en la
+--   última hora, 03:39Z). Checksum sha256 verificado ANTES de aplicar:
+--   c75a31fb03f66c0157de0454929b9b96f2f4b16e56d20b91b94ce79834c68521.
+--   Pre-vuelo: única firma /31 (md5 e25a939d…), 0 dependencias duras,
+--   punto de restauración del objeto capturado (PITR no operativo:
+--   pitr_enabled=false — restorepoint-create_sale_v2-31-antes-ventana.sql).
+--   Post-verificación solo-lectura: firma ÚNICA de 32 params (md5
+--   e931f9d88d3ce04abcdbc72eafc9e775 = convergencia aislada 31/31),
+--   SECURITY DEFINER + search_path intactos, ACL de paridad H0R
+--   {postgres=X, authenticated=X, service_role=X} tras la 20261025130000
+--   consecutiva (anon=false verificado con has_function_privilege).
+--   Smoke productivo de HUELLA CERO 12/12 PASS (2026-10-24T04:0xZ, dentro de
+--   transacciones BEGIN…ROLLBACK con datos QA identificados): venta CUP pura
+--   legada, mixta 5 USD + 15 000 CUP con tasa 1000 persistida por componente,
+--   insuficiente fail-closed, guard §14.9 sobrepago, liquidación D6 con vuelto
+--   NO-ingreso, idempotencia sin duplicados, reversión modelo vigente con
+--   existencias restauradas una vez y doble reversión neutralizada,
+--   rechazos EUR/duplicados/vacío, aislamiento por tienda ERR_UNAUTHORIZED.
+--   Residuo verificado = 0 filas. Surface re-exportado (150 funciones, /32
+--   certificada) y baseline temporal create_sale_v2/31 retirada del
+--   ci-gate-allowlist (mismo procedimiento que 5920348/f53ab605).
+--   NOTA OPERATIVA PENDIENTE: la caché de PostgREST conserva la firma /31
+--   hasta recargar; los NOTIFY vía Management API/pg_cron NO llegan al
+--   listener (evidencia 2026-10-22 del repo + 4 intentos 2026-10-24). Las
+--   ventas puras operan por resolución named-args; los cobros por componentes
+--   fallan cerrados (503 ERR_RPC_SCHEMA_MISMATCH por el fix D1) hasta
+--   ejecutar «NOTIFY pgrst, 'reload schema';» desde el SQL editor del
+--   dashboard (camino fiable verificado 2026-10-22).
 -- ============================================================================
 
 -- D2: eliminar el overload legado de 31 params (firma desplegada v2.24.1,

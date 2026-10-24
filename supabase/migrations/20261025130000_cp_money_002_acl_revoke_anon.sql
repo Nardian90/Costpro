@@ -34,6 +34,21 @@
 --   proacl == {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 --   (sin «=X» para anon ni PUBLIC) y has_function_privilege('anon',
 --   'create_sale_v2(...)', 'EXECUTE') == false.
+--
+-- REGISTRO DE APLICACIÓN A PRODUCCIÓN (wthkddeleylijmonclxg):
+--   AUTORIZADA por el propietario el 2026-10-24 y aplicada CONSECUTIVA a la
+--   companion el 2026-10-24T03:47Z vía Supabase Management API (rol
+--   postgres), transacción única por fichero. Checksum sha256 verificado
+--   ANTES de aplicar:
+--   939110100d960be7bc61893c81152a8d3219ce08a3622e108c5b70acb512eb7b.
+--   Post-verificación solo-lectura (2026-10-24T03:47Z): ACL de paridad H0R
+--   EXACTA {postgres=X, authenticated=X, service_role=X} — sin anon, sin
+--   PUBLIC; has_function_privilege anon=false, authenticated=true,
+--   service_role=true; firma única /32 (md5 e931f9d8…); SECURITY DEFINER +
+--   search_path intactos; re-ejecución de la SECUENCIA completa verificada
+--   convergente en aislado (F3-09, 18/18). Ventana D5 de exposición
+--   anon-on-/32: segundos entre companion y este archivo, con autorización
+--   interna ERR_UNAUTHORIZED para auth.uid() nulo en toda la superficie.
 -- ============================================================================
 
 -- Cierre del vector PUBLIC (anon hereda de PUBLIC; cerrar PUBLIC solo no
