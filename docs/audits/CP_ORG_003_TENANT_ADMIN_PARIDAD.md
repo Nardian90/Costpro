@@ -160,7 +160,7 @@ Restaurar la paridad **alineando el móvil con el guard canónico** (el más res
 | PR | Rama | Head SHA | Alcance exacto |
 |---|---|---|---|
 | **A** — #1491 | `fix/cp-org-003-fase1-paridad-movil-20261026` | `10fee29c50e8e219e00aa67d83dace5f7888a7fb` | Paridad móvil: `mobile-sheet.ts` (nuevo, doctrina canónica), `MobileTabBar.tsx`, comentarios de prueba D3, 38 pruebas (28 lógica + 10 componente). Sin migraciones ni permisos. |
-| **B** — #1493 | `fix/cp-org-003-fase2-bootstrap-tienda-20261026` | `3621cec06e3939ce8804e87091396ab64a0d275f` | Bootstrap primera tienda: `POST /api/stores/bootstrap` (nuevo) + migración `20261026210000` (endurece RPC `create_store_with_membership`; **NO aplicada**), 30 pruebas. |
+| **B** — #1493 | `fix/cp-org-003-fase2-bootstrap-tienda-20261026` | `3621cec0` → `e9866ea` (corrección post-Audit, ver §10.4-N1b) | Bootstrap primera tienda: `POST /api/stores/bootstrap` (nuevo) + migración `20261026210000` (endurece RPC `create_store_with_membership`; **NO aplicada**), 32 pruebas. |
 | **C** — #1494 | `feat/cp-org-003-fase3-usuarios-org-20261026` | `f0f457efd76e42c43a474ebfb8edf4baa1145320` | Lectura organizacional `GET /api/users` para tenant_admin (su tenant, sin cuentas de plataforma), 8 pruebas. Mutaciones sin cambios. |
 | **D** — (este PR) | `docs/cp-org-003-cierre-20261026` | — | Expediente actualizado (§10) + corrección D3 en `CP_ORG_002_NAVEGACION_SUPERADMIN.md` §6. |
 
@@ -172,11 +172,12 @@ Restaurar la paridad **alineando el móvil con el guard canónico** (el más res
 - **D4 (bootstrap bloqueado) — CORREGIDO (PR B):** ruta específica + RPC endurecido; la membresía resultante es `admin` de LA tienda creada dentro de SU tenant (alcance de tienda, no de plataforma).
 - **D5 (regresión COSTO del self-signup) — SIN RESTAURAR (decisión expresa):** no se amplían permisos por inferencia; el alcance efectivo actual (INICIO+AYUDA+COSTO en desktop, INICIO+AYUDA en móvil) queda documentado, pendiente de decisión del propietario.
 - **D6 (asimetrías UI↔RPC en caja) — SIN CAMBIOS:** clase pre-existente fuera del alcance de esta misión (familia de la superficie 6 de CP-ORG-002); registrada para incidencia propia.
-- **D7 (hueco de pruebas) — CERRADO:** 86 pruebas nuevas (38 paridad móvil + 30 bootstrap + 8 usuarios + 10 estáticas de migración), todas de visibilidad Y resultado del guard, sin snapshots.
+- **D7 (hueco de pruebas) — CERRADO:** 88 pruebas nuevas (38 paridad móvil + 32 bootstrap + 8 usuarios + 10→12 estáticas de migración incluidas en las 32), todas de visibilidad Y resultado del guard, sin snapshots.
 
 ### 10.4 Hallazgos NUEVOS durante la implementación (no estaban en §§1-9)
 
-- **N1 — Hueco pre-existente del RPC `create_store_with_membership` (ALTO, cerrado en PR B):** cualquier usuario `authenticated` podía llamarlo directamente vía PostgREST pasando un `p_tenant_id` **ajeno** → creaba tienda + membresía admin en OTRA organización (SECURITY DEFINER → bypass RLS; el parámetro `p_max_stores` también era del cliente). La migración de PR B fija el tenant al profile del caller, añade gate de rol interno y resuelve el límite del plan del tenant. **La migración NO está aplicada: hasta su despliegue, el hueco persiste en producción.**
+- **N1 — Superficie authenticated del RPC `create_store_with_membership` (MATIZADO tras el Security Audit):** el análisis inicial leyó la migración de Iteración 13 (GRANT authenticated) y concluyó que cualquier usuario autenticado podía llamar al RPC con `p_tenant_id` ajeno. **El estado real de producción ya estaba endurecido** por CUATRO migraciones posteriores: **W9-F06** (20260902000002: `REVOKE EXECUTE FROM PUBLIC, authenticated` — solo `service_role`), **W9-F06-H1** (20260902205210: `search_path = pg_catalog, public`), **REM-INV-5** (20260915000003: advisory lock per-tenant que serializa check+INSERT contra la carrera del límite por plan) y **REM-INV-6** (20260916000002: certificación ACL). Conclusión corregida: la superficie explotable **ya estaba cerrada** en producción; PR B aporta **defensa en profundidad** (gates internos del path authenticated: tenant del caller SIEMPRE + gate de rol + límite por plan del tenant) que protege si el ACL volviera a ampliarse.
+- **N1b — El Security Audit detectó una regresión REAL en la primera versión de la migración de PR B (evidencia del valor del gate):** el CREATE inicial partía del cuerpo de agosto y (i) **eliminaba el advisory lock de REM-INV-5**, (ii) regresaba el search_path a `public, pg_temp` y (iii) re-otorgaba EXECUTE a authenticated — exactamente las tres divergencias que la Capa C (REM-INV-6) reportó como bloqueantes. Corregido en `e9866ea`: cuerpo REM-INV-5 conservado íntegro, search_path W9-F06-H1, ACL service_role-only replicado, y entrada `source_of_truth_baseline` en `ci-gate-allowlist.json` (primera de su categoría, expiry 2026-11-30) para la única divergencia restante e intencional: `BODY_DRIFT_FROM_MIGRATION` (la migración redefine el cuerpo y está pendiente de aplicación autorizada; al aplicarla + regenerar `contract-surface.sql`, la divergencia desaparece y la entrada debe retirarse). Auditor verificado localmente: `CONTRATO OK, 0 divergencias`.
 - **N2 — Visible-denied por herencia de grupo en el walk del sheet (MEDIO, corregido en PR A):** el walk histórico solo filtraba sección y hoja, no los submenús intermedios — `whatsapp-hub`/`telegram-hub` (ítems sin roles dentro de un grupo admin-level) eran visibles-denegados para roles operativos. El walk corregido filtra cada nivel (semántica exacta de `filterModulesByRole`).
 - **N3 — `checkStoreQuota` (tenant-limiter) no aplicable server-side (BAJO, evitado):** usa un cliente sin sesión y cuenta tiendas activas sin filtro de tenant; el bootstrap de PR B hace un count per-tenant explícito con admin client + re-verificación atómica en el RPC.
 - **N4 — `GET /api/users/[id]` permite a CUALQUIER rol ver perfiles de su mismo tenant (BAJO, pre-existente, sin cambio):** el bloque `!isSelf && !isAdmin` compara `tenant_id`, no membresías por tienda (su comentario declara intención más restrictiva). Registrado para incidencia menor propia; ni ampliado ni restringido aquí.
@@ -196,16 +197,15 @@ Restaurar la paridad **alineando el móvil con el guard canónico** (el más res
 
 ### 10.6 Riesgos residuales
 
-- **N1 activo hasta desplegar la migración de PR B** (hueco del RPC en producción; la ruta nueva no lo agrava, pero no lo cierra hasta aplicar la migración).
 - PR A: solo se OCULTAN entradas muertas (todo lo ocultado era denegado por el guard al tap) — usuarios con membresías altas que usaban el sheet para entradas permitidas por su ROL GLOBAL las conservan por construcción. `useTerminalNavigation` (N6) queda alineado solo en navegación principal, no en sugerencias de búsqueda.
-- PR B: la UI de consumo del bootstrap (dónde vive el botón) queda pendiente de producto; `admin` global malintencionado sigue siendo diseño (nivel de plataforma); el path service_role del RPC conserva `p_max_stores` confiable de la API.
+- PR B: la UI de consumo del bootstrap (dónde vive el botón) queda pendiente de producto; `admin` global malintencionado sigue siendo diseño (nivel de plataforma); el path service_role del RPC conserva `p_max_stores` confiable de la API; el cuerpo del RPC live (REM-INV-5 + CP-ORG-003 gates) solo converge con el replay tras aplicar la migración y regenerar el surface (entrada de baseline con expiry mientras tanto).
 - PR C: lectura only — la vista `users` del catálogo NO se habilita para tenant_admin (sin mutaciones operativas mostraría botones que fallan); wayfinding pendiente del PR de mutaciones.
 - Transversal: nada de lo implementado está verificado en PRODUCCIÓN (sin fusión/despliegue/validación productiva — autorización independiente).
 
 ### 10.7 Pendientes bajo responsabilidad del propietario
 
 1. Revisar y fusionar (o rechazar) los PRs #1491 / #1493 / #1494 y este PR D.
-2. **Autorizar expresamente la aplicación de la migración `20261026210000`** (cierra N1) — no ejecutada en ninguna base de datos.
+2. **Autorizar expresamente la aplicación de la migración `20261026210000`** y regenerar `contract-surface.sql` (`scripts/export-contract-surface.cjs`) — retirando entonces la entrada `source_of_truth_baseline` añadida en PR B — no ejecutada en ninguna base de datos.
 3. Tras fusionar+desplegar: verificación productiva real (sesión tenant_admin: navegación móvil, bootstrap de primera tienda, lectura de usuarios) — no realizada en esta misión.
 4. Decisiones de producto: D5 (¿restaurar COSTO al self-signup?), D6 (asimetrías caja UI↔RPC), UI del bootstrap, UI de gestión de usuarios (tras el PR de mutaciones §10.5), N4 (¿endurecer GET [id] a membresías por tienda?), N5 (unificar límites free).
 
@@ -215,11 +215,11 @@ Restaurar la paridad **alineando el móvil con el guard canónico** (el más res
 |---|---|---|---|
 | `tsc --noEmit` | ✓ | ✓ | ✓ |
 | `eslint` (0 errores) | ✓ | ✓ | ✓ |
-| Pruebas nuevas | 38/38 | 30/30 | 8/8 |
+| Pruebas nuevas | 38/38 | 32/32 | 8/8 |
 | Regresión navegación/roles (266) | ✓ 266/266 | n/a (no toca navegación) | n/a |
 | Suite `api/`+`integration/` (1791) | ✓ (incluida en suite completa) | ✓ 1791/1791 | ✓ 456/456 (api) |
-| Suite COMPLETA local | ✓ 4193/4193 | delegada a CI | delegada a CI |
-| Build de producción | **OMITIDO local** (sandbox sin memoria para Turbopack) → **CI del PR** | ídem | ídem |
+| Security Audit (contrato estático) | ✓ CI | ✓ local exit 0 tras e9866ea + baseline certificada (CI en curso) | ✓ CI |
+| Build de producción | ✓ **CI** (verificado en checks del PR) | **CI del PR** | **CI del PR** |
 | E2E (Playwright) | OMITIDO (config del repo, pre-existente) | ídem | ídem |
 | LIVE-DB | OMITIDO (sin credenciales, política del repo) | ídem (migración validada estáticamente) | ídem |
 | Validación en PRODUCCIÓN | **NO REALIZADA** (sin fusión/despliegue) | ídem | ídem |
