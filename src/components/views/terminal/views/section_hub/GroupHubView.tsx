@@ -39,7 +39,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, ChevronDown } from 'lucide-react';
 import { useUIStore, ViewType } from '@/store';
-import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
+import { SIDEBAR_STRUCTURE, NavModule, effectiveNavRole } from '@/config/navigation/sidebar.structure';
 import { useAuthStore } from '@/store';
 import { useTranslations } from 'next-intl';
 
@@ -76,11 +76,13 @@ export default function GroupHubView({ groupId }: GroupHubViewProps) {
   }
 
   // Filtrar hijos por rol del usuario (RBAC)
+  // CP-ORG-002: rol efectivo canónico — 'superadmin' satisface los
+  // requisitos de 'admin' (misma regla que el sidebar y el guard de vistas).
   const visibleChildren = (group.children || []).filter(child => {
     if (!child.allowedRoles || child.allowedRoles.length === 0) return true;
     const userRole = user?.role;
     if (!userRole) return false;
-    return child.allowedRoles.includes(userRole);
+    return child.allowedRoles.includes(effectiveNavRole(userRole));
   });
 
   // Separar items directos de submenus para layout diferenciado

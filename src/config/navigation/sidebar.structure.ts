@@ -51,17 +51,37 @@ export const SIDEBAR_STRUCTURE: NavModule[] = DERIVED_TREE.map(toNavModule);
 // ════════════════════════════════════════════════════════════════════
 
 /**
+ * CP-ORG-002 — Regla canónica de rol efectivo para NAVEGACIÓN (UI-only).
+ *
+ * El rol de plataforma 'superadmin' satisface los requisitos de rol de
+ * 'admin' en TODA la navegación: es la MISMA regla que isViewAllowedForRole
+ * aplicaba inline desde la misión organizaciones (2026-10-26) y que el
+ * constructor del menú (filterModulesByRole) NO aplicaba — por eso, tras la
+ * promoción de la cuenta designada (CP-ORG-001), el sidebar colapsaba a
+ * Inicio+Ayuda (ninguna lista roles: del catálogo incluye 'superadmin').
+ *
+ * Todos los filtros de navegación (sidebar, palette, hubs, tabs) DEBEN
+ * resolver el rol con esta función; la seguridad real vive server-side/RLS.
+ */
+export function effectiveNavRole(role: string): string;
+export function effectiveNavRole(role: string | null | undefined): string | null | undefined;
+export function effectiveNavRole(role: string | null | undefined): string | null | undefined {
+  return role === 'superadmin' ? 'admin' : role;
+}
+
+/**
  * Filtra el árbol por rol a CADA nivel (la visibilidad de un grupo depende
  * de su propio allowedRoles). Puro y sin dependencia del store — usado por
  * useFilteredNavigation y validado directamente por los tests de la
  * reorganización (fix/navigation-orphaned-development).
  */
 export function filterModulesByRole(modules: NavModule[], role: string): NavModule[] {
+  const navRole = effectiveNavRole(role);
   return modules
     .filter(mod => {
       // Si no tiene allowedRoles definido, acceso universal
       if (!mod.allowedRoles) return true;
-      return mod.allowedRoles.includes(role);
+      return mod.allowedRoles.includes(navRole);
     })
     .map(mod => {
       if (!mod.children) return mod;
@@ -95,13 +115,12 @@ function findModuleAndAncestors(
 export function isViewAllowedForRole(viewId: string, userRole: string | undefined | null): boolean {
   if (!userRole) return false;
 
-  // Misión organizaciones (2026-10-26): el rol de plataforma 'superadmin'
-  // satisface los requisitos de rol de 'admin' en toda la navegación. Sin
-  // esta normalización, la cuenta designada quedaba excluida de SISTEMA
-  // (roles: ['admin']) pese a tener MÁS privilegios. El menú NO es el
-  // mecanismo de seguridad (la validación real es server-side/RLS); esto
-  // solo corrige el wayfinding.
-  const effectiveRole = userRole === 'superadmin' ? 'admin' : userRole;
+  // Misión organizaciones (2026-10-26) / CP-ORG-002: la normalización
+  // superadmin→admin vive en effectiveNavRole (regla compartida con
+  // filterModulesByRole — ver su docstring). El menú NO es el mecanismo de
+  // seguridad (la validación real es server-side/RLS); esto solo corrige el
+  // wayfinding.
+  const effectiveRole = effectiveNavRole(userRole);
 
   // Home única (GATE 1 §1): el dashboard es la home role-aware; 'occ' es
   // alias técnico de migración que el store normaliza a 'dashboard'.

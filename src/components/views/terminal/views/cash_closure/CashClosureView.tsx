@@ -223,12 +223,18 @@ export default function CashClosureView() {
   const voucherDiff = pendingClosure ? arqueo.voucher_diff : 0;
   const difference = pendingClosure ? arqueo.difference : 0;
 
+  // CP-ORG-002: 'superadmin' añadido — espejo EXACTO del bypass server-side
+  // de has_store_role_as (profiles.role IN ('admin','superadmin') → cierre
+  // autorizado en la DB). Sin esto, la UI negaba con AccessDenied un módulo
+  // que el servidor SÍ autoriza a la cuenta de plataforma (0 membresías por
+  // diseño). Manager/encargado requieren membresía — la DB la re-valida.
   const canClose = useMemo(
-    () => ['admin', 'manager', 'encargado'].includes(user?.role || ''),
+    () => ['admin', 'superadmin', 'manager', 'encargado'].includes(user?.role || ''),
     [user?.role]
   );
 
-  const allowedRoles = ['admin', 'manager', 'encargado', 'clerk'];
+  // CP-ORG-002: mismo criterio — roles de contrato ['superadmin'] deben pasar.
+  const allowedRoles = ['admin', 'superadmin', 'manager', 'encargado', 'clerk'];
   const isAuthorized = user?.roles?.some(r => allowedRoles.includes(r)) ?? false;
 
   // ── Process Closure ──
