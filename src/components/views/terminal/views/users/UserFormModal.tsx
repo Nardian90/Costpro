@@ -62,6 +62,13 @@ export function UserFormModal({
                 mode={mode}
                 allowedRoles={allowedRoles}
                 isAdmin={isAdmin}
+                // CP-ORG-001: rol de plataforma REAL del contrato — bloqueado
+                // en el formulario y omitido del payload de edición.
+                platformRole={
+                  mode === 'edit' && userContract?.role === 'superadmin' ? 'superadmin'
+                  : mode === 'edit' && userContract?.role === 'tenant_admin' ? 'tenant_admin'
+                  : null
+                }
             />
         ) : (
           <div className="flex flex-col items-center justify-center p-12 space-y-4">

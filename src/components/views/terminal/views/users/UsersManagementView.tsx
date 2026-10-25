@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Edit, ShieldAlert, Trash2, MoreVertical, Store, KeyRound, MailQuestion, Building2, AlertTriangle, ArrowRightLeft } from 'lucide-react';
+import { Plus, Edit, ShieldAlert, Trash2, MoreVertical, Store, KeyRound, MailQuestion, Building2, AlertTriangle, ArrowRightLeft, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
@@ -52,6 +52,12 @@ export default function UsersManagementView() {
     isSuperAdmin,
     canCreateMoreUsers,
     limitReachedMessage,
+    isLoadingUsers,
+    isUsersError,
+    usersErrorMessage,
+    refetchUsers,
+    usersTotal,
+    shownCount,
     user
   } = useUsersView();
 
@@ -135,7 +141,7 @@ export default function UsersManagementView() {
           </div>
         </div>
 
-        <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar usuarios por nombre, email o rol..." />
+        <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar usuarios por nombre o email..." />
 
         {/* MISIÓN ORGANIZACIONES (FASE 2 §2): filtros de empresa / rol / estado.
             «Todas las empresas» y «Sin asignar» solo para SuperAdmin (un
@@ -180,6 +186,37 @@ export default function UsersManagementView() {
           </Select>
         </div>
 
+        {/* CP-ORG-001: estado de ERROR explícito y reintentable — un fallo de
+            carga NUNCA se presenta como «no hay usuarios» (vacío fingido). */}
+        {isUsersError && (
+          <div role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-destructive shrink-0" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-black uppercase tracking-widest text-destructive">No se pudieron cargar los usuarios</p>
+              <p className="text-xs text-muted-foreground font-bold mt-1">{usersErrorMessage || 'Error de conexión con el servidor.'}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchUsers()}
+              className="gap-2 shrink-0"
+              aria-label="Reintentar la carga de usuarios"
+            >
+              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+              Reintentar
+            </Button>
+          </div>
+        )}
+
+        {/* CP-ORG-001: total honesto — si los filtros coinciden con más
+            usuarios de los mostrados en esta página, se dice explícitamente
+            en lugar de fingir que la lista está completa. */}
+        {!isUsersError && !isLoadingUsers && usersTotal > shownCount && shownCount > 0 && (
+          <p role="status" className="text-xs font-bold text-muted-foreground">
+            {usersTotal} usuarios coinciden con los filtros; se muestran {shownCount}. Afina la búsqueda para acotar la lista.
+          </p>
+        )}
+
         <div className="table-scroll-wrapper rounded-xl border border-border bg-card shadow-sm">
           <table className="data-table sticky-column-1 w-full text-sm">
             <thead>
@@ -196,7 +233,18 @@ export default function UsersManagementView() {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
+              {/* CP-ORG-001: estado de carga REAL (antes la tabla se pintaba
+                  vacía sin distinguirse de «sin usuarios»). */}
+              {isLoadingUsers && (
+                [...Array(4)].map((_, i) => (
+                  <tr key={`skeleton-${i}`} className="border-b border-border/50" aria-hidden="true">
+                    <td className="p-4" colSpan={9}>
+                      <div className="h-5 w-full max-w-2xl rounded bg-muted/60 animate-pulse" />
+                    </td>
+                  </tr>
+                ))
+              )}
+              {!isLoadingUsers && users.map((u) => (
                 <tr key={u.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors" aria-label={`Usuario: ${u.full_name}`}>
                   <td className="p-4" aria-label="Datos del usuario">
                      <div className="flex items-center gap-3">
@@ -217,11 +265,13 @@ export default function UsersManagementView() {
                     <div className="flex flex-col items-center">
                       <span className="text-xs font-black text-primary">
                         {(() => {
-                          // FIX-BUG-UX-001: Guard against invalid Date from created_at
+                          // FIX-BUG-UX-001 + CP-ORG-001: sin fecha válida se
+                          // muestra «—» (desconocido), nunca un «0» que aparenta
+                          // un dato real de hoy.
                           const created = new Date(u.created_at);
                           return u.created_at && !isNaN(created.getTime())
                             ? Math.floor((Date.now() - created.getTime()) / 86400000)
-                            : 0;
+                            : '—';
                         })()}
                       </span>
                       <span className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Días</span>
@@ -305,7 +355,7 @@ export default function UsersManagementView() {
                         defaultValue={u.plan || 'free'}
                         onValueChange={(val) => handleUpdatePlan(u.id, val)}
                       >
-                        <SelectTrigger className="w-[100px] h-10 text-[10px] font-black uppercase">
+                        <SelectTrigger className="w-[100px] h-10 text-[10px] font-black uppercase" aria-label={`Plan de ${u.full_name}`}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -328,7 +378,8 @@ export default function UsersManagementView() {
                       <Switch
                         checked={u.is_active}
                         onCheckedChange={(checked) => handleToggleUserStatus(u.id, checked)}
-                        disabled={u.id === user?.id} // Don't allow self-ban
+                        disabled={u.id === user?.id || (u.role === 'superadmin' && !isSuperAdmin)} // Don't allow self-ban; cuenta de plataforma solo SuperAdmin
+                        aria-label={`Activar o desactivar a ${u.full_name}`}
                       />
                       <span className={cn(
                         "text-xs font-black uppercase tracking-widest",
@@ -369,16 +420,18 @@ export default function UsersManagementView() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onSelect={() => setAssignTarget(u)}
-                          disabled={u.id === user?.id || (!isSuperAdmin && !!u.tenant_id)}
+                          disabled={u.id === user?.id || u.role === 'superadmin' || (!isSuperAdmin && !!u.tenant_id)}
                           className="gap-2 text-xs font-bold"
+                          title={u.role === 'superadmin' ? 'La cuenta SuperAdmin de plataforma no pertenece a una empresa' : (u.id === user?.id ? 'No puedes reasignar tu propia empresa' : undefined)}
                         >
                           <ArrowRightLeft className="w-3.5 h-3.5" />
                           Asignar empresa
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onSelect={() => openSetPassword(u)}
-                          disabled={u.id === user?.id}
+                          disabled={u.id === user?.id || (u.role === 'superadmin' && !isSuperAdmin)}
                           className="gap-2 text-xs font-bold"
+                          title={u.role === 'superadmin' && !isSuperAdmin ? 'La cuenta SuperAdmin solo puede gestionarla otro SuperAdmin' : (u.id === user?.id ? 'No puedes cambiar tu propia contraseña aquí' : undefined)}
                         >
                           <KeyRound className="w-3.5 h-3.5" />
                           Cambiar contraseña
@@ -390,8 +443,9 @@ export default function UsersManagementView() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onSelect={() => handleDeleteUser(u.id)}
-                          disabled={u.id === user?.id}
+                          disabled={u.id === user?.id || (u.role === 'superadmin' && !isSuperAdmin)}
                           className="gap-2 text-xs font-bold text-destructive focus:text-destructive"
+                          title={u.role === 'superadmin' && !isSuperAdmin ? 'La cuenta SuperAdmin solo puede gestionarla otro SuperAdmin' : (u.id === user?.id ? 'No puedes eliminar tu propia cuenta' : undefined)}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           Eliminar usuario
@@ -401,14 +455,14 @@ export default function UsersManagementView() {
                   </td>
                 </tr>
               ))}
-              {users.length === 0 && (
+              {!isLoadingUsers && users.length === 0 && !isUsersError && (
                 <tr aria-label="Sin resultados de usuarios">
                   <td colSpan={9} className="p-12 text-center py-20">
                     <p className="text-muted-foreground uppercase font-black tracking-widest text-xs mb-2">
                       No se encontraron usuarios
                     </p>
                     <p className="text-xs text-muted-foreground/50 font-bold">
-                      No tienes acceso a entidades en este contexto o no existen registros.
+                      No hay usuarios que coincidan con los filtros en tu alcance, o todavía no existen registros.
                     </p>
                   </td>
                 </tr>

@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '@/lib/utils';
 import { UserContract } from '@/contracts/user';
 import { Store, UserRole } from '@/types';
-import { Loader2, Save, Plus, Trash2, Building, Users, ChevronRight } from 'lucide-react';
+import { Loader2, Save, Plus, Trash2, Building, Users, ChevronRight, ShieldCheck } from 'lucide-react';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { BulkStoreAssignModal } from './BulkStoreAssignModal';
@@ -72,6 +72,13 @@ interface UserFormProps {
   isSubmitting?: boolean;
   allowedRoles?: UserRole[];
   isAdmin?: boolean;
+  /**
+   * CP-ORG-001: rol REAL del usuario objetivo cuando es de plataforma
+   * (superadmin/tenant_admin). El formulario lo muestra BLOQUEADO — nunca
+   * lo degrada a 'admin' en pantalla ni lo envía en el submit (la vista
+   * omite «role» del payload y el servidor conserva el rol real).
+   */
+  platformRole?: 'superadmin' | 'tenant_admin' | null;
 }
 
 export default function UserForm({
@@ -82,7 +89,8 @@ export default function UserForm({
   onCancel,
   isSubmitting = false,
   allowedRoles,
-  isAdmin = false
+  isAdmin = false,
+  platformRole = null
 }: UserFormProps) {
   const {
     register,
@@ -228,22 +236,45 @@ export default function UserForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="user-role" className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
-              Rol de Usuario
-            </label>
-            <select
-              id="user-role"
-              {...register('role')}
-              className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer"
-            >
-              {(!allowedRoles || allowedRoles.includes('admin')) && <option value="admin">Administrador</option>}
-              {(!allowedRoles || allowedRoles.includes('encargado')) && <option value="encargado">Encargado</option>}
-              {(!allowedRoles || allowedRoles.includes('manager')) && <option value="manager">Gestor</option>}
-              {(!allowedRoles || allowedRoles.includes('clerk')) && <option value="clerk">Cajero</option>}
-              {(!allowedRoles || allowedRoles.includes('warehouse')) && <option value="warehouse">Almacén</option>}
-              {(!allowedRoles || allowedRoles.includes('usuario')) && <option value="usuario">Usuario</option>}
-              {(!allowedRoles || allowedRoles.includes('costo')) && <option value="costo">Costo</option>}
-            </select>
+            {platformRole ? (
+              <>
+                <label htmlFor="user-role-locked" className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+                  Rol de Usuario
+                </label>
+                <div
+                  id="user-role-locked"
+                  aria-live="polite"
+                  className="w-full p-3 rounded-xl border border-border bg-muted/40 font-bold text-sm flex items-center gap-2"
+                  title="Rol de plataforma gestionado administrativamente (migración/RPC con guardas) — no editable en este formulario"
+                >
+                  <ShieldCheck className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
+                  {platformRole === 'superadmin' ? 'SuperAdmin' : 'Admin de Tenant'}
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">(rol de plataforma — no editable aquí)</span>
+                </div>
+                <select id="user-role" {...register('role')} className="sr-only" tabIndex={-1} aria-hidden="true">
+                  <option value="admin">Administrador</option>
+                </select>
+              </>
+            ) : (
+              <>
+                <label htmlFor="user-role" className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+                  Rol de Usuario
+                </label>
+                <select
+                  id="user-role"
+                  {...register('role')}
+                  className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer"
+                >
+                  {(!allowedRoles || allowedRoles.includes('admin')) && <option value="admin">Administrador</option>}
+                  {(!allowedRoles || allowedRoles.includes('encargado')) && <option value="encargado">Encargado</option>}
+                  {(!allowedRoles || allowedRoles.includes('manager')) && <option value="manager">Gestor</option>}
+                  {(!allowedRoles || allowedRoles.includes('clerk')) && <option value="clerk">Cajero</option>}
+                  {(!allowedRoles || allowedRoles.includes('warehouse')) && <option value="warehouse">Almacén</option>}
+                  {(!allowedRoles || allowedRoles.includes('usuario')) && <option value="usuario">Usuario</option>}
+                  {(!allowedRoles || allowedRoles.includes('costo')) && <option value="costo">Costo</option>}
+                </select>
+              </>
+            )}
           </div>
 
           <div>

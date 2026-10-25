@@ -1,10 +1,10 @@
 
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store';
-import { useUsers, useCreateUser, useUpdateUser, useManageUserMemberships } from '@/hooks/api/useUsers';
+import { useUsersAdmin, useCreateUser, useUpdateUser, useManageUserMemberships } from '@/hooks/api/useUsers';
 import { useStores } from '@/hooks/api/useStores';
 import { UserFormData } from './UserForm';
 import { toast } from 'sonner';
@@ -33,6 +33,7 @@ export function useUsersView() {
     const [assignTarget, setAssignTarget] = useState<Profile | null>(null);
 
     const isSuperAdmin = user?.role === 'superadmin';
+    const isManager = user?.role === 'admin' || isSuperAdmin;
 
     // REMEDIACIÓN (fix/users-multistore-admin-password): modal de seteo directo
     // de contraseña por Super Admin. Solo se guarda el usuario objetivo
@@ -43,13 +44,35 @@ export function useUsersView() {
     // Data Fetching
     const isEncargado = user?.role === 'encargado' || user?.role === 'manager' || user?.memberships?.some(m => m.role === 'encargado');
 
-    const { data: usersData = [], isLoading: isLoadingUsers } = useUsers(
-        user?.id || '',
-        user?.role === 'admin',
-        isEncargado || false,
-        user?.activeStoreId,
-        isSuperAdmin || false
-    );
+    // CP-ORG-001: búsqueda con debounce (300 ms) para no disparar una
+    // consulta por tecla, y filtros APLICADOS EN SERVIDOR vía useUsersAdmin
+    // (los usuarios más allá de los primeros «limit» ya no son invisibles:
+    // search/rol/estado/empresa se resuelven en la base, no en el cliente).
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
+        return () => clearTimeout(t);
+    }, [searchTerm]);
+
+    const {
+        data: usersPage,
+        isLoading: isLoadingUsers,
+        isError: isUsersError,
+        error: usersError,
+        refetch: refetchUsers,
+    } = useUsersAdmin(user?.id || '', {
+        search: debouncedSearch || undefined,
+        role: roleFilter,
+        is_active: statusFilter,
+        // 'unassigned' y empresa concreta solo son seleccionables por
+        // SuperAdmin; la API ya acota el alcance de un admin ordinario.
+        unassigned: orgFilter === 'unassigned' && isSuperAdmin,
+        tenant_id: orgFilter !== 'all' && orgFilter !== 'unassigned' ? orgFilter : undefined,
+    }, { enabled: !!user?.id });
+
+    const usersData = useMemo(() => usersPage?.users ?? [], [usersPage]);
+    const usersTotal = usersPage?.total ?? 0;
+    const shownCount = usersData.length;
     const { data: stores = [] } = useStores(
         user?.id || '',
         user?.role === 'admin' || isSuperAdmin,
@@ -69,26 +92,21 @@ export function useUsersView() {
         }, {})
     ).sort((a, b) => a.name.localeCompare(b.name));
 
+    // Filtros de REFUERZO en cliente (idempotentes con los del servidor):
+    // el término de búsqueda se re-aplica como literal fallback defensivo y el
+    // guard RBAC oculta admins de encargados (la API añade su propio alcance).
     const filteredUsers = usersData
-        .filter(u => (u.full_name || '').toLowerCase().includes(searchTerm.toLowerCase())
-            || (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()))
-        // Filtro por empresa: 'all' | 'unassigned' | <tenant_id>
-        .filter(u => {
-            if (orgFilter === 'all') return true;
-            if (orgFilter === 'unassigned') return !u.tenant_id;
-            return u.tenant_id === orgFilter;
-        })
-        .filter(u => roleFilter === 'all' ? true : u.role === roleFilter)
-        .filter(u => statusFilter === 'all' ? true : (statusFilter === 'active' ? u.is_active : !u.is_active))
+        .filter(u => !debouncedSearch || (u.full_name || '').toLowerCase().includes(debouncedSearch.toLowerCase())
+            || (u.email || '').toLowerCase().includes(debouncedSearch.toLowerCase()))
         .filter(u => {
             // RBAC Guard: Only admins can see other admins
-            if (user?.role === 'admin' || isSuperAdmin) return true;
+            if (isManager) return true;
             return u.role !== 'admin';
         });
 
-    const canCreateMoreUsers = user?.role === 'admin' ||
+    const canCreateMoreUsers = user?.role === 'admin' || isSuperAdmin ||
       (typeof user?.maxUsersLimit === 'number' && user.maxUsersLimit > 0
-        ? usersData.length < user.maxUsersLimit
+        ? usersTotal < user.maxUsersLimit
         : true);
 
     const limitReachedMessage = !canCreateMoreUsers && user?.role !== 'admin'
@@ -134,10 +152,18 @@ export function useUsersView() {
               memberships: data.memberships
             });
 
+            // CP-ORG-001: el rol de la cuenta objetivo es el REAL del contrato
+            // (mapProfileToContract), no el que muestra el formulario. Si la
+            // cuenta es de plataforma (superadmin/tenant_admin), el payload NO
+            // incluye «role»: el servidor conserva el rol real y la guardas de
+            // 20261026130000 lo verifican. Antes se enviaba el rol degradado
+            // del formulario (downgrade silencioso de la cuenta de plataforma).
+            const targetIsPlatform = selectedUserContract?.role === 'superadmin' || selectedUserContract?.role === 'tenant_admin';
+
             await updateUserMutation.mutateAsync({
               id: selectedUserContractId,
               full_name: data.fullName,
-              role: data.role,
+              ...(targetIsPlatform ? {} : { role: data.role }),
               is_active: data.isActive,
               plan: data.plan || 'free',
               max_stores_limit: data.role === 'encargado' ? data.maxStoresLimit : 0,
@@ -355,7 +381,14 @@ export function useUsersView() {
         stores,
         orgOptions,
         isLoadingUsers,
-        isAdmin: user?.role === 'admin' || isSuperAdmin,
+        // CP-ORG-001: estados honestos de la consulta — el error es visible y
+        // reintentable; el total real evita el «vacío fingido».
+        isUsersError,
+        usersErrorMessage: usersError instanceof Error ? usersError.message : (usersError ? String(usersError) : null),
+        refetchUsers,
+        usersTotal,
+        shownCount,
+        isAdmin: isManager,
         isSuperAdmin,
         canCreateMoreUsers,
         limitReachedMessage,
