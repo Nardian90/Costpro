@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Home, Package, ShoppingCart, Building, MoreHorizontal, Search, Check, X, Warehouse,
+  Package, ShoppingCart, Building, MoreHorizontal, Search, Check, X, Warehouse,
   DollarSign, ChevronDown, Zap, PenTool, Layers, Swords,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,13 +12,12 @@ import { useAuthStore } from '@/store';
 import { useStoreSwitcher } from '@/hooks/ui/useStoreSwitcher';
 import { useStores } from '@/hooks/api/useStores';
 import { useDebounce } from '@/hooks/ui/useDebounce';
-import { hasRole, isAdminLevel } from '@/lib/roles';
+import { isAdminLevel } from '@/lib/roles';
 import {
-  MOBILE_MAIN_TABS,
-  NAVIGATION_SECTIONS,
-  ACTION_EXTENSIONS,
-  type NavEntry,
-} from '@/config/navigation/navigation-definition';
+  buildMobileSheetGroups,
+  visibleMobileMainTabs,
+} from '@/config/navigation/mobile-sheet';
+import type { MobileMainTab } from '@/config/navigation/navigation-definition';
 import { moduleTabForCostSection } from '@/components/views/terminal/views/cost_sheet/CostSheetModuleNav';
 
 /**
@@ -29,6 +28,12 @@ import { moduleTabForCostSection } from '@/components/views/terminal/views/cost_
  * navigation-definition que el Sidebar y el Command Palette. Ya no existe
  * una tercera lista móvil: los 10 IDs muertos del sheet histórico
  * ("Módulo No Disponible") son imposibles por construcción.
+ *
+ * CP-ORG-003 Fase 1 (D1/D2): el sheet y los tabs fijos usan la doctrina
+ * canónica de mobile-sheet.ts (rol global estricto + guard) — ya NO el
+ * hasRole con membresías/jerarquía que mostraba entradas visibles-denegadas
+ * (p.ej. clerk con membresía admin veía SISTEMA; tenant_admin/costo veían
+ * Vender/Recibir/Inventario/Caja que el guard negaba al tap).
  *
  * Test contractual por destino visible: tap → vista correcta → nunca
  * "Módulo No Disponible" → estado activo correcto → back correcto.
@@ -80,44 +85,15 @@ export function MobileTabBar({ currentView, onViewChange }: MobileTabBarProps) {
   };
 
   // ── Sheet "Más" — derivado de la definición (agrupado por sección) ──
-  const sheetGroups = useMemo(() => {
-    const roleOk = (e: NavEntry) => !e.roles || (user ? e.roles.some(r => hasRole(user, r as any)) : false);
+  // CP-ORG-003 Fase 1: doctrina canónica por ROL GLOBAL (misma que el
+  // sidebar desktop) — ver mobile-sheet.ts. Las membresías de tienda no
+  // amplían la visibilidad del menú (la autorización operativa por tienda
+  // vive en el servidor: has_store_role_as / RLS).
+  const sheetGroups = useMemo(() => buildMobileSheetGroups(user?.role), [user]);
 
-    const mainTabIds = MOBILE_MAIN_TABS.map(t => t.id);
-    const groups: { section: string; items: { id: string; label: string; icon?: any }[] }[] = [];
-
-    // Inicio siempre primero
-    groups.push({ section: 'INICIO', items: [{ id: 'dashboard', label: 'Inicio', icon: Home }] });
-
-    for (const section of NAVIGATION_SECTIONS) {
-      const sectionRolesOk = roleOk(section);
-      if (!sectionRolesOk) continue;
-      const items: { id: string; label: string; icon?: any }[] = [];
-
-      const walk = (entries: NavEntry[]) => {
-        for (const e of entries) {
-          if (e.type === 'item') {
-            if (mainTabIds.includes(e.id)) continue;      // ya son tabs fijos
-            if (e.mobileHide) continue;                    // widget/acción
-            if (!roleOk(e)) continue;
-            items.push({ id: e.id, label: e.label, icon: e.icon });
-          } else if (e.children) {
-            walk(e.children);
-          }
-        }
-      };
-      walk(section.children || []);
-      if (items.length > 0) groups.push({ section: section.label, items });
-    }
-
-    // Extensiones de acción (nueva recepción, calculadora, chat, vitrina)
-    const extItems = ACTION_EXTENSIONS
-      .filter(e => !e.mobileHide && roleOk(e))
-      .map(e => ({ id: e.id, label: e.label, icon: e.icon }));
-    if (extItems.length > 0) groups.push({ section: 'ACCIONES', items: extItems });
-
-    return groups;
-  }, [user]);
+  // CP-ORG-003 Fase 1 (D2): tabs fijos con visibilidad coherente con el
+  // guard — un tab solo se muestra si isViewAllowedForRole permite SU vista.
+  const mainTabs = visibleMobileMainTabs(user?.role);
 
   // ── Tabs del MÓDULO Costo (GATE 1.4R.1 — mandato §25) ──────────────
   // La MISMA arquitectura de segundo nivel que desktop (CostSheetModuleNav):
@@ -181,6 +157,7 @@ export function MobileTabBar({ currentView, onViewChange }: MobileTabBarProps) {
               handleTabClick={handleTabClick}
               moreSheetOpen={moreSheetOpen}
               setMoreSheetOpen={setMoreSheetOpen}
+              tabs={mainTabs}
             />
           )}
           {/* Botón colapsar — a la derecha de los tabs.
@@ -377,13 +354,16 @@ function DefaultTabs({
   handleTabClick,
   moreSheetOpen,
   setMoreSheetOpen,
+  tabs,
 }: {
   currentView: string;
   handleTabClick: (view: ViewType) => void;
   moreSheetOpen: boolean;
   setMoreSheetOpen: (open: boolean) => void;
+  /** CP-ORG-003 Fase 1: tabs ya filtrados por el guard (visibleMobileMainTabs). */
+  tabs: MobileMainTab[];
 }) {
-  const mainTabs = MOBILE_MAIN_TABS;
+  const mainTabs = tabs;
   const activeTab = mainTabs.find(t => t.activeViews.includes(currentView));
 
   return (

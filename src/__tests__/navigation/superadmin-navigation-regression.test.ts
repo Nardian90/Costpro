@@ -164,9 +164,13 @@ describe('CP-ORG-002 — isViewAllowedForRole (guard de acceso directo)', () => 
     expect(isViewAllowedForRole('cost-sheets', 'costo')).toBe(true);
     expect(isViewAllowedForRole('users', 'costo')).toBe(false);
     // tenant_admin: HALLAZGO PRE-EXISTENTE separado — el catálogo desktop
-    // estricto no lo incluye en las listas roles: (móvil/jerarquía sí le
-    // muestra alcance operativo). Fuera del alcance de este fix: no se
-    // altera. Lo que se conserva: NADA de SISTEMA transversal.
+    // estricto no lo incluye en las listas roles:. CP-ORG-003 (auditoría
+    // 2026-10-26, D3) DESMENTIÓ el claim anterior de que «móvil/jerarquía
+    // sí le muestra alcance operativo»: para el tenant_admin puro el sheet
+    // era INICIO+AYUDA (la jerarquía declarada NO se consume en hasRole),
+    // y con membresías ampliaba por el paso 3 — entradas visibles-denegadas.
+    // Corregido en CP-ORG-003 Fase 1 (mobile-sheet.ts: doctrina canónica
+    // estricta). Lo que se conserva: NADA de SISTEMA transversal.
     expect(isViewAllowedForRole('users', 'tenant_admin')).toBe(false);
     expect(isViewAllowedForRole('settings', 'tenant_admin')).toBe(false);
   });
@@ -343,11 +347,14 @@ describe('CP-ORG-002 — Restricciones por módulo conservadas', () => {
   });
 
   it('tenant_admin: sin SISTEMA transversal (restricción FASE 3 conservada)', () => {
-    // HALLAZGO SEPARADO (pre-existente, FUERA del alcance CP-ORG-002): el
+    // HALLAZGO SEPARADO (pre-existente, documentado por CP-ORG-003): el
     // filtro estricto del catálogo no incluye 'tenant_admin' en las listas
-    // roles: (móvil, vía hasRole/jerarquía, sí muestra el alcance operativo).
-    // No se altera ese comportamiento en esta misión: el alcance de este fix
-    // es la navegación de la cuenta de plataforma ('superadmin').
+    // roles:. El claim original de que «móvil, vía hasRole/jerarquía, sí
+    // muestra el alcance operativo» quedó DESMENTIDO por la auditoría
+    // CP-ORG-003 (D3): el sheet del tenant_admin puro era INICIO+AYUDA, y
+    // con membresías el paso 3 de hasRole introducía entradas
+    // visibles-denegadas. CP-ORG-003 Fase 1 alineó el sheet y los tabs
+    // móviles a esta MISMA doctrina estricta (mobile-sheet.ts).
     expect(rootIdsFor('tenant_admin')).not.toContain('sistema');
     expect(rootIdsFor('tenant_admin')).not.toContain('desarrollo');
   });
