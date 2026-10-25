@@ -1565,6 +1565,198 @@ Detects exchange rate data from Banco Central de Cuba.
     },
   };
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // MISIÓN ORGANIZACIONES (2026-10-26) — administración de empresas (tenants).
+  // Alcance por rol: superadmin = todas (plataforma); admin = la suya.
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // 31. /api/organizations
+  paths['/api/organizations'] = {
+    get: {
+      tags: ['System'],
+      operationId: 'listOrganizations',
+      summary: 'Listar organizaciones (empresas) con recuentos reales',
+      description:
+        'Lista las empresas que agrupan tiendas y usuarios. SuperAdmin: todas (con cifra global de usuarios sin asignar). Admin ordinario: solo la suya. Recuentos de tiendas/usuarios por empresa provienen de consultas reales.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        { name: 'search', in: 'query', schema: { type: 'string', maxLength: 100 }, description: 'Búsqueda por nombre (ilike)' },
+        { name: 'status', in: 'query', schema: { type: 'string', enum: ['active', 'inactive'] } },
+        { name: 'has_stores', in: 'query', schema: { type: 'string', enum: ['true', 'false'] }, description: 'Filtro por presencia de tiendas' },
+        { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+        { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 } },
+      ],
+      responses: {
+        '200': {
+          description: 'Listado con summary de recuentos reales',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string', format: 'uuid' },
+                        name: { type: 'string' },
+                        owner_name: { type: 'string', nullable: true },
+                        is_active: { type: 'boolean' },
+                        stores_total: { type: 'integer' },
+                        stores_active: { type: 'integer' },
+                        users: { type: 'integer' },
+                        created_at: { type: 'string', format: 'date-time' },
+                      },
+                    },
+                  },
+                  pagination: { type: 'object' },
+                  summary: {
+                    type: 'object',
+                    properties: {
+                      organizations: { type: 'integer' },
+                      active_organizations: { type: 'integer' },
+                      stores: { type: 'integer' },
+                      assigned_users: { type: 'integer' },
+                      unassigned_users: { type: 'integer', description: 'Solo SuperAdmin (cifra global)' },
+                      scope: { type: 'string', enum: ['all', 'own'] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': errorResponse401,
+        '403': errorResponse403,
+        '429': errorResponse429,
+        '500': errorResponse500,
+      },
+    },
+    post: {
+      tags: ['System'],
+      operationId: 'createOrganization',
+      summary: 'Crear organización (solo SuperAdmin)',
+      description:
+        'Crear empresas es una acción de plataforma: solo el SuperAdmin. Nombre normalizado; duplicado exacto → 409. Requiere CSRF (Origin).',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['name'],
+              properties: {
+                name: { type: 'string', minLength: 1, maxLength: 200 },
+                is_active: { type: 'boolean', default: true },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '201': { description: 'Organización creada' },
+        '400': errorResponse400,
+        '401': errorResponse401,
+        '403': errorResponse403,
+        '409': { description: 'Ya existe una organización con ese nombre' },
+        '429': errorResponse429,
+        '500': errorResponse500,
+      },
+    },
+  };
+
+  // 32. /api/organizations/[id]
+  paths['/api/organizations/{id}'] = {
+    get: {
+      tags: ['System'],
+      operationId: 'getOrganization',
+      summary: 'Detalle de organización (identidad, tiendas, usuarios)',
+      description: 'SuperAdmin: cualquiera. Admin: la suya (404 para ajena, sin revelar existencia).',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': { description: 'Detalle con stores[] y users[] reales' },
+        '401': errorResponse401,
+        '403': errorResponse403,
+        '404': errorResponse404,
+        '429': errorResponse429,
+        '500': errorResponse500,
+      },
+    },
+    patch: {
+      tags: ['System'],
+      operationId: 'updateOrganization',
+      summary: 'Editar organización (nombre / estado)',
+      description: 'SuperAdmin: cualquiera. Admin: la suya. Duplicado exacto al renombrar → 409. Requiere CSRF.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': { description: 'Actualizada' },
+        '400': errorResponse400,
+        '401': errorResponse401,
+        '403': errorResponse403,
+        '404': errorResponse404,
+        '409': { description: 'Nombre duplicado' },
+        '429': errorResponse429,
+        '500': errorResponse500,
+      },
+    },
+    delete: {
+      tags: ['System'],
+      operationId: 'deleteOrganization',
+      summary: 'Eliminar organización (solo SuperAdmin, sin dependencias)',
+      description:
+        'Bloqueada con 409 + resumen real de dependencias (tiendas/usuarios) cuando existen. Nunca cascada. Las eliminaciones masivas de producción están delimitadas a la fase de limpieza autorizada.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': { description: 'Eliminada (estaba vacía)' },
+        '401': errorResponse401,
+        '403': errorResponse403,
+        '404': errorResponse404,
+        '409': { description: 'Tiene dependencias (stores/users)' },
+        '429': errorResponse429,
+        '500': errorResponse500,
+      },
+    },
+  };
+
+  // 33. POST /api/users/{id}/assign-organization
+  paths['/api/users/{id}/assign-organization'] = {
+    post: {
+      tags: ['Users'],
+      operationId: 'assignUserOrganization',
+      summary: 'Asignar la empresa de un usuario (regla de pertenencia única)',
+      description:
+        'RPC atómica assign_user_organization: valida server-side (actor, org activa, no-superadmin), retira en la misma transacción las membresías de tiendas de otra empresa y audita en user_audit_log. Si hay membresías que retirar, la primera llamada SIN confirmación devuelve requires_confirmation con el detalle; no aplica nada hasta confirmar. Admin ordinario: solo usuarios de su empresa → su empresa. SuperAdmin: cualquiera.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                organization_id: { type: 'string', format: 'uuid', nullable: true, description: 'null = dejar sin asignar (solo SuperAdmin)' },
+                confirm_removals: { type: 'boolean', default: false },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Aplicada (applied=true) o pendiente de confirmación (requires_confirmation=true)',
+        },
+        '400': errorResponse400,
+        '401': errorResponse401,
+        '403': errorResponse403,
+        '409': { description: 'Rechazo de regla de negocio (org inactiva, actor sin permiso…)' },
+        '429': errorResponse429,
+        '500': errorResponse500,
+      },
+    },
+  };
+
   return spec;
 }
 

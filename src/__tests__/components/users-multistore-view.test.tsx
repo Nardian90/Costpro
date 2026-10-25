@@ -19,8 +19,18 @@ import React from 'react';
 const mockHookState = {
   searchTerm: '',
   setSearchTerm: vi.fn(),
+  // MISIÓN ORGANIZACIONES (2026-10-26): nuevos filtros/estado del hook.
+  orgFilter: 'all',
+  setOrgFilter: vi.fn(),
+  roleFilter: 'all',
+  setRoleFilter: vi.fn(),
+  statusFilter: 'all',
+  setStatusFilter: vi.fn(),
   userFormMode: null,
   selectedUserContract: null,
+  assignTarget: null,
+  setAssignTarget: vi.fn(),
+  orgOptions: [] as Array<{ id: string; name: string }>,
   users: [] as any[],
   stores: [] as any[],
   handleEditUser: vi.fn(),
@@ -38,6 +48,7 @@ const mockHookState = {
   isSubmittingUser: false,
   allowedRoles: ['admin', 'encargado', 'clerk'],
   isAdmin: true,
+  isSuperAdmin: false,
   canCreateMoreUsers: true,
   limitReachedMessage: undefined,
   user: { id: 'admin-row-1', role: 'admin' } as any,
@@ -45,6 +56,14 @@ const mockHookState = {
 
 vi.mock('@/components/views/terminal/views/users/useUsersView', () => ({
   useUsersView: () => mockHookState,
+}));
+
+// MISIÓN ORGANIZACIONES (2026-10-26): el modal de asignación de empresa usa
+// React Query; este test no monta provider → se mockea la frontera de datos.
+vi.mock('@/hooks/api/useOrganizations', () => ({
+  useOrganizations: () => ({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn(), isRefetching: false }),
+  useOrganizationDetail: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
+  useAssignUserOrganization: () => ({ mutateAsync: vi.fn(), isPending: false, reset: vi.fn() }),
 }));
 
 vi.mock('@/hooks/api/useStores', () => ({

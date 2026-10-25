@@ -16,12 +16,23 @@ import { supabase } from '@/lib/supabaseClient';
 export function useUsersView() {
     const { user } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState('');
+    // MISIÓN ORGANIZACIONES (2026-10-26): filtros de empresa/rol/estado
+    // (misión FASE 2 §2: búsqueda, empresa — «Todas» solo SuperAdmin —,
+    // «Sin asignar», rol y estado con conteos coherentes).
+    const [orgFilter, setOrgFilter] = useState<string>('all');
+    const [roleFilter, setRoleFilter] = useState<string>('all');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
     // F1-T02: queryClient para invalidar cache tras toggle/delete (en lugar de window.location.reload)
     const queryClient = useQueryClient();
 
     // Modal/Form State
     const [userFormMode, setUserFormMode] = useState<'create' | 'edit' | null>(null);
     const [selectedUserContract, setSelectedUserContract] = useState<UserContract | null>(null);
+
+    // MISIÓN ORGANIZACIONES: objetivo del modal de asignación de empresa.
+    const [assignTarget, setAssignTarget] = useState<Profile | null>(null);
+
+    const isSuperAdmin = user?.role === 'superadmin';
 
     // REMEDIACIÓN (fix/users-multistore-admin-password): modal de seteo directo
     // de contraseña por Super Admin. Solo se guarda el usuario objetivo
@@ -36,19 +47,42 @@ export function useUsersView() {
         user?.id || '',
         user?.role === 'admin',
         isEncargado || false,
-        user?.activeStoreId
+        user?.activeStoreId,
+        isSuperAdmin || false
     );
     const { data: stores = [] } = useStores(
         user?.id || '',
-        user?.role === 'admin',
+        user?.role === 'admin' || isSuperAdmin,
         isEncargado || false
     );
 
+    // Catálogo de empresas para el filtro, derivado de los datos cargados
+    // (nombres reales, sin tenant_id crudo en pantalla). La API ya acota el
+    // alcance (superadmin = todas, admin = la suya). «Todas las empresas» y
+    // «Sin asignar» solo se ofrecen al SuperAdmin.
+    const orgOptions: Array<{ id: string; name: string }> = Object.values(
+        usersData.reduce<Record<string, { id: string; name: string }>>((acc, u) => {
+            if (u.tenant_id && u.tenant_name && !acc[u.tenant_id]) {
+                acc[u.tenant_id] = { id: u.tenant_id, name: u.tenant_name };
+            }
+            return acc;
+        }, {})
+    ).sort((a, b) => a.name.localeCompare(b.name));
+
     const filteredUsers = usersData
-        .filter(u => (u.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()))
+        .filter(u => (u.full_name || '').toLowerCase().includes(searchTerm.toLowerCase())
+            || (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()))
+        // Filtro por empresa: 'all' | 'unassigned' | <tenant_id>
+        .filter(u => {
+            if (orgFilter === 'all') return true;
+            if (orgFilter === 'unassigned') return !u.tenant_id;
+            return u.tenant_id === orgFilter;
+        })
+        .filter(u => roleFilter === 'all' ? true : u.role === roleFilter)
+        .filter(u => statusFilter === 'all' ? true : (statusFilter === 'active' ? u.is_active : !u.is_active))
         .filter(u => {
             // RBAC Guard: Only admins can see other admins
-            if (user?.role === 'admin') return true;
+            if (user?.role === 'admin' || isSuperAdmin) return true;
             return u.role !== 'admin';
         });
 
@@ -304,15 +338,25 @@ export function useUsersView() {
         // State
         searchTerm,
         setSearchTerm,
+        orgFilter,
+        setOrgFilter,
+        roleFilter,
+        setRoleFilter,
+        statusFilter,
+        setStatusFilter,
         userFormMode,
         selectedUserContract,
+        assignTarget,
+        setAssignTarget,
 
         // Data
         user,
         users: filteredUsers,
         stores,
+        orgOptions,
         isLoadingUsers,
-        isAdmin: user?.role === 'admin',
+        isAdmin: user?.role === 'admin' || isSuperAdmin,
+        isSuperAdmin,
         canCreateMoreUsers,
         limitReachedMessage,
 

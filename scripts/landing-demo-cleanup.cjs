@@ -25,6 +25,11 @@ const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 const CTX = path.join(__dirname, '..', '.e2e-run-contexts', 'landing-demo-context.json');
 
+// MISIÓN ORGANIZACIONES (FASE 4) — CP-INFRA-011: este script BORRA datos
+// (renombra y hard-delete). El guard de aislamiento es OBLIGATORIO antes de
+// cualquier operación: producción se rechaza por identidad, sin conectar.
+const { assertIsolatedDb } = require(path.join(__dirname, '..', 'e2e', 'fixtures', 'assert-isolated-db.cjs'));
+
 function h() {
   return { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' };
 }
@@ -37,6 +42,17 @@ async function rpc(fn, params) {
 }
 
 (async () => {
+  // MISIÓN ORGANIZACIONES (FASE 4): validar destino aislado ANTES de leer o
+  // borrar nada. Falla cerrado — producción jamás es destino de limpieza demo.
+  await assertIsolatedDb({
+    env: {
+      ...process.env,
+      NEXT_PUBLIC_SUPABASE_URL: SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: SERVICE_KEY,
+    },
+  });
+  console.log('✓ destino validado por el guard de aislamiento (CP-INFRA-011)');
+
   if (!fs.existsSync(CTX)) {
     console.log('• no hay contexto demo (ya limpiado)');
     return;

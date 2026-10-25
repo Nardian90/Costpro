@@ -51,6 +51,18 @@ const userFormSchema = z.object({
 
 export type UserFormData = z.output<typeof userFormSchema>;
 
+/**
+ * Misión Organizaciones: los roles de plataforma (superadmin/tenant_admin) NO son
+ * editables desde este formulario — se gestionan por mecanismos administrativos
+ * firmados (migración/RPC), nunca por payload del cliente.
+ */
+const FORM_EDITABLE_ROLES = ['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo'] as const;
+export type FormEditableRole = (typeof FORM_EDITABLE_ROLES)[number];
+
+function toFormRole(role: UserRole): FormEditableRole {
+  return (FORM_EDITABLE_ROLES as readonly string[]).includes(role) ? (role as FormEditableRole) : 'admin';
+}
+
 interface UserFormProps {
   mode: 'create' | 'edit';
   initialData?: UserContract | null;
@@ -84,7 +96,7 @@ export default function UserForm({
     defaultValues: initialData ? {
       fullName: initialData.fullName,
       email: initialData.email,
-      role: initialData.role,
+      role: toFormRole(initialData.role),
       isActive: initialData.isActive,
       plan: (initialData as any).plan || 'free',
       maxStoresLimit: initialData.maxStoresLimit ?? 0,
@@ -92,7 +104,7 @@ export default function UserForm({
       memberships: initialData.memberships?.map(m => ({
         // Extracción resiliente de store_id (maneja casos donde m.store_id puede ser null pero m.store.id existe)
         store_id: typeof m.store_id === 'string' ? m.store_id : (m as any).store?.id || '',
-        role: m.role,
+        role: toFormRole(m.role),
         status: m.status || 'active'
       })) || [],
     } : {

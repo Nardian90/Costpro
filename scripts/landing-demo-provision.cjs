@@ -36,6 +36,25 @@ const ANON_KEY = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const OUT = path.join(__dirname, '..', '.e2e-run-contexts', 'landing-demo-context.json');
 
+// MISIÓN ORGANIZACIONES (FASE 4) — CP-INFRA-011: este script fue el ORIGEN de
+// la contaminación de producción (creó landing.demo@costpro-e2e.com + tenant
+// "Grupo Demo CostPro" + 3 tiendas demo EN PRODUCCIÓN porque no validaba el
+// destino). El guard de aislamiento es OBLIGATORIO antes de cualquier
+// aprovisionamiento: rechaza producción por identidad, sin conectar, y exige
+// destino E2E certificado (E2E_SUPABASE_URL + E2E_TARGET_KIND + ref exacta +
+// centinela). No puede depender de que el operador recuerde las variables.
+const { assertIsolatedDb } = require(path.join(__dirname, '..', 'e2e', 'fixtures', 'assert-isolated-db.cjs'));
+
+async function assertIsolatedLandingDb() {
+  await assertIsolatedDb({
+    env: {
+      ...process.env,
+      NEXT_PUBLIC_SUPABASE_URL: SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: SERVICE_KEY,
+    },
+  });
+}
+
 const DEMO_EMAIL = 'landing.demo@costpro-e2e.com';
 const DEMO_PASS = 'DemoLanding2026!';
 const COMPANY = 'Grupo Demo CostPro';
@@ -89,7 +108,12 @@ function svc(method, apiPath, body) {
 }
 
 async function provision() {
-  // 0) health
+  // 0) MISIÓN ORGANIZACIONES (FASE 4): validar destino aislado ANTES de
+  //    cualquier escritura. Producción → rechazo inmediato sin conectar.
+  await assertIsolatedLandingDb();
+  console.log('✓ destino validado por el guard de aislamiento (CP-INFRA-011)');
+
+  // 0b) health
   const health = await fetch(`${BASE_URL}/api/health`).catch(() => null);
   if (!health || !health.ok) throw new Error(`Servidor ${BASE_URL} no responde`);
   console.log('✓ servidor vivo');

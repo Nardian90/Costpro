@@ -67,6 +67,7 @@ export const VIEW_TIPS: Record<string, string> = {
 
   // Administración
   'users': 'Asigna memberships por tienda con roles granulares',
+  'organizations': 'Administra las empresas y a qué tienda y usuario agrupan',
   'roles': 'Define permisos por rol y módulo',
   'health': 'Monitorea latencia de API y conexión a BD',
   'usage-monitoring': 'Alertas al 60/80/90% del límite del plan',

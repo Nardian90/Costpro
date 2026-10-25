@@ -104,8 +104,15 @@ describe('COSTPRO 4 — creación de usuarios: una operación, un mensaje', () =
     useAuthStore.setState({ user: ADMIN_USER as any });
   });
 
+  // MISIÓN ORGANIZACIONES (2026-10-26): useUsers (camino admin) ahora también
+  // consume GET /api/users?limit=100. El mock debe ser consciente de ruta y
+  // devolver Response NUEVOS por llamada (un body no se puede leer dos veces).
+  const listResponse = () => new Response(JSON.stringify({ data: [], pagination: { total: 0 } }), { status: 200 });
+  const routeAware = (intended: () => Response) =>
+    async (url: any) => (String(url).includes('/api/users?limit') ? listResponse() : intended());
+
   it('A. creación correcta → UN solo toast verde y CERO rojos', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: true, user_id: 'u1' }), { status: 200 }));
+    fetchMock.mockImplementation(routeAware(() => new Response(JSON.stringify({ success: true, user_id: 'u1' }), { status: 200 })));
     const getApi = renderHarness();
     await waitFor(() => expect(getApi()).toBeTruthy());
     const ok = await getApi().handleUserFormSubmit('create', CREATE_DATA as any);
@@ -118,9 +125,9 @@ describe('COSTPRO 4 — creación de usuarios: una operación, un mensaje', () =
   });
 
   it('B. duplicado (409) → UN solo toast rojo con la causa real y CERO verdes; el formulario permanece', async () => {
-    fetchMock.mockResolvedValue(new Response(
+    fetchMock.mockImplementation(routeAware(() => new Response(
       JSON.stringify({ error: 'Ya existe un usuario con ese correo electrónico' }), { status: 409 }
-    ));
+    )));
     const getApi = renderHarness();
     await waitFor(() => expect(getApi()).toBeTruthy());
     const ok = await getApi().handleUserFormSubmit('create', CREATE_DATA as any);
@@ -150,7 +157,10 @@ describe('COSTPRO 4 — creación de usuarios: una operación, un mensaje', () =
   });
 
   it('D. fallo de red → mensaje de resultado incierto (no afirma ni éxito ni fracaso)', async () => {
-    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    fetchMock.mockImplementation(async (url: any) => {
+      if (String(url).includes('/api/users?limit')) return listResponse();
+      throw new TypeError('Failed to fetch');
+    });
     const getApi = renderHarness();
     await waitFor(() => expect(getApi()).toBeTruthy());
     const ok = await getApi().handleUserFormSubmit('create', CREATE_DATA as any);

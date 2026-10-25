@@ -36,6 +36,10 @@ import { UserRole, UserStoreMembership } from '@/types';
 // ─────────────────────────────────────────────────────────────────────
 
 const ROLES_HIERARCHY: Record<UserRole, UserRole[]> = {
+  // Misión organizaciones (2026-10-26): 'superadmin' es el rol de PLATAFORMA
+  // global (cuenta designada admin@demo.com). Hereda TODA la capacidad
+  // administrativa y además ve todos los tenants (is_superadmin() en DB).
+  superadmin: ['superadmin', 'admin', 'manager', 'encargado', 'clerk', 'warehouse', 'usuario', 'costo', 'tenant_admin'],
   admin: ['admin', 'manager', 'encargado', 'clerk', 'warehouse', 'usuario', 'costo'],
   manager: ['manager', 'encargado', 'clerk', 'warehouse', 'usuario', 'costo'],
   encargado: ['encargado', 'clerk', 'warehouse', 'usuario', 'costo'],
@@ -43,6 +47,21 @@ const ROLES_HIERARCHY: Record<UserRole, UserRole[]> = {
   warehouse: ['warehouse'],
   usuario: ['usuario'],
   costo: ['costo'],
+  // tenant_admin: admin auto-provisionado de SU tenant (landing). Alcance
+  // operativo equivalente a encargado; el acceso transversal NO le
+  // corresponde (misión FASE 3: administración solo de su empresa).
+  tenant_admin: ['tenant_admin', 'manager', 'encargado', 'clerk', 'warehouse', 'usuario', 'costo'],
+};
+
+/**
+ * Misión organizaciones (2026-10-26): ¿es la cuenta de plataforma global?
+ * Espejo EXACTO de public.is_superadmin() en la DB — la única fuente
+ * canónica del rol es profiles.role validada server-side; NUNCA una cadena
+ * enviada por el cliente (FASE 3: enviar { company: "SuperAdmin" } no
+ * concede nada).
+ */
+export const isSuperAdmin = (user: { role?: UserRole | null } | null | undefined): boolean => {
+  return user?.role === 'superadmin';
 };
 
 export const getAllowedRoles = (role: UserRole | undefined): UserRole[] => {
@@ -65,8 +84,13 @@ export const hasRole = (user: { role: UserRole; roles?: UserRole[]; memberships?
   // 3. Memberships check
   if (user.memberships?.some(m => m.role === targetRole && m.status === 'active')) return true;
 
-  // 4. Hierarchy check (if Admin, they have all roles)
-  if (user.role === 'admin') return true;
+  // 4. Hierarchy check. Misión organizaciones (2026-10-26): se consulta la
+  //    JERARQUÍA real en lugar de un `return true` incondicional — 'superadmin'
+  //    está POR ENCIMA de 'admin', por lo que un admin NO satisface chequeos
+  //    de superadmin (antes cualquier targetRole pasaba para admin).
+  if (user.role === 'admin' || user.role === 'superadmin') {
+    return (ROLES_HIERARCHY[user.role] || []).includes(targetRole);
+  }
 
   // 5. Encargado/Manager mapping (similar to backend)
   if (targetRole === 'manager' && (user.role === 'encargado' || user.memberships?.some(m => m.role === 'encargado' && m.status === 'active'))) return true;
@@ -96,7 +120,7 @@ export type StoreAccessUser = { role: UserRole; memberships?: UserStoreMembershi
  */
 export const canManageStore = (user: StoreAccessUser | null, storeId: string): boolean => {
   if (!user) return false;
-  if (user.role === 'admin') return true;
+  if (user.role === 'admin' || user.role === 'superadmin') return true;
 
   return user.memberships?.some(m =>
     m.store_id === storeId &&
@@ -131,7 +155,7 @@ const ADMIN_REVERSE_ROLES = ['admin', 'manager', 'encargado'];
  */
 export const canUndoSaleInStore = (user: StoreAccessUser | null, storeId: string): boolean => {
   if (!user || !storeId) return false;
-  if (user.role === 'admin') return true;
+  if (user.role === 'admin' || user.role === 'superadmin') return true;
   return user.memberships?.some(m =>
     m.store_id === storeId &&
     POS_UNDO_ROLES.includes(m.role) &&
@@ -177,7 +201,7 @@ export const canReverseDocumentInStore = (
   docType: keyof typeof DOCUMENT_REVERSE_ROLES | string,
 ): boolean => {
   if (!user || !storeId) return false;
-  if (user.role === 'admin') return true;
+  if (user.role === 'admin' || user.role === 'superadmin') return true;
   const roles = DOCUMENT_REVERSE_ROLES[docType];
   if (!roles) return false;
   return user.memberships?.some(m =>
@@ -189,7 +213,7 @@ export const canReverseDocumentInStore = (
 
 export const canAdminReverseSaleInStore = (user: StoreAccessUser | null, storeId: string): boolean => {
   if (!user || !storeId) return false;
-  if (user.role === 'admin') return true;
+  if (user.role === 'admin' || user.role === 'superadmin') return true;
   return user.memberships?.some(m =>
     m.store_id === storeId &&
     ADMIN_REVERSE_ROLES.includes(m.role) &&
@@ -209,7 +233,7 @@ export const canAdminReverseSaleInStore = (user: StoreAccessUser | null, storeId
  */
 export const canViewStore = (user: StoreAccessUser | null, storeId: string): boolean => {
   if (!user || !storeId) return false;
-  if (user.role === 'admin') return true;
+  if (user.role === 'admin' || user.role === 'superadmin') return true;
   return user.memberships?.some(m =>
     m.store_id === storeId &&
     m.status === 'active'

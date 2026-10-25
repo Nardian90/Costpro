@@ -127,6 +127,12 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["create_user", "edit_user", "reset_password"]
   },
   {
+    id: "organizations",
+    route: "/?view=organizations",
+    description: "Administración de las empresas (organizaciones) que agrupan tiendas y usuarios.",
+    actions: ["create_organization", "edit_organization", "assign_user_organization"]
+  },
+  {
     id: "stores",
     route: "/?view=stores",
     description: "Administración de tiendas y almacenes de la empresa.",

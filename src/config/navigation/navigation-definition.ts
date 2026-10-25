@@ -55,7 +55,7 @@ import {
   Home, Zap, ShoppingCart, Package, Warehouse, ArrowLeftRight, FileText, Calculator,
   Factory, UserCog, LayoutGrid, MessageCircle, Send, TrendingUp, Table2, DollarSign, Truck,
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
-  Scale, HelpCircle, Book, FlaskConical, Layers, Landmark,
+  Scale, HelpCircle, Book, FlaskConical, Layers, Landmark, Building2,
   Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone, Printer,
   ClipboardCheck,
   ReceiptText, Coins,
@@ -637,6 +637,19 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         type: 'item',
         navClass: 'admin',
         keywords: ['ajustes', 'configuración', 'preferencias', 'tema', 'impuestos', 'plan', 'perfil'],
+      },
+      {
+        // MISIÓN ORGANIZACIONES (2026-10-26): administración de las empresas
+        // que agrupan tiendas. Se ubica ANTES de Usuarios: primero se
+        // administra la estructura de empresas, después las personas que
+        // pertenecen a ellas.
+        id: 'organizations',
+        label: 'Organizaciones',
+        description: 'Gestiona las empresas (organizaciones) que agrupan tiendas y usuarios: creación, estado, tiendas y asignación de usuarios por empresa.',
+        icon: Building2,
+        type: 'item',
+        navClass: 'admin',
+        keywords: ['organizaciones', 'empresas', 'tenants', 'grupos', 'compañías'],
       },
       {
         id: 'users',
@@ -1445,6 +1458,7 @@ export const VALID_VIEWS: Set<string> = new Set([
   'history', 'inventory_adjustments', 'vales_salida', 'physical_inventory', 'audit', 'cash', 'users', 'roles', 'stores',
   'storefront-config', 'settings', 'help', 'wiki', 'news', 'rss_management',
   'management-hub', 'ipv', 'legal', 'health',
+  'organizations',
   // CP-INFRA-002 (2026-10-23): 'pick3-intelligence' y 'wallet' retirados del producto activo.
   // CP-INFRA-002b (2026-10-23): 'academy' retirado del producto activo junto con el módulo Academia.
   'labels', 'sales_catalog', 'ofertas', 'purchase-orders', 'sales-hub',
