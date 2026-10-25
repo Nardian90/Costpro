@@ -41,14 +41,25 @@ import { BaseModal } from '@/components/ui/BaseModal';
 /**
  * IC-2: Inteligencia Cambiaria — AUDIT-2/3/5: Conectado a datos reales de Supabase.
  *
- * MEJORAS ACCESIBILIDAD (adultos mayores / dark mode):
- * - Tipografía ampliada: ejes 14px, tooltip 14px, leyenda 14px (antes 11-12px)
- * - Grid opacity 0.5 (antes 0.3) — visible en dark mode
- * - Stroke width 3 (antes 2) — líneas más gruesas
- * - Colores explícitos high-contrast: oficial #3b82f6 (azul brillante), informal #f97316 (naranja brillante)
- *   Antes usaban hsl(var(--primary)) y hsl(var(--warning)) que en dark mode se confundían
- * - Cards con bg-X/15 y border-X/40 (antes bg-X/5 y border-X/20) — visibles en dark mode
- * - Botón "Actualizar BD" para captura manual de 7 días desde BCC
+ * IC-DIVIZA (2026-10-26): fuente informal activa = Diviza (cubadivisas.com);
+ * solucionescuba.com está caído (última tasa informal previa: 2026-07-28, se
+ * conserva como serie histórica source='elToque'). El informal vigente se
+ * resuelve por frescura entre ambos proveedores — sin duplicar valores.
+ *
+ * SISTEMA VISUAL (rediseño 2026-10-26): una superficie neutra (bg-card +
+ * border) para TODAS las tarjetas; UN solo acento (primary) para selección y
+ * énfasis; semánticos moderados: success (favorable), destructive (adverso),
+ * warning (advertencia/estimación/tasa antigua). Series de gráficos con
+ * asignación categórica consistente entre tabs (oficial azul, informal
+ * naranja). Sin gradientes arcoíris ni acentos morados.
+ *
+ * MEJORAS ACCESIBILIDAD (WCAG 2.2 AA):
+ * - Tipografía ampliada: ejes 14px, tooltip 14px, leyenda 14px
+ * - Grid opacity 0.5 — visible en dark mode
+ * - Stroke width 3 — líneas más gruesas
+ * - Foco visible con outline de tokens del tema; navegación por teclado
+ * - Estados con texto + color (nunca solo color); aria-selected/aria-pressed
+ * - Áreas táctiles ≥ 44×44px en controles principales
  */
 
 interface ExchangeRate {
@@ -63,10 +74,11 @@ interface ExchangeRate {
   variation_weekly: number;
   variation_monthly: number;
   variation_yearly: number;
-  // F-01c: método de captura. 'real' = scraping eltoque.com (cuando funcione) o
-  // API directa BCC. Las tasas informales vienen de solucionescuba.com (scraper real).
-  //
-  capture_method?: 'real' | 'estimated';
+  // Método de captura. 'real' = cotización válida y verificable del proveedor
+  // que se registra (Diviza para el informal vigente; API BCC para el oficial).
+  // 'estimated' = histórico calculado (BCC×1.15) — nunca como 'real'.
+  // 'carry_forward' = virtual: último valor real arrastrado (solo lectura API).
+  capture_method?: 'real' | 'estimated' | 'carry_forward';
 }
 
 interface HistoryPoint {
@@ -86,12 +98,33 @@ const ALL_TABS = [
   { id: 'configuracion', label: 'Configuración', icon: RefreshCw },
 ];
 
-// Fallback si Supabase no tiene datos aún
+// Fallback si Supabase no tiene datos aún (solo visual, marcado como estimado)
 const FALLBACK_OFFICIAL = { USD: 120, EUR: 128, MLC: 120 };
-const FALLBACK_INFORMAL = { USD: 650, EUR: 680, MLC: 650 };
 
-// Nota: Los colores del gráfico ahora viven en HistoryTab.tsx y están coordinados
-// con el primer tab: BCC verde (#22c55e) y elToque naranja (#f97316).
+/**
+ * Proveedores informales registrados en exchange_rates.source.
+ * Diviza = fuente activa (cubadivisas.com, desde 2026-10-26).
+ * elToque = serie histórica (2025-12-25 → 2026-07-28, solucionescuba.com era).
+ * El informal vigente = el registro MÁS FRESCO entre ambos (rate_date DESC,
+ * captured_at DESC); por fecha, si ambos existen, gana el de captured_at más
+ * reciente — sin duplicar valores ni mezclar procedencias.
+ */
+const INFORMAL_SOURCES = ['Diviza', 'elToque'] as const;
+
+/** ¿Es una fila de tasa informal (cualquier proveedor)? */
+const isInformalSource = (s: string): boolean =>
+  (INFORMAL_SOURCES as readonly string[]).includes(s);
+
+/**
+ * De varias filas informales del MISMO día, devuelve la prioritaria:
+ * la de captured_at más reciente (procedencia más fresca).
+ */
+const pickInformalRow = (rows: ExchangeRate[]): ExchangeRate | undefined =>
+  [...rows].sort((a, b) => (b.captured_at || '').localeCompare(a.captured_at || ''))[0];
+
+// Nota: Los colores del gráfico viven en HistoryTab.tsx con asignación
+// categórica consistente entre tabs: BCC azul (#3b82f6) e informal naranja
+// (#ea580c) — identidades de serie, no estados semánticos.
 
 export function ExchangeIntelligenceView() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -210,21 +243,24 @@ export function ExchangeIntelligenceView() {
       if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
       return (b.captured_at || '').localeCompare(a.captured_at || '');
     });
+  // IC-DIVIZA: informal = el registro MÁS FRESCO entre Diviza (activa) y
+  // elToque (histórica) — misma regla de frescura que la API y el RPC.
   const usdInformalRates = rates
-    .filter(r => r.source === 'elToque' && r.currency === 'USD')
+    .filter(r => isInformalSource(r.source) && r.currency === 'USD')
     .sort((a, b) => {
       if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
       return (b.captured_at || '').localeCompare(a.captured_at || '');
     });
-  // El primero del array ordenado DESC es el más reciente (hoy)
+  // El primero del array ordenado DESC es el más reciente (hoy).
+  // Sin registro informal NO se inventa valor: null → estado "sin dato fiable".
   const usdOfficial = usdOfficialRates[0]?.rate ?? FALLBACK_OFFICIAL.USD;
-  const usdInformal = usdInformalRates[0]?.rate ?? FALLBACK_INFORMAL.USD;
-  // F-01c: detecta el método de captura del último registro informal para
-  // mostrar badge 'Real' vs 'Real' en el Dashboard. Si la columna no
-  // existe aún en BD (NULL) o no hay registros, cae a 'estimated' para no
-  // mentir al usuario — el fallback siempre es la carry-forward del último valor real.
+  const usdInformal = usdInformalRates[0]?.rate ?? null;
+  // IC-DIVIZA: método de captura + proveedor real del último registro informal
+  // para el badge honesto ("Real · Diviza" / "Real · elToque" / "Estimada").
+  // NULL/ausente → 'estimated' para no mentir al usuario.
   const lastInformalRecord = usdInformalRates[0];
   const informalCaptureMethod = lastInformalRecord?.capture_method ?? 'estimated';
+  const informalProvider = lastInformalRecord?.source ?? null;
 
   // CARRY-FORWARD: detectar si la tasa informal más reciente NO es de hoy.
   // Si es de un día anterior, la UI debe avisar "usando último valor de YYYY-MM-DD".
@@ -236,16 +272,22 @@ export function ExchangeIntelligenceView() {
   const lastOfficialRecord = usdOfficialRates[0];
   const officialRateDate = lastOfficialRecord?.rate_date ?? '';
   const officialIsCarryForward = officialRateDate !== '' && officialRateDate !== todayStr;
-  const diff = usdInformal - usdOfficial;
-  const diffPct = usdOfficial > 0 ? ((diff / usdOfficial) * 100).toFixed(0) : '0';
+  const officialCaptureMethod = lastOfficialRecord?.capture_method ?? 'estimated';
+  const diff = usdInformal != null && usdOfficial > 0 ? usdInformal - usdOfficial : 0;
+  const diffPct = usdInformal != null && usdOfficial > 0 ? ((diff / usdOfficial) * 100).toFixed(0) : '—';
 
   // Construir datos históricos para gráficos
+  // IC-DIVIZA: por fecha, el punto informal se deduplica — si ambos proveedores
+  // tienen fila ese día gana la de captured_at más reciente; jamás se suman ni
+  // se duplican valores en los gráficos.
   const historyData: HistoryPoint[] = useCallback(() => {
     const dates = [...new Set(rates.map(r => r.rate_date))].sort((a, b) => a.localeCompare(b));
     return dates.map(date => {
       const oficial = rates.find(r => r.rate_date === date && r.source === 'BCC' && r.currency === 'USD' && r.segment === bccSegment)?.rate ?? null;
-      const informal = rates.find(r => r.rate_date === date && r.source === 'elToque' && r.currency === 'USD')?.rate ?? null;
-      return { date, oficial, informal };
+      const informalRow = pickInformalRow(
+        rates.filter(r => r.rate_date === date && isInformalSource(r.source) && r.currency === 'USD'),
+      );
+      return { date, oficial, informal: informalRow?.rate ?? null };
     });
   }, [rates, bccSegment])();
 
@@ -299,23 +341,23 @@ export function ExchangeIntelligenceView() {
     [fetchRates],
   );
 
-  // ═══ CAPTURAR TASA REAL DESDE solucionescuba.com ═══
-  // eltoque.com bloquea el scraping automático (Cloudflare + imágenes).
-  // solucionescuba.com publica las tasas en HTML estático como TEXTO, así
-  // que el scraping funciona. Esta función llama al endpoint que dispara
-  // el scraper y persiste con capture_method='real' (no 'estimated').
+  // ═══ CAPTURAR TASA INFORMAL DESDE DIVIZA (proveedor activo) ═══
+  // solucionescuba.com está caído (2026-07-28 fue la última tasa informal).
+  // Diviza (cubadivisas.com) publica USD/EUR/MLC en HTML estático y se
+  // persiste con source='Diviza', capture_method='real'. El endpoint usa la
+  // MISMA lógica compartida que el cron (captureInformalToday).
   const [scraping, setScraping] = useState(false);
 
-  const handleScrapeRealRate = useCallback(async () => {
+  const handleCaptureInformal = useCallback(async () => {
     setScraping(true);
-    const toastId = toast.loading('Capturando tasa desde solucionescuba.com...', {
-      description: 'Scrapeando HTML público — alternativa a eltoque.com',
+    const toastId = toast.loading('Capturando tasa informal desde Diviza (cubadivisas.com)...', {
+      description: 'Lectura del HTML público — misma lógica que el cron',
     });
 
     try {
       const { useAuthStore } = await import('@/store');
       const token = useAuthStore.getState().token;
-      const res = await fetch('/api/exchange-rates/scrape-soluciones', {
+      const res = await fetch('/api/exchange-rates/scrape-diviza', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -323,84 +365,40 @@ export function ExchangeIntelligenceView() {
         },
       });
 
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error || `HTTP ${res.status}`);
+        // Estado de error de conexión/extracción: mensaje honesto — nunca
+        // éxito falso. La última tasa real y su fecha NO se tocan.
+        throw new Error(data.error || `HTTP ${res.status}`);
       }
 
-      const data = await res.json();
       const usdRate = data.rates?.usd ?? 0;
       const captured = data.captured ?? 0;
+      const updated = data.sourceUpdatedAt
+        ? new Date(data.sourceUpdatedAt).toLocaleString('es-CU', { dateStyle: 'short', timeStyle: 'short' })
+        : null;
 
-      toast.success(`Tasa USD=${usdRate} CUP capturada como REAL`, {
+      toast.success(`Tasa informal USD=${usdRate} CUP capturada (Diviza, REAL)`, {
         id: toastId,
-        description: `${captured} moneda(s) guardada(s) · El badge cambiará a "✓ Real"`,
+        description: `${captured} moneda(s) guardada(s)` +
+          (updated ? ` · fuente actualizada: ${updated}` : '') +
+          ' · el badge mostrará "Real · Diviza"',
         duration: 7000,
         icon: <CheckCircle2 className="w-4 h-4" />,
       });
 
       await fetchRates();
     } catch (e: any) {
-      toast.error('No se pudo capturar. Intenta cargar por Excel.', {
+      toast.error('No se pudo capturar la tasa informal de Diviza', {
         id: toastId,
-        description: e.message || 'Error desconocido',
+        description: (e.message || 'Error desconocido') +
+          ' — se conserva la última tasa real con su fecha. Reintenta o usa Excel.',
         duration: 10000,
       });
     } finally {
       setScraping(false);
     }
   }, [fetchRates]);
-
-  // ═══ SCRAPING HISTÓRICO (admin only) ═══
-  // Scrapea bolsa-divisas.php que contiene ~380 entradas con JSON embebido
-  // (timestamp + tasas). Hace upsert masivo de todo el histórico.
-  const [scrapingHist, setScrapingHist] = useState(false);
-  const [showHistoricalModal, setShowHistoricalModal] = useState(false);
-  const [histSource, setHistSource] = useState<'both' | 'informal'>('both');
-
-  const handleScrapeHistorical = useCallback(async () => {
-    setShowHistoricalModal(false);
-    setScrapingHist(true);
-    const toastId = toast.loading(`Scrapeando histórico (${histSource === 'both' ? 'ambos' : 'solo informal'}) desde solucionescuba.com...`, {
-      description: 'Puede tardar 30-60s (~380 días × 3 monedas)',
-    });
-
-    try {
-      const { useAuthStore } = await import('@/store');
-      const token = useAuthStore.getState().token;
-      const res = await fetch('/api/exchange-rates/scrape-historical', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ source: histSource }),
-      });
-
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error || errBody.message || `HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
-      toast.success(`Histórico cargado: ${data.processed} filas`, {
-        id: toastId,
-        description: `${data.totalEntries} días (${data.firstDate} → ${data.lastDate})`,
-        duration: 10000,
-        icon: <CheckCircle2 className="w-4 h-4" />,
-      });
-
-      await fetchRates();
-    } catch (e: any) {
-      toast.error('No se pudo cargar el histórico', {
-        id: toastId,
-        description: e.message || 'Error desconocido',
-        duration: 10000,
-      });
-    } finally {
-      setScrapingHist(false);
-    }
-  }, [fetchRates, histSource]);
 
   // ═══ CARGA MASIVA POR EXCEL (admin only) ═══
   // Descarga plantilla con fechas hábiles (2021-01-01 → hoy) para que el
@@ -504,8 +502,8 @@ export function ExchangeIntelligenceView() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-success flex items-center justify-center shrink-0 shadow-lg">
-            <DollarSign className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shrink-0 shadow-md">
+            <DollarSign className="w-7 h-7 text-primary-foreground" aria-hidden="true" />
           </div>
           <div>
             <h1 className="text-2xl font-black uppercase tracking-tighter text-foreground">
@@ -580,10 +578,12 @@ export function ExchangeIntelligenceView() {
                 segmentShortLabels={segmentShortLabels}
                 segmentDescriptions={segmentDescriptions}
                 informalCaptureMethod={informalCaptureMethod}
+                informalProvider={informalProvider}
                 informalIsCarryForward={informalIsCarryForward}
                 informalRateDate={informalRateDate}
                 officialIsCarryForward={officialIsCarryForward}
                 officialRateDate={officialRateDate}
+                officialCaptureMethod={officialCaptureMethod}
                 isAdmin={isAdmin}
                 onManualCapture={handleManualCapture}
                 capturing={capturing}
@@ -591,31 +591,36 @@ export function ExchangeIntelligenceView() {
             )}
             {activeTab === 'history' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><HistoryTab data={historyData} /></Suspense>}
             {activeTab === 'variations' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><VariationsTab data={historyData} /></Suspense>}
-            {activeTab === 'impact' && <ImpactTab officialUsd={usdOfficial} informalUsd={usdInformal} historyData={historyData} />}
+            {activeTab === 'impact' && <ImpactTab officialUsd={usdOfficial} informalUsd={usdInformal ?? 0} historyData={historyData} />}
             {activeTab === 'mi-producto' && (
               <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}>
-                <MiProductoTab historyData={historyData} informalUsd={usdInformal} officialUsd={usdOfficial} />
+                <MiProductoTab historyData={historyData} informalUsd={usdInformal ?? 0} officialUsd={usdOfficial} />
               </Suspense>
             )}
-            {activeTab === 'alerts' && <AlertsTab diffPct={parseFloat(diffPct)} historyData={historyData} />}
-            {activeTab === 'simulator' && <SimulatorTab informalUsd={usdInformal} officialUsd={usdOfficial} historyData={historyData} />}
+            {activeTab === 'alerts' && <AlertsTab diffPct={parseFloat(diffPct) || 0} historyData={historyData} />}
+            {activeTab === 'simulator' && <SimulatorTab informalUsd={usdInformal ?? 0} officialUsd={usdOfficial} historyData={historyData} />}
             {activeTab === 'configuracion' && (
               <ConfiguracionTab
                 onManualCapture={handleManualCapture}
-                onScrapeRealRate={handleScrapeRealRate}
+                onCaptureInformal={handleCaptureInformal}
+                onOpenExcelModal={() => setShowExcelModal(true)}
                 onDownloadTemplate={handleDownloadTemplate}
-                onUploadExcel={handleUploadExcel}
-                onScrapeHistorical={() => setShowHistoricalModal(true)}
                 capturing={capturing}
                 scraping={scraping}
                 uploading={uploading}
-                scrapingHist={scrapingHist}
                 loading={loading}
                 isAdmin={isAdmin}
                 rates={rates}
                 lastCaptureInfo={lastCaptureInfo}
                 fetchRates={fetchRates}
                 bccSegment={bccSegment}
+                informalProvider={informalProvider}
+                informalCaptureMethod={informalCaptureMethod}
+                informalRateDate={informalRateDate}
+                informalIsCarryForward={informalIsCarryForward}
+                officialRateDate={officialRateDate}
+                officialIsCarryForward={officialIsCarryForward}
+                officialCaptureMethod={officialCaptureMethod}
               />
             )}
           </>
@@ -746,109 +751,18 @@ export function ExchangeIntelligenceView() {
           )}
 
           {/* Nota informativa */}
-          <div className="rounded-xl bg-blue-500/5 border border-blue-500/20 p-3 flex gap-2">
-            <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+          <div className="rounded-xl bg-muted/40 border border-border p-3 flex gap-2">
+            <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
             <p className="text-xs text-muted-foreground">
               Las tasas se guardan con <code className="font-mono">capture_method='real'</code>.
               Si ya existe una tasa para esa fecha+fuente, se sobreescribe (upsert).
-              No afecta al scraper automático de solucionescuba.com.
+              La columna <strong>informal</strong> alimenta la serie histórica (elToque); las capturas
+              vigentes llegan automáticamente de Diviza.
             </p>
           </div>
         </div>
       </BaseModal>
 
-      {/* ═══ MODAL: Cargar histórico con selector de fuente ═══ */}
-      {showHistoricalModal && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => !scrapingHist && setShowHistoricalModal(false)}>
-          <div className="bg-card rounded-2xl border-2 border-border p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-black uppercase tracking-widest text-foreground">
-                Cargar histórico
-              </h3>
-              <button
-                onClick={() => !scrapingHist && setShowHistoricalModal(false)}
-                className="w-8 h-8 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center"
-                aria-label="Cerrar"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-              Scrapea ~380 días de histórico desde{' '}
-              <a href="https://solucionescuba.com/bolsa-divisas.php" target="_blank" rel="noopener noreferrer" className="text-purple-600 dark:text-purple-400 underline font-bold">
-                solucionescuba.com
-              </a>
-              . El histórico solo contiene <strong>tasas informales</strong> (elToque). Para BCC histórico usa "Actualizar BD (7 días)".
-            </p>
-
-            <div className="space-y-3 mb-5">
-              <label className="text-xs font-black uppercase tracking-widest text-foreground block mb-1.5">¿Qué cargar?</label>
-              <button
-                onClick={() => setHistSource('both')}
-                className={cn(
-                  'w-full px-4 py-3 rounded-xl text-sm font-bold transition-all min-h-[48px] border-2 text-left',
-                  histSource === 'both'
-                    ? 'bg-purple-600 text-white border-purple-600 shadow-md'
-                    : 'bg-background text-foreground border-border hover:bg-purple-600/10'
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span>Solo informal (recomendado)</span>
-                  {histSource === 'both' && <CheckCircle2 className="w-4 h-4" />}
-                </div>
-                <p className={cn('text-xs mt-0.5', histSource === 'both' ? 'text-white/70' : 'text-muted-foreground')}>
-                  USD + EUR + MLC de elToque (~380 días)
-                </p>
-              </button>
-              <button
-                onClick={() => setHistSource('informal')}
-                className={cn(
-                  'w-full px-4 py-3 rounded-xl text-sm font-bold transition-all min-h-[48px] border-2 text-left',
-                  histSource === 'informal'
-                    ? 'bg-purple-600 text-white border-purple-600 shadow-md'
-                    : 'bg-background text-foreground border-border hover:bg-purple-600/10'
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span>Solo informal (igual)</span>
-                  {histSource === 'informal' && <CheckCircle2 className="w-4 h-4" />}
-                </div>
-                <p className={cn('text-xs mt-0.5', histSource === 'informal' ? 'text-white/70' : 'text-muted-foreground')}>
-                  Misma opción (el histórico no tiene BCC)
-                </p>
-              </button>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowHistoricalModal(false)}
-                disabled={scrapingHist}
-                className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-muted text-foreground hover:bg-muted/70 disabled:opacity-50 transition-colors font-bold text-sm"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleScrapeHistorical}
-                disabled={scrapingHist}
-                className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md flex items-center justify-center gap-2"
-              >
-                {scrapingHist ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Cargando...
-                  </>
-                ) : (
-                  <>
-                    <Database className="w-4 h-4" />
-                    Cargar histórico
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -876,7 +790,11 @@ function calcBrechaStats(rates: ExchangeRate[], bccSegment: string, windowDays: 
   const brechas: { date: string; value: number }[] = [];
   for (const date of dates) {
     const oficial = rates.find(r => r.rate_date === date && r.source === 'BCC' && r.currency === 'USD' && r.segment === bccSegment)?.rate;
-    const informal = rates.find(r => r.rate_date === date && r.source === 'elToque' && r.currency === 'USD')?.rate;
+    // IC-DIVIZA: informal deduplicado por fecha (gana el captured_at más fresco)
+    const informalRow = pickInformalRow(
+      rates.filter(r => r.rate_date === date && isInformalSource(r.source) && r.currency === 'USD'),
+    );
+    const informal = informalRow?.rate;
     if (oficial && informal && oficial > 0) {
       brechas.push({ date, value: ((informal - oficial) / oficial) * 100 });
     }
@@ -1103,16 +1021,18 @@ function DashboardTab({
   segmentShortLabels,
   segmentDescriptions,
   informalCaptureMethod,
+  informalProvider,
   informalIsCarryForward,
   informalRateDate,
   officialIsCarryForward,
   officialRateDate,
+  officialCaptureMethod,
   isAdmin,
   onManualCapture,
   capturing,
 }: {
   officialUsd: number;
-  informalUsd: number;
+  informalUsd: number | null;
   diff: number;
   diffPct: string;
   rates: ExchangeRate[];
@@ -1121,11 +1041,13 @@ function DashboardTab({
   segmentLabels: Record<string, string>;
   segmentShortLabels: Record<string, string>;
   segmentDescriptions: Record<string, string>;
-  informalCaptureMethod?: 'real' | 'estimated';
+  informalCaptureMethod?: 'real' | 'estimated' | 'carry_forward';
+  informalProvider?: string | null;
   informalIsCarryForward?: boolean;
   informalRateDate?: string;
   officialIsCarryForward?: boolean;
   officialRateDate?: string;
+  officialCaptureMethod?: 'real' | 'estimated' | 'carry_forward';
   isAdmin?: boolean;
   onManualCapture?: (days: number) => void;
   capturing?: boolean;
@@ -1138,10 +1060,10 @@ function DashboardTab({
   const brechaStatus = useMemo(() => getBrechaStatus(brechaStats), [brechaStats]);
 
   // Variación 30 días (mantenida para Card 2)
-  const usdInformalRates = rates.filter((r: ExchangeRate) => r.source === 'elToque' && r.currency === 'USD');
+  const usdInformalRates = rates.filter((r: ExchangeRate) => isInformalSource(r.source) && r.currency === 'USD');
   const last30 = usdInformalRates.slice(-30);
-  const monthStart = last30[0]?.rate ?? informalUsd;
-  const monthEnd = last30[last30.length - 1]?.rate ?? informalUsd;
+  const monthStart = last30[0]?.rate ?? informalUsd ?? 0;
+  const monthEnd = last30[last30.length - 1]?.rate ?? informalUsd ?? 0;
   const monthChange = monthStart > 0 ? ((monthEnd - monthStart) / monthStart) * 100 : 0;
   // Días reales en la ventana (en caso de que haya menos de 30 muestras)
   const monthWindowDays = last30.length;
@@ -1149,15 +1071,25 @@ function DashboardTab({
   // ─── Variación diaria (vs día anterior) para ambas tarjetas ───
   // FIX-BADGE-REAL: Ordenar DESC por fecha + captured_at para garantizar
   // que tomamos hoy (no ayer).
-  // elToque: últimos 2 registros informales (hoy = primero, ayer = segundo)
+  // IC-DIVIZA: informales de cualquier proveedor (frescura DESC). Para la
+  // variación diaria se usa la serie deduplicada por fecha (un punto/día).
   const usdInformalRatesLocal = rates
-    .filter((r: ExchangeRate) => r.source === 'elToque' && r.currency === 'USD')
+    .filter((r: ExchangeRate) => isInformalSource(r.source) && r.currency === 'USD')
     .sort((a, b) => {
       if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
       return (b.captured_at || '').localeCompare(a.captured_at || '');
     });
-  const informalToday = usdInformalRatesLocal[0]?.rate;
-  const informalYesterday = usdInformalRatesLocal[1]?.rate;
+  // Deduplicar por fecha: si hoy hay Diviza Y elToque, gana el más fresco.
+  const seenDates = new Set<string>();
+  const informalByDateDesc: ExchangeRate[] = [];
+  for (const r of usdInformalRatesLocal) {
+    if (!seenDates.has(r.rate_date)) {
+      seenDates.add(r.rate_date);
+      informalByDateDesc.push(r);
+    }
+  }
+  const informalToday = informalByDateDesc[0]?.rate;
+  const informalYesterday = informalByDateDesc[1]?.rate;
   const informalDailyChange = (informalToday != null && informalYesterday != null)
     ? informalToday - informalYesterday
     : 0;
@@ -1187,14 +1119,14 @@ function DashboardTab({
   const volatility7d = calcVolatility(last7Informal);
 
   // 2) Cambio semanal (%) — último 7 días
-  const weekStart = last7Informal[0] ?? informalUsd;
-  const weekEnd = last7Informal[last7Informal.length - 1] ?? informalUsd;
+  const weekStart = last7Informal[0] ?? informalUsd ?? 0;
+  const weekEnd = last7Informal[last7Informal.length - 1] ?? informalUsd ?? 0;
   const weeklyChange = weekStart > 0 ? ((weekEnd - weekStart) / weekStart) * 100 : 0;
 
   // 3) Proyección 10 días (regresión lineal sobre últimos 30 días)
   const last30Values = usdInformalRates.slice(-30).map((r: ExchangeRate) => r.rate);
   const forecast10d = useMemo(() => forecastTrend(last30Values, 10), [last30Values]);
-  const forecastProjection = forecast10d?.projected ?? informalUsd;
+  const forecastProjection = forecast10d?.projected ?? informalUsd ?? 0;
   const forecastR2 = forecast10d?.r2 ?? 0;
   const forecastConfidence = forecast10d?.confidence ?? 'low';
 
@@ -1253,7 +1185,7 @@ function DashboardTab({
             <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
               <div className="min-w-0">
                 <p className="text-xs font-black text-foreground">Actualizar BD (7 días)</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">BCC + solucionescuba.com</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">BCC oficial + informal Diviza (misma lógica del cron)</p>
               </div>
               <button
                 onClick={() => onManualCapture(7)}
@@ -1268,19 +1200,18 @@ function DashboardTab({
         </div>
       </details>
 
-      {/* ── Tarjetas premium diferenciadas BCC vs elToque ── */}
+      {/* ── Tarjetas BCC e Informal — superficie unificada, acento único ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Tarjeta BCC — verde gubernamental con bordes más visibles */}
-        <div className="relative overflow-hidden rounded-2xl border-2 border-primary/50 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent backdrop-blur-xl p-6 hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300">
-          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
+        {/* Tarjeta BCC — superficie neutra; semántica solo en badges */}
+        <div className="rounded-2xl border-2 border-border bg-card p-6 hover:shadow-lg transition-shadow">
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/40">
-                  <DollarSign className="w-5 h-5 text-primary-foreground" />
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center">
+                  <DollarSign className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black uppercase tracking-widest text-primary">
+                  <h3 className="text-base font-black uppercase tracking-widest text-foreground">
                     BCC — Oficial
                   </h3>
                   <p className="text-sm text-muted-foreground">Banco Central de Cuba</p>
@@ -1310,8 +1241,9 @@ function DashboardTab({
               <span className="text-sm font-bold text-muted-foreground">CUP / USD</span>
             </div>
             {officialIsCarryForward && (
-              <div className="mb-2 px-2 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-400 font-bold">
-                ⚠ Tasa de hoy no disponible. Usando último valor de {officialRateDate}
+              <div className="mb-2 px-2 py-1 rounded-md bg-warning/15 border border-warning/30 text-xs text-warning font-bold flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>Tasa de hoy no disponible. Usando último valor de {officialRateDate}</span>
               </div>
             )}
             <div className="flex items-center gap-2 text-sm flex-wrap">
@@ -1327,34 +1259,50 @@ function DashboardTab({
           </div>
         </div>
 
-        {/* Tarjeta elToque — naranja/dorado con bordes más visibles */}
-        <div className="relative overflow-hidden rounded-2xl border-2 border-amber-500/50 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent backdrop-blur-xl p-6 hover:shadow-2xl hover:shadow-amber-500/20 transition-all duration-300">
-          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
+        {/* Tarjeta Informal — misma superficie; badge honesto con proveedor */}
+        <div className="rounded-2xl border-2 border-border bg-card p-6 hover:shadow-lg transition-shadow">
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500/60 flex items-center justify-center shadow-lg shadow-amber-500/40">
-                  <TrendingUp className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 flex items-center flex-wrap">
+                  <h3 className="text-base font-black uppercase tracking-widest text-foreground flex items-center flex-wrap">
                     Informal
                     <InfoTooltip
-                      title="Tasa informal real"
+                      title="Tasa informal — proveedor y método"
                     >
                       <p className="mb-1">
-                        Tasa capturada directamente de solucionescuba.com mediante scraping.
-                        Es el valor real del mercado informal cubano (USD, EUR, MLC).
-                        Cuando el scraper falla temporalmente, se usa el último valor real disponible (carry-forward).
+                        Capturada del proveedor activo <strong>Diviza</strong> (cubadivisas.com):
+                        mediana del mercado informal, actualizada cada 30 minutos con su
+                        hora visible. La serie histórica (hasta 2026-07-28) corresponde a
+                        elToque y se conserva con su procedencia original.
+                      </p>
+                      <p className="mt-1">
+                        Si la captura falla, NO se inventa valor: se usa el último valor
+                        real disponible (carry-forward) con su fecha visible.
                       </p>
                     </InfoTooltip>
-                    <span
-                      className="ml-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30"
-                    >
-                      ✓ Real
-                    </span>
+                    {/* Badge honesto: método + proveedor. Una estimación NUNCA
+                        se etiqueta como Real. Texto + color (no solo color). */}
+                    {informalUsd == null ? (
+                      <span className="ml-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border bg-muted text-muted-foreground border-border">
+                        Sin dato fiable
+                      </span>
+                    ) : informalCaptureMethod === 'real' ? (
+                      <span className="ml-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border bg-success/15 text-success border-success/30">
+                        Real · {informalProvider ?? 'proveedor'}
+                      </span>
+                    ) : (
+                      <span className="ml-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border bg-warning/15 text-warning border-warning/30">
+                        Estimada
+                      </span>
+                    )}
                   </h3>
-                  <p className="text-sm text-muted-foreground">Mercado informal (solucionescuba.com)</p>
+                  <p className="text-sm text-muted-foreground">
+                    Mercado informal · {informalProvider === 'Diviza' ? 'Diviza (cubadivisas.com)' : informalProvider === 'elToque' ? 'elToque (histórico)' : 'sin proveedor activo'}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -1378,18 +1326,29 @@ function DashboardTab({
                     <strong>Significado:</strong> positivo = el CUP se devaluó (USD subió). Negativo = el CUP se apreció.
                   </p>
                 </InfoTooltip>
-                <span className="px-2 py-1 rounded-lg bg-amber-500/20 text-sm font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 border border-amber-500/40">
+                <span className="px-2 py-1 rounded-lg bg-muted text-sm font-black uppercase tracking-widest text-foreground border border-border">
                   Diario
                 </span>
               </div>
             </div>
             <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-4xl font-black font-mono text-foreground">{informalUsd.toFixed(0)}</span>
+              {informalUsd == null ? (
+                <span className="text-4xl font-black font-mono text-muted-foreground">—</span>
+              ) : (
+                <span className="text-4xl font-black font-mono text-foreground">{(informalUsd ?? 0).toFixed(0)}</span>
+              )}
               <span className="text-sm font-bold text-muted-foreground">CUP / USD</span>
             </div>
-            {informalIsCarryForward && (
-              <div className="mb-2 px-2 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-400 font-bold">
-                ⚠ Tasa de hoy no disponible. Usando último valor de {informalRateDate}
+            {informalUsd == null && (
+              <div className="mb-2 px-2 py-1 rounded-md bg-destructive/10 border border-destructive/30 text-xs text-destructive font-bold flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>Sin dato fiable disponible — captura la informal desde Configuración</span>
+              </div>
+            )}
+            {informalIsCarryForward && informalUsd != null && (
+              <div className="mb-2 px-2 py-1 rounded-md bg-warning/15 border border-warning/30 text-xs text-warning font-bold flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>Tasa de hoy no disponible. Usando último valor de {informalRateDate} ({informalProvider})</span>
               </div>
             )}
             <div className="flex flex-col gap-1 text-sm">
@@ -1409,23 +1368,21 @@ function DashboardTab({
         </div>
       </div>
 
-      {/* ── Tarjeta Brecha — full width con análisis científico ── */}
+      {/* ── Tarjeta Brecha — semántica moderada por estado, sin gradientes ── */}
       <div className={cn(
-        'relative overflow-hidden rounded-2xl border-2 backdrop-blur-xl p-6 transition-all duration-300',
-        trend === 'critical' ? 'border-destructive/50 bg-gradient-to-r from-destructive/20 via-destructive/10 to-transparent' :
-        trend === 'risk' ? 'border-destructive/50 bg-gradient-to-r from-destructive/20 via-destructive/10 to-transparent' :
-        trend === 'warning' ? 'border-warning/50 bg-gradient-to-r from-warning/20 via-warning/10 to-transparent' :
-        'border-success/50 bg-gradient-to-r from-success/20 via-success/10 to-transparent'
+        'rounded-2xl border-2 bg-card p-6',
+        trend === 'critical' || trend === 'risk' ? 'border-destructive/40' :
+        trend === 'warning' ? 'border-warning/40' : 'border-success/40'
       )}>
         <div className="flex items-start justify-between mb-4 gap-4">
           <div className="flex items-center gap-3">
             <div className={cn(
-              'w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shrink-0',
-              trend === 'critical' || trend === 'risk' ? 'bg-destructive/20' : trend === 'warning' ? 'bg-warning/20' : 'bg-success/20'
+              'w-12 h-12 rounded-xl flex items-center justify-center shrink-0',
+              trend === 'critical' || trend === 'risk' ? 'bg-destructive/15' : trend === 'warning' ? 'bg-warning/15' : 'bg-success/15'
             )}>
               {trend === 'critical' || trend === 'risk' || brechaStatus?.isAbruptChange
-                ? <AlertTriangle className={cn('w-6 h-6', trendColor)} />
-                : <Activity className={cn('w-6 h-6', trendColor)} />}
+                ? <AlertTriangle className={cn('w-6 h-6', trendColor)} aria-hidden="true" />
+                : <Activity className={cn('w-6 h-6', trendColor)} aria-hidden="true" />}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -1586,7 +1543,7 @@ function DashboardTab({
               <ul className="list-disc pl-4 mt-2 text-xs space-y-0.5">
                 <li>Pendiente (m): <strong>{forecast10d?.slope.toFixed(0) ?? '—'} CUP/día</strong></li>
                 <li>R² (bondad de ajuste): <strong>{forecastR2.toFixed(4)}</strong></li>
-                <li>Tasa actual: <strong>{informalUsd.toFixed(0)} CUP</strong></li>
+                <li>Tasa actual: <strong>{(informalUsd ?? 0).toFixed(0)} CUP</strong></li>
                 <li>Proyección +10 días: <strong>{forecastProjection.toFixed(0)} CUP</strong></li>
               </ul>
               <p className="mt-2 text-xs pt-2 border-t border-border/50">
@@ -1612,7 +1569,7 @@ function DashboardTab({
           <h3 className="text-lg font-black uppercase tracking-tight text-foreground">Análisis Ejecutivo</h3>
         </div>
         <p className="text-sm text-foreground leading-relaxed mb-3">
-          La brecha entre la tasa oficial ({officialUsd.toFixed(0)} CUP) y la informal ({informalUsd.toFixed(0)} CUP) es de <strong className={trendColor}>{diffPct}%</strong>.{' '}
+          La brecha entre la tasa oficial ({officialUsd.toFixed(0)} CUP) y la informal ({(informalUsd ?? 0).toFixed(0)} CUP) es de <strong className={trendColor}>{diffPct}%</strong>.{' '}
           {brechaStatus
             ? brechaStatus.explanation
             : 'No hay suficientes datos históricos para análisis estadístico. Se requieren al menos 5 muestras de la brecha.'}
@@ -1637,7 +1594,7 @@ function DashboardTab({
             </div>
             <div className="bg-background/60 rounded-lg p-2 border border-border/50">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Proyección 10d</p>
-              <p className={cn('text-sm font-black font-mono', forecastProjection > informalUsd ? 'text-destructive' : 'text-success')}>
+              <p className={cn('text-sm font-black font-mono', forecastProjection > (informalUsd ?? 0) ? 'text-destructive' : 'text-success')}>
                 {forecastProjection.toFixed(0)} CUP
               </p>
             </div>
@@ -1661,8 +1618,8 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
   // ─── Toggle tasa formal/informal ───
   const [rateSource, setRateSource] = useState<'informal' | 'oficial'>('informal');
   const rateSourceMeta = {
-    informal: { label: 'Informal', color: 'text-orange-500', current: informalUsd },
-    oficial: { label: 'BCC (oficial)', color: 'text-green-500', current: officialUsd },
+    informal: { label: 'Informal', color: 'text-primary', current: informalUsd },
+    oficial: { label: 'BCC (oficial)', color: 'text-primary', current: officialUsd },
   }[rateSource];
 
   // ─── Datos: filtrar por la tasa seleccionada ───
@@ -1725,9 +1682,10 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
                 rateSource === 'informal'
-                  ? 'bg-orange-500 text-white shadow-md'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
               )}
+              aria-pressed={rateSource === 'informal'}
             >
               Informal
             </button>
@@ -1736,9 +1694,10 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
                 rateSource === 'oficial'
-                  ? 'bg-green-500 text-white shadow-md'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
               )}
+              aria-pressed={rateSource === 'oficial'}
             >
               BCC (oficial)
             </button>
@@ -2074,8 +2033,8 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
   // ─── Tasa: formal o informal ───
   const [rateSource, setRateSource] = useState<'informal' | 'oficial'>('informal');
   const rateSourceMeta = {
-    informal: { label: 'Informal', color: 'text-orange-500', current: informalUsd, colorClass: 'bg-orange-500' },
-    oficial: { label: 'BCC (oficial)', color: 'text-green-500', current: officialUsd, colorClass: 'bg-green-500' },
+    informal: { label: 'Informal', color: 'text-primary', current: informalUsd, colorClass: 'bg-primary' },
+    oficial: { label: 'BCC (oficial)', color: 'text-primary', current: officialUsd, colorClass: 'bg-primary' },
   }[rateSource];
 
   // ─── Datos de la tasa seleccionada ───
@@ -2271,9 +2230,10 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
                 rateSource === 'informal'
-                  ? 'bg-orange-500 text-white shadow-md'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
               )}
+              aria-pressed={rateSource === 'informal'}
             >
               Informal
             </button>
@@ -2282,9 +2242,10 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
                 rateSource === 'oficial'
-                  ? 'bg-green-500 text-white shadow-md'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
               )}
+              aria-pressed={rateSource === 'oficial'}
             >
               BCC (oficial)
             </button>
@@ -2292,7 +2253,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
         </div>
 
         <p className="text-xs text-muted-foreground italic mb-4">
-          Modelo por defecto: <strong className="text-purple-600 dark:text-purple-400">{TREND_MODELS.find(m => m.id === defaultModelId)?.label}</strong> (mayor R² = {projR2.toFixed(4)}). Puedes cambiarlo abajo.
+          Modelo por defecto: <strong className="text-primary">{TREND_MODELS.find(m => m.id === defaultModelId)?.label}</strong> (mayor R² = {projR2.toFixed(4)}). Puedes cambiarlo abajo.
         </p>
 
         {/* ─── Configuración: modo de inicio, valor inicial, costo ─── */}
@@ -2399,8 +2360,8 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
                   className={cn(
                     'p-3 rounded-xl text-left border-2 transition-all',
                     isSelected
-                      ? 'bg-purple-600 text-white border-purple-600 shadow-md'
-                      : 'bg-background text-foreground border-border hover:bg-purple-600/10 hover:border-purple-600/50',
+                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                      : 'bg-background text-foreground border-border hover:bg-primary/10 hover:border-primary/50',
                   )}
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -2408,7 +2369,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
                     {isDefault && (
                       <span className={cn(
                         'text-[10px] font-black px-1.5 py-0.5 rounded',
-                        isSelected ? 'bg-white/20 text-white' : 'bg-purple-600/15 text-purple-600 dark:text-purple-400'
+                        isSelected ? 'bg-white/20 text-white' : 'bg-primary/15 text-primary'
                       )}>
                         DEFAULT
                       </span>
@@ -2482,12 +2443,12 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
           </div>
 
           {/* Etapa 3: +7 días proyectado */}
-          <div className="rounded-xl p-4 bg-purple-500/10 border-2 border-purple-500/30">
+          <div className="rounded-xl p-4 bg-primary/5 border-2 border-primary/30">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center border border-purple-500/40">
-                <span className="text-xs font-black text-purple-600 dark:text-purple-400">3</span>
+              <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center border border-primary/30">
+                <span className="text-xs font-black text-primary">3</span>
               </div>
-              <span className="text-xs font-black uppercase tracking-widest text-purple-600 dark:text-purple-400">+7 días (proy.)</span>
+              <span className="text-xs font-black uppercase tracking-widest text-primary">+7 días (proy.)</span>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
               Modelo: {TREND_MODELS.find(m => m.id === selectedModel)?.label} · R² = {projR2.toFixed(4)}
@@ -2495,7 +2456,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span className="text-xs text-muted-foreground">Tasa proy.:</span>
-                <span className="font-black font-mono text-purple-600 dark:text-purple-400">{proj7d.toFixed(0)} CUP</span>
+                <span className="font-black font-mono text-primary">{proj7d.toFixed(0)} CUP</span>
               </div>
               <div className="flex justify-between border-t border-border/50 pt-1">
                 <span className="text-xs font-black text-muted-foreground">Costo proy.:</span>
@@ -2523,7 +2484,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
             el costo era <strong>{costAtStart.toFixed(0)} CUP</strong>. Hoy la tasa es{' '}
             <strong className={rateSourceMeta.color}>{currentRate.toFixed(0)} CUP/USD</strong>, por lo que el costo actual es{' '}
             <strong>{costNow.toFixed(0)} CUP</strong> — {changeToNow >= 0 ? '+' : ''}{changeToNowPct.toFixed(0)}% ({changeToNow >= 0 ? '+' : ''}{changeToNow.toFixed(0)} CUP).{' '}
-            <span className="text-purple-600 dark:text-purple-400">
+            <span className="text-primary">
               Según el modelo <strong>{TREND_MODELS.find(m => m.id === selectedModel)?.label}</strong> (R² = {projR2.toFixed(4)}),
               en <strong>7 días</strong> la tasa proyectada es <strong>{proj7d.toFixed(0)} CUP/USD</strong> — {changeTo7d >= 0 ? '+' : ''}{changeTo7dPct.toFixed(0)}% ({changeTo7d >= 0 ? '+' : ''}{changeTo7d.toFixed(0)} CUP) respecto a hoy.
             </span>
@@ -2577,24 +2538,132 @@ function StatBox({ label, value, color }: any) {
 // ════════════════════════════════════════════════════════════════════
 function ConfiguracionTab({
   onManualCapture,
-  onScrapeRealRate,
+  onCaptureInformal,
+  onOpenExcelModal,
   onDownloadTemplate,
-  onScrapeHistorical,
   capturing,
   scraping,
+  uploading,
   loading,
-  scrapingHist,
   isAdmin,
   rates,
   lastCaptureInfo,
   bccSegment,
+  informalProvider,
+  informalCaptureMethod,
+  informalRateDate,
+  informalIsCarryForward,
+  officialRateDate,
+  officialIsCarryForward,
+  officialCaptureMethod,
 }: any) {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const captureInProgress = capturing || scraping || uploading;
+
+  // ── Estados del proveedor BCC (oficial) ──
+  const bccStatus: {
+    level: 'ok' | 'capturing' | 'stale' | 'nodata';
+    label: string;
+    detail: string;
+  } = officialRateDate
+    ? officialIsCarryForward
+      ? {
+          level: 'stale',
+          label: 'Último valor conocido (antiguo)',
+          detail: `Sin tasa de hoy. Último valor oficial del ${officialRateDate}.`,
+        }
+      : {
+          level: 'ok',
+          label: 'Actualizada hoy',
+          detail: `Tasa oficial capturada de la API del BCC para ${todayStr}.`,
+        }
+    : { level: 'nodata', label: 'Sin dato fiable', detail: 'No hay tasas oficiales almacenadas.' };
+
+  // ── Estados del proveedor informal activo (Diviza) ──
+  const informalStatus: {
+    level: 'ok' | 'capturing' | 'stale' | 'nodata';
+    label: string;
+    detail: string;
+  } = scraping
+    ? {
+        level: 'capturing',
+        label: 'Captura en curso',
+        detail: 'Consultando cubadivisas.com…',
+      }
+    : informalRateDate
+      ? informalIsCarryForward
+        ? {
+            level: 'stale',
+            label: 'Último valor conocido (antiguo)',
+            detail: `Sin captura de hoy. Último valor real del ${informalRateDate} (${informalProvider ?? '—'}).`,
+          }
+        : {
+            level: 'ok',
+            label: 'Actualizada y capturada',
+            detail: `Tasa informal de hoy (${todayStr}) · ${informalProvider ?? '—'} · ${
+              informalCaptureMethod === 'real' ? 'captura real verificable' : 'estimada (no usar como real)'
+            }.`,
+          }
+      : {
+          level: 'nodata',
+          label: 'Sin dato fiable disponible',
+          detail: 'Captura la informal desde el proveedor activo o carga por Excel.',
+        };
+
+  const statusStyles: Record<string, string> = {
+    ok: 'bg-success/10 text-success border-success/30',
+    capturing: 'bg-primary/10 text-primary border-primary/30',
+    stale: 'bg-warning/10 text-warning border-warning/30',
+    nodata: 'bg-destructive/10 text-destructive border-destructive/30',
+  };
+
+  const lastDivizaRow = rates
+    .filter((r: ExchangeRate) => r.source === 'Diviza')
+    .sort((a: ExchangeRate, b: ExchangeRate) => (b.captured_at || '').localeCompare(a.captured_at || ''))[0];
+
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Estado de la BD */}
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* ── Estado de los proveedores ── */}
+      <div className="bg-card rounded-2xl border-2 border-border p-6">
+        <h3 className="text-base font-black uppercase tracking-widest text-foreground mb-1">
+          Estado de los proveedores
+        </h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Fuente, hora de captura, última actualización conocida y estado de cada cotización.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* BCC */}
+          <div className={cn('rounded-xl border p-4', statusStyles[bccStatus.level])}>
+            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+              <p className="text-sm font-black uppercase tracking-widest">BCC — Oficial</p>
+              <span className="text-[10px] font-black uppercase tracking-widest border rounded-md px-1.5 py-0.5 border-current">
+                {capturing ? 'Capturando…' : bccStatus.label}
+              </span>
+            </div>
+            <p className="text-xs leading-relaxed opacity-90">{bccStatus.detail}</p>
+            <p className="text-[10px] mt-2 opacity-75">Fuente: api.bc.gob.cu (API pública) · método: {officialCaptureMethod === 'real' ? 'real' : 'estimado'}</p>
+          </div>
+          {/* Informal Diviza */}
+          <div className={cn('rounded-xl border p-4', statusStyles[informalStatus.level])}>
+            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+              <p className="text-sm font-black uppercase tracking-widest">Informal — Diviza</p>
+              <span className="text-[10px] font-black uppercase tracking-widest border rounded-md px-1.5 py-0.5 border-current">
+                {informalStatus.label}
+              </span>
+            </div>
+            <p className="text-xs leading-relaxed opacity-90">{informalStatus.detail}</p>
+            <p className="text-[10px] mt-2 opacity-75">
+              Fuente: cubadivisas.com (mediana del mercado, cada 30 min)
+              {lastDivizaRow ? ` · capturada: ${new Date(lastDivizaRow.captured_at).toLocaleString('es-CU', { dateStyle: 'short', timeStyle: 'short' })}` : ''}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Resumen de la base de datos ── */}
       <div className="bg-card rounded-2xl border-2 border-border p-6">
         <h3 className="text-base font-black uppercase tracking-widest text-foreground mb-4">
-          Estado de la base de datos
+          Base de datos de tasas
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-muted/40 rounded-xl p-3 text-center border border-border">
@@ -2602,7 +2671,7 @@ function ConfiguracionTab({
             <p className="text-lg font-black font-mono text-foreground">{rates.length}</p>
           </div>
           <div className="bg-muted/40 rounded-xl p-3 text-center border border-border">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Última captura</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Última fecha</p>
             <p className="text-sm font-black font-mono text-foreground">{lastCaptureInfo?.date ?? '—'}</p>
           </div>
           <div className="bg-muted/40 rounded-xl p-3 text-center border border-border">
@@ -2610,98 +2679,102 @@ function ConfiguracionTab({
             <p className="text-sm font-black font-mono text-foreground">{bccSegment === '1' ? 'Estatal' : bccSegment === '2' ? 'CADECA' : 'MIPYMES'}</p>
           </div>
           <div className="bg-muted/40 rounded-xl p-3 text-center border border-border">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Tasas reales</p>
-            <p className="text-lg font-black font-mono text-green-600 dark:text-green-400">
-              {rates.filter((r: any) => r.capture_method === 'real').length}
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Capturas reales</p>
+            <p className="text-lg font-black font-mono text-success">
+              {rates.filter((r: ExchangeRate) => r.capture_method === 'real').length}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Acciones de captura */}
+      {/* ── Acciones de actualización ── */}
       <div className="bg-card rounded-2xl border-2 border-border p-6 space-y-4">
         <h3 className="text-base font-black uppercase tracking-widest text-foreground">
-          Captura de tasas
+          Actualización de tasas
         </h3>
+        <p className="text-xs text-muted-foreground -mt-2">
+          Cada acción indica qué datos actualiza y con qué fuente. La captura manual y el cron usan la misma lógica compartida.
+        </p>
 
-        {/* Actualizar BD (7 días) */}
+        {/* Consultar/actualizar tasas actuales (BCC + Diviza) */}
         <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
-          <div className="flex-1">
-            <p className="text-sm font-black text-foreground">Actualizar BD (7 días)</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Captura los últimos 7 días desde la API del Banco Central de Cuba + solucionescuba.com</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-foreground">Consultar y actualizar tasas actuales</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              BCC oficial (api.bc.gob.cu) + informal Diviza — últimos 7 días, mismo flujo del cron automático.
+            </p>
           </div>
           <button
             onClick={() => onManualCapture(7)}
-            disabled={capturing || loading}
-            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
+            disabled={captureInProgress || loading}
+            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-sm shrink-0"
           >
-            <Database className={cn('w-4 h-4', capturing && 'animate-pulse')} />
-            <span>{capturing ? 'Capturando...' : 'Ejecutar'}</span>
+            <Database className={cn('w-4 h-4', capturing && 'animate-pulse')} aria-hidden="true" />
+            <span>{capturing ? 'Actualizando…' : 'Actualizar tasas'}</span>
           </button>
         </div>
 
-        {/* Capturar tasa real */}
-        <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
-          <div className="flex-1">
-            <p className="text-sm font-black text-foreground">Capturar tasa real (hoy)</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Scrapea la tasa actual de USD/EUR/MLC desde solucionescuba.com</p>
+        {/* Capturar informal desde el proveedor activo */}
+        <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-muted/40 border border-border">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-foreground">Capturar informal desde el proveedor activo</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Solo la informal de HOY desde Diviza (cubadivisas.com): USD, EUR y MLC como capture_method='real'.
+              Si falla, se conserva la última tasa real con su fecha.
+            </p>
           </div>
           <button
-            onClick={onScrapeRealRate}
-            disabled={scraping || loading}
-            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
+            onClick={onCaptureInformal}
+            disabled={captureInProgress || loading}
+            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-sm shrink-0"
           >
-            <Globe className={cn('w-4 h-4', scraping && 'animate-pulse')} />
-            <span>{scraping ? 'Capturando...' : 'Ejecutar'}</span>
+            <Globe className={cn('w-4 h-4', scraping && 'animate-pulse')} aria-hidden="true" />
+            <span>{scraping ? 'Capturando…' : 'Capturar informal'}</span>
           </button>
         </div>
 
-        {/* Cargar histórico (admin) */}
+        {/* Importar histórico por Excel */}
         {isAdmin && (
-          <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-purple-600/5 border border-purple-600/20">
-            <div className="flex-1">
-              <p className="text-sm font-black text-foreground">Cargar histórico completo</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Scrapea ~380 días de histórico desde bolsa-divisas.php (solo admin)</p>
+          <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-muted/40 border border-border">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-black text-foreground">Importar datos históricos por Excel</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Plantilla con fechas hábiles (2021→hoy). La columna informal alimenta la serie histórica (elToque);
+                Diviza solo publica la cotización vigente, por eso el histórico se importa con fechas verificables.
+              </p>
             </div>
-            <button
-              onClick={onScrapeHistorical}
-              disabled={scrapingHist || loading}
-              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
-            >
-              <Database className={cn('w-4 h-4', scrapingHist && 'animate-pulse')} />
-              <span>{scrapingHist ? 'Cargando...' : 'Ejecutar'}</span>
-            </button>
-          </div>
-        )}
-
-        {/* Cargar Excel (admin) */}
-        {isAdmin && (
-          <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-emerald-600/5 border border-emerald-600/20">
-            <div className="flex-1">
-              <p className="text-sm font-black text-foreground">Cargar Excel (admin)</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Descarga plantilla, llénala con tasas y súbelo. Columnas: fecha | bcc | informal</p>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+              <button
+                onClick={onDownloadTemplate}
+                disabled={uploading || loading}
+                className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-background text-foreground border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm"
+              >
+                <Download className="w-4 h-4" aria-hidden="true" />
+                <span>Plantilla</span>
+              </button>
+              <button
+                onClick={onOpenExcelModal}
+                disabled={uploading || loading}
+                className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-sm"
+              >
+                <Upload className={cn('w-4 h-4', uploading && 'animate-pulse')} aria-hidden="true" />
+                <span>Cargar Excel</span>
+              </button>
             </div>
-            <button
-              onClick={onDownloadTemplate}
-              disabled={loading}
-              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
-            >
-              <Download className="w-4 h-4" />
-              <span>Descargar plantilla</span>
-            </button>
           </div>
         )}
       </div>
 
-      {/* Info */}
+      {/* ── Fuentes de datos ── */}
       <div className="bg-muted/30 rounded-2xl border border-border p-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
           <strong className="text-foreground">Fuentes de datos:</strong><br />
-          • BCC (oficial): API del Banco Central de Cuba (api.bc.gob.cu)<br />
-          • Informal: solucionescuba.com (scraper de HTML + histórico de bolsa-divisas.php)<br />
-          • Excel: carga manual para fechas no scrapeables<br />
+          • <strong>BCC (oficial):</strong> API pública del Banco Central de Cuba (api.bc.gob.cu), 3 segmentos por moneda.<br />
+          • <strong>Informal vigente — Diviza:</strong> cubadivisas.com, HTML público con cotizaciones USD/EUR/MLC; metodología declarada (mediana del mercado informal) y actualización cada 30 minutos con hora visible.<br />
+          • <strong>Informal histórico — elToque:</strong> serie 2025-12-25 → 2026-07-28 conservada con su procedencia original (el proveedor anterior, solucionescuba.com, está fuera de servicio).<br />
+          • <strong>Excel:</strong> importación histórica manual con fechas verificables por el operador.<br />
           <br />
-          <strong className="text-foreground">Nota:</strong> Las tasas informales se capturan en tiempo real desde solucionescuba.com. Si el scraper falla, se usa el último valor real disponible (carry-forward).
+          <strong className="text-foreground">Ante fallos:</strong> si una captura falla no se inventa ningún valor — se conserva la última tasa real con su fecha y la interfaz muestra la antigüedad (estado "Último valor conocido"). Las estimaciones, cuando existan, se identifican siempre como <em>Estimada</em>, nunca como <em>Real</em>.
         </p>
       </div>
     </div>

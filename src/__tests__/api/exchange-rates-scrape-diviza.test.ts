@@ -13,9 +13,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/exchange-rates/scrape-diviza/route';
 
 const mockSession = { value: { id: 'u-1', role: 'admin' } as any };
-const captureResult = {
+
+interface CaptureRow {
+  date: string;
+  currency: string;
+  source: string;
+  segment: string;
+  rate: number;
+  capture_method: string;
+}
+interface CaptureState {
+  captured: CaptureRow[];
+  errors: string[];
+  provider: string | null;
+  sourceUpdatedAt: string | null;
+}
+const captureResult: { value: CaptureState } = {
   value: {
-    captured: [],
+    captured: [] as CaptureRow[],
     errors: [],
     provider: null as string | null,
     sourceUpdatedAt: null as string | null,
@@ -53,8 +68,8 @@ afterAll(() => {
 
 import { afterAll } from 'vitest';
 
-function makeRequest(): Request {
-  return { method: 'POST', headers: new Map(), url: 'http://localhost/api/exchange-rates/scrape-diviza' } as any;
+function makeRequest(): any {
+  return { method: 'POST', headers: new Map(), url: 'http://localhost/api/exchange-rates/scrape-diviza' };
 }
 
 describe('POST /api/exchange-rates/scrape-diviza', () => {

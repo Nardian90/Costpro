@@ -11,8 +11,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 // ═══ Paleta coordinada con el resto del módulo ═══
-const COLOR_BCC = '#22c55e'; // verde
-const COLOR_ELTOQUE = '#f97316'; // naranja
+const COLOR_BCC = '#3b82f6'; // azul (identidad de serie oficial — igual que HistoryTab)
+const COLOR_ELTOQUE = '#ea580c'; // naranja accesible (identidad de serie informal — igual que HistoryTab)
 
 // ═══ Tipos ═══
 type RateSource = 'informal' | 'oficial';
@@ -22,15 +22,15 @@ const RATE_SOURCES: { id: RateSource; label: string; color: string; bgClass: str
     id: 'informal',
     label: 'Informal',
     color: COLOR_ELTOQUE,
-    bgClass: 'bg-orange-500',
-    textClass: 'text-orange-500',
+    bgClass: 'bg-primary',
+    textClass: 'text-primary',
   },
   {
     id: 'oficial',
     label: 'BCC (oficial)',
     color: COLOR_BCC,
-    bgClass: 'bg-green-500',
-    textClass: 'text-green-500',
+    bgClass: 'bg-primary',
+    textClass: 'text-primary',
   },
 ];
 
@@ -198,7 +198,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
 
         <p className="text-xs text-muted-foreground italic">
           {rateSource === 'informal'
-            ? 'Usa la tasa real capturada de solucionescuba.com (mercado informal cubano).'
+            ? 'Usa la tasa del mercado informal cubano (Diviza para la vigente; elToque en el histórico).'
             : 'Usa la tasa oficial del BCC. Recomendado si importas vía sector formal.'}
         </p>
 
@@ -349,12 +349,12 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
         </div>
 
         {/* ─── Bloque 3: Proyección a N días ─── */}
-        <div className={cn('rounded-xl p-5 border-2', forecast && forecast.r2 >= 0.4 ? 'bg-purple-500/10 border-purple-500/30' : 'bg-muted/30 border-border')}>
+        <div className={cn('rounded-xl p-5 border-2', forecast && forecast.r2 >= 0.4 ? 'bg-primary/5 border-primary/30' : 'bg-muted/30 border-border')}>
           <div className="flex items-center gap-2 mb-3">
-            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center border', forecast && forecast.r2 >= 0.4 ? 'bg-purple-500/20 border-purple-500/40' : 'bg-muted/50 border-border')}>
-              <span className={cn('text-sm font-black', forecast && forecast.r2 >= 0.4 ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}>3</span>
+            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center border', forecast && forecast.r2 >= 0.4 ? 'bg-primary/15 border-primary/30' : 'bg-muted/50 border-border')}>
+              <span className={cn('text-sm font-black', forecast && forecast.r2 >= 0.4 ? 'text-primary' : 'text-muted-foreground')}>3</span>
             </div>
-            <span className={cn('text-sm font-black uppercase tracking-widest', forecast && forecast.r2 >= 0.4 ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}>
+            <span className={cn('text-sm font-black uppercase tracking-widest', forecast && forecast.r2 >= 0.4 ? 'text-primary' : 'text-muted-foreground')}>
               En +{forecastDays} días
             </span>
             <InfoTooltip title={`Proyección a ${forecastDays} días — cómo se calcula`}>
@@ -382,7 +382,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
           </div>
           {forecast && forecast.r2 >= 0.4 ? (
             <p className="text-sm text-foreground leading-relaxed">
-              <span className="text-purple-600 dark:text-purple-400">
+              <span className="text-primary">
                 Según la regresión lineal, en <strong>{forecastDays} días</strong> la tasa proyectada es{' '}
                 <strong>{forecast.rateInFuture.toFixed(0)} CUP/USD</strong>.
               </span>{' '}
@@ -432,8 +432,8 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
               </p>
             </div>
             {/* Precio recomendado en N días */}
-            <div className={cn('rounded-lg p-3 bg-background/70 border', forecast && forecast.r2 >= 0.4 ? 'border-purple-500/40' : 'border-border/50 opacity-60')}>
-              <p className={cn('text-[10px] font-black uppercase tracking-widest mb-1', forecast && forecast.r2 >= 0.4 ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}>
+            <div className={cn('rounded-lg p-3 bg-background/70 border', forecast && forecast.r2 >= 0.4 ? 'border-primary/40' : 'border-border/50 opacity-60')}>
+              <p className={cn('text-[10px] font-black uppercase tracking-widest mb-1', forecast && forecast.r2 >= 0.4 ? 'text-primary' : 'text-muted-foreground')}>
                 En +{forecastDays}d (proy.)
               </p>
               <p className="text-lg font-black font-mono text-foreground">
