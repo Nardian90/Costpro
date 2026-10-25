@@ -15,6 +15,20 @@
 --                                        membresías cruzando tenants
 --   6. Activación de SuperAdmin       — admin@demo.com (guarded, ver nota)
 --
+-- CORRECCIÓN CP-ORG-001 (2026-10-25, pre-despliegue — esta migración NUNCA se
+-- aplicó a producción, por lo que se corrige en el propio archivo):
+--   a. assign_user_organization: el actor se vincula a auth.uid() con el
+--      patrón anti-spoofing H-7 (idéntico al de los 8 RPC corregidos en
+--      20260820000001). Antes aceptaba p_actor_id arbitrario de CUALQUIER
+--      authenticated vía PostgREST directo → escalamiento de privilegios.
+--   b. assign_user_organization: el UPDATE del perfil filtraba por filas
+--      cuyo active_store_id fuera NULL o ajeno al destino; si la tienda
+--      activa ya pertenecía a la empresa destino (o era legacy sin tenant),
+--      el cambio de empresa se OMITÍA silenciosamente reportando
+--      applied=true. Ahora tenant_id se aplica SIEMPRE y solo
+--      active_store_id se limpia condicionalmente.
+--
+-- ----------------------------------------------------------------------------
 -- NOTA DE DESPLIEGUE (IMPORTANTE):
 --   El paso 6 activa el rol 'superadmin' en admin@demo.com. El código de la
 --   app que lo soporta (UserRole, jerarquía, navegación) viaja en ESTE mismo
@@ -241,6 +255,12 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
+  -- CORRECCIÓN CP-ORG-001 (a): patrón anti-spoofing H-7 — un llamado
+  -- authenticated usa SIEMPRE auth.uid() como actor (p_actor_id se ignora);
+  -- solo service_role (la ruta API con clave de servicio) puede declarar
+  -- p_actor_id (la sesión del usuario autenticado que la invoca).
+  v_actor_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_actor_id, auth.uid()) ELSE auth.uid() END;
   v_actor_role public.user_role;
   v_actor_tenant uuid;
   v_user_tenant uuid;
@@ -249,13 +269,13 @@ DECLARE
   v_old_tenant uuid;
   v_removed int := 0;
 BEGIN
-  IF p_actor_id IS NULL OR p_user_id IS NULL THEN
+  IF v_actor_uid IS NULL OR p_user_id IS NULL THEN
     RETURN QUERY SELECT false, false, 0, 'Parámetros incompletos'::text;
     RETURN;
   END IF;
 
   SELECT role, tenant_id INTO v_actor_role, v_actor_tenant
-    FROM public.profiles WHERE id = p_actor_id;
+    FROM public.profiles WHERE id = v_actor_uid;
   IF NOT FOUND OR v_actor_role NOT IN ('admin', 'superadmin') THEN
     RETURN QUERY SELECT false, false, 0, 'El actor no tiene permisos administrativos'::text;
     RETURN;
@@ -323,24 +343,30 @@ BEGIN
        AND s.tenant_id IS DISTINCT FROM p_tenant_id;
   END IF;
 
+  -- CORRECCIÓN CP-ORG-001 (b): tenant_id se aplica SIEMPRE (el cambio de
+  -- empresa nunca se omite). active_store_id solo se limpia cuando apunta a
+  -- una tienda AJENA al destino (con tenant asignado distinto); si pertenece
+  -- al destino o es legacy sin tenant, se conserva (coherente con el
+  -- criterio de las membresías que se retiran arriba).
   UPDATE public.profiles
      SET tenant_id = p_tenant_id,
-         active_store_id = NULL,
+         active_store_id = CASE
+           WHEN active_store_id IS NULL THEN NULL
+           WHEN EXISTS (
+             SELECT 1 FROM public.stores s2
+             WHERE s2.id = profiles.active_store_id
+               AND s2.tenant_id IS NOT NULL
+               AND s2.tenant_id IS DISTINCT FROM p_tenant_id
+           ) THEN NULL
+           ELSE active_store_id
+         END,
          updated_at = now()
-   WHERE id = p_user_id
-     AND (
-       active_store_id IS NULL
-       OR NOT EXISTS (
-         SELECT 1 FROM public.stores s2
-         WHERE s2.id = profiles.active_store_id
-           AND (s2.tenant_id IS NULL OR s2.tenant_id IS NOT DISTINCT FROM p_tenant_id)
-       )
-     );
+   WHERE id = p_user_id;
 
   INSERT INTO public.user_audit_log (
     performed_by, target_user_id, action, old_values, new_values, metadata
   ) VALUES (
-    p_actor_id,
+    v_actor_uid,
     p_user_id,
     'assign_organization',
     jsonb_build_object('tenant_id', v_old_tenant),
