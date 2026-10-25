@@ -878,3 +878,52 @@ propietario:
 | Aislamiento de roles ordinarios | VERIFICADO — tenant_admin 0 tiendas; empleado 1/1; cross-store 0 filas; rol inmutable desde cliente |
 | Cuenta afectada | Intacta, superadmin VIVO, 0 membresías por diseño; CERO escrituras productivas |
 | Cierre funcional en producción | **PENDIENTE DE ACTIVACIÓN** (merge + deploy + `20261026170000`) — ver §17.6 |
+
+### 17.8 Adendo — reconciliación de los gates de seguridad (commit 2a9020451)
+
+El CI del SHA c0e60523e expuso dos estados que este adendo corrige y documenta:
+
+**Hallazgo A — `secdef_public_grant` (SQL DB Security, EN VIVO):** tras la
+activación productiva del ciclo 4, dos funciones SECURITY DEFINER quedaron
+con EXECUTE para PUBLIC/anon porque la migración que las creó
+(20261026120000) solo revocó para `assign_user_organization`:
+`is_superadmin/0` (anon/PUBLIC; helper de policies) y
+`enforce_membership_tenant_consistency/0` (trigger de empresa única; su
+grant directo es inerte — Postgres prohíbe invocar funciones de trigger
+directamente). Estado PREEXISTENTE en producción (el gate no había corrido
+sobre SQL desde la activación), expuesto porque este PR toca SQL.
+
+Correcciones (2a9020451):
+1. **Migración `20261026180000_cp_org001_platform_acl_revoke.sql`** — REVOKE
+   PUBLIC/anon a `is_superadmin` (GRANT authenticated+service_role: las
+   policies la ejecutan con privilegios del usuario, doctrina de `is_admin`)
+   y a `enforce_membership_tenant_consistency` (GRANT service_role, doctrina
+   de `validate_active_store`). Aplicada a E2E y validada (grants verificados;
+   suite LIVE re-ejecutada 12/12 — las policies siguen operativas).
+2. **Check 2 del gate: paridad con Check 1** — excluye funciones
+   DISPARADORAS del chequeo de grants anon/PUBLIC (falso positivo de la clase
+   descrita); el hallazgo del trigger desaparece por corrección del propio
+   check, no por allowlist.
+3. **`is_superadmin` en producción permanece como hallazgo REAL hasta que el
+   propietario aplique 20261026180000 junto con el despliegue** (pasos de
+   activación §17.6). NO se añadió allowlist: el chequeo es fail-closed por
+   diseño y enmascarar un grant anónimo real contradice la doctrina del repo;
+   el PR lo documenta con esta entrada y la migración que lo cierra. Riesgo
+   del grant residual mientras tanto: NULO en la práctica (anon: auth.uid() IS
+   NULL → false; sin superficie de escalada), es higiene de defensa en
+   profundidad.
+
+**Hallazgo B — `BODY_DRIFT_FROM_MIGRATION` (Security Audit, Capa C):** la
+migración 20261026170000 cambia el cuerpo de `validate_active_store` y el
+cuerpo LIVE de producción no cambia hasta su aplicación. Corrección: entrada
+`source_of_truth_baseline` para `validate_active_store` (regla
+BODY_DRIFT_FROM_MIGRATION, expira 2026-11-30) — el mecanismo sancionado §8.1,
+idéntico al usado para las 4 funciones `managed_*` del ciclo 3. Verificado
+localmente: contrato estático 152/152 representadas, **0 divergencias
+bloqueantes**.
+
+**Estado final esperado del CI en 2a9020451:** todos los checks verdes SALVO
+`SQL DB Security Checks`, que mantiene exactamente UN hallazgo
+(`is_superadmin`) que se apaga al aplicar 20261026180000 a producción (junto
+con 170000 y el despliegue del código). El evaluador fue simulado localmente
+con ese resultado exacto.
