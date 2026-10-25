@@ -54,11 +54,11 @@ const REPORTE = S({
     { id: 'cf-out', direction: 'out', amount: 1200, currency: 'CUP', amount_cup: 1200 },
   ],
   payments: [
-    { id: 'svc', payment_method: 'cash', currency: 'CUP', ref_type: 'service', total: 150 },
-    { id: 'rcp', payment_method: 'cash', currency: 'CUP', ref_type: 'receipt', total: 90 },
+    { payment_method: 'cash', currency: 'CUP', ref_type: 'service', total: 150 },
+    { payment_method: 'cash', currency: 'CUP', ref_type: 'receipt', total: 90 },
   ],
-  commissions: [{ id: 'com', payment_method: 'cash', currency: 'CUP', total: 60 }],
-  production: [{ id: 'ot', payment_method: 'cash', currency: 'CUP', total: 450 }],
+  commissions: [{ payment_method: 'cash', currency: 'CUP', total: 60 }],
+  production: [{ payment_method: 'cash', currency: 'CUP', total: 450 }],
   adjustments: [
     { id: 'adj+', direction: 'in', amount: 35, note: '' },
     { id: 'adj-', direction: 'out', amount: 25, note: '' },
