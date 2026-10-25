@@ -8,7 +8,7 @@ import { parseISO, differenceInCalendarDays } from 'date-fns';
 type RateSource = 'informal' | 'oficial';
 
 const RATE_SOURCES: { id: RateSource; label: string; color: string; bgClass: string }[] = [
-  { id: 'informal', label: 'Informal (solucionescuba)', color: 'text-orange-500', bgClass: 'bg-orange-500' },
+  { id: 'informal', label: 'Informal (Diviza)', color: 'text-primary', bgClass: 'bg-primary' },
   { id: 'oficial', label: 'BCC (oficial)', color: 'text-green-500', bgClass: 'bg-green-500' },
 ];
 
@@ -143,12 +143,12 @@ function VariationsTab({ data }: any) {
                 <tr className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                   <td className="py-3 px-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white bg-orange-500">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-primary-foreground bg-primary">
                         $
                       </div>
                       <div>
                         <p className="font-black text-foreground">USD</p>
-                        <p className="text-xs text-muted-foreground">Informal (solucionescuba)</p>
+                        <p className="text-xs text-muted-foreground">Informal (Diviza)</p>
                       </div>
                     </div>
                   </td>

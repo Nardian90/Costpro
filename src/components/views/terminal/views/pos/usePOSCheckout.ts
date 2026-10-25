@@ -675,12 +675,17 @@ export function usePOSCheckout() {
           let usdToCupRate = cartState.globalRates['USD'] || 0;
 
           if (usdToCupRate === 0) {
-            // Fetch tasa informal
-            const rateRes = await fetch('/api/exchange-rates?currency=USD&source=elToque&days=1');
+            // Fetch tasa informal (pseudo-fuente 'informal': la más reciente
+            // entre Diviza [activa] y elToque [histórica], por frescura)
+            const rateRes = await fetch('/api/exchange-rates?currency=USD&source=informal&days=1');
             if (rateRes.ok) {
               const rateData = await rateRes.json();
-              if (rateData.rates && rateData.rates.length > 0) {
-                usdToCupRate = parseFloat(rateData.rates[0].rate) || 0;
+              // informal_latest: la informal vigente resuelta server-side por
+              // frescura (Diviza activa > elToque histórica > carry-forward)
+              if (rateData.informal_latest?.rate) {
+                usdToCupRate = parseFloat(rateData.informal_latest.rate) || 0;
+              } else if (rateData.rates && rateData.rates.length > 0) {
+                usdToCupRate = parseFloat(rateData.rates[rateData.rates.length - 1].rate) || 0;
               }
             }
             // Fallback BCC

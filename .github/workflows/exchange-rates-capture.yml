@@ -1,0 +1,62 @@
+name: Exchange rates capture (BCC + Diviza)
+
+# AUTOMATIZACIÓN DE LA CAPTURA DE TASAS (misión IC-DIVIZA 2026-10-26).
+#
+# Contexto: el plan Vercel Hobby solo admite 1 cron (ocupado por
+# purge-snapshots), y solucionescuba.com (fuente informal anterior) está
+# caído — la tasa informal llevaba congelada desde 2026-07-28. La captura
+# automática se recupera con este workflow programado que ejecuta el MISMO
+# adaptador compartido que la captura manual (src/lib/exchange-capture.ts):
+# BCC oficial (api.bc.gob.cu) + informal Diviza (cubadivisas.com).
+#
+# Schedule: 2×/día (Diviza actualiza cada 30 min; dos capturas diarias
+# cubren mañana y tarde de Cuba con margen ante fallos puntuales).
+# 12:00 UTC ≈ 08:00 Cuba (verano) · 00:00 UTC ≈ 20:00 Cuba (verano).
+
+on:
+  schedule:
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Días de backfill (1-30)'
+        required: false
+        default: '1'
+
+concurrency:
+  group: exchange-rates-capture
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Sin npm ci: el script solo usa fetch global de Node 20 y tsx para
+      # compilar TS en caliente (imports relativos puros, sin aliases).
+      - name: Capture exchange rates (BCC + Diviza)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::Faltan secrets NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY"
+            exit 1
+          fi
+          npx --yes tsx@4 scripts/cron/exchange-rates-capture.ts --days=${{ github.event.inputs.days || '1' }}
+
+      - name: Alert on zero captures
+        if: failure()
+        run: |
+          echo "::warning::La captura de tasas falló o devolvió 0 registros — revisa el log del paso anterior (conectividad BCC/Diviza o credenciales)."

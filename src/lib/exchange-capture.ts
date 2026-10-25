@@ -1,58 +1,54 @@
 /**
- * exchange-capture.ts — Lógica compartida de captura de tasas BCC + elToque.
+ * exchange-capture.ts — Lógica compartida de captura de tasas BCC + informal (Diviza).
  *
- * Antes había 2 implementaciones paralelas:
- *   1. /api/cron/exchange-rates/route.ts (cron job)
- *   2. /api/exchange-rates/route.ts POST (manual admin)
+ * Single source of truth: el cron (GitHub Actions → scripts/cron), el proxy
+ * manual (/api/exchange-rates/refresh) y la captura informal puntual
+ * (/api/exchange-rates/scrape-diviza) usan TODOS esta lib.
  *
- * Ahora ambas importan esta lib. Single source of truth.
+ * HISTORIA DE LA CAPTURA INFORMAL:
+ *   - RED FLAG F-01b (2026-07-03): source='elToque' se estimaba como
+ *     `BCC_seg3 × 1.15` sin distinguirla en BD → se añadió capture_method.
+ *   - IC-SOLUCIONES-CUBA-SCRAPER (2026-07-03): el scraping de eltoque.com no
+ *     funciona (Cloudflare + tasas como imágenes) → se añadió
+ *     solucionescuba.com como fuente informal real.
+ *   - IC-DIVIZA (2026-10-26): solucionescuba.com CAÍDO (el dominio sirve un
+ *     panel de hosting; TLS mismatch; la última tasa informal guardada es del
+ *     2026-07-28). Reemplazo: cubadivisas.com (Diviza) — HTML público estático
+ *     con JSON "conv-data" (informal: USD/EUR/MLC + otras), metodología
+ *     declarada (mediana del mercado, actualización cada 30 min con hora
+ *     visible). El scraper de eltoque.com y el de solucionescuba.com se
+ *     RETIRAN: nunca capturaron nada real (Cloudflare bloquea todo) y la
+ *     fuente está muerta respectivamente. Sus filas históricas source='elToque'
+ *     se conservan intactas en BD con su procedencia original.
  *
- * Mejoras vs versión anterior:
- *   - Promise.allSettled para paralelizar USD + EUR en backfill (C4 fix)
- *   - Constantes extraídas (no más magic numbers)
- *   - Validación de shape BCC explícita
- *   - Sin duplicación de fetch /activas (era llamada 2 veces)
- *
- * RED FLAG F-01b (2026-07-03):
- *   - Antes: las tasas source='elToque' SIEMPRE se calculaban como
- *     `BCC_seg3 × 1.15` (estimación), sin distinguirlas en BD.
- *   - Ahora: se intenta primero scraping real de eltoque.com vía
- *     `fetchElToqueRatesReal()` (ver `./eltoque-scraper.ts`). Si funciona,
- *     se persisten con `capture_method='real'`. Si falla (Cloudflare,
- *     timeout, parse error), se cae al cálculo `BCC × 1.15` con
- *     `capture_method='estimated'`.
- *   - Las filas source='BCC' siempre se marcan `capture_method='real'`
- *     (la API del BCC es pública y se captura directamente).
- *   - Migración: `20260703000004_exchange_rates_capture_method.sql`.
- *
- * ACTUALIZACIÓN IC-SOLUCIONES-CUBA-SCRAPER (2026-07-03):
- *   - El scraping de eltoque.com NO funciona (Cloudflare bloquea todo fetch
- *     del agente + publican tasas como imágenes). Se añadió un segundo
- *     scraper como fallback: `fetchSolucionesCubaRates()` (ver
- *     `./soluciones-cuba-scraper.ts`). solucionescuba.com responde HTTP 200
- *     con HTML estático que contiene las tasas como TEXTO visible.
- *   - Orden de intentos para source='elToque':
- *       1. eltoque.com (probablemente falle)
- *       2. solucionescuba.com (debería funcionar)
- *       3. BCC × 1.15 estimado (fallback final)
- *   - Las tasas capturadas de solucionescuba.com también se marcan
- *     `capture_method='real'` porque son la tasa informal real publicada.
+ * REGLAS ACTUALES (misión 2026-10-26):
+ *   - Tasas BCC: siempre `capture_method='real'` (API pública directa).
+ *   - Tasas informales HOY: se capturan de Diviza con `source='Diviza'`,
+ *     `capture_method='real'`. EUR/MLC solo se guardan si Diviza los publica
+ *     (JAMÁS se fabrican desde BCC×1.15 ni EUR=USD).
+ *   - NO se persisten estimaciones: si Diviza falla, no se guarda nada para
+ *     esa fecha — la capa de consulta hace carry-forward del último valor real
+ *     y la UI muestra la antigüedad.
+ *   - Fechas PASADAS: Diviza solo publica la cotización vigente (sin serie
+ *     histórica) → el backfill informal NO inventa datos; el histórico se
+ *     importa por Excel (bulk-upload, serie informal histórica elToque).
  */
-
-import { fetchElToqueRatesReal } from './eltoque-scraper';
-import { fetchSolucionesCubaRates, fetchHistoricalRates } from './soluciones-cuba-scraper';
 
 // Constantes (antes magic numbers esparcidos)
 export const BCC_API_BASE = 'https://api.bc.gob.cu/v1/tasas-de-cambio';
 export const CURRENCIES = ['USD', 'EUR'] as const;
 export const DEFAULT_USD_ESPECIAL = 574;
 export const DEFAULT_EUR_ESPECIAL = 653;
-export const EL_TOQUE_SPREAD = 1.15; // El informal suele estar ~15% por encima del segmento 3
+
+/** Fuentes informales válidas en exchange_rates.source (orden de prioridad). */
+export const INFORMAL_SOURCES = ['Diviza', 'elToque'] as const;
 
 /**
- * Método de captura — RED FLAG F-01b.
- * - 'real': scraping de eltoque.com exitoso, o API directa del BCC.
- * - 'estimated': fallback BCC_seg3 × 1.15 (cuando el scraping falla).
+ * Método de captura.
+ * - 'real': cotización válida y verificable obtenida del proveedor que se
+ *   registra (Diviza o API directa BCC).
+ * - 'estimated': valor calculado (identificado como estimado; NUNCA se
+ *   persiste desde 2026-10-26 — se mantiene en el enum por el histórico).
  */
 export type CaptureMethod = 'real' | 'estimated';
 
@@ -74,12 +70,12 @@ export interface BCCRate {
 export interface CaptureResult {
   date: string;
   currency: string;
-  source: 'BCC' | 'elToque';
+  source: 'BCC' | 'elToque' | 'Diviza';
   segment: string;
   rate: number;
   /**
-   * Método de captura (F-01b): 'real' (scraping eltoque.com / API BCC)
-   * o 'estimated' (BCC×1.15 fallback).
+   * Método de captura: 'real' (cotización verificable del proveedor
+   * registrado) o 'estimated' (histórico: BCC×1.15).
    */
   capture_method: CaptureMethod;
 }
@@ -103,7 +99,6 @@ async function upsertToSupabase(
     source: string;
     segment: string;
     rate: number;
-    /** F-01b: siempre se envía. Default 'estimated' si se omite. */
     capture_method?: CaptureMethod;
   },
 ): Promise<boolean> {
@@ -153,12 +148,100 @@ async function fetchBCCHistorico(
 }
 
 /**
- * Captura tasas para una fecha específica usando BCC API.
- * - Para "hoy": usa /activas
- * - Para fechas pasadas: usa /historico con rango de 1 día (paralelo USD+EUR)
+ * CAPTURA INFORMAL DE HOY — lógica única compartida por cron, refresh y
+ * scrape-diviza (misión 2026-10-26: "el cron y la captura manual utilizan el
+ * mismo adaptador y reglas").
  *
- * FIX C4: usa Promise.allSettled para paralelizar USD+EUR en backfill,
- * reduciendo tiempo por fecha de ~2.2s a ~1.2s.
+ * - Fuente: Diviza (cubadivisas.com) — JSON conv-data del HTML público.
+ * - Persiste `source='Diviza'`, `capture_method='real'`, `segment='3'`.
+ * - Solo monedas publicadas y validadas por Diviza (EUR/MLC null → no se
+ *   guardan; JAMÁS se fabrican).
+ * - Si Diviza falla (red, HTTP, parseo, mantenimiento): NO persiste nada y
+ *   devuelve errors descriptivos — el carry-forward lo resuelve la capa de
+ *   consulta con el último valor real.
+ * - Solo aplica a la fecha de HOY: Diviza no publica serie histórica.
+ */
+export async function captureInformalToday(
+  supabaseUrl: string,
+  serviceKey: string,
+): Promise<{
+  captured: CaptureResult[];
+  errors: string[];
+  provider: 'Diviza' | null;
+  sourceUpdatedAt: string | null;
+}> {
+  const captured: CaptureResult[] = [];
+  const errors: string[] = [];
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toISOString();
+
+  const { fetchDivizaRates } = await import('./diviza-scraper');
+  // Defensa en profundidad: el adaptador no debe lanzar, pero si lo hace
+  // (bug inesperado), la captura falla limpio — el cron y la ruta manual
+  // reciben el estado de error, nunca una excepción sin manejar.
+  let rates: Awaited<ReturnType<typeof fetchDivizaRates>> = null;
+  try {
+    rates = await fetchDivizaRates();
+  } catch (e: any) {
+    console.warn(`[exchange-capture] Diviza lanzó excepción inesperada: ${e?.message ?? e}`);
+  }
+
+  if (!rates) {
+    errors.push('Diviza: no se pudo obtener una cotización válida (red, HTTP o parseo)');
+    console.warn(
+      `[exchange-capture] Diviza falló para ${today} — NO se guarda nada. ` +
+        'Carry-forward desde el último valor real.',
+    );
+    return { captured, errors, provider: null, sourceUpdatedAt: null };
+  }
+
+  const rows: Array<{ currency: string; rate: number }> = [
+    { currency: 'USD', rate: rates.usd },
+  ];
+  if (rates.eur !== null) rows.push({ currency: 'EUR', rate: rates.eur });
+  if (rates.mlc !== null) rows.push({ currency: 'MLC', rate: rates.mlc });
+
+  for (const row of rows) {
+    const ok = await upsertToSupabase(supabaseUrl, serviceKey, {
+      rate_date: today,
+      captured_at: now,
+      currency: row.currency,
+      source: 'Diviza',
+      segment: '3',
+      rate: row.rate,
+      capture_method: 'real',
+    });
+    if (ok) {
+      captured.push({
+        date: today,
+        currency: row.currency,
+        source: 'Diviza',
+        segment: '3',
+        rate: row.rate,
+        capture_method: 'real',
+      });
+    } else {
+      errors.push(`Diviza upsert failed: ${row.currency} ${today}`);
+    }
+  }
+
+  console.info(
+    `[exchange-capture] Diviza REAL capturado para ${today}: ` +
+      `USD=${rates.usd} EUR=${rates.eur ?? '—'} MLC=${rates.mlc ?? '—'} ` +
+      `(fuente actualizada: ${rates.sourceUpdatedAt ?? '—'})`,
+  );
+
+  return { captured, errors, provider: 'Diviza', sourceUpdatedAt: rates.sourceUpdatedAt };
+}
+
+/**
+ * Captura tasas para una fecha específica usando BCC API + Diviza (informal).
+ * - Para "hoy": BCC /activas + captura informal de Diviza
+ * - Para fechas pasadas: BCC /historico con rango de 1 día (paralelo USD+EUR).
+ *   El informal de fechas pasadas NO se persite (Diviza solo publica la tasa
+ *   vigente; el histórico informal se importa por Excel).
+ *
+ * FIX C4: Promise.allSettled para paralelizar USD+EUR en backfill.
  */
 export async function captureForDate(
   targetDate: string,
@@ -207,159 +290,47 @@ export async function captureForDate(
 
     if (!bccRates || bccRates.length === 0) {
       errors.push(`No BCC data for ${targetDate}`);
-      return { captured, errors };
-    }
+    } else {
+      // 1. BCC: 3 segmentos por moneda (siempre captura 'real' — API pública).
+      for (const tasa of bccRates) {
+        if (!CURRENCIES.includes(tasa.codigoMoneda as typeof CURRENCIES[number])) continue;
 
-    // 1. BCC: 3 segmentos por moneda
-    // F-01b: BCC siempre es captura 'real' (API pública, fetch directo).
-    for (const tasa of bccRates) {
-      if (!CURRENCIES.includes(tasa.codigoMoneda as typeof CURRENCIES[number])) continue;
-
-      for (const seg of BCC_SEGMENTS) {
-        const rate = tasa[seg.field] as number | undefined;
-        if (rate && rate > 0) {
-          const ok = await upsertToSupabase(supabaseUrl, serviceKey, {
-            rate_date: targetDate,
-            captured_at: now,
-            currency: tasa.codigoMoneda,
-            source: 'BCC',
-            segment: seg.segment,
-            rate: Math.round(rate * 100) / 100,
-            capture_method: 'real',
-          });
-          if (ok) {
-            captured.push({
-              date: targetDate,
+        for (const seg of BCC_SEGMENTS) {
+          const rate = tasa[seg.field] as number | undefined;
+          if (rate && rate > 0) {
+            const ok = await upsertToSupabase(supabaseUrl, serviceKey, {
+              rate_date: targetDate,
+              captured_at: now,
               currency: tasa.codigoMoneda,
               source: 'BCC',
               segment: seg.segment,
-              rate,
+              rate: Math.round(rate * 100) / 100,
               capture_method: 'real',
             });
-          } else {
-            errors.push(`BCC upsert failed: ${tasa.codigoMoneda} seg${seg.segment} ${targetDate}`);
+            if (ok) {
+              captured.push({
+                date: targetDate,
+                currency: tasa.codigoMoneda,
+                source: 'BCC',
+                segment: seg.segment,
+                rate,
+                capture_method: 'real',
+              });
+            } else {
+              errors.push(`BCC upsert failed: ${tasa.codigoMoneda} seg${seg.segment} ${targetDate}`);
+            }
           }
         }
       }
     }
 
-    // 2. elToque: PRIMERO intentar scraping real (F-01b).
-    //    Orden de intentos:
-    //      1. eltoque.com (probablemente falle por Cloudflare — imágenes + challenge)
-    //      2. solucionescuba.com — si es HOY: home (tasa actual);
-    //         si es fecha PASADA: bolsa-divisas.php (histórico JSON embebido)
-    //      3. Fallback BCC×1.15 con capture_method='estimated'
-    //    Ambos scrapers devuelven null si fallan (no lanzan), por lo que
-    //    encadenamos y solo caemos al estimado si AMBOS fallan.
-    let elToqueRates: Array<{ currency: string; rate: number; capture_method: CaptureMethod }>;
-    let elToqueCaptureMethod: CaptureMethod;
-
-    const realRatesElToque = await fetchElToqueRatesReal();
-
-    // FIX: Si la fecha objetivo NO es hoy, la home de solucionescuba.com
-    // devuelve la tasa ACTUAL, no la histórica. Para fechas pasadas, usar
-    // el histórico de bolsa-divisas.php que tiene JSON embebido con ~380 días.
-    const todayStr = new Date().toISOString().split('T')[0];
-    const isToday = targetDate === todayStr;
-
-    let realRatesSoluciones: { usd: number; eur: number; mlc: number } | null = null;
-    if (!realRatesElToque) {
-      if (isToday) {
-        // Hoy: usar la home que tiene la tasa actual
-        realRatesSoluciones = await fetchSolucionesCubaRates();
-      } else {
-        // Fecha pasada: usar histórico de bolsa-divisas.php
-        const historical = await fetchHistoricalRates();
-        const entry = historical.find(h => h.date === targetDate);
-        if (entry && entry.usd > 0) {
-          realRatesSoluciones = {
-            usd: entry.usd,
-            eur: entry.eur,
-            mlc: entry.mlc,
-          };
-          console.info(
-            `[exchange-capture] Histórico solucionescuba.com para ${targetDate}: ` +
-              `USD=${entry.usd} EUR=${entry.eur} MLC=${entry.mlc}`,
-          );
-        }
-      }
-    }
-
-    if (realRatesElToque) {
-      // Scraping de eltoque.com exitoso
-      elToqueCaptureMethod = 'real';
-      elToqueRates = [
-        { currency: 'USD', rate: Math.round(realRatesElToque.usd * 100) / 100, capture_method: 'real' },
-        { currency: 'EUR', rate: Math.round(realRatesElToque.eur * 100) / 100, capture_method: 'real' },
-        { currency: 'MLC', rate: Math.round(realRatesElToque.mlc * 100) / 100, capture_method: 'real' },
-      ];
-      console.info(
-        `[exchange-capture] elToque REAL capturado (${realRatesElToque.strategy}) ` +
-          `para ${targetDate}: USD=${realRatesElToque.usd} EUR=${realRatesElToque.eur} MLC=${realRatesElToque.mlc}`,
-      );
-    } else if (realRatesSoluciones) {
-      // eltoque.com falló — scraping de solucionescuba.com exitoso.
-      // Si EUR o MLC no fueron encontrados por el scraper (reportados como 0),
-      // estimarlos desde BCC×1.15 para no guardar 0 en BD.
-      elToqueCaptureMethod = 'real';
-      const eurEspecialBcc =
-        bccRates.find(t => t.codigoMoneda === 'EUR')?.tasaEspecial ?? DEFAULT_EUR_ESPECIAL;
-      const usdReal = realRatesSoluciones.usd;
-      const eurReal =
-        realRatesSoluciones.eur > 0
-          ? realRatesSoluciones.eur
-          : Math.round(eurEspecialBcc * EL_TOQUE_SPREAD * 100) / 100;
-      const mlcReal =
-        realRatesSoluciones.mlc > 0
-          ? realRatesSoluciones.mlc
-          : usdReal; // MLC suele ≈ USD cuando no se reporta
-      elToqueRates = [
-        { currency: 'USD', rate: Math.round(usdReal * 100) / 100, capture_method: 'real' },
-        { currency: 'EUR', rate: Math.round(eurReal * 100) / 100, capture_method: 'real' },
-        { currency: 'MLC', rate: Math.round(mlcReal * 100) / 100, capture_method: 'real' },
-      ];
-      console.info(
-        `[exchange-capture] solucionescuba.com REAL capturado ` +
-          `para ${targetDate}: USD=${usdReal} EUR=${eurReal} MLC=${mlcReal}`,
-      );
-    } else {
-      // Ambos scrapers fallaron — NO inventar BCC×1.15.
-      // Carry-forward: usar el último valor real guardado en BD como referencia
-      // temporal, PERO no persistirlo (no se guarda en exchange_rates para esta
-      // fecha). El caller (UI) debe mostrar un mensaje "tasa temporalmente no
-      // disponible, usando último valor de YYYY-MM-DD" en lugar de inventar.
-      elToqueCaptureMethod = 'real'; // marcamos como real porque es valor real histórico
-      elToqueRates = []; // NO se persiste nada para esta fecha
-
-      // Loguear para monitoreo
-      console.warn(
-        `[exchange-capture] Ambos scrapers fallaron para ${targetDate} — ` +
-          `NO se guarda nada. Carry-forward manejado por la UI desde el último valor real.`,
-      );
-    }
-
-    for (const r of elToqueRates) {
-      const ok = await upsertToSupabase(supabaseUrl, serviceKey, {
-        rate_date: targetDate,
-        captured_at: now,
-        currency: r.currency,
-        source: 'elToque',
-        segment: '3',
-        rate: r.rate,
-        capture_method: elToqueCaptureMethod,
-      });
-      if (ok) {
-        captured.push({
-          date: targetDate,
-          currency: r.currency,
-          source: 'elToque',
-          segment: '3',
-          rate: r.rate,
-          capture_method: elToqueCaptureMethod,
-        });
-      } else {
-        errors.push(`elToque upsert failed: ${r.currency} ${targetDate}`);
-      }
+    // 2. Informal de HOY desde Diviza (única fuente informal activa).
+    //    Para fechas pasadas NO se persiste informal (Diviza no tiene serie
+    //    histórica) — el Excel bulk-upload cubre el histórico.
+    if (targetDate === today) {
+      const informal = await captureInformalToday(supabaseUrl, serviceKey);
+      captured.push(...informal.captured);
+      errors.push(...informal.errors);
     }
   } catch (e: any) {
     errors.push(`captureForDate ${targetDate} error: ${e.message}`);

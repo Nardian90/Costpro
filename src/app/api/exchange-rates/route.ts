@@ -7,29 +7,23 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
  * GET /api/exchange-rates — devuelve tasas con filtros opcionales:
  *   ?currency=USD&source=BCC&segment=3&days=90
  *
- * POST /api/exchange-rates — captura tasas de BCC (3 segmentos) + elToque.
+ * Fuentes soportadas (misión IC-DIVIZA 2026-10-26):
+ *   - source=BCC           → tasa oficial por segmento (1/2/3).
+ *   - source=Diviza        → tasa informal capturada de cubadivisas.com.
+ *   - source=elToque       → tasa informal histórica (serie congelada desde
+ *                            2026-07-28; se conserva con su procedencia).
+ *   - source=informal      → pseudo-fuente: la informal MÁS RECIENTE entre
+ *                            Diviza y elToque (prioridad por frescura).
+ *   - (sin source)         → BCC + Diviza + elToque.
  *
- * BCC Segmentos:
- *   1 = tasaOficial (empresas estatales)
- *   2 = tasaPublica (CADECA)
- *   3 = tasaEspecial (MIPYMES y personas naturales) — DEFAULT
- *
- * BCC API: https://api.bc.gob.cu/v1/tasas-de-cambio
- *   - /activas — tasas del día actual
- *   - /historico?fechaInicio=...&fechaFin=...&codigoMoneda=USD — histórico
- *
- * elToque: No tiene API pública. Se estima como BCC segmento 3 × 1.15 (constante EL_TOQUE_SPREAD). No es captura de eltoque.com.
+ * El carry-forward virtual se aplica POR FUENTE: si hoy falta la tasa de una
+ * fuente, se arrastra su último valor real con capture_method='carry_forward'
+ * y original_rate_date para que la UI muestre la antigüedad.
  */
 
-const BCC_API = 'https://api.bc.gob.cu/v1/tasas-de-cambio';
-const CURRENCIES = ['USD', 'EUR']; // MLC no está en BCC API, solo elToque
-
-// Mapeo BCC segmento → campo en la API
-const BCC_SEGMENTS = [
-  { segment: '1', field: 'tasaOficial' },
-  { segment: '2', field: 'tasaPublica' },
-  { segment: '3', field: 'tasaEspecial' }, // DEFAULT — MIPYMES
-];
+const CURRENCIES = ['USD', 'EUR', 'MLC']; // MLC no está en BCC API, solo informal
+/** Fuentes informales reales registradas en exchange_rates.source. */
+const INFORMAL_SOURCES = ['Diviza', 'elToque'];
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
@@ -42,14 +36,28 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // Parse query params
     const { searchParams } = new URL(req.url);
     const currency = searchParams.get('currency');
-    const source = searchParams.get('source');
+    const sourceParam = searchParams.get('source');
     const segment = searchParams.get('segment') || '3'; // Default: segmento 3 (MIPYMES)
     const days = parseInt(searchParams.get('days') || '90');
+
+    // Resolución de fuentes a consultar.
+    // 'informal' = pseudo-fuente: ambas informales, el consumidor/el propio
+    // endpoint resuelven por frescura (rate_date DESC, captured_at DESC).
+    const sources: string[] = sourceParam
+      ? sourceParam === 'informal'
+        ? INFORMAL_SOURCES
+        : [sourceParam]
+      : ['BCC', ...INFORMAL_SOURCES];
 
     let query = admin.from('exchange_rates').select('*').eq('segment', segment);
 
     if (currency) query = query.eq('currency', currency);
-    if (source) query = query.eq('source', source);
+    // BCC consulta por segmento; las informales siempre son segmento '3'.
+    if (sources.length === 1) {
+      query = query.eq('source', sources[0]);
+    } else {
+      query = query.in('source', sources);
+    }
 
     // Filtro por fecha (últimos N días)
     const cutoff = new Date();
@@ -64,13 +72,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // FIX-CARRY-FORWARD (2026-07-05): si hoy no hay tasa para alguna combinación
     // source/currency/segment, buscar el último valor disponible y crear un
     // registro virtual carry-forward para que la UI no muestre brincos.
-    //
-    // Esto resuelve el problema: si el BCC o elToque fallan hoy, la UI usa
-    // automáticamente el último valor real disponible arrastrándolo hasta
-    // que el servicio se restablezca.
     const todayStr = new Date().toISOString().split('T')[0];
-    const sources = source ? [source] : ['BCC', 'elToque'];
-    const currencies = currency ? [currency] : ['USD', 'EUR', 'MLC'];
+    const currencies = currency ? [currency] : CURRENCIES;
     const segments = [segment];
 
     const carryForwardRecords: any[] = [];
@@ -110,9 +113,35 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       (a: any, b: any) => a.rate_date.localeCompare(b.rate_date)
     );
 
+    // Pseudo-fuente 'informal': además de devolver todas las filas de los
+    // proveedores informales, se resuelve explícitamente la vigente (la más
+    // fresca) para que el consumidor no tenga que duplicar la regla.
+    let informalLatest: Record<string, any> | undefined;
+    if (sourceParam === 'informal' && currency) {
+      const informalRows = allRates
+        .filter((r: any) => INFORMAL_SOURCES.includes(r.source) && r.currency === currency)
+        .sort((a: any, b: any) => {
+          if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
+          return (b.captured_at || '').localeCompare(a.captured_at || '');
+        });
+      const latest = informalRows[0];
+      if (latest) {
+        informalLatest = {
+          rate: latest.rate,
+          rate_date: latest.rate_date,
+          source: latest.source,
+          capture_method: latest.capture_method,
+          original_rate_date: latest.original_rate_date,
+          is_carry_forward: latest.capture_method === 'carry_forward',
+        };
+      }
+    }
+
     return NextResponse.json({
       rates: allRates,
       count: allRates.length,
+      sources_queried: sources,
+      informal_latest: informalLatest,
       carry_forward_count: carryForwardRecords.length,
       carry_forward_dates: carryForwardRecords.map((r: any) => ({
         source: r.source,
@@ -129,10 +158,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
  * FIX M7: POST eliminado — era duplicado del cron route.
  *
  * Para captura manual (admin), usar:
- *   POST /api/exchange-rates/refresh?days=7
- *
- * Ese endpoint proxy usa withAuth + captureDateRange() (lib compartida
- * con el cron), eliminando la duplicación de lógica que existía antes.
+ *   POST /api/exchange-rates/refresh?days=7        → BCC + informal (Diviza)
+ *   POST /api/exchange-rates/scrape-diviza         → informal puntual (Diviza)
  *
  * El GET sigue disponible para consulta de tasas con filtros.
  */
@@ -147,4 +174,3 @@ export const POST = async () =>
     },
     { status: 410 },
   );
-

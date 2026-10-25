@@ -8,21 +8,28 @@ import { validateOrigin } from '@/lib/csrf';
 /**
  * POST /api/exchange-rates/manual
  *
- * Permite al usuario ingresar manualmente la tasa REAL de elToque (vista en
- * eltoque.com) cuando el scraping automático falla (Cloudflare bloquea).
+ * Permite al usuario ingresar manualmente la tasa informal REAL que ve en el
+ * proveedor (cubadivisas.com/Diviza por defecto, o elToque para la serie
+ * histórica) cuando la captura automática falla.
  *
  * Body:
  *   {
  *     "currency": "USD" | "EUR" | "MLC",
  *     "rate": number (>0, rango 1-10000),
- *     "rate_date"?: "YYYY-MM-DD" (default: hoy)
+ *     "rate_date"?: "YYYY-MM-DD" (default: hoy),
+ *     "source"?: "Diviza" | "elToque" (default: "Diviza" — proveedor activo)
  *   }
+ *
+ * IC-DIVIZA (2026-10-26): el campo source registra la PROCEDENCIA REAL del
+ * valor que el operador consultó. Nunca se atribuye a elToque una cotización
+ * vista en Diviza (ni viceversa). La RPC atómica revalida admin en BD.
  */
 
 const manualSchema = z.object({
   currency: z.enum(['USD', 'EUR', 'MLC']),
   rate: z.number().positive().min(1).max(10000),
   rate_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  source: z.enum(['Diviza', 'elToque']).optional(),
 });
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -79,8 +86,11 @@ async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
       );
     }
 
-    const { currency, rate, rate_date } = parsed.data;
+    const { currency, rate, rate_date, source } = parsed.data;
     const today = rate_date || new Date().toISOString().split('T')[0];
+    // Procedencia verdadera del valor introducido (default: Diviza, proveedor
+    // activo). La RPC y el CHECK de la tabla rechazan fuentes inválidas.
+    const sourceProvider = source ?? 'Diviza';
 
     // Identidad server-side tipada como uuid (la RPC exige uuid real; un id no
     // uuid nunca debería ocurrir tras withAuth, pero el fallo debe ser 403 y no
@@ -103,6 +113,7 @@ async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
       p_currency: currency,
       p_rate: rate,
       p_rate_date: today,
+      p_source: sourceProvider,
       p_source_ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
     });
 
@@ -143,7 +154,7 @@ async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
         rate,
         rate_date: today,
         capture_method: 'real',
-        source: 'elToque',
+        source: sourceProvider,
       },
       audit: {
         audit_id: result.audit_id ?? null,
@@ -152,7 +163,7 @@ async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
         new_rate: rate,
         actor_id: _session.user.id,
       },
-      message: `Tasa ${currency} = ${rate} CUP guardada como REAL para ${today}`,
+      message: `Tasa ${currency} = ${rate} CUP guardada como REAL (${sourceProvider}) para ${today}`,
     });
   } catch (error: unknown) {
     logger.error('DATABASE', 'EXCHANGE_RATES_MANUAL_FATAL', {

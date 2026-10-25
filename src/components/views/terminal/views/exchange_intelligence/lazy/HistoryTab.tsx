@@ -33,14 +33,16 @@ import { format, parseISO, differenceInCalendarDays, addDays } from 'date-fns';
 import { es as esLocale } from 'date-fns/locale';
 
 // ═══ Paleta de colores coordinada con el primer tab ═══
-// BCC (oficial) → verde (success #22c55e)
-// elToque (informal) → naranja (#f97316)
-const CHART_COLOR_OFICIAL = '#22c55e';
-const CHART_COLOR_INFORMAL = '#f97316';
-const CHART_COLOR_TREND = '#a855f7';
-const CHART_COLOR_FORECAST_OFICIAL = '#16a34a';
+// Asignación categórica consistente entre tabs (IC-DIVIZA 2026-10-26):
+// BCC (oficial) → azul (#3b82f6, token info) — identidad de serie, no semántica.
+// Informal (Diviza/elToque) → naranja accesible (#ea580c, contraste ≥3:1 en
+// claro y oscuro). El mismo par de colores se usa en TODOS los tabs.
+const CHART_COLOR_OFICIAL = '#3b82f6';
+const CHART_COLOR_INFORMAL = '#ea580c';
+const CHART_COLOR_TREND = '#71717a'; // gris neutro: línea auxiliar de tendencia (sin hue)
+const CHART_COLOR_FORECAST_OFICIAL = '#93c5fd'; // azul claro: proyección de la serie oficial (dashed)
 const CHART_COLOR_FORECAST_INFORMAL = '#c2410c';
-const CHART_COLOR_VARIATION_POS = '#22c55e';
+const CHART_COLOR_VARIATION_POS = '#16a34a'; // verde-600: contraste >=3:1 sobre blanco
 const CHART_COLOR_VARIATION_NEG = '#ef4444';
 
 // ─── Colores de ejes (visibles en light y dark theme) ───
@@ -81,7 +83,7 @@ const VARIATION_SOURCES: { id: VariationSource; label: string }[] = [
 // ─── Tasa para la calculadora de impacto ───
 type RateSource = 'informal' | 'oficial';
 const RATE_SOURCES: { id: RateSource; label: string; description: string }[] = [
-  { id: 'informal', label: 'Informal', description: 'Tasa real capturada de solucionescuba.com (USD, EUR, MLC).' },
+  { id: 'informal', label: 'Informal', description: 'Tasa del mercado informal (Diviza para la vigente; elToque en el histórico).' },
   { id: 'oficial', label: 'BCC (oficial)', description: 'Tasa del Banco Central de Cuba — relevante si importas vía sector formal.' },
 ];
 
@@ -560,8 +562,8 @@ function HistoryTab({ data }: any) {
             className={cn(
               'ml-auto px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border flex items-center gap-1.5',
               advancedOpen
-                ? 'bg-purple-600 text-white shadow-md border-purple-600'
-                : 'bg-background text-muted-foreground hover:bg-purple-600/10 hover:text-purple-600 border-border',
+                ? 'bg-primary text-primary-foreground shadow-sm border-primary'
+                : 'bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary border-border',
             )}
             aria-expanded={advancedOpen}
           >
@@ -686,8 +688,8 @@ function HistoryTab({ data }: any) {
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border flex items-center gap-1',
                         trendMethod === m.id
-                          ? 'bg-purple-600 text-white shadow-md border-purple-600'
-                          : 'bg-background text-muted-foreground hover:bg-purple-600/10 hover:text-purple-600 border-border',
+                          ? 'bg-primary text-primary-foreground shadow-sm border-primary'
+                          : 'bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary border-border',
                       )}
                     >
                       {m.label}
@@ -702,7 +704,7 @@ function HistoryTab({ data }: any) {
                       {isBest && m.id !== 'none' && (
                         <span className={cn(
                           'text-[8px] font-black px-1 py-0.5 rounded',
-                          trendMethod === m.id ? 'bg-white/20 text-white' : 'bg-purple-600/15 text-purple-600 dark:text-purple-400'
+                          trendMethod === m.id ? 'bg-white/20 text-white' : 'bg-primary/15 text-primary'
                         )}>
                           MEJOR
                         </span>
@@ -912,7 +914,7 @@ function HistoryTab({ data }: any) {
               />
             )}
 
-            {/* elToque (informal) — naranja */}
+            {/* Informal (Diviza/elToque) — naranja (identidad categórica) */}
             {chartMode === 'area' && (
               <Area
                 type="monotone"
@@ -1033,7 +1035,7 @@ function HistoryTab({ data }: any) {
       <div className="bg-card rounded-2xl border-2 border-border p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <CandlestickChart className="w-5 h-5 text-purple-600" />
+            <CandlestickChart className="w-5 h-5 text-primary" />
             <h3 className="text-base font-black uppercase tracking-widest text-foreground">
               Variación diaria (%)
             </h3>
@@ -1059,8 +1061,8 @@ function HistoryTab({ data }: any) {
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px] border',
                   variationSource === s.id
-                    ? 'bg-purple-600 text-white shadow-md border-purple-600'
-                    : 'bg-background text-muted-foreground hover:bg-purple-600/10 hover:text-purple-600 border-border',
+                    ? 'bg-primary text-primary-foreground shadow-sm border-primary'
+                    : 'bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary border-border',
                 )}
               >
                 {s.label}
@@ -1298,12 +1300,12 @@ function HistoryTab({ data }: any) {
           </div>
 
           {/* Etapa 3: proyección */}
-          <div className={cn('rounded-xl p-4 border-2', forecast && forecast.r2 >= 0.4 ? 'bg-purple-500/10 border-purple-500/30' : 'bg-muted/30 border-border')}>
+          <div className={cn('rounded-xl p-4 border-2', forecast && forecast.r2 >= 0.4 ? 'bg-primary/5 border-primary/30' : 'bg-muted/30 border-border')}>
             <div className="flex items-center gap-2 mb-2">
-              <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center border', forecast && forecast.r2 >= 0.4 ? 'bg-purple-500/20 border-purple-500/40' : 'bg-muted/50 border-border')}>
-                <span className={cn('text-xs font-black', forecast && forecast.r2 >= 0.4 ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}>3</span>
+              <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center border', forecast && forecast.r2 >= 0.4 ? 'bg-primary/15 border-primary/30' : 'bg-muted/50 border-border')}>
+                <span className={cn('text-xs font-black', forecast && forecast.r2 >= 0.4 ? 'text-primary' : 'text-muted-foreground')}>3</span>
               </div>
-              <span className={cn('text-xs font-black uppercase tracking-widest', forecast && forecast.r2 >= 0.4 ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}>
+              <span className={cn('text-xs font-black uppercase tracking-widest', forecast && forecast.r2 >= 0.4 ? 'text-primary' : 'text-muted-foreground')}>
                 +{forecastDays} días
               </span>
               <InfoTooltip title={`Proyección a ${forecastDays} días — cómo se calcula`}>
@@ -1334,7 +1336,7 @@ function HistoryTab({ data }: any) {
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span className="text-xs text-muted-foreground">Tasa proy.:</span>
-                <span className={cn('font-black font-mono', forecast && forecast.r2 >= 0.4 ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}>
+                <span className={cn('font-black font-mono', forecast && forecast.r2 >= 0.4 ? 'text-primary' : 'text-muted-foreground')}>
                   {forecastRate.toFixed(0)} CUP
                 </span>
               </div>
@@ -1381,7 +1383,7 @@ function HistoryTab({ data }: any) {
                   {changeToDate >= 0 ? '+' : ''}{changeToDatePct.toFixed(0)}%
                 </strong>{' '}
                 ({changeToDate >= 0 ? '+' : ''}{changeToDate.toFixed(0)} CUP) {changeToDate >= 0 ? 'más caro' : 'más barato'} que cuando compraste.{' '}
-                <span className="text-purple-600 dark:text-purple-400">
+                <span className="text-primary">
                   Según la regresión lineal (R² = {forecast.r2.toFixed(4)}), en <strong>{forecastDays} días más</strong> la tasa proyectada es{' '}
                   <strong>{forecastRate.toFixed(0)} CUP/USD</strong>, lo que elevaría el costo de reposición a{' '}
                   <strong>{costInFuture.toFixed(0)} CUP</strong> — {changeToForecast >= 0 ? '+' : ''}{changeToForecast.toFixed(0)} CUP ({changeToForecastPct >= 0 ? '+' : ''}{changeToForecastPct.toFixed(0)}%) respecto a hoy.

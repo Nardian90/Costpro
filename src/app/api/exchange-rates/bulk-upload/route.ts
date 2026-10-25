@@ -10,9 +10,15 @@ import * as XLSX from '@e965/xlsx';
  * IC-EXCEL-BULK-UPLOAD: Carga masiva de tasas por Excel (admin only).
  *
  * Contexto:
- *   - El scraping de eltoque.com no funciona (publican imágenes).
- *   - El scraping de solucionescuba.com funciona pero solo para HOY.
- *   - Para análisis de tendencias se necesitan datos históricos.
+ *   - Diviza (cubadivisas.com) solo publica la cotización VIGENTE (sin serie
+ *     histórica) → la captura automática cubre HOY.
+ *   - Para análisis de tendencias se necesitan datos históricos → este flujo
+ *     de Excel es la vía de importación histórica (fechas verificables por
+ *     el operador, fuente declarada).
+ *   - La columna "informal" del Excel se persiste como source='elToque':
+ *     representa la SERIE INFORMAL HISTÓRICA (elToque y equivalentes de la
+ *     era 2021→2026-07). Las capturas nuevas y vigentes llegan de Diviza con
+ *     source='Diviza' — nunca se mezclan las procedencias.
  *
  * El Excel debe tener 3 columnas (case-insensitive, flexible):
  *   - fecha   (o date, día)           — YYYY-MM-DD o DD/MM/YYYY

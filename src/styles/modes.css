@@ -20,9 +20,16 @@
    ============================================ */
 
 /* ── Auto: prefers-reduced-motion forces performance ── */
+/* IC-DIVIZA a11y (2026-10-26): regla real — reduce animaciones/transiciones
+   decorativas para usuarios con vestibular disorders, independientemente del
+   modo visual. WCAG 2.2 AA / prefers-reduced-motion. */
 @media (prefers-reduced-motion: reduce) {
+  html:not(:has(#landing-root)),
   html.mode-enhanced:not(:has(#landing-root)) {
-    /* Even if manually set, respect user preference */
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
