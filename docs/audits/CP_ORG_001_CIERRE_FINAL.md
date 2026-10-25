@@ -927,3 +927,54 @@ bloqueantes**.
 (`is_superadmin`) que se apaga al aplicar 20261026180000 a producción (junto
 con 170000 y el despliegue del código). El evaluador fue simulado localmente
 con ese resultado exacto.
+
+---
+
+## 18. Ciclo 7 — EJECUCIÓN de la activación productiva y cierre definitivo P0
+
+**Fecha:** 2026-10-25 (15:07–15:10+ UTC). **Rama:**
+`cp-org-001-ciclo4-activacion-superadmin` @ `f8c2fe0d9` (pre-push docs-only).
+**Autorización:** orden expresa del propietario (misión «CIERRE DEFINITIVO P0»:
+merge del PR #1484 + despliegue de las migraciones pendientes + verificación).
+
+### 18.1 Lo ejecutado (detalle y evidencia por paso: paquete §9)
+
+1. **Reinspección real (§9.1):** PR #1484 @ `f8c2fe0d9` — 8 checks verdes,
+   único rojo SQL DB Security con exactamente 1 hallazgo
+   (`is_superadmin` PUBLIC/anon en producción); main SIN protección de rama;
+   producción auditada read-only (RC3 vivo, grants, 8 policies, cuenta,
+   integridad contable intacta).
+2. **P0 prevalidación §3.5 del paquete (§9.2):** ALL_MATCH=True (13 esperados).
+3. **Batería local del head (§9.3):** tsc 0 · lint 0 errores · suite
+   4055/0/66-skip · security-contract 153/153 · generación del gate OK.
+4. **P2 `20261026170000` aplicada (15:07:35 UTC, §9.4):** atómica vía
+   Management API; V1 cuerpo nuevo vivo (admin|superadmin valida tienda
+   existente+activa; branch costo con membresía conservada; SECDEF y
+   search_path correctos) + V2 trigger vivo. Guards §3.8 previos 6/6;
+   contingencia C-1/C-2 capturada antes de aplicar.
+5. **P3 `20261026180000` aplicada (15:07:41 UTC, §9.4):** transaccional
+   atómica; V3 grants EXACTOS (is_superadmin → authenticated+postgres+
+   service_role, SIN PUBLIC/anon; enforce → postgres+service_role;
+   validate sin cambios); V4 detector 0 hallazgos.
+6. **Gate REAL re-ejecutado contra producción (15:09:51 UTC, §9.5):** el SQL
+   generado por el repo + el EVALUADOR REAL `ci-gate-evaluate.js` →
+   **TODO PASS, exit 0** — `secdef_public_grant` 0 hallazgos (eliminación de
+   raíz, sin allowlist). Evidencia: `download/c7_gate_prod.json`.
+7. **Integridad post-aplicación:** V5 8 policies intactas · V6 cuenta
+   superadmin intacta con 0 membresías · contabilidad SIN cambios (799/894/
+   4/33) · RLS 3×true.
+8. **Matriz de migraciones definitiva (§9.6):** 120000/130000/140000/150000/
+   160000 vivas NO reaplicadas; **170000 y 180000 APLICADAS y VERIFICADAS en
+   producción**. Registro histórico sin `supabase db push` (doctrina manual).
+
+### 18.2 Estado al momento de este commit y pasos restantes
+
+- Producción queda con la BD en el estado objetivo del incidente
+  ( RC3 corregido + ACL endurecida + gate verde real). El CÓDIGO de main en
+  Vercel sigue siendo pre-PR hasta el merge (estado intermedio documentado en
+  §9.7: CERO regresión — la app antigua sigue aplicando su guard propio).
+- Pasos restantes de la misión (en curso al redactar): push de este
+  expediente → CI del SHA definitivo (se espera TODO VERDE) → **merge del
+  PR #1484** → despliegue Vercel de main → verificación post-despliegue
+  (§3.6 + pruebas no destructivas con transacciones ROLLBACK) → §9.8 del
+  paquete con la evidencia final.

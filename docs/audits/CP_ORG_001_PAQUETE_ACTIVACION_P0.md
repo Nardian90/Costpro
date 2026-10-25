@@ -966,3 +966,167 @@ Acciones realizadas en el ciclo 6 — TODAS de solo lectura:
 Producción queda EXACTAMENTE como estaba al inicio del ciclo: código de
 `main` en Vercel (pre-PR), trigger RC3 vivo, ACL con el hallazgo del gate, PR
 #1484 abierto, incidente pendiente de activación.
+
+---
+
+## §9. EJECUCIÓN DE LA ACTIVACIÓN — CICLO 7 (cierre definitivo P0)
+
+> **Autorización:** orden del propietario (2026-10-25, misión «CIERRE
+> DEFINITIVO P0»): corregir íntegramente, obtener los controles de seguridad
+> verdes mediante correcciones legítimas, «completar el merge del PR #1484 y
+> desplegar las migraciones productivas que realmente estén pendientes»,
+> verificar después del despliegue y entregar el informe final. Modo
+> autónomo. Esta sección EJECUTA el paquete §0–§8 (la §8 documenta la
+> garantía de no-ejecución del ciclo 6, que este ciclo levanta expresamente
+> bajo la autorización anterior).
+
+### §9.1 Reinspección del estado real (antes de tocar nada, 2026-10-25 ~14:45–15:00 UTC)
+
+- **Rama:** `cp-org-001-ciclo4-activacion-superadmin` @ `f8c2fe0d9`
+  (sincronizada con origin; 6 commits por delante de `main` @ `f265fb692`,
+  0 detrás → base vigente, sin conflictos). Árbol limpio.
+- **PR #1484:** open, `mergeable=true`, estado `unstable` (check NO
+  requerido en fallo; rama `main` SIN protección de rama configurada), 104
+  archivos, +2761/−192, sin revisores solicitados.
+- **Checks del head `f8c2fe0d9` (recuento propio vía API):** 8 SUCCESS
+  (TypeCheck+Lint+Unit+Build, Unit&Integration, SQL Static, Security Audit,
+  TypeScript Security, Allowlist Review, Vercel Preview Comments), E2E
+  skipped (política del repo), **SQL DB Security Checks FAILURE** con
+  EXACTAMENTE 1 hallazgo: `secdef_public_grant → is_superadmin` (log del job
+  121197610480 descargado y conservado). `secdef_no_auth` 101/101 en
+  allowlist; `tables_no_rls` 0.
+- **Producción (read-only, Management API):** registro de migraciones
+  detenido en `20260615000003` (doctrina manual — re-verificado, sin
+  sorpresas); `validate_active_store` cuerpo ANTIGUO RC3 (exige membresía a
+  admin/superadmin); `is_superadmin` con EXECUTE para PUBLIC(0)+anon+postgres+
+  authenticated+service_role (hallazgo del gate REAL);
+  `enforce_membership_tenant_consistency` igual (función DISPARADORA, grant
+  inerte); 8 policies dependen de `is_superadmin` (3 `stores_tenant_*` +
+  5 `tenants`); trigger `trigger_validate_active_store` vivo sobre
+  `public.profiles`; `admin@demo.com` = superadmin, `active_store_id` NULL,
+  activo, no baneado (auth.users `banned_until` NULL), 0 membresías, tenant
+  5364ccf8 conservado; 2 tiendas activas (ENERVIDA-VITALLCONS, Puerto Padre
+  VITALLCONS); integridad contable: `payment_transactions` 799 (todas con
+  tienda viva, Σ`amount_cup` 65 743 380.97), `transactions` 894, archivo de la
+  purga 33 filas (685 400 nativo, 33 huérfanas por diseño — tiendas
+  eliminadas), membresías 4, tenants 2; último movimiento contable
+  2026-10-23 22:15:24 UTC (SIN cambios desde antes del incidente).
+
+### §9.2 P0 — Prevalidación §3.5 del paquete (solo lectura)
+
+Ejecutadas las consultas Q1–Q10+Q7b EXACTAS del paquete contra CostproBD a
+las **14:58:29 UTC** (evidencia `download/c7_prevalidacion.json`):
+**ALL_MATCH = True** — los 13 esperados coinciden (Q1 registro histórico; Q2
+hallazgo gate PRESENTE como estado pre-deploy + `validate_active_store`
+postgres+service_role; Q3 firma del cuerpo antiguo RC3; Q4 3 policies
+stores_tenant_*; Q5 8 dependientes; Q6 trigger vivo; Q7/Q7b/Q8/Q9/Q10
+cuenta/autenticación/membresías/tiendas/RLS). NOTA técnica: `PUBLIC` es
+pseudo-rol (OID 0) ausente de `pg_roles`; su verificación usa el OID.
+
+### §9.3 Batería local sobre el head `f8c2fe0d9`
+
+| Control | Comando | Resultado | Salida |
+|---|---|---|---|
+| TypeCheck | `npx tsc --noEmit` | PASS | exit 0 |
+| Lint | `npx eslint .` | PASS | 0 errores (1385 warnings preexistentes) |
+| Suite | `npx vitest run` | PASS | 4055 passed / 66 skipped (live sin credenciales) / **0 failed**; 282 archivos |
+| Contrato de seguridad | `node scripts/security-contract-test.cjs` | PASS | 153/153 funciones sin violaciones; PIN REM-INV-2R OK |
+| Gate SQL (generación) | `node scripts/ci-gate-sql-checks.js` | PASS | checks generados íntegros |
+
+### §9.4 P2+P3 — Aplicación productiva controlada (2026-10-25 15:07:11–15:07:54 UTC)
+
+Script `scripts` del agente (persistido): guards programáticos de los
+criterios de abortado §3.8 ANTES de aplicar; captura de contingencia C-1
+(cuerpo pre-170000, 2611 chars) y C-2 (10 grants previos) ANTES de aplicar;
+un archivo = UNA query Management API (atómica, como en el ciclo 4);
+verificación inmediata tras cada archivo. Evidencia:
+`download/c7_aplicacion_prod.json` (pasos con timestamp UTC).
+
+1. **Guards (6/6 OK):** cuerpo RC3 antiguo vivo · hallazgo gate presente
+   (PUBLIC+anon) · cuenta superadmin intacta · trigger vivo · 8 policies ·
+   baseline contable capturado (799/894/4/33).
+2. **P2 — `20261026170000` (15:07:35 UTC):** aplicada sin error (1 query
+   atómica). **V1:** cuerpo nuevo VIVO — `valida_stores=true` (rama
+   `FROM public.stores`), `branch_costo=true` (rama membresía conservada),
+   `prosecdef=true`, `search_path=pg_catalog, public, pg_temp`. **V2:**
+   `trigger_validate_active_store` vivo → `validate_active_store()`.
+3. **P3 — `20261026180000` (15:07:41 UTC):** aplicada sin error (1 query
+   transaccional BEGIN…COMMIT). **V3 grants objetivo EXACTOS:**
+   `is_superadmin` → authenticated+postgres+service_role (SIN PUBLIC/anon);
+   `enforce_membership_tenant_consistency` → postgres+service_role;
+   `validate_active_store` → postgres+service_role (sin cambios).
+   **V4 (detector equivalente del gate):** 0 hallazgos.
+4. **Verificaciones posteriores §3.6:** V5 8 policies dependientes intactas ·
+   V6 cuenta intacta (superadmin, 0 membresías — la corrección NO crea
+   membresías) · integridad contable SIN cambios (payment_tx 799, tx 894,
+   membresías 4, archivo 33) · RLS 3×true (stores/profiles/
+   user_store_memberships).
+
+### §9.5 Re-ejecución del gate REAL contra producción (P6 anticipado, 15:09:51 UTC)
+
+Reproducción exacta del job `sql-db-security-checks`: el SQL generado por
+`scripts/ci-gate-sql-checks.js` del propio repo ejecutado contra CostproBD
+(vía Management API, solo lectura), salida formateada idéntica a
+`psql -t -A -F '|'`, evaluada por el **evaluador real**
+`scripts/ci-gate-evaluate.js` (canario incluido: solo se emite si las 4
+consultas se ejecutaron completas — equivalente ON_ERROR_STOP=1).
+
+```
+✅ secdef_no_auth: 101 hallazgo(s), 101 en allowlist, 0 NO permitidos
+✅ secdef_public_grant: 0 hallazgo(s), 0 en allowlist, 0 NO permitidos
+✅ tables_no_rls: 0 hallazgo(s), 0 en allowlist, 0 NO permitidos
+✅ Resultado: TODO PASS — 3 checks ejecutados completos, 0 hallazgos fuera de allowlist
+EVALUATOR_EXIT = 0
+```
+
+El hallazgo `is_superadmin` quedó ELIMINADO DE RAÍZ (REVOKE legítimo en
+producción por la migración del propio PR — sin allowlist, sin exclusiones,
+sin debilitar el check). Evidencia: `download/c7_gate_prod.json` +
+`tool-results/c7_gate_results.txt`.
+
+### §9.6 Matriz de migraciones (estado tras P2+P3, verificado)
+
+| Migración | Estado en BD | ¿Registrada en `supabase_migrations`? | Acción c7 | Verificación |
+|---|---|---|---|---|
+| 20260826120000 | VIVA (ciclo 4) | NO (doctrina manual) | NO reaplicar | auditoría §16 |
+| 20261026130000 | VIVA (ciclo 4) | NO (doctrina manual) | NO reaplicar | auditoría §16 |
+| 20261026140000 | VIVA (ciclo 4) | NO (doctrina manual) | NO reaplicar | auditoría §16 |
+| 20261026150000 | VIVA (efecto verificado: archivo 33 filas + 0 colgantes) | NO (doctrina manual) | NO reaplicar | §2.1 paquete |
+| 20261026160000 | VIVA (policies `is_superadmin()` exactas) | NO (doctrina manual) | NO reaplicar | Q4/Q5 |
+| **20261026170000** | **VIVA desde 15:07:35 UTC** | NO (doctrina manual) | **APLICADA (P2)** | V1+V2+V5 |
+| **20261026180000** | **VIVA desde 15:07:41 UTC** | NO (doctrina manual) | **APLICADA (P3)** | V3+V4+gate real 0 hallazgos |
+
+Nota: el registro `supabase_migrations` sigue detenido en `20260615000003`
+porque la doctrina del proyecto aplica las migraciones de activación por
+Management API controlada (ciclo 4) y NO mediante `supabase db push`
+(advertencia §2.1). Ninguna migración quedó pendiente para la recuperación
+del incidente.
+
+### §9.7 SHA definitivo, orden de activación y estado esperado del CI
+
+- **SHA definitivo del PR #1484:** el commit de esta actualización del
+  expediente (docs-only; el tree de CÓDIGO es idéntico al validado en
+  `f8c2fe0d9` — 8 checks verdes + hallazgo único de producción). El CI
+  completo corre sobre él tras el push; su resultado y el del merge se
+  registran en §9.8.
+- **Orden de activación ejecutado:** P2+P3 (este ciclo, 15:07 UTC) → push del
+  expediente → CI del SHA definitivo (se espera TODO VERDE, incluido SQL DB
+  Security — el hallazgo ya no existe en producción) → **merge P1** →
+  despliegue Vercel de `main` → verificación post-despliegue §3.6/§3.7 →
+  §9.8. El paquete §3.2 sanciona este orden: «P3 es independiente del código
+  y puede ir antes o después de P1»; «P2 SIN P1» deja el incidente tal cual
+  (la app antigua sigue exigiendo membresía app-side) — CERO regresión
+  durante la ventana de despliegue.
+- **Ventana de estados intermedios:** entre P2/P3 y el despliegue de código,
+  la BD admite selección admin-level pero la app en producción (pre-merge)
+  sigue aplicando su propio guard — exactamente el estado pre-misión, sin
+  nueva exposición (RLS de datos sin cambios; policies intactas; grants
+  endurecidos).
+- **Post-despliegue (P5) — capacidad verificable sin sesión del dueño:**
+  verificación de la cadena completa con transacciones ROLLBACK (no
+  destructivas) sobre la cuenta real + verificación del despliegue del
+  código. La confirmación interactiva final (login del dueño con
+  admin@demo.com: selector 2/2 tiendas → seleccionar → recargar → persiste →
+  módulos operativos) queda explícitamente indicada como ÚLTIMA evidencia del
+  dueño; el agente NO posee credenciales de la cuenta ni puede crearlas
+  (prohibido crear membresías/superadmins con service_role).
