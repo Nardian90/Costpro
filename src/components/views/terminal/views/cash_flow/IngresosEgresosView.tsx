@@ -31,7 +31,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Plus, Search, Loader2, Eye, RefreshCcw, LayoutList, List, AlertTriangle,
-  ArrowDownToLine, ArrowUpFromLine, Ban, Wallet, Coins, Landmark, FileText,
+  ArrowDownToLine, ArrowUpFromLine, Ban, Wallet, Coins, FileText,
   ChevronLeft, ChevronRight, XCircle, History, Scale,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime, touch } from '@/lib/utils';
@@ -166,8 +166,11 @@ export default function IngresosEgresosView() {
   const activeShift = useActiveShift(storeId);
   // MISIÓN CAJA v2.24.0 (§9): libro físico por moneda — fuente de los saldos
   // físicos (CUP/USD separados) y de la validación de entregas sin turno.
+  // MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): queda como FALLBACK — la fuente
+  // primaria pasa a ser physical_cash del propio get_cash_flow_summary
+  // (una sola fuente de verdad, la misma lectura que las autorizaciones).
   const currencySummary = useCashCurrencySummary(storeId);
-  const saldoFisico = {
+  const saldoFisicoLibro = {
     CUP: currencySummary.data?.net?.CUP ?? null,
     USD: currencySummary.data?.net?.USD ?? null,
   };
@@ -220,24 +223,36 @@ export default function IngresosEgresosView() {
   const turnoAbierto = activeShift.data != null;
   const turnoCargando = activeShift.isLoading || summaryQuery.isLoading;
 
+  // ── MISIÓN EFECTIVO FÍSICO (P0 2026-10-26) · fuente única de disponibilidad ──
+  // El saldo físico por moneda llega del PROPIO get_cash_flow_summary
+  // (physical_cash — libro autoritativo, lectura 'infinity' idéntica a la de
+  // las autorizaciones del cajón). El espejo del ledger (/api/cash-flow/ledger
+  // → currency_summary_now, mismo RPC get_cash_currency_summary) queda como
+  // degradación limpia mientras la migración 20261026200000 se aplica.
+  const saldoFisico = {
+    CUP: resumen?.physical_cash?.CUP ?? saldoFisicoLibro.CUP,
+    USD: resumen?.physical_cash?.USD ?? saldoFisicoLibro.USD,
+  };
+
   // ── MISIÓN CONCILIACIÓN (2026-10-26) · Incidente A ──
   // Cuatro magnitudes con base contable DISTINTA (misión §3.2), nunca
   // intercambiables: (A) esperado canónico CUP — vista de VALOR de la fórmula
   // oficial de arqueo (cada movimiento a SU tasa histórica); (B)/(C) saldos
-  // físicos CUP/USD — libro de BILLETES por moneda (get_cash_currency_summary);
-  // (D) fondo de cambio vigente — mecanismo del RPC. La conciliación expone la
-  // diferencia entre bases con su explicación; NO se fuerza la igualdad.
+  // físicos CUP/USD — libro de BILLETES por moneda; (D) fondo de cambio
+  // vigente — mecanismo del RPC. La diferencia (A)−(B) es una DIFERENCIA DE
+  // VALORACIÓN CONTABLE: se presenta clasificada como tal (nunca como
+  // efectivo disponible) con su causa y trazabilidad; NO se fuerza la igualdad.
   const esperadoCanonico = resumen?.expected_cash ?? null;
   const fisicoCup = saldoFisico.CUP;
   const fisicoUsd = saldoFisico.USD;
-  // Diferencia pendiente: esperado canónico − libros físicos. El USD físico NO
-  // se convierte aquí (no existe una tasa única legítima para valorar billetes
-  // ya entregados): la diferencia se presenta por separado y su explicación
-  // documenta la causa (valorización a tasas históricas distintas).
-  const diferenciaFisica = esperadoCanonico != null && fisicoCup != null
-    ? esperadoCanonico - fisicoCup
-    : null;
-  const conciliado = diferenciaFisica != null && Math.abs(diferenciaFisica) < 0.005 && (fisicoUsd ?? 0) === 0;
+  // Diferencia de valoración: esperado canónico − libro físico CUP. El USD
+  // físico NO se convierte aquí (no existe una tasa única legítima para
+  // valorar billetes ya entregados): la diferencia se presenta por separado y
+  // su explicación documenta la causa (valorización a tasas históricas
+  // distintas). Prioridad: campo del RPC (20261026200000) — misma fórmula.
+  const diferenciaFisica = resumen?.valuation_residual_cup
+    ?? (esperadoCanonico != null && fisicoCup != null ? esperadoCanonico - fisicoCup : null);
+  const sinDiferenciaValoracion = diferenciaFisica != null && Math.abs(diferenciaFisica) < 0.005;
   // Ventana del turno explícita: el esperado canónico se calcula sobre una
   // ventana (turno abierto → apertura; sin turno → desde el último cierre o
   // desde el origen). Sin turno abierto NO es «el saldo de un turno abierto».
@@ -391,6 +406,10 @@ export default function IngresosEgresosView() {
           cuando llega al día actual (nunca una flecha que sugiera filtro sin
           configurar). Los subtotales de ingresos/egresos corresponden SOLO a
           este intervalo; los indicadores de saldo no cambian de significado. */}
+      {/* MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): el PRIMER KPI es la
+          disponibilidad FÍSICA por moneda (libro de billetes). El esperado
+          canónico YA NO es KPI: vive en el bloque secundario «Diferencia de
+          valoración contable CUP — no representa efectivo disponible». */}
       <div
         className="flex items-center justify-between gap-2 flex-wrap text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
         data-testid="periodo-banner"
@@ -406,29 +425,23 @@ export default function IngresosEgresosView() {
           {rangoInvalido ? 'Rango invertido — no aplicado' : `Subtotales del período únicamente`}
         </span>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-        <KpiCard
-          icon={<Landmark className="w-4 h-4" />}
-          label="Efectivo esperado (CUP canónico)"
-          value={resumen ? formatCurrency(resumen.expected_cash) : '—'}
-          tone="primary"
-          hint={resumen ? `Valor contable según fórmula de arqueo (cada movimiento a su tasa histórica) · ${hintVentana}` : undefined}
-        />
-        {/* MISIÓN CAJA v2.24.0 (§9): saldos físicos por moneda separados — no se
-            suman al canónico como si fueran unidades iguales */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+        {/* MISIÓN CAJA v2.24.0 (§9) + EFECTIVO FÍSICO (P0): saldos físicos por
+            moneda como KPIs PRINCIPALES — no se suman monedas ni se convierte
+            USD a CUP sin declarar la tasa */}
         <KpiCard
           icon={<Coins className="w-4 h-4" />}
-          label="Saldo físico CUP"
+          label="Efectivo físico CUP"
           value={saldoFisico.CUP != null ? formatCurrency(saldoFisico.CUP) : '—'}
           tone="primary"
-          hint="Libro físico de billetes CUP (movimientos persistidos)"
+          hint="Libro físico de billetes CUP · disponible real (respalda salidas)"
         />
         <KpiCard
           icon={<Coins className="w-4 h-4" />}
-          label="Saldo físico USD"
+          label="Efectivo físico USD"
           value={saldoFisico.USD != null ? formatCurrency(saldoFisico.USD, 'USD') : '—'}
           tone="warning"
-          hint="Libro físico de billetes USD (movimientos persistidos)"
+          hint="Libro físico de billetes USD · disponibilidad en su moneda"
         />
         <KpiCard
           icon={<Coins className="w-4 h-4" />}
@@ -464,34 +477,39 @@ export default function IngresosEgresosView() {
         />
       </div>
 
-      {/* ── MISIÓN CONCILIACIÓN (2026-10-26) · Incidente A ──
-          Conciliación del esperado canónico con el libro físico por moneda.
-          Magnitudes distintas POR DISEÑO (valor contable vs billetes): la
-          diferencia se muestra con importes y explicación accesible; solo se
-          declara «Conciliado» cuando la igualdad corresponde a la misma base,
-          moneda y ventana. Nunca se presenta el esperado canónico como
-          billetes físicamente disponibles sin respaldo del libro. */}
+      {/* ── MISIÓN EFECTIVO FÍSICO (P0 2026-10-26) · Bloque secundario ──
+          «Diferencia de valoración contable CUP — no representa efectivo
+          disponible»: el esperado canónico (fórmula de arqueo, cada movimiento
+          a SU tasa histórica) comparado con el libro físico por moneda. La
+          diferencia es una VALORACIÓN, nunca billetes: con libro 0/0 la
+          disponibilidad sigue siendo 0,00 CUP / 0,00 USD aunque el residuo
+          persista (p. ej. 2.820,00 CUP por USD cobrados a tasa histórica y
+          entregados a la vigente). */}
       <section
-        aria-label="Conciliación con el libro físico"
+        aria-label="Diferencia de valoración contable CUP — no representa efectivo disponible"
         data-testid="conciliacion-fisica"
         className={cn(
           'rounded-2xl border p-4',
-          conciliado ? 'border-success/30 bg-success/5' : 'border-warning/40 bg-warning/5',
+          sinDiferenciaValoracion ? 'border-success/30 bg-success/5' : 'border-warning/40 bg-warning/5',
         )}
       >
         <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
           <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-1.5">
             <Scale className="w-4 h-4" aria-hidden="true" />
-            Conciliación con el libro físico
+            Diferencia de valoración contable CUP
           </h3>
           <span
             className={cn(
               'text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full',
-              conciliado ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
+              sinDiferenciaValoracion ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
             )}
             data-testid="conciliacion-estado"
           >
-            {diferenciaFisica == null ? 'Cargando libro físico…' : conciliado ? 'Conciliado' : 'Diferencia pendiente de conciliación'}
+            {diferenciaFisica == null
+              ? 'Cargando libro físico…'
+              : sinDiferenciaValoracion
+                ? 'Sin diferencia de valoración'
+                : 'Valoración contable — no es efectivo disponible'}
           </span>
         </div>
         {diferenciaFisica != null ? (
@@ -513,20 +531,21 @@ export default function IngresosEgresosView() {
                 <div className="text-[9px] text-muted-foreground/80">Libro de billetes USD</div>
               </div>
               <div>
-                <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Diferencia</div>
-                <div className={cn('text-sm font-black tabular-nums', conciliado ? 'text-success' : 'text-warning')}>
+                <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Diferencia de valoración</div>
+                <div className={cn('text-sm font-black tabular-nums', sinDiferenciaValoracion ? 'text-success' : 'text-warning')}>
                   {formatCurrency(diferenciaFisica)}
                 </div>
-                <div className="text-[9px] text-muted-foreground/80">Esperado − físico CUP</div>
+                <div className="text-[9px] text-muted-foreground/80">Esperado − físico CUP · sin respaldo en billetes</div>
               </div>
             </div>
-            {!conciliado && (
+            {!sinDiferenciaValoracion && (
               <p className="text-[11px] leading-relaxed text-muted-foreground mt-2" data-testid="conciliacion-explicacion">
-                El esperado canónico es una <strong>vista de valor</strong> (cada cobro y cada entrega se valora a la tasa
-                histórica de su propia operación), mientras el libro físico cuenta <strong>billetes por moneda</strong>.
-                Una diferencia puede surgir cuando los mismos billetes USD entran valorizados a la tasa de la venta y
-                salen (entrega) valorizados a la tasa vigente del documento de caja: el residuo en CUP no respalda
-                billetes físicos. Verifica los movimientos en la pestaña «Movimientos que explican el saldo».
+                <strong>No representa efectivo disponible.</strong> El esperado canónico es una <strong>vista de valor</strong>
+                (cada cobro y cada entrega se valora a la tasa histórica de su propia operación), mientras el libro físico
+                cuenta <strong>billetes por moneda</strong>. La diferencia surge cuando los mismos billetes USD entran
+                valorizados a la tasa de la venta y salen (entrega) valorizados a la tasa vigente del documento de caja:
+                el residuo en CUP no respalda billetes físicos y ninguna salida puede autorizarse contra él.
+                {' '}({hintVentana ?? 'ventana del cálculo sin identificar'} · trazabilidad: pestaña «Movimientos que explican el saldo».)
               </p>
             )}
           </>

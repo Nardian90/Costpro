@@ -115,6 +115,14 @@ export interface CashShiftExpected {
   opening_balance_usd?: number;
   /** v2.24.0: efectivo USD esperado en el cajón (libro físico por moneda). */
   expected_cash_usd?: number;
+  /**
+   * MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): saldo FÍSICO acumulado por moneda
+   * (libro autoritativo — misma lectura que las autorizaciones). Disponibilidad
+   * real de billetes; NUNCA se presenta expected_cash como disponible.
+   */
+  physical_cash?: { CUP: number; USD: number };
+  /** Residuo de valoración (expected_cash − physical_cash.CUP) — informativo, no efectivo. */
+  valuation_residual_cup?: number;
 }
 
 /**

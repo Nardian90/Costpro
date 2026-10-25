@@ -394,3 +394,52 @@ describe('CashFlowCreateModal — paso 2 CONFIRMACIÓN y registro', () => {
     await waitFor(() => expect(screen.getByText('Documento registrado')).toBeTruthy());
   });
 });
+
+describe('CashFlowCreateModal — MISIÓN P0 «EFECTIVO FANTASMA» (2026-10-26)', () => {
+  // CASO ENERVIDA: libro físico 0/0 con esperado canónico 2.820 (fantasma).
+  const FANTASMA = { CUP: 0, USD: 0 };
+  const SUMMARY_FANTASMA: CashFlowSummary = {
+    ...SUMMARY,
+    has_pending_shift: false,
+    expected_cash: 2820,
+    fondo_vigente: 0,
+    cash_sales: 0,
+    cash_flow_in: 0,
+    cash_flow_out: 0,
+    opening_balance: 0,
+  };
+
+  it('17 · efecto esperado sobre el saldo usa el FÍSICO por moneda, no el canónico', async () => {
+    renderModal(SUMMARY_FANTASMA, FANTASMA);
+    await waitFor(() => expect(screen.getByLabelText(/Importe \*/)).toBeTruthy());
+    fireEvent.change(screen.getByLabelText(/Importe \*/), { target: { value: '5000' } });
+    fireEvent.change(screen.getByLabelText(/Justificación \*/), { target: { value: 'Constitución del fondo' } });
+    fireEvent.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    await waitFor(() => expect(screen.getByText('Resumen de la operación')).toBeTruthy());
+    // El efecto parte del FÍSICO (0 → 5.000), JAMÁS de «Efectivo en caja: 2.820»
+    expect(screen.getByText(/Saldo físico CUP:/)).toBeTruthy();
+    expect(screen.getAllByText('$0.00').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('$5,000.00').length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText(/Efectivo en caja/)).toBeNull();
+    // El canónico 2.820 aparece SOLO como valoración clasificada (no billetes)
+    expect(screen.getByText(/valoración contable CUP \$2,820\.00 \(no son billetes\)/)).toBeTruthy();
+  });
+
+  it('18 · egreso CUP con físico 0: la validación física BLOQUEA (el fantasma no autoriza)', async () => {
+    // Sin turno (SUMMARY_FANTASMA) el modal fuerza entrega_efactivo; para el
+    // egreso ORDINARIO usamos turno abierto (SUMMARY normal) con físico 0.
+    renderModal(SUMMARY, FANTASMA);
+    await waitFor(() => expect(screen.getByLabelText(/Importe \*/)).toBeTruthy());
+    // Tipo egreso (radiogroup) + importe dentro del turno
+    await waitFor(() => expect(screen.getByRole('radio', { name: /Egreso/ })).toBeTruthy());
+    fireEvent.click(screen.getByRole('radio', { name: /Egreso/ }));
+    await waitFor(() => expect(screen.getByLabelText(/Importe \*/)).toBeTruthy());
+    fireEvent.change(screen.getByLabelText(/Importe \*/), { target: { value: '100' } });
+    fireEvent.change(screen.getByLabelText(/Justificación \*/), { target: { value: 'Gasto urgente' } });
+    // El espejo físico de ERR_INSUFFICIENT_CURRENCY bloquea ANTES de enviar:
+    // el canónico 174.000 NO financia billetes CUP que no existen.
+    await waitFor(() => expect(screen.getByText(/supera el saldo físico CUP en caja \(\$0\.00\)/)).toBeTruthy());
+    const confirmar = screen.queryByRole('button', { name: /Confirmar Documento/i });
+    if (confirmar) expect(confirmar).toBeDisabled();
+  });
+});

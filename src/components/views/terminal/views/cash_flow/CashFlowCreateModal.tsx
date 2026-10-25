@@ -484,11 +484,12 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
           <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-1.5">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estado de caja</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-              {/* MISIÓN CAJA v2.24.0 (§9): saldos físicos por moneda separados +
-                  equivalente canónico identificado como tal */}
+              {/* MISIÓN CAJA v2.24.0 (§9) + EFECTIVO FÍSICO (P0 2026-10-26):
+                  saldos físicos por moneda como referencia operativa + la
+                  valoración canónica clasificada (nunca como billetes) */}
               <span>Saldo físico CUP: <span className="font-black tabular-nums">{saldoFisico.CUP != null ? formatCurrency(saldoFisico.CUP) : '—'}</span></span>
               <span>Saldo físico USD: <span className="font-black tabular-nums">{saldoFisico.USD != null ? formatCurrency(saldoFisico.USD, 'USD') : '—'}</span></span>
-              <span>Canónico CUP (equiv. contable): <span className="font-black tabular-nums">{saldoCaja != null ? formatCurrency(saldoCaja) : '—'}</span></span>
+              <span>Valoración contable CUP: <span className="font-black tabular-nums">{saldoCaja != null ? formatCurrency(saldoCaja) : '—'}</span> <span className="text-muted-foreground">(no son billetes)</span></span>
               <span>Fondo de cambio: <span className="font-black tabular-nums">{fondoVigente != null ? formatCurrency(fondoVigente) : '—'}</span></span>
             </div>
             {errores.length > 0 && (
@@ -550,13 +551,16 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
                 </span>
                 {modoEntregaSinTurno && <span className="text-muted-foreground"> · documento fuera de turno (closure_id nulo)</span>}
               </p>
-            ) : saldoCaja != null && currency === 'CUP' && (
+            ) : saldoFisico.CUP != null && currency === 'CUP' && (
               <p className="tabular-nums">
-                Efectivo en caja: <span className="font-black">{formatCurrency(saldoCaja)}</span>
+                Saldo físico CUP: <span className="font-black">{formatCurrency(saldoFisico.CUP)}</span>
                 {' → '}
                 <span className={cn('font-black', docType === 'ingreso' ? 'text-success' : 'text-destructive')}>
-                  {formatCurrency(saldoCaja + (docType === 'ingreso' ? amount : -amount))}
+                  {formatCurrency(saldoFisico.CUP + (docType === 'ingreso' ? amount : -amount))}
                 </span>
+                {saldoCaja != null && Math.abs(saldoCaja - (saldoFisico.CUP ?? 0)) >= 0.005 && (
+                  <span className="text-muted-foreground"> · valoración contable CUP {formatCurrency(saldoCaja)} (no son billetes)</span>
+                )}
               </p>
             )}
             {isFondoConcept(concept) && fondoVigente != null && currency === 'CUP' && (

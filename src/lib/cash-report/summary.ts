@@ -168,9 +168,9 @@ export interface CashReportLike {
    * (incidente 2026-10-16, collection-currency) traen total_cup (equivalencia
    * canónica del grupo) y transaction_count — opcionales en el fallback legacy. */
   sales?: Array<{ payment_method: string; currency: string; total: number; total_cup?: number; transaction_count?: number }>;
-  payments?: Array<{ payment_method: string; currency: string; ref_type: string; total: number }>;
-  commissions?: Array<{ payment_method: string; currency: string; total: number }>;
-  production?: Array<{ payment_method: string; currency: string; total: number }>;
+  payments?: Array<{ payment_method: string; currency: string; ref_type: string; total: number; total_cup?: number }>;
+  commissions?: Array<{ payment_method: string; currency: string; total: number; total_cup?: number }>;
+  production?: Array<{ payment_method: string; currency: string; total: number; total_cup?: number }>;
   /** Nuevo campo expuesto por /api/cash-report (split real por moneda). */
   sales_split?: SalesSplit;
   /** Nuevo campo: ajustes extraordinarios del periodo. */
@@ -265,6 +265,15 @@ export interface DailySummary {
    *  −2.400, hoja USD +3. Partida VISIBLE y auditable; no gobernable por
    *  checkbox (es contable, no presentación). */
   liquidacionBilletes: number;
+  /** MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): valor canónico CUP NETO de los
+   *  flujos de EFECTIVO en OTRA moneda del período — cobros (equivCash) +
+   *  documentos de caja + reembolsos + pagos a proveedores/servicios +
+   *  anticipos de producción + comisiones, cada uno a SU tasa histórica.
+   *  Es la parte del esperado canónico del arqueo que NO corresponde a
+   *  billetes CUP: cuando los billetes de otra moneda entraron y salieron
+   *  completos, este neto es la DIFERENCIA DE VALORACIÓN sin respaldo físico
+   *  (p. ej. ENERVIDA: 296.420 − 293.600 = 2.820). Solo hoja CUP; 0 en USD. */
+  flujosOtraMonedaValorCup: number;
 }
 
 const n = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : Number(v) || 0);
@@ -288,7 +297,7 @@ export function computeDailySummary(
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0,
     reembolsosCash: 0, reembolsosVoucher: 0, equivCashOtraMoneda: 0,
     equivVouchersOtraMoneda: 0, efectivoEsperado: 0, saldoInicial: 0,
-    liquidacionBilletes: 0, cobrosBilletes: 0,
+    liquidacionBilletes: 0, cobrosBilletes: 0, flujosOtraMonedaValorCup: 0,
   };
   if (!report) return zero;
 
@@ -439,6 +448,40 @@ export function computeDailySummary(
     - comisionesCash - serviciosRecibidosCash - recibosProveedoresCash - ajustesNegativos - egresosCaja
     - reembolsosCash;
 
+  // ── MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): valor canónico CUP NETO de los
+  //    flujos de efectivo en OTRA moneda del período (solo hoja CUP). Es la
+  //    DIFERENCIA DE VALORACIÓN del arqueo canónico frente al libro de
+  //    billetes: cobros a la tasa histórica de SU operación, entregas/egresos
+  //    a la del documento. Con billetes netos de otra moneda = 0, este neto
+  //    queda SIN respaldo físico — se conserva trazable, jamás como efectivo
+  //    disponible. (payment_transactions: receipt|service = salida;
+  //    production_order|work = entrada; cash_flow y devolution usan SU
+  //    direction; la fuente de cobros es equivCash — misma reconstrucción.)
+  let flujosOtraMonedaValorCup = 0;
+  if (currency === 'CUP') {
+    flujosOtraMonedaValorCup += equivCash;
+    for (const cf of report.cash_flows || []) {
+      if (cf.currency === 'CUP') continue;
+      flujosOtraMonedaValorCup += (cf.direction === 'in' ? 1 : -1) * n(cf.amount_cup);
+    }
+    for (const rf of report.refund_rows || []) {
+      if (rf.currency === 'CUP' || rf.payment_method !== 'cash') continue;
+      flujosOtraMonedaValorCup -= n(rf.amount_cup);
+    }
+    for (const p of report.payments || []) {
+      if (p.currency === 'CUP' || p.payment_method !== 'cash') continue;
+      flujosOtraMonedaValorCup -= n(p.total_cup ?? p.total); // receipt|service: salida física
+    }
+    for (const pr of report.production || []) {
+      if (pr.currency === 'CUP' || pr.payment_method !== 'cash') continue;
+      flujosOtraMonedaValorCup += n(pr.total_cup ?? pr.total); // anticipo: entrada física
+    }
+    for (const c of report.commissions || []) {
+      if (c.currency === 'CUP' || c.payment_method !== 'cash') continue;
+      flujosOtraMonedaValorCup -= n(c.total_cup ?? c.total); // comisión pagada: salida física
+    }
+  }
+
   return {
     currency, ventasCash, ventasTransfer, ventasZelle, ventasMixed, ventasTotales,
     otIngresosCash, comisionesCash, comisionesTransfer, serviciosRecibidosCash,
@@ -446,6 +489,7 @@ export function computeDailySummary(
     ingresosCaja, egresosCaja, reembolsosCash, reembolsosVoucher,
     equivCashOtraMoneda: equivCash, equivVouchersOtraMoneda: equivVouchers,
     efectivoEsperado, saldoInicial, liquidacionBilletes, cobrosBilletes,
+    flujosOtraMonedaValorCup,
   };
 }
 

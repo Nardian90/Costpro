@@ -531,3 +531,71 @@ describe('CASO E · integridad de formatos (signos, importes, bases y estado)', 
     expect(t).not.toContain('Estado: Conciliado');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MISIÓN P0 «EFECTIVO FANTASMA» (2026-10-26) — el anexo de auditoría del PDF
+// conserva el residuo de valoración CLASIFICADO (valoración contable, jamás
+// como efectivo disponible). Caso base: 7 USD cobrados a 800 (5.600 CUP
+// canónicos) siguen en el cajón (respaldo en billetes USD). Caso fantasma:
+// los mismos 7 USD entregados a 900 (6.300) ⇒ residuo −700 SIN billetes.
+// ═══════════════════════════════════════════════════════════════════════════
+describe('MISIÓN P0 — anexo de auditoría del PDF: residuo de valoración clasificado', () => {
+  it('con billetes USD remanentes: valoración contable CONVIVE con billetes (no es efectivo CUP)', async () => {
+    await buildCashReportPdf(buildContext(), SUMMARIES);
+    const t = allTexts();
+    // La fila del anexo (etiqueta con «…» por geometría — prefijo estable)
+    expect(t).toContain('Diferencia de valoración contable CUP del per');
+    // 5.600 canónicos de los 7 USD cobrados — JAMÁS sumados al esperado CUP
+    expect(t).toContain('+5.600,00');
+    // Billetes USD del período: 7 (respaldo de esa valoración)
+    expect(t).toContain('7,00');
+    expect(t).toContain('valoración contable — no son billetes CUP');
+  });
+
+  it('CASO FANTASMA: USD cobrados a 800 y entregados a 900 → residuo SIN respaldo en billetes', async () => {
+    const report = {
+      ...REPORT_FULL,
+      cash_flows: [
+        // El egreso CUP original del fixture PERMANECE (500 CUP)
+        { id: 'cf-1', direction: 'out' as const, amount: 500, currency: 'CUP', amount_cup: 500, note: 'IE-000001', document_number: 'IE-000001', created_by: null, created_at: '2026-10-24T19:00:00Z' },
+        // Entrega de los 7 USD a una tasa DISTINTA (900): 6.300 canónicos
+        { id: 'ent-usd', direction: 'out' as const, amount: 7, currency: 'USD', amount_cup: 6300, note: 'IE-000002', document_number: 'IE-000002', created_by: null, created_at: '2026-10-24T20:00:00Z' },
+      ],
+    } as unknown as CashReportPdfContext['report'];
+    await buildCashReportPdf(buildContext({ report }), SUMMARIES);
+    const t = allTexts();
+    // Residuo de valoración: 5.600 − 6.300 = −700 (sin billetes que lo respalden)
+    expect(t).toContain('Diferencia de valoración contable CUP del per');
+    expect(t).toContain('-700,00');
+    // Clasificación inequívoca: NO es efectivo disponible
+    expect(t).toContain('residuo SIN respaldo en billetes — valoración contable, NO efectivo disponible');
+    // El esperado físico por moneda NO recoge el residuo: hoja CUP 10.500 y
+    // hoja USD 7 − 7 = 0 (los billetes salieron completos).
+    expect(t).toContain('10.500,00');
+    expect(t).toContain('Efectivo esperado a entregar');
+  });
+
+  it('paridad PDF ↔ Excel: la MISMA cifra y clasificación del residuo (misión §6-E)', async () => {
+    const report = {
+      ...REPORT_FULL,
+      cash_flows: [
+        { id: 'ent-usd', direction: 'out' as const, amount: 7, currency: 'USD', amount_cup: 6300, note: 'IE-000002', document_number: 'IE-000002', created_by: null, created_at: '2026-10-24T20:00:00Z' },
+      ],
+    } as unknown as CashReportPdfContext['report'];
+    const ctx = buildContext({ report });
+    // PDF
+    await buildCashReportPdf(ctx, SUMMARIES);
+    const t = allTexts();
+    expect(t).toContain('-700,00');
+    expect(t).toContain('residuo SIN respaldo en billetes');
+    // Excel (misma fuente: computeCustomResultsForPdf)
+    const { wb } = await buildCashReportExcelWorkbook(ctx, SUMMARIES, new Map());
+    const aud = rows(wb.Sheets['Auditoría']!);
+    const dif = findRow(aud, 'Diferencia de valoración contable CUP del período (flujos en otra moneda a su tasa)');
+    expect(Number(dif.row[2])).toBe(-700);
+    const clasif = findRow(aud, 'Clasificación del residuo de valoración');
+    expect(String(clasif.row[2])).toContain('SIN respaldo en billetes');
+    const billetes = findRow(aud, 'Billetes netos de otra moneda del período (físico USD)');
+    expect(Number(billetes.row[2])).toBe(0);
+  });
+});

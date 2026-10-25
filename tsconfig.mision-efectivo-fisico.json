@@ -1,0 +1,31 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/types/index.ts",
+    "src/lib/cash-flow/constants.ts",
+    "src/lib/cash-ledger/build-ledger.ts",
+    "src/lib/cash-report/summary.ts",
+    "src/lib/cash-report/custom-result.ts",
+    "src/lib/cash-report/report-selection.ts",
+    "src/app/api/cash-flow/route.ts",
+    "src/app/api/cash-flow/ledger/route.ts",
+    "src/app/api/cash-report/route.ts",
+    "src/hooks/api/useCashClosures.ts",
+    "src/hooks/api/useCashFlow.ts",
+    "src/hooks/api/useCashLedger.ts",
+    "src/hooks/api/useActiveShift.ts",
+    "src/components/views/terminal/views/dashboard/CajaStatusStrip.tsx",
+    "src/components/views/terminal/views/cash_flow/IngresosEgresosView.tsx",
+    "src/components/views/terminal/views/cash_flow/CashFlowCreateModal.tsx",
+    "src/components/views/terminal/views/cash_flow/CashLedgerPanel.tsx",
+    "src/components/views/terminal/views/cash/CashReportView.tsx",
+    "src/components/views/terminal/views/cash/cash-report-pdf.ts",
+    "src/components/views/terminal/views/cash/cash-report-excel.ts",
+    "src/__tests__/lib/cash-report-summary.test.ts",
+    "src/__tests__/lib/cash-report-custom-result.test.ts",
+    "src/__tests__/migrations/efectivo-fisico-disponibilidad-migration.test.ts"
+  ]
+}

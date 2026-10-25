@@ -242,6 +242,21 @@ export interface AuditReconciliation {
   ventasExcluidas: number;
   /** Estado inequívoco del anexo (misión P1 §5). */
   estado: AuditStatus;
+  /** MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): DIFERENCIA DE VALORACIÓN
+   *  CONTABLE CUP del período — valor canónico neto de los flujos de
+   *  efectivo en otra moneda (cobros + documentos + pagos, cada uno a SU
+   *  tasa histórica). Base OFICIAL. NO representa efectivo disponible.
+   *  0 en la hoja USD. */
+  diferenciaValoracionCup: number;
+  /** Billetes netos de otra moneda del período (USD físico del arqueo
+   *  oficial de la hoja USD: esperado − saldo inicial). Contexto del
+   *  residuo: si es 0, la diferencia de valoración queda SIN respaldo. */
+  billetesOtraMonedaPeriodo: number;
+  /** true ⇔ |diferenciaValoracionCup| ≥ tolerancia y los billetes de otra
+   *  moneda del período son 0: el residuo canónico NO tiene respaldo en
+   *  billetes — se exhibe clasificado como valoración contable, jamás como
+   *  efectivo disponible (regla inviolable de la misión P0). */
+  residuoValoracionSinRespaldo: boolean;
 }
 
 /** Resultado completo por moneda: personalizado + oficial + auditoría. */
@@ -352,6 +367,11 @@ export function customVentasTotales(s: DailySummary, sel: SummaryConceptsSelecti
  *                 fórmula — produce los importes «con las ventas activas»).
  * @param sel      Conceptos activos.
  * @param counts   {validas, seleccionadas} — conteos del período (anexo).
+ * @param otraMoneda DailySummary OFICIAL de la otra moneda (hoja CUP ← hoja
+ *                 USD): alimenta la clasificación del residuo de valoración
+ *                 (billetes netos de otra moneda del período). Opcional —
+ *                 sin ella, billetesOtraMonedaPeriodo se reporta como 0 y la
+ *                 clasificación se basa solo en la diferencia de valoración.
  */
 export function computeCustomCurrencyResult(
   currency: CustomCurrency,
@@ -359,6 +379,7 @@ export function computeCustomCurrencyResult(
   seleccion: DailySummary,
   sel: SummaryConceptsSelection,
   counts: { validas: number; seleccionadas: number },
+  otraMoneda?: DailySummary | null,
 ): CustomCurrencyResult {
   const oficialEsperado = num(oficial.efectivoEsperado);
   // (1) CAMBIO REAL — cálculo directo del personalizado (conceptos activos
@@ -500,6 +521,21 @@ export function computeCustomCurrencyResult(
 
   const excluidas = Math.max(0, counts.validas - counts.seleccionadas);
 
+  // ── MISIÓN EFECTIVO FÍSICO (P0 2026-10-26) · residuo de valoración ──
+  // Base OFICIAL (el universo completo): la diferencia de valoración NO
+  // depende de la configuración — clasifica lo que el arqueo canónico lleva
+  // de más frente al libro de billetes. Los billetes netos de otra moneda
+  // salen del arqueo físico de la hoja USD (esperado − saldo inicial).
+  const diferenciaValoracionCup = currency === 'CUP'
+    ? Math.round((num(oficial.flujosOtraMonedaValorCup)) * 100) / 100
+    : 0;
+  const billetesOtraMonedaPeriodo = currency === 'CUP' && otraMoneda
+    ? Math.round((num(otraMoneda.efectivoEsperado) - num(otraMoneda.saldoInicial)) * 100) / 100
+    : 0;
+  const residuoValoracionSinRespaldo = currency === 'CUP'
+    && Math.abs(diferenciaValoracionCup) >= EPS
+    && Math.abs(billetesOtraMonedaPeriodo) < EPS;
+
   const conciliacion: AuditReconciliation = {
     ventasTotalesOficial: num(oficial.ventasTotales),
     ventasTotalesPersonalizado,
@@ -523,6 +559,9 @@ export function computeCustomCurrencyResult(
     ventasSeleccionadas: counts.seleccionadas,
     ventasExcluidas: excluidas,
     estado,
+    diferenciaValoracionCup,
+    billetesOtraMonedaPeriodo,
+    residuoValoracionSinRespaldo,
   };
 
   const esPersonalizado = Object.values(sel).some(v => v === false) || excluidas > 0;

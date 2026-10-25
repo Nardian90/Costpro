@@ -817,6 +817,14 @@ export async function buildCashReportExcelWorkbook(
         ['Equivalencia canónica CUP oficial (contable, no billetes)', rec.equivalenciaOficial, true],
         ['Equivalencia canónica CUP configurada', rec.equivalenciaPersonalizada, true],
         ['Diferencia de equivalencia contable (personalizado − oficial)', rec.diferenciaEquivalencia, true],
+        // MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): el residuo de valoración se
+        // conserva y clasifica — jamás como efectivo disponible ni sumado al
+        // efectivo de la hoja.
+        ['Diferencia de valoración contable CUP del período (flujos en otra moneda a su tasa)', rec.diferenciaValoracionCup, true],
+        ['Billetes netos de otra moneda del período (físico USD)', rec.billetesOtraMonedaPeriodo, true],
+        ['Clasificación del residuo de valoración', rec.residuoValoracionSinRespaldo
+          ? 'SIN respaldo en billetes — valoración contable, NO efectivo disponible'
+          : 'valoración contable — no son billetes CUP', false],
       ] as Array<[string, number | string, boolean]>) : []),
       ['Ingresos de caja oficiales del período', rec.ingresosCajaOficial, true],
       ['Egresos de caja oficiales del período', rec.egresosCajaOficial, true],
