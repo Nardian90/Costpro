@@ -14,6 +14,7 @@
  */
 
 import { ViewType } from '@/store';
+import { effectiveNavRole } from '@/config/navigation/sidebar.structure';
 import {
   ACTION_EXTENSIONS,
   HOME_ITEM,
@@ -81,9 +82,13 @@ function buildSystemActions(): Action[] {
 export const SYSTEM_ACTIONS: Action[] = buildSystemActions();
 
 export function getActionsForUser(role: string): Action[] {
+  // CP-ORG-002: misma regla canónica que el sidebar — el rol de plataforma
+  // 'superadmin' satisface los requisitos de 'admin' en el palette ⌘K.
+  // Sin esto, la cuenta designada solo veía acciones universales.
+  const navRole = effectiveNavRole(role);
   return SYSTEM_ACTIONS.filter(action => {
     if (!action.roles) return true;
-    return action.roles.includes(role);
+    return action.roles.includes(navRole);
   });
 }
 

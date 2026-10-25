@@ -40,7 +40,7 @@ import React, { useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, Crown, Zap, LayoutGrid } from 'lucide-react';
 import { useUIStore, ViewType } from '@/store';
-import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
+import { SIDEBAR_STRUCTURE, NavModule, effectiveNavRole } from '@/config/navigation/sidebar.structure';
 import { useAuthStore } from '@/store';
 import { BackToVentaButton } from '@/components/ui/BackToVentaButton';
 import { useTranslations } from 'next-intl';
@@ -125,11 +125,13 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
   }
 
   // Filtrar hijos por rol del usuario (RBAC)
+  // CP-ORG-002: rol efectivo canónico — 'superadmin' satisface los
+  // requisitos de 'admin' (misma regla que el sidebar y el guard de vistas).
   const visibleChildren = (submenu.children || []).filter(child => {
     if (!child.allowedRoles || child.allowedRoles.length === 0) return true;
     const userRole = user?.role;
     if (!userRole) return false;
-    return child.allowedRoles.includes(userRole);
+    return child.allowedRoles.includes(effectiveNavRole(userRole));
   });
 
   const Icon = submenu.icon;

@@ -61,6 +61,7 @@ import dynamic from 'next/dynamic';
 import { Store, Building, Loader2, LayoutGrid, BarChart3, LayoutList } from 'lucide-react'; // F4: ChevronRight retirado con el breadcrumb local
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
+import { effectiveNavRole } from '@/config/navigation/sidebar.structure';
 import ContentSwitcher, { type ContentSwitcherItem } from '@/components/ui/ContentSwitcher';
 
 // Lazy-load de las sub-vistas
@@ -193,7 +194,8 @@ export default function ManagementHubView() {
     const saved = localStorage.getItem(LEGACY_HUB_TAB_KEY) as TabId | null;
     if (saved && TABS.some(t => t.id === saved)) {
       const tab = TABS.find(t => t.id === saved)!;
-      if (user && tab.roles.includes(user.role)) {
+      // CP-ORG-002: rol efectivo canónico (superadmin → requisitos de admin).
+      if (user && tab.roles.includes(effectiveNavRole(user.role))) {
         setActiveTab(saved);
       }
     }
@@ -252,7 +254,10 @@ export default function ManagementHubView() {
     return () => cancelAnimationFrame(raf);
   }, [storesViewMode]);
 
-  const visibleTabs = useMemo(() => TABS.filter(tab => !user || tab.roles.includes(user.role)), [user]);
+  // CP-ORG-002: rol efectivo canónico (superadmin → requisitos de admin),
+  // mismo criterio del sidebar — los tabs del hub no colapsan para la
+  // cuenta de plataforma.
+  const visibleTabs = useMemo(() => TABS.filter(tab => !user || tab.roles.includes(effectiveNavRole(user.role))), [user]);
 
   useEffect(() => {
     if (!visibleTabs.some(t => t.id === activeTab) && visibleTabs.length > 0) {
