@@ -1356,7 +1356,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     // MISIÓN CORRECTIVA 2026-10-25: el bloque abre con el SALDO INICIAL del
     // período (libro de caja, `opening_balance` de la API) — partida real con
     // importe real; ocultarla NO la saca del cálculo del esperado (§5).
-    const incomeRows: ConceptTaggedRow[] = filterIncomeRowsByConcepts([
+    const incomeRows: ConceptTaggedRow[] = filterIncomeRowsByConcepts(([
       { label: 'Saldo inicial / fondo de caja', amount: s.saldoInicial, concept: 'saldoInicial' },
       ...(currency === 'CUP'
       ? [
@@ -1369,7 +1369,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
           { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
           { label: 'Venta por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' },
         ]),
-    ], ctx.concepts);
+    ] as ConceptTaggedRow[]), ctx.concepts);
     if (currency === 'CUP') {
       if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' });
       if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true });

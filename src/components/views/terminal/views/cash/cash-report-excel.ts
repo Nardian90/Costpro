@@ -157,17 +157,17 @@ function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD', concepts?: Summ
   const off = (k: SummaryConceptKey) => concepts?.[k] === false;
   const rows: IncomeRow[] = [
     { label: 'Saldo inicial / fondo de caja', amount: s.saldoInicial, kind: 'normal', concept: 'saldoInicial' },
-    ...(currency === 'CUP'
-    ? [
-        { label: 'Resumen del día (efectivo + transferencia)', amount: s.ventasTotales, kind: 'total', concept: 'resumenDia' },
-        { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal', concept: 'ventasEfectivo' },
-        { label: 'Ventas por transferencia', amount: s.ventasTransfer, kind: 'normal', concept: 'ventasTransferencia' },
-      ]
-    : [
-        { label: 'Resumen del día (efectivo + Zelle)', amount: s.ventasTotales, kind: 'total', concept: 'resumenDia' },
-        { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal', concept: 'ventasEfectivo' },
-        { label: 'Venta por Zelle', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' },
-      ]),
+    ...((currency === 'CUP'
+      ? [
+          { label: 'Resumen del día (efectivo + transferencia)', amount: s.ventasTotales, kind: 'total', concept: 'resumenDia' },
+          { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal', concept: 'ventasEfectivo' },
+          { label: 'Ventas por transferencia', amount: s.ventasTransfer, kind: 'normal', concept: 'ventasTransferencia' },
+        ]
+      : [
+          { label: 'Resumen del día (efectivo + Zelle)', amount: s.ventasTotales, kind: 'total', concept: 'resumenDia' },
+          { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal', concept: 'ventasEfectivo' },
+          { label: 'Venta por Zelle', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' },
+        ]) as IncomeRow[]),
   ];
   if (currency === 'CUP') {
     if (s.ventasZelle > 0) rows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' });
