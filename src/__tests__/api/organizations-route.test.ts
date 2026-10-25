@@ -338,6 +338,50 @@ describe('MISIÓN ORGANIZACIONES — /api/organizations (FASE 1+3: alcance por r
     const res = await orgsPOST(makeReq('/api/organizations', 'POST', { name: '   ' }));
     expect(res.status).toBe(400);
   });
+
+  // ─── CP-ORG-001 continuación (2026-10-25): brecha de creación §4.2-4.7 ──
+
+  it('CP-ORG-001 POST: tenant_admin NO puede crear organizaciones (403)', async () => {
+    sessionOverride.user = { ...currentSession.user, role: 'tenant_admin' };
+    const res = await orgsPOST(makeReq('/api/organizations', 'POST', { name: 'Tenant Admin Corp' }));
+    expect(res.status).toBe(403);
+    expect(state.inserted).toHaveLength(0);
+  });
+
+  it('CP-ORG-001 POST: clerk NO puede crear organizaciones (403)', async () => {
+    sessionOverride.user = { ...currentSession.user, role: 'clerk' };
+    const res = await orgsPOST(makeReq('/api/organizations', 'POST', { name: 'Clerk Corp' }));
+    expect(res.status).toBe(403);
+    expect(state.inserted).toHaveLength(0);
+  });
+
+  it('CP-ORG-001 POST: la inserción NO genera efectos colaterales (§4.7)', async () => {
+    sessionOverride.user = { ...currentSession.user, role: 'superadmin' };
+    const tenantsBefore = state.tenants.length;
+    const res = await orgsPOST(makeReq('/api/organizations', 'POST', { name: 'Corp Aislada' }));
+    expect(res.status).toBe(201);
+    expect(state.inserted).toHaveLength(1);
+    // Payload EXACTO: solo los campos del modelo de tenants — nada de
+    // owner_id (el creador NO se autoasigna), ni users, ni tiendas, ni
+    // membresías, ni roles inferidos.
+    const inserted = state.inserted[0];
+    expect(Object.keys(inserted).sort()).toEqual(['is_active', 'name', 'subscription_status']);
+    expect(inserted.name).toBe('Corp Aislada');
+    expect(inserted.is_active).toBe(true);
+    expect(inserted.subscription_status).toBe('trial');
+    // Ninguna otra tabla fue tocada por la creación: cero UPDATEs, cero
+    // DELETEs, y el listado previo no se modifica (la creación es aditiva).
+    expect(state.updated).toHaveLength(0);
+    expect(state.deleted).toHaveLength(0);
+    expect(state.tenants.length).toBe(tenantsBefore);
+  });
+
+  it('CP-ORG-001 POST: is_active=false respeta el estado solicitado', async () => {
+    sessionOverride.user = { ...currentSession.user, role: 'superadmin' };
+    const res = await orgsPOST(makeReq('/api/organizations', 'POST', { name: 'Corp Inactiva', is_active: false }));
+    expect(res.status).toBe(201);
+    expect(state.inserted[0].is_active).toBe(false);
+  });
 });
 
 describe('MISIÓN ORGANIZACIONES — /api/organizations/[id] (FASE 1 §§4-5)', () => {
