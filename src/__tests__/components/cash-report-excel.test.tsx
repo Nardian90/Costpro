@@ -504,7 +504,11 @@ describe('Fórmulas reales del libro (misma hoja: tabla ↔ resumen ↔ desglose
     const totalIdx = findRow(rs, 'Resumen del día (efectivo + transferencia)').idx;
     expect(cell(ws, `D${totalIdx + 1}`).f).toMatch(/^D\d+\+D\d+$/);
     const espIdx = findRow(rs, 'Efectivo esperado a entregar').idx;
-    expect(cell(ws, `D${espIdx + 1}`).f).toMatch(/^D\d+$/); // componentes del fixture
+    // MISIÓN CORRECTIVA: la fórmula abre con el saldo inicial (celda, importe 0
+    // en este fixture sin apertura) y suma los cobros — cadena de componentes:
+    expect(cell(ws, `D${espIdx + 1}`).f).toMatch(/^D\d+(\+D\d+)*$/);
+    const saldoIdx = findRow(rs, 'Saldo inicial / fondo de caja').idx;
+    expect(String(cell(ws, `D${espIdx + 1}`).f)).toContain(`D${saldoIdx + 1}`);
   });
 
   it('cuadre = contado − esperado (misma hoja, fórmula viva)', async () => {

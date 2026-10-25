@@ -1884,7 +1884,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
     serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0, reembolsosCash: 0, reembolsosVoucher: 0,
     equivCashOtraMoneda: 0, equivVouchersOtraMoneda: 0,
-    efectivoEsperado: p.expectedCup,
+    efectivoEsperado: p.expectedCup, saldoInicial: 0, liquidacionBilletes: 0,
   };
   const diferencia = computeCuadre(p.cupTotal, s.efectivoEsperado);
   const cuadreState = cuadreLabel(diferencia);
@@ -2032,13 +2032,22 @@ function ResultadosPanel(p: ResultadosPanelProps) {
           </button>
         </div>
         <div className="divide-y divide-border/20">
+          {/* MISIÓN CORRECTIVA 2026-10-25: saldo inicial del período (libro de
+              caja) — partida real que abre el resumen; ocultarla (concepto) NO
+              la saca del cálculo del esperado (presentación pura, §5). */}
+          {p.concepts.saldoInicial && (
+            <SummaryRow label="Saldo inicial / fondo de caja" value={s.saldoInicial} note="saldo del libro de caja inmediatamente anterior al período" />
+          )}
           {p.concepts.resumenDia && <SummaryRow label="Ventas totales (efectivo + transferencia)" value={s.ventasTotales} strong />}
           {p.concepts.ventasEfectivo && <SummaryRow label="Ventas en efectivo" value={s.ventasCash} />}
           {p.concepts.ventasTransferencia && <SummaryRow label="Ventas por transferencia" value={s.ventasTransfer} />}
           {p.concepts.ventasZelle && s.ventasZelle > 0 && <SummaryRow label="Ventas por Zelle" value={s.ventasZelle} />}
           {/* MISIÓN DEFINITIVA 2026-10-24: la equivalencia canónica NO es una
-              segunda venta — línea propia de consolidación (contrato único §2). */}
-          {p.concepts.equivalenciaCup && s.equivCashOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de cobros en efectivo en otras monedas" value={s.equivCashOtraMoneda} note="consolidación contable — no es una segunda venta" />}
+              segunda venta — línea propia de consolidación (contrato único §2).
+              MISIÓN CORRECTIVA 2026-10-25: consolidación de PRESENTACIÓN —
+              los billetes de ese cobro viven en la hoja USD y ya están en su
+              esperado; no alimentan el esperado de la hoja CUP. */}
+          {p.concepts.equivalenciaCup && s.equivCashOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de cobros en efectivo en otras monedas" value={s.equivCashOtraMoneda} note="consolidación contable — no es una segunda venta; no es efectivo físico CUP" />}
           {s.equivVouchersOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de vouchers en otras monedas" value={s.equivVouchersOtraMoneda} note="informativo — no es efectivo físico" />}
           {s.otIngresosCash > 0 && <SummaryRow label="Órdenes de trabajo (anticipos)" value={s.otIngresosCash} />}
           {s.comisionesCash > 0 && <SummaryRow label="Comisiones pagadas en efectivo" value={-s.comisionesCash} negative />}
@@ -2052,6 +2061,17 @@ function ResultadosPanel(p: ResultadosPanelProps) {
               contenido del documento; «Egresos de caja» es concepto gobernable. */}
           {s.ingresosCaja > 0 && <SummaryRow label="Ingresos de caja (fondo y otros)" value={s.ingresosCaja} />}
           {p.concepts.egresosCaja && s.egresosCaja > 0 && <SummaryRow label="Egresos de caja (fondo y otros)" value={-s.egresosCaja} negative />}
+          {/* MISIÓN CORRECTIVA 2026-10-25: liquidación de billetes (vuelto
+              cruzado de cobros con liquidación explícita) — partida contable
+              de la conciliación física; siempre visible cuando ≠ 0. */}
+          {Math.abs(s.liquidacionBilletes) > 0.005 && (
+            <SummaryRow
+              label={s.currency === 'CUP' ? 'Vuelto dado en CUP de cobros en otras monedas' : 'Billetes recibidos en exceso (vuelto dado en CUP)'}
+              value={s.liquidacionBilletes}
+              negative={s.currency === 'CUP'}
+              note="conciliación física de billetes (regla del libro de caja)"
+            />
+          )}
         </div>
         <div className="flex items-center justify-between px-4 py-3 bg-primary/10 border-t-2 border-primary/40">
           <p className="text-xs font-black uppercase text-primary">Efectivo esperado a entregar</p>

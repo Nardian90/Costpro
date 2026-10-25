@@ -215,8 +215,10 @@ describe('FUNCIÓN B · reporte AJUSTADO (misión §4: una sola fuente para pant
     expect(adjusted.ventasCash).toBe(0);
     expect(adjusted.ventasTransfer).toBe(3000); // V4 intacto
     expect(adjusted.ventasTotales).toBe(3000);
-    // Esperado = 0 + equiv(V2 5 600) + egresos(−500):
-    expect(adjusted.efectivoEsperado).toBe(5600 - 500);
+    // MISIÓN CORRECTIVA: esperado = saldo inicial (0) + cobros BILLETES CUP
+    // del conjunto (0 — V2 es USD, V4 transfer, V5 zelle) − egresos (500).
+    // La equivalencia de V2 NO entra: sus billetes USD viven en la hoja USD.
+    expect(adjusted.efectivoEsperado).toBe(-500);
     // Equivalencia recalculada con las seleccionadas (solo V2):
     expect(adjusted.equivCashOtraMoneda).toBe(5600);
     // Egresos de caja NO recalculados por la selección de ventas:

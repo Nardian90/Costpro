@@ -52,6 +52,38 @@ export interface SalePaymentBucket {
 }
 
 /**
+ * MISIÓN CORRECTIVA 2026-10-25: liquidación explícita de la venta (vuelto
+ * persistido, columnas de transactions). Presente solo en ventas v2.24+;
+ `null` en ventas legadas. Es la vista FÍSICA de los billetes: para el
+ * efectivo esperado el cobro cuenta como (recibido − vuelto) por moneda
+ * — exactamente la regla del libro (get_cash_currency_summary §1).
+ */
+export interface SaleSettlement {
+  cash_received_cup?: number | null;
+  change_given_cup?: number | null;
+  cash_received_usd?: number | null;
+  change_given_usd?: number | null;
+}
+
+/** ¿La venta tiene liquidación explícita? (misma regla que el libro §1). */
+export function saleIsSettled(s: SaleSettlement | null | undefined): boolean {
+  return s != null && (
+    s.cash_received_cup != null || s.cash_received_usd != null
+    || s.change_given_cup != null || s.change_given_usd != null
+  );
+}
+
+/** Neto de BILLETES de una venta liquidada, por moneda (regla del ledger). */
+export function saleBillsByCurrency(s: SaleSettlement | null | undefined): { CUP: number; USD: number } | null {
+  if (!saleIsSettled(s)) return null;
+  const num = (v: unknown): number => Number(v ?? 0) || 0;
+  return {
+    CUP: num(s!.cash_received_cup) - num(s!.change_given_cup),
+    USD: num(s!.cash_received_usd) - num(s!.change_given_usd),
+  };
+}
+
+/**
  * Venta individual del período con su composición REAL de pagos. La produce
  * /api/cash-report junto a sales_split — misma reconstrucción, misma fuente.
  * `items`/`tx`/`payments` son el input EXACTO de buildItemsSummary para
@@ -67,6 +99,10 @@ export interface SaleRow {
    *  histórica · 'no-items' = venta sin ítems reconstruida por pools. */
   source: 'ledger' | 'reconstruction' | 'no-items';
   buckets: SalePaymentBucket[];
+  /** MISIÓN CORRECTIVA 2026-10-25: liquidación explícita (vuelto persistido)
+   *  de la venta — vista FÍSICA de los billetes para el efectivo esperado.
+   *  null en ventas legadas (los buckets actúan como fallback). */
+  settlement?: SaleSettlement | null;
   tx?: CollectionTx;
   items?: CollectionItem[];
   payments?: LedgerPayment[];
@@ -109,6 +145,11 @@ export interface SummaryConceptDef {
 
 export const SUMMARY_CONCEPTS: readonly SummaryConceptDef[] = [
   {
+    key: 'saldoInicial',
+    label: 'Saldo inicial / fondo de caja',
+    hint: 'Saldo del libro de caja inmediatamente anterior al período — no cambia con la selección de ventas',
+  },
+  {
     key: 'resumenDia',
     label: 'Resumen del día (efectivo + transferencia)',
     hint: 'Ventas totales del período cobradas en la moneda de la hoja',
@@ -138,12 +179,13 @@ export const SUMMARY_CONCEPTS: readonly SummaryConceptDef[] = [
   },
 ] as const;
 
-export type SummaryConceptKey = 'resumenDia' | 'ventasEfectivo' | 'ventasTransferencia' | 'ventasZelle' | 'equivalenciaCup' | 'egresosCaja';
+export type SummaryConceptKey = 'saldoInicial' | 'resumenDia' | 'ventasEfectivo' | 'ventasTransferencia' | 'ventasZelle' | 'equivalenciaCup' | 'egresosCaja';
 
 export type SummaryConceptsSelection = Record<SummaryConceptKey, boolean>;
 
 /** Todos activados: reproduce EXACTAMENTE el contenido actual del reporte. */
 export const DEFAULT_SUMMARY_CONCEPTS: SummaryConceptsSelection = {
+  saldoInicial: true,
   resumenDia: true,
   ventasEfectivo: true,
   ventasTransferencia: true,
@@ -225,6 +267,10 @@ export interface SelectedSalesTotals {
   /** Split por moneda SOLO de las ventas seleccionadas (misma forma que
    *  report.sales_split: buckets nativos por moneda — nunca se mezclan). */
   split: SalesSplit;
+  /** MISIÓN CORRECTIVA 2026-10-25: cobros en BILLETES por moneda de las
+   *  seleccionadas (liquidación explícita cuando existe; buckets si no).
+   *  Misma forma que report.sales_bills_split — alimenta el esperado. */
+  billsSplit: Record<string, number>;
   /** Σ amount_cup de los buckets cash no-CUP de las seleccionadas (hoja CUP). */
   equivCashOtherCup: number;
   /** Σ amount_cup de los buckets transfer/zelle no-CUP de las seleccionadas. */
@@ -257,6 +303,7 @@ export function computeSelectedSalesTotals(
   const list = rows || [];
   const excl = excluded || new Set<string>();
   const split: Record<string, { cash: number; transfer: number; zelle: number; mixedUnsplit: number; total: number }> = {};
+  const billsSplit: Record<string, number> = {};
   const groups = new Map<string, { payment_method: string; currency: string; transaction_count: number; total: number; total_cup: number }>();
   let equivCash = 0;
   let equivVoucher = 0;
@@ -267,11 +314,30 @@ export function computeSelectedSalesTotals(
   // cuando la selección vacía una moneda completa.
   for (const cur of ['CUP', 'USD']) {
     split[cur] = { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 };
+    billsSplit[cur] = 0;
   }
 
   for (const row of list) {
     if (excl.has(row.id)) continue;
     included += 1;
+    // MISIÓN CORRECTIVA: cobros en BILLETES (vista física del ledger) — la
+    // liquidación explícita manda; sin ella, el bucket cash de la moneda
+    // (coincide con la vista de valor legada). Misma regla que la ruta usa
+    // para sales_bills_split: UNA fuente, sin algoritmo paralelo.
+    const bills = saleBillsByCurrency(row.settlement);
+    if (bills) {
+      for (const [cur, net] of Object.entries(bills)) {
+        billsSplit[cur] = (billsSplit[cur] || 0) + net;
+      }
+    } else {
+      for (const b of row.buckets || []) {
+        if (b.method !== 'cash') continue;
+        const cur = normCur(b.currency);
+        const amount = num(b.amount);
+        if (!(Math.abs(amount) > 0.005)) continue;
+        billsSplit[cur] = (billsSplit[cur] || 0) + amount;
+      }
+    }
     for (const b of row.buckets || []) {
       const cur = normCur(b.currency);
       const amount = num(b.amount);
@@ -299,6 +365,7 @@ export function computeSelectedSalesTotals(
 
   return {
     split: split as SalesSplit,
+    billsSplit,
     equivCashOtherCup: equivCash,
     equivVoucherOtherCup: equivVoucher,
     groups: [...groups.values()].sort((a, b) => a.payment_method.localeCompare(b.payment_method) || a.currency.localeCompare(b.currency)),
@@ -326,15 +393,18 @@ export interface SelectionAdjustedReport<T> {
 
 /**
  * Construye el reporte ajustado: sustituye SOLO los campos derivados de las
- * ventas (sales, sales_split, equivalencias) por los recalculados con el
- * conjunto seleccionado. Pagos, comisiones, egresos de caja, reembolsos y
- * ajustes quedan INTACTOS (regla §4: egresos independientes de la selección).
+ * ventas (sales, sales_split, equivalencias, cobros en billetes) por los
+ * recalculados con el conjunto seleccionado. Pagos, comisiones, egresos de
+ * caja, reembolsos y ajustes quedan INTACTOS (regla §4: egresos independientes
+ * de la selección); el SALDO INICIAL también queda intacto (misión correctiva
+ * §7: no cambia al seleccionar o excluir ventas).
  */
 export function buildSelectionAdjustedReport<T extends {
   sales?: Array<{ payment_method: string; currency: string; transaction_count?: number; total: number; total_cup?: number }>;
   sales_split?: SalesSplit;
   sales_equiv_cash_other_cup?: number;
   sales_equiv_voucher_other_cup?: number;
+  sales_bills_split?: Partial<Record<string, number>>;
 }>(base: T, rows: readonly SaleRow[] | null | undefined, excluded: ReadonlySet<string> | null | undefined): SelectionAdjustedReport<T> {
   const list = rows || [];
   if (list.length === 0 || !excluded || excluded.size === 0) {
@@ -353,6 +423,7 @@ export function buildSelectionAdjustedReport<T extends {
       sales_split: totals.split,
       sales_equiv_cash_other_cup: totals.equivCashOtherCup,
       sales_equiv_voucher_other_cup: totals.equivVoucherOtherCup,
+      sales_bills_split: totals.billsSplit,
     } as T,
     selectionActive: true,
     totals,

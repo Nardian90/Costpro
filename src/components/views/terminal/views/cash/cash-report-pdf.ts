@@ -973,7 +973,11 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
       doc.text(lbl, x, by);
       // Signo explícito para egresos/ajustes: −1.234,56 (auditable a simple vista).
       const signed = r.isTotal ? r.amount : (r.amount < 0 ? r.amount : (r.note === 'expense' ? -r.amount : r.amount));
-      const amt = r.isTotal || r.amount === 0 || !r.note ? (r.amount === 0 ? '-' : fmtCup(r.amount)) : fmtCup(signed);
+      // MISIÓN CORRECTIVA 2026-10-25: el CERO monetario se presenta como tal
+      // («0,00»), nunca como guión ambiguo — el cero del saldo/cuadre es un
+      // dato contable, no un vacío (§6 «elimina valores vacíos o guiones
+      // ambiguos cuando la plantilla pueda presentar correctamente el cero»).
+      const amt = r.isTotal || !r.note ? fmtCup(r.amount) : fmtCup(signed);
       doc.text(amt, x + blockW - 2, by, { align: 'right' });
       by += 4.2;
     }
@@ -1297,6 +1301,8 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
   // reporte USD fluye tras el CUP con separador de sección).
   const usdWillRender = options.includeUsd !== false && (
     usdSummary.ventasTotales > 0 || usdSummary.ventasCash > 0
+    || usdSummary.saldoInicial > 0 || Math.abs(usdSummary.liquidacionBilletes) > 0.005
+    || Math.abs(usdSummary.efectivoEsperado) > 0.005
     || breakdownTotal(usdBreakdown) > 0
     || itemsWithCommission.some((it: any) => (Number(it.usd_total || 0)) > 0)
   );
@@ -1347,7 +1353,12 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     // MISIÓN PERSONALIZACIÓN: las filas llevan su CONCEPTO (clave) y el bloque
     // se filtra por la selección — un concepto desactivado se OMITE realmente
     // del documento (presentación: el esperado y los saldos no se recalculan).
-    const incomeRows: ConceptTaggedRow[] = filterIncomeRowsByConcepts(currency === 'CUP'
+    // MISIÓN CORRECTIVA 2026-10-25: el bloque abre con el SALDO INICIAL del
+    // período (libro de caja, `opening_balance` de la API) — partida real con
+    // importe real; ocultarla NO la saca del cálculo del esperado (§5).
+    const incomeRows: ConceptTaggedRow[] = filterIncomeRowsByConcepts(([
+      { label: 'Saldo inicial / fondo de caja', amount: s.saldoInicial, concept: 'saldoInicial' },
+      ...(currency === 'CUP'
       ? [
           { label: 'Resumen del día (efectivo + transferencia)', amount: s.ventasTotales, isTotal: true, concept: 'resumenDia' },
           { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
@@ -1357,14 +1368,18 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
           { label: 'Resumen del día (efectivo + Zelle)', amount: s.ventasTotales, isTotal: true, concept: 'resumenDia' },
           { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
           { label: 'Venta por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' },
-        ], ctx.concepts);
+        ]),
+    ] as ConceptTaggedRow[]), ctx.concepts);
     if (currency === 'CUP') {
       if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' });
       if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true });
       // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
       // (contrato único §2) — jamás sumada a las filas de venta (no es una
-      // segunda venta); la de efectivo SÍ alimenta el esperado a entregar.
-      if (s.equivCashOtraMoneda > 0 && ctx.concepts?.equivalenciaCup !== false) incomeRows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, concept: 'equivalenciaCup' });
+      // segunda venta). MISIÓN CORRECTIVA 2026-10-25: es CONSOLIDACIÓN de
+      // presentación ('info'): los billetes de ese cobro viven físicamente en
+      // la hoja USD — no alimentan el esperado de la hoja CUP (contarlos en
+      // ambas rompería la conciliación con el libro físico).
+      if (s.equivCashOtraMoneda > 0 && ctx.concepts?.equivalenciaCup !== false) incomeRows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, note: 'info', concept: 'equivalenciaCup' });
       if (s.equivVouchersOtraMoneda > 0) incomeRows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, note: 'info' });
       if (s.otIngresosCash > 0) incomeRows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash });
       // Comisiones PAGADAS desglosadas por medio (§4): transferencia NO toca el efectivo.
@@ -1387,6 +1402,17 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     } else {
       if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense' });
       if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense' });
+    }
+    // MISIÓN CORRECTIVA 2026-10-25: liquidación de billetes (vuelto cruzado de
+    // cobros con liquidación explícita) — partida CONTABLE de la conciliación
+    // física (siempre visible cuando ≠ 0; sin checkbox: no es presentación).
+    // Hoja CUP: vuelto entregado en CUP (salida). Hoja USD: billetes recibidos
+    // en exceso con vuelto dado en CUP (entrada). El importe ya llega con SU
+    // SIGNO (liquidacionBilletes = cobrosBilletes − ventasCash de la hoja).
+    if (Math.abs(s.liquidacionBilletes) > 0.005) {
+      incomeRows.push(currency === 'CUP'
+        ? { label: 'Vuelto dado en CUP de cobros en otras monedas', amount: s.liquidacionBilletes }
+        : { label: 'Billetes recibidos en exceso (vuelto dado en CUP)', amount: s.liquidacionBilletes });
     }
     const esperadoLabel = currency === 'CUP' ? 'Efectivo esperado a entregar' : 'Efectivo esperado a entregar (USD)';
     const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, s.efectivoEsperado, esperadoLabel);

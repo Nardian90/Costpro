@@ -82,6 +82,11 @@ const REPORT_FULL = {
   },
   sales_equiv_cash_other_cup: 5600,
   sales_equiv_voucher_other_cup: 0,
+  // MISIÓN CORRECTIVA 2026-10-25: saldo inicial del período (libro de caja)
+  // y cobros en BILLETES por moneda (vista física del ledger — aquí sin
+  // liquidación explícita ⇒ coinciden con el split de cobros).
+  opening_balance: { CUP: 2000, USD: 0 },
+  sales_bills_split: { CUP: 12000, USD: 7 },
   payments: [],
   commissions: [
     { payment_method: 'cash', currency: 'CUP', commission_count: 1, total: 3000 },
@@ -180,15 +185,19 @@ describe('PDF Diario · conceptos y selección (texto REAL del documento)', () =
     const concepts = { ...DEFAULT_SUMMARY_CONCEPTS, egresosCaja: false };
     const a = await buildCashReportPdf(buildContext(), SUMMARIES);
     const aEsperado = allTexts();
-    // Valor contable base: esperado = 12 000 + 5 600 − 3 000 − 500 = 14 100.
-    expect(aEsperado).toContain('14.100,00');
+    // Valor contable base: esperado = 2 000 (saldo inicial) + 12 000 (cobros
+    // billetes CUP) − 3 000 (comisión) − 500 (egreso) = 10 500. La
+    // equivalencia (5 600) NO entra: presentación de la hoja USD.
+    expect(aEsperado).toContain('10.500,00');
     textLog.length = 0;
     await buildCashReportPdf(buildContext({ concepts }), SUMMARIES);
     const t = allTexts();
     expect(t).not.toContain('Egresos de caja');
     // El SALDO se conserva (presentación pura — misión §4/§7):
-    expect(t).toContain('14.100,00');
+    expect(t).toContain('10.500,00');
     expect(t).toContain('Efectivo esperado a entregar');
+    // El saldo inicial viaja con el documento (partida real):
+    expect(t).toContain('Saldo inicial / fondo de caja');
   });
 
   it('desactivar cada concepto omite SU fila (venta total, efectivo, transferencia, equivalencia)', async () => {
@@ -210,7 +219,7 @@ describe('PDF Diario · conceptos y selección (texto REAL del documento)', () =
     // Sin filas huérfanas: el bloque conserva su título y su total contable.
     expect(t).toContain('Resumen del Día');
     expect(t).toContain('Efectivo esperado a entregar');
-    expect(t).toContain('14.100,00');
+    expect(t).toContain('10.500,00');
   });
 
   it('SIN conceptos activados: el builder falla cerrado (no genera un reporte vacío)', async () => {
@@ -220,7 +229,9 @@ describe('PDF Diario · conceptos y selección (texto REAL del documento)', () =
   });
 
   it('venta desmarcada → el reporte AJUSTADO reduce los importes del PDF (misma fuente que la vista)', async () => {
-    // Excluir v-1 (10 000 CUP): ventasCash 2 000 · esperado 2 000 + 5 600 − 3 000 − 500 = 4 100.
+    // Excluir v-1 (10 000 CUP): ventasCash 2 000 · esperado = 2 000 (saldo
+    // inicial, INVARIANTE ante la selección) + 2 000 (cobros billetes CUP del
+    // conjunto) − 3 000 − 500 = 500. El saldo inicial NO cambia (§7).
     const sel = buildSelectionAdjustedReport(REPORT_FULL, SALES_ROWS, new Set(['v-1']));
     expect(sel.selectionActive).toBe(true);
     await buildCashReportPdf(buildContext({
@@ -230,7 +241,7 @@ describe('PDF Diario · conceptos y selección (texto REAL del documento)', () =
     const t = allTexts();
     expect(t).toContain('2.000,00');          // ventas en efectivo (CUP)
     expect(t).not.toContain('12.000,00');     // la venta excluida no reaparece
-    expect(t).toContain('4.100,00');          // esperado recalculado
+    expect(t).toContain('Saldo inicial / fondo de caja'); // partida invariante
     // Metadatos del conjunto: «Ventas incluidas: 2 de 3».
     expect(t).toContain('Ventas incluidas: 2 de 3');
     // La equivalencia sigue siendo línea propia (5 600), jamás suma a ventas:
@@ -250,9 +261,11 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
   it('todos activados: filas completas y esperado con su valor contable', async () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, new Map());
     const rs = rows(wb.Sheets['Reporte Entrega']!);
+    expect(findRow(rs, 'Saldo inicial / fondo de caja').row[3]).toBe(2000);
     expect(findRow(rs, 'Ventas en efectivo').row[3]).toBe(12000);
     expect(findRow(rs, 'Egresos de caja (fondo y otros)').row[3]).toBe(-500); // signo contable
-    expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(14100);
+    // esperado = 2 000 + 12 000 − 3 000 − 500 (la equivalencia NO es término):
+    expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(10500);
   });
 
   it('desactivar «Egresos de caja» OMITE la fila del Excel y el esperado conserva el saldo (literal en fórmula)', async () => {
@@ -264,14 +277,14 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     expect(rs.findIndex(r => String(r[0] ?? '') === 'Egresos de caja (fondo y otros)')).toBe(-1);
     // El valor del esperado conserva el saldo contable:
     const esp = findRow(rs, 'Efectivo esperado a entregar');
-    expect(esp.row[3]).toBe(14100);
+    expect(esp.row[3]).toBe(10500);
     // La FÓRMULA viva incluye el LITERAL del término oculto (mismo resultado):
     const f = String(cell(ws, `D${esp.idx + 1}`).f ?? '');
     expect(f).toMatch(/500/); // literal del egreso oculto
-    expect(evalFormula(f, ws)).toBe(14100);
+    expect(evalFormula(f, ws)).toBe(10500);
   });
 
-  it('REGRESIÓN signo de la fórmula: 20 000 − 3 000 − 500 = 14 100 (antes evaluaba 23 500)', async () => {
+  it('REGRESIÓN signo de la fórmula: 2 000 + 12 000 − 3 000 − 500 = 10 500 (antes evaluaba 23 500)', async () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, new Map());
     const ws = wb.Sheets['Reporte Entrega']!;
     const rs = rows(ws);
@@ -279,7 +292,7 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     const f = String(cell(ws, `D${esp.idx + 1}`).f ?? '');
     // Los términos de egreso ya llevan SU signo negativo → se SUMAN:
     expect(f).not.toMatch(/-D\d+/);
-    expect(evalFormula(f, ws)).toBe(14100); // contable EXACTO
+    expect(evalFormula(f, ws)).toBe(10500); // contable EXACTO
   });
 
   it('desactivar «Ventas en efectivo»: total de ventas por fórmula con literal + esperado íntegro', async () => {
@@ -295,7 +308,7 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     expect(fTotal).toMatch(/12000/);
     expect(evalFormula(fTotal, ws)).toBe(12000);
     // Esperado íntegro (presentación pura):
-    expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(14100);
+    expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(10500);
   });
 
   it('SIN conceptos: el builder de Excel falla cerrado', async () => {
@@ -311,7 +324,10 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     }), SUMMARIES, new Map());
     const rs = rows(wb.Sheets['Reporte Entrega']!);
     expect(findRow(rs, 'Ventas en efectivo').row[3]).toBe(2000);
-    expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(4100);
+    // esperado = 2 000 (saldo inicial INVARIANTE) + 2 000 − 3 000 − 500 = 500:
+    expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(500);
+    // El saldo inicial no cambia por la selección (misión §7):
+    expect(findRow(rs, 'Saldo inicial / fondo de caja').row[3]).toBe(2000);
     // Metadatos del conjunto en la identidad del documento:
     expect(rs.some(r => String(r[0] ?? '').startsWith('Ventas incluidas: 2 de 3'))).toBe(true);
     // La fila oculta no deja huecos: el importe de la venta excluida no aparece:
@@ -325,12 +341,12 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     await buildCashReportPdf(ctx, SUMMARIES);
     const pdfText = allTexts();
     expect(pdfText).toContain('2.000,00');
-    expect(pdfText).toContain('4.100,00');
+    expect(pdfText).toContain('Saldo inicial / fondo de caja');
     // Excel:
     const { wb } = await buildCashReportExcelWorkbook(ctx, SUMMARIES, new Map());
     const rs = rows(wb.Sheets['Reporte Entrega']!);
     expect(findRow(rs, 'Ventas en efectivo').row[3]).toBe(2000);
-    expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(4100);
+    expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(500);
     // La vista previa usa el MISMO builder del PDF (mismo ctx) → idéntico.
   });
 });

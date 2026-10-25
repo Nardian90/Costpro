@@ -256,9 +256,9 @@ describe('FUNCIÓN A · conceptos del Resumen del Día', () => {
     const user = userEvent.setup();
     await renderAndGenerate();
     await user.click(screen.getByTestId('conceptos-desmarcar-todos'));
-    // Aviso claro (role=alert) y contador 0/6:
+    // Aviso claro (role=alert) y contador 0/7 (misión correctiva: +saldoInicial):
     expect(screen.getByRole('alert').textContent).toContain('No hay conceptos seleccionados');
-    expect(screen.getByText('0/6 activos')).toBeTruthy();
+    expect(screen.getByText('0/7 activos')).toBeTruthy();
     // Exportaciones bloqueadas (PDF y Excel):
     await user.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     const { toast } = await import('sonner');
@@ -321,7 +321,7 @@ describe('FUNCIÓN B · selección de ventas (composición real de los pagos)', 
     expect(screen.queryByTestId('venta-grupo-transfer|CUP')).toBeNull();
   });
 
-  it('desmarcar una venta la excluye de los totales y del desglose (V1 fuera → ventasCash 2 000, esperado −10 000)', async () => {
+  it('desmarcar una venta la excluye de los totales y del desglose (V1 fuera → ventasCash 2 000, esperado 1 500)', async () => {
     const user = userEvent.setup();
     await renderAndGenerate();
     // Estado base (todo seleccionado): ventasCash 12 000 (V1 + componente CUP de V3).
@@ -338,8 +338,10 @@ describe('FUNCIÓN B · selección de ventas (composición real de los pagos)', 
     expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(5000));
     // Equivalencia recalculada sin V1 (V1 era CUP: no cambia) = 9 600 intacta:
     expect(summaryValue('Equivalencia CUP de cobros en efectivo en otras monedas')).toBe(fmtCup(9600));
-    // Esperado = 2 000 + 9 600 − 500 egreso = 11 100:
-    expect((screen.getByText('Efectivo esperado a entregar').closest('div')?.textContent ?? '')).toContain(fmtCup(11100).replace(/^\D+/, ''));
+    // MISIÓN CORRECTIVA: esperado = saldo inicial (0) + cobros BILLETES CUP del
+    // conjunto (2 000) − egreso (500) = 1 500. La equivalencia NO entra (los
+    // billetes USD viven en la hoja USD) y el saldo inicial no cambia (§7).
+    expect((screen.getByText('Efectivo esperado a entregar').closest('div')?.textContent ?? '')).toContain(fmtCup(1500).replace(/^\D+/, ''));
     // Contador del grupo: 1 de 2 seleccionadas:
     expect(within(grupoCashCup).getByText(/1 de 2 seleccionadas/)).toBeTruthy();
     // Egresos de caja INDEPENDIENTES de la selección de ventas (signo contable −):

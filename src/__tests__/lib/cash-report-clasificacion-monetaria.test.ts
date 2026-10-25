@@ -94,7 +94,9 @@ describe('Caso 1 — venta íntegra en USD (7 USD, SKU 22, tasa 800)', () => {
     expect(cup.ventasCash).toBe(0);              // ← el defecto reportado (segunda venta 5.600) está muerto
     expect(cup.ventasTotales).toBe(0);
     expect(cup.equivCashOtraMoneda).toBe(5600);  // canónico contable, tasa trazable
-    expect(cup.efectivoEsperado).toBe(5600);     // consolidación del comprobante de entrega
+    // MISIÓN CORRECTIVA: la equivalencia es consolidación de PRESENTACIÓN —
+    // los billetes USD viven en la hoja USD (su esperado ya los cuenta).
+    expect(cup.efectivoEsperado).toBe(0);        // saldo FÍSICO CUP del día
   });
 
   it('vía fallback de grupos (sin split): mismo resultado — una sola fuente de verdad', () => {
@@ -105,7 +107,7 @@ describe('Caso 1 — venta íntegra en USD (7 USD, SKU 22, tasa 800)', () => {
     expect(cup.ventasCash).toBe(0);
     expect(cup.ventasTotales).toBe(0);
     expect(cup.equivCashOtraMoneda).toBe(5600);
-    expect(cup.efectivoEsperado).toBe(5600);
+    expect(cup.efectivoEsperado).toBe(0);
   });
 });
 
@@ -170,7 +172,9 @@ describe('Caso 3 — venta mixta 7 USD con componente CUP (ledger v2.25.0)', () 
     const usd = computeDailySummary(report, 'USD');
     expect(cup.ventasCash).toBe(1600);           // componente CUP nativo — UNA vez
     expect(cup.equivCashOtraMoneda).toBe(4000);  // canónico del componente USD
-    expect(cup.efectivoEsperado).toBe(5600);     // 1600 + 4000 (consolidación completa, sin duplicar)
+    // MISIÓN CORRECTIVA: esperado CUP = saldo FÍSICO (1600 cobrado en CUP;
+    // los 5 USD billetes viven en la hoja USD — su esperado los cuenta).
+    expect(cup.efectivoEsperado).toBe(1600);
     expect(usd.ventasCash).toBe(5);              // componente USD nativo — UNA vez
     expect(usd.efectivoEsperado).toBe(5);
   });
@@ -253,7 +257,8 @@ describe('Caso 5 — venta con varios pagos e ítems: JOIN/agregación no multip
     expect(usd.ventasCash).toBe(14);
     expect(cup.ventasCash).toBe(0);
     expect(cup.equivCashOtraMoneda).toBe(11200);
-    expect(cup.efectivoEsperado).toBe(11200);
+    // MISIÓN CORRECTIVA: esperado CUP físico (sin cobros CUP) = 0.
+    expect(cup.efectivoEsperado).toBe(0);
   });
 });
 
@@ -279,7 +284,9 @@ describe('Caso 6 — anulaciones/reversos no reaparecen como ventas duplicadas',
     });
     const cup = computeDailySummary(report, 'CUP');
     expect(cup.reembolsosCash).toBe(300);
-    expect(cup.efectivoEsperado).toBe(1000 + 5600 - 300); // venta CUP + equivalencia − reembolso, cada término una vez
+    // MISIÓN CORRECTIVA: esperado = saldo inicial (0) + cobros CUP (1.000)
+    // − reembolso (300); la equivalencia no es término físico.
+    expect(cup.efectivoEsperado).toBe(1000 - 300); // cada término una sola vez
   });
 });
 

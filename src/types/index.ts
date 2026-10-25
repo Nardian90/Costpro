@@ -578,6 +578,15 @@ export interface CashReport {
     reference?: string | null;
     status?: string;
     source: 'ledger' | 'reconstruction' | 'no-items';
+    /** MISIÓN CORRECTIVA 2026-10-25: liquidación explícita de la venta
+     *  (vuelto persistido) — vista FÍSICA de los billetes para el efectivo
+     *  esperado; null en ventas legadas. */
+    settlement?: {
+      cash_received_cup?: number | null;
+      change_given_cup?: number | null;
+      cash_received_usd?: number | null;
+      change_given_usd?: number | null;
+    } | null;
     buckets: Array<{ method: 'cash' | 'transfer' | 'zelle'; currency: string; amount: number; amount_cup: number }>;
     tx?: Record<string, unknown>;
     items?: Array<Record<string, unknown>>;
@@ -629,6 +638,14 @@ export interface CashReport {
   cash_balance_cup: number;
   cash_breakdown: Array<{ denom: number; count: number; total: number }>;
   period?: { start: string; end: string };
+  // MISIÓN CORRECTIVA 2026-10-25 — REPORTE ENTREGA Y CONCILIACIÓN DEL EFECTIVO:
+  // saldo inicial por moneda (neto ACUMULADO del libro autoritativo con
+  // ventana [origen, inicio del período)) y cobros en BILLETES por moneda
+  // (vista física del ledger: liquidación explícita o buckets legados).
+  // Los produce /api/cash-report (única fuente); pantalla, PDF y Excel los
+  // CONSUMEN vía computeDailySummary — jamás los recalculan.
+  opening_balance?: Record<string, number>;
+  sales_bills_split?: Partial<Record<string, number>>;
 }
 
 // ============================================

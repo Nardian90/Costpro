@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { computeDailySummary, type SalesSplit } from '@/lib/cash-report/summary';
+import { saleIsSettled } from '@/lib/cash-report/report-selection';
 
 /**
  * GET /api/cash-report?start_date=ISO&end_date=ISO
@@ -20,6 +22,28 @@ import { computeDailySummary, type SalesSplit } from '@/lib/cash-report/summary'
  * FIX (2026-07-14): reescrito con withAuth + getSupabaseForSession.
  * Antes usaba supabase.auth.getUser() sin sesión SSR → 401 siempre.
  */
+
+/**
+ * MISIÓN CORRECTIVA 2026-10-25: neto de BILLETES de una venta con liquidación
+ * explícita (vuelto persistido), por moneda — MISMA regla que el libro
+ * autoritativo get_cash_currency_summary §1: (cash_received_cur −
+ * change_given_cur). Devuelve null si la venta es legada (sin liquidación):
+ * en ese caso los buckets/pools de cobro actúan como vista de billetes.
+ */
+function saleBillsOfTx(tx: Record<string, unknown>): { CUP: number; USD: number } | null {
+  const s = {
+    cash_received_cup: tx.cash_received_cup as number | null | undefined,
+    change_given_cup: tx.change_given_cup as number | null | undefined,
+    cash_received_usd: tx.cash_received_usd as number | null | undefined,
+    change_given_usd: tx.change_given_usd as number | null | undefined,
+  };
+  if (!saleIsSettled(s)) return null;
+  const num = (v: unknown): number => Number(v ?? 0) || 0;
+  return {
+    CUP: num(s.cash_received_cup) - num(s.change_given_cup),
+    USD: num(s.cash_received_usd) - num(s.change_given_usd),
+  };
+}
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
@@ -46,6 +70,41 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const { canManageStore } = await import('@/lib/roles');
     if (!canManageStore(session.user, userData.active_store_id)) {
       return NextResponse.json({ error: 'No tienes acceso a esta tienda' }, { status: 403 });
+    }
+
+    // ── MISIÓN CORRECTIVA 2026-10-25: SALDO INICIAL del período ──
+    // Neto ACUMULADO del libro autoritativo (get_cash_currency_summary) con
+    // ventana [origen, inicio del período). Es el ÚNICO cálculo del saldo
+    // inicial de todo el módulo — pantalla, PDF y Excel lo CONSUMEN de aquí
+    // (`opening_balance`), jamás lo recalculan. Patrón del libro de Caja
+    // (/api/cash-flow/ledger): RPC service_role tras validar canManageStore
+    // (lectura agregada, sin exposición de filas). Límite µs-exacto: el período
+    // filtra payment_date/created_at >= startDate, así que el saldo inicial
+    // cubre hasta startDate − 1µs — sin solapamiento ni hueco con el período.
+    // include_all_dates ⇒ el período ES toda la historia ⇒ apertura 0.
+    const openingBalance: Record<string, number> = { CUP: 0, USD: 0 };
+    if (!includeAllDates) {
+      try {
+        const admin = getSupabaseAdminSafe();
+        if (!admin) throw new Error('SUPABASE_SERVICE_ROLE_KEY no configurado');
+        // startDate − 1ms con precisión de microsegundos (PG timestamptz):
+        // '...T03:59:59.999999Z' cubre TODO lo estrictamente anterior a startDate.
+        const openTo = new Date(Date.parse(startDate) - 1).toISOString().replace('Z', '999Z');
+        const { data: openingData, error: openingErr } = await admin.rpc('get_cash_currency_summary', {
+          p_store_id: userData.active_store_id,
+          p_from: null,
+          p_to: openTo,
+        });
+        if (openingErr) throw openingErr;
+        const net = (openingData as { net?: Record<string, number> } | null)?.net;
+        if (net) {
+          for (const cur of Object.keys(net)) openingBalance[cur] = Number(net[cur]) || 0;
+        }
+      } catch (openErr: unknown) {
+        // Degradación limpia (entornos sin la función): el reporte sigue
+        // generándose; el saldo inicial queda 0 y se reporta la causa.
+        console.warn('[cash-report] saldo inicial no disponible:', (openErr as { message?: string })?.message);
+      }
     }
 
     // Llamar al RPC get_cash_report
@@ -76,6 +135,11 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     let salesRows: Array<Record<string, unknown>> = [];
     let salesRowsTruncated = false;
     const SALES_ROWS_CAP = 1000;
+    // MISIÓN CORRECTIVA 2026-10-25: cobros en BILLETES por moneda (vista
+    // física del ledger — liquidación explícita cuando existe, buckets si
+    // no). Misma regla que get_cash_currency_summary §1/§2: el neto de
+    // billetes de una venta liquidada es (recibido − vuelto) por moneda.
+    let salesBillsSplit: Record<string, number> = {};
     // MISIÓN DEFINITIVA (2026-10-24): equivalencias canónicas de la MISMA
     // reconstrucción (se rellenan junto a salesGroups; 0 si la reconstrucción falla).
     let equivFields: { sales_equiv_cash_other_cup: number; sales_equiv_voucher_other_cup: number } = { sales_equiv_cash_other_cup: 0, sales_equiv_voucher_other_cup: 0 };
@@ -85,7 +149,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       //    alimentan las filas individuales (solo lectura, sin migraciones).
       let txQuery = supabase
         .from('transactions')
-        .select('id, created_at, customer_name, notes, sale_currency, sale_exchange_rate, cash_amount, transfer_amount, zelle_amount')
+        .select('id, created_at, customer_name, notes, sale_currency, sale_exchange_rate, cash_amount, transfer_amount, zelle_amount, cash_received_cup, change_given_cup, cash_received_usd, change_given_usd')
         .eq('store_id', userData.active_store_id)
         .eq('status', 'completed');
       if (!includeAllDates) {
@@ -131,13 +195,28 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       // PERSONALIZACIÓN: fila de venta individual (misma reconstrucción que el
       // split). items/tx/payments son el input EXACTO de buildItemsSummary para
       // que el cliente recalibre la tabla por producto con la MISMA función.
-      const toSaleRow = (tx: Record<string, unknown>, result: { buckets: Array<{ method: string; currency: string; amount: number; amountCup: number }>; source: string }, items: Array<Record<string, unknown>>, payments: Array<Record<string, unknown>> | undefined): Record<string, unknown> => ({
+      // MISIÓN CORRECTIVA: `settlement` viaja con la fila (liquidación explícita)
+      // para que la selección recompute los cobros en billetes del conjunto.
+      const toSaleRow = (tx: Record<string, unknown>, result: { buckets: Array<{ method: string; currency: string; amount: number; amountCup: number }>; source: string }, items: Array<Record<string, unknown>>, payments: Array<Record<string, unknown>> | undefined): Record<string, unknown> => {
+        const settlement = saleIsSettled({
+          cash_received_cup: tx.cash_received_cup as number | null | undefined,
+          change_given_cup: tx.change_given_cup as number | null | undefined,
+          cash_received_usd: tx.cash_received_usd as number | null | undefined,
+          change_given_usd: tx.change_given_usd as number | null | undefined,
+        }) ? {
+          cash_received_cup: tx.cash_received_cup ?? null,
+          change_given_cup: tx.change_given_cup ?? null,
+          cash_received_usd: tx.cash_received_usd ?? null,
+          change_given_usd: tx.change_given_usd ?? null,
+        } : null;
+        return {
         id: String(tx.id ?? ''),
         created_at: String(tx.created_at ?? ''),
         customer_name: (tx.customer_name as string | null) ?? null,
         reference: (tx.notes as string | null) ?? null,
         status: 'completed',
         source: result.source === 'ledger' ? 'ledger' : 'reconstruction',
+        settlement,
         buckets: (result.buckets || []).map(b => ({ method: b.method, currency: normCur(b.currency), amount: Number(b.amount) || 0, amount_cup: Number(b.amountCup) || 0 })),
         tx: {
           id: tx.id ?? undefined,
@@ -165,7 +244,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           zelle_currency: it.zelle_currency ?? null,
         })),
         payments: (payments || []).map(p => ({ payment_method: p.payment_method, currency: p.currency, amount: p.amount, exchange_rate: p.exchange_rate })),
-      });
+      };
+      };
 
       const results: Array<{ tx: Parameters<typeof reconstructTxCollections>[0]; result: ReturnType<typeof reconstructTxCollections> }> = [];
       const txWithoutItems: Array<Record<string, unknown>> = [];
@@ -202,6 +282,28 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       }
       for (const { result } of results) accumulateSalesSplit(salesSplit as Record<string, { cash: number; transfer: number; zelle: number; mixedUnsplit: number; total: number }>, result);
 
+      // MISIÓN CORRECTIVA: cobros en BILLETES por moneda sobre el universo
+      // completo (la selección los recompute luego desde las filas). Venta
+      // liquidada ⇒ neto (recibido − vuelto) por moneda; venta legada ⇒ su
+      // bucket cash por moneda. Misma regla del libro §1/§2 — sin la fórmula
+      // paralela de valor que rompía la conciliación física.
+      for (const { tx, result } of results) {
+        const txRec = tx as Record<string, unknown>;
+        const bills = saleBillsOfTx(txRec);
+        if (bills) {
+          for (const [cur, net] of Object.entries(bills)) {
+            salesBillsSplit[cur] = (salesBillsSplit[cur] || 0) + net;
+          }
+        } else {
+          for (const b of (result as { buckets?: Array<{ method: string; currency: string; amount: number }> }).buckets || []) {
+            if (b.method !== 'cash') continue;
+            if (!(Math.abs(Number(b.amount) || 0) > 0.005)) continue;
+            const cur = normCur(b.currency);
+            salesBillsSplit[cur] = (salesBillsSplit[cur] || 0) + (Number(b.amount) || 0);
+          }
+        }
+      }
+
       // PERSONALIZACIÓN: filas individuales de las ventas reconstruidas (con
       // ítems o con ledger). El split/los grupos se calculan SIEMPRE sobre el
       // universo completo; sales_rows solo acota el payload de selección.
@@ -228,6 +330,17 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         salesSplit[cur].transfer += tr;
         salesSplit[cur].zelle += ze;
         salesSplit[cur].total += cash + tr + ze;
+        // MISIÓN CORRECTIVA: sin ítems la vista de billetes es el pool cash
+        // (coincide con la canónica del libro §2 para las legadas); si la
+        // venta trae liquidación explícita, manda el neto (recibido − vuelto).
+        const billsNoItems = saleBillsOfTx(tx);
+        if (billsNoItems) {
+          for (const [bcur, net] of Object.entries(billsNoItems)) {
+            salesBillsSplit[bcur] = (salesBillsSplit[bcur] || 0) + net;
+          }
+        } else {
+          salesBillsSplit[cur] = (salesBillsSplit[cur] || 0) + cash;
+        }
         const synthBuckets: Array<{ method: string; currency: string; amount: number; amountCup: number }> = [];
         for (const [m, amt] of [['cash', cash], ['transfer', tr], ['zelle', ze]] as const) {
           if (amt > 0.01) {
@@ -243,6 +356,12 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
             reference: (tx.notes as string | null) ?? null,
             status: 'completed',
             source: 'no-items',
+            settlement: saleBillsOfTx(tx) ? {
+              cash_received_cup: tx.cash_received_cup ?? null,
+              change_given_cup: tx.change_given_cup ?? null,
+              cash_received_usd: tx.cash_received_usd ?? null,
+              change_given_usd: tx.change_given_usd ?? null,
+            } : null,
             buckets: synthBuckets.map(b => ({ method: b.method, currency: b.currency, amount: b.amount, amount_cup: b.amountCup })),
             tx: {
               id: tx.id ?? undefined,
@@ -438,7 +557,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // EXCLUIA el tramo efectivo de ventas mixed (p. ej. EnerVida 02/10: 2.600
     // en vez de 12.600). La fórmula única vive en src/lib/cash-report/summary.ts
     // y la consumen idénticamente vista, previsualización y PDF.
-    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows, refund_rows: refunds, sales_rows: salesRows, sales_rows_truncated: salesRowsTruncated, ...equivFields };
+    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows, refund_rows: refunds, sales_rows: salesRows, sales_rows_truncated: salesRowsTruncated, ...equivFields, opening_balance: openingBalance, sales_bills_split: salesBillsSplit };
     // INCIDENTE 2026-10-16: grupos `sales` por MONEDA DE COBRO (antes por
     // sale_currency — los cobros USD aparecían como CUP). La vista (acordeón),
     // el fallback de computeDailySummary y la plantilla Estándar heredan la

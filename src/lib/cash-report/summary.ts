@@ -14,13 +14,41 @@
  * Identidades contables (verificadas contra el modelo real):
  *
  *   ventasTotales = ventasCash + ventasTransfer + ventasZelle + ventasMixed
- *   efectivoEsperado = ventasCash + equivalenciaCanónicaEfectivoOtraMoneda
- *                    + otIngresosCash + ajustesPositivos + ingresosCaja
+ *   efectivoEsperado = saldoInicial + cobrosBilletes + otIngresosCash
+ *                    + ajustesPositivos + ingresosCaja
  *                    − comisionesCash − serviciosRecibidosCash
  *                    − recibosProveedoresCash − ajustesNegativos − egresosCaja
  *                    − reembolsosCash
  *   diferenciaCuadre = efectivoContado − efectivoEsperado
  *                      (negativo ⇒ FALTANTE · positivo ⇒ SOBRANTE)
+ *
+ * MISIÓN CORRECTIVA (2026-10-25) — SALDO INICIAL Y CONCILIACIÓN DEL EFECTIVO:
+ *   El esperado es un SALDO DE CIERRE físico por moneda (hoja CUP = billetes
+ *   CUP; hoja USD = billetes USD), no un total de movimientos del período:
+ *
+ *   1. SALDO INICIAL: llega desde /api/cash-report como `opening_balance`
+ *      (neto ACUMULADO del libro autoritativo get_cash_currency_summary con
+ *      ventana [origen, inicio del período) — reutilizado, jamás recalculado
+ *   aquí; jamás el saldo ACTUAL de la caja). Período histórico ⇒ saldo
+ *   inmediatamente anterior, verificable contra el libro.
+ *   2. COBROS EN BILLETES: para ventas con liquidación explícita (columnas
+ *   cash_received_cup/usd − change_given_cup/usd) el esperado usa el NETO DE
+ *   BILLETES de la venta (p. ej. cobro de 10 USD con 2.400 CUP de vuelto ⇒
+ *   USD +10, CUP −2.400) — exactamente la regla del ledger/libro. Para ventas
+ *   legadas (sin liquidación) coincide con el split por moneda de cobro.
+ *   `liquidacionBilletes` = cobrosBilletes − ventasCash expone la diferencia
+ *   (el vuelto cruzado) como partida visible y auditables.
+ *   3. EQUIVALENCIA CANÓNICA (contrato #1479 intacto): la equivalencia CUP de
+ *   cobros en efectivo en OTRA moneda sigue siendo una línea PROPIA de
+ *   consolidación contable — jamás una segunda venta — pero YA NO alimenta el
+ *   esperado de la hoja CUP: esos billetes viven físicamente en la hoja USD
+ *   (contarlos en ambas rompería la conciliación con el libro físico y el
+ *   enlace cierre‑de‑un‑período = apertura‑del‑siguiente).
+ *   4. ENLACE DE PERÍODOS: esperado = saldo inicial + términos del período ⇒
+ *   el cierre de un período es la apertura del siguiente (regla del ledger).
+ *   5. La SELECCIÓN de ventas (#1480) ajusta SOLO el componente de cobros
+ *   (ventasCash y cobrosBilletes del conjunto seleccionado); el saldo inicial
+ *   y los movimientos de caja no cambian.
  *
  * ══════════════════════════════════════════════════════════════════════════
  * MISIÓN DEFINITIVA (2026-10-24) — CONTRATO ÚNICO DE CLASIFICACIÓN MONETARIA
@@ -158,6 +186,17 @@ export interface CashReportLike {
   sales_equiv_cash_other_cup?: number;
   /** Ídem para vouchers (transfer/zelle) en otra moneda — informativo. */
   sales_equiv_voucher_other_cup?: number;
+  /** MISIÓN CORRECTIVA 2026-10-25: saldo inicial por moneda — neto ACUMULADO
+   *  del libro autoritativo (get_cash_currency_summary) con ventana
+   *  [origen, inicio del período). Lo calcula /api/cash-report (una sola
+   *  fuente); aquí solo se CONSUME. Clave: moneda ('CUP'/'USD'). */
+  opening_balance?: Record<string, number>;
+  /** MISIÓN CORRECTIVA 2026-10-25: cobros en BILLETES por moneda (vista
+   *  física del ledger): ventas con liquidación explícita aportan
+   *  (cash_received − change_given) de SU moneda; ventas legadas aportan su
+   *  bucket cash de la moneda. Mismo productor que sales_split (la ruta),
+   *  recomputado por selección en report-selection.ts. */
+  sales_bills_split?: Partial<Record<string, number>>;
 }
 
 export interface DailySummary {
@@ -205,8 +244,22 @@ export interface DailySummary {
   /** Ídem para vouchers (transfer/zelle) en otra moneda — puramente
    *  informativo, NO toca el efectivo esperado. En la hoja USD vale 0. */
   equivVouchersOtraMoneda: number;
-  /** Efectivo que debe existir en caja al final del periodo. */
+  /** Efectivo que debe existir en caja al final del periodo.
+   *  MISIÓN CORRECTIVA 2026-10-25: SALDO DE CIERRE por moneda =
+   *  saldoInicial + cobrosBilletes + ingresos − egresos (regla del ledger:
+   *  cierre del período = apertura del siguiente). La equivalencia canónica
+   *  de cobros en otra moneda NO entra aquí (esos billetes viven en su hoja). */
   efectivoEsperado: number;
+  /** MISIÓN CORRECTIVA 2026-10-25: saldo del libro de caja inmediatamente
+   *  ANTERIOR al período consultado (por moneda; 0 si la fuente no lo trae). */
+  saldoInicial: number;
+  /** MISIÓN CORRECTIVA 2026-10-25: neto de BILLETES de los cobros del
+   *  período MENOS el importe de las ventas en efectivo (vista de valor) de
+   *  la hoja. ≠ 0 solo con liquidación explícita cruzada (vuelto dado en la
+   *  otra moneda): p. ej. cobro 10 USD con 2.400 CUP de vuelto ⇒ hoja CUP
+   *  −2.400, hoja USD +3. Partida VISIBLE y auditable; no gobernable por
+   *  checkbox (es contable, no presentación). */
+  liquidacionBilletes: number;
 }
 
 const n = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : Number(v) || 0);
@@ -229,7 +282,8 @@ export function computeDailySummary(
     serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0,
     reembolsosCash: 0, reembolsosVoucher: 0, equivCashOtraMoneda: 0,
-    equivVouchersOtraMoneda: 0, efectivoEsperado: 0,
+    equivVouchersOtraMoneda: 0, efectivoEsperado: 0, saldoInicial: 0,
+    liquidacionBilletes: 0,
   };
   if (!report) return zero;
 
@@ -240,9 +294,17 @@ export function computeDailySummary(
   // una segunda venta en la hoja CUP: «hoja CUP +5.600, hoja USD +7»). La
   // equivalencia se calcula aparte y alimenta SOLO la consolidación contable
   // (efectivo esperado de la hoja canónica CUP) con su propia línea.
+  // MISIÓN CORRECTIVA (2026-10-25): la presencia de `sales_split` (objeto
+  // con ALGUNA moneda) activa la vía del split — una moneda SIN clave
+  // significa CERO cobros en esa hoja (día solo-USD ⇒ hoja CUP sin clave),
+  // no «sin datos» que obligue al fallback de grupos. La ruta y la selección
+  // (#1480) garantizan la misma reconstrucción detrás de ambas vías.
   let ventasCash = 0, ventasTransfer = 0, ventasZelle = 0, ventasMixed = 0;
   let equivCash = 0, equivVouchers = 0;
-  const split = report.sales_split?.[currency];
+  const hasSplit = !!report.sales_split && Object.keys(report.sales_split).length > 0;
+  const split = hasSplit
+    ? (report.sales_split![currency] ?? { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 })
+    : undefined;
   const pt = paymentTotals?.totals?.[currency];
   if (split) {
     ventasCash = n(split.cash);
@@ -350,8 +412,25 @@ export function computeDailySummary(
 
   const ventasTotales = ventasCash + ventasTransfer + ventasZelle + ventasMixed;
   const ajustesNeto = ajustesPositivos - ajustesNegativos;
+
+  // ── MISIÓN CORRECTIVA 2026-10-25: saldo inicial + cobros en billetes ──
+  // El saldo inicial viene del libro autoritativo vía /api/cash-report
+  // (opening_balance por moneda). Los cobros en BILLETES (vista física del
+  // ledger) llegan como sales_bills_split; cuando la fuente no los trae
+  // (fixtures legados, payment-totals antiguo) degradan a ventasCash — la
+  // vista de valor coincide con la de billetes salvo liquidación cruzada.
+  const saldoInicial = n(report.opening_balance?.[currency]);
+  const cobrosBilletes = report.sales_bills_split && report.sales_bills_split[currency] !== undefined
+    ? n(report.sales_bills_split[currency])
+    : ventasCash;
+  const liquidacionBilletes = cobrosBilletes - ventasCash;
+
+  // MISIÓN CORRECTIVA: esperado = SALDO DE CIERRE por moneda. La
+  // equivalencia canónica de cobros en otra moneda NO entra (línea de
+  // consolidación de la hoja CUP — esos billetes viven en la hoja USD);
+  // el vuelto cruzado entra vía cobrosBilletes (= ventasCash + liquidación).
   const efectivoEsperado =
-    ventasCash + equivCash + otIngresosCash + ajustesPositivos + ingresosCaja
+    saldoInicial + cobrosBilletes + otIngresosCash + ajustesPositivos + ingresosCaja
     - comisionesCash - serviciosRecibidosCash - recibosProveedoresCash - ajustesNegativos - egresosCaja
     - reembolsosCash;
 
@@ -361,7 +440,7 @@ export function computeDailySummary(
     recibosProveedoresCash, ajustesPositivos, ajustesNegativos, ajustesNeto,
     ingresosCaja, egresosCaja, reembolsosCash, reembolsosVoucher,
     equivCashOtraMoneda: equivCash, equivVouchersOtraMoneda: equivVouchers,
-    efectivoEsperado,
+    efectivoEsperado, saldoInicial, liquidacionBilletes,
   };
 }
 
