@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-24T13:00:46.446Z
+-- Captured  : 2026-10-25T15:32:02.280Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 152 (SECURITY DEFINER write functions, public schema)
+-- Functions : 153 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -460,6 +460,138 @@ BEGIN
     'approved_by', v_caller_uid,
     'approved_at', NOW()
   );
+END;
+$function$
+
+
+-- @contract-function name=assign_user_organization args="p_actor_id uuid, p_user_id uuid, p_tenant_id uuid, p_confirm_removals boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.assign_user_organization(p_actor_id uuid, p_user_id uuid, p_tenant_id uuid, p_confirm_removals boolean DEFAULT false)
+ RETURNS TABLE(applied boolean, requires_confirmation boolean, removed_memberships integer, reason text)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  -- CORRECCIÓN CP-ORG-001 (a): patrón anti-spoofing H-7 — un llamado
+  -- authenticated usa SIEMPRE auth.uid() como actor (p_actor_id se ignora);
+  -- solo service_role (la ruta API con clave de servicio) puede declarar
+  -- p_actor_id (la sesión del usuario autenticado que la invoca).
+  v_actor_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_actor_id, auth.uid()) ELSE auth.uid() END;
+  v_actor_role public.user_role;
+  v_actor_tenant uuid;
+  v_user_tenant uuid;
+  v_user_role public.user_role;
+  v_target_active boolean;
+  v_old_tenant uuid;
+  v_removed int := 0;
+BEGIN
+  IF v_actor_uid IS NULL OR p_user_id IS NULL THEN
+    RETURN QUERY SELECT false, false, 0, 'Parámetros incompletos'::text;
+    RETURN;
+  END IF;
+
+  SELECT role, tenant_id INTO v_actor_role, v_actor_tenant
+    FROM public.profiles WHERE id = v_actor_uid;
+  IF NOT FOUND OR v_actor_role NOT IN ('admin', 'superadmin') THEN
+    RETURN QUERY SELECT false, false, 0, 'El actor no tiene permisos administrativos'::text;
+    RETURN;
+  END IF;
+
+  SELECT role, tenant_id INTO v_user_role, v_user_tenant
+    FROM public.profiles WHERE id = p_user_id AND deleted_at IS NULL;
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, false, 0, 'Usuario destino no encontrado'::text;
+    RETURN;
+  END IF;
+
+  IF v_user_role = 'superadmin' THEN
+    RETURN QUERY SELECT false, false, 0, 'La cuenta SuperAdmin de plataforma no pertenece a una empresa'::text;
+    RETURN;
+  END IF;
+
+  -- Admin ordinario: solo su propia empresa, y solo usuarios de su empresa.
+  IF v_actor_role <> 'superadmin' THEN
+    IF p_tenant_id IS DISTINCT FROM v_actor_tenant OR v_user_tenant IS DISTINCT FROM v_actor_tenant THEN
+      RETURN QUERY SELECT false, false, 0, 'Un administrador solo puede gestionar su propia empresa'::text;
+      RETURN;
+    END IF;
+  END IF;
+
+  IF p_tenant_id IS NOT NULL THEN
+    SELECT is_active INTO v_target_active FROM public.tenants WHERE id = p_tenant_id;
+    IF NOT FOUND THEN
+      RETURN QUERY SELECT false, false, 0, 'La organización no existe'::text;
+      RETURN;
+    END IF;
+    IF NOT v_target_active THEN
+      RETURN QUERY SELECT false, false, 0, 'La organización está inactiva'::text;
+      RETURN;
+    END IF;
+  END IF;
+
+  v_old_tenant := v_user_tenant;
+
+  -- Membresías que quedarían de otra empresa (tiendas con tenant distinto
+  -- del destino). Tiendas sin tenant (legacy) no se consideran ajenas.
+  SELECT count(*) INTO v_removed
+    FROM public.user_store_memberships m
+    JOIN public.stores s ON s.id = m.store_id
+   WHERE m.user_id = p_user_id
+     AND m.status = 'active'
+     AND s.tenant_id IS NOT NULL
+     AND s.tenant_id IS DISTINCT FROM p_tenant_id;
+
+  IF v_removed > 0 AND NOT p_confirm_removals THEN
+    RETURN QUERY SELECT false, true, v_removed,
+      'La reasignación retirará membresías de tiendas de otra empresa; confirma para aplicar'::text;
+    RETURN;
+  END IF;
+
+  -- Aplicación atómica: retirar memberships ajenos + mover empresa +
+  -- limpiar tienda activa/store_id si quedaron apuntando afuera.
+  IF v_removed > 0 THEN
+    DELETE FROM public.user_store_memberships m
+     USING public.stores s
+     WHERE m.store_id = s.id
+       AND m.user_id = p_user_id
+       AND m.status = 'active'
+       AND s.tenant_id IS NOT NULL
+       AND s.tenant_id IS DISTINCT FROM p_tenant_id;
+  END IF;
+
+  -- CORRECCIÓN CP-ORG-001 (b): tenant_id se aplica SIEMPRE (el cambio de
+  -- empresa nunca se omite). active_store_id solo se limpia cuando apunta a
+  -- una tienda AJENA al destino (con tenant asignado distinto); si pertenece
+  -- al destino o es legacy sin tenant, se conserva (coherente con el
+  -- criterio de las membresías que se retiran arriba).
+  UPDATE public.profiles
+     SET tenant_id = p_tenant_id,
+         active_store_id = CASE
+           WHEN active_store_id IS NULL THEN NULL
+           WHEN EXISTS (
+             SELECT 1 FROM public.stores s2
+             WHERE s2.id = profiles.active_store_id
+               AND s2.tenant_id IS NOT NULL
+               AND s2.tenant_id IS DISTINCT FROM p_tenant_id
+           ) THEN NULL
+           ELSE active_store_id
+         END,
+         updated_at = now()
+   WHERE id = p_user_id;
+
+  INSERT INTO public.user_audit_log (
+    performed_by, target_user_id, action, old_values, new_values, metadata
+  ) VALUES (
+    v_actor_uid,
+    p_user_id,
+    'assign_organization',
+    jsonb_build_object('tenant_id', v_old_tenant),
+    jsonb_build_object('tenant_id', p_tenant_id),
+    jsonb_build_object('removed_memberships', v_removed, 'actor_role', v_actor_role)
+  );
+
+  RETURN QUERY SELECT true, false, v_removed, NULL::text;
 END;
 $function$
 
@@ -7035,6 +7167,7 @@ DECLARE
     THEN COALESCE(p_caller_id, auth.uid()) ELSE auth.uid() END;
   v_caller_role public.user_role;
   v_target_email text;
+  v_target_role public.user_role;
 BEGIN
   SELECT role INTO v_caller_role FROM public.profiles WHERE id = v_caller_uid;
   IF v_caller_role IS NULL OR v_caller_role NOT IN ('admin', 'superadmin') THEN
@@ -7045,9 +7178,16 @@ BEGIN
     RAISE EXCEPTION 'ERR_SELF_RESET_BLOCKED';
   END IF;
 
-  SELECT email INTO v_target_email FROM public.profiles WHERE id = p_user_id AND deleted_at IS NULL;
+  SELECT email, role INTO v_target_email, v_target_role
+    FROM public.profiles WHERE id = p_user_id AND deleted_at IS NULL;
   IF v_target_email IS NULL THEN
     RAISE EXCEPTION 'ERR_USER_NOT_FOUND';
+  END IF;
+
+  -- CP-ORG-001: solo otro SuperAdmin puede disparar la recuperación de la
+  -- cuenta SuperAdmin de plataforma.
+  IF v_target_role = 'superadmin' AND v_caller_role <> 'superadmin' THEN
+    RAISE EXCEPTION 'ERR_PLATFORM_ACCOUNT_PROTECTED: la cuenta SuperAdmin solo puede gestionarla otro SuperAdmin';
   END IF;
 
   INSERT INTO public.user_audit_log (performed_by, target_user_id, action, metadata)
@@ -7156,6 +7296,12 @@ BEGIN
     FROM public.profiles WHERE id = p_user_id AND deleted_at IS NULL FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'ERR_USER_NOT_FOUND_OR_ALREADY_DELETED';
+  END IF;
+
+  -- CP-ORG-001: un admin ordinario no puede dar de baja la cuenta
+  -- SuperAdmin de plataforma (anonimización irreversible).
+  IF v_old.role = 'superadmin' AND v_caller_role <> 'superadmin' THEN
+    RAISE EXCEPTION 'ERR_PLATFORM_ACCOUNT_PROTECTED: la cuenta SuperAdmin solo puede gestionarla otro SuperAdmin';
   END IF;
 
   SELECT COUNT(*) INTO v_active_memberships_count
@@ -7282,10 +7428,17 @@ BEGIN
     RAISE EXCEPTION 'ERR_SELF_DEACTIVATE_BLOCKED';
   END IF;
 
-  SELECT id, is_active, full_name INTO v_old
+  SELECT id, is_active, full_name, role INTO v_old
     FROM public.profiles WHERE id = p_user_id AND deleted_at IS NULL FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'ERR_USER_NOT_FOUND';
+  END IF;
+
+  -- CP-ORG-001: la cuenta SuperAdmin de plataforma solo puede ser
+  -- activada/desactivada por otro SuperAdmin (evita el bloqueo de la
+  -- administración global por un admin/encargado ordinario).
+  IF v_old.role = 'superadmin' AND v_caller_role <> 'superadmin' THEN
+    RAISE EXCEPTION 'ERR_PLATFORM_ACCOUNT_PROTECTED: la cuenta SuperAdmin solo puede gestionarla otro SuperAdmin';
   END IF;
 
   IF v_old.is_active = p_is_active THEN
@@ -7454,6 +7607,25 @@ BEGIN
 
   IF p_is_active = false AND p_user_id = v_caller_uid THEN
     RAISE EXCEPTION 'ERR_SELF_DEACTIVATE_BLOCKED: Cannot deactivate own account.';
+  END IF;
+
+  -- CP-ORG-001: la cuenta SuperAdmin de plataforma (CUALQUIER campo) solo
+  -- puede modificarse por otro SuperAdmin — coherente con toggle/baja/reset.
+  IF v_old.role = 'superadmin' AND v_caller_role <> 'superadmin' THEN
+    RAISE EXCEPTION 'ERR_PLATFORM_ACCOUNT_PROTECTED: la cuenta SuperAdmin solo puede gestionarla otro SuperAdmin';
+  END IF;
+
+  -- CP-ORG-001: roles de plataforma — el cambio de rol 'superadmin'
+  -- (en cualquier dirección) queda reservado a un SuperAdmin, y nadie
+  -- puede cambiar su PROPIO rol.
+  IF p_role IS NOT NULL AND p_role <> v_old.role THEN
+    IF p_user_id = v_caller_uid THEN
+      RAISE EXCEPTION 'ERR_SELF_ROLE_CHANGE: Cannot change your own role via this RPC.';
+    END IF;
+    IF (p_role = 'superadmin' OR v_old.role = 'superadmin')
+       AND v_caller_role <> 'superadmin' THEN
+      RAISE EXCEPTION 'ERR_PLATFORM_ROLE: Only a SuperAdmin can grant or revoke the platform role superadmin.';
+    END IF;
   END IF;
 
   IF p_full_name IS NOT NULL AND p_full_name <> v_old.full_name THEN
@@ -9726,6 +9898,81 @@ END;
 $function$
 
 
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
+$function$
+
+
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -9949,81 +10196,6 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
-$function$
-
-
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
 $function$
 
 
@@ -12828,11 +13000,30 @@ DECLARE
 BEGIN
     v_role := NEW.role;
 
-    -- Si role es 'costo' o 'admin' o 'superadmin', active_store_id es opcional
-    IF v_role = 'costo'::user_role
-       OR v_role = 'admin'::user_role
+    -- CP-ORG-001 ciclo 5: NIVEL ADMINISTRATIVO (admin|superadmin) transversal.
+    -- active_store_id es opcional; si se fija, la tienda debe existir y estar
+    -- activa. NO se exige membresía: la cuenta de plataforma no la lleva y
+    -- no debe necesitar membresías ficticias (causa raíz del incidente).
+    IF v_role = 'admin'::user_role
        OR v_role = 'superadmin'::user_role THEN
-        -- Solo validar si active_store_id cambió o es INSERT
+        IF TG_OP = 'INSERT' OR (OLD.active_store_id IS DISTINCT FROM NEW.active_store_id) THEN
+            IF NEW.active_store_id IS NOT NULL THEN
+                IF NOT EXISTS (
+                    SELECT 1 FROM public.stores
+                    WHERE id = NEW.active_store_id
+                      AND is_active = true
+                ) THEN
+                    IF TG_OP = 'UPDATE' THEN
+                        RAISE EXCEPTION 'ERR_INVALID_ACTIVE_STORE: la tienda no existe o no está activa.';
+                    END IF;
+                END IF;
+            END IF;
+        END IF;
+        RETURN NEW;
+    END IF;
+
+    -- rol 'costo': semántica PREVIA intacta (membresía activa obligatoria en UPDATE)
+    IF v_role = 'costo'::user_role THEN
         IF TG_OP = 'INSERT' OR (OLD.active_store_id IS DISTINCT FROM NEW.active_store_id) THEN
             IF NEW.active_store_id IS NOT NULL THEN
                 IF NOT EXISTS (

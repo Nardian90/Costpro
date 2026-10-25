@@ -978,3 +978,39 @@ merge del PR #1484 + despliegue de las migraciones pendientes + verificación).
   PR #1484** → despliegue Vercel de main → verificación post-despliegue
   (§3.6 + pruebas no destructivas con transacciones ROLLBACK) → §9.8 del
   paquete con la evidencia final.
+
+### 18.3 Cierre definitivo — merge, despliegue, verificación post-despliegue y P7
+
+- **Merge P1 (15:18:26 UTC):** CI del SHA definitivo `da6f3c34d` TODO VERDE
+  (10 checks; SQL DB Security verde por primera vez — producción corregida de
+  raíz en P3, sin allowlists). Diff verificado: sin secretos, sin cambios
+  destructivos, alcance 100 % CP-ORG-001. Merge commit
+  **`074b8dc01`** (método merge, padres f265fb692+da6f3c34d). PR #1484
+  closed/merged por Nardian90. CI del merge commit en main: 8/8 SUCCESS + E2E
+  skipped (política).
+- **Despliegue Vercel Production (15:20 UTC):** deployment 7315057012 sha
+  074b8dc01 → **success** («Deployment has completed»). Dominio del proyecto
+  con Vercel Authentication (política del dueño — impide smoke HTTP anónimo;
+  documentado como impedimento externo).
+- **Verificación post-despliegue:** gate REAL TODO PASS ×2 (15:09 y
+  post-deploy; más el CI del merge commit) · pruebas no destructivas del
+  camino del incidente 6/6 con resultados exactos (T1 superadmin→tienda sin
+  membresía ÉXITO — RC3 corregido en producción; T3 tienda ajena RECHAZO;
+  T3b ERR_STORE_REQUIRED; T2 inexistente RECHAZO; T2b NULL permitido; T4
+  flujo legítimo ÉXITO) con no-persistencia verificada · integridad contable
+  0 deltas (799/894/2/33; Σamount_cup idéntico; último movimiento 2026-10-23;
+  admin@demo.com intacta).
+- **P7 ejecutado:** contract surface re-certificado desde producción
+  corregida (153 funciones, SHA-256 c70319da…) · **5 entradas inertes
+  retiradas del `source_of_truth_baseline`** (4 `managed_*` +
+  `validate_active_store`) — el contrato estático da 153/153 · 0 divergencias
+  · EXIT=0 SIN ellas (detector de drift re-armado) · contrato LIVE: todas
+  pasan.
+- **Veredicto final del incidente P0 (CP-ORG-001):** corregido en código ·
+  validado en aislado (12/12 LIVE E2E) · fusionado (074b8dc01) · aplicado en
+  producción (170000+180000, V1-V6 verificados) · **verificado en producción**
+  (gate TODO PASS, camino del incidente probado no destructivamente,
+  aislamiento multitienda intacto, integridad contable preservada). Queda
+  únicamente la confirmación interactiva del dueño: login admin@demo.com →
+  selector 2/2 tiendas → seleccionar → recargar → persiste → módulos
+  operativos. Matriz completa de evidencias: paquete §9.1–§9.8.

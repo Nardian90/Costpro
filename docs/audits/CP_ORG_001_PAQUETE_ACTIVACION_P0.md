@@ -1130,3 +1130,115 @@ del incidente.
   módulos operativos) queda explícitamente indicada como ÚLTIMA evidencia del
   dueño; el agente NO posee credenciales de la cuenta ni puede crearlas
   (prohibido crear membresías/superadmins con service_role).
+
+### §9.8 P1 merge + despliegue + verificación post-despliegue (cierre definitivo)
+
+**P1 — Merge del PR #1484 (2026-10-25 15:18:26 UTC):**
+
+- CI del SHA definitivo `da6f3c34d` (10 checks): **TODO VERDE** — 9 SUCCESS
+  (TypeCheck+Lint+Unit+Build, Unit&Integration, SQL Static, **SQL DB Security**,
+  Security Audit, TypeScript Security, Allowlist Review, Vercel Preview
+  Comments) + E2E skipped (política del repo). El check SQL DB Security pasó
+  por PRIMERA VEZ: producción corregida de raíz (P3), sin allowlist.
+- Verificación pre-merge del diff: 104 archivos (+2761/−192); 6 commits
+  (2 de código + 4 docs); sin secretos literales (escaneo de patrones sk-/sbp_
+  /eyJ…/ghp_/postgres://): 0 coincidencias; SQL «destructivo» limitado a los
+  `DROP POLICY IF EXISTS` del patrón idempotente de reemplazo de 160000 (ya
+  viva en producción); alcance 100 % CP-ORG-001.
+- **Merge ejecutado por Nardian90 (autorización de la misión), método
+  `merge`** (merge commit, como el PR #1482): commit
+  **`074b8dc01b71b64fff589e7f26e92758463c70fa`** (padres f265fb692 +
+  da6f3c34d). PR #1484: closed/merged.
+- CI del merge commit `074b8dc01` en main: **8/8 SUCCESS + E2E skipped**
+  (incl. SQL DB Security Checks = success contra producción).
+- **Despliegue Vercel Production:** deployment 7315057012 (vercel[bot],
+  15:20:23 UTC, environment Production, sha 074b8dc01) → estado **success**
+  «Deployment has completed». El dominio del proyecto
+  (`costpro-nardian90s-projects.vercel.app`) tiene **Vercel Authentication
+  activada** (redirige al login de Vercel): el acceso interactivo a la app es
+  una política del propietario; los smoke tests HTTP anónimos NO son
+  ejecutables desde fuera (impedimento externo documentado, no un defecto).
+
+**P4/P5 — Verificación post-despliegue (evidencia en download/):**
+
+1. **Gate REAL re-ejecutado contra producción tras el despliegue
+   (post-deploy):** `secdef_no_auth` 101/101 allowlist ·
+   `secdef_public_grant` **0 hallazgos** · `tables_no_rls` 0 · canario
+   presente · **EVALUATOR_EXIT = 0 (TODO PASS)**. Evidencia:
+   `c7_gate_prod.json` (re-ejecución) — y doblemente certificado por el CI
+   del merge commit.
+2. **Pruebas NO destructivas del camino exacto del incidente (BD real,
+   subtransacciones con rollback forzado — cero persistencia):**
+   - **T1 superadmin → tienda válida SIN membresía: ÉXITO** ← el camino
+     bloqueado por RC3 funciona en producción (c7_pruebas_rollback.json).
+   - T2 superadmin → tienda inexistente: rechazo EXACTO
+     `ERR_INVALID_ACTIVE_STORE: la tienda no existe o no está activa.`
+   - T2b superadmin → NULL: ÉXITO (opcionalidad de plataforma intacta).
+   - **T3 encargado (miembro SOLO de ENERVIDA) → tienda AJENA: RECHAZO**
+     `ERR_INVALID_ACTIVE_STORE: …membership activa…` ← aislamiento intacto.
+   - T3b encargado → NULL: RECHAZO `ERR_STORE_REQUIRED` (invariante viva).
+   - T4 encargado (miembro de AMBAS) → otra tienda propia: ÉXITO (flujo
+     operativo legítimo sin regresión).
+   - **No-persistencia verificada:** admin NULL · david ENERVIDA · belkis
+     ENERVIDA · membresías 4 · superadmins 1 — NADA persistió.
+3. **Integridad contable y de datos tras todo el ciclo:** `payment_transactions`
+   799 (Σ amount_cup 65 743 380.97 — idéntico), `transactions` 894,
+   `cash_flow_documents` 2, archivo purga 33 (685 400), membresías 4, tiendas
+   2, tenants 2, 1 único superadmin, último movimiento contable
+   **2026-10-23 22:15:24 UTC** (SIN escrituras contables del ciclo);
+   admin@demo.com intacta (superadmin, NULL, 0 membresías, no baneada).
+
+**P7 — Re-certificación del contract surface y retiro del baseline (ejecutado):**
+
+- `scripts/export-contract-surface.cjs` re-ejecutado desde producción ya
+  corregida: **153 funciones** capturadas (antes 152 — `assign_user_organization`
+  entra en la superficie post-activación ciclo 4), SHA-256
+  `c70319da97f8e9437dd9842a3da242786a37ba33c17f566a8d44cdb277be2b37`.
+- **5 entradas inertes retiradas de `source_of_truth_baseline`**
+  (`managed_update_user`, `managed_toggle_user_status`,
+  `managed_soft_delete_user`, `managed_reset_password`,
+  `validate_active_store`): con la superficie re-exportada y las migraciones
+  130000/170000 vivas en producción, el contrato estático da
+  **153/153 representadas · 0 divergencias · EXIT=0 SIN las entradas** —
+  probadas inertes; el detector de drift queda RE-ARMADO sin exención alguna
+  (respaldo pre-cambio conservado en el expediente del agente).
+- Contrato LIVE (`security-contract-test.cjs`): TODAS las funciones pasan.
+- RLS/ACL post-retiro verificadas de nuevo por el gate (TODO PASS arriba).
+
+**Impedimentos externos documentados (no defectos):**
+
+1. **Vercel Authentication** sobre el dominio del proyecto impide smoke
+   tests HTTP anónimos de la app (política del propietario). La confirmación
+   interactiva FINAL del incidente (login con admin@demo.com → selector 2/2
+   tiendas → seleccionar → recargar → persiste → módulos operativos) es el
+   único paso que queda en manos del dueño, con esta guía paso a paso. El
+   agente no posee credenciales de la cuenta ni puede crearlas sin violar el
+   modelo de permisos (prohibido usar service_role para fabricar acceso).
+2. **Supabase logs API** no accesible con el PAT actual (404): la revisión de
+   logs post-despliegue se cubre con (a) integridad contable verificada,
+   (b) auditoría read-only completa, (c) cero errores en las 60+ consultas del
+   ciclo y (d) CI verde del merge commit.
+
+**Riesgos residuales (evaluados, sin exagerar ni ocultar):**
+
+- `supabase_migrations.registry` sigue detenido en 20260615000003 (doctrina
+  manual del proyecto): las 7 migraciones de activación (120000…180000) viven
+  en BD verificadas por efecto, no por registro. Riesgo: confusión futura si
+  alguien ejecuta `supabase db push` sin la advertencia §2.1 (el paquete la
+  documenta; el comportamiento de db push con el registro desfasado podría
+  intentar reejecutar — por eso el proyecto prohíbe su uso).
+- Dominio productivo con Vercel Authentication: hasta que el dueño lo
+  desactive o use dominio custom público, la app no es accesible anónimamente
+  (decisión de infraestructura del dueño, no de esta misión).
+- La ventana pre-merge en la que la BD (P2/P3) iba por delante del código
+  (Vercel) quedó cerrada con el despliegue 15:20 UTC; durante ella el estado
+  fue exactamente el pre-misión más el endurecimiento ACL (sin regresión ni
+  exposición, §9.7).
+
+**Veredicto del ciclo 7 (cierre definitivo P0):** corregido en código ✅ ·
+validado en aislado ✅ (12/12 LIVE E2E ciclo 5) · fusionado ✅ (074b8dc01) ·
+aplicado en producción ✅ (170000+180000, V1-V6) · verificado en producción ✅
+(gate real TODO PASS ×2, pruebas no destructivas 6/6 del camino del incidente,
+aislamiento operativo 2/2 rechazos correctos, integridad contable 0 deltas) —
+**pendiente SOLO de la confirmación interactiva del dueño** (login con
+admin@demo.com), que ningún agente puede ejecutar legítimamente en su lugar.
