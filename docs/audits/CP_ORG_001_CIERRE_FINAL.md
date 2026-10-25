@@ -8,27 +8,31 @@
 
 ## 1. Fecha y hora UTC
 
-- **Inicio de este ciclo:** 2026-10-25 01:14 UTC
-- **Cierre de este ciclo:** 2026-10-25 02:20 UTC (evidencia recogida en el intervalo)
+- **Ciclo 1 (auditoría + correcciones):** 2026-10-25 01:14 – 02:20 UTC (PAT
+  inválido → push bloqueado, trabajo preservado en patch)
+- **Ciclo 2 (publicación + cierre):** 2026-10-25 09:45 – 10:14+ UTC (PAT nuevo
+  válido; rama publicada, PR #1482, CI del SHA de código completo y verde,
+  producción re-verificada read-only)
 
 ## 2. Repositorio, rama, SHA base y SHA final
 
 | Elemento | Valor verificado en el momento de la comprobación |
 |---|---|
-| Repositorio | `Nardian90/Costpro` (público; git anónimo verificado con `ls-remote`) |
-| Rama de trabajo | `fix/cp-org-001-guards-superadmin-20261025` |
+| Repositorio | `Nardian90/Costpro` (público; verificado con ls-remote y API autenticada) |
+| Rama de trabajo | `fix/cp-org-001-guards-superadmin-20261025` (publicada en el ciclo 2) |
 | `origin/main` al inicio | `e9225927444bca43b1454deffded28a6c803e194` (= fusión del PR #1481) |
 | SHA base de la rama | `e9225927444bca43b1454deffded28a6c803e194` |
-| SHA final de la rama | `010be8312` (9 commits: 71f081e2e, efe1fb066, 2e148c794, 7168a237a, e0a6f85c5, f1ea6890c, a858e214b, 4ab1972e4, 010be8312) |
+| SHA del código auditado | `e5ecf72d7c6ae8e25943f1902b45f456edba7bfe` (10 commits; CI completo verde, §10) |
+| SHA final de la rama | El presente expediente es el único commit posterior a `e5ecf72d7` (cambio solo-docs); su CI se registra en el PR #1482 |
 | Árbol de trabajo | Limpio al final (todos los cambios con commit) |
 
-Nota de entorno: el repositorio local anterior se perdió (sándbox reiniciado);
-se re-clonó desde GitHub (origin/main idéntico al reportado por las misiones
-previas) y se reactivó el servidor pm2 `costpro` (puerto 3000, HTTP 200) con el
-`.env` del propietario. **El PAT de GitHub facilitado devolvió `401 Bad
-credentials` en todas las pruebas** (Bearer y token, `/user`): expirado o
-revocado. Consecuencia: imposible hacer push/abrir PR desde este ciclo con
-esas credenciales (ver §13).
+Nota de entorno: el sándbox se reinició entre ciclos (repositorio local perdido);
+el trabajo fue preservado en `cp-org-001.patch` (10 commits, `git am` limpio
+sobre el mismo `origin/main` intacto) y re-verificado íntegro antes de
+publicar (tsc 0, lint 0, suite 4000/0, gates). El PAT del ciclo 1 devolvió
+401; **el PAT nuevo facilitado por el propietario fue válido (200)** y
+permitió push + PR. Servidor pm2 `costpro` reactivado (puerto 3000, HTTP 200,
+health ok, `pm2 save`).
 
 ## 3. PR y estado de fusión
 
@@ -37,13 +41,13 @@ esas credenciales (ver §13).
   (4 commits). Checks en el head en el momento de la fusión: 11 verdes
   (TypeCheck, Lint, Unit, Build, Unit&Integration y 4 de seguridad). Sin
   revisiones formales pendientes ni conversaciones sin resolver.
-- La entrega de ESTE ciclo de correcciones es una **rama nueva + PR nuevo**
-  (el #1481 ya no es actualizable). El push queda **BLOQUEADO por el PAT
-  inválido** (§13); la rama con los 9 commits queda lista localmente y el
-  bundle `cp-org-001.patch` adjunto a la evidencia permite aplicarla con un
-  PAT válido.
+- La entrega de este ciclo es el **PR #1482**
+  (`fix/cp-org-001-guards-superadmin-20261025` → `main`), abierto el
+  2026-10-25 10:00 UTC aprox., **open y SIN fusionar** (decisión de merge: el
+  propietario). CI del head de código `e5ecf72d7`: 8/8 checks ejecutados en
+  success + E2E skipped por política del repo (§10).
 
-## 4. Alcance exacto de los cambios (9 commits)
+## 4. Alcance exacto de los cambios (10 commits, +1855/−140, 23 archivos)
 
 1. **Migración `20261026120000` (editada, PRE-despliegue — nunca aplicada a
    producción, verificado):** `assign_user_organization` vincula el actor a
@@ -95,6 +99,9 @@ esas credenciales (ver §13).
    hasta que el propietario despliegue `20261026130000` y re-exporte el
    surface certificado. Mecanismo documentado del propio gate; se retiran
    tras el despliegue (patrón de las misiones previas).
+10. **Expediente (docs):** el commit 10 del ciclo 1 añadió este documento;
+    el ciclo 2 lo actualiza con la publicación y evidencia final (el presente
+    texto) — único cambio posterior al SHA de código `e5ecf72d7`.
 
 ## 5. Modelo de organización, usuario, tienda y SuperAdmin (estado verificado)
 
@@ -182,6 +189,20 @@ JOIN). **Acción que corresponde al propietario** (requiere decisión, no
 ejecutada): borrado/quarantena puntual de esas 33 filas + migración que añada
 el FK `store_id` faltante. Este ciclo NO escribió.
 
+**Re-verificación del ciclo 2 (2026-10-25 10:05 UTC, READ-ONLY, 14 consultas
+GET, 0 escrituras):** estado idéntico — 2 tiendas (protegidas, activas,
+tenant `5364ccf8`), baseline exacto 185+36=221 productos / 682+212=894
+transacciones / 4+2=6 membresías, 11 perfiles anonimizados (inactivos,
+`deleted_at` 2026-10-24, tenant NULL), 11 registros `USER_SOFT_DELETED`, 0
+huérfanos de membresía/tienda activa, 4 tenants de prueba ausentes, y **los 11
+bans verificados individualmente** (GET auth admin por usuario: `banned_until`
+2126-09-30, 0 sesiones). El tenant `5364ccf8` figura ahora con nombre
+«Vitallcons» (antes «Default Tenant»): renombrado por el propietario entre
+ciclos (misma identidad canónica; sin impacto). Los 33 `payment_transactions`
+residuales PERSISTEN (documentados arriba; sin cambios). Endpoint admin list
+de auth sigue en 500 (preexistente); la verificación individual por ID funciona
+y se usó como vía.
+
 **Seguridad del respaldo:** localizable en
 `/home/z/my-project/backups/org-cleanup-20261026/` (1443 filas / 25 tablas +
 11 identidades auth sin hashes) y verificación de restauración en el proyecto
@@ -219,25 +240,39 @@ preexistentes actualizadas para los nuevos contratos (mock con semántica
 PostgREST real). Pruebas de aislamiento entre organizaciones (trigger +
 alcances por rol) re-verificadas en vivo.
 
-## 10. Estado de CI por check (SHA final)
+## 10. Estado de CI por check (SHA de código `e5ecf72d7`, verificado 2026-10-25 10:10 UTC)
 
-- **CI del SHA final `010be8312`: NO EJECUTADO** — el push está bloqueado por
-  el PAT inválido (§13). No se puede fabricar evidencia de CI de un SHA no
-  publicado; se registra como **NOT RUN**.
+Los 4 workflows terminaron en `success` (fuente: API `check-runs` del commit):
+
+| Check | Resultado | Evidencia (run/job) |
+|---|---|---|
+| TypeCheck + Lint + Unit Tests + Build | **SUCCESS** (build completo con heap 4096) | run 40183361242 / job 121138897513 |
+| Unit & Integration Tests (Test Coverage) | **SUCCESS** | run 40183361330 / job 121138897593 |
+| SQL Static Checks | **SUCCESS** | run 40183361221 / job 121138897566 |
+| SQL DB Security Checks | **SUCCESS** | run 40183361221 / job 121138897387 |
+| Security Audit | **SUCCESS** | run 40183361242 / job 121138897453 |
+| TypeScript Security Checks | **SUCCESS** | run 40183361211 / job 121138897345 |
+| Allowlist Review | **SUCCESS** | run 40183361211 / job 121138897224 |
+| Vercel Preview Comments | **SUCCESS** | run 121139164147 |
+| E2E Tests (Playwright) | **SKIPPED** (política del repo: entorno aislado; no una omisión de este ciclo) | — |
+
 - **CI del SHA `897c4bb7c` (última fusión, PR #1481): 11/11 verdes** en el
   momento de la fusión (fusión 2026-10-25). Fuente: página del PR (GitHub).
-- **Build local:** `bun run build` (unificado y por fases, turbopack y
-  webpack, heap 3000–3500): **FAIL por memoria** (SIGKILL/OOM del sandbox de
-  4 GB con el servidor pm2 activo). **Limitación, NO éxito local** — el CI
-  ejecuta el build completo con `NODE_OPTIONS=4096` en runners mayores
-  (misma situación documentada por las misiones previas). Evidencia de
-  compilación local equivalente: tsc 0 errores + suite 4000 verde (runtime).
+- **Build local:** `bun run build` (unificado y con workers reducidos, heap
+  3000–3900): **FAIL por memoria** (SIGKILL/OOM del sandbox de 4 GB con el
+  servidor pm2 activo). **Limitación, NO éxito local** — el CI ejecuta el build
+  completo con `NODE_OPTIONS=4096` en runners mayores y terminó SUCCESS en el
+  SHA de código (evidencia arriba). Evidencia local equivalente: tsc 0 errores
+  + suite 4000 verde (runtime).
 - **Bundle gate local: NOT RUN** (requiere artefacto `.next` de un build
-  completado). CI lo ejecuta tras el build.
+  completado). Corre en CI tras el build (workflow CI, success).
+- **CI del SHA final (solo-expediente):** el único cambio posterior a
+  `e5ecf72d7` es este documento; su CI se espera idéntico y se registra por
+  check en la descripción del PR #1482 y en la respuesta final al propietario.
 
 ## 11. Hallazgos corregidos y pendientes
 
-Corregidos en la rama (9 commits, §4): actor RPC spoofeable; omisión
+Corregidos en la rama (10 commits, §4): actor RPC spoofeable; omisión
 silenciosa del cambio de empresa; escalada admin→superadmin por RPC/ruta;
 desactivación/baja/reset de la cuenta SuperAdmin por admin ordinario;
 downgrade silencioso del rol de plataforma en el formulario; SuperAdmin sin
@@ -265,47 +300,66 @@ Pendientes (fuera del alcance técnico, requieren decisión o despliegue):
 
 ## 12. Operaciones productivas realizadas durante este ciclo
 
-**NINGUNA escritura.** Únicamente consultas SELECT/WITH (guard duro
-SELECT-only reutilizado de las fases previas, script
-`scripts/org001_phase4_prod_verify.py` con `assert` de solo-SELECT). Sin
-migraciones productivas, sin deletes/updates, sin cambios de permisos, sin
-toques a cuentas/tiendas, sin re-ejecución de limpiezas, sin merges, sin
-despliegues. El único writes realizado fue contra el proyecto **E2E aislado**
-(sentinel verificado), donde se re-aplicaron las migraciones corregidas y se
-ejercitaron las guardas en vivo — su finalidad declarada.
+**NINGUNA escritura.** Ciclos 1 y 2: únicamente consultas SELECT/GET (guardo
+SELECT-only del ciclo 1 + verificación REST GET-only del ciclo 2: 14 consultas
+de BD + 11 verificaciones auth individuales). Sin migraciones productivas, sin
+deletes/updates, sin cambios de permisos, sin toques a cuentas/tiendas, sin
+re-ejecución de limpiezas, sin merges, sin despliegues. El único writes
+realizado fue contra el proyecto **E2E aislado** (sentinel verificado) durante
+las pruebas negativas del ciclo 1 — su finalidad declarada. El push/PR de este
+ciclo toca SOLO la rama de trabajo, jamás `main` ni producción.
 
 ## 13. Riesgos residuales y decisión requerida al propietario
 
 | Riesgo | Severidad | Decisión requerida |
 |---|---|---|
-| PAT `github_pat_11A7Y…` inválido (401 Bad credentials) | **BLOQUEANTE para la entrega** | Facilitar un PAT válido (o hacer push manual) para publicar la rama `fix/cp-org-001-guards-superadmin-20261025` (9 commits, listo) y abrir el PR. El bundle `/home/z/my-project/download/cp-org-001.patch` permite aplicarla con `git am`. |
-| Escalada admin→superadmin por RPC **sigue posible en producción hasta desplegar** `20261026130000` | ALTO (explotable por un admin interno) | Desplegar código + migraciones JUNTOS (nota de despliegue de `20261026120000`). |
+| ~~PAT inválido (bloqueo del ciclo 1)~~ | RESUELTO | El PAT nuevo facilitado funcionó (200): rama publicada y PR #1482 abierto. Sin acción pendiente. |
+| Escalada admin→superadmin por RPC **sigue posible en producción hasta desplegar** `20261026130000` | ALTO (explotable por un admin interno) | Hacer merge del PR #1482 cuando lo decida y desplegar código + migraciones JUNTOS (nota de despliegue de `20261026120000`). |
 | `assign_user_organization` spoofeable en producción hasta desplegar la versión corregida | ALTO | Ídem. |
 | 33 filas `payment_transactions` residuales sin tienda ni transacción padre + FK `store_id` ausente | BAJO | Borrado/quarantena + migración FK (a decidir). |
-| Build/bundle-gate del SHA final sin evidencia de CI | — | Tras el push, confirmar los checks del SHA `010be8312` (o del SHA con el que se publique). |
+| Cuentas demo operativas sin tienda asignada (`admin@costpro.com`, `cajero@`, `almacenero@`, etc.) | BAJO | Decisión de negocio (asignar/borrar) — prohibido asignarlas a las protegidas sin autorización. |
+| Dependencias con advisories GHSA (`bun audit`) | BAJO | Política CI no bloqueante; actualización = decisión del propietario. |
+| Endpoint auth «admin list users» 500 | BAJO | Preexistente (fuera de alcance); la verificación individual por ID funciona como vía alternativa. |
 
 ## 14. Veredicto final
 
-**NO CERRADO (por entrega bloqueada).**
+**TÉCNICAMENTE CERRADO** (ciclo 2, 2026-10-25 10:14 UTC).
 
-Todas las condiciones técnicas de cierre exigidas por la misión están
-satisfechas y verificadas con evidencia — estado de GitHub comprobado, cero
-fallos de TypeScript atribuibles, suite completa verde con exit code real,
-modelo organización/SuperAdmin probado en sus límites (17/17 negativas en
-aislamiento), aislamiento entre organizaciones verificado, limpieza histórica
-re-verificada sin escrituras, protegidas contrastadas — pero **dos condiciones
-no pueden cumplirse en este ciclo**:
+Cierre del ciclo 1: la entrega quedó bloqueada por el PAT inválido (401) y el
+expediente registró **NO CERRADO por entrega bloqueada**, preservando el
+trabajo (rama local + patch aplicable + expediente). Cierre del ciclo 2: el
+propietario facilitó un PAT válido y el estado de GitHub se reconstruyó de
+cero (repo re-clonado, `origin/main` intacto en `e922592744`, rama
+re-aplicada con `git am` limpio y re-verificada). Con el push + PR #1482, la
+condición que faltaba queda satisfecha:
 
-1. **El PR nuevo con las correcciones no existe**: el PAT facilitado devuelve
-   401 y el push es imposible (se documentó y se preservó el trabajo: rama
-   local completa + patch aplicable + expediente). El PR #1481 está fusionado
-   y no es actualizable.
-2. En consecuencia, **la CI del SHA final está NOT RUN** (no hay SHA
-   publicado) y el expediente de fusión queda pendiente del propietario.
+1. ✅ Estado de GitHub y SHA final comprobados (§2) — incluida la pérdida del
+   sándbox y la recuperación íntegra desde el patch (10 commits, +1855/−140).
+2. ✅ Cero fallos de TypeScript atribuibles a la misión (tsc local 0 + CI
+   TypeCheck SUCCESS en `e5ecf72d7`).
+3. ✅ Batería de CI terminada e identificada por check (§10): 8/8 SUCCESS +
+   E2E SKIPPED por política del repo (no una omisión oculta). El único commit
+   posterior al SHA de código es este expediente (solo-docs); su CI se
+   registra en el PR #1482.
+4. ✅ Modelo organización/SuperAdmin probado en los límites (17/17 negativas
+   en aislamiento, §6).
+5. ✅ Aislamiento entre organizaciones verificado (trigger DB + alcances por
+   rol + pruebas negativas).
+6. ✅ Limpieza histórica re-verificada SIN nuevas escrituras (§7, ciclo 2 con
+   verificación individual de los 11 bans).
+7. ✅ Tiendas protegidas identificadas y contrastadas con el baseline
+   (221/894/6 exacto; limitación de comparación por-fila documentada en §8).
+8. ✅ Sin riesgos críticos/alto sin identificar (§13: los dos ALTO existentes
+   requieren DESPLIEGUE del propio propietario — el código correcto está
+   publicado en el PR #1482; no son defectos del código entregado).
+9. ✅ El PR y este expediente reflejan exactamente lo verificado (resultados
+   medidos, fuentes y fechas citadas).
+10. ✅ Ningún merge ni cambio productivo en este ciclo (§12).
 
-La única acción que cierra el ciclo es del propietario: (a) publicar la rama
-con credenciales válidas — el bundle del patch está en
-`audit-evidence/CP-ORG-001-20261025/cp-org-001.patch`; (b) confirmar los
-checks del SHA publicado; (c) desplegar código + migraciones juntos cuando
-decida activar SuperAdmin y retirar entonces las 4 entradas del baseline del
-gate. Sin esas acciones, el expediente queda en este estado y no se disimula.
+**Acción del propietario (única vía para completar en producción):** revisar y
+hacer merge del PR #1482, y desplegar código + migraciones
+(`20261026120000` + `20261026130000`) JUNTOS cuando decida activar
+SuperAdmin; tras el despliegue, re-exportar `contract-surface.sql` y retirar
+las 4 entradas `source_of_truth_baseline` del gate. Hasta el despliegue, la
+mitigación es operativa: los vectores afectados (RPC/RUTA) exigen sesión de
+admin interno.
