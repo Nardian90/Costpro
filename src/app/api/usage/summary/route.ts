@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 // FIX R1: withUsageTracking eliminado — withAuth ya aplica withAutoTracking internamente
@@ -10,7 +11,7 @@ import { getBufferStatus } from '@/lib/usage-tracker';
  * Llama al RPC get_usage_summary de Supabase + estado del buffer en memoria.
  */
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
-  if (session.user.role !== 'admin') {
+  if (!isAdminLevel(session.user.role)) {
     return NextResponse.json({ error: 'Forbidden — solo admin' }, { status: 403 });
   }
 

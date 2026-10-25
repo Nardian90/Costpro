@@ -10,7 +10,7 @@ import { UserFormData } from './UserForm';
 import { toast } from 'sonner';
 import { UserContract, mapProfileToContract, UserContractFactory } from '@/contracts/user';
 import { Profile, UserRole } from '@/types';
-import { getAllowedRoles } from '@/lib/roles';
+import { getAllowedRoles, isAdminLevel } from '@/lib/roles';
 import { supabase } from '@/lib/supabaseClient';
 
 export function useUsersView() {
@@ -99,9 +99,12 @@ export function useUsersView() {
         .filter(u => !debouncedSearch || (u.full_name || '').toLowerCase().includes(debouncedSearch.toLowerCase())
             || (u.email || '').toLowerCase().includes(debouncedSearch.toLowerCase()))
         .filter(u => {
-            // RBAC Guard: Only admins can see other admins
-            if (isManager) return true;
-            return u.role !== 'admin';
+            // RBAC Guard: Only admins can see other admins.
+            // CP-ORG-001 ciclo 4: superadmin también (gestiona cuentas de plataforma).
+            if (isManager || isSuperAdmin) return true;
+            // CP-ORG-001 ciclo 5: las cuentas de plataforma (superadmin) quedan
+            // ocultas igual que las admin para visores no privilegiados.
+            return u.role !== 'admin' && u.role !== 'superadmin';
         });
 
     const canCreateMoreUsers = user?.role === 'admin' || isSuperAdmin ||
@@ -109,7 +112,7 @@ export function useUsersView() {
         ? usersTotal < user.maxUsersLimit
         : true);
 
-    const limitReachedMessage = !canCreateMoreUsers && user?.role !== 'admin'
+    const limitReachedMessage = !canCreateMoreUsers && !isAdminLevel(user?.role)
       ? `Has alcanzado el límite de usuarios (${user?.maxUsersLimit}). Contacta a un administrador para aumentar tu capacidad.`
       : undefined;
 

@@ -3,39 +3,79 @@ import { logger } from '@/lib/logger';
 import { Profile, UserRole } from '@/types';
 import { profileSchema } from '@/validation/schemas';
 import { validateResponse } from '@/lib/rpc-validator';
+import { isAdminLevel } from '@/lib/roles';
 
 export const userService = {
   async setActiveStore(userId: string, storeId: string) {
     logger.info('DATABASE', 'SET_ACTIVE_STORE', { userId, storeId });
 
-    // FIX CRITICAL-001: Validate membership before setting active store
-    const { data: membership, error: membershipError } = await supabase
-      .from('user_store_memberships')
-      .select('id, status, store:stores(id, is_active)')
-      .eq('user_id', userId)
-      .eq('store_id', storeId)
+    // CP-ORG-001 ciclo 4: admin/superadmin son transversales por diseño (el
+    // SuperAdmin de plataforma NO lleva membresías — §6 de la migración
+    // 20260826120000). El nivel administrativo se resuelve desde el perfil
+    // vía RLS (lectura propia), no desde el cliente.
+    const { data: selfProfile, error: selfError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
       .limit(1);
-
-    if (membershipError) {
-      logger.error('DATABASE', 'SET_ACTIVE_STORE_MEMBERSHIP_CHECK_FAILED', { userId, storeId, error: membershipError });
-      throw new Error('Error al verificar membresía de tienda');
+    const callerRole: UserRole | undefined | null = selfProfile?.[0]?.role as UserRole | undefined;
+    const skipMembershipCheck = isAdminLevel(callerRole);
+    if (selfError) {
+      logger.warn('DATABASE', 'SET_ACTIVE_STORE_ROLE_READ_FAILED', { userId, storeId, error: selfError });
+      // Sin lectura de rol no podemos elevar: se mantiene la validación de membresía.
     }
 
-    const membershipRecord = membership?.[0];
-    if (!membershipRecord) {
-      logger.warn('DATABASE', 'SET_ACTIVE_STORE_NO_MEMBERSHIP', { userId, storeId });
-      throw new Error('No tienes acceso a esta tienda. Membresía no encontrada.');
-    }
+    // FIX CRITICAL-001: Validate membership before setting active store
+    // (excepto nivel administrativo transversal, ver arriba)
+    if (!skipMembershipCheck) {
+      const { data: membership, error: membershipError } = await supabase
+        .from('user_store_memberships')
+        .select('id, status, store:stores(id, is_active)')
+        .eq('user_id', userId)
+        .eq('store_id', storeId)
+        .limit(1);
 
-    if (membershipRecord.status !== 'active') {
-      logger.warn('DATABASE', 'SET_ACTIVE_STORE_MEMBERSHIP_REVOKED', { userId, storeId });
-      throw new Error('Tu membresía a esta tienda ha sido revocada.');
-    }
+      if (membershipError) {
+        logger.error('DATABASE', 'SET_ACTIVE_STORE_MEMBERSHIP_CHECK_FAILED', { userId, storeId, error: membershipError });
+        throw new Error('Error al verificar membresía de tienda');
+      }
 
-    const storeData = (membershipRecord.store as unknown as Array<{ id: string; is_active: boolean }> | null)?.[0];
-    if (storeData && storeData.is_active === false) {
-      logger.warn('DATABASE', 'SET_ACTIVE_STORE_INACTIVE', { userId, storeId });
-      throw new Error('Esta tienda está desactivada. No se puede seleccionar.');
+      const membershipRecord = membership?.[0];
+      if (!membershipRecord) {
+        logger.warn('DATABASE', 'SET_ACTIVE_STORE_NO_MEMBERSHIP', { userId, storeId });
+        throw new Error('No tienes acceso a esta tienda. Membresía no encontrada.');
+      }
+
+      if (membershipRecord.status !== 'active') {
+        logger.warn('DATABASE', 'SET_ACTIVE_STORE_MEMBERSHIP_REVOKED', { userId, storeId });
+        throw new Error('Tu membresía a esta tienda ha sido revocada.');
+      }
+
+      const storeData = (membershipRecord.store as unknown as Array<{ id: string; is_active: boolean }> | null)?.[0];
+      if (storeData && storeData.is_active === false) {
+        logger.warn('DATABASE', 'SET_ACTIVE_STORE_INACTIVE', { userId, storeId });
+        throw new Error('Esta tienda está desactivada. No se puede seleccionar.');
+      }
+    } else {
+      // CP-ORG-001 ciclo 4: para nivel administrativo solo validar que la
+      // tienda exista y esté activa (la lectura pasa por RLS).
+      const { data: storeRow, error: storeError } = await supabase
+        .from('stores')
+        .select('id, is_active')
+        .eq('id', storeId)
+        .limit(1);
+      if (storeError) {
+        logger.error('DATABASE', 'SET_ACTIVE_STORE_STORE_CHECK_FAILED', { userId, storeId, error: storeError });
+        throw new Error('Error al verificar la tienda');
+      }
+      if (!storeRow || storeRow.length === 0) {
+        logger.warn('DATABASE', 'SET_ACTIVE_STORE_STORE_NOT_FOUND', { userId, storeId });
+        throw new Error('Tienda no encontrada.');
+      }
+      if ((storeRow[0] as { is_active?: boolean }).is_active === false) {
+        logger.warn('DATABASE', 'SET_ACTIVE_STORE_INACTIVE', { userId, storeId });
+        throw new Error('Esta tienda está desactivada. No se puede seleccionar.');
+      }
     }
 
     const { data, error } = await supabase

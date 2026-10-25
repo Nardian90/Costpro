@@ -4,6 +4,7 @@ import { z } from 'zod';
 // FIX C1: usar getSupabaseAuthClient para que RLS respete el usuario autenticado
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
+import { isAdminLevel } from '@/lib/roles';
 
 /**
  * GET /api/commissions/rules?store_id=...&worker_id=...
@@ -126,7 +127,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     );
   }
 
-  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
   }
 

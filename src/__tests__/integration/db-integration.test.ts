@@ -180,7 +180,7 @@ describe.skipIf(!shouldRun)('DB Integration — Real Supabase queries', () => {
 
   // ─── profiles table (FK target) ───────────────────────────────────
   describe('profiles table', () => {
-    it('admin@demo.com profile has role=admin', async () => {
+    it('admin@demo.com profile has role=superadmin (cuenta de plataforma)', async () => {
       const { data, error } = await admin
         .from('profiles')
         .select('id, email, role')
@@ -190,10 +190,13 @@ describe.skipIf(!shouldRun)('DB Integration — Real Supabase queries', () => {
       expect(error).toBeNull();
       expect(data).toBeDefined();
       expect(data!.email).toBe('admin@demo.com');
-      expect(data!.role).toBe('admin');
+      // CP-ORG-001 ciclo 4 (2026-10-25): el propietario promovió la cuenta a
+      // SuperAdmin de plataforma. La app debe reconocerla en TODO nivel
+      // administrativo (isAdminLevel) — causa raíz del incidente P0.
+      expect(data!.role).toBe('superadmin');
     });
 
-    it('admin user has active memberships in stores', async () => {
+    it('superadmin platform account has NO store memberships by design', async () => {
       // Use the FK-hinted query (same pattern as bot/chat route)
       const { data, error } = await admin
         .from('profiles')
@@ -203,13 +206,31 @@ describe.skipIf(!shouldRun)('DB Integration — Real Supabase queries', () => {
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
-      expect(data!.role).toBe('admin');
-      // Admin should have memberships
+      expect(data!.role).toBe('superadmin');
+      // §6 migración 20260826120000: la cuenta de plataforma NO lleva
+      // membresías de tienda. Su acceso a tiendas proviene del ROL
+      // (is_superadmin/is_admin en RLS + isAdminLevel en la app), no de
+      // membresías. REGRESIÓN DEL INCIDENTE: exigir membresía a esta cuenta
+      // la dejó sin tiendas; setActiveStore debe validar por rol.
       const memberships = (data as any).memberships || [];
-      expect(memberships.length).toBeGreaterThan(0);
-      // At least one active membership
-      const active = memberships.filter((m: any) => m.status === 'active');
-      expect(active.length).toBeGreaterThan(0);
+      expect(memberships.length).toBe(0);
+      expect(memberships.filter((m: any) => m.status === 'active').length).toBe(0);
+    });
+
+    it('there are active stores for the platform account to select (regresión incidente)', async () => {
+      // La cuenta de plataforma debe tener tiendas activas que seleccionar.
+      // La visibilidad para superadmin la garantiza la policy
+      // stores_tenant_select (bypass is_superadmin(), verificado en vivo en
+      // el ciclo 4); la selección sin membresía la permite setActiveStore.
+      const { data, error } = await admin
+        .from('stores')
+        .select('id, name, is_active')
+        .eq('is_active', true);
+
+      expect(error).toBeNull();
+      expect(data).toBeDefined();
+      expect(data!.length).toBeGreaterThan(0);
+      expect(data!.every((s: any) => s.is_active === true)).toBe(true);
     });
   });
 });

@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
-import { canManageStore } from '@/lib/roles';
+import {canManageStore, isAdminLevel } from '@/lib/roles';
 import { validateOrigin } from '@/lib/csrf';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
@@ -100,7 +100,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   let rpcName: string;
   if (parsed.data.action === 'lock') {
     // Only admin can lock
-    if (session.user.role !== 'admin') return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
+    if (!isAdminLevel(session.user.role)) return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
     rpcName = 'lock_fiscal_period';
   } else if (parsed.data.action === 'close') {
     rpcName = 'close_fiscal_period';

@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
@@ -129,7 +130,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
     const { amount, direction, note, payment_date, idempotency_key } = parsed.data;
 
-    if (session.user.role !== 'admin' && session.user.role !== 'manager' && session.user.role !== 'encargado') {
+    if (!isAdminLevel(session.user.role) && session.user.role !== 'manager' && session.user.role !== 'encargado') {
       return NextResponse.json({ error: 'Forbidden — requiere rol admin, manager o encargado' }, { status: 403 });
     }
 

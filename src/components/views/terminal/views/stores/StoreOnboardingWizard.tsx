@@ -21,6 +21,7 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 import { cn } from '@/lib/utils';
 import { useUsers } from '@/hooks/api/useUsers';
 import { useAuthStore } from '@/store';
+import { isAdminLevel } from '@/lib/roles';
 import { useTranslations } from 'next-intl';
 
 /**
@@ -82,7 +83,8 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
   const t = useTranslations('stores');
   const { user } = useAuthStore();
   const isMobile = useIsMobile();
-  const isAdmin = user?.role === 'admin';
+  // CP-ORG-001 ciclo 4: nivel administrativo transversal (admin|superadmin)
+  const isAdmin = isAdminLevel(user?.role);
   const isEncargado = user?.role === 'encargado' || user?.role === 'manager';
   // FIX-DEUDA: cargar usuarios existentes para el Paso 3 (asignación real)
   const { data: existingUsers = [] } = useUsers(user?.id || '', isAdmin, isEncargado);

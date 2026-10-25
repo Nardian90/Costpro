@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { captureDateRange } from '@/lib/exchange-capture';
@@ -22,7 +23,7 @@ export const maxDuration = 60;
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   // Solo admin puede disparar captura manual
-  if (session.user.role !== 'admin') {
+  if (!isAdminLevel(session.user.role)) {
     return NextResponse.json({ error: 'Forbidden — solo admin' }, { status: 403 });
   }
 

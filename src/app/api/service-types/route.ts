@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
@@ -57,7 +58,8 @@ const PatchSchema = z.object({
 });
 
 function isAdmin(session: AuthenticatedSession): boolean {
-  return session?.user?.role === 'admin';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  return isAdminLevel(session?.user?.role);
 }
 
 async function getAdminClient() {

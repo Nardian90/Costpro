@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import autoTable from 'jspdf-autotable';
 import { NextRequest, NextResponse } from 'next/server';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
@@ -131,7 +132,8 @@ async function exportPdfHandler(req: NextRequest, session: AuthenticatedSession)
         return NextResponse.json({ error: 'store_id requerido para obtener oferta de BD' }, { status: 400 });
       }
       const memberships = (session.user as any).memberships || [];
-      const isAdmin = session.user.role === 'admin';
+      // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+      const isAdmin = isAdminLevel(session.user.role);
       const hasAccess = isAdmin || memberships.some(
         (m: any) => m.store_id === store_id && m.status === 'active'
       );

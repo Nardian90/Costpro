@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withSecurity } from '@/lib/with-security';
@@ -47,7 +48,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     // Anular es una operación de corrección: exige rol superior (doctrina de
     // reversas — igual que anular ventas). El RPC revalida con membresía.
-    if (session.user.role !== 'admin' && session.user.role !== 'manager' && session.user.role !== 'encargado') {
+    if (!isAdminLevel(session.user.role) && session.user.role !== 'manager' && session.user.role !== 'encargado') {
       return NextResponse.json(
         { error: 'Forbidden — anular requiere rol admin, manager o encargado' },
         { status: 403 },

@@ -175,17 +175,48 @@ async function patchHandler(req: NextRequest, session: { user: { id: string } })
 
   // FIX RLS-B4 (v2.21.0): Manejar activeStoreId separadamente (no va por managed_update_user).
   // Validar membresía antes de actualizar active_store_id.
+  //
+  // CP-ORG-001 ciclo 5 (incidente admin@demo.com): la cuenta de plataforma
+  // (superadmin) y el admin global NO llevan membresías por diseño (§6 de la
+  // migración 20260826120000) — exigirles membresía los deja sin tienda activa
+  // seleccionable. Para objetivos de NIVEL ADMINISTRATIVO se valida que la
+  // tienda exista y esté activa; el resto de roles mantiene la membresía
+  // activa obligatoria (sin cambios de aislamiento). El rol del objetivo se
+  // resuelve server-side (service role), nunca desde el cliente.
   if (parsed.data.activeStoreId) {
-    const { data: membership } = await supabaseAdmin
-      .from('user_store_memberships')
-      .select('id, status')
-      .eq('user_id', userId)
-      .eq('store_id', parsed.data.activeStoreId)
-      .eq('status', 'active')
-      .limit(1);
+    const { data: targetProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    const targetRole = targetProfile?.role as string | undefined;
 
-    if (!membership || membership.length === 0) {
-      return NextResponse.json({ error: 'El usuario no tiene membresía activa en esa tienda' }, { status: 403 });
+    if (targetRole === 'admin' || targetRole === 'superadmin') {
+      // Objetivo administrativo: la tienda debe existir y estar activa.
+      const { data: storeRow } = await supabaseAdmin
+        .from('stores')
+        .select('id, is_active')
+        .eq('id', parsed.data.activeStoreId)
+        .limit(1);
+
+      if (!storeRow || storeRow.length === 0) {
+        return NextResponse.json({ error: 'Tienda no encontrada' }, { status: 404 });
+      }
+      if ((storeRow[0] as { is_active?: boolean }).is_active === false) {
+        return NextResponse.json({ error: 'Esta tienda está desactivada. No se puede seleccionar.' }, { status: 400 });
+      }
+    } else {
+      const { data: membership } = await supabaseAdmin
+        .from('user_store_memberships')
+        .select('id, status')
+        .eq('user_id', userId)
+        .eq('store_id', parsed.data.activeStoreId)
+        .eq('status', 'active')
+        .limit(1);
+
+      if (!membership || membership.length === 0) {
+        return NextResponse.json({ error: 'El usuario no tiene membresía activa en esa tienda' }, { status: 403 });
+      }
     }
 
     const { error: updateError } = await supabaseAdmin

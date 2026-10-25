@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
@@ -45,7 +46,9 @@ const handler = withRole('admin', async (req, session) => {
       roleNames.push(requesterProfile.role.toLowerCase());
     }
 
-    const requesterRole = roleNames.includes('admin') ? 'admin' : (roleNames.includes('encargado') || roleNames.includes('manager') ? 'encargado' : 'other');
+    // CP-ORG-001 ciclo 5: superadmin comparte el NIVEL administrativo
+    // (espejo de is_admin()); sin esto la plataforma no podía crear usuarios.
+    const requesterRole = (roleNames.includes('admin') || roleNames.includes('superadmin')) ? 'admin' : (roleNames.includes('encargado') || roleNames.includes('manager') ? 'encargado' : 'other');
 
     const rawBody = await req.json();
     const parsed = managedCreateUserSchema.safeParse(rawBody);

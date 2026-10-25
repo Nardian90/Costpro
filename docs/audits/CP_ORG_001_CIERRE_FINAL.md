@@ -550,3 +550,431 @@ Reversible vía tabla de archivo.
 | Secretos en archivos nuevos | 0 coincidencias | — |
 | Live E2E (aislado, aparte) | 14/14 PASS | 0 |
 | Build local | NOT RUN-completo (OOM sandbox 4GB, limitación documentada; CI con 4096) | — |
+
+## 16. Ciclo 4 — Activación productiva post-merge (SuperAdmin admin@demo.com)
+
+**Contexto:** el propietario fusionó el PR #1482 (2026-10-25 11:26:56 UTC, merge
+commit `f265fb692` por Nardian90; head del PR `4ccb3cef7` con CI 8/8 SUCCESS) y
+ordenó explícitamente activar a `admin@demo.com` como SuperAdmin de organizaciones
+y comenzar una rama nueva. La activación ya estaba codificada en la migración
+`20261026120000` §6 (fusionada); lo que faltaba era aplicarla a producción junto
+con el despliegue del código (nota de despliegue de la propia migración:
+migración y código JUNTOS).
+
+### 16.1 Estado pre-activación verificado (READ-ONLY, evidencia c4_preflight_prod.json)
+
+- `admin@demo.com`: `role='admin'`, `tenant_id=5364ccf8…` (Vitallcons),
+  `active_store_id=5e6fe821…`, 2 membresías de tienda activas.
+- `is_superadmin()`: INEXISTENTE en producción (PGRST202 404). Migraciones
+  120000/130000/140000: no aplicadas. Tabla de archivo §8.2: inexistente.
+- Precondiciones verificadas: enum `user_role` ya incluye `superadmin`;
+  funciones referenciadas (`current_user_tenant_id`, `validate_tenant_access`,
+  `has_store_access`, `managed_*`, `validate_payment_transactions_invariants`)
+  presentes; policies vigentes de `tenants`/`stores` con los nombres EXACTOS que
+  las migraciones reemplazan (`tenants_select_own_or_admin`,
+  `tenants_select_own_or_store_member`, `tenants_{insert,update,delete}_*`,
+  `stores_tenant_select`).
+- Kit de rollback/evidencia capturado: definiciones completas de policies
+  (qual/with_check), cuerpos de `is_admin`/`managed_*`, perfil y membresías de
+  `admin@demo.com`, conteos de 10 tablas.
+- Residuos `payment_transactions`: exactamente **33** (sin cambios desde §8.2):
+  23 CUP (680 400 CUP) + 10 USD (5 000 USD ≡ 4 050 000 CUP al tipo registrado) =
+  **4 730 400 CUP** equivalentes; 32 `ref_type=cash_flow` (todas con documento
+  padre inexistente) + 1 `service`; 6 tiendas huérfanas distintas; rango de
+  creación 2026-10-23 06:31–15:56 UTC. Las 799 filas VÁLIDAS suman
+  65 743 380.97 CUP y no se relacionan con los residuos.
+
+### 16.2 Aplicación productiva (Management API del propietario, wthkddeleylijmonclxg)
+
+Cada archivo aplicado como UNA query (transacción implícita atómica), con
+verificación inmediata tras cada uno (evidencia c4_aplicacion_prod.json):
+
+1. `20261026120000` — OK. Verificado: `admin@demo.com` → `role='superadmin'`,
+   `tenant_id` CONSERVADO, `store_id/active_store_id` = NULL, **0 membresías**
+   (§6 las retira; 6→4 en la tabla), `is_superadmin()` creada,
+   `assign_user_organization` creada (anti-spoofing H-7, ACL service_role),
+   trigger `trg_membership_tenant_consistency` activo.
+2. `20261026130000` — OK. Las 4 RPC `managed_*` portan las guardas
+   `ERR_PLATFORM_ROLE`/`ERR_PLATFORM_ACCOUNT_PROTECTED` (verificado en
+   `pg_get_functiondef`).
+3. `20261026140000` — OK. Las 5 policies de `tenants` referencian
+   `is_superadmin()` (INSERT/DELETE solo SuperAdmin; UPDATE SuperAdmin o owner).
+
+**NO se aplicó `20261026150000`** (archivo+purga de las 33 filas): su aplicación
+productiva es la decisión irreversible que el propietario solicitó diferir hasta
+recibir la explicación de efectos (entregada; ver §16.5).
+
+### 16.3 Despliegue del código
+
+- Rama de trabajo: `cp-org-001-ciclo4-activacion-superadmin` (desde `main`
+  `f265fb692`), según instrucción del propietario.
+- Re-despliegue: reinicio de pm2 con `main` fusionado (migración+código juntos,
+  como exige la nota de despliegue). `GET /` → HTTP 200;
+  `GET /api/organizations` anónimo → **401 «Se requiere sesión activa»**
+  (guard de la ruta viva en el código desplegado).
+- Ventana de riesgo documentada en la nota de despliegue (migración aplicada
+  mientras el código anterior seguía sirviendo) cerrada en <2 minutos con el
+  reinicio; sin queja de usuario posible (ventana de plataforma de una sola
+  cuenta).
+
+### 16.4 Estado post-activación (READ-ONLY)
+
+- Perfil `admin@demo.com`: `superadmin`, activo, sin baja lógica, `tenant_id`
+  conservado por diseño (evita regresiones de visibilidad en policies que aún
+  comparan tenant).
+- Distribución de roles (22 perfiles, 11 vivos): superadmin=1 (única),
+  admin=1, tenant_admin=1, encargado=3, costo=3, clerk=1, warehouse=1.
+- Tiendas protegidas: ENERVIDA-VITALLCONS y Puerto Padre VITALLCONS activas e
+  intactas. Tenants: Vitallcons (owner=admin@demo.com) y WAC Test Tenant.
+- Conteos: SOLO `user_store_memberships` cambió 6→4 (esperado por §6; eran las
+  2 membresías de admin@demo.com). profiles=22, stores=2, tenants=2,
+  transactions=894, payment_transactions=832, cash_flow_documents=2,
+  receipts=76, products=221 — sin cambios.
+- Residuos: 33 (intactos, deliberadamente).
+
+### 16.5 Las 33 filas — explicación y estado de la decisión
+
+**Para un usuario (resumen):** son 33 registros de pagos que quedaron apuntando
+a tiendas de PRUEBA que fueron borradas en la limpieza del 26/10. No aparecen
+en ningún informe, en ningún saldo y ningún usuario puede verlos: son «peso
+muerto» invisible en la base de datos. Si el dueño aprueba, la migración ya
+fusionada los COPIA primero a una tabla de archivo (solo acceso administrativo)
+y luego los elimina; además añade la regla de integridad que evita que vuelva a
+ocurrir. Si no se aprueba, no pasa nada hoy: siguen invisibles; el único coste
+de conservarlos es que ciertas consultas SQL crudas «SUMAR TODO» darían una
+cifra inflada en 4 730 400 CUP que no corresponde a dinero real.
+
+**Para un técnico:** `payment_transactions.store_id` carecía de FK (defecto de
+esquema frente a sus hermanas `transactions.store_id` y
+`cash_flow_documents.store_id`, ambas `ON DELETE CASCADE`). Al eliminarse las
+tiendas QA, las hermanas murieron por CASCADE y las 33 sobrevivieron como
+residuos: `store_id` inexistente (6 valores distintos), 32 con `ref_type=cash_flow`
+cuyo documento padre también murió, 1 `service`; `transaction_id` NULL (0/33
+vínculos con ventas); RLS las oculta (`has_store_access` de tienda inexistente =
+false); los 5 agregadores de caja son por-tienda y no las alcanzan; 0 consultas
+cliente. Suma 4 730 400 CUP equivalentes (680 400 CUP + 5 000 USD ≡ 4 050 000 CUP)
+FUERA de todo saldo vivo; las 799 filas válidas (65 743 380.97 CUP) no se tocan.
+
+**Efectos de aprobar el borrado (`20261026150000`, ya en main):**
+(1) las 33 se archivan en `payment_transactions_purga_20261026_archive` (RLS sin
+policies: solo service_role/postgres — reversibilidad y evidencia completa);
+(2) se purgan vía `app.restore_mode` documentado del trigger (el trigger NO se
+desactiva; solo postgres/supabase_admin puede ejecutarla);
+(3) se añade la FK `store_id→stores(id) ON DELETE CASCADE` idempotente;
+(4) verificación DO exige 0 residuos y FK presente. Validada en E2E aislado con
+escenario fiel (39 residuos análogos purgados; idempotente en re-ejecución).
+Impacto contable del borrado: NINGUNO (nada las cuenta). Impacto de NO borrar:
+ninguno funcional hoy; el defecto de esquema permanece y futuros borrados de
+tienda podrían dejar residuos nuevos. La operación es reversible vía tabla de
+archivo; lo único irreversible sería borrar la tabla de archivo después.
+
+**Estado:** explicación entregada al propietario (2026-10-25). **Decisión
+PENDIENTE**: aplicar `20261026150000` a producción requiere su aprobación
+explícita; no se ejecutó en este ciclo.
+
+### 16.6 Veredicto actualizado por dimensión
+
+| Dimensión | Estado ciclo 3 | Estado ciclo 4 |
+|---|---|---|
+| Cierre técnico | CERRADO (tsc 0, lint 0, suite 4011/0, gates verdes) | CERRADO (sin cambios de código) |
+| Cierre funcional (creación de organizaciones) | CERRADO EN AISLADO (14/14 live E2E) | **ACTIVADO EN PRODUCCIÓN** (admin@demo.com = SuperAdmin; vista SISTEMA→Organizaciones operativa: crear/renombrar/borrar con RLS platform-only) |
+| Integración | PREPARADO (CI 8/8 del SHA final) | **COMPLETADO** — PR #1482 merged (`f265fb692`, 2026-10-25 11:26 UTC por Nardian90) |
+| Activación productiva | PENDIENTE DEL PROPIETARIO | **EJECUTADA** — migraciones 120000+130000+140000 aplicadas atómicamente y verificadas; código desplegado junto (pm2, main) |
+| Protección de plataforma | PREPARADA | **VIVA** — superadmin solo gestionable por superadmin; tenants CRUD solo SuperAdmin/owner; invariante de empresa única en trigger |
+| Residuos payment_transactions (33) | Clasificados + corrección preparada | **DECISIÓN PENDIENTE** del propietario (migración 20261026150000 en main, no aplicada) |
+
+Producción no recibió ninguna otra escritura fuera del paquete de activación
+descrito en §16.2. Las verificaciones de §16.1 y §16.4 fueron read-only.
+
+---
+
+## 17. Ciclo 5 — INCIDENTE P0: recuperación del acceso integral de SuperAdmin (admin@demo.com)
+
+**Fecha:** 2026-10-25 (tarde). **Rama:** `cp-org-001-ciclo4-activacion-superadmin`
+(continúa el trabajo del ciclo 4 sobre `cc86a9f06`, main tras merge PR #1482).
+
+### 17.1 Incidente y síntomas reportados
+
+Tras convertir `admin@demo.com` en SuperAdmin de plataforma (ciclo 4), la
+cuenta **perdió el acceso a las tiendas y a las funcionalidades operativas
+dependientes de tienda**: selector vacío, sin tienda activa seleccionable y
+rutas operativas bloqueadas. Incidente clasificado P0 por el propietario con
+mandato de no declararlo cerrado hasta comprobar entrada → selección de
+tienda → funciones operativas con la cuenta real.
+
+### 17.2 Causa raíz confirmada (tres capas)
+
+**RC1 — App: comparación estricta `role === 'admin'`.** Unas 27 vistas/rutas
+comparaban la igualdad exacta con `'admin'`, excluyendo a `'superadmin'` de
+listados de tiendas, `setActiveStore` y de cada guard administrativo
+(workers, comisiones, ajustes de caja, reportes, etc.). La cuenta de
+plataforma quedaba fuera de su propio nivel de privilegio.
+
+**RC2 — App: `setActiveStore` exigía membresía de tienda.** El servicio
+(validación FIX CRITICAL-001) rechazaba con «Membresía no encontrada» a
+cualquier usuario sin `user_store_memberships` activa en la tienda. La cuenta
+de plataforma **no lleva membresías por diseño** (§6 de 20260826120000):
+necesitaba membresías ficticias para operar, algo expresamente prohibido por
+el modelo.
+
+**RC3 — DB: trigger `validate_active_store` exigía membresía TAMBIÉN a
+admin/superadmin.** Aun con app y RLS correctas, el `UPDATE
+profiles.active_store_id` fallaba con `ERR_INVALID_ACTIVE_STORE` porque el
+trigger (versionado desde 20260118, endurecido en 20260715000007) demandaba
+membresía activa para los roles `costo|admin|superadmin`. **Descubierto en
+este ciclo**: el listado funcionaba pero la persistencia de la tienda activa
+quedaba bloqueada en la última capa. Las migraciones del ciclo 4
+(`is_admin()` con superadmin, policies `stores_tenant_*` con bypass
+`is_superadmin()`) no cubrían este trigger.
+
+Verificación read-only del estado real previo (producción):
+`admin@demo.com` → `role='superadmin'`, `tenant_id=5364ccf8` (conservado),
+`active_store_id=NULL`, **0 membresías**; 2 tiendas activas (ambas del
+tenant Vitallcons); `is_superadmin()`, `is_admin()` y
+`current_user_store_ids()` (rama superadmin = todas las activas) vivas en la
+BD aunque sin registro en `schema_migrations` (aplicación ciclo 4 vía SQL
+directo); flag `app.use_tenant_rls` vacío → rama ELSE con bypass activo.
+Ni `20261026150000` ni `20261026160000` figuran en `schema_migrations`;
+el SQL de `20261026160000` SÍ está vivo en producción (policies idénticas al
+archivo); `20261026150000` TAMBIÉN está viva en su efecto (tabla
+`payment_transactions_purga_20261026_archive` presente, 0 filas colgantes,
+FK CASCADE) — los 33 residuos fueron archivados/purgados fuera de
+schema_migrations. Ninguna se repitió ni se revirtió.
+
+### 17.3 Correcciones aplicadas (99 archivos: 94 M + 5 nuevos)
+
+**Principio rector (mandato del propietario):** distinguir niveles sin
+sustitución textual indiscriminada. Privilegios de plataforma (superadmin) =
+transversales; admin global = transversal de app; tenant_admin/empleados =
+aislamiento intacto. El rol se resuelve SIEMPRE server-side (session
+middleware / service role / lectura RLS del perfil propio), nunca desde el
+cliente.
+
+1. **`src/lib/roles.ts`**: helper `isAdminLevel(role) = 'admin' | 'superadmin'`
+   (espejo exacto de `public.is_admin()`), documentado como obligatorio para
+   toda comparación de nivel administrativo.
+2. **`userService.setActiveStore`**: resuelve el rol del perfil vía RLS
+   (lectura propia, fail-closed si la lectura falla o no es admin-level);
+   nivel admin → valida tienda existente+activa sin membresía; resto →
+   membresía activa obligatoria (FIX CRITICAL-001 intacta).
+3. **`PATCH /api/users/[id]`**: mismo contrato para `activeStoreId` del
+   objetivo (rol del objetivo leído con service role; superadmin de plataforma
+   ya protegido por `ERR_PLATFORM_ACCOUNT_PROTECTED` en `managed_update_user`).
+4. **38 rutas API extendidas a nivel administrativo** (lote 1): ofertas (4),
+   production-orders pdf/void/payments (3), purchase-orders (4 guards),
+   transfers export, tenants/[id], billing portal+checkout, store-cost-templates (2),
+   catalog bulk-import, usage (5), exchange-rates (4), fiscal-close lock,
+   cash-flow (2), workers (2), inventory receptions (3), commissions/payments
+   raíz, sync/batch, reports/generate, physical-inventory, whatsapp+telegram
+   publish (2), users/managed-create (clasificación de requester), users
+   memberships GET (superadmin global; admin ordinario conserva aislamiento
+   por tenant) y memberships bulk.
+5. **23 vistas/servicios extendidos** (lote 2): service-types, costeo-dinámico,
+   cash-report adjustments, product-cost-sheets (4), usage-service (cuota),
+   y los componentes OfertasView, ExchangeIntelligenceView, ReceptionsHistoryView,
+   ReportConfigPanel, useSalesHistoryView, TransactionDetailsModal,
+   CostSheetTemplateExplorer, AuditGlobalView, IpvVentasView,
+   PhysicalInventoryDetail/View, MultiStoreDashboardView, TransferDetailsModal.
+   Más `useUsersView`: las cuentas superadmin quedan OCULTAS a visores no
+   privilegiados (paridad con admins — brecha de información cerrada).
+6. **Migración `20261026170000_superadmin_active_store_trigger.sql`** (RC3):
+   `validate_active_store` bifurca el nivel administrativo (valida tienda
+   existente+activa, sin membresía) de `costo` y roles operativos (membresía
+   obligatoria SIN cambios). Aplicada a E2E (sentinel true) y validada;
+   **NO aplicada a producción** (pendiente de autorización).
+
+### 17.4 Pruebas
+
+**Cuatro fallos originales — RESUELTOS sin eliminar aserciones:**
+- `audit-user-service.test.ts` (2): el mock de cadena única hacía que la
+  nueva query de `profiles` consumiera el stub de `user_store_memberships`.
+  Refactor: mock consciente de tabla (4 cadenas) + stubs explícitos por
+  tabla; las 4 aserciones originales se conservan con su semántica y se
+  AÑADEN 7 regresiones del incidente (23 tests: superadmin sin membresía
+  resuelve y NO consulta membresías; admin global ídem; tienda inactiva e
+  inexistente rechazadas; error de lectura de rol → fail-closed a membresía;
+  perfil no-admin nunca obtiene el bypass aunque la tienda exista; error de
+  persistencia rechazado).
+- `db-integration.test.ts` (2): codificaban la realidad VIEJA (`role='admin'`
+  + membresías>0). Actualizadas a la realidad canónica: `role='superadmin'`,
+  0 membresías por diseño (§6), + regresión en vivo de que existen tiendas
+  activas seleccionables (10/10 PASS contra producción, read-only).
+
+**Tests nuevos del ciclo 4 (ya presentes):** `stores-route-superadmin.test.ts`
+(4) y `roles-is-admin-level.test.ts` (5) — PASS.
+
+**Mocks alineados al nuevo contrato** (sin debilitar): `cash-flow-route.test.ts`
+y `cash-flow-ui-contract.test.ts` exportan `isAdminLevel` en su factoría de
+`@/lib/roles` con la semántica real (17 fallos transitorios → 23/23 PASS).
+
+**Aceptación LIVE E2E (proyecto aislado CostproE2E, sentinel
+`e2e_is_isolated_db()=true` verificado antes de provisionar) —
+`superadmin-store-access-live-db.test.ts`, 12/12 PASS** con JWT reales
+(password grant), RLS real, triggers reales, handler REAL `GET /api/stores`
+y `userService.setActiveStore` REAL:
+- S1/S1b: SuperAdmin lista TODAS las tiendas activas de TODOS los tenants
+  (ruta real y PostgREST directo; total exacto).
+- **S2: SuperAdmin SELECCIONA tienda SIN membresía — la ruta EXACTA del
+  incidente resuelve, persiste y la cuenta sigue con 0 membresías**
+  (acceso por ROL, no por membresías ficticias).
+- S3: persistencia entre sesiones (re-login recupera la tienda).
+- S4: cambio de tienda A→B sin pérdida de privilegios.
+- S5/S5b: tienda desactivada e inexistente rechazadas (sin mutar el perfil).
+- S6: tenant_admin NO adquiere privilegios (ruta: 0 tiendas; RLS: 0).
+- S7: empleado solo ve SU tienda; petición con store_id ajeno → 0 filas.
+- S8: empleado NO fija tienda ajena (membresía sigue obligatoria).
+- S9: anti-spoofing — PATCH propio a `role: 'superadmin'` bloqueado por
+  trigger de BD; rol inmutable desde el cliente.
+- S10: empleado NO escribe el perfil de otro usuario (RLS, 0 filas).
+Limpieza post-ejecución verificada: 0 tiendas activas de prueba, 0 tenants
+de prueba (hard-delete de tiendas impedido por diseño — auditoría FK
+RESTRICT; se usa soft-archive, semántica de la app).
+
+**Batería completa final:** `tsc` 0 errores · `lint` 0 errores (1385 warnings
+preexistentes) · suite íntegra **282 archivos passed / 4 skipped (live sin
+credenciales) / 0 failed** (~4055+ tests) · `security-contract-test.cjs`
+**153/153 funciones SECURITY DEFINER sin violaciones** · PIN REM-INV-2R
+`receive_purchase` sigue ausente. Build local no ejecutable por OOM del
+sandbox (CI con 4096 MB lo cubre).
+
+### 17.5 Evidencia del estado real de la cuenta afectada
+
+`admin@demo.com` (id `a1111111-…`): `role='superadmin'` (promoción del ciclo 4
+VIVA), autenticación intacta (no se tocó contraseña/ban/privilegios),
+`active_store_id=NULL` (elegirá tienda al desplegar la corrección), 0
+membresías (correcto por diseño), tenant Vitallcons conservado. **NO se
+repromovió ni se alteró su identidad.** Producción recibió CERO escrituras en
+este ciclo (todas las verificaciones read-only; escrituras solo en E2E
+aislado). PM2 del sandbox ejecuta el código corregido localmente; el
+despliegue productivo es del propietario (Vercel).
+
+### 17.6 Dependencia de activación para CIERRE FUNCIONAL en producción
+
+El incidente queda **cerrado en código y probado en aislado**, pero la
+recuperación efectiva de `admin@demo.com` en producción exige del
+propietario:
+
+1. **Merge del PR de este ciclo** (rama
+   `cp-org-001-ciclo4-activacion-superadmin`) y despliegue del código (Vercel).
+2. **Aplicar `20261026170000` a producción** junto con el despliegue — sin
+   ella, el trigger `validate_active_store` seguirá rechazando la persistencia
+   de `active_store_id` para superadmin (RC3). Idempotente y aislada del resto
+   de cambios. (Alternativa: aplicarla por SQL directo como el ciclo 4, con
+   registro expreso de que queda fuera de schema_migrations.)
+3. `20261026160000` ya está viva en producción (policies); el archivo se
+   versiona en este PR para reproducibilidad de entornos.
+
+**Comprobación post-despliegue sugerida (propietario):** iniciar sesión como
+`admin@demo.com` → ver las 2 tiendas activas en el selector → seleccionar una
+→ recargar: la tienda persiste → abrir Ventas/Caja/Reportes.
+
+### 17.7 Veredicto por dimensión (ciclo 5)
+
+| Dimensión | Estado |
+|---|---|
+| Causa raíz | **CONFIRMADA** en 3 capas (app estricta, membresía exigida, trigger DB) |
+| Cierre técnico | CERRADO — tsc 0, lint 0, suite 4055+/0, gates verdes (153/153) |
+| Cierre funcional en aislado | CERRADO — 12/12 LIVE E2E (listar, seleccionar, persistir, cambiar, aislamiento, anti-spoofing) |
+| Aislamiento de roles ordinarios | VERIFICADO — tenant_admin 0 tiendas; empleado 1/1; cross-store 0 filas; rol inmutable desde cliente |
+| Cuenta afectada | Intacta, superadmin VIVO, 0 membresías por diseño; CERO escrituras productivas |
+| Cierre funcional en producción | **PENDIENTE DE ACTIVACIÓN** (merge + deploy + `20261026170000`) — ver §17.6 |
+
+### 17.8 Adendo — reconciliación de los gates de seguridad (commit 2a9020451)
+
+El CI del SHA c0e60523e expuso dos estados que este adendo corrige y documenta:
+
+**Hallazgo A — `secdef_public_grant` (SQL DB Security, EN VIVO):** tras la
+activación productiva del ciclo 4, dos funciones SECURITY DEFINER quedaron
+con EXECUTE para PUBLIC/anon porque la migración que las creó
+(20261026120000) solo revocó para `assign_user_organization`:
+`is_superadmin/0` (anon/PUBLIC; helper de policies) y
+`enforce_membership_tenant_consistency/0` (trigger de empresa única; su
+grant directo es inerte — Postgres prohíbe invocar funciones de trigger
+directamente). Estado PREEXISTENTE en producción (el gate no había corrido
+sobre SQL desde la activación), expuesto porque este PR toca SQL.
+
+Correcciones (2a9020451):
+1. **Migración `20261026180000_cp_org001_platform_acl_revoke.sql`** — REVOKE
+   PUBLIC/anon a `is_superadmin` (GRANT authenticated+service_role: las
+   policies la ejecutan con privilegios del usuario, doctrina de `is_admin`)
+   y a `enforce_membership_tenant_consistency` (GRANT service_role, doctrina
+   de `validate_active_store`). Aplicada a E2E y validada (grants verificados;
+   suite LIVE re-ejecutada 12/12 — las policies siguen operativas).
+2. **Check 2 del gate: paridad con Check 1** — excluye funciones
+   DISPARADORAS del chequeo de grants anon/PUBLIC (falso positivo de la clase
+   descrita); el hallazgo del trigger desaparece por corrección del propio
+   check, no por allowlist.
+3. **`is_superadmin` en producción permanece como hallazgo REAL hasta que el
+   propietario aplique 20261026180000 junto con el despliegue** (pasos de
+   activación §17.6). NO se añadió allowlist: el chequeo es fail-closed por
+   diseño y enmascarar un grant anónimo real contradice la doctrina del repo;
+   el PR lo documenta con esta entrada y la migración que lo cierra. Riesgo
+   del grant residual mientras tanto: NULO en la práctica (anon: auth.uid() IS
+   NULL → false; sin superficie de escalada), es higiene de defensa en
+   profundidad.
+
+**Hallazgo B — `BODY_DRIFT_FROM_MIGRATION` (Security Audit, Capa C):** la
+migración 20261026170000 cambia el cuerpo de `validate_active_store` y el
+cuerpo LIVE de producción no cambia hasta su aplicación. Corrección: entrada
+`source_of_truth_baseline` para `validate_active_store` (regla
+BODY_DRIFT_FROM_MIGRATION, expira 2026-11-30) — el mecanismo sancionado §8.1,
+idéntico al usado para las 4 funciones `managed_*` del ciclo 3. Verificado
+localmente: contrato estático 152/152 representadas, **0 divergencias
+bloqueantes**.
+
+**Estado final esperado del CI en 2a9020451:** todos los checks verdes SALVO
+`SQL DB Security Checks`, que mantiene exactamente UN hallazgo
+(`is_superadmin`) que se apaga al aplicar 20261026180000 a producción (junto
+con 170000 y el despliegue del código). El evaluador fue simulado localmente
+con ese resultado exacto.
+
+---
+
+## 18. Ciclo 7 — EJECUCIÓN de la activación productiva y cierre definitivo P0
+
+**Fecha:** 2026-10-25 (15:07–15:10+ UTC). **Rama:**
+`cp-org-001-ciclo4-activacion-superadmin` @ `f8c2fe0d9` (pre-push docs-only).
+**Autorización:** orden expresa del propietario (misión «CIERRE DEFINITIVO P0»:
+merge del PR #1484 + despliegue de las migraciones pendientes + verificación).
+
+### 18.1 Lo ejecutado (detalle y evidencia por paso: paquete §9)
+
+1. **Reinspección real (§9.1):** PR #1484 @ `f8c2fe0d9` — 8 checks verdes,
+   único rojo SQL DB Security con exactamente 1 hallazgo
+   (`is_superadmin` PUBLIC/anon en producción); main SIN protección de rama;
+   producción auditada read-only (RC3 vivo, grants, 8 policies, cuenta,
+   integridad contable intacta).
+2. **P0 prevalidación §3.5 del paquete (§9.2):** ALL_MATCH=True (13 esperados).
+3. **Batería local del head (§9.3):** tsc 0 · lint 0 errores · suite
+   4055/0/66-skip · security-contract 153/153 · generación del gate OK.
+4. **P2 `20261026170000` aplicada (15:07:35 UTC, §9.4):** atómica vía
+   Management API; V1 cuerpo nuevo vivo (admin|superadmin valida tienda
+   existente+activa; branch costo con membresía conservada; SECDEF y
+   search_path correctos) + V2 trigger vivo. Guards §3.8 previos 6/6;
+   contingencia C-1/C-2 capturada antes de aplicar.
+5. **P3 `20261026180000` aplicada (15:07:41 UTC, §9.4):** transaccional
+   atómica; V3 grants EXACTOS (is_superadmin → authenticated+postgres+
+   service_role, SIN PUBLIC/anon; enforce → postgres+service_role;
+   validate sin cambios); V4 detector 0 hallazgos.
+6. **Gate REAL re-ejecutado contra producción (15:09:51 UTC, §9.5):** el SQL
+   generado por el repo + el EVALUADOR REAL `ci-gate-evaluate.js` →
+   **TODO PASS, exit 0** — `secdef_public_grant` 0 hallazgos (eliminación de
+   raíz, sin allowlist). Evidencia: `download/c7_gate_prod.json`.
+7. **Integridad post-aplicación:** V5 8 policies intactas · V6 cuenta
+   superadmin intacta con 0 membresías · contabilidad SIN cambios (799/894/
+   4/33) · RLS 3×true.
+8. **Matriz de migraciones definitiva (§9.6):** 120000/130000/140000/150000/
+   160000 vivas NO reaplicadas; **170000 y 180000 APLICADAS y VERIFICADAS en
+   producción**. Registro histórico sin `supabase db push` (doctrina manual).
+
+### 18.2 Estado al momento de este commit y pasos restantes
+
+- Producción queda con la BD en el estado objetivo del incidente
+  ( RC3 corregido + ACL endurecida + gate verde real). El CÓDIGO de main en
+  Vercel sigue siendo pre-PR hasta el merge (estado intermedio documentado en
+  §9.7: CERO regresión — la app antigua sigue aplicando su guard propio).
+- Pasos restantes de la misión (en curso al redactar): push de este
+  expediente → CI del SHA definitivo (se espera TODO VERDE) → **merge del
+  PR #1484** → despliegue Vercel de main → verificación post-despliegue
+  (§3.6 + pruebas no destructivas con transacciones ROLLBACK) → §9.8 del
+  paquete con la evidencia final.

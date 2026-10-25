@@ -13,6 +13,7 @@
  * Body:
  *   reason: string (motivo de anulación, default 'Anulación')
  */
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
@@ -58,7 +59,8 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
       .eq('status', 'active')
       .maybeSingle();
 
-    const isAdmin = session.user.role === 'admin';
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    const isAdmin = isAdminLevel(session.user.role);
     if (!membership && !isAdmin) {
       return NextResponse.json({ error: 'No autorizado para esta OT' }, { status: 403 });
     }

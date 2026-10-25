@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
@@ -131,7 +132,8 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
     // por membresías — su alcance global está documentado con hoja de ruta
     // SaaS; este fix no reabre esa decisión.
     const uniqueStoreIds = [...new Set(validatedProducts.map(p => p.store_id))];
-    const isAdmin = (session.user as any).role === 'admin';
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    const isAdmin = isAdminLevel(session.user.role);
     const memberships = (session.user as any).memberships || [];
     const accessibleStoreIds = new Set(memberships.filter((m: any) => m.status === 'active').map((m: any) => m.store_id));
 

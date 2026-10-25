@@ -1,5 +1,6 @@
 'use client';
 
+import { isAdminLevel } from '@/lib/roles';
 import React, { useState, useCallback, memo } from 'react';
 import { Building2, TrendingUp, ShoppingCart, AlertTriangle, RefreshCcw, ExternalLink, Settings, BarChart3, CalendarClock, Crown } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -208,7 +209,8 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
 // Vista principal
 export default function MultiStoreDashboardView({ toolbar }: { toolbar?: React.ReactNode }) {
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const isAdmin = isAdminLevel(user?.role);
   const isEncargado = user?.role === 'encargado' || user?.role === 'manager';
   const queryClient = useQueryClient();
   const t = useTranslations('stores.dashboard');

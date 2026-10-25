@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DollarSign, CreditCard, Layers, Edit, History, Eye, CheckCircle2, RefreshCw, AlertTriangle, ShieldCheck, FileText, Clock, Wallet, ArrowRight, Play, Square, Printer } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
+import { isAdminLevel } from '@/lib/roles';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
@@ -53,7 +54,7 @@ export default function CashClosureView() {
     // F3-B1: exponer errores de carga — antes no se desestructuraban y un fallo de red
     // dejaba la vista en silencio (sin turno + $0 en resumen parecían datos reales).
     error: closuresError,
-  } = useCashClosures(user?.activeStoreId, user?.role === 'admin');
+  } = useCashClosures(user?.activeStoreId, isAdminLevel(user?.role));
 
   const {
     data: salesData,

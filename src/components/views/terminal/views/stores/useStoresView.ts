@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useAuthStore } from '@/store';
+import { isAdminLevel } from '@/lib/roles';
 import { useStores, useToggleStoreStatus } from '@/hooks/api/useStores';
 import { useStoreEdit } from '@/hooks/views/useStoreEdit'; // F3-T02: hook compartido
 import { Store } from '@/types';
@@ -44,9 +45,9 @@ export function useStoresView() {
 
     const { data: storesData = [], isLoading: isLoadingStores, isError: isErrorStores, refetch: refetchStores } = useStores(
         user?.id || '',
-        user?.role === 'admin',
+        isAdminLevel(user?.role),
         isEncargado || false,
-        user?.role === 'admin' ? statusFilter : undefined // solo admin puede ver inactivas
+        isAdminLevel(user?.role) ? statusFilter : undefined // solo nivel admin ve inactivas
     );
 
     const filteredStores = useMemo(() => {
@@ -267,7 +268,7 @@ export function useStoresView() {
         isError: isErrorStores,
         refetch: refetchStores,
         activeStoreId: user?.activeStoreId,
-        isAdmin: user?.role === 'admin',
+        isAdmin: isAdminLevel(user?.role),
 
         // Operations
         handleSetActiveStore,

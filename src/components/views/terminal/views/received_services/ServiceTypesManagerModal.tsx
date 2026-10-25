@@ -7,6 +7,7 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
+import { isAdminLevel } from '@/lib/roles';
 import type { ServiceType } from '@/hooks/useServiceTypes';
 
 /**
@@ -54,7 +55,7 @@ export function ServiceTypesManagerModal({
   isOpen, onClose, types, loading, onRefresh, onTypeCreated, loadError,
 }: ServiceTypesManagerModalProps) {
   const { user, token } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = isAdminLevel(user?.role);
 
   /**
    * FIX SUPERADMIN-TIPOS (2026-10-17): el fetch crudo sin Authorization daba

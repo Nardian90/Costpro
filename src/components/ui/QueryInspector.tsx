@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { useUIStore, useAuthStore } from '@/store';
+import { isAdminLevel } from '@/lib/roles';
 import { SyntaxHighlighterLazy } from '@/components/code/SyntaxHighlighterLazy';
 import { Search, ChevronDown, ChevronUp, Code, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,7 +15,7 @@ export const QueryInspector: React.FC = () => {
   const lastQuery = viewQueries[currentView];
   const [isOpen, setIsOpen] = useState(false);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = isAdminLevel(user?.role);
   const [copied, setCopied] = useState(false);
 
   /* FIX #060: Gate entire component to development only */

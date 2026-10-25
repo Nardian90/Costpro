@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
@@ -45,7 +46,8 @@ async function handler(req: NextRequest, session: AuthenticatedSession) {
 
   if (publishType === 'manual') {
     const memberships = (session.user as any).memberships || [];
-    const isAdmin = (session.user as any).role === 'admin';
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    const isAdmin = isAdminLevel(session.user.role);
     if (!isAdmin && !memberships.some((m: any) => m.store_id === storeId && m.status === 'active')) {
       return NextResponse.json({ error: 'Unauthorized for this store' }, { status: 403 });
     }

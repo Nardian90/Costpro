@@ -34,6 +34,7 @@ import {
   Plus, X, ListChecks, FileSearch, Calculator, Users, Minus, BookOpen, Sheet,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { isAdminLevel } from '@/lib/roles';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore, useUIStore, type CommissionNavContext } from '@/store';
 import { toast } from 'sonner';
@@ -1725,7 +1726,7 @@ function AjustesExtraordinarios({ applied, onRefresh }: { applied: { cfg: { star
   // Flag central único (misma fuente que el backend) + rol GLOBAL admin
   // (no confundir con el acceso a una tienda específica — roles.ts).
   const ajusteActivo = isCashReportExtraordinaryAdjustmentEnabled();
-  const isAdmin = useAuthStore(s => s.user?.role === 'admin');
+  const isAdmin = useAuthStore(s => isAdminLevel(s.user?.role));
 
   const adjustments = ((applied?.report as unknown as { adjustments?: Array<{ id: string; direction: 'in' | 'out'; amount: number; note: string; created_at?: string }> })?.adjustments) || [];
 

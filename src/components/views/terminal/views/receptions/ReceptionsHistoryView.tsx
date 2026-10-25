@@ -29,7 +29,7 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
-import { canReverseDocumentInStore } from '@/lib/roles';
+import {canReverseDocumentInStore, isAdminLevel } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
@@ -100,7 +100,8 @@ export default function ReceptionsHistoryView() {
   const storeId = (user as any)?.activeStoreId;
   // W9.5 B-10: gate de rol (espejo de can_reverse_document) — operadores de recepciones
   const canReverseReceipt = canReverseDocumentInStore(user, storeId, 'receipt');
-  const isAdmin = (user as any)?.role === 'admin' || (user as any)?.role === 'manager';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const isAdmin = isAdminLevel(user?.role) || (user as any)?.role === 'manager';
   const [showBackfillWizard, setShowBackfillWizard] = useState(false);
   const [backfillLoading, setBackfillLoading] = useState(false);
   const [backfillForm, setBackfillForm] = useState({

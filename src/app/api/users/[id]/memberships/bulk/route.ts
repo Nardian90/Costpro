@@ -4,7 +4,7 @@ import { withTracing } from '@/lib/observability';
 import { validateOrigin } from '@/lib/csrf';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
-import { canManageStore } from '@/lib/roles';
+import {canManageStore, isAdminLevel } from '@/lib/roles';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { z } from 'zod';
 import { uuidLoose } from '@/validation/api-schemas';
@@ -71,7 +71,8 @@ async function bulkMembershipsHandler(
     //   admin global → puede asignar (by design, roles.ts).
     //   Cualquier otro rol global (incl. manager) → necesita membership activa
     //   con rol de gestión EN CADA tienda objetivo de los assignments.
-    if (session.user.role !== 'admin') {
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    if (!isAdminLevel(session.user.role)) {
       const targets = validated.data.assignments.map(a => a.store_id);
       const allAuthorized = targets.every(sid => canManageStore(session.user, sid));
       if (!allAuthorized) {

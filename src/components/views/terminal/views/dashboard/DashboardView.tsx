@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { useUIStore, useAuthStore } from '@/store';
+import { isAdminLevel } from '@/lib/roles';
 import { useProducts } from '@/hooks/api/useProducts';
 import { useStores } from '@/hooks/api/useStores';
 import { StateRenderer } from '@/components/ui/StateRenderer';
@@ -112,7 +113,7 @@ function StoreDashboardGate() {
 
   const { data: stores = [], isLoading: isLoadingStores } = useStores(
     user?.id || '',
-    user?.role === 'admin',
+    isAdminLevel(user?.role),
     isEncargado
   );
 

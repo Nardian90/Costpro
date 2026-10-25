@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 // FIX R1: withUsageTracking eliminado — withAuth ya aplica withAutoTracking internamente
@@ -15,7 +16,7 @@ import { flushUsage, getBufferStatus } from '@/lib/usage-tracker';
  * Solo admin puede ejecutarlo.
  */
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
-  if (session.user.role !== 'admin') {
+  if (!isAdminLevel(session.user.role)) {
     return NextResponse.json({ error: 'Forbidden — solo admin' }, { status: 403 });
   }
 

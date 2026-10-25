@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { uuidLoose } from '@/validation/api-schemas';
 import { logger } from '@/lib/logger';
 import { checkTenantRateLimit, rateLimitHeaders, type Plan } from '@/lib/rate-limit/tenant-limiter'; // B1
-import { canManageStore } from '@/lib/roles';
+import { canManageStore, isAdminLevel } from '@/lib/roles';
 // FIX-AUDIT-MSTORE-04 (P2): idempotency para evitar doble-tap en bulk destructivo
 import { withIdempotency } from '@/lib/idempotency';
 
@@ -62,7 +62,7 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const { storeIds, action } = validated.data;
 
-    if (session.user.role !== 'admin') {
+    if (!isAdminLevel(session.user.role)) {
       return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
     }
 

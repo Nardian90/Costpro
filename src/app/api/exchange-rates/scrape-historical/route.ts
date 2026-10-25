@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
@@ -26,7 +27,7 @@ import { fetchHistoricalRates, type HistoricalRateEntry } from '@/lib/soluciones
  */
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   // Verificar rol admin
-  if (session.user.role !== 'admin') {
+  if (!isAdminLevel(session.user.role)) {
     return NextResponse.json(
       { error: 'Forbidden', message: 'Solo admin puede cargar histórico masivo' },
       { status: 403 }

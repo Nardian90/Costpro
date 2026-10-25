@@ -26,6 +26,7 @@ import { SyncConflictModal } from '@/components/modals/SyncConflictModal';
 import { StoreSelectorSheet } from './StoreSelectorSheet';
 import { NotificationCenter } from './NotificationCenter';
 import { cn } from '@/lib/utils';
+import { isAdminLevel } from '@/lib/roles';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 import { ViewType, SidebarState, useUIStore } from '@/store';
@@ -76,7 +77,8 @@ export const Header = ({
     || 'Panel';
 
   // Determine which list of stores to show
-  const storesToShow = user?.role === 'admin' && allStores.length > 0
+  // CP-ORG-001 ciclo 4: nivel administrativo transversal (admin|superadmin)
+  const storesToShow = isAdminLevel(user?.role) && allStores.length > 0
     ? allStores.map(s => ({ id: s.id, name: s.name }))
     : user?.memberships?.filter(m => m.status === 'active').map(m => ({
         id: m.store_id || '',

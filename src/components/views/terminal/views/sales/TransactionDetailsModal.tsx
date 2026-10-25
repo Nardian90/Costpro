@@ -1,6 +1,7 @@
 
 'use client'
 
+import { isAdminLevel } from '@/lib/roles';
 import React, { useEffect, useMemo, useState } from 'react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -108,7 +109,8 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
 
   if (!transaction) return null;
 
-  const canManageTaxes = user?.role === 'admin' || user?.role === 'encargado' || user?.role === 'manager';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const canManageTaxes = isAdminLevel(user?.role) || user?.role === 'encargado' || user?.role === 'manager';
   const appliedTaxes = currentAppliedTaxes;
   const isVoided = transaction.status === 'voided';
 

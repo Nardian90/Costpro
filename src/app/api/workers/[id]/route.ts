@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { parseCI, getBirthDateFromCI } from '@/lib/parse-ci';
 import { withSecurity } from '@/lib/with-security';
+import { isAdminLevel } from '@/lib/roles';
 
 /**
  * /api/workers/[id]
@@ -84,7 +85,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
   }
 
-  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
   }
 
@@ -102,7 +103,8 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // Admin global puede; manager debe tener membership en la tienda del worker
-  const hasStoreAccess = session.user.role === 'admin' ||
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const hasStoreAccess = isAdminLevel(session.user.role) ||
     session.user.memberships?.some((m: any) => m.store_id === existingWorker.store_id && m.status === 'active');
   if (!hasStoreAccess) {
     return NextResponse.json({ error: 'Forbidden — sin acceso a la tienda del trabajador' }, { status: 403 });
@@ -155,7 +157,7 @@ async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
   const id = extractIdFromUrl(req);
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
-  if (session.user.role !== 'admin') {
+  if (!isAdminLevel(session.user.role)) {
     return NextResponse.json({ error: 'Forbidden — solo admin puede desactivar trabajadores' }, { status: 403 });
   }
 

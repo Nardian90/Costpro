@@ -5,6 +5,7 @@ import { Loader2, Lock, CheckCircle2, AlertTriangle, Calendar } from 'lucide-rea
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
+import { isAdminLevel } from '@/lib/roles';
 import { toast } from 'sonner';
 
 const touch = 'min-h-[44px]';
@@ -18,7 +19,7 @@ export function FiscalCloseView() {
   const [closing, setClosing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = isAdminLevel(user?.role);
 
   const load = useCallback(async () => {
     if (!storeId) return;

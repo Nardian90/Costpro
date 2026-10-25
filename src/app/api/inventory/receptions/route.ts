@@ -13,6 +13,7 @@
  * Si la RPC falla, retorna 500 con detalle para que el SyncEngine mantenga
  * el item en cola y reintente más tarde.
  */
+import { isAdminLevel } from '@/lib/roles';
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAuthClient } from "@/lib/supabaseClient";
 import { rateLimit } from "@/lib/rate-limit";
@@ -114,7 +115,8 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
       .eq('id', session.user.id)
       .single();
 
-    if (profile?.role !== 'admin') {
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
       return NextResponse.json(
         { error: "Forbidden", message: "No tienes acceso a esta tienda" },
         { status: 403 }

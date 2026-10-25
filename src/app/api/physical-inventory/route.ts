@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { uuidLoose } from '@/validation/api-schemas';
@@ -87,7 +88,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const admin = getSupabaseAdminSafe();
   if (!admin) return NextResponse.json({ error: 'Servicio no disponible' }, { status: 500 });
   const membership = session.user.memberships?.find(m => m.store_id === storeId && m.status === 'active');
-  const isGlobalAdmin = session.user.role === 'admin';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const isGlobalAdmin = isAdminLevel(session.user.role);
   const hasPrivilegedRole = isGlobalAdmin || ['admin', 'manager', 'encargado'].includes(membership?.role || '');
   if (!hasPrivilegedRole) {
     return NextResponse.json(

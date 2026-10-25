@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
@@ -38,7 +39,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
 
-  if (tenant.owner_id !== session.user.id && session.user.role !== 'admin') {
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  if (tenant.owner_id !== session.user.id && !isAdminLevel(session.user.role)) {
     return NextResponse.json({ error: 'Only tenant owner can upgrade plan' }, { status: 403 });
   }
 

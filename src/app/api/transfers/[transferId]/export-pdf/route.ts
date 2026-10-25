@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { withRole, AuthenticatedSession } from '@/lib/auth-middleware';
@@ -22,7 +23,8 @@ async function exportTransferPdfHandler(
 
     // FIX-SEC-M2: Fetch transfer with store-level filter at query time
     // Get user's accessible store IDs for query-level filtering
-    const isAdmin = (session.user as any).role === 'admin';
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    const isAdmin = isAdminLevel(session.user.role);
     const memberships = (session.user as any).memberships || [];
     const accessibleStoreIds = memberships
       .filter((m: any) => m.status === 'active')
