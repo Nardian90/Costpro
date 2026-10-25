@@ -86,9 +86,28 @@ function makeQuery(rowsFor: (table: string) => Row[]) {
       eq: (_col: string, val: unknown) => { filters.push(r => r[_col] === val); return q; },
       neq: (_col: string, val: unknown) => { filters.push(r => r[_col] !== val); return q; },
       in: (_col: string, vals: unknown[]) => { filters.push(r => vals.includes(r[_col])); return q; },
+      // CP-ORG-001: ilike con semántica REAL de PostgREST — patrón completo,
+      // % = cualquier secuencia, _ = un carácter. Sin esto, los comodines
+      // y los chequeos literales no son distinguibles en las pruebas.
       ilike: (_col: string, pattern: string) => {
-        const needle = pattern.replace(/%/g, '').toLowerCase();
-        filters.push(r => String(r[_col] ?? '').toLowerCase().includes(needle));
+        const regex = new RegExp(
+          '^' + pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/%/g, '.*').replace(/_/g, '.') + '$',
+          'i'
+        );
+        filters.push(r => regex.test(String(r[_col] ?? '')));
+        return q;
+      },
+      // CP-ORG-001: negación usada por has_stores=false («id not.in (...)»).
+      not: (_col: string, op: string, val: unknown) => {
+        if (op === 'is') {
+          filters.push(r => !(r[_col] == null ? val == null : r[_col] === val));
+        } else if (op === 'in') {
+          const raw = String(val ?? '').replace(/^\(/, '').replace(/\)$/, '');
+          const vals = raw
+            ? raw.split(',').map((s: string) => s.replace(/^"|"$/g, ''))
+            : [];
+          filters.push(r => !vals.includes(r[_col]));
+        }
         return q;
       },
       is: (_col: string, val: unknown) => { filters.push(r => (r[_col] == null ? val == null : r[_col] === val)); return q; },
@@ -102,14 +121,17 @@ function makeQuery(rowsFor: (table: string) => Row[]) {
       then: (resolve: any, reject: any) => promise.then(resolve, reject),
     };
     const promise = Promise.resolve().then(() => {
-      const rows = apply(table);
-      if (head) return { data: null, error: null, count: rows.length };
-      return { data: rows, error: null, count: withCount ? rows.length : null };
+      // CP-ORG-001: semántica PostgREST — count es el total FILTRADO (sin
+      // paginar) y data es la página (con rango aplicado).
+      const all = apply(table, false);
+      const rows = apply(table, true);
+      if (head) return { data: null, error: null, count: all.length };
+      return { data: rows, error: null, count: withCount ? all.length : null };
     });
-    function apply(t: string): Row[] {
+    function apply(t: string, sliced = true): Row[] {
       let rows = rowsFor(t).filter(r => filters.every(f => f(r)));
       if (t === 'tenants') rows = rows.sort((a, b) => String(a.name).localeCompare(String(b.name)));
-      if (rangeSlice) rows = rows.slice(rangeSlice[0], rangeSlice[1] + 1);
+      if (sliced && rangeSlice) rows = rows.slice(rangeSlice[0], rangeSlice[1] + 1);
       return rows;
     }
     return q;
@@ -238,6 +260,56 @@ describe('MISIÓN ORGANIZACIONES — /api/organizations (FASE 1+3: alcance por r
     expect(body.data[0].stores_active).toBe(1);
     // u1 (caller) + u2 en ORG_A (la del admin)
     expect(body.data[0].users).toBe(2);
+  });
+
+  // ─── CP-ORG-001: has_stores pre-paginación + resumen de alcance ───────
+
+  it('CP-ORG-001 GET: has_stores=true filtra EN SERVIDOR con total coherente', async () => {
+    sessionOverride.user = { ...currentSession.user, role: 'superadmin' };
+    // ORG_A tiene tiendas; ORG_B no.
+    const res = await orgsGET(makeReq('/api/organizations?has_stores=true'));
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0].id).toBe(ORG_A);
+    // El total paginado refleja el FILTRO (antes quedaba sin filtrar).
+    expect(body.pagination.total).toBe(1);
+  });
+
+  it('CP-ORG-001 GET: has_stores=false EXCLUYE las organizaciones con tiendas', async () => {
+    sessionOverride.user = { ...currentSession.user, role: 'superadmin' };
+    const res = await orgsGET(makeReq('/api/organizations?has_stores=false'));
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0].id).toBe(ORG_B);
+    expect(body.pagination.total).toBe(1);
+  });
+
+  it('CP-ORG-001 GET: summary describe el ALCANCE completo, no la página', async () => {
+    sessionOverride.user = { ...currentSession.user, role: 'superadmin' };
+    // Página de 1 fila: el resumen NO debe depender de la paginación.
+    const res = await orgsGET(makeReq('/api/organizations?limit=1'));
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.data).toHaveLength(1);
+    // Alcance completo: 2 organizaciones, 1 activa (ORG_B inactiva),
+    // 1 tienda activa (de las 2 de ORG_A), 3 usuarios asignados.
+    expect(body.summary.organizations).toBe(2);
+    expect(body.summary.active_organizations).toBe(1);
+    expect(body.summary.stores).toBe(1);
+    expect(body.summary.assigned_users).toBe(3);
+    expect(body.pagination.total).toBe(2);
+  });
+
+  it('CP-ORG-001 POST: comodines del nombre no generan falsos duplicados (ilike LITERAL)', async () => {
+    sessionOverride.user = { ...currentSession.user, role: 'superadmin' };
+    state.tenants.push({ id: 'org-100', name: '100x', owner_id: null, plan: 'free', is_active: true, created_at: '2026-10-01', updated_at: '2026-10-01' });
+    // «100%» con comodín coincidiría con «100x» (falso 409); el chequeo
+    // saneado lo trata como literal → creación permitida.
+    const res = await orgsPOST(makeReq('/api/organizations', 'POST', { name: '100%' }));
+    expect(res.status).toBe(201);
+    expect(state.inserted).toHaveLength(1);
   });
 
   it('POST: admin ordinario NO puede crear organizaciones (403)', async () => {

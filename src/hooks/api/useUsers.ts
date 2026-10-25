@@ -40,7 +40,9 @@ export function useUsersAdmin(
 ) {
   return useQuery<UsersListResult, Error>({
     // El queryKey incluye TODOS los filtros: cambiar un filtro reconsulta.
-    queryKey: ['users-admin', currentUserId, params.search ?? '', params.role ?? 'all',
+    // Prefijo 'users' deliberado: TODAS las invalidaciones existentes
+    // (invalidateQueries({queryKey: ['users']})) refrescan esta consulta.
+    queryKey: ['users', 'admin', currentUserId, params.search ?? '', params.role ?? 'all',
       params.is_active ?? 'all', params.tenant_id ?? 'all', !!params.unassigned,
       params.page ?? 1, params.limit ?? 100],
     staleTime: 30 * 1000,
