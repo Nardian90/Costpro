@@ -111,7 +111,8 @@ describe('captureInformalToday — captura informal unificada (Diviza)', () => {
     }
     expect(result.sourceUpdatedAt).toBe('2026-10-26T12:30:00-04:00');
 
-    // Los upserts REST llevan source='Diviza' y capture_method='real'
+    // Los upserts REST llevan source='Diviza', capture_method='real' y la
+    // semántica merge-duplicates sobre la clave natural (recaptura = update)
     const upserts = fetchLog.filter(l => l.url.includes('/rest/v1/exchange_rates'));
     expect(upserts).toHaveLength(3);
     for (const u of upserts) {
@@ -119,6 +120,30 @@ describe('captureInformalToday — captura informal unificada (Diviza)', () => {
       expect(u.body.capture_method).toBe('real');
       expect(u.body.rate).toBeGreaterThan(0);
     }
+  });
+
+  it('upserts usan on_conflict de la clave natural + merge-duplicates (recaptura actualiza, no 409)', async () => {
+    mockDiviza.mockResolvedValue({
+      usd: 839,
+      eur: null,
+      mlc: null,
+      sourceUpdatedAt: null,
+      capturedAt: new Date().toISOString(),
+      sourceUrl: 'https://cubadivisas.com/',
+      strategy: 'conv-data-json',
+    });
+    const seen: Array<{ url: string; prefer?: string }> = [];
+    globalThis.fetch = vi.fn(async (url: string | URL, init?: RequestInit) => {
+      const headers = (init?.headers ?? {}) as Record<string, string>;
+      seen.push({ url: String(url), prefer: headers['Prefer'] });
+      return jsonResponse(200, [{}]);
+    }) as any;
+
+    await captureInformalToday(SUPABASE_URL, SERVICE_KEY);
+
+    expect(seen).toHaveLength(1);
+    expect(seen[0].url).toContain('on_conflict=rate_date,currency,source,segment');
+    expect(seen[0].prefer).toBe('resolution=merge-duplicates');
   });
 
   it('cuando Diviza no publica EUR/MLC no los fabrica (null → sin fila)', async () => {

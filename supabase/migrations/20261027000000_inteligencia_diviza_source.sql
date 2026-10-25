@@ -1220,7 +1220,7 @@ BEGIN
     'calculated_tax', v_calculated_tax,
     'discount_amount', v_discount_amount
   );
-END $function$
+END $function$;
 
 
 -- ── 2) create_cash_flow_document: paso informal ampliado a Diviza + etiqueta real ──
@@ -1632,7 +1632,7 @@ BEGIN
 
   RETURN v_result;
 END;
-$function$
+$function$;
 
 
 -- ── 2) get_cash_balances_by_currency: paso informal ampliado a Diviza + etiqueta real ──
@@ -1713,7 +1713,7 @@ BEGIN
     )
   );
 END;
-$function$
+$function$;
 
 
 -- ── 2) open_cash_shift: paso informal ampliado a Diviza + etiqueta real ──
@@ -1899,7 +1899,7 @@ BEGIN
 
   RETURN v_result;
 END;
-$function$
+$function$;
 
 
 -- ── 3) Verificación post-migración (operador, READ-ONLY) ────────────

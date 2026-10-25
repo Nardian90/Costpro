@@ -87,7 +87,19 @@ export interface CaptureForDateResult {
 
 /**
  * Hace upsert a Supabase vía REST (no necesita client JS).
- * Usa Prefer: resolution=ignore-duplicates para idempotencia.
+ *
+ * FIX IC-DIVIZA (2026-10-26): el upsert anterior usaba
+ * `Prefer: resolution=ignore-duplicates` SIN `on_conflict`, por lo que
+ * PostgREST resolvía el conflicto contra la PK sintética (id) — no contra la
+ * clave natural (rate_date,currency,source,segment). Resultado: recapturar
+ * el mismo día devolvía 409 «duplicate key» en vez de actualizar.
+ *
+ * Ahora: `on_conflict=rate_date,currency,source,segment` +
+ * `Prefer: resolution=merge-duplicates` → ON CONFLICT DO UPDATE (refresh de
+ * rate/captured_at/capture_method). Diviza actualiza cada 30 min: una
+ * recaptura del mismo día DEBE refrescar la tasa, no fallar. Misma semántica
+ * que la RPC upsert_manual_exchange_rate_with_audit (DO UPDATE SET rate,
+ * captured_at) — idempotente y actualizable.
  */
 async function upsertToSupabase(
   supabaseUrl: string,
@@ -102,19 +114,22 @@ async function upsertToSupabase(
     capture_method?: CaptureMethod;
   },
 ): Promise<boolean> {
-  const res = await fetch(`${supabaseUrl}/rest/v1/exchange_rates`, {
-    method: 'POST',
-    headers: {
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
-      'Content-Type': 'application/json',
-      Prefer: 'resolution=ignore-duplicates',
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/exchange_rates?on_conflict=rate_date,currency,source,segment`,
+    {
+      method: 'POST',
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({
+        capture_method: 'estimated',
+        ...payload,
+      }),
     },
-    body: JSON.stringify({
-      capture_method: 'estimated',
-      ...payload,
-    }),
-  });
+  );
   return res.ok;
 }
 
