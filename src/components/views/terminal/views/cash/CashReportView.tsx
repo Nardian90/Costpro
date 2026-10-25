@@ -73,7 +73,7 @@ import {
 import { computeDailySummary, computeCuadre, cuadreLabel, type DailySummary } from '@/lib/cash-report/summary';
 // MISIÓN CONCILIACIÓN (2026-10-26): cálculo personalizado según conceptos
 // activos + resultado oficial de referencia (misma fuente que PDF y Excel).
-import { computeCustomCurrencyResult, type CustomCurrencyResult } from '@/lib/cash-report/custom-result';
+import { computeCustomCurrencyResult, auditStatusLabel, type CustomCurrencyResult } from '@/lib/cash-report/custom-result';
 // MISIÓN PERSONALIZACIÓN REPORTE ENTREGA (2026-10-25): selección de
 // conceptos del Resumen del Día (persistida POR TIENDA) + selección de las
 // ventas que se computan (filtro por composición real de pagos + checkbox
@@ -2136,15 +2136,23 @@ function ResultadosPanel(p: ResultadosPanelProps) {
           </div>
           <p className="text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(p.expectedCup)}</p>
         </div>
-        {/* MISIÓN CONCILIACIÓN: resumen de diferencias frente al oficial —
-            pantalla/PDF/Excel muestran el MISMO resultado configurado. */}
+        {/* MISIÓN INTEGRIDAD DEL ANEXO (P1): resumen de diferencias frente al
+            oficial — MISMA convención de signos que el PDF/impresión/Excel:
+            diferencia = personalizado − oficial (positivo ⇒ el personalizado
+            EXCEDE al oficial). Estado tri-estado inequívoco. */}
         {p.customResult?.esPersonalizado && (
           <div className="px-4 py-2 bg-warning/5 border-t border-warning/20 text-[10px] text-muted-foreground flex flex-wrap gap-x-4 gap-y-0.5" data-testid="resumen-diferencias">
             <span>Oficial: <strong className="text-foreground font-mono">{formatCurrency(p.customResult.conciliacion.efectivoEsperadoOficial)}</strong></span>
-            <span>Dif. por conceptos: <strong className="text-foreground font-mono">{formatCurrency(p.customResult.conciliacion.diferenciaPorConceptos)}</strong></span>
-            <span>Dif. por ventas: <strong className="text-foreground font-mono">{formatCurrency(p.customResult.conciliacion.diferenciaPorVentas)}</strong></span>
-            <span className={p.customResult.conciliacion.conciliado ? 'text-success font-bold' : 'text-warning font-bold'}>
-              {p.customResult.conciliacion.conciliado ? 'Conciliado' : 'Pendiente de conciliación'}
+            <span>Dif. total (pers. − ofi.): <strong className="text-foreground font-mono">{p.customResult.conciliacion.diferenciaTotal >= 0 ? '+' : ''}{formatCurrency(p.customResult.conciliacion.diferenciaTotal)}</strong></span>
+            <span>· por conceptos: <strong className="text-foreground font-mono">{p.customResult.conciliacion.diferenciaPorConceptos >= 0 ? '+' : ''}{formatCurrency(p.customResult.conciliacion.diferenciaPorConceptos)}</strong></span>
+            <span>· por ventas: <strong className="text-foreground font-mono">{p.customResult.conciliacion.diferenciaPorVentas >= 0 ? '+' : ''}{formatCurrency(p.customResult.conciliacion.diferenciaPorVentas)}</strong></span>
+            <span className={cn(
+              'font-bold',
+              p.customResult.conciliacion.estado === 'sin-diferencias' && 'text-success',
+              p.customResult.conciliacion.estado === 'explicadas' && 'text-primary',
+              p.customResult.conciliacion.estado === 'pendiente' && 'text-warning',
+            )}>
+              {auditStatusLabel(p.customResult.conciliacion.estado)}
             </span>
           </div>
         )}

@@ -240,7 +240,11 @@ describe('FUNCIÓN A · conceptos del Resumen del Día', () => {
     expect(esperadoDespues).not.toBe(esperadoAntes);
     expect(esperadoDespues).toContain(fmtCup(12000).replace(/^\D+/, ''));
     // Resumen de diferencias frente al oficial (pantalla = exportado):
-    expect(screen.getByTestId('resumen-diferencias').textContent).toContain('Conciliado');
+    // MISIÓN P1: convención personalizado − oficial y estado tri-estado
+    // (un personalizado que difiere NO se presenta como «Conciliado»).
+    const dif = screen.getByTestId('resumen-diferencias').textContent ?? '';
+    expect(dif).toContain('Diferencias explicadas por la configuración');
+    expect(dif).toContain('+$500.00'); // egreso omitido ⇒ diferencia +500
   });
 
   it('desactivar cada concepto omite SU fila y el esperado se rotula como personalizado', async () => {

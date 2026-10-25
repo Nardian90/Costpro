@@ -69,7 +69,7 @@ import {
   type SummaryConceptKey,
   type SummaryConceptsSelection,
 } from '@/lib/cash-report/report-selection';
-import type { CustomCurrencyResult } from '@/lib/cash-report/custom-result';
+import { auditStatusLabel, CONCEPT_SIGN, type CustomCurrencyResult } from '@/lib/cash-report/custom-result';
 
 type CellValue = string | number;
 
@@ -746,15 +746,16 @@ export async function buildCashReportExcelWorkbook(
   // omisiones por concepto con sus importes oficiales y diferencias separadas
   // por conceptos y por selección de ventas. Se genera SIEMPRE — con más
   // motivo cuando el usuario desactivó conceptos del resumen principal.
-  const aud = newSheetCtx(5); // A..F
+  const aud = newSheetCtx(6); // A..G
   aud.aoa.push(['AUDITORÍA — REPORTE ENTREGA']);
-  aud.merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } });
+  aud.merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } });
   aud.docTitleRows.push(0);
   aud.aoa.push([]);
   const audIdent: Array<[string, string]> = [
     ['Tienda:', sanitizeExcelText(sn)],
     ['Período:', periodoLbl],
     ['Base de cálculo:', 'Efectivo físico por moneda (hoja CUP / hoja USD); equivalencias contables en línea propia'],
+    ['Convención de signos:', 'Diferencia = personalizado − oficial (positivo: el personalizado excede al oficial)'],
     ['Fecha de generación:', generatedAt],
     ['Configuración de conceptos:', isDefaultSummaryConcepts(ctx.concepts) ? 'Todos los conceptos activos (sin personalización)' : `${customResults.CUP.conceptos.filter(c => c.estado === 'activo').length} activos · ${customResults.CUP.conceptos.filter(c => c.estado === 'omitido').length} omitidos`],
     ['Ventas del período:', `${salesCounts.seleccionadas} incluidas de ${salesCounts.validas} válidas` + (selectionMeta?.filterLabel ? ` · Filtro: ${selectionMeta.filterLabel}` : '')],
@@ -765,56 +766,67 @@ export async function buildCashReportExcelWorkbook(
   for (let i = 0; i < audIdent.length; i += 1) {
     const r = audIdentRowsStart + i;
     aud.identityRows.push(r);
-    aud.merges.push({ s: { r, c: 2 }, e: { r, c: 5 } });
+    aud.merges.push({ s: { r, c: 2 }, e: { r, c: 6 } });
   }
   aud.aoa.push([]);
   aud.aoa.push([sanitizeExcelText('El reporte principal representa la configuración elegida por el usuario; los importes oficiales de esta auditoría representan TODOS los movimientos aplicables de COSTPRO.')]);
   const audNotaRow = aud.aoa.length - 1;
-  aud.merges.push({ s: { r: audNotaRow, c: 0 }, e: { r: audNotaRow, c: 5 } });
+  aud.merges.push({ s: { r: audNotaRow, c: 0 }, e: { r: audNotaRow, c: 6 } });
   aud.aoa.push([]);
 
   let audLastRow = aud.aoa.length;
   for (const cur of (['CUP', 'USD'] as const)) {
     const r = customResults[cur];
-    // Tabla por concepto (misión §5.1 — columnas obligatorias).
-    pushSectionTitle(aud, `HOJA ${cur} — COMPARACIÓN POR CONCEPTO`, 'Oficial vs personalizado');
-    aud.aoa.push(['Concepto', 'Estado en configuración', 'Importe oficial', 'Incluido en personalizado', 'Diferencia por concepto', 'Efecto']);
+    // Tabla por concepto (misión P1 §3 — columnas obligatorias):
+    // oficial | incorporado | dif. importe | EFECTO FIRMADO | base.
+    pushSectionTitle(aud, `HOJA ${cur} — COMPARACIÓN POR CONCEPTO`, 'Oficial vs personalizado · diferencia = personalizado − oficial');
+    aud.aoa.push(['Concepto', 'Estado en configuración', 'Importe oficial', 'Incluido en personalizado', 'Dif. importe (pers.−ofi.)', 'Efecto en esperado', 'Base']);
     const hdrRow = aud.aoa.length - 1;
     aud.headerRows.push(hdrRow);
     const firstDataRow = aud.aoa.length;
     for (const c of r.conceptos) {
-      aud.aoa.push([sanitizeExcelText(c.concepto), c.estado, c.importeOficial, c.importePersonalizado, c.diferencia, c.efecto]);
+      aud.aoa.push([sanitizeExcelText(c.concepto), c.estado, c.importeOficial, c.importePersonalizado, c.diferencia, c.efectoEsperado, c.base]);
       const row = aud.aoa.length - 1;
-      aud.moneyCells.push({ r: row, c: 2 }, { r: row, c: 3 }, { r: row, c: 4 });
+      aud.moneyCells.push({ r: row, c: 2 }, { r: row, c: 3 }, { r: row, c: 4 }, { r: row, c: 5 });
     }
     const lastDataRow = aud.aoa.length - 1;
-    // Diferencia por concepto como FÓRMULA viva: oficial − personalizado.
+    // Fórmulas VIVAS (misión P1 §2 — valores y fórmulas con el MISMO signo):
+    // · Dif. importe = personalizado − oficial (D − C).
+    // · Efecto en esperado = signo contable × (personalizado − oficial) —
+    //   viva para que Excel la recalcule al editar el detalle.
     for (let row = firstDataRow; row <= lastDataRow; row += 1) {
-      aud.formulas.push({ r: row, c: 4, f: `C${row + 1}-D${row + 1}` });
+      const c = r.conceptos[row - firstDataRow]!;
+      aud.formulas.push({ r: row, c: 4, f: `D${row + 1}-C${row + 1}` });
+      if (c.efecto === 'componente') {
+        aud.formulas.push({ r: row, c: 5, f: `(D${row + 1}-C${row + 1})*${CONCEPT_SIGN[c.key] ?? 0}` });
+      }
     }
     aud.aoa.push([]);
 
-    // Conciliación (misión §5.1).
+    // Conciliación (misión P1 §4 — magnitudes separadas + residuo independiente).
     pushSectionTitle(aud, `HOJA ${cur} — CONCILIACIÓN CONFIGURADO VS OFICIAL`);
     const rec = r.conciliacion;
     const recon: Array<[string, number | string, boolean]> = [
       ['Ventas totales del período (oficial)', rec.ventasTotalesOficial, true],
       ['Ventas totales del reporte personalizado', rec.ventasTotalesPersonalizado, true],
+      ['Diferencia de ventas totales (personalizado − oficial)', rec.diferenciaVentasTotales, true],
       ['Saldo inicial oficial', rec.saldoInicialOficial, true],
       ['Efectivo esperado OFICIAL (fórmula completa COSTPRO)', rec.efectivoEsperadoOficial, true],
       ['Efectivo esperado PERSONALIZADO (conceptos activos)', rec.efectivoEsperadoPersonalizado, true],
       ...(cur === 'CUP' ? ([
         ['Equivalencia canónica CUP oficial (contable, no billetes)', rec.equivalenciaOficial, true],
         ['Equivalencia canónica CUP configurada', rec.equivalenciaPersonalizada, true],
+        ['Diferencia de equivalencia contable (personalizado − oficial)', rec.diferenciaEquivalencia, true],
       ] as Array<[string, number | string, boolean]>) : []),
       ['Ingresos de caja oficiales del período', rec.ingresosCajaOficial, true],
       ['Egresos de caja oficiales del período', rec.egresosCajaOficial, true],
-      ['Diferencia monetaria total (personalizado − oficial)', rec.diferenciaTotal, true],
-      ['Diferencia por conceptos desactivados', rec.diferenciaPorConceptos, true],
-      ['Diferencia por ventas excluidas de la selección', rec.diferenciaPorVentas, true],
-      ['Diferencia no explicada (residuo)', rec.diferenciaNoExplicada, true],
+      ['DIFERENCIA TOTAL del efectivo esperado (personalizado − oficial)', rec.diferenciaTotal, true],
+      ['Efecto de conceptos desactivados (firmado, independiente)', rec.diferenciaPorConceptos, true],
+      ['Efecto de ventas excluidas de la selección (independiente)', rec.diferenciaPorVentas, true],
+      ['Suma de efectos del detalle (Σ filas del anexo)', rec.sumaEfectosFilas, true],
+      ['Diferencia no explicada (residuo independiente)', rec.diferenciaNoExplicada, true],
       ['Ventas válidas / seleccionadas / excluidas', `${rec.ventasValidas} / ${rec.ventasSeleccionadas} / ${rec.ventasExcluidas}`, false],
-      ['Estado', rec.conciliado ? 'Conciliado' : 'Pendiente de conciliación', false],
+      ['Estado', auditStatusLabel(rec.estado), false],
     ];
     const reconFirst = aud.aoa.length;
     for (const [k, v, isMoney] of recon) {
@@ -823,22 +835,25 @@ export async function buildCashReportExcelWorkbook(
       aud.merges.push({ s: { r: row, c: 0 }, e: { r: row, c: 1 } });
       if (isMoney) aud.moneyCells.push({ r: row, c: 2 });
     }
-    // Verificación en vivo (misión §8.3: las diferencias suman coherente):
-    // porConceptos + porVentas + noExplicada = total. Fórmula real.
+    // VERIFICACIÓN EN VIVO (misión P1 §4/§6-E — NO tautológica): la diferencia
+    // total menos la SUMA de los efectos FIRMADOS del detalle debe ser 0. Es
+    // una comprobación REAL: si el desglose del anexo dejara de explicar el
+    // efecto de la configuración, esta celda abre ≠ 0 al recalcular (antes:
+    // porConceptos + porVentas + noExplicada − total ≡ 0 por construcción).
     const verRow = aud.aoa.length;
-    aud.aoa.push(['Verificación: porConceptos + porVentas + noExplicada − total = 0', '', 0]);
+    aud.aoa.push(['Verificación: diferencia total − Σ efectos del detalle = 0', '', 0]);
     aud.merges.push({ s: { r: verRow, c: 0 }, e: { r: verRow, c: 1 } });
     aud.moneyCells.push({ r: verRow, c: 2 });
     const rOf = (base: number) => base + 1; // 0-based → 1-based
     const idxOf = (label: string) => rOf(reconFirst + recon.findIndex(([k]) => k === label));
     aud.formulas.push({
       r: verRow, c: 2,
-      f: `C${idxOf('Diferencia por conceptos desactivados')}+C${idxOf('Diferencia por ventas excluidas de la selección')}+C${idxOf('Diferencia no explicada (residuo)')}-C${idxOf('Diferencia monetaria total (personalizado − oficial)')}`,
+      f: `C${idxOf('DIFERENCIA TOTAL del efectivo esperado (personalizado − oficial)')}-SUM(F${rOf(firstDataRow)}:F${rOf(lastDataRow)})`,
     });
     aud.aoa.push([]);
     audLastRow = aud.aoa.length;
   }
-  const wsAud = materialize(XLSX, aud, [{ wch: 52 }, { wch: 22 }, { wch: 17 }, { wch: 21 }, { wch: 19 }, { wch: 12 }], {});
+  const wsAud = materialize(XLSX, aud, [{ wch: 48 }, { wch: 20 }, { wch: 16 }, { wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 11 }], {});
 
   // ═══════════════ HOJA «Nota metodológica» (auditoría del documento) ═══════════════
   const nota = newSheetCtx(1);

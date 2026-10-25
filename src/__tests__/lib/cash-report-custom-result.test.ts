@@ -1,22 +1,34 @@
 /**
- * custom-result.test.ts — MISIÓN CONCILIACIÓN DEFINITIVA (2026-10-26).
+ * custom-result.test.ts — MISIÓN CIERRE: INTEGRIDAD MATEMÁTICA DEL ANEXO DE
+ * AUDITORÍA (P1 2026-10-26).
  *
  * CONTRATO DEL REPORTE PERSONALIZADO CON ANEXO DE AUDITORÍA:
  *   1. La selección de conceptos GOBIERNA el cálculo (no solo oculta filas).
  *   2. Dos resultados independientes: personalizado (conceptos activos +
  *      ventas seleccionadas) y OFICIAL de referencia (universo completo —
  *      jamás derivado del personalizado ni de sus diferencias).
- *   3. Descomposición aditiva de la diferencia: total = porConceptos +
- *      porVentas + residuo(=0) — ventas separadas de conceptos (misión §5.2).
- *   4. Identidad: con todo activo, personalizado === oficial (quien no
- *      personaliza ve el resultado íntegro de COSTPRO).
- *   5. Incidente A reproducido aritméticamente: el 2.820,00 CUP es el residuo
- *      de valorizar los MISMOS billetes USD a tasas distintas (cobros a tasas
- *      de ítems 288.420 vs entrega a 800 = 285.600) — el libro físico neto
- *      queda 0/0 y la diferencia queda explicada, NO forzada a cero.
+ *   3. CONVENCIÓN DE SIGNOS (misión P1 §2): DIFERENCIA = PERSONALIZADO −
+ *      OFICIAL, en la diferencia total, en el efecto por concepto, en la
+ *      diferencia de importe de cada fila, en la vista, el PDF y el Excel.
+ *   4. RESIDUO NO TAUTOLÓGICO (misión P1 §4): el residuo compara el cambio
+ *      REAL del esperado con las contribuciones INDEPENDIENTES por concepto
+ *      y por ventas — un drift entre rutas de cálculo ABRE el residuo y el
+ *      estado pasa a «pendiente» (regresión del cierre tautológico anterior).
+ *   5. ESTADO TRI-ESTADO (misión P1 §5): sin-diferencias / explicadas /
+ *      pendiente — «Conciliado» desaparece del vocabulario.
  *
- * Datos sintéticos (cifras documentales de producción — misma convención que
- * cash-report-enervida-2310.test.ts); ninguna escritura: funciones puras.
+ * PRUEBAS DE ACEPTACIÓN OBLIGATORIAS (misión P1 §6):
+ *   · Caso A — egreso omitido: oficial 10.500, personalizado 11.000,
+ *     diferencia +500, efecto del egreso +500.
+ *   · Caso B — ingreso omitido: personalizado 300 menor, diferencia −300.
+ *   · Caso C — venta excluida: solo cambia el componente de ventas (−700);
+ *     saldo inicial y movimientos de caja intactos.
+ *   · Caso D — mezcla: ingreso + egreso + venta excluidos; signos,
+ *     subtotales, residuo independiente y total final.
+ *   · Caso F — regresión del saldo físico: el anexo no cambia saldos reales
+ *     ni convierte la diferencia de valoración 2.820 en efectivo disponible.
+ *
+ * Datos sintéticos deterministas; ninguna escritura: funciones puras.
  */
 import { describe, it, expect } from 'vitest';
 import { computeDailySummary, type CashReportLike } from '@/lib/cash-report/summary';
@@ -32,6 +44,7 @@ import {
   customExpected,
   customVentasTotales,
   conceptTerms,
+  CONCEPT_SIGN,
 } from '@/lib/cash-report/custom-result';
 
 const S = (partial: Partial<CashReportLike>): CashReportLike => ({
@@ -69,7 +82,7 @@ const REPORTE = S({
 const resumen = (report: CashReportLike) => computeDailySummary(report, 'CUP');
 const counts = { validas: 3, seleccionadas: 3 };
 
-describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
+describe('MISIÓN INTEGRIDAD P1 · contrato del cálculo personalizado', () => {
   it('IDENTIDAD: todos los conceptos activos reproducen EXACTAMENTE el oficial', () => {
     const s = resumen(REPORTE);
     expect(customExpected(s, DEFAULT_SUMMARY_CONCEPTS)).toBe(s.efectivoEsperado);
@@ -77,12 +90,15 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     expect(r.efectivoEsperadoPersonalizado).toBe(s.efectivoEsperado);
     expect(r.esPersonalizado).toBe(false);
     expect(r.conciliacion.efectivoEsperadoOficial).toBe(s.efectivoEsperado);
-    // Sin personalización no hay diferencia y la conciliación es completa:
+    // Sin personalización no hay diferencia en NINGUNA magnitud y el estado
+    // tri-estado lo certifica (misión P1 §5):
     expect(r.conciliacion.diferenciaTotal).toBe(0);
-    expect(r.conciliacion.conciliado).toBe(true);
+    expect(r.conciliacion.diferenciaVentasTotales).toBe(0);
+    expect(r.conciliacion.diferenciaEquivalencia).toBe(0);
+    expect(r.conciliacion.estado).toBe('sin-diferencias');
   });
 
-  it('desactivar «Egresos de caja» EXCLUYE el término del cálculo personalizado (§4.3)', () => {
+  it('desactivar «Egresos de caja» EXCLUYE el término y el anexo firma su efecto + (§4.3)', () => {
     const s = resumen(REPORTE);
     const sel: SummaryConceptsSelection = { ...DEFAULT_SUMMARY_CONCEPTS, egresosCaja: false };
     const r = computeCustomCurrencyResult('CUP', s, s, sel, counts);
@@ -90,18 +106,22 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     //           − comisiones − servicios − proveedores − egresosCaja − reembolsos
     // personalizado (sin egresosCaja) = oficial + 1200:
     expect(r.efectivoEsperadoPersonalizado).toBe(s.efectivoEsperado + 1200);
-    // El anexo registra el importe oficial omitido y la diferencia:
+    // El anexo registra el importe oficial omitido y su efecto FIRMADO:
     const row = r.conceptos.find(c => c.key === 'egresosCaja')!;
     expect(row.estado).toBe('omitido');
     expect(row.importeOficial).toBe(1200);
     expect(row.importePersonalizado).toBe(0);
-    expect(row.diferencia).toBe(1200);
+    expect(row.diferencia).toBe(-1200);       // dif. importe = pers. − ofi.
+    expect(row.efectoEsperado).toBe(1200);    // efecto firmado: + al esperado
     expect(row.efecto).toBe('componente');
-    // La diferencia total se explica por el concepto desactivado:
-    expect(r.conciliacion.diferenciaPorConceptos).toBe(-1200);
+    // CONVENCIÓN (misión P1 §2): diferencia = personalizado − oficial:
+    expect(r.conciliacion.diferenciaTotal).toBe(1200);
+    expect(r.conciliacion.diferenciaPorConceptos).toBe(1200);
     expect(r.conciliacion.diferenciaPorVentas).toBe(0);
     expect(r.conciliacion.diferenciaNoExplicada).toBe(0);
-    expect(r.conciliacion.conciliado).toBe(true);
+    expect(r.conciliacion.sumaEfectosFilas).toBe(1200);
+    // Hay diferencias y el detalle las explica ⇒ «explicadas» (no «Conciliado»):
+    expect(r.conciliacion.estado).toBe('explicadas');
   });
 
   it('desactivar «Saldo inicial / fondo de caja» deja de incorporar esa base (§4.3)', () => {
@@ -112,6 +132,9 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     const row = r.conceptos.find(c => c.key === 'saldoInicial')!;
     expect(row.importeOficial).toBe(1000);
     expect(row.importePersonalizado).toBe(0);
+    expect(row.efectoEsperado).toBe(-1000); // signo contable +: efecto = −1000
+    expect(r.conciliacion.diferenciaTotal).toBe(-1000);
+    expect(r.conciliacion.diferenciaPorConceptos).toBe(-1000);
   });
 
   it('desactivar «Ventas en efectivo» retira el NETO DE BILLETES completo (cobros + liquidación)', () => {
@@ -134,6 +157,8 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     const row = r.conceptos.find(c => c.key === 'ventasEfectivo')!;
     expect(row.importeOficial).toBe(-2400); // cobrosBilletes de la hoja CUP
     expect(row.importePersonalizado).toBe(0);
+    expect(row.diferencia).toBe(2400);      // 0 − (−2.400)
+    expect(row.efectoEsperado).toBe(2400);  // signo + × +2.400
   });
 
   it('desactivar un concepto INFORMATIVO no modifica el saldo físico (§4.3)', () => {
@@ -148,8 +173,13 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     expect(r.ventasTotalesPersonalizado).toBe(s.ventasTotales - 800);
     const row = r.conceptos.find(c => c.key === 'ventasTransferencia')!;
     expect(row.efecto).toBe('informativo');
-    // Partida informativa: SU diferencia no entra a la diferencia monetaria:
+    expect(row.efectoEsperado).toBe(0); // jamás toca el esperado físico
+    // Partida informativa: SU diferencia no entra a la diferencia del efectivo:
     expect(r.conciliacion.diferenciaPorConceptos).toBe(0);
+    expect(r.conciliacion.diferenciaTotal).toBe(0);
+    // …pero la diferencia del AGREGADO vive en su propia magnitud:
+    expect(r.conciliacion.diferenciaVentasTotales).toBe(-800);
+    expect(r.conciliacion.estado).toBe('explicadas');
   });
 
   it('desactivar «Equivalencia CUP» la omite del cálculo contable sin reclasificar la venta (§4.3)', () => {
@@ -165,6 +195,9 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     // El oficial de referencia la conserva:
     expect(r.conciliacion.equivalenciaOficial).toBe(5600);
     expect(r.conciliacion.equivalenciaPersonalizada).toBe(0);
+    // La diferencia de equivalencia vive en SU magnitud (contable), separada:
+    expect(r.conciliacion.diferenciaEquivalencia).toBe(-5600);
+    expect(r.conciliacion.diferenciaTotal).toBe(0); // el efectivo NO cambia
     // La venta original NO se reclasifica (no aparece como venta CUP):
     expect(r.seleccion.ventasCash).toBe(s.ventasCash);
     expect(r.seleccion.ventasCash).toBe(5000);
@@ -176,6 +209,8 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     const sel: SummaryConceptsSelection = { ...DEFAULT_SUMMARY_CONCEPTS, otrosEgresos: false };
     const r = computeCustomCurrencyResult('CUP', resumen(REPORTE), resumen(REPORTE), sel, counts);
     expect(r.efectivoEsperadoPersonalizado).toBe(resumen(REPORTE).efectivoEsperado + 300);
+    // Efecto firmado: omitir egresos compuestos AUMENTA el esperado:
+    expect(r.conceptos.find(c => c.key === 'otrosEgresos')!.efectoEsperado).toBe(300);
   });
 
   it('desmarcar una VENTA: sus cobros dejan de computar; saldo inicial y movimientos de caja NO desaparecen (§4.3)', () => {
@@ -197,11 +232,13 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     // Oficial: 1000 + 5000 − 400 = 5600 · Personalizado: 1000 − 400 = 600
     expect(r.conciliacion.efectivoEsperadoOficial).toBe(5600);
     expect(r.efectivoEsperadoPersonalizado).toBe(600);
+    // CONVENCIÓN: diferencia = personalizado − oficial = 600 − 5600 = −5000.
     // Diferencia SOLO por ventas (conceptos intactos):
-    expect(r.conciliacion.diferenciaPorVentas).toBe(5000);
+    expect(r.conciliacion.diferenciaTotal).toBe(-5000);
+    expect(r.conciliacion.diferenciaPorVentas).toBe(-5000);
     expect(r.conciliacion.diferenciaPorConceptos).toBe(0);
     expect(r.conciliacion.diferenciaNoExplicada).toBe(0);
-    expect(r.conciliacion.conciliado).toBe(true);
+    expect(r.conciliacion.estado).toBe('explicadas');
     // La venta excluida permanece en el universo oficial:
     expect(r.conciliacion.ventasValidas).toBe(1);
     expect(r.conciliacion.ventasExcluidas).toBe(1);
@@ -210,7 +247,7 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     expect(r.seleccion.egresosCaja).toBe(400);
   });
 
-  it('descomposición aditiva: total = porConceptos + porVentas + residuo(=0), separadas (§5.2)', () => {
+  it('descomposición: total = porConceptos + porVentas + residuo(=0), calculada INDEPENDIENTEMENTE (§5.2)', () => {
     const universo = S({
       opening_balance: { CUP: 1000 },
       sales_split: { CUP: { cash: 5000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 5000 } },
@@ -225,18 +262,45 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     });
     const sel: SummaryConceptsSelection = { ...DEFAULT_SUMMARY_CONCEPTS, egresosCaja: false, saldoInicial: false };
     const r = computeCustomCurrencyResult('CUP', resumen(universo), resumen(seleccion), sel, { validas: 1, seleccionadas: 0 });
-    // total = oficial(5600) − personalizado(0 − 400 = −400... sin saldo inicial ni venta, con el egreso EXCLUIDO):
-    // personalizado = 0 (sin saldo) + 0 (sin ventas) − 0 (egreso desactivado) − 0 = 0
+    // personalizado = 0 (sin saldo) + 0 (sin ventas) − 0 (egreso desactivado):
     expect(r.efectivoEsperadoPersonalizado).toBe(0);
-    expect(r.conciliacion.diferenciaTotal).toBe(5600);
-    // porConceptos = oficial(5600) − personalizadoConTodasLasVentas(5000)
-    //              = saldo 1000 + egreso 400 (los dos términos desactivados):
-    expect(r.conciliacion.diferenciaPorConceptos).toBe(600);
-    // porVentas = personalizadoTodasVentas(5000) − personalizado(0):
-    expect(r.conciliacion.diferenciaPorVentas).toBe(5000);
+    // CONVENCIÓN pers. − ofi.: total = 0 − 5600 = −5600.
+    expect(r.conciliacion.diferenciaTotal).toBe(-5600);
+    // porConceptos = −(saldo +1000) + (egreso omitido +400) = −600:
+    expect(r.conciliacion.diferenciaPorConceptos).toBe(-600);
+    // porVentas = efecto de excluir los cobros (−5000):
+    expect(r.conciliacion.diferenciaPorVentas).toBe(-5000);
     expect(r.conciliacion.diferenciaPorConceptos + r.conciliacion.diferenciaPorVentas).toBe(r.conciliacion.diferenciaTotal);
     expect(r.conciliacion.diferenciaNoExplicada).toBe(0);
-    expect(r.conciliacion.conciliado).toBe(true);
+    expect(r.conciliacion.sumaEfectosFilas).toBe(-5600); // el detalle explica TODO
+    expect(r.conciliacion.derivaDetalle).toBe(0);
+    expect(r.conciliacion.estado).toBe('explicadas');
+  });
+
+  it('RESIDUO NO TAUTOLÓGICO: un drift entre la fórmula oficial y el desglose ABRE el residuo (§4)', () => {
+    // Simula una divergencia real: summary.ts cambia su fórmula (o un término
+    // nuevo no entra a conceptTerms) ⇒ efectivoEsperado ≠ Σ términos firmados.
+    // Con el residuo SECUENCIAL anterior esto era INVISIBLE (≡ 0 siempre);
+    // ahora el anexo debe declararse «Pendiente de conciliación».
+    const s = resumen(REPORTE);
+    const drifted: typeof s = { ...s, efectivoEsperado: s.efectivoEsperado + 100 };
+    const sel: SummaryConceptsSelection = { ...DEFAULT_SUMMARY_CONCEPTS, egresosCaja: false };
+    const r = computeCustomCurrencyResult('CUP', drifted, drifted, sel, counts);
+    // Contribuciones independientes (desde los términos): +1200.
+    expect(r.conciliacion.diferenciaPorConceptos).toBe(1200);
+    // Cambio real (desde el esperado driftado): 5290 − 1200... personalizado =
+    // customExpected − egreso = 5190 + 1200 = 6390; total = 6390 − 5290 = 1100.
+    expect(r.conciliacion.diferenciaTotal).toBe(1100);
+    // El residuo abre EXACTAMENTE el drift (−100):
+    expect(r.conciliacion.diferenciaNoExplicada).toBe(-100);
+    expect(r.conciliacion.estado).toBe('pendiente');
+  });
+
+  it('bases de comparación inválidas ⇒ «Pendiente de conciliación» (§5)', () => {
+    const s = resumen(REPORTE);
+    // Conteos incoherentes (más seleccionadas que válidas):
+    const r = computeCustomCurrencyResult('CUP', s, s, DEFAULT_SUMMARY_CONCEPTS, { validas: 3, seleccionadas: 5 });
+    expect(r.conciliacion.estado).toBe('pendiente');
   });
 
   it('el OFICIAL jamás se construye a partir del personalizado ni de sus diferencias (§4.1)', () => {
@@ -270,6 +334,18 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     // Base monetaria documentada por fila:
     expect(r.conceptos.every(c => c.base.length > 0)).toBe(true);
     expect(r.conceptos.every(c => c.observacion.length > 0)).toBe(true);
+    // Toda fila informativa tiene efecto 0; toda componente lleva SU signo
+    // contable aplicado a la diferencia de importe (misma convención):
+    for (const c of r.conceptos) {
+      if (c.efecto === 'informativo') {
+        expect(c.efectoEsperado).toBe(0);
+      } else if (Math.abs(c.diferencia) >= 0.005) {
+        expect(Math.sign(c.efectoEsperado)).toBe(Math.sign((CONCEPT_SIGN[c.key] ?? 0) * c.diferencia));
+        expect(Math.abs(c.efectoEsperado)).toBeCloseTo(Math.abs(c.diferencia), 6);
+      } else {
+        expect(Math.abs(c.efectoEsperado)).toBeLessThan(0.005);
+      }
+    }
   });
 
   it('persistencia v1 compatible: preferencias anteriores (7 claves) no rompen y las nuevas activan (§7)', () => {
@@ -292,6 +368,204 @@ describe('MISIÓN CONCILIACIÓN · contrato del cálculo personalizado', () => {
     expect(loaded.otIngresos).toBe(true);
     expect(loaded.ajustes).toBe(true);
     expect(loaded.reembolsos).toBe(true);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PRUEBAS DE ACEPTACIÓN OBLIGATORIAS (misión P1 §6) — cifras sencillas y
+// deterministas, exactamente las del enunciado.
+// ═══════════════════════════════════════════════════════════════════════════
+describe('MISIÓN P1 §6 · CASO A — egreso omitido', () => {
+  /** Saldo 2.000 · cobros 12.000 · comisión 3.000 · egreso 500 ⇒ oficial 10.500. */
+  const casoA = S({
+    opening_balance: { CUP: 2000 },
+    sales_split: { CUP: { cash: 12000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 12000 } },
+    sales_bills_split: { CUP: 12000 },
+    commissions: [{ payment_method: 'cash', currency: 'CUP', total: 3000 }],
+    cash_flows: [{ id: 'cf-eg', direction: 'out', amount: 500, currency: 'CUP', amount_cup: 500 }],
+  });
+
+  it('oficial 10.500; sin el concepto de egresos, personalizado 11.000; diferencia +500', () => {
+    const s = resumen(casoA);
+    expect(s.efectivoEsperado).toBe(10500); // 2.000 + 12.000 − 3.000 − 500
+    const sel: SummaryConceptsSelection = { ...DEFAULT_SUMMARY_CONCEPTS, egresosCaja: false };
+    const r = computeCustomCurrencyResult('CUP', s, s, sel, { validas: 1, seleccionadas: 1 });
+    expect(r.efectivoEsperadoPersonalizado).toBe(11000);
+    // Diferencia personalizado − oficial = +500 (positivo en TODOS los formatos):
+    expect(r.conciliacion.diferenciaTotal).toBe(500);
+    expect(r.conciliacion.diferenciaPorConceptos).toBe(500);
+    expect(r.conciliacion.diferenciaPorVentas).toBe(0);
+    expect(r.conciliacion.diferenciaNoExplicada).toBe(0);
+    expect(r.conciliacion.estado).toBe('explicadas');
+  });
+
+  it('el detalle identifica el egreso oficial de 500, su exclusión y su efecto +500', () => {
+    const s = resumen(casoA);
+    const sel: SummaryConceptsSelection = { ...DEFAULT_SUMMARY_CONCEPTS, egresosCaja: false };
+    const r = computeCustomCurrencyResult('CUP', s, s, sel, { validas: 1, seleccionadas: 1 });
+    const row = r.conceptos.find(c => c.key === 'egresosCaja')!;
+    expect(row.estado).toBe('omitido');
+    expect(row.importeOficial).toBe(500);   // egreso oficial de 500 CUP
+    expect(row.importePersonalizado).toBe(0); // su exclusión del personalizado
+    expect(row.diferencia).toBe(-500);      // dif. importe (pers. − ofi.)
+    expect(row.efectoEsperado).toBe(500);   // efecto +500 sobre el resultado
+    expect(row.base).toBe('CUP');
+    // La comisión (egreso compuesto, ACTIVO) no se ve afectada:
+    const com = r.conceptos.find(c => c.key === 'otrosEgresos')!;
+    expect(com.estado).toBe('activo');
+    expect(com.efectoEsperado).toBe(0);
+  });
+});
+
+describe('MISIÓN P1 §6 · CASO B — ingreso omitido', () => {
+  it('sin un ingreso de 300, el personalizado es 300 menor y la diferencia es −300', () => {
+    const rep = S({
+      opening_balance: { CUP: 2000 },
+      sales_split: { CUP: { cash: 12000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 12000 } },
+      sales_bills_split: { CUP: 12000 },
+      commissions: [{ payment_method: 'cash', currency: 'CUP', total: 3000 }],
+      cash_flows: [{ id: 'cf-eg', direction: 'out', amount: 500, currency: 'CUP', amount_cup: 500 }],
+    });
+    const s = resumen(rep);
+    expect(s.efectivoEsperado).toBe(10500);
+    const sel: SummaryConceptsSelection = { ...DEFAULT_SUMMARY_CONCEPTS, otIngresos: false };
+    // Añadimos el ingreso de 300 (OT) al universo:
+    const repConIngreso = S({
+      ...rep,
+      production: [{ payment_method: 'cash', currency: 'CUP', total: 300 }],
+    });
+    const s2 = resumen(repConIngreso);
+    expect(s2.efectivoEsperado).toBe(10800); // 10.500 + 300
+    const r = computeCustomCurrencyResult('CUP', s2, s2, sel, { validas: 1, seleccionadas: 1 });
+    expect(r.efectivoEsperadoPersonalizado).toBe(10500); // 300 inferior
+    expect(r.conciliacion.diferenciaTotal).toBe(-300);
+    const row = r.conceptos.find(c => c.key === 'otIngresos')!;
+    expect(row.importeOficial).toBe(300);
+    expect(row.efectoEsperado).toBe(-300); // ingreso omitido ⇒ efecto −300
+    expect(r.conciliacion.diferenciaPorConceptos).toBe(-300);
+    expect(r.conciliacion.estado).toBe('explicadas');
+  });
+});
+
+describe('MISIÓN P1 §6 · CASO C — venta excluida', () => {
+  it('saldo inicial y movimientos de caja intactos; la diferencia refleja SOLO la venta (−700)', () => {
+    const universo = S({
+      opening_balance: { CUP: 2000 },
+      sales_split: { CUP: { cash: 700, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 700 } },
+      sales_bills_split: { CUP: 700 },
+      cash_flows: [{ id: 'cf-eg', direction: 'out', amount: 100, currency: 'CUP', amount_cup: 100 }],
+    });
+    // La selección excluye la única venta en efectivo (700 CUP):
+    const seleccion = S({
+      opening_balance: { CUP: 2000 },
+      sales_split: { CUP: { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 } },
+      sales_bills_split: { CUP: 0 },
+      cash_flows: [{ id: 'cf-eg', direction: 'out', amount: 100, currency: 'CUP', amount_cup: 100 }],
+    });
+    const r = computeCustomCurrencyResult('CUP', resumen(universo), resumen(seleccion), DEFAULT_SUMMARY_CONCEPTS, { validas: 1, seleccionadas: 0 });
+    // Oficial 2.600 · Personalizado 1.900 ⇒ diferencia −700 por la venta:
+    expect(r.conciliacion.efectivoEsperadoOficial).toBe(2600);
+    expect(r.efectivoEsperadoPersonalizado).toBe(1900);
+    expect(r.conciliacion.diferenciaTotal).toBe(-700);
+    // El cambio real vive SOLO en el componente de ventas seleccionado:
+    expect(r.conciliacion.diferenciaPorVentas).toBe(-700);
+    expect(r.conciliacion.diferenciaPorConceptos).toBe(0);
+    // Ningún otro concepto se altera (efecto 0 en todas las demás filas):
+    const ventasRow = r.conceptos.find(c => c.key === 'ventasEfectivo')!;
+    expect(ventasRow.efectoEsperado).toBe(-700);
+    expect(r.conceptos.filter(c => c.key !== 'ventasEfectivo').every(c => Math.abs(c.efectoEsperado) < 0.005)).toBe(true);
+    // El saldo inicial y el egreso independientes permanecen INTACTOS:
+    expect(r.seleccion.saldoInicial).toBe(2000);
+    expect(r.seleccion.egresosCaja).toBe(100);
+    expect(r.conciliacion.ventasExcluidas).toBe(1);
+    expect(r.conciliacion.estado).toBe('explicadas');
+  });
+});
+
+describe('MISIÓN P1 §6 · CASO D — mezcla de exclusiones', () => {
+  it('ingreso (300) + egreso (500) + venta (700) excluidos: signos, subtotales y residuo', () => {
+    // Universo: saldo 2.000 + venta 700 + ingreso 300 − egreso 500 = 2.500.
+    const universo = S({
+      opening_balance: { CUP: 2000 },
+      sales_split: { CUP: { cash: 700, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 700 } },
+      sales_bills_split: { CUP: 700 },
+      production: [{ payment_method: 'cash', currency: 'CUP', total: 300 }],
+      cash_flows: [{ id: 'cf-eg', direction: 'out', amount: 500, currency: 'CUP', amount_cup: 500 }],
+    });
+    // Personalizado: sin la venta (selección) y sin ingreso/egreso (conceptos):
+    const seleccion = S({
+      opening_balance: { CUP: 2000 },
+      sales_split: { CUP: { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 } },
+      sales_bills_split: { CUP: 0 },
+      production: [{ payment_method: 'cash', currency: 'CUP', total: 300 }],
+      cash_flows: [{ id: 'cf-eg', direction: 'out', amount: 500, currency: 'CUP', amount_cup: 500 }],
+    });
+    const sel: SummaryConceptsSelection = { ...DEFAULT_SUMMARY_CONCEPTS, otIngresos: false, egresosCaja: false };
+    const r = computeCustomCurrencyResult('CUP', resumen(universo), resumen(seleccion), sel, { validas: 1, seleccionadas: 0 });
+    // Oficial 2.500 · Personalizado 2.000 ⇒ total −500.
+    expect(r.conciliacion.efectivoEsperadoOficial).toBe(2500);
+    expect(r.efectivoEsperadoPersonalizado).toBe(2000);
+    expect(r.conciliacion.diferenciaTotal).toBe(-500);
+    // Subtotales por selección (signos contables correctos):
+    //   ingreso omitido −300 · egreso omitido +500 ⇒ porConceptos +200.
+    expect(r.conciliacion.diferenciaPorConceptos).toBe(200);
+    //   venta excluida ⇒ porVentas −700.
+    expect(r.conciliacion.diferenciaPorVentas).toBe(-700);
+    // Residuo INDEPENDIENTE (no secuencia) y detalle coherente:
+    expect(r.conciliacion.diferenciaNoExplicada).toBe(0);
+    expect(r.conciliacion.sumaEfectosFilas).toBe(-500);
+    expect(r.conciliacion.derivaDetalle).toBe(0);
+    // Efecto por selección de ventas SOLO en el componente de ventas:
+    const rowIngreso = r.conceptos.find(c => c.key === 'otIngresos')!;
+    const rowEgreso = r.conceptos.find(c => c.key === 'egresosCaja')!;
+    const rowVenta = r.conceptos.find(c => c.key === 'ventasEfectivo')!;
+    expect(rowIngreso.efectoEsperado).toBe(-300);
+    expect(rowEgreso.efectoEsperado).toBe(500);
+    expect(rowVenta.efectoEsperado).toBe(-700);
+    expect(r.conciliacion.estado).toBe('explicadas');
+    // Total final cuadra: personalizado = oficial + Σ efectos:
+    expect(r.efectivoEsperadoPersonalizado).toBe(r.conciliacion.efectivoEsperadoOficial + r.conciliacion.sumaEfectosFilas);
+  });
+});
+
+describe('MISIÓN P1 §6 · CASO F — regresión del saldo físico', () => {
+  /** Documento ENERVIDA 23/10: saldo 8.438.079,98 · vuelto −2.400 · entrega −8.435.679,98 ⇒ esperado 0. */
+  const enervida = S({
+    opening_balance: { CUP: 8438079.98, USD: 357 },
+    sales_split: { USD: { cash: 7, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 7 } },
+    sales_bills_split: { CUP: -2400, USD: 10 },
+    sales_equiv_cash_other_cup: 5600,
+    cash_flows: [{ id: 'cf-entrega', direction: 'out', amount: 8435679.98, currency: 'CUP', amount_cup: 8435679.98 }],
+  });
+
+  it('el anexo NO cambia los saldos reales de Caja (función pura, sin escrituras)', () => {
+    const s = resumen(enervida);
+    const antes = { esperado: s.efectivoEsperado, saldo: s.saldoInicial, billetes: s.cobrosBilletes };
+    const sel: SummaryConceptsSelection = { ...DEFAULT_SUMMARY_CONCEPTS, egresosCaja: false };
+    const r = computeCustomCurrencyResult('CUP', s, s, sel, { validas: 1, seleccionadas: 1 });
+    // El universO OFICIAL queda intacto (el personalizado es una vista):
+    expect(r.oficial.efectivoEsperado).toBe(antes.esperado);
+    expect(r.oficial.saldoInicial).toBe(antes.saldo);
+    expect(r.oficial.cobrosBilletes).toBe(antes.billetes);
+    expect(r.seleccion.efectivoEsperado).toBe(antes.esperado); // selección sin cambios
+    // El esperado OFICIAL sigue siendo 0,00 — los billetes reales no cambian:
+    expect(r.conciliacion.efectivoEsperadoOficial).toBe(0);
+  });
+
+  it('la diferencia de valoración 2.820 NO se convierte en efectivo disponible', () => {
+    // Con TODO activo el documento ENERVIDA es «sin diferencias» y su esperado
+    // físico es 0,00 — el 2.820 pertenece a la BASE de valorización (tasa de
+    // ítems vs tasa de entrega de los mismos billetes USD), no al cajón.
+    const s = resumen(enervida);
+    const r = computeCustomCurrencyResult('CUP', s, s, DEFAULT_SUMMARY_CONCEPTS, { validas: 1, seleccionadas: 1 });
+    expect(r.efectivoEsperadoPersonalizado).toBe(0);
+    expect(r.conciliacion.estado).toBe('sin-diferencias');
+    // La equivalencia contable (5.600) sigue siendo línea informativa propia:
+    expect(r.conciliacion.equivalenciaOficial).toBe(5600);
+    expect(r.conciliacion.diferenciaTotal).toBe(0);
+    // …y el valor canónico ≠ billetes por moneda se conserva distinto:
+    expect(r.oficial.cobrosBilletes).toBe(-2400); // billetes CUP netos (vuelto)
+    expect(r.oficial.equivCashOtraMoneda).toBe(5600); // valor canónico (otra base)
   });
 });
 
@@ -383,8 +657,8 @@ describe('MISIÓN CONCILIACIÓN · INCIDENTE A — residuo 2.820,00 CUP reproduc
     const físicoUSD = 0;
     const diferencia = esperadoCanónico - físicoCUP;
     expect(diferencia).toBe(2820);
-    // Estado correcto: pendiente de conciliación (no «Conciliado»):
-    const conciliado = Math.abs(diferencia) < 0.005 && físicoUSD === 0;
-    expect(conciliado).toBe(false);
+    // Estado correcto: pendiente de conciliación (no «Sin diferencias»):
+    const concilia = Math.abs(diferencia) < 0.005 && físicoUSD === 0;
+    expect(concilia).toBe(false);
   });
 });
