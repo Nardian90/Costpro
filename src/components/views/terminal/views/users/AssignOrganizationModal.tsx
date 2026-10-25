@@ -48,22 +48,37 @@ export function AssignOrganizationModal({ user, isSuperAdmin, onOpenChange }: As
   const isSuperAdminAccount = user.role === 'superadmin';
 
   const handleFirstSubmit = async () => {
-    const result = await assignMutation.mutateAsync({
-      userId: user.id,
-      organizationId: selectedOrg || null,
-      confirmRemovals: false,
-    });
-    if (result.requires_confirmation && result.memberships_to_remove) {
-      setPendingRemovals(result.memberships_to_remove);
+    try {
+      const result = await assignMutation.mutateAsync({
+        userId: user.id,
+        organizationId: selectedOrg || null,
+        confirmRemovals: false,
+      });
+      if (result.requires_confirmation && result.memberships_to_remove) {
+        setPendingRemovals(result.memberships_to_remove);
+      } else {
+        // CP-ORG-001: aplicación directa (sin membresías que retirar). El
+        // hook ya notificó el éxito; cerrar evita que el operador vea datos
+        // obsoletos del usuario (empresa anterior) en el modal abierto.
+        onOpenChange(false);
+      }
+    } catch {
+      // Rechazo de regla de negocio o fallo de red: el hook ya emitió el
+      // toast con la causa real; el modal permanece para corregir.
     }
   };
 
   const handleConfirmSubmit = async () => {
-    await assignMutation.mutateAsync({
-      userId: user.id,
-      organizationId: selectedOrg || null,
-      confirmRemovals: true,
-    });
+    try {
+      await assignMutation.mutateAsync({
+        userId: user.id,
+        organizationId: selectedOrg || null,
+        confirmRemovals: true,
+      });
+    } catch {
+      // Igual que arriba: la causa real ya es visible para el operador.
+      return;
+    }
     setPendingRemovals(null);
     onOpenChange(false);
   };
