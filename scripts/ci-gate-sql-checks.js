@@ -89,6 +89,12 @@ ORDER BY p.proname;
     // 0 hallazgos como rol restringido vs 10 como superusuario). Se usa la
     // forma directa sobre pg_proc.proacl/aclexplode, que NO filtra por
     // usuario y produce resultados idénticos para cualquier rol.
+    // CP-ORG-001 c5: PARIDAD con Check 1 — se excluyen las funciones
+    // DISPARADORAS (trigger): Postgres prohíbe su invocación directa (solo
+    // el trigger puede ejecutarlas), por lo que su grant EXECUTE a
+    // PUBLIC/anon es inerte y su hallazgo es un falso positivo (detectado
+    // en vivo con enforce_membership_tenant_consistency tras la activación
+    // del ciclo 4). Check 1 ya las excluía por la misma razón.
     name: 'Check 2: SECURITY DEFINER con grants anon/PUBLIC',
     check_id: 'secdef_public_grant',
     sql: `
@@ -97,6 +103,9 @@ FROM pg_proc p
 JOIN pg_namespace n ON p.pronamespace = n.oid
 WHERE n.nspname = 'public'
   AND p.prosecdef = true
+  AND NOT EXISTS (
+    SELECT 1 FROM pg_trigger t WHERE t.tgfoid = p.oid
+  )
   AND EXISTS (
     SELECT 1
     FROM aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) AS a
