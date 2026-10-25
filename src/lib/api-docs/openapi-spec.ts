@@ -1580,9 +1580,9 @@ Detects exchange rate data from Banco Central de Cuba.
         'Lista las empresas que agrupan tiendas y usuarios. SuperAdmin: todas (con cifra global de usuarios sin asignar). Admin ordinario: solo la suya. Recuentos de tiendas/usuarios por empresa provienen de consultas reales.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       parameters: [
-        { name: 'search', in: 'query', schema: { type: 'string', maxLength: 100 }, description: 'Búsqueda por nombre (ilike)' },
+        { name: 'search', in: 'query', schema: { type: 'string', maxLength: 100 }, description: 'Búsqueda por nombre (ilike, término saneado de comodines → literal)' },
         { name: 'status', in: 'query', schema: { type: 'string', enum: ['active', 'inactive'] } },
-        { name: 'has_stores', in: 'query', schema: { type: 'string', enum: ['true', 'false'] }, description: 'Filtro por presencia de tiendas' },
+        { name: 'has_stores', in: 'query', schema: { type: 'string', enum: ['true', 'false'] }, description: 'Filtro por presencia de tiendas, resuelto en servidor ANTES de paginar (pagination.total coherente con el filtro)' },
         { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
         { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 } },
       ],
@@ -1727,7 +1727,7 @@ Detects exchange rate data from Banco Central de Cuba.
       operationId: 'assignUserOrganization',
       summary: 'Asignar la empresa de un usuario (regla de pertenencia única)',
       description:
-        'RPC atómica assign_user_organization: valida server-side (actor, org activa, no-superadmin), retira en la misma transacción las membresías de tiendas de otra empresa y audita en user_audit_log. Si hay membresías que retirar, la primera llamada SIN confirmación devuelve requires_confirmation con el detalle; no aplica nada hasta confirmar. Admin ordinario: solo usuarios de su empresa → su empresa. SuperAdmin: cualquiera.',
+        'RPC atómica assign_user_organization: valida server-side (actor vinculado a la sesión por el patrón H-7 — service_role transporta p_actor_id de la ruta API, authenticated siempre opera como auth.uid(); org activa, no-superadmin), retira en la misma transacción las membresías de tiendas de otra empresa y audita en user_audit_log. Si hay membresías que retirar, la primera llamada SIN confirmación devuelve requires_confirmation con el detalle; no aplica nada hasta confirmar. Admin ordinario: solo usuarios de su empresa → su empresa. SuperAdmin: cualquiera. ACL certificada: solo service_role ejecuta la RPC.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,
