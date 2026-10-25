@@ -127,4 +127,82 @@ El filtro estricto del catálogo desktop tampoco incluye `tenant_admin` en las l
 `roles:` (pre-existente; móvil, vía `hasRole`/jerarquía, sí le muestra el alcance
 operativo). NO se alteró en esta misión (alcance = navegación del SuperAdmin, sin
 refactorizaciones ajenas). Si se desea paridad desktop/móvil para `tenant_admin`, requiere
-decisión de producto y cambio propio.
+decisión de producto y cambio propio. **Incidencia mantenida separada del cierre de
+CP-ORG-002**: no bloquea la verificación productiva del SuperAdmin.
+
+---
+
+## 7. Validación final, fusión y verificación productiva (2026-10-26)
+
+### 7.1 Estado real de GitHub (verificado, no repetida la implementación)
+
+- **PR #1486** (`fix/cp-org-002-navegacion-superadmin-20261026`, head `c7127c8839a7cf3e...`)
+  fusionado por el propietario (`Nardian90`) el **2026-10-25T18:14:21Z** con commit de
+  fusión **`fd1d417e3fabb5414deea9350e2e1de0b47031ae`** — `origin/main` verificado en
+  ese SHA exacto. 1 commit, 10 archivos, +831/−17.
+- **Checks del head `c7127c8839`** (GitHub check-runs + combined status = `success`):
+  `TypeCheck + Lint + Unit Tests + Build` ✓ · `Unit & Integration Tests` ✓ ·
+  `Security Audit` ✓ · `Vercel Preview Comments` ✓ · `E2E Tests (Playwright)` skipped
+  (política del repo: suite aislada dedicada). El código probado en CI ES el commit
+  fusionado.
+- **Coherencia expediente ↔ código fusionado** (lectura directa de `main @ fd1d417e3`):
+  las 6 superficies declaradas usan la regla canónica — `sidebar.structure.ts:66-123`
+  (`effectiveNavRole` + `filterModulesByRole` + `isViewAllowedForRole` delegada),
+  `actions.ts:88` (palette), `GroupHubView.tsx:85` y `SectionHubView.tsx:134` (tarjetas),
+  `ManagementHubView.tsx:198,260` (tabs), `CashClosureView.tsx:232,237` (puertas UI) —
+  y el espejo server-side afirmado existe: `has_store_role_as` en
+  `supabase/migrations/20260807000002_v2_16_2_has_store_role_as.sql:30`
+  (`profiles.role IN ('admin', 'superadmin')`). Los 3 archivos de pruebas declarados
+  (38 pruebas) están presentes en `main`.
+- **Batería local re-ejecutada sobre el main fusionado** (sandbox, misma base que CI):
+  `tsc --noEmit` 0 errores · `eslint` 0 errores (warnings preexistentes) ·
+  `vitest run` **4122 passed / 0 failed / 66 skipped** (286 archivos; incluye las
+  **38/38** pruebas nuevas de esta misión en verde; los +29 tests respecto a las 4093
+  del head corresponden al PR #1487 fusionado en paralelo, ajeno a este alcance).
+
+### 7.2 Despliegue de producción (Vercel)
+
+- GitHub Deployments: entorno **Production** para `fd1d417e3` creado
+  2026-10-25T18:15:33Z → estado **`success`** ("Deployment has completed").
+- Dominio productivo `https://costpro4.vercel.app` → **HTTP 200**; `/api/health`
+  `{"status":"ok","service":"costpro-enterprise"}`. La URL de deployment del proyecto
+  (`costpro-…-nardian90s-projects.vercel.app`) queda tras Vercel Authentication
+  (protección documentada), por lo que la validación funcional se realizó contra el
+  dominio público.
+
+### 7.3 Comprobación funcional productiva (navegación REAL autenticada)
+
+Sesión de solo lectura con la cuenta autorizada (`admin@demo.com`, SuperAdmin) contra
+`costpro4.vercel.app`. **Cero escrituras** (sin ventas, sin turnos, sin cambios de datos,
+sin overrides de rol, sin migraciones). Evidencia: 10 capturas en
+`download/cp-org-002-verificacion-produccion/`.
+
+| # | Verificación productiva | Método | Resultado |
+|---|---|---|---|
+| 1 | Menú muestra las 6 secciones INICIO·OPERACIÓN·ANÁLISIS·SISTEMA·AYUDA·EN DESARROLLO | Navegación real SuperAdmin | ✓ (capturas 01/06/10) |
+| 2 | SISTEMA abre con sus 8 entradas (Ajustes→Cierre Fiscal) | Navegación real | ✓ (captura 02) |
+| 3 | OPERACIÓN abre completo (11 entradas, Dashboard→Redes) | Navegación real | ✓ (captura 06 contexto) |
+| 4 | ANÁLISIS abre (Análisis de Datos·Inteligencia Cambiaria·Tablón·Reportes·ABC) | Navegación real | ✓ (captura 07) |
+| 5 | EN DESARROLLO abre (IPV·Wiki·Marco Legal) | Navegación real | ✓ (captura 09) |
+| 6 | Módulos principales cargan: Usuarios (columna Empresa/Organización + badge SUPERADMIN), Organizaciones (Vitallcons, 2 tiendas activas, alcance SuperAdmin visible) | Navegación real | ✓ (capturas 03/04) |
+| 7 | **Caja sin AccessDenied** para SuperAdmin (superficie 6; vista Vender carga con catálogo real) | Navegación real | ✓ (captura 05) |
+| 8 | **Command Palette** expone la acción administrativa «Usuarios» (superficie 2) | Navegación real | ✓ (captura 08) |
+| 9 | **Cambio de tienda** ENERVIDA-VITALLCONS → PUERTO PADRE VITALLCONS: el menú NO desaparece (6 secciones íntegras) y los datos cambian al alcance de la tienda (productos distintos) | Navegación real | ✓ (captura 06) |
+| 10 | URL directa `?view=users` carga para SuperAdmin; sin sesión el guard niega (pruebas de regresión CI) | Navegación real + CI | ✓ |
+| 11 | Autorización del servidor intacta: `/api/intelligence`, `/api/users`, `/api/organizations` → **401** sin sesión (gates `withRole`) | HTTP anónimo | ✓ |
+| 12 | Aislamiento entre tiendas: catálogo/panel cambian con la tienda activa; selector solo ofrece las tiendas autorizadas | Navegación real | ✓ |
+| 13 | Roles operativos SIN permisos nuevos: `clerk`/`costo`/`warehouse` sin SISTEMA/ANÁLISIS/desarrollo, admin NO satisface chequeos de superadmin, sin sesión → deny (27 pruebas de regresión CI en verde) | CI `c7127c8839` + re-ejecución local | ✓ |
+
+### 7.4 Distinción explícita de estados (cierre)
+
+| Estado | Evidencia |
+|---|---|
+| Pruebas locales (sandbox) | 38/38 nuevas + suite 4122/0 en `main @ fd1d417e3` |
+| Fusión | PR #1486 merged por el propietario → `fd1d417e3` (2026-10-25T18:14:21Z) |
+| Despliegue | Vercel Production `fd1d417e3` = `success`; `costpro4.vercel.app` 200 |
+| **Validación productiva real** | **Ejecutada** — matriz §7.3 completa (13/13 ✓) con sesión de solo lectura |
+
+**Veredicto: CP-ORG-002 CERRADO** — menú del SuperAdmin restaurado en producción
+(6 secciones), módulos navegables, cambio de tienda estable, autorización server-side
+y aislamiento por tienda intactos, roles operativos sin permisos adicionales. La
+incidencia separada de `tenant_admin` (§6) queda abierta para decisión de producto.
