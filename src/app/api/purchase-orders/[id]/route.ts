@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
@@ -34,7 +35,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // Verificar acceso a la tienda de la OC
-  const hasStoreAccess = session.user.role === 'admin' ||
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const hasStoreAccess = isAdminLevel(session.user.role) ||
     session.user.memberships?.some((m: any) => m.store_id === order.store_id && m.status === 'active');
   if (!hasStoreAccess) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -55,7 +57,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   const id = extractIdFromUrl(req);
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
-  if (session.user.role !== 'admin' && session.user.role !== 'manager' && session.user.role !== 'encargado') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager' && session.user.role !== 'encargado') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -129,7 +131,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const id = extractIdFromUrl(req);
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
-  if (session.user.role !== 'admin' && session.user.role !== 'manager' && session.user.role !== 'encargado' && session.user.role !== 'warehouse') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager' && session.user.role !== 'encargado' && session.user.role !== 'warehouse') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

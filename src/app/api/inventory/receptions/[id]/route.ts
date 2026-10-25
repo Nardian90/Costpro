@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
@@ -28,7 +29,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   const id = extractIdFromUrl(req);
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
-  if (session.user.role !== 'admin' && session.user.role !== 'manager' && session.user.role !== 'encargado') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager' && session.user.role !== 'encargado') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

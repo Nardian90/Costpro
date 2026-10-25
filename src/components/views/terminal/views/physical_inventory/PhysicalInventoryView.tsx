@@ -13,6 +13,7 @@
  * solo reflejan lo que el backend permite; no son la seguridad.
  */
 
+import { isAdminLevel } from '@/lib/roles';
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -54,7 +55,8 @@ export default function PhysicalInventoryView() {
   const storeQuery = useQuery({
     queryKey: ['pi-stores', authorizedStores.join(',')],
     queryFn: async () => {
-      if (user?.role === 'admin') {
+      // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+      if (isAdminLevel(user?.role)) {
         const { data } = await supabase.from('stores').select('id, name').eq('is_active', true).limit(30);
         return (data || []) as Array<{ id: string; name: string }>;
       }

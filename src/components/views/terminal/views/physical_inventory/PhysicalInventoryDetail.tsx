@@ -15,6 +15,7 @@
  *   pending_authorization → conciliated → closed  (+ voided antes de conciliar)
  */
 
+import { isAdminLevel } from '@/lib/roles';
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -83,7 +84,8 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
 
   // ¿Puede ver teóricas? (rol privilegiado en la tienda o admin global)
   const canSeeTheoretical = useMemo(() => {
-    if (user?.role === 'admin') return true;
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    if (isAdminLevel(user?.role)) return true;
     const m = (user?.memberships || []).find(
       (mm) => mm.store_id === pi?.store_id && mm.status === 'active'
     );
@@ -92,7 +94,8 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
 
   const canAuthorize = canSeeTheoretical;
   const canClose = useMemo(() => {
-    if (user?.role === 'admin') return true;
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    if (isAdminLevel(user?.role)) return true;
     const m = (user?.memberships || []).find(
       (mm) => mm.store_id === pi?.store_id && mm.status === 'active'
     );

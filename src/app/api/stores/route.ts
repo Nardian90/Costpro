@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 import { createStoreSchema, updateStoreSchema, deleteStoreSchema } from '@/validation/api-schemas';
 import { PLAN_STORE_LIMITS } from '@/config/app';
 import { checkStoreQuota, rateLimitHeaders, type Plan } from '@/lib/rate-limit/tenant-limiter'; // B1
-import { canManageStore } from '@/lib/roles';
+import { canManageStore, isAdminLevel } from '@/lib/roles';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -49,7 +49,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const { searchParams } = new URL(req.url);
     const statusFilter = searchParams.get('status') || 'active';
 
-    if (session.user.role === 'admin') {
+    // CP-ORG-001 ciclo 4: nivel administrativo (admin|superadmin) — igualdad
+    // estricta dejaba al SuperAdmin sin tiendas.
+    if (isAdminLevel(session.user.role)) {
       // V2.6 H4: paginación para admin — antes traía TODAS las tiendas sin límite.
       // Soporta 3 modos:
       //   - Sin params: legacy (todas) para no romper UI existente

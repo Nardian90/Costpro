@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { parseCI, getBirthDateFromCI } from '@/lib/parse-ci';
 import { withSecurity } from '@/lib/with-security';
+import { isAdminLevel } from '@/lib/roles';
 
 /**
  * GET /api/workers?store_id=...&status=active
@@ -90,7 +91,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     );
   }
 
-  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
   }
 
@@ -109,7 +110,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   // Verificar que el usuario tiene acceso a la tienda
   const hasStoreAccess = session.user.memberships?.some(
     (m: any) => m.store_id === store_id && m.status === 'active'
-  ) || session.user.role === 'admin';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  ) || isAdminLevel(session.user.role);
 
   if (!hasStoreAccess) {
     return NextResponse.json({ error: 'Sin acceso a esta tienda' }, { status: 403 });

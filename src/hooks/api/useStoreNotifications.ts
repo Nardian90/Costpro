@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 import { useAuthStore } from '@/store';
+import { isAdminLevel } from '@/lib/roles';
 
 /**
  * F6-T02: Hook para sistema de notificaciones scoped por tienda.
@@ -48,7 +49,7 @@ export function useStoreNotifications() {
     queryFn: async () => {
       if (!supabase || !user) return [];
 
-      const isAdmin = user.role === 'admin';
+      const isAdmin = isAdminLevel(user.role);
       const isEncargado = user.role === 'encargado' || user.role === 'manager';
 
       // 1. Traer tiendas accesibles

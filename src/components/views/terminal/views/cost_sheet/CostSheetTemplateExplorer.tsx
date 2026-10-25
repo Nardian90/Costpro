@@ -1,4 +1,5 @@
 'use client';
+import { isAdminLevel } from '@/lib/roles';
 import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -122,7 +123,8 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   const { data: currentSheetData, setSheet } = useCostSheetStore();
   const { setActiveCostSection } = useUIStore();
   const user = useAuthStore(state => state.user);
-  const isAdmin = user?.role === 'admin';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const isAdmin = isAdminLevel(user?.role);
 
   // System Templates
   const systemTemplates: Template[] = [

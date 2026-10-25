@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { isAdminLevel } from '@/lib/roles';
 
 /**
  * F3-T06: Hook para detectar tiendas inactivas operativamente.
@@ -44,8 +45,8 @@ export function useStoreInactivityMonitor(options?: {
 }) {
   const { user } = useAuthStore();
   const thresholdDays = options?.thresholdDays ?? DEFAULT_THRESHOLD_DAYS;
-  // Solo admin necesita ver alertas de inactividad global
-  const enabled = options?.enabled ?? (user?.role === 'admin');
+  // Solo nivel administrativo necesita ver alertas de inactividad global
+  const enabled = options?.enabled ?? isAdminLevel(user?.role);
   const hasRunRef = useRef(false);
   const [inactiveStores, setInactiveStores] = useState<InactiveStore[]>([]);
 

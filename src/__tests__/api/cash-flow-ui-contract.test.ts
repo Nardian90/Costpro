@@ -41,6 +41,9 @@ const rolesState = { canManage: true };
 vi.mock('@/lib/roles', () => ({
   canManageStore: vi.fn(() => rolesState.canManage),
   canViewStore: vi.fn(() => true),
+  // CP-ORG-001 ciclo 5: la ruta usa isAdminLevel — espejo de la semántica real
+  // ('admin' | 'superadmin') para que el mock siga siendo fiel al contrato.
+  isAdminLevel: vi.fn((role: unknown) => role === 'admin' || role === 'superadmin'),
 }));
 
 const profileState = { storeId: 'store-1' as string | null };

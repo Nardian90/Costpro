@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { withRole, AuthenticatedSession } from '@/lib/auth-middleware';
@@ -50,7 +51,8 @@ async function generateReportHandler(
     // Validate store access (admins bypass)
     if (effectiveStoreId) {
       const memberships = (session.user as any).memberships || [];
-      const isAdmin = (session.user as any).role === 'admin';
+      // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+      const isAdmin = isAdminLevel(session.user.role);
       if (!isAdmin && !memberships.some((m: any) => m.store_id === effectiveStoreId && m.status === 'active')) {
         return NextResponse.json(
           { error: 'Prohibido', message: 'No tienes acceso a esta tienda' },

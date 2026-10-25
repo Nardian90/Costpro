@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import { logger } from '@/lib/logger';
+import { isAdminLevel } from '@/lib/roles';
 
 /**
  * F1-T05: Hook para obtener el conteo de usuarios asignados a cada tienda.
@@ -32,7 +33,7 @@ export function useStoreUserCounts(): {
   isLoading: boolean;
 } {
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = isAdminLevel(user?.role);
 
   const { data, isLoading } = useQuery<StoreUserCountsMap>({
     queryKey: ['store-user-counts', user?.id, isAdmin],

@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { supabase } from '@/lib/supabaseClient';
 
 export type UsageAction = 'fc_create' | 'fc_export' | 'fc_import';
@@ -9,7 +10,8 @@ export const usageService = {
    */
   async checkQuota(userId: string, action: UsageAction, plan: string = 'free', role: string = 'usuario') {
     // Admins, Pro and Enterprise have unlimited access
-    if (plan === 'pro' || plan === 'enterprise' || role === 'admin') {
+    // CP-ORG-001 ciclo 5: superadmin comparte el nivel administrativo
+    if (plan === 'pro' || plan === 'enterprise' || role === 'admin' || role === 'superadmin') {
       return { allowed: true, count: 0, limit: -1 };
     }
 
@@ -41,7 +43,8 @@ export const usageService = {
    * Returns true if successful and within limit.
    */
   async trackUsage(userId: string, action: UsageAction, plan: string = 'free', role: string = 'usuario') {
-    if (plan === 'pro' || plan === 'enterprise' || role === 'admin') {
+    // CP-ORG-001 ciclo 5: superadmin comparte el nivel administrativo
+    if (plan === 'pro' || plan === 'enterprise' || role === 'admin' || role === 'superadmin') {
       return true;
     }
 

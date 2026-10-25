@@ -12,7 +12,7 @@ import { useAuthStore } from '@/store';
 import { useStoreSwitcher } from '@/hooks/ui/useStoreSwitcher';
 import { useStores } from '@/hooks/api/useStores';
 import { useDebounce } from '@/hooks/ui/useDebounce';
-import { hasRole } from '@/lib/roles';
+import { hasRole, isAdminLevel } from '@/lib/roles';
 import {
   MOBILE_MAIN_TABS,
   NAVIGATION_SECTIONS,
@@ -64,7 +64,7 @@ export function MobileTabBar({ currentView, onViewChange }: MobileTabBarProps) {
     }
   }, [collapsed]);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = isAdminLevel(user?.role);
   const isEncargado = user?.role === 'encargado' || user?.role === 'manager';
   const { data: stores = [] } = useStores(user?.id || '', isAdmin, isEncargado);
 

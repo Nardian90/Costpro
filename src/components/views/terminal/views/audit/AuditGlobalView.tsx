@@ -25,6 +25,7 @@
  *     (FASE 16), sin colores hardcodeados.
  */
 
+import { isAdminLevel } from '@/lib/roles';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Shield, Download, Search, Eye } from 'lucide-react';
 import { toast } from 'sonner';
@@ -99,7 +100,8 @@ function AuditRow({
 
 export default function AuditGlobalView() {
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const isAdmin = isAdminLevel(user?.role);
   const isEncargado = user?.role === 'encargado' || user?.role === 'manager';
 
   const [actionFilter, setActionFilter] = useState('');

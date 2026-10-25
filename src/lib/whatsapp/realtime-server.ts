@@ -44,6 +44,8 @@ import type { Server as HTTPServer } from 'http';
 import { Server as SocketIOServer, type Socket } from 'socket.io';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
+import { isAdminLevel } from '@/lib/roles';
+import type { UserRole } from '@/types';
 
 // ── Singleton ──────────────────────────────────────────────────────────
 
@@ -119,12 +121,13 @@ export function attachRealtimeServer(httpServer: HTTPServer): SocketIOServer {
           .eq('status', 'active'),
       ]);
 
-      const profile = profileResult.data as { role: string } | null;
+      const profile = profileResult.data as { role: UserRole } | null;
       const memberships = (membershipsResult.data || []) as Array<{
         store_id: string; role: string; status: string;
       }>;
 
-      const isAdmin = profile?.role === 'admin';
+      // CP-ORG-001 ciclo 4: nivel administrativo transversal (admin|superadmin)
+      const isAdmin = isAdminLevel(profile?.role);
       const hasMembership = memberships.some(m => m.store_id === storeId);
 
       if (!isAdmin && !hasMembership) {

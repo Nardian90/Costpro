@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
@@ -27,7 +28,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'Receipt ID e Item ID son requeridos' }, { status: 400 });
   }
 
-  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
   }
 

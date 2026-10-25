@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
@@ -63,7 +64,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     }
 
     // 2. Validate access
-    const isAdmin = session.user.role === 'admin';
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    const isAdmin = isAdminLevel(session.user.role);
     const memberships = session.user.memberships || [];
     const hasAccess = isAdmin || memberships.some(m => m.store_id === resolvedStoreId && m.status === 'active');
     if (!hasAccess) return NextResponse.json(createApiError('STORE_ACCESS_DENIED'), { status: 403 });

@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
@@ -14,7 +15,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const { data: tenant } = await supabaseAdmin.from('tenants').select('stripe_customer_id, owner_id').eq('id', profile.tenant_id).single();
   if (!tenant?.stripe_customer_id) return NextResponse.json({ error: 'No Stripe customer found' }, { status: 404 });
 
-  if (tenant.owner_id !== session.user.id && session.user.role !== 'admin') {
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  if (tenant.owner_id !== session.user.id && !isAdminLevel(session.user.role)) {
     return NextResponse.json({ error: 'Only tenant owner can manage billing' }, { status: 403 });
   }
 

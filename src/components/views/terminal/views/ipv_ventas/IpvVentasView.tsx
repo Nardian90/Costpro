@@ -21,6 +21,7 @@
  * targets táctiles ≥44px, el estado se comunica con icono+texto (no solo color).
  */
 
+import { isAdminLevel } from '@/lib/roles';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ReceiptText, RefreshCw, Calculator, AlertTriangle, Eye, FileText, Sheet,
@@ -142,7 +143,8 @@ export default function IpvVentasView() {
         const data = await apiFetch('/api/stores?status=all', { signal: ctrl.signal });
         const all: StoreOpt[] = (data?.data || data || []) as StoreOpt[];
         const memberships = (user?.memberships ?? []) as Array<{ store_id: string; status: string }>;
-        const usable = user?.role === 'admin' || !user
+        // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+        const usable = isAdminLevel(user?.role) || !user
           ? all
           : all.filter((s) => memberships.some((m) => m.store_id === s.id && m.status === 'active'));
         const list = usable.length > 0 ? usable : all.filter((s) => s.id === user?.activeStoreId);

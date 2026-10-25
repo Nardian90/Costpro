@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import React, { useState } from 'react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { StateRenderer } from '@/components/ui/StateRenderer';
@@ -119,7 +120,8 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
   const isIncoming = transfer?.destination_store_id === user?.activeStoreId;
   const isOutgoing = transfer?.origin_store_id === user?.activeStoreId;
   const canConfirm = isIncoming && transfer?.status === 'PENDIENTE';
-  const canCancel = (isOutgoing || user?.role === 'admin' || user?.role === 'manager') && transfer?.status === 'PENDIENTE';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const canCancel = (isOutgoing || isAdminLevel(user?.role) || user?.role === 'manager') && transfer?.status === 'PENDIENTE';
 
   return (
     <>

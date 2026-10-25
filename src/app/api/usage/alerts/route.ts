@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
@@ -15,7 +16,7 @@ import { z } from 'zod';
  *   Body: { id: string } → marca alerta como reconocida
  */
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
-  if (session.user.role !== 'admin') {
+  if (!isAdminLevel(session.user.role)) {
     return NextResponse.json({ error: 'Forbidden — solo admin' }, { status: 403 });
   }
 
@@ -59,7 +60,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
-  if (session.user.role !== 'admin') {
+  if (!isAdminLevel(session.user.role)) {
     return NextResponse.json({ error: 'Forbidden — solo admin' }, { status: 403 });
   }
 

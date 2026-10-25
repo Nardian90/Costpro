@@ -1,5 +1,6 @@
 'use client';
 
+import { isAdminLevel } from '@/lib/roles';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/store';
 import { useStores } from '@/hooks/api/useStores';
@@ -19,7 +20,8 @@ export default function OfertasView() {
   const storeId = user?.activeStoreId || '';
 
   // Fetch stores to pre-fill suministrador data
-  const isAdmin = user?.role === 'admin';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const isAdmin = isAdminLevel(user?.role);
   const isEncargado = user?.role === 'encargado' || user?.role === 'manager';
   const { data: stores = [] } = useStores(user?.id || '', isAdmin, isEncargado);
   const activeStore = useMemo(() => stores.find(s => s.id === storeId), [stores, storeId]);

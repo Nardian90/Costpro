@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
@@ -13,7 +14,8 @@ export const runtime = 'nodejs';
  * Admins bypass this check.
  */
 function validateStoreMembership(session: AuthenticatedSession, ofertaStoreId: string): boolean {
-  if (session.user.role === 'admin') return true;
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  if (isAdminLevel(session.user.role)) return true;
   const memberships = (session.user as any).memberships || [];
   return memberships.some(
     (m: any) => m.store_id === ofertaStoreId && m.status === 'active'
@@ -181,7 +183,8 @@ async function deleteHandler(req: NextRequest, _session: AuthenticatedSession, {
     if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
     // Only admin/manager can delete
-    const isAdmin = session.user.role === 'admin';
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    const isAdmin = isAdminLevel(session.user.role);
     const memberships = (session.user as any).memberships || [];
     const isManager = memberships.some(
       (m: any) => m.status === 'active' && m.role === 'manager'

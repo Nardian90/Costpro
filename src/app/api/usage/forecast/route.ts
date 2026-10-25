@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 
@@ -19,7 +20,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
  * Hace 4 queries SQL simples (thresholds + 3 agregaciones) en paralelo.
  */
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
-  if (session.user.role !== 'admin') {
+  if (!isAdminLevel(session.user.role)) {
     return NextResponse.json({ error: 'Forbidden — solo admin' }, { status: 403 });
   }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
+import { isAdminLevel } from '@/lib/roles';
 import { z } from 'zod';
 import {
   businessDayOf,
@@ -96,7 +97,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
     // FIX-C3 (2026-07-14): validar rol admin/manager (defense in depth)
-    if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+    if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
       return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
     }
 

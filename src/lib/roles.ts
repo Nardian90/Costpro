@@ -64,6 +64,22 @@ export const isSuperAdmin = (user: { role?: UserRole | null } | null | undefined
   return user?.role === 'superadmin';
 };
 
+/**
+ * CP-ORG-001 ciclo 4 (2026-10-25): espejo EXACTO de public.is_admin() en la DB.
+ * 'admin' y 'superadmin' comparten el NIVEL administrativo de la app.
+ *
+ * Motivo: las comparaciones estrictas `role === 'admin'` dejaban al SuperAdmin
+ * de plataforma FUERA de la vistas/rutas administrativas (bug real reportado por
+ * el propietario: el selector de tiendas y GET /api/stores devolvían vacío para
+ * superadmin, que por diseño no lleva membresías de tienda — §6 de la migración
+ * 20260826120000). Toda comparación de nivel administrativo DEBE usar esta
+ * función o el par explícito `=== 'admin' || === 'superadmin'`, nunca la
+ * igualdad estricta sola.
+ */
+export const isAdminLevel = (role: UserRole | null | undefined): boolean => {
+  return role === 'admin' || role === 'superadmin';
+};
+
 export const getAllowedRoles = (role: UserRole | undefined): UserRole[] => {
   if (!role) return [];
   return ROLES_HIERARCHY[role] || [];

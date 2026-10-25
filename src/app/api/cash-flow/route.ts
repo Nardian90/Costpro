@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withSecurity } from '@/lib/with-security';
@@ -147,7 +148,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     // Roles autorizados a registrar: admin/manager/encargado/clerk (la caja
     // diaria la opera el cajero; el backend revalida con membresía de tienda).
-    if (session.user.role !== 'admin' && session.user.role !== 'manager'
+    if (!isAdminLevel(session.user.role) && session.user.role !== 'manager'
         && session.user.role !== 'encargado' && session.user.role !== 'clerk') {
       return NextResponse.json(
         { error: 'Forbidden — requiere rol admin, manager, encargado o clerk' },

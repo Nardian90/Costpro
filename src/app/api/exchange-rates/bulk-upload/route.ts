@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
@@ -191,7 +192,7 @@ async function upsertRate(
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   // 1) Authorization: admin only.
-  if (session.user.role !== 'admin') {
+  if (!isAdminLevel(session.user.role)) {
     return NextResponse.json(
       { error: 'Forbidden — solo admin puede cargar Excel masivo' },
       { status: 403 },

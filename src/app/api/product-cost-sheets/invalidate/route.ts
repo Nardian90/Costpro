@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, withRole, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
@@ -49,7 +50,7 @@ async function invalidateHandler(req: NextRequest, session: AuthenticatedSession
     const { storeId } = validated.data;
 
     // Validar membership del caller (excepto admin global)
-    if (session.user.role !== 'admin') {
+    if (!isAdminLevel(session.user.role)) {
       const memberships = session.user.memberships || [];
       const hasAccess = memberships.some(
         m => m.store_id === storeId && m.status === 'active' &&

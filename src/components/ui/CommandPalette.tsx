@@ -7,6 +7,7 @@ import { Search, Command, X, ArrowRight, Sparkles, Store as StoreIcon } from 'lu
 import Fuse from 'fuse.js';
 import { useUIStore, type ViewType } from '@/store';
 import { useAuthStore } from '@/store';
+import { isAdminLevel } from '@/lib/roles';
 import { SYSTEM_ACTIONS, Action, getActionsForUser } from '@/config/actions';
 import { getNavigationRoute } from '@/config/navigation/navigation-map';
 import { useStores } from '@/hooks/api/useStores';
@@ -45,7 +46,7 @@ export const CommandPalette = () => {
 
   // F1-T03: cargar tiendas del usuario para hacerlas buscables desde Cmd+K.
   // Solo se cargan si el usuario está autenticado; si no hay sesión, storesItem es [].
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = isAdminLevel(user?.role);
   const isEncargado = user?.role === 'encargado' || user?.role === 'manager' ||
     user?.memberships?.some(m => m.role === 'encargado');
   const { data: stores = [] } = useStores(user?.id || '', isAdmin, isEncargado || false);

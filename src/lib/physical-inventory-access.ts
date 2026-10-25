@@ -10,6 +10,7 @@
 
 import type { AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
+import { isAdminLevel } from '@/lib/roles';
 
 /**
  * Devuelve el store_id del inventario físico (o null si no existe).
@@ -30,7 +31,8 @@ export async function resolvePhysicalInventoryStore(piId: string): Promise<strin
  * activa. (La barrera final sigue siendo RLS + roles dentro de cada RPC.)
  */
 export function sessionHasStoreAccess(session: AuthenticatedSession, storeId: string): boolean {
-  if (session.user.role === 'admin') return true;
+  // CP-ORG-001 ciclo 4: nivel administrativo transversal (admin|superadmin)
+  if (isAdminLevel(session.user.role)) return true;
   return (session.user.memberships || []).some(
     (m) => m.store_id === storeId && m.status === 'active'
   );
@@ -40,7 +42,8 @@ export function sessionHasStoreAccess(session: AuthenticatedSession, storeId: st
  * Rol del usuario en una tienda concreta (o 'admin' global).
  */
 export function roleInStore(session: AuthenticatedSession, storeId: string): string | null {
-  if (session.user.role === 'admin') return 'admin';
+  // CP-ORG-001 ciclo 4: nivel administrativo transversal (admin|superadmin)
+  if (isAdminLevel(session.user.role)) return 'admin';
   const m = (session.user.memberships || []).find(
     (mm) => mm.store_id === storeId && mm.status === 'active'
   );

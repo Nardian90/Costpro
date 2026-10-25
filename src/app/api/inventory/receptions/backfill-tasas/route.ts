@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
@@ -39,7 +40,7 @@ const backfillSchema = z.object({
  * Genera auditoría por cada item actualizado.
  */
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
-  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
   }
 

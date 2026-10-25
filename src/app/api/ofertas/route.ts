@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withStoreAccess, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
@@ -103,7 +104,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // R-6: Validate that the store_id from the body matches the user's active store membership
     const bodyStoreId = validated.data.store_id;
     const memberships = (session.user as any).memberships || [];
-    const isAdmin = session.user.role === 'admin';
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    const isAdmin = isAdminLevel(session.user.role);
     const hasStoreAccess = isAdmin || memberships.some(
       (m: any) => m.store_id === bodyStoreId && m.status === 'active'
     );

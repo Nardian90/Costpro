@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useUIStore, useAuthStore } from '@/store';
+import { isAdminLevel } from '@/lib/roles';
 import { supabase } from '@/lib/supabaseClient';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -541,7 +542,7 @@ function PlanAndLimitsSection({ user }: { user: any }) {
   const [storeCount, setStoreCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = isAdminLevel(user?.role);
 
   const PLAN_INFO: Record<string, { label: string; limit: number; color: string; icon: any }> = {
     basico: { label: 'Básico', limit: 1, color: 'text-muted-foreground', icon: ShieldCheck },

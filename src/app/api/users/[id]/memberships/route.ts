@@ -20,6 +20,7 @@ import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
+import { isAdminLevel } from '@/lib/roles';
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const { allowed } = await rateLimit(`memberships:list:${session.user.id}`, {
@@ -45,9 +46,13 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
   // Authorization: self-access or admin
   const isSelf = userId === session.user.id;
-  const isAdmin = session.user.role === 'admin';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin).
+  // El SuperAdmin de plataforma tiene alcance GLOBAL (cuenta sin membresías
+  // por diseño); el admin ordinario mantiene el aislamiento por tenant.
+  const isSuperAdmin = session.user.role === 'superadmin';
+  const isAdminLevelUser = isAdminLevel(session.user.role);
 
-  if (!isSelf && !isAdmin) {
+  if (!isSelf && !isAdminLevelUser) {
     // For non-admin, check tenant isolation
     const { data: targetProfile } = await admin
       .from('profiles')
@@ -70,8 +75,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     }
   }
 
-  // Admin tenant isolation
-  if (isAdmin && !isSelf) {
+  // Admin tenant isolation (superadmin NO: alcance global de plataforma)
+  if (isAdminLevelUser && !isSelf && !isSuperAdmin) {
     const { data: targetProfile } = await admin
       .from('profiles')
       .select('tenant_id')

@@ -1,5 +1,6 @@
 'use client'
 
+import { isAdminLevel } from '@/lib/roles';
 import { useState, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store';
 import { useTransactionDetails } from '@/hooks/api/useTransactions';
@@ -86,7 +87,7 @@ export function useSalesHistoryView() {
     // Data Fetching
     // F3-B1: exponer error + refetch — antes los errores de red se tragaban y la vista
     // mostraba "Sin ventas registradas" (empty) para lo que era un error.
-    const { data: transactionsData = [], isLoading: isLoadingTransactions, error: transactionsError, refetch: refetchTransactions } = useTransactions(user?.activeStoreId, user?.role === 'admin');
+    const { data: transactionsData = [], isLoading: isLoadingTransactions, error: transactionsError, refetch: refetchTransactions } = useTransactions(user?.activeStoreId, isAdminLevel(user?.role));
 
     const filteredTransactions = useMemo(() => {
         return transactionsData.filter(t => {

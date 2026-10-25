@@ -1,5 +1,6 @@
 'use client';
 
+import { isAdminLevel } from '@/lib/roles';
 import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import { cn } from '@/lib/utils';
 import { UnifiedTabs } from '@/components/views/terminal/views/cost_sheet/UnifiedTabs';
@@ -104,7 +105,8 @@ export function ExchangeIntelligenceView() {
   // El botón solo se muestra si el usuario es admin; el endpoint valida
   // de nuevo el rol (defense in depth).
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const isAdmin = isAdminLevel(user?.role);
   // FIX (2026-07-23): tab Configuración solo visible para admin
   const TABS = useMemo(() => isAdmin ? ALL_TABS : ALL_TABS.filter(t => t.id !== 'configuracion'), [isAdmin]);
   const [showExcelModal, setShowExcelModal] = useState(false);

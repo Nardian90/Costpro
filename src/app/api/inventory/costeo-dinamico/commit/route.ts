@@ -3,7 +3,7 @@ import { withAuth, withStoreAccess, type AuthenticatedSession } from '@/lib/auth
 import { withTracing } from '@/lib/observability';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
-import { canManageStore } from '@/lib/roles';
+import {canManageStore, isAdminLevel } from '@/lib/roles';
 import { z } from 'zod';
 import { uuidLoose } from '@/validation/api-schemas';
 // F4-GAP1: Import cache invalidation
@@ -31,7 +31,7 @@ const commitSchema = z.object({
  * Registra cada cambio en price_commit_log para auditoría y rollback.
  */
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
-  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
   }
 
@@ -120,7 +120,7 @@ async function rollbackHandler(req: NextRequest, session: AuthenticatedSession) 
   // IC-F04B-ROLLBACK-STORE-ACCESS: defense-in-depth role gate (admin/manager).
   // The per-store membership check below (canManageStore) further restricts
   // non-admins to their own store's commits.
-  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
     return NextResponse.json(
       { error: 'Forbidden', message: 'Solo admin o manager puede revertir' },
       { status: 403 }

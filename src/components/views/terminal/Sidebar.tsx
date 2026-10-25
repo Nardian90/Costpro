@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuthStore, useUIStore, SidebarState, ViewType } from '@/store';
+import { isAdminLevel } from '@/lib/roles';
 import { NavModule, SIDEBAR_STRUCTURE } from '@/config/navigation/sidebar.structure';
 import { isSidebarItemActive } from '@/config/navigation/navigation-map';
 import { useFilteredNavigation } from '@/hooks/ui/useFilteredNavigation';
@@ -690,7 +691,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           )}
 
           <div className={cn("p-4 space-y-1", displayState === 'rail' && "p-2 items-center flex flex-col")}>
-          {user?.plan === 'free' && user?.role !== 'admin' && displayState === 'expanded' && (
+          {user?.plan === 'free' && !isAdminLevel(user?.role) && displayState === 'expanded' && (
             <button
               onClick={() => {
                 const whatsappNumber = "+53 53183215";

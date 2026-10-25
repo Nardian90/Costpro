@@ -3,6 +3,7 @@ import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect, useTransition, Suspense, useRef } from 'react';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
+import { isAdminLevel } from '@/lib/roles';
 import { isViewAllowedForRole } from '@/config/navigation/sidebar.structure';
 import { Header } from '@/components/views/terminal/Header';
 import Sidebar from '@/components/views/terminal/Sidebar';
@@ -295,7 +296,7 @@ export default function TerminalShell() {
 
   const { data: allStores = [] } = useStores(
     user?.id || '',
-    user?.role === 'admin',
+    isAdminLevel(user?.role),
     isEncargado || false
   );
 
@@ -392,7 +393,7 @@ export default function TerminalShell() {
         prefetchProducts(queryClient, user.activeStoreId);
         break;
       case 'sales':
-        prefetchTransactions(queryClient, user.activeStoreId, user.role === 'admin');
+        prefetchTransactions(queryClient, user.activeStoreId, isAdminLevel(user.role));
         break;
       case 'dashboard':
       case 'store-dashboard':
@@ -404,7 +405,7 @@ export default function TerminalShell() {
         prefetchAuditLogs(queryClient, { storeIds: [user.activeStoreId] });
         break;
       case 'recepcion':
-        prefetchReceptions(queryClient, user.activeStoreId, user.role === 'admin');
+        prefetchReceptions(queryClient, user.activeStoreId, isAdminLevel(user.role));
         break;
     }
   };

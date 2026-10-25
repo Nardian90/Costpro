@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAuthClient } from '@/lib/supabaseClient';
@@ -42,7 +43,8 @@ const handler = withAuth(async (req, session) => {
     const batch = parsedBatch.data;
 
     // FIX-SEC-H3: Validate store membership for each operation in the batch
-    const isAdmin = (session.user as any).role === 'admin';
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    const isAdmin = isAdminLevel(session.user.role);
     const memberships = (session.user as any).memberships || [];
     const accessibleStoreIds = new Set(
       memberships

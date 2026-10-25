@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
@@ -58,7 +59,7 @@ async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
 
     // DECISION-FX-01: solo admin global muta tasas globales (gate rápido por JWT;
     // la RPC revalida contra BD como defensa en profundidad).
-    if (_session.user.role !== 'admin') {
+    if (!isAdminLevel(_session.user.role)) {
       logger.warn('AUTH', 'EXCHANGE_RATE_MANUAL_DENIED_BY_ROLE', {
         actorId: _session.user.id,
         actorRole: _session.user.role,

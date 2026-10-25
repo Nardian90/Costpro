@@ -3,6 +3,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
+import { isAdminLevel } from '@/lib/roles';
 
 /**
  * PATCH /api/commissions/rules/[id]
@@ -28,7 +29,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
   }
 
-  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
   }
 
@@ -148,7 +149,7 @@ async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
   }
 
-  if (session.user.role !== 'admin') {
+  if (!isAdminLevel(session.user.role)) {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin' }, { status: 403 });
   }
 

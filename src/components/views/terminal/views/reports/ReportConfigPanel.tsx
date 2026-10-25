@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import React, { useState, useMemo, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Card } from '@/components/ui/card';
@@ -146,7 +147,8 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
   }, [config.date_range]);
 
   // ── Column helpers ──
-  const isAdmin = user?.role === 'admin';
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const isAdmin = isAdminLevel(user?.role);
   const isEncargado = user?.role === 'encargado';
 
   const { data: products = [], isLoading: isLoadingProducts } = useProducts(

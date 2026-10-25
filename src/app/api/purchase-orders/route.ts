@@ -1,3 +1,4 @@
+import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
@@ -36,7 +37,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
-  if (session.user.role !== 'admin' && session.user.role !== 'manager' && session.user.role !== 'encargado') {
+  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager' && session.user.role !== 'encargado') {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin, manager o encargado' }, { status: 403 });
   }
 
@@ -71,7 +72,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // Validar acceso a la tienda
-  const hasStoreAccess = session.user.role === 'admin' ||
+  // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+  const hasStoreAccess = isAdminLevel(session.user.role) ||
     session.user.memberships?.some((m: any) => m.store_id === store_id && m.status === 'active');
   if (!hasStoreAccess) {
     return NextResponse.json({ error: 'Forbidden — sin acceso a esta tienda' }, { status: 403 });
