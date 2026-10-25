@@ -27,6 +27,36 @@ interface UsePOSServerSearchParams {
   debounceMs?: number;
 }
 
+/**
+ * MISIÓN POS FILTRO REAL DE STOCK (2026-10-26) — Función C.
+ *
+ * ÚNICA definición de «vendible/visible» para TODOS los resultados que ve el
+ * cajero (cuadrícula, vista en tabla, sugerencias del autocompletado, paginación
+ * y «Ver más»). La exportan aquí para que el autocompletado y cualquier otro
+ * consumidor apliquen EXACTAMENTE el mismo criterio que la lista principal —
+ * sin una segunda fuente de stock en el cliente (usa el `stock_current` e
+ * `is_service` que ya viajan en el producto de `get_products_for_pos`).
+ *
+ * Regla (idéntica a la que aplicaba la lista principal):
+ *  · Filtro DESACTIVADO → todo es visible (disponibles y agotados, con sus
+ *    etiquetas actuales de disponibilidad).
+ *  · Filtro ACTIVADO → solo productos físicos con stock POSITIVO; los
+ *    servicios (is_service === true) conservan su excepción del modelo — no
+ *    tienen existencias propias y el servidor ya los exime del check de stock.
+ *
+ * NOTA: es un filtro de VISIBILIDAD. NO sustituye a las validaciones de
+ * disponibilidad de onAddToCart/handleAddItem/cart store/backend — esas
+ * siguen vigentes como defensa adicional (un item puede agotarse entre la
+ * consulta y el clic).
+ */
+export function isPosProductVisible(product: Product, hideOutOfStock: boolean): boolean {
+  if (!hideOutOfStock) return true;
+  // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los servicios NO se ocultan —
+  // no tienen existencias propias y siempre son vendibles.
+  if (product.is_service === true) return true;
+  return (product.stock_current ?? 0) > 0;
+}
+
 export function usePOSServerSearch({
   products,
   initialPageSize = 60,
@@ -71,9 +101,9 @@ export function usePOSServerSearch({
       // Categoría
       if (selectedCategory && p.category !== selectedCategory) return false;
       // Stock: ocultar agotados por default (no hacer ruido visual en POS).
-      // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los servicios NO se ocultan —
-      // no tienen existencias propias y siempre son vendibles.
-      if (hideOutOfStock && p.is_service !== true && (p.stock_current ?? 0) <= 0) return false;
+      // MISIÓN POS FILTRO REAL DE STOCK: usa el predicado compartido — la
+      // MISMA regla que el autocompletado y cualquier resultado visible.
+      if (!isPosProductVisible(p, hideOutOfStock)) return false;
       // Search
       if (!q) return true;
       const name = p.name.toLowerCase();

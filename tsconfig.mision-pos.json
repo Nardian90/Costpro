@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/types/index.ts",
+    "src/lib/pos/cash-settlement.ts",
+    "src/lib/pos/cash-denominations.ts",
+    "src/lib/utils.ts",
+    "src/store/cart.ts",
+    "src/hooks/api/usePOSServerSearch.ts",
+    "src/hooks/api/useProducts.ts",
+    "src/components/views/terminal/views/pos/POSCartCheckoutPanel.tsx",
+    "src/components/views/terminal/views/pos/POSCart.tsx",
+    "src/components/views/terminal/views/pos/POSCart.types.ts",
+    "src/components/views/terminal/views/pos/POSAutocomplete.tsx",
+    "src/components/views/terminal/views/pos/POSView.tsx",
+    "src/components/views/terminal/views/pos/EmptyProducts.tsx",
+    "src/components/views/terminal/views/pos/FrequentProducts.tsx",
+    "src/components/views/terminal/views/pos/POSPortalModal.tsx",
+    "src/components/views/terminal/views/pos/usePOSCheckout.ts",
+    "src/__tests__/lib/pos-cash-denominations.test.ts",
+    "src/__tests__/components/pos-checkout-panel-denominations.test.tsx",
+    "src/__tests__/components/pos-cart-mobile-close.test.tsx",
+    "src/__tests__/components/pos-autocomplete-stock-filter.test.tsx"
+  ]
+}

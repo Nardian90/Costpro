@@ -9,6 +9,9 @@ import { useFrequentProducts, type FrequentProduct } from "@/hooks/api/useFreque
 import { useActiveShift } from "@/hooks/api/useActiveShift";
 import { useAuthStore } from "@/store";
 import ProductImage from "@/components/ui/ProductImage";
+// MISIÓN POS FILTRO REAL DE STOCK (2026-10-26): misma regla de disponibilidad
+// que la cuadrícula y el autocompletado (predicado compartido).
+import { isPosProductVisible } from "@/hooks/api/usePOSServerSearch";
 
 interface FrequentProductsProps {
   /** Lista completa de productos (para hydrate sin round-trip extra) */
@@ -16,6 +19,12 @@ interface FrequentProductsProps {
   /** Al hacer clic en un frecuente, ejecuta onAddToCart (igual que el grid normal) */
   onAddToCart: (product: Product) => void;
   className?: string;
+  /**
+   * MISIÓN POS FILTRO REAL DE STOCK: cuando «Solo con stock» está activo, los
+   * frecuentes agotados no se muestran (coherencia con el resto del POS).
+   * Default false = compatibilidad con usos existentes.
+   */
+  hideOutOfStock?: boolean;
 }
 
 /**
@@ -27,7 +36,7 @@ interface FrequentProductsProps {
  * Si el turno no tiene ventas aún, no se renderiza (no tiene sentido mostrar
  * "frecuentes" de un turno vacío).
  */
-export function FrequentProducts({ products, onAddToCart, className }: FrequentProductsProps) {
+export function FrequentProducts({ products, onAddToCart, className, hideOutOfStock = false }: FrequentProductsProps) {
   const { user } = useAuthStore();
   const storeId = user?.activeStoreId;
   const { data: activeShift } = useActiveShift(storeId);
@@ -38,8 +47,16 @@ export function FrequentProducts({ products, onAddToCart, className }: FrequentP
     { enabled: !!activeShift },
   );
 
+  // MISIÓN POS FILTRO REAL DE STOCK: los frecuentes visibles obedecen la
+  // misma regla de disponibilidad que la cuadrícula y el autocompletado.
+  // El guard de onAddToCart (y el del store/backend) sigue como defensa.
+  const visibleFrequent = React.useMemo(
+    () => (frequent || []).filter((fp: FrequentProduct) => isPosProductVisible(fp.product, hideOutOfStock)),
+    [frequent, hideOutOfStock],
+  );
+
   if (!activeShift) return null; // Sin turno → no mostrar
-  if (!isLoading && (!frequent || frequent.length === 0)) return null;
+  if (!isLoading && visibleFrequent.length === 0) return null;
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -49,7 +66,7 @@ export function FrequentProducts({ products, onAddToCart, className }: FrequentP
           Frecuentes del turno
         </h3>
         <span className="text-[10px] font-bold text-muted-foreground/70">
-          {frequent?.length ?? 0}
+          {visibleFrequent?.length ?? 0}
         </span>
       </div>
       <div
@@ -64,7 +81,7 @@ export function FrequentProducts({ products, onAddToCart, className }: FrequentP
                 className="shrink-0 w-28 h-20 rounded-xl bg-muted/50 animate-pulse border border-border/50"
               />
             ))
-          : frequent?.map((fp: FrequentProduct, idx: number) => (
+          : visibleFrequent?.map((fp: FrequentProduct, idx: number) => (
               <motion.button
                 key={fp.product.id}
                 type="button"
