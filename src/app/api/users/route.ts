@@ -14,6 +14,11 @@
  * Autorización:
  * - admin: ve todos los users de su tenant
  * - encargado: ve users de stores donde tiene membership (excluye admins)
+ * - tenant_admin (CP-ORG-003 F3): ve los users de SU organización, EXCLUYENDO
+ *   las cuentas de nivel de plataforma (admin/superadmin) — administra su
+ *   organización, no la plataforma. Mutaciones (create/update/toggle/delete):
+ *   sin cambios — 403 para tenant_admin hasta el PR de mutaciones org-scoped
+ *   (diseño en docs/audits/CP_ORG_003_TENANT_ADMIN_PARIDAD.md).
  * - otros roles: 403
  */
 import { NextRequest, NextResponse } from 'next/server';
@@ -81,14 +86,17 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const { page, limit, store_id, role, search, is_active, tenant_id, unassigned } = parsed.data;
   const offset = (page - 1) * limit;
 
-  // Authorization: only admin, superadmin and encargado can list users
+  // Authorization: only admin, superadmin, encargado and tenant_admin can list users
   // MISIÓN ORGANIZACIONES (2026-10-26): superadmin = alcance global de
   // plataforma; admin ordinario = su empresa; encargado = sus tiendas.
+  // CP-ORG-003 Fase 3 (2026-10-26): tenant_admin = SU empresa, sin cuentas
+  // de plataforma (lectura organizacional demostrable; mutaciones aparte).
   const isSuperAdmin = session.user.role === 'superadmin';
   const isAdmin = session.user.role === 'admin';
   const isEncargado = session.user.role === 'encargado' || session.user.roles?.includes('encargado');
+  const isTenantAdmin = session.user.role === 'tenant_admin';
 
-  if (!isAdmin && !isSuperAdmin && !isEncargado) {
+  if (!isAdmin && !isSuperAdmin && !isEncargado && !isTenantAdmin) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
 
@@ -113,6 +121,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   // - superadmin: TODAS las empresas (alcance global de plataforma) con
   //   filtro opcional por tenant_id; puede listar «sin asignar».
   // - admin/encargado: únicamente SU empresa.
+  // - tenant_admin (CP-ORG-003 F3): únicamente SU empresa y SIN las cuentas
+  //   de nivel de plataforma (admin/superadmin) — no gestiona a la plataforma.
   let query = admin
     .from('profiles')
     .select(PROFILE_COLUMNS, { count: 'exact' })
@@ -126,6 +136,10 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     } else if (unassigned === 'true') {
       query = query.is('tenant_id', null);
     }
+  } else if (isTenantAdmin) {
+    query = query
+      .eq('tenant_id', callerTenantId)
+      .not('role', 'in', '("admin","superadmin")');
   } else {
     query = query.eq('tenant_id', callerTenantId);
   }
