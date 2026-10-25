@@ -43,6 +43,8 @@ import {
   type SummaryConceptsSelection,
 } from '@/lib/cash-report/report-selection';
 import {
+  auditStatusLabel,
+  auditStatusDefinition,
   computeCustomCurrencyResult,
   type CustomCurrencyResult,
 } from '@/lib/cash-report/custom-result';
@@ -740,10 +742,11 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     doc.text('Firma', pw - m - 80, sigY + 9);
   }
 
-  // ══════════════ MISIÓN CONCILIACIÓN (2026-10-26) · ANEXO DE AUDITORÍA ══════════════
+  // ══════════════ MISIÓN INTEGRIDAD DEL ANEXO (P1 2026-10-26) · ANEXO DE AUDITORÍA ══════════════
   // Página SEPARADA (misión §5): misma estructura que el Diario — identificación,
-  // tabla por concepto (oficial vs personalizado) y conciliación con diferencias
-  // separadas por conceptos y por selección de ventas. Siempre se genera.
+  // tabla por concepto (oficial vs personalizado, con efecto FIRMADO sobre el
+  // esperado y base monetaria) y conciliación verificable de forma INDEPENDIENTE.
+  // CONVENCIÓN DE SIGNOS (misión P1 §2): diferencia = personalizado − oficial.
   doc.addPage(); y = m;
   sectionTitle('ANEXO DE AUDITORÍA — REPORTE PERSONALIZADO', 'Independiente del reporte principal');
   setText(C_MUTED); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
@@ -757,6 +760,7 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     `Generado: ${new Date().toLocaleString('es-CU')}`,
     estCfgConceptos,
     `Ventas: ${estandarCounts.seleccionadas} incluidas de ${estandarCounts.validas} válidas del período` + (ctx.selectionMeta?.filterLabel ? ` · Filtro: ${ctx.selectionMeta.filterLabel}` : ''),
+    'Convención de signos: diferencia = personalizado − oficial (positivo: el personalizado excede al oficial)',
   ]) {
     doc.text(line, m, y); y += 3.4;
   }
@@ -770,39 +774,46 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     const r = estandarResults[cur];
     if (y + 60 > ph - m - 10) { doc.addPage(); y = m; }
     sectionTitle(`HOJA ${cur} — COMPARACIÓN POR CONCEPTO`, 'Oficial vs personalizado');
+    // Importes según SU base monetaria; signo explícito en diferencia y efecto.
+    const amt = (n: number) => cur === 'USD' ? `$${n.toFixed(2)}` : fmt(n);
+    const sgn = (n: number) => `${n >= 0 ? '+' : ''}${amt(n)}`;
+    const baseLbl = (b: string) => b === 'USD' ? 'USD' : b === 'CUP' ? 'CUP' : 'equiv. CUP';
     const compRows: (string | number)[][] = r.conceptos.map(c => [
-      c.concepto.length > 38 ? c.concepto.substring(0, 36) + '…' : c.concepto,
+      c.concepto.length > 30 ? c.concepto.substring(0, 28) + '…' : c.concepto,
       c.estado,
-      c.base === 'USD' ? `$${c.importeOficial.toFixed(2)}` : fmt(c.importeOficial),
-      c.base === 'USD' ? `$${c.importePersonalizado.toFixed(2)}` : fmt(c.importePersonalizado),
-      c.base === 'USD' ? `$${c.diferencia.toFixed(2)}` : fmt(c.diferencia),
-      c.efecto,
+      amt(c.importeOficial),
+      amt(c.importePersonalizado),
+      sgn(c.diferencia),
+      c.efecto === 'componente' ? sgn(c.efectoEsperado) : '—',
+      baseLbl(c.base),
     ]);
     renderTable(
-      ['Concepto', 'Estado', 'Importe oficial', 'En personalizado', 'Diferencia', 'Efecto'],
+      ['Concepto', 'Estado', 'Importe oficial', 'En personalizado', 'Dif. importe (pers.−ofi.)', 'Efecto en esperado', 'Base'],
       compRows,
-      [62, 22, 32, 32, 30, 30],
-      { align: ['left', 'left', 'right', 'right', 'right', 'left'] },
+      [50, 18, 24, 24, 24, 26, 16],
+      { align: ['left', 'left', 'right', 'right', 'right', 'right', 'left'] },
     );
     y += 4;
     const rec = r.conciliacion;
-    const amt = (n: number) => cur === 'USD' ? `$${n.toFixed(2)}` : fmt(n);
     const reconRows: (string | number)[][] = [
       ['Ventas totales del período (oficial)', amt(rec.ventasTotalesOficial)],
       ['Ventas totales del reporte personalizado', amt(rec.ventasTotalesPersonalizado)],
+      ['Diferencia de ventas totales (personalizado − oficial)', sgn(rec.diferenciaVentasTotales)],
       ['Saldo inicial oficial', amt(rec.saldoInicialOficial)],
       ['Efectivo esperado OFICIAL (fórmula completa COSTPRO)', amt(rec.efectivoEsperadoOficial)],
       ['Efectivo esperado PERSONALIZADO (conceptos activos)', amt(rec.efectivoEsperadoPersonalizado)],
       ...(cur === 'CUP' ? ([
         ['Equivalencia canónica CUP oficial (contable, no billetes)', amt(rec.equivalenciaOficial)],
         ['Equivalencia canónica CUP configurada', amt(rec.equivalenciaPersonalizada)],
+        ['Diferencia de equivalencia contable (personalizado − oficial)', sgn(rec.diferenciaEquivalencia)],
       ] as (string | number)[][]) : []),
       ['Ingresos de caja oficiales del período', amt(rec.ingresosCajaOficial)],
       ['Egresos de caja oficiales del período', amt(rec.egresosCajaOficial)],
-      ['Diferencia monetaria total (personalizado − oficial)', amt(rec.diferenciaTotal)],
-      ['  · causada por conceptos desactivados', amt(rec.diferenciaPorConceptos)],
-      ['  · causada por ventas excluidas de la selección', amt(rec.diferenciaPorVentas)],
-      ['  · no explicada (residuo de conciliación)', amt(rec.diferenciaNoExplicada)],
+      ['DIFERENCIA TOTAL del efectivo esperado (personalizado − oficial)', sgn(rec.diferenciaTotal)],
+      ['  · efecto de conceptos desactivados (firmado, independiente)', sgn(rec.diferenciaPorConceptos)],
+      ['  · efecto de ventas excluidas de la selección (independiente)', sgn(rec.diferenciaPorVentas)],
+      ['  · suma de efectos del detalle (Σ filas del anexo)', sgn(rec.sumaEfectosFilas)],
+      ['  · no explicada (residuo de conciliación independiente)', sgn(rec.diferenciaNoExplicada)],
       ['Ventas válidas / seleccionadas / excluidas', `${rec.ventasValidas} / ${rec.ventasSeleccionadas} / ${rec.ventasExcluidas}`],
     ];
     renderTable(
@@ -812,10 +823,11 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
       { align: ['left', 'right'] },
     );
     y += 4;
-    setText(rec.conciliado ? C_SUCCESS : C_WARN); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-    doc.text(rec.conciliado
-      ? `Estado: Conciliado (la diferencia se explica por completo: conceptos + selección de ventas).`
-      : `Estado: Pendiente de conciliación (residuo ${amt(rec.diferenciaNoExplicada)} ${cur} no explicado).`, m, y);
+    // Estado tri-estado inequívoco (misión P1 §5): la palabra «Conciliado»
+    // desaparece — un personalizado que difiere se declara EXPLICADO.
+    const estColor = rec.estado === 'sin-diferencias' ? C_SUCCESS : rec.estado === 'explicadas' ? C_PRIMARY : C_WARN;
+    setText(estColor); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+    doc.text(`Estado: ${auditStatusLabel(rec.estado)} — ${auditStatusDefinition(rec.estado)}`, m, y, { maxWidth: 170 });
     y += 7;
     setText(C_DARK); doc.setFont('helvetica', 'normal');
   }
@@ -1285,20 +1297,23 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     if (flow) y = sigY + 9;
   };
 
-  // ══════════════ MISIÓN CONCILIACIÓN (2026-10-26) · ANEXO DE AUDITORÍA ══════════════
+  // ══════════════ MISIÓN INTEGRIDAD DEL ANEXO (P1 2026-10-26) · ANEXO DE AUDITORÍA ══════════════
   // Página INDEPENDIENTE del reporte principal (misión §5). El anexo se genera
   // SIEMPRE (también sin personalización — entonces certifica la igualdad con
   // el reporte oficial) y documenta: identificación (tienda, período, base,
-  // fecha, configuración), tabla por concepto (oficial vs personalizado) y
-  // conciliación con diferencias separadas por conceptos y por selección de
-  // ventas. Sin IO: es un documento de solo lectura de los resultados ya
-  // calculados — jamás edita ni escribe registros del sistema.
+  // fecha, configuración), tabla por concepto (oficial vs personalizado con
+  // efecto FIRMADO sobre el esperado y base monetaria) y conciliación
+  // VERIFICABLE de forma independiente (residuo no tautológico).
+  // CONVENCIÓN DE SIGNOS (misión P1 §2): diferencia = personalizado − oficial.
+  // Sin IO: es un documento de solo lectura de los resultados ya calculados.
   const renderAuditAnnex = () => {
     doc.addPage(); y = 14;
     renderPageHeader('Anexo de Auditoría — Reporte Entrega');
     markSection('Auditoría');
 
     const fmtAmt = (n: number, cur: 'CUP' | 'USD') => cur === 'CUP' ? fmtCup(n) : fmtUsdFmt(n);
+    // Signo explícito para diferencias y efectos (misión P1 §2).
+    const sgnAmt = (n: number, cur: 'CUP' | 'USD') => `${n >= 0 ? '+' : ''}${fmtAmt(n, cur)}`;
 
     // Identificación (misión §5: tienda, período, base, fecha, configuración).
     setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
@@ -1315,6 +1330,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
       `Generado: ${new Date().toLocaleString('es-CU')}`,
       cfgConceptos,
       cfgVentas,
+      'Convención de signos: diferencia = personalizado − oficial (positivo: el personalizado excede al oficial)',
     ]) {
       doc.text(line, m, y); y += 3.4;
     }
@@ -1332,17 +1348,18 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
       doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); setText(C_DARK);
       doc.text(`Hoja ${cur} — comparación por concepto`, m, y); y += 5;
 
-      // Tabla: Concepto | Estado | Oficial | Personalizado | Diferencia | Efecto
-      const colW = [contentW * 0.30, contentW * 0.11, contentW * 0.16, contentW * 0.16, contentW * 0.15, contentW * 0.12];
+      // Tabla: Concepto | Estado | Oficial | Personalizado | Dif. importe |
+      // Efecto en esperado | Base (misión P1 §3: efecto FIRMADO + base).
+      const colW = [contentW * 0.26, contentW * 0.10, contentW * 0.14, contentW * 0.14, contentW * 0.13, contentW * 0.14, contentW * 0.09];
       const colX: number[] = []; let ax = m;
       for (const w of colW) { colX.push(ax); ax += w; }
       const rowH = 4.6;
       const drawHeader = () => {
         setFill(C_DARK); doc.rect(m, y, contentW, 5.4, 'F');
         setText([255, 255, 255]); doc.setFont('helvetica', 'bold'); doc.setFontSize(6.4);
-        const heads = ['Concepto', 'Estado', 'Importe oficial', 'En personalizado', 'Diferencia', 'Efecto'];
+        const heads = ['Concepto', 'Estado', 'Importe oficial', 'En personalizado', 'Dif. importe', 'Efecto en esperado', 'Base'];
         heads.forEach((h, i) => {
-          if (i >= 2) doc.text(h, colX[i] + colW[i] - 1, y + 3.8, { align: 'right' });
+          if (i >= 2 && i <= 5) doc.text(h, colX[i] + colW[i] - 1, y + 3.8, { align: 'right' });
           else doc.text(h, colX[i] + 1, y + 3.8);
         });
         y += 5.4; setText(C_DARK); doc.setFont('helvetica', 'normal'); doc.setFontSize(6.4);
@@ -1365,38 +1382,47 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
         doc.text(c.estado, colX[1] + 1, y + 3.2);
         doc.setFont('helvetica', 'normal'); setText(C_DARK);
         const amt = (n: number) => c.base === 'USD' ? fmtUsdFmt(n) : fmtCup(n);
+        // Signo explícito (misión P1 §2): + para positivos.
+        const sgn = (n: number) => `${n >= 0 ? '+' : ''}${amt(n)}`;
         doc.text(amt(c.importeOficial), colX[2] + colW[2] - 1, y + 3.2, { align: 'right' });
         doc.text(amt(c.importePersonalizado), colX[3] + colW[3] - 1, y + 3.2, { align: 'right' });
         setText(Math.abs(c.diferencia) < 0.005 ? C_MUTED : C_WARN);
-        doc.text(amt(c.diferencia), colX[4] + colW[4] - 1, y + 3.2, { align: 'right' });
+        doc.text(sgn(c.diferencia), colX[4] + colW[4] - 1, y + 3.2, { align: 'right' });
+        // Efecto FIRMADO sobre el esperado (componentes); «—» en informativas.
+        setText(Math.abs(c.efectoEsperado) < 0.005 ? C_MUTED : C_WARN);
+        doc.text(c.efecto === 'componente' ? sgn(c.efectoEsperado) : '—', colX[5] + colW[5] - 1, y + 3.2, { align: 'right' });
         setText(C_MUTED);
-        doc.text(c.efecto, colX[5] + 1, y + 3.2);
+        doc.text(c.base === 'USD' ? 'USD' : c.base === 'CUP' ? 'CUP' : 'equiv. CUP', colX[6] + 1, y + 3.2);
         y += rowH;
       }
       y += 3;
 
-      // Conciliación (misión §5.1).
+      // Conciliación (misión §4: verificación INDEPENDIENTE del detalle).
       if (y + 88 > ph - m - 8) { doc.addPage(); y = 14; renderPageHeader(`Anexo de Auditoría (${cur}) — conciliación`); }
       doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); setText(C_DARK);
       doc.text(`Hoja ${cur} — conciliación configurado vs oficial`, m, y); y += 5;
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
       const rec = r.conciliacion;
+      const sgn = (n: number) => `${n >= 0 ? '+' : ''}${fmt(n)}`;
       const reconRows: Array<[string, string]> = [
         ['Ventas totales del período (oficial)', fmt(rec.ventasTotalesOficial)],
         ['Ventas totales del reporte personalizado', fmt(rec.ventasTotalesPersonalizado)],
+        ['Diferencia de ventas totales (personalizado − oficial)', sgn(rec.diferenciaVentasTotales)],
         ['Saldo inicial oficial', fmt(rec.saldoInicialOficial)],
         ['Efectivo esperado OFICIAL (fórmula completa COSTPRO)', fmt(rec.efectivoEsperadoOficial)],
         ['Efectivo esperado PERSONALIZADO (conceptos activos)', fmt(rec.efectivoEsperadoPersonalizado)],
         ...(cur === 'CUP' ? ([
           ['Equivalencia canónica CUP oficial (contable, no billetes)', fmt(rec.equivalenciaOficial)],
           ['Equivalencia canónica CUP configurada', fmt(rec.equivalenciaPersonalizada)],
+          ['Diferencia de equivalencia contable (personalizado − oficial)', sgn(rec.diferenciaEquivalencia)],
         ] as Array<[string, string]>) : []),
         ['Ingresos de caja oficiales del período', fmt(rec.ingresosCajaOficial)],
         ['Egresos de caja oficiales del período', fmt(rec.egresosCajaOficial)],
-        ['Diferencia monetaria total (personalizado − oficial)', fmt(rec.diferenciaTotal)],
-        ['  · causada por conceptos desactivados', fmt(rec.diferenciaPorConceptos)],
-        ['  · causada por ventas excluidas de la selección', fmt(rec.diferenciaPorVentas)],
-        ['  · no explicada (residuo de conciliación)', fmt(rec.diferenciaNoExplicada)],
+        ['DIFERENCIA TOTAL del efectivo esperado (personalizado − oficial)', sgn(rec.diferenciaTotal)],
+        ['  · efecto de conceptos desactivados (firmado, independiente)', sgn(rec.diferenciaPorConceptos)],
+        ['  · efecto de ventas excluidas de la selección (independiente)', sgn(rec.diferenciaPorVentas)],
+        ['  · suma de efectos del detalle (Σ filas del anexo)', sgn(rec.sumaEfectosFilas)],
+        ['  · no explicada (residuo de conciliación independiente)', sgn(rec.diferenciaNoExplicada)],
         ['Ventas válidas / seleccionadas / excluidas', `${rec.ventasValidas} / ${rec.ventasSeleccionadas} / ${rec.ventasExcluidas}`],
       ];
       for (const [k, v] of reconRows) {
@@ -1413,13 +1439,14 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
         doc.setFont('helvetica', 'normal');
         y += 4;
       }
-      // Estado de conciliación (misión §5.2: pendiente si hay residuo).
+      // Estado tri-estado inequívoco (misión P1 §5): la palabra «Conciliado»
+      // desaparece — un personalizado que difiere se declara EXPLICADO; el
+      // residuo independiente gobierna «Pendiente de conciliación».
       y += 2;
       doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-      setText(rec.conciliado ? C_SUCCESS : C_WARN);
-      doc.text(rec.conciliado
-        ? `Estado: Conciliado (la diferencia se explica por completo: conceptos + selección de ventas).`
-        : `Estado: Pendiente de conciliación (residuo ${fmt(rec.diferenciaNoExplicada)} ${cur} no explicado por conceptos ni selección).`, m, y, { maxWidth: contentW });
+      const C_INFO: [number, number, number] = [37, 99, 235];
+      setText(rec.estado === 'sin-diferencias' ? C_SUCCESS : rec.estado === 'explicadas' ? C_INFO : C_WARN);
+      doc.text(`Estado: ${auditStatusLabel(rec.estado)} — ${auditStatusDefinition(rec.estado)}`, m, y, { maxWidth: contentW });
       y += 8;
       setText(C_DARK);
     }

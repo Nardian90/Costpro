@@ -185,15 +185,24 @@ describe('MISIÓN CORRECTIVA · documento ENERVIDA 23/10/2026 (PDF + Excel)', ()
     const f = String(espCell2?.f ?? '');
     // La fórmula solo suma filas visibles — SIN literal del saldo omitido:
     expect(f).not.toMatch(/8438079\.98/);
-    // El ANEXO (hoja Auditoría) registra el saldo oficial omitido y su efecto:
+    // El ANEXO (hoja Auditoría) registra el saldo oficial omitido y su efecto
+    // FIRMADO (misión P1 §2: diferencia = personalizado − oficial ⇒ −8.438.079,98):
     const aud = XLSX.utils.sheet_to_json(wb.Sheets['Auditoría']!, { header: 1, blankrows: true, defval: '' }) as Array<Array<string | number | undefined>>;
     const saldoRow = aud.find(r => String(r[0] ?? '') === 'Saldo inicial / fondo de caja');
     expect(saldoRow).toBeDefined();
     expect(saldoRow![1]).toBe('omitido');
     expect(saldoRow![2]).toBe(8438079.98); // importe oficial
     expect(saldoRow![3]).toBe(0);          // incluido en personalizado
-    // Conciliación: la diferencia se explica por el concepto desactivado:
-    const dif = aud.find(r => String(r[0] ?? '') === 'Diferencia por conceptos desactivados');
-    expect(dif![2]).toBe(8438079.98);
+    expect(saldoRow![4]).toBe(-8438079.98); // dif. importe = pers. − ofi.
+    expect(saldoRow![5]).toBe(-8438079.98); // efecto firmado sobre el esperado
+    // Conciliación: el efecto del concepto desactivado explica la diferencia:
+    const dif = aud.find(r => String(r[0] ?? '') === 'Efecto de conceptos desactivados (firmado, independiente)');
+    expect(dif![2]).toBe(-8438079.98);
+    // CASO F (misión P1 §6): los saldos REALES no cambian — el esperado
+    // oficial sigue siendo 0,00 y el estado certifica diferencias explicadas:
+    const eo = aud.find(r => String(r[0] ?? '') === 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)');
+    expect(eo![2]).toBe(0);
+    const est = aud.find(r => String(r[0] ?? '') === 'Estado');
+    expect(est![2]).toBe('Diferencias explicadas por la configuración');
   });
 });

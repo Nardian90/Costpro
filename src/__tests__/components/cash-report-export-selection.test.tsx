@@ -299,13 +299,19 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     const f = String(cell(ws, `D${esp.idx + 1}`).f ?? '');
     expect(f).not.toMatch(/500/); // sin literal del egreso omitido
     expect(evalFormula(f, ws)).toBe(11000);
-    // La hoja «Auditoría» documenta el egreso omitido con su importe oficial:
+    // La hoja «Auditoría» documenta el egreso omitido con su importe oficial
+    // y su EFECTO FIRMADO (misión P1 §3/§6-A):
     const aud = rows(wb.Sheets['Auditoría']!);
     const egRow = findRow(aud, 'Egresos de caja (fondo y otros)');
     expect(egRow.row[1]).toBe('omitido');
-    expect(egRow.row[2]).toBe(500);   // importe oficial
-    expect(egRow.row[3]).toBe(0);     // incluido en personalizado
-    expect(egRow.row[4]).toBe(500);   // diferencia por concepto
+    expect(egRow.row[2]).toBe(500);    // importe oficial
+    expect(egRow.row[3]).toBe(0);      // incluido en personalizado
+    expect(egRow.row[4]).toBe(-500);   // dif. importe = pers. − ofi.
+    expect(egRow.row[5]).toBe(500);    // efecto FIRMADO sobre el esperado
+    expect(egRow.row[6]).toBe('CUP');  // base monetaria
+    // La fórmula viva del efecto: (personalizado − oficial) × signo −1:
+    const fEfecto = String(cell(wb.Sheets['Auditoría']!, `F${egRow.idx + 1}`).f ?? '');
+    expect(fEfecto).toBe(`(D${egRow.idx + 1}-C${egRow.idx + 1})*-1`);
   });
 
   it('REGRESIÓN signo de la fórmula: 2 000 + 12 000 − 3 000 − 500 = 10 500 (antes evaluaba 23 500)', async () => {
@@ -365,13 +371,19 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     expect(rs.some(r => String(r[0] ?? '').startsWith('Ventas incluidas: 2 de 3'))).toBe(true);
     // La fila oculta no deja huecos: el importe de la venta excluida no aparece:
     expect(rs.some(r => String(r[3] ?? '') === '10000')).toBe(false);
-    // La hoja «Auditoría» separa la diferencia por ventas de la de conceptos
+    // La hoja «Auditoría» separa el efecto de ventas del de conceptos
     // (la venta excluida permanece en el universo oficial — misión §5.2):
     const aud = rows(wb.Sheets['Auditoría']!);
-    const dv = findRow(aud, 'Diferencia por ventas excluidas de la selección');
-    expect(dv.row[2]).toBe(10000);
-    const dc = findRow(aud, 'Diferencia por conceptos desactivados');
+    const dv = findRow(aud, 'Efecto de ventas excluidas de la selección (independiente)');
+    expect(dv.row[2]).toBe(-10000);
+    const dc = findRow(aud, 'Efecto de conceptos desactivados (firmado, independiente)');
     expect(dc.row[2]).toBe(0);
+    // CONVENCIÓN (misión P1 §2): diferencia total = personalizado − oficial:
+    const dt = findRow(aud, 'DIFERENCIA TOTAL del efectivo esperado (personalizado − oficial)');
+    expect(dt.row[2]).toBe(-10000);
+    // El estado tri-estado NO dice «Conciliado»: hay diferencias explicadas:
+    const est = findRow(aud, 'Estado');
+    expect(est.row[2]).toBe('Diferencias explicadas por la configuración');
     // El oficial de referencia queda íntegro (10 500): no se recalcula con la
     // selección ni con los conceptos:
     const eo = findRow(aud, 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)');
@@ -393,5 +405,129 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     expect(findRow(rs, 'Ventas en efectivo').row[3]).toBe(2000);
     expect(findRow(rs, 'Efectivo esperado (personalizado)').row[3]).toBe(500);
     // La vista previa usa el MISMO builder del PDF (mismo ctx) → idéntico.
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MISIÓN P1 §6 · CASO E — FORMATOS: vista, vista previa, PDF, impresión y
+// Excel muestran EXACTAMENTE los mismos signos, importes, bases monetarias y
+// estado de auditoría (Caso A: egreso omitido ⇒ +500). La impresión y la
+// vista previa consumen el MISMO builder del PDF; el Excel se RECALCULA.
+// ═══════════════════════════════════════════════════════════════════════════
+describe('CASO E · integridad de formatos (signos, importes, bases y estado)', () => {
+  const conceptsA = { ...DEFAULT_SUMMARY_CONCEPTS, egresosCaja: false };
+
+  /** Evalúa fórmulas del anexo: `D5-C5`, `(D5-C5)*-1`, `C12-SUM(F3:F14)`. */
+  function evalAuditFormula(f: string, ws: XLSX.WorkSheet): number {
+    const val = (ref: string) => Number(((ws[ref] ?? {}) as Record<string, unknown>).v ?? 0);
+    const mSum = f.match(/^C(\d+)-SUM\(F(\d+):F(\d+)\)$/);
+    if (mSum) {
+      let acc = val(`C${mSum[1]}`);
+      for (let r = Number(mSum[2]); r <= Number(mSum[3]); r += 1) acc -= val(`F${r}`);
+      return acc;
+    }
+    const mEfecto = f.match(/^\(D(\d+)-C(\d+)\)\*(-?\d+)$/);
+    if (mEfecto) return (val(`D${mEfecto[1]}`) - val(`C${mEfecto[2]}`)) * Number(mEfecto[3]);
+    const mDif = f.match(/^D(\d+)-C(\d+)$/);
+    if (mDif) return val(`D${mDif[1]}`) - val(`C${mDif[2]}`);
+    throw new Error(`fórmula no soportada por el evaluador: ${f}`);
+  }
+
+  it('PDF (Diario): convención +500 visible, base y estado tri-estado', async () => {
+    await buildCashReportPdf(buildContext({ concepts: conceptsA }), SUMMARIES);
+    const t = allTexts();
+    // Convención documentada en el anexo (misión P1 §2):
+    expect(t).toContain('diferencia = personalizado − oficial');
+    // Diferencia total y efecto del egreso con signo EXPLÍCITO +500:
+    expect(t).toContain('+500,00');
+    // Dif. de importe de la partida con signo −500 (pers. − ofi.):
+    expect(t).toContain('-500,00');
+    // Importes normativos del Caso A en el MISMO documento:
+    expect(t).toContain('11.000,00'); // personalizado
+    expect(t).toContain('10.500,00'); // oficial
+    // Columnas del anexo: efecto firmado y base monetaria (misión P1 §3):
+    expect(t).toContain('Efecto en esperado');
+    expect(t).toContain('Dif. importe');
+    // Estado tri-estado (NO «Conciliado»):
+    expect(t).toContain('Diferencias explicadas por la configuración');
+    expect(t).not.toContain('Estado: Conciliado');
+  });
+
+  it('Excel: mismos signos e importes que el PDF; fórmulas vivas recalculan EXACTO', async () => {
+    const { wb } = await buildCashReportExcelWorkbook(buildContext({ concepts: conceptsA }), SUMMARIES, new Map());
+    const aud = rows(wb.Sheets['Auditoría']!);
+    const ws = wb.Sheets['Auditoría']!;
+    // Misma convención visible:
+    expect(aud.some(r => String(r[0] ?? '') === 'Convención de signos:')).toBe(true);
+    // Fila del egreso: −500 de importe, +500 de efecto, base CUP:
+    const egRow = findRow(aud, 'Egresos de caja (fondo y otros)');
+    expect(egRow.row[4]).toBe(-500);
+    expect(egRow.row[5]).toBe(500);
+    expect(egRow.row[6]).toBe('CUP');
+    // Diferencia total = personalizado − oficial = +500:
+    const dt = findRow(aud, 'DIFERENCIA TOTAL del efectivo esperado (personalizado − oficial)');
+    expect(dt.row[2]).toBe(500);
+    // RECALCULO en vivo (misión §6-E: «abre y recalcula el Excel»):
+    //  · fórmula de dif. importe (D − C):
+    const fDif = String(cell(ws, `E${egRow.idx + 1}`).f ?? '');
+    expect(evalAuditFormula(fDif, ws)).toBe(-500);
+    //  · fórmula de efecto firmado ((D − C) × signo):
+    const fEfecto = String(cell(ws, `F${egRow.idx + 1}`).f ?? '');
+    expect(evalAuditFormula(fEfecto, ws)).toBe(500);
+    //  · VERIFICACIÓN INDEPENDIENTE: total − Σ efectos del detalle = 0
+    //    (NO la identidad tautológica anterior):
+    const ver = findRow(aud, 'Verificación: diferencia total − Σ efectos del detalle = 0');
+    const fVer = String(cell(ws, `C${ver.idx + 1}`).f ?? '');
+    expect(fVer).toMatch(/^C\d+-SUM\(F\d+:F\d+\)$/);
+    expect(evalAuditFormula(fVer, ws)).toBe(0);
+    // El residuo del MODELO también es 0 (verificación no tautológica §4):
+    expect(findRow(aud, 'Diferencia no explicada (residuo independiente)').row[2]).toBe(0);
+    // Mismo estado que el PDF:
+    expect(findRow(aud, 'Estado').row[2]).toBe('Diferencias explicadas por la configuración');
+    // Mismos importes normativos del Caso A:
+    expect(findRow(aud, 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)').row[2]).toBe(10500);
+    expect(findRow(aud, 'Efectivo esperado PERSONALIZADO (conceptos activos)').row[2]).toBe(11000);
+  });
+
+  it('Excel: la verificación viva ABRE si el detalle dejara de explicar el total (no tautológica)', async () => {
+    // Sabotaje controlado del libro exportado: alteramos el importe oficial del
+    // egreso (C) SIN tocar su efecto (F, fórmula viva que recalcula) ⇒ al
+    // recalcular, la verificación total − Σ efectos debe abrir ≠ 0.
+    const { wb } = await buildCashReportExcelWorkbook(buildContext({ concepts: conceptsA }), SUMMARIES, new Map());
+    const ws = wb.Sheets['Auditoría']!;
+    const aud = rows(wb.Sheets['Auditoría']!);
+    const egRow = findRow(aud, 'Egresos de caja (fondo y otros)');
+    const dt = findRow(aud, 'DIFERENCIA TOTAL del efectivo esperado (personalizado − oficial)');
+    const ver = findRow(aud, 'Verificación: diferencia total − Σ efectos del detalle = 0');
+    // El efecto firmado del egreso recalcula con el C sabotado (D − C) × −1:
+    ws[`C${egRow.idx + 1}`] = { ...ws[`C${egRow.idx + 1}`] as Record<string, unknown>, v: 600 };
+    // D − C = 0 − 600 = −600 ⇒ efecto = (−600) × −1 = +600 ⇒ Σ efectos = +600.
+    // total (celda C de «DIFERENCIA TOTAL», sin fórmula: valor del modelo) = +500.
+    const fVer = String(cell(ws, `C${ver.idx + 1}`).f ?? '');
+    const val = (ref: string) => Number(((ws[ref] ?? {}) as Record<string, unknown>).v ?? 0);
+    const mSum = fVer.match(/^C(\d+)-SUM\(F(\d+):F(\d+)\)$/)!;
+    let efectos = 0;
+    for (let r = Number(mSum[2]); r <= Number(mSum[3]); r += 1) {
+      const fCell = String((ws[`F${r}`] ?? {} as Record<string, unknown>).f ?? '');
+      efectos += fCell ? evalLocal(fCell) : val(`F${r}`);
+    }
+    function evalLocal(fx: string): number {
+      const m = fx.match(/^\(D(\d+)-C(\d+)\)\*(-?\d+)$/)!;
+      return (val(`D${m[1]}`) - val(`C${m[2]}`)) * Number(m[3]);
+    }
+    expect(efectos).toBe(600);        // el detalle recalculado explica +600…
+    expect(val(`C${dt.idx + 1}`)).toBe(500); // …pero el total del modelo es +500
+    expect(val(`C${dt.idx + 1}`) - efectos).toBe(-100); // ⇒ verificación ABRE ≠ 0
+  });
+
+  it('plantilla Estándar: MISMA convención y estado en su anexo (impresión = PDF)', async () => {
+    await buildCashReportPdf(buildContext({ concepts: conceptsA, template: 'estandar' }), SUMMARIES);
+    const t = allTexts();
+    expect(t).toContain('ANEXO DE AUDITORÍA');
+    expect(t).toContain('diferencia = personalizado − oficial');
+    // formatCurrency (es-CU) antepone $ — el signo + sigue siendo explícito:
+    expect(t).toContain('+$500.00');
+    expect(t).toContain('Diferencias explicadas por la configuración');
+    expect(t).not.toContain('Estado: Conciliado');
   });
 });
