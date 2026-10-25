@@ -106,7 +106,7 @@ function makeQuery(rowsFor: (table: string) => Row[]) {
           const vals = raw
             ? raw.split(',').map((s: string) => s.replace(/^"|"$/g, ''))
             : [];
-          filters.push(r => !vals.includes(r[_col]));
+          filters.push(r => !vals.includes(r[_col] as string));
         }
         return q;
       },
