@@ -550,3 +550,138 @@ Reversible vía tabla de archivo.
 | Secretos en archivos nuevos | 0 coincidencias | — |
 | Live E2E (aislado, aparte) | 14/14 PASS | 0 |
 | Build local | NOT RUN-completo (OOM sandbox 4GB, limitación documentada; CI con 4096) | — |
+
+## 16. Ciclo 4 — Activación productiva post-merge (SuperAdmin admin@demo.com)
+
+**Contexto:** el propietario fusionó el PR #1482 (2026-10-25 11:26:56 UTC, merge
+commit `f265fb692` por Nardian90; head del PR `4ccb3cef7` con CI 8/8 SUCCESS) y
+ordenó explícitamente activar a `admin@demo.com` como SuperAdmin de organizaciones
+y comenzar una rama nueva. La activación ya estaba codificada en la migración
+`20261026120000` §6 (fusionada); lo que faltaba era aplicarla a producción junto
+con el despliegue del código (nota de despliegue de la propia migración:
+migración y código JUNTOS).
+
+### 16.1 Estado pre-activación verificado (READ-ONLY, evidencia c4_preflight_prod.json)
+
+- `admin@demo.com`: `role='admin'`, `tenant_id=5364ccf8…` (Vitallcons),
+  `active_store_id=5e6fe821…`, 2 membresías de tienda activas.
+- `is_superadmin()`: INEXISTENTE en producción (PGRST202 404). Migraciones
+  120000/130000/140000: no aplicadas. Tabla de archivo §8.2: inexistente.
+- Precondiciones verificadas: enum `user_role` ya incluye `superadmin`;
+  funciones referenciadas (`current_user_tenant_id`, `validate_tenant_access`,
+  `has_store_access`, `managed_*`, `validate_payment_transactions_invariants`)
+  presentes; policies vigentes de `tenants`/`stores` con los nombres EXACTOS que
+  las migraciones reemplazan (`tenants_select_own_or_admin`,
+  `tenants_select_own_or_store_member`, `tenants_{insert,update,delete}_*`,
+  `stores_tenant_select`).
+- Kit de rollback/evidencia capturado: definiciones completas de policies
+  (qual/with_check), cuerpos de `is_admin`/`managed_*`, perfil y membresías de
+  `admin@demo.com`, conteos de 10 tablas.
+- Residuos `payment_transactions`: exactamente **33** (sin cambios desde §8.2):
+  23 CUP (680 400 CUP) + 10 USD (5 000 USD ≡ 4 050 000 CUP al tipo registrado) =
+  **4 730 400 CUP** equivalentes; 32 `ref_type=cash_flow` (todas con documento
+  padre inexistente) + 1 `service`; 6 tiendas huérfanas distintas; rango de
+  creación 2026-10-23 06:31–15:56 UTC. Las 799 filas VÁLIDAS suman
+  65 743 380.97 CUP y no se relacionan con los residuos.
+
+### 16.2 Aplicación productiva (Management API del propietario, wthkddeleylijmonclxg)
+
+Cada archivo aplicado como UNA query (transacción implícita atómica), con
+verificación inmediata tras cada uno (evidencia c4_aplicacion_prod.json):
+
+1. `20261026120000` — OK. Verificado: `admin@demo.com` → `role='superadmin'`,
+   `tenant_id` CONSERVADO, `store_id/active_store_id` = NULL, **0 membresías**
+   (§6 las retira; 6→4 en la tabla), `is_superadmin()` creada,
+   `assign_user_organization` creada (anti-spoofing H-7, ACL service_role),
+   trigger `trg_membership_tenant_consistency` activo.
+2. `20261026130000` — OK. Las 4 RPC `managed_*` portan las guardas
+   `ERR_PLATFORM_ROLE`/`ERR_PLATFORM_ACCOUNT_PROTECTED` (verificado en
+   `pg_get_functiondef`).
+3. `20261026140000` — OK. Las 5 policies de `tenants` referencian
+   `is_superadmin()` (INSERT/DELETE solo SuperAdmin; UPDATE SuperAdmin o owner).
+
+**NO se aplicó `20261026150000`** (archivo+purga de las 33 filas): su aplicación
+productiva es la decisión irreversible que el propietario solicitó diferir hasta
+recibir la explicación de efectos (entregada; ver §16.5).
+
+### 16.3 Despliegue del código
+
+- Rama de trabajo: `cp-org-001-ciclo4-activacion-superadmin` (desde `main`
+  `f265fb692`), según instrucción del propietario.
+- Re-despliegue: reinicio de pm2 con `main` fusionado (migración+código juntos,
+  como exige la nota de despliegue). `GET /` → HTTP 200;
+  `GET /api/organizations` anónimo → **401 «Se requiere sesión activa»**
+  (guard de la ruta viva en el código desplegado).
+- Ventana de riesgo documentada en la nota de despliegue (migración aplicada
+  mientras el código anterior seguía sirviendo) cerrada en <2 minutos con el
+  reinicio; sin queja de usuario posible (ventana de plataforma de una sola
+  cuenta).
+
+### 16.4 Estado post-activación (READ-ONLY)
+
+- Perfil `admin@demo.com`: `superadmin`, activo, sin baja lógica, `tenant_id`
+  conservado por diseño (evita regresiones de visibilidad en policies que aún
+  comparan tenant).
+- Distribución de roles (22 perfiles, 11 vivos): superadmin=1 (única),
+  admin=1, tenant_admin=1, encargado=3, costo=3, clerk=1, warehouse=1.
+- Tiendas protegidas: ENERVIDA-VITALLCONS y Puerto Padre VITALLCONS activas e
+  intactas. Tenants: Vitallcons (owner=admin@demo.com) y WAC Test Tenant.
+- Conteos: SOLO `user_store_memberships` cambió 6→4 (esperado por §6; eran las
+  2 membresías de admin@demo.com). profiles=22, stores=2, tenants=2,
+  transactions=894, payment_transactions=832, cash_flow_documents=2,
+  receipts=76, products=221 — sin cambios.
+- Residuos: 33 (intactos, deliberadamente).
+
+### 16.5 Las 33 filas — explicación y estado de la decisión
+
+**Para un usuario (resumen):** son 33 registros de pagos que quedaron apuntando
+a tiendas de PRUEBA que fueron borradas en la limpieza del 26/10. No aparecen
+en ningún informe, en ningún saldo y ningún usuario puede verlos: son «peso
+muerto» invisible en la base de datos. Si el dueño aprueba, la migración ya
+fusionada los COPIA primero a una tabla de archivo (solo acceso administrativo)
+y luego los elimina; además añade la regla de integridad que evita que vuelva a
+ocurrir. Si no se aprueba, no pasa nada hoy: siguen invisibles; el único coste
+de conservarlos es que ciertas consultas SQL crudas «SUMAR TODO» darían una
+cifra inflada en 4 730 400 CUP que no corresponde a dinero real.
+
+**Para un técnico:** `payment_transactions.store_id` carecía de FK (defecto de
+esquema frente a sus hermanas `transactions.store_id` y
+`cash_flow_documents.store_id`, ambas `ON DELETE CASCADE`). Al eliminarse las
+tiendas QA, las hermanas murieron por CASCADE y las 33 sobrevivieron como
+residuos: `store_id` inexistente (6 valores distintos), 32 con `ref_type=cash_flow`
+cuyo documento padre también murió, 1 `service`; `transaction_id` NULL (0/33
+vínculos con ventas); RLS las oculta (`has_store_access` de tienda inexistente =
+false); los 5 agregadores de caja son por-tienda y no las alcanzan; 0 consultas
+cliente. Suma 4 730 400 CUP equivalentes (680 400 CUP + 5 000 USD ≡ 4 050 000 CUP)
+FUERA de todo saldo vivo; las 799 filas válidas (65 743 380.97 CUP) no se tocan.
+
+**Efectos de aprobar el borrado (`20261026150000`, ya en main):**
+(1) las 33 se archivan en `payment_transactions_purga_20261026_archive` (RLS sin
+policies: solo service_role/postgres — reversibilidad y evidencia completa);
+(2) se purgan vía `app.restore_mode` documentado del trigger (el trigger NO se
+desactiva; solo postgres/supabase_admin puede ejecutarla);
+(3) se añade la FK `store_id→stores(id) ON DELETE CASCADE` idempotente;
+(4) verificación DO exige 0 residuos y FK presente. Validada en E2E aislado con
+escenario fiel (39 residuos análogos purgados; idempotente en re-ejecución).
+Impacto contable del borrado: NINGUNO (nada las cuenta). Impacto de NO borrar:
+ninguno funcional hoy; el defecto de esquema permanece y futuros borrados de
+tienda podrían dejar residuos nuevos. La operación es reversible vía tabla de
+archivo; lo único irreversible sería borrar la tabla de archivo después.
+
+**Estado:** explicación entregada al propietario (2026-10-25). **Decisión
+PENDIENTE**: aplicar `20261026150000` a producción requiere su aprobación
+explícita; no se ejecutó en este ciclo.
+
+### 16.6 Veredicto actualizado por dimensión
+
+| Dimensión | Estado ciclo 3 | Estado ciclo 4 |
+|---|---|---|
+| Cierre técnico | CERRADO (tsc 0, lint 0, suite 4011/0, gates verdes) | CERRADO (sin cambios de código) |
+| Cierre funcional (creación de organizaciones) | CERRADO EN AISLADO (14/14 live E2E) | **ACTIVADO EN PRODUCCIÓN** (admin@demo.com = SuperAdmin; vista SISTEMA→Organizaciones operativa: crear/renombrar/borrar con RLS platform-only) |
+| Integración | PREPARADO (CI 8/8 del SHA final) | **COMPLETADO** — PR #1482 merged (`f265fb692`, 2026-10-25 11:26 UTC por Nardian90) |
+| Activación productiva | PENDIENTE DEL PROPIETARIO | **EJECUTADA** — migraciones 120000+130000+140000 aplicadas atómicamente y verificadas; código desplegado junto (pm2, main) |
+| Protección de plataforma | PREPARADA | **VIVA** — superadmin solo gestionable por superadmin; tenants CRUD solo SuperAdmin/owner; invariante de empresa única en trigger |
+| Residuos payment_transactions (33) | Clasificados + corrección preparada | **DECISIÓN PENDIENTE** del propietario (migración 20261026150000 en main, no aplicada) |
+
+Producción no recibió ninguna otra escritura fuera del paquete de activación
+descrito en §16.2. Las verificaciones de §16.1 y §16.4 fueron read-only.
