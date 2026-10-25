@@ -134,7 +134,8 @@ describe('captureInformalToday — captura informal unificada (Diviza)', () => {
     });
     const seen: Array<{ url: string; prefer?: string }> = [];
     globalThis.fetch = vi.fn(async (url: string | URL, init?: RequestInit) => {
-      seen.push({ url: String(url), prefer: init?.headers?.['Prefer'] as string | undefined });
+      const headers = (init?.headers ?? {}) as Record<string, string>;
+      seen.push({ url: String(url), prefer: headers['Prefer'] });
       return jsonResponse(200, [{}]);
     }) as any;
 
