@@ -144,8 +144,11 @@ BEGIN
 END;
 $function$;
 
-REVOKE EXECUTE ON FUNCTION public.managed_update_user FROM anon;
-GRANT EXECUTE ON FUNCTION public.managed_update_user TO authenticated;
+-- CP-ORG-001: ACL CERTIFICADA (REM-INV-6, patrón 20260916000002): solo
+-- service_role ejecuta estas RPC — las rutas API van con clave de
+-- servicio. El acceso directo de authenticated queda revocado (endurece
+-- la postura; antes esta migración re-grantaba authenticated por error).
+REVOKE EXECUTE ON FUNCTION public.managed_update_user FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.managed_update_user TO service_role;
 
 COMMENT ON FUNCTION public.managed_update_user IS
@@ -209,8 +212,11 @@ BEGIN
 END;
 $function$;
 
-REVOKE EXECUTE ON FUNCTION public.managed_toggle_user_status FROM anon;
-GRANT EXECUTE ON FUNCTION public.managed_toggle_user_status TO authenticated;
+-- CP-ORG-001: ACL CERTIFICADA (REM-INV-6, patrón 20260916000002): solo
+-- service_role ejecuta estas RPC — las rutas API van con clave de
+-- servicio. El acceso directo de authenticated queda revocado (endurece
+-- la postura; antes esta migración re-grantaba authenticated por error).
+REVOKE EXECUTE ON FUNCTION public.managed_toggle_user_status FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.managed_toggle_user_status TO service_role;
 
 COMMENT ON FUNCTION public.managed_toggle_user_status IS
@@ -305,8 +311,11 @@ BEGIN
 END;
 $function$;
 
-REVOKE EXECUTE ON FUNCTION public.managed_soft_delete_user FROM anon;
-GRANT EXECUTE ON FUNCTION public.managed_soft_delete_user TO authenticated;
+-- CP-ORG-001: ACL CERTIFICADA (REM-INV-6, patrón 20260916000002): solo
+-- service_role ejecuta estas RPC — las rutas API van con clave de
+-- servicio. El acceso directo de authenticated queda revocado (endurece
+-- la postura; antes esta migración re-grantaba authenticated por error).
+REVOKE EXECUTE ON FUNCTION public.managed_soft_delete_user FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.managed_soft_delete_user TO service_role;
 
 COMMENT ON FUNCTION public.managed_soft_delete_user IS
@@ -361,8 +370,11 @@ BEGIN
 END;
 $function$;
 
-REVOKE EXECUTE ON FUNCTION public.managed_reset_password FROM anon;
-GRANT EXECUTE ON FUNCTION public.managed_reset_password TO authenticated;
+-- CP-ORG-001: ACL CERTIFICADA (REM-INV-6, patrón 20260916000002): solo
+-- service_role ejecuta estas RPC — las rutas API van con clave de
+-- servicio. El acceso directo de authenticated queda revocado (endurece
+-- la postura; antes esta migración re-grantaba authenticated por error).
+REVOKE EXECUTE ON FUNCTION public.managed_reset_password FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.managed_reset_password TO service_role;
 
 COMMENT ON FUNCTION public.managed_reset_password IS

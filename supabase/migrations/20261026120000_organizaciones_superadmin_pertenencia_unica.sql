@@ -378,5 +378,9 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.assign_user_organization(uuid, uuid, uuid, boolean) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.assign_user_organization(uuid, uuid, uuid, boolean) TO authenticated, service_role;
+-- CORRECCIÓN CP-ORG-001: ACL CERTIFICADA (patrón REM-INV-6): solo
+-- service_role (rutas API con clave de servicio) ejecuta la RPC. El
+-- enlace anti-spoofing H-7 a auth.uid() permanece como defensa en
+-- profundidad si el grant cambiara en el futuro.
+REVOKE EXECUTE ON FUNCTION public.assign_user_organization(uuid, uuid, uuid, boolean) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.assign_user_organization(uuid, uuid, uuid, boolean) TO service_role;
