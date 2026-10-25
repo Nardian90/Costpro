@@ -51,7 +51,7 @@ import { BackToVentaButton } from '@/components/ui/BackToVentaButton';
 import { LoadMoreIndicator } from './LoadMoreIndicator';
 import { POSExpressMode } from './POSExpressMode';
 import { OfflineStatusIndicator } from './OfflineStatusIndicator';
-import { Zap, History } from 'lucide-react';
+import { Zap, History, Coins } from 'lucide-react';
 // MISIÓN CARRITO-VENTAS (2026-10-23): panel del carrito redimensionable —
 // un solo dueño del estado (ancho + arrastre) para sidebar y padding.
 import { useCartPanelResize, CART_PANEL_GAP } from './useCartPanelResize';
@@ -63,6 +63,11 @@ import { usePOSServerSearch } from '@/hooks/api/usePOSServerSearch';
 // MISIÓN-TASAS (2026-10-17): confirmación diaria de tasas al abrir el carrito
 import { useDailyRatesConfirmation } from '@/hooks/api/useDailyRatesConfirmation';
 import RatesConfirmationModal from './RatesConfirmationModal';
+// UX-TASAS (2026-10-26): acceso directo al modal REAL de tasas (StoreRatesModal)
+// desde el header de Vender — mismo componente que el botón «Tasas» del ítem
+// del carrito y que la acción «Revisar o actualizar tasas» de la confirmación
+// diaria. Sin segunda implementación.
+import StoreRatesModal from './StoreRatesModal';
 
 export default function POSView() {
   const { user } = useAuthStore();
@@ -233,8 +238,11 @@ export default function POSView() {
   // FIX (2026-07-23): escaneo directo a cámara sin paso intermedio
   const [showCameraDirect, setShowCameraDirect] = useState(false);
   const [selectedProductForVariants, setSelectedProductForVariants] = useState<Product | null>(null);
-  // POS-3b EM-1: Modo Cajero Express (layout full-screen alternativo).
   const [expressMode, setExpressMode] = useState(false);
+  // UX-TASAS (2026-10-26): apertura del modal de tasas desde el header (junto a
+  // Historial). Reutiliza StoreRatesModal — el mismo del botón «Tasas» del
+  // carrito. Disponible también con el carrito vacío.
+  const [showStoreRates, setShowStoreRates] = useState(false);
 
   // ESTÁNDAR: si se navegó al POS desde "Duplicar venta", abrir carrito automáticamente
   const { forceOpenCart, setForceOpenCart, setCurrentView } = useUIStore();
@@ -563,6 +571,32 @@ export default function POSView() {
                   Ventas" del hub (view 'sales'); "Registro" era un 3er nombre huérfano. */}
               <span className="hidden sm:inline">Historial</span>
             </button>
+            {/* UX-TASAS (2026-10-26): botón «Tasas» inmediatamente después de
+                «Historial» (orden visual: Historial | Tasas). Abre el MISMO
+                StoreRatesModal del botón Tasas del carrito (reutilización, no
+                segunda implementación) y funciona con el carrito vacío.
+                PERMISOS: se presenta solo a quien ya puede gestionar las tasas
+                (dailyRates.canManageRates = canManageStore, idéntico al gate de
+                «Revisar o actualizar tasas» del diálogo de confirmación diaria
+                y al POST /api/store-rates server-side). El botón NO concede
+                permisos nuevos: el servidor sigue aplicando canViewStore (GET)
+                y canManageStore (POST) sobre store_exchange_rates.
+                Visual: mismo sistema que los botones vecinos (h-11, rounded-xl,
+                border-2, uppercase tracking-widest); icon-only en móvil (<sm)
+                como Historial/Express/Reporte Entrega. Abrir/cerrar sin guardar
+                NO altera carrito, importes ni tasas activas. */}
+            {dailyRates.canManageRates && (
+            <button
+              type="button"
+              onClick={() => setShowStoreRates(true)}
+              className="inline-flex items-center justify-center gap-1.5 h-11 min-h-[44px] min-w-[44px] px-3 sm:px-4 rounded-xl border-2 border-amber-500/30 bg-amber-500/5 text-amber-500 font-black text-xs uppercase tracking-widest hover:bg-amber-500/10 hover:border-amber-500/50 transition-all active:scale-95"
+              aria-label="Consultar o actualizar tasas de cambio"
+              title="Consultar o actualizar las tasas de cambio de la tienda (USD/EUR/MLC)"
+            >
+              <Coins className="w-4 h-4" />
+              <span className="hidden sm:inline">Tasas</span>
+            </button>
+            )}
           </div>
         </div>
         {/* POS-2 MM-6: Widget de estado de caja siempre visible en el header del POS.
@@ -615,6 +649,17 @@ export default function POSView() {
           onConfirm={dailyRates.confirm}
           onContinueWithoutConfirm={dailyRates.dismiss}
           canManageRates={dailyRates.canManageRates}
+        />
+
+        {/* UX-TASAS (2026-10-26): modal REAL de tasas abierto desde el header
+            (junto a Historial). Mismo componente compartido del botón Tasas
+            del carrito: carga las vigentes al abrir (GET /api/store-rates),
+            guarda solo con acción explícita del usuario (POST) y re-tasa el
+            carrito con el mecanismo ya existente. Abrir y cerrar sin guardar
+            no toca carrito, importes, conversiones ni registros. */}
+        <StoreRatesModal
+          open={showStoreRates}
+          onClose={() => setShowStoreRates(false)}
         />
 
         {/* FIX-EXCHANGE-VALIDATION (2026-07-06): modal custom de advertencia de tasa */}
