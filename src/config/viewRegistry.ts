@@ -130,7 +130,7 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     id: "organizations",
     route: "/?view=organizations",
     description: "Administración de las empresas (organizaciones) que agrupan tiendas y usuarios.",
-    actions: ["create_organization", "edit_organization", "assign_user_organization"]
+    actions: ["create_organization", "edit_organization", "view_organization_detail", "delete_organization"]
   },
   {
     id: "stores",

@@ -29,13 +29,32 @@ const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   store_id: uuidLoose.optional(),
-  role: z.enum(['admin', 'superadmin', 'manager', 'clerk', 'warehouse', 'encargado', 'usuario', 'costo']).optional(),
+  // CP-ORG-001: 'tenant_admin' añadido — el filtro de rol de la vista de
+  // usuarios lo ofrece (es un rol real del enum user_role, no de plataforma).
+  role: z.enum(['admin', 'superadmin', 'tenant_admin', 'manager', 'clerk', 'warehouse', 'encargado', 'usuario', 'costo']).optional(),
   search: z.string().min(1).max(100).optional(),
   is_active: z.enum(['true', 'false']).optional(),
   // MISIÓN ORGANIZACIONES (2026-10-26): filtro por empresa + «sin asignar».
   tenant_id: uuidLoose.optional(),
   unassigned: z.enum(['true']).optional(),
 });
+
+/**
+ * CP-ORG-001: sanea el término de búsqueda antes de incrustarlo en la
+ * expresión .or() de PostgREST. La cadena de .or() es sintaxis cruda
+ * («col.op.val,col.op.val») — un valor con comas, paréntesis o comillas
+ * permitiría romper la expresión o inyectar condiciones adicionales.
+ * Los caracteres peligrosos para el PARSER se eliminan; los comodines %
+ * y _ se conservan (son funcionalidad legítima de búsqueda) y el valor
+ * completo se envuelve en comillas dobles — el escape documentado de
+ * PostgREST, que protege puntos, espacios, guiones y @ de nombres/correos.
+ */
+function sanitizeSearchTerm(raw: string): string {
+  return raw
+    .replace(/[(),\\"']/g, '')
+    .trim()
+    .slice(0, 100);
+}
 
 const PROFILE_COLUMNS = 'id, full_name, email, role, role_id, active_store_id, logo_url, is_active, store_id, created_at, plan, tenant_id, deleted_at';
 
@@ -124,7 +143,13 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     query = query.eq('role', role);
   }
   if (search) {
-    query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+    const term = sanitizeSearchTerm(search);
+    // CP-ORG-001: término saneado + valor entrecomillado (escape oficial de
+    // PostgREST); si el saneamiento lo vacía, no se aplica el filtro de
+    // texto (no queda nada que buscar).
+    if (term) {
+      query = query.or(`full_name.ilike."%${term}%",email.ilike."%${term}%"`);
+    }
   }
   if (is_active === 'true') {
     query = query.eq('is_active', true);
@@ -136,7 +161,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
   if (error) {
     logger.error('DATABASE', 'LIST_USERS_FAILED', { error: error.message, userId: session.user.id });
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // CP-ORG-001: no se expone el mensaje interno del proveedor al cliente.
+    return NextResponse.json({ error: 'No se pudieron cargar los usuarios' }, { status: 500 });
   }
 
   // Fetch memberships for each user (separate query to avoid column cache issues)

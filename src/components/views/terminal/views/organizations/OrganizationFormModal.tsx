@@ -100,7 +100,7 @@ export function OrganizationFormModal({ open, onOpenChange, organization }: Orga
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={() => setTouched(true)}
-            maxLength={220}
+            maxLength={200}
             placeholder="p. ej. Grupo Comercial Enervida"
             aria-required="true"
             aria-invalid={!!nameError}

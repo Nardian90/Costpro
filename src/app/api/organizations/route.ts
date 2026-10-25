@@ -43,6 +43,17 @@ const createOrganizationSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
+/**
+ * CP-ORG-001: sanea el nombre para el chequeo de duplicados por ilike.
+ * Sin escapar, un nombre con '%' o '_' (p. ej. «100%») coincide con CUALQUIER
+ * organización que comparta prefijo → falsos positivos de duplicado que
+ * bloqueaban creaciones legítimas. Los comodines se eliminan: la detección
+ * de duplicados es LITERAL.
+ */
+function escapeIlikeLiteral(raw: string): string {
+  return raw.replace(/[\\%_*]/g, '');
+}
+
 type SupabaseAdmin = NonNullable<ReturnType<typeof getSupabaseAdmin>>;
 
 async function countUnassigned(admin: SupabaseAdmin): Promise<number> {
@@ -120,6 +131,48 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   // Alcance: SuperAdmin = todas; admin = solo la suya.
   const scopeTenantId = isSuperAdmin ? null : callerTenantId;
 
+  // CP-ORG-001: el filtro has_stores se resuelve ANTES de paginar — antes
+  // se filtraba la PÁGINA en memoria y pagination.total quedaba con el total
+  // SIN filtrar (contador incoherente con las filas mostradas).
+  let orgIdsWithStores: string[] | null = null;
+  if (has_stores) {
+    const { data: storeTenantRows } = await admin
+      .from('stores')
+      .select('tenant_id')
+      .not('tenant_id', 'is', null);
+    const withStores = new Set(
+      ((storeTenantRows || []) as Array<{ tenant_id: string | null }>)
+        .map(s => s.tenant_id)
+        .filter((t): t is string => !!t)
+    );
+    if (scopeTenantId) {
+      orgIdsWithStores = withStores.has(scopeTenantId) ? [scopeTenantId] : [];
+    } else {
+      orgIdsWithStores = [...withStores];
+    }
+    if (has_stores === 'true' && orgIdsWithStores.length === 0) {
+      // Ninguna organización del alcance tiene tiendas: resultado vacío
+      // honesto con paginación coherente.
+      return NextResponse.json({
+        data: [],
+        pagination: { page, limit, total: 0, totalPages: 0 },
+        summary: {
+          organizations: 0,
+          active_organizations: 0,
+          stores: 0,
+          assigned_users: 0,
+          unassigned_users: 0,
+          scope: isSuperAdmin ? 'all' : 'own',
+        },
+      });
+    }
+    if (has_stores === 'false' && orgIdsWithStores.length === 0) {
+      // Ninguna organización tiene tiendas → «sin tiendas» = todas: no se
+      // necesita filtro (evita un `not.in` con lista vacía, sintaxis frágil).
+      orgIdsWithStores = null;
+    }
+  }
+
   let query = admin
     .from('tenants')
     .select('id, name, owner_id, plan, is_active, created_at, updated_at', { count: 'exact' })
@@ -128,8 +181,17 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   if (scopeTenantId) {
     query = query.eq('id', scopeTenantId);
   }
+  if (orgIdsWithStores) {
+    // has_stores=false → organizaciones SIN tiendas (exclusión del conjunto
+    // con tiendas, resuelta en servidor con la lista acotada del alcance).
+    if (has_stores === 'true') {
+      query = query.in('id', orgIdsWithStores);
+    } else {
+      query = query.not('id', 'in', `(${orgIdsWithStores.map(id => `"${id}"`).join(',')})`);
+    }
+  }
   if (search) {
-    query = query.ilike('name', `%${search}%`);
+    query = query.ilike('name', `%${escapeIlikeLiteral(search)}%`);
   }
   if (status === 'active') {
     query = query.eq('is_active', true);
@@ -150,14 +212,28 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const count = pageRes.count ?? 0;
   const orgIds = orgs.map(o => o.id as string);
 
-  // Recuentos REALES por organización: tiendas y usuarios asignados.
-  const [storesRes, usersRes, ownerRes] = await Promise.all([
-    orgIds.length
-      ? admin.from('stores').select('tenant_id, is_active').in('tenant_id', orgIds)
-      : Promise.resolve({ data: [] as Array<{ tenant_id: string | null; is_active: boolean }> }),
-    orgIds.length
-      ? admin.from('profiles').select('tenant_id').in('tenant_id', orgIds).is('deleted_at', null)
-      : Promise.resolve({ data: [] as Array<{ tenant_id: string | null }> }),
+  // CP-ORG-001: recuentos del ALCANCE COMPLETO (todas las organizaciones del
+  // alcance, no solo la página) — antes los indicadores eran la suma de las
+  // filas de la página actual y cambiaban al navegar (cifra engañosa). Las
+  // filas toman sus recuentos por-organización de estos mismos datos.
+  const scopeStoresQuery = scopeTenantId
+    ? admin.from('stores').select('tenant_id, is_active').eq('tenant_id', scopeTenantId)
+    : admin.from('stores').select('tenant_id, is_active').not('tenant_id', 'is', null);
+  const scopeUsersQuery = scopeTenantId
+    ? admin.from('profiles').select('tenant_id').eq('tenant_id', scopeTenantId).is('deleted_at', null)
+    : admin.from('profiles').select('tenant_id').not('tenant_id', 'is', null).is('deleted_at', null);
+  const scopeOrgsQuery = admin
+    .from('tenants')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_active', true);
+  if (scopeTenantId) {
+    void scopeOrgsQuery.eq('id', scopeTenantId);
+  }
+
+  const [scopeStoresRes, scopeUsersRes, scopeOrgsRes, ownerRes] = await Promise.all([
+    scopeStoresQuery,
+    scopeUsersQuery,
+    scopeOrgsQuery,
     orgIds.length
       ? admin
           .from('profiles')
@@ -167,18 +243,24 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   ]);
 
   const storeCountByOrg = new Map<string, { total: number; active: number }>();
-  for (const s of (storesRes.data || []) as Array<{ tenant_id: string | null; is_active: boolean }>) {
+  let scopeActiveStores = 0;
+  for (const s of (scopeStoresRes.data || []) as Array<{ tenant_id: string | null; is_active: boolean }>) {
     if (!s.tenant_id) continue;
     const entry = storeCountByOrg.get(s.tenant_id) || { total: 0, active: 0 };
     entry.total += 1;
-    if (s.is_active) entry.active += 1;
+    if (s.is_active) {
+      entry.active += 1;
+      scopeActiveStores += 1;
+    }
     storeCountByOrg.set(s.tenant_id, entry);
   }
 
   const userCountByOrg = new Map<string, number>();
-  for (const u of (usersRes.data || []) as Array<{ tenant_id: string | null }>) {
+  let scopeAssignedUsers = 0;
+  for (const u of (scopeUsersRes.data || []) as Array<{ tenant_id: string | null }>) {
     if (!u.tenant_id) continue;
     userCountByOrg.set(u.tenant_id, (userCountByOrg.get(u.tenant_id) || 0) + 1);
+    scopeAssignedUsers += 1;
   }
 
   const ownerNameById = new Map<string, string>();
@@ -186,7 +268,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     ownerNameById.set(o.id, o.full_name);
   }
 
-  let rows = orgs.map(o => ({
+  const rows = orgs.map(o => ({
     id: o.id as string,
     name: o.name as string,
     owner_id: (o.owner_id as string) || null,
@@ -200,24 +282,31 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     users: userCountByOrg.get(o.id as string) || 0,
   }));
 
-  // Filtro por presencia/ausencia de tiendas (recuento real, no decorativo).
-  if (has_stores === 'true') {
-    rows = rows.filter(r => r.stores_total > 0);
-  } else if (has_stores === 'false') {
-    rows = rows.filter(r => r.stores_total === 0);
-  }
-
-  // Indicadores de resumen con alcance explícito (misión FASE 1 §2):
-  // solo recuentos de consultas reales, sin doble contabilización.
+  // Indicadores de resumen con alcance explícito (misión FASE 1 §2): cifras
+  // del ALCANCE completo (independientes de búsqueda/paginación), solo
+  // recuentos de consultas reales, sin doble contabilización.
   const summary: Record<string, string | number> = {
-    organizations: scopeTenantId ? count : count,
-    active_organizations: rows.filter(r => r.is_active).length,
-    stores: rows.reduce((acc, r) => acc + r.stores_active, 0),
-    assigned_users: rows.reduce((acc, r) => acc + r.users, 0),
+    // Organizaciones ACTIVAS en el alcance (recuento directo, no derivado).
+    active_organizations: scopeOrgsRes.count ?? 0,
+    // Tiendas ACTIVAS en el alcance.
+    stores: scopeActiveStores,
+    // Usuarios asignados a alguna organización del alcance.
+    assigned_users: scopeAssignedUsers,
     // Usuarios sin empresa es una cifra GLOBAL de plataforma: solo el
     // SuperAdmin la recibe (un admin ordinario no debe conocerla).
     scope: isSuperAdmin ? 'all' : 'own',
   };
+  // Total de organizaciones del alcance (sin filtros de búsqueda/estado):
+  // describe el ALCANCE; el total de la tabla paginada (con filtros) es
+  // `count` y viaja en pagination.total.
+  if (scopeTenantId) {
+    summary.organizations = 1;
+  } else {
+    const { count: totalOrgs } = await admin
+      .from('tenants')
+      .select('id', { count: 'exact', head: true });
+    summary.organizations = totalOrgs ?? count;
+  }
   summary.unassigned_users = isSuperAdmin ? await countUnassigned(admin) : 0;
 
   return NextResponse.json({
@@ -260,11 +349,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   const name = parsed.data.name.replace(/\s+/g, ' ').trim();
 
-  // Duplicado exacto (case-insensitive) conforme a las restricciones reales.
+  // Duplicado exacto (case-insensitive, LITERAL) conforme a las
+  // restricciones reales. CP-ORG-001: nombre saneado de comodines ilike.
   const { data: dup } = await admin
     .from('tenants')
     .select('id, name')
-    .ilike('name', name)
+    .ilike('name', escapeIlikeLiteral(name))
     .limit(1);
   if (dup && dup.length > 0) {
     return NextResponse.json(

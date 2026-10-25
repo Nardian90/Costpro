@@ -10,7 +10,11 @@ import { z } from 'zod';
 import { uuidLoose } from '@/validation/api-schemas';
 const updateUserSchema = z.object({
   full_name: z.string().min(1).max(200).optional(),
-  role: z.enum(['admin', 'superadmin', 'manager', 'clerk', 'warehouse', 'encargado', 'usuario', 'costo']).optional(),
+  // CP-ORG-001 (2026-10-25): 'superadmin' eliminado del enum del cliente —
+  // el rol de plataforma NUNCA viaja en un payload de edición genérica;
+  // otorgarlo/retirarlo queda reservado a SuperAdmin vía RPC con guardas
+  // (migración 20261026130000). La ruta de edición no es ese mecanismo.
+  role: z.enum(['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'usuario', 'costo']).optional(),
   role_id: uuidLoose.optional().nullable(),
   is_active: z.boolean().optional(),
   max_stores_limit: z.number().int().min(0).max(1000).optional(),
@@ -52,7 +56,10 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
   // Self-access allowed
   const isSelf = userId === session.user.id;
-  const isAdmin = session.user.role === 'admin';
+  // CP-ORG-001: SuperAdmin = alcance global de plataforma (misma capacidad
+  // administrativa que admin; antes caía al camino de membership y recibía
+  // 403/404 al inspeccionar usuarios de otras empresas desde la vista).
+  const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin';
 
   if (!isSelf && !isAdmin) {
     // Check if encargado with membership in same store as target user
@@ -89,8 +96,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
   }
 
-  // Tenant isolation: admin can only see users in their tenant
-  if (isAdmin) {
+  // Tenant isolation: admin can only see users in their tenant.
+  // SuperAdmin: alcance global (sin aislamiento por tenant).
+  if (isAdmin && session.user.role !== 'superadmin') {
     const { data: callerProfile } = await admin
       .from('profiles')
       .select('tenant_id')
@@ -155,7 +163,14 @@ async function patchHandler(req: NextRequest, session: { user: { id: string } })
     if (msg.includes('ERR_SELF_DEACTIVATE_BLOCKED')) return NextResponse.json({ error: 'No puedes desactivar tu propia cuenta' }, { status: 400 });
     if (msg.includes('ERR_UNAUTHORIZED')) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     if (msg.includes('ERR_USER_NOT_FOUND')) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
-    return NextResponse.json({ error: msg }, { status: 400 });
+    // CP-ORG-001: guardas de plataforma con mensajes claros y sin fuga de
+    // detalles internos del servidor.
+    if (msg.includes('ERR_PLATFORM_ROLE')) return NextResponse.json({ error: 'El rol de plataforma SuperAdmin solo puede otorgarlo o retirarlo otro SuperAdmin' }, { status: 403 });
+    if (msg.includes('ERR_PLATFORM_ACCOUNT_PROTECTED')) return NextResponse.json({ error: 'La cuenta SuperAdmin solo puede gestionarla otro SuperAdmin' }, { status: 403 });
+    if (msg.includes('ERR_SELF_ROLE_CHANGE')) return NextResponse.json({ error: 'No puedes cambiar tu propio rol' }, { status: 403 });
+    // Mensaje interno del proveedor NO viaja al cliente (sanitización).
+    logger.error('DATABASE', 'UPDATE_USER_RPC_FAILED', { code: (error as { code?: string }).code, msg: msg.slice(0, 80) });
+    return NextResponse.json({ error: 'No se pudo actualizar el usuario' }, { status: 400 });
   }
 
   // FIX RLS-B4 (v2.21.0): Manejar activeStoreId separadamente (no va por managed_update_user).

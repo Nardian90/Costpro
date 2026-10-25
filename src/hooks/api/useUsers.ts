@@ -9,6 +9,85 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store'; // F4-T02: para token en bulk assign
 
+/**
+ * CP-ORG-001: filtros server-side + paginación real para la vista de
+ * usuarios. Antes el hook pedía ?limit=100 y filtraba en cliente: los
+ * usuarios por encima de los primeros 100 eran invisibles a los filtros
+ * (falsos negativos silenciosos) y un error de API se tragaba devolviendo
+ * [] (vacío fingido indistinguible de «no hay usuarios»).
+ */
+export interface UsersListParams {
+  search?: string;
+  role?: string;
+  is_active?: string;
+  tenant_id?: string;
+  unassigned?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+export interface UsersListResult {
+  users: Profile[];
+  total: number;
+  totalPages: number;
+  page: number;
+}
+
+export function useUsersAdmin(
+  currentUserId: string,
+  params: UsersListParams = {},
+  options: { enabled?: boolean } = {}
+) {
+  return useQuery<UsersListResult, Error>({
+    // El queryKey incluye TODOS los filtros: cambiar un filtro reconsulta.
+    // Prefijo 'users' deliberado: TODAS las invalidaciones existentes
+    // (invalidateQueries({queryKey: ['users']})) refrescan esta consulta.
+    queryKey: ['users', 'admin', currentUserId, params.search ?? '', params.role ?? 'all',
+      params.is_active ?? 'all', params.tenant_id ?? 'all', !!params.unassigned,
+      params.page ?? 1, params.limit ?? 100],
+    staleTime: 30 * 1000,
+    retry: 1,
+    queryFn: async (): Promise<UsersListResult> => {
+      if (!currentUserId) {
+        throw new Error('Falta la sesión del usuario.');
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error('No hay sesión activa. Inicia sesión de nuevo.');
+      }
+
+      const qs = new URLSearchParams();
+      qs.set('limit', String(params.limit ?? 100));
+      qs.set('page', String(params.page ?? 1));
+      if (params.search) qs.set('search', params.search);
+      if (params.role && params.role !== 'all') qs.set('role', params.role);
+      if (params.is_active && params.is_active !== 'all') qs.set('is_active', params.is_active);
+      if (params.unassigned) qs.set('unassigned', 'true');
+      else if (params.tenant_id && params.tenant_id !== 'all') qs.set('tenant_id', params.tenant_id);
+
+      const res = await fetch(`/api/users?${qs.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        // CP-ORG-001: el error SE PROPAGA (react-query error state) — nunca
+        // se convierte en una lista vacía. El mensaje es el saneado de la ruta.
+        throw new Error((body && typeof body.error === 'string' && body.error) || `Error HTTP ${res.status}`);
+      }
+      const apiProfiles = Array.isArray(body?.data) ? body.data : [];
+      const users = await validateRPCArrayResponse(apiProfiles, profileSchema, 'fetch_users_api');
+      return {
+        users,
+        total: typeof body?.pagination?.total === 'number' ? body.pagination.total : users.length,
+        totalPages: typeof body?.pagination?.totalPages === 'number' ? body.pagination.totalPages : 1,
+        page: params.page ?? 1,
+      };
+    },
+    enabled: !!currentUserId && (options.enabled ?? true),
+  });
+}
+
 export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: boolean, activeStoreId?: string | null, isSuperAdmin = false) {
   return useQuery({
     queryKey: ['users', currentUserId, isAdmin, isEncargado, activeStoreId, isSuperAdmin],
@@ -36,8 +115,12 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
               headers: { Authorization: `Bearer ${token}` },
             });
             if (!res.ok) {
-              logger.error('DATABASE', 'FETCH_USERS_API_FAILED', { status: res.status });
-              return [];
+              // CP-ORG-001: el error se PROPAGA en lugar de fingir lista vacía.
+              // Los consumidores secundarios (p. ej. StoreOnboardingWizard)
+              // degradan a [] con su default; la vista principal usa
+              // useUsersAdmin, que expone el error con reintento.
+              const body = await res.json().catch(() => null);
+              throw new Error((body && typeof body.error === 'string' && body.error) || `Error HTTP ${res.status}`);
             }
             const body = (await res.json()) as { data: Profile[] };
             const apiProfiles = Array.isArray(body.data) ? body.data : [];
@@ -98,8 +181,10 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
 
           return await validateRPCArrayResponse(joinedData, profileSchema, isAdmin ? 'fetch_users_admin' : 'fetch_users_encargado');
         } catch (err) {
+          // CP-ORG-001: los errores se PROPAGAN — un fallo de fetch no es un
+          // «no hay usuarios». Nunca se devuelve una lista vacía fingida.
           logger.error('DATABASE', 'FETCH_USERS_FAILED', { err });
-          return [];
+          throw err instanceof Error ? err : new Error(String(err));
         }
       }
 

@@ -19,7 +19,7 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Edit, Building2, Users, Store, Settings, AlertTriangle } from 'lucide-react';
+import { Edit, Building2, Users, Store, Settings, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useOrganizationDetail } from '@/hooks/api/useOrganizations';
 
 interface OrganizationDetailModalProps {
@@ -32,7 +32,7 @@ type Tab = 'resumen' | 'tiendas' | 'usuarios' | 'configuracion';
 
 export function OrganizationDetailModal({ orgId, onOpenChange, onEdit }: OrganizationDetailModalProps) {
   const [tab, setTab] = useState<Tab>('resumen');
-  const { data, isLoading, isError, error } = useOrganizationDetail(orgId);
+  const { data, isLoading, isError, error, refetch } = useOrganizationDetail(orgId);
 
   const org = data?.organization;
   const stores = data?.stores || [];
@@ -98,10 +98,20 @@ export function OrganizationDetailModal({ orgId, onOpenChange, onEdit }: Organiz
         )}
 
         {isError && (
-          <div className="rounded-lg border border-destructive/40 p-6 text-center space-y-2" role="alert">
+          <div className="rounded-lg border border-destructive/40 p-6 text-center space-y-3" role="alert">
             <AlertTriangle className="w-8 h-8 text-destructive mx-auto" aria-hidden="true" />
             <p className="text-xs font-black uppercase tracking-widest text-destructive">No se pudo cargar el detalle</p>
             <p className="text-xs text-muted-foreground font-bold">{error instanceof Error ? error.message : 'Error desconocido'}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              className="gap-2"
+              aria-label="Reintentar la carga del detalle de la organización"
+            >
+              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+              Reintentar
+            </Button>
           </div>
         )}
 

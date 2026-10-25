@@ -27,6 +27,15 @@ const updateOrganizationSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
+/**
+ * CP-ORG-001: sanea el nombre para el chequeo de duplicados por ilike
+ * (comodines % _ * eliminados → detección LITERAL; antes «100%» chocaba con
+ * cualquier organización de prefijo «100» y bloqueaba ediciones legítimas).
+ */
+function escapeIlikeLiteral(raw: string): string {
+  return raw.replace(/[\\%_*]/g, '');
+}
+
 function extractId(req: NextRequest): string | null {
   const pathParts = req.nextUrl.pathname.split('/').filter(Boolean);
   const id = pathParts[pathParts.length - 1];
@@ -174,11 +183,11 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   if (parsed.data.name !== undefined) {
     const name = parsed.data.name.replace(/\s+/g, ' ').trim();
     updates.name = name;
-    // Duplicado exacto excluyendo la propia organización.
+    // Duplicado exacto excluyendo la propia organización (LITERAL).
     const { data: dup } = await admin
       .from('tenants')
       .select('id')
-      .ilike('name', name)
+      .ilike('name', escapeIlikeLiteral(name))
       .neq('id', orgId)
       .limit(1);
     if (dup && dup.length > 0) {
