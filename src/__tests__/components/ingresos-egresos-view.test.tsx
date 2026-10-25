@@ -496,3 +496,70 @@ describe('IngresosEgresosView — vacío y paginación', () => {
     expect(screen.getByRole('button', { name: 'Página anterior' })).toBeDisabled();
   });
 });
+
+describe('IngresosEgresosView — MISIÓN P0 «EFECTIVO FANTASMA» (2026-10-26)', () => {
+  it('16 · KPIs principales = EFECTIVO FÍSICO por moneda; el canónico YA NO es KPI', async () => {
+    rpcMock.mockResolvedValue({
+      data: {
+        ...SUMMARY,
+        physical_cash: { CUP: 172000, USD: 100 },
+        valuation_residual_cup: 0,
+      },
+      error: null,
+    });
+    renderView();
+    await waitFor(() => expect(screen.getAllByText('Efectivo físico CUP').length).toBeGreaterThanOrEqual(1));
+    expect(screen.getAllByText('Efectivo físico USD').length).toBeGreaterThanOrEqual(1);
+    // El esperado canónico desaparece como tarjeta de disponibilidad
+    expect(screen.queryByText('Efectivo esperado (CUP canónico)')).toBeNull();
+    // El valor físico del RPC es la fuente única (no el espejo del ledger)
+    await waitFor(() => expect(screen.getAllByText('$172,000.00').length).toBeGreaterThanOrEqual(1));
+  });
+
+  it('17 · CASO ENERVIDA: físico 0/0 + esperado canónico 2.820 → bloque de valoración clasificado', async () => {
+    rpcMock.mockResolvedValue({
+      data: {
+        ...SUMMARY,
+        // El fantasma: esperado canónico 2.820 con libro físico 0/0
+        expected_cash: 2819.997799999995,
+        has_pending_shift: false,
+        window_start: '1970-01-01T00:00:00Z',
+        fondo_vigente: 0,
+        physical_cash: { CUP: 0, USD: 0 },
+        valuation_residual_cup: 2820,
+      },
+      error: null,
+    });
+    renderView();
+    // Disponibilidad: 0,00 CUP — JAMÁS 2.820 como efectivo
+    await waitFor(() => expect(screen.getByTestId('conciliacion-estado')).toHaveTextContent('Valoración contable'));
+    expect(screen.getAllByText('$0.00').length).toBeGreaterThanOrEqual(2); // KPI CUP + bloque
+    // El bloque secundario clasifica el residuo como valoración contable
+    expect(screen.getByText('Diferencia de valoración contable CUP')).toBeTruthy();
+    expect(screen.getByTestId('conciliacion-estado')).toHaveTextContent('Valoración contable — no es efectivo disponible');
+    expect(screen.getByTestId('conciliacion-explicacion')).toHaveTextContent('No representa efectivo disponible');
+    // El esperado canónico 2.820 sigue VISIBLE (dato informativo, no oculto)
+    expect(screen.getAllByText('$2,820.00').length).toBeGreaterThanOrEqual(2); // cifra + diferencia
+  });
+
+  it('18 · sin residuo: estado «Sin diferencia de valoración» y sin explicación', async () => {
+    rpcMock.mockResolvedValue({
+      data: { ...SUMMARY, physical_cash: { CUP: 172000, USD: 0 }, valuation_residual_cup: 0 },
+      error: null,
+    });
+    renderView();
+    await waitFor(() => expect(screen.getByTestId('conciliacion-estado')).toHaveTextContent('Sin diferencia de valoración'));
+    expect(screen.queryByTestId('conciliacion-explicacion')).toBeNull();
+  });
+
+  it('19 · degradación limpia: sin physical_cash en el RPC, los KPIs usan el espejo del ledger', async () => {
+    // El mock de api-fetch devuelve currency_summary_now: null → '—' (nunca
+    // el canónico como físico). El bloque de valoración se calcula en local
+    // con la MISMA fórmula (esperado − físico).
+    rpcMock.mockResolvedValue({ data: { ...SUMMARY, has_pending_shift: false }, error: null });
+    renderView();
+    await waitFor(() => expect(screen.getByTestId('conciliacion-estado')).toBeTruthy());
+    // físico ausente ⇒ '—', jamás 172.000 (el canónico) presentado como billetes
+    expect(screen.queryByText('$172,000.00')).toBeNull();
+  });
+});

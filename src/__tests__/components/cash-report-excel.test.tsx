@@ -587,3 +587,94 @@ describe('Seguridad y robustez', () => {
     expect(String(prod?.[1])).toBe("'=SUM(A1)*2");
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MISIÓN P0 «EFECTIVO FANTASMA» (2026-10-26) — hoja «Auditoría»: el residuo
+// de valoración se conserva CLASIFICADO (valoración contable, NO efectivo).
+// Caso ENERVIDA sintético: cobros 367 USD → 296.420 CUP canónicos; entrega
+// de los mismos 367 USD a 800 → 293.600; libro físico 0/0; residuo 2.820.
+// ═══════════════════════════════════════════════════════════════════════════
+describe('MISIÓN P0 — hoja Auditoría: diferencia de valoración clasificada', () => {
+  // paymentTotals COHERENTE con el reporte fantasma (la vía del split/totals
+  // tiene precedencia sobre los grupos `sales` del fallback).
+  const SUMMARIES_FANTASMA: Required<CashReportSummaries> = {
+    itemsSummary: { items: [], total_cup: 241655, total_cash: 241655, total_transfer: 0, total_zelle: 0 },
+    paymentTotals: {
+      totals: {
+        CUP: { cash: 241655, transfer: 0, zelle: 0, total: 241655 },
+        USD: { cash: 367, transfer: 0, zelle: 0, total: 367 },
+      },
+      equiv_cash_other_cup: 296420,
+    },
+    commissionsSummary: { workers: [], total_cup: 0 },
+    productionOrders: [],
+  };
+
+  function contextFantasma(): CashReportPdfContext {
+    return buildContext({
+      report: {
+        sales: [
+          { payment_method: 'cash', currency: 'CUP', total: 241655, total_cup: 241655, transaction_count: 1 },
+          { payment_method: 'cash', currency: 'USD', total: 367, total_cup: 296420, transaction_count: 2 },
+        ],
+        commissions: [{ payment_method: 'cash', currency: 'CUP', total: 300, total_cup: 300 }],
+        payments: [{ payment_method: 'cash', currency: 'CUP', ref_type: 'receipt', total: 2400, total_cup: 2400 }],
+        production: [{ payment_method: 'cash', currency: 'CUP', total: 450, total_cup: 450 }],
+        adjustments: [],
+        cash_flows: [
+          { id: 'ent-usd', direction: 'out', amount: 367, currency: 'USD', amount_cup: 293600 },
+        ],
+        refund_rows: [
+          { id: 'ref-1', payment_method: 'cash', currency: 'CUP', amount: 239405, amount_cup: 239405 },
+        ],
+        totals: {}, start_date: '2026-10-26', end_date: '2026-10-26',
+      } as unknown as CashReportPdfContext['report'],
+      startDate: '2026-10-26',
+      endDate: '2026-10-26',
+      cupBreakdown: {},
+      usdBreakdown: {},
+    });
+  }
+
+  it('P0-1: el esperado físico por moneda del anexo es 0,00 CUP / 0,00 USD (libro 0/0)', async () => {
+    const ctx = contextFantasma();
+    const { wb } = await buildCashReportExcelWorkbook(ctx, SUMMARIES_FANTASMA, COMMISSIONS);
+    const aud = rows(wb.Sheets['Auditoría']);
+    // El OFICIAL de la hoja CUP: 241.655 + 450 − 2.400 − 300 − 239.405 = 0
+    const esperado = findRow(aud, 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)');
+    expect(Number(esperado.row[2])).toBe(0);
+    // La hoja USD: 367 − 367 = 0
+    const usdHoja = aud.findIndex(r => String(r[0] ?? '').startsWith('HOJA USD — COMPARACIÓN'));
+    expect(usdHoja).toBeGreaterThanOrEqual(0);
+    const esperadoUsd = aud.filter(r => String(r[0] ?? '') === 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)');
+    expect(Number(esperadoUsd[esperadoUsd.length - 1]?.[2])).toBe(0);
+  });
+
+  it('P0-2: la fila «Diferencia de valoración contable CUP» = 2.820 con billetes 0 y clasificación SIN respaldo', async () => {
+    const ctx = contextFantasma();
+    const { wb } = await buildCashReportExcelWorkbook(ctx, SUMMARIES_FANTASMA, COMMISSIONS);
+    const aud = rows(wb.Sheets['Auditoría']);
+    const dif = findRow(aud, 'Diferencia de valoración contable CUP del período (flujos en otra moneda a su tasa)');
+    expect(Number(dif.row[2])).toBe(2820);
+    const billetes = findRow(aud, 'Billetes netos de otra moneda del período (físico USD)');
+    expect(Number(billetes.row[2])).toBe(0);
+    const clasif = findRow(aud, 'Clasificación del residuo de valoración');
+    expect(String(clasif.row[2])).toContain('SIN respaldo en billetes');
+    expect(String(clasif.row[2])).toContain('NO efectivo disponible');
+  });
+
+  it('P0-3: el residuo NO se suma al efectivo — la verificación en vivo sigue cerrando en 0', async () => {
+    const ctx = contextFantasma();
+    const { wb } = await buildCashReportExcelWorkbook(ctx, SUMMARIES_FANTASMA, COMMISSIONS);
+    const aud = rows(wb.Sheets['Auditoría']);
+    // La VERIFICACIÓN (diferencia total − Σ efectos detalle) sigue siendo 0:
+    // las filas de valoración son magnitud PROPIA, no componentes del esperado.
+    const ver = aud.find(r => String(r[0] ?? '').startsWith('Verificación: diferencia total'));
+    expect(ver).toBeTruthy();
+    // Sin personalización: diferencia total 0 ⇒ verificación 0
+    expect(Number(ver![2])).toBe(0);
+    // Ninguna fila de valoración entra en la columna «Efecto en esperado»
+    const filaEquiv = findRow(aud, 'Equivalencia canónica CUP oficial (contable, no billetes)');
+    expect(filaEquiv.row[5] ?? '').toBe('');
+  });
+});

@@ -305,8 +305,10 @@ export function computeCustomResultsForPdf(
   const cupSeleccion = computeDailySummary(report, 'CUP', paymentTotals as never);
   const usdSeleccion = computeDailySummary(report, 'USD', paymentTotals as never);
   return {
-    CUP: computeCustomCurrencyResult('CUP', cupOficial, cupSeleccion, sel, counts),
-    USD: computeCustomCurrencyResult('USD', usdOficial, usdSeleccion, sel, counts),
+    // MISIÓN EFECTIVO FÍSICO (P0): la hoja CUP recibe el arqueo USD oficial
+    // para clasificar el residuo de valoración (billetes netos del período).
+    CUP: computeCustomCurrencyResult('CUP', cupOficial, cupSeleccion, sel, counts, usdOficial),
+    USD: computeCustomCurrencyResult('USD', usdOficial, usdSeleccion, sel, counts, cupOficial),
   };
 }
 
@@ -806,6 +808,13 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
         ['Equivalencia canónica CUP oficial (contable, no billetes)', amt(rec.equivalenciaOficial)],
         ['Equivalencia canónica CUP configurada', amt(rec.equivalenciaPersonalizada)],
         ['Diferencia de equivalencia contable (personalizado − oficial)', sgn(rec.diferenciaEquivalencia)],
+        // MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): el residuo de valoración se
+        // CONSERVA y se CLASIFICA — jamás como efectivo disponible.
+        ['Diferencia de valoración contable CUP del período (flujos en otra moneda a su tasa)', sgn(rec.diferenciaValoracionCup)],
+        ['  · billetes netos de otra moneda del período (físico USD)', amt(rec.billetesOtraMonedaPeriodo)],
+        ['  · clasificación', rec.residuoValoracionSinRespaldo
+          ? 'residuo SIN respaldo en billetes — valoración contable, NO efectivo disponible'
+          : 'valoración contable — no son billetes CUP'],
       ] as (string | number)[][]) : []),
       ['Ingresos de caja oficiales del período', amt(rec.ingresosCajaOficial)],
       ['Egresos de caja oficiales del período', amt(rec.egresosCajaOficial)],
@@ -1415,6 +1424,12 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
           ['Equivalencia canónica CUP oficial (contable, no billetes)', fmt(rec.equivalenciaOficial)],
           ['Equivalencia canónica CUP configurada', fmt(rec.equivalenciaPersonalizada)],
           ['Diferencia de equivalencia contable (personalizado − oficial)', sgn(rec.diferenciaEquivalencia)],
+          // MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): residuo clasificado.
+          ['Diferencia de valoración contable CUP del período (flujos en otra moneda a su tasa)', sgn(rec.diferenciaValoracionCup)],
+          ['  · billetes netos de otra moneda del período (físico USD)', fmt(rec.billetesOtraMonedaPeriodo)],
+          ['  · clasificación', rec.residuoValoracionSinRespaldo
+            ? 'residuo SIN respaldo en billetes — valoración contable, NO efectivo disponible'
+            : 'valoración contable — no son billetes CUP'],
         ] as Array<[string, string]>) : []),
         ['Ingresos de caja oficiales del período', fmt(rec.ingresosCajaOficial)],
         ['Egresos de caja oficiales del período', fmt(rec.egresosCajaOficial)],

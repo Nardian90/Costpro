@@ -724,6 +724,19 @@ export interface CashFlowSummary {
   fondo_vigente: number;
   fondo_ingresado: number;
   fondo_devuelto: number;
+  /**
+   * MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): saldo FÍSICO acumulado por moneda
+   * del libro autoritativo (get_cash_currency_summary → net, lectura tope
+   * 'infinity' — la misma que usan las autorizaciones del cajón). ESTA es la
+   * disponibilidad real de billetes; nunca expected_cash.
+   */
+  physical_cash?: { CUP: number; USD: number };
+  /**
+   * Residuo de valoración = expected_cash − physical_cash.CUP. NO representa
+   * efectivo disponible (valorización de flujos en otra moneda a tasas
+   * históricas + base de apertura con turno abierto). Informativo y trazable.
+   */
+  valuation_residual_cup?: number;
   period: {
     from: string;
     to: string;

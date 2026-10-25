@@ -52,7 +52,9 @@ const MOVEMENT_TYPE_OPTIONS: Array<{ value: CashLedgerMovementType | 'all'; labe
 
 interface Props {
   storeId: string | null;
-  /** Equivalente contable en CUP canónico (expected_cash del arqueo — get_cash_flow_summary). */
+  /** Esperado canónico CUP (expected_cash del arqueo — get_cash_flow_summary).
+   *  MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): se exhibe clasificado como
+   *  VALORACIÓN CONTABLE — nunca como efectivo disponible. */
   canonicalCup: number | null;
   /** §Fase 2: la pestaña está activa (el panel siempre montado, oculto si inactivo). */
   active?: boolean;
@@ -112,10 +114,10 @@ export default function CashLedgerPanel({ storeId, canonicalCup, active = true }
             <Kpi label="Saldo físico CUP" value={balanceNow ? formatCurrency(balanceNow.cup) : '—'} tone="primary" />
             <Kpi label="Saldo físico USD" value={balanceNow ? formatCurrency(balanceNow.usd, 'USD') : '—'} tone="usd" />
             <Kpi
-              label="Equivalente contable (CUP canónico)"
+              label="Valoración contable CUP (no es efectivo disponible)"
               value={canonicalCup != null ? formatCurrency(canonicalCup) : '—'}
               tone="muted"
-              hint="Identificado como equivalente — no sustituye los saldos físicos"
+              hint="Esperado canónico del arqueo · vista de valor — no son billetes"
             />
             <Kpi
               label={asOf ? `Saldo histórico al ${asOf}` : 'Saldo histórico (elige fecha de corte)'}

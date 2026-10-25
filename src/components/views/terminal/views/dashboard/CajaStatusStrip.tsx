@@ -4,20 +4,26 @@
  * CajaStatusStrip — indicadores de caja del Inicio (MISIÓN INGRESOS/EGRESOS
  * 2026-10-20, requisito §7).
  *
- * El saldo de caja mostrado proviene del RPC get_cash_shift_expected
- * (v2.21.0), que ya incorpora los documentos Ingresos/Egresos (fondo de
- * cambio y otros) UNA sola vez — un ingreso físico de efectivo aumenta el
- * saldo SIN inflar las ventas ni los cobros. El fondo de cambio vigente
- * llega del RPC get_cash_flow_summary (degradación limpia si la migración
- * aún no se aplicó: el chip simplemente no se muestra).
+ * MISIÓN EFECTIVO FÍSICO (P0 2026-10-26) — «eliminar el efectivo fantasma»:
+ * la cifra PRINCIPAL de disponibilidad es el SALDO FÍSICO DEL LIBRO por
+ * moneda (physical_cash del RPC get_cash_shift_expected — la misma lectura
+ * que autorizan los RPC del cajón: get_cash_currency_summary → net). El
+ * esperado canónico (fórmula de arqueo, cada movimiento a SU tasa histórica)
+ * NO se presenta como billetes: su diferencia frente al libro vive en el
+ * bloque secundario «Diferencia de valoración contable CUP — no representa
+ * efectivo disponible», con ventana identificada y trazabilidad.
  *
- * Embebido en DashboardView → visible en Inicio (AICommandCenterView) y en
- * OPERACIÓN → Dashboard. NO es saldo persistido: es el efectivo esperado del
- * turno, reconstruible desde los movimientos válidos.
+ * Regla inviolable materializada aquí: si el libro físico marca CUP = 0 y
+ * USD = 0, la disponibilidad mostrada es 0,00 CUP y 0,00 USD — aunque exista
+ * un residuo de valoración canónico (p. ej. 2.820,00 CUP por cobros/entregas
+ * de USD a tasas históricas distintas).
+ *
+ * El fondo de cambio vigente llega del RPC get_cash_flow_summary (degradación
+ * limpia si la migración aún no se aplicó: el chip simplemente no se muestra).
  */
 
 import React from 'react';
-import { Landmark, Coins, ArrowRight, RefreshCw, Loader2 } from 'lucide-react';
+import { Landmark, Coins, ArrowRight, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
@@ -36,7 +42,15 @@ export function CajaStatusStrip() {
 
   const turnoAbierto = activeShift.data != null;
   const cargando = activeShift.isLoading || expected.isLoading;
-  const saldo = expected.data?.expected_cash ?? null;
+
+  // ═══ MISIÓN EFECTIVO FÍSICO (P0 2026-10-26) ═══
+  // Disponibilidad = libro físico por moneda (NUNCA el esperado canónico).
+  const fisico = expected.data?.physical_cash ?? null;
+  const fisicoCup = fisico?.CUP ?? null;
+  const fisicoUsd = fisico?.USD ?? null;
+  // Residuo de valoración (canónico − libro físico CUP): solo informativo.
+  const residuoValoracion = expected.data?.valuation_residual_cup ?? null;
+  const hayResiduo = residuoValoracion != null && Math.abs(residuoValoracion) >= 0.005;
   const fondo = summary.data?.fondo_vigente ?? null;
 
   if (!storeId) return null;
@@ -90,25 +104,23 @@ export function CajaStatusStrip() {
           </span>
         </button>
 
-        {/* Saldo de caja (efectivo esperado — MISIÓN CONCILIACIÓN 2026-10-26:
-            base EXPLÍCITA. Es el esperado canónico CUP (vista de valor de la
-            fórmula de arqueo). Sin turno abierto la ventana es el acumulado
-            desde el último cierre/origen — nunca «el saldo de un turno abierto». */}
+        {/* ═══ MISIÓN EFECTIVO FÍSICO: disponibilidad PRINCIPAL = billetes por moneda ═══ */}
         <div className="flex items-start gap-2.5 min-w-0">
           <span className="mt-0.5 p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
             <RefreshCw className={cn('w-4 h-4', expected.isFetching && 'animate-spin')} aria-hidden="true" />
           </span>
           <span className="min-w-0">
             <span className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              Efectivo esperado (CUP canónico)
+              Efectivo físico disponible
             </span>
-            <span className="block text-base font-black tabular-nums text-foreground truncate" data-testid="caja-saldo">
-              {saldo != null ? formatCurrency(saldo) : cargando ? '…' : '—'}
+            <span className="block text-base font-black tabular-nums text-foreground truncate" data-testid="caja-fisico-cup">
+              {fisicoCup != null ? formatCurrency(fisicoCup) : cargando ? '…' : '—'}
             </span>
-            <span className="block text-[10px] text-muted-foreground" data-testid="caja-saldo-base">
-              {turnoAbierto
-                ? 'Fondo + ventas cash + ingresos − egresos del turno · valor contable'
-                : 'Sin turno abierto · acumulado (valor contable, no billetes disponibles)'}
+            <span className="block text-[10px] text-muted-foreground" data-testid="caja-fisico-usd">
+              {fisicoUsd != null ? `${fisicoUsd.toFixed(2)} USD en billetes` : cargando ? '…' : '—'}
+            </span>
+            <span className="block text-[10px] text-muted-foreground" data-testid="caja-fisico-base">
+              Libro físico por moneda · respalda toda salida de efectivo
             </span>
           </span>
         </div>
@@ -131,6 +143,42 @@ export function CajaStatusStrip() {
           </span>
         </div>
       </div>
+
+      {/* ═══ MISIÓN EFECTIVO FÍSICO: bloque SECUNDARIO de valoración contable ═══
+          El esperado canónico (fórmula de arqueo — cada movimiento a su tasa
+          histórica) NUNCA es la cifra principal de disponibilidad. Su
+          diferencia frente al libro físico se presenta clasificada como
+          valoración contable, con ventana identificada y trazabilidad. */}
+      {hayResiduo && (
+        <div
+          className="rounded-2xl border border-warning/40 bg-warning/5 px-4 py-3 flex items-start gap-2.5"
+          data-testid="caja-valoracion-residual"
+          role="status"
+        >
+          <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" aria-hidden="true" />
+          <div className="min-w-0 text-[11px] leading-relaxed">
+            <p className="font-black uppercase tracking-widest text-[10px] text-warning">
+              Diferencia de valoración contable CUP — no representa efectivo disponible
+            </p>
+            <p className="tabular-nums mt-0.5">
+              <span className="font-black" data-testid="caja-valoracion-cifra">{formatCurrency(residuoValoracion ?? 0)}</span>
+              <span className="text-muted-foreground"> · esperado canónico {formatCurrency((expected.data?.expected_cash) ?? 0)} − libro físico {formatCurrency(fisicoCup ?? 0)}</span>
+            </p>
+            <p className="text-muted-foreground mt-0.5">
+              Valoración de cobros y entregas en otra moneda a sus tasas históricas (p. ej. USD cobrados a la tasa de la venta y entregados a la vigente).
+              {!turnoAbierto ? ' Sin turno abierto: ventana acumulada desde el último cierre u origen.' : ''}
+              {' Trazabilidad: '}
+              <button
+                type="button"
+                onClick={() => setCurrentView('ingresos_egresos')}
+                className="underline underline-offset-4 hover:opacity-80 font-bold"
+              >
+                movimientos que explican el saldo →
+              </button>
+            </p>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -373,8 +373,10 @@ export default function CashReportView() {
     const usdSeleccion = computeDailySummary(sel, 'USD');
     const counts = { validas: selection.totals.totalCount, seleccionadas: selection.totals.includedCount };
     return {
-      CUP: computeCustomCurrencyResult('CUP', cupOficial, cupSeleccion, summaryConcepts, counts),
-      USD: computeCustomCurrencyResult('USD', usdOficial, usdSeleccion, summaryConcepts, counts),
+      // MISIÓN EFECTIVO FÍSICO (P0): la hoja CUP recibe el arqueo USD oficial
+      // para clasificar el residuo de valoración (billetes netos del período).
+      CUP: computeCustomCurrencyResult('CUP', cupOficial, cupSeleccion, summaryConcepts, counts, usdOficial),
+      USD: computeCustomCurrencyResult('USD', usdOficial, usdSeleccion, summaryConcepts, counts, cupOficial),
     };
   }, [applied, selection, summaryConcepts]);
 
@@ -1935,6 +1937,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0, reembolsosCash: 0, reembolsosVoucher: 0,
     equivCashOtraMoneda: 0, equivVouchersOtraMoneda: 0,
     efectivoEsperado: p.expectedCup, saldoInicial: 0, liquidacionBilletes: 0, cobrosBilletes: 0,
+    flujosOtraMonedaValorCup: 0,
   };
   const diferencia = computeCuadre(p.cupTotal, p.expectedCup);
   const cuadreState = cuadreLabel(diferencia);
@@ -2099,6 +2102,18 @@ function ResultadosPanel(p: ResultadosPanelProps) {
               esperado; no alimentan el esperado de la hoja CUP. */}
           {p.concepts.equivalenciaCup && s.equivCashOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de cobros en efectivo en otras monedas" value={s.equivCashOtraMoneda} note="consolidación contable — no es una segunda venta; no es efectivo físico CUP" />}
           {p.concepts.equivalenciaCup && s.equivVouchersOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de vouchers en otras monedas" value={s.equivVouchersOtraMoneda} note="informativo — no es efectivo físico" />}
+          {/* MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): la DIFERENCIA DE
+              VALORACIÓN del período se exhibe clasificada — visible cuando
+              existe, jamás como efectivo disponible ni sumada al esperado. */}
+          {s.currency === 'CUP' && Math.abs(p.customResult?.conciliacion.diferenciaValoracionCup ?? 0) >= 0.005 && (
+            <SummaryRow
+              label="Diferencia de valoración contable CUP"
+              value={p.customResult!.conciliacion.diferenciaValoracionCup}
+              note={p.customResult!.conciliacion.residuoValoracionSinRespaldo
+                ? 'residuo SIN respaldo en billetes — NO representa efectivo disponible'
+                : 'valoración de flujos en otra moneda a su tasa — no son billetes CUP'}
+            />
+          )}
           {p.concepts.otIngresos && s.otIngresosCash > 0 && <SummaryRow label="Órdenes de trabajo (anticipos)" value={s.otIngresosCash} />}
           {p.concepts.otrosEgresos && s.comisionesCash > 0 && <SummaryRow label="Comisiones pagadas en efectivo" value={-s.comisionesCash} negative />}
           {p.concepts.otrosEgresos && s.comisionesTransfer > 0 && <SummaryRow label="Comisiones pagadas por transferencia" value={-s.comisionesTransfer} negative note="no reduce el efectivo físico" />}
