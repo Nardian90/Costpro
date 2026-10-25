@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   ShoppingCart,
@@ -83,7 +83,6 @@ export const POSCart = ({
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isEasyReading, setIsEasyReading] = useState(false);
   const [activeTab, setActiveTab] = useState<"items" | "checkout">("items");
-  const touchStartY = useRef(0);
   const [viewingImage, setViewingImage] = useState<{ url: string; name: string } | null>(null);
 
   const isMobileHook = useIsMobile();
@@ -232,13 +231,17 @@ export const POSCart = ({
         </div>
 
         {/* ── BODY ──────────────────────────────────────────────────── */}
+        {/* MISIÓN POS CARRITO MÓVIL (2026-10-26) — Función B: el cuerpo del
+            carrito NO tiene manejadores táctiles de cierre. El cierre por
+            deslizamiento hacia abajo (>120px) convertía el scroll normal de
+            productos, desglose o configuración en cierres accidentales. El
+            cierre manual es EXCLUSIVAMENTE el botón «X» del header (área
+            táctil ≥44px, aria-label «Cerrar carrito»). No se introduce ningún
+            umbral sustituto ni listener equivalente: desplazar (arriba o
+            abajo) jamás cierra el panel, y el scroll vertical del cuerpo y
+            de las listas internas queda libre (sin touch-action restrictivo). */}
         <div
           className="flex-1 flex flex-col overflow-hidden bg-card"
-          onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
-          onTouchEnd={(e) => {
-            const diff = e.changedTouches[0].clientY - touchStartY.current;
-            if (diff > 120) onClose();
-          }}
         >
           {lastSale ? (
             <POSCartSuccessView

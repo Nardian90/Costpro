@@ -205,10 +205,14 @@ export default function POSView() {
   const {
     searchTerm,
     setSearchTerm,
+    debouncedSearch,
     selectedCategory,
     handleCategoryChange,
     categories,
     filteredProducts,
+    // MISIÓN POS FILTRO REAL DE STOCK: conteo real bajo los filtros activos
+    // (incluye el criterio de stock) — no solo la página visible.
+    allFilteredCount,
     isPending,
     hasMore,
     remainingCount,
@@ -757,7 +761,11 @@ export default function POSView() {
                 />
                 {/* POS-3b EM-7: Autocompletado dropdown tipo Shopify.
                     Solo se renderiza cuando hay query ≥ 2 chars y hay sugerencias.
-                    Tab selecciona del dropdown; Enter sigue el flujo normal de onSubmit. */}
+                    Tab selecciona del dropdown; Enter sigue el flujo normal de onSubmit.
+                    MISIÓN POS FILTRO REAL DE STOCK (2026-10-26): las sugerencias
+                    obedecen el MISMO «Solo con stock» que la cuadrícula (predicado
+                    compartido del hook) — sin agotados en el dropdown cuando el
+                    filtro está activo, con respuesta inmediata al toggle. */}
                 <POSAutocomplete
                   products={products}
                   query={searchTerm}
@@ -766,6 +774,7 @@ export default function POSView() {
                     setSearchTerm('');
                   }}
                   disabled={isLoadingProducts}
+                  hideOutOfStock={hideOutOfStock}
                 />
               </div>
               {/* FIX-AUDIT-MOBILE-A2: Botón directo de cámara visible SIEMPRE.
@@ -810,14 +819,21 @@ export default function POSView() {
                 {hideOutOfStock ? 'Solo con stock' : 'Ver todo (incl. agotados)'}
               </button>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {filteredProducts.length} productos
+                {/* MISIÓN POS FILTRO REAL DE STOCK (§5.5): el conteo refleja los
+                    resultados realmente visibles bajo los filtros activos
+                    (búsqueda + categoría + stock), no el conjunto completo. */}
+                {allFilteredCount} producto{allFilteredCount !== 1 ? 's' : ''}
+                {hideOutOfStock ? ' con stock' : ''}
               </p>
             </div>
           </div>
 
           {/* POS-2 MM-5: Productos frecuentes del turno actual.
-              Solo se renderiza si hay turno activo y hay ventas en él. */}
-          <FrequentProducts products={products} onAddToCart={onAddToCart} />
+              Solo se renderiza si hay turno activo y hay ventas en él.
+              MISIÓN POS FILTRO REAL DE STOCK: los frecuentes también obedecen
+              «Solo con stock» (coherencia de todo lo que ve el cajero); el
+              guard de onAddToCart sigue como defensa última. */}
+          <FrequentProducts products={products} onAddToCart={onAddToCart} hideOutOfStock={hideOutOfStock} />
 
           <div
             id="pos-product-list"
@@ -831,7 +847,13 @@ export default function POSView() {
               error={productsError as Error}
               onRetry={refetchProducts as () => void}
               data={filteredProducts}
-              emptyComponent={<EmptyProducts onClearSearch={searchTerm ? () => setSearchTerm('') : undefined} />}
+              emptyComponent={
+                <EmptyProducts
+                  onClearSearch={searchTerm ? () => setSearchTerm('') : undefined}
+                  stockFiltered={hideOutOfStock}
+                  hasSearchOrCategory={Boolean(searchTerm || selectedCategory)}
+                />
+              }
               loadingComponent={<POSLoadingSkeleton layoutMode={posLayoutMode} />}
             >
               {(data) => (

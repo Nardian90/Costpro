@@ -6,6 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/lib/utils";
 import ProductImage from "@/components/ui/ProductImage";
 import type { Product } from "@/types";
+// MISIÓN POS FILTRO REAL DE STOCK (2026-10-26) — Función C: el autocompletado
+// obedece el MISMO criterio de disponibilidad que la lista principal. El
+// predicado compartido vive junto a su único dueño funcional (el hook de
+// búsqueda del POS) para que exista UNA definición de «vendible».
+import { isPosProductVisible } from "@/hooks/api/usePOSServerSearch";
 
 interface POSAutocompleteProps {
   /** Lista completa de productos para sugerencias (cargada en POSView). */
@@ -18,6 +23,13 @@ interface POSAutocompleteProps {
   inputId?: string;
   /** Si el POS está procesando algo (loading state). */
   disabled?: boolean;
+  /**
+   * MISIÓN POS FILTRO REAL DE STOCK: cuando «Solo con stock» está activo, las
+   * sugerencias muestran únicamente productos físicos con existencias
+   * positivas (los servicios conservan su excepción). Default false = mostrar
+   * todo (compatibilidad con usos existentes del componente).
+   */
+  hideOutOfStock?: boolean;
 }
 
 /**
@@ -45,6 +57,7 @@ export function POSAutocomplete({
   onSelectProduct,
   inputId = "pos-search-input",
   disabled = false,
+  hideOutOfStock = false,
 }: POSAutocompleteProps) {
   // POS-3b audit fix: isOpen se deriva del query+suggestions, no es useState.
   // userClosed permite al usuario cerrar manualmente (Esc o clic fuera).
@@ -56,11 +69,20 @@ export function POSAutocomplete({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputElRef = useRef<HTMLInputElement | null>(null);
 
-  // Sugerencias filtradas (máximo 8 para performance)
+  // Sugerencias filtradas (máximo 8 para performance).
+  // MISIÓN POS FILTRO REAL DE STOCK: se aplica el MISMO criterio de
+  // disponibilidad que la lista principal (predicado compartido) sobre el
+  // UNIVERSO COMPLETO de productos — no sobre `filteredProducts` del hook
+  // (que es solo la página visible y depende del término con debounce, lo
+  // que excluiría productos válidos de las sugerencias). Orden: filtro de
+  // disponibilidad → coincidencia por nombre/SKU/código de barras.
+  // La respuesta al toggle es inmediata: hideOutOfStock es dependencia del
+  // memo → las sugerencias se recalculan sin reescribir el término.
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q || q.length < 2 || q.endsWith("*")) return [];
     return products
+      .filter((p) => isPosProductVisible(p, hideOutOfStock))
       .filter((p) => {
         const name = p.name.toLowerCase();
         const sku = (p.sku || "").toLowerCase();
@@ -68,7 +90,7 @@ export function POSAutocomplete({
         return name.includes(q) || sku.includes(q) || barcode.includes(q);
       })
       .slice(0, 8);
-  }, [products, query]);
+  }, [products, query, hideOutOfStock]);
 
   // POS-3b audit fix: derived state durante el render (sin useEffect con setState).
   // isOpen se deriva del query y suggestions; userClosed permite al usuario cerrar manualmente.
