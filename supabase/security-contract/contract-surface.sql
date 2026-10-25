@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-25T15:32:02.280Z
+-- Captured  : 2026-10-25T23:40:19.000Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 153 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -1522,6 +1522,43 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
+END;
+$function$
+
+
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1558,43 +1595,6 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
-END;
-$function$
-
-
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
 END;
 $function$
 
@@ -2743,7 +2743,7 @@ BEGIN
     IF v_rate IS NULL THEN
       SELECT er.rate, er.rate_date::timestamptz INTO v_rate, v_rate_effective
         FROM public.exchange_rates er
-        WHERE er.currency = 'USD' AND er.source = 'elToque'
+        WHERE er.currency = 'USD' AND er.source IN ('elToque', 'Diviza')
         ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
     END IF;
     IF v_rate IS NULL OR v_rate <= 1 THEN
@@ -4580,10 +4580,10 @@ BEGIN
         ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
     END IF;
     IF v_server_rate IS NULL THEN
-      SELECT er.rate, 'global_eltoque', er.rate_date
+      SELECT er.rate, 'global_' || lower(er.source), er.rate_date
         INTO v_server_rate, v_rate_source, v_rate_effective_date
         FROM public.exchange_rates er
-        WHERE er.currency = p_sale_currency AND er.source = 'elToque'
+        WHERE er.currency = p_sale_currency AND er.source IN ('elToque', 'Diviza')
         ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
     END IF;
     IF v_server_rate IS NULL OR v_server_rate <= 0 THEN
@@ -4798,10 +4798,10 @@ BEGIN
           ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
       END IF;
       IF v_usd_rate IS NULL THEN
-        SELECT er.rate, 'global_eltoque', er.rate_date
+        SELECT er.rate, 'global_' || lower(er.source), er.rate_date
           INTO v_usd_rate, v_usd_rate_source, v_usd_rate_eff
           FROM public.exchange_rates er
-          WHERE er.currency = 'USD' AND er.source = 'elToque'
+          WHERE er.currency = 'USD' AND er.source IN ('elToque', 'Diviza')
           ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
       END IF;
       IF v_usd_rate IS NULL OR v_usd_rate <= 1 THEN
@@ -4941,9 +4941,9 @@ BEGIN
           ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
       END IF;
       IF v_chg_rate IS NULL THEN
-        SELECT er.rate, 'global_eltoque' INTO v_chg_rate, v_chg_rate_src
+        SELECT er.rate, 'global_' || lower(er.source) INTO v_chg_rate, v_chg_rate_src
           FROM public.exchange_rates er
-          WHERE er.currency = 'USD' AND er.source = 'elToque'
+          WHERE er.currency = 'USD' AND er.source IN ('elToque', 'Diviza')
           ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
       END IF;
       IF v_chg_rate IS NULL OR v_chg_rate <= 1 THEN
@@ -7956,9 +7956,9 @@ BEGIN
         ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
     END IF;
     IF v_usd_rate IS NULL THEN
-      SELECT er.rate, 'global_eltoque' INTO v_usd_rate, v_usd_rate_source
+      SELECT er.rate, 'global_' || lower(er.source) INTO v_usd_rate, v_usd_rate_source
         FROM public.exchange_rates er
-        WHERE er.currency = 'USD' AND er.source = 'elToque'
+        WHERE er.currency = 'USD' AND er.source IN ('elToque', 'Diviza')
         ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
     END IF;
     IF v_usd_rate IS NULL OR v_usd_rate <= 1 THEN
