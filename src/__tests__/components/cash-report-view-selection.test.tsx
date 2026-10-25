@@ -226,19 +226,24 @@ describe('FUNCIÓN A · conceptos del Resumen del Día', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('desactivar «Egresos de caja» omite la fila de pantalla (presentación: el esperado NO cambia)', async () => {
+  it('desactivar «Egresos de caja» omite la fila de pantalla y el cálculo personalizado EXCLUYE el término (misión 2026-10-26)', async () => {
     const user = userEvent.setup();
     await renderAndGenerate();
     const esperadoAntes = screen.getByText('Efectivo esperado a entregar').closest('div')?.textContent ?? '';
     expect(summaryValue('Egresos de caja (fondo y otros)')).toBeTruthy();
     await user.click(screen.getByTestId('concepto-egresosCaja'));
     expect(summaryValue('Egresos de caja (fondo y otros)')).toBeUndefined();
-    // El esperado se conserva (solo presentación — misión §4/§7):
-    const esperadoDespues = screen.getByText('Efectivo esperado a entregar').closest('div')?.textContent ?? '';
-    expect(esperadoDespues).toBe(esperadoAntes);
+    // MISIÓN CONCILIACIÓN: el cálculo personalizado se actualiza SIN el término
+    // (11 500 + 500 = 12 000) y se identifica como personalizado (§4.3).
+    // La etiqueta aparece en el Resumen y en el Cuadre (getAllByText):
+    const esperadoDespues = screen.getAllByText('Efectivo esperado (personalizado)').map(e => e.closest('div')?.textContent ?? '').join(' ');
+    expect(esperadoDespues).not.toBe(esperadoAntes);
+    expect(esperadoDespues).toContain(fmtCup(12000).replace(/^\D+/, ''));
+    // Resumen de diferencias frente al oficial (pantalla = exportado):
+    expect(screen.getByTestId('resumen-diferencias').textContent).toContain('Conciliado');
   });
 
-  it('desactivar cada concepto omite SU fila (venta total, efectivo, transferencia, equivalencia)', async () => {
+  it('desactivar cada concepto omite SU fila y el esperado se rotula como personalizado', async () => {
     const user = userEvent.setup();
     await renderAndGenerate();
     for (const key of ['resumenDia', 'ventasEfectivo', 'ventasTransferencia', 'equivalenciaCup'] as const) {
@@ -248,17 +253,18 @@ describe('FUNCIÓN A · conceptos del Resumen del Día', () => {
     expect(summaryValue('Ventas en efectivo')).toBeUndefined();
     expect(summaryValue('Ventas por transferencia')).toBeUndefined();
     expect(summaryValue('Equivalencia CUP de cobros en efectivo en otras monedas')).toBeUndefined();
-    // El esperado sigue visible (total de entrega, no un concepto):
-    expect(screen.getByText('Efectivo esperado a entregar')).toBeTruthy();
+    // MISIÓN CONCILIACIÓN: el esperado personalizado sigue visible, rotulado
+    // como tal (sin cobros de ventas: 0 − 500 = −500):
+    expect(screen.getAllByText('Efectivo esperado (personalizado)').length).toBeGreaterThan(0);
   });
 
   it('«Seleccionar todos» y «Desmarcar todos» funcionan; sin conceptos → aviso y exportación BLOQUEADA', async () => {
     const user = userEvent.setup();
     await renderAndGenerate();
     await user.click(screen.getByTestId('conceptos-desmarcar-todos'));
-    // Aviso claro (role=alert) y contador 0/7 (misión correctiva: +saldoInicial):
+    // Aviso claro (role=alert) y contador 0/12 (misión conciliación: 12 conceptos):
     expect(screen.getByRole('alert').textContent).toContain('No hay conceptos seleccionados');
-    expect(screen.getByText('0/7 activos')).toBeTruthy();
+    expect(screen.getByText('0/12 activos')).toBeTruthy();
     // Exportaciones bloqueadas (PDF y Excel):
     await user.click(screen.getByRole('button', { name: /Exportar PDF/i }));
     const { toast } = await import('sonner');
@@ -341,7 +347,9 @@ describe('FUNCIÓN B · selección de ventas (composición real de los pagos)', 
     // MISIÓN CORRECTIVA: esperado = saldo inicial (0) + cobros BILLETES CUP del
     // conjunto (2 000) − egreso (500) = 1 500. La equivalencia NO entra (los
     // billetes USD viven en la hoja USD) y el saldo inicial no cambia (§7).
-    expect((screen.getByText('Efectivo esperado a entregar').closest('div')?.textContent ?? '')).toContain(fmtCup(1500).replace(/^\D+/, ''));
+    // MISIÓN CONCILIACIÓN: con ventas excluidas el resultado se rotula como
+    // personalizado (mismo cálculo que el exportado):
+    expect((screen.getAllByText('Efectivo esperado (personalizado)')[0]?.closest('div')?.parentElement?.textContent ?? '')).toContain(fmtCup(1500).replace(/^\D+/, ''));
     // Contador del grupo: 1 de 2 seleccionadas:
     expect(within(grupoCashCup).getByText(/1 de 2 seleccionadas/)).toBeTruthy();
     // Egresos de caja INDEPENDIENTES de la selección de ventas (signo contable −):

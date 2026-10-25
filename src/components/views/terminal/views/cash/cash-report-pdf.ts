@@ -31,11 +31,21 @@ import { createPDFDocument } from '@/lib/export/lazy-pdf';
 // MISIÓN PERSONALIZACIÓN REPORTE ENTREGA (2026-10-25): selección de conceptos
 // (filas del Resumen del Día que aparecen en el documento) y metadatos del
 // conjunto de ventas seleccionado — misma fuente que pantalla y Excel.
+// MISIÓN CONCILIACIÓN (2026-10-26): la selección de conceptos GOBIERNA el
+// cálculo del reporte personalizado (custom-result.ts — fórmula centralizada
+// compartida con pantalla y Excel) y el documento incorpora el ANEXO DE
+// AUDITORÍA independiente (página propia) con el resultado oficial completo.
 import {
   hasAnySummaryConcept,
+  isDefaultSummaryConcepts,
+  DEFAULT_SUMMARY_CONCEPTS,
   type SummaryConceptKey,
   type SummaryConceptsSelection,
 } from '@/lib/cash-report/report-selection';
+import {
+  computeCustomCurrencyResult,
+  type CustomCurrencyResult,
+} from '@/lib/cash-report/custom-result';
 import { COLLECTION_EPS } from '@/lib/cash-report/collection-currency';
 import type { jsPDF } from 'jspdf';
 import type { CashReport } from '@/types';
@@ -152,6 +162,14 @@ export interface CashReportPdfContext {
    *  concepto desactivado se OMITE realmente (sin título/subtotal huérfano):
    *  es presentación, no altera saldos ni registros. */
   concepts?: SummaryConceptsSelection;
+  /** MISIÓN CONCILIACIÓN (2026-10-26): reporte OFICIAL (universo completo —
+   *  todas las ventas válidas del período, sin ajuste de selección). Base del
+   *  resultado oficial de referencia y del anexo de auditoría. Ausente ⇒ se
+   *  usa `report` (no hay selección activa ⇒ coinciden). */
+  officialReport?: CashReport;
+  /** MISIÓN CONCILIACIÓN: conteos de ventas del período (universo y selección)
+   *  para el anexo de auditoría. Default: derivado de selectionMeta. */
+  salesCounts?: { validas: number; seleccionadas: number };
   /** MISIÓN PERSONALIZACIÓN · FUNCIÓN B: metadatos del conjunto de ventas
    *  seleccionado (N de M + etiqueta del filtro) — se imprimen junto al
    *  período para que el destinatario sepa qué conjunto se está mostrando. */
@@ -252,6 +270,42 @@ export function filterIncomeRowsByConcepts(
 ): ConceptTaggedRow[] {
   if (!concepts) return rows;
   return rows.filter(r => !r.concept || concepts[r.concept] !== false);
+}
+
+// ── MISIÓN CONCILIACIÓN (2026-10-26) · Resultado personalizado + anexo ──
+
+/** Etiqueta de identificación del documento (misión §4.1): el personalizado
+ *  se identifica como tal para NO confundirse con el saldo oficial de Caja. */
+export function reportIdentificationLabel(
+  results: { CUP?: CustomCurrencyResult | null; USD?: CustomCurrencyResult | null } | null | undefined,
+): string | null {
+  if (!results) return null;
+  const anyCustom = results.CUP?.esPersonalizado || results.USD?.esPersonalizado;
+  return anyCustom ? 'Reporte personalizado — conceptos seleccionados' : null;
+}
+
+/** Cálculo centralizado del par (oficial, personalizado) por moneda.
+ *  `report` = ajustado a la selección de ventas; `officialReport` = universo
+ *  completo (fallback: report cuando no hay selección). Una sola fuente:
+ *  computeDailySummary + computeCustomCurrencyResult — la misma que consume
+ *  la vista y el Excel (misión §6: contrato común). */
+export function computeCustomResultsForPdf(
+  report: CashReport,
+  officialReport: CashReport | null | undefined,
+  paymentTotals: unknown,
+  concepts: SummaryConceptsSelection | null | undefined,
+  counts: { validas: number; seleccionadas: number },
+): { CUP: CustomCurrencyResult; USD: CustomCurrencyResult } {
+  const base = officialReport ?? report;
+  const sel = concepts ?? DEFAULT_SUMMARY_CONCEPTS;
+  const cupOficial = computeDailySummary(base, 'CUP', paymentTotals as never);
+  const usdOficial = computeDailySummary(base, 'USD', paymentTotals as never);
+  const cupSeleccion = computeDailySummary(report, 'CUP', paymentTotals as never);
+  const usdSeleccion = computeDailySummary(report, 'USD', paymentTotals as never);
+  return {
+    CUP: computeCustomCurrencyResult('CUP', cupOficial, cupSeleccion, sel, counts),
+    USD: computeCustomCurrencyResult('USD', usdOficial, usdSeleccion, sel, counts),
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -463,18 +517,35 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     ['', '', '', ''],
     ['(-) Transferencias (no se entregan en efectivo)', '', '', fmt(cupTransferSales + cupTransferProduction)],
   ];
-  // MISIÓN PERSONALIZACIÓN — regla de presentación pura (misión §4/§7): el
-  // DINERO A ENTREGAR es un SALDO contable (equivalente al «Efectivo esperado
-  // a entregar» del Diario) y NO se recalcula al ocultar conceptos: solo la
-  // selección de VENTAS (reporte ajustado) recalcula lo que de ella deriva.
-  // La nota memo de transferencias conserva su valor contable completo.
-  const dineroEntregar = cupCashSales + cupCashProduction - cupCashPayments - cupCashCommissions;
+  // MISIÓN CONCILIACIÓN (2026-10-26) — contraste con la fórmula CENTRALIZADA:
+  // la plantilla Estándar consume el MISMO resultado personalizado que el
+  // Diario (computeCustomResultsForPdf → custom-result.ts). El «DINERO A
+  // ENTREGAR» pasa a ser el esperado CONFIGURADO (conceptos activos + ventas
+  // seleccionadas) — se elimina la segunda fórmula paralela que dejaba fuera
+  // saldo inicial, liquidación de billetes, documentos de caja, reembolsos y
+  // ajustes. El oficial completo queda en el ANEXO DE AUDITORÍA (hoja propia).
+  const estandarCounts = ctx.salesCounts ?? {
+    validas: ctx.selectionMeta?.total ?? 0,
+    seleccionadas: ctx.selectionMeta?.included ?? ctx.selectionMeta?.total ?? 0,
+  };
+  const estandarResults = computeCustomResultsForPdf(report, ctx.officialReport, null, ctx.concepts, estandarCounts);
+  const estandarIdLabel = reportIdentificationLabel(estandarResults);
+  const dineroEntregar = estandarResults.CUP.efectivoEsperadoPersonalizado;
   renderTable(
     ['Concepto', 'Documentos', '', 'Monto CUP'],
     summaryRows,
     [85, 30, 25, 40],
-    { align: ['left', 'left', 'right', 'right'], totalsRow: ['DINERO A ENTREGAR EN EFECTIVO', '', '', fmt(dineroEntregar)] }
+    { align: ['left', 'left', 'right', 'right'], totalsRow: [estandarIdLabel ? 'DINERO A ENTREGAR (PERSONALIZADO)' : 'DINERO A ENTREGAR EN EFECTIVO', '', '', fmt(dineroEntregar)] }
   );
+  // MISIÓN CONCILIACIÓN: identificación del resultado configurado + ruta al
+  // anexo (misión §4.1: el personalizado jamás se presenta como saldo oficial).
+  if (estandarIdLabel) {
+    es(8);
+    setText(C_WARN); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+    doc.text(`${estandarIdLabel} — resultado condicionado a los conceptos y ventas seleccionados.`, m, y); y += 3.4;
+    doc.text('El importe oficial completo está en el Anexo de Auditoría (última hoja).', m, y); y += 4;
+    setText(C_DARK); doc.setFont('helvetica', 'normal');
+  }
   y += 6;
 
   if (y + 40 > ph - m - 10) { doc.addPage(); y = m; }
@@ -594,7 +665,10 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     sectionTitle('DESGLOSE DE BILLETES PARA ENTREGA', 'Conteo físico de efectivo');
   }
   const cupTotal = breakdownTotal(cupBreakdown);
-  const expectedCup = report?.cash_balance_cup ?? (report?.totals as any | undefined)?.balance_cup as number ?? 0;
+  // MISIÓN CONCILIACIÓN: el cuadre del desglose compara contra el esperado
+  // CONFIGURADO (misma cifra que «DINERO A ENTREGAR») — antes usaba
+  // cash_balance_cup del RPC (fórmula distinta: segunda lógica contable).
+  const expectedCup = dineroEntregar;
   const cupDifference = cupTotal - expectedCup;
 
   if (options.includeCashBreakdown !== false && options.includeBreakdown) {
@@ -664,6 +738,86 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     doc.setFontSize(6); setText(C_MUTED);
     doc.text('Firma', m, sigY + 9);
     doc.text('Firma', pw - m - 80, sigY + 9);
+  }
+
+  // ══════════════ MISIÓN CONCILIACIÓN (2026-10-26) · ANEXO DE AUDITORÍA ══════════════
+  // Página SEPARADA (misión §5): misma estructura que el Diario — identificación,
+  // tabla por concepto (oficial vs personalizado) y conciliación con diferencias
+  // separadas por conceptos y por selección de ventas. Siempre se genera.
+  doc.addPage(); y = m;
+  sectionTitle('ANEXO DE AUDITORÍA — REPORTE PERSONALIZADO', 'Independiente del reporte principal');
+  setText(C_MUTED); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+  const estCfgConceptos = isDefaultSummaryConcepts(ctx.concepts)
+    ? 'Conceptos: todos los conceptos activos (sin personalización)'
+    : `Conceptos: ${estandarResults.CUP.conceptos.filter(c => c.estado === 'activo').length} activos · ${estandarResults.CUP.conceptos.filter(c => c.estado === 'omitido').length} omitidos`;
+  for (const line of [
+    `Tienda: ${sn}`,
+    `Período: ${startDate} - ${endDate}`,
+    `Base: efectivo físico por moneda (hoja CUP y hoja USD) · equivalencias contables en línea propia`,
+    `Generado: ${new Date().toLocaleString('es-CU')}`,
+    estCfgConceptos,
+    `Ventas: ${estandarCounts.seleccionadas} incluidas de ${estandarCounts.validas} válidas del período` + (ctx.selectionMeta?.filterLabel ? ` · Filtro: ${ctx.selectionMeta.filterLabel}` : ''),
+  ]) {
+    doc.text(line, m, y); y += 3.4;
+  }
+  y += 1;
+  setText(C_WARN); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+  doc.text('El reporte principal representa la configuración elegida por el usuario; los importes oficiales', m, y); y += 3.2;
+  doc.text('de esta auditoría representan TODOS los movimientos aplicables de COSTPRO.', m, y); y += 5;
+  setText(C_DARK);
+
+  for (const cur of (['CUP', 'USD'] as const)) {
+    const r = estandarResults[cur];
+    if (y + 60 > ph - m - 10) { doc.addPage(); y = m; }
+    sectionTitle(`HOJA ${cur} — COMPARACIÓN POR CONCEPTO`, 'Oficial vs personalizado');
+    const compRows: (string | number)[][] = r.conceptos.map(c => [
+      c.concepto.length > 38 ? c.concepto.substring(0, 36) + '…' : c.concepto,
+      c.estado,
+      c.base === 'USD' ? `$${c.importeOficial.toFixed(2)}` : fmt(c.importeOficial),
+      c.base === 'USD' ? `$${c.importePersonalizado.toFixed(2)}` : fmt(c.importePersonalizado),
+      c.base === 'USD' ? `$${c.diferencia.toFixed(2)}` : fmt(c.diferencia),
+      c.efecto,
+    ]);
+    renderTable(
+      ['Concepto', 'Estado', 'Importe oficial', 'En personalizado', 'Diferencia', 'Efecto'],
+      compRows,
+      [62, 22, 32, 32, 30, 30],
+      { align: ['left', 'left', 'right', 'right', 'right', 'left'] },
+    );
+    y += 4;
+    const rec = r.conciliacion;
+    const amt = (n: number) => cur === 'USD' ? `$${n.toFixed(2)}` : fmt(n);
+    const reconRows: (string | number)[][] = [
+      ['Ventas totales del período (oficial)', amt(rec.ventasTotalesOficial)],
+      ['Ventas totales del reporte personalizado', amt(rec.ventasTotalesPersonalizado)],
+      ['Saldo inicial oficial', amt(rec.saldoInicialOficial)],
+      ['Efectivo esperado OFICIAL (fórmula completa COSTPRO)', amt(rec.efectivoEsperadoOficial)],
+      ['Efectivo esperado PERSONALIZADO (conceptos activos)', amt(rec.efectivoEsperadoPersonalizado)],
+      ...(cur === 'CUP' ? ([
+        ['Equivalencia canónica CUP oficial (contable, no billetes)', amt(rec.equivalenciaOficial)],
+        ['Equivalencia canónica CUP configurada', amt(rec.equivalenciaPersonalizada)],
+      ] as (string | number)[][]) : []),
+      ['Ingresos de caja oficiales del período', amt(rec.ingresosCajaOficial)],
+      ['Egresos de caja oficiales del período', amt(rec.egresosCajaOficial)],
+      ['Diferencia monetaria total (personalizado − oficial)', amt(rec.diferenciaTotal)],
+      ['  · causada por conceptos desactivados', amt(rec.diferenciaPorConceptos)],
+      ['  · causada por ventas excluidas de la selección', amt(rec.diferenciaPorVentas)],
+      ['  · no explicada (residuo de conciliación)', amt(rec.diferenciaNoExplicada)],
+      ['Ventas válidas / seleccionadas / excluidas', `${rec.ventasValidas} / ${rec.ventasSeleccionadas} / ${rec.ventasExcluidas}`],
+    ];
+    renderTable(
+      ['Conciliación — hoja ' + cur, 'Importe'],
+      reconRows,
+      [125, 45],
+      { align: ['left', 'right'] },
+    );
+    y += 4;
+    setText(rec.conciliado ? C_SUCCESS : C_WARN); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+    doc.text(rec.conciliado
+      ? `Estado: Conciliado (la diferencia se explica por completo: conceptos + selección de ventas).`
+      : `Estado: Pendiente de conciliación (residuo ${amt(rec.diferenciaNoExplicada)} ${cur} no explicado).`, m, y);
+    y += 7;
+    setText(C_DARK); doc.setFont('helvetica', 'normal');
   }
 
   const pageCount = doc.getNumberOfPages();
@@ -843,6 +997,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
 
   const setText = (c: [number, number, number]) => { doc.setTextColor(c[0], c[1], c[2]); };
   const setDraw = (c: [number, number, number]) => { doc.setDrawColor(c[0], c[1], c[2]); };
+  const setFill = (c: [number, number, number]) => { doc.setFillColor(c[0], c[1], c[2]); };
   const fmtCup = (n: number) => n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true });
   const fmtUsdFmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true });
 
@@ -855,6 +1010,19 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
   // Misma fuente para pantalla, previsualización y PDF (src/lib/cash-report/summary.ts).
   const cupSummary: DailySummary = computeDailySummary(report, 'CUP', paymentTotals);
   const usdSummary: DailySummary = computeDailySummary(report, 'USD', paymentTotals);
+
+  // ── MISIÓN CONCILIACIÓN (2026-10-26): resultado personalizado + oficial ──
+  // `report` = conjunto de ventas SELECCIONADO (ajustado por la vista);
+  // `officialReport` = universo completo. La selección de conceptos GOBIERNA
+  // el cálculo del esperado personalizado; el oficial de referencia queda
+  // intacto para el anexo. UNA fuente: computeCustomResultsForPdf (misma que
+  // la vista y el Excel — contrato común de la misión §6).
+  const salesCounts = ctx.salesCounts ?? {
+    validas: selectionMeta?.total ?? 0,
+    seleccionadas: selectionMeta?.included ?? selectionMeta?.total ?? 0,
+  };
+  const customResults = computeCustomResultsForPdf(report, ctx.officialReport, paymentTotals, concepts, salesCounts);
+  const idLabel = reportIdentificationLabel(customResults);
 
   // ── Comisión sugerida por producto: CÁLCULO REAL DEL SISTEMA (§5.1) ──
   // POST /api/commissions/calculate (motor de reglas por trabajador con
@@ -938,6 +1106,14 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
       doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); setText(C_MUTED);
       const selTxt = `Ventas incluidas: ${selectionMeta.included} de ${selectionMeta.total}` + (selectionMeta.filterLabel ? ` · Filtro: ${selectionMeta.filterLabel}` : '');
       doc.text(selTxt, tx, y, { maxWidth: maxW });
+    }
+    // MISIÓN CONCILIACIÓN (2026-10-26): identificación del resultado — el
+    // documento personalizado se rotula como tal (jamás como saldo oficial).
+    if (idLabel) {
+      y += 3.6;
+      doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); setText(C_WARN);
+      doc.text(idLabel, tx, y, { maxWidth: maxW });
+      setText(C_MUTED); doc.setFont('helvetica', 'normal');
     }
     if (orientation === 'horizontal') {
       doc.setFontSize(7); doc.setFont('helvetica', 'normal'); setText(C_MUTED);
@@ -1107,6 +1283,146 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     if (entrega) doc.text(entrega, m + colW + 5, sigY + 5);
     if (recibe) doc.text(recibe, m + 2 * colW + 5, sigY + 5);
     if (flow) y = sigY + 9;
+  };
+
+  // ══════════════ MISIÓN CONCILIACIÓN (2026-10-26) · ANEXO DE AUDITORÍA ══════════════
+  // Página INDEPENDIENTE del reporte principal (misión §5). El anexo se genera
+  // SIEMPRE (también sin personalización — entonces certifica la igualdad con
+  // el reporte oficial) y documenta: identificación (tienda, período, base,
+  // fecha, configuración), tabla por concepto (oficial vs personalizado) y
+  // conciliación con diferencias separadas por conceptos y por selección de
+  // ventas. Sin IO: es un documento de solo lectura de los resultados ya
+  // calculados — jamás edita ni escribe registros del sistema.
+  const renderAuditAnnex = () => {
+    doc.addPage(); y = 14;
+    renderPageHeader('Anexo de Auditoría — Reporte Entrega');
+    markSection('Auditoría');
+
+    const fmtAmt = (n: number, cur: 'CUP' | 'USD') => cur === 'CUP' ? fmtCup(n) : fmtUsdFmt(n);
+
+    // Identificación (misión §5: tienda, período, base, fecha, configuración).
+    setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+    doc.text('Documento de auditoría independiente', m, y); y += 5;
+    setText(C_MUTED); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+    const cfgConceptos = isDefaultSummaryConcepts(concepts)
+      ? 'Conceptos: todos los conceptos activos (sin personalización)'
+      : `Conceptos: ${customResults.CUP.conceptos.filter(c => c.estado === 'activo').length} activos · ${customResults.CUP.conceptos.filter(c => c.estado === 'omitido').length} omitidos`;
+    const cfgVentas = `Ventas: ${salesCounts.seleccionadas} incluidas de ${salesCounts.validas} válidas del período` + (selectionMeta?.filterLabel ? ` · Filtro: ${selectionMeta.filterLabel}` : '');
+    for (const line of [
+      `Tienda: ${sn}`,
+      `Período: ${startDate} - ${endDate}`,
+      `Base: efectivo físico por moneda (hoja CUP y hoja USD) · equivalencias contables en línea propia`,
+      `Generado: ${new Date().toLocaleString('es-CU')}`,
+      cfgConceptos,
+      cfgVentas,
+    ]) {
+      doc.text(line, m, y); y += 3.4;
+    }
+    y += 2;
+    setText(C_WARN); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+    doc.text('El reporte principal representa la configuración elegida por el usuario; los importes', m, y); y += 3.2;
+    doc.text('oficiales de esta auditoría representan TODOS los movimientos aplicables de COSTPRO.', m, y); y += 5;
+    setText(C_DARK);
+
+    // Tabla por concepto + conciliación, por moneda.
+    for (const cur of (['CUP', 'USD'] as const)) {
+      const r = customResults[cur];
+      const fmt = (n: number) => fmtAmt(n, cur);
+      if (y + 60 > ph - m - 8) { doc.addPage(); y = 14; renderPageHeader(`Anexo de Auditoría (${cur})`); }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); setText(C_DARK);
+      doc.text(`Hoja ${cur} — comparación por concepto`, m, y); y += 5;
+
+      // Tabla: Concepto | Estado | Oficial | Personalizado | Diferencia | Efecto
+      const colW = [contentW * 0.30, contentW * 0.11, contentW * 0.16, contentW * 0.16, contentW * 0.15, contentW * 0.12];
+      const colX: number[] = []; let ax = m;
+      for (const w of colW) { colX.push(ax); ax += w; }
+      const rowH = 4.6;
+      const drawHeader = () => {
+        setFill(C_DARK); doc.rect(m, y, contentW, 5.4, 'F');
+        setText([255, 255, 255]); doc.setFont('helvetica', 'bold'); doc.setFontSize(6.4);
+        const heads = ['Concepto', 'Estado', 'Importe oficial', 'En personalizado', 'Diferencia', 'Efecto'];
+        heads.forEach((h, i) => {
+          if (i >= 2) doc.text(h, colX[i] + colW[i] - 1, y + 3.8, { align: 'right' });
+          else doc.text(h, colX[i] + 1, y + 3.8);
+        });
+        y += 5.4; setText(C_DARK); doc.setFont('helvetica', 'normal'); doc.setFontSize(6.4);
+      };
+      drawHeader();
+      let alt = 0;
+      for (const c of r.conceptos) {
+        if (y + rowH > ph - m - 6) { doc.addPage(); y = 14; drawHeader(); }
+        if (alt % 2 === 0) { setFill([243, 244, 246]); doc.rect(m, y, contentW, rowH, 'F'); }
+        alt += 1;
+        // Concepto (truncado) + estado coloreado.
+        let lbl = c.concepto;
+        if (doc.getTextWidth(lbl) > colW[0] - 2) {
+          while (lbl.length > 0 && doc.getTextWidth(lbl + '…') > colW[0] - 2) lbl = lbl.slice(0, -1);
+          lbl += '…';
+        }
+        setText(C_DARK);
+        doc.text(lbl, colX[0] + 1, y + 3.2);
+        setText(c.estado === 'activo' ? C_SUCCESS : C_WARN); doc.setFont('helvetica', 'bold');
+        doc.text(c.estado, colX[1] + 1, y + 3.2);
+        doc.setFont('helvetica', 'normal'); setText(C_DARK);
+        const amt = (n: number) => c.base === 'USD' ? fmtUsdFmt(n) : fmtCup(n);
+        doc.text(amt(c.importeOficial), colX[2] + colW[2] - 1, y + 3.2, { align: 'right' });
+        doc.text(amt(c.importePersonalizado), colX[3] + colW[3] - 1, y + 3.2, { align: 'right' });
+        setText(Math.abs(c.diferencia) < 0.005 ? C_MUTED : C_WARN);
+        doc.text(amt(c.diferencia), colX[4] + colW[4] - 1, y + 3.2, { align: 'right' });
+        setText(C_MUTED);
+        doc.text(c.efecto, colX[5] + 1, y + 3.2);
+        y += rowH;
+      }
+      y += 3;
+
+      // Conciliación (misión §5.1).
+      if (y + 88 > ph - m - 8) { doc.addPage(); y = 14; renderPageHeader(`Anexo de Auditoría (${cur}) — conciliación`); }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); setText(C_DARK);
+      doc.text(`Hoja ${cur} — conciliación configurado vs oficial`, m, y); y += 5;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+      const rec = r.conciliacion;
+      const reconRows: Array<[string, string]> = [
+        ['Ventas totales del período (oficial)', fmt(rec.ventasTotalesOficial)],
+        ['Ventas totales del reporte personalizado', fmt(rec.ventasTotalesPersonalizado)],
+        ['Saldo inicial oficial', fmt(rec.saldoInicialOficial)],
+        ['Efectivo esperado OFICIAL (fórmula completa COSTPRO)', fmt(rec.efectivoEsperadoOficial)],
+        ['Efectivo esperado PERSONALIZADO (conceptos activos)', fmt(rec.efectivoEsperadoPersonalizado)],
+        ...(cur === 'CUP' ? ([
+          ['Equivalencia canónica CUP oficial (contable, no billetes)', fmt(rec.equivalenciaOficial)],
+          ['Equivalencia canónica CUP configurada', fmt(rec.equivalenciaPersonalizada)],
+        ] as Array<[string, string]>) : []),
+        ['Ingresos de caja oficiales del período', fmt(rec.ingresosCajaOficial)],
+        ['Egresos de caja oficiales del período', fmt(rec.egresosCajaOficial)],
+        ['Diferencia monetaria total (personalizado − oficial)', fmt(rec.diferenciaTotal)],
+        ['  · causada por conceptos desactivados', fmt(rec.diferenciaPorConceptos)],
+        ['  · causada por ventas excluidas de la selección', fmt(rec.diferenciaPorVentas)],
+        ['  · no explicada (residuo de conciliación)', fmt(rec.diferenciaNoExplicada)],
+        ['Ventas válidas / seleccionadas / excluidas', `${rec.ventasValidas} / ${rec.ventasSeleccionadas} / ${rec.ventasExcluidas}`],
+      ];
+      for (const [k, v] of reconRows) {
+        if (y + 4 > ph - m - 6) { doc.addPage(); y = 14; }
+        let lbl = k;
+        if (doc.getTextWidth(lbl) > contentW - 50) {
+          while (lbl.length > 0 && doc.getTextWidth(lbl + '…') > contentW - 50) lbl = lbl.slice(0, -1);
+          lbl += '…';
+        }
+        setText(lbl.startsWith('  ·') ? C_MUTED : C_DARK);
+        doc.text(lbl, m + 1, y);
+        setText(C_DARK); doc.setFont('helvetica', 'bold');
+        doc.text(v, m + contentW - 1, y, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+        y += 4;
+      }
+      // Estado de conciliación (misión §5.2: pendiente si hay residuo).
+      y += 2;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+      setText(rec.conciliado ? C_SUCCESS : C_WARN);
+      doc.text(rec.conciliado
+        ? `Estado: Conciliado (la diferencia se explica por completo: conceptos + selección de ventas).`
+        : `Estado: Pendiente de conciliación (residuo ${fmt(rec.diferenciaNoExplicada)} ${cur} no explicado por conceptos ni selección).`, m, y, { maxWidth: contentW });
+      y += 8;
+      setText(C_DARK);
+    }
   };
 
   // ── Separador visual entre el reporte CUP y el USD (hoja compartida) ──
@@ -1350,29 +1666,33 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     markSection(currency);
 
     const s = curSummary;
-    // MISIÓN PERSONALIZACIÓN: las filas llevan su CONCEPTO (clave) y el bloque
-    // se filtra por la selección — un concepto desactivado se OMITE realmente
-    // del documento (presentación: el esperado y los saldos no se recalculan).
-    // MISIÓN CORRECTIVA 2026-10-25: el bloque abre con el SALDO INICIAL del
-    // período (libro de caja, `opening_balance` de la API) — partida real con
-    // importe real; ocultarla NO la saca del cálculo del esperado (§5).
+    // MISIÓN CONCILIACIÓN (2026-10-26): el cálculo personalizado GOBIERNA el
+    // bloque — el importe a entregar es el RESULTADO CONFIGURADO (conceptos
+    // activos + ventas seleccionadas), no el oficial. Las filas desactivadas
+    // se omiten del documento; el anexo de auditoría documenta las omisiones
+    // con sus importes oficiales y la diferencia frente al reporte completo.
+    const curResult = currency === 'CUP' ? customResults.CUP : customResults.USD;
+    const esperadoPersonalizado = curResult.efectivoEsperadoPersonalizado;
     const incomeRows: ConceptTaggedRow[] = filterIncomeRowsByConcepts(([
       { label: 'Saldo inicial / fondo de caja', amount: s.saldoInicial, concept: 'saldoInicial' },
       ...(currency === 'CUP'
       ? [
-          { label: 'Resumen del día (efectivo + transferencia)', amount: s.ventasTotales, isTotal: true, concept: 'resumenDia' },
+          // MISIÓN CONCILIACIÓN: el agregado se RECALCULA con los componentes
+          // de venta activos (una partida desactivada nunca queda sumada en
+          // silencio dentro del total — misión §4.2).
+          { label: 'Resumen del día (efectivo + transferencia)', amount: curResult.ventasTotalesPersonalizado, isTotal: true, concept: 'resumenDia' },
           { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
           { label: 'Ventas por transferencia', amount: s.ventasTransfer, concept: 'ventasTransferencia' },
         ]
       : [
-          { label: 'Resumen del día (efectivo + Zelle)', amount: s.ventasTotales, isTotal: true, concept: 'resumenDia' },
+          { label: 'Resumen del día (efectivo + Zelle)', amount: curResult.ventasTotalesPersonalizado, isTotal: true, concept: 'resumenDia' },
           { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
           { label: 'Venta por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' },
         ]),
     ] as ConceptTaggedRow[]), ctx.concepts);
     if (currency === 'CUP') {
       if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' });
-      if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true });
+      if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true, concept: 'ventasEfectivo' });
       // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
       // (contrato único §2) — jamás sumada a las filas de venta (no es una
       // segunda venta). MISIÓN CORRECTIVA 2026-10-25: es CONSOLIDACIÓN de
@@ -1380,28 +1700,28 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
       // la hoja USD — no alimentan el esperado de la hoja CUP (contarlos en
       // ambas rompería la conciliación con el libro físico).
       if (s.equivCashOtraMoneda > 0 && ctx.concepts?.equivalenciaCup !== false) incomeRows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, note: 'info', concept: 'equivalenciaCup' });
-      if (s.equivVouchersOtraMoneda > 0) incomeRows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, note: 'info' });
-      if (s.otIngresosCash > 0) incomeRows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash });
+      if (s.equivVouchersOtraMoneda > 0 && ctx.concepts?.equivalenciaCup !== false) incomeRows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, note: 'info', concept: 'equivalenciaCup' });
+      if (s.otIngresosCash > 0) incomeRows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash, concept: 'otIngresos' });
       // Comisiones PAGADAS desglosadas por medio (§4): transferencia NO toca el efectivo.
-      if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense' });
-      if (s.comisionesTransfer > 0) incomeRows.push({ label: 'Comisiones pagadas por transferencia', amount: s.comisionesTransfer, note: 'info' });
+      if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense', concept: 'otrosEgresos' });
+      if (s.comisionesTransfer > 0) incomeRows.push({ label: 'Comisiones pagadas por transferencia', amount: s.comisionesTransfer, note: 'info', concept: 'otrosEgresos' });
       // Servicios recibidos: línea INDEPENDIENTE (§6) — ya no fusionados en proveedores.
-      if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense' });
-      if (s.recibosProveedoresCash > 0) incomeRows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, note: 'expense' });
-      if (s.ajustesPositivos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos });
-      if (s.ajustesNegativos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (-)', amount: s.ajustesNegativos, note: 'expense' });
+      if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense', concept: 'otrosEgresos' });
+      if (s.recibosProveedoresCash > 0) incomeRows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, note: 'expense', concept: 'otrosEgresos' });
+      if (s.ajustesPositivos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos, concept: 'ajustes' });
+      if (s.ajustesNegativos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (-)', amount: s.ajustesNegativos, note: 'expense', concept: 'ajustes' });
       // MISIÓN INGRESOS/EGRESOS 2026-10-20: documentos de caja (fondo de cambio
       // y otros) — filas independientes de los ajustes, auditables por separado.
-      if (s.ingresosCaja > 0) incomeRows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja });
+      if (s.ingresosCaja > 0) incomeRows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja, concept: 'ingresosCaja' });
       if (s.egresosCaja > 0 && ctx.concepts?.egresosCaja !== false) incomeRows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, note: 'expense', concept: 'egresosCaja' });
-      if (s.reembolsosCash > 0) incomeRows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, note: 'expense' });
+      if (s.reembolsosCash > 0) incomeRows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, note: 'expense', concept: 'reembolsos' });
       // v2.23.0 (decisión del propietario 2026-10-21): reembolsos por voucher —
       // INFORMATIVO (nota 'info', igual que comisiones por transferencia): no
       // tocan el efectivo esperado; documenta el neto del lado vouchers.
-      if (s.reembolsosVoucher > 0) incomeRows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, note: 'info' });
+      if (s.reembolsosVoucher > 0) incomeRows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, note: 'info', concept: 'reembolsos' });
     } else {
-      if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense' });
-      if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense' });
+      if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense', concept: 'otrosEgresos' });
+      if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense', concept: 'otrosEgresos' });
     }
     // MISIÓN CORRECTIVA 2026-10-25: liquidación de billetes (vuelto cruzado de
     // cobros con liquidación explícita) — partida CONTABLE de la conciliación
@@ -1414,11 +1734,15 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
         ? { label: 'Vuelto dado en CUP de cobros en otras monedas', amount: s.liquidacionBilletes }
         : { label: 'Billetes recibidos en exceso (vuelto dado en CUP)', amount: s.liquidacionBilletes });
     }
-    const esperadoLabel = currency === 'CUP' ? 'Efectivo esperado a entregar' : 'Efectivo esperado a entregar (USD)';
-    const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, s.efectivoEsperado, esperadoLabel);
+    const esperadoLabel = currency === 'CUP'
+      ? (idLabel ? 'Efectivo esperado (personalizado)' : 'Efectivo esperado a entregar')
+      : (idLabel ? 'Efectivo esperado (personalizado, USD)' : 'Efectivo esperado a entregar (USD)');
+    const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, esperadoPersonalizado, esperadoLabel);
 
     const totalCounted = breakdownTotal(curBreakdown);
-    const cuadre = computeCuadre(totalCounted, s.efectivoEsperado);
+    // MISIÓN CONCILIACIÓN: el cuadre compara contra el esperado CONFIGURADO
+    // (el documento ES el reporte personalizado); el oficial vive en el anexo.
+    const cuadre = computeCuadre(totalCounted, esperadoPersonalizado);
     const displayDenomsList = displayDenoms(curDenoms, curBreakdown, currency);
     // «Desglose de efectivo» OFF → bloque omitido (la sección queda solo con
     // el Resumen; breakdownEndY = y mantiene la geometría intacta).
@@ -1461,6 +1785,14 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
       renderCurrencyReport('USD', false);
     }
   }
+
+  // ══════════════ MISIÓN CONCILIACIÓN (2026-10-26) · ANEXO DE AUDITORÍA ══════════════
+  // Página/sección SEPARADA e INDEPENDIENTE del reporte principal (misión §5):
+  // documenta los conceptos omitidos, sus importes OFICIALES, los importes
+  // incluidos en el personalizado y las diferencias — incluso (y sobre todo)
+  // cuando el usuario desactivó conceptos del resumen principal. El resultado
+  // oficial se calcula sobre el universo completo de movimientos del período.
+  renderAuditAnnex();
 
   // ══════════════ SECCIÓN ÓRDENES DE TRABAJO (§8.1: conmutable) ══════════════
   if (options.includeOtReport !== false) {

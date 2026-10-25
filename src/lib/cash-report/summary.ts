@@ -250,6 +250,11 @@ export interface DailySummary {
    *  cierre del período = apertura del siguiente). La equivalencia canónica
    *  de cobros en otra moneda NO entra aquí (esos billetes viven en su hoja). */
   efectivoEsperado: number;
+  /** MISIÓN CONCILIACIÓN (2026-10-26): neto de BILLETES de los cobros del
+   *  período (= ventasCash + liquidacionBilletes; vista física del ledger).
+   *  Término del esperado gobernable por el concepto «ventasEfectivo» en el
+   *  cálculo personalizado (custom-result.ts). */
+  cobrosBilletes: number;
   /** MISIÓN CORRECTIVA 2026-10-25: saldo del libro de caja inmediatamente
    *  ANTERIOR al período consultado (por moneda; 0 si la fuente no lo trae). */
   saldoInicial: number;
@@ -283,7 +288,7 @@ export function computeDailySummary(
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0,
     reembolsosCash: 0, reembolsosVoucher: 0, equivCashOtraMoneda: 0,
     equivVouchersOtraMoneda: 0, efectivoEsperado: 0, saldoInicial: 0,
-    liquidacionBilletes: 0,
+    liquidacionBilletes: 0, cobrosBilletes: 0,
   };
   if (!report) return zero;
 
@@ -440,7 +445,7 @@ export function computeDailySummary(
     recibosProveedoresCash, ajustesPositivos, ajustesNegativos, ajustesNeto,
     ingresosCaja, egresosCaja, reembolsosCash, reembolsosVoucher,
     equivCashOtraMoneda: equivCash, equivVouchersOtraMoneda: equivVouchers,
-    efectivoEsperado, saldoInicial, liquidacionBilletes,
+    efectivoEsperado, saldoInicial, liquidacionBilletes, cobrosBilletes,
   };
 }
 

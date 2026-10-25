@@ -169,18 +169,31 @@ describe('MISIÓN CORRECTIVA · documento ENERVIDA 23/10/2026 (PDF + Excel)', ()
     expect(cuadre.row[3]).toBe(0);
   });
 
-  it('Excel: ocultar «Saldo inicial» conserva el saldo por literal en la fórmula (§8: sin depender de fila visible)', async () => {
+  it('Excel: ocultar «Saldo inicial» EXCLUYE la base del cálculo personalizado (misión 2026-10-26 §4.3)', async () => {
     const { DEFAULT_SUMMARY_CONCEPTS } = await import('@/lib/cash-report/report-selection');
     const concepts = { ...DEFAULT_SUMMARY_CONCEPTS, saldoInicial: false };
     const { wb } = await buildCashReportExcelWorkbook(buildContext({ concepts }), SUMMARIES, new Map());
     const ws = wb.Sheets['Reporte Entrega']!;
     const rs = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: true, defval: '' }) as Array<Array<string | number | undefined>>;
     expect(rs.findIndex(r => String(r[0] ?? '') === 'Saldo inicial / fondo de caja')).toBe(-1); // fila omitida
-    const espIdx = rs.findIndex(r => String(r[0] ?? '') === 'Efectivo esperado a entregar');
+    // MISIÓN CONCILIACIÓN: el cálculo personalizado deja de incorporar la base
+    // (0 − 2.400 − 8.435.679,98 = −8.438.079,98) y se identifica como tal:
+    const espIdx = rs.findIndex(r => String(r[0] ?? '') === 'Efectivo esperado (personalizado)');
     expect(espIdx).toBeGreaterThanOrEqual(0);
-    expect(rs[espIdx]![3]).toBe(0); // el saldo contable NO cambia
+    expect(rs[espIdx]![3]).toBe(-8438079.98);
     const espCell2 = ws[`D${espIdx + 1}`] as Record<string, unknown> | undefined;
     const f = String(espCell2?.f ?? '');
-    expect(f).toMatch(/8438079\.98/); // el literal del saldo inicial viaja en la fórmula
+    // La fórmula solo suma filas visibles — SIN literal del saldo omitido:
+    expect(f).not.toMatch(/8438079\.98/);
+    // El ANEXO (hoja Auditoría) registra el saldo oficial omitido y su efecto:
+    const aud = XLSX.utils.sheet_to_json(wb.Sheets['Auditoría']!, { header: 1, blankrows: true, defval: '' }) as Array<Array<string | number | undefined>>;
+    const saldoRow = aud.find(r => String(r[0] ?? '') === 'Saldo inicial / fondo de caja');
+    expect(saldoRow).toBeDefined();
+    expect(saldoRow![1]).toBe('omitido');
+    expect(saldoRow![2]).toBe(8438079.98); // importe oficial
+    expect(saldoRow![3]).toBe(0);          // incluido en personalizado
+    // Conciliación: la diferencia se explica por el concepto desactivado:
+    const dif = aud.find(r => String(r[0] ?? '') === 'Diferencia por conceptos desactivados');
+    expect(dif![2]).toBe(8438079.98);
   });
 });

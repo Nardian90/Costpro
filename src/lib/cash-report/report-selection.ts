@@ -141,6 +141,10 @@ export interface SummaryConceptDef {
   key: SummaryConceptKey;
   label: string;
   hint?: string;
+  /** MISIÓN CONCILIACIÓN (2026-10-26): efecto del concepto sobre el cálculo
+   *  del reporte personalizado — componente de la fórmula del esperado o
+   *  partida informativa/agregada (documentado en custom-result.ts). */
+  effect: 'componente' | 'informativo';
 }
 
 export const SUMMARY_CONCEPTS: readonly SummaryConceptDef[] = [
@@ -148,42 +152,87 @@ export const SUMMARY_CONCEPTS: readonly SummaryConceptDef[] = [
     key: 'saldoInicial',
     label: 'Saldo inicial / fondo de caja',
     hint: 'Saldo del libro de caja inmediatamente anterior al período — no cambia con la selección de ventas',
+    effect: 'componente',
   },
   {
     key: 'resumenDia',
     label: 'Resumen del día (efectivo + transferencia)',
-    hint: 'Ventas totales del período cobradas en la moneda de la hoja',
+    hint: 'Total agregado de las ventas del período cobradas en la moneda de la hoja — se recalcula según los componentes activos',
+    effect: 'informativo',
   },
   {
     key: 'ventasEfectivo',
     label: 'Ventas en efectivo',
-    hint: 'Cobros en efectivo en la moneda de la hoja',
+    hint: 'Cobros en BILLETES de la moneda de la hoja (incluye el neto de liquidación/vuelto de esas ventas)',
+    effect: 'componente',
   },
   {
     key: 'ventasTransferencia',
     label: 'Ventas por transferencia',
+    hint: 'Informativo: la transferencia no es efectivo físico',
+    effect: 'informativo',
   },
   {
     key: 'ventasZelle',
     label: 'Ventas por Zelle',
+    hint: 'Informativo: Zelle no es efectivo físico',
+    effect: 'informativo',
   },
   {
     key: 'equivalenciaCup',
-    label: 'Equivalencia CUP de cobros en efectivo en otras monedas',
-    hint: 'Consolidación contable — no es una segunda venta',
+    label: 'Equivalencia CUP de cobros en otras monedas',
+    hint: 'Consolidación contable — no es una segunda venta ni billetes CUP',
+    effect: 'informativo',
+  },
+  {
+    key: 'ingresosCaja',
+    label: 'Ingresos de caja (fondo y otros)',
+    hint: 'Documentos de entrada física de efectivo del período',
+    effect: 'componente',
   },
   {
     key: 'egresosCaja',
     label: 'Egresos de caja (fondo y otros)',
     hint: 'Concepto independiente: no se recalcula al excluir ventas',
+    effect: 'componente',
+  },
+  {
+    key: 'otrosEgresos',
+    label: 'Comisiones, servicios y proveedores en efectivo',
+    hint: 'Otros egresos de efectivo del período (comisiones, servicios recibidos y pagos a proveedores)',
+    effect: 'componente',
+  },
+  {
+    key: 'otIngresos',
+    label: 'Anticipos de órdenes de trabajo (efectivo)',
+    hint: 'Cobros en efectivo de OT/producción del período',
+    effect: 'componente',
+  },
+  {
+    key: 'ajustes',
+    label: 'Ajustes extraordinarios',
+    hint: 'Ajustes de efectivo del período (neto de positivos y negativos)',
+    effect: 'componente',
+  },
+  {
+    key: 'reembolsos',
+    label: 'Reembolsos de devoluciones (efectivo)',
+    hint: 'Solo el tramo pagado en efectivo reduce el esperado',
+    effect: 'componente',
   },
 ] as const;
 
-export type SummaryConceptKey = 'saldoInicial' | 'resumenDia' | 'ventasEfectivo' | 'ventasTransferencia' | 'ventasZelle' | 'equivalenciaCup' | 'egresosCaja';
+export type SummaryConceptKey = 'saldoInicial' | 'resumenDia' | 'ventasEfectivo' | 'ventasTransferencia'
+  | 'ventasZelle' | 'equivalenciaCup' | 'ingresosCaja' | 'egresosCaja' | 'otrosEgresos'
+  | 'otIngresos' | 'ajustes' | 'reembolsos';
 
 export type SummaryConceptsSelection = Record<SummaryConceptKey, boolean>;
 
-/** Todos activados: reproduce EXACTAMENTE el contenido actual del reporte. */
+/** Todos activados: reproduce EXACTAMENTE el contenido y el cálculo del
+ *  reporte oficial completo de COSTPRO (contrato de la misión: quien no
+ *  personaliza ve el resultado íntegro). Las claves nuevas (2026-10-26)
+ *  activan por defecto — la persistencia v1 se valida clave a clave y las
+ *  preferencias anteriores no provocan errores. */
 export const DEFAULT_SUMMARY_CONCEPTS: SummaryConceptsSelection = {
   saldoInicial: true,
   resumenDia: true,
@@ -191,7 +240,12 @@ export const DEFAULT_SUMMARY_CONCEPTS: SummaryConceptsSelection = {
   ventasTransferencia: true,
   ventasZelle: true,
   equivalenciaCup: true,
+  ingresosCaja: true,
   egresosCaja: true,
+  otrosEgresos: true,
+  otIngresos: true,
+  ajustes: true,
+  reembolsos: true,
 };
 
 export const SUMMARY_CONCEPT_KEYS = Object.keys(DEFAULT_SUMMARY_CONCEPTS) as SummaryConceptKey[];

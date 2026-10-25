@@ -45,6 +45,8 @@ import {
   salesTableColumns,
   salesTableItems,
   salesTableQty,
+  computeCustomResultsForPdf,
+  reportIdentificationLabel,
   type CashReportPdfContext,
   type CashReportSummaries,
 } from './cash-report-pdf';
@@ -57,12 +59,17 @@ import {
 } from '@/lib/cash-report/summary';
 // MISIÓN PERSONALIZACIÓN REPORTE ENTREGA (2026-10-25): selección de conceptos
 // (misma fuente que pantalla y PDF) + metadatos del conjunto de ventas.
+// MISIÓN CONCILIACIÓN (2026-10-26): la selección de conceptos GOBIERNA el
+// cálculo del esperado personalizado (custom-result.ts — fórmula centralizada
+// compartida con pantalla y PDF) y el libro incorpora la hoja «Auditoría» con
+// el resultado oficial completo y las diferencias por concepto y por ventas.
 import {
   hasAnySummaryConcept,
   isDefaultSummaryConcepts,
   type SummaryConceptKey,
   type SummaryConceptsSelection,
 } from '@/lib/cash-report/report-selection';
+import type { CustomCurrencyResult } from '@/lib/cash-report/custom-result';
 
 type CellValue = string | number;
 
@@ -147,59 +154,62 @@ function attachFormulas(ws: WorkSheetLike, XLSX: XLSXModule, refs: FormulaRef[])
 // ── Filas del resumen (MISMA lógica condicional del PDF Diario §4) ─────────
 interface IncomeRow { label: string; amount: number; kind: 'total' | 'normal' | 'expense' | 'info'; concept?: SummaryConceptKey }
 
-function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD', concepts?: SummaryConceptsSelection | null): IncomeRow[] {
-  // MISIÓN PERSONALIZACIÓN: cada fila lleva su CONCEPTO; las desactivadas se
-  // OMITEN realmente (sin dejar títulos/subtotales huérfanos). Presentación
-  // pura: los valores contables no se alteran (el literal de la fórmula del
-  // esperado conserva el aporte de las filas ocultas — ver abajo).
+function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD', concepts?: SummaryConceptsSelection | null, customVentasTotales?: number): IncomeRow[] {
+  // MISIÓN CONCILIACIÓN (2026-10-26): cada fila lleva su CONCEPTO y el cálculo
+  // lo Gobierna la selección — el agregado del Resumen del día se RECALCULA con
+  // los componentes activos (customVentasTotales de custom-result.ts) y los
+  // términos desactivados dejan de aportar al esperado (fórmula de la hoja).
   // MISIÓN CORRECTIVA 2026-10-25: el resumen abre con el SALDO INICIAL del
   // período (libro de caja) — partida real del cálculo del esperado (§5).
   const off = (k: SummaryConceptKey) => concepts?.[k] === false;
+  const totalDia = customVentasTotales ?? s.ventasTotales;
   const rows: IncomeRow[] = [
     { label: 'Saldo inicial / fondo de caja', amount: s.saldoInicial, kind: 'normal', concept: 'saldoInicial' },
     ...((currency === 'CUP'
       ? [
-          { label: 'Resumen del día (efectivo + transferencia)', amount: s.ventasTotales, kind: 'total', concept: 'resumenDia' },
+          { label: 'Resumen del día (efectivo + transferencia)', amount: totalDia, kind: 'total', concept: 'resumenDia' },
           { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal', concept: 'ventasEfectivo' },
           { label: 'Ventas por transferencia', amount: s.ventasTransfer, kind: 'normal', concept: 'ventasTransferencia' },
         ]
       : [
-          { label: 'Resumen del día (efectivo + Zelle)', amount: s.ventasTotales, kind: 'total', concept: 'resumenDia' },
+          { label: 'Resumen del día (efectivo + Zelle)', amount: totalDia, kind: 'total', concept: 'resumenDia' },
           { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal', concept: 'ventasEfectivo' },
           { label: 'Venta por Zelle', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' },
         ]) as IncomeRow[]),
   ];
   if (currency === 'CUP') {
     if (s.ventasZelle > 0) rows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' });
-    if (s.ventasMixed > 0) rows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, kind: 'info' });
+    if (s.ventasMixed > 0) rows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, kind: 'info', concept: 'ventasEfectivo' });
     // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
     // (contrato único §2) — no es una segunda venta. MISIÓN CORRECTIVA
     // 2026-10-25: consolidación de PRESENTACIÓN ('info') — los billetes de
     // ese cobro viven en la hoja USD; no alimentan el esperado de la hoja CUP.
     if (s.equivCashOtraMoneda > 0) rows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, kind: 'info', concept: 'equivalenciaCup' });
-    if (s.equivVouchersOtraMoneda > 0) rows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, kind: 'info' });
-    if (s.otIngresosCash > 0) rows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash, kind: 'normal' });
-    if (s.comisionesCash > 0) rows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, kind: 'expense' });
-    if (s.comisionesTransfer > 0) rows.push({ label: 'Comisiones pagadas por transferencia', amount: s.comisionesTransfer, kind: 'info' });
-    if (s.serviciosRecibidosCash > 0) rows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, kind: 'expense' });
-    if (s.recibosProveedoresCash > 0) rows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, kind: 'expense' });
-    if (s.ajustesPositivos > 0) rows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos, kind: 'normal' });
-    if (s.ajustesNegativos > 0) rows.push({ label: 'Ajustes extraordinarios (−)', amount: s.ajustesNegativos, kind: 'expense' });
-    if (s.ingresosCaja > 0) rows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja, kind: 'normal' });
+    if (s.equivVouchersOtraMoneda > 0) rows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, kind: 'info', concept: 'equivalenciaCup' });
+    if (s.otIngresosCash > 0) rows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash, kind: 'normal', concept: 'otIngresos' });
+    if (s.comisionesCash > 0) rows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, kind: 'expense', concept: 'otrosEgresos' });
+    if (s.comisionesTransfer > 0) rows.push({ label: 'Comisiones pagadas por transferencia', amount: s.comisionesTransfer, kind: 'info', concept: 'otrosEgresos' });
+    if (s.serviciosRecibidosCash > 0) rows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, kind: 'expense', concept: 'otrosEgresos' });
+    if (s.recibosProveedoresCash > 0) rows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, kind: 'expense', concept: 'otrosEgresos' });
+    if (s.ajustesPositivos > 0) rows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos, kind: 'normal', concept: 'ajustes' });
+    if (s.ajustesNegativos > 0) rows.push({ label: 'Ajustes extraordinarios (−)', amount: s.ajustesNegativos, kind: 'expense', concept: 'ajustes' });
+    if (s.ingresosCaja > 0) rows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja, kind: 'normal', concept: 'ingresosCaja' });
     if (s.egresosCaja > 0) rows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, kind: 'expense', concept: 'egresosCaja' });
-    if (s.reembolsosCash > 0) rows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, kind: 'expense' });
-    if (s.reembolsosVoucher > 0) rows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, kind: 'info' });
+    if (s.reembolsosCash > 0) rows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, kind: 'expense', concept: 'reembolsos' });
+    if (s.reembolsosVoucher > 0) rows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, kind: 'info', concept: 'reembolsos' });
   } else {
-    if (s.comisionesCash > 0) rows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, kind: 'expense' });
-    if (s.serviciosRecibidosCash > 0) rows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, kind: 'expense' });
+    if (s.comisionesCash > 0) rows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, kind: 'expense', concept: 'otrosEgresos' });
+    if (s.serviciosRecibidosCash > 0) rows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, kind: 'expense', concept: 'otrosEgresos' });
   }
   // MISIÓN CORRECTIVA 2026-10-25: liquidación de billetes (vuelto cruzado) —
   // partida contable de la conciliación física, con SU SIGNO (hoja CUP
   // negativa = salida; hoja USD positiva = entrada). Siempre visible ≠ 0.
+  // Va JUNTO al concepto «ventasEfectivo»: si el concepto se desactiva, el
+  // neto de billetes de esas ventas se retira COMPLETO (misma regla del PDF).
   if (Math.abs(s.liquidacionBilletes) > 0.005) {
     rows.push(currency === 'CUP'
-      ? { label: 'Vuelto dado en CUP de cobros en otras monedas', amount: s.liquidacionBilletes, kind: 'normal' }
-      : { label: 'Billetes recibidos en exceso (vuelto dado en CUP)', amount: s.liquidacionBilletes, kind: 'normal' });
+      ? { label: 'Vuelto dado en CUP de cobros en otras monedas', amount: s.liquidacionBilletes, kind: 'normal', concept: 'ventasEfectivo' }
+      : { label: 'Billetes recibidos en exceso (vuelto dado en CUP)', amount: s.liquidacionBilletes, kind: 'normal', concept: 'ventasEfectivo' });
   }
   return concepts ? rows.filter(r => !r.concept || !off(r.concept)) : rows;
 }
@@ -290,6 +300,17 @@ export async function buildCashReportExcelWorkbook(
   const cupSummary = computeDailySummary(report, 'CUP', paymentTotals);
   const usdSummary = computeDailySummary(report, 'USD', paymentTotals);
 
+  // ── MISIÓN CONCILIACIÓN (2026-10-26): resultado personalizado + oficial ──
+  // Misma fuente que pantalla, vista previa y PDF (computeCustomResultsForPdf
+  // → custom-result.ts): la selección de conceptos GOBIERNA el cálculo del
+  // esperado exportado; el oficial de referencia alimenta la hoja «Auditoría».
+  const salesCounts = ctx.salesCounts ?? {
+    validas: selectionMeta?.total ?? 0,
+    seleccionadas: selectionMeta?.included ?? selectionMeta?.total ?? 0,
+  };
+  const customResults = computeCustomResultsForPdf(report, ctx.officialReport, paymentTotals, ctx.concepts, salesCounts);
+  const idLabel = reportIdentificationLabel(customResults);
+
   const periodoLbl = startDate === endDate ? startDate : `${startDate} → ${endDate}`;
   const sn = storeInfo?.name || 'Tienda';
   const generatedAt = new Date().toLocaleString('es');
@@ -347,6 +368,15 @@ export async function buildCashReportExcelWorkbook(
       s.merges.push({ s: { r: r3, c: 0 }, e: { r: r3, c: 2 } });
       if (s.lastCol > 4) s.merges.push({ s: { r: r3, c: 4 }, e: { r: r3, c: s.lastCol } });
     }
+    // MISIÓN CONCILIACIÓN (2026-10-26): identificación del resultado — la hoja
+    // personalizada se rotula como tal (jamás como saldo oficial de Caja) y
+    // remite a la hoja «Auditoría» para el oficial completo.
+    if (idLabel) {
+      s.aoa.push([sanitizeExcelText(`${idLabel} — resultado condicionado a los conceptos y ventas seleccionados; el oficial completo está en la hoja «Auditoría».`)]);
+      const r4 = s.aoa.length - 1;
+      s.identityRows.push(r4);
+      s.merges.push({ s: { r: r4, c: 0 }, e: { r: r4, c: s.lastCol } });
+    }
     s.aoa.push([]);
   };
 
@@ -372,12 +402,13 @@ export async function buildCashReportExcelWorkbook(
     denoms: number[],
     breakdown: Breakdown,
     concepts?: SummaryConceptsSelection | null,
+    customResult?: CustomCurrencyResult | null,
   ): { esperadoRow: number } => {
     const rowsByLabel = new Map<string, number>();
 
     // ══ RESUMEN DEL DÍA (mismas filas condicionales que el PDF §4) ══
     pushSectionTitle(s, `SECCIÓN 1 — RESUMEN Y ENTREGA DE EFECTIVO (${currency})`);
-    const rows = incomeRowsFor(summary, currency, concepts);
+    const rows = incomeRowsFor(summary, currency, concepts, customResult?.ventasTotalesPersonalizado);
     for (const r of rows) {
       // Regla B4 + paridad PDF §4: los egresos llevan SU signo contable
       // (negativo — igual que el PDF imprime −); las filas info, positivo.
@@ -388,16 +419,13 @@ export async function buildCashReportExcelWorkbook(
       s.merges.push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 2 } }); // etiqueta A:C
       if (r.kind !== 'total') s.moneyCells.push({ r: rowIdx, c: 3 });
     }
-    // Total de ventas como FÓRMULA viva: suma exacta de los componentes
-    // renderizados (ventasTotales = cash + transfer + zelle + mixed) + el
-    // LITERAL de los componentes ocultos por concepto (presentación pura:
-    // el total contable NUNCA cambia al ocultar una fila — misión §4/§7).
-    // MISIÓN CORRECTIVA: el total ya no es rows[0] (el resumen abre con el
-    // saldo inicial) — se localiza por kind='total'.
+    // Total de ventas como FÓRMULA viva: MISIÓN CONCILIACIÓN (2026-10-26) —
+    // suma EXACTA de los componentes renderizados (los desactivados ya NO
+    // aportan literales ocultos: el agregado personalizado se recalcula con
+    // los componentes activos, paridad total con el PDF y custom-result.ts).
     const totalRow = rows.find(r => r.kind === 'total');
     const totalLabel = totalRow?.label;
     const totalRowIdx = totalLabel ? rowsByLabel.get(totalLabel)! : -1;
-    const off = (k: SummaryConceptKey) => concepts?.[k] === false;
     const components = [
       rowsByLabel.get('Ventas en efectivo'),
       rowsByLabel.get('Ventas por transferencia'),
@@ -405,14 +433,7 @@ export async function buildCashReportExcelWorkbook(
       rowsByLabel.get('Venta por Zelle'),
       rowsByLabel.get('Ventas mixtas sin desglosar'),
     ].filter((v): v is number => v !== undefined);
-    const hiddenComponents =
-      (off('ventasEfectivo') ? summary.ventasCash : 0) +
-      (off('ventasTransferencia') ? summary.ventasTransfer : 0) +
-      (off('ventasZelle') ? summary.ventasZelle : 0);
-    const totalTerms = [
-      ...components.map((row) => `D${row + 1}`),
-      ...(Math.abs(hiddenComponents) > 0.005 ? [String(Number(hiddenComponents.toFixed(2)))] : []),
-    ];
+    const totalTerms = components.map((row) => `D${row + 1}`);
     s.formulas.push({
       r: totalRowIdx, c: 3,
       f: totalTerms.length > 0 ? totalTerms.join('+') : '0',
@@ -421,30 +442,32 @@ export async function buildCashReportExcelWorkbook(
     s.moneyCells.push({ r: totalRowIdx, c: 3 });
 
     // Efectivo esperado como FÓRMULA viva (misma cadena contable del sistema):
-    // efectivoEsperado = saldoInicial + ventasCash + liquidaciónBilletes
-    //                    + otIngresos + ajustes(+) + ingresosCaja
-    //                    − comisiones − servicios − proveedores − ajustes(−)
-    //                    − egresosCaja − reembolsosCash
-    // MISIÓN CORRECTIVA 2026-10-25: el esperado es SALDO DE CIERRE — abre con
-    // el saldo inicial (celda visible o LITERAL si el concepto está oculto:
-    // la fórmula NUNCA depende de una fila visible para dar el saldo correcto)
-    // y suma la liquidación de billetes (vuelto cruzado, fila contable). La
-    // equivalencia canónica YA NO es término (consolidación 'info' — los
-    // billetes viven en la hoja USD y ya están en SU esperado).
-    // CORRECCIÓN DE SIGNO (misión 2026-10-25, defecto preexistente demostrado
-    // por prueba): las filas de egreso ya llevan SU SIGNO CONTABLE en D
-    // (negativo — regla B4), de modo que la fórmula las SUMA; el join con
-    // '-' producía doble negación (p. ej. 20 000 − (−3 000) − (−500) =
-    // 23 500 en lugar de 16 500) y Excel recalculaba MAL al abrir
-    // (fullCalcOnLoad). El literal de conceptos ocultos conserva su aporte
-    // contable sin fila visible (presentación pura — nunca cambia el saldo).
-    const esperadoLbl = currency === 'CUP' ? 'Efectivo esperado a entregar' : 'Efectivo esperado a entregar (USD)';
-    s.aoa.push([esperadoLbl, '', '', summary.efectivoEsperado]);
+    // MISIÓN CONCILIACIÓN (2026-10-26): el esperado de la hoja es el
+    // PERSONALIZADO — exactamente los términos de los conceptos ACTIVOS, sin
+    // literales ocultos (la selección GOBIERNA el cálculo, misión §4.3). Con
+    // todos los conceptos activos la fórmula reproduce el oficial completo
+    // (identidad certificada por prueba).
+    //   esperado(personalizado) = saldoInicial? + (ventasCash + liquidación)?
+    //                          + otIngresos? + ajustes(±)? + ingresosCaja?
+    //                          − (comisiones + servicios + proveedores)?
+    //                          − egresosCaja? − reembolsosCash?
+    // CORRECCIÓN DE SIGNO (misión 2026-10-25): las filas de egreso llevan SU
+    // SIGNO contable en D (negativo — regla B4), de modo que la fórmula las
+    // SUMA; el join con '-' producía doble negación.
+    // (La equivalencia canónica NO es término: los billetes viven en su hoja.)
+    const esperadoPersonalizado = customResult?.efectivoEsperadoPersonalizado ?? summary.efectivoEsperado;
+    const esperadoLbl = currency === 'CUP'
+      ? (customResult?.esPersonalizado ? 'Efectivo esperado (personalizado)' : 'Efectivo esperado a entregar')
+      : (customResult?.esPersonalizado ? 'Efectivo esperado (personalizado, USD)' : 'Efectivo esperado a entregar (USD)');
+    s.aoa.push([esperadoLbl, '', '', esperadoPersonalizado]);
     const esperadoRow = s.aoa.length - 1;
     rowsByLabel.set(esperadoLbl, esperadoRow);
     s.merges.push({ s: { r: esperadoRow, c: 0 }, e: { r: esperadoRow, c: 2 } });
     s.moneyCells.push({ r: esperadoRow, c: 3 });
     s.totalRows.push(esperadoRow);
+    // Términos de la fórmula: SOLO filas visibles (conceptos activos). Las
+    // filas de egreso ya son negativas en D → se SUMAN. La liquidación de
+    // billetes va con «ventasEfectivo» (neto de billetes completo).
     const posTerms = [
       rowsByLabel.get('Saldo inicial / fondo de caja'),
       rowsByLabel.get('Ventas en efectivo'),
@@ -462,19 +485,9 @@ export async function buildCashReportExcelWorkbook(
       rowsByLabel.get('Egresos de caja (fondo y otros)'),
       rowsByLabel.get('Reembolsos de devoluciones (efectivo)'),
     ].filter((v): v is number => v !== undefined);
-    // Aporte contable de los términos de fórmula OCULTOS por concepto: sus
-    // filas no se renderizaron — el literal preserva el saldo exacto.
-    // (La liquidación de billetes no tiene concepto: siempre visible ≠ 0 —
-    // su celda YA está en posTerms, nunca se duplica como literal;
-    // la equivalencia ya no es término del esperado.)
-    const hiddenEsperadoTerms =
-      (off('saldoInicial') ? summary.saldoInicial : 0) +
-      (off('ventasEfectivo') ? summary.ventasCash : 0) -
-      (off('egresosCaja') ? summary.egresosCaja : 0);
     const esperadoTerms = [
       ...posTerms.map((row) => `D${row + 1}`),
       ...negTerms.map((row) => `D${row + 1}`),
-      ...(Math.abs(hiddenEsperadoTerms) > 0.005 ? [`${hiddenEsperadoTerms >= 0 ? '' : '-'}${Math.abs(Number(hiddenEsperadoTerms.toFixed(2)))}`] : []),
     ];
     const esperadoFormula = esperadoTerms.length > 0 ? esperadoTerms.join('+') : '0';
     s.formulas.push({ r: esperadoRow, c: 3, f: esperadoFormula });
@@ -523,8 +536,9 @@ export async function buildCashReportExcelWorkbook(
         s.moneyCells.push({ r: contadoRow, c: 3 });
         s.totalRows.push(contadoRow);
       }
-      // Cuadre en vivo: contado (esta hoja) − esperado (RESUMEN de esta hoja).
-      const cuadre = computeCuadre(breakdownTotal(breakdown), summary.efectivoEsperado);
+      // Cuadre en vivo: contado (esta hoja) − esperado PERSONALIZADO de esta
+      // hoja (misma cifra que el resumen — misión §6: paridad exacta).
+      const cuadre = computeCuadre(breakdownTotal(breakdown), esperadoPersonalizado);
       const state = cuadreLabel(cuadre);
       s.aoa.push([`Cuadre (${state.toUpperCase()})`, '', '', cuadre]);
       const cuadreRow = s.aoa.length - 1;
@@ -607,7 +621,7 @@ export async function buildCashReportExcelWorkbook(
     breakdown: Breakdown,
   ): { section2StartRow: number; ventasHeaderRow: number } => {
     renderIdentity(s, currency, true);
-    renderSection1(s, currency, summary, denoms, breakdown, ctx.concepts);
+    renderSection1(s, currency, summary, denoms, breakdown, ctx.concepts, customResults[currency]);
     if (showFirmas) renderFirmas(s);
     // La línea de corte cierra la sección 1 (línea negra al imprimir).
     renderCutLine(s);
@@ -726,6 +740,106 @@ export async function buildCashReportExcelWorkbook(
     wsOt = materialize(XLSX, ot, [{ wch: 13 }, { wch: 13 }, { wch: 44 }, { wch: 10 }, { wch: 14 }, { wch: 12 }], {});
   }
 
+  // ═══════════════ HOJA «Auditoría» (MISIÓN CONCILIACIÓN 2026-10-26) ═══════════════
+  // Hoja de trabajo SEPARADA e INDEPENDIENTE (misión §5): resultado oficial
+  // completo (universo de movimientos del período), resultado configurado,
+  // omisiones por concepto con sus importes oficiales y diferencias separadas
+  // por conceptos y por selección de ventas. Se genera SIEMPRE — con más
+  // motivo cuando el usuario desactivó conceptos del resumen principal.
+  const aud = newSheetCtx(5); // A..F
+  aud.aoa.push(['AUDITORÍA — REPORTE ENTREGA']);
+  aud.merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } });
+  aud.docTitleRows.push(0);
+  aud.aoa.push([]);
+  const audIdent: Array<[string, string]> = [
+    ['Tienda:', sanitizeExcelText(sn)],
+    ['Período:', periodoLbl],
+    ['Base de cálculo:', 'Efectivo físico por moneda (hoja CUP / hoja USD); equivalencias contables en línea propia'],
+    ['Fecha de generación:', generatedAt],
+    ['Configuración de conceptos:', isDefaultSummaryConcepts(ctx.concepts) ? 'Todos los conceptos activos (sin personalización)' : `${customResults.CUP.conceptos.filter(c => c.estado === 'activo').length} activos · ${customResults.CUP.conceptos.filter(c => c.estado === 'omitido').length} omitidos`],
+    ['Ventas del período:', `${salesCounts.seleccionadas} incluidas de ${salesCounts.validas} válidas` + (selectionMeta?.filterLabel ? ` · Filtro: ${selectionMeta.filterLabel}` : '')],
+    ['Resultado del reporte principal:', idLabel ? 'Reporte personalizado — conceptos seleccionados' : 'Reporte oficial completo (sin personalización)'],
+  ];
+  for (const [k, v] of audIdent) aud.aoa.push([k, '', v]);
+  const audIdentRowsStart = aud.aoa.length - audIdent.length;
+  for (let i = 0; i < audIdent.length; i += 1) {
+    const r = audIdentRowsStart + i;
+    aud.identityRows.push(r);
+    aud.merges.push({ s: { r, c: 2 }, e: { r, c: 5 } });
+  }
+  aud.aoa.push([]);
+  aud.aoa.push([sanitizeExcelText('El reporte principal representa la configuración elegida por el usuario; los importes oficiales de esta auditoría representan TODOS los movimientos aplicables de COSTPRO.')]);
+  const audNotaRow = aud.aoa.length - 1;
+  aud.merges.push({ s: { r: audNotaRow, c: 0 }, e: { r: audNotaRow, c: 5 } });
+  aud.aoa.push([]);
+
+  let audLastRow = aud.aoa.length;
+  for (const cur of (['CUP', 'USD'] as const)) {
+    const r = customResults[cur];
+    // Tabla por concepto (misión §5.1 — columnas obligatorias).
+    pushSectionTitle(aud, `HOJA ${cur} — COMPARACIÓN POR CONCEPTO`, 'Oficial vs personalizado');
+    aud.aoa.push(['Concepto', 'Estado en configuración', 'Importe oficial', 'Incluido en personalizado', 'Diferencia por concepto', 'Efecto']);
+    const hdrRow = aud.aoa.length - 1;
+    aud.headerRows.push(hdrRow);
+    const firstDataRow = aud.aoa.length;
+    for (const c of r.conceptos) {
+      aud.aoa.push([sanitizeExcelText(c.concepto), c.estado, c.importeOficial, c.importePersonalizado, c.diferencia, c.efecto]);
+      const row = aud.aoa.length - 1;
+      aud.moneyCells.push({ r: row, c: 2 }, { r: row, c: 3 }, { r: row, c: 4 });
+    }
+    const lastDataRow = aud.aoa.length - 1;
+    // Diferencia por concepto como FÓRMULA viva: oficial − personalizado.
+    for (let row = firstDataRow; row <= lastDataRow; row += 1) {
+      aud.formulas.push({ r: row, c: 4, f: `C${row + 1}-D${row + 1}` });
+    }
+    aud.aoa.push([]);
+
+    // Conciliación (misión §5.1).
+    pushSectionTitle(aud, `HOJA ${cur} — CONCILIACIÓN CONFIGURADO VS OFICIAL`);
+    const rec = r.conciliacion;
+    const recon: Array<[string, number | string, boolean]> = [
+      ['Ventas totales del período (oficial)', rec.ventasTotalesOficial, true],
+      ['Ventas totales del reporte personalizado', rec.ventasTotalesPersonalizado, true],
+      ['Saldo inicial oficial', rec.saldoInicialOficial, true],
+      ['Efectivo esperado OFICIAL (fórmula completa COSTPRO)', rec.efectivoEsperadoOficial, true],
+      ['Efectivo esperado PERSONALIZADO (conceptos activos)', rec.efectivoEsperadoPersonalizado, true],
+      ...(cur === 'CUP' ? ([
+        ['Equivalencia canónica CUP oficial (contable, no billetes)', rec.equivalenciaOficial, true],
+        ['Equivalencia canónica CUP configurada', rec.equivalenciaPersonalizada, true],
+      ] as Array<[string, number | string, boolean]>) : []),
+      ['Ingresos de caja oficiales del período', rec.ingresosCajaOficial, true],
+      ['Egresos de caja oficiales del período', rec.egresosCajaOficial, true],
+      ['Diferencia monetaria total (personalizado − oficial)', rec.diferenciaTotal, true],
+      ['Diferencia por conceptos desactivados', rec.diferenciaPorConceptos, true],
+      ['Diferencia por ventas excluidas de la selección', rec.diferenciaPorVentas, true],
+      ['Diferencia no explicada (residuo)', rec.diferenciaNoExplicada, true],
+      ['Ventas válidas / seleccionadas / excluidas', `${rec.ventasValidas} / ${rec.ventasSeleccionadas} / ${rec.ventasExcluidas}`, false],
+      ['Estado', rec.conciliado ? 'Conciliado' : 'Pendiente de conciliación', false],
+    ];
+    const reconFirst = aud.aoa.length;
+    for (const [k, v, isMoney] of recon) {
+      aud.aoa.push([sanitizeExcelText(k), '', v]);
+      const row = aud.aoa.length - 1;
+      aud.merges.push({ s: { r: row, c: 0 }, e: { r: row, c: 1 } });
+      if (isMoney) aud.moneyCells.push({ r: row, c: 2 });
+    }
+    // Verificación en vivo (misión §8.3: las diferencias suman coherente):
+    // porConceptos + porVentas + noExplicada = total. Fórmula real.
+    const verRow = aud.aoa.length;
+    aud.aoa.push(['Verificación: porConceptos + porVentas + noExplicada − total = 0', '', 0]);
+    aud.merges.push({ s: { r: verRow, c: 0 }, e: { r: verRow, c: 1 } });
+    aud.moneyCells.push({ r: verRow, c: 2 });
+    const rOf = (base: number) => base + 1; // 0-based → 1-based
+    const idxOf = (label: string) => rOf(reconFirst + recon.findIndex(([k]) => k === label));
+    aud.formulas.push({
+      r: verRow, c: 2,
+      f: `C${idxOf('Diferencia por conceptos desactivados')}+C${idxOf('Diferencia por ventas excluidas de la selección')}+C${idxOf('Diferencia no explicada (residuo)')}-C${idxOf('Diferencia monetaria total (personalizado − oficial)')}`,
+    });
+    aud.aoa.push([]);
+    audLastRow = aud.aoa.length;
+  }
+  const wsAud = materialize(XLSX, aud, [{ wch: 52 }, { wch: 22 }, { wch: 17 }, { wch: 21 }, { wch: 19 }, { wch: 12 }], {});
+
   // ═══════════════ HOJA «Nota metodológica» (auditoría del documento) ═══════════════
   const nota = newSheetCtx(1);
   nota.aoa.push(['NOTA METODOLÓGICA — REPORTE ENTREGA']);
@@ -753,16 +867,21 @@ export async function buildCashReportExcelWorkbook(
   const MAIN_SHEET = 'Reporte Entrega';
   const USD_SHEET = 'Reporte Entrega USD';
   const OT_SHEET = 'Órdenes de Trabajo';
+  const AUD_SHEET = 'Auditoría';
   const NOTA_SHEET = 'Nota metodológica';
 
   XLSX.utils.book_append_sheet(wb, wsMain, MAIN_SHEET);
   if (wsUsd) XLSX.utils.book_append_sheet(wb, wsUsd, USD_SHEET);
   if (wsOt) XLSX.utils.book_append_sheet(wb, wsOt, OT_SHEET);
+  // MISIÓN CONCILIACIÓN: la hoja «Auditoría» es PARTE del documento exportado
+  // (misión §5) — se inserta SIEMPRE, antes de la nota metodológica.
+  XLSX.utils.book_append_sheet(wb, wsAud, AUD_SHEET);
   XLSX.utils.book_append_sheet(wb, wsNota, NOTA_SHEET);
   // Índices 0-based de hoja (mismo orden de append):
   const usdSheetIdx = wsUsd ? 1 : -1;
   const otSheetIdx = wsOt ? (wsUsd ? 2 : 1) : -1;
-  const notaSheetIdx = (wsUsd ? 2 : 1) + (wsOt ? 1 : 0);
+  const audSheetIdx = (wsUsd ? 2 : 1) + (wsOt ? 1 : 0);
+  const notaSheetIdx = audSheetIdx + 1;
 
   // Encabezados y áreas de impresión (_xlnm.Print_Titles / _xlnm.Print_Area,
   // definidos a nivel de workbook con índice 0-based de hoja).
@@ -785,6 +904,7 @@ export async function buildCashReportExcelWorkbook(
     workbookNames.push({ Name: '_xlnm.Print_Area', Sheet: otSheetIdx, Ref: `${q(OT_SHEET)}!$A$1:$F$${otLastRow}` });
     workbookNames.push({ Name: '_xlnm.Print_Titles', Sheet: otSheetIdx, Ref: `${q(OT_SHEET)}!$${otHeaderRow0 + 1}:$${otHeaderRow0 + 1}` });
   }
+  workbookNames.push({ Name: '_xlnm.Print_Area', Sheet: audSheetIdx, Ref: `${q(AUD_SHEET)}!$A$1:$F$${audLastRow}` });
   workbookNames.push({ Name: '_xlnm.Print_Area', Sheet: notaSheetIdx, Ref: `${q(NOTA_SHEET)}!$A$1:$B$${notaLastRow}` });
   (wb as unknown as { Workbook?: Record<string, unknown> }).Workbook!.Names = workbookNames;
 
@@ -806,6 +926,9 @@ export async function buildCashReportExcelWorkbook(
     wsOt
       ? { orientation: 'portrait', headerTitle: `Órdenes de Trabajo — ${sn}` }
       : undefined,
+    // MISIÓN CONCILIACIÓN: hoja Auditoría — resultado oficial + configurado
+    // + omisiones + diferencias (misión §5, documento exportado completo).
+    { orientation: 'portrait', headerTitle: `Auditoría — ${sn}` },
     { orientation: 'portrait', headerTitle: 'Nota metodológica' },
   ];
 

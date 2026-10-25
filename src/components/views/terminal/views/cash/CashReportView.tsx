@@ -71,6 +71,9 @@ import {
   type PdfTemplate, type PdfOrientation, type Breakdown, type Currency, type CustomDenoms, type SavedBreakdown,
 } from './cash-report-core';
 import { computeDailySummary, computeCuadre, cuadreLabel, type DailySummary } from '@/lib/cash-report/summary';
+// MISIÓN CONCILIACIÓN (2026-10-26): cálculo personalizado según conceptos
+// activos + resultado oficial de referencia (misma fuente que PDF y Excel).
+import { computeCustomCurrencyResult, type CustomCurrencyResult } from '@/lib/cash-report/custom-result';
 // MISIÓN PERSONALIZACIÓN REPORTE ENTREGA (2026-10-25): selección de
 // conceptos del Resumen del Día (persistida POR TIENDA) + selección de las
 // ventas que se computan (filtro por composición real de pagos + checkbox
@@ -353,6 +356,27 @@ export default function CashReportView() {
 
   // ── AUDITORÍA 2026-10: Resumen del Día con la fórmula centralizada (misma que PDF) ──
   const cupSummaryMemo = useMemo<DailySummary>(() => computeDailySummary(selection.report, 'CUP'), [selection]);
+  const usdSummaryMemo = useMemo<DailySummary>(() => computeDailySummary(selection.report, 'USD'), [selection]);
+
+  // ── MISIÓN CONCILIACIÓN (2026-10-26): resultado personalizado + oficial ──
+  // Misma fuente que vista previa, PDF, impresión y Excel (custom-result.ts):
+  // la selección de conceptos GOBIERNA el cálculo del esperado que muestra la
+  // pantalla — EXACTAMENTE el mismo que se exporta. El oficial de referencia
+  // queda disponible para el resumen de diferencias (misión §4.1/§6).
+  const customResultsView = useMemo(() => {
+    if (!applied?.report) return null;
+    const base = applied.report;
+    const sel = selection.report ?? base;
+    const cupOficial = computeDailySummary(base, 'CUP');
+    const usdOficial = computeDailySummary(base, 'USD');
+    const cupSeleccion = computeDailySummary(sel, 'CUP');
+    const usdSeleccion = computeDailySummary(sel, 'USD');
+    const counts = { validas: selection.totals.totalCount, seleccionadas: selection.totals.includedCount };
+    return {
+      CUP: computeCustomCurrencyResult('CUP', cupOficial, cupSeleccion, summaryConcepts, counts),
+      USD: computeCustomCurrencyResult('USD', usdOficial, usdSeleccion, summaryConcepts, counts),
+    };
+  }, [applied, selection, summaryConcepts]);
 
   // ── Totales y esperados (§5.4: sin conversión, monedas separadas) ──
   const cupTotal = useMemo(() => breakdownTotal(cupBreakdown), [cupBreakdown]);
@@ -360,8 +384,10 @@ export default function CashReportView() {
   // AUDITORÍA 2026-10 (D4): esperado CUP desde la MISMA fórmula centralizada que
   // el PDF (antes: cash_balance_cup del RPC que excluía el efectivo de mixtas;
   // fallback a balance_cup del RPC que INCLUÍA transferencias — inconsistente).
-  const expectedCup = cupSummaryMemo.efectivoEsperado;
-  const expectedUsd = useMemo(() => computeDailySummary(selection.report, 'USD').efectivoEsperado, [selection]);
+  // MISIÓN CONCILIACIÓN: el esperado de la pantalla es el PERSONALIZADO (los
+  // conceptos activos gobiernan el cálculo) — idéntico al exportado.
+  const expectedCup = customResultsView?.CUP.efectivoEsperadoPersonalizado ?? cupSummaryMemo.efectivoEsperado;
+  const expectedUsd = customResultsView?.USD.efectivoEsperadoPersonalizado ?? usdSummaryMemo.efectivoEsperado;
   const cupDifference = cupTotal - expectedCup;
   const usdDifference = usdTotal - expectedUsd;
 
@@ -639,8 +665,17 @@ export default function CashReportView() {
   // metadatos del filtro; con selección activa, la tabla por producto se
   // recalcula del conjunto seleccionado con la MISMA función del servidor
   // (buildItemsSummary) — sin algoritmo paralelo.
+  // MISIÓN CONCILIACIÓN (2026-10-26): además inyecta el REPORTE OFICIAL
+  // (universo completo — applied.report SIN ajuste) y los conteos de ventas:
+  // PDF, impresión, vista previa y Excel consumen el MISMO contrato con el
+  // resultado personalizado + oficial + auditoría (misión §6).
   const buildSelectionCtx = useCallback(() => ({
     report: (selection.report ?? applied?.report)!,
+    officialReport: applied?.report ?? undefined,
+    salesCounts: {
+      validas: selection.totals.totalCount,
+      seleccionadas: selection.totals.includedCount,
+    },
     concepts: summaryConcepts,
     selectionMeta,
   }), [selection, applied, summaryConcepts, selectionMeta]);
@@ -672,6 +707,8 @@ export default function CashReportView() {
       const selCtx = buildSelectionCtx();
       const doc = await buildCashReportPdf({
         report: selCtx.report,
+        officialReport: selCtx.officialReport,
+        salesCounts: selCtx.salesCounts,
         template: pdfTemplate,
         startDate: applied.cfg.startDate,
         endDate: applied.cfg.endDate,
@@ -735,6 +772,8 @@ export default function CashReportView() {
       const selCtx = buildSelectionCtx();
       const filename = await descargarCashReportExcel({
         report: selCtx.report, template: pdfTemplate,
+        officialReport: selCtx.officialReport,
+        salesCounts: selCtx.salesCounts,
         startDate: applied.cfg.startDate, endDate: applied.cfg.endDate,
         storeInfo, deliveredBy, recipientName, madeBy,
         cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptions,
@@ -773,6 +812,8 @@ export default function CashReportView() {
         const selCtx = buildSelectionCtx();
         doc = await buildCashReportPdf({
           report: selCtx.report, template: pdfTemplate,
+          officialReport: selCtx.officialReport,
+          salesCounts: selCtx.salesCounts,
           startDate: applied.cfg.startDate, endDate: applied.cfg.endDate,
           storeInfo, deliveredBy, recipientName, madeBy,
           cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptions,
@@ -1050,6 +1091,7 @@ export default function CashReportView() {
                 loadingDetails={loadingDetails}
                 setSelectedDoc={setSelectedDoc}
                 concepts={summaryConcepts}
+                customResult={customResultsView?.CUP ?? null}
                 onToggleConcept={toggleSummaryConcept}
                 onSetAllConcepts={setAllSummaryConcepts}
                 salesRows={salesRows}
@@ -1487,7 +1529,10 @@ function ConceptosSelector({ concepts, onToggle, onSetAll }: {
         </p>
       )}
       <p className="px-4 py-2 text-[10px] text-muted-foreground border-t border-border/20">
-        Solo cambia la PRESENTACIÓN del reporte (pantalla, PDF e impresión y Excel): no modifica saldos, el libro de caja ni registros almacenados.
+        La selección <strong className="text-foreground">gobierna el cálculo</strong> del reporte personalizado (conceptos
+        activos + ventas seleccionadas) y se documenta en el <strong className="text-foreground">anexo de auditoría</strong> del
+        PDF/Excel con la diferencia frente al reporte oficial. Nunca modifica saldos reales, el libro de caja ni registros
+        almacenados.
       </p>
     </section>
   );
@@ -1858,6 +1903,10 @@ interface ResultadosPanelProps {
   // ══ MISIÓN PERSONALIZACIÓN (2026-10-25) ══
   /** Conceptos activos (todos activados = comportamiento actual). */
   concepts: SummaryConceptsSelection;
+  // ══ MISIÓN CONCILIACIÓN (2026-10-26) ══
+  /** Resultado personalizado + oficial de la hoja CUP (custom-result.ts).
+   *  Null-safe: sin reporte calculado la vista degrada al comportamiento previo. */
+  customResult?: CustomCurrencyResult | null;
   onToggleConcept: (key: SummaryConceptKey) => void;
   onSetAllConcepts: (all: boolean) => void;
   /** Filas de venta individuales (vacío ⇔ no disponibles: fallback acordeón). */
@@ -1885,9 +1934,9 @@ function ResultadosPanel(p: ResultadosPanelProps) {
     serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0, reembolsosCash: 0, reembolsosVoucher: 0,
     equivCashOtraMoneda: 0, equivVouchersOtraMoneda: 0,
-    efectivoEsperado: p.expectedCup, saldoInicial: 0, liquidacionBilletes: 0,
+    efectivoEsperado: p.expectedCup, saldoInicial: 0, liquidacionBilletes: 0, cobrosBilletes: 0,
   };
-  const diferencia = computeCuadre(p.cupTotal, s.efectivoEsperado);
+  const diferencia = computeCuadre(p.cupTotal, p.expectedCup);
   const cuadreState = cuadreLabel(diferencia);
 
   const filterSales = (s: Record<string, unknown>) => (!p.filterCurrency || s.currency === p.filterCurrency) && (!p.filterMethod || s.payment_method === p.filterMethod);
@@ -2039,7 +2088,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
           {p.concepts.saldoInicial && (
             <SummaryRow label="Saldo inicial / fondo de caja" value={s.saldoInicial} note="saldo del libro de caja inmediatamente anterior al período" />
           )}
-          {p.concepts.resumenDia && <SummaryRow label="Ventas totales (efectivo + transferencia)" value={s.ventasTotales} strong />}
+          {p.concepts.resumenDia && <SummaryRow label="Ventas totales (efectivo + transferencia)" value={p.customResult?.ventasTotalesPersonalizado ?? s.ventasTotales} strong />}
           {p.concepts.ventasEfectivo && <SummaryRow label="Ventas en efectivo" value={s.ventasCash} />}
           {p.concepts.ventasTransferencia && <SummaryRow label="Ventas por transferencia" value={s.ventasTransfer} />}
           {p.concepts.ventasZelle && s.ventasZelle > 0 && <SummaryRow label="Ventas por Zelle" value={s.ventasZelle} />}
@@ -2049,19 +2098,21 @@ function ResultadosPanel(p: ResultadosPanelProps) {
               los billetes de ese cobro viven en la hoja USD y ya están en su
               esperado; no alimentan el esperado de la hoja CUP. */}
           {p.concepts.equivalenciaCup && s.equivCashOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de cobros en efectivo en otras monedas" value={s.equivCashOtraMoneda} note="consolidación contable — no es una segunda venta; no es efectivo físico CUP" />}
-          {s.equivVouchersOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de vouchers en otras monedas" value={s.equivVouchersOtraMoneda} note="informativo — no es efectivo físico" />}
-          {s.otIngresosCash > 0 && <SummaryRow label="Órdenes de trabajo (anticipos)" value={s.otIngresosCash} />}
-          {s.comisionesCash > 0 && <SummaryRow label="Comisiones pagadas en efectivo" value={-s.comisionesCash} negative />}
-          {s.comisionesTransfer > 0 && <SummaryRow label="Comisiones pagadas por transferencia" value={-s.comisionesTransfer} negative note="no reduce el efectivo físico" />}
-          {s.serviciosRecibidosCash > 0 && <SummaryRow label="Servicios recibidos pagados en efectivo" value={-s.serviciosRecibidosCash} negative />}
-          {s.recibosProveedoresCash > 0 && <SummaryRow label="Pagos a proveedores (efectivo)" value={-s.recibosProveedoresCash} negative />}
-          {s.ajustesPositivos > 0 && <SummaryRow label="Ajustes extraordinarios (+)" value={s.ajustesPositivos} />}
-          {s.ajustesNegativos > 0 && <SummaryRow label="Ajustes extraordinarios (−)" value={-s.ajustesNegativos} negative />}
+          {p.concepts.equivalenciaCup && s.equivVouchersOtraMoneda > 0 && <SummaryRow label="Equivalencia CUP de vouchers en otras monedas" value={s.equivVouchersOtraMoneda} note="informativo — no es efectivo físico" />}
+          {p.concepts.otIngresos && s.otIngresosCash > 0 && <SummaryRow label="Órdenes de trabajo (anticipos)" value={s.otIngresosCash} />}
+          {p.concepts.otrosEgresos && s.comisionesCash > 0 && <SummaryRow label="Comisiones pagadas en efectivo" value={-s.comisionesCash} negative />}
+          {p.concepts.otrosEgresos && s.comisionesTransfer > 0 && <SummaryRow label="Comisiones pagadas por transferencia" value={-s.comisionesTransfer} negative note="no reduce el efectivo físico" />}
+          {p.concepts.otrosEgresos && s.serviciosRecibidosCash > 0 && <SummaryRow label="Servicios recibidos pagados en efectivo" value={-s.serviciosRecibidosCash} negative />}
+          {p.concepts.otrosEgresos && s.recibosProveedoresCash > 0 && <SummaryRow label="Pagos a proveedores (efectivo)" value={-s.recibosProveedoresCash} negative />}
+          {p.concepts.ajustes && s.ajustesPositivos > 0 && <SummaryRow label="Ajustes extraordinarios (+)" value={s.ajustesPositivos} />}
+          {p.concepts.ajustes && s.ajustesNegativos > 0 && <SummaryRow label="Ajustes extraordinarios (−)" value={-s.ajustesNegativos} negative />}
           {/* MISIÓN PERSONALIZACIÓN: los documentos de caja (fondo y otros) se
               muestran igual que en el PDF/Excel — la vista prevé el MISMO
               contenido del documento; «Egresos de caja» es concepto gobernable. */}
-          {s.ingresosCaja > 0 && <SummaryRow label="Ingresos de caja (fondo y otros)" value={s.ingresosCaja} />}
+          {p.concepts.ingresosCaja && s.ingresosCaja > 0 && <SummaryRow label="Ingresos de caja (fondo y otros)" value={s.ingresosCaja} />}
           {p.concepts.egresosCaja && s.egresosCaja > 0 && <SummaryRow label="Egresos de caja (fondo y otros)" value={-s.egresosCaja} negative />}
+          {p.concepts.reembolsos && s.reembolsosCash > 0 && <SummaryRow label="Reembolsos de devoluciones (efectivo)" value={-s.reembolsosCash} negative />}
+          {p.concepts.reembolsos && s.reembolsosVoucher > 0 && <SummaryRow label="Reembolsos por voucher (transfer/Zelle)" value={-s.reembolsosVoucher} negative note="informativo — no reduce el efectivo físico" />}
           {/* MISIÓN CORRECTIVA 2026-10-25: liquidación de billetes (vuelto
               cruzado de cobros con liquidación explícita) — partida contable
               de la conciliación física; siempre visible cuando ≠ 0. */}
@@ -2075,17 +2126,36 @@ function ResultadosPanel(p: ResultadosPanelProps) {
           )}
         </div>
         <div className="flex items-center justify-between px-4 py-3 bg-primary/10 border-t-2 border-primary/40">
-          <p className="text-xs font-black uppercase text-primary">Efectivo esperado a entregar</p>
-          <p className="text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(s.efectivoEsperado)}</p>
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase text-primary">{p.customResult?.esPersonalizado ? 'Efectivo esperado (personalizado)' : 'Efectivo esperado a entregar'}</p>
+            {p.customResult?.esPersonalizado && (
+              <p className="text-[9px] text-warning font-bold uppercase tracking-wide truncate">
+                Reporte personalizado — conceptos seleccionados · el oficial va en el anexo de auditoría
+              </p>
+            )}
+          </div>
+          <p className="text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(p.expectedCup)}</p>
         </div>
+        {/* MISIÓN CONCILIACIÓN: resumen de diferencias frente al oficial —
+            pantalla/PDF/Excel muestran el MISMO resultado configurado. */}
+        {p.customResult?.esPersonalizado && (
+          <div className="px-4 py-2 bg-warning/5 border-t border-warning/20 text-[10px] text-muted-foreground flex flex-wrap gap-x-4 gap-y-0.5" data-testid="resumen-diferencias">
+            <span>Oficial: <strong className="text-foreground font-mono">{formatCurrency(p.customResult.conciliacion.efectivoEsperadoOficial)}</strong></span>
+            <span>Dif. por conceptos: <strong className="text-foreground font-mono">{formatCurrency(p.customResult.conciliacion.diferenciaPorConceptos)}</strong></span>
+            <span>Dif. por ventas: <strong className="text-foreground font-mono">{formatCurrency(p.customResult.conciliacion.diferenciaPorVentas)}</strong></span>
+            <span className={p.customResult.conciliacion.conciliado ? 'text-success font-bold' : 'text-warning font-bold'}>
+              {p.customResult.conciliacion.conciliado ? 'Conciliado' : 'Pendiente de conciliación'}
+            </span>
+          </div>
+        )}
       </section>
 
       {/* Cuadre: esperado vs contado — etiquetas inequívocas (§4). Con «Desglose
           de efectivo» OFF, el contado/diferencia no existe en el reporte. */}
       <section aria-label="Cuadre de caja" className={cn('grid gap-2', p.showCuadre ? 'grid-cols-3' : 'grid-cols-1')}>
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
-          <p className="text-[9px] font-black uppercase text-muted-foreground">Efectivo esperado</p>
-          <p className="text-base sm:text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(s.efectivoEsperado)}</p>
+          <p className="text-[9px] font-black uppercase text-muted-foreground">{p.customResult?.esPersonalizado ? 'Efectivo esperado (personalizado)' : 'Efectivo esperado'}</p>
+          <p className="text-base sm:text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(p.expectedCup)}</p>
         </div>
         {p.showCuadre && (
           <>

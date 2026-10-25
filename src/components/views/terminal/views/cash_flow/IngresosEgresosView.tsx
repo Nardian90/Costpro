@@ -32,7 +32,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Plus, Search, Loader2, Eye, RefreshCcw, LayoutList, List, AlertTriangle,
   ArrowDownToLine, ArrowUpFromLine, Ban, Wallet, Coins, Landmark, FileText,
-  ChevronLeft, ChevronRight, XCircle, History,
+  ChevronLeft, ChevronRight, XCircle, History, Scale,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime, touch } from '@/lib/utils';
 import { useAuthStore } from '@/store';
@@ -220,6 +220,38 @@ export default function IngresosEgresosView() {
   const turnoAbierto = activeShift.data != null;
   const turnoCargando = activeShift.isLoading || summaryQuery.isLoading;
 
+  // ── MISIÓN CONCILIACIÓN (2026-10-26) · Incidente A ──
+  // Cuatro magnitudes con base contable DISTINTA (misión §3.2), nunca
+  // intercambiables: (A) esperado canónico CUP — vista de VALOR de la fórmula
+  // oficial de arqueo (cada movimiento a SU tasa histórica); (B)/(C) saldos
+  // físicos CUP/USD — libro de BILLETES por moneda (get_cash_currency_summary);
+  // (D) fondo de cambio vigente — mecanismo del RPC. La conciliación expone la
+  // diferencia entre bases con su explicación; NO se fuerza la igualdad.
+  const esperadoCanonico = resumen?.expected_cash ?? null;
+  const fisicoCup = saldoFisico.CUP;
+  const fisicoUsd = saldoFisico.USD;
+  // Diferencia pendiente: esperado canónico − libros físicos. El USD físico NO
+  // se convierte aquí (no existe una tasa única legítima para valorar billetes
+  // ya entregados): la diferencia se presenta por separado y su explicación
+  // documenta la causa (valorización a tasas históricas distintas).
+  const diferenciaFisica = esperadoCanonico != null && fisicoCup != null
+    ? esperadoCanonico - fisicoCup
+    : null;
+  const conciliado = diferenciaFisica != null && Math.abs(diferenciaFisica) < 0.005 && (fisicoUsd ?? 0) === 0;
+  // Ventana del turno explícita: el esperado canónico se calcula sobre una
+  // ventana (turno abierto → apertura; sin turno → desde el último cierre o
+  // desde el origen). Sin turno abierto NO es «el saldo de un turno abierto».
+  const ventanaTurno = resumen?.window_start
+    ? new Date(resumen.window_start).toLocaleDateString('es-CU')
+    : null;
+  const hintVentana = resumen
+    ? (resumen.has_pending_shift
+        ? `Turno abierto · desde ${ventanaTurno}`
+        : (ventanaTurno && resumen.window_start && new Date(resumen.window_start).getFullYear() > 1970
+            ? `Sin turno abierto · acumulado desde el último cierre (${ventanaTurno})`
+            : 'Sin turno abierto · acumulado histórico (sin cierres previos)'))
+    : undefined;
+
   const totalPages = hasNextPage ? page + 1 : page;
 
   // ── Navegación por teclado de las pestañas (patrón WAI-ARIA Tabs,
@@ -354,13 +386,33 @@ export default function IngresosEgresosView() {
         className={cn(activeTab === 'documentos' ? 'space-y-4' : '')}
       >
       {/* ── KPIs (RPC get_cash_flow_summary — una sola fuente) ── */}
+      {/* MISIÓN CONCILIACIÓN (2026-10-26): período EXPLÍCITO e inequívoco — el
+          intervalo de negocio America/Havana con estado «abierto hasta ahora»
+          cuando llega al día actual (nunca una flecha que sugiera filtro sin
+          configurar). Los subtotales de ingresos/egresos corresponden SOLO a
+          este intervalo; los indicadores de saldo no cambian de significado. */}
+      <div
+        className="flex items-center justify-between gap-2 flex-wrap text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+        data-testid="periodo-banner"
+      >
+        <span>
+          Período: {dateFrom && dateTo && !rangoInvalido ? `${formatDate(periodFrom)} → ${formatDate(periodTo)}` : 'Sin rango válido'}
+          <span className="normal-case font-medium"> · día de negocio (America/Havana)</span>
+          {dateTo === hoy && dateTo >= dateFrom && !rangoInvalido && (
+            <span className="ml-1 normal-case font-black text-primary">· abierto hasta ahora</span>
+          )}
+        </span>
+        <span className={cn(rangoInvalido && 'text-destructive')}>
+          {rangoInvalido ? 'Rango invertido — no aplicado' : `Subtotales del período únicamente`}
+        </span>
+      </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
         <KpiCard
           icon={<Landmark className="w-4 h-4" />}
-          label="Saldo de caja (ahora)"
+          label="Efectivo esperado (CUP canónico)"
           value={resumen ? formatCurrency(resumen.expected_cash) : '—'}
           tone="primary"
-          hint={resumen ? `Efectivo esperado · CUP canónico (equivalente contable, incluye USD a tasa)` : undefined}
+          hint={resumen ? `Valor contable según fórmula de arqueo (cada movimiento a su tasa histórica) · ${hintVentana}` : undefined}
         />
         {/* MISIÓN CAJA v2.24.0 (§9): saldos físicos por moneda separados — no se
             suman al canónico como si fueran unidades iguales */}
@@ -411,6 +463,77 @@ export default function IngresosEgresosView() {
           hint={resumen ? `Período: ${formatDate(resumen.period.from)} → ${formatDate(resumen.period.to)}` : undefined}
         />
       </div>
+
+      {/* ── MISIÓN CONCILIACIÓN (2026-10-26) · Incidente A ──
+          Conciliación del esperado canónico con el libro físico por moneda.
+          Magnitudes distintas POR DISEÑO (valor contable vs billetes): la
+          diferencia se muestra con importes y explicación accesible; solo se
+          declara «Conciliado» cuando la igualdad corresponde a la misma base,
+          moneda y ventana. Nunca se presenta el esperado canónico como
+          billetes físicamente disponibles sin respaldo del libro. */}
+      <section
+        aria-label="Conciliación con el libro físico"
+        data-testid="conciliacion-fisica"
+        className={cn(
+          'rounded-2xl border p-4',
+          conciliado ? 'border-success/30 bg-success/5' : 'border-warning/40 bg-warning/5',
+        )}
+      >
+        <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
+          <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-1.5">
+            <Scale className="w-4 h-4" aria-hidden="true" />
+            Conciliación con el libro físico
+          </h3>
+          <span
+            className={cn(
+              'text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full',
+              conciliado ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning',
+            )}
+            data-testid="conciliacion-estado"
+          >
+            {diferenciaFisica == null ? 'Cargando libro físico…' : conciliado ? 'Conciliado' : 'Diferencia pendiente de conciliación'}
+          </span>
+        </div>
+        {diferenciaFisica != null ? (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div>
+                <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Esperado canónico (CUP)</div>
+                <div className="text-sm font-black tabular-nums">{formatCurrency(esperadoCanonico ?? 0)}</div>
+                <div className="text-[9px] text-muted-foreground/80">Fórmula de arqueo · valor contable</div>
+              </div>
+              <div>
+                <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Físico CUP</div>
+                <div className="text-sm font-black tabular-nums">{formatCurrency(fisicoCup ?? 0)}</div>
+                <div className="text-[9px] text-muted-foreground/80">Libro de billetes CUP</div>
+              </div>
+              <div>
+                <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Físico USD</div>
+                <div className="text-sm font-black tabular-nums">{fisicoUsd != null ? `${fisicoUsd.toFixed(2)} USD` : '—'}</div>
+                <div className="text-[9px] text-muted-foreground/80">Libro de billetes USD</div>
+              </div>
+              <div>
+                <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Diferencia</div>
+                <div className={cn('text-sm font-black tabular-nums', conciliado ? 'text-success' : 'text-warning')}>
+                  {formatCurrency(diferenciaFisica)}
+                </div>
+                <div className="text-[9px] text-muted-foreground/80">Esperado − físico CUP</div>
+              </div>
+            </div>
+            {!conciliado && (
+              <p className="text-[11px] leading-relaxed text-muted-foreground mt-2" data-testid="conciliacion-explicacion">
+                El esperado canónico es una <strong>vista de valor</strong> (cada cobro y cada entrega se valora a la tasa
+                histórica de su propia operación), mientras el libro físico cuenta <strong>billetes por moneda</strong>.
+                Una diferencia puede surgir cuando los mismos billetes USD entran valorizados a la tasa de la venta y
+                salen (entrega) valorizados a la tasa vigente del documento de caja: el residuo en CUP no respalda
+                billetes físicos. Verifica los movimientos en la pestaña «Movimientos que explican el saldo».
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-[11px] text-muted-foreground">Esperando el libro físico por moneda…</p>
+        )}
+      </section>
 
       {/* ── MISIÓN CAJA v2.24.0 (§7): movimientos que explican el saldo ──
           Ahora pestaña dedicada (antes acordeón). Ver panel abajo. */}

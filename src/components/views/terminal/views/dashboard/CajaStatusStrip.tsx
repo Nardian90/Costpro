@@ -90,20 +90,25 @@ export function CajaStatusStrip() {
           </span>
         </button>
 
-        {/* Saldo de caja (efectivo esperado del turno — incluye ingresos/egresos) */}
+        {/* Saldo de caja (efectivo esperado — MISIÓN CONCILIACIÓN 2026-10-26:
+            base EXPLÍCITA. Es el esperado canónico CUP (vista de valor de la
+            fórmula de arqueo). Sin turno abierto la ventana es el acumulado
+            desde el último cierre/origen — nunca «el saldo de un turno abierto». */}
         <div className="flex items-start gap-2.5 min-w-0">
           <span className="mt-0.5 p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
             <RefreshCw className={cn('w-4 h-4', expected.isFetching && 'animate-spin')} aria-hidden="true" />
           </span>
           <span className="min-w-0">
             <span className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              Saldo de caja (efectivo esperado)
+              Efectivo esperado (CUP canónico)
             </span>
             <span className="block text-base font-black tabular-nums text-foreground truncate" data-testid="caja-saldo">
               {saldo != null ? formatCurrency(saldo) : cargando ? '…' : '—'}
             </span>
-            <span className="block text-[10px] text-muted-foreground">
-              Fondo + ventas cash + ingresos − egresos del turno
+            <span className="block text-[10px] text-muted-foreground" data-testid="caja-saldo-base">
+              {turnoAbierto
+                ? 'Fondo + ventas cash + ingresos − egresos del turno · valor contable'
+                : 'Sin turno abierto · acumulado (valor contable, no billetes disponibles)'}
             </span>
           </span>
         </div>

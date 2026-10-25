@@ -133,6 +133,12 @@ function buildContext(over?: Partial<CashReportPdfContext>): CashReportPdfContex
 }
 
 const allTexts = () => textLog.map(t => t.text).join('\n');
+/** Textos del CUERPO del documento (antes del Anexo de Auditoría): las filas
+ *  omitidas NO aparecen aquí, aunque el anexo las documenta (misión §5). */
+const bodyTexts = () => {
+  const cut = textLog.findIndex(t => t.text.startsWith('Anexo de Auditoría'));
+  return textLog.slice(0, cut === -1 ? textLog.length : cut).map(t => t.text).join('\n');
+};
 
 // ── Helpers de hoja Excel (mismo patrón del test de Excel existente) ──
 type Row = Array<string | number | undefined>;
@@ -181,9 +187,9 @@ describe('PDF Diario · conceptos y selección (texto REAL del documento)', () =
     expect(t).toContain('Efectivo esperado a entregar');
   });
 
-  it('desactivar «Egresos de caja» OMITE la fila del PDF (el esperado NO cambia)', async () => {
+  it('desactivar «Egresos de caja» OMITE la fila del PDF y el cálculo personalizado EXCLUYE el término (misión 2026-10-26)', async () => {
     const concepts = { ...DEFAULT_SUMMARY_CONCEPTS, egresosCaja: false };
-    const a = await buildCashReportPdf(buildContext(), SUMMARIES);
+    await buildCashReportPdf(buildContext(), SUMMARIES);
     const aEsperado = allTexts();
     // Valor contable base: esperado = 2 000 (saldo inicial) + 12 000 (cobros
     // billetes CUP) − 3 000 (comisión) − 500 (egreso) = 10 500. La
@@ -191,16 +197,23 @@ describe('PDF Diario · conceptos y selección (texto REAL del documento)', () =
     expect(aEsperado).toContain('10.500,00');
     textLog.length = 0;
     await buildCashReportPdf(buildContext({ concepts }), SUMMARIES);
+    const body = bodyTexts();
     const t = allTexts();
-    expect(t).not.toContain('Egresos de caja');
-    // El SALDO se conserva (presentación pura — misión §4/§7):
-    expect(t).toContain('10.500,00');
-    expect(t).toContain('Efectivo esperado a entregar');
+    // La fila NO aparece en el CUERPO del documento (el anexo la documenta):
+    expect(body).not.toContain('Egresos de caja');
+    // MISIÓN CONCILIACIÓN: el cálculo personalizado se actualiza SIN el término
+    // (10 500 + 500 = 11 000) y se identifica como personalizado (§4.3):
+    expect(t).toContain('11.000,00');
+    expect(t).toContain('Efectivo esperado (personalizado)');
+    expect(t).toContain('Reporte personalizado — conceptos seleccionados');
+    // El ANEXO DE AUDITORÍA documenta el egreso omitido con su importe oficial:
+    expect(t).toContain('Anexo de Auditoría');
+    expect(t).toContain('Egresos de caja (fondo y otros)');
     // El saldo inicial viaja con el documento (partida real):
     expect(t).toContain('Saldo inicial / fondo de caja');
   });
 
-  it('desactivar cada concepto omite SU fila (venta total, efectivo, transferencia, equivalencia)', async () => {
+  it('desactivar cada concepto omite SU fila y recalcula el esperado personalizado', async () => {
     const concepts = {
       ...DEFAULT_SUMMARY_CONCEPTS,
       resumenDia: false,
@@ -210,16 +223,19 @@ describe('PDF Diario · conceptos y selección (texto REAL del documento)', () =
       equivalenciaCup: false,
     };
     await buildCashReportPdf(buildContext({ concepts }), SUMMARIES);
+    const body = bodyTexts();
     const t = allTexts();
-    expect(t).not.toContain('Resumen del día (efectivo + transferencia)');
-    expect(t).not.toContain('Ventas en efectivo');
-    expect(t).not.toContain('Ventas por transferencia');
-    // Sin equivalencia (ni su versión truncada):
-    expect(t).not.toContain('Equivalencia CUP');
-    // Sin filas huérfanas: el bloque conserva su título y su total contable.
-    expect(t).toContain('Resumen del Día');
-    expect(t).toContain('Efectivo esperado a entregar');
-    expect(t).toContain('10.500,00');
+    expect(body).not.toContain('Resumen del día (efectivo + transferencia)');
+    expect(body).not.toContain('Ventas en efectivo');
+    expect(body).not.toContain('Ventas por transferencia');
+    // Sin equivalencia en el cuerpo (el anexo la documenta como omitida):
+    expect(body).not.toContain('Equivalencia CUP');
+    // Sin filas huérfanas: el bloque conserva su título.
+    expect(body).toContain('Resumen del Día');
+    // MISIÓN CONCILIACIÓN: sin cobros de ventas, el esperado personalizado =
+    // 2 000 (saldo) − 3 000 (comisión) − 500 (egreso) = −1.500,00 (§4.3):
+    expect(t).toContain('-1.500,00');
+    expect(t).toContain('Efectivo esperado (personalizado)');
   });
 
   it('SIN conceptos activados: el builder falla cerrado (no genera un reporte vacío)', async () => {
@@ -268,20 +284,28 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(10500);
   });
 
-  it('desactivar «Egresos de caja» OMITE la fila del Excel y el esperado conserva el saldo (literal en fórmula)', async () => {
+  it('desactivar «Egresos de caja» OMITE la fila del Excel y el cálculo personalizado EXCLUYE el término (sin literales)', async () => {
     const concepts = { ...DEFAULT_SUMMARY_CONCEPTS, egresosCaja: false };
     const { wb } = await buildCashReportExcelWorkbook(buildContext({ concepts }), SUMMARIES, new Map());
     const ws = wb.Sheets['Reporte Entrega']!;
     const rs = rows(ws);
     // La fila NO existe (omitida realmente, no en blanco):
     expect(rs.findIndex(r => String(r[0] ?? '') === 'Egresos de caja (fondo y otros)')).toBe(-1);
-    // El valor del esperado conserva el saldo contable:
-    const esp = findRow(rs, 'Efectivo esperado a entregar');
-    expect(esp.row[3]).toBe(10500);
-    // La FÓRMULA viva incluye el LITERAL del término oculto (mismo resultado):
+    // MISIÓN CONCILIACIÓN: el esperado personalizado EXCLUYE el egreso
+    // (10 500 + 500 = 11 000) y se identifica como personalizado (§4.3):
+    const esp = findRow(rs, 'Efectivo esperado (personalizado)');
+    expect(esp.row[3]).toBe(11000);
+    // La FÓRMULA viva solo suma las filas VISIBLES (sin literal oculto):
     const f = String(cell(ws, `D${esp.idx + 1}`).f ?? '');
-    expect(f).toMatch(/500/); // literal del egreso oculto
-    expect(evalFormula(f, ws)).toBe(10500);
+    expect(f).not.toMatch(/500/); // sin literal del egreso omitido
+    expect(evalFormula(f, ws)).toBe(11000);
+    // La hoja «Auditoría» documenta el egreso omitido con su importe oficial:
+    const aud = rows(wb.Sheets['Auditoría']!);
+    const egRow = findRow(aud, 'Egresos de caja (fondo y otros)');
+    expect(egRow.row[1]).toBe('omitido');
+    expect(egRow.row[2]).toBe(500);   // importe oficial
+    expect(egRow.row[3]).toBe(0);     // incluido en personalizado
+    expect(egRow.row[4]).toBe(500);   // diferencia por concepto
   });
 
   it('REGRESIÓN signo de la fórmula: 2 000 + 12 000 − 3 000 − 500 = 10 500 (antes evaluaba 23 500)', async () => {
@@ -295,20 +319,23 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     expect(evalFormula(f, ws)).toBe(10500); // contable EXACTO
   });
 
-  it('desactivar «Ventas en efectivo»: total de ventas por fórmula con literal + esperado íntegro', async () => {
+  it('desactivar «Ventas en efectivo»: total recalculado por fórmula y esperado personalizado sin cobros', async () => {
     const concepts = { ...DEFAULT_SUMMARY_CONCEPTS, ventasEfectivo: false };
     const { wb } = await buildCashReportExcelWorkbook(buildContext({ concepts }), SUMMARIES, new Map());
     const ws = wb.Sheets['Reporte Entrega']!;
     const rs = rows(ws);
     expect(rs.findIndex(r => String(r[0] ?? '') === 'Ventas en efectivo')).toBe(-1);
-    // El total de ventas conserva el valor (literal del componente oculto):
+    // MISIÓN CONCILIACIÓN: el agregado se recalcula SOLO con los componentes
+    // activos (sin literal del componente oculto) — aquí solo transferencias
+    // (0): el total es 0 (misma cifra que el PDF):
     const total = findRow(rs, 'Resumen del día (efectivo + transferencia)');
-    expect(total.row[3]).toBe(12000);
+    expect(total.row[3]).toBe(0);
     const fTotal = String(cell(ws, `D${total.idx + 1}`).f ?? '');
-    expect(fTotal).toMatch(/12000/);
-    expect(evalFormula(fTotal, ws)).toBe(12000);
-    // Esperado íntegro (presentación pura):
-    expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(10500);
+    expect(fTotal).not.toMatch(/12000/);
+    expect(evalFormula(fTotal, ws)).toBe(0);
+    // Esperado personalizado sin el neto de billetes de las ventas:
+    // 2 000 − 3 000 − 500 = −1 500:
+    expect(findRow(rs, 'Efectivo esperado (personalizado)').row[3]).toBe(-1500);
   });
 
   it('SIN conceptos: el builder de Excel falla cerrado', async () => {
@@ -318,20 +345,37 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
 
   it('venta desmarcada → el Excel recibe el reporte AJUSTADO: importes y metadatos del conjunto', async () => {
     const sel = buildSelectionAdjustedReport(REPORT_FULL, SALES_ROWS, new Set(['v-1']));
+    // Contrato MISIÓN CONCILIACIÓN: el ctx lleva el reporte OFICIAL (universo
+    // completo) + conteos — igual que inyecta la vista (buildSelectionCtx).
     const { wb } = await buildCashReportExcelWorkbook(buildContext({
       report: sel.report,
+      officialReport: REPORT_FULL,
+      salesCounts: { validas: 3, seleccionadas: 2 },
       selectionMeta: { included: 2, total: 3 },
     }), SUMMARIES, new Map());
     const rs = rows(wb.Sheets['Reporte Entrega']!);
     expect(findRow(rs, 'Ventas en efectivo').row[3]).toBe(2000);
-    // esperado = 2 000 (saldo inicial INVARIANTE) + 2 000 − 3 000 − 500 = 500:
-    expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(500);
+    // esperado = 2 000 (saldo inicial INVARIANTE) + 2 000 − 3 000 − 500 = 500.
+    // MISIÓN CONCILIACIÓN: con ventas excluidas el resultado se identifica
+    // como personalizado (misma cifra que el PDF — paridad §6):
+    expect(findRow(rs, 'Efectivo esperado (personalizado)').row[3]).toBe(500);
     // El saldo inicial no cambia por la selección (misión §7):
     expect(findRow(rs, 'Saldo inicial / fondo de caja').row[3]).toBe(2000);
     // Metadatos del conjunto en la identidad del documento:
     expect(rs.some(r => String(r[0] ?? '').startsWith('Ventas incluidas: 2 de 3'))).toBe(true);
     // La fila oculta no deja huecos: el importe de la venta excluida no aparece:
     expect(rs.some(r => String(r[3] ?? '') === '10000')).toBe(false);
+    // La hoja «Auditoría» separa la diferencia por ventas de la de conceptos
+    // (la venta excluida permanece en el universo oficial — misión §5.2):
+    const aud = rows(wb.Sheets['Auditoría']!);
+    const dv = findRow(aud, 'Diferencia por ventas excluidas de la selección');
+    expect(dv.row[2]).toBe(10000);
+    const dc = findRow(aud, 'Diferencia por conceptos desactivados');
+    expect(dc.row[2]).toBe(0);
+    // El oficial de referencia queda íntegro (10 500): no se recalcula con la
+    // selección ni con los conceptos:
+    const eo = findRow(aud, 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)');
+    expect(eo.row[2]).toBe(10500);
   });
 
   it('PDF y Excel con el MISMO ctx: mismos importes de resumen (vista previa = PDF = Excel)', async () => {
@@ -342,11 +386,12 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     const pdfText = allTexts();
     expect(pdfText).toContain('2.000,00');
     expect(pdfText).toContain('Saldo inicial / fondo de caja');
-    // Excel:
+    expect(pdfText).toContain('500,00'); // esperado personalizado (CUP)
+    // Excel: MISMO esperado personalizado (paridad exacta §6):
     const { wb } = await buildCashReportExcelWorkbook(ctx, SUMMARIES, new Map());
     const rs = rows(wb.Sheets['Reporte Entrega']!);
     expect(findRow(rs, 'Ventas en efectivo').row[3]).toBe(2000);
-    expect(findRow(rs, 'Efectivo esperado a entregar').row[3]).toBe(500);
+    expect(findRow(rs, 'Efectivo esperado (personalizado)').row[3]).toBe(500);
     // La vista previa usa el MISMO builder del PDF (mismo ctx) → idéntico.
   });
 });

@@ -158,7 +158,9 @@ describe('PARTE D — el .xlsx final es un libro Office Open XML VÁLIDO', () =>
       expect(zip.file(required), `${required} debe existir en el ZIP`).toBeTruthy();
     }
     const sheets = Object.keys(zip.files).filter(n => /^xl\/worksheets\/sheet\d+\.xml$/.test(n));
-    expect(sheets.length).toBe(4);
+    // MISIÓN CONCILIACIÓN (2026-10-26): +1 hoja — «Auditoría» (anexo
+    // independiente del reporte principal, misión §5): 5 hojas totales.
+    expect(sheets.length).toBe(5);
     const parser = new DOMParser();
     for (const name of [...sheets, '[Content_Types].xml', '_rels/.rels', 'xl/workbook.xml']) {
       const xml = await zip.file(name)!.async('string');
@@ -170,9 +172,12 @@ describe('PARTE D — el .xlsx final es un libro Office Open XML VÁLIDO', () =>
   it('D-3: el libro abre con un lector compatible (.xlsx) — round-trip con hojas y valores', async () => {
     const { wb } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
     const rt = XLSX.read(XLSX.write(wb, { bookType: 'xlsx', type: 'array' }), { type: 'array' });
-    expect(rt.SheetNames).toEqual(['Reporte Entrega', 'Reporte Entrega USD', 'Órdenes de Trabajo', 'Nota metodológica']);
+    expect(rt.SheetNames).toEqual(['Reporte Entrega', 'Reporte Entrega USD', 'Órdenes de Trabajo', 'Auditoría', 'Nota metodológica']);
     const rs = rows(rt.Sheets['Reporte Entrega']);
     expect(findRow(rs, 'Tienda:').row[1]).toBe('ENERVIDA-VITALLCONS');
+    // MISIÓN CONCILIACIÓN: la hoja Auditoría abre con el lector (round-trip):
+    const aud = rows(rt.Sheets['Auditoría']);
+    expect(aud.some(r => String(r[0] ?? '') === 'AUDITORÍA — REPORTE ENTREGA')).toBe(true);
   });
 
   it('E-3: impresión completa en el XML — A4 VERTICAL (misión 2026-10-23 §5), fitToWidth=1/fitToHeight=0, SIN pane congelado, headerFooter con numeración, fitToPage y SALTO MANUAL antes de la sección 2', async () => {
@@ -364,7 +369,9 @@ describe('PARTE E — estructura del libro espejo del PDF', () => {
       usdSeparatePage: false,
     };
     const { wb } = await buildCashReportExcelWorkbook(buildContext({ options }), SUMMARIES, COMMISSIONS);
-    expect(wb.SheetNames).toEqual(['Reporte Entrega', 'Nota metodológica']);
+    // MISIÓN CONCILIACIÓN: la hoja «Auditoría» forma parte del documento
+    // exportado AUN con todas las opciones desactivadas (misión §5):
+    expect(wb.SheetNames).toEqual(['Reporte Entrega', 'Auditoría', 'Nota metodológica']);
     const rs = rows(wb.Sheets['Reporte Entrega']);
     expect(findRow(rs, 'SECCIÓN 1 — RESUMEN Y ENTREGA DE EFECTIVO (CUP)').idx).toBeGreaterThanOrEqual(0);
     expect(findRow(rs, 'SECCIÓN 2 — DETALLE DE VENTAS (CUP)').idx).toBeGreaterThanOrEqual(0);
