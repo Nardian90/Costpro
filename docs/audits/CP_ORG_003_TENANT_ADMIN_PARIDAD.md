@@ -1,6 +1,6 @@
 # CP-ORG-003 — Expediente de auditoría: paridad `tenant_admin` entre escritorio y móvil
 
-**Fecha:** 2026-10-26 · **Tipo:** AUDITORÍA Y DIAGNÓSTICO (solo lectura — sin cambios de código, sin migraciones, sin escrituras, sin merge)
+**Fecha:** 2026-10-26 · **Tipo:** AUDITORÍA Y DIAGNÓSTICO (solo lectura — sin cambios de código, sin migraciones, sin escrituras, sin merge) + **§10 RESOLUCIÓN TÉCNICA** (implementación en ramas separadas; PRs abiertos, NINGUNO fusionado por el agente)
 **SHA auditado:** `48ffecfa1459a7f105d271e78644b0bd1fc68247` = `origin/main` (fusión del PR #1488, 2026-10-25T18:52:16Z) · **Rama base:** `main`
 **Estado inicial verificado:** 0 PRs abiertos; CP-ORG-002 íntegro (fusión del PR #1486 presente en el SHA; 156/156 pruebas de navegación/caja/roles en verde re-ejecutadas para esta auditoría); producción (`costpro4.vercel.app`) sirviendo el mismo SHA (HTTP 200).
 
@@ -134,3 +134,94 @@ Restaurar la paridad **alineando el móvil con el guard canónico** (el más res
 ---
 
 *Auditoría de solo lectura sobre `main @ 48ffecfa1`. Sin modificaciones de código, datos, configuración productiva, migraciones, PR de implementación, fusiones ni despliegues. Los archivos scratch de verificación se ejecutaron contra los módulos reales del repositorio y se eliminaron sin commit; sus resultados están reproducidos en §3/§5.*
+
+---
+
+## 10. RESOLUCIÓN TÉCNICA E IMPLEMENTACIÓN (2026-10-26, misma jornada)
+
+**Tipo:** implementación controlada sobre las conclusiones §§7-9, con las decisiones de diseño del propietario (mandato §2). **Ningún PR fusionado, ningún despliegue, ninguna migración aplicada** — fusión/despliegue/migraciones de producción conservan autorización independiente (mandato §8).
+
+**Base real verificada:** `main @ 9a4a8246` — incluye la fusión del presente expediente (PR #1489, byte-idéntico al auditado: head `8107467`) y el PR #1490 (fix caja P0, verificado: **ningún archivo de esta auditoría tocado**). Discrepancia menor con el estado de partida reportado («PR #1489 abierto»): reconciliada sin impacto.
+
+### 10.1 Decisiones de diseño aplicadas (mandato §2)
+
+| Decisión | Implementación |
+|---|---|
+| `tenant_admin` administra su organización, no la plataforma | Sin roles globales nuevos; sin equiparación a admin/superadmin en NINGUNA superficie |
+| Visibilidad coherente con permisos efectivos (cero opciones que el guard rechaza) | PR A: sheet y tabs móviles filtrados por la doctrina canónica (rol global + guard) |
+| Ser `tenant_admin` NO concede permisos operativos automáticos en todas las tiendas | El wayfinding NO consulta membresías; la autorización por tienda queda server-side (sin cambios) |
+| Creación de la primera tienda: flujo explícito, seguro, limitado a la propia org | PR B: `POST /api/stores/bootstrap` + RPC endurecido (tenant del caller SIEMPRE, cuota per-tenant atómica) |
+| Gestión de usuarios: scope `tenant_id`, protegida server-side | PR C: lectura organizacional (demostrable); mutaciones = diseño §10.5 (no implementadas sin rediseñar guards compartidos) |
+| No restaurar permisos históricos COSTO sin evidencia | D5 SIN RESTAURAR: alcance actual documentado, pendiente decisión del propietario |
+| No debilitar RLS/gates/cuotas/CI | Cero cambios de RLS; guards RPC ENDURECIDOS (PR B); cuota per-tenant reforzada |
+
+### 10.2 Entregables (PRs ABIERTOS, sin fusionar)
+
+| PR | Rama | Head SHA | Alcance exacto |
+|---|---|---|---|
+| **A** — #1491 | `fix/cp-org-003-fase1-paridad-movil-20261026` | `10fee29c50e8e219e00aa67d83dace5f7888a7fb` | Paridad móvil: `mobile-sheet.ts` (nuevo, doctrina canónica), `MobileTabBar.tsx`, comentarios de prueba D3, 38 pruebas (28 lógica + 10 componente). Sin migraciones ni permisos. |
+| **B** — #1493 | `fix/cp-org-003-fase2-bootstrap-tienda-20261026` | `3621cec06e3939ce8804e87091396ab64a0d275f` | Bootstrap primera tienda: `POST /api/stores/bootstrap` (nuevo) + migración `20261026210000` (endurece RPC `create_store_with_membership`; **NO aplicada**), 30 pruebas. |
+| **C** — #1494 | `feat/cp-org-003-fase3-usuarios-org-20261026` | `f0f457efd76e42c43a474ebfb8edf4baa1145320` | Lectura organizacional `GET /api/users` para tenant_admin (su tenant, sin cuentas de plataforma), 8 pruebas. Mutaciones sin cambios. |
+| **D** — (este PR) | `docs/cp-org-003-cierre-20261026` | — | Expediente actualizado (§10) + corrección D3 en `CP_ORG_002_NAVEGACION_SUPERADMIN.md` §6. |
+
+### 10.3 Resultado por defecto (D1–D7)
+
+- **D1 (tres doctrinas de filtrado) — CORREGIDO (PR A):** el sheet móvil usa el predicado canónico por rol global (`mobileRoleAllows` = `filterModulesByRole` + `effectiveNavRole`); las membresías dejan de ampliar el wayfinding. Verificado: clerk con membresía admin ya NO ve SISTEMA (test E4).
+- **D2 (tabs fijos sin gate) — CORREGIDO (PR A):** cada tab visible pasa `isViewAllowedForRole`. tenant_admin/costo pierden los 4 (eran visibles-denegados); clerk/usuario conservan Vender+Caja; warehouse conserva Recibir+Inventario; manager/encargado/admin/superadmin sin cambios.
+- **D3 (claim impreciso CP-ORG-002 §6 + comentarios) — CORREGIDO (PR A + PR D):** comentarios de prueba reescritos con la evidencia; §6 de CP-ORG-002 corregido en este PR.
+- **D4 (bootstrap bloqueado) — CORREGIDO (PR B):** ruta específica + RPC endurecido; la membresía resultante es `admin` de LA tienda creada dentro de SU tenant (alcance de tienda, no de plataforma).
+- **D5 (regresión COSTO del self-signup) — SIN RESTAURAR (decisión expresa):** no se amplían permisos por inferencia; el alcance efectivo actual (INICIO+AYUDA+COSTO en desktop, INICIO+AYUDA en móvil) queda documentado, pendiente de decisión del propietario.
+- **D6 (asimetrías UI↔RPC en caja) — SIN CAMBIOS:** clase pre-existente fuera del alcance de esta misión (familia de la superficie 6 de CP-ORG-002); registrada para incidencia propia.
+- **D7 (hueco de pruebas) — CERRADO:** 86 pruebas nuevas (38 paridad móvil + 30 bootstrap + 8 usuarios + 10 estáticas de migración), todas de visibilidad Y resultado del guard, sin snapshots.
+
+### 10.4 Hallazgos NUEVOS durante la implementación (no estaban en §§1-9)
+
+- **N1 — Hueco pre-existente del RPC `create_store_with_membership` (ALTO, cerrado en PR B):** cualquier usuario `authenticated` podía llamarlo directamente vía PostgREST pasando un `p_tenant_id` **ajeno** → creaba tienda + membresía admin en OTRA organización (SECURITY DEFINER → bypass RLS; el parámetro `p_max_stores` también era del cliente). La migración de PR B fija el tenant al profile del caller, añade gate de rol interno y resuelve el límite del plan del tenant. **La migración NO está aplicada: hasta su despliegue, el hueco persiste en producción.**
+- **N2 — Visible-denied por herencia de grupo en el walk del sheet (MEDIO, corregido en PR A):** el walk histórico solo filtraba sección y hoja, no los submenús intermedios — `whatsapp-hub`/`telegram-hub` (ítems sin roles dentro de un grupo admin-level) eran visibles-denegados para roles operativos. El walk corregido filtra cada nivel (semántica exacta de `filterModulesByRole`).
+- **N3 — `checkStoreQuota` (tenant-limiter) no aplicable server-side (BAJO, evitado):** usa un cliente sin sesión y cuenta tiendas activas sin filtro de tenant; el bootstrap de PR B hace un count per-tenant explícito con admin client + re-verificación atómica en el RPC.
+- **N4 — `GET /api/users/[id]` permite a CUALQUIER rol ver perfiles de su mismo tenant (BAJO, pre-existente, sin cambio):** el bloque `!isSelf && !isAdmin` compara `tenant_id`, no membresías por tienda (su comentario declara intención más restrictiva). Registrado para incidencia menor propia; ni ampliado ni restringido aquí.
+- **N5 — Discrepancia de límites free: `PLAN_LIMITS.free.maxStores=3` vs `PLAN_STORE_LIMITS.free=1` vs `check_tenant_store_quota` (free=1) (BAJO, pre-existente):** las rutas stores usan `PLAN_STORE_LIMITS` (consistente con la DB); `PLAN_LIMITS` solo alimenta `checkStoreQuota` (N3). Unificación pendiente de incidencia de limpieza.
+- **N6 — `useTerminalNavigation` vestigial (INFO):** alimenta el título del header y la búsqueda del sidebar con `hasRole` (membresías) — superficie de sugerencias, no de navegación principal. Alineación futura opcional; documentado.
+
+### 10.5 Diseño pendiente: mutaciones de usuarios org-scoped (Fase 3 completa)
+
+**Por qué no se implementaron:** `managed-create`/`[id] PATCH`/`toggle-status`/`delete` dependen de RPCs cuyo guard interno exige caller **admin/superadmin global** (migración `20261026130000`, CP-ORG-001). Habilitar `tenant_admin` exige: (a) migración de guards de RPCs compartidos por los flujos de admin; (b) recortar la superficie de esas rutas (el schema de edición permite asignar `admin` y `plan`/`max_users` — cosas de plataforma); (c) reglas de membresía por tienda. Implementarlo «a medias» habría ampliado privilegios por inferencia (prohibido por mandato).
+
+**Diseño propuesto para el PR propio (gates por operación):**
+1. `managed_update_user`: nuevo guard — caller `tenant_admin` SÍ autorizado **solo si** `target.tenant_id = caller.tenant_id` Y `target.role NOT IN (admin, superadmin, tenant_admin)` Y campos de plataforma (`plan`, `max_*`, rol→admin) rechazados para este caller. Caller admin/superadmin: sin cambios.
+2. `managed-create` org: variante para tenant_admin — roles asignables SOLO operativos (`clerk`/`warehouse`/`usuario`/`costo`/`manager`/`encargado`), sin `p_plan`/`p_max_*`, tenant heredado del creator, membresías SOLO en tiendas del tenant (validación server-side de cada `store_id`).
+3. `toggle-status`: mismo scope que update (sin self-deactivation, sin cuentas de plataforma).
+4. Membresías: `canManageStore` ya permite al tenant_admin gestionar las de las tiendas donde tiene membresía admin (las suyas tras el bootstrap de Fase 2); la gestión de tiendas de su tenant SIN membresía propia requiere una regla `canManageTenantStore` nueva (decisión técnica pendiente de ese PR).
+5. **Pruebas requeridas:** por cada operación — org propia (+), org ajena (403 y sin RPC), objetivo de plataforma (403), self (400/403), campos de plataforma en payload (400), RLS como barrera (suites LIVE-DB), regresión completa de los flujos admin existentes.
+
+### 10.6 Riesgos residuales
+
+- **N1 activo hasta desplegar la migración de PR B** (hueco del RPC en producción; la ruta nueva no lo agrava, pero no lo cierra hasta aplicar la migración).
+- PR A: solo se OCULTAN entradas muertas (todo lo ocultado era denegado por el guard al tap) — usuarios con membresías altas que usaban el sheet para entradas permitidas por su ROL GLOBAL las conservan por construcción. `useTerminalNavigation` (N6) queda alineado solo en navegación principal, no en sugerencias de búsqueda.
+- PR B: la UI de consumo del bootstrap (dónde vive el botón) queda pendiente de producto; `admin` global malintencionado sigue siendo diseño (nivel de plataforma); el path service_role del RPC conserva `p_max_stores` confiable de la API.
+- PR C: lectura only — la vista `users` del catálogo NO se habilita para tenant_admin (sin mutaciones operativas mostraría botones que fallan); wayfinding pendiente del PR de mutaciones.
+- Transversal: nada de lo implementado está verificado en PRODUCCIÓN (sin fusión/despliegue/validación productiva — autorización independiente).
+
+### 10.7 Pendientes bajo responsabilidad del propietario
+
+1. Revisar y fusionar (o rechazar) los PRs #1491 / #1493 / #1494 y este PR D.
+2. **Autorizar expresamente la aplicación de la migración `20261026210000`** (cierra N1) — no ejecutada en ninguna base de datos.
+3. Tras fusionar+desplegar: verificación productiva real (sesión tenant_admin: navegación móvil, bootstrap de primera tienda, lectura de usuarios) — no realizada en esta misión.
+4. Decisiones de producto: D5 (¿restaurar COSTO al self-signup?), D6 (asimetrías caja UI↔RPC), UI del bootstrap, UI de gestión de usuarios (tras el PR de mutaciones §10.5), N4 (¿endurecer GET [id] a membresías por tienda?), N5 (unificar límites free).
+
+### 10.8 Verificación ejecutada vs omitida (por PR)
+
+| Control | PR A | PR B | PR C |
+|---|---|---|---|
+| `tsc --noEmit` | ✓ | ✓ | ✓ |
+| `eslint` (0 errores) | ✓ | ✓ | ✓ |
+| Pruebas nuevas | 38/38 | 30/30 | 8/8 |
+| Regresión navegación/roles (266) | ✓ 266/266 | n/a (no toca navegación) | n/a |
+| Suite `api/`+`integration/` (1791) | ✓ (incluida en suite completa) | ✓ 1791/1791 | ✓ 456/456 (api) |
+| Suite COMPLETA local | ✓ 4193/4193 | delegada a CI | delegada a CI |
+| Build de producción | **OMITIDO local** (sandbox sin memoria para Turbopack) → **CI del PR** | ídem | ídem |
+| E2E (Playwright) | OMITIDO (config del repo, pre-existente) | ídem | ídem |
+| LIVE-DB | OMITIDO (sin credenciales, política del repo) | ídem (migración validada estáticamente) | ídem |
+| Validación en PRODUCCIÓN | **NO REALIZADA** (sin fusión/despliegue) | ídem | ídem |
+
+*Sección añadida por la misión de resolución técnica (2026-10-26). Las §§1-9 permanecen como registro original de la auditoría de solo lectura.*

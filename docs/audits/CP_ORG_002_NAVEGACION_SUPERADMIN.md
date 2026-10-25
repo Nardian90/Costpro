@@ -124,11 +124,17 @@ lo esperado del dev-bypass).
 ## 6. Hallazgo separado (fuera de alcance, reportado para decisión del propietario)
 
 El filtro estricto del catálogo desktop tampoco incluye `tenant_admin` en las listas
-`roles:` (pre-existente; móvil, vía `hasRole`/jerarquía, sí le muestra el alcance
-operativo). NO se alteró en esta misión (alcance = navegación del SuperAdmin, sin
-refactorizaciones ajenas). Si se desea paridad desktop/móvil para `tenant_admin`, requiere
-decisión de producto y cambio propio. **Incidencia mantenida separada del cierre de
-CP-ORG-002**: no bloquea la verificación productiva del SuperAdmin.
+`roles:` (pre-existente). **Corrección (CP-ORG-003, 2026-10-26):** el paréntesis original
+decía que «móvil, vía `hasRole`/jerarquía, sí le muestra el alcance operativo» — la
+auditoría CP-ORG-003 (§4-D3) lo **desmintió empíricamente**: para el `tenant_admin` puro
+el sheet móvil era INICIO+AYUDA (la jerarquía declarada NO se consume en `hasRole` para
+este rol), y con membresías de tienda el paso 3 de `hasRole` introducía entradas
+**visibles-denegadas** (p.ej. un clerk con membresía admin veía SISTEMA en el sheet que
+el guard negaba al tap). CP-ORG-003 Fase 1 alineó el sheet y los tabs móviles a la
+doctrina canónica estricta (`mobile-sheet.ts`), y su Fase 2 recuperó el bootstrap de la
+primera tienda. Ver `docs/audits/CP_ORG_003_TENANT_ADMIN_PARIDAD.md` §10. **Incidencia
+resuelta por CP-ORG-003** (PRs de esa misión); no bloqueó en su momento la verificación
+productiva del SuperAdmin.
 
 ---
 
