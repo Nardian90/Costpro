@@ -11,14 +11,21 @@
  * Contrato único (regla §2 de summary.ts):
  *   · INGRESO por ventas: SIEMPRE nativo de la hoja (cobro real).
  *   · EQUIVALENCIA canónica: línea PROPIA (equivCashOtraMoneda /
- *     equivVouchersOtraMoneda), solo hoja CUP; la de efectivo alimenta el
- *     EFECTIVO ESPERADO a entregar (consolidación contable — el día con
- *     cobros solo-USD no pierde su valor del comprobante); la de vouchers es
- *     informativa. NUNCA entra en ventasCash/ventasTotales.
+ *     equivVouchersOtraMoneda), solo hoja CUP; NUNCA entra en
+ *     ventasCash/ventasTotales.
  *   · La equivalencia viaja desde la MISMA reconstrucción que produce
  *     sales_split (sales_equiv_cash_other_cup) o, en el fallback de grupos,
  *     se computa de los total_cup de los grupos — mismo resultado en ambas
  *     vías (una sola fuente de verdad).
+ *
+ * MISIÓN CORRECTIVA (2026-10-25) — SALDO INICIAL Y CONCILIACIÓN DEL EFECTIVO:
+ * el EFECTIVO ESPERADO pasa de «total de movimientos del período» a SALDO DE
+ * CIERRE FÍSICO por moneda (saldo inicial + cobros billetes + ingresos −
+ * egresos). La equivalencia canónica de cobros en otra moneda es ahora
+ * CONSOLIDACIÓN DE PRESENTACIÓN: los billetes de ese cobro viven físicamente
+ * en la hoja USD (su esperado ya los cuenta); alimentar también el esperado
+ * de la hoja CUP rompería la conciliación con el libro físico y el enlace
+ * cierre-de-un-período = apertura-del-siguiente (misión §4/§6/§9).
  */
 import { describe, it, expect } from 'vitest';
 import { computeDailySummary, type CashReportLike } from '@/lib/cash-report/summary';
@@ -49,8 +56,12 @@ describe('MISIÓN DEFINITIVA — caso EXACTO 23/10: venta 7 USD cobrada en efect
     expect(hojaCup.ventasTotales).toBe(0);        // ← ninguna venta CUP
     // La equivalencia contable vive en su LÍNEA PROPIA (no en las filas de venta):
     expect(hojaCup.equivCashOtraMoneda).toBe(5600); // 7 × 800 (tasa de la operación)
-    // Y alimenta la consolidación del efectivo a entregar (hoja canónica):
-    expect(hojaCup.efectivoEsperado).toBe(5600);
+    // MISIÓN CORRECTIVA: la equivalencia NO alimenta el esperado de la hoja
+    // CUP — esos billetes viven físicamente en la hoja USD (ya contados ahí).
+    // Con saldo inicial 0 (fixture sin apertura), el esperado CUP físico = 0.
+    expect(hojaCup.efectivoEsperado).toBe(0);
+    expect(hojaCup.saldoInicial).toBe(0);
+    expect(hojaCup.liquidacionBilletes).toBe(0);  // sin liquidación explícita ⇒ vistas coinciden
   });
 
   it('vía sales_split (canal principal): la equivalencia de la MISMA reconstrucción no duplica el ingreso', () => {
@@ -68,7 +79,9 @@ describe('MISIÓN DEFINITIVA — caso EXACTO 23/10: venta 7 USD cobrada en efect
     expect(hojaCup.ventasCash).toBe(0);           // split manda: ingreso nativo CUP = 0
     expect(hojaCup.ventasTotales).toBe(0);
     expect(hojaCup.equivCashOtraMoneda).toBe(5600);
-    expect(hojaCup.efectivoEsperado).toBe(5600);
+    // MISIÓN CORRECTIVA: esperado = saldo FÍSICO CUP (los billetes USD viven
+    // en la hoja USD) — la equivalencia es consolidación de presentación.
+    expect(hojaCup.efectivoEsperado).toBe(0);
 
     const hojaUsd = computeDailySummary(r, 'USD');
     expect(hojaUsd.ventasCash).toBe(7);
@@ -104,7 +117,9 @@ describe('MISIÓN DEFINITIVA — caso EXACTO 23/10: venta 7 USD cobrada en efect
     expect(hojaCup.ventasCash).toBe(1000);        // solo el nativo — ANTES: 6600 (duplicaba el USD como venta CUP)
     expect(hojaCup.ventasTotales).toBe(1000);
     expect(hojaCup.equivCashOtraMoneda).toBe(5600);
-    expect(hojaCup.efectivoEsperado).toBe(6600);  // consolidación: 1000 + 5600
+    // MISIÓN CORRECTIVA: esperado CUP = saldo FÍSICO (1.000 CUP cobrados;
+    // los 7 USD billetes cuentan en la hoja USD — equivalencia solo presenta).
+    expect(hojaCup.efectivoEsperado).toBe(1000);
 
     const hojaUsd = computeDailySummary(r, 'USD');
     expect(hojaUsd.ventasCash).toBe(7);           // el cobro USD NO se duplica en su hoja por el canónico
@@ -162,11 +177,13 @@ describe('MISIÓN DEFINITIVA — caso EXACTO 23/10: venta 7 USD cobrada en efect
     });
     const a = computeDailySummary(viaGrupos, 'CUP');
     const b = computeDailySummary(viaSplit, 'CUP');
-    expect(a.efectivoEsperado).toBe(b.efectivoEsperado); // 6.600 = 1.000 + 5.600 (consolidación idéntica)
+    // MISIÓN CORRECTIVA: ambas vías producen el MISMO esperado CUP FÍSICO
+    // (1.000 = cobros CUP nativos; la equivalencia es presentación).
+    expect(a.efectivoEsperado).toBe(b.efectivoEsperado);
     expect(a.ventasCash).toBe(b.ventasCash);             // ingreso nativo 1.000 en ambas vías
     expect(a.equivCashOtraMoneda).toBe(b.equivCashOtraMoneda); // 5.600 separado en ambas vías
     expect(b.ventasCash).toBe(1000);
     expect(b.equivCashOtraMoneda).toBe(5600);
-    expect(b.efectivoEsperado).toBe(6600);
+    expect(b.efectivoEsperado).toBe(1000);
   });
 });

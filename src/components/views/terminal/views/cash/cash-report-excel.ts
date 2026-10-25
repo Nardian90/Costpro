@@ -152,8 +152,12 @@ function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD', concepts?: Summ
   // OMITEN realmente (sin dejar títulos/subtotales huérfanos). Presentación
   // pura: los valores contables no se alteran (el literal de la fórmula del
   // esperado conserva el aporte de las filas ocultas — ver abajo).
+  // MISIÓN CORRECTIVA 2026-10-25: el resumen abre con el SALDO INICIAL del
+  // período (libro de caja) — partida real del cálculo del esperado (§5).
   const off = (k: SummaryConceptKey) => concepts?.[k] === false;
-  const rows: IncomeRow[] = currency === 'CUP'
+  const rows: IncomeRow[] = [
+    { label: 'Saldo inicial / fondo de caja', amount: s.saldoInicial, kind: 'normal', concept: 'saldoInicial' },
+    ...(currency === 'CUP'
     ? [
         { label: 'Resumen del día (efectivo + transferencia)', amount: s.ventasTotales, kind: 'total', concept: 'resumenDia' },
         { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal', concept: 'ventasEfectivo' },
@@ -163,14 +167,16 @@ function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD', concepts?: Summ
         { label: 'Resumen del día (efectivo + Zelle)', amount: s.ventasTotales, kind: 'total', concept: 'resumenDia' },
         { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal', concept: 'ventasEfectivo' },
         { label: 'Venta por Zelle', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' },
-      ];
+      ]),
+  ];
   if (currency === 'CUP') {
     if (s.ventasZelle > 0) rows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' });
     if (s.ventasMixed > 0) rows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, kind: 'info' });
     // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
-    // (contrato único §2) — no es una segunda venta; la de efectivo SÍ entra
-    // al esperado (posTerms abajo), la de vouchers es informativa.
-    if (s.equivCashOtraMoneda > 0) rows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, kind: 'normal', concept: 'equivalenciaCup' });
+    // (contrato único §2) — no es una segunda venta. MISIÓN CORRECTIVA
+    // 2026-10-25: consolidación de PRESENTACIÓN ('info') — los billetes de
+    // ese cobro viven en la hoja USD; no alimentan el esperado de la hoja CUP.
+    if (s.equivCashOtraMoneda > 0) rows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, kind: 'info', concept: 'equivalenciaCup' });
     if (s.equivVouchersOtraMoneda > 0) rows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, kind: 'info' });
     if (s.otIngresosCash > 0) rows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash, kind: 'normal' });
     if (s.comisionesCash > 0) rows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, kind: 'expense' });
@@ -186,6 +192,14 @@ function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD', concepts?: Summ
   } else {
     if (s.comisionesCash > 0) rows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, kind: 'expense' });
     if (s.serviciosRecibidosCash > 0) rows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, kind: 'expense' });
+  }
+  // MISIÓN CORRECTIVA 2026-10-25: liquidación de billetes (vuelto cruzado) —
+  // partida contable de la conciliación física, con SU SIGNO (hoja CUP
+  // negativa = salida; hoja USD positiva = entrada). Siempre visible ≠ 0.
+  if (Math.abs(s.liquidacionBilletes) > 0.005) {
+    rows.push(currency === 'CUP'
+      ? { label: 'Vuelto dado en CUP de cobros en otras monedas', amount: s.liquidacionBilletes, kind: 'normal' }
+      : { label: 'Billetes recibidos en exceso (vuelto dado en CUP)', amount: s.liquidacionBilletes, kind: 'normal' });
   }
   return concepts ? rows.filter(r => !r.concept || !off(r.concept)) : rows;
 }
@@ -378,8 +392,11 @@ export async function buildCashReportExcelWorkbook(
     // renderizados (ventasTotales = cash + transfer + zelle + mixed) + el
     // LITERAL de los componentes ocultos por concepto (presentación pura:
     // el total contable NUNCA cambia al ocultar una fila — misión §4/§7).
-    const totalLabel = rows[0].label;
-    const totalRowIdx = rowsByLabel.get(totalLabel)!;
+    // MISIÓN CORRECTIVA: el total ya no es rows[0] (el resumen abre con el
+    // saldo inicial) — se localiza por kind='total'.
+    const totalRow = rows.find(r => r.kind === 'total');
+    const totalLabel = totalRow?.label;
+    const totalRowIdx = totalLabel ? rowsByLabel.get(totalLabel)! : -1;
     const off = (k: SummaryConceptKey) => concepts?.[k] === false;
     const components = [
       rowsByLabel.get('Ventas en efectivo'),
@@ -404,9 +421,16 @@ export async function buildCashReportExcelWorkbook(
     s.moneyCells.push({ r: totalRowIdx, c: 3 });
 
     // Efectivo esperado como FÓRMULA viva (misma cadena contable del sistema):
-    // efectivoEsperado = ventasCash + otIngresos + ajustes(+) + ingresosCaja
+    // efectivoEsperado = saldoInicial + ventasCash + liquidaciónBilletes
+    //                    + otIngresos + ajustes(+) + ingresosCaja
     //                    − comisiones − servicios − proveedores − ajustes(−)
     //                    − egresosCaja − reembolsosCash
+    // MISIÓN CORRECTIVA 2026-10-25: el esperado es SALDO DE CIERRE — abre con
+    // el saldo inicial (celda visible o LITERAL si el concepto está oculto:
+    // la fórmula NUNCA depende de una fila visible para dar el saldo correcto)
+    // y suma la liquidación de billetes (vuelto cruzado, fila contable). La
+    // equivalencia canónica YA NO es término (consolidación 'info' — los
+    // billetes viven en la hoja USD y ya están en SU esperado).
     // CORRECCIÓN DE SIGNO (misión 2026-10-25, defecto preexistente demostrado
     // por prueba): las filas de egreso ya llevan SU SIGNO CONTABLE en D
     // (negativo — regla B4), de modo que la fórmula las SUMA; el join con
@@ -422,8 +446,10 @@ export async function buildCashReportExcelWorkbook(
     s.moneyCells.push({ r: esperadoRow, c: 3 });
     s.totalRows.push(esperadoRow);
     const posTerms = [
+      rowsByLabel.get('Saldo inicial / fondo de caja'),
       rowsByLabel.get('Ventas en efectivo'),
-      rowsByLabel.get('Equivalencia CUP de cobros en efectivo en otras monedas'),
+      rowsByLabel.get('Vuelto dado en CUP de cobros en otras monedas'),
+      rowsByLabel.get('Billetes recibidos en exceso (vuelto dado en CUP)'),
       rowsByLabel.get('Órdenes de trabajo (anticipos)'),
       rowsByLabel.get('Ajustes extraordinarios (+)'),
       rowsByLabel.get('Ingresos de caja (fondo y otros)'),
@@ -438,9 +464,12 @@ export async function buildCashReportExcelWorkbook(
     ].filter((v): v is number => v !== undefined);
     // Aporte contable de los términos de fórmula OCULTOS por concepto: sus
     // filas no se renderizaron — el literal preserva el saldo exacto.
+    // (La liquidación de billetes no tiene concepto: siempre visible ≠ 0 —
+    // su celda YA está en posTerms, nunca se duplica como literal;
+    // la equivalencia ya no es término del esperado.)
     const hiddenEsperadoTerms =
-      (off('ventasEfectivo') ? summary.ventasCash : 0) +
-      (off('equivalenciaCup') ? summary.equivCashOtraMoneda : 0) -
+      (off('saldoInicial') ? summary.saldoInicial : 0) +
+      (off('ventasEfectivo') ? summary.ventasCash : 0) -
       (off('egresosCaja') ? summary.egresosCaja : 0);
     const esperadoTerms = [
       ...posTerms.map((row) => `D${row + 1}`),
