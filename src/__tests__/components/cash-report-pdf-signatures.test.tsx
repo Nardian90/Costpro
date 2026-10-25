@@ -215,9 +215,14 @@ describe('INC-2026-10-19 · PDF Diario — hoja compartida CUP+USD: margen visua
       buildContext({}, { madeBy: 'Ana Elabora', deliveredBy: 'Israel Leyva Velazquez', recipientName: 'Belkis Olivera Perez' }),
       summaries(),
     );
-    expect(doc.getNumberOfPages()).toBe(3); // CUP + USD + Órdenes (default includeOtReport)
+    // MISIÓN CONCILIACIÓN (2026-10-26): el anexo de auditoría abre hoja
+    // PROPIA tras las monedas (misión §5) y fluya a las que necesite
+    // (aquí 2: comparación + conciliación) → CUP + USD + Auditoría×2 + Órdenes.
+    expect(doc.getNumberOfPages()).toBe(5);
     expect(textsOf(1).some(t => t.includes('Reporte de Venta USD'))).toBe(false);
     expect(textsOf(2).some(t => t.includes('Reporte de Venta USD'))).toBe(true);
+    // El anexo es una página/section SEPARADA del reporte principal:
+    expect(textsOf(3).some(t => t.includes('Anexo de Auditoría'))).toBe(true);
     // Encabezado COMPLETO repetido dentro de cada hoja de moneda (2× título)
     for (const page of [1, 2]) {
       expect(countIn(textsOf(page), 'Hecho por:')).toBe(2);   // pie sección 1 + pie sección 2
@@ -225,7 +230,7 @@ describe('INC-2026-10-19 · PDF Diario — hoja compartida CUP+USD: margen visua
       expect(countIn(textsOf(page), 'Recibido por:')).toBe(2);
       expect(textsOf(page).filter(t => t.includes('Reporte de Venta')).length).toBe(2); // encabezado repetido
     }
-    expect(countIn(textsOf(3), 'Hecho por:')).toBe(1);        // hoja de Órdenes: UN pie
+    expect(countIn(textsOf(5), 'Hecho por:')).toBe(1);        // hoja de Órdenes: UN pie
     // Sin separador de doble filete (no comparten hoja)
     expect(lineLog.filter(l => l.lw === 0.9).length).toBe(0);
     // LÍNEA DE CORTE entre las secciones (misión §3): fina (0.25) a ancho completo
