@@ -685,3 +685,196 @@ explícita; no se ejecutó en este ciclo.
 
 Producción no recibió ninguna otra escritura fuera del paquete de activación
 descrito en §16.2. Las verificaciones de §16.1 y §16.4 fueron read-only.
+
+---
+
+## 17. Ciclo 5 — INCIDENTE P0: recuperación del acceso integral de SuperAdmin (admin@demo.com)
+
+**Fecha:** 2026-10-25 (tarde). **Rama:** `cp-org-001-ciclo4-activacion-superadmin`
+(continúa el trabajo del ciclo 4 sobre `cc86a9f06`, main tras merge PR #1482).
+
+### 17.1 Incidente y síntomas reportados
+
+Tras convertir `admin@demo.com` en SuperAdmin de plataforma (ciclo 4), la
+cuenta **perdió el acceso a las tiendas y a las funcionalidades operativas
+dependientes de tienda**: selector vacío, sin tienda activa seleccionable y
+rutas operativas bloqueadas. Incidente clasificado P0 por el propietario con
+mandato de no declararlo cerrado hasta comprobar entrada → selección de
+tienda → funciones operativas con la cuenta real.
+
+### 17.2 Causa raíz confirmada (tres capas)
+
+**RC1 — App: comparación estricta `role === 'admin'`.** Unas 27 vistas/rutas
+comparaban la igualdad exacta con `'admin'`, excluyendo a `'superadmin'` de
+listados de tiendas, `setActiveStore` y de cada guard administrativo
+(workers, comisiones, ajustes de caja, reportes, etc.). La cuenta de
+plataforma quedaba fuera de su propio nivel de privilegio.
+
+**RC2 — App: `setActiveStore` exigía membresía de tienda.** El servicio
+(validación FIX CRITICAL-001) rechazaba con «Membresía no encontrada» a
+cualquier usuario sin `user_store_memberships` activa en la tienda. La cuenta
+de plataforma **no lleva membresías por diseño** (§6 de 20260826120000):
+necesitaba membresías ficticias para operar, algo expresamente prohibido por
+el modelo.
+
+**RC3 — DB: trigger `validate_active_store` exigía membresía TAMBIÉN a
+admin/superadmin.** Aun con app y RLS correctas, el `UPDATE
+profiles.active_store_id` fallaba con `ERR_INVALID_ACTIVE_STORE` porque el
+trigger (versionado desde 20260118, endurecido en 20260715000007) demandaba
+membresía activa para los roles `costo|admin|superadmin`. **Descubierto en
+este ciclo**: el listado funcionaba pero la persistencia de la tienda activa
+quedaba bloqueada en la última capa. Las migraciones del ciclo 4
+(`is_admin()` con superadmin, policies `stores_tenant_*` con bypass
+`is_superadmin()`) no cubrían este trigger.
+
+Verificación read-only del estado real previo (producción):
+`admin@demo.com` → `role='superadmin'`, `tenant_id=5364ccf8` (conservado),
+`active_store_id=NULL`, **0 membresías**; 2 tiendas activas (ambas del
+tenant Vitallcons); `is_superadmin()`, `is_admin()` y
+`current_user_store_ids()` (rama superadmin = todas las activas) vivas en la
+BD aunque sin registro en `schema_migrations` (aplicación ciclo 4 vía SQL
+directo); flag `app.use_tenant_rls` vacío → rama ELSE con bypass activo.
+Ni `20261026150000` ni `20261026160000` figuran en `schema_migrations`;
+el SQL de `20261026160000` SÍ está vivo en producción (policies idénticas al
+archivo); `20261026150000` TAMBIÉN está viva en su efecto (tabla
+`payment_transactions_purga_20261026_archive` presente, 0 filas colgantes,
+FK CASCADE) — los 33 residuos fueron archivados/purgados fuera de
+schema_migrations. Ninguna se repitió ni se revirtió.
+
+### 17.3 Correcciones aplicadas (99 archivos: 94 M + 5 nuevos)
+
+**Principio rector (mandato del propietario):** distinguir niveles sin
+sustitución textual indiscriminada. Privilegios de plataforma (superadmin) =
+transversales; admin global = transversal de app; tenant_admin/empleados =
+aislamiento intacto. El rol se resuelve SIEMPRE server-side (session
+middleware / service role / lectura RLS del perfil propio), nunca desde el
+cliente.
+
+1. **`src/lib/roles.ts`**: helper `isAdminLevel(role) = 'admin' | 'superadmin'`
+   (espejo exacto de `public.is_admin()`), documentado como obligatorio para
+   toda comparación de nivel administrativo.
+2. **`userService.setActiveStore`**: resuelve el rol del perfil vía RLS
+   (lectura propia, fail-closed si la lectura falla o no es admin-level);
+   nivel admin → valida tienda existente+activa sin membresía; resto →
+   membresía activa obligatoria (FIX CRITICAL-001 intacta).
+3. **`PATCH /api/users/[id]`**: mismo contrato para `activeStoreId` del
+   objetivo (rol del objetivo leído con service role; superadmin de plataforma
+   ya protegido por `ERR_PLATFORM_ACCOUNT_PROTECTED` en `managed_update_user`).
+4. **38 rutas API extendidas a nivel administrativo** (lote 1): ofertas (4),
+   production-orders pdf/void/payments (3), purchase-orders (4 guards),
+   transfers export, tenants/[id], billing portal+checkout, store-cost-templates (2),
+   catalog bulk-import, usage (5), exchange-rates (4), fiscal-close lock,
+   cash-flow (2), workers (2), inventory receptions (3), commissions/payments
+   raíz, sync/batch, reports/generate, physical-inventory, whatsapp+telegram
+   publish (2), users/managed-create (clasificación de requester), users
+   memberships GET (superadmin global; admin ordinario conserva aislamiento
+   por tenant) y memberships bulk.
+5. **23 vistas/servicios extendidos** (lote 2): service-types, costeo-dinámico,
+   cash-report adjustments, product-cost-sheets (4), usage-service (cuota),
+   y los componentes OfertasView, ExchangeIntelligenceView, ReceptionsHistoryView,
+   ReportConfigPanel, useSalesHistoryView, TransactionDetailsModal,
+   CostSheetTemplateExplorer, AuditGlobalView, IpvVentasView,
+   PhysicalInventoryDetail/View, MultiStoreDashboardView, TransferDetailsModal.
+   Más `useUsersView`: las cuentas superadmin quedan OCULTAS a visores no
+   privilegiados (paridad con admins — brecha de información cerrada).
+6. **Migración `20261026170000_superadmin_active_store_trigger.sql`** (RC3):
+   `validate_active_store` bifurca el nivel administrativo (valida tienda
+   existente+activa, sin membresía) de `costo` y roles operativos (membresía
+   obligatoria SIN cambios). Aplicada a E2E (sentinel true) y validada;
+   **NO aplicada a producción** (pendiente de autorización).
+
+### 17.4 Pruebas
+
+**Cuatro fallos originales — RESUELTOS sin eliminar aserciones:**
+- `audit-user-service.test.ts` (2): el mock de cadena única hacía que la
+  nueva query de `profiles` consumiera el stub de `user_store_memberships`.
+  Refactor: mock consciente de tabla (4 cadenas) + stubs explícitos por
+  tabla; las 4 aserciones originales se conservan con su semántica y se
+  AÑADEN 7 regresiones del incidente (23 tests: superadmin sin membresía
+  resuelve y NO consulta membresías; admin global ídem; tienda inactiva e
+  inexistente rechazadas; error de lectura de rol → fail-closed a membresía;
+  perfil no-admin nunca obtiene el bypass aunque la tienda exista; error de
+  persistencia rechazado).
+- `db-integration.test.ts` (2): codificaban la realidad VIEJA (`role='admin'`
+  + membresías>0). Actualizadas a la realidad canónica: `role='superadmin'`,
+  0 membresías por diseño (§6), + regresión en vivo de que existen tiendas
+  activas seleccionables (10/10 PASS contra producción, read-only).
+
+**Tests nuevos del ciclo 4 (ya presentes):** `stores-route-superadmin.test.ts`
+(4) y `roles-is-admin-level.test.ts` (5) — PASS.
+
+**Mocks alineados al nuevo contrato** (sin debilitar): `cash-flow-route.test.ts`
+y `cash-flow-ui-contract.test.ts` exportan `isAdminLevel` en su factoría de
+`@/lib/roles` con la semántica real (17 fallos transitorios → 23/23 PASS).
+
+**Aceptación LIVE E2E (proyecto aislado CostproE2E, sentinel
+`e2e_is_isolated_db()=true` verificado antes de provisionar) —
+`superadmin-store-access-live-db.test.ts`, 12/12 PASS** con JWT reales
+(password grant), RLS real, triggers reales, handler REAL `GET /api/stores`
+y `userService.setActiveStore` REAL:
+- S1/S1b: SuperAdmin lista TODAS las tiendas activas de TODOS los tenants
+  (ruta real y PostgREST directo; total exacto).
+- **S2: SuperAdmin SELECCIONA tienda SIN membresía — la ruta EXACTA del
+  incidente resuelve, persiste y la cuenta sigue con 0 membresías**
+  (acceso por ROL, no por membresías ficticias).
+- S3: persistencia entre sesiones (re-login recupera la tienda).
+- S4: cambio de tienda A→B sin pérdida de privilegios.
+- S5/S5b: tienda desactivada e inexistente rechazadas (sin mutar el perfil).
+- S6: tenant_admin NO adquiere privilegios (ruta: 0 tiendas; RLS: 0).
+- S7: empleado solo ve SU tienda; petición con store_id ajeno → 0 filas.
+- S8: empleado NO fija tienda ajena (membresía sigue obligatoria).
+- S9: anti-spoofing — PATCH propio a `role: 'superadmin'` bloqueado por
+  trigger de BD; rol inmutable desde el cliente.
+- S10: empleado NO escribe el perfil de otro usuario (RLS, 0 filas).
+Limpieza post-ejecución verificada: 0 tiendas activas de prueba, 0 tenants
+de prueba (hard-delete de tiendas impedido por diseño — auditoría FK
+RESTRICT; se usa soft-archive, semántica de la app).
+
+**Batería completa final:** `tsc` 0 errores · `lint` 0 errores (1385 warnings
+preexistentes) · suite íntegra **282 archivos passed / 4 skipped (live sin
+credenciales) / 0 failed** (~4055+ tests) · `security-contract-test.cjs`
+**153/153 funciones SECURITY DEFINER sin violaciones** · PIN REM-INV-2R
+`receive_purchase` sigue ausente. Build local no ejecutable por OOM del
+sandbox (CI con 4096 MB lo cubre).
+
+### 17.5 Evidencia del estado real de la cuenta afectada
+
+`admin@demo.com` (id `a1111111-…`): `role='superadmin'` (promoción del ciclo 4
+VIVA), autenticación intacta (no se tocó contraseña/ban/privilegios),
+`active_store_id=NULL` (elegirá tienda al desplegar la corrección), 0
+membresías (correcto por diseño), tenant Vitallcons conservado. **NO se
+repromovió ni se alteró su identidad.** Producción recibió CERO escrituras en
+este ciclo (todas las verificaciones read-only; escrituras solo en E2E
+aislado). PM2 del sandbox ejecuta el código corregido localmente; el
+despliegue productivo es del propietario (Vercel).
+
+### 17.6 Dependencia de activación para CIERRE FUNCIONAL en producción
+
+El incidente queda **cerrado en código y probado en aislado**, pero la
+recuperación efectiva de `admin@demo.com` en producción exige del
+propietario:
+
+1. **Merge del PR de este ciclo** (rama
+   `cp-org-001-ciclo4-activacion-superadmin`) y despliegue del código (Vercel).
+2. **Aplicar `20261026170000` a producción** junto con el despliegue — sin
+   ella, el trigger `validate_active_store` seguirá rechazando la persistencia
+   de `active_store_id` para superadmin (RC3). Idempotente y aislada del resto
+   de cambios. (Alternativa: aplicarla por SQL directo como el ciclo 4, con
+   registro expreso de que queda fuera de schema_migrations.)
+3. `20261026160000` ya está viva en producción (policies); el archivo se
+   versiona en este PR para reproducibilidad de entornos.
+
+**Comprobación post-despliegue sugerida (propietario):** iniciar sesión como
+`admin@demo.com` → ver las 2 tiendas activas en el selector → seleccionar una
+→ recargar: la tienda persiste → abrir Ventas/Caja/Reportes.
+
+### 17.7 Veredicto por dimensión (ciclo 5)
+
+| Dimensión | Estado |
+|---|---|
+| Causa raíz | **CONFIRMADA** en 3 capas (app estricta, membresía exigida, trigger DB) |
+| Cierre técnico | CERRADO — tsc 0, lint 0, suite 4055+/0, gates verdes (153/153) |
+| Cierre funcional en aislado | CERRADO — 12/12 LIVE E2E (listar, seleccionar, persistir, cambiar, aislamiento, anti-spoofing) |
+| Aislamiento de roles ordinarios | VERIFICADO — tenant_admin 0 tiendas; empleado 1/1; cross-store 0 filas; rol inmutable desde cliente |
+| Cuenta afectada | Intacta, superadmin VIVO, 0 membresías por diseño; CERO escrituras productivas |
+| Cierre funcional en producción | **PENDIENTE DE ACTIVACIÓN** (merge + deploy + `20261026170000`) — ver §17.6 |
