@@ -26,24 +26,46 @@ const MIGRATION = '20261026210000_cp_org_003_fase2_bootstrap_tenant_admin.sql';
 const sql = readFileSync(join(process.cwd(), 'supabase/migrations', MIGRATION), 'utf-8');
 
 describe('CP-ORG-003 F2 — Migración bootstrap: privilegios y endurecimiento del RPC', () => {
-  it('conserva SECURITY DEFINER con search_path fijado (sin secuestro de esquema)', () => {
+  it('conserva SECURITY DEFINER con el search_path VIGENTE de W9-F06-H1 (pg_catalog, public)', () => {
     expect(sql).toContain('SECURITY DEFINER');
-    expect(sql).toContain("SET search_path TO public, pg_temp");
+    expect(sql).toContain("SET search_path TO 'pg_catalog', 'public'");
+    // NO se regresa al search_path de Iteración 13:
+    expect(sql).not.toContain('SET search_path TO public, pg_temp');
   });
 
-  it('ACL idéntica a Iteración 13: REVOKE anon, GRANT authenticated + service_role', () => {
-    expect(sql).toContain('REVOKE EXECUTE ON FUNCTION public.create_store_with_membership FROM anon');
-    expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.create_store_with_membership TO authenticated');
-    expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.create_store_with_membership TO service_role');
+  it('ACL VIGENTE de W9-F06 replicado: EXECUTE solo service_role (ni PUBLIC ni authenticated)', () => {
+    expect(sql).toContain('REVOKE EXECUTE ON FUNCTION public.create_store_with_membership(');
+    expect(sql).toContain(') FROM PUBLIC;');
+    expect(sql).toMatch(/\) FROM authenticated;/);
+    expect(sql).toMatch(/\) TO service_role;/);
+    // La superficie authenticated NO se reabre:
+    expect(sql).not.toMatch(/TO authenticated;/);
   });
 
-  it('idempotente: DROP de overloads previos + CREATE OR REPLACE', () => {
-    expect(sql).toContain('DROP FUNCTION IF EXISTS public.create_store_with_membership(');
+  it('idempotente: CREATE OR REPLACE sobre la firma /17 vigente (sin DROPs de overloads históricos)', () => {
     expect(sql).toContain('CREATE OR REPLACE FUNCTION public.create_store_with_membership(');
+    expect(sql).not.toContain('DROP FUNCTION IF EXISTS public.create_store_with_membership(');
   });
 
   it('distingue el path del caller por auth.role() — no solo por parámetros', () => {
     expect(sql).toContain("auth.role() = 'service_role'");
+  });
+});
+
+describe('CP-ORG-003 F2 — Remediaciones previas preservadas (no se regresa NADA)', () => {
+  it('REM-INV-5: advisory lock per-tenant CONSERVADO, tras resolver el tenant y ANTES del count check', () => {
+    expect(sql).toContain("PERFORM pg_advisory_xact_lock(hashtext('tenant_stores:' || v_tenant::text));");
+    // La SENTENCIA del lock (PERFORM…), no su mención en comentarios del header:
+    const lockIdx = sql.indexOf('PERFORM pg_advisory_xact_lock');
+    const countIdx = sql.indexOf('SELECT COUNT(*) INTO v_active_count');
+    const tenantIdx = sql.indexOf('v_tenant := COALESCE(p_tenant_id');
+    expect(tenantIdx).toBeGreaterThan(-1);
+    expect(lockIdx).toBeGreaterThan(tenantIdx);
+    expect(lockIdx).toBeLessThan(countIdx);
+  });
+
+  it('la carrera del límite por plan sigue serializada por el lock (check+INSERT dentro del mismo bloque protegido)', () => {
+    expect(sql.indexOf('PERFORM pg_advisory_xact_lock')).toBeLessThan(sql.indexOf('INSERT INTO public.stores'));
   });
 });
 
