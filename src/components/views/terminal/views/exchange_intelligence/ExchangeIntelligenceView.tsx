@@ -2844,7 +2844,7 @@ function ConfiguracionTab({
             <p className="text-xs leading-relaxed opacity-90">{informalStatus.detail}</p>
             <p className="text-[10px] mt-2 opacity-75">
               Fuente: cubadivisas.com (mediana del mercado, cada 30 min)
-              {lastDivizaRow ? ` · capturada: ${new Date(lastDivizaRow.captured_at).toLocaleString('es-CU', { dateStyle: 'short', timeStyle: 'short' })}` : ''}
+              {lastDivizaRow ? ` · capturada: ${new Date(lastDivizaRow.captured_at).toLocaleString('es-CU', { dateStyle: 'short', timeStyle: 'short', timeZone: BUSINESS_TIMEZONE })}` : ''}
             </p>
             {/* IC-DIVIZA-002 (misión §5): hora de actualización de DIVIZA (no la
                 de CostPro) convertida a Cuba — visible en el estado del proveedor. */}
