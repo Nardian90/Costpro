@@ -59,7 +59,9 @@ function transformGate(fnSql: string, name: string): string {
   // Gate has_store_role (sin paréntesis anidados en los args)
   let count = 0;
   let out = fnSql.replace(
-    /IF NOT public\.has_store_role\(([^)]*?)\) THEN/gs,
+    // Nota: sin flag 's' — ES2017 (tsconfig raíz) no lo soporta (TS1501) y es
+    // innecesario: los patrones usan clases [^)] que ya cruzan líneas.
+    /IF NOT public\.has_store_role\(([^)]*?)\) THEN/g,
     (_m, args: string) => {
       count++;
       return `IF NOT (public.is_admin_check(v_caller_uid)\n            OR public.has_store_role(${args})) THEN`;
@@ -69,7 +71,7 @@ function transformGate(fnSql: string, name: string): string {
   // Gate has_store_access_as (solo confirm_inventory_adjustment)
   count = 0;
   out = out.replace(
-    /IF NOT public\.has_store_access_as\(([^)]*?)\) THEN/gs,
+    /IF NOT public\.has_store_access_as\(([^)]*?)\) THEN/g,
     (_m, args: string) => {
       count++;
       return `IF NOT (public.is_admin_check(v_caller_uid)\n            OR public.has_store_access_as(${args})) THEN`;
@@ -122,7 +124,7 @@ async function main() {
     if (!liveDef) {
       report.push({ fn: name, liveMatch: '⚠️ NO EXISTE EN BD VIVA' });
     } else {
-      const gateRe = /IF NOT public\.has_store_role\(v_caller_uid[^)]*\) THEN/s;
+      const gateRe = /IF NOT public\.has_store_role\(v_caller_uid[^)]*\) THEN/;
       const fileGate = fnSql.match(gateRe)?.[0] ?? fnSql.match(/IF NOT public\.has_store_access_as\(v_caller_uid[^)]*\) THEN/)?.[0];
       const liveHasGate = fileGate ? norm(liveDef).includes(norm(fileGate)) : false;
       const sameLen = norm(liveDef).length > 0;
