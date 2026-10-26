@@ -303,6 +303,31 @@ describe('ExchangeIntelligenceView — informal Diviza + elToque', () => {
   });
 
   // ── IC-DIVIZA-002 · Caso de aceptación 8 (contenido de la tarjeta) ──
+  // ── IC-DIVIZA-002 · Fila futura legado (bug UTC previo a la misión) ──
+  it('una fila FUTURA legado (bug UTC) no gana a la fila de la fecha operativa ni provoca aviso falso', async () => {
+    // Estado REAL de producción durante la validación: filas rate_date=TOMORROW
+    // capturadas a las 20:28 de Cuba del HOY (bug UTC) + fila correcta de HOY.
+    const TOMORROW = addDaysToDateString(TODAY, 1);
+    mockRatesApi([
+      bccRow(TODAY, 743),
+      // Fila futura legado (capturada ANTES que la correcta, sin sello)
+      divizaRow(TOMORROW, 840, 'USD', 'T00:28:51Z'),
+      // Fila correcta de la fecha operativa (capturada DESPUÉS, con sello)
+      divizaRow(TODAY, 840, 'USD', 'T01:18:36Z', '2026-10-25T21:00:00-04:00'),
+    ]);
+
+    render(<ExchangeIntelligenceView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('840')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Real · Diviza/i)).toBeInTheDocument();
+    // SIN aviso de antigüedad: existe fila de la fecha operativa (prioridad)
+    expect(screen.queryByText(/Usando último valor/i)).not.toBeInTheDocument();
+    // La hora del proveedor de la fila correcta (no la futura legado sin sello)
+    expect(screen.getByTestId('diviza-source-updated')).toBeInTheDocument();
+  });
+
   it('caso 8: la tarjeta muestra la cotización de la API con horas de Diviza y de CostPro (Cuba)', async () => {
     mockRatesApi([
       bccRow(TODAY, 380),

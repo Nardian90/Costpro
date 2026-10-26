@@ -79,3 +79,38 @@ export function buildOperativeDateRange(days: number, now: Date | number = new D
   }
   return dates;
 }
+
+/** Forma mínima de una fila de tasa con fecha y hora de captura. */
+export interface DatedRateRowLike {
+  rate_date: string;
+  captured_at?: string | null;
+}
+
+/**
+ * Comparador de frescura del informal/oficial vigente (IC-DIVIZA-002, misión
+ * §5: «priorizando la fecha operativa y la frescura de la captura»):
+ *
+ *   1. Las filas cuya rate_date ES la fecha operativa van PRIMERO (por
+ *      captured_at DESC entre ellas).
+ *   2. El resto, por rate_date DESC y captured_at DESC.
+ *
+ * La prioridad 1 resuelve el caso residual de las filas FUTURAS legado del
+ * bug UTC (p.ej. rate_date=2026-10-26 capturadas a las 20:28 de Cuba del 25):
+ * sin ella, una fila «de mañana» ganaba la ordenación por fecha DESC y la
+ * tarjeta mostraba un aviso de antigüedad falso aunque la fila correcta de
+ * la fecha operativa existía. Con la prioridad, la vigente es SIEMPRE la de
+ * la fecha operativa cuando existe; las futuras legado solo compiten entre
+ * sí (y al cambiar la fecha operativa de día entran naturalmente en 1).
+ *
+ * Misma definición para la vista (ExchangeIntelligenceView) y la API
+ * (informal_latest) — sin divergencia cliente/servidor.
+ */
+export function byOperativeDateFirstThenFreshness(operativeDate: string) {
+  return (a: DatedRateRowLike, b: DatedRateRowLike): number => {
+    const aOperative = a.rate_date === operativeDate;
+    const bOperative = b.rate_date === operativeDate;
+    if (aOperative !== bOperative) return aOperative ? -1 : 1;
+    if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
+    return (b.captured_at || '').localeCompare(a.captured_at || '');
+  };
+}
