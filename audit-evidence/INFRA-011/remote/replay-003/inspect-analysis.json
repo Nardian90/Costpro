@@ -1,0 +1,146 @@
+{
+  "censo": {
+    "tablas": 155,
+    "funciones": 510,
+    "centinela": true
+  },
+  "registro": {
+    "limpiada_para_baseline": 3,
+    "fallida": 2,
+    "aplicada": 82
+  },
+  "baseline_ok": true,
+  "pretamo_exactos": 10,
+  "tramo": {
+    "aplicadas_hash_exacto": 71,
+    "divergentes": [],
+    "pendientes": [
+      {
+        "pos": 72,
+        "nombre": "20261023000000_create_physical_inventory_module.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 73,
+        "nombre": "20261023230000_mision_caja_multimoneda_v2_24_0.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 74,
+        "nombre": "20261024120000_revision_final_caja_v2_24_1.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 75,
+        "nombre": "20261024150000_mision_pagos_mixtos_multimoneda_v2_25_0.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 76,
+        "nombre": "20261024180000_auditoria_caja_idempotencia_determinista.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 77,
+        "nombre": "20261024220000_saldo_fisico_egresos_multimoneda.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 78,
+        "nombre": "20261024230000_devoluciones_reembolso_fisico_moneda.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 79,
+        "nombre": "20261024400000_devoluciones_recuperacion_reversa.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 80,
+        "nombre": "20261025120000_cp_money_002_postmerge_integrity.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 81,
+        "nombre": "20261025130000_cp_money_002_acl_revoke_anon.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 82,
+        "nombre": "20261026000000_caja_serializacion_commit_coherente.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 83,
+        "nombre": "20261026100000_caja_acl_anon_revoke.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 84,
+        "nombre": "20261026120000_organizaciones_superadmin_pertenencia_unica.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 85,
+        "nombre": "20261026130000_cp_org001_platform_role_guards.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 86,
+        "nombre": "20261026140000_cp_org001_tenants_rls_platform_only.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 87,
+        "nombre": "20261026150000_payment_tx_integrity.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 88,
+        "nombre": "20261026160000_superadmin_store_access.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 89,
+        "nombre": "20261026170000_superadmin_active_store_trigger.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 90,
+        "nombre": "20261026180000_cp_org001_platform_acl_revoke.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 91,
+        "nombre": "20261026200000_efectivo_fisico_disponibilidad.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 92,
+        "nombre": "20261026210000_cp_org_003_fase2_bootstrap_tenant_admin.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 93,
+        "nombre": "20261027000000_inteligencia_diviza_source.sql",
+        "estado_registro": "SIN FILA"
+      },
+      {
+        "pos": 94,
+        "nombre": "20261027010000_exchange_rates_source_updated_at.sql",
+        "estado_registro": "SIN FILA"
+      }
+    ]
+  },
+  "variacion_vs_preflight002": {
+    "preflight_002": {
+      "pendientes": 22,
+      "posiciones": "72-93"
+    },
+    "hoy": {
+      "pendientes": 23,
+      "posiciones": "72-94"
+    },
+    "explicacion": "posici\u00f3n 94 = 20261027010000_exchange_rates_source_updated_at.sql (PR #1502, main f1611c356) \u2014 an\u00e1lisis de diferencias completado (DDL aditivo puro)"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "fecha": "2026-10-26T01:51:03.324852+00:00",
+  "ref": "lguovmvrozxgssupkwpf",
+  "create_sale_v2_overloads": [
+    {
+      "firma": "create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid,text,jsonb,text,text,jsonb,numeric,numeric,numeric,numeric,text)",
+      "args": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb, p_cash_received_cup numeric DEFAULT NULL::numeric, p_cash_received_usd numeric DEFAULT NULL::numeric, p_change_given_cup numeric DEFAULT NULL::numeric, p_change_given_usd numeric DEFAULT NULL::numeric, p_change_currency text DEFAULT NULL::text"
+    },
+    {
+      "firma": "create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid,text,jsonb,text,text,jsonb)",
+      "args": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb"
+    }
+  ],
+  "create_sale_v2_overloads_n_args": [
+    31,
+    26
+  ],
+  "overloads_esperados_pre_replay": 2,
+  "overloads_tras_fallo_75": 2,
+  "prueba_rollback_integro": true,
+  "registro_posiciones_72_75": [
+    {
+      "nombre": "20261023000000_create_physical_inventory_module.sql",
+      "estado": "aplicada",
+      "posicion": 72
+    },
+    {
+      "nombre": "20261023230000_mision_caja_multimoneda_v2_24_0.sql",
+      "estado": "aplicada",
+      "posicion": 73
+    },
+    {
+      "nombre": "20261024120000_revision_final_caja_v2_24_1.sql",
+      "estado": "aplicada",
+      "posicion": 74
+    },
+    {
+      "nombre": "20261024150000_mision_pagos_mixtos_multimoneda_v2_25_0.sql",
+      "estado": "fallida",
+      "posicion": 75
+    }
+  ],
+  "registro_desglose": {
+    "aplicada": 85,
+    "fallida": 3,
+    "limpiada_para_baseline": 3
+  },
+  "nota": "El overload /32 (v2.25, p_payment_components) NO existe tras el fallo: la ejecución multi-sentencia vía /database/query es transaccional (rollback íntegro). Estado equivalente a \"75 jamás ejecutada\"."
+}
