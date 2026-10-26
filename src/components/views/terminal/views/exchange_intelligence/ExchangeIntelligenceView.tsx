@@ -37,6 +37,9 @@ import { toast } from 'sonner';
 import { useIntervalWhenVisible } from '@/hooks/ui/use-interval-when-visible';
 import { useAuthStore } from '@/store';
 import { BaseModal } from '@/components/ui/BaseModal';
+// IC-DIVIZA-002 (misión §3): fecha operativa compartida cliente/servidor
+// (civil de Cuba, America/Havana) — única regla de vigencia diaria.
+import { getOperativeDate, BUSINESS_TIMEZONE } from '@/lib/operative-date';
 
 /**
  * IC-2: Inteligencia Cambiaria — AUDIT-2/3/5: Conectado a datos reales de Supabase.
@@ -79,6 +82,11 @@ interface ExchangeRate {
   // 'estimated' = histórico calculado (BCC×1.15) — nunca como 'real'.
   // 'carry_forward' = virtual: último valor real arrastrado (solo lectura API).
   capture_method?: 'real' | 'estimated' | 'carry_forward';
+  // Hora en que el PROVEEDOR actualizó la cotización (Diviza). Metadato de
+  // presentación — NO criterio de frescura. NULL en BCC/histórico/manual.
+  source_updated_at?: string | null;
+  // Fecha real de la fila de la que deriva una virtual carry_forward.
+  original_rate_date?: string;
 }
 
 interface HistoryPoint {
@@ -105,9 +113,9 @@ const FALLBACK_OFFICIAL = { USD: 120, EUR: 128, MLC: 120 };
  * Proveedores informales registrados en exchange_rates.source.
  * Diviza = fuente activa (cubadivisas.com, desde 2026-10-26).
  * elToque = serie histórica (2025-12-25 → 2026-07-28, solucionescuba.com era).
- * El informal vigente = el registro MÁS FRESCO entre ambos (rate_date DESC,
- * captured_at DESC); por fecha, si ambos existen, gana el de captured_at más
- * reciente — sin duplicar valores ni mezclar procedencias.
+ * El informal vigente = el registro REAL más fresco entre ambos (rate_date
+ * DESC, captured_at DESC); por fecha, si ambos existen, gana el de captured_at
+ * más reciente — sin duplicar valores ni mezclar procedencias.
  */
 const INFORMAL_SOURCES = ['Diviza', 'elToque'] as const;
 
@@ -116,11 +124,39 @@ const isInformalSource = (s: string): boolean =>
   (INFORMAL_SOURCES as readonly string[]).includes(s);
 
 /**
- * De varias filas informales del MISMO día, devuelve la prioritaria:
- * la de captured_at más reciente (procedencia más fresca).
+ * REGLA DE SELECCIÓN DEL INFORMAL VIGENTE (IC-DIVIZA-002, misión §5):
+ * el registro REAL más reciente por (rate_date DESC, captured_at DESC).
+ *
+ * Las filas virtuales carry_forward se EXCLUYEN de la selección: son una
+ * copia presentacional de un dato viejo que la API crea para continuidad
+ * de gráficos. Antes de esta misión, la virtual de elToque (fuente muerta
+ * desde 2026-07-28) llevaba captured_at = «ahora» y desplazaba a la
+ * captura REAL de Diviza del propio día — la tarjeta mostraba 675 (elToque)
+ * en lugar de 840 (Diviza) aunque la fila real existía en la respuesta.
+ * La regla es EXACTAMENTE la misma que resuelve /api/exchange-rates
+ * (informal_latest): sin divergencia cliente/servidor.
  */
-const pickInformalRow = (rows: ExchangeRate[]): ExchangeRate | undefined =>
-  [...rows].sort((a, b) => (b.captured_at || '').localeCompare(a.captured_at || ''))[0];
+const isRealCaptureRow = (r: ExchangeRate): boolean => r.capture_method !== 'carry_forward';
+
+/**
+ * Orden de frescura del informal REAL: rate_date DESC, captured_at DESC.
+ * (Misma regla que la API y el RPC del paso informal contable.)
+ */
+const byFreshnessDesc = (a: ExchangeRate, b: ExchangeRate): number => {
+  if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
+  return (b.captured_at || '').localeCompare(a.captured_at || '');
+};
+
+/**
+ * De varias filas informales del MISMO día, devuelve la prioritaria: la
+ * REAL con captured_at más reciente (las virtuales solo si no hay reales —
+ * continuidad del gráfico, nunca la selección de la tarjeta).
+ */
+const pickInformalRow = (rows: ExchangeRate[]): ExchangeRate | undefined => {
+  const reales = rows.filter(isRealCaptureRow);
+  const pool = reales.length > 0 ? reales : rows;
+  return [...pool].sort((a, b) => (b.captured_at || '').localeCompare(a.captured_at || ''))[0];
+};
 
 // Nota: Los colores del gráfico viven en HistoryTab.tsx con asignación
 // categórica consistente entre tabs: BCC azul (#3b82f6) e informal naranja
@@ -133,6 +169,10 @@ export function ExchangeIntelligenceView() {
   const [error, setError] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
   const [lastCaptureInfo, setLastCaptureInfo] = useState<{ count: number; date: string } | null>(null);
+  // IC-DIVIZA-002: fecha operativa reportada por el backend (civil de Cuba).
+  // Fuente única de verdad para etiquetas de antigüedad — el fallback local
+  // (getOperativeDate) aplica solo si la respuesta no la trae.
+  const [operativeDateFromServer, setOperativeDateFromServer] = useState<string | null>(null);
 
   // IC-EXCEL-BULK-UPLOAD: carga masiva por Excel (admin only).
   // El botón solo se muestra si el usuario es admin; el endpoint valida
@@ -152,7 +192,7 @@ export function ExchangeIntelligenceView() {
   } | null>(null);
 
   // Fetch real de Supabase
-  const fetchRates = useCallback(async () => {
+  const fetchRates = useCallback(async (): Promise<ExchangeRate[]> => {
     setLoading(true);
     setError(null);
     try {
@@ -175,6 +215,13 @@ export function ExchangeIntelligenceView() {
       const data = json.rates || [];
       setRates(data);
 
+      // IC-DIVIZA-002 (misión §3): el backend reporta la fecha operativa
+      // (civil de Cuba) que gobierna vigencia/carry-forward — la adoptamos
+      // como fuente única de verdad para las etiquetas de antigüedad.
+      if (typeof json.operative_date === 'string' && json.operative_date) {
+        setOperativeDateFromServer(json.operative_date);
+      }
+
       // Detectar última fecha capturada
       if (data.length > 0) {
         const lastDate = data[data.length - 1].rate_date;
@@ -190,12 +237,14 @@ export function ExchangeIntelligenceView() {
           duration: 5000,
         });
       }
+      return data as ExchangeRate[];
     } catch (e: any) {
       setError(e.message || 'Error al cargar tasas');
       toast.error('No se pudieron cargar las tasas de cambio', {
         description: 'Verifica la conexión a Supabase.',
         action: { label: 'Reintentar', onClick: fetchRates },
       });
+      return [] as ExchangeRate[];
     } finally {
       setLoading(false);
     }
@@ -243,14 +292,15 @@ export function ExchangeIntelligenceView() {
       if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
       return (b.captured_at || '').localeCompare(a.captured_at || '');
     });
-  // IC-DIVIZA: informal = el registro MÁS FRESCO entre Diviza (activa) y
-  // elToque (histórica) — misma regla de frescura que la API y el RPC.
+  // IC-DIVIZA-002 (misión §5): informal vigente = el registro REAL más fresco
+  // entre Diviza (activa) y elToque (histórica). Las filas VIRTUALES
+  // carry_forward quedan EXCLUIDAS de la selección (isRealCaptureRow): la
+  // virtual de elToque llevaba captured_at fabricado «ahora» y desplazaba a
+  // la captura real de Diviza del mismo día (bug de la tarjeta). Misma
+  // regla que la API (informal_latest) y el RPC contable.
   const usdInformalRates = rates
-    .filter(r => isInformalSource(r.source) && r.currency === 'USD')
-    .sort((a, b) => {
-      if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
-      return (b.captured_at || '').localeCompare(a.captured_at || '');
-    });
+    .filter(r => isInformalSource(r.source) && r.currency === 'USD' && isRealCaptureRow(r))
+    .sort(byFreshnessDesc);
   // El primero del array ordenado DESC es el más reciente (hoy).
   // Sin registro informal NO se inventa valor: null → estado "sin dato fiable".
   const usdOfficial = usdOfficialRates[0]?.rate ?? FALLBACK_OFFICIAL.USD;
@@ -262,11 +312,19 @@ export function ExchangeIntelligenceView() {
   const informalCaptureMethod = lastInformalRecord?.capture_method ?? 'estimated';
   const informalProvider = lastInformalRecord?.source ?? null;
 
-  // CARRY-FORWARD: detectar si la tasa informal más reciente NO es de hoy.
-  // Si es de un día anterior, la UI debe avisar "usando último valor de YYYY-MM-DD".
-  const todayStr = new Date().toISOString().split('T')[0];
+  // IC-DIVIZA-002 (misión §3): la vigencia diaria se evalúa contra la FECHA
+  // OPERATIVA (civil de Cuba, America/Havana) — la MISMA que usa el backend
+  // (respuesta.operative_date cuando llega; cálculo local idéntico como
+  // fallback). Antes se comparaba contra la fecha UTC (toISOString) y entre
+  // las 20:00–01:00 de Cuba la tarjeta etiquetaba como «antigua» una tasa
+  // vigente (o como vigente una antigua).
+  const todayStr = operativeDateFromServer ?? getOperativeDate();
   const informalRateDate = lastInformalRecord?.rate_date ?? '';
   const informalIsCarryForward = informalRateDate !== '' && informalRateDate !== todayStr;
+  // Metadatos de frescura de la tarjeta (misión §5): hora del PROVEEDOR
+  // (Diviza) y hora de captura de CostPro, convertidas a Cuba.
+  const informalSourceUpdatedAt = lastInformalRecord?.source_updated_at ?? null;
+  const informalCapturedAt = lastInformalRecord?.captured_at ?? null;
 
   // Lo mismo para BCC
   const lastOfficialRecord = usdOfficialRates[0];
@@ -294,11 +352,21 @@ export function ExchangeIntelligenceView() {
   // ═══ BOTÓN ACTUALIZAR BD: captura manual de 7 días desde BCC ═══
   // FIX C1+C2: llama al proxy /api/exchange-rates/refresh (server-side, con auth de sesión)
   // en lugar de /api/cron/exchange-rates con secrets en el cliente.
+  //
+  // IC-DIVIZA-002 (misión §4): la respuesta distingue el estado de cada
+  // fuente (bcc/diviza) y el éxito parcial. El toast informa EXPLÍCITAMENTE:
+  //   - ambas OK → éxito con la tasa informal capturada;
+  //   - BCC OK + Diviza fallido → AVISO parcial con el error de Diviza y la
+  //     última tasa real disponible (con su fecha real, jamás «actual»);
+  //   - Diviza OK + BCC fallido → aviso parcial con el fallo oficial;
+  //   - ambas fallidas → error honesto.
+  // Después de la captura se vuelve a consultar la API (fetchRates) y la
+  // tarjeta se re-renderiza SIN recarga manual ni segunda acción (misión §5).
   const handleManualCapture = useCallback(
     async (days: number = 7) => {
       setCapturing(true);
-      const toastId = toast.loading(`Capturando últimos ${days} días desde BCC...`, {
-        description: 'Consultando API del Banco Central de Cuba',
+      const toastId = toast.loading(`Capturando últimos ${days} días — BCC + Diviza...`, {
+        description: `BCC oficial + informal Diviza (fecha operativa de Cuba)`,
       });
 
       try {
@@ -319,15 +387,65 @@ export function ExchangeIntelligenceView() {
         }
 
         const data = await res.json();
-        toast.success(`Captura completada: ${data.captured_count || 0} registros`, {
-          id: toastId,
-          description: `${data.dates_processed?.length || 0} fechas procesadas · ${data.elapsed_ms || 0}ms`,
-          duration: 8000,
-          icon: <CheckCircle2 className="w-4 h-4" />,
-        });
+        const bcc = data.bcc as { ok?: boolean; rows?: number; errors?: string[] } | undefined;
+        const diviza = data.diviza as
+          | { ok?: boolean; rows?: number; rates?: { usd?: number | null; eur?: number | null; mlc?: number | null }; source_updated_at?: string | null; errors?: string[] }
+          | undefined;
+        const bccOk = bcc?.ok === true;
+        const divizaOk = diviza?.ok === true;
 
-        // Refrescar datos locales
-        await fetchRates();
+        // Refrescar datos locales ANTES de los toasts: si Diviza falló, la
+        // descripción del aviso incluye la última tasa real disponible con su
+        // fecha real (misión §4: «indica si existe una tasa anterior, con su
+        // fecha real»). fetchRates DEVUELVE los datos frescos — el closure de
+        // `rates` aún tendría el estado previo.
+        const freshRates = await fetchRates();
+
+        if (bccOk && divizaOk) {
+          // Éxito completo — tasa informal vigente visible de inmediato.
+          toast.success(
+            `Captura completada — BCC ✓ · Diviza ✓${diviza?.rates?.usd != null ? ` (USD=${diviza.rates.usd})` : ''}`,
+            {
+              id: toastId,
+              description:
+                `BCC: ${bcc?.rows ?? 0} filas · Diviza: ${diviza?.rows ?? 0} filas · fecha operativa ${data.operative_date ?? '—'} · ${data.elapsed_ms ?? 0}ms`,
+              duration: 8000,
+              icon: <CheckCircle2 className="w-4 h-4" />,
+            },
+          );
+        } else if (bccOk || divizaOk) {
+          // Éxito parcial (misión §4): una fuente falla — aviso EXPLÍCITO con
+          // el error de la fuente fallida. Nunca «Captura completada» genérico.
+          const failedSource = !divizaOk ? 'Diviza (informal)' : 'BCC (oficial)';
+          const okSource = divizaOk ? 'Diviza' : 'BCC';
+          const failedErrors = (!divizaOk ? diviza?.errors : bcc?.errors) ?? [];
+          let description = `${okSource} actualizado. ${failedSource} falló: ${failedErrors[0] ?? 'sin detalle'}`;
+          // Si Diviza falló: informar la última tasa real con su FECHA REAL
+          // (no marcar como actual una tasa antigua).
+          if (!divizaOk) {
+            const lastReal = (freshRates as ExchangeRate[])
+              .filter(r => isInformalSource(r.source) && r.currency === 'USD' && isRealCaptureRow(r))
+              .sort(byFreshnessDesc)[0];
+            if (lastReal) {
+              description += `. Última tasa real: ${lastReal.rate} CUP/USD del ${lastReal.rate_date} (${lastReal.source})`;
+            } else {
+              description += '. No hay tasa informal real almacenada';
+            }
+          }
+          toast.warning(`Éxito parcial — ${okSource} actualizado, ${failedSource} falló`, {
+            id: toastId,
+            description,
+            duration: 12000,
+          });
+        } else {
+          // Ambas fuentes fallaron (respuesta 200 con success=false es poco
+          // probable — el endpoint responde 502 — pero cubrimos el estado).
+          toast.error('Captura fallida — ni BCC ni Diviza aportaron filas', {
+            id: toastId,
+            description: [...(bcc?.errors ?? []), ...(diviza?.errors ?? [])].slice(0, 2).join(' · ') || 'Sin detalle',
+            duration: 12000,
+          });
+        }
       } catch (e: any) {
         toast.error('Error en captura manual', {
           id: toastId,
@@ -581,6 +699,9 @@ export function ExchangeIntelligenceView() {
                 informalProvider={informalProvider}
                 informalIsCarryForward={informalIsCarryForward}
                 informalRateDate={informalRateDate}
+                informalSourceUpdatedAt={informalSourceUpdatedAt}
+                informalCapturedAt={informalCapturedAt}
+                operativeDate={todayStr}
                 officialIsCarryForward={officialIsCarryForward}
                 officialRateDate={officialRateDate}
                 officialCaptureMethod={officialCaptureMethod}
@@ -618,6 +739,9 @@ export function ExchangeIntelligenceView() {
                 informalCaptureMethod={informalCaptureMethod}
                 informalRateDate={informalRateDate}
                 informalIsCarryForward={informalIsCarryForward}
+                informalSourceUpdatedAt={informalSourceUpdatedAt}
+                informalCapturedAt={informalCapturedAt}
+                operativeDate={todayStr}
                 officialRateDate={officialRateDate}
                 officialIsCarryForward={officialIsCarryForward}
                 officialCaptureMethod={officialCaptureMethod}
@@ -1024,6 +1148,9 @@ function DashboardTab({
   informalProvider,
   informalIsCarryForward,
   informalRateDate,
+  informalSourceUpdatedAt,
+  informalCapturedAt,
+  operativeDate,
   officialIsCarryForward,
   officialRateDate,
   officialCaptureMethod,
@@ -1045,6 +1172,12 @@ function DashboardTab({
   informalProvider?: string | null;
   informalIsCarryForward?: boolean;
   informalRateDate?: string;
+  /** Hora en que DIVIZA actualizó la cotización (ISO con offset de Cuba). */
+  informalSourceUpdatedAt?: string | null;
+  /** Hora en que CostPro capturó (ISO UTC). */
+  informalCapturedAt?: string | null;
+  /** Fecha operativa (civil de Cuba) — regla compartida con el backend. */
+  operativeDate?: string;
   officialIsCarryForward?: boolean;
   officialRateDate?: string;
   officialCaptureMethod?: 'real' | 'estimated' | 'carry_forward';
@@ -1052,6 +1185,23 @@ function DashboardTab({
   onManualCapture?: (days: number) => void;
   capturing?: boolean;
 }) {
+  // IC-DIVIZA-002 (misión §5): horas del proveedor y de la captura,
+  // convertidas a la zona horaria de Cuba (texto + valor, nunca solo color).
+  const formatInCubaTz = (iso: string | null | undefined): string => {
+    if (!iso) return '';
+    try {
+      return new Date(iso).toLocaleString('es-CU', {
+        timeZone: BUSINESS_TIMEZONE,
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    } catch {
+      return '';
+    }
+  };
   // ─── Cálculos científicos de brecha y forecast ───
   const brechaStats = useMemo(
     () => calcBrechaStats(rates, bccSegment, 90),
@@ -1243,7 +1393,7 @@ function DashboardTab({
             {officialIsCarryForward && (
               <div className="mb-2 px-2 py-1 rounded-md bg-warning/15 border border-warning/30 text-xs text-warning font-bold flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>Tasa de hoy no disponible. Usando último valor de {officialRateDate}</span>
+                <span>Tasa de la fecha operativa ({operativeDate ?? 'hoy'}) no disponible. Usando último valor de {officialRateDate}</span>
               </div>
             )}
             <div className="flex items-center gap-2 text-sm flex-wrap">
@@ -1348,7 +1498,30 @@ function DashboardTab({
             {informalIsCarryForward && informalUsd != null && (
               <div className="mb-2 px-2 py-1 rounded-md bg-warning/15 border border-warning/30 text-xs text-warning font-bold flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>Tasa de hoy no disponible. Usando último valor de {informalRateDate} ({informalProvider})</span>
+                <span>
+                  Tasa de la fecha operativa ({operativeDate ?? 'hoy'}) no disponible. Usando último valor real del{' '}
+                  {informalRateDate} ({informalProvider})
+                </span>
+              </div>
+            )}
+            {/* IC-DIVIZA-002 (misión §5): trazabilidad de frescura en la tarjeta —
+                hora de actualización del PROVEEDOR (Diviza) y hora de captura de
+                CostPro, ambas convertidas a la zona horaria de Cuba. Solo cuando
+                la tasa mostrada es real del proveedor que la publicó. */}
+            {informalUsd != null && informalCaptureMethod === 'real' && (
+              <div className="mb-2 flex flex-col gap-0.5 text-xs text-muted-foreground">
+                {informalProvider === 'Diviza' && informalSourceUpdatedAt && (
+                  <span className="flex items-center gap-1.5" data-testid="diviza-source-updated">
+                    <Globe className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                    Diviza actualizó: {formatInCubaTz(informalSourceUpdatedAt)} (Cuba)
+                  </span>
+                )}
+                {informalCapturedAt && (
+                  <span className="flex items-center gap-1.5" data-testid="costpro-captured">
+                    <RefreshCw className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                    Captura CostPro: {formatInCubaTz(informalCapturedAt)} (Cuba)
+                  </span>
+                )}
               </div>
             )}
             <div className="flex flex-col gap-1 text-sm">
@@ -2553,12 +2726,33 @@ function ConfiguracionTab({
   informalCaptureMethod,
   informalRateDate,
   informalIsCarryForward,
+  informalSourceUpdatedAt,
+  informalCapturedAt,
+  operativeDate,
   officialRateDate,
   officialIsCarryForward,
   officialCaptureMethod,
 }: any) {
-  const todayStr = new Date().toISOString().split('T')[0];
+  // IC-DIVIZA-002 (misión §3): vigencia evaluada contra la FECHA OPERATIVA
+  // (civil de Cuba) — la misma del backend. Antes: fecha UTC.
+  const todayStr = operativeDate ?? getOperativeDate();
   const captureInProgress = capturing || scraping || uploading;
+  // Horas convertidas a Cuba para el estado del proveedor (misión §5).
+  const formatInCubaTz = (iso: string | null | undefined): string => {
+    if (!iso) return '';
+    try {
+      return new Date(iso).toLocaleString('es-CU', {
+        timeZone: BUSINESS_TIMEZONE,
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    } catch {
+      return '';
+    }
+  };
 
   // ── Estados del proveedor BCC (oficial) ──
   const bccStatus: {
@@ -2656,6 +2850,13 @@ function ConfiguracionTab({
               Fuente: cubadivisas.com (mediana del mercado, cada 30 min)
               {lastDivizaRow ? ` · capturada: ${new Date(lastDivizaRow.captured_at).toLocaleString('es-CU', { dateStyle: 'short', timeStyle: 'short' })}` : ''}
             </p>
+            {/* IC-DIVIZA-002 (misión §5): hora de actualización de DIVIZA (no la
+                de CostPro) convertida a Cuba — visible en el estado del proveedor. */}
+            {informalSourceUpdatedAt && (
+              <p className="text-[10px] mt-1 opacity-75" data-testid="config-diviza-updated">
+                Diviza actualizó su cotización: {formatInCubaTz(informalSourceUpdatedAt)} (Cuba)
+              </p>
+            )}
           </div>
         </div>
       </div>
