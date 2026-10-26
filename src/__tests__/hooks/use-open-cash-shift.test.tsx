@@ -141,8 +141,9 @@ describe('CP-CASH-OPENING-001 · useOpenCashShift — vía RPC y fallback legado
     fetchMock.mockResolvedValueOnce(jsonRes(501, { fallback: true }));
     createClosureMock.mockResolvedValueOnce({ id: 'c-min' });
     const { result } = renderHookOpen();
-    const { legacy_insert: _omit, ...minimal } = PAYLOAD as Record<string, unknown>;
-    result.current.mutate(minimal as never);
+    // Sin legacy_insert: el hook construye el INSERT mínimo en la degradación
+    const { legacy_insert: _omit, ...minimal } = PAYLOAD;
+    result.current.mutate(minimal);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toMatchObject({ via: 'legacy' });
     expect(createClosureMock.mock.calls[0][0]).toMatchObject({
