@@ -39,7 +39,7 @@ import { useAuthStore } from '@/store';
 import { BaseModal } from '@/components/ui/BaseModal';
 // IC-DIVIZA-002 (misión §3): fecha operativa compartida cliente/servidor
 // (civil de Cuba, America/Havana) — única regla de vigencia diaria.
-import { getOperativeDate, BUSINESS_TIMEZONE } from '@/lib/operative-date';
+import { getOperativeDate, BUSINESS_TIMEZONE, byOperativeDateFirstThenFreshness } from '@/lib/operative-date';
 
 /**
  * IC-2: Inteligencia Cambiaria — AUDIT-2/3/5: Conectado a datos reales de Supabase.
@@ -137,15 +137,6 @@ const isInformalSource = (s: string): boolean =>
  * (informal_latest): sin divergencia cliente/servidor.
  */
 const isRealCaptureRow = (r: ExchangeRate): boolean => r.capture_method !== 'carry_forward';
-
-/**
- * Orden de frescura del informal REAL: rate_date DESC, captured_at DESC.
- * (Misma regla que la API y el RPC del paso informal contable.)
- */
-const byFreshnessDesc = (a: ExchangeRate, b: ExchangeRate): number => {
-  if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
-  return (b.captured_at || '').localeCompare(a.captured_at || '');
-};
 
 /**
  * De varias filas informales del MISMO día, devuelve la prioritaria: la
@@ -286,21 +277,33 @@ export function ExchangeIntelligenceView() {
   // FIX-BADGE-REAL: Ordenar por fecha DESC + captured_at DESC antes de tomar
   // el primero, para garantizar que obtenemos el registro más reciente de hoy
   // (no el de ayer que podría ser 'estimated').
+  //
+  // IC-DIVIZA-002 (misión §3): la vigencia diaria se evalúa contra la FECHA
+  // OPERATIVA (civil de Cuba, America/Havana) — la MISMA que usa el backend
+  // (respuesta.operative_date cuando llega; cálculo local idéntico como
+  // fallback). Antes se comparaba contra la fecha UTC (toISOString) y entre
+  // las 20:00–01:00 de Cuba la tarjeta etiquetaba como «antigua» una tasa
+  // vigente (o como vigente una antigua).
+  const todayStr = operativeDateFromServer ?? getOperativeDate();
+  // Comparador de frescura con prioridad de fecha operativa (misión §5):
+  // la fila de HOY (Cuba) gana siempre a una futura legado (bug UTC) o
+  // antigua; a igualdad de fecha, gana la captura más reciente.
+  const byVigente = byOperativeDateFirstThenFreshness(todayStr);
+
   const usdOfficialRates = rates
     .filter(r => r.source === 'BCC' && r.segment === bccSegment && r.currency === 'USD')
-    .sort((a, b) => {
-      if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
-      return (b.captured_at || '').localeCompare(a.captured_at || '');
-    });
+    .sort(byVigente);
   // IC-DIVIZA-002 (misión §5): informal vigente = el registro REAL más fresco
-  // entre Diviza (activa) y elToque (histórica). Las filas VIRTUALES
-  // carry_forward quedan EXCLUIDAS de la selección (isRealCaptureRow): la
-  // virtual de elToque llevaba captured_at fabricado «ahora» y desplazaba a
-  // la captura real de Diviza del mismo día (bug de la tarjeta). Misma
-  // regla que la API (informal_latest) y el RPC contable.
+  // entre Diviza (activa) y elToque (histórica), PRIORIZANDO la fecha
+  // operativa (byVigente). Las filas VIRTUALES carry_forward quedan
+  // EXCLUIDAS de la selección (isRealCaptureRow): la virtual de elToque
+  // llevaba captured_at fabricado «ahora» y desplazaba a la captura real de
+  // Diviza del mismo día (bug de la tarjeta). Las filas FUTURAS legado del
+  // bug UTC tampoco ganan a la fila de la fecha operativa. Misma regla que
+  // la API (informal_latest) y el RPC contable.
   const usdInformalRates = rates
     .filter(r => isInformalSource(r.source) && r.currency === 'USD' && isRealCaptureRow(r))
-    .sort(byFreshnessDesc);
+    .sort(byVigente);
   // El primero del array ordenado DESC es el más reciente (hoy).
   // Sin registro informal NO se inventa valor: null → estado "sin dato fiable".
   const usdOfficial = usdOfficialRates[0]?.rate ?? FALLBACK_OFFICIAL.USD;
@@ -312,13 +315,6 @@ export function ExchangeIntelligenceView() {
   const informalCaptureMethod = lastInformalRecord?.capture_method ?? 'estimated';
   const informalProvider = lastInformalRecord?.source ?? null;
 
-  // IC-DIVIZA-002 (misión §3): la vigencia diaria se evalúa contra la FECHA
-  // OPERATIVA (civil de Cuba, America/Havana) — la MISMA que usa el backend
-  // (respuesta.operative_date cuando llega; cálculo local idéntico como
-  // fallback). Antes se comparaba contra la fecha UTC (toISOString) y entre
-  // las 20:00–01:00 de Cuba la tarjeta etiquetaba como «antigua» una tasa
-  // vigente (o como vigente una antigua).
-  const todayStr = operativeDateFromServer ?? getOperativeDate();
   const informalRateDate = lastInformalRecord?.rate_date ?? '';
   const informalIsCarryForward = informalRateDate !== '' && informalRateDate !== todayStr;
   // Metadatos de frescura de la tarjeta (misión §5): hora del PROVEEDOR
@@ -421,11 +417,15 @@ export function ExchangeIntelligenceView() {
           const failedErrors = (!divizaOk ? diviza?.errors : bcc?.errors) ?? [];
           let description = `${okSource} actualizado. ${failedSource} falló: ${failedErrors[0] ?? 'sin detalle'}`;
           // Si Diviza falló: informar la última tasa real con su FECHA REAL
-          // (no marcar como actual una tasa antigua).
+          // (no marcar como actual una tasa antigua). Misma prioridad de
+          // fecha operativa que la tarjeta (byVigente).
           if (!divizaOk) {
+            const byVigenteNow = byOperativeDateFirstThenFreshness(
+              (typeof data.operative_date === 'string' && data.operative_date) || todayStr,
+            );
             const lastReal = (freshRates as ExchangeRate[])
               .filter(r => isInformalSource(r.source) && r.currency === 'USD' && isRealCaptureRow(r))
-              .sort(byFreshnessDesc)[0];
+              .sort(byVigenteNow)[0];
             if (lastReal) {
               description += `. Última tasa real: ${lastReal.rate} CUP/USD del ${lastReal.rate_date} (${lastReal.source})`;
             } else {
@@ -1221,14 +1221,13 @@ function DashboardTab({
   // ─── Variación diaria (vs día anterior) para ambas tarjetas ───
   // FIX-BADGE-REAL: Ordenar DESC por fecha + captured_at para garantizar
   // que tomamos hoy (no ayer).
-  // IC-DIVIZA: informales de cualquier proveedor (frescura DESC). Para la
+  // IC-DIVIZA-002: informales de cualquier proveedor REAL, con prioridad de
+  // fecha operativa (una fila futura legado no dispara el «vs ayer»). Para la
   // variación diaria se usa la serie deduplicada por fecha (un punto/día).
+  const byVigenteLocal = byOperativeDateFirstThenFreshness(operativeDate ?? getOperativeDate());
   const usdInformalRatesLocal = rates
     .filter((r: ExchangeRate) => isInformalSource(r.source) && r.currency === 'USD')
-    .sort((a, b) => {
-      if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
-      return (b.captured_at || '').localeCompare(a.captured_at || '');
-    });
+    .sort(byVigenteLocal);
   // Deduplicar por fecha: si hoy hay Diviza Y elToque, gana el más fresco.
   const seenDates = new Set<string>();
   const informalByDateDesc: ExchangeRate[] = [];
@@ -1250,10 +1249,7 @@ function DashboardTab({
   // BCC: últimos 2 registros oficiales para el segmento seleccionado
   const usdOfficialRatesLocal = rates
     .filter((r: ExchangeRate) => r.source === 'BCC' && r.currency === 'USD' && r.segment === bccSegment)
-    .sort((a, b) => {
-      if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
-      return (b.captured_at || '').localeCompare(a.captured_at || '');
-    });
+    .sort(byVigenteLocal);
   const officialToday = usdOfficialRatesLocal[0]?.rate;
   const officialYesterday = usdOfficialRatesLocal[1]?.rate;
   const officialDailyChange = (officialToday != null && officialYesterday != null)

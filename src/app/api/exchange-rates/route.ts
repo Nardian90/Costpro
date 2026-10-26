@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
-import { getOperativeDate, addDaysToDateString } from '@/lib/operative-date';
+import { getOperativeDate, addDaysToDateString, byOperativeDateFirstThenFreshness } from '@/lib/operative-date';
 
 /**
  * IC-AUDIT: API para gestión de tasas de cambio con segmentos BCC.
@@ -147,11 +147,13 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // el consumidor no tenga que duplicar la regla.
     //
     // REGLA (IC-DIVIZA-002, misión §5): la vigente = el registro REAL más
-    // reciente (capture_method !== 'carry_forward') por (rate_date DESC,
+    // reciente (capture_method !== 'carry_forward'), PRIORIZANDO la fecha
+    // operativa y luego la frescura de la captura (rate_date DESC,
     // captured_at DESC). Las filas virtuales de una fuente muerta (elToque
     // congelado desde 2026-07-28) NO desplazan a una captura Diviza real —
     // una virtual es una copia presentacional de un dato viejo, no un dato
-    // más fresco. Misma regla exacta en ExchangeIntelligenceView.
+    // más fresco. Las filas FUTURAS legado del bug UTC tampoco ganan a la
+    // fila de la fecha operativa. Misma regla exacta en la vista.
     let informalLatest: Record<string, any> | undefined;
     if (sourceParam === 'informal' && currency) {
       const informalRows = allRates
@@ -161,10 +163,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
             r.currency === currency &&
             r.capture_method !== 'carry_forward',
         )
-        .sort((a: any, b: any) => {
-          if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
-          return (b.captured_at || '').localeCompare(a.captured_at || '');
-        });
+        .sort(byOperativeDateFirstThenFreshness(operativeDate));
       const latest = informalRows[0];
       if (latest) {
         informalLatest = {

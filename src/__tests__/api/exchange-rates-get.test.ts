@@ -19,7 +19,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '@/app/api/exchange-rates/route';
-import { getOperativeDate, addDaysToDateString } from '@/lib/operative-date';
+import { getOperativeDate, addDaysToDateString, byOperativeDateFirstThenFreshness } from '@/lib/operative-date';
 
 // ── Mock de sesión (withAuth inyecta la sesión mockeada) ──
 const mockSession = { value: { id: 'u-1', role: 'admin', user: { id: 'u-1', role: 'admin' } } as any };
@@ -273,5 +273,52 @@ describe('GET /api/exchange-rates — fecha operativa y selección del informal 
     const json = await res.json();
 
     expect(json.informal_latest.rate).toBe(840); // la recaptura más fresca
+  });
+
+  it('fila FUTURA legado (bug UTC) no gana a la fila de la fecha operativa (prioridad operativa)', async () => {
+    // Estado real de producción durante la validación integral: filas
+    // rate_date=mañana (capturadas de noche en Cuba, bug UTC) + fila correcta
+    // de la fecha operativa. informal_latest debe resolver la de HOY.
+    const TOMORROW = addDaysToDateString(TODAY, 1);
+    queryResult.data = [
+      bccRow(TODAY, 743),
+      { ...divizaRow(TOMORROW, 840), captured_at: `${TOMORROW}T00:28:51Z` },
+      { ...divizaRow(TODAY, 840), captured_at: `${TODAY}T01:18:36Z` },
+    ];
+
+    const res = await GET(makeRequest('?days=90&segment=3&source=informal&currency=USD'));
+    const json = await res.json();
+
+    expect(json.informal_latest.rate_date).toBe(TODAY); // la de la fecha operativa
+    expect(json.informal_latest.rate).toBe(840);
+  });
+});
+
+describe('byOperativeDateFirstThenFreshness — comparador compartido vista/API', () => {
+  it('la fila de la fecha operativa gana a una futura y a una antigua', () => {
+    const cmp = byOperativeDateFirstThenFreshness('2026-10-25');
+    const today = { rate_date: '2026-10-25', captured_at: '2026-10-25T01:18:00Z' };
+    const future = { rate_date: '2026-10-26', captured_at: '2026-10-26T00:28:00Z' };
+    const past = { rate_date: '2026-10-24', captured_at: '2026-10-24T23:00:00Z' };
+    expect(cmp(today, future)).toBeLessThan(0);
+    expect(cmp(today, past)).toBeLessThan(0);
+    // Futura vs antigua: la futura (más reciente) va antes
+    expect(cmp(future, past)).toBeLessThan(0);
+  });
+
+  it('misma fecha: gana la captura más reciente (captured_at DESC)', () => {
+    const cmp = byOperativeDateFirstThenFreshness('2026-10-25');
+    const a = { rate_date: '2026-10-25', captured_at: '2026-10-25T19:55:00Z' };
+    const b = { rate_date: '2026-10-25', captured_at: '2026-10-25T23:28:51Z' };
+    expect(cmp(a, b)).toBeGreaterThan(0); // b (más fresca) primero
+    expect(cmp(b, a)).toBeLessThan(0);
+  });
+
+  it('captured_at ausente no rompe la comparación', () => {
+    const cmp = byOperativeDateFirstThenFreshness('2026-10-25');
+    const a = { rate_date: '2026-10-25' };
+    const b = { rate_date: '2026-10-25', captured_at: '2026-10-25T23:00:00Z' };
+    expect(() => [a, b].sort(cmp)).not.toThrow();
+    expect(cmp(a, b)).toBeGreaterThan(0); // la que TIENE captured_at gana
   });
 });
