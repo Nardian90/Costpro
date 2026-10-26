@@ -1,0 +1,160 @@
+{
+  "fecha": "2026-10-26T01:38:23.105110+00:00",
+  "ref": "lguovmvrozxgssupkwpf",
+  "sondas": {
+    "A_20261026120000": {
+      "perfil_admin_demo": [
+        {
+          "email": "admin@demo.com",
+          "role": "superadmin",
+          "store_id": null,
+          "active_store_id": null,
+          "deleted_at": null
+        }
+      ],
+      "membresias_admin_demo": [
+        {
+          "n": 0
+        }
+      ],
+      "filas_update_superadmin": [
+        {
+          "n": 0
+        }
+      ],
+      "filas_delete_membresias": [
+        {
+          "n": 0
+        }
+      ],
+      "trigger_membresias": [
+        {
+          "tgname": "trg_membership_tenant_consistency",
+          "tgenabled": "O"
+        },
+        {
+          "tgname": "update_user_store_memberships_updated_at",
+          "tgenabled": "O"
+        }
+      ],
+      "policies_membresias": [
+        {
+          "policyname": "memberships_delete_admin"
+        },
+        {
+          "policyname": "memberships_insert_admin_manager"
+        },
+        {
+          "policyname": "memberships_select_own_and_managed"
+        },
+        {
+          "policyname": "memberships_update_admin"
+        }
+      ],
+      "fn_organizacion_acl": [
+        {
+          "proname": "assign_user_organization",
+          "proacl": "{postgres=X/postgres,service_role=X/postgres}"
+        }
+      ]
+    },
+    "B_20261026130000": {
+      "acl_managed": [
+        {
+          "proname": "managed_reset_password",
+          "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+          "prosecdef": true
+        },
+        {
+          "proname": "managed_soft_delete_user",
+          "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+          "prosecdef": true
+        },
+        {
+          "proname": "managed_toggle_user_status",
+          "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+          "prosecdef": true
+        },
+        {
+          "proname": "managed_update_user",
+          "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+          "prosecdef": true
+        }
+      ]
+    },
+    "C_20261026150000": {
+      "filas_archivo": [
+        {
+          "n": 2
+        }
+      ],
+      "huerfanas_payment_transactions": [
+        {
+          "n": 0
+        }
+      ],
+      "filas_insert_hoy": [
+        {
+          "n": 0
+        }
+      ],
+      "filas_delete_hoy": [
+        {
+          "n": 0
+        }
+      ],
+      "fk_store_id": [
+        {
+          "conname": "payment_transactions_store_id_fkey"
+        }
+      ],
+      "archivo_rls": [
+        {
+          "relrowsecurity": true
+        }
+      ]
+    },
+    "D_caja_create_sale_v2": {
+      "sobrecargas_create_sale_v2": [
+        {
+          "firma": "create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid,text,jsonb,text,text,jsonb,numeric,numeric,numeric,numeric,text)",
+          "proacl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+        },
+        {
+          "firma": "create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid,text,jsonb,text,text,jsonb)",
+          "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+        }
+      ],
+      "fn_caja_dependencias": [
+        {
+          "proname": "create_cash_flow_document",
+          "sobrecargas": 1
+        },
+        {
+          "proname": "create_devolution_v2",
+          "sobrecargas": 2
+        },
+        {
+          "proname": "create_store_with_membership",
+          "sobrecargas": 1
+        },
+        {
+          "proname": "open_cash_shift",
+          "sobrecargas": 1
+        },
+        {
+          "proname": "reverse_transaction_v2",
+          "sobrecargas": 1
+        }
+      ],
+      "marcadores_ausentes_esperados": [
+        {
+          "overload_v25": 0,
+          "fn_balances_diviza": 0,
+          "fn_pay_commission": 0
+        }
+      ],
+      "columna_exchange_rates_src": []
+    }
+  }
+}

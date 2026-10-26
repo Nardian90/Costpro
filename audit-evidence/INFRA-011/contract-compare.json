@@ -1,12 +1,15 @@
 {
   "contrato": {
     "archivo": "supabase/security-contract/contract-surface.sql",
-    "funciones_esperadas": 135
+    "funciones_esperadas": 151
   },
   "e2e": {
-    "funciones_security_definer": 242
+    "funciones_security_definer": 264
   },
-  "funciones_faltantes_en_e2e": [],
+  "funciones_faltantes_en_e2e": [
+    "pay_commission",
+    "register_cash_adjustment"
+  ],
   "funciones_definer_extra_en_e2e": [
     "audit_backup_restore_protected_change",
     "audit_cash_closures_changes",
@@ -39,6 +42,7 @@
     "detect_orphan_users",
     "discover_backup_tables",
     "enforce_ledger_append_only",
+    "enforce_membership_tenant_consistency",
     "ensure_product_barcode",
     "fn_sync_inventory_on_movement",
     "generate_internal_barcode",
@@ -48,6 +52,7 @@
     "get_backup_table_list",
     "get_batch_store_daily_kpis",
     "get_cash_closures",
+    "get_cash_currency_summary",
     "get_cash_flow_summary",
     "get_cash_shift_expected",
     "get_current_user_store_id",
@@ -66,6 +71,8 @@
     "get_or_create_product_cost_sheet",
     "get_paginated_products",
     "get_paginated_products_v2",
+    "get_physical_inventory_count_lines",
+    "get_physical_inventory_reconciliation",
     "get_product_cost_analysis",
     "get_product_stock_ledger",
     "get_product_stock_ledger_paginated",
@@ -109,6 +116,7 @@
     "is_role_not_changed",
     "is_store_manager",
     "is_store_member",
+    "is_superadmin",
     "is_tenant_member",
     "is_user_creator",
     "log_transaction_changes",
@@ -138,8 +146,8 @@
   ],
   "nota_e2e_infra": "e2e_is_isolated_db es infraestructura E2E esperada (no está en el contrato de producción)",
   "rls": {
-    "total": 149,
-    "con_rls": 149,
+    "total": 155,
+    "con_rls": 155,
     "sin_rls": null
   },
   "bucket_reports": [

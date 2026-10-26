@@ -1,0 +1,666 @@
+{
+  "modo": "--inspect",
+  "transporte": "api",
+  "ref": "lguovmvrozxgssupkwpf",
+  "inicio": "2026-10-26T01:36:15.170Z",
+  "pasos": [
+    {
+      "nombre": "identidad-management-api",
+      "ok": true,
+      "detalle": "nombre=CostproE2E ref=lguovmvrozxgssupkwpf region=us-east-1 estado=ACTIVE_HEALTHY",
+      "ts": "2026-10-26T01:36:15.352Z"
+    },
+    {
+      "nombre": "guard-identidad-sin-centinela",
+      "ok": true,
+      "detalle": "identidad validada (excepción §3.3)",
+      "ts": "2026-10-26T01:36:15.353Z"
+    },
+    {
+      "nombre": "inspeccion-read-only",
+      "ok": true,
+      "detalle": "tablas_public=155 funciones_public=510 centinela=true",
+      "ts": "2026-10-26T01:36:29.085Z"
+    }
+  ],
+  "identidad": {
+    "ref": "lguovmvrozxgssupkwpf",
+    "name": "CostproE2E",
+    "region": "us-east-1",
+    "status": "ACTIVE_HEALTHY"
+  },
+  "estado": {
+    "public_tablas": [
+      "abc_classifications",
+      "ai_api_keys",
+      "audit_events",
+      "audit_logs",
+      "backup_table_registry",
+      "bank_statement_items",
+      "bank_statements",
+      "bulk_confirmation_tokens",
+      "bulk_ops_log",
+      "business_events",
+      "cash_closures",
+      "cash_flow_documents",
+      "cash_movements",
+      "cash_register_sessions",
+      "cash_sessions",
+      "categories",
+      "commission_payments",
+      "commission_reception_links",
+      "commission_rule_products",
+      "commission_rule_versions",
+      "commission_rules",
+      "cost_sheet_templates",
+      "cost_sheets",
+      "customers",
+      "devolution_items",
+      "devolutions",
+      "document_sequences",
+      "exchange_rate_audit",
+      "exchange_rates",
+      "fiscal_closings",
+      "idempotency_keys",
+      "idempotency_registry",
+      "inventory",
+      "inventory_adjustment_items",
+      "inventory_adjustments",
+      "inventory_batches",
+      "inventory_movements",
+      "inventory_reservations",
+      "inventory_snapshots",
+      "issue_slip_items",
+      "issue_slips",
+      "kardex_entries",
+      "learning_cards",
+      "legal_models",
+      "legal_resolutions",
+      "migration_history_snapshots",
+      "ofertas",
+      "orphaned_users_log",
+      "payment_transactions",
+      "payment_transactions_purga_20261026_archive",
+      "physical_count_items",
+      "physical_counts",
+      "physical_inventories",
+      "physical_inventory_adjustments",
+      "physical_inventory_count_log",
+      "physical_inventory_items",
+      "physical_inventory_sheets",
+      "pick3_history",
+      "pick3_ledger",
+      "pick3_profiles",
+      "pick3_referrals",
+      "pick3_simulations",
+      "pick3_subscriptions",
+      "pick3_usage",
+      "pick3_user_plays",
+      "pr2_backup_receipt_items_20260810",
+      "pr2_backup_receipts_20260810",
+      "price_change_history",
+      "price_commit_log",
+      "product_cost_sheets",
+      "product_lots",
+      "product_variants",
+      "production_order_items",
+      "production_orders",
+      "products",
+      "profiles",
+      "purchase_items",
+      "purchase_order_items",
+      "purchase_orders",
+      "quotation_items",
+      "quotations",
+      "receipt_items",
+      "receipt_tasa_audit",
+      "receipts",
+      "received_services",
+      "report_definitions",
+      "report_runs",
+      "restore_sessions",
+      "roles",
+      "rss_feeds",
+      "rss_settings",
+      "sale_items",
+      "sales",
+      "sales_transactions",
+      "saved_analytics_views",
+      "service_audit_log",
+      "service_cost_distributions",
+      "service_production_order_links",
+      "service_reception_links",
+      "service_types",
+      "stock_movements",
+      "store_cost_templates",
+      "store_credit_ledger",
+      "store_exchange_rates",
+      "store_notifications",
+      "store_reset_snapshots",
+      "stores",
+      "supervisor_token_usages",
+      "suppliers",
+      "sync_log",
+      "system_config",
+      "system_health_logs",
+      "system_metrics",
+      "tax_configurations",
+      "telegram_configs",
+      "telegram_contacts",
+      "telegram_invitations",
+      "telegram_messages",
+      "telegram_product_posts",
+      "tenants",
+      "transaction_item_lots",
+      "transaction_items",
+      "transaction_recovery_ledger",
+      "transactions",
+      "transfer_approval_rules",
+      "transfer_items",
+      "transfers",
+      "units_of_measure",
+      "usage_aggregates",
+      "usage_alerts",
+      "usage_drift",
+      "usage_thresholds",
+      "user_audit_log",
+      "user_invitations",
+      "user_preferences",
+      "user_progress",
+      "user_store_memberships",
+      "user_strategy_feedback",
+      "user_usage",
+      "w62_df04_design_params",
+      "w62_df04_synthetic_rows",
+      "w62_zero_cost_flags",
+      "wac_change_log",
+      "wallet_accounts",
+      "wallet_transactions",
+      "warehouse_stock",
+      "warehouses",
+      "whatsapp_configs",
+      "whatsapp_contacts",
+      "whatsapp_invitations",
+      "whatsapp_messages",
+      "whatsapp_product_posts",
+      "whatsapp_risk_state",
+      "workers",
+      "z_reports"
+    ],
+    "public_funciones": 510,
+    "extensiones": [
+      "btree_gist@1.7",
+      "pg_cron@1.6.4",
+      "pg_stat_statements@1.11",
+      "pgcrypto@1.3",
+      "plpgsql@1.0",
+      "supabase_vault@0.3.1",
+      "uuid-ossp@1.1"
+    ],
+    "roles": [
+      "anon",
+      "authenticated",
+      "authenticator",
+      "costpro_snapshot_restorer",
+      "costpro_transaction_adjuster",
+      "dashboard_user",
+      "pgbouncer",
+      "postgres",
+      "service_role",
+      "supabase_admin",
+      "supabase_auth_admin",
+      "supabase_etl_admin",
+      "supabase_privileged_role",
+      "supabase_read_only_user",
+      "supabase_realtime_admin",
+      "supabase_replication_admin",
+      "supabase_storage_admin",
+      "warehouse_staff"
+    ],
+    "buckets": [
+      {
+        "id": "reports",
+        "name": "reports",
+        "public": false
+      }
+    ],
+    "centinela_sql": true,
+    "replay_estado": [
+      {
+        "nombre": "202401230001_add_get_users_for_encargado.sql",
+        "estado": "limpiada_para_baseline",
+        "sha256": "limpiada-para-baseline-v3"
+      },
+      {
+        "nombre": "202401230002_update_rls_for_encargado.sql",
+        "estado": "fallida",
+        "sha256": "ecfe7b5119f56ea30166476f5534378e8559099130959479990afe6cab3b4ebc"
+      },
+      {
+        "nombre": "20240325000000_harden_audit_triggers.sql",
+        "estado": "limpiada_para_baseline",
+        "sha256": "limpiada-para-baseline-v3"
+      },
+      {
+        "nombre": "20240725_add_paginated_stock_ledger.sql",
+        "estado": "limpiada_para_baseline",
+        "sha256": "limpiada-para-baseline-v3"
+      },
+      {
+        "nombre": "20240801_create_inventory_adjustments.sql",
+        "estado": "fallida",
+        "sha256": "f6d8da3a7e14ec4489c413274fea116918214c213d9f58641aea40e58ff3094e"
+      },
+      {
+        "nombre": "20260831000001_w9_f07_reset_store_data_acl.sql",
+        "estado": "aplicada",
+        "sha256": "d979b01538c30f9321434cf087adad144883767b2d139f5c1c3bd4c2492020af"
+      },
+      {
+        "nombre": "20260902000001_w9_f01_rls_hardening.sql",
+        "estado": "aplicada",
+        "sha256": "21ed6d3120cd7b5546cdf08cbfe1c7609a72496db4afa8718022f1b733e09bde"
+      },
+      {
+        "nombre": "20260902000002_w9_f06_secdef_execute_hardening.sql",
+        "estado": "aplicada",
+        "sha256": "c4aa55101ab303c060a44392027faa5f017d85d2ee0abe9679531f40117a39d4"
+      },
+      {
+        "nombre": "20260902200923_w9_f06_c2_hardening.sql",
+        "estado": "aplicada",
+        "sha256": "0a73415ef26bdd3ce6ccd6cc3a9dafa89c1b5ae57f599ca585c12e2e571d3f85"
+      },
+      {
+        "nombre": "20260902205210_w9_f06_h1_security_definer_search_path.sql",
+        "estado": "aplicada",
+        "sha256": "b199cceba8f4883dbeca8eb7bf1d2a5669437f164f646aa8b134f4b0bff645e4"
+      },
+      {
+        "nombre": "20260902231200_w9_f45_h4_reverse_receipt_v2_reconcile.sql",
+        "estado": "aplicada",
+        "sha256": "32f5c4e3145482c62644415d3a86b386a11473d16170373cf299f0e8af1a2b2b"
+      },
+      {
+        "nombre": "20260903030000_w9_h5b1_retire_reverse_transaction_v1.sql",
+        "estado": "aplicada",
+        "sha256": "c3cff46b5d2c7d31e58ba7f3ae54434241cc38573b494c5ef1cbabe5f5f18e1d"
+      },
+      {
+        "nombre": "20260904030000_w9_obs1_fix_cash_report_double_conversion.sql",
+        "estado": "aplicada",
+        "sha256": "d9f004fe3f2a2d5881086d430233a5df6bdcbf363542de441c1bb48260450ff1"
+      },
+      {
+        "nombre": "20260905000001_w9_b8_modelo_c_undo_reverse_authorization.sql",
+        "estado": "aplicada",
+        "sha256": "190c7f696e4df39c2165796b26b84287477db245c6730aadf46d27cbbdfdf24e"
+      },
+      {
+        "nombre": "20260905000002_w9_b10_reverse_document_authorization.sql",
+        "estado": "aplicada",
+        "sha256": "487b1c747a4a396cf450fefd55ec8e35c3d3572d69780565b8f1dd97e2e1ea36"
+      },
+      {
+        "nombre": "20260905120000_w9_b10b_modernize_reverse_devolution.sql",
+        "estado": "aplicada",
+        "sha256": "c93d10b5d28f7f3d8f6c27e87b3643ef07c2606441355009b0ccf8de31c5e5d3"
+      },
+      {
+        "nombre": "20260909000000_rem_f4_04_register_reception_canonical_wac.sql",
+        "estado": "aplicada",
+        "sha256": "1cbd9cdf0d0c6eb4ba550320eee9bc0c12a7a8cf5475fca3503f7eee9cff5326"
+      },
+      {
+        "nombre": "20260909000001_rem_f4_03_grant_withdraw_production_item_v3.sql",
+        "estado": "aplicada",
+        "sha256": "6835517c987dba5d5b6aff71b8daa83d679b59a052c0bcf198acff7468ad77f1"
+      },
+      {
+        "nombre": "20260909000003_rem_f4_06b_audit_fiscal_closing_record_id_uuid.sql",
+        "estado": "aplicada",
+        "sha256": "1ba4ac0c09c910b44007ce7d91327ef7547ff2c32a093430cc84caec4fc2ddb1"
+      },
+      {
+        "nombre": "20260909000004_rem_f4_06c_fiscal_close_rpc_contract.sql",
+        "estado": "aplicada",
+        "sha256": "e02d61c11b072ca2af0b57b5235be9be81217707168e1d4adecd30daea7136e6"
+      },
+      {
+        "nombre": "20260911000000_rem_sec1_security_boundaries.sql",
+        "estado": "aplicada",
+        "sha256": "bef5c71b3970048360adfd33b2805ad42cd9cf3e9c0dbf4808997e31d5a0d390"
+      },
+      {
+        "nombre": "20260911000100_rem_po1_production_orders_boundaries.sql",
+        "estado": "aplicada",
+        "sha256": "20db8efda36fd53bb0375e4a2c8b37d0afb74972189a18f00c947ba837ad79b5"
+      },
+      {
+        "nombre": "20260913000001_rem_inv_3c_restore_document_transition_validator.sql",
+        "estado": "aplicada",
+        "sha256": "8ee93945fcf57ca1dc40d16dc73afc48cb5b236a74d110cc0add968d3739411f"
+      },
+      {
+        "nombre": "20260915000001_rem_inv_4a_r_rc1_rc2_supervisor_gate_audit_acl.sql",
+        "estado": "aplicada",
+        "sha256": "f19908294de5a097632ed4eb33e068fba2af1f8d92840054be90068abba3341a"
+      },
+      {
+        "nombre": "20260915000002_rem_inv_4b_rc3_transferable_stores_identity_binding.sql",
+        "estado": "aplicada",
+        "sha256": "f4dbab3cd5e2b880c4bfb97e11ba4ec0bf7fd2c1f34731a269accb849976e32b"
+      },
+      {
+        "nombre": "20260915000003_rem_inv_5_csm_advisory_lock.sql",
+        "estado": "aplicada",
+        "sha256": "0c0eb40066d9acfcf785006b2464275cec6bdcf6a28b480cc18763e45f0f0516"
+      },
+      {
+        "nombre": "20260916000001_rem_inv_6_materialize_certified_function_surface.sql",
+        "estado": "aplicada",
+        "sha256": "2766b12b718b722fcbd1528790028bb318f7670f19c39e1ec813bf34216293c1"
+      },
+      {
+        "nombre": "20260916000002_rem_inv_6_reconcile_function_acl.sql",
+        "estado": "aplicada",
+        "sha256": "da299115864265770453d8f98232da17ab3c2382468d9672d4a0bcd54427a673"
+      },
+      {
+        "nombre": "20260916000003_rem_inv_6r_rescue_hidden_write_surface.sql",
+        "estado": "aplicada",
+        "sha256": "b0d2810a745b0d3f620ec59439636c7622489f1e3394d31a47561040284cc1ca"
+      },
+      {
+        "nombre": "20260916000004_rem_inv_6r_kpi_store_access_guard.sql",
+        "estado": "aplicada",
+        "sha256": "bcd598bd1bbe2ef01845284b173074af148153f2a4d82e13b0e434682aae9f5b"
+      },
+      {
+        "nombre": "20260916000005_rem_r2_a_high_read_guards.sql",
+        "estado": "aplicada",
+        "sha256": "037ea2acf93748fb298d2d560a51b69145cb2b5f4ddead80fcfdc4f0cc7e8647"
+      },
+      {
+        "nombre": "20260916000006_rem_r2_b_medium_read_guards.sql",
+        "estado": "aplicada",
+        "sha256": "e6da80646e79614d340a50bf1d6047620449ece693981975284d0c78c87dee69"
+      },
+      {
+        "nombre": "20260916000007_rem_r2_c_low_read_guards.sql",
+        "estado": "aplicada",
+        "sha256": "7784da350eeeb59b771384b95715b3ffccd2fd8b6999c795691715d43e0e01e8"
+      },
+      {
+        "nombre": "20260916000008_rem_f2bug_transfers_status_cast.sql",
+        "estado": "aplicada",
+        "sha256": "14617cc04a36c364c5b888b683f16da587ad0746567955bb859cab74df801a91"
+      },
+      {
+        "nombre": "20260926000001_esec_price_integrity.sql",
+        "estado": "aplicada",
+        "sha256": "c841d8711c2ac7df4d429e84a9b5731a04266fc80253f17adb40a3aa6a3f99e1"
+      },
+      {
+        "nombre": "20260927000001_esec_final_definitive_policy.sql",
+        "estado": "aplicada",
+        "sha256": "9cc9af57888876ccfecd0f5341b92d6782d4eba06d63b025ba4463d8b091fe93"
+      },
+      {
+        "nombre": "20260927000002_f4_create_sale_v2_acl_reconciliation.sql",
+        "estado": "aplicada",
+        "sha256": "1ade739824e21ebc3f855166ef17abfd2183dc9a48205cf9786fc6d8c47fcf9b"
+      },
+      {
+        "nombre": "20261004120000_enervida_import_vale_salida_operation_date.sql",
+        "estado": "aplicada",
+        "sha256": "ea9d895dd3929880ae5a92d259fcbeaf8f036d018270daef8296e7244795ea9c"
+      },
+      {
+        "nombre": "20261004120001_enervida_import_devolution_operation_date.sql",
+        "estado": "aplicada",
+        "sha256": "ad86b9819fb2f8f38d3a8d6506451df1d9e0c122b0f647543f48f4ad99e9c4c0"
+      },
+      {
+        "nombre": "20261004120002_enervida_import_adjustment_skip_access_consistency.sql",
+        "estado": "aplicada",
+        "sha256": "2b10ab58a212ddedc4f4522e935164e095e3ba0aaeabc1ac1e7ca7c051893ec6"
+      },
+      {
+        "nombre": "20261004130000_h0r_create_sale_v2_hardening.sql",
+        "estado": "aplicada",
+        "sha256": "b50ad5ccea2ef53d467fbd6f8f6aa60d78cf666dbbe53d0b3a7730d62ba79bd1"
+      },
+      {
+        "nombre": "20261004130001_h0r_tax_configurations_authority.sql",
+        "estado": "aplicada",
+        "sha256": "468ee8808af4cc8dfd3987c18043661ad579cca7431ac6774a5b8cb2a012a08f"
+      },
+      {
+        "nombre": "20261004130002_h0r_store_exchange_rates_authority.sql",
+        "estado": "aplicada",
+        "sha256": "d5800f7e81418ee0f5a6142f606f122be87d41dc670386d3343492a2dc5198c1"
+      },
+      {
+        "nombre": "20261004130003_h0r_update_transaction_taxes.sql",
+        "estado": "aplicada",
+        "sha256": "b922296dc4db5e44553a00105d105ad64f61351e2a02fcf607f60a795cbfd77b"
+      },
+      {
+        "nombre": "20261004130004_h0r_acl_reconciler.sql",
+        "estado": "aplicada",
+        "sha256": "c984eae7f694d2a578b50a3c21bd4b943f3f98175d52ac68bc108c0a28419fe1"
+      },
+      {
+        "nombre": "20261005120000_e2e_hard_delete_store.sql",
+        "estado": "aplicada",
+        "sha256": "3200f3fbc2cf1a450f76e7cfc4ff41319fb2dfa7714a63b29a03186776944f19"
+      },
+      {
+        "nombre": "20261005120000_fix_rpc_overload_ambiguity.sql",
+        "estado": "aplicada",
+        "sha256": "167d9ab44e3a890a8821c835ff5aab729520a5ce2a2968e12c13ef76ca037627"
+      },
+      {
+        "nombre": "20261005120001_bug022_reports_private_bucket.sql",
+        "estado": "aplicada",
+        "sha256": "d6488fbb57467217cf4a76362ca7f1a7a1c5a6ba493789b5cb012ab6ca06366c"
+      },
+      {
+        "nombre": "20261005120001_e2e_hard_delete_user.sql",
+        "estado": "aplicada",
+        "sha256": "4fff7426517bce624df20f043f59717b03a42d70e87a3a088d264c6fa6c9fe0f"
+      },
+      {
+        "nombre": "20261005130000_cta_family_auth_usage.sql",
+        "estado": "aplicada",
+        "sha256": "299b6052335b7ae53451ee951b1130103fe80f4ccdb512bf9c699056bd559408"
+      },
+      {
+        "nombre": "20261005140000_drop_v1_sale_devolution.sql",
+        "estado": "aplicada",
+        "sha256": "4e3ac1cc383ab090ef71f200bc75e9de3cb983e02715f1bf7e0ef0c12d04ca89"
+      },
+      {
+        "nombre": "20261005150000_cta_family_rls_policies.sql",
+        "estado": "aplicada",
+        "sha256": "6ad0b5f9f2766ae5307d2d483b661e88500e0b87f27154d155b8cf93a03e8024"
+      },
+      {
+        "nombre": "20261009000001_v2_16_0_managed_create_v2_trigger_coexistence.sql",
+        "estado": "aplicada",
+        "sha256": "82d467695184812216c69e87911c3606e9e8d4d5419fa6c0584b6f4b85e31316"
+      },
+      {
+        "nombre": "20261009000002_v2_16_1_managed_create_v2_store_ordering.sql",
+        "estado": "aplicada",
+        "sha256": "003e463432dc5ce3f7a3c3461a2b07cdce8854faa6cf27dfa28382f4321fad94"
+      },
+      {
+        "nombre": "20261010000001_v2_17_0_bulk_assign_memberships_actor.sql",
+        "estado": "aplicada",
+        "sha256": "d346748a5919edb3729ffab71fa2c826325ff3a915e39e8bbe147e7b78525436"
+      },
+      {
+        "nombre": "20261010000002_v2_18_0_servicios_actor_y_caja.sql",
+        "estado": "aplicada",
+        "sha256": "7949c14b3caef1978035fc52b9b178408272e14e061a30f60ef28702c12bd406"
+      },
+      {
+        "nombre": "20261012000001_cash_report_adjustments.sql",
+        "estado": "aplicada",
+        "sha256": "37badf2bb509996f4f60aa47d5373c8ebd7b2c86eb50fabcde3fc2d749a09acc"
+      },
+      {
+        "nombre": "20261014000000_create_sale_v2_item_currency_rate.sql",
+        "estado": "aplicada",
+        "sha256": "5cea570593937b688fdcfca1ce9596291b40a42d6c83d6cd0a35d6ca586a48b5"
+      },
+      {
+        "nombre": "20261014080000_regularize_sale_payment.sql",
+        "estado": "aplicada",
+        "sha256": "3f135d9019332db393a5243746e7d09089597e64fe876a470eaeeddd187318ce"
+      },
+      {
+        "nombre": "20261015000000_regularize_sale_payment_acl_lockdown.sql",
+        "estado": "aplicada",
+        "sha256": "05f7a3512ed671688d2507006e5a9face33d98f344fde089cc5fb4fef640ff04"
+      },
+      {
+        "nombre": "20261015000001_service_types_global_acceptance.sql",
+        "estado": "aplicada",
+        "sha256": "bdf785835bd0b13cadb36cd52499284eaa4d7e79f4be5ecd125f3c6e09d4a9a2"
+      },
+      {
+        "nombre": "20261017000000_pos_payment_incidents_negative_guard.sql",
+        "estado": "aplicada",
+        "sha256": "c58d6d0fc3492f22066e75337e3766bd58ed0c5ca9233266466b4e4c5b189fed"
+      },
+      {
+        "nombre": "20261018000000_politica_temporal_coherente.sql",
+        "estado": "aplicada",
+        "sha256": "71375b5ec690cbaeedb5c8225087a6a3abbc88a28c2343e41b195b93b88b7afe"
+      },
+      {
+        "nombre": "20261018000001_drop_legacy_create_sale_v2_overload.sql",
+        "estado": "aplicada",
+        "sha256": "5919d6550f5beae29ccf62e6d6849a0c29f7243f2c01e6c98691c3d527291225"
+      },
+      {
+        "nombre": "20261019000001_cp_sec_027_catalogo_publico.sql",
+        "estado": "aplicada",
+        "sha256": "5c2b8f97a2bfef2c5ca51cc7e6276b9fd010f97d0f47d6c8b0ce04f55c349b78"
+      },
+      {
+        "nombre": "20261019000002_cp_sec_027_vistas_solo_select.sql",
+        "estado": "aplicada",
+        "sha256": "a404c4b634b9c3d393da9ef3773bd2f7dde9aefaa5c2add2d8651960d26d29ac"
+      },
+      {
+        "nombre": "20261019000002_create_sale_v2_overload_acl_reconciliation.sql",
+        "estado": "aplicada",
+        "sha256": "1af068418490b8969eff431bd504f885dedb4c239fca4ec57e21e3583af5d3d2"
+      },
+      {
+        "nombre": "20261020000001_services_item_type_model.sql",
+        "estado": "aplicada",
+        "sha256": "6bef3c0fda307927ba0b7e269da2858dc21ca6eeedc99e033f4dcc0cc3c55a8a"
+      },
+      {
+        "nombre": "20261020000002_sec_definer_hardening.sql",
+        "estado": "aplicada",
+        "sha256": "1ccded98b5f703a2b938aefa84e9f364711e8594e0c000c907fc130c7c069328"
+      },
+      {
+        "nombre": "20261020000004_cogs_derived.sql",
+        "estado": "aplicada",
+        "sha256": "13d3533c6f6ea12406a50061f648c39ad444f4c17ee14c44470479d0d249b6f5"
+      },
+      {
+        "nombre": "20261020000005_legal_incidents_index.sql",
+        "estado": "aplicada",
+        "sha256": "65e645198c2fa4a0cc86d1ebe7a9a43d0cb7394462d889e1e2b9663fd7ff2f9b"
+      },
+      {
+        "nombre": "20261021000001_cash_flow_documents.sql",
+        "estado": "aplicada",
+        "sha256": "4c2697430f0218c984603c8f8f1af81e6433bc43db5dafe2eb046c28415fd840"
+      },
+      {
+        "nombre": "20261021120000_nulidad_compuesta_refunds_devolucion.sql",
+        "estado": "aplicada",
+        "sha256": "37461d48540c38912be3cf6085e543889d48d62126be771ef85b96c3bd14d19a"
+      },
+      {
+        "nombre": "20261022000001_cash_flow_documents_pgrst_cache.sql",
+        "estado": "aplicada",
+        "sha256": "5d2ce864851c402c7d9022e99cecf701883748384a79d14e3f06fbe8bab284df"
+      },
+      {
+        "nombre": "20261022000001_cp_sec_003_products_update_policy_consolidation.sql",
+        "estado": "aplicada",
+        "sha256": "7d7432443e91363b24fe319fa899ef786142808b0819a2a86362a061ad90d587"
+      },
+      {
+        "nombre": "20261022000002_cp_ui_001_commission_payments_no_overlap.sql",
+        "estado": "aplicada",
+        "sha256": "e914ffbc00205d0aee13a20945329d6b1ae3663cc7630a45d382879620e28b06"
+      },
+      {
+        "nombre": "BASELINE:production-schema-snapshot-20260828.sql",
+        "estado": "aplicada",
+        "sha256": "1ed539ccc0dd7dd1bddc2e015ab3c396808f275810538bf9fad17ce768e306d3"
+      },
+      {
+        "nombre": "PRETAMO:01-df01-wac-singleton.sql",
+        "estado": "aplicada",
+        "sha256": "a3701246c1a8c0dd90d388af7c417232f7380e6da526c2b38f858feb695f2b69"
+      },
+      {
+        "nombre": "PRETAMO:02-df02-cogs.sql",
+        "estado": "aplicada",
+        "sha256": "b9a7f3121eb19ccc37b6612dce2538c8ee15a3f998501c243766d966b10da8df"
+      },
+      {
+        "nombre": "PRETAMO:03-df05-production.sql",
+        "estado": "aplicada",
+        "sha256": "5363380e9d9375df8cf9fd20f3aa38741e0a44b88ed27833d77b07b6286c3609"
+      },
+      {
+        "nombre": "PRETAMO:04-df09-overloads.sql",
+        "estado": "aplicada",
+        "sha256": "dee4c92cfd812fa51b1186298b0df1931fc2a5eadeff598c3bbaf9dd46f8d4ea"
+      },
+      {
+        "nombre": "PRETAMO:05-df06-transfer.sql",
+        "estado": "aplicada",
+        "sha256": "45c74a014bac0ffccc0d2363763465896a66ec6aa1aa16e381dfc304d5e8356d"
+      },
+      {
+        "nombre": "PRETAMO:06-df07-devolution-cap.sql",
+        "estado": "aplicada",
+        "sha256": "549547bbc6ee95ce374c6125d0287a644f5032daaa498cfca448bc7e7d41f55e"
+      },
+      {
+        "nombre": "PRETAMO:07-df08-close-fix.sql",
+        "estado": "aplicada",
+        "sha256": "855d7d43ff19aa3d4773681b03db7d2f104670e9366b509fc8d932c2006c28c2"
+      },
+      {
+        "nombre": "PRETAMO:08-df03-devolution-finance.sql",
+        "estado": "aplicada",
+        "sha256": "cf433a65a943b782a72e2c8edcbf5efa343b9d5902a5273a7e5ff4eb3e06dc83"
+      },
+      {
+        "nombre": "PRETAMO:09-df04-design-only.sql",
+        "estado": "aplicada",
+        "sha256": "ab1445ac634488b4f289adda0134229b9b92aca551cb3ea44df969a9d71764c5"
+      },
+      {
+        "nombre": "PRETAMO:20260221_create_reports_bucket.sql",
+        "estado": "aplicada",
+        "sha256": "61f2caf70c8f64f4bca70bbf0d66731c55c6482bdeb0572b8e57a7f80f574987"
+      }
+    ]
+  }
+}

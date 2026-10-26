@@ -1,0 +1,42 @@
+{
+  "totals": {
+    "old_total_considerados": 508,
+    "new_total_considerados": 509,
+    "old_total_incluidos": 93,
+    "new_total_incluidos": 94,
+    "old_digest": "0f2599e15cdc297423ea032f64e3b127517555408a15641e92aac38785977ad5",
+    "new_digest": "5ceff26cff21d54fd3d78e6f6441c3499faea59c5be2e684136977ade78e249e"
+  },
+  "baseline": {
+    "old_sha256_generado": "1ed539ccc0dd7dd1bddc2e015ab3c396808f275810538bf9fad17ce768e306d3",
+    "new_sha256_generado": "1ed539ccc0dd7dd1bddc2e015ab3c396808f275810538bf9fad17ce768e306d3",
+    "identico": true
+  },
+  "pre_tamo": {
+    "old_n": 10,
+    "new_n": 10,
+    "todos_iguales": true
+  },
+  "tramo": {
+    "solo_en_viejo": [],
+    "solo_en_nuevo": [
+      "20261027010000_exchange_rates_source_updated_at.sql"
+    ],
+    "diferencias_en_comunes": [],
+    "posiciones_1_93_invariantes": true
+  },
+  "excluidos": {
+    "solo_en_viejo": [],
+    "solo_en_nuevo": [],
+    "razones_cambiadas": []
+  },
+  "nueva_migracion": {
+    "nombre": "20261027010000_exchange_rates_source_updated_at.sql",
+    "posicion": 94,
+    "bytes": 2789,
+    "sha256_original": "b3b2bd4cae7dc5d05fdc68c34bacd567febdd72b2d77e67ffdc832095961b6c7",
+    "timestamp": "20261027",
+    "observaciones": []
+  },
+  "veredicto": "INVARIANTE 1-93 + SOLO POS 94 NUEVA"
+}

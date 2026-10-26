@@ -1,0 +1,47 @@
+{
+  "modo": "--apply-replay",
+  "transporte": "api",
+  "ref": "lguovmvrozxgssupkwpf",
+  "inicio": "2026-10-26T01:40:30.038Z",
+  "pasos": [
+    {
+      "nombre": "guard-identidad-replay",
+      "ok": true,
+      "detalle": "identidad validada (centinela diferido al final del replay: desviación documentada)",
+      "ts": "2026-10-26T01:40:30.039Z"
+    },
+    {
+      "nombre": "tabla-estado-replay",
+      "ok": true,
+      "detalle": "e2e_infra.e2e_migrations_replay_state (IF NOT EXISTS)",
+      "ts": "2026-10-26T01:40:35.829Z"
+    },
+    {
+      "nombre": "baseline-ya-aplicado",
+      "ok": true,
+      "detalle": "sha coincide — reanudación",
+      "ts": "2026-10-26T01:40:37.761Z"
+    },
+    {
+      "nombre": "replay 20261024150000_mision_pagos_mixtos_multimoneda_v2_25_0.sql",
+      "ok": false,
+      "detalle": "(HTTP 400) Failed to run sql query: ERROR:  42725: function name \"public.create_sale_v2\" is not unique\nHINT:  Specify the argument list to select the function unambiguously.\n (posición 75)",
+      "ts": "2026-10-26T01:40:56.457Z"
+    },
+    {
+      "nombre": "resultado",
+      "ok": false,
+      "detalle": "la migración [redacted-largo].sql FALLÓ en la posición 75 — replay DETENIDO. Diagnóstico registrado; no se borra ni repara nada.",
+      "ts": "2026-10-26T01:40:56.457Z"
+    }
+  ],
+  "manifest_sha256": "43c9a77cd779098b0accd7e5ca00d5b635a6b8726114b280cb5cc3b8041ca974",
+  "manifest_total_tramo": 94,
+  "fallo": {
+    "fase": "tramo",
+    "archivo": "20261024150000_mision_pagos_mixtos_multimoneda_v2_25_0.sql",
+    "posicion": 75,
+    "error": "(HTTP 400) Failed to run sql query: ERROR:  42725: function name \"public.create_sale_v2\" is not unique\nHINT:  Specify the argument list to select the function unambiguously.\n"
+  },
+  "error": "la migración [redacted-largo].sql FALLÓ en la posición 75 — replay DETENIDO. Diagnóstico registrado; no se borra ni repara nada."
+}
