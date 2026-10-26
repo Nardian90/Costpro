@@ -14,8 +14,10 @@
  *     real es canónica: recibido − vuelto (a tasa servidor) = efectivo de la
  *     venta. El libro por moneda refleja el efecto físico de cada cajón.
  *   · La tasa del vuelto la fija el SERVIDOR (jerarquía tienda → BCC →
- *     elToque, fail-closed): el cliente propone con la tasa hidratada del POS
- *     y el servidor revalida con la suya (sin tasas ocultas ni inventadas).
+ *     Diviza [informal activa], fail-closed): el cliente propone con la tasa
+ *     hidratada del POS y el servidor revalida con la suya (sin tasas ocultas
+ *     ni inventadas). IC-DIVIZA-003: elToque está retirada como fuente
+ *     activa — el paso informal del RPC contable es EXCLUSIVAMENTE Diviza.
  *   · El vuelto no puede exceder el cambio debido (ERROR del cliente, no
  *     incidencia silenciosa).
  */
@@ -188,6 +190,6 @@ export function settlementErrorMessage(error: SettlementError): string {
     case 'ERR_CHANGE_NEGATIVE':
       return 'El vuelto no puede ser negativo.';
     case 'ERR_RATE_INVALID':
-      return 'No hay tasa USD válida para liquidar el vuelto en esa moneda (jerarquía tienda → BCC → elToque).';
+      return 'No hay tasa USD válida para liquidar el vuelto en esa moneda (jerarquía tienda → BCC → Diviza).';
   }
 }

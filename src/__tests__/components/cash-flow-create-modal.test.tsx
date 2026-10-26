@@ -263,8 +263,10 @@ describe('CashFlowCreateModal — paso 1 EDICIÓN (validaciones junto al campo)'
     fireEvent.change(screen.getByLabelText(/Importe \*/), { target: { value: '100' } });
     fireEvent.change(screen.getByLabelText(/Moneda \*/), { target: { value: 'USD' } });
     expect(await screen.findByText(/tasa del servidor/i)).toBeTruthy();
-    // La equivalencia NO se inventa en el cliente (jerarquía server-side)
-    expect(screen.getByText(/jerarquía tienda → BCC → elToque/i)).toBeTruthy();
+    // La equivalencia NO se inventa en el cliente (jerarquía server-side).
+    // IC-DIVIZA-003: el paso informal del RPC contable es EXCLUSIVAMENTE
+    // Diviza (elToque retirada como fuente activa — archivo histórico).
+    expect(screen.getByText(/jerarquía tienda → BCC → Diviza/i)).toBeTruthy();
   });
 
   it('7 · sin turno abierto: modo ENTREGA de efectivo (única operación autorizada — misión v2.24 §6)', async () => {

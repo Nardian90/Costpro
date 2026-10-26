@@ -6,6 +6,8 @@ import { apiFetch } from '@/lib/api-fetch';
 import { cn } from '@/lib/utils';
 import { getRiskColor, getRiskLabel } from '@/lib/costeo-dinamico/risk.classifier';
 import type { ProductCostResult, DashboardSummary, CurrentRate, CostEngineConfig, RateSource } from '@/lib/costeo-dinamico/types';
+// IC-DIVIZA-003: normalización del valor legado 'elToque' → 'Diviza' (activa).
+import { normalizeCosteoRateSource } from '@/lib/exchange-sources';
 import {
   TrendingUp, TrendingDown, AlertTriangle, DollarSign, Package,
   Loader2, RefreshCw, Sliders, CheckCircle2, ArrowLeftRight, Search, Download,
@@ -24,10 +26,11 @@ import { useUserPreferences } from '@/hooks/useUserPreferences';
 // hardcodear siempre BCC_seg3. Los valores deben coincidir con `RateSource`
 // en `src/lib/costeo-dinamico/types.ts` (excluyendo 'Manual' que es solo para
 // simulación manual).
-// IMPORTANTE: 'elToque' se mapea en el backend (route.ts línea 102) a
-// `source='elToque', segment='3'` en la tabla `exchange_rates`, que es donde
-// se persiste la estimación informal (BCC seg3 × 1.15). Ver worklog
-// IC-F01-RENAME-ELTOQUE-INFORMAL para el contexto del renombramiento UI.
+// IC-DIVIZA-003 (2026-10-26): la opción informal es 'Diviza' (cubadivisas.com,
+// proveedor ACTIVO). El valor LEGADO 'elToque' (persistido en preferencias de
+// versiones anteriores — era la estimación BCC×1.15) se NORMALIZA a 'Diviza'
+// al leerlo (normalizeCosteoRateSource): elToque es archivo histórico y
+// jamás calcula la tasa actual del costeo.
 // F-02b: la preferencia ahora se sincroniza móvil ↔ desktop vía la tabla
 // `user_preferences` (Supabase). localStorage sigue siendo la capa de
 // fallback offline. Ver worklog IC-F02B-PREFERENCES-SUPABASE.
@@ -36,7 +39,7 @@ const RATE_SOURCE_OPTIONS: { value: RateSource; shortLabel: string; description:
   { value: 'BCC_seg1', shortLabel: 'BCC seg1', description: 'BCC segmento 1 — Estatal (empresas estatales).' },
   { value: 'BCC_seg2', shortLabel: 'BCC seg2', description: 'BCC segmento 2 — CADECA (cajero minorista).' },
   { value: 'BCC_seg3', shortLabel: 'BCC seg3', description: 'BCC segmento 3 — MIPYMES (por defecto).' },
-  { value: 'elToque', shortLabel: 'Informal', description: 'Informal estimada — BCC seg3 × 1.15. Aproxima el mercado paralelo; no es captura de eltoque.com.' },
+  { value: 'Diviza', shortLabel: 'Informal', description: 'Informal — Diviza (cubadivisas.com): mediana del mercado informal en tiempo real, captura real verificable.' },
 ];
 
 function getRateSourceLabel(value: RateSource): string {
@@ -44,13 +47,16 @@ function getRateSourceLabel(value: RateSource): string {
     case 'BCC_seg1': return 'BCC Estatal';
     case 'BCC_seg2': return 'BCC CADECA';
     case 'BCC_seg3': return 'BCC MIPYMES';
-    case 'elToque':  return 'Informal estimada';
+    // 'elToque' es LEGADO: se normaliza a Diviza antes de llegar aquí; el
+    // case existe para que el switch sea exhaustivo sobre el tipo.
+    case 'Diviza':
+    case 'elToque':  return 'Informal · Diviza';
     case 'Manual':   return 'Manual';
   }
 }
 
 function isValidRateSource(value: string | null): value is RateSource {
-  return value === 'BCC_seg1' || value === 'BCC_seg2' || value === 'BCC_seg3' || value === 'elToque' || value === 'Manual';
+  return value === 'BCC_seg1' || value === 'BCC_seg2' || value === 'BCC_seg3' || value === 'Diviza' || value === 'elToque' || value === 'Manual';
 }
 
 export default function CosteoDinamicoView() {
@@ -86,8 +92,13 @@ export default function CosteoDinamicoView() {
     loading: prefLoading,
   } = useUserPreferences<RateSource>(RATE_SOURCE_PREFERENCE_KEY, 'BCC_seg3');
 
+  // IC-DIVIZA-003: normalización del valor LEGADO 'elToque' → 'Diviza' (la
+  // informal activa). El usuario que tenía guardada la opción «Informal»
+  // conserva su intención — los datos ahora vienen de Diviza, no del archivo
+  // histórico congelado. El valor persistido se sobrescribe con 'Diviza' la
+  // próxima vez que el usuario toque el selector.
   const rateSource: RateSource = isValidRateSource(storedRateSource)
-    ? storedRateSource
+    ? normalizeCosteoRateSource(storedRateSource) as RateSource
     : 'BCC_seg3';
 
   // Wrapper sync sobre `updateRateSource` (async) para mantener la firma

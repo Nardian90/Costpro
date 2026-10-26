@@ -35,8 +35,10 @@ import { es as esLocale } from 'date-fns/locale';
 // ═══ Paleta de colores coordinada con el primer tab ═══
 // Asignación categórica consistente entre tabs (IC-DIVIZA 2026-10-26):
 // BCC (oficial) → azul (#3b82f6, token info) — identidad de serie, no semántica.
-// Informal (Diviza/elToque) → naranja accesible (#ea580c, contraste ≥3:1 en
+// Informal (Diviza, activa) → naranja accesible (#ea580c, contraste ≥3:1 en
 // claro y oscuro). El mismo par de colores se usa en TODOS los tabs.
+// IC-DIVIZA-003: la serie informal que se grafica es la del proveedor ACTIVO
+// (Diviza); el archivo elToque no se mezcla en la visualización por defecto.
 const CHART_COLOR_OFICIAL = '#3b82f6';
 const CHART_COLOR_INFORMAL = '#ea580c';
 const CHART_COLOR_TREND = '#71717a'; // gris neutro: línea auxiliar de tendencia (sin hue)
@@ -83,7 +85,7 @@ const VARIATION_SOURCES: { id: VariationSource; label: string }[] = [
 // ─── Tasa para la calculadora de impacto ───
 type RateSource = 'informal' | 'oficial';
 const RATE_SOURCES: { id: RateSource; label: string; description: string }[] = [
-  { id: 'informal', label: 'Informal', description: 'Tasa del mercado informal (Diviza para la vigente; elToque en el histórico).' },
+  { id: 'informal', label: 'Informal', description: 'Tasa del mercado informal capturada del proveedor activo (Diviza). El archivo elToque no participa.' },
   { id: 'oficial', label: 'BCC (oficial)', description: 'Tasa del Banco Central de Cuba — relevante si importas vía sector formal.' },
 ];
 
@@ -457,7 +459,7 @@ function HistoryTab({ data }: any) {
   }, [filtered]);
 
   // ═══════════════════════════════════════════════════════════════
-  // CALCULADORA DE IMPACTO (Diátaxis) — con toggle elToque/BCC
+  // CALCULADORA DE IMPACTO (Diátaxis) — con toggle Informal/BCC
   // ═══════════════════════════════════════════════════════════════
   const [rateSource, setRateSource] = useState<RateSource>('informal');
   const [purchaseDateIdx, setPurchaseDateIdx] = useState(0);
@@ -914,7 +916,7 @@ function HistoryTab({ data }: any) {
               />
             )}
 
-            {/* Informal (Diviza/elToque) — naranja (identidad categórica) */}
+            {/* Informal (Diviza) — naranja (identidad categórica) */}
             {chartMode === 'area' && (
               <Area
                 type="monotone"
@@ -1000,7 +1002,7 @@ function HistoryTab({ data }: any) {
               />
             )}
 
-            {/* Proyección al futuro — elToque (naranja oscuro punteada) */}
+            {/* Proyección al futuro — informal (naranja oscuro punteada) */}
             {forecastDays > 0 && (
               <Line
                 type="monotone"
@@ -1168,7 +1170,7 @@ function HistoryTab({ data }: any) {
               Estima cómo un producto comprado en una fecha pasada habría cambiado de valor hasta hoy, y cómo se proyecta a {forecastDays} días.
             </p>
           </div>
-          {/* Toggle elToque / BCC */}
+          {/* Toggle Informal / BCC */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
             {RATE_SOURCES.map(r => (
               <button

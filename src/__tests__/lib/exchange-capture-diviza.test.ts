@@ -21,7 +21,8 @@ import {
   captureForDate,
   captureInformalToday,
   captureDateRange,
-  INFORMAL_SOURCES,
+  INFORMAL_ACTIVE_SOURCES,
+  INFORMAL_HISTORICAL_SOURCES,
 } from '@/lib/exchange-capture';
 import { getOperativeDate, addDaysToDateString } from '@/lib/operative-date';
 
@@ -618,9 +619,21 @@ describe('captureDateRange — backfill operativo con estado por fuente', () => 
   });
 });
 
-describe('contrato de fuentes informales', () => {
-  it('INFORMAL_SOURCES declara Diviza (activa) y elToque (histórica)', () => {
-    expect(INFORMAL_SOURCES).toContain('Diviza');
-    expect(INFORMAL_SOURCES).toContain('elToque');
+describe('contrato de fuentes informales (IC-DIVIZA-003)', () => {
+  it('ACTIVAS = [\'Diviza\'] EXACTAMENTE — la única con derecho a vigencia', () => {
+    // El registro único vive en exchange-sources.ts; la lib de captura lo
+    // re-exporta para que cron/endpoints/tests tengan UNA fuente de verdad.
+    expect(INFORMAL_ACTIVE_SOURCES).toEqual(['Diviza']);
+  });
+
+  it('HISTÓRICAS = [\'elToque\'] EXACTAMENTE — archivo, jamás vigente', () => {
+    expect(INFORMAL_HISTORICAL_SOURCES).toEqual(['elToque']);
+  });
+
+  it('las listas son DISJUNTAS (una fuente no puede ser activa e histórica)', () => {
+    const activas = INFORMAL_ACTIVE_SOURCES as readonly string[];
+    for (const h of INFORMAL_HISTORICAL_SOURCES) {
+      expect(activas).not.toContain(h);
+    }
   });
 });

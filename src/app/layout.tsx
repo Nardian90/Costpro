@@ -183,7 +183,7 @@ export default async function RootLayout({
                 "Gestión de inventario en tiempo real",
                 "Punto de venta (POS)",
                 "Vitrina online pública configurable",
-                "Inteligencia cambiaria (BCC, Diviza, elToque)",
+                "Inteligencia cambiaria (BCC, Diviza)",
                 "Gestión multi-tienda",
                 "Tabla dinámica de análisis (pivot table)",
                 "Exportación a Excel y PDF",
