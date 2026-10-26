@@ -9,7 +9,6 @@ import {
   TrendingUp,
   TrendingDown,
   AlertTriangle,
-  Calculator,
   BarChart3,
   Bell,
   Activity,
@@ -108,7 +107,14 @@ const ALL_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
   { id: 'history', label: 'Histórico', icon: TrendingUp },
   { id: 'variations', label: 'Variaciones', icon: Activity },
-  { id: 'impact', label: 'Impacto Precios', icon: Calculator },
+  // IC-UX-HISTORY-004 §2: «Impacto Precios» ELIMINADA — duplicaba la
+  // finalidad de «Mi Producto» (mismas fórmulas USD×tasa, margen y
+  // proyección). Sus aportes útiles (veredicto de utilidad/margen real,
+  // ajuste de precio necesario, pérdida mensual por unidades vendidas,
+  // comparativa informal vs BCC) viven ahora en «Mi Producto» con la
+  // lógica centralizada y probada en src/lib/exchange-intelligence/
+  // product-analysis.ts. La pestaña desaparece del navegador, del render
+  // y de los imports (nada del componente se carga aunque se pida).
   { id: 'mi-producto', label: 'Mi Producto', icon: DollarSign },
   { id: 'alerts', label: 'Alertas', icon: Bell },
   { id: 'simulator', label: 'Simulador', icon: Target },
@@ -723,12 +729,17 @@ export function ExchangeIntelligenceView() {
                 capturing={capturing}
               />
             )}
-            {activeTab === 'history' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><HistoryTab data={historyData} /></Suspense>}
+            {activeTab === 'history' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><HistoryTab data={historyData} bccSegment={bccSegment} /></Suspense>}
             {activeTab === 'variations' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><VariationsTab data={historyData} /></Suspense>}
-            {activeTab === 'impact' && <ImpactTab officialUsd={usdOfficial} informalUsd={usdInformal ?? 0} historyData={historyData} />}
+            {/* IC-UX-HISTORY-004 §2: sin pestaña «impact» — el análisis del
+                efecto cambiario sobre un producto vive SOLO en Mi Producto
+                (fuente única de la verdad, sin duplicación de cálculos).
+                informalUsd se pasa TAL CUAL (number | null): sin tasa
+                informal verificada Mi Producto muestra «sin dato fiable»
+                en vez de calcular con un valor inventado. */}
             {activeTab === 'mi-producto' && (
               <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}>
-                <MiProductoTab historyData={historyData} informalUsd={usdInformal ?? 0} officialUsd={usdOfficial} />
+                <MiProductoTab historyData={historyData} informalUsd={usdInformal} officialUsd={usdOfficial} bccSegment={bccSegment} />
               </Suspense>
             )}
             {activeTab === 'alerts' && <AlertsTab diffPct={parseFloat(diffPct) || 0} historyData={historyData} />}
@@ -1798,325 +1809,15 @@ function DashboardTab({
 // TAB 3: Variaciones — análisis entre dos fechas con datos reales
 // ════════════════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════════════
-// TAB 4: Impacto sobre Precios — Rediseño completo con accesibilidad mejorada
+// IC-UX-HISTORY-004 §2: TAB «Impacto sobre Precios» — ELIMINADA por
+// completo (definición, render, imports y componente). Duplicaba la
+// finalidad de «Mi Producto»; sus cálculos útiles se centralizaron en
+// src/lib/exchange-intelligence/product-analysis.ts y su presentación
+// se integró en la pestaña «Mi Producto» (lazy/MiProductoTab.tsx):
+// veredicto utilidad/margen real, precio recomendado, ajuste necesario
+// (aumento/disminución), pérdida mensual por unidades y comparativa de
+// escenarios informal vs BCC.
 // ════════════════════════════════════════════════════════════════════
-function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
-  // ─── Toggle tasa formal/informal ───
-  const [rateSource, setRateSource] = useState<'informal' | 'oficial'>('informal');
-  const rateSourceMeta = {
-    informal: { label: 'Informal', color: 'text-primary', current: informalUsd },
-    oficial: { label: 'BCC (oficial)', color: 'text-primary', current: officialUsd },
-  }[rateSource];
-
-  // ─── Datos: filtrar por la tasa seleccionada ───
-  const dataForRate = historyData.filter((d: any) =>
-    rateSource === 'informal' ? d.informal != null && d.informal > 0 : d.oficial != null && d.oficial > 0
-  );
-
-  const defaultIdx = Math.max(0, dataForRate.length - 16);
-  const [purchaseDateIdx, setPurchaseDateIdx] = useState(defaultIdx);
-  const [costUsd, setCostUsd] = useState('1');
-  const [marginPct, setMarginPct] = useState('30');
-
-  // Reset purchaseDateIdx cuando cambia la tasa (para evitar índices fuera de rango)
-  React.useEffect(() => {
-    setPurchaseDateIdx(Math.max(0, dataForRate.length - 16));
-  }, [rateSource]);
-
-  const safePurchaseIdx = Math.min(purchaseDateIdx, Math.max(0, dataForRate.length - 1));
-  const purchaseDate = dataForRate[safePurchaseIdx]?.date ?? '';
-  const purchaseRate = (rateSource === 'informal'
-    ? dataForRate[safePurchaseIdx]?.informal
-    : dataForRate[safePurchaseIdx]?.oficial) ?? rateSourceMeta.current;
-  const currentDate = dataForRate[dataForRate.length - 1]?.date ?? '';
-  const currentRate = rateSourceMeta.current;
-
-  const usd = parseFloat(costUsd) || 0;
-  const margin = parseFloat(marginPct) || 0;
-
-  const costCupAtPurchase = usd * purchaseRate;
-  const salePrice = costCupAtPurchase * (1 + margin / 100);
-  const costCupNow = usd * currentRate;
-  const realUtility = salePrice - costCupNow;
-  const realMarginPct = costCupNow > 0 ? (realUtility / costCupNow) * 100 : 0;
-  const recommendedPrice = costCupNow * (1 + margin / 100);
-  const priceIncrease = recommendedPrice - salePrice;
-  const priceIncreasePct = salePrice > 0 ? (priceIncrease / salePrice) * 100 : 0;
-  const isLosing = realUtility < 0;
-
-  // ─── Label dinámico: "Aumento" o "Disminución" según el signo de priceIncrease ───
-  const isIncrease = priceIncrease >= 0;
-  const priceChangeLabel = isIncrease ? 'Aumento necesario' : 'Disminución necesaria';
-
-  return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* ── Sección 1: Configuración ── */}
-      <div className="bg-card rounded-2xl border-2 border-border p-6">
-        <div className="flex items-center justify-between mb-2 flex-wrap gap-3">
-          <div>
-            <h3 className="text-base font-black uppercase tracking-widest text-foreground">
-              Calculadora de Impacto Cambiario
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Descubre cuánto dinero estás perdiendo al no actualizar tus precios según la devaluación del CUP.
-            </p>
-          </div>
-          {/* ─── Toggle elToque / BCC ─── */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
-            <button
-              onClick={() => setRateSource('informal')}
-              className={cn(
-                'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
-                rateSource === 'informal'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-              aria-pressed={rateSource === 'informal'}
-            >
-              Informal
-            </button>
-            <button
-              onClick={() => setRateSource('oficial')}
-              className={cn(
-                'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
-                rateSource === 'oficial'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-              aria-pressed={rateSource === 'oficial'}
-            >
-              BCC (oficial)
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div>
-            <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
-              Costo del producto (USD)
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-muted-foreground">$</span>
-              <input
-                type="number"
-                value={costUsd}
-                onChange={e => setCostUsd(e.target.value)}
-                className="w-full h-12 pl-7 pr-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
-                placeholder="1"
-                step="0.01"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Cuánto costó en dólares</p>
-          </div>
-
-          <div>
-            <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
-              Fecha de compra
-            </label>
-            <select
-              value={safePurchaseIdx}
-              onChange={e => setPurchaseDateIdx(Number(e.target.value))}
-              className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
-            >
-              {dataForRate.map((d: any, i: number) => {
-                const v = rateSource === 'informal' ? d.informal : d.oficial;
-                return (
-                  <option key={i} value={i}>
-                    {d.date} — 1 USD = {v?.toFixed(0)} CUP
-                  </option>
-                );
-              })}
-            </select>
-            <p className="text-xs text-muted-foreground mt-1">
-              Tasa al comprar ({rateSourceMeta.label}):{' '}
-              <strong className={rateSourceMeta.color}>{purchaseRate.toFixed(0)} CUP/USD</strong>
-            </p>
-          </div>
-
-          <div>
-            <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
-              Margen de rentabilidad (%)
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                value={marginPct}
-                onChange={e => setMarginPct(e.target.value)}
-                className="w-full h-12 px-3 pr-8 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
-                placeholder="30"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-black text-muted-foreground">%</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Sobre el costo (ej: 30%)</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Sección 2: Línea de tiempo narrativa ── */}
-      <div className="bg-card rounded-2xl border-2 border-border p-6">
-        <h3 className="text-base font-black uppercase tracking-widest text-foreground mb-6">
-          Análisis de Impacto
-        </h3>
-
-        {/* Timeline visual */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* Paso 1: Compra */}
-          <div className="rounded-xl p-4 bg-primary/15 border-2 border-primary/40">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center border border-primary/40">
-                <span className="text-sm font-black text-primary">1</span>
-              </div>
-              <span className="text-sm font-black uppercase tracking-widest text-primary">Compra</span>
-            </div>
-            <p className="text-sm text-muted-foreground mb-2">{purchaseDate}</p>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Costo USD:</span>
-                <span className="text-sm font-black font-mono text-foreground">${usd.toFixed(0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Tasa:</span>
-                <span className={cn('text-sm font-black font-mono', rateSourceMeta.color)}>{purchaseRate.toFixed(0)} CUP</span>
-              </div>
-              <div className="flex justify-between border-t border-border/50 pt-1 mt-1">
-                <span className="text-sm font-black text-muted-foreground">Costo CUP:</span>
-                <span className="text-base font-black font-mono text-foreground">{costCupAtPurchase.toFixed(0)} CUP</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Paso 2: Venta */}
-          <div className="rounded-xl p-4 bg-success/15 border-2 border-success/40">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-9 h-9 rounded-lg bg-success/20 flex items-center justify-center border border-success/40">
-                <span className="text-sm font-black text-success">2</span>
-              </div>
-              <span className="text-sm font-black uppercase tracking-widest text-success">Venta (precio fijado)</span>
-            </div>
-            <p className="text-sm text-muted-foreground mb-2">Margen: {margin}% sobre costo</p>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Costo:</span>
-                <span className="text-sm font-black font-mono text-foreground">{costCupAtPurchase.toFixed(0)} CUP</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Margen:</span>
-                <span className="text-sm font-black font-mono text-success">+{(costCupAtPurchase * margin / 100).toFixed(0)} CUP</span>
-              </div>
-              <div className="flex justify-between border-t border-border/50 pt-1 mt-1">
-                <span className="text-sm font-black text-muted-foreground">Precio venta:</span>
-                <span className="text-base font-black font-mono text-foreground">{salePrice.toFixed(0)} CUP</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Paso 3: Reposición */}
-          <div className={cn('rounded-xl p-4 border-2', isLosing ? 'bg-destructive/15 border-destructive/40' : 'bg-warning/15 border-warning/40')}>
-            <div className="flex items-center gap-2 mb-3">
-              <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center border', isLosing ? 'bg-destructive/20 border-destructive/40' : 'bg-warning/20 border-warning/40')}>
-                <span className={cn('text-sm font-black', isLosing ? 'text-destructive' : 'text-warning')}>3</span>
-              </div>
-              <span className={cn('text-sm font-black uppercase tracking-widest', isLosing ? 'text-destructive' : 'text-warning')}>
-                {isLosing ? '¡PÉRDIDA!' : 'Reposición hoy'}
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground mb-2">{currentDate}</p>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Costo USD:</span>
-                <span className="text-sm font-black font-mono text-foreground">${usd.toFixed(0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Tasa actual:</span>
-                <span className={cn('text-sm font-black font-mono', isLosing ? 'text-destructive' : 'text-warning')}>{currentRate.toFixed(0)} CUP</span>
-              </div>
-              <div className="flex justify-between border-t border-border/50 pt-1 mt-1">
-                <span className="text-sm font-black text-muted-foreground">Reposición CUP:</span>
-                <span className={cn('text-base font-black font-mono', isLosing ? 'text-destructive' : 'text-foreground')}>{costCupNow.toFixed(0)} CUP</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Sección 3: Veredicto ── */}
-        <div className={cn(
-          'rounded-xl p-5 border-2',
-          isLosing ? 'bg-destructive/20 border-destructive/50' : realMarginPct < margin ? 'bg-warning/20 border-warning/50' : 'bg-success/20 border-success/50'
-        )}>
-          <div className="flex items-start gap-3 mb-4">
-            {isLosing ? (
-              <AlertTriangle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
-            ) : realMarginPct < margin ? (
-              <AlertTriangle className="w-6 h-6 text-warning shrink-0 mt-0.5" />
-            ) : (
-              <TrendingUp className="w-6 h-6 text-success shrink-0 mt-0.5" />
-            )}
-            <div className="flex-1">
-              <h4 className={cn(
-                'text-base font-black uppercase tracking-widest mb-1',
-                isLosing ? 'text-destructive' : realMarginPct < margin ? 'text-warning' : 'text-success'
-              )}>
-                {isLosing ? 'Estás perdiendo dinero' : realMarginPct < margin ? 'Tu margen se redujo' : 'Margen saludable'}
-              </h4>
-              <p className="text-sm text-foreground leading-relaxed">
-                {isLosing
-                  ? `Compraste a ${costCupAtPurchase.toFixed(0)} CUP, vendes a ${salePrice.toFixed(0)} CUP, pero reponer te cuesta ${costCupNow.toFixed(0)} CUP. Estás perdiendo ${Math.abs(realUtility).toFixed(0)} CUP por unidad.`
-                  : realMarginPct < margin
-                  ? `Tu margen real bajó de ${margin}% a ${realMarginPct.toFixed(0)}% por la devaluación del CUP. Para mantener el ${margin}%, debes vender a ${recommendedPrice.toFixed(0)} CUP.`
-                  : `Tu margen se mantiene en ${realMarginPct.toFixed(0)}%. No necesitas ajustar precios aún.`}
-              </p>
-            </div>
-          </div>
-
-          {/* KPIs del veredicto */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-background/70 rounded-lg p-3 text-center border border-border/50">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Utilidad real</p>
-              <p className={cn('text-lg font-black font-mono', isLosing ? 'text-destructive' : 'text-success')}>
-                {realUtility >= 0 ? '+' : ''}{realUtility.toFixed(0)} CUP
-              </p>
-            </div>
-            <div className="bg-background/70 rounded-lg p-3 text-center border border-border/50">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Margen real</p>
-              <p className={cn('text-lg font-black font-mono', isLosing ? 'text-destructive' : realMarginPct < margin ? 'text-warning' : 'text-success')}>
-                {realMarginPct.toFixed(0)}%
-              </p>
-            </div>
-            <div className="bg-background/70 rounded-lg p-3 text-center border border-border/50">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Precio recomendado</p>
-              <p className="text-lg font-black font-mono text-primary">{recommendedPrice.toFixed(0)} CUP</p>
-            </div>
-            <div className="bg-background/70 rounded-lg p-3 text-center border border-border/50">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">{priceChangeLabel}</p>
-              <p className={cn('text-lg font-black font-mono', isIncrease ? 'text-warning' : 'text-success')}>
-                {isIncrease ? '+' : ''}{priceIncrease.toFixed(0)} CUP ({priceIncreasePct >= 0 ? '+' : ''}{priceIncreasePct.toFixed(0)}%)
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Sección 4: Recomendación ── */}
-        {isLosing && (
-          <div className="mt-4 p-4 rounded-xl bg-destructive/15 border-2 border-destructive/40">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-black text-destructive uppercase tracking-widest mb-1">Acción inmediata requerida</p>
-                <p className="text-sm text-foreground leading-relaxed">
-                  Si vendes <strong>{salePrice.toFixed(0)} CUP</strong> pero reponer te cuesta <strong className="text-destructive">{costCupNow.toFixed(0)} CUP</strong>,
-                  pierdes <strong className="text-destructive">{Math.abs(realUtility).toFixed(0)} CUP</strong> por cada unidad vendida.
-                  Para recuperar tu margen del {margin}%, {isIncrease ? 'aumenta' : 'disminuye'} el precio a <strong className="text-primary">{recommendedPrice.toFixed(0)} CUP</strong>
-                  ({priceIncreasePct >= 0 ? '+' : ''}{priceIncreasePct.toFixed(0)}% {isIncrease ? 'más' : 'menos'}). Si vendes 100 unidades/mes, pierdes <strong className="text-destructive">{(Math.abs(realUtility) * 100).toFixed(0)} CUP/mes</strong>.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ════════════════════════════════════════════════════════════════════
 // TAB 5: Alertas Estratégicas — calculadas desde datos reales
 // ════════════════════════════════════════════════════════════════════

@@ -21,7 +21,6 @@ import {
   Calendar as CalendarIcon,
   Info,
   Target,
-  DollarSign,
   LineChart as LineChartIcon,
   AreaChart as AreaChartIcon,
   BarChart3 as BarChartIcon,
@@ -31,14 +30,25 @@ import {
 } from 'lucide-react';
 import { format, parseISO, differenceInCalendarDays, addDays } from 'date-fns';
 import { es as esLocale } from 'date-fns/locale';
+// IC-UX-HISTORY-004: serie informal UNIFICADA (Diviza + archivo elToque) con
+// procedencia por fecha — regla determinista documentada en la lib.
+import {
+  buildUnifiedHistorySeries,
+  summarizeInformalProvenance,
+  type UnifiedHistoryPoint,
+} from '@/lib/exchange-history';
+// IC-UX-HISTORY-004 §3: consulta del archivo COMPLETA y COMPARTIDA entre
+// tabs (caché en memoria + deduplicación en vuelo — sin peticiones dobles).
+import { loadExchangeArchive, getCachedArchiveRows } from '@/lib/exchange-intelligence/archive-loader';
 
 // ═══ Paleta de colores coordinada con el primer tab ═══
 // Asignación categórica consistente entre tabs (IC-DIVIZA 2026-10-26):
 // BCC (oficial) → azul (#3b82f6, token info) — identidad de serie, no semántica.
-// Informal (Diviza, activa) → naranja accesible (#ea580c, contraste ≥3:1 en
-// claro y oscuro). El mismo par de colores se usa en TODOS los tabs.
-// IC-DIVIZA-003: la serie informal que se grafica es la del proveedor ACTIVO
-// (Diviza); el archivo elToque no se mezcla en la visualización por defecto.
+// Informal → naranja accesible (#ea580c, contraste ≥3:1 en claro y oscuro).
+// El mismo par de colores se usa en TODOS los tabs.
+// IC-UX-HISTORY-004: la serie informal del Histórico es la serie UNIFICADA
+// (Diviza + archivo elToque); la procedencia de cada punto se muestra en el
+// tooltip y en el bloque «Serie informal unificada».
 const CHART_COLOR_OFICIAL = '#3b82f6';
 const CHART_COLOR_INFORMAL = '#ea580c';
 const CHART_COLOR_TREND = '#71717a'; // gris neutro: línea auxiliar de tendencia (sin hue)
@@ -82,12 +92,12 @@ const VARIATION_SOURCES: { id: VariationSource; label: string }[] = [
   { id: 'oficial', label: 'BCC' },
 ];
 
-// ─── Tasa para la calculadora de impacto ───
-type RateSource = 'informal' | 'oficial';
-const RATE_SOURCES: { id: RateSource; label: string; description: string }[] = [
-  { id: 'informal', label: 'Informal', description: 'Tasa del mercado informal capturada del proveedor activo (Diviza). El archivo elToque no participa.' },
-  { id: 'oficial', label: 'BCC (oficial)', description: 'Tasa del Banco Central de Cuba — relevante si importas vía sector formal.' },
-];
+// IC-UX-HISTORY-004 §4: la variación entre dos observaciones se computa solo
+// si están a lo sumo MAX_GAP_DAYS aparte; a partir de un hueco grande (p.ej.
+// el salto del archivo elToque → Diviza, 2026-07-28 → 2026-10-25) el cambio
+// NO se reporta como «diaria»: sería fabricar una variación que ningún día
+// real tuvo. El resto queda como hueco (null).
+const MAX_GAP_DAYS = 7;
 
 // ─── Helpers de análisis estadístico ───
 function sma(values: (number | null)[], window: number): (number | null)[] {
@@ -179,17 +189,111 @@ function InfoTooltip({ title, children }: { title: string; children: React.React
 }
 
 // ════════════════════════════════════════════════════════════════════
-// TAB 2: Histórico — con proyección a futuro, modo de gráfico y variación cripto
+// TAB 2: Histórico — serie informal UNIFICADA (IC-UX-HISTORY-004 §4)
 // ════════════════════════════════════════════════════════════════════
-function HistoryTab({ data }: any) {
+// MISIÓN IC-UX-HISTORY-004: esta pestaña consulta TODA la serie informal
+// disponible en la base de datos — Diviza (fuente activa vigente) + el
+// archivo histórico elToque (2025-12-25 → 2026-07-28) + cualquier otro
+// proveedor que haya aportado filas — como UNA serie lógica con
+// procedencia por fecha. Antes solo llegaban los últimos 90 días de la
+// fuente activa (Diviza comenzó 2026-10-25) y el Histórico quedaba
+// reducido a ~2 días pese a existir meses de datos reales.
+//
+// La consulta del archivo (days=all&source=all) es INDEPENDIENTE de la
+// consulta principal de la vista (90 días, activas) — la selección de la
+// tasa VIGENTE sigue siendo responsabilidad exclusiva de la fuente activa
+// (IC-DIVIZA-003): el archivo jamás desplaza la tasa actual ni genera
+// avisos de arrastre.
+function HistoryTab({
+  data,
+  bccSegment = '3',
+}: {
+  /** Fallback inicial (serie 90d de fuentes activas de la vista) — forma
+   * estructural mínima: la vista pasa HistoryPoint[] y aquí se completa con
+   * procedencia nula mientras llega el archivo completo. */
+  data?: Array<{ date: string; oficial: number | null; informal: number | null }>;
+  bccSegment?: string;
+}) {
+  // ─── Consulta del archivo completo (IC-UX-HISTORY-004) ───
+  // El Histórico se auto-abastece: days=all&source=all trae TODO el rango
+  // disponible (BCC + Diviza + elToque). `data` (serie 90d de fuentes
+  // activas que pasa la vista) queda como pintado inicial/fallback honesto:
+  // si la consulta del archivo falla, se muestra CON un aviso explícito de
+  // que es parcial — nunca como si fuera el histórico completo (misión §4:
+  // «Si la consulta falla, informa del error y no presentes un resultado
+  // parcial como si fuera el histórico completo»).
+  const [archiveRows, setArchiveRows] = useState<any[] | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+  const [archiveLoading, setArchiveLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // IC-UX-HISTORY-004 §3 (sin solicitudes duplicadas): la consulta del
+  // archivo vive en el loader COMPARTIDO (archive-loader.ts) con caché por
+  // segmento y deduplicación en vuelo — si «Mi Producto» (u otro montaje)
+  // ya la pidió, esta pestaña reutiliza la MISMA respuesta; el botón
+  // «Reintentar archivo» la fuerza (force) para revalidar tras un error.
+  useEffect(() => {
+    let cancelled = false;
+    setArchiveLoading(true);
+    // Pintado inmediato si hay caché fresca (segundo tab, misma sesión).
+    const cached = getCachedArchiveRows(bccSegment);
+    if (cached) {
+      setArchiveRows(cached);
+      setArchiveError(null);
+      setArchiveLoading(false);
+      return;
+    }
+    loadExchangeArchive(bccSegment)
+      .then(rows => {
+        if (!cancelled) {
+          setArchiveRows(rows);
+          setArchiveError(null);
+        }
+      })
+      .catch((e: any) => {
+        if (!cancelled) setArchiveError(e?.message || 'Error al consultar el histórico completo');
+      })
+      .finally(() => {
+        if (!cancelled) setArchiveLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [bccSegment, reloadKey]);
+
+  // Reintento explícito: fuerza revalidación (ignora la caché en fallo).
+  const reloadArchive = useCallback(() => {
+    setReloadKey(k => k + 1);
+  }, []);
+
+  // ─── Serie unificada: del archivo cuando está; si no, la prop (90d) ───
+  const series: UnifiedHistoryPoint[] = useMemo(() => {
+    if (archiveRows) {
+      return buildUnifiedHistorySeries(archiveRows, { segment: bccSegment });
+    }
+    // Fallback (carga inicial o error): la serie de la vista activa.
+    // Se tipa como serie sin procedencia — el tooltip muestra «—» en la
+    // procedencia mientras no llegue el archivo.
+    return ((data as UnifiedHistoryPoint[]) ?? []).map(d => ({
+      ...d,
+      informalSource: d.informalSource ?? null,
+      informalCaptureMethod: d.informalCaptureMethod ?? null,
+    }));
+  }, [archiveRows, data, bccSegment]);
+
+  // ─── Resumen de procedencia de la serie informal unificada ───
+  const provenance = useMemo(() => summarizeInformalProvenance(series), [series]);
+
   // ─── Rango: presets + fecha inicio/fin custom ───
+  // IC-UX-HISTORY-004 §4: default «Todo» — mostrar el histórico informal
+  // COMPLETO disponible, sin recortar a 7/30/90 sin pedirlo el usuario.
   const presets = [
     { label: '7 días', value: 7 },
     { label: '30 días', value: 30 },
     { label: '90 días', value: 90 },
     { label: 'Todo', value: 9999 },
   ];
-  const [preset, setPreset] = useState(30);
+  const [preset, setPreset] = useState(9999);
   const [useCustomRange, setUseCustomRange] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -220,10 +324,10 @@ function HistoryTab({ data }: any) {
   // ─── Fuente para el gráfico de variación (default Ambos) ───
   const [variationSource, setVariationSource] = useState<VariationSource>('both');
 
-  // ─── Filtrado de datos ───
+  // ─── Filtrado de datos (sobre la serie unificada) ───
   const filtered = useMemo(() => {
     if (useCustomRange && startDate && endDate) {
-      return data.filter((d: any) => {
+      return series.filter((d: UnifiedHistoryPoint) => {
         try {
           const date = parseISO(d.date);
           return date >= startDate && date <= endDate;
@@ -232,8 +336,8 @@ function HistoryTab({ data }: any) {
         }
       });
     }
-    return data.slice(-preset);
-  }, [data, preset, useCustomRange, startDate, endDate]);
+    return series.slice(-preset);
+  }, [series, preset, useCustomRange, startDate, endDate]);
 
   // ─── Calcular R² de cada método para elegir el default y mostrar info de confiabilidad ───
   const trendR2Info = useMemo(() => {
@@ -441,76 +545,46 @@ function HistoryTab({ data }: any) {
   }, [filtered, trendMethod, forecastDays, forecastModel]);
 
   // ─── Datos de variación diaria (estilo cripto/bolsa) ───
+  // IC-UX-HISTORY-004: gap-aware — el cambio porcentual solo se computa
+  // entre observaciones separadas ≤ MAX_GAP_DAYS (7). El salto del archivo
+  // (elToque 2026-07-28 → Diviza 2026-10-25) NO se reporta como variación
+  // diaria: queda como hueco (misión §4: los días sin cotización verificable
+  // permanecen como huecos, sin fabricar variaciones).
   const variationData = useMemo(() => {
-    return (filtered as any[]).map((d: any, i: number) => {
-      const prev = filtered[i - 1];
+    return (filtered as UnifiedHistoryPoint[]).map((d: UnifiedHistoryPoint, i: number) => {
+      const prev = filtered[i - 1] as UnifiedHistoryPoint | undefined;
       let informalChange: number | null = null;
       let oficialChange: number | null = null;
       if (i > 0 && prev) {
-        if (prev.informal != null && d.informal != null && prev.informal > 0) {
-          informalChange = ((d.informal - prev.informal) / prev.informal) * 100;
+        let gapDays = Number.POSITIVE_INFINITY;
+        try {
+          gapDays = differenceInCalendarDays(parseISO(d.date), parseISO(prev.date));
+        } catch {
+          /* fecha inválida → hueco */
         }
-        if (prev.oficial != null && d.oficial != null && prev.oficial > 0) {
-          oficialChange = ((d.oficial - prev.oficial) / prev.oficial) * 100;
+        if (gapDays <= MAX_GAP_DAYS) {
+          if (prev.informal != null && d.informal != null && prev.informal > 0) {
+            informalChange = ((d.informal - prev.informal) / prev.informal) * 100;
+          }
+          if (prev.oficial != null && d.oficial != null && prev.oficial > 0) {
+            oficialChange = ((d.oficial - prev.oficial) / prev.oficial) * 100;
+          }
         }
       }
       return { date: d.date, informalChange, oficialChange };
     });
   }, [filtered]);
 
-  // ═══════════════════════════════════════════════════════════════
-  // CALCULADORA DE IMPACTO (Diátaxis) — con toggle Informal/BCC
-  // ═══════════════════════════════════════════════════════════════
-  const [rateSource, setRateSource] = useState<RateSource>('informal');
-  const [purchaseDateIdx, setPurchaseDateIdx] = useState(0);
-  const [costUsd, setCostUsd] = useState('100');
-
-  const safePurchaseIdx = Math.min(Math.max(0, purchaseDateIdx), Math.max(0, filtered.length - 1));
-  const valuesForCalc = (filtered as any[]).map((d: any) =>
-    rateSource === 'informal' ? d.informal : d.oficial,
-  );
-  const valuesForForecast: number[] = (valuesForCalc as (number | null)[])
-    .filter((v): v is number => v != null);
-  const forecast = useMemo(() => {
-    const reg = linearRegression(valuesForForecast);
-    if (!reg || valuesForForecast.length < 5) return null;
-    const n = valuesForForecast.length;
-    const projected = reg.slope * (n - 1 + forecastDays) + reg.intercept;
-    return { slope: reg.slope, intercept: reg.intercept, r2: reg.r2, projected };
-  }, [valuesForForecast, forecastDays]);
-
-  const purchasePoint = filtered[safePurchaseIdx];
-  const purchaseRate = (rateSource === 'informal'
-    ? purchasePoint?.informal
-    : purchasePoint?.oficial) ?? 0;
-  const purchaseDate = purchasePoint?.date ?? '';
-  const currentPoint = filtered[filtered.length - 1];
-  const currentRate = (rateSource === 'informal'
-    ? currentPoint?.informal
-    : currentPoint?.oficial) ?? 0;
-  const currentDate = currentPoint?.date ?? '';
-
-  const usd = parseFloat(costUsd) || 0;
-  const costAtPurchase = usd * purchaseRate;
-  const costNow = usd * currentRate;
-  const forecastRate = forecast?.projected ?? currentRate;
-  const costInFuture = usd * forecastRate;
-  const changeToDate = costNow - costAtPurchase;
-  const changeToDatePct = costAtPurchase > 0 ? (changeToDate / costAtPurchase) * 100 : 0;
-  const changeToForecast = costInFuture - costNow;
-  const changeToForecastPct = costNow > 0 ? (changeToForecast / costNow) * 100 : 0;
-
-  let daysElapsed = 0;
-  try {
-    if (purchaseDate && currentDate) {
-      daysElapsed = differenceInCalendarDays(parseISO(currentDate), parseISO(purchaseDate));
-    }
-  } catch {
-    /* ignore */
-  }
+  // IC-UX-HISTORY-004 §2/§3: la CALCULADORA DE IMPACTO que vivía aquí fue
+  // RETIRADA — duplicaba la finalidad de «Mi Producto» (misma fórmula
+  // costo = USD × tasa, mismo margen, misma proyección). El análisis del
+  // efecto cambiario sobre un producto vive EXCLUSIVAMENTE en la pestaña
+  // «Mi Producto», que además conserva los aportes útiles de la antigua
+  // «Impacto Precios» (ajuste de precio necesario, pérdida mensual por
+  // unidades, comparativa de escenarios). El Histórico se centra en la
+  // serie: gráficos, procedencia y proyección de las TASAS.
 
   const trendMethodMeta = TREND_METHODS.find(m => m.id === trendMethod);
-  const rateSourceMeta = RATE_SOURCES.find(r => r.id === rateSource)!;
 
   const lastHistDate = filtered[filtered.length - 1]?.date;
   let forecastEndDateStr = '';
@@ -524,6 +598,91 @@ function HistoryTab({ data }: any) {
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* ═══ SERIE INFORMAL UNIFICADA — estado de la consulta + procedencia ═══ */}
+      <div className="bg-card rounded-2xl border-2 border-border p-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
+            <h3 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2">
+              Serie informal unificada
+              <InfoTooltip title="Serie informal unificada — regla de selección">
+                <p className="mb-2">
+                  El Histórico consulta TODAS las cotizaciones informales verificadas de la base de datos, de todos los proveedores que aportaron datos. Para cada fecha se selecciona <strong>una sola observación</strong> con esta regla:
+                </p>
+                <ol className="list-decimal pl-4 text-xs space-y-1">
+                  <li><strong>Calidad:</strong> cotización real &gt; estimada &gt; arrastre (virtual).</li>
+                  <li><strong>Procedencia:</strong> a igual calidad, el proveedor activo (Diviza) precede al histórico (elToque).</li>
+                  <li><strong>Frescura:</strong> a igual calidad y procedencia, la captura más reciente del día.</li>
+                </ol>
+                <p className="mt-2 pt-2 border-t border-border/50 text-xs">
+                  Los días sin cotización verificable permanecen como huecos — no se interpolan ni se fabrican valores. La tasa <strong>vigente</strong> sigue viniendo exclusivamente de la fuente activa (Diviza); el archivo elToque jamás la desplaza.
+                </p>
+              </InfoTooltip>
+            </h3>
+            {/* Resumen de procedencia por fuente */}
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+              {provenance.entries.length > 0 ? (
+                provenance.entries.map(entry => (
+                  <span key={entry.source} className="inline-flex items-center gap-1.5">
+                    <span
+                      aria-hidden="true"
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: entry.active ? CHART_COLOR_INFORMAL : CHART_COLOR_TREND }}
+                    />
+                    <span className="font-bold text-foreground">{entry.source}</span>
+                    <span className="text-muted-foreground font-mono">
+                      {entry.count} días · {entry.firstDate} → {entry.lastDate}
+                      {entry.active ? '' : ' (archivo)'}
+                    </span>
+                  </span>
+                ))
+              ) : (
+                <span className="text-muted-foreground">Sin cotizaciones informales en el rango consultado.</span>
+              )}
+            </div>
+            {provenance.totalInformalDays > 0 && (
+              <p className="mt-1.5 text-xs text-muted-foreground" data-testid="history-range-summary">
+                Serie disponible: <strong className="text-foreground font-mono">{provenance.firstDate}</strong> →{' '}
+                <strong className="text-foreground font-mono">{provenance.lastDate}</strong> ·{' '}
+                {provenance.totalInformalDays} días con cotización informal · {series.length} fechas en total
+                {archiveRows ? ' · archivo completo' : ' · cargando archivo completo…'}
+              </p>
+            )}
+          </div>
+          {/* Estado de la consulta del archivo */}
+          <div className="flex items-center gap-2 shrink-0">
+            {archiveLoading && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground" data-testid="archive-loading">
+                <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-border border-t-primary animate-spin" aria-hidden="true" />
+                Consultando archivo…
+              </span>
+            )}
+            {!archiveLoading && archiveError && (
+              <button
+                onClick={reloadArchive}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-black uppercase tracking-widest border border-border bg-background text-foreground hover:bg-muted/60"
+              >
+                Reintentar archivo
+              </button>
+            )}
+          </div>
+        </div>
+        {/* Aviso honesto: la consulta del archivo falló → lo visible es PARCIAL */}
+        {!archiveLoading && archiveError && (
+          <div
+            role="alert"
+            data-testid="archive-error"
+            className="mt-3 rounded-xl border-2 border-warning/40 bg-warning/10 p-3 flex items-start gap-2"
+          >
+            <Info className="w-4 h-4 text-warning shrink-0 mt-0.5" aria-hidden="true" />
+            <p className="text-xs text-foreground leading-relaxed">
+              <strong className="text-warning">No se pudo consultar el histórico completo</strong> ({archiveError}).
+              Mientras tanto se muestra <strong>solo la serie reciente de la fuente activa (últimos 90 días)</strong> —
+              no es el histórico completo. Reintenta la consulta del archivo para recuperar toda la serie disponible.
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* ─── Controles básicos: presets + custom range ─── */}
       <div className="bg-card rounded-2xl border-2 border-border p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -796,7 +955,7 @@ function HistoryTab({ data }: any) {
       <div className="bg-card rounded-2xl border-2 border-border p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h3 className="text-base font-black uppercase tracking-widest text-foreground">
-            USD — Oficial vs Informal ({filtered.length} días{forecastDays > 0 ? ` + ${forecastDays}d proy.` : ''})
+            USD — Oficial vs Informal ({filtered.length} fechas{forecastDays > 0 ? ` + ${forecastDays}d proy.` : ''})
           </h3>
           {forecastModel.informal && (
             <div className="flex items-center gap-3 text-xs font-bold flex-wrap">
@@ -827,6 +986,7 @@ function HistoryTab({ data }: any) {
           <div className="flex items-center gap-2">
             <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_INFORMAL }} />
             <span className="text-foreground">USD Informal</span>
+            <span className="text-xs font-normal text-muted-foreground">(serie unificada: procedencia en el tooltip)</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_OFICIAL }} />
@@ -880,24 +1040,8 @@ function HistoryTab({ data }: any) {
               tickFormatter={(v: number) => Number.isFinite(v) ? v.toFixed(0) : ''}
             />
             <Tooltip
-              contentStyle={{
-                background: 'hsl(var(--card))',
-                border: '2px solid hsl(var(--border))',
-                borderRadius: '12px',
-                fontSize: '14px',
-                color: 'hsl(var(--foreground))',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              }}
-              labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 700, marginBottom: '4px' }}
-              itemStyle={{ color: 'hsl(var(--foreground))', padding: '2px 0' }}
-              formatter={(value: any, name: string) => {
-                if (value == null) return ['—', name];
-                const num = Number(value);
-                if (Number.isFinite(num)) {
-                  return [num.toFixed(0), name];
-                }
-                return [String(value), name];
-              }}
+              cursor={{ stroke: REFERENCE_LINE_STROKE, strokeDasharray: '3 3' }}
+              content={<UnifiedSeriesTooltip />}
             />
 
             {forecastDays > 0 && filtered.length > 0 && (
@@ -916,7 +1060,10 @@ function HistoryTab({ data }: any) {
               />
             )}
 
-            {/* Informal (Diviza) — naranja (identidad categórica) */}
+            {/* Informal (serie unificada Diviza + elToque) — naranja (identidad categórica).
+                IC-UX-HISTORY-004: SIN connectNulls — los días sin cotización
+                verificable permanecen como HUECOS visibles (misión §4: nunca
+                interpolar para que el gráfico parezca continuo). */}
             {chartMode === 'area' && (
               <Area
                 type="monotone"
@@ -928,7 +1075,6 @@ function HistoryTab({ data }: any) {
                 name="USD Informal"
                 dot={false}
                 activeDot={{ r: 6, fill: CHART_COLOR_INFORMAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
-                connectNulls
               />
             )}
             {chartMode === 'line' && (
@@ -940,7 +1086,6 @@ function HistoryTab({ data }: any) {
                 dot={false}
                 activeDot={{ r: 6, fill: CHART_COLOR_INFORMAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
                 name="USD Informal"
-                connectNulls
               />
             )}
             {chartMode === 'bar' && (
@@ -952,7 +1097,7 @@ function HistoryTab({ data }: any) {
               />
             )}
 
-            {/* BCC (oficial) — verde */}
+            {/* BCC (oficial) — azul. Sin connectNulls: huecos honestos. */}
             {chartMode === 'area' && (
               <Area
                 type="monotone"
@@ -964,7 +1109,6 @@ function HistoryTab({ data }: any) {
                 name="USD Oficial (BCC)"
                 dot={false}
                 activeDot={{ r: 6, fill: CHART_COLOR_OFICIAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
-                connectNulls
               />
             )}
             {chartMode === 'line' && (
@@ -976,7 +1120,6 @@ function HistoryTab({ data }: any) {
                 dot={false}
                 activeDot={{ r: 6, fill: CHART_COLOR_OFICIAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
                 name="USD Oficial (BCC)"
-                connectNulls
               />
             )}
             {chartMode === 'bar' && (
@@ -988,7 +1131,8 @@ function HistoryTab({ data }: any) {
               />
             )}
 
-            {/* Línea de tendencia (morado punteada) */}
+            {/* Línea de tendencia (gris punteada — línea AUXILIAR derivada,
+                puede conectar: no es una observación) */}
             {trendMethod !== 'none' && (
               <Line
                 type="monotone"
@@ -1156,274 +1300,75 @@ function HistoryTab({ data }: any) {
         </ResponsiveContainer>
       </div>
 
-      {/* ═══ CALCULADORA DE IMPACTO (Diátaxis) ═══ */}
-      <div className="bg-card rounded-2xl border-2 border-border p-6 space-y-5">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center border border-blue-500/30">
-            <DollarSign className="w-5 h-5 text-blue-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-black uppercase tracking-widest text-foreground">
-              Calculadora de impacto en precios
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Estima cómo un producto comprado en una fecha pasada habría cambiado de valor hasta hoy, y cómo se proyecta a {forecastDays} días.
-            </p>
-          </div>
-          {/* Toggle Informal / BCC */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
-            {RATE_SOURCES.map(r => (
-              <button
-                key={r.id}
-                onClick={() => setRateSource(r.id)}
-                title={r.description}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
-                  rateSource === r.id
-                    ? r.id === 'informal'
-                      ? 'bg-orange-500 text-white shadow-md'
-                      : 'bg-green-500 text-white shadow-md'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-        </div>
+    </div>
+  );
+}
 
-        <p className="text-xs text-muted-foreground italic">
-          {rateSourceMeta.description} · Proyección a {forecastDays} día(s) basada en regresión lineal.
+// ════════════════════════════════════════════════════════════════════
+// TOOLTIP personalizado del gráfico principal — procedencia por punto
+// (IC-UX-HISTORY-004 §4: «conserva su trazabilidad y permite identificar
+// qué fuente aportó el valor seleccionado»).
+// ════════════════════════════════════════════════════════════════════
+function UnifiedSeriesTooltip({ active, payload, label }: any) {
+  if (!active || !payload || payload.length === 0) return null;
+  const point = payload[0]?.payload as
+    | (UnifiedHistoryPoint & { isForecast?: boolean; trend?: number | null; forecastInformal?: number | null; forecastOficial?: number | null })
+    | undefined;
+  if (!point) return null;
+
+  const fmt = (v: number | null | undefined) =>
+    v != null && Number.isFinite(v) ? v.toFixed(0) : '—';
+
+  const provenanceLabel = (() => {
+    if (point.informal == null) return null;
+    if (point.informalSource == null) return 'procedencia pendiente del archivo';
+    if (point.informalCaptureMethod === 'carry_forward') {
+      return `arrastre de ${point.informalSource} (valor del ${point.informalOriginalRateDate ?? '—'})`;
+    }
+    if (point.informalCaptureMethod === 'estimated') {
+      return `${point.informalSource} · estimada`;
+    }
+    return point.informalSource;
+  })();
+
+  return (
+    <div
+      role="tooltip"
+      className="rounded-xl border-2 bg-card p-3 shadow-xl"
+      style={{
+        background: 'hsl(var(--card))',
+        borderColor: 'hsl(var(--border))',
+        color: 'hsl(var(--foreground))',
+        fontSize: '14px',
+        maxWidth: '320px',
+      }}
+    >
+      <p className="font-black mb-1.5 font-mono" style={{ color: 'hsl(var(--foreground))' }}>{label}</p>
+      {point.informal != null && (
+        <p className="flex items-center gap-2 py-0.5">
+          <span aria-hidden="true" className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CHART_COLOR_INFORMAL }} />
+          <span className="font-bold">Informal:</span>
+          <span className="font-mono font-bold">{fmt(point.informal)} CUP</span>
+          {provenanceLabel && (
+            <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>· {provenanceLabel}</span>
+          )}
         </p>
-
-        {/* Inputs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-black uppercase tracking-widest text-foreground block mb-1.5">
-              Fecha de compra del producto
-            </label>
-            <select
-              value={safePurchaseIdx}
-              onChange={e => setPurchaseDateIdx(Number(e.target.value))}
-              className="w-full h-10 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[40px] text-foreground font-mono"
-            >
-              {(filtered as any[]).map((d: any, i: number) => {
-                const rate = rateSource === 'informal' ? d.informal : d.oficial;
-                return (
-                  <option key={i} value={i}>
-                    {d.date} — 1 USD = {rate != null ? rate.toFixed(0) : 'N/A'} CUP
-                  </option>
-                );
-              })}
-            </select>
-            <p className="text-xs text-muted-foreground mt-1">
-              Tasa al comprar ({rateSourceMeta.label}):{' '}
-              <strong className={rateSource === 'informal' ? 'text-orange-500' : 'text-green-500'}>
-                {purchaseRate.toFixed(0)} CUP/USD
-              </strong>
-            </p>
-          </div>
-          <div>
-            <label className="text-xs font-black uppercase tracking-widest text-foreground block mb-1.5">
-              Costo del producto en USD
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-muted-foreground">$</span>
-              <input
-                type="number"
-                value={costUsd}
-                onChange={e => setCostUsd(e.target.value)}
-                className="w-full h-10 pl-7 pr-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[40px] text-foreground font-mono"
-                placeholder="100"
-                step="0.01"
-                min="0"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Costo al comprar: <strong className="text-foreground">{costAtPurchase.toFixed(0)} CUP</strong>
-            </p>
-          </div>
-        </div>
-
-        {/* Timeline visual — 3 etapas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Etapa 1: compra */}
-          <div className="rounded-xl p-4 bg-blue-500/10 border-2 border-blue-500/30">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-lg bg-blue-500/20 flex items-center justify-center border border-blue-500/40">
-                <span className="text-xs font-black text-blue-500">1</span>
-              </div>
-              <span className="text-xs font-black uppercase tracking-widest text-blue-500">Compra</span>
-            </div>
-            <p className="text-xs text-muted-foreground mb-2 font-mono">{purchaseDate || '—'}</p>
-            <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">Tasa:</span>
-                <span className={cn('font-black font-mono', rateSource === 'informal' ? 'text-orange-500' : 'text-green-500')}>
-                  {purchaseRate.toFixed(0)} CUP
-                </span>
-              </div>
-              <div className="flex justify-between border-t border-border/50 pt-1">
-                <span className="text-xs font-black text-muted-foreground">Costo total:</span>
-                <span className="font-black font-mono text-foreground">{costAtPurchase.toFixed(0)} CUP</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Etapa 2: hoy */}
-          <div className="rounded-xl p-4 bg-amber-500/10 border-2 border-amber-500/30">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center border border-amber-500/40">
-                <span className="text-xs font-black text-amber-600 dark:text-amber-400">2</span>
-              </div>
-              <span className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">Hoy</span>
-            </div>
-            <p className="text-xs text-muted-foreground mb-2 font-mono">
-              {currentDate || '—'} · {daysElapsed > 0 ? `${daysElapsed}d transcurridos` : '—'}
-            </p>
-            <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">Tasa:</span>
-                <span className={cn('font-black font-mono', rateSource === 'informal' ? 'text-orange-500' : 'text-green-500')}>
-                  {currentRate.toFixed(0)} CUP
-                </span>
-              </div>
-              <div className="flex justify-between border-t border-border/50 pt-1">
-                <span className="text-xs font-black text-muted-foreground">Costo actual:</span>
-                <span className="font-black font-mono text-foreground">{costNow.toFixed(0)} CUP</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">Δ desde compra:</span>
-                <span className={cn('font-black font-mono', changeToDate >= 0 ? 'text-destructive' : 'text-success')}>
-                  {changeToDate >= 0 ? '+' : ''}{changeToDate.toFixed(0)} CUP ({changeToDatePct >= 0 ? '+' : ''}{changeToDatePct.toFixed(0)}%)
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Etapa 3: proyección */}
-          <div className={cn('rounded-xl p-4 border-2', forecast && forecast.r2 >= 0.4 ? 'bg-primary/5 border-primary/30' : 'bg-muted/30 border-border')}>
-            <div className="flex items-center gap-2 mb-2">
-              <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center border', forecast && forecast.r2 >= 0.4 ? 'bg-primary/15 border-primary/30' : 'bg-muted/50 border-border')}>
-                <span className={cn('text-xs font-black', forecast && forecast.r2 >= 0.4 ? 'text-primary' : 'text-muted-foreground')}>3</span>
-              </div>
-              <span className={cn('text-xs font-black uppercase tracking-widest', forecast && forecast.r2 >= 0.4 ? 'text-primary' : 'text-muted-foreground')}>
-                +{forecastDays} días
-              </span>
-              <InfoTooltip title={`Proyección a ${forecastDays} días — cómo se calcula`}>
-                <p className="mb-2">
-                  Se usa <strong>regresión lineal por mínimos cuadrados</strong> sobre todos los datos visibles del gráfico para la tasa <strong>{rateSourceMeta.label}</strong>:
-                </p>
-                <code className="block bg-muted/60 rounded-md p-2 text-xs font-mono">
-                  tasa(t) = m·t + b
-                </code>
-                <p className="mt-2">Valores del modelo:</p>
-                <ul className="list-disc pl-4 mt-1 text-xs space-y-0.5">
-                  <li>Pendiente (m): <strong>{forecast?.slope.toFixed(0) ?? '—'} CUP/día</strong></li>
-                  <li>R²: <strong>{forecast?.r2.toFixed(4) ?? '—'}</strong></li>
-                  <li>Tasa actual: <strong>{currentRate.toFixed(0)} CUP</strong></li>
-                  <li>Tasa proyectada +{forecastDays}d: <strong>{forecastRate.toFixed(0)} CUP</strong></li>
-                </ul>
-                <p className="mt-2 pt-2 border-t border-border/50 text-xs">
-                  <strong>Confianza:</strong> R² ≥ 0.7 alta · 0.4-0.7 media · &lt;0.4 baja (no usar para decisiones).
-                  {forecast && forecast.r2 < 0.4 && (
-                    <span className="block mt-1 text-warning">⚠ R² bajo — la tendencia es muy ruidosa, no confíes en esta proyección.</span>
-                  )}
-                </p>
-              </InfoTooltip>
-            </div>
-            <p className="text-xs text-muted-foreground mb-2 font-mono">
-              +{forecastDays} días · pendiente {forecast?.slope.toFixed(0) ?? '—'} CUP/día
-            </p>
-            <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">Tasa proy.:</span>
-                <span className={cn('font-black font-mono', forecast && forecast.r2 >= 0.4 ? 'text-primary' : 'text-muted-foreground')}>
-                  {forecastRate.toFixed(0)} CUP
-                </span>
-              </div>
-              <div className="flex justify-between border-t border-border/50 pt-1">
-                <span className="text-xs font-black text-muted-foreground">Costo proy.:</span>
-                <span className={cn('font-black font-mono', forecast && forecast.r2 >= 0.4 ? 'text-foreground' : 'text-muted-foreground')}>
-                  {costInFuture.toFixed(0)} CUP
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-muted-foreground">Δ vs hoy:</span>
-                <span className={cn('font-black font-mono', !forecast || forecast.r2 < 0.4 ? 'text-muted-foreground' : changeToForecast >= 0 ? 'text-destructive' : 'text-success')}>
-                  {changeToForecast >= 0 ? '+' : ''}{changeToForecast.toFixed(0)} CUP ({changeToForecastPct >= 0 ? '+' : ''}{changeToForecastPct.toFixed(0)}%)
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Veredicto narrativo */}
-        <div className={cn('rounded-xl p-4 border-2',
-          !forecast || forecast.r2 < 0.4
-            ? 'bg-muted/30 border-border'
-            : changeToDate >= 0 && changeToForecast >= 0
-              ? 'bg-destructive/10 border-destructive/30'
-              : changeToDate < 0 && changeToForecast < 0
-                ? 'bg-success/10 border-success/30'
-                : 'bg-warning/10 border-warning/30'
-        )}>
-          <p className="text-sm text-foreground leading-relaxed">
-            {!forecast || forecast.r2 < 0.4 ? (
-              <>
-                <strong className="text-muted-foreground">Proyección no confiable.</strong> La regresión lineal sobre los datos visibles tiene R² = {forecast?.r2.toFixed(4) ?? '—'}, lo que indica que no hay tendencia lineal clara. Esto puede deberse a alta volatilidad o a un cambio de régimen reciente. No se recomienda usar esta proyección para decisiones de precio.
-              </>
-            ) : (
-              <>
-                Si compraste <strong className="text-foreground">{usd.toFixed(0)} USD</strong> de mercancía el{' '}
-                <strong className="text-blue-500">{purchaseDate}</strong> a <strong className={rateSource === 'informal' ? 'text-orange-500' : 'text-green-500'}>{purchaseRate.toFixed(0)} CUP/USD</strong> ({rateSourceMeta.label}),
-                el costo total fue <strong className="text-foreground">{costAtPurchase.toFixed(0)} CUP</strong>.{' '}
-                Hoy ({currentDate}, {daysElapsed} días después) la tasa {rateSourceMeta.label} es{' '}
-                <strong className={rateSource === 'informal' ? 'text-orange-500' : 'text-green-500'}>{currentRate.toFixed(0)} CUP/USD</strong>, por lo que reponer la misma mercancía costaría{' '}
-                <strong className="text-foreground">{costNow.toFixed(0)} CUP</strong> — un{' '}
-                <strong className={changeToDate >= 0 ? 'text-destructive' : 'text-success'}>
-                  {changeToDate >= 0 ? '+' : ''}{changeToDatePct.toFixed(0)}%
-                </strong>{' '}
-                ({changeToDate >= 0 ? '+' : ''}{changeToDate.toFixed(0)} CUP) {changeToDate >= 0 ? 'más caro' : 'más barato'} que cuando compraste.{' '}
-                <span className="text-primary">
-                  Según la regresión lineal (R² = {forecast.r2.toFixed(4)}), en <strong>{forecastDays} días más</strong> la tasa proyectada es{' '}
-                  <strong>{forecastRate.toFixed(0)} CUP/USD</strong>, lo que elevaría el costo de reposición a{' '}
-                  <strong>{costInFuture.toFixed(0)} CUP</strong> — {changeToForecast >= 0 ? '+' : ''}{changeToForecast.toFixed(0)} CUP ({changeToForecastPct >= 0 ? '+' : ''}{changeToForecastPct.toFixed(0)}%) respecto a hoy.
-                </span>
-              </>
-            )}
-          </p>
-
-          <div className="mt-3 pt-3 border-t border-border/50">
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1.5">Cálculo:</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs font-mono text-muted-foreground">
-              <div className="bg-muted/40 rounded p-2">
-                <p className="text-foreground font-bold mb-1">Costo en fecha X:</p>
-                <p>costoX = USD × tasa({rateSourceMeta.label}, X)</p>
-                <p className="text-foreground">= {usd.toFixed(0)} × {purchaseRate.toFixed(0)} = {costAtPurchase.toFixed(0)} CUP</p>
-              </div>
-              <div className="bg-muted/40 rounded p-2">
-                <p className="text-foreground font-bold mb-1">Costo hoy:</p>
-                <p>costoHoy = USD × tasa({rateSourceMeta.label}, hoy)</p>
-                <p className="text-foreground">= {usd.toFixed(0)} × {currentRate.toFixed(0)} = {costNow.toFixed(0)} CUP</p>
-              </div>
-              <div className="bg-muted/40 rounded p-2">
-                <p className="text-foreground font-bold mb-1">Costo en +{forecastDays} días:</p>
-                <p>costo+{forecastDays}d = USD × tasa_proy({rateSourceMeta.label}, +{forecastDays}d)</p>
-                <p className="text-foreground">= {usd.toFixed(0)} × {forecastRate.toFixed(0)} = {costInFuture.toFixed(0)} CUP</p>
-              </div>
-            </div>
-            {forecast && (
-              <p className="text-xs text-muted-foreground mt-2 italic">
-                Tasa proyectada calculada con regresión lineal y = m·x + b donde m = {forecast.slope.toFixed(0)} CUP/día, R² = {forecast.r2.toFixed(4)}.
-                {' '}{forecast.r2 < 0.4 && '⚠ R² bajo — baja confianza.'}
-                {forecast.r2 >= 0.4 && forecast.r2 < 0.7 && '⚠ R² medio — confianza limitada.'}
-                {forecast.r2 >= 0.7 && '✓ R² alto — proyección confiable.'}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+      )}
+      {point.oficial != null && (
+        <p className="flex items-center gap-2 py-0.5">
+          <span aria-hidden="true" className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CHART_COLOR_OFICIAL }} />
+          <span className="font-bold">Oficial (BCC):</span>
+          <span className="font-mono font-bold">{fmt(point.oficial)} CUP</span>
+        </p>
+      )}
+      {point.isForecast && (
+        <p className="text-xs mt-1 pt-1 border-t" style={{ borderColor: 'hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+          Punto PROYECTADO (regresión) — no es una cotización observada.
+        </p>
+      )}
+      {point.informal == null && point.oficial == null && !point.isForecast && (
+        <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Sin cotización verificable este día.</p>
+      )}
     </div>
   );
 }

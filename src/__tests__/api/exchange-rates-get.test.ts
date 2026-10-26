@@ -381,3 +381,100 @@ describe('byOperativeDateFirstThenFreshness — comparador compartido vista/API'
     expect(cmp(a, b)).toBeGreaterThan(0); // la que TIENE captured_at gana
   });
 });
+
+describe('GET /api/exchange-rates — serie informal UNIFICADA del Histórico (IC-UX-HISTORY-004 §4)', () => {
+  // Estado real de la BD al diseñar la misión: elToque 2025-12-25→2026-07-28
+  // (archivo) + Diviza desde 2026-10-25 (activa) + BCC diario. El Histórico
+  // consulta TODO ese rango como UNA serie con procedencia.
+  const archivo = [
+    elToqueRow('2025-12-25', 440),
+    elToqueRow('2026-01-15', 450),
+    elToqueRow('2026-07-28', 475),
+  ];
+
+  it('source=all consulta BCC + TODAS las informales (activas + históricas) y devuelve elToque con su procedencia', async () => {
+    queryResult.data = [...archivo, bccRow(TODAY, 380), divizaRow(TODAY, 840)];
+
+    const res = await GET(makeRequest('?days=all&source=all&segment=3'));
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.sources_queried).toEqual(['BCC', 'Diviza', 'elToque']);
+    // El archivo elToque VIAJA COMPLETO en la respuesta del Histórico…
+    const elToqueRows = (json.rates as Row[]).filter(r => r.source === 'elToque');
+    expect(elToqueRows).toHaveLength(3);
+    expect(elToqueRows.map(r => r.rate_date)).toContain('2025-12-25');
+    // …SIN re-atribuir: source sigue siendo 'elToque' (criterio 7).
+    expect(elToqueRows.every(r => r.source === 'elToque')).toBe(true);
+  });
+
+  it('source=informal-all consulta TODAS las informales SIN BCC', async () => {
+    queryResult.data = [...archivo, divizaRow(TODAY, 840)];
+
+    const res = await GET(makeRequest('?days=all&source=informal-all&segment=3'));
+    const json = await res.json();
+
+    expect(json.sources_queried).toEqual(['Diviza', 'elToque']);
+    expect((json.rates as Row[]).some(r => r.source === 'BCC')).toBe(false);
+  });
+
+  it('days=all NO aplica corte de fecha (todo el rango disponible, sin truncar)', async () => {
+    queryResult.data = [...archivo, divizaRow(TODAY, 840)];
+
+    await GET(makeRequest('?days=all&source=all&segment=3'));
+
+    // La cadena NO recibió gte('rate_date', …): sin ventana de 7/30/90 días.
+    // (chain.gte se usa SOLO con corte; aquí no debe llamarse.)
+    expect(chain.gte).not.toHaveBeenCalled();
+  });
+
+  it('la consulta del archivo NO resuelve informal_latest (separación de responsabilidades: la vigente es de source=informal)', async () => {
+    queryResult.data = [...archivo, divizaRow(TODAY, 840)];
+
+    for (const source of ['all', 'informal-all']) {
+      const res = await GET(makeRequest(`?days=all&source=${source}&segment=3&currency=USD`));
+      const json = await res.json();
+      // El archivo jamás alimenta la selección de la tasa VIGENTE.
+      expect(json.informal_latest).toBeUndefined();
+    }
+  });
+
+  it('las filas de elToque del archivo NO generan carry-forward ni conteo de arrastre', async () => {
+    // El archivo termina 2026-07-28: una fuente muerta jamás se «arrastra».
+    queryResult.data = [...archivo, bccRow(TODAY, 380), divizaRow(TODAY, 840)];
+
+    const res = await GET(makeRequest('?days=all&source=all&segment=3'));
+    const json = await res.json();
+
+    const virtuales = (json.rates as Row[]).filter(r => r.capture_method === 'carry_forward');
+    expect(virtuellesTodosDeFuentesActivas(virtuales)).toBe(true);
+    expect((json.carry_forward_dates as any[]).some(d => d.source === 'elToque')).toBe(false);
+  });
+
+  it('expone oldest/newest_rate_date y informal_sources_included sobre filas reales (rango servido honesto)', async () => {
+    queryResult.data = [...archivo, bccRow('2026-03-26', 360), bccRow(TODAY, 380), divizaRow(TODAY, 840)];
+
+    const res = await GET(makeRequest('?days=all&source=all&segment=3'));
+    const json = await res.json();
+
+    expect(json.oldest_rate_date).toBe('2025-12-25');
+    expect(json.newest_rate_date).toBe(TODAY);
+    expect(json.informal_sources_included).toEqual(['Diviza', 'elToque']);
+  });
+
+  it('error de Supabase → 500 con el mensaje (nunca un histórico parcial como completo)', async () => {
+    queryResult = { data: null, error: { message: 'connection reset' } };
+
+    const res = await GET(makeRequest('?days=all&source=all&segment=3'));
+    const json = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(json.error).toBe('connection reset');
+    expect(json.rates).toBeUndefined();
+  });
+});
+
+/** Toda virtual carry-forward debe ser de una fuente ACTIVA (BCC/Diviza). */
+function virtuellesTodosDeFuentesActivas(virtuales: Row[]): boolean {
+  return virtuales.every(r => r.source === 'BCC' || r.source === 'Diviza');
+}

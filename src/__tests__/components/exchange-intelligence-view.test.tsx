@@ -790,3 +790,63 @@ describe('ExchangeIntelligenceView — sistema visual y accesibilidad', () => {
     });
   });
 });
+
+// ════════════════════════════════════════════════════════════════════
+// IC-UX-HISTORY-004 (2026-10-26) — eliminación de «Impacto Precios» y
+// «Mi Producto» como herramienta única de análisis por producto.
+// ════════════════════════════════════════════════════════════════════
+describe('ExchangeIntelligenceView — navegación sin «Impacto Precios» (IC-UX-HISTORY-004 §2)', () => {
+  it('criterio 1: «Impacto Precios» NO aparece en la navegación (ni su label ni su contenido)', async () => {
+    mockRatesApi([bccRow(TODAY, 380), divizaRow(TODAY, 839)]);
+    render(<ExchangeIntelligenceView />);
+
+    // El dashboard pinta con datos reales (prueba de que la vista carga).
+    await waitFor(() => {
+      expect(screen.getByText('839')).toBeInTheDocument();
+    });
+
+    // La pestaña eliminada no existe NI como botón/rol de tab…
+    expect(screen.queryByRole('tab', { name: /Impacto Precios/i })).toBeNull();
+    // …NI como texto en ninguna parte (ni «Calculadora de Impacto Cambiario»
+    // ni «Análisis de Impacto» — los títulos del componente eliminado).
+    expect(screen.queryByText(/Impacto Precios/i)).toBeNull();
+    expect(screen.queryByText(/Calculadora de Impacto Cambiario/i)).toBeNull();
+    expect(screen.queryByText(/Análisis de Impacto/i)).toBeNull();
+  });
+
+  it('el resto de la navegación queda INTACTO (Histórico, Variaciones, Mi Producto, Alertas, Simulador, Configuración)', async () => {
+    mockRatesApi([bccRow(TODAY, 380), divizaRow(TODAY, 839)]);
+    render(<ExchangeIntelligenceView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('839')).toBeInTheDocument();
+    });
+
+    // UnifiedTabs renderiza la lista dos veces (navegación desktop y móvil):
+    // se deduplica por texto y se exige el conjunto EXACTO de pestañas.
+    const labels = [...new Set(screen.getAllByRole('tab').map(t => (t.textContent ?? '').trim()))];
+    expect(labels.some(l => l.includes('Impacto'))).toBe(false);
+    for (const esperada of ['Dashboard', 'Histórico', 'Variaciones', 'Mi Producto', 'Alertas', 'Simulador', 'Configuración']) {
+      expect(labels.some(l => l.includes(esperada))).toBe(true);
+    }
+    // Sin pestañas fantasma: exactamente las 7 esperadas (admin ve Configuración).
+    expect(labels).toHaveLength(7);
+  });
+
+  it('criterio 9 (defensa): las filas elToque del archivo NO llegan a la consulta por defecto de la vista', async () => {
+    // La vista consulta ?days=90&segment=3 SIN source → BCC + Diviza. Aunque
+    // elToque exista en la BD, la vista vigente no la consume (la serie
+    // unificada se consulta por separado desde las pestañas de archivo).
+    mockRatesApi([bccRow(TODAY, 380), divizaRow(TODAY, 839)]);
+    render(<ExchangeIntelligenceView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('839')).toBeInTheDocument();
+    });
+
+    const url = (fetchMock.mock.calls[0]?.[0] as string) ?? '';
+    expect(url).toContain('/api/exchange-rates?');
+    expect(url).toContain('days=90');
+    expect(url).not.toContain('source=');
+  });
+});
