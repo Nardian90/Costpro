@@ -382,13 +382,24 @@ export function withStoreAccess(handler: AuthHandler) {
       }
     }
 
-    // Admins bypass store access check
-    // FIX RLS (v2.21.0): Cuando USE_TENANT_RLS=true, admin global solo puede
-    // acceder stores de su propio tenant. El bypass total solo aplica si
-    // el flag está desactivado (comportamiento legacy).
+    // Nivel administrativo (admin|superadmin) — bypass del chequeo de membresía.
+    // FIX RLS (v2.21.0): Cuando USE_TENANT_RLS=true, el admin ORDINARIO solo
+    // puede acceder stores de su propio tenant. El bypass total solo aplica
+    // si el flag está desactivado (comportamiento legacy).
+    //
+    // MISIÓN PI-SUPERADMIN (2026-10-26): la igualdad estricta `=== 'admin'`
+    // dejaba al SuperAdmin de plataforma (que por diseño NO lleva membresías
+    // de tienda — §6 de la migración 20260826120000) FUERA de TODAS las rutas
+    // withStoreAccess → 403 «No tienes acceso a esta tienda» en
+    // /api/physical-inventory y demás (reproducido en vivo). El rol
+    // 'superadmin' es de PLATAFORMA y transversal a tiendas y tenants
+    // (doctrina CP-ORG-001 §16/§17): la RLS ya lo refleja — is_admin() incluye
+    // 'superadmin' (20261026120000 §2) y stores_tenant_select añadió el bypass
+    // is_superadmin() incluso con USE_TENANT_RLS=true (20261026160000 §2).
+    // El límite de tenant de abajo se conserva ÍNTEGRO para el admin ordinario.
     const useTenantRls = process.env.USE_TENANT_RLS === 'true';
-    if (userRole === 'admin') {
-      if (useTenantRls) {
+    if (userRole === 'superadmin' || userRole === 'admin') {
+      if (userRole === 'admin' && useTenantRls) {
         // Verificar que la store pertenece al tenant del admin
         const { data: storeData } = await admin
           .from('stores')

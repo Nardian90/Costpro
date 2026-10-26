@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/__tests__/setup.ts",
+    "src/lib/auth-middleware.ts",
+    "src/lib/physical-inventory-access.ts",
+    "src/lib/roles.ts",
+    "src/hooks/api/useAuthorizedStores.ts",
+    "src/app/api/physical-inventory/route.ts",
+    "src/app/api/physical-inventory/[id]/route.ts",
+    "src/components/views/terminal/views/physical_inventory/CreatePhysicalInventoryModal.tsx",
+    "src/components/views/terminal/views/physical_inventory/PhysicalInventoryView.tsx",
+    "src/components/views/terminal/views/physical_inventory/PhysicalInventoryDetail.tsx",
+    "src/__tests__/lib/auth-middleware-with-store-access.test.ts",
+    "src/__tests__/hooks/use-authorized-stores.test.tsx",
+    "src/__tests__/components/physical-inventory/create-modal-superadmin.test.tsx",
+    "src/__tests__/migrations/pi-superadmin-rpc-migration.test.ts"
+  ]
+}
