@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-26T02:34:56.773Z
+-- Captured  : 2026-10-26T16:03:06.313Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 153 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -2011,7 +2011,8 @@ BEGIN
   IF v_pi.status <> 'conciliated' THEN
     RAISE EXCEPTION 'ERR_NOT_CONCILIATED (estado actual: %)', v_pi.status;
   END IF;
-  IF NOT public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager']::text[]) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager']::text[])) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED_CLOSE';
   END IF;
 
@@ -2364,8 +2365,9 @@ BEGIN
   IF v_pi.status <> 'in_progress' THEN
     RAISE EXCEPTION 'ERR_NOT_COUNTING (estado actual: %)', v_pi.status;
   END IF;
-  IF NOT public.has_store_role(v_caller_uid, v_pi.store_id,
-       ARRAY['admin','manager','encargado','warehouse','clerk']::text[]) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id,
+       ARRAY['admin','manager','encargado','warehouse','clerk']::text[])) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED_COUNT';
   END IF;
 
@@ -2413,7 +2415,8 @@ BEGIN
 
   -- Autorización por tienda (fail-closed: sin usuario autenticado no se confirma)
   IF v_caller_uid IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHENTICATED'; END IF;
-  IF NOT public.has_store_access_as(v_caller_uid, v_adj.store_id) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_access_as(v_caller_uid, v_adj.store_id)) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
@@ -3666,7 +3669,8 @@ DECLARE
   v_pi_id UUID;
 BEGIN
   IF v_caller_uid IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHENTICATED'; END IF;
-  IF NOT public.has_store_role(v_caller_uid, p_store_id, ARRAY['admin','manager','encargado']::text[]) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, p_store_id, ARRAY['admin','manager','encargado']::text[])) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED_CREATE_PI';
   END IF;
   IF p_cutoff_date IS NULL OR p_cutoff_date > NOW() THEN
@@ -6230,7 +6234,8 @@ BEGIN
   IF v_pi.status <> 'pending_authorization' THEN
     RAISE EXCEPTION 'ERR_NOT_PENDING_AUTHORIZATION (estado actual: %)', v_pi.status;
   END IF;
-  IF NOT public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[]) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[])) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED_GENERATE_ADJUSTMENTS';
   END IF;
   IF EXISTS (SELECT 1 FROM public.physical_inventory_adjustments WHERE pi_id = p_pi_id) THEN
@@ -8225,7 +8230,8 @@ BEGIN
   IF v_pi.status <> 'draft' THEN
     RAISE EXCEPTION 'ERR_NOT_DRAFT: solo un borrador puede prepararse (estado actual: %)', v_pi.status;
   END IF;
-  IF NOT public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[]) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[])) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED_PREPARE_PI';
   END IF;
 
@@ -9089,8 +9095,9 @@ BEGIN
   IF v_pi.status <> 'in_progress' THEN
     RAISE EXCEPTION 'ERR_NOT_COUNTING: el conteo solo puede registrarse en estado in_progress (estado actual: %)', v_pi.status;
   END IF;
-  IF NOT public.has_store_role(v_caller_uid, v_pi.store_id,
-       ARRAY['admin','manager','encargado','warehouse','clerk']::text[]) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id,
+       ARRAY['admin','manager','encargado','warehouse','clerk']::text[])) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED_COUNT';
   END IF;
   IF p_items IS NULL OR jsonb_array_length(p_items) = 0 THEN
@@ -9898,81 +9905,6 @@ END;
 $function$
 
 
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
-$function$
-
-
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -10196,6 +10128,81 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
+$function$
+
+
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
 $function$
 
 
@@ -11826,7 +11833,8 @@ BEGIN
   IF v_pi.status NOT IN ('in_reconciliation','pending_authorization') THEN
     RAISE EXCEPTION 'ERR_NOT_IN_RECONCILIATION (estado actual: %)', v_pi.status;
   END IF;
-  IF NOT public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[]) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[])) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED_REVIEW';
   END IF;
 
@@ -12236,8 +12244,9 @@ BEGIN
   IF v_pi.status <> 'prepared' THEN
     RAISE EXCEPTION 'ERR_NOT_PREPARED (estado actual: %)', v_pi.status;
   END IF;
-  IF NOT public.has_store_role(v_caller_uid, v_pi.store_id,
-       ARRAY['admin','manager','encargado','warehouse','clerk']::text[]) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id,
+       ARRAY['admin','manager','encargado','warehouse','clerk']::text[])) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED_COUNT';
   END IF;
 
@@ -12271,7 +12280,8 @@ BEGIN
   IF v_pi.status <> 'in_reconciliation' THEN
     RAISE EXCEPTION 'ERR_NOT_IN_RECONCILIATION (estado actual: %)', v_pi.status;
   END IF;
-  IF NOT public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[]) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[])) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED_SUBMIT';
   END IF;
 
@@ -12303,8 +12313,9 @@ BEGIN
   IF v_pi.status <> 'counted' THEN
     RAISE EXCEPTION 'ERR_NOT_COUNTED (estado actual: %)', v_pi.status;
   END IF;
-  IF NOT public.has_store_role(v_caller_uid, v_pi.store_id,
-       ARRAY['admin','manager','encargado']::text[]) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id,
+       ARRAY['admin','manager','encargado']::text[])) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED_RECONCILE';
   END IF;
   SELECT COUNT(*) INTO v_pending FROM public.physical_inventory_items
@@ -13279,7 +13290,8 @@ BEGIN
   IF v_pi.status IN ('conciliated','closed','voided') THEN
     RAISE EXCEPTION 'ERR_CANNOT_VOID_STATE: un inventario % no puede anularse; utilice la reversión de los ajustes generados', v_pi.status;
   END IF;
-  IF NOT public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[]) THEN
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[])) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED_VOID';
   END IF;
 

@@ -3,9 +3,10 @@
 /**
  * CreatePhysicalInventoryModal — flujo guiado de creación.
  *
- * Datos generales: tienda (limitada a membresías activas), fecha de corte
- * (≤ ahora), descripción, responsable, alcance (catálogo / categoría /
- * selección), modo ciego y observaciones.
+ * Datos generales: tienda (autorizadas según rol — nivel administrativo ve su
+ * alcance; roles operativos ven sus membresías activas, ver
+ * useAuthorizedStores), fecha de corte (≤ ahora), descripción, responsable,
+ * alcance (catálogo / categoría / selección), modo ciego y observaciones.
  *
  * La fecha de corte NO es la fecha de creación ni la de aprobación: la RPC
  * congelará las existencias teóricas correspondientes al corte al PREPARAR.
@@ -13,12 +14,13 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, ClipboardCheck, EyeOff, CalendarClock, PackageSearch, X } from 'lucide-react';
+import { Loader2, ClipboardCheck, EyeOff, CalendarClock, PackageSearch, X, AlertTriangle, RefreshCw } from 'lucide-react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { apiFetch } from '@/lib/api-fetch';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
+import { useAuthorizedStores } from '@/hooks/api/useAuthorizedStores';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PI_SCOPE_LABELS } from './pi-types';
@@ -33,7 +35,6 @@ const inputCls =
   'w-full min-h-[44px] rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30';
 const labelCls = 'text-[10px] font-black uppercase tracking-widest text-muted-foreground';
 
-interface StoreOpt { id: string; name: string; }
 interface ProductOpt { id: string; name: string; sku: string | null; category: string | null; }
 
 export const CreatePhysicalInventoryModal: React.FC<Props> = ({ open, onOpenChange, onCreated }) => {
@@ -55,49 +56,32 @@ export const CreatePhysicalInventoryModal: React.FC<Props> = ({ open, onOpenChan
   const [observations, setObservations] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Tiendas autorizadas: membresías activas del usuario
-  const storeOptions = useMemo<StoreOpt[]>(() => {
-    const active = (user?.memberships || []).filter((m) => m.status === 'active');
-    return active
-      .map((m) => (m.store ? { id: m.store.id, name: m.store.name } : null))
-      .filter((s): s is StoreOpt => !!s);
-  }, [user]);
+  // Tiendas autorizadas — MISIÓN PI-SUPERADMIN (2026-10-26): fuente única
+  // compartida con la vista del módulo. Antes este modal construía las
+  // opciones SOLO con user.memberships → el SuperAdmin de plataforma (sin
+  // membresías POR DISEÑO, §6 20260826120000) veía «Sin Tiendas Autorizadas».
+  // El hook distingue carga / error / ausencia legítima y consulta con el
+  // token del usuario (la RLS es la barrera final).
+  const {
+    data: effectiveStores = [],
+    isLoading: storesLoading,
+    error: storesError,
+    refetch: refetchStores,
+  } = useAuthorizedStores();
 
-  // Fallback: si las membresías no traen el objeto store, consultar por ids
-  const membershipIds = useMemo(
-    () => (user?.memberships || [])
-      .filter((m) => m.status === 'active')
-      .map((m) => m.store_id)
-      .filter((id): id is string => !!id),
-    [user]
-  );
-
+  // Selección por defecto: la tienda activa del usuario SI está dentro de las
+  // autorizadas; si no, la primera autorizada. Nunca deja un storeId fuera de
+  // las opciones (evita desincronización select/estado y envíos a tiendas no
+  // autorizadas — el servidor revalida de todos modos).
   useEffect(() => {
-    if (!storeId) {
-      if (user?.activeStoreId) setStoreId(user.activeStoreId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.activeStoreId]);
-
-  const { data: storesFromIds = [] } = useQuery({
-    queryKey: ['pi-create-stores', membershipIds.join(',')],
-    queryFn: async () => {
-      if (storeOptions.length > 0 || membershipIds.length === 0) return [] as StoreOpt[];
-      const { data } = await supabase
-        .from('stores')
-        .select('id, name')
-        .in('id', membershipIds)
-        .eq('is_active', true);
-      return (data || []) as StoreOpt[];
-    },
-    enabled: open && storeOptions.length === 0 && membershipIds.length > 0,
-    staleTime: 60_000,
-  });
-
-  const effectiveStores = storeOptions.length > 0 ? storeOptions : storesFromIds;
-  useEffect(() => {
-    if (open && !storeId && effectiveStores.length > 0) setStoreId(effectiveStores[0].id);
-  }, [open, effectiveStores, storeId]);
+    if (!open || effectiveStores.length === 0) return;
+    if (effectiveStores.some((s) => s.id === storeId)) return;
+    const preferred =
+      user?.activeStoreId && effectiveStores.some((s) => s.id === user.activeStoreId)
+        ? user.activeStoreId
+        : effectiveStores[0].id;
+    setStoreId(preferred);
+  }, [open, effectiveStores, storeId, user?.activeStoreId]);
 
   // Categorías de la tienda (products.category — texto)
   const { data: categories = [] } = useQuery({
@@ -137,10 +121,14 @@ export const CreatePhysicalInventoryModal: React.FC<Props> = ({ open, onOpenChan
 
   const canSubmit = useMemo(() => {
     if (!storeId || !cutoffDate) return false;
+    // La tienda elegida debe estar en la lista autorizada cargada (el servidor
+    // revalida membresía/nivel administrativo en withStoreAccess + RPC).
+    if (!effectiveStores.some((s) => s.id === storeId)) return false;
+    if (storesLoading || !!storesError) return false;
     if (scopeType === 'category' && selectedCats.length === 0) return false;
     if (scopeType === 'selection' && selectedProducts.length === 0) return false;
     return true;
-  }, [storeId, cutoffDate, scopeType, selectedCats, selectedProducts]);
+  }, [storeId, cutoffDate, effectiveStores, storesLoading, storesError, scopeType, selectedCats, selectedProducts]);
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
@@ -209,13 +197,38 @@ export const CreatePhysicalInventoryModal: React.FC<Props> = ({ open, onOpenChan
               className={inputCls}
               value={storeId}
               onChange={(e) => setStoreId(e.target.value)}
-              disabled={submitting}
+              disabled={submitting || storesLoading}
             >
-              {effectiveStores.length === 0 && <option value="">Sin tiendas autorizadas</option>}
+              {storesLoading && <option value="">Cargando tiendas…</option>}
+              {storesError && <option value="">Error al cargar tiendas</option>}
+              {!storesLoading && !storesError && effectiveStores.length === 0 && (
+                <option value="">Sin tiendas autorizadas</option>
+              )}
               {effectiveStores.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
+            {/* Estados diferenciados: un error de carga NO se presenta como
+                «Sin tiendas autorizadas» (requisito misión §5.4/§6.G) */}
+            {storesError ? (
+              <p role="alert" className="flex items-center justify-between gap-2 text-[10px] font-bold text-destructive">
+                <span className="flex min-w-0 items-center gap-1">
+                  <AlertTriangle className="h-3 w-3 shrink-0" />
+                  <span className="truncate">No se pudieron cargar las tiendas ({storesError.message}).</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => refetchStores()}
+                  className="flex shrink-0 items-center gap-1 rounded-md border border-destructive/40 px-2 py-1 hover:bg-destructive/10"
+                >
+                  <RefreshCw className="h-3 w-3" /> Reintentar
+                </button>
+              </p>
+            ) : !storesLoading && effectiveStores.length === 0 ? (
+              <p className="text-[10px] text-muted-foreground">
+                No tiene tiendas autorizadas. Solicite acceso al administrador de su organización.
+              </p>
+            ) : null}
           </div>
           <div className="space-y-1.5">
             <label className={labelCls} htmlFor="pi-cutoff">Fecha y hora de corte</label>

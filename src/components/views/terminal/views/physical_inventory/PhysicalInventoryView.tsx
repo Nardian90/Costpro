@@ -13,7 +13,6 @@
  * solo reflejan lo que el backend permite; no son la seguridad.
  */
 
-import { isAdminLevel } from '@/lib/roles';
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -23,7 +22,7 @@ import {
 import { cn, formatDate, touch } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
-import { supabase } from '@/lib/supabaseClient';
+import { useAuthorizedStores } from '@/hooks/api/useAuthorizedStores';
 import { PrimaryButton } from '@/components/ui/atomic';
 import { CreatePhysicalInventoryModal } from './CreatePhysicalInventoryModal';
 import { PhysicalInventoryDetail } from './PhysicalInventoryDetail';
@@ -43,31 +42,17 @@ export default function PhysicalInventoryView() {
   const [createOpen, setCreateOpen] = useState(false);
   const [openPiId, setOpenPiId] = useState<string | null>(null);
 
-  // Tiendas autorizadas del usuario (para el filtro de tienda)
-  const authorizedStores = useMemo(() => {
-    const active = (user?.memberships || []).filter((m) => m.status === 'active');
-    const ids = active.map((m) => m.store_id).filter((id): id is string => !!id);
-    return ids;
-  }, [user]);
+  // Tiendas autorizadas del usuario (filtro de tienda) — MISIÓN PI-SUPERADMIN
+  // (2026-10-26): fuente única compartida con el modal de creación (hook
+  // useAuthorizedStores). El nivel administrativo (admin|superadmin) consulta
+  // las tiendas activas de su alcance (RLS decide); los roles operativos,
+  // solo sus membresías. Antes esta vista duplicaba la consulta y el modal
+  // quedaba sin la rama administrativa.
+  const { data: authorizedStores = [] } = useAuthorizedStores();
 
   const [storeFilter, setStoreFilter] = useState<string>('');
 
-  const storeQuery = useQuery({
-    queryKey: ['pi-stores', authorizedStores.join(',')],
-    queryFn: async () => {
-      // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
-      if (isAdminLevel(user?.role)) {
-        const { data } = await supabase.from('stores').select('id, name').eq('is_active', true).limit(30);
-        return (data || []) as Array<{ id: string; name: string }>;
-      }
-      if (authorizedStores.length === 0) return [] as Array<{ id: string; name: string }>;
-      const { data } = await supabase.from('stores').select('id, name').in('id', authorizedStores).limit(30);
-      return (data || []) as Array<{ id: string; name: string }>;
-    },
-    staleTime: 120_000,
-  });
-
-  const effectiveStore = storeFilter || activeStoreId || (storeQuery.data?.[0]?.id ?? '');
+  const effectiveStore = storeFilter || activeStoreId || (authorizedStores[0]?.id ?? '');
 
   const { data: inventories = [], isLoading, isFetching, refetch } = useQuery({
     queryKey: ['physical-inventories', effectiveStore, statusFilter, dateFrom, dateTo, search],
@@ -141,7 +126,7 @@ export default function PhysicalInventoryView() {
             value={effectiveStore}
             onChange={(e) => setStoreFilter(e.target.value)}
           >
-            {(storeQuery.data || []).map((s) => (
+            {(authorizedStores).map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
