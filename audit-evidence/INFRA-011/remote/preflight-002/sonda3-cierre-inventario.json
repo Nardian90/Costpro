@@ -1,0 +1,91 @@
+{
+  "tablas_exactas": [
+    {
+      "tablename": "payment_transactions_purga_20261026_archive"
+    },
+    {
+      "tablename": "physical_inventories"
+    }
+  ],
+  "rls_inventario": [
+    {
+      "relname": "physical_inventories",
+      "rls": true
+    },
+    {
+      "relname": "physical_inventory_adjustments",
+      "rls": true
+    },
+    {
+      "relname": "physical_inventory_count_log",
+      "rls": true
+    },
+    {
+      "relname": "physical_inventory_items",
+      "rls": true
+    },
+    {
+      "relname": "physical_inventory_sheets",
+      "rls": true
+    }
+  ],
+  "triggers_inventario": [
+    {
+      "tgname": "trg_generate_pi_number"
+    },
+    {
+      "tgname": "trg_pi_recalc_and_guard"
+    },
+    {
+      "tgname": "trg_touch_pi_on_item_change"
+    },
+    {
+      "tgname": "trg_validate_pi_transition"
+    }
+  ],
+  "archivo_filas": [
+    {
+      "archivadas": 2
+    }
+  ],
+  "sale_v2_sobrecargas": [
+    {
+      "args": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb",
+      "m74_v241": false,
+      "m75_v225": false,
+      "m73_v240": false
+    },
+    {
+      "args": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb, p_cash_received_cup numeric, p_cash_received_usd numeric, p_change_given_cup numeric, p_change_given_usd numeric, p_change_currency text",
+      "m74_v241": true,
+      "m75_v225": false,
+      "m73_v240": true
+    }
+  ],
+  "open_shift_74": [
+    {
+      "m74": true
+    }
+  ],
+  "rev_devolution_79": [
+    {
+      "m79": false
+    }
+  ],
+  "close_shift_82": [
+    {
+      "m82": false
+    },
+    {
+      "m82": false
+    }
+  ],
+  "fn_caja_82_targets": [
+    {
+      "proname": "register_supplier_payment"
+    },
+    {
+      "proname": "reverse_devolution"
+    }
+  ]
+}

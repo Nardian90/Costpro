@@ -1,0 +1,236 @@
+{
+  "aplicadas_ok": [
+    "20260831000001_w9_f07_reset_store_data_acl.sql",
+    "20260902000001_w9_f01_rls_hardening.sql",
+    "20260902000002_w9_f06_secdef_execute_hardening.sql",
+    "20260902200923_w9_f06_c2_hardening.sql",
+    "20260902205210_w9_f06_h1_security_definer_search_path.sql",
+    "20260902231200_w9_f45_h4_reverse_receipt_v2_reconcile.sql",
+    "20260903030000_w9_h5b1_retire_reverse_transaction_v1.sql",
+    "20260904030000_w9_obs1_fix_cash_report_double_conversion.sql",
+    "20260905000001_w9_b8_modelo_c_undo_reverse_authorization.sql",
+    "20260905000002_w9_b10_reverse_document_authorization.sql",
+    "20260905120000_w9_b10b_modernize_reverse_devolution.sql",
+    "20260909000000_rem_f4_04_register_reception_canonical_wac.sql",
+    "20260909000001_rem_f4_03_grant_withdraw_production_item_v3.sql",
+    "20260909000003_rem_f4_06b_audit_fiscal_closing_record_id_uuid.sql",
+    "20260909000004_rem_f4_06c_fiscal_close_rpc_contract.sql",
+    "20260911000000_rem_sec1_security_boundaries.sql",
+    "20260911000100_rem_po1_production_orders_boundaries.sql",
+    "20260913000001_rem_inv_3c_restore_document_transition_validator.sql",
+    "20260915000001_rem_inv_4a_r_rc1_rc2_supervisor_gate_audit_acl.sql",
+    "20260915000002_rem_inv_4b_rc3_transferable_stores_identity_binding.sql",
+    "20260915000003_rem_inv_5_csm_advisory_lock.sql",
+    "20260916000001_rem_inv_6_materialize_certified_function_surface.sql",
+    "20260916000002_rem_inv_6_reconcile_function_acl.sql",
+    "20260916000003_rem_inv_6r_rescue_hidden_write_surface.sql",
+    "20260916000004_rem_inv_6r_kpi_store_access_guard.sql",
+    "20260916000005_rem_r2_a_high_read_guards.sql",
+    "20260916000006_rem_r2_b_medium_read_guards.sql",
+    "20260916000007_rem_r2_c_low_read_guards.sql",
+    "20260916000008_rem_f2bug_transfers_status_cast.sql",
+    "20260926000001_esec_price_integrity.sql",
+    "20260927000001_esec_final_definitive_policy.sql",
+    "20260927000002_f4_create_sale_v2_acl_reconciliation.sql",
+    "20261004120000_enervida_import_vale_salida_operation_date.sql",
+    "20261004120001_enervida_import_devolution_operation_date.sql",
+    "20261004120002_enervida_import_adjustment_skip_access_consistency.sql",
+    "20261004130000_h0r_create_sale_v2_hardening.sql",
+    "20261004130001_h0r_tax_configurations_authority.sql",
+    "20261004130002_h0r_store_exchange_rates_authority.sql",
+    "20261004130003_h0r_update_transaction_taxes.sql",
+    "20261004130004_h0r_acl_reconciler.sql",
+    "20261005120000_e2e_hard_delete_store.sql",
+    "20261005120000_fix_rpc_overload_ambiguity.sql",
+    "20261005120001_bug022_reports_private_bucket.sql",
+    "20261005120001_e2e_hard_delete_user.sql",
+    "20261005130000_cta_family_auth_usage.sql",
+    "20261005140000_drop_v1_sale_devolution.sql",
+    "20261005150000_cta_family_rls_policies.sql",
+    "20261009000001_v2_16_0_managed_create_v2_trigger_coexistence.sql",
+    "20261009000002_v2_16_1_managed_create_v2_store_ordering.sql",
+    "20261010000001_v2_17_0_bulk_assign_memberships_actor.sql",
+    "20261010000002_v2_18_0_servicios_actor_y_caja.sql",
+    "20261012000001_cash_report_adjustments.sql",
+    "20261014000000_create_sale_v2_item_currency_rate.sql",
+    "20261014080000_regularize_sale_payment.sql",
+    "20261015000000_regularize_sale_payment_acl_lockdown.sql",
+    "20261015000001_service_types_global_acceptance.sql",
+    "20261017000000_pos_payment_incidents_negative_guard.sql",
+    "20261018000000_politica_temporal_coherente.sql",
+    "20261018000001_drop_legacy_create_sale_v2_overload.sql",
+    "20261019000001_cp_sec_027_catalogo_publico.sql",
+    "20261019000002_cp_sec_027_vistas_solo_select.sql",
+    "20261019000002_create_sale_v2_overload_acl_reconciliation.sql",
+    "20261020000001_services_item_type_model.sql",
+    "20261020000002_sec_definer_hardening.sql",
+    "20261020000004_cogs_derived.sql",
+    "20261020000005_legal_incidents_index.sql",
+    "20261021000001_cash_flow_documents.sql",
+    "20261021120000_nulidad_compuesta_refunds_devolucion.sql",
+    "20261022000001_cash_flow_documents_pgrst_cache.sql",
+    "20261022000001_cp_sec_003_products_update_policy_consolidation.sql",
+    "20261022000002_cp_ui_001_commission_payments_no_overlap.sql"
+  ],
+  "pendientes": [
+    {
+      "pos": 72,
+      "nombre": "20261023000000_create_physical_inventory_module.sql",
+      "bytes": 66267,
+      "sha256_original": "fd483761397c79f3632ec3516d6d654b0fdaa933a1d32d6d7196f6ab9a553157",
+      "sha256_generado": "fd483761397c79f3632ec3516d6d654b0fdaa933a1d32d6d7196f6ab9a553157"
+    },
+    {
+      "pos": 73,
+      "nombre": "20261023230000_mision_caja_multimoneda_v2_24_0.sql",
+      "bytes": 115084,
+      "sha256_original": "e36ecb55ce8d1549e53da7eaaebdb535b31a5d91fd4ee031d38cd46b1292d6cb",
+      "sha256_generado": "e36ecb55ce8d1549e53da7eaaebdb535b31a5d91fd4ee031d38cd46b1292d6cb"
+    },
+    {
+      "pos": 74,
+      "nombre": "20261024120000_revision_final_caja_v2_24_1.sql",
+      "bytes": 106477,
+      "sha256_original": "df7a1f3725d690dec21bbc051c66f53f0b788165c944de30fd629efbf549dc66",
+      "sha256_generado": "df7a1f3725d690dec21bbc051c66f53f0b788165c944de30fd629efbf549dc66"
+    },
+    {
+      "pos": 75,
+      "nombre": "20261024150000_mision_pagos_mixtos_multimoneda_v2_25_0.sql",
+      "bytes": 62697,
+      "sha256_original": "0c4970220cb0dc536c29d79e727c47c2d9814734c4632b1ad9f0559d2f6ed4d6",
+      "sha256_generado": "0c4970220cb0dc536c29d79e727c47c2d9814734c4632b1ad9f0559d2f6ed4d6"
+    },
+    {
+      "pos": 76,
+      "nombre": "20261024180000_auditoria_caja_idempotencia_determinista.sql",
+      "bytes": 22218,
+      "sha256_original": "8a616b5bbeaf2155166d1b94996952d72a28932ad90f330863b5304b8a8c43c0",
+      "sha256_generado": "8a616b5bbeaf2155166d1b94996952d72a28932ad90f330863b5304b8a8c43c0"
+    },
+    {
+      "pos": 77,
+      "nombre": "20261024220000_saldo_fisico_egresos_multimoneda.sql",
+      "bytes": 30852,
+      "sha256_original": "bf0c0d28091734a5c359a56bbe4c1433df679597ba6b9f47f51aeb2d6f5229ea",
+      "sha256_generado": "bf0c0d28091734a5c359a56bbe4c1433df679597ba6b9f47f51aeb2d6f5229ea"
+    },
+    {
+      "pos": 78,
+      "nombre": "20261024230000_devoluciones_reembolso_fisico_moneda.sql",
+      "bytes": 27052,
+      "sha256_original": "9428ec2d51c6ea5086a9f3c48924314cf44d327eac916e2c2ffcbd19108e9a8b",
+      "sha256_generado": "9428ec2d51c6ea5086a9f3c48924314cf44d327eac916e2c2ffcbd19108e9a8b"
+    },
+    {
+      "pos": 79,
+      "nombre": "20261024400000_devoluciones_recuperacion_reversa.sql",
+      "bytes": 125067,
+      "sha256_original": "6154bdf96e4b185aa0475c1dde0e75a58e4c489b245efff3d7d9942bbf874c9c",
+      "sha256_generado": "6154bdf96e4b185aa0475c1dde0e75a58e4c489b245efff3d7d9942bbf874c9c"
+    },
+    {
+      "pos": 80,
+      "nombre": "20261025120000_cp_money_002_postmerge_integrity.sql",
+      "bytes": 68093,
+      "sha256_original": "4f5303867b686e514474c336954f2bc961d9fd9cc919e8ac136c5ed3763d7b76",
+      "sha256_generado": "4f5303867b686e514474c336954f2bc961d9fd9cc919e8ac136c5ed3763d7b76"
+    },
+    {
+      "pos": 81,
+      "nombre": "20261025130000_cp_money_002_acl_revoke_anon.sql",
+      "bytes": 5853,
+      "sha256_original": "d796f70c3d478e3cac9d4b5e6b58d3bafb679c4236d6d05e4c02ecd1d10152f1",
+      "sha256_generado": "d796f70c3d478e3cac9d4b5e6b58d3bafb679c4236d6d05e4c02ecd1d10152f1"
+    },
+    {
+      "pos": 82,
+      "nombre": "20261026000000_caja_serializacion_commit_coherente.sql",
+      "bytes": 101185,
+      "sha256_original": "756ce7b5c196c37d1d057c9253241e9161bf9fa54b905fb1e3d1bbfc1c9b3ec1",
+      "sha256_generado": "756ce7b5c196c37d1d057c9253241e9161bf9fa54b905fb1e3d1bbfc1c9b3ec1"
+    },
+    {
+      "pos": 83,
+      "nombre": "20261026100000_caja_acl_anon_revoke.sql",
+      "bytes": 3223,
+      "sha256_original": "24ea442ef06f7ccfea8be0735d0ae1b788e09d97ee446472167c287f85321b0d",
+      "sha256_generado": "24ea442ef06f7ccfea8be0735d0ae1b788e09d97ee446472167c287f85321b0d"
+    },
+    {
+      "pos": 84,
+      "nombre": "20261026120000_organizaciones_superadmin_pertenencia_unica.sql",
+      "bytes": 15968,
+      "sha256_original": "5cc60a88dc32ca2930e6a53d75999eee7b8e209a0bd1b066a57d55c9544bb490",
+      "sha256_generado": "5cc60a88dc32ca2930e6a53d75999eee7b8e209a0bd1b066a57d55c9544bb490"
+    },
+    {
+      "pos": 85,
+      "nombre": "20261026130000_cp_org001_platform_role_guards.sql",
+      "bytes": 16785,
+      "sha256_original": "431768e3d8acd076cff039bda544866cce8cdf01da33224d174827cf9541a333",
+      "sha256_generado": "431768e3d8acd076cff039bda544866cce8cdf01da33224d174827cf9541a333"
+    },
+    {
+      "pos": 86,
+      "nombre": "20261026140000_cp_org001_tenants_rls_platform_only.sql",
+      "bytes": 4165,
+      "sha256_original": "5e32bfac567463e05ff816354cecd9c703abb3ba8a163366fa29aaefaff1c01e",
+      "sha256_generado": "5e32bfac567463e05ff816354cecd9c703abb3ba8a163366fa29aaefaff1c01e"
+    },
+    {
+      "pos": 87,
+      "nombre": "20261026150000_payment_tx_integrity.sql",
+      "bytes": 7608,
+      "sha256_original": "548c874b8ce8076bdc8c695698e5146d9ccc84666fd3a4712047c3a8444f4dec",
+      "sha256_generado": "548c874b8ce8076bdc8c695698e5146d9ccc84666fd3a4712047c3a8444f4dec"
+    },
+    {
+      "pos": 88,
+      "nombre": "20261026160000_superadmin_store_access.sql",
+      "bytes": 4556,
+      "sha256_original": "66fdf5f9c73ef23f3b9c60d0cbe96abd12b74fcb65b8960a29ac3bc5196d3ee0",
+      "sha256_generado": "66fdf5f9c73ef23f3b9c60d0cbe96abd12b74fcb65b8960a29ac3bc5196d3ee0"
+    },
+    {
+      "pos": 89,
+      "nombre": "20261026170000_superadmin_active_store_trigger.sql",
+      "bytes": 6123,
+      "sha256_original": "d41d974647251faa3b1ce883fa6f44fb1bf48db51dc5a8c306024c97b280ce83",
+      "sha256_generado": "d41d974647251faa3b1ce883fa6f44fb1bf48db51dc5a8c306024c97b280ce83"
+    },
+    {
+      "pos": 90,
+      "nombre": "20261026180000_cp_org001_platform_acl_revoke.sql",
+      "bytes": 2979,
+      "sha256_original": "3fd5dc19cc248fe7918d81ca0ed8d34189bdd3a145d0f600b8e13d64b66167dd",
+      "sha256_generado": "3fd5dc19cc248fe7918d81ca0ed8d34189bdd3a145d0f600b8e13d64b66167dd"
+    },
+    {
+      "pos": 91,
+      "nombre": "20261026200000_efectivo_fisico_disponibilidad.sql",
+      "bytes": 24760,
+      "sha256_original": "2fcd6decf0c8d9cdc2a3d8262f324b800b751a77d06d3574a5864ceb9a0d0e2e",
+      "sha256_generado": "2fcd6decf0c8d9cdc2a3d8262f324b800b751a77d06d3574a5864ceb9a0d0e2e"
+    },
+    {
+      "pos": 92,
+      "nombre": "20261026210000_cp_org_003_fase2_bootstrap_tenant_admin.sql",
+      "bytes": 9704,
+      "sha256_original": "13f339d72044745ab6b0950e09c9d0ffb57f86ab591862336f8b08c9f7e64887",
+      "sha256_generado": "13f339d72044745ab6b0950e09c9d0ffb57f86ab591862336f8b08c9f7e64887"
+    },
+    {
+      "pos": 93,
+      "nombre": "20261027000000_inteligencia_diviza_source.sql",
+      "bytes": 95833,
+      "sha256_original": "b77a9cecd2fdcc2676a59898b2aae2a1eb6c592720759e3fac7b2e1f384355d4",
+      "sha256_generado": "b77a9cecd2fdcc2676a59898b2aae2a1eb6c592720759e3fac7b2e1f384355d4"
+    }
+  ],
+  "divergentes_sha": [],
+  "out_of_band_en_registro": {
+    "20261026120000_organizaciones_superadmin_pertenencia_unica.sql": false,
+    "20261026130000_cp_org001_platform_role_guards.sql": false
+  }
+}
