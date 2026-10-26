@@ -138,7 +138,14 @@ export function CajaStatusStrip() {
               {fondo != null ? formatCurrency(fondo) : summary.isError ? 'N/D' : '…'}
             </span>
             <span className="block text-[10px] text-muted-foreground">
-              {turnoAbierto ? 'Pendiente de devolver al cierre' : 'Constitúyelo al abrir el turno'}
+              {/* MISIÓN CP-CASH-OPENING-001: composición explícita del KPI —
+                  con turno abierto, fondo_vigente = fondo inicial declarado
+                  (físico, por moneda) + constituciones − devoluciones del
+                  mecanismo documental (get_cash_flow_summary). Nunca incluye
+                  la valoración canónica ni residuos de valoración. */}
+              {turnoAbierto
+                ? 'Fondo inicial del turno (físico) + constituciones − devoluciones · pendiente de devolver al cierre'
+                : 'Sin turno: decláralo al abrir el turno o vía Ingresos/Egresos'}
             </span>
           </span>
         </div>

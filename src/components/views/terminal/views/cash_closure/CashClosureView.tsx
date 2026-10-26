@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 // CAMBIO 2026-10: el botón "Reporte Entrega" navega a la vista dedicada cash_report;
 // el modal CashReportModal fue eliminado (fuente única = CashReportView).
 
-import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSinceLastClosure, useCashShiftExpected } from '@/hooks/api/useCashClosures';
+import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSinceLastClosure, useCashShiftExpected, useOpenCashShift } from '@/hooks/api/useCashClosures';
 import { computeArqueo, type CashShiftBreakdown } from '@/lib/cash-arqueo';
 import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
@@ -76,12 +76,21 @@ export default function CashClosureView() {
 
   const createClosure = useCreateCashClosure();
   const updateClosure = useUpdateCashClosure();
+  // MISIÓN CP-CASH-OPENING-001: apertura por la vía autoritativa (RPC
+  // open_cash_shift vía /api/cash-closures/open) con degradación legada.
+  const openShift = useOpenCashShift();
 
   const [declaredCash, setDeclaredCash] = useState<number>(0);
   // MISIÓN CAJA v2.24.0 (D8): lado USD FÍSICO — contado/apertura por moneda.
   const [declaredCashUsd, setDeclaredCashUsd] = useState<number>(0);
   const [declaredVouchers, setDeclaredVouchers] = useState<number>(0);
   const [notes, setNotes] = useState<string>('');
+  // MISIÓN CP-CASH-OPENING-001: causa de la diferencia de apertura (contado −
+  // libro físico). Obligatoria cuando hay discrepancia — regla espejo del RPC
+  // open_cash_shift (ERR_OPENING_DIFFERENCE_NOTE_REQUIRED).
+  const [differenceNote, setDifferenceNote] = useState<string>('');
+  // Clave de idempotencia estable por apertura lógica (patrón v2.26).
+  const idempotenciaRef = useRef<{ firma: string; key: string } | null>(null);
 
   // ── Confirmation modal ──
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
@@ -174,24 +183,42 @@ export default function CashClosureView() {
     });
   }, [pendingClosure]);
 
+  // ═══ MISIÓN CP-CASH-OPENING-001: base de la apertura = LIBRO FÍSICO por
+  // moneda (get_cash_shift_expected.physical_cash — migración 20261026200000),
+  // NUNCA el esperado canónico. «Fondo Inicial de Efectivo» es una declaración
+  // de BILLETES contados: prellenarla con la valoración canónica presentaba el
+  // residuo de valoración (p. ej. 2.820,00 CUP con libro 0/0) como fondo
+  // inicial y, tras un cierre, además omitía el efectivo heredado del cajón
+  // (sin turno pendiente la ventana canónica no lleva base de apertura).
+  // Degradación limpia: sin physical_cash (migración no aplicada) se usa el
+  // saldo heredado estimado anterior y la UI lo declara en el hint.
+  const libroFisicoApertura = shiftExpected?.physical_cash ?? null;
+  const usaLibroFisico = !pendingClosure && libroFisicoApertura != null;
+  const baseAperturaCup = usaLibroFisico
+    ? Math.round((Number(libroFisicoApertura?.CUP) || 0) * 100) / 100
+    : Math.round((Number(shiftExpected?.expected_cash) || 0) * 100) / 100;
+  const baseAperturaUsd = usaLibroFisico
+    ? Math.round((Number(libroFisicoApertura?.USD) || 0) * 100) / 100
+    : Math.round((Number(shiftExpected?.expected_cash_usd) || 0) * 100) / 100;
+
   // MISIÓN CAJA v2.24.0 (§10): APERTURA con saldo heredado por moneda.
-  // El saldo inicial esperado = efectivo acumulado según movimientos
-  // persistidos (CUP canónico + USD físico del libro). Se PRELLLENA para que
-  // el cajero CONFIRME el efectivo contado; si declara otra cosa, la
-  // diferencia se DOCUMENTA (opening_difference_*) — jamás se sobreescribe
-  // el saldo silenciosamente ni se impone cero por conveniencia.
+  // Se PRELLLENA para que el cajero CONFIRME el efectivo contado; si declara
+  // otra cosa, la diferencia se DOCUMENTA (opening_difference_*) — jamás se
+  // sobreescribe el saldo silenciosamente ni se impone cero por conveniencia.
   const prefillDoneRef = useRef<string | null>(null);
   useEffect(() => {
     if (pendingClosure || isLoadingExpected || !shiftExpected) return;
     const key = `${user?.activeStoreId ?? ''}:${shiftExpected.window_start}`;
     if (prefillDoneRef.current === key) return;
     prefillDoneRef.current = key;
-    const expCup = Math.round((Number(shiftExpected.expected_cash) || 0) * 100) / 100;
-    const expUsd = Math.round((Number(shiftExpected.expected_cash_usd) || 0) * 100) / 100;
-    setDeclaredCash(expCup);
-    setDeclaredCashUsd(expUsd);
+    // MISIÓN CP-CASH-OPENING-001: prellenar con el LIBRO FÍSICO por moneda
+    // (lo que el cajón contiene según los movimientos persistidos) — nunca
+    // con la valoración canónica. El cajero ajusta al conteo real.
+    setDeclaredCash(baseAperturaCup);
+    setDeclaredCashUsd(baseAperturaUsd);
     setDeclaredVouchers(0);
-  }, [pendingClosure, isLoadingExpected, shiftExpected, user?.activeStoreId]);
+    setDifferenceNote('');
+  }, [pendingClosure, isLoadingExpected, shiftExpected, user?.activeStoreId, baseAperturaCup, baseAperturaUsd]);
 
   const totalDeclared = declaredCash + declaredVouchers;
 
@@ -205,9 +232,26 @@ export default function CashClosureView() {
   const usdDiff = pendingClosure
     ? Math.round((declaredCashUsd - expectedCashUsd) * 100) / 100
     : 0;
-  // Diferencias de APERTURA documentadas (contado al abrir − esperado heredado).
-  const openingDiffCup = Math.round((declaredCash - (Number(shiftExpected?.expected_cash) || 0)) * 100) / 100;
-  const openingDiffUsd = Math.round((declaredCashUsd - expectedCashUsd) * 100) / 100;
+  // MISIÓN CP-CASH-OPENING-001: diferencias de APERTURA documentadas contra
+  // el LIBRO FÍSICO por moneda (contado − libro) — la base correcta de una
+  // declaración de billetes. Antes se comparaba contra el esperado canónico:
+  // un conteo correcto de 0 con residuo 2.820 quedaba marcado como
+  // «diferencia de apertura −2.820» (clasificación errónea de la valoración).
+  const openingDiffCup = Math.round((declaredCash - baseAperturaCup) * 100) / 100;
+  const openingDiffUsd = Math.round((declaredCashUsd - baseAperturaUsd) * 100) / 100;
+  const hayDiferenciaApertura = !pendingClosure
+    && (Math.abs(openingDiffCup) > 0.01 || Math.abs(openingDiffUsd) > 0.01);
+  const motivoDiferencia = differenceNote.trim();
+  // Regla espejo del RPC open_cash_shift: discrepancia contado vs libro exige
+  // causa documentada (≥ 10 caracteres). JAMÁS ingresos/egresos automáticos.
+  const motivoValido = motivoDiferencia.length >= 10;
+  const aperturaBloqueada = hayDiferenciaApertura && !motivoValido;
+  // Residuo de valoración INFORMATIVO en la apertura (esperado canónico −
+  // libro físico CUP): visible y trazable, jamás fondo, jamás disponible.
+  const aperturaResidualCup = !pendingClosure && shiftExpected?.physical_cash != null
+    ? Math.round(((Number(shiftExpected.expected_cash) || 0) - (Number(shiftExpected.physical_cash.CUP) || 0)) * 100) / 100
+    : null;
+  const hayResidualApertura = aperturaResidualCup != null && Math.abs(aperturaResidualCup) >= 0.005;
 
   // MISIÓN CAJA v2.24.0 (§9): lado USD FÍSICO del arqueo — equivalente
   // contable identificado como tal; no reemplaza el control de cantidades
@@ -266,38 +310,55 @@ export default function CashClosureView() {
         }
       });
     } else {
-      // FIX F3-01: Al abrir, guardar fondo inicial en opening_balance Y en declared_cash
-      // (declared_cash se sobreescriirá al cerrar, opening_balance se preserva)
-      // MISIÓN CAJA v2.24.0 (§10): apertura POR MONEDA — el lado canónico CUP
-      // se conserva (opening_balance) y se descompone físicamente
-      // (opening_balance_cup/usd). Si lo contado difiere del esperado heredado,
-      // la diferencia se DOCUMENTA en opening_difference_* + nota de auditoría.
+      // ═══ MISIÓN CP-CASH-OPENING-001: apertura por la VÍA AUTORITATIVA ═══
+      // POST /api/cash-closures/open → RPC open_cash_shift: base del LIBRO
+      // FÍSICO por moneda, nota de diferencia obligatoria, apertura canónica
+      // CUP con los billetes USD valorados a la tasa del SERVIDOR, idempotencia
+      // y auditoría atómica. La apertura NO crea movimientos de caja: el fondo
+      // declarado es la base del arqueo al cierre (se contabiliza UNA vez).
       const r2v24 = (n: number) => Math.round(n * 100) / 100;
-      const expCup = Number(shiftExpected?.expected_cash) || 0;
-      const expUsd = Number(shiftExpected?.expected_cash_usd) || 0;
-      const diffCup = r2v24(declaredCash - expCup);
-      const diffUsd = r2v24(declaredCashUsd - expUsd);
-      const diffNote = (Math.abs(diffCup) > 0.004 || Math.abs(diffUsd) > 0.004)
-        ? `[APERTURA CON DIFERENCIA DOCUMENTADA] esperado CUP ${r2v24(expCup)} / USD ${r2v24(expUsd)}; contado CUP ${r2v24(declaredCash)} / USD ${r2v24(declaredCashUsd)}.`
+      const motivo = hayDiferenciaApertura ? motivoDiferencia : null;
+      const diffNote = hayDiferenciaApertura
+        ? `[APERTURA CON DIFERENCIA DOCUMENTADA] libro CUP ${r2v24(baseAperturaCup)} / USD ${r2v24(baseAperturaUsd)}; contado CUP ${r2v24(declaredCash)} / USD ${r2v24(declaredCashUsd)}. Causa: ${motivo}`
         : null;
-      createClosure.mutate({
+      // Clave de idempotencia estable por apertura LÓGICA: se reutiliza en
+      // reintentos con los mismos valores (el índice único de turno pendiente
+      // y el idempotency_registry del RPC evitan duplicados) y se regenera al
+      // cambiar cualquier valor declarado.
+      const firmaApertura = `${user.activeStoreId}|${r2v24(declaredCash)}|${r2v24(declaredCashUsd)}|${notes.trim()}|${motivo ?? ''}`;
+      if (idempotenciaRef.current?.firma !== firmaApertura) {
+        idempotenciaRef.current = { firma: firmaApertura, key: `open-${crypto.randomUUID()}` };
+      }
+      openShift.mutate({
         store_id: user.activeStoreId,
-        user_id: user.id,
-        declared_cash: declaredCash, // fondo inicial (se sobreescribe al cerrar)
-        opening_balance: declaredCash, // FIX F3-01: preservar fondo inicial
-        // MISIÓN CAJA v2.24.0 (D8): descomposición física por moneda
-        opening_balance_cup: declaredCash,
-        opening_balance_usd: declaredCashUsd,
-        opening_difference_cup: Math.abs(diffCup) > 0.004 ? diffCup : null,
-        opening_difference_usd: Math.abs(diffUsd) > 0.004 ? diffUsd : null,
-        opening_difference_note: diffNote,
-        declared_cash_usd: declaredCashUsd,
-        declared_vouchers: declaredVouchers,
-        declared_total: totalDeclared,
-        system_expected_total: 0,
-        difference: 0,
-        notes: [notes, diffNote].filter(Boolean).join(' ') || null,
-        status: 'pendiente'
+        counted_cup: r2v24(declaredCash),
+        counted_usd: r2v24(declaredCashUsd),
+        opening_note: notes.trim() || null,
+        difference_note: motivo,
+        idempotency_key: idempotenciaRef.current.key,
+        // Fallback legado (501 fallback:true — RPC ausente en el esquema):
+        // INSERT directo bajo RLS con los MISMOS valores confirmados en el
+        // formulario. «Otros Fondos Iniciales» ELIMINADO de la apertura
+        // (dictamen Fase D): declared_vouchers queda en 0 — el campo solo
+        // tiene sentido en el cierre como «Transferencias Contadas».
+        legacy_insert: {
+          store_id: user.activeStoreId,
+          user_id: user.id,
+          declared_cash: r2v24(declaredCash), // fondo inicial (se sobreescribe al cerrar)
+          opening_balance: r2v24(declaredCash), // FIX F3-01: preservar fondo inicial
+          opening_balance_cup: r2v24(declaredCash),
+          opening_balance_usd: r2v24(declaredCashUsd),
+          opening_difference_cup: Math.abs(openingDiffCup) > 0.01 ? openingDiffCup : null,
+          opening_difference_usd: Math.abs(openingDiffUsd) > 0.01 ? openingDiffUsd : null,
+          opening_difference_note: motivo,
+          declared_cash_usd: r2v24(declaredCashUsd),
+          declared_vouchers: 0,
+          declared_total: r2v24(declaredCash),
+          system_expected_total: 0,
+          difference: 0,
+          notes: [notes.trim(), diffNote].filter(Boolean).join(' ') || null,
+          status: 'pendiente',
+        },
       });
     }
   };
@@ -305,7 +366,10 @@ export default function CashClosureView() {
   const handleProcessClosure = () => {
     // Show confirmation modal before proceeding
     if (!pendingClosure) {
-      // Apertura de turno
+      // Apertura de turno — regla espejo del RPC: sin causa documentada para
+      // la discrepancia contado vs libro, la apertura no se oferta (botón
+      // deshabilitado; guard defensivo ante cualquier otra vía de invocación).
+      if (aperturaBloqueada) return;
       setShowOpenConfirm(true);
     } else if (pendingClosure && canClose) {
       // Cierre (admin/manager)
@@ -328,7 +392,7 @@ export default function CashClosureView() {
     executeProcessClosure();
   };
 
-  const isProcessing = createClosure.isPending || updateClosure.isPending;
+  const isProcessing = createClosure.isPending || updateClosure.isPending || openShift.isPending;
   const isRefreshing = isRefetchingClosures || isRefetchingSales || isRefetchingExpected;
   const isLoading = isLoadingClosures || isLoadingSales || isLoadingExpected;
   // F3-B1: error de carga solo bloquea si además no hay datos que mostrar;
@@ -354,13 +418,21 @@ export default function CashClosureView() {
   const cashInputLabel = isOpening ? 'Fondo Inicial de Efectivo (CUP)' : 'Efectivo Contado CUP (Final)';
   const cashInputPlaceholder = isOpening ? 'Ej. 100.00 (cambio inicial)' : '0.00';
   const cashInputHint = isOpening
-    ? 'Cuánto efectivo en CUP dejas en la caja (prellenado con el saldo heredado — ajusta al conteo real).'
+    ? (usaLibroFisico
+        ? 'Billetes CUP con los que abre el cajón — prellenado con el LIBRO FÍSICO por moneda; ajusta al conteo real.'
+        : 'Billetes CUP con los que abre el cajón — prellenado con el saldo heredado estimado (libro físico no disponible en este entorno); ajusta al conteo real.')
     : 'Cuenta el efectivo físico en CUP al final del turno.';
   const cashUsdInputLabel = isOpening ? 'Fondo Inicial USD (físico)' : 'Efectivo Contado USD (Final)';
   const cashUsdInputHint = isOpening
-    ? 'Billetes USD con los que arranca el cajón (prellenado con el libro físico).'
+    ? 'Billetes USD con los que arranca el cajón (prellenado con el libro físico por moneda).'
     : 'Billetes USD contados al cerrar — el arqueo USD se registra sin autoajuste.';
-  const vouchersInputLabel = isOpening ? 'Otros Fondos Iniciales (opcional)' : 'Transferencias Contadas (Final)';
+  // MISIÓN CP-CASH-OPENING-001 (Fase D): «Otros Fondos Iniciales (opcional)»
+  // ELIMINADO de la apertura — ambiguo (sin moneda; mezclaba vouchers con un
+  // fondo físico) y sin función contable (open_cash_shift no lo acepta; nada
+  // consume los vouchers de apertura). El campo se conserva EXCLUSIVAMENTE
+  // en el cierre como «Transferencias Contadas (Final)» (conciliación por
+  // vouchers — legítima e inequívoca).
+  const vouchersInputLabel = 'Transferencias Contadas (Final)';
   const notesLabel = isOpening ? 'Notas de Apertura' : 'Observaciones del Cierre';
 
   const actions: Action[] = [
@@ -386,7 +458,11 @@ export default function CashClosureView() {
       icon: buttonIcon,
       onClick: handleProcessClosure,
       variant: buttonVariant,
-      disabled: isProcessing || isLoadingSales
+      // MISIÓN CP-CASH-OPENING-001: en la apertura, la discrepancia contado vs
+      // libro físico sin causa documentada BLOQUEA el botón (regla clara y
+      // trazable — espejo de ERR_OPENING_DIFFERENCE_NOTE_REQUIRED del RPC).
+      disabled: isProcessing || isLoadingSales || aperturaBloqueada,
+      ...(aperturaBloqueada ? { title: 'Documenta la causa de la diferencia (mínimo 10 caracteres) para habilitar la apertura.' } : {})
     }
   ];
 
@@ -493,7 +569,10 @@ export default function CashClosureView() {
                   <button
                     type="button"
                     onClick={() => setShowOpenConfirm(true)}
-                    className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all"
+                    disabled={aperturaBloqueada}
+                    title={aperturaBloqueada ? 'Documenta la causa de la diferencia contado vs libro (mínimo 10 caracteres) en el formulario de apertura.' : undefined}
+                    data-testid="btn-abrir-turno-vacio"
+                    className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Play className="w-4 h-4" />
                     Abrir Turno
@@ -622,6 +701,11 @@ export default function CashClosureView() {
                     <p className="text-[10px] text-muted-foreground ml-1">{cashUsdInputHint}</p>
                   </div>
 
+                  {/* MISIÓN CP-CASH-OPENING-001 (Fase D): el campo vouchers YA
+                      NO existe en la apertura («Otros Fondos Iniciales»
+                      eliminado — dictamen en el expediente). Solo se declara
+                      en el CIERRE como «Transferencias Contadas (Final)». */}
+                  {!isOpening && (
                   <div className="space-y-1.5">
                     <label htmlFor="cash-vouchers" className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">
                       {vouchersInputLabel}
@@ -641,15 +725,38 @@ export default function CashClosureView() {
                       />
                     </div>
                   </div>
+                  )}
 
-                  {/* Declared total preview */}
+                  {/* MISIÓN CP-CASH-OPENING-001: en la apertura NO se suman
+                      monedas distintas — el fondo se declara POR MONEDA. En el
+                      cierre el total declarado sigue siendo CUP canónico +
+                      vouchers (ambos expresados en CUP). */}
                   <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">
-                        {isOpening ? 'Fondo Total Inicial' : 'Total Declarado'}
-                      </span>
-                      <span className="text-2xl font-black font-mono text-primary">{formatCurrency(totalDeclared)}</span>
-                    </div>
+                    {isOpening ? (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">
+                            Fondo inicial declarado (por moneda)
+                          </span>
+                        </div>
+                        <div className="flex items-baseline gap-3 tabular-nums mt-1">
+                          <span className="text-2xl font-black font-mono text-primary">{formatCurrency(declaredCash)}</span>
+                          <span className="text-sm font-black font-mono text-emerald-600 dark:text-emerald-400">
+                            {formatCurrency(declaredCashUsd, 'USD')}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          Billetes CUP y USD por separado — no se suman unidades de monedas distintas.
+                        </p>
+                      </>
+                    ) : (
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">
+                          Total Declarado
+                        </span>
+                        <span className="text-2xl font-black font-mono text-primary">{formatCurrency(totalDeclared)}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">
@@ -665,6 +772,90 @@ export default function CashClosureView() {
                       placeholder={isOpening ? 'Ej. Fondo de cambio entregado por el encargado...' : 'Notas del turno...'}
                     />
                   </div>
+
+                  {/* ═══ MISIÓN CP-CASH-OPENING-001: conciliación de la apertura
+                      contra el LIBRO FÍSICO + residuo de valoración informativo.
+                      La discrepancia contado vs libro exige CAUSA documentada
+                      (regla espejo del RPC); la valoración canónica NUNCA es
+                      fondo ni disponible. ═══ */}
+                  {isOpening && (
+                    <div className="space-y-3">
+                      <div className="rounded-xl border border-border bg-background p-4 space-y-2" data-testid="apertura-conciliacion">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                          Conciliación con el libro físico{usaLibroFisico ? '' : ' (base estimada — libro físico no disponible)'}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 text-xs tabular-nums">
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground font-bold uppercase">Libro CUP</span>
+                            <span className="font-black font-mono">{formatCurrency(baseAperturaCup)}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground font-bold uppercase">Libro USD</span>
+                            <span className="font-black font-mono">{formatCurrency(baseAperturaUsd, 'USD')}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground font-bold uppercase">Contado CUP</span>
+                            <span className="font-black font-mono">{formatCurrency(declaredCash)}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground font-bold uppercase">Contado USD</span>
+                            <span className="font-black font-mono">{formatCurrency(declaredCashUsd, 'USD')}</span>
+                          </div>
+                        </div>
+                        <div className={cn(
+                          'flex justify-between items-center p-3 rounded-lg border',
+                          hayDiferenciaApertura ? 'bg-warning/10 border-warning/30' : 'bg-success/10 border-success/25',
+                        )} data-testid="apertura-diferencia">
+                          <span className="text-[10px] font-black uppercase tracking-widest">
+                            Diferencia de apertura (contado − libro)
+                          </span>
+                          <span className={cn('text-sm font-black font-mono tabular-nums', hayDiferenciaApertura ? 'text-warning' : 'text-success')} data-testid="apertura-diferencia-cifra">
+                            {openingDiffCup > 0 ? '+' : ''}{formatCurrency(openingDiffCup)} CUP · {openingDiffUsd > 0 ? '+' : ''}{formatCurrency(openingDiffUsd, 'USD')}
+                          </span>
+                        </div>
+                        {hayDiferenciaApertura && (
+                          <div className="space-y-1.5" data-testid="apertura-motivo">
+                            <label htmlFor="opening-difference-note" className="text-[10px] font-black uppercase tracking-widest text-warning block">
+                              Causa de la diferencia (obligatoria — mínimo 10 caracteres)
+                            </label>
+                            <textarea
+                              id="opening-difference-note"
+                              aria-label="Causa de la diferencia de apertura"
+                              value={differenceNote}
+                              onChange={(e) => setDifferenceNote(e.target.value)}
+                              className={cn(
+                                'w-full p-3 rounded-xl border bg-background text-xs font-medium resize-none h-16 focus:ring-1 outline-none',
+                                motivoValido ? 'border-success/40 focus:ring-success' : 'border-warning/50 focus:ring-warning',
+                              )}
+                              placeholder="Ej. Faltan billetes por entrega no registrada; sobrante por vuelto sin registrar…"
+                            />
+                            {!motivoValido && (
+                              <p className="text-[10px] font-bold text-warning" data-testid="apertura-motivo-aviso">
+                                La apertura no puede completarse con una discrepancia sin causa documentada. Corrige el conteo o registra la causa autorizada — el sistema NUNCA genera ingresos ni egresos automáticos para cuadrar.
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {hayResidualApertura && (
+                        <div className="rounded-xl border border-warning/40 bg-warning/5 px-4 py-3 flex items-start gap-2.5" data-testid="apertura-residual" role="status">
+                          <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" aria-hidden="true" />
+                          <div className="min-w-0 text-[11px] leading-relaxed">
+                            <p className="font-black uppercase tracking-widest text-[10px] text-warning">
+                              Diferencia de valoración contable CUP — no es efectivo disponible
+                            </p>
+                            <p className="tabular-nums mt-0.5">
+                              <span className="font-black">{formatCurrency(aperturaResidualCup ?? 0)}</span>
+                              <span className="text-muted-foreground"> · esperado canónico {formatCurrency(Number(shiftExpected?.expected_cash) || 0)} − libro físico {formatCurrency(Number(shiftExpected?.physical_cash?.CUP) || 0)}</span>
+                            </p>
+                            <p className="text-muted-foreground mt-0.5">
+                              Valoración de cobros y entregas en otra moneda a sus tasas históricas. Este importe no prellena el fondo inicial ni autoriza salidas — el fondo se declara con billetes contados.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -857,28 +1048,47 @@ export default function CashClosureView() {
             ¿Confirmas la <span className="text-primary uppercase">apertura de turno</span>?
           </p>
           <div className="rounded-xl bg-muted/50 border border-border p-4 space-y-2">
+            {/* MISIÓN CP-CASH-OPENING-001: el fondo se confirma POR MONEDA
+                (billetes contados) contra el LIBRO FÍSICO — nunca la
+                valoración canónica ni vouchers ajenos al conteo. */}
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-muted-foreground uppercase">Fondo Inicial CUP</span>
+              <span className="text-xs font-bold text-muted-foreground uppercase">Fondo contado CUP</span>
               <span className="text-xs font-black text-primary tabular-nums">{formatCurrency(declaredCash)}</span>
             </div>
-            {/* MISIÓN CAJA v2.24.0: apertura por moneda */}
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-muted-foreground uppercase">Fondo Inicial USD (físico)</span>
+              <span className="text-xs font-bold text-muted-foreground uppercase">Fondo contado USD (físico)</span>
               <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{formatCurrency(declaredCashUsd, 'USD')}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-muted-foreground uppercase">Total (CUP canónico + vouchers)</span>
-              <span className="text-xs font-black text-primary tabular-nums">{formatCurrency(totalDeclared)}</span>
+              <span className="text-xs font-bold text-muted-foreground uppercase">
+                Libro físico esperado{usaLibroFisico ? '' : ' (estimado)'}
+              </span>
+              <span className="text-xs font-black tabular-nums">
+                {formatCurrency(baseAperturaCup)} · {formatCurrency(baseAperturaUsd, 'USD')}
+              </span>
             </div>
+            {hayDiferenciaApertura && (
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-warning uppercase">Diferencia documentada</span>
+                <span className="text-xs font-black text-warning tabular-nums">
+                  {openingDiffCup > 0 ? '+' : ''}{formatCurrency(openingDiffCup)} CUP · {openingDiffUsd > 0 ? '+' : ''}{formatCurrency(openingDiffUsd, 'USD')}
+                </span>
+              </div>
+            )}
             <div className="text-[10px] text-muted-foreground">
-              Este fondo se usará como base para calcular la diferencia al cerrar el turno.
+              Este fondo físico es la base del arqueo al cierre. La apertura NO crea movimientos de caja: cada entrada o salida de dinero se documenta aparte (Ingresos/Egresos) con su causa y responsable.
             </div>
           </div>
-          {(Math.abs(openingDiffCup) > 0.004 || Math.abs(openingDiffUsd) > 0.004) && (
+          {hayDiferenciaApertura && (
             <div className="p-3 rounded-xl bg-warning/10 border border-warning/25 text-[11px] font-bold text-warning text-center leading-relaxed">
-              Diferencia de apertura documentada: esperado CUP {formatCurrency(Number(shiftExpected?.expected_cash) || 0)} / USD {formatCurrency(Number(shiftExpected?.expected_cash_usd) || 0, 'USD')} —
-              lo contado difiere ({openingDiffCup > 0 ? '+' : ''}{formatCurrency(openingDiffCup)} CUP, {openingDiffUsd > 0 ? '+' : ''}{formatCurrency(openingDiffUsd, 'USD')}).
-              La diferencia queda registrada en auditoría (no se sobreescribe el saldo silenciosamente).
+              Apertura con diferencia documentada contra el libro físico — causa: «{motivoDiferencia}».
+              La diferencia queda registrada en auditoría (no se sobreescribe el saldo silenciosamente ni se generan movimientos compensatorios).
+            </div>
+          )}
+          {hayResidualApertura && (
+            <div className="p-3 rounded-xl bg-muted/50 border border-border text-[11px] text-muted-foreground leading-relaxed">
+              Existe además una diferencia de valoración contable de {formatCurrency(aperturaResidualCup ?? 0)} (esperado canónico − libro físico CUP)
+              por flujos en otra moneda valorados a tasas históricas: es una valoración, NO efectivo disponible — no forma parte del fondo declarado.
             </div>
           )}
           <p className="text-xs text-muted-foreground text-center leading-relaxed">
