@@ -33,13 +33,33 @@ export function useSalesSinceLastClosure(storeId?: string | null) {
   });
 }
 
+/**
+ * MISIÓN CP-CASH-OPENING-001: invalidación CONSOLIDADA del estado de caja.
+ *
+ * Apertura, cierre, actualización de declaración y documentos Ingresos/Egresos
+ * comparten el mismo grafo de consultas. Antes la apertura/cierre solo
+ * invalidaba cash-closures + sales-since-last-closure: el estado del turno
+ * (active-shift, refresco 30s) y los KPIs de Inicio/Caja (cash-shift-expected,
+ * 60s; cash-flow-summary; libro cash-ledger) quedaban RANCIOS hasta un minuto
+ * tras abrir o cerrar el turno — la interfaz mostraba «Sin turno abierto» con
+ * el turno ya creado (requisito Fase F: refresco correcto al cambiar de turno).
+ */
+function invalidateCajaState(queryClient: { invalidateQueries: (q: { queryKey: unknown[] }) => void }) {
+  queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
+  queryClient.invalidateQueries({ queryKey: ['sales-since-last-closure'] });
+  queryClient.invalidateQueries({ queryKey: ['active-shift'] });
+  queryClient.invalidateQueries({ queryKey: ['cash-shift-expected'] });
+  queryClient.invalidateQueries({ queryKey: ['cash-flow-summary'] });
+  queryClient.invalidateQueries({ queryKey: ['cash-ledger'] });
+  queryClient.invalidateQueries({ queryKey: ['cash-currency-summary'] });
+}
+
 export function useCreateCashClosure() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (closure: Partial<CashClosure>) => cashService.createClosure(closure),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
-      queryClient.invalidateQueries({ queryKey: ['sales-since-last-closure'] });
+      invalidateCajaState(queryClient);
       toast.success('Declaración de fondos registrada correctamente');
     },
     onError: (error: unknown) => {
@@ -79,13 +99,92 @@ export function useUpdateCashClosure() {
     },
     onSuccess: () => {
       // Iteración 11.4: audit ahora atómico en RPC — no llamar logCashClosureFinalized
-      queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
-      queryClient.invalidateQueries({ queryKey: ['sales-since-last-closure'] });
+      invalidateCajaState(queryClient);
       toast.success('Cierre de caja finalizado correctamente');
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : String(error);
       toast.error(`Error al finalizar cierre: ${message}`);
+    },
+  });
+}
+
+export interface OpenCashShiftPayload {
+  store_id: string;
+  /** Billetes CUP contados al abrir (fondo inicial físico CUP). */
+  counted_cup: number;
+  /** Billetes USD contados al abrir (fondo inicial físico USD). */
+  counted_usd: number;
+  /** Notas de apertura (libre). */
+  opening_note?: string | null;
+  /** Motivo de la diferencia contado − libro físico (exigido por el RPC). */
+  difference_note?: string | null;
+  /** Clave de idempotencia estable por apertura lógica (patrón v2.26). */
+  idempotency_key?: string | null;
+  /**
+   * Fila del INSERT LEGADO (bajo RLS) que se usa SOLO si la ruta responde
+   * 501 fallback:true — entorno sin el RPC open_cash_shift aplicado. La
+   * construye la UI con los mismos valores confirmados en el formulario.
+   */
+  legacy_insert?: Partial<CashClosure>;
+}
+
+/**
+ * MISIÓN CP-CASH-OPENING-001 — apertura de turno por la vía AUTORITATIVA.
+ *
+ * POST /api/cash-closures/open → RPC open_cash_shift (service_role): el saldo
+ * esperado sale del LIBRO FÍSICO por moneda (nunca del esperado canónico), la
+ * diferencia de apertura exige nota de causa, la apertura canónica CUP valora
+ * los billetes USD a la tasa del servidor, y todo queda en auditoría con
+ * idempotencia. Degradación explícita: si el RPC no existe en el esquema, la
+ * ruta responde 501 {fallback:true} y se ejecuta el INSERT legado bajo RLS
+ * (comportamiento previo a esta misión) con los valores ya corregidos por la
+ * UI — abrir caja JAMÁS queda bloqueado por una migración pendiente.
+ */
+export function useOpenCashShift() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      payload: OpenCashShiftPayload,
+    ): Promise<{ via: 'rpc' | 'legacy'; data: unknown }> => {
+      const { legacy_insert: legacyInsert, ...body } = payload;
+      const response = await fetch('/api/cash-closures/open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (response.status === 501) {
+        const err = await response.json().catch(() => ({}) as { fallback?: boolean });
+        if (err?.fallback) {
+          // Degradación: RPC ausente → INSERT legado (RLS aplica como siempre).
+          const row = await cashService.createClosure(
+            legacyInsert ?? {
+              store_id: body.store_id,
+              declared_cash: body.counted_cup,
+              opening_balance: body.counted_cup,
+              status: 'pendiente',
+            },
+          );
+          return { via: 'legacy', data: row };
+        }
+      }
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(err.error || `HTTP ${response.status}`);
+      }
+      return { via: 'rpc', data: await response.json() };
+    },
+    onSuccess: (result) => {
+      invalidateCajaState(queryClient);
+      toast.success(
+        result.via === 'legacy'
+          ? 'Turno abierto (vía legada — RPC de apertura no disponible en este entorno)'
+          : 'Turno abierto: fondo inicial físico registrado',
+      );
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Error al abrir el turno: ${message}`);
     },
   });
 }
