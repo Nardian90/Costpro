@@ -6,7 +6,18 @@
  */
 
 export type Currency = 'CUP' | 'USD' | 'EUR' | 'MLC' | string;
-export type RateSource = 'BCC_seg1' | 'BCC_seg2' | 'BCC_seg3' | 'elToque' | 'Manual';
+/**
+ * Fuente de tasa del motor de costeo (IC-DIVIZA-003):
+ *   - 'BCC_seg1/2/3' → oficial por segmento.
+ *   - 'Diviza' → informal ACTIVA (cubadivisas.com) — la única informal con
+ *     derecho a calcular la tasa actual del costeo.
+ *   - 'elToque' → LEGADO: valor persistido en preferencias de versiones
+ *     anteriores; al leerlo se normaliza a 'Diviza' (normalizeCosteoRateSource
+ *     en src/lib/exchange-sources.ts). ElToque es archivo histórico y JAMÁS
+ *     alimenta el cálculo vigente.
+ *   - 'Manual' → solo simulación manual.
+ */
+export type RateSource = 'BCC_seg1' | 'BCC_seg2' | 'BCC_seg3' | 'Diviza' | 'elToque' | 'Manual';
 export type DistributionMethod = 'quantity' | 'cost_value' | 'weight' | 'manual';
 export type RiskLevel = 'muy_bajo' | 'bajo' | 'medio' | 'alto' | 'critico';
 

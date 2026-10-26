@@ -675,13 +675,13 @@ export function usePOSCheckout() {
           let usdToCupRate = cartState.globalRates['USD'] || 0;
 
           if (usdToCupRate === 0) {
-            // Fetch tasa informal (pseudo-fuente 'informal': la más reciente
-            // entre Diviza [activa] y elToque [histórica], por frescura)
+            // Fetch tasa informal (pseudo-fuente 'informal': la vigente de la
+            // fuente ACTIVA Diviza — IC-DIVIZA-003: elToque está retirada)
             const rateRes = await fetch('/api/exchange-rates?currency=USD&source=informal&days=1');
             if (rateRes.ok) {
               const rateData = await rateRes.json();
-              // informal_latest: la informal vigente resuelta server-side por
-              // frescura (Diviza activa > elToque histórica > carry-forward)
+              // informal_latest: la informal vigente resuelta server-side
+              // (Diviza activa; sin arrastres de fuentes históricas)
               if (rateData.informal_latest?.rate) {
                 usdToCupRate = parseFloat(rateData.informal_latest.rate) || 0;
               } else if (rateData.rates && rateData.rates.length > 0) {

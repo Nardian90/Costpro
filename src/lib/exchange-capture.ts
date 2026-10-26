@@ -23,6 +23,11 @@
  *     BD» distinga éxito completo de éxito parcial; (4) se persiste
  *     source_updated_at (hora en que DIVIZA actualizó su cotización),
  *     distinta de captured_at (hora en que CostPro capturó).
+ *   - IC-DIVIZA-003 (2026-10-26): elToque RETIRADA como fuente activa — es
+ *     ARCHIVO HISTÓRICO (serie congelada 2025-12-25 → 2026-07-28, ver
+ *     src/lib/exchange-sources.ts). Las listas de fuentes activas vs
+ *     históricas viven en exchange-sources.ts: la única informal ACTIVA es
+ *     Diviza; elToque jamás se captura, selecciona o arrastra.
  *
  * REGLAS ACTUALES (misión 2026-10-26):
  *   - Tasas BCC: siempre `capture_method='real'` (API pública directa).
@@ -39,6 +44,8 @@
  */
 
 import { getOperativeDate, buildOperativeDateRange } from './operative-date';
+// IC-DIVIZA-003: registro único de fuentes activas vs históricas.
+import { INFORMAL_ACTIVE_SOURCES, INFORMAL_HISTORICAL_SOURCES } from './exchange-sources';
 
 // Constantes (antes magic numbers esparcidos)
 export const BCC_API_BASE = 'https://api.bc.gob.cu/v1/tasas-de-cambio';
@@ -46,8 +53,16 @@ export const CURRENCIES = ['USD', 'EUR'] as const;
 export const DEFAULT_USD_ESPECIAL = 574;
 export const DEFAULT_EUR_ESPECIAL = 653;
 
-/** Fuentes informales válidas en exchange_rates.source (orden de prioridad). */
-export const INFORMAL_SOURCES = ['Diviza', 'elToque'] as const;
+/**
+ * Fuentes informales (registro único en exchange-sources.ts):
+ *   - ACTIVAS  (INFORMAL_ACTIVE_SOURCES = ['Diviza']): la única que se
+ *     captura y la única con derecho a vigencia.
+ *   - HISTÓRICAS (INFORMAL_HISTORICAL_SOURCES = ['elToque']): archivo
+ *     verificable; jamás se captura, selecciona, arrastra o estima.
+ * Se re-exportan para que los consumidores (tests, cron, endpoints) tengan
+ * UNA sola fuente de verdad importable desde la lib de captura.
+ */
+export { INFORMAL_ACTIVE_SOURCES, INFORMAL_HISTORICAL_SOURCES };
 
 /**
  * Método de captura.

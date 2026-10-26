@@ -419,7 +419,7 @@ export interface Transaction {
   change_currency?: 'CUP' | 'USD' | null;
   /** Tasa USD usada en la liquidación (cobro o vuelto en USD). */
   change_exchange_rate?: number | null;
-  /** Fuente de la tasa (store_exchange_rates | global_bcc_seg3 | global_eltoque). */
+  /** Fuente de la tasa (store_exchange_rates | global_bcc_seg3 | global_diviza). */
   change_rate_source?: string | null;
 }
 

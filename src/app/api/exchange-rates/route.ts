@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getOperativeDate, addDaysToDateString, byOperativeDateFirstThenFreshness } from '@/lib/operative-date';
+import {
+  INFORMAL_ACTIVE_SOURCES,
+  isActiveInformalSource,
+  isHistoricalInformalSource,
+} from '@/lib/exchange-sources';
 
 /**
  * IC-AUDIT: API para gestión de tasas de cambio con segmentos BCC.
@@ -8,19 +13,27 @@ import { getOperativeDate, addDaysToDateString, byOperativeDateFirstThenFreshnes
  * GET /api/exchange-rates — devuelve tasas con filtros opcionales:
  *   ?currency=USD&source=BCC&segment=3&days=90
  *
- * Fuentes soportadas (misión IC-DIVIZA 2026-10-26):
+ * Fuentes soportadas (IC-DIVIZA-003, 2026-10-26 — listas DISTINTAS para
+ * activas y históricas, ver src/lib/exchange-sources.ts):
  *   - source=BCC           → tasa oficial por segmento (1/2/3).
- *   - source=Diviza        → tasa informal capturada de cubadivisas.com.
- *   - source=elToque       → tasa informal histórica (serie congelada desde
- *                            2026-07-28; se conserva con su procedencia).
- *   - source=informal      → pseudo-fuente: todas las informales reales +
+ *   - source=Diviza        → tasa informal ACTIVA (cubadivisas.com).
+ *   - source=informal      → pseudo-fuente: la informal ACTIVA (Diviza) +
  *                            resolución server-side de la vigente.
- *   - (sin source)         → BCC + Diviza + elToque.
+ *   - source=elToque       → ARCHIVO HISTÓRICO explícito (serie congelada
+ *                            2025-12-25 → 2026-07-28): filas íntegras con
+ *                            su procedencia, SIN virtuales ni vigencia.
+ *   - (sin source)         → BCC + Diviza (activas). elToque NO se incluye.
  *
- * El carry-forward virtual se aplica POR FUENTE: si la fecha operativa no
- * tiene tasa de una fuente, se arrastra su último valor real con
- * capture_method='carry_forward' y original_rate_date para que la UI muestre
- * la antigüedad.
+ * ElToque está EXCLUÍDA EXPRESAMENTE (misión IC-DIVIZA-003 §1) de: la
+ * selección de la vigente (informal_latest), el carry-forward (ninguna fila
+ * virtual de una fuente histórica), el conteo de arrastres y la respuesta por
+ * defecto. Su histórico se conserva íntegro y solo se sirve bajo demanda
+ * explícita, sin re-fechar ni re-atribuir (§3).
+ *
+ * El carry-forward virtual se aplica SOLO a fuentes activas: si la fecha
+ * operativa no tiene tasa de BCC o Diviza, se arrastra su último valor real
+ * con capture_method='carry_forward' y original_rate_date para que la UI
+ * muestre la antigüedad.
  *
  * IC-DIVIZA-002 (2026-10-26):
  *   - La fecha de vigencia es la FECHA OPERATIVA (civil de Cuba,
@@ -36,8 +49,9 @@ import { getOperativeDate, addDaysToDateString, byOperativeDateFirstThenFreshnes
  */
 
 const CURRENCIES = ['USD', 'EUR', 'MLC']; // MLC no está en BCC API, solo informal
-/** Fuentes informales reales registradas en exchange_rates.source. */
-const INFORMAL_SOURCES = ['Diviza', 'elToque'];
+// Listas de fuentes: ver src/lib/exchange-sources.ts (IC-DIVIZA-003).
+// ACTIVAS: ['Diviza'] — únicas con derecho a vigencia/carry-forward.
+// HISTÓRICAS: ['elToque'] — archivo; jamás alimentan la tasa vigente.
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
@@ -54,14 +68,15 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const segment = searchParams.get('segment') || '3'; // Default: segmento 3 (MIPYMES)
     const days = parseInt(searchParams.get('days') || '90');
 
-    // Resolución de fuentes a consultar.
-    // 'informal' = pseudo-fuente: ambas informales reales; la vigente se
-    // resuelve server-side (informal_latest) con la MISMA regla de la vista.
+    // Resolución de fuentes a consultar (IC-DIVIZA-003 §1).
+    // 'informal' = pseudo-fuente: SOLO la informal ACTIVA (Diviza); la
+    // vigente se resuelve server-side (informal_latest) con la MISMA regla
+    // de la vista. 'elToque' solo entra si se pide EXPLÍCITAMENTE (archivo).
     const sources: string[] = sourceParam
       ? sourceParam === 'informal'
-        ? INFORMAL_SOURCES
+        ? [...INFORMAL_ACTIVE_SOURCES]
         : [sourceParam]
-      : ['BCC', ...INFORMAL_SOURCES];
+      : ['BCC', ...INFORMAL_ACTIVE_SOURCES];
 
     let query = admin.from('exchange_rates').select('*').eq('segment', segment);
 
@@ -84,18 +99,27 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const { data, error } = await query;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // FIX-CARRY-FORWARD: si la fecha operativa no tiene tasa para alguna
-    // combinación source/currency/segment, buscar el último valor disponible
-    // y crear un registro virtual carry-forward para que la UI no muestre
-    // brincos. La fila virtual CONSERVA el captured_at original: su frescura
-    // es la del dato real del que deriva (jamás «ahora») — así no desplaza a
-    // capturas reales más frescas en los ordenamientos por captured_at.
+    // FIX-CARRY-FORWARD (solo fuentes ACTIVAS): si la fecha operativa no
+    // tiene tasa para alguna combinación source/currency/segment de una
+    // fuente ACTIVA (BCC/Diviza), buscar el último valor disponible y crear
+    // un registro virtual carry-forward para que la UI no muestre brincos.
+    // La fila virtual CONSERVA el captured_at original: su frescura es la del
+    // dato real del que deriva (jamás «ahora») — así no desplaza a capturas
+    // reales más frescas en los ordenamientos por captured_at.
+    //
+    // IC-DIVIZA-003 §1/§2: una fuente HISTÓRICA (elToque) JAMÁS genera
+    // arrastres — ni virtuales ni conteo: una fuente muerta no «se arrastrará
+    // hasta que el servicio se restablezca» porque no hay servicio que
+    // restablecer. Sus filas se devuelven solo si se pidieron explícitamente.
     const currencies = currency ? [currency] : CURRENCIES;
     const segments = [segment];
 
     const carryForwardRecords: any[] = [];
 
     for (const src of sources) {
+      // Archivo histórico: excluido EXPRESAMENTE del mecanismo de
+      // carry-forward y del conteo de arrastres (misión §2).
+      if (isHistoricalInformalSource(src)) continue;
       for (const cur of currencies) {
         for (const seg of segments) {
           // Verificar si ya existe un registro para la fecha operativa
@@ -138,28 +162,39 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     }
 
     // Combinar datos reales + carry-forward
-    const allRates = [...(data || []), ...carryForwardRecords].sort(
+    let allRates = [...(data || []), ...carryForwardRecords].sort(
       (a: any, b: any) => a.rate_date.localeCompare(b.rate_date)
     );
 
-    // Pseudo-fuente 'informal': además de devolver todas las filas de los
-    // proveedores informales, se resuelve explícitamente la vigente para que
-    // el consumidor no tenga que duplicar la regla.
+    // IC-DIVIZA-003 §1 (exclusión EXPRESA, defensa en profundidad): salvo
+    // consulta explícita del archivo (source=elToque), las filas históricas
+    // de elToque se EXCLUYEN de la respuesta — no participan en la tasa
+    // vigente, la brecha, los indicadores ni los simuladores que el cliente
+    // calcula a partir de esta respuesta. El filtro del query (.in) ya las
+    // excluye en la BD; esto garantiza que NINGÚN consumidor las reciba.
+    const wantsHistoricalArchive = sources.some(s => isHistoricalInformalSource(s));
+    if (!wantsHistoricalArchive) {
+      allRates = allRates.filter((r: any) => !isHistoricalInformalSource(r.source));
+    }
+
+    // Pseudo-fuente 'informal': además de devolver las filas del proveedor
+    // informal ACTIVO, se resuelve explícitamente la vigente para que el
+    // consumidor no tenga que duplicar la regla.
     //
-    // REGLA (IC-DIVIZA-002, misión §5): la vigente = el registro REAL más
-    // reciente (capture_method !== 'carry_forward'), PRIORIZANDO la fecha
+    // REGLA (IC-DIVIZA-002 §5 + IC-DIVIZA-003 §1): la vigente = el registro
+    // REAL más reciente de una fuente ACTIVA (Diviza), PRIORIZANDO la fecha
     // operativa y luego la frescura de la captura (rate_date DESC,
-    // captured_at DESC). Las filas virtuales de una fuente muerta (elToque
-    // congelado desde 2026-07-28) NO desplazan a una captura Diviza real —
-    // una virtual es una copia presentacional de un dato viejo, no un dato
-    // más fresco. Las filas FUTURAS legado del bug UTC tampoco ganan a la
-    // fila de la fecha operativa. Misma regla exacta en la vista.
+    // captured_at DESC). Las filas virtuales quedan EXCLUIDAS y las de
+    // fuentes históricas (elToque) JAMÁS compiten — una fuente muerta no
+    // puede desplazar a la captura real del proveedor activo. Las filas
+    // FUTURAS legado del bug UTC tampoco ganan a la fila de la fecha
+    // operativa. Misma regla exacta en la vista.
     let informalLatest: Record<string, any> | undefined;
     if (sourceParam === 'informal' && currency) {
       const informalRows = allRates
         .filter(
           (r: any) =>
-            INFORMAL_SOURCES.includes(r.source) &&
+            isActiveInformalSource(r.source) &&
             r.currency === currency &&
             r.capture_method !== 'carry_forward',
         )
@@ -186,6 +221,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       // antigüedad (misión §3: sin divergencias cliente/servidor).
       operative_date: operativeDate,
       informal_latest: informalLatest,
+      // Arrastres SOLO de fuentes activas (IC-DIVIZA-003 §2): representan
+      // exclusivamente las fuentes que corresponde informar como vigentes
+      // (BCC/Diviza). Una fuente histórica jamás aparece aquí.
       carry_forward_count: carryForwardRecords.length,
       carry_forward_dates: carryForwardRecords.map((r: any) => ({
         source: r.source,

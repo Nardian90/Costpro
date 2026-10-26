@@ -183,7 +183,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       p_amount: parsedData.amount,
       p_currency: parsedData.currency,
       // La tasa del cliente NO tiene autoridad financiera (se ignora; el RPC
-      // resuelve la jerarquía canónica: tienda → BCC → elToque).
+      // resuelve la jerarquía canónica: tienda → BCC → Diviza informal).
       p_exchange_rate: null,
       p_operation_date: parsedData.operation_date ?? null,
       p_counterparty: parsedData.counterparty ?? null,

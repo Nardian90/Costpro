@@ -94,12 +94,15 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       date: new Date().toISOString(),
     };
   } else {
-    // Mapear source a la tabla exchange_rates
+    // Mapear source a la tabla exchange_rates (IC-DIVIZA-003: la informal
+    // ACTIVA es Diviza — el valor legado 'elToque' se resuelve con Diviza
+    // porque elToque es archivo histórico y jamás alimenta la tasa actual
+    // del costeo).
     let erSource = 'BCC';
     let erSegment = '3';
     if (rateSource === 'BCC_seg1') { erSource = 'BCC'; erSegment = '1'; }
     else if (rateSource === 'BCC_seg2') { erSource = 'BCC'; erSegment = '2'; }
-    else if (rateSource === 'elToque') { erSource = 'elToque'; erSegment = '3'; }
+    else if (rateSource === 'Diviza' || rateSource === 'elToque') { erSource = 'Diviza'; erSegment = '3'; }
 
     const { data: rateData } = await supabase
       .from('exchange_rates')

@@ -206,7 +206,7 @@ export function CashFlowCreateModal({ open, onClose, storeId, storeName, summary
       warns.push(`La apertura del turno ya declaró un fondo inicial de ${formatCurrency(summary?.opening_balance ?? 0)}. Registra la constitución SOLO si entra dinero NUEVO (reposición) — nunca dos veces el mismo billete.`);
     }
     if (currency === 'USD') {
-      warns.push('El equivalente en CUP lo resuelve el servidor con la tasa vigente de la tienda (jerarquía tienda → BCC → elToque).');
+      warns.push('El equivalente en CUP lo resuelve el servidor con la tasa vigente de la tienda (jerarquía tienda → BCC → Diviza informal).');
     }
     if (docType === 'egreso' && !isFondoConcept(concept) && concept !== 'entrega_efectivo') {
       warns.push('Los gastos de proveedores, servicios y comisiones tienen su propio módulo (Cuentas por Pagar) — usa «Otro egreso» solo para salidas autorizadas sin módulo propio.');

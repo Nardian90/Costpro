@@ -177,7 +177,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
               </p>
             </div>
           </div>
-          {/* Toggle elToque / BCC */}
+          {/* Toggle Informal (Diviza) / BCC */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
             {RATE_SOURCES.map(r => (
               <button
@@ -198,7 +198,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
 
         <p className="text-xs text-muted-foreground italic">
           {rateSource === 'informal'
-            ? 'Usa la tasa del mercado informal cubano (Diviza para la vigente; elToque en el histórico).'
+            ? 'Usa la tasa del mercado informal cubano capturada del proveedor activo (Diviza). El archivo elToque (hasta 2026-07-28) no participa.'
             : 'Usa la tasa oficial del BCC. Recomendado si importas vía sector formal.'}
         </p>
 

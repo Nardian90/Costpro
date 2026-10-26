@@ -218,12 +218,15 @@ describe('ExchangeIntelligenceView — informal Diviza + elToque', () => {
     expect(screen.queryByText('650')).not.toBeInTheDocument();
   });
 
-  it('carry-forward del informal antiguo: avisa con fecha operativa y proveedor', async () => {
+  it('carry-forward del informal antiguo (fuente ACTIVA): avisa con fecha operativa y proveedor', async () => {
+    // IC-DIVIZA-003: el arrastre solo existe para fuentes ACTIVAS. La última
+    // captura REAL de Diviza es de ayer → la tarjeta avisa el arrastre con
+    // la fecha operativa, el badge cita al proveedor ACTIVO (Real · Diviza)
+    // y muestra el valor arrastrado. ElToque jamás llega aquí (archivo).
     mockRatesApi([
       bccRow(TODAY, 380),
-      // La última informal es de ayer (proveedor elToque histórico)
-      elToqueRow(YESTERDAY, 675),
-      elToqueRow(addDaysToDateString(TODAY, -2), 670),
+      divizaRow(YESTERDAY, 675),
+      divizaRow(addDaysToDateString(TODAY, -2), 670),
     ]);
 
     render(<ExchangeIntelligenceView />);
@@ -233,16 +236,22 @@ describe('ExchangeIntelligenceView — informal Diviza + elToque', () => {
         screen.getByText(/Tasa de la fecha operativa.*no disponible\. Usando último valor real de/i),
       ).toBeInTheDocument();
     });
-    // El aviso menciona la procedencia real (badge "Real · elToque")
-    expect(screen.getByText(/^Real · elToque$/)).toBeInTheDocument();
+    // El aviso menciona la procedencia real (badge "Real · Diviza" — activa)
+    expect(screen.getByText(/^Real · Diviza$/)).toBeInTheDocument();
     expect(screen.getAllByText(/675/).length).toBeGreaterThan(0);
+    // El archivo elToque no se cita como proveedor vigente
+    expect(screen.queryByText(/Real · elToque/i)).not.toBeInTheDocument();
   });
 
-  it('estimación histórica se etiqueta "Estimada" — nunca "Real"', async () => {
+  it('estimación histórica se etiqueta "Estimada" — nunca "Real" (fuente activa)', async () => {
+    // IC-DIVIZA-003: la estimación de una fuente ACTIVA (Diviza) se etiqueta
+    // "Estimada". ElToque no puede llegar a esta tarjeta (excluida de la
+    // selección), por lo que la honestidad de la etiqueta se prueba con la
+    // fuente que sí alimenta la vigente.
     mockRatesApi([
       bccRow(TODAY, 380),
       {
-        ...elToqueRow(YESTERDAY, 437),
+        ...divizaRow(YESTERDAY, 437),
         capture_method: 'estimated',
       },
     ]);
@@ -252,6 +261,7 @@ describe('ExchangeIntelligenceView — informal Diviza + elToque', () => {
     await waitFor(() => {
       expect(screen.getByText(/^Estimada$/)).toBeInTheDocument();
     });
+    expect(screen.queryByText(/Real · Diviza/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Real · elToque/i)).not.toBeInTheDocument();
   });
 
@@ -664,10 +674,14 @@ describe('ExchangeIntelligenceView — sistema visual y accesibilidad', () => {
     expect(screen.getByText(/Importar datos históricos por Excel/i)).toBeInTheDocument();
   });
 
-  it('Configuración: proveedor antiguo → estado "Último valor conocido"', async () => {
+  it('Configuración: proveedor antiguo (activo) → estado "Último valor conocido"', async () => {
+    // IC-DIVIZA-003: el estado del proveedor informal sigue SOLO a la fuente
+    // ACTIVA (Diviza). Con BCC e informal antiguos, ambos proveedores activos
+    // reportan "Último valor conocido (antiguo)" — sin inventar capturas de
+    // hoy y sin contar el archivo elToque como proveedor.
     mockRatesApi([
       bccRow(YESTERDAY, 380),
-      elToqueRow(addDaysToDateString(TODAY, -5), 675),
+      divizaRow(addDaysToDateString(TODAY, -5), 675),
     ]);
 
     render(<ExchangeIntelligenceView />);

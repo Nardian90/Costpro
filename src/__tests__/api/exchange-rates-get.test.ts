@@ -1,6 +1,7 @@
 /**
  * exchange-rates-get.test.ts — Pruebas del GET /api/exchange-rates tras
- * IC-DIVIZA-002 (misión §5: garantizar la visualización).
+ * IC-DIVIZA-002 (misión §5) e IC-DIVIZA-003 (retiro de elToque como fuente
+ * activa — 2026-10-26).
  *
  * Cubre los casos de aceptación que atañen a la API de consulta:
  *   - (6) Una fila histórica de elToque no desplaza una captura Diviza más
@@ -14,8 +15,17 @@
  *     la tarjeta use exactamente esa cotización.
  *   - (9) Sin cotizaciones → respuesta honesta vacía; error de Supabase →
  *     500 con el mensaje (nunca datos inventados).
- *   - (10) El histórico elToque se devuelve intacto (sin re-atribución ni
- *     re-fechado).
+ *   - (10) El histórico elToque se devuelve INTACTO SOLO bajo consulta
+ *     explícita (source=elToque) — sin re-atribución ni re-fechado.
+ *
+ * IC-DIVIZA-003 (criterios de aceptación §5):
+ *   - (2) Diviza real + elToque antigua/virtual → gana Diviza; elToque NI
+ *     SIQUIERA se devuelve en source=informal.
+ *   - (4) La API no genera ni devuelve arrastres de elToque para el cálculo
+ *     vigente: ninguna virtual, ningún conteo, ninguna entrada en
+ *     carry_forward_dates — ni en la consulta por defecto ni en informal.
+ *   - El archivo elToque (source=elToque) se sirve íntegro y SIN virtuales.
+ *   - La consulta por defecto (sin source) NO incluye filas elToque.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '@/app/api/exchange-rates/route';
@@ -133,9 +143,10 @@ describe('GET /api/exchange-rates — fecha operativa y selección del informal 
     expect(json.operative_date).toBe(getOperativeDate());
   });
 
-  it('caso 6: informal_latest resuelve la Diviza REAL — la virtual elToque no la desplaza', async () => {
-    // Escenario REAL de producción: Diviza real de hoy + virtual elToque
-    // (fuente muerta 2026-07-28) con captured_at fabricado «ahora».
+  it('caso 6 (IC-DIVIZA-003): informal_latest resuelve la Diviza REAL y elToque NI aparece en la respuesta', async () => {
+    // Escenario REAL de producción: Diviza real de hoy + histórico elToque
+    // (fuente muerta 2026-07-28). Con source=informal la API consulta SOLO
+    // Diviza (fuente activa) y excluye EXPRESAMENTE toda fila elToque.
     const elToqueJulio = elToqueRow('2026-07-28', 675);
     queryResult.data = [
       bccRow(TODAY, 743),
@@ -153,18 +164,20 @@ describe('GET /api/exchange-rates — fecha operativa y selección del informal 
     expect(json.informal_latest.source).toBe('Diviza');
     expect(json.informal_latest.capture_method).toBe('real');
     expect(json.informal_latest.source_updated_at).toBe('2026-10-25T20:03:00-04:00');
-    // La virtual elToque existe para continuidad del gráfico (rate_date hoy)
-    const virtualElToque = (json.rates as Row[]).find(
-      r => r.source === 'elToque' && r.capture_method === 'carry_forward',
-    );
-    expect(virtualElToque).toBeDefined();
-    expect(virtualElToque!.rate).toBe(675);
-    expect(virtualElToque!.original_rate_date).toBe('2026-07-28');
+    // IC-DIVIZA-003 §1: NINGUNA fila elToque en la respuesta (ni real ni
+    // virtual): la fuente histórica no participa en la ruta de datos vigentes.
+    const elToqueRows = (json.rates as Row[]).filter(r => r.source === 'elToque');
+    expect(elToqueRows).toHaveLength(0);
+    // Y por tanto ningún arrastre de elToque en el conteo ni en las fechas
+    expect(json.carry_forward_count).toBe(0);
+    expect((json.carry_forward_dates as any[]).some(d => d.source === 'elToque')).toBe(false);
   });
 
-  it('las virtuales carry-forward CONSERVAN el captured_at original (no «ahora»)', async () => {
-    const elToqueJulio = elToqueRow('2026-07-28', 675);
-    queryResult.data = [bccRow(TODAY, 743), elToqueJulio];
+  it('las virtuales carry-forward de fuentes ACTIVAS CONSERVAN el captured_at original (no «ahora»)', async () => {
+    // IC-DIVIZA-003: elToque jamás genera virtuales; se prueba el mecanismo
+    // con una fuente ACTIVA (BCC de ayer sin fila hoy).
+    const bccAyer = bccRow(YESTERDAY, 743);
+    queryResult.data = [bccAyer, divizaRow(TODAY, 840)];
 
     const before = new Date().toISOString();
     const res = await GET(makeRequest());
@@ -172,14 +185,17 @@ describe('GET /api/exchange-rates — fecha operativa y selección del informal 
     const json = await res.json();
 
     const virtual = (json.rates as Row[]).find(
-      (r: Row) => r.capture_method === 'carry_forward' && r.source === 'elToque' && r.currency === 'USD',
+      (r: Row) => r.capture_method === 'carry_forward' && r.source === 'BCC' && r.currency === 'USD',
     );
     expect(virtual).toBeDefined();
-    // El captured_at de la virtual es el ORIGINAL (2026-07-28), jamás un
+    // El captured_at de la virtual es el ORIGINAL (ayer), jamás un
     // timestamp entre before/after (que era el bug que desplazaba a Diviza).
-    expect(virtual!.captured_at).toBe('2026-07-28T03:32:28Z');
+    expect(virtual!.captured_at).toBe(`${YESTERDAY}T00:11:42Z`);
     expect(virtual!.captured_at < before).toBe(true);
     expect(after > virtual!.captured_at).toBe(true);
+    // El arrastre reportado es SOLO de la fuente activa BCC
+    expect(json.carry_forward_count).toBe(1);
+    expect(json.carry_forward_dates[0]).toMatchObject({ source: 'BCC', currency: 'USD', original_date: YESTERDAY });
   });
 
   it('caso 8: la API devuelve la fila Diviza guardada con sus metadatos exactos', async () => {
@@ -230,7 +246,7 @@ describe('GET /api/exchange-rates — fecha operativa y selección del informal 
     expect(json.error).toContain('does not exist');
   });
 
-  it('caso 10: el histórico elToque se devuelve INTACTO (sin re-atribución ni re-fechado)', async () => {
+  it('caso 10 (IC-DIVIZA-003): el archivo elToque se sirve SOLO bajo source=elToque, INTACTO y SIN virtuales', async () => {
     queryResult.data = [
       bccRow(TODAY, 743),
       divizaRow(TODAY, 840),
@@ -238,7 +254,10 @@ describe('GET /api/exchange-rates — fecha operativa y selección del informal 
       elToqueRow('2026-07-27', 675),
     ];
 
-    const res = await GET(makeRequest());
+    // Consulta EXPLÍCITA del archivo: filas íntegras con procedencia y
+    // fechas originales — sin re-fecharlas a la fecha operativa ni crear
+    // virtuales de arrastre.
+    const res = await GET(makeRequest('?days=90&segment=3&source=elToque'));
     const json = await res.json();
 
     const reales = (json.rates as Row[]).filter(r => r.source === 'elToque' && r.capture_method !== 'carry_forward');
@@ -246,6 +265,46 @@ describe('GET /api/exchange-rates — fecha operativa y selección del informal 
     // Fechas y procedencia originales conservadas
     expect(reales.map(r => r.rate_date).sort()).toEqual(['2026-07-27', '2026-07-28']);
     expect(reales.every(r => r.source === 'elToque')).toBe(true);
+    // SIN virtuales de elToque (misión §2: el archivo jamás se arrastra)
+    expect((json.rates as Row[]).filter(r => r.capture_method === 'carry_forward')).toHaveLength(0);
+    expect(json.carry_forward_count).toBe(0);
+    expect(json.sources_queried).toEqual(['elToque']);
+  });
+
+  it('IC-DIVIZA-003 criterio 4: la consulta por DEFECTO no devuelve ni arrastra filas elToque', async () => {
+    queryResult.data = [
+      bccRow(TODAY, 743),
+      divizaRow(TODAY, 840),
+      elToqueRow('2026-07-28', 675),
+    ];
+
+    const res = await GET(makeRequest());
+    const json = await res.json();
+
+    // Defecto = BCC + Diviza (activas): elToque excluida EXPRESAMENTE de la
+    // respuesta — defensa en profundidad aunque el mock no aplique el filtro
+    // .in() del query (la BD real sí lo aplica; el route vuelve a filtrar).
+    expect((json.rates as Row[]).some(r => r.source === 'elToque')).toBe(false);
+    expect((json.rates as Row[]).some(r => r.source === 'Diviza')).toBe(true);
+    expect(json.sources_queried).toEqual(['BCC', 'Diviza']);
+    expect(json.carry_forward_count).toBe(0);
+    expect((json.carry_forward_dates as any[]).some(d => d.source === 'elToque')).toBe(false);
+  });
+
+  it('IC-DIVIZA-003: solo elToque en BD → source=informal devuelve vacío honesto (archivo jamás vigente)', async () => {
+    queryResult.data = [
+      bccRow(TODAY, 743),
+      elToqueRow('2026-07-28', 675),
+    ];
+
+    const res = await GET(makeRequest('?days=90&segment=3&source=informal&currency=USD'));
+    const json = await res.json();
+
+    // Sin Diviza no hay tasa informal vigente: ni informal_latest ni filas
+    // (elToque NO la sustituye — «Sin dato fiable» en la vista).
+    expect(json.informal_latest).toBeUndefined();
+    expect((json.rates as Row[]).filter(r => r.source === 'elToque')).toHaveLength(0);
+    expect((json.rates as Row[]).filter(r => r.source !== 'BCC')).toHaveLength(0);
   });
 
   it('la vigente de varios días: Diviza de HOY gana a Diviza de ayer (frescura por fecha)', async () => {

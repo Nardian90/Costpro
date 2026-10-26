@@ -7,7 +7,7 @@ import { usage, maybeFlush } from '@/lib/usage-tracker';
 import { waitUntil } from '@vercel/functions';
 
 /**
- * Cron job: captura diaria automática de tasas BCC + elToque.
+ * Cron job: captura diaria automática de tasas BCC + Diviza (informal activa).
  *
  * Schedule en vercel.json: "0 18 * * *" (diariamente a las 18:00 UTC = 14:00 Cuba)
  *

@@ -149,7 +149,7 @@ export function POSCartCheckoutPanel({
   const [receivedCurrency, setReceivedCurrency] = useState<"CUP" | "USD">("CUP");
   // MISIÓN CAJA v2.24.0 (D6): moneda del VUELTO — el cliente paga en una
   // moneda y recibe el cambio en otra (misión §8: paga CUP → vuelto USD).
-  // La tasa la revalida el servidor (jerarquía tienda → BCC → elToque).
+  // La tasa la revalida el servidor (jerarquía tienda → BCC → Diviza informal).
   const [changeCurrency, setChangeCurrency] = useState<"CUP" | "USD">("CUP");
   const [changeUsdOverride, setChangeUsdOverride] = useState("");
   // FIX-CASH-BREAKDOWN (2026-07-10): modal de desglose por billetes/monedas
@@ -424,7 +424,8 @@ export function POSCartCheckoutPanel({
   // ── MISIÓN CAJA v2.24.0 (D6): liquidación del cobro (vuelto multimoneda) ──
   // Identidad canónica revalidada por el RPC: (recibido − vuelto) = cash de la
   // venta ±0.01. La tasa USD se propone con la hidratada del POS y el servidor
-  // la fija con la suya (jerarquía tienda → BCC → elToque — sin tasas ocultas).
+  // la fija con la suya (jerarquía tienda → BCC → Diviza informal — sin tasas
+  // ocultas).
   // Solo cobro simple en efectivo (v1 de la liquidación); mixto mantiene el
   // flujo previo (el RPC acepta liquidación parcial por diseño).
   const changeDueUsd = change > 0 && usdRate > 1 ? Math.round((change / usdRate) * 100) / 100 : null;

@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-25T23:40:19.000Z
+-- Captured  : 2026-10-26T02:34:56.773Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 153 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -2743,7 +2743,7 @@ BEGIN
     IF v_rate IS NULL THEN
       SELECT er.rate, er.rate_date::timestamptz INTO v_rate, v_rate_effective
         FROM public.exchange_rates er
-        WHERE er.currency = 'USD' AND er.source IN ('elToque', 'Diviza')
+        WHERE er.currency = 'USD' AND er.source = 'Diviza'
         ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
     END IF;
     IF v_rate IS NULL OR v_rate <= 1 THEN
@@ -4556,7 +4556,7 @@ BEGIN
 
   -- 10. Tasa de cambio (§6.1): resolución SERVER-SIDE exclusiva. Jerarquía:
   --     store_exchange_rates (updated_at) → exchange_rates BCC seg 3 (rate_date)
-  --     → exchange_rates elToque (rate_date) → fail-closed. D-EXR-01: la tasa
+  --     → exchange_rates Diviza informal (rate_date) → fail-closed. D-EXR-01: la tasa
   --     que gana por precedencia y tiene fecha efectiva > 45 días → ERR_RATE_STALE
   --     (FAIL CLOSED, sin salto silencioso a fuente inferior, sin sustitución por
   --     la tasa del cliente). D-EXR-02: p_sale_exchange_rate queda como dato
@@ -4583,7 +4583,7 @@ BEGIN
       SELECT er.rate, 'global_' || lower(er.source), er.rate_date
         INTO v_server_rate, v_rate_source, v_rate_effective_date
         FROM public.exchange_rates er
-        WHERE er.currency = p_sale_currency AND er.source IN ('elToque', 'Diviza')
+        WHERE er.currency = p_sale_currency AND er.source = 'Diviza'
         ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
     END IF;
     IF v_server_rate IS NULL OR v_server_rate <= 0 THEN
@@ -4713,7 +4713,7 @@ BEGIN
   --        1. Valida la estructura (método ∈ cash|transfer|zelle, moneda ∈
   --           CUP|USD, importe > 0; zelle es riel USD por diseño).
   --        2. Resuelve la TASA USD de la operación con la jerarquía autoritaria
-  --           (tienda → BCC seg3 → elToque, fail-closed, staleness 45 días) —
+  --           (tienda → BCC seg3 → Diviza informal, fail-closed, staleness 45 días) —
   --           la MISMA fuente del §10; para venta USD reutiliza v_server_rate.
   --        3. DERIVA los pools canónicos (v_cash_amt/v_transfer_amt/
   --           v_zelle_amt) desde los componentes a la tasa servidor — el
@@ -4801,11 +4801,11 @@ BEGIN
         SELECT er.rate, 'global_' || lower(er.source), er.rate_date
           INTO v_usd_rate, v_usd_rate_source, v_usd_rate_eff
           FROM public.exchange_rates er
-          WHERE er.currency = 'USD' AND er.source IN ('elToque', 'Diviza')
+          WHERE er.currency = 'USD' AND er.source = 'Diviza'
           ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
       END IF;
       IF v_usd_rate IS NULL OR v_usd_rate <= 1 THEN
-        RAISE EXCEPTION 'ERR_EXCHANGE_RATE_UNAVAILABLE: componentes en USD exigen tasa USD (jerarquía tienda→BCC→elToque) — tienda %', p_store_id;
+        RAISE EXCEPTION 'ERR_EXCHANGE_RATE_UNAVAILABLE: componentes en USD exigen tasa USD (jerarquía tienda→BCC→Diviza) — tienda %', p_store_id;
       END IF;
       IF v_usd_rate_eff < now() - INTERVAL '45 days' THEN
         RAISE EXCEPTION 'ERR_RATE_STALE: currency=USD, store=%, source=%, effective=%',
@@ -4943,11 +4943,11 @@ BEGIN
       IF v_chg_rate IS NULL THEN
         SELECT er.rate, 'global_' || lower(er.source) INTO v_chg_rate, v_chg_rate_src
           FROM public.exchange_rates er
-          WHERE er.currency = 'USD' AND er.source IN ('elToque', 'Diviza')
+          WHERE er.currency = 'USD' AND er.source = 'Diviza'
           ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
       END IF;
       IF v_chg_rate IS NULL OR v_chg_rate <= 1 THEN
-        RAISE EXCEPTION 'ERR_EXCHANGE_RATE_UNAVAILABLE: el cobro/vuelto en USD exige tasa USD de la tienda (jerarquía tienda→BCC→elToque) — sin tasa no se completa la operación (tienda %)', p_store_id;
+        RAISE EXCEPTION 'ERR_EXCHANGE_RATE_UNAVAILABLE: el cobro/vuelto en USD exige tasa USD de la tienda (jerarquía tienda→BCC→Diviza) — sin tasa no se completa la operación (tienda %)', p_store_id;
       END IF;
     END IF;
     v_settle_net_cup := COALESCE(p_cash_received_cup, 0) - COALESCE(p_change_given_cup, 0);
@@ -7958,7 +7958,7 @@ BEGIN
     IF v_usd_rate IS NULL THEN
       SELECT er.rate, 'global_' || lower(er.source) INTO v_usd_rate, v_usd_rate_source
         FROM public.exchange_rates er
-        WHERE er.currency = 'USD' AND er.source IN ('elToque', 'Diviza')
+        WHERE er.currency = 'USD' AND er.source = 'Diviza'
         ORDER BY er.rate_date DESC, er.captured_at DESC LIMIT 1;
     END IF;
     IF v_usd_rate IS NULL OR v_usd_rate <= 1 THEN

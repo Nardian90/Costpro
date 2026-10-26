@@ -40,14 +40,23 @@ import { BaseModal } from '@/components/ui/BaseModal';
 // IC-DIVIZA-002 (misión §3): fecha operativa compartida cliente/servidor
 // (civil de Cuba, America/Havana) — única regla de vigencia diaria.
 import { getOperativeDate, BUSINESS_TIMEZONE, byOperativeDateFirstThenFreshness } from '@/lib/operative-date';
+// IC-DIVIZA-003: registro único de fuentes — la informal ACTIVA es Diviza;
+// elToque es archivo histórico y jamás alimenta la tasa vigente.
+import { isActiveInformalSource } from '@/lib/exchange-sources';
 
 /**
  * IC-2: Inteligencia Cambiaria — AUDIT-2/3/5: Conectado a datos reales de Supabase.
  *
  * IC-DIVIZA (2026-10-26): fuente informal activa = Diviza (cubadivisas.com);
  * solucionescuba.com está caído (última tasa informal previa: 2026-07-28, se
- * conserva como serie histórica source='elToque'). El informal vigente se
- * resuelve por frescura entre ambos proveedores — sin duplicar valores.
+ * conserva como serie histórica source='elToque').
+ *
+ * IC-DIVIZA-003 (2026-10-26): elToque RETIRADA de la ruta de datos vigentes
+ * (ver src/lib/exchange-sources.ts). La selección del informal vigente, la
+ * brecha, los indicadores y los simuladores usan EXCLUSIVAMENTE Diviza. El
+ * histórico elToque (2025-12-25 → 2026-07-28) se conserva como archivo
+ * verificable y NO se muestra como serie actual ni genera avisos de arrastre
+ * de un supuesto servicio que «se restablecerá».
  *
  * SISTEMA VISUAL (rediseño 2026-10-26): una superficie neutra (bg-card +
  * border) para TODAS las tarjetas; UN solo acento (primary) para selección y
@@ -110,18 +119,14 @@ const ALL_TABS = [
 const FALLBACK_OFFICIAL = { USD: 120, EUR: 128, MLC: 120 };
 
 /**
- * Proveedores informales registrados en exchange_rates.source.
- * Diviza = fuente activa (cubadivisas.com, desde 2026-10-26).
- * elToque = serie histórica (2025-12-25 → 2026-07-28, solucionescuba.com era).
- * El informal vigente = el registro REAL más fresco entre ambos (rate_date
- * DESC, captured_at DESC); por fecha, si ambos existen, gana el de captured_at
- * más reciente — sin duplicar valores ni mezclar procedencias.
+ * Proveedor informal ACTIVO registrado en exchange_rates.source.
+ * Diviza = fuente activa (cubadivisas.com, desde 2026-10-26) — la ÚNICA con
+ * derecho a la tasa vigente (IC-DIVIZA-003; registro en exchange-sources.ts).
+ * elToque = serie histórica congelada (2025-12-25 → 2026-07-28): archivo
+ * verificable, excluida EXPRESAMENTE de la selección, la brecha y los
+ * indicadores — nunca se presenta como serie actual de un proveedor activo.
  */
-const INFORMAL_SOURCES = ['Diviza', 'elToque'] as const;
-
-/** ¿Es una fila de tasa informal (cualquier proveedor)? */
-const isInformalSource = (s: string): boolean =>
-  (INFORMAL_SOURCES as readonly string[]).includes(s);
+const isInformalSource = isActiveInformalSource;
 
 /**
  * REGLA DE SELECCIÓN DEL INFORMAL VIGENTE (IC-DIVIZA-002, misión §5):
@@ -219,15 +224,14 @@ export function ExchangeIntelligenceView() {
         setLastCaptureInfo({ count: data.length, date: lastDate });
       }
 
-      // Mostrar notificación si hay carry-forward
-      if (json.carry_forward_count > 0) {
-        const cfDates = json.carry_forward_dates || [];
-        const sources = [...new Set(cfDates.map((d: any) => d.source))].join(', ');
-        toast.info(`Tasa en arrastre (${sources})`, {
-          description: `Usando último valor real disponible hasta que el servicio se restablezca`,
-          duration: 5000,
-        });
-      }
+      // IC-DIVIZA-003 §2: el aviso «Tasa en arrastre (…) — Usando último
+      // valor real disponible hasta que el servicio se restablezca» quedó
+      // ELIMINADO. Los arrastres que la API reporta son SOLO de fuentes
+      // activas (BCC/Diviza) y su antigüedad ya se comunica de forma precisa
+      // en cada tarjeta («Tasa de la fecha operativa no disponible. Usando
+      // último valor real del <fecha>») y en Configuración («Último valor
+      // conocido»). Ninguna fuente muerta genera arrastres ni promesas de
+      // restablecimiento.
       return data as ExchangeRate[];
     } catch (e: any) {
       setError(e.message || 'Error al cargar tasas');
@@ -293,14 +297,16 @@ export function ExchangeIntelligenceView() {
   const usdOfficialRates = rates
     .filter(r => r.source === 'BCC' && r.segment === bccSegment && r.currency === 'USD')
     .sort(byVigente);
-  // IC-DIVIZA-002 (misión §5): informal vigente = el registro REAL más fresco
-  // entre Diviza (activa) y elToque (histórica), PRIORIZANDO la fecha
-  // operativa (byVigente). Las filas VIRTUALES carry_forward quedan
-  // EXCLUIDAS de la selección (isRealCaptureRow): la virtual de elToque
-  // llevaba captured_at fabricado «ahora» y desplazaba a la captura real de
-  // Diviza del mismo día (bug de la tarjeta). Las filas FUTURAS legado del
-  // bug UTC tampoco ganan a la fila de la fecha operativa. Misma regla que
-  // la API (informal_latest) y el RPC contable.
+  // IC-DIVIZA-002 §5 + IC-DIVIZA-003 §1: informal vigente = el registro REAL
+  // más fresco de la fuente ACTIVA (Diviza — isInformalSource es
+  // isActiveInformalSource), PRIORIZANDO la fecha operativa (byVigente). Las
+  // filas VIRTUALES carry_forward quedan EXCLUIDAS de la selección
+  // (isRealCaptureRow) y las de elToque NO EXISTEN en `rates` (la API ya no
+  // las devuelve en la consulta por defecto) — y aunque llegaran, el filtro
+  // activo las excluye EXPRESAMENTE: una fuente muerta jamás alimenta la
+  // tarjeta. Las filas FUTURAS legado del bug UTC tampoco ganan a la fila de
+  // la fecha operativa. Misma regla que la API (informal_latest) y el RPC
+  // contable.
   const usdInformalRates = rates
     .filter(r => isInformalSource(r.source) && r.currency === 'USD' && isRealCaptureRow(r))
     .sort(byVigente);
@@ -309,7 +315,8 @@ export function ExchangeIntelligenceView() {
   const usdOfficial = usdOfficialRates[0]?.rate ?? FALLBACK_OFFICIAL.USD;
   const usdInformal = usdInformalRates[0]?.rate ?? null;
   // IC-DIVIZA: método de captura + proveedor real del último registro informal
-  // para el badge honesto ("Real · Diviza" / "Real · elToque" / "Estimada").
+  // para el badge honesto ("Real · Diviza" / "Estimada"). Con la selección
+  // activa-only el proveedor solo puede ser Diviza (o null → sin dato).
   // NULL/ausente → 'estimated' para no mentir al usuario.
   const lastInformalRecord = usdInformalRates[0];
   const informalCaptureMethod = lastInformalRecord?.capture_method ?? 'estimated';
@@ -334,6 +341,10 @@ export function ExchangeIntelligenceView() {
   // IC-DIVIZA: por fecha, el punto informal se deduplica — si ambos proveedores
   // tienen fila ese día gana la de captured_at más reciente; jamás se suman ni
   // se duplican valores en los gráficos.
+  // IC-DIVIZA-003: la serie informal de los gráficos es la del proveedor
+  // ACTIVO (Diviza); el archivo elToque no se mezcla en la visualización por
+  // defecto (misión §3: si no puede mostrarse sin confusión, se excluye,
+  // preservando los registros originales en la BD).
   const historyData: HistoryPoint[] = useCallback(() => {
     const dates = [...new Set(rates.map(r => r.rate_date))].sort((a, b) => a.localeCompare(b));
     return dates.map(date => {
@@ -418,7 +429,9 @@ export function ExchangeIntelligenceView() {
           let description = `${okSource} actualizado. ${failedSource} falló: ${failedErrors[0] ?? 'sin detalle'}`;
           // Si Diviza falló: informar la última tasa real con su FECHA REAL
           // (no marcar como actual una tasa antigua). Misma prioridad de
-          // fecha operativa que la tarjeta (byVigente).
+          // fecha operativa que la tarjeta (byVigente). IC-DIVIZA-003: solo
+          // fuentes ACTIVAS — el archivo elToque jamás se cita como «última
+          // tasa real» del proveedor informal vigente.
           if (!divizaOk) {
             const byVigenteNow = byOperativeDateFirstThenFreshness(
               (typeof data.operative_date === 'string' && data.operative_date) || todayStr,
@@ -1221,14 +1234,16 @@ function DashboardTab({
   // ─── Variación diaria (vs día anterior) para ambas tarjetas ───
   // FIX-BADGE-REAL: Ordenar DESC por fecha + captured_at para garantizar
   // que tomamos hoy (no ayer).
-  // IC-DIVIZA-002: informales de cualquier proveedor REAL, con prioridad de
-  // fecha operativa (una fila futura legado no dispara el «vs ayer»). Para la
-  // variación diaria se usa la serie deduplicada por fecha (un punto/día).
+  // IC-DIVIZA-002: informales REALES con prioridad de fecha operativa (una
+  // fila futura legado no dispara el «vs ayer»). Para la variación diaria se
+  // usa la serie deduplicada por fecha (un punto/día).
+  // IC-DIVIZA-003: isInformalSource = isActiveInformalSource → la serie es
+  // la del proveedor ACTIVO (Diviza); el archivo elToque no entra.
   const byVigenteLocal = byOperativeDateFirstThenFreshness(operativeDate ?? getOperativeDate());
   const usdInformalRatesLocal = rates
     .filter((r: ExchangeRate) => isInformalSource(r.source) && r.currency === 'USD')
     .sort(byVigenteLocal);
-  // Deduplicar por fecha: si hoy hay Diviza Y elToque, gana el más fresco.
+  // Deduplicar por fecha: si hoy hay varias capturas, gana la más fresca.
   const seenDates = new Set<string>();
   const informalByDateDesc: ExchangeRate[] = [];
   for (const r of usdInformalRatesLocal) {
@@ -1422,12 +1437,14 @@ function DashboardTab({
                       <p className="mb-1">
                         Capturada del proveedor activo <strong>Diviza</strong> (cubadivisas.com):
                         mediana del mercado informal, actualizada cada 30 minutos con su
-                        hora visible. La serie histórica (hasta 2026-07-28) corresponde a
-                        elToque y se conserva con su procedencia original.
+                        hora visible.
                       </p>
                       <p className="mt-1">
-                        Si la captura falla, NO se inventa valor: se usa el último valor
-                        real disponible (carry-forward) con su fecha visible.
+                        La serie informal anterior (elToque, hasta 2026-07-28) se conserva
+                        como <strong>archivo histórico</strong> con su procedencia original y
+                        NO participa en la tasa vigente (IC-DIVIZA-003). Si la captura de
+                        Diviza falla, NO se inventa valor: se usa el último valor real
+                        disponible con su fecha visible.
                       </p>
                     </InfoTooltip>
                     {/* Badge honesto: método + proveedor. Una estimación NUNCA
@@ -1447,7 +1464,7 @@ function DashboardTab({
                     )}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Mercado informal · {informalProvider === 'Diviza' ? 'Diviza (cubadivisas.com)' : informalProvider === 'elToque' ? 'elToque (histórico)' : 'sin proveedor activo'}
+                    Mercado informal · {informalProvider === 'Diviza' ? 'Diviza (cubadivisas.com)' : 'sin dato del proveedor activo'}
                   </p>
                 </div>
               </div>
