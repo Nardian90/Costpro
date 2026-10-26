@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { getOperativeDate, addDaysToDateString } from '@/lib/operative-date';
 
 /**
  * IC-AUDIT: API para gestión de tasas de cambio con segmentos BCC.
@@ -12,13 +13,26 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
  *   - source=Diviza        → tasa informal capturada de cubadivisas.com.
  *   - source=elToque       → tasa informal histórica (serie congelada desde
  *                            2026-07-28; se conserva con su procedencia).
- *   - source=informal      → pseudo-fuente: la informal MÁS RECIENTE entre
- *                            Diviza y elToque (prioridad por frescura).
+ *   - source=informal      → pseudo-fuente: todas las informales reales +
+ *                            resolución server-side de la vigente.
  *   - (sin source)         → BCC + Diviza + elToque.
  *
- * El carry-forward virtual se aplica POR FUENTE: si hoy falta la tasa de una
- * fuente, se arrastra su último valor real con capture_method='carry_forward'
- * y original_rate_date para que la UI muestre la antigüedad.
+ * El carry-forward virtual se aplica POR FUENTE: si la fecha operativa no
+ * tiene tasa de una fuente, se arrastra su último valor real con
+ * capture_method='carry_forward' y original_rate_date para que la UI muestre
+ * la antigüedad.
+ *
+ * IC-DIVIZA-002 (2026-10-26):
+ *   - La fecha de vigencia es la FECHA OPERATIVA (civil de Cuba,
+ *     America/Havana) — no la fecha UTC (misión §3). Se expone como
+ *     `operative_date` para que cliente y servidor compartan UNA regla.
+ *   - Las filas virtuales carry-forward CONSERVAN el captured_at ORIGINAL
+ *     (antes se fabricaba «ahora» y la fila virtual de una fuente muerta
+ *     desplazaba a la captura real de Diviza en los ordenamientos por
+ *     frescura de la vista — caso de aceptación 6 de la misión).
+ *   - informal_latest resuelve la vigente EXCLUYENDO filas virtuales: la
+ *     regla inequívoca es «el registro REAL más reciente por (rate_date
+ *     DESC, captured_at DESC)», idéntica a la que aplica la vista.
  */
 
 const CURRENCIES = ['USD', 'EUR', 'MLC']; // MLC no está en BCC API, solo informal
@@ -41,8 +55,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const days = parseInt(searchParams.get('days') || '90');
 
     // Resolución de fuentes a consultar.
-    // 'informal' = pseudo-fuente: ambas informales, el consumidor/el propio
-    // endpoint resuelven por frescura (rate_date DESC, captured_at DESC).
+    // 'informal' = pseudo-fuente: ambas informales reales; la vigente se
+    // resuelve server-side (informal_latest) con la MISMA regla de la vista.
     const sources: string[] = sourceParam
       ? sourceParam === 'informal'
         ? INFORMAL_SOURCES
@@ -59,20 +73,23 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       query = query.in('source', sources);
     }
 
-    // Filtro por fecha (últimos N días)
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - days);
-    query = query.gte('rate_date', cutoff.toISOString().split('T')[0]);
+    // Filtro por fecha (últimos N días) — anclado a la FECHA OPERATIVA
+    // (civil de Cuba): la ventana de vigencia es cubana, no UTC.
+    const operativeDate = getOperativeDate();
+    const cutoff = addDaysToDateString(operativeDate, -days);
+    query = query.gte('rate_date', cutoff);
 
     query = query.order('rate_date', { ascending: true });
 
     const { data, error } = await query;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // FIX-CARRY-FORWARD (2026-07-05): si hoy no hay tasa para alguna combinación
-    // source/currency/segment, buscar el último valor disponible y crear un
-    // registro virtual carry-forward para que la UI no muestre brincos.
-    const todayStr = new Date().toISOString().split('T')[0];
+    // FIX-CARRY-FORWARD: si la fecha operativa no tiene tasa para alguna
+    // combinación source/currency/segment, buscar el último valor disponible
+    // y crear un registro virtual carry-forward para que la UI no muestre
+    // brincos. La fila virtual CONSERVA el captured_at original: su frescura
+    // es la del dato real del que deriva (jamás «ahora») — así no desplaza a
+    // capturas reales más frescas en los ordenamientos por captured_at.
     const currencies = currency ? [currency] : CURRENCIES;
     const segments = [segment];
 
@@ -81,23 +98,35 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     for (const src of sources) {
       for (const cur of currencies) {
         for (const seg of segments) {
-          // Verificar si ya existe un registro para hoy
-          const hasToday = data?.some(
-            (r: any) => r.rate_date === todayStr && r.source === src && r.currency === cur && r.segment === seg
+          // Verificar si ya existe un registro para la fecha operativa
+          const hasOperative = data?.some(
+            (r: any) => r.rate_date === operativeDate && r.source === src && r.currency === cur && r.segment === seg
           );
 
-          if (!hasToday) {
-            // Buscar el último valor real disponible (más reciente antes de hoy)
+          if (!hasOperative) {
+            // Buscar el último valor real disponible ANTES de (o en) la
+            // fecha operativa. Las filas con rate_date FUTURO (legado del bug
+            // UTC anterior a IC-DIVIZA-002) no se arrastran hacia atrás: se
+            // devuelven como filas reales tal cual, sin duplicar el punto.
             const lastReal = data
-              ?.filter((r: any) => r.source === src && r.currency === cur && r.segment === seg)
-              .sort((a: any, b: any) => b.rate_date.localeCompare(a.rate_date))[0];
+              ?.filter(
+                (r: any) =>
+                  r.source === src &&
+                  r.currency === cur &&
+                  r.segment === seg &&
+                  r.rate_date <= operativeDate
+              )
+              .sort((a: any, b: any) => {
+                if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
+                return (b.captured_at || '').localeCompare(a.captured_at || '');
+              })[0];
 
             if (lastReal) {
-              // Crear registro carry-forward virtual
+              // Crear registro carry-forward virtual — captured_at ORIGINAL
+              // conservado (frescura del dato real, no del momento de consulta).
               carryForwardRecords.push({
                 ...lastReal,
-                rate_date: todayStr,
-                captured_at: new Date().toISOString(),
+                rate_date: operativeDate,
                 capture_method: 'carry_forward',
                 original_rate_date: lastReal.rate_date,
                 id: `cf-${lastReal.id}`,
@@ -114,12 +143,24 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     );
 
     // Pseudo-fuente 'informal': además de devolver todas las filas de los
-    // proveedores informales, se resuelve explícitamente la vigente (la más
-    // fresca) para que el consumidor no tenga que duplicar la regla.
+    // proveedores informales, se resuelve explícitamente la vigente para que
+    // el consumidor no tenga que duplicar la regla.
+    //
+    // REGLA (IC-DIVIZA-002, misión §5): la vigente = el registro REAL más
+    // reciente (capture_method !== 'carry_forward') por (rate_date DESC,
+    // captured_at DESC). Las filas virtuales de una fuente muerta (elToque
+    // congelado desde 2026-07-28) NO desplazan a una captura Diviza real —
+    // una virtual es una copia presentacional de un dato viejo, no un dato
+    // más fresco. Misma regla exacta en ExchangeIntelligenceView.
     let informalLatest: Record<string, any> | undefined;
     if (sourceParam === 'informal' && currency) {
       const informalRows = allRates
-        .filter((r: any) => INFORMAL_SOURCES.includes(r.source) && r.currency === currency)
+        .filter(
+          (r: any) =>
+            INFORMAL_SOURCES.includes(r.source) &&
+            r.currency === currency &&
+            r.capture_method !== 'carry_forward',
+        )
         .sort((a: any, b: any) => {
           if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
           return (b.captured_at || '').localeCompare(a.captured_at || '');
@@ -131,8 +172,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           rate_date: latest.rate_date,
           source: latest.source,
           capture_method: latest.capture_method,
-          original_rate_date: latest.original_rate_date,
-          is_carry_forward: latest.capture_method === 'carry_forward',
+          captured_at: latest.captured_at,
+          source_updated_at: latest.source_updated_at ?? null,
         };
       }
     }
@@ -141,6 +182,10 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       rates: allRates,
       count: allRates.length,
       sources_queried: sources,
+      // Fecha operativa (civil de Cuba) que gobierna vigencia y carry-forward.
+      // El cliente la usa como única fuente de verdad para etiquetas de
+      // antigüedad (misión §3: sin divergencias cliente/servidor).
+      operative_date: operativeDate,
       informal_latest: informalLatest,
       carry_forward_count: carryForwardRecords.length,
       carry_forward_dates: carryForwardRecords.map((r: any) => ({

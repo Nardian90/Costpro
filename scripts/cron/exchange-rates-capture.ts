@@ -43,6 +43,8 @@ async function main() {
 
   const elapsed = ((Date.now() - started) / 1000).toFixed(1);
   console.log(`[cron-exchange-rates] Completado en ${elapsed}s`);
+  // IC-DIVIZA-002: fecha operativa (civil de Cuba) que gobernó la captura.
+  console.log(`  fecha operativa (Cuba): ${result.operativeDate}`);
   console.log(`  fechas procesadas: ${result.datesProcessed.length}`);
   console.log(`  registros capturados: ${result.captured.length}`);
   const bySource = result.captured.reduce<Record<string, number>>((acc, c) => {
@@ -50,6 +52,15 @@ async function main() {
     return acc;
   }, {});
   console.log(`  por fuente: ${JSON.stringify(bySource)}`);
+  // Estado independiente por fuente (misión §4): un BCC correcto no oculta
+  // un fallo de Diviza y viceversa.
+  console.log(
+    `  BCC: ok=${result.bcc.ok} filas=${result.bcc.rows} errores=${result.bcc.errors.length}`,
+  );
+  console.log(
+    `  Diviza: ok=${result.diviza.ok} filas=${result.diviza.rows} ` +
+      `fuenteActualizada=${result.divizaSourceUpdatedAt ?? '—'} errores=${result.diviza.errors.length}`,
+  );
   if (result.errors.length > 0) {
     console.warn(`  errores (${result.errors.length}):`);
     for (const e of result.errors.slice(0, 10)) console.warn(`    - ${e}`);
@@ -61,11 +72,15 @@ async function main() {
   const summary = [
     `### Captura de tasas — ${new Date().toISOString().slice(0, 19)}Z`,
     '',
+    `- Fecha operativa (Cuba): **${result.operativeDate}**`,
     `- Fechas procesadas: **${result.datesProcessed.length}**`,
     `- Registros capturados: **${result.captured.length}**`,
     `- Informal Diviza (real): **${informal.length}** filas ` +
       `(${informal.map(i => `${i.currency}=${i.rate}`).join(', ') || 'sin captura'})`,
     `- BCC oficial: **${result.captured.filter(c => c.source === 'BCC').length}** filas`,
+    `- Estado BCC: **${result.bcc.ok ? 'OK' : 'CON ERRORES'}** · ` +
+      `Estado Diviza: **${result.diviza.ok ? 'OK' : 'FALLIDO'}**` +
+      `${result.bcc.ok !== result.diviza.ok ? ' · ÉXITO PARCIAL' : ''}`,
     `- Errores: **${result.errors.length}**`,
     '',
   ].join('\n');
