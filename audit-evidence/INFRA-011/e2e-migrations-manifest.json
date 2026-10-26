@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 509,
-  "total_incluidos": 94,
+  "total_considerados": 510,
+  "total_incluidos": 95,
   "total_excluidos": 415,
-  "digest": "5ceff26cff21d54fd3d78e6f6441c3499faea59c5be2e684136977ade78e249e",
+  "digest": "e75190e15296243ba37dc71ca342ddd4239645f4dcec55892d89a22f7c18b0da",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -4684,6 +4684,17 @@
       "sha256_generado": "df7a1f3725d690dec21bbc051c66f53f0b788165c944de30fd629efbf549dc66"
     },
     {
+      "nombre": "20261024140000_replay_unblock_legacy_create_sale_v2.sql",
+      "bytes": 7264,
+      "sha256_original": "19382aa513833ab472b6c729a72f574fb673c74c71a577e0ce309d80f66afea3",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261024",
+      "observaciones": [],
+      "posicion": 75,
+      "sha256_generado": "19382aa513833ab472b6c729a72f574fb673c74c71a577e0ce309d80f66afea3"
+    },
+    {
       "nombre": "20261024150000_mision_pagos_mixtos_multimoneda_v2_25_0.sql",
       "bytes": 62697,
       "sha256_original": "0c4970220cb0dc536c29d79e727c47c2d9814734c4632b1ad9f0559d2f6ed4d6",
@@ -4691,7 +4702,7 @@
       "razon": null,
       "timestamp": "20261024",
       "observaciones": [],
-      "posicion": 75,
+      "posicion": 76,
       "sha256_generado": "0c4970220cb0dc536c29d79e727c47c2d9814734c4632b1ad9f0559d2f6ed4d6"
     },
     {
@@ -4702,7 +4713,7 @@
       "razon": null,
       "timestamp": "20261024",
       "observaciones": [],
-      "posicion": 76,
+      "posicion": 77,
       "sha256_generado": "8a616b5bbeaf2155166d1b94996952d72a28932ad90f330863b5304b8a8c43c0"
     },
     {
@@ -4713,7 +4724,7 @@
       "razon": null,
       "timestamp": "20261024",
       "observaciones": [],
-      "posicion": 77,
+      "posicion": 78,
       "sha256_generado": "bf0c0d28091734a5c359a56bbe4c1433df679597ba6b9f47f51aeb2d6f5229ea"
     },
     {
@@ -4724,7 +4735,7 @@
       "razon": null,
       "timestamp": "20261024",
       "observaciones": [],
-      "posicion": 78,
+      "posicion": 79,
       "sha256_generado": "9428ec2d51c6ea5086a9f3c48924314cf44d327eac916e2c2ffcbd19108e9a8b"
     },
     {
@@ -4735,7 +4746,7 @@
       "razon": null,
       "timestamp": "20261024",
       "observaciones": [],
-      "posicion": 79,
+      "posicion": 80,
       "sha256_generado": "6154bdf96e4b185aa0475c1dde0e75a58e4c489b245efff3d7d9942bbf874c9c"
     },
     {
@@ -4746,7 +4757,7 @@
       "razon": null,
       "timestamp": "20261025",
       "observaciones": [],
-      "posicion": 80,
+      "posicion": 81,
       "sha256_generado": "4f5303867b686e514474c336954f2bc961d9fd9cc919e8ac136c5ed3763d7b76"
     },
     {
@@ -4757,7 +4768,7 @@
       "razon": null,
       "timestamp": "20261025",
       "observaciones": [],
-      "posicion": 81,
+      "posicion": 82,
       "sha256_generado": "d796f70c3d478e3cac9d4b5e6b58d3bafb679c4236d6d05e4c02ecd1d10152f1"
     },
     {
@@ -4768,7 +4779,7 @@
       "razon": null,
       "timestamp": "20261026",
       "observaciones": [],
-      "posicion": 82,
+      "posicion": 83,
       "sha256_generado": "756ce7b5c196c37d1d057c9253241e9161bf9fa54b905fb1e3d1bbfc1c9b3ec1"
     },
     {
@@ -4779,7 +4790,7 @@
       "razon": null,
       "timestamp": "20261026",
       "observaciones": [],
-      "posicion": 83,
+      "posicion": 84,
       "sha256_generado": "24ea442ef06f7ccfea8be0735d0ae1b788e09d97ee446472167c287f85321b0d"
     },
     {
@@ -4790,7 +4801,7 @@
       "razon": null,
       "timestamp": "20261026",
       "observaciones": [],
-      "posicion": 84,
+      "posicion": 85,
       "sha256_generado": "5cc60a88dc32ca2930e6a53d75999eee7b8e209a0bd1b066a57d55c9544bb490"
     },
     {
@@ -4801,7 +4812,7 @@
       "razon": null,
       "timestamp": "20261026",
       "observaciones": [],
-      "posicion": 85,
+      "posicion": 86,
       "sha256_generado": "431768e3d8acd076cff039bda544866cce8cdf01da33224d174827cf9541a333"
     },
     {
@@ -4812,7 +4823,7 @@
       "razon": null,
       "timestamp": "20261026",
       "observaciones": [],
-      "posicion": 86,
+      "posicion": 87,
       "sha256_generado": "5e32bfac567463e05ff816354cecd9c703abb3ba8a163366fa29aaefaff1c01e"
     },
     {
@@ -4823,7 +4834,7 @@
       "razon": null,
       "timestamp": "20261026",
       "observaciones": [],
-      "posicion": 87,
+      "posicion": 88,
       "sha256_generado": "548c874b8ce8076bdc8c695698e5146d9ccc84666fd3a4712047c3a8444f4dec"
     },
     {
@@ -4834,7 +4845,7 @@
       "razon": null,
       "timestamp": "20261026",
       "observaciones": [],
-      "posicion": 88,
+      "posicion": 89,
       "sha256_generado": "66fdf5f9c73ef23f3b9c60d0cbe96abd12b74fcb65b8960a29ac3bc5196d3ee0"
     },
     {
@@ -4845,7 +4856,7 @@
       "razon": null,
       "timestamp": "20261026",
       "observaciones": [],
-      "posicion": 89,
+      "posicion": 90,
       "sha256_generado": "d41d974647251faa3b1ce883fa6f44fb1bf48db51dc5a8c306024c97b280ce83"
     },
     {
@@ -4856,7 +4867,7 @@
       "razon": null,
       "timestamp": "20261026",
       "observaciones": [],
-      "posicion": 90,
+      "posicion": 91,
       "sha256_generado": "3fd5dc19cc248fe7918d81ca0ed8d34189bdd3a145d0f600b8e13d64b66167dd"
     },
     {
@@ -4867,7 +4878,7 @@
       "razon": null,
       "timestamp": "20261026",
       "observaciones": [],
-      "posicion": 91,
+      "posicion": 92,
       "sha256_generado": "2fcd6decf0c8d9cdc2a3d8262f324b800b751a77d06d3574a5864ceb9a0d0e2e"
     },
     {
@@ -4878,7 +4889,7 @@
       "razon": null,
       "timestamp": "20261026",
       "observaciones": [],
-      "posicion": 92,
+      "posicion": 93,
       "sha256_generado": "13f339d72044745ab6b0950e09c9d0ffb57f86ab591862336f8b08c9f7e64887"
     },
     {
@@ -4889,7 +4900,7 @@
       "razon": null,
       "timestamp": "20261027",
       "observaciones": [],
-      "posicion": 93,
+      "posicion": 94,
       "sha256_generado": "b77a9cecd2fdcc2676a59898b2aae2a1eb6c592720759e3fac7b2e1f384355d4"
     },
     {
@@ -4900,7 +4911,7 @@
       "razon": null,
       "timestamp": "20261027",
       "observaciones": [],
-      "posicion": 94,
+      "posicion": 95,
       "sha256_generado": "b3b2bd4cae7dc5d05fdc68c34bacd567febdd72b2d77e67ffdc832095961b6c7"
     },
     {
