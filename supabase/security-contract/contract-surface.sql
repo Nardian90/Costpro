@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-26T16:03:06.313Z
+-- Captured  : 2026-10-26T18:08:41.147Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 153 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -441,7 +441,9 @@ BEGIN
       LIMIT 1;
 
     IF v_rule.id IS NOT NULL THEN
-      v_has_approver_role := v_user_role = ANY(v_rule.approver_roles) OR v_user_role = 'admin';
+      -- [HSAA-20261027] Override administrativo delegado al check central
+      -- (admin|superadmin) — antes: v_user_role = 'admin' estricto.
+      v_has_approver_role := v_user_role = ANY(v_rule.approver_roles) OR public.is_admin_check(v_caller_uid);
       IF NOT v_has_approver_role THEN
         RAISE EXCEPTION 'ERR_NOT_APPROVER: tu rol (%) no está autorizado para aprobar (requerido: %)', v_user_role, v_rule.approver_roles;
       END IF;
@@ -450,9 +452,9 @@ BEGIN
 
   -- Marcar como aprobada
   UPDATE public.transfers
-    SET approved_by = v_caller_uid,
-        approved_at = NOW()
-    WHERE id = p_transfer_id;
+  SET approved_by = v_caller_uid,
+      approved_at = NOW()
+  WHERE id = p_transfer_id;
 
   RETURN jsonb_build_object(
     'status', 'success',
