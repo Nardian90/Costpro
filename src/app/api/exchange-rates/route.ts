@@ -3,6 +3,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getOperativeDate, addDaysToDateString, byOperativeDateFirstThenFreshness } from '@/lib/operative-date';
 import {
   INFORMAL_ACTIVE_SOURCES,
+  ALL_INFORMAL_SOURCES,
   isActiveInformalSource,
   isHistoricalInformalSource,
 } from '@/lib/exchange-sources';
@@ -23,6 +24,23 @@ import {
  *                            2025-12-25 → 2026-07-28): filas íntegras con
  *                            su procedencia, SIN virtuales ni vigencia.
  *   - (sin source)         → BCC + Diviza (activas). elToque NO se incluye.
+ *
+ * IC-UX-HISTORY-004 (2026-10-26) — consulta de la serie informal UNIFICADA
+ * para la pestaña «Histórico» (misión §4, la consulta histórica y la
+ * selección de la vigente son responsabilidades DISTINTAS):
+ *   - source=informal-all  → pseudo-fuente: TODAS las informales (activas +
+ *                            históricas: Diviza + elToque) con su
+ *                            procedencia intacta. Sin virtuales de fuentes
+ *                            históricas, sin informal_latest.
+ *   - source=all           → BCC + TODAS las informales (activas +
+ *                            históricas). Es la consulta del Histórico:
+ *                            serie completa con procedencia.
+ *   - days=all             → SIN límite de días: todo el rango realmente
+ *                            disponible en la base de datos (misión §4
+ *                            «Rango y presentación»: no truncar a 7/30/90
+ *                            sin pedirlo el usuario). La respuesta expone
+ *                            oldest_rate_date / newest_rate_date para que
+ *                            el cliente pueda informar el rango servido.
  *
  * ElToque está EXCLUÍDA EXPRESAMENTE (misión IC-DIVIZA-003 §1) de: la
  * selección de la vigente (informal_latest), el carry-forward (ninguna fila
@@ -66,16 +84,28 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const currency = searchParams.get('currency');
     const sourceParam = searchParams.get('source');
     const segment = searchParams.get('segment') || '3'; // Default: segmento 3 (MIPYMES)
-    const days = parseInt(searchParams.get('days') || '90');
+    // IC-UX-HISTORY-004: days=all → SIN corte de fecha (todo el histórico
+    // disponible; misión §4: nunca truncar el rango silenciosamente).
+    const daysParam = searchParams.get('days');
+    const daysIsAll = daysParam === 'all';
+    const days = parseInt(daysParam || '90');
 
     // Resolución de fuentes a consultar (IC-DIVIZA-003 §1).
     // 'informal' = pseudo-fuente: SOLO la informal ACTIVA (Diviza); la
     // vigente se resuelve server-side (informal_latest) con la MISMA regla
     // de la vista. 'elToque' solo entra si se pide EXPLÍCITAMENTE (archivo).
+    // IC-UX-HISTORY-004: 'informal-all' = todas las informales (activas +
+    // históricas — serie unificada); 'all' = BCC + todas las informales
+    // (consulta del Histórico). NINGUNA de las dos resuelve informal_latest:
+    // la selección de la vigente es responsabilidad de source=informal.
     const sources: string[] = sourceParam
       ? sourceParam === 'informal'
         ? [...INFORMAL_ACTIVE_SOURCES]
-        : [sourceParam]
+        : sourceParam === 'informal-all'
+          ? [...ALL_INFORMAL_SOURCES]
+          : sourceParam === 'all'
+            ? ['BCC', ...ALL_INFORMAL_SOURCES]
+            : [sourceParam]
       : ['BCC', ...INFORMAL_ACTIVE_SOURCES];
 
     let query = admin.from('exchange_rates').select('*').eq('segment', segment);
@@ -90,9 +120,12 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
     // Filtro por fecha (últimos N días) — anclado a la FECHA OPERATIVA
     // (civil de Cuba): la ventana de vigencia es cubana, no UTC.
+    // days=all NO aplica corte: se sirve TODO el histórico disponible.
     const operativeDate = getOperativeDate();
-    const cutoff = addDaysToDateString(operativeDate, -days);
-    query = query.gte('rate_date', cutoff);
+    if (!daysIsAll) {
+      const cutoff = addDaysToDateString(operativeDate, -days);
+      query = query.gte('rate_date', cutoff);
+    }
 
     query = query.order('rate_date', { ascending: true });
 
@@ -212,6 +245,17 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       }
     }
 
+    // IC-UX-HISTORY-004 §4 «Rango y presentación»: metadatos del rango
+    // realmente servido (sobre filas REALES, sin virtuales) y de las fuentes
+    // informales presentes en la respuesta — el cliente los usa para informar
+    // la cobertura del histórico sin fingir continuidad. Con days=all el
+    // rango es TODO el disponible en la base de datos.
+    const realRows = (allRates as any[]).filter((r: any) => r.capture_method !== 'carry_forward');
+    const sortedReal = [...realRows].sort((a: any, b: any) => a.rate_date.localeCompare(b.rate_date));
+    const informalSourcesInResponse = [
+      ...new Set(realRows.map((r: any) => r.source).filter((s: string) => s !== 'BCC')),
+    ].sort();
+
     return NextResponse.json({
       rates: allRates,
       count: allRates.length,
@@ -230,6 +274,11 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         currency: r.currency,
         original_date: r.original_rate_date,
       })),
+      // IC-UX-HISTORY-004: rango servido (filas reales) y procedencia
+      // informal presente en la respuesta.
+      oldest_rate_date: sortedReal.length > 0 ? sortedReal[0].rate_date : null,
+      newest_rate_date: sortedReal.length > 0 ? sortedReal[sortedReal.length - 1].rate_date : null,
+      informal_sources_included: informalSourcesInResponse,
     });
   } catch (error: unknown) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown' }, { status: 500 });
