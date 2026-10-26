@@ -1,0 +1,196 @@
+{
+  "ref": "lguovmvrozxgssupkwpf",
+  "transporte": "management-api/database/query (solo SELECT)",
+  "consultas": [
+    "perfil_demo",
+    "membresias_demo",
+    "censo_profiles",
+    "acl_funciones_oob",
+    "marcadores_version_assign",
+    "marcadores_is_admin",
+    "marcadores_managed_update",
+    "trigger_consistencia",
+    "policies_tenants_stores",
+    "tabla_existe_usm"
+  ],
+  "resultado": {
+    "perfil_demo": [
+      {
+        "id": "0c13aa78-0411-4eb0-b766-ce9dcd6b58c3",
+        "email": "admin@demo.com",
+        "role": "superadmin",
+        "store_id": null,
+        "active_store_id": null,
+        "tenant_id": null,
+        "is_active": true,
+        "deleted_at": null
+      }
+    ],
+    "membresias_demo": [],
+    "censo_profiles": [
+      {
+        "total": 78,
+        "superadmins": 6,
+        "demo_admin": 1,
+        "sinteticos_e2e": 44
+      }
+    ],
+    "acl_funciones_oob": [
+      {
+        "proname": "assign_user_organization",
+        "args": "p_actor_id uuid, p_user_id uuid, p_tenant_id uuid, p_confirm_removals boolean",
+        "anon_exec": false,
+        "auth_exec": false,
+        "sr_exec": true
+      },
+      {
+        "proname": "enforce_membership_tenant_consistency",
+        "args": "",
+        "anon_exec": false,
+        "auth_exec": false,
+        "sr_exec": true
+      },
+      {
+        "proname": "is_admin",
+        "args": "",
+        "anon_exec": false,
+        "auth_exec": true,
+        "sr_exec": true
+      },
+      {
+        "proname": "is_admin_check",
+        "args": "p_user_id uuid",
+        "anon_exec": false,
+        "auth_exec": false,
+        "sr_exec": true
+      },
+      {
+        "proname": "is_global_admin",
+        "args": "",
+        "anon_exec": false,
+        "auth_exec": true,
+        "sr_exec": true
+      },
+      {
+        "proname": "is_superadmin",
+        "args": "",
+        "anon_exec": false,
+        "auth_exec": true,
+        "sr_exec": true
+      },
+      {
+        "proname": "managed_reset_password",
+        "args": "p_user_id uuid, p_caller_id uuid",
+        "anon_exec": false,
+        "auth_exec": false,
+        "sr_exec": true
+      },
+      {
+        "proname": "managed_soft_delete_user",
+        "args": "p_user_id uuid, p_reason text, p_caller_id uuid",
+        "anon_exec": false,
+        "auth_exec": false,
+        "sr_exec": true
+      },
+      {
+        "proname": "managed_toggle_user_status",
+        "args": "p_user_id uuid, p_is_active boolean, p_caller_id uuid",
+        "anon_exec": false,
+        "auth_exec": false,
+        "sr_exec": true
+      },
+      {
+        "proname": "managed_update_user",
+        "args": "p_user_id uuid, p_full_name text, p_role user_role, p_role_id uuid, p_is_active boolean, p_max_stores_limit integer, p_max_users_limit integer, p_plan plan_t, p_caller_id uuid",
+        "anon_exec": false,
+        "auth_exec": false,
+        "sr_exec": true
+      }
+    ],
+    "marcadores_version_assign": [
+      {
+        "h7_antispoofing": true,
+        "fix_b_tenant_siempre": true,
+        "comentario_fix_b": true
+      }
+    ],
+    "marcadores_is_admin": [
+      {
+        "incluye_superadmin": true
+      }
+    ],
+    "marcadores_managed_update": [
+      {
+        "guarda_plataforma": true,
+        "guarda_rol_propio": true
+      }
+    ],
+    "trigger_consistencia": [
+      {
+        "tgname": "trg_membership_tenant_consistency",
+        "tgenabled": "O",
+        "funcion": "enforce_membership_tenant_consistency"
+      },
+      {
+        "tgname": "update_user_store_memberships_updated_at",
+        "tgenabled": "O",
+        "funcion": "update_updated_at_column"
+      }
+    ],
+    "policies_tenants_stores": [
+      {
+        "tablename": "stores",
+        "policyname": "stores_delete_admin_only"
+      },
+      {
+        "tablename": "stores",
+        "policyname": "stores_insert_admin_manager"
+      },
+      {
+        "tablename": "stores",
+        "policyname": "stores_select_authenticated"
+      },
+      {
+        "tablename": "stores",
+        "policyname": "stores_tenant_delete"
+      },
+      {
+        "tablename": "stores",
+        "policyname": "stores_tenant_select"
+      },
+      {
+        "tablename": "stores",
+        "policyname": "stores_tenant_update"
+      },
+      {
+        "tablename": "stores",
+        "policyname": "stores_update_member_roles"
+      },
+      {
+        "tablename": "tenants",
+        "policyname": "tenants_delete_admin_only"
+      },
+      {
+        "tablename": "tenants",
+        "policyname": "tenants_insert_admin_only"
+      },
+      {
+        "tablename": "tenants",
+        "policyname": "tenants_select_own_or_admin"
+      },
+      {
+        "tablename": "tenants",
+        "policyname": "tenants_select_own_or_store_member"
+      },
+      {
+        "tablename": "tenants",
+        "policyname": "tenants_update_own_or_admin"
+      }
+    ],
+    "tabla_existe_usm": [
+      {
+        "n": 1
+      }
+    ]
+  }
+}
