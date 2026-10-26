@@ -360,7 +360,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 96 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 97 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -374,9 +374,9 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(salida).toContain('MATCH');
     // verificación del contenido
     const m = leeryValidarManifiesto();
-    expect(m.total_incluidos).toBe(96);
+    expect(m.total_incluidos).toBe(97);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(96);
+    expect(incluidos.length).toBe(97);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -386,8 +386,9 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos(NUEVA)).toBe(75);
     expect(pos(VIEJA75)).toBe(76);
     expect(pos(VIEJA80)).toBe(81);
-    // correspondencia total disco ↔ manifiesto (hashes de ORIGEN de las 96)
+    // correspondencia total disco ↔ manifiesto (hashes de ORIGEN de las 97)
     // (IC-DIVIZA-003: la posición 96 = 20261027020000_retire_eltoque_active_source.sql)
+    // (MISIÓN PI-SUPERADMIN: la posición 97 = 20261027030000_pi_superadmin_rpc_authorization.sql)
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }
