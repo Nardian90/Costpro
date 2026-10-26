@@ -22,7 +22,7 @@
  *      bloqueo 42725 de RECONCILE-003 en la posición 75 original.
  *   6. Integridad de los archivos históricos 75/80: hashes idénticos a los
  *      auditados por RECONCILE-001/002/003 (manifiesto de 94 en main).
- *   7. Manifiesto: determinista (dos ejecuciones byte-idénticas), 95
+ *   7. Manifiesto: determinista (dos ejecuciones byte-idénticas), 96
  *      incluidas, posiciones esperadas, correspondencia total de hashes
  *      disco↔manifiesto y `--check` MATCH exit 0.
  */
@@ -360,7 +360,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 95 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 96 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -374,9 +374,9 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(salida).toContain('MATCH');
     // verificación del contenido
     const m = leeryValidarManifiesto();
-    expect(m.total_incluidos).toBe(95);
+    expect(m.total_incluidos).toBe(96);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(95);
+    expect(incluidos.length).toBe(96);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -386,7 +386,8 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos(NUEVA)).toBe(75);
     expect(pos(VIEJA75)).toBe(76);
     expect(pos(VIEJA80)).toBe(81);
-    // correspondencia total disco ↔ manifiesto (hashes de ORIGEN de las 95)
+    // correspondencia total disco ↔ manifiesto (hashes de ORIGEN de las 96)
+    // (IC-DIVIZA-003: la posición 96 = 20261027020000_retire_eltoque_active_source.sql)
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }
