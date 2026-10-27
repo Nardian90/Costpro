@@ -23,6 +23,7 @@ import {
   ClipboardList, ShieldCheck, FileWarning, Ban, XCircle, Save, Upload,
   FileText, ArrowLeftRight, History, Search, AlertTriangle, Clock, TrendingDown,
   TrendingUp, PackageMinus, PackagePlus, Eye, ExternalLink, Lock, Layers,
+  SquarePen, Trash2,
 } from 'lucide-react';
 import { cn, formatDate, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
@@ -34,8 +35,10 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { DocumentStatusBadge } from '@/components/ui/DocumentStatusBadge';
 import { CountSheetModal } from './CountSheetModal';
 import { ImportCountDialog } from './ImportCountDialog';
+import { EditPhysicalInventoryModal } from './EditPhysicalInventoryModal';
 import {
-  PI_STATUS_META, PI_SCOPE_LABELS,
+  PI_STATUS_META, PI_SCOPE_LABELS, PI_LIFECYCLE_META, piLifecycleOf,
+  canEditPI, canVoidPI, canDeletePI, isReadOnlyPI,
   type PIHeader, type PILine, type PISheet, type PIReconciliation,
 } from './pi-types';
 
@@ -55,6 +58,10 @@ interface DetailResponse {
     count_started_at?: string | null;
     count_completed_at?: string | null;
     void_reason?: string | null;
+    voided_by?: string | null;
+    voider?: { full_name: string } | null;
+    scope_category_names?: string[] | null;
+    scope_products?: string[] | null;
   };
   lines: PILine[];
   showTheoretical: boolean;
@@ -70,6 +77,18 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [transitioning, setTransitioning] = useState<string | null>(null);
+  // MISIÓN CICLO DE VIDA: edición del borrador, borrado definitivo y
+  // confirmaciones explícitas de las transiciones de ciclo de vida.
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<null | {
+    action: string;
+    title: string;
+    description: string;
+    confirmLabel: string;
+    destructive?: boolean;
+    extra?: Record<string, unknown>;
+  }>(null);
 
   // ── Carga del detalle ──────────────────────────────────────────────────
   const { data, isLoading, refetch, isFetching } = useQuery({
@@ -135,6 +154,57 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
     refetchRecon();
   }, [refetch, refetchRecon]);
 
+  // Borrado definitivo del borrador (misión §2/ESTADO 1): al confirmarse,
+  // el documento desaparece — se vuelve al listado.
+  const runDelete = useCallback(async () => {
+    if (transitioning) return;
+    setTransitioning('delete');
+    const tid = toast.loading('Eliminando borrador…');
+    try {
+      await apiFetch(`/api/physical-inventory/${piId}`, { method: 'DELETE' });
+      toast.success('Inventario eliminado', { id: tid, description: 'El borrador se eliminó definitivamente.' });
+      await queryClient.invalidateQueries({ queryKey: ['physical-inventories'] });
+      onBack();
+    } catch (e) {
+      toast.error('No se pudo eliminar', { id: tid, description: e instanceof Error ? e.message : undefined });
+      setTransitioning(null);
+    }
+  }, [piId, queryClient, transitioning, onBack]);
+
+  const confirmations: Record<string, {
+    title: string; description: string; confirmLabel: string; destructive?: boolean; extra?: Record<string, unknown>;
+  }> = {
+    prepare: {
+      title: 'Preparar inventario',
+      description: 'Se generarán las líneas de conteo y la existencia teórica quedará congelada a la fecha de corte. Después de preparar podrá iniciar el conteo, o eliminar el borrador si desea rehacerlo.',
+      confirmLabel: 'Preparar conteo',
+    },
+    start: {
+      title: 'Iniciar inventario',
+      description: 'El conteo quedará formalmente iniciado: el inventario pasará a En proceso, ya no podrá eliminarse (solo anularse con motivo) y quienes cuenten podrán capturar cantidades físicas.',
+      confirmLabel: 'Iniciar inventario',
+    },
+    complete: {
+      title: 'Completar conteo',
+      description: 'Se dará por completada la fase de captura. Si quedan líneas sin contar deberá aceptarlas explícitamente para continuar.',
+      confirmLabel: 'Completar conteo',
+    },
+    close: {
+      title: 'Terminar inventario',
+      description: 'El inventario pasará a Terminado de forma IRREVERSIBLE: no podrá editarse, anularse ni eliminarse. Los ajustes confirmados ya quedaron aplicados al inventario.',
+      confirmLabel: 'Terminar inventario',
+      destructive: true,
+    },
+  };
+
+  const askTransition = useCallback((action: string) => {
+    const conf = confirmations[action];
+    if (conf) {
+      setConfirmAction({ action, ...conf });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (isLoading || !pi) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -144,6 +214,8 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
   }
 
   const meta = PI_STATUS_META[pi.status];
+  const lifecycle = PI_LIFECYCLE_META[piLifecycleOf(pi.status)];
+  const readOnly = isReadOnlyPI(pi.status);
   const activeCount = pi.status === 'in_progress';
   const canReview = ['in_reconciliation', 'pending_authorization'].includes(pi.status);
 
@@ -163,8 +235,17 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-mono text-xl font-black text-primary">{pi.pi_number}</h2>
-                <span className={cn('inline-flex items-center gap-1.5 rounded px-2 py-1 text-[10px] font-black uppercase tracking-wider', meta.className)}>
-                  <span className={cn('h-1.5 w-1.5 rounded-full', meta.dot)} />
+                {/* Ciclo de vida (misión §5): etiqueta EXACTA del estado principal */}
+                <span
+                  data-testid={`pi-lifecycle-${piLifecycleOf(pi.status)}`}
+                  className={cn('inline-flex items-center gap-1.5 rounded px-2 py-1 text-[10px] font-black uppercase tracking-wider', lifecycle.className)}
+                  title={`Estado del ciclo de vida: ${lifecycle.label}`}
+                >
+                  <span className={cn('h-1.5 w-1.5 rounded-full', lifecycle.dot)} />
+                  {lifecycle.label}
+                </span>
+                {/* Fase interna (información operativa, no sustituye al texto) */}
+                <span className={cn('inline-flex items-center gap-1.5 rounded px-2 py-1 text-[10px] font-bold tracking-wider border border-border text-muted-foreground')}>
                   {meta.label}
                 </span>
                 {pi.blind_mode && (
@@ -192,20 +273,41 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
           {pi.count_completed_at && <span>· Conteo: <b>{formatDate(pi.count_completed_at)}</b></span>}
           {pi.submitted_at && <span>· Conciliación: <b>{formatDate(pi.submitted_at)}</b></span>}
           {pi.authorized_at && <span>· Autorización: <b>{formatDate(pi.authorized_at)}</b></span>}
-          {pi.closed_at && <span>· Cierre: <b>{formatDate(pi.closed_at)}</b></span>}
-          {pi.voided_at && <span className="text-destructive">· Anulado: <b>{formatDate(pi.voided_at)}</b> ({pi.void_reason})</span>}
+          {pi.closed_at && <span>· Terminado: <b>{formatDate(pi.closed_at)}</b></span>}
+          {pi.voided_at && (
+            <span className="text-destructive">
+              · Anulado: <b>{formatDate(pi.voided_at)}</b>
+              {pi.voider?.full_name ? ` por ${pi.voider.full_name}` : ''} — {pi.void_reason}
+            </span>
+          )}
           <span className="ml-auto">Alcance: <b>{PI_SCOPE_LABELS[pi.scope_type]}</b></span>
         </div>
 
-        {/* Acciones de estado */}
-        <StateActions
-          pi={pi}
-          canAuthorize={canAuthorize}
-          canClose={canClose}
-          transitioning={transitioning}
-          onTransition={runTransition}
-          onVoid={() => setVoidOpen(true)}
-        />
+        {/* Aviso de solo lectura (Terminado / Anulado — misión §5) */}
+        {readOnly && (
+          <p className={cn('rounded-xl border px-3 py-2 text-xs flex items-center gap-2',
+            pi.status === 'closed'
+              ? 'border-success/25 bg-success/5 text-success'
+              : 'border-destructive/25 bg-destructive/5 text-destructive')}>
+            <Lock className="h-3.5 w-3.5 shrink-0" />
+            {pi.status === 'closed' && 'Inventario TERMINADO: consulta de solo lectura. El estado es definitivo y no puede editarse, anularse ni eliminarse.'}
+            {pi.status === 'voided' && `Inventario ANULADO: consulta de solo lectura${pi.void_reason ? ` — motivo: ${pi.void_reason}` : ''}. No puede editarse ni terminarse.`}
+          </p>
+        )}
+
+        {/* Acciones de estado (según ciclo de vida y permisos) */}
+        {!readOnly && (
+          <StateActions
+            pi={pi}
+            canAuthorize={canAuthorize}
+            canClose={canClose}
+            transitioning={transitioning}
+            onTransition={askTransition}
+            onVoid={() => setVoidOpen(true)}
+            onEdit={() => setEditOpen(true)}
+            onDelete={() => setDeleteOpen(true)}
+          />
+        )}
       </div>
 
       {/* ── Pestañas ── */}
@@ -301,6 +403,96 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
           />
         </div>
       </BaseModal>
+
+      {/* Confirmación de transiciones de ciclo de vida (misión §5) */}
+      <BaseModal
+        open={!!confirmAction}
+        onOpenChange={(o) => !o && setConfirmAction(null)}
+        title={
+          <span className="flex items-center gap-2">
+            <AlertTriangle className={cn('h-5 w-5', confirmAction?.destructive ? 'text-destructive' : 'text-primary')} />
+            {confirmAction?.title}
+          </span>
+        }
+        description={confirmAction?.description}
+        maxWidth="sm:max-w-md"
+        footer={
+          <div className="flex gap-2">
+            <SecondaryButton className="flex-1" onClick={() => setConfirmAction(null)}>
+              Cancelar
+            </SecondaryButton>
+            <button
+              data-testid={`pi-confirm-${confirmAction?.action}`}
+              className={cn(
+                'flex-1 min-h-[44px] rounded-xl text-xs font-black uppercase disabled:opacity-50',
+                confirmAction?.destructive
+                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+              )}
+              disabled={transitioning === confirmAction?.action}
+              onClick={async () => {
+                if (!confirmAction) return;
+                const act = confirmAction.action;
+                const extra = confirmAction.extra;
+                setConfirmAction(null);
+                await runTransition(act, extra);
+              }}
+            >
+              {transitioning === confirmAction?.action
+                ? <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                : confirmAction?.confirmLabel}
+            </button>
+          </div>
+        }
+      >
+        <p className="text-xs text-muted-foreground">
+          Esta acción se valida en el servidor: si el estado del inventario cambió mientras tanto, será rechazada.
+        </p>
+      </BaseModal>
+
+      {/* Borrado definitivo del borrador (misión §2/ESTADO 1) */}
+      <BaseModal
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={
+          <span className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-destructive" />
+            Eliminar inventario {pi.pi_number}
+          </span>
+        }
+        description="El borrador se eliminará DEFINITIVAMENTE: desaparecerán sus líneas, capturas, hojas de conteo y eventos de auditoría, SIN registro de anulación. La acción no puede deshacerse y no tiene efectos sobre las existencias."
+        maxWidth="sm:max-w-md"
+        footer={
+          <div className="flex gap-2">
+            <SecondaryButton className="flex-1" onClick={() => setDeleteOpen(false)}>
+              Cancelar
+            </SecondaryButton>
+            <button
+              data-testid="pi-confirm-delete"
+              className="flex-1 min-h-[44px] rounded-xl bg-destructive text-destructive-foreground text-xs font-black uppercase hover:bg-destructive/90 disabled:opacity-50"
+              disabled={transitioning === 'delete'}
+              onClick={runDelete}
+            >
+              {transitioning === 'delete'
+                ? <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                : 'Eliminar definitivamente'}
+            </button>
+          </div>
+        }
+      >
+        <p className="rounded-xl border border-destructive/25 bg-destructive/5 px-3 py-2 text-xs text-destructive flex items-start gap-2">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          Solo los borradores pueden eliminarse. Si necesita abandonar un inventario ya iniciado, utilice «Anular inventario» con motivo obligatorio.
+        </p>
+      </BaseModal>
+
+      {/* Edición del borrador (misión §2/ESTADO 1) */}
+      <EditPhysicalInventoryModal
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        pi={pi}
+        onSaved={refreshAll}
+      />
 
       {/* Hoja de conteo PDF */}
       <CountSheetModal
@@ -1043,11 +1235,18 @@ function AuditPanel({ piId, pi, sheets, onChanged }: { piId: string; pi: PIHeade
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Acciones de estado (según estado actual y permisos)
+// Acciones de estado — matriz del CICLO DE VIDA (misión §3/§5):
+//   Borrador (draft/prepared): Editar · Preparar/Iniciar · Eliminar
+//   En proceso:                fases del flujo · Anular (con trazabilidad)
+//   Terminado (closed):        sin acciones (solo lectura)
+//   Anulado (voided):          sin acciones (solo lectura)
+// Los botones REFLEJAN las validaciones del servidor (RPC por transición);
+// nunca las sustituyen. Anular/Editar/Eliminar se muestran según la matriz
+// canVoidPI/canEditPI/canDeletePI de pi-types (espejo del servidor).
 // ──────────────────────────────────────────────────────────────────────────
 
 function StateActions({
-  pi, canAuthorize, canClose, transitioning, onTransition, onVoid,
+  pi, canAuthorize, canClose, transitioning, onTransition, onVoid, onEdit, onDelete,
 }: {
   pi: PIHeader;
   canAuthorize: boolean;
@@ -1055,16 +1254,18 @@ function StateActions({
   transitioning: string | null;
   onTransition: (action: string, extra?: Record<string, unknown>) => void;
   onVoid: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   const s = pi.status;
   const btn = (action: string, label: string, Icon: React.ComponentType<{ className?: string }>, primary = false) => (
     primary ? (
-      <PrimaryButton key={action} onClick={() => onTransition(action)} disabled={transitioning === action}>
+      <PrimaryButton key={action} onClick={() => onTransition(action)} disabled={transitioning === action} data-testid={`pi-action-${action}`}>
         {transitioning === action ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
         {label}
       </PrimaryButton>
     ) : (
-      <SecondaryButton key={action} onClick={() => onTransition(action)} disabled={transitioning === action}>
+      <SecondaryButton key={action} onClick={() => onTransition(action)} disabled={transitioning === action} data-testid={`pi-action-${action}`}>
         {transitioning === action ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
         {label}
       </SecondaryButton>
@@ -1072,9 +1273,35 @@ function StateActions({
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {s === 'draft' && canAuthorize && btn('prepare', 'Preparar conteo', PackageCheck, true)}
-      {s === 'prepared' && btn('start', 'Iniciar conteo', PlayCircle, true)}
+    <div className="flex flex-wrap items-center gap-2" data-testid="pi-state-actions">
+      {/* ── BORRADOR: Editar · Preparar/Iniciar · Eliminar ── */}
+      {s === 'draft' && (
+        <>
+          <SecondaryButton onClick={onEdit} data-testid="pi-action-edit">
+            <SquarePen className="h-4 w-4" /> Editar
+          </SecondaryButton>
+          {canAuthorize && btn('prepare', 'Preparar conteo', PackageCheck, true)}
+        </>
+      )}
+      {s === 'prepared' && (
+        <>
+          <SecondaryButton onClick={onEdit} data-testid="pi-action-edit">
+            <SquarePen className="h-4 w-4" /> Editar
+          </SecondaryButton>
+          {btn('start', 'Iniciar inventario', PlayCircle, true)}
+        </>
+      )}
+      {canDeletePI(s) && (
+        <button
+          onClick={onDelete}
+          data-testid="pi-action-delete"
+          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-destructive/40 bg-destructive/5 px-4 text-xs font-black uppercase text-destructive hover:bg-destructive hover:text-destructive-foreground"
+        >
+          <Trash2 className="h-4 w-4" /> Eliminar
+        </button>
+      )}
+
+      {/* ── EN PROCESO: fases del flujo hacia Terminado · Anular ── */}
       {s === 'in_progress' && btn('complete', 'Completar conteo', CheckCircle2, true)}
       {s === 'counted' && canAuthorize && btn('submit_reconciliation', 'Enviar a conciliación', ClipboardList, true)}
       {s === 'in_reconciliation' && canAuthorize && btn('submit_authorization', 'Enviar a autorización', ShieldCheck, true)}
@@ -1084,13 +1311,17 @@ function StateActions({
           {btn('submit_reconciliation', 'Devolver a conciliación', TrendingDown)}
         </>
       )}
-      {s === 'conciliated' && canClose && btn('close', 'Cerrar inventario', Lock, true)}
-      {['draft', 'prepared', 'in_progress', 'counted', 'in_reconciliation', 'pending_authorization'].includes(s) && (
+      {s === 'conciliated' && canClose && btn('close', 'Terminar inventario', Lock, true)}
+
+      {/* Anular: EXCLUSIVO de En proceso sin efectos generados (misión §3).
+          Un conciliado se rectifica revirtiendo sus ajustes (regla vigente). */}
+      {canVoidPI(s) && (
         <button
           onClick={onVoid}
+          data-testid="pi-action-void"
           className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-destructive/40 bg-destructive/5 px-4 text-xs font-black uppercase text-destructive hover:bg-destructive hover:text-destructive-foreground"
         >
-          <Ban className="h-4 w-4" /> Anular
+          <Ban className="h-4 w-4" /> Anular inventario
         </button>
       )}
     </div>

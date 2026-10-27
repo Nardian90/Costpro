@@ -26,9 +26,13 @@ import { useAuthorizedStores } from '@/hooks/api/useAuthorizedStores';
 import { PrimaryButton } from '@/components/ui/atomic';
 import { CreatePhysicalInventoryModal } from './CreatePhysicalInventoryModal';
 import { PhysicalInventoryDetail } from './PhysicalInventoryDetail';
-import { PI_STATUS_META, PI_STATUS_FILTER_LABELS, PI_SCOPE_LABELS, type PIHeader } from './pi-types';
+import {
+  PI_STATUS_META, PI_SCOPE_LABELS, PI_LIFECYCLE_META, PI_LIFECYCLE_FILTER_LABELS, piLifecycleOf,
+  statusesOfLifecycle, type PILifecycleStage, type PIHeader,
+} from './pi-types';
 
-type StatusFilter = 'all' | keyof typeof PI_STATUS_META;
+/** Filtro por estado del CICLO DE VIDA (misión §5): Borrador · En proceso · Terminado · Anulado. */
+type StatusFilter = 'all' | PILifecycleStage;
 
 export default function PhysicalInventoryView() {
   const { user } = useAuthStore();
@@ -58,7 +62,7 @@ export default function PhysicalInventoryView() {
     queryKey: ['physical-inventories', effectiveStore, statusFilter, dateFrom, dateTo, search],
     queryFn: async () => {
       const params = new URLSearchParams({ storeId: effectiveStore });
-      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (statusFilter !== 'all') params.set('status', statusesOfLifecycle(statusFilter).join(','));
       if (dateFrom) params.set('from', dateFrom);
       if (dateTo) params.set('to', dateTo);
       if (search.trim()) params.set('search', search.trim());
@@ -69,9 +73,13 @@ export default function PhysicalInventoryView() {
     staleTime: 30_000,
   });
 
-  const countsByStatus = useMemo(() => {
+  // Contadores por ciclo de vida (etiqueta EXACTA de la misión)
+  const countsByLifecycle = useMemo(() => {
     const c: Record<string, number> = { all: inventories.length };
-    for (const pi of inventories) c[pi.status] = (c[pi.status] || 0) + 1;
+    for (const pi of inventories) {
+      const stage = piLifecycleOf(pi.status);
+      c[stage] = (c[stage] || 0) + 1;
+    }
     return c;
   }, [inventories]);
 
@@ -131,14 +139,14 @@ export default function PhysicalInventoryView() {
             ))}
           </select>
           <select
-            aria-label="Filtrar por estado"
+            aria-label="Filtrar por estado del ciclo de vida"
             className={cn(touch, 'rounded-xl border border-border bg-card px-3 text-xs font-bold text-muted-foreground')}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
           >
-            {Object.entries(PI_STATUS_FILTER_LABELS).map(([k, label]) => (
+            {Object.entries(PI_LIFECYCLE_FILTER_LABELS).map(([k, label]) => (
               <option key={k} value={k}>
-                {label}{countsByStatus[k] ? ` (${countsByStatus[k]})` : ''}
+                {label}{countsByLifecycle[k] ? ` (${countsByLifecycle[k]})` : ''}
               </option>
             ))}
           </select>
@@ -199,6 +207,7 @@ export default function PhysicalInventoryView() {
             <tbody>
               {inventories.map((pi) => {
                 const meta = PI_STATUS_META[pi.status];
+                const lifecycle = PI_LIFECYCLE_META[piLifecycleOf(pi.status)];
                 const progress = pi.total_items > 0 ? Math.round((pi.counted_items / pi.total_items) * 100) : 0;
                 return (
                   <tr
@@ -218,10 +227,15 @@ export default function PhysicalInventoryView() {
                       )}
                     </td>
                     <td className="p-3">
-                      <span className={cn('inline-flex items-center gap-1.5 rounded px-2 py-1 text-[10px] font-black uppercase tracking-wider', meta.className)}>
-                        <span className={cn('h-1.5 w-1.5 rounded-full', meta.dot)} />
-                        {meta.label}
+                      {/* Ciclo de vida (etiqueta EXACTA) + fase interna */}
+                      <span
+                        data-testid={`pi-row-lifecycle-${piLifecycleOf(pi.status)}`}
+                        className={cn('inline-flex items-center gap-1.5 rounded px-2 py-1 text-[10px] font-black uppercase tracking-wider', lifecycle.className)}
+                      >
+                        <span className={cn('h-1.5 w-1.5 rounded-full', lifecycle.dot)} />
+                        {lifecycle.label}
                       </span>
+                      <p className="mt-1 text-[10px] text-muted-foreground">{meta.label}</p>
                     </td>
                     <td className="p-3 font-mono tabular-nums text-muted-foreground">{formatDate(pi.cutoff_date)}</td>
                     <td className="p-3 font-mono tabular-nums text-muted-foreground">{formatDate(pi.created_at)}</td>

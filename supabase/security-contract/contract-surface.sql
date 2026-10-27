@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-26T18:08:41.147Z
+-- Captured  : 2026-10-27T13:59:18.729Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 153 (SECURITY DEFINER write functions, public schema)
+-- Functions : 155 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -1524,43 +1524,6 @@ BEGIN
 END $function$
 
 
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
-END;
-$function$
-
-
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1597,6 +1560,43 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
+END;
+$function$
+
+
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
 END;
 $function$
 
@@ -5634,6 +5634,47 @@ BEGIN
 
   RETURN jsonb_build_object('status','success','slip_id',v_slip_id,'slip_number',v_slip_number,'total_cost',v_total_cost);
 END $function$
+
+
+-- @contract-function name=delete_physical_inventory args="p_pi_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.delete_physical_inventory(p_pi_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_pi public.physical_inventories%ROWTYPE;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
+                            THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  IF v_caller_uid IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHENTICATED'; END IF;
+
+  SELECT * INTO v_pi FROM public.physical_inventories WHERE id = p_pi_id FOR UPDATE;
+  IF v_pi IS NULL THEN RAISE EXCEPTION 'ERR_PI_NOT_FOUND'; END IF;
+  IF v_pi.status NOT IN ('draft','prepared') THEN
+    RAISE EXCEPTION 'ERR_CANNOT_DELETE_STATE: solo un Borrador puede eliminarse definitivamente (estado actual: %); un inventario iniciado se anula con trazabilidad y uno terminado es inmutable', v_pi.status;
+  END IF;
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[])) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED_DELETE_PI';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.physical_inventory_adjustments WHERE pi_id = p_pi_id)
+     OR EXISTS (SELECT 1 FROM public.inventory_adjustments WHERE source_physical_inventory_id = p_pi_id) THEN
+    RAISE EXCEPTION 'ERR_ADJUSTMENTS_LINKED: el inventario tiene ajustes documentales vinculados y no puede eliminarse';
+  END IF;
+
+  -- Limpieza de registros asociados al documento (sin líneas/log/hojas
+  -- huérfanas ni eventos parciales de auditoría).
+  DELETE FROM public.audit_logs
+   WHERE table_name = 'physical_inventories' AND record_id = p_pi_id;
+  DELETE FROM public.physical_inventories WHERE id = p_pi_id;
+  -- items / count_log / sheets caen por ON DELETE CASCADE.
+
+  RETURN jsonb_build_object('status', 'success', 'pi_id', p_pi_id,
+                            'pi_number', v_pi.pi_number);
+END;
+$function$
 
 
 -- @contract-function name=detect_orphan_users args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
@@ -12473,6 +12514,93 @@ END;
 $function$
 
 
+-- @contract-function name=update_physical_inventory args="p_pi_id uuid, p_cutoff_date timestamp with time zone, p_description text, p_responsible_name text, p_scope_type text, p_categories text[], p_product_ids uuid[], p_blind_mode boolean, p_observations text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.update_physical_inventory(p_pi_id uuid, p_cutoff_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_description text DEFAULT NULL::text, p_responsible_name text DEFAULT NULL::text, p_scope_type text DEFAULT NULL::text, p_categories text[] DEFAULT NULL::text[], p_product_ids uuid[] DEFAULT NULL::uuid[], p_blind_mode boolean DEFAULT NULL::boolean, p_observations text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_pi public.physical_inventories%ROWTYPE;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
+                            THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_scope TEXT;
+  v_cats TEXT[];
+  v_prods UUID[];
+BEGIN
+  IF v_caller_uid IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHENTICATED'; END IF;
+
+  SELECT * INTO v_pi FROM public.physical_inventories WHERE id = p_pi_id FOR UPDATE;
+  IF v_pi IS NULL THEN RAISE EXCEPTION 'ERR_PI_NOT_FOUND'; END IF;
+  IF v_pi.status NOT IN ('draft','prepared') THEN
+    RAISE EXCEPTION 'ERR_NOT_EDITABLE_STATE: solo un Borrador puede editarse (estado actual: %)', v_pi.status;
+  END IF;
+  IF NOT (public.is_admin_check(v_caller_uid)
+            OR public.has_store_role(v_caller_uid, v_pi.store_id, ARRAY['admin','manager','encargado']::text[])) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED_UPDATE_PI';
+  END IF;
+
+  IF v_pi.status = 'draft' THEN
+    -- Edición completa: los campos NULL conservan el valor vigente
+    v_scope := COALESCE(p_scope_type, v_pi.scope_type);
+    IF COALESCE(p_cutoff_date, v_pi.cutoff_date) > NOW() THEN
+      RAISE EXCEPTION 'ERR_INVALID_CUTOFF_DATE: la fecha de corte no puede ser futura';
+    END IF;
+    IF v_scope NOT IN ('full','category','selection') THEN
+      RAISE EXCEPTION 'ERR_INVALID_SCOPE';
+    END IF;
+    v_cats := CASE WHEN v_scope = 'category' THEN COALESCE(p_categories, v_pi.scope_category_names) END;
+    v_prods := CASE WHEN v_scope = 'selection' THEN COALESCE(p_product_ids, v_pi.scope_products) END;
+    IF v_scope = 'category' AND (v_cats IS NULL OR array_length(v_cats, 1) = 0) THEN
+      RAISE EXCEPTION 'ERR_SCOPE_CATEGORIES_REQUIRED';
+    END IF;
+    IF v_scope = 'selection' AND (v_prods IS NULL OR array_length(v_prods, 1) = 0) THEN
+      RAISE EXCEPTION 'ERR_SCOPE_PRODUCTS_REQUIRED';
+    END IF;
+
+    UPDATE public.physical_inventories
+      SET cutoff_date = COALESCE(p_cutoff_date, v_pi.cutoff_date),
+          description = p_description,
+          responsible_name = p_responsible_name,
+          scope_type = v_scope,
+          scope_category_names = v_cats,
+          scope_products = v_prods,
+          blind_mode = COALESCE(p_blind_mode, v_pi.blind_mode),
+          observations = p_observations
+    WHERE id = p_pi_id;
+  ELSE
+    -- prepared: la instantánea ya está congelada — corte/alcance intocables
+    IF (p_cutoff_date IS NOT NULL AND p_cutoff_date <> v_pi.cutoff_date)
+       OR (p_scope_type IS NOT NULL AND p_scope_type <> v_pi.scope_type)
+       OR (p_categories IS NOT NULL)
+       OR (p_product_ids IS NOT NULL) THEN
+      RAISE EXCEPTION 'ERR_FIELD_FROZEN: la fecha de corte y el alcance quedaron congelados al preparar; elimine el borrador y créelo de nuevo si deben cambiar';
+    END IF;
+
+    UPDATE public.physical_inventories
+      SET description = p_description,
+          responsible_name = p_responsible_name,
+          blind_mode = COALESCE(p_blind_mode, v_pi.blind_mode),
+          observations = p_observations
+    WHERE id = p_pi_id;
+  END IF;
+
+  INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, new_data, store_id)
+  VALUES (v_caller_uid, 'PHYSICAL_INVENTORY_UPDATED', 'physical_inventories', p_pi_id,
+          jsonb_build_object('cutoff_date', v_pi.cutoff_date, 'description', v_pi.description,
+                             'responsible_name', v_pi.responsible_name, 'scope_type', v_pi.scope_type,
+                             'blind_mode', v_pi.blind_mode),
+          jsonb_build_object('cutoff_date', p_cutoff_date, 'description', p_description,
+                             'responsible_name', p_responsible_name, 'scope_type', p_scope_type,
+                             'blind_mode', p_blind_mode),
+          v_pi.store_id);
+
+  RETURN jsonb_build_object('status', 'success', 'pi_id', p_pi_id);
+END;
+$function$
+
+
 -- @contract-function name=update_receipt_item_tasa args="p_receipt_item_id uuid, p_new_tasa_cambio_recepcion numeric, p_new_moneda_recepcion text, p_motivo text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.update_receipt_item_tasa(p_receipt_item_id uuid, p_new_tasa_cambio_recepcion numeric, p_new_moneda_recepcion text DEFAULT NULL::text, p_motivo text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -13289,6 +13417,9 @@ BEGIN
   END IF;
   SELECT * INTO v_pi FROM public.physical_inventories WHERE id = p_pi_id FOR UPDATE;
   IF v_pi IS NULL THEN RAISE EXCEPTION 'ERR_PI_NOT_FOUND'; END IF;
+  IF v_pi.status IN ('draft','prepared') THEN
+    RAISE EXCEPTION 'ERR_CANNOT_VOID_STATE: un borrador (%) no se anula: elimínelo definitivamente o inicie el inventario', v_pi.status;
+  END IF;
   IF v_pi.status IN ('conciliated','closed','voided') THEN
     RAISE EXCEPTION 'ERR_CANNOT_VOID_STATE: un inventario % no puede anularse; utilice la reversión de los ajustes generados', v_pi.status;
   END IF;
@@ -13299,7 +13430,7 @@ BEGIN
 
   UPDATE public.physical_inventories
     SET status = 'voided', voided_at = NOW(), voided_by = v_caller_uid, void_reason = p_reason
-  WHERE id = p_pi_id;
+    WHERE id = p_pi_id;
 
   INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, store_id)
   VALUES (v_caller_uid, 'PHYSICAL_INVENTORY_VOIDED', 'physical_inventories', p_pi_id,
