@@ -252,6 +252,21 @@ export interface PendingReceptionItem {
 }
 
 /**
+ * MISIÓN RECEPCIONES (2026-10-27): rollback best-effort de los productos
+ * creados para una recepción pendiente cuyo guardado falló. Silencioso por
+ * diseño (el error original es el que se reporta), pero deja rastro en
+ * consola para diagnóstico.
+ */
+async function rollbackCreatedProducts(ids: string[]) {
+  try {
+    const { error } = await supabase.from('products').delete().in('id', ids);
+    if (error) console.error('Rollback de productos creados falló:', error.message);
+  } catch (e) {
+    console.error('Rollback de productos creados (excepción):', e);
+  }
+}
+
+/**
  * Guarda una recepción como PENDIENTE.
  *
  * Inserta en `receipts` (status='pending') + `receipt_items` sin afectar
@@ -277,6 +292,11 @@ export function useSavePendingReception() {
       const existingItems = params.items.filter(i => i.product_id);
 
       const createdProductIds: Record<string, string> = {}; // sku -> new product_id
+      // MISIÓN RECEPCIONES (2026-10-27): los productos creados en este flujo
+      // se revierten si CUALQUIER paso posterior falla (antes: un fallo al
+      // insertar la cabecera o las líneas dejaba productos huérfanos en el
+      // catálogo — misión §4.2 "evitar productos duplicados o huérfanos").
+      let createdProductIdList: string[] = [];
 
       if (newItems.length > 0) {
         // FIX CP-CAT-004 (auditoría 2026-10-16): la policy products_tenant_insert
@@ -326,10 +346,23 @@ export function useSavePendingReception() {
           .insert(productsData)
           .select('id, sku');
 
-        if (createErr) throw new Error(`Error al crear productos nuevos: ${createErr.message}`);
+        if (createErr) {
+          // MISIÓN RECEPCIONES (defecto D-A/D-B): clasificar el 23505 de
+          // products_sku_store_unique con un mensaje específico y accionable
+          // (antes: mensaje crudo del motor).
+          if (createErr.code === '23505' || /products_sku_store_unique|duplicate key/i.test(createErr.message)) {
+            const dupSkus = newItems.map(i => i.sku).filter(Boolean).join(', ');
+            throw new Error(
+              `ERR_SKU_EXISTS: el SKU ${dupSkus ? `"${dupSkus}" ` : ''}ya existe en el catálogo de esta tienda. ` +
+              'Elimina el item de la recepción y selecciona el producto existente desde el buscador.'
+            );
+          }
+          throw new Error(`Error al crear productos nuevos: ${createErr.message}`);
+        }
 
         for (const p of createdProducts || []) {
           if (p.sku) createdProductIds[p.sku] = p.id;
+          createdProductIdList.push(p.id);
         }
       }
 
@@ -392,8 +425,28 @@ export function useSavePendingReception() {
         .select('id')
         .single();
 
-      if (receiptErr) throw new Error(`Error al guardar recepción pendiente: ${receiptErr.message}`);
-      if (!receipt) throw new Error('No se pudo crear la recepción pendiente');
+      if (receiptErr) {
+        // MISIÓN RECEPCIONES: revertir productos creados si la cabecera falla
+        // (antes quedaban huérfanos en el catálogo).
+        if (createdProductIdList.length > 0) {
+          await rollbackCreatedProducts(createdProductIdList);
+        }
+        // Defecto D-B: el 23505 de idx_receipts_store_reference_doc (factura
+        // duplicada) debe reportarse como tal, no como error de SKU.
+        if (receiptErr.code === '23505' || /idx_receipts_store_reference_doc|duplicate key|unique constraint/i.test(receiptErr.message)) {
+          throw new Error(
+            `ERR_INVOICE_DUPLICATE: el número de factura "${params.invoiceNumber}" ya existe en esta tienda. ` +
+            'Cada recepción necesita un número de factura distinto.'
+          );
+        }
+        throw new Error(`Error al guardar recepción pendiente: ${receiptErr.message}`);
+      }
+      if (!receipt) {
+        if (createdProductIdList.length > 0) {
+          await rollbackCreatedProducts(createdProductIdList);
+        }
+        throw new Error('No se pudo crear la recepción pendiente');
+      }
 
       // 2. Insertar los items
       const itemsToInsert = allItems.map(item => ({
@@ -414,6 +467,12 @@ export function useSavePendingReception() {
 
         if (itemsErr) {
           await supabase.from('receipts').delete().eq('id', receipt.id);
+          // MISIÓN RECEPCIONES: revertir también los productos creados para
+          // esta recepción (antes la cabecera se borraba pero los productos
+          // nuevos quedaban huérfanos en el catálogo).
+          if (createdProductIdList.length > 0) {
+            await rollbackCreatedProducts(createdProductIdList);
+          }
           throw new Error(`Error al guardar items: ${itemsErr.message}`);
         }
       }
@@ -461,6 +520,64 @@ export function useConfirmPendingReception() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+    },
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// MISIÓN RECEPCIONES (2026-10-27) — Eliminar borrador de recepción.
+//
+// Defecto D-C: el historial solo ofrecía Anular (void_pending_reception,
+// que conserva el registro como 'voided' para siempre). El usuario necesita
+// ELIMINAR un borrador legítimo (status='pending', sin efectos de
+// inventario) para descartar un intento fallido y comenzar de nuevo.
+//
+// La RPC delete_pending_reception (migración 20261027180000) ejecuta todo
+// server-side de forma atómica: FOR UPDATE + guard de estado (solo
+// 'pending') + autorización multitienda has_store_access_as + limpieza de
+// líneas y cabecera + evento de auditoría. Las recepciones confirmadas
+// (active), anuladas (voided) o revertidas (reversed) NO son eliminables —
+// su rectificación es Revertir/Anular con trazabilidad.
+// ════════════════════════════════════════════════════════════════════════
+export function useDeletePendingReception() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      receiptId: string;
+    }) => {
+      const { data, error } = await supabase.rpc('delete_pending_reception', {
+        p_receipt_id: params.receiptId,
+      });
+
+      if (error) {
+        // Clasificar los errores de negocio esperados sin exponer detalles
+        // del motor SQL al usuario.
+        const msg = error.message || '';
+        if (msg.includes('ERR_INVALID_STATUS')) {
+          throw new Error(
+            'Solo se pueden eliminar recepciones en estado Pendiente (borrador). ' +
+            'Las confirmadas se revierten y las anuladas se conservan para auditoría.'
+          );
+        }
+        if (msg.includes('ERR_UNAUTHORIZED')) {
+          throw new Error('No tienes permisos para eliminar recepciones de esta tienda.');
+        }
+        if (msg.includes('ERR_RECEIPT_NOT_FOUND')) {
+          throw new Error('La recepción no existe (¿ya fue eliminada?). Actualiza la lista.');
+        }
+        if (msg.includes('ERR_RECEIPT_HAS_MOVEMENTS') || msg.includes('ERR_RECEIPT_HAS_PAYMENTS')) {
+          throw new Error('La recepción tiene efectos asociados; usa Revertir o Anular según corresponda.');
+        }
+        throw new Error(`Error al eliminar el borrador: ${msg}`);
+      }
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      // El borrador desaparece del listado, detalle y consultas dependientes
+      // sin recargar la aplicación (misión §5.1).
+      queryClient.invalidateQueries({ queryKey: ['receptions'] });
+      queryClient.invalidateQueries({ queryKey: ['receipt-items', variables.receiptId] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
 }

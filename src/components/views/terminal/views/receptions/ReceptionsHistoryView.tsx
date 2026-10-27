@@ -11,6 +11,7 @@ import {
   Copy,
   Pencil,
   Trash2,
+  Ban,
   Download,
   Plus,
   Zap,
@@ -88,6 +89,12 @@ export default function ReceptionsHistoryView() {
     handleConfirmPendingRequest,
     handleConfirmPendingExecute,
     handleConfirmPendingCancel,
+    // MISIÓN RECEPCIONES (2026-10-27): eliminar borrador (pending)
+    deletingReceipt,
+    isDeletingDraft,
+    handleDeleteDraftRequest,
+    handleDeleteDraftConfirm,
+    handleDeleteDraftCancel,
     // R2: modal de inversión estilado
     invertConfirmReceipt,
     handleInvertConfirm,
@@ -429,7 +436,24 @@ export default function ReceptionsHistoryView() {
                             <button type="button"
                               onClick={() => handleVoidRequest(rec)}
                               className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95"
-                              title="Anular"
+                              title="Anular (conserva el registro como anulada para auditoría)"
+                            >
+                              <Ban className="w-4 h-4" />
+                            </button>
+                          )}
+                          {/* MISIÓN RECEPCIONES (2026-10-27) — Eliminar borrador:
+                              distinto de Anular. Borra DEFINITIVAMENTE la
+                              recepción pendiente y sus líneas (RPC
+                              delete_pending_reception con guard de estado +
+                              auditoría). Solo visible para pending. */}
+                          {rec.status === 'pending' && (
+                            <button type="button"
+                              onClick={() => handleDeleteDraftRequest(rec as any)}
+                              disabled={isDeletingDraft}
+                              className="w-11 h-11 inline-flex items-center justify-center rounded-lg border-2 border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white dark:hover:text-black transition-all active:scale-95 disabled:opacity-50"
+                              title="Eliminar borrador (borrado definitivo, sin registro anulados)"
+                              aria-label="Eliminar borrador de recepción"
+                              data-testid={`reception-delete-draft-${(rec as any).id.slice(0, 8)}`}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -461,6 +485,37 @@ export default function ReceptionsHistoryView() {
         onConfirmPending={() => selectedReceipt && handleConfirmPendingExecute(selectedReceipt)}
         onConfirmPendingCancel={handleConfirmPendingCancel}
         isConfirmingPending={isConfirmingPending}
+      />
+
+      {/* MISIÓN RECEPCIONES (2026-10-27) — Confirmación de eliminación de
+          borrador (pending). Distinción explícita con Anular: Anular conserva
+          el registro como 'voided'; Eliminar lo borra definitivamente (solo
+          borradores sin efectos de inventario). */}
+      <DestructiveConfirmModal
+        key={`delete-draft-${deletingReceipt?.id ?? 'none'}`}
+        isOpen={!!deletingReceipt}
+        onClose={() => !isDeletingDraft && handleDeleteDraftCancel()}
+        title="Eliminar Borrador de Recepción"
+        description="Borrado definitivo del borrador (estado Pendiente) y sus líneas"
+        confirmName={deletingReceipt?.id.split('-')[0] || ''}
+        confirmNameLabel="ID de la recepción"
+        warningText={
+          <>
+            Vas a eliminar definitivamente el borrador <strong>{deletingReceipt?.id.split('-')[0]}</strong>
+            {' '}({deletingReceipt?.supplier || 'sin proveedor'} · factura {deletingReceipt?.reference_doc || '—'}).
+            A diferencia de <strong>Anular</strong> (que conserva el registro como anulada para auditoría),
+            esta acción <strong>no se puede deshacer</strong> y el borrador desaparecerá del historial.
+          </>
+        }
+        itemsList={[
+          'La recepción pendiente y todas sus líneas se borran definitivamente',
+          'El inventario NO cambia (un borrador nunca afectó existencias)',
+          'Queda registro de auditoría de quién eliminó el borrador',
+          'Las recepciones confirmadas no se pueden eliminar (usa Revertir)',
+        ]}
+        confirmLabel="Eliminar Borrador"
+        onConfirm={handleDeleteDraftConfirm}
+        isSubmitting={isDeletingDraft}
       />
 
       {/* R2: Modal estilado para invertir/anular recepción (reemplaza confirm() nativo) */}

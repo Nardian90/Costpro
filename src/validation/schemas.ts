@@ -692,6 +692,21 @@ export const registerReceptionParamsSchema = z.object({
       // FIX-COSTEO-DINAMICO: moneda y tasa de cambio por item
       moneda_recepcion: z.string().optional().default('CUP'),
       tasa_cambio_recepcion: z.number().min(0).optional().default(1.0),
+      // MISIÓN RECEPCIONES (2026-10-27): alta transaccional — un item SIN
+      // product_id puede declarar su producto nuevo; register_reception lo
+      // crea DENTRO de la misma transacción (sin huérfanos). Mutuamente
+      // excluyente con product_id (ERR_AMBIGUOUS_ITEM server-side).
+      new_product: z
+        .object({
+          sku: z.string().min(1),
+          name: z.string().min(1),
+          cost_price: z.number().min(0).optional(),
+          price: z.number().min(0).optional(),
+          unit_of_measure: z.string().optional(),
+          is_complete: z.boolean().optional(),
+        })
+        .nullable()
+        .optional(),
     }),
   ),
   // PR-2 C10: parámetros 6 y 7 de la firma C (register_reception 7-param TIMESTAMPTZ).

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store';
-import { useReceptions, useReceptionDetails, useUpdateReception, useVoidReception, useConfirmPendingReception } from '@/hooks/api/useReceptions';
+import { useReceptions, useReceptionDetails, useUpdateReception, useVoidReception, useConfirmPendingReception, useDeletePendingReception } from '@/hooks/api/useReceptions';
 import { Receipt, ReceiptItem } from '@/types';
 import { useInvertDocument } from '@/hooks/api/useDocumentActions';
 import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
@@ -27,6 +27,11 @@ export function useReceptionsHistoryView() {
   const voidReceptionMutation = useVoidReception();
   // Reception-Flow-Fix: hook para confirmar recepción pendiente.
   const confirmPendingMutation = useConfirmPendingReception();
+  // MISIÓN RECEPCIONES (2026-10-27) — Defecto D-C: hook para ELIMINAR
+  // borradores de recepción (status='pending') de forma definitiva.
+  const deletePendingMutation = useDeletePendingReception();
+  // MISIÓN RECEPCIONES: recepción pendiente cuya eliminación se confirma.
+  const [deletingReceipt, setDeletingReceipt] = useState<Receipt | null>(null);
 
   // Document Actions Hooks
   const invertDocumentMutation = useInvertDocument();
@@ -136,6 +141,34 @@ export function useReceptionsHistoryView() {
   const handleConfirmPendingCancel = () => {
     setConfirmingReceiptId(null);
   };
+
+  // MISIÓN RECEPCIONES (2026-10-27) — Eliminar borrador de recepción (pending).
+  // Diferencia con Anular: Anular conserva el registro como 'voided' para
+  // auditoría; Eliminar lo borra DEFINITIVAMENTE (solo permitido sobre
+  // borradores sin efectos de inventario) para descartar intentos fallidos.
+  const handleDeleteDraftRequest = (receipt: Receipt) => {
+    if (receipt.status !== 'pending') {
+      toast.error('Solo se pueden eliminar recepciones en estado Pendiente (borrador).');
+      return;
+    }
+    setDeletingReceipt(receipt);
+  };
+
+  const handleDeleteDraftConfirm = async () => {
+    if (!deletingReceipt) return;
+    try {
+      await deletePendingMutation.mutateAsync({ receiptId: deletingReceipt.id });
+      toast.success('Borrador de recepción eliminado correctamente');
+      setDeletingReceipt(null);
+      // Si el modal de detalles estaba abierto sobre esa recepción, cerrarlo
+      if (selectedReceiptId === deletingReceipt.id) setSelectedReceiptId(null);
+    } catch (error: any) {
+      logger.error('DATABASE', 'RECEPTION_DELETE_DRAFT_FAILED', { error });
+      toast.error(error?.message || 'Error al eliminar el borrador de recepción', { duration: 8000 });
+    }
+  };
+
+  const handleDeleteDraftCancel = () => setDeletingReceipt(null);
 
   const handleUpdateSubmit = async (receiptId: string, updates: {
     supplier?: string;
@@ -323,6 +356,13 @@ export function useReceptionsHistoryView() {
     handleConfirmPendingRequest,
     handleConfirmPendingExecute,
     handleConfirmPendingCancel,
+
+    // MISIÓN RECEPCIONES: eliminar borrador (pending)
+    deletingReceipt,
+    isDeletingDraft: deletePendingMutation.isPending,
+    handleDeleteDraftRequest,
+    handleDeleteDraftConfirm,
+    handleDeleteDraftCancel,
 
     // Actions
     handleInvert,

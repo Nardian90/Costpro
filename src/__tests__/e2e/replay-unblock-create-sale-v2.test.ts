@@ -374,9 +374,9 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(salida).toContain('MATCH');
     // verificación del contenido
     const m = leeryValidarManifiesto();
-    expect(m.total_incluidos).toBe(99);
+    expect(m.total_incluidos).toBe(100);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(99);
+    expect(incluidos.length).toBe(100);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -391,6 +391,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // (MISIÓN PI-SUPERADMIN: la posición 97 = 20261027030000_pi_superadmin_rpc_authorization.sql)
     // (MISIÓN HSAA-SUPERADMIN: la posición 98 = 20261027120000_has_store_access_as_superadmin_policy.sql)
     // (MISIÓN CICLO DE VIDA PI: la posición 99 = 20261027150000_pi_lifecycle_ciclo_vida.sql)
+    // (MISIÓN RECEPCIONES: la posición 100 = 20261027180000_recepciones_borradores_transaccional.sql)
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }
