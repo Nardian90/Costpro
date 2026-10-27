@@ -13,7 +13,15 @@ import { withTracing } from '@/lib/observability';
  * GET /api/physical-inventory?storeId=...&status=...&from=...&to=...&search=...
  *   Lista los inventarios físicos de la tienda con contadores derivados.
  *   Authorization: withStoreAccess (membresía activa o admin) + RLS en BD.
+ *   status admite lista separada por comas (filtro por ciclo de vida:
+ *   Borrador=draft,prepared · En proceso=in_progress,…,conciliated ·
+ *   Terminado=closed · Anulado=voided — MISIÓN CICLO DE VIDA 2026-10-27).
  */
+const PI_STATUS_VALUES = [
+  'draft', 'prepared', 'in_progress', 'counted', 'in_reconciliation',
+  'pending_authorization', 'conciliated', 'closed', 'voided',
+] as const;
+
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const { searchParams } = req.nextUrl;
   const storeId = searchParams.get('storeId');
@@ -40,7 +48,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     .order('created_at', { ascending: false })
     .limit(200);
 
-  if (status && status !== 'all') query = query.eq('status', status);
+  if (status && status !== 'all') {
+    const list = status.split(',').map((s) => s.trim()).filter(Boolean);
+    const valid = list.every((s) => (PI_STATUS_VALUES as readonly string[]).includes(s));
+    if (!valid) {
+      return NextResponse.json({ error: 'Estado no válido' }, { status: 400 });
+    }
+    query = list.length === 1 ? query.eq('status', list[0]) : query.in('status', list);
+  }
   if (from) query = query.gte('cutoff_date', from);
   if (to) query = query.lte('cutoff_date', `${to}T23:59:59.999Z`);
   if (search) {

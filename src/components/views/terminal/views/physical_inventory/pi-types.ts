@@ -42,6 +42,118 @@ export const PI_STATUS_FILTER_LABELS: Record<string, string> = {
   voided: 'Anulados',
 };
 
+// ══════════════════════════════════════════════════════════════════════════
+// CICLO DE VIDA (MISIÓN CICLO DE VIDA 2026-10-27)
+//
+// Cuatro estados principales presentados al usuario — etiquetas EXACTAS:
+//   Borrador · En proceso · Terminado · Anulado
+// El flujo interno de 9 estados (con reglas de negocio de conteo/conciliación
+// /ajustes) se conserva; el ciclo de vida es la capa de presentación Y de
+// política (la matriz de permisos por estado se valida en servidor):
+//
+//   Borrador   = draft, prepared                → editable, iniciable, ELIMINABLE
+//   En proceso = in_progress … conciliated      → editable (conteo), terminable,
+//                                                 anulable con trazabilidad
+//   Terminado  = closed                         → inmutable e irreversible
+//   Anulado    = voided                         → consulta + motivo, inmutable
+// ══════════════════════════════════════════════════════════════════════════
+
+export type PILifecycleStage = 'borrador' | 'en_proceso' | 'terminado' | 'anulado';
+
+export interface PILifecycleMeta {
+  /** Etiqueta EXACTA requerida por la misión §5. */
+  label: 'Borrador' | 'En proceso' | 'Terminado' | 'Anulado';
+  className: string;
+  dot: string;
+  statuses: PIStatus[];
+}
+
+export const PI_LIFECYCLE_META: Record<PILifecycleStage, PILifecycleMeta> = {
+  borrador: {
+    label: 'Borrador',
+    className: 'bg-muted text-muted-foreground',
+    dot: 'bg-muted-foreground',
+    statuses: ['draft', 'prepared'],
+  },
+  en_proceso: {
+    label: 'En proceso',
+    className: 'bg-warning/10 text-warning',
+    dot: 'bg-warning',
+    statuses: ['in_progress', 'counted', 'in_reconciliation', 'pending_authorization', 'conciliated'],
+  },
+  terminado: {
+    label: 'Terminado',
+    className: 'bg-success/15 text-success font-bold',
+    dot: 'bg-success',
+    statuses: ['closed'],
+  },
+  anulado: {
+    label: 'Anulado',
+    className: 'bg-destructive/10 text-destructive',
+    dot: 'bg-destructive',
+    statuses: ['voided'],
+  },
+};
+
+export const PI_LIFECYCLE_FILTER_LABELS: Record<'all' | PILifecycleStage, string> = {
+  all: 'Todos',
+  borrador: 'Borrador',
+  en_proceso: 'En proceso',
+  terminado: 'Terminado',
+  anulado: 'Anulado',
+};
+
+/** Estado del ciclo de vida al que pertenece un estado interno. */
+export function piLifecycleOf(status: PIStatus): PILifecycleStage {
+  if (status === 'draft' || status === 'prepared') return 'borrador';
+  if (status === 'closed') return 'terminado';
+  if (status === 'voided') return 'anulado';
+  return 'en_proceso';
+}
+
+/** Lista de estados internos de un ciclo de vida (para el filtro del listado). */
+export function statusesOfLifecycle(stage: PILifecycleStage): PIStatus[] {
+  return PI_LIFECYCLE_META[stage].statuses;
+}
+
+// ── Matriz de permisos por estado (misión §3 — espejo de las validaciones
+//    del servidor; los botones solo REFLEJAN lo que el backend permite) ──
+
+/** Editar datos/configuración (cabecera) — solo Borrador (RPC update_physical_inventory). */
+export function canEditPI(status: PIStatus): boolean {
+  return status === 'draft' || status === 'prepared';
+}
+
+/** Capturar/modificar cantidades — solo mientras el conteo está activo. */
+export function canCountPI(status: PIStatus): boolean {
+  return status === 'in_progress';
+}
+
+/** Iniciar inventario (Borrador → En proceso): preparar (draft) o iniciar conteo (prepared). */
+export function canStartPI(status: PIStatus): boolean {
+  return status === 'draft' || status === 'prepared';
+}
+
+/** Acción de ciclo de vida disponible (fases del flujo hacia Terminado). */
+export function canWorkTowardsFinishPI(status: PIStatus): boolean {
+  return ['in_progress', 'counted', 'in_reconciliation', 'pending_authorization', 'conciliated'].includes(status);
+}
+
+/** Anular — EXCLUSIVO de En proceso sin efectos generados (RPC void_physical_inventory). */
+export function canVoidPI(status: PIStatus): boolean {
+  return ['in_progress', 'counted', 'in_reconciliation', 'pending_authorization'].includes(status);
+}
+
+/** Eliminar definitivamente — EXCLUSIVO de Borrador (RPC delete_physical_inventory). */
+export function canDeletePI(status: PIStatus): boolean {
+  return status === 'draft' || status === 'prepared';
+}
+
+/** Modo consulta: Terminado y Anulado (la interfaz oculta/deshabilita acciones). */
+export function isReadOnlyPI(status: PIStatus): boolean {
+  return status === 'closed' || status === 'voided';
+}
+
 export type PIScopeType = 'full' | 'category' | 'selection';
 
 export const PI_SCOPE_LABELS: Record<PIScopeType, string> = {
