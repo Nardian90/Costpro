@@ -6,7 +6,7 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import {
   Package, X, Plus, Trash2, FileSpreadsheet, Upload, Download,
   AlertCircle, CheckCircle2, AlertTriangle, ChevronLeft, Loader2,
-  Camera, Zap, ClipboardList, Clock, SearchX,
+  Camera, Zap, ClipboardList, Clock, SearchX, Eraser,
 } from 'lucide-react';
 import { SupplierSelector } from './SupplierSelector';
 import { ReceptionSuccessModal } from './ReceptionSuccessModal';
@@ -78,6 +78,24 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
         <div className="flex items-center gap-2">
           {/* EM-R7: Indicador offline/sync */}
           <ReceptionOfflineIndicator />
+          {/* MISIÓN RECEPCIONES (2026-10-27) — Defecto D-C: eliminar el
+              borrador local. Antes el borrador se restauraba en cada visita
+              sin ninguna forma de descartarlo; el usuario veía datos de un
+              intento fallido indefinidamente. */}
+          {s.hasDraftContent && (
+            <button
+              type="button"
+              onClick={() => s.setShowDiscardConfirm(true)}
+              disabled={s.isSubmitting}
+              className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-xl border-2 border-destructive/30 bg-destructive/5 text-destructive font-black text-xs uppercase tracking-widest hover:bg-destructive/10 hover:border-destructive/50 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-destructive/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Eliminar borrador de la recepción"
+              title="Elimina este borrador local (proveedor, factura, productos) para comenzar de cero"
+              data-testid="reception-discard-draft"
+            >
+              <Eraser className="w-4 h-4" />
+              <span className="hidden sm:inline">Eliminar borrador</span>
+            </button>
+          )}
           {/* EM-R1: Toggle Modo Recepción Express */}
           <button
             type="button"
@@ -510,7 +528,14 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
             {s.selectedProductId ? (
               <PrimaryButton onClick={s.handleAddItem} label="Agregar" className="flex-1" />
             ) : (
-              <PrimaryButton onClick={s.handleAddManualProduct} label="Agregar como nuevo" className="flex-1" icon={Plus} />
+              <PrimaryButton
+                onClick={s.handleAddManualProduct}
+                label={s.isCheckingSku ? 'Verificando SKU…' : 'Agregar como nuevo'}
+                className="flex-1"
+                icon={s.isCheckingSku ? undefined : Plus}
+                disabled={s.isCheckingSku}
+                title="Si el SKU ya existe en el catálogo de esta tienda se te guiará a seleccionar el producto existente"
+              />
             )}
           </>
         }
@@ -976,6 +1001,46 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={s.executeSubmit} disabled={s.isSubmitting}>
               {s.isSubmitting ? 'Registrando...' : 'Confirmar Registro'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ═══════════════════════════════════════════════════════════
+          MISIÓN RECEPCIONES (2026-10-27) — Defecto D-C: confirmación de
+          eliminación del borrador local. Diferencia explícita entre cerrar
+          el formulario (conserva el borrador), guardarlo como Pendiente
+          (persiste en el servidor sin tocar inventario), registrarlo
+          (confirma y aplica inventario) y ELIMINAR el borrador (descarte
+          definitivo local, sin efectos en el servidor ni en inventario).
+          ═══════════════════════════════════════════════════════════ */}
+      <AlertDialog open={s.showDiscardConfirm} onOpenChange={s.setShowDiscardConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar borrador</AlertDialogTitle>
+            <div className="text-muted-foreground text-sm space-y-2 mt-2">
+              <p>Se descartara DEFINITIVAMENTE el borrador local de esta recepcion:</p>
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1 text-xs">
+                <div className="flex justify-between"><span className="text-muted-foreground">Proveedor:</span><span className="font-bold">{s.supplier || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Factura:</span><span className="font-bold">{s.invoiceNumber || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Productos:</span><span className="font-bold">{s.items.length}</span></div>
+              </div>
+              <p className="text-muted-foreground">
+                Esta accion NO modifica el inventario ni el historial (un borrador local nunca toco el servidor).
+                Si lo unico que quieres es salir sin perder los datos, usa la X de cerrar: el borrador se conserva
+                para continuar despues.
+              </p>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={s.handleDiscardDraft}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="reception-discard-confirm"
+            >
+              <Trash2 className="w-4 h-4 mr-1.5" />
+              Si, eliminar borrador
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-27T13:59:18.729Z
+-- Captured  : 2026-10-27T15:21:43.657Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 155 (SECURITY DEFINER write functions, public schema)
+-- Functions : 156 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -5636,6 +5636,90 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=delete_pending_reception args="p_receipt_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.delete_pending_reception(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_receipt RECORD;
+  v_store_id uuid;
+  v_items_deleted integer := 0;
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+BEGIN
+  -- 1. Lock de la fila (concurrencia: confirmar/anular/eliminar a la vez →
+  --    exactamente una operación gana; el resto ve el estado ya avanzado).
+  SELECT * INTO v_receipt FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND';
+  END IF;
+
+  -- 2. Guard de estado: SOLO borradores (pending). Una recepción confirmada
+  --    (active), anulada (voided) o revertida (reversed) NO se elimina —
+  --    su rectificación es Anular/Revertir con trazabilidad.
+  IF v_receipt.status <> 'pending' THEN
+    RAISE EXCEPTION 'ERR_INVALID_STATUS: solo se pueden eliminar recepciones en estado pendiente/borrador (estado actual: %). Para descartar una recepción confirmada usa Revertir; para una anulada no hay acción.', v_receipt.status;
+  END IF;
+
+  v_store_id := v_receipt.store_id;
+
+  -- 3. Autorización multitienda (mismo guard que void_pending_reception).
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- 4. Defense-in-depth: un borrador nunca tocó inventario ni pagos, pero si
+  --    por cualquier vía existen efectos ligados, se rechaza el borrado.
+  IF EXISTS (
+    SELECT 1 FROM public.stock_movements
+    WHERE store_id = v_store_id AND notes = p_receipt_id::text
+  ) THEN
+    RAISE EXCEPTION 'ERR_RECEIPT_HAS_MOVEMENTS: la recepción tiene movimientos de inventario asociados; usa Revertir';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM public.payment_transactions
+    WHERE ref_type = 'receipt' AND ref_id = p_receipt_id
+  ) THEN
+    RAISE EXCEPTION 'ERR_RECEIPT_HAS_PAYMENTS: la recepción tiene pagos asociados; usa Anular';
+  END IF;
+
+  -- 5. Eliminar líneas (SECURITY DEFINER pasa receipt_items_delete_denied;
+  --    service_reception_links / commission_reception_links /
+  --    service_cost_distributions tienen ON DELETE CASCADE).
+  DELETE FROM public.receipt_items WHERE receipt_id = p_receipt_id;
+  GET DIAGNOSTICS v_items_deleted = ROW_COUNT;
+
+  -- 6. Eliminar cabecera
+  DELETE FROM public.receipts WHERE id = p_receipt_id;
+
+  -- 7. Trazabilidad de la eliminación (política de auditoría del módulo:
+  --    paridad con void_pending_reception — quién, qué, cuándo y contenido).
+  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (v_caller_uid, v_store_id, 'DELETE_PENDING_RECEPTION', 'receipts', p_receipt_id,
+    jsonb_build_object(
+      'status', 'success',
+      'supplier', v_receipt.supplier,
+      'reference_doc', v_receipt.reference_doc,
+      'reception_date', v_receipt.reception_date,
+      'total_cost', v_receipt.total_cost,
+      'items_deleted', v_items_deleted,
+      'deleted_at', now()
+    ));
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'id', p_receipt_id,
+    'items_deleted', v_items_deleted
+  );
+END
+$function$
+
+
 -- @contract-function name=delete_physical_inventory args="p_pi_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.delete_physical_inventory(p_pi_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -9378,6 +9462,12 @@ DECLARE
   v_units_to_add NUMERIC;
   v_effective_date TIMESTAMP WITH TIME ZONE := COALESCE(p_reception_date, NOW());
   v_uc_base NUMERIC;
+  -- MISIÓN RECEPCIONES (2026-10-27): alta transaccional de productos nuevos
+  v_new_product JSONB;
+  v_new_sku TEXT;
+  v_new_tenant_id UUID;
+  v_created_skus TEXT[] := '{}';
+  v_new_products_count INTEGER := 0;
 BEGIN
   PERFORM public.validate_operation_date(p_reception_date, p_store_id);
 
@@ -9395,19 +9485,31 @@ BEGIN
     RAISE EXCEPTION 'ERR_EMPTY_ITEMS: at least one item is required';
   END IF;
 
+  -- D1 (misión recepciones 2026-10-27): factura duplicada → error accionable.
+  -- Antes este caso reventaba como 23505 crudo (idx_receipts_store_reference_doc)
+  -- y el frontend lo clasificaba erróneamente como "SKU ya existe".
+  IF p_invoice_number IS NOT NULL AND btrim(p_invoice_number) <> '' AND EXISTS (
+    SELECT 1 FROM public.receipts
+    WHERE store_id = p_store_id
+      AND reference_doc IS NOT NULL
+      AND reference_doc = btrim(p_invoice_number)
+  ) THEN
+    RAISE EXCEPTION 'ERR_INVOICE_DUPLICATE: el número de factura "%" ya existe en esta tienda. Usa un número distinto.', btrim(p_invoice_number);
+  END IF;
+
   INSERT INTO public.receipts (
     id, store_id, user_id, supplier, reception_date,
     reference_doc, total_cost, status, created_at, updated_at,
-    po_id   -- ← nueva columna
+    po_id
   ) VALUES (
     v_receipt_id, p_store_id, v_user_id, p_supplier,
     v_effective_date, p_invoice_number, 0, 'active', v_effective_date, v_effective_date,
-    p_po_id   -- ← pasa NULL si no viene
+    p_po_id
   );
 
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
   LOOP
-    v_product_id := (v_item->>'product_id')::UUID;
+    v_product_id := NULLIF(v_item->>'product_id', '')::UUID;
     v_quantity := (v_item->>'quantity')::NUMERIC;
     v_unit_cost := COALESCE((v_item->>'unit_cost')::NUMERIC, 0);
 
@@ -9415,6 +9517,59 @@ BEGIN
     IF v_unit_cost <= 0 THEN
       RAISE EXCEPTION 'ERR_INVALID_UNIT_COST: unit_cost must be > 0 for product %', v_product_id;
     END IF;
+
+    -- D2 (misión recepciones 2026-10-27): alta transaccional del producto
+    -- nuevo. Un item SIN product_id pero CON objeto new_product crea el
+    -- producto DENTRO de esta transacción: si cualquier paso posterior de la
+    -- recepción falla, el producto se revierte con todo lo demás (sin
+    -- huérfanos). La ambigüedad product_id + new_product se rechaza.
+    IF v_item ? 'new_product' THEN
+      IF v_product_id IS NOT NULL THEN
+        RAISE EXCEPTION 'ERR_AMBIGUOUS_ITEM: el item trae product_id y new_product a la vez';
+      END IF;
+      v_new_product := v_item->'new_product';
+      v_new_sku := btrim(COALESCE(v_new_product->>'sku', ''));
+      IF v_new_sku = '' THEN
+        RAISE EXCEPTION 'ERR_NEW_PRODUCT_INVALID: el producto nuevo requiere sku';
+      END IF;
+      IF btrim(COALESCE(v_new_product->>'name', '')) = '' THEN
+        RAISE EXCEPTION 'ERR_NEW_PRODUCT_INVALID: el producto nuevo % requiere nombre', v_new_sku;
+      END IF;
+      IF v_new_sku = ANY (v_created_skus) THEN
+        RAISE EXCEPTION 'ERR_SKU_DUPLICATE_PAYLOAD: el SKU "%" aparece más de una vez entre los productos nuevos de la recepción', v_new_sku;
+      END IF;
+      -- Unicidad REAL contra el catálogo de la tienda (mismo modelo que
+      -- products_sku_store_unique). Mensión misión: si ya existe, el usuario
+      -- debe SELECCIONARLO como existente, no crearlo de nuevo.
+      IF EXISTS (
+        SELECT 1 FROM public.products
+        WHERE store_id = p_store_id AND sku = v_new_sku
+      ) THEN
+        RAISE EXCEPTION 'ERR_SKU_EXISTS: el SKU "%" ya existe en el catálogo de esta tienda. Selecciona el producto existente en lugar de crearlo de nuevo.', v_new_sku;
+      END IF;
+      -- tenant fail-closed (paridad products_tenant_insert / RLS-FIX cliente)
+      IF v_new_tenant_id IS NULL THEN
+        SELECT tenant_id INTO v_new_tenant_id FROM public.stores WHERE id = p_store_id;
+        IF v_new_tenant_id IS NULL THEN
+          RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: no se pudo resolver el tenant de la tienda %', p_store_id;
+        END IF;
+      END IF;
+      INSERT INTO public.products (
+        store_id, tenant_id, sku, name, cost_price, price,
+        unit_of_measure, is_active, is_complete, stock_current
+      ) VALUES (
+        p_store_id, v_new_tenant_id, v_new_sku, btrim(v_new_product->>'name'),
+        COALESCE((v_new_product->>'cost_price')::NUMERIC, 0),
+        COALESCE((v_new_product->>'price')::NUMERIC, 0),
+        COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
+        TRUE,
+        COALESCE((v_new_product->>'is_complete')::BOOLEAN, TRUE),
+        0
+      ) RETURNING id INTO v_product_id;
+      v_created_skus := array_append(v_created_skus, v_new_sku);
+      v_new_products_count := v_new_products_count + 1;
+    END IF;
+
     v_moneda := COALESCE(v_item->>'moneda_recepcion', 'CUP');
     v_tasa := COALESCE((v_item->>'tasa_cambio_recepcion')::NUMERIC, 1.0);
 
@@ -9509,7 +9664,8 @@ BEGIN
       'supplier', p_supplier,
       'total_cost', v_total_cost,
       'items_count', jsonb_array_length(p_items),
-      'po_id', p_po_id
+      'po_id', p_po_id,
+      'new_products_created', v_new_products_count
     ));
 
   RETURN v_receipt_id;

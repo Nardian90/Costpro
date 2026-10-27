@@ -201,6 +201,9 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   const [manualName, setManualName] = useState('');
   const [manualSku, setManualSku] = useState('');
   const [manualUnitOfMeasure, setManualUnitOfMeasure] = useState<string>('unidad');
+  // MISIÓN RECEPCIONES (2026-10-27): verificación de SKU contra el catálogo
+  // durante el alta manual (defecto D-A — bloquear altas de SKU existentes).
+  const [isCheckingSku, setIsCheckingSku] = useState(false);
   // REC-2 MM-R9: Precio de venta editable en modal
   const [newSalePrice, setNewSalePrice] = useState<number | null>(null);
   // FIX-GAP2: Moneda y tasa de cambio para el formulario de nuevo item
@@ -208,6 +211,9 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   const [newTasa, setNewTasa] = useState<number>(1.0);
   // FIX-MULTI-MONEDA: moneda del precio de venta (puede diferir de la compra)
   const [newPriceCurrency, setNewPriceCurrency] = useState<string>('CUP');
+  // MISIÓN RECEPCIONES (2026-10-27): confirmación de descarte del borrador
+  // local (defecto D-C — el borrador se restauraba sin opción de eliminarlo).
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // ─────────────────────────────────────────────────────────────
   // MISIÓN UI/UX RECEPCIONES (2026-10-22): búsqueda en SERVIDOR.
@@ -334,6 +340,31 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       }
     } catch { /* ignore quota errors */ }
   }, [supplier, invoiceNumber, notes, receptionDate, items, draftKey]);
+
+  // MISIÓN RECEPCIONES (2026-10-27) — Defecto D-C: "Eliminar borrador".
+  // El borrador localStorage se restaura en cada montaje sin que existiera
+  // acción para descartarlo; el usuario veía "Borrador restaurado"
+  // indefinidamente tras un intento fallido. handleDiscardDraft limpia el
+  // almacenamiento y resetea el formulario COMPLETO (la acción es local: un
+  // borrador nunca tocó el servidor — las recepciones pending del servidor se
+  // eliminan desde el historial con delete_pending_reception).
+  const hasDraftContent = !!(supplier || invoiceNumber || notes || items.length > 0);
+
+  const handleDiscardDraft = () => {
+    try {
+      localStorage.removeItem(draftKey);
+    } catch { /* ignore */ }
+    setSupplier('');
+    setInvoiceNumber('');
+    setNotes('');
+    setItems([]);
+    setPendingDelete(null);
+    setEditingIndex(null);
+    setReceptionDateTouched(false);
+    setReceptionDate(todayStr);
+    setShowDiscardConfirm(false);
+    toast.success('Borrador eliminado. Puedes comenzar una recepción nueva.');
+  };
 
   // FIX-10: Cleanup delete timer on unmount (+ focus timer REC-1 QW-R5)
   useEffect(() => {
@@ -588,7 +619,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   };
 
   // FIX-02: Manual add for products not in catalog
-  const handleAddManualProduct = () => {
+  const handleAddManualProduct = async () => {
     const name = manualName.trim();
     if (!name) { toast.error('El nombre del producto es obligatorio'); return; }
 
@@ -597,6 +628,52 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     if (items.some(i => i.sku.toLowerCase() === sku.toLowerCase())) {
       toast.error(`Ya existe un producto con SKU "${sku}" en esta recepcion`);
       return;
+    }
+
+    // MISIÓN RECEPCIONES (2026-10-27) — Defecto D-A: el alta manual NO
+    // comprobaba el catálogo de la tienda; el usuario podía agregar un SKU
+    // existente como "nuevo" y el fallo (23505 products_sku_store_unique)
+    // solo aparecía al registrar, con un mensaje genérico. Ahora se verifica
+    // contra el catálogo REAL (RLS con el JWT del usuario) ANTES de agregar:
+    // si el SKU existe, se bloquea el alta y se guía a seleccionar el
+    // existente (misión §4.1 — modalidades inequívocas).
+    if (user?.activeStoreId && manualSku.trim()) {
+      setIsCheckingSku(true);
+      try {
+        const { data: candidates, error: skuErr } = await supabase
+          .from('products')
+          .select('id, sku, name, cost_price, price, unit_of_measure')
+          .eq('store_id', user.activeStoreId)
+          .ilike('sku', manualSku.trim())
+          .limit(5);
+        if (skuErr) throw skuErr;
+        // ILIKE sin comodines es exacto salvo %/_ en el SKU: confirmar
+        // igualdad case-insensitive para no bloquear por falso positivo.
+        const found = (candidates || []).find(
+          p => (p.sku || '').toLowerCase() === manualSku.trim().toLowerCase()
+        );
+        if (found) {
+          // Guía activa hacia el producto existente: pre-seleccionarlo y
+          // disparar la búsqueda para que el panel de confirmación cargue
+          // sus datos reales (identidad, no texto libre).
+          setManualSku('');
+          setManualName('');
+          setAddItemSearch(found.sku || found.name);
+          setSelectedProductId(found.id);
+          toast.info(
+            `El SKU "${found.sku}" ya existe en el catálogo de esta tienda: "${found.name}". ` +
+            'Ya quedó seleccionado como producto existente — completa cantidad y costo debajo.',
+            { duration: 9000 }
+          );
+          return;
+        }
+      } catch (e) {
+        // Solo registrar: si la verificación falla por red, la RPC revalida
+        // la unicidad en el servidor (fail-safe autoritativo).
+        console.error('Error verificando SKU contra el catálogo:', e);
+      } finally {
+        setIsCheckingSku(false);
+      }
     }
 
     setItems(prev => [...prev, {
@@ -1119,84 +1196,17 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setShowSubmitConfirm(false);
     setIsSubmitting(true);
 
-    // REC-2 MM-R6: Rollback transaccional.
-    let createdProductIds: string[] = [];
-
     try {
-      let finalItems = [...items];
-
-      // FIX-02: Auto-create products that don't exist
-      const itemsToCreate = finalItems.filter(i => i.is_new && !i.product_id);
-      const autoCreatedSkus: string[] = [];
-
-      if (itemsToCreate.length > 0) {
-        toast.loading(`Creando ${itemsToCreate.length} producto(s) nuevo(s)...`, { id: 'auto-create' });
-
-        // RLS-FIX (products_tenant_insert): la política vigente de INSERT en
-        // products exige tenant_id = current_user_tenant_id() AND
-        // store_id ∈ current_user_store_ids(). El cliente no tiene contexto de
-        // tenant (UserContract no lo expone), así que se resuelve desde la BD
-        // leyendo stores.tenant_id con el JWT del usuario: la política
-        // stores_tenant_select solo devuelve tiendas del propio tenant, por lo
-        // que el valor queda validado contra la identidad del usuario (no es
-        // dato arbitrario del cliente). Fail-closed: si la tienda activa no es
-        // legible para este usuario (0 filas o tenant_id nulo), se aborta sin
-        // INSERT. RLS revalida el WITH CHECK server-side.
-        const { data: tenantStore, error: tenantError } = await supabase
-          .from('stores')
-          .select('tenant_id')
-          .eq('id', user!.activeStoreId)
-          .maybeSingle();
-
-        if (tenantError || !tenantStore?.tenant_id) {
-          console.error('RLS-FIX: no se pudo resolver tenant_id de la tienda activa', {
-            hasError: !!tenantError,
-            hasRow: !!tenantStore,
-          });
-          throw new Error(
-            'No se pudo verificar la tienda activa para crear productos. ' +
-            'Comprueba tu sesión y los permisos sobre la tienda, e inténtalo de nuevo.'
-          );
-        }
-        const verifiedTenantId: string = tenantStore.tenant_id;
-
-        const productsData = itemsToCreate.map(item => ({
-          store_id: user!.activeStoreId,
-          tenant_id: verifiedTenantId,
-          sku: item.sku,
-          name: item.name,
-          cost_price: item.unit_cost,
-          price: item.sale_price || 0,
-          unit_of_measure: item.unit_of_measure || 'unidad',
-          is_complete: !!item.sale_price,
-          is_active: true,
-        }));
-
-        let insertResult = await supabase.from('products')
-          .insert(productsData)
-          .select('id, sku');
-
-        // Fallback if is_complete column doesn't exist yet (SUP-R01 not run)
-        if (insertResult.error && (insertResult.error.message?.includes('is_complete') || insertResult.error.code === 'PGRST204' || insertResult.error.message?.includes('column'))) {
-          const fallback = productsData.map(({ is_complete, ...rest }: any) => rest);
-          insertResult = await supabase.from('products').insert(fallback).select('id, sku');
-        }
-
-        if (insertResult.error) throw new Error(`Error al crear productos: ${insertResult.error.message}`);
-
-        const createdMap = new Map((insertResult.data || []).map((p: { sku: string; id: string }) => [p.sku, p.id] as [string, string]));
-        autoCreatedSkus.push(...Array.from(createdMap.keys()));
-        createdProductIds = Array.from(createdMap.values());
-
-        finalItems = finalItems.map(item => {
-          if (item.is_new && !item.product_id && createdMap.has(item.sku)) {
-            return { ...item, product_id: createdMap.get(item.sku) as string, is_new: false };
-          }
-          return item;
-        });
-
-        toast.success(`${itemsToCreate.length} producto(s) creado(s) correctamente`, { id: 'auto-create' });
-      }
+      // MISIÓN RECEPCIONES (2026-10-27): la creación de productos nuevos ahora
+      // es TRANSACCIONAL en el servidor. Antes el cliente insertaba en
+      // `products` y luego llamaba a register_reception: un fallo intermedio
+      // dejaba huérfanos (o un 23505 crudo cuando el SKU ya existía en el
+      // catálogo — defecto D-A/D-B del diagnóstico). Ahora cada item nuevo
+      // viaja con su objeto new_product DENTRO de p_items y la RPC crea el
+      // producto y la recepción en la MISMA transacción: o se registra todo,
+      // o no se registra nada.
+      const finalItems = [...items];
+      const autoCreatedSkus = finalItems.filter(i => i.is_new && !i.product_id).map(i => i.sku);
 
       // Call register_reception RPC
       // MISIÓN POLÍTICA TEMPORAL: convención de envío unificada al MEDIODÍA
@@ -1233,6 +1243,21 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           moneda_recepcion: item.moneda_recepcion || 'CUP',
           price_currency: item.price_currency || 'CUP',
           tasa_cambio_recepcion: item.tasa_cambio_recepcion || 1.0,
+          // MISIÓN RECEPCIONES: alta transaccional server-side. El producto
+          // nuevo se declara en el item; la RPC lo crea (validando unicidad
+          // real de SKU contra el catálogo) dentro de su transacción.
+          ...(item.is_new && !item.product_id
+            ? {
+                new_product: {
+                  sku: item.sku,
+                  name: item.name,
+                  cost_price: item.unit_cost,
+                  price: item.sale_price || 0,
+                  unit_of_measure: item.unit_of_measure || 'unidad',
+                  is_complete: !!item.sale_price,
+                },
+              }
+            : {}),
         })),
         // PR-2 C6: enviar los 7 args explícitos a la firma C (register_reception 7-param TIMESTAMPTZ).
         // p_user_id se envía explícitamente (no dependemos de la resolución implícita
@@ -1303,51 +1328,58 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       setItems([]);
     } catch (err: any) {
       console.error('Submit error:', err);
-      // REC-2 MM-R6: Rollback — eliminar productos auto-creados si falla el registro.
-      if (createdProductIds.length > 0) {
-        try {
-          toast.loading(`Revirtiendo ${createdProductIds.length} producto(s) creado(s)...`, { id: 'rollback' });
-          const { error: rollbackErr } = await supabase
-            .from('products')
-            .delete()
-            .in('id', createdProductIds);
-          if (rollbackErr) {
-            console.error('Rollback falló:', rollbackErr.message);
-            toast.error(
-              `Error: no se pudo revertir la creación de ${createdProductIds.length} producto(s). ` +
-              `Contacta al administrador para limpieza manual.`,
-              { duration: 10000, id: 'rollback' }
-            );
-          } else {
-            toast.warning(
-              `${createdProductIds.length} producto(s) creado(s) fueron revertidos debido al error.`,
-              { id: 'rollback' }
-            );
-          }
-        } catch (rollbackErr) {
-          console.error('Rollback exception:', rollbackErr);
-        }
-      }
+      // MISIÓN RECEPCIONES (2026-10-27): ya no hay rollback client-side de
+      // productos — la creación es transaccional en el servidor (register_reception
+      // con new_product): si algo falla, la RPC revierte producto + recepción +
+      // líneas + stock de forma atómica. No quedan huérfanos que limpiar.
+      //
       // RLS-FIX (observabilidad): clasificar el error para dar feedback
       // accionable sin exponer detalles internos de PostgreSQL (códigos,
       // SQLSTATE ni mensajes del motor). Solo se registran en console.error
       // (sin JWT/cookies/secretos); al usuario llega el mensaje clasificado.
       const rawMsg: string = typeof err?.message === 'string' ? err.message : String(err ?? '');
       let userMessage = rawMsg || 'Error al registrar la recepcion';
-      if (err?.code === '42501' || /row-level security|violates row-level|42501/i.test(rawMsg)) {
+      if (rawMsg.includes('ERR_INVOICE_DUPLICATE')) {
+        // D1: factura duplicada (idx_receipts_store_reference_doc) — antes se
+        // reportaba erróneamente como "SKU ya existe" (defecto D-B).
         userMessage =
-          'Permisos insuficientes para crear productos en esta tienda. ' +
+          `El número de factura "${invoiceNumber.trim()}" ya existe en esta tienda. ` +
+          'Cada recepción necesita un número de factura distinto.';
+      } else if (rawMsg.includes('ERR_SKU_EXISTS')) {
+        // D2: el SKU ya está en el catálogo — guiar a seleccionar el existente.
+        const skuMatch = rawMsg.match(/ERR_SKU_EXISTS: el SKU "([^"]+)"/);
+        const skuTxt = skuMatch ? `"${skuMatch[1]}" ` : '';
+        userMessage =
+          `El SKU ${skuTxt}ya existe en el catálogo de esta tienda. ` +
+          'Elimínalo de la recepción y selecciónalo desde el buscador como producto existente.';
+      } else if (rawMsg.includes('ERR_SKU_DUPLICATE_PAYLOAD')) {
+        userMessage =
+          'Hay dos productos nuevos con el mismo SKU en esta recepción. ' +
+          'Corrige los items marcados como nuevos e inténtalo de nuevo.';
+      } else if (rawMsg.includes('ERR_AMBIGUOUS_ITEM')) {
+        userMessage = 'Datos inconsistentes en uno de los items (producto existente y nuevo a la vez). Vuelve a agregar el producto.';
+      } else if (err?.code === '42501' || /row-level security|violates row-level|42501/i.test(rawMsg)) {
+        userMessage =
+          'Permisos insuficientes para registrar la recepción en esta tienda. ' +
           'Verifica tu sesión y tu membresía activa en la tienda, e inténtalo de nuevo.';
       } else if (err?.code === '23505' || /duplicate key|unique constraint/i.test(rawMsg)) {
-        userMessage =
-          'Uno de los SKU ya existe en esta tienda. ' +
-          'Revisa los items marcados como nuevos e inténtalo de nuevo.';
+        // Residual (carrera real de unicidad): identificar el constraint para
+        // no repetir el defecto D-B de culpar siempre al SKU.
+        if (/idx_receipts_store_reference_doc|reference_doc/i.test(rawMsg)) {
+          userMessage =
+            `El número de factura "${invoiceNumber.trim()}" ya existe en esta tienda. ` +
+            'Cada recepción necesita un número de factura distinto.';
+        } else {
+          userMessage =
+            'Uno de los SKU ya existe en el catálogo de esta tienda. ' +
+            'Revisa los items marcados como nuevos — si el producto ya existe, selecciónalo desde el buscador.';
+        }
       } else if (/failed to fetch|networkerror|err_network|load failed/i.test(rawMsg)) {
         userMessage =
           'Problema de conexión con el servidor. ' +
           'Revisa tu red e inténtalo de nuevo; no se registró la recepción.';
       }
-      toast.error(userMessage);
+      toast.error(userMessage, { duration: 8000 });
     } finally {
       setIsSubmitting(false);
       submitInProgressRef.current = false;
@@ -1596,6 +1628,13 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     showSubmitConfirm,
     setShowSubmitConfirm,
     isSubmitting,
+    // MISIÓN RECEPCIONES (2026-10-27): eliminar borrador local (defecto D-C)
+    hasDraftContent,
+    showDiscardConfirm,
+    setShowDiscardConfirm,
+    handleDiscardDraft,
+    // MISIÓN RECEPCIONES (2026-10-27): verificación de SKU en alta manual
+    isCheckingSku,
     successData,
     setSuccessData,
     isFormOpen,
