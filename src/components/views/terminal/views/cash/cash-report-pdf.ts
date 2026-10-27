@@ -312,6 +312,156 @@ export function computeCustomResultsForPdf(
   };
 }
 
+// ── MISIÓN WORD (2026-10-27): ensamblador de filas del Resumen del Día ─────
+// Extracción VERBATIM del bloque de `renderCurrencyReport` (buildDiarioPdf):
+// la exportación Word (.docx) consume EXACTAMENTE las mismas filas que el PDF
+// (etiquetas, importes, orden y filtrado por conceptos) — paridad por
+// construcción, sin segunda lógica de presentación. El comportamiento del PDF
+// no cambia: el bloque original llama a esta función.
+export function buildDiarioIncomeRows(
+  currency: 'CUP' | 'USD',
+  s: DailySummary,
+  curResult: CustomCurrencyResult,
+  concepts?: SummaryConceptsSelection | null,
+): ConceptTaggedRow[] {
+  const incomeRows: ConceptTaggedRow[] = filterIncomeRowsByConcepts(([
+    { label: 'Saldo inicial / fondo de caja', amount: s.saldoInicial, concept: 'saldoInicial' },
+    ...(currency === 'CUP'
+    ? [
+        // MISIÓN CONCILIACIÓN: el agregado se RECALCULA con los componentes
+        // de venta activos (una partida desactivada nunca queda sumada en
+        // silencio dentro del total — misión §4.2).
+        { label: 'Resumen del día (efectivo + transferencia)', amount: curResult.ventasTotalesPersonalizado, isTotal: true, concept: 'resumenDia' },
+        { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
+        { label: 'Ventas por transferencia', amount: s.ventasTransfer, concept: 'ventasTransferencia' },
+      ]
+    : [
+        { label: 'Resumen del día (efectivo + Zelle)', amount: curResult.ventasTotalesPersonalizado, isTotal: true, concept: 'resumenDia' },
+        { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
+        { label: 'Venta por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' },
+      ]),
+  ] as ConceptTaggedRow[]), concepts ?? undefined);
+  if (currency === 'CUP') {
+    if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' });
+    if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true, concept: 'ventasEfectivo' });
+    // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
+    // (contrato único §2) — jamás sumada a las filas de venta (no es una
+    // segunda venta). MISIÓN CORRECTIVA 2026-10-25: es CONSOLIDACIÓN de
+    // presentación ('info'): los billetes de ese cobro viven físicamente en
+    // la hoja USD — no alimentan el esperado de la hoja CUP (contarlos en
+    // ambas rompería la conciliación con el libro físico).
+    if (s.equivCashOtraMoneda > 0 && concepts?.equivalenciaCup !== false) incomeRows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, note: 'info', concept: 'equivalenciaCup' });
+    if (s.equivVouchersOtraMoneda > 0 && concepts?.equivalenciaCup !== false) incomeRows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, note: 'info', concept: 'equivalenciaCup' });
+    if (s.otIngresosCash > 0) incomeRows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash, concept: 'otIngresos' });
+    // Comisiones PAGADAS desglosadas por medio (§4): transferencia NO toca el efectivo.
+    if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense', concept: 'otrosEgresos' });
+    if (s.comisionesTransfer > 0) incomeRows.push({ label: 'Comisiones pagadas por transferencia', amount: s.comisionesTransfer, note: 'info', concept: 'otrosEgresos' });
+    // Servicios recibidos: línea INDEPENDIENTE (§6) — ya no fusionados en proveedores.
+    if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense', concept: 'otrosEgresos' });
+    if (s.recibosProveedoresCash > 0) incomeRows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, note: 'expense', concept: 'otrosEgresos' });
+    if (s.ajustesPositivos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos, concept: 'ajustes' });
+    if (s.ajustesNegativos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (-)', amount: s.ajustesNegativos, note: 'expense', concept: 'ajustes' });
+    // MISIÓN INGRESOS/EGRESOS 2026-10-20: documentos de caja (fondo de cambio
+    // y otros) — filas independientes de los ajustes, auditables por separado.
+    if (s.ingresosCaja > 0) incomeRows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja, concept: 'ingresosCaja' });
+    if (s.egresosCaja > 0 && concepts?.egresosCaja !== false) incomeRows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, note: 'expense', concept: 'egresosCaja' });
+    if (s.reembolsosCash > 0) incomeRows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, note: 'expense', concept: 'reembolsos' });
+    // v2.23.0 (decisión del propietario 2026-10-21): reembolsos por voucher —
+    // INFORMATIVO (nota 'info', igual que comisiones por transferencia): no
+    // tocan el efectivo esperado; documenta el neto del lado vouchers.
+    if (s.reembolsosVoucher > 0) incomeRows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, note: 'info', concept: 'reembolsos' });
+  } else {
+    if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense', concept: 'otrosEgresos' });
+    if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense', concept: 'otrosEgresos' });
+  }
+  // MISIÓN CORRECTIVA 2026-10-25: liquidación de billetes (vuelto cruzado de
+  // cobros con liquidación explícita) — partida CONTABLE de la conciliación
+  // física (siempre visible cuando ≠ 0; sin checkbox: no es presentación).
+  // Hoja CUP: vuelto entregado en CUP (salida). Hoja USD: billetes recibidos
+  // en exceso con vuelto dado en CUP (entrada). El importe ya llega con SU
+  // SIGNO (liquidacionBilletes = cobrosBilletes − ventasCash de la hoja).
+  if (Math.abs(s.liquidacionBilletes) > 0.005) {
+    incomeRows.push(currency === 'CUP'
+      ? { label: 'Vuelto dado en CUP de cobros en otras monedas', amount: s.liquidacionBilletes }
+      : { label: 'Billetes recibidos en exceso (vuelto dado en CUP)', amount: s.liquidacionBilletes });
+  }
+  return incomeRows;
+}
+
+// ── MISIÓN WORD (2026-10-27): ensamblador de filas del Resumen Estándar ────
+// Extracción VERBATIM del bloque de `buildEstandarPdf` (filas del RESUMEN —
+// FLUJO DE CAJA CUP): la exportación Word (.docx) consume EXACTAMENTE las
+// mismas filas que el PDF. El comportamiento del PDF no cambia.
+export interface EstandarResumenData {
+  summaryRows: (string | number)[][];
+  ventasRowsVisible: number;
+  sales: any[];
+  payments: any[];
+  commissions: any[];
+  production: any[];
+}
+
+export function buildEstandarSummaryRows(
+  report: CashReport,
+  concepts?: SummaryConceptsSelection | null,
+): EstandarResumenData {
+  const fmt = (n: number) => formatCurrency(n);
+  const sales: any[] = report.sales || [];
+  const payments: any[] = report.payments || [];
+  const commissions: any[] = report.commissions || [];
+  const production: any[] = (report as any).production || [];
+
+  const cupCashSales = sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+  const cupTransferSales = sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+  const cupZelleSales = sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+  const cupCashPayments = payments.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+  const cupTransferPayments = payments.filter((p: any) => p.payment_method === 'transfer' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+  const cupCashCommissions = commissions.filter((c: any) => c.payment_method === 'cash' && c.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+  const cupCashProduction = production.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+  const cupTransferProduction = production.filter((p: any) => p.payment_method === 'transfer' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+
+  // MISIÓN PERSONALIZACIÓN (2026-10-25): las filas de ventas del resumen de
+  // la plantilla Estándar también respetan la selección de conceptos (misma
+  // clave que el Diario) — el SUBTOTAL INGRESOS se recalcula con las filas
+  // visibles (nunca queda un total que incluya conceptos ocultos). Los
+  // importes provienen del reporte AJUSTADO que inyecta la vista cuando hay
+  // ventas excluidas (mismo mecanismo que el Diario).
+  const showVentasEfectivo = concepts?.ventasEfectivo !== false;
+  const showVentasTransferencia = concepts?.ventasTransferencia !== false;
+  const showVentasZelle = concepts?.ventasZelle !== false;
+  const ventasRowsVisible =
+    (showVentasEfectivo ? cupCashSales : 0) +
+    (showVentasTransferencia ? cupTransferSales : 0) +
+    (showVentasZelle ? cupZelleSales : 0);
+  const summaryRows: (string | number)[][] = [
+    ['INGRESOS', '', '', ''],
+    ...(showVentasEfectivo ? [[
+      '  Ventas en Efectivo',
+      `${sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`,
+      '',
+      fmt(cupCashSales),
+    ]] : []),
+    ...(showVentasTransferencia ? [[
+      '  Ventas por Transferencia',
+      `${sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`,
+      '',
+      fmt(cupTransferSales),
+    ]] : []),
+    ...(showVentasZelle && cupZelleSales > 0 ? [['  Ventas por Zelle', `${sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`, '', fmt(cupZelleSales)]] : []),
+    ['  Anticipos/Liquidaciones de Órdenes', `${production.reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(cupCashProduction + cupTransferProduction)],
+    ['SUBTOTAL INGRESOS', '', '', fmt(ventasRowsVisible + cupCashProduction + cupTransferProduction)],
+    ['', '', '', ''],
+    ['EGRESOS (-)', '', '', ''],
+    ['  Pagos a Proveedores (Recepciones)', `${payments.filter((p: any) => p.ref_type === 'receipt').reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(payments.filter((p: any) => p.ref_type === 'receipt').reduce((s: number, x: any) => s + Number(x.total), 0))],
+    ['  Pagos por Servicios Recibidos', `${payments.filter((p: any) => p.ref_type === 'service').reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(payments.filter((p: any) => p.ref_type === 'service').reduce((s: number, x: any) => s + Number(x.total), 0))],
+    ['  Comisiones a Trabajadores', `${commissions.reduce((s: number, x: any) => s + Number(x.commission_count), 0)} pagos`, '', fmt(commissions.reduce((s: number, x: any) => s + Number(x.total), 0))],
+    ['SUBTOTAL EGRESOS', '', '', fmt(cupCashPayments + cupTransferPayments + cupCashCommissions)],
+    ['', '', '', ''],
+    ['(-) Transferencias (no se entregan en efectivo)', '', '', fmt(cupTransferSales + cupTransferProduction)],
+  ];
+  return { summaryRows, ventasRowsVisible, sales, payments, commissions, production };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // PLANTILLA ESTÁNDAR (portado 1:1 del modal — refactor 2026-07-20)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -467,60 +617,10 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     ? { itemsSummary: summaries.itemsSummary, commissionsSummary: summaries.commissionsSummary }
     : await fetchEstandarSummaries(startDate, endDate);
 
-  const sales: any[] = report.sales || [];
-  const payments: any[] = report.payments || [];
-  const commissions: any[] = report.commissions || [];
-  const production: any[] = (report as any).production || [];
-
-  const cupCashSales = sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-  const cupTransferSales = sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-  const cupZelleSales = sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-  const cupCashPayments = payments.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-  const cupTransferPayments = payments.filter((p: any) => p.payment_method === 'transfer' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-  const cupCashCommissions = commissions.filter((c: any) => c.payment_method === 'cash' && c.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-  const cupCashProduction = production.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-  const cupTransferProduction = production.filter((p: any) => p.payment_method === 'transfer' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+  const estandarResumen = buildEstandarSummaryRows(report, ctx.concepts);
+  const { summaryRows, sales, payments, commissions, production } = estandarResumen;
 
   sectionTitle('RESUMEN — FLUJO DE CAJA CUP', `${sales.length} grupos de ventas · ${payments.length} grupos de pagos`);
-  // MISIÓN PERSONALIZACIÓN (2026-10-25): las filas de ventas del resumen de
-  // la plantilla Estándar también respetan la selección de conceptos (misma
-  // clave que el Diario) — el SUBTOTAL INGRESOS se recalcula con las filas
-  // visibles (nunca queda un total que incluya conceptos ocultos). Los
-  // importes provienen del reporte AJUSTADO que inyecta la vista cuando hay
-  // ventas excluidas (mismo mecanismo que el Diario).
-  const showVentasEfectivo = ctx.concepts?.ventasEfectivo !== false;
-  const showVentasTransferencia = ctx.concepts?.ventasTransferencia !== false;
-  const showVentasZelle = ctx.concepts?.ventasZelle !== false;
-  const ventasRowsVisible =
-    (showVentasEfectivo ? cupCashSales : 0) +
-    (showVentasTransferencia ? cupTransferSales : 0) +
-    (showVentasZelle ? cupZelleSales : 0);
-  const summaryRows: (string | number)[][] = [
-    ['INGRESOS', '', '', ''],
-    ...(showVentasEfectivo ? [[
-      '  Ventas en Efectivo',
-      `${sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`,
-      '',
-      fmt(cupCashSales),
-    ]] : []),
-    ...(showVentasTransferencia ? [[
-      '  Ventas por Transferencia',
-      `${sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`,
-      '',
-      fmt(cupTransferSales),
-    ]] : []),
-    ...(showVentasZelle && cupZelleSales > 0 ? [['  Ventas por Zelle', `${sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`, '', fmt(cupZelleSales)]] : []),
-    ['  Anticipos/Liquidaciones de Órdenes', `${production.reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(cupCashProduction + cupTransferProduction)],
-    ['SUBTOTAL INGRESOS', '', '', fmt(ventasRowsVisible + cupCashProduction + cupTransferProduction)],
-    ['', '', '', ''],
-    ['EGRESOS (-)', '', '', ''],
-    ['  Pagos a Proveedores (Recepciones)', `${payments.filter((p: any) => p.ref_type === 'receipt').reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(payments.filter((p: any) => p.ref_type === 'receipt').reduce((s: number, x: any) => s + Number(x.total), 0))],
-    ['  Pagos por Servicios Recibidos', `${payments.filter((p: any) => p.ref_type === 'service').reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(payments.filter((p: any) => p.ref_type === 'service').reduce((s: number, x: any) => s + Number(x.total), 0))],
-    ['  Comisiones a Trabajadores', `${commissions.reduce((s: number, x: any) => s + Number(x.commission_count), 0)} pagos`, '', fmt(commissions.reduce((s: number, x: any) => s + Number(x.total), 0))],
-    ['SUBTOTAL EGRESOS', '', '', fmt(cupCashPayments + cupTransferPayments + cupCashCommissions)],
-    ['', '', '', ''],
-    ['(-) Transferencias (no se entregan en efectivo)', '', '', fmt(cupTransferSales + cupTransferProduction)],
-  ];
   // MISIÓN CONCILIACIÓN (2026-10-26) — contraste con la fórmula CENTRALIZADA:
   // la plantilla Estándar consume el MISMO resultado personalizado que el
   // Diario (computeCustomResultsForPdf → custom-result.ts). El «DINERO A
@@ -907,7 +1007,10 @@ export function salesTableQty(it: any, currency: SalesTableCurrency): number {
   return Number.isFinite(q) ? q : Number(it.total_quantity || 0);
 }
 
-async function fetchDetailRows(startDate: string, endDate: string, type: string, method: string, currency: string, refType?: string): Promise<any[]> {
+/** Detalle de documentos por grupo (misión WORD 2026-10-27: exportada — la
+ *  exportación .docx consulta los mismos detalles que las secciones
+ *  «Órdenes de producción» y «Salidas de dinero» de la plantilla Estándar). */
+export async function fetchDetailRows(startDate: string, endDate: string, type: string, method: string, currency: string, refType?: string): Promise<any[]> {
   const { sISO, eISO } = periodISO(startDate, endDate);
   let url = `/api/cash-report/details?type=${type}&method=${method}&currency=${currency}&start_date=${sISO}&end_date=${eISO}`;
   if (refType) url += `&ref_type=${refType}`;
@@ -1713,69 +1816,11 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     // activos + ventas seleccionadas), no el oficial. Las filas desactivadas
     // se omiten del documento; el anexo de auditoría documenta las omisiones
     // con sus importes oficiales y la diferencia frente al reporte completo.
+    // MISIÓN WORD (2026-10-27): las filas provienen del ensamblador COMPARTIDO
+    // buildDiarioIncomeRows (misma fuente que la exportación .docx).
     const curResult = currency === 'CUP' ? customResults.CUP : customResults.USD;
     const esperadoPersonalizado = curResult.efectivoEsperadoPersonalizado;
-    const incomeRows: ConceptTaggedRow[] = filterIncomeRowsByConcepts(([
-      { label: 'Saldo inicial / fondo de caja', amount: s.saldoInicial, concept: 'saldoInicial' },
-      ...(currency === 'CUP'
-      ? [
-          // MISIÓN CONCILIACIÓN: el agregado se RECALCULA con los componentes
-          // de venta activos (una partida desactivada nunca queda sumada en
-          // silencio dentro del total — misión §4.2).
-          { label: 'Resumen del día (efectivo + transferencia)', amount: curResult.ventasTotalesPersonalizado, isTotal: true, concept: 'resumenDia' },
-          { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
-          { label: 'Ventas por transferencia', amount: s.ventasTransfer, concept: 'ventasTransferencia' },
-        ]
-      : [
-          { label: 'Resumen del día (efectivo + Zelle)', amount: curResult.ventasTotalesPersonalizado, isTotal: true, concept: 'resumenDia' },
-          { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
-          { label: 'Venta por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' },
-        ]),
-    ] as ConceptTaggedRow[]), ctx.concepts);
-    if (currency === 'CUP') {
-      if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' });
-      if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true, concept: 'ventasEfectivo' });
-      // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
-      // (contrato único §2) — jamás sumada a las filas de venta (no es una
-      // segunda venta). MISIÓN CORRECTIVA 2026-10-25: es CONSOLIDACIÓN de
-      // presentación ('info'): los billetes de ese cobro viven físicamente en
-      // la hoja USD — no alimentan el esperado de la hoja CUP (contarlos en
-      // ambas rompería la conciliación con el libro físico).
-      if (s.equivCashOtraMoneda > 0 && ctx.concepts?.equivalenciaCup !== false) incomeRows.push({ label: 'Equivalencia CUP de cobros en efectivo en otras monedas', amount: s.equivCashOtraMoneda, note: 'info', concept: 'equivalenciaCup' });
-      if (s.equivVouchersOtraMoneda > 0 && ctx.concepts?.equivalenciaCup !== false) incomeRows.push({ label: 'Equivalencia CUP de vouchers en otras monedas', amount: s.equivVouchersOtraMoneda, note: 'info', concept: 'equivalenciaCup' });
-      if (s.otIngresosCash > 0) incomeRows.push({ label: 'Órdenes de trabajo (anticipos)', amount: s.otIngresosCash, concept: 'otIngresos' });
-      // Comisiones PAGADAS desglosadas por medio (§4): transferencia NO toca el efectivo.
-      if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense', concept: 'otrosEgresos' });
-      if (s.comisionesTransfer > 0) incomeRows.push({ label: 'Comisiones pagadas por transferencia', amount: s.comisionesTransfer, note: 'info', concept: 'otrosEgresos' });
-      // Servicios recibidos: línea INDEPENDIENTE (§6) — ya no fusionados en proveedores.
-      if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense', concept: 'otrosEgresos' });
-      if (s.recibosProveedoresCash > 0) incomeRows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, note: 'expense', concept: 'otrosEgresos' });
-      if (s.ajustesPositivos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos, concept: 'ajustes' });
-      if (s.ajustesNegativos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (-)', amount: s.ajustesNegativos, note: 'expense', concept: 'ajustes' });
-      // MISIÓN INGRESOS/EGRESOS 2026-10-20: documentos de caja (fondo de cambio
-      // y otros) — filas independientes de los ajustes, auditables por separado.
-      if (s.ingresosCaja > 0) incomeRows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja, concept: 'ingresosCaja' });
-      if (s.egresosCaja > 0 && ctx.concepts?.egresosCaja !== false) incomeRows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, note: 'expense', concept: 'egresosCaja' });
-      if (s.reembolsosCash > 0) incomeRows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, note: 'expense', concept: 'reembolsos' });
-      // v2.23.0 (decisión del propietario 2026-10-21): reembolsos por voucher —
-      // INFORMATIVO (nota 'info', igual que comisiones por transferencia): no
-      // tocan el efectivo esperado; documenta el neto del lado vouchers.
-      if (s.reembolsosVoucher > 0) incomeRows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, note: 'info', concept: 'reembolsos' });
-    } else {
-      if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense', concept: 'otrosEgresos' });
-      if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense', concept: 'otrosEgresos' });
-    }
-    // MISIÓN CORRECTIVA 2026-10-25: liquidación de billetes (vuelto cruzado de
-    // cobros con liquidación explícita) — partida CONTABLE de la conciliación
-    // física (siempre visible cuando ≠ 0; sin checkbox: no es presentación).
-    // Hoja CUP: vuelto entregado en CUP (salida). Hoja USD: billetes recibidos
-    // en exceso con vuelto dado en CUP (entrada). El importe ya llega con SU
-    // SIGNO (liquidacionBilletes = cobrosBilletes − ventasCash de la hoja).
-    if (Math.abs(s.liquidacionBilletes) > 0.005) {
-      incomeRows.push(currency === 'CUP'
-        ? { label: 'Vuelto dado en CUP de cobros en otras monedas', amount: s.liquidacionBilletes }
-        : { label: 'Billetes recibidos en exceso (vuelto dado en CUP)', amount: s.liquidacionBilletes });
-    }
+    const incomeRows: ConceptTaggedRow[] = buildDiarioIncomeRows(currency, s, curResult, ctx.concepts);
     const esperadoLabel = currency === 'CUP'
       ? (idLabel ? 'Efectivo esperado (personalizado)' : 'Efectivo esperado a entregar')
       : (idLabel ? 'Efectivo esperado (personalizado, USD)' : 'Efectivo esperado a entregar (USD)');

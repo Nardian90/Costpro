@@ -55,6 +55,11 @@ import {
   type CashReportStoreInfo, type CashReportPdfOptions, type CashReportSummaries,
 } from './cash-report-pdf';
 import { descargarCashReportExcel } from './cash-report-excel';
+// MISIÓN WORD (2026-10-27): exportación .docx — MISMA fuente de datos y
+// parámetros que el PDF y el Excel (reporte aplicado + selección + conceptos).
+// CARGA DIFERIDA (patrón W2/W3 del Excel/xlsx-js-style): la librería `docx`
+// (~1MB) solo se descarga al pulsar «Exportar Word», nunca al abrir la vista.
+const loadCashReportWord = () => import('./cash-report-docx');
 import {
   TEMPLATES, CUP_DEFAULT_DENOMS, USD_DEFAULT_DENOMS, LS_KEYS,
   loadPdfTemplate, savePdfTemplate, validatePdfTemplate,
@@ -750,6 +755,8 @@ export default function CashReportView() {
 
   // ── Exportar PDF (acción explícita e independiente de la vista previa) ──
   const [exportingExcel, setExportingExcel] = useState(false);
+  // ── MISIÓN WORD (2026-10-27): estado de carga del export Word ──
+  const [exportingWord, setExportingWord] = useState(false);
 
   // ── MISIÓN EXCEL 2026-10-21 (Parte B): exportar Excel .xlsx real ──
   // MISMA fuente de datos y parámetros que el PDF: reporte APLICADO (no el
@@ -791,6 +798,50 @@ export default function CashReportView() {
       setExportingExcel(false);
     }
   }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, exporting, exportingExcel, conceptsNone, applySelectionToSummaries, buildSelectionCtx]);
+
+  // ── MISIÓN WORD (2026-10-27): exportar Word .docx ──
+  // MISMA fuente de datos y parámetros que el PDF y el Excel: reporte
+  // APLICADO (no el borrador), mismos summaries (fetch una sola vez si
+  // procede), mismas opciones/plantilla/orientación. El generador consume el
+  // MISMO CashReportPdfContext — sin consultas ni cálculos alternativos.
+  const handleExportWord = useCallback(async () => {
+    if (!applied?.report) {
+      toast.info('Genera el reporte primero: pulsa «Generar reporte».');
+      return;
+    }
+    if (conceptsNone) {
+      toast.error('Selecciona al menos un concepto del Resumen del Día: un reporte sin conceptos quedaría aparentemente vacío.');
+      setActiveTab('resultados');
+      return;
+    }
+    if (exportingWord || exporting || exportingExcel) return;
+    setExportingWord(true);
+    try {
+      let summaries: CashReportSummaries | undefined;
+      if (pdfTemplate === 'diario') summaries = await fetchDiarioSummaries(applied.cfg.startDate, applied.cfg.endDate);
+      summaries = applySelectionToSummaries(summaries);
+      const selCtx = buildSelectionCtx();
+      // Librería docx en diferido: solo se carga en el momento de exportar.
+      const { descargarCashReportWord } = await loadCashReportWord();
+      const filename = await descargarCashReportWord({
+        report: selCtx.report, template: pdfTemplate,
+        officialReport: selCtx.officialReport,
+        salesCounts: selCtx.salesCounts,
+        startDate: applied.cfg.startDate, endDate: applied.cfg.endDate,
+        storeInfo, deliveredBy, recipientName, madeBy,
+        cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptions,
+        orientation: pdfOrientation,
+        concepts: selCtx.concepts,
+        selectionMeta: selCtx.selectionMeta,
+      }, summaries);
+      toast.success(`Word generado: ${filename}`);
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      toast.error(e?.message || 'Error al generar el Word.');
+    } finally {
+      setExportingWord(false);
+    }
+  }, [applied, pdfTemplate, pdfOrientation, pdfOptions, storeInfo, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, exporting, exportingExcel, exportingWord, conceptsNone, applySelectionToSummaries, buildSelectionCtx]);
 
   const handleExport = useCallback(async () => {
     if (!applied?.report) {
@@ -984,6 +1035,22 @@ export default function CashReportView() {
             >
               {exportingExcel ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sheet className="w-4 h-4" />}
               Exportar Excel
+            </button>
+            {/* MISIÓN WORD (2026-10-27): exportación .docx junto a PDF y Excel —
+                misma fuente de datos, parámetros y reglas de negocio. */}
+            <button
+              onClick={handleExportWord}
+              disabled={exportingWord || !applied}
+              title={applied ? `Descarga el Word (.docx) de ${applied.cfg.startDate} → ${applied.cfg.endDate}` : 'Genera el reporte antes de exportar'}
+              data-testid="cash-report-export-word"
+              className={cn(
+                'px-3 rounded-xl border border-border/40 text-xs font-black uppercase hover:bg-muted flex items-center justify-center gap-1.5',
+                touch,
+                (exportingWord || !applied) && 'opacity-60 cursor-not-allowed',
+              )}
+            >
+              {exportingWord ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+              Exportar Word
             </button>
           </div>
         }
