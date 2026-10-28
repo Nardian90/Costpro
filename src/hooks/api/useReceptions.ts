@@ -6,6 +6,11 @@ import { receiptSchema, receiptItemSchema } from '@/validation/schemas';
 import { withTableLogging, getCleanStoreId } from './base';
 // F-21: validar tasa_cambio_recepcion antes de insertar receipt_items
 import { validateReceiptItemsTasa } from '@/lib/receipt-items-validation';
+// MISIÓN RECEPCIONES (2026-10-28): vista por productos
+import {
+  receptionProductLineSchema,
+  type ReceptionProductLine,
+} from '@/lib/receptions/product-lines';
 
 export function useReceptions(storeId?: string | null, isAdmin = false) {
   const cleanStoreId = getCleanStoreId(storeId);
@@ -59,6 +64,88 @@ export function useReceptionDetails(receiptId?: string) {
       return await validateRPCArrayResponse(data, receiptItemSchema, 'receipt_items');
     },
     enabled: !!receiptId,
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// MISIÓN RECEPCIONES (2026-10-28) — Pestaña "Productos" de Recepciones.
+//
+// Segunda perspectiva de la MISMA información: cada fila es una línea de
+// producto de un documento de recepción (receipt_items ⟶ receipts ⟶ products),
+// con trazabilidad completa hacia su documento de origen.
+//
+// Reglas de la misión aplicadas:
+//  - Fuente de datos: las mismas tablas que ya usa COSTPRO (receipts +
+//    receipt_items). No se crean tablas ni migraciones.
+//  - Aislamiento multitienda: la política SELECT de receipt_items es
+//    'authenticated' (migración 20260112), por lo que el filtro de tienda
+//    se aplica explícitamente vía receipts!inner + eq('receipts.store_id')
+//    — el MISMO patrón que useReceptions usa sobre receipts. RLS sigue
+//    activa encima; este filtro garantiza que solo se leen líneas de la
+//    tienda activa.
+//  - Sin N+1: una sola consulta con joins embebidos (products + receipts).
+//  - Rendimiento: tope de 1000 líneas (equivalente al limit(200) de
+//    Documentos) con orden server-side por fecha del documento para que
+//    un mismo documento nunca quede partido por el límite.
+//  - Solo lectura: ninguna mutación de inventario ni de documentos.
+// ════════════════════════════════════════════════════════════════════════
+
+const RECEPTION_PRODUCT_LINES_LIMIT = 1000;
+
+export function useReceptionProductLines(storeId?: string | null) {
+  const cleanStoreId = getCleanStoreId(storeId);
+
+  return useQuery({
+    queryKey: ['reception-product-lines', cleanStoreId],
+    queryFn: async (): Promise<ReceptionProductLine[]> => {
+      if (!cleanStoreId) return [];
+
+      const columns = [
+        'id',
+        'receipt_id',
+        'product_id',
+        'quantity',
+        'unit_cost',
+        'moneda_recepcion',
+        'tasa_cambio_recepcion',
+        'created_at',
+        'products(name, sku)',
+        'receipts!inner(id, reference_doc, supplier, reception_date, status, store_id, created_at)',
+      ].join(', ');
+
+      const data = await withTableLogging('select', 'receipt_items', () =>
+        supabase
+          .from('receipt_items')
+          .select(columns)
+          .eq('receipts.store_id', cleanStoreId)
+          // Orden server-side: documento más reciente primero y, dentro del
+          // mismo documento, líneas en orden de inserción — evita que el
+          // límite parta un documento por la mitad.
+          .order('created_at', { referencedTable: 'receipts', ascending: false })
+          .order('created_at', { ascending: true })
+          .limit(RECEPTION_PRODUCT_LINES_LIMIT)
+      );
+
+      const validated = await validateRPCArrayResponse(
+        data,
+        receptionProductLineSchema,
+        'receipt_items+receipts+products'
+      );
+
+      // Defense-in-depth: reordenar client-side (estable, ≤1000 filas) para
+      // que la UI no dependa del comportamiento del orden server-side.
+      return [...(validated as ReceptionProductLine[])].sort((a, b) => {
+        const dateA = new Date(a.receipts.reception_date || a.receipts.created_at || 0).getTime();
+        const dateB = new Date(b.receipts.reception_date || b.receipts.created_at || 0).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+        const docA = a.receipts.created_at || '';
+        const docB = b.receipts.created_at || '';
+        if (docB !== docA) return docB.localeCompare(docA);
+        return (a.created_at || '').localeCompare(b.created_at || '');
+      });
+    },
+    enabled: !!cleanStoreId,
+    staleTime: 30 * 1000,
   });
 }
 

@@ -8,6 +8,7 @@ import { useInvertDocument } from '@/hooks/api/useDocumentActions';
 import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { supabase } from '@/lib/supabaseClient';
 
 export function useReceptionsHistoryView() {
   const { user } = useAuthStore();
@@ -63,18 +64,56 @@ export function useReceptionsHistoryView() {
   // Fetching items for the modal or action
   const { data: items = [], isLoading: loadingDetails } = useReceptionDetails(selectedReceiptId || undefined);
 
-  const selectedReceipt = useMemo(() =>
-    receptions.find((r: any) => r.id === selectedReceiptId) || null,
-    [receptions, selectedReceiptId]
-  );
+  // MISIÓN RECEPCIONES (2026-10-28) — Vista por productos:
+  // override para abrir desde la pestaña Productos el documento de origen
+  // aunque no esté en la lista paginada de Documentos (tope 200). La fila
+  // se lee con el mismo cliente Supabase (RLS activa) — solo lectura.
+  const [overrideReceipt, setOverrideReceipt] = useState<Receipt | null>(null);
+
+  const selectedReceipt = useMemo(() => {
+    if (overrideReceipt && selectedReceiptId === overrideReceipt.id) return overrideReceipt;
+    return receptions.find((r: any) => r.id === selectedReceiptId) || null;
+  }, [receptions, selectedReceiptId, overrideReceipt]);
 
   const handleViewDetails = (receipt: Receipt) => {
+    setOverrideReceipt(null);
     setSelectedReceiptId(receipt.id);
   };
+
+  // MISIÓN RECEPCIONES (2026-10-28): abrir el documento de origen desde una
+  // línea de la pestaña Productos. Si el documento ya está en la lista
+  // cargada se reutiliza; si no (documentos antiguos fuera del tope), se
+  // lee su cabecera por ID — siempre bajo RLS y sin modificar nada.
+  const handleViewDetailsById = useCallback(async (receiptId: string) => {
+    const inList = receptions.find((r: any) => r.id === receiptId);
+    if (inList) {
+      setOverrideReceipt(null);
+      setSelectedReceiptId(receiptId);
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from('receipts')
+        .select('*')
+        .eq('id', receiptId)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        toast.error('No se encontró el documento de origen (¿fue eliminado?).');
+        return;
+      }
+      setOverrideReceipt(data as Receipt);
+      setSelectedReceiptId(receiptId);
+    } catch (error) {
+      logger.error('DATABASE', 'RECEPTION_OPEN_FROM_LINE_FAILED', { error, receiptId });
+      toast.error('No se pudo abrir el documento de origen');
+    }
+  }, [receptions]);
 
   const handleCloseDetails = () => {
     setSelectedReceiptId(null);
     setEditingReceiptId(null);
+    setOverrideReceipt(null);
   };
 
   const handleEdit = (receipt: Receipt) => {
@@ -336,6 +375,7 @@ export function useReceptionsHistoryView() {
     loadingDetails,
     isDetailsModalOpen: !!selectedReceiptId,
     handleViewDetails,
+    handleViewDetailsById,
     handleCloseDetails,
 
     // FM-06

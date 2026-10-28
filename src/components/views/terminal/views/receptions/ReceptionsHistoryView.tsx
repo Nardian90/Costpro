@@ -19,6 +19,7 @@ import {
   Clock,
   DollarSign,
   Loader2,
+  Package,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
@@ -36,6 +37,9 @@ import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
 import { useReceptionsHistoryView } from './useReceptionsHistoryView';
 import { ReceptionDetailsModal } from './ReceptionDetailsModal';
+// MISIÓN RECEPCIONES (2026-10-28): pestaña Productos — mismo dato, otra perspectiva
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import ReceptionProductLinesTable from './ReceptionProductLinesTable';
 import PageHeader from '@/components/ui/PageHeader'; // F4 (IA-F11): portador F2 de la jerarquía de página
 import { Warehouse } from 'lucide-react';
 
@@ -51,6 +55,17 @@ export default function ReceptionsHistoryView() {
   const { setCurrentView } = useUIStore();
   // V2.2: estado del modal de reversión contable
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
+  // MISIÓN RECEPCIONES (2026-10-28): pestañas Documentos | Productos.
+  // 'documentos' es la vista original — se conserva intacta.
+  const [activeTab, setActiveTab] = useState('documentos');
+  // Carga diferida de la pestaña Productos: el fetch solo ocurre tras la
+  // primera visita (sin cargas innecesarias), pero una vez visitada el
+  // componente permanece montado para no perder filtros ni paginación.
+  const [productsVisited, setProductsVisited] = useState(false);
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === 'productos') setProductsVisited(true);
+  };
   const {
     searchTerm,
     setSearchTerm,
@@ -68,6 +83,7 @@ export default function ReceptionsHistoryView() {
     receptionsError,
     refetchReceptions,
     handleViewDetails,
+    handleViewDetailsById,
     handleCloseDetails,
     handleInvert,
     handleDuplicate,
@@ -221,6 +237,40 @@ export default function ReceptionsHistoryView() {
           }
         />
 
+        <QueryInspector />
+
+        {/* MISIÓN RECEPCIONES (2026-10-28): dos perspectivas de la MISMA información.
+            Pestaña 1 "Documentos": la vista original, intacta.
+            Pestaña 2 "Productos": detalle por líneas de producto (solo lectura).
+            Ambas pestañas usan forceMount + hidden para no perder estado
+            (filtros, paginación, scroll) al alternar entre ellas. */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="gap-4">
+          <TabsList aria-label="Perspectivas de recepciones" className="h-11 w-full sm:w-fit">
+            <TabsTrigger
+              value="documentos"
+              className="min-h-[44px] px-4 sm:px-6 text-xs font-black uppercase tracking-widest gap-2"
+              data-testid="receptions-tab-documentos"
+            >
+              <FileText className="w-4 h-4" />
+              Documentos
+            </TabsTrigger>
+            <TabsTrigger
+              value="productos"
+              className="min-h-[44px] px-4 sm:px-6 text-xs font-black uppercase tracking-widest gap-2"
+              data-testid="receptions-tab-productos"
+            >
+              <Package className="w-4 h-4" />
+              Productos
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ═══════════ PESTAÑA 1: DOCUMENTOS — vista original intacta ═══════════ */}
+          <TabsContent
+            value="documentos"
+            forceMount
+            className={cn('mt-0 space-y-6', activeTab !== 'documentos' && 'hidden')}
+          >
+
         {/* Reception-Flow-Fix: banner informativo cuando hay recepciones pendientes.
             Ayuda al usuario a recordar que tiene recepciones sin confirmar. */}
         {receptions.some((r: any) => r.status === 'pending') && (
@@ -237,8 +287,6 @@ export default function ReceptionsHistoryView() {
             </div>
           </div>
         )}
-
-        <QueryInspector />
 
         <SearchBar
           value={searchTerm}
@@ -467,6 +515,26 @@ export default function ReceptionsHistoryView() {
             )}
           </StateRenderer>
         </div>
+          </TabsContent>
+
+          {/* ═══════════ PESTAÑA 2: PRODUCTOS — detalle por líneas (solo lectura) ═══════════
+              Render diferido: el fetch de líneas solo ocurre tras la primera visita.
+              Una vez visitada, permanece montada (forceMount) para conservar
+              filtros y paginación al alternar pestañas. La apertura del documento
+              de origen reutiliza el modal de detalles existente y sus permisos. */}
+          <TabsContent
+            value="productos"
+            forceMount
+            className={cn('mt-0', activeTab !== 'productos' && 'hidden')}
+          >
+            {productsVisited && (
+              <ReceptionProductLinesTable
+                storeId={storeId}
+                onViewDocument={handleViewDetailsById}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
       <ReceptionDetailsModal
         receipt={selectedReceipt}
