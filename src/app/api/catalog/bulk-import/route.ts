@@ -1,4 +1,5 @@
 import { isAdminLevel } from '@/lib/roles';
+import { isTenantRlsEnabled } from '@/lib/rls-middleware';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
@@ -16,6 +17,20 @@ import { bulkImportProductSchema, type BulkImportProduct } from '@/validation/ap
  * Uses the user's JWT token to authenticate with Supabase.
  * Requires either SUPABASE_SERVICE_ROLE_KEY (bypasses RLS) or
  * a proper RLS policy on the products table.
+ *
+ * CP-CATÁLOGO MAESTRO (2026-10-28) — autorización por fila en el servidor:
+ * El service_role SOLO es el transporte de escritura; la autorización se
+ * resuelve explícitamente aquí y nunca se delega en el cliente:
+ *   1. Cada fila valida su tienda contra `stores` leído del servidor y su
+ *      organización (`stores.tenant_id`); el `tenant_id` de cada fila se
+ *      ESTAMPA desde el servidor (patrón resolveStoreTenantId, CP-CAT-004).
+ *      Antes de este fix, con service_role todas las filas entraban con
+ *      tenant_id NULL (sin trigger que lo derive en BD).
+ *   2. Con USE_TENANT_RLS=true el admin ordinario queda limitado a tiendas
+ *      de SU organización (superadmin conserva alcance de plataforma).
+ *   3. Los no-admin conservan el check de membresía activa por tienda
+ *      (FIX-SEC-H2) y, además, la organización de la fila debe coincidir
+ *      con la del llamante (defensa en profundidad).
  */
 // FIX-SEC-H2: Wrap with withAuth for membership-enriched session
 async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -147,12 +162,119 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
       }
     }
 
+    // ── Step 4b (CP-CATÁLOGO): autorización por fila en el servidor ──
+    // Lee tiendas y el perfil del llamante DESDE LA BD (nunca del cliente) y
+    // estampa el tenant_id de cada fila desde stores.tenant_id.
+    type StoreRow = { id: string; tenant_id: string | null };
+    const { data: storeRows, error: storesErr } = await (client as any)
+      .from('stores')
+      .select('id, tenant_id')
+      .in('id', uniqueStoreIds);
+
+    if (storesErr) {
+      console.error(`[${route}] stores lookup failed:`, storesErr.message);
+      return NextResponse.json(
+        { ...createApiError('BULK_IMPORT_FAILED'), detail: storesErr.message },
+        { status: 500 }
+      );
+    }
+
+    const storeTenantMap = new Map<string, string>();
+    const missingStores: string[] = [];
+    const nullTenantStores: string[] = [];
+    for (const sid of uniqueStoreIds) {
+      const row = (storeRows as StoreRow[] | null)?.find(s => s.id === sid);
+      if (!row) {
+        missingStores.push(sid);
+      } else if (!row.tenant_id) {
+        nullTenantStores.push(sid);
+      } else {
+        storeTenantMap.set(sid, row.tenant_id);
+      }
+    }
+
+    if (missingStores.length > 0) {
+      return NextResponse.json(
+        { ...createApiError('BULK_IMPORT_INVALID_PRODUCT'), detail: 'Tienda inexistente en filas del import.', stores: missingStores },
+        { status: 400 }
+      );
+    }
+    if (nullTenantStores.length > 0) {
+      // Fail-closed: no se importan filas sin organización verificada.
+      return NextResponse.json(
+        { ...createApiError('STORE_ACCESS_DENIED'), detail: 'Tienda sin organización asignada (tenant_id nulo); importación bloqueada para esas filas.', stores: nullTenantStores },
+        { status: 403 }
+      );
+    }
+
+    // Perfil del llamante leído del servidor (rol y organización reales).
+    const isSuperadmin = session.user.role === 'superadmin';
+    let callerTenantId: string | null = null;
+    const { data: profileRow, error: profileErr } = await (client as any)
+      .from('profiles')
+      .select('tenant_id')
+      .eq('id', session.user.id)
+      .maybeSingle();
+    if (profileErr) {
+      console.error(`[${route}] profile lookup failed:`, profileErr.message);
+      return NextResponse.json(
+        { ...createApiError('BULK_IMPORT_FAILED'), detail: profileErr.message },
+        { status: 500 }
+      );
+    }
+    callerTenantId = (profileRow as { tenant_id: string | null } | null)?.tenant_id ?? null;
+
+    // Matriz de autorización por tienda:
+    //  · superadmin: alcance de plataforma (transversal, sin membresías).
+    //  · admin ordinario: global según Decisión B.1; con USE_TENANT_RLS=true
+    //    se limita a tiendas de su organización (Tabla 6 del informe).
+    //  · resto: membresía activa (Step 4a) + misma organización (defensa en
+    //    profundidad contra tiendas cruzadas de la misma membresía)
+    const tenantRestricted = !isSuperadmin && isTenantRlsEnabled();
+    const unauthorizedStores: string[] = [];
+    for (const sid of uniqueStoreIds) {
+      const storeTenant = storeTenantMap.get(sid)!;
+      if (isSuperadmin) continue;
+      if (isAdmin) {
+        if (tenantRestricted && callerTenantId && storeTenant !== callerTenantId) {
+          unauthorizedStores.push(sid);
+        }
+        continue;
+      }
+      if (callerTenantId && storeTenant !== callerTenantId) {
+        unauthorizedStores.push(sid);
+      }
+    }
+    if (unauthorizedStores.length > 0) {
+      logInfo(route, 'bulk-import cross-org blocked', {
+        actor: session.user.id,
+        stores: unauthorizedStores,
+      });
+      return NextResponse.json(
+        { ...createApiError('STORE_TENANT_MISMATCH'), stores: unauthorizedStores },
+        { status: 403 }
+      );
+    }
+
     // ── Step 5: Upsert products ───────────────────────────────
     console.log(`[${route}] Upserting ${products.length} products...`);
 
-    // FIX-SEC-H2: When using service_role, add store_id filter to ensure RLS-equivalent isolation
-    // Filter products to only those stores the user has access to (defense in depth)
-    const authorizedProducts = isAdmin ? validatedProducts : validatedProducts.filter(p => accessibleStoreIds.has(p.store_id));
+    // FIX-SEC-H2 + CP-CATÁLOGO: filtro por accesibilidad (defensa en profundidad)
+    // y estampado del tenant_id desde stores.tenant_id (nunca del cliente).
+    const authorizedProducts = (isAdmin && !tenantRestricted
+      ? validatedProducts
+      : validatedProducts.filter(p => accessibleStoreIds.has(p.store_id))
+    ).map(p => ({
+      ...p,
+      tenant_id: storeTenantMap.get(p.store_id)!,
+    }));
+
+    if (authorizedProducts.length === 0) {
+      return NextResponse.json(
+        createApiError('STORE_ACCESS_DENIED'),
+        { status: 403 }
+      );
+    }
 
     // Use explicit any cast for the array to avoid 'any[]' to 'never[]' assignment error
     let upsertResult = await (client

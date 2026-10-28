@@ -878,6 +878,7 @@
     "storeUpdateEmptyResponse": "Error al actualizar tienda: respuesta vacía",
     "storePlanRequired": "El plan del usuario es requerido para gestionar tiendas",
     "storeAccessDenied": "Sin acceso a la tienda especificada",
+    "storeTenantMismatch": "La tienda pertenece a otra organización",
     "storeResetWarning": "Reinicio de Tienda Programado",
     "storeResetWarningMessage": "La tienda está siendo reiniciada. Todos los datos de ventas, inventario y movimientos serán eliminados. Por favor guarda tu trabajo y recarga la página.",
     "storefrontUpdateEmptyResponse": "Error al actualizar vitrina: respuesta vacía",

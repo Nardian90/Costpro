@@ -41,6 +41,7 @@ export const API_ERRORS = {
   BULK_IMPORT_CONFLICT: { key: 'apiErrors.bulkImportConflict', status: 409, defaultMessage: 'Conflicto de datos: SKU duplicado' },
   BULK_IMPORT_FAILED: { key: 'apiErrors.bulkImportFailed', status: 500, defaultMessage: 'Error al importar productos' },
   STORE_ACCESS_DENIED: { key: 'apiErrors.storeAccessDenied', status: 403, defaultMessage: 'Sin acceso a la tienda especificada' },
+  STORE_TENANT_MISMATCH: { key: 'apiErrors.storeTenantMismatch', status: 403, defaultMessage: 'La tienda pertenece a otra organización' },
   TRANSFER_NOT_FOUND: { key: 'apiErrors.transferNotFound', status: 404, defaultMessage: 'Transferencia no encontrada o sin acceso' },
   INTERNAL_ERROR: { key: 'apiErrors.internalError', status: 500, defaultMessage: 'Error interno del servidor' },
 

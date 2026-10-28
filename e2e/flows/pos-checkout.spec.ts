@@ -232,10 +232,11 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
     // implementan ERR_STORE_MISMATCH/ERR_PRODUCT_NOT_FOUND NI EN PRODUCCIÓN
     // NI en la base E2E (verificado read-only contra ambos refs — cuerpos
     // equivalentes): una venta con producto de OTRA tienda se ACEPTA (200).
-    // La validación cross-store que este test exige requiere decisión +
-    // migración del propietario. Skip EXPLICITO y temporal: este mensaje es
-    // el registro del hallazgo (nada de skips silenciosos).
-    test.skip(true, 'HALLAZGO CICLO 2: create_sale_v2 sin validación cross-store en producción — venta con producto ajeno aceptada (200). Requiere decisión del propietario (SEC + migración).');
+    // CIERRE (misión catálogo maestro, 2026-10-28): la migración
+    // 20261028090000_cp_catalogo_cierre_fallback_create_sale_v2.sql elimina
+    // el fallback sin filtro de tienda y fail-closed con
+    // ERR_STORE_MISMATCH / ERR_PRODUCT_NOT_FOUND. Este test se reactiva y
+    // pasa de skip a ejecución efectiva (ver docs/audits del PR).
     test.skip(!foreignProductId, 'sin producto externo disponible');
     const before = await getInventory(store.id, product.id);
 
