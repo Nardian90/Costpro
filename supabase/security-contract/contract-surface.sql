@@ -1,15 +1,91 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-28T16:17:48.373Z
+-- Captured  : 2026-10-28T16:58:26.576Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 156 (SECURITY DEFINER write functions, public schema)
+-- Functions : 165 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
 -- snapshot as Layer A of the security contract. Re-run the generator to
 -- re-certify after authorized production changes.
 -- =====================================================================
+-- @contract-function name=activate_master_product args="p_master_id uuid, p_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.activate_master_product(p_master_id uuid, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_tenant uuid;
+  v_master public.master_products;
+  v_existing uuid;
+  v_product_id uuid;
+BEGIN
+  IF v_caller_uid IS NULL OR p_master_id IS NULL OR p_store_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT tenant_id INTO v_tenant FROM public.stores WHERE id = p_store_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: %', p_store_id;
+  END IF;
+
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF NOT public.is_admin_check(v_caller_uid)
+     AND NOT public.has_store_role_as(v_caller_uid, p_store_id, ARRAY['admin','manager','encargado']::text[]) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: sin permiso de alta de productos en la tienda';
+  END IF;
+
+  SELECT * INTO v_master FROM public.master_products WHERE id = p_master_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_MASTER_NOT_FOUND: %', p_master_id;
+  END IF;
+  IF v_master.tenant_id <> v_tenant THEN
+    RAISE EXCEPTION 'ERR_STORE_MISMATCH: el maestro pertenece a otra organización';
+  END IF;
+  IF v_master.status = 'archived' THEN
+    RAISE EXCEPTION 'ERR_MASTER_ARCHIVED: el producto maestro está archivado';
+  END IF;
+  IF NOT public.is_catalog_store_connected(v_tenant, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_CONNECTED: la tienda % no usa el catálogo de la organización', p_store_id;
+  END IF;
+
+  -- Idempotencia: máx. una fila local por (maestro, tienda)
+  SELECT id INTO v_existing FROM public.products
+   WHERE master_product_id = p_master_id AND store_id = p_store_id;
+  IF v_existing IS NOT NULL THEN
+    RETURN jsonb_build_object('status','success','already_active', true,
+      'product_id', v_existing, 'master_product_id', p_master_id);
+  END IF;
+
+  -- Fila local con valores por defecto del alta manual: SIN existencias, SIN
+  -- recepciones, SIN movimientos, SIN precios de otras tiendas (misión §10)
+  INSERT INTO public.products
+    (store_id, tenant_id, master_product_id, sku, name, description, image_url,
+     unit_of_measure, is_service, price, price_currency, cost_price, min_stock,
+     stock_current, is_active, is_complete)
+  VALUES
+    (p_store_id, v_tenant, p_master_id, v_master.sku, v_master.name, v_master.description,
+     v_master.image_path, COALESCE(v_master.unit_of_measure, 'unidad'), v_master.is_service,
+     0, 'CUP', 0, 1, 0, true, true)
+  RETURNING id INTO v_product_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('ACTIVATE_MASTER_PRODUCT', 'master_products', p_master_id, p_store_id, v_caller_uid,
+          jsonb_build_object('product_id', v_product_id, 'tenant_id', v_tenant));
+
+  RETURN jsonb_build_object('status','success','already_active', false,
+    'product_id', v_product_id, 'master_product_id', p_master_id);
+END;
+$function$
+
+
 -- @contract-function name=adjust_sale_payment args="p_transaction_id uuid, p_user_id uuid, p_payment_method text, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_items_price_adjustments jsonb, p_discount_type text, p_discount_value numeric, p_reason text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.adjust_sale_payment(p_transaction_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT NULL::text, p_cash_amount numeric DEFAULT NULL::numeric, p_transfer_amount numeric DEFAULT NULL::numeric, p_zelle_amount numeric DEFAULT NULL::numeric, p_sale_currency text DEFAULT NULL::text, p_sale_exchange_rate numeric DEFAULT NULL::numeric, p_items_price_adjustments jsonb DEFAULT NULL::jsonb, p_discount_type text DEFAULT NULL::text, p_discount_value numeric DEFAULT NULL::numeric, p_reason text DEFAULT NULL::text)
  RETURNS jsonb
@@ -1524,6 +1600,43 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
+END;
+$function$
+
+
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1560,43 +1673,6 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
-END;
-$function$
-
-
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
 END;
 $function$
 
@@ -2637,6 +2713,57 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=connect_store_catalog args="p_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.connect_store_catalog(p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_tenant uuid;
+  v_existing record;
+BEGIN
+  IF v_caller_uid IS NULL OR p_store_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT s.tenant_id INTO v_tenant FROM public.stores s WHERE s.id = p_store_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: %', p_store_id;
+  END IF;
+
+  IF NOT public.is_catalog_governor(v_tenant, v_caller_uid) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el gobernador del catálogo conecta tiendas';
+  END IF;
+
+  SELECT * INTO v_existing FROM public.catalog_store_links WHERE store_id = p_store_id FOR UPDATE;
+
+  IF v_existing IS NULL THEN
+    INSERT INTO public.catalog_store_links (tenant_id, store_id, status, connected_at, created_by)
+    VALUES (v_tenant, p_store_id, 'connected', now(), v_caller_uid);
+  ELSIF v_existing.status = 'connected' THEN
+    RETURN jsonb_build_object('status','success','store_id', p_store_id,
+      'link_status','connected','already_connected', true);
+  ELSE
+    UPDATE public.catalog_store_links
+       SET status = 'connected', connected_at = now(), disconnected_at = NULL,
+           reason = NULL, updated_at = now(), created_by = v_caller_uid
+     WHERE store_id = p_store_id;
+  END IF;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CATALOG_STORE_CONNECT', 'stores', p_store_id, p_store_id, v_caller_uid,
+          jsonb_build_object('tenant_id', v_tenant, 'at', now()));
+
+  RETURN jsonb_build_object('status','success','store_id', p_store_id,
+    'link_status','connected','already_connected', false);
+END;
+$function$
+
+
 -- @contract-function name=create_cash_flow_document args="p_store_id uuid, p_doc_type text, p_concept text, p_amount numeric, p_currency text, p_exchange_rate numeric, p_operation_date timestamp with time zone, p_counterparty text, p_justification text, p_notes text, p_related_document_id uuid, p_idempotency_key text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_cash_flow_document(p_store_id uuid, p_doc_type text, p_concept text, p_amount numeric, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT NULL::numeric, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_counterparty text DEFAULT NULL::text, p_justification text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_related_document_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -3612,6 +3739,126 @@ BEGIN
     'financial_effect', CASE WHEN p_payment_method = 'store_credit' THEN 'store_credit_ledger' ELSE 'cash_out_and_refund' END
   );
 END $function$
+
+
+-- @contract-function name=create_master_product args="p_store_id uuid, p_sku text, p_name text, p_description text, p_image_path text, p_barcode text, p_barcode_type text, p_unit_of_measure text, p_is_service boolean, p_local jsonb, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_master_product(p_store_id uuid, p_sku text, p_name text, p_description text DEFAULT NULL::text, p_image_path text DEFAULT NULL::text, p_barcode text DEFAULT NULL::text, p_barcode_type text DEFAULT NULL::text, p_unit_of_measure text DEFAULT 'unidad'::text, p_is_service boolean DEFAULT false, p_local jsonb DEFAULT '{}'::jsonb, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_tenant uuid;
+  v_sku text := NULLIF(btrim(COALESCE(p_sku, '')), '');
+  v_name text := NULLIF(btrim(COALESCE(p_name, '')), '');
+  v_barcode text := NULLIF(btrim(COALESCE(p_barcode, '')), '');
+  v_master_id uuid;
+  v_product_id uuid;
+  v_existing_master uuid;
+  v_price numeric := COALESCE(NULLIF(p_local->>'price', '')::numeric, 0);
+  v_currency text := COALESCE(NULLIF(p_local->>'price_currency', ''), 'CUP');
+  v_cost numeric := COALESCE(NULLIF(p_local->>'cost_price', '')::numeric, 0);
+  v_min_stock numeric := COALESCE(NULLIF(p_local->>'min_stock', '')::numeric, 1);
+BEGIN
+  IF v_caller_uid IS NULL OR p_store_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+  IF v_sku IS NULL OR v_name IS NULL THEN
+    RAISE EXCEPTION 'ERR_INVALID_PAYLOAD: SKU y nombre son obligatorios';
+  END IF;
+
+  SELECT tenant_id INTO v_tenant FROM public.stores WHERE id = p_store_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: %', p_store_id;
+  END IF;
+
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF NOT public.is_admin_check(v_caller_uid)
+     AND NOT public.has_store_role_as(v_caller_uid, p_store_id, ARRAY['admin','manager','encargado']::text[]) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: sin permiso de alta de productos en la tienda';
+  END IF;
+
+  IF NOT public.is_catalog_store_connected(v_tenant, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_CONNECTED: la tienda % no usa el catálogo de la organización', p_store_id;
+  END IF;
+
+  IF v_currency NOT IN ('CUP','USD','EUR','MLC') THEN
+    RAISE EXCEPTION 'ERR_INVALID_CURRENCY: %', v_currency;
+  END IF;
+  IF v_price < 0 OR v_cost < 0 OR v_min_stock < 1 THEN
+    RAISE EXCEPTION 'ERR_INVALID_PAYLOAD: precio/costo no pueden ser negativos ni min_stock menor que 1';
+  END IF;
+
+  -- Deduplicación por SKU a nivel de maestro (misión §5): proponer existente
+  SELECT id INTO v_existing_master FROM public.master_products
+   WHERE tenant_id = v_tenant AND sku = v_sku;
+  IF v_existing_master IS NOT NULL THEN
+    RAISE EXCEPTION 'ERR_MASTER_SKU_EXISTS: %', v_existing_master;
+  END IF;
+
+  -- Si la tienda ya tiene un producto local con ese SKU sin maestro → vincular
+  IF EXISTS (SELECT 1 FROM public.products WHERE store_id = p_store_id AND sku = v_sku) THEN
+    RAISE EXCEPTION 'ERR_SKU_EXISTS_LOCAL: la tienda ya tiene un producto local con ese SKU; vincúlelo al catálogo en lugar de duplicar';
+  END IF;
+
+  IF v_barcode IS NOT NULL AND EXISTS (
+    SELECT 1 FROM public.master_products WHERE barcode = v_barcode) THEN
+    RAISE EXCEPTION 'ERR_BARCODE_EXISTS: %', v_barcode;
+  END IF;
+
+  BEGIN
+    INSERT INTO public.master_products
+      (tenant_id, sku, name, description, image_path, barcode, barcode_type,
+       unit_of_measure, is_service, status, created_by)
+    VALUES
+      (v_tenant, v_sku, v_name, p_description, p_image_path, v_barcode,
+       COALESCE(NULLIF(btrim(COALESCE(p_barcode_type, '')), ''), CASE WHEN v_barcode IS NULL THEN NULL ELSE 'EAN13' END),
+       COALESCE(NULLIF(btrim(COALESCE(p_unit_of_measure, '')), ''), 'unidad'),
+       p_is_service, 'active', v_caller_uid)
+    RETURNING id INTO v_master_id;
+  EXCEPTION
+    WHEN unique_violation THEN
+      -- Carrera: otra tienda creó el mismo SKU en paralelo (misión §8.1):
+      -- se traduce el 23505 a un error controlado con el id del maestro
+      -- ganador; NUNCA un segundo maestro ni una transacción parcial.
+      SELECT id INTO v_existing_master FROM public.master_products
+       WHERE tenant_id = v_tenant AND sku = v_sku;
+      RAISE EXCEPTION 'ERR_MASTER_SKU_EXISTS: %', COALESCE(v_existing_master, '(carrera de unicidad, revise y vincule)');
+  END;
+
+  -- Fila local de ESTA tienda (valores por defecto del alta manual local;
+  -- el trigger de identidad garantiza SKU/nombre = maestro)
+  INSERT INTO public.products
+    (store_id, tenant_id, master_product_id, sku, name, description, image_url,
+     unit_of_measure, is_service, price, price_currency, cost_price, min_stock,
+     stock_current, is_active, is_complete, category, supplier)
+  VALUES
+    (p_store_id, v_tenant, v_master_id, v_sku, v_name, p_description, p_image_path,
+     COALESCE(NULLIF(btrim(COALESCE(p_unit_of_measure, '')), ''), 'unidad'),
+     p_is_service, v_price, v_currency, v_cost, v_min_stock,
+     0, true, true, NULLIF(btrim(COALESCE(p_local->>'category', '')), ''), NULLIF(btrim(COALESCE(p_local->>'supplier', '')), ''))
+  RETURNING id INTO v_product_id;
+
+  -- Auditoría de identidad: creación (registro por campo)
+  INSERT INTO public.master_change_log
+    (master_product_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
+  VALUES
+    (v_master_id, v_tenant, 'sku', NULL, v_sku, v_caller_uid, p_store_id),
+    (v_master_id, v_tenant, 'name', NULL, v_name, v_caller_uid, p_store_id);
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CREATE_MASTER_PRODUCT', 'master_products', v_master_id, p_store_id, v_caller_uid,
+          jsonb_build_object('sku', v_sku, 'product_id', v_product_id, 'tenant_id', v_tenant));
+
+  RETURN jsonb_build_object('status','success','master_product_id', v_master_id,
+    'product_id', v_product_id, 'tenant_id', v_tenant, 'sku', v_sku);
+END;
+$function$
 
 
 -- @contract-function name=create_physical_count args="p_store_id uuid, p_user_id uuid, p_notes text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
@@ -5811,6 +6058,51 @@ END;
 $function$
 
 
+-- @contract-function name=disconnect_store_catalog args="p_store_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.disconnect_store_catalog(p_store_id uuid, p_reason text DEFAULT ''::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_tenant uuid;
+BEGIN
+  IF v_caller_uid IS NULL OR p_store_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT s.tenant_id INTO v_tenant FROM public.stores s WHERE s.id = p_store_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: %', p_store_id;
+  END IF;
+
+  IF NOT public.is_catalog_governor(v_tenant, v_caller_uid) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el gobernador del catálogo desconecta tiendas';
+  END IF;
+
+  -- La desconexión NO borra productos locales, vínculos ni historial
+  -- (misión §4.2/§13): solo cambia el estado del enlace.
+  UPDATE public.catalog_store_links
+     SET status = 'disconnected', disconnected_at = now(), reason = NULLIF(btrim(COALESCE(p_reason,'')), ''),
+         updated_at = now()
+   WHERE store_id = p_store_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_CONNECTED: la tienda % nunca se conectó al catálogo', p_store_id;
+  END IF;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CATALOG_STORE_DISCONNECT', 'stores', p_store_id, p_store_id, v_caller_uid,
+          jsonb_build_object('tenant_id', v_tenant, 'reason', COALESCE(p_reason,''), 'at', now()));
+
+  RETURN jsonb_build_object('status','success','store_id', p_store_id, 'link_status','disconnected');
+END;
+$function$
+
+
 -- @contract-function name=distribute_service_cost_v2 args="p_service_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.distribute_service_cost_v2(p_service_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -6156,6 +6448,97 @@ BEGIN
     ) RETURNING id INTO v_id;
 
     RETURN v_id;
+END;
+$function$
+
+
+-- @contract-function name=fn_master_apply_identity_changes args="p_master_id uuid, p_changes jsonb, p_actor uuid, p_origin_store_id uuid, p_proposal_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fn_master_apply_identity_changes(p_master_id uuid, p_changes jsonb, p_actor uuid, p_origin_store_id uuid DEFAULT NULL::uuid, p_proposal_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_master record;
+  v_allowed text[] := ARRAY['sku','name','description','image_path','barcode','barcode_type','unit_of_measure','is_service'];
+  v_key text;
+  v_old text;
+  v_new text;
+  v_new_sku text;
+  v_new_barcode text;
+  v_log_row record;
+  v_changes_applied jsonb := '[]'::jsonb;
+BEGIN
+  IF p_changes IS NULL OR jsonb_typeof(p_changes) <> 'object' OR p_changes = '{}'::jsonb THEN
+    RAISE EXCEPTION 'ERR_INVALID_CHANGES: se requiere un objeto de cambios no vacío';
+  END IF;
+
+  SELECT * INTO v_master FROM public.master_products WHERE id = p_master_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_MASTER_NOT_FOUND: %', p_master_id;
+  END IF;
+
+  FOR v_key IN SELECT jsonb_object_keys(p_changes) LOOP
+    IF NOT (v_key = ANY (v_allowed)) THEN
+      RAISE EXCEPTION 'ERR_INVALID_CHANGES: campo % no es identidad compartida editable', v_key;
+    END IF;
+  END LOOP;
+
+  -- Validaciones de unicidad sobre los valores NUEVOS
+  v_new_sku := NULLIF(btrim(COALESCE(p_changes->>'sku', '')), '');
+  IF v_new_sku IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM public.master_products
+                WHERE tenant_id = v_master.tenant_id AND sku = v_new_sku AND id <> p_master_id) THEN
+      RAISE EXCEPTION 'ERR_MASTER_SKU_EXISTS: %', v_new_sku;
+    END IF;
+  END IF;
+
+  v_new_barcode := NULLIF(btrim(COALESCE(p_changes->>'barcode', '')), '');
+  IF v_new_barcode IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM public.master_products
+                WHERE barcode = v_new_barcode AND id <> p_master_id) THEN
+      RAISE EXCEPTION 'ERR_BARCODE_EXISTS: %', v_new_barcode;
+    END IF;
+  END IF;
+
+  IF p_changes->>'name' IS NOT NULL AND btrim(p_changes->>'name') = '' THEN
+    RAISE EXCEPTION 'ERR_INVALID_CHANGES: el nombre no puede quedar vacío';
+  END IF;
+
+  -- Aplicar campo a campo con registro de auditoría por campo.
+  -- v_master es la instantánea previa (bajo lock FOR UPDATE): los old_value
+  -- reflejan el estado original aunque se cambien varios campos a la vez.
+  FOR v_key, v_new IN
+    SELECT k, p_changes ->> k FROM jsonb_each(p_changes) AS t(k, v)
+  LOOP
+    v_old := to_jsonb(v_master) ->> v_key;
+
+    EXECUTE format('UPDATE public.master_products SET %I = %L, updated_at = now() WHERE id = %L',
+                   v_key, v_new, p_master_id);
+
+    INSERT INTO public.master_change_log
+      (master_product_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id, proposal_id)
+    VALUES
+      (p_master_id, v_master.tenant_id, v_key, v_old, v_new, p_actor, p_origin_store_id, p_proposal_id);
+
+    v_changes_applied := v_changes_applied || jsonb_build_object('field', v_key, 'old', v_old, 'new', v_new);
+  END LOOP;
+
+  -- Propagación de coherencia de identidad (SKU y nombre) a las filas locales
+  -- vinculadas de TODAS las tiendas conectadas. El trigger de identidad
+  -- re-coerciona contra el maestro; datos comerciales intactos.
+  IF v_new_sku IS NOT NULL OR p_changes->>'name' IS NOT NULL THEN
+    UPDATE public.products pr
+       SET sku = m.sku,
+           name = m.name,
+           updated_at = now()
+      FROM public.master_products m
+     WHERE m.id = pr.master_product_id
+       AND pr.master_product_id = p_master_id;
+  END IF;
+
+  RETURN jsonb_build_object('status','success','applied', v_changes_applied);
 END;
 $function$
 
@@ -6644,6 +7027,64 @@ AS $function$
 BEGIN
     INSERT INTO public.inventory_snapshots (store_id, product_id, quantity, snapshot_date)
     SELECT store_id, product_id, quantity, now() FROM public.inventory WHERE store_id = p_store_id;
+END;
+$function$
+
+
+-- @contract-function name=grant_catalog_governor args="p_tenant_id uuid, p_target_user_id uuid, p_grant boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.grant_catalog_governor(p_tenant_id uuid, p_target_user_id uuid, p_grant boolean DEFAULT true, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_caller_role text;
+  v_already boolean;
+BEGIN
+  IF v_caller_uid IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT role INTO v_caller_role FROM public.profiles WHERE id = v_caller_uid;
+  IF v_caller_role IS DISTINCT FROM 'superadmin' THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo superadmin administra la capacidad de gobernar el catálogo';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM public.tenants WHERE id = p_tenant_id) THEN
+    RAISE EXCEPTION 'ERR_TENANT_NOT_FOUND: %', p_tenant_id;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = p_target_user_id) THEN
+    RAISE EXCEPTION 'ERR_PROFILE_NOT_FOUND: %', p_target_user_id;
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = p_target_user_id AND tenant_id = p_tenant_id
+  ) INTO v_already;
+  IF p_grant AND NOT v_already THEN
+    RAISE EXCEPTION 'ERR_TENANT_MISMATCH: el usuario % no pertenece a la organización %', p_target_user_id, p_tenant_id;
+  END IF;
+
+  IF p_grant THEN
+    INSERT INTO public.catalog_governors (tenant_id, user_id, granted_by)
+    VALUES (p_tenant_id, p_target_user_id, v_caller_uid)
+    ON CONFLICT (tenant_id, user_id) DO NOTHING;
+  ELSE
+    DELETE FROM public.catalog_governors
+     WHERE tenant_id = p_tenant_id AND user_id = p_target_user_id;
+  END IF;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, user_id, metadata)
+  VALUES ('CATALOG_GOVERNOR_GRANT', 'system', p_tenant_id, v_caller_uid,
+          jsonb_build_object(
+            'target_user', p_target_user_id,
+            'granted', p_grant,
+            'at', now()));
+
+  RETURN jsonb_build_object('status','success','granted', p_grant,
+    'tenant_id', p_tenant_id, 'user_id', p_target_user_id);
 END;
 $function$
 
@@ -8539,6 +8980,57 @@ END;
 $function$
 
 
+-- @contract-function name=propose_master_change args="p_master_id uuid, p_changes jsonb, p_origin_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.propose_master_change(p_master_id uuid, p_changes jsonb, p_origin_store_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_tenant uuid;
+  v_proposal_id uuid;
+  v_allowed text[] := ARRAY['sku','name','description','image_path','barcode','barcode_type','unit_of_measure','is_service'];
+  v_key text;
+BEGIN
+  IF v_caller_uid IS NULL OR p_origin_store_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+  IF p_changes IS NULL OR jsonb_typeof(p_changes) <> 'object' OR p_changes = '{}'::jsonb THEN
+    RAISE EXCEPTION 'ERR_INVALID_CHANGES: se requiere un objeto de cambios no vacío';
+  END IF;
+  FOR v_key IN SELECT jsonb_object_keys(p_changes) LOOP
+    IF NOT (v_key = ANY (v_allowed)) THEN
+      RAISE EXCEPTION 'ERR_INVALID_CHANGES: campo % no es identidad compartida proponible', v_key;
+    END IF;
+  END LOOP;
+
+  SELECT tenant_id INTO v_tenant FROM public.master_products WHERE id = p_master_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_MASTER_NOT_FOUND: %', p_master_id;
+  END IF;
+
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  INSERT INTO public.master_change_proposals
+    (master_product_id, tenant_id, proposed_by, origin_store_id, changes, status)
+  VALUES
+    (p_master_id, v_tenant, v_caller_uid, p_origin_store_id, p_changes, 'pending')
+  RETURNING id INTO v_proposal_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('PROPOSE_MASTER_CHANGE', 'master_change_proposals', v_proposal_id, p_origin_store_id, v_caller_uid,
+          jsonb_build_object('master_product_id', p_master_id, 'changes', p_changes));
+
+  RETURN jsonb_build_object('status','success','proposal_id', v_proposal_id, 'master_product_id', p_master_id);
+END;
+$function$
+
+
 -- @contract-function name=purge_old_reset_snapshots args="p_days integer" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.purge_old_reset_snapshots(p_days integer DEFAULT 30)
  RETURNS integer
@@ -10113,6 +10605,81 @@ END;
 $function$
 
 
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
+$function$
+
+
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -10336,81 +10903,6 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
-$function$
-
-
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
 $function$
 
 
@@ -12023,6 +12515,58 @@ END;
 $function$
 
 
+-- @contract-function name=review_master_proposal args="p_proposal_id uuid, p_decision text, p_note text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.review_master_proposal(p_proposal_id uuid, p_decision text, p_note text DEFAULT ''::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_proposal record;
+  v_result jsonb;
+BEGIN
+  IF v_caller_uid IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+  IF p_decision NOT IN ('approved','rejected') THEN
+    RAISE EXCEPTION 'ERR_INVALID_DECISION: %', p_decision;
+  END IF;
+
+  SELECT * INTO v_proposal FROM public.master_change_proposals WHERE id = p_proposal_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_PROPOSAL_NOT_FOUND: %', p_proposal_id;
+  END IF;
+  IF v_proposal.status <> 'pending' THEN
+    RAISE EXCEPTION 'ERR_PROPOSAL_REVIEWED: la propuesta ya fue revisada (%)', v_proposal.status;
+  END IF;
+
+  IF NOT public.is_catalog_governor(v_proposal.tenant_id, v_caller_uid) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el gobernador del catálogo revisa propuestas';
+  END IF;
+
+  IF p_decision = 'approved' THEN
+    v_result := public.fn_master_apply_identity_changes(
+      v_proposal.master_product_id, v_proposal.changes, v_caller_uid,
+      v_proposal.origin_store_id, p_proposal_id);
+  END IF;
+
+  UPDATE public.master_change_proposals
+     SET status = p_decision, reviewed_by = v_caller_uid, reviewed_at = now(),
+         review_note = NULLIF(btrim(COALESCE(p_note, '')), ''), updated_at = now()
+   WHERE id = p_proposal_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('REVIEW_MASTER_PROPOSAL', 'master_change_proposals', p_proposal_id, v_proposal.origin_store_id, v_caller_uid,
+          jsonb_build_object('decision', p_decision, 'master_product_id', v_proposal.master_product_id, 'note', COALESCE(p_note,'')));
+
+  RETURN COALESCE(v_result, jsonb_build_object('status','success','decision', p_decision, 'proposal_id', p_proposal_id));
+END;
+$function$
+
+
 -- @contract-function name=review_physical_inventory_item args="p_pi_id uuid, p_item_id uuid, p_review_notes text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.review_physical_inventory_item(p_pi_id uuid, p_item_id uuid, p_review_notes text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -12675,6 +13219,43 @@ BEGIN
     WHERE id = NEW.product_id;
 
     RETURN NEW;
+END;
+$function$
+
+
+-- @contract-function name=update_master_product args="p_master_id uuid, p_changes jsonb, p_origin_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.update_master_product(p_master_id uuid, p_changes jsonb, p_origin_store_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_tenant uuid;
+  v_result jsonb;
+BEGIN
+  IF v_caller_uid IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT tenant_id INTO v_tenant FROM public.master_products WHERE id = p_master_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_MASTER_NOT_FOUND: %', p_master_id;
+  END IF;
+
+  IF NOT public.is_catalog_governor(v_tenant, v_caller_uid) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el gobernador del catálogo edita la identidad compartida';
+  END IF;
+
+  v_result := public.fn_master_apply_identity_changes(p_master_id, p_changes, v_caller_uid, p_origin_store_id, NULL);
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('UPDATE_MASTER_PRODUCT', 'master_products', p_master_id, p_origin_store_id, v_caller_uid,
+          jsonb_build_object('changes', p_changes, 'tenant_id', v_tenant));
+
+  RETURN v_result;
 END;
 $function$
 
