@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 518,
-  "total_incluidos": 103,
+  "total_considerados": 522,
+  "total_incluidos": 107,
   "total_excluidos": 415,
-  "digest": "a672c9706a54e537cd625a97481271c601e12ce28a91d40ba35f5db8831f0415",
+  "digest": "f8595e4df2bd6c372905489b540aadb88c53044b5740f6348b5b5fcbe45d6abf",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5003,6 +5003,50 @@
       "observaciones": [],
       "posicion": 103,
       "sha256_generado": "c6f45ed1acb04109c921592a4af4d66cdf1832328a48c3cb07b63eb6f55a2e71"
+    },
+    {
+      "nombre": "20261028110000_cp_catalogo_master_model_schema.sql",
+      "bytes": 22553,
+      "sha256_original": "5e8f48def1a62057ec0a72d5add4a3700a11c1d2419e350e237eb5b493d0924c",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261028",
+      "observaciones": [],
+      "posicion": 104,
+      "sha256_generado": "5e8f48def1a62057ec0a72d5add4a3700a11c1d2419e350e237eb5b493d0924c"
+    },
+    {
+      "nombre": "20261028112000_cp_catalogo_rpcs_gobernanza.sql",
+      "bytes": 13164,
+      "sha256_original": "bdba46a443d599d6c01fd6df0401ff307be76c104dd2a220af0f96e2bf0df8c6",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261028",
+      "observaciones": [],
+      "posicion": 105,
+      "sha256_generado": "bdba46a443d599d6c01fd6df0401ff307be76c104dd2a220af0f96e2bf0df8c6"
+    },
+    {
+      "nombre": "20261028112100_cp_catalogo_rpcs_ciclo_vida.sql",
+      "bytes": 25453,
+      "sha256_original": "6a99ba4bc721bd467dd1775dc4af1e529afbfc3c6df01236e859f94513371397",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261028",
+      "observaciones": [],
+      "posicion": 106,
+      "sha256_generado": "6a99ba4bc721bd467dd1775dc4af1e529afbfc3c6df01236e859f94513371397"
+    },
+    {
+      "nombre": "20261028112200_cp_catalogo_helpers_acl_hardening.sql",
+      "bytes": 2038,
+      "sha256_original": "904ab803d52f0bf238a22f6fd0db1964c15ea0786dd1832d18eb417e4d01d3ae",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261028",
+      "observaciones": [],
+      "posicion": 107,
+      "sha256_generado": "904ab803d52f0bf238a22f6fd0db1964c15ea0786dd1832d18eb417e4d01d3ae"
     },
     {
       "nombre": "AUDIT_FIXES.md",
