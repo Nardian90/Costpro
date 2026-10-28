@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/lib/receptions/product-lines.ts",
+    "src/hooks/api/useReceptions.ts",
+    "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
+    "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+    "src/components/views/terminal/views/receptions/ReceptionProductLinesTable.tsx",
+    "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
+    "src/__tests__/lib/receptions-product-lines.test.ts"
+  ]
+}
