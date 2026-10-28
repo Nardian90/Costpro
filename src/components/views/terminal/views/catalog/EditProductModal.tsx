@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Plus, Trash2, CheckCircle2, X,
   Package, Camera, ImagePlus, Info,
@@ -16,6 +16,7 @@ import { cn, getProductImageUrl } from '@/lib/utils';
 // Accessibility-Fix: helper para detectar campos faltantes del producto.
 import { getIncompleteReasons } from '@/lib/product-completeness';
 import { generateEAN13FromSKU } from '@/lib/barcode-utils';
+import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import type { Product, ProductVariant, ProductFCStatus } from '@/types';
 
@@ -98,6 +99,29 @@ export default function EditProductModal({
 }: EditProductModalProps) {
   const editCameraRef = useRef<HTMLInputElement>(null);
   const editGalleryRef = useRef<HTMLInputElement>(null);
+
+  // CP-CATÁLOGO MAESTRO (PR 4): identidad compartida de solo lectura en la
+  // ficha local de un producto vinculado al catálogo de la organización
+  // (misión §5). El servidor además coacciona SKU/nombre al maestro (trigger
+  // trg_products_master_identity_guard), esta UI solo refleja el contrato.
+  const [identityLocked, setIdentityLocked] = useState(false);
+  const productId = product?.id ?? null;
+  useEffect(() => {
+    let alive = true;
+    setIdentityLocked(false);
+    if (!productId) return;
+    supabase
+      .from('products')
+      .select('master_product_id')
+      .eq('id', productId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (alive && data?.master_product_id) setIdentityLocked(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [productId]);
 
   // FC auto-enabled state (local toggle)
   const fcAutoEnabled = product?.fc_auto_enabled ?? true;
@@ -289,6 +313,7 @@ export default function EditProductModal({
             aria-label="Nombre del producto"
             className="neu-input w-full font-bold"
             placeholder="Ej: Camiseta Algodón"
+            disabled={identityLocked}
           />
         </div>
 
@@ -303,7 +328,13 @@ export default function EditProductModal({
               onChange={(e) => onFormChange({ ...editForm, sku: e.target.value })}
               className="neu-input w-full"
               placeholder="SKU-001"
+              disabled={identityLocked}
             />
+            {identityLocked && (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                Vinculado al catálogo de la organización: el SKU y el nombre los administra el catálogo maestro. Para proponer un cambio, use el panel de gobernanza del catálogo.
+              </p>
+            )}
           </div>
           <div className="space-y-1.5">
             <label htmlFor="edit-product-category" className="text-xs font-black uppercase tracking-widest ml-1">Categoría</label>
