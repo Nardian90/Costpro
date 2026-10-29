@@ -104,10 +104,20 @@ CREATE POLICY "product_images_delete_product_owner" ON storage.objects
   );
 
 -- 4) Verificación post-migración documentada
+--    CP-CAT-MAESTRO-001 (2026-10-29): el guard original solo contaba 4
+--    políticas product_images_% y no detectaba políticas HEREDADAS
+--    peligrosas. Se conserva la verificación del contador (contrato de esta
+--    migración) y se AÑADE la detección de políticas de escritura heredadas
+--    no owner-scoped sobre el bucket: se REPORTAN con WARNING (no abortan
+--    aquí porque esta migración no las crea ni las elimina — su retirada es
+--    responsabilidad de la migración correctiva 20261029090000, cuyo guard
+--    estricto SÍ aborta si alguna permaneciera activa).
 DO $verification$
 DECLARE
   v_bucket BOOLEAN;
   v_policies INTEGER;
+  v_legacy RECORD;
+  v_lista_legacy TEXT;
 BEGIN
   SELECT public INTO v_bucket FROM storage.buckets WHERE id = 'product-images';
   SELECT count(*) INTO v_policies
@@ -119,6 +129,28 @@ BEGIN
   END IF;
   IF v_policies <> 4 THEN
     RAISE EXCEPTION 'GUARD product-images: se esperaban 4 políticas, hay %', v_policies;
+  END IF;
+  -- Detección de políticas HEREDADAS peligrosas (escrituras no owner-scoped
+  -- que referencian el bucket): visibilidad total para el operador.
+  v_lista_legacy := '';
+  FOR v_legacy IN
+    SELECT policyname, cmd
+      FROM pg_policies
+      WHERE schemaname = 'storage' AND tablename = 'objects'
+        AND cmd IN ('INSERT', 'UPDATE', 'DELETE')
+        AND (qual ILIKE '%product-images%' OR with_check ILIKE '%product-images%')
+        AND policyname NOT IN (
+          'product_images_insert_product_owner',
+          'product_images_update_product_owner',
+          'product_images_delete_product_owner'
+        )
+  LOOP
+    v_lista_legacy := v_lista_legacy || format('%s (%s); ', v_legacy.policyname, v_legacy.cmd);
+  END LOOP;
+  IF v_lista_legacy <> '' THEN
+    RAISE WARNING 'GUARD product-images: coexisten políticas de escritura HEREDADAS no owner-scoped (vía de escritura arbitraria abierta): % — deben ser retiradas por la migración correctiva 20261029090000', v_lista_legacy;
+  ELSE
+    RAISE NOTICE 'GUARD product-images: sin políticas de escritura heredadas peligrosas';
   END IF;
   RAISE NOTICE 'product-images versionado OK: bucket público + % políticas', v_policies;
 END
