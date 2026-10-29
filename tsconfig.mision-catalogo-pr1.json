@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/types/index.ts",
+    "src/lib/api-errors.ts",
+    "src/lib/rls-middleware.ts",
+    "src/lib/roles.ts",
+    "src/lib/auth-middleware.ts",
+    "src/validation/api-schemas.ts",
+    "src/app/api/catalog/bulk-import/route.ts",
+    "src/__tests__/api/catalog-bulk-import-validation.test.ts",
+    "src/__tests__/migrations/cp-catalogo-pr1-bloqueos-seguridad-migration.test.ts"
+  ]
+}

@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-27T15:21:43.657Z
+-- Captured  : 2026-10-28T16:17:48.373Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 156 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -4423,9 +4423,16 @@ BEGIN
       FOR UPDATE;
 
     IF v_stock IS NULL THEN
-      -- fallback legacy: producto sin tienda (servicios globales)
-      SELECT stock_current, cost_average, price INTO v_stock, v_wac_prev, v_catalog_price
-        FROM public.products WHERE id = v_pid FOR UPDATE;
+      -- CP-CATALOGO (2026-10-28): cierre del fallback legacy sin filtro de tienda
+      -- (hallazgo CICLO 2 / E2E-POS-007). products.store_id es NOT NULL, de modo
+      -- que no existe el caso legitimo «producto sin tienda»: si la fila
+      -- (id, store_id) no existe, el producto pertenece a otra tienda o no
+      -- existe. Fail-closed con error explicito; ninguna venta puede tomar
+      -- precio/costo/existencia de una fila ajena a la tienda.
+      IF EXISTS (SELECT 1 FROM public.products WHERE id = v_pid) THEN
+        RAISE EXCEPTION 'ERR_STORE_MISMATCH: el producto % pertenece a otra tienda (solicitada: %)', v_pid, p_store_id;
+      END IF;
+      RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: el producto % no existe', v_pid;
     END IF;
     v_stock := COALESCE(v_stock, 0);
 
@@ -4452,7 +4459,7 @@ BEGIN
       v_price := NULLIF(v_item->>'price', '')::numeric;
     END IF;
     IF v_price IS NULL THEN
-      SELECT price INTO v_product_price FROM public.products WHERE id = v_pid;
+      SELECT price INTO v_product_price FROM public.products WHERE id = v_pid AND store_id = p_store_id;
       v_price := COALESCE(v_product_price, 0);
     END IF;
 
@@ -5033,7 +5040,7 @@ BEGIN
       v_price := NULLIF(v_item->>'price', '')::numeric;
     END IF;
     IF v_price IS NULL THEN
-      SELECT price INTO v_product_price FROM public.products WHERE id = v_pid;
+      SELECT price INTO v_product_price FROM public.products WHERE id = v_pid AND store_id = p_store_id;
       v_price := COALESCE(v_product_price, 0);
     END IF;
     v_price := ROUND(v_price, 2);
@@ -5059,11 +5066,13 @@ BEGIN
       FROM public.products
       WHERE id = v_pid AND store_id = p_store_id
       FOR UPDATE;
+    -- CP-CATALOGO (2026-10-28): fallback legacy eliminado (leía el costo por id
+    -- sin filtro de tienda). Fail-closed con la misma semántica del bloque 1.
     IF v_cost IS NULL THEN
-      SELECT cost_average INTO v_cost FROM public.products WHERE id = v_pid FOR UPDATE;
-    END IF;
-    IF v_cost IS NULL THEN
-      RAISE EXCEPTION 'ERR_PRODUCT_COST_UNAVAILABLE: %', v_pid;
+      IF EXISTS (SELECT 1 FROM public.products WHERE id = v_pid) THEN
+        RAISE EXCEPTION 'ERR_STORE_MISMATCH: el producto % pertenece a otra tienda (solicitada: %)', v_pid, p_store_id;
+      END IF;
+      RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: el producto % no existe', v_pid;
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM public.products WHERE id = v_pid AND is_service = true) THEN

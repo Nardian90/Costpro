@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 515,
-  "total_incluidos": 100,
+  "total_considerados": 518,
+  "total_incluidos": 103,
   "total_excluidos": 415,
-  "digest": "a00b15ad5c35b29f2dc81ebda8eb02bf054c596cafb611cab49aa6a5a11d6678",
+  "digest": "075d5cd905144e5a31d638501cac0f08784563e574a1aff55c967f29e034457d",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -4968,6 +4968,43 @@
       "observaciones": [],
       "posicion": 100,
       "sha256_generado": "ceb3c74423316bf8fe1079aa15dd571869f2a6d08dac9e07018cc7381d08e60a"
+    },
+    {
+      "nombre": "20261028090000_cp_catalogo_cierre_fallback_create_sale_v2.sql",
+      "bytes": 62490,
+      "sha256_original": "412f20fc9a0722c8763d1db01a868e1f69cb7299429686d1d16e0a5123bc6ed3",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261028",
+      "observaciones": [],
+      "posicion": 101,
+      "sha256_generado": "412f20fc9a0722c8763d1db01a868e1f69cb7299429686d1d16e0a5123bc6ed3"
+    },
+    {
+      "nombre": "20261028091000_cp_catalogo_bucket_product_images_policies.sql",
+      "bytes": 7244,
+      "sha256_original": "d59bafd0a663883227028fac4df975d1b6fe15f7de74ce0ec0d9671bd805f30f",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261028",
+      "observaciones": [
+        "storage_writes"
+      ],
+      "posicion": 102,
+      "sha256_generado": "d59bafd0a663883227028fac4df975d1b6fe15f7de74ce0ec0d9671bd805f30f"
+    },
+    {
+      "nombre": "20261029090000_drop_legacy_product_images_policies.sql",
+      "bytes": 7033,
+      "sha256_original": "30abe760942b8d0adda24f4e5c4ce4757426df601197733f7edae5e9847f6e03",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261029",
+      "observaciones": [
+        "storage_writes"
+      ],
+      "posicion": 103,
+      "sha256_generado": "30abe760942b8d0adda24f4e5c4ce4757426df601197733f7edae5e9847f6e03"
     },
     {
       "nombre": "AUDIT_FIXES.md",
