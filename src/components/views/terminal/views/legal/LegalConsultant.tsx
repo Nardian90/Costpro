@@ -5,9 +5,13 @@ import { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   FileText, BookOpen, ChevronRight, Sparkles,
-  ExternalLink, Info, ClipboardList, Briefcase, Scale
+  ExternalLink, Info, ClipboardList, Briefcase, Scale,
+  FileDown, Download
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+// MISIÓN RESOLUCIÓN 11 (2026-10-29): PDF oficial original servido desde /public/legal.
+// Mapeo estático frontend — sin cambios de esquema en legal_resolutions.
+import { getResolutionPdfUrl } from '@/lib/legal/resolution-originals';
 
 interface LegalConsultantProps {
   resolutions: any[];
@@ -122,6 +126,38 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
                   <h2 className="text-[clamp(1.25rem,5vw,1.5rem)] font-black uppercase tracking-tight leading-tight">
                     {resolutions.find(r => r.id === activeResId)?.title}
                   </h2>
+                  {/* MISIÓN RESOLUCIÓN 11 (2026-10-29): abrir/descargar el documento
+                      oficial original en PDF cuando está disponible. Solo se muestra
+                      para las resoluciones con entrada en LEGAL_RESOLUTION_PDFS —
+                      las resoluciones sin PDF (12/13) no cambian en nada. */}
+                  {(() => {
+                    const activeResolution = resolutions.find(r => r.id === activeResId);
+                    const pdfUrl = getResolutionPdfUrl(activeResolution?.number, activeResolution?.year);
+                    if (!pdfUrl) return null;
+                    return (
+                      <div className="flex flex-wrap items-center gap-2 mt-4">
+                        <a
+                          href={pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all active:scale-95"
+                          aria-label={`Abrir PDF original de ${activeResolution?.title}`}
+                        >
+                          <FileDown className="w-4 h-4" />
+                          Abrir PDF original
+                        </a>
+                        <a
+                          href={pdfUrl}
+                          download
+                          className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border-2 border-primary/30 bg-background text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/10 transition-all active:scale-95"
+                          aria-label={`Descargar PDF original de ${activeResolution?.title}`}
+                        >
+                          <Download className="w-4 h-4" />
+                          Descargar
+                        </a>
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div className="p-8 max-h-[500px] overflow-y-auto text-sm no-scrollbar">
                   {formatResolutionText(resolutions.find(r => r.id === activeResId)?.full_text)}

@@ -4,6 +4,8 @@ import { useState, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store';
 import { useReceptions, useReceptionDetails, useUpdateReception, useVoidReception, useConfirmPendingReception, useDeletePendingReception } from '@/hooks/api/useReceptions';
 import { Receipt, ReceiptItem } from '@/types';
+// MISIÓN RESOLUCIÓN 11 (2026-10-29): exportación del modelo oficial SC-2-04.
+import { exportSc204ForReceipt } from '@/lib/legal/sc204';
 import { useInvertDocument } from '@/hooks/api/useDocumentActions';
 import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
 import { toast } from 'sonner';
@@ -314,6 +316,26 @@ export function useReceptionsHistoryView() {
     }
   };
 
+  // MISIÓN RESOLUCIÓN 11 (2026-10-29): exportar la recepción como modelo
+  // oficial SC-2-04 «Informe de Recepción» (Res. 11/2007 MFP). Solo lectura:
+  // la función lee los datos bajo RLS y genera el PDF — no muta ningún
+  // registro, inventario ni estado de la recepción.
+  const [isExportingSc204, setIsExportingSc204] = useState(false);
+  const handleExportSc204 = async () => {
+    if (!selectedReceipt) return;
+    setIsExportingSc204(true);
+    const toastId = toast.loading('Generando SC-2-04 (PDF)...');
+    try {
+      await exportSc204ForReceipt(selectedReceipt, user?.activeStoreId);
+      toast.success('Informe SC-2-04 generado', { id: toastId });
+    } catch (error) {
+      logger.error('SYSTEM', 'SC204_EXPORT_FAILED', { error });
+      toast.error('No se pudo generar el SC-2-04: ' + (error instanceof Error ? error.message : String(error)), { id: toastId, duration: 8000 });
+    } finally {
+      setIsExportingSc204(false);
+    }
+  };
+
   // Export full receptions list to Excel
   const handleExportAllExcel = useCallback(async () => {
     if (receptions.length === 0) {
@@ -409,6 +431,9 @@ export function useReceptionsHistoryView() {
     handleDuplicate,
     handleExportCSV,
     handleExportAllExcel,
+    // MISIÓN RESOLUCIÓN 11: exportación SC-2-04
+    handleExportSc204,
+    isExportingSc204,
     isInverting: invertDocumentMutation.isPending,
 
     // R2: modal de inversión estilado
