@@ -172,6 +172,7 @@ const LotsView = dynamic(() => import('@/components/views/terminal/views/lots/Lo
 const WarehousesView = dynamic(() => import('@/components/views/terminal/views/warehouses/WarehousesView').then(m => ({ default: m.WarehousesView })), { ssr: false });
 const ABCView = dynamic(() => import('@/components/views/terminal/views/abc_analysis/ABCView').then(m => ({ default: m.ABCView })), { ssr: false });
 const CreateProductModal = dynamic(() => import('@/components/modals/CreateProductModal').then(m => m.CreateProductModal), { ssr: false });
+const MasterCatalogModal = dynamic(() => import('@/components/modals/MasterCatalogModal').then(m => m.MasterCatalogModal), { ssr: false });
 const CommandPalette = dynamic(() => import('@/components/ui/CommandPalette').then(m => m.CommandPalette), { ssr: false });
 const SyncConflictModal = dynamic(() => import('@/components/modals/SyncConflictModal').then(m => m.SyncConflictModal), { ssr: false });
 
@@ -779,6 +780,7 @@ export default function TerminalShell() {
       </AnimatePresence>
 
       <CreateProductModal />
+      <MasterCatalogModal />
       <CommandPalette />
       <KeyboardShortcutsModal open={showKeyboardHelp} onOpenChange={setShowKeyboardHelp} />
       {/* F5-T02: ChatBot y FloatingCalculator solo en desktop — en mobile están integrados en el tab bar / sheet "Más" */}

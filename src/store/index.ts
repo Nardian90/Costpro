@@ -70,6 +70,7 @@ interface UIState {
   viewQueries: Record<string, string>;
   showQueries: boolean;
   isCreateProductModalOpen: boolean;
+  isMasterCatalogModalOpen: boolean;
   initialProductName: string;
   isChatBotOpen: boolean;
   ipvActiveTab: string;
@@ -101,6 +102,7 @@ interface UIState {
   setLastQuery: (sql: string, view?: string) => void;
   setShowQueries: (show: boolean) => void;
   setIsCreateProductModalOpen: (open: boolean) => void;
+  setIsMasterCatalogModalOpen: (open: boolean) => void;
   setInitialProductName: (name: string) => void;
   setIsChatBotOpen: (open: boolean) => void;
   setIpvActiveTab: (tab: string) => void;
@@ -128,6 +130,7 @@ export const useUIStore = create<UIState>()(
       viewQueries: {},
       showQueries: false,
       isCreateProductModalOpen: false,
+      isMasterCatalogModalOpen: false,
       initialProductName: '',
       isChatBotOpen: false,
       ipvActiveTab: 'dashboard',
@@ -172,6 +175,7 @@ export const useUIStore = create<UIState>()(
       })),
       setShowQueries: (showQueries: boolean) => set({ showQueries }),
       setIsCreateProductModalOpen: (isCreateProductModalOpen: boolean) => set({ isCreateProductModalOpen }),
+      setIsMasterCatalogModalOpen: (isMasterCatalogModalOpen: boolean) => set({ isMasterCatalogModalOpen }),
       setInitialProductName: (initialProductName: string) => set({ initialProductName }),
       setIsChatBotOpen: (isChatBotOpen: boolean) => set({ isChatBotOpen }),
       setIpvActiveTab: (ipvActiveTab: string) => set({ ipvActiveTab }),
