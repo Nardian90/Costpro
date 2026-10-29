@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 523,
-  "total_incluidos": 108,
+  "total_considerados": 524,
+  "total_incluidos": 109,
   "total_excluidos": 415,
-  "digest": "6367066aa3c4e2a4605a6186d5d837bf50ab6c71e42bf616c20a1663a7e01a3f",
+  "digest": "51f2b6b53e4c496839b25510018c3185574a7d809861014415bcb6752f9e362d",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -4982,8 +4982,8 @@
     },
     {
       "nombre": "20261028091000_cp_catalogo_bucket_product_images_policies.sql",
-      "bytes": 5505,
-      "sha256_original": "d3e9d0fb89fb57ee0e746ab96db35effe1683242fa7e290d940ba5695d5f8e35",
+      "bytes": 7244,
+      "sha256_original": "d59bafd0a663883227028fac4df975d1b6fe15f7de74ce0ec0d9671bd805f30f",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261028",
@@ -4991,7 +4991,7 @@
         "storage_writes"
       ],
       "posicion": 102,
-      "sha256_generado": "d3e9d0fb89fb57ee0e746ab96db35effe1683242fa7e290d940ba5695d5f8e35"
+      "sha256_generado": "d59bafd0a663883227028fac4df975d1b6fe15f7de74ce0ec0d9671bd805f30f"
     },
     {
       "nombre": "20261028100000_cp_catalogo_etapa0_backfill_products_tenant_id.sql",
@@ -5058,6 +5058,19 @@
       "observaciones": [],
       "posicion": 108,
       "sha256_generado": "4f065d23e9f7003b28af99f4e50198fcd7beb71bb5ad5cf79396c49446e17dd9"
+    },
+    {
+      "nombre": "20261029090000_drop_legacy_product_images_policies.sql",
+      "bytes": 7033,
+      "sha256_original": "30abe760942b8d0adda24f4e5c4ce4757426df601197733f7edae5e9847f6e03",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261029",
+      "observaciones": [
+        "storage_writes"
+      ],
+      "posicion": 109,
+      "sha256_generado": "30abe760942b8d0adda24f4e5c4ce4757426df601197733f7edae5e9847f6e03"
     },
     {
       "nombre": "AUDIT_FIXES.md",

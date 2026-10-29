@@ -89,6 +89,9 @@ export default function ReceptionsHistoryView() {
     handleDuplicate,
     handleExportCSV,
     handleExportAllExcel,
+    // MISIÓN RESOLUCIÓN 11 (2026-10-29): exportación SC-2-04
+    handleExportSc204,
+    isExportingSc204,
     receiptItems,
     loadingDetails,
     // FM-06 additions
@@ -543,6 +546,9 @@ export default function ReceptionsHistoryView() {
         items={receiptItems}
         isLoading={loadingDetails}
         onExport={() => selectedReceipt && handleExportCSV(selectedReceipt, receiptItems)}
+        // MISIÓN RESOLUCIÓN 11 (2026-10-29): modelo oficial SC-2-04 (solo lectura)
+        onExportSc204Pdf={() => handleExportSc204()}
+        isExportingSc204={isExportingSc204}
         isEditMode={isEditMode}
         onUpdateSubmit={(updates) => selectedReceipt && handleUpdateSubmit(selectedReceipt.id, updates)}
         onVoidRequest={() => selectedReceipt && handleVoidConfirm(selectedReceipt!)}

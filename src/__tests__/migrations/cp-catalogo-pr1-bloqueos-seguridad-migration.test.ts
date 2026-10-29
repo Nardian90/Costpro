@@ -139,4 +139,57 @@ describe('migración 20261028091000 — bucket product-images versionado y polí
     expect(s).toMatch(/se esperaban 4 políticas/);
     expect(s).toMatch(/el bucket no quedó público/);
   });
+
+  it('CP-CAT-MAESTRO-001: el guard DETECTA políticas heredadas peligrosas de escritura (no solo cuenta 4)', () => {
+    // Detección por operación sobre pg_policies, excluyendo la lista blanca owner-scoped
+    expect(s).toMatch(/cmd IN \('INSERT', 'UPDATE', 'DELETE'\)/);
+    expect(s).toMatch(/policyname NOT IN \(/);
+    expect(s).toMatch(/'product_images_insert_product_owner',/);
+    expect(s).toMatch(/'product_images_update_product_owner',/);
+    expect(s).toMatch(/'product_images_delete_product_owner'/);
+    // Las heredadas se REPORTAN (WARNING) y no abortan aquí: su retirada es
+    // responsabilidad de la correctiva 20261029090000, cuyo guard SÍ aborta.
+    expect(s).toMatch(/RAISE WARNING 'GUARD product-images: coexisten políticas de escritura HEREDADAS/);
+    expect(s).toMatch(/20261029090000/);
+  });
+});
+
+describe('migración 20261029090000 — DROP de políticas legacy peligrosas de product-images (R1)', () => {
+  const FIX = 'supabase/migrations/20261029090000_drop_legacy_product_images_policies.sql';
+  const f = read(FIX);
+
+  it('elimina EXACTAMENTE las tres políticas legacy de escritura (INSERT/UPDATE/DELETE)', () => {
+    expect(f).toMatch(/DROP POLICY IF EXISTS "Authenticated users can upload product images" ON storage\.objects;/);
+    expect(f).toMatch(/DROP POLICY IF EXISTS "Authenticated users can update product images" ON storage\.objects;/);
+    expect(f).toMatch(/DROP POLICY IF EXISTS "Authenticated users can delete product images" ON storage\.objects;/);
+    // Solo 3 DROP legacy + ninguno sobre las owner-scoped ni sobre la de lectura pública
+    const drops = f.match(/DROP POLICY IF EXISTS "[^"]+"/g) || [];
+    expect(drops).toHaveLength(3);
+    expect(drops.join('\n')).not.toContain('product_images_');
+    expect(drops.join('\n')).not.toContain('Public Access to Product Images');
+  });
+
+  it('CONSERVA la lectura pública del diseño vigente (legacy SELECT + product_images_select_public)', () => {
+    expect(f).not.toMatch(/DROP POLICY IF EXISTS "Public Access to Product Images"/);
+    // El guard exige al menos una política de lectura pública activa
+    expect(f).toMatch(/cmd = 'SELECT'/);
+    expect(f).toMatch(/no queda ninguna política de lectura pública/);
+  });
+
+  it('guard estricto fail-closed: bucket público, 4 owner-scoped presentes y CERO escrituras no autorizadas', () => {
+    expect(f).toMatch(/el bucket no está público/);
+    expect(f).toMatch(/se esperaban las 4 políticas product_images_\*, hay %/);
+    // Detección por OPERACIÓN (no por contador), con lista blanca owner-scoped
+    expect(f).toMatch(/cmd IN \('INSERT', 'UPDATE', 'DELETE'\)/);
+    expect(f).toMatch(/qual ILIKE '%product-images%' OR with_check ILIKE '%product-images%'/);
+    expect(f).toMatch(/políticas de escritura NO autorizadas activas sobre el bucket/);
+    // Aborte real (EXCEPTION, no WARNING) al encontrar heredadas peligrosas
+    expect(f).toMatch(/RAISE EXCEPTION 'GUARD product-images: políticas de escritura NO autorizadas/);
+  });
+
+  it('es idempotente (re-aplicación segura) y no toca datos comerciales ni objetos del bucket', () => {
+    expect(f).toMatch(/IF EXISTS/g);
+    expect(f).not.toMatch(/DELETE FROM|TRUNCATE|UPDATE\s+(public\.)?products|INSERT INTO (public\.)?products/i);
+    expect(f).not.toMatch(/DELETE FROM storage\.objects|TRUNCATE storage\.objects/i);
+  });
 });
