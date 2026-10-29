@@ -69,7 +69,7 @@ vi.mock('@/lib/supabaseClient', () => ({
   },
 }));
 
-import { catalogService } from '@/services/catalog-service';
+import { catalogService, importCatalogFromCSV } from '@/services/catalog-service';
 
 beforeEach(() => {
   uploadMock.mockReset().mockResolvedValue({ error: null });
@@ -106,5 +106,48 @@ describe('uploadProductImage — GC de imagen compartida', () => {
     masterRefCount = { count: 0, error: null };
     await catalogService.uploadProductImage(PRODUCT_ID, new File(['x'], 'nueva.webp'));
     expect(removeMock).not.toHaveBeenCalled();
+  });
+});
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * CP-CAT-MAESTRO-002 — Cobertura real del servicio (Fase 4): importación CSV.
+ * Ejercita el mapeo de headers, la naturaleza del artículo (Servicio), la
+ * validación de filas y el dedup de SKU dentro del archivo (Caso H).
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+const csvFile = (content: string) => new File([content], 'catalogo.csv', { type: 'text/csv' });
+
+describe('importCatalogFromCSV — importación y dedup (Caso H)', () => {
+  it('mapea headers flexibles, reconoce «Servicio» y autogenera barcode', async () => {
+    const csv = [
+      'SKU,Nombre,Categoría,Tipo de Artículo,Unidad de Medida,Costo,Precio Venta,Stock Mínimo,Proveedor',
+      'PAR-500,Paracetamol 500 mg,Medicamentos,Servicio,unidad,90,150,10,Farmacia Central',
+      'PAN-1,Pan Francés,Panadería,,unidad,0.05,0.15,50,Panadería Local',
+    ].join('\n');
+    const res = await importCatalogFromCSV(csvFile(csv));
+    expect(res.totalCount).toBe(2);
+    expect(res.errors).toHaveLength(0);
+    expect(res.rows[0]).toMatchObject({ sku: 'PAR-500', name: 'Paracetamol 500 mg', is_service: true, price: 150, cost_price: 90, unit_of_measure: 'unidad' });
+    expect(res.rows[1].is_service).toBe(false); // ausencia ⇒ producto físico
+    expect(String(res.rows[1].barcode)).toMatch(/^\d{13}$/); // autogenerado por SKU
+  });
+
+  it('registra errores por fila: SKU obligatorio y SKU duplicado en el archivo', async () => {
+    const csv = [
+      'SKU,Nombre',
+      ',Sin SKU',
+      'DUP-1,Primero',
+      'DUP-1,Duplicado',
+    ].join('\n');
+    const res = await importCatalogFromCSV(csvFile(csv));
+    expect(res.rows).toHaveLength(1);
+    expect(res.errors.map(e => e.message)).toEqual(
+      expect.arrayContaining(['SKU es obligatorio', 'SKU duplicado en el archivo: DUP-1'])
+    );
+  });
+
+  it('rechaza CSV vacío con error claro', async () => {
+    await expect(importCatalogFromCSV(csvFile('SKU,Nombre\n'))).rejects.toThrow('vacío');
   });
 });
