@@ -360,7 +360,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 102 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 103 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -374,9 +374,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(salida).toContain('MATCH');
     // verificación del contenido
     const m = leeryValidarManifiesto();
-    expect(m.total_incluidos).toBe(102);
+    // CP-CAT-MAESTRO-001 R1: la correctiva 20261029090000 eleva el tramo a 103
+    expect(m.total_incluidos).toBe(103);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(102);
+    expect(incluidos.length).toBe(103);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -393,6 +394,8 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // (MISIÓN CICLO DE VIDA PI: la posición 99 = 20261027150000_pi_lifecycle_ciclo_vida.sql)
     // (MISIÓN RECEPCIONES: la posición 100 = 20261027180000_recepciones_borradores_transaccional.sql)
     // (MISIÓN CATÁLOGO MAESTRO PR 1: posiciones 101-102 = 20261028090000_cierre_fallback_create_sale_v2 + 20261028091000_bucket_product_images_policies)
+    // (MISIÓN CP-CAT-MAESTRO-001 R1: la posición 103 = 20261029090000_drop_legacy_product_images_policies)
+    expect(pos('20261029090000_drop_legacy_product_images_policies.sql')).toBe(103);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }
