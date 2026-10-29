@@ -7,7 +7,9 @@ const PROTECTED_ENDPOINTS = [
   { method: 'POST', path: '/api/cost-sheets/save' },
   { method: 'POST', path: '/api/cost-sheets/calculate' },
   { method: 'POST', path: '/api/reports/generate' },
-  { method: 'POST', path: '/api/academy/generate' },
+  // CP-CAT-MAESTRO-001 (cierre): /api/academy/generate retirado de la superficie
+  // API por CP-INFRA-002b (retirada de Academia, commit e1fac2535) — el endpoint
+  // ya no existe y respondía 404 en el smoke E2E aislado (corrida 40944242255).
   { method: 'POST', path: '/api/sync/batch' },
   { method: 'POST', path: '/api/cost-sheets/import-json' },
   { method: 'POST', path: '/api/cost-sheets/import-anexo' },
