@@ -378,13 +378,37 @@ export const catalogService = {
 
     // Step 3: garbage-collect the previous file (if any).
     // Best-effort: don't fail the whole operation if cleanup fails.
+    // CP-CAT-MAESTRO-002 (Fase 3): el archivo anterior PUEDE seguir siendo la
+    // imagen compartida del maestro o estar referenciado por productos de otras
+    // tiendas conectadas. Solo se elimina si NINGUNA referencia viva lo usa
+    // (products.image_url o master_products.image_path). Si la verificación no
+    // puede ejecutarse, se conserva el archivo (fail-safe: nunca se rompen
+    // referencias ajenas por una limpieza).
     if (previousFileName && previousFileName !== fileName) {
       try {
-        const { error: removeErr } = await supabase.storage
-          .from('product-images')
-          .remove([previousFileName]);
-        if (removeErr) {
-          console.warn(`[uploadProductImage] orphan cleanup failed for ${previousFileName}:`, removeErr.message);
+        let sharedCount = -1; // -1 = no se pudo verificar ⇒ conservar
+        try {
+          const [prodRef, masterRef] = await Promise.all([
+            supabase.from('products').select('id', { count: 'exact', head: true }).eq('image_url', previousFileName),
+            supabase.from('master_products').select('id', { count: 'exact', head: true }).eq('image_path', previousFileName),
+          ]);
+          sharedCount = (prodRef.count ?? 0) + (masterRef.count ?? 0);
+          if (prodRef.error || masterRef.error) sharedCount = -1;
+        } catch (countErr) {
+          console.warn('[uploadProductImage] shared-reference check failed, keeping previous file:', countErr);
+          sharedCount = -1;
+        }
+        if (sharedCount > 0) {
+          console.info(`[uploadProductImage] previous file ${previousFileName} still referenced by ${sharedCount} row(s) — kept (imagen compartida).`);
+        } else if (sharedCount === 0) {
+          const { error: removeErr } = await supabase.storage
+            .from('product-images')
+            .remove([previousFileName]);
+          if (removeErr) {
+            console.warn(`[uploadProductImage] orphan cleanup failed for ${previousFileName}:`, removeErr.message);
+          }
+        } else {
+          console.warn(`[uploadProductImage] could not verify references for ${previousFileName} — file kept.`);
         }
       } catch (cleanupErr) {
         console.warn('[uploadProductImage] orphan cleanup threw:', cleanupErr);

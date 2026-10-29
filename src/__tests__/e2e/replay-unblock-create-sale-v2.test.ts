@@ -360,7 +360,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 109 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 110 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -374,10 +374,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(salida).toContain('MATCH');
     // verificación del contenido
     const m = leeryValidarManifiesto();
-    // cadena catálogo maestro + R1: 102 (PR1) + 1 R1 + 1 etapa 0 + 4 etapa 1 + 1 PR4 = 109
-    expect(m.total_incluidos).toBe(109);
+    // cadena catálogo maestro + R1 + CP-CAT-MAESTRO-002: 102 (PR1) + 1 R1 + 1 etapa 0 + 4 etapa 1 + 1 PR4 + 1 propagación imagen = 110
+    expect(m.total_incluidos).toBe(110);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(109);
+    expect(incluidos.length).toBe(110);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -398,7 +398,9 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // (MISIÓN CATÁLOGO MAESTRO PR 3 · ETAPA 1: posiciones 104-107 = modelo maestro + RPCs + ACL)
     // (MISIÓN CATÁLOGO MAESTRO PR 4: la posición 108 = 20261028120000_busquedas_maestro)
     // (MISIÓN CP-CAT-MAESTRO-001 R1: la posición 109 = 20261029090000_drop_legacy_product_images_policies)
+    // (MISIÓN CP-CAT-MAESTRO-002: la posición 110 = 20261030120000_cp_catalogo_master_image_propagation)
     expect(pos('20261029090000_drop_legacy_product_images_policies.sql')).toBe(109);
+    expect(pos('20261030120000_cp_catalogo_master_image_propagation.sql')).toBe(110);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

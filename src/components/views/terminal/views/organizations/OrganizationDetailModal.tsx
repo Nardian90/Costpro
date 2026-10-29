@@ -19,8 +19,9 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Edit, Building2, Users, Store, Settings, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Edit, Building2, Users, Store, Settings, AlertTriangle, RefreshCw, Package } from 'lucide-react';
 import { useOrganizationDetail } from '@/hooks/api/useOrganizations';
+import { CatalogGovernanceSection } from './CatalogGovernanceSection';
 
 interface OrganizationDetailModalProps {
   orgId: string | null;
@@ -28,7 +29,7 @@ interface OrganizationDetailModalProps {
   onEdit: (org: { id: string; name: string; is_active: boolean }) => void;
 }
 
-type Tab = 'resumen' | 'tiendas' | 'usuarios' | 'configuracion';
+type Tab = 'resumen' | 'tiendas' | 'catalogo' | 'usuarios' | 'configuracion';
 
 export function OrganizationDetailModal({ orgId, onOpenChange, onEdit }: OrganizationDetailModalProps) {
   const [tab, setTab] = useState<Tab>('resumen');
@@ -41,6 +42,8 @@ export function OrganizationDetailModal({ orgId, onOpenChange, onEdit }: Organiz
   const tabs: Array<{ id: Tab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
     { id: 'resumen', label: 'Resumen', icon: Building2 },
     { id: 'tiendas', label: `Tiendas (${stores.length})`, icon: Store },
+    // CP-CAT-MAESTRO-002: gobernanza del Catálogo Maestro de la organización
+    { id: 'catalogo', label: 'Catálogo', icon: Package },
     { id: 'usuarios', label: `Usuarios (${users.length})`, icon: Users },
     { id: 'configuracion', label: 'Configuración', icon: Settings },
   ];
@@ -175,6 +178,10 @@ export function OrganizationDetailModal({ orgId, onOpenChange, onEdit }: Organiz
                   ))}
                 </ul>
               )
+            )}
+
+            {tab === 'catalogo' && (
+              <CatalogGovernanceSection orgId={org.id} stores={stores.map(s => ({ id: s.id, name: s.name, is_active: s.is_active, is_archived: s.is_archived }))} />
             )}
 
             {tab === 'usuarios' && (

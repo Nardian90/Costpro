@@ -15,6 +15,7 @@ import { Loader2, RefreshCw, Search, Store } from 'lucide-react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { getSupabaseUrl } from '@/lib/utils';
 import {
   useActivateMasterProduct,
   useCatalogStoreLink,
@@ -94,19 +95,37 @@ export const MasterCatalogModal = () => {
               </div>
             ) : (
               <ul className="space-y-2 max-h-[50vh] overflow-y-auto pr-1" role="list">
-                {rows.map(m => (
+                {rows.map(m => {
+                  // CP-CAT-MAESTRO-002 (Fase 3): la imagen compartida se resuelve
+                  // por referencia al mismo objeto del bucket para todas las tiendas.
+                  const sharedImage = getSupabaseUrl('product-images', m.image_path);
+                  return (
                   <li key={m.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-muted">{m.sku}</span>
-                        {m.is_service && <span className="text-[10px] uppercase tracking-wider text-muted-foreground">servicio</span>}
-                        {m.status === 'archived' && <span className="text-[10px] uppercase tracking-wider text-destructive">archivado</span>}
+                    <div className="flex items-center gap-3 min-w-0">
+                      {sharedImage ? (
+                        <img
+                          src={sharedImage}
+                          alt={`Imagen de ${m.name}`}
+                          className="h-10 w-10 rounded object-cover border shrink-0"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded border bg-muted flex items-center justify-center shrink-0" aria-hidden="true">
+                          <Store className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-muted">{m.sku}</span>
+                          {m.is_service && <span className="text-[10px] uppercase tracking-wider text-muted-foreground">servicio</span>}
+                          {m.status === 'archived' && <span className="text-[10px] uppercase tracking-wider text-destructive">archivado</span>}
+                        </div>
+                        <p className="text-sm font-medium truncate">{m.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {m.unit_of_measure || 'unidad'}{m.barcode ? ` · ${m.barcode}` : ''}
+                          {m.activated ? ' · activado en esta tienda' : ' · disponible'}
+                        </p>
                       </div>
-                      <p className="text-sm font-medium truncate">{m.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {m.unit_of_measure || 'unidad'}{m.barcode ? ` · ${m.barcode}` : ''}
-                        {m.activated ? ' · activado en esta tienda' : ' · disponible'}
-                      </p>
                     </div>
                     {!m.activated && m.status === 'active' && (
                       <Button
@@ -120,7 +139,8 @@ export const MasterCatalogModal = () => {
                       </Button>
                     )}
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )}
           </>

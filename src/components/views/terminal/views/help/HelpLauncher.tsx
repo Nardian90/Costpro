@@ -66,6 +66,8 @@ export const HELP_DOC_BY_VIEW: Record<string, string> = {
   // Configuración / sistema
   'stores': 'help/04-explicacion/01-que-es-multi-tienda.md',
   'management-hub': 'help/04-explicacion/01-que-es-multi-tienda.md',
+  // CP-CAT-MAESTRO-002: gobernanza del Catálogo Maestro (Organizaciones)
+  'organizations': 'help/02-como-hacer/30-como-usar-catalogo-de-la-organizacion.md',
   'users': 'help/03-referencia/02-roles-permisos.md',
   'roles': 'help/03-referencia/02-roles-permisos.md',
   'settings': 'help/03-referencia/04-temas-visuales.md',

@@ -40,6 +40,19 @@ export interface CatalogStoreLink {
   reason: string | null;
 }
 
+/** Fila del inventario de identidad compartida (panel de gobernanza). */
+export interface MasterProductOrgRow {
+  id: string;
+  sku: string;
+  name: string;
+  image_path: string | null;
+  barcode: string | null;
+  unit_of_measure: string | null;
+  is_service: boolean;
+  status: string;
+  created_at: string | null;
+}
+
 /** Estado del enlace catálogo↔tienda (una fila por tienda, RLS por tenant). */
 export function useCatalogStoreLink(storeId?: string | null) {
   return useQuery({
@@ -86,8 +99,10 @@ export function useSearchMasterProducts(storeId?: string | null, search = '', on
 function invalidateCatalog(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ['master-products'] });
   qc.invalidateQueries({ queryKey: ['catalog-store-link'] });
+  qc.invalidateQueries({ queryKey: ['catalog-org-links'] });
   qc.invalidateQueries({ queryKey: ['products'] });
   qc.invalidateQueries({ queryKey: ['catalog-products-v2'] });
+  qc.invalidateQueries({ queryKey: ['master-products-org'] });
 }
 
 /** Activar un maestro en la tienda activa: crea la fila local (defaults de alta manual). */
@@ -229,6 +244,136 @@ export function useReviewMasterProposal() {
       qc.invalidateQueries({ queryKey: ['master-proposals'] });
       invalidateCatalog(qc);
     },
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * CP-CAT-MAESTRO-002 — GOBERNANZA Y CREACIÓN (Fase 2)
+ * Hooks para el panel de gobernanza del catálogo (pestaña «Catálogo» del
+ * detalle de Organización) y para el alta con identidad compartida desde una
+ * tienda conectada. Toda escritura sigue pasando por RPC certificadas.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/** Enlaces catálogo↔tienda de TODA la organización (RLS: miembros del tenant).
+ *  Base del panel de gobernanza: qué tiendas están conectadas y cuáles no. */
+export function useOrgCatalogLinks(tenantId?: string | null) {
+  return useQuery({
+    queryKey: ['catalog-org-links', tenantId],
+    queryFn: async (): Promise<CatalogStoreLink[]> => {
+      if (!tenantId) return [];
+      const { data, error } = await supabase
+        .from('catalog_store_links')
+        .select('id, tenant_id, store_id, status, connected_at, disconnected_at, reason')
+        .eq('tenant_id', tenantId);
+      if (error) {
+        logger.error('DATABASE', 'useOrgCatalogLinks: fallo de lectura', { error: error.message });
+        throw error;
+      }
+      return (data ?? []) as CatalogStoreLink[];
+    },
+    enabled: !!tenantId,
+    staleTime: 15_000,
+  });
+}
+
+/** Inventario de identidad compartida de la organización (panel de gobernanza).
+ *  Lee master_products directamente (RLS can_read_master_catalog permite a los
+ *  miembros consultar; la escritura sigue siendo exclusiva de las RPC). */
+export function useOrgMasterProducts(tenantId?: string | null, search = '') {
+  return useQuery({
+    queryKey: ['master-products-org', tenantId, search],
+    queryFn: async (): Promise<MasterProductOrgRow[]> => {
+      if (!tenantId) return [];
+      let q = supabase
+        .from('master_products')
+        .select('id, sku, name, image_path, barcode, unit_of_measure, is_service, status, created_at')
+        .eq('tenant_id', tenantId)
+        .order('sku')
+        .limit(200);
+      const clean = (search || '').trim();
+      if (clean) q = q.or(`sku.ilike.${clean}*,name.ilike.%${clean}%`);
+      const { data, error } = await q;
+      if (error) {
+        logger.error('DATABASE', 'useOrgMasterProducts: fallo de lectura', { error: error.message });
+        throw error;
+      }
+      return (data ?? []) as MasterProductOrgRow[];
+    },
+    enabled: !!tenantId,
+    staleTime: 15_000,
+  });
+}
+
+/** ¿El usuario es gobernador del catálogo de la organización?
+ *  (propietario del tenant o catalog_governors explícito — RPC certificada). */
+export function useIsCatalogGovernor(tenantId?: string | null, userId?: string | null) {
+  return useQuery({
+    queryKey: ['catalog-governor', tenantId, userId],
+    queryFn: async (): Promise<boolean> => {
+      if (!tenantId || !userId) return false;
+      const { data, error } = await supabase.rpc('is_catalog_governor', {
+        p_tenant_id: tenantId,
+        p_user_id: userId,
+      });
+      if (error) return false; // fail-closed: sin capacidad no hay acciones de gobierno
+      return data === true;
+    },
+    enabled: !!tenantId && !!userId,
+    staleTime: 30_000,
+  });
+}
+
+export interface CreateMasterProductPayload {
+  sku: string;
+  name: string;
+  description?: string | null;
+  barcode?: string | null;
+  barcode_type?: string | null;
+  unit_of_measure?: string;
+  is_service?: boolean;
+  /** Valores comerciales POR DEFECTO de la tienda de origen (jamás se copian a otras tiendas). */
+  local?: {
+    price?: number;
+    price_currency?: string;
+    cost_price?: number;
+    min_stock?: number;
+    category?: string;
+    supplier?: string;
+  };
+}
+
+/** Alta con identidad compartida desde una tienda conectada (misión §4.3):
+ *  crea el maestro UNA VEZ + la fila local de ESTA tienda con los valores
+ *  comerciales de esta pantalla. La carrera de SKU se traduce a
+ *  ERR_MASTER_SKU_EXISTS con el id del maestro ganador. */
+export function useCreateMasterProduct(storeId?: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: CreateMasterProductPayload) => {
+      if (!storeId) throw new Error('Sin tienda activa');
+      const { data, error } = await supabase.rpc('create_master_product', {
+        p_store_id: storeId,
+        p_sku: payload.sku,
+        p_name: payload.name,
+        p_description: payload.description ?? null,
+        p_image_path: null,
+        p_barcode: payload.barcode ?? null,
+        p_barcode_type: payload.barcode_type ?? null,
+        p_unit_of_measure: payload.unit_of_measure || 'unidad',
+        p_is_service: payload.is_service === true,
+        p_local: {
+          price: payload.local?.price != null ? String(payload.local.price) : '',
+          price_currency: payload.local?.price_currency || 'CUP',
+          cost_price: payload.local?.cost_price != null ? String(payload.local.cost_price) : '',
+          min_stock: payload.local?.min_stock != null ? String(payload.local.min_stock) : '',
+          category: payload.local?.category || '',
+          supplier: payload.local?.supplier || '',
+        },
+      });
+      if (error) throw error;
+      return data as { status: string; master_product_id: string; product_id: string; sku: string };
+    },
+    onSuccess: () => invalidateCatalog(qc),
   });
 }
 

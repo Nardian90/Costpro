@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 524,
-  "total_incluidos": 109,
+  "total_considerados": 525,
+  "total_incluidos": 110,
   "total_excluidos": 415,
-  "digest": "51f2b6b53e4c496839b25510018c3185574a7d809861014415bcb6752f9e362d",
+  "digest": "007c84d311aa15e94dc1bbec0ff651a4447aa173ec5c38318288744dd849375d",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5071,6 +5071,17 @@
       ],
       "posicion": 109,
       "sha256_generado": "30abe760942b8d0adda24f4e5c4ce4757426df601197733f7edae5e9847f6e03"
+    },
+    {
+      "nombre": "20261030120000_cp_catalogo_master_image_propagation.sql",
+      "bytes": 7614,
+      "sha256_original": "cdd2f572a09557f94131051a58de0c8cd050dbeee0c2220110744bccd8278907",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261030",
+      "observaciones": [],
+      "posicion": 110,
+      "sha256_generado": "cdd2f572a09557f94131051a58de0c8cd050dbeee0c2220110744bccd8278907"
     },
     {
       "nombre": "AUDIT_FIXES.md",
