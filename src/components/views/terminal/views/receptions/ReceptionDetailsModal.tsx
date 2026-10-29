@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { BaseModal } from "@/components/ui/BaseModal";
-import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle, Trash2, Truck, Link2, Plus, RefreshCw, Eye, X, DollarSign, Wallet } from 'lucide-react';
+import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle, Trash2, Truck, Link2, Plus, RefreshCw, Eye, X, DollarSign, Wallet, FileDown } from 'lucide-react';
 import { type Receipt, type ReceiptItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { resolveProductImage, getProductImageUrl, formatCurrency, formatDate } from '@/lib/utils';
@@ -25,6 +25,10 @@ interface ReceptionDetailsModalProps {
   items: ReceiptItem[];
   isLoading: boolean;
   onExport?: () => void;
+  // MISIÓN RESOLUCIÓN 11 (2026-10-29): exportar el modelo oficial SC-2-04
+  // «Informe de Recepción» en PDF (solo lectura, Res. 11/2007 MFP).
+  onExportSc204Pdf?: () => void;
+  isExportingSc204?: boolean;
   // Nuevas props para edición y anulación:
   isEditMode?: boolean;
   onUpdateSubmit?: (updates: { supplier?: string; referenceDoc?: string; itemUpdates?: Array<{ id: string; quantity: number; unit_cost: number; deleted: boolean }> }) => void;
@@ -45,6 +49,8 @@ export function ReceptionDetailsModal({
   items,
   isLoading,
   onExport,
+  onExportSc204Pdf,
+  isExportingSc204 = false,
   isEditMode = false,
   onUpdateSubmit,
   onVoidRequest,
@@ -144,7 +150,7 @@ export function ReceptionDetailsModal({
       maxWidth="sm:max-w-2xl"
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center w-full">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             {isConfirmPendingMode && (
               <button
                 onClick={onConfirmPending}
@@ -175,6 +181,18 @@ export function ReceptionDetailsModal({
               <p className="text-[10px] font-medium text-muted-foreground italic max-w-[200px] leading-tight">
                 Recepción confirmada. Para revertir, use <strong>Invertir</strong> desde el historial (mantiene trazabilidad).
               </p>
+            )}
+            {!isEditMode && !isConfirmPendingMode && (
+              <button
+                onClick={onExportSc204Pdf}
+                disabled={isExportingSc204}
+                className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-foreground transition-all active:scale-95 disabled:opacity-50"
+                type="button"
+                aria-label="Exportar recepción como modelo oficial SC-2-04 Informe de Recepción en PDF"
+              >
+                <FileDown className="w-4 h-4" aria-hidden="true" />
+                {isExportingSc204 ? 'Generando…' : 'Exportar SC-2-04 (PDF)'}
+              </button>
             )}
             {!isEditMode && !isConfirmPendingMode && (
               <button

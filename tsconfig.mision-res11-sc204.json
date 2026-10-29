@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/lib/legal/sc204.ts",
+    "src/lib/legal/resolution-originals.ts",
+    "src/components/views/terminal/views/legal/LegalConsultant.tsx",
+    "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
+    "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+    "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
+    "src/__tests__/lib/sc204-export.test.ts"
+  ]
+}
