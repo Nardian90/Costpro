@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Camera, ImagePlus, X, Upload, Loader2, Package, Plus, Trash2, Info, Wrench } from 'lucide-react';
 import { compressImage, validateImageFile } from '@/lib/image-compress';
 import { generateEAN13FromSKU } from '@/lib/barcode-utils';
+import { findMasterBySku, useActivateMasterProduct } from '@/hooks/api/useMasterCatalog';
 import { supabase } from '@/lib/supabaseClient';
 
 interface VariantForm {
@@ -23,6 +24,7 @@ export const CreateProductModal = () => {
   const { isCreateProductModalOpen, setIsCreateProductModalOpen, initialProductName, setInitialProductName } = useUIStore();
   const { user } = useAuthStore();
   const createProductMutation = useCreateProduct();
+  const activateMaster = useActivateMasterProduct(user?.activeStoreId || null);
   const addVariantMutation = useAddVariant();
 
   const initialFormState = {
@@ -198,6 +200,31 @@ export const CreateProductModal = () => {
     }
 
     try {
+      // CP-CATÁLOGO MAESTRO (misión §10.1): dedup ANTES de insertar. Si la
+      // tienda está conectada y el SKU ya existe en el catálogo de la
+      // organización, se ofrece activar el producto existente (fila local con
+      // los valores de esta pantalla como defaults comerciales) en lugar de
+      // crear una identidad duplicada. Fail-open: sin conexión al catálogo el
+      // alta manual continúa (la unicidad real la garantiza la BD).
+      const master = await findMasterBySku(user.activeStoreId, form.sku);
+      if (master) {
+        if (master.activated) {
+          toast.error(`El SKU ${master.sku} ya existe en esta tienda como producto vinculado al catálogo.`);
+          return;
+        }
+        const aceptar = window.confirm(
+          `El SKU «${master.sku}» ya existe en el catálogo de la organización como «${master.name}».\n\n` +
+          '¿Activarlo en esta tienda? Se creará el producto local vinculado con el nombre del catálogo ' +
+          'y los valores de esta pantalla (precio/costo) como valores propios; existencia 0 y sin movimientos.\n\n' +
+          'Cancelar: no se creará nada.'
+        );
+        if (!aceptar) return;
+        await activateMaster.mutateAsync(master.id);
+        toast.success(`Producto del catálogo activado en esta tienda (existencia 0, sin movimientos).`);
+        handleClose();
+        return;
+      }
+
       // 1. Create product
       const result = await createProductMutation.mutateAsync({
         ...form,

@@ -7,7 +7,7 @@ import { useCatalogProductsInfinite, useCatalogProductsPage } from '@/hooks/api/
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuthStore, useUIStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
-import { ChevronDown, AlertCircle, RefreshCw } from 'lucide-react';
+import { ChevronDown, AlertCircle, RefreshCw, Building2 } from 'lucide-react';
 import { SecondaryButton } from '@/components/ui/atomic';
 import { Button } from '@/components/ui/button';
 import { TablePagination } from '@/components/views/terminal/views/catalog/TablePagination';
@@ -57,7 +57,7 @@ function getErrorMsg(err: unknown): string {
 
 export default function CatalogView() {
   const { user } = useAuthStore();
-  const { setIsCreateProductModalOpen } = useUIStore();
+  const { setIsCreateProductModalOpen, setIsMasterCatalogModalOpen } = useUIStore();
 
   // FIX (2026-10-08, INVENTORY-CATALOG-REGRESSION-1379): el término de búsqueda
   // es estado de consulta EFÍMERO, no una preferencia. Antes se persistía en
@@ -1062,6 +1062,19 @@ export default function CatalogView() {
         filtersOpen={catalogFiltersOpen}
         onFiltersOpenChange={setCatalogFiltersOpen}
       />
+
+      {/* CP-CATÁLOGO MAESTRO (PR 4): acceso al catálogo de la organización */}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsMasterCatalogModalOpen(true)}
+          aria-label="Abrir catálogo de la organización"
+        >
+          <Building2 className="h-4 w-4 mr-1.5" />
+          Catálogo de la organización
+        </Button>
+      </div>
 
       {/* Header Row — Filtros button + ViewSwitcher en la misma línea */}
       <CatalogHeader

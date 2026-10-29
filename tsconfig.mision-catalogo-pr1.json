@@ -12,6 +12,14 @@
     "src/validation/api-schemas.ts",
     "src/app/api/catalog/bulk-import/route.ts",
     "src/__tests__/api/catalog-bulk-import-validation.test.ts",
-    "src/__tests__/migrations/cp-catalogo-pr1-bloqueos-seguridad-migration.test.ts"
+    "src/__tests__/migrations/cp-catalogo-pr1-bloqueos-seguridad-migration.test.ts",
+    "src/hooks/api/useMasterCatalog.ts",
+    "src/components/modals/MasterCatalogModal.tsx",
+    "src/components/modals/CreateProductModal.tsx",
+    "src/components/views/terminal/views/catalog/EditProductModal.tsx",
+    "src/components/views/terminal/views/catalog/CatalogView.tsx",
+    "src/components/views/TerminalShell.tsx",
+    "src/store/index.ts",
+    "src/__tests__/hooks/useMasterCatalog-catalogo.test.tsx"
   ]
 }
