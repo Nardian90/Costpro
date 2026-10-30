@@ -1,0 +1,34 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/__tests__/setup.ts",
+    "src/types/index.ts",
+    "src/lib/utils.ts",
+    "src/lib/rpc-validator.ts",
+    "src/store/cart.ts",
+    "src/hooks/api/usePOSServerSearch.ts",
+    "src/hooks/api/useProducts.ts",
+    "src/hooks/api/useFrequentProducts.ts",
+    "src/hooks/api/useActiveShift.ts",
+    "src/components/views/terminal/views/pos/POSCart.types.ts",
+    "src/components/views/terminal/views/pos/POSAutocomplete.tsx",
+    "src/components/views/terminal/views/pos/POSCartItemEditModal.tsx",
+    "src/components/views/terminal/views/pos/POSCartDiscountModal.tsx",
+    "src/components/views/terminal/views/pos/POSCartSuccessView.tsx",
+    "src/components/views/terminal/views/pos/usePOSCartExports.ts",
+    "src/components/views/terminal/views/pos/PriceSelectorModal.tsx",
+    "src/components/views/terminal/views/pos/POSPortalModal.tsx",
+    "src/components/views/terminal/views/pos/POSOperationDateSection.tsx",
+    "src/components/views/terminal/views/pos/PaymentMethodSelector.tsx",
+    "src/components/views/terminal/views/pos/usePOSCheckout.ts",
+    "src/components/views/terminal/views/pos/POSExpressMode.tsx",
+    "src/components/views/terminal/views/pos/POSView.tsx",
+    "src/__tests__/components/pos-express-parity.test.tsx",
+    "src/__tests__/components/pos-autocomplete-stock-filter.test.tsx",
+    "src/__tests__/components/pos-cart-counter.test.tsx"
+  ]
+}
