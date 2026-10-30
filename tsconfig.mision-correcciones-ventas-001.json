@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/__tests__/setup.ts",
+    "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx",
+    "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+    "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
+    "src/lib/pos/thermal-receipt.ts",
+    "src/__tests__/components/transaction-details-modal-regresion.test.tsx"
+  ]
+}
