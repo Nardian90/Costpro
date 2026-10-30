@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Camera, ImagePlus, X, Upload, Loader2, Package, Plus, Trash2, Info, Wrench } from 'lucide-react';
 import { compressImage, validateImageFile } from '@/lib/image-compress';
 import { generateEAN13FromSKU } from '@/lib/barcode-utils';
-import { findMasterBySku, useActivateMasterProduct } from '@/hooks/api/useMasterCatalog';
+import { findMasterBySku, useActivateMasterProduct, useCatalogStoreLink, useCreateMasterProduct } from '@/hooks/api/useMasterCatalog';
 import { supabase } from '@/lib/supabaseClient';
 
 interface VariantForm {
@@ -26,6 +26,11 @@ export const CreateProductModal = () => {
   const createProductMutation = useCreateProduct();
   const activateMaster = useActivateMasterProduct(user?.activeStoreId || null);
   const addVariantMutation = useAddVariant();
+  // CP-CAT-MAESTRO-002 (§4.3): en tienda conectada, el alta con SKU nuevo crea
+  // identidad compartida (maestro) + vínculo local en una sola RPC certificada.
+  const catalogLink = useCatalogStoreLink(isCreateProductModalOpen ? user?.activeStoreId ?? null : null);
+  const createMasterProduct = useCreateMasterProduct(user?.activeStoreId || null);
+  const storeConnected = catalogLink.data?.status === 'connected';
 
   const initialFormState = {
     name: '',
@@ -225,17 +230,43 @@ export const CreateProductModal = () => {
         return;
       }
 
-      // 1. Create product
-      const result = await createProductMutation.mutateAsync({
-        ...form,
-        // MISIÓN TIPO-DE-ARTÍCULO: persistir la naturaleza del artículo.
-        is_service: form.is_service === true,
-        barcode: form.barcode ? form.barcode : generateEAN13FromSKU(form.sku),
-        barcode_type: form.barcode ? 'CODE128' : 'EAN13',
-        store_id: user.activeStoreId
-      });
-
-      const productId = (result as any)?.id;
+      // 1. Crear producto
+      // CP-CAT-MAESTRO-002 (§4.3): si la tienda está conectada al catálogo de la
+      // organización, el alta crea la identidad compartida UNA VEZ (create_master_
+      // product) y la fila local de esta tienda con los valores de esta pantalla.
+      // Si no está conectada (o la verificación no resolvió), se usa el flujo local
+      // histórico — fail-open, la unicidad real la garantiza la BD.
+      let productId: string | undefined;
+      if (storeConnected) {
+        const res = await createMasterProduct.mutateAsync({
+          sku: form.sku,
+          name: form.name,
+          description: form.description || null,
+          barcode: form.barcode || null,
+          barcode_type: form.barcode ? 'CODE128' : null,
+          unit_of_measure: form.unit_of_measure || 'unidad',
+          is_service: form.is_service === true,
+          local: {
+            price: form.price || 0,
+            price_currency: form.price_currency || 'CUP',
+            cost_price: form.cost_price || 0,
+            min_stock: 1,
+            category: form.category || '',
+            supplier: '',
+          },
+        });
+        productId = res.product_id;
+      } else {
+        const result = await createProductMutation.mutateAsync({
+          ...form,
+          // MISIÓN TIPO-DE-ARTÍCULO: persistir la naturaleza del artículo.
+          is_service: form.is_service === true,
+          barcode: form.barcode ? form.barcode : generateEAN13FromSKU(form.sku),
+          barcode_type: form.barcode ? 'CODE128' : 'EAN13',
+          store_id: user.activeStoreId
+        });
+        productId = (result as any)?.id;
+      }
       if (!productId) throw new Error('No se recibió ID del producto creado');
 
       // 2. Create variants in parallel
@@ -271,7 +302,9 @@ export const CreateProductModal = () => {
         }
       } else {
         const vCount = validVariants.length > 0 ? ` con ${validVariants.length} variante(s)` : '';
-        toast.success(`Producto creado con éxito${vCount}`);
+        toast.success(storeConnected
+          ? `Producto creado en el catálogo de la organización y vinculado a esta tienda${vCount}`
+          : `Producto creado con éxito${vCount}`);
       }
       handleClose();
     } catch (error: any) {
@@ -282,6 +315,14 @@ export const CreateProductModal = () => {
       let friendlyMsg = rawMsg;
       if (lowMsg.includes('duplicate key') || lowMsg.includes('unique constraint') || lowMsg.includes('23505')) {
         friendlyMsg = 'Ya existe un producto con ese SKU en esta tienda. Usa un SKU diferente o genera uno automáticamente.';
+      } else if (lowMsg.includes('ERR_MASTER_SKU_EXISTS')) {
+        // CP-CAT-MAESTRO-002 (§8.1): carrera de alta — otra tienda creó el mismo
+        // SKU de forma simultánea. Salida segura: actualizar y activar/vincular.
+        friendlyMsg = 'Otra tienda acaba de crear ese SKU en el catálogo de la organización. Actualiza la página y actívalo desde «Catálogo de la organización».';
+      } else if (lowMsg.includes('ERR_STORE_NOT_CONNECTED')) {
+        friendlyMsg = 'La tienda dejó de estar conectada al catálogo. Actualiza la página e inténtalo de nuevo.';
+      } else if (lowMsg.includes('ERR_BARCODE_EXISTS')) {
+        friendlyMsg = 'Ya existe un producto con ese código de barras en la organización.';
       } else if (lowMsg.includes('row-level security') || lowMsg.includes('42501') || lowMsg.includes('rls')) {
         friendlyMsg = 'No tienes permisos para crear productos en esta tienda. Si crees que es un error, cierra sesión, vuelve a iniciarla e inténtalo de nuevo.';
       } else if (lowMsg.includes('no se pudo verificar la tienda activa')) {

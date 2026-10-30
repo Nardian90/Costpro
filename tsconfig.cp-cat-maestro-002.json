@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/hooks/api/useMasterCatalog.ts",
+    "src/components/views/terminal/views/organizations/CatalogGovernanceSection.tsx",
+    "src/components/views/terminal/views/organizations/OrganizationDetailModal.tsx",
+    "src/components/modals/MasterCatalogModal.tsx",
+    "src/components/modals/CreateProductModal.tsx",
+    "src/services/catalog-service.ts",
+    "src/__tests__/hooks/useMasterCatalog-catalogo-m002.test.tsx",
+    "src/__tests__/components/catalog-governance-wiring.test.tsx",
+    "src/__tests__/services/catalog-image-gc-compartida.test.ts"
+  ]
+}
