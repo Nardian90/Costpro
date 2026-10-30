@@ -237,7 +237,7 @@ Permisos: rol admin, manager o encargado de la tienda conectada. En tiendas **no
 
 ## 7.13 Estado funcional y limitaciones
 
-**Entorno de verificación**: repositorio `Nardian90/Costpro`, rama `feat/catalogo-maestro-gobernanza-docs-20261030` sobre `main @ 1799dfb14e`; suites automatizadas del proyecto (vitest) y verificación de solo lectura sobre la base de producción (0 maestros y 0 conexiones al 2026-10-30).
+**Entorno de verificación**: repositorio `Nardian90/Costpro`; suites automatizadas del proyecto (vitest), batería E2E aislada del flujo completo (`e2e/flows/master-catalog-full.spec.ts`, misión CP-CAT-MAESTRO-003) y verificación sobre la base de producción (0 maestros y 0 conexiones al 2026-10-30 — el catálogo sigue **listo para su primer uso**, aún sin contenido).
 
 **Operativo y probado (implementado + pruebas automatizadas):**
 
@@ -247,21 +247,17 @@ Permisos: rol admin, manager o encargado de la tienda conectada. En tiendas **no
 - Activación con defaults locales y existencia 0 (sin movimientos ni copias de otras tiendas).
 - Alta con identidad compartida desde tienda conectada; dedup por SKU previo; carrera de SKU con salida segura.
 - Edición de identidad compartida por el gobernador con propagación de SKU/nombre y auditoría por campo.
+- **Propagación de la imagen compartida** al reemplazarla: migración `20261030120000_cp_catalogo_master_image_propagation.sql` **aplicada a producción** (2026-10-30, misión CP-CAT-MAESTRO-003, con pre-vuelo, guard fail-closed y batería transaccional sintética 5/5 con rollback completo); `fn_master_apply_identity_changes` conserva `SECURITY DEFINER`, `search_path=public` y ACL (EXECUTE solo `service_role`), y el contrato de seguridad fue reconciliado (`contract-surface.sql` regenerado y excepción temporal del baseline retirada en PR #1525).
 - Propuestas y revisión (aprobar/rechazar) por el gobernador.
 - Imagen compartida por referencia; GC de imágenes condicionado a referencias vivas (no se borran archivos aún usados).
-- Aislamiento entre organizaciones (RLS y RPC fail-closed; 291 pruebas de contrato de migraciones en verde).
+- Aislamiento entre organizaciones (RLS y RPC fail-closed; 300 pruebas de contrato de migraciones en verde).
 - Ayuda integrada con 3 documentos nuevos e índice de búsquedas (8 términos verificados).
-
-**Preparado, pendiente de aplicación a producción (requiere autorización):**
-
-- Migración versionada `20261030120000_cp_catalogo_master_image_propagation.sql`: propaga el **reemplazo de imagen** del maestro a las filas ya vinculadas. Hasta su aplicación, el reemplazo de imagen actualiza el maestro y las altas futuras, pero las tiendas ya activadas conservan la imagen anterior (las referencias no se rompen: el archivo anterior no se borra mientras lo use el maestro u otra tienda). Plan de ejecución: ventana autorizada, `supabase migration up` controlado o aplicación por SQL versionado con verificación del guard incluido.
 
 **Limitaciones conocidas:**
 
 - La concesión de gobernador (`grant_catalog_governor`) se realiza por el SuperAdmin a nivel de plataforma (sin panel dedicado todavía).
 - La subida de imagen compartida nueva exige el producto activado en al menos una tienda (requisito de la política de almacenamiento); la **promoción** de imágenes locales existentes no tiene ese requisito.
-- La desconexión y reconexión están verificadas a nivel de contrato (RPC + pruebas); el recorrido E2E aislado con usuarios reales para el catálogo completo no forma parte del smoke set actual (queda como trabajo futuro).
-- En producción el catálogo está **vacío** hasta que el propietario conecte una tienda y cree/active productos; no se conectó ninguna tienda real durante esta misión (requiere autorización del propietario).
+- En producción el catálogo está **vacío** hasta que el propietario conecte una tienda y cree/active productos; no se conectó ninguna tienda real durante estas misiones (requiere autorización del propietario).
 
 ---
 
