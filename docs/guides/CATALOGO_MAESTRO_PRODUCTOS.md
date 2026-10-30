@@ -1,9 +1,9 @@
 # Guía operativa — Catálogo Maestro de Productos de la Organización
 
 **Sistema:** COSTPRO 4 Multitienda
-**Misión:** CP-CAT-MAESTRO-002
-**Revisión:** 2026-10-30 · rama `feat/catalogo-maestro-gobernanza-docs-20261030` (base `main @ 1799dfb14e`)
-**Estado de la funcionalidad descrita:** verificado por inspección de código, migraciones versionadas y suites de pruebas automatizadas (ver §13). Los datos de producción al momento de la revisión: 0 productos maestros y 0 tiendas conectadas — el catálogo está **listo para su primer uso**, aún sin contenido.
+**Misiones:** CP-CAT-MAESTRO-002 a 004
+**Revisión:** 2026-10-30 · misión CP-CAT-MAESTRO-004 (piloto real Puerto Padre)
+**Estado de la funcionalidad descrita:** verificado por inspección de código, migraciones versionadas, suites de pruebas automatizadas y **piloto real desde la interfaz** en la tienda Puerto Padre VITALLCONS (creación, búsqueda, edición de identidad e imagen compartida; ver §7.13). ENERVIDA-VITALLCONS permanece sin conexión y sin ninguna modificación.
 
 ---
 
@@ -56,8 +56,9 @@ Notas importantes:
 **Ruta verificada 1 — Desde la tienda (consulta y activación):**
 
 1. Inicie sesión y seleccione la tienda.
-2. Menú principal → **OPERACIÓN** → **Catálogo**.
-3. Botón **«Catálogo de la organización»** (parte superior derecha de la vista, encima de la fila de filtros).
+2. Menú principal → **OPERACIÓN** → sección **ALMACÉN** → **Inventario** (hub con pestañas Stock Actual / Catálogo / Trazabilidad).
+3. Pestaña **«CATÁLOGO»**.
+4. Botón **«Catálogo de la organización»** (parte superior derecha de la vista, encima de la fila de filtros).
 
 **Ruta verificada 2 — Gobernanza de la organización:**
 
@@ -67,8 +68,10 @@ Notas importantes:
 
 **Ruta verificada 3 — Alta de producto compartido:**
 
-1. **Catálogo** → alta habitual de **Nuevo producto**.
+1. **OPERACIÓN → ALMACÉN → Inventario → pestaña «CATÁLOGO»** → botón **«+ CREAR»**.
 2. Si la tienda está conectada, el sistema integra el catálogo automáticamente en el alta (ver §7.7).
+
+La guía quedó verificada navegando la interfaz real (misión CP-CAT-MAESTRO-004, tienda Puerto Padre VITALLCONS).
 
 La ayuda integrada del sistema contiene esta guía en: **Centro de Ayuda (Ayuda) → Cómo Hacer → «Cómo Hacer: Usar el Catálogo de la Organización»**, con documentación complementaria en **Explicación → «¿Qué es el Catálogo Maestro de Productos?»** y **Referencia → «Catálogo maestro: campos compartidos, campos locales y permisos»**.
 
@@ -137,7 +140,7 @@ Las tiendas de **otras organizaciones** no pueden consultar ni conectarse a este
 
 ## 7.7 Cómo crear un producto nuevo (tienda conectada)
 
-1. En **Catálogo**, inicie el alta habitual: **Nuevo producto**.
+1. En la pestaña **CATÁLOGO** del inventario, pulse **«+ CREAR»** (alta habitual de Nuevo producto).
 2. Complete SKU, nombre y datos comerciales (precio, costo, moneda). Esos valores comerciales serán **los de su tienda**; no viajan a otras.
 3. Al guardar, el sistema verifica primero el SKU contra el catálogo de la organización:
    - **Si ya existe**: se le ofrece **activarlo** (con los valores de su pantalla como valores propios). Si ya está activado aquí, el alta se detiene con un aviso claro.
@@ -151,7 +154,7 @@ Permisos: rol admin, manager o encargado de la tienda conectada. En tiendas **no
 
 **Quién puede**: solo el **gobernador del catálogo** edita la identidad compartida. Un usuario sin capacidad que intente el cambio recibe el rechazo del servidor, incluso por vía directa.
 
-**Procedimiento verificado:**
+**Procedimiento verificado en la interfaz real (misión CP-CAT-MAESTRO-004):**
 
 1. **SISTEMA → Organizaciones → Ver detalle → «Catálogo»**.
 2. En «Productos maestros», busque el producto y pulse **«Editar»**.
@@ -162,6 +165,8 @@ Permisos: rol admin, manager o encargado de la tienda conectada. En tiendas **no
 5. Pulse **«Guardar y propagar»**. El cambio:
    - Se aplica a todas las filas locales vinculadas (SKU y nombre se re-coercionan al valor canónico; con la imagen vigente igualmente).
    - Queda **auditado campo a campo** (valor anterior → valor nuevo, autor, tienda de origen).
+
+**La ficha local queda protegida**: en una tienda conectada, los campos SKU y nombre de la ficha del producto se muestran deshabilitados con el aviso «Vinculado al catálogo de la organización: el SKU y el nombre los administra el catálogo maestro». La identidad no puede sobrescribirse desde la ficha local.
 
 **Modificaciones compartidas vs. locales**: lo que edita aquí es la identidad (viaja a todas las tiendas conectadas). El precio, el costo y las existencias se editan desde la ficha local de cada tienda, como siempre, y **nunca** se propagan.
 
@@ -237,7 +242,7 @@ Permisos: rol admin, manager o encargado de la tienda conectada. En tiendas **no
 
 ## 7.13 Estado funcional y limitaciones
 
-**Entorno de verificación**: repositorio `Nardian90/Costpro`; suites automatizadas del proyecto (vitest), batería E2E aislada del flujo completo (`e2e/flows/master-catalog-full.spec.ts`, misión CP-CAT-MAESTRO-003) y verificación sobre la base de producción (0 maestros y 0 conexiones al 2026-10-30 — el catálogo sigue **listo para su primer uso**, aún sin contenido).
+**Entorno de verificación**: repositorio `Nardian90/Costpro`; suites automatizadas del proyecto (vitest), batería E2E aislada del flujo completo (`e2e/flows/master-catalog-full.spec.ts`, misiones CP-CAT-MAESTRO-003/004) y **piloto real desde la interfaz** (misión CP-CAT-MAESTRO-004, tienda **Puerto Padre VITALLCONS**, conexión al catálogo de Vitallcons con producto sintético de prueba `QA-CM-20261030-01` creado, buscado, editado e ilustrado desde la UI; producto de prueba archivado/limpiado al cierre del piloto).
 
 **Operativo y probado (implementado + pruebas automatizadas):**
 
@@ -246,8 +251,9 @@ Permisos: rol admin, manager o encargado de la tienda conectada. En tiendas **no
 - Búsqueda de maestros por SKU/nombre/barcode; estados «disponible» / «activado en esta tienda».
 - Activación con defaults locales y existencia 0 (sin movimientos ni copias de otras tiendas).
 - Alta con identidad compartida desde tienda conectada; dedup por SKU previo; carrera de SKU con salida segura.
-- Edición de identidad compartida por el gobernador con propagación de SKU/nombre y auditoría por campo.
-- **Propagación de la imagen compartida** al reemplazarla: migración `20261030120000_cp_catalogo_master_image_propagation.sql` **aplicada a producción** (2026-10-30, misión CP-CAT-MAESTRO-003, con pre-vuelo, guard fail-closed y batería transaccional sintética 5/5 con rollback completo); `fn_master_apply_identity_changes` conserva `SECURITY DEFINER`, `search_path=public` y ACL (EXECUTE solo `service_role`), y el contrato de seguridad fue reconciliado (`contract-surface.sql` regenerado y excepción temporal del baseline retirada en PR #1525).
+- Edición de identidad compartida por el gobernador con propagación de SKU/nombre y auditoría por campo — **ejecutada desde la interfaz real** (el nombre editado en gobernanza se propagó a la fila local de Puerto Padre y quedó auditado campo a campo).
+- Ficha local protegida: en tienda conectada, SKU y nombre se muestran deshabilitados con aviso de administración por el maestro (verificado en la UI).
+- Propagación de la imagen compartida al subirla o reemplazarla: migración `20261030120000_cp_catalogo_master_image_propagation.sql` **aplicada a producción** (2026-10-30, misión CP-CAT-MAESTRO-003) y **ejercitada desde la interfaz real** (misión 004: subida y reemplazo propagando la misma referencia al maestro y a la fila local, un único objeto de almacenamiento por imagen, `master_change_log` con valor anterior → nuevo); `fn_master_apply_identity_changes` conserva `SECURITY DEFINER`, `search_path=public` y ACL (EXECUTE solo `service_role`), y el contrato de seguridad fue reconciliado (`contract-surface.sql` regenerado; excepciones del baseline retiradas en PR #1525 y PR #1528).
 - Propuestas y revisión (aprobar/rechazar) por el gobernador.
 - Imagen compartida por referencia; GC de imágenes condicionado a referencias vivas (no se borran archivos aún usados).
 - Aislamiento entre organizaciones (RLS y RPC fail-closed; 300 pruebas de contrato de migraciones en verde).
@@ -257,8 +263,9 @@ Permisos: rol admin, manager o encargado de la tienda conectada. En tiendas **no
 
 - La concesión de gobernador (`grant_catalog_governor`) se realiza por el SuperAdmin a nivel de plataforma (sin panel dedicado todavía).
 - La subida de imagen compartida nueva exige el producto activado en al menos una tienda (requisito de la política de almacenamiento); la **promoción** de imágenes locales existentes no tiene ese requisito.
-- En producción el catálogo está **vacío** hasta que el propietario conecte una tienda y cree/active productos; no se conectó ninguna tienda real durante estas misiones (requiere autorización del propietario).
+- La imagen sustituida se conserva en el almacén mientras el sistema no verifique lo contrario (política fail-safe del GC: jamás elimina un archivo que pueda estar referenciado). El archivo huérfano solo se limpia por administración.
+- Puerto Padre VITALLCONS quedó conectada como configuración real (piloto aprobado por el propietario, misión CP-CAT-MAESTRO-004). Las demás tiendas (incluida ENERVIDA-VITALLCONS) permanecen sin conexión hasta que el propietario lo ordene; la vinculación de productos históricos ya existentes se hará con el mecanismo del piloto acordado, nunca por similitud de nombre.
 
 ---
 
-*Guía generada en la misión CP-CAT-MAESTRO-002. Toda descripción corresponde a funciones implementadas y verificadas en el commit indicado; las funciones proyectadas se listan explícitamente como pendientes.*
+*Guía generada en la misión CP-CAT-MAESTRO-002 y verificada contra la interfaz real en la misión CP-CAT-MAESTRO-004 (piloto Puerto Padre). Toda descripción corresponde a funciones implementadas y verificadas en el commit indicado; las funciones proyectadas se listan explícitamente como pendientes.*

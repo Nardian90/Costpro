@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 527,
-  "total_incluidos": 112,
+  "total_considerados": 528,
+  "total_incluidos": 113,
   "total_excluidos": 415,
-  "digest": "35ac6d8c61ba18ea1fd023cd0cce55916745bcf2d05fb9e1d42326218abe472f",
+  "digest": "e82821c3b2a72cb038c1e08450334b36ff2ccca9906210123a18f122348f4da7",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5095,6 +5095,17 @@
       "sha256_generado": "8637edaf5340d446c5f7942fa26312f3cc3a3de00f6b667503d1d86fb33a1aa4"
     },
     {
+      "nombre": "20261030143000_cp_catalogo_audit_check_master_products.sql",
+      "bytes": 3437,
+      "sha256_original": "5b6f0ed33ef0953056cb1d5b5e1196e3a674d1f3eb9fab24f81d4ceb5d7c27f7",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261030",
+      "observaciones": [],
+      "posicion": 112,
+      "sha256_generado": "5b6f0ed33ef0953056cb1d5b5e1196e3a674d1f3eb9fab24f81d4ceb5d7c27f7"
+    },
+    {
       "nombre": "20261030150000_cp_correcciones_sku176_nombre_enervida.sql",
       "bytes": 2364,
       "sha256_original": "ef1e6e5b5a761bf89e0138a8170a1f2efd8b1b3dff64c01b5f6d3ff918e5982d",
@@ -5102,7 +5113,7 @@
       "razon": null,
       "timestamp": "20261030",
       "observaciones": [],
-      "posicion": 112,
+      "posicion": 113,
       "sha256_generado": "ef1e6e5b5a761bf89e0138a8170a1f2efd8b1b3dff64c01b5f6d3ff918e5982d"
     },
     {

@@ -1,0 +1,72 @@
+{
+ "referencias_pre_limpieza": {
+  "inventory": 0,
+  "stock_movements": 0,
+  "transaction_items": 0,
+  "receipt_items": 0,
+  "cost_sheets": 0,
+  "kardex": 0,
+  "variants": 0,
+  "batches": 0
+ },
+ "referencias_cero": true,
+ "maestro": [
+  {
+   "sku": "QA-CM-20261030-01",
+   "status": "archived",
+   "name": "QA CM-004 Producto de prueba tecnica v2 (no comercial)"
+  }
+ ],
+ "fila_local_restante": [
+  {
+   "n": 0
+  }
+ ],
+ "objetos_eliminados": [
+  {
+   "objeto": "f31bc30f-…-973461e6-…png",
+   "http": 200,
+   "via": "Storage API del proyecto"
+  },
+  {
+   "objeto": "f31bc30f-…-7c9542aa-…png",
+   "http": 200,
+   "via": "Storage API del proyecto"
+  }
+ ],
+ "objetos_restantes_bucket": [
+  {
+   "n": 0
+  }
+ ],
+ "gobernadores_qa_restantes": [
+  {
+   "n": 0
+  }
+ ],
+ "membresias_qa_restantes": [
+  {
+   "n": 0
+  }
+ ],
+ "auth_user_banned": true,
+ "perfil_qa": [
+  {
+   "email": "qa-cm004@costpro.dev",
+   "is_active": false,
+   "archivado": true,
+   "deletion_reason": "Usuario QA del piloto CP-CAT-MAESTRO-004 — archivado (la auditoría conserva sus registros)"
+  }
+ ],
+ "estado_final": [
+  {
+   "pp_conectada": "connected",
+   "pp_productos": 36,
+   "pp_vinculados": 0,
+   "enervida_productos": 188,
+   "enervida_conexiones": 0,
+   "maestros_activos": 0,
+   "auditoria_catalogo_total": 15
+  }
+ ]
+}

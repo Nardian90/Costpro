@@ -474,8 +474,24 @@ export default function POSView() {
   // ── Render ─────────────────────────────────────────────────
   // POS-3b EM-1: Modo Cajero Express. Si está activo, renderiza el layout
   // alternativo full-screen y sale del flujo normal del POSView.
+  // MISIÓN VENDER-EXPRESS (2026-10-30): Express recibe las rutas COMPLETAS del
+  // carrito (onAddToCart/handleAddItem: stock, auditoría precio<costo,
+  // variantes), la venta confirmada (lastSale → misma vista de éxito) y el
+  // estado compartido de «Solo con stock» — un solo criterio y un solo flujo
+  // de negocio para ambas modalidades.
   if (expressMode) {
-    return <POSExpressMode products={products} onExit={() => setExpressMode(false)} />;
+    return (
+      <POSExpressMode
+        products={products}
+        onExit={() => setExpressMode(false)}
+        onAddToCart={onAddToCart}
+        onAddItemWithVariant={handleAddItem}
+        lastSale={lastSale}
+        onClearLastSale={handleClearLastSale}
+        hideOutOfStock={hideOutOfStock}
+        onHideOutOfStockChange={setHideOutOfStock}
+      />
+    );
   }
 
   return (

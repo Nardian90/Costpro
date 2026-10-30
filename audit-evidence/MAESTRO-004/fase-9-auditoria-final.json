@@ -1,0 +1,163 @@
+{
+ "pp_modificados_en_ventana": [
+  {
+   "n": 0,
+   "skus": "-"
+  }
+ ],
+ "pp_total_y_vinculados": [
+  {
+   "total": 36,
+   "vinculados": 0
+  }
+ ],
+ "en_modificados_en_ventana": [
+  {
+   "n": 0,
+   "skus": "-"
+  }
+ ],
+ "en_integridad": [
+  {
+   "productos": 188,
+   "vinculados": 0,
+   "conexiones": 0,
+   "audit_en_ventana": 0,
+   "membresias_nuevas": 0
+  }
+ ],
+ "pp_movimientos_ventana": [
+  {
+   "stock_movements": 0,
+   "transacciones": 0,
+   "inventory_rows_tocadas": 0,
+   "receipt_items": 0
+  }
+ ],
+ "duplicados_sku_pp": [],
+ "duplicados_sku_maestros_org": [],
+ "catalogo_final": [
+  {
+   "tiendas_conectadas": 1,
+   "pp_estado": "connected",
+   "maestros_total": 1,
+   "maestros_activos": 0,
+   "propuestas": 0
+  }
+ ],
+ "storage_ventana": [],
+ "rls_catalogo": [
+  {
+   "relname": "catalog_governors",
+   "rls_on": true,
+   "politicas": 1
+  },
+  {
+   "relname": "catalog_store_links",
+   "rls_on": true,
+   "politicas": 1
+  },
+  {
+   "relname": "master_change_log",
+   "rls_on": true,
+   "politicas": 1
+  },
+  {
+   "relname": "master_change_proposals",
+   "rls_on": true,
+   "politicas": 1
+  },
+  {
+   "relname": "master_products",
+   "rls_on": true,
+   "politicas": 1
+  },
+  {
+   "relname": "public_catalog_v",
+   "rls_on": false,
+   "politicas": 0
+  }
+ ],
+ "funciones_cat": [
+  {
+   "proname": "activate_master_product",
+   "secdef": true,
+   "cfg": "{search_path=public}",
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+  },
+  {
+   "proname": "connect_store_catalog",
+   "secdef": true,
+   "cfg": "{search_path=public}",
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+  },
+  {
+   "proname": "create_master_product",
+   "secdef": true,
+   "cfg": "{search_path=public}",
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+  },
+  {
+   "proname": "disconnect_store_catalog",
+   "secdef": true,
+   "cfg": "{search_path=public}",
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+  },
+  {
+   "proname": "fn_master_apply_identity_changes",
+   "secdef": true,
+   "cfg": "{search_path=public}",
+   "acl": "{postgres=X/postgres,service_role=X/postgres}"
+  },
+  {
+   "proname": "is_catalog_governor",
+   "secdef": true,
+   "cfg": "{search_path=public}",
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+  },
+  {
+   "proname": "is_catalog_store_connected",
+   "secdef": true,
+   "cfg": "{search_path=public}",
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+  },
+  {
+   "proname": "propose_master_change",
+   "secdef": true,
+   "cfg": "{search_path=public}",
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+  },
+  {
+   "proname": "review_master_proposal",
+   "secdef": true,
+   "cfg": "{search_path=public}",
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+  },
+  {
+   "proname": "update_master_product",
+   "secdef": true,
+   "cfg": "{search_path=public}",
+   "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+  }
+ ],
+ "auditoria_mision": [
+  {
+   "action": "CATALOG_STORE_CONNECT",
+   "n": 1,
+   "desde": "2026-10-30 14:14:23.872546+00",
+   "hasta": "2026-10-30 14:14:23.872546+00"
+  },
+  {
+   "action": "CREATE_MASTER_PRODUCT",
+   "n": 1,
+   "desde": "2026-10-30 14:15:54.215471+00",
+   "hasta": "2026-10-30 14:15:54.215471+00"
+  },
+  {
+   "action": "UPDATE_MASTER_PRODUCT",
+   "n": 3,
+   "desde": "2026-10-30 14:21:36.321445+00",
+   "hasta": "2026-10-30 14:23:31.665436+00"
+  }
+ ]
+}
