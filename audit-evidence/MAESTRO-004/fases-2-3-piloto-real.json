@@ -1,0 +1,57 @@
+{
+ "fase2_conexion": [
+  {
+   "status": "connected",
+   "connected_at": "2026-10-30 14:14:23.872546+00",
+   "conectada_por_qa": true,
+   "enervida_conexiones": 0
+  }
+ ],
+ "auditoria_conexion": [
+  {
+   "action": "CATALOG_STORE_CONNECT",
+   "created_at": "2026-10-30 14:14:23.872546+00"
+  }
+ ],
+ "fase3_1_creacion": [
+  {
+   "maestro_ok": 1,
+   "local_vinculado_ok": 1,
+   "maestros_unicos": 1,
+   "locales_unicos": 1,
+   "stock_actual": "0.0000",
+   "precio": "0"
+  }
+ ],
+ "fase3_3_edicion": [
+  {
+   "nombre_maestro": "QA CM-004 Producto de prueba tecnica v2 (no comercial)",
+   "nombre_local_propagado": "QA CM-004 Producto de prueba tecnica v2 (no comercial)",
+   "log_cambio_nombre": 1,
+   "audit_hoy": 3
+  }
+ ],
+ "fase3_4_imagen": [
+  {
+   "maestro_img": "f31bc30f-bcf9-4fd7-9c1b-98dd0c0a9d75-7c9542aa-0f67-40da-87c1-6079772b479c.png",
+   "local_img": "f31bc30f-bcf9-4fd7-9c1b-98dd0c0a9d75-7c9542aa-0f67-40da-87c1-6079772b479c.png",
+   "objetos_unicos": 1,
+   "cambios_imagen": 2
+  }
+ ],
+ "enervida_intacta": [
+  {
+   "productos_enervida": 188,
+   "enervida_vinculados": 0,
+   "enervida_conectada": 0,
+   "escrituras_catalogo_hoy": 0
+  }
+ ],
+ "pp_intacta": [
+  {
+   "productos_pp_ahora": 37,
+   "productos_originales": 36,
+   "comerciales_vinculados": 0
+  }
+ ]
+}

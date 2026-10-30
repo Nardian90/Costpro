@@ -1,0 +1,20 @@
+{
+ "checks": {
+  "secdef_no_auth": {
+   "total_hallazgos": 104,
+   "en_allowlist": 104,
+   "no_permitidos": []
+  },
+  "secdef_public_grant": {
+   "total_hallazgos": 0,
+   "en_allowlist": 0,
+   "no_permitidos": []
+  },
+  "tables_no_rls": {
+   "total_hallazgos": 0,
+   "en_allowlist": 0,
+   "no_permitidos": []
+  }
+ },
+ "canary": true
+}
