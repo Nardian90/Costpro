@@ -1,0 +1,54 @@
+{
+  "C_log": [
+    {
+      "new": "product-images/v2-m003.png",
+      "old": "product-images/v1-m003.png",
+      "field": "image_path"
+    },
+    {
+      "new": "SKU-M003-V2",
+      "old": "SKU-M003-TEST",
+      "field": "sku"
+    }
+  ],
+  "B_sku_a": "SKU-M003-V2",
+  "B_sku_b": "SKU-M003-V2",
+  "D_detalle": "ERR_INVALID_CHANGES: campo price no es identidad compartida editable",
+  "E_detalle": "ERR_MASTER_SKU_EXISTS: SKU-OTRO-M003",
+  "A2_costo_a": 80,
+  "A2_stock_a": 25,
+  "A2_stock_b": 7,
+  "A2_precio_a": 100.5,
+  "A2_precio_b": 250,
+  "A_invocacion": {
+    "status": "success",
+    "changes_applied": [
+      {
+        "new": "product-images/v2-m003.png",
+        "old": "product-images/v1-m003.png",
+        "field": "image_path"
+      }
+    ],
+    "master_product_id": "cccccccc-0000-0000-0000-00000000c003"
+  },
+  "B_invocacion": {
+    "status": "success",
+    "changes_applied": [
+      {
+        "new": "SKU-M003-V2",
+        "old": "SKU-M003-TEST",
+        "field": "sku"
+      }
+    ],
+    "master_product_id": "cccccccc-0000-0000-0000-00000000c003"
+  },
+  "A_propagacion_ok": true,
+  "A2_comercial_intacto": true,
+  "A_maestro_image_path": "product-images/v2-m003.png",
+  "A_tienda_a_image_url": "product-images/v2-m003.png",
+  "A_tienda_b_image_url": "product-images/v2-m003.png",
+  "B_propagacion_sku_ok": true,
+  "D_rechaza_no_identidad": true,
+  "E_rechaza_sku_duplicado": true,
+  "A_misma_referencia_sin_duplicar": true
+}

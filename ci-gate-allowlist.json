@@ -839,15 +839,6 @@
       "reason": "CP-ORG-003 Fase 2 (migración 20261026210000): redefinición INTENCIONAL del cuerpo pendiente de aplicación autorizada — endurecimiento del path authenticated (tenant del caller SIEMPRE + gate de rol interno + límite por plan del tenant) preservando íntegros el advisory lock REM-INV-5, el search_path W9-F06-H1 (pg_catalog, public) y el ACL W9-F06 (service_role only). Al aplicar la migración y regenerar contract-surface.sql (scripts/export-contract-surface.cjs) la divergencia desaparece; retirar esta entrada en ese mismo cambio. Cualquier OTRA regla (search_path/ACL/secdef/volatility) sigue bloqueando.",
       "added_by": "CP-ORG-003",
       "expires": "2026-11-30"
-    },
-    {
-      "function": "fn_master_apply_identity_changes/5",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "CP-CAT-MAESTRO-002 (migración 20261030120000): redefinición INTENCIONAL del cuerpo pendiente de aplicación autorizada — propagación de la imagen compartida (image_path) del maestro a las filas locales vinculadas (products.image_url) cuando el cambio de identidad incluye imagen. Preserva íntegros SECURITY DEFINER, search_path 'public', la propagación histórica de SKU/nombre, el registro por campo en master_change_log y el ACL (service_role only, REVOKE PUBLIC/anon/authenticated). Al aplicar la migración en producción y regenerar contract-surface.sql (scripts/export-contract-surface.cjs) la divergencia desaparece; retirar esta entrada en ese mismo cambio. Cualquier OTRA regla (search_path/ACL/secdef/volatilidad) sigue bloqueando.",
-      "added_by": "CP-CAT-MAESTRO-002",
-      "expires": "2026-12-31"
     }
   ]
 }

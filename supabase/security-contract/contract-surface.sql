@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-28T17:10:05.337Z
+-- Captured  : 2026-10-30T12:36:37.820Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 165 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -6467,7 +6467,6 @@ DECLARE
   v_new text;
   v_new_sku text;
   v_new_barcode text;
-  v_log_row record;
   v_changes_applied jsonb := '[]'::jsonb;
 BEGIN
   IF p_changes IS NULL OR jsonb_typeof(p_changes) <> 'object' OR p_changes = '{}'::jsonb THEN
@@ -6538,7 +6537,26 @@ BEGIN
        AND pr.master_product_id = p_master_id;
   END IF;
 
-  RETURN jsonb_build_object('status','success','applied', v_changes_applied);
+  -- CP-CAT-MAESTRO-002 (F2): propagación de la imagen compartida. Cuando el
+  -- cambio de identidad incluye image_path, las filas locales vinculadas
+  -- adoptan la referencia vigente del maestro (compartición por referencia;
+  -- el objeto del bucket es el mismo y no se duplica). Solo se toca
+  -- image_url/updated_at: precio, costo y existencias locales intactos.
+  IF p_changes->>'image_path' IS NOT NULL THEN
+    UPDATE public.products pr
+       SET image_url = m.image_path,
+           updated_at = now()
+      FROM public.master_products m
+     WHERE m.id = pr.master_product_id
+       AND pr.master_product_id = p_master_id
+       AND m.image_path IS NOT NULL;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'master_product_id', p_master_id,
+    'changes_applied', v_changes_applied
+  );
 END;
 $function$
 
