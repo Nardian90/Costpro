@@ -6,6 +6,11 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { mapProfileToContract } from '@/contracts/user';
 import { userService } from '@/services/user-service';
+// INC-20261030: caída de GoTrue/Postgres NO debe expulsar al usuario con sesión
+// local válida — reintento escalado en vez de logout por error transitorio.
+import { isRetryableAuthOutage, AUTH_OUTAGE_RETRY_DELAYS_MS } from '@/lib/auth-outage';
+import { hasCostproSession } from '@/lib/fcEntry';
+import type { Session } from '@supabase/supabase-js';
 import type { Profile } from '@/types';
 
 const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -18,6 +23,10 @@ export function useSessionManager() {
     const { login, logout, setLoading, setStatus: setAuthStatus } = useAuthStore();
     const { setOnlineStatus, setSessionStatus, setStatus } = useSessionStore();
     const checkingRef = useRef(false);
+    // INC-20261030: contador de reintentos por caída del backend de auth.
+    // Se agota tras AUTH_OUTAGE_RETRY_DELAYS_MS.length intentos (comportamiento
+    // previo acotado) y se resetea en cualquier verificación exitosa.
+    const authOutageRetryRef = useRef(0);
 
     const checkSession = useCallback(async (force = false) => {
         // Prevent re-entrant async calls from effect re-fires
@@ -50,9 +59,14 @@ export function useSessionManager() {
         checkingRef.current = true;
         setSessionStatus(true);
 
+        // INC-20261030: declarada fuera del try para que el catch pueda
+        // distinguir «sin sesión local» de «con sesión local + backend caído».
+        let session: Session | null = null;
+
         try {
             // BUG-035: Use getSession() to get the token, then validate with getUser()
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data } = await supabase.auth.getSession();
+            session = data.session;
 
             if (!session) {
                 setAuthStatus('unauthenticated');
@@ -67,6 +81,21 @@ export function useSessionManager() {
             ]) as any;
 
             if (userError || !user) {
+                // INC-20261030: error transitorio (red/5xx/timeout) con sesión local
+                // presente → NO es un logout válido. Programa reintento escalado y
+                // conserva loading=true (HomePageClient mantiene el splash honesto).
+                if (
+                    session &&
+                    isRetryableAuthOutage(userError) &&
+                    authOutageRetryRef.current < AUTH_OUTAGE_RETRY_DELAYS_MS.length
+                ) {
+                    const delay = AUTH_OUTAGE_RETRY_DELAYS_MS[authOutageRetryRef.current];
+                    authOutageRetryRef.current += 1;
+                    logger.warn('DATABASE', '[SESSIONMANAGER]_AUTH_OUTAGE_RETRY_SCHEDULED', { data: `attempt=${authOutageRetryRef.current} delayMs=${delay}` });
+                    setTimeout(() => { void checkSession(true); }, delay);
+                    return;
+                }
+                authOutageRetryRef.current = 0;
                 logout();
                 setLoading(false);
                 return;
@@ -93,6 +122,8 @@ export function useSessionManager() {
             }
 
             if (profileData) {
+                // INC-20261030: verificación exitosa → resetea la escalera de reintentos.
+                authOutageRetryRef.current = 0;
                 const userContractData = mapProfileToContract(profileData);
                 if (session.access_token !== currentToken || JSON.stringify(userContractData) !== JSON.stringify(currentUser)) {
                     login(userContractData, session.access_token, 'authenticated_valid');
@@ -108,6 +139,22 @@ export function useSessionManager() {
             }
         } catch (error: unknown) {
             logger.warn('DATABASE', 'SESSION_CHECK_FAILED', { message: error instanceof Error ? error.message : String(error) });
+            // INC-20261030: timeout del Promise.race («Session check timeout») o fallo
+            // de red con sesión local → reintento escalado en vez de expulsar al
+            // usuario. La sesión local (sb-*-auth-token) no fue revocada: el fallo
+            // es de infraestructura, no de credenciales.
+            if (
+                session?.access_token &&
+                isRetryableAuthOutage(error) &&
+                authOutageRetryRef.current < AUTH_OUTAGE_RETRY_DELAYS_MS.length
+            ) {
+                const delay = AUTH_OUTAGE_RETRY_DELAYS_MS[authOutageRetryRef.current];
+                authOutageRetryRef.current += 1;
+                logger.warn('DATABASE', '[SESSIONMANAGER]_AUTH_OUTAGE_RETRY_SCHEDULED', { data: `attempt=${authOutageRetryRef.current} delayMs=${delay}` });
+                setTimeout(() => { void checkSession(true); }, delay);
+                return; // `finally` libera checkingRef; loading se conserva para el splash
+            }
+            authOutageRetryRef.current = 0;
             setAuthStatus(useAuthStore.getState().user ? 'authenticated_valid' : 'unauthenticated');
             setLoading(false);
             setStatus('error');
@@ -164,9 +211,14 @@ export function useSessionManager() {
     useEffect(() => { checkSession(true); }, [checkSession]);
 
     useEffect(() => {
+        // INC-20261030: failsafe anti-loading-infinito. Sin sesión local → 5s
+        // (comportamiento original). Con sesión local (sb-*-auth-token) el
+        // reintento escalado puede tardar hasta ~53s en agotarse: se acota a 20s
+        // para nunca colgar el splash más de lo razonable.
+        const hasLocalSession = hasCostproSession();
         const timer = setTimeout(() => {
             if (useAuthStore.getState().loading) setLoading(false);
-        }, 5000);
+        }, hasLocalSession ? 20000 : 5000);
         return () => clearTimeout(timer);
     }, [setLoading]);
 }
