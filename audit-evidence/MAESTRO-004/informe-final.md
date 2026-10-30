@@ -104,3 +104,9 @@ Usuario QA gobernador autenticado por el login real (Supabase Auth) en la interf
 ---
 
 **CERTIFICACIÓN:** el Catálogo Maestro de Productos por Organización está **implementado, migrado, fusionado (`main @ 247333002`), desplegado en producción (Vercel success), conectado a su primera tienda real (Puerto Padre VITALLCONS), probado de extremo a extremo desde la interfaz y desde la batería aislada (12/12), documentado, con ayuda integrada verificada, y con sus elementos de prueba limpiados o archivados**. ENERVIDA-VITALLCONS termina la misión exactamente como empezó.
+
+---
+
+## H. Incidencia de plataforma posterior al cierre (transitoria)
+
+A partir de ~15:09 UTC del 2026-10-30 (≈45 min después de la última escritura de la misión, 14:23 UTC), el proyecto de producción Supabase `wthkddeleylijmonclxg` dejó de responder por red (HTTP 522 vía REST y 544 «connection terminated» vía Management API), sin incidents declarados en status.supabase.com. **Todas las operaciones de la misión se completaron y verificaron ANTES del incidente** (evidencias §A–§F capturadas entre 14:04 y 15:08 UTC); ninguna operación quedó a medias (cada migración y cada limpieza fue confirmada con su propia verificación inmediata). El despliegue de Vercel (`5714a9759`, success) y la aplicación responden; solo el canal de base de datos del proyecto estaba inalcanzable al momento de redactar esta nota. La re-verificación de solo lectura queda pendiente de la recuperación del proyecto; el estado final autoritativo es el capturado en `fase-9-auditoria-final.json`.
