@@ -348,9 +348,11 @@ test.describe('Catálogo maestro — flujo completo (12 casos)', () => {
     const filaB0 = (await sb.select('products', `store_id=eq.${storeB.id}&master_product_id=eq.${masterId}&select=id,stock_current`))[0] as any;
     const stockBantes = Number(filaB0.stock_current);
 
-    const mov = await rpcAsUser('register_stock_movement', adminToken, {
-      p_product_id: filaA.id, p_store_id: storeA.id, p_quantity: 10,
-      p_movement_type: 'in', p_reason: `E2E C12 ${RUN_TAG}`, p_user_id: adminId,
+    // Ajuste de inventario vía la RPC que usa la UI real
+    // (register_stock_movement es helper interno EXECUTE-only service_role).
+    const mov = await rpcAsUser('perform_inventory_adjustment', adminToken, {
+      p_store_id: storeA.id, p_product_id: filaA.id, p_user_id: adminId,
+      p_quantity_delta: 10, p_reason: `E2E C12 ${RUN_TAG}`,
     });
     expect(mov.ok, `movimiento falló: ${mov.error}`).toBeTruthy();
 
