@@ -12,9 +12,9 @@ Ejemplo: el producto «Paracetamol 500 mg» (SKU `PAR-500`) existe una vez en el
 
 ## ¿Dónde encontrarlo?
 
-- **Catálogo de la organización (tienda conectada)**: Inicio → **OPERACIÓN** → **Catálogo** → botón **«Catálogo de la organización»** (parte superior derecha de la vista).
+- **Catálogo de la organización (tienda conectada)**: Inicio → **OPERACIÓN** → **ALMACÉN** → **Inventario** → pestaña **«CATÁLOGO»** → botón **«Catálogo de la organización»** (parte superior derecha de la vista).
 - **Gobernanza (conectar tiendas, editar identidad, revisar propuestas)**: Inicio → **SISTEMA** → **Organizaciones** → **Ver detalle** → pestaña **«Catálogo»**.
-- **Alta de producto con identidad compartida**: en el flujo normal de **Nuevo producto** (Catálogo), cuando la tienda está conectada.
+- **Alta de producto con identidad compartida**: pestaña **«CATÁLOGO»** → botón **«+ CREAR»** (flujo normal de Nuevo producto), cuando la tienda está conectada.
 
 ## Antes de comenzar
 

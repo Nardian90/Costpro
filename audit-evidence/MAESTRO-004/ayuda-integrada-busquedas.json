@@ -1,0 +1,114 @@
+{
+ "catálogo maestro": [
+  {
+   "title": "Cómo Hacer: Usar el Catálogo de la Organización",
+   "path": "help/02-como-hacer/30-como-usar-catalogo-de-la-organizacion.md"
+  },
+  {
+   "title": "Catálogo maestro: campos compartidos, campos locales y permisos",
+   "path": "help/03-referencia/10-catalogo-maestro-campos.md"
+  },
+  {
+   "title": "¿Qué es el Catálogo Maestro de Productos?",
+   "path": "help/04-explicacion/09-que-es-catalogo-maestro.md"
+  },
+  {
+   "title": "Tutorial: Cómo Dar de Alta Mi Primer Producto",
+   "path": "help/01-tutoriales/03-primer-producto.md"
+  },
+  {
+   "title": "Referencia: Glosario de Términos",
+   "path": "help/03-referencia/01-glosario.md"
+  },
+  {
+   "title": "Tutorial: Gestión Completa de Inventario",
+   "path": "help/03-inventario/gestion-inventario.md"
+  },
+  {
+   "title": "Guía Completa: Exportación de Catálogos",
+   "path": "help/03-inventario/exportacion-catalogo.md"
+  }
+ ],
+ "catálogo de la organización": [
+  {
+   "title": "Cómo Hacer: Usar el Catálogo de la Organización",
+   "path": "help/02-como-hacer/30-como-usar-catalogo-de-la-organizacion.md"
+  },
+  {
+   "title": "¿Qué es el Catálogo Maestro de Productos?",
+   "path": "help/04-explicacion/09-que-es-catalogo-maestro.md"
+  },
+  {
+   "title": "Catálogo maestro: campos compartidos, campos locales y permisos",
+   "path": "help/03-referencia/10-catalogo-maestro-campos.md"
+  }
+ ],
+ "conectar tienda": [
+  {
+   "title": "Cómo Hacer: Usar el Catálogo de la Organización",
+   "path": "help/02-como-hacer/30-como-usar-catalogo-de-la-organizacion.md"
+  },
+  {
+   "title": "Cómo Administrar Tiendas y Usuarios",
+   "path": "help/04-configuracion/administrar-tiendas.md"
+  },
+  {
+   "title": "Explicación: ¿Qué Significa \"Multi-Tienda\"?",
+   "path": "help/04-explicacion/01-que-es-multi-tienda.md"
+  },
+  {
+   "title": "Catálogo maestro: campos compartidos, campos locales y permisos",
+   "path": "help/03-referencia/10-catalogo-maestro-campos.md"
+  }
+ ],
+ "crear producto compartido": [
+  {
+   "title": "Catálogo maestro: campos compartidos, campos locales y permisos",
+   "path": "help/03-referencia/10-catalogo-maestro-campos.md"
+  },
+  {
+   "title": "¿Qué es el Catálogo Maestro de Productos?",
+   "path": "help/04-explicacion/09-que-es-catalogo-maestro.md"
+  }
+ ],
+ "activar producto": [
+  {
+   "title": "Cómo Hacer: Usar el Catálogo de la Organización",
+   "path": "help/02-como-hacer/30-como-usar-catalogo-de-la-organizacion.md"
+  }
+ ],
+ "editar producto maestro": [
+  {
+   "title": "Cómo Hacer: Usar el Catálogo de la Organización",
+   "path": "help/02-como-hacer/30-como-usar-catalogo-de-la-organizacion.md"
+  },
+  {
+   "title": "¿Qué es el Catálogo Maestro de Productos?",
+   "path": "help/04-explicacion/09-que-es-catalogo-maestro.md"
+  }
+ ],
+ "imagen compartida": [
+  {
+   "title": "Cómo Hacer: Usar el Catálogo de la Organización",
+   "path": "help/02-como-hacer/30-como-usar-catalogo-de-la-organizacion.md"
+  }
+ ],
+ "desconectar tienda": [
+  {
+   "title": "Cómo Hacer: Usar el Catálogo de la Organización",
+   "path": "help/02-como-hacer/30-como-usar-catalogo-de-la-organizacion.md"
+  },
+  {
+   "title": "Cómo Administrar Tiendas y Usuarios",
+   "path": "help/04-configuracion/administrar-tiendas.md"
+  },
+  {
+   "title": "Explicación: ¿Qué Significa \"Multi-Tienda\"?",
+   "path": "help/04-explicacion/01-que-es-multi-tienda.md"
+  },
+  {
+   "title": "Catálogo maestro: campos compartidos, campos locales y permisos",
+   "path": "help/03-referencia/10-catalogo-maestro-campos.md"
+  }
+ ]
+}
