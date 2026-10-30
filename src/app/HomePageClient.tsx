@@ -9,6 +9,9 @@ import { CostProLoader } from '@/components/ui/CostProLoader';
 import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
 import { useTranslations } from 'next-intl';
 import { safeReturnTo } from '@/lib/navigation';
+// INC-20261030: sesión local (sb-*-auth-token) presente → un backend de auth
+// caído no debe rebotar al usuario al landing durante el reintento escalado.
+import { hasCostproSession } from '@/lib/fcEntry';
 
 // ── Lazy-loaded to reduce initial compilation memory ──
 const CyberShell = dynamic(() => import('@/components/ui/CyberShell'), { ssr: false });
@@ -66,17 +69,35 @@ export default function HomePageClient() {
       }
     });
 
+    const forceUnauthenticated = () => {
+      logger.warn('DATABASE', '[HOMEPAGE]_AUTH_CHECK_TIMEOUT,_FORCING_READY_STATE');
+      useAuthStore.getState().setLoading(false);
+      useAuthStore.getState().setStatus('unauthenticated');
+      setIsReady(true);
+      setIsAuthenticated(false);
+    };
+
     const timer = setTimeout(() => {
       const state = useAuthStore.getState();
       if (state.loading) {
-        logger.warn('DATABASE', '[HOMEPAGE]_AUTH_CHECK_TIMEOUT,_FORCING_READY_STATE')
-        useAuthStore.getState().setLoading(false);
-        useAuthStore.getState().setStatus('unauthenticated');
-        setIsReady(true);
-        setIsAuthenticated(false);
+        // INC-20261030: con sesión local preservada, el check de sesión puede estar
+        // reintentando contra un GoTrue caído — NO forzar 'unauthenticated' a los
+        // 5s (era el rebote masivo al landing del incidente). El failsafe absoluto
+        // de abajo acota el caso de un outage prolongado.
+        if (hasCostproSession()) return;
+        forceUnauthenticated();
       }
     }, 5000);
 
+    // INC-20261030: failsafe absoluto — el landing nunca queda colgado más de 25s
+    // esperando la resolución de la sesión, con o sin outage del backend.
+    const absoluteTimer = setTimeout(() => {
+      const state = useAuthStore.getState();
+      if (state.loading) forceUnauthenticated();
+    }, 25000);
+
+    // Store ya resuelto al montar (remount / hidratación tardía): no esperar a
+    // una notificación futura del subscribe.
     const currentState = useAuthStore.getState();
     if (!currentState.loading) {
       queueMicrotask(() => {
@@ -85,7 +106,7 @@ export default function HomePageClient() {
       });
     }
 
-    return () => { clearTimeout(timer); unsub(); };
+    return () => { clearTimeout(timer); clearTimeout(absoluteTimer); unsub(); };
   }, []);
 
   // PERF-AUDIT FASE 4 (2026-10-12): montaje en paralelo. Antes el contenido (landing
