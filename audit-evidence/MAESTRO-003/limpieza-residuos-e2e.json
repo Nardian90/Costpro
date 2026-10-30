@@ -1,0 +1,80 @@
+{
+  "antes": {
+    "productos": [
+      {
+        "id": "bac99491-f719-4547-8817-d488bec15579",
+        "sku": "22",
+        "name": "Conector MC4",
+        "store_id": "9635e633-387f-411d-bc15-7d2b6179aae4",
+        "tenant_id": null
+      },
+      {
+        "id": "2c81287d-9cfa-49b7-8911-8e768e1d94eb",
+        "sku": "ENSAYO-V4",
+        "name": "Producto Ensayo",
+        "store_id": "46d82282-8bb6-4c76-be0e-2b61e100fc09",
+        "tenant_id": null
+      }
+    ],
+    "inventory": [
+      {
+        "id": "04238339-44ec-4bec-a71e-559b17c02a16",
+        "product_id": "bac99491-f719-4547-8817-d488bec15579",
+        "store_id": "9635e633-387f-411d-bc15-7d2b6179aae4",
+        "quantity": "9.0000"
+      }
+    ],
+    "stock_movements": [
+      {
+        "id": "52f5f535-80e1-4da7-916f-18360baa2eef",
+        "product_id": "bac99491-f719-4547-8817-d488bec15579",
+        "movement_type": "purchase",
+        "quantity_change": "10.0000"
+      },
+      {
+        "id": "5ee2e4f7-1828-40c5-bf87-050688c43f75",
+        "product_id": "bac99491-f719-4547-8817-d488bec15579",
+        "movement_type": "sale",
+        "quantity_change": "-1.0000"
+      }
+    ],
+    "transaction_items": [
+      {
+        "id": "8b354d4e-61c0-45bc-9cf4-0383ad626a4e",
+        "transaction_id": "0caf222e-0054-48cf-9110-ccc95a674b59",
+        "product_id": "bac99491-f719-4547-8817-d488bec15579",
+        "quantity": "1.0000"
+      }
+    ]
+  },
+  "operaciones": [
+    {
+      "op": "DELETE transaction_items",
+      "resultado": []
+    },
+    {
+      "op": "DELETE stock_movements",
+      "resultado": []
+    },
+    {
+      "op": "DELETE inventory",
+      "resultado": []
+    },
+    {
+      "op": "DELETE products",
+      "resultado": []
+    }
+  ],
+  "despues": {
+    "productos_restantes": [
+      {
+        "n": 0
+      }
+    ],
+    "casos_guard": [
+      {
+        "n": 0
+      }
+    ]
+  }
+}

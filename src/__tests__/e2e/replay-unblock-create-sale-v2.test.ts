@@ -374,10 +374,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(salida).toContain('MATCH');
     // verificación del contenido
     const m = leeryValidarManifiesto();
-    // cadena catálogo maestro + R1 + CP-CAT-MAESTRO-002: 102 (PR1) + 1 R1 + 1 etapa 0 + 4 etapa 1 + 1 PR4 + 1 propagación imagen = 110
-    expect(m.total_incluidos).toBe(110);
+    // cadena catálogo maestro + R1 + CP-CAT-MAESTRO-002: 102 (PR1) + 1 R1 + 1 etapa 0 + 4 etapa 1 + 1 PR4 + 1 propagación imagen = 110; +1 fix CP-ORG-003 (CP-CAT-MAESTRO-003) = 111
+    expect(m.total_incluidos).toBe(111);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(110);
+    expect(incluidos.length).toBe(111);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

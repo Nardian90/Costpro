@@ -140,3 +140,4 @@ scripts-tmp/
 # (la genera scripts/e2e/build-migrations-replay.mjs; el MANIFIESTO determinista
 # SÍ se commitea como evidencia en audit-evidence/INFRA-011/)
 .e2e-migrations/
+.env.e2e-local
