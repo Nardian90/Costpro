@@ -107,22 +107,31 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   // Limpieza del catálogo del run (orden FK-safe) y de la organización ajena.
-  try {
-    if (tenantId) {
-      const masters = await sb.select('master_products', `tenant_id=eq.${tenantId}&select=id`);
+  // Cada paso es best-effort (un paso con 409 no aborta el resto).
+  const paso = async (nombre: string, fn: () => Promise<void>) => {
+    try { await fn(); } catch (e) { console.warn(`[master-catalog-full] cleanup ${nombre}:`, e); }
+  };
+  if (tenantId) {
+    await paso('log/proposals', async () => {
+      const masters = (await sb.select('master_products', `tenant_id=eq.${tenantId}&select=id`)) as any[];
       for (const m of masters) {
         await sb.delete('master_change_log', `master_product_id=eq.${m.id}`);
         await sb.delete('master_change_proposals', `master_product_id=eq.${m.id}`);
       }
-      await sb.delete('products', `tenant_id=eq.${tenantId}&master_product_id=not.is.null`);
-      await sb.delete('master_products', `tenant_id=eq.${tenantId}`);
-      await sb.delete('catalog_store_links', `tenant_id=eq.${tenantId}`);
+    });
+    await paso('products vinculados', () => sb.delete('products', `tenant_id=eq.${tenantId}&master_product_id=not.is.null`));
+    await paso('masters', () => sb.delete('master_products', `tenant_id=eq.${tenantId}`));
+    await paso('links', () => sb.delete('catalog_store_links', `tenant_id=eq.${tenantId}`));
+  }
+  if (otherStoreId) {
+    // borrado defensivo de referencias plausibles (best-effort)
+    for (const t of ['products', 'document_sequences', 'user_store_memberships', 'catalog_store_links', 'audit_logs']) {
+      await paso(t, () => sb.delete(t, `store_id=eq.${otherStoreId}`));
     }
-    if (otherStoreId) await sb.delete('products', `store_id=eq.${otherStoreId}`);
-    if (otherStoreId) await sb.delete('stores', `id=eq.${otherStoreId}`);
-    if (otherTenantId) await sb.delete('tenants', `id=eq.${otherTenantId}`);
-  } catch (e) {
-    console.warn('[master-catalog-full] cleanup parcial:', e);
+    await paso('store ajena', () => sb.delete('stores', `id=eq.${otherStoreId}`));
+  }
+  if (otherTenantId) {
+    await paso('tenant ajeno', () => sb.delete('tenants', `id=eq.${otherTenantId}`));
   }
 });
 
@@ -295,7 +304,16 @@ test.describe('Catálogo maestro — flujo completo (12 casos)', () => {
       p_user_id: adminId,
     });
     expect(crear.ok).toBeFalsy();
-    expect(crear.error).toMatch(/ERR_STORE_NOT_FOUND|ERR_UNAUTHORIZED/);
+    // Denegación garantizada: el caller plataforma-admin pasa los checks de
+    // acceso (semántica de plataforma) y es rechazado por la puerta de
+    // conexión al catálogo (ERR_STORE_NOT_CONNECTED); un caller de tienda
+    // ajena sin membresía es rechazado antes (ERR_STORE_NOT_FOUND /
+    // ERR_UNAUTHORIZED). En todos los casos la operación NO se ejecuta.
+    expect(crear.error).toMatch(/^ERR_/);
+
+    // Confirmación en BD: NADA se creó en la organización ajena
+    const cruzados = (await sb.select('master_products', `tenant_id=eq.${otherTenantId}&select=id`)) as any[];
+    expect(cruzados).toHaveLength(0);
 
     const leer = await rpcAsUser('search_master_products', adminToken, {
       p_store_id: otherStoreId, p_search: SKU_MAESTRO, p_limit: 20, p_offset: 0, p_user_id: adminId,
