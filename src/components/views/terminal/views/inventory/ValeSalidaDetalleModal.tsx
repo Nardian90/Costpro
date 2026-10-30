@@ -21,10 +21,11 @@
  * el diccionario movementPresentation para etiquetar tipos de movimiento.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   FileText,
+  FileDown,
   Factory,
   Undo2,
   ArrowLeftRight,
@@ -34,6 +35,9 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
+import { useAuthStore } from '@/store';
+import { exportSc208ForVale } from '@/lib/legal/sc208';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { DocumentStatusBadge } from '@/components/ui/DocumentStatusBadge';
@@ -139,6 +143,24 @@ export function ValeSalidaDetalleModal({
     open
   );
 
+  // MISIÓN RESOLUCIÓN 11 — exportación SC-2-08 «Vale de Entrega o Devolución».
+  // Solo lectura: no muta el vale ni ningún registro. RLS: tienda activa.
+  const { user } = useAuthStore();
+  const [isExportingSc208, setIsExportingSc208] = useState(false);
+
+  const handleExportSc208 = async () => {
+    if (!vale) return;
+    setIsExportingSc208(true);
+    try {
+      await exportSc208ForVale(vale, user?.activeStoreId);
+      toast.success(`Modelo SC-2-08 generado (${vale.slip_number})`);
+    } catch {
+      toast.error('No se pudo generar el PDF SC-2-08. Intente nuevamente.');
+    } finally {
+      setIsExportingSc208(false);
+    }
+  };
+
   const items = useMemo(() => vale?.items ?? [], [vale]);
   const totalLineas = items.length;
   // Cantidad total SOLO como conteo de líneas/unidades del documento — no se
@@ -173,6 +195,23 @@ export function ValeSalidaDetalleModal({
             El stock ya fue descontado al emitir el documento.
           </p>
           <div className="flex items-center gap-2 ml-auto">
+            {vale && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleExportSc208}
+                disabled={isExportingSc208}
+                className="h-9 px-4 rounded-lg gap-1.5 font-bold"
+                aria-label="Exportar el vale como modelo oficial SC-2-08 Vale de Entrega o Devolución en PDF"
+              >
+                {isExportingSc208 ? (
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <FileDown className="w-4 h-4" aria-hidden="true" />
+                )}
+                {isExportingSc208 ? 'Generando…' : 'Exportar SC-2-08 (PDF)'}
+              </Button>
+            )}
             {vale && vale.status === 'completed' && canReverse && (
               <Button
                 type="button"

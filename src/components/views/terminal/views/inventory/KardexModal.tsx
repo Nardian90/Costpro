@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { BookOpen, X, Download, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { BookOpen, X, Download, FileDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Product } from '@/types';
 import { formatDate, formatCurrency, cn } from '@/lib/utils';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { toast } from 'sonner';
 import { useKardex, type KardexEntry } from '@/hooks/api/useKardex';
+import { useAuthStore } from '@/store';
+import { exportSc213ForProduct } from '@/lib/legal/sc213';
 // CAPA DE PRESENTACIÓN (§14-18): etiquetas SIEMPRE vía diccionario central.
 // Jamás imprimir movement_type crudo al usuario.
 import { obtenerEtiquetaMovimiento, obtenerClaseMovimiento } from '@/lib/inventory/movementPresentation';
@@ -79,6 +81,35 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
     toast.success('Kardex exportado');
   };
 
+  // MISIÓN RESOLUCIÓN 11 — exportación SC-2-13 «Submayor de Inventario».
+  // El PDF cubre la HISTORIA COMPLETA del producto (misma tabla stock_movements
+  // bajo RLS, tope 10.000), no solo la página visible del modal. Solo lectura.
+  const { user } = useAuthStore();
+  const [isExportingSc213, setIsExportingSc213] = useState(false);
+
+  const handleExportSc213 = async () => {
+    if (!product) return;
+    setIsExportingSc213(true);
+    try {
+      await exportSc213ForProduct(
+        {
+          id: product.id,
+          name: product.name,
+          sku: product.sku,
+          unit_of_measure: product.unit_of_measure,
+          cost_average: product.cost_average,
+          cost_price: product.cost_price,
+        },
+        user?.activeStoreId,
+      );
+      toast.success(`Modelo SC-2-13 generado (${product.sku || product.name})`);
+    } catch {
+      toast.error('No se pudo generar el PDF SC-2-13. Intente nuevamente.');
+    } finally {
+      setIsExportingSc213(false);
+    }
+  };
+
   if (!product) return null;
 
   return (
@@ -103,6 +134,14 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
             {totalPages > 1 && ` — Pág. ${page}/${totalPages}`}
           </div>
           <div className="flex gap-2">
+            <SecondaryButton
+              onClick={handleExportSc213}
+              disabled={isExportingSc213}
+              label={isExportingSc213 ? 'Generando…' : 'Exportar SC-2-13 (PDF)'}
+              icon={isExportingSc213 ? Loader2 : FileDown}
+              className="gap-1.5"
+              aria-label="Exportar el submayor completo del producto como modelo oficial SC-2-13 Submayor de Inventario en PDF"
+            />
             <SecondaryButton onClick={handleExport} label="Exportar CSV" icon={Download} className="gap-1.5" />
             <SecondaryButton onClick={onClose} label="Cerrar" />
           </div>

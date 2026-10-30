@@ -19,7 +19,9 @@
 
 import type { jsPDF } from 'jspdf';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
-import { PG, GRY } from '@/lib/export/pdf-shared';
+// IMPRESIÓN ECONÓMICA (misión Res. 11): se eliminó el uso de PG (verde) —
+// el documento se imprime en negro sobre fondo blanco, sin bandas de color.
+// (GRY ya no se usa en este archivo.)
 
 export interface CountSheetPayload {
   piNumber: string;
@@ -79,7 +81,7 @@ export async function buildCountSheetPdf(payload: CountSheetPayload): Promise<js
     if (page > 1) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.setTextColor(...PG);
+      doc.setTextColor(0, 0, 0);
       doc.text('COSTPRO — HOJA DE INVENTARIO FÍSICO', M, M + 6);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
@@ -94,18 +96,16 @@ export async function buildCountSheetPdf(payload: CountSheetPayload): Promise<js
       return M + 26;
     }
 
-    // Página 1 — encabezado completo
+    // Página 1 — encabezado completo (sin banda decorativa: impresión económica)
     let y = M + 10;
-    doc.setFillColor(...PG);
-    doc.rect(M, y - 12, 3, 30, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(15);
     doc.setTextColor(17, 24, 39);
-    doc.text('COSTPRO', M + 10, y + 4);
+    doc.text('COSTPRO', M, y + 4);
     doc.setFontSize(9);
     doc.setTextColor(110);
     doc.setFont('helvetica', 'normal');
-    doc.text(pdfWinAnsi(payload.storeName), M + 10, y + 18);
+    doc.text(pdfWinAnsi(payload.storeName), M, y + 18);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
@@ -113,7 +113,7 @@ export async function buildCountSheetPdf(payload: CountSheetPayload): Promise<js
     doc.text('HOJA DE INVENTARIO FÍSICO', W - M, y + 4, { align: 'right' });
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.setTextColor(...PG);
+    doc.setTextColor(0, 0, 0);
     doc.text(payload.piNumber, W - M, y + 18, { align: 'right' });
 
     y += 34;
