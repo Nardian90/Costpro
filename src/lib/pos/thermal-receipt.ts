@@ -395,6 +395,8 @@ export interface TransactionItemSource {
   quantity: number | string;
   price_at_sale: number | string;
   price_at_sale_cup?: number | string | null;
+  /** Tasa de la línea (null/0 en filas históricas V1 → se asume 1, CUP). */
+  exchange_rate?: number | string | null;
   price_currency?: string | null;
   products?: { name: string; sku?: string | null } | null;
 }
@@ -439,9 +441,14 @@ export function buildReceiptDataFromTransaction(
     sellerName: null,
     customerName: transaction.customer_name ?? null,
     items: items.map((i) => {
-      // price_at_sale_cup es la misma columna canónica CUP (null solo en filas
-      // históricas) — se usa el fallback de price_at_sale, idéntica semántica.
-      const unitPriceCup = Number(i.price_at_sale_cup ?? i.price_at_sale ?? 0);
+      // CP-CORRECCIONES-VENTAS-ALMACÉN-001: misma regla canónica del sistema
+      // (lineTotalCup, cash-report/summary.ts) que el modal de detalle —
+      // price_at_sale_cup > 0 manda; si es 0/null (filas históricas V1) se
+      // deriva de price_at_sale × tasa. `??` imprimía «0.00» en el recibo
+      // reimpresso de ventas legacy con price_at_sale_cup = 0.
+      const rate = Number(i.exchange_rate) > 0 ? Number(i.exchange_rate) : 1;
+      const pCup = Number(i.price_at_sale_cup);
+      const unitPriceCup = pCup > 0 ? pCup : Number(i.price_at_sale || 0) * rate;
       const qty = Number(i.quantity) || 0;
       return {
         code: i.products?.sku ?? null,

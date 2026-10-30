@@ -78,6 +78,14 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
   const [draftTaxes, setDraftTaxes] = useState<TaxConfiguration[]>([]);
   const [taxReason, setTaxReason] = useState('');
   const [isSavingTaxes, setIsSavingTaxes] = useState(false);
+  // MISIÓN RESOLUCIÓN 11 — exportación SC-2-12 «Factura».
+  // Solo lectura: no muta la venta ni ningún registro. RLS: tienda activa.
+  // CP-CORRECCIONES-VENTAS-ALMACÉN-001: este useState DEBE vivir ANTES del
+  // `if (!transaction) return null` — si queda después, el modal cerrado
+  // (transaction=null) renderiza 10 hooks y al abrir una venta aparece el 11º
+  // → «Rendered more hooks than during the previous render» → crash del
+  // Historial de Ventas en CADA clic sobre una venta (Rules of Hooks).
+  const [isExportingSc212, setIsExportingSc212] = useState(false);
 
   const currentAppliedTaxes: TaxConfiguration[] = Array.isArray(transaction?.applied_taxes) ? transaction.applied_taxes : [];
 
@@ -206,9 +214,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
   };
 
   // MISIÓN RESOLUCIÓN 11 — exportación SC-2-12 «Factura».
-  // Solo lectura: no muta la venta ni ningún registro. RLS: tienda activa.
-  const [isExportingSc212, setIsExportingSc212] = useState(false);
-
+  // (el estado isExportingSc212 vive arriba, junto a los demás hooks)
   const handleExportSc212 = async () => {
     if (!transaction) return;
     setIsExportingSc212(true);
@@ -392,9 +398,18 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                 </TableRow>
               ) : (
                 items.map(item => {
-                  // price_at_sale is ALWAYS stored in CUP (DB design)
-                  // price_at_sale_cup is the same (might be NULL for historical rows)
-                  const unitPriceCUP = Number(item.price_at_sale_cup ?? item.price_at_sale ?? 0);
+                  // CP-CORRECCIONES-VENTAS-ALMACÉN-001: precio unitario CUP con la
+                  // MISMA regla canónica del sistema (lineTotalCup en
+                  // cash-report/summary.ts): si price_at_sale_cup > 0 se usa; si es
+                  // 0/null (filas históricas V1, 60 casos reales en producción)
+                  // se deriva de price_at_sale × tasa — price_at_sale es SIEMPRE el
+                  // precio unitario persistido y nunca se inventa un importe.
+                  // Antes: `??` trataba 0 como valor válido → «$0.00» en el modal.
+                  const rate = Number(item.exchange_rate) > 0 ? Number(item.exchange_rate) : 1;
+                  const pCup = Number(item.price_at_sale_cup);
+                  const unitPriceCUP = pCup > 0
+                    ? pCup
+                    : Number(item.price_at_sale || 0) * rate;
                   const lineSubtotalCUP = unitPriceCUP * Number(item.quantity || 0);
                   return (
                     <TableRow key={item.id}>
