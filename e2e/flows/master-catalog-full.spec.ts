@@ -344,27 +344,29 @@ test.describe('Catálogo maestro — flujo completo (12 casos)', () => {
   });
 
   test('C12 — operaciones comerciales locales no se mezclan entre tiendas', async () => {
-    const filaA = (await filaDelMaestro(storeA.id)) as any;
-    const filaB0 = (await sb.select('products', `store_id=eq.${storeB.id}&master_product_id=eq.${masterId}&select=id,stock_current`))[0] as any;
+    const filaAId = String((await filaDelMaestro(storeA.id)).id);
+    const filaA0 = (await getLocalRow(filaAId)) as any;
+    const filaBId = String((await filaDelMaestro(storeB.id)).id);
+    const filaB0 = (await getLocalRow(filaBId)) as any;
     const stockBantes = Number(filaB0.stock_current);
 
     // Ajuste de inventario vía la RPC que usa la UI real
     // (register_stock_movement es helper interno EXECUTE-only service_role).
     const mov = await rpcAsUser('perform_inventory_adjustment', adminToken, {
-      p_store_id: storeA.id, p_product_id: filaA.id, p_user_id: adminId,
+      p_store_id: storeA.id, p_product_id: filaAId, p_user_id: adminId,
       p_quantity_delta: 10, p_reason: `E2E C12 ${RUN_TAG}`,
     });
     expect(mov.ok, `movimiento falló: ${mov.error}`).toBeTruthy();
 
-    const a = await getLocalRow(filaA.id as string);
-    const b = await getLocalRow(filaB0.id as string);
-    expect(Number(a?.stock_current)).toBe(Number(filaA.stock_current) + 10);
+    const a = await getLocalRow(filaAId);
+    const b = await getLocalRow(filaBId);
+    expect(Number(a?.stock_current)).toBe(Number(filaA0.stock_current) + 10);
     expect(Number(b?.stock_current)).toBe(stockBantes); // B intacto
 
     // cambio de precio local en A no toca B (re-verificación con PATCH local)
-    await sb.update('products', `id=eq.${filaA.id}`, { price: 175 });
-    const a2 = await getLocalRow(filaA.id as string);
-    const b2 = await getLocalRow(filaB0.id as string);
+    await sb.update('products', `id=eq.${filaAId}`, { price: 175 });
+    const a2 = await getLocalRow(filaAId);
+    const b2 = await getLocalRow(filaBId);
     expect(Number(a2?.price)).toBe(175);
     expect(Number(b2?.price)).toBe(250);
     // identidad compartida preservada tras operaciones comerciales
