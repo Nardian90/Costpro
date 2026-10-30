@@ -147,12 +147,14 @@ const DEFAULT_CURRENCY = 'CUP';
 
 export function formatSc204Money(value: number): string {
   if (!Number.isFinite(value)) return '';
-  return moneyFormatter.format(value);
+  // Canonicalización: elimina el ruido de representación binaria (float64)
+  // sin alterar el valor almacenado (columnas numeric de PostgreSQL).
+  return moneyFormatter.format(Number(value.toFixed(10)));
 }
 
 export function formatSc204Quantity(value: number): string {
   if (!Number.isFinite(value)) return '';
-  return quantityFormatter.format(value);
+  return quantityFormatter.format(Number(value.toFixed(10)));
 }
 
 export function formatSc204Date(date: Date | string | null | undefined): string {
@@ -297,7 +299,12 @@ function blankField(label: string): string {
   return `${label}: ${BLANK_LINE}`;
 }
 
-export async function generateSc204Pdf(model: Sc204ModelData): Promise<void> {
+/**
+ * Construye el documento SC-2-04 sin descargarlo (patrón del proyecto:
+ * el caller decide preview o descarga). Permite verificación a nivel de
+ * bytes en las pruebas (impresión económica: sin bandas de tinta).
+ */
+export async function renderSc204Pdf(model: Sc204ModelData) {
   const doc = await createPDFDocument('p', 'mm', 'letter');
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -423,13 +430,32 @@ export async function generateSc204Pdf(model: Sc204ModelData): Promise<void> {
       l.saldoExistencia,
     ]),
     theme: 'grid',
-    styles: { font: 'helvetica', fontSize: 7.5, cellPadding: 1.6, textColor: 0 },
+    styles: {
+      font: 'helvetica',
+      fontSize: 7.5,
+      cellPadding: 1.6,
+      textColor: 0,
+      // IMPRESIÓN ECONÓMICA: líneas finas y fondo blanco (sin rellenos).
+      lineColor: [150, 150, 150],
+      lineWidth: 0.15,
+      fillColor: [255, 255, 255],
+    },
     headStyles: {
-      fillColor: [0, 0, 0],
-      textColor: [255, 255, 255],
+      // IMPRESIÓN ECONÓMICA (FASE 5/6 de la misión): cabecera BLANCA con
+      // texto negro — antes era una banda negra que consumía tinta.
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
+      fontStyle: 'bold',
       halign: 'center',
       fontSize: 7,
+      lineColor: [0, 0, 0],
+      lineWidth: 0.2,
     },
+    alternateRowStyles: {
+      // Sin bandas de fondo para alternar filas (ahorro de tinta).
+      fillColor: [255, 255, 255],
+    },
+    rowPageBreak: 'avoid',
     columnStyles: {
       0: { cellWidth: 22, halign: 'center' },
       1: { cellWidth: 'auto' },
@@ -499,6 +525,12 @@ export async function generateSc204Pdf(model: Sc204ModelData): Promise<void> {
     { maxWidth: contentWidth },
   );
 
+  return doc;
+}
+
+/** Genera y descarga el SC-2-04 con el nombre de archivo oficial. */
+export async function generateSc204Pdf(model: Sc204ModelData): Promise<void> {
+  const doc = await renderSc204Pdf(model);
   doc.save(sc204FileName(model.identificadorRecepcion));
 }
 

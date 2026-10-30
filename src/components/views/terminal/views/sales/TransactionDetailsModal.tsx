@@ -16,7 +16,8 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, ShieldAlert, DollarSign, ArrowLeftRight, Banknote, Printer } from 'lucide-react';
+import { Check, ShieldAlert, DollarSign, ArrowLeftRight, Banknote, Printer, FileDown, Loader2 } from 'lucide-react';
+import { exportSc212ForTransaction } from '@/lib/legal/sc212';
 // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): reimpresión del comprobante POS desde
 // el historial — reconstruye el recibo del registro PERSISTIDO (transacción +
 // ítems + payment_transactions vía resolveSalePayments). 100% lectura: no
@@ -204,6 +205,39 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
     }
   };
 
+  // MISIÓN RESOLUCIÓN 11 — exportación SC-2-12 «Factura».
+  // Solo lectura: no muta la venta ni ningún registro. RLS: tienda activa.
+  const [isExportingSc212, setIsExportingSc212] = useState(false);
+
+  const handleExportSc212 = async () => {
+    if (!transaction) return;
+    setIsExportingSc212(true);
+    try {
+      await exportSc212ForTransaction(
+        {
+          id: transaction.id,
+          status: transaction.status,
+          total_amount: transaction.total_amount,
+          subtotal: transaction.subtotal,
+          discount_value: transaction.discount_value,
+          sale_currency: transaction.sale_currency,
+          customer_name: transaction.customer_name,
+          invoice_number: transaction.invoice_number,
+          completed_at: transaction.completed_at,
+          created_at: transaction.created_at,
+          seller_id: transaction.seller_id,
+          store_id: transaction.store_id,
+        },
+        user?.activeStoreId,
+      );
+      toast.success('Modelo SC-2-12 generado');
+    } catch {
+      toast.error('No se pudo generar el PDF SC-2-12. Intente nuevamente.');
+    } finally {
+      setIsExportingSc212(false);
+    }
+  };
+
   return (
     <BaseModal
       open={isOpen}
@@ -224,7 +258,17 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
             para cualquier venta consultada (los datos ya cargados mandan; ítems
             cargando → deshabilitado). Imprimir no altera la venta ni genera un
             segundo documento comercial — es la MISMA venta re-presentada. */}
-        <div className="mb-4 flex justify-end">
+        <div className="mb-4 flex justify-end gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={handleExportSc212}
+            disabled={isLoading || isExportingSc212}
+            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-background border border-border font-black text-xs uppercase tracking-widest hover:bg-muted transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+            title="Exportar la venta como modelo oficial SC-2-12 Factura (Resolución 11/2007 MFP)"
+          >
+            {isExportingSc212 ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+            {isExportingSc212 ? 'Generando…' : 'Exportar SC-2-12 (PDF)'}
+          </button>
           <button
             type="button"
             onClick={handlePrintReceipt}

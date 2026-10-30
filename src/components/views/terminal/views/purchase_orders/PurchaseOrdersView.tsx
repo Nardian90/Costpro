@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Plus,
   Eye,
+  FileDown,
   XCircle,
   Clock,
   AlertCircle,
@@ -42,6 +43,7 @@ import {
 } from '@/hooks/api/usePurchaseOrders';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { exportSc201ForOrder } from '@/lib/legal/sc201';
 import type {
   PurchaseOrder,
   PurchaseOrderItem,
@@ -831,6 +833,37 @@ function CreatePOModal({ suppliers, onClose }: CreatePOModalProps) {
 
 function DetailModal({ poId, onClose }: { poId: string; onClose: () => void }) {
   const { data, isLoading } = usePurchaseOrderDetails(poId);
+  const { user } = useAuthStore();
+  const [isExportingSc201, setIsExportingSc201] = useState(false);
+
+  // MISIÓN RESOLUCIÓN 11 — exportación SC-2-01 «Solicitud de Compra».
+  // Solo lectura: no muta la orden ni ningún registro. RLS: tienda activa.
+  const handleExportSc201 = async () => {
+    const order = data?.order;
+    if (!order) return;
+    setIsExportingSc201(true);
+    try {
+      await exportSc201ForOrder(
+        {
+          id: order.id,
+          po_number: order.po_number,
+          supplier_name: order.supplier_name,
+          status: order.status,
+          total_amount: order.total_amount,
+          notes: order.notes,
+          expected_date: order.expected_date,
+          created_by: order.created_by,
+          created_at: order.created_at,
+        },
+        user?.activeStoreId,
+      );
+      toast.success(`Modelo SC-2-01 generado (${order.po_number || order.id.slice(0, 8)})`);
+    } catch {
+      toast.error('No se pudo generar el PDF SC-2-01. Intente nuevamente.');
+    } finally {
+      setIsExportingSc201(false);
+    }
+  };
 
   return (
     <BaseModal
@@ -838,7 +871,18 @@ function DetailModal({ poId, onClose }: { poId: string; onClose: () => void }) {
       onOpenChange={(o) => { if (!o) onClose(); }}
       title="Detalle de Orden de Compra"
       maxWidth="sm:max-w-3xl"
-      footer={<SecondaryButton label="Cerrar" onClick={onClose} />}
+      footer={
+        <div className="flex items-center gap-2 w-full justify-end">
+          <SecondaryButton
+            label={isExportingSc201 ? 'Generando…' : 'Exportar SC-2-01 (PDF)'}
+            icon={isExportingSc201 ? Loader2 : FileDown}
+            onClick={handleExportSc201}
+            disabled={isLoading || isExportingSc201 || !data?.order}
+            aria-label="Exportar la orden como modelo oficial SC-2-01 Solicitud de Compra en PDF"
+          />
+          <SecondaryButton label="Cerrar" onClick={onClose} />
+        </div>
+      }
     >
       {isLoading || !data?.order ? (
         <div className="py-12 flex items-center justify-center gap-3 text-muted-foreground">

@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Plus, Search, Ban, Undo2, Copy, X, Loader2, Eye, RefreshCcw, ChevronDown, ChevronUp, CheckCircle2, ClipboardCheck } from 'lucide-react';
+import { Plus, Search, Ban, Undo2, Copy, X, Loader2, Eye, FileDown, RefreshCcw, ChevronDown, ChevronUp, CheckCircle2, ClipboardCheck } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
+import { exportSc216ForAdjustment } from '@/lib/legal/sc216';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
 import { canReverseDocumentInStore } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
@@ -148,6 +149,42 @@ export default function InventoryAdjustmentsView() {
     }
   }, [user?.id, queryClient]);
 
+  // MISIÓN RESOLUCIÓN 11 — exportación SC-2-16 «Ajuste de Inventario».
+  // Solo lectura: no muta el ajuste ni el inventario. RLS: tienda activa.
+  const [isExportingSc216Id, setIsExportingSc216Id] = useState<string | null>(null);
+
+  const handleExportSc216 = useCallback(async (doc: AdjustmentDoc) => {
+    setIsExportingSc216Id(doc.id);
+    try {
+      await exportSc216ForAdjustment(
+        {
+          id: doc.id,
+          status: doc.status,
+          reason: doc.reason,
+          notes: doc.notes,
+          created_at: doc.created_at,
+          reversed_at: doc.reversed_at,
+          reversal_reason: doc.reversal_reason,
+          source_physical_inventory: doc.source_physical_inventory
+            ? { pi_number: doc.source_physical_inventory.pi_number, cutoff_date: doc.source_physical_inventory.cutoff_date }
+            : null,
+          items: (doc.items || []).map(it => ({
+            expected_quantity: it.expected_quantity,
+            counted_quantity: it.counted_quantity,
+            products: it.products,
+          })),
+          creator: doc.creator,
+        },
+        storeId,
+      );
+      toast.success(`Modelo SC-2-16 generado (${doc.id.slice(0, 8)})`);
+    } catch {
+      toast.error('No se pudo generar el PDF SC-2-16. Intente nuevamente.');
+    } finally {
+      setIsExportingSc216Id(null);
+    }
+  }, [storeId]);
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -248,6 +285,15 @@ export default function InventoryAdjustmentsView() {
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => handleExportSc216(d)}
+                    disabled={isExportingSc216Id === d.id}
+                    className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95 disabled:opacity-50"
+                    title="Exportar como modelo oficial SC-2-16 Ajuste de Inventario (PDF)"
+                    aria-label={`Exportar el ajuste ${d.id.slice(0, 8)} como modelo oficial SC-2-16 en PDF`}
+                  >
+                    {isExportingSc216Id === d.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                  </button>
                   {d.items && d.items.length > 0 && (
                     <button
                       onClick={() => setExpandedDoc(expandedDoc === d.id ? null : d.id)}

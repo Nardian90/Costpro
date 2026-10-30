@@ -19,10 +19,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { CheckCircle2, Clock, Package, Building, User, Calendar, XCircle, FileDown } from 'lucide-react';
+import { CheckCircle2, Clock, Package, Building, User, Calendar, XCircle, FileDown, Loader2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { exportSc209ForTransfer } from '@/lib/legal/sc209';
 import type { Transfer, TransferItem, TransferStatus } from '@/types';
 
 interface TransferDetailsModalProps {
@@ -112,9 +113,44 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
     }
   };
 
-  const handleExportPdf = () => {
-    if (!transferId) return;
-    window.open(`/api/transfers/${transferId}/export-pdf`, '_blank');
+  // MISIÓN RESOLUCIÓN 11 — exportación SC-2-09 «Transferencia entre Almacenes».
+  // Sustituye al PDF genérico anterior: el documento generado ahora respeta el
+  // modelo oficial de la Resolución 11/2007. Solo lectura: no muta la
+  // transferencia ni ningún registro.
+  const [isExportingSc209, setIsExportingSc209] = useState(false);
+
+  const handleExportSc209 = async () => {
+    if (!transfer) return;
+    setIsExportingSc209(true);
+    try {
+      await exportSc209ForTransfer({
+        id: transfer.id,
+        status: transfer.status,
+        notes: transfer.notes,
+        created_at: transfer.created_at,
+        confirmed_at: transfer.confirmed_at,
+        reversed_at: transfer.reversed_at,
+        reversal_reason: transfer.reversal_reason,
+        origin_store_id: transfer.origin_store_id,
+        destination_store_id: transfer.destination_store_id,
+        confirmed_by: transfer.confirmed_by,
+        origin_store: transfer.origin_store,
+        destination_store: transfer.destination_store,
+        creator: transfer.creator,
+        items: (transfer.items || []).map((item) => ({
+          quantity: item.quantity,
+          unit_cost: item.unit_cost,
+          products: item.product
+            ? { name: item.product.name, sku: item.product.sku, unit_of_measure: item.product.unit_of_measure }
+            : null,
+        })),
+      });
+      toast.success('Modelo SC-2-09 generado');
+    } catch {
+      toast.error('No se pudo generar el PDF SC-2-09. Intente nuevamente.');
+    } finally {
+      setIsExportingSc209(false);
+    }
   };
 
   const isIncoming = transfer?.destination_store_id === user?.activeStoreId;
@@ -160,11 +196,12 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
               )}
               <button
                 type="button"
-                onClick={handleExportPdf}
-                className="neu-btn px-4 py-2 text-xs font-black uppercase tracking-widest flex items-center gap-2"
+                onClick={handleExportSc209}
+                disabled={isExportingSc209 || !transfer}
+                className="neu-btn px-4 py-2 text-xs font-black uppercase tracking-widest flex items-center gap-2 disabled:opacity-50"
               >
-                <FileDown className="w-4 h-4" />
-                Exportar PDF
+                {isExportingSc209 ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                {isExportingSc209 ? 'Generando…' : 'Exportar SC-2-09 (PDF)'}
               </button>
             </div>
             <div className="flex gap-3">
