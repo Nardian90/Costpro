@@ -273,3 +273,17 @@ Fundamentos:
 **Orden sugerido**: merge de #1531 → merge del PR de corrección → (opcional) limpieza del residuo de catálogo H-5 por su dueño → re-ejecución del guard de higiene AFTER (debe dar PASS con residuo 0/0).
 
 La decisión final de integración corresponde al propietario. Esta certificación no ejecutó ningún merge.
+
+---
+
+## 15. Adenda — el repositorio avanzó DURANTE la auditoría (sin invalidar la revisión)
+
+**Evento:** a las 2026-10-31T14:53:49Z (con la auditoría en curso) el propietario fusionó el PR #1532 (catálogo, CP-CAT-MAESTRO-002) → `main` pasó de `422655eae` a `c32fe9554`.
+
+**Impacto en PR #1531:** `mergeable_state=dirty` por **un único archivo**: `src/__tests__/components/cash-report-view.test.tsx`. El merge de catálogo incluía (commit `4e642eeca`) un fix del MISMO time-bomb con la MISMA fórmula relativa (`new Date(Date.now() + 86_400_000).toISOString().slice(0,10)`) — dos agentes corrigieron el mismo defecto casi simultáneamente por vías independientes. Verificado por merge local: **ningún otro archivo de #1531 colisiona** (todo auto-mergea). **Rebase trivial:** aceptar la versión de main (el fix ya vive allí) y soltar la copia de #1531; la afirmación 9 de la matriz queda cubierta por main con la solución equivalente (misma invariante, misma fórmula).
+
+**Impacto en esta certificación:** ninguno sobre los resultados — el audit se ejecutó íntegramente contra `f04919c3f` (intacto) sobre base `422655eae` (intacta como ancestro); los módulos tocados por #1532 (catálogo, manifiesto de migraciones, contrato de seguridad, test de replay) no interfieren con las rutas, contratos ni pruebas del módulo Ofertas certificados.
+
+**Impacto en el PR de corrección #1533:** `mergeable=true / clean` contra el main nuevo (verificado por API y sin solapamiento de archivos). Su recomendación de integración no cambia.
+
+**Recomendación actualizada (§14):** igual orden, con un paso previo: rebase trivial de #1531 resolviendo el duplicado del test de caja a favor de la versión ya presente en main.
