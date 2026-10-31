@@ -12,6 +12,12 @@ export const runtime = 'nodejs';
 /**
  * Validates that the user has access to the store that owns the given oferta.
  * Admins bypass this check.
+ *
+ * CP-OFFERS-PUERTOPADRE-001: la lectura (GET) exige membresía activa — igual
+ * que la política RLS SELECT. La ESCRITURA (PATCH) se hace con service_role
+ * (bypass de RLS), por lo que su autorización se alinea con la política RLS
+ * real de la tabla («Admin/manager/encargado can update ofertas»): un miembro
+ * clerk/usuario puede VER la oferta pero no modificarla.
  */
 function validateStoreMembership(session: AuthenticatedSession, ofertaStoreId: string): boolean {
   // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
@@ -19,6 +25,18 @@ function validateStoreMembership(session: AuthenticatedSession, ofertaStoreId: s
   const memberships = (session.user as any).memberships || [];
   return memberships.some(
     (m: any) => m.store_id === ofertaStoreId && m.status === 'active'
+  );
+}
+
+/** Autorización de ESCRITURA alineada con la política RLS UPDATE de ofertas. */
+function validateStoreWriteMembership(session: AuthenticatedSession, ofertaStoreId: string): boolean {
+  if (isAdminLevel(session.user.role)) return true;
+  const memberships = (session.user as any).memberships || [];
+  return memberships.some(
+    (m: any) =>
+      m.store_id === ofertaStoreId &&
+      m.status === 'active' &&
+      ['admin', 'manager', 'encargado'].includes(m.role)
   );
 }
 
@@ -81,7 +99,7 @@ async function patchHandler(req: NextRequest, _session: AuthenticatedSession, { 
 
     if (!validated.success) {
       return NextResponse.json(
-        { error: 'Datos inválidos', details: zodError(validated.error) },
+        { error: 'Datos inválidos', details: zodError(validated.error).details },
         { status: 400 }
       );
     }
@@ -99,9 +117,17 @@ async function patchHandler(req: NextRequest, _session: AuthenticatedSession, { 
       return NextResponse.json({ error: 'Oferta no encontrada' }, { status: 404 });
     }
 
-    if (!validateStoreMembership(session, existing.store_id)) {
+    // Escritura con service_role → autorización alineada con RLS UPDATE
+    // (admin/manager/encargado de la tienda o nivel administrativo).
+    if (!validateStoreWriteMembership(session, existing.store_id)) {
+      const isMember = validateStoreMembership(session, existing.store_id);
       return NextResponse.json(
-        { error: 'Prohibido', message: 'No tienes permisos para editar esta oferta' },
+        {
+          error: 'Prohibido',
+          message: isMember
+            ? 'Tu rol no permite editar ofertas en esta tienda (requiere admin, manager o encargado)'
+            : 'No tienes permisos para editar esta oferta',
+        },
         { status: 403 }
       );
     }

@@ -214,6 +214,7 @@ export default function OfertasView() {
           setIsDirty={setIsDirty}
           onReset={resetForm}
           onConfirmIfDirty={confirmIfDirty}
+          onNewOferta={handleNewOferta}
           storeId={storeId}
         />
       </div>
