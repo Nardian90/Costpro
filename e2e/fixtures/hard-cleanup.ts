@@ -402,7 +402,12 @@ export async function countE2EResiduals(): Promise<{ stores: number; users: numb
   try {
     const rows = await sb.select<{ id: string; name: string }>(
       'stores',
-      `select=id,name&is_archived=false&${storeOr}`,
+      // CP-OFFERS-PUERTOPADRE-002 (F-2): `is_archived=false` (booleano desnudo)
+      // es rechazado por el PostgREST vigente con HTTP 400 «failed to parse
+      // filter (false)» → el catch de abajo lo tragaba y el contador devolvía
+      // SIEMPRE 0 tiendas → el guardrail del global-teardown imprimía un
+      // «PASS — net delta = 0» falso (fail-open). Sintaxis explícita eq.false.
+      `select=id,name&is_archived=eq.false&${storeOr}`,
     );
     // Protegidos NO son residuo (pilotos persistentes matchean 'E2E *')
     stores = rows.filter((r) => !isProtectedStore(r.id, r.name)).length;
