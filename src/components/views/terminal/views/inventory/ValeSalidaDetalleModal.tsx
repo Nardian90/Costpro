@@ -65,18 +65,23 @@ export type ValeSalidaDoc = {
   id: string;
   store_id: string;
   slip_number: string;
-  status: 'completed' | 'voided' | 'reversed';
+  /** MISIÓN RES. 11 (2026-10-31): 'pending' = guardado En Revisión (sin
+   * descontar stock hasta confirm_vale_salida). */
+  status: 'pending' | 'completed' | 'voided' | 'reversed';
   production_order_id: string | null;
   notes: string;
   total_cost: number;
   created_by: string;
   created_at: string;
+  confirmed_at?: string | null;
+  confirmed_by?: string | null;
   voided_at: string | null;
   voided_by: string | null;
   void_reason: string | null;
   items?: ValeSalidaItem[];
   creator?: { full_name: string } | null;
   voider?: { full_name: string } | null;
+  confirmer?: { full_name: string } | null;
   production_orders?: { order_number: string; order_type: string } | null;
 };
 
@@ -149,10 +154,17 @@ export function ValeSalidaDetalleModal({
   const [isExportingSc208, setIsExportingSc208] = useState(false);
 
   const handleExportSc208 = async () => {
-    if (!vale) return;
+    // El modelo oficial SC-2-08 ampara un despacho real: un vale 'pending'
+    // (En Revisión) no ha despachado nada — no se exporta (guard de tipo).
+    if (!vale || vale.status === 'pending') return;
     setIsExportingSc208(true);
     try {
-      await exportSc208ForVale(vale, user?.activeStoreId);
+      // Narrowing explícito: el guard superior ya excluyó 'pending'; el modelo
+      // oficial SC-2-08 solo cubre estados con despacho real.
+      await exportSc208ForVale(
+        { ...vale, status: vale.status as 'completed' | 'voided' | 'reversed' },
+        user?.activeStoreId,
+      );
       toast.success(`Modelo SC-2-08 generado (${vale.slip_number})`);
     } catch {
       toast.error('No se pudo generar el PDF SC-2-08. Intente nuevamente.');
@@ -192,10 +204,16 @@ export function ValeSalidaDetalleModal({
       footer={
         <div className="flex items-center justify-between gap-2 w-full">
           <p className="text-[10px] text-muted-foreground font-bold hidden sm:block">
-            El stock ya fue descontado al emitir el documento.
+            {vale?.status === 'pending'
+              ? 'Vale en revisión: el stock se descontará al confirmarlo.'
+              : 'El stock ya fue descontado al emitir el documento.'}
           </p>
           <div className="flex items-center gap-2 ml-auto">
-            {vale && (
+            {/* MISIÓN RES. 11 (2026-10-31): el modelo oficial SC-2-08 ampara un
+                despacho REAL — un vale En Revisión todavía no despachó nada, por
+                lo que la exportación se ofrece solo cuando el vale tiene efectos
+                (completado/devuelto/anulado). */}
+            {vale && vale.status !== 'pending' && (
               <Button
                 type="button"
                 variant="outline"
@@ -236,6 +254,22 @@ export function ValeSalidaDetalleModal({
         </p>
       ) : (
         <div className="space-y-5">
+          {/* ── Aviso de vale en revisión (misión Res. 11, 2026-10-31) ── */}
+          {vale.status === 'pending' && (
+            <div className="rounded-xl border border-warning/40 bg-warning/5 p-3" role="status">
+              <p className="text-xs font-black text-warning uppercase tracking-widest flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
+                Vale en revisión — sin efecto en inventario todavía
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                El documento fue guardado para revisión. El stock y las OT <span className="font-bold">no</span> se
+                han descontado: ocurrirá al confirmarlo desde el listado del módulo (el costo se recalculará
+                servidor con el costo promedio vigente en ese momento). Los costos mostrados abajo son
+                estimados del momento del guardado.
+              </p>
+            </div>
+          )}
+
           {/* ── Datos del documento ── */}
           <section aria-label="Datos del documento">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
@@ -343,7 +377,9 @@ export function ValeSalidaDetalleModal({
               </p>
             ) : movimientos.length === 0 ? (
               <p className="text-xs text-muted-foreground italic py-2">
-                Sin movimientos vinculados a este documento.
+                {vale.status === 'pending'
+                  ? 'Sin movimientos: el vale está en revisión y todavía no ha descontado stock.'
+                  : 'Sin movimientos vinculados a este documento.'}
               </p>
             ) : (
               <ul className="rounded-lg border border-border divide-y divide-border/50 overflow-hidden">
@@ -400,6 +436,18 @@ export function ValeSalidaDetalleModal({
                   <Dato etiqueta="Fecha de anulación" valor={vale.voided_at ? formatDate(vale.voided_at) : '—'} />
                   {vale.void_reason && <Dato etiqueta="Motivo" valor={vale.void_reason} full />}
                 </>
+              )}
+              {vale.status === 'completed' && vale.confirmed_at && (
+                <>
+                  <Dato etiqueta="Confirmado por" valor={vale.confirmer?.full_name || '—'} />
+                  <Dato etiqueta="Fecha de confirmación" valor={formatDate(vale.confirmed_at)} />
+                </>
+              )}
+              {vale.status === 'pending' && (
+                <p className="text-[10px] text-muted-foreground italic sm:col-span-2 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" aria-hidden="true" />
+                  Pendiente de confirmación: Confírmalo desde el listado para aplicar la salida de inventario.
+                </p>
               )}
               {vale.status === 'completed' && (
                 <p className="text-[10px] text-muted-foreground italic sm:col-span-2 flex items-center gap-1">

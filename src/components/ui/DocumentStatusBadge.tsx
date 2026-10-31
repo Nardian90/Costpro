@@ -28,11 +28,14 @@ import {
  * - devolution         (pending, completed, voided, reversed)
  * - adjustment         (pending, confirmed, reversed)
  * - production_order   (draft, approved, in_progress, paused, completed, closed, voided, reversed)
- * - issue_slip         (completed, voided, reversed) — Vale de Salida (nace completado;
- *                      la "devolución" es la reversión contable reverse_vale_salida)
+ * - issue_slip         (pending, completed, voided, reversed) — Vale de Salida
+ *                      (misión Res. 11, 2026-10-31: nace 'pending' (En Revisión)
+ *                      cuando se guarda para revisar; se confirma después)
+ * - material_request   (draft, in_review, confirmed, voided) — Solicitud de
+ *                      Materiales, Modelo SC-2-07 Res. 11/2007 MFP
  */
 
-type DocType = 'transaction' | 'receipt' | 'transfer' | 'devolution' | 'adjustment' | 'production_order' | 'issue_slip' | 'cash_flow';
+type DocType = 'transaction' | 'receipt' | 'transfer' | 'devolution' | 'adjustment' | 'production_order' | 'issue_slip' | 'material_request' | 'cash_flow';
 
 interface BadgeConfig {
   label: string;
@@ -87,11 +90,24 @@ const STATUS_CONFIG: Record<DocType, Record<string, BadgeConfig>> = {
     reversed:    { label: 'Revertida',     icon: RefreshCcw,    className: 'bg-purple-500/15 text-purple-500 dark:text-purple-400' },
   },
   issue_slip: {
-    // Estados REALES de issue_slips (CHECK constraint DB). No existe borrador:
-    // el vale nace 'completed' y su devolución es la reversión compensatoria.
-    completed:   { label: 'Completado',  icon: CheckCircle2,  className: 'bg-success/10 text-success' },
-    voided:      { label: 'Anulado',     icon: Ban,           className: 'bg-destructive/10 text-destructive' },
-    reversed:    { label: 'Devuelto',    icon: RefreshCcw,    className: 'bg-purple-500/10 text-purple-500 dark:text-purple-400' },
+    // Estados REALES de issue_slips (CHECK constraint DB). MISIÓN RES. 11
+    // (2026-10-31): el vale puede nacer 'pending' (En Revisión — guardado sin
+    // descontar stock, se confirma después); la "devolución" de un vale
+    // completado sigue siendo la reversión contable reverse_vale_salida.
+    pending:    { label: 'En Revisión', icon: Clock,         className: 'bg-warning/10 text-warning' },
+    completed:  { label: 'Completado',  icon: CheckCircle2,  className: 'bg-success/10 text-success' },
+    voided:     { label: 'Anulado',     icon: Ban,           className: 'bg-destructive/10 text-destructive' },
+    reversed:   { label: 'Devuelto',    icon: RefreshCcw,    className: 'bg-purple-500/10 text-purple-500 dark:text-purple-400' },
+  },
+  material_request: {
+    // Estados REALES de material_requests (CHECK DB) — Modelo SC-2-07
+    // «Solicitud de Entrega» (Res. 11/2007 MFP). Flujo documental con el
+    // estándar de Ajustes Documentales: borrador → revisión → confirmada,
+    // con anulación trazable.
+    draft:      { label: 'Borrador',    icon: FileText,      className: 'bg-muted text-muted-foreground' },
+    in_review:  { label: 'En Revisión', icon: Clock,         className: 'bg-warning/10 text-warning' },
+    confirmed:  { label: 'Confirmada',  icon: CheckCircle2,  className: 'bg-success/10 text-success' },
+    voided:     { label: 'Anulada',     icon: Ban,           className: 'bg-destructive/10 text-destructive' },
   },
   cash_flow: {
     // MISIÓN INGRESOS/EGRESOS 2026-10-20: estados REALES de
@@ -183,6 +199,7 @@ export function isTerminalStatus(type: DocType, status: string): boolean {
     adjustment: ['reversed'],
     production_order: ['voided', 'reversed'],
     issue_slip: ['voided', 'reversed'],
+    material_request: ['voided'],
     cash_flow: ['anulado'],
   };
   return terminal[type]?.includes(status) ?? false;
@@ -200,6 +217,7 @@ export function canReverse(type: DocType, status: string): boolean {
     adjustment: ['confirmed'],
     production_order: ['in_progress', 'paused', 'completed', 'closed'],
     issue_slip: ['completed'],
+    material_request: [],
     cash_flow: ['confirmado'],
   };
   return reversible[type]?.includes(status) ?? false;
