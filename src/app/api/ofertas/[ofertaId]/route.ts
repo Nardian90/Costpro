@@ -109,6 +109,25 @@ async function patchHandler(req: NextRequest, _session: AuthenticatedSession, { 
     // Build update object — exclude id from update data
     const { id, ...updateFields } = validated.data;
 
+    // CP-OFFERS-PUERTOPADRE-002 (F-1): el cambio de tienda de una oferta vía
+    // PATCH no es una operación soportada por el producto y, ejecutado con
+    // service_role (bypass de RLS), eludía el WITH CHECK implícito de la
+    // política RLS UPDATE: un miembro con rol de escritura en la tienda
+    // ORIGEN podía mover la oferta a una tienda AJENA (demostrado en
+    // CostproE2E: RLS directo responde 42501, la ruta respondía 200).
+    // Se rechaza explícitamente cualquier cambio de store_id: la oferta se
+    // elimina y se recrea en la tienda destino si el negocio lo requiere.
+    const targetStoreId = (updateFields as any).store_id;
+    if (targetStoreId && targetStoreId !== existing.store_id) {
+      return NextResponse.json(
+        {
+          error: 'Cambio de tienda no permitido',
+          message: 'No se puede cambiar la tienda de una oferta existente. Elimínala y créala de nuevo en la tienda correspondiente.',
+        },
+        { status: 400 }
+      );
+    }
+
     // Recalculate financials if productos, descuento, or itbis are provided
     const needsRecalc = updateFields.productos || (updateFields as any).descuento !== undefined || (updateFields as any).itbis !== undefined;
     if (needsRecalc) {
