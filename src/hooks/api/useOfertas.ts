@@ -24,6 +24,13 @@ interface OfertaListResponse {
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
+/**
+ * CP-OFFERS-PUERTOPADRE-001: la respuesta de error de las rutas /api/ofertas
+ * incluye `details` (array {path, message} del ZodError del backend) y a veces
+ * `message` (errores de permisos). Antes solo se leía `error` ("Datos
+ * inválidos" / "Prohibido") — el usuario nunca sabía QUÉ campo falló.
+ * Ahora el mensaje incluye los motivos específicos por campo.
+ */
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   const token = useAuthStore.getState().token;
   const res = await fetch(url, {
@@ -37,7 +44,22 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: 'Error de red' }));
-    throw new Error(body.error || `Error ${res.status}`);
+    // details: array plano {path, message} (normalizado CP-OFFERS-PUERTOPADRE-001).
+    // Se tolera también el anidamiento legacy {details: {details: [...]}}.
+    const rawDetails = (body as { details?: unknown }).details;
+    const details: Array<{ path?: string; message?: string }> = Array.isArray(rawDetails)
+      ? (rawDetails as Array<{ path?: string; message?: string }>)
+      : Array.isArray((rawDetails as { details?: unknown })?.details)
+        ? ((rawDetails as { details: Array<{ path?: string; message?: string }> }).details)
+        : [];
+    const detailMsg = details
+      .map(d => (d.path ? `${d.message} (${d.path})` : d.message))
+      .filter(Boolean)
+      .join('; ');
+    const base = (body as { message?: string; error?: string }).message
+      || (body as { error?: string }).error
+      || `Error ${res.status}`;
+    throw new Error(detailMsg ? `${base}: ${detailMsg}` : base);
   }
 
   return res.json();
