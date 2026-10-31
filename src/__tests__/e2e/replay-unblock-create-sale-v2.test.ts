@@ -360,7 +360,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 113 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 115 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -375,9 +375,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // verificación del contenido
     const m = leeryValidarManifiesto();
     // cadena catálogo maestro + R1 + CP-CAT-MAESTRO-002: 102 (PR1) + 1 R1 + 1 etapa 0 + 4 etapa 1 + 1 PR4 + 1 propagación imagen = 110; +1 fix CP-ORG-003 (CP-CAT-MAESTRO-003) = 111; +1 fix CHECK auditoría (CP-CAT-MAESTRO-004) = 112; +1 CP-CORRECCIONES-VENTAS-ALMACÉN-001 = 113
-    expect(m.total_incluidos).toBe(113);
+    // MISIÓN RESOLUCIÓN 11 (2026-10-31): +1 SC-2-07 Solicitud de Materiales (20261031120000) = 114; +1 vales etapa revisión (20261031120100) = 115
+    expect(m.total_incluidos).toBe(115);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(113);
+    expect(incluidos.length).toBe(115);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -401,10 +402,13 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // (MISIÓN CP-CAT-MAESTRO-002: la posición 110 = 20261030120000_cp_catalogo_master_image_propagation)
     // (MISIÓN CP-CAT-MAESTRO-004: la posición 112 = 20261030143000_cp_catalogo_audit_check_master_products)
     // (MISIÓN CP-CORRECCIONES-VENTAS-ALMACÉN-001: la posición 113 = 20261030150000_cp_correcciones_sku176_nombre_enervida)
+    // (MISIÓN RESOLUCIÓN 11: las posiciones 114-115 = 20261031120000_res11_sc207_solicitud_materiales + 20261031120100_vales_salida_etapa_revision)
     expect(pos('20261029090000_drop_legacy_product_images_policies.sql')).toBe(109);
     expect(pos('20261030120000_cp_catalogo_master_image_propagation.sql')).toBe(110);
     expect(pos('20261030143000_cp_catalogo_audit_check_master_products.sql')).toBe(112);
     expect(pos('20261030150000_cp_correcciones_sku176_nombre_enervida.sql')).toBe(113);
+    expect(pos('20261031120000_res11_sc207_solicitud_materiales.sql')).toBe(114);
+    expect(pos('20261031120100_vales_salida_etapa_revision.sql')).toBe(115);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }
