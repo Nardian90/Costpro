@@ -279,8 +279,11 @@ describe('§1/§2 — Vista dedicada: render inicial y separación config/cálcu
   it('§2: intervalo inválido (Desde > Hasta) deshabilita la acción y muestra alerta', async () => {
     await renderView();
     const desde = document.getElementById('cr-sd') as HTMLInputElement;
-    // Hasta queda en hoy (2026-10-12): Desde = 2026-10-31 SÍ es posterior
-    await act(async () => { fireEvent.change(desde, { target: { value: '2026-10-31' } }); });
+    // Hasta queda en HOY (default de la vista): Desde = MAÑANA es siempre
+    // posterior, sea cual sea la fecha real de ejecución (FIX 2026-10-31:
+    // el literal '2026-10-31' dejó de ser futuro el 31/10 y rompía el test)
+    const manana = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    await act(async () => { fireEvent.change(desde, { target: { value: manana } }); });
     const btn = screen.getByRole('button', { name: /Generar reporte/i }) as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
     expect(screen.getByRole('alert').textContent).toContain('inválido');
