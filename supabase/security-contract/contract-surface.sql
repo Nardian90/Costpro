@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-31T13:56:10.864Z
+-- Captured  : 2026-10-31T16:58:31.057Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 166 (SECURITY DEFINER write functions, public schema)
+-- Functions : 175 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -2552,6 +2552,60 @@ END;
 $function$
 
 
+-- @contract-function name=confirm_material_request args="p_request_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.confirm_material_request(p_request_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_req public.material_requests%ROWTYPE;
+  v_items_count integer;
+BEGIN
+  SELECT * INTO v_req FROM public.material_requests WHERE id = p_request_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_REQUEST_NOT_FOUND';
+  END IF;
+  IF v_req.status <> 'in_review' THEN
+    RAISE EXCEPTION 'ERR_NOT_IN_REVIEW: solo se pueden confirmar solicitudes en revisión (estado actual: %)', v_req.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_req.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  SELECT count(*) INTO v_items_count FROM public.material_request_items WHERE request_id = p_request_id;
+  IF v_items_count = 0 THEN
+    RAISE EXCEPTION 'ERR_EMPTY_ITEMS';
+  END IF;
+
+  UPDATE public.material_requests
+  SET status = 'confirmed',
+      authorized_by = v_caller_uid,
+      authorized_at = now(),
+      received_by = v_caller_uid,
+      received_at = now(),
+      updated_at = now()
+  WHERE id = p_request_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CONFIRM_MATERIAL_REQUEST', 'material_requests', p_request_id, v_req.store_id, v_caller_uid,
+    jsonb_build_object('request_number', v_req.request_number, 'from', 'in_review', 'to', 'confirmed',
+      'items_count', v_items_count,
+      'authorized_by', v_caller_uid,
+      'nota_modelo', 'Datos 7 y 8 del SC-2-07 registrados en la confirmación'));
+
+  RETURN jsonb_build_object('status', 'success', 'request_id', p_request_id,
+    'request_number', v_req.request_number, 'to', 'confirmed',
+    'authorized_by', v_caller_uid);
+END;
+$function$
+
+
 -- @contract-function name=confirm_pending_reception args="p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.confirm_pending_reception(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS void
@@ -2711,6 +2765,113 @@ BEGIN
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
 END $function$
+
+
+-- @contract-function name=confirm_vale_salida args="p_slip_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.confirm_vale_salida(p_slip_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_slip public.issue_slips%ROWTYPE;
+  v_item public.issue_slip_items%ROWTYPE;
+  v_unit_cost numeric;
+  v_total_cost numeric := 0;
+  v_items_count integer := 0;
+BEGIN
+  -- Lock de fila: confirmar/anular concurrentes → exactamente uno gana;
+  -- una segunda confirmación ve el estado avanzado y se rechaza (evita
+  -- dobles descuentos de stock).
+  SELECT * INTO v_slip FROM public.issue_slips WHERE id = p_slip_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_SLIP_NOT_FOUND';
+  END IF;
+  IF v_slip.status <> 'pending' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden confirmar vales en revisión (estado actual: %)', v_slip.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_slip.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  PERFORM public.validate_operation_date(NOW(), v_slip.store_id);
+
+  FOR v_item IN
+    SELECT * FROM public.issue_slip_items WHERE slip_id = p_slip_id ORDER BY created_at, id
+  LOOP
+    -- Costo SIEMPRE servidor, re-leído con lock en el momento de la
+    -- confirmación (el snapshot del borrador era solo informativo).
+    SELECT cost_average INTO v_unit_cost
+    FROM public.products WHERE id = v_item.product_id AND store_id = v_slip.store_id
+    FOR UPDATE;
+    IF v_unit_cost IS NULL THEN
+      RAISE EXCEPTION 'ERR_PRODUCT_COST_UNAVAILABLE: %', v_item.product_id;
+    END IF;
+
+    IF v_item.production_order_item_id IS NOT NULL THEN
+      -- Descuento sobre la línea de OT (misma firma consolidada v3 que
+      -- create_vale_salida — costo server-side).
+      PERFORM public.withdraw_production_item_v3(
+        p_item_id := v_item.production_order_item_id, p_qty := v_item.quantity,
+        p_store_id := v_slip.store_id, p_user_id := v_caller_uid,
+        p_idempotency_key := NULL,
+        p_reference_id := v_slip.id,
+        p_reference_doc := 'Vale de Salida ' || v_slip.slip_number
+      );
+      SELECT cost_average INTO v_unit_cost FROM public.products WHERE id = v_item.product_id;
+    ELSE
+      IF v_item.variant_id IS NOT NULL THEN
+        IF NOT EXISTS (SELECT 1 FROM public.product_variants WHERE id = v_item.variant_id AND product_id = v_item.product_id) THEN
+          RAISE EXCEPTION 'ERR_VARIANT_NOT_BELONG_TO_PRODUCT';
+        END IF;
+      END IF;
+
+      PERFORM public.register_stock_movement(
+        p_product_id := v_item.product_id, p_store_id := v_slip.store_id,
+        p_quantity := -v_item.quantity, p_movement_type := 'issue_slip_out',
+        p_reason := 'Vale de Salida ' || v_slip.slip_number,
+        p_user_id := v_caller_uid,
+        p_variant_id := v_item.variant_id,
+        p_sale_id := v_slip.id,
+        p_unit_cost := v_unit_cost,
+        p_notes := COALESCE(v_slip.notes, ''),
+        p_skip_access_check := TRUE,
+        p_operation_date := NOW()
+      );
+    END IF;
+
+    UPDATE public.issue_slip_items
+    SET unit_cost = v_unit_cost, total_cost = v_item.quantity * v_unit_cost
+    WHERE id = v_item.id;
+
+    v_total_cost := v_total_cost + (v_item.quantity * v_unit_cost);
+    v_items_count := v_items_count + 1;
+  END LOOP;
+
+  UPDATE public.issue_slips
+  SET status = 'completed',
+      total_cost = v_total_cost,
+      confirmed_at = NOW(),
+      confirmed_by = v_caller_uid
+  WHERE id = p_slip_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CONFIRM_VALE_SALIDA', 'issue_slips', p_slip_id, v_slip.store_id, v_caller_uid,
+    jsonb_build_object('slip_number', v_slip.slip_number, 'from', 'pending', 'to', 'completed',
+      'total_cost', v_total_cost, 'items_count', v_items_count,
+      'confirmed_by', v_caller_uid,
+      'production_order_id', v_slip.production_order_id));
+
+  RETURN jsonb_build_object('status','success','slip_id',p_slip_id,
+    'slip_number', v_slip.slip_number, 'total_cost', v_total_cost,
+    'items_count', v_items_count);
+END;
+$function$
 
 
 -- @contract-function name=connect_store_catalog args="p_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
@@ -3857,6 +4018,169 @@ BEGIN
 
   RETURN jsonb_build_object('status','success','master_product_id', v_master_id,
     'product_id', v_product_id, 'tenant_id', v_tenant, 'sku', v_sku);
+END;
+$function$
+
+
+-- @contract-function name=create_material_request args="p_store_id uuid, p_fecha_emision date, p_warehouse_id uuid, p_almacen_nombre text, p_almacen_codigo text, p_entidad_codigo text, p_area_nombre text, p_area_codigo text, p_centro_costo text, p_production_order_id uuid, p_notes text, p_items jsonb, p_idempotency_key text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_material_request(p_store_id uuid, p_fecha_emision date DEFAULT NULL::date, p_warehouse_id uuid DEFAULT NULL::uuid, p_almacen_nombre text DEFAULT NULL::text, p_almacen_codigo text DEFAULT NULL::text, p_entidad_codigo text DEFAULT NULL::text, p_area_nombre text DEFAULT NULL::text, p_area_codigo text DEFAULT NULL::text, p_centro_costo text DEFAULT NULL::text, p_production_order_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_items jsonb DEFAULT NULL::jsonb, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_request_id uuid := gen_random_uuid();
+  v_request_number text;
+  v_fecha_emision date := COALESCE(p_fecha_emision, CURRENT_DATE);
+  v_almacen_nombre text;
+  v_almacen_codigo text;
+  v_entidad_codigo text;
+  v_reeup text;
+  v_nit text;
+  v_tenant uuid;
+  v_item jsonb;
+  v_product_id uuid;
+  v_quantity numeric;
+  v_sku text;
+  v_descripcion text;
+  v_um text;
+  v_seen_products uuid[] := ARRAY[]::uuid[];
+  v_items_count integer := 0;
+  v_param_hash text;
+  v_existing jsonb;
+BEGIN
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  IF p_items IS NULL OR jsonb_array_length(p_items) = 0 THEN
+    RAISE EXCEPTION 'ERR_EMPTY_ITEMS';
+  END IF;
+
+  -- Dato 1: fecha de emisión — no futura, no anterior a 6 meses (mismo límite
+  -- histórico que validate_operation_date aplica a vales/ventas).
+  IF v_fecha_emision > CURRENT_DATE THEN
+    RAISE EXCEPTION 'ERR_FUTURE_DATED_DOCUMENT';
+  END IF;
+  IF v_fecha_emision < (CURRENT_DATE - INTERVAL '6 months')::date THEN
+    RAISE EXCEPTION 'ERR_BACKDATED_DOCUMENT';
+  END IF;
+
+  -- Dato 4: el área solicitante es obligatoria.
+  IF p_area_nombre IS NULL OR btrim(p_area_nombre) = '' THEN
+    RAISE EXCEPTION 'ERR_AREA_REQUIRED';
+  END IF;
+
+  -- Dato 3: almacén resuelto SIEMPRE servidor (trust boundary).
+  IF p_warehouse_id IS NOT NULL THEN
+    SELECT w.name, w.code INTO v_almacen_nombre, v_almacen_codigo
+    FROM public.warehouses w
+    WHERE w.id = p_warehouse_id AND w.store_id = p_store_id AND w.is_active = true;
+    IF v_almacen_nombre IS NULL THEN
+      RAISE EXCEPTION 'ERR_WAREHOUSE_NOT_FOUND';
+    END IF;
+  ELSE
+    v_almacen_nombre := btrim(COALESCE(p_almacen_nombre, ''));
+    IF v_almacen_nombre = '' THEN
+      RAISE EXCEPTION 'ERR_WAREHOUSE_NAME_REQUIRED';
+    END IF;
+    v_almacen_codigo := NULLIF(btrim(COALESCE(p_almacen_codigo, '')), '');
+  END IF;
+
+  -- Dato 2: código de entidad — snapshot (cliente → reeup → nit; puede quedar
+  -- en blanco si la entidad no lo ha registrado: el modelo se cumple con el
+  -- nombre automático y el código se completa en el documento impreso).
+  SELECT s.reeup, s.nit, s.tenant_id INTO v_reeup, v_nit, v_tenant
+    FROM public.stores s WHERE s.id = p_store_id;
+  v_entidad_codigo := COALESCE(
+    NULLIF(btrim(COALESCE(p_entidad_codigo, '')), ''),
+    NULLIF(btrim(COALESCE(v_reeup, '')), ''),
+    NULLIF(btrim(COALESCE(v_nit, '')), ''));
+
+  -- Dato 4: OP/OT asociada (opcional) — debe pertenecer a la tienda.
+  IF p_production_order_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM public.production_orders po
+    WHERE po.id = p_production_order_id AND po.store_id = p_store_id
+  ) THEN
+    RAISE EXCEPTION 'ERR_ORDER_NOT_FOUND';
+  END IF;
+
+  -- Idempotencia (misma infraestructura que create_vale_salida).
+  IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
+    v_param_hash := md5(p_store_id::text || '|' || v_fecha_emision::text || '|' ||
+      COALESCE(p_warehouse_id::text, '') || '|' || v_almacen_nombre || '|' ||
+      COALESCE(p_area_nombre, '') || '|' || COALESCE(p_production_order_id::text, '') ||
+      '|' || COALESCE(p_items::text, ''));
+    v_existing := public.check_idempotency(p_idempotency_key, 'material_request', v_request_id, v_param_hash);
+    IF v_existing IS NOT NULL THEN RETURN v_existing; END IF;
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+  v_request_number := public.next_document_number(p_store_id, 'material_request', v_caller_uid);
+
+  INSERT INTO public.material_requests (
+    id, store_id, tenant_id, request_number, status, fecha_emision,
+    entidad_codigo, warehouse_id, almacen_nombre, almacen_codigo,
+    area_nombre, area_codigo, centro_costo, production_order_id,
+    notes, created_by, created_at
+  ) VALUES (
+    v_request_id, p_store_id, v_tenant, v_request_number, 'draft', v_fecha_emision,
+    v_entidad_codigo, p_warehouse_id, v_almacen_nombre, v_almacen_codigo,
+    btrim(p_area_nombre), NULLIF(btrim(COALESCE(p_area_codigo, '')), ''),
+    NULLIF(btrim(COALESCE(p_centro_costo, '')), ''), p_production_order_id,
+    COALESCE(btrim(p_notes), ''), v_caller_uid, now()
+  );
+
+  -- Dato 5: líneas con snapshots servidor (código, descripción, UM, cantidad).
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
+    v_product_id := (v_item->>'product_id')::uuid;
+    v_quantity := (v_item->>'quantity')::numeric;
+
+    IF v_quantity IS NULL OR v_quantity <= 0 THEN
+      RAISE EXCEPTION 'ERR_INVALID_QUANTITY';
+    END IF;
+    IF v_product_id = ANY(v_seen_products) THEN
+      RAISE EXCEPTION 'ERR_DUPLICATE_PRODUCT: %', v_product_id;
+    END IF;
+    v_seen_products := v_seen_products || v_product_id;
+
+    SELECT p.sku, p.name, p.unit_of_measure INTO v_sku, v_descripcion, v_um
+    FROM public.products p
+    WHERE p.id = v_product_id AND p.store_id = p_store_id;
+    IF v_descripcion IS NULL THEN
+      RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: %', v_product_id;
+    END IF;
+
+    INSERT INTO public.material_request_items (
+      request_id, product_id, sku, descripcion, unit_of_measure, quantity
+    ) VALUES (
+      v_request_id, v_product_id, COALESCE(v_sku, ''), v_descripcion,
+      COALESCE(v_um, ''), v_quantity
+    );
+    v_items_count := v_items_count + 1;
+  END LOOP;
+
+  IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
+    PERFORM public.register_idempotency(p_idempotency_key, 'material_request', v_request_id, v_param_hash,
+      jsonb_build_object('status', 'success', 'request_id', v_request_id,
+        'request_number', v_request_number, 'items_count', v_items_count));
+  END IF;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CREATE_MATERIAL_REQUEST', 'material_requests', v_request_id, p_store_id, v_caller_uid,
+    jsonb_build_object('request_number', v_request_number, 'status', 'draft',
+      'fecha_emision', v_fecha_emision, 'items_count', v_items_count,
+      'area_nombre', btrim(p_area_nombre), 'almacen_nombre', v_almacen_nombre,
+      'production_order_id', p_production_order_id,
+      'normativa', 'Res. 11/2007 MFP — Modelo SC-2-07 Solicitud de Entrega'));
+
+  RETURN jsonb_build_object('status', 'success', 'request_id', v_request_id,
+    'request_number', v_request_number, 'items_count', v_items_count);
 END;
 $function$
 
@@ -5936,6 +6260,120 @@ BEGIN
 
   RETURN jsonb_build_object('status','success','slip_id',v_slip_id,'slip_number',v_slip_number,'total_cost',v_total_cost);
 END $function$
+
+
+-- @contract-function name=create_vale_salida_pending args="p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text, p_user_id uuid, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_vale_salida_pending(p_store_id uuid, p_items jsonb, p_production_order_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_slip_id uuid := gen_random_uuid();
+  v_slip_number text;
+  v_caller_uid uuid;
+  v_product_id uuid;
+  v_variant_id uuid;
+  v_quantity numeric;
+  v_unit_cost numeric;
+  v_total_cost numeric := 0;
+  v_item jsonb;
+  v_po_item_id uuid;
+  v_po_product uuid;
+  v_po_variant uuid;
+  v_seen_po_items uuid[] := ARRAY[]::uuid[];
+  v_seen_products uuid[] := ARRAY[]::uuid[];
+  v_existing_result jsonb;
+  v_param_hash text;
+  v_eff timestamptz;
+  v_items_count integer := 0;
+BEGIN
+  v_eff := COALESCE(p_operation_date, NOW());
+  PERFORM public.validate_operation_date(v_eff, p_store_id);
+
+  v_caller_uid := CASE WHEN auth.role() = 'service_role'
+                       THEN COALESCE(p_user_id, auth.uid())
+                       ELSE auth.uid() END;
+  IF v_caller_uid IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHENTICATED'; END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN RAISE EXCEPTION 'ERR_UNAUTHORIZED'; END IF;
+
+  IF p_items IS NULL OR jsonb_array_length(p_items) = 0 THEN
+    RAISE EXCEPTION 'ERR_EMPTY_ITEMS';
+  END IF;
+
+  IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
+    v_param_hash := md5(p_store_id::text || '|pending|' || COALESCE(p_production_order_id::text,'') || '|' || COALESCE(p_notes,'') || '|' || COALESCE(p_operation_date::text,'') || '|' || p_items::text);
+    v_existing_result := public.check_idempotency(p_idempotency_key, 'vale_salida_pending', v_slip_id, v_param_hash);
+    IF v_existing_result IS NOT NULL THEN RETURN v_existing_result; END IF;
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+  v_slip_number := public.next_document_number(p_store_id, 'vale_salida', v_caller_uid);
+
+  -- El vale nace 'pending' (En Revisión): NO descuenta stock ni OT.
+  INSERT INTO issue_slips (id, store_id, slip_number, status, production_order_id, notes, total_cost, created_by, created_at, tenant_id)
+  VALUES (v_slip_id, p_store_id, v_slip_number, 'pending', p_production_order_id, COALESCE(p_notes, ''), 0, v_caller_uid, v_eff,
+    (SELECT tenant_id FROM stores WHERE id = p_store_id));
+
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
+    v_product_id := (v_item->>'product_id')::uuid;
+    v_variant_id := NULLIF(v_item->>'variant_id','')::uuid;
+    v_quantity   := (v_item->>'quantity')::numeric;
+    v_po_item_id := NULLIF(v_item->>'production_order_item_id','')::uuid;
+
+    IF v_quantity IS NULL OR v_quantity <= 0 THEN RAISE EXCEPTION 'ERR_INVALID_QUANTITY'; END IF;
+    IF v_product_id = ANY(v_seen_products) THEN RAISE EXCEPTION 'ERR_DUPLICATE_PRODUCT: %', v_product_id; END IF;
+    v_seen_products := v_seen_products || v_product_id;
+
+    IF p_production_order_id IS NOT NULL THEN
+      IF v_po_item_id IS NULL THEN RAISE EXCEPTION 'ERR_PO_ITEM_REQUIRED'; END IF;
+      IF v_po_item_id = ANY(v_seen_po_items) THEN RAISE EXCEPTION 'ERR_DUPLICATE_PO_ITEM: %', v_po_item_id; END IF;
+      v_seen_po_items := v_seen_po_items || v_po_item_id;
+
+      SELECT product_id, variant_id INTO v_po_product, v_po_variant
+      FROM production_order_items WHERE id = v_po_item_id AND order_id = p_production_order_id;
+      IF NOT FOUND THEN RAISE EXCEPTION 'ERR_PO_ITEM_NOT_FOUND'; END IF;
+      IF v_po_product IS DISTINCT FROM v_product_id THEN RAISE EXCEPTION 'ERR_PRODUCT_MISMATCH'; END IF;
+      IF v_po_variant IS DISTINCT FROM v_variant_id THEN RAISE EXCEPTION 'ERR_VARIANT_MISMATCH'; END IF;
+    ELSE
+      IF v_variant_id IS NOT NULL THEN
+        IF NOT EXISTS (SELECT 1 FROM product_variants WHERE id = v_variant_id AND product_id = v_product_id) THEN
+          RAISE EXCEPTION 'ERR_VARIANT_NOT_BELONG_TO_PRODUCT';
+        END IF;
+      END IF;
+    END IF;
+
+    -- Snapshot del costo promedio VIGENTE para la revisión (informativo):
+    -- en la confirmación el costo se relee y el servidor vuelve a mandar.
+    SELECT cost_average INTO v_unit_cost FROM products WHERE id = v_product_id AND store_id = p_store_id;
+    IF v_unit_cost IS NULL THEN RAISE EXCEPTION 'ERR_PRODUCT_COST_UNAVAILABLE: %', v_product_id; END IF;
+
+    INSERT INTO issue_slip_items (slip_id, product_id, variant_id, production_order_item_id, quantity, unit_cost, total_cost, created_at)
+    VALUES (v_slip_id, v_product_id, v_variant_id, v_po_item_id, v_quantity, v_unit_cost, v_quantity * v_unit_cost, v_eff);
+
+    v_total_cost := v_total_cost + (v_quantity * v_unit_cost);
+    v_items_count := v_items_count + 1;
+  END LOOP;
+
+  UPDATE issue_slips SET total_cost = v_total_cost WHERE id = v_slip_id;
+
+  IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
+    PERFORM public.register_idempotency(p_idempotency_key, 'vale_salida_pending', v_slip_id, v_param_hash,
+      jsonb_build_object('status','success','slip_id',v_slip_id,'slip_number',v_slip_number,
+        'total_cost',v_total_cost,'status_vale','pending'));
+  END IF;
+
+  INSERT INTO audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CREATE_VALE_SALIDA_PENDING', 'issue_slips', v_slip_id, p_store_id, v_caller_uid,
+    jsonb_build_object('slip_number', v_slip_number, 'status', 'pending',
+      'total_cost_estimado', v_total_cost, 'items_count', v_items_count,
+      'production_order_id', p_production_order_id, 'operation_date', v_eff));
+
+  RETURN jsonb_build_object('status','success','slip_id',v_slip_id,'slip_number',v_slip_number,
+    'total_cost',v_total_cost,'vale_status','pending','items_count',v_items_count);
+END;
+$function$
 
 
 -- @contract-function name=delete_pending_reception args="p_receipt_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
@@ -8576,7 +9014,7 @@ DECLARE
   v_prefix text;
   v_result text;
 BEGIN
-  IF p_document_type NOT IN ('invoice', 'credit_note', 'quotation', 'z_report', 'vale_salida', 'cash_flow') THEN
+  IF p_document_type NOT IN ('invoice', 'credit_note', 'quotation', 'z_report', 'vale_salida', 'cash_flow', 'material_request') THEN
     RAISE EXCEPTION 'ERR_INVALID_DOCUMENT_TYPE: %', p_document_type;
   END IF;
 
@@ -8619,6 +9057,7 @@ BEGIN
     WHEN 'z_report' THEN 'ZR'
     WHEN 'vale_salida' THEN 'VS'
     WHEN 'cash_flow' THEN 'IE'
+    WHEN 'material_request' THEN 'SM'
   END;
 
   v_result := v_prefix || '-' || LPAD(v_next::text, 6, '0') || '-' || v_year::text;
@@ -10878,6 +11317,53 @@ BEGIN
     jsonb_build_object('reason', p_reason, 'old_status', 'cerrado', 'reopened_at', NOW()));
 
   RETURN jsonb_build_object('status', 'success', 'closure_id', p_closure_id);
+END;
+$function$
+
+
+-- @contract-function name=reopen_material_request args="p_request_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reopen_material_request(p_request_id uuid, p_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_req public.material_requests%ROWTYPE;
+BEGIN
+  SELECT * INTO v_req FROM public.material_requests WHERE id = p_request_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_REQUEST_NOT_FOUND';
+  END IF;
+  IF v_req.status <> 'in_review' THEN
+    RAISE EXCEPTION 'ERR_NOT_IN_REVIEW: solo se pueden devolver a borrador las solicitudes en revisión (estado actual: %)', v_req.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_req.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF p_reason IS NULL OR btrim(p_reason) = '' THEN
+    RAISE EXCEPTION 'ERR_REASON_REQUIRED';
+  END IF;
+
+  UPDATE public.material_requests
+  SET status = 'draft',
+      submitted_at = NULL,
+      reopen_count = reopen_count + 1,
+      last_reopen_reason = btrim(p_reason),
+      updated_at = now()
+  WHERE id = p_request_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('REOPEN_MATERIAL_REQUEST', 'material_requests', p_request_id, v_req.store_id, v_caller_uid,
+    jsonb_build_object('request_number', v_req.request_number, 'from', 'in_review', 'to', 'draft',
+      'reason', btrim(p_reason), 'reopen_count', v_req.reopen_count + 1));
+
+  RETURN jsonb_build_object('status', 'success', 'request_id', p_request_id,
+    'request_number', v_req.request_number, 'to', 'draft');
 END;
 $function$
 
@@ -13291,6 +13777,52 @@ END;
 $function$
 
 
+-- @contract-function name=submit_material_request args="p_request_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.submit_material_request(p_request_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_req public.material_requests%ROWTYPE;
+  v_items_count integer;
+BEGIN
+  SELECT * INTO v_req FROM public.material_requests WHERE id = p_request_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_REQUEST_NOT_FOUND';
+  END IF;
+  IF v_req.status <> 'draft' THEN
+    RAISE EXCEPTION 'ERR_NOT_DRAFT: solo se pueden enviar a revisión solicitudes en borrador (estado actual: %)', v_req.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_req.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  SELECT count(*) INTO v_items_count FROM public.material_request_items WHERE request_id = p_request_id;
+  IF v_items_count = 0 THEN
+    RAISE EXCEPTION 'ERR_EMPTY_ITEMS';
+  END IF;
+
+  UPDATE public.material_requests
+  SET status = 'in_review', submitted_at = now(), updated_at = now()
+  WHERE id = p_request_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('SUBMIT_MATERIAL_REQUEST', 'material_requests', p_request_id, v_req.store_id, v_caller_uid,
+    jsonb_build_object('request_number', v_req.request_number, 'from', 'draft', 'to', 'in_review',
+      'items_count', v_items_count, 'solicitante', v_req.created_by));
+
+  RETURN jsonb_build_object('status', 'success', 'request_id', p_request_id,
+    'request_number', v_req.request_number, 'to', 'in_review');
+END;
+$function$
+
+
 -- @contract-function name=submit_physical_inventory_authorization args="p_pi_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.submit_physical_inventory_authorization(p_pi_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -13533,6 +14065,146 @@ BEGIN
           jsonb_build_object('changes', p_changes, 'tenant_id', v_tenant));
 
   RETURN v_result;
+END;
+$function$
+
+
+-- @contract-function name=update_material_request args="p_request_id uuid, p_fecha_emision date, p_warehouse_id uuid, p_almacen_nombre text, p_almacen_codigo text, p_entidad_codigo text, p_area_nombre text, p_area_codigo text, p_centro_costo text, p_production_order_id uuid, p_notes text, p_items jsonb, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.update_material_request(p_request_id uuid, p_fecha_emision date DEFAULT NULL::date, p_warehouse_id uuid DEFAULT NULL::uuid, p_almacen_nombre text DEFAULT NULL::text, p_almacen_codigo text DEFAULT NULL::text, p_entidad_codigo text DEFAULT NULL::text, p_area_nombre text DEFAULT NULL::text, p_area_codigo text DEFAULT NULL::text, p_centro_costo text DEFAULT NULL::text, p_production_order_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_items jsonb DEFAULT NULL::jsonb, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_req public.material_requests%ROWTYPE;
+  v_fecha_emision date := COALESCE(p_fecha_emision, CURRENT_DATE);
+  v_almacen_nombre text;
+  v_almacen_codigo text;
+  v_entidad_codigo text;
+  v_reeup text;
+  v_nit text;
+  v_item jsonb;
+  v_product_id uuid;
+  v_quantity numeric;
+  v_sku text;
+  v_descripcion text;
+  v_um text;
+  v_seen_products uuid[] := ARRAY[]::uuid[];
+  v_items_count integer := 0;
+BEGIN
+  -- Lock de fila: editar/anular/enviar concurrentes → exactamente uno gana.
+  SELECT * INTO v_req FROM public.material_requests WHERE id = p_request_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_REQUEST_NOT_FOUND';
+  END IF;
+  IF v_req.status <> 'draft' THEN
+    RAISE EXCEPTION 'ERR_NOT_DRAFT: solo se pueden editar solicitudes en borrador (estado actual: %)', v_req.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_req.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  IF p_items IS NULL OR jsonb_array_length(p_items) = 0 THEN
+    RAISE EXCEPTION 'ERR_EMPTY_ITEMS';
+  END IF;
+  IF v_fecha_emision > CURRENT_DATE THEN
+    RAISE EXCEPTION 'ERR_FUTURE_DATED_DOCUMENT';
+  END IF;
+  IF v_fecha_emision < (CURRENT_DATE - INTERVAL '6 months')::date THEN
+    RAISE EXCEPTION 'ERR_BACKDATED_DOCUMENT';
+  END IF;
+  IF p_area_nombre IS NULL OR btrim(p_area_nombre) = '' THEN
+    RAISE EXCEPTION 'ERR_AREA_REQUIRED';
+  END IF;
+
+  IF p_warehouse_id IS NOT NULL THEN
+    SELECT w.name, w.code INTO v_almacen_nombre, v_almacen_codigo
+    FROM public.warehouses w
+    WHERE w.id = p_warehouse_id AND w.store_id = v_req.store_id AND w.is_active = true;
+    IF v_almacen_nombre IS NULL THEN
+      RAISE EXCEPTION 'ERR_WAREHOUSE_NOT_FOUND';
+    END IF;
+  ELSE
+    v_almacen_nombre := btrim(COALESCE(p_almacen_nombre, ''));
+    IF v_almacen_nombre = '' THEN
+      RAISE EXCEPTION 'ERR_WAREHOUSE_NAME_REQUIRED';
+    END IF;
+    v_almacen_codigo := NULLIF(btrim(COALESCE(p_almacen_codigo, '')), '');
+  END IF;
+
+  SELECT s.reeup, s.nit INTO v_reeup, v_nit FROM public.stores s WHERE s.id = v_req.store_id;
+  v_entidad_codigo := COALESCE(
+    NULLIF(btrim(COALESCE(p_entidad_codigo, '')), ''),
+    NULLIF(btrim(COALESCE(v_reeup, '')), ''),
+    NULLIF(btrim(COALESCE(v_nit, '')), ''));
+
+  IF p_production_order_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM public.production_orders po
+    WHERE po.id = p_production_order_id AND po.store_id = v_req.store_id
+  ) THEN
+    RAISE EXCEPTION 'ERR_ORDER_NOT_FOUND';
+  END IF;
+
+  -- Reemplazo transaccional de líneas: validar TODO antes de mutar.
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
+    v_product_id := (v_item->>'product_id')::uuid;
+    v_quantity := (v_item->>'quantity')::numeric;
+    IF v_quantity IS NULL OR v_quantity <= 0 THEN
+      RAISE EXCEPTION 'ERR_INVALID_QUANTITY';
+    END IF;
+    IF v_product_id = ANY(v_seen_products) THEN
+      RAISE EXCEPTION 'ERR_DUPLICATE_PRODUCT: %', v_product_id;
+    END IF;
+    v_seen_products := v_seen_products || v_product_id;
+    SELECT p.name INTO v_descripcion FROM public.products p
+    WHERE p.id = v_product_id AND p.store_id = v_req.store_id;
+    IF v_descripcion IS NULL THEN
+      RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: %', v_product_id;
+    END IF;
+    v_items_count := v_items_count + 1;
+  END LOOP;
+
+  UPDATE public.material_requests SET
+    fecha_emision = v_fecha_emision,
+    entidad_codigo = v_entidad_codigo,
+    warehouse_id = p_warehouse_id,
+    almacen_nombre = v_almacen_nombre,
+    almacen_codigo = v_almacen_codigo,
+    area_nombre = btrim(p_area_nombre),
+    area_codigo = NULLIF(btrim(COALESCE(p_area_codigo, '')), ''),
+    centro_costo = NULLIF(btrim(COALESCE(p_centro_costo, '')), ''),
+    production_order_id = p_production_order_id,
+    notes = COALESCE(btrim(p_notes), ''),
+    updated_at = now()
+  WHERE id = p_request_id;
+
+  DELETE FROM public.material_request_items WHERE request_id = p_request_id;
+
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
+    v_product_id := (v_item->>'product_id')::uuid;
+    v_quantity := (v_item->>'quantity')::numeric;
+    SELECT p.sku, p.name, p.unit_of_measure INTO v_sku, v_descripcion, v_um
+    FROM public.products p WHERE p.id = v_product_id;
+    INSERT INTO public.material_request_items (
+      request_id, product_id, sku, descripcion, unit_of_measure, quantity
+    ) VALUES (
+      p_request_id, v_product_id, COALESCE(v_sku, ''), v_descripcion,
+      COALESCE(v_um, ''), v_quantity
+    );
+  END LOOP;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('UPDATE_MATERIAL_REQUEST', 'material_requests', p_request_id, v_req.store_id, v_caller_uid,
+    jsonb_build_object('request_number', v_req.request_number, 'status', 'draft',
+      'items_count', v_items_count));
+
+  RETURN jsonb_build_object('status', 'success', 'request_id', p_request_id,
+    'request_number', v_req.request_number, 'items_count', v_items_count);
 END;
 $function$
 
@@ -14339,6 +15011,56 @@ END;
 $function$
 
 
+-- @contract-function name=void_material_request args="p_request_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.void_material_request(p_request_id uuid, p_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_req public.material_requests%ROWTYPE;
+  v_items_count integer;
+BEGIN
+  SELECT * INTO v_req FROM public.material_requests WHERE id = p_request_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_REQUEST_NOT_FOUND';
+  END IF;
+  IF v_req.status NOT IN ('draft', 'in_review') THEN
+    RAISE EXCEPTION 'ERR_NOT_VOIDABLE: solo se pueden anular solicitudes en borrador o en revisión (estado actual: %)', v_req.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_req.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF p_reason IS NULL OR btrim(p_reason) = '' THEN
+    RAISE EXCEPTION 'ERR_REASON_REQUIRED';
+  END IF;
+
+  SELECT count(*) INTO v_items_count FROM public.material_request_items WHERE request_id = p_request_id;
+
+  UPDATE public.material_requests
+  SET status = 'voided',
+      voided_at = now(),
+      voided_by = v_caller_uid,
+      void_reason = btrim(p_reason),
+      updated_at = now()
+  WHERE id = p_request_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('VOID_MATERIAL_REQUEST', 'material_requests', p_request_id, v_req.store_id, v_caller_uid,
+    jsonb_build_object('request_number', v_req.request_number, 'from', v_req.status, 'to', 'voided',
+      'reason', btrim(p_reason), 'items_count', v_items_count));
+
+  RETURN jsonb_build_object('status', 'success', 'request_id', p_request_id,
+    'request_number', v_req.request_number, 'to', 'voided');
+END;
+$function$
+
+
 -- @contract-function name=void_pending_reception args="p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.void_pending_reception(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT 'Anulación de recepción pendiente'::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS jsonb
@@ -14679,6 +15401,64 @@ BEGIN
   RETURN jsonb_build_object('status', 'success', 'transaction_id', p_transaction_id);
 END;
 
+$function$
+
+
+-- @contract-function name=void_vale_salida args="p_slip_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.void_vale_salida(p_slip_id uuid, p_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_slip public.issue_slips%ROWTYPE;
+  v_items_count integer;
+BEGIN
+  SELECT * INTO v_slip FROM public.issue_slips WHERE id = p_slip_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_SLIP_NOT_FOUND';
+  END IF;
+  IF v_slip.status <> 'pending' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden anular vales en revisión (estado actual: %). Un vale completado se corrige con Devolver (reversión); uno ya anulado o devuelto no admite más acciones.', v_slip.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_slip.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF p_reason IS NULL OR btrim(p_reason) = '' THEN
+    RAISE EXCEPTION 'ERR_REASON_REQUIRED';
+  END IF;
+
+  -- Defense-in-depth: un vale 'pending' jamás movió stock; si por cualquier
+  -- vía existieran movimientos ligados (stock_movements.reference_id es TEXT:
+  -- se compara con cast explícito), la anulación se rechaza (usar
+  -- Devolver/reversión).
+  IF EXISTS (SELECT 1 FROM public.stock_movements
+             WHERE reference_id = p_slip_id::text AND movement_type = 'issue_slip_out') THEN
+    RAISE EXCEPTION 'ERR_SLIP_HAS_MOVEMENTS: el vale tiene movimientos de inventario; usa Devolver (reversión)';
+  END IF;
+
+  SELECT count(*) INTO v_items_count FROM public.issue_slip_items WHERE slip_id = p_slip_id;
+
+  UPDATE public.issue_slips
+  SET status = 'voided',
+      voided_at = NOW(),
+      voided_by = v_caller_uid,
+      void_reason = btrim(p_reason)
+  WHERE id = p_slip_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('VOID_VALE_SALIDA', 'issue_slips', p_slip_id, v_slip.store_id, v_caller_uid,
+    jsonb_build_object('slip_number', v_slip.slip_number, 'from', 'pending', 'to', 'voided',
+      'reason', btrim(p_reason), 'items_count', v_items_count));
+
+  RETURN jsonb_build_object('status','success','slip_id',p_slip_id,
+    'slip_number', v_slip.slip_number, 'to', 'voided');
+END;
 $function$
 
 
