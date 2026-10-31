@@ -185,7 +185,7 @@ Los cambios atribuibles a la misión son exclusivamente: 188 maestros de identid
 ## 15. PR fusionados, SHA definitivos y despliegue
 
 - Migración: `supabase/migrations/20261031140000_cp_catalogo_master_incorporacion_backfill.sql` — aplicada a producción ANTES del PR (Management API + NOTIFY pgrst, pre-vuelo y verificación POST incluidos: SECURITY DEFINER, owner postgres, grants `authenticated`+`service_role`), patrón oficial de #1525/#1528.
-- Repositorio: rama `feat/catalogo-m002-inicializacion-vitallcons-20261031`; el PR incluye la migración + test estático (14) + batería E2E (11 casos) + manifiesto replay regenerado (114) + contract-surface regenerado (166) + este expediente.
+- Repositorio: **PR #1532** (rama `feat/catalogo-m002-inicializacion-vitallcons-20261031`, commit `6ddeec9`); incluye la migración + test estático (14) + batería E2E (11 casos) + manifiesto replay regenerado (114) + contract-surface regenerado (166) + este expediente.
 - CI del PR: TypeCheck+Lint+Unit+Build, Unit & Integration, Security Audit, TypeScript Security, SQL Static, SQL DB Security, Allowlist Review, Vercel Preview Comments. (Resultado y SHA definitivos registrados en el worklog al fusionar.)
 - Despliegue: Vercel producción (verificación del commit desplegado y smoke tests no destructivos registrados en el worklog).
 
