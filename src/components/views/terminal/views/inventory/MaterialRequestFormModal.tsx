@@ -100,6 +100,30 @@ const hoyLocal = (): string => {
   return `${y}-${m}-${day}`;
 };
 
+/**
+ * Sección fieldset del modelo SC-2-07.
+ *
+ * MISIÓN COSTPRO-WAREHOUSE-REQUEST-001: debe vivir a NIVEL DE MÓDULO. Si se
+ * define dentro del cuerpo del componente, cada render crea una identidad de
+ * componente nueva y React desmonta/remonta TODAS las secciones del formulario
+ * en cada pulsación: los inputs se recrean, el `autoFocus` de «Área
+ * solicitante» se re-aplica y roba el foco, y se pierde la posición del cursor.
+ */
+function Seccion({ icon: Icon, titulo, children }: {
+  icon: React.ComponentType<{ className?: string }>;
+  titulo: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <fieldset className="rounded-xl border border-border p-3 space-y-3">
+      <legend className="px-1.5 -ml-1 text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+        <Icon className="w-3.5 h-3.5" /> {titulo}
+      </legend>
+      {children}
+    </fieldset>
+  );
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Componente
 // ────────────────────────────────────────────────────────────────────────────
@@ -367,18 +391,9 @@ export function MaterialRequestFormModal({
     centroCosto, productionOrderId, notes, lineas, idempotencyKey, onSaved, nuevaClave,
   ]);
 
-  const Seccion = ({ icon: Icon, titulo, children }: {
-    icon: React.ComponentType<{ className?: string }>;
-    titulo: string;
-    children: React.ReactNode;
-  }) => (
-    <fieldset className="rounded-xl border border-border p-3 space-y-3">
-      <legend className="px-1.5 -ml-1 text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-        <Icon className="w-3.5 h-3.5" /> {titulo}
-      </legend>
-      {children}
-    </fieldset>
-  );
+  // (Seccion se define a nivel de módulo — ver la nota sobre
+  // COSTPRO-WAREHOUSE-REQUEST-001; una definición inline remontaría el
+  // formulario en cada render y robaría el foco del primer campo.)
 
   return (
     <BaseModal
