@@ -150,7 +150,8 @@ commit inmediatamente posterior de la misma rama.
 
 ## 10. Enlace al PR
 
-PR: **`<URL_PR>`** — no se fusiona automáticamente; el propietario revisa antes.
+PR: **https://github.com/Nardian90/Costpro/pull/1538** — no se fusiona
+automáticamente; el propietario revisa antes.
 
 ## 11. Limitaciones y riesgos residuales
 
