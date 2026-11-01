@@ -18,6 +18,7 @@ import {
   Clock,
   CreditCard,
   Truck,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
@@ -46,6 +47,7 @@ import {
   calculateSubtotal,
   calculateTotal,
   calculateItbis,
+  validateOfertaForm,
   type OfertaContract,
   type OfertaItemContract,
 } from '@/contracts/oferta';
@@ -61,39 +63,9 @@ import { supabase } from '@/lib/supabaseClient';
 function useFormValidation() {
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
-  const validate = useCallback((formData: OfertaContract): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.numero.trim()) {
-      newErrors.numero = 'Número de oferta es requerido';
-    }
-    if (!formData.objeto.trim()) {
-      newErrors.objeto = 'Objeto es requerido';
-    }
-    if (!formData.suministrador.empresa.trim()) {
-      newErrors['suministrador.empresa'] = 'Empresa del suministrador es requerida';
-    }
-    if (!formData.cliente.empresa.trim()) {
-      newErrors['cliente.empresa'] = 'Empresa del cliente es requerida';
-    }
-    if (formData.productos.length === 0) {
-      newErrors.productos = 'Al menos un producto es requerido';
-    }
-    formData.productos.forEach((p, i) => {
-      if (!p.descripcion.trim()) {
-        newErrors[`productos.${i}.descripcion`] = 'Descripción requerida';
-      }
-      if (p.cantidad <= 0) {
-        newErrors[`productos.${i}.cantidad`] = 'Cantidad debe ser > 0';
-      }
-      if (p.precio_unitario <= 0) {
-        newErrors[`productos.${i}.precio_unitario`] = 'Precio debe ser > 0';
-      }
-    });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, []);
+  // CP-OFFERS-PUERTOPADRE-001: la validación vive en el contrato compartido
+  // validateOfertaForm (src/contracts/oferta.ts) con mensajes que identifican
+  // campo y producto. Este hook solo gestiona el estado de errores del form.
 
   const clearFieldError = useCallback((field: string) => {
     setErrors(prev => {
@@ -105,7 +77,7 @@ function useFormValidation() {
 
   const clearErrors = useCallback(() => setErrors({}), []);
 
-  return { errors, validate, clearFieldError, clearErrors };
+  return { errors, setErrors, clearFieldError, clearErrors };
 }
 
 // ─── Storage Upload Helper ─────────────────────────────────────────────────────
@@ -180,6 +152,9 @@ interface OfertaFormPanelProps {
   setIsDirty: (dirty: boolean) => void;
   onReset: () => void;
   onConfirmIfDirty: (action: () => void) => void;
+  /** CP-OFFERS-PUERTOPADRE-001: abre el formulario de alta (usado por el
+   *  botón del estado vacío — antes era un no-op que llamaba onReset). */
+  onNewOferta: () => void;
   storeId: string;
 }
 
@@ -193,9 +168,10 @@ export default function OfertaFormPanel({
   setIsDirty,
   onReset,
   onConfirmIfDirty,
+  onNewOferta,
   storeId,
 }: OfertaFormPanelProps) {
-  const { errors, validate, clearFieldError, clearErrors } = useFormValidation();
+  const { errors, setErrors, clearFieldError, clearErrors } = useFormValidation();
   const [isExportingPreview, setIsExportingPreview] = useState(false);
   const [isUploading, setIsUploading] = useState<'stamp' | 'sign' | null>(null);
 
@@ -312,13 +288,43 @@ export default function OfertaFormPanel({
 
   // ─── Submit Handler ────────────────────────────────────────────────────────────
 
+  // CP-OFFERS-PUERTOPADRE-001: foco al primer campo inválido tras un intento
+  // de envío fallido. Los inputs llevan data-field="<clave de error>".
+  const focusFirstInvalidField = useCallback((errs: Record<string, string>) => {
+    const firstKey = Object.keys(errs)[0];
+    if (!firstKey || typeof document === 'undefined') return;
+    const el = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+      `[data-field="${firstKey}"]`
+    );
+    el?.focus();
+    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, []);
+
+  // CP-OFFERS-PUERTOPADRE-001: candado de doble envío — isPending de React Query
+  // no cubre el intervalo síncrono entre el primer clic y la primera renderización
+  // con el botón deshabilitado (dos clics rápidos duplicarían la creación).
+  const submittingRef = useRef(false);
+
   const handleSubmit = useCallback(async () => {
+    if (submittingRef.current) return;
     clearErrors();
-    if (!validate(formData)) {
-      toast.error('Por favor, corrija los errores en el formulario');
+    const errs = validateOfertaForm(formData);
+    if (Object.keys(errs).length > 0) {
+      // El toast genérico desaparece como única explicación: se listan los
+      // campos con error y se enfoca el primero. El resumen accesible vive
+      // en el bloque role="alert" del formulario.
+      const summary = Object.values(errs).slice(0, 3).join(' · ');
+      const restantes = Object.keys(errs).length - 3;
+      toast.error(
+        `Revisa ${Object.keys(errs).length} campo${Object.keys(errs).length !== 1 ? 's' : ''}: ${summary}${restantes > 0 ? ` · y ${restantes} más` : ''}`,
+        { duration: 6000 }
+      );
+      setErrors(errs);
+      focusFirstInvalidField(errs);
       return;
     }
 
+    submittingRef.current = true;
     const payload = {
       ...formData,
       subtotal,
@@ -337,9 +343,12 @@ export default function OfertaFormPanel({
       }
       onReset();
     } catch {
-      // Error handled by mutation onError
+      // Error handled by mutation onError — los datos del formulario se
+      // CONSERVAN (onReset solo se ejecuta tras éxito persistido).
+    } finally {
+      submittingRef.current = false;
     }
-  }, [formData, subtotal, total, selectedOfertaId, createMutation, updateMutation, onReset, validate, clearErrors]);
+  }, [formData, subtotal, total, selectedOfertaId, createMutation, updateMutation, onReset, clearErrors, focusFirstInvalidField]);
 
   // ─── PDF Export Handler ────────────────────────────────────────────────────────
 
@@ -402,7 +411,10 @@ export default function OfertaFormPanel({
             Usa el panel izquierdo para seleccionar una oferta existente o crea una nueva
           </p>
         </div>
-        <Button onClick={() => onConfirmIfDirty(() => onReset())} variant="outline" size="sm" className="gap-1.5">
+        {/* CP-OFFERS-PUERTOPADRE-001: antes llamaba onReset (no-op en estado
+            vacío: isCreating ya era false). Ahora abre el formulario de alta
+            con los datos del suministrador precargados de la tienda. */}
+        <Button onClick={() => onConfirmIfDirty(onNewOferta)} variant="outline" size="sm" className="gap-1.5">
           <Plus className="w-3.5 h-3.5" />
           Nueva Oferta
         </Button>
@@ -431,6 +443,29 @@ export default function OfertaFormPanel({
         </Button>
       </div>
 
+      {/* CP-OFFERS-PUERTOPADRE-001: resumen de errores de validación — accesible
+          (role=alert), persistente (no depende del toast) y con la lista COMPLETA
+          de campos a corregir. Renderiza solo cuando hay errores. */}
+      {Object.keys(errors).length > 0 && (
+        <div
+          role="alert"
+          aria-label="Resumen de errores del formulario"
+          className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 space-y-1.5"
+        >
+          <p className="text-xs font-bold text-destructive flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            Revisa {Object.keys(errors).length} campo{Object.keys(errors).length !== 1 ? 's' : ''} antes de guardar:
+          </p>
+          <ul className="list-disc list-inside space-y-0.5">
+            {Object.entries(errors).map(([field, message]) => (
+              <li key={field} className="text-[11px] leading-snug text-destructive">
+                {message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Show form sections only when not loading detail data */}
       {!(selectedOfertaId && detailLoading) && (
       <>
@@ -443,10 +478,11 @@ export default function OfertaFormPanel({
                 value={formData.numero}
                 onChange={e => updateField('numero', e.target.value)}
                 placeholder="OF-2026-001"
+                data-field="numero"
                 className={cn('h-9 text-sm', errors.numero && 'border-destructive focus-visible:ring-destructive')}
                 aria-invalid={!!errors.numero}
               />
-              {errors.numero && <p className="text-[9px] text-destructive mt-0.5">{errors.numero}</p>}
+              {errors.numero && <p className="text-[11px] text-destructive mt-0.5">{errors.numero}</p>}
             </div>
             <div>
               <Label className="text-xs">Fecha *</Label>
@@ -479,10 +515,11 @@ export default function OfertaFormPanel({
                 value={formData.objeto}
                 onChange={e => updateField('objeto', e.target.value)}
                 placeholder="Descripción del objeto de la oferta"
+                data-field="objeto"
                 className={cn('h-9 text-sm', errors.objeto && 'border-destructive focus-visible:ring-destructive')}
                 aria-invalid={!!errors.objeto}
               />
-              {errors.objeto && <p className="text-[9px] text-destructive mt-0.5">{errors.objeto}</p>}
+              {errors.objeto && <p className="text-[11px] text-destructive mt-0.5">{errors.objeto}</p>}
             </div>
             {selectedOfertaId && (
               <div className="sm:col-span-3">
@@ -515,10 +552,11 @@ export default function OfertaFormPanel({
                 value={formData.suministrador.empresa}
                 onChange={e => updateSuministrador('empresa', e.target.value)}
                 placeholder="Nombre de la empresa suministradora"
+                data-field="suministrador.empresa"
                 className={cn('h-9 text-sm', errors['suministrador.empresa'] && 'border-destructive focus-visible:ring-destructive')}
                 aria-invalid={!!errors['suministrador.empresa']}
               />
-              {errors['suministrador.empresa'] && <p className="text-[9px] text-destructive mt-0.5">{errors['suministrador.empresa']}</p>}
+              {errors['suministrador.empresa'] && <p className="text-[11px] text-destructive mt-0.5">{errors['suministrador.empresa']}</p>}
             </div>
             <div>
               <Label className="text-xs">Código REUP</Label>
@@ -586,10 +624,11 @@ export default function OfertaFormPanel({
                 value={formData.cliente.empresa}
                 onChange={e => updateCliente('empresa', e.target.value)}
                 placeholder="Nombre de la empresa cliente"
+                data-field="cliente.empresa"
                 className={cn('h-9 text-sm', errors['cliente.empresa'] && 'border-destructive focus-visible:ring-destructive')}
                 aria-invalid={!!errors['cliente.empresa']}
               />
-              {errors['cliente.empresa'] && <p className="text-[9px] text-destructive mt-0.5">{errors['cliente.empresa']}</p>}
+              {errors['cliente.empresa'] && <p className="text-[11px] text-destructive mt-0.5">{errors['cliente.empresa']}</p>}
             </div>
             <div>
               <Label className="text-xs">Contacto</Label>

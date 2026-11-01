@@ -46,10 +46,11 @@ export default function ProductRow({
           value={item.descripcion}
           onChange={e => onChange(index, 'descripcion', e.target.value)}
           placeholder="Descripción del producto"
+          data-field={`productos.${index}.descripcion`}
           className={`h-8 text-xs ${descError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
           aria-invalid={!!descError}
         />
-        {descError && <p className="text-[9px] text-destructive mt-0.5">{descError}</p>}
+        {descError && <p className="text-[11px] text-destructive mt-0.5">{descError}</p>}
       </div>
       <div className="col-span-1">
         <Label className="text-[10px] text-muted-foreground">UM</Label>
@@ -61,30 +62,32 @@ export default function ProductRow({
         />
       </div>
       <div className="col-span-1">
-        <Label className="text-[10px] text-muted-foreground">Cant.</Label>
+        <Label className="text-[10px] text-muted-foreground">Cant. *</Label>
         <Input
           type="number"
           min={0.01}
           step="any"
           value={item.cantidad || ''}
           onChange={e => onChange(index, 'cantidad', parseFloat(e.target.value) || 0)}
+          data-field={`productos.${index}.cantidad`}
           className={`h-8 text-xs text-right ${cantError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
           aria-invalid={!!cantError}
         />
-        {cantError && <p className="text-[9px] text-destructive mt-0.5">{cantError}</p>}
+        {cantError && <p className="text-[11px] text-destructive mt-0.5">{cantError}</p>}
       </div>
       <div className="col-span-2">
-        <Label className="text-[10px] text-muted-foreground">Precio Unit.</Label>
+        <Label className="text-[10px] text-muted-foreground">Precio Unit. *</Label>
         <Input
           type="number"
           min={0.01}
           step="any"
           value={item.precio_unitario || ''}
           onChange={e => onChange(index, 'precio_unitario', parseFloat(e.target.value) || 0)}
+          data-field={`productos.${index}.precio_unitario`}
           className={`h-8 text-xs text-right ${precioError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
           aria-invalid={!!precioError}
         />
-        {precioError && <p className="text-[9px] text-destructive mt-0.5">{precioError}</p>}
+        {precioError && <p className="text-[11px] text-destructive mt-0.5">{precioError}</p>}
       </div>
       <div className="col-span-2">
         <Label className="text-[10px] text-muted-foreground">Importe</Label>

@@ -117,7 +117,7 @@ async function exportPdfHandler(req: NextRequest, session: AuthenticatedSession)
     const validated = ofertaPdfExportSchema.safeParse(body);
     if (!validated.success) {
       return NextResponse.json(
-        { error: 'Datos inválidos', details: zodError(validated.error) },
+        { error: 'Datos inválidos', details: zodError(validated.error).details },
         { status: 400 }
       );
     }

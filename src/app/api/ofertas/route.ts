@@ -96,7 +96,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     if (!validated.success) {
       return NextResponse.json(
-        { error: 'Datos inválidos', details: zodError(validated.error) },
+        { error: 'Datos inválidos', details: zodError(validated.error).details },
         { status: 400 }
       );
     }
@@ -106,12 +106,30 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     const memberships = (session.user as any).memberships || [];
     // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
     const isAdmin = isAdminLevel(session.user.role);
+    // CP-OFFERS-PUERTOPADRE-001: la inserción se hace con service_role (bypass
+    // de RLS), por lo que ESTA comprobación es el único guard de autorización.
+    // Se alinea con la política RLS real de la tabla («Admin/manager/encargado
+    // can insert ofertas», migración 20260612000000_create_ofertas.sql):
+    // antes bastaba una membresía activa de CUALQUIER rol (clerk/usuario
+    // podían crear ofertas vía API aunque RLS lo prohíbe — divergencia
+    // detectada en la auditoría).
     const hasStoreAccess = isAdmin || memberships.some(
-      (m: any) => m.store_id === bodyStoreId && m.status === 'active'
+      (m: any) =>
+        m.store_id === bodyStoreId &&
+        m.status === 'active' &&
+        ['admin', 'manager', 'encargado'].includes(m.role)
     );
     if (!hasStoreAccess) {
+      const isMember = memberships.some(
+        (m: any) => m.store_id === bodyStoreId && m.status === 'active'
+      );
       return NextResponse.json(
-        { error: 'Prohibido', message: 'No tienes acceso a la tienda especificada' },
+        {
+          error: 'Prohibido',
+          message: isMember
+            ? 'Tu rol no permite crear ofertas en esta tienda (requiere admin, manager o encargado)'
+            : 'No tienes acceso a la tienda especificada',
+        },
         { status: 403 }
       );
     }

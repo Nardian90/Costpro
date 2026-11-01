@@ -279,9 +279,12 @@ describe('§1/§2 — Vista dedicada: render inicial y separación config/cálcu
   it('§2: intervalo inválido (Desde > Hasta) deshabilita la acción y muestra alerta', async () => {
     await renderView();
     const desde = document.getElementById('cr-sd') as HTMLInputElement;
-    // Hasta queda en HOY (default de la vista): Desde = MAÑANA es siempre
-    // posterior, sea cual sea la fecha real de ejecución (FIX 2026-10-31:
-    // el literal '2026-10-31' dejó de ser futuro el 31/10 y rompía el test)
+    // CP-OFFERS-PUERTOPADRE-001 (fix de flaky): Hasta por defecto es HOY
+    // (CashReportView endDate = new Date().toISOString().slice(0,10)).
+    // El valor estaba hardcodeado a '2026-10-31' con el comentario «hoy es
+    // 2026-10-12» → time-bomb: falla para toda fecha real ≥ 2026-10-31
+    // (reproducido en CI el 2026-10-31). Desde = MAÑANA garantiza
+    // Desde > Hasta (= hoy) en cualquier fecha de ejecución.
     const manana = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
     await act(async () => { fireEvent.change(desde, { target: { value: manana } }); });
     const btn = screen.getByRole('button', { name: /Generar reporte/i }) as HTMLButtonElement;

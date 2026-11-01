@@ -181,3 +181,57 @@ export function calculateItbis(subtotal: number, descuento: number, impuestoRate
   const baseAfterDiscount = subtotal - descuento;
   return baseAfterDiscount * impuestoRate / (100 - impuestoRate);
 }
+
+// ============================================
+// Validación del formulario (contrato compartido)
+// ============================================
+
+/**
+ * Valida el formulario de Ofertas y devuelve un mapa campo → mensaje.
+ * Contrato: {} = válido. Las claves coinciden con los data-field del DOM:
+ *   'numero' | 'objeto' | 'suministrador.empresa' | 'cliente.empresa'
+ *   | 'productos' | `productos.${i}.descripcion` | `productos.${i}.cantidad`
+ *   | `productos.${i}.precio_unitario`
+ *
+ * Reglas de negocio EXACTAS del modelo vigente (Zod ofertaCreateSchema +
+ * validación histórica del formulario) — no se añaden requisitos nuevos:
+ *   - numero, objeto, suministrador.empresa, cliente.empresa: no vacíos (trim)
+ *   - al menos 1 producto
+ *   - por producto: descripción no vacía, cantidad > 0, precio_unitario > 0
+ *
+ * CP-OFFERS-PUERTOPADRE-001: los mensajes identifican campo y producto para
+ * que el usuario sepa QUÉ corregir sin mensajes genéricos.
+ */
+export function validateOfertaForm(formData: OfertaContract): Record<string, string> {
+  const errors: Record<string, string> = {};
+
+  if (!formData.numero.trim()) {
+    errors.numero = 'El número de oferta es obligatorio (ej. OF-2026-001)';
+  }
+  if (!formData.objeto.trim()) {
+    errors.objeto = 'El objeto de la oferta es obligatorio';
+  }
+  if (!formData.suministrador.empresa.trim()) {
+    errors['suministrador.empresa'] = 'La empresa del suministrador es obligatoria';
+  }
+  if (!formData.cliente.empresa.trim()) {
+    errors['cliente.empresa'] = 'La empresa del cliente es obligatoria';
+  }
+  if (formData.productos.length === 0) {
+    errors.productos = 'Agrega al menos un producto a la oferta';
+  }
+  formData.productos.forEach((p, i) => {
+    const n = i + 1;
+    if (!p.descripcion.trim()) {
+      errors[`productos.${i}.descripcion`] = `La descripción del producto ${n} es obligatoria`;
+    }
+    if (p.cantidad <= 0) {
+      errors[`productos.${i}.cantidad`] = `La cantidad del producto ${n} debe ser mayor que 0`;
+    }
+    if (p.precio_unitario <= 0) {
+      errors[`productos.${i}.precio_unitario`] = `El precio unitario del producto ${n} debe ser mayor que 0`;
+    }
+  });
+
+  return errors;
+}
