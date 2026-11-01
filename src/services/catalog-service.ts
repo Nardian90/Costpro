@@ -341,13 +341,16 @@ export const catalogService = {
 
     // Audit defect #1 (orphan files): fetch previous image_url BEFORE upload
     // so we can delete it from storage after a successful UPDATE.
+    // CATALOG-MASTER-002: también la vinculación al maestro — la imagen de un
+    // producto vinculado es un atributo GLOBAL del maestro (fuente única).
     const { data: prevProduct, error: prevErr } = await supabase
       .from('products')
-      .select('image_url')
+      .select('image_url, master_product_id, store_id')
       .eq('id', productId)
       .maybeSingle();
     if (prevErr) throw prevErr;
     const previousFileName = prevProduct?.image_url || null;
+    const masterId = prevProduct?.master_product_id || null;
 
     const fileExt = (file.name.split('.').pop() || 'webp').toLowerCase();
     const fileName = `${productId}-${crypto.randomUUID()}.${fileExt}`;
@@ -358,6 +361,28 @@ export const catalogService = {
       .upload(fileName, file);
 
     if (uploadError) throw uploadError;
+
+    // CATALOG-MASTER-002 (misión §3.2): si la fila está vinculada al maestro,
+    // la imagen se actualiza EN EL MAESTRO vía la RPC gobernada
+    // (update_master_product — solo gobernador del catálogo). Todas las
+    // tiendas conectadas lo reflejan sin generar copias por tienda.
+    // Sin permiso: se descarta el archivo subido y se informa (misión §3.3).
+    if (masterId) {
+      const { error: masterErr } = await supabase.rpc('update_master_product', {
+        p_master_id: masterId,
+        p_changes: { image_path: fileName },
+        p_origin_store_id: prevProduct?.store_id ?? null,
+      });
+      if (masterErr) {
+        try {
+          await supabase.storage.from('product-images').remove([fileName]);
+        } catch { /* best-effort: no dejar el archivo huérfano */ }
+        throw new Error(
+          'Este producto pertenece al catálogo maestro: solo el gobernador del catálogo puede cambiar su imagen. ' +
+          `Detalle: ${masterErr.message}`
+        );
+      }
+    }
 
     // Step 2: UPDATE products.image_url to point to the new file
     const { error: updateError } = await supabase

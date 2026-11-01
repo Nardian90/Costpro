@@ -234,6 +234,9 @@ export interface Store {
 export type BarcodeType = 'EAN13' | 'UPC' | 'CODE128' | 'SKU' | 'auto' | (string & {});
 
 export interface Product {
+  /** CATALOG-MASTER-002: fuente de la fila en el catálogo de una tienda conectada. */
+  source?: 'local' | 'master';
+  master_product_id?: string | null;
   id: string;
   name: string;
   description?: string | null;
