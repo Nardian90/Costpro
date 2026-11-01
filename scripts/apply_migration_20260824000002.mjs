@@ -3,8 +3,12 @@
  * Adds show_price + show_physical_units columns to telegram_configs.
  */
 import { createClient } from '@supabase/supabase-js';
+// GUARD (LIMITES-SUPABASE T1b): bloquea producción salvo doble flag explícito.
+import { assertNotProduction } from './lib/assert-not-production.mjs';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+assertNotProduction({ mode: 'write', url: process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL, context: 'apply_migration_20260824000002.mjs' });
+
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const client = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
