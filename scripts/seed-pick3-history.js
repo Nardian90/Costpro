@@ -3,16 +3,17 @@
  * Carga el seed data de Pick3 en la tabla pick3_history de Supabase.
  * Esto resuelve el problema de "no carga histórico" — la tabla está vacía.
  */
-require('dotenv').config({ path: '/home/z/my-project/.env' });
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 
-// GUARD (LIMITES-SUPABASE T1b): bloquea producción salvo doble flag explícito.
-// (.cjs: CLI del guard compartido, mismo contrato)
+// GUARD (CP-INFRA-019): bloquea producción salvo doble flag explícito.
+// Valida la URL cargada del .env por dotenv (la que usará la petición).
+// (.js CommonJS: CLI del guard compartido, mismo contrato)
 try {
   require('child_process').execFileSync('node', [
     require('path').resolve(__dirname, 'lib', 'assert-not-production.mjs'),
-    '--mode', 'write', '--url', String(process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''), '--context', 'seed-pick3-history.js',
+    '--mode', 'write', '--url', String(SUPABASE_URL ?? ''), '--context', 'seed-pick3-history.js',
   ], { stdio: 'inherit' });
 } catch { process.exit(1); }
 

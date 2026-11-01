@@ -18,7 +18,9 @@ for (const l of env.split('\n')) {
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
-assertNotProduction({ mode: 'write', url: process.env.NEXT_PUBLIC_SUPABASE_URL ?? SUPABASE_URL, context: 'm004-aplicar-migracion-20261030143000.mjs' });
+// GUARD (CP-INFRA-019): valida la URL real de la operación (la misma de la
+// que se extrae el ref usado en la Management API).
+assertNotProduction({ mode: 'write', url: SUPABASE_URL, context: 'm004-aplicar-migracion-20261030143000.mjs' });
 const ref = SUPABASE_URL.match(/https:\/\/(.*?)\.supabase\.co/)[1];
 
 const FILE = 'supabase/migrations/20261030143000_cp_catalogo_audit_check_master_products.sql';
