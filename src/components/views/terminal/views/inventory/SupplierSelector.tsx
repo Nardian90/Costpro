@@ -70,15 +70,29 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
     if (!name) {
       return;
     }
-    const created = await createSupplier.mutateAsync({
-      name,
-      phone: newSupplierPhone.trim() || undefined,
-      tax_id: newSupplierTaxId.trim() || undefined,
-    });
-    handleSelect(created);
-    setNewSupplierName("");
-    setNewSupplierPhone("");
-    setNewSupplierTaxId("");
+    // CP-PROVEEDORES-001: try/catch alrededor del mutateAsync — el onError de
+    // la mutación ya muestra el toast con la causa real (mensajería
+    // estructurada del hook); sin este catch el rechazo quedaría además como
+    // unhandled rejection y el formulario de alta no se mantendría abierto
+    // para corregir el dato. El alta NO se interpreta como exitosa: solo se
+    // conserva el estado local para reintentar sin perder lo escrito.
+    try {
+      const created = await createSupplier.mutateAsync({
+        name,
+        phone: newSupplierPhone.trim() || undefined,
+        tax_id: newSupplierTaxId.trim() || undefined,
+      });
+      handleSelect(created);
+      setNewSupplierName("");
+      setNewSupplierPhone("");
+      setNewSupplierTaxId("");
+    } catch {
+      // La causa ya se mostró vía onError del hook (toast estructurado) y
+      // quedó registrada en el log del servidor. Mantener el formulario
+      // abierto permite al usuario corregir (p. ej. nombre duplicado) sin
+      // reescribir todo — sin riesgo de doble alta: el hook reutiliza el
+      // proveedor existente si el nombre ya está en la tienda.
+    }
   };
 
   return (
