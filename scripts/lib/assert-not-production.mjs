@@ -78,12 +78,18 @@ const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]', '0.0.0.0'
 export function classifyTarget(rawUrl) {
   const s = String(rawUrl ?? '').trim();
   if (!s) return { kind: 'none' };
-  // ref de postgres connection string: postgres://postgres.<ref>@host/...
-  const mPg = s.match(/postgres(?:ql)?:\/\/[^@]*\.([a-z0-9]{18,22})@/i);
+  // Connection string postgres. El ref puede venir del USUARIO del pooler
+  // (postgres.<ref>:PASSWORD@host.pooler.supabase.com — formato oficial de
+  // Supabase) o del host (db.<ref>.supabase.co). La regex tolera la
+  // contraseña tras el ref y exige el esquema al inicio (CP-INFRA-019-FOLLOWUP:
+  // la versión anterior no matcheaba `postgres.<ref>:<pw>@` y el pooler caía
+  // a "desconocido").
+  const mPg = s.match(/^postgres(?:ql)?:\/\/[^/@]*\.([a-z0-9]{18,22})(?::[^@]*)?@/i);
   if (mPg) return { kind: 'supabase', ref: mPg[1].toLowerCase() };
   let u;
   try { u = new URL(s); } catch { return { kind: 'unknown' }; }
   const host = u.hostname.toLowerCase();
+  if (!host) return { kind: 'unknown' };
   if (LOCAL_HOSTS.has(host) || host.endsWith('.localhost')) return { kind: 'local' };
   if (host === 'supabase.co' || host.endsWith('.supabase.co')) {
     const parts = host.split('.');
@@ -101,10 +107,21 @@ function isKnownE2eRef(ref) {
   return E2E_KNOWN_REFS.includes(ref);
 }
 
-function maskUrl(url) {
-  const s = String(url);
-  const m = s.match(/^https?:\/\/([^/?#]+)/i);
-  return m ? `https://${m[1]}` : s.split('?')[0];
+/**
+ * Sanitiza un destino para Mostrarlo en mensajes (CP-INFRA-019-FOLLOWUP fix B).
+ * Devuelve ÚNICAMENTE `esquema://host[:puerto]` — sin usuario, sin contraseña,
+ * sin path, sin query string y sin fragment. Si el destino no se puede
+ * analizar, devuelve una descripción genérica: NUNCA el valor original
+ * (podría contener credenciales embebidas).
+ * Solo afecta al mensaje; la clasificación del guard usa el valor original.
+ */
+export function sanitizeTarget(rawUrl) {
+  const s = String(rawUrl ?? '').trim();
+  if (!s) return '(vacío)';
+  let u;
+  try { u = new URL(s); } catch { return '(destino no identificable)'; }
+  if (!u.hostname) return '(destino no identificable)';
+  return `${u.protocol}//${u.hostname.toLowerCase()}${u.port ? `:${u.port}` : ''}`;
 }
 
 function prodBlockedMessage(context, target) {
@@ -176,7 +193,8 @@ export function assertNotProduction({ mode = 'write', url, projectRef, envUrl, c
 
   // ── 2. Destino NO identificado (ausente / desconocido / malformado) ───────
   if (cls.kind === 'none' || cls.kind === 'unknown') {
-    const shown = target ? maskUrl(target) : '(vacío)';
+    // Se muestra SANITIZADO: sin credenciales, query ni path (fix B).
+    const shown = sanitizeTarget(target);
     // ¿el "desconocido" menciona producción en alguna parte? → producción.
     if (target && String(target).toLowerCase().includes(PROD_REF)) {
       throw new Error(prodBlockedMessage(context, shown));
@@ -202,17 +220,22 @@ export function assertNotProduction({ mode = 'write', url, projectRef, envUrl, c
 
   const { ref } = cls; // kind === 'supabase'
   if (ref === PROD_REF) {
-    if (!allowReadOnly) throw new Error(prodBlockedMessage(context, `https://${ref}.supabase.co`));
+    // Mensaje con el destino SANITIZADO (fix B): la URL cruda podría llevar
+    // credenciales (usuario:password@host). El ref de producción es público.
+    const shownProd = projectRef
+      ? `https://${ref}.supabase.co` // validado por projectRef: no hay URL cruda
+      : sanitizeTarget(target);
+    if (!allowReadOnly) throw new Error(prodBlockedMessage(context, shownProd));
     if (mode === 'write' && !allowWrite) {
       throw new Error(
-        `[${context}] BLOQUEADO: escritura contra PRODUCCIÓN (https://${ref}.supabase.co) requiere el doble flag:\n` +
+        `[${context}] BLOQUEADO: escritura contra PRODUCCIÓN (${shownProd}) requiere el doble flag:\n` +
         `  export ALLOW_PROD=read-only ALLOW_PROD_WRITE=I_UNDERSTAND\n` +
         `  Si esto es una operación productiva legítima, documéntala en docs/audits/ antes de ejecutarla.`
       );
     }
     if (mode === 'write' && allowWrite) {
       // Registro visible de la autorización explícita (no es un error).
-      console.error(`[${context}] AUTORIZADO (explícito): escritura contra producción https://${ref}.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.`);
+      console.error(`[${context}] AUTORIZADO (explícito): escritura contra producción ${shownProd} — ALLOW_PROD_WRITE=I_UNDERSTAND presente.`);
     }
     return target;
   }

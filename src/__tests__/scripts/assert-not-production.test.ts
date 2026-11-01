@@ -381,3 +381,232 @@ describe('Regresión: los once escritores bloquean producción/destino ausente',
     expect(r).not.toMatch(/BLOQUEADO/);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CP-INFRA-019-FOLLOWUP — pruebas del endurecimiento (token, sanitización,
+// compatibilidad PostgreSQL y protección de futuros escritores).
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── A. Token y procesos hijos (apply-rpc-fix.sh, sin red) ──────────────────
+describe('FOLLOWUP A: propagación segura del token en apply-rpc-fix.sh', () => {
+  it('los 8 casos del test dedicado pasan (token al hijo, sin otras credenciales, sin red)', async () => {
+    const t = resolve(LIB, 'test-fixa-token.sh');
+    const r = await execFileP('bash', [t], { timeout: 120_000 })
+      .then(o => ({ code: 0, out: String(o.stdout) }))
+      .catch(e => ({ code: (e as { code?: number }).code ?? 1, out: String((e as { stdout?: string }).stdout ?? '') }));
+    expect(r.out).toContain('RESUMEN FIX A: PASS=8 FAIL=0');
+    expect(r.code).toBe(0);
+  }, 180_000);
+});
+
+// ── B. Sanitización de mensajes (fix B): ninguna credencial en errores ─────
+describe('FOLLOWUP B: los mensajes del guard no exponen credenciales', () => {
+  // Batería exigida por la misión. PROJECT_REF sustituido por el ref de prod
+  // real (público en el cliente de la app) para ejercitar el bloqueo.
+  const SECRET = 'MI_PASSWORD';
+  const SECRET_ENC = 'p%40ss%3Aword'; // postgres:p%40ss%3Aword@... (decodifica a p@ss:word)
+  const APIKEY = 'SECRET';
+  const TOKENSECRET = 'SECRET';
+  const SANITIZE_INPUTS: Array<{ name: string; url: string; secrets: string[]; mustIdentify?: boolean }> = [
+    {
+      name: 'Supabase REST con credenciales y apikey',
+      url: `https://usuario:${SECRET}@${PROD_REF}.supabase.co/rest/v1/?apikey=${APIKEY}`,
+      secrets: [SECRET, APIKEY, 'usuario:'],
+    },
+    {
+      name: 'PostgreSQL directo con contraseña',
+      url: `postgresql://postgres:${SECRET}@db.${PROD_REF}.supabase.co:5432/postgres?sslmode=require`,
+      secrets: [SECRET, 'postgres:'],
+    },
+    {
+      name: 'PostgreSQL con caracteres especiales codificados',
+      url: `postgresql://postgres:${SECRET_ENC}@db.${PROD_REF}.supabase.co:5432/postgres?sslmode=require`,
+      secrets: [SECRET_ENC],
+    },
+    {
+      name: 'Management API con token en query string',
+      url: `https://api.supabase.com/v1/projects/${PROD_REF}/database/query?token=${TOKENSECRET}`,
+      secrets: [TOKENSECRET, 'token='],
+    },
+    {
+      name: 'URL malformada con usuario, contraseña y query',
+      url: `xx://usuario:${SECRET}@/ruta?apikey=${APIKEY}#frag`,
+      secrets: [SECRET, APIKEY, 'usuario:'],
+    },
+  ];
+
+  // API ESM (unitaria, incluye la clasificación intacta)
+  it('sanitizeTarget elimina userinfo/query/fragment y NO altera la clasificación', async () => {
+    const { sanitizeTarget } = await import('../../../scripts/lib/assert-not-production.mjs');
+    for (const c of SANITIZE_INPUTS) {
+      const shown = sanitizeTarget(c.url);
+      for (const s of c.secrets) expect(shown, `${c.name}: '${s}' filtrado en '${shown}'`).not.toContain(s);
+      expect(shown).not.toMatch(/[?#]/);
+    }
+    // destino identificable sigue mostrándose (host/puerto)
+    expect(sanitizeTarget(SANITIZE_INPUTS[1].url)).toBe(`postgresql://db.${PROD_REF}.supabase.co:5432`);
+    // malformado → genérico, nunca el original
+    expect(sanitizeTarget(SANITIZE_INPUTS[4].url)).toBe('(destino no identificable)');
+    expect(sanitizeTarget('')).toBe('(vacío)');
+    // la sanitización NO cambia la decisión del guard (clasifica el original)
+    for (const c of SANITIZE_INPUTS) {
+      expect(() => assertNotProduction({ mode: 'write', url: c.url, context: 'san' }))
+        .toThrow(c.name.includes('malformada') ? /sin destino verificado/ : /PRODUCCIÓN/);
+    }
+  });
+
+  // CLI de las 3 variantes con procesos reales: stderr del bloqueo sin secretos
+  for (const variant of ['mjs', 'py', 'sh'] as const) {
+    it(`${variant}: mensaje de bloqueo sin password/token/apikey/query`, async () => {
+      for (const c of SANITIZE_INPUTS) {
+        const r = await runCli(variant, ['--mode', 'write', '--url', c.url, '--context', 'san'], {});
+        expect(r.code, `${variant} ${c.name}`).not.toBe(0);
+        for (const s of c.secrets) {
+          expect(r.stderr, `${variant} ${c.name}: '${s}' filtrado`).not.toContain(s);
+        }
+        expect(r.stderr).not.toMatch(/[?#]/); // sin query string ni fragment
+      }
+    }, 120_000);
+  }
+});
+
+// ── C. Compatibilidad PostgreSQL real (fix C): paridad 3 variantes ─────────
+describe('FOLLOWUP C: paridad de clasificación PostgreSQL en 3 variantes', () => {
+  // Formatos de conexión que realmente aparecen en Supabase (misión §5 A-E)
+  // + matriz de paridad §5. Clasificación canónica esperada.
+  const PARITY: Array<{ name: string; url: string; expect: 'prod' | 'e2e' | 'local' | 'unknown' | 'none' }> = [
+    { name: 'A. postgresql directo a producción', url: `postgresql://postgres:PW@db.${PROD_REF}.supabase.co:5432/postgres`, expect: 'prod' },
+    { name: 'B. postgres:// directo a E2E', url: `postgres://postgres:PW@db.${E2E_REF}.supabase.co:5432/postgres`, expect: 'e2e' },
+    { name: 'C. pooler postgres.<ref>:PW@ (E2E)', url: `postgresql://postgres.${E2E_REF}:PW@aws-0-eu-central-1.pooler.supabase.com:6543/postgres`, expect: 'e2e' },
+    { name: 'C2. pooler sin contraseña (E2E)', url: `postgresql://postgres.${E2E_REF}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres`, expect: 'e2e' },
+    { name: 'C3. pooler a PRODUCCIÓN', url: `postgresql://postgres.${PROD_REF}:PW@aws-0-eu-central-1.pooler.supabase.com:6543/postgres`, expect: 'prod' },
+    { name: 'D. PostgreSQL local', url: 'postgresql://postgres:password@localhost:54322/postgres', expect: 'local' },
+    { name: 'E. malformado (sin host determinable)', url: 'postgres://postgres:pass@/postgres?x=1', expect: 'unknown' },
+    { name: 'E2. pooler de ref DESCONOCIDO (no es E2E por defecto)', url: 'postgresql://postgres.aaaaaaaaaaaaaaaaaaaa:PW@aws-0-eu-central-1.pooler.supabase.com:6543/postgres', expect: 'unknown' },
+    { name: 'URL Supabase desconocida', url: 'https://aaaaaaaaaaaaaaaaaaaa.supabase.co', expect: 'unknown' },
+    { name: 'URL no Supabase', url: 'https://otro.proyecto.com/api', expect: 'unknown' },
+    { name: 'URL vacía', url: '', expect: 'none' },
+  ];
+
+  it('API ESM clasifica todos los formatos (fuente de verdad de la paridad)', () => {
+    for (const c of PARITY) {
+      const cls = classifyTarget(c.url);
+      const got = cls.kind === 'supabase' ? (cls.ref === PROD_REF ? 'prod' : cls.ref === E2E_REF ? 'e2e' : 'unknown') : cls.kind;
+      expect(got, `${c.name}: ${cls.kind}:${(cls as { ref?: string }).ref ?? ''}`).toBe(c.expect);
+    }
+  });
+
+  // Las 3 variantes por CLI con procesos reales: misma decisión (exit code).
+  // prod → bloquea (sin flags); e2e/local → pasa; unknown/none → bloquea.
+  for (const variant of ['mjs', 'py', 'sh'] as const) {
+    it(`${variant}: misma decisión en los 11 formatos (paridad con mjs)`, async () => {
+      for (const c of PARITY) {
+        const r = await runCli(variant, ['--mode', 'write', '--url', c.url, '--context', 'parity'], {});
+        const shouldPass = c.expect === 'e2e' || c.expect === 'local';
+        expect(r.code, `${variant} ${c.name} (${c.expect}) → exit ${r.code}`).toBe(shouldPass ? 0 : 1);
+      }
+    }, 180_000);
+  }
+
+  it('la variante Shell YA NO contiene la expresión regular defectuosa postgres(q l)?', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(resolve(LIB, 'assert-not-production.sh'), 'utf8');
+    expect(src).not.toMatch(/postgres\(q l\)\?/);
+    expect(src).toMatch(/_guard_split_url/); // parser de autoridad estructurado
+  });
+});
+
+// ── D. Protección de producción (contrato completo, procesos reales) ───────
+describe('FOLLOWUP D: protección de producción — casos exigidos', () => {
+  const CASES: Array<{ name: string; url: string; env: Record<string, string>; variant: 'mjs' | 'py' | 'sh'; expect: 'block' | 'allow'; msg?: RegExp }> = [
+    { name: 'producción con entorno E2E: bloqueada', url: PROD, env: { E2E_SUPABASE_URL: E2E, NEXT_PUBLIC_SUPABASE_URL: E2E }, variant: 'sh', expect: 'block', msg: /PRODUCCIÓN/ },
+    { name: 'producción sin URL ambiental: bloqueada', url: PROD, env: {}, variant: 'py', expect: 'block', msg: /PRODUCCIÓN/ },
+    { name: 'producción sin flags: bloqueada', url: PROD, env: {}, variant: 'mjs', expect: 'block', msg: /PRODUCCIÓN/ },
+    { name: 'producción con autorización incompleta (solo read-only): bloqueada', url: PROD, env: { ALLOW_PROD: 'read-only' }, variant: 'sh', expect: 'block', msg: /ALLOW_PROD_WRITE=I_UNDERSTAND/ },
+    { name: 'producción con doble flag: autorizada SOLO en la prueba simulada', url: PROD, env: { ALLOW_PROD: 'read-only', ALLOW_PROD_WRITE: 'I_UNDERSTAND' }, variant: 'mjs', expect: 'allow' },
+    { name: 'destino E2E con entorno productivo: permitido (destino efectivo E2E)', url: E2E, env: { NEXT_PUBLIC_SUPABASE_URL: PROD }, variant: 'py', expect: 'allow' },
+    { name: 'destino desconocido: bloqueado', url: 'https://aaaaaaaaaaaaaaaaaaaa.supabase.co', env: {}, variant: 'sh', expect: 'block', msg: /NO VERIFICADO/ },
+    { name: 'destino ausente: bloqueado', url: '', env: {}, variant: 'mjs', expect: 'block' },
+    { name: 'ref hardcodeado de producción: bloqueado (entorno E2E no autoriza)', url: '', env: { E2E_SUPABASE_URL: E2E }, variant: 'sh', expect: 'block', msg: /PRODUCCIÓN/, },
+  ];
+  // Para el caso del ref hardcodeado usamos --project-ref (URL vacía):
+  const REF_CASE_IDX = 8;
+
+  for (const [i, c] of CASES.entries()) {
+    it(`${c.variant}: ${c.name}`, async () => {
+      const args = i === REF_CASE_IDX
+        ? ['--mode', 'write', '--project-ref', PROD_REF, '--context', 'followup-d']
+        : ['--mode', 'write', '--url', c.url, '--context', 'followup-d'];
+      const r = await runCli(c.variant, args, c.env);
+      expect(r.code, `exit=${r.code} stderr=${r.stderr.slice(0, 150)}`).toBe(c.expect === 'allow' ? 0 : 1);
+      if (c.msg) expect(r.stderr).toMatch(c.msg);
+    }, 60_000);
+  }
+});
+
+// ── E. check-writers: protección de futuros escritores (fix D) ──────────────
+describe('FOLLOWUP E: check-writers detecta escritores nuevos (fail-closed)', () => {
+  const MANIFEST = resolve(LIB, 'writers.manifest.json');
+  const { readFileSync, writeFileSync, rmSync, existsSync } = {} as never; // (importado abajo)
+
+  it('el árbol actual pasa: todos los escritores declarados y verificados', async () => {
+    const r = await execFileP('node', [resolve(LIB, 'check-writers.mjs')], { timeout: 120_000 });
+    expect(String(r.stdout)).toContain('CHECK-WRITERS OK');
+  }, 180_000);
+
+  it('un script NUEVO con señal de escritor sin manifiesto rompe el check', async () => {
+    const { writeFileSync: wf, rmSync: rm } = await import('node:fs');
+    const probe = resolve(process.cwd(), 'scripts/zz-vitest-writer-probe.mjs');
+    wf(probe, `import { createClient } from '@supabase/supabase-js';\nconst c = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);\nawait c.from('t').insert({ a: 1 });\n`);
+    try {
+      const r = await execFileP('node', [resolve(LIB, 'check-writers.mjs')], { timeout: 120_000 });
+      expect.unreachable(`debía fallar: ${String(r.stdout).slice(0, 200)}`);
+    } catch (e) {
+      const err = e as { stdout?: string; stderr?: string; code?: number };
+      const report = String(err.stderr ?? '') + String(err.stdout ?? '');
+      expect(err.code).not.toBe(0);
+      expect(report).toContain('NUEVO ESCRITOR SIN DECLARAR');
+      expect(report).toContain('zz-vitest-writer-probe.mjs');
+    } finally { rm(probe, { force: true }); }
+  }, 180_000);
+
+  it('guardProtected declarado sin invocar el guard rompe el check (manifest honesto)', async () => {
+    const fs = await import('node:fs');
+    const backup = fs.readFileSync(MANIFEST, 'utf8');
+    const probe = resolve(process.cwd(), 'scripts/zz-vitest-writer-probe2.mjs');
+    fs.writeFileSync(probe, `const u = process.env.NEXT_PUBLIC_SUPABASE_URL;\nawait fetch(u + '/rest/v1/t', { method: 'POST' });\n`);
+    try {
+      const m = JSON.parse(backup);
+      m.guardProtected.push('scripts/zz-vitest-writer-probe2.mjs');
+      fs.writeFileSync(MANIFEST, JSON.stringify(m, null, 2));
+      await expect(execFileP('node', [resolve(LIB, 'check-writers.mjs')], { timeout: 120_000 })).rejects.toThrow();
+      const r = await execFileP('node', [resolve(LIB, 'check-writers.mjs')], { timeout: 120_000 })
+        .catch(e => String((e as { stdout?: string; stderr?: string }).stderr ?? '') + String((e as { stdout?: string }).stdout ?? ''));
+      expect(r).toContain('guardProtected INCUMPLENTE');
+    } finally {
+      fs.writeFileSync(MANIFEST, backup); // manifiesto exactamente como estaba
+      fs.rmSync(probe, { force: true });
+    }
+    // el árbol restaurado vuelve a pasar
+    const ok = await execFileP('node', [resolve(LIB, 'check-writers.mjs')], { timeout: 120_000 });
+    expect(String(ok.stdout)).toContain('CHECK-WRITERS OK');
+  }, 240_000);
+
+  it('exception sin justificación rompe el check', async () => {
+    const fs = await import('node:fs');
+    const backup = fs.readFileSync(MANIFEST, 'utf8');
+    try {
+      const m = JSON.parse(backup);
+      // reutiliza un escritor existente: quítale la justificación
+      const some = Object.keys(m.exceptions)[0];
+      m.exceptions[some] = '';
+      fs.writeFileSync(MANIFEST, JSON.stringify(m, null, 2));
+      const r = await execFileP('node', [resolve(LIB, 'check-writers.mjs')], { timeout: 120_000 })
+        .catch(e => String((e as { stdout?: string; stderr?: string }).stderr ?? '') + String((e as { stdout?: string }).stdout ?? ''));
+      expect(r).toContain('SIN JUSTIFICACIÓN');
+    } finally {
+      fs.writeFileSync(MANIFEST, backup);
+    }
+    void readFileSync; void writeFileSync; void rmSync; void existsSync; // (no-op: imports arriba eran tipado)
+  }, 180_000);
+});
