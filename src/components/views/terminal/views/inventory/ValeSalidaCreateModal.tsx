@@ -16,8 +16,15 @@
  * Tres estados documentales explícitos (requisito 3):
  *   1. EDITANDO   — búsqueda de productos, líneas, concepto, OT opcional.
  *   2. CONFIRMANDO — resumen del documento + impacto de inventario +
- *                    advertencias; botón «Emitir Vale» es el acto definitivo.
- *   3. REGISTRADO  — documento emitido con número real VS-NNNNNN-YYYY.
+ *                    advertencias; el acto definitivo es elegir:
+ *                    · «Guardar en Revisión» (PRIMARY — estándar documental
+ *                      de Ajustes Documentales, misión Res. 11 2026-10-31:
+ *                      persiste el vale 'pending' SIN descontar stock; se
+ *                      confirma después desde el listado) o
+ *                    · «Emitir y confirmar ahora» (flujo histórico intacto:
+ *                      create_vale_salida descuenta stock inmediatamente).
+ *   3. REGISTRADO  — documento emitido con número real VS-NNNNNN-YYYY y el
+ *                    estado resultante (En Revisión o Completado).
  *
  * El número NO se inventa en cliente: «se asignará al emitir».
  */
@@ -162,7 +169,7 @@ export function ValeSalidaCreateModal({
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [poItems, setPoItems] = useState<ProductionOrderItem[]>([]);
 
-  const { isSubmitting, submitError, emitirVale } = useCrearValeSalida();
+  const { isSubmitting, submitError, emitirVale, guardarEnRevision } = useCrearValeSalida();
 
   // Reset total al (re)abrir: flujo nuevo, sin arrastrar estado anterior.
   useEffect(() => {
@@ -328,10 +335,11 @@ export function ValeSalidaCreateModal({
     [poItems]
   );
 
-  // ── Emisión (paso CONFIRMANDO → REGISTRADO) ──
+  // ── Emisión directa (paso CONFIRMANDO → REGISTRADO) ──
   // MISIÓN POLÍTICA TEMPORAL: convención canónica — HOY → no se envía
   // operation_date (el servidor estampa NOW(), timestamps reales del día);
   // fecha distinta → mediodía local (misma regla de Vender/Catálogo).
+  // Flujo histórico intacto: descuenta stock en la misma transacción.
   const emitir = useCallback(async () => {
     if (!valeDateValidation.valid) {
       toast.error(valeDateValidation.error || 'La fecha del vale no es válida.', { duration: 8000 });
@@ -355,14 +363,39 @@ export function ValeSalidaCreateModal({
     }
   }, [emitirVale, lineas, productionOrderId, notas, onEmitido, valeDate, valeDateValidation]);
 
+  // ── Guardar en Revisión (paso CONFIRMANDO → REGISTRADO) ──
+  // MISIÓN RESOLUCIÓN 11 (2026-10-31): persiste el vale en estado 'pending'
+  // (En Revisión) SIN descontar stock — etapa intermedia del estándar
+  // documental de Ajustes Documentales. La confirmación posterior (acción
+  // explícita con sus validaciones) se realiza desde el listado del módulo.
+  const guardarRevision = useCallback(async () => {
+    if (!valeDateValidation.valid) {
+      toast.error(valeDateValidation.error || 'La fecha del vale no es válida.', { duration: 8000 });
+      return;
+    }
+    const result = await guardarEnRevision({
+      items: lineas.map(l => ({
+        product_id: l.product_id,
+        variant_id: l.variant_id,
+        quantity: l.quantity,
+        production_order_item_id: l.production_order_item_id,
+      })),
+      production_order_id: productionOrderId,
+      notes: notas.trim(),
+      operation_date: resolvePosOperationDate(valeDate),
+    });
+    if (result) {
+      setResultado(result);
+      setPaso('registrado');
+      onEmitido(result);
+    }
+  }, [guardarEnRevision, lineas, productionOrderId, notas, onEmitido, valeDate, valeDateValidation]);
+
   // ── Anulación del borrador (paso REVISIÓN → descartar) ──
-  // Flujo documental requerido: crear → REVISIÓN → anular o confirmar →
-  // (si se confirmó) devolver. El borrador NO está persistido — no se
-  // escribe nada en BD hasta EMITIR (la RPC crea el vale ya confirmado
-  // y mueve stock en la misma transacción). Por eso «Anular» aquí es
-  // descartar el documento en revisión: cero efectos en inventario,
-  // numeración o auditoría. Tras la confirmación NO existe Anular
-  // (modelo real: solo devolución/reversión).
+  // Descarta el documento EN CLIENTE antes de persistir nada: cero efectos
+  // en inventario, numeración o auditoría. Si el vale ya se guardó «En
+  // Revisión», la anulación correspondiente se hace desde el listado del
+  // módulo (void_vale_salida con motivo y trazabilidad completa).
   const anularBorrador = useCallback(() => {
     if (isSubmitting) return;
     onClose();
@@ -397,7 +430,7 @@ export function ValeSalidaCreateModal({
               disabled={!validoParaConfirmar}
               className="h-10 rounded-lg font-black uppercase text-xs tracking-wide"
             >
-              Revisar y confirmar
+              Revisar y continuar
               <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden="true" />
             </Button>
           </div>
@@ -414,39 +447,68 @@ export function ValeSalidaCreateModal({
                 <ArrowLeft className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Volver a editar
               </Button>
-              {/* Anular el documento EN REVISIÓN (flujo crear → revisión →
-                  anular/confirmar). Descarta el borrador sin efectos. */}
+              {/* Anular el documento EN REVISIÓN CLIENTE (descarta el borrador
+                  sin efectos). Un vale ya guardado «En Revisión» se anula desde
+                  el listado con trazabilidad completa. */}
               <Button
                 type="button"
                 variant="outline"
                 onClick={anularBorrador}
                 disabled={isSubmitting}
                 className="h-10 rounded-lg text-destructive border-destructive/50 hover:bg-destructive hover:text-white dark:hover:text-white"
-                title="Anular el vale en revisión: descarta el borrador sin efectos en inventario"
-                aria-label="Anular vale en revisión"
+                title="Descartar el borrador (sin efectos en inventario)"
+                aria-label="Descartar borrador del vale"
               >
                 <Ban className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                Anular
+                Descartar
               </Button>
             </div>
-            <Button
-              type="button"
-              onClick={emitir}
-              disabled={isSubmitting || lineas.length === 0}
-              className="h-10 rounded-lg font-black uppercase text-xs tracking-wide"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" aria-hidden="true" />
-                  Emitiendo…
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                  Emitir Vale
-                </>
-              )}
-            </Button>
+            {/* MISIÓN RESOLUCIÓN 11 (2026-10-31): dos actos definitivos tras la
+                revisión — el estándar documental (guardar En Revisión y
+                confirmar después) como acción PRIMARIA, y el flujo histórico
+                «emitir y confirmar ahora» intacto como alternativa. */}
+            <div className="flex flex-col sm:flex-row items-stretch gap-2">
+              <Button
+                type="button"
+                onClick={guardarRevision}
+                disabled={isSubmitting || lineas.length === 0}
+                className="h-10 rounded-lg font-black uppercase text-xs tracking-wide border-warning/70! bg-warning/15! text-warning hover:bg-warning! hover:text-white! flex-1"
+                title="Guardar el vale en estado En Revisión (sin descontar stock): confírmalo después desde el listado"
+                aria-label="Guardar en Revisión"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" aria-hidden="true" />
+                    Guardando…
+                  </>
+                ) : (
+                  <>
+                    <ClipboardList className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                    Guardar en Revisión
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                onClick={emitir}
+                disabled={isSubmitting || lineas.length === 0}
+                className="h-10 rounded-lg font-black uppercase text-xs tracking-wide flex-1"
+                title="Emitir y confirmar ahora: descuenta el stock inmediatamente (flujo histórico)"
+                aria-label="Emitir y confirmar ahora"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" aria-hidden="true" />
+                    Emitiendo…
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                    Emitir y confirmar ahora
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="flex items-center justify-end gap-2 w-full">
@@ -770,21 +832,43 @@ export function ValeSalidaCreateModal({
       {/* ─────────── PASO 3 · REGISTRADO ─────────── */}
       {paso === 'registrado' && resultado && (
         <div className="py-6 text-center space-y-4" aria-live="polite">
-          <CheckCircle2 className="w-14 h-14 text-success mx-auto" aria-hidden="true" />
-          <div>
-            <p className="text-sm font-black uppercase tracking-widest">Vale registrado</p>
-            <p className="font-mono text-lg font-black text-primary mt-1">
-              {resultado.slip_number || '—'}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2 max-w-md mx-auto">
-              El stock fue descontado y el documento quedó registrado con estado
-              {' '}<span className="font-black text-foreground">Completado</span>.
-              Ya es visible en el listado de Vales de Salida y en el inventario.
-            </p>
-            {resultado.total_cost != null && resultado.total_cost > 0 && (
-              <p className="text-xs font-bold mt-2">Costo del documento: {formatCurrency(Number(resultado.total_cost))}</p>
-            )}
-          </div>
+          {resultado.vale_status === 'pending' ? (
+            <>
+              <ClipboardList className="w-14 h-14 text-warning mx-auto" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-black uppercase tracking-widest">Vale guardado en revisión</p>
+                <p className="font-mono text-lg font-black text-primary mt-1">
+                  {resultado.slip_number || '—'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2 max-w-md mx-auto">
+                  El documento quedó en estado <span className="font-black text-foreground">En Revisión</span>:
+                  {' '}el stock todavía NO se ha descontado. Revísalo en el listado del módulo y
+                  {' '}confírmalo cuando estés seguro (o anúlalo si procede).
+                </p>
+                {resultado.total_cost != null && resultado.total_cost > 0 && (
+                  <p className="text-xs font-bold mt-2">Costo estimado: {formatCurrency(Number(resultado.total_cost))}</p>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="w-14 h-14 text-success mx-auto" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-black uppercase tracking-widest">Vale registrado</p>
+                <p className="font-mono text-lg font-black text-primary mt-1">
+                  {resultado.slip_number || '—'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2 max-w-md mx-auto">
+                  El stock fue descontado y el documento quedó registrado con estado
+                  {' '}<span className="font-black text-foreground">Completado</span>.
+                  Ya es visible en el listado de Vales de Salida y en el inventario.
+                </p>
+                {resultado.total_cost != null && resultado.total_cost > 0 && (
+                  <p className="text-xs font-bold mt-2">Costo del documento: {formatCurrency(Number(resultado.total_cost))}</p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </BaseModal>

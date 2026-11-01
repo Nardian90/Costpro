@@ -314,6 +314,22 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             keywords: ['ajuste', 'merma', 'corrección', 'inventario', 'documental'],
           },
           {
+            // MISIÓN RESOLUCIÓN 11 (2026-10-31): vista documental de la
+            // Solicitud de Materiales — Modelo SC-2-07 «Solicitud de Entrega»
+            // (Res. 11/2007 MFP, Gaceta Oficial 015/2007, Anexo Único). Flujo
+            // documental con el estándar de Ajustes Documentales (borrador →
+            // revisión → confirmación/anulación), listado dual tarjetas/tabla
+            // (mismo comportamiento que Vales de Salida) y numeración
+            // consecutiva SM-NNNNNN-YYYY por tienda.
+            id: 'solicitud_materiales',
+            label: 'Solicitud de Materiales',
+            description: 'Solicitudes de entrega de productos para consumo de la unidad solicitante (Modelo SC-2-07, Res. 11/2007 MFP): borrador, revisión, confirmación y anulación con trazabilidad.',
+            icon: ClipboardList,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'warehouse', 'clerk', 'usuario'],
+            keywords: ['solicitud', 'materiales', 'solicitud de materiales', 'solicitud de entrega', 'sc-2-07', 'resolución 11', 'pedido', 'requisición', 'consumo interno'],
+          },
+          {
             // Vista documental de Vales de Salida (issue_slips). Módulo PROPIO:
             // listado dual (tarjetas/tabla), detalle documental real (VALE DE SALIDA
             // + movimientos vía reference_id), devolución vía reversión contable
@@ -1434,6 +1450,7 @@ export const MOBILE_MAIN_TABS: MobileMainTab[] = [
     icon: Package,
     activeViews: [
       'inventory', 'history', 'catalog', 'inventory_adjustments', 'vales_salida',
+      'solicitud_materiales',
       'labels', 'lots', 'warehouses',
     ],
   },
@@ -1455,7 +1472,7 @@ export const MOBILE_MAIN_TABS: MobileMainTab[] = [
 export const VALID_VIEWS: Set<string> = new Set([
   'occ', 'dashboard', 'store-dashboard', 'pos', 'inventory', 'recepcion', 'reception_list',
   'transferencias', 'sales', 'inventory_count', 'cost-sheets', 'reports', 'catalog',
-  'history', 'inventory_adjustments', 'vales_salida', 'physical_inventory', 'audit', 'cash', 'users', 'roles', 'stores',
+  'history', 'inventory_adjustments', 'vales_salida', 'solicitud_materiales', 'physical_inventory', 'audit', 'cash', 'users', 'roles', 'stores',
   'storefront-config', 'settings', 'help', 'wiki', 'news', 'rss_management',
   'management-hub', 'ipv', 'legal', 'health',
   'organizations',

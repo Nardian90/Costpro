@@ -545,7 +545,7 @@ describe('ValesSalidaView — invalidación de kardex tras emitir/devolver (CP-I
     await waitFor(() => expect(screen.getByRole('option', { name: /Tornillo M8/ })).toBeTruthy());
     await user.click(screen.getByRole('option', { name: /Tornillo M8/ }));
     await user.type(screen.getByLabelText(/Concepto \/ notas/i), 'Consumo interno de mantenimiento');
-    await user.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    await user.click(screen.getByRole('button', { name: /Revisar y continuar/i }));
     await screen.findByText(/Impacto en inventario/i);
 
     apiFetchMock.mockResolvedValueOnce({
@@ -553,7 +553,7 @@ describe('ValesSalidaView — invalidación de kardex tras emitir/devolver (CP-I
       slip_id: '22222222-2222-2222-2222-222222222222',
       slip_number: 'VS-000004-2026',
     });
-    await user.click(screen.getByRole('button', { name: /Emitir Vale/i }));
+    await user.click(screen.getByRole('button', { name: /Emitir y confirmar ahora/i }));
 
     await waitFor(() => expect(spy).toHaveBeenCalledWith({ queryKey: ['kardex'] }));
     expect(spy).toHaveBeenCalledWith({ queryKey: ['product-kardex'] });

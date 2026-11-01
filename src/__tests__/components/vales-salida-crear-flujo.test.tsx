@@ -115,9 +115,9 @@ describe('ValeSalidaCreateModal — paso 1 EDITANDO', () => {
     expect(screen.getByText('Ana Torres')).toBeTruthy();
   });
 
-  it('2 · botón «Revisar y confirmar» deshabilitado sin productos ni concepto', async () => {
+  it('2 · botón «Revisar y continuar» deshabilitado sin productos ni concepto', async () => {
     renderModal();
-    const confirmBtn = await screen.findByRole('button', { name: /Revisar y confirmar/i });
+    const confirmBtn = await screen.findByRole('button', { name: /Revisar y continuar/i });
     expect(confirmBtn).toBeDisabled();
   });
 
@@ -156,7 +156,7 @@ describe('ValeSalidaCreateModal — paso 1 EDITANDO', () => {
     await user.type(notas, 'Consumo interno de mantenimiento');
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Revisar y confirmar/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /Revisar y continuar/i })).toBeEnabled();
     });
   });
 });
@@ -170,7 +170,7 @@ describe('ValeSalidaCreateModal — paso 2 CONFIRMANDO (validación pre-emisión
     await waitFor(() => expect(screen.getByRole('option', { name: /Tornillo M8/ })).toBeTruthy());
     await user.click(screen.getByRole('option', { name: /Tornillo M8/ }));
     await user.type(screen.getByLabelText(/Concepto \/ notas/i), 'Consumo interno de mantenimiento');
-    await user.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    await user.click(screen.getByRole('button', { name: /Revisar y continuar/i }));
     await screen.findByText(/Impacto en inventario/i);
     return user;
   }
@@ -186,7 +186,7 @@ describe('ValeSalidaCreateModal — paso 2 CONFIRMANDO (validación pre-emisión
 
     // Agregamos ahora el caso de stock insuficiente en un segundo flujo:
     // (el producto Pintura Blanca con stock 0 se valida en el test 6)
-    expect(screen.getByRole('button', { name: /Emitir Vale/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Emitir y confirmar ahora/i })).toBeEnabled();
     expect(screen.getByRole('button', { name: /Volver a editar/i })).toBeTruthy();
   });
 
@@ -199,7 +199,7 @@ describe('ValeSalidaCreateModal — paso 2 CONFIRMANDO (validación pre-emisión
     await waitFor(() => expect(screen.getByRole('option', { name: /Pintura Blanca/ })).toBeTruthy());
     await user.click(screen.getByRole('option', { name: /Pintura Blanca/ }));
     await user.type(screen.getByLabelText(/Concepto \/ notas/i), 'Merma por derrame');
-    await user.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    await user.click(screen.getByRole('button', { name: /Revisar y continuar/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/Revisa antes de emitir/i)).toBeTruthy();
@@ -229,11 +229,11 @@ describe('ValeSalidaCreateModal — paso 2 CONFIRMANDO (validación pre-emisión
     await waitFor(() => expect(screen.getByRole('option', { name: /Tornillo M8/ })).toBeTruthy());
     await user.click(screen.getByRole('option', { name: /Tornillo M8/ }));
     await user.type(screen.getByLabelText(/Concepto \/ notas/i), 'Borrador que se anulará');
-    await user.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    await user.click(screen.getByRole('button', { name: /Revisar y continuar/i }));
     await screen.findByText(/Impacto en inventario/i);
 
     // El botón Anular existe en el pie del paso Revisión
-    const anularBtn = screen.getByRole('button', { name: 'Anular vale en revisión' });
+    const anularBtn = screen.getByRole('button', { name: 'Descartar borrador del vale' });
     expect(anularBtn).toBeEnabled();
     await user.click(anularBtn);
 
@@ -263,9 +263,9 @@ describe('ValeSalidaCreateModal — paso 3 REGISTRADO (emisión real)', () => {
       total_cost: 10,
     });
 
-    await user.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    await user.click(screen.getByRole('button', { name: /Revisar y continuar/i }));
     await screen.findByText(/Impacto en inventario/i);
-    await user.click(screen.getByRole('button', { name: /Emitir Vale/i }));
+    await user.click(screen.getByRole('button', { name: /Emitir y confirmar ahora/i }));
 
     // POST al MISMO endpoint que Vender (requisito 4 — cero duplicación)
     await waitFor(() => {
@@ -307,14 +307,72 @@ describe('ValeSalidaCreateModal — paso 3 REGISTRADO (emisión real)', () => {
 
     apiFetchMock.mockRejectedValueOnce(new Error('Stock insuficiente'));
 
-    await user.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    await user.click(screen.getByRole('button', { name: /Revisar y continuar/i }));
     await screen.findByText(/Impacto en inventario/i);
-    await user.click(screen.getByRole('button', { name: /Emitir Vale/i }));
+    await user.click(screen.getByRole('button', { name: /Emitir y confirmar ahora/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Stock insuficiente')).toBeTruthy();
     });
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(screen.queryByText(/Vale registrado/i)).toBeNull();
+  });
+
+  // MISIÓN RESOLUCIÓN 11 (2026-10-31): etapa intermedia de revisión —
+  // «Guardar en Revisión» persiste el vale 'pending' vía
+  // POST /api/vale-salida/pending (mismo payload/validaciones que el flujo
+  // directo) y el paso REGISTRADO distingue el estado (sin descontar stock).
+  it('9 · Guardar en Revisión hace POST a /api/vale-salida/pending y muestra estado En Revisión', async () => {
+    const onEmitido = vi.fn();
+    const user = userEvent.setup();
+    renderModal(onEmitido);
+
+    const search = await screen.findByLabelText(/Buscar productos/i);
+    await user.type(search, 'Tor');
+    await waitFor(() => expect(screen.getByRole('option', { name: /Tornillo M8/ })).toBeTruthy());
+    await user.click(screen.getByRole('option', { name: /Tornillo M8/ }));
+    await user.type(screen.getByLabelText(/Concepto \/ notas/i), 'Consumo interno de mantenimiento');
+
+    apiFetchMock.mockResolvedValueOnce({
+      status: 'success',
+      slip_id: 'eeeeeeee-2222-2222-2222-222222222222',
+      slip_number: 'VS-000010-2026',
+      total_cost: 10,
+      vale_status: 'pending',
+      items_count: 1,
+    });
+
+    await user.click(screen.getByRole('button', { name: /Revisar y continuar/i }));
+    await screen.findByText(/Impacto en inventario/i);
+    await user.click(screen.getByRole('button', { name: /Guardar en revisión/i }));
+
+    // POST al endpoint de la etapa intermedia (mismo trust boundary)
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledWith(
+        '/api/vale-salida/pending',
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+    const [, opts] = apiFetchMock.mock.calls[0];
+    const body = JSON.parse(String(opts.body));
+    expect(body.items).toEqual([
+      {
+        product_id: 'aaaaaaaa-1111-1111-1111-111111111111',
+        variant_id: null,
+        quantity: 1,
+        production_order_item_id: null,
+      },
+    ]);
+    expect(body.idempotency_key.length).toBeGreaterThanOrEqual(8);
+
+    // Estado REGISTRADO (variante En Revisión): número real + aviso de que
+    // el stock NO se descontó + callback con el resultado.
+    await waitFor(() => {
+      expect(screen.getByText('VS-000010-2026')).toBeTruthy();
+    });
+    expect(screen.getByText(/Vale guardado en revisión/i)).toBeTruthy();
+    expect(screen.getByText(/NO se ha descontado/i)).toBeTruthy();
+    expect(onEmitido).toHaveBeenCalledTimes(1);
+    expect(onEmitido.mock.calls[0][0]).toMatchObject({ vale_status: 'pending' });
   });
 });

@@ -140,17 +140,17 @@ describe('ValeSalidaCreateModal — fecha operativa (misión política temporal)
     await waitFor(() => {
       expect(screen.getByText(/no puede ser futura/i)).toBeTruthy();
     });
-    const btn = screen.getByRole('button', { name: /Revisar y confirmar/i }) as HTMLButtonElement;
+    const btn = screen.getByRole('button', { name: /Revisar y continuar/i }) as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
   });
 
   it('HOY → al emitir NO se envía operation_date (NOW() canónico)', async () => {
     renderModal();
     await llenarValeMinimo();
-    fireEvent.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Revisar y continuar/i }));
     // El resumen muestra la fecha elegida
     expect(await screen.findByText(/Hoy · se estampará al emitir/i)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /Emitir Vale/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Emitir y confirmar ahora/i }));
     await waitFor(() => expect(emitirValeMock).toHaveBeenCalledTimes(1));
     const payload = emitirValeMock.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.operation_date).toBeUndefined();
@@ -166,10 +166,10 @@ describe('ValeSalidaCreateModal — fecha operativa (misión política temporal)
     const fechaElegida = ayerStr >= '2026-10-14' && ayerStr < todayBusinessDay() ? ayerStr : '2026-10-15';
     fireEvent.change(input, { target: { value: fechaElegida } });
     await llenarValeMinimo();
-    fireEvent.click(screen.getByRole('button', { name: /Revisar y confirmar/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Revisar y continuar/i }));
     // El resumen muestra la fecha elegida en DD/MM/YYYY
     expect(await screen.findByText(fechaElegida.split('-').reverse().join('/'))).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /Emitir Vale/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Emitir y confirmar ahora/i }));
     await waitFor(() => expect(emitirValeMock).toHaveBeenCalledTimes(1));
     const payload = emitirValeMock.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.operation_date).toBe(new Date(`${fechaElegida}T12:00:00`).toISOString());

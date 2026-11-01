@@ -119,6 +119,8 @@ const IPVView = dynamic(() => import('@/components/views/terminal/views/ipv/IPVV
 const InventoryAdjustmentsView = dynamic(() => import('@/components/views/terminal/views/inventory/InventoryAdjustmentsView'), { ssr: false });
 const PhysicalInventoryView = dynamic(() => import('@/components/views/terminal/views/physical_inventory/PhysicalInventoryView'), { ssr: false });
 const ValesSalidaView = dynamic(() => import('@/components/views/terminal/views/inventory/ValesSalidaView'), { ssr: false });
+// MISIÓN RESOLUCIÓN 11 (2026-10-31): Solicitud de Materiales (SC-2-07).
+const MaterialRequestsView = dynamic(() => import('@/components/views/terminal/views/inventory/MaterialRequestsView'), { ssr: false });
 // MISIÓN INGRESOS/EGRESOS DE CAJA (2026-10-20): documento Ingreso/Egreso
 // (fondo de cambio y otros) — OPERACIÓN → Caja → Ingresos/Egresos.
 const IngresosEgresosView = dynamic(() => import('@/components/views/terminal/views/cash_flow/IngresosEgresosView'), { ssr: false });
@@ -507,6 +509,7 @@ export default function TerminalShell() {
         // fecha de corte, hojas PDF (con teóricas o ciegas), importación Excel,
         // conciliación y ajustes documentales vinculados.
         case 'physical_inventory': return <ViewErrorBoundary viewName="Inventario Físico"><PhysicalInventoryView /></ViewErrorBoundary>;
+        case 'solicitud_materiales': return <ViewErrorBoundary viewName="Solicitud de Materiales"><MaterialRequestsView /></ViewErrorBoundary>;
         case 'vales_salida': return <ViewErrorBoundary viewName="Vales de Salida"><ValesSalidaView /></ViewErrorBoundary>;
         // MISIÓN FECHAS DE TRABAJO: OPERACIÓN → Control operativo → Fechas de trabajo
         case 'work_dates': return <ViewErrorBoundary viewName="Fechas de trabajo"><WorkDatesView /></ViewErrorBoundary>;

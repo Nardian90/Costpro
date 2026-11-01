@@ -23,11 +23,13 @@
  *      misma consulta RLS — antes limit(100) silencioso), unidades reales,
  *      contadores por estado y estados vacíos alineados con el módulo.
  *
- * Matriz de acciones (modelo REAL issue_slips — no existe Borrador):
- *   | Estado               | Ver | Devolver |
- *   | Completado (nace)    | ✅  | ✅       |
- *   | Devuelto (reversado) | ✅  | ❌       |
- *   | Anulado (defensivo)  | ✅  | ❌       |
+ * Matriz de acciones (modelo REAL issue_slips — MISIÓN RES. 11 2026-10-31:
+ * el vale puede nacer 'pending' (En Revisión) y confirmarse después):
+ *   | Estado               | Ver | Confirmar | Anular | Devolver |
+ *   | Pending (en revisión)| ✅  | ✅        | ✅     | ❌       |
+ *   | Completado           | ✅  | ❌        | ❌     | ✅       |
+ *   | Devuelto (reversado) | ✅  | ❌        | ❌     | ❌       |
+ *   | Anulado (defensivo)  | ✅  | ❌        | ❌     | ❌       |
  *
  * FIX UI/UX (evidencia del usuario — 09/10/2026):
  *   - Breadcrumb DUPLICADO eliminado: el shell ya renderiza el
@@ -46,8 +48,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Plus, Search, Loader2, Eye, RefreshCcw, Package, Undo2,
-  Factory, LayoutList, List, AlertTriangle,
+  Plus, Search, Loader2, Eye, RefreshCcw, Package, Undo2, Ban,
+  Factory, LayoutList, List, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, touch } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
@@ -55,21 +57,25 @@ import { useAuthStore } from '@/store';
 import { canViewStore } from '@/lib/roles';
 import { DocumentStatusBadge } from '@/components/ui/DocumentStatusBadge';
 import { Button } from '@/components/ui/button';
+import { BaseModal } from '@/components/ui/BaseModal';
+import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { ValeSalidaReverseModal } from './ValeSalidaReverseModal';
 import { ValeSalidaDetalleModal, type ValeSalidaDoc } from './ValeSalidaDetalleModal';
 import { ValeSalidaCreateModal } from './ValeSalidaCreateModal';
 import { toast } from 'sonner';
+import { formatearCantidad } from '@/lib/inventory/kardexPeriod';
 
 // ──────────────────────────────────────────────────────────────────────────
 // Tipos (espejo del esquema real issue_slips / issue_slip_items)
 // ──────────────────────────────────────────────────────────────────────────
 
-type ValeStatus = 'completed' | 'voided' | 'reversed';
+type ValeStatus = 'pending' | 'completed' | 'voided' | 'reversed';
 type StatusFilter = 'all' | ValeStatus;
 type ViewMode = 'cards' | 'table';
 
 const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
   all: 'Todos',
+  pending: 'En Revisión',
   completed: 'Completados',
   reversed: 'Devueltos',
   voided: 'Anulados',
@@ -84,6 +90,7 @@ const VALE_SELECT = [
   'items:issue_slip_items(*, products(name, sku, unit_of_measure))',
   'creator:profiles!issue_slips_created_by_fkey(full_name)',
   'voider:profiles!issue_slips_voided_by_fkey(full_name)',
+  'confirmer:profiles!issue_slips_confirmed_by_fkey(full_name)',
   'production_orders(order_number, order_type)',
 ].join(', ');
 
@@ -136,6 +143,10 @@ export default function ValesSalidaView() {
   const [createOpen, setCreateOpen] = useState(false);
   const [detalleDoc, setDetalleDoc] = useState<ValeSalidaDoc | null>(null);
   const [reverseTarget, setReverseTarget] = useState<ValeSalidaDoc | null>(null);
+  // MISIÓN RES. 11 (2026-10-31): confirmación/anulación de vales En Revisión.
+  const [confirmTarget, setConfirmTarget] = useState<ValeSalidaDoc | null>(null);
+  const [voidTarget, setVoidTarget] = useState<ValeSalidaDoc | null>(null);
+  const [actionPending, setActionPending] = useState<string | null>(null);
 
   // ── Consulta RLS paginada (misma fuente de verdad, «Cargar más» real) ──
   const query = useInfiniteQuery({
@@ -211,6 +222,7 @@ export default function ValesSalidaView() {
     });
     return {
       all: base.length,
+      pending: base.filter(d => d.status === 'pending').length,
       completed: base.filter(d => d.status === 'completed').length,
       reversed: base.filter(d => d.status === 'reversed').length,
       voided: base.filter(d => d.status === 'voided').length,
@@ -229,18 +241,21 @@ export default function ValesSalidaView() {
     setCreateOpen(true);
   }, []);
 
-  const handleEmitido = useCallback(() => {
+  const handleEmitido = useCallback((resultado: { vale_status?: string; slip_number?: string }) => {
     queryClient.invalidateQueries({ queryKey: ['vales-salida'] });
     queryClient.invalidateQueries({ queryKey: ['inventory'] });
     queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
-    // CP-INV-009: el vale genera movimientos issue_slip_out visibles en el
-    // Kardex — invalidar sus caches para que la reversión/emisión se refleje
-    // sin esperar refresco manual (misma convención que useReverseDocument).
     queryClient.invalidateQueries({ queryKey: ['kardex'] });
     queryClient.invalidateQueries({ queryKey: ['product-kardex'] });
-    toast.success('Vale de Salida emitido', {
-      description: 'El stock fue descontado y el documento ya aparece en el listado.',
-    });
+    if (resultado?.vale_status === 'pending') {
+      toast.success(`Vale ${resultado.slip_number || ''} guardado en revisión`, {
+        description: 'El stock NO se ha descontado: revisa el documento y confírmalo cuando estés seguro.',
+      });
+    } else {
+      toast.success('Vale de Salida emitido', {
+        description: 'El stock fue descontado y el documento ya aparece en el listado.',
+      });
+    }
   }, [queryClient]);
 
   const handleReversed = useCallback(() => {
@@ -252,6 +267,62 @@ export default function ValesSalidaView() {
     queryClient.invalidateQueries({ queryKey: ['kardex'] });
     queryClient.invalidateQueries({ queryKey: ['product-kardex'] });
   }, [queryClient]);
+
+  // ── Confirmación de vale En Revisión (misión Res. 11, 2026-10-31) ──
+  // Acción EXPLÍCITA con validaciones de servidor: la RPC confirm_vale_salida
+  // valida el estado con lock FOR UPDATE (evita dobles confirmaciones),
+  // aplica los movimientos issue_slip_out y registra confirmed_at/confirmed_by.
+  const [voidMotivo, setVoidMotivo] = useState('');
+  useEffect(() => { if (voidTarget) setVoidMotivo(''); }, [voidTarget]);
+
+  const handleConfirmPending = useCallback(async (d: ValeSalidaDoc) => {
+    setActionPending('confirm');
+    try {
+      const { error } = await supabase.rpc('confirm_vale_salida', {
+        p_slip_id: d.id,
+        p_user_id: null,
+      });
+      if (error) throw error;
+      toast.success(`Vale ${d.slip_number} confirmado`, {
+        description: 'El stock fue descontado y los movimientos quedaron registrados en el kardex.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['vales-salida'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['kardex'] });
+      queryClient.invalidateQueries({ queryKey: ['product-kardex'] });
+      if (detalleDoc?.id === d.id) setDetalleDoc(null);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error('No se pudo confirmar el vale: ' + msg, { duration: 9000 });
+    } finally {
+      setActionPending(null);
+      setConfirmTarget(null);
+    }
+  }, [queryClient, detalleDoc]);
+
+  const handleVoidPending = useCallback(async (d: ValeSalidaDoc, motivo: string) => {
+    setActionPending('void');
+    try {
+      const { error } = await supabase.rpc('void_vale_salida', {
+        p_slip_id: d.id,
+        p_reason: motivo,
+        p_user_id: null,
+      });
+      if (error) throw error;
+      toast.success(`Vale ${d.slip_number} anulado`, {
+        description: 'El vale estaba en revisión: ningún efecto en inventario. La anulación queda en la auditoría.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['vales-salida'] });
+      if (detalleDoc?.id === d.id) setDetalleDoc(null);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error('No se pudo anular el vale: ' + msg, { duration: 9000 });
+    } finally {
+      setActionPending(null);
+      setVoidTarget(null);
+    }
+  }, [queryClient, detalleDoc]);
 
   const isLoading = query.isLoading;
   const queryError = query.error;
@@ -392,6 +463,8 @@ export default function ValesSalidaView() {
           canActInStore={canActInStore}
           onVer={setDetalleDoc}
           onDevolver={setReverseTarget}
+          onConfirmar={setConfirmTarget}
+          onAnular={setVoidTarget}
         />
       ) : (
         <div className="grid gap-2">
@@ -402,6 +475,8 @@ export default function ValesSalidaView() {
               canActInStore={canActInStore}
               onVer={setDetalleDoc}
               onDevolver={setReverseTarget}
+              onConfirmar={setConfirmTarget}
+              onAnular={setVoidTarget}
             />
           ))}
         </div>
@@ -459,6 +534,104 @@ export default function ValesSalidaView() {
         docLabel={reverseTarget ? `Vale ${reverseTarget.slip_number} • ${reverseTarget.notes || ''}` : undefined}
         onReversed={handleReversed}
       />
+
+      {/* ── Confirmación de vale En Revisión (misión Res. 11, 2026-10-31) ── */}
+      <BaseModal
+        open={!!confirmTarget}
+        onOpenChange={o => { if (!o) setConfirmTarget(null); }}
+        aria-label="Confirmar vale"
+        maxWidth="sm:max-w-md"
+        title={
+          <span className="text-lg font-black uppercase tracking-tight flex items-center gap-2 text-success">
+            <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
+            Confirmar Vale
+          </span>
+        }
+        footer={
+          <>
+            <SecondaryButton label="Cancelar" onClick={() => setConfirmTarget(null)} disabled={!!actionPending} className="flex-1" />
+            <PrimaryButton
+              label={actionPending === 'confirm' ? 'Confirmando…' : 'Confirmar y descontar stock'}
+              onClick={() => confirmTarget && handleConfirmPending(confirmTarget)}
+              disabled={!!actionPending}
+              className="flex-1 !bg-success hover:!bg-success/90"
+            />
+          </>
+        }
+      >
+        <div className="py-4 space-y-3">
+          <p className="font-bold text-center text-sm">
+            ¿Confirmar el vale {confirmTarget?.slip_number}?
+          </p>
+          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+            Esto descontará el stock de los productos listados, registrará los movimientos en el kardex
+            (y el consumo de OT si aplica) y marcará el documento como <span className="font-bold text-success">Completado</span>.
+            El costo se calculará servidor con el costo promedio vigente. La acción no puede deshacerse
+            (la corrección posterior es la Devolución/Reversión).
+          </p>
+          {confirmTarget?.items && confirmTarget.items.length > 0 && (
+            <div className="rounded-xl bg-muted/50 border border-border p-3 space-y-1">
+              <p className="text-xs font-black uppercase text-muted-foreground mb-1">
+                {confirmTarget.items.length} salida(s) a aplicar
+              </p>
+              {confirmTarget.items.map(it => (
+                <div key={it.id} className="flex items-center justify-between text-xs gap-2">
+                  <span className="font-bold truncate flex-1">{it.products?.name || '—'}</span>
+                  <span className="font-mono font-black text-destructive whitespace-nowrap">
+                    −{formatearCantidad(Number(it.quantity))} {it.products?.unit_of_measure || ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </BaseModal>
+
+      {/* ── Anulación de vale En Revisión ── */}
+      <BaseModal
+        open={!!voidTarget}
+        onOpenChange={o => { if (!o && !actionPending) setVoidTarget(null); }}
+        aria-label="Anular vale en revisión"
+        maxWidth="sm:max-w-md"
+        title={
+          <span className="text-lg font-black uppercase tracking-tight flex items-center gap-2 text-destructive">
+            <Ban className="w-5 h-5" aria-hidden="true" />
+            Anular Vale en Revisión
+          </span>
+        }
+        footer={
+          <>
+            <SecondaryButton label="Cancelar" onClick={() => setVoidTarget(null)} disabled={!!actionPending} className="flex-1" />
+            <PrimaryButton
+              label={actionPending === 'void' ? 'Anulando…' : 'Anular definitivamente'}
+              onClick={() => voidTarget && handleVoidPending(voidTarget, voidMotivo.trim())}
+              disabled={!!actionPending || voidMotivo.trim().length === 0}
+              className="flex-1 !bg-destructive hover:!bg-destructive/90"
+            />
+          </>
+        }
+      >
+        <div className="py-4 space-y-3">
+          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+            El vale {voidTarget?.slip_number || ''} está <span className="font-bold">En Revisión</span>:
+            nunca descontó stock, por lo que la anulación no tiene efecto en inventario. El documento y su
+            numeración se conservan para trazabilidad (no se borra nada). Motivo obligatorio para la auditoría.
+          </p>
+          <div>
+            <label htmlFor="vale-anular-motivo" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Motivo <span className="text-destructive">*</span>
+            </label>
+            <textarea
+              id="vale-anular-motivo"
+              value={voidMotivo}
+              onChange={e => setVoidMotivo(e.target.value)}
+              rows={2}
+              placeholder="Motivo de la anulación…"
+              className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm resize-none', touch)}
+            />
+          </div>
+        </div>
+      </BaseModal>
     </div>
   );
 }
@@ -472,11 +645,15 @@ function TarjetaVale({
   canActInStore,
   onVer,
   onDevolver,
+  onConfirmar,
+  onAnular,
 }: {
   vale: ValeSalidaDoc;
   canActInStore: boolean;
   onVer: (d: ValeSalidaDoc) => void;
   onDevolver: (d: ValeSalidaDoc) => void;
+  onConfirmar: (d: ValeSalidaDoc) => void;
+  onAnular: (d: ValeSalidaDoc) => void;
 }) {
   const itemCount = d.items?.length ?? 0;
   return (
@@ -503,16 +680,13 @@ function TarjetaVale({
             {formatDate(d.created_at)} • {d.creator?.full_name || '—'}
             {itemCount > 0 && ` • ${itemCount} producto(s)`}
             {d.total_cost > 0 && ` • ${formatCurrency(d.total_cost)}`}
+            {d.status === 'pending' && ' • el stock NO se ha descontado'}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {/* Historial de visibilidad: icon-only outline (invisible en dark)
               → secondary relleno (etiqueta, #1384) → OUTLINE del design system
               con etiqueta (E2E-AUDIT 2026-10-09: contraste + coherencia verde). */}
-          {/* E2E-AUDIT FIX (2026-10-09): variante outline (tokens del design
-              system) — antes `secondary` (#475569 slate azulado + blanco):
-              contraste y coherencia visual deficientes con el primario verde.
-              Se conserva la etiqueta de texto «Ver» (requisito de accesibilidad). */}
           <Button
             type="button"
             variant="outline"
@@ -524,16 +698,36 @@ function TarjetaVale({
             <Eye className="w-4 h-4" aria-hidden="true" />
             <span className="hidden sm:inline">Ver</span>
           </Button>
+          {/* MISIÓN RES. 11 (2026-10-31) — vale En Revisión: Confirmar (acción
+              explícita que descuenta stock) y Anular (sin efectos en stock). */}
+          {d.status === 'pending' && canActInStore && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onAnular(d)}
+                className="h-10 px-3.5 rounded-lg gap-1.5 text-xs font-bold border-destructive/50! text-destructive hover:bg-destructive! hover:text-white!"
+                title="Anular el vale en revisión (sin efecto en stock)"
+                aria-label={`Anular vale en revisión ${d.slip_number}`}
+              >
+                <Ban className="w-4 h-4" aria-hidden="true" />
+                <span className="hidden xl:inline">Anular</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onConfirmar(d)}
+                className="h-10 px-3.5 rounded-lg gap-1.5 text-xs font-bold border-success/70! bg-success/15! text-success hover:bg-success! hover:text-white!"
+                title="Confirmar el vale: descuenta el stock y lo marca Completado"
+                aria-label={`Confirmar vale ${d.slip_number}`}
+              >
+                <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Confirmar</span>
+              </Button>
+            </>
+          )}
           {/* Matriz de acciones: solo 'completed' admite devolución
-              (espejo de canReverse('issue_slip') + RPC reverse_vale_salida).
-              FIX visibilidad: fondo violeta 20% + borde 70% + etiqueta — antes
-              bg-purple-500/5 (5% de opacidad) prácticamente invisible.
-              NOTA TÉCNICA: el modificador `!` (Tailwind v4) es OBLIGATORIO en
-              borde/fondo/hover. El variante outline del Button define
-              dark:bg-input/30 + dark:border-input + dark:hover:bg-input/50,
-              que en modo oscuro tienen especificidad (0,2,0) y PISAN las
-              utilidades púrpura planas (0,1,0) — sin `!` el botón se
-              renderiza gris sobre gris (bug evidenciado 09/10/2026). */}
+              (espejo de canReverse('issue_slip') + RPC reverse_vale_salida). */}
           {d.status === 'completed' && canActInStore && (
             <Button
               type="button"
@@ -565,6 +759,8 @@ function TablaVales({
   canActInStore,
   onVer,
   onDevolver,
+  onConfirmar,
+  onAnular,
 }: {
   vales: ValeSalidaDoc[];
   sortKey: 'created_at' | 'total_cost';
@@ -573,6 +769,8 @@ function TablaVales({
   canActInStore: boolean;
   onVer: (d: ValeSalidaDoc) => void;
   onDevolver: (d: ValeSalidaDoc) => void;
+  onConfirmar: (d: ValeSalidaDoc) => void;
+  onAnular: (d: ValeSalidaDoc) => void;
 }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-border bg-card">
@@ -634,6 +832,31 @@ function TablaVales({
                   >
                     <Eye className="w-3.5 h-3.5" />
                   </Button>
+                  {d.status === 'pending' && canActInStore && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => onAnular(d)}
+                        className="w-8 h-8 p-0 rounded-lg border-destructive/50! text-destructive hover:bg-destructive! hover:text-white!"
+                        title="Anular el vale en revisión (sin efecto en stock)"
+                        aria-label={`Anular vale en revisión ${d.slip_number}`}
+                      >
+                        <Ban className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => onConfirmar(d)}
+                        className="h-8 px-2.5 rounded-lg gap-1 text-[10px] font-black uppercase border-success/70! bg-success/15! text-success hover:bg-success! hover:text-white!"
+                        title="Confirmar el vale: descuenta el stock y lo marca Completado"
+                        aria-label={`Confirmar vale ${d.slip_number}`}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span className="hidden lg:inline">Confirmar</span>
+                      </Button>
+                    </>
+                  )}
                   {d.status === 'completed' && canActInStore && (
                     <Button
                       type="button"

@@ -255,3 +255,27 @@ export const canViewStore = (user: StoreAccessUser | null, storeId: string): boo
     m.status === 'active'
   ) || false;
 };
+
+// ─────────────────────────────────────────────────────────────────────
+// MISIÓN RESOLUCIÓN 11 (2026-10-31) — Solicitud de Materiales (SC-2-07)
+// ─────────────────────────────────────────────────────────────────────
+// El dato 7 del modelo («Nombre y firma del funcionario que autoriza la
+// Solicitud») exige nivel de autorización: la CONFIRMACIÓN de una solicitud
+// queda reservada a admin/manager/encargado (espejo del gate de reversión de
+// ajustes). Crear/editar/enviar a revisión y anular permanecen abiertos a
+// cualquier miembro activo de la tienda (canViewStore) — la DB revalida con
+// has_store_access_as en el RPC confirm_material_request (última barrera).
+const MATERIAL_REQUEST_CONFIRM_ROLES: UserRole[] = ['admin', 'manager', 'encargado'];
+
+export const canConfirmMaterialRequestInStore = (
+  user: StoreAccessUser | null,
+  storeId: string,
+): boolean => {
+  if (!user || !storeId) return false;
+  if (user.role === 'admin' || user.role === 'superadmin') return true;
+  return user.memberships?.some(m =>
+    m.store_id === storeId &&
+    MATERIAL_REQUEST_CONFIRM_ROLES.includes(m.role) &&
+    m.status === 'active'
+  ) || false;
+};

@@ -181,6 +181,12 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["create_physical_inventory", "generate_count_sheet", "import_count_excel", "generate_adjustments"]
   },
   {
+    id: "solicitud_materiales",
+    route: "/?view=solicitud_materiales",
+    description: "Solicitud de Materiales (Modelo SC-2-07 «Solicitud de Entrega», Res. 11/2007 MFP): flujo documental borrador → revisión → confirmación/anulación con datos obligatorios del modelo, listado en tarjetas o tabla y numeración consecutiva por tienda.",
+    actions: ["create_request", "edit_draft", "submit_review", "confirm_request", "reopen_request", "void_request"]
+  },
+  {
     id: "vales_salida",
     route: "/?view=vales_salida",
     description: "Centro documental de Vales de Salida: listado (tarjetas/tabla), detalle documental con trazabilidad y movimientos, devolución (reversión) y flujo dedicado de creación propio del módulo (misma RPC que Vender).",
