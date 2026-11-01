@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { createServerClient } from "@/lib/supabaseClient";
+import { UserRole } from "@/types";
 // SEC-TS-10 (FIX BUG REAL): getServerSession usaba el SINGLETON client-side
 // de supabase (`export const supabase` — persistSession: true,
 // autoRefreshToken: true) en el SERVIDOR. Bajo concurrencia (múltiples
@@ -102,7 +103,7 @@ export async function getServerSession(request: NextRequest) {
                     ? profileResult.data.roles
                     : profileResult.data.role
                       ? [profileResult.data.role]
-                      : ['user']) as string[],
+                      : ['user']) as UserRole[],
                 },
                 token,
               };

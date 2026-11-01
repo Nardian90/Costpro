@@ -99,7 +99,7 @@ describe('LIMITES-SUPABASE T4a — withAuth deduplica la consulta a profiles', (
       token: 'token',
     };
     const handler = vi.fn(async () => new Response('ok'));
-    await withAuth(handler)(makeReq() as never) as never as Promise<Response>;
+    await withAuth(handler)(makeReq() as never);
 
     const profileQueries = calls.filter(c => c.table === 'profiles');
     const membershipQueries = calls.filter(c => c.table === 'user_store_memberships');
@@ -119,7 +119,7 @@ describe('LIMITES-SUPABASE T4a — withAuth deduplica la consulta a profiles', (
       token: 'token',
     };
     const handler = vi.fn(async () => new Response('ok'));
-    await withAuth(handler)(makeReq() as never) as never as Promise<Response>;
+    await withAuth(handler)(makeReq() as never);
 
     const profileQueries = calls.filter(c => c.table === 'profiles');
     const membershipQueries = calls.filter(c => c.table === 'user_store_memberships');
@@ -138,8 +138,8 @@ describe('LIMITES-SUPABASE T4a — withAuth deduplica la consulta a profiles', (
     // Authorization ausente (getServerSession no encuentra Bearer → null).
     const req = new NextRequest('http://localhost/api/example');
     const handler = vi.fn(async () => new Response('ok'));
-    const res = await withAuth(handler)(req as never) as never as Promise<Response>;
-    expect(res.status).toBe(401);
+    const res = await withAuth(handler)(req as never);
+    expect((res as Response).status).toBe(401);
     expect(handler).not.toHaveBeenCalled();
     expect(calls).toHaveLength(0); // cero consultas — el 401 no gasta BD
   });

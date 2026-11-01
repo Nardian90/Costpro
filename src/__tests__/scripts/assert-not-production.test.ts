@@ -7,7 +7,10 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { assertNotProduction } from 'file:///home/z/my-project/costpro/scripts/lib/assert-not-production.mjs';
+// Import relativo al .mjs del guard (fuera de src/): funciona en vitest y en
+// tsc gracias a allowJs+moduleResolution bundler. NO usar file:/// — rompería
+// en cualquier máquina que no sea el sandbox donde se escribió.
+import { assertNotProduction } from '../../../scripts/lib/assert-not-production.mjs';
 
 const LIB = resolve(process.cwd(), 'scripts/lib');
 const PROD = 'https://wthkddeleylijmonclxg.supabase.co';
