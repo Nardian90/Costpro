@@ -141,6 +141,9 @@ y tenant ajeno por ID).
 
 ## 14. SHA y enlace al PR
 
-- Commit de la corrección (fase 1): **ver PR** — rama `fix/master-catalog-multistore-visibility`.
-- PR: **`<URL_PR>`** — sin auto-merge; el propietario revisa antes de integrar.
+- Commit de la corrección (fase 1): **`7d349e8`** — `fix(catalog): visibilidad
+  global del catálogo maestro para tiendas conectadas`. Pruebas e informe:
+  **`06a0d92`** (rama `fix/master-catalog-multistore-visibility`).
+- PR: **https://github.com/Nardian90/Costpro/pull/1540** — sin auto-merge; el
+  propietario revisa antes de integrar.
 - Evidencia de la verificación de imágenes: `scripts/verify-imagen-afirmacion.mjs` (solo lectura, reproducible).
