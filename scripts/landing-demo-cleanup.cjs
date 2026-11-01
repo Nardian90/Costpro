@@ -23,12 +23,14 @@ for (const line of envContent.split('\n')) {
 }
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 
-// GUARD (LIMITES-SUPABASE T1b): bloquea producción salvo doble flag explícito.
-// (.cjs: CLI del guard compartido, mismo contrato)
+// GUARD (CP-INFRA-019): bloquea producción salvo doble flag explícito.
+// Valida la URL leída del .env por el parser local (la que usan las
+// peticiones de este script) — NO process.env, que puede estar vacío o
+// apuntar a otro proyecto. (.cjs: CLI del guard compartido, mismo contrato)
 try {
   require('child_process').execFileSync('node', [
     require('path').resolve(__dirname, 'lib', 'assert-not-production.mjs'),
-    '--mode', 'write', '--url', String(process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''), '--context', 'landing-demo-cleanup.cjs',
+    '--mode', 'write', '--url', String(SUPABASE_URL ?? ''), '--context', 'landing-demo-cleanup.cjs',
   ], { stdio: 'inherit' });
 } catch { process.exit(1); }
 
