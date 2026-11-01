@@ -98,7 +98,16 @@ borradas/E2E» quedó **REFUTADA** con consultas read-only sobre producción
 ## 7. Cambios de base de datos
 
 1. **Índice único parcial** `products_master_store_unique ON products(master_product_id, store_id) WHERE master_product_id IS NOT NULL` — el invariante que `activate_master_product` ya aplicaba en su lógica pasa a ser ley. Verificado en producción antes: 188 pares (maestro, tienda), 0 duplicados. Idempotente (`IF NOT EXISTS`), reversible (`DROP INDEX IF EXISTS`).
-2. **Funciones** recreadas (`CREATE OR REPLACE`; v2 con DROP previo por cambio de RETURNS). Sin migración de DATOS: la corrección es de lectura, no reescribe filas ni archivos. Producción NO fue modificada en esta misión (la aplicación del PR la decide el propietario).
+2. **Funciones** recreadas (`CREATE OR REPLACE`; v2 con DROP previo por cambio de RETURNS). Sin migración de DATOS: la corrección es de lectura, no reescribe filas ni archivos.
+3. **APLICACIÓN EN PRODUCCIÓN (autorizada por el propietario el 2026-11-01: «aplica 20261101130000»):**
+   - **Cuándo:** 2026-11-01 ≈22:45 UTC. **Qué:** `supabase/migrations/20261101130000_cp_catalogo_visibilidad_maestro.sql` en su versión del commit **`4f0bfb4`** (rama conectada en UNION ALL). **Cómo:** Management API (`scripts/apply-migration-prod.mjs`, guard fail-closed ref=wthkddeleylijmonclxg, flag explícito `--aplicar-produccion`). **Resultado:** HTTP 201; índice creado; funciones recreadas con las columnas nuevas (`source`, `master_product_id` verificadas vía `pg_proc.proargnames`).
+   - **Verificación post-aplicación (impersonación JWT read-only: SET LOCAL role authenticated + request.jwt.claims, ROLLBACK final):**
+
+     | Tienda | Antes | Después |
+     | --- | --- | --- |
+     | FERROCARRIL VITALLCONS (connected) | 0 filas | **188 filas = los 188 maestros activos (188 solo-maestro, 0 locales)** |
+     | ENERVIDA-VITALLCONS (connected) | 188 locales | **188 filas (188 locales, 0 solo-maestro) — intacta** |
+     | Puerto Padre VITALLCONS (disconnected) | 36 locales | **36 filas, 0 solo-maestro — comportamiento idéntico al anterior** |
 
 ## 8. Modelo final de referencias de imágenes
 
@@ -133,17 +142,19 @@ y tenant ajeno por ID).
 
 ## 13. Riesgos residuales
 
-1. **Producción aún sin aplicar**: la migración y el fix viven en el PR; hasta que el propietario lo integre y aplique las funciones, Ferricarril sigue viendo 0. Aplicación: `supabase/migrations/20261101130000…` (idempotente, sin migración de datos; reversible restaurando las definiciones de 20261028120000).
+1. ~~Producción aún sin aplicar~~ → **APLICADA en producción el 2026-11-01** (ver §7.3, autorización explícita del propietario, verificación incluida). Reversibilidad: restaurar las definiciones de 20261028120000 + `DROP INDEX IF EXISTS products_master_store_unique`.
 2. **Filtrado por categoría**: los maestros no tienen categoría (atributo local) — con filtro de categoría activo las filas solo-maestro se ocultan. Documentado como comportamiento, no defecto.
 3. **POS sigue vendiendo solo filas locales**: la visibilidad global es de CATALOGO (misión §2.2 distingue visibilidad vs operatividad comercial); incorporar a inventario sigue siendo explícito (`activate_master_product`).
-4. **Badge/guardas UI**: la edición global desde CATALOGO sigue canalizada por las vías existentes (Catálogo de la organización / propuestas); el badge identifica la fila y las guardas evitan operaciones locales indebidas.
+4. **Badge/guardas UI**: hasta que el PR #1540 se integre, el frontend desplegado (main) renderiza las filas solo-maestro como filas normales (sin badge, operativos en cero, badge «Incompleto») — compatible por diseño (zod descarta `source`/`master_product_id`). Con el PR: badge «Maestro» y guardas locales.
 5. **Caché**: la invalidación de react-query (`catalog-products-v2`) ya existía; no se añadieron capas de caché nuevas.
+6. **Ferricarril sin membresías**: la tienda FERROCARRIL VITALLCONS no tiene `user_store_memberships` en producción — está conectada al catálogo pero ningún usuario pertenece formalmente a ella. La visibilidad se verificó impersonando al owner del tenant. Cuando se den de alta usuarios en la tienda, verán el catálogo completo sin pasos adicionales.
 
 ## 14. SHA y enlace al PR
 
-- Commit de la corrección (fase 1): **`7d349e8`** — `fix(catalog): visibilidad
-  global del catálogo maestro para tiendas conectadas`. Pruebas e informe:
-  **`06a0d92`** (rama `fix/master-catalog-multistore-visibility`).
-- PR: **https://github.com/Nardian90/Costpro/pull/1540** — sin auto-merge; el
-  propietario revisa antes de integrar.
+- Corrección (fase 1): **`7d349e8`** · pruebas e informe: **`06a0d92`** ·
+  versión final de la migración (UNION ALL) + merge de main + manifiesto a 118
+  + CI verde: **`4f0bfb4`** (rama `fix/master-catalog-multistore-visibility`).
+- PR: **https://github.com/Nardian90/Costpro/pull/1540** — CI completo en verde
+  (TypeCheck + Lint + Unit Tests + Build ✅ · Unit & Integration Tests ✅).
+  Sin auto-merge; el propietario revisa antes de integrar.
 - Evidencia de la verificación de imágenes: `scripts/verify-imagen-afirmacion.mjs` (solo lectura, reproducible).
