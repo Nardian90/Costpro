@@ -8,8 +8,14 @@
 # El guard bloquea la operación (ref de producción) ANTES de leer el .env,
 # así que el caso de éxito del token usa doble flag en un entorno simulado:
 # el objetivo aquí es la PROPAGACIÓN del token, no la autorización.
+#
+# NOTA: el script bajo prueba copia apply-rpc-fix.sh a $TMP/scripts/, pero
+# apply-rpc-fix.sh resuelve REPO_ROOT desde su PROPIA ubicación ($TMP) — por
+# eso la copia incluye .env y scripts/lib/. La raíz del REPO REAL se deriva
+# de la ubicación de este test (sin rutas absolutas: funciona en cualquier
+# checkout, incluido el runner de CI).
 set -u
-ROOT="/home/z/my-project/costpro"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TMP="$(mktemp -d /tmp/fixa-XXXXXX)"
 PASS=0; FAIL=0
 ok()   { echo "PASS  $1"; PASS=$((PASS+1)); }
