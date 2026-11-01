@@ -94,7 +94,7 @@ Pruebas específicas adicionales (todas ✓):
 - **Elusión por entorno imposible:** escritura sin URL con entorno E2E completo → bloquea (la URL ambiental no autoriza escrituras).
 - **Idempotencia:** decisiones idénticas en corridas repetidas (API y CLI).
 - **Sin duplicación de procesos:** el patrón CLI de los `.cjs` genera exactamente un proceso guard por invocación.
-- **Regresión de los once escritores** (`scripts/lib/smoke-writers-cp-infra-019.sh`, invocado desde la suite): **15/15 PASS** — cada escritor con `.env` real (=prod) y con destino ausente se bloquea con mensaje del guard antes de cualquier efecto; caso de discrepancia entorno-E2E/operación-prod bloquea.
+- **Regresión de los once escritores** (`scripts/lib/smoke-writers-cp-infra-019.sh`, invocado desde la suite): **15/15 PASS** — cada escritor con un `.env` de **prueba** (URL de producción + credenciales dummy, creado por el propio smoke y restaurado al salir; no toca el `.env` real) y con destino ausente se bloquea con mensaje del guard antes de cualquier efecto; caso de discrepancia entorno-E2E/operación-prod bloquea. El smoke es determinista tanto en el sandbox (con `.env` real presente) como en un checkout de CI sin `.env`.
 - **Las tres variantes del guard funcionan de verdad:** cada caso de la matriz se ejecuta como proceso real `node`/`python3`/`bash`.
 - **Node 22+:** todos los scripts pasan `node --check` / `bash -n` / `py_compile`; el demo del fix C corrió con el Node del proyecto (v24; engines exige >=22).
 
@@ -114,7 +114,7 @@ Pruebas específicas adicionales (todas ✓):
 - **Ninguna operación contra CostproBD se ejecutó ni se ejecutará en este PR.** Las únicas ejecuciones de escritores fueron con bloqueo activo (se cortan en el guard) o con destino E2E/mock. No se tocaron migraciones, seeds, limpiezas, configuración de Supabase ni claves.
 - `apply-rpc-fix.sh` mantiene su ref de producción hardcodeado **y ahora siempre se bloquea** salvo doble flag explícito: es un script de operación productiva legítima, y su uso correcto queda a discreción del propietario (documentado en el mensaje de bloqueo).
 - La lista `E2E_KNOWN_REFS` es deliberadamente cerrada; si aparecen entornos remotos legítimos nuevos, deben añadirse con justificación en `docs/audits/`.
-- El `.env` del sandbox apunta a producción; por eso el smoke de regresión es también una prueba realista: cualquier corrida accidental de los once escritores en este entorno se bloquea.
+- El `.env` del sandbox apunta a producción; el smoke de regresión usa una copia de prueba con esa misma URL para que cualquier corrida accidental de los once escritores en ese entorno se bloquee de forma verificable y reproducible también en CI.
 
 ## 8. Archivos modificados
 

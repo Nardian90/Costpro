@@ -1,12 +1,38 @@
 #!/usr/bin/env bash
-# Smoke test CP-INFRA-019: los 11 escritores, ejecutados con el entorno REAL
-# del repo (.env apunta a PRODUCCIÓN wthkddeleylijmonclxg) y con entorno
+# Smoke test CP-INFRA-019: los 11 escritores, ejecutados con un .env de
+# PRUEBA que apunta a PRODUCCIÓN (wthkddeleylijmonclxg) y con entorno
 # controlado. Todos deben BLOQUEARSE (exit != 0, mensaje BLOQUEADO) antes de
 # cualquier petición externa.
+#
+# El .env de prueba (URL de producción + token dummy) garantiza que los
+# escritores que leen .env con parser local (apply-migration.cjs, m003, m004,
+# pgrst, landing-demo, seed) lleguen AL GUARD con un destino identificable —
+# en un checkout de CI sin .env morirían en ENOENT antes de validarlo, que
+# también es fail-safe pero no ejercita el guard. Si el repo ya tiene .env
+# (p.ej. el sandbox), se usa una COPIA y se restaura al terminar; el original
+# no se toca.
 #
 # Uso: bash scripts/lib/smoke-writers-cp-infra-019.sh  (desde la raíz del repo)
 set -u
 cd "$(dirname "$0")/../.." || exit 1
+
+TEST_ENV_URL="https://wthkddeleylijmonclxg.supabase.co" # PRODUCCIÓN (debe bloquear)
+HAD_ENV=0
+cleanup() {
+  if [ "$HAD_ENV" = "1" ]; then
+    mv -f .env.smoke-bak .env 2>/dev/null || true
+  else
+    rm -f .env
+  fi
+  rm -f .env.smoke-bak
+}
+trap cleanup EXIT
+if [ -f .env ]; then
+  HAD_ENV=1
+  cp .env .env.smoke-bak
+fi
+printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nSUPABASE_SERVICE_ROLE_KEY=dummy-key-smoke\nSUPABASE_ACCESS_TOKEN=dummy-token-smoke\nE2E_SUPABASE_URL=%s\n' \
+  "$TEST_ENV_URL" "$TEST_ENV_URL" > .env
 
 PASS=0; FAIL=0
 run_case() { # <nombre> <comando...>
