@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Aplica el RPC e2e_hard_delete_user corregido vía Supabase Management API.
 set -euo pipefail
+
+# GUARD (LIMITES-SUPABASE T1b): producción bloqueada salvo doble flag.
+# (el ref wthkddeleylijmonclxg está hardcodeado en este script)
+source "$(dirname "$0")/lib/assert-not-production.sh"
+assert_not_production write "${NEXT_PUBLIC_SUPABASE_URL:-https://wthkddeleylijmonclxg.supabase.co}" "apply-rpc-fix.sh"
 cd /home/z/my-project/Costpro
 export $(grep -v '^#' .env | xargs)
 

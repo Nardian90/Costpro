@@ -199,7 +199,7 @@ export function EditStoreModal({
 
             const { error: uploadError } = await supabase.storage
                 .from(bucket)
-                .upload(filePath, file, { contentType: file.type, upsert: false });
+                .upload(filePath, file, { contentType: file.type, upsert: false, cacheControl: 'public, max-age=31536000, immutable' });
 
             if (uploadError) throw uploadError;
 

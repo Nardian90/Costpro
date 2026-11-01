@@ -92,7 +92,7 @@ async function uploadImageToStorage(file: File, bucket: string, folder: string):
 
   const { error: uploadError } = await supabase.storage
     .from(bucket)
-    .upload(filePath, compressedFile, { contentType: file.type, upsert: false });
+    .upload(filePath, compressedFile, { contentType: file.type, upsert: false, cacheControl: 'public, max-age=31536000, immutable' });
 
   if (uploadError) throw new Error(uploadError.message);
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-/**
+
+// GUARD (LIMITES-SUPABASE T1b): bloquea producción salvo doble flag explícito.
+import { assertNotProduction } from './lib/assert-not-production.mjs';/**
  * Aplica una migración SQL directamente a Supabase vía Management API.
  *
  * Uso:
@@ -14,6 +16,8 @@ const fs = require('fs');
 const path = require('path');
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+assertNotProduction({ mode: 'write', url: process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL, context: 'apply-sql-migration.js' });
+
 const ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN || '';
 
 if (!SUPABASE_URL || !ACCESS_TOKEN) {

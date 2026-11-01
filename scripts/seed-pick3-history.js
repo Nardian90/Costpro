@@ -6,6 +6,16 @@
 require('dotenv').config({ path: '/home/z/my-project/.env' });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+
+// GUARD (LIMITES-SUPABASE T1b): bloquea producción salvo doble flag explícito.
+// (.cjs: CLI del guard compartido, mismo contrato)
+try {
+  require('child_process').execFileSync('node', [
+    require('path').resolve(__dirname, 'lib', 'assert-not-production.mjs'),
+    '--mode', 'write', '--url', String(process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''), '--context', 'seed-pick3-history.js',
+  ], { stdio: 'inherit' });
+} catch { process.exit(1); }
+
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {

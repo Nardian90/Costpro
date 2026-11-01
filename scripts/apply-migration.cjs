@@ -16,6 +16,15 @@ for (const line of envContent.split('\n')) {
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 
+// GUARD (LIMITES-SUPABASE T1b): bloquea producción salvo doble flag explícito.
+// .cjs no puede importar ESM estáticamente — CLI con el mismo contrato.
+const { execFileSync } = require('child_process');
+try {
+  execFileSync('node', [path.resolve(__dirname, 'lib', 'assert-not-production.mjs'),
+    '--mode', 'write', '--url', String(SUPABASE_URL ?? ''), '--context', 'apply-migration.cjs'],
+    { stdio: 'inherit' });
+} catch { process.exit(1); }
+
 if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error('Missing env vars');
   process.exit(1);

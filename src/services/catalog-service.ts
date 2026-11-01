@@ -353,9 +353,19 @@ export const catalogService = {
     const fileName = `${productId}-${crypto.randomUUID()}.${fileExt}`;
 
     // Step 1: upload new file to storage
+    // LIMITES-SUPABASE T4e: el nombre lleva un UUID → la URL de cada archivo
+    // es inmutable por construcción (una subida = un objeto nuevo; el archivo
+    // anterior se borra y la BD apunta al nuevo). Por eso se sirve con
+    // cache-control público de 1 año: el navegador/CDN deja de revalidar en
+    // cada render y cada imagen deja de generar una request 304 + línea de
+    // log asociada. Antes: Supabase asignaba por defecto
+    // `cache-control: private, no-cache` [MEDIDO 2026-11-01 contra un objeto
+    // real del bucket product-images → revalidación en cada uso].
     const { error: uploadError } = await supabase.storage
       .from('product-images')
-      .upload(fileName, file);
+      .upload(fileName, file, {
+        cacheControl: 'public, max-age=31536000, immutable',
+      });
 
     if (uploadError) throw uploadError;
 

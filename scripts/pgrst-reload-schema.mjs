@@ -25,6 +25,9 @@
  * COLUMNA en el embed autoreferencial (inmune a este problema), pero otros
  * embeds con hint por constraint dependen de una caché sincronizada.
  */
+
+// GUARD (LIMITES-SUPABASE T1b): bloquea producción salvo doble flag explícito.
+import { assertNotProduction } from './lib/assert-not-production.mjs';
 import { readFileSync } from 'node:fs';
 
 const env = readFileSync(new URL('../.env', import.meta.url), 'utf8');
@@ -42,6 +45,7 @@ if (!SUPABASE_URL || !TOKEN) {
 }
 const ref = SUPABASE_URL.match(/https:\/\/(.*?)\.supabase\.co/)?.[1];
 
+assertNotProduction({ mode: 'write', url: process.env.NEXT_PUBLIC_SUPABASE_URL, context: 'pgrst-reload-schema.mjs' });
 const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {
   method: 'POST',
   headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
