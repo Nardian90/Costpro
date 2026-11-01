@@ -107,6 +107,20 @@ describe('uploadProductImage — GC de imagen compartida', () => {
     await catalogService.uploadProductImage(PRODUCT_ID, new File(['x'], 'nueva.webp'));
     expect(removeMock).not.toHaveBeenCalled();
   });
+
+  // LIMITES-SUPABASE T4e: el upload debe fijar cache-control público inmutable.
+  // El nombre del archivo lleva UUID → cada subida es una URL nueva → la
+  // inmutabilidad es estructuralmente segura (no puede servir contenido viejo).
+  // Sin esto, Supabase asigna `private, no-cache` por defecto y cada render
+  // revalida la imagen (request 304 + línea de log por petición).
+  it('LIMITES-SUPABASE T4e: sube con cacheControl público inmutable (URL única por UUID)', async () => {
+    productsRefCount = { count: 0, error: null };
+    masterRefCount = { count: 0, error: null };
+    await catalogService.uploadProductImage(PRODUCT_ID, new File(['x'], 'nueva.webp'));
+    expect(uploadMock).toHaveBeenCalled();
+    const opts = uploadMock.mock.calls[0][2] as { cacheControl?: string } | undefined;
+    expect(opts?.cacheControl).toBe('public, max-age=31536000, immutable');
+  });
 });
 
 

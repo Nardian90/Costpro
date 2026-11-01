@@ -358,7 +358,7 @@ function EditMasterIdentityDialog({
     const fileName = `${base.id}-${crypto.randomUUID()}.${ext}`;
     setUploading(true);
     try {
-      const { error: upErr } = await supabase.storage.from('product-images').upload(fileName, file);
+      const { error: upErr } = await supabase.storage.from('product-images').upload(fileName, file, { cacheControl: 'public, max-age=31536000, immutable' });
       if (upErr) throw upErr;
       await onSave({ image_path: fileName });
     } catch (e) {

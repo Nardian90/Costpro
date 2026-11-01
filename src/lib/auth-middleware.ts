@@ -139,6 +139,27 @@ export function withAuth(handler: AuthHandler) {
 
     if (admin) {
       try {
+        // LIMITES-SUPABASE T4a — deduplicación de la consulta a profiles:
+        // getServerSession ya consultó la fila de profiles del usuario en
+        // ESTA misma request (con timeout de 3s y fail-closed). Si el role
+        // llegó, se reutiliza tal cual y aquí solo se consultan las
+        // membresías (1 consulta menos por request de API en el caso común).
+        // Si NO llegó (timeout del profile o usuario sin profile), se ejecuta
+        // la consulta completa como antes — mismo comportamiento fail-closed.
+        const sessionRole = (session.user as { role?: string }).role;
+        const sessionRoles = (session.user as { roles?: string[] }).roles;
+        const hasSessionProfile = typeof sessionRole === 'string' && sessionRole.length > 0;
+
+        if (hasSessionProfile) {
+          const membershipsResult = await admin
+            .from('user_store_memberships')
+            .select('user_id,store_id,role,status')
+            .eq('user_id', session.user.id)
+            .eq('status', 'active');
+          enrichedUser.role = sessionRole as UserRole;
+          enrichedUser.roles = (sessionRoles?.length ? sessionRoles : [sessionRole]) as UserRole[];
+          enrichedUser.memberships = membershipsResult.data || [];
+        } else {
         // Use separate queries instead of embed (embed fails when multiple FK
         // relationships exist between profiles and user_store_memberships)
         const [profileResult, membershipsResult] = await Promise.all([
@@ -168,6 +189,7 @@ export function withAuth(handler: AuthHandler) {
           enrichedUser.role = profileResult.data.role;
           enrichedUser.roles = profileResult.data.roles;
           enrichedUser.memberships = membershipsResult.data || [];
+        }
         }
       } catch (err) {
         console.error('[withAuth] RBAC Enrichment Error:', err);
