@@ -15,6 +15,12 @@
  *
  * Variables (de .env): NEXT_PUBLIC_SUPABASE_URL, SUPABASE_ACCESS_TOKEN.
  *
+ * CP-INFRA-019 (fix B): el destino que valida el guard es EXACTAMENTE la URL
+ * leída del .env (la misma de la que se extrae el ref para la Management
+ * API). Antes el guard recibía process.env.NEXT_PUBLIC_SUPABASE_URL, que
+ * podía estar ausente o apuntar a otro proyecto: el destino comprobado y el
+ * ejecutado podían ser diferentes.
+ *
  * NOTA DOCUMENTADA (evidencia 2026-10-22): en este proyecto, el NOTIFY
  * enviado vía Management API NO llegó al listener de PostgREST (probado dos
  * veces con espera de 60 s — la caché no se actualizó). El camino fiable
@@ -25,6 +31,9 @@
  * COLUMNA en el embed autoreferencial (inmune a este problema), pero otros
  * embeds con hint por constraint dependen de una caché sincronizada.
  */
+
+// GUARD (CP-INFRA-019): bloquea producción salvo doble flag explícito.
+import { assertNotProduction } from './lib/assert-not-production.mjs';
 import { readFileSync } from 'node:fs';
 
 const env = readFileSync(new URL('../.env', import.meta.url), 'utf8');
@@ -40,7 +49,17 @@ if (!SUPABASE_URL || !TOKEN) {
   console.error('Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_ACCESS_TOKEN en .env');
   process.exit(1);
 }
-const ref = SUPABASE_URL.match(/https:\/\/(.*?)\.supabase\.co/)?.[1];
+
+// El guard valida la URL REALMENTE LEÍDA del .env (no process.env) y devuelve
+// ese mismo destino: el ref de la Management API se extrae de la URL ya
+// validada — comprobado y ejecutado son el mismo proyecto por construcción.
+const validatedUrl = assertNotProduction({ mode: 'write', url: SUPABASE_URL, context: 'pgrst-reload-schema.mjs' });
+const ref = validatedUrl.match(/https:\/\/(.*?)\.supabase\.co/)?.[1];
+if (!ref) {
+  // No debería ocurrir: el guard ya rechaza destinos no identificables.
+  console.error('FALLO DE GUARD: no se pudo extraer el ref del destino validado');
+  process.exit(1);
+}
 
 const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {
   method: 'POST',

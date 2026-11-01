@@ -9,11 +9,19 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { config as loadEnv } from 'dotenv';
 
+// GUARD (LIMITES-SUPABASE T1b): bloquea producción salvo doble flag explícito.
+import { assertNotProduction } from './lib/assert-not-production.mjs';
+
 loadEnv({ path: './.env.local' });   // E2E_SUPABASE_URL + keys
 loadEnv({ path: './.env' });         // SUPABASE_ACCESS_TOKEN (Management API)
 
 const SUPABASE_URL = process.env.E2E_SUPABASE_URL;
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
+// GUARD (CP-INFRA-019): se valida EXACTAMENTE la URL que este script usa
+// (E2E_SUPABASE_URL, de la que se extrae el ref de la Management API) — no
+// NEXT_PUBLIC_SUPABASE_URL, que puede apuntar a producción y haría pasar el
+// bloqueo de una operación dirigida a otro proyecto.
+assertNotProduction({ mode: 'write', url: SUPABASE_URL, context: 'm002-aplicar-migracion-20261031140000.mjs' });
 const ALLOWED_REF = process.env.E2E_ALLOWED_REMOTE_REF;
 const m = SUPABASE_URL.match(/https:\/\/(.*?)\.supabase\.co/);
 const ref = m && m[1];

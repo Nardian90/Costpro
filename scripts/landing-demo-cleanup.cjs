@@ -22,6 +22,18 @@ for (const line of envContent.split('\n')) {
   if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '');
 }
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
+
+// GUARD (CP-INFRA-019): bloquea producción salvo doble flag explícito.
+// Valida la URL leída del .env por el parser local (la que usan las
+// peticiones de este script) — NO process.env, que puede estar vacío o
+// apuntar a otro proyecto. (.cjs: CLI del guard compartido, mismo contrato)
+try {
+  require('child_process').execFileSync('node', [
+    require('path').resolve(__dirname, 'lib', 'assert-not-production.mjs'),
+    '--mode', 'write', '--url', String(SUPABASE_URL ?? ''), '--context', 'landing-demo-cleanup.cjs',
+  ], { stdio: 'inherit' });
+} catch { process.exit(1); }
+
 const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 const CTX = path.join(__dirname, '..', '.e2e-run-contexts', 'landing-demo-context.json');
 

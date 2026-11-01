@@ -2,22 +2,39 @@
 /**
  * Aplica una migración SQL directamente a Supabase vía Management API.
  *
- * Uso:
- *   node /home/z/my-project/scripts/apply-sql-migration.js \
- *     /home/z/my-project/supabase/migrations/20260704000001_storefront_config.sql
+ * CP-INFRA-019 (fix C): este archivo es .js y el package.json NO declara
+ * "type": "module" — con `import` es módulo ESM (no puede usar `require`) y
+ * el require rompía con "require is not defined in ES module scope".
+ * Reescrito en CommonJS puro: el guard se invoca por CLI (mismo contrato,
+ * scripts/lib/assert-not-production.mjs) con la URL EXACTA que usará la
+ * petición; el ref de la Management API se extrae de esa misma URL.
  *
- * Requiere en .env:
+ * Uso (Node >= 22, engines del proyecto):
+ *   node scripts/apply-sql-migration.js supabase/migrations/<migración>.sql
+ *
+ * Requiere en el entorno:
  *   SUPABASE_ACCESS_TOKEN=sbp_...
  *   NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+ *   (o SUPABASE_URL como alternativa)
  */
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
 const ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN || '';
 
+// GUARD (CP-INFRA-019): el destino validado es la URL que usará la petición.
+// CommonJS no puede importar el .mjs — CLI con el mismo contrato.
+try {
+  execFileSync('node', [
+    path.resolve(__dirname, 'lib', 'assert-not-production.mjs'),
+    '--mode', 'write', '--url', SUPABASE_URL, '--context', 'apply-sql-migration.js',
+  ], { stdio: 'inherit' });
+} catch { process.exit(1); }
+
 if (!SUPABASE_URL || !ACCESS_TOKEN) {
-  console.error('❌ Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_ACCESS_TOKEN en el entorno');
+  console.error('❌ Faltan NEXT_PUBLIC_SUPABASE_URL (o SUPABASE_URL) o SUPABASE_ACCESS_TOKEN en el entorno');
   process.exit(1);
 }
 
@@ -26,6 +43,7 @@ if (!match) {
   console.error('❌ NEXT_PUBLIC_SUPABASE_URL no tiene el formato esperado:', SUPABASE_URL);
   process.exit(1);
 }
+// Ref extraído de la MISMA URL que validó el guard (destino comprobado == ejecutado).
 const PROJECT_REF = match[1];
 
 const sqlPath = process.argv[2];

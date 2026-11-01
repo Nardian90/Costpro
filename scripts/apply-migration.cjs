@@ -6,7 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const envContent = fs.readFileSync('/home/z/my-project/.env', 'utf8');
+// .env de la raíz del repo (sin rutas absolutas de sandbox).
+const envContent = fs.readFileSync(path.join(__dirname, '..', '.env'), 'utf8');
 const env = {};
 for (const line of envContent.split('\n')) {
   const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.+)$/);
@@ -15,6 +16,17 @@ for (const line of envContent.split('\n')) {
 
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+
+// GUARD (CP-INFRA-019): bloquea producción salvo doble flag explícito.
+// Valida la URL leída del .env (la que usará la petición), no el entorno del
+// proceso, que puede apuntar a otro proyecto. .cjs no puede importar ESM
+// estáticamente — CLI con el mismo contrato.
+const { execFileSync } = require('child_process');
+try {
+  execFileSync('node', [path.resolve(__dirname, 'lib', 'assert-not-production.mjs'),
+    '--mode', 'write', '--url', String(SUPABASE_URL ?? ''), '--context', 'apply-migration.cjs'],
+    { stdio: 'inherit' });
+} catch { process.exit(1); }
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error('Missing env vars');

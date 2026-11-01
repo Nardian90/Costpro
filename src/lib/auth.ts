@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { createServerClient } from "@/lib/supabaseClient";
+import { UserRole } from "@/types";
 // SEC-TS-10 (FIX BUG REAL): getServerSession usaba el SINGLETON client-side
 // de supabase (`export const supabase` — persistSession: true,
 // autoRefreshToken: true) en el SERVIDOR. Bajo concurrencia (múltiples
@@ -81,7 +82,9 @@ export async function getServerSession(request: NextRequest) {
             const profileResult = await Promise.race([
               adminClient
                 .from('profiles')
-                .select('role')
+                // LIMITES-SUPABASE T4a: 'roles' además de 'role' — la misma
+                // fila alimenta a withAuth/withRole sin segunda consulta.
+                .select('role, roles')
                 .eq('id', user.id)
                 .maybeSingle(),
               new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
@@ -91,8 +94,16 @@ export async function getServerSession(request: NextRequest) {
               return {
                 user: {
                   ...user,
+                  // LIMITES-SUPABASE T4a: traer también la columna `roles`
+                  // (array) para que withAuth/withRole puedan reutilizar este
+                  // profile y no re-consultar la misma fila en la misma
+                  // request (deduplicación de la consulta a profiles).
                   role: profileResult.data.role || 'user',
-                  roles: profileResult.data.role ? [profileResult.data.role] : ['user'],
+                  roles: (profileResult.data.roles?.length
+                    ? profileResult.data.roles
+                    : profileResult.data.role
+                      ? [profileResult.data.role]
+                      : ['user']) as UserRole[],
                 },
                 token,
               };

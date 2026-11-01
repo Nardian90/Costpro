@@ -3,9 +3,23 @@
  * Adds show_price + show_physical_units columns to telegram_configs.
  */
 import { createClient } from '@supabase/supabase-js';
+// GUARD (CP-INFRA-019): bloquea producción salvo doble flag explícito.
+// Se ejecuta ANTES de crear el cliente: el destino se valida antes de
+// cualquier efecto externo, y se valida la URL que el script usará.
+import { assertNotProduction } from './lib/assert-not-production.mjs';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+assertNotProduction({ mode: 'write', url: SUPABASE_URL, context: 'apply_migration_20260824000002.mjs' });
+
+// CP-INFRA-019: este archivo es .mjs ejecutado con Node puro — la sintaxis
+// TypeScript `!` (non-null assertion) que había aquí rompía el PARSEO del
+// archivo completo, de modo que el guard nunca llegaba a ejecutarse (el
+// script moría con SyntaxError antes de toda acción). JS válido:
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+if (!SERVICE_ROLE_KEY) {
+  console.error('Falta SUPABASE_SERVICE_ROLE_KEY en el entorno');
+  process.exit(1);
+}
 
 const client = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
