@@ -7,21 +7,22 @@
 --   products, 188 maestros activos del tenant) veía 0 productos.
 -- MODELO CORRECTO (misión §6): UN PRODUCTO MAESTRO, UNA IDENTIDAD GLOBAL, UNA
 --   FUENTE DE IMAGEN Y MÚLTIPLES INVENTARIOS LOCALES INDEPENDIENTES.
---   La visibilidad de una tienda conectada proviene de master_products
---   (activos) de SU organización; la fila local (si existe) aporta SOLO los
---   atributos operativos locales (stock, precio, costo, categoría, flags).
+--   En una tienda conectada el catálogo = maestros activos de la organización
+--   (con o sin fila local) ∪ productos locales sin vínculo (altas locales
+--   previas a la conexión — nunca desaparecen).
 -- CAMBIOS:
 --   1) Índice único parcial products(master_product_id, store_id): el
 --      invariant "máx. una fila local por (maestro, tienda)" que
 --      activate_master_product ya garantiza en su lógica pasa a ser ley de la
 --      base (verificado: producción 188 pares, 0 duplicados).
 --   2) get_paginated_products_v2: si la tienda está CONECTADA
---      (is_catalog_store_connected), la fuente son los maestros activos del
---      tenant LEFT JOIN la fila local de ESA tienda:
+--      (is_catalog_store_connected):
 --        · Identidad (nombre/sku/código/imagen) → maestro (fuente única).
 --        · Operativo (stock/precio/costo/categoría/flags) → fila local.
 --        · Filas sin fila local: source='master', operativos en cero, sin
 --          precios de otras tiendas (misión §10) e is_complete=false honesto.
+--        · Productos locales sin master_product_id: siguen visibles (source
+--          'local', master NULL) — altas locales puras de la tienda.
 --      Las tiendas NO conectadas conservan el comportamiento exacto anterior.
 --   3) get_products_for_pos: la imagen de una fila vinculada se resuelve
 --      SIEMPRE desde el maestro (master-first) — el cambio de imagen del
@@ -106,6 +107,7 @@ DECLARE
   v_offset integer := GREATEST(COALESCE(p_offset, 0), 0);
   v_tenant uuid;
   v_connected boolean;
+  v_search text;
 BEGIN
   -- Auth checks (sin cambios respecto a la versión anterior)
   IF auth.uid() IS NULL THEN
@@ -121,20 +123,14 @@ BEGIN
   v_tenant := (SELECT s.tenant_id FROM public.stores s WHERE s.id = p_store_id);
   v_connected := v_tenant IS NOT NULL
     AND public.is_catalog_store_connected(v_tenant, p_store_id);
+  v_search := COALESCE(p_search_term, '');
 
   -- ── Tienda CONECTADA: catálogo maestro completo de la organización ──────
+  --    ∪ productos locales sin vínculo (altas locales puras).
   IF v_connected THEN
     RETURN QUERY
-    SELECT
-      b.id, b.name, b.sku, b.barcode, b.barcode_type, b.category, b.price,
-      b.precio_empresa, b.precio_empresa_currency, b.price_currency,
-      b.cost_price, b.min_stock, b.image_url, b.description, b.unit_of_measure,
-      b.supplier, b.stock_current, b.cost_average, b.store_id, b.is_active,
-      b.has_movements, b.visible_en_tienda, b.price_visible, b.stock_visible,
-      b.on_promotion, b.created_at, b.updated_at, b.is_complete, b.is_service,
-      COUNT(*) OVER()::bigint AS total_count,
-      b.source, b.master_product_id
-    FROM (
+    WITH base AS (
+      -- (a) Maestros activos de la organización (con o sin fila local)
       SELECT
         COALESCE(p.id, m.id) AS id,
         COALESCE(NULLIF(btrim(COALESCE(p.name, '')), ''), m.name) AS name,
@@ -172,7 +168,7 @@ BEGIN
          AND p.cost_price IS NOT NULL AND COALESCE(p.category, '') <> ''
          AND COALESCE(p.unit_of_measure, '') <> '') AS is_complete,
         COALESCE(p.is_service, m.is_service) AS is_service,
-        CASE WHEN p.id IS NULL THEN 'master' ELSE 'local' END AS source,
+        CASE WHEN p.id IS NULL THEN 'master' ELSE 'local' END::text AS source,
         m.id AS master_product_id
       FROM public.master_products m
       LEFT JOIN public.products p
@@ -181,27 +177,74 @@ BEGIN
       WHERE m.tenant_id = v_tenant
         AND m.status = 'active'
         AND (p.id IS NULL OR p.tenant_id IS NOT DISTINCT FROM v_tenant)
-        AND (p_search_term IS NULL OR p_search_term = '' OR
-             COALESCE(NULLIF(btrim(COALESCE(p.name, '')), ''), m.name) ILIKE ('%' || p_search_term || '%') OR
-             COALESCE(NULLIF(btrim(COALESCE(p.sku, '')), ''), m.sku) ILIKE ('%' || p_search_term || '%') OR
-             COALESCE(NULLIF(m.barcode, ''), p.barcode) ILIKE ('%' || p_search_term || '%'))
-        AND (p_category IS NULL OR p_category = '' OR p.category = p_category)
-        AND (p_active_filter = 'all' OR
-             (p_active_filter = 'active' AND COALESCE(p.is_active, true) = true) OR
-             (p_active_filter = 'inactive' AND p.id IS NOT NULL AND p.is_active = false))
-        AND (p_stock_filter = 'all' OR
-             (p_stock_filter = 'out' AND
-              COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv
-                        WHERE inv.product_id = p.id AND inv.store_id = p_store_id), 0) <= 0) OR
-             (p_stock_filter = 'low' AND
-              COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv
-                        WHERE inv.product_id = p.id AND inv.store_id = p_store_id), 0) > 0 AND
-              COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv
-                        WHERE inv.product_id = p.id AND inv.store_id = p_store_id), 0) <= COALESCE(p.min_stock, 0)) OR
-             (p_stock_filter = 'ok' AND
-              COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv
-                        WHERE inv.product_id = p.id AND inv.store_id = p_store_id), 0) > COALESCE(p.min_stock, 0)))
-    ) b
+      UNION ALL
+      -- (b) Productos locales SIN vínculo al maestro (altas locales puras:
+      --     nunca desaparecen al conectar la tienda al catálogo)
+      SELECT
+        p.id,
+        p.name,
+        p.sku,
+        p.barcode,
+        p.barcode_type,
+        NULLIF(p.category, ''),
+        p.price,
+        p.precio_empresa,
+        p.precio_empresa_currency,
+        COALESCE(p.price_currency, 'CUP'),
+        p.cost_price,
+        p.min_stock,
+        p.image_url,
+        p.description,
+        p.unit_of_measure,
+        p.supplier,
+        COALESCE((SELECT SUM(inv.quantity) FROM public.inventory inv
+                  WHERE inv.product_id = p.id AND inv.store_id = p_store_id), 0)::numeric,
+        p.cost_average,
+        p_store_id,
+        p.is_active,
+        EXISTS (SELECT 1 FROM public.transaction_items ti WHERE ti.product_id = p.id
+                UNION ALL SELECT 1 FROM public.stock_movements sm WHERE sm.product_id = p.id
+                UNION ALL SELECT 1 FROM public.receipt_items ri WHERE ri.product_id = p.id),
+        p.visible_en_tienda,
+        COALESCE(p.price_visible, true),
+        COALESCE(p.stock_visible, true),
+        COALESCE(p.on_promotion, false),
+        p.created_at,
+        p.updated_at,
+        (COALESCE(p.name, '') <> '' AND COALESCE(p.sku, '') <> '' AND p.price > 0
+         AND p.cost_price IS NOT NULL AND COALESCE(p.category, '') <> ''
+         AND COALESCE(p.unit_of_measure, '') <> ''),
+        COALESCE(p.is_service, false),
+        'local'::text,
+        NULL::uuid
+      FROM public.products p
+      WHERE p.store_id = p_store_id
+        AND p.master_product_id IS NULL
+        AND (p.tenant_id IS NULL OR p.tenant_id IS NOT DISTINCT FROM v_tenant)
+    )
+    SELECT
+      b.id, b.name, b.sku, b.barcode, b.barcode_type, b.category, b.price,
+      b.precio_empresa, b.precio_empresa_currency, b.price_currency,
+      b.cost_price, b.min_stock, b.image_url, b.description, b.unit_of_measure,
+      b.supplier, b.stock_current, b.cost_average, b.store_id, b.is_active,
+      b.has_movements, b.visible_en_tienda, b.price_visible, b.stock_visible,
+      b.on_promotion, b.created_at, b.updated_at, b.is_complete, b.is_service,
+      COUNT(*) OVER()::bigint AS total_count,
+      b.source, b.master_product_id
+    FROM base b
+    WHERE (v_search = '' OR
+           b.name ILIKE ('%' || v_search || '%') OR
+           b.sku ILIKE ('%' || v_search || '%') OR
+           COALESCE(b.barcode, '') ILIKE ('%' || v_search || '%'))
+      AND (p_category IS NULL OR p_category = '' OR b.category = p_category)
+      AND (p_active_filter = 'all' OR
+           (p_active_filter = 'active' AND b.is_active = true) OR
+           (p_active_filter = 'inactive' AND b.is_active = false))
+      AND (p_stock_filter = 'all' OR
+           (p_stock_filter = 'out' AND b.stock_current <= 0) OR
+           (p_stock_filter = 'low' AND b.stock_current > 0
+              AND b.stock_current <= COALESCE(b.min_stock, 0)) OR
+           (p_stock_filter = 'ok' AND b.stock_current > COALESCE(b.min_stock, 0)))
     ORDER BY
       CASE WHEN p_sort_dir = 'asc' THEN
         CASE p_sort_key
