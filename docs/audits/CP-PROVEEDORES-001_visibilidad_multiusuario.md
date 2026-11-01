@@ -233,3 +233,19 @@ quedan exactamente 5 proveedores en 1 tienda.)
 - [x] PR con evidencia verificable (este expediente).
 
 **ESTADO: RESUELTO — PROVEEDORES MULTIUSUARIO Y CREACIÓN DESDE RECEPCIONES CORREGIDOS.**
+
+---
+
+## 9. Adenda — Verificación visual post-fix en la UI (2026-11-01, navegador headless)
+
+Flujo completo `admin@demo.com` (superadmin) con tienda activa ENERVIDA-VITALLCONS:
+
+| Paso | Resultado | Evidencia |
+|---|---|---|
+| Dropdown Proveedor en nueva recepción | **Los 5 históricos visibles** («—», «Juan Carlos», «Pedro Infante», «Proveedor General», «Tienda Pueblo») — antes «Sin proveedores registrados» | `download/proveedores-001-postfix-dropdown-admin.png` |
+| Creación desde el formulario de alta | Toast **«Proveedor «Verificacion UI Post-Fix» creado»** (antes: «Error al crear proveedor: desconocido») | `download/proveedores-001-postfix-creacion-y-seleccion.png` |
+| Selección automática en la recepción | El combobox queda con el proveedor creado como valor | misma captura |
+| Red | GET inicial 200 (5 filas) → GET ilike (lookup anti-duplicado) → **POST 201** → GET refresco 200 | pestaña de red del navegador |
+| Limpieza | Registro de verificación eliminado; ENERVIDA queda con exactamente sus 5 proveedores históricos | consulta post-limpieza |
+
+**Criterio §10 de la misión verificado end-to-end en UI con JWT real de sesión.**
