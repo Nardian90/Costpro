@@ -46,7 +46,11 @@ def classify_target(raw_url):
     s = str(raw_url or "").strip()
     if not s:
         return ("none", None)
-    m_pg = re.match(r"postgres(?:ql)?://[^@]*\.([a-z0-9]{18,22})@", s, re.IGNORECASE)
+    # Connection string postgres: el ref puede venir del USUARIO del pooler
+    # (postgres.<ref>:PASSWORD@...pooler.supabase.com, formato oficial) — la
+    # regex tolera la contraseña tras el ref y exige el esquema al inicio
+    # (CP-INFRA-019-FOLLOWUP fix C: `postgres.<ref>:<pw>@` no matcheaba).
+    m_pg = re.match(r"postgres(?:ql)?://[^/@]*\.([a-z0-9]{18,22})(?::[^@]*)?@", s, re.IGNORECASE)
     if m_pg:
         return ("supabase", m_pg.group(1).lower())
     try:
@@ -69,12 +73,23 @@ def classify_target(raw_url):
     return ("unknown", None)
 
 
-def _mask(url: str) -> str:
-    s = str(url)
-    if "://" in s:
-        host = s.split("://", 1)[1].split("/")[0]
-        return "https://" + host
-    return s.split("?")[0]
+def sanitize_target(raw_url) -> str:
+    """Sanitiza un destino para mostrarlo en mensajes (fix B): devuelve
+    ÚNICAMENTE esquema://host[:puerto] — sin usuario, contraseña, path, query
+    ni fragment. Si no se puede analizar, descripción genérica: NUNCA el
+    valor original (podría llevar credenciales embebidas). Solo afecta al
+    mensaje; la clasificación usa el valor original."""
+    s = str(raw_url or "").strip()
+    if not s:
+        return "(vacío)"
+    try:
+        p = urlparse(s)
+        if not p.scheme or not p.hostname:
+            return "(destino no identificable)"
+        port = f":{p.port}" if p.port else ""
+        return f"{p.scheme}://{p.hostname.lower()}{port}"
+    except ValueError:
+        return "(destino no identificable)"
 
 
 def _prod_blocked(context: str, target: str) -> str:
@@ -132,7 +147,8 @@ def assert_not_production(mode: str = "write", url: str = None, project_ref: str
 
     # 2. Destino NO identificado
     if kind in ("none", "unknown"):
-        shown = _mask(target) if target else "(vacío)"
+        # Se muestra SANITIZADO: sin credenciales, query ni path (fix B).
+        shown = sanitize_target(target)
         if target and PROD_REF in str(target).lower():
             raise SystemExit(_prod_blocked(context, shown))
         if mode == "write":
@@ -151,15 +167,18 @@ def assert_not_production(mode: str = "write", url: str = None, project_ref: str
         return target
     ref = cls_ref
     if ref == PROD_REF:
+        # Mensaje con el destino SANITIZADO (fix B): la URL cruda podría
+        # llevar credenciales. El ref de producción es público.
+        shown_prod = f"https://{ref}.supabase.co" if project_ref else sanitize_target(target)
         if not allow_read_only:
-            raise SystemExit(_prod_blocked(context, f"https://{ref}.supabase.co"))
+            raise SystemExit(_prod_blocked(context, shown_prod))
         if mode == "write" and not allow_write:
             raise SystemExit(
-                f"[{context}] BLOQUEADO: escritura contra PRODUCCIÓN (https://{ref}.supabase.co) requiere el doble flag:\n"
+                f"[{context}] BLOQUEADO: escritura contra PRODUCCIÓN ({shown_prod}) requiere el doble flag:\n"
                 f"  export ALLOW_PROD=read-only ALLOW_PROD_WRITE=I_UNDERSTAND\n"
                 f"  Si esto es una operación productiva legítima, documéntala en docs/audits/ antes de ejecutarla.")
         if mode == "write" and allow_write:
-            print(f"[{context}] AUTORIZADO (explícito): escritura contra producción https://{ref}.supabase.co — "
+            print(f"[{context}] AUTORIZADO (explícito): escritura contra producción {shown_prod} — "
                   f"ALLOW_PROD_WRITE=I_UNDERSTAND presente.", file=sys.stderr)
         return target
     if ref in E2E_KNOWN_REFS:

@@ -204,3 +204,12 @@ jobs:
         # (baseline histórico revisado en ci-gate-allowlist.json).
         # El contract LIVE (scripts/security-contract-test.cjs) requiere
         # SUPABASE_ACCESS_TOKEN y NUNCA debe ejecutarse en CI.
+
+      - name: Guard de producción — manifiesto de escritores (CP-INFRA-019-FOLLOWUP)
+        run: node scripts/lib/check-writers.mjs
+        # Fail-closed ante scripts NUEVOS que escriban contra Supabase (SQL,
+        # RPC, service_role, Management API o métodos POST/PATCH/PUT/DELETE):
+        # todo archivo de scripts/ con señal de escritor debe estar declarado
+        # en scripts/lib/writers.manifest.json (guard / aislamiento E2E /
+        # excepción justificada). Alcance: solo scripts/ — ver limitaciones en
+        # docs/audits/CP-INFRA-019_GUARD_PRODUCCION_AUDIT.md.

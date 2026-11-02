@@ -3,11 +3,20 @@
  *   supabase/migrations/20261031140000_cp_catalogo_master_incorporacion_backfill.sql
  * Mecanismo oficial del repo: Management API + NOTIFY pgrst
  * (scripts/apply-migration-mgmt.ts / patrón scripts/m004-aplicar-*.mjs).
- * Guard fail-closed: destino DEBE ser el ref de producción wthkddeleylijmonclxg.
  * Pre-vuelo: existencia de las dependencias (master_products, is_catalog_governor).
+ *
+ * CP-INFRA-019-FOLLOWUP: antes este script tenía un "guard" INVERTIDO —
+ * comprobaba que el destino FUERA producción y arrancaba sin autorización
+ * alguna (ningún doble flag). Ahora usa el guard compartido con su ref REAL:
+ * sigue siendo una operación productiva explícita (existe para eso), pero
+ * queda sujeta al mismo contrato que apply-rpc-fix.sh — bloqueada salvo
+ * ALLOW_PROD=read-only + ALLOW_PROD_WRITE=I_UNDERSTAND — y mantiene su
+ * verificación adicional de que el destino es el ref de producción esperado.
  */
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+// GUARD (CP-INFRA-019): bloquea producción salvo doble flag explícito.
+import { assertNotProduction } from './lib/assert-not-production.mjs';
 
 const env = {};
 for (const l of readFileSync(resolve(process.cwd(), '.env'), 'utf8').split('\n')) {
@@ -17,6 +26,8 @@ for (const l of readFileSync(resolve(process.cwd(), '.env'), 'utf8').split('\n')
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const TOKEN = env.SUPABASE_ACCESS_TOKEN;
 const ref = SUPABASE_URL.match(/https:\/\/(.*?)\.supabase\.co/)[1];
+// El guard valida la URL REAL de la operación, ANTES de cualquier petición.
+assertNotProduction({ mode: 'write', url: SUPABASE_URL, context: 'm002-aplicar-migracion-PRODUCCION.mjs' });
 if (ref !== 'wthkddeleylijmonclxg') {
   console.error('FALLO DE GUARD: destino no es producción (wthkddeleylijmonclxg)');
   process.exit(2);

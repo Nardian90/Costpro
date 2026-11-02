@@ -26,6 +26,12 @@ if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
   echo "Falta SUPABASE_ACCESS_TOKEN en $REPO_ROOT/.env" >&2
   exit 1
 fi
+# CP-INFRA-019-FOLLOWUP (fix A): el token se exporta EXCLUSIVAMENTE aquí para
+# que el proceso Python hijo lo vea (una asignación de Bash no entra al
+# entorno de los hijos → os.environ['SUPABASE_ACCESS_TOKEN'] reventaba con
+# KeyError). NUNCA volver a `export $(grep … .env)`: exportaría TODAS las
+# variables y credenciales del archivo al entorno de todos los procesos.
+export SUPABASE_ACCESS_TOKEN
 cd "$REPO_ROOT"
 
 python3 - <<EOF
@@ -47,7 +53,10 @@ with urllib.request.urlopen(req, timeout=120) as r:
 EOF
 
 echo "---verificación: función actualizada---"
-curl -s -X POST "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query" \
-  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
-  -d '{"query":"select prosrc from pg_proc where proname = '"'"'e2e_hard_delete_user'"'"'"}' \
+# El token viaja por stdin (configuración de curl con -K -), nunca por argv:
+# los argumentos de un proceso son visibles en ps para todo el sistema.
+printf 'header = "Authorization: Bearer %s"\n' "$SUPABASE_ACCESS_TOKEN" \
+  | curl -s -K - -X POST "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query" \
+    -H "Content-Type: application/json" \
+    -d '{"query":"select prosrc from pg_proc where proname = '"'"'e2e_hard_delete_user'"'"'"}' \
   | python3 -c "import json,sys; d=json.load(sys.stdin); src=d[0]['prosrc'] if d else ''; print('restore_mode presente:', 'app.restore_mode' in src); print('payment_transactions presente:', 'payment_transactions' in src)"

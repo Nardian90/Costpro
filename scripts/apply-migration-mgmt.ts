@@ -4,12 +4,17 @@
  */
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+// GUARD (CP-INFRA-019-FOLLOWUP): este script aplica SQL vía Management API.
+// El guard recibe la URL REAL de la operación (la misma de la que se extrae
+// el ref de la petición) y corre ANTES de cualquier efecto externo.
+import { assertNotProduction } from './lib/assert-not-production.mjs';
 
 const env = readFileSync(resolve(__dirname, '../.env'), 'utf8');
 env.split('\n').forEach(l => { const m = l.match(/^([A-Z_0-9]+)=(.*)$/); if (m) process.env[m[1]] = m[2]; });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN!;
+assertNotProduction({ mode: 'write', url: SUPABASE_URL, context: 'apply-migration-mgmt.ts' });
 const ref = SUPABASE_URL.match(/https:\/\/(.*?)\.supabase\.co/)![1];
 
 const file = process.argv[2];
