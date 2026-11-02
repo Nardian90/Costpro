@@ -33,6 +33,34 @@ export const nullableUrl = z.union([
   .optional()
   .transform(v => (v === '' || v == null ? null : v));
 
+/**
+ * Variante OPTIONAL de nullableUrl para PATCH/update (FIX misión 2026-11-02).
+ *
+ * PROBLEMA (causa raíz del "no se puede eliminar logo/firma"):
+ * nullableUrl aplica .transform() SIEMPRE — incluso cuando la clave no viene
+ * en el body del PATCH — convirtiendo claves AUSENTES en null. Consecuencia:
+ * cualquier PATCH parcial (toggle is_active, banner de Vitrina, whatsapp,
+ * promo_images…) borra logo_url/signature_url/stamp_url/banner_url/etc. de la
+ * tienda en la DB (data-loss silencioso confirmado en producción).
+ *
+ * SOLUCIÓN: transformar ANTES de .optional() — así el transform solo ve
+ * valores presentes:
+ *   - URL válida → URL
+ *   - '' → null (semántica "quitar imagen")
+ *   - null → null
+ *   - clave ausente → sigue ausente (undefined) y NO se incluye en el UPDATE
+ *
+ * USO: exclusivamente en updateStoreSchema. createStoreSchema mantiene
+ * nullableUrl (en CREATE, clave ausente → null es el default deseado).
+ */
+export const optionalNullableUrl = z.union([
+  z.string().url(),
+  z.literal(''),
+  z.null(),
+])
+  .transform(v => (v === '' ? null : v))
+  .optional();
+
 // ─── Users ───────────────────────────────────────────────────────────────────
 export const managedCreateUserSchema = z.object({
   p_email: z.string().email('Email inválido'),
@@ -266,7 +294,7 @@ export const updateStoreSchema = z.object({
   storeId: uuidLoose,
   name: z.string().min(1).max(100).optional(),
   address: z.string().max(200).optional().nullable(),
-  logo_url: nullableUrl,
+  logo_url: optionalNullableUrl,
   reeup: z.string().regex(/^\d{11}$/).optional().nullable(),
   nit: z.string().regex(/^\d{1,15}$/, 'NIT debe contener solo dígitos').optional().nullable(),
   bank_account: z.string().min(1).optional().nullable(),
@@ -274,8 +302,8 @@ export const updateStoreSchema = z.object({
   email: z.string().email().optional().nullable(),
   slug: z.string().min(1).max(100).optional().nullable(),
   plantilla: z.enum(STORE_TEMPLATES).optional().nullable(),
-  signature_url: nullableUrl,
-  stamp_url: nullableUrl,
+  signature_url: optionalNullableUrl,
+  stamp_url: optionalNullableUrl,
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),
   // F2-T03: is_active permitido en PATCH para implementar toggle activar/desactivar
@@ -284,10 +312,10 @@ export const updateStoreSchema = z.object({
   // Diferencia clave: toggle = pausa temporal; DELETE = baja permanente con cleanup.
   is_active: z.boolean().optional(),
   // ── Storefront config (2026-07-04) ──
-  banner_url: nullableUrl,
+  banner_url: optionalNullableUrl,
   store_tagline: z.string().max(200).optional().nullable(),
-  whatsapp_group_url: nullableUrl,
-  telegram_url: nullableUrl,
+  whatsapp_group_url: optionalNullableUrl,
+  telegram_url: optionalNullableUrl,
   services: z.array(z.object({
     icon: z.string().max(50),
     title: z.string().max(100),
@@ -300,7 +328,7 @@ export const updateStoreSchema = z.object({
   })).max(5).optional().nullable(),
   opening_hours: z.string().max(200).optional().nullable(),
   banner_cta_text: z.string().max(50).optional().nullable(),
-  banner_cta_link: nullableUrl,
+  banner_cta_link: optionalNullableUrl,
 });
 
 export const deleteStoreSchema = z.object({

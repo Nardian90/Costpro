@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Store, StoreTemplate } from '@/types';
-import { Upload, ImageIcon } from 'lucide-react';
+import { Upload, ImageIcon, X } from 'lucide-react';
 // Audit-Fix #2b: removed StoreTemplateSelector import — was used with wrong props
 // (value/onChange don't exist on its interface). Replaced with inline <select>.
 import { supabase } from '@/lib/supabaseClient';
@@ -226,6 +226,18 @@ export function EditStoreModal({
     const handleStampUpload = (e: React.ChangeEvent<HTMLInputElement>) =>
         uploadFile(e, 'stores', 'store-stamps', (url) => dispatch({ type: 'SET_FIELD', field: 'stampUrl', value: url }));
 
+    // MISIÓN 2026-11-02 (fix eliminación de logo/firma/sello): el apartado Info
+    // solo tenía "Cambiar/Subir" — no existía forma de eliminar una imagen.
+    // Se añaden botones "Quitar" independientes (mismo patrón que StoreConfigModal
+    // F2.5-4): limpian el campo del formulario y el usuario confirma con "Guardar
+    // Cambios". El submit ya envía logo_url/signature_url/stamp_url, y el backend
+    // (updateStoreSchema → optionalNullableUrl) persiste '' → null en la DB.
+    // La eliminación es independiente: quitar el logo no afecta firma ni sello.
+    const clearImage = (field: 'logoUrl' | 'signatureUrl' | 'stampUrl', message: string) => {
+        dispatch({ type: 'SET_FIELD', field, value: '' });
+        toast.info(message);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!name || name.trim().length < 2) {
@@ -312,6 +324,13 @@ export function EditStoreModal({
         <BaseModal
             open={isOpen}
             onOpenChange={(open) => !open && onClose()}
+            // MISIÓN 2026-11-02 (fix modal a mitad de área): este modal aloja un
+            // formulario denso de 4 columnas + uploads de imagen. Usaba el default
+            // de BaseModal (sm:max-w-lg = 512px) — demasiado estrecho, el contenido
+            // se comprimía y parecía "medio modal". La convención de la app para
+            // formularios de esta complejidad es sm:max-w-2xl (Catálogo, inventario
+            // físico, export). En móvil sigue ocupando el ancho completo.
+            maxWidth="sm:max-w-2xl"
             aria-label={`${t('editStore')}. ${t('completeData')}`}
             title={
                 <span className="text-[clamp(1.25rem,4vw,1.5rem)] font-black uppercase tracking-tighter text-primary">
@@ -541,22 +560,35 @@ export function EditStoreModal({
                                     <ImageIcon className="w-5 h-5 text-muted-foreground/70" />
                                 )}
                             </div>
-                            <label className="cursor-pointer">
-                                <input
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp,image/gif"
-                                    onChange={handleFileUpload}
-                                    disabled={isUploading}
-                                    className="sr-only"
-                                />
-                                <span className={cn(
-                                    "inline-flex items-center gap-1 min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
-                                    isUploading ? "bg-muted text-muted-foreground opacity-60" : "bg-primary/10 text-primary hover:bg-primary/20"
-                                )}>
-                                    <Upload className="w-3 h-3" />
-                                    {isUploading ? '...' : (logoUrl ? t('change') : t('upload'))}
-                                </span>
-                            </label>
+                            <div className="flex items-center gap-1.5">
+                                <label className="cursor-pointer">
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp,image/gif"
+                                        onChange={handleFileUpload}
+                                        disabled={isUploading}
+                                        className="sr-only"
+                                    />
+                                    <span className={cn(
+                                        "inline-flex items-center gap-1 min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
+                                        isUploading ? "bg-muted text-muted-foreground opacity-60" : "bg-primary/10 text-primary hover:bg-primary/20"
+                                    )}>
+                                        <Upload className="w-3 h-3" />
+                                        {isUploading ? '...' : (logoUrl ? t('change') : t('upload'))}
+                                    </span>
+                                </label>
+                                {logoUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={() => clearImage('logoUrl', t('removeLogo'))}
+                                        className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
+                                        aria-label={t('removeLogo')}
+                                        title={t('removeLogo')}
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className="space-y-1.5">
@@ -571,22 +603,35 @@ export function EditStoreModal({
                                     <ImageIcon className="w-5 h-5 text-muted-foreground/70" />
                                 )}
                             </div>
-                            <label className="cursor-pointer">
-                                <input
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp,image/gif"
-                                    onChange={handleSignatureUpload}
-                                    disabled={isUploading}
-                                    className="sr-only"
-                                />
-                                <span className={cn(
-                                    "inline-flex items-center gap-1 min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
-                                    isUploading ? "bg-muted text-muted-foreground opacity-60" : "bg-primary/10 text-primary hover:bg-primary/20"
-                                )}>
-                                    <Upload className="w-3 h-3" />
-                                    {isUploading ? '...' : (signatureUrl ? t('change') : t('upload'))}
-                                </span>
-                            </label>
+                            <div className="flex items-center gap-1.5">
+                                <label className="cursor-pointer">
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp,image/gif"
+                                        onChange={handleSignatureUpload}
+                                        disabled={isUploading}
+                                        className="sr-only"
+                                    />
+                                    <span className={cn(
+                                        "inline-flex items-center gap-1 min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
+                                        isUploading ? "bg-muted text-muted-foreground opacity-60" : "bg-primary/10 text-primary hover:bg-primary/20"
+                                    )}>
+                                        <Upload className="w-3 h-3" />
+                                        {isUploading ? '...' : (signatureUrl ? t('change') : t('upload'))}
+                                    </span>
+                                </label>
+                                {signatureUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={() => clearImage('signatureUrl', t('removeSignature'))}
+                                        className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
+                                        aria-label={t('removeSignature')}
+                                        title={t('removeSignature')}
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className="space-y-1.5">
@@ -601,22 +646,35 @@ export function EditStoreModal({
                                     <ImageIcon className="w-5 h-5 text-muted-foreground/70" />
                                 )}
                             </div>
-                            <label className="cursor-pointer">
-                                <input
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp,image/gif"
-                                    onChange={handleStampUpload}
-                                    disabled={isUploading}
-                                    className="sr-only"
-                                />
-                                <span className={cn(
-                                    "inline-flex items-center gap-1 min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
-                                    isUploading ? "bg-muted text-muted-foreground opacity-60" : "bg-primary/10 text-primary hover:bg-primary/20"
-                                )}>
-                                    <Upload className="w-3 h-3" />
-                                    {isUploading ? '...' : (stampUrl ? t('change') : t('upload'))}
-                                </span>
-                            </label>
+                            <div className="flex items-center gap-1.5">
+                                <label className="cursor-pointer">
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp,image/gif"
+                                        onChange={handleStampUpload}
+                                        disabled={isUploading}
+                                        className="sr-only"
+                                    />
+                                    <span className={cn(
+                                        "inline-flex items-center gap-1 min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
+                                        isUploading ? "bg-muted text-muted-foreground opacity-60" : "bg-primary/10 text-primary hover:bg-primary/20"
+                                    )}>
+                                        <Upload className="w-3 h-3" />
+                                        {isUploading ? '...' : (stampUrl ? t('change') : t('upload'))}
+                                    </span>
+                                </label>
+                                {stampUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={() => clearImage('stampUrl', t('removeStamp'))}
+                                        className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
+                                        aria-label={t('removeStamp')}
+                                        title={t('removeStamp')}
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

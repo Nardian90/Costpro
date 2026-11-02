@@ -252,6 +252,10 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
     <BaseModal
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
+      // MISIÓN 2026-11-02: mismo estándar de ancho que EditStoreModal — el modal
+      // de configuración aloja uploads de imagen + 4 secciones; con el default
+      // (max-w-lg) el área de contenido quedaba comprimida ("medio modal").
+      maxWidth="sm:max-w-2xl"
       aria-label={`Configuración de tienda ${store.name}`}
       title={
         <span className="text-[clamp(1.25rem,4vw,1.5rem)] font-black uppercase tracking-tighter text-primary flex items-center gap-2">
