@@ -579,7 +579,15 @@ export const paginatedProductSchema = productSchema.extend({
   total_count: z.number().optional(),
   total: z.coerce.number().optional(),
   is_complete: z.boolean().optional().default(true),
+  // MISIÓN CATALOG-MASTER-002: la RPC marca la fuente de la fila cuando la
+  // tienda está conectada al catálogo maestro ('master' = sin fila local).
+  source: z.enum(['local', 'master']).optional().default('local'),
+  master_product_id: z.string().regex(uuidRegex).nullable().optional(),
 });
+
+/** Fila del catálogo que proviene del maestro (sin fila local en esta tienda). */
+export const isMasterCatalogRow = (p: { source?: string | null }): boolean =>
+  p?.source === 'master';
 
 export const dashboardKpiResponseSchema = z.object({
   total_sales: z.coerce.number().default(0),

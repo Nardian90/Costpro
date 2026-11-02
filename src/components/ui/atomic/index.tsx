@@ -413,6 +413,16 @@ export const ProductCard: React.FC<any> = ({
             Inactivo
           </div>
         )}
+        {/* CATALOG-MASTER-002: fila del catálogo maestro (sin fila local en
+            esta tienda) → identidad e imagen compartidas con la organización. */}
+        {product.source === 'master' && (
+          <div
+            className="bg-primary/15 text-primary border border-primary/30 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm pointer-events-none backdrop-blur-sm"
+            title="Producto del catálogo maestro de la organización: sin fila local en esta tienda."
+          >
+            <span>Maestro</span>
+          </div>
+        )}
         {/* ── 3. Incompleto (missing data — LOW priority, just informational) ──
             Antes: bg-warning sólido amarillo brillante → demasiado llamativo.
             Ahora: bg-warning/15 translúcido + borde outline + text-warning.

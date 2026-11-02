@@ -500,8 +500,22 @@ export default function CatalogView() {
     setIsCreateProductModalOpen(true);
   };
 
+  // CATALOG-MASTER-002: las filas 'master' NO tienen fila local en esta
+  // tienda — las operaciones LOCALES (clonar, editar, activar/desactivar,
+  // borrar, selección masiva) no les aplican. La identidad global se gestiona
+  // por las RPC gobernadas (gobernador del catálogo) y la incorporación al
+  // inventario con activate_master_product («Activar en esta tienda»).
+  const bloquearOperacionLocal = (product: Product | null | undefined): boolean => {
+    if (product?.source !== 'master') return false;
+    toast.info(
+      'Producto del catálogo maestro (sin fila local en esta tienda): incorpóralo al inventario con «Activar en esta tienda» o gestiona la identidad global desde el Catálogo de la organización (gobernador).',
+    );
+    return true;
+  };
+
   // --- Clone Product ---
   const handleCloneProduct = (product: Product) => {
+    if (bloquearOperacionLocal(product)) return;
     const cloned = {
       store_id: user?.activeStoreId,
       name: `${product.name} (copia)`,
@@ -526,6 +540,7 @@ export default function CatalogView() {
 
   // --- Toggle Active ---
   const handleToggleActive = (product: Product) => {
+    if (bloquearOperacionLocal(product)) return;
     const newState = !product.is_active;
     toggleActiveMutation.mutate(
       { productId: product.id, isActive: newState },
@@ -540,6 +555,12 @@ export default function CatalogView() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const isAllSelected = filteredProducts.length > 0 && filteredProducts.every(p => selectedIds.has(p.id));
   const toggleSelect = (id: string) => {
+    // CATALOG-MASTER-002: una fila solo-maestro no participa en operaciones
+    // locales masivas (precio/stock/visibilidad/borrado son locales).
+    if (filteredProducts.some(p => p.id === id && p.source === 'master')) {
+      toast.info('Los productos solo-maestro no se seleccionan para operaciones locales: incorpora primero una fila local.');
+      return;
+    }
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -550,7 +571,7 @@ export default function CatalogView() {
     if (isAllSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredProducts.map(p => p.id)));
+      setSelectedIds(new Set(filteredProducts.filter(p => p.source !== 'master').map(p => p.id)));
     }
   };
   const handleBulkDeactivate = () => {
@@ -775,6 +796,7 @@ export default function CatalogView() {
 
   // --- Edit Product ---
   const handleOpenEdit = (product: Product) => {
+    if (bloquearOperacionLocal(product)) return;
     setEditingProduct(product);
     setEditForm({
       name: product.name || '',
@@ -1013,6 +1035,7 @@ export default function CatalogView() {
 
   // --- Delete Product ---
   const handleOpenDelete = (product: Product) => {
+    if (bloquearOperacionLocal(product)) return;
     setProductToDelete(product);
   };
 

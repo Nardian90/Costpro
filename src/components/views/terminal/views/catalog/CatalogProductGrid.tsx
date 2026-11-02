@@ -250,6 +250,16 @@ export default function CatalogProductGrid({
                           {product.is_complete === false && (
                             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-warning/10 text-warning border border-warning/20 shrink-0">Incompleto</span>
                           )}
+                          {/* CATALOG-MASTER-002: fila del catálogo maestro sin
+                              fila local — identidad e imagen son GLOBALES. */}
+                          {product.source === 'master' && (
+                            <span
+                              className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 shrink-0"
+                              title="Producto del catálogo maestro de la organización: sin fila local en esta tienda. Incorpóralo al inventario para operarlo localmente."
+                            >
+                              Maestro
+                            </span>
+                          )}
                           {/* CM-1.3: Badge margen negativo en tabla (antes solo en grid) */}
                           {product.price < (product.cost_price || 0) && (product.cost_price || 0) > 0 && (
                             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-destructive/10 text-destructive border border-destructive/20 shrink-0 animate-pulse">
