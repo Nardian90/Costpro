@@ -106,6 +106,63 @@ describe('updateStoreSchema', () => {
       expect(storeIdIssue).toBeDefined();
     }
   });
+
+  // ── MISIÓN 2026-11-02: fix del wipe de imágenes en PATCH parciales ──
+  // Antes, nullableUrl transformaba claves AUSENTES en null → cualquier PATCH
+  // parcial (toggle is_active, banner de Vitrina, whatsapp…) borraba logo_url,
+  // signature_url, stamp_url, banner_url, etc. de la tienda en la DB.
+  describe('optionalNullableUrl — PATCH parciales no borran imágenes (regresión)', () => {
+    const STORE = '550e8400-e29b-41d4-a716-446655440000';
+
+    it('toggle is_active NO inyecta null en campos de imagen ausentes', () => {
+      const result = updateStoreSchema.safeParse({ storeId: STORE, is_active: false });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.logo_url).toBeUndefined();
+        expect(result.data.signature_url).toBeUndefined();
+        expect(result.data.stamp_url).toBeUndefined();
+        expect(result.data.banner_url).toBeUndefined();
+        expect(result.data.whatsapp_group_url).toBeUndefined();
+        expect(result.data.telegram_url).toBeUndefined();
+        expect(result.data.banner_cta_link).toBeUndefined();
+        expect(result.data.is_active).toBe(false);
+      }
+    });
+
+    it("logo_url: '' → null SOLO para logo_url (quitar logo, resto ausente)", () => {
+      const result = updateStoreSchema.safeParse({ storeId: STORE, logo_url: '' });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.logo_url).toBeNull();
+        expect(result.data.signature_url).toBeUndefined();
+        expect(result.data.stamp_url).toBeUndefined();
+      }
+    });
+
+    it("signature_url: '' y stamp_url: '' → null; logo_url ausente intacto", () => {
+      const result = updateStoreSchema.safeParse({ storeId: STORE, signature_url: '', stamp_url: '' });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.signature_url).toBeNull();
+        expect(result.data.stamp_url).toBeNull();
+        expect(result.data.logo_url).toBeUndefined();
+      }
+    });
+
+    it('URL válida enviada se conserva tal cual', () => {
+      const url = 'https://wthkddeleylijmonclxg.supabase.co/storage/v1/object/public/stores/store-logos/a.jpeg';
+      const result = updateStoreSchema.safeParse({ storeId: STORE, logo_url: url });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.logo_url).toBe(url);
+      }
+    });
+
+    it('rechaza un valor no-URL explícito', () => {
+      const result = updateStoreSchema.safeParse({ storeId: STORE, logo_url: 'no-es-url' });
+      expect(result.success).toBe(false);
+    });
+  });
 });
 
 describe('deleteStoreSchema', () => {
