@@ -41,6 +41,11 @@ export function useUsersView() {
     // modal y viaja por POST al endpoint server-side.
     const [setPasswordTarget, setSetPasswordTarget] = useState<Profile | null>(null);
 
+    // USER-MGMT-DELETE-001: eliminación definitiva (modal con preflight).
+    const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
+    const [deletePreflight, setDeletePreflight] = useState<unknown>(null);
+    const [deletePreflightError, setDeletePreflightError] = useState<string | null>(null);
+
     // Data Fetching
     const isEncargado = user?.role === 'encargado' || user?.role === 'manager' || user?.memberships?.some(m => m.role === 'encargado');
 
@@ -230,42 +235,93 @@ export function useUsersView() {
         }
     };
 
-    const handleDeleteUser = async (userId: string) => {
-        if (!confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción es irreversible y solo se permitirá si el usuario no tiene registros operativos.')) {
-            return;
+    // USER-MGMT-DELETE-001: al fijar el objetivo se dispara el preflight
+    // (inspección sin efectos) que alimenta el diálogo de confirmación.
+    useEffect(() => {
+        if (deleteTarget?.id) {
+            void loadDeletePreflight(deleteTarget.id);
         }
+    }, [deleteTarget?.id]);
 
+    const handleDeleteUser = async (userId: string) => {
+        // USER-MGMT-DELETE-001: eliminación DEFINITIVA con confirmación explícita.
+        // Ya no se usa confirm() nativo: el modal DeleteUserConfirmModal muestra
+        // nombre, correo, tiendas, bloqueos y exige escribir ELIMINAR + razón.
+        // Este handler se invoca SOLO desde ese modal.
+        const target = usersData.find(u => u.id === userId) || null;
+        setDeleteTarget(target);
+        setDeletePreflight(null);
+        setDeletePreflightError(null);
+    };
+
+    // USER-MGMT-DELETE-001: preflight de la eliminación (inspección sin efectos).
+    const loadDeletePreflight = async (userId: string) => {
+        setDeletePreflight(null);
+        setDeletePreflightError(null);
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
+            if (!token) throw new Error('No hay sesión activa.');
 
-            if (!token) {
-                throw new Error('No hay sesión activa.');
+            const response = await fetch(`/api/users/${userId}/hard-delete?preflight=1`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'No se pudo inspeccionar la cuenta');
             }
+            setDeletePreflight(data);
+        } catch (error: unknown) {
+            setDeletePreflightError(error instanceof Error ? error.message : String(error));
+        }
+    };
 
-            const response = await fetch('/api/users/delete', {
+    // USER-MGMT-DELETE-001: ejecución de la eliminación definitiva (desde el modal).
+    // Devuelve true solo con éxito confirmado por el servidor; el modal muestra
+    // el error y NO se cierra en fallo (el usuario sigue visible en la tabla).
+    const confirmHardDelete = async (userId: string, reason: string): Promise<boolean> => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            if (!token) throw new Error('No hay sesión activa.');
+
+            const response = await fetch(`/api/users/${userId}/hard-delete`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ user_id: userId })
+                body: JSON.stringify({ reason })
             });
 
             const data = await response.json();
-
             if (!response.ok) {
                 throw new Error(data.error || 'Error al eliminar usuario');
             }
 
-            toast.success('Usuario eliminado correctamente');
-            // F1-T02: invalidar cache de React Query en lugar de window.location.reload().
+            toast.success(data.message || 'Usuario eliminado definitivamente');
+            setDeleteTarget(null);
+            setDeletePreflight(null);
+            setDeletePreflightError(null);
+            // Refrescar la tabla y todas las vistas derivadas.
             await queryClient.invalidateQueries({ queryKey: ['users'] });
             await queryClient.invalidateQueries({ queryKey: ['user-store-access'] });
             await queryClient.invalidateQueries({ queryKey: ['memberships'] });
+            return true;
         } catch (error: unknown) {
             toast.error(error instanceof Error ? error.message : String(error));
+            return false;
         }
+    };
+
+    const closeDeleteModal = () => {
+        setDeleteTarget(null);
+        setDeletePreflight(null);
+        setDeletePreflightError(null);
     };
 
     // REMEDIACIÓN (fix/users-multistore-admin-password): abrir el modal de
@@ -403,6 +459,12 @@ export function useUsersView() {
         handleUserFormSubmit,
         handleToggleUserStatus,
         handleDeleteUser,
+        loadDeletePreflight,
+        confirmHardDelete,
+        closeDeleteModal,
+        deleteTarget,
+        deletePreflight,
+        deletePreflightError,
         handleResetPassword,
         openSetPassword,
         closeSetPassword,
