@@ -360,7 +360,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 118 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 119 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -375,10 +375,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // verificación del contenido
     const m = leeryValidarManifiesto();
     // cadena catálogo maestro + R1 + CP-CAT-MAESTRO-002: 102 (PR1) + 1 R1 + 1 etapa 0 + 4 etapa 1 + 1 PR4 + 1 propagación imagen = 110; +1 fix CP-ORG-003 (CP-CAT-MAESTRO-003) = 111; +1 fix CHECK auditoría (CP-CAT-MAESTRO-004) = 112; +1 CP-CORRECCIONES-VENTAS-ALMACÉN-001 = 113
-    // MISIÓN RESOLUCIÓN 11 (2026-10-31): +1 SC-2-07 Solicitud de Materiales (20261031120000) = 114; +1 vales etapa revisión (20261031120100) = 115; +1 incorporación maestro CP-CAT-MAESTRO-002 (20261031140000, PR #1532) = 116; +1 suppliers visibilidad multiusuario (CP-PROVEEDORES-001) = 117; +1 visibilidad maestro multitienda (COSTPRO-CATALOG-MASTER-002, 20261101130000) = 118
-    expect(m.total_incluidos).toBe(118);
+    // MISIÓN RESOLUCIÓN 11 (2026-10-31): +1 SC-2-07 Solicitud de Materiales (20261031120000) = 114; +1 vales etapa revisión (20261031120100) = 115; +1 incorporación maestro CP-CAT-MAESTRO-002 (20261031140000, PR #1532) = 116; +1 suppliers visibilidad multiusuario (CP-PROVEEDORES-001) = 117; +1 visibilidad maestro multitienda (COSTPRO-CATALOG-MASTER-002, 20261101130000) = 118; +1 auditoría de membresías CP-SEC-026 (20261103000001) = 119
+    expect(m.total_incluidos).toBe(119);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(118);
+    expect(incluidos.length).toBe(119);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
