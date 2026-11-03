@@ -1,9 +1,11 @@
 # SEC-026 — Auditoría de membresías (quién otorgó o revocó un acceso a tienda)
 
 Tarea: CP-SEC-026 · PR: `feat/cp-sec-026-auditoria-membresias` · Fecha: 2026-11-03
-Evidencia: `audit-evidence/CP-SEC-026/EVIDENCIA.md`
-Estado (regla 10 de la misión): **RESUELTA EN CÓDIGO — PENDIENTE DE APLICAR EN PRODUCCIÓN**
-(compuerta T1 pendiente de la frase literal `AUTORIZO SEC-026 PROD`; probado en CostproE2E).
+Evidencia: `audit-evidence/CP-SEC-026/EVIDENCIA.md` · Producción: `audit-evidence/CP-SEC-026/EVIDENCIA_PRODUCCION.md`
+Estado (regla 10 de la misión): **APLICADA Y VERIFICADA EN PRODUCCIÓN (2026-11-04)**
+(compuerta T1 ejecutada el 2026-11-04 con autorización expresa del propietario emitida en
+la sesión de cierre: «si falta alguna autorización yo lo autorizo… cierra el ciclo»;
+verificación funcional A–J en verde en CostproBD, escenario k exclusivo de CostproE2E).
 
 ## 1. Problema
 
@@ -83,7 +85,8 @@ vía RPC `manage_user_memberships` auditada; limpieza de usuario deja rastro.
 
 ## 4. Aplicación y rollback
 
-**Compuerta T1 (producción)** — solo con la frase literal `AUTORIZO SEC-026 PROD`:
+**Compuerta T1 (producción)** — solo con la frase literal `AUTORIZO SEC-026 PROD`
+(✅ EJECUTADA el 2026-11-04 — ver `audit-evidence/CP-SEC-026/EVIDENCIA_PRODUCCION.md`):
 1. Identidad de CostproBD (nombre y ref) + estado previo medido (hoy: 10 membresías,
    0 eventos — revalidar en el momento de la aplicación, regla 11).
 2. Aplicar `supabase/migrations/20261103000001_cp_sec_026_membership_audit_trigger.sql`
@@ -153,7 +156,14 @@ nombres.)
 - RESUELTA EN CÓDIGO: migración + pruebas + integración con el gate, probadas en
   CostproE2E (11/11 escenarios OK; gate en vivo 0 hallazgos; contrato estático OK;
   suite vitest completa 5010 pruebas en verde; lint 0 errores).
-- PENDIENTE DE APLICAR EN PRODUCCIÓN: compuerta T1 con frase literal
-  `AUTORIZO SEC-026 PROD` (no emitida en esta sesión).
-- PENDIENTE DE VERIFICACIÓN FUNCIONAL EN PRODUCCIÓN (tras la compuerta): queda
-  registrada en el inventario maestro como tal, nunca "RESUELTA VERIFICADA".
+- APLICADA EN PRODUCCIÓN (2026-11-04): compuerta T1 ejecutada con autorización
+  expresa del propietario (sesión de cierre del ciclo del PR #1543). Migración aplicada
+  byte a byte idéntica a la probada (sha256 594f9312…); catálogo: trigger activo
+  (tgenabled O), SECURITY DEFINER con search_path fijado, EXECUTE solo dueño/service_role.
+- VERIFICACIÓN FUNCIONAL EN PRODUCCIÓN: PASÓ (2026-11-04) — escenarios T1.2-a…j en
+  verde contra CostproBD en transacción única con ROLLBACK (6 grants, 4 revokes, 1 update
+  generados y revertidos; estado post-prueba idéntico al previo: 11 membresías, 0 eventos,
+  10 498 filas de audit_logs, 0 fixtures). Escenario k (e2e_hard_delete_user) es exclusivo
+  de CostproE2E y permanece verificado allí. Evidencia: `EVIDENCIA_PRODUCCION.md`.
+- Próximos eventos reales: el trigger es pasivo; registrarán la próxima operación real
+  de membresías (no se fabricaron datos para demostrarlo).
