@@ -8,10 +8,13 @@ import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { logger } from '@/lib/logger';
 
-// Iteración 12 (Q6): schema para soft delete con reason
+// USER-MGMT-DELETE-001: reason OPCIONAL con default — el flujo clásico de la
+// vista enviaba solo {user_id} y el schema estricto devolvía 400 SIEMPRE
+// (causa raíz del bug: el botón Eliminar jamás llegó a ejecutarse).
+// La eliminación DEFINITIVA (hard-delete) sigue exigiendo razón explícita.
 const softDeleteUserSchema = z.object({
   user_id: uuidLoose,
-  reason: z.string().min(3, 'Razón requerida (mín 3 chars)').max(500),
+  reason: z.string().min(3).max(500).optional(),
 });
 
 const handler = withRole('admin', async (req, session) => {
@@ -42,9 +45,10 @@ const handler = withRole('admin', async (req, session) => {
     }
 
     // Iteración 12 (Q6): Soft delete via RPC con audit atómico + PII anonymization
+    // USER-MGMT-DELETE-001: reason con default explícito cuando la UI no lo envía.
     const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('managed_soft_delete_user', {
       p_user_id: user_id,
-      p_reason: reason,
+      p_reason: reason ?? 'Eliminado desde la vista de administración de usuarios',
       p_caller_id: session.user.id,
     });
 
