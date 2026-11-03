@@ -3,7 +3,7 @@ import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
 // SEC-TS-10: los UI tests de este spec navegaban SIN sesión → login wall →
 // selectores nunca visibles (y el REGRESSION de enums pasaba vacuamente).
 // Inyección de sesión fresca por test (auto-sanable con refresh real).
-import { signIn, injectSession } from './fixtures/session.fixture';
+import { signIn, injectSession, ADMIN_EMAIL, ADMIN_PASS } from './fixtures/session.fixture';
 // E2E-DEBT-CLEANUP: seed determinista para el test de headers (Opción B del
 // plan de deuda: datos test-owned en tienda EXCLUSIVA de test + cleanup)
 import {
@@ -13,8 +13,10 @@ import {
   testSuffix,
 } from './fixtures/session.fixture';
 
-const ADMIN_EMAIL = 'admin@costpro.com';
-const ADMIN_PASS = 'costpro123';
+// COSTPRO-E2E-REACTIVATION-001: credenciales del fixture (isolation-aware).
+// El hardcode 'admin@costpro.com' no existe en la base aislada (identidad
+// sintética por run) y los 7 UI tests morían en el signIn (400).
+// ADMIN_EMAIL/ADMIN_PASS del fixture resuelven al admin del run.
 
 /** SEC-TS-10: sesión fresca + navegación autenticada */
 async function authedGoto(page: import('@playwright/test').Page, view: string) {

@@ -166,12 +166,22 @@ async function verifyProtectedIdentity() {
   console.log(`[data-hygiene-guard:${mode}] residuos E2E — stores=${stores} users=${users} (límites: ${MAX_RESIDUAL_STORES}/${MAX_RESIDUAL_USERS}) | protegidos: ${PROTECTED_STORE_IDS.length} tiendas por ${source}`);
 
   if (mode === 'BEFORE') {
-    // 1. Identidad de protegidos (fail-fast si un run anterior los violó)
-    const identity = await verifyProtectedIdentity();
-    if (identity.length > 0) {
-      console.error(`E2E PROTECTED RESOURCES VIOLATED — faltan o están archivadas: ${identity.join('; ')}`);
-      console.error('Remediación: re-provisionar pilotos con `node e2e/scripts/provision-pilot-env.cjs` y actualizar e2e/config/protected-resources.json (ver docs/audits/E2E-RESOURCE-LIFECYCLE-REMEDIATION.md).');
-      process.exit(1);
+    // 1. Identidad de protegidos (fail-fast si un run anterior los violó).
+    // COSTPRO-E2E-REACTIVATION-001: en la BD AISLADA (E2E_SKIP_PROTECTED_GUARD=1,
+    // mismo escape documentado de e2e/fixtures/run-env.ts §verifyProtectedResources)
+    // los pilotos legacy del config NO existen por diseño — su identidad vive en
+    // producción y la base aislada usa identidad sintética por-run. Verificarlos
+    // allí es inaplicable: se omite SOLO la identidad; el conteo de residuos
+    // (límites 12/12) y el net-zero del modo AFTER siguen activos.
+    if (process.env.E2E_SKIP_PROTECTED_GUARD === '1') {
+      console.log(`[data-hygiene-guard:${mode}] identidad de protegidos OMITIDA (E2E_SKIP_PROTECTED_GUARD=1 — base aislada: identidad por-run; pilotos legacy no aplicables)`);
+    } else {
+      const identity = await verifyProtectedIdentity();
+      if (identity.length > 0) {
+        console.error(`E2E PROTECTED RESOURCES VIOLATED — faltan o están archivadas: ${identity.join('; ')}`);
+        console.error('Remediación: re-provisionar pilotos con `node e2e/scripts/provision-pilot-env.cjs` y actualizar e2e/config/protected-resources.json (ver docs/audits/E2E-RESOURCE-LIFECYCLE-REMEDIATION.md).');
+        process.exit(1);
+      }
     }
     // 2. Residuo preexistente sobre el límite
     if (stores > MAX_RESIDUAL_STORES || users > MAX_RESIDUAL_USERS) {

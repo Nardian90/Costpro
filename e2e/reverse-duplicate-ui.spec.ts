@@ -76,7 +76,8 @@ test.describe('V2.4.5 UI: Modal de Reversión', () => {
     await reverseBtn.click();
 
     // Validar que el modal aparece
-    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5000 });
+    // COSTPRO-E2E-REACTIVATION-001: la vista monta 2 role=dialog (modal + contenedor) — se acota al contenido del modal bajo prueba.
+    await expect(page.getByRole('dialog').filter({ hasText: /Revertir esta venta/i })).toBeVisible({ timeout: 5000 });
     await expect(page.getByText(/Revertir esta venta/i)).toBeVisible();
 
     // Validar que pide motivo
@@ -94,7 +95,7 @@ test.describe('V2.4.5 UI: Modal de Reversión', () => {
 
     // Cancelar (no destruimos datos)
     await page.getByRole('button', { name: /Cancelar/i }).click();
-    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(page.getByRole('dialog').filter({ hasText: /Revertir esta venta/i })).toBeHidden();
   });
 
   test('modal ReverseDocumentModal se abre en vista transferencias', async ({ page }) => {
@@ -112,7 +113,7 @@ test.describe('V2.4.5 UI: Modal de Reversión', () => {
     }
 
     await reverseBtn.click();
-    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('dialog').filter({ hasText: /Revertir esta transferencia/i })).toBeVisible({ timeout: 5000 });
     await expect(page.getByText(/Revertir esta transferencia/i)).toBeVisible();
 
     // Cancelar
@@ -134,7 +135,7 @@ test.describe('V2.4.5 UI: Modal de Reversión', () => {
     }
 
     await reverseBtn.click();
-    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('dialog').filter({ hasText: /Revertir esta devolución/i })).toBeVisible({ timeout: 5000 });
     await expect(page.getByText(/Revertir esta devolución/i)).toBeVisible();
 
     await page.getByRole('button', { name: /Cancelar/i }).click();
@@ -163,7 +164,7 @@ test.describe('V2.4.5 UI: Modal de Duplicación', () => {
     await dupBtn.click();
 
     // Validar modal
-    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('dialog').filter({ hasText: /Duplicar esta transferencia/i })).toBeVisible({ timeout: 5000 });
     await expect(page.getByText(/Duplicar esta transferencia/i)).toBeVisible();
 
     // Validar advertencia "Sin efecto inmediato en stock" (transfer = pending)
@@ -188,7 +189,7 @@ test.describe('V2.4.5 UI: Modal de Duplicación', () => {
 
     await dupBtn.click();
 
-    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('dialog').filter({ hasText: /Duplicar esta devolución/i })).toBeVisible({ timeout: 5000 });
     await expect(page.getByText(/Duplicar esta devolución/i)).toBeVisible();
 
     // Validar advertencia "Efecto inmediato en stock" (devolution = immediate)

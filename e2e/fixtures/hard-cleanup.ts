@@ -293,6 +293,19 @@ export async function hardDeleteRunUser(userId: string): Promise<boolean> {
   await sb.delete('sales', `cashier_id=eq.${userId}`).catch(() => {});
   await sb.update('user_invitations', `invited_by=eq.${userId}`, { invited_by: null }).catch(() => {});
 
+  // COSTPRO-E2E-REACTIVATION-001: el modelo de catálogo maestro
+  // (20261028110000) es posterior al RPC e2e_hard_delete_user
+  // (20261005120001) y su lista scoped no lo cubre — el FK
+  // master_products_created_by_fkey (NO ACTION) bloquea el borrado del
+  // usuario del run cuando este creó maestros (spec CP-CAT-MAESTRO-002).
+  // Orden respetando las FKs hijas NO ACTION: links → log → proposals →
+  // masters. Limpieza estrictamente por created_by del usuario del run.
+  await sb.delete('catalog_store_links', `created_by=eq.${userId}`).catch(() => {});
+  const mastersOfUser = `master_product_id=in.(select id from master_products where created_by=eq.${userId})`;
+  await sb.delete('master_change_log', mastersOfUser).catch(() => {});
+  await sb.delete('master_change_proposals', mastersOfUser).catch(() => {});
+  await sb.delete('master_products', `created_by=eq.${userId}`).catch(() => {});
+
   // Mecanismo primario: RPC e2e_hard_delete_user (SECURITY DEFINER — migra-
   // ción 20261005120001). Maneja profile + identidad Auth server-side.
   const viaRpc = await rpcService('e2e_hard_delete_user', { p_user_id: userId });
@@ -352,20 +365,51 @@ export async function sweepResidualsSince(
   let storesDeleted = 0;
   let usersDeleted = 0;
 
-  // Tiendas: creadas desde el inicio del run O por usuarios del run
+  // Tiendas: creadas desde el inicio del run O por usuarios del run.
+  // COSTPRO-E2E-REACTIVATION-001 (fix): la versión anterior encadenaba
+  // created_at>=since AND created_by=in.(runUsers) — las tiendas creadas por
+  // SERVICE-ROLE (specs de catálogo: 'E2E OTHER-STORE …', created_by NULL)
+  // no matcheaban NUNCA y sobrevivían al teardown (2 residuos en la corrida
+  // de referencia). Semántica OR real: dos consultas deduplicadas, SIEMPRE
+  // acotadas por isTestStoreName + isProtectedStore (nunca toca negocio).
   try {
-    const createdBy = runUserIds.length
-      ? `&created_by=in.(${runUserIds.map((id) => `"${id}"`).join(',')})`
-      : '';
-    const rows = await sb.select<{ id: string; name: string; created_by: string | null }>(
-      'stores',
-      `select=id,name,created_by&created_at=gte.${sinceIso}${createdBy}&limit=500`,
+    const queries = [`select=id,name,created_by&created_at=gte.${sinceIso}&limit=500`];
+    if (runUserIds.length) {
+      queries.push(`select=id,name,created_by&created_by=in.(${runUserIds.map((id) => `"${id}"`).join(',')})&limit=500`);
+    }
+    const seen = new Set<string>();
+    for (const q of queries) {
+      const rows = await sb.select<{ id: string; name: string; created_by: string | null }>('stores', q);
+      for (const r of rows) {
+        if (seen.has(r.id)) continue;
+        seen.add(r.id);
+        if (isProtectedStore(r.id, r.name)) continue; // config: pilotos A/B + negocio
+        if (!isTestStoreName(r.name)) continue;
+        const deleted = await hardDeleteTestStore(r.id).then(() => true).catch(() => false);
+        if (deleted) storesDeleted++; // solo cuenta borrados REALES
+      }
+    }
+  } catch { /* best-effort */ }
+
+  // Tenants E2E ajenos creados durante el run (specs de catálogo multitienda:
+  // 'E2E OTHER-TENANT …' con su maestro ajeno). Costos FK: tiendas → datos →
+  // masters/proposals/logs/links → tenant.
+  try {
+    const t2s = await sb.select<{ id: string }>(
+      'tenants', `select=id&name=ilike.E2E OTHER-TENANT*&created_at=gte.${sinceIso}&limit=100`,
     );
-    for (const r of rows) {
-      if (isProtectedStore(r.id, r.name)) continue; // config: pilotos A/B + negocio
-      if (!isTestStoreName(r.name)) continue;
-      const deleted = await hardDeleteTestStore(r.id).then(() => true).catch(() => false);
-      if (deleted) storesDeleted++; // solo cuenta borrados REALES
+    for (const t of t2s) {
+      await hardDeleteRunTenantStores(t.id).catch(() => {});
+      const masters = await sb.select<{ id: string }>(
+        'master_products', `select=id&tenant_id=eq.${t.id}&limit=500`,
+      ).catch(() => [] as Array<{ id: string }>);
+      for (const m of masters) {
+        await sb.delete('master_change_log', `master_product_id=eq.${m.id}`).catch(() => {});
+        await sb.delete('master_change_proposals', `master_product_id=eq.${m.id}`).catch(() => {});
+        await sb.delete('master_products', `id=eq.${m.id}`).catch(() => {});
+      }
+      await sb.delete('catalog_store_links', `tenant_id=eq.${t.id}`).catch(() => {});
+      await sb.delete('tenants', `id=eq.${t.id}`).catch(() => {});
     }
   } catch { /* best-effort */ }
 

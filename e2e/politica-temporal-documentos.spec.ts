@@ -22,7 +22,11 @@
  */
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
-import { getAuthHeaders } from './fixtures/auth.fixture';
+import { getAuthHeaders, freshAuthHeaders } from './fixtures/auth.fixture';
+// COSTPRO-E2E-REACTIVATION-001: el token estático del global-setup sufre el
+// fallo transitorio «Auth session missing!» documentado en auth.fixture para
+// specs que corren tarde en la suite — freshAuthHeaders re-firma sesión
+// (caché 5 min) con las credenciales del run.
 import { businessDayOf, todayBusinessDay } from '../src/lib/cash-report/period-attribution';
 import { createClient } from '@supabase/supabase-js';
 
@@ -68,7 +72,7 @@ test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASS, 'credenci
 // poder retro-fechar; la Parte A (API) corre después (su transferencia sube
 // el MAX de la tienda — por eso el orden importa).
 test.beforeAll(async ({ request }) => {
-  headers = getAuthHeaders('admin')!;
+  headers = (await freshAuthHeaders('admin'))!;
   fs.mkdirSync(OUT_DIR, { recursive: true });
   // Tipo de servicio dedicado (catálogo GLOBAL): buscar/reactivar si existe
   // de un run previo, o crear. Se desactiva en el afterAll global final.
@@ -356,7 +360,7 @@ test.describe('Política temporal — Parte A: validación server (API)', () => 
 // contaminación del catálogo compartido). Los documentos creados pertenecen
 // a la tienda piloto (hard-delete del teardown global).
 test.afterAll(async ({ request }) => {
-  headers = getAuthHeaders('admin')!;
+  headers = (await freshAuthHeaders('admin'))!;
   if (createdServiceId) {
       await request.patch('/api/received-services', {
         headers,

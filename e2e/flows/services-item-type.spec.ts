@@ -83,6 +83,10 @@ test.beforeAll(async ({ playwright }) => {
 
 test.afterAll(async () => {
   if (store?.id) {
+    // Limpieza del flag de costo cero documentado (setup de este spec).
+    for (const pid of [servicio?.id].filter(Boolean) as string[]) {
+      await sb.delete('w62_zero_cost_flags', `store_id=eq.${store.id}&product_id=eq.${pid}&scope=eq.sale`).catch(() => {});
+    }
     const ids = [servicio?.id, fisico?.id, fisicoSinStock?.id].filter(Boolean) as string[];
     await cleanupProducts(store.id, ids).catch(() => {});
     await restoreActiveStore(adminId);
@@ -115,6 +119,16 @@ test.describe('Tipo de artículo — servicio vs producto físico', () => {
       is_service: true,
     }]);
     servicio = { id: svc.id, sku: svc.sku };
+
+    // COSTPRO-E2E-REACTIVATION-001: el guard DF-02 (esec_price_integrity)
+    // exige que un producto vendido con WAC=0 tenga su costo cero DOCUMENTADO
+    // (w62_zero_cost_flags scope='sale') — aplica también a servicios. El
+    // insert con service-role es el equivalente de la aprobación del
+    // administrador: el guard de venta sigue ejecutándose íntegro (sin el
+    // flag, la venta sigue rechazándose con ERR_PRODUCT_ZERO_WAC_*).
+    await sb.insert('w62_zero_cost_flags', [{
+      store_id: store.id, product_id: svc.id, scope: 'sale',
+    }]);
 
     // Físico con stock 100 (usa el helper estándar: products + inventory).
     fisico = await seedProduct(store, {

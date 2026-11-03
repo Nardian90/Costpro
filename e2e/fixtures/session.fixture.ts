@@ -278,10 +278,17 @@ export async function createTestStore(
   request: import('@playwright/test').APIRequestContext,
   adminToken: string,
   label: string,
+  // COSTPRO-E2E-REACTIVATION-001: pin determinista de piloto para specs cuya
+  // lógica depende de la membership del usuario (el clerk del run SOLO es
+  // miembro del piloto A). Sin pin se conserva la alternancia A/B histórica;
+  // con pin NO se avanza el contador (impacto cero en los demás specs).
+  opts?: { pilot?: 'A' | 'B' },
 ): Promise<TestStore> {
   if (STORE_FIXTURE_MODE === 'reuse') {
     const pilot = await getReusePilotEnv();
-    const pick = reuseAlternate++ % 2 === 0 ? pilot.storeA : pilot.storeB;
+    const pick = opts?.pilot === 'A' ? pilot.storeA
+      : opts?.pilot === 'B' ? pilot.storeB
+      : reuseAlternate++ % 2 === 0 ? pilot.storeA : pilot.storeB;
     // Fail-closed: si la gobernanza de protegidos rotara y el piloto dejara
     // de estar en la lista, el spec aborta en vez de operar sobre una tienda
     // sin protección (defensa en profundidad sobre pilot-env).
@@ -303,7 +310,11 @@ export async function createTestStore(
     return {
       id: pick.id,
       name: pick.name,
-      slug: pick === pilot.storeA ? 'e2e-pilot-a' : 'e2e-pilot-b',
+      // COSTPRO-E2E-REACTIVATION-001: slug REAL de la BD (pilot-env). El
+      // sintético 'e2e-pilot-a' no existe en la base aislada (slugs por-run)
+      // y rompía E2E-SF-001/003 (404 del storefront). Fallback al sintético
+      // solo si la BD no expone slug (modo legacy antiguo).
+      slug: pick.slug || (pick === pilot.storeA ? 'e2e-pilot-a' : 'e2e-pilot-b'),
     };
   }
   const suffix = testSuffix();

@@ -80,7 +80,10 @@ test.afterAll(async () => {
 test.describe('Roles y permisos — autorización por rol', () => {
   test.beforeAll(async () => {
     // E2E-FIXTURE-REUSE: devuelve la PILOTO A persistente (no crea nada).
-    store = await createTestStore(api, adminToken, 'RBAC');
+    // COSTPRO-E2E-REACTIVATION-001: piloto B — el clerk del run SOLO tiene
+// membership en el piloto A, la precondición de RBAC-006 («sin membership»)
+// exige operar sobre una tienda ajena al clerk (determinista en modo aislado).
+store = await createTestStore(api, adminToken, 'RBAC', { pilot: 'B' });
 
     // Address original de la piloto (para el PATCH no-op de RBAC-005)
     const rows = await sb.select<{ address: string | null }>(

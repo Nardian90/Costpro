@@ -5,7 +5,10 @@ test.describe('Home Page', () => {
     await page.goto('/');
 
     // The CostProLoader renders with text "Gestión Empresarial"
-    const splashText = page.getByText('Gestión Empresarial');
+    // COSTPRO-E2E-REACTIVATION-001: la landing renderiza el texto en 2 nodos
+    // (hero + footer) — .first() mantiene la aserción de visibilidad del
+    // splash sin strict-mode violation.
+    const splashText = page.getByText('Gestión Empresarial').first();
     await expect(splashText).toBeVisible({ timeout: 10000 });
 
     // The splash screen should be full-screen

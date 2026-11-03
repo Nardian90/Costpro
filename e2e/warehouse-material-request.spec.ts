@@ -56,7 +56,10 @@ test.beforeAll(async ({ playwright }) => {
   adminId = admin.userId;
   // Tienda sintética "Puertopadre" SOLO dentro del proyecto aislado (nunca la
   // real de producción). El nombre lleva el patrón E2E80 → higiene garantizada.
-  store = await createTestStore(api, adminToken, 'PUERTOPADRE');
+  // COSTPRO-E2E-REACTIVATION-001: piloto B — C8 (aislamiento RLS) consulta
+// como el clerk, miembro únicamente del piloto A; fijar B hace la
+// precondición determinista en ambos modos (aislado y legacy).
+store = await createTestStore(api, adminToken, 'PUERTOPADRE', { pilot: 'B' });
   await sb.update('profiles', `id=eq.${adminId}`, { active_store_id: store.id });
 
   // Productos sintéticos del dato 5 (descripción/código/UM los snapshot-ea el servidor).

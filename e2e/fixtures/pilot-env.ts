@@ -47,7 +47,7 @@ export const PILOT_B_NAME = process.env.E2E_PILOT_B_NAME || 'E2E PILOT B CostPro
 export const PILOT_SKU_A = process.env.E2E_PILOT_SKU_A || 'E2E-PILOT-A-001';
 export const PILOT_SKU_B = process.env.E2E_PILOT_SKU_B || 'E2E-PILOT-B-001';
 
-export interface PilotStore { id: string; name: string; }
+export interface PilotStore { id: string; name: string; slug?: string | null; }
 export interface PilotEnv {
   storeA: PilotStore;
   storeB: PilotStore;
@@ -74,12 +74,15 @@ function svc(method: string, path: string, body?: unknown) {
 }
 
 async function findStoreByName(name: string): Promise<PilotStore | null> {
-  const res = await svc('GET', `/stores?name=eq.${encodeURIComponent(name)}&select=id,name,is_active,is_archived&limit=5`);
+  const res = await svc('GET', `/stores?name=eq.${encodeURIComponent(name)}&select=id,name,slug,is_active,is_archived&limit=5`);
   if (!res.ok) return null;
-  const rows: Array<{ id: string; name: string; is_active: boolean; is_archived: boolean }> = await res.json();
+  const rows: Array<{ id: string; name: string; slug?: string | null; is_active: boolean; is_archived: boolean }> = await res.json();
   // Válida: activa y no archivada (una tienda archivada no es piloto usable)
   const valid = rows.find((r) => r.is_active && !r.is_archived);
-  return valid ? { id: valid.id, name: valid.name } : null;
+  // COSTPRO-E2E-REACTIVATION-001: devolver el slug REAL de la BD — el valor
+  // sintético hardcodeado ('e2e-pilot-a') no existe en la base aislada
+  // (slugs por-run) y hacía fallar los specs de storefront (E2E-SF-001: 404).
+  return valid ? { id: valid.id, name: valid.name, slug: valid.slug ?? null } : null;
 }
 
 /** Producto de referencia determinista por SKU; lo siembra si no existe (idempotente). */
