@@ -375,10 +375,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // verificación del contenido
     const m = leeryValidarManifiesto();
     // cadena catálogo maestro + R1 + CP-CAT-MAESTRO-002: 102 (PR1) + 1 R1 + 1 etapa 0 + 4 etapa 1 + 1 PR4 + 1 propagación imagen = 110; +1 fix CP-ORG-003 (CP-CAT-MAESTRO-003) = 111; +1 fix CHECK auditoría (CP-CAT-MAESTRO-004) = 112; +1 CP-CORRECCIONES-VENTAS-ALMACÉN-001 = 113
-    // MISIÓN RESOLUCIÓN 11 (2026-10-31): +1 SC-2-07 Solicitud de Materiales (20261031120000) = 114; +1 vales etapa revisión (20261031120100) = 115; +1 incorporación maestro CP-CAT-MAESTRO-002 (20261031140000, PR #1532) = 116; +1 suppliers visibilidad multiusuario (CP-PROVEEDORES-001) = 117; +1 visibilidad maestro multitienda (COSTPRO-CATALOG-MASTER-002, 20261101130000) = 118; +1 auditoría de membresías CP-SEC-026 (20261103000001) = 119
-    expect(m.total_incluidos).toBe(119);
+    // MISIÓN RESOLUCIÓN 11 (2026-10-31): +1 SC-2-07 Solicitud de Materiales (20261031120000) = 114; +1 vales etapa revisión (20261031120100) = 115; +1 incorporación maestro CP-CAT-MAESTRO-002 (20261031140000, PR #1532) = 116; +1 suppliers visibilidad multiusuario (CP-PROVEEDORES-001) = 117; +1 visibilidad maestro multitienda (COSTPRO-CATALOG-MASTER-002, 20261101130000) = 118; +1 auditoría de membresías CP-SEC-026 (20261103000001, PR #1543) = 119; +1 eliminación administrativa managed_hard_delete_user (USER-MGMT-DELETE-001, PR #1544, 20261103120000) = 120
+    expect(m.total_incluidos).toBe(120);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(119);
+    expect(incluidos.length).toBe(120);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -405,6 +405,8 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // (MISIÓN RESOLUCIÓN 11: las posiciones 114-115 = 20261031120000_res11_sc207_solicitud_materiales + 20261031120100_vales_salida_etapa_revision)
     // (MISIÓN CP-CAT-MAESTRO-002 inicialización: la posición 116 = 20261031140000_cp_catalogo_master_incorporacion_backfill)
     // (MISIÓN CP-PROVEEDORES-001: la posición 117 = 20261101120000_suppliers_visibilidad_multiusuario)
+    // (MISIÓN CP-SEC-026: la posición 119 = 20261103000001_cp_sec_026_membership_audit_trigger)
+    // (MISIÓN USER-MGMT-DELETE-001: la posición 120 = 20261103120000_user_mgmt_delete_001_managed_hard_delete)
     expect(pos('20261029090000_drop_legacy_product_images_policies.sql')).toBe(109);
     expect(pos('20261030120000_cp_catalogo_master_image_propagation.sql')).toBe(110);
     expect(pos('20261030143000_cp_catalogo_audit_check_master_products.sql')).toBe(112);
@@ -413,6 +415,8 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261031120100_vales_salida_etapa_revision.sql')).toBe(115);
     expect(pos('20261031140000_cp_catalogo_master_incorporacion_backfill.sql')).toBe(116);
     expect(pos('20261101120000_suppliers_visibilidad_multiusuario.sql')).toBe(117);
+    expect(pos('20261103000001_cp_sec_026_membership_audit_trigger.sql')).toBe(119);
+    expect(pos('20261103120000_user_mgmt_delete_001_managed_hard_delete.sql')).toBe(120);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

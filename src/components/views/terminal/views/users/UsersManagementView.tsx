@@ -21,6 +21,7 @@ import { useUsersView } from './useUsersView';
 import { UserFormModal } from './UserFormModal';
 import { SetPasswordModal } from './SetPasswordModal';
 import { AssignOrganizationModal } from './AssignOrganizationModal';
+import DeleteUserConfirmModal, { type DeleteUserPreflight } from './DeleteUserConfirmModal';
 
 export default function UsersManagementView() {
   const {
@@ -45,6 +46,8 @@ export default function UsersManagementView() {
     handleUserFormSubmit,
     handleToggleUserStatus,
     handleDeleteUser, handleResetPassword, handleUpdatePlan,
+    loadDeletePreflight, confirmHardDelete, closeDeleteModal,
+    deleteTarget, deletePreflight, deletePreflightError,
     openSetPassword, closeSetPassword, submitSetPassword, setPasswordTarget,
     isSubmittingUser,
     allowedRoles,
@@ -441,14 +444,23 @@ export default function UsersManagementView() {
                           Enviar correo de recuperación
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        {/* USER-MGMT-DELETE-001: eliminación DEFINITIVA — solo
+                         * SuperAdmin (la RPC re-verifica en servidor). Se
+                         * distingue de las operaciones reversibles: switch de
+                         * estado (desactivar/banear) arriba en la fila. */}
                         <DropdownMenuItem
                           onSelect={() => handleDeleteUser(u.id)}
-                          disabled={u.id === user?.id || (u.role === 'superadmin' && !isSuperAdmin)}
-                          className="gap-2 text-xs font-bold text-destructive focus:text-destructive"
-                          title={u.role === 'superadmin' && !isSuperAdmin ? 'La cuenta SuperAdmin solo puede gestionarla otro SuperAdmin' : (u.id === user?.id ? 'No puedes eliminar tu propia cuenta' : undefined)}
+                          disabled={u.id === user?.id || !isSuperAdmin || (u.role === 'superadmin' && !isSuperAdmin)}
+                          className="gap-2 text-xs font-bold text-destructive focus:text-destructive focus:bg-destructive/10"
+                          title={
+                            !isSuperAdmin ? 'Solo un SuperAdmin puede eliminar cuentas definitivamente (desactivar/banear sigue disponible con el interruptor de estado)'
+                              : u.id === user?.id ? 'No puedes eliminar tu propia cuenta'
+                              : u.role === 'superadmin' ? 'La cuenta SuperAdmin solo puede gestionarla otro SuperAdmin'
+                              : 'Eliminación definitiva: retira el acceso, elimina perfil y asignaciones, conserva el historial comercial'
+                          }
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                          Eliminar usuario
+                          Eliminar definitivamente
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -492,6 +504,16 @@ export default function UsersManagementView() {
         user={assignTarget}
         isSuperAdmin={!!isSuperAdmin}
         onOpenChange={(open) => { if (!open) setAssignTarget(null); }}
+      />
+      {/* USER-MGMT-DELETE-001: confirmación de eliminación definitiva con
+       * preflight (tiendas, bloqueos, qué se conserva) y type-to-confirm. */}
+      <DeleteUserConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={closeDeleteModal}
+        onConfirm={(reason) => deleteTarget ? confirmHardDelete(deleteTarget.id, reason) : Promise.resolve(false)}
+        preflight={(deletePreflight as DeleteUserPreflight) || null}
+        preflightError={deletePreflightError}
+        user={deleteTarget ? { id: deleteTarget.id, full_name: deleteTarget.full_name, email: deleteTarget.email } : null}
       />
     </>
   );

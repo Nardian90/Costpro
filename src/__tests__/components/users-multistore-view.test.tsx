@@ -178,6 +178,8 @@ describe('UsersManagementView — columna de acciones estable con menú ⋮ (FAS
     const user = userEvent.setup();
     const target = makeUser({ memberships: [makeMembership(1)] });
     mockHookState.users = [target];
+    // USER-MGMT-DELETE-001: la eliminación definitiva es acción de SuperAdmin.
+    mockHookState.isSuperAdmin = true;
     renderView();
 
     await user.click(screen.getByRole('button', { name: /Opciones de Juan Pérez/i }));
@@ -185,7 +187,10 @@ describe('UsersManagementView — columna de acciones estable con menú ⋮ (FAS
     expect(screen.getByText('Editar usuario')).toBeTruthy();
     expect(screen.getByText('Cambiar contraseña')).toBeTruthy();
     expect(screen.getByText('Enviar correo de recuperación')).toBeTruthy();
-    expect(screen.getByText('Eliminar usuario')).toBeTruthy();
+    // USER-MGMT-DELETE-001: antes «Eliminar usuario» (accesible a cualquier
+    // admin); ahora «Eliminar definitivamente», distinguible de desactivar/
+    // banear y reservada a SuperAdmin (la RPC re-verifica en servidor).
+    expect(screen.getByText('Eliminar definitivamente')).toBeTruthy();
   });
 
   it('"Cambiar contraseña" abre el modal con el usuario objetivo', async () => {
@@ -213,14 +218,15 @@ describe('UsersManagementView — columna de acciones estable con menú ⋮ (FAS
     expect(item.getAttribute('data-disabled')).not.toBeNull();
   });
 
-  it('"Eliminar usuario" ejecuta el handler preexistente (ninguna acción se elimina)', async () => {
+  it('"Eliminar definitivamente" ejecuta el handler (acción de SuperAdmin, ninguna acción se elimina)', async () => {
     const user = userEvent.setup();
     const target = makeUser({ memberships: [makeMembership(1)] });
     mockHookState.users = [target];
+    mockHookState.isSuperAdmin = true;
     renderView();
 
     await user.click(screen.getByRole('button', { name: /Opciones de Juan Pérez/i }));
-    await user.click(screen.getByText('Eliminar usuario'));
+    await user.click(screen.getByText('Eliminar definitivamente'));
     expect(mockHookState.handleDeleteUser).toHaveBeenCalledWith(target.id);
   });
 });
