@@ -1,0 +1,1361 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 /home/z/my-project/Costpro
+
+ ✓ src/__tests__/components/cash-report-view.test.tsx (41 tests) 6734ms
+     ✓ §5.3: añadir denominación personalizada por moneda, con validación y eliminación  502ms
+     ✓ «Ver en módulo» de un documento navega vía setCurrentView (sin abrir modal antiguo)  349ms
+     ✓ F-6: «Guardar desglose» persiste el conteo y se restaura al reabrir el módulo  351ms
+     ✓ «Limpiar todo» descarta también el conteo persistido (no reaparece al reabrir)  301ms
+     ✓ RB-3: abrir/cerrar repetido no acumula estado ni reinicia el reporte  405ms
+ ✓ src/__tests__/integration/db-integration.test.ts (10 tests) 5706ms
+       ✓ stores_archived_by_fkey constraint exists  1418ms
+       ✓ archived_by accepts NULL (no user assigned)  409ms
+       ✓ exists and defaults to false  805ms
+       ✓ can filter is_active=true AND is_archived=false (the GET /api/stores query)  318ms
+       ✓ stores have slugs (some may be legacy with underscores)  307ms
+       ✓ store 43a4dabc has products with is_active column (not deleted_at)  766ms
+       ✓ admin@demo.com profile has role=superadmin (cuenta de plataforma)  308ms
+       ✓ superadmin platform account has NO store memberships by design  305ms
+       ✓ there are active stores for the platform account to select (regresión incidente)  770ms
+ ✓ src/__tests__/components/vales-salida-crear-flujo.test.tsx (10 tests) 4687ms
+     ✓ 3 · buscar producto y agregar línea con unidad y stock disponible  452ms
+     ✓ 4 · concepto requerido habilita la confirmación (con producto agregado)  604ms
+     ✓ 5 · resumen con impacto: salida −1 UN, costo estimado y advertencia de stock  603ms
+     ✓ 6 · producto sin stock → advertencia visible en confirmación  504ms
+     ✓ 6b · ANULAR en Revisión: descarta el borrador y cierra SIN POST (flujo crear → revisión → anular)  529ms
+     ✓ 7 · Emitir hace POST al endpoint existente con idempotencia y muestra el número  616ms
+     ✓ 8 · error del backend se muestra (no inventa éxito, no cierra)  556ms
+     ✓ 9 · Guardar en Revisión hace POST a /api/vale-salida/pending y muestra estado En Revisión  576ms
+stderr | src/__tests__/scripts/assert-not-production.test.ts > assertNotProduction (API ESM) — contrato CP-INFRA-019 > permite ESCRITURA solo con el doble flag completo
+[script] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+
+ ✓ src/__tests__/scripts/assert-not-production.test.ts (75 tests) 3755ms
+     ✓ todos bloquean la escritura contra producción o destino ausente (smoke 15/15)  694ms
+     ✓ mjs: misma decisión en los 11 formatos (paridad con mjs)  373ms
+     ✓ py: misma decisión en los 11 formatos (paridad con mjs)  360ms
+stderr | src/__tests__/components/users-view-honest-states.test.tsx > CP-ORG-001 §6.9 — estados de carga/error/vacío honestos en Usuarios > fallo de la API → banner de error reintentable, NUNCA «no se encontraron usuarios»
+An update to AssignOrganizationModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/users-view-honest-states.test.tsx > CP-ORG-001 §6.9 — estados de carga/error/vacío honestos en Usuarios > fallo de la API → banner de error reintentable, NUNCA «no se encontraron usuarios»
+An update to UsersManagementView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/users-view-honest-states.test.tsx > CP-ORG-001 §6.9 — estados de carga/error/vacío honestos en Usuarios > fallo de la API → banner de error reintentable, NUNCA «no se encontraron usuarios»
+An update to ActionMenu inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ActionMenu inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/__tests__/components/users-view-honest-states.test.tsx (4 tests) 4053ms
+     ✓ fallo de la API → banner de error reintentable, NUNCA «no se encontraron usuarios»  3784ms
+ ✓ src/__tests__/components/dashboard-consolidated-gate.test.tsx (6 tests) 3226ms
+     ✓ 1 · monta la vista consolidada (tabs Resumen/Productos/Comportamiento) de la TIENDA ACTIVA  3184ms
+stderr | src/__tests__/components/g1-component-tests.test.tsx > G1.1 — Tests de render componentes MULTI-TIENDA > ManagementHubView (IA-FIX: view switcher) > expone tabs semánticos Tiendas | Vitrina — KPIs ya no es tab
+A suspended resource finished loading inside a test, but the event was not wrapped in act(...).
+
+When testing, code that resolves suspended data should be wrapped into act(...):
+
+act(() => {
+  /* finish loading suspended data */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+A suspended resource finished loading inside a test, but the event was not wrapped in act(...).
+
+When testing, code that resolves suspended data should be wrapped into act(...):
+
+act(() => {
+  /* finish loading suspended data */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/g1-component-tests.test.tsx > G1.1 — Tests de render componentes MULTI-TIENDA > StoreOnboardingWizard > renderiza sin crashear cuando está cerrado
+{"timestamp":"2026-11-03T11:30:04.194Z","level":"error","category":"DATABASE","event":"FETCH_USERS_FAILED","data":{"err":{}}}
+
+ ✓ src/__tests__/components/g1-component-tests.test.tsx (17 tests) 2547ms
+       ✓ standalone sin tienda accesible → prompt honesto, NO Panel de Control (remediación V2)  1487ms
+       ✓ cambia a Resumen con clic, persiste el modo y lo comunica programáticamente  356ms
+ ✓ src/__tests__/components/cash-report-view-selection.test.tsx (15 tests) 2801ms
+     ✓ todos activados por defecto: reproduce el contenido actual (filas completas, sin aviso)  301ms
+     ✓ la selección de ventas NO se persiste: cambia el período → selección reconstruida  397ms
+ ✓ src/__tests__/components/cash-report-docx.test.tsx (26 tests) 2146ms
+     ✓ produce un paquete OOXML completo y bien formado  397ms
+ ✓ src/__tests__/components/pos-checkout-panel-denominations.test.tsx (10 tests) 1846ms
+     ✓ fixture aritmético: CUP 12.000 y USD 45; limpiar USD deja CUP intacto en 12.000  512ms
+ ✓ src/__tests__/components/cash-closure-view-apertura.test.tsx (10 tests) 1987ms
+     ✓ conciliación contra el libro con cuadre perfecto: sin motivo exigido y apertura habilitada  320ms
+     ✓ bloquea la apertura hasta la causa (≥10 chars) y envía la diferencia documentada  569ms
+     ✓ exige causa para el exceso de 2.000 y envía la diferencia tal cual  429ms
+     ✓ reintento con los mismos valores reutiliza la clave; cambiar valores la regenera  394ms
+ ✓ src/__tests__/components/vales-salida-view.test.tsx (18 tests) 1946ms
+     ✓ 18 · EMITIR un vale desde el modal dedicado también invalida kardex y product-kardex  696ms
+ ✓ src/__tests__/components/exchange-intelligence-view.test.tsx (22 tests) 1492ms
+stderr | src/__tests__/integration/sync-batch-w4-roundtrips.test.ts > W4 — sync/batch round-trip reduction (orden intacto) > 5) Clave duplicada con 1ª error: reintento (RPC ×2), ambos error
+Error processing sync operation 33333333-0000-0000-0000-000000000008: {
+  message: 'RPC failed for 33333333-0000-0000-0000-000000000008',
+  code: 'XX111'
+}
+
+stderr | src/__tests__/integration/sync-batch-w4-roundtrips.test.ts > W4 — sync/batch round-trip reduction (orden intacto) > 5) Clave duplicada con 1ª error: reintento (RPC ×2), ambos error
+Error processing sync operation 33333333-0000-0000-0000-000000000008: {
+  message: 'RPC failed for 33333333-0000-0000-0000-000000000008',
+  code: 'XX111'
+}
+
+stderr | src/__tests__/integration/sync-batch-w4-roundtrips.test.ts > W4 — sync/batch round-trip reduction (orden intacto) > 6) Fallo parcial no aborta el batch (op2 falla, op3 se ejecuta)
+Error processing sync operation 33333333-0000-0000-0000-000000000009: {
+  message: 'RPC failed for 33333333-0000-0000-0000-000000000009',
+  code: 'XX111'
+}
+
+stderr | src/__tests__/integration/sync-batch-w4-roundtrips.test.ts > W4 — sync/batch round-trip reduction (orden intacto) > 7) Durabilidad: los upserts se resuelven ANTES de responder; orden por clave respetado
+Error processing sync operation 33333333-0000-0000-0000-000000000010: {
+  message: 'RPC failed for 33333333-0000-0000-0000-000000000010',
+  code: 'XX111'
+}
+
+ ✓ src/__tests__/integration/sync-batch-w4-roundtrips.test.ts (7 tests) 1560ms
+     ✓ 3) Latencia total < equivalente secuencial con el mismo RTT simulado  324ms
+ ✓ src/__tests__/components/ingresos-egresos-view.test.tsx (20 tests) 1346ms
+ ✓ src/__tests__/components/cash-flow-create-modal.test.tsx (16 tests) 1184ms
+stderr | src/__tests__/components/organizations-view-create.test.tsx > CP-ORG-001 — creación de organizaciones desde la vista (brecha §4.1) > el formulario bloquea el envío con nombre vacío y muestra el error
+An update to OrganizationFormModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/__tests__/components/organizations-view-create.test.tsx (7 tests) 1097ms
+     ✓ enviar un nombre válido llama a la creación con nombre normalizado y cierra  354ms
+ ✓ src/__tests__/components/set-password-modal.test.tsx (8 tests) 963ms
+ ✓ src/__tests__/work-dates/WorkDatesView.test.tsx (12 tests) 1180ms
+     ✓ renderiza la matriz con los tipos y las columnas de fecha  390ms
+stderr | src/__tests__/components/service-types-manager.test.tsx > ServiceTypesManagerModal > doble envío bloqueado: segundo submit mientras submitting no dispara segunda llamada
+An update to ServiceTypesManagerModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ServiceTypesManagerModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ServiceTypesManagerModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ServiceTypesManagerModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ServiceTypesManagerModal inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/__tests__/components/service-types-manager.test.tsx (9 tests) 981ms
+ ✓ src/__tests__/components/catalog-stale-search-regression.test.tsx (7 tests) 1005ms
+     ✓ 4-BUSQUEDA: la búsqueda dentro de la sesión sigue funcionando (llega al RPC tras debounce)  548ms
+stderr | src/__tests__/components/pos-express-parity.test.tsx > MISIÓN VENDER-EXPRESS — Caso B: resultados comparables con el carrito > producto con SKU que no existe muestra error y no agrega nada
+[Express] server search failed: TypeError: Cannot destructure property 'data' of '(intermediate value)' as it is undefined.
+    at /home/z/my-project/Costpro/src/components/views/terminal/views/pos/POSExpressMode.tsx:270:17
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+An update to POSExpressMode inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/pos-express-parity.test.tsx > MISIÓN VENDER-EXPRESS — Caso C: cantidades > botón + incrementa la cantidad vía el store del carrito (fallback real)
+Received `true` for a non-boolean attribute `layout`.
+
+If you want to write it to the DOM, pass a string instead: layout="true" or layout={value.toString()}.
+
+ ✓ src/__tests__/components/pos-express-parity.test.tsx (24 tests) 902ms
+ ✓ src/__tests__/components/users-multistore-view.test.tsx (8 tests) 1129ms
+stderr | src/__tests__/components/store-card.test.tsx > StoreCard > logo rendering > renders <img> when store.logo_url is set
+Received `true` for a non-boolean attribute `unoptimized`.
+
+If you want to write it to the DOM, pass a string instead: unoptimized="true" or unoptimized={value.toString()}.
+
+ ✓ src/__tests__/components/store-card.test.tsx (48 tests) 811ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/__tests__/components/pos-thermal-receipt.test.tsx (22 tests) 892ms
+ ✓ src/__tests__/components/ingresos-egresos-tabs-fechas.test.tsx (10 tests) 1074ms
+ ✓ src/__tests__/hooks/useUserPreferences.test.ts (19 tests) 882ms
+ ✓ src/__tests__/components/cash-report-view-ajustes.test.tsx (3 tests) 912ms
+     ✓ ADMIN: el contenedor se muestra en modo DESHABILITADO con el aviso del flag central  550ms
+ ✓ src/__tests__/components/inventory-row-actions.test.tsx (4 tests) 848ms
+     ✓ 3 · cada acción ejecuta el handler preexistente con el producto de la fila  478ms
+ ✓ src/__tests__/components/inventory-mobile-row.test.tsx (5 tests) 734ms
+ ✓ src/__tests__/components/users-empresa-column.test.tsx (7 tests) 769ms
+ ✓ src/__tests__/e2e/replay-unblock-create-sale-v2.test.ts (7 tests) 718ms
+     ✓ 7. manifiesto: determinista (2 ejecuciones byte-idénticas), 119 incluidas, posiciones y hashes consistentes, --check MATCH  646ms
+ ✓ src/__tests__/components/MaterialRequestFormModal-focus.test.tsx (4 tests) 697ms
+ ✓ src/__tests__/components/g3-performance.test.tsx (4 tests) 706ms
+     ✓ StoresManagementView renderiza 15 tiendas en menos de 1500ms (sin virtualización)  440ms
+ ✓ src/__tests__/components/dashboard-panel-tab.test.tsx (3 tests) 678ms
+     ✓ 2 · el anillo concéntrico del Panel de Control monta con los datos del rango activo  320ms
+stderr | src/__tests__/components/pos-header-tasas-button.test.tsx > UX-TASAS — botón «Tasas» junto a «Historial» en el header de Vender > 1. muestra «Tasas» inmediatamente después de «Historial» (mismo grupo, orden visual)
+Received `true` for a non-boolean attribute `layout`.
+
+If you want to write it to the DOM, pass a string instead: layout="true" or layout={value.toString()}.
+
+ ✓ src/__tests__/components/pos-header-tasas-button.test.tsx (7 tests) 565ms
+ ✓ src/__tests__/components/pos-checkout-panel-multimoneda-recibido-usd.test.tsx (4 tests) 639ms
+     ✓ recibido 10 USD: equivalente canónico 8 000 CUP y cambio 2 400 CUP en la UI  316ms
+ ✓ src/__tests__/components/health-view-redesign.test.tsx (8 tests) 568ms
+ ✓ src/__tests__/components/pos-autocomplete-stock-filter.test.tsx (19 tests) 665ms
+ ✓ src/__tests__/components/dashboard-performance-kpi.test.tsx (22 tests) 621ms
+ ✓ src/__tests__/components/g2-cost-functional.test.tsx (10 tests) 578ms
+ ✓ src/__tests__/unit/idempotency.test.ts (9 tests) 567ms
+ ✓ src/__tests__/components/cash-report-view-excel-button.test.tsx (3 tests) 523ms
+     ✓ tras Generar, Excel se habilita y al pulsarlo exporta con la MISMA configuración aplicada  305ms
+ ✓ src/__tests__/components/cash-report-view-word-button.test.tsx (3 tests) 493ms
+     ✓ tras Generar, Word se habilita y exporta con la MISMA configuración aplicada  301ms
+ ✓ src/__tests__/components/audit-event-detail-modal.test.tsx (6 tests) 548ms
+ ✓ src/__tests__/work-dates/devolutions-fecha.test.tsx (5 tests) 462ms
+ ✓ src/__tests__/ui/sidebar-hover-expand.test.tsx (15 tests) 522ms
+ ✓ src/__tests__/hooks/useMultiStoreDashboard.test.ts (10 tests) 514ms
+ ✓ src/__tests__/components/mobile-tabbar-parity.test.tsx (10 tests) 475ms
+ ✓ src/__tests__/components/p2-validation.test.tsx (9 tests) 441ms
+ ✓ src/__tests__/components/ValeSalidaCreateModal-fecha.test.tsx (4 tests) 475ms
+ ✓ src/__tests__/components/commissions-manage-modal.test.tsx (12 tests) 535ms
+ ✓ src/__tests__/components/cash-flow-reverse-modal.test.tsx (5 tests) 352ms
+ ✓ src/__tests__/components/c-cost-module.test.tsx (7 tests) 322ms
+stderr | src/__tests__/help/help-center-library.test.tsx > help center — HelpLayout colapsable (FASE 4-5) > expandida por defecto: control "Ocultar biblioteca" con aria-expanded/controls
+React does not recognize the `railMode` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `railmode` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+
+ ✓ src/__tests__/help/help-center-library.test.tsx (12 tests) 436ms
+ ✓ src/__tests__/components/edit-product-item-type.test.tsx (5 tests) 528ms
+ ✓ src/__tests__/hooks/useHealthData-refresh-semantics.test.tsx (8 tests) 455ms
+stderr | src/__tests__/components/pos-thermal-print-flow.test.tsx > printThermalReceipt — flujo real hasta el diálogo nativo > inyecta el CSS @page (55 mm default, nivel superior) + monta el recibo + llama window.print + limpia
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/pos-thermal-print-flow.test.tsx > printThermalReceipt — flujo real hasta el diálogo nativo > inyecta el CSS @page (55 mm default, nivel superior) + monta el recibo + llama window.print + limpia
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/pos-thermal-print-flow.test.tsx > printThermalReceipt — flujo real hasta el diálogo nativo > retira dark/theme-dark/mode-performance del <html> durante la impresión y los RESTAURA verbatim al cerrar
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/pos-thermal-print-flow.test.tsx > printThermalReceipt — flujo real hasta el diálogo nativo > retira dark/theme-dark/mode-performance del <html> durante la impresión y los RESTAURA verbatim al cerrar
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/pos-thermal-print-flow.test.tsx > printThermalReceipt — flujo real hasta el diálogo nativo > restaura las clases también vía afterprint (diálogo cerrado por evento)
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/pos-thermal-print-flow.test.tsx > printThermalReceipt — flujo real hasta el diálogo nativo > respeta el ancho configurado (80 mm) en el @page inyectado
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/pos-thermal-print-flow.test.tsx > printThermalReceipt — flujo real hasta el diálogo nativo > respeta el ancho configurado (80 mm) en el @page inyectado
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/pos-thermal-print-flow.test.tsx > printThermalReceipt — flujo real hasta el diálogo nativo > una segunda impresión recoge la primera (sin duplicados en el DOM)
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/pos-thermal-print-flow.test.tsx > printThermalReceipt — flujo real hasta el diálogo nativo > una segunda impresión recoge la primera (sin duplicados en el DOM)
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/pos-thermal-print-flow.test.tsx > printThermalReceipt — flujo real hasta el diálogo nativo > informa con honestidad: toast de diálogo abierto, NUNCA de impresión física completada
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/__tests__/components/pos-thermal-print-flow.test.tsx > printThermalReceipt — flujo real hasta el diálogo nativo > informa con honestidad: toast de diálogo abierto, NUNCA de impresión física completada
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/__tests__/components/pos-thermal-print-flow.test.tsx (12 tests) 397ms
+ ✓ src/__tests__/integration/iteration-11-5.test.ts (30 tests) 151ms
+ ✓ src/__tests__/components/pos-cart-item-decimal.test.tsx (11 tests) 360ms
+ ✓ src/__tests__/hooks/useCatalogProducts-uuid-guard.test.tsx (17 tests) 361ms
+stderr | src/__tests__/components/pos-cart-counter.test.tsx > FASE D — flujo real Vender: agregar producto actualiza el contador > agregar producto desde el grid actualiza el contador a 1 (con estado stale preexistente)
+Received `true` for a non-boolean attribute `layout`.
+
+If you want to write it to the DOM, pass a string instead: layout="true" or layout={value.toString()}.
+
+ ✓ src/__tests__/components/pos-cart-counter.test.tsx (3 tests) 367ms
+ ✓ src/__tests__/api/stores-backup.test.ts (11 tests) 322ms
+ ✓ src/__tests__/components/p3-unified.test.tsx (9 tests) 317ms
+ ✓ src/__tests__/components/cash-report-export-selection.test.tsx (20 tests) 228ms
+ ✓ src/__tests__/components/workers-return-navigation.test.tsx (5 tests) 271ms
+ ✓ src/__tests__/components/pos-transf-exterior-ui.test.tsx (9 tests) 290ms
+ ✓ src/__tests__/components/physical-inventory/create-modal-superadmin.test.tsx (5 tests) 274ms
+ ✓ src/__tests__/hooks/use-authorized-stores.test.tsx (6 tests) 296ms
+ ✓ src/__tests__/hooks/useUpdateReception-audit.test.tsx (5 tests) 294ms
+ ✓ src/__tests__/hooks/use-open-cash-shift.test.tsx (5 tests) 288ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+stderr | src/__tests__/components/landing-brand-enhanced.test.tsx > FIX-ENHANCED-BRANDING-PERSIST — ParticleBackground Layer 2 > el contenedor de branding NO lleva enhanced-layer (causa raíz del texto permanente)
+Received `true` for a non-boolean attribute `jsx`.
+
+If you want to write it to the DOM, pass a string instead: jsx="true" or jsx={value.toString()}.
+Received `true` for a non-boolean attribute `global`.
+
+If you want to write it to the DOM, pass a string instead: global="true" or global={value.toString()}.
+
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/__tests__/components/landing-brand-enhanced.test.tsx (8 tests) 279ms
+ ✓ src/__tests__/components/pos-cart-mobile-close.test.tsx (6 tests) 260ms
+ ✓ src/__tests__/components/transaction-details-modal-regresion.test.tsx (5 tests) 270ms
+ ✓ src/__tests__/components/cash-report-excel.test.tsx (33 tests) 279ms
+ ✓ src/__tests__/integration/exchange-rates-template.test.ts (4 tests) 280ms
+stderr | src/__tests__/lib/backup-service.test.ts > backup-service > Warnings behavior > records warnings when a table fails to fetch
+{"timestamp":"2026-11-03T11:32:31.077Z","level":"warn","category":"DATABASE","event":"BACKUP_TABLE_FETCH_WARN","data":{"storeId":"s1","table":"products","severity":"error","message":"DB_ERROR: column products.store_id does not exist"}}
+
+ ✓ src/__tests__/lib/backup-service.test.ts (18 tests) 211ms
+ ✓ src/__tests__/navigation/gate1-navigation.test.ts (109 tests) 194ms
+ ✓ src/__tests__/components/cash-report-pdf-signatures.test.tsx (12 tests) 241ms
+ ✓ src/__tests__/hooks/useStoreHealth.test.tsx (4 tests) 233ms
+ ✓ src/__tests__/components/reverse-modal-recovery.test.tsx (5 tests) 227ms
+ ✓ src/__tests__/components/stores-management.test.tsx (7 tests | 3 skipped) 188ms
+ ✓ src/__tests__/components/catalog-governance-wiring.test.tsx (9 tests) 200ms
+ ✓ src/__tests__/components/cash-report-pdf-sales-table.test.tsx (7 tests) 166ms
+ ✓ src/__tests__/components/pos-checkout-panel-f4-block.test.tsx (2 tests) 300ms
+ ✓ src/__tests__/help/catalogo-maestro-help.test.tsx (14 tests) 251ms
+ ✓ src/__tests__/components/sidebar-superadmin-navigation.test.tsx (6 tests) 181ms
+ ✓ src/__tests__/api/role-enum-canonical.test.ts (3 tests) 170ms
+ ✓ src/__tests__/integration/rem-inv-2r-receive-purchase-retirement.test.ts (2 tests) 145ms
+ ✓ src/__tests__/hooks/useMasterCatalog-catalogo-m002.test.tsx (5 tests) 189ms
+ ✓ src/__tests__/navigation/gate1-url-sync.test.ts (13 tests) 189ms
+ ✓ src/__tests__/integration/fc-generator-service.test.ts (20 tests) 185ms
+stdout | src/__tests__/ipv-ventas/pdf-solape.test.ts > PDF del IPV — solape de encabezados y multi-página > página 1 con header pintado UNA sola vez (n.º títulos = n.º páginas) y ≥2 páginas
+Of the table content, 52 units width could not fit page
+Of the table content, 224 units width could not fit page
+
+stdout | src/__tests__/ipv-ventas/pdf-solape.test.ts > PDF del IPV — solape de encabezados y multi-página > documento con una sola página también queda sin título duplicado
+Of the table content, 52 units width could not fit page
+
+ ✓ src/__tests__/ipv-ventas/pdf-solape.test.ts (2 tests) 153ms
+ ✓ src/__tests__/components/caja-status-strip.test.tsx (5 tests) 142ms
+ ✓ src/__tests__/components/pos-barcode-scanner.test.tsx (6 tests) 159ms
+stdout | src/__tests__/ipv-ventas/pdf-nota-margen.test.ts > PDF del IPV — nota de conciliación dentro de márgenes (PR #1411) > caso real (94 productos, 4 páginas): la nota se dibuja en un solo byte y dentro de la hoja
+Of the table content, 52 units width could not fit page
+Of the table content, 224 units width could not fit page
+
+ ✓ src/__tests__/ipv-ventas/pdf-nota-margen.test.ts (3 tests) 156ms
+ ✓ src/__tests__/integration/exchange-rates-bulk-upload.test.ts (13 tests) 175ms
+ ✓ src/__tests__/components/multi-tienda-views.test.tsx (6 tests | 2 skipped) 167ms
+ ✓ src/__tests__/components/cash-report-pdf-period.test.tsx (6 tests) 152ms
+ ✓ src/__tests__/hooks/useMasterCatalog-catalogo.test.tsx (7 tests) 134ms
+ ✓ src/__tests__/components/users-form-platform-role.test.tsx (3 tests) 89ms
+ ✓ src/__tests__/components/recommended-actions.test.tsx (17 tests) 118ms
+stdout | src/__tests__/lib/res11-exporters.test.ts > Impresión económica — ningún relleno oscuro en los 7 modelos > SC-2-13: sin rellenos oscuros en múltiples páginas (tabla amplia)
+Of the table content, 36 units width could not fit page
+
+ ✓ src/__tests__/lib/res11-exporters.test.ts (28 tests) 106ms
+stderr | src/__tests__/hooks/useReceptionState-tenant-rls.test.tsx > useReceptionState — MISIÓN RECEPCIONES: alta transaccional + borradores > 2 · ERR_INVOICE_DUPLICATE (factura duplicada) → mensaje de FACTURA, no de SKU
+Submit error: Error: ERR_INVOICE_DUPLICATE: el número de factura "FAC-TEST-1" ya existe en esta tienda. Usa un número distinto.
+    at /home/z/my-project/Costpro/src/__tests__/hooks/useReceptionState-tenant-rls.test.tsx:204:7
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stderr | src/__tests__/hooks/useReceptionState-tenant-rls.test.tsx > useReceptionState — MISIÓN RECEPCIONES: alta transaccional + borradores > 3 · ERR_SKU_EXISTS → mensaje con el SKU y guía a seleccionar el existente
+Submit error: Error: ERR_SKU_EXISTS: el SKU "186" ya existe en el catálogo de esta tienda. Selecciona el producto existente en lugar de crearlo de nuevo.
+    at /home/z/my-project/Costpro/src/__tests__/hooks/useReceptionState-tenant-rls.test.tsx:221:7
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+stderr | src/__tests__/hooks/useReceptionState-tenant-rls.test.tsx > useReceptionState — MISIÓN RECEPCIONES: alta transaccional + borradores > 4 · clasifica error RLS (42501) sin exponer detalles internos de PostgreSQL
+Submit error: Error: new row violates row-level security policy for table "receipts"
+    at /home/z/my-project/Costpro/src/__tests__/hooks/useReceptionState-tenant-rls.test.tsx:237:22
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64 {
+  code: '42501'
+}
+
+stderr | src/__tests__/hooks/useReceptionState-tenant-rls.test.tsx > useReceptionState — MISIÓN RECEPCIONES: alta transaccional + borradores > 5 · 23505 residual sobre reference_doc → mensaje de factura (carrera real)
+Submit error: Error: duplicate key value violates unique constraint "idx_receipts_store_reference_doc"
+    at /home/z/my-project/Costpro/src/__tests__/hooks/useReceptionState-tenant-rls.test.tsx:255:22
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64 {
+  code: '23505'
+}
+
+stderr | src/__tests__/hooks/useReceptionState-tenant-rls.test.tsx > useReceptionState — MISIÓN RECEPCIONES: alta transaccional + borradores > 6 · fallo de register_reception → sin rollback client-side; item permanece para reintento
+Submit error: Error: ERR_BACKDATED_DOCUMENT
+    at /home/z/my-project/Costpro/src/__tests__/hooks/useReceptionState-tenant-rls.test.tsx:270:42
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64
+
+ ✓ src/__tests__/hooks/useReceptionState-tenant-rls.test.tsx (12 tests) 123ms
+ ✓ src/__tests__/hooks/useServiceTypes.test.ts (4 tests) 129ms
+ ✓ src/__tests__/api/pos-checkout-rate-literals.test.ts (2 tests) 126ms
+ ✓ src/__tests__/components/cash-report-pdf-enervida-2310.test.tsx (4 tests) 122ms
+ ✓ src/__tests__/components/ai-command-center.test.tsx (16 tests) 133ms
+ ✓ src/__tests__/components/POSOperationDateSection.test.tsx (6 tests) 89ms
+ ✓ src/__tests__/integration/telegram-multimedia.test.ts (19 tests) 119ms
+ ✓ src/__tests__/components/group-hub-superadmin.test.tsx (5 tests) 98ms
+ ✓ src/__tests__/integration/whatsapp-realtime.test.ts (6 tests) 139ms
+ ✓ src/__tests__/hooks/useUpdateUser-auth.test.tsx (6 tests) 93ms
+ ✓ src/__tests__/components/cash-report-icon-variant.test.tsx (2 tests) 105ms
+ ✓ src/__tests__/components/physical-inventory/pi-pdf.test.ts (4 tests) 80ms
+stderr | src/__tests__/hooks/useInventoryCount-storeId.test.tsx > CP-POS-003 · useInventoryCount envía storeId > sin tienda activa NO llama al endpoint y notifica error accionable
+Error fetching products: Error: No hay tienda activa seleccionada. Selecciona una tienda y vuelve a intentar el conteo.
+    at fetchProducts (/home/z/my-project/Costpro/src/components/views/terminal/views/inventory_count/useInventoryCount.ts:160:15)
+    at /home/z/my-project/Costpro/src/components/views/terminal/views/inventory_count/useInventoryCount.ts:118:7
+    at Object.react_stack_bottom_frame (/home/z/my-project/Costpro/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/home/z/my-project/Costpro/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/home/z/my-project/Costpro/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/home/z/my-project/Costpro/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11)
+    at commitPassiveMountOnFiber (/home/z/my-project/Costpro/node_modules/react-dom/cjs/react-dom-client.development.js:15484:13)
+    at recursivelyTraversePassiveMountEffects (/home/z/my-project/Costpro/node_modules/react-dom/cjs/react-dom-client.development.js:15439:11)
+    at commitPassiveMountOnFiber (/home/z/my-project/Costpro/node_modules/react-dom/cjs/react-dom-client.development.js:15519:11)
+    at flushPassiveEffects (/home/z/my-project/Costpro/node_modules/react-dom/cjs/react-dom-client.development.js:18432:9)
+
+ ✓ src/__tests__/hooks/useInventoryCount-storeId.test.tsx (2 tests) 87ms
+ ✓ src/__tests__/components/pos-checkout-payment-incidents.test.tsx (10 tests) 62ms
+stderr | src/__tests__/hooks/useReceptionSearch-ux.test.tsx > Resumen de unidades (misión: no sumar unidades incompatibles) > suma cantidades cuando todas las líneas comparten la misma UM
+Error verificando SKU contra el catálogo: TypeError: __vite_ssr_import_10__.supabase.from(...).select(...).eq(...).ilike is not a function
+    at Object.handleAddManualProduct (/home/z/my-project/Costpro/src/components/views/terminal/views/inventory/useReceptionState.ts:647:12)
+    at /home/z/my-project/Costpro/src/__tests__/hooks/useReceptionSearch-ux.test.tsx:256:32
+    at /home/z/my-project/Costpro/node_modules/@testing-library/react/dist/act-compat.js:47:24
+    at process.env.NODE_ENV.exports.act (/home/z/my-project/Costpro/node_modules/react/cjs/react.development.js:814:22)
+    at Proxy.<anonymous> (/home/z/my-project/Costpro/node_modules/@testing-library/react/dist/act-compat.js:46:25)
+    at /home/z/my-project/Costpro/src/__tests__/hooks/useReceptionSearch-ux.test.tsx:256:5
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+Error verificando SKU contra el catálogo: TypeError: __vite_ssr_import_10__.supabase.from(...).select(...).eq(...).ilike is not a function
+    at Object.handleAddManualProduct (/home/z/my-project/Costpro/src/components/views/terminal/views/inventory/useReceptionState.ts:647:12)
+    at /home/z/my-project/Costpro/src/__tests__/hooks/useReceptionSearch-ux.test.tsx:258:32
+    at /home/z/my-project/Costpro/node_modules/@testing-library/react/dist/act-compat.js:47:24
+    at process.env.NODE_ENV.exports.act (/home/z/my-project/Costpro/node_modules/react/cjs/react.development.js:814:22)
+    at Proxy.<anonymous> (/home/z/my-project/Costpro/node_modules/@testing-library/react/dist/act-compat.js:46:25)
+    at /home/z/my-project/Costpro/src/__tests__/hooks/useReceptionSearch-ux.test.tsx:258:5
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/z/my-project/Costpro/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+
+ ✓ src/__tests__/hooks/useReceptionSearch-ux.test.tsx (14 tests) 83ms
+stderr | src/__tests__/components/users-creation-toast-costpro4.test.tsx > COSTPRO 4 — creación de usuarios: una operación, un mensaje > B. duplicado (409) → UN solo toast rojo con la causa real y CERO verdes; el formulario permanece
+[useUsersView] Error submitting form: Error: Ya existe un usuario con ese correo electrónico
+    at Object.mutationFn (/home/z/my-project/Costpro/src/hooks/api/useUsers.ts:250:15)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:644:9)
+    at processTimers (node:internal/timers:618:7)
+
+stdout | src/__tests__/components/users-creation-toast-costpro4.test.tsx > COSTPRO 4 — creación de usuarios: una operación, un mensaje > C. edición combinada (memberships + perfil) → UN solo toast verde, CERO rojos
+{"timestamp":"2026-11-03T11:33:25.775Z","level":"info","category":"DATABASE","event":"RPC_CALL_START: manage_user_memberships","data":{"p_user_id":"9a999999-9999-4999-8999-999999999999","p_memberships":[{"store_id":"9a222222-2222-4222-8222-999999999992","role":"clerk","status":"active"}]}}
+
+stdout | src/__tests__/components/users-creation-toast-costpro4.test.tsx > COSTPRO 4 — creación de usuarios: una operación, un mensaje > C. edición combinada (memberships + perfil) → UN solo toast verde, CERO rojos
+{"timestamp":"2026-11-03T11:33:25.775Z","level":"info","category":"DATABASE","event":"RPC_CALL_SUCCESS: manage_user_memberships","data":{"p_user_id":"9a999999-9999-4999-8999-999999999999","p_memberships":[{"store_id":"9a222222-2222-4222-8222-999999999992","role":"clerk","status":"active"}]}}
+
+stderr | src/__tests__/components/users-creation-toast-costpro4.test.tsx > COSTPRO 4 — creación de usuarios: una operación, un mensaje > D. fallo de red → mensaje de resultado incierto (no afirma ni éxito ni fracaso)
+[useUsersView] Error submitting form: TypeError: Failed to fetch
+    at /home/z/my-project/Costpro/src/__tests__/components/users-creation-toast-costpro4.test.tsx:162:13
+    at Mock (file:///home/z/my-project/Costpro/node_modules/@vitest/spy/dist/index.js:332:34)
+    at Object.mutationFn (/home/z/my-project/Costpro/src/hooks/api/useUsers.ts:238:30)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:644:9)
+    at processTimers (node:internal/timers:618:7)
+
+ ✓ src/__tests__/components/users-creation-toast-costpro4.test.tsx (4 tests) 64ms
+ ✓ src/__tests__/integration/telegram-security-e2e.test.ts (19 tests) 30ms
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureInformalToday — captura informal unificada (Diviza) > persiste USD/EUR/MLC con source=Diviza y capture_method=real
+[exchange-capture] Diviza REAL capturado para 2026-11-03: USD=839 EUR=930 MLC=691.62 (fuente actualizada: 2026-10-26T12:30:00-04:00)
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureInformalToday — captura informal unificada (Diviza) > caso 1: Diviza devuelve USD=840 → rate_date = FECHA OPERATIVA (civil de Cuba) + source_updated_at persistido
+[exchange-capture] Diviza REAL capturado para 2026-11-03: USD=840 EUR=925 MLC=692.79 (fuente actualizada: 2026-10-25T20:03:00-04:00)
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureInformalToday — captura informal unificada (Diviza) > source_updated_at ausente → el campo NO viaja en el upsert (nunca fabricado)
+[exchange-capture] Diviza REAL capturado para 2026-11-03: USD=840 EUR=— MLC=— (fuente actualizada: —)
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureInformalToday — captura informal unificada (Diviza) > upserts usan on_conflict de la clave natural + merge-duplicates (recaptura actualiza, no 409)
+[exchange-capture] Diviza REAL capturado para 2026-11-03: USD=839 EUR=— MLC=— (fuente actualizada: —)
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureInformalToday — captura informal unificada (Diviza) > cuando Diviza no publica EUR/MLC no los fabrica (null → sin fila)
+[exchange-capture] Diviza REAL capturado para 2026-11-03: USD=839 EUR=— MLC=— (fuente actualizada: —)
+
+stderr | src/__tests__/lib/exchange-capture-diviza.test.ts > captureInformalToday — captura informal unificada (Diviza) > Diviza caído → NO persiste nada y reporta error (sin estimaciones)
+[exchange-capture] Diviza falló para 2026-11-03 — NO se guarda nada. Carry-forward desde el último valor real.
+
+stderr | src/__tests__/lib/exchange-capture-diviza.test.ts > captureInformalToday — captura informal unificada (Diviza) > error de red del proveedor → sin lanzar y sin escrituras
+[exchange-capture] Diviza lanzó excepción inesperada: timeout
+[exchange-capture] Diviza falló para 2026-11-03 — NO se guarda nada. Carry-forward desde el último valor real.
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureInformalToday — captura informal unificada (Diviza) > caso 5: ANTES del cambio de día civil cubano — la captura de la tarde cubana NO se fecha mañana
+[exchange-capture] Diviza REAL capturado para 2026-10-25: USD=840 EUR=— MLC=— (fuente actualizada: 2026-10-25T20:03:00-04:00)
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureInformalToday — captura informal unificada (Diviza) > caso 5: DESPUÉS del cambio de día civil cubano — rate_date es el día cubano nuevo
+[exchange-capture] Diviza REAL capturado para 2026-10-26: USD=841 EUR=— MLC=— (fuente actualizada: —)
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureForDate — BCC + informal Diviza (cron y manual comparten) > hoy (operativo): captura BCC 3 segmentos × 2 monedas + informal Diviza 3 monedas
+[exchange-capture] Diviza REAL capturado para 2026-11-03: USD=839 EUR=930 MLC=691.62 (fuente actualizada: —)
+
+stderr | src/__tests__/lib/exchange-capture-diviza.test.ts > captureForDate — BCC + informal Diviza (cron y manual comparten) > caso 3: BCC OK + Diviza caído → BCC se guarda, Diviza falla IDENTIFICADO por separado
+[exchange-capture] Diviza falló para 2026-11-03 — NO se guarda nada. Carry-forward desde el último valor real.
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureForDate — BCC + informal Diviza (cron y manual comparten) > caso 4: BCC caído + Diviza operativa → informal se captura y el fallo oficial queda separado
+[exchange-capture] Diviza REAL capturado para 2026-11-03: USD=840 EUR=925 MLC=692.79 (fuente actualizada: 2026-10-25T20:03:00-04:00)
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureForDate — BCC + informal Diviza (cron y manual comparten) > caso 9: error de persistencia (Supabase 4xx) → la fuente falla sin éxito falso
+[exchange-capture] Diviza REAL capturado para 2026-11-03: USD=840 EUR=— MLC=— (fuente actualizada: —)
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureDateRange — backfill operativo con estado por fuente > days=1 procesa la FECHA OPERATIVA y combina BCC + Diviza
+[exchange-capture] Diviza REAL capturado para 2026-11-03: USD=839 EUR=930 MLC=691.62 (fuente actualizada: 2026-10-26T12:30:00-04:00)
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureDateRange — backfill operativo con estado por fuente > days=7: el intervalo termina en la fecha operativa (civil de Cuba) y el backfill BCC histórico funciona
+[exchange-capture] Diviza REAL capturado para 2026-10-25: USD=840 EUR=925 MLC=692.79 (fuente actualizada: 2026-10-25T20:03:00-04:00)
+
+stderr | src/__tests__/lib/exchange-capture-diviza.test.ts > captureDateRange — backfill operativo con estado por fuente > caso 3 (rango): BCC OK + Diviza fallido → parcial identificable en el contrato
+[exchange-capture] Diviza falló para 2026-11-03 — NO se guarda nada. Carry-forward desde el último valor real.
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureDateRange — backfill operativo con estado por fuente > caso 7: recaptura del mismo día → mismos upserts idempotentes, sin conflicto ni duplicado
+[exchange-capture] Diviza REAL capturado para 2026-11-03: USD=840 EUR=925 MLC=692.79 (fuente actualizada: 2026-10-25T20:03:00-04:00)
+
+stdout | src/__tests__/lib/exchange-capture-diviza.test.ts > captureDateRange — backfill operativo con estado por fuente > caso 7: recaptura del mismo día → mismos upserts idempotentes, sin conflicto ni duplicado
+[exchange-capture] Diviza REAL capturado para 2026-11-03: USD=840 EUR=925 MLC=692.79 (fuente actualizada: 2026-10-25T20:03:00-04:00)
+
+ ✓ src/__tests__/lib/exchange-capture-diviza.test.ts (24 tests) 50ms
+ ✓ src/__tests__/lib/cash-flow-comprobante-pdf.test.ts (3 tests) 58ms
+ ✓ src/__tests__/navigation/gate1-viewid-contract.test.tsx (20 tests) 65ms
+ ✓ src/__tests__/hooks/useCartPanelResize.test.tsx (15 tests) 60ms
+stderr | src/__tests__/api/cash-report-route-sales-rows.test.ts > MISIÓN PERSONALIZACIÓN · GET /api/cash-report → sales_rows > cada venta completada aparece UNA vez con buckets de composición real coherentes con el split
+[cash-report] saldo inicial no disponible: SUPABASE_SERVICE_ROLE_KEY no configurado
+
+stderr | src/__tests__/api/cash-report-route-sales-rows.test.ts > MISIÓN PERSONALIZACIÓN · GET /api/cash-report → sales_rows > las filas llevan el input EXACTO de buildItemsSummary (items con producto + tx + payments)
+[cash-report] saldo inicial no disponible: SUPABASE_SERVICE_ROLE_KEY no configurado
+
+stderr | src/__tests__/api/cash-report-route-sales-rows.test.ts > MISIÓN PERSONALIZACIÓN · GET /api/cash-report → sales_rows > venta SIN ítems: fila con buckets sintéticos del pool (selección cubre TODO el universo)
+[cash-report] saldo inicial no disponible: SUPABASE_SERVICE_ROLE_KEY no configurado
+
+stderr | src/__tests__/api/cash-report-route-sales-rows.test.ts > MISIÓN PERSONALIZACIÓN · GET /api/cash-report → sales_rows > venta REVERTIDA excluida: nunca aparece en sales_rows (filtro status=completed)
+[cash-report] saldo inicial no disponible: SUPABASE_SERVICE_ROLE_KEY no configurado
+
+stderr | src/__tests__/api/cash-report-route-sales-rows.test.ts > MISIÓN PERSONALIZACIÓN · GET /api/cash-report → sales_rows > sales_rows_truncated solo con >1000 filas (payload acotado, split sobre el universo completo)
+[cash-report] saldo inicial no disponible: SUPABASE_SERVICE_ROLE_KEY no configurado
+
+ ✓ src/__tests__/api/cash-report-route-sales-rows.test.ts (7 tests) 36ms
+stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > retorna null cuando getUser falla (token inválido)
+[getServerSession] getUser error (fail closed): Invalid token
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > NO acepta un JWT fabricado con payload válido pero sin firma
+[getServerSession] getUser error (fail closed): Invalid signature
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > rechaza dev-token-bypass en producción
+[getServerSession] getUser error (fail closed): Invalid token
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > retorna null sin header Authorization
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+ ✓ src/__tests__/integration/auth-fail-closed.test.ts (6 tests) 46ms
+ ✓ src/__tests__/hooks/useCreateProduct-tenant-rls.test.tsx (9 tests) 45ms
+ ✓ src/__tests__/hooks/useSalesCatalog-notes.test.tsx (5 tests) 40ms
+ ✓ src/__tests__/components/theme-mode-defaults.test.tsx (10 tests) 37ms
+ ✓ src/__tests__/components/pos-checkout-usd-cup.test.tsx (3 tests) 63ms
+ ✓ src/__tests__/integration/iteration-18-b10b-obs2-repair-design.test.ts (24 tests) 43ms
+ ✓ src/__tests__/navigation/cash-report-dedicated-view.test.ts (8 tests) 44ms
+stderr | src/__tests__/hooks/useSavePendingReception-tenant-rls.test.tsx > useSavePendingReception — CP-CAT-004 · tenant_id en alta de productos > 2 · fail-closed: tienda con tenant_id NULL → abort SIN insert de products ni receipts
+FIX CP-CAT-004: no se pudo resolver tenant_id de la tienda {
+  storeId: '5e6fe821-5465-48b1-b3f1-3aa3182edc38',
+  hasError: false,
+  hasRow: false
+}
+
+stderr | src/__tests__/hooks/useSavePendingReception-tenant-rls.test.tsx > useSavePendingReception — CP-CAT-004 · tenant_id en alta de productos > 3 · fail-closed: error de BD al leer stores → abort SIN insert
+FIX CP-CAT-004: no se pudo resolver tenant_id de la tienda {
+  storeId: '5e6fe821-5465-48b1-b3f1-3aa3182edc38',
+  hasError: true,
+  hasRow: false
+}
+
+ ✓ src/__tests__/hooks/useSavePendingReception-tenant-rls.test.tsx (5 tests) 36ms
+ ✓ src/__tests__/api/received-services-authz.test.ts (13 tests) 41ms
+ ✓ src/__tests__/work-dates/useWorkDateDefault.test.tsx (7 tests) 43ms
+ ✓ src/__tests__/integration/telegram-module.test.ts (29 tests) 38ms
+ ✓ src/__tests__/integration/telegram-renderer-parity.test.ts (22 tests) 40ms
+ ✓ src/__tests__/hooks/useStoreSwitcher.test.ts (9 tests) 16ms
+ ✓ src/__tests__/hooks/useSidebarHoverExpand.test.tsx (7 tests) 35ms
+ ✓ src/__tests__/hooks/useSessionManager-logout.test.tsx (9 tests) 33ms
+ ✓ src/__tests__/hooks/useSuppliers-proveedores-001.test.tsx (13 tests) 36ms
+ ✓ src/__tests__/api/sec-ts-02-ocr-receipt.test.ts (7 tests) 32ms
+ ✓ src/__tests__/hooks/useSessionManager-auth-outage.test.tsx (4 tests) 33ms
+ ✓ src/__tests__/api/organizations-route.test.ts (22 tests) 33ms
+ ✓ src/__tests__/integration/whatsapp-module.test.ts (38 tests) 28ms
+ ✓ src/__tests__/lib/thermal-receipt.test.ts (24 tests) 21ms
+ ✓ src/__tests__/navigation/superadmin-navigation-regression.test.ts (27 tests) 30ms
+ ✓ src/__tests__/integration/store-csrf-ratelimit-idempotency.test.ts (13 tests) 25ms
+ ✓ src/__tests__/api/payments-route-payment-date.test.ts (9 tests) 28ms
+ ✓ scripts/bundle-gate/bundle-gate.test.mjs (26 tests) 31ms
+ ✓ src/__tests__/api/sec-ts-03-telegram-webhook.test.ts (10 tests) 35ms
+ ✓ src/__tests__/hooks/useBulkAssignMemberships.test.tsx (3 tests) 26ms
+ ✓ src/__tests__/integration/store-checkslug-healthbatch-ratelimit.test.ts (13 tests) 35ms
+ ✓ src/__tests__/lib/performance-kpi.test.ts (56 tests) 26ms
+ ✓ src/__tests__/api/exchange-rates-get.test.ts (22 tests) 31ms
+ ✓ src/__tests__/integration/rem-inv-2-dynamic-reachability.test.ts (4 tests) 25ms
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 1 · fila con precio string → 400 con detalle por fila (row, sku, issues)
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 2 · propiedad DESCONOCIDA en la fila → 400 (strict: nada fuera de contrato llega al upsert)
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 3 · store_id no UUID → 400 (uuidLoose)
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 4 · precio negativo → 400 (regla de negocio explícita)
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 5 · acumula TODAS las filas inválidas (no solo la primera) con índice y sku
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 6 · payload válido → 200 y el upsert recibe SOLO los campos del contrato
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 6 · payload válido → 200 y el upsert recibe SOLO los campos del contrato
+[POST /api/catalog/bulk-import] Using service_role client
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 6 · payload válido → 200 y el upsert recibe SOLO los campos del contrato
+[POST /api/catalog/bulk-import] Upserting 1 products...
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 6 · payload válido → 200 y el upsert recibe SOLO los campos del contrato
+[POST /api/catalog/bulk-import] Success: 1 products upserted in 1ms
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 7 · contrato preservado: sin products → BULK_IMPORT_NO_PRODUCTS 400
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 8 · contrato preservado: >500 filas → BULK_IMPORT_LIMIT 400 (antes de validar)
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 9 · contrato preservado: no-admin sin membresía de la tienda → 403 STORE_ACCESS_DENIED
+[POST /api/catalog/bulk-import] Authenticated user: u-clerk
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 9 · contrato preservado: no-admin sin membresía de la tienda → 403 STORE_ACCESS_DENIED
+[POST /api/catalog/bulk-import] Using service_role client
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 10 · admin global (flag OFF) importa a tienda sin membresía propia (Decisión B.1) y la fila recibe el tenant de ESA tienda
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 10 · admin global (flag OFF) importa a tienda sin membresía propia (Decisión B.1) y la fila recibe el tenant de ESA tienda
+[POST /api/catalog/bulk-import] Using service_role client
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 10 · admin global (flag OFF) importa a tienda sin membresía propia (Decisión B.1) y la fila recibe el tenant de ESA tienda
+[POST /api/catalog/bulk-import] Upserting 1 products...
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 10 · admin global (flag OFF) importa a tienda sin membresía propia (Decisión B.1) y la fila recibe el tenant de ESA tienda
+[POST /api/catalog/bulk-import] Success: 1 products upserted in 1ms
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 11 · tienda inexistente en BD → 400 (nada se importa)
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 11 · tienda inexistente en BD → 400 (nada se importa)
+[POST /api/catalog/bulk-import] Using service_role client
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 12 · tienda con tenant_id nulo → 403 fail-closed (no se generan filas huérfanas sin organización)
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 12 · tienda con tenant_id nulo → 403 fail-closed (no se generan filas huérfanas sin organización)
+[POST /api/catalog/bulk-import] Using service_role client
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 13 · admin con USE_TENANT_RLS=true no puede importar a otra organización → 403 STORE_TENANT_MISMATCH
+[POST /api/catalog/bulk-import] Authenticated user: u-admin
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 13 · admin con USE_TENANT_RLS=true no puede importar a otra organización → 403 STORE_TENANT_MISMATCH
+[POST /api/catalog/bulk-import] Using service_role client
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 14 · superadmin conserva alcance de plataforma: importa a otra organización con tenant estampado
+[POST /api/catalog/bulk-import] Authenticated user: u-super
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 14 · superadmin conserva alcance de plataforma: importa a otra organización con tenant estampado
+[POST /api/catalog/bulk-import] Using service_role client
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 14 · superadmin conserva alcance de plataforma: importa a otra organización con tenant estampado
+[POST /api/catalog/bulk-import] Upserting 1 products...
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 14 · superadmin conserva alcance de plataforma: importa a otra organización con tenant estampado
+[POST /api/catalog/bulk-import] Success: 1 products upserted in 0ms
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 15 · no-admin con membresía activa pero tienda de otra organización → 403 (defensa en profundidad)
+[POST /api/catalog/bulk-import] Authenticated user: u-clerk
+
+stdout | src/__tests__/api/catalog-bulk-import-validation.test.ts > POST /api/catalog/bulk-import — validación por fila (CP-CAT-005) > 15 · no-admin con membresía activa pero tienda de otra organización → 403 (defensa en profundidad)
+[POST /api/catalog/bulk-import] Using service_role client
+
+ ✓ src/__tests__/api/catalog-bulk-import-validation.test.ts (15 tests) 28ms
+stderr | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: handleInvitationBlock > first block → warning + 24h cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"warn","category":"DATABASE","event":"ANTI_BAN_WARNING","data":{"consecutiveBlocks":1}}
+
+stderr | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: handleInvitationBlock > second block → danger + 48h cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"warn","category":"DATABASE","event":"ANTI_BAN_DANGER","data":{"consecutiveBlocks":2}}
+
+stderr | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: handleInvitationBlock > third block → blocked + 7-day cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"error","category":"DATABASE","event":"ANTI_BAN_LONG_PAUSE","data":{"consecutiveBlocks":3,"cooldownDays":7}}
+
+stdout | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: resetRiskIfStale > resets to safe after 7 days past cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"info","category":"DATABASE","event":"ANTI_BAN_RESET","data":{"wasLevel":"blocked"}}
+
+ ✓ src/__tests__/integration/whatsapp-module-mock.test.ts (61 tests) 25ms
+stderr | src/__tests__/api/cash-report-route-d4.test.ts > CP-MONEY-002 D4 · GET /api/cash-report — contrato del Reporte Entrega > ledger DISPONIBLE → desglose por moneda REAL con tasa PERSISTIDA (cash|USD 5 @1000 + cash|CUP 15000)
+[cash-report] saldo inicial no disponible: SUPABASE_SERVICE_ROLE_KEY no configurado
+
+ ✓ src/__tests__/api/cash-report-route-d4.test.ts (5 tests) 33ms
+stderr | src/__tests__/api/cash-report-route-saldo-inicial.test.ts > MISIÓN CORRECTIVA · GET /api/cash-report → saldo inicial y cobros en billetes > fallo del RPC de apertura ⇒ degradación limpia (opening 0), NUNCA 500
+[cash-report] saldo inicial no disponible: function not found (simulado)
+
+ ✓ src/__tests__/api/cash-report-route-saldo-inicial.test.ts (7 tests) 25ms
+stderr | src/__tests__/api/sec-ts-02-cron-auto-publish.test.ts > SEC-TS-02 · verifyCronAuthorization (helper puro, jose mockeado) > JWT presente pero VERCEL_PROJECT_ID ausente → NO autorizado (fail-closed)
+[cron-auth] VERCEL_PROJECT_ID not configured — rejecting JWT
+
+ ✓ src/__tests__/api/sec-ts-02-cron-auto-publish.test.ts (26 tests) 29ms
+ ✓ src/__tests__/hooks/useStoreEdit.test.tsx (4 tests) 26ms
+ ✓ src/__tests__/hooks/useBulkStoreAction.test.tsx (3 tests) 34ms
+ ✓ src/__tests__/api/pos-checkout-price-integrity.test.ts (20 tests) 22ms
+ ✓ src/__tests__/contracts/oferta-contract.test.ts (24 tests) 24ms
+ ✓ src/__tests__/api/stores-bootstrap-route.test.ts (20 tests) 19ms
+ ✓ src/__tests__/migrations/hsaa-superadmin-policy-contract.test.ts (14 tests) 22ms
+ ✓ src/__tests__/lib/cash-report-period-attribution.test.ts (16 tests) 28ms
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > sin headers y sin CRON_SECRET en server → 401 y la RPC de purge NUNCA se ejecuta (fail-closed)
+{"timestamp":"2026-11-03T11:34:20.136Z","level":"error","message":"Request completed with error status 401","context":"GET /api/cron/purge-snapshots"}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > sin headers y sin CRON_SECRET en server → 401 y la RPC de purge NUNCA se ejecuta (fail-closed)
+[31mERROR[0m 11:34:20.136 [GET /api/cron/purge-snapshots] Request completed with error status 401
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > CRON_SECRET ausente + Bearer arbitrario → 401, sin purge (el fail-open quedó eliminado)
+{"timestamp":"2026-11-03T11:34:20.138Z","level":"error","message":"Request completed with error status 401","context":"GET /api/cron/purge-snapshots"}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > CRON_SECRET ausente + Bearer arbitrario → 401, sin purge (el fail-open quedó eliminado)
+[31mERROR[0m 11:34:20.138 [GET /api/cron/purge-snapshots] Request completed with error status 401
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > CRON_SECRET ausente + header x-cron-secret heredado → 401, sin purge (el mecanismo antiguo ya NO autoriza)
+{"timestamp":"2026-11-03T11:34:20.139Z","level":"error","message":"Request completed with error status 401","context":"GET /api/cron/purge-snapshots"}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > CRON_SECRET ausente + header x-cron-secret heredado → 401, sin purge (el mecanismo antiguo ya NO autoriza)
+[31mERROR[0m 11:34:20.139 [GET /api/cron/purge-snapshots] Request completed with error status 401
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > CRON_SECRET configurado + Authorization ausente → 401, sin purge
+{"timestamp":"2026-11-03T11:34:20.140Z","level":"error","message":"Request completed with error status 401","context":"GET /api/cron/purge-snapshots"}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > CRON_SECRET configurado + Authorization ausente → 401, sin purge
+[31mERROR[0m 11:34:20.140 [GET /api/cron/purge-snapshots] Request completed with error status 401
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > CRON_SECRET configurado + Bearer incorrecto → 401, sin purge
+{"timestamp":"2026-11-03T11:34:20.140Z","level":"error","message":"Request completed with error status 401","context":"GET /api/cron/purge-snapshots"}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > CRON_SECRET configurado + Bearer incorrecto → 401, sin purge
+[31mERROR[0m 11:34:20.140 [GET /api/cron/purge-snapshots] Request completed with error status 401
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > CRON_SECRET configurado + Bearer correcto → 200, RPC purge_old_reset_snapshots(30) ejecutada, respuesta existente intacta
+{"timestamp":"2026-11-03T11:34:20.141Z","level":"info","message":"GET http://localhost:3000/api/cron/purge-snapshots → 200 (0ms)","context":"GET /api/cron/purge-snapshots","data":{"method":"GET","statusCode":200,"duration":0}}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > CRON_SECRET configurado + Bearer correcto → 200, RPC purge_old_reset_snapshots(30) ejecutada, respuesta existente intacta
+[32mINFO[0m 11:34:20.141 [GET /api/cron/purge-snapshots] GET http://localhost:3000/api/cron/purge-snapshots → 200 (0ms)
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > JWT x-vercel-signature presente pero VERCEL_PROJECT_ID ausente → 401, sin purge (Modo 1 fail-closed)
+[cron-auth] VERCEL_PROJECT_ID not configured — rejecting JWT
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > JWT x-vercel-signature presente pero VERCEL_PROJECT_ID ausente → 401, sin purge (Modo 1 fail-closed)
+{"timestamp":"2026-11-03T11:34:20.144Z","level":"error","message":"Request completed with error status 401","context":"GET /api/cron/purge-snapshots"}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > JWT x-vercel-signature presente pero VERCEL_PROJECT_ID ausente → 401, sin purge (Modo 1 fail-closed)
+[31mERROR[0m 11:34:20.144 [GET /api/cron/purge-snapshots] Request completed with error status 401
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > JWT x-vercel-signature VÁLIDO (Vercel Cron automático) + VERCEL_PROJECT_ID → 200, purge ejecutada (caller legítimo)
+{"timestamp":"2026-11-03T11:34:20.145Z","level":"info","message":"GET http://localhost:3000/api/cron/purge-snapshots → 200 (1ms)","context":"GET /api/cron/purge-snapshots","data":{"method":"GET","statusCode":200,"duration":1}}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > JWT x-vercel-signature VÁLIDO (Vercel Cron automático) + VERCEL_PROJECT_ID → 200, purge ejecutada (caller legítimo)
+[32mINFO[0m 11:34:20.145 [GET /api/cron/purge-snapshots] GET http://localhost:3000/api/cron/purge-snapshots → 200 (1ms)
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > JWT inválido (verificación falla) y sin Bearer → 401, sin purge
+{"timestamp":"2026-11-03T11:34:20.146Z","level":"error","message":"Request completed with error status 401","context":"GET /api/cron/purge-snapshots"}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > JWT inválido (verificación falla) y sin Bearer → 401, sin purge
+[31mERROR[0m 11:34:20.146 [GET /api/cron/purge-snapshots] Request completed with error status 401
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > repetición del request autorizado → ambas 200, RPC ejecutada 2 veces con los mismos args (contrato idempotente)
+{"timestamp":"2026-11-03T11:34:20.146Z","level":"info","message":"GET http://localhost:3000/api/cron/purge-snapshots → 200 (0ms)","context":"GET /api/cron/purge-snapshots","data":{"method":"GET","statusCode":200,"duration":0}}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > repetición del request autorizado → ambas 200, RPC ejecutada 2 veces con los mismos args (contrato idempotente)
+[32mINFO[0m 11:34:20.146 [GET /api/cron/purge-snapshots] GET http://localhost:3000/api/cron/purge-snapshots → 200 (0ms)
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > repetición del request autorizado → ambas 200, RPC ejecutada 2 veces con los mismos args (contrato idempotente)
+{"timestamp":"2026-11-03T11:34:20.147Z","level":"info","message":"GET http://localhost:3000/api/cron/purge-snapshots → 200 (0ms)","context":"GET /api/cron/purge-snapshots","data":{"method":"GET","statusCode":200,"duration":0}}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > repetición del request autorizado → ambas 200, RPC ejecutada 2 veces con los mismos args (contrato idempotente)
+[32mINFO[0m 11:34:20.147 [GET /api/cron/purge-snapshots] GET http://localhost:3000/api/cron/purge-snapshots → 200 (0ms)
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > el secret NUNCA aparece en la respuesta ni en los logs
+{"timestamp":"2026-11-03T11:34:20.148Z","level":"error","message":"Request completed with error status 401","context":"GET /api/cron/purge-snapshots"}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > el secret NUNCA aparece en la respuesta ni en los logs
+[31mERROR[0m 11:34:20.148 [GET /api/cron/purge-snapshots] Request completed with error status 401
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > el secret NUNCA aparece en la respuesta ni en los logs
+{"timestamp":"2026-11-03T11:34:20.148Z","level":"info","message":"GET http://localhost:3000/api/cron/purge-snapshots → 200 (0ms)","context":"GET /api/cron/purge-snapshots","data":{"method":"GET","statusCode":200,"duration":0}}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > el secret NUNCA aparece en la respuesta ni en los logs
+[32mINFO[0m 11:34:20.148 [GET /api/cron/purge-snapshots] GET http://localhost:3000/api/cron/purge-snapshots → 200 (0ms)
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > supabase-admin ausente con auth OK → 500 "Server misconfigured" (comportamiento preexistente preservado)
+{"timestamp":"2026-11-03T11:34:20.149Z","level":"error","message":"Request completed with error status 500","context":"GET /api/cron/purge-snapshots"}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > supabase-admin ausente con auth OK → 500 "Server misconfigured" (comportamiento preexistente preservado)
+[31mERROR[0m 11:34:20.149 [GET /api/cron/purge-snapshots] Request completed with error status 500
+
+stdout | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > RPC con error de DB → 500 controlado (comportamiento preexistente preservado)
+{"timestamp":"2026-11-03T11:34:20.149Z","level":"error","message":"Request completed with error status 500","context":"GET /api/cron/purge-snapshots"}
+
+stderr | src/__tests__/api/sec-ts-05-purge-snapshots.test.ts > SEC-TS-05 · purge-snapshots — fail-closed cron auth (ruta REAL) > RPC con error de DB → 500 controlado (comportamiento preexistente preservado)
+[31mERROR[0m 11:34:20.149 [GET /api/cron/purge-snapshots] Request completed with error status 500
+
+ ✓ src/__tests__/api/sec-ts-05-purge-snapshots.test.ts (16 tests) 20ms
+ ✓ src/__tests__/integration/iteration-12.test.ts (68 tests) 21ms
+ ✓ src/__tests__/api/uuid-loose-central-contract.test.ts (5 tests) 22ms
+ ✓ src/__tests__/api/cash-flow-route.test.ts (15 tests) 25ms
+ ✓ src/__tests__/api/intelligence-route-honest-health.test.ts (16 tests) 27ms
+ ✓ src/__tests__/lib/cash-report-selection.test.ts (27 tests) 21ms
+ ✓ src/__tests__/unit/cash-report-core.test.ts (28 tests) 22ms
+ ✓ src/__tests__/api/service-types.test.ts (12 tests) 21ms
+ ✓ src/__tests__/api/sec-ts-02-store-rates.test.ts (16 tests) 23ms
+ ✓ src/__tests__/lib/operative-date.test.ts (16 tests) 21ms
+ ✓ src/__tests__/migrations/cash-flow-migration.test.ts (25 tests) 21ms
+ ✓ src/__tests__/lib/pos-operation-date.test.ts (13 tests) 19ms
+ ✓ src/__tests__/lib/receptions-product-lines.test.ts (16 tests) 20ms
+ ✓ src/__tests__/lib/cash-report-mixed-payments-predominant.test.ts (21 tests) 20ms
+ ✓ src/__tests__/navigation/mobile-tabbar-parity.test.ts (28 tests) 19ms
+ ✓ src/__tests__/api/sec-ts-02-publish-attribution.test.ts (10 tests) 20ms
+ ✓ src/__tests__/api/legal-incidents-audit.test.ts (8 tests) 20ms
+ ✓ src/__tests__/integration/telegram-catalog-export.test.ts (25 tests) 21ms
+ ✓ src/__tests__/integration/iteration-17-b10b-obs2-orphan-ledger.test.ts (16 tests) 17ms
+stdout | src/__tests__/api/devolutions-route.test.ts > POST /api/devolutions — contrato de la regla contable del reembolso > llama create_devolution_v2 con actor de sesión + p_refund_currency del body
+{"timestamp":"2026-11-03T11:34:39.138Z","level":"info","category":"DATABASE","event":"DEVOLUTION_CREATED","data":{"storeId":"store-1","userId":"user-1","devId":"d1"}}
+
+stdout | src/__tests__/api/devolutions-route.test.ts > POST /api/devolutions — contrato de la regla contable del reembolso > idempotencia cooperativa: la clave del body viaja; sin clave se mintea (dev-)
+{"timestamp":"2026-11-03T11:34:39.145Z","level":"info","category":"DATABASE","event":"DEVOLUTION_CREATED","data":{"storeId":"store-1","userId":"user-1"}}
+
+stdout | src/__tests__/api/devolutions-route.test.ts > POST /api/devolutions — contrato de la regla contable del reembolso > idempotencia cooperativa: la clave del body viaja; sin clave se mintea (dev-)
+{"timestamp":"2026-11-03T11:34:39.145Z","level":"info","category":"DATABASE","event":"DEVOLUTION_CREATED","data":{"storeId":"store-1","userId":"user-1"}}
+
+stderr | src/__tests__/api/devolutions-route.test.ts > POST /api/devolutions — contrato de la regla contable del reembolso > error desconocido sigue siendo 500 (sin enmascarar fallos reales)
+{"timestamp":"2026-11-03T11:34:39.152Z","level":"error","category":"DATABASE","event":"CREATE_DEVOLUTION_FAILED","data":{"error":"something exploded"}}
+
+ ✓ src/__tests__/api/devolutions-route.test.ts (9 tests) 19ms
+ ✓ src/__tests__/hooks/useGlobalOperationDate-validate.test.ts (17 tests) 25ms
+stdout | src/__tests__/services/catalog-image-gc-compartida.test.ts > uploadProductImage — GC de imagen compartida > CONSERVA el archivo anterior cuando el maestro todavía lo referencia
+[uploadProductImage] previous file aaaaaaaa-1111-4111-8111-111111111111-old.webp still referenced by 1 row(s) — kept (imagen compartida).
+
+stdout | src/__tests__/services/catalog-image-gc-compartida.test.ts > uploadProductImage — GC de imagen compartida > CONSERVA el archivo anterior cuando otro producto de otra tienda lo referencia
+[uploadProductImage] previous file aaaaaaaa-1111-4111-8111-111111111111-old.webp still referenced by 2 row(s) — kept (imagen compartida).
+
+stderr | src/__tests__/services/catalog-image-gc-compartida.test.ts > uploadProductImage — GC de imagen compartida > FAIL-SAFE: si la verificación de referencias falla, conserva el archivo
+[uploadProductImage] could not verify references for aaaaaaaa-1111-4111-8111-111111111111-old.webp — file kept.
+
+ ✓ src/__tests__/services/catalog-image-gc-compartida.test.ts (8 tests) 17ms
+stderr | src/__tests__/services/audit-user-service.test.ts > auditService > logInvoiceWithoutPrice does not throw on DB error
+[AuditService] Error logging invoice_without_price: { message: 'DB error' }
+
+ ✓ src/__tests__/services/audit-user-service.test.ts (23 tests) 16ms
+ ✓ src/__tests__/lib/cash-report-clasificacion-monetaria.test.ts (19 tests) 16ms
+ ✓ src/__tests__/migrations/pi-lifecycle-migration.test.ts (33 tests) 14ms
+ ✓ src/__tests__/lib/cash-report-collection-currency.test.ts (17 tests) 18ms
+ ✓ src/__tests__/migrations/null-trap-refunds-migration.test.ts (16 tests) 17ms
+ ✓ src/__tests__/store/cart-mision-vs-edicion.test.ts (13 tests) 16ms
+ ✓ src/__tests__/integration/iteration-rls.test.ts (40 tests) 16ms
+ ✓ src/__tests__/api/cash-ledger-route.test.ts (9 tests) 17ms
+ ✓ src/__tests__/api/cash-closures-open-route.test.ts (8 tests) 16ms
+ ✓ src/__tests__/store/cart-usd-cup-conversion.test.ts (15 tests) 16ms
+ ✓ src/__tests__/api/pos-checkout-payment-components-payload.test.ts (5 tests) 15ms
+stdout | src/__tests__/api/reverse-route-recovery.test.ts > POST /api/reverse — recuperación explícita (p_recovery) > type=devolution con recovery → reverse_devolution con p_recovery jsonb
+{"timestamp":"2026-11-03T11:34:52.666Z","level":"info","category":"DATABASE","event":"DOCUMENT_REVERSED","data":{"type":"devolution","id":"11111111-1111-4111-8111-111111111111","userId":"user-1","reason":"error operativo, cliente devolvió el dinero","result":{"status":"success"}}}
+
+stdout | src/__tests__/api/reverse-route-recovery.test.ts > POST /api/reverse — recuperación explícita (p_recovery) > recovery multi-moneda: ambos componentes viajan (moneda+riel+fecha)
+{"timestamp":"2026-11-03T11:34:52.672Z","level":"info","category":"DATABASE","event":"DOCUMENT_REVERSED","data":{"type":"devolution","id":"11111111-1111-4111-8111-111111111111","userId":"user-1","reason":"recuperación completa en ambos rieles","result":{"status":"success"}}}
+
+stdout | src/__tests__/api/reverse-route-recovery.test.ts > POST /api/reverse — recuperación explícita (p_recovery) > type≠devolution: recovery NO viaja (PGRST202 imposible) aunque llegue
+{"timestamp":"2026-11-03T11:34:52.673Z","level":"info","category":"DATABASE","event":"DOCUMENT_REVERSED","data":{"type":"transaction","id":"22222222-2222-4222-8222-222222222222","userId":"user-1","reason":"venta errónea","result":{"status":"success"}}}
+
+stderr | src/__tests__/api/reverse-route-recovery.test.ts > POST /api/reverse — recuperación explícita (p_recovery) > ERR_DEVOLUTION_REFUND_NOT_RECOVERED → 422 accionable (mostrar formulario)
+{"timestamp":"2026-11-03T11:34:52.674Z","level":"error","category":"DATABASE","event":"REVERSE_FAILED","data":{"type":"devolution","id":"11111111-1111-4111-8111-111111111111","error":"ERR_DEVOLUTION_REFUND_NOT_RECOVERED: la devolución tiene reembolso(s) liquidado(s) (1 componente CUP, 0 componente USD) y el dinero no ha vuelto a la caja. La reversión es ATÓMICA con la recuperación: envíe p_recovery = [{currency, method, operation_date?, notes?}] con la moneda y el riel reales de cobro (el importe lo fija el servidor). Una reversión documental no puede liberar el tope de reembolso como si el dinero hubiera regresado.","userId":"user-1"}}
+
+stderr | src/__tests__/api/reverse-route-recovery.test.ts > POST /api/reverse — recuperación explícita (p_recovery) > guards de recuperación → 422/409 accionables
+{"timestamp":"2026-11-03T11:34:52.676Z","level":"error","category":"DATABASE","event":"REVERSE_FAILED","data":{"type":"devolution","id":"11111111-1111-4111-8111-111111111111","error":"ERR_DEVOLUTION_RECOVERY_COMPONENTS: los componentes de recuperación deben cubrir EXACTAMENTE las monedas reembolsadas (esperado: 1 CUP + 1 USD; recibido: 1 CUP + 0 USD). La recuperación de una moneda no compensa la otra.","userId":"user-1"}}
+
+stderr | src/__tests__/api/reverse-route-recovery.test.ts > POST /api/reverse — recuperación explícita (p_recovery) > guards de recuperación → 422/409 accionables
+{"timestamp":"2026-11-03T11:34:52.677Z","level":"error","category":"DATABASE","event":"REVERSE_FAILED","data":{"type":"devolution","id":"11111111-1111-4111-8111-111111111111","error":"ERR_DEVOLUTION_ALREADY_RECOVERED: ya existe una recuperación en USD para esta devolución (idempotencia dev-%-recovery-%)","userId":"user-1"}}
+
+ ✓ src/__tests__/api/reverse-route-recovery.test.ts (6 tests) 18ms
+ ✓ src/__tests__/api/production-orders-filters.test.ts (6 tests) 12ms
+ ✓ src/__tests__/integration/store-audit-health-reset-auth.test.ts (11 tests) 19ms
+ ✓ src/__tests__/store/cart-decimal-quantities.test.ts (24 tests) 15ms
+ ✓ src/__tests__/lib/audit/eventPresentation.test.ts (29 tests) 15ms
+ ✓ src/__tests__/api/exchange-rates-refresh.test.ts (7 tests) 12ms
+ ✓ src/__tests__/api/memberships-bulk.test.ts (9 tests) 16ms
+ ✓ src/__tests__/integration/iteration-11-1.test.ts (54 tests) 13ms
+stdout | src/__tests__/api/devolutions-route-cierre.test.ts > POST /api/devolutions — AS_PAID y regla contable del cierre > AS_PAID viaja al RPC como p_refund_currency (multi-moneda según lo pagado)
+{"timestamp":"2026-11-03T11:35:00.410Z","level":"info","category":"DATABASE","event":"DEVOLUTION_CREATED","data":{"storeId":"store-1","userId":"user-1"}}
+
+ ✓ src/__tests__/api/devolutions-route-cierre.test.ts (7 tests) 27ms
+ ✓ src/__tests__/api/cash-flow-ui-contract.test.ts (8 tests) 16ms
+ ✓ src/__tests__/api/exchange-rates-manual.test.ts (8 tests) 15ms
+ ✓ src/__tests__/api/users-managed-create-email-contract.test.ts (4 tests) 14ms
+ ✓ src/__tests__/migrations/devoluciones-recuperacion-migration.test.ts (13 tests) 15ms
+ ✓ src/__tests__/integration/iteration-11-2.test.ts (87 tests) 13ms
+stderr | src/__tests__/api/cost-sheets-save.test.ts > POST /api/cost-sheets/save (C2-A — writer alineado al esquema real) > UPDATE de ficha ajena o inexistente → 404 (fetch owner-scoped sin filas)
+[SaveCostSheet] Update fetch error: { code: 'PGRST116' }
+
+ ✓ src/__tests__/api/cost-sheets-save.test.ts (7 tests) 20ms
+ ✓ src/__tests__/integration/store-archive-restore-auth.test.ts (9 tests) 16ms
+ ✓ src/__tests__/api/users-route-empresa-superadmin.test.ts (11 tests) 14ms
+ ✓ src/__tests__/services/store-api-client.test.ts (19 tests) 13ms
+ ✓ src/__tests__/lib/exchange-history.test.ts (15 tests) 14ms
+ ✓ src/__tests__/integration/iteration-19-b10b-obs2-post-repair-operational-integrity.test.ts (29 tests) 13ms
+ ✓ src/__tests__/lib/auth-middleware-with-store-access.test.ts (9 tests) 15ms
+ ✓ src/__tests__/services/ai-tools.test.ts (15 tests) 15ms
+ ✓ src/__tests__/integration/iteration-13.test.ts (74 tests) 15ms
+stderr | src/__tests__/store/cost-sheet-persisted-doc.test.ts > cost-sheet-store — persistedDocId (C2-C) > setSheet con documento FC-format RECHAZA el cambio (guard Zod intacto)
+[Zod Validation Error] cost sheet data: {
+  _errors: [],
+  header: {
+    _errors: [],
+    code: { _errors: [Array] },
+    date: { _errors: [Array] },
+    quantity: { _errors: [Array] },
+    currency: { _errors: [Array] },
+    category: { _errors: [Array] },
+    type: { _errors: [Array] },
+    unit: { _errors: [Array] }
+  },
+  sections: { _errors: [ 'Invalid input: expected array, received undefined' ] },
+  annexes: { _errors: [ 'Invalid input: expected array, received undefined' ] },
+  signature: { _errors: [ 'Invalid input: expected object, received undefined' ] }
+}
+
+ ✓ src/__tests__/store/cost-sheet-persisted-doc.test.ts (4 tests) 17ms
+ ✓ src/__tests__/lib/pos-cash-denominations.test.ts (32 tests) 16ms
+ ✓ src/__tests__/api/users-tenant-admin-scope.test.ts (8 tests) 15ms
+ ✓ src/__tests__/migrations/res11-sc207-solicitud-materiales-migration.test.ts (22 tests) 16ms
+ ✓ src/__tests__/api/memberships-single-authz.test.ts (13 tests) 15ms
+stdout | src/__tests__/api/users-reset-password-authz.test.ts > Autorización real de POST /api/users/reset-password (withRole sin mockear) > No autenticado → 401
+{"timestamp":"2026-11-03T11:35:20.350Z","level":"error","message":"Request completed with error status 401","context":"POST /api/users/reset-password"}
+
+stderr | src/__tests__/api/users-reset-password-authz.test.ts > Autorización real de POST /api/users/reset-password (withRole sin mockear) > No autenticado → 401
+[31mERROR[0m 11:35:20.350 [POST /api/users/reset-password] Request completed with error status 401
+
+stdout | src/__tests__/api/users-reset-password-authz.test.ts > Autorización real de POST /api/users/reset-password (withRole sin mockear) > Autenticado con rol clerk (sin privilegio) → 403
+{"timestamp":"2026-11-03T11:35:20.353Z","level":"error","message":"Request completed with error status 403","context":"POST /api/users/reset-password"}
+
+stderr | src/__tests__/api/users-reset-password-authz.test.ts > Autorización real de POST /api/users/reset-password (withRole sin mockear) > Autenticado con rol clerk (sin privilegio) → 403
+[31mERROR[0m 11:35:20.353 [POST /api/users/reset-password] Request completed with error status 403
+
+stdout | src/__tests__/api/users-reset-password-authz.test.ts > Autorización real de POST /api/users/reset-password (withRole sin mockear) > Autenticado con rol encargado (gestión de tienda, no global) → 403
+{"timestamp":"2026-11-03T11:35:20.354Z","level":"error","message":"Request completed with error status 403","context":"POST /api/users/reset-password"}
+
+stderr | src/__tests__/api/users-reset-password-authz.test.ts > Autorización real de POST /api/users/reset-password (withRole sin mockear) > Autenticado con rol encargado (gestión de tienda, no global) → 403
+[31mERROR[0m 11:35:20.354 [POST /api/users/reset-password] Request completed with error status 403
+
+stdout | src/__tests__/api/users-reset-password-authz.test.ts > Autorización real de POST /api/users/reset-password (withRole sin mockear) > Super Admin (profiles.role = admin) → PERMITIDO: operación + auditoría
+{"timestamp":"2026-11-03T11:35:20.357Z","level":"info","message":"POST http://localhost:3000/api/users/reset-password → 200 (2ms)","context":"POST /api/users/reset-password","data":{"method":"POST","statusCode":200,"duration":2}}
+
+stderr | src/__tests__/api/users-reset-password-authz.test.ts > Autorización real de POST /api/users/reset-password (withRole sin mockear) > Super Admin (profiles.role = admin) → PERMITIDO: operación + auditoría
+[32mINFO[0m 11:35:20.357 [POST /api/users/reset-password] POST http://localhost:3000/api/users/reset-password → 200 (2ms)
+
+stdout | src/__tests__/api/users-reset-password-authz.test.ts > Autorización real de POST /api/users/reset-password (withRole sin mockear) > El endpoint NO autoriza por coincidencia de email — el rol viene de profiles
+{"timestamp":"2026-11-03T11:35:20.358Z","level":"error","message":"Request completed with error status 403","context":"POST /api/users/reset-password"}
+
+stderr | src/__tests__/api/users-reset-password-authz.test.ts > Autorización real de POST /api/users/reset-password (withRole sin mockear) > El endpoint NO autoriza por coincidencia de email — el rol viene de profiles
+[31mERROR[0m 11:35:20.358 [POST /api/users/reset-password] Request completed with error status 403
+
+ ✓ src/__tests__/api/users-reset-password-authz.test.ts (5 tests) 13ms
+ ✓ src/__tests__/ipv-ventas/compute.test.ts (28 tests) 12ms
+ ✓ src/__tests__/migrations/caja-serializacion-commit-coherente-migration.test.ts (11 tests) 12ms
+ ✓ src/__tests__/integration/commit-rollback-store-access.test.ts (4 tests) 12ms
+ ✓ src/__tests__/api/users-reset-password-direct.test.ts (9 tests) 14ms
+ ✓ src/__tests__/integration/iteration-fiscal.test.ts (53 tests) 11ms
+ ✓ src/__tests__/integration/iteration-16-b10b-obs1-historical-repair.test.ts (22 tests) 10ms
+ ✓ src/__tests__/api/reverse-route-v1-retirement.test.ts (6 tests) 13ms
+ ✓ src/__tests__/integration/cpsec027-public-catalog.test.ts (26 tests) 11ms
+ ✓ src/__tests__/lib/cash-report-custom-result.test.ts (25 tests) 19ms
+ ✓ src/__tests__/lib/pos-payment-components.test.ts (10 tests) 14ms
+ ✓ src/__tests__/api/users-platform-role-guards.test.ts (7 tests) 15ms
+stdout | src/__tests__/lib/diviza-scraper.test.ts > diviza-scraper — fetchDivizaRates (red) > HTTP 200 con HTML válido → tasas con procedencia Diviza
+[diviza-scraper] Captura REAL exitosa (conv-data-json): USD=839 EUR=930 MLC=691.62 fuenteActualizada=2026-10-25T17:30:00-04:00
+
+stderr | src/__tests__/lib/diviza-scraper.test.ts > diviza-scraper — fetchDivizaRates (red) > HTTP 500 → null sin lanzar (error del servidor del proveedor)
+[diviza-scraper] HTTP 500 Internal Server Error — fetch rechazado
+
+stderr | src/__tests__/lib/diviza-scraper.test.ts > diviza-scraper — fetchDivizaRates (red) > timeout / error de red → null sin lanzar
+[diviza-scraper] fetch falló: This operation was aborted
+
+stderr | src/__tests__/lib/diviza-scraper.test.ts > diviza-scraper — fetchDivizaRates (red) > HTTP 200 con página de mantenimiento → null (sin cotizaciones)
+[diviza-scraper] HTML recibido pero sin cotizaciones válidas (USD no extraído o bloque conv-data ausente)
+
+ ✓ src/__tests__/lib/diviza-scraper.test.ts (23 tests) 18ms
+ ✓ src/__tests__/store/cart-services.test.ts (9 tests) 12ms
+ ✓ src/__tests__/api/cash-report-adjustments-disabled.test.ts (7 tests) 12ms
+ ✓ src/__tests__/lib/kardexPeriod.test.ts (38 tests) 16ms
+ ✓ src/__tests__/store/cart-transf-exterior.test.ts (7 tests) 13ms
+ ✓ src/__tests__/e2e/assert-isolated-db.test.ts (71 tests) 12ms
+ ✓ src/__tests__/api/stores-bulk.test.ts (5 tests) 12ms
+ ✓ src/__tests__/api/assign-organization-route.test.ts (6 tests) 13ms
+ ✓ src/__tests__/integration/iteration-11-4.test.ts (62 tests) 11ms
+ ✓ src/__tests__/migrations/recepciones-borradores-migration.test.ts (23 tests) 14ms
+ ✓ src/__tests__/validation/store-schemas.test.ts (18 tests) 12ms
+ ✓ src/__tests__/lib/cash-ledger-balance.test.ts (16 tests) 8ms
+ ✓ src/__tests__/services/offline-storage.test.ts (19 tests) 12ms
+ ✓ src/__tests__/integration/iteration-14-b8-modelo-c.test.ts (30 tests) 8ms
+ ✓ src/__tests__/lib/auth-middleware-dedup-profiles.test.ts (3 tests) 12ms
+ ✓ src/__tests__/integration/iteration-11-3.test.ts (62 tests) 13ms
+ ✓ src/__tests__/validation/fc-schemas.test.ts (25 tests) 11ms
+ ✓ src/__tests__/migrations/cp-money-002-companion-migration.test.ts (13 tests) 12ms
+ ✓ src/__tests__/api/stores-route-superadmin.test.ts (4 tests) 11ms
+ ✓ src/__tests__/lib/costeo-dinamico.test.ts (36 tests) 10ms
+ ✓ src/__tests__/api/exchange-rates-scrape-diviza.test.ts (6 tests) 11ms
+ ✓ src/__tests__/integration/concurrency.test.ts (5 tests) 11ms
+ ✓ src/__tests__/store/cart-mixed-payment-legacy-fields.test.ts (5 tests) 16ms
+ ✓ src/__tests__/lib/cash-report-qty-per-currency.test.ts (17 tests) 10ms
+ ✓ src/__tests__/ipv-ventas/incidente-142.test.ts (15 tests) 10ms
+ ✓ src/__tests__/contracts/fc-contracts.test.ts (22 tests) 9ms
+ ✓ src/__tests__/integration/store-rls-database.test.ts (33 tests | 1 skipped) 9ms
+ ✓ src/__tests__/validation/product-is-service-schemas.test.ts (12 tests) 10ms
+ ✓ src/__tests__/integration/store-rls-isolation.test.ts (33 tests) 9ms
+ ✓ src/__tests__/api/fc-invalidate.test.ts (5 tests) 10ms
+ ✓ src/__tests__/migrations/cp-catalogo-pr1-bloqueos-seguridad-migration.test.ts (14 tests) 8ms
+ ✓ src/__tests__/integration/fc-rls-database.test.ts (58 tests | 1 skipped) 10ms
+ ✓ src/__tests__/unit/cash-report-summary.test.ts (34 tests) 10ms
+ ✓ src/__tests__/migrations/vales-salida-etapa-revision-migration.test.ts (15 tests) 10ms
+ ✓ src/__tests__/migrations/pos-payment-incidents-migration.test.ts (13 tests) 9ms
+ ✓ src/__tests__/lib/cp-money-002-reference-cases.test.ts (10 tests) 8ms
+ ✓ src/__tests__/store/cart-stale-store-sync.test.ts (6 tests) 9ms
+ ✓ src/__tests__/migrations/devoluciones-reembolso-migration.test.ts (9 tests) 8ms
+ ✓ src/__tests__/work-dates/work-date-prefs.test.ts (12 tests) 9ms
+ ✓ src/__tests__/navigation/solicitud-materiales-navigation.test.ts (9 tests) 9ms
+ ✓ src/__tests__/migrations/hsaa-superadmin-policy-migration.test.ts (10 tests) 9ms
+ ✓ src/__tests__/lib/sc204-export.test.ts (9 tests) 10ms
+ ✓ src/__tests__/unit/cash-report-options-persistence.test.ts (13 tests) 9ms
+ ✓ src/__tests__/lib/supervisor-token.test.ts (7 tests) 8ms
+ ✓ src/__tests__/ipv-ventas/fetch-all.test.ts (7 tests) 9ms
+ ✓ src/__tests__/integration/iteration-15-b10-reverse-authorization.test.ts (25 tests) 9ms
+ ✓ src/__tests__/lib/movementPresentation.test.ts (9 tests) 8ms
+ ✓ src/__tests__/migrations/pi-superadmin-rpc-migration.test.ts (7 tests) 10ms
+ ✓ src/__tests__/lib/roles-superadmin.test.ts (8 tests) 13ms
+stderr | src/__tests__/lib/fetch-sale-payments-degradation.test.ts > CP-MONEY-002 D4 · fetchSalePaymentsByTx — degradación limpia > REGRESIÓN: el helper ya NO propaga la excepción (contrato de degradación documentado)
+[fetch-sale-payments] ledger de pagos no disponible — degradando a la reconstrucción heurística: boom
+
+ ✓ src/__tests__/lib/fetch-sale-payments-degradation.test.ts (6 tests) 9ms
+ ✓ src/__tests__/store/auth-ui-store.test.ts (14 tests) 6ms
+ ✓ src/__tests__/integration/workers-commissions-transfers.test.ts (29 tests) 8ms
+ ✓ src/__tests__/migrations/cp-catalogo-pr3-modelo-maestro-migration.test.ts (25 tests) 7ms
+ ✓ src/__tests__/migrations/saldo-fisico-egresos-migration.test.ts (7 tests) 6ms
+ ✓ src/__tests__/work-dates/movement-types.test.ts (10 tests) 8ms
+ ✓ src/__tests__/migrations/efectivo-fisico-disponibilidad-migration.test.ts (6 tests) 6ms
+ ✓ src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts (20 tests) 7ms
+ ✓ src/__tests__/integration/audit-fixes.test.ts (22 tests) 9ms
+ ✓ src/__tests__/lib/pos-payment-incidents.test.ts (10 tests) 8ms
+ ✓ src/__tests__/store/cart-saleDate.test.ts (7 tests) 7ms
+ ✓ src/__tests__/lib/api-fetch-details.test.ts (3 tests) 8ms
+ ✓ src/__tests__/integration/fc-automation.test.ts (27 tests) 7ms
+ ✓ src/__tests__/navigation/caja-navigation.test.ts (7 tests) 7ms
+ ✓ src/__tests__/lib/cash-report-valoracion-residuo.test.ts (10 tests) 7ms
+ ✓ src/__tests__/components/physical-inventory/pi-lifecycle.test.ts (16 tests) 7ms
+ ✓ src/__tests__/integration/dt03-multi-tenant-access.test.ts (21 tests) 6ms
+ ✓ src/__tests__/integration/caja-v224-1-corrective.test.ts (21 tests) 8ms
+ ✓ src/__tests__/migrations/suppliers-visibilidad-migration.test.ts (11 tests) 7ms
+ ✓ src/__tests__/lib/cash-flow-concepts.test.ts (11 tests) 6ms
+ ✓ src/__tests__/migrations/cp-catalogo-m002-backfill-migration.test.ts (14 tests) 6ms
+ ✓ src/__tests__/migrations/politica-temporal-migration.test.ts (8 tests) 7ms
+ ✓ src/__tests__/lib/cash-arqueo.test.ts (25 tests) 6ms
+ ✓ src/__tests__/components/StorefrontErrorBoundary.test.tsx (8 tests) 6ms
+ ✓ src/__tests__/ui/fc-ui-phase3.test.ts (16 tests) 6ms
+ ✓ src/__tests__/lib/cash-settlement.test.ts (13 tests) 6ms
+ ✓ src/__tests__/lib/cash-report-enervida-2310.test.ts (7 tests) 6ms
+ ✓ src/__tests__/integration/e2e-product-fix-round1.test.ts (16 tests) 7ms
+ ✓ src/__tests__/navigation/vales-salida-navigation.test.ts (7 tests) 6ms
+ ✓ src/__tests__/lib/commission-product-confcomisiones.test.ts (6 tests) 6ms
+ ✓ src/__tests__/navigation/ipv-ventas-navigation.test.ts (6 tests) 6ms
+ ✓ src/__tests__/unit/cash-report-saldo-inicial.test.ts (9 tests) 5ms
+ ✓ src/__tests__/integration/services-item-type-migration-pin.test.ts (6 tests) 6ms
+ ✓ src/__tests__/lib/auth-outage.test.ts (8 tests) 6ms
+ ✓ src/__tests__/api/payments-modal-auth-contract.test.ts (13 tests) 5ms
+ ✓ src/__tests__/integration/cp-org-003-bootstrap-migration.test.ts (12 tests) 5ms
+ ✓ src/__tests__/migrations/cp-money-002-acl-revoke-migration.test.ts (7 tests) 6ms
+ ✓ src/__tests__/lib/receipt-items-validation.test.ts (12 tests) 6ms
+ ✓ src/__tests__/migrations/retire-eltoque-migration.test.ts (8 tests) 7ms
+ ✓ src/__tests__/lib/cost-sheet-document-compatibility.test.ts (16 tests) 6ms
+ ✓ src/__tests__/migrations/inteligencia-diviza-migration.test.ts (8 tests) 6ms
+ ✓ src/__tests__/lib/exchange-sources.test.ts (10 tests) 5ms
+ ✓ src/__tests__/store/effective-unit-price.test.ts (15 tests) 5ms
+ ✓ src/__tests__/lib/pos-rates-confirmation.test.ts (8 tests) 5ms
+ ✓ src/__tests__/unit/cash-report-summary-hoja-canonica-cup.test.ts (7 tests) 5ms
+ ✓ src/__tests__/contracts/store-contract.test.ts (7 tests) 6ms
+ ✓ src/__tests__/lib/product-analysis.test.ts (11 tests) 5ms
+ ✓ src/__tests__/migrations/cp-catalogo-m002-image-propagation-migration.test.ts (9 tests) 5ms
+ ✓ src/__tests__/api/v2-18-0-servicios-arqueo-contract.test.ts (8 tests) 5ms
+ ✓ src/__tests__/migrations/cp-catalogo-pr2-etapa0-tenant-backfill-migration.test.ts (6 tests) 4ms
+ ✓ src/__tests__/migrations/cp-sec-003-cp-ui-001-migrations.test.ts (6 tests) 5ms
+ ✓ src/__tests__/migrations/cash-flow-pgrst-hint.test.ts (4 tests) 5ms
+ ✓ src/__tests__/store/session-store.test.ts (5 tests) 4ms
+ ✓ src/__tests__/migrations/exchange-rates-source-updated-at-migration.test.ts (5 tests) 5ms
+ ✓ src/__tests__/ipv-ventas/mision-multimoneda-vuelto-cup.test.ts (3 tests) 4ms
+ ✓ src/__tests__/migrations/cp-catalogo-m004-audit-check-migration.test.ts (4 tests) 4ms
+ ✓ src/__tests__/integration/sync-batch-pnotes.test.ts (3 tests) 4ms
+ ✓ src/__tests__/integration/sync-batch-payment-components-payload.test.ts (3 tests) 4ms
+ ✓ src/__tests__/lib/roles-is-admin-level.test.ts (5 tests) 4ms
+ ✓ src/__tests__/hooks/useStoreInactivityMonitor.test.tsx (2 tests | 1 skipped) 4ms
+stdout | src/__tests__/integration/null-trap-sql-scenarios.test.ts > batería de nulidad — documentación de gating > declara explícitamente las condiciones de ejecución aislada
+[null-trap-sql-scenarios] SKIP: requiere NULL_TRAP_INTEGRATION_DB=1 y NULL_TRAP_TEST_DB_URL (BD AISLADA, nunca producción). Evidencia de la auditoría: 41/41 en PG 18 aislado.
+
+ ✓ src/__tests__/integration/null-trap-sql-scenarios.test.ts (15 tests | 14 skipped) 3ms
+stdout | src/__tests__/api/cash-flow-ui-payload-evidence.test.ts
+HTTP 500
+{
+  "error": "[vitest] No \"isAdminLevel\" export is defined on the \"@/lib/roles\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+}
+
+ ✓ src/__tests__/api/cash-flow-ui-payload-evidence.test.ts (1 test) 3ms
+ ↓ src/__tests__/integration/backup-schema-validation.test.ts (10 tests | 10 skipped)
+ ↓ src/__tests__/integration/cash-flow-sql-scenarios.test.ts (8 tests | 8 skipped)
+ ↓ src/__tests__/integration/organizations-create-live-db.test.ts (14 tests | 14 skipped)
+ ↓ src/__tests__/integration/superadmin-store-access-live-db.test.ts (12 tests | 12 skipped)
+
+ Test Files  352 passed | 4 skipped (356)
+      Tests  5010 passed | 66 skipped (5076)
+   Start at  11:29:23
+   Duration  477.99s (transform 8.84s, setup 13.71s, import 64.61s, tests 91.13s, environment 238.09s)
+
