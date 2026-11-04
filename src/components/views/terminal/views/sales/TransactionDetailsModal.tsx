@@ -16,8 +16,12 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, ShieldAlert, DollarSign, ArrowLeftRight, Banknote, Printer, FileDown, Loader2 } from 'lucide-react';
+import { Check, ShieldAlert, DollarSign, ArrowLeftRight, Banknote, Printer, FileDown, Loader2, Settings } from 'lucide-react';
 import { exportSc212ForTransaction } from '@/lib/legal/sc212';
+import { normalizeSc212Prefs, sc212PrefsKey, type Sc212FieldsPrefs } from '@/lib/legal/sc212-config/fields';
+// CP-SALES-024: panel de personalización de presentación del SC-2-12 —
+// preferencias por usuario+tienda, JAMÁS toca la configuración de la tienda.
+import { Sc212ConfigModal } from './Sc212ConfigModal';
 // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): reimpresión del comprobante POS desde
 // el historial — reconstruye el recibo del registro PERSISTIDO (transacción +
 // ítems + payment_transactions vía resolveSalePayments). 100% lectura: no
@@ -86,6 +90,79 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
   // → «Rendered more hooks than during the previous render» → crash del
   // Historial de Ventas en CADA clic sobre una venta (Rules of Hooks).
   const [isExportingSc212, setIsExportingSc212] = useState(false);
+  // CP-SALES-024: panel de configuración del documento SC-2-12 (icono ⚙ junto
+  // al botón de exportar). Estado + carga de la preferencia por usuario+tienda
+  // DE LA VENTA (no la seleccionada en el menú global).
+  const [isSc212ConfigOpen, setIsSc212ConfigOpen] = useState(false);
+  const [sc212Prefs, setSc212Prefs] = useState<Sc212FieldsPrefs>({});
+  const sc212PrefsStoreKey = transaction?.store_id ? sc212PrefsKey(transaction.store_id) : null;
+  // CP-SALES-024: configuración de la tienda DE LA VENTA (store_id real, no
+  // la seleccionada en el menú global) — alimenta el panel ⚙ con los valores
+  // oficiales persistidos en Gestión de Tiendas (solo lectura).
+  const [sc212StoreConfig, setSc212StoreConfig] = useState<{
+    name: string | null;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    reeup: string | null;
+    nit: string | null;
+    bank_account: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!isOpen || !transaction?.store_id) {
+      setSc212StoreConfig(null);
+      return;
+    }
+    // Lectura de la configuración de la tienda DE LA VENTA (solo lectura;
+    // degradación suave: si falla, el panel ⚙ abre con valores vacíos y la
+    // exportación sigue funcionando con el fetch propio del exportador).
+    try {
+      supabase
+        .from('stores')
+        .select('name, address, phone, email, reeup, nit, bank_account')
+        .eq('id', transaction.store_id)
+        .maybeSingle()
+        .then(({ data }: { data: unknown }) => {
+          if (!cancelled) setSc212StoreConfig((data as typeof sc212StoreConfig) ?? null);
+        })
+        .catch(() => {
+          if (!cancelled) setSc212StoreConfig(null);
+        });
+    } catch {
+      if (!cancelled) setSc212StoreConfig(null);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, transaction?.store_id]);
+
+  const sc212StoreName = sc212StoreConfig?.name || null;
+  const sc212StoreValues: Record<string, string> = {
+    proveedorDireccion: sc212StoreConfig?.address || '',
+    proveedorCodigo: sc212StoreConfig?.reeup || '',
+    proveedorNIT: sc212StoreConfig?.nit || '',
+    proveedorCuentaBancaria: sc212StoreConfig?.bank_account || '',
+    proveedorSucursalBancaria: '',
+    proveedorTelefono: sc212StoreConfig?.phone || '',
+    proveedorEmail: sc212StoreConfig?.email || '',
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!sc212PrefsStoreKey) return;
+    try {
+      const raw = localStorage.getItem(`costpro:${sc212PrefsStoreKey}`);
+      if (!cancelled && raw) setSc212Prefs(normalizeSc212Prefs(JSON.parse(raw)));
+    } catch {
+      // Preferencia ilegible → documento con valores oficiales (degradación
+      // suave: la exportación jamás se bloquea por una preferencia corrupta).
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [sc212PrefsStoreKey]);
 
   const currentAppliedTaxes: TaxConfiguration[] = Array.isArray(transaction?.applied_taxes) ? transaction.applied_taxes : [];
 
@@ -215,6 +292,9 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
 
   // MISIÓN RESOLUCIÓN 11 — exportación SC-2-12 «Factura».
   // (el estado isExportingSc212 vive arriba, junto a los demás hooks)
+  // CP-SALES-024: se pasan las preferencias de presentación guardadas para la
+  // tienda de LA VENTA; los datos fuente siguen viniendo de la configuración
+  // persistida de esa misma tienda (resolución por transactions.store_id).
   const handleExportSc212 = async () => {
     if (!transaction) return;
     setIsExportingSc212(true);
@@ -235,6 +315,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
           store_id: transaction.store_id,
         },
         user?.activeStoreId,
+        sc212Prefs,
       );
       toast.success('Modelo SC-2-12 generado');
     } catch {
@@ -242,6 +323,37 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
     } finally {
       setIsExportingSc212(false);
     }
+  };
+
+  // CP-SALES-024: vista previa desde el panel — mismo generador, mismas
+  // preferencias en borrador; solo lectura (no guarda nada).
+  const handleSc212Preview = async (draftPrefs: Sc212FieldsPrefs) => {
+    if (!transaction) return;
+    await exportSc212ForTransaction(
+      {
+        id: transaction.id,
+        status: transaction.status,
+        total_amount: transaction.total_amount,
+        subtotal: transaction.subtotal,
+        discount_value: transaction.discount_value,
+        sale_currency: transaction.sale_currency,
+        customer_name: transaction.customer_name,
+        invoice_number: transaction.invoice_number,
+        completed_at: transaction.completed_at,
+        created_at: transaction.created_at,
+        seller_id: transaction.seller_id,
+        store_id: transaction.store_id,
+      },
+      user?.activeStoreId,
+      draftPrefs,
+    );
+    toast.success('Vista previa del SC-2-12 generada con los ajustes actuales.');
+  };
+
+  // CP-SALES-024: tras guardar preferencias en el panel, refrescar la copia
+  // local que usa la exportación directa (misma fuente: user_preferences).
+  const handleSc212PrefsSaved = (saved: Sc212FieldsPrefs) => {
+    setSc212Prefs(saved);
   };
 
   return (
@@ -274,6 +386,21 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
           >
             {isExportingSc212 ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
             {isExportingSc212 ? 'Generando…' : 'Exportar SC-2-12 (PDF)'}
+          </button>
+          {/* CP-SALES-024: icono de configuración junto a la exportación —
+              personaliza la PRESENTACIÓN del documento (mostrar/ocultar campos,
+              etiquetas, valores no oficiales). No toca la configuración de la
+              tienda ni la venta. */}
+          <button
+            type="button"
+            onClick={() => setIsSc212ConfigOpen(true)}
+            disabled={isLoading}
+            aria-label="Configurar documento SC-2-12"
+            title="Configurar documento SC-2-12: campos, etiquetas y vista previa"
+            className="inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-xl bg-background border border-border font-black text-xs uppercase tracking-widest hover:bg-muted transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+          >
+            <Settings className="w-4 h-4" />
+            Configurar documento
           </button>
           <button
             type="button"
@@ -562,6 +689,21 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                 )}
             </div>
         </div>
+
+        {/* CP-SALES-024: panel de personalización del SC-2-12. Los valores
+            "oficiales" que muestra el panel son los de la tienda de LA VENTA
+            (leídos con el mismo fetch del exportador); el guardado escribe
+            SOLO la preferencia de presentación (user_preferences), nunca la
+            configuración de Gestión de Tiendas. */}
+        <Sc212ConfigModal
+          isOpen={isSc212ConfigOpen}
+          onClose={() => setIsSc212ConfigOpen(false)}
+          storeId={transaction.store_id ?? null}
+          storeName={sc212StoreName}
+          storeValues={sc212StoreValues}
+          onPreview={handleSc212Preview}
+          onSaved={handleSc212PrefsSaved}
+        />
     </BaseModal>
   );
 }
