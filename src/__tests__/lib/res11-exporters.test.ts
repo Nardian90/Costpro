@@ -394,10 +394,12 @@ describe('SC-2-12 — modelo según Resolución 11/2007', () => {
     vendedorNombre: 'Ana Torres',
   };
 
-  it('cubre los 12 datos de uso obligatorio con NIT/cuenta/sucursal EN BLANCO', () => {
+  it('cubre los 12 datos de uso obligatorio; identificación desde la configuración de la tienda (CP-SALES-024)', () => {
     const model = buildSc212ModelData(base);
     expect(model.fechaEmision).toBe('27/10/2026');            // 1
     expect(model.proveedorNombre).toBe('Tienda QA');          // 2 (entidad vendedora)
+    // CP-SALES-024: sin storeConfig en la fuente, los datos de identificación
+    // quedan en blanco (línea manual) — nunca «undefined» ni inventados.
     expect(model.proveedorNIT).toBe('');
     expect(model.proveedorCuentaBancaria).toBe('');
     expect(model.compradorNombre).toBe('Combinado Deportivo'); // 3
@@ -407,7 +409,7 @@ describe('SC-2-12 — modelo según Resolución 11/2007', () => {
     expect(model.lineas[0].importe).toBe('2,520.00 CUP');     // 6 (12 × 210)
     expect(model.lineas[0].saldoExistencia).toBe('');
     expect(model.importesTotales[0].importe).toBe('5,487.30 CUP'); // 7 (almacenado)
-    expect(model.entregaNombre).toBe('Ana Torres');           // 8
+    expect(model.entregaNombre).toBe('');                     // 8 (CP-SALES-024: leyenda genérica, sin nombre)
     expect(model.numeroConsecutivo).toBe('FV-2026-003412');   // 12 (invoice_number real)
   });
 

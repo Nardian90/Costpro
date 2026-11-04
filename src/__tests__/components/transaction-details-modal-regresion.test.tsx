@@ -43,8 +43,22 @@ vi.mock('@/hooks/api/useTransactions', () => ({
 
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
-    from: vi.fn(),
+    from: vi.fn(() => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    })),
     rpc: vi.fn(),
+    // CP-SALES-024: el modal monta Sc212ConfigModal → useUserPreferences
+    // suscribe un canal realtime; el mock mínimo lo ignora silenciosamente.
+    channel: vi.fn(() => ({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn().mockReturnThis(),
+      unsubscribe: vi.fn(),
+    })),
+    removeChannel: vi.fn(),
   },
 }));
 

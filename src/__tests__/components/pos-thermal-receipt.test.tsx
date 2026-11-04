@@ -56,7 +56,24 @@ vi.mock('@/hooks/api/useTransactions', () => ({
   useSalePayments: () => ({ data: [] }),
 }));
 vi.mock('@/lib/supabaseClient', () => ({
-  supabase: { rpc: vi.fn(async () => ({ error: null })) },
+  supabase: {
+    rpc: vi.fn(async () => ({ error: null })),
+    // CP-SALES-024: el modal monta Sc212ConfigModal → useUserPreferences
+    // suscribe un canal realtime; el mock mínimo lo ignora silenciosamente.
+    from: vi.fn(() => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    })),
+    channel: vi.fn(() => ({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn().mockReturnThis(),
+      unsubscribe: vi.fn(),
+    })),
+    removeChannel: vi.fn(),
+  },
 }));
 
 // El flujo de impresión real (montaje + diálogo) se mockea en los tests de
