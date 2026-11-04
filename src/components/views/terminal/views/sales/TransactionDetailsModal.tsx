@@ -119,11 +119,13 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
     // degradación suave: si falla, el panel ⚙ abre con valores vacíos y la
     // exportación sigue funcionando con el fetch propio del exportador).
     try {
-      supabase
-        .from('stores')
-        .select('name, address, phone, email, reeup, nit, bank_account')
-        .eq('id', transaction.store_id)
-        .maybeSingle()
+      Promise.resolve(
+        supabase
+          .from('stores')
+          .select('name, address, phone, email, reeup, nit, bank_account')
+          .eq('id', transaction.store_id)
+          .maybeSingle(),
+      )
         .then(({ data }: { data: unknown }) => {
           if (!cancelled) setSc212StoreConfig((data as typeof sc212StoreConfig) ?? null);
         })
