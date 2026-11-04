@@ -2,7 +2,7 @@
 
 Misión de 5 tareas (multitienda) · Sesión 2026-11-03/04 · Repo Nardian90/Costpro · Base main
 PRs: #1543 (T1, FUSIONADO) · #1546 (T2) · #1547 (T3) · #1548 (T4) · #1549 (T5, incluye este cierre)
-Compuertas de producción: T1 EJECUTADA por el propietario (2026-11-04, PR #1545) · T2 PENDIENTE DE FRASE
+Compuertas de producción: T1 EJECUTADA por el propietario (2026-11-04, PR #1545) · **T2 EJECUTADA — frase emitida por el propietario el 2026-11-04 con orden de fusionar los PRs (ver §3)**
 Regla aplicada en todo el ciclo: estados honestos (regla 10) — nada se declara "RESUELTA VERIFICADA" sin evidencia en el entorno desplegado.
 
 ---
@@ -16,7 +16,7 @@ Regla aplicada en todo el ciclo: estados honestos (regla 10) — nada se declara
 
 ### T2 · CP-SEC-003 + CP-UI-001 (2/5) → **SEC-003 LISTA PARA COMPUERTA · UI-001 DETENIDA (hallazgo de duplicado)** — PR #1546
 - SEC-003 (policy débil `products_update_rls`): precondiciones revalidadas en producción [0 productos tenant-NULL, 0 solapes, btree_gist ON]; batería de aislamiento 5/5 en E2E (cross-tenant bloqueado, miembro+tenant OK, admin según regla, admin de otro tenant y sin membresía bloqueados); flujos que actualizan products revisados (ninguno dependía de la política débil — 0 filas NULL-tenant en producción; service_role y RPC SECURITY DEFINER fuera de alcance); `isolation_test.sql` reparada y en verde; rollback documentado.
-- **HALLAZGO MAYOR (excepción de la misión: premisa contradicha por el código):** producción YA tiene el constraint de exclusión de periodos de comisión con OTRO nombre (`no_overlapping_periods`, definición idéntica, origen committeado `20260714000001` aplicado out-of-band). Aplicar `20261022000002` crearía un DUPLICADO → aplicación DETENIDA en espera de decisión del propietario (opción A recomendada: NO aplicar, archivar como supersada; opción B: aplicar documentando el duplicado).
+- **HALLAZGO MAYOR (excepción de la misión: premisa contradicha por el código):** producción YA tiene el constraint de exclusión de periodos de comisión con OTRO nombre (`no_overlapping_periods`, definición idéntica, origen committeado `20260714000001` aplicado out-of-band). Aplicar `20261022000002` crearía un DUPLICADO → la aplicación quedó detenida hasta decisión del propietario. **DECISIÓN DEL PROPIETARIO (2026-11-04): OPCIÓN B** — aplicó la frase `AUTORIZO SEC-003 UI-001 PROD` a sabiendas del duplicado; ambos constraints conviven documentados con rollback disponible.
 - Batería UI-001 ejecutada igualmente en E2E (8/8: solapado rechazado, contiguo permitido, frontera compartida '[]' rechazada, cancelado no bloquea, cancelar/recrear OK, reabrir con/sin competencia, otro worker). Semántica de periodos de la app revisada: el usuario elige fechas; no hay generación automática que comparta frontera.
 - Decisiones: D2.1 (migraciones existentes NO tocadas), D2.2 (E2E primero), D2.3 (separadas, SEC-003 primero).
 
@@ -53,14 +53,14 @@ Regla aplicada en todo el ciclo: estados honestos (regla 10) — nada se declara
 | Compuerta | Estado | Frase requerida | Nota |
 |---|---|---|---|
 | T1 (SEC-026) | **EJECUTADA por el propietario** (2026-11-04, PR #1545) | `AUTORIZO SEC-026 PROD` (respondida por él en su sesión) | Verificación funcional A–J en verde con rollback; evidencia de aplicación registrada (regla 11) |
-| T2a (SEC-003) | **PENDIENTE** | `AUTORIZO SEC-003 UI-001 PROD` | Lista: probada en E2E, rollback documentado. Aplicar POR SEPARADO y primero |
-| T2b (UI-001) | **DETENIDA — decisión del propietario** | la misma frase, PERO recomendación: NO aplicar (duplicaría `no_overlapping_periods`) | Ver PR #1546 §2 y `docs/audits/SEC-003_UI-001_APLICACION.md` |
+| T2a (SEC-003) | **EJECUTADA (2026-11-04)** — frase emitida por el propietario; HTTP 201; `products_tenant_update` única policy UPDATE [MEDIDO]; sonda RLS con identidad inexistente = 0 filas | `AUTORIZO SEC-003 UI-001 PROD` | Evidencia: `audit-evidence/CP-SEC-003_UI-001/EVIDENCIA_PRODUCCION.md` |
+| T2b (UI-001) | **EJECUTADA — OPCIÓN B del propietario (2026-11-04)** — HTTP 201; dos constraints idénticos documentados; INSERT solapado rechazado con exclusion_violation [MEDIDO] | la misma frase, emitida a sabiendas del duplicado | Limpieza opcional del duplicado (DROP CONSTRAINT commission_payments_no_overlap) a decisión futura del propietario |
 | T3/T4/T5 | N/A — sin compuerta (sin escrituras en producción por diseño) | — | — |
 
 ## 4. Checklist del propietario (en orden)
 
-1. **Revisar y fusionar los PRs tras verificar CI** (independientes, sin fusionar de golpe): #1546 (T2), #1547 (T3), #1548 (T4), #1549 (T5 + este cierre). Verificar que cada uno llega verde en tsc/lint/vitest/contract tests.
-2. **Responder la frase de autorización si quiere aplicar en producción**: `AUTORIZO SEC-003 UI-001 PROD` — decisión recomendada: aplicar SOLO SEC-003 (por separado, primero) y ARCHIVAR UI-001 como supersada (su efecto ya vive en producción como `no_overlapping_periods`; aplicarla crearía un duplicado).
+1. ~~Revisar y fusionar los PRs tras verificar CI~~ — **EJECUTADO por orden expresa del propietario (2026-11-04): los 4 PRs fusionados (#1546, #1547, #1548, #1549), todos con CI verde antes de la fusión.**
+2. ~~Frase de autorización~~ — **RESPONDIDA por el propietario**: `AUTORIZO SEC-003 UI-001 PROD` (aplicación ejecutada; UI-001 en su opción B con duplicado documentado y rollback disponible).
 3. **Endpoints muertos a eliminar**: esta misión NO propone eliminaciones nuevas (los módulos muertos — academy/pick3/wallet y la ruta cash-report/export — ya estaban eliminados por misiones previas). Nada pendiente de decisión por este frente.
 4. **Estrategia para el historial de migraciones de producción** (`schema_migrations`: 12 registros vs 535+ archivos): elegir entre (A, recomendada) ledger nuevo + conciliación automática por huellas (`compute-function-fingerprint.cjs` ampliable) sin tocar `schema_migrations` retroactivamente, o (B) backfill masivo por evidencia (riesgo de "aplicadas" falsas). Propuesta completa en `docs/audits/SEC-005_PARIDAD_REPLAY.md` §10.
 5. **Mantener SEC-025 en espera** hasta el primer negocio cliente adicional (o autorización expresa): el diseño F2/F3 ya está listo por olas; no ejecutar sin el disparador. Además quedan abiertas tres decisiones menores de SEC-005: las 2 sobrecargas muertas E2E-only (`close_cash_shift/5`, `create_devolution_v2/11`), la función prod-only (`profiles_block_privileged_update`: codificar o excepción permanente) y absorber en producción el refactor en curso de `pay_commission` (otro actor).
@@ -70,8 +70,8 @@ Regla aplicada en todo el ciclo: estados honestos (regla 10) — nada se declara
 | Tarea | Estado en inventario |
 |---|---|
 | CP-SEC-026 | RESUELTA — APLICADA Y VERIFICADA EN PRODUCCIÓN (por el propietario, 2026-11-04) |
-| CP-SEC-003 | RESUELTA EN CÓDIGO — PENDIENTE DE APLICAR EN PRODUCCIÓN (compuerta) |
-| CP-UI-001 | PARCIALMENTE RESUELTA — ítem 2 vivo en producción por otra vía; migración duplicada en espera de decisión |
+| CP-SEC-003 | RESUELTA — APLICADA EN PRODUCCIÓN Y VERIFICADA FUNCIONALMENTE (compuerta T2, 2026-11-04) |
+| CP-UI-001 | PARCIALMENTE RESUELTA — ítem 2 APLICADO EN PRODUCCIÓN (opción B: duplicado consciente documentado) |
 | CP-SEC-005 | PARCIALMENTE RESUELTA — paridad replay↔producción demostrada; decisiones menores pendientes |
 | CP-SEC-006 | RESUELTA EN CÓDIGO — backlog superado 52/52 [MEDIDO]; verificación funcional en desplegado pendiente |
 | CP-SEC-025 | EN ESPERA DE DISPARADOR — F1+F2 completos, F3 solo borrador |
