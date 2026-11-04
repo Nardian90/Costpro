@@ -110,6 +110,14 @@ export interface Sc212SourceItem {
   quantity: number;
   price_at_sale: number;
   price_currency?: string | null;
+  /**
+   * FIX-SC212-OVERLAP · precio de línea en CUP (regla canónica del sistema,
+   * la misma de lineTotalCup en cash-report/summary.ts y del modal de
+   * Detalles de la Venta): si > 0, es el precio unitario real de la venta.
+   */
+  price_at_sale_cup?: number | null;
+  /** Tasa de cambio persistida de la línea (fallback del precio CUP). */
+  exchange_rate?: number | null;
   products?: {
     name?: string | null;
     sku?: string | null;
@@ -193,10 +201,6 @@ function formatDateRes11(value: string | null | undefined): string {
   return format(d, 'dd/MM/yyyy');
 }
 
-function lineCurrency(item: Sc212SourceItem): string {
-  return item.price_currency || DEFAULT_CURRENCY;
-}
-
 /** Valor persistido → texto del modelo: null/undefined → '' (nunca «null»). */
 function asText(value: string | null | undefined): string {
   return typeof value === 'string' ? value : '';
@@ -211,16 +215,26 @@ export function buildSc212ModelData(
   prefs: Sc212FieldsPrefs = DEFAULT_SC212_FIELDS_PREFS,
 ): Sc212ModelData {
   const { transaction } = source;
+  // FIX-SC212-OVERLAP · precio de línea: MISMA regla canónica del sistema
+  // que el modal «Detalles de la Venta» (lineTotalCup en cash-report/summary.ts):
+  //   precio CUP = price_at_sale_cup > 0 ? price_at_sale_cup
+  //                                      : price_at_sale × exchange_rate (rate>0, si no 1)
+  // Antes el PDF usaba price_at_sale crudo y, en ventas con conversión
+  // (p. ej. 4.50 × tasa 900 = 4050 CUP), mostraba importes que NO cuadraban
+  // con el total almacenado de la venta ni con lo que el usuario ve en el
+  // modal. Sin redondeos ni transformaciones: los valores persistidos tal cual.
   const lineas = (source.items || []).map((item) => {
-    const importe = (Number(item.quantity) || 0) * (Number(item.price_at_sale) || 0);
-    const moneda = lineCurrency(item);
+    const rate = Number(item.exchange_rate) > 0 ? Number(item.exchange_rate) : 1;
+    const pCup = Number(item.price_at_sale_cup);
+    const precioUnitarioCup = pCup > 0 ? pCup : (Number(item.price_at_sale) || 0) * rate;
+    const importe = (Number(item.quantity) || 0) * precioUnitarioCup;
     return {
       codigo: item.products?.sku || '',
       descripcion: item.products?.name || '',
       unidadMedida: item.products?.unit_of_measure || '',
       cantidad: formatRes11Quantity(item.quantity),
-      precioUnitario: `${formatRes11Money(item.price_at_sale)} ${moneda}`.trim(),
-      importe: `${formatRes11Money(importe)} ${moneda}`.trim(),
+      precioUnitario: `${formatRes11Money(precioUnitarioCup)} CUP`.trim(),
+      importe: `${formatRes11Money(importe)} CUP`.trim(),
       saldoExistencia: '',
     };
   });
@@ -359,7 +373,7 @@ export async function fetchSc212SourceData(
   const [itemsRes, storeRes, sellerRes] = await Promise.all([
     db
       .from('transaction_items')
-      .select('quantity, price_at_sale, price_currency, products(name, sku, unit_of_measure)')
+      .select('quantity, price_at_sale, price_currency, price_at_sale_cup, exchange_rate, products(name, sku, unit_of_measure)')
       .eq('transaction_id', transaction.id)
       .order('created_at', { ascending: true }),
     storeIdForSale
@@ -405,33 +419,87 @@ export async function fetchSc212SourceData(
 // ────────────────────────────────────────────────────────────────────────────
 // Generación del PDF (jsPDF + autoTable — mismas librerías del proyecto)
 // ────────────────────────────────────────────────────────────────────────────
+//
+// FIX-SC212-OVERLAP (2026-11-04) — causa raíz de las superposiciones:
+//  1. El valor se dibujaba en `x + 2` mm, ES DECIR ENCIMA de la etiqueta
+//     (que empieza en `x` y mide 15–30 mm): cada par etiqueta-valor se
+//     auto-solapaba («Dirección:» + «Calle Menocal…» → texto ilegible).
+//  2. El wrap del valor (`{ maxWidth }` de jsPDF) añade líneas DEBAJO de la
+//     baseline, pero la banda avanzaba con paso FIJO de 4,6 mm y el cursor
+//     con anchos teóricos: la segunda línea del wrap («Francisco») pisaba la
+//     fila siguiente. La altura real consumida nunca se medía.
+//
+// Solución: mini-motor de flujo para la banda de identificación —
+//  · etiqueta en `x`, valor en `x + getTextWidth(etiqueta) + GAP`;
+//  · líneas del valor precalculadas con splitTextToSize (interlineado real);
+//  · extents/alturas REALES por par; la fila avanza por la altura MÁXIMA
+//    realmente consumida; el value nunca excede el margen derecho.
+
+/** Altura de una fila de banda con una sola línea (paso base). */
+const BAND_ROW_PITCH = 4.6;
+/** Interlineado de las líneas envueltas adicionales de un mismo valor. */
+const BAND_LINE_H = 4.2;
+/** Separación etiqueta → valor dentro de un par. */
+const BAND_GAP = 1.5;
+/** Separación entre pares en la misma fila de banda. */
+const BAND_FIELD_GAP = 6;
+
+interface BandFieldMetrics {
+  labelText: string;
+  lines: string[];
+  labelW: number;
+  /** Ancho total del par (etiqueta + gap + línea más ancha del valor). */
+  extent: number;
+  /** Altura REAL consumida (filas del wrap incluidas). */
+  height: number;
+}
 
 /**
- * Dibuja un par etiqueta-valor de la banda de identificación del proveedor.
- * El valor se dibuja TAL CUAL (dígitos y espacios de cuentas bancarias
- * intactos); si está vacío se imprime la línea de cumplimentación manual.
- * Devuelve la altura consumida (0 si el campo está oculto — sin hueco).
+ * MIDE un par etiqueta-valor SIN dibujarlo: líneas del valor ya envueltas a
+ * `maxW`, ancho real del par y altura real consumida. Permite decidir si el
+ * par cabe en la fila antes de dibujar (sin efectos).
  */
-function drawProviderField(
+function measureBandField(
+  doc: import('jspdf').jsPDF,
+  label: string,
+  value: string,
+  maxW: number,
+  fixedBlank?: boolean,
+): BandFieldMetrics {
+  doc.setFont('helvetica', 'bold');
+  const labelText = `${label}:`;
+  const labelW = doc.getTextWidth(labelText);
+  doc.setFont('helvetica', 'normal');
+  const text = value || (fixedBlank ? '__________' : RES11_BLANK_LINE);
+  const lines = doc.splitTextToSize(text, Math.max(maxW, 10)) as string[];
+  const widest = lines.reduce((m, l) => Math.max(m, doc.getTextWidth(l)), 0);
+  return {
+    labelText,
+    lines,
+    labelW,
+    extent: labelW + BAND_GAP + widest,
+    height: BAND_ROW_PITCH + (lines.length - 1) * BAND_LINE_H,
+  };
+}
+
+/**
+ * Dibuja un par ya medido: etiqueta en negrita en `x`, valor DEBAJO DEL
+ * ANCHO REAL de la etiqueta (nunca encima), líneas envueltas con el
+ * interlineado real.
+ */
+function drawBandField(
   doc: import('jspdf').jsPDF,
   x: number,
   y: number,
-  maxWidth: number,
-  label: string,
-  value: string,
-  opts: { valueAlign?: 'left' | 'right'; fixedBlank?: boolean } = {},
-): number {
+  m: BandFieldMetrics,
+): void {
   doc.setFont('helvetica', 'bold');
-  doc.text(`${label}:`, x, y);
+  doc.text(m.labelText, x, y);
   doc.setFont('helvetica', 'normal');
-  if (value) {
-    doc.text(value, x + 2, y, { maxWidth });
-  } else if (opts.fixedBlank) {
-    doc.text('__________', x + 2, y, { maxWidth });
-  } else {
-    doc.text(RES11_BLANK_LINE, x + 2, y, { maxWidth });
-  }
-  return 4.6;
+  const valueX = x + m.labelW + BAND_GAP;
+  m.lines.forEach((line, i) => {
+    doc.text(line, valueX, y + i * BAND_LINE_H);
+  });
 }
 
 export async function renderSc212Pdf(model: Sc212ModelData) {
@@ -454,74 +522,144 @@ export async function renderSc212Pdf(model: Sc212ModelData) {
   doc.setFontSize(9);
   doc.setTextColor(0, 0, 0);
 
-  // Dato 12: número consecutivo
-  doc.setFont('helvetica', 'bold');
-  doc.text('No. Consecutivo:', marginX + 4, y);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.numeroConsecutivo || RES11_BLANK_LINE, marginX + 38, y);
-
-  // ── Dato 2: proveedor (entidad vendedora) — desde la configuración de la
-  //    tienda de la venta (CP-SALES-024). El NIT comparte línea con el
-  //    nombre; el resto fluye en la(s) línea(s) siguiente(s) SIN huecos
-  //    cuando un campo está oculto o vacío.
-  const nit = field('proveedorNIT');
-  y += 6;
-  doc.setFont('helvetica', 'bold');
-  doc.text('PROVEEDOR (entidad vendedora) — Nombre:', marginX + 4, y);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.proveedorNombre || RES11_BLANK_LINE, marginX + 74, y, { maxWidth: 60 });
-  if (nit.visible) {
+  // Dato 12: número consecutivo (valor tras el ancho REAL de la etiqueta)
+  {
     doc.setFont('helvetica', 'bold');
-    doc.text(`${nit.label}:`, marginX + 140, y);
+    const labelText = 'No. Consecutivo:';
+    doc.text(labelText, marginX + 4, y);
+    const labelW = doc.getTextWidth(labelText);
     doc.setFont('helvetica', 'normal');
-    doc.text(nit.value || RES11_BLANK_LINE, marginX + 150, y, { maxWidth: 45 });
+    doc.text(model.numeroConsecutivo || RES11_BLANK_LINE, marginX + 4 + labelW + BAND_GAP, y);
   }
 
+  // ── Dato 2: proveedor (entidad vendedora) — desde la configuración de la
+  //    tienda de la venta (CP-SALES-024). Fila 1: Nombre (envuelve con altura
+  //    real medida) + NIT reservado a la derecha, ambos con límites que
+  //    respetan el margen derecho. FIX-SC212-OVERLAP.
+  const nit = field('proveedorNIT');
+  const rightLimit = pageWidth - marginX - 2;
+  y += 6;
+  let providerRowH = BAND_ROW_PITCH;
+  {
+    doc.setFont('helvetica', 'bold');
+    const provLabelText = 'PROVEEDOR (entidad vendedora) — Nombre:';
+    doc.text(provLabelText, marginX + 4, y);
+    const provLabelW = doc.getTextWidth(provLabelText);
+    doc.setFont('helvetica', 'normal');
+
+    // Reserva del par NIT a la derecha (etiqueta + valor hasta el margen).
+    let nitRowH = 0;
+    let nitLabelX = 0;
+    let nitLabelW = 0;
+    let nitLabelY = y;
+    if (nit.visible) {
+      doc.setFont('helvetica', 'bold');
+      nitLabelW = doc.getTextWidth(`${nit.label}:`);
+      nitLabelX = rightLimit - 40 - 3 - nitLabelW - 3;
+      nitRowH = BAND_ROW_PITCH;
+    }
+
+    // Nombre: envuelto a lo disponible SIN invadir la zona del NIT.
+    const nameX = marginX + 4 + provLabelW + BAND_GAP;
+    const nameMaxW = Math.max(20, (nit.visible ? nitLabelX : rightLimit) - nameX - 4);
+    doc.setFont('helvetica', 'normal');
+    const nameText = model.proveedorNombre || RES11_BLANK_LINE;
+    const nameLines = doc.splitTextToSize(nameText, nameMaxW) as string[];
+    nameLines.forEach((line, i) => doc.text(line, nameX, y + i * BAND_LINE_H));
+    providerRowH = BAND_ROW_PITCH + (nameLines.length - 1) * BAND_LINE_H;
+
+    if (nit.visible) {
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${nit.label}:`, nitLabelX, nitLabelY);
+      doc.setFont('helvetica', 'normal');
+      const nitValueX = nitLabelX + nitLabelW + 3;
+      const nitLines = doc.splitTextToSize(nit.value || RES11_BLANK_LINE, 40) as string[];
+      nitLines.forEach((line, i) => doc.text(line, nitValueX, nitLabelY + i * BAND_LINE_H));
+      nitRowH = BAND_ROW_PITCH + (nitLines.length - 1) * BAND_LINE_H;
+    }
+    providerRowH = Math.max(providerRowH, nitRowH);
+  }
+  // La banda de identificación empieza DEBAJO de la altura REAL consumida.
+  y += providerRowH + 1.2;
+
   // Banda de identificación: solo los campos visibles, empaquetados sin
-  // huecos. Máximos por campo para que textos largos no se solapen.
+  // huecos, con anchos y ALTURAS reales (FIX-SC212-OVERLAP). Máximos por
+  // campo para que textos largos envuelvan sin invadir vecinos.
   const bandFields: Array<{ id: string; maxW: number; fixedBlank?: boolean }> = [
     { id: 'proveedorDireccion', maxW: 52 },
     { id: 'proveedorCodigo', maxW: 30 },
     { id: 'proveedorCuentaBancaria', maxW: 34, fixedBlank: true },
     { id: 'proveedorSucursalBancaria', maxW: 30, fixedBlank: true },
-    { id: 'proveedorTelefono', maxW: 26 },
+    // ≥ 28: la línea de cumplimentación manual (15 «_» ≈ 26,5 mm) no debe
+    // envolver nunca (un maxW menor suelta un «_» huérfano en la fila siguiente).
+    { id: 'proveedorTelefono', maxW: 28 },
     { id: 'proveedorEmail', maxW: 58 },
   ];
 
   let cursorX = marginX + 4;
-  y += 5;
+  let rowAnchorY = y;
+  let rowMaxH = 0;
   for (const bf of bandFields) {
     const f = field(bf.id);
     if (!f.visible) continue; // campo oculto → no dibuja ni deja hueco
-    const labelW = doc.getTextWidth(`${f.label}:`) + 2;
-    const valueW = f.value ? doc.getTextWidth(f.value) : doc.getTextWidth(bf.fixedBlank ? '__________' : RES11_BLANK_LINE);
-    const needed = labelW + Math.min(valueW, bf.maxW);
-    const fits = cursorX + needed <= pageWidth - marginX - 2;
+    const m = measureBandField(doc, f.label, f.value, bf.maxW, bf.fixedBlank);
+    const fits = cursorX + m.extent <= rightLimit;
     if (!fits && cursorX > marginX + 4) {
-      // No cabe en esta línea → siguiente línea (wrap de banda)
-      y += 4.6;
+      // No cabe en esta línea → nueva fila de banda: la Y avanza por la
+      // altura REAL de la fila anterior (no por un paso fijo).
+      y = rowAnchorY + rowMaxH + 1.0;
+      rowAnchorY = y;
+      rowMaxH = 0;
       cursorX = marginX + 4;
     }
-    drawProviderField(doc, cursorX, y, bf.maxW, f.label, f.value, { fixedBlank: bf.fixedBlank });
-    cursorX += needed + 6;
+    drawBandField(doc, cursorX, y, m);
+    cursorX += m.extent + BAND_FIELD_GAP;
+    rowMaxH = Math.max(rowMaxH, m.height);
   }
+  y = rowAnchorY + rowMaxH;
 
-  // ── Dato 3: comprador ──
-  y += 8;
-  doc.setFont('helvetica', 'bold');
-  doc.text('COMPRADOR — Nombre:', marginX + 4, y);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.compradorNombre || RES11_BLANK_LINE, marginX + 44, y, { maxWidth: 80 });
-  doc.setFont('helvetica', 'bold');
-  doc.text('Dirección:', marginX + 130, y);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.compradorDireccion || RES11_BLANK_LINE, marginX + 148, y, { maxWidth: 60 });
-  doc.setFont('helvetica', 'bold');
-  doc.text('Código:', marginX + 4, y + 5);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.compradorCodigo || RES11_BLANK_LINE, marginX + 20, y + 5);
+  // ── Dato 3: comprador ── medido, con envoltura acotada y altura real.
+  y += 7;
+  let compradorRowH = BAND_ROW_PITCH;
+  {
+    doc.setFont('helvetica', 'bold');
+    const compLabelText = 'COMPRADOR — Nombre:';
+    doc.text(compLabelText, marginX + 4, y);
+    const compLabelW = doc.getTextWidth(compLabelText);
+    const dirLabelText = 'Dirección:';
+    const dirLabelW = doc.getTextWidth(dirLabelText);
+    doc.setFont('helvetica', 'normal');
 
-  y += 11;
+    // «Dirección:» reservado a la derecha con espacio garantizado para su
+    // valor; el nombre se envuelve solo hasta esa zona (nunca la invade).
+    const dirValueMaxW = 52;
+    const dirLabelX = rightLimit - dirValueMaxW - 3 - dirLabelW - 3;
+    const compNameX = marginX + 4 + compLabelW + BAND_GAP;
+    const compNameMaxW = Math.max(18, dirLabelX - compNameX - 5);
+    const compNameText = model.compradorNombre || RES11_BLANK_LINE;
+    const compNameLines = doc.splitTextToSize(compNameText, compNameMaxW) as string[];
+    compNameLines.forEach((line, i) => doc.text(line, compNameX, y + i * BAND_LINE_H));
+    compradorRowH = BAND_ROW_PITCH + (compNameLines.length - 1) * BAND_LINE_H;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text(dirLabelText, dirLabelX, y);
+    doc.setFont('helvetica', 'normal');
+    const dirValueX = dirLabelX + dirLabelW + 3;
+    const dirLines = doc.splitTextToSize(model.compradorDireccion || RES11_BLANK_LINE, dirValueMaxW) as string[];
+    dirLines.forEach((line, i) => doc.text(line, dirValueX, y + i * BAND_LINE_H));
+    compradorRowH = Math.max(compradorRowH, BAND_ROW_PITCH + (dirLines.length - 1) * BAND_LINE_H);
+  }
+  // «Código:» debajo de la altura REAL del bloque comprador (no y+5 fijo).
+  const codigoY = y + compradorRowH + 1.2;
+  {
+    doc.setFont('helvetica', 'bold');
+    const codLabelText = 'Código:';
+    doc.text(codLabelText, marginX + 4, codigoY);
+    const codLabelW = doc.getTextWidth(codLabelText);
+    doc.setFont('helvetica', 'normal');
+    doc.text(model.compradorCodigo || RES11_BLANK_LINE, marginX + 4 + codLabelW + BAND_GAP, codigoY);
+  }
+  y = codigoY + BAND_ROW_PITCH;
   // Dato 4: operación
   doc.setFont('helvetica', 'bold');
   doc.text('OPERACIÓN:', marginX + 4, y);
