@@ -319,7 +319,7 @@ test.describe('Tipo de artículo — servicio vs producto físico', () => {
   });
 
   test('E2E-SVC-008 (P1) UI: Cobrar → Venta Completada con el servicio (stock 0)', async ({ page }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(300_000); // dev-server: compilación fría de POS puede exceder 120s
     await sb.update('profiles', `id=eq.${adminId}`, { active_store_id: store.id });
     const session = { token: adminToken, userId: adminId, email: ADMIN_EMAIL };
     await page.addInitScript(([key, val]: any) => window.localStorage.setItem(key, val), [

@@ -57,6 +57,10 @@ async function injectSupabaseSession(page: Page) {
 
 test.describe('V2.4.5 UI: Modal de Reversión', () => {
   test('modal ReverseDocumentModal se abre al click en botón Revertir (vista ventas)', async ({ page }) => {
+    // COSTPRO-E2E-REACTIVATION-001: el servidor dev compila las vistas al
+    // primer hit (60s por defecto se agota); CI con build de producción no
+    // lo necesita. Acomodo de entorno, sin debilitar aserciones.
+    test.setTimeout(240_000);
     await injectSupabaseSession(page);
     await page.goto('/?view=sales');
     await page.waitForLoadState('networkidle');
@@ -121,6 +125,10 @@ test.describe('V2.4.5 UI: Modal de Reversión', () => {
   });
 
   test('modal ReverseDocumentModal se abre en vista devoluciones', async ({ page }) => {
+    // COSTPRO-E2E-REACTIVATION-001: el servidor dev compila las vistas al
+    // primer hit (60s por defecto se agota); CI con build de producción no
+    // lo necesita. Acomodo de entorno, sin debilitar aserciones.
+    test.setTimeout(240_000);
     await injectSupabaseSession(page);
     await page.goto('/?view=devolutions');
     await page.waitForLoadState('networkidle');
