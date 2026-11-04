@@ -1,0 +1,452 @@
+[
+ {
+  "grupo": "audit_logs|SELECT",
+  "politicas": [
+   {
+    "name": "Audit logs select",
+    "layer": "usuario",
+    "roles": "authenticated"
+   },
+   {
+    "name": "audit_logs_select_own_and_managed",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "cash_closures|INSERT",
+  "politicas": [
+   {
+    "name": "cash_closures_insert_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "cash_closures_tenant_insert_with_check",
+    "layer": "otra",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "categories|ALL",
+  "politicas": [
+   {
+    "name": "Categories unified",
+    "layer": "otra",
+    "roles": "authenticated"
+   },
+   {
+    "name": "categories_store_access",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "commission_payments|SELECT",
+  "politicas": [
+   {
+    "name": "commission_payments_select",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "commission_payments_tenant_select",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "commission_rules|SELECT",
+  "politicas": [
+   {
+    "name": "commission_rules_select",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "commission_rules_tenant_select",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "devolutions|INSERT",
+  "politicas": [
+   {
+    "name": "devolutions_insert_own_store",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "devolutions_tenant_insert_with_check",
+    "layer": "otra",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "inventory|INSERT",
+  "politicas": [
+   {
+    "name": "inventory_deny_insert",
+    "layer": "otra",
+    "roles": "authenticated"
+   },
+   {
+    "name": "inventory_insert_auth",
+    "layer": "usuario",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "inventory_adjustments|INSERT",
+  "politicas": [
+   {
+    "name": "inventory_adjustments_insert_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "inventory_adjustments_tenant_insert_with_check",
+    "layer": "otra",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "kardex_entries|INSERT",
+  "politicas": [
+   {
+    "name": "kardex_entries_tenant_insert_with_check",
+    "layer": "otra",
+    "roles": "authenticated"
+   },
+   {
+    "name": "kardex_insert_own_store",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "payment_transactions|INSERT",
+  "politicas": [
+   {
+    "name": "payment_transactions_insert_own_store",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "payment_transactions_tenant_insert_with_check",
+    "layer": "otra",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "product_cost_sheets|INSERT",
+  "politicas": [
+   {
+    "name": "pcs_insert_auth",
+    "layer": "usuario",
+    "roles": "authenticated"
+   },
+   {
+    "name": "product_cost_sheets_insert_roles",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "product_cost_sheets|SELECT",
+  "politicas": [
+   {
+    "name": "product_cost_sheets_select_authenticated",
+    "layer": "otra",
+    "roles": "authenticated"
+   },
+   {
+    "name": "product_cost_sheets_select_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "product_variants|SELECT",
+  "politicas": [
+   {
+    "name": "Variantes públicas - lectura autenticada",
+    "layer": "otra",
+    "roles": "authenticated"
+   },
+   {
+    "name": "Variants store isolation",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "products|DELETE",
+  "politicas": [
+   {
+    "name": "products_delete_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "products_tenant_delete",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "products|SELECT",
+  "politicas": [
+   {
+    "name": "products_select_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "products_tenant_select",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "products|UPDATE",
+  "politicas": [
+   {
+    "name": "products_tenant_update",
+    "layer": "tenant",
+    "roles": "authenticated"
+   },
+   {
+    "name": "products_update_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "receipts|SELECT",
+  "politicas": [
+   {
+    "name": "receipts_select_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "receipts_tenant_select",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "receipts|UPDATE",
+  "politicas": [
+   {
+    "name": "receipts_tenant_update",
+    "layer": "tenant",
+    "roles": "authenticated"
+   },
+   {
+    "name": "receipts_update_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "sales_transactions|SELECT",
+  "politicas": [
+   {
+    "name": "sales_transactions_select",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "sales_transactions_tenant_select",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "stock_movements|DELETE",
+  "politicas": [
+   {
+    "name": "stock_movements_delete_rls",
+    "layer": "otra",
+    "roles": "authenticated"
+   },
+   {
+    "name": "stock_movements_tenant_delete",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "store_cost_templates|SELECT",
+  "politicas": [
+   {
+    "name": "store_cost_templates_select_authenticated",
+    "layer": "otra",
+    "roles": "authenticated"
+   },
+   {
+    "name": "store_cost_templates_select_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "stores|DELETE",
+  "politicas": [
+   {
+    "name": "stores_delete_admin_only",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "stores_tenant_delete",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "stores|SELECT",
+  "politicas": [
+   {
+    "name": "stores_select_authenticated",
+    "layer": "otra",
+    "roles": "authenticated"
+   },
+   {
+    "name": "stores_tenant_select",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "stores|UPDATE",
+  "politicas": [
+   {
+    "name": "stores_tenant_update",
+    "layer": "tenant",
+    "roles": "authenticated"
+   },
+   {
+    "name": "stores_update_member_roles",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "tenants|SELECT",
+  "politicas": [
+   {
+    "name": "tenants_select_own_or_admin",
+    "layer": "tenant",
+    "roles": "authenticated"
+   },
+   {
+    "name": "tenants_select_own_or_store_member",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "transactions|DELETE",
+  "politicas": [
+   {
+    "name": "transactions_delete_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "transactions_tenant_delete",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "transactions|SELECT",
+  "politicas": [
+   {
+    "name": "transactions_select_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "transactions_tenant_select",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "transactions|UPDATE",
+  "politicas": [
+   {
+    "name": "transactions_tenant_update",
+    "layer": "tenant",
+    "roles": "authenticated"
+   },
+   {
+    "name": "transactions_update_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "transfers|SELECT",
+  "politicas": [
+   {
+    "name": "transfers_select_rls",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "transfers_tenant_select",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ },
+ {
+  "grupo": "workers|SELECT",
+  "politicas": [
+   {
+    "name": "workers_select_authenticated",
+    "layer": "membresia",
+    "roles": "authenticated"
+   },
+   {
+    "name": "workers_tenant_select",
+    "layer": "tenant",
+    "roles": "authenticated"
+   }
+  ]
+ }
+]
