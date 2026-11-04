@@ -52,6 +52,13 @@ jobs:
         env:
           CI: true
 
+      # CP-SEC-006 (T4, 2026-11-04): barrera anti-desincronización con
+      # docs/SECURITY_CI_GATE_FINDINGS_BACKLOG.md — el backlog está en 0; si un
+      # endpoint de mutación pierde Zod o auth, este paso ROMPE el CI aunque el
+      # backlog no se haya actualizado. Sin credenciales (estático).
+      - name: SEC-TS gate (endpoints sin Zod/auth)
+        run: node scripts/ci-gate-ts-checks.js
+
       - name: Build
         run: NODE_OPTIONS="--max-old-space-size=4096" bun run build
 
