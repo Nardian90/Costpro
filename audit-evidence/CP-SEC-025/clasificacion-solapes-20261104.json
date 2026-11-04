@@ -1,0 +1,655 @@
+{
+ "groups": [
+  {
+   "grupo": "audit_logs|SELECT",
+   "politicas": [
+    {
+     "name": "Audit logs select",
+     "layer": "usuario"
+    },
+    {
+     "name": "audit_logs_select_own_and_managed",
+     "layer": "membresia"
+    },
+    {
+     "name": "cta_family_audit_logs_select",
+     "layer": "abierta"
+    }
+   ]
+  },
+  {
+   "grupo": "audit_logs|INSERT",
+   "politicas": [
+    {
+     "name": "audit_logs_insert_authenticated",
+     "layer": "usuario"
+    },
+    {
+     "name": "cta_family_audit_logs_insert",
+     "layer": "abierta"
+    }
+   ]
+  },
+  {
+   "grupo": "cash_closures|INSERT",
+   "politicas": [
+    {
+     "name": "cash_closures_insert_rls",
+     "layer": "membresia"
+    },
+    {
+     "name": "cash_closures_tenant_insert_with_check",
+     "layer": "otra"
+    }
+   ]
+  },
+  {
+   "grupo": "cash_movements|SELECT",
+   "politicas": [
+    {
+     "name": "Cash movements access",
+     "layer": "membresia"
+    },
+    {
+     "name": "cash_movements_select",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "cash_movements|INSERT",
+   "politicas": [
+    {
+     "name": "Cash movements insert",
+     "layer": "membresia"
+    },
+    {
+     "name": "cash_movements_insert",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "categories|ALL",
+   "politicas": [
+    {
+     "name": "Categories unified",
+     "layer": "otra"
+    },
+    {
+     "name": "categories_store_access",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "commission_payments|SELECT",
+   "politicas": [
+    {
+     "name": "commission_payments_select",
+     "layer": "membresia"
+    },
+    {
+     "name": "commission_payments_tenant_select",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "commission_rules|SELECT",
+   "politicas": [
+    {
+     "name": "commission_rules_select",
+     "layer": "membresia"
+    },
+    {
+     "name": "commission_rules_tenant_select",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "devolutions|INSERT",
+   "politicas": [
+    {
+     "name": "devolutions_insert_own_store",
+     "layer": "membresia"
+    },
+    {
+     "name": "devolutions_tenant_insert_with_check",
+     "layer": "otra"
+    }
+   ]
+  },
+  {
+   "grupo": "inventory|INSERT",
+   "politicas": [
+    {
+     "name": "inventory_deny_insert",
+     "layer": "otra"
+    },
+    {
+     "name": "inventory_insert_auth",
+     "layer": "usuario"
+    }
+   ]
+  },
+  {
+   "grupo": "inventory_adjustments|INSERT",
+   "politicas": [
+    {
+     "name": "inventory_adjustments_insert_rls",
+     "layer": "membresia"
+    },
+    {
+     "name": "inventory_adjustments_tenant_insert_with_check",
+     "layer": "otra"
+    }
+   ]
+  },
+  {
+   "grupo": "kardex_entries|INSERT",
+   "politicas": [
+    {
+     "name": "kardex_entries_tenant_insert_with_check",
+     "layer": "otra"
+    },
+    {
+     "name": "kardex_insert_own_store",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "ofertas|SELECT",
+   "politicas": [
+    {
+     "name": "Users can view ofertas from their stores",
+     "layer": "membresia"
+    },
+    {
+     "name": "ofertas_select_rls",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "payment_transactions|SELECT",
+   "politicas": [
+    {
+     "name": "cta_family_payment_transactions_select",
+     "layer": "abierta"
+    },
+    {
+     "name": "payment_transactions_select_own_store",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "payment_transactions|UPDATE",
+   "politicas": [
+    {
+     "name": "cta_family_payment_transactions_update",
+     "layer": "abierta"
+    },
+    {
+     "name": "payment_transactions_update_own_store",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "payment_transactions|INSERT",
+   "politicas": [
+    {
+     "name": "payment_transactions_insert_own_store",
+     "layer": "membresia"
+    },
+    {
+     "name": "payment_transactions_tenant_insert_with_check",
+     "layer": "otra"
+    }
+   ]
+  },
+  {
+   "grupo": "product_cost_sheets|INSERT",
+   "politicas": [
+    {
+     "name": "pcs_insert_auth",
+     "layer": "usuario"
+    },
+    {
+     "name": "product_cost_sheets_insert_roles",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "product_cost_sheets|SELECT",
+   "politicas": [
+    {
+     "name": "product_cost_sheets_select_authenticated",
+     "layer": "otra"
+    },
+    {
+     "name": "product_cost_sheets_select_rls",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "product_variants|SELECT",
+   "politicas": [
+    {
+     "name": "Variantes públicas - lectura autenticada",
+     "layer": "otra"
+    },
+    {
+     "name": "Variants store isolation",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "products|DELETE",
+   "politicas": [
+    {
+     "name": "products_delete_rls",
+     "layer": "membresia"
+    },
+    {
+     "name": "products_tenant_delete",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "products|SELECT",
+   "politicas": [
+    {
+     "name": "products_select_rls",
+     "layer": "membresia"
+    },
+    {
+     "name": "products_tenant_select",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "products|UPDATE",
+   "politicas": [
+    {
+     "name": "products_tenant_update",
+     "layer": "tenant"
+    },
+    {
+     "name": "products_update_rls",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "profiles|SELECT",
+   "politicas": [
+    {
+     "name": "cta_family_profiles_select",
+     "layer": "abierta"
+    },
+    {
+     "name": "profiles_tenant_select",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "purchase_order_items|INSERT",
+   "politicas": [
+    {
+     "name": "po_items_insert_authenticated",
+     "layer": "membresia"
+    },
+    {
+     "name": "poi_ins",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "purchase_order_items|SELECT",
+   "politicas": [
+    {
+     "name": "po_items_select_authenticated",
+     "layer": "membresia"
+    },
+    {
+     "name": "poi_sel",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "purchase_orders|INSERT",
+   "politicas": [
+    {
+     "name": "po_ins",
+     "layer": "membresia"
+    },
+    {
+     "name": "po_insert_authenticated",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "purchase_orders|SELECT",
+   "politicas": [
+    {
+     "name": "po_sel",
+     "layer": "membresia"
+    },
+    {
+     "name": "po_select_authenticated",
+     "layer": "membresia"
+    },
+    {
+     "name": "purchase_orders_select_rls",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "purchase_orders|UPDATE",
+   "politicas": [
+    {
+     "name": "po_upd",
+     "layer": "membresia"
+    },
+    {
+     "name": "po_update_authenticated",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "receipts|SELECT",
+   "politicas": [
+    {
+     "name": "receipts_select_rls",
+     "layer": "membresia"
+    },
+    {
+     "name": "receipts_tenant_select",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "receipts|UPDATE",
+   "politicas": [
+    {
+     "name": "receipts_tenant_update",
+     "layer": "tenant"
+    },
+    {
+     "name": "receipts_update_rls",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "sales_transactions|SELECT",
+   "politicas": [
+    {
+     "name": "sales_transactions_select",
+     "layer": "membresia"
+    },
+    {
+     "name": "sales_transactions_tenant_select",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "stock_movements|INSERT",
+   "politicas": [
+    {
+     "name": "Warehouse can insert stock movements",
+     "layer": "otra"
+    },
+    {
+     "name": "stock_movements_insert_rls",
+     "layer": "otra"
+    }
+   ]
+  },
+  {
+   "grupo": "stock_movements|DELETE",
+   "politicas": [
+    {
+     "name": "stock_movements_delete_rls",
+     "layer": "otra"
+    },
+    {
+     "name": "stock_movements_tenant_delete",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "store_cost_templates|SELECT",
+   "politicas": [
+    {
+     "name": "store_cost_templates_select_authenticated",
+     "layer": "otra"
+    },
+    {
+     "name": "store_cost_templates_select_rls",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "stores|DELETE",
+   "politicas": [
+    {
+     "name": "stores_delete_admin_only",
+     "layer": "membresia"
+    },
+    {
+     "name": "stores_tenant_delete",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "stores|SELECT",
+   "politicas": [
+    {
+     "name": "stores_select_authenticated",
+     "layer": "otra"
+    },
+    {
+     "name": "stores_tenant_select",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "stores|UPDATE",
+   "politicas": [
+    {
+     "name": "stores_tenant_update",
+     "layer": "tenant"
+    },
+    {
+     "name": "stores_update_member_roles",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "tax_configurations|SELECT",
+   "politicas": [
+    {
+     "name": "cta_family_tax_configurations_select",
+     "layer": "abierta"
+    },
+    {
+     "name": "tax_configurations_select",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "tenants|SELECT",
+   "politicas": [
+    {
+     "name": "tenants_select_own_or_admin",
+     "layer": "tenant"
+    },
+    {
+     "name": "tenants_select_own_or_store_member",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "transactions|SELECT",
+   "politicas": [
+    {
+     "name": "cta_family_transactions_select",
+     "layer": "abierta"
+    },
+    {
+     "name": "transactions_select_rls",
+     "layer": "membresia"
+    },
+    {
+     "name": "transactions_tenant_select",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "transactions|UPDATE",
+   "politicas": [
+    {
+     "name": "cta_family_transactions_update",
+     "layer": "abierta"
+    },
+    {
+     "name": "transactions_tenant_update",
+     "layer": "tenant"
+    },
+    {
+     "name": "transactions_update_rls",
+     "layer": "membresia"
+    }
+   ]
+  },
+  {
+   "grupo": "transactions|DELETE",
+   "politicas": [
+    {
+     "name": "transactions_delete_rls",
+     "layer": "membresia"
+    },
+    {
+     "name": "transactions_tenant_delete",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "transfers|SELECT",
+   "politicas": [
+    {
+     "name": "transfers_select_rls",
+     "layer": "membresia"
+    },
+    {
+     "name": "transfers_tenant_select",
+     "layer": "tenant"
+    }
+   ]
+  },
+  {
+   "grupo": "wallet_accounts|SELECT",
+   "politicas": [
+    {
+     "name": "Admins can view all wallet accounts",
+     "layer": "usuario"
+    },
+    {
+     "name": "Users can view own wallet accounts",
+     "layer": "usuario"
+    }
+   ]
+  },
+  {
+   "grupo": "wallet_transactions|SELECT",
+   "politicas": [
+    {
+     "name": "Admins can view all wallet transactions",
+     "layer": "usuario"
+    },
+    {
+     "name": "Users can view own wallet transactions",
+     "layer": "usuario"
+    }
+   ]
+  },
+  {
+   "grupo": "workers|SELECT",
+   "politicas": [
+    {
+     "name": "workers_select_authenticated",
+     "layer": "membresia"
+    },
+    {
+     "name": "workers_tenant_select",
+     "layer": "tenant"
+    }
+   ]
+  }
+ ],
+ "mixed": [
+  "audit_logs|SELECT",
+  "audit_logs|INSERT",
+  "cash_closures|INSERT",
+  "categories|ALL",
+  "commission_payments|SELECT",
+  "commission_rules|SELECT",
+  "devolutions|INSERT",
+  "inventory|INSERT",
+  "inventory_adjustments|INSERT",
+  "kardex_entries|INSERT",
+  "payment_transactions|SELECT",
+  "payment_transactions|UPDATE",
+  "payment_transactions|INSERT",
+  "product_cost_sheets|INSERT",
+  "product_cost_sheets|SELECT",
+  "product_variants|SELECT",
+  "products|DELETE",
+  "products|SELECT",
+  "products|UPDATE",
+  "profiles|SELECT",
+  "receipts|SELECT",
+  "receipts|UPDATE",
+  "sales_transactions|SELECT",
+  "stock_movements|DELETE",
+  "store_cost_templates|SELECT",
+  "stores|DELETE",
+  "stores|SELECT",
+  "stores|UPDATE",
+  "tax_configurations|SELECT",
+  "tenants|SELECT",
+  "transactions|SELECT",
+  "transactions|UPDATE",
+  "transactions|DELETE",
+  "transfers|SELECT",
+  "workers|SELECT"
+ ]
+}
