@@ -1,0 +1,6 @@
+[
+ "close_cash_shift/p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid",
+ "create_devolution_v2/p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text, p_operation_date timestamp with time zone",
+ "e2e_hard_delete_store/p_store_id uuid",
+ "e2e_hard_delete_user/p_user_id uuid"
+]
