@@ -78,6 +78,9 @@ export const storeSchema = z.object({
   reeup: z.string().nullable().optional(),
   nit: z.string().nullable().optional(),
   bank_account: z.string().nullable().optional(),
+  // CP-STORES-BANK-BRANCH (Objetivo A): sin esta entrada el safeParse la
+  // eliminaba del objeto y el modal «Info» mostraba el campo vacío.
+  bank_branch: z.string().nullable().optional(),
   signature_url: z.string().nullable().optional(),
   stamp_url: z.string().nullable().optional(),
   latitude: z.number().nullable().optional(),

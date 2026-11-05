@@ -148,6 +148,7 @@ function invalidateClassifier(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ['party-change-log'] });
   qc.invalidateQueries({ queryKey: ['suppliers'] });
   qc.invalidateQueries({ queryKey: ['classifier-parties-lite'] });
+  qc.invalidateQueries({ queryKey: ['classifier-parties-lite-supplier'] });
 }
 
 export interface CreateMasterPartyPayload {

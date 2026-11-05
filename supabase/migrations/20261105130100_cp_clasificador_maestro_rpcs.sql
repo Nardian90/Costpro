@@ -944,18 +944,32 @@ BEGIN
     END IF;
   END IF;
 
+  -- REGLA DE LA MISIÓN: historial = OPERACIONES reales (ventas o recepciones).
+  -- Los vínculos locales vacíos (customers/suppliers.master_party_id sin
+  -- operaciones) NO son historial: se DESVINCULAN (master_party_id = NULL,
+  -- conservando los datos locales) y el maestro puede eliminarse.
+  -- Historial = ventas (customer_id) o recepciones (snapshot textual del
+  -- proveedor dentro de la organización: receipts no porta FK).
   SELECT EXISTS (SELECT 1 FROM public.transactions t WHERE t.customer_id = p_party_id)
-      OR EXISTS (SELECT 1 FROM public.receipts r WHERE r.supplier_id = p_party_id)
-      OR EXISTS (SELECT 1 FROM public.customers c WHERE c.master_party_id = p_party_id)
-      OR EXISTS (SELECT 1 FROM public.suppliers s2 WHERE s2.master_party_id = p_party_id)
+      OR EXISTS (
+        SELECT 1 FROM public.receipts r
+          JOIN public.stores st ON st.id = r.store_id
+         WHERE st.tenant_id = v_party.tenant_id
+           AND (r.supplier = v_party.name
+                OR (COALESCE(v_party.tax_id,'') <> '' AND r.supplier_tax_id = v_party.tax_id))
+      )
     INTO v_history;
   IF v_history THEN
-    RAISE EXCEPTION 'ERR_PARTY_HAS_HISTORY: el tercero % tiene operaciones o vínculos históricos; solo puede desactivarse (status=archived)', p_party_id;
+    RAISE EXCEPTION 'ERR_PARTY_HAS_HISTORY: el tercero % tiene ventas o recepciones históricas; solo puede desactivarse (status=archived)', p_party_id;
   END IF;
 
-  -- Sin historial → eliminación permitida. party_change_log (FK sin CASCADE)
-  -- se elimina primero: es la traza del propio registro; la huella transversal
-  -- permanece en audit_logs (sin FK).
+  -- Sin operaciones → eliminación permitida. Las filas locales vinculadas se
+  -- conservan con master_party_id = NULL (la identidad compartida desaparece,
+  -- los datos de la tienda quedan intactos). party_change_log (FK sin
+  -- CASCADE) se elimina primero: es la traza del propio registro; la huella
+  -- transversal permanece en audit_logs (sin FK).
+  UPDATE public.customers SET master_party_id = NULL WHERE master_party_id = p_party_id;
+  UPDATE public.suppliers SET master_party_id = NULL WHERE master_party_id = p_party_id;
   DELETE FROM public.party_change_log WHERE master_party_id = p_party_id;
 
   INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)

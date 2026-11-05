@@ -312,6 +312,10 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
           discount_value: transaction.discount_value,
           sale_currency: transaction.sale_currency,
           customer_name: transaction.customer_name,
+          // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot del COMPRADOR
+          // congelado en la venta — Dirección y Código del SC-2-12.
+          customer_address: (transaction as { customer_address?: string | null }).customer_address ?? null,
+          customer_code: (transaction as { customer_code?: string | null }).customer_code ?? null,
           invoice_number: transaction.invoice_number,
           completed_at: transaction.completed_at,
           created_at: transaction.created_at,
@@ -342,6 +346,9 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
         discount_value: transaction.discount_value,
         sale_currency: transaction.sale_currency,
         customer_name: transaction.customer_name,
+        // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot del COMPRADOR.
+        customer_address: (transaction as { customer_address?: string | null }).customer_address ?? null,
+        customer_code: (transaction as { customer_code?: string | null }).customer_code ?? null,
         invoice_number: transaction.invoice_number,
         completed_at: transaction.completed_at,
         created_at: transaction.created_at,
