@@ -12,8 +12,12 @@
  *    `generatingRef` evita dobles envíos; AbortController cancela al
  *    desmontar/reconfigurar; `stale` marca resultados obsoletos.
  *  · Un dataset → tres representaciones: tabla visible, PDF y Excel usan
- *    el MISMO subconjunto de filas (filtro de búsqueda aplicado) y los
+ *    el MISMO subconjunto de filas (filtro de búsqueda + filtros de
+ *    resultados «Con movimiento» / «Existencia final > 0» aplicados) y los
  *    mismos totales (totalsFromRows) — escenario K.
+ *  · Filtros de resultados (petición 2026-11-06): toggles de filas sobre el
+ *    dataset real calculado en servidor — no recalculan nada. Predicados en
+ *    src/lib/ipv-ventas/filters.ts; «Restablecer filtros» los apaga todos.
  *  · Solo lectura: ninguna acción escribe en datos comerciales.
  *
  * Accesibilidad (WCAG 2.2 AA): labels asociados, aria-live del estado,
@@ -25,7 +29,7 @@ import { isAdminLevel } from '@/lib/roles';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ReceiptText, RefreshCw, Calculator, AlertTriangle, Eye, FileText, Sheet,
-  Search, Store as StoreIcon, CalendarDays, CheckCircle2,
+  Search, Store as StoreIcon, CalendarDays, CheckCircle2, Filter, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
@@ -39,6 +43,12 @@ import {
   type IpvIncidence,
   type IpvTotals,
 } from '@/lib/ipv-ventas/compute';
+import {
+  applyIpvResultFilters,
+  ipvActiveFilterLabels,
+  ipvAnyFilterActive,
+  type IpvResultFilters,
+} from '@/lib/ipv-ventas/filters';
 import { formatIpvQty, formatIpvMoney } from '@/lib/ipv-ventas/format';
 import { buildIpvVentasPdf, ipvFileName } from './ipv-ventas-pdf';
 import { buildIpvVentasWorkbook } from './ipv-ventas-excel';
@@ -91,6 +101,11 @@ export default function IpvVentasView() {
   const [endDate, setEndDate] = useState<string>(() => isoDate(new Date()));
   const [search, setSearch] = useState('');
 
+  // Filtros de resultados (2026-11-06): selección de filas sobre el dataset
+  // real — no alteran la configuración del informe ni lo marcan obsoleto.
+  const [fConMovimiento, setFConMovimiento] = useState(false);
+  const [fEfPositiva, setFEfPositiva] = useState(false);
+
   // ── Estado de cálculo ────────────────────────────────────────────────────
   const [applied, setApplied] = useState<AppliedReport | null>(null);
   const [loading, setLoading] = useState(false);
@@ -112,13 +127,22 @@ export default function IpvVentasView() {
   const rangeInvalid = isDateRangeInvalid(startDate, endDate);
   const stale = !!applied && (applied.cfg.storeId !== storeId || applied.cfg.startDate !== startDate || applied.cfg.endDate !== endDate);
 
-  // Filas visibles = dataset aplicado ∩ filtro de búsqueda (código o descripción)
+  const resultFilters: IpvResultFilters = useMemo(
+    () => ({ conMovimiento: fConMovimiento, existenciaFinalPositiva: fEfPositiva }),
+    [fConMovimiento, fEfPositiva],
+  );
+
+  // Filas visibles = dataset aplicado ∩ filtro de búsqueda (código o
+  // descripción) ∩ filtros de resultados («Con movimiento», «Existencia
+  // final > 0») — el MISMO subconjunto que ven tabla, PDF y Excel (§K).
   const filteredRows = useMemo(() => {
     if (!applied) return [] as IpvRow[];
+    let rows = applied.rows;
     const q = normalize(search.trim());
-    if (!q) return applied.rows;
-    return applied.rows.filter((r) => normalize(r.sku).includes(q) || normalize(r.name).includes(q));
-  }, [applied, search]);
+    if (q) rows = rows.filter((r) => normalize(r.sku).includes(q) || normalize(r.name).includes(q));
+    rows = applyIpvResultFilters(rows, resultFilters);
+    return rows;
+  }, [applied, search, resultFilters]);
 
   // Totales de lo VISIBLE → compartidos por pantalla, PDF y Excel (§K)
   const visibleTotals = useMemo(() => totalsFromRows(filteredRows), [filteredRows]);
@@ -224,7 +248,7 @@ export default function IpvVentasView() {
   }, [applied, filteredRows, visibleTotals]);
 
   const previewSignature = applied
-    ? `${applied.cfg.storeId}|${applied.cfg.startDate}|${applied.cfg.endDate}|${applied.generatedAt}|${search}|${filteredRows.length}`
+    ? `${applied.cfg.storeId}|${applied.cfg.startDate}|${applied.cfg.endDate}|${applied.generatedAt}|${search}|${fConMovimiento ? 1 : 0}|${fEfPositiva ? 1 : 0}|${filteredRows.length}`
     : null;
 
   const handlePreview = useCallback(async () => {
@@ -407,20 +431,60 @@ export default function IpvVentasView() {
         {rangeInvalid && (
           <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">La fecha inicial no puede ser posterior a la fecha final.</p>
         )}
-        <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Períodos rápidos">
-          {PERIOD_CHIPS.map((p) => (
-            <button key={p.label} type="button"
-              onClick={() => { const [a, b] = p.range(); setStartDate(a); setEndDate(b); }}
-              className="rounded-full border border-border/50 px-3 py-1.5 text-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              {p.label}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Períodos rápidos">
+            {PERIOD_CHIPS.map((p) => (
+              <button key={p.label} type="button"
+                onClick={() => { const [a, b] = p.range(); setStartDate(a); setEndDate(b); }}
+                className="rounded-full border border-border/50 px-3 py-1.5 text-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                {p.label}
+              </button>
+            ))}
+          </div>
+          {/* Filtros de resultados (2026-11-06) — inmediatamente después de
+              «Mes anterior». Toggles aria-pressed sobre el dataset real; el
+              estilo activo sigue los tokens shadcn (bg-primary). */}
+          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtros de resultados del IPV">
+            <button type="button" aria-pressed={fConMovimiento}
+              onClick={() => setFConMovimiento((v) => !v)}
+              title="Solo productos con cantidad ≠ 0 en Vendidas, Vales de salida, Entradas o Devoluciones del período"
+              className={cn(
+                'flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                fConMovimiento
+                  ? 'border-primary bg-primary font-bold text-primary-foreground'
+                  : 'border-border/50 hover:bg-muted',
+              )}>
+              <Filter className="w-3 h-3" aria-hidden />
+              Con movimiento
             </button>
-          ))}
+            <button type="button" aria-pressed={fEfPositiva}
+              onClick={() => setFEfPositiva((v) => !v)}
+              title="Solo productos con existencia final estrictamente mayor que cero (decimales incluidos)"
+              className={cn(
+                'flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                fEfPositiva
+                  ? 'border-primary bg-primary font-bold text-primary-foreground'
+                  : 'border-border/50 hover:bg-muted',
+              )}>
+              <Filter className="w-3 h-3" aria-hidden />
+              Existencia final &gt; 0
+            </button>
+            {ipvAnyFilterActive(resultFilters) && (
+              <button type="button"
+                onClick={() => { setFConMovimiento(false); setFEfPositiva(false); }}
+                title="Desactiva «Con movimiento» y «Existencia final > 0»"
+                className="flex items-center gap-1 rounded-full border border-border/50 px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <X className="w-3 h-3" aria-hidden />
+                Restablecer filtros
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
       {/* Estado para lectores de pantalla */}
       <p aria-live="polite" className="sr-only">
-        {loading ? 'Calculando el informe IPV' : applied ? `Informe calculado con ${filteredRows.length} productos visibles` : 'Informe sin calcular'}
+        {loading ? 'Calculando el informe IPV' : applied ? `Informe calculado con ${filteredRows.length} productos visibles${ipvAnyFilterActive(resultFilters) ? ` — filtros activos: ${ipvActiveFilterLabels(resultFilters).join(' + ')}` : ''}` : 'Informe sin calcular'}
       </p>
 
       {/* ── Resultados ── */}
@@ -442,6 +506,11 @@ export default function IpvVentasView() {
             <span>Generado: {new Date(applied.generatedAt).toLocaleString('es')}</span>
             <span>Monedas: CUP contable · USD informativo</span>
             <span>{filteredRows.length} de {applied.rows.length} productos</span>
+            {ipvAnyFilterActive(resultFilters) && (
+              <span data-testid="ipv-filtros-activos" className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 font-bold text-primary">
+                <Filter className="w-3 h-3" aria-hidden /> Filtros: {ipvActiveFilterLabels(resultFilters).join(' + ')}
+              </span>
+            )}
             {applied.incidences.length > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-bold text-amber-600 dark:text-amber-400">
                 <AlertTriangle className="w-3 h-3" aria-hidden /> {applied.incidences.length} incidencia(s)
@@ -493,7 +562,11 @@ export default function IpvVentasView() {
                   </thead>
                   <tbody>
                     {filteredRows.length === 0 ? (
-                      <tr><td colSpan={12} className="px-4 py-8 text-center text-muted-foreground">Sin coincidencias para «{search}».</td></tr>
+                      <tr><td colSpan={12} className="px-4 py-8 text-center text-muted-foreground">
+                        {ipvAnyFilterActive(resultFilters)
+                          ? (search.trim() ? 'Ningún producto cumple la búsqueda y los filtros activos. Prueba restablecer los filtros o cambiar la búsqueda.' : 'Ningún producto cumple los filtros activos. Pulsa «Restablecer filtros» para ver el informe completo.')
+                          : (search.trim() ? `Sin coincidencias para «${search}».` : 'Sin productos que mostrar.')}
+                      </td></tr>
                     ) : filteredRows.map((r) => {
                       const hasInc = r.incidenceTypes.length > 0;
                       // Énfasis de legibilidad (petición 2026-10-16): filas con

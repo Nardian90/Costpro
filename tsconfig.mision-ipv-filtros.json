@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/types/index.ts",
+    "src/lib/ipv-ventas/compute.ts",
+    "src/lib/ipv-ventas/filters.ts",
+    "src/lib/ipv-ventas/format.ts",
+    "src/lib/roles.ts",
+    "src/lib/api-fetch.ts",
+    "src/lib/utils.ts",
+    "src/app/api/ipv-ventas/route.ts",
+    "src/components/views/terminal/views/ipv_ventas/IpvVentasView.tsx",
+    "src/components/views/terminal/views/ipv_ventas/ipv-ventas-excel.ts",
+    "src/components/views/terminal/views/ipv_ventas/ipv-ventas-pdf.ts",
+    "src/__tests__/setup.ts",
+    "src/__tests__/ipv-ventas/filters.test.ts",
+    "src/__tests__/ipv-ventas/ipv-filters-ui.test.tsx"
+  ]
+}
