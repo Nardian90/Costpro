@@ -229,6 +229,13 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["manage_permissions"]
   },
   {
+    // MISIÓN CLASIFICADOR MAESTRO (FASE 3)
+    id: "clientes-proveedores",
+    route: "/?view=clientes-proveedores",
+    description: "Clasificador Maestro de Clientes y Proveedores: registro único de terceros de la organización, compartido entre tiendas, con búsqueda, filtros, trazabilidad y estado.",
+    actions: ["create_party", "edit_party", "deactivate_party", "search_parties", "view_traceability"]
+  },
+  {
     id: "rss_management",
     route: "/?view=rss_management",
     description: "Configuración de fuentes de noticias RSS externas.",

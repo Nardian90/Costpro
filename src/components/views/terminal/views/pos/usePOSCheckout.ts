@@ -143,6 +143,9 @@ export function usePOSCheckout() {
         const cartState = useCartStore.getState();
         const customerId = cartState.customerId;
         const customerName = cartState.customerName;
+        // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot COMPRADOR (SC-2-12)
+        const customerAddress = cartState.customerAddress;
+        const customerCode = cartState.customerCode;
         const validUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         const safeCustomerId =
           customerId && validUuid.test(customerId) ? customerId : null;
@@ -300,6 +303,10 @@ export function usePOSCheckout() {
               sale_exchange_rate: zelleAmount > 0 ? (useCartStore.getState().saleExchangeRate > 1 ? useCartStore.getState().saleExchangeRate : USD_CUP_RATE) : 1.0,
               customer_id: safeCustomerId,
               customer_name: customerName || null,
+              // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot del comprador —
+              // create_sale_v2 (CLASIFICATOR-PARTIES) lo congela en la venta.
+              customer_address: customerAddress || null,
+              customer_code: customerCode || null,
               // REM-INV-4A-R (RC-1): forward the server-issued supervisor authorization
               // (validated + signed at /api/auth/supervisor-check) when present.
               supervisor_user_id: supervisorAuth?.userId ?? null,

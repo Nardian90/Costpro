@@ -516,6 +516,20 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         keywords: ['tiendas', 'gestión', 'sucursales', 'vitrina', 'backup', 'kpi tiendas'],
       },
       {
+        // MISIÓN CLASIFICADOR MAESTRO (FASE 3): registro maestro de terceros de
+        // la organización (clientes y proveedores), compartido con las tiendas
+        // conectadas. Entrada ÚNICA en OPERACIÓN — no duplica 'clientes' (CRM
+        // por tienda, colgante del hub Ventas) ni crea hub propio.
+        id: 'clientes-proveedores',
+        label: 'Clientes y Proveedores',
+        description: 'Clasificador Maestro de terceros de la organización: alta única de clientes y proveedores compartida entre tiendas, con trazabilidad y estado.',
+        icon: Users,
+        type: 'item',
+        navClass: 'primary',
+        roles: ['admin', 'manager', 'encargado'],
+        keywords: ['clientes', 'proveedores', 'terceros', 'clasificador', 'maestro', 'nit', 'alta cliente', 'alta proveedor'],
+      },
+      {
         // DASHBOARD V3 (feat/dashboard-v3-audit-ux): Auditoría se MUEVE desde
         // SISTEMA a OPERACIÓN, inmediatamente después de "Gestión de Tiendas"
         // (solicitud explícita del usuario). Mismo ViewType 'audit', misma
@@ -1488,6 +1502,8 @@ export const VALID_VIEWS: Set<string> = new Set([
   // MISIÓN 2026-10-16 (IPV): informe de ingresos por ventas con conciliación
   'ipv_ventas',
   'devolutions', 'customers', 'quotations', 'fiscal-close', 'lots', 'warehouses',
+  // MISIÓN CLASIFICADOR MAESTRO (FASE 3): vista única de terceros por organización
+  'clientes-proveedores',
   'abc-analysis', 'calculator', 'accounts-payable',
   // CP-INFRA-002: 'bank-reconciliation' retirado del producto activo.
   'punto_venta', 'almacen_gestion', 'almacen_operaciones', 'analitica',

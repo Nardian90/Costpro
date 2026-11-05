@@ -412,6 +412,10 @@ export interface Transaction {
   sale_currency?: string | null;
   sale_exchange_rate?: number | null;
   customer_name?: string | null;
+  // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot COMPRADOR congelado en la
+  // venta (Factura SC-2-12) — nunca se resuelve dinámicamente del maestro.
+  customer_address?: string | null;
+  customer_code?: string | null;
   invoice_number?: string | null;
   // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — vuelto multimoneda
   // persistido ENLAZADO a la venta (sin fila de caja aparte). NULL en ventas

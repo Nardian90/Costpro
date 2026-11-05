@@ -138,6 +138,12 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
       p_items: params.p_items,
       p_user_id: session.user.id,
       p_po_id: params.p_po_id,
+      // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot de identificación del
+      // proveedor (receipts.supplier_code/address/phone/tax_id).
+      p_supplier_code: params.p_supplier_code ?? null,
+      p_supplier_address: params.p_supplier_address ?? null,
+      p_supplier_phone: params.p_supplier_phone ?? null,
+      p_supplier_tax_id: params.p_supplier_tax_id ?? null,
     }
   );
 

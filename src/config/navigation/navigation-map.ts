@@ -134,6 +134,8 @@ const TECHNICAL_DIRECT_ROUTES: Record<string, DirectRoute> = {
   // /?view=customers sigue resolviendo por el case 'customers' del shell y su
   // breadcrumb por VIEW_TO_HUB_MAP ("Clientes" colgando del hub Ventas).
   stores:                { type: 'direct', view: 'stores' },
+  // MISIÓN CLASIFICADOR MAESTRO (FASE 3): vista única de terceros
+  'clientes-proveedores': { type: 'direct', view: 'clientes-proveedores' },
   'accounts-payable':    { type: 'direct', view: 'accounts-payable' },
   'accounts_payable':    { type: 'direct', view: 'accounts-payable' },
   accounts_receivable:   { type: 'direct', view: 'accounts_receivable' },
@@ -301,6 +303,9 @@ const VIEW_TO_HUB_MAP: Record<string, { hubId: string; leafLabel: string }> = {
   lots: { hubId: 'inventory', leafLabel: 'Lotes' },
   // Contextuales de Gestión de Tiendas
   stores: { hubId: 'management-hub', leafLabel: 'Tiendas' },
+  // MISIÓN CLASIFICADOR MAESTRO (FASE 3): 'clientes-proveedores' NO necesita
+  // entrada aquí — es hoja directa de OPERACIÓN y su breadcrumb se deriva del
+  // árbol de la definición (fuente única), igual que 'pos' o 'cash_report'.
   // FASE B (UX-005): 'news' salió de este mapa — hoy es hoja de menú de
   // ANÁLISIS y su breadcrumb se deriva del árbol de definición (fuente única).
   warehouses: { hubId: 'management-hub', leafLabel: 'Almacenes y Depósitos' },

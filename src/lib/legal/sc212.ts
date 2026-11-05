@@ -134,6 +134,9 @@ export interface Sc212SourceData {
     discount_value?: number | null;
     sale_currency?: string | null;
     customer_name?: string | null;
+    /** MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot congelado en la venta. */
+    customer_address?: string | null;
+    customer_code?: string | null;
     invoice_number?: string | null;
     completed_at?: string | null;
     created_at: string;
@@ -173,8 +176,9 @@ export interface Sc212ModelData {
   proveedorSucursalBancaria: string;
   proveedorNIT: string;
   compradorNombre: string;
-  compradorDireccion: string; // no gestionado → ''
-  compradorCodigo: string; // no gestionado → ''
+  /** FASE 4: snapshot congelado de la venta (vacío → línea de cumplimentación). */
+  compradorDireccion: string;
+  compradorCodigo: string;
   tipoOperacion: string;
   transportadorNombre: string; // no gestionado → ''
   transportadorCarne: string; // no gestionado → ''
@@ -284,8 +288,12 @@ export function buildSc212ModelData(
     proveedorSucursalBancaria: resolved.proveedorSucursalBancaria.value,
     proveedorNIT: resolved.proveedorNIT.value,
     compradorNombre: transaction.customer_name || '',
-    compradorDireccion: '',
-    compradorCodigo: '',
+    // MISIÓN CLASIFICADOR MAESTRO (FASE 4): Dirección y Código del COMPRADOR
+    // salen del snapshot CONGELADO en la venta (transactions.customer_address
+    // / customer_code). Históricos JAMÁS consultan el maestro dinámicamente;
+    // ventas sin snapshot degradan a línea de cumplimentación manual.
+    compradorDireccion: asText(transaction.customer_address),
+    compradorCodigo: asText(transaction.customer_code),
     tipoOperacion: 'Venta',
     transportadorNombre: '',
     transportadorCarne: '',
