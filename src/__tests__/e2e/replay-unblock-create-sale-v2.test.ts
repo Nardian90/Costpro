@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 124 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 125 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -385,9 +385,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // cadena catálogo maestro + R1 + CP-CAT-MAESTRO-002: 102 (PR1) + 1 R1 + 1 etapa 0 + 4 etapa 1 + 1 PR4 + 1 propagación imagen = 110; +1 fix CP-ORG-003 (CP-CAT-MAESTRO-003) = 111; +1 fix CHECK auditoría (CP-CAT-MAESTRO-004) = 112; +1 CP-CORRECCIONES-VENTAS-ALMACÉN-001 = 113
     // MISIÓN RESOLUCIÓN 11 (2026-10-31): +1 SC-2-07 Solicitud de Materiales (20261031120000) = 114; +1 vales etapa revisión (20261031120100) = 115; +1 incorporación maestro CP-CAT-MAESTRO-002 (20261031140000, PR #1532) = 116; +1 suppliers visibilidad multiusuario (CP-PROVEEDORES-001) = 117; +1 visibilidad maestro multitienda (COSTPRO-CATALOG-MASTER-002, 20261101130000) = 118; +1 auditoría de membresías CP-SEC-026 (20261103000001, PR #1543) = 119; +1 eliminación administrativa managed_hard_delete_user (USER-MGMT-DELETE-001, PR #1544, 20261103120000) = 120
     // MISIÓN CLASIFICADOR MAESTRO (FASE 2/3/4, 2026-11-05): +1 stores.bank_branch (CP-STORES-BANK-BRANCH, 20261105120000) = 121; +1 base clasificador (20261105130000) = 122; +1 RPCs clasificador (20261105130100) = 123; +1 snapshots FASE 4 (20261105140000) = 124
-    expect(m.total_incluidos).toBe(124);
+    // FASE 5 reconciliación contract surface (2026-11-06): +1 ACL/GUARD (20261106100000_cp_contract_surface_reconcile) = 125
+    expect(m.total_incluidos).toBe(125);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(124);
+    expect(incluidos.length).toBe(125);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -431,6 +432,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261105130000_cp_clasificador_maestro_base.sql')).toBe(122);
     expect(pos('20261105130100_cp_clasificador_maestro_rpcs.sql')).toBe(123);
     expect(pos('20261105140000_cp_clasificador_fase4_snapshots.sql')).toBe(124);
+    expect(pos('20261106100000_cp_contract_surface_reconcile.sql')).toBe(125);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

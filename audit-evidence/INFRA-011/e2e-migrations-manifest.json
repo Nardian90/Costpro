@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 539,
-  "total_incluidos": 124,
+  "total_considerados": 540,
+  "total_incluidos": 125,
   "total_excluidos": 415,
-  "digest": "650c40715f4a5f4cd913aa6e64a2252d1a6bf838b28c7fe1f73801656017cec4",
+  "digest": "beebbaac5147d23842f1cd26460c7fbb93f692edb3ada65de003d01cb08ed3a5",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5217,14 +5217,14 @@
     },
     {
       "nombre": "20261105130100_cp_clasificador_maestro_rpcs.sql",
-      "bytes": 49604,
-      "sha256_original": "0d92e0271885733eac2b0e8a93439b8a83a2ead97567a9fc2c3f569fccfca4b5",
+      "bytes": 50422,
+      "sha256_original": "fc8cba7c6b27cf827a1f6f8c0a712a5d6acc14cc8f840c95ae93b5859c5f54b5",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261105",
       "observaciones": [],
       "posicion": 123,
-      "sha256_generado": "0d92e0271885733eac2b0e8a93439b8a83a2ead97567a9fc2c3f569fccfca4b5"
+      "sha256_generado": "fc8cba7c6b27cf827a1f6f8c0a712a5d6acc14cc8f840c95ae93b5859c5f54b5"
     },
     {
       "nombre": "20261105140000_cp_clasificador_fase4_snapshots.sql",
@@ -5236,6 +5236,17 @@
       "observaciones": [],
       "posicion": 124,
       "sha256_generado": "9d57ef8458c8fc013c6b6560e6cd1f4980d63eb37a86fdbf85b63898d86c748c"
+    },
+    {
+      "nombre": "20261106100000_cp_contract_surface_reconcile.sql",
+      "bytes": 11536,
+      "sha256_original": "8760f555335255eb0225e18f65dfd84546c89f177ffd0edb6c9b5b57b02f9c6e",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261106",
+      "observaciones": [],
+      "posicion": 125,
+      "sha256_generado": "8760f555335255eb0225e18f65dfd84546c89f177ffd0edb6c9b5b57b02f9c6e"
     },
     {
       "nombre": "AUDIT_FIXES.md",
