@@ -55,6 +55,10 @@ $guard$;
 
 
 -- ─── create_sale_v2 (definición vigente de producción, verbatim) ───
+-- Disciplina CP-E2E-RECONCILE-004: la firma nueva (/34, con snapshot del
+-- comprador) exige DROP sin calificar para dejar UNA sola firma viva.
+DROP FUNCTION IF EXISTS public.create_sale_v2;
+
 CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb, p_cash_received_cup numeric DEFAULT NULL::numeric, p_cash_received_usd numeric DEFAULT NULL::numeric, p_change_given_cup numeric DEFAULT NULL::numeric, p_change_given_usd numeric DEFAULT NULL::numeric, p_change_currency text DEFAULT NULL::text, p_payment_components jsonb DEFAULT NULL::jsonb, p_customer_code text DEFAULT NULL::text, p_customer_address text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1227,6 +1231,9 @@ BEGIN
 END $function$;
 
 -- ─── register_reception (definición vigente de producción, verbatim) ───
+-- Misma disciplina: la firma se amplió (7→11 params) con snapshot del proveedor.
+DROP FUNCTION IF EXISTS public.register_reception;
+
 CREATE OR REPLACE FUNCTION public.register_reception(p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT ''::text, p_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_po_id uuid DEFAULT NULL::uuid, p_supplier_code text DEFAULT NULL::text, p_supplier_address text DEFAULT NULL::text, p_supplier_phone text DEFAULT NULL::text, p_supplier_tax_id text DEFAULT NULL::text)
  RETURNS uuid
  LANGUAGE plpgsql
