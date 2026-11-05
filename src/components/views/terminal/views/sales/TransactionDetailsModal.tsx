@@ -107,6 +107,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
     reeup: string | null;
     nit: string | null;
     bank_account: string | null;
+    bank_branch: string | null;
   } | null>(null);
 
   useEffect(() => {
@@ -122,7 +123,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
       Promise.resolve(
         supabase
           .from('stores')
-          .select('name, address, phone, email, reeup, nit, bank_account')
+          .select('name, address, phone, email, reeup, nit, bank_account, bank_branch')
           .eq('id', transaction.store_id)
           .maybeSingle(),
       )
@@ -146,7 +147,8 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
     proveedorCodigo: sc212StoreConfig?.reeup || '',
     proveedorNIT: sc212StoreConfig?.nit || '',
     proveedorCuentaBancaria: sc212StoreConfig?.bank_account || '',
-    proveedorSucursalBancaria: '',
+    // CP-STORES-BANK-BRANCH (Objetivo A): valor real de la tienda.
+    proveedorSucursalBancaria: sc212StoreConfig?.bank_branch || '',
     proveedorTelefono: sc212StoreConfig?.phone || '',
     proveedorEmail: sc212StoreConfig?.email || '',
   };

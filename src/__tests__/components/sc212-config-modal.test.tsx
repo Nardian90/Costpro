@@ -155,9 +155,10 @@ describe('CP-SALES-024 · FASE B — icono ⚙ y panel de configuración', () =>
   it('los campos oficiales NO ofrecen entrada de valor (solo lectura)', async () => {
     renderModal();
     fireEvent.click(screen.getByRole('button', { name: /Configurar documento SC-2-12/i }));
-    // NIT, Código y Cuenta bancaria: los 3 oficiales en solo lectura.
+    // NIT, Código, Cuenta bancaria y —desde CP-STORES-BANK-BRANCH (Objetivo A)—
+    // Sucursal bancaria: los 4 oficiales en solo lectura.
     await waitFor(() => {
-      expect(screen.getAllByText(/Valor oficial \(solo lectura\)/)).toHaveLength(3);
+      expect(screen.getAllByText(/Valor oficial \(solo lectura\)/)).toHaveLength(4);
     });
     // Los no oficiales sí tienen entrada de valor personalizado:
     expect(screen.getAllByPlaceholderText(/56561619|vitallcons@gmail.com|Calle Menocal/)).toHaveLength(3);

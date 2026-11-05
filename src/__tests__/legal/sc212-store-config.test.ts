@@ -69,6 +69,7 @@ const CONFIG_ENERVIDA = {
   reeup: '50004179942',
   nit: '50004179942',
   bank_account: '0664 4340 0002 6710',
+  bank_branch: 'BPA Las Tunas — Sucursal Centro',
 };
 
 const sourceEnervida: Sc212SourceData = {
@@ -94,7 +95,9 @@ describe('CP-SALES-024 · A — Integración con la configuración de la tienda'
     expect(model.proveedorCodigo).toBe(CONFIG_ENERVIDA.reeup);   // stores.reeup (código)
     expect(model.proveedorNIT).toBe(CONFIG_ENERVIDA.nit);        // stores.nit
     expect(model.proveedorCuentaBancaria).toBe(CONFIG_ENERVIDA.bank_account); // stores.bank_account
-    expect(model.proveedorSucursalBancaria).toBe('');            // NO gestionado → blanco
+    // CP-STORES-BANK-BRANCH (Objetivo A): la sucursal bancaria ahora ES
+    // gestionada por la tienda — valor real, jamás inventado.
+    expect(model.proveedorSucursalBancaria).toBe(CONFIG_ENERVIDA.bank_branch); // stores.bank_branch
     // Contacto (banda del proveedor, añadidos por COSTPRO):
     const pres = sc212PresentationOf(model);
     expect(pres.proveedorTelefono.value).toBe(CONFIG_ENERVIDA.phone);
@@ -150,6 +153,7 @@ describe('CP-SALES-024 · A — Integración con la configuración de la tienda'
         reeup: '41004179942',
         nit: '41004179943',
         bank_account: '0110 0000 1111 2222',
+        bank_branch: 'BANDEC Puerto Padre',
       },
     };
     const modelA = buildSc212ModelData(sourceEnervida);
@@ -159,6 +163,8 @@ describe('CP-SALES-024 · A — Integración con la configuración de la tienda'
     expect(modelB.proveedorNIT).toBe('41004179943');
     expect(modelB.proveedorNIT).not.toBe(modelA.proveedorNIT);
     expect(modelB.proveedorCuentaBancaria).toBe('0110 0000 1111 2222');
+    expect(modelB.proveedorSucursalBancaria).toBe('BANDEC Puerto Padre');
+    expect(modelB.proveedorSucursalBancaria).not.toBe(modelA.proveedorSucursalBancaria);
     expect(modelB.proveedorDireccion).toBe('Calle Marta Abreu 12');
   });
 

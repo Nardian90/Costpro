@@ -44,6 +44,7 @@ const STORE_A = {
   reeup: '50004179942',
   nit: '50004179942',
   bank_account: '0664 4340 0002 6710',
+  bank_branch: 'BPA Las Tunas — Sucursal Centro',
 };
 const STORE_B = {
   name: `E2E SC212 Beta ${TS}`,
@@ -53,6 +54,7 @@ const STORE_B = {
   reeup: '41004179942',
   nit: '41004179943',
   bank_account: '0110 0000 1111 2222',
+  bank_branch: 'BANDEC Puerto Padre',
 };
 
 let admin: SupabaseClient;
@@ -157,6 +159,28 @@ const d = describe.skipIf(!LIVE)('CP-SALES-024 — SC-2-12 live E2E (CostproE2E)
     };
     storeAId = await mkStore(STORE_A);
     storeBId = await mkStore(STORE_B);
+
+    // 4b) CP-STORES-BANK-BRANCH (Objetivo A): la sucursal bancaria se gestiona
+    //     DESPUÉS de crear la tienda, por el flujo real de edición (PATCH
+    //     /api/stores ← modal «Info» de Gestión de Tiendas). El POST no la
+    //     pide (igual que la dirección en el alta rápida).
+    const setBankBranch = async (storeId: string, value: string): Promise<void> => {
+      const res = await fetch('http://localhost:3000/api/stores', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${saToken}`,
+          Origin: 'http://localhost:3000',
+        },
+        body: JSON.stringify({ storeId, bank_branch: value }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(`setBankBranch ${storeId}: ${res.status} ${JSON.stringify(body).slice(0, 200)}`);
+      }
+    };
+    await setBankBranch(storeAId, STORE_A.bank_branch);
+    await setBankBranch(storeBId, STORE_B.bank_branch);
 
     // 5) Una venta por tienda (mínimo: fila transactions legible bajo RLS).
     //    La política tenant INSERT exige tenant_id explícito en la fila
@@ -333,9 +357,10 @@ const d = describe.skipIf(!LIVE)('CP-SALES-024 — SC-2-12 live E2E (CostproE2E)
     expect(pres.proveedorCuentaBancaria.visible).toBe(false);
     // El dato persistido en stores NO cambia (verificación directa):
     const check = await rest(
-      `/rest/v1/stores?id=eq.${storeAId}&select=bank_account,nit,reeup,phone,email,address`,
+      `/rest/v1/stores?id=eq.${storeAId}&select=bank_account,bank_branch,nit,reeup,phone,email,address`,
     );
     expect(check.body[0].bank_account).toBe(STORE_A.bank_account);
+    expect(check.body[0].bank_branch).toBe(STORE_A.bank_branch); // CP-STORES-BANK-BRANCH
     expect(check.body[0].nit).toBe(STORE_A.nit);
     expect(check.body[0].reeup).toBe(STORE_A.reeup);
     expect(check.body[0].phone).toBe(STORE_A.phone);

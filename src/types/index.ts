@@ -197,6 +197,8 @@ export interface Store {
   reeup?: string | null;
   nit?: string | null;
   bank_account?: string | null;
+  /** CP-STORES-BANK-BRANCH (Objetivo A): sucursal bancaria por tienda. */
+  bank_branch?: string | null;
   signature_url?: string | null;
   stamp_url?: string | null;
   latitude?: number | null;

@@ -262,6 +262,8 @@ export const createStoreSchema = z.object({
   reeup: z.string().regex(/^\d{11}$/, 'REEUP debe tener 11 dígitos').optional().nullable(),
   nit: z.string().regex(/^\d{1,15}$/, 'NIT debe contener solo dígitos').optional().nullable(),
   bank_account: z.string().min(1).optional().nullable(),
+  // CP-STORES-BANK-BRANCH (Objetivo A): sucursal bancaria por tienda.
+  bank_branch: z.string().max(200).transform(v => (v.trim() === '' ? null : v.trim().slice(0, 120))).optional().nullable(),
   phone: z.string().optional().nullable(),
   email: z.string().email('Email inválido').optional().nullable(),
   slug: z.string().min(1).max(100).optional().nullable(),
@@ -298,6 +300,9 @@ export const updateStoreSchema = z.object({
   reeup: z.string().regex(/^\d{11}$/).optional().nullable(),
   nit: z.string().regex(/^\d{1,15}$/, 'NIT debe contener solo dígitos').optional().nullable(),
   bank_account: z.string().min(1).optional().nullable(),
+  // CP-STORES-BANK-BRANCH (Objetivo A): alta/cambio/eliminación del valor
+  // (string vacío → null en la DB) vía PATCH /api/stores.
+  bank_branch: z.string().max(200).transform(v => (v.trim() === '' ? null : v.trim().slice(0, 120))).optional().nullable(),
   phone: z.string().optional().nullable(),
   email: z.string().email().optional().nullable(),
   slug: z.string().min(1).max(100).optional().nullable(),

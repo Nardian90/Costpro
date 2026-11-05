@@ -467,6 +467,8 @@
     "emailPlaceholder": "tienda@ejemplo.com",
     "reeupPlaceholder": "XXXXXXXXXXX",
     "bankAccountPlaceholder": "XXXX-XXXX-XXXX-XXXX",
+    "bankBranch": "Sucursal Bancaria",
+    "bankBranchPlaceholder": "Sucursal del banco (opcional)",
     "nitPlaceholder": "Número de Identificación Tributaria",
     "slugPlaceholder": "mi_tienda",
     "latPlaceholder": "Latitud (ej: 20.0337)",

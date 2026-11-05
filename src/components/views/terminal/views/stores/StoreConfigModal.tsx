@@ -78,7 +78,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
   });
   const [form, setForm] = useState({
     name: '', address: '', phone: '', email: '', logo_url: '',
-    reeup: '', nit: '', bank_account: '', signature_url: '', stamp_url: '',
+    reeup: '', nit: '', bank_account: '', bank_branch: '', signature_url: '', stamp_url: '',
     slug: '', plantilla: '',
   });
   const [slugChecking, setSlugChecking] = useState(false);
@@ -122,6 +122,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
         reeup: store.reeup || '',
         nit: store.nit || '',
         bank_account: store.bank_account || '',
+        bank_branch: store.bank_branch || '', // CP-STORES-BANK-BRANCH (Objetivo A)
         signature_url: store.signature_url || '',
         stamp_url: store.stamp_url || '',
         slug: store.slug || '',
@@ -232,6 +233,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
         reeup: form.reeup,
         nit: form.nit,
         bank_account: form.bank_account,
+        bank_branch: form.bank_branch, // CP-STORES-BANK-BRANCH (Objetivo A)
         slug: form.slug,
       });
       // Invalidar caches
@@ -483,6 +485,13 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                     Cuenta Bancaria
                   </Label>
                   <Input id="cfg-bank" value={form.bank_account} onChange={e => updateField('bank_account', e.target.value)} maxLength={30} placeholder="Banco y n° de cuenta" />
+                </div>
+                {/* CP-STORES-BANK-BRANCH (Objetivo A): sucursal bancaria por tienda. */}
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="cfg-bank-branch" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                    Sucursal Bancaria
+                  </Label>
+                  <Input id="cfg-bank-branch" value={form.bank_branch} onChange={e => updateField('bank_branch', e.target.value)} maxLength={120} placeholder="Sucursal del banco (opcional)" />
                 </div>
               </div>
               {/* F2.5-4: uploads de firma y sello — antes estaban solo en StoreModals edit mode */}

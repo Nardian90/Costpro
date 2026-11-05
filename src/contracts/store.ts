@@ -25,6 +25,8 @@ export interface StoreContract {
   reeup: string;
   nit: string;
   bank_account: string;
+  /** CP-STORES-BANK-BRANCH (Objetivo A). */
+  bank_branch: string;
   signature_url: string;
   stamp_url: string;
   latitude: number | null;   // null for "not set"
@@ -53,6 +55,7 @@ export const StoreFactory = {
     reeup: '',
     nit: '',
     bank_account: '',
+    bank_branch: '',
     signature_url: '',
     stamp_url: '',
     latitude: null,
@@ -85,6 +88,7 @@ export function mapStoreToContract(store: Store): StoreContract {
     reeup: store.reeup ?? '',
     nit: store.nit ?? '',
     bank_account: store.bank_account ?? '',
+    bank_branch: store.bank_branch ?? '',
     signature_url: store.signature_url ?? '',
     stamp_url: store.stamp_url ?? '',
     latitude: store.latitude ?? null,

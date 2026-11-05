@@ -7,7 +7,7 @@
  * ETIQUETA o (solo en campos no oficiales) sustituir su valor de forma
  * puntual. La fuente de verdad de los DATOS sigue siendo la configuración
  * persistida de la tienda en Gestión de Tiendas (`stores.address`, `phone`,
- * `email`, `reeup`, `nit`, `bank_account`).
+ * `email`, `reeup`, `nit`, `bank_account`, `bank_branch`).
  *
  * Reglas de la misión (§4.2 y §4.3):
  *  - Los campos con valor OFICIAL (identificadores fiscales REEUP/NIT y
@@ -91,8 +91,11 @@ export const SC212_FIELDS: readonly Sc212FieldDef[] = [
     id: 'proveedorSucursalBancaria',
     defaultLabel: 'Sucursal bancaria',
     hint: 'Sucursal bancaria de la entidad',
-    source: '(no gestionado)',
-    official: false,
+    // CP-STORES-BANK-BRANCH (Objetivo A): dato gestionado por la tienda en
+    // Gestión de Tiendas. OFICIAL como la cuenta bancaria: no admite
+    // sustitución de valor (vacío → línea de cumplimentación manual).
+    source: 'stores.bank_branch',
+    official: true,
   },
   {
     id: 'proveedorTelefono',
