@@ -51,6 +51,7 @@
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabaseClient';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
+import { resolveScLogoDataUrl } from './sc-logo';
 import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
@@ -92,9 +93,13 @@ export interface Sc216SourceData {
   };
   /** Nombre de la entidad/almacén (tienda activa bajo RLS). */
   entidadNombre: string;
+  /** logo_url de la tienda (multitienda); null → default de la app. */
+  logoUrl?: string | null;
 }
 
 export interface Sc216ModelData {
+  /** Logo de la tienda o default de la app (dataURL en fetch). */
+  logoUrl?: string | null;
   entidadNombre: string;
   entidadCodigo: string; // no gestionado → ''
   almacenNombre: string;
@@ -160,6 +165,7 @@ export function buildSc216ModelData(source: Sc216SourceData): Sc216ModelData {
   const pi = adjustment.source_physical_inventory;
 
   return {
+    logoUrl: source.logoUrl ?? null,
     entidadNombre: entidadNombre || '',
     entidadCodigo: '',
     almacenNombre: entidadNombre || '',
@@ -205,7 +211,7 @@ export async function fetchSc216SourceData(
   adjustment: Sc216SourceData['adjustment'],
   activeStoreId?: string | null,
 ): Promise<Sc216SourceData> {
-  const enriched: Sc216SourceData = { adjustment: { ...adjustment }, entidadNombre: '' };
+  const enriched: Sc216SourceData = { adjustment: { ...adjustment }, entidadNombre: '', logoUrl: null };
 
   const [itemsRes, storeRes] = await Promise.all([
     adjustment.items && adjustment.items.length > 0 && adjustment.items[0]?.products?.unit_of_measure != null
@@ -216,7 +222,7 @@ export async function fetchSc216SourceData(
           .eq('adjustment_id', adjustment.id)
           .order('created_at', { ascending: true }),
     activeStoreId
-      ? supabase.from('stores').select('name').eq('id', activeStoreId).maybeSingle()
+      ? supabase.from('stores').select('name, logo_url').eq('id', activeStoreId).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -226,7 +232,9 @@ export async function fetchSc216SourceData(
     enriched.adjustment.items = (itemsRes.data as unknown as Sc216SourceItem[]) || [];
   }
   if (!storeRes.error && storeRes.data) {
-    enriched.entidadNombre = (storeRes.data as { name?: string | null } | null)?.name || '';
+    const row = storeRes.data as { name?: string | null; logo_url?: string | null } | null;
+    enriched.entidadNombre = row?.name || '';
+    enriched.logoUrl = row?.logo_url || null;
   }
 
   return enriched;
@@ -242,8 +250,10 @@ export async function renderSc216Pdf(model: Sc216ModelData) {
   const marginX = 12;
 
   // ── Encabezado del modelo ──
+  const logo = await resolveScLogoDataUrl(model.logoUrl);
   let y = drawRes11Header(doc, {
     modelo: 'SC-2-16',
+    logoDataUrl: logo.dataUrl,
     titulo: 'AJUSTE DE INVENTARIO',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
   });

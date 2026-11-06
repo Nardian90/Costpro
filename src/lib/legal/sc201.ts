@@ -41,6 +41,7 @@
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabaseClient';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
+import { resolveScLogoDataUrl } from './sc-logo';
 import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
@@ -83,9 +84,13 @@ export interface Sc201SourceData {
   entidadNombre: string;
   /** Nombre real del creador (si es legible bajo RLS). */
   creadorNombre?: string | null;
+  /** logo_url de la tienda solicitante (multitienda); null → default de la app. */
+  logoUrl?: string | null;
 }
 
 export interface Sc201ModelData {
+  /** Logo de la tienda solicitante o default de la app (dataURL en fetch). */
+  logoUrl?: string | null;
   fechaEmision: string;
   proveedorNombre: string;
   proveedorCodigo: string; // no gestionado → ''
@@ -138,6 +143,7 @@ export function buildSc201ModelData(source: Sc201SourceData): Sc201ModelData {
   }));
 
   return {
+    logoUrl: source.logoUrl ?? null,
     fechaEmision: formatDateRes11(order.created_at),
     proveedorNombre: order.supplier_name || '',
     proveedorCodigo: '',
@@ -185,6 +191,7 @@ export async function fetchSc201SourceData(
     items: [],
     entidadNombre: '',
     creadorNombre: '',
+    logoUrl: null,
   };
 
   const [itemsRes, storeRes, creatorRes] = await Promise.all([
@@ -194,7 +201,7 @@ export async function fetchSc201SourceData(
       .eq('po_id', order.id)
       .order('created_at', { ascending: true }),
     activeStoreId
-      ? supabase.from('stores').select('name').eq('id', activeStoreId).maybeSingle()
+      ? supabase.from('stores').select('name, logo_url').eq('id', activeStoreId).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
     order.created_by
       ? supabase.from('profiles').select('full_name').eq('id', order.created_by).maybeSingle()
@@ -208,6 +215,7 @@ export async function fetchSc201SourceData(
   }
   if (!storeRes.error && storeRes.data) {
     result.entidadNombre = (storeRes.data as { name?: string | null } | null)?.name || '';
+  result.logoUrl = (storeRes.data as { name?: string | null; logo_url?: string | null } | null)?.logo_url || null;
   }
   if (!creatorRes.error && creatorRes.data) {
     result.creadorNombre = (creatorRes.data as { full_name?: string | null } | null)?.full_name || '';
@@ -226,8 +234,10 @@ export async function renderSc201Pdf(model: Sc201ModelData) {
   const marginX = 12;
 
   // ── Encabezado del modelo ──
+  const logo = await resolveScLogoDataUrl(model.logoUrl);
   let y = drawRes11Header(doc, {
     modelo: 'SC-2-01',
+    logoDataUrl: logo.dataUrl,
     titulo: 'SOLICITUD DE COMPRA',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
   });

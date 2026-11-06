@@ -83,6 +83,7 @@
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabaseClient';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
+import { resolveScLogoDataUrl } from './sc-logo';
 import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
@@ -163,10 +164,14 @@ export interface Sc212SourceData {
     bank_account?: string | null;
     /** CP-STORES-BANK-BRANCH (Objetivo A): sucursal bancaria de la tienda. */
     bank_branch?: string | null;
+    /** Logo de la tienda emisora (multitienda) para el comprobante. */
+    logo_url?: string | null;
   } | null;
 }
 
 export interface Sc212ModelData {
+  /** Logo de la tienda vendedora o default de la app (dataURL en fetch). */
+  logoUrl?: string | null;
   fechaEmision: string;
   proveedorNombre: string;
   proveedorDireccion: string;
@@ -305,6 +310,7 @@ export function buildSc212ModelData(
     entregaNombre: '',
     estado: estadoDocumentoLabel(transaction.status),
     numeroConsecutivo: transaction.invoice_number || '',
+    logoUrl: source.storeConfig?.logo_url ?? null,
     identificadorVenta: transaction.id?.split('-')[0] || '',
     // Metadatos de presentación (no forman parte del modelo oficial; el
     // render los consume y los tests los ignoran en las igualdades).
@@ -340,7 +346,7 @@ export function sc212PresentationOf(
 // Lectura de datos bajo RLS (solo lectura, tienda de la VENTA)
 // ────────────────────────────────────────────────────────────────────────────
 
-const STORE_CONFIG_COLUMNS = 'name, address, phone, email, reeup, nit, bank_account, bank_branch';
+const STORE_CONFIG_COLUMNS = 'name, address, phone, email, reeup, nit, bank_account, bank_branch, logo_url';
 
 /**
  * Cliente de lectura opcional para los fetch del SC-2-12. En el browser es
@@ -526,8 +532,10 @@ export async function renderSc212Pdf(model: Sc212ModelData) {
     pres[id] || { visible: true, label: id, value: (model as unknown as Record<string, string>)[id] || '' };
 
   // ── Encabezado del modelo ──
+  const logo = await resolveScLogoDataUrl(model.logoUrl);
   let y = drawRes11Header(doc, {
     modelo: 'SC-2-12',
+    logoDataUrl: logo.dataUrl,
     titulo: 'FACTURA',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
   });

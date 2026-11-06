@@ -19,6 +19,7 @@
  */
 
 import type { jsPDF } from 'jspdf';
+import { drawScLogo } from './sc-logo';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Paleta de impresión económica (tinta mínima)
@@ -82,6 +83,8 @@ export function blankRes11Field(label: string): string {
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface Res11HeaderOptions {
+  /** Logo de la tienda emisora (o default de la app) — dataURL rasterizado. Opcional: RES-11 sigue saliendo sin logo. */
+  logoDataUrl?: string | null;
   /** Código oficial del modelo, p. ej. «SC-2-08». */
   modelo: string;
   /** Nombre oficial del documento, p. ej. «VALE DE ENTREGA O DEVOLUCIÓN». */
@@ -108,11 +111,27 @@ export function drawRes11Header(doc: jsPDF, opts: Res11HeaderOptions): number {
   doc.setLineWidth(0.35);
   doc.rect(marginX, 10, contentWidth, height, 'S');
 
+  // Logo de la tienda emisora (o default de la app) — a la derecha del
+  // recuadro; el código del modelo se corre a la izquierda para no pisarlo.
+  // Los modelos RES-11 (que prohíben logotipos) no pasan logoDataUrl y quedan
+  // exactamente como antes.
+  let modeloRightX = pageWidth - marginX - 4;
+  if (opts.logoDataUrl) {
+    const logoBoxW = 20;
+    modeloRightX -= logoBoxW + 4;
+    drawScLogo(doc, { dataUrl: opts.logoDataUrl, source: 'store' }, {
+      x: pageWidth - marginX - 3 - logoBoxW,
+      y: 10.8,
+      maxW: logoBoxW,
+      maxH: height - 1.6,
+    });
+  }
+
   // Código del modelo (derecha, negrita)
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...RES11_INK.texto);
   doc.setFontSize(13);
-  doc.text(opts.modelo, pageWidth - marginX - 4, 16.5, { align: 'right' });
+  doc.text(opts.modelo, modeloRightX, 16.5, { align: 'right' });
 
   // Título oficial (izquierda, negrita)
   doc.setFontSize(12);
@@ -129,12 +148,13 @@ export function drawRes11Header(doc: jsPDF, opts: Res11HeaderOptions): number {
     { maxWidth: contentWidth - 8 },
   );
 
-  // Línea derecha opcional (fecha de emisión del modelo, etc.)
+  // Línea derecha opcional (fecha de emisión del modelo, etc.). Con logo
+  // presente se alinea a la izquierda del logo para no quedar debajo.
   if (opts.lineaDerecha) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(...RES11_INK.texto);
-    doc.text(opts.lineaDerecha, pageWidth - marginX - 4, 23.5, { align: 'right' });
+    doc.text(opts.lineaDerecha, modeloRightX, 23.5, { align: 'right' });
   }
 
   return 10 + height;
