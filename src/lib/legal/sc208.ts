@@ -56,6 +56,7 @@
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabaseClient';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
+import { resolveScLogoDataUrl } from './sc-logo';
 import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
@@ -101,6 +102,8 @@ export interface Sc208SourceData {
   };
   /** Nombre de la entidad/almacén (tienda activa bajo RLS). */
   entidadNombre: string;
+  /** logo_url de la tienda emisora (multitienda); null → default de la app. */
+  logoUrl?: string | null;
 }
 
 /**
@@ -109,6 +112,8 @@ export interface Sc208SourceData {
  * a mano (nunca «N/A», ceros ni guiones).
  */
 export interface Sc208ModelData {
+  /** Logo de la tienda emisora o default de la app (dataURL en fetch). */
+  logoUrl?: string | null;
   fechaEmision: string;
   entidadNombre: string;
   entidadCodigo: string; // no gestionado → ''
@@ -170,6 +175,7 @@ export function buildSc208ModelData(source: Sc208SourceData): Sc208ModelData {
 
   const esReversado = vale.status === 'reversed';
   return {
+    logoUrl: source.logoUrl ?? null,
     fechaEmision: formatDateRes11(vale.created_at),
     entidadNombre: entidadNombre || '',
     entidadCodigo: '',
@@ -230,21 +236,23 @@ export async function fetchSc208SourceData(
   }
 
   let entidadNombre = '';
+  let logoUrl: string | null = null;
   const storeId = activeStoreId || null;
   if (storeId) {
     const { data: storeRow, error: storeError } = await supabase
       .from('stores')
-      .select('name')
+      .select('name, logo_url')
       .eq('id', storeId)
       .maybeSingle();
     if (storeError) {
       logger.warn('DATABASE', 'SC208_STORE_NAME_READ_FAILED', { data: storeError });
     } else {
       entidadNombre = (storeRow as { name?: string | null } | null)?.name || '';
+      logoUrl = (storeRow as { name?: string | null; logo_url?: string | null } | null)?.logo_url || null;
     }
   }
 
-  return { vale: { ...vale, items }, entidadNombre };
+  return { vale: { ...vale, items }, entidadNombre, logoUrl };
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -258,8 +266,10 @@ export async function renderSc208Pdf(model: Sc208ModelData) {
   const marginX = 12;
 
   // ── Encabezado del modelo ──
+  const logo = await resolveScLogoDataUrl(model.logoUrl);
   let y = drawRes11Header(doc, {
     modelo: 'SC-2-08',
+    logoDataUrl: logo.dataUrl,
     titulo: 'VALE DE ENTREGA O DEVOLUCIÓN',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
   });

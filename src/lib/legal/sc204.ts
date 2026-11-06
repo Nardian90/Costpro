@@ -50,6 +50,7 @@ import { format } from 'date-fns';
 import type { Receipt } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
+import { drawScLogo, resolveScLogoDataUrl } from './sc-logo';
 import { logger } from '@/lib/logger';
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -72,6 +73,8 @@ export interface Sc204SourceItem {
 export interface Sc204SourceData {
   /** Nombre de la entidad receptora (tienda activa bajo RLS). */
   entidadNombre: string;
+  /** logo_url de la tienda receptora (multitienda); null → default de la app. */
+  logoUrl?: string | null;
   /** Recepción que se formaliza. */
   receipt: Pick<Receipt, 'id' | 'reference_doc' | 'supplier' | 'reception_date'> & {
     store_id?: string | null;
@@ -88,6 +91,8 @@ export interface Sc204SourceData {
  * a mano (nunca «N/A», ceros ni guiones).
  */
 export interface Sc204ModelData {
+  // Logo de la tienda receptora o default de la app (dataURL en fetch)
+  logoUrl?: string | null;
   // 1. Entidad receptora
   entidadNombre: string;
   entidadCodigo: string; // no gestionado → ''
@@ -206,6 +211,7 @@ export function buildSc204ModelData(source: Sc204SourceData): Sc204ModelData {
   }));
 
   return {
+    logoUrl: source.logoUrl ?? null,
     // 1. Entidad receptora: nombre de la tienda; código no gestionado
     entidadNombre: source.entidadNombre || '',
     entidadCodigo: '',
@@ -257,7 +263,7 @@ export function sc204FileName(receiptId: string): string {
 export async function fetchSc204SourceData(
   receipt: Sc204SourceData['receipt'],
   activeStoreId?: string | null,
-): Promise<Pick<Sc204SourceData, 'entidadNombre' | 'items'>> {
+): Promise<Pick<Sc204SourceData, 'entidadNombre' | 'logoUrl' | 'items'>> {
   const storeId = receipt.store_id || activeStoreId || null;
   const { data: items, error } = await supabase
     .from('receipt_items')
@@ -269,10 +275,11 @@ export async function fetchSc204SourceData(
   if (error) throw error;
 
   let entidadNombre = '';
+  let logoUrl: string | null = null;
   if (storeId) {
     const { data: storeRow, error: storeError } = await supabase
       .from('stores')
-      .select('name')
+      .select('name, logo_url')
       .eq('id', storeId)
       .maybeSingle();
     if (storeError) {
@@ -280,11 +287,13 @@ export async function fetchSc204SourceData(
       logger.warn('DATABASE', 'SC204_STORE_NAME_READ_FAILED', { data: storeError });
     } else {
       entidadNombre = (storeRow as { name?: string | null } | null)?.name || '';
+      logoUrl = (storeRow as { name?: string | null; logo_url?: string | null } | null)?.logo_url || null;
     }
   }
 
   return {
     entidadNombre,
+    logoUrl,
     items: (items as unknown as Sc204SourceItem[]) || [],
   };
 }
@@ -315,6 +324,11 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
   doc.setDrawColor(0);
   doc.setLineWidth(0.4);
   doc.rect(marginX, 10, contentWidth, 34);
+
+  // Logo de la tienda receptora (o default de la app) en la zona libre
+  // central del encabezado, sin pisar los bloques normativos.
+  const logo = await resolveScLogoDataUrl(model.logoUrl);
+  drawScLogo(doc, logo, { x: pageWidth - 88, y: 10.8, maxW: 28, maxH: 9.5 });
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
@@ -547,9 +561,10 @@ export async function exportSc204ForReceipt(
   receipt: Sc204SourceData['receipt'],
   activeStoreId?: string | null,
 ): Promise<void> {
-  const { entidadNombre, items } = await fetchSc204SourceData(receipt, activeStoreId);
+  const { entidadNombre, logoUrl, items } = await fetchSc204SourceData(receipt, activeStoreId);
   const model = buildSc204ModelData({
     entidadNombre,
+    logoUrl,
     receipt,
     items,
     emissionDate: new Date(),

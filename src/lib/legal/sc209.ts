@@ -51,6 +51,7 @@
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabaseClient';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
+import { resolveScLogoDataUrl } from './sc-logo';
 import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
@@ -91,8 +92,8 @@ export interface Sc209SourceData {
     confirmed_at?: string | null;
     reversed_at?: string | null;
     reversal_reason?: string | null;
-    origin_store?: { name?: string | null } | null;
-    destination_store?: { name?: string | null } | null;
+    origin_store?: { name?: string | null; logo_url?: string | null } | null;
+    destination_store?: { name?: string | null; logo_url?: string | null } | null;
     creator?: { full_name: string } | null;
     confirmer?: { full_name: string } | null;
     items?: Sc209SourceItem[];
@@ -100,6 +101,8 @@ export interface Sc209SourceData {
 }
 
 export interface Sc209ModelData {
+  /** Logo de la tienda de origen (emisora) o default de la app. */
+  logoUrl?: string | null;
   fechaEmision: string;
   entidadNombre: string;
   entidadCodigo: string; // no gestionado → ''
@@ -171,6 +174,7 @@ export function buildSc209ModelData(source: Sc209SourceData): Sc209ModelData {
   });
 
   return {
+    logoUrl: transfer.origin_store?.logo_url ?? null,
     fechaEmision: formatDateRes11(transfer.created_at),
     entidadNombre: transfer.origin_store?.name || '',
     entidadCodigo: '',
@@ -229,14 +233,14 @@ export async function fetchSc209SourceData(transfer: Sc209SourceData['transfer']
       ? Promise.resolve({ data: null, error: null })
       : supabase
           .from('stores')
-          .select('name')
+          .select('name, logo_url')
           .eq('id', transfer.origin_store_id ?? '')
           .maybeSingle(),
     transfer.destination_store?.name
       ? Promise.resolve({ data: null, error: null })
       : supabase
           .from('stores')
-          .select('name')
+          .select('name, logo_url')
           .eq('id', transfer.destination_store_id ?? '')
           .maybeSingle(),
     supabase
@@ -252,10 +256,12 @@ export async function fetchSc209SourceData(transfer: Sc209SourceData['transfer']
     enriched.items = (itemsRes.data as unknown as Sc209SourceItem[]) || [];
   }
   if (!originRes.error && originRes.data) {
-    enriched.origin_store = { name: (originRes.data as { name?: string | null } | null)?.name || '' };
+    const row = originRes.data as { name?: string | null; logo_url?: string | null } | null;
+    enriched.origin_store = { name: row?.name || '', logo_url: row?.logo_url || null };
   }
   if (!destRes.error && destRes.data) {
-    enriched.destination_store = { name: (destRes.data as { name?: string | null } | null)?.name || '' };
+    const row = destRes.data as { name?: string | null; logo_url?: string | null } | null;
+    enriched.destination_store = { name: row?.name || '', logo_url: row?.logo_url || null };
   }
   if (!confirmerRes.error && confirmerRes.data) {
     enriched.confirmer = {
@@ -278,8 +284,10 @@ export async function renderSc209Pdf(model: Sc209ModelData) {
   const marginX = 12;
 
   // ── Encabezado del modelo ──
+  const logo = await resolveScLogoDataUrl(model.logoUrl);
   let y = drawRes11Header(doc, {
     modelo: 'SC-2-09',
+    logoDataUrl: logo.dataUrl,
     titulo: 'TRANSFERENCIA ENTRE ALMACENES',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
   });

@@ -56,6 +56,7 @@
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabaseClient';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
+import { resolveScLogoDataUrl } from './sc-logo';
 import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
@@ -92,12 +93,16 @@ export interface Sc213SourceData {
   };
   /** Nombre de la entidad/almacén (tienda activa bajo RLS). */
   entidadNombre: string;
+  /** logo_url de la tienda (multitienda); null → default de la app. */
+  logoUrl?: string | null;
   movimientos: Sc213SourceMovement[];
   /** true si la lectura alcanzó el tope de 10.000 movimientos. */
   truncado?: boolean;
 }
 
 export interface Sc213ModelData {
+  /** Logo de la tienda o default de la app (dataURL en fetch). */
+  logoUrl?: string | null;
   entidadNombre: string;
   entidadCodigo: string; // no gestionado → ''
   almacenNombre: string;
@@ -177,6 +182,7 @@ export function buildSc213ModelData(source: Sc213SourceData): Sc213ModelData {
   const saldoFinal = lineas.length > 0 ? saldoCorrido : 0;
 
   return {
+    logoUrl: source.logoUrl ?? null,
     entidadNombre: source.entidadNombre || '',
     entidadCodigo: '',
     almacenNombre: source.entidadNombre || '',
@@ -223,7 +229,7 @@ export async function fetchSc213SourceData(
   activeStoreId?: string | null,
 ): Promise<Sc213SourceData> {
   if (!activeStoreId) {
-    return { producto, entidadNombre: '', movimientos: [], truncado: false };
+    return { producto, entidadNombre: '', logoUrl: null, movimientos: [], truncado: false };
   }
 
   const [{ data: movs, error }, { data: storeRow, error: storeError }] = await Promise.all([
@@ -235,7 +241,7 @@ export async function fetchSc213SourceData(
       .order('created_at', { ascending: true })
       .order('id', { ascending: true })
       .range(0, LIMITE_MOVIMIENTOS - 1),
-    supabase.from('stores').select('name').eq('id', activeStoreId).maybeSingle(),
+    supabase.from('stores').select('name, logo_url').eq('id', activeStoreId).maybeSingle(),
   ]);
 
   if (error) {
@@ -249,6 +255,7 @@ export async function fetchSc213SourceData(
   return {
     producto,
     entidadNombre: (storeRow as { name?: string | null } | null)?.name || '',
+    logoUrl: (storeRow as { name?: string | null; logo_url?: string | null } | null)?.logo_url || null,
     movimientos: lista,
     truncado: lista.length >= LIMITE_MOVIMIENTOS,
   };
@@ -266,9 +273,11 @@ export async function renderSc213Pdf(model: Sc213ModelData) {
   const marginX = 12;
 
   // ── Encabezado del modelo ──
+  const logo = await resolveScLogoDataUrl(model.logoUrl);
   const y = drawRes11Header(doc, {
     modelo: 'SC-2-13',
     titulo: 'SUBMAYOR DE INVENTARIO',
+    logoDataUrl: logo.dataUrl,
   });
 
   doc.setFont('helvetica', 'normal');
