@@ -2,43 +2,43 @@
   "modo": "--verify",
   "transporte": "api",
   "ref": "lguovmvrozxgssupkwpf",
-  "inicio": "2026-11-06T11:12:05.371Z",
+  "inicio": "2026-11-06T12:12:41.403Z",
   "pasos": [
     {
       "nombre": "guard-normal-centinela",
       "ok": true,
       "detalle": "destino validado con centinela true",
-      "ts": "2026-11-06T11:12:06.155Z"
+      "ts": "2026-11-06T12:12:41.753Z"
     },
     {
       "nombre": "verificacion-centinela",
       "ok": true,
       "detalle": "centinela=true",
-      "ts": "2026-11-06T11:12:23.887Z"
+      "ts": "2026-11-06T12:12:59.244Z"
     },
     {
       "nombre": "verificacion-baseline",
       "ok": true,
       "detalle": "estado=aplicada",
-      "ts": "2026-11-06T11:12:23.887Z"
+      "ts": "2026-11-06T12:12:59.245Z"
     },
     {
       "nombre": "verificacion-completitud-tramo",
       "ok": true,
-      "detalle": "aplicadas=125/125 fallidas=0",
-      "ts": "2026-11-06T11:12:23.887Z"
+      "detalle": "aplicadas=127/127 fallidas=0",
+      "ts": "2026-11-06T12:12:59.245Z"
     },
     {
       "nombre": "verificacion-objetos-esenciales",
       "ok": true,
       "detalle": "tablas=[audit_logs, inventory, products, profiles, receipt_items, stock_movements, stores, transactions]",
-      "ts": "2026-11-06T11:12:23.887Z"
+      "ts": "2026-11-06T12:12:59.245Z"
     },
     {
       "nombre": "verificacion-tablas-rls",
       "ok": true,
       "detalle": "tablas=165, con RLS=165",
-      "ts": "2026-11-06T11:12:23.887Z"
+      "ts": "2026-11-06T12:12:59.245Z"
     }
   ],
   "estado": {
@@ -209,7 +209,7 @@
       "workers",
       "z_reports"
     ],
-    "public_funciones": 559,
+    "public_funciones": 558,
     "extensiones": [
       "btree_gist@1.7",
       "pg_cron@1.6.4",
@@ -589,6 +589,16 @@
         "sha256": "1af068418490b8969eff431bd504f885dedb4c239fca4ec57e21e3583af5d3d2"
       },
       {
+        "nombre": "20261020000000_sec005_profiles_block_privileged_update_prod_literal.sql",
+        "estado": "aplicada",
+        "sha256": "2e5d8e0d5875a1c5535e68df31ce6e76d735779ae07a1a7cbcf2d7044dc8de7f"
+      },
+      {
+        "nombre": "20261020000001_sec005_profiles_block_privileged_update_prod_literal.sql",
+        "estado": "aplicada",
+        "sha256": "2e5d8e0d5875a1c5535e68df31ce6e76d735779ae07a1a7cbcf2d7044dc8de7f"
+      },
+      {
         "nombre": "20261020000001_services_item_type_model.sql",
         "estado": "aplicada",
         "sha256": "6bef3c0fda307927ba0b7e269da2858dc21ca6eeedc99e033f4dcc0cc3c55a8a"
@@ -596,7 +606,7 @@
       {
         "nombre": "20261020000002_sec_definer_hardening.sql",
         "estado": "aplicada",
-        "sha256": "1ccded98b5f703a2b938aefa84e9f364711e8594e0c000c907fc130c7c069328"
+        "sha256": "52d60e9d6e021b38921441798c5128f113ea5128102c063e9e6807c8be85aef1"
       },
       {
         "nombre": "20261020000004_cogs_derived.sql",
@@ -902,6 +912,11 @@
         "nombre": "20261106100000_cp_contract_surface_reconcile.sql",
         "estado": "aplicada",
         "sha256": "8760f555335255eb0225e18f65dfd84546c89f177ffd0edb6c9b5b57b02f9c6e"
+      },
+      {
+        "nombre": "20261106120000_sec005_drop_dead_overloads_close_cash_shift5_devolution_v11.sql",
+        "estado": "aplicada",
+        "sha256": "4983d647c186fb27543916e214eff17a7ec736f7f652ac7980a891640b3bc14b"
       },
       {
         "nombre": "BASELINE:production-schema-snapshot-20260828.sql",
