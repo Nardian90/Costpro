@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
+import { businessDayWindow } from '@/lib/cash-report/period-attribution';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import PageHeader from '@/components/ui/PageHeader';
@@ -197,10 +198,14 @@ export default function IpvVentasView() {
     abortRef.current?.abort();
     abortRef.current = ctrl;
     try {
-      // Convención oficial de rangos de COSTPRO (idéntica a Reporte Entrega):
-      // límites locales del día → ISO UTC, inclusivos en ambos extremos.
-      const fromISO = new Date(`${startDate}T00:00:00`).toISOString();
-      const toISO = new Date(`${endDate}T23:59:59.999`).toISOString();
+      // Convención canónica de rangos de COSTPRO (FIX DESFASE 2026-11-06):
+      // la ventana del día se calcula con businessDayWindow (Zona de negocio
+      // America/Havana, determinista desde cualquier TZ del navegador) — antes
+      // `new Date('YYYY-MM-DDTHH:mm:ss')` dependía de la TZ del navegador y un
+      // navegador fuera de Habana desplazaba el dataset. Límites inclusivos en
+      // ambos extremos: [inicio del día inicial, fin del día final].
+      const fromISO = businessDayWindow(startDate).startIso;
+      const toISO = businessDayWindow(endDate).endIso;
       const qs = new URLSearchParams({ from: fromISO, to: toISO, store_id: storeId });
       const data = await apiFetch(`/api/ipv-ventas?${qs.toString()}`, { signal: ctrl.signal }) as {
         store: { id: string; name: string };

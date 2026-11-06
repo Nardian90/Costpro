@@ -154,7 +154,7 @@ export function SalesSummaryTab({ dateFrom, dateTo, storeId }: SalesSummaryTabPr
               <th className="p-3 text-left min-h-[44px]">Fecha</th>
               <th className="p-3 text-right">Efectivo CUP</th>
               <th className="p-3 text-right">Transf CUP</th>
-              <th className="p-3 text-right">USD</th>
+              <th className="p-3 text-right">Venta USD</th>
               <th className="p-3 text-right hidden sm:table-cell">Comisión</th>
               <th className="p-3 text-right">N° Ventas</th>
             </tr>

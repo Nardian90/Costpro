@@ -15,7 +15,7 @@
 import type { jsPDF } from 'jspdf';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { totalsFromRows, round2, type IpvRow, type IpvTotals, type IpvIncidence } from '@/lib/ipv-ventas/compute';
-import { formatIpvQty, formatIpvMoney } from '@/lib/ipv-ventas/format';
+import { formatIpvQty, formatIpvMoney, formatDayLabel } from '@/lib/ipv-ventas/format';
 
 export interface IpvPdfPayload {
   storeName: string;
@@ -32,9 +32,12 @@ export interface IpvPdfPayload {
 const PAGE = { margin: 36 };
 
 function dateLabel(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('es', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  // FIX DESFASE (2026-11-06): las etiquetas del período son date-only elegidos
+  // por el usuario (YYYY-MM-DD). Formateo por partes SIN Date ni TZ: el día
+  // elegido es exactamente el que se imprime (antes `new Date('YYYY-MM-DD')`
+  // se interpretaba como medianoche UTC y `toLocaleDateString` en TZ local
+  // (Habana UTC−5) retrocedía un día).
+  return formatDayLabel(iso);
 }
 
 function dateTimeLabel(iso: string): string {

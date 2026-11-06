@@ -56,6 +56,9 @@ import { FCPreviewModal } from '@/components/ui/FCPreviewModal';
 import { ProductFCSync } from '@/components/ui/ProductFCSync';
 import { getQuickPdfUrl } from '@/lib/integration/fc-automation';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
+// MISIÓN 2026-11-06 (Objetivo 3): exportación COMPLETA del Stock actual (PDF+Excel)
+import { fetchAllStockFromSupabase, matchesStockFilter, resolveExportFCStatuses, describeStockFilters, type StockExportProduct, type StockFilterValue } from '@/lib/inventory/stock-export';
+import { buildStockActualPdf, stockFileName } from '@/components/views/terminal/views/inventory/inventory-stock-pdf';
 // Tabs: Catálogo y Trazabilidad (import dinámico para code-splitting)
 import dynamic from 'next/dynamic';
 const CatalogView = dynamic(() => import('@/components/views/terminal/views/catalog/CatalogView'), { ssr: false });
@@ -310,14 +313,10 @@ export default function InventoryView() {
         let filtered = products;
         // Stock filter — default 'with_stock' (oculta sin stock para no hacer ruido visual)
         if (stockFilter !== 'all') {
-            filtered = filtered.filter(p => {
-                const stock = p.stock_current ?? 0;
-                const min = p.min_stock ?? 0;
-                if (stockFilter === 'with_stock') return stock > 0;
-                if (stockFilter === 'out') return stock <= 0;
-                if (stockFilter === 'low') return stock > 0 && min > 0 && stock <= min;
-                return stock > 0 && (min <= 0 || stock > min);
-            });
+            // MISIÓN 2026-11-06: predicado compartido con la exportación completa
+            // (matchesStockFilter) → pantalla y exportaciones aplican EXACTAMENTE
+            // el mismo criterio.
+            filtered = filtered.filter(p => matchesStockFilter(p, stockFilter as StockFilterValue));
         }
         // FC status filter
         if (fcFilter !== 'all') {
@@ -408,33 +407,89 @@ export default function InventoryView() {
         }
     }, [filteredProducts.length, hasNextPage, isFetchingNextPage, isLoading, inventoryTab, fetchNextPage]);
 
-    const handleExportExcel = useCallback(async () => {
-        if (products.length === 0) {
-            toast.error('No hay productos para exportar');
-            return;
+    // ── MISIÓN 2026-11-06 (Objetivo 3B/3C): exportación COMPLETA del stock ──
+    // ANTES: el Excel tomaba `products` (páginas acumuladas por scroll infinito,
+    // 20/página) e ignoraba los filtros client-side → archivo silenciosamente
+    // incompleto que dependía de cuánto se había scrolleado.
+    // AHORA: se descarga el conjunto COMPLETO desde la MISMA fuente canónica
+    // (RPC get_paginated_products, con búsqueda/categoría server-side iguales
+    // a la pantalla) y se aplican los MISMOS predicados client-side (estado de
+    // stock y FC) → el archivo contiene todo lo que cumple los criterios
+    // aplicados, sin necesidad de recorrer la tabla. El fetchAllStockFromSupabase
+    // falla explícitamente si no puede cubrir el total (nunca exportación parcial
+    // silenciosa). El PDF comparte ESTE mismo dataset → pantalla, PDF y Excel
+    // coherentes.
+    const buildFullStockExportData = useCallback(async (): Promise<{ products: StockExportProduct[]; storeName: string; filtersLabel: string }> => {
+        if (!user?.activeStoreId || !uuidRegex.test(user.activeStoreId)) {
+            throw new Error('No hay una tienda activa válida para exportar.');
         }
+        // 1) Conjunto COMPLETO desde la fuente (búsqueda + categoría server-side,
+        //    idénticas a las de la tabla en pantalla).
+        const allProducts = await fetchAllStockFromSupabase(user.activeStoreId, debouncedSearch, selectedCategory);
+        if (allProducts.length === 0) {
+            throw new Error('No hay productos para exportar con los criterios aplicados.');
+        }
+        // 2) Mismos predicados client-side de la vista.
+        let rows = allProducts.filter(p => matchesStockFilter(p, stockFilter as StockFilterValue));
+        if (fcFilter !== 'all') {
+            // FC para TODOS los productos exportados (incluidos los no cargados
+            // en pantalla): se resuelven con el mismo motor que la vista.
+            const fcMap = await resolveExportFCStatuses(allProducts, user.activeStoreId);
+            rows = rows.filter(p => fcMap.get(p.id) === fcFilter);
+        }
+        if (rows.length === 0) {
+            throw new Error('Ningún producto cumple los filtros aplicados.');
+        }
+        // Nombre de la tienda activa (membresías del usuario; fallback = id)
+        const storeName = user.memberships?.find(m => m.store_id === user.activeStoreId)?.store?.name
+            || user.activeStoreId;
+        const filtersLabel = describeStockFilters(debouncedSearch, selectedCategory, stockFilter as StockFilterValue, fcFilter);
+        return { products: rows, storeName, filtersLabel };
+    }, [user?.activeStoreId, user?.memberships, debouncedSearch, selectedCategory, stockFilter, fcFilter]);
+
+    const handleExportExcel = useCallback(async () => {
+        const toastId = toast.loading('Descargando inventario completo...');
         try {
-            const toastId = toast.loading('Preparando Excel...');
+            const { products: rows, storeName } = await buildFullStockExportData();
             const XLSX = await import('@e965/xlsx');
-            const data = products.map(p => ({
+            const data = rows.map(p => ({
                 'SKU': p.sku || '',
                 'Nombre': p.name || '',
                 'Stock Actual': p.stock_current || 0,
+                'Precio': Number((p.price || 0).toFixed(2)),
                 'Costo Promedio': Number((p.cost_average || 0).toFixed(2)),
                 'Valor Total': Number(((p.stock_current || 0) * (p.cost_average || 0)).toFixed(2)),
                 'Categoría': p.category || '',
             }));
             const worksheet = XLSX.utils.json_to_sheet(data);
-            worksheet['!cols'] = [{ wch: 15 }, { wch: 35 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 20 }];
+            worksheet['!cols'] = [{ wch: 15 }, { wch: 35 }, { wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 16 }, { wch: 20 }];
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventario');
-            XLSX.writeFile(workbook, `inventario-${user?.activeStoreId || 'export'}-${Date.now()}.xlsx`);
-            toast.success('Inventario exportado a Excel', { id: toastId });
+            XLSX.writeFile(workbook, stockFileName(storeName, 'xlsx'));
+            toast.success(`Inventario completo exportado: ${rows.length} productos`, { id: toastId });
         } catch (error) {
             console.error('Error al exportar Excel:', error);
-            toast.error('Error al exportar a Excel');
+            toast.error(error instanceof Error ? error.message : 'Error al exportar a Excel', { id: toastId });
         }
-    }, [products, user?.activeStoreId]);
+    }, [buildFullStockExportData]);
+
+    const handleExportPdf = useCallback(async () => {
+        const toastId = toast.loading('Generando PDF del inventario completo...');
+        try {
+            const { products: rows, storeName, filtersLabel } = await buildFullStockExportData();
+            const doc = await buildStockActualPdf({
+                storeName,
+                generatedAt: new Date().toISOString(),
+                filtersLabel,
+                products: rows,
+            });
+            doc.save(stockFileName(storeName, 'pdf'));
+            toast.success(`PDF generado: ${rows.length} productos`, { id: toastId });
+        } catch (error) {
+            console.error('Error al exportar PDF:', error);
+            toast.error(error instanceof Error ? error.message : 'Error al generar el PDF', { id: toastId });
+        }
+    }, [buildFullStockExportData]);
 
     const actions: Action[] = [
         // FIX (2026-07-22): duplicate `toggle-layout` action removed — the ViewSwitcher
@@ -450,9 +505,17 @@ export default function InventoryView() {
         },
         {
             id: 'export-excel',
-            label: 'Exportar Excel',
+            label: 'Exportar Excel (completo)',
             icon: FileSpreadsheet,
             onClick: handleExportExcel,
+            variant: 'outline',
+            className: currentView === 'inventory' ? 'flex' : 'hidden',
+        },
+        {
+            id: 'export-pdf',
+            label: 'Exportar PDF (completo)',
+            icon: FileText,
+            onClick: handleExportPdf,
             variant: 'outline',
             className: currentView === 'inventory' ? 'flex' : 'hidden',
         },

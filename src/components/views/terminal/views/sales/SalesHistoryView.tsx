@@ -18,7 +18,7 @@ import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { useUIStore, useAuthStore } from '@/store';
 import { TaxCalculationModal } from './TaxCalculationModal';
 import { SalesSummaryTab } from './SalesSummaryTab';
-import { SalesProductTab, exportProductTabToExcel } from './SalesProductTab';
+import { SalesProductTab, exportProductTabToExcel, type ProductModalityFilterValue } from './SalesProductTab';
 
 // Helper para icono y etiqueta del método de pago
 function getPaymentMethodInfo(method: string | null | undefined): { icon: React.ElementType; label: string; color: string } {
@@ -188,13 +188,26 @@ export default function SalesHistoryView() {
   // Ref para datos del tab Producto (para exportación)
   const productTabDataRef = React.useRef<any[]>([]);
 
+  // ── Filtros avanzados de MODALIDAD/VÍA del tab Producto (misión 2026-11-06) ─
+  // Viven aquí para integrarse en el panel «Filtros Avanzados» de la búsqueda;
+  // solo afectan al tab Producto. Sin selección = consulta general.
+  const [productModalities, setProductModalities] = useState<ProductModalityFilterValue[]>([]);
+  const [productTransferOnly, setProductTransferOnly] = useState(false);
+  const toggleProductModality = useCallback((m: ProductModalityFilterValue) => {
+    setProductModalities(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]);
+  }, []);
+  const clearProductModalityFilters = useCallback(() => {
+    setProductModalities([]);
+    setProductTransferOnly(false);
+  }, []);
+
   // PR-4.4I: Export to Excel — tab-aware
   const handleExportExcel = useCallback(() => {
     const storeName = activeStoreId ? 'tienda' : 'todas';
     const dateStr = new Date().toISOString().slice(0, 10);
 
     if (activeTab === 'producto') {
-      // Export product tab data
+      // Export product tab data (los datos ya vienen con los filtros aplicados)
       if (productTabDataRef.current.length === 0) return;
       exportProductTabToExcel(productTabDataRef.current, `ventas_producto_${storeName}_${dateStr}.xlsx`);
       return;
@@ -334,6 +347,73 @@ export default function SalesHistoryView() {
             />
           </div>
 
+          {/* Misión 2026-11-06 (tab Producto): modalidad monetaria de la venta
+              (CUP / USD / Mixta — criterios exclusivos entre sí, multi-selección
+              = conjunto) y vía de pago (Transferencia — criterio ortogonal, AND).
+              La clasificación usa la distribución REAL de payment_transactions. */}
+          {activeTab === 'producto' && (
+            <div className="mt-3 pt-3 border-t border-border/60">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
+                Modalidad de la venta (tab Producto)
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  ['cup', 'Venta CUP'],
+                  ['usd', 'Venta USD'],
+                  ['mixta', 'Venta Mixta'],
+                ] as Array<[ProductModalityFilterValue, string]>).map(([value, label]) => {
+                  const active = productModalities.includes(value);
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => toggleProductModality(value)}
+                      className={cn(
+                        'px-4 min-h-[44px] rounded-full border text-xs font-bold transition-all active:scale-95',
+                        active
+                          ? 'bg-primary/10 border-primary/40 text-primary'
+                          : 'border-border text-muted-foreground hover:bg-muted'
+                      )}
+                      aria-pressed={active}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setProductTransferOnly(v => !v)}
+                  className={cn(
+                    'px-4 min-h-[44px] rounded-full border text-xs font-bold transition-all active:scale-95',
+                    productTransferOnly
+                      ? 'bg-blue-500/10 border-blue-500/40 text-blue-500'
+                      : 'border-border text-muted-foreground hover:bg-muted'
+                  )}
+                  aria-pressed={productTransferOnly}
+                >
+                  Transferencia
+                </button>
+              </div>
+              {(productModalities.length > 0 || productTransferOnly) && (
+                <div className="flex items-center justify-between mt-3 px-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+                    <Filter className="w-3 h-3" />
+                    <span>
+                      Modalidad activa: {[...productModalities.map(m => m === 'cup' ? 'Venta CUP' : m === 'usd' ? 'Venta USD' : 'Venta Mixta'), ...(productTransferOnly ? ['Transferencia'] : [])].join(' + ')}
+                    </span>
+                  </div>
+                  <button type="button"
+                    onClick={clearProductModalityFilters}
+                    className="flex items-center gap-1 text-xs font-bold text-destructive hover:underline"
+                  >
+                    <X className="w-3 h-3" />
+                    Limpiar modalidad
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {hasActiveFilters && (
             <div className="flex items-center justify-between mt-3 px-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
@@ -341,7 +421,7 @@ export default function SalesHistoryView() {
                 <span>Filtros activos — {totalFilteredCount} resultado{totalFilteredCount !== 1 ? 's' : ''}</span>
               </div>
               <button type="button"
-                onClick={handleClearFilters}
+                onClick={() => { handleClearFilters(); clearProductModalityFilters(); }}
                 className="flex items-center gap-1 text-xs font-bold text-destructive hover:underline"
               >
                 <X className="w-3 h-3" />
@@ -397,6 +477,9 @@ export default function SalesHistoryView() {
             dateFrom={dateFrom || ''}
             dateTo={dateTo || ''}
             storeId={activeStoreId}
+            modalities={productModalities}
+            transferOnly={productTransferOnly}
+            onClearModalityFilters={clearProductModalityFilters}
             onDataLoaded={(data) => { productTabDataRef.current = data; }}
           />
         )}
