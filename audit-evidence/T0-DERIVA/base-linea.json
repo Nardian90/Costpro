@@ -1,0 +1,15 @@
+{
+ "medido": "2026-11-06 (Management API, solo lectura)",
+ "produccion": {
+  "ref": "wthkddeleylijmonclxg",
+  "funciones_sd": 309,
+  "schema_migrations_cli": 12,
+  "public_schema_migrations": "no existe"
+ },
+ "costproe2e": {
+  "ref": "lguovmvrozxgssupkwpf",
+  "funciones_sd": 312
+ },
+ "huella_prod_exportada": "docs/security/certified-function-fingerprint.json (2026-11-06)",
+ "nota": "sin PII; solo nombres de objetos y hashes md5"
+}
