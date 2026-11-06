@@ -1,12 +1,20 @@
 name: E2E Aislado (CostproE2E)
 
 # ============================================================================
-# CP-INFRA-011 — Workflow E2E INDEPENDIENTE y EXCLUSIVAMENTE MANUAL.
+# CP-INFRA-011 — Workflow E2E aislado: manual + PRs hacia main.
 # ============================================================================
-# - Solo workflow_dispatch (mandato FASE 7 §8.1). NUNCA en push/PR. La
-#   activación por PR solo podrá PROPONERSE tras 3 ejecuciones verdes
-#   consecutivas + orden explícita del propietario (documentado en
-#   docs/e2e/E2E_AISLADO.md §criterios-trigger-pr).
+# - ACTIVADO POR PR (2026-11-06): orden explícita del propietario («activa ya
+#   las pruebas E2E en los CI de los PR») tras cumplir los criterios documen-
+#   tados en docs/e2e/E2E_AISLADO.md §15: tres corridas manuales verdes conse-
+#   cutivas del smoke set (#20 11:22, #21 12:28 y #22 19:36 UTC del 2026-11-06)
+#   + la orden del propietario registrada en el PR dedicado de activación.
+# - `workflow_dispatch` conserva los inputs manuales (spec_filter/target).
+#   En eventos `pull_request` esos inputs son nulos y aplican los defaults:
+#   destino `project` y smoke set CP-INFRA-011.
+# - Los PRs de forks NO reciben secretos del environment (comportamiento de
+#   GitHub para `pull_request`) → el paso de validación de config falla rápido
+#   sin exponer nada. Los PRs de ramas del propio repo sí corren con los
+#   secretos del environment `e2e-isolated`.
 # - Environment separado `e2e-isolated` (NO reutiliza `e2e`). Los jobs
 #   antiguos con if:false (ci.yml / test-coverage.yml) quedan INTACTOS.
 # - Modo project: verifica (no construye) la base aislada vía REST y corre
@@ -38,7 +46,15 @@ on:
         options:
           - project
           - local
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
+# Un solo grupo global SIN cancelación: todas las corridas (manuales y de PR)
+# se serializan para que nunca dos suites pisen la misma base aislada a la vez
+# (los specs de integridad/isolation-proof asumen la base quieta). Una corrida
+# de PR encola detrás de la manual en curso; pushes sucesivos al mismo PR
+# encolan corridas adicionales (~20 min c/u) — mantener pushes acotados.
 concurrency:
   group: e2e-isolated
   cancel-in-progress: false

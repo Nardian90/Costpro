@@ -253,15 +253,28 @@ smoke set del workflow SOLO si la prueba es estable (3 corridas verdes).
 - `vector`/`pg_trgm` NO son requeridos por el stream (inventario FASE 0) — no se instalan.
 - Servicios externos (Telegram/WhatsApp/IA) no se testean en el smoke set.
 
-## 15. Evitar la activación accidental en PRs/pushes
+## 15. Trigger por PR — activado el 2026-11-06
 
-- El trigger del workflow es ÚNICAMENTE `workflow_dispatch` — ningún evento
-  `push`/`pull_request` aparece en `on:`. Modificar `on:` exige pasar por PR
-  (los workflows con `if: false` antiguos permanecen intactos por mandato).
-- **Criterios para proponer trigger por PR en el futuro:** (1) tres corridas
-  manuales verdes consecutivas del smoke set; (2) orden explícita del
-  propietario en un PR dedicado. Antes de eso, cualquier edición del trigger
-  debe considerarse fuera de alcance.
+- El workflow admite dos eventos: `workflow_dispatch` (manual, con inputs
+  `spec_filter`/`target`) y `pull_request` hacia `main` (types: opened,
+  synchronize, reopened). En los PR los inputs son nulos y aplican los
+  defaults: base `project` y smoke set CP-INFRA-011.
+- **Criterios de activación cumplidos el 2026-11-06:** (1) tres corridas
+  manuales verdes consecutivas del smoke set — #20 (11:22), #21 (12:28) y
+  #22 (19:36 UTC) —; (2) orden explícita del propietario («activa ya las
+  pruebas E2E en los CI de los PR»), registrada en el PR dedicado de
+  activación. Ambos requisitos de la versión anterior de esta sección se
+  satisfacen; el trigger dejó de estar fuera de alcance.
+- Concurrencia: un único grupo global `e2e-isolated` SIN cancelación serializa
+  TODAS las corridas (nunca dos suites simultáneas sobre la misma base
+  aislada). Una corrida de PR encola detrás de la manual en curso; pushes
+  sucesivos al mismo PR encolan corridas adicionales (~20 min cada una).
+- Secretos: los PRs desde forks no reciben los secretos del environment
+  `e2e-isolated` (comportamiento de GitHub para `pull_request`) y fallan
+  rápido en la validación de config sin exponer nada; los PRs de ramas del
+  propio repo sí corren contra la base aislada.
+- Los workflows con `if: false` antiguos (ci.yml / test-coverage.yml)
+  permanecen intactos.
 
 ## 16. Desviaciones documentadas (resumen)
 
